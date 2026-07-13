@@ -1,5 +1,9 @@
 # Guilda Work
 
+<p align="center">
+  <img src="assets/repo-logo.png" alt="Guilda Work logo" width="420">
+</p>
+
 Registro diario de actividad organizado en **menús** (carriles independientes,
 ej. "Lueira", "Guilda"): entras en un menú y ahí anotas notas, eventos
 instantáneos y tareas con duración, viendo su propio registro cronológico.
