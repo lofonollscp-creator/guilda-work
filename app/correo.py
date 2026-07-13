@@ -8,13 +8,28 @@ de en `registro.db` o en un archivo de texto. Se reutiliza la misma
 contraseña para SMTP que para IMAP/POP3 (es lo habitual en la inmensa
 mayoría de proveedores).
 
-MVP: solo la carpeta INBOX, sin adjuntos.
+Los correos se muestran y se redactan en HTML enriquecido (al estilo New
+Outlook): al sincronizar, las imágenes incrustadas (`cid:`) se embeben como
+data URI dentro del propio HTML guardado, para que no queden rotas al
+mostrarlo; al enviar, se genera un mensaje multipart/alternative (texto plano
++ HTML) a partir de lo que el usuario escribe en el editor.
+
+Carpetas: en IMAP se descubren y sincronizan TODAS las carpetas del
+servidor automáticamente (sin pantalla de selección). POP3 no tiene ningún
+concepto de carpetas a nivel de protocolo — solo hay una "INBOX" implícita,
+siempre, sin excepción posible.
+
+Sin adjuntos descargables aparte de las imágenes incrustadas en el propio
+cuerpo del mensaje.
 """
 from __future__ import annotations
 
+import base64
 import email
+import html as html_lib
 import imaplib
 import poplib
+import re
 import smtplib
 import socket
 from email.header import decode_header
@@ -141,15 +156,41 @@ def _decodificar(valor: str | None) -> str:
     return "".join(resultado)
 
 
+def _incrustar_imagenes_inline(html: str, imagenes: dict[str, tuple[bytes, str]]) -> str:
+    """Sustituye src="cid:xxx" por data URIs, para que las imágenes
+    incrustadas (logos, gráficos...) no aparezcan rotas al mostrar el HTML."""
+    def reemplazar(m: re.Match) -> str:
+        cid = m.group(2)
+        if cid in imagenes:
+            contenido, tipo = imagenes[cid]
+            b64 = base64.b64encode(contenido).decode("ascii")
+            return f'src={m.group(1)}data:{tipo};base64,{b64}{m.group(1)}'
+        return m.group(0)
+
+    return re.sub(r'src=(["\'])cid:([^"\']+)\1', reemplazar, html, flags=re.IGNORECASE)
+
+
 def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None]:
-    """Devuelve (texto_plano, html) extraídos del mensaje (ignora adjuntos)."""
+    """Devuelve (texto_plano, html) extraídos del mensaje. Las imágenes
+    incrustadas por Content-ID se embeben en el propio HTML como data URI."""
     texto = html = None
+    imagenes_inline: dict[str, tuple[bytes, str]] = {}
     if mensaje.is_multipart():
         for parte in mensaje.walk():
+            tipo = parte.get_content_type()
+            content_id = parte.get("Content-ID")
+            if content_id and tipo.startswith("image/"):
+                try:
+                    contenido = parte.get_payload(decode=True)
+                except Exception:
+                    continue
+                if contenido is not None:
+                    imagenes_inline[content_id.strip("<>")] = (contenido, tipo)
+                continue
+
             disposicion = str(parte.get("Content-Disposition") or "")
             if "attachment" in disposicion:
                 continue
-            tipo = parte.get_content_type()
             try:
                 contenido = parte.get_payload(decode=True)
             except Exception:
@@ -171,7 +212,27 @@ def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None]:
                 html = texto_decodificado
             else:
                 texto = texto_decodificado
+
+    if html and imagenes_inline:
+        html = _incrustar_imagenes_inline(html, imagenes_inline)
     return texto, html
+
+
+def texto_a_html(texto: str) -> str:
+    """Convierte texto plano a HTML equivalente (escapado + saltos de línea
+    como <br>), para citar mensajes que no tienen versión HTML."""
+    return html_lib.escape(texto).replace("\n", "<br>")
+
+
+def html_a_texto_plano(contenido_html: str) -> str:
+    """Conversión simple de HTML a texto plano, para el fallback text/plain
+    que acompaña a todo correo HTML enviado (algunos clientes lo prefieren)."""
+    texto = re.sub(r"<br\s*/?>", "\n", contenido_html, flags=re.IGNORECASE)
+    texto = re.sub(r"</(p|div|h[1-6])>", "\n\n", texto, flags=re.IGNORECASE)
+    texto = re.sub(r"</li>", "\n", texto, flags=re.IGNORECASE)
+    texto = re.sub(r"<[^>]+>", "", texto)
+    texto = html_lib.unescape(texto).strip()
+    return re.sub(r"\n{3,}", "\n\n", texto)
 
 
 def _fecha_iso(mensaje: email.message.Message) -> str | None:
@@ -187,41 +248,93 @@ def _fecha_iso(mensaje: email.message.Message) -> str | None:
         return None
 
 
+_PATRON_LISTA_IMAP = re.compile(r'^\(([^)]*)\)\s+("[^"]*"|NIL)\s+(".*"|\S+)$')
+
+ETIQUETAS_CARPETA = {
+    "inbox": "Bandeja de entrada",
+    "sent": "Enviados", "sent items": "Enviados", "sent mail": "Enviados",
+    "drafts": "Borradores",
+    "trash": "Papelera", "deleted items": "Papelera", "deleted messages": "Papelera",
+    "junk": "Spam", "junk e-mail": "Spam", "spam": "Spam",
+    "archive": "Archivo", "all mail": "Todos",
+}
+
+
+def _parsear_carpetas_imap(lineas: list) -> list[str]:
+    """Parsea la respuesta de `LIST` de IMAP y devuelve los nombres de
+    carpeta tal cual los usa el servidor. No decodifica UTF-7 modificado
+    (limitación aceptada: un nombre de carpeta no-ASCII puede mostrarse
+    codificado en vez de legible)."""
+    nombres = []
+    for linea in lineas or []:
+        if isinstance(linea, bytes):
+            linea = linea.decode("utf-8", errors="replace")
+        m = _PATRON_LISTA_IMAP.match(linea.strip())
+        if not m:
+            continue
+        crudo = m.group(3)
+        if crudo.startswith('"') and crudo.endswith('"'):
+            crudo = crudo[1:-1]
+        nombres.append(crudo)
+    return nombres
+
+
+def _nombre_visible_carpeta(nombre: str) -> str:
+    ultimo = re.split(r"[\\/]", nombre)[-1].strip()
+    return ETIQUETAS_CARPETA.get(ultimo.lower(), ultimo)
+
+
+def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
+    estado, _ = conn.select(f'"{carpeta}"')
+    if estado != "OK":
+        return 0
+
+    estado, datos = conn.uid("search", None, "ALL")
+    if estado != "OK":
+        raise ErrorCorreo(f"No se han podido listar los mensajes de la carpeta «{carpeta}».")
+    uids_servidor = [u.decode() for u in datos[0].split()] if datos and datos[0] else []
+
+    ya_descargados = db.uids_existentes_correo(cuenta["id"], carpeta)
+    nuevos = [u for u in uids_servidor if u not in ya_descargados]
+
+    for uid in nuevos:
+        estado, datos_msg = conn.uid("fetch", uid, "(RFC822)")
+        if estado != "OK" or not datos_msg or datos_msg[0] is None:
+            continue
+        crudo = datos_msg[0][1]
+        mensaje = email.message_from_bytes(crudo)
+        texto, html = _cuerpos(mensaje)
+        db.guardar_mensaje_correo(
+            cuenta_id=cuenta["id"],
+            uid=uid,
+            asunto=_decodificar(mensaje.get("Subject")),
+            remitente=_decodificar(mensaje.get("From")),
+            destinatarios=_decodificar(mensaje.get("To")),
+            cc=_decodificar(mensaje.get("Cc")) or None,
+            fecha=_fecha_iso(mensaje),
+            cuerpo_texto=texto,
+            cuerpo_html=html,
+            carpeta=carpeta,
+            message_id=mensaje.get("Message-ID"),
+        )
+    return len(nuevos)
+
+
 def _sincronizar_imap(cuenta) -> int:
     conn = _conectar_imap_cuenta(cuenta)
     try:
-        estado, _ = conn.select("INBOX")
+        estado, lineas = conn.list()
         if estado != "OK":
-            raise ErrorCorreo("No se ha podido abrir la bandeja de entrada (INBOX).")
+            raise ErrorCorreo("No se han podido listar las carpetas del servidor.")
+        nombres_carpetas = _parsear_carpetas_imap(lineas) or ["INBOX"]
+        db.guardar_carpetas_correo(
+            cuenta["id"], [(n, _nombre_visible_carpeta(n)) for n in nombres_carpetas]
+        )
 
-        estado, datos = conn.uid("search", None, "ALL")
-        if estado != "OK":
-            raise ErrorCorreo("No se han podido listar los mensajes del servidor.")
-        uids_servidor = [u.decode() for u in datos[0].split()] if datos and datos[0] else []
-
-        ya_descargados = db.uids_existentes_correo(cuenta["id"], "INBOX")
-        nuevos = [u for u in uids_servidor if u not in ya_descargados]
-
-        for uid in nuevos:
-            estado, datos_msg = conn.uid("fetch", uid, "(RFC822)")
-            if estado != "OK" or not datos_msg or datos_msg[0] is None:
-                continue
-            crudo = datos_msg[0][1]
-            mensaje = email.message_from_bytes(crudo)
-            texto, html = _cuerpos(mensaje)
-            db.guardar_mensaje_correo(
-                cuenta_id=cuenta["id"],
-                uid=uid,
-                asunto=_decodificar(mensaje.get("Subject")),
-                remitente=_decodificar(mensaje.get("From")),
-                destinatarios=_decodificar(mensaje.get("To")),
-                fecha=_fecha_iso(mensaje),
-                cuerpo_texto=texto,
-                cuerpo_html=html,
-                carpeta="INBOX",
-                message_id=mensaje.get("Message-ID"),
-            )
-        return len(nuevos)
+        total_nuevos = 0
+        for nombre in nombres_carpetas:
+            total_nuevos += _sincronizar_carpeta_imap(conn, cuenta, nombre)
+        return total_nuevos
     finally:
         try:
             conn.logout()
@@ -248,6 +361,7 @@ def _sincronizar_pop3(cuenta) -> int:
                 asunto=_decodificar(mensaje.get("Subject")),
                 remitente=_decodificar(mensaje.get("From")),
                 destinatarios=_decodificar(mensaje.get("To")),
+                cc=_decodificar(mensaje.get("Cc")) or None,
                 fecha=_fecha_iso(mensaje),
                 cuerpo_texto=texto,
                 cuerpo_html=html,
@@ -264,7 +378,9 @@ def _sincronizar_pop3(cuenta) -> int:
 
 
 def sincronizar_bandeja(cuenta_id: int) -> dict:
-    """Descarga los mensajes nuevos de INBOX. Devuelve {"nuevos": N}."""
+    """Descarga los mensajes nuevos. En IMAP, de todas las carpetas del
+    servidor (descubiertas automáticamente); en POP3, de la única bandeja
+    posible. Devuelve {"nuevos": N}."""
     cuenta = db.obtener_cuenta_correo(cuenta_id)
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
@@ -276,8 +392,24 @@ def sincronizar_bandeja(cuenta_id: int) -> dict:
     return {"nuevos": nuevos}
 
 
-def listar_mensajes(cuenta_id: int, solo_no_leidos: bool = False, texto: str | None = None, limite: int = 50):
-    return db.listar_mensajes_correo(cuenta_id, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite)
+CARPETA_POP3_UNICA = ("INBOX", "Bandeja de entrada")
+
+
+def listar_carpetas(cuenta_id: int) -> list[dict]:
+    """Carpetas de una cuenta. Las cuentas POP3 siempre devuelven una única
+    carpeta sintética "Bandeja de entrada" (POP3 no tiene carpetas reales)."""
+    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    if cuenta is not None and cuenta["protocolo"] == "pop3":
+        return [{"nombre": CARPETA_POP3_UNICA[0], "nombre_visible": CARPETA_POP3_UNICA[1]}]
+    carpetas = [dict(c) for c in db.listar_carpetas_correo(cuenta_id)]
+    return carpetas or [{"nombre": "INBOX", "nombre_visible": "Bandeja de entrada"}]
+
+
+def listar_mensajes(
+    cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
+    texto: str | None = None, limite: int = 50,
+):
+    return db.listar_mensajes_correo(cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite)
 
 
 def obtener_mensaje(mensaje_id: int):
@@ -286,6 +418,57 @@ def obtener_mensaje(mensaje_id: int):
 
 def marcar_leido(mensaje_id: int, leido: bool = True) -> None:
     db.marcar_leido_mensaje_correo(mensaje_id, leido)
+
+
+def eliminar_mensaje(mensaje_id: int) -> None:
+    db.eliminar_mensaje_correo(mensaje_id)
+
+
+# --- Categorías (propias de Guilda Work, no se sincronizan) -------------------
+
+def crear_categoria(nombre: str, color: str) -> int:
+    if not nombre.strip():
+        raise ErrorCorreo("La categoría necesita un nombre.")
+    return db.crear_categoria_correo(nombre, color)
+
+
+def listar_categorias():
+    return db.listar_categorias_correo()
+
+
+def eliminar_categoria(categoria_id: int) -> None:
+    db.eliminar_categoria_correo(categoria_id)
+
+
+def asignar_categoria(mensaje_id: int, categoria_id: int | None) -> None:
+    db.asignar_categoria_correo(mensaje_id, categoria_id)
+
+
+# --- Firma ---------------------------------------------------------------------
+
+def guardar_firma(cuenta_id: int, firma_html: str, en_nuevos: bool, en_respuestas: bool) -> None:
+    db.guardar_firma_correo(cuenta_id, firma_html or None, en_nuevos, en_respuestas)
+
+
+def preparar_cuerpo_inicial(cuenta_id: int, es_respuesta: bool, contenido_tras_firma: str = "") -> str:
+    """Cuerpo con el que se abre el editor de redactar: un párrafo vacío
+    (para que el cursor quede libre encima) seguido de la firma si
+    corresponde según los interruptores de la cuenta, y después el contenido
+    que ya hubiera (la cita de responder/reenviar, o nada si es nuevo)."""
+    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    aplica_firma = False
+    firma_html = None
+    if cuenta is not None:
+        firma_html = cuenta["firma_html"]
+        aplica_firma = bool(firma_html) and bool(
+            cuenta["firma_en_respuestas"] if es_respuesta else cuenta["firma_en_nuevos"]
+        )
+    partes = ["<p><br></p>"]
+    if aplica_firma:
+        partes.append(firma_html)
+    if contenido_tras_firma:
+        partes.append(contenido_tras_firma)
+    return "".join(partes)
 
 
 # --- Envío (SMTP) --------------------------------------------------------------
@@ -304,15 +487,28 @@ def _conectar_smtp(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
         raise ErrorCorreo(f"No se ha podido conectar a {host}:{puerto} (SMTP): {e}") from e
 
 
+def _direcciones(cadena: str | None) -> list[str]:
+    return [d.strip() for d in (cadena or "").split(",") if d.strip()]
+
+
 def construir_y_enviar(
-    cuenta_id: int, destinatarios: str, asunto: str, cuerpo: str,
-    en_respuesta_a: str | None = None,
+    cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
+    cc: str = "", bcc: str = "", en_respuesta_a: str | None = None,
 ) -> None:
-    """Envía un correo desde `cuenta_id`. `destinatarios` es una cadena con
-    uno o varios correos separados por comas. `en_respuesta_a` es el
-    Message-ID del mensaje original, si se trata de una respuesta (se manda
-    en In-Reply-To/References para que el hilo se vea correctamente en
-    Outlook/Gmail/etc.)."""
+    """Envía un correo desde `cuenta_id`. `destinatarios`/`cc`/`bcc` son
+    cadenas con uno o varios correos separados por comas. `cuerpo_html` es
+    el HTML escrito en el editor enriquecido — se manda como
+    multipart/alternative (texto plano generado automáticamente + HTML),
+    igual que hacen Outlook, Gmail, etc. `en_respuesta_a` es el Message-ID
+    del mensaje original, si se trata de una respuesta (se manda en
+    In-Reply-To/References para que el hilo se vea correctamente en el
+    cliente de destino).
+
+    `bcc` (Cco) NUNCA se añade como cabecera del mensaje — por definición,
+    nadie salvo el remitente debe poder ver quién iba en copia oculta. Sus
+    direcciones solo se añaden a la lista de destinatarios del sobre SMTP
+    (`to_addrs`), construida aquí explícitamente en vez de dejar que
+    `smtplib` derive los destinatarios de las cabeceras."""
     cuenta = db.obtener_cuenta_correo(cuenta_id)
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
@@ -322,15 +518,22 @@ def construir_y_enviar(
         raise ErrorCorreo("Indica al menos un destinatario.")
     if not asunto.strip():
         raise ErrorCorreo("El correo necesita un asunto.")
+    if not cuerpo_html or not html_a_texto_plano(cuerpo_html).strip():
+        raise ErrorCorreo("El correo no puede estar vacío.")
 
     mensaje = EmailMessage()
     mensaje["From"] = cuenta["usuario"]
     mensaje["To"] = destinatarios.strip()
+    if cc.strip():
+        mensaje["Cc"] = cc.strip()
     mensaje["Subject"] = asunto.strip()
     if en_respuesta_a:
         mensaje["In-Reply-To"] = en_respuesta_a
         mensaje["References"] = en_respuesta_a
-    mensaje.set_content(cuerpo)
+    mensaje.set_content(html_a_texto_plano(cuerpo_html) or " ")
+    mensaje.add_alternative(cuerpo_html, subtype="html")
+
+    todos_los_destinatarios = _direcciones(destinatarios) + _direcciones(cc) + _direcciones(bcc)
 
     contrasena = _contrasena(cuenta_id)
     conn = _conectar_smtp(
@@ -338,7 +541,7 @@ def construir_y_enviar(
         cuenta["usuario"], contrasena,
     )
     try:
-        conn.send_message(mensaje)
+        conn.send_message(mensaje, to_addrs=todos_los_destinatarios)
     except smtplib.SMTPException as e:
         raise ErrorCorreo(f"No se ha podido enviar el correo: {e}") from e
     finally:

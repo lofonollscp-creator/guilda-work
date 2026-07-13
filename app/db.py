@@ -97,6 +97,10 @@ CREATE TABLE IF NOT EXISTS tareas_outlook (
 -- Cliente de correo IMAP/POP3. La contraseña de cada cuenta NO se guarda
 -- aquí: vive en el almacén de credenciales del sistema (keyring), bajo la
 -- clave "cuenta-<id>" — esta tabla solo tiene metadatos de conexión.
+-- firma_html: firma enriquecida (HTML), propia de esta cuenta; los dos
+-- interruptores controlan cuándo se antepone al redactar (ver
+-- app/correo.py::preparar_cuerpo_inicial). Cualquier combinación es válida,
+-- incluida ninguna de las dos.
 CREATE TABLE IF NOT EXISTS correo_cuentas (
     id INTEGER PRIMARY KEY,
     nombre TEXT NOT NULL,
@@ -109,11 +113,47 @@ CREATE TABLE IF NOT EXISTS correo_cuentas (
     smtp_puerto INTEGER,
     smtp_tls INTEGER NOT NULL DEFAULT 1,
     creada_en TEXT NOT NULL,
-    ultima_sincronizacion TEXT
+    ultima_sincronizacion TEXT,
+    firma_html TEXT,
+    firma_en_nuevos INTEGER NOT NULL DEFAULT 1,
+    firma_en_respuestas INTEGER NOT NULL DEFAULT 1
+);
+
+-- Carpetas IMAP descubiertas al sincronizar (POP3 no tiene fila aquí: su
+-- única carpeta "INBOX" se sintetiza en Python, nunca se guarda, porque
+-- POP3 no tiene ningún concepto de carpetas a nivel de protocolo).
+CREATE TABLE IF NOT EXISTS correo_carpetas (
+    id INTEGER PRIMARY KEY,
+    cuenta_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    nombre_visible TEXT NOT NULL,
+    FOREIGN KEY (cuenta_id) REFERENCES correo_cuentas(id),
+    UNIQUE (cuenta_id, nombre)
+);
+
+-- Categorías de color propias de Guilda Work (no existe un estándar real de
+-- "categorías con color" en IMAP/POP3 genérico — es propietario de
+-- Exchange/Outlook — así que estas nunca se sincronizan con el servidor).
+CREATE TABLE IF NOT EXISTS correo_categorias (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL UNIQUE,
+    color TEXT NOT NULL,
+    creada_en TEXT NOT NULL
+);
+
+-- Preferencias generales de Correo: una sola fila (id=1 siempre).
+CREATE TABLE IF NOT EXISTS correo_preferencias (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    densidad TEXT NOT NULL DEFAULT 'normal' CHECK (densidad IN ('normal','compacta')),
+    marcar_leido_automatico INTEGER NOT NULL DEFAULT 1,
+    limite_mensajes INTEGER NOT NULL DEFAULT 50
 );
 
 -- Caché local de mensajes ya descargados (para no ir a red en cada
--- consulta). MVP: solo la carpeta INBOX.
+-- consulta). cc: cabecera Cc del mensaje recibido. Cco (Bcc) nunca se guarda
+-- aquí porque, por diseño del propio correo electrónico, nadie salvo el
+-- remitente original sabe quién iba en copia oculta — no es una limitación
+-- nuestra, un mensaje recibido jamás trae esa información.
 CREATE TABLE IF NOT EXISTS correo_mensajes (
     id INTEGER PRIMARY KEY,
     cuenta_id INTEGER NOT NULL,
@@ -122,13 +162,16 @@ CREATE TABLE IF NOT EXISTS correo_mensajes (
     asunto TEXT,
     remitente TEXT,
     destinatarios TEXT,
+    cc TEXT,
     fecha TEXT,
     cuerpo_texto TEXT,
     cuerpo_html TEXT,
     message_id TEXT,       -- cabecera Message-ID, para poder responder con hilo (In-Reply-To/References)
     leido INTEGER NOT NULL DEFAULT 0,
+    categoria_id INTEGER,
     descargado_en TEXT NOT NULL,
     FOREIGN KEY (cuenta_id) REFERENCES correo_cuentas(id),
+    FOREIGN KEY (categoria_id) REFERENCES correo_categorias(id) ON DELETE SET NULL,
     UNIQUE (cuenta_id, carpeta, uid)
 );
 """
@@ -186,6 +229,12 @@ def init_db() -> None:
         _asegurar_columna(conn, "notas", "papelera_en", "TEXT")
         _asegurar_columna(conn, "categorias", "orden", "INTEGER")
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "categoria_id", "INTEGER")
+        _asegurar_columna(conn, "correo_cuentas", "firma_html", "TEXT")
+        _asegurar_columna(conn, "correo_cuentas", "firma_en_nuevos", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "correo_cuentas", "firma_en_respuestas", "INTEGER NOT NULL DEFAULT 1")
+        conn.execute("INSERT OR IGNORE INTO correo_preferencias (id) VALUES (1)")
         _asegurar_orden_categorias(conn)
         conn.commit()
     finally:
@@ -1163,12 +1212,124 @@ def obtener_cuenta_correo(cuenta_id: int) -> sqlite3.Row | None:
 
 
 def eliminar_cuenta_correo(cuenta_id: int) -> None:
-    """Borra la cuenta y sus mensajes cacheados. Sin papelera: la credencial
-    en keyring se borra aparte, desde app/correo.py, antes de llamar aquí."""
+    """Borra la cuenta y sus mensajes/carpetas cacheados. Sin papelera: la
+    credencial en keyring se borra aparte, desde app/correo.py, antes de
+    llamar aquí."""
     conn = get_connection()
     try:
         conn.execute("DELETE FROM correo_mensajes WHERE cuenta_id = ?", (cuenta_id,))
+        conn.execute("DELETE FROM correo_carpetas WHERE cuenta_id = ?", (cuenta_id,))
         conn.execute("DELETE FROM correo_cuentas WHERE id = ?", (cuenta_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_firma_correo(cuenta_id: int, firma_html: str | None, firma_en_nuevos: bool, firma_en_respuestas: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE correo_cuentas SET firma_html = ?, firma_en_nuevos = ?, firma_en_respuestas = ?
+               WHERE id = ?""",
+            (firma_html, int(firma_en_nuevos), int(firma_en_respuestas), cuenta_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Carpetas IMAP (POP3 no tiene fila aquí, ver comentario del esquema) ------
+
+def guardar_carpetas_correo(cuenta_id: int, carpetas: list[tuple[str, str]]) -> None:
+    """`carpetas`: lista de (nombre, nombre_visible). Upsert — no borra
+    carpetas que ya no aparezcan en el servidor, para no perder sus mensajes
+    cacheados si es un fallo puntual de listado."""
+    conn = get_connection()
+    try:
+        for nombre, nombre_visible in carpetas:
+            conn.execute(
+                """INSERT INTO correo_carpetas (cuenta_id, nombre, nombre_visible) VALUES (?, ?, ?)
+                   ON CONFLICT (cuenta_id, nombre) DO UPDATE SET nombre_visible = excluded.nombre_visible""",
+                (cuenta_id, nombre, nombre_visible),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_carpetas_correo(cuenta_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_carpetas WHERE cuenta_id = ? ORDER BY nombre_visible", (cuenta_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+# --- Categorías de correo (propias de Guilda Work, no se sincronizan) --------
+
+def crear_categoria_correo(nombre: str, color: str) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO correo_categorias (nombre, color, creada_en) VALUES (?, ?, ?)",
+            (nombre.strip(), color, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_categorias_correo() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM correo_categorias ORDER BY nombre").fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_categoria_correo(categoria_id: int) -> None:
+    """Los mensajes que la tuvieran asignada se quedan sin categoría
+    (ON DELETE SET NULL en el esquema)."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM correo_categorias WHERE id = ?", (categoria_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_categoria_correo(mensaje_id: int, categoria_id: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Preferencias generales de Correo (una sola fila) -------------------------
+
+def obtener_preferencias_correo() -> sqlite3.Row:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO correo_preferencias (id) VALUES (1)")
+        conn.commit()
+        return conn.execute("SELECT * FROM correo_preferencias WHERE id = 1").fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_preferencias_correo(densidad: str, marcar_leido_automatico: bool, limite_mensajes: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE correo_preferencias
+               SET densidad = ?, marcar_leido_automatico = ?, limite_mensajes = ? WHERE id = 1""",
+            (densidad, int(marcar_leido_automatico), limite_mensajes),
+        )
         conn.commit()
     finally:
         conn.close()
@@ -1204,16 +1365,17 @@ def guardar_mensaje_correo(
     cuenta_id: int, uid: str, asunto: str | None, remitente: str | None,
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
     cuerpo_html: str | None, carpeta: str = "INBOX", message_id: str | None = None,
+    cc: str | None = None,
 ) -> None:
     conn = get_connection()
     try:
         conn.execute(
             """INSERT OR IGNORE INTO correo_mensajes
                (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
-                fecha, cuerpo_texto, cuerpo_html, message_id, descargado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                cc, fecha, cuerpo_texto, cuerpo_html, message_id, descargado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
-             fecha, cuerpo_texto, cuerpo_html, message_id, now_iso()),
+             cc, fecha, cuerpo_texto, cuerpo_html, message_id, now_iso()),
         )
         conn.commit()
     finally:
@@ -1257,6 +1419,31 @@ def marcar_leido_mensaje_correo(mensaje_id: int, leido: bool = True) -> None:
     try:
         conn.execute("UPDATE correo_mensajes SET leido = ? WHERE id = ?", (int(leido), mensaje_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_mensaje_correo(mensaje_id: int) -> None:
+    """Borra el mensaje de la caché local (no del servidor de correo). Si
+    sigue en el buzón real, una futura sincronización volverá a descargarlo
+    (su UID ya no está en la caché local) — borrarlo también en el servidor
+    queda fuera de alcance de esta fase."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM correo_mensajes WHERE id = ?", (mensaje_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def contar_no_leidos_correo(cuenta_id: int, carpeta: str = "INBOX") -> int:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT COUNT(*) AS n FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ? AND leido = 0",
+            (cuenta_id, carpeta),
+        ).fetchone()
+        return fila["n"]
     finally:
         conn.close()
 

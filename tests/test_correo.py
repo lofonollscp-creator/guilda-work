@@ -25,14 +25,18 @@ def _mensaje_bytes(asunto: str, remitente: str, cuerpo: str, message_id: str | N
 
 
 class FakeIMAP:
-    def __init__(self, mensajes: dict[str, bytes], contrasena_valida: str = "correcta"):
+    def __init__(self, mensajes: dict[str, bytes], contrasena_valida: str = "correcta", carpetas=("INBOX",)):
         self._mensajes = mensajes
         self._contrasena_valida = contrasena_valida
+        self._carpetas = carpetas
 
     def login(self, usuario, contrasena):
         if contrasena != self._contrasena_valida:
             raise imaplib.IMAP4.error("credenciales inválidas")
         return "OK", [b"Logged in"]
+
+    def list(self):
+        return "OK", [f'(\\HasNoChildren) "/" "{c}"'.encode() for c in self._carpetas]
 
     def select(self, carpeta):
         return "OK", [b"1"]
@@ -77,8 +81,11 @@ class FakePOP3:
         pass
 
 
-def _cuenta_imap(monkeypatch, mensajes: dict[str, bytes], contrasena_valida: str = "correcta") -> None:
-    monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda host, port, timeout=None: FakeIMAP(mensajes, contrasena_valida))
+def _cuenta_imap(monkeypatch, mensajes: dict[str, bytes], contrasena_valida: str = "correcta", carpetas=("INBOX",)) -> None:
+    monkeypatch.setattr(
+        imaplib, "IMAP4_SSL",
+        lambda host, port, timeout=None: FakeIMAP(mensajes, contrasena_valida, carpetas),
+    )
 
 
 def _cuenta_pop3(monkeypatch, mensajes: list[bytes], contrasena_valida: str = "correcta") -> None:
@@ -88,9 +95,10 @@ def _cuenta_pop3(monkeypatch, mensajes: list[bytes], contrasena_valida: str = "c
 class FakeSMTP:
     ultimo_mensaje = None
 
-    def __init__(self, mensajes_enviados: list, contrasena_valida: str = "correcta"):
+    def __init__(self, mensajes_enviados: list, contrasena_valida: str = "correcta", destinatarios_capturados: list | None = None):
         self._mensajes_enviados = mensajes_enviados
         self._contrasena_valida = contrasena_valida
+        self._destinatarios_capturados = destinatarios_capturados
 
     def starttls(self):
         pass
@@ -99,16 +107,19 @@ class FakeSMTP:
         if contrasena != self._contrasena_valida:
             raise smtplib.SMTPAuthenticationError(535, b"credenciales invalidas")
 
-    def send_message(self, mensaje):
+    def send_message(self, mensaje, to_addrs=None):
         self._mensajes_enviados.append(mensaje)
+        if self._destinatarios_capturados is not None:
+            self._destinatarios_capturados.append(to_addrs)
 
     def quit(self):
         pass
 
 
-def _cuenta_smtp(monkeypatch, mensajes_enviados: list, contrasena_valida: str = "correcta") -> None:
-    monkeypatch.setattr(smtplib, "SMTP", lambda host, port, timeout=None: FakeSMTP(mensajes_enviados, contrasena_valida))
-    monkeypatch.setattr(smtplib, "SMTP_SSL", lambda host, port, timeout=None: FakeSMTP(mensajes_enviados, contrasena_valida))
+def _cuenta_smtp(monkeypatch, mensajes_enviados: list, contrasena_valida: str = "correcta", destinatarios_capturados: list | None = None) -> None:
+    fabrica = lambda host, port, timeout=None: FakeSMTP(mensajes_enviados, contrasena_valida, destinatarios_capturados)
+    monkeypatch.setattr(smtplib, "SMTP", fabrica)
+    monkeypatch.setattr(smtplib, "SMTP_SSL", fabrica)
 
 
 def _crear_cuenta_con_smtp(monkeypatch) -> int:
@@ -257,6 +268,40 @@ def test_listar_mensajes_filtra_por_no_leidos_y_texto(monkeypatch):
     assert correo.obtener_mensaje(mensaje["id"])["leido"] == 1
 
 
+def test_eliminar_mensaje_lo_quita_de_la_cache_local(monkeypatch):
+    mensajes = {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")}
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+
+    correo.eliminar_mensaje(mensaje_id)
+
+    assert correo.obtener_mensaje(mensaje_id) is None
+    assert correo.listar_mensajes(cuenta_id) == []
+
+
+def test_contar_no_leidos_correo(monkeypatch):
+    mensajes = {
+        "1": _mensaje_bytes("Uno", "a@b.com", "cuerpo"),
+        "2": _mensaje_bytes("Dos", "c@d.com", "cuerpo"),
+    }
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    assert db.contar_no_leidos_correo(cuenta_id) == 2
+
+    mensaje = correo.listar_mensajes(cuenta_id, texto="Uno")[0]
+    correo.marcar_leido(mensaje["id"], True)
+    assert db.contar_no_leidos_correo(cuenta_id) == 1
+
+
 def test_sincronizar_guarda_message_id_para_poder_responder(monkeypatch):
     mensajes = {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo", message_id="<abc123@ejemplo.com>")}
     _cuenta_imap(monkeypatch, mensajes)
@@ -271,19 +316,26 @@ def test_sincronizar_guarda_message_id_para_poder_responder(monkeypatch):
 
 # --- Envío (SMTP) ----------------------------------------------------------------
 
-def test_construir_y_enviar_manda_el_mensaje_con_los_campos_correctos(monkeypatch):
+def test_construir_y_enviar_manda_html_y_texto_plano_alternativo(monkeypatch):
     enviados = []
     _cuenta_smtp(monkeypatch, enviados)
     cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
 
-    correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto de prueba", "Cuerpo del mensaje.")
+    correo.construir_y_enviar(
+        cuenta_id, "destino@ejemplo.com", "Asunto de prueba",
+        "<p>Cuerpo <b>en negrita</b> del mensaje.</p>",
+    )
 
     assert len(enviados) == 1
     enviado = enviados[0]
     assert enviado["To"] == "destino@ejemplo.com"
     assert enviado["Subject"] == "Asunto de prueba"
     assert enviado["From"] == "yo@ejemplo.com"
-    assert enviado.get_content().strip() == "Cuerpo del mensaje."
+    assert enviado.is_multipart()
+    html_parte = enviado.get_body(preferencelist=("html",))
+    assert "<b>en negrita</b>" in html_parte.get_content()
+    texto_parte = enviado.get_body(preferencelist=("plain",))
+    assert texto_parte.get_content().strip() == "Cuerpo en negrita del mensaje."
 
 
 def test_construir_y_enviar_respuesta_incluye_in_reply_to(monkeypatch):
@@ -292,7 +344,7 @@ def test_construir_y_enviar_respuesta_incluye_in_reply_to(monkeypatch):
     cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
 
     correo.construir_y_enviar(
-        cuenta_id, "destino@ejemplo.com", "Re: Hola", "Respuesta.",
+        cuenta_id, "destino@ejemplo.com", "Re: Hola", "<p>Respuesta.</p>",
         en_respuesta_a="<abc123@ejemplo.com>",
     )
 
@@ -308,7 +360,7 @@ def test_construir_y_enviar_sin_smtp_configurado_lanza_error(monkeypatch):
         usuario="yo@ejemplo.com", contrasena="correcta",
     )
     with pytest.raises(correo.ErrorCorreo):
-        correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto", "Cuerpo")
+        correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto", "<p>Cuerpo</p>")
 
 
 def test_construir_y_enviar_sin_destinatarios_lanza_error(monkeypatch):
@@ -316,7 +368,16 @@ def test_construir_y_enviar_sin_destinatarios_lanza_error(monkeypatch):
     _cuenta_smtp(monkeypatch, enviados)
     cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
     with pytest.raises(correo.ErrorCorreo):
-        correo.construir_y_enviar(cuenta_id, "", "Asunto", "Cuerpo")
+        correo.construir_y_enviar(cuenta_id, "", "Asunto", "<p>Cuerpo</p>")
+    assert enviados == []
+
+
+def test_construir_y_enviar_cuerpo_vacio_lanza_error(monkeypatch):
+    enviados = []
+    _cuenta_smtp(monkeypatch, enviados)
+    cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
+    with pytest.raises(correo.ErrorCorreo):
+        correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto", "<p><br></p>")
     assert enviados == []
 
 
@@ -325,10 +386,217 @@ def test_construir_y_enviar_credenciales_invalidas_lanza_error(monkeypatch):
     _cuenta_smtp(monkeypatch, enviados, contrasena_valida="otra-cosa")
     cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
     with pytest.raises(correo.ErrorCorreo):
-        correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto", "Cuerpo")
+        correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto", "<p>Cuerpo</p>")
     assert enviados == []
 
 
 def test_construir_y_enviar_cuenta_inexistente_lanza_error():
     with pytest.raises(correo.ErrorCorreo):
-        correo.construir_y_enviar(999, "destino@ejemplo.com", "Asunto", "Cuerpo")
+        correo.construir_y_enviar(999, "destino@ejemplo.com", "Asunto", "<p>Cuerpo</p>")
+
+
+# --- HTML enriquecido: helpers y contenido embebido ------------------------------
+
+def test_texto_a_html_escapa_y_convierte_saltos_de_linea():
+    assert correo.texto_a_html("Hola <b>mundo</b>\nSegunda línea") == "Hola &lt;b&gt;mundo&lt;/b&gt;<br>Segunda línea"
+
+
+def test_html_a_texto_plano_extrae_texto_legible():
+    html = "<p>Hola <b>mundo</b></p><p>Segundo párrafo</p><br>Tercera línea"
+    assert correo.html_a_texto_plano(html) == "Hola mundo\n\nSegundo párrafo\n\nTercera línea"
+
+
+def test_sincronizar_incrusta_imagenes_inline_como_data_uri(monkeypatch):
+    from email.message import EmailMessage as _EM
+
+    msg = _EM()
+    msg["Subject"] = "Con imagen"
+    msg["From"] = "a@b.com"
+    msg["To"] = "yo@ejemplo.com"
+    msg["Date"] = "Mon, 13 Jul 2026 09:00:00 +0000"
+    msg.set_content("Versión en texto plano.")
+    msg.add_alternative('<p>Mira esto:</p><img src="cid:logo1">', subtype="html")
+    html_part = msg.get_body(preferencelist=("html",))
+    html_part.add_related(b"contenido-fake-png", maintype="image", subtype="png", cid="<logo1>")
+
+    _cuenta_imap(monkeypatch, {"1": bytes(msg)})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+
+    guardado = correo.listar_mensajes(cuenta_id)[0]
+    assert "cid:logo1" not in guardado["cuerpo_html"]
+    assert "data:image/png;base64," in guardado["cuerpo_html"]
+
+
+# --- Carpetas IMAP (todas se sincronizan automáticamente) -----------------------
+
+def test_parsear_carpetas_imap_reconoce_nombres_con_espacios():
+    lineas = [
+        b'(\\HasNoChildren) "/" "INBOX"',
+        b'(\\HasNoChildren) "/" "[Gmail]/Sent Mail"',
+        b'(\\Noselect \\HasChildren) "/" "[Gmail]"',
+    ]
+    assert correo._parsear_carpetas_imap(lineas) == ["INBOX", "[Gmail]/Sent Mail", "[Gmail]"]
+
+
+def test_nombre_visible_carpeta_traduce_nombres_conocidos():
+    assert correo._nombre_visible_carpeta("INBOX") == "Bandeja de entrada"
+    assert correo._nombre_visible_carpeta("[Gmail]/Sent Mail") == "Enviados"
+    assert correo._nombre_visible_carpeta("Trabajo/Proyectos") == "Proyectos"
+
+
+def test_sincronizar_imap_descubre_y_sincroniza_varias_carpetas(monkeypatch):
+    mensajes = {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")}
+    _cuenta_imap(monkeypatch, mensajes, carpetas=("INBOX", "Enviados"))
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    resumen = correo.sincronizar_bandeja(cuenta_id)
+    assert resumen == {"nuevos": 2}  # el mismo UID "1" se sincroniza en cada una de las 2 carpetas
+
+    carpetas = db.listar_carpetas_correo(cuenta_id)
+    assert {c["nombre"] for c in carpetas} == {"INBOX", "Enviados"}
+
+    assert len(correo.listar_mensajes(cuenta_id, carpeta="INBOX")) == 1
+    assert len(correo.listar_mensajes(cuenta_id, carpeta="Enviados")) == 1
+
+
+def test_listar_carpetas_pop3_devuelve_una_unica_bandeja_sintetica(monkeypatch):
+    _cuenta_pop3(monkeypatch, [])
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Personal", protocolo="pop3", host="pop.ejemplo.com", puerto=995,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    carpetas = correo.listar_carpetas(cuenta_id)
+    assert carpetas == [{"nombre": "INBOX", "nombre_visible": "Bandeja de entrada"}]
+    # POP3 no puede tener carpetas reales: no debe crearse ninguna fila en la tabla.
+    assert db.listar_carpetas_correo(cuenta_id) == []
+
+
+# --- Cc ------------------------------------------------------------------------
+
+def test_sincronizar_guarda_cc(monkeypatch):
+    msg = _mensaje_bytes("Hola", "a@b.com", "cuerpo")
+    # _mensaje_bytes no añade Cc; se construye uno aparte para este test.
+    from email.message import EmailMessage as _EM
+    m = _EM()
+    m["Subject"] = "Con copia"
+    m["From"] = "a@b.com"
+    m["To"] = "yo@ejemplo.com"
+    m["Cc"] = "otro@ejemplo.com, tercero@ejemplo.com"
+    m["Date"] = "Mon, 13 Jul 2026 09:00:00 +0000"
+    m.set_content("cuerpo")
+
+    _cuenta_imap(monkeypatch, {"1": bytes(m)})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    guardado = correo.listar_mensajes(cuenta_id)[0]
+    assert guardado["cc"] == "otro@ejemplo.com, tercero@ejemplo.com"
+
+
+def test_construir_y_enviar_con_cc_y_cco(monkeypatch):
+    enviados = []
+    capturados = []
+    _cuenta_smtp(monkeypatch, enviados, destinatarios_capturados=capturados)
+    cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
+
+    correo.construir_y_enviar(
+        cuenta_id, "destino@ejemplo.com", "Asunto", "<p>Cuerpo</p>",
+        cc="copia@ejemplo.com", bcc="oculto@ejemplo.com",
+    )
+
+    enviado = enviados[0]
+    assert enviado["Cc"] == "copia@ejemplo.com"
+    assert enviado["Bcc"] is None  # Cco NUNCA es una cabecera del mensaje enviado
+    assert set(capturados[0]) == {"destino@ejemplo.com", "copia@ejemplo.com", "oculto@ejemplo.com"}
+
+
+def test_construir_y_enviar_sin_cc_ni_cco_no_incluye_cabecera_cc(monkeypatch):
+    enviados = []
+    _cuenta_smtp(monkeypatch, enviados)
+    cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
+
+    correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Asunto", "<p>Cuerpo</p>")
+
+    assert enviados[0]["Cc"] is None
+
+
+# --- Categorías (propias de Guilda Work) -----------------------------------------
+
+def test_crear_listar_eliminar_categoria():
+    cat_id = correo.crear_categoria("Importante", "#e0555a")
+    categorias = correo.listar_categorias()
+    assert len(categorias) == 1
+    assert categorias[0]["nombre"] == "Importante"
+    assert categorias[0]["color"] == "#e0555a"
+
+    correo.eliminar_categoria(cat_id)
+    assert correo.listar_categorias() == []
+
+
+def test_crear_categoria_sin_nombre_lanza_error():
+    with pytest.raises(correo.ErrorCorreo):
+        correo.crear_categoria("", "#000000")
+
+
+def test_asignar_categoria_a_mensaje_y_eliminarla_la_deja_sin_categoria(monkeypatch):
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+    cat_id = correo.crear_categoria("Urgente", "#e0555a")
+
+    correo.asignar_categoria(mensaje_id, cat_id)
+    assert correo.obtener_mensaje(mensaje_id)["categoria_id"] == cat_id
+
+    correo.eliminar_categoria(cat_id)
+    assert correo.obtener_mensaje(mensaje_id)["categoria_id"] is None
+
+
+# --- Firma -----------------------------------------------------------------------
+
+def test_preparar_cuerpo_inicial_sin_firma_configurada(monkeypatch):
+    _cuenta_imap(monkeypatch, {})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    assert correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=False) == "<p><br></p>"
+
+
+def test_preparar_cuerpo_inicial_respeta_los_interruptores(monkeypatch):
+    _cuenta_imap(monkeypatch, {})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.guardar_firma(cuenta_id, "<p>-- Mi firma</p>", en_nuevos=True, en_respuestas=False)
+
+    nuevo = correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=False)
+    assert "Mi firma" in nuevo
+
+    respuesta = correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=True, contenido_tras_firma="<p>cita</p>")
+    assert "Mi firma" not in respuesta
+    assert "cita" in respuesta
+
+
+def test_preparar_cuerpo_inicial_ninguno_de_los_dos(monkeypatch):
+    _cuenta_imap(monkeypatch, {})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.guardar_firma(cuenta_id, "<p>-- Mi firma</p>", en_nuevos=False, en_respuestas=False)
+
+    assert "Mi firma" not in correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=False)
+    assert "Mi firma" not in correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=True)

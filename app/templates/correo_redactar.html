@@ -1,52 +1,82 @@
 {% extends "base.html" %}
-{% block title %}Redactar — Guilda Work{% endblock %}
+{% block title %}{{ titulo }} — Guilda Work{% endblock %}
 {% block content %}
+{% if not cuentas %}
 <header class="page-header">
   <div>
-    <h1>Redactar correo</h1>
-    <p class="subtitle">Se envía con la cuenta seleccionada. Revisa bien antes de confirmar — no hay deshacer.</p>
+    <h1>Correo</h1>
+    <p class="subtitle">Ninguna cuenta tiene datos de SMTP configurados todavía.</p>
   </div>
 </header>
-
-<nav class="tareas-subnav">
-  <a href="{{ url_for('correo.bandeja') }}">Bandeja de entrada</a>
-  <a href="{{ url_for('correo.cuentas') }}">Cuentas</a>
-  <a class="active" href="{{ url_for('correo.redactar') }}">Redactar</a>
-</nav>
-
-{% if error %}
-<div class="ia-error">{{ error }}</div>
-{% endif %}
-
-{% if not cuentas %}
 <p class="empty-lane">
-  Ninguna de tus cuentas tiene datos de SMTP configurados todavía.
   <a href="{{ url_for('correo.cuentas') }}">Añade los datos de SMTP a una cuenta</a> para poder enviar correo.
 </p>
 {% else %}
-<form class="edit-form" method="post" action="{{ url_for('correo.enviar') }}" style="max-width: 640px;"
-      onsubmit="return confirm('¿Enviar este correo? No se puede deshacer.');">
-  <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
-  <label>Cuenta remitente
-    <select name="cuenta_id" required>
-      {% for c in cuentas %}
-      <option value="{{ c.id }}" {% if c.id == cuenta_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
-      {% endfor %}
-    </select>
-  </label>
-  <label>Para
-    <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required>
-  </label>
-  <label>Asunto
-    <input type="text" name="asunto" value="{{ asunto }}" required autofocus>
-  </label>
-  <label>Mensaje
-    <textarea name="cuerpo" rows="12">{{ cuerpo }}</textarea>
-  </label>
-  <div class="edit-form-actions">
-    <button type="submit" class="btn btn-primary">✉ Enviar</button>
-    <a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">Cancelar</a>
+<div class="correo-compose">
+  <div class="correo-compose-header">
+    <h1>{{ titulo }}</h1>
+    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="Cerrar">✕</a>
   </div>
-</form>
+
+  {% if error %}
+  <div class="ia-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('correo.enviar') }}"
+        onsubmit="return confirm('¿Enviar este correo? No se puede deshacer.');">
+    <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
+
+    <div class="correo-compose-campo">
+      <label>De</label>
+      <select name="cuenta_id" required>
+        {% for c in cuentas %}
+        <option value="{{ c.id }}" {% if c.id == cuenta_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="correo-compose-campo">
+      <label>Para</label>
+      <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required>
+      {% if not cc and not bcc %}
+      <a class="correo-compose-cc-toggle" href="javascript:void(0)" onclick="document.getElementById('correo-compose-cc-cco').hidden = false; this.hidden = true;">Cc/Cco</a>
+      {% endif %}
+    </div>
+    <div class="correo-compose-cc-cco" id="correo-compose-cc-cco" {% if not cc and not bcc %}hidden{% endif %}>
+      <div class="correo-compose-campo">
+        <label>Cc</label>
+        <input type="text" name="cc" value="{{ cc }}" placeholder="correo@ejemplo.com">
+      </div>
+      <div class="correo-compose-campo">
+        <label>Cco</label>
+        <input type="text" name="bcc" value="{{ bcc }}" placeholder="correo@ejemplo.com">
+      </div>
+    </div>
+    <div class="correo-compose-campo">
+      <label>Asunto</label>
+      <input type="text" name="asunto" value="{{ asunto }}" required autofocus>
+    </div>
+
+    <div class="correo-editor-toolbar">
+      <button type="button" data-cmd="bold" title="Negrita"><b>N</b></button>
+      <button type="button" data-cmd="italic" title="Cursiva"><i>K</i></button>
+      <button type="button" data-cmd="underline" title="Subrayado"><u>S</u></button>
+      <span class="correo-editor-separador"></span>
+      <button type="button" data-cmd="insertUnorderedList" title="Lista con viñetas">&#8226; Lista</button>
+      <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+      <span class="correo-editor-separador"></span>
+      <button type="button" data-cmd="createLink" title="Insertar enlace">&#128279; Enlace</button>
+      <button type="button" data-cmd="insertImageFile" title="Insertar imagen">&#128247; Imagen</button>
+      <button type="button" data-cmd="removeFormat" title="Quitar formato">Tx</button>
+    </div>
+    <div id="correo-editor-cuerpo" class="correo-editor" contenteditable="true">{{ cuerpo_html|safe }}</div>
+    <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
+
+    <div class="correo-compose-acciones">
+      <button type="submit" class="btn btn-primary">✉ Enviar</button>
+      <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">Descartar</a>
+    </div>
+  </form>
+</div>
 {% endif %}
+<script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
 {% endblock %}

@@ -3,27 +3,24 @@
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Correo</h1>
-    <p class="subtitle">Cuentas IMAP/POP3. La contraseña se guarda en el almacén de credenciales de Windows, no en la base de datos.</p>
+    <h1>Cuentas de correo</h1>
+    <p class="subtitle">IMAP/POP3. La contraseña se guarda en el almacén de credenciales de Windows, no en la base de datos.</p>
   </div>
 </header>
 
-<nav class="tareas-subnav">
-  <a href="{{ url_for('correo.bandeja') }}">Bandeja de entrada</a>
-  <a class="active" href="{{ url_for('correo.cuentas') }}">Cuentas</a>
-  <a href="{{ url_for('correo.redactar') }}">Redactar</a>
-</nav>
+<a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">&larr; Volver al correo</a>
 
 {% if error %}
-<div class="ia-error">{{ error }}</div>
+<div class="ia-error" style="margin-top: 16px;">{{ error }}</div>
 {% endif %}
 
 {% if not cuentas %}
 <p class="empty-lane">Aún no has añadido ninguna cuenta de correo.</p>
 {% else %}
-<ul class="log-list">
+<ul class="log-list" style="margin-top: 16px;">
   {% for c in cuentas %}
   <li class="log-item">
+    <span class="avatar-circulo" style="--avatar-color: {{ c.nombre|avatar_color }};">{{ c.nombre|iniciales }}</span>
     <span class="log-text">{{ c.nombre }} <span class="muted">({{ c.usuario }} · {{ c.protocolo|upper }} · {{ c.host }}:{{ c.puerto }})</span></span>
     {% if c.ultima_sincronizacion %}
     <span class="log-duration">Sincronizado {{ c.ultima_sincronizacion[:16].replace('T', ' ') }}</span>
@@ -40,33 +37,60 @@
 </ul>
 {% endif %}
 
-<section class="quick-actions">
-  <form class="quick-card" action="{{ url_for('correo.crear_cuenta') }}" method="post" style="grid-column: 1 / -1;">
-    <label>Añadir cuenta</label>
-    <div class="ia-form-row">
-      <input type="text" name="nombre" placeholder="Nombre (ej. Trabajo)" required>
+<section class="correo-ajustes-seccion">
+  <h2>Añadir cuenta</h2>
+  <form action="{{ url_for('correo.crear_cuenta') }}" method="post" class="correo-form-seccion" style="max-width: 480px;">
+    <div class="correo-form-campo">
+      <label>Nombre</label>
+      <input type="text" name="nombre" placeholder="ej. Trabajo" required>
+    </div>
+    <div class="correo-form-campo">
+      <label>Usuario / correo</label>
+      <input type="text" name="usuario" placeholder="tucorreo@ejemplo.com" required>
+    </div>
+    <div class="correo-form-campo">
+      <label>Contraseña</label>
+      <input type="password" name="contrasena" placeholder="Contraseña (o contraseña de aplicación)" required>
+    </div>
+
+    <h3 class="correo-form-subtitulo">Servidor entrante</h3>
+    <div class="correo-form-campo">
+      <label>Protocolo</label>
       <select name="protocolo">
         <option value="imap" selected>IMAP</option>
         <option value="pop3">POP3</option>
       </select>
-      <input type="text" name="usuario" placeholder="Usuario / correo" required>
     </div>
-    <div class="ia-form-row">
-      <input type="text" name="host" placeholder="Servidor (ej. imap.gmail.com)" required>
-      <input type="number" name="puerto" placeholder="Puerto (993)" value="993">
-      <label style="display:flex; align-items:center; gap:6px; font-weight:normal; text-transform:none;">
-        <input type="checkbox" name="usa_tls" checked style="width:auto;"> Usar TLS/SSL
-      </label>
+    <div class="correo-form-fila-doble">
+      <div class="correo-form-campo">
+        <label>Servidor</label>
+        <input type="text" name="host" placeholder="imap.gmail.com" required>
+      </div>
+      <div class="correo-form-campo correo-form-campo-estrecho">
+        <label>Puerto</label>
+        <input type="number" name="puerto" value="993">
+      </div>
     </div>
-    <input type="password" name="contrasena" placeholder="Contraseña (o contraseña de aplicación)" required>
-    <p class="muted">Datos de SMTP (opcional por ahora — necesarios cuando llegue el envío de correo):</p>
-    <div class="ia-form-row">
-      <input type="text" name="smtp_host" placeholder="Servidor SMTP (opcional)">
-      <input type="number" name="smtp_puerto" placeholder="Puerto SMTP">
-      <label style="display:flex; align-items:center; gap:6px; font-weight:normal; text-transform:none;">
-        <input type="checkbox" name="smtp_tls" checked style="width:auto;"> Usar TLS/SSL
-      </label>
+    <label class="correo-form-checkbox">
+      <input type="checkbox" name="usa_tls" checked> Usar TLS/SSL
+    </label>
+
+    <h3 class="correo-form-subtitulo">Servidor saliente (SMTP)</h3>
+    <p class="muted">Opcional — hace falta para poder enviar correo con esta cuenta.</p>
+    <div class="correo-form-fila-doble">
+      <div class="correo-form-campo">
+        <label>Servidor SMTP</label>
+        <input type="text" name="smtp_host" placeholder="smtp.gmail.com">
+      </div>
+      <div class="correo-form-campo correo-form-campo-estrecho">
+        <label>Puerto</label>
+        <input type="number" name="smtp_puerto" placeholder="587">
+      </div>
     </div>
+    <label class="correo-form-checkbox">
+      <input type="checkbox" name="smtp_tls" checked> Usar TLS/SSL
+    </label>
+
     <div class="edit-form-actions">
       <button type="submit" class="btn btn-primary">+ Añadir cuenta</button>
     </div>

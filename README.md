@@ -143,6 +143,54 @@ Si usas **ChatGPT o Claude en el navegador** (sin acceso al sistema de
 archivos), la vía es la de siempre: exporta desde el Histórico de la app
 (botones JSON/CSV/Markdown) y pega o sube el archivo en la conversación.
 
+## Servidor MCP (notas, tareas, calendario y correo desde Claude/Codex)
+
+`mcp_server.py` expone notas, tareas (con duración y estilo Outlook),
+calendario y correo como *tools* MCP, para usar la app directamente desde
+Claude Code, Claude Desktop o Codex CLI sin pasar por la interfaz web ni por
+la CLI de solo lectura. Es un script aparte — **no se empaqueta en el
+`.exe`** — así que hace falta tener Python y las dependencias del servidor
+instaladas:
+
+```bash
+pip install -r requirements-mcp.txt
+```
+
+**Registrarlo en Claude Code** (desde esta misma carpeta del proyecto):
+
+```bash
+claude mcp add guilda-work -- python mcp_server.py
+```
+
+**Registrarlo en Codex CLI**: añade en tu `config.toml` de Codex (o el
+equivalente que use tu instalación):
+
+```toml
+[mcp_servers.guilda-work]
+command = "python"
+args = ["mcp_server.py"]
+cwd = "/ruta/a/ELEGANZA"
+```
+
+**Claude Desktop**: en su configuración de servidores MCP (`claude_desktop_config.json`),
+añade una entrada equivalente con `command`/`args`/`cwd` apuntando a este proyecto.
+
+Tools disponibles: `listar_notas`/`crear_nota`/`editar_nota`,
+`listar_tareas`/`crear_tarea`/`editar_tarea`/`completar_tarea`,
+`consultar_calendario`, `listar_cuentas_correo`/`sincronizar_correo`/
+`listar_bandeja_entrada`/`leer_correo`, `exportar_historial`/`importar_historial`,
+`exportar_tareas`/`importar_tareas` (formato `.ics`/`.csv` compatible con
+Outlook). **Enviar correo es la única acción de dos pasos a propósito**:
+`preparar_borrador_correo` solo genera una vista previa (no envía nada);
+`enviar_borrador_correo` es la que de verdad lo manda — dale a tu asistente
+la instrucción de confirmar contigo el contenido antes de llamar a esa
+segunda tool.
+
+Fuera de alcance por ahora: sincronización COM en vivo con Outlook Classic
+(solo hay import/export por archivo `.ics`/`.csv`) y un conector remoto para
+ChatGPT (el soporte actual es MCP local vía stdio, pensado para Claude
+Code/Desktop y Codex CLI).
+
 ## Zona horaria
 
 Todos los timestamps se guardan en **hora local del sistema** (pensado para
@@ -224,11 +272,15 @@ taskkill /F /IM GuildaWork.exe
 
 ```
 app/
-  main.py       # rutas Flask + arranque de la ventana nativa (pywebview)
-  db.py         # esquema y acceso a SQLite
-  export.py     # exportación a JSON/CSV/Markdown + resumen automático nocturno
-  importador.py # importación de JSON/CSV de vuelta a la base
-  ai_local.py   # integración con Ollama / LM Studio
+  main.py         # rutas Flask + arranque de la ventana nativa (pywebview)
+  db.py           # esquema y acceso a SQLite
+  export.py       # exportación a JSON/CSV/Markdown + resumen automático nocturno
+  importador.py   # importación de JSON/CSV de vuelta a la base
+  ai_local.py     # integración con Ollama / LM Studio
+  rutas_tareas.py # blueprint de la pestaña Tareas (lista + calendario estilo Outlook)
+  outlook_ics.py  # import/export de tareas a .ics/.csv compatibles con Outlook
+  rutas_correo.py # blueprint del cliente de correo IMAP/POP3/SMTP
+  correo.py       # lógica de correo (conexión, sincronización, envío HTML)
   templates/    # HTML (Jinja2)
   static/       # CSS/JS, logo.png, favicon.ico
 assets/
@@ -241,6 +293,8 @@ exports/
 tests/          # pytest — ver "Cómo correr los tests"
 run.py          # punto de entrada (arranca el servidor web)
 cli.py          # acceso a los datos por línea de comandos, sin servidor
+mcp_server.py   # servidor MCP (notas/tareas/calendario/correo) para Claude/Codex
 requirements.txt      # dependencias para ejecutar la app
 requirements-dev.txt  # + pytest, para desarrollo
+requirements-mcp.txt  # + mcp, solo para ejecutar mcp_server.py
 ```

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Ajustes de correo — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Ajustes de correo</h1>
+    <p class="subtitle">Preferencias, categorías y firma. La gestión de cuentas (IMAP/SMTP) está aparte.</p>
+  </div>
+</header>
+
+<a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">&larr; Volver al correo</a>
+
+{% if error %}
+<div class="ia-error" style="margin-top: 16px;">{{ error }}</div>
+{% endif %}
+
+<section class="correo-ajustes-seccion">
+  <h2>Preferencias generales</h2>
+  <form method="post" action="{{ url_for('correo.guardar_preferencias') }}" class="correo-form-seccion">
+    <div class="correo-form-campo">
+      <label>Densidad de la lista de mensajes</label>
+      <div class="correo-form-radios">
+        <label><input type="radio" name="densidad" value="normal" {% if preferencias.densidad == 'normal' %}checked{% endif %}> Normal</label>
+        <label><input type="radio" name="densidad" value="compacta" {% if preferencias.densidad == 'compacta' %}checked{% endif %}> Compacta</label>
+      </div>
+    </div>
+    <div class="correo-form-campo">
+      <label class="correo-form-checkbox">
+        <input type="checkbox" name="marcar_leido_automatico" {% if preferencias.marcar_leido_automatico %}checked{% endif %}>
+        Marcar como leído automáticamente al abrir un mensaje
+      </label>
+    </div>
+    <div class="correo-form-campo">
+      <label>Mensajes a mostrar por carpeta</label>
+      <input type="number" name="limite_mensajes" value="{{ preferencias.limite_mensajes }}" min="10" max="500">
+    </div>
+    <div class="edit-form-actions">
+      <button type="submit" class="btn btn-primary">Guardar preferencias</button>
+    </div>
+  </form>
+</section>
+
+<section class="correo-ajustes-seccion">
+  <h2>Categorías</h2>
+  <p class="muted">Propias de Guilda Work — no se sincronizan con tu proveedor de correo.</p>
+  {% if categorias %}
+  <ul class="log-list">
+    {% for cat in categorias %}
+    <li class="log-item">
+      <span class="correo-categoria-punto" style="background: {{ cat.color }};"></span>
+      <span class="log-text">{{ cat.nombre }}</span>
+      <form action="{{ url_for('correo.eliminar_categoria', categoria_id=cat.id) }}" method="post"
+            onsubmit="return confirm('¿Eliminar la categoría «{{ cat.nombre }}»? Los mensajes que la tuvieran se quedan sin categoría.');">
+        <button type="submit" class="chip-del" title="Eliminar">✕</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('correo.crear_categoria') }}" class="correo-form-seccion">
+    <div class="ia-form-row">
+      <input type="text" name="nombre" placeholder="Nombre (ej. Importante)" required>
+      <input type="color" name="color" value="#4a6cf7">
+      <button type="submit" class="btn btn-primary">+ Añadir categoría</button>
+    </div>
+  </form>
+</section>
+
+<section class="correo-ajustes-seccion">
+  <h2>Firma</h2>
+  {% if not cuentas %}
+  <p class="empty-lane">Añade una cuenta primero para poder configurar su firma.</p>
+  {% else %}
+  <form method="get" action="{{ url_for('correo.ajustes') }}" class="correo-form-campo" style="max-width: 320px;">
+    <label>Cuenta</label>
+    <select name="cuenta_firma_id" onchange="this.form.requestSubmit()">
+      {% for c in cuentas %}
+      <option value="{{ c.id }}" {% if c.id == cuenta_firma_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <form method="post" action="{{ url_for('correo.guardar_firma') }}" class="correo-form-seccion">
+    <input type="hidden" name="cuenta_id" value="{{ cuenta_firma_id }}">
+    <div class="correo-editor-toolbar">
+      <button type="button" data-cmd="bold" title="Negrita"><b>N</b></button>
+      <button type="button" data-cmd="italic" title="Cursiva"><i>K</i></button>
+      <button type="button" data-cmd="underline" title="Subrayado"><u>S</u></button>
+      <span class="correo-editor-separador"></span>
+      <button type="button" data-cmd="createLink" title="Insertar enlace">&#128279; Enlace</button>
+      <button type="button" data-cmd="insertImageFile" title="Insertar imagen">&#128247; Imagen</button>
+      <button type="button" data-cmd="removeFormat" title="Quitar formato">Tx</button>
+    </div>
+    <div id="firma-editor-cuerpo" class="correo-editor" data-campo-oculto="firma-campo-oculto" contenteditable="true">{{ cuenta_firma.firma_html|safe if cuenta_firma and cuenta_firma.firma_html else '' }}</div>
+    <input type="hidden" name="firma_html" id="firma-campo-oculto">
+
+    <div class="correo-form-campo" style="margin-top: 12px;">
+      <label class="correo-form-checkbox">
+        <input type="checkbox" name="firma_en_nuevos" {% if not cuenta_firma or cuenta_firma.firma_en_nuevos %}checked{% endif %}>
+        Insertar en correos nuevos
+      </label>
+    </div>
+    <div class="correo-form-campo">
+      <label class="correo-form-checkbox">
+        <input type="checkbox" name="firma_en_respuestas" {% if not cuenta_firma or cuenta_firma.firma_en_respuestas %}checked{% endif %}>
+        Insertar en respuestas y reenvíos
+      </label>
+    </div>
+    <div class="edit-form-actions">
+      <button type="submit" class="btn btn-primary">Guardar firma</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+
+<script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
+{% endblock %}

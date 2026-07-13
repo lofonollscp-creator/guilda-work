@@ -1,61 +1,143 @@
 {% extends "base.html" %}
-{% block title %}Bandeja de entrada — Guilda Work{% endblock %}
+{% block title %}Correo — Guilda Work{% endblock %}
 {% block content %}
-<header class="page-header">
-  <div>
-    <h1>Correo</h1>
-    <p class="subtitle">Bandeja de entrada (solo lectura por ahora — la caché se actualiza al sincronizar).</p>
+<div class="correo-shell">
+  <div class="correo-topbar">
+    <span class="correo-topbar-titulo">Correo</span>
+    <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="Ajustes">⚙</a>
   </div>
-</header>
 
-<nav class="tareas-subnav">
-  <a class="active" href="{{ url_for('correo.bandeja') }}">Bandeja de entrada</a>
-  <a href="{{ url_for('correo.cuentas') }}">Cuentas</a>
-  <a href="{{ url_for('correo.redactar') }}">Redactar</a>
-</nav>
-
-{% if error %}
-<div class="ia-error">{{ error }}</div>
-{% endif %}
-
-{% if not cuentas %}
-<p class="empty-lane">Aún no has añadido ninguna cuenta de correo. <a href="{{ url_for('correo.cuentas') }}">Añade una</a> para empezar.</p>
-{% else %}
-<form class="filters" method="get">
-  <label>Cuenta
-    <select name="cuenta_id" onchange="this.form.submit()">
+  <aside class="correo-rail">
+    <a class="correo-nuevo-btn" href="{{ url_for('correo.redactar', cuenta_id=cuenta_id) }}">+ Nuevo correo</a>
+    {% if not cuentas %}
+    <p class="correo-rail-vacio">Aún no tienes ninguna cuenta.</p>
+    {% else %}
+    <div class="correo-cuentas-lista">
       {% for c in cuentas %}
-      <option value="{{ c.id }}" {% if c.id == cuenta_id %}selected{% endif %}>{{ c.nombre }}</option>
+      <a class="correo-cuenta-item {{ 'active' if c.id == cuenta_id }}" href="{{ url_for('correo.bandeja', cuenta_id=c.id) }}">
+        <span class="avatar-circulo" style="--avatar-color: {{ c.nombre|avatar_color }};">{{ c.nombre|iniciales }}</span>
+        <span class="correo-cuenta-nombre">{{ c.nombre }}</span>
+        {% if no_leidos_por_cuenta.get(c.id) %}
+        <span class="correo-badge">{{ no_leidos_por_cuenta[c.id] }}</span>
+        {% endif %}
+      </a>
+      {% if c.id == cuenta_id %}
+      <div class="correo-carpeta-lista">
+        {% for f in carpetas %}
+        <a class="correo-carpeta-item {{ 'active' if f.nombre == carpeta }}"
+           href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=f.nombre) }}">📁 {{ f.nombre_visible }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
       {% endfor %}
-    </select>
-  </label>
-  <label>Buscar <input type="search" name="q" value="{{ q }}" placeholder="Asunto o remitente..."></label>
-  <label style="display:flex; align-items:center; gap:6px;">
-    <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} style="width:auto;"> Solo no leídos
-  </label>
-  <button type="submit" class="btn btn-primary">Filtrar</button>
-</form>
+    </div>
+    {% endif %}
+    <a class="correo-rail-ajustes" href="{{ url_for('correo.cuentas') }}">⚙ Cuentas</a>
+  </aside>
 
-<form action="{{ url_for('correo.sincronizar') }}" method="post" style="margin-bottom: 16px;">
-  <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
-  <button type="submit" class="btn btn-primary">⟳ Sincronizar ahora</button>
-</form>
+  <section class="correo-lista-pane">
+    {% if cuentas %}
+    <form class="correo-lista-toolbar" method="get">
+      <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
+      <input type="hidden" name="carpeta" value="{{ carpeta }}">
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar correo...">
+      <label class="correo-toolbar-check">
+        <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} onchange="this.form.requestSubmit()"> No leídos
+      </label>
+    </form>
+    <form action="{{ url_for('correo.sincronizar') }}" method="post" class="correo-sync-form">
+      <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
+      <input type="hidden" name="carpeta" value="{{ carpeta }}">
+      <button type="submit" class="btn btn-ghost correo-sync-btn">⟳ Sincronizar</button>
+    </form>
 
-{% if not mensajes %}
-<p class="empty-lane">No hay mensajes descargados. Pulsa "Sincronizar ahora" para ir a buscar los nuevos.</p>
-{% else %}
-<ul class="log-list">
-  {% for m in mensajes %}
-  <li class="log-item {{ '' if m.leido else 'is-no-leido' }}">
-    <span class="log-badge log-badge-{{ 'nota' if not m.leido else 'instantanea' }}">{{ 'Nuevo' if not m.leido else 'Leído' }}</span>
-    <span class="log-text">
-      <a href="{{ url_for('correo.ver_mensaje', mensaje_id=m.id) }}"><strong>{{ m.asunto or '(sin asunto)' }}</strong></a>
-      <span class="muted"> — {{ m.remitente or '(desconocido)' }}</span>
-    </span>
-    {% if m.fecha %}<span class="log-duration">{{ m.fecha[:16].replace('T', ' ') }}</span>{% endif %}
-  </li>
-  {% endfor %}
-</ul>
-{% endif %}
-{% endif %}
+    {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+
+    {% if not mensajes %}
+    <p class="correo-lista-vacio">No hay mensajes. Pulsa "Sincronizar" para buscar los nuevos.</p>
+    {% else %}
+    <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }}">
+      {% for m in mensajes %}
+      {% set cat = categorias_por_id.get(m.categoria_id) %}
+      <li>
+        <a class="correo-fila {{ 'is-no-leido' if not m.leido }} {{ 'is-seleccionada' if mensaje_seleccionado and mensaje_seleccionado.id == m.id }}"
+           style="{{ 'border-left: 4px solid ' + cat.color + ';' if cat else '' }}"
+           href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=m.id, q=q or None, no_leidos=1 if solo_no_leidos else None) }}">
+          <span class="avatar-circulo" style="--avatar-color: {{ m.remitente|avatar_color }};">{{ m.remitente|iniciales }}</span>
+          <div class="correo-fila-texto">
+            <div class="correo-fila-top">
+              <span class="correo-fila-remitente">{{ m.remitente or '(desconocido)' }}</span>
+              <span class="correo-fila-fecha">{{ m.fecha|fecha_relativa }}</span>
+            </div>
+            <div class="correo-fila-asunto">{{ m.asunto or '(sin asunto)' }}</div>
+            <div class="correo-fila-preview">{{ m|vista_previa }}</div>
+          </div>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% else %}
+    <p class="correo-lista-vacio">Aún no has añadido ninguna cuenta de correo. <a href="{{ url_for('correo.cuentas') }}">Añade una</a> para empezar.</p>
+    {% endif %}
+  </section>
+
+  <section class="correo-lectura-pane">
+    {% if mensaje_seleccionado %}
+    {% set cat_actual = categorias_por_id.get(mensaje_seleccionado.categoria_id) %}
+    <div class="correo-lectura-header">
+      <div class="correo-lectura-remitente">
+        <span class="avatar-circulo avatar-grande" style="--avatar-color: {{ mensaje_seleccionado.remitente|avatar_color }};">{{ mensaje_seleccionado.remitente|iniciales }}</span>
+        <div>
+          <div class="correo-lectura-nombre">{{ mensaje_seleccionado.remitente or '(desconocido)' }}</div>
+          <div class="correo-lectura-meta">
+            {% if mensaje_seleccionado.destinatarios %}Para: {{ mensaje_seleccionado.destinatarios }} · {% endif %}
+            {% if mensaje_seleccionado.cc %}Cc: {{ mensaje_seleccionado.cc }} · {% endif %}
+            {{ mensaje_seleccionado.fecha[:16].replace('T', ' ') if mensaje_seleccionado.fecha else '' }}
+          </div>
+        </div>
+      </div>
+      <div class="correo-lectura-acciones">
+        {% if categorias %}
+        <form action="{{ url_for('correo.asignar_categoria', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <select name="categoria_id" class="correo-categoria-select" style="{{ 'border-color: ' + cat_actual.color if cat_actual }}" onchange="this.form.requestSubmit()">
+            <option value="">Sin categoría</option>
+            {% for cat in categorias %}
+            <option value="{{ cat.id }}" {% if mensaje_seleccionado.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% endif %}
+        <a class="correo-icon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}" title="Responder">↩</a>
+        <a class="correo-icon-btn" href="{{ url_for('correo.reenviar', mensaje_id=mensaje_seleccionado.id) }}" title="Reenviar">↪</a>
+        <form action="{{ url_for('correo.alternar_leido', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-icon-btn" title="{{ 'Marcar como no leído' if mensaje_seleccionado.leido else 'Marcar como leído' }}">
+            {{ '✉' if mensaje_seleccionado.leido else '📖' }}
+          </button>
+        </form>
+        <form action="{{ url_for('correo.eliminar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"
+              onsubmit="return confirm('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).');">
+          <button type="submit" class="correo-icon-btn" title="Eliminar">🗑</button>
+        </form>
+      </div>
+    </div>
+    <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or '(sin asunto)' }}</h2>
+    <div class="correo-lectura-cuerpo">
+      {% if mensaje_seleccionado.cuerpo_html %}
+      <iframe class="correo-cuerpo-html" srcdoc="{{ mensaje_seleccionado.cuerpo_html|e }}" sandbox=""
+              onload="try { this.style.height = (this.contentWindow.document.body.scrollHeight + 24) + 'px'; } catch (e) {}"></iframe>
+      {% elif mensaje_seleccionado.cuerpo_texto %}
+      <div class="correo-cuerpo-texto">{{ mensaje_seleccionado.cuerpo_texto }}</div>
+      {% else %}
+      <p class="muted">Este mensaje no tiene cuerpo legible.</p>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="correo-lectura-vacio">
+      <span class="correo-lectura-vacio-icono">✉</span>
+      <p>Selecciona un mensaje para leerlo</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}
