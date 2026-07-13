@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Editar nota — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Editar nota</h1>
+    <p class="subtitle">{{ nota.creada_en }}</p>
+  </div>
+</header>
+
+<form class="edit-form" method="post" action="{{ url_for('editar_nota', nota_id=nota.id) }}">
+  <input type="hidden" name="volver_a" value="{{ volver_a }}">
+  <label>Texto
+    <textarea name="texto" rows="4" required autofocus>{{ nota.texto }}</textarea>
+  </label>
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-ghost" href="{{ volver_a }}">Cancelar</a>
+  </div>
+</form>
+
+<form class="edit-form-delete" method="post" action="{{ url_for('eliminar_nota', nota_id=nota.id) }}"
+      onsubmit="return confirm('¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí.');">
+  <input type="hidden" name="volver_a" value="{{ volver_a }}">
+  <button type="submit" class="btn btn-stop">🗑 Eliminar nota</button>
+</form>
+{% endblock %}

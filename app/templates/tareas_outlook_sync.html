@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Sincronizar con Outlook — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Tareas</h1>
+    <p class="subtitle">Importar y exportar con Microsoft Outlook Classic mediante archivo (.ics / .csv).</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('tareas.listar') }}">Lista</a>
+  <a href="{{ url_for('tareas.calendario') }}">Calendario</a>
+  <a class="active" href="{{ url_for('tareas.sincronizar') }}">Sincronizar</a>
+</nav>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+{% if resumen %}
+<div class="ia-result">
+  Importación completada: <strong>{{ resumen.creadas }}</strong> creadas{% if 'actualizadas' in resumen %},
+  <strong>{{ resumen.actualizadas }}</strong> actualizadas{% endif %}, <strong>{{ resumen.omitidas }}</strong> omitidas.
+</div>
+{% endif %}
+
+<section class="quick-actions">
+  <div class="quick-card">
+    <label>Exportar a Outlook</label>
+    <p class="muted">Genera un archivo con todas tus tareas activas, listo para importar en Outlook Classic
+      ("Archivo &gt; Abrir y exportar &gt; Importar o exportar &gt; Exportar a un archivo", o arrastrando
+      el .ics sobre tu carpeta de Tareas).</p>
+    <div class="quick-row">
+      <a class="btn btn-primary" href="{{ url_for('tareas.exportar_ics') }}">⬇ Exportar .ics</a>
+      <a class="btn btn-ghost" href="{{ url_for('tareas.exportar_csv') }}">⬇ Exportar .csv</a>
+    </div>
+  </div>
+
+  <form class="quick-card" action="{{ url_for('tareas.importar_archivo') }}" method="post" enctype="multipart/form-data">
+    <label>Importar desde Outlook</label>
+    <p class="muted">Sube un archivo .ics o .csv exportado desde la carpeta de Tareas de Outlook Classic.
+      Las tareas .ics ya importadas antes se actualizan en vez de duplicarse (se reconocen por su UID);
+      las de .csv se crean siempre como nuevas, porque ese formato no trae un identificador único.</p>
+    <div class="quick-row">
+      <input type="file" name="archivo" accept=".ics,.csv" required>
+      <button type="submit" class="btn btn-primary">⬆ Importar</button>
+    </div>
+  </form>
+</section>
+
+<p class="muted" style="margin-top: 24px;">
+  La sincronización en vivo con Outlook Classic (sin exportar/importar archivos a mano) llegará en una fase posterior.
+</p>
+{% endblock %}

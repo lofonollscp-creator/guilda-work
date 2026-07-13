@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ mensaje.asunto or '(sin asunto)' }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ mensaje.asunto or '(sin asunto)' }}</h1>
+    <p class="subtitle">
+      De: {{ mensaje.remitente or '(desconocido)' }}
+      {% if mensaje.destinatarios %} · Para: {{ mensaje.destinatarios }}{% endif %}
+      {% if mensaje.fecha %} · {{ mensaje.fecha[:16].replace('T', ' ') }}{% endif %}
+    </p>
+  </div>
+</header>
+
+<a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=mensaje.cuenta_id) }}">&larr; Volver a la bandeja</a>
+<a class="btn btn-primary" href="{{ url_for('correo.responder', mensaje_id=mensaje.id) }}">↩ Responder</a>
+<a class="btn btn-ghost" href="{{ url_for('correo.reenviar', mensaje_id=mensaje.id) }}">↪ Reenviar</a>
+
+<div class="quick-card" style="margin-top: 16px; white-space: pre-wrap;">
+  {% if mensaje.cuerpo_html %}
+  <iframe class="correo-cuerpo-html" srcdoc="{{ mensaje.cuerpo_html|e }}"></iframe>
+  {% elif mensaje.cuerpo_texto %}
+  {{ mensaje.cuerpo_texto }}
+  {% else %}
+  <p class="muted">Este mensaje no tiene cuerpo legible.</p>
+  {% endif %}
+</div>
+{% endblock %}

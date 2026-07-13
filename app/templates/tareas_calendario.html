@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Calendario de tareas — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Tareas</h1>
+    <p class="subtitle">Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí.</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('tareas.listar') }}">Lista</a>
+  <a class="active" href="{{ url_for('tareas.calendario', vista=vista, fecha=ancla.isoformat()) }}">Calendario</a>
+  <a href="{{ url_for('tareas.sincronizar') }}">Sincronizar</a>
+</nav>
+
+<div class="cal-toolbar">
+  <div class="cal-nav">
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=anterior) }}">&larr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=hoy) }}">Hoy</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=siguiente) }}">&rarr;</a>
+    <span class="cal-titulo">{{ titulo_rango }}</span>
+  </div>
+  <div class="cal-vistas">
+    {% for v, etiqueta in [('dia', 'Día'), ('semana_laboral', 'Semana laboral'), ('semana', 'Semana'), ('mes', 'Mes')] %}
+    <a class="{{ 'active' if vista == v }}" href="{{ url_for('tareas.calendario', vista=v, fecha=ancla.isoformat()) }}">{{ etiqueta }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+{% macro chip(t) %}
+<a class="cal-chip {{ 'is-completada' if t.estado == 'completada' }}"
+   style="--chip-color: {{ t.categoria_outlook|color_categoria }};"
+   href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ t.asunto }}{% if t.categoria_outlook %} · {{ t.categoria_outlook }}{% endif %}">
+  {{ t.asunto }}
+</a>
+{% endmacro %}
+
+{% if vista == 'mes' %}
+<div class="cal-grid cal-grid-mes">
+  {% for etiqueta in ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] %}
+  <div class="cal-weekday">{{ etiqueta }}</div>
+  {% endfor %}
+  {% for semana in semanas %}
+    {% for dia in semana %}
+    <div class="cal-cell cal-seleccionable {{ 'is-hoy' if dia.es_hoy }} {{ '' if dia.es_mes_actual else 'is-fuera-de-mes' }}" data-fecha="{{ dia.iso }}">
+      <span class="cal-cell-num">{{ dia.fecha.day }}</span>
+      <div class="cal-cell-chips">
+        {% for t in dia.tareas[:4] %}{{ chip(t) }}{% endfor %}
+        {% if dia.tareas|length > 4 %}<span class="cal-mas">+{{ dia.tareas|length - 4 }} más</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% endfor %}
+</div>
+
+{% elif vista == 'dia' %}
+<div class="cal-day-tasks">
+  {% if dias[0].tareas %}
+  <ul class="log-list">
+    {% for t in dias[0].tareas %}
+    <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
+      <span class="log-text"><a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a></span>
+      {% if t.categoria_outlook %}<span class="pill">{{ t.categoria_outlook }}</span>{% endif %}
+      <span class="pill prioridad-{{ t.prioridad }}">{{ t.prioridad }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-lane">No hay tareas este día. Haz clic en una franja horaria de abajo para crear una.</p>
+  {% endif %}
+</div>
+<div class="cal-hours">
+  {% for hora in horas %}
+  <div class="cal-hour-row">
+    <span class="cal-hour-label">{{ hora }}</span>
+    <div class="cal-hour-cell cal-seleccionable" data-fecha="{{ ancla.isoformat() }}T{{ hora }}"></div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="cal-grid cal-grid-cols" style="--cal-cols: {{ dias|length }};">
+  {% for dia in dias %}
+  <div class="cal-col cal-seleccionable {{ 'is-hoy' if dia.es_hoy }}" data-fecha="{{ dia.iso }}">
+    <div class="cal-col-header">
+      <span class="cal-col-weekday">{{ ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][dia.fecha.weekday()] }}</span>
+      <span class="cal-col-num">{{ dia.fecha.day }}</span>
+    </div>
+    <div class="cal-col-chips">
+      {% for t in dia.tareas %}{{ chip(t) }}{% endfor %}
+      {% if not dia.tareas %}<span class="cal-vacio">Sin tareas</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div id="cal-quick-create" class="cal-quick-create" hidden>
+  <form method="post" action="{{ url_for('tareas.crear') }}">
+    <input type="hidden" name="volver_a" value="{{ volver_a }}">
+    <input type="hidden" name="fecha_inicio" id="qc-fecha-inicio">
+    <input type="hidden" name="fecha_vencimiento" id="qc-fecha-vencimiento">
+    <div class="cal-quick-create-header">
+      <span id="qc-rango-label"></span>
+      <button type="button" class="cal-quick-close" onclick="cerrarCreacionRapidaTarea()">✕</button>
+    </div>
+    <input type="text" name="asunto" id="qc-asunto" placeholder="Asunto de la tarea..." required>
+    <div class="quick-row">
+      <select name="prioridad">
+        {% for valor, etiqueta in prioridades %}
+        <option value="{{ valor }}" {% if valor == 'normal' %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="categoria_outlook" placeholder="Categoría (opcional)" list="categorias-outlook-datalist-cal">
+      <datalist id="categorias-outlook-datalist-cal">
+        {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
+      </datalist>
+    </div>
+    <div class="cal-quick-create-actions">
+      <button type="submit" class="btn btn-primary">+ Crear tarea</button>
+    </div>
+  </form>
+</div>
+
+<script src="{{ url_for('static', filename='calendario_tareas.js') }}"></script>
+{% endblock %}

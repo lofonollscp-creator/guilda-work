@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Redactar — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Redactar correo</h1>
+    <p class="subtitle">Se envía con la cuenta seleccionada. Revisa bien antes de confirmar — no hay deshacer.</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('correo.bandeja') }}">Bandeja de entrada</a>
+  <a href="{{ url_for('correo.cuentas') }}">Cuentas</a>
+  <a class="active" href="{{ url_for('correo.redactar') }}">Redactar</a>
+</nav>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+{% if not cuentas %}
+<p class="empty-lane">
+  Ninguna de tus cuentas tiene datos de SMTP configurados todavía.
+  <a href="{{ url_for('correo.cuentas') }}">Añade los datos de SMTP a una cuenta</a> para poder enviar correo.
+</p>
+{% else %}
+<form class="edit-form" method="post" action="{{ url_for('correo.enviar') }}" style="max-width: 640px;"
+      onsubmit="return confirm('¿Enviar este correo? No se puede deshacer.');">
+  <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
+  <label>Cuenta remitente
+    <select name="cuenta_id" required>
+      {% for c in cuentas %}
+      <option value="{{ c.id }}" {% if c.id == cuenta_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Para
+    <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required>
+  </label>
+  <label>Asunto
+    <input type="text" name="asunto" value="{{ asunto }}" required autofocus>
+  </label>
+  <label>Mensaje
+    <textarea name="cuerpo" rows="12">{{ cuerpo }}</textarea>
+  </label>
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">✉ Enviar</button>
+    <a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">Cancelar</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

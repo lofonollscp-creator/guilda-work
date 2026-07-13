@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Tareas — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Tareas</h1>
+    <p class="subtitle">Lista de tareas estilo Outlook, independiente de tus menús. Asunto, vencimiento, prioridad y estado.</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a class="active" href="{{ url_for('tareas.listar') }}">Lista</a>
+  <a href="{{ url_for('tareas.calendario') }}">Calendario</a>
+  <a href="{{ url_for('tareas.sincronizar') }}">Sincronizar</a>
+</nav>
+
+<form class="filters" method="get">
+  <label>Buscar <input type="search" name="q" value="{{ q }}" placeholder="Texto..."></label>
+  <label>Estado
+    <select name="estado">
+      <option value="">Todos (sin completadas)</option>
+      {% for valor, etiqueta in estados %}
+      <option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Prioridad
+    <select name="prioridad">
+      <option value="">Todas</option>
+      {% for valor, etiqueta in prioridades %}
+      <option value="{{ valor }}" {% if prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if categorias_outlook %}
+  <label>Categoría
+    <select name="categoria">
+      <option value="">Todas</option>
+      {% for c in categorias_outlook %}
+      <option value="{{ c }}" {% if categoria == c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+  {% if not (q or estado or prioridad or categoria) %}
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', completadas=1) }}">Ver también completadas</a>
+  {% endif %}
+</form>
+
+<section class="quick-actions">
+  <form class="quick-card" action="{{ url_for('tareas.crear') }}" method="post" style="grid-column: 1 / -1;">
+    <label>Nueva tarea</label>
+    <div class="quick-row">
+      <input type="text" name="asunto" placeholder="Asunto..." required autofocus>
+      <input type="date" name="fecha_vencimiento" title="Fecha de vencimiento">
+      <select name="prioridad" title="Prioridad">
+        {% for valor, etiqueta in prioridades %}
+        <option value="{{ valor }}" {% if valor == 'normal' %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="categoria_outlook" placeholder="Categoría (opcional)" list="categorias-outlook-datalist">
+      <datalist id="categorias-outlook-datalist">
+        {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
+      </datalist>
+      <button type="submit" class="btn btn-primary">+ Añadir</button>
+    </div>
+  </form>
+</section>
+
+{% if not tareas %}
+<p class="empty-lane">No hay tareas para este filtro.</p>
+{% else %}
+<ul class="log-list">
+  {% for t in tareas %}
+  <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
+    <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
+      <button type="submit" class="tarea-check" title="Marcar como completada" {{ 'disabled' if t.estado == 'completada' }}>
+        {{ '✓' if t.estado == 'completada' else '' }}
+      </button>
+    </form>
+    <span class="log-text">
+      <a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a>
+    </span>
+    {% if t.categoria_outlook %}
+    <span class="pill">{{ t.categoria_outlook }}</span>
+    {% endif %}
+    <span class="pill prioridad-{{ t.prioridad }}">{{ t.prioridad }}</span>
+    {% if t.fecha_vencimiento %}
+    <span class="log-duration">Vence {{ t.fecha_vencimiento[:10] }}</span>
+    {% endif %}
+    <span class="log-badge log-badge-{{ 'duracion' if t.estado == 'completada' else 'instantanea' }}">
+      {{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}
+    </span>
+    <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="Editar">✏</a>
+    <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
+          onsubmit="return confirm('¿Eliminar esta tarea? Se moverá a la papelera.');">
+      <button type="submit" class="chip-del" title="Eliminar">✕</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

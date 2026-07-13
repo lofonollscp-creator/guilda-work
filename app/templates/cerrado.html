@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guilda Work — Cerrado</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+      background: #16181d;
+      color: #e5e7eb;
+    }
+    .card {
+      text-align: center;
+      max-width: 420px;
+      padding: 32px;
+    }
+    .mark {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      margin: 0 auto 20px;
+    }
+    h1 { font-size: 1.3em; margin: 0 0 10px; }
+    p { color: #9aa1ac; line-height: 1.5; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img class="mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+    <h1>Guilda Work se ha cerrado</h1>
+    <p>Todo lo que anotaste ya estaba guardado (se escribe al instante en cada acción).
+    El programa y su servidor se han terminado por completo. Esta ventana se cerrará
+    sola en un instante.</p>
+  </div>
+</body>
+</html>

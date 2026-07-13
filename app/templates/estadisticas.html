@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Estadísticas — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Estadísticas</h1>
+    <p class="subtitle">Tiempo dedicado a tareas con duración, por menú y por día.</p>
+  </div>
+</header>
+
+<form class="filters" method="get">
+  <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
+  <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+<section class="stats-section">
+  <h3>Por menú</h3>
+  {% if not por_categoria %}
+  <p class="empty-lane">Todavía no hay menús creados.</p>
+  {% else %}
+  {% set max_segundos = por_categoria|map(attribute='segundos_totales')|max %}
+  {% if max_segundos %}
+  <div class="bar-chart">
+    {% for c in por_categoria %}
+    <div class="bar-row">
+      <span class="bar-label"><span class="dot" style="background: {{ c.color or '#7c8ba1' }};"></span>{{ c.nombre }}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width: {{ (c.segundos_totales / max_segundos * 100)|round(1) }}%; background: {{ c.color or '#7c8ba1' }};"></div>
+      </div>
+      <span class="bar-value mono">{{ (c.segundos_totales // 3600) }}h {{ (c.segundos_totales % 3600) // 60 }}m</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>Menú</th>
+        <th>Tiempo en tareas</th>
+        <th>Tareas finalizadas</th>
+        <th>Eventos</th>
+        <th>Notas</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in por_categoria %}
+      <tr>
+        <td><span class="dot" style="background: {{ c.color or '#7c8ba1' }};"></span>{{ c.nombre }}</td>
+        <td class="mono">{{ (c.segundos_totales // 3600) }}h {{ (c.segundos_totales % 3600) // 60 }}m</td>
+        <td class="mono">{{ c.num_tareas }}</td>
+        <td class="mono">{{ c.num_eventos }}</td>
+        <td class="mono">{{ c.num_notas }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+
+<section class="stats-section">
+  <h3>Por día</h3>
+  {% if not por_dia %}
+  <p class="empty-lane">Todavía no hay tareas con duración finalizadas en este rango.</p>
+  {% else %}
+  {% set max_segundos_dia = por_dia|map(attribute='segundos')|max %}
+  {% if max_segundos_dia %}
+  <div class="bar-chart">
+    {% for d in por_dia[:20] %}
+    <div class="bar-row">
+      <span class="bar-label"><span class="dot" style="background: {{ d.categoria_color or '#7c8ba1' }};"></span>{{ d.fecha }} — {{ d.categoria }}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width: {{ (d.segundos / max_segundos_dia * 100)|round(1) }}%; background: {{ d.categoria_color or '#7c8ba1' }};"></div>
+      </div>
+      <span class="bar-value mono">{{ (d.segundos // 3600) }}h {{ (d.segundos % 3600) // 60 }}m</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% if por_dia|length > 20 %}<p class="muted">Mostrando los 20 primeros del gráfico; la tabla de abajo tiene el resto.</p>{% endif %}
+  {% endif %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Menú</th>
+        <th>Tiempo total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in por_dia %}
+      <tr>
+        <td class="mono">{{ d.fecha }}</td>
+        <td><span class="dot" style="background: {{ d.categoria_color or '#7c8ba1' }};"></span>{{ d.categoria }}</td>
+        <td class="mono">{{ (d.segundos // 3600) }}h {{ (d.segundos % 3600) // 60 }}m</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

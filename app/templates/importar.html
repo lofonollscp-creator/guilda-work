@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Importar — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Importar datos</h1>
+    <p class="subtitle">Sube un archivo JSON o CSV exportado desde Guilda Work (o desde una copia de seguridad) para recuperarlo.</p>
+  </div>
+</header>
+
+<form class="edit-form" method="post" action="{{ url_for('procesar_importacion') }}" enctype="multipart/form-data">
+  <label>Archivo (.json o .csv)
+    <input type="file" name="archivo" accept=".json,.csv" required>
+  </label>
+  <p class="muted">
+    Los menús que no existan se crean automáticamente por nombre. Las notas y eventos
+    se importan tal cual; las tareas con duración que en el archivo seguían "en curso"
+    (sin fin) se omiten, porque no hay forma segura de cerrarlas solas.
+  </p>
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">⬆ Importar</button>
+  </div>
+</form>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+{% if resumen %}
+<div class="ia-result">
+  Importación completada: <strong>{{ resumen.notas }}</strong> nota(s), <strong>{{ resumen.tareas }}</strong> tarea(s)/evento(s).
+  {% if resumen.omitidos %}<br>Se omitieron {{ resumen.omitidos }} fila(s) por datos incompletos o inválidos.{% endif %}
+</div>
+{% endif %}
+{% endblock %}

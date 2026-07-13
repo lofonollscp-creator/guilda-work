@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Captura rápida</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+      background: #16181d;
+      color: #e5e7eb;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    .box { width: 100%; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .row { display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; }
+    .logo { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+    select {
+      background: #23262d;
+      color: #e5e7eb;
+      border: 1px solid #34383f;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.8em;
+      max-width: 160px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: #23262d;
+      color: #e5e7eb;
+      border: 1px solid #34383f;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 0.95em;
+    }
+    input[type="text"]:focus, select:focus { outline: 2px solid #4a6cf7; }
+    .hint { margin: 0; font-size: 0.72em; color: #6b7280; -webkit-app-region: no-drag; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="row">
+      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="">
+      <select id="menu-select">
+        {% for m in menus %}
+        <option value="{{ m.id }}" {% if m.id == menu_id %}selected{% endif %}>{{ m.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="row">
+      <input type="text" id="texto" placeholder="Apunta algo que ha pasado..." autofocus>
+    </div>
+    <p class="hint">Enter para guardar · Esc para cancelar</p>
+  </div>
+  <script>
+    function cerrarVentana() {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.cerrar_captura();
+      }
+    }
+    async function guardar() {
+      const texto = document.getElementById('texto').value.trim();
+      if (!texto) { cerrarVentana(); return; }
+      const datos = new FormData();
+      datos.append('texto', texto);
+      datos.append('categoria_id', document.getElementById('menu-select').value);
+      try {
+        await fetch('/captura', { method: 'POST', body: datos });
+      } finally {
+        cerrarVentana();
+      }
+    }
+    document.getElementById('texto').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); guardar(); }
+      if (e.key === 'Escape') { e.preventDefault(); cerrarVentana(); }
+    });
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { cerrarVentana(); }
+    });
+  </script>
+</body>
+</html>

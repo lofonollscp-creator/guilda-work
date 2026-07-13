@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+data/*.db
+data/backups/
+exports/*.json
+exports/*.csv
+exports/*.md
+exports/auto/
+build/
+dist/
+*.spec
+.venv/
+.pytest_cache/

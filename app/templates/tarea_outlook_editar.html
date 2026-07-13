@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Editar tarea — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Editar tarea</h1>
+    <p class="subtitle">Creada el {{ tarea.creada_en[:16].replace('T', ' ') }}</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+<form class="edit-form" method="post" action="{{ url_for('tareas.editar', tarea_id=tarea.id) }}" style="max-width: 640px;">
+  <label>Asunto
+    <input type="text" name="asunto" value="{{ tarea.asunto }}" required autofocus>
+  </label>
+  <label>Descripción
+    <textarea name="cuerpo" rows="4">{{ tarea.cuerpo or '' }}</textarea>
+  </label>
+
+  <div class="ia-form-row">
+    <label>Estado
+      <select name="estado">
+        {% for valor, etiqueta in estados %}
+        <option value="{{ valor }}" {% if tarea.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Prioridad
+      <select name="prioridad">
+        {% for valor, etiqueta in prioridades %}
+        <option value="{{ valor }}" {% if tarea.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>% completado
+      <input type="number" name="porcentaje_completado" min="0" max="100" step="10" value="{{ tarea.porcentaje_completado }}">
+    </label>
+  </div>
+
+  <div class="ia-form-row">
+    <label>Fecha de inicio
+      <input type="date" name="fecha_inicio" value="{{ tarea.fecha_inicio[:10] if tarea.fecha_inicio else '' }}">
+    </label>
+    <label>Fecha de vencimiento
+      <input type="date" name="fecha_vencimiento" value="{{ tarea.fecha_vencimiento[:10] if tarea.fecha_vencimiento else '' }}">
+    </label>
+  </div>
+
+  <label>Categoría
+    <input type="text" name="categoria_outlook" value="{{ tarea.categoria_outlook or '' }}" placeholder="ej. Trabajo, Personal...">
+  </label>
+
+  {% if tarea.fecha_completada %}
+  <p class="muted">Completada el {{ tarea.fecha_completada[:16].replace('T', ' ') }}.</p>
+  {% endif %}
+
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">Cancelar</a>
+  </div>
+</form>
+
+<form class="edit-form-delete" method="post" action="{{ url_for('tareas.eliminar', tarea_id=tarea.id) }}"
+      onsubmit="return confirm('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.');">
+  <button type="submit" class="btn btn-stop">🗑 Eliminar tarea</button>
+</form>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Guilda Work{% endblock %}</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('inicio') }}">
+        <img class="brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+        <span class="brand-name">Guilda Work</span>
+      </a>
+      <nav class="side-nav">
+        <a href="{{ url_for('inicio') }}" class="{{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}">
+          <span class="nav-icon">&#9776;</span> Menús
+        </a>
+        <a href="{{ url_for('tareas.listar') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}">
+          <span class="nav-icon">&#128203;</span> Tareas
+        </a>
+        <a href="{{ url_for('correo.bandeja') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}">
+          <span class="nav-icon">&#9993;</span> Correo
+        </a>
+        <a href="{{ url_for('historial') }}" class="{{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}">
+          <span class="nav-icon">&#128337;</span> Histórico
+        </a>
+        <a href="{{ url_for('estadisticas') }}" class="{{ 'active' if request.endpoint == 'estadisticas' else '' }}">
+          <span class="nav-icon">&#128202;</span> Estadísticas
+        </a>
+        <a href="{{ url_for('papelera') }}" class="{{ 'active' if request.endpoint == 'papelera' else '' }}">
+          <span class="nav-icon">&#128465;</span> Papelera
+        </a>
+        <a href="{{ url_for('importar') }}" class="{{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}">
+          <span class="nav-icon">&#11014;</span> Importar
+        </a>
+        <button type="button" class="side-capture" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="Atajo global: Ctrl+Alt+G">
+          <span class="nav-icon">&#128204;</span> Captura rápida
+        </button>
+      </nav>
+      <div class="side-menu-list">
+        <span class="side-menu-list-title">Tus menús</span>
+        {% for m in menus %}
+        <a class="side-menu-item {{ 'active' if request.view_args and request.view_args.get('menu_id')|string == m.id|string else '' }}"
+           href="{{ url_for('ver_menu', menu_id=m.id) }}">
+          <span class="dot" style="background: {{ m.color or '#7c8ba1' }};"></span>{{ m.nombre }}
+        </a>
+        {% else %}
+        <span class="side-menu-empty">Aún no hay menús</span>
+        {% endfor %}
+      </div>
+      <form class="side-shutdown" action="{{ url_for('apagar') }}" method="post"
+            onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
+        <button type="submit">&#9211; Cerrar programa</button>
+      </form>
+    </aside>
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

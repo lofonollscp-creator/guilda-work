@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Papelera — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Papelera</h1>
+    <p class="subtitle">Lo que borres se queda aquí 30 días antes de purgarse solo. Puedes recuperarlo cuando quieras.</p>
+  </div>
+</header>
+
+{% if not items %}
+<p class="empty-lane">La papelera está vacía.</p>
+{% else %}
+<form method="post" action="{{ url_for('vaciar_papelera') }}"
+      onsubmit="return confirm('¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma permanente. Esta acción no se puede deshacer.');"
+      class="papelera-vaciar">
+  <button type="submit" class="btn btn-stop">🗑 Vaciar papelera ahora</button>
+</form>
+
+<ul class="log-list">
+  {% for item in items %}
+  <li class="log-item">
+    <span class="log-time">{{ item.papelera_en[:16].replace('T', ' ') }}</span>
+    <span class="log-badge log-badge-{% if item.origen in ('menu', 'nota') %}nota{% elif item.origen == 'tarea_outlook' %}duracion{% elif item.tipo == 'instantanea' %}instantanea{% else %}duracion{% endif %}">
+      {% if item.origen == 'menu' %}Menú
+      {% elif item.origen == 'nota' %}Nota
+      {% elif item.origen == 'tarea_outlook' %}Tarea (lista)
+      {% elif item.tipo == 'instantanea' %}Evento
+      {% else %}Tarea{% endif %}
+    </span>
+    {% if item.categoria_nombre %}
+    <span class="log-menu"><span class="dot" style="background: {{ item.categoria_color or '#7c8ba1' }};"></span>{{ item.categoria_nombre }}</span>
+    {% endif %}
+    <span class="log-text">{{ item.texto }}</span>
+
+    {% if item.origen == 'menu' %}
+    <form action="{{ url_for('restaurar_menu', menu_id=item.id) }}" method="post">
+      <button type="submit" class="btn btn-ghost">↺ Restaurar</button>
+    </form>
+    <form action="{{ url_for('eliminar_menu_definitivamente', menu_id=item.id) }}" method="post"
+          onsubmit="return confirm('¿Eliminar este menú y todo lo que contiene para siempre? No se puede deshacer.');">
+      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+    </form>
+    {% elif item.origen == 'nota' %}
+    <form action="{{ url_for('restaurar_nota', nota_id=item.id) }}" method="post">
+      <button type="submit" class="btn btn-ghost">↺ Restaurar</button>
+    </form>
+    <form action="{{ url_for('eliminar_nota_definitivamente', nota_id=item.id) }}" method="post"
+          onsubmit="return confirm('¿Eliminar esta nota para siempre? No se puede deshacer.');">
+      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+    </form>
+    {% elif item.origen == 'tarea_outlook' %}
+    <form action="{{ url_for('tareas.restaurar', tarea_id=item.id) }}" method="post">
+      <button type="submit" class="btn btn-ghost">↺ Restaurar</button>
+    </form>
+    <form action="{{ url_for('tareas.eliminar_definitivamente', tarea_id=item.id) }}" method="post"
+          onsubmit="return confirm('¿Eliminar esto para siempre? No se puede deshacer.');">
+      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+    </form>
+    {% else %}
+    <form action="{{ url_for('restaurar_tarea', tarea_id=item.id) }}" method="post">
+      <button type="submit" class="btn btn-ghost">↺ Restaurar</button>
+    </form>
+    <form action="{{ url_for('eliminar_tarea_definitivamente', tarea_id=item.id) }}" method="post"
+          onsubmit="return confirm('¿Eliminar esto para siempre? No se puede deshacer.');">
+      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

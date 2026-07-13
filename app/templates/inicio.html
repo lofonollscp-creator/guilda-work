@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Guilda Work — Menús{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Tus menús</h1>
+    <p class="subtitle">Cada menú es un carril propio: entra para anotar y ver su actividad.</p>
+  </div>
+</header>
+
+{% if not menus %}
+  <div class="empty-state">
+    <p>Todavía no tienes ningún menú.</p>
+    <p class="muted">Crea el primero abajo para empezar a registrar actividad.</p>
+  </div>
+{% else %}
+<div class="menu-grid">
+  {% for m in menus %}
+  <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
+    <a class="menu-card-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
+      <div class="menu-card-top">
+        <span class="menu-card-dot"></span>
+        <h2>{{ m.nombre }}</h2>
+      </div>
+      <div class="menu-card-stats">
+        {% set n_activas = activas_por_menu.get(m.id, [])|length %}
+        {% if n_activas %}
+          <span class="pill pill-live">{{ n_activas }} en curso</span>
+        {% endif %}
+        <span class="pill">{{ entradas_hoy.get(m.id, 0) }} hoy</span>
+      </div>
+    </a>
+    {% if menus|length > 1 %}
+    <div class="menu-card-reorder">
+      <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
+        <input type="hidden" name="direccion" value="arriba">
+        <button type="submit" class="menu-card-reorder-btn" title="Mover arriba" {{ 'disabled' if loop.first }}>↑</button>
+      </form>
+      <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
+        <input type="hidden" name="direccion" value="abajo">
+        <button type="submit" class="menu-card-reorder-btn" title="Mover abajo" {{ 'disabled' if loop.last }}>↓</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if menus %}
+<section class="log-section">
+  <h3>Hoy</h3>
+  {% if not log_hoy %}
+  <p class="empty-lane">Todavía no has registrado nada hoy.</p>
+  {% else %}
+  <ul class="log-list">
+    {% for f in log_hoy %}
+    <li class="log-item">
+      <span class="log-time">{{ f.timestamp[11:16] if f.timestamp else '' }}</span>
+      <span class="dot" style="background: {{ f.categoria_color or '#7c8ba1' }};"></span>
+      <span class="log-menu">{{ f.categoria_nombre or '—' }}</span>
+      <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">
+        {% if f.origen == 'nota' %}Nota
+        {% elif f.tipo == 'instantanea' %}Evento
+        {% elif f.estado == 'en_curso' %}En curso
+        {% elif f.estado == 'pausada' %}En pausa
+        {% else %}Tarea{% endif %}
+      </span>
+      <span class="log-text">{{ f.texto }}</span>
+      {% if f.duracion_segundos is not none %}
+      <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
+      {% endif %}
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar">✏</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="new-menu">
+  <h3>+ Nuevo menú</h3>
+  <form class="inline-form" method="post" action="{{ url_for('crear_menu') }}">
+    <input type="text" name="nombre" placeholder="Nombre del menú (ej. Lueira, Guilda...)" required>
+    <input type="color" name="color" value="#4a90d9" title="Color del menú">
+    <button type="submit" class="btn btn-primary">Crear menú</button>
+  </form>
+</section>
+{% endblock %}

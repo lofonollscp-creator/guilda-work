@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}{{ menu.nombre }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header menu-header" style="--accent: {{ menu.color or '#7c8ba1' }};">
+  <div>
+    <span class="menu-header-dot"></span>
+    <h1>{{ menu.nombre }}</h1>
+  </div>
+  <details class="menu-settings">
+    <summary class="btn btn-ghost">⚙ Editar menú</summary>
+    <div class="menu-settings-panel">
+      <form class="inline-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
+        <input type="text" name="nombre" value="{{ menu.nombre }}" required>
+        <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="Color del menú">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </form>
+      <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
+            onsubmit="return confirm('¿Eliminar el menú «{{ menu.nombre }}»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.');">
+        <button type="submit" class="btn btn-stop">🗑 Eliminar menú</button>
+      </form>
+    </div>
+  </details>
+</header>
+
+<section class="quick-actions">
+  <div class="quick-card">
+    <label>Nota rápida</label>
+    {% if plantillas %}
+    <div class="chip-row">
+      {% for p in plantillas %}
+      <form class="chip" action="{{ url_for('crear_nota') }}" method="post">
+        <input type="hidden" name="categoria_id" value="{{ menu.id }}">
+        <input type="hidden" name="texto" value="{{ p.texto }}">
+        <button type="submit" class="chip-btn" title="Anotar «{{ p.texto }}»">{{ p.texto }}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <form action="{{ url_for('crear_nota') }}" method="post" class="quick-row">
+      <input type="hidden" name="categoria_id" value="{{ menu.id }}">
+      <input type="text" name="texto" placeholder="Escribe algo que ha pasado..." required autofocus>
+      <button type="submit" class="btn">📝 Anotar</button>
+    </form>
+  </div>
+
+  <form class="quick-card" action="{{ url_for('crear_tarea') }}" method="post">
+    <input type="hidden" name="categoria_id" value="{{ menu.id }}">
+    <input type="hidden" name="tipo" value="instantanea">
+    <label>Evento instantáneo</label>
+    <div class="quick-row">
+      <input type="text" name="nombre" placeholder="Algo puntual que acaba de ocurrir..." required>
+      <button type="submit" class="btn">⚡ Registrar</button>
+    </div>
+  </form>
+
+  <form class="quick-card" action="{{ url_for('crear_tarea') }}" method="post">
+    <input type="hidden" name="categoria_id" value="{{ menu.id }}">
+    <input type="hidden" name="tipo" value="duracion">
+    <label>Tarea con duración</label>
+    <div class="quick-row">
+      <input type="text" name="nombre" placeholder="Nombre de la tarea a iniciar..." required>
+      <button type="submit" class="btn btn-primary">▶ Iniciar</button>
+    </div>
+  </form>
+</section>
+
+<details class="favoritas">
+  <summary class="btn btn-ghost">⭐ Gestionar frases favoritas</summary>
+  <div class="favoritas-panel">
+    {% if plantillas %}
+    <ul class="favoritas-list">
+      {% for p in plantillas %}
+      <li>
+        <span>{{ p.texto }}</span>
+        <form action="{{ url_for('eliminar_plantilla', plantilla_id=p.id) }}" method="post">
+          <input type="hidden" name="volver_a" value="{{ url_for('ver_menu', menu_id=menu.id) }}">
+          <button type="submit" class="chip-del" title="Quitar">×</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">Aún no tienes frases favoritas. Añade las que repites a menudo para anotarlas en un clic desde "Nota rápida".</p>
+    {% endif %}
+    <form class="inline-form" action="{{ url_for('crear_plantilla', menu_id=menu.id) }}" method="post">
+      <input type="text" name="texto" placeholder="Nueva frase favorita..." required>
+      <button type="submit" class="btn btn-primary">Añadir</button>
+    </form>
+  </div>
+</details>
+
+{% if activas %}
+<section class="active-section">
+  <h3>En curso ahora</h3>
+  <div class="active-tasks">
+    {% for t in activas %}
+    <div class="active-task {{ 'is-paused' if t.estado == 'pausada' else '' }} {{ 'is-olvidada' if t.estado == 'pausada' and t.segundos_trabajados_congelado >= 14400 else '' }}">
+      <span class="task-name">{{ t.nombre }}</span>
+      {% if t.estado == 'pausada' %}
+      <span class="task-timer task-timer-frozen">⏸ {{ '%02d:%02d:%02d'|format(t.segundos_trabajados_congelado // 3600, (t.segundos_trabajados_congelado % 3600) // 60, t.segundos_trabajados_congelado % 60) }}</span>
+      {% else %}
+      <span class="task-timer" data-inicio="{{ t.inicio_en }}" data-pausado="{{ t.segundos_pausados }}">00:00:00</span>
+      {% endif %}
+      <span class="task-aviso" title="Lleva mucho tiempo activa — ¿se te olvidó finalizarla?">⚠ lleva mucho rato</span>
+      <div class="active-task-buttons">
+        {% if t.estado == 'pausada' %}
+        <form action="{{ url_for('reanudar_tarea', tarea_id=t.id) }}" method="post">
+          <button type="submit" class="btn btn-primary">▶ Reanudar</button>
+        </form>
+        {% else %}
+        <form action="{{ url_for('pausar_tarea', tarea_id=t.id) }}" method="post">
+          <button type="submit" class="btn">⏸ Pausar</button>
+        </form>
+        {% endif %}
+        <form action="{{ url_for('finalizar_tarea', tarea_id=t.id) }}" method="post">
+          <button type="submit" class="btn btn-stop">⏹ Finalizar</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="log-section">
+  <div class="log-section-head">
+    <h3>Registro de {{ menu.nombre }}</h3>
+    <form class="search-form" method="get" action="{{ url_for('ver_menu', menu_id=menu.id) }}">
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar en este menú...">
+      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}">✕</a>{% endif %}
+    </form>
+  </div>
+  {% if not log %}
+  <p class="empty-lane">
+    {% if q %}No hay resultados para «{{ q }}».{% else %}Todavía no hay nada registrado en este menú.{% endif %}
+  </p>
+  {% else %}
+  <ul class="log-list">
+    {% for f in log %}
+    <li class="log-item">
+      <span class="log-time">{{ f.timestamp[11:16] if f.timestamp else '' }}</span>
+      <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">
+        {% if f.origen == 'nota' %}Nota
+        {% elif f.tipo == 'instantanea' %}Evento
+        {% elif f.estado == 'en_curso' %}En curso
+        {% elif f.estado == 'pausada' %}En pausa
+        {% else %}Tarea{% endif %}
+      </span>
+      <span class="log-text">{{ f.texto }}</span>
+      {% if f.duracion_segundos is not none %}
+      <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
+      {% endif %}
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar">✏</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<script src="{{ url_for('static', filename='timer.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Bandeja de entrada — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Correo</h1>
+    <p class="subtitle">Bandeja de entrada (solo lectura por ahora — la caché se actualiza al sincronizar).</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a class="active" href="{{ url_for('correo.bandeja') }}">Bandeja de entrada</a>
+  <a href="{{ url_for('correo.cuentas') }}">Cuentas</a>
+  <a href="{{ url_for('correo.redactar') }}">Redactar</a>
+</nav>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+{% if not cuentas %}
+<p class="empty-lane">Aún no has añadido ninguna cuenta de correo. <a href="{{ url_for('correo.cuentas') }}">Añade una</a> para empezar.</p>
+{% else %}
+<form class="filters" method="get">
+  <label>Cuenta
+    <select name="cuenta_id" onchange="this.form.submit()">
+      {% for c in cuentas %}
+      <option value="{{ c.id }}" {% if c.id == cuenta_id %}selected{% endif %}>{{ c.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Buscar <input type="search" name="q" value="{{ q }}" placeholder="Asunto o remitente..."></label>
+  <label style="display:flex; align-items:center; gap:6px;">
+    <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} style="width:auto;"> Solo no leídos
+  </label>
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+<form action="{{ url_for('correo.sincronizar') }}" method="post" style="margin-bottom: 16px;">
+  <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
+  <button type="submit" class="btn btn-primary">⟳ Sincronizar ahora</button>
+</form>
+
+{% if not mensajes %}
+<p class="empty-lane">No hay mensajes descargados. Pulsa "Sincronizar ahora" para ir a buscar los nuevos.</p>
+{% else %}
+<ul class="log-list">
+  {% for m in mensajes %}
+  <li class="log-item {{ '' if m.leido else 'is-no-leido' }}">
+    <span class="log-badge log-badge-{{ 'nota' if not m.leido else 'instantanea' }}">{{ 'Nuevo' if not m.leido else 'Leído' }}</span>
+    <span class="log-text">
+      <a href="{{ url_for('correo.ver_mensaje', mensaje_id=m.id) }}"><strong>{{ m.asunto or '(sin asunto)' }}</strong></a>
+      <span class="muted"> — {{ m.remitente or '(desconocido)' }}</span>
+    </span>
+    {% if m.fecha %}<span class="log-duration">{{ m.fecha[:16].replace('T', ' ') }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+{% endblock %}

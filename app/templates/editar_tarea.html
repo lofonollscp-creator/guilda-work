@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Editar {{ 'evento' if tarea.tipo == 'instantanea' else 'tarea' }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Editar {{ 'evento' if tarea.tipo == 'instantanea' else 'tarea' }}</h1>
+    <p class="subtitle">{{ tarea.categoria_nombre }}</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+<form class="edit-form" method="post" action="{{ url_for('editar_tarea', tarea_id=tarea.id) }}">
+  <input type="hidden" name="volver_a" value="{{ volver_a }}">
+  <label>Nombre
+    <input type="text" name="nombre" value="{{ tarea.nombre }}" required autofocus>
+  </label>
+
+  <label>Inicio
+    <input type="datetime-local" name="inicio" value="{{ tarea.inicio_en[:19] }}" step="1" required>
+  </label>
+
+  {% if tarea.tipo == 'duracion' and tarea.estado == 'finalizada' %}
+  <label>Fin
+    <input type="datetime-local" name="fin" value="{{ tarea.fin_en[:19] }}" step="1" required>
+  </label>
+  <p class="muted">Duración actual: {{ (tarea.duracion_segundos // 3600) }}h {{ (tarea.duracion_segundos % 3600) // 60 }}m — se recalculará al guardar.</p>
+  {% elif tarea.tipo == 'duracion' %}
+  <p class="muted">Esta tarea sigue {{ 'en pausa' if tarea.estado == 'pausada' else 'en curso' }}; el fin se registrará al finalizarla.</p>
+  {% endif %}
+
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a class="btn btn-ghost" href="{{ volver_a }}">Cancelar</a>
+  </div>
+</form>
+
+<form class="edit-form-delete" method="post" action="{{ url_for('eliminar_tarea', tarea_id=tarea.id) }}"
+      onsubmit="return confirm('¿Eliminar esta {{ 'evento' if tarea.tipo == 'instantanea' else 'tarea' }}? Se moverá a la papelera — podrás recuperarla desde ahí.');">
+  <input type="hidden" name="volver_a" value="{{ volver_a }}">
+  <button type="submit" class="btn btn-stop">🗑 Eliminar {{ 'evento' if tarea.tipo == 'instantanea' else 'tarea' }}</button>
+</form>
+{% endblock %}
