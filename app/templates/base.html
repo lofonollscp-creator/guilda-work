@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Guilda Work{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <script>
+    // Aplica el tema guardado ANTES de que se pinte la página, para que no
+    // haya un parpadeo del tema equivocado. "system" no fija el atributo:
+    // deja que decida @media (prefers-color-scheme) en el CSS.
+    (function () {
+      var tema = localStorage.getItem("guilda-work-tema") || "system";
+      if (tema !== "system") {
+        document.documentElement.dataset.theme = tema;
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -40,25 +51,51 @@
           <span class="nav-icon">&#128204;</span> Captura rápida
         </button>
       </nav>
-      <div class="side-menu-list">
-        <span class="side-menu-list-title">Tus menús</span>
-        {% for m in menus %}
-        <a class="side-menu-item {{ 'active' if request.view_args and request.view_args.get('menu_id')|string == m.id|string else '' }}"
-           href="{{ url_for('ver_menu', menu_id=m.id) }}">
-          <span class="dot" style="background: {{ m.color or '#7c8ba1' }};"></span>{{ m.nombre }}
+
+      {% set favoritos = menus|selectattr('favorito')|list %}
+      {% set resto = menus|rejectattr('favorito')|list %}
+
+      {% macro fila_menu(m) %}
+      <div class="side-menu-item {{ 'active' if request.view_args and request.view_args.get('menu_id')|string == m.id|string else '' }}"
+           draggable="true" data-menu-id="{{ m.id }}">
+        <a class="side-menu-item-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
+          <span class="dot" style="background: {{ m.color or '#7c8ba1' }};"></span>
+          <span class="side-menu-item-nombre">{{ m.nombre }}</span>
         </a>
-        {% else %}
-        <span class="side-menu-empty">Aún no hay menús</span>
-        {% endfor %}
+        {% set n = entradas_hoy_sidebar.get(m.id, 0) %}
+        {% if n %}<span class="side-menu-badge">{{ n }}</span>{% endif %}
+        <form class="side-menu-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
+          <button type="submit" title="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}">{{ '★' if m.favorito else '☆' }}</button>
+        </form>
       </div>
-      <form class="side-shutdown" action="{{ url_for('apagar') }}" method="post"
-            onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
-        <button type="submit">&#9211; Cerrar programa</button>
-      </form>
+      {% endmacro %}
+
+      <div class="side-menu-list" id="side-menu-list">
+        {% if favoritos %}
+        <span class="side-menu-list-title">Favoritos</span>
+        {% for m in favoritos %}{{ fila_menu(m) }}{% endfor %}
+        <span class="side-menu-list-title">Tus menús</span>
+        {% else %}
+        <span class="side-menu-list-title">Tus menús</span>
+        {% endif %}
+        {% for m in resto %}{{ fila_menu(m) }}{% endfor %}
+        {% if not menus %}
+        <span class="side-menu-empty">Aún no hay menús</span>
+        {% endif %}
+      </div>
+
+      <div class="side-footer">
+        <button type="button" id="theme-toggle" class="side-theme-toggle" title="Tema: cambiar">🖥 Sistema</button>
+        <form class="side-shutdown" action="{{ url_for('apagar') }}" method="post"
+              onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
+          <button type="submit">&#9211; Cerrar programa</button>
+        </form>
+      </div>
     </aside>
     <main class="content">
       {% block content %}{% endblock %}
     </main>
   </div>
+  <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
 </body>
 </html>

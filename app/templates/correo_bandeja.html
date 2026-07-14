@@ -44,6 +44,9 @@
       <label class="correo-toolbar-check">
         <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} onchange="this.form.requestSubmit()"> No leídos
       </label>
+      <label class="correo-toolbar-check">
+        <input type="checkbox" name="pospuestos" value="1" {% if incluir_pospuestos %}checked{% endif %} onchange="this.form.requestSubmit()"> Pospuestos
+      </label>
     </form>
     <form action="{{ url_for('correo.sincronizar') }}" method="post" class="correo-sync-form">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
@@ -51,23 +54,43 @@
       <button type="submit" class="btn btn-ghost correo-sync-btn">⟳ Sincronizar</button>
     </form>
 
+    <div class="correo-lista-bulkbar" id="correo-bulkbar" hidden>
+      <span id="correo-bulkbar-cuenta">0 seleccionados</span>
+      <button type="button" data-accion="marcar-leido" data-valor="true">Leído</button>
+      <button type="button" data-accion="marcar-leido" data-valor="false">No leído</button>
+      <button type="button" data-accion="destacar" data-valor="true">⚑ Destacar</button>
+      <button type="button" data-accion="destacar" data-valor="false">Quitar destacado</button>
+      {% if carpetas|length > 1 %}
+      <select id="correo-bulkbar-carpeta">
+        <option value="">Mover a…</option>
+        {% for f in carpetas %}
+        {% if f.nombre != carpeta %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endif %}
+        {% endfor %}
+      </select>
+      <button type="button" data-accion="mover">Mover</button>
+      {% endif %}
+      <button type="button" data-accion="eliminar" class="correo-bulkbar-eliminar">🗑 Eliminar</button>
+      <button type="button" id="correo-bulkbar-cancelar">Cancelar</button>
+    </div>
+
     {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
     {% if not mensajes %}
     <p class="correo-lista-vacio">No hay mensajes. Pulsa "Sincronizar" para buscar los nuevos.</p>
     {% else %}
-    <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }}">
+    <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }}" id="correo-lista-mensajes">
       {% for m in mensajes %}
       {% set cat = categorias_por_id.get(m.categoria_id) %}
-      <li>
-        <a class="correo-fila {{ 'is-no-leido' if not m.leido }} {{ 'is-seleccionada' if mensaje_seleccionado and mensaje_seleccionado.id == m.id }}"
-           style="{{ 'border-left: 4px solid ' + cat.color + ';' if cat else '' }}"
-           href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=m.id, q=q or None, no_leidos=1 if solo_no_leidos else None) }}">
+      <li class="correo-fila-wrap {{ 'is-no-leido' if not m.leido }} {{ 'is-seleccionada' if mensaje_seleccionado and mensaje_seleccionado.id == m.id }}"
+          style="{{ 'border-left: 4px solid ' + cat.color + ';' if cat else '' }}">
+        <input type="checkbox" class="correo-fila-check" data-mensaje-id="{{ m.id }}">
+        <a class="correo-fila-contenido"
+           href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=m.id, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None) }}">
           <span class="avatar-circulo" style="--avatar-color: {{ m.remitente|avatar_color }};">{{ m.remitente|iniciales }}</span>
           <div class="correo-fila-texto">
             <div class="correo-fila-top">
               <span class="correo-fila-remitente">{{ m.remitente or '(desconocido)' }}</span>
-              <span class="correo-fila-fecha">{{ m.fecha|fecha_relativa }}</span>
+              <span class="correo-fila-fecha">{{ '⚑ ' if m.destacado }}{{ m.fecha|fecha_relativa }}</span>
             </div>
             <div class="correo-fila-asunto">{{ m.asunto or '(sin asunto)' }}</div>
             <div class="correo-fila-preview">{{ m|vista_previa }}</div>
@@ -97,7 +120,53 @@
           </div>
         </div>
       </div>
-      <div class="correo-lectura-acciones">
+    </div>
+
+    <div class="correo-ribbon">
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.eliminar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"
+              onsubmit="return confirm('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).');">
+          <button type="submit" class="correo-ribbon-btn" title="Eliminar"><span class="correo-ribbon-icono">🗑</span><span class="correo-ribbon-etiqueta">Eliminar</span></button>
+        </form>
+      </div>
+
+      <div class="correo-ribbon-grupo">
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono">↩</span><span class="correo-ribbon-etiqueta">Responder</span></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder_a_todos', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono">↩↩</span><span class="correo-ribbon-etiqueta">Resp. a todos</span></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.reenviar', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono">↪</span><span class="correo-ribbon-etiqueta">Reenviar</span></a>
+      </div>
+
+      {% if carpetas|length > 1 %}
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.mover_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <select name="carpeta_destino" class="correo-ribbon-select" onchange="this.form.requestSubmit()">
+            <option value="">Mover a…</option>
+            {% for f in carpetas %}
+            {% if f.nombre != mensaje_seleccionado.carpeta %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endif %}
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+      {% endif %}
+
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.destacar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <input type="hidden" name="destacado" value="{{ '' if mensaje_seleccionado.destacado else 'on' }}">
+          <button type="submit" class="correo-ribbon-btn" title="{{ 'Quitar destacado' if mensaje_seleccionado.destacado else 'Destacar' }}">
+            <span class="correo-ribbon-icono">{{ '🏳' if mensaje_seleccionado.destacado else '⚑' }}</span>
+            <span class="correo-ribbon-etiqueta">Destacar</span>
+          </button>
+        </form>
+        {% if mensaje_seleccionado.destacado %}
+        <form action="{{ url_for('correo.destacar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-ribbon-fecha-aviso">
+          <input type="hidden" name="destacado" value="on">
+          <input type="date" name="fecha_aviso" value="{{ mensaje_seleccionado.fecha_aviso[:10] if mensaje_seleccionado.fecha_aviso else '' }}"
+                 title="Fecha de aviso" onchange="this.form.requestSubmit()">
+        </form>
+        {% endif %}
+      </div>
+
+      <div class="correo-ribbon-grupo">
         {% if categorias %}
         <form action="{{ url_for('correo.asignar_categoria', mensaje_id=mensaje_seleccionado.id) }}" method="post">
           <select name="categoria_id" class="correo-categoria-select" style="{{ 'border-color: ' + cat_actual.color if cat_actual }}" onchange="this.form.requestSubmit()">
@@ -108,19 +177,30 @@
           </select>
         </form>
         {% endif %}
-        <a class="correo-icon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}" title="Responder">↩</a>
-        <a class="correo-icon-btn" href="{{ url_for('correo.reenviar', mensaje_id=mensaje_seleccionado.id) }}" title="Reenviar">↪</a>
         <form action="{{ url_for('correo.alternar_leido', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-          <button type="submit" class="correo-icon-btn" title="{{ 'Marcar como no leído' if mensaje_seleccionado.leido else 'Marcar como leído' }}">
-            {{ '✉' if mensaje_seleccionado.leido else '📖' }}
+          <button type="submit" class="correo-ribbon-btn" title="{{ 'Marcar como no leído' if mensaje_seleccionado.leido else 'Marcar como leído' }}">
+            <span class="correo-ribbon-icono">{{ '✉' if mensaje_seleccionado.leido else '📖' }}</span>
+            <span class="correo-ribbon-etiqueta">{{ 'No leído' if mensaje_seleccionado.leido else 'Leído' }}</span>
           </button>
         </form>
-        <form action="{{ url_for('correo.eliminar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"
-              onsubmit="return confirm('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).');">
-          <button type="submit" class="correo-icon-btn" title="Eliminar">🗑</button>
+      </div>
+
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.posponer_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-ribbon-posponer">
+          <input type="datetime-local" name="hasta" required>
+          <button type="submit" class="correo-ribbon-btn" title="Posponer hasta la fecha elegida">
+            <span class="correo-ribbon-icono">🕒</span><span class="correo-ribbon-etiqueta">Posponer</span>
+          </button>
         </form>
       </div>
+
+      <div class="correo-ribbon-grupo">
+        <button type="button" class="correo-ribbon-btn" onclick="window.print()" title="Imprimir">
+          <span class="correo-ribbon-icono">🖨</span><span class="correo-ribbon-etiqueta">Imprimir</span>
+        </button>
+      </div>
     </div>
+
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or '(sin asunto)' }}</h2>
     <div class="correo-lectura-cuerpo">
       {% if mensaje_seleccionado.cuerpo_html %}
@@ -140,4 +220,5 @@
     {% endif %}
   </section>
 </div>
+<script src="{{ url_for('static', filename='correo_seleccion.js') }}"></script>
 {% endblock %}

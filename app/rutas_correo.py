@@ -130,7 +130,7 @@ def probar_cuenta(cuenta_id: int):
     return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(), error=error)
 
 
-def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error):
+def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_pospuestos=False):
     cuentas_disponibles = db.listar_cuentas_correo()
     no_leidos_por_cuenta = {c["id"]: db.contar_no_leidos_correo(c["id"]) for c in cuentas_disponibles}
     carpetas = correo.listar_carpetas(cuenta_id) if cuenta_id is not None else []
@@ -140,7 +140,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error):
     if cuenta_id is not None:
         mensajes = correo.listar_mensajes(
             cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=q,
-            limite=preferencias["limite_mensajes"],
+            limite=preferencias["limite_mensajes"], incluir_pospuestos=incluir_pospuestos,
         )
 
     categorias = db.listar_categorias_correo()
@@ -156,6 +156,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error):
         "densidad": preferencias["densidad"],
         "q": q or "",
         "solo_no_leidos": solo_no_leidos,
+        "incluir_pospuestos": incluir_pospuestos,
         "error": error,
     }
 
@@ -169,11 +170,12 @@ def bandeja():
     carpeta = request.args.get("carpeta") or "INBOX"
     q = request.args.get("q") or None
     solo_no_leidos = request.args.get("no_leidos") == "1"
+    incluir_pospuestos = request.args.get("pospuestos") == "1"
 
     if cuenta_id is not None and db.obtener_cuenta_correo(cuenta_id) is None:
         abort(404)
 
-    contexto = _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, None)
+    contexto = _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, None, incluir_pospuestos)
 
     mensaje_seleccionado = None
     mensaje_id = request.args.get("mensaje_id", type=int)
@@ -249,6 +251,51 @@ def asignar_categoria(mensaje_id: int):
     ))
 
 
+@correo_bp.route("/<int:mensaje_id>/mover", methods=["POST"])
+def mover_mensaje(mensaje_id: int):
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    if mensaje is None:
+        abort(404)
+    cuenta_id = mensaje["cuenta_id"]
+    carpeta_origen = mensaje["carpeta"]
+    carpeta_destino = request.form.get("carpeta_destino", "")
+    error = None
+    try:
+        correo.mover_mensaje(mensaje_id, carpeta_destino)
+    except correo.ErrorCorreo as e:
+        error = str(e)
+    if error:
+        contexto = _contexto_bandeja(cuenta_id, carpeta_origen, None, False, error)
+        contexto["mensaje_seleccionado"] = correo.obtener_mensaje(mensaje_id)
+        return render_template("correo_bandeja.html", **contexto)
+    return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta_origen))
+
+
+@correo_bp.route("/<int:mensaje_id>/destacar", methods=["POST"])
+def destacar_mensaje(mensaje_id: int):
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    if mensaje is None:
+        abort(404)
+    destacado = request.form.get("destacado") == "on"
+    fecha_aviso = request.form.get("fecha_aviso") or None
+    correo.destacar_mensaje(mensaje_id, destacado, fecha_aviso)
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
+    ))
+
+
+@correo_bp.route("/<int:mensaje_id>/posponer", methods=["POST"])
+def posponer_mensaje(mensaje_id: int):
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    if mensaje is None:
+        abort(404)
+    hasta = request.form.get("hasta") or None
+    correo.posponer_mensaje(mensaje_id, hasta)
+    # Al posponer, el mensaje se oculta de la lista por defecto — no tiene
+    # sentido dejarlo seleccionado en el panel de lectura.
+    return redirect(url_for("correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"]))
+
+
 @correo_bp.route("/redactar")
 def redactar():
     cuenta_id = request.args.get("cuenta_id", type=int)
@@ -276,6 +323,28 @@ def responder(mensaje_id: int):
     return _render_redactar(
         cuenta_id=mensaje["cuenta_id"], destinatarios=mensaje["remitente"] or "",
         asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo="Responder",
+    )
+
+
+@correo_bp.route("/<int:mensaje_id>/responder-a-todos")
+def responder_a_todos(mensaje_id: int):
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    if mensaje is None:
+        abort(404)
+    cuenta = db.obtener_cuenta_correo(mensaje["cuenta_id"])
+    asunto = mensaje["asunto"] or ""
+    if not asunto.lower().startswith("re:"):
+        asunto = f"Re: {asunto}"
+    original_html = mensaje["cuerpo_html"] or correo.texto_a_html(mensaje["cuerpo_texto"] or "")
+    cita = (
+        f"<p>{correo.texto_a_html(mensaje['remitente'] or '')} escribió:</p>"
+        f'<blockquote style="border-left:2px solid #ccc;margin:0 0 0 8px;padding-left:12px;color:#555;">{original_html}</blockquote>'
+    )
+    cuerpo_html = correo.preparar_cuerpo_inicial(mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=cita)
+    destinatarios = correo.destinatarios_responder_a_todos(mensaje, cuenta["usuario"] if cuenta else None)
+    return _render_redactar(
+        cuenta_id=mensaje["cuenta_id"], destinatarios=destinatarios,
+        asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo="Responder a todos",
     )
 
 
@@ -380,3 +449,55 @@ def guardar_firma():
         en_respuestas=request.form.get("firma_en_respuestas") == "on",
     )
     return redirect(url_for("correo.ajustes", cuenta_firma_id=cuenta_id))
+
+
+# --- Acciones en lote (selección múltiple, llamadas por fetch desde
+# app/static/correo_seleccion.js — no son formularios, así que no
+# redirigen: solo recorren los ids llamando a la función individual ya
+# existente en app/correo.py, sin lógica de negocio nueva) --------------------
+
+def _ids_del_body() -> list[int]:
+    datos = request.get_json(silent=True) or {}
+    return [int(i) for i in datos.get("ids", []) if str(i).isdigit()]
+
+
+@correo_bp.route("/mensajes/eliminar", methods=["POST"])
+def eliminar_mensajes_lote():
+    ids = _ids_del_body()
+    for mensaje_id in ids:
+        correo.eliminar_mensaje(mensaje_id)
+    return {"procesados": len(ids)}
+
+
+@correo_bp.route("/mensajes/marcar-leido", methods=["POST"])
+def marcar_leido_mensajes_lote():
+    datos = request.get_json(silent=True) or {}
+    leido = bool(datos.get("leido", True))
+    ids = _ids_del_body()
+    for mensaje_id in ids:
+        correo.marcar_leido(mensaje_id, leido)
+    return {"procesados": len(ids)}
+
+
+@correo_bp.route("/mensajes/destacar", methods=["POST"])
+def destacar_mensajes_lote():
+    datos = request.get_json(silent=True) or {}
+    destacado = bool(datos.get("destacado", True))
+    ids = _ids_del_body()
+    for mensaje_id in ids:
+        correo.destacar_mensaje(mensaje_id, destacado)
+    return {"procesados": len(ids)}
+
+
+@correo_bp.route("/mensajes/mover", methods=["POST"])
+def mover_mensajes_lote():
+    datos = request.get_json(silent=True) or {}
+    carpeta_destino = datos.get("carpeta", "")
+    ids = _ids_del_body()
+    errores = []
+    for mensaje_id in ids:
+        try:
+            correo.mover_mensaje(mensaje_id, carpeta_destino)
+        except correo.ErrorCorreo as e:
+            errores.append(str(e))
+    return {"procesados": len(ids) - len(errores), "errores": errores}

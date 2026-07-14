@@ -57,7 +57,9 @@ app.register_blueprint(correo_bp)
 
 @app.context_processor
 def inyectar_menus():
-    return {"menus": db.listar_categorias()}
+    menus = db.listar_categorias()
+    entradas_hoy_sidebar = {m["id"]: db.contar_entradas_hoy(m["id"]) for m in menus}
+    return {"menus": menus, "entradas_hoy_sidebar": entradas_hoy_sidebar}
 
 
 @app.route("/")
@@ -133,6 +135,24 @@ def mover_menu(menu_id: int):
     if direccion in ("arriba", "abajo"):
         db.mover_categoria(menu_id, direccion)
     return redirect(request.referrer or url_for("inicio"))
+
+
+@app.route("/menu/<int:menu_id>/favorito", methods=["POST"])
+def alternar_favorito_menu(menu_id: int):
+    if db.obtener_categoria(menu_id) is None:
+        abort(404)
+    db.alternar_favorito_categoria(menu_id)
+    return redirect(request.referrer or url_for("inicio"))
+
+
+@app.route("/menus/reordenar", methods=["POST"])
+def reordenar_menus():
+    """Recibe el orden final tras arrastrar en la barra lateral (fetch en
+    segundo plano, sin recarga de página — ver app/static/sidebar.js)."""
+    datos = request.get_json(silent=True) or {}
+    orden_ids = [int(i) for i in datos.get("orden", []) if str(i).isdigit()]
+    db.reordenar_categorias(orden_ids)
+    return "", 204
 
 
 @app.route("/menu/<int:menu_id>/eliminar", methods=["POST"])

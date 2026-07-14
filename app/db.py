@@ -169,6 +169,9 @@ CREATE TABLE IF NOT EXISTS correo_mensajes (
     message_id TEXT,       -- cabecera Message-ID, para poder responder con hilo (In-Reply-To/References)
     leido INTEGER NOT NULL DEFAULT 0,
     categoria_id INTEGER,
+    destacado INTEGER NOT NULL DEFAULT 0,
+    fecha_aviso TEXT,      -- recordatorio opcional del destacado
+    pospuesto_hasta TEXT,  -- mientras sea futuro, se oculta de la lista por defecto
     descargado_en TEXT NOT NULL,
     FOREIGN KEY (cuenta_id) REFERENCES correo_cuentas(id),
     FOREIGN KEY (categoria_id) REFERENCES correo_categorias(id) ON DELETE SET NULL,
@@ -228,12 +231,16 @@ def init_db() -> None:
         _asegurar_columna(conn, "tareas", "papelera_en", "TEXT")
         _asegurar_columna(conn, "notas", "papelera_en", "TEXT")
         _asegurar_columna(conn, "categorias", "orden", "INTEGER")
+        _asegurar_columna(conn, "categorias", "favorito", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "categoria_id", "INTEGER")
         _asegurar_columna(conn, "correo_cuentas", "firma_html", "TEXT")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_nuevos", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_respuestas", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
         conn.execute("INSERT OR IGNORE INTO correo_preferencias (id) VALUES (1)")
         _asegurar_orden_categorias(conn)
         conn.commit()
@@ -339,6 +346,37 @@ def mover_categoria(categoria_id: int, direccion: str) -> None:
         )
         conn.execute(
             "UPDATE categorias SET orden = ? WHERE id = ?", (activas[idx]["orden"], ids[vecino_idx])
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def reordenar_categorias(orden_ids: list[int]) -> None:
+    """Reescribe `orden` según la lista completa recibida (0, 1, 2...), para
+    el arrastrar-y-soltar de la barra lateral — a diferencia de
+    `mover_categoria`, que mueve un solo puesto. Los ids que no existan (o no
+    estén activos) se ignoran sin fallar; los menús activos que falten en la
+    lista conservan su `orden` actual, detrás de los que sí se han movido."""
+    conn = get_connection()
+    try:
+        activos = {f["id"] for f in conn.execute("SELECT id FROM categorias WHERE papelera_en IS NULL")}
+        siguiente = 0
+        for categoria_id in orden_ids:
+            if categoria_id in activos:
+                conn.execute("UPDATE categorias SET orden = ? WHERE id = ?", (siguiente, categoria_id))
+                siguiente += 1
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def alternar_favorito_categoria(categoria_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE categorias SET favorito = 1 - favorito WHERE id = ? AND papelera_en IS NULL",
+            (categoria_id,),
         )
         conn.commit()
     finally:
@@ -1384,7 +1422,7 @@ def guardar_mensaje_correo(
 
 def listar_mensajes_correo(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
-    texto: str | None = None, limite: int = 50,
+    texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
 ) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
@@ -1395,6 +1433,9 @@ def listar_mensajes_correo(
         if texto:
             cond.append("(asunto LIKE ? OR remitente LIKE ?)")
             params.extend([f"%{texto}%", f"%{texto}%"])
+        if not incluir_pospuestos:
+            cond.append("(pospuesto_hasta IS NULL OR pospuesto_hasta <= ?)")
+            params.append(now_iso())
         where = " AND ".join(cond)
         params.append(limite)
         return conn.execute(
@@ -1418,6 +1459,28 @@ def marcar_leido_mensaje_correo(mensaje_id: int, leido: bool = True) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE correo_mensajes SET leido = ? WHERE id = ?", (int(leido), mensaje_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def destacar_mensaje_correo(mensaje_id: int, destacado: bool, fecha_aviso: str | None = None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_mensajes SET destacado = ?, fecha_aviso = ? WHERE id = ?",
+            (int(destacado), fecha_aviso if destacado else None, mensaje_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def posponer_mensaje_correo(mensaje_id: int, hasta: str | None) -> None:
+    """`hasta=None` quita el pospuesto (el mensaje vuelve a verse ya)."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE correo_mensajes SET pospuesto_hasta = ? WHERE id = ?", (hasta, mensaje_id))
         conn.commit()
     finally:
         conn.close()

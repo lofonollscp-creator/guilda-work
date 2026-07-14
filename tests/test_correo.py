@@ -50,7 +50,19 @@ class FakeIMAP:
             if uid not in self._mensajes:
                 return "OK", [None]
             return "OK", [(b"1 (RFC822 {n})", self._mensajes[uid])]
+        if comando == "copy":
+            self.copiados = getattr(self, "copiados", [])
+            self.copiados.append(args)
+            return "OK", [b"COPY completed"]
+        if comando == "store":
+            self.marcados = getattr(self, "marcados", [])
+            self.marcados.append(args)
+            return "OK", [b"STORE completed"]
         raise AssertionError(f"comando IMAP inesperado: {comando}")
+
+    def expunge(self):
+        self.expurgado = True
+        return "OK", [b"EXPUNGE completed"]
 
     def logout(self):
         return "BYE", [b"Logout"]
@@ -86,6 +98,15 @@ def _cuenta_imap(monkeypatch, mensajes: dict[str, bytes], contrasena_valida: str
         imaplib, "IMAP4_SSL",
         lambda host, port, timeout=None: FakeIMAP(mensajes, contrasena_valida, carpetas),
     )
+
+
+def _cuenta_imap_instancia_compartida(monkeypatch, mensajes: dict[str, bytes], carpetas=("INBOX",)) -> "FakeIMAP":
+    """Como _cuenta_imap, pero siempre devuelve la MISMA instancia de FakeIMAP
+    en cada conexión — para poder inspeccionar su estado (copiados/marcados)
+    después de una operación que abre más de una conexión IMAP en el test."""
+    instancia = FakeIMAP(mensajes, "correcta", carpetas)
+    monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda host, port, timeout=None: instancia)
+    return instancia
 
 
 def _cuenta_pop3(monkeypatch, mensajes: list[bytes], contrasena_valida: str = "correcta") -> None:
@@ -600,3 +621,122 @@ def test_preparar_cuerpo_inicial_ninguno_de_los_dos(monkeypatch):
 
     assert "Mi firma" not in correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=False)
     assert "Mi firma" not in correo.preparar_cuerpo_inicial(cuenta_id, es_respuesta=True)
+
+
+# --- Destacar (con fecha de aviso opcional) --------------------------------------
+
+def test_destacar_mensaje_y_quitar_destacado(monkeypatch):
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+
+    correo.destacar_mensaje(mensaje_id, True, fecha_aviso="2026-08-01")
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    assert mensaje["destacado"] == 1
+    assert mensaje["fecha_aviso"] == "2026-08-01"
+
+    correo.destacar_mensaje(mensaje_id, False)
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    assert mensaje["destacado"] == 0
+    assert mensaje["fecha_aviso"] is None  # se limpia al quitar el destacado
+
+
+# --- Posponer (Snooze) ------------------------------------------------------------
+
+def test_mensaje_pospuesto_en_el_futuro_se_oculta_de_la_lista(monkeypatch):
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+
+    correo.posponer_mensaje(mensaje_id, "2099-01-01T00:00:00")
+    assert correo.listar_mensajes(cuenta_id) == []
+    assert len(correo.listar_mensajes(cuenta_id, incluir_pospuestos=True)) == 1
+
+
+def test_mensaje_pospuesto_en_el_pasado_vuelve_a_verse(monkeypatch):
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+
+    correo.posponer_mensaje(mensaje_id, "2020-01-01T00:00:00")
+    assert len(correo.listar_mensajes(cuenta_id)) == 1
+
+
+def test_quitar_pospuesto():
+    tid = db.crear_cuenta_correo("Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    db.guardar_mensaje_correo(
+        cuenta_id=tid, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com",
+        fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    mensaje_id = db.listar_mensajes_correo(tid)[0]["id"]
+    db.posponer_mensaje_correo(mensaje_id, "2099-01-01T00:00:00")
+    assert db.listar_mensajes_correo(tid) == []
+
+    db.posponer_mensaje_correo(mensaje_id, None)
+    assert len(db.listar_mensajes_correo(tid)) == 1
+
+
+# --- Responder a todos -------------------------------------------------------------
+
+def test_destinatarios_responder_a_todos_dedupe_y_excluye_la_propia_cuenta():
+    mensaje = {
+        "remitente": "Ana <ana@empresa.com>",
+        "destinatarios": "yo@trabajo.com, Luis <luis@empresa.com>",
+        "cc": "ana@empresa.com, Marta <marta@empresa.com>",
+    }
+    resultado = correo.destinatarios_responder_a_todos(mensaje, "yo@trabajo.com")
+    assert resultado == "Ana <ana@empresa.com>, Luis <luis@empresa.com>, Marta <marta@empresa.com>"
+
+
+def test_destinatarios_responder_a_todos_sin_cc():
+    mensaje = {"remitente": "ana@empresa.com", "destinatarios": "yo@trabajo.com", "cc": None}
+    assert correo.destinatarios_responder_a_todos(mensaje, "yo@trabajo.com") == "ana@empresa.com"
+
+
+# --- Mover a otra carpeta (solo IMAP) ----------------------------------------------
+
+def test_mover_mensaje_copia_marca_borrado_expurga_y_borra_la_fila_local(monkeypatch):
+    instancia = _cuenta_imap_instancia_compartida(monkeypatch, {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+
+    correo.mover_mensaje(mensaje_id, "Archivo")
+
+    assert instancia.copiados == [("1", '"Archivo"')]
+    assert instancia.marcados == [("1", "+FLAGS", "(\\Deleted)")]
+    assert instancia.expurgado is True
+    assert correo.obtener_mensaje(mensaje_id) is None  # se borra de la caché local
+
+
+def test_mover_mensaje_en_cuenta_pop3_lanza_error(monkeypatch):
+    _cuenta_pop3(monkeypatch, [_mensaje_bytes("Hola", "a@b.com", "cuerpo")])
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Personal", protocolo="pop3", host="pop.ejemplo.com", puerto=995,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
+
+    with pytest.raises(correo.ErrorCorreo):
+        correo.mover_mensaje(mensaje_id, "Archivo")
+
+
+def test_mover_mensaje_inexistente_lanza_error():
+    with pytest.raises(correo.ErrorCorreo):
+        correo.mover_mensaje(999, "Archivo")

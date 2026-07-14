@@ -411,6 +411,36 @@ def test_mover_categoria_arriba_y_abajo():
     assert [m["id"] for m in db.listar_categorias()] == [a, c, b]
 
 
+def test_reordenar_categorias_aplica_el_orden_completo_recibido():
+    a = db.crear_categoria("Lueira")
+    b = db.crear_categoria("Guilda")
+    c = db.crear_categoria("Formación")
+    assert [m["id"] for m in db.listar_categorias()] == [a, b, c]
+
+    db.reordenar_categorias([c, a, b])
+    assert [m["id"] for m in db.listar_categorias()] == [c, a, b]
+
+
+def test_reordenar_categorias_ignora_ids_inexistentes():
+    a = db.crear_categoria("Lueira")
+    b = db.crear_categoria("Guilda")
+
+    db.reordenar_categorias([b, 9999, a])  # el id 9999 no existe
+
+    assert [m["id"] for m in db.listar_categorias()] == [b, a]
+
+
+def test_alternar_favorito_categoria():
+    cid = db.crear_categoria("Lueira")
+    assert db.obtener_categoria(cid)["favorito"] == 0
+
+    db.alternar_favorito_categoria(cid)
+    assert db.obtener_categoria(cid)["favorito"] == 1
+
+    db.alternar_favorito_categoria(cid)
+    assert db.obtener_categoria(cid)["favorito"] == 0
+
+
 # --- Actividad reciente (para el recordatorio periódico) -------------------
 
 def test_hubo_actividad_reciente():

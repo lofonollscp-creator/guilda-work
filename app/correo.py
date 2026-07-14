@@ -407,9 +407,12 @@ def listar_carpetas(cuenta_id: int) -> list[dict]:
 
 def listar_mensajes(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
-    texto: str | None = None, limite: int = 50,
+    texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
 ):
-    return db.listar_mensajes_correo(cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite)
+    return db.listar_mensajes_correo(
+        cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto,
+        limite=limite, incluir_pospuestos=incluir_pospuestos,
+    )
 
 
 def obtener_mensaje(mensaje_id: int):
@@ -421,6 +424,84 @@ def marcar_leido(mensaje_id: int, leido: bool = True) -> None:
 
 
 def eliminar_mensaje(mensaje_id: int) -> None:
+    db.eliminar_mensaje_correo(mensaje_id)
+
+
+def destacar_mensaje(mensaje_id: int, destacado: bool, fecha_aviso: str | None = None) -> None:
+    db.destacar_mensaje_correo(mensaje_id, destacado, fecha_aviso)
+
+
+def posponer_mensaje(mensaje_id: int, hasta: str | None) -> None:
+    db.posponer_mensaje_correo(mensaje_id, hasta)
+
+
+def _direccion_email(texto: str | None) -> str | None:
+    """Extrae solo la dirección de "Nombre <correo@x.com>" (o la devuelve
+    tal cual si ya es una dirección pelada), en minúsculas para comparar."""
+    if not texto:
+        return None
+    texto = texto.strip()
+    if "<" in texto and ">" in texto:
+        texto = texto.split("<", 1)[1].split(">", 1)[0]
+    return texto.strip().lower() or None
+
+
+def destinatarios_responder_a_todos(mensaje, direccion_propia: str | None) -> str:
+    """Une remitente + "Para" + "Cc" del mensaje original en una sola lista
+    para "Responder a todos", sin duplicados y sin incluir la propia cuenta."""
+    propia = _direccion_email(direccion_propia)
+    vistas: set[str] = set()
+    resultado: list[str] = []
+    for campo in (mensaje["remitente"], mensaje["destinatarios"], mensaje["cc"]):
+        if not campo:
+            continue
+        for destinatario in campo.split(","):
+            destinatario = destinatario.strip()
+            if not destinatario:
+                continue
+            clave = _direccion_email(destinatario)
+            if not clave or clave == propia or clave in vistas:
+                continue
+            vistas.add(clave)
+            resultado.append(destinatario)
+    return ", ".join(resultado)
+
+
+def mover_mensaje(mensaje_id: int, carpeta_destino: str) -> None:
+    """Mueve un mensaje a otra carpeta — solo IMAP (POP3 no tiene carpetas).
+
+    A diferencia de eliminar_mensaje (que es solo caché local), esto actúa
+    de verdad en el servidor: copia el mensaje a la carpeta destino, marca
+    el original como \\Deleted y expurga (compatible con cualquier servidor
+    IMAP, sin depender de la extensión MOVE). Si solo cambiáramos la
+    carpeta en nuestra caché, la próxima sincronización volvería a
+    descargar el mensaje "perdido" en su carpeta original, duplicándolo —
+    por eso se borra la fila local y se deja que la próxima sincronización
+    la traiga de vuelta, ya con su nuevo UID, en la carpeta destino."""
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
+    if mensaje is None:
+        raise ErrorCorreo("Ese mensaje no existe.")
+    cuenta = db.obtener_cuenta_correo(mensaje["cuenta_id"])
+    if cuenta is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+    if cuenta["protocolo"] == "pop3":
+        raise ErrorCorreo("Las cuentas POP3 no tienen carpetas: no se puede mover el mensaje.")
+
+    conn = _conectar_imap_cuenta(cuenta)
+    try:
+        estado, _ = conn.select(f'"{mensaje["carpeta"]}"')
+        if estado != "OK":
+            raise ErrorCorreo(f"No se ha podido abrir la carpeta «{mensaje['carpeta']}».")
+        estado, _ = conn.uid("copy", mensaje["uid"], f'"{carpeta_destino}"')
+        if estado != "OK":
+            raise ErrorCorreo(f"No se ha podido copiar el mensaje a «{carpeta_destino}».")
+        conn.uid("store", mensaje["uid"], "+FLAGS", "(\\Deleted)")
+        conn.expunge()
+    finally:
+        try:
+            conn.logout()
+        except Exception:
+            pass
     db.eliminar_mensaje_correo(mensaje_id)
 
 
