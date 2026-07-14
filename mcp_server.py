@@ -1,6 +1,7 @@
 """Servidor MCP de Guilda Work — expone notas, tareas (con duración y estilo
-Outlook), calendario, correo y export/import a cualquier cliente MCP (Claude
-Code, Claude Desktop, Codex CLI...).
+Outlook), calendario, correo (carpetas IMAP, categorías, Cc/Cco, firma) y
+export/import a cualquier cliente MCP (Claude Code, Claude Desktop, Codex
+CLI...).
 
 Sigue el mismo patrón que cli.py: importa app.db/app.export/etc. directamente
 y llama a db.init_db() al arrancar, sin tocar Flask ni pywebview para nada.
@@ -10,14 +11,16 @@ No se empaqueta en el .exe — se ejecuta con:
 
 y se registra en el cliente MCP que corresponda (ver README.md).
 
-Permisos: todas las tools de notas/tareas/calendario/correo son de lectura o
-escritura directa. La única excepción es el envío de correo, que es un
-proceso de DOS pasos deliberado: preparar_borrador_correo() no envía nada,
-solo devuelve una vista previa y un borrador_id; enviar_borrador_correo(id)
-es la que de verdad envía, y por eso conviene pedir confirmación explícita
-al usuario antes de llamarla (el propio cliente MCP normalmente ya lo pide
-para acciones "de envío", pero este diseño de dos pasos da un punto de
-control adicional pase lo que pase).
+Permisos: todas las tools de notas/tareas/calendario/correo (incluidas
+carpetas y categorías) son de lectura o escritura directa. La única
+excepción es el envío de correo, que es un proceso de DOS pasos deliberado:
+preparar_borrador_correo() no envía nada, solo devuelve una vista previa y
+un borrador_id; enviar_borrador_correo(id) es la que de verdad envía, y por
+eso conviene pedir confirmación explícita al usuario antes de llamarla (el
+propio cliente MCP normalmente ya lo pide para acciones "de envío", pero
+este diseño de dos pasos da un punto de control adicional pase lo que pase).
+Cco (bcc) en preparar_borrador_correo nunca viaja como cabecera visible del
+mensaje enviado, solo como destinatario oculto real.
 """
 from __future__ import annotations
 
@@ -156,19 +159,36 @@ def listar_cuentas_correo() -> list[dict]:
 
 @mcp.tool()
 def sincronizar_correo(cuenta_id: int) -> dict:
-    """Descarga los mensajes nuevos de la bandeja de entrada de esa cuenta."""
+    """Descarga los mensajes nuevos. En IMAP, de TODAS las carpetas de la
+    cuenta (se descubren solas); en POP3, de la única bandeja posible."""
     return correo.sincronizar_bandeja(cuenta_id)
 
 
 @mcp.tool()
-def listar_bandeja_entrada(cuenta_id: int, solo_no_leidos: bool = False, texto: str | None = None, limite: int = 20) -> list[dict]:
-    """Lista mensajes ya descargados de una cuenta (usa sincronizar_correo antes si quieres los más recientes)."""
-    return _filas(correo.listar_mensajes(cuenta_id, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite))
+def listar_carpetas_correo(cuenta_id: int) -> list[dict]:
+    """Carpetas de una cuenta (ej. "INBOX", "[Gmail]/Sent Mail"...). Las
+    cuentas POP3 siempre devuelven una única "INBOX" sintética — POP3 no
+    tiene carpetas a nivel de protocolo."""
+    return correo.listar_carpetas(cuenta_id)
+
+
+@mcp.tool()
+def listar_bandeja_entrada(
+    cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
+    texto: str | None = None, limite: int = 20,
+) -> list[dict]:
+    """Lista mensajes ya descargados de una carpeta de una cuenta (usa
+    sincronizar_correo antes si quieres los más recientes; listar_carpetas_correo
+    para ver qué carpetas existen)."""
+    return _filas(correo.listar_mensajes(cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite))
 
 
 @mcp.tool()
 def leer_correo(mensaje_id: int) -> dict:
-    """Devuelve un mensaje completo (asunto, remitente, cuerpo en texto y HTML)."""
+    """Devuelve un mensaje completo (asunto, remitente, destinatarios, Cc,
+    cuerpo en texto y HTML, categoría). Cco nunca aparece aquí ni en ningún
+    mensaje recibido — por diseño del correo electrónico, nadie salvo el
+    remitente original sabe quién iba en copia oculta."""
     mensaje = correo.obtener_mensaje(mensaje_id)
     if mensaje is None:
         raise ValueError(f"No existe el mensaje {mensaje_id}.")
@@ -176,23 +196,105 @@ def leer_correo(mensaje_id: int) -> dict:
 
 
 @mcp.tool()
+def marcar_leido_correo(mensaje_id: int, leido: bool = True) -> dict:
+    """Marca un mensaje como leído (o no leído, con leido=False)."""
+    if correo.obtener_mensaje(mensaje_id) is None:
+        raise ValueError(f"No existe el mensaje {mensaje_id}.")
+    correo.marcar_leido(mensaje_id, leido)
+    return _fila(correo.obtener_mensaje(mensaje_id))
+
+
+@mcp.tool()
+def eliminar_correo(mensaje_id: int) -> dict:
+    """Borra un mensaje de la caché local (no del servidor). Si sigue en el
+    buzón real, una futura sincronización volverá a descargarlo."""
+    if correo.obtener_mensaje(mensaje_id) is None:
+        raise ValueError(f"No existe el mensaje {mensaje_id}.")
+    correo.eliminar_mensaje(mensaje_id)
+    return {"eliminado": True}
+
+
+# --- Categorías de correo (propias de Guilda Work, no se sincronizan) --------
+
+@mcp.tool()
+def listar_categorias_correo() -> list[dict]:
+    """Categorías de color propias de Guilda Work para clasificar correos
+    (no existen en el servidor: IMAP/POP3 genérico no tiene un estándar real
+    de categorías con color, eso es propietario de Exchange/Outlook)."""
+    return _filas(correo.listar_categorias())
+
+
+@mcp.tool()
+def crear_categoria_correo(nombre: str, color: str) -> dict:
+    """Crea una categoría de correo. `color` en formato hexadecimal, ej. "#e0555a"."""
+    categoria_id = correo.crear_categoria(nombre, color)
+    return {"id": categoria_id, "nombre": nombre, "color": color}
+
+
+@mcp.tool()
+def eliminar_categoria_correo(categoria_id: int) -> dict:
+    """Elimina una categoría. Los mensajes que la tuvieran asignada quedan sin categoría."""
+    correo.eliminar_categoria(categoria_id)
+    return {"eliminada": True}
+
+
+@mcp.tool()
+def asignar_categoria_correo(mensaje_id: int, categoria_id: int | None = None) -> dict:
+    """Asigna una categoría a un mensaje, o la quita si `categoria_id` es None."""
+    if correo.obtener_mensaje(mensaje_id) is None:
+        raise ValueError(f"No existe el mensaje {mensaje_id}.")
+    correo.asignar_categoria(mensaje_id, categoria_id)
+    return _fila(correo.obtener_mensaje(mensaje_id))
+
+
+# --- Firma de correo -----------------------------------------------------------
+
+@mcp.tool()
+def obtener_firma_correo(cuenta_id: int) -> dict:
+    """Firma HTML configurada para una cuenta y cuándo se aplica (en nuevos
+    y/o en respuestas/reenvíos). Útil para incluirla al preparar un borrador
+    si quieres que el correo salga firmado."""
+    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    if cuenta is None:
+        raise ValueError(f"No existe la cuenta {cuenta_id}.")
+    return {
+        "firma_html": cuenta["firma_html"],
+        "firma_en_nuevos": bool(cuenta["firma_en_nuevos"]),
+        "firma_en_respuestas": bool(cuenta["firma_en_respuestas"]),
+    }
+
+
+@mcp.tool()
+def configurar_firma_correo(cuenta_id: int, firma_html: str, en_nuevos: bool = True, en_respuestas: bool = True) -> dict:
+    """Guarda la firma HTML de una cuenta y cuándo debe aplicarse."""
+    correo.guardar_firma(cuenta_id, firma_html, en_nuevos, en_respuestas)
+    return obtener_firma_correo(cuenta_id)
+
+
+@mcp.tool()
 def preparar_borrador_correo(
-    cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str, en_respuesta_a: str | None = None,
+    cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
+    cc: str = "", bcc: str = "", en_respuesta_a: str | None = None,
 ) -> dict:
     """Prepara un borrador de correo para revisar antes de enviarlo. NO envía nada.
 
-    Devuelve un `borrador_id` y una vista previa en texto plano. Para enviarlo
-    de verdad hace falta una llamada aparte a enviar_borrador_correo(borrador_id)
-    — confirma con el usuario el contenido antes de hacer esa segunda llamada."""
+    `cc`/`bcc` (Cco) son cadenas con uno o varios correos separados por
+    comas; `bcc` nunca viajará como cabecera visible del mensaje, solo como
+    destinatario oculto en el envío real. Devuelve un `borrador_id` y una
+    vista previa en texto plano. Para enviarlo de verdad hace falta una
+    llamada aparte a enviar_borrador_correo(borrador_id) — confirma con el
+    usuario el contenido antes de hacer esa segunda llamada."""
     borrador_id = str(uuid.uuid4())
     _BORRADORES_CORREO[borrador_id] = {
-        "cuenta_id": cuenta_id, "destinatarios": destinatarios, "asunto": asunto,
-        "cuerpo_html": cuerpo_html, "en_respuesta_a": en_respuesta_a,
+        "cuenta_id": cuenta_id, "destinatarios": destinatarios, "cc": cc, "bcc": bcc,
+        "asunto": asunto, "cuerpo_html": cuerpo_html, "en_respuesta_a": en_respuesta_a,
     }
     return {
         "borrador_id": borrador_id,
         "cuenta_id": cuenta_id,
         "destinatarios": destinatarios,
+        "cc": cc,
+        "bcc": bcc,
         "asunto": asunto,
         "vista_previa_texto": correo.html_a_texto_plano(cuerpo_html),
     }
@@ -211,8 +313,8 @@ def enviar_borrador_correo(borrador_id: str) -> dict:
             "Prepara uno nuevo con preparar_borrador_correo."
         )
     correo.construir_y_enviar(
-        borrador["cuenta_id"], borrador["destinatarios"], borrador["asunto"],
-        borrador["cuerpo_html"], en_respuesta_a=borrador["en_respuesta_a"],
+        borrador["cuenta_id"], borrador["destinatarios"], borrador["asunto"], borrador["cuerpo_html"],
+        cc=borrador.get("cc", ""), bcc=borrador.get("bcc", ""), en_respuesta_a=borrador["en_respuesta_a"],
     )
     del _BORRADORES_CORREO[borrador_id]
     return {"enviado": True}

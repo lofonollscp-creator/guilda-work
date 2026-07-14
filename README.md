@@ -175,16 +175,22 @@ cwd = "/ruta/a/ELEGANZA"
 **Claude Desktop**: en su configuración de servidores MCP (`claude_desktop_config.json`),
 añade una entrada equivalente con `command`/`args`/`cwd` apuntando a este proyecto.
 
-Tools disponibles: `listar_notas`/`crear_nota`/`editar_nota`,
+Tools disponibles (27): `listar_notas`/`crear_nota`/`editar_nota`,
 `listar_tareas`/`crear_tarea`/`editar_tarea`/`completar_tarea`,
-`consultar_calendario`, `listar_cuentas_correo`/`sincronizar_correo`/
-`listar_bandeja_entrada`/`leer_correo`, `exportar_historial`/`importar_historial`,
-`exportar_tareas`/`importar_tareas` (formato `.ics`/`.csv` compatible con
-Outlook). **Enviar correo es la única acción de dos pasos a propósito**:
-`preparar_borrador_correo` solo genera una vista previa (no envía nada);
-`enviar_borrador_correo` es la que de verdad lo manda — dale a tu asistente
-la instrucción de confirmar contigo el contenido antes de llamar a esa
-segunda tool.
+`consultar_calendario`, `listar_cuentas_correo`/`sincronizar_correo`
+(todas las carpetas IMAP se descubren y sincronizan solas),
+`listar_carpetas_correo`/`listar_bandeja_entrada`/`leer_correo`/
+`marcar_leido_correo`/`eliminar_correo`, categorías de correo propias de
+Guilda Work (`listar_categorias_correo`/`crear_categoria_correo`/
+`eliminar_categoria_correo`/`asignar_categoria_correo` — no se sincronizan
+con el servidor), firma (`obtener_firma_correo`/`configurar_firma_correo`),
+`exportar_historial`/`importar_historial`, `exportar_tareas`/`importar_tareas`
+(formato `.ics`/`.csv` compatible con Outlook). **Enviar correo es la única
+acción de dos pasos a propósito**: `preparar_borrador_correo` (acepta
+`cc`/`bcc`) solo genera una vista previa (no envía nada); `enviar_borrador_correo`
+es la que de verdad lo manda — dale a tu asistente la instrucción de
+confirmar contigo el contenido antes de llamar a esa segunda tool. El `bcc`
+nunca viaja como cabecera visible del mensaje enviado.
 
 Fuera de alcance por ahora: sincronización COM en vivo con Outlook Classic
 (solo hay import/export por archivo `.ics`/`.csv`) y un conector remoto para
