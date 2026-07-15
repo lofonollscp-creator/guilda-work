@@ -1,7 +1,9 @@
-// Barra lateral: selector de tema (claro/oscuro/sistema) y arrastrar para
-// reordenar los menús, al estilo New Outlook. El tema ya se aplica antes de
-// pintar mediante el script inline en <head> de base.html — este archivo
-// solo gestiona el clic para rotarlo y refleja el estado en el botón.
+// Cabecera de la app: selector de tema (claro/oscuro/sistema), selector de
+// densidad, y el menú desplegable de ajustes (⚙) de la barra superior. El
+// tema ya se aplica antes de pintar mediante el script inline en <head> de
+// base.html — este archivo solo gestiona el clic para rotarlo y refleja el
+// estado en el botón. La lista de menús (favoritos/reordenar) vive en el
+// Dashboard (inicio.html), no aquí.
 (function () {
   const CLAVE_TEMA = "guilda-work-tema";
   const ORDEN_TEMAS = ["system", "light", "dark"];
@@ -55,40 +57,31 @@
     });
   }
 
-  const lista = document.getElementById("side-menu-list");
-  if (!lista) return;
-
-  let elementoArrastrado = null;
-
-  function filasMenu() {
-    return Array.from(lista.querySelectorAll(".side-menu-item"));
+  const railToggle = document.getElementById("rail-toggle");
+  if (railToggle) {
+    railToggle.addEventListener("click", () => {
+      const expandido = document.documentElement.dataset.railExpandido === "1";
+      if (expandido) {
+        delete document.documentElement.dataset.railExpandido;
+        localStorage.removeItem("guilda-work-rail-expandido");
+      } else {
+        document.documentElement.dataset.railExpandido = "1";
+        localStorage.setItem("guilda-work-rail-expandido", "1");
+      }
+    });
   }
 
-  lista.querySelectorAll(".side-menu-item").forEach((fila) => {
-    fila.addEventListener("dragstart", () => {
-      elementoArrastrado = fila;
-      fila.classList.add("is-arrastrando");
+  const ajustesToggle = document.getElementById("ajustes-toggle");
+  const ajustesPanel = document.getElementById("ajustes-panel");
+  if (ajustesToggle && ajustesPanel) {
+    ajustesToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      ajustesPanel.hidden = !ajustesPanel.hidden;
     });
-    fila.addEventListener("dragend", () => {
-      fila.classList.remove("is-arrastrando");
-      elementoArrastrado = null;
-      guardarOrden();
-    });
-    fila.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      if (!elementoArrastrado || elementoArrastrado === fila) return;
-      const rect = fila.getBoundingClientRect();
-      const despuesDelMedio = e.clientY - rect.top > rect.height / 2;
-      fila.parentNode.insertBefore(elementoArrastrado, despuesDelMedio ? fila.nextSibling : fila);
-    });
-  });
-
-  function guardarOrden() {
-    const ids = filasMenu().map((f) => f.dataset.menuId);
-    fetch("/menus/reordenar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orden: ids }),
+    document.addEventListener("click", (e) => {
+      if (!ajustesPanel.hidden && !ajustesPanel.contains(e.target) && e.target !== ajustesToggle) {
+        ajustesPanel.hidden = true;
+      }
     });
   }
 })();

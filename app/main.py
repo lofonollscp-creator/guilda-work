@@ -58,14 +58,12 @@ app.register_blueprint(ia_bp)
 
 
 @app.context_processor
-def inyectar_menus():
-    menus = db.listar_categorias()
-    entradas_hoy_sidebar = {m["id"]: db.contar_entradas_hoy(m["id"]) for m in menus}
-    return {
-        "menus": menus,
-        "entradas_hoy_sidebar": entradas_hoy_sidebar,
-        "correo_no_leidos_sidebar": db.contar_no_leidos_total_correo(),
-    }
+def inyectar_correo_badge():
+    # El rail de iconos necesita este contador en cualquier página (para el
+    # badge sobre el icono de Correo). La lista de menús ya no vive en un
+    # sidebar global — cada ruta que la necesita (inicio(), captura()) la
+    # pasa explícitamente en su propio contexto.
+    return {"correo_no_leidos_sidebar": db.contar_no_leidos_total_correo()}
 
 
 @app.context_processor

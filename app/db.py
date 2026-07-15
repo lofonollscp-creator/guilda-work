@@ -212,11 +212,41 @@ CREATE TABLE IF NOT EXISTS ia_mensajes (
     nombre_herramienta TEXT,
     creado_en TEXT NOT NULL
 );
+
+-- Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en
+-- un escaneo completo de la tabla. A partir de unos pocos miles de filas
+-- (uso de empresa: 100+ tareas y 200+ correos al día) eso se nota en cada
+-- carga del Dashboard/Correo/Tareas. `CREATE INDEX IF NOT EXISTS` es
+-- idempotente, así que se ejecuta en cada init_db() sin coste real si ya
+-- existen.
+CREATE INDEX IF NOT EXISTS idx_notas_categoria_creada ON notas(categoria_id, creada_en);
+CREATE INDEX IF NOT EXISTS idx_notas_papelera ON notas(papelera_en);
+CREATE INDEX IF NOT EXISTS idx_tareas_categoria_inicio ON tareas(categoria_id, inicio_en);
+CREATE INDEX IF NOT EXISTS idx_tareas_papelera ON tareas(papelera_en);
+CREATE INDEX IF NOT EXISTS idx_categorias_papelera ON categorias(papelera_en);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_papelera_vencimiento ON tareas_outlook(papelera_en, fecha_vencimiento);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_estado ON tareas_outlook(estado);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
+CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 """
 
 
 def now_iso() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+
+def _fecha_exclusiva(fecha: str) -> str:
+    """`fecha` (YYYY-MM-DD, límite inclusive) -> el día siguiente (YYYY-MM-DD).
+
+    Permite filtrar con `columna < _fecha_exclusiva(hasta)` en vez de
+    `substr(columna,1,10) <= hasta`: envolver la columna en `substr()`
+    impide a SQLite usar cualquier índice sobre ella (fuerza un escaneo
+    completo de la tabla en cada consulta). Comparar el timestamp completo
+    contra el día siguiente, sin tocar la columna, sí puede usar un índice
+    — y da el mismo resultado porque los timestamps ISO 8601 ordenan bien
+    como texto."""
+    return (datetime.strptime(fecha, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
 
 def _marca_papelera() -> str:
@@ -512,13 +542,14 @@ def contar_entradas_hoy(categoria_id: int) -> int:
     conn = get_connection()
     try:
         hoy = datetime.now().strftime("%Y-%m-%d")
+        manana = _fecha_exclusiva(hoy)
         n = conn.execute(
-            "SELECT COUNT(*) FROM notas WHERE categoria_id = ? AND papelera_en IS NULL AND substr(creada_en,1,10) = ?",
-            (categoria_id, hoy),
+            "SELECT COUNT(*) FROM notas WHERE categoria_id = ? AND papelera_en IS NULL AND creada_en >= ? AND creada_en < ?",
+            (categoria_id, hoy, manana),
         ).fetchone()[0]
         t = conn.execute(
-            "SELECT COUNT(*) FROM tareas WHERE categoria_id = ? AND papelera_en IS NULL AND substr(inicio_en,1,10) = ?",
-            (categoria_id, hoy),
+            "SELECT COUNT(*) FROM tareas WHERE categoria_id = ? AND papelera_en IS NULL AND inicio_en >= ? AND inicio_en < ?",
+            (categoria_id, hoy, manana),
         ).fetchone()[0]
         return n + t
     finally:
@@ -879,21 +910,30 @@ def historial(
     """
     conn = get_connection()
     try:
-        cond = []
-        params: list = []
+        # El filtro de fecha se aplica DENTRO de cada rama (sobre la columna
+        # de timestamp real, notas.creada_en / tareas.inicio_en) en vez de
+        # sobre un alias calculado en la consulta exterior — así SQLite
+        # puede usar los índices idx_notas_categoria_creada /
+        # idx_tareas_categoria_inicio en vez de escanear ambas tablas
+        # enteras antes de filtrar.
+        hasta_excl = _fecha_exclusiva(hasta) if hasta else None
+
+        cond_n = ["n.papelera_en IS NULL"]
+        cond_t = ["t.papelera_en IS NULL"]
+        params_n: list = []
+        params_t: list = []
         if desde:
-            cond.append("fecha >= ?")
-            params.append(desde)
-        if hasta:
-            cond.append("fecha <= ?")
-            params.append(hasta)
+            cond_n.append("n.creada_en >= ?"); params_n.append(desde)
+            cond_t.append("t.inicio_en >= ?"); params_t.append(desde)
+        if hasta_excl:
+            cond_n.append("n.creada_en < ?"); params_n.append(hasta_excl)
+            cond_t.append("t.inicio_en < ?"); params_t.append(hasta_excl)
         if categoria_id:
-            cond.append("categoria_id = ?")
-            params.append(categoria_id)
+            cond_n.append("n.categoria_id = ?"); params_n.append(categoria_id)
+            cond_t.append("t.categoria_id = ?"); params_t.append(categoria_id)
         if texto:
-            cond.append("texto LIKE ?")
-            params.append(f"%{texto}%")
-        where = ("WHERE " + " AND ".join(cond)) if cond else ""
+            cond_n.append("n.texto LIKE ?"); params_n.append(f"%{texto}%")
+            cond_t.append("t.nombre LIKE ?"); params_t.append(f"%{texto}%")
 
         query = f"""
             SELECT * FROM (
@@ -904,14 +944,13 @@ def historial(
                     NULL AS tipo,
                     NULL AS estado,
                     n.creada_en AS timestamp,
-                    substr(n.creada_en, 1, 10) AS fecha,
                     NULL AS fin_en,
                     NULL AS duracion_segundos,
                     n.categoria_id AS categoria_id,
                     c.nombre AS categoria_nombre,
                     c.color AS categoria_color
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
-                WHERE n.papelera_en IS NULL
+                WHERE {' AND '.join(cond_n)}
 
                 UNION ALL
 
@@ -922,19 +961,17 @@ def historial(
                     t.tipo AS tipo,
                     t.estado AS estado,
                     t.inicio_en AS timestamp,
-                    substr(t.inicio_en, 1, 10) AS fecha,
                     t.fin_en AS fin_en,
                     t.duracion_segundos AS duracion_segundos,
                     t.categoria_id AS categoria_id,
                     c.nombre AS categoria_nombre,
                     c.color AS categoria_color
                 FROM tareas t JOIN categorias c ON c.id = t.categoria_id
-                WHERE t.papelera_en IS NULL
+                WHERE {' AND '.join(cond_t)}
             )
-            {where}
             ORDER BY timestamp DESC
         """
-        return conn.execute(query, params).fetchall()
+        return conn.execute(query, [*params_n, *params_t]).fetchall()
     finally:
         conn.close()
 
@@ -951,14 +988,15 @@ def estadisticas_por_categoria(desde: str | None = None, hasta: str | None = Non
         params_t: list = []
         params_ev: list = []
         params_n: list = []
+        hasta_excl = _fecha_exclusiva(hasta) if hasta else None
         if desde:
-            cond_t.append("substr(t.inicio_en,1,10) >= ?"); params_t.append(desde)
-            cond_ev.append("substr(tt.inicio_en,1,10) >= ?"); params_ev.append(desde)
-            cond_n.append("substr(n.creada_en,1,10) >= ?"); params_n.append(desde)
-        if hasta:
-            cond_t.append("substr(t.inicio_en,1,10) <= ?"); params_t.append(hasta)
-            cond_ev.append("substr(tt.inicio_en,1,10) <= ?"); params_ev.append(hasta)
-            cond_n.append("substr(n.creada_en,1,10) <= ?"); params_n.append(hasta)
+            cond_t.append("t.inicio_en >= ?"); params_t.append(desde)
+            cond_ev.append("tt.inicio_en >= ?"); params_ev.append(desde)
+            cond_n.append("n.creada_en >= ?"); params_n.append(desde)
+        if hasta_excl:
+            cond_t.append("t.inicio_en < ?"); params_t.append(hasta_excl)
+            cond_ev.append("tt.inicio_en < ?"); params_ev.append(hasta_excl)
+            cond_n.append("n.creada_en < ?"); params_n.append(hasta_excl)
 
         filas = conn.execute(
             f"""SELECT c.id, c.nombre, c.color,
@@ -986,9 +1024,9 @@ def estadisticas_por_dia(desde: str | None = None, hasta: str | None = None) -> 
         cond = ["t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
         params: list = []
         if desde:
-            cond.append("substr(t.inicio_en,1,10) >= ?"); params.append(desde)
+            cond.append("t.inicio_en >= ?"); params.append(desde)
         if hasta:
-            cond.append("substr(t.inicio_en,1,10) <= ?"); params.append(hasta)
+            cond.append("t.inicio_en < ?"); params.append(_fecha_exclusiva(hasta))
         where = " AND ".join(cond)
         filas = conn.execute(
             f"""SELECT substr(t.inicio_en,1,10) AS fecha, c.nombre AS categoria, c.color AS categoria_color,
@@ -1108,9 +1146,9 @@ def listar_tareas_outlook(
             cond.append("(asunto LIKE ? OR cuerpo LIKE ?)")
             params.extend([f"%{texto}%", f"%{texto}%"])
         if desde:
-            cond.append("substr(fecha_vencimiento,1,10) >= ?"); params.append(desde)
+            cond.append("fecha_vencimiento >= ?"); params.append(desde)
         if hasta:
-            cond.append("substr(fecha_vencimiento,1,10) <= ?"); params.append(hasta)
+            cond.append("fecha_vencimiento < ?"); params.append(_fecha_exclusiva(hasta))
         where = " AND ".join(cond)
         return conn.execute(
             f"""SELECT * FROM tareas_outlook WHERE {where}
@@ -1483,8 +1521,14 @@ def listar_mensajes_correo(
         where = " AND ".join(cond)
         params.append(limite)
         return conn.execute(
+            # "ORDER BY fecha DESC" basta: SQLite ya trata NULL como el valor
+            # más pequeño, así que en DESC los mensajes sin fecha quedan al
+            # final solos — no hace falta "(fecha IS NULL), fecha DESC" (esa
+            # expresión extra impedía usar idx_correo_mensajes_cuenta_carpeta_fecha
+            # para el propio ORDER BY, forzando un TEMP B-TREE en cada carga
+            # de la bandeja).
             f"""SELECT * FROM correo_mensajes WHERE {where}
-                ORDER BY (fecha IS NULL), fecha DESC LIMIT ?""",
+                ORDER BY fecha DESC LIMIT ?""",
             params,
         ).fetchall()
     finally:

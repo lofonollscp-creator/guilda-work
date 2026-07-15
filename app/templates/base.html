@@ -18,95 +18,84 @@
       if (densidad !== "normal") {
         document.documentElement.dataset.densidad = densidad;
       }
+      var railExpandido = localStorage.getItem("guilda-work-rail-expandido") === "1";
+      if (railExpandido) {
+        document.documentElement.dataset.railExpandido = "1";
+      }
     })();
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="{{ url_for('inicio') }}">
-        <img class="brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
-        <span class="brand-name">Guilda Work</span>
+    <aside class="icon-rail">
+      <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="Expandir/contraer menú">
+        <span class="icon-rail-icono">&#9776;</span>
+      </button>
+      <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="Menús / Dashboard">
+        <span class="icon-rail-icono">&#127968;</span>
+        <span class="icon-rail-etiqueta">Menús</span>
       </a>
-      <nav class="side-nav">
-        <a href="{{ url_for('inicio') }}" class="{{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}">
-          <span class="nav-icon">&#9776;</span> Menús
-        </a>
-        <a href="{{ url_for('tareas.listar') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}">
-          <span class="nav-icon">&#128203;</span> Tareas
-        </a>
-        <a href="{{ url_for('correo.bandeja') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}">
-          <span class="nav-icon">&#9993;</span> Correo
-          {% if correo_no_leidos_sidebar %}<span class="side-menu-badge side-nav-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
-        </a>
-        <a href="{{ url_for('historial') }}" class="{{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}">
-          <span class="nav-icon">&#128337;</span> Histórico
-        </a>
-        <a href="{{ url_for('ia.asistente_vista') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}">
-          <span class="nav-icon">&#129302;</span> Asistente IA
-        </a>
-        <a href="{{ url_for('estadisticas') }}" class="{{ 'active' if request.endpoint == 'estadisticas' else '' }}">
-          <span class="nav-icon">&#128202;</span> Estadísticas
-        </a>
-        <a href="{{ url_for('papelera') }}" class="{{ 'active' if request.endpoint == 'papelera' else '' }}">
-          <span class="nav-icon">&#128465;</span> Papelera
-        </a>
-        <a href="{{ url_for('importar') }}" class="{{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}">
-          <span class="nav-icon">&#11014;</span> Importar
-        </a>
-        <button type="button" class="side-capture" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="Atajo global: Ctrl+Alt+G">
-          <span class="nav-icon">&#128204;</span> Captura rápida
-        </button>
-      </nav>
-
-      {% set favoritos = menus|selectattr('favorito')|list %}
-      {% set resto = menus|rejectattr('favorito')|list %}
-
-      {% macro fila_menu(m) %}
-      <div class="side-menu-item {{ 'active' if request.view_args and request.view_args.get('menu_id')|string == m.id|string else '' }}"
-           draggable="true" data-menu-id="{{ m.id }}">
-        <a class="side-menu-item-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
-          <span class="dot" style="background: {{ m.color or '#7c8ba1' }};"></span>
-          <span class="side-menu-item-nombre">{{ m.nombre }}</span>
-        </a>
-        {% set n = entradas_hoy_sidebar.get(m.id, 0) %}
-        {% if n %}<span class="side-menu-badge">{{ n }}</span>{% endif %}
-        <form class="side-menu-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
-          <button type="submit" title="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}">{{ '★' if m.favorito else '☆' }}</button>
-        </form>
-      </div>
-      {% endmacro %}
-
-      <div class="side-menu-list" id="side-menu-list">
-        {% if favoritos %}
-        <span class="side-menu-list-title">Favoritos</span>
-        {% for m in favoritos %}{{ fila_menu(m) }}{% endfor %}
-        <span class="side-menu-list-title">Tus menús</span>
-        {% else %}
-        <span class="side-menu-list-title">Tus menús</span>
-        {% endif %}
-        {% for m in resto %}{{ fila_menu(m) }}{% endfor %}
-        {% if not menus %}
-        <span class="side-menu-empty">Aún no hay menús</span>
-        {% endif %}
-      </div>
-
-      <div class="side-footer">
-        <button type="button" id="theme-toggle" class="side-theme-toggle" title="Tema: cambiar">🖥 Sistema</button>
-        <button type="button" id="densidad-toggle" class="side-theme-toggle" title="Densidad: cambiar">☰ Normal</button>
-        {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
-        <button type="button" id="ia-panel-toggle" class="side-theme-toggle" title="Abrir Asistente IA">🤖</button>
-        {% endif %}
-        <form class="side-shutdown" action="{{ url_for('apagar') }}" method="post"
-              onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
-          <button type="submit">&#9211; Cerrar programa</button>
-        </form>
-      </div>
+      <a href="{{ url_for('tareas.listar') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}" title="Tareas">
+        <span class="icon-rail-icono">&#128203;</span>
+        <span class="icon-rail-etiqueta">Tareas</span>
+      </a>
+      <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="Correo{{ ' — ' ~ correo_no_leidos_sidebar ~ ' sin leer' if correo_no_leidos_sidebar }}">
+        <span class="icon-rail-icono">&#9993;</span>
+        <span class="icon-rail-etiqueta">Correo</span>
+        {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
+      </a>
+      <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="Histórico">
+        <span class="icon-rail-icono">&#128337;</span>
+        <span class="icon-rail-etiqueta">Histórico</span>
+      </a>
+      <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="Asistente IA">
+        <span class="icon-rail-icono">&#129302;</span>
+        <span class="icon-rail-etiqueta">Asistente IA</span>
+      </a>
+      <a href="{{ url_for('estadisticas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'estadisticas' else '' }}" title="Estadísticas">
+        <span class="icon-rail-icono">&#128202;</span>
+        <span class="icon-rail-etiqueta">Estadísticas</span>
+      </a>
+      <a href="{{ url_for('papelera') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'papelera' else '' }}" title="Papelera">
+        <span class="icon-rail-icono">&#128465;</span>
+        <span class="icon-rail-etiqueta">Papelera</span>
+      </a>
+      <a href="{{ url_for('importar') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}" title="Importar">
+        <span class="icon-rail-icono">&#11014;</span>
+        <span class="icon-rail-etiqueta">Importar</span>
+      </a>
+      <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="Captura rápida (Ctrl+Alt+G)">
+        <span class="icon-rail-icono">&#128204;</span>
+        <span class="icon-rail-etiqueta">Captura rápida</span>
+      </button>
     </aside>
-    <main class="content">
-      {% block content %}{% endblock %}
-    </main>
+
+    <div class="app-main">
+      <header class="top-bar">
+        <a class="brand" href="{{ url_for('inicio') }}">
+          <img class="brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+          <span class="brand-name">Guilda Work</span>
+        </a>
+        <div class="ajustes-menu">
+          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="Ajustes">&#9881;</button>
+          <div class="ajustes-panel" id="ajustes-panel" hidden>
+            <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="Tema: cambiar">🖥 Sistema</button>
+            <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="Densidad: cambiar">☰ Normal</button>
+            {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
+            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="Abrir Asistente IA">🤖 Asistente IA</button>
+            {% endif %}
+            <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
+                  onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
+              <button type="submit" class="ajustes-panel-btn">&#9211; Cerrar programa</button>
+            </form>
+          </div>
+        </div>
+      </header>
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
   </div>
 
   {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}

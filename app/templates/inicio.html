@@ -64,9 +64,11 @@
     <p class="muted">Crea el primero abajo para empezar a registrar actividad.</p>
   </div>
 {% else %}
-<div class="menu-grid">
-  {% for m in menus %}
+  {% macro tarjeta_menu(m, es_primero, es_ultimo, mostrar_reorder) %}
   <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
+    <form class="menu-card-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
+      <button type="submit" title="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}">{{ '★' if m.favorito else '☆' }}</button>
+    </form>
     <a class="menu-card-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
       <div class="menu-card-top">
         <span class="menu-card-dot"></span>
@@ -80,21 +82,34 @@
         <span class="pill">{{ entradas_hoy.get(m.id, 0) }} hoy</span>
       </div>
     </a>
-    {% if menus|length > 1 %}
+    {% if mostrar_reorder %}
     <div class="menu-card-reorder">
       <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
         <input type="hidden" name="direccion" value="arriba">
-        <button type="submit" class="menu-card-reorder-btn" title="Mover arriba" {{ 'disabled' if loop.first }}>↑</button>
+        <button type="submit" class="menu-card-reorder-btn" title="Mover arriba" {{ 'disabled' if es_primero }}>↑</button>
       </form>
       <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
         <input type="hidden" name="direccion" value="abajo">
-        <button type="submit" class="menu-card-reorder-btn" title="Mover abajo" {{ 'disabled' if loop.last }}>↓</button>
+        <button type="submit" class="menu-card-reorder-btn" title="Mover abajo" {{ 'disabled' if es_ultimo }}>↓</button>
       </form>
     </div>
     {% endif %}
   </div>
-  {% endfor %}
-</div>
+  {% endmacro %}
+
+  {% set favoritos = menus|selectattr('favorito')|list %}
+  {% set resto = menus|rejectattr('favorito')|list %}
+
+  {% if favoritos %}
+  <h3 class="menu-grid-titulo">★ Favoritos</h3>
+  <div class="menu-grid">
+    {% for m in favoritos %}{{ tarjeta_menu(m, loop.first, loop.last, favoritos|length > 1) }}{% endfor %}
+  </div>
+  <h3 class="menu-grid-titulo">Tus menús</h3>
+  {% endif %}
+  <div class="menu-grid">
+    {% for m in resto %}{{ tarjeta_menu(m, loop.first, loop.last, resto|length > 1) }}{% endfor %}
+  </div>
 {% endif %}
 
 {% if menus %}
