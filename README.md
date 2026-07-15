@@ -162,6 +162,15 @@ pip install -r requirements-mcp.txt
 claude mcp add guilda-work -- python mcp_server.py
 ```
 
+En Windows, si tienes varios Python instalados (o el de PATH no es el del
+`.venv` de este proyecto, que es donde está instalado el paquete `mcp`),
+usa la ruta absoluta del intérprete del propio `.venv` para evitar que
+`claude mcp add` resuelva a un Python distinto sin la dependencia:
+
+```powershell
+claude mcp add guilda-work -- "C:\ruta\a\ELEGANZA\.venv\Scripts\python.exe" "C:\ruta\a\ELEGANZA\mcp_server.py"
+```
+
 **Registrarlo en Codex CLI**: añade en tu `config.toml` de Codex (o el
 equivalente que use tu instalación):
 

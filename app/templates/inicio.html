@@ -1,12 +1,62 @@
 {% extends "base.html" %}
-{% block title %}Guilda Work — Menús{% endblock %}
+{% from "_ia_chat_macro.html" import chat %}
+{% block title %}Guilda Work — Dashboard{% endblock %}
 {% block content %}
-<header class="page-header">
+<header class="page-header dash-header">
   <div>
-    <h1>Tus menús</h1>
-    <p class="subtitle">Cada menú es un carril propio: entra para anotar y ver su actividad.</p>
+    <h1>Dashboard</h1>
+    <p class="subtitle">Un vistazo rápido a tu día.</p>
   </div>
 </header>
+
+<section class="dash-stats">
+  <div class="dash-stat">
+    <span class="dash-stat-valor">{{ total_activas }}</span>
+    <span class="dash-stat-label">tareas en curso</span>
+  </div>
+  <div class="dash-stat">
+    <span class="dash-stat-valor">{{ total_notas_hoy }}</span>
+    <span class="dash-stat-label">notas hoy</span>
+  </div>
+  <a class="dash-stat dash-stat-link" href="{{ url_for('correo.bandeja') }}">
+    <span class="dash-stat-valor">{{ correo_no_leidos_sidebar }}</span>
+    <span class="dash-stat-label">correos sin leer</span>
+  </a>
+</section>
+
+<section class="dash-acciones">
+  <form class="dash-accion" action="{{ url_for('crear_nota') }}" method="post">
+    <label for="dash-nota-texto" title="Atajo: Ctrl+Alt+N">📝 Nota rápida</label>
+    <div class="quick-row">
+      {% if menus %}
+      <select name="categoria_id">
+        <option value="">Sin menú</option>
+        {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <input type="text" id="dash-nota-texto" name="texto" placeholder="¿Qué ha pasado?" required>
+      <button type="submit" class="btn btn-primary">Anotar</button>
+    </div>
+  </form>
+
+  {% if menus %}
+  <form class="dash-accion" action="{{ url_for('crear_tarea') }}" method="post">
+    <input type="hidden" name="tipo" value="duracion">
+    <label for="dash-tarea-nombre" title="Atajo: Ctrl+Alt+T">▶ Nueva tarea</label>
+    <div class="quick-row">
+      <select name="categoria_id" required>
+        {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+      </select>
+      <input type="text" id="dash-tarea-nombre" name="nombre" placeholder="Nombre de la tarea" required>
+      <button type="submit" class="btn">Iniciar</button>
+    </div>
+  </form>
+  {% endif %}
+
+  <a class="dash-accion dash-accion-buscar" id="dash-accion-buscar" href="{{ url_for('historial') }}">
+    <span>🔍 Buscar en el histórico</span>
+  </a>
+</section>
 
 {% if not menus %}
   <div class="empty-state">
@@ -77,6 +127,11 @@
   {% endif %}
 </section>
 {% endif %}
+
+<section class="dash-ia">
+  <h3>Asistente IA</h3>
+  {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-dashboard') }}
+</section>
 
 <section class="new-menu">
   <h3>+ Nuevo menú</h3>

@@ -170,11 +170,14 @@ def _incrustar_imagenes_inline(html: str, imagenes: dict[str, tuple[bytes, str]]
     return re.sub(r'src=(["\'])cid:([^"\']+)\1', reemplazar, html, flags=re.IGNORECASE)
 
 
-def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None]:
-    """Devuelve (texto_plano, html) extraídos del mensaje. Las imágenes
-    incrustadas por Content-ID se embeben en el propio HTML como data URI."""
+def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None, list[dict]]:
+    """Devuelve (texto_plano, html, adjuntos) extraídos del mensaje. Las
+    imágenes incrustadas por Content-ID se embeben en el propio HTML como
+    data URI. `adjuntos` es una lista de {"nombre", "tipo", "bytes"} con los
+    adjuntos reales (Content-Disposition: attachment) del mensaje."""
     texto = html = None
     imagenes_inline: dict[str, tuple[bytes, str]] = {}
+    adjuntos: list[dict] = []
     if mensaje.is_multipart():
         for parte in mensaje.walk():
             tipo = parte.get_content_type()
@@ -190,6 +193,16 @@ def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None]:
 
             disposicion = str(parte.get("Content-Disposition") or "")
             if "attachment" in disposicion:
+                try:
+                    contenido = parte.get_payload(decode=True)
+                except Exception:
+                    contenido = None
+                if contenido is not None:
+                    adjuntos.append({
+                        "nombre": _decodificar(parte.get_filename()) or "adjunto",
+                        "tipo": tipo,
+                        "bytes": contenido,
+                    })
                 continue
             try:
                 contenido = parte.get_payload(decode=True)
@@ -215,7 +228,7 @@ def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None]:
 
     if html and imagenes_inline:
         html = _incrustar_imagenes_inline(html, imagenes_inline)
-    return texto, html
+    return texto, html, adjuntos
 
 
 def texto_a_html(texto: str) -> str:
@@ -303,8 +316,8 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
             continue
         crudo = datos_msg[0][1]
         mensaje = email.message_from_bytes(crudo)
-        texto, html = _cuerpos(mensaje)
-        db.guardar_mensaje_correo(
+        texto, html, adjuntos = _cuerpos(mensaje)
+        mensaje_id = db.guardar_mensaje_correo(
             cuenta_id=cuenta["id"],
             uid=uid,
             asunto=_decodificar(mensaje.get("Subject")),
@@ -317,6 +330,8 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
             carpeta=carpeta,
             message_id=mensaje.get("Message-ID"),
         )
+        if adjuntos and mensaje_id is not None:
+            db.guardar_adjuntos_correo(mensaje_id, adjuntos)
     return len(nuevos)
 
 
@@ -354,8 +369,8 @@ def _sincronizar_pop3(cuenta) -> int:
                 continue
             crudo = b"\n".join(conn.retr(indice)[1])
             mensaje = email.message_from_bytes(crudo)
-            texto, html = _cuerpos(mensaje)
-            db.guardar_mensaje_correo(
+            texto, html, adjuntos = _cuerpos(mensaje)
+            mensaje_id = db.guardar_mensaje_correo(
                 cuenta_id=cuenta["id"],
                 uid=uid,
                 asunto=_decodificar(mensaje.get("Subject")),
@@ -368,6 +383,8 @@ def _sincronizar_pop3(cuenta) -> int:
                 carpeta="INBOX",
                 message_id=mensaje.get("Message-ID"),
             )
+            if adjuntos and mensaje_id is not None:
+                db.guardar_adjuntos_correo(mensaje_id, adjuntos)
             nuevos_count += 1
         return nuevos_count
     finally:
@@ -575,6 +592,7 @@ def _direcciones(cadena: str | None) -> list[str]:
 def construir_y_enviar(
     cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
     cc: str = "", bcc: str = "", en_respuesta_a: str | None = None,
+    adjuntos: list[dict] | None = None,
 ) -> None:
     """Envía un correo desde `cuenta_id`. `destinatarios`/`cc`/`bcc` son
     cadenas con uno o varios correos separados por comas. `cuerpo_html` es
@@ -613,6 +631,13 @@ def construir_y_enviar(
         mensaje["References"] = en_respuesta_a
     mensaje.set_content(html_a_texto_plano(cuerpo_html) or " ")
     mensaje.add_alternative(cuerpo_html, subtype="html")
+
+    for adjunto in (adjuntos or []):
+        maintype, _, subtype = adjunto["tipo"].partition("/")
+        mensaje.add_attachment(
+            adjunto["bytes"], maintype=maintype or "application",
+            subtype=subtype or "octet-stream", filename=adjunto["nombre"],
+        )
 
     todos_los_destinatarios = _direcciones(destinatarios) + _direcciones(cc) + _direcciones(bcc)
 

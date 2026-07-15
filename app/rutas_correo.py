@@ -6,7 +6,7 @@ carpetas + lista de mensajes + panel de lectura, todo en la misma ruta
 import re
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, redirect, render_template, request, url_for
 
 from . import correo, db
 from .rutas_tareas import color_categoria
@@ -36,6 +36,15 @@ def iniciales(remitente: str | None) -> str:
     if len(palabras) == 1:
         return palabras[0][:2].upper()
     return (palabras[0][0] + palabras[1][0]).upper()
+
+
+@correo_bp.app_template_filter("tamano_legible")
+def tamano_legible(bytes_: int) -> str:
+    if bytes_ < 1024:
+        return f"{bytes_} B"
+    if bytes_ < 1024 * 1024:
+        return f"{bytes_ / 1024:.0f} KB"
+    return f"{bytes_ / (1024 * 1024):.1f} MB"
 
 
 @correo_bp.app_template_filter("fecha_relativa")
@@ -191,6 +200,7 @@ def bandeja():
             contexto["no_leidos_por_cuenta"][cuenta_id] = db.contar_no_leidos_correo(cuenta_id)
 
     contexto["mensaje_seleccionado"] = mensaje_seleccionado
+    contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
     return render_template("correo_bandeja.html", **contexto)
 
 
@@ -218,6 +228,23 @@ def ver_mensaje(mensaje_id: int):
     return redirect(url_for(
         "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
     ))
+
+
+TIPOS_PREVISUALIZABLES = ("application/pdf",)
+
+
+@correo_bp.route("/<int:mensaje_id>/adjunto/<int:adjunto_id>")
+def descargar_adjunto(mensaje_id: int, adjunto_id: int):
+    adjunto = db.obtener_adjunto_correo(adjunto_id)
+    if adjunto is None or adjunto["mensaje_id"] != mensaje_id:
+        abort(404)
+    previsualizable = adjunto["tipo_mime"].startswith("image/") or adjunto["tipo_mime"] in TIPOS_PREVISUALIZABLES
+    disposicion = "inline" if previsualizable else "attachment"
+    return Response(
+        adjunto["contenido"],
+        mimetype=adjunto["tipo_mime"],
+        headers={"Content-Disposition": f'{disposicion}; filename="{adjunto["nombre_archivo"]}"'},
+    )
 
 
 @correo_bp.route("/<int:mensaje_id>/eliminar", methods=["POST"])
@@ -376,8 +403,15 @@ def enviar():
     asunto = request.form.get("asunto", "")
     cuerpo_html = request.form.get("cuerpo_html", "")
     en_respuesta_a = request.form.get("en_respuesta_a") or None
+    adjuntos = [
+        {"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()}
+        for f in request.files.getlist("adjuntos") if f.filename
+    ]
     try:
-        correo.construir_y_enviar(cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc, en_respuesta_a=en_respuesta_a)
+        correo.construir_y_enviar(
+            cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
+            en_respuesta_a=en_respuesta_a, adjuntos=adjuntos,
+        )
     except correo.ErrorCorreo as e:
         return _render_redactar(
             cuenta_id=cuenta_id, destinatarios=destinatarios, cc=cc, bcc=bcc, asunto=asunto,

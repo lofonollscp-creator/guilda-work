@@ -22,7 +22,7 @@
   <div class="ia-error">{{ error }}</div>
   {% endif %}
 
-  <form method="post" action="{{ url_for('correo.enviar') }}"
+  <form method="post" action="{{ url_for('correo.enviar') }}" enctype="multipart/form-data"
         onsubmit="return confirm('¿Enviar este correo? No se puede deshacer.');">
     <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
 
@@ -70,6 +70,11 @@
     </div>
     <div id="correo-editor-cuerpo" class="correo-editor" contenteditable="true">{{ cuerpo_html|safe }}</div>
     <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
+
+    <div class="correo-compose-campo correo-compose-adjuntos">
+      <label>📎 Adjuntar archivos</label>
+      <input type="file" name="adjuntos" multiple>
+    </div>
 
     <div class="correo-compose-acciones">
       <button type="submit" class="btn btn-primary">✉ Enviar</button>

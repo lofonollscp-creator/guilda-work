@@ -178,6 +178,20 @@ CREATE TABLE IF NOT EXISTS correo_mensajes (
     UNIQUE (cuenta_id, carpeta, uid)
 );
 
+-- Adjuntos reales de mensajes recibidos (Content-Disposition: attachment).
+-- Los bytes viven en la propia SQLite, igual que el resto de la app: un
+-- único archivo .db, sin carpeta aparte que sincronizar/hacer backup.
+CREATE TABLE IF NOT EXISTS correo_adjuntos (
+    id INTEGER PRIMARY KEY,
+    mensaje_id INTEGER NOT NULL,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    creado_en TEXT NOT NULL,
+    FOREIGN KEY (mensaje_id) REFERENCES correo_mensajes(id) ON DELETE CASCADE
+);
+
 -- Preferencias del Asistente IA (OpenRouter): una sola fila (id=1 siempre).
 -- La clave de API NUNCA se guarda aquí: vive en el almacén de credenciales
 -- del sistema (keyring), gestionada por app/ia_asistente.py, igual que las
@@ -1426,7 +1440,10 @@ def guardar_mensaje_correo(
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
     cuerpo_html: str | None, carpeta: str = "INBOX", message_id: str | None = None,
     cc: str | None = None,
-) -> None:
+) -> int | None:
+    """Devuelve el id del mensaje (recién insertado, o el ya existente si
+    `(cuenta_id, carpeta, uid)` ya estaba en caché) — para poder colgarle
+    adjuntos justo después."""
     conn = get_connection()
     try:
         conn.execute(
@@ -1438,6 +1455,11 @@ def guardar_mensaje_correo(
              cc, fecha, cuerpo_texto, cuerpo_html, message_id, now_iso()),
         )
         conn.commit()
+        fila = conn.execute(
+            "SELECT id FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ? AND uid = ?",
+            (cuenta_id, carpeta, uid),
+        ).fetchone()
+        return fila["id"] if fila else None
     finally:
         conn.close()
 
@@ -1473,6 +1495,43 @@ def obtener_mensaje_correo(mensaje_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute("SELECT * FROM correo_mensajes WHERE id = ?", (mensaje_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_adjuntos_correo(mensaje_id: int, adjuntos: list[dict]) -> None:
+    """`adjuntos` es una lista de {"nombre", "tipo", "bytes"}, tal como los
+    devuelve app.correo._cuerpos()."""
+    conn = get_connection()
+    try:
+        for a in adjuntos:
+            conn.execute(
+                """INSERT INTO correo_adjuntos
+                   (mensaje_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (mensaje_id, a["nombre"], a["tipo"], len(a["bytes"]), a["bytes"], now_iso()),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_adjuntos_correo(mensaje_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT id, mensaje_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
+            "FROM correo_adjuntos WHERE mensaje_id = ? ORDER BY id",
+            (mensaje_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_adjunto_correo(adjunto_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM correo_adjuntos WHERE id = ?", (adjunto_id,)).fetchone()
     finally:
         conn.close()
 
@@ -1529,6 +1588,16 @@ def contar_no_leidos_correo(cuenta_id: int, carpeta: str = "INBOX") -> int:
             (cuenta_id, carpeta),
         ).fetchone()
         return fila["n"]
+    finally:
+        conn.close()
+
+
+def contar_no_leidos_total_correo() -> int:
+    """Total de mensajes no leídos en TODAS las cuentas y carpetas (para el
+    badge de "correo nuevo" de la barra lateral)."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) AS n FROM correo_mensajes WHERE leido = 0").fetchone()["n"]
     finally:
         conn.close()
 

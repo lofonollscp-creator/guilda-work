@@ -15,7 +15,7 @@ from pathlib import Path
 import webview
 from flask import Flask, Response, abort, redirect, render_template, request, url_for
 
-from . import ai_local, db, export, ia_asistente, importador
+from . import ai_local, correo, db, export, ia_asistente, importador
 from .rutas_correo import correo_bp
 from .rutas_ia import ia_bp
 from .rutas_tareas import tareas_bp
@@ -61,7 +61,11 @@ app.register_blueprint(ia_bp)
 def inyectar_menus():
     menus = db.listar_categorias()
     entradas_hoy_sidebar = {m["id"]: db.contar_entradas_hoy(m["id"]) for m in menus}
-    return {"menus": menus, "entradas_hoy_sidebar": entradas_hoy_sidebar}
+    return {
+        "menus": menus,
+        "entradas_hoy_sidebar": entradas_hoy_sidebar,
+        "correo_no_leidos_sidebar": db.contar_no_leidos_total_correo(),
+    }
 
 
 @app.context_processor
@@ -93,6 +97,8 @@ def inicio():
         activas_por_menu=activas_por_menu,
         entradas_hoy=entradas_hoy,
         log_hoy=log_hoy,
+        total_activas=len(activas),
+        total_notas_hoy=len([f for f in log_hoy if f["origen"] == "nota"]),
     )
 
 
@@ -632,6 +638,29 @@ def _registrar_atajo_global():
         pass
 
 
+SINCRONIZACION_CORREO_INTERVALO_MINUTOS = 10
+
+
+def _sincronizacion_correo_periodica():
+    """Cada SINCRONIZACION_CORREO_INTERVALO_MINUTOS, sincroniza todas las
+    cuentas de correo configuradas, para que el badge de "correo nuevo" de
+    la barra lateral refleje mensajes recién llegados sin tener que pulsar
+    "Sincronizar" a mano. Cada cuenta se sincroniza en su propio try/except:
+    una cuenta con credenciales caducadas o sin red no debe impedir que se
+    sincronicen las demás, ni tumbar este hilo."""
+    while True:
+        time.sleep(SINCRONIZACION_CORREO_INTERVALO_MINUTOS * 60)
+        try:
+            cuentas = db.listar_cuentas_correo()
+        except Exception:
+            continue
+        for cuenta in cuentas:
+            try:
+                correo.sincronizar_bandeja(cuenta["id"])
+            except Exception:
+                pass  # un fallo de esta cuenta no debe impedir sincronizar las demás
+
+
 RECORDATORIO_INTERVALO_MINUTOS = 60
 
 
@@ -685,6 +714,7 @@ def main():
     _crear_icono_bandeja()
     _registrar_atajo_global()
     threading.Thread(target=_recordatorio_periodico, daemon=True).start()
+    threading.Thread(target=_sincronizacion_correo_periodica, daemon=True).start()
 
     webview.start()
 

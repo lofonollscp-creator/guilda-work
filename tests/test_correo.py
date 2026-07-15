@@ -24,6 +24,17 @@ def _mensaje_bytes(asunto: str, remitente: str, cuerpo: str, message_id: str | N
     return bytes(msg)
 
 
+def _mensaje_con_adjunto_bytes(asunto: str, remitente: str, cuerpo: str, nombre_archivo: str, contenido_adjunto: bytes) -> bytes:
+    msg = EmailMessage()
+    msg["Subject"] = asunto
+    msg["From"] = remitente
+    msg["To"] = "yo@ejemplo.com"
+    msg["Date"] = "Mon, 13 Jul 2026 09:00:00 +0000"
+    msg.set_content(cuerpo)
+    msg.add_attachment(contenido_adjunto, maintype="text", subtype="plain", filename=nombre_archivo)
+    return bytes(msg)
+
+
 class FakeIMAP:
     def __init__(self, mensajes: dict[str, bytes], contrasena_valida: str = "correcta", carpetas=("INBOX",)):
         self._mensajes = mensajes
@@ -740,3 +751,81 @@ def test_mover_mensaje_en_cuenta_pop3_lanza_error(monkeypatch):
 def test_mover_mensaje_inexistente_lanza_error():
     with pytest.raises(correo.ErrorCorreo):
         correo.mover_mensaje(999, "Archivo")
+
+
+# --- Adjuntos (Fase 5) -----------------------------------------------------
+
+def test_sincronizar_guarda_adjuntos_reales(monkeypatch):
+    crudo = _mensaje_con_adjunto_bytes(
+        "Con adjunto", "a@b.com", "cuerpo", "informe.txt", b"contenido del adjunto",
+    )
+    _cuenta_imap(monkeypatch, {"1": crudo})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+
+    mensaje = correo.listar_mensajes(cuenta_id)[0]
+    adjuntos = db.listar_adjuntos_correo(mensaje["id"])
+    assert len(adjuntos) == 1
+    assert adjuntos[0]["nombre_archivo"] == "informe.txt"
+    assert adjuntos[0]["tamano_bytes"] == len(b"contenido del adjunto")
+
+    completo = db.obtener_adjunto_correo(adjuntos[0]["id"])
+    assert completo["contenido"] == b"contenido del adjunto"
+
+
+def test_sincronizar_mensaje_sin_adjuntos_no_crea_filas(monkeypatch):
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Sin adjuntos", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje = correo.listar_mensajes(cuenta_id)[0]
+    assert db.listar_adjuntos_correo(mensaje["id"]) == []
+
+
+def test_eliminar_mensaje_borra_tambien_sus_adjuntos(monkeypatch):
+    crudo = _mensaje_con_adjunto_bytes("Con adjunto", "a@b.com", "cuerpo", "x.txt", b"datos")
+    _cuenta_imap(monkeypatch, {"1": crudo})
+    cuenta_id = correo.guardar_cuenta(
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(cuenta_id)
+    mensaje = correo.listar_mensajes(cuenta_id)[0]
+    adjunto_id = db.listar_adjuntos_correo(mensaje["id"])[0]["id"]
+
+    correo.eliminar_mensaje(mensaje["id"])
+
+    assert db.obtener_adjunto_correo(adjunto_id) is None
+
+
+def test_construir_y_enviar_con_adjunto(monkeypatch):
+    enviados = []
+    _cuenta_smtp(monkeypatch, enviados)
+    cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
+
+    correo.construir_y_enviar(
+        cuenta_id, "destino@ejemplo.com", "Con adjunto", "<p>Cuerpo</p>",
+        adjuntos=[{"nombre": "datos.csv", "tipo": "text/csv", "bytes": b"a,b,c\n1,2,3"}],
+    )
+
+    enviado = enviados[0]
+    assert enviado.is_multipart()
+    adjuntos_enviados = [p for p in enviado.walk() if p.get_content_disposition() == "attachment"]
+    assert len(adjuntos_enviados) == 1
+    assert adjuntos_enviados[0].get_filename() == "datos.csv"
+    assert adjuntos_enviados[0].get_payload(decode=True) == b"a,b,c\n1,2,3"
+
+
+def test_construir_y_enviar_sin_adjuntos_no_rompe(monkeypatch):
+    enviados = []
+    _cuenta_smtp(monkeypatch, enviados)
+    cuenta_id = _crear_cuenta_con_smtp(monkeypatch)
+
+    correo.construir_y_enviar(cuenta_id, "destino@ejemplo.com", "Sin adjunto", "<p>Cuerpo</p>")
+
+    assert len(enviados) == 1

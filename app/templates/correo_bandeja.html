@@ -202,6 +202,15 @@
     </div>
 
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or '(sin asunto)' }}</h2>
+    {% if adjuntos_mensaje %}
+    <div class="correo-adjuntos">
+      {% for a in adjuntos_mensaje %}
+      <a class="correo-adjunto-chip" href="{{ url_for('correo.descargar_adjunto', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) }}" target="_blank" title="{{ a.nombre_archivo }}">
+        📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
     <div class="correo-lectura-cuerpo">
       {% if mensaje_seleccionado.cuerpo_html %}
       <iframe class="correo-cuerpo-html" srcdoc="{{ mensaje_seleccionado.cuerpo_html|e }}" sandbox=""

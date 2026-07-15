@@ -1,7 +1,7 @@
 :root {
-  --bg: #f5f6f8;
+  --bg: #f7f8fa;
   --surface: #ffffff;
-  --border: #e5e7eb;
+  --border: #e2e4e9;
   --text: #1a1d23;
   --text-muted: #6b7280;
   --sidebar-bg: #16181d;
@@ -10,8 +10,33 @@
   --primary: #4a6cf7;
   --primary-dark: #3a56cc;
   --danger: #e0555a;
+  --success: #1f9d55;
   --radius: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+
+  /* Sistema de diseño (Fase 0 del rediseño): escalas de espaciado,
+     tipografía, radios y sombra. --radius/--shadow de arriba se mantienen
+     tal cual (equivalen a --radius-md/--shadow-md) para no romper las
+     ~1600 líneas de CSS ya escritas contra esos dos nombres. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font-size-sm: 0.85em;
+  --font-size-base: 1em;
+  --font-size-lg: 1.15em;
+  --font-size-xl: 1.5em;
+
+  --radius-sm: 6px;
+  --radius-md: var(--radius);
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: var(--shadow);
+  --shadow-lg: 0 4px 12px rgba(16, 24, 40, 0.10), 0 2px 4px rgba(16, 24, 40, 0.08);
 }
 
 /* Modo oscuro: sigue "Sistema" (prefers-color-scheme) salvo que el usuario
@@ -30,6 +55,7 @@
     --primary-dark: #7c93fb;
     --danger: #ff6b70;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
   }
 }
 :root[data-theme="dark"] {
@@ -43,6 +69,7 @@
   --primary-dark: #7c93fb;
   --danger: #ff6b70;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 * { box-sizing: border-box; }
@@ -172,6 +199,8 @@ a { color: inherit; }
   padding: 1px 7px;
 }
 .side-menu-item.active .side-menu-badge { background: rgba(255,255,255,0.28); color: white; }
+.side-nav-badge { margin-left: auto; }
+.side-nav a.active .side-nav-badge { background: rgba(255,255,255,0.28); color: white; }
 .side-menu-favorito { flex-shrink: 0; }
 .side-menu-favorito button {
   border: none;
@@ -269,6 +298,66 @@ a { color: inherit; }
 .menu-settings-panel form:last-child { border-top: 1px solid var(--border); padding-top: 10px; }
 .menu-settings-panel .btn-stop { width: 100%; justify-content: center; }
 
+/* ---- Dashboard (home) ---- */
+.dash-header { display: flex; align-items: center; justify-content: space-between; }
+
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.dash-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+}
+.dash-stat-link { transition: box-shadow .15s, transform .15s; }
+.dash-stat-link:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.dash-stat-valor { font-size: var(--font-size-xl); font-weight: 700; line-height: 1; }
+.dash-stat-label { color: var(--text-muted); font-size: var(--font-size-sm); }
+
+.dash-acciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.dash-accion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.dash-accion label { font-weight: 600; font-size: var(--font-size-sm); }
+.dash-accion .quick-row { display: flex; gap: var(--space-2); }
+.dash-accion .quick-row input[type="text"] { flex: 1; }
+.dash-accion-buscar {
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.dash-accion-buscar:hover { border-color: var(--primary); color: var(--primary); }
+
+.dash-ia { margin: var(--space-6) 0; }
+.dash-ia h3 { margin-bottom: var(--space-3); }
+.dash-ia .ia-chat { box-shadow: var(--shadow-sm); }
+
 /* ---- Menu grid (home) ---- */
 .menu-grid {
   display: grid;
@@ -346,6 +435,27 @@ a { color: inherit; }
   margin-bottom: 24px;
 }
 .empty-state .muted { color: var(--text-muted); font-size: 0.9em; }
+
+/* Onboarding (Fase 4): estado vacío guiado de un menú recién creado, con
+   CTA directos a las acciones rápidas de arriba. */
+.empty-state-guiado {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+.empty-state-guiado-icono { font-size: var(--font-size-xl); }
+.empty-state-guiado p { margin: var(--space-2) 0; }
+.empty-state-guiado .muted { color: var(--text-muted); font-size: var(--font-size-sm); }
+.empty-state-guiado-botones {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
 
 .new-menu {
   background: var(--surface);
@@ -526,6 +636,21 @@ a { color: inherit; }
 .log-text { flex: 1; }
 .log-duration { color: var(--text-muted); font-size: 0.85em; }
 .empty-lane { color: var(--text-muted); font-size: 0.9em; }
+
+/* Densidad global (Fase 3): botón en side-footer, localStorage, aplicado
+   como atributo en <html> (mismo mecanismo que el tema). De momento solo
+   afecta a la lista de Tareas (.tarea-outlook-item); el resto de listas se
+   suman después sin cambios de arquitectura. La densidad de Correo es
+   independiente y vive en Correo > Ajustes, sin tocar. */
+:root[data-densidad="compacta"] .tarea-outlook-item {
+  padding: var(--space-1) var(--space-3);
+  gap: var(--space-2);
+  margin-bottom: 2px;
+}
+:root[data-densidad="compacta"] .tarea-outlook-item .log-duration,
+:root[data-densidad="compacta"] .tarea-outlook-item .pill {
+  display: none;
+}
 
 .log-badge {
   font-size: 0.72em;
@@ -1286,6 +1411,28 @@ a { color: inherit; }
 }
 .correo-icon-btn:hover { background: var(--bg); border-color: var(--primary); }
 .correo-lectura-asunto { margin: 18px 0 12px; font-size: 1.3em; }
+
+.correo-adjuntos { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.correo-adjunto-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  max-width: 260px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.correo-adjunto-chip:hover { border-color: var(--primary); color: var(--primary); }
+.correo-adjunto-tamano { color: var(--text-muted); }
+
+.correo-compose-adjuntos input[type="file"] { font-size: var(--font-size-sm); }
 .correo-lectura-cuerpo { flex: 1; white-space: pre-wrap; }
 .correo-cuerpo-texto { font-size: 0.92em; line-height: 1.5; }
 .correo-lectura-vacio {

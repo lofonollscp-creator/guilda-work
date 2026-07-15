@@ -38,7 +38,7 @@
     {% endif %}
     <form action="{{ url_for('crear_nota') }}" method="post" class="quick-row">
       <input type="hidden" name="categoria_id" value="{{ menu.id }}">
-      <input type="text" name="texto" placeholder="Escribe algo que ha pasado..." required autofocus>
+      <input type="text" id="menu-nota-texto" name="texto" placeholder="Escribe algo que ha pasado..." required autofocus>
       <button type="submit" class="btn">📝 Anotar</button>
     </form>
   </div>
@@ -48,7 +48,7 @@
     <input type="hidden" name="tipo" value="instantanea">
     <label>Evento instantáneo</label>
     <div class="quick-row">
-      <input type="text" name="nombre" placeholder="Algo puntual que acaba de ocurrir..." required>
+      <input type="text" id="menu-evento-nombre" name="nombre" placeholder="Algo puntual que acaba de ocurrir..." required>
       <button type="submit" class="btn">⚡ Registrar</button>
     </div>
   </form>
@@ -58,7 +58,7 @@
     <input type="hidden" name="tipo" value="duracion">
     <label>Tarea con duración</label>
     <div class="quick-row">
-      <input type="text" name="nombre" placeholder="Nombre de la tarea a iniciar..." required>
+      <input type="text" id="menu-tarea-nombre" name="nombre" placeholder="Nombre de la tarea a iniciar..." required>
       <button type="submit" class="btn btn-primary">▶ Iniciar</button>
     </div>
   </form>
@@ -131,9 +131,19 @@
     </form>
   </div>
   {% if not log %}
-  <p class="empty-lane">
-    {% if q %}No hay resultados para «{{ q }}».{% else %}Todavía no hay nada registrado en este menú.{% endif %}
-  </p>
+    {% if q %}
+    <p class="empty-lane">No hay resultados para «{{ q }}».</p>
+    {% else %}
+    <div class="empty-state-guiado">
+      <span class="empty-state-guiado-icono">✨</span>
+      <p>Este menú todavía está vacío.</p>
+      <p class="muted">Empieza por lo que te resulte más natural ahora mismo:</p>
+      <div class="empty-state-guiado-botones">
+        <button type="button" class="btn btn-primary" data-enfocar="menu-nota-texto">📝 Escribe tu primera nota</button>
+        <button type="button" class="btn" data-enfocar="menu-tarea-nombre">▶ Inicia tu primera tarea con duración</button>
+      </div>
+    </div>
+    {% endif %}
   {% else %}
   <ul class="log-list">
     {% for f in log %}
@@ -158,4 +168,15 @@
 </section>
 
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
+<script>
+  document.querySelectorAll(".empty-state-guiado [data-enfocar]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var campo = document.getElementById(boton.dataset.enfocar);
+      if (campo) {
+        campo.scrollIntoView({ block: "center" });
+        campo.focus();
+      }
+    });
+  });
+</script>
 {% endblock %}

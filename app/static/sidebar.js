@@ -29,6 +29,32 @@
     });
   }
 
+  const CLAVE_DENSIDAD = "guilda-work-densidad";
+  const ORDEN_DENSIDADES = ["normal", "compacta"];
+  const ETIQUETAS_DENSIDAD = { normal: "☰ Normal", compacta: "☰ Compacta" };
+
+  const botonDensidad = document.getElementById("densidad-toggle");
+  if (botonDensidad) {
+    const actualizarBotonDensidad = () => {
+      const densidad = localStorage.getItem(CLAVE_DENSIDAD) || "normal";
+      botonDensidad.textContent = ETIQUETAS_DENSIDAD[densidad];
+      botonDensidad.title = "Densidad actual: " + ETIQUETAS_DENSIDAD[densidad].slice(2) + " (clic para cambiar)";
+    };
+    actualizarBotonDensidad();
+
+    botonDensidad.addEventListener("click", () => {
+      const actual = localStorage.getItem(CLAVE_DENSIDAD) || "normal";
+      const siguiente = ORDEN_DENSIDADES[(ORDEN_DENSIDADES.indexOf(actual) + 1) % ORDEN_DENSIDADES.length];
+      localStorage.setItem(CLAVE_DENSIDAD, siguiente);
+      if (siguiente === "normal") {
+        delete document.documentElement.dataset.densidad;
+      } else {
+        document.documentElement.dataset.densidad = siguiente;
+      }
+      actualizarBotonDensidad();
+    });
+  }
+
   const lista = document.getElementById("side-menu-list");
   if (!lista) return;
 

@@ -14,6 +14,10 @@
       if (tema !== "system") {
         document.documentElement.dataset.theme = tema;
       }
+      var densidad = localStorage.getItem("guilda-work-densidad") || "normal";
+      if (densidad !== "normal") {
+        document.documentElement.dataset.densidad = densidad;
+      }
     })();
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -34,6 +38,7 @@
         </a>
         <a href="{{ url_for('correo.bandeja') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}">
           <span class="nav-icon">&#9993;</span> Correo
+          {% if correo_no_leidos_sidebar %}<span class="side-menu-badge side-nav-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
         </a>
         <a href="{{ url_for('historial') }}" class="{{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}">
           <span class="nav-icon">&#128337;</span> Histórico
@@ -89,6 +94,7 @@
 
       <div class="side-footer">
         <button type="button" id="theme-toggle" class="side-theme-toggle" title="Tema: cambiar">🖥 Sistema</button>
+        <button type="button" id="densidad-toggle" class="side-theme-toggle" title="Densidad: cambiar">☰ Normal</button>
         {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
         <button type="button" id="ia-panel-toggle" class="side-theme-toggle" title="Abrir Asistente IA">🤖</button>
         {% endif %}
@@ -115,6 +121,7 @@
   {% endif %}
 
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
+  <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
 </body>
 </html>
