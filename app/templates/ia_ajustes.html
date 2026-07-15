@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Ajustes del Asistente IA · Guilda Work{% endblock %}
+{% block content %}
+<div class="ia-pagina">
+  <div class="ia-pagina-cabecera">
+    <h1>Ajustes del Asistente IA</h1>
+    <a class="btn btn-ghost" href="{{ url_for('ia.asistente_vista') }}">&larr; Volver al chat</a>
+  </div>
+
+  <section class="correo-ajustes-seccion">
+    <h2>Modelo (OpenRouter)</h2>
+    <form method="post" action="{{ url_for('ia.guardar_ajustes') }}" class="correo-form-seccion">
+      <div class="correo-form-campo">
+        <label>Modelo sugerido</label>
+        <select name="modelo">
+          <option value="">— elegir uno de la lista, o usar el campo de abajo —</option>
+          {% for m in modelos_sugeridos %}
+          <option value="{{ m }}" {% if preferencias.modelo == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="correo-form-campo">
+        <label>O escribe cualquier otro id de modelo de OpenRouter</label>
+        <input type="text" name="modelo_personalizado" placeholder="ej. mistralai/mistral-large"
+               value="{{ preferencias.modelo if preferencias.modelo not in modelos_sugeridos else '' }}">
+      </div>
+
+      <div class="correo-form-campo">
+        <label>Clave de API de OpenRouter</label>
+        <input type="password" name="api_key" placeholder="{{ 'Ya configurada — deja en blanco para no cambiarla' if api_key_configurada else 'sk-or-...' }}">
+      </div>
+      {% if api_key_configurada %}
+      <label class="correo-form-checkbox">
+        <input type="checkbox" name="borrar_api_key"> Borrar la clave guardada
+      </label>
+      {% endif %}
+
+      <label class="correo-form-checkbox">
+        <input type="checkbox" name="modo_autonomo" {% if preferencias.modo_autonomo %}checked{% endif %}>
+        Modo autónomo: no pedir confirmación al crear/editar/borrar contenido
+      </label>
+      <p class="ia-aviso ia-aviso-modo-autonomo">
+        Aunque actives el modo autónomo, <strong>enviar un correo de verdad</strong> siempre
+        pedirá confirmación explícita, y el asistente nunca podrá borrar copias de seguridad
+        (solo crearlas) porque esa herramienta no existe.
+      </p>
+
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

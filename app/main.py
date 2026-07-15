@@ -15,8 +15,9 @@ from pathlib import Path
 import webview
 from flask import Flask, Response, abort, redirect, render_template, request, url_for
 
-from . import ai_local, db, export, importador
+from . import ai_local, db, export, ia_asistente, importador
 from .rutas_correo import correo_bp
+from .rutas_ia import ia_bp
 from .rutas_tareas import tareas_bp
 
 HOST = "127.0.0.1"
@@ -53,6 +54,7 @@ app = Flask(
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.register_blueprint(tareas_bp)
 app.register_blueprint(correo_bp)
+app.register_blueprint(ia_bp)
 
 
 @app.context_processor
@@ -60,6 +62,19 @@ def inyectar_menus():
     menus = db.listar_categorias()
     entradas_hoy_sidebar = {m["id"]: db.contar_entradas_hoy(m["id"]) for m in menus}
     return {"menus": menus, "entradas_hoy_sidebar": entradas_hoy_sidebar}
+
+
+@app.context_processor
+def inyectar_ia_flotante():
+    # El panel flotante del Asistente IA vive en base.html, así que necesita
+    # su propio contexto en cualquier página que no sea ya /ia (ahí la ruta
+    # pasa mensajes/pendiente explícitamente para el chat de página completa).
+    if request.endpoint and request.endpoint.startswith("ia."):
+        return {}
+    return {
+        "ia_mensajes_flotante": db.listar_mensajes_ia(),
+        "ia_pendiente_flotante": ia_asistente.pendiente_actual(),
+    }
 
 
 @app.route("/")

@@ -177,6 +177,27 @@ CREATE TABLE IF NOT EXISTS correo_mensajes (
     FOREIGN KEY (categoria_id) REFERENCES correo_categorias(id) ON DELETE SET NULL,
     UNIQUE (cuenta_id, carpeta, uid)
 );
+
+-- Preferencias del Asistente IA (OpenRouter): una sola fila (id=1 siempre).
+-- La clave de API NUNCA se guarda aquí: vive en el almacén de credenciales
+-- del sistema (keyring), gestionada por app/ia_asistente.py, igual que las
+-- contraseñas de correo en app/correo.py.
+CREATE TABLE IF NOT EXISTS ia_preferencias (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    modelo TEXT NOT NULL DEFAULT '',
+    modo_autonomo INTEGER NOT NULL DEFAULT 0
+);
+
+-- Historial de la conversación con el Asistente IA (un único hilo).
+CREATE TABLE IF NOT EXISTS ia_mensajes (
+    id INTEGER PRIMARY KEY,
+    rol TEXT NOT NULL CHECK (rol IN ('user','assistant','tool')),
+    contenido TEXT,
+    tool_calls_json TEXT,
+    tool_call_id TEXT,
+    nombre_herramienta TEXT,
+    creado_en TEXT NOT NULL
+);
 """
 
 
@@ -242,6 +263,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
         conn.execute("INSERT OR IGNORE INTO correo_preferencias (id) VALUES (1)")
+        conn.execute("INSERT OR IGNORE INTO ia_preferencias (id) VALUES (1)")
         _asegurar_orden_categorias(conn)
         conn.commit()
     finally:
@@ -1592,3 +1614,65 @@ def vaciar_papelera_antigua(dias: int = 30) -> None:
         eliminar_categoria_definitivamente(cid)
     for tid in ids_tareas_outlook:
         eliminar_tarea_outlook_definitivamente(tid)
+
+
+# --- Asistente IA (OpenRouter): preferencias y conversación -------------------
+
+def obtener_preferencias_ia() -> sqlite3.Row:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO ia_preferencias (id) VALUES (1)")
+        conn.commit()
+        return conn.execute("SELECT * FROM ia_preferencias WHERE id = 1").fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_preferencias_ia(modelo: str, modo_autonomo: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE id = 1",
+            (modelo, int(modo_autonomo)),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_mensajes_ia() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM ia_mensajes ORDER BY id").fetchall()
+    finally:
+        conn.close()
+
+
+def agregar_mensaje_ia(
+    rol: str,
+    contenido: str | None = None,
+    tool_calls_json: str | None = None,
+    tool_call_id: str | None = None,
+    nombre_herramienta: str | None = None,
+) -> int:
+    conn = get_connection()
+    try:
+        cursor = conn.execute(
+            """INSERT INTO ia_mensajes
+               (rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, now_iso()),
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def vaciar_mensajes_ia() -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM ia_mensajes")
+        conn.commit()
+    finally:
+        conn.close()

@@ -38,6 +38,9 @@
         <a href="{{ url_for('historial') }}" class="{{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}">
           <span class="nav-icon">&#128337;</span> Histórico
         </a>
+        <a href="{{ url_for('ia.asistente_vista') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}">
+          <span class="nav-icon">&#129302;</span> Asistente IA
+        </a>
         <a href="{{ url_for('estadisticas') }}" class="{{ 'active' if request.endpoint == 'estadisticas' else '' }}">
           <span class="nav-icon">&#128202;</span> Estadísticas
         </a>
@@ -86,6 +89,9 @@
 
       <div class="side-footer">
         <button type="button" id="theme-toggle" class="side-theme-toggle" title="Tema: cambiar">🖥 Sistema</button>
+        {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
+        <button type="button" id="ia-panel-toggle" class="side-theme-toggle" title="Abrir Asistente IA">🤖</button>
+        {% endif %}
         <form class="side-shutdown" action="{{ url_for('apagar') }}" method="post"
               onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
           <button type="submit">&#9211; Cerrar programa</button>
@@ -96,6 +102,19 @@
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
+  {% from "_ia_chat_macro.html" import chat %}
+  <div class="ia-panel-flotante" id="ia-panel-flotante" hidden>
+    <div class="ia-panel-flotante-cabecera">
+      <span>Asistente IA</span>
+      <button type="button" id="ia-panel-cerrar" title="Cerrar">&times;</button>
+    </div>
+    {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-flotante') }}
+  </div>
+  {% endif %}
+
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
+  <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
 </body>
 </html>
