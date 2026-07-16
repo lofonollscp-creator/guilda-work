@@ -1,0 +1,24 @@
+# Plantilla de unidad systemd para app/../serve.py en un VPS Linux (Fase 3
+# de la app móvil — ver HOSTING.md). Copia a /etc/systemd/system/guilda-work.service,
+# ajusta USUARIO y las rutas, y luego:
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now guilda-work
+#
+# El servicio se reinicia solo si el proceso muere o el servidor arranca.
+
+[Unit]
+Description=Guilda Work - API REST (serve.py)
+After=network.target
+
+[Service]
+Type=simple
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python serve.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

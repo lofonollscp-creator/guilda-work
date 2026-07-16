@@ -32,9 +32,16 @@ def cliente(base_de_datos_temporal):
     """Cliente de test de Flask para app/rutas_api.py (Fase 2). Se importa
     aquí dentro (no al nivel de módulo) para que la base de datos temporal
     ya esté activa cuando app.main se registre sus blueprints."""
+    from app.auth import limiter
     from app.main import app as flask_app
 
     flask_app.config.update(TESTING=True)
+    # El límite de intentos en /auth/login y /auth/registro (Fase 3, contra
+    # fuerza bruta) usa un almacén en memoria a nivel de proceso — sin
+    # resetearlo aquí, los tests que registran varios usuarios de seguido se
+    # agotarían la cuota entre sí y fallarían con 429 por algo ajeno a lo que
+    # están probando.
+    limiter.reset()
     with flask_app.test_client() as client:
         yield client
 

@@ -308,6 +308,13 @@ def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL permite que la app de escritorio (GuildaWork.exe) y un serve.py
+    # expuesto a internet (Fase 3, app móvil) lean/escriban el mismo
+    # registro.db a la vez sin bloquearse mutuamente; busy_timeout evita que
+    # el choque puntual entre dos escrituras casi simultáneas falle al
+    # instante con "database is locked" en vez de esperar un poco.
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 

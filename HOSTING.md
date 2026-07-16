@@ -1,0 +1,158 @@
+# Hosting en un VPS (Fase 3 de la app móvil)
+
+Guía lista para ejecutar el día que decidas contratar un VPS. Mientras
+tanto, la vía gratuita para tener la API accesible desde internet es
+[`CASERO.md`](CASERO.md) (Tailscale Funnel, sin coste, sin dominio, sobre
+tu propio PC). Contratar y pagar el VPS es algo que tienes que hacer tú
+— esta guía empieza justo después de tener el servidor creado.
+
+## Elegir proveedor
+
+| Proveedor | Precio aprox./mes | Notas |
+|---|---|---|
+| **Hetzner Cloud** (CX22) | ~€4,5 | Mejor relación calidad/precio, datacenters en Alemania/Finlandia. Recomendación por defecto si no quieres complicarte. |
+| **Contabo** | ~€4-5 | Más RAM/disco por el precio, pero rendimiento más variable (servidores más compartidos). |
+| **DigitalOcean** | ~$6 | Muy bien documentado, buena opción si es tu primer VPS. |
+| **Oracle Cloud "Always Free"** | Gratis de verdad | 4 núcleos ARM + 24GB RAM gratis para siempre, pero el proceso de alta de cuenta es errático (a veces rechaza tarjetas o "recupera" recursos sin avisar). Vale la pena intentarlo si no te importa la posible fricción inicial. |
+
+Para el uso de esta app (un solo backend Flask + SQLite, tráfico bajo), la
+oferta más pequeña de cualquiera de ellos sobra: 1 vCPU / 1-2GB RAM.
+Elige **Ubuntu 22.04 o 24.04 LTS** como sistema operativo al crear el
+servidor.
+
+## 1. Acceso y hardening básico
+
+```bash
+# Desde tu PC, conéctate como root la primera vez:
+ssh root@TU_IP
+
+# Crea un usuario normal (no sigas usando root para todo):
+adduser guilda
+usermod -aG sudo guilda
+
+# Cortafuegos: solo SSH, HTTP y HTTPS
+ufw allow OpenSSH
+ufw allow 80
+ufw allow 443
+ufw enable
+
+# Desactiva el login por contraseña (usa solo tu clave SSH) — edita
+# /etc/ssh/sshd_config y pon PasswordAuthentication no, luego:
+systemctl restart sshd
+```
+
+A partir de aquí, conéctate siempre como `guilda`, no como `root`.
+
+## 2. Instalar dependencias y traer el código
+
+```bash
+sudo apt update && sudo apt install -y python3.11 python3.11-venv git
+
+git clone https://github.com/lofonollscp-creator/guilda-work.git
+cd guilda-work
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+## 3. Variables de entorno de producción
+
+```bash
+python3.11 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Copia el resultado y créalo como archivo (no lo subas nunca a git):
+
+```bash
+sudo tee /etc/guilda-work.env > /dev/null <<'EOF'
+GUILDA_SECRET_KEY=pega-aqui-el-valor-generado
+GUILDA_HOST=127.0.0.1
+GUILDA_PORT=8000
+EOF
+sudo chmod 600 /etc/guilda-work.env
+```
+
+`GUILDA_HOST=127.0.0.1` (no `0.0.0.0`) porque quien de verdad va a estar
+expuesto a internet es Caddy, no `serve.py` directamente — `serve.py`
+solo escucha en local y Caddy hace de proxy inverso delante.
+
+## 4. Hostname sin dominio propio (sslip.io)
+
+Sin comprar un dominio todavía, usa un hostname que resuelve
+automáticamente a la IP de tu servidor — permite que Caddy pida un
+certificado Let's Encrypt real sin más:
+
+```
+203.0.113.10  →  203-0-113-10.sslip.io
+```
+
+(sustituye por la IP real de tu VPS, con guiones en vez de puntos).
+
+## 5. Caddy: proxy inverso con HTTPS automático
+
+Se elige Caddy sobre nginx+certbot porque la configuración es una
+`Caddyfile` de 3 líneas y renueva los certificados solo, sin cron.
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update && sudo apt install -y caddy
+```
+
+Copia la plantilla [`deploy/Caddyfile`](deploy/Caddyfile) a
+`/etc/caddy/Caddyfile`, sustituye `HOSTNAME` por tu `*.sslip.io` (o tu
+dominio real más adelante), y:
+
+```bash
+sudo systemctl reload caddy
+```
+
+## 6. systemd: que `serve.py` arranque solo y se reinicie si muere
+
+Copia la plantilla [`deploy/guilda-work.service`](deploy/guilda-work.service)
+a `/etc/systemd/system/guilda-work.service`, ajusta `USUARIO` y las rutas
+a las tuyas, y:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now guilda-work
+sudo systemctl status guilda-work
+```
+
+## 7. Verificar
+
+```bash
+curl https://tu-hostname.sslip.io/api/v1/categorias
+```
+
+Debería responder `401` con `{"ok": false, "error": "Token inválido o
+ausente."}` — confirma que Caddy y `serve.py` están sirviendo tráfico real
+con HTTPS válido.
+
+## 8. Backups (opcional, recomendado)
+
+`app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
+usa la app de escritorio. Un cron simple que la invoque y copie el
+resultado fuera del VPS (a otro almacenamiento barato, o simplemente por
+`scp` a tu PC) es suficiente para no depender solo del disco del
+servidor:
+
+```bash
+# crontab -e (usuario guilda)
+0 4 * * * /home/guilda/guilda-work/.venv/bin/python -c "from app import db; db.hacer_backup_si_hace_falta()"
+```
+
+## Migrar de sslip.io a un dominio propio
+
+Cuando compres un dominio:
+1. Crea un registro DNS **A** apuntando el subdominio que quieras (p.ej.
+   `app.tu-dominio.com`) a la IP del VPS.
+2. Cambia `HOSTNAME` en `/etc/caddy/Caddyfile` por ese subdominio.
+3. `sudo systemctl reload caddy` — Caddy pide el nuevo certificado solo.
+
+## Fuera de alcance de esta guía
+
+- Sincronizar datos entre esta instancia VPS y la base de datos local del
+  PC de escritorio si usas las dos a la vez — hoy serían dos bases de
+  datos independientes. Si llega a hacer falta, se plantea como una fase
+  aparte.

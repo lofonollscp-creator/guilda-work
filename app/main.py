@@ -24,7 +24,7 @@ import webview
 from flask import Flask, Response, abort, g, redirect, render_template, request, session, url_for
 
 from . import ai_local, correo, db, export, ia_asistente, importador
-from .auth import login_required
+from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_correo import correo_bp
 from .rutas_ia import ia_bp
@@ -74,6 +74,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 # GUILDA_SECRET_KEY como variable de entorno para que las sesiones no se
 # invaliden cada vez que se reinicie el proceso.
 app.secret_key = os.environ.get("GUILDA_SECRET_KEY") or secrets.token_hex(32)
+limiter.init_app(app)
 app.register_blueprint(tareas_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)

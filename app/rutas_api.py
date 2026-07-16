@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 from . import correo, db, export, ia_asistente
-from .auth import token_required
+from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -62,6 +62,7 @@ def _token_de_cabecera() -> str | None:
 # --- Auth ----------------------------------------------------------------
 
 @api_bp.route("/auth/registro", methods=["POST"])
+@limiter.limit("10/minute")
 def registro():
     datos = _body()
     email = (datos.get("email") or "").strip()
@@ -78,6 +79,7 @@ def registro():
 
 
 @api_bp.route("/auth/login", methods=["POST"])
+@limiter.limit("10/minute")
 def login():
     datos = _body()
     email = (datos.get("email") or "").strip()

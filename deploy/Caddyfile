@@ -1,0 +1,18 @@
+# Plantilla de Caddyfile para servir Guilda Work (serve.py) detrás de un
+# proxy inverso con HTTPS automático. Copia este archivo a /etc/caddy/Caddyfile
+# en el VPS y sustituye HOSTNAME antes de arrancar Caddy.
+#
+# Sin dominio propio todavía: usa un hostname de sslip.io, que resuelve
+# automáticamente a la IP del servidor y permite a Caddy pedir un
+# certificado Let's Encrypt real sin necesitar comprar un dominio. Si la IP
+# del VPS es 203.0.113.10, el hostname sería:
+#
+#   203-0-113-10.sslip.io
+#
+# Cuando compres un dominio de verdad, solo hay que cambiar HOSTNAME por
+# ese dominio aquí y crear el registro DNS A correspondiente — Caddy pide
+# el nuevo certificado solo, sin más pasos.
+
+HOSTNAME {
+	reverse_proxy localhost:8000
+}
