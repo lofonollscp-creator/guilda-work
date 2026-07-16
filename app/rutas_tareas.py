@@ -6,9 +6,10 @@ dentro de la app (sin relación con los menús ni con las tareas con duración).
 import calendar as calendario_std
 from datetime import date, timedelta
 
-from flask import Blueprint, Response, abort, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
 from . import db, outlook_ics
+from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
 
@@ -80,6 +81,7 @@ def _mover_ancla(vista: str, ancla: date, direccion: int) -> date:
 
 
 @tareas_bp.route("/")
+@login_required
 def listar():
     estado = request.args.get("estado") or None
     prioridad = request.args.get("prioridad") or None
@@ -91,12 +93,12 @@ def listar():
         # Vista por defecto: como el "To-Do List" de Outlook, oculta lo ya
         # completado para que la lista no se llene de tareas resueltas.
         tareas = [
-            t for t in db.listar_tareas_outlook(prioridad=prioridad, categoria_outlook=categoria, texto=q)
+            t for t in db.listar_tareas_outlook(g.usuario_id, prioridad=prioridad, categoria_outlook=categoria, texto=q)
             if t["estado"] != "completada"
         ]
     else:
         tareas = db.listar_tareas_outlook(
-            estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q
+            g.usuario_id, estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q
         )
 
     return render_template(
@@ -104,7 +106,7 @@ def listar():
         tareas=tareas,
         estados=ESTADOS,
         prioridades=PRIORIDADES,
-        categorias_outlook=db.listar_categorias_outlook(),
+        categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
         estado=estado or "",
         prioridad=prioridad or "",
         categoria=categoria or "",
@@ -114,6 +116,7 @@ def listar():
 
 
 @tareas_bp.route("/calendario")
+@login_required
 def calendario():
     vista = request.args.get("vista", "mes")
     if vista not in VISTAS_CALENDARIO:
@@ -129,7 +132,7 @@ def calendario():
     # cada tarea se ubica en el día de su vencimiento o, si no tiene, en el de
     # inicio — ese cálculo se hace aquí, no es un filtro directo de columna.
     tareas_por_dia: dict[str, list] = {}
-    for t in db.listar_tareas_outlook():
+    for t in db.listar_tareas_outlook(g.usuario_id):
         fecha_efectiva = (t["fecha_vencimiento"] or t["fecha_inicio"] or "")[:10]
         if fecha_efectiva:
             tareas_por_dia.setdefault(fecha_efectiva, []).append(t)
@@ -160,7 +163,7 @@ def calendario():
         hoy=date.today().isoformat(),
         horas=HORAS_DIA,
         prioridades=PRIORIDADES,
-        categorias_outlook=db.listar_categorias_outlook(),
+        categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
         volver_a=url_for("tareas.calendario", vista=vista, fecha=ancla.isoformat()),
     )
 
@@ -176,10 +179,12 @@ def _titulo_rango(vista: str, ancla: date, inicio: date, fin: date) -> str:
 
 
 @tareas_bp.route("/", methods=["POST"])
+@login_required
 def crear():
     asunto = request.form.get("asunto", "").strip()
     if asunto:
         db.crear_tarea_outlook(
+            g.usuario_id,
             asunto=asunto,
             prioridad=request.form.get("prioridad", "normal"),
             fecha_inicio=request.form.get("fecha_inicio") or None,
@@ -190,8 +195,9 @@ def crear():
 
 
 @tareas_bp.route("/<int:tarea_id>/editar", methods=["GET", "POST"])
+@login_required
 def editar(tarea_id: int):
-    tarea = db.obtener_tarea_outlook(tarea_id)
+    tarea = db.obtener_tarea_outlook(g.usuario_id, tarea_id)
     if tarea is None:
         abort(404)
 
@@ -213,49 +219,55 @@ def editar(tarea_id: int):
             "categoria_outlook": request.form.get("categoria_outlook", "").strip() or None,
         }
         if campos["estado"] == "completada" and tarea["estado"] != "completada":
-            db.completar_tarea_outlook(tarea_id)
+            db.completar_tarea_outlook(g.usuario_id, tarea_id)
             campos.pop("estado")
             campos.pop("porcentaje_completado")
-        db.editar_tarea_outlook(tarea_id, **campos)
+        db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
         return redirect(url_for("tareas.listar"))
 
     return render_template("tarea_outlook_editar.html", tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, error=None)
 
 
 @tareas_bp.route("/<int:tarea_id>/completar", methods=["POST"])
+@login_required
 def completar(tarea_id: int):
-    db.completar_tarea_outlook(tarea_id)
+    db.completar_tarea_outlook(g.usuario_id, tarea_id)
     return redirect(request.referrer or url_for("tareas.listar"))
 
 
 @tareas_bp.route("/<int:tarea_id>/eliminar", methods=["POST"])
+@login_required
 def eliminar(tarea_id: int):
-    if db.obtener_tarea_outlook(tarea_id) is None:
+    if db.obtener_tarea_outlook(g.usuario_id, tarea_id) is None:
         abort(404)
-    db.eliminar_tarea_outlook(tarea_id)
+    db.eliminar_tarea_outlook(g.usuario_id, tarea_id)
     return redirect(url_for("tareas.listar"))
 
 
 @tareas_bp.route("/<int:tarea_id>/restaurar", methods=["POST"])
+@login_required
 def restaurar(tarea_id: int):
-    db.restaurar_tarea_outlook(tarea_id)
+    db.restaurar_tarea_outlook(g.usuario_id, tarea_id)
     return redirect(request.form.get("volver_a") or url_for("papelera"))
 
 
 @tareas_bp.route("/<int:tarea_id>/eliminar-definitivamente", methods=["POST"])
+@login_required
 def eliminar_definitivamente(tarea_id: int):
-    db.eliminar_tarea_outlook_definitivamente(tarea_id)
+    db.eliminar_tarea_outlook_definitivamente(g.usuario_id, tarea_id)
     return redirect(request.form.get("volver_a") or url_for("papelera"))
 
 
 @tareas_bp.route("/sincronizar")
+@login_required
 def sincronizar():
     return render_template("tareas_outlook_sync.html", resumen=None, error=None)
 
 
 @tareas_bp.route("/exportar.ics")
+@login_required
 def exportar_ics():
-    contenido = outlook_ics.exportar_ics(db.listar_tareas_outlook())
+    contenido = outlook_ics.exportar_ics(db.listar_tareas_outlook(g.usuario_id))
     return Response(
         contenido,
         mimetype="text/calendar",
@@ -264,8 +276,9 @@ def exportar_ics():
 
 
 @tareas_bp.route("/exportar.csv")
+@login_required
 def exportar_csv():
-    contenido = outlook_ics.exportar_csv_outlook(db.listar_tareas_outlook())
+    contenido = outlook_ics.exportar_csv_outlook(db.listar_tareas_outlook(g.usuario_id))
     return Response(
         contenido,
         mimetype="text/csv",
@@ -274,6 +287,7 @@ def exportar_csv():
 
 
 @tareas_bp.route("/importar", methods=["POST"])
+@login_required
 def importar_archivo():
     archivo = request.files.get("archivo")
     if archivo is None or not archivo.filename:
@@ -285,9 +299,9 @@ def importar_archivo():
     contenido = archivo.read().decode("utf-8", errors="replace")
     try:
         if archivo.filename.lower().endswith(".csv"):
-            resumen = outlook_ics.importar_csv_outlook(contenido)
+            resumen = outlook_ics.importar_csv_outlook(g.usuario_id, contenido)
         else:
-            resumen = outlook_ics.importar_ics(contenido)
+            resumen = outlook_ics.importar_ics(g.usuario_id, contenido)
     except outlook_ics.ErrorSincronizacionOutlook as e:
         return render_template("tareas_outlook_sync.html", resumen=None, error=str(e))
 

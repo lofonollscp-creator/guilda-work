@@ -6,7 +6,7 @@ import pytest
 from app import db, importador
 
 
-def test_importar_json_crea_menu_notas_y_tareas():
+def test_importar_json_crea_menu_notas_y_tareas(usuario_id):
     contenido = json.dumps({
         "registros": [
             {
@@ -27,20 +27,20 @@ def test_importar_json_crea_menu_notas_y_tareas():
         ]
     })
 
-    resumen = importador.importar_json(contenido)
+    resumen = importador.importar_json(usuario_id, contenido)
 
     assert resumen == {"notas": 1, "tareas": 2, "omitidos": 0}
-    nombres_menus = {c["nombre"] for c in db.listar_categorias()}
+    nombres_menus = {c["nombre"] for c in db.listar_categorias(usuario_id)}
     assert nombres_menus == {"Lueira", "Guilda"}
 
-    historial = db.historial()
+    historial = db.historial(usuario_id)
     assert len(historial) == 3
     tarea_duracion = next(f for f in historial if f["texto"] == "Proceso de despliegue")
     assert tarea_duracion["duracion_segundos"] == 5400
     assert tarea_duracion["estado"] == "finalizada"
 
 
-def test_importar_json_omite_filas_invalidas_sin_abortar():
+def test_importar_json_omite_filas_invalidas_sin_abortar(usuario_id):
     contenido = json.dumps({
         "registros": [
             {"origen": "nota", "texto_o_nombre": "", "categoria": "Guilda", "timestamp_inicio": "2026-01-01T10:00:00"},
@@ -52,19 +52,19 @@ def test_importar_json_omite_filas_invalidas_sin_abortar():
         ]
     })
 
-    resumen = importador.importar_json(contenido)
+    resumen = importador.importar_json(usuario_id, contenido)
 
     assert resumen == {"notas": 1, "tareas": 0, "omitidos": 3}
 
 
-def test_importar_json_rechaza_formato_no_reconocido():
+def test_importar_json_rechaza_formato_no_reconocido(usuario_id):
     with pytest.raises(importador.ErrorImportacion):
-        importador.importar_json("{}")
+        importador.importar_json(usuario_id, "{}")
     with pytest.raises(importador.ErrorImportacion):
-        importador.importar_json("esto no es json")
+        importador.importar_json(usuario_id, "esto no es json")
 
 
-def test_importar_json_recalcula_duracion_si_falta():
+def test_importar_json_recalcula_duracion_si_falta(usuario_id):
     contenido = json.dumps({
         "registros": [
             {
@@ -75,31 +75,31 @@ def test_importar_json_recalcula_duracion_si_falta():
         ]
     })
 
-    importador.importar_json(contenido)
+    importador.importar_json(usuario_id, contenido)
 
-    tarea = db.historial()[0]
+    tarea = db.historial(usuario_id)[0]
     assert tarea["duracion_segundos"] == 1800
 
 
-def test_importar_csv_equivalente_al_json():
+def test_importar_csv_equivalente_al_json(usuario_id):
     contenido = (
         "origen,id,texto_o_nombre,tipo,estado,categoria,timestamp_inicio,timestamp_fin,duracion_segundos\n"
         "nota,1,Nota de prueba,,,Guilda,2026-01-01T10:00:00,,\n"
         "tarea,2,Proceso,duracion,finalizada,Guilda,2026-01-01T09:00:00,2026-01-01T09:15:00,900\n"
     )
 
-    resumen = importador.importar_csv(contenido)
+    resumen = importador.importar_csv(usuario_id, contenido)
 
     assert resumen == {"notas": 1, "tareas": 1, "omitidos": 0}
 
 
-def test_importar_csv_rechaza_columnas_inesperadas():
+def test_importar_csv_rechaza_columnas_inesperadas(usuario_id):
     with pytest.raises(importador.ErrorImportacion):
-        importador.importar_csv("columna_a,columna_b\n1,2\n")
+        importador.importar_csv(usuario_id, "columna_a,columna_b\n1,2\n")
 
 
-def test_importar_reutiliza_menu_existente_por_nombre():
-    cid = db.crear_categoria("Guilda")
+def test_importar_reutiliza_menu_existente_por_nombre(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda")
     contenido = json.dumps({
         "registros": [
             {"origen": "nota", "texto_o_nombre": "Nota", "categoria": "Guilda",
@@ -107,7 +107,7 @@ def test_importar_reutiliza_menu_existente_por_nombre():
         ]
     })
 
-    importador.importar_json(contenido)
+    importador.importar_json(usuario_id, contenido)
 
-    assert len(db.listar_categorias()) == 1
-    assert db.listar_categorias()[0]["id"] == cid
+    assert len(db.listar_categorias(usuario_id)) == 1
+    assert db.listar_categorias(usuario_id)[0]["id"] == cid

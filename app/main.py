@@ -3,8 +3,16 @@
 Punto de entrada: arranca un servidor Flask local y lo muestra en una
 ventana nativa de Windows (WebView2, vía pywebview) en lugar de abrir el
 navegador del sistema.
+
+Multiusuario (Fase 1 de la app móvil): en modo escritorio (esta misma app,
+`main()`) no hay pantalla de login — se entra automáticamente como el
+"usuario local" (`db.usuario_local_id()`), igual que siempre. El login de
+verdad (`/login`, `/registro`) solo hace falta cuando la app se sirve fuera
+de este modo (por ejemplo, ya alojada en internet para la futura app
+móvil — ver `serve.py`), donde `MODO_ESCRITORIO` es False.
 """
 import os
+import secrets
 import socket
 import sys
 import threading
@@ -13,9 +21,11 @@ from datetime import datetime
 from pathlib import Path
 
 import webview
-from flask import Flask, Response, abort, redirect, render_template, request, url_for
+from flask import Flask, Response, abort, g, redirect, render_template, request, session, url_for
 
 from . import ai_local, correo, db, export, ia_asistente, importador
+from .auth import login_required
+from .rutas_api import api_bp
 from .rutas_correo import correo_bp
 from .rutas_ia import ia_bp
 from .rutas_tareas import tareas_bp
@@ -33,6 +43,12 @@ if sys.stderr is None:
     sys.stderr = open(os.devnull, "w")
 
 PROMPT_IA_POR_DEFECTO = "Resume mis actividades agrupadas por categoría, destacando lo más relevante y el tiempo dedicado a cada una."
+
+# True solo dentro de main() (la app de escritorio empaquetada/pywebview):
+# hace que cualquier visita entre automáticamente como el usuario local, sin
+# pantalla de login. Falso por defecto (p.ej. al servir con waitress/serve.py
+# para la futura app móvil), donde sí hace falta iniciar sesión de verdad.
+MODO_ESCRITORIO = False
 
 # Cuando se empaqueta con PyInstaller, los recursos (templates/static) viajan
 # dentro de sys._MEIPASS/app (--add-data "app/templates;app/templates" los
@@ -52,9 +68,23 @@ app = Flask(
 # (comprobar mtime en cada render) es insignificante para una app de un solo
 # usuario local.
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+# Necesaria para firmar la cookie de sesión (login). En desarrollo/escritorio
+# se genera una aleatoria al arrancar (basta con que la sesión sobreviva
+# mientras el proceso está vivo); en un despliegue real de verdad, fija
+# GUILDA_SECRET_KEY como variable de entorno para que las sesiones no se
+# invaliden cada vez que se reinicie el proceso.
+app.secret_key = os.environ.get("GUILDA_SECRET_KEY") or secrets.token_hex(32)
 app.register_blueprint(tareas_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)
+app.register_blueprint(api_bp)
+
+
+@app.before_request
+def _resolver_usuario_actual():
+    if MODO_ESCRITORIO and "usuario_id" not in session:
+        session["usuario_id"] = db.usuario_local_id()
+    g.usuario_id = session.get("usuario_id")
 
 
 @app.context_processor
@@ -63,7 +93,9 @@ def inyectar_correo_badge():
     # badge sobre el icono de Correo). La lista de menús ya no vive en un
     # sidebar global — cada ruta que la necesita (inicio(), captura()) la
     # pasa explícitamente en su propio contexto.
-    return {"correo_no_leidos_sidebar": db.contar_no_leidos_total_correo()}
+    if not g.usuario_id:
+        return {}
+    return {"correo_no_leidos_sidebar": db.contar_no_leidos_total_correo(g.usuario_id)}
 
 
 @app.context_processor
@@ -71,24 +103,75 @@ def inyectar_ia_flotante():
     # El panel flotante del Asistente IA vive en base.html, así que necesita
     # su propio contexto en cualquier página que no sea ya /ia (ahí la ruta
     # pasa mensajes/pendiente explícitamente para el chat de página completa).
-    if request.endpoint and request.endpoint.startswith("ia."):
+    if not g.usuario_id or (request.endpoint and request.endpoint.startswith("ia.")):
         return {}
     return {
-        "ia_mensajes_flotante": db.listar_mensajes_ia(),
-        "ia_pendiente_flotante": ia_asistente.pendiente_actual(),
+        "ia_mensajes_flotante": db.listar_mensajes_ia(g.usuario_id),
+        "ia_pendiente_flotante": ia_asistente.pendiente_actual(g.usuario_id),
     }
 
 
+# --- Autenticación -----------------------------------------------------------
+
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
+    if g.usuario_id:
+        return redirect(url_for("inicio"))
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        contrasena = request.form.get("contrasena", "")
+        confirmar = request.form.get("confirmar", "")
+        if not email or "@" not in email:
+            error = "Indica un email válido."
+        elif len(contrasena) < 8:
+            error = "La contraseña debe tener al menos 8 caracteres."
+        elif contrasena != confirmar:
+            error = "Las contraseñas no coinciden."
+        elif db.obtener_usuario_por_email(email) is not None:
+            error = "Ya existe una cuenta con ese email."
+        else:
+            usuario_id = db.crear_usuario(email, contrasena)
+            session["usuario_id"] = usuario_id
+            return redirect(url_for("inicio"))
+    return render_template("registro.html", error=error)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if g.usuario_id:
+        return redirect(url_for("inicio"))
+    error = None
+    siguiente = request.args.get("siguiente") or request.form.get("siguiente") or url_for("inicio")
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        contrasena = request.form.get("contrasena", "")
+        usuario = db.verificar_credenciales(email, contrasena)
+        if usuario is None:
+            error = "Email o contraseña incorrectos."
+        else:
+            session["usuario_id"] = usuario["id"]
+            return redirect(request.form.get("siguiente") or url_for("inicio"))
+    return render_template("login.html", error=error, siguiente=siguiente)
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/")
+@login_required
 def inicio():
-    menus = db.listar_categorias()
-    activas = db.tareas_activas()
+    menus = db.listar_categorias(g.usuario_id)
+    activas = db.tareas_activas(g.usuario_id)
     activas_por_menu: dict[int, list] = {}
     for t in activas:
         activas_por_menu.setdefault(t["categoria_id"], []).append(t)
-    entradas_hoy = {m["id"]: db.contar_entradas_hoy(m["id"]) for m in menus}
+    entradas_hoy = {m["id"]: db.contar_entradas_hoy(g.usuario_id, m["id"]) for m in menus}
     hoy = datetime.now().strftime("%Y-%m-%d")
-    log_hoy = db.historial(desde=hoy, hasta=hoy)
+    log_hoy = db.historial(g.usuario_id, desde=hoy, hasta=hoy)
     return render_template(
         "inicio.html",
         menus=menus,
@@ -101,29 +184,32 @@ def inicio():
 
 
 @app.route("/menus", methods=["POST"])
+@login_required
 def crear_menu():
     nombre = request.form.get("nombre", "").strip()
     color = request.form.get("color", "").strip() or None
     if nombre:
-        db.crear_categoria(nombre, color)
+        db.crear_categoria(g.usuario_id, nombre, color)
     return redirect(url_for("inicio"))
 
 
 @app.route("/menu/<int:menu_id>")
+@login_required
 def ver_menu(menu_id: int):
-    menu = db.obtener_categoria(menu_id)
+    menu = db.obtener_categoria(g.usuario_id, menu_id)
     if menu is None:
         abort(404)
     q = request.args.get("q") or None
-    activas = [t for t in db.tareas_activas() if t["categoria_id"] == menu_id]
-    log = db.historial(categoria_id=menu_id, texto=q)
+    activas = [t for t in db.tareas_activas(g.usuario_id) if t["categoria_id"] == menu_id]
+    log = db.historial(g.usuario_id, categoria_id=menu_id, texto=q)
     plantillas = db.listar_plantillas(menu_id)
     return render_template("menu.html", menu=menu, activas=activas, log=log, q=q or "", plantillas=plantillas)
 
 
 @app.route("/menu/<int:menu_id>/plantillas", methods=["POST"])
+@login_required
 def crear_plantilla(menu_id: int):
-    if db.obtener_categoria(menu_id) is None:
+    if db.obtener_categoria(g.usuario_id, menu_id) is None:
         abort(404)
     texto = request.form.get("texto", "").strip()
     if texto:
@@ -132,101 +218,112 @@ def crear_plantilla(menu_id: int):
 
 
 @app.route("/plantilla/<int:plantilla_id>/eliminar", methods=["POST"])
+@login_required
 def eliminar_plantilla(plantilla_id: int):
     db.eliminar_plantilla(plantilla_id)
     return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
 
 
 @app.route("/menu/<int:menu_id>/renombrar", methods=["POST"])
+@login_required
 def renombrar_menu(menu_id: int):
-    if db.obtener_categoria(menu_id) is None:
+    if db.obtener_categoria(g.usuario_id, menu_id) is None:
         abort(404)
     nombre = request.form.get("nombre", "").strip()
     color = request.form.get("color", "").strip() or None
     if nombre:
-        db.renombrar_categoria(menu_id, nombre, color)
+        db.renombrar_categoria(g.usuario_id, menu_id, nombre, color)
     return redirect(url_for("ver_menu", menu_id=menu_id))
 
 
 @app.route("/menu/<int:menu_id>/mover", methods=["POST"])
+@login_required
 def mover_menu(menu_id: int):
     direccion = request.form.get("direccion")
     if direccion in ("arriba", "abajo"):
-        db.mover_categoria(menu_id, direccion)
+        db.mover_categoria(g.usuario_id, menu_id, direccion)
     return redirect(request.referrer or url_for("inicio"))
 
 
 @app.route("/menu/<int:menu_id>/favorito", methods=["POST"])
+@login_required
 def alternar_favorito_menu(menu_id: int):
-    if db.obtener_categoria(menu_id) is None:
+    if db.obtener_categoria(g.usuario_id, menu_id) is None:
         abort(404)
-    db.alternar_favorito_categoria(menu_id)
+    db.alternar_favorito_categoria(g.usuario_id, menu_id)
     return redirect(request.referrer or url_for("inicio"))
 
 
 @app.route("/menus/reordenar", methods=["POST"])
+@login_required
 def reordenar_menus():
     """Recibe el orden final tras arrastrar en la barra lateral (fetch en
     segundo plano, sin recarga de página — ver app/static/sidebar.js)."""
     datos = request.get_json(silent=True) or {}
     orden_ids = [int(i) for i in datos.get("orden", []) if str(i).isdigit()]
-    db.reordenar_categorias(orden_ids)
+    db.reordenar_categorias(g.usuario_id, orden_ids)
     return "", 204
 
 
 @app.route("/menu/<int:menu_id>/eliminar", methods=["POST"])
+@login_required
 def eliminar_menu(menu_id: int):
-    if db.obtener_categoria(menu_id) is None:
+    if db.obtener_categoria(g.usuario_id, menu_id) is None:
         abort(404)
-    db.eliminar_categoria(menu_id)
+    db.eliminar_categoria(g.usuario_id, menu_id)
     return redirect(url_for("inicio"))
 
 
 @app.route("/notas", methods=["POST"])
+@login_required
 def crear_nota():
     texto = request.form.get("texto", "").strip()
     categoria_id = request.form.get("categoria_id") or None
     if texto:
-        db.crear_nota(texto, categoria_id=categoria_id)
+        db.crear_nota(g.usuario_id, texto, categoria_id=categoria_id)
     return redirect(request.referrer or url_for("inicio"))
 
 
 @app.route("/nota/<int:nota_id>/editar", methods=["GET", "POST"])
+@login_required
 def editar_nota(nota_id: int):
-    nota = db.obtener_nota(nota_id)
+    nota = db.obtener_nota(g.usuario_id, nota_id)
     if nota is None:
         abort(404)
     if request.method == "POST":
         texto = request.form.get("texto", "").strip()
         volver_a = request.form.get("volver_a") or url_for("inicio")
         if texto:
-            db.editar_nota(nota_id, texto)
+            db.editar_nota(g.usuario_id, nota_id, texto)
         return redirect(volver_a)
     volver_a = request.args.get("volver_a") or request.referrer or url_for("inicio")
     return render_template("editar_nota.html", nota=nota, volver_a=volver_a)
 
 
 @app.route("/nota/<int:nota_id>/eliminar", methods=["POST"])
+@login_required
 def eliminar_nota(nota_id: int):
-    if db.obtener_nota(nota_id) is None:
+    if db.obtener_nota(g.usuario_id, nota_id) is None:
         abort(404)
-    db.eliminar_nota(nota_id)
+    db.eliminar_nota(g.usuario_id, nota_id)
     return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
 
 
 @app.route("/tareas", methods=["POST"])
+@login_required
 def crear_tarea():
     nombre = request.form.get("nombre", "").strip()
     categoria_id = request.form.get("categoria_id")
     tipo = request.form.get("tipo", "duracion")
     if nombre and categoria_id:
-        db.crear_tarea(nombre, int(categoria_id), tipo)
+        db.crear_tarea(g.usuario_id, nombre, int(categoria_id), tipo)
     return redirect(request.referrer or url_for("inicio"))
 
 
 @app.route("/tarea/<int:tarea_id>/editar", methods=["GET", "POST"])
+@login_required
 def editar_tarea(tarea_id: int):
-    tarea = db.obtener_tarea(tarea_id)
+    tarea = db.obtener_tarea(g.usuario_id, tarea_id)
     if tarea is None:
         abort(404)
     error = None
@@ -236,12 +333,12 @@ def editar_tarea(tarea_id: int):
         fin = request.form.get("fin") or None
         volver_a = request.form.get("volver_a") or url_for("inicio")
         if nombre:
-            db.editar_tarea(tarea_id, nombre)
+            db.editar_tarea(g.usuario_id, tarea_id, nombre)
         if inicio:
-            error = db.editar_tiempos_tarea(tarea_id, inicio, fin)
+            error = db.editar_tiempos_tarea(g.usuario_id, tarea_id, inicio, fin)
         if error is None:
             return redirect(volver_a)
-        tarea = db.obtener_tarea(tarea_id)
+        tarea = db.obtener_tarea(g.usuario_id, tarea_id)
     volver_a = (
         request.form.get("volver_a")
         or request.args.get("volver_a")
@@ -252,36 +349,40 @@ def editar_tarea(tarea_id: int):
 
 
 @app.route("/tarea/<int:tarea_id>/eliminar", methods=["POST"])
+@login_required
 def eliminar_tarea(tarea_id: int):
-    if db.obtener_tarea(tarea_id) is None:
+    if db.obtener_tarea(g.usuario_id, tarea_id) is None:
         abort(404)
-    db.eliminar_tarea(tarea_id)
+    db.eliminar_tarea(g.usuario_id, tarea_id)
     return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
 
 
 @app.route("/tareas/<int:tarea_id>/pausar", methods=["POST"])
+@login_required
 def pausar_tarea(tarea_id: int):
-    db.pausar_tarea(tarea_id)
+    db.pausar_tarea(g.usuario_id, tarea_id)
     return redirect(request.referrer or url_for("inicio"))
 
 
 @app.route("/tareas/<int:tarea_id>/reanudar", methods=["POST"])
+@login_required
 def reanudar_tarea(tarea_id: int):
-    db.reanudar_tarea(tarea_id)
+    db.reanudar_tarea(g.usuario_id, tarea_id)
     return redirect(request.referrer or url_for("inicio"))
 
 
 @app.route("/tareas/<int:tarea_id>/finalizar", methods=["POST"])
+@login_required
 def finalizar_tarea(tarea_id: int):
-    db.finalizar_tarea(tarea_id)
+    db.finalizar_tarea(g.usuario_id, tarea_id)
     return redirect(request.referrer or url_for("inicio"))
 
 
 def _contexto_historial(desde, hasta, categoria_id, q=None, **extra):
-    filas = db.historial(desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q)
+    filas = db.historial(g.usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q)
     ctx = {
         "filas": filas,
-        "categorias": db.listar_categorias(),
+        "categorias": db.listar_categorias(g.usuario_id),
         "desde": desde or "",
         "hasta": hasta or "",
         "categoria_id": categoria_id or "",
@@ -297,6 +398,7 @@ def _contexto_historial(desde, hasta, categoria_id, q=None, **extra):
 
 
 @app.route("/historial")
+@login_required
 def historial():
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
@@ -307,6 +409,7 @@ def historial():
 
 
 @app.route("/export")
+@login_required
 def exportar():
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
@@ -315,15 +418,15 @@ def exportar():
     formato = request.args.get("formato", "json")
 
     if formato == "csv":
-        contenido = export.a_csv(desde, hasta, categoria_id)
+        contenido = export.a_csv(g.usuario_id, desde, hasta, categoria_id)
         mimetype = "text/csv"
         nombre_archivo = "guilda_work_export.csv"
     elif formato == "md":
-        contenido = export.a_markdown(desde, hasta, categoria_id)
+        contenido = export.a_markdown(g.usuario_id, desde, hasta, categoria_id)
         mimetype = "text/markdown"
         nombre_archivo = "guilda_work_resumen.md"
     else:
-        contenido = export.a_json(desde, hasta, categoria_id)
+        contenido = export.a_json(g.usuario_id, desde, hasta, categoria_id)
         mimetype = "application/json"
         nombre_archivo = "guilda_work_export.json"
 
@@ -335,11 +438,13 @@ def exportar():
 
 
 @app.route("/importar", methods=["GET"])
+@login_required
 def importar():
     return render_template("importar.html", resumen=None, error=None)
 
 
 @app.route("/importar", methods=["POST"])
+@login_required
 def procesar_importacion():
     archivo = request.files.get("archivo")
     if archivo is None or not archivo.filename:
@@ -348,9 +453,9 @@ def procesar_importacion():
     contenido = archivo.read().decode("utf-8", errors="replace")
     try:
         if archivo.filename.lower().endswith(".csv"):
-            resumen = importador.importar_csv(contenido)
+            resumen = importador.importar_csv(g.usuario_id, contenido)
         else:
-            resumen = importador.importar_json(contenido)
+            resumen = importador.importar_json(g.usuario_id, contenido)
     except importador.ErrorImportacion as e:
         return render_template("importar.html", resumen=None, error=str(e))
 
@@ -358,6 +463,7 @@ def procesar_importacion():
 
 
 @app.route("/informe-ia", methods=["POST"])
+@login_required
 def informe_ia():
     desde = request.form.get("desde") or None
     hasta = request.form.get("hasta") or None
@@ -367,7 +473,7 @@ def informe_ia():
     modelo = request.form.get("modelo", "").strip()
     prompt = request.form.get("prompt", "").strip() or PROMPT_IA_POR_DEFECTO
 
-    datos = export.construir_export(desde, hasta, categoria_id)
+    datos = export.construir_export(g.usuario_id, desde, hasta, categoria_id)
     informe_texto = None
     informe_error = None
     try:
@@ -386,6 +492,7 @@ def informe_ia():
 
 
 @app.route("/pregunta-ia", methods=["POST"])
+@login_required
 def pregunta_ia():
     """Modo "pregunta libre": chat con memoria contra los datos filtrados.
 
@@ -409,7 +516,7 @@ def pregunta_ia():
         if isinstance(m, dict) and m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str)
     ]
 
-    datos = export.construir_export(desde, hasta, categoria_id)
+    datos = export.construir_export(g.usuario_id, desde, hasta, categoria_id)
     try:
         respuesta = ai_local.preguntar(datos, historial_mensajes, pregunta, proveedor, modelo)
         return {"ok": True, "respuesta": respuesta}
@@ -418,6 +525,7 @@ def pregunta_ia():
 
 
 @app.route("/estadisticas")
+@login_required
 def estadisticas():
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
@@ -425,71 +533,85 @@ def estadisticas():
         "estadisticas.html",
         desde=desde or "",
         hasta=hasta or "",
-        por_categoria=db.estadisticas_por_categoria(desde, hasta),
-        por_dia=db.estadisticas_por_dia(desde, hasta),
+        por_categoria=db.estadisticas_por_categoria(g.usuario_id, desde, hasta),
+        por_dia=db.estadisticas_por_dia(g.usuario_id, desde, hasta),
     )
 
 
 @app.route("/captura")
+@login_required
 def captura():
-    menus = db.listar_categorias()
+    menus = db.listar_categorias(g.usuario_id)
     menu_id = request.args.get("menu")
     menu_id = int(menu_id) if menu_id and menu_id.isdigit() else (menus[0]["id"] if menus else None)
     return render_template("captura.html", menus=menus, menu_id=menu_id)
 
 
 @app.route("/captura", methods=["POST"])
+@login_required
 def crear_captura():
     texto = request.form.get("texto", "").strip()
     categoria_id = request.form.get("categoria_id") or None
     if texto and categoria_id:
-        db.crear_nota(texto, categoria_id=categoria_id)
+        db.crear_nota(g.usuario_id, texto, categoria_id=categoria_id)
     return {"ok": True}
 
 
 @app.route("/papelera")
+@login_required
 def papelera():
-    return render_template("papelera.html", items=db.papelera())
+    return render_template("papelera.html", items=db.papelera(g.usuario_id))
 
 
 @app.route("/papelera/nota/<int:nota_id>/restaurar", methods=["POST"])
+@login_required
 def restaurar_nota(nota_id: int):
-    db.restaurar_nota(nota_id)
+    db.restaurar_nota(g.usuario_id, nota_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/papelera/nota/<int:nota_id>/eliminar-definitivamente", methods=["POST"])
+@login_required
 def eliminar_nota_definitivamente(nota_id: int):
-    db.eliminar_nota_definitivamente(nota_id)
+    db.eliminar_nota_definitivamente(g.usuario_id, nota_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/papelera/tarea/<int:tarea_id>/restaurar", methods=["POST"])
+@login_required
 def restaurar_tarea(tarea_id: int):
-    db.restaurar_tarea(tarea_id)
+    db.restaurar_tarea(g.usuario_id, tarea_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/papelera/tarea/<int:tarea_id>/eliminar-definitivamente", methods=["POST"])
+@login_required
 def eliminar_tarea_definitivamente(tarea_id: int):
-    db.eliminar_tarea_definitivamente(tarea_id)
+    db.eliminar_tarea_definitivamente(g.usuario_id, tarea_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/papelera/menu/<int:menu_id>/restaurar", methods=["POST"])
+@login_required
 def restaurar_menu(menu_id: int):
-    db.restaurar_categoria(menu_id)
+    db.restaurar_categoria(g.usuario_id, menu_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/papelera/menu/<int:menu_id>/eliminar-definitivamente", methods=["POST"])
+@login_required
 def eliminar_menu_definitivamente(menu_id: int):
-    db.eliminar_categoria_definitivamente(menu_id)
+    db.eliminar_categoria_definitivamente(g.usuario_id, menu_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/papelera/vaciar", methods=["POST"])
+@login_required
 def vaciar_papelera():
+    # dias=0 purgaría la papelera de TODOS los usuarios (vaciar_papelera_antigua
+    # no filtra por usuario) — aceptable en modo escritorio (un único usuario
+    # real de todas formas); revisar si esto llega a servir a varios usuarios
+    # de verdad en la Fase 3 (hosting).
     db.vaciar_papelera_antigua(dias=0)
     return redirect(url_for("papelera"))
 
@@ -645,11 +767,14 @@ def _sincronizacion_correo_periodica():
     la barra lateral refleje mensajes recién llegados sin tener que pulsar
     "Sincronizar" a mano. Cada cuenta se sincroniza en su propio try/except:
     una cuenta con credenciales caducadas o sin red no debe impedir que se
-    sincronicen las demás, ni tumbar este hilo."""
+    sincronicen las demás, ni tumbar este hilo. En modo escritorio solo hay
+    un usuario real, así que se recorren las cuentas de todos los usuarios
+    (en la práctica, solo el local) sin distinción."""
     while True:
         time.sleep(SINCRONIZACION_CORREO_INTERVALO_MINUTOS * 60)
         try:
-            cuentas = db.listar_cuentas_correo()
+            usuario_id = db.usuario_local_id()
+            cuentas = db.listar_cuentas_correo(usuario_id)
         except Exception:
             continue
         for cuenta in cuentas:
@@ -672,7 +797,8 @@ def _recordatorio_periodico():
         if _icono_bandeja is None:
             continue
         try:
-            if not db.hubo_actividad_reciente(RECORDATORIO_INTERVALO_MINUTOS):
+            usuario_id = db.usuario_local_id()
+            if not db.hubo_actividad_reciente(usuario_id, RECORDATORIO_INTERVALO_MINUTOS):
                 _icono_bandeja.notify(
                     "¿Qué has hecho en la última hora? Ctrl+Alt+G lo anota en dos segundos.",
                     "Guilda Work",
@@ -682,7 +808,8 @@ def _recordatorio_periodico():
 
 
 def main():
-    global _ventana_principal
+    global _ventana_principal, MODO_ESCRITORIO
+    MODO_ESCRITORIO = True
     db.init_db()
     try:
         db.hacer_backup_si_hace_falta()

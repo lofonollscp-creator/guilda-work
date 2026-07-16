@@ -18,32 +18,34 @@ import sys
 from app import db, export
 
 
-def _resolver_menu_id(nombre_o_id: str | None) -> int | None:
+def _resolver_menu_id(usuario_id: int, nombre_o_id: str | None) -> int | None:
     if not nombre_o_id:
         return None
     if nombre_o_id.isdigit():
         return int(nombre_o_id)
-    for c in db.listar_categorias():
+    for c in db.listar_categorias(usuario_id):
         if c["nombre"].lower() == nombre_o_id.lower():
             return c["id"]
-    disponibles = ", ".join(c["nombre"] for c in db.listar_categorias())
+    disponibles = ", ".join(c["nombre"] for c in db.listar_categorias(usuario_id))
     print(f"Menú '{nombre_o_id}' no encontrado. Disponibles: {disponibles}", file=sys.stderr)
     sys.exit(1)
 
 
 def cmd_menus(args):
-    for c in db.listar_categorias():
+    usuario_id = db.usuario_local_id()
+    for c in db.listar_categorias(usuario_id):
         print(f"{c['id']}\t{c['nombre']}\t{c['color'] or ''}")
 
 
 def cmd_export(args):
-    menu_id = _resolver_menu_id(args.menu)
+    usuario_id = db.usuario_local_id()
+    menu_id = _resolver_menu_id(usuario_id, args.menu)
     if args.formato == "csv":
-        contenido = export.a_csv(args.desde, args.hasta, menu_id)
+        contenido = export.a_csv(usuario_id, args.desde, args.hasta, menu_id)
     elif args.formato == "md":
-        contenido = export.a_markdown(args.desde, args.hasta, menu_id)
+        contenido = export.a_markdown(usuario_id, args.desde, args.hasta, menu_id)
     else:
-        contenido = export.a_json(args.desde, args.hasta, menu_id)
+        contenido = export.a_json(usuario_id, args.desde, args.hasta, menu_id)
 
     if args.salida:
         with open(args.salida, "w", encoding="utf-8") as f:
@@ -53,35 +55,36 @@ def cmd_export(args):
         print(contenido)
 
 
-def _categoria_o_crear(nombre: str, color: str) -> int:
+def _categoria_o_crear(usuario_id: int, nombre: str, color: str) -> int:
     """Reutiliza el menú si ya existe uno con ese nombre (evita chocar con la
     restricción UNIQUE al volver a ejecutar `demo --forzar`)."""
-    for c in db.listar_categorias():
+    for c in db.listar_categorias(usuario_id):
         if c["nombre"] == nombre:
             return c["id"]
-    return db.crear_categoria(nombre, color)
+    return db.crear_categoria(usuario_id, nombre, color)
 
 
 def cmd_demo(args):
-    if db.listar_categorias() and not args.forzar:
+    usuario_id = db.usuario_local_id()
+    if db.listar_categorias(usuario_id) and not args.forzar:
         print(
             "Ya hay menús creados. Usa --forzar si quieres añadir datos de ejemplo de todas formas.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    lueira = _categoria_o_crear("Lueira", "#4a90d9")
-    guilda = _categoria_o_crear("Guilda", "#e0a83a")
+    lueira = _categoria_o_crear(usuario_id, "Lueira", "#4a90d9")
+    guilda = _categoria_o_crear(usuario_id, "Guilda", "#e0a83a")
 
-    db.crear_nota("Atendido cliente X (consulta sobre reserva)", categoria_id=lueira)
-    db.crear_nota("Llamada a cliente Y", categoria_id=lueira)
-    db.crear_nota("Recibido correo de cliente Z, contestado", categoria_id=lueira)
+    db.crear_nota(usuario_id, "Atendido cliente X (consulta sobre reserva)", categoria_id=lueira)
+    db.crear_nota(usuario_id, "Llamada a cliente Y", categoria_id=lueira)
+    db.crear_nota(usuario_id, "Recibido correo de cliente Z, contestado", categoria_id=lueira)
     db.crear_plantilla(lueira, "Llamada a cliente")
 
-    db.crear_nota("Avance en desarrollo de la exportación", categoria_id=guilda)
-    tarea_id = db.crear_tarea("Proceso de despliegue", guilda, "duracion")
-    db.finalizar_tarea(tarea_id)
-    db.crear_tarea("Reunión rápida con el equipo", lueira, "instantanea")
+    db.crear_nota(usuario_id, "Avance en desarrollo de la exportación", categoria_id=guilda)
+    tarea_id = db.crear_tarea(usuario_id, "Proceso de despliegue", guilda, "duracion")
+    db.finalizar_tarea(usuario_id, tarea_id)
+    db.crear_tarea(usuario_id, "Reunión rápida con el equipo", lueira, "instantanea")
     db.crear_plantilla(guilda, "Avance en desarrollo")
 
     print("Datos de ejemplo creados: menús 'Lueira' y 'Guilda' con notas, eventos, una tarea y frases favoritas.")

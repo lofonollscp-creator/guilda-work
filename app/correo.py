@@ -53,6 +53,7 @@ def _clave_keyring(cuenta_id: int) -> str:
 
 
 def guardar_cuenta(
+    usuario_id: int,
     nombre: str, protocolo: str, host: str, puerto: int, usuario: str, contrasena: str,
     usa_tls: bool = True, smtp_host: str | None = None,
     smtp_puerto: int | None = None, smtp_tls: bool = True,
@@ -71,19 +72,19 @@ def guardar_cuenta(
         conn.logout()
 
     cuenta_id = db.crear_cuenta_correo(
-        nombre=nombre, protocolo=protocolo, host=host, puerto=puerto, usuario=usuario,
+        usuario_id, nombre=nombre, protocolo=protocolo, host=host, puerto=puerto, usuario=usuario,
         usa_tls=usa_tls, smtp_host=smtp_host, smtp_puerto=smtp_puerto, smtp_tls=smtp_tls,
     )
     keyring.set_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id), contrasena)
     return cuenta_id
 
 
-def eliminar_cuenta(cuenta_id: int) -> None:
+def eliminar_cuenta(usuario_id: int, cuenta_id: int) -> None:
     try:
         keyring.delete_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id))
     except keyring.errors.PasswordDeleteError:
         pass  # ya no había contraseña guardada (o nunca llegó a guardarse)
-    db.eliminar_cuenta_correo(cuenta_id)
+    db.eliminar_cuenta_correo(usuario_id, cuenta_id)
 
 
 def _contrasena(cuenta_id: int) -> str:
@@ -129,10 +130,10 @@ def _conectar_pop3_cuenta(cuenta) -> poplib.POP3:
     return _conectar_pop3(cuenta["host"], cuenta["puerto"], cuenta["usa_tls"], cuenta["usuario"], _contrasena(cuenta["id"]))
 
 
-def probar_conexion(cuenta_id: int) -> None:
+def probar_conexion(usuario_id: int, cuenta_id: int) -> None:
     """Abre y cierra la conexión de una cuenta ya guardada, para comprobar
     que sigue funcionando. Lanza ErrorCorreo con un mensaje legible si falla."""
-    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
     if cuenta["protocolo"] == "pop3":
@@ -394,11 +395,11 @@ def _sincronizar_pop3(cuenta) -> int:
             pass
 
 
-def sincronizar_bandeja(cuenta_id: int) -> dict:
+def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
     """Descarga los mensajes nuevos. En IMAP, de todas las carpetas del
     servidor (descubiertas automáticamente); en POP3, de la única bandeja
     posible. Devuelve {"nuevos": N}."""
-    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
     if cuenta["protocolo"] == "pop3":
@@ -412,10 +413,10 @@ def sincronizar_bandeja(cuenta_id: int) -> dict:
 CARPETA_POP3_UNICA = ("INBOX", "Bandeja de entrada")
 
 
-def listar_carpetas(cuenta_id: int) -> list[dict]:
+def listar_carpetas(usuario_id: int, cuenta_id: int) -> list[dict]:
     """Carpetas de una cuenta. Las cuentas POP3 siempre devuelven una única
     carpeta sintética "Bandeja de entrada" (POP3 no tiene carpetas reales)."""
-    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     if cuenta is not None and cuenta["protocolo"] == "pop3":
         return [{"nombre": CARPETA_POP3_UNICA[0], "nombre_visible": CARPETA_POP3_UNICA[1]}]
     carpetas = [dict(c) for c in db.listar_carpetas_correo(cuenta_id)]
@@ -484,7 +485,7 @@ def destinatarios_responder_a_todos(mensaje, direccion_propia: str | None) -> st
     return ", ".join(resultado)
 
 
-def mover_mensaje(mensaje_id: int, carpeta_destino: str) -> None:
+def mover_mensaje(usuario_id: int, mensaje_id: int, carpeta_destino: str) -> None:
     """Mueve un mensaje a otra carpeta — solo IMAP (POP3 no tiene carpetas).
 
     A diferencia de eliminar_mensaje (que es solo caché local), esto actúa
@@ -498,7 +499,7 @@ def mover_mensaje(mensaje_id: int, carpeta_destino: str) -> None:
     mensaje = db.obtener_mensaje_correo(mensaje_id)
     if mensaje is None:
         raise ErrorCorreo("Ese mensaje no existe.")
-    cuenta = db.obtener_cuenta_correo(mensaje["cuenta_id"])
+    cuenta = db.obtener_cuenta_correo(usuario_id, mensaje["cuenta_id"])
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
     if cuenta["protocolo"] == "pop3":
@@ -524,18 +525,18 @@ def mover_mensaje(mensaje_id: int, carpeta_destino: str) -> None:
 
 # --- Categorías (propias de Guilda Work, no se sincronizan) -------------------
 
-def crear_categoria(nombre: str, color: str) -> int:
+def crear_categoria(usuario_id: int, nombre: str, color: str) -> int:
     if not nombre.strip():
         raise ErrorCorreo("La categoría necesita un nombre.")
-    return db.crear_categoria_correo(nombre, color)
+    return db.crear_categoria_correo(usuario_id, nombre, color)
 
 
-def listar_categorias():
-    return db.listar_categorias_correo()
+def listar_categorias(usuario_id: int):
+    return db.listar_categorias_correo(usuario_id)
 
 
-def eliminar_categoria(categoria_id: int) -> None:
-    db.eliminar_categoria_correo(categoria_id)
+def eliminar_categoria(usuario_id: int, categoria_id: int) -> None:
+    db.eliminar_categoria_correo(usuario_id, categoria_id)
 
 
 def asignar_categoria(mensaje_id: int, categoria_id: int | None) -> None:
@@ -544,16 +545,16 @@ def asignar_categoria(mensaje_id: int, categoria_id: int | None) -> None:
 
 # --- Firma ---------------------------------------------------------------------
 
-def guardar_firma(cuenta_id: int, firma_html: str, en_nuevos: bool, en_respuestas: bool) -> None:
-    db.guardar_firma_correo(cuenta_id, firma_html or None, en_nuevos, en_respuestas)
+def guardar_firma(usuario_id: int, cuenta_id: int, firma_html: str, en_nuevos: bool, en_respuestas: bool) -> None:
+    db.guardar_firma_correo(usuario_id, cuenta_id, firma_html or None, en_nuevos, en_respuestas)
 
 
-def preparar_cuerpo_inicial(cuenta_id: int, es_respuesta: bool, contenido_tras_firma: str = "") -> str:
+def preparar_cuerpo_inicial(usuario_id: int, cuenta_id: int, es_respuesta: bool, contenido_tras_firma: str = "") -> str:
     """Cuerpo con el que se abre el editor de redactar: un párrafo vacío
     (para que el cursor quede libre encima) seguido de la firma si
     corresponde según los interruptores de la cuenta, y después el contenido
     que ya hubiera (la cita de responder/reenviar, o nada si es nuevo)."""
-    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     aplica_firma = False
     firma_html = None
     if cuenta is not None:
@@ -590,6 +591,7 @@ def _direcciones(cadena: str | None) -> list[str]:
 
 
 def construir_y_enviar(
+    usuario_id: int,
     cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
     cc: str = "", bcc: str = "", en_respuesta_a: str | None = None,
     adjuntos: list[dict] | None = None,
@@ -608,7 +610,7 @@ def construir_y_enviar(
     direcciones solo se añaden a la lista de destinatarios del sobre SMTP
     (`to_addrs`), construida aquí explícitamente en vez de dejar que
     `smtplib` derive los destinatarios de las cabeceras."""
-    cuenta = db.obtener_cuenta_correo(cuenta_id)
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
     if not cuenta["smtp_host"] or not cuenta["smtp_puerto"]:

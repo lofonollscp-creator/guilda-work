@@ -156,7 +156,7 @@ def exportar_ics(tareas) -> str:
     return cal.to_ical().decode("utf-8")
 
 
-def importar_ics(contenido: str) -> dict:
+def importar_ics(usuario_id: int, contenido: str) -> dict:
     """Devuelve {"creadas": N, "actualizadas": N, "omitidas": N}."""
     resumen = {"creadas": 0, "actualizadas": 0, "omitidas": 0}
     try:
@@ -193,7 +193,7 @@ def importar_ics(contenido: str) -> dict:
                 categoria = str(valores[0])
 
         _, creada = db.upsert_tarea_outlook_por_entry_id(
-            uid,
+            usuario_id, uid,
             asunto=asunto, cuerpo=cuerpo, estado=estado,
             porcentaje_completado=porcentaje, prioridad=prioridad,
             fecha_inicio=fecha_inicio, fecha_vencimiento=fecha_vencimiento,
@@ -224,7 +224,7 @@ def exportar_csv_outlook(tareas) -> str:
     return salida.getvalue()
 
 
-def importar_csv_outlook(contenido: str) -> dict:
+def importar_csv_outlook(usuario_id: int, contenido: str) -> dict:
     """Devuelve {"creadas": N, "actualizadas": N, "omitidas": N}."""
     resumen = {"creadas": 0, "actualizadas": 0, "omitidas": 0}
     lector = csv.DictReader(io.StringIO(contenido))
@@ -256,6 +256,7 @@ def importar_csv_outlook(contenido: str) -> dict:
             porcentaje = 0
 
         tid = db.crear_tarea_outlook(
+            usuario_id,
             asunto=asunto,
             cuerpo=(datos.get("cuerpo") or "").strip() or None,
             estado=CSV_A_ESTADO.get(estado_txt, "no_iniciada"),
@@ -269,6 +270,6 @@ def importar_csv_outlook(contenido: str) -> dict:
         # en un segundo paso si el CSV trae una tarea ya cerrada.
         fecha_completada = _parsear_fecha_csv(datos.get("fecha_completada"))
         if fecha_completada:
-            db.editar_tarea_outlook(tid, fecha_completada=fecha_completada)
+            db.editar_tarea_outlook(usuario_id, tid, fecha_completada=fecha_completada)
         resumen["creadas"] += 1
     return resumen

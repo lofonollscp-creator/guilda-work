@@ -2,11 +2,31 @@
 
 Todos los timestamps se guardan en hora local (Europe/Madrid), formato
 ISO 8601 sin zona horaria explícita, ej: 2026-07-10T14:32:05.
+
+Multiusuario (Fase 1 de la app móvil): categorias, notas, tareas,
+tareas_outlook, correo_cuentas, correo_categorias e ia_mensajes llevan
+`usuario_id` directamente (denormalizado incluso en las que cuelgan de una
+categoría, porque notas/tareas pueden no tener categoría). Las tablas que
+cuelgan de una de esas con FK NOT NULL (pausas, plantillas,
+correo_carpetas, correo_mensajes, correo_adjuntos) se aíslan a través de su
+padre, sin columna propia. `correo_preferencias`/`ia_preferencias` pasan de
+fila única global (`id=1`) a una fila por usuario (`usuario_id` como clave
+primaria).
+
+Limitación conocida de esta fase: `categorias.nombre` y
+`correo_categorias.nombre` siguen siendo UNIQUE de forma global (no por
+usuario) — cambiarlo exige reconstruir esas tablas igual que se hizo con
+las de preferencias; se deja para una fase posterior si llega a ser un
+problema real con más de un usuario.
 """
+import hashlib
+import secrets
 import sqlite3
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+
+from werkzeug.security import check_password_hash, generate_password_hash
 
 if hasattr(sys, "_MEIPASS"):
     # Empaquetado con PyInstaller: sys._MEIPASS es una carpeta temporal que se
@@ -19,8 +39,27 @@ DB_PATH = RAIZ_PROYECTO / "data" / "registro.db"
 BACKUPS_DIR = RAIZ_PROYECTO / "data" / "backups"
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    contrasena_hash TEXT NOT NULL,
+    rol TEXT NOT NULL DEFAULT 'usuario' CHECK (rol IN ('usuario','admin')),
+    es_local INTEGER NOT NULL DEFAULT 0,
+    creado_en TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tokens_api (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    token_hash TEXT NOT NULL UNIQUE,
+    nombre_dispositivo TEXT,
+    creado_en TEXT NOT NULL,
+    ultimo_uso_en TEXT
+);
+
 CREATE TABLE IF NOT EXISTS categorias (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     nombre TEXT NOT NULL UNIQUE,
     color TEXT,
     creada_en TEXT NOT NULL,
@@ -30,6 +69,7 @@ CREATE TABLE IF NOT EXISTS categorias (
 
 CREATE TABLE IF NOT EXISTS tareas (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     nombre TEXT NOT NULL,
     categoria_id INTEGER NOT NULL,
     tipo TEXT NOT NULL CHECK (tipo IN ('duracion','instantanea')) DEFAULT 'duracion',
@@ -43,6 +83,7 @@ CREATE TABLE IF NOT EXISTS tareas (
 
 CREATE TABLE IF NOT EXISTS notas (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     texto TEXT NOT NULL,
     categoria_id INTEGER,
     tarea_id INTEGER,
@@ -76,6 +117,7 @@ CREATE TABLE IF NOT EXISTS plantillas (
 -- VTODO de iCalendar, para que el mapeo de importación/exportación sea 1:1.
 CREATE TABLE IF NOT EXISTS tareas_outlook (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     asunto TEXT NOT NULL,
     cuerpo TEXT,
     estado TEXT NOT NULL CHECK (estado IN
@@ -103,6 +145,7 @@ CREATE TABLE IF NOT EXISTS tareas_outlook (
 -- incluida ninguna de las dos.
 CREATE TABLE IF NOT EXISTS correo_cuentas (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     nombre TEXT NOT NULL,
     protocolo TEXT NOT NULL CHECK (protocolo IN ('imap','pop3')),
     host TEXT NOT NULL,
@@ -136,17 +179,10 @@ CREATE TABLE IF NOT EXISTS correo_carpetas (
 -- Exchange/Outlook — así que estas nunca se sincronizan con el servidor).
 CREATE TABLE IF NOT EXISTS correo_categorias (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     nombre TEXT NOT NULL UNIQUE,
     color TEXT NOT NULL,
     creada_en TEXT NOT NULL
-);
-
--- Preferencias generales de Correo: una sola fila (id=1 siempre).
-CREATE TABLE IF NOT EXISTS correo_preferencias (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    densidad TEXT NOT NULL DEFAULT 'normal' CHECK (densidad IN ('normal','compacta')),
-    marcar_leido_automatico INTEGER NOT NULL DEFAULT 1,
-    limite_mensajes INTEGER NOT NULL DEFAULT 50
 );
 
 -- Caché local de mensajes ya descargados (para no ir a red en cada
@@ -192,19 +228,10 @@ CREATE TABLE IF NOT EXISTS correo_adjuntos (
     FOREIGN KEY (mensaje_id) REFERENCES correo_mensajes(id) ON DELETE CASCADE
 );
 
--- Preferencias del Asistente IA (OpenRouter): una sola fila (id=1 siempre).
--- La clave de API NUNCA se guarda aquí: vive en el almacén de credenciales
--- del sistema (keyring), gestionada por app/ia_asistente.py, igual que las
--- contraseñas de correo en app/correo.py.
-CREATE TABLE IF NOT EXISTS ia_preferencias (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    modelo TEXT NOT NULL DEFAULT '',
-    modo_autonomo INTEGER NOT NULL DEFAULT 0
-);
-
--- Historial de la conversación con el Asistente IA (un único hilo).
+-- Historial de la conversación con el Asistente IA (un hilo por usuario).
 CREATE TABLE IF NOT EXISTS ia_mensajes (
     id INTEGER PRIMARY KEY,
+    usuario_id INTEGER,
     rol TEXT NOT NULL CHECK (rol IN ('user','assistant','tool')),
     contenido TEXT,
     tool_calls_json TEXT,
@@ -213,22 +240,37 @@ CREATE TABLE IF NOT EXISTS ia_mensajes (
     creado_en TEXT NOT NULL
 );
 
--- Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en
--- un escaneo completo de la tabla. A partir de unos pocos miles de filas
--- (uso de empresa: 100+ tareas y 200+ correos al día) eso se nota en cada
--- carga del Dashboard/Correo/Tareas. `CREATE INDEX IF NOT EXISTS` es
--- idempotente, así que se ejecuta en cada init_db() sin coste real si ya
--- existen.
+"""
+
+# Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en un
+# escaneo completo de la tabla. A partir de unos pocos miles de filas (uso
+# de empresa: 100+ tareas y 200+ correos al día) eso se nota en cada carga
+# del Dashboard/Correo/Tareas. `CREATE INDEX IF NOT EXISTS` es idempotente,
+# así que se ejecuta en cada init_db() sin coste real si ya existen. Va en
+# un script APARTE de SCHEMA (no dentro) porque los índices sobre
+# `usuario_id` referencian una columna que en bases de datos migradas se
+# añade con `_asegurar_columna` DESPUÉS de crear las tablas — si viviera en
+# el mismo `executescript(SCHEMA)`, fallaría en cualquier base de datos ya
+# existente donde la tabla ya existe pero todavía no tiene esa columna.
+INDICES = """
 CREATE INDEX IF NOT EXISTS idx_notas_categoria_creada ON notas(categoria_id, creada_en);
 CREATE INDEX IF NOT EXISTS idx_notas_papelera ON notas(papelera_en);
+CREATE INDEX IF NOT EXISTS idx_notas_usuario ON notas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_categoria_inicio ON tareas(categoria_id, inicio_en);
 CREATE INDEX IF NOT EXISTS idx_tareas_papelera ON tareas(papelera_en);
+CREATE INDEX IF NOT EXISTS idx_tareas_usuario ON tareas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_categorias_papelera ON categorias(papelera_en);
+CREATE INDEX IF NOT EXISTS idx_categorias_usuario ON categorias(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_papelera_vencimiento ON tareas_outlook(papelera_en, fecha_vencimiento);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_estado ON tareas_outlook(estado);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_usuario ON tareas_outlook(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_cuentas_usuario ON correo_cuentas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_categorias_usuario ON correo_categorias(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
+CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
 """
 
 
@@ -288,6 +330,80 @@ def _asegurar_orden_categorias(conn: sqlite3.Connection) -> None:
         conn.execute("UPDATE categorias SET orden = ? WHERE id = ?", (i, fila["id"]))
 
 
+def _resolver_usuario_local(conn: sqlite3.Connection) -> int:
+    """Usuario de confianza para procesos locales (cli.py, mcp_server.py,
+    y para migrar datos de antes de que existiera el login) que no pasan
+    por una sesión web. Si no existe todavía, se crea automáticamente con
+    una contraseña aleatoria (nadie inicia sesión "como" este usuario desde
+    fuera; es un ancla interna, no una cuenta pensada para usarse en la web)."""
+    fila = conn.execute("SELECT id FROM usuarios WHERE es_local = 1 ORDER BY id LIMIT 1").fetchone()
+    if fila:
+        return fila["id"]
+    cur = conn.execute(
+        "INSERT INTO usuarios (email, contrasena_hash, es_local, creado_en) VALUES (?, ?, 1, ?)",
+        ("local@guilda-work.local", generate_password_hash(secrets.token_urlsafe(16)), now_iso()),
+    )
+    return cur.lastrowid
+
+
+def _migrar_datos_sin_usuario(conn: sqlite3.Connection, usuario_id: int) -> None:
+    """Asigna al usuario local cualquier fila de las tablas "raíz" que
+    todavía no tenga dueño — es decir, todo lo que se anotó antes de que
+    existiera el login. No toca nada que ya pertenezca a un usuario."""
+    for tabla in (
+        "categorias", "notas", "tareas", "tareas_outlook",
+        "correo_cuentas", "correo_categorias", "ia_mensajes",
+    ):
+        conn.execute(f"UPDATE {tabla} SET usuario_id = ? WHERE usuario_id IS NULL", (usuario_id,))
+
+
+_ESPECIFICACION_PREFERENCIAS = {
+    "correo_preferencias": (
+        ["densidad", "marcar_leido_automatico", "limite_mensajes"],
+        """CREATE TABLE correo_preferencias (
+               usuario_id INTEGER PRIMARY KEY,
+               densidad TEXT NOT NULL DEFAULT 'normal' CHECK (densidad IN ('normal','compacta')),
+               marcar_leido_automatico INTEGER NOT NULL DEFAULT 1,
+               limite_mensajes INTEGER NOT NULL DEFAULT 50
+           )""",
+    ),
+    "ia_preferencias": (
+        ["modelo", "modo_autonomo"],
+        """CREATE TABLE ia_preferencias (
+               usuario_id INTEGER PRIMARY KEY,
+               modelo TEXT NOT NULL DEFAULT '',
+               modo_autonomo INTEGER NOT NULL DEFAULT 0
+           )""",
+    ),
+}
+
+
+def _migrar_preferencias_singleton(conn: sqlite3.Connection, usuario_id_local: int) -> None:
+    """`correo_preferencias`/`ia_preferencias` eran una única fila global
+    (`id=1`). Multiusuario necesita una fila por usuario, con `usuario_id`
+    como clave primaria — un cambio de clave primaria que SQLite no permite
+    con `ALTER TABLE`, así que se reconstruye la tabla la primera vez que
+    se detecta el esquema antiguo (o se crea directamente con el esquema
+    nuevo si es una instalación nunca antes usada)."""
+    for tabla, (columnas, ddl_nueva) in _ESPECIFICACION_PREFERENCIAS.items():
+        cols_actuales = {r["name"] for r in conn.execute(f"PRAGMA table_info({tabla})")}
+        if not cols_actuales:
+            conn.execute(ddl_nueva)
+            continue
+        if "usuario_id" in cols_actuales:
+            continue
+        conn.execute(f"ALTER TABLE {tabla} RENAME TO {tabla}_viejo")
+        conn.execute(ddl_nueva)
+        fila = conn.execute(f"SELECT * FROM {tabla}_viejo WHERE id = 1").fetchone()
+        if fila:
+            marcadores = ", ".join("?" * len(columnas))
+            conn.execute(
+                f"INSERT INTO {tabla} (usuario_id, {', '.join(columnas)}) VALUES (?, {marcadores})",
+                [usuario_id_local, *[fila[c] for c in columnas]],
+            )
+        conn.execute(f"DROP TABLE {tabla}_viejo")
+
+
 def init_db() -> None:
     conn = get_connection()
     try:
@@ -306,9 +422,22 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
-        conn.execute("INSERT OR IGNORE INTO correo_preferencias (id) VALUES (1)")
-        conn.execute("INSERT OR IGNORE INTO ia_preferencias (id) VALUES (1)")
+
+        # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
+        # columna (bases de datos migradas desde una versión sin ella).
+        for tabla in (
+            "categorias", "notas", "tareas", "tareas_outlook",
+            "correo_cuentas", "correo_categorias", "ia_mensajes",
+        ):
+            _asegurar_columna(conn, tabla, "usuario_id", "INTEGER")
+
+        conn.executescript(INDICES)
         _asegurar_orden_categorias(conn)
+
+        usuario_id_local = _resolver_usuario_local(conn)
+        _migrar_datos_sin_usuario(conn, usuario_id_local)
+        _migrar_preferencias_singleton(conn, usuario_id_local)
+
         conn.commit()
     finally:
         conn.close()
@@ -347,9 +476,119 @@ def hacer_backup_si_hace_falta(mantener_dias: int = 30) -> None:
             f.unlink(missing_ok=True)
 
 
+# --- Usuarios / autenticación ------------------------------------------------
+
+def crear_usuario(email: str, contrasena: str) -> int:
+    """Crea una cuenta con la contraseña ya hasheada (nunca en texto plano).
+    Lanza sqlite3.IntegrityError si el email ya existe (el email es UNIQUE)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO usuarios (email, contrasena_hash, creado_en) VALUES (?, ?, ?)",
+            (email.strip().lower(), generate_password_hash(contrasena), now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def obtener_usuario_por_email(email: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM usuarios WHERE email = ?", (email.strip().lower(),)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def obtener_usuario(usuario_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def verificar_credenciales(email: str, contrasena: str) -> sqlite3.Row | None:
+    """Devuelve la fila del usuario si el email existe y la contraseña es
+    correcta; None en cualquier otro caso (sin distinguir el motivo, para no
+    filtrar si un email concreto existe o no)."""
+    usuario = obtener_usuario_por_email(email)
+    if usuario is None or not check_password_hash(usuario["contrasena_hash"], contrasena):
+        return None
+    return usuario
+
+
+def usuario_local_id() -> int:
+    """Para procesos locales de confianza (cli.py, mcp_server.py) que no
+    pasan por login web: resuelve (o crea la primera vez) el usuario local
+    fijo, y lo usan siempre como su `usuario_id`."""
+    conn = get_connection()
+    try:
+        uid = _resolver_usuario_local(conn)
+        conn.commit()
+        return uid
+    finally:
+        conn.close()
+
+
+# --- Tokens de la API (Fase 2, app móvil) -------------------------------
+# Tokens opacos (no JWT): el valor en claro se genera una vez y se devuelve
+# al cliente; aquí solo se guarda su hash SHA-256 (no generate_password_hash
+# — el token ya tiene alta entropía propia y hace falta una búsqueda exacta
+# rápida por igualdad, no una comparación tipo contraseña).
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None) -> str:
+    token = secrets.token_urlsafe(32)
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en) "
+            "VALUES (?, ?, ?, ?)",
+            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso()),
+        )
+        conn.commit()
+        return token
+    finally:
+        conn.close()
+
+
+def usuario_id_por_token(token: str) -> int | None:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT usuario_id FROM tokens_api WHERE token_hash = ?", (_hash_token(token),)
+        ).fetchone()
+        if fila is None:
+            return None
+        conn.execute(
+            "UPDATE tokens_api SET ultimo_uso_en = ? WHERE token_hash = ?",
+            (now_iso(), _hash_token(token)),
+        )
+        conn.commit()
+        return fila["usuario_id"]
+    finally:
+        conn.close()
+
+
+def revocar_token_api(token: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM tokens_api WHERE token_hash = ?", (_hash_token(token),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # --- Categorías --------------------------------------------------------
 
-def crear_categoria(nombre: str, color: str | None = None) -> int:
+def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> int:
     """Crea un menú, o reutiliza uno existente con el mismo nombre.
 
     `nombre` tiene una restricción UNIQUE en la tabla, y esa restricción no
@@ -372,10 +611,12 @@ def crear_categoria(nombre: str, color: str | None = None) -> int:
                 conn.commit()
             return existente["id"]
 
-        siguiente_orden = conn.execute("SELECT COALESCE(MAX(orden), -1) + 1 FROM categorias").fetchone()[0]
+        siguiente_orden = conn.execute(
+            "SELECT COALESCE(MAX(orden), -1) + 1 FROM categorias WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()[0]
         cur = conn.execute(
-            "INSERT INTO categorias (nombre, color, creada_en, orden) VALUES (?, ?, ?, ?)",
-            (nombre, color, now_iso(), siguiente_orden),
+            "INSERT INTO categorias (usuario_id, nombre, color, creada_en, orden) VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, nombre, color, now_iso(), siguiente_orden),
         )
         conn.commit()
         return cur.lastrowid
@@ -383,22 +624,24 @@ def crear_categoria(nombre: str, color: str | None = None) -> int:
         conn.close()
 
 
-def listar_categorias() -> list[sqlite3.Row]:
+def listar_categorias(usuario_id: int) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM categorias WHERE papelera_en IS NULL ORDER BY orden, nombre"
+            "SELECT * FROM categorias WHERE usuario_id = ? AND papelera_en IS NULL ORDER BY orden, nombre",
+            (usuario_id,),
         ).fetchall()
     finally:
         conn.close()
 
 
-def mover_categoria(categoria_id: int, direccion: str) -> None:
+def mover_categoria(usuario_id: int, categoria_id: int, direccion: str) -> None:
     """Reordena un menú un puesto arriba o abajo (`direccion`: 'arriba'/'abajo')."""
     conn = get_connection()
     try:
         activas = conn.execute(
-            "SELECT id, orden FROM categorias WHERE papelera_en IS NULL ORDER BY orden, nombre"
+            "SELECT id, orden FROM categorias WHERE usuario_id = ? AND papelera_en IS NULL ORDER BY orden, nombre",
+            (usuario_id,),
         ).fetchall()
         ids = [f["id"] for f in activas]
         if categoria_id not in ids:
@@ -418,15 +661,20 @@ def mover_categoria(categoria_id: int, direccion: str) -> None:
         conn.close()
 
 
-def reordenar_categorias(orden_ids: list[int]) -> None:
+def reordenar_categorias(usuario_id: int, orden_ids: list[int]) -> None:
     """Reescribe `orden` según la lista completa recibida (0, 1, 2...), para
     el arrastrar-y-soltar de la barra lateral — a diferencia de
     `mover_categoria`, que mueve un solo puesto. Los ids que no existan (o no
-    estén activos) se ignoran sin fallar; los menús activos que falten en la
-    lista conservan su `orden` actual, detrás de los que sí se han movido."""
+    estén activos, o no sean del usuario) se ignoran sin fallar; los menús
+    activos que falten en la lista conservan su `orden` actual, detrás de
+    los que sí se han movido."""
     conn = get_connection()
     try:
-        activos = {f["id"] for f in conn.execute("SELECT id FROM categorias WHERE papelera_en IS NULL")}
+        activos = {
+            f["id"] for f in conn.execute(
+                "SELECT id FROM categorias WHERE usuario_id = ? AND papelera_en IS NULL", (usuario_id,)
+            )
+        }
         siguiente = 0
         for categoria_id in orden_ids:
             if categoria_id in activos:
@@ -437,67 +685,73 @@ def reordenar_categorias(orden_ids: list[int]) -> None:
         conn.close()
 
 
-def alternar_favorito_categoria(categoria_id: int) -> None:
+def alternar_favorito_categoria(usuario_id: int, categoria_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute(
-            "UPDATE categorias SET favorito = 1 - favorito WHERE id = ? AND papelera_en IS NULL",
-            (categoria_id,),
+            "UPDATE categorias SET favorito = 1 - favorito WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (categoria_id, usuario_id),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def obtener_categoria(categoria_id: int) -> sqlite3.Row | None:
+def obtener_categoria(usuario_id: int, categoria_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM categorias WHERE id = ? AND papelera_en IS NULL", (categoria_id,)
+            "SELECT * FROM categorias WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (categoria_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
 
 
-def renombrar_categoria(categoria_id: int, nombre: str, color: str | None = None) -> None:
+def renombrar_categoria(usuario_id: int, categoria_id: int, nombre: str, color: str | None = None) -> None:
     conn = get_connection()
     try:
         conn.execute(
-            "UPDATE categorias SET nombre = ?, color = ? WHERE id = ?",
-            (nombre.strip(), color, categoria_id),
+            "UPDATE categorias SET nombre = ?, color = ? WHERE id = ? AND usuario_id = ?",
+            (nombre.strip(), color, categoria_id, usuario_id),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def eliminar_categoria(categoria_id: int) -> None:
+def eliminar_categoria(usuario_id: int, categoria_id: int) -> None:
     """Manda un menú (y todo lo que contiene) a la papelera. No borra nada de
     verdad — se puede restaurar, o purgar definitivamente desde la papelera."""
     conn = get_connection()
     try:
         ahora = _marca_papelera()
-        conn.execute("UPDATE categorias SET papelera_en = ? WHERE id = ?", (ahora, categoria_id))
         conn.execute(
-            "UPDATE tareas SET papelera_en = ? WHERE categoria_id = ? AND papelera_en IS NULL",
-            (ahora, categoria_id),
+            "UPDATE categorias SET papelera_en = ? WHERE id = ? AND usuario_id = ?",
+            (ahora, categoria_id, usuario_id),
         )
         conn.execute(
-            "UPDATE notas SET papelera_en = ? WHERE categoria_id = ? AND papelera_en IS NULL",
-            (ahora, categoria_id),
+            "UPDATE tareas SET papelera_en = ? WHERE categoria_id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (ahora, categoria_id, usuario_id),
+        )
+        conn.execute(
+            "UPDATE notas SET papelera_en = ? WHERE categoria_id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (ahora, categoria_id, usuario_id),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def restaurar_categoria(categoria_id: int) -> None:
+def restaurar_categoria(usuario_id: int, categoria_id: int) -> None:
     """Saca un menú de la papelera, junto con lo que se mandó a la papelera
     a la vez que él (no restaura notas/tareas que ya estaban en la papelera
     por separado antes de borrar el menú)."""
     conn = get_connection()
     try:
-        fila = conn.execute("SELECT papelera_en FROM categorias WHERE id = ?", (categoria_id,)).fetchone()
+        fila = conn.execute(
+            "SELECT papelera_en FROM categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+        ).fetchone()
         if fila is None or fila["papelera_en"] is None:
             return
         marca = fila["papelera_en"]
@@ -515,41 +769,42 @@ def restaurar_categoria(categoria_id: int) -> None:
         conn.close()
 
 
-def eliminar_categoria_definitivamente(categoria_id: int) -> None:
+def eliminar_categoria_definitivamente(usuario_id: int, categoria_id: int) -> None:
     """Borra un menú y todo lo que contiene de verdad (sin pasar por la
     papelera). Lo usa el botón "Eliminar definitivamente" y la purga
     automática de la papelera."""
     conn = get_connection()
     try:
         tarea_ids = [
-            row["id"]
-            for row in conn.execute("SELECT id FROM tareas WHERE categoria_id = ?", (categoria_id,)).fetchall()
+            row["id"] for row in conn.execute(
+                "SELECT id FROM tareas WHERE categoria_id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+            ).fetchall()
         ]
         if tarea_ids:
             marcas = ",".join("?" * len(tarea_ids))
             conn.execute(f"DELETE FROM pausas WHERE tarea_id IN ({marcas})", tarea_ids)
             conn.execute(f"DELETE FROM notas WHERE tarea_id IN ({marcas})", tarea_ids)
-        conn.execute("DELETE FROM notas WHERE categoria_id = ?", (categoria_id,))
-        conn.execute("DELETE FROM tareas WHERE categoria_id = ?", (categoria_id,))
+        conn.execute("DELETE FROM notas WHERE categoria_id = ? AND usuario_id = ?", (categoria_id, usuario_id))
+        conn.execute("DELETE FROM tareas WHERE categoria_id = ? AND usuario_id = ?", (categoria_id, usuario_id))
         conn.execute("DELETE FROM plantillas WHERE categoria_id = ?", (categoria_id,))
-        conn.execute("DELETE FROM categorias WHERE id = ?", (categoria_id,))
+        conn.execute("DELETE FROM categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id))
         conn.commit()
     finally:
         conn.close()
 
 
-def contar_entradas_hoy(categoria_id: int) -> int:
+def contar_entradas_hoy(usuario_id: int, categoria_id: int) -> int:
     conn = get_connection()
     try:
         hoy = datetime.now().strftime("%Y-%m-%d")
         manana = _fecha_exclusiva(hoy)
         n = conn.execute(
-            "SELECT COUNT(*) FROM notas WHERE categoria_id = ? AND papelera_en IS NULL AND creada_en >= ? AND creada_en < ?",
-            (categoria_id, hoy, manana),
+            "SELECT COUNT(*) FROM notas WHERE categoria_id = ? AND usuario_id = ? AND papelera_en IS NULL AND creada_en >= ? AND creada_en < ?",
+            (categoria_id, usuario_id, hoy, manana),
         ).fetchone()[0]
         t = conn.execute(
-            "SELECT COUNT(*) FROM tareas WHERE categoria_id = ? AND papelera_en IS NULL AND inicio_en >= ? AND inicio_en < ?",
-            (categoria_id, hoy, manana),
+            "SELECT COUNT(*) FROM tareas WHERE categoria_id = ? AND usuario_id = ? AND papelera_en IS NULL AND inicio_en >= ? AND inicio_en < ?",
+            (categoria_id, usuario_id, hoy, manana),
         ).fetchone()[0]
         return n + t
     finally:
@@ -558,23 +813,23 @@ def contar_entradas_hoy(categoria_id: int) -> int:
 
 # --- Tareas / eventos ---------------------------------------------------
 
-def crear_tarea(nombre: str, categoria_id: int, tipo: str) -> int:
+def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> int:
     conn = get_connection()
     try:
         ahora = now_iso()
         if tipo == "instantanea":
             cur = conn.execute(
                 """INSERT INTO tareas
-                   (nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
-                   VALUES (?, ?, 'instantanea', 'finalizada', ?, NULL, NULL)""",
-                (nombre.strip(), categoria_id, ahora),
+                   (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
+                   VALUES (?, ?, ?, 'instantanea', 'finalizada', ?, NULL, NULL)""",
+                (usuario_id, nombre.strip(), categoria_id, ahora),
             )
         else:
             cur = conn.execute(
                 """INSERT INTO tareas
-                   (nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
-                   VALUES (?, ?, 'duracion', 'en_curso', ?, NULL, NULL)""",
-                (nombre.strip(), categoria_id, ahora),
+                   (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
+                   VALUES (?, ?, ?, 'duracion', 'en_curso', ?, NULL, NULL)""",
+                (usuario_id, nombre.strip(), categoria_id, ahora),
             )
         conn.commit()
         return cur.lastrowid
@@ -583,6 +838,7 @@ def crear_tarea(nombre: str, categoria_id: int, tipo: str) -> int:
 
 
 def importar_tarea(
+    usuario_id: int,
     nombre: str,
     categoria_id: int,
     tipo: str,
@@ -598,9 +854,9 @@ def importar_tarea(
     try:
         cur = conn.execute(
             """INSERT INTO tareas
-               (nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
-               VALUES (?, ?, ?, 'finalizada', ?, ?, ?)""",
-            (nombre.strip(), categoria_id, tipo, inicio_en, fin_en, duracion_segundos),
+               (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
+               VALUES (?, ?, ?, ?, 'finalizada', ?, ?, ?)""",
+            (usuario_id, nombre.strip(), categoria_id, tipo, inicio_en, fin_en, duracion_segundos),
         )
         conn.commit()
         return cur.lastrowid
@@ -608,13 +864,17 @@ def importar_tarea(
         conn.close()
 
 
-def hubo_actividad_reciente(minutos: int) -> bool:
+def hubo_actividad_reciente(usuario_id: int, minutos: int) -> bool:
     """True si se ha creado alguna nota o tarea en los últimos `minutos`."""
     conn = get_connection()
     try:
         limite = (datetime.now() - timedelta(minutes=minutos)).isoformat(timespec="seconds")
-        n = conn.execute("SELECT COUNT(*) FROM notas WHERE creada_en >= ?", (limite,)).fetchone()[0]
-        t = conn.execute("SELECT COUNT(*) FROM tareas WHERE inicio_en >= ?", (limite,)).fetchone()[0]
+        n = conn.execute(
+            "SELECT COUNT(*) FROM notas WHERE usuario_id = ? AND creada_en >= ?", (usuario_id, limite)
+        ).fetchone()[0]
+        t = conn.execute(
+            "SELECT COUNT(*) FROM tareas WHERE usuario_id = ? AND inicio_en >= ?", (usuario_id, limite)
+        ).fetchone()[0]
         return (n + t) > 0
     finally:
         conn.close()
@@ -633,12 +893,12 @@ def _segundos_pausados_cerrados(conn: sqlite3.Connection, tarea_id: int) -> int:
     return total
 
 
-def pausar_tarea(tarea_id: int) -> None:
+def pausar_tarea(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "UPDATE tareas SET estado = 'pausada' WHERE id = ? AND tipo = 'duracion' AND estado = 'en_curso'",
-            (tarea_id,),
+            "UPDATE tareas SET estado = 'pausada' WHERE id = ? AND usuario_id = ? AND tipo = 'duracion' AND estado = 'en_curso'",
+            (tarea_id, usuario_id),
         )
         if cur.rowcount:
             conn.execute(
@@ -650,12 +910,12 @@ def pausar_tarea(tarea_id: int) -> None:
         conn.close()
 
 
-def reanudar_tarea(tarea_id: int) -> None:
+def reanudar_tarea(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "UPDATE tareas SET estado = 'en_curso' WHERE id = ? AND estado = 'pausada'",
-            (tarea_id,),
+            "UPDATE tareas SET estado = 'en_curso' WHERE id = ? AND usuario_id = ? AND estado = 'pausada'",
+            (tarea_id, usuario_id),
         )
         if cur.rowcount:
             conn.execute(
@@ -668,10 +928,12 @@ def reanudar_tarea(tarea_id: int) -> None:
         conn.close()
 
 
-def finalizar_tarea(tarea_id: int) -> None:
+def finalizar_tarea(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
-        row = conn.execute("SELECT inicio_en, estado FROM tareas WHERE id = ?", (tarea_id,)).fetchone()
+        row = conn.execute(
+            "SELECT inicio_en, estado FROM tareas WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+        ).fetchone()
         if row is None:
             return
         fin = now_iso()
@@ -692,16 +954,17 @@ def finalizar_tarea(tarea_id: int) -> None:
         conn.close()
 
 
-def tareas_activas() -> list[dict]:
+def tareas_activas(usuario_id: int) -> list[dict]:
     """Tareas con duración en curso o en pausa, con el tiempo ya pausado calculado."""
     conn = get_connection()
     try:
         filas = conn.execute(
             """SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
                FROM tareas t JOIN categorias c ON c.id = t.categoria_id
-               WHERE t.tipo = 'duracion' AND t.estado IN ('en_curso', 'pausada')
+               WHERE t.usuario_id = ? AND t.tipo = 'duracion' AND t.estado IN ('en_curso', 'pausada')
                  AND t.papelera_en IS NULL
-               ORDER BY t.inicio_en"""
+               ORDER BY t.inicio_en""",
+            (usuario_id,),
         ).fetchall()
         resultado = []
         for f in filas:
@@ -723,36 +986,41 @@ def tareas_activas() -> list[dict]:
         conn.close()
 
 
-def obtener_tarea(tarea_id: int) -> sqlite3.Row | None:
+def obtener_tarea(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
             """SELECT t.*, c.nombre AS categoria_nombre
                FROM tareas t JOIN categorias c ON c.id = t.categoria_id
-               WHERE t.id = ? AND t.papelera_en IS NULL""",
-            (tarea_id,),
+               WHERE t.id = ? AND t.usuario_id = ? AND t.papelera_en IS NULL""",
+            (tarea_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
 
 
-def editar_tarea(tarea_id: int, nombre: str) -> None:
+def editar_tarea(usuario_id: int, tarea_id: int, nombre: str) -> None:
     conn = get_connection()
     try:
-        conn.execute("UPDATE tareas SET nombre = ? WHERE id = ?", (nombre.strip(), tarea_id))
+        conn.execute(
+            "UPDATE tareas SET nombre = ? WHERE id = ? AND usuario_id = ?",
+            (nombre.strip(), tarea_id, usuario_id),
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def editar_tiempos_tarea(tarea_id: int, inicio_en: str, fin_en: str | None = None) -> str | None:
+def editar_tiempos_tarea(usuario_id: int, tarea_id: int, inicio_en: str, fin_en: str | None = None) -> str | None:
     """Ajusta manualmente el inicio (y el fin, si la tarea ya está finalizada).
 
     Devuelve un mensaje de error legible si la entrada no es válida, o None si todo fue bien.
     """
     conn = get_connection()
     try:
-        row = conn.execute("SELECT tipo, estado, fin_en FROM tareas WHERE id = ?", (tarea_id,)).fetchone()
+        row = conn.execute(
+            "SELECT tipo, estado, fin_en FROM tareas WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+        ).fetchone()
         if row is None:
             return "La tarea ya no existe."
         try:
@@ -788,32 +1056,37 @@ def editar_tiempos_tarea(tarea_id: int, inicio_en: str, fin_en: str | None = Non
         conn.close()
 
 
-def eliminar_tarea(tarea_id: int) -> None:
+def eliminar_tarea(usuario_id: int, tarea_id: int) -> None:
     """Manda una tarea/evento a la papelera (no la borra de verdad)."""
     conn = get_connection()
     try:
-        conn.execute("UPDATE tareas SET papelera_en = ? WHERE id = ?", (_marca_papelera(), tarea_id))
+        conn.execute(
+            "UPDATE tareas SET papelera_en = ? WHERE id = ? AND usuario_id = ?",
+            (_marca_papelera(), tarea_id, usuario_id),
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def restaurar_tarea(tarea_id: int) -> None:
+def restaurar_tarea(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("UPDATE tareas SET papelera_en = NULL WHERE id = ?", (tarea_id,))
+        conn.execute(
+            "UPDATE tareas SET papelera_en = NULL WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def eliminar_tarea_definitivamente(tarea_id: int) -> None:
+def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
     """Borra una tarea/evento y sus pausas y notas asociadas de verdad."""
     conn = get_connection()
     try:
         conn.execute("DELETE FROM pausas WHERE tarea_id = ?", (tarea_id,))
         conn.execute("DELETE FROM notas WHERE tarea_id = ?", (tarea_id,))
-        conn.execute("DELETE FROM tareas WHERE id = ?", (tarea_id,))
+        conn.execute("DELETE FROM tareas WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:
         conn.close()
@@ -821,12 +1094,12 @@ def eliminar_tarea_definitivamente(tarea_id: int) -> None:
 
 # --- Notas ---------------------------------------------------------------
 
-def crear_nota(texto: str, categoria_id: int | None = None, tarea_id: int | None = None) -> int:
+def crear_nota(usuario_id: int, texto: str, categoria_id: int | None = None, tarea_id: int | None = None) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO notas (texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, ?)",
-            (texto.strip(), categoria_id, tarea_id, now_iso()),
+            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, texto.strip(), categoria_id, tarea_id, now_iso()),
         )
         conn.commit()
         return cur.lastrowid
@@ -834,13 +1107,13 @@ def crear_nota(texto: str, categoria_id: int | None = None, tarea_id: int | None
         conn.close()
 
 
-def importar_nota(texto: str, categoria_id: int | None, creada_en: str) -> int:
+def importar_nota(usuario_id: int, texto: str, categoria_id: int | None, creada_en: str) -> int:
     """Inserta una nota con un timestamp explícito (importación de datos exportados)."""
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO notas (texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, NULL, ?)",
-            (texto.strip(), categoria_id, creada_en),
+            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, NULL, ?)",
+            (usuario_id, texto.strip(), categoria_id, creada_en),
         )
         conn.commit()
         return cur.lastrowid
@@ -848,48 +1121,55 @@ def importar_nota(texto: str, categoria_id: int | None, creada_en: str) -> int:
         conn.close()
 
 
-def obtener_nota(nota_id: int) -> sqlite3.Row | None:
+def obtener_nota(usuario_id: int, nota_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM notas WHERE id = ? AND papelera_en IS NULL", (nota_id,)
+            "SELECT * FROM notas WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (nota_id, usuario_id)
         ).fetchone()
     finally:
         conn.close()
 
 
-def editar_nota(nota_id: int, texto: str) -> None:
+def editar_nota(usuario_id: int, nota_id: int, texto: str) -> None:
     conn = get_connection()
     try:
-        conn.execute("UPDATE notas SET texto = ? WHERE id = ?", (texto.strip(), nota_id))
+        conn.execute(
+            "UPDATE notas SET texto = ? WHERE id = ? AND usuario_id = ?", (texto.strip(), nota_id, usuario_id)
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def eliminar_nota(nota_id: int) -> None:
+def eliminar_nota(usuario_id: int, nota_id: int) -> None:
     """Manda una nota a la papelera (no la borra de verdad)."""
     conn = get_connection()
     try:
-        conn.execute("UPDATE notas SET papelera_en = ? WHERE id = ?", (_marca_papelera(), nota_id))
+        conn.execute(
+            "UPDATE notas SET papelera_en = ? WHERE id = ? AND usuario_id = ?",
+            (_marca_papelera(), nota_id, usuario_id),
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def restaurar_nota(nota_id: int) -> None:
+def restaurar_nota(usuario_id: int, nota_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("UPDATE notas SET papelera_en = NULL WHERE id = ?", (nota_id,))
+        conn.execute(
+            "UPDATE notas SET papelera_en = NULL WHERE id = ? AND usuario_id = ?", (nota_id, usuario_id)
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def eliminar_nota_definitivamente(nota_id: int) -> None:
+def eliminar_nota_definitivamente(usuario_id: int, nota_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("DELETE FROM notas WHERE id = ?", (nota_id,))
+        conn.execute("DELETE FROM notas WHERE id = ? AND usuario_id = ?", (nota_id, usuario_id))
         conn.commit()
     finally:
         conn.close()
@@ -898,6 +1178,7 @@ def eliminar_nota_definitivamente(nota_id: int) -> None:
 # --- Histórico combinado ---------------------------------------------------
 
 def historial(
+    usuario_id: int,
     desde: str | None = None,
     hasta: str | None = None,
     categoria_id: int | None = None,
@@ -918,10 +1199,10 @@ def historial(
         # enteras antes de filtrar.
         hasta_excl = _fecha_exclusiva(hasta) if hasta else None
 
-        cond_n = ["n.papelera_en IS NULL"]
-        cond_t = ["t.papelera_en IS NULL"]
-        params_n: list = []
-        params_t: list = []
+        cond_n = ["n.usuario_id = ?", "n.papelera_en IS NULL"]
+        cond_t = ["t.usuario_id = ?", "t.papelera_en IS NULL"]
+        params_n: list = [usuario_id]
+        params_t: list = [usuario_id]
         if desde:
             cond_n.append("n.creada_en >= ?"); params_n.append(desde)
             cond_t.append("t.inicio_en >= ?"); params_t.append(desde)
@@ -978,16 +1259,16 @@ def historial(
 
 # --- Estadísticas ----------------------------------------------------------
 
-def estadisticas_por_categoria(desde: str | None = None, hasta: str | None = None) -> list[dict]:
+def estadisticas_por_categoria(usuario_id: int, desde: str | None = None, hasta: str | None = None) -> list[dict]:
     """Tiempo total (tareas finalizadas) y nº de entradas por categoría."""
     conn = get_connection()
     try:
-        cond_t = ["t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
-        cond_ev = ["tt.tipo = 'instantanea'", "tt.papelera_en IS NULL"]
-        cond_n = ["n.papelera_en IS NULL"]
-        params_t: list = []
-        params_ev: list = []
-        params_n: list = []
+        cond_t = ["t.usuario_id = ?", "t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
+        cond_ev = ["tt.usuario_id = ?", "tt.tipo = 'instantanea'", "tt.papelera_en IS NULL"]
+        cond_n = ["n.usuario_id = ?", "n.papelera_en IS NULL"]
+        params_t: list = [usuario_id]
+        params_ev: list = [usuario_id]
+        params_n: list = [usuario_id]
         hasta_excl = _fecha_exclusiva(hasta) if hasta else None
         if desde:
             cond_t.append("t.inicio_en >= ?"); params_t.append(desde)
@@ -1007,22 +1288,23 @@ def estadisticas_por_categoria(desde: str | None = None, hasta: str | None = Non
                    COALESCE((SELECT COUNT(*) FROM tareas tt
                              WHERE tt.categoria_id = c.id AND {' AND '.join(cond_ev)}), 0) AS num_eventos,
                    COALESCE((SELECT COUNT(*) FROM notas n
-                             WHERE n.categoria_id = c.id {(' AND ' + ' AND '.join(cond_n)) if cond_n else ''}), 0) AS num_notas
+                             WHERE n.categoria_id = c.id AND {' AND '.join(cond_n)}), 0) AS num_notas
                FROM categorias c
+               WHERE c.usuario_id = ?
                ORDER BY segundos_totales DESC, c.nombre""",
-            [*params_t, *params_t, *params_ev, *params_n],
+            [*params_t, *params_t, *params_ev, *params_n, usuario_id],
         ).fetchall()
         return [dict(f) for f in filas]
     finally:
         conn.close()
 
 
-def estadisticas_por_dia(desde: str | None = None, hasta: str | None = None) -> list[dict]:
+def estadisticas_por_dia(usuario_id: int, desde: str | None = None, hasta: str | None = None) -> list[dict]:
     """Tiempo total en tareas con duración finalizadas, agrupado por día y categoría."""
     conn = get_connection()
     try:
-        cond = ["t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
-        params: list = []
+        cond = ["t.usuario_id = ?", "t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
+        params: list = [usuario_id]
         if desde:
             cond.append("t.inicio_en >= ?"); params.append(desde)
         if hasta:
@@ -1043,6 +1325,8 @@ def estadisticas_por_dia(desde: str | None = None, hasta: str | None = None) -> 
 
 
 # --- Frases favoritas (plantillas) ------------------------------------------
+# Se aíslan a través de categoria_id (NOT NULL, siempre de un usuario ya
+# validado por la ruta antes de llamar aquí) — no llevan usuario_id propio.
 
 def crear_plantilla(categoria_id: int, texto: str) -> int:
     conn = get_connection()
@@ -1089,6 +1373,7 @@ CAMPOS_TAREA_OUTLOOK = (
 
 
 def crear_tarea_outlook(
+    usuario_id: int,
     asunto: str,
     cuerpo: str | None = None,
     estado: str = "no_iniciada",
@@ -1103,12 +1388,12 @@ def crear_tarea_outlook(
     try:
         cur = conn.execute(
             """INSERT INTO tareas_outlook
-               (asunto, cuerpo, estado, porcentaje_completado, prioridad,
+               (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook,
                 outlook_entry_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                asunto.strip(), (cuerpo or "").strip() or None, estado,
+                usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
                 (categoria_outlook or "").strip() or None, outlook_entry_id, now_iso(),
             ),
@@ -1120,6 +1405,7 @@ def crear_tarea_outlook(
 
 
 def listar_tareas_outlook(
+    usuario_id: int,
     estado: str | None = None,
     prioridad: str | None = None,
     categoria_outlook: str | None = None,
@@ -1134,8 +1420,8 @@ def listar_tareas_outlook(
     """
     conn = get_connection()
     try:
-        cond = ["papelera_en IS NULL"]
-        params: list = []
+        cond = ["usuario_id = ?", "papelera_en IS NULL"]
+        params: list = [usuario_id]
         if estado:
             cond.append("estado = ?"); params.append(estado)
         if prioridad:
@@ -1159,37 +1445,38 @@ def listar_tareas_outlook(
         conn.close()
 
 
-def obtener_tarea_outlook(tarea_id: int) -> sqlite3.Row | None:
+def obtener_tarea_outlook(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)
+            "SELECT * FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (tarea_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
 
 
-def obtener_tarea_outlook_por_entry_id(entry_id: str) -> sqlite3.Row | None:
+def obtener_tarea_outlook_por_entry_id(usuario_id: int, entry_id: str) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM tareas_outlook WHERE outlook_entry_id = ?", (entry_id,)
+            "SELECT * FROM tareas_outlook WHERE outlook_entry_id = ? AND usuario_id = ?", (entry_id, usuario_id)
         ).fetchone()
     finally:
         conn.close()
 
 
-def upsert_tarea_outlook_por_entry_id(outlook_entry_id: str | None, **campos) -> tuple[int, bool]:
+def upsert_tarea_outlook_por_entry_id(usuario_id: int, outlook_entry_id: str | None, **campos) -> tuple[int, bool]:
     """Crea la tarea, o actualiza la ya existente con ese `outlook_entry_id`.
 
     Devuelve (id, creada) — creada=True si no existía y se ha creado nueva.
     Pensado para sincronizar desde una fuente externa (.ics, .csv, o más
     adelante COM) sin duplicar tareas ya importadas en una sincronización anterior.
     """
-    existente = obtener_tarea_outlook_por_entry_id(outlook_entry_id) if outlook_entry_id else None
+    existente = obtener_tarea_outlook_por_entry_id(usuario_id, outlook_entry_id) if outlook_entry_id else None
     if existente:
         campos_validos = {c: v for c, v in campos.items() if c in CAMPOS_TAREA_OUTLOOK}
-        editar_tarea_outlook(existente["id"], **campos_validos)
+        editar_tarea_outlook(usuario_id, existente["id"], **campos_validos)
         return existente["id"], False
 
     # crear_tarea_outlook no acepta fecha_completada como argumento de creación
@@ -1200,13 +1487,13 @@ def upsert_tarea_outlook_por_entry_id(outlook_entry_id: str | None, **campos) ->
         c: v for c, v in campos.items()
         if c in CAMPOS_TAREA_OUTLOOK and c not in ("fecha_completada", "outlook_entry_id")
     }
-    tid = crear_tarea_outlook(outlook_entry_id=outlook_entry_id, **campos_creacion)
+    tid = crear_tarea_outlook(usuario_id, outlook_entry_id=outlook_entry_id, **campos_creacion)
     if fecha_completada:
-        editar_tarea_outlook(tid, fecha_completada=fecha_completada)
+        editar_tarea_outlook(usuario_id, tid, fecha_completada=fecha_completada)
     return tid, True
 
 
-def editar_tarea_outlook(tarea_id: int, **campos) -> None:
+def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
     """Actualiza los campos indicados (cualquiera de CAMPOS_TAREA_OUTLOOK)."""
     columnas = [c for c in campos if c in CAMPOS_TAREA_OUTLOOK]
     if not columnas:
@@ -1216,64 +1503,70 @@ def editar_tarea_outlook(tarea_id: int, **campos) -> None:
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
         conn.execute(
-            f"UPDATE tareas_outlook SET {asignaciones}, actualizada_en = ? WHERE id = ?",
-            [*valores, now_iso(), tarea_id],
+            f"UPDATE tareas_outlook SET {asignaciones}, actualizada_en = ? WHERE id = ? AND usuario_id = ?",
+            [*valores, now_iso(), tarea_id, usuario_id],
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def completar_tarea_outlook(tarea_id: int) -> None:
+def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute(
             """UPDATE tareas_outlook
                SET estado = 'completada', porcentaje_completado = 100,
                    fecha_completada = ?, actualizada_en = ?
-               WHERE id = ?""",
-            (now_iso(), now_iso(), tarea_id),
+               WHERE id = ? AND usuario_id = ?""",
+            (now_iso(), now_iso(), tarea_id, usuario_id),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def eliminar_tarea_outlook(tarea_id: int) -> None:
+def eliminar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("UPDATE tareas_outlook SET papelera_en = ? WHERE id = ?", (_marca_papelera(), tarea_id))
+        conn.execute(
+            "UPDATE tareas_outlook SET papelera_en = ? WHERE id = ? AND usuario_id = ?",
+            (_marca_papelera(), tarea_id, usuario_id),
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def restaurar_tarea_outlook(tarea_id: int) -> None:
+def restaurar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("UPDATE tareas_outlook SET papelera_en = NULL WHERE id = ?", (tarea_id,))
+        conn.execute(
+            "UPDATE tareas_outlook SET papelera_en = NULL WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+        )
         conn.commit()
     finally:
         conn.close()
 
 
-def eliminar_tarea_outlook_definitivamente(tarea_id: int) -> None:
+def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("DELETE FROM tareas_outlook WHERE id = ?", (tarea_id,))
+        conn.execute("DELETE FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:
         conn.close()
 
 
-def listar_categorias_outlook() -> list[str]:
+def listar_categorias_outlook(usuario_id: int) -> list[str]:
     """Nombres de categoría (estilo "Categories" de Outlook) usados hasta ahora."""
     conn = get_connection()
     try:
         filas = conn.execute(
             """SELECT DISTINCT categoria_outlook FROM tareas_outlook
-               WHERE categoria_outlook IS NOT NULL AND papelera_en IS NULL
-               ORDER BY categoria_outlook"""
+               WHERE usuario_id = ? AND categoria_outlook IS NOT NULL AND papelera_en IS NULL
+               ORDER BY categoria_outlook""",
+            (usuario_id,),
         ).fetchall()
         return [f["categoria_outlook"] for f in filas]
     finally:
@@ -1284,8 +1577,11 @@ def listar_categorias_outlook() -> list[str]:
 # La lógica de red (conectar, sincronizar, enviar) vive en app/correo.py; aquí
 # solo hay persistencia. La contraseña de cada cuenta NO se guarda en esta
 # tabla — la gestiona app/correo.py directamente contra keyring.
+# correo_carpetas/correo_mensajes/correo_adjuntos cuelgan de correo_cuentas
+# (cuenta_id NOT NULL) y se aíslan por JOIN — no llevan usuario_id propio.
 
 def crear_cuenta_correo(
+    usuario_id: int,
     nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
     usa_tls: bool = True, smtp_host: str | None = None,
     smtp_puerto: int | None = None, smtp_tls: bool = True,
@@ -1294,10 +1590,10 @@ def crear_cuenta_correo(
     try:
         cur = conn.execute(
             """INSERT INTO correo_cuentas
-               (nombre, protocolo, host, puerto, usa_tls, usuario,
+               (usuario_id, nombre, protocolo, host, puerto, usa_tls, usuario,
                 smtp_host, smtp_puerto, smtp_tls, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (nombre.strip(), protocolo, host.strip(), puerto, int(usa_tls),
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, nombre.strip(), protocolo, host.strip(), puerto, int(usa_tls),
              usuario.strip(), (smtp_host or "").strip() or None, smtp_puerto,
              int(smtp_tls), now_iso()),
         )
@@ -1307,43 +1603,53 @@ def crear_cuenta_correo(
         conn.close()
 
 
-def listar_cuentas_correo() -> list[sqlite3.Row]:
+def listar_cuentas_correo(usuario_id: int) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
-        return conn.execute("SELECT * FROM correo_cuentas ORDER BY nombre").fetchall()
+        return conn.execute(
+            "SELECT * FROM correo_cuentas WHERE usuario_id = ? ORDER BY nombre", (usuario_id,)
+        ).fetchall()
     finally:
         conn.close()
 
 
-def obtener_cuenta_correo(cuenta_id: int) -> sqlite3.Row | None:
+def obtener_cuenta_correo(usuario_id: int, cuenta_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
-        return conn.execute("SELECT * FROM correo_cuentas WHERE id = ?", (cuenta_id,)).fetchone()
+        return conn.execute(
+            "SELECT * FROM correo_cuentas WHERE id = ? AND usuario_id = ?", (cuenta_id, usuario_id)
+        ).fetchone()
     finally:
         conn.close()
 
 
-def eliminar_cuenta_correo(cuenta_id: int) -> None:
+def eliminar_cuenta_correo(usuario_id: int, cuenta_id: int) -> None:
     """Borra la cuenta y sus mensajes/carpetas cacheados. Sin papelera: la
     credencial en keyring se borra aparte, desde app/correo.py, antes de
     llamar aquí."""
     conn = get_connection()
     try:
-        conn.execute("DELETE FROM correo_mensajes WHERE cuenta_id = ?", (cuenta_id,))
-        conn.execute("DELETE FROM correo_carpetas WHERE cuenta_id = ?", (cuenta_id,))
-        conn.execute("DELETE FROM correo_cuentas WHERE id = ?", (cuenta_id,))
+        conn.execute(
+            "DELETE FROM correo_mensajes WHERE cuenta_id IN (SELECT id FROM correo_cuentas WHERE id = ? AND usuario_id = ?)",
+            (cuenta_id, usuario_id),
+        )
+        conn.execute(
+            "DELETE FROM correo_carpetas WHERE cuenta_id IN (SELECT id FROM correo_cuentas WHERE id = ? AND usuario_id = ?)",
+            (cuenta_id, usuario_id),
+        )
+        conn.execute("DELETE FROM correo_cuentas WHERE id = ? AND usuario_id = ?", (cuenta_id, usuario_id))
         conn.commit()
     finally:
         conn.close()
 
 
-def guardar_firma_correo(cuenta_id: int, firma_html: str | None, firma_en_nuevos: bool, firma_en_respuestas: bool) -> None:
+def guardar_firma_correo(usuario_id: int, cuenta_id: int, firma_html: str | None, firma_en_nuevos: bool, firma_en_respuestas: bool) -> None:
     conn = get_connection()
     try:
         conn.execute(
             """UPDATE correo_cuentas SET firma_html = ?, firma_en_nuevos = ?, firma_en_respuestas = ?
-               WHERE id = ?""",
-            (firma_html, int(firma_en_nuevos), int(firma_en_respuestas), cuenta_id),
+               WHERE id = ? AND usuario_id = ?""",
+            (firma_html, int(firma_en_nuevos), int(firma_en_respuestas), cuenta_id, usuario_id),
         )
         conn.commit()
     finally:
@@ -1381,12 +1687,12 @@ def listar_carpetas_correo(cuenta_id: int) -> list[sqlite3.Row]:
 
 # --- Categorías de correo (propias de Guilda Work, no se sincronizan) --------
 
-def crear_categoria_correo(nombre: str, color: str) -> int:
+def crear_categoria_correo(usuario_id: int, nombre: str, color: str) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO correo_categorias (nombre, color, creada_en) VALUES (?, ?, ?)",
-            (nombre.strip(), color, now_iso()),
+            "INSERT INTO correo_categorias (usuario_id, nombre, color, creada_en) VALUES (?, ?, ?, ?)",
+            (usuario_id, nombre.strip(), color, now_iso()),
         )
         conn.commit()
         return cur.lastrowid
@@ -1394,20 +1700,24 @@ def crear_categoria_correo(nombre: str, color: str) -> int:
         conn.close()
 
 
-def listar_categorias_correo() -> list[sqlite3.Row]:
+def listar_categorias_correo(usuario_id: int) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
-        return conn.execute("SELECT * FROM correo_categorias ORDER BY nombre").fetchall()
+        return conn.execute(
+            "SELECT * FROM correo_categorias WHERE usuario_id = ? ORDER BY nombre", (usuario_id,)
+        ).fetchall()
     finally:
         conn.close()
 
 
-def eliminar_categoria_correo(categoria_id: int) -> None:
+def eliminar_categoria_correo(usuario_id: int, categoria_id: int) -> None:
     """Los mensajes que la tuvieran asignada se quedan sin categoría
     (ON DELETE SET NULL en el esquema)."""
     conn = get_connection()
     try:
-        conn.execute("DELETE FROM correo_categorias WHERE id = ?", (categoria_id,))
+        conn.execute(
+            "DELETE FROM correo_categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+        )
         conn.commit()
     finally:
         conn.close()
@@ -1422,25 +1732,28 @@ def asignar_categoria_correo(mensaje_id: int, categoria_id: int | None) -> None:
         conn.close()
 
 
-# --- Preferencias generales de Correo (una sola fila) -------------------------
+# --- Preferencias generales de Correo (una fila por usuario) ------------------
 
-def obtener_preferencias_correo() -> sqlite3.Row:
+def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO correo_preferencias (id) VALUES (1)")
+        conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
         conn.commit()
-        return conn.execute("SELECT * FROM correo_preferencias WHERE id = 1").fetchone()
+        return conn.execute(
+            "SELECT * FROM correo_preferencias WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()
     finally:
         conn.close()
 
 
-def guardar_preferencias_correo(densidad: str, marcar_leido_automatico: bool, limite_mensajes: int) -> None:
+def guardar_preferencias_correo(usuario_id: int, densidad: str, marcar_leido_automatico: bool, limite_mensajes: int) -> None:
     conn = get_connection()
     try:
+        conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
         conn.execute(
             """UPDATE correo_preferencias
-               SET densidad = ?, marcar_leido_automatico = ?, limite_mensajes = ? WHERE id = 1""",
-            (densidad, int(marcar_leido_automatico), limite_mensajes),
+               SET densidad = ?, marcar_leido_automatico = ?, limite_mensajes = ? WHERE usuario_id = ?""",
+            (densidad, int(marcar_leido_automatico), limite_mensajes, usuario_id),
         )
         conn.commit()
     finally:
@@ -1543,6 +1856,21 @@ def obtener_mensaje_correo(mensaje_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
+def mensaje_correo_pertenece_a_usuario(usuario_id: int, mensaje_id: int) -> bool:
+    """Comprueba que un mensaje cuelga de una cuenta del usuario, antes de
+    dejarle leer/modificar un `mensaje_id` que le podrían pasar por URL."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT 1 FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE m.id = ? AND c.usuario_id = ?""",
+            (mensaje_id, usuario_id),
+        ).fetchone()
+        return fila is not None
+    finally:
+        conn.close()
+
+
 def guardar_adjuntos_correo(mensaje_id: int, adjuntos: list[dict]) -> None:
     """`adjuntos` es una lista de {"nombre", "tipo", "bytes"}, tal como los
     devuelve app.correo._cuerpos()."""
@@ -1576,6 +1904,21 @@ def obtener_adjunto_correo(adjunto_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute("SELECT * FROM correo_adjuntos WHERE id = ?", (adjunto_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def adjunto_correo_pertenece_a_usuario(usuario_id: int, adjunto_id: int) -> bool:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT 1 FROM correo_adjuntos a
+               JOIN correo_mensajes m ON m.id = a.mensaje_id
+               JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE a.id = ? AND c.usuario_id = ?""",
+            (adjunto_id, usuario_id),
+        ).fetchone()
+        return fila is not None
     finally:
         conn.close()
 
@@ -1636,19 +1979,24 @@ def contar_no_leidos_correo(cuenta_id: int, carpeta: str = "INBOX") -> int:
         conn.close()
 
 
-def contar_no_leidos_total_correo() -> int:
-    """Total de mensajes no leídos en TODAS las cuentas y carpetas (para el
-    badge de "correo nuevo" de la barra lateral)."""
+def contar_no_leidos_total_correo(usuario_id: int) -> int:
+    """Total de mensajes no leídos en TODAS las cuentas y carpetas de un
+    usuario (para el badge de "correo nuevo" del rail de iconos)."""
     conn = get_connection()
     try:
-        return conn.execute("SELECT COUNT(*) AS n FROM correo_mensajes WHERE leido = 0").fetchone()["n"]
+        return conn.execute(
+            """SELECT COUNT(*) AS n FROM correo_mensajes m
+               JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE c.usuario_id = ? AND m.leido = 0""",
+            (usuario_id,),
+        ).fetchone()["n"]
     finally:
         conn.close()
 
 
 # --- Papelera ----------------------------------------------------------------
 
-def papelera() -> list[dict]:
+def papelera(usuario_id: int) -> list[dict]:
     """Menús, tareas/eventos y notas que están en la papelera, más recientes primero."""
     conn = get_connection()
     try:
@@ -1658,31 +2006,32 @@ def papelera() -> list[dict]:
                 SELECT 'menu' AS origen, c.id AS id, c.nombre AS texto, NULL AS tipo,
                        NULL AS categoria_nombre, NULL AS categoria_color, c.papelera_en AS papelera_en
                 FROM categorias c
-                WHERE c.papelera_en IS NOT NULL
+                WHERE c.usuario_id = ? AND c.papelera_en IS NOT NULL
 
                 UNION ALL
 
                 SELECT 'tarea' AS origen, t.id AS id, t.nombre AS texto, t.tipo AS tipo,
                        c.nombre AS categoria_nombre, c.color AS categoria_color, t.papelera_en AS papelera_en
                 FROM tareas t JOIN categorias c ON c.id = t.categoria_id
-                WHERE t.papelera_en IS NOT NULL
+                WHERE t.usuario_id = ? AND t.papelera_en IS NOT NULL
 
                 UNION ALL
 
                 SELECT 'nota' AS origen, n.id AS id, n.texto AS texto, NULL AS tipo,
                        c.nombre AS categoria_nombre, c.color AS categoria_color, n.papelera_en AS papelera_en
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
-                WHERE n.papelera_en IS NOT NULL
+                WHERE n.usuario_id = ? AND n.papelera_en IS NOT NULL
 
                 UNION ALL
 
                 SELECT 'tarea_outlook' AS origen, tk.id AS id, tk.asunto AS texto, NULL AS tipo,
                        tk.categoria_outlook AS categoria_nombre, NULL AS categoria_color, tk.papelera_en AS papelera_en
                 FROM tareas_outlook tk
-                WHERE tk.papelera_en IS NOT NULL
+                WHERE tk.usuario_id = ? AND tk.papelera_en IS NOT NULL
             )
             ORDER BY papelera_en DESC
-            """
+            """,
+            (usuario_id, usuario_id, usuario_id, usuario_id),
         ).fetchall()
         return [dict(f) for f in filas]
     finally:
@@ -1691,77 +2040,83 @@ def papelera() -> list[dict]:
 
 def vaciar_papelera_antigua(dias: int = 30) -> None:
     """Purga definitivamente (sin posibilidad de recuperar) lo que lleva en
-    la papelera más de `dias` días. Se llama al arrancar la app, igual que
-    la copia de seguridad."""
+    la papelera más de `dias` días, para TODOS los usuarios. Se llama al
+    arrancar la app, igual que la copia de seguridad."""
     conn = get_connection()
     try:
         limite = (datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds")
         ids_categorias = [
-            r["id"] for r in conn.execute(
-                "SELECT id FROM categorias WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+            (r["id"], r["usuario_id"]) for r in conn.execute(
+                "SELECT id, usuario_id FROM categorias WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
             )
         ]
         ids_tareas = [
-            r["id"] for r in conn.execute(
-                "SELECT id FROM tareas WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+            (r["id"], r["usuario_id"]) for r in conn.execute(
+                "SELECT id, usuario_id FROM tareas WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
             )
         ]
         ids_notas = [
-            r["id"] for r in conn.execute(
-                "SELECT id FROM notas WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+            (r["id"], r["usuario_id"]) for r in conn.execute(
+                "SELECT id, usuario_id FROM notas WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
             )
         ]
         ids_tareas_outlook = [
-            r["id"] for r in conn.execute(
-                "SELECT id FROM tareas_outlook WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+            (r["id"], r["usuario_id"]) for r in conn.execute(
+                "SELECT id, usuario_id FROM tareas_outlook WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
             )
         ]
     finally:
         conn.close()
 
-    for nid in ids_notas:
-        eliminar_nota_definitivamente(nid)
-    for tid in ids_tareas:
-        eliminar_tarea_definitivamente(tid)
-    for cid in ids_categorias:
-        eliminar_categoria_definitivamente(cid)
-    for tid in ids_tareas_outlook:
-        eliminar_tarea_outlook_definitivamente(tid)
+    for nid, uid in ids_notas:
+        eliminar_nota_definitivamente(uid, nid)
+    for tid, uid in ids_tareas:
+        eliminar_tarea_definitivamente(uid, tid)
+    for cid, uid in ids_categorias:
+        eliminar_categoria_definitivamente(uid, cid)
+    for tid, uid in ids_tareas_outlook:
+        eliminar_tarea_outlook_definitivamente(uid, tid)
 
 
 # --- Asistente IA (OpenRouter): preferencias y conversación -------------------
 
-def obtener_preferencias_ia() -> sqlite3.Row:
+def obtener_preferencias_ia(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO ia_preferencias (id) VALUES (1)")
+        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
         conn.commit()
-        return conn.execute("SELECT * FROM ia_preferencias WHERE id = 1").fetchone()
+        return conn.execute(
+            "SELECT * FROM ia_preferencias WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()
     finally:
         conn.close()
 
 
-def guardar_preferencias_ia(modelo: str, modo_autonomo: bool) -> None:
+def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -> None:
     conn = get_connection()
     try:
+        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
         conn.execute(
-            "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE id = 1",
-            (modelo, int(modo_autonomo)),
+            "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE usuario_id = ?",
+            (modelo, int(modo_autonomo), usuario_id),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-def listar_mensajes_ia() -> list[sqlite3.Row]:
+def listar_mensajes_ia(usuario_id: int) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
-        return conn.execute("SELECT * FROM ia_mensajes ORDER BY id").fetchall()
+        return conn.execute(
+            "SELECT * FROM ia_mensajes WHERE usuario_id = ? ORDER BY id", (usuario_id,)
+        ).fetchall()
     finally:
         conn.close()
 
 
 def agregar_mensaje_ia(
+    usuario_id: int,
     rol: str,
     contenido: str | None = None,
     tool_calls_json: str | None = None,
@@ -1772,9 +2127,9 @@ def agregar_mensaje_ia(
     try:
         cursor = conn.execute(
             """INSERT INTO ia_mensajes
-               (rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, now_iso()),
+               (usuario_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, now_iso()),
         )
         conn.commit()
         return cursor.lastrowid
@@ -1782,10 +2137,10 @@ def agregar_mensaje_ia(
         conn.close()
 
 
-def vaciar_mensajes_ia() -> None:
+def vaciar_mensajes_ia(usuario_id: int) -> None:
     conn = get_connection()
     try:
-        conn.execute("DELETE FROM ia_mensajes")
+        conn.execute("DELETE FROM ia_mensajes WHERE usuario_id = ?", (usuario_id,))
         conn.commit()
     finally:
         conn.close()

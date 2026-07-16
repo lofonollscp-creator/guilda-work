@@ -310,13 +310,20 @@ def necesita_confirmacion(nombre: str, modo_autonomo: bool) -> bool:
     return not modo_autonomo
 
 
-def ejecutar(nombre: str, argumentos: dict):
+def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
+    """Ejecuta una tool "como" `usuario_id` — mcp_server.py no expone ningún
+    parámetro de usuario en sus tools (un cliente MCP externo como Claude
+    Code no tiene ese concepto), así que se fija temporalmente vía la
+    contextvar `_usuario_id_actual` que sus funciones internas consultan."""
     if nombre not in _NOMBRES_VALIDOS:
         raise ErrorHerramientaIA(f"Herramienta desconocida: '{nombre}'.")
     funcion = getattr(mcp_server, nombre, None)
     if funcion is None:
         raise ErrorHerramientaIA(f"Herramienta '{nombre}' no está implementada en mcp_server.")
+    token = mcp_server._usuario_id_actual.set(usuario_id)
     try:
         return funcion(**argumentos)
     except (ValueError, ErrorCorreo) as e:
         raise ErrorHerramientaIA(str(e)) from e
+    finally:
+        mcp_server._usuario_id_actual.reset(token)

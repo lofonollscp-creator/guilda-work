@@ -45,17 +45,21 @@ class ErrorIA(Exception):
     """Error legible para mostrar en el chat cuando el asistente falla."""
 
 
-def guardar_api_key(clave: str) -> None:
-    keyring.set_password(SERVICIO_KEYRING_IA, CLAVE_API_OPENROUTER, clave)
+def _clave_keyring_api(usuario_id: int) -> str:
+    return f"{CLAVE_API_OPENROUTER}-usuario-{usuario_id}"
 
 
-def obtener_api_key() -> str | None:
-    return keyring.get_password(SERVICIO_KEYRING_IA, CLAVE_API_OPENROUTER)
+def guardar_api_key(usuario_id: int, clave: str) -> None:
+    keyring.set_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id), clave)
 
 
-def borrar_api_key() -> None:
+def obtener_api_key(usuario_id: int) -> str | None:
+    return keyring.get_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id))
+
+
+def borrar_api_key(usuario_id: int) -> None:
     try:
-        keyring.delete_password(SERVICIO_KEYRING_IA, CLAVE_API_OPENROUTER)
+        keyring.delete_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id))
     except keyring.errors.PasswordDeleteError:
         pass
 
@@ -85,9 +89,9 @@ def _post_json(url: str, payload: dict, api_key: str) -> dict:
         raise ErrorIA(f"Respuesta inválida de OpenRouter: {e}") from e
 
 
-def _mensajes_para_openrouter() -> list[dict]:
+def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
     mensajes = [{"role": "system", "content": PROMPT_SISTEMA}]
-    for fila in db.listar_mensajes_ia():
+    for fila in db.listar_mensajes_ia(usuario_id):
         if fila["rol"] == "assistant":
             mensaje = {"role": "assistant", "content": fila["contenido"]}
             if fila["tool_calls_json"]:
@@ -104,12 +108,12 @@ def _mensajes_para_openrouter() -> list[dict]:
     return mensajes
 
 
-def _tool_call_id_pendiente() -> str | None:
+def _tool_call_id_pendiente(usuario_id: int) -> str | None:
     """Si el último mensaje `assistant` pidió herramientas y a alguna todavía
     le falta su fila `tool` de respuesta, devuelve el primer tool_call_id sin
     resolver (en el orden en que el modelo los pidió). Si no hay nada
     pendiente, devuelve None."""
-    mensajes = db.listar_mensajes_ia()
+    mensajes = db.listar_mensajes_ia(usuario_id)
     if not mensajes or mensajes[-1]["rol"] != "assistant" or not mensajes[-1]["tool_calls_json"]:
         return None
     tool_calls = json.loads(mensajes[-1]["tool_calls_json"])
@@ -121,8 +125,8 @@ def _tool_call_id_pendiente() -> str | None:
     return None
 
 
-def _tool_call_por_id(tool_call_id: str) -> dict | None:
-    mensajes = db.listar_mensajes_ia()
+def _tool_call_por_id(usuario_id: int, tool_call_id: str) -> dict | None:
+    mensajes = db.listar_mensajes_ia(usuario_id)
     for fila in reversed(mensajes):
         if fila["rol"] == "assistant" and fila["tool_calls_json"]:
             for tc in json.loads(fila["tool_calls_json"]):
@@ -131,13 +135,13 @@ def _tool_call_por_id(tool_call_id: str) -> dict | None:
     return None
 
 
-def _ejecutar_tool_call(tool_call: dict) -> str:
+def _ejecutar_tool_call(usuario_id: int, tool_call: dict) -> str:
     """Ejecuta una herramienta y devuelve el resultado como texto (JSON),
     listo para guardarse como contenido de un mensaje `tool`."""
     nombre = tool_call["function"]["name"]
     argumentos = json.loads(tool_call["function"]["arguments"] or "{}")
     try:
-        resultado = herramientas.ejecutar(nombre, argumentos)
+        resultado = herramientas.ejecutar(usuario_id, nombre, argumentos)
         return json.dumps(resultado, ensure_ascii=False, default=str)
     except herramientas.ErrorHerramientaIA as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
@@ -151,33 +155,33 @@ def _pendiente_dict(tool_call: dict) -> dict:
     }
 
 
-def _continuar_conversacion() -> dict:
-    preferencias = db.obtener_preferencias_ia()
+def _continuar_conversacion(usuario_id: int) -> dict:
+    preferencias = db.obtener_preferencias_ia(usuario_id)
     modelo = preferencias["modelo"]
     modo_autonomo = bool(preferencias["modo_autonomo"])
-    api_key = obtener_api_key()
+    api_key = obtener_api_key(usuario_id)
 
     if not modelo.strip():
         raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
     if not api_key:
         raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
 
-    ids_antes = {m["id"] for m in db.listar_mensajes_ia()}
+    ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
 
     for _ in range(MAX_ITERACIONES_HERRAMIENTAS):
         # Si queda un tool_call pendiente de confirmación, se para aquí sin
         # llamar a OpenRouter (se resolverá con confirmar_pendiente()).
-        tool_call_id_pendiente = _tool_call_id_pendiente()
+        tool_call_id_pendiente = _tool_call_id_pendiente(usuario_id)
         if tool_call_id_pendiente is not None:
-            tool_call = _tool_call_por_id(tool_call_id_pendiente)
+            tool_call = _tool_call_por_id(usuario_id, tool_call_id_pendiente)
             return {
-                "mensajes_nuevos": _mensajes_nuevos_desde(ids_antes),
+                "mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes),
                 "pendiente": _pendiente_dict(tool_call),
             }
 
         respuesta = _post_json(
             OPENROUTER_URL,
-            {"model": modelo, "messages": _mensajes_para_openrouter(), "tools": herramientas.HERRAMIENTAS},
+            {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": herramientas.HERRAMIENTAS},
             api_key,
         )
         try:
@@ -187,11 +191,11 @@ def _continuar_conversacion() -> dict:
 
         tool_calls = mensaje.get("tool_calls") or []
         if not tool_calls:
-            db.agregar_mensaje_ia("assistant", contenido=mensaje.get("content") or "")
-            return {"mensajes_nuevos": _mensajes_nuevos_desde(ids_antes), "pendiente": None}
+            db.agregar_mensaje_ia(usuario_id, "assistant", contenido=mensaje.get("content") or "")
+            return {"mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes), "pendiente": None}
 
         db.agregar_mensaje_ia(
-            "assistant", contenido=mensaje.get("content"),
+            usuario_id, "assistant", contenido=mensaje.get("content"),
             tool_calls_json=json.dumps(tool_calls, ensure_ascii=False),
         )
 
@@ -199,12 +203,12 @@ def _continuar_conversacion() -> dict:
             nombre = tool_call["function"]["name"]
             if herramientas.necesita_confirmacion(nombre, modo_autonomo):
                 return {
-                    "mensajes_nuevos": _mensajes_nuevos_desde(ids_antes),
+                    "mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes),
                     "pendiente": _pendiente_dict(tool_call),
                 }
-            contenido = _ejecutar_tool_call(tool_call)
+            contenido = _ejecutar_tool_call(usuario_id, tool_call)
             db.agregar_mensaje_ia(
-                "tool", contenido=contenido, tool_call_id=tool_call["id"], nombre_herramienta=nombre,
+                usuario_id, "tool", contenido=contenido, tool_call_id=tool_call["id"], nombre_herramienta=nombre,
             )
 
     raise ErrorIA(
@@ -213,41 +217,41 @@ def _continuar_conversacion() -> dict:
     )
 
 
-def _mensajes_nuevos_desde(ids_antes: set[int]) -> list[dict]:
-    return [dict(m) for m in db.listar_mensajes_ia() if m["id"] not in ids_antes]
+def _mensajes_nuevos_desde(usuario_id: int, ids_antes: set[int]) -> list[dict]:
+    return [dict(m) for m in db.listar_mensajes_ia(usuario_id) if m["id"] not in ids_antes]
 
 
-def procesar_turno(texto_usuario: str) -> dict:
+def procesar_turno(usuario_id: int, texto_usuario: str) -> dict:
     if not texto_usuario.strip():
         raise ErrorIA("Escribe un mensaje.")
-    if _tool_call_id_pendiente() is not None:
+    if _tool_call_id_pendiente(usuario_id) is not None:
         raise ErrorIA(
             "Hay una acción esperando confirmación. Acéptala o recházala antes de seguir la conversación."
         )
-    db.agregar_mensaje_ia("user", contenido=texto_usuario.strip())
-    return _continuar_conversacion()
+    db.agregar_mensaje_ia(usuario_id, "user", contenido=texto_usuario.strip())
+    return _continuar_conversacion(usuario_id)
 
 
-def pendiente_actual() -> dict | None:
+def pendiente_actual(usuario_id: int) -> dict | None:
     """Devuelve la acción esperando confirmación ahora mismo, si la hay."""
-    tool_call_id = _tool_call_id_pendiente()
+    tool_call_id = _tool_call_id_pendiente(usuario_id)
     if tool_call_id is None:
         return None
-    return _pendiente_dict(_tool_call_por_id(tool_call_id))
+    return _pendiente_dict(_tool_call_por_id(usuario_id, tool_call_id))
 
 
-def confirmar_pendiente(aceptar: bool) -> dict:
-    tool_call_id = _tool_call_id_pendiente()
+def confirmar_pendiente(usuario_id: int, aceptar: bool) -> dict:
+    tool_call_id = _tool_call_id_pendiente(usuario_id)
     if tool_call_id is None:
         raise ErrorIA("No hay ninguna acción esperando confirmación.")
-    tool_call = _tool_call_por_id(tool_call_id)
+    tool_call = _tool_call_por_id(usuario_id, tool_call_id)
     nombre = tool_call["function"]["name"]
 
     if aceptar:
-        contenido = _ejecutar_tool_call(tool_call)
+        contenido = _ejecutar_tool_call(usuario_id, tool_call)
     else:
         contenido = json.dumps(
             {"rechazado": True, "motivo": "El usuario ha rechazado esta acción."}, ensure_ascii=False,
         )
-    db.agregar_mensaje_ia("tool", contenido=contenido, tool_call_id=tool_call_id, nombre_herramienta=nombre)
-    return _continuar_conversacion()
+    db.agregar_mensaje_ia(usuario_id, "tool", contenido=contenido, tool_call_id=tool_call_id, nombre_herramienta=nombre)
+    return _continuar_conversacion(usuario_id)

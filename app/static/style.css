@@ -1765,3 +1765,28 @@ a { color: inherit; }
   color: var(--text-muted);
   cursor: pointer;
 }
+
+/* ---- Login / registro (páginas independientes, sin app-shell) ---- */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.auth-logo { width: 48px; height: 48px; object-fit: contain; margin: 0 auto var(--space-2); }
+.auth-card h1 { margin: 0 0 var(--space-2); font-size: 1.3em; text-align: center; }
+.auth-submit { width: 100%; justify-content: center; margin-top: var(--space-2); }
+.auth-alterna { text-align: center; font-size: 0.88em; color: var(--text-muted); margin: var(--space-2) 0 0; }

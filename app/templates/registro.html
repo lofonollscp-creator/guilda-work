@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crear cuenta — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="auth-shell">
+    <form class="auth-card" method="post">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>Crear cuenta</h1>
+      {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+      <div class="correo-form-campo">
+        <label>Email</label>
+        <input type="email" name="email" required autofocus>
+      </div>
+      <div class="correo-form-campo">
+        <label>Contraseña (mínimo 8 caracteres)</label>
+        <input type="password" name="contrasena" minlength="8" required>
+      </div>
+      <div class="correo-form-campo">
+        <label>Repite la contraseña</label>
+        <input type="password" name="confirmar" minlength="8" required>
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit">Crear cuenta</button>
+      <p class="auth-alterna">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+    </form>
+  </div>
+</body>
+</html>

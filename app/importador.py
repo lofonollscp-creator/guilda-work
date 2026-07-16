@@ -29,7 +29,7 @@ def _timestamp_valido(valor) -> bool:
         return False
 
 
-def _importar_registro(registro: dict, resumen: dict) -> None:
+def _importar_registro(usuario_id: int, registro: dict, resumen: dict) -> None:
     origen = registro.get("origen")
     texto = (registro.get("texto_o_nombre") or "").strip()
     categoria_nombre = (registro.get("categoria") or "").strip()
@@ -39,10 +39,10 @@ def _importar_registro(registro: dict, resumen: dict) -> None:
         resumen["omitidos"] += 1
         return
 
-    categoria_id = db.crear_categoria(categoria_nombre) if categoria_nombre else None
+    categoria_id = db.crear_categoria(usuario_id, categoria_nombre) if categoria_nombre else None
 
     if origen == "nota":
-        db.importar_nota(texto, categoria_id, timestamp_inicio)
+        db.importar_nota(usuario_id, texto, categoria_id, timestamp_inicio)
         resumen["notas"] += 1
         return
 
@@ -52,7 +52,7 @@ def _importar_registro(registro: dict, resumen: dict) -> None:
             return
         tipo = registro.get("tipo") or "duracion"
         if tipo == "instantanea":
-            db.importar_tarea(texto, categoria_id, "instantanea", timestamp_inicio, None, None)
+            db.importar_tarea(usuario_id, texto, categoria_id, "instantanea", timestamp_inicio, None, None)
             resumen["tareas"] += 1
             return
 
@@ -74,14 +74,14 @@ def _importar_registro(registro: dict, resumen: dict) -> None:
                 resumen["omitidos"] += 1
                 return
 
-        db.importar_tarea(texto, categoria_id, "duracion", timestamp_inicio, timestamp_fin, duracion)
+        db.importar_tarea(usuario_id, texto, categoria_id, "duracion", timestamp_inicio, timestamp_fin, duracion)
         resumen["tareas"] += 1
         return
 
     resumen["omitidos"] += 1
 
 
-def importar_json(contenido: str) -> dict:
+def importar_json(usuario_id: int, contenido: str) -> dict:
     """Devuelve {"notas": N, "tareas": N, "omitidos": N}."""
     resumen = {"notas": 0, "tareas": 0, "omitidos": 0}
     try:
@@ -95,13 +95,13 @@ def importar_json(contenido: str) -> dict:
 
     for registro in registros:
         if isinstance(registro, dict):
-            _importar_registro(registro, resumen)
+            _importar_registro(usuario_id, registro, resumen)
         else:
             resumen["omitidos"] += 1
     return resumen
 
 
-def importar_csv(contenido: str) -> dict:
+def importar_csv(usuario_id: int, contenido: str) -> dict:
     """Devuelve {"notas": N, "tareas": N, "omitidos": N}."""
     resumen = {"notas": 0, "tareas": 0, "omitidos": 0}
     lector = csv.DictReader(io.StringIO(contenido))
@@ -123,5 +123,5 @@ def importar_csv(contenido: str) -> dict:
             registro["duracion_segundos"] = None
         if registro.get("timestamp_fin") == "":
             registro["timestamp_fin"] = None
-        _importar_registro(registro, resumen)
+        _importar_registro(usuario_id, registro, resumen)
     return resumen

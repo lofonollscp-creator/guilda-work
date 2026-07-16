@@ -15,21 +15,21 @@ def test_catalogo_tiene_las_mismas_27_herramientas_clasificadas():
     assert not (h.ESCRITURA & h.SIEMPRE_CONFIRMAR)
 
 
-def test_ejecutar_crear_nota_usa_mcp_server_directamente():
-    resultado = h.ejecutar("crear_nota", {"texto": "creada por el asistente"})
+def test_ejecutar_crear_nota_usa_mcp_server_directamente(usuario_id):
+    resultado = h.ejecutar(usuario_id, "crear_nota", {"texto": "creada por el asistente"})
     assert resultado["texto"] == "creada por el asistente"
-    notas = [n for n in db.historial() if n["origen"] == "nota"]
+    notas = [n for n in db.historial(usuario_id) if n["origen"] == "nota"]
     assert len(notas) == 1
 
 
-def test_ejecutar_herramienta_desconocida_da_error_legible():
+def test_ejecutar_herramienta_desconocida_da_error_legible(usuario_id):
     with pytest.raises(h.ErrorHerramientaIA):
-        h.ejecutar("no_existe", {})
+        h.ejecutar(usuario_id, "no_existe", {})
 
 
-def test_ejecutar_propaga_value_error_como_error_de_herramienta():
+def test_ejecutar_propaga_value_error_como_error_de_herramienta(usuario_id):
     with pytest.raises(h.ErrorHerramientaIA):
-        h.ejecutar("editar_nota", {"nota_id": 9999, "texto": "x"})
+        h.ejecutar(usuario_id, "editar_nota", {"nota_id": 9999, "texto": "x"})
 
 
 @pytest.mark.parametrize(

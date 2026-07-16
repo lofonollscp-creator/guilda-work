@@ -1,8 +1,9 @@
 """Rutas del Asistente IA (chat con OpenRouter + herramientas del MCP), en
 su propio Blueprint, mismo patrón que app/rutas_correo.py."""
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, g, jsonify, redirect, render_template, request, url_for
 
 from . import db, ia_asistente as asistente
+from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
 
@@ -14,66 +15,73 @@ MODELOS_SUGERIDOS = [
 
 
 @ia_bp.route("/")
+@login_required
 def asistente_vista():
     return render_template(
         "ia_asistente.html",
-        mensajes=db.listar_mensajes_ia(),
-        pendiente=asistente.pendiente_actual(),
-        preferencias=db.obtener_preferencias_ia(),
+        mensajes=db.listar_mensajes_ia(g.usuario_id),
+        pendiente=asistente.pendiente_actual(g.usuario_id),
+        preferencias=db.obtener_preferencias_ia(g.usuario_id),
         panel_flotante=False,
     )
 
 
 @ia_bp.route("/mensaje", methods=["POST"])
+@login_required
 def enviar_mensaje():
     datos = request.get_json(silent=True) or {}
     try:
-        resultado = asistente.procesar_turno(datos.get("texto", ""))
+        resultado = asistente.procesar_turno(g.usuario_id, datos.get("texto", ""))
         return jsonify({"ok": True, **resultado})
     except asistente.ErrorIA as e:
         return jsonify({"ok": False, "error": str(e)})
 
 
 @ia_bp.route("/confirmar", methods=["POST"])
+@login_required
 def confirmar():
     datos = request.get_json(silent=True) or {}
     try:
-        resultado = asistente.confirmar_pendiente(bool(datos.get("aceptar")))
+        resultado = asistente.confirmar_pendiente(g.usuario_id, bool(datos.get("aceptar")))
         return jsonify({"ok": True, **resultado})
     except asistente.ErrorIA as e:
         return jsonify({"ok": False, "error": str(e)})
 
 
 @ia_bp.route("/vaciar", methods=["POST"])
+@login_required
 def vaciar():
-    db.vaciar_mensajes_ia()
+    db.vaciar_mensajes_ia(g.usuario_id)
     return "", 204
 
 
 @ia_bp.route("/ajustes")
+@login_required
 def ajustes():
     return render_template(
         "ia_ajustes.html",
-        preferencias=db.obtener_preferencias_ia(),
+        preferencias=db.obtener_preferencias_ia(g.usuario_id),
         modelos_sugeridos=MODELOS_SUGERIDOS,
-        api_key_configurada=bool(asistente.obtener_api_key()),
+        api_key_configurada=bool(asistente.obtener_api_key(g.usuario_id)),
     )
 
 
 @ia_bp.route("/ajustes", methods=["POST"])
+@login_required
 def guardar_ajustes():
     modelo = request.form.get("modelo", "").strip()
     if not modelo:
         modelo = request.form.get("modelo_personalizado", "").strip()
     db.guardar_preferencias_ia(
+        g.usuario_id,
         modelo=modelo,
         modo_autonomo=request.form.get("modo_autonomo") == "on",
     )
 
     nueva_clave = request.form.get("api_key", "").strip()
     if nueva_clave:
-        asistente.guardar_api_key(nueva_clave)
+        asistente.guardar_api_key(g.usuario_id, nueva_clave)
     if request.form.get("borrar_api_key") == "on":
-        asistente.borrar_api_key()
+        asistente.borrar_api_key(g.usuario_id)
 
     return redirect(url_for("ia.ajustes"))

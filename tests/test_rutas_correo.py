@@ -52,8 +52,8 @@ def test_fecha_relativa_vacia():
     assert fecha_relativa("") == ""
 
 
-def test_vista_previa_usa_cuerpo_texto():
-    tid = db.crear_cuenta_correo("Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+def test_vista_previa_usa_cuerpo_texto(usuario_id):
+    tid = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
     db.guardar_mensaje_correo(
         cuenta_id=tid, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com",
         fecha=None, cuerpo_texto="Este   es\nun cuerpo  con espacios raros", cuerpo_html=None,
@@ -62,8 +62,8 @@ def test_vista_previa_usa_cuerpo_texto():
     assert vista_previa(mensaje) == "Este es un cuerpo con espacios raros"
 
 
-def test_vista_previa_usa_html_si_no_hay_texto_plano():
-    tid = db.crear_cuenta_correo("Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+def test_vista_previa_usa_html_si_no_hay_texto_plano(usuario_id):
+    tid = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
     db.guardar_mensaje_correo(
         cuenta_id=tid, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com",
         fecha=None, cuerpo_texto=None, cuerpo_html="<p>Solo <b>HTML</b></p>",
@@ -72,8 +72,8 @@ def test_vista_previa_usa_html_si_no_hay_texto_plano():
     assert vista_previa(mensaje) == "Solo HTML"
 
 
-def test_vista_previa_recorta_a_la_longitud_pedida():
-    tid = db.crear_cuenta_correo("Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+def test_vista_previa_recorta_a_la_longitud_pedida(usuario_id):
+    tid = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
     db.guardar_mensaje_correo(
         cuenta_id=tid, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com",
         fecha=None, cuerpo_texto="a" * 200, cuerpo_html=None,
@@ -82,8 +82,8 @@ def test_vista_previa_recorta_a_la_longitud_pedida():
     assert len(vista_previa(mensaje, longitud=50)) == 50
 
 
-def test_vista_previa_sin_cuerpo():
-    tid = db.crear_cuenta_correo("Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+def test_vista_previa_sin_cuerpo(usuario_id):
+    tid = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
     db.guardar_mensaje_correo(
         cuenta_id=tid, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com",
         fecha=None, cuerpo_texto=None, cuerpo_html=None,

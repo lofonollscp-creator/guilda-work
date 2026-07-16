@@ -9,8 +9,8 @@ from . import db
 EXPORTS_AUTO_DIR = db.RAIZ_PROYECTO / "exports" / "auto"
 
 
-def construir_export(desde: str | None, hasta: str | None, categoria_id: int | None) -> dict:
-    filas = db.historial(desde=desde, hasta=hasta, categoria_id=categoria_id)
+def construir_export(usuario_id: int, desde: str | None, hasta: str | None, categoria_id: int | None) -> dict:
+    filas = db.historial(usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id)
     registros = []
     for f in filas:
         registros.append({
@@ -38,12 +38,12 @@ def construir_export(desde: str | None, hasta: str | None, categoria_id: int | N
     }
 
 
-def a_json(desde=None, hasta=None, categoria_id=None) -> str:
-    return json.dumps(construir_export(desde, hasta, categoria_id), ensure_ascii=False, indent=2)
+def a_json(usuario_id: int, desde=None, hasta=None, categoria_id=None) -> str:
+    return json.dumps(construir_export(usuario_id, desde, hasta, categoria_id), ensure_ascii=False, indent=2)
 
 
-def a_csv(desde=None, hasta=None, categoria_id=None) -> str:
-    data = construir_export(desde, hasta, categoria_id)
+def a_csv(usuario_id: int, desde=None, hasta=None, categoria_id=None) -> str:
+    data = construir_export(usuario_id, desde, hasta, categoria_id)
     buf = io.StringIO()
     campos = ["origen", "id", "texto_o_nombre", "tipo", "estado", "categoria",
               "timestamp_inicio", "timestamp_fin", "duracion_segundos"]
@@ -54,9 +54,9 @@ def a_csv(desde=None, hasta=None, categoria_id=None) -> str:
     return buf.getvalue()
 
 
-def a_markdown(desde=None, hasta=None, categoria_id=None) -> str:
+def a_markdown(usuario_id: int, desde=None, hasta=None, categoria_id=None) -> str:
     """Resumen legible en Markdown, agrupado por categoría."""
-    data = construir_export(desde, hasta, categoria_id)
+    data = construir_export(usuario_id, desde, hasta, categoria_id)
     por_categoria: dict[str, list[dict]] = {}
     for r in data["registros"]:
         por_categoria.setdefault(r["categoria"] or "Sin categoría", []).append(r)
@@ -102,7 +102,7 @@ def generar_resumen_automatico_si_hace_falta(dias_atras: int = 1, mantener_dias:
     EXPORTS_AUTO_DIR.mkdir(parents=True, exist_ok=True)
     destino = EXPORTS_AUTO_DIR / f"resumen_{fecha}.md"
     if not destino.exists():
-        contenido = a_markdown(desde=fecha, hasta=fecha)
+        contenido = a_markdown(db.usuario_local_id(), desde=fecha, hasta=fecha)
         destino.write_text(contenido, encoding="utf-8")
 
     limite = datetime.now() - timedelta(days=mantener_dias)

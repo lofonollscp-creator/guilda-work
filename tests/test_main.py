@@ -11,15 +11,16 @@ class _DetenerBucle(Exception):
     pass
 
 
-def _cuenta(nombre: str) -> int:
+def _cuenta(usuario_id: int, nombre: str) -> int:
     return db.crear_cuenta_correo(
+        usuario_id,
         nombre=nombre, protocolo="imap", host="imap.ejemplo.com", puerto=993, usuario=f"{nombre}@ejemplo.com",
     )
 
 
-def test_sincronizacion_correo_periodica_sincroniza_todas_las_cuentas(monkeypatch):
-    id_a = _cuenta("A")
-    id_b = _cuenta("B")
+def test_sincronizacion_correo_periodica_sincroniza_todas_las_cuentas(monkeypatch, usuario_id):
+    id_a = _cuenta(usuario_id, "A")
+    id_b = _cuenta(usuario_id, "B")
 
     llamadas = []
     monkeypatch.setattr(main_module.correo, "sincronizar_bandeja", lambda cid: llamadas.append(cid) or {"nuevos": 0})
@@ -39,9 +40,9 @@ def test_sincronizacion_correo_periodica_sincroniza_todas_las_cuentas(monkeypatc
     assert sorted(llamadas) == sorted([id_a, id_b])
 
 
-def test_sincronizacion_correo_periodica_una_cuenta_rota_no_bloquea_las_demas(monkeypatch):
-    id_a = _cuenta("A")
-    id_b = _cuenta("B")
+def test_sincronizacion_correo_periodica_una_cuenta_rota_no_bloquea_las_demas(monkeypatch, usuario_id):
+    id_a = _cuenta(usuario_id, "A")
+    id_b = _cuenta(usuario_id, "B")
 
     llamadas = []
 

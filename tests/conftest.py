@@ -20,6 +20,25 @@ def base_de_datos_temporal(tmp_path, monkeypatch):
     yield
 
 
+@pytest.fixture
+def usuario_id() -> int:
+    """El 'usuario local' (mismo que resuelve la app de escritorio y el MCP),
+    ya creado automáticamente por db.init_db() en base_de_datos_temporal."""
+    return db.usuario_local_id()
+
+
+@pytest.fixture
+def cliente(base_de_datos_temporal):
+    """Cliente de test de Flask para app/rutas_api.py (Fase 2). Se importa
+    aquí dentro (no al nivel de módulo) para que la base de datos temporal
+    ya esté activa cuando app.main se registre sus blueprints."""
+    from app.main import app as flask_app
+
+    flask_app.config.update(TESTING=True)
+    with flask_app.test_client() as client:
+        yield client
+
+
 @pytest.fixture(autouse=True)
 def keyring_en_memoria(monkeypatch):
     """Sustituye keyring por un almacén en memoria durante los tests, para no
