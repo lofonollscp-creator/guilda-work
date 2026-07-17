@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/api_client.dart';
 import 'services/session_service.dart';
@@ -26,7 +26,7 @@ class GuildaWorkApp extends StatelessWidget {
 }
 
 /// Si ya hay un token guardado, intenta recuperar el usuario y salta
-/// directo a HomeScreen; si no hay token o el token ya no es válido
+/// directo al Dashboard; si no hay token o el token ya no es válido
 /// (revocado, servidor reinstalado...), muestra el login.
 class _PantallaInicial extends StatelessWidget {
   final ApiClient api;
@@ -41,7 +41,7 @@ class _PantallaInicial extends StatelessWidget {
     }
     try {
       final usuario = await api.quienSoy();
-      return HomeScreen(usuario: usuario, api: api, sesion: sesion);
+      return DashboardScreen(usuario: usuario, api: api, sesion: sesion);
     } catch (_) {
       await sesion.borrarToken();
       return LoginScreen(api: api, sesion: sesion);

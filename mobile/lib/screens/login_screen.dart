@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../services/session_service.dart';
 import 'ajustes_servidor_dialog.dart';
-import 'home_screen.dart';
+import 'dashboard_screen.dart';
 import 'registro_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => HomeScreen(
+          builder: (_) => DashboardScreen(
             usuario: usuario,
             api: widget.api,
             sesion: widget.sesion,

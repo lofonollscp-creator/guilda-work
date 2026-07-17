@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../models/models.dart';
 import 'session_service.dart';
 
 /// Error legible para mostrar en la UI cuando falla una llamada a la API.
@@ -116,6 +117,100 @@ class ApiClient {
       await _dio.post('/auth/logout');
     } on DioException {
       // Si el servidor no responde, no bloquea el cierre de sesión local.
+    }
+  }
+
+  // --- Dashboard / menús / notas / tareas con duración (Fase 4c) -----------
+
+  Future<Map<String, dynamic>> dashboard() async {
+    try {
+      final resp = await _dio.get('/dashboard');
+      return resp.data['data'] as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<Categoria>> listarCategorias() async {
+    try {
+      final resp = await _dio.get('/categorias');
+      return (resp.data['data'] as List)
+          .map((c) => Categoria.fromJson(c as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<Categoria> crearCategoria(String nombre, {String? color}) async {
+    try {
+      final resp = await _dio.post(
+        '/categorias',
+        data: {'nombre': nombre, 'color': ?color},
+      );
+      return Categoria.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarCategoria(int id) async {
+    try {
+      await _dio.delete('/categorias/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> crearNota(String texto, {int? categoriaId}) async {
+    try {
+      await _dio.post(
+        '/notas',
+        data: {'texto': texto, 'categoria_id': ?categoriaId},
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> crearTarea(String nombre, int categoriaId, String tipo) async {
+    try {
+      await _dio.post(
+        '/tareas',
+        data: {'nombre': nombre, 'categoria_id': categoriaId, 'tipo': tipo},
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> pausarTarea(int id) => _accionTarea(id, 'pausar');
+  Future<void> reanudarTarea(int id) => _accionTarea(id, 'reanudar');
+  Future<void> finalizarTarea(int id) => _accionTarea(id, 'finalizar');
+
+  Future<void> _accionTarea(int id, String accion) async {
+    try {
+      await _dio.post('/tareas/$id/$accion');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<EntradaHistorial>> historial({int? categoriaId, String? q}) async {
+    final qEfectivo = (q != null && q.isNotEmpty) ? q : null;
+    try {
+      final resp = await _dio.get(
+        '/historial',
+        queryParameters: {
+          'categoria_id': ?categoriaId,
+          'q': ?qEfectivo,
+        },
+      );
+      return (resp.data['data'] as List)
+          .map((f) => EntradaHistorial.fromJson(f as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
     }
   }
 }
