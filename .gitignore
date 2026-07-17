@@ -12,3 +12,4 @@ dist/
 *.spec
 .venv/
 .pytest_cache/
+.env

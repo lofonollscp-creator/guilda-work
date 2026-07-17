@@ -38,6 +38,11 @@ selfservice:
   default_browser_return_url: http://127.0.0.1:8000/
   allowed_return_urls:
     - http://127.0.0.1:8000/
+    # Fase 7b: el puente de login de Ory Hydra (app/rutas_hydra.py) manda
+    # aquí con ?return_to= cuando hace falta autenticar de verdad (no hay
+    # sesión de Kratos todavía) — sin esta entrada, Kratos rechaza la
+    # redirección de vuelta como "no permitida".
+    - http://127.0.0.1:8000/hydra/login
 
   flows:
     login:

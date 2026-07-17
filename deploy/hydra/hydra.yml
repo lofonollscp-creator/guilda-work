@@ -1,0 +1,51 @@
+# Configuración de Ory Hydra para Guilda Work (Fase 7b — SSO para
+# herramientas externas como Outline que no tienen login con contraseña
+# propio). El "login/consent" NO es la UI de referencia de Ory: Hydra
+# llama a app/rutas_hydra.py (prefijo /hydra en Guilda Work), que decide
+# quién es el usuario apoyándose en la sesión de Kratos que ya exista
+# (Fase 7a) — ver deploy/kratos/kratos.yml, selfservice.allowed_return_urls.
+#
+# dsn y secrets.system se pasan por variable de entorno (ver
+# docker-compose.yml), nunca en claro aquí.
+dsn: ${DSN}
+
+serve:
+  public:
+    base_url: http://127.0.0.1:4444/
+    cors:
+      enabled: true
+      allowed_origins:
+        - http://127.0.0.1:8000
+        - http://localhost:8000
+      allowed_methods:
+        - GET
+        - POST
+      allow_credentials: true
+  admin:
+    base_url: http://127.0.0.1:4445/
+
+urls:
+  self:
+    issuer: http://127.0.0.1:4444/
+  login: http://127.0.0.1:8000/hydra/login
+  consent: http://127.0.0.1:8000/hydra/consent
+  logout: http://127.0.0.1:8000/hydra/logout
+
+secrets:
+  system:
+    - ${SECRETS_SYSTEM}
+
+strategies:
+  # El access token no necesita ser JWT para este uso (SSO interno, sin
+  # microservicios de terceros que lo validen sin llamar a Hydra) — el
+  # id_token sí es JWT siempre, por exigencia de la spec OIDC.
+  access_token: opaque
+
+oidc:
+  subject_identifiers:
+    supported_types:
+      - public
+
+log:
+  level: info
+  format: text

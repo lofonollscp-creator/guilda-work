@@ -117,8 +117,130 @@ services:
       - ./deploy/kratos:/etc/config/kratos:ro
     command: serve --config /etc/config/kratos/kratos.yml --dev
 
+  # Ory Hydra: proveedor OAuth2/OIDC (Fase 7b) — necesario porque Outline
+  # (y más adelante OpenProject) no tienen login con contraseña propio,
+  # solo saben delegar en un proveedor externo. El "login/consent" lo
+  # resuelve app/rutas_hydra.py (prefijo /hydra) apoyándose en la sesión
+  # de Kratos que ya exista (Fase 7a) — ver deploy/hydra/hydra.yml.
+  postgres-hydra:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-hydra
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hydra
+      POSTGRES_PASSWORD: ${HYDRA_DB_PASSWORD:-CambiaEstaClaveHydra2026}
+      POSTGRES_DB: hydra
+    volumes:
+      - postgres-hydra-data:/var/lib/postgresql/data
+
+  hydra-migrate:
+    image: oryd/hydra:latest
+    container_name: guilda-work-hydra-migrate
+    depends_on:
+      - postgres-hydra
+    environment:
+      DSN: postgres://hydra:${HYDRA_DB_PASSWORD:-CambiaEstaClaveHydra2026}@postgres-hydra:5432/hydra?sslmode=disable
+    volumes:
+      - ./deploy/hydra:/etc/config/hydra:ro
+    command: migrate sql -e --yes --config /etc/config/hydra/hydra.yml
+    restart: on-failure
+
+  hydra:
+    image: oryd/hydra:latest
+    container_name: guilda-work-hydra
+    restart: unless-stopped
+    depends_on:
+      - hydra-migrate
+    environment:
+      DSN: postgres://hydra:${HYDRA_DB_PASSWORD:-CambiaEstaClaveHydra2026}@postgres-hydra:5432/hydra?sslmode=disable
+      SECRETS_SYSTEM: ${HYDRA_SYSTEM_SECRET:-CambiaEsteSecretoHydra2026CambiaEsteSecretoHydra2026}
+    ports:
+      - "4444:4444"   # API pública (OAuth2/OIDC)
+      - "4445:4445"   # API admin (login/consent, gestión de clientes)
+    volumes:
+      - ./deploy/hydra:/etc/config/hydra:ro
+    command: serve --config /etc/config/hydra/hydra.yml all --dev
+
+  # Outline: wiki/base de conocimiento para guías de empleados (Fase 7b).
+  # No tiene login con contraseña propio — exige un proveedor OIDC externo
+  # desde el primer inicio de sesión, de ahí Hydra por encima. Los
+  # adjuntos van al MinIO ya desplegado (bucket outline-uploads, se crea
+  # aparte con `mc mb`, igual que guilda-backups — ver HOSTING.md).
+  postgres-outline:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-outline
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: outline
+      POSTGRES_PASSWORD: ${OUTLINE_DB_PASSWORD:-CambiaEstaClaveOutline2026}
+      POSTGRES_DB: outline
+    volumes:
+      - postgres-outline-data:/var/lib/postgresql/data
+
+  redis-outline:
+    image: redis:7-alpine
+    container_name: guilda-work-redis-outline
+    restart: unless-stopped
+    volumes:
+      - redis-outline-data:/data
+
+  outline:
+    image: outlinewiki/outline:latest
+    container_name: guilda-work-outline
+    restart: unless-stopped
+    depends_on:
+      - postgres-outline
+      - redis-outline
+    ports:
+      - "3001:3000"   # 3000 ya lo usa Metabase
+    environment:
+      # Outline exige NODE_ENV=production para servir cookies `secure`, lo
+      # que a su vez exige que el navegador vea HTTPS de verdad (propio o
+      # de un proxy TLS delante, ver HOSTING.md Fase 3c) — sin eso, el
+      # flujo OAuth2 falla con "Cannot send secure cookie over unencrypted
+      # connection". En local (sin proxy TLS) usa NODE_ENV=development
+      # para poder verificar el flujo entero por http://127.0.0.1:3001.
+      NODE_ENV: ${OUTLINE_NODE_ENV:-production}
+      SECRET_KEY: ${OUTLINE_SECRET_KEY:?define OUTLINE_SECRET_KEY (openssl rand -hex 32)}
+      UTILS_SECRET: ${OUTLINE_UTILS_SECRET:?define OUTLINE_UTILS_SECRET (openssl rand -hex 32)}
+      DATABASE_URL: postgres://outline:${OUTLINE_DB_PASSWORD:-CambiaEstaClaveOutline2026}@postgres-outline:5432/outline
+      DATABASE_URL_TEST: postgres://outline:${OUTLINE_DB_PASSWORD:-CambiaEstaClaveOutline2026}@postgres-outline:5432/outline-test
+      PGSSLMODE: disable
+      REDIS_URL: redis://redis-outline:6379
+      URL: http://127.0.0.1:3001
+      PORT: 3000
+      FORCE_HTTPS: "false"
+      # MinIO ya desplegado (integración anterior) — endpoint interno
+      # (contenedor a contenedor) para las subidas, endpoint público para
+      # las URLs que ve el navegador (mismo matiz que Kratos, ver app/kratos.py).
+      AWS_ACCESS_KEY_ID: guilda_admin
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-CambiaEstaClave2026}
+      AWS_REGION: us-east-1
+      AWS_S3_UPLOAD_BUCKET_URL: http://minio:9000
+      AWS_S3_UPLOAD_BUCKET_NAME: outline-uploads
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      AWS_S3_ACL: private
+      # Se sirve tal cual (sin proxy) — el navegador pide las imágenes
+      # directo a MinIO en su puerto público.
+      AWS_S3_UPLOAD_MAX_SIZE: "26214400"
+      # Ory Hydra ya desplegado (Fase 7b) — único proveedor OIDC de Outline.
+      # AUTH_URI la ve el navegador (pública); TOKEN/USERINFO los llama
+      # Outline server-to-server, dentro de la red de Docker (hostname
+      # interno, a diferencia de serve.py que corre fuera).
+      OIDC_CLIENT_ID: ${OUTLINE_OIDC_CLIENT_ID:?define tras ejecutar scripts/registrar_cliente_hydra.py}
+      OIDC_CLIENT_SECRET: ${OUTLINE_OIDC_CLIENT_SECRET:?define tras ejecutar scripts/registrar_cliente_hydra.py}
+      OIDC_AUTH_URI: http://127.0.0.1:4444/oauth2/auth
+      OIDC_TOKEN_URI: http://hydra:4444/oauth2/token
+      OIDC_USERINFO_URI: http://hydra:4444/userinfo
+      OIDC_USERNAME_CLAIM: email
+      OIDC_DISPLAY_NAME: "Guilda Work"
+      OIDC_SCOPES: "openid email profile"
+
 volumes:
   metabase-data:
   minio-data:
   n8n-data:
   postgres-kratos-data:
+  postgres-hydra-data:
+  postgres-outline-data:
+  redis-outline-data:
