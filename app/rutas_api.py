@@ -100,6 +100,13 @@ def logout():
     return _ok()
 
 
+@api_bp.route("/auth/me", methods=["GET"])
+@token_required
+def me():
+    usuario = db.obtener_usuario(g.usuario_id)
+    return _ok({"id": usuario["id"], "email": usuario["email"]})
+
+
 # --- Menús / categorías ----------------------------------------------------
 
 @api_bp.route("/categorias", methods=["GET"])

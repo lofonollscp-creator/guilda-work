@@ -65,6 +65,14 @@ def test_logout_revoca_el_token(cliente):
     assert resp.status_code == 401
 
 
+def test_auth_me_devuelve_el_usuario_del_token(cliente):
+    datos = _registrar(cliente, email="me@ejemplo.com")
+    resp = cliente.get("/api/v1/auth/me", headers=_auth(datos["token"]))
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["email"] == "me@ejemplo.com"
+    assert resp.get_json()["data"]["id"] == datos["usuario"]["id"]
+
+
 # --- Categorías ----------------------------------------------------------------
 
 def test_crud_categorias(cliente):
