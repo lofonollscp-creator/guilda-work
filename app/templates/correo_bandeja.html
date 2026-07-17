@@ -199,21 +199,41 @@
           <span class="correo-ribbon-icono">🖨</span><span class="correo-ribbon-etiqueta">Imprimir</span>
         </button>
       </div>
+
+      {% if not remitente_confiable %}
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-ribbon-btn" title="Confiar en este remitente">
+            <span class="correo-ribbon-icono">🛡</span><span class="correo-ribbon-etiqueta">Confiar</span>
+          </button>
+        </form>
+      </div>
+      {% endif %}
     </div>
 
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or '(sin asunto)' }}</h2>
     {% if adjuntos_mensaje %}
     <div class="correo-adjuntos">
       {% for a in adjuntos_mensaje %}
-      <a class="correo-adjunto-chip" href="{{ url_for('correo.descargar_adjunto', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) }}" target="_blank" title="{{ a.nombre_archivo }}">
+      <a class="correo-adjunto-chip" href="{{ url_for('correo.descargar_adjunto', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) }}" target="_blank" title="{{ a.nombre_archivo }}"
+         {% if not remitente_confiable %}onclick="return confirm('Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?');"{% endif %}>
         📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
       </a>
       {% endfor %}
     </div>
     {% endif %}
+    {% if imagenes_bloqueadas %}
+    <div class="correo-aviso-imagenes">
+      <span>🖼 Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.</span>
+      <a href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=mensaje_seleccionado.id, mostrar_imagenes=1) }}">Mostrar solo esta vez</a>
+      <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+        <button type="submit">Confiar en este remitente</button>
+      </form>
+    </div>
+    {% endif %}
     <div class="correo-lectura-cuerpo">
-      {% if mensaje_seleccionado.cuerpo_html %}
-      <iframe class="correo-cuerpo-html" srcdoc="{{ mensaje_seleccionado.cuerpo_html|e }}" sandbox=""
+      {% if cuerpo_html_mostrado %}
+      <iframe class="correo-cuerpo-html" srcdoc="{{ cuerpo_html_mostrado|e }}" sandbox=""
               onload="try { this.style.height = (this.contentWindow.document.body.scrollHeight + 24) + 'px'; } catch (e) {}"></iframe>
       {% elif mensaje_seleccionado.cuerpo_texto %}
       <div class="correo-cuerpo-texto">{{ mensaje_seleccionado.cuerpo_texto }}</div>

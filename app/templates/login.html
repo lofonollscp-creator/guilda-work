@@ -9,19 +9,32 @@
 </head>
 <body>
   <div class="auth-shell">
-    <form class="auth-card" method="post">
+    <form class="auth-card" method="post" action="{{ accion }}">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>Guilda Work</h1>
-      {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
-      <input type="hidden" name="siguiente" value="{{ siguiente }}">
-      <div class="correo-form-campo">
-        <label>Email</label>
-        <input type="email" name="email" required autofocus>
-      </div>
-      <div class="correo-form-campo">
-        <label>Contraseña</label>
-        <input type="password" name="contrasena" required>
-      </div>
+      {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+
+      {% for nodo in nodos %}
+        {% set attrs = nodo.attributes %}
+        {% if attrs.name == 'csrf_token' %}
+          <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
+        {% elif attrs.name == 'identifier' %}
+          <div class="correo-form-campo">
+            <label>Email</label>
+            <input type="email" name="{{ attrs.name }}" value="{{ attrs.value or '' }}" required autofocus>
+          </div>
+          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+        {% elif attrs.name == 'password' %}
+          <div class="correo-form-campo">
+            <label>Contraseña</label>
+            <input type="password" name="{{ attrs.name }}" required>
+          </div>
+          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+        {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
+          <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
+        {% endif %}
+      {% endfor %}
+
       <button type="submit" class="btn btn-primary auth-submit">Entrar</button>
       <p class="auth-alterna">¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>
     </form>

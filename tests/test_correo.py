@@ -857,4 +857,136 @@ def test_construir_y_enviar_sin_adjuntos_no_rompe(monkeypatch, usuario_id):
 
     correo.construir_y_enviar(usuario_id, cuenta_id, "destino@ejemplo.com", "Sin adjunto", "<p>Cuerpo</p>")
 
-    assert len(enviados) == 1
+
+# --- Remitentes de confianza + bloqueo de imágenes remotas (Fase 5) --------------
+
+def test_direccion_email_extrae_de_nombre_y_correo():
+    assert correo.direccion_email("Jorge Velasco <jorge@guilda.cat>") == "jorge@guilda.cat"
+    assert correo.direccion_email("plano@ejemplo.com") == "plano@ejemplo.com"
+    assert correo.direccion_email(None) is None
+
+
+def test_confiar_listar_eliminar_remitente(usuario_id):
+    remitente_id = correo.confiar_en_remitente(usuario_id, "Proveedor <facturas@proveedor.com>")
+    remitentes = correo.listar_remitentes_confiables(usuario_id)
+    assert len(remitentes) == 1
+    assert remitentes[0]["direccion"] == "facturas@proveedor.com"
+
+    assert db.es_remitente_confiable(usuario_id, "facturas@proveedor.com") is True
+    assert db.es_remitente_confiable(usuario_id, "otro@ejemplo.com") is False
+
+    correo.eliminar_remitente_confiable(usuario_id, remitente_id)
+    assert correo.listar_remitentes_confiables(usuario_id) == []
+    assert db.es_remitente_confiable(usuario_id, "facturas@proveedor.com") is False
+
+
+def test_html_con_imagenes_bloqueadas_sustituye_src_remoto():
+    html = '<p>Hola</p><img src="https://tracker.ejemplo.com/pixel.png"> texto'
+    seguro, hubo = correo.html_con_imagenes_bloqueadas(html)
+    assert hubo is True
+    assert "https://tracker.ejemplo.com/pixel.png" not in seguro.split("data-src-bloqueado")[0]
+    assert 'data-src-bloqueado="https://tracker.ejemplo.com/pixel.png"' in seguro
+
+
+def test_html_con_imagenes_bloqueadas_sin_imagenes_remotas_no_cambia_nada():
+    html = "<p>Solo texto, sin imágenes</p>"
+    seguro, hubo = correo.html_con_imagenes_bloqueadas(html)
+    assert hubo is False
+    assert seguro == html
+
+
+def test_html_con_imagenes_bloqueadas_con_html_vacio():
+    assert correo.html_con_imagenes_bloqueadas(None) == ("", False)
+    assert correo.html_con_imagenes_bloqueadas("") == ("", False)
+
+
+# --- Reglas de categorización automática por remitente (Fase 5) -----------------
+
+def test_regla_categoria_por_email_exacto_se_aplica_al_sincronizar(monkeypatch, usuario_id):
+    cat_id = correo.crear_categoria(usuario_id, "Facturas", "#e0555a")
+    correo.crear_regla_categoria(usuario_id, "facturas@proveedor.com", cat_id)
+
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Factura", "facturas@proveedor.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    mensaje = correo.listar_mensajes(cuenta_id)[0]
+    assert mensaje["categoria_id"] == cat_id
+
+
+def test_regla_categoria_por_dominio_se_aplica_al_sincronizar(monkeypatch, usuario_id):
+    cat_id = correo.crear_categoria(usuario_id, "Proveedores", "#4a6cf7")
+    correo.crear_regla_categoria(usuario_id, "@proveedor.com", cat_id)
+
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Aviso", "cualquiera@proveedor.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    mensaje = correo.listar_mensajes(cuenta_id)[0]
+    assert mensaje["categoria_id"] == cat_id
+
+
+def test_sin_regla_coincidente_no_asigna_categoria(monkeypatch, usuario_id):
+    cat_id = correo.crear_categoria(usuario_id, "Facturas", "#e0555a")
+    correo.crear_regla_categoria(usuario_id, "facturas@proveedor.com", cat_id)
+
+    _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Hola", "amigo@ejemplo.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    mensaje = correo.listar_mensajes(cuenta_id)[0]
+    assert mensaje["categoria_id"] is None
+
+
+def test_eliminar_regla_categoria(usuario_id):
+    cat_id = correo.crear_categoria(usuario_id, "Facturas", "#e0555a")
+    regla_id = correo.crear_regla_categoria(usuario_id, "facturas@proveedor.com", cat_id)
+    assert len(correo.listar_reglas_categoria(usuario_id)) == 1
+
+    correo.eliminar_regla_categoria(usuario_id, regla_id)
+    assert correo.listar_reglas_categoria(usuario_id) == []
+
+
+# --- Destinatarios recientes (Fase 5) --------------------------------------------
+
+def test_construir_y_enviar_registra_destinatarios_recientes(monkeypatch, usuario_id):
+    enviados = []
+    _cuenta_smtp(monkeypatch, enviados)
+    cuenta_id = _crear_cuenta_con_smtp(monkeypatch, usuario_id)
+
+    correo.construir_y_enviar(
+        usuario_id, cuenta_id, "Ana <ana@ejemplo.com>", "Asunto", "<p>Cuerpo</p>",
+        cc="bea@ejemplo.com",
+    )
+
+    recientes = db.buscar_destinatarios_recientes(usuario_id)
+    direcciones = {r["direccion"] for r in recientes}
+    assert direcciones == {"ana@ejemplo.com", "bea@ejemplo.com"}
+    ana = next(r for r in recientes if r["direccion"] == "ana@ejemplo.com")
+    assert ana["nombre_mostrado"] == "Ana"
+
+
+def test_registrar_destinatario_reciente_dos_veces_incrementa_contador(usuario_id):
+    db.registrar_destinatario_reciente(usuario_id, "ana@ejemplo.com", "Ana")
+    db.registrar_destinatario_reciente(usuario_id, "ana@ejemplo.com", "Ana")
+    recientes = db.buscar_destinatarios_recientes(usuario_id)
+    assert len(recientes) == 1
+    assert recientes[0]["veces_usado"] == 2
+
+
+def test_buscar_destinatarios_recientes_filtra_por_texto(usuario_id):
+    db.registrar_destinatario_reciente(usuario_id, "ana@ejemplo.com", "Ana García")
+    db.registrar_destinatario_reciente(usuario_id, "bea@ejemplo.com", "Beatriz López")
+
+    resultado = db.buscar_destinatarios_recientes(usuario_id, "ana")
+    assert len(resultado) == 1
+    assert resultado[0]["direccion"] == "ana@ejemplo.com"

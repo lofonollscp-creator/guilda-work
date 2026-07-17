@@ -1,0 +1,124 @@
+# Servicios auxiliares de Guilda Work (ninguno reemplaza a serve.py/GuildaWork.exe
+# — la app en sí sigue corriendo tal cual, fuera de Docker, ver HOSTING.md).
+# Se levantan aparte, apuntando al mismo data/registro.db, sin tocar nada de app/.
+#
+# Uso local (verificación en este PC):   docker compose up -d
+# Uso en el VPS (Fase 3c de HOSTING.md): mismo comando, tras clonar el repo allí.
+#
+# Metabase (Fase "integraciones de código abierto" del plan): panel de análisis
+# sobre data/registro.db. El driver de SQLite viene ya incluido en la imagen
+# oficial de Metabase — no hace falta ningún plugin aparte.
+#
+# Se monta la CARPETA data/ completa (no solo el .db) porque la app usa WAL
+# mode (PRAGMA journal_mode=WAL, Fase 3a) — SQLite necesita poder ver/crear
+# los archivos -wal/-shm que viven junto al .db para abrir la conexión, algo
+# que un mount de un único archivo no permite. En la práctica, Metabase solo
+# hace SELECT (nunca hay ninguna escritura real desde la UI de análisis), así
+# que no hace falta forzar :ro para estar a salvo del "usuario que se despista
+# y edita algo" — no hay ninguna vía en la interfaz de Metabase para editar
+# filas. Si se quisiera un aislamiento estricto a nivel de sistema de
+# archivos, la alternativa es apuntar Metabase a una copia periódica del .db
+# en vez de al archivo en vivo (ver plan: "vía de escape con pgloader/Postgres").
+services:
+  metabase:
+    image: metabase/metabase:latest
+    container_name: guilda-work-metabase
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+      - metabase-data:/metabase-data
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+
+  # MinIO: almacenamiento de objetos compatible con S3, 100% self-hosted.
+  # Uso previsto (plan "integraciones de código abierto"): destino de las
+  # copias de Litestream (ver litestream.yml), sin depender de un bucket de
+  # pago (AWS/Backblaze). El bucket en sí (guilda-backups) se crea aparte,
+  # a mano o con `mc`, no en este compose — ver deploy/ para el paso a paso.
+  minio:
+    image: minio/minio:latest
+    container_name: guilda-work-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Consola web
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: guilda_admin
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-CambiaEstaClave2026}
+
+  # n8n: automatización de flujos sobre la API REST ya existente
+  # (app/rutas_api.py, Fase 2) — n8n es, para Guilda Work, "otro cliente
+  # autenticado más", igual que la app móvil: llama a /api/v1/... con un
+  # token, sin que haga falta ningún cambio de backend.
+  #
+  # host.docker.internal apunta al PC anfitrión (donde corre serve.py o
+  # GuildaWork.exe fuera de Docker, ver HOSTING.md) — así los flujos de
+  # n8n pueden llamar a http://host.docker.internal:8000/api/v1/... para
+  # probar contra la app real en local. En el VPS, serve.py corre en la
+  # misma máquina que Docker, así que ahí también aplica host.docker.internal
+  # (o localhost si se prefiere red "host").
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: guilda-work-n8n
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+  # Ory Kratos: identidad real para el modo hospedado de Guilda Work
+  # (Fase 7a del plan) — sustituye la comprobación de contraseña casera
+  # como origen de verdad, sin tocar cli.py/mcp_server.py (usuario local,
+  # nunca pasa por aquí) ni el modo escritorio (GuildaWork.exe).
+  postgres-kratos:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-kratos
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kratos
+      POSTGRES_PASSWORD: ${KRATOS_DB_PASSWORD:-CambiaEstaClaveKratos2026}
+      POSTGRES_DB: kratos
+    volumes:
+      - postgres-kratos-data:/var/lib/postgresql/data
+
+  kratos-migrate:
+    image: oryd/kratos:latest
+    container_name: guilda-work-kratos-migrate
+    depends_on:
+      - postgres-kratos
+    environment:
+      DSN: postgres://kratos:${KRATOS_DB_PASSWORD:-CambiaEstaClaveKratos2026}@postgres-kratos:5432/kratos?sslmode=disable
+    volumes:
+      - ./deploy/kratos:/etc/config/kratos:ro
+    command: migrate sql -e --yes --config /etc/config/kratos/kratos.yml
+    restart: on-failure
+
+  kratos:
+    image: oryd/kratos:latest
+    container_name: guilda-work-kratos
+    restart: unless-stopped
+    depends_on:
+      - kratos-migrate
+    environment:
+      DSN: postgres://kratos:${KRATOS_DB_PASSWORD:-CambiaEstaClaveKratos2026}@postgres-kratos:5432/kratos?sslmode=disable
+      SERVE_PUBLIC_BASE_URL: http://127.0.0.1:4433/
+      SERVE_ADMIN_BASE_URL: http://127.0.0.1:4434/
+    ports:
+      - "4433:4433"   # API pública (self-service)
+      - "4434:4434"   # API admin (gestión de identidades)
+    volumes:
+      - ./deploy/kratos:/etc/config/kratos:ro
+    command: serve --config /etc/config/kratos/kratos.yml --dev
+
+volumes:
+  metabase-data:
+  minio-data:
+  n8n-data:
+  postgres-kratos-data:

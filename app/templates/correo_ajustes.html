@@ -67,6 +67,64 @@
 </section>
 
 <section class="correo-ajustes-seccion">
+  <h2>Reglas de categorización automática</h2>
+  <p class="muted">Los correos nuevos de un remitente o dominio que coincida se categorizan solos, sin tener que hacerlo a mano.</p>
+  {% if reglas_categoria %}
+  <ul class="log-list">
+    {% for regla in reglas_categoria %}
+    <li class="log-item">
+      <span class="correo-categoria-punto" style="background: {{ regla.categoria_color }};"></span>
+      <span class="log-text">{{ regla.remitente_patron }} &rarr; {{ regla.categoria_nombre }}</span>
+      <form action="{{ url_for('correo.eliminar_regla_categoria', regla_id=regla.id) }}" method="post"
+            onsubmit="return confirm('¿Eliminar esta regla?');">
+        <button type="submit" class="chip-del" title="Eliminar">✕</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if categorias %}
+  <form method="post" action="{{ url_for('correo.crear_regla_categoria') }}" class="correo-form-seccion">
+    <div class="ia-form-row">
+      <input type="text" name="remitente_patron" placeholder="email@ejemplo.com o @dominio.com" required>
+      <select name="categoria_id" required>
+        {% for cat in categorias %}
+        <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">+ Añadir regla</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="empty-lane">Crea al menos una categoría para poder definir reglas.</p>
+  {% endif %}
+</section>
+
+<section class="correo-ajustes-seccion">
+  <h2>Remitentes de confianza</h2>
+  <p class="muted">Sus imágenes remotas y adjuntos se muestran/abren sin avisar. Los de cualquier otro remitente se bloquean/avisan por privacidad.</p>
+  {% if remitentes_confiables %}
+  <ul class="log-list">
+    {% for r in remitentes_confiables %}
+    <li class="log-item">
+      <span class="log-text">{{ r.direccion }}</span>
+      <form action="{{ url_for('correo.eliminar_remitente_confiable', remitente_id=r.id) }}" method="post"
+            onsubmit="return confirm('¿Quitar «{{ r.direccion }}» de la lista de confianza?');">
+        <button type="submit" class="chip-del" title="Eliminar">✕</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('correo.crear_remitente_confiable') }}" class="correo-form-seccion">
+    <div class="ia-form-row">
+      <input type="email" name="direccion" placeholder="correo@ejemplo.com" required>
+      <button type="submit" class="btn btn-primary">+ Añadir remitente</button>
+    </div>
+  </form>
+</section>
+
+<section class="correo-ajustes-seccion">
   <h2>Firma</h2>
   {% if not cuentas %}
   <p class="empty-lane">Añade una cuenta primero para poder configurar su firma.</p>

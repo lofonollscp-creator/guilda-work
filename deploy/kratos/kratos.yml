@@ -1,0 +1,93 @@
+# Configuración de Ory Kratos para Guilda Work (Fase 7a — identidad real
+# para el modo hospedado). NO se usa la UI de referencia de Ory: todas las
+# ui_url apuntan a rutas propias de Guilda Work (app/main.py), que renderizan
+# los nodos del flujo con la misma plantilla/marca de siempre. El formulario
+# postea a través del proxy /.ory/ (app/rutas_kratos_proxy.py) para que la
+# cookie de sesión de Kratos quede en el mismo origen que la app.
+#
+# dsn se pasa por variable de entorno (ver docker-compose.yml), nunca en
+# claro aquí.
+version: v26.2.0
+
+dsn: ${DSN}
+
+serve:
+  public:
+    # Se sobreescribe por variable de entorno (SERVE_PUBLIC_BASE_URL) en
+    # docker-compose.yml/docker-compose.test.yml — dev y test comparten
+    # este mismo archivo pero publican Kratos en puertos distintos
+    # (4433 vs 14433), así que el valor de aquí es solo un respaldo.
+    base_url: http://127.0.0.1:4433/
+    cors:
+      enabled: true
+      allowed_origins:
+        - http://127.0.0.1:8000
+        - http://localhost:8000
+      allowed_methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+      allow_credentials: true
+  admin:
+    # Idem — respaldo, normalmente lo fija SERVE_ADMIN_BASE_URL.
+    base_url: http://127.0.0.1:4434/
+
+selfservice:
+  default_browser_return_url: http://127.0.0.1:8000/
+  allowed_return_urls:
+    - http://127.0.0.1:8000/
+
+  flows:
+    login:
+      ui_url: http://127.0.0.1:8000/login
+      lifespan: 10m
+    registration:
+      ui_url: http://127.0.0.1:8000/registro
+      lifespan: 10m
+      # Kratos separa el registro en dos pasos por defecto desde hace unas
+      # versiones (email primero, contraseña en una segunda pantalla) — con
+      # un único método de registro (password) y un único trait (email),
+      # eso es más fricción que ayuda; se vuelve al formulario clásico de
+      # una sola pantalla.
+      enable_legacy_one_step: true
+      after:
+        password:
+          hooks:
+            - hook: session
+    logout:
+      after:
+        default_browser_return_url: http://127.0.0.1:8000/login
+    settings:
+      ui_url: http://127.0.0.1:8000/ajustes-cuenta
+      privileged_session_max_age: 15m
+    error:
+      ui_url: http://127.0.0.1:8000/login
+
+  methods:
+    password:
+      enabled: true
+    # Verificación de email y recuperación de contraseña requieren SMTP
+    # saliente configurado — fuera de alcance de la Fase 7a, se documentan
+    # como pulido futuro cuando haya un proveedor de correo transaccional.
+    link:
+      enabled: false
+    code:
+      enabled: false
+
+identity:
+  default_schema_id: default
+  schemas:
+    - id: default
+      url: file:///etc/config/kratos/identity.schema.json
+
+# Requerido por Kratos aunque la verificación/recuperación estén
+# desactivadas — no se usa mientras esos flujos sigan deshabilitados.
+courier:
+  smtp:
+    connection_uri: smtps://noreply:noreply@localhost:465/?skip_ssl_verify=true
+
+log:
+  level: info
+  format: text

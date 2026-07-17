@@ -108,10 +108,10 @@
 
   <div class="chat-config">
     <select id="chat-proveedor">
-      <option value="ollama">Ollama (localhost:11434)</option>
-      <option value="lmstudio">LM Studio (localhost:1234)</option>
+      <option value="ollama" {% if proveedor_ia == 'ollama' %}selected{% endif %}>Ollama (localhost:11434)</option>
+      <option value="lmstudio" {% if proveedor_ia == 'lmstudio' %}selected{% endif %}>LM Studio (localhost:1234)</option>
     </select>
-    <input type="text" id="chat-modelo" placeholder="Modelo, ej. llama3.1">
+    <input type="text" id="chat-modelo" placeholder="Modelo, ej. llama3.1" value="{{ modelo_ia }}">
     <button type="button" id="chat-reset" class="btn btn-ghost">Nueva conversación</button>
   </div>
 

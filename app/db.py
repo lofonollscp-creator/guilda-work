@@ -228,6 +228,41 @@ CREATE TABLE IF NOT EXISTS correo_adjuntos (
     FOREIGN KEY (mensaje_id) REFERENCES correo_mensajes(id) ON DELETE CASCADE
 );
 
+-- Remitentes marcados como de confianza: sus imágenes remotas y adjuntos
+-- no se bloquean/avisan antes de mostrarlos.
+CREATE TABLE IF NOT EXISTS correo_remitentes_confiables (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    direccion TEXT NOT NULL,
+    creada_en TEXT NOT NULL,
+    UNIQUE (usuario_id, direccion)
+);
+
+-- Reglas de categorización automática: al llegar un mensaje nuevo cuyo
+-- remitente coincide con remitente_patron (email exacto o "@dominio.com"),
+-- se le asigna categoria_id sin intervención manual.
+CREATE TABLE IF NOT EXISTS correo_reglas_categoria (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    remitente_patron TEXT NOT NULL,
+    categoria_id INTEGER NOT NULL,
+    creada_en TEXT NOT NULL,
+    FOREIGN KEY (categoria_id) REFERENCES correo_categorias(id) ON DELETE CASCADE
+);
+
+-- Direcciones a las que ya se ha enviado correo, para sugerirlas al
+-- redactar uno nuevo (autocompletar). veces_usado/ultima_vez_en permiten
+-- ordenar las sugerencias por relevancia.
+CREATE TABLE IF NOT EXISTS correo_destinatarios_recientes (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    direccion TEXT NOT NULL,
+    nombre_mostrado TEXT,
+    ultima_vez_en TEXT NOT NULL,
+    veces_usado INTEGER NOT NULL DEFAULT 1,
+    UNIQUE (usuario_id, direccion)
+);
+
 -- Historial de la conversación con el Asistente IA (un hilo por usuario).
 CREATE TABLE IF NOT EXISTS ia_mensajes (
     id INTEGER PRIMARY KEY,
@@ -271,6 +306,9 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_remitentes_confiables_usuario ON correo_remitentes_confiables(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_reglas_categoria_usuario ON correo_reglas_categoria(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_destinatarios_recientes_usuario ON correo_destinatarios_recientes(usuario_id);
 """
 
 
@@ -429,6 +467,11 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
+        _asegurar_columna(conn, "usuarios", "kratos_identity_id", "TEXT")
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_kratos_identity_id "
+            "ON usuarios(kratos_identity_id) WHERE kratos_identity_id IS NOT NULL"
+        )
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -444,6 +487,12 @@ def init_db() -> None:
         usuario_id_local = _resolver_usuario_local(conn)
         _migrar_datos_sin_usuario(conn, usuario_id_local)
         _migrar_preferencias_singleton(conn, usuario_id_local)
+
+        # IA local (Ollama/LM Studio): columnas añadidas después de la
+        # migración del singleton, ya que esta es la que crea/asegura la
+        # propia tabla ia_preferencias en primer lugar.
+        _asegurar_columna(conn, "ia_preferencias", "proveedor_local", "TEXT NOT NULL DEFAULT 'ollama'")
+        _asegurar_columna(conn, "ia_preferencias", "modelo_local", "TEXT NOT NULL DEFAULT ''")
 
         conn.commit()
     finally:
@@ -521,11 +570,56 @@ def obtener_usuario(usuario_id: int) -> sqlite3.Row | None:
 def verificar_credenciales(email: str, contrasena: str) -> sqlite3.Row | None:
     """Devuelve la fila del usuario si el email existe y la contraseña es
     correcta; None en cualquier otro caso (sin distinguir el motivo, para no
-    filtrar si un email concreto existe o no)."""
+    filtrar si un email concreto existe o no).
+
+    Solo queda en uso para el usuario "local" del modo escritorio (que
+    nunca pasa por Kratos, ver `usuario_local_id`) — el login real
+    (hospedado, web/API) verifica credenciales contra Kratos a partir de
+    la Fase 7a; ver `app/kratos.py`."""
     usuario = obtener_usuario_por_email(email)
     if usuario is None or not check_password_hash(usuario["contrasena_hash"], contrasena):
         return None
     return usuario
+
+
+# --- Vínculo con la identidad de Ory Kratos (Fase 7a) -------------------
+
+def usuario_por_kratos_id(identity_id: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM usuarios WHERE kratos_identity_id = ?", (identity_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def vincular_kratos_id(usuario_id: int, identity_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE usuarios SET kratos_identity_id = ? WHERE id = ?", (identity_id, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_usuario_vinculado_a_kratos(email: str, identity_id: str) -> int:
+    """Crea la fila local de `usuarios` para una identidad que YA existe en
+    Kratos (login/registro real, a partir de la Fase 7a) — no guarda
+    ninguna contraseña propia, Kratos es quien la custodia."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO usuarios (email, contrasena_hash, kratos_identity_id, creado_en) "
+            "VALUES (?, ?, ?, ?)",
+            (email.strip().lower(), "", identity_id, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
 
 
 def usuario_local_id() -> int:
@@ -1739,6 +1833,174 @@ def asignar_categoria_correo(mensaje_id: int, categoria_id: int | None) -> None:
         conn.close()
 
 
+# --- Remitentes de confianza (imágenes/adjuntos no se bloquean) --------------
+
+def confiar_en_remitente(usuario_id: int, direccion: str) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO correo_remitentes_confiables (usuario_id, direccion, creada_en)
+               VALUES (?, ?, ?)
+               ON CONFLICT (usuario_id, direccion) DO NOTHING""",
+            (usuario_id, direccion.strip().lower(), now_iso()),
+        )
+        conn.commit()
+        fila = conn.execute(
+            "SELECT id FROM correo_remitentes_confiables WHERE usuario_id = ? AND direccion = ?",
+            (usuario_id, direccion.strip().lower()),
+        ).fetchone()
+        return fila["id"] if fila else cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_remitentes_confiables(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_remitentes_confiables WHERE usuario_id = ? ORDER BY direccion",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_remitente_confiable(usuario_id: int, remitente_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_remitentes_confiables WHERE id = ? AND usuario_id = ?",
+            (remitente_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def es_remitente_confiable(usuario_id: int, direccion: str | None) -> bool:
+    if not direccion:
+        return False
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT 1 FROM correo_remitentes_confiables WHERE usuario_id = ? AND direccion = ?",
+            (usuario_id, direccion.strip().lower()),
+        ).fetchone()
+        return fila is not None
+    finally:
+        conn.close()
+
+
+# --- Reglas de categorización automática por remitente -----------------------
+
+def crear_regla_categoria_correo(usuario_id: int, remitente_patron: str, categoria_id: int) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO correo_reglas_categoria (usuario_id, remitente_patron, categoria_id, creada_en)
+               VALUES (?, ?, ?, ?)""",
+            (usuario_id, remitente_patron.strip().lower(), categoria_id, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_reglas_categoria_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT r.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+               FROM correo_reglas_categoria r
+               JOIN correo_categorias c ON c.id = r.categoria_id
+               WHERE r.usuario_id = ? ORDER BY r.remitente_patron""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_regla_categoria_correo(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_reglas_categoria WHERE id = ? AND usuario_id = ?", (regla_id, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def categoria_id_por_remitente_correo(usuario_id: int, direccion: str | None) -> int | None:
+    """Busca primero una regla de email exacto, luego una de dominio
+    (`remitente_patron` empezando por "@")."""
+    if not direccion:
+        return None
+    direccion = direccion.strip().lower()
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT categoria_id FROM correo_reglas_categoria
+               WHERE usuario_id = ? AND remitente_patron = ?""",
+            (usuario_id, direccion),
+        ).fetchone()
+        if fila:
+            return fila["categoria_id"]
+        dominio = "@" + direccion.split("@", 1)[1] if "@" in direccion else None
+        if dominio:
+            fila = conn.execute(
+                """SELECT categoria_id FROM correo_reglas_categoria
+                   WHERE usuario_id = ? AND remitente_patron = ?""",
+                (usuario_id, dominio),
+            ).fetchone()
+            if fila:
+                return fila["categoria_id"]
+        return None
+    finally:
+        conn.close()
+
+
+# --- Destinatarios recientes (para autocompletar al redactar) ----------------
+
+def registrar_destinatario_reciente(usuario_id: int, direccion: str, nombre_mostrado: str | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            """INSERT INTO correo_destinatarios_recientes
+               (usuario_id, direccion, nombre_mostrado, ultima_vez_en, veces_usado)
+               VALUES (?, ?, ?, ?, 1)
+               ON CONFLICT (usuario_id, direccion) DO UPDATE SET
+                   nombre_mostrado = excluded.nombre_mostrado,
+                   ultima_vez_en = excluded.ultima_vez_en,
+                   veces_usado = veces_usado + 1""",
+            (usuario_id, direccion.strip().lower(), nombre_mostrado, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def buscar_destinatarios_recientes(usuario_id: int, q: str | None = None, limite: int = 8) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        if q:
+            patron = f"%{q.strip().lower()}%"
+            return conn.execute(
+                """SELECT * FROM correo_destinatarios_recientes
+                   WHERE usuario_id = ? AND (direccion LIKE ? OR LOWER(nombre_mostrado) LIKE ?)
+                   ORDER BY veces_usado DESC, ultima_vez_en DESC LIMIT ?""",
+                (usuario_id, patron, patron, limite),
+            ).fetchall()
+        return conn.execute(
+            """SELECT * FROM correo_destinatarios_recientes WHERE usuario_id = ?
+               ORDER BY veces_usado DESC, ultima_vez_en DESC LIMIT ?""",
+            (usuario_id, limite),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 # --- Preferencias generales de Correo (una fila por usuario) ------------------
 
 def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
@@ -2106,6 +2368,33 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -
         conn.execute(
             "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE usuario_id = ?",
             (modelo, int(modo_autonomo), usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- IA local (Ollama/LM Studio): recordar el último proveedor/modelo usado --
+
+def obtener_preferencias_ia_local(usuario_id: int) -> sqlite3.Row:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        conn.commit()
+        return conn.execute(
+            "SELECT * FROM ia_preferencias WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_preferencias_ia_local(usuario_id: int, proveedor: str, modelo: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute(
+            "UPDATE ia_preferencias SET proveedor_local = ?, modelo_local = ? WHERE usuario_id = ?",
+            (proveedor, modelo, usuario_id),
         )
         conn.commit()
     finally:

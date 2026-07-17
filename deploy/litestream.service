@@ -1,0 +1,24 @@
+# Plantilla de unidad systemd para litestream replicate en un VPS Linux.
+# Copia a /etc/systemd/system/litestream.service, guarda las credenciales
+# reales en /etc/litestream.env (mismo patrón que /etc/guilda-work.env),
+# y luego:
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now litestream
+#
+# Requiere litestream instalado (ver https://litestream.io/install/) y
+# deploy/litestream.yml copiado a /etc/litestream.yml.
+
+[Unit]
+Description=Litestream - réplica continua de registro.db
+After=network.target guilda-work.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/litestream.env
+ExecStart=/usr/local/bin/litestream replicate -config /etc/litestream.yml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

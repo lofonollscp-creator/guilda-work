@@ -14,12 +14,13 @@ Formato de respuesta uniforme: `{"ok": true, "data": ...}` en éxito,
 `abort()`, 405, etc.) se convierte también a ese mismo formato mediante el
 errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 """
+import base64
 from datetime import datetime
 
 from flask import Blueprint, Response, abort, g, jsonify, request
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, export, ia_asistente
+from . import correo, db, export, ia_asistente, kratos
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -64,6 +65,9 @@ def _token_de_cabecera() -> str | None:
 @api_bp.route("/auth/registro", methods=["POST"])
 @limiter.limit("10/minute")
 def registro():
+    """Fase 7a: la contraseña la custodia Kratos, no esta tabla — el móvil
+    sigue recibiendo el mismo token opaco propio de siempre (sin cambios en
+    mobile/), solo cambia qué la valida por debajo."""
     datos = _body()
     email = (datos.get("email") or "").strip()
     contrasena = datos.get("contrasena") or ""
@@ -73,7 +77,11 @@ def registro():
         return _err("La contraseña debe tener al menos 8 caracteres.")
     if db.obtener_usuario_por_email(email) is not None:
         return _err("Ya existe una cuenta con ese email.", 409)
-    usuario_id = db.crear_usuario(email, contrasena)
+    try:
+        identity_id = kratos.crear_identidad(email, contrasena)
+    except kratos.ErrorKratos as e:
+        return _err(str(e))
+    usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     token = db.crear_token_api(usuario_id, datos.get("nombre_dispositivo"))
     return _ok({"token": token, "usuario": {"id": usuario_id, "email": email}}, 201)
 
@@ -84,9 +92,16 @@ def login():
     datos = _body()
     email = (datos.get("email") or "").strip()
     contrasena = datos.get("contrasena") or ""
-    usuario = db.verificar_credenciales(email, contrasena)
-    if usuario is None:
+    identity_id = kratos.verificar_credenciales_admin(email, contrasena)
+    if identity_id is None:
         return _err("Email o contraseña incorrectos.", 401)
+    usuario = db.usuario_por_kratos_id(identity_id)
+    if usuario is None:
+        # Identidad ya existente en Kratos (p.ej. migrada por
+        # scripts/migrar_usuarios_a_kratos.py) que todavía no tiene fila
+        # local vinculada — se crea aquí, la primera vez que entra.
+        usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
+        usuario = db.obtener_usuario(usuario_id)
     token = db.crear_token_api(usuario["id"], datos.get("nombre_dispositivo"))
     return _ok({"token": token, "usuario": {"id": usuario["id"], "email": usuario["email"]}})
 
@@ -466,6 +481,8 @@ def obtener_mensaje_correo(mensaje_id: int):
     mensaje = _mensaje_de_usuario_o_404(mensaje_id)
     datos = _dict(mensaje)
     datos["adjuntos"] = _dicts(db.listar_adjuntos_correo(mensaje_id))
+    direccion = correo.direccion_email(mensaje["remitente"])
+    datos["remitente_confiable"] = db.es_remitente_confiable(g.usuario_id, direccion)
     return _ok(datos)
 
 
@@ -566,12 +583,20 @@ def accion_en_lote_correo(accion: str):
 @token_required
 def enviar_correo():
     datos = _body()
+    adjuntos = [
+        {
+            "nombre": a.get("nombre", "adjunto"),
+            "tipo": a.get("tipo") or "application/octet-stream",
+            "bytes": base64.b64decode(a["contenido_base64"]),
+        }
+        for a in datos.get("adjuntos", []) if a.get("contenido_base64")
+    ]
     try:
         correo.construir_y_enviar(
             g.usuario_id,
             datos.get("cuenta_id"), datos.get("destinatarios", ""), datos.get("asunto", ""),
             datos.get("cuerpo_html", ""), cc=datos.get("cc", ""), bcc=datos.get("bcc", ""),
-            en_respuesta_a=datos.get("en_respuesta_a"),
+            en_respuesta_a=datos.get("en_respuesta_a"), adjuntos=adjuntos or None,
         )
     except correo.ErrorCorreo as e:
         return _err(str(e))
@@ -600,6 +625,63 @@ def crear_categoria_correo():
 def eliminar_categoria_correo(categoria_id: int):
     correo.eliminar_categoria(g.usuario_id, categoria_id)
     return _ok()
+
+
+@api_bp.route("/correo/remitentes-confiables", methods=["GET"])
+@token_required
+def listar_remitentes_confiables():
+    return _ok(_dicts(db.listar_remitentes_confiables(g.usuario_id)))
+
+
+@api_bp.route("/correo/remitentes-confiables", methods=["POST"])
+@token_required
+def crear_remitente_confiable():
+    datos = _body()
+    try:
+        remitente_id = correo.confiar_en_remitente(g.usuario_id, datos.get("direccion", ""))
+    except correo.ErrorCorreo as e:
+        return _err(str(e))
+    return _ok({"id": remitente_id}, 201)
+
+
+@api_bp.route("/correo/remitentes-confiables/<int:remitente_id>", methods=["DELETE"])
+@token_required
+def eliminar_remitente_confiable(remitente_id: int):
+    correo.eliminar_remitente_confiable(g.usuario_id, remitente_id)
+    return _ok()
+
+
+@api_bp.route("/correo/reglas-categoria", methods=["GET"])
+@token_required
+def listar_reglas_categoria():
+    return _ok(_dicts(db.listar_reglas_categoria_correo(g.usuario_id)))
+
+
+@api_bp.route("/correo/reglas-categoria", methods=["POST"])
+@token_required
+def crear_regla_categoria():
+    datos = _body()
+    try:
+        regla_id = correo.crear_regla_categoria(
+            g.usuario_id, datos.get("remitente_patron", ""), datos.get("categoria_id"),
+        )
+    except correo.ErrorCorreo as e:
+        return _err(str(e))
+    return _ok({"id": regla_id}, 201)
+
+
+@api_bp.route("/correo/reglas-categoria/<int:regla_id>", methods=["DELETE"])
+@token_required
+def eliminar_regla_categoria(regla_id: int):
+    correo.eliminar_regla_categoria(g.usuario_id, regla_id)
+    return _ok()
+
+
+@api_bp.route("/correo/destinatarios-recientes", methods=["GET"])
+@token_required
+def buscar_destinatarios_recientes():
+    q = request.args.get("q", "")
+    return _ok(_dicts(db.buscar_destinatarios_recientes(g.usuario_id, q)))
 
 
 @api_bp.route("/correo/ajustes", methods=["GET"])

@@ -196,6 +196,128 @@ def test_mensaje_de_correo_leer_y_destacar(cliente):
     assert cliente.get(f"/api/v1/correo/mensajes/{mensaje_id}", headers=h).get_json()["data"]["destacado"] == 1
 
 
+def test_mensaje_correo_indica_si_el_remitente_es_confiable(cliente):
+    token = _registrar(cliente, email="confianza@ejemplo.com")["token"]
+    usuario_id = db.obtener_usuario_por_email("confianza@ejemplo.com")["id"]
+    h = _auth(token)
+
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Hola", remitente="Ana <ana@ejemplo.com>",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    mensaje_id = db.listar_mensajes_correo(cuenta_id)[0]["id"]
+
+    assert cliente.get(f"/api/v1/correo/mensajes/{mensaje_id}", headers=h).get_json()["data"]["remitente_confiable"] is False
+
+    resp = cliente.post("/api/v1/correo/remitentes-confiables", json={"direccion": "ana@ejemplo.com"}, headers=h)
+    assert resp.status_code == 201
+    remitente_id = resp.get_json()["data"]["id"]
+
+    assert len(cliente.get("/api/v1/correo/remitentes-confiables", headers=h).get_json()["data"]) == 1
+    assert cliente.get(f"/api/v1/correo/mensajes/{mensaje_id}", headers=h).get_json()["data"]["remitente_confiable"] is True
+
+    resp = cliente.delete(f"/api/v1/correo/remitentes-confiables/{remitente_id}", headers=h)
+    assert resp.status_code == 200
+    assert cliente.get("/api/v1/correo/remitentes-confiables", headers=h).get_json()["data"] == []
+
+
+def test_crud_reglas_categoria_correo(cliente):
+    token = _registrar(cliente, email="reglas@ejemplo.com")["token"]
+    h = _auth(token)
+
+    categoria_id = cliente.post(
+        "/api/v1/correo/categorias", json={"nombre": "Facturas", "color": "#e0555a"}, headers=h,
+    ).get_json()["data"]["id"]
+
+    resp = cliente.post(
+        "/api/v1/correo/reglas-categoria",
+        json={"remitente_patron": "@proveedor.com", "categoria_id": categoria_id},
+        headers=h,
+    )
+    assert resp.status_code == 201
+    regla_id = resp.get_json()["data"]["id"]
+
+    reglas = cliente.get("/api/v1/correo/reglas-categoria", headers=h).get_json()["data"]
+    assert len(reglas) == 1
+    assert reglas[0]["remitente_patron"] == "@proveedor.com"
+
+    resp = cliente.delete(f"/api/v1/correo/reglas-categoria/{regla_id}", headers=h)
+    assert resp.status_code == 200
+    assert cliente.get("/api/v1/correo/reglas-categoria", headers=h).get_json()["data"] == []
+
+
+def test_buscar_destinatarios_recientes(cliente):
+    token = _registrar(cliente, email="recientes@ejemplo.com")["token"]
+    usuario_id = db.obtener_usuario_por_email("recientes@ejemplo.com")["id"]
+    h = _auth(token)
+
+    db.registrar_destinatario_reciente(usuario_id, "ana@ejemplo.com", "Ana García")
+    db.registrar_destinatario_reciente(usuario_id, "bea@ejemplo.com", "Beatriz López")
+
+    resp = cliente.get("/api/v1/correo/destinatarios-recientes?q=ana", headers=h)
+    assert resp.status_code == 200
+    datos = resp.get_json()["data"]
+    assert len(datos) == 1
+    assert datos[0]["direccion"] == "ana@ejemplo.com"
+
+
+def test_enviar_correo_con_adjunto_en_base64(cliente, monkeypatch):
+    import base64
+    import smtplib
+
+    class _SMTPFalso:
+        enviados = []
+
+        def __init__(self, *a, **k):
+            pass
+
+        def starttls(self):
+            pass
+
+        def login(self, usuario, contrasena):
+            pass
+
+        def send_message(self, mensaje, to_addrs=None):
+            _SMTPFalso.enviados.append(mensaje)
+
+        def quit(self):
+            pass
+
+    monkeypatch.setattr(smtplib, "SMTP", _SMTPFalso)
+    monkeypatch.setattr(smtplib, "SMTP_SSL", _SMTPFalso)
+    _mock_imap(monkeypatch)
+
+    token = _registrar(cliente, email="adjuntos@ejemplo.com")["token"]
+    h = _auth(token)
+    resp = cliente.post(
+        "/api/v1/correo/cuentas",
+        json={
+            "nombre": "Trabajo", "protocolo": "imap", "host": "imap.ejemplo.com", "puerto": 993,
+            "usuario": "yo@ejemplo.com", "contrasena": "x",
+            "smtp_host": "smtp.ejemplo.com", "smtp_puerto": 587,
+        },
+        headers=h,
+    )
+    cuenta_id = resp.get_json()["data"]["id"]
+
+    contenido = base64.b64encode(b"a,b,c\n1,2,3").decode()
+    resp = cliente.post(
+        "/api/v1/correo/enviar",
+        json={
+            "cuenta_id": cuenta_id, "destinatarios": "destino@ejemplo.com", "asunto": "Con adjunto",
+            "cuerpo_html": "<p>Cuerpo</p>",
+            "adjuntos": [{"nombre": "datos.csv", "tipo": "text/csv", "contenido_base64": contenido}],
+        },
+        headers=h,
+    )
+    assert resp.status_code == 200
+    enviado = _SMTPFalso.enviados[-1]
+    adjuntos_enviados = [p for p in enviado.walk() if p.get_content_disposition() == "attachment"]
+    assert len(adjuntos_enviados) == 1
+    assert adjuntos_enviados[0].get_filename() == "datos.csv"
+
+
 # --- Asistente IA -----------------------------------------------------------------
 
 def test_ajustes_y_mensajes_ia(cliente):

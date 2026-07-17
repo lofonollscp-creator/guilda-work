@@ -34,7 +34,7 @@ import smtplib
 import socket
 from email.header import decode_header
 from email.message import EmailMessage
-from email.utils import parsedate_to_datetime
+from email.utils import getaddresses, parsedate_to_datetime
 
 import keyring
 
@@ -333,6 +333,8 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
         )
         if adjuntos and mensaje_id is not None:
             db.guardar_adjuntos_correo(mensaje_id, adjuntos)
+        if mensaje_id is not None:
+            _aplicar_categoria_automatica(cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")))
     return len(nuevos)
 
 
@@ -386,6 +388,8 @@ def _sincronizar_pop3(cuenta) -> int:
             )
             if adjuntos and mensaje_id is not None:
                 db.guardar_adjuntos_correo(mensaje_id, adjuntos)
+            if mensaje_id is not None:
+                _aplicar_categoria_automatica(cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")))
             nuevos_count += 1
         return nuevos_count
     finally:
@@ -453,7 +457,7 @@ def posponer_mensaje(mensaje_id: int, hasta: str | None) -> None:
     db.posponer_mensaje_correo(mensaje_id, hasta)
 
 
-def _direccion_email(texto: str | None) -> str | None:
+def direccion_email(texto: str | None) -> str | None:
     """Extrae solo la dirección de "Nombre <correo@x.com>" (o la devuelve
     tal cual si ya es una dirección pelada), en minúsculas para comparar."""
     if not texto:
@@ -467,7 +471,7 @@ def _direccion_email(texto: str | None) -> str | None:
 def destinatarios_responder_a_todos(mensaje, direccion_propia: str | None) -> str:
     """Une remitente + "Para" + "Cc" del mensaje original en una sola lista
     para "Responder a todos", sin duplicados y sin incluir la propia cuenta."""
-    propia = _direccion_email(direccion_propia)
+    propia = direccion_email(direccion_propia)
     vistas: set[str] = set()
     resultado: list[str] = []
     for campo in (mensaje["remitente"], mensaje["destinatarios"], mensaje["cc"]):
@@ -477,12 +481,44 @@ def destinatarios_responder_a_todos(mensaje, direccion_propia: str | None) -> st
             destinatario = destinatario.strip()
             if not destinatario:
                 continue
-            clave = _direccion_email(destinatario)
+            clave = direccion_email(destinatario)
             if not clave or clave == propia or clave in vistas:
                 continue
             vistas.add(clave)
             resultado.append(destinatario)
     return ", ".join(resultado)
+
+
+def _aplicar_categoria_automatica(usuario_id: int, mensaje_id: int, remitente_crudo: str | None) -> None:
+    """Aplica, si existe, la regla de categorización cuyo patrón coincide
+    con el remitente del mensaje recién insertado (email exacto o
+    "@dominio.com")."""
+    direccion = direccion_email(remitente_crudo)
+    categoria_id = db.categoria_id_por_remitente_correo(usuario_id, direccion)
+    if categoria_id is not None:
+        db.asignar_categoria_correo(mensaje_id, categoria_id)
+
+
+_PATRON_IMG_REMOTA = re.compile(r'(<img\b[^>]*\bsrc=["\'])(https?://[^"\']+)(["\'])', re.IGNORECASE)
+
+
+def html_con_imagenes_bloqueadas(html: str | None) -> tuple[str, bool]:
+    """Sustituye el `src` de cualquier `<img src="http(s)://...">` por un
+    marcador inerte, para que el navegador (o el HtmlWidget del móvil) no
+    llegue a pedirlo por red — evita tracking pixels y fugas de IP de
+    remitentes no confiables. Devuelve (html_modificado, hubo_bloqueo).
+    No modifica el HTML guardado en la base de datos, solo el que se
+    muestra en este momento."""
+    if not html:
+        return html or "", False
+    hubo = False
+
+    def _reemplazo(m: re.Match) -> str:
+        nonlocal hubo
+        hubo = True
+        return f'{m.group(1)}data:,{m.group(3)} data-src-bloqueado="{m.group(2)}"'
+
+    return _PATRON_IMG_REMOTA.sub(_reemplazo, html), hubo
 
 
 def mover_mensaje(usuario_id: int, mensaje_id: int, carpeta_destino: str) -> None:
@@ -541,6 +577,40 @@ def eliminar_categoria(usuario_id: int, categoria_id: int) -> None:
 
 def asignar_categoria(mensaje_id: int, categoria_id: int | None) -> None:
     db.asignar_categoria_correo(mensaje_id, categoria_id)
+
+
+# --- Remitentes de confianza ---------------------------------------------------
+
+def confiar_en_remitente(usuario_id: int, direccion: str) -> int:
+    direccion = direccion_email(direccion) or direccion.strip().lower()
+    if not direccion:
+        raise ErrorCorreo("Indica una dirección de correo.")
+    return db.confiar_en_remitente(usuario_id, direccion)
+
+
+def listar_remitentes_confiables(usuario_id: int):
+    return db.listar_remitentes_confiables(usuario_id)
+
+
+def eliminar_remitente_confiable(usuario_id: int, remitente_id: int) -> None:
+    db.eliminar_remitente_confiable(usuario_id, remitente_id)
+
+
+# --- Reglas de categorización automática por remitente --------------------------
+
+def crear_regla_categoria(usuario_id: int, remitente_patron: str, categoria_id: int) -> int:
+    remitente_patron = remitente_patron.strip().lower()
+    if not remitente_patron:
+        raise ErrorCorreo("Indica un email o un dominio (@ejemplo.com).")
+    return db.crear_regla_categoria_correo(usuario_id, remitente_patron, categoria_id)
+
+
+def listar_reglas_categoria(usuario_id: int):
+    return db.listar_reglas_categoria_correo(usuario_id)
+
+
+def eliminar_regla_categoria(usuario_id: int, regla_id: int) -> None:
+    db.eliminar_regla_categoria_correo(usuario_id, regla_id)
 
 
 # --- Firma ---------------------------------------------------------------------
@@ -657,3 +727,7 @@ def construir_y_enviar(
             conn.quit()
         except Exception:
             pass
+
+    for nombre, direccion in getaddresses([destinatarios, cc, bcc]):
+        if direccion.strip():
+            db.registrar_destinatario_reciente(usuario_id, direccion.strip(), nombre.strip() or None)

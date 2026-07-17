@@ -23,11 +23,12 @@ from pathlib import Path
 import webview
 from flask import Flask, Response, abort, g, redirect, render_template, request, session, url_for
 
-from . import ai_local, correo, db, export, ia_asistente, importador
+from . import ai_local, correo, db, export, ia_asistente, importador, kratos
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_correo import correo_bp
 from .rutas_ia import ia_bp
+from .rutas_kratos_proxy import kratos_proxy_bp
 from .rutas_tareas import tareas_bp
 
 HOST = "127.0.0.1"
@@ -79,13 +80,41 @@ app.register_blueprint(tareas_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
+app.register_blueprint(kratos_proxy_bp)
+
+
+KRATOS_SESSION_COOKIE = "ory_kratos_session"
 
 
 @app.before_request
 def _resolver_usuario_actual():
-    if MODO_ESCRITORIO and "usuario_id" not in session:
-        session["usuario_id"] = db.usuario_local_id()
-    g.usuario_id = session.get("usuario_id")
+    # Modo escritorio (GuildaWork.exe): un único usuario local de confianza,
+    # sin pantalla de login real — no pasa por Kratos en absoluto (Fase 7a).
+    if MODO_ESCRITORIO:
+        if "usuario_id" not in session:
+            session["usuario_id"] = db.usuario_local_id()
+        g.usuario_id = session.get("usuario_id")
+        return
+
+    # Modo hospedado: identidad real vía Ory Kratos. Solo se llama a Kratos
+    # si hay cookie de sesión de Kratos en la petición — evita una llamada
+    # HTTP en cada visita anónima (página de login, assets, etc.).
+    g.usuario_id = None
+    if KRATOS_SESSION_COOKIE not in request.cookies:
+        return
+    sesion_kratos = kratos.whoami(request.cookies)
+    if not sesion_kratos or not sesion_kratos.get("active"):
+        return
+    identity_id = sesion_kratos["identity"]["id"]
+    usuario = db.usuario_por_kratos_id(identity_id)
+    if usuario is None:
+        # Primera vez que se ve esta identidad (recién registrada en Kratos,
+        # que ya le abrió sesión automáticamente): crea la fila local
+        # vinculada sobre la marcha, sin contraseña propia que guardar.
+        email = sesion_kratos["identity"]["traits"]["email"]
+        g.usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
+    else:
+        g.usuario_id = usuario["id"]
 
 
 @app.context_processor
@@ -112,54 +141,63 @@ def inyectar_ia_flotante():
     }
 
 
-# --- Autenticación -----------------------------------------------------------
+# --- Autenticación (Fase 7a: Ory Kratos) --------------------------------
+#
+# El navegador ya NO postea a estas rutas — el <form> de login.html/
+# registro.html postea directo a la `action` que devuelve Kratos (reescrita
+# a /.ory/..., ver app/rutas_kratos_proxy.py). Estas vistas solo:
+# 1. Si no hay `flow` en la URL, redirigen a Kratos para que inicie uno
+#    (que a su vez redirige de vuelta aquí, ya con `?flow=<id>`).
+# 2. Si hay `flow`, recuperan sus nodos (campos + posibles errores de un
+#    intento anterior) y renderizan la plantilla.
+# En modo escritorio nunca se llega aquí (antes ya hay usuario_id).
 
-@app.route("/registro", methods=["GET", "POST"])
+
+def _flujo_o_redirigir(tipo: str):
+    """Devuelve los datos del flujo (nodos + acción reescrita) para el
+    `flow` de la URL actual, o None si hay que redirigir (sin flow, o el
+    flow ya no es válido/ha caducado) — en ese caso ya deja preparada la
+    respuesta de redirección en `g._redireccion_flujo`."""
+    flow_id = request.args.get("flow")
+    if not flow_id:
+        g._redireccion_flujo = redirect(f"/.ory/self-service/{tipo}/browser")
+        return None
+    try:
+        flujo = kratos.obtener_flujo(tipo, flow_id, request.cookies)
+    except kratos.ErrorKratos:
+        g._redireccion_flujo = redirect(url_for(tipo if tipo == "login" else "registro"))
+        return None
+    return {
+        "nodos": flujo["ui"]["nodes"],
+        "accion": kratos.reescribir_action_para_navegador(flujo["ui"]["action"]),
+        "mensajes": flujo["ui"].get("messages", []),
+    }
+
+
+@app.route("/registro", methods=["GET"])
 def registro():
     if g.usuario_id:
         return redirect(url_for("inicio"))
-    error = None
-    if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        contrasena = request.form.get("contrasena", "")
-        confirmar = request.form.get("confirmar", "")
-        if not email or "@" not in email:
-            error = "Indica un email válido."
-        elif len(contrasena) < 8:
-            error = "La contraseña debe tener al menos 8 caracteres."
-        elif contrasena != confirmar:
-            error = "Las contraseñas no coinciden."
-        elif db.obtener_usuario_por_email(email) is not None:
-            error = "Ya existe una cuenta con ese email."
-        else:
-            usuario_id = db.crear_usuario(email, contrasena)
-            session["usuario_id"] = usuario_id
-            return redirect(url_for("inicio"))
-    return render_template("registro.html", error=error)
+    datos = _flujo_o_redirigir("registration")
+    if datos is None:
+        return g._redireccion_flujo
+    return render_template("registro.html", **datos)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET"])
 def login():
     if g.usuario_id:
         return redirect(url_for("inicio"))
-    error = None
-    siguiente = request.args.get("siguiente") or request.form.get("siguiente") or url_for("inicio")
-    if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        contrasena = request.form.get("contrasena", "")
-        usuario = db.verificar_credenciales(email, contrasena)
-        if usuario is None:
-            error = "Email o contraseña incorrectos."
-        else:
-            session["usuario_id"] = usuario["id"]
-            return redirect(request.form.get("siguiente") or url_for("inicio"))
-    return render_template("login.html", error=error, siguiente=siguiente)
+    datos = _flujo_o_redirigir("login")
+    if datos is None:
+        return g._redireccion_flujo
+    return render_template("login.html", **datos)
 
 
 @app.route("/logout", methods=["POST"])
 def logout():
-    session.clear()
-    return redirect(url_for("login"))
+    url = kratos.logout_url(request.cookies)
+    return redirect(url or url_for("login"))
 
 
 @app.route("/")
@@ -381,6 +419,7 @@ def finalizar_tarea(tarea_id: int):
 
 def _contexto_historial(desde, hasta, categoria_id, q=None, **extra):
     filas = db.historial(g.usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q)
+    preferencias_ia_local = db.obtener_preferencias_ia_local(g.usuario_id)
     ctx = {
         "filas": filas,
         "categorias": db.listar_categorias(g.usuario_id),
@@ -388,8 +427,8 @@ def _contexto_historial(desde, hasta, categoria_id, q=None, **extra):
         "hasta": hasta or "",
         "categoria_id": categoria_id or "",
         "q": q or "",
-        "proveedor_ia": "ollama",
-        "modelo_ia": "",
+        "proveedor_ia": preferencias_ia_local["proveedor_local"],
+        "modelo_ia": preferencias_ia_local["modelo_local"],
         "prompt_ia": PROMPT_IA_POR_DEFECTO,
         "informe_texto": None,
         "informe_error": None,
@@ -474,6 +513,8 @@ def informe_ia():
     modelo = request.form.get("modelo", "").strip()
     prompt = request.form.get("prompt", "").strip() or PROMPT_IA_POR_DEFECTO
 
+    db.guardar_preferencias_ia_local(g.usuario_id, proveedor, modelo)
+
     datos = export.construir_export(g.usuario_id, desde, hasta, categoria_id)
     informe_texto = None
     informe_error = None
@@ -516,6 +557,8 @@ def pregunta_ia():
         for m in historial_bruto
         if isinstance(m, dict) and m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str)
     ]
+
+    db.guardar_preferencias_ia_local(g.usuario_id, proveedor, modelo)
 
     datos = export.construir_export(g.usuario_id, desde, hasta, categoria_id)
     try:

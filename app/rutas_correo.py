@@ -6,7 +6,7 @@ carpetas + lista de mensajes + panel de lectura, todo en la misma ruta
 import re
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 
 from . import correo, db
 from .auth import login_required
@@ -217,6 +217,23 @@ def bandeja():
 
     contexto["mensaje_seleccionado"] = mensaje_seleccionado
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
+
+    remitente_confiable = False
+    cuerpo_html_mostrado = None
+    imagenes_bloqueadas = False
+    if mensaje_seleccionado is not None:
+        direccion_remitente = correo.direccion_email(mensaje_seleccionado["remitente"])
+        remitente_confiable = db.es_remitente_confiable(g.usuario_id, direccion_remitente)
+        mostrar_imagenes = request.args.get("mostrar_imagenes") == "1"
+        if remitente_confiable or mostrar_imagenes:
+            cuerpo_html_mostrado = mensaje_seleccionado["cuerpo_html"]
+        else:
+            cuerpo_html_mostrado, imagenes_bloqueadas = correo.html_con_imagenes_bloqueadas(
+                mensaje_seleccionado["cuerpo_html"]
+            )
+    contexto["remitente_confiable"] = remitente_confiable
+    contexto["cuerpo_html_mostrado"] = cuerpo_html_mostrado
+    contexto["imagenes_bloqueadas"] = imagenes_bloqueadas
     return render_template("correo_bandeja.html", **contexto)
 
 
@@ -264,6 +281,19 @@ def descargar_adjunto(mensaje_id: int, adjunto_id: int):
         mimetype=adjunto["tipo_mime"],
         headers={"Content-Disposition": f'{disposicion}; filename="{adjunto["nombre_archivo"]}"'},
     )
+
+
+@correo_bp.route("/<int:mensaje_id>/confiar-remitente", methods=["POST"])
+@login_required
+def confiar_en_remitente_del_mensaje(mensaje_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    direccion = correo.direccion_email(mensaje["remitente"])
+    if direccion:
+        correo.confiar_en_remitente(g.usuario_id, direccion)
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"],
+        mensaje_id=mensaje_id, mostrar_imagenes=1,
+    ))
 
 
 @correo_bp.route("/<int:mensaje_id>/eliminar", methods=["POST"])
@@ -447,6 +477,8 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         cuentas=cuentas,
         cuenta_firma_id=cuenta_firma_id,
         cuenta_firma=cuenta_firma,
+        remitentes_confiables=db.listar_remitentes_confiables(g.usuario_id),
+        reglas_categoria=db.listar_reglas_categoria_correo(g.usuario_id),
         error=error,
     )
 
@@ -489,6 +521,52 @@ def crear_categoria():
 def eliminar_categoria(categoria_id: int):
     correo.eliminar_categoria(g.usuario_id, categoria_id)
     return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/remitentes-confiables", methods=["POST"])
+@login_required
+def crear_remitente_confiable():
+    try:
+        correo.confiar_en_remitente(g.usuario_id, request.form.get("direccion", ""))
+    except correo.ErrorCorreo as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/remitentes-confiables/<int:remitente_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_remitente_confiable(remitente_id: int):
+    correo.eliminar_remitente_confiable(g.usuario_id, remitente_id)
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/reglas", methods=["POST"])
+@login_required
+def crear_regla_categoria():
+    try:
+        correo.crear_regla_categoria(
+            g.usuario_id,
+            request.form.get("remitente_patron", ""),
+            request.form.get("categoria_id", type=int),
+        )
+    except correo.ErrorCorreo as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/reglas/<int:regla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_regla_categoria(regla_id: int):
+    correo.eliminar_regla_categoria(g.usuario_id, regla_id)
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/destinatarios-recientes")
+@login_required
+def destinatarios_recientes():
+    q = request.args.get("q", "")
+    filas = db.buscar_destinatarios_recientes(g.usuario_id, q)
+    return jsonify([dict(f) for f in filas])
 
 
 @correo_bp.route("/ajustes/firma", methods=["POST"])

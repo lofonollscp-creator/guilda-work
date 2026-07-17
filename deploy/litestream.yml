@@ -1,0 +1,25 @@
+# Plantilla de configuración de Litestream (Fase "integraciones de código
+# abierto" del plan) — réplica continua de data/registro.db a un bucket
+# S3-compatible, para tener backup con recuperación punto-en-el-tiempo sin
+# depender de copias periódicas manuales (complementa, no sustituye,
+# db.hacer_backup_si_hace_falta()).
+#
+# Uso local (verificación en este PC, contra el MinIO de docker-compose.yml):
+#   litestream replicate -config deploy/litestream.yml
+#
+# Uso en el VPS: copiar este archivo a /etc/litestream.yml, sustituir
+# LITESTREAM_S3_ENDPOINT/LITESTREAM_S3_ACCESS_KEY/LITESTREAM_S3_SECRET_KEY
+# como variables de entorno (nunca en claro en este archivo), y arrancar
+# con el servicio systemd de deploy/litestream.service.
+#
+# Credenciales: se leen de variables de entorno, nunca hardcodeadas aquí.
+dbs:
+  - path: ${LITESTREAM_DB_PATH}
+    replicas:
+      - type: s3
+        bucket: guilda-backups
+        path: registro-db
+        endpoint: ${LITESTREAM_S3_ENDPOINT}
+        access-key-id: ${LITESTREAM_S3_ACCESS_KEY}
+        secret-access-key: ${LITESTREAM_S3_SECRET_KEY}
+        force-path-style: true

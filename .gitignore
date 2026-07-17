@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 data/*.db
 data/backups/
+data/.*-litestream/
 exports/*.json
 exports/*.csv
 exports/*.md

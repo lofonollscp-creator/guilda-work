@@ -34,21 +34,24 @@
         {% endfor %}
       </select>
     </div>
-    <div class="correo-compose-campo">
+    <div class="correo-compose-campo correo-autocomplete-wrap">
       <label>Para</label>
-      <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required>
+      <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required data-destinatarios-autocomplete autocomplete="off">
+      <div class="correo-autocomplete-lista"></div>
       {% if not cc and not bcc %}
       <a class="correo-compose-cc-toggle" href="javascript:void(0)" onclick="document.getElementById('correo-compose-cc-cco').hidden = false; this.hidden = true;">Cc/Cco</a>
       {% endif %}
     </div>
     <div class="correo-compose-cc-cco" id="correo-compose-cc-cco" {% if not cc and not bcc %}hidden{% endif %}>
-      <div class="correo-compose-campo">
+      <div class="correo-compose-campo correo-autocomplete-wrap">
         <label>Cc</label>
-        <input type="text" name="cc" value="{{ cc }}" placeholder="correo@ejemplo.com">
+        <input type="text" name="cc" value="{{ cc }}" placeholder="correo@ejemplo.com" data-destinatarios-autocomplete autocomplete="off">
+        <div class="correo-autocomplete-lista"></div>
       </div>
-      <div class="correo-compose-campo">
+      <div class="correo-compose-campo correo-autocomplete-wrap">
         <label>Cco</label>
-        <input type="text" name="bcc" value="{{ bcc }}" placeholder="correo@ejemplo.com">
+        <input type="text" name="bcc" value="{{ bcc }}" placeholder="correo@ejemplo.com" data-destinatarios-autocomplete autocomplete="off">
+        <div class="correo-autocomplete-lista"></div>
       </div>
     </div>
     <div class="correo-compose-campo">
@@ -84,4 +87,5 @@
 </div>
 {% endif %}
 <script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_destinatarios.js') }}"></script>
 {% endblock %}
