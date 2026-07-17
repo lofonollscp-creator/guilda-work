@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../models/models.dart';
@@ -283,6 +286,249 @@ class ApiClient {
     try {
       final resp = await _dio.post('/tareas-outlook/$id/completar');
       return TareaOutlook.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Correo (Fase 4e) -------------------------------------------------
+
+  Future<List<CuentaCorreo>> listarCuentasCorreo() async {
+    try {
+      final resp = await _dio.get('/correo/cuentas');
+      return (resp.data['data'] as List)
+          .map((c) => CuentaCorreo.fromJson(c as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<Carpeta>> listarCarpetas(int cuentaId) async {
+    try {
+      final resp = await _dio.get(
+        '/correo/carpetas',
+        queryParameters: {'cuenta_id': cuentaId},
+      );
+      return (resp.data['data'] as List)
+          .map((c) => Carpeta.fromJson(c as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<Mensaje>> listarMensajes({
+    required int cuentaId,
+    String carpeta = 'INBOX',
+    bool? noLeidos,
+    String? q,
+  }) async {
+    final qEfectivo = (q != null && q.isNotEmpty) ? q : null;
+    try {
+      final resp = await _dio.get(
+        '/correo/mensajes',
+        queryParameters: {
+          'cuenta_id': cuentaId,
+          'carpeta': carpeta,
+          'no_leidos': ?(noLeidos == true ? 1 : null),
+          'q': ?qEfectivo,
+        },
+      );
+      return (resp.data['data'] as List)
+          .map((m) => Mensaje.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<Mensaje> obtenerMensaje(int id) async {
+    try {
+      final resp = await _dio.get('/correo/mensajes/$id');
+      return Mensaje.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarMensaje(int id) async {
+    try {
+      await _dio.delete('/correo/mensajes/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> marcarLeido(int id, bool leido) async {
+    try {
+      await _dio.post('/correo/mensajes/$id/leido', data: {'leido': leido});
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> destacarMensaje(int id, bool destacado) async {
+    try {
+      await _dio.post(
+        '/correo/mensajes/$id/destacar',
+        data: {'destacado': destacado},
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> asignarCategoria(int id, int? categoriaId) async {
+    try {
+      await _dio.post(
+        '/correo/mensajes/$id/categoria',
+        data: {'categoria_id': categoriaId},
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> moverMensaje(int id, String carpetaDestino) async {
+    try {
+      await _dio.post(
+        '/correo/mensajes/$id/mover',
+        data: {'carpeta_destino': carpetaDestino},
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<CategoriaCorreo>> listarCategoriasCorreo() async {
+    try {
+      final resp = await _dio.get('/correo/categorias');
+      return (resp.data['data'] as List)
+          .map((c) => CategoriaCorreo.fromJson(c as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> enviarCorreo({
+    required int cuentaId,
+    required String destinatarios,
+    String? cc,
+    String? bcc,
+    required String asunto,
+    required String cuerpoHtml,
+    String? enRespuestaA,
+    List<ArchivoAdjuntoNuevo> adjuntos = const [],
+  }) async {
+    try {
+      await _dio.post(
+        '/correo/enviar',
+        data: {
+          'cuenta_id': cuentaId,
+          'destinatarios': destinatarios,
+          'cc': ?cc,
+          'bcc': ?bcc,
+          'asunto': asunto,
+          'cuerpo_html': cuerpoHtml,
+          'en_respuesta_a': ?enRespuestaA,
+          if (adjuntos.isNotEmpty)
+            'adjuntos': adjuntos
+                .map((a) => {
+                      'nombre': a.nombre,
+                      'tipo': a.tipo,
+                      'contenido_base64': base64Encode(a.bytes),
+                    })
+                .toList(),
+        },
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<Uint8List> descargarAdjunto(int mensajeId, int adjuntoId) async {
+    try {
+      final resp = await _dio.get(
+        '/correo/mensajes/$mensajeId/adjuntos/$adjuntoId',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(resp.data as List<int>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Remitentes de confianza (Fase 5) ----------------------------------
+
+  Future<List<RemitenteConfiable>> listarRemitentesConfiables() async {
+    try {
+      final resp = await _dio.get('/correo/remitentes-confiables');
+      return (resp.data['data'] as List)
+          .map((r) => RemitenteConfiable.fromJson(r as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> confiarEnRemitente(String direccion) async {
+    try {
+      await _dio.post('/correo/remitentes-confiables', data: {'direccion': direccion});
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarRemitenteConfiable(int id) async {
+    try {
+      await _dio.delete('/correo/remitentes-confiables/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Reglas de categorización automática (Fase 5) ----------------------
+
+  Future<List<ReglaCategoria>> listarReglasCategoria() async {
+    try {
+      final resp = await _dio.get('/correo/reglas-categoria');
+      return (resp.data['data'] as List)
+          .map((r) => ReglaCategoria.fromJson(r as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> crearReglaCategoria(String remitentePatron, int categoriaId) async {
+    try {
+      await _dio.post(
+        '/correo/reglas-categoria',
+        data: {'remitente_patron': remitentePatron, 'categoria_id': categoriaId},
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarReglaCategoria(int id) async {
+    try {
+      await _dio.delete('/correo/reglas-categoria/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Destinatarios recientes (Fase 5) -----------------------------------
+
+  Future<List<DestinatarioReciente>> buscarDestinatariosRecientes(String q) async {
+    try {
+      final resp = await _dio.get('/correo/destinatarios-recientes', queryParameters: {'q': q});
+      return (resp.data['data'] as List)
+          .map((d) => DestinatarioReciente.fromJson(d as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw _errorLegible(e);
     }

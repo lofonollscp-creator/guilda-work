@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/session_service.dart';
+import 'correo_bandeja_screen.dart';
 import 'login_screen.dart';
 import 'menu_detail_screen.dart';
 import 'tareas_outlook_screen.dart';
@@ -124,6 +125,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'Tareas',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => TareasOutlookScreen(api: widget.api)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.mail_outline),
+            tooltip: 'Correo',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
             ),
           ),
           IconButton(

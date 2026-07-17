@@ -135,3 +135,224 @@ const prioridadesTareaOutlook = [
   ('normal', 'Normal'),
   ('alta', 'Alta'),
 ];
+
+/// Cuenta de correo IMAP/POP3+SMTP (db.listar_cuentas_correo), Fase 4e —
+/// solo se lee desde el móvil, no se crean/editan cuentas en esta fase.
+class CuentaCorreo {
+  final int id;
+  final String nombre;
+  final String protocolo;
+  final String host;
+  final int puerto;
+  final String usuario;
+  final String? smtpHost;
+  final int? smtpPuerto;
+  final String? ultimaSincronizacion;
+
+  CuentaCorreo({
+    required this.id,
+    required this.nombre,
+    required this.protocolo,
+    required this.host,
+    required this.puerto,
+    required this.usuario,
+    this.smtpHost,
+    this.smtpPuerto,
+    this.ultimaSincronizacion,
+  });
+
+  factory CuentaCorreo.fromJson(Map<String, dynamic> json) => CuentaCorreo(
+        id: json['id'] as int,
+        nombre: json['nombre'] as String,
+        protocolo: json['protocolo'] as String,
+        host: json['host'] as String,
+        puerto: json['puerto'] as int,
+        usuario: json['usuario'] as String,
+        smtpHost: json['smtp_host'] as String?,
+        smtpPuerto: json['smtp_puerto'] as int?,
+        ultimaSincronizacion: json['ultima_sincronizacion'] as String?,
+      );
+}
+
+/// Carpeta IMAP de una cuenta (db.correo_carpetas / correo.listar_carpetas).
+class Carpeta {
+  final String nombre;
+  final String nombreVisible;
+
+  Carpeta({required this.nombre, required this.nombreVisible});
+
+  factory Carpeta.fromJson(Map<String, dynamic> json) => Carpeta(
+        nombre: json['nombre'] as String,
+        nombreVisible: json['nombre_visible'] as String,
+      );
+}
+
+/// Adjunto de un mensaje (db.correo_adjuntos) — solo metadatos, sin
+/// contenido: en esta fase no se descargan adjuntos desde el móvil.
+class Adjunto {
+  final int id;
+  final String nombreArchivo;
+  final String tipoMime;
+  final int tamanoBytes;
+
+  Adjunto({
+    required this.id,
+    required this.nombreArchivo,
+    required this.tipoMime,
+    required this.tamanoBytes,
+  });
+
+  factory Adjunto.fromJson(Map<String, dynamic> json) => Adjunto(
+        id: json['id'] as int,
+        nombreArchivo: json['nombre_archivo'] as String,
+        tipoMime: json['tipo_mime'] as String,
+        tamanoBytes: json['tamano_bytes'] as int,
+      );
+}
+
+/// Categoría de correo (db.listar_categorias_correo) — distinta de las
+/// categorías/menús de Notas y Tareas.
+class CategoriaCorreo {
+  final int id;
+  final String nombre;
+  final String color;
+
+  CategoriaCorreo({required this.id, required this.nombre, required this.color});
+
+  factory CategoriaCorreo.fromJson(Map<String, dynamic> json) => CategoriaCorreo(
+        id: json['id'] as int,
+        nombre: json['nombre'] as String,
+        color: json['color'] as String,
+      );
+}
+
+/// Mensaje de correo (db.correo_mensajes) — se usa tanto en la lista de la
+/// bandeja (sin `adjuntos`) como en el detalle (con `adjuntos` rellenado).
+class Mensaje {
+  final int id;
+  final int cuentaId;
+  final String carpeta;
+  final String asunto;
+  final String remitente;
+  final String destinatarios;
+  final String? cc;
+  final String? fecha;
+  final String? cuerpoTexto;
+  final String? cuerpoHtml;
+  final bool leido;
+  final int? categoriaId;
+  final bool destacado;
+  final String? messageId;
+  final bool remitenteConfiable;
+  final List<Adjunto> adjuntos;
+
+  Mensaje({
+    required this.id,
+    required this.cuentaId,
+    required this.carpeta,
+    required this.asunto,
+    required this.remitente,
+    required this.destinatarios,
+    this.cc,
+    this.fecha,
+    this.cuerpoTexto,
+    this.cuerpoHtml,
+    required this.leido,
+    this.categoriaId,
+    required this.destacado,
+    this.messageId,
+    this.remitenteConfiable = false,
+    this.adjuntos = const [],
+  });
+
+  factory Mensaje.fromJson(Map<String, dynamic> json) => Mensaje(
+        id: json['id'] as int,
+        cuentaId: json['cuenta_id'] as int,
+        carpeta: json['carpeta'] as String,
+        asunto: json['asunto'] as String,
+        remitente: json['remitente'] as String,
+        destinatarios: json['destinatarios'] as String,
+        cc: json['cc'] as String?,
+        fecha: json['fecha'] as String?,
+        cuerpoTexto: json['cuerpo_texto'] as String?,
+        cuerpoHtml: json['cuerpo_html'] as String?,
+        leido: (json['leido'] as int? ?? 0) != 0,
+        categoriaId: json['categoria_id'] as int?,
+        destacado: (json['destacado'] as int? ?? 0) != 0,
+        messageId: json['message_id'] as String?,
+        remitenteConfiable: json['remitente_confiable'] as bool? ?? false,
+        adjuntos: json['adjuntos'] == null
+            ? const []
+            : (json['adjuntos'] as List)
+                .map((a) => Adjunto.fromJson(a as Map<String, dynamic>))
+                .toList(),
+      );
+}
+
+/// Remitente marcado como de confianza (db.correo_remitentes_confiables),
+/// Fase 5 — sus imágenes remotas y adjuntos no se bloquean/avisan.
+class RemitenteConfiable {
+  final int id;
+  final String direccion;
+
+  RemitenteConfiable({required this.id, required this.direccion});
+
+  factory RemitenteConfiable.fromJson(Map<String, dynamic> json) => RemitenteConfiable(
+        id: json['id'] as int,
+        direccion: json['direccion'] as String,
+      );
+}
+
+/// Regla de categorización automática por remitente (db.correo_reglas_categoria),
+/// Fase 5 — remitentePatron es un email exacto o "@dominio.com".
+class ReglaCategoria {
+  final int id;
+  final String remitentePatron;
+  final int categoriaId;
+  final String categoriaNombre;
+  final String categoriaColor;
+
+  ReglaCategoria({
+    required this.id,
+    required this.remitentePatron,
+    required this.categoriaId,
+    required this.categoriaNombre,
+    required this.categoriaColor,
+  });
+
+  factory ReglaCategoria.fromJson(Map<String, dynamic> json) => ReglaCategoria(
+        id: json['id'] as int,
+        remitentePatron: json['remitente_patron'] as String,
+        categoriaId: json['categoria_id'] as int,
+        categoriaNombre: json['categoria_nombre'] as String,
+        categoriaColor: json['categoria_color'] as String,
+      );
+}
+
+/// Destinatario al que ya se ha enviado correo antes (db.correo_destinatarios_recientes),
+/// Fase 5 — usado para autocompletar Para/Cc/Cco al redactar.
+class DestinatarioReciente {
+  final String direccion;
+  final String? nombreMostrado;
+
+  DestinatarioReciente({required this.direccion, this.nombreMostrado});
+
+  factory DestinatarioReciente.fromJson(Map<String, dynamic> json) => DestinatarioReciente(
+        direccion: json['direccion'] as String,
+        nombreMostrado: json['nombre_mostrado'] as String?,
+      );
+
+  String get etiqueta => nombreMostrado != null && nombreMostrado!.isNotEmpty
+      ? '$nombreMostrado <$direccion>'
+      : direccion;
+}
+
+/// Un adjunto nuevo elegido en el móvil para enviar (aún no subido) —
+/// se codifica a base64 justo antes de mandarlo a la API.
+class ArchivoAdjuntoNuevo {
+  final String nombre;
+  final String tipo;
+  final List<int> bytes;
+
+  ArchivoAdjuntoNuevo({required this.nombre, required this.tipo, required this.bytes});
+}
