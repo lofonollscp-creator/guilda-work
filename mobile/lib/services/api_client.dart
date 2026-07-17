@@ -213,4 +213,78 @@ class ApiClient {
       throw _errorLegible(e);
     }
   }
+
+  // --- Tareas Outlook (Fase 4d) ----------------------------------------------
+
+  Future<List<TareaOutlook>> listarTareasOutlook({
+    String? estado,
+    String? prioridad,
+    String? categoria,
+    String? q,
+  }) async {
+    try {
+      final resp = await _dio.get(
+        '/tareas-outlook',
+        queryParameters: {
+          'estado': ?estado,
+          'prioridad': ?prioridad,
+          'categoria': ?categoria,
+          'q': ?q,
+        },
+      );
+      return (resp.data['data'] as List)
+          .map((t) => TareaOutlook.fromJson(t as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<TareaOutlook> crearTareaOutlook({
+    required String asunto,
+    String? prioridad,
+    String? fechaVencimiento,
+    String? categoriaOutlook,
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/tareas-outlook',
+        data: {
+          'asunto': asunto,
+          'prioridad': ?prioridad,
+          'fecha_vencimiento': ?fechaVencimiento,
+          'categoria_outlook': ?categoriaOutlook,
+        },
+      );
+      return TareaOutlook.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<TareaOutlook> editarTareaOutlook(int id, Map<String, dynamic> campos) async {
+    try {
+      final resp = await _dio.put('/tareas-outlook/$id', data: campos);
+      return TareaOutlook.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarTareaOutlook(int id) async {
+    try {
+      await _dio.delete('/tareas-outlook/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<TareaOutlook> completarTareaOutlook(int id) async {
+    try {
+      final resp = await _dio.post('/tareas-outlook/$id/completar');
+      return TareaOutlook.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
 }

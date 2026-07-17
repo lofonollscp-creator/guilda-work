@@ -83,3 +83,55 @@ class EntradaHistorial {
         categoriaColor: json['categoria_color'] as String?,
       );
 }
+
+/// Tarea "estilo Outlook" (independiente de los menús), Fase 4d — mismos
+/// campos que app/templates/tarea_outlook_editar.html.
+class TareaOutlook {
+  final int id;
+  final String asunto;
+  final String? cuerpo;
+  final String estado;
+  final String prioridad;
+  final int porcentajeCompletado;
+  final String? fechaInicio;
+  final String? fechaVencimiento;
+  final String? categoriaOutlook;
+
+  TareaOutlook({
+    required this.id,
+    required this.asunto,
+    this.cuerpo,
+    required this.estado,
+    required this.prioridad,
+    required this.porcentajeCompletado,
+    this.fechaInicio,
+    this.fechaVencimiento,
+    this.categoriaOutlook,
+  });
+
+  factory TareaOutlook.fromJson(Map<String, dynamic> json) => TareaOutlook(
+        id: json['id'] as int,
+        asunto: json['asunto'] as String,
+        cuerpo: json['cuerpo'] as String?,
+        estado: json['estado'] as String,
+        prioridad: json['prioridad'] as String,
+        porcentajeCompletado: json['porcentaje_completado'] as int? ?? 0,
+        fechaInicio: json['fecha_inicio'] as String?,
+        fechaVencimiento: json['fecha_vencimiento'] as String?,
+        categoriaOutlook: json['categoria_outlook'] as String?,
+      );
+}
+
+const estadosTareaOutlook = [
+  ('no_iniciada', 'No iniciada'),
+  ('en_progreso', 'En progreso'),
+  ('completada', 'Completada'),
+  ('esperando', 'Esperando a otros'),
+  ('aplazada', 'Aplazada'),
+];
+
+const prioridadesTareaOutlook = [
+  ('baja', 'Baja'),
+  ('normal', 'Normal'),
+  ('alta', 'Alta'),
+];

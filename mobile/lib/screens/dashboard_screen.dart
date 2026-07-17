@@ -5,6 +5,7 @@ import '../services/api_client.dart';
 import '../services/session_service.dart';
 import 'login_screen.dart';
 import 'menu_detail_screen.dart';
+import 'tareas_outlook_screen.dart';
 
 /// Dashboard (equivalente móvil de app/templates/inicio.html): stats del
 /// día, nota rápida, y las tarjetas de menú desde las que se entra al
@@ -118,6 +119,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Guilda Work'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.checklist),
+            tooltip: 'Tareas',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => TareasOutlookScreen(api: widget.api)),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',
