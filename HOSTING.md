@@ -321,6 +321,7 @@ HERRAMIENTA_METABASE_URL=https://metabase.tu-hostname.sslip.io
 HERRAMIENTA_N8N_URL=https://n8n.tu-hostname.sslip.io
 HERRAMIENTA_MINIO_URL=https://minio.tu-hostname.sslip.io
 HERRAMIENTA_OPENPROJECT_URL=https://openproject.tu-hostname.sslip.io
+HERRAMIENTA_CHATWOOT_URL=https://chatwoot.tu-hostname.sslip.io
 EOF
 sudo systemctl restart guilda-work
 ```
@@ -368,6 +369,47 @@ Verificar:
 - Añade `HERRAMIENTA_OPENPROJECT_URL` al bloque de la sección 8.9 de
   arriba, si no lo hiciste ya.
 
+### 8.11 Chatwoot (Fase 7g)
+
+Sin SSO (confirmado en su documentación oficial: SAML/SSO es un plan
+Enterprise de pago, no está en la community edition) — login aparte, con
+la cuenta de administrador que crea el propio asistente de primer
+arranque (no hay usuario sembrado por variables de entorno como en
+OpenProject).
+
+Añade a `.env`:
+
+```bash
+CHATWOOT_DB_PASSWORD=...
+CHATWOOT_REDIS_PASSWORD=...
+CHATWOOT_SECRET_KEY_BASE=...   # openssl rand -hex 64
+CHATWOOT_PUBLIC_ORIGIN=https://chatwoot.tu-hostname.sslip.io
+```
+
+Arranca el paso de preparación (crea el esquema, `db:chatwoot_prepare`)
+antes que la web:
+
+```bash
+docker compose up -d postgres-chatwoot redis-chatwoot chatwoot-prepare
+docker compose logs -f chatwoot-prepare   # espera a que termine (Ctrl+C al ver que sale)
+docker compose up -d chatwoot-web chatwoot-sidekiq
+```
+
+Verificar:
+- `curl https://chatwoot.tu-hostname.sslip.io/` → `302` (redirige al
+  asistente de primer arranque o al login).
+- Navegador: completa el asistente de primer arranque (crea la cuenta de
+  administrador — nombre, empresa, email, contraseña), inicia sesión, y
+  completa el formulario breve de "Please review the following details"
+  (rol, industria, tamaño de empresa — son desplegables nativos del
+  navegador; si usas un gestor de formularios automatizado ten en cuenta
+  que a veces cuesta interactuar con ellos, hazlo a mano si hace falta).
+  Después crea una bandeja de entrada (Settings → Inboxes → Add Inbox) y
+  envía un mensaje de prueba por el widget de chat para confirmar que
+  `chatwoot-sidekiq` también funciona (gran parte de Chatwoot depende de
+  trabajos en segundo plano).
+- Añade `HERRAMIENTA_CHATWOOT_URL` al bloque de la sección 8.9.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
@@ -385,8 +427,8 @@ servidor:
 
 Cuando compres un dominio:
 1. Crea un registro DNS **A** para cada subdominio que uses (`app.`,
-   `hydra.`, `outline.`, `chat.`, `matrix.`, `openproject.`, y los
-   opcionales que tengas activos) apuntando todos a la IP del VPS.
+   `hydra.`, `outline.`, `chat.`, `matrix.`, `openproject.`, `chatwoot.`,
+   y los opcionales que tengas activos) apuntando todos a la IP del VPS.
 2. Cambia `HOSTNAME` en `/etc/caddy/Caddyfile` por tu dominio (todos los
    bloques comparten el mismo `HOSTNAME`, solo cambia el prefijo de cada
    uno).

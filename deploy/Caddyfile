@@ -75,3 +75,7 @@ minio.HOSTNAME {
 openproject.HOSTNAME {
 	reverse_proxy localhost:8010
 }
+
+chatwoot.HOSTNAME {
+	reverse_proxy localhost:8011
+}

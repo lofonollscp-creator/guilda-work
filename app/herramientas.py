@@ -71,4 +71,15 @@ HERRAMIENTAS = [
         # en la edición community desplegada aquí (Fase 7f).
         "sso": False,
     },
+    {
+        "id": "chatwoot",
+        "nombre": "Chatwoot",
+        "descripcion": "Bandeja de soporte omnicanal para incidencias de clientes.",
+        "icono": "🎧",
+        "url": os.environ.get("HERRAMIENTA_CHATWOOT_URL", "http://127.0.0.1:8011"),
+        # Sin SSO: confirmado en su documentación oficial que SAML/SSO es
+        # un plan Enterprise de pago, no está en la community edition
+        # desplegada aquí (Fase 7g) — mismo criterio que OpenProject.
+        "sso": False,
+    },
 ]

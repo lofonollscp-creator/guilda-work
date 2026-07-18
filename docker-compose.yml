@@ -458,6 +458,88 @@ services:
       - openproject-data:/var/openproject/assets
     command: ["./docker/prod/cron"]
 
+  # Chatwoot: bandeja de soporte omnicanal para incidencias de clientes
+  # (Fase 7g) — la pieza más cara de operar del catálogo (Rails +
+  # Postgres + Redis + Sidekiq). Sin SSO: confirmado en su documentación
+  # oficial que SAML/SSO es un plan Enterprise de pago, no está en la
+  # community edition — login aparte en el dashboard, como OpenProject.
+  postgres-chatwoot:
+    # pgvector/pgvector, no el postgres:16-alpine genérico del resto del
+    # proyecto — Chatwoot necesita la extensión pgvector para sus
+    # funciones de IA (respuestas asistidas), confirmado en su
+    # docker-compose.production.yaml oficial.
+    image: pgvector/pgvector:pg16
+    container_name: guilda-work-postgres-chatwoot
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chatwoot
+      POSTGRES_PASSWORD: ${CHATWOOT_DB_PASSWORD:-CambiaEstaClaveChatwoot2026}
+      POSTGRES_DB: chatwoot
+    volumes:
+      - postgres-chatwoot-data:/var/lib/postgresql/data
+
+  redis-chatwoot:
+    image: redis:7-alpine
+    container_name: guilda-work-redis-chatwoot
+    restart: unless-stopped
+    # A diferencia de redis-outline, Chatwoot SÍ exige contraseña en su
+    # Redis para arrancar.
+    command: ["redis-server", "--requirepass", "${CHATWOOT_REDIS_PASSWORD:-CambiaEstaClaveRedisChatwoot2026}"]
+    volumes:
+      - redis-chatwoot-data:/data
+
+  # Corre una vez (crea el esquema, `db:chatwoot_prepare`) y termina —
+  # mismo patrón que kratos-migrate/openproject-seeder. La documentación
+  # oficial de Chatwoot lo describe como un comando manual de un solo
+  # uso; aquí se automatiza como init container para seguir el mismo
+  # patrón que el resto de este proyecto.
+  chatwoot-prepare:
+    image: chatwoot/chatwoot:latest
+    container_name: guilda-work-chatwoot-prepare
+    restart: on-failure
+    depends_on:
+      - postgres-chatwoot
+      - redis-chatwoot
+    environment: &chatwoot-env
+      NODE_ENV: production
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+      SECRET_KEY_BASE: ${CHATWOOT_SECRET_KEY_BASE:?define CHATWOOT_SECRET_KEY_BASE (openssl rand -hex 64)}
+      FRONTEND_URL: ${CHATWOOT_PUBLIC_ORIGIN:-http://127.0.0.1:8011}
+      POSTGRES_HOST: postgres-chatwoot
+      POSTGRES_USERNAME: chatwoot
+      POSTGRES_PASSWORD: ${CHATWOOT_DB_PASSWORD:-CambiaEstaClaveChatwoot2026}
+      POSTGRES_DATABASE: chatwoot
+      REDIS_URL: redis://redis-chatwoot:6379
+      REDIS_PASSWORD: ${CHATWOOT_REDIS_PASSWORD:-CambiaEstaClaveRedisChatwoot2026}
+      # El alta de cuentas nuevas la hace el administrador desde dentro,
+      # no un formulario público — mismo criterio que
+      # OPENPROJECT_SEED_ADMIN_USER_* (cuenta inicial controlada, no
+      # autoregistro abierto).
+      ENABLE_ACCOUNT_SIGNUP: "false"
+    command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
+
+  chatwoot-web:
+    image: chatwoot/chatwoot:latest
+    container_name: guilda-work-chatwoot-web
+    restart: unless-stopped
+    depends_on:
+      - chatwoot-prepare
+    environment: *chatwoot-env
+    entrypoint: ["docker/entrypoints/rails.sh"]
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    ports:
+      - "127.0.0.1:8011:3000"
+
+  chatwoot-sidekiq:
+    image: chatwoot/chatwoot:latest
+    container_name: guilda-work-chatwoot-sidekiq
+    restart: unless-stopped
+    depends_on:
+      - chatwoot-prepare
+    environment: *chatwoot-env
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
   # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
   # de verificar los flujos OIDC (Outline/Element) que en local plano
   # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —
@@ -506,3 +588,5 @@ volumes:
   caddy-local-data:
   postgres-openproject-data:
   openproject-data:
+  postgres-chatwoot-data:
+  redis-chatwoot-data:
