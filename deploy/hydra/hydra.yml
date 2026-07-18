@@ -6,7 +6,17 @@
 # (Fase 7a) — ver deploy/kratos/kratos.yml, selfservice.allowed_return_urls.
 #
 # dsn y secrets.system se pasan por variable de entorno (ver
-# docker-compose.yml), nunca en claro aquí.
+# docker-compose.yml), nunca en claro aquí. Los valores de abajo
+# (127.0.0.1) son el respaldo para desarrollo local — en el VPS real
+# (Fase 3c de HOSTING.md), docker-compose.yml sobreescribe serve.public.*
+# y urls.* con la convención de variables de entorno de Ory
+# (SERVE_PUBLIC_BASE_URL, URLS_SELF_ISSUER, URLS_LOGIN, ...) — NO hay
+# sustitución de plantilla ${VAR} dentro de este archivo. A diferencia de
+# Kratos, el navegador SÍ habla directo con la API pública de Hydra
+# (Outline le redirige ahí durante el OAuth2) — por eso su base_url tiene
+# que ser una URL de verdad alcanzable desde fuera en despliegue real, no
+# un respaldo en 127.0.0.1 como serve.admin.base_url (esa sí se queda
+# fija, nunca debe ser pública).
 dsn: ${DSN}
 
 serve:

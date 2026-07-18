@@ -3,7 +3,17 @@
 # Se levantan aparte, apuntando al mismo data/registro.db, sin tocar nada de app/.
 #
 # Uso local (verificación en este PC):   docker compose up -d
-# Uso en el VPS (Fase 3c de HOSTING.md): mismo comando, tras clonar el repo allí.
+# Uso en el VPS (Fase 3c de HOSTING.md): mismo comando, tras clonar el repo allí,
+# con KRATOS_UI_ORIGIN/HYDRA_PUBLIC_ORIGIN/GUILDA_ORIGIN/OUTLINE_PUBLIC_ORIGIN
+# fijados en .env a las URLs públicas reales (ver HOSTING.md, sección Docker).
+#
+# Todos los `ports:` de aquí abajo se publican en 127.0.0.1, NUNCA en
+# 0.0.0.0 — Docker manipula iptables directamente para publicar puertos y
+# eso SALTA POR ENCIMA de ufw (un `ufw deny 4444` no basta para bloquear un
+# puerto publicado por Docker sin este `127.0.0.1:` explícito). En el VPS,
+# Caddy corre en el host (fuera de Docker) y sí puede alcanzar localhost
+# para hacer de proxy inverso con HTTPS — nada de esto queda expuesto
+# directamente a internet.
 #
 # Metabase (Fase "integraciones de código abierto" del plan): panel de análisis
 # sobre data/registro.db. El driver de SQLite viene ya incluido en la imagen
@@ -25,7 +35,7 @@ services:
     container_name: guilda-work-metabase
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./data:/data
       - metabase-data:/metabase-data
@@ -43,8 +53,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"   # API S3
-      - "9001:9001"   # Consola web
+      - "127.0.0.1:9000:9000"   # API S3
+      - "127.0.0.1:9001:9001"   # Consola web
     volumes:
       - minio-data:/data
     environment:
@@ -69,7 +79,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "5678:5678"
+      - "127.0.0.1:5678:5678"
     volumes:
       - n8n-data:/home/node/.n8n
 
@@ -108,11 +118,30 @@ services:
       - kratos-migrate
     environment:
       DSN: postgres://kratos:${KRATOS_DB_PASSWORD:-CambiaEstaClaveKratos2026}@postgres-kratos:5432/kratos?sslmode=disable
+      # Estas dos son sobre Kratos mismo: se quedan en 127.0.0.1 siempre —
+      # solo las usa serve.py, en la misma máquina, y sus URLs se
+      # reescriben a rutas relativas /.ory/... antes de llegar al
+      # navegador (ver app/kratos.py). Nunca deben ser la URL pública.
       SERVE_PUBLIC_BASE_URL: http://127.0.0.1:4433/
       SERVE_ADMIN_BASE_URL: http://127.0.0.1:4434/
+      # Estas SÍ son URLs que ve el navegador — origen público de la
+      # propia Guilda Work (GUILDA_ORIGIN, definido en .env en el VPS
+      # real; por defecto http://127.0.0.1:8000 en local). Cada variable
+      # sobreescribe una clave de deploy/kratos/kratos.yml siguiendo la
+      # convención de Ory (SCREAMING_SNAKE del camino en el YAML) — Kratos
+      # NO hace sustitución de plantilla ${VAR} dentro del archivo, cada
+      # env var reemplaza la clave entera.
+      SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/
+      SELFSERVICE_ALLOWED_RETURN_URLS: '["${GUILDA_ORIGIN:-http://127.0.0.1:8000}/","${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/login"]'
+      SELFSERVICE_FLOWS_LOGIN_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
+      SELFSERVICE_FLOWS_REGISTRATION_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/registro
+      SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
+      SELFSERVICE_FLOWS_SETTINGS_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/ajustes-cuenta
+      SELFSERVICE_FLOWS_ERROR_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
+      SERVE_PUBLIC_CORS_ALLOWED_ORIGINS: '["${GUILDA_ORIGIN:-http://127.0.0.1:8000}"]'
     ports:
-      - "4433:4433"   # API pública (self-service)
-      - "4434:4434"   # API admin (gestión de identidades)
+      - "127.0.0.1:4433:4433"   # API pública (self-service)
+      - "127.0.0.1:4434:4434"   # API admin (gestión de identidades)
     volumes:
       - ./deploy/kratos:/etc/config/kratos:ro
     command: serve --config /etc/config/kratos/kratos.yml --dev
@@ -154,9 +183,27 @@ services:
     environment:
       DSN: postgres://hydra:${HYDRA_DB_PASSWORD:-CambiaEstaClaveHydra2026}@postgres-hydra:5432/hydra?sslmode=disable
       SECRETS_SYSTEM: ${HYDRA_SYSTEM_SECRET:-CambiaEsteSecretoHydra2026CambiaEsteSecretoHydra2026}
+      # A diferencia de Kratos, el navegador SÍ habla directo con la API
+      # pública de Hydra (Outline le redirige ahí durante el OAuth2) — por
+      # eso SERVE_PUBLIC_BASE_URL/URLS_SELF_ISSUER tienen que ser una URL
+      # de verdad alcanzable desde fuera en despliegue real
+      # (https://hydra.tu-hostname en el VPS, var HYDRA_PUBLIC_ORIGIN), a
+      # diferencia del caso de Kratos (que se queda en 127.0.0.1, ver
+      # servicio `kratos` más arriba). URLS_LOGIN/CONSENT/LOGOUT son
+      # rutas del propio puente de Guilda Work (app/rutas_hydra.py), así
+      # que usan GUILDA_ORIGIN en vez de HYDRA_PUBLIC_ORIGIN. Misma
+      # convención de Ory que en el servicio `kratos`: cada env var
+      # sobreescribe una clave de deploy/hydra/hydra.yml, sin sustitución
+      # de plantilla dentro del archivo.
+      SERVE_PUBLIC_BASE_URL: ${HYDRA_PUBLIC_ORIGIN:-http://127.0.0.1:4444}/
+      SERVE_PUBLIC_CORS_ALLOWED_ORIGINS: '["${GUILDA_ORIGIN:-http://127.0.0.1:8000}"]'
+      URLS_SELF_ISSUER: ${HYDRA_PUBLIC_ORIGIN:-http://127.0.0.1:4444}/
+      URLS_LOGIN: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/login
+      URLS_CONSENT: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/consent
+      URLS_LOGOUT: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/logout
     ports:
-      - "4444:4444"   # API pública (OAuth2/OIDC)
-      - "4445:4445"   # API admin (login/consent, gestión de clientes)
+      - "127.0.0.1:4444:4444"   # API pública (OAuth2/OIDC) — Caddy la publica de verdad
+      - "127.0.0.1:4445:4445"   # API admin (login/consent, gestión de clientes) — nunca pública
     volumes:
       - ./deploy/hydra:/etc/config/hydra:ro
     command: serve --config /etc/config/hydra/hydra.yml all --dev
@@ -192,14 +239,17 @@ services:
       - postgres-outline
       - redis-outline
     ports:
-      - "3001:3000"   # 3000 ya lo usa Metabase
+      - "127.0.0.1:3001:3000"   # 3000 ya lo usa Metabase
     environment:
       # Outline exige NODE_ENV=production para servir cookies `secure`, lo
       # que a su vez exige que el navegador vea HTTPS de verdad (propio o
       # de un proxy TLS delante, ver HOSTING.md Fase 3c) — sin eso, el
       # flujo OAuth2 falla con "Cannot send secure cookie over unencrypted
       # connection". En local (sin proxy TLS) usa NODE_ENV=development
-      # para poder verificar el flujo entero por http://127.0.0.1:3001.
+      # para poder verificar el flujo entero por http://127.0.0.1:3001 —
+      # OJO: en ese modo la interfaz no renderiza (la imagen de producción
+      # no trae el código fuente que pediría el servidor de desarrollo de
+      # Vite), solo sirve para inspeccionar peticiones/errores por curl.
       NODE_ENV: ${OUTLINE_NODE_ENV:-production}
       SECRET_KEY: ${OUTLINE_SECRET_KEY:?define OUTLINE_SECRET_KEY (openssl rand -hex 32)}
       UTILS_SECRET: ${OUTLINE_UTILS_SECRET:?define OUTLINE_UTILS_SECRET (openssl rand -hex 32)}
@@ -207,9 +257,15 @@ services:
       DATABASE_URL_TEST: postgres://outline:${OUTLINE_DB_PASSWORD:-CambiaEstaClaveOutline2026}@postgres-outline:5432/outline-test
       PGSSLMODE: disable
       REDIS_URL: redis://redis-outline:6379
-      URL: http://127.0.0.1:3001
+      # URL pública de verdad (https://outline.tu-hostname en el VPS) — la
+      # necesita para construir enlaces/cookies correctos. FORCE_HTTPS a
+      # "true" en despliegue real: Caddy delante SÍ da HTTPS de verdad al
+      # navegador, así que la cookie `secure` que exige NODE_ENV=production
+      # funciona sin problema (a diferencia de la verificación local por
+      # http:// sin proxy, donde tuvo que probarse en development).
+      URL: ${OUTLINE_PUBLIC_ORIGIN:-http://127.0.0.1:3001}
       PORT: 3000
-      FORCE_HTTPS: "false"
+      FORCE_HTTPS: ${OUTLINE_FORCE_HTTPS:-false}
       # MinIO ya desplegado (integración anterior) — endpoint interno
       # (contenedor a contenedor) para las subidas, endpoint público para
       # las URLs que ve el navegador (mismo matiz que Kratos, ver app/kratos.py).
@@ -229,7 +285,7 @@ services:
       # interno, a diferencia de serve.py que corre fuera).
       OIDC_CLIENT_ID: ${OUTLINE_OIDC_CLIENT_ID:?define tras ejecutar scripts/registrar_cliente_hydra.py}
       OIDC_CLIENT_SECRET: ${OUTLINE_OIDC_CLIENT_SECRET:?define tras ejecutar scripts/registrar_cliente_hydra.py}
-      OIDC_AUTH_URI: http://127.0.0.1:4444/oauth2/auth
+      OIDC_AUTH_URI: ${HYDRA_PUBLIC_ORIGIN:-http://127.0.0.1:4444}/oauth2/auth
       OIDC_TOKEN_URI: http://hydra:4444/oauth2/token
       OIDC_USERINFO_URI: http://hydra:4444/userinfo
       OIDC_USERNAME_CLAIM: email

@@ -6,7 +6,13 @@
 # cookie de sesión de Kratos quede en el mismo origen que la app.
 #
 # dsn se pasa por variable de entorno (ver docker-compose.yml), nunca en
-# claro aquí.
+# claro aquí. Los valores de abajo (127.0.0.1:8000) son el respaldo para
+# desarrollo/test local — en el VPS real (Fase 3c de HOSTING.md),
+# docker-compose.yml sobreescribe las claves de selfservice.* con la URL
+# pública real detrás de Caddy, usando la convención de variables de
+# entorno de Ory (SELFSERVICE_..., una por cada clave anidada — NO hay
+# sustitución de plantilla ${VAR} dentro de este archivo, cada variable
+# reemplaza la clave entera).
 version: v26.2.0
 
 dsn: ${DSN}

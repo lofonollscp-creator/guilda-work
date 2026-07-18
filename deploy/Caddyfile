@@ -1,6 +1,8 @@
-# Plantilla de Caddyfile para servir Guilda Work (serve.py) detrás de un
-# proxy inverso con HTTPS automático. Copia este archivo a /etc/caddy/Caddyfile
-# en el VPS y sustituye HOSTNAME antes de arrancar Caddy.
+# Plantilla de Caddyfile para servir Guilda Work y el resto del stack de
+# Docker (Fase 3c de HOSTING.md, ver también la sección "Fase 7c" del
+# plan de integraciones) detrás de un proxy inverso con HTTPS automático.
+# Copia este archivo a /etc/caddy/Caddyfile en el VPS y sustituye HOSTNAME
+# por tu hostname real (ver más abajo) antes de arrancar Caddy.
 #
 # Sin dominio propio todavía: usa un hostname de sslip.io, que resuelve
 # automáticamente a la IP del servidor y permite a Caddy pedir un
@@ -10,9 +12,46 @@
 #   203-0-113-10.sslip.io
 #
 # Cuando compres un dominio de verdad, solo hay que cambiar HOSTNAME por
-# ese dominio aquí y crear el registro DNS A correspondiente — Caddy pide
-# el nuevo certificado solo, sin más pasos.
+# ese dominio (y los subdominios de abajo) aquí y crear los registros DNS
+# A correspondientes — Caddy pide los nuevos certificados solo, sin más
+# pasos.
+#
+# Cada bloque de abajo corresponde a un puerto publicado en 127.0.0.1 por
+# docker-compose.yml/HOSTING.md — Caddy es la ÚNICA vía de entrada real
+# desde internet a cualquiera de estos servicios (ver la nota de
+# seguridad en la cabecera de docker-compose.yml sobre por qué los
+# puertos publicados NUNCA quedan en 0.0.0.0).
 
-HOSTNAME {
+app.HOSTNAME {
 	reverse_proxy localhost:8000
+}
+
+# Hydra: el navegador la visita directamente durante el OAuth2 (a
+# diferencia de Kratos, que siempre queda detrás de /.ory/ en app.HOSTNAME)
+# — necesita su propio subdominio con HTTPS real. Solo el puerto público
+# (4444) se publica aquí; el admin (4445) NUNCA se expone, ni siquiera vía
+# Caddy — gestión de clientes OAuth2 solo desde el propio servidor
+# (scripts/registrar_cliente_hydra.py).
+hydra.HOSTNAME {
+	reverse_proxy localhost:4444
+}
+
+outline.HOSTNAME {
+	reverse_proxy localhost:3001
+}
+
+# Opcionales — solo si quieres acceder a estos paneles desde fuera del
+# servidor. Si prefieres mantenerlos solo accesibles por SSH (túnel local,
+# `ssh -L 3000:localhost:3000 guilda@tu-servidor`), simplemente no los
+# publiques aquí y bórralos de esta plantilla.
+metabase.HOSTNAME {
+	reverse_proxy localhost:3000
+}
+
+n8n.HOSTNAME {
+	reverse_proxy localhost:5678
+}
+
+minio.HOSTNAME {
+	reverse_proxy localhost:9001
 }

@@ -107,6 +107,13 @@ dominio real más adelante), y:
 sudo systemctl reload caddy
 ```
 
+La plantilla ya trae un subdominio por servicio (`app.`, `hydra.`,
+`outline.`, y opcionalmente `metabase.`/`n8n.`/`minio.`) — hace falta si
+en algún momento despliegas también el resto del stack de Docker (ver
+sección "Desplegar el resto del stack" más abajo). Si por ahora solo vas
+a tener `serve.py` funcionando, puedes borrar los bloques que no uses
+todavía y añadirlos cuando le toque el turno a cada pieza.
+
 ## 6. systemd: que `serve.py` arranque solo y se reinicie si muere
 
 Copia la plantilla [`deploy/guilda-work.service`](deploy/guilda-work.service)
@@ -122,14 +129,112 @@ sudo systemctl status guilda-work
 ## 7. Verificar
 
 ```bash
-curl https://tu-hostname.sslip.io/api/v1/categorias
+curl https://app.tu-hostname.sslip.io/api/v1/categorias
 ```
 
 Debería responder `401` con `{"ok": false, "error": "Token inválido o
 ausente."}` — confirma que Caddy y `serve.py` están sirviendo tráfico real
 con HTTPS válido.
 
-## 8. Backups (opcional, recomendado)
+## 8. Desplegar el resto del stack (Metabase/MinIO/n8n/Kratos/Hydra/Outline)
+
+Todo esto vive en `docker-compose.yml`, ya en el repo que clonaste en el
+paso 2 — no hace falta clonar nada aparte. Los puertos que publica cada
+contenedor están fijados a `127.0.0.1` a propósito (ver la cabecera del
+propio `docker-compose.yml`): Docker manipula `iptables` directamente al
+publicar puertos, así que un puerto publicado en `0.0.0.0` **salta por
+encima de `ufw`** — con `127.0.0.1:` explícito, la única puerta de
+entrada real desde internet es Caddy (que sí corre en el host y alcanza
+`localhost`).
+
+### 8.1 Instalar Docker
+
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker guilda
+# cierra sesión y vuelve a entrar para que el grupo surta efecto
+```
+
+### 8.2 Variables de entorno del stack
+
+```bash
+cd ~/guilda-work
+python3.11 -c "import secrets; print(secrets.token_hex(32))"   # repite para cada secreto
+```
+
+Crea `.env` (NUNCA se sube a git, ya está en `.gitignore`) con, como
+mínimo:
+
+```bash
+# Contraseñas propias, una por servicio — no dejes los valores por
+# defecto del docker-compose.yml en un servidor real:
+MINIO_ROOT_PASSWORD=...
+KRATOS_DB_PASSWORD=...
+HYDRA_DB_PASSWORD=...
+HYDRA_SYSTEM_SECRET=...          # 32+ caracteres
+OUTLINE_DB_PASSWORD=...
+OUTLINE_SECRET_KEY=...           # openssl rand -hex 32
+OUTLINE_UTILS_SECRET=...         # openssl rand -hex 32
+
+# Orígenes públicos — sustituye por tu hostname real de sslip.io o dominio
+GUILDA_ORIGIN=https://app.tu-hostname.sslip.io
+HYDRA_PUBLIC_ORIGIN=https://hydra.tu-hostname.sslip.io
+OUTLINE_PUBLIC_ORIGIN=https://outline.tu-hostname.sslip.io
+OUTLINE_FORCE_HTTPS=true
+
+# Se rellenan en el paso 8.4, tras registrar el cliente OAuth2 de Outline
+OUTLINE_OIDC_CLIENT_ID=
+OUTLINE_OIDC_CLIENT_SECRET=
+```
+
+### 8.3 Arrancar Kratos + Hydra primero (Outline los necesita ya arriba)
+
+```bash
+docker compose up -d postgres-kratos kratos-migrate kratos postgres-hydra hydra-migrate hydra
+curl http://127.0.0.1:4433/health/ready   # 200
+curl http://127.0.0.1:4445/admin/health/ready   # 200
+```
+
+### 8.4 Registrar el cliente OAuth2 de Outline
+
+```bash
+.venv/bin/python scripts/registrar_cliente_hydra.py --nombre outline \
+  --redirect-uri https://outline.tu-hostname.sslip.io/auth/oidc.callback
+```
+
+Copia el `client_id`/`client_secret` que imprime a `OUTLINE_OIDC_CLIENT_ID`/
+`OUTLINE_OIDC_CLIENT_SECRET` en `.env`.
+
+### 8.5 MinIO + bucket de Outline
+
+```bash
+docker compose up -d minio
+docker run --rm --network guilda-work_default --entrypoint sh minio/mc -c \
+  "mc alias set localminio http://minio:9000 guilda_admin \$MINIO_ROOT_PASSWORD && \
+   mc mb -p localminio/outline-uploads"
+```
+
+(el nombre de la red puede variar según el nombre de la carpeta del
+repo — `docker network ls` para confirmarlo si el comando falla).
+
+### 8.6 Arrancar Outline y el resto
+
+```bash
+docker compose up -d
+docker compose ps   # todo "Up"/"healthy"
+```
+
+### 8.7 Verificar
+
+- `curl https://hydra.tu-hostname.sslip.io/health/ready` → `200`.
+- Navegador: `https://app.tu-hostname.sslip.io/login` — mismo login de
+  siempre, ahora con HTTPS real.
+- Navegador: `https://outline.tu-hostname.sslip.io` → "Continuar con
+  Guilda Work" → a diferencia de la verificación local (que se quedaba
+  bloqueada por exigir HTTPS), aquí Caddy sí da HTTPS de verdad, así que
+  el login completo debería funcionar de principio a fin.
+
+## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
 usa la app de escritorio. Un cron simple que la invoque y copie el
@@ -145,10 +250,16 @@ servidor:
 ## Migrar de sslip.io a un dominio propio
 
 Cuando compres un dominio:
-1. Crea un registro DNS **A** apuntando el subdominio que quieras (p.ej.
-   `app.tu-dominio.com`) a la IP del VPS.
-2. Cambia `HOSTNAME` en `/etc/caddy/Caddyfile` por ese subdominio.
-3. `sudo systemctl reload caddy` — Caddy pide el nuevo certificado solo.
+1. Crea un registro DNS **A** para cada subdominio que uses (`app.`,
+   `hydra.`, `outline.`, y los opcionales que tengas activos) apuntando
+   todos a la IP del VPS.
+2. Cambia `HOSTNAME` en `/etc/caddy/Caddyfile` por tu dominio (todos los
+   bloques comparten el mismo `HOSTNAME`, solo cambia el prefijo de cada
+   uno).
+3. Actualiza también `GUILDA_ORIGIN`/`HYDRA_PUBLIC_ORIGIN`/
+   `OUTLINE_PUBLIC_ORIGIN` en `.env` (sección 8.2) al nuevo dominio, y
+   `docker compose up -d` para que los contenedores recojan el cambio.
+4. `sudo systemctl reload caddy` — Caddy pide los nuevos certificados solo.
 
 ## Fuera de alcance de esta guía
 
