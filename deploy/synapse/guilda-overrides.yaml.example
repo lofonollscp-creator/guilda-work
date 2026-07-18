@@ -1,0 +1,106 @@
+# PLANTILLA — copia este archivo a guilda-overrides.yaml (gitignorado,
+# nunca se sube porque lleva el client_secret de Hydra en claro — Synapse
+# no tiene una convención de variables de entorno para esto, a diferencia
+# de Kratos/Hydra/Outline que sí resuelven sus secretos vía .env) y
+# rellena client_id/client_secret con los que imprima
+# `scripts/registrar_cliente_hydra.py --nombre element ...`.
+#
+# cp deploy/synapse/guilda-overrides.yaml.example deploy/synapse/guilda-overrides.yaml
+#
+# Overrides de Guilda Work sobre la config autogenerada de Synapse
+# (Fase 7d — Element + Synapse: chat de verdad, sustituye al chat propio
+# descartado en la ronda de decisión con el usuario).
+#
+# `homeserver.yaml` (server_name, claves de firma, secretos, conexión a
+# Postgres...) lo genera Synapse solo la primera vez que arranca, a
+# partir de las variables de entorno SYNAPSE_SERVER_NAME/POSTGRES_* del
+# servicio `synapse` en docker-compose.yml — ver el comando `run -c
+# /data/homeserver.yaml -c /etc/synapse-overrides/guilda-overrides.yaml`
+# de ese servicio. Este archivo SOLO fija lo que a Guilda Work le importa
+# cambiar del comportamiento por defecto — Synapse aplica los dos
+# archivos en orden, el segundo gana en las claves que coincidan.
+#
+# A diferencia de Kratos/Hydra, Synapse NO tiene una convención de
+# variables de entorno para sobreescribir claves arbitrarias (solo
+# reconoce un puñado fijo: SYNAPSE_SERVER_NAME, POSTGRES_*, etc.) — por
+# eso client_id/client_secret están en claro aquí abajo en vez de venir
+# de .env. Para desplegar esto en el VPS real hace falta editar este
+# archivo a mano con el hostname/cliente reales (ver Fase 7d del plan) —
+# es un paso manual aceptado, no automatizable sin escribir un
+# envolvente propio para el arranque de Synapse.
+
+# Sin esto, Synapse deduce `https://<server_name>/` como su URL pública
+# (usada para construir enlaces de vuelta, incluido el primer salto del
+# propio flujo de login SSO) — en local no hay HTTPS real, así que hay
+# que fijarlo a mano. En el VPS real, cambia esto por
+# `https://matrix.tu-hostname/` (el subdominio de Synapse detrás de
+# Caddy).
+public_baseurl: "http://127.0.0.1:8008/"
+
+# Sin federación — el chat es solo para el equipo de Guilda Work (ver
+# Fase 7d del plan para el porqué: nada en el catálogo de herramientas
+# necesita interoperar con otros servidores Matrix, y desactivarla evita
+# toda la complejidad de .well-known/certificados de federación).
+federation_domain_whitelist: []
+
+# Sin contraseñas propias de Matrix ni registro manual — solo entra
+# quien pase por Ory Hydra (Fase 7b), igual que Outline (Fase 7b) y el
+# mismo criterio que el resto de la identidad de este proyecto.
+password_config:
+  enabled: false
+enable_registration: false
+
+oidc_providers:
+  - idp_id: guilda_work
+    idp_name: "Guilda Work"
+    # `issuer` y el resto de endpoints server-to-server (token/userinfo,
+    # que Synapse llama él mismo desde dentro de Docker) usan el nombre
+    # de host interno `hydra` — nunca 127.0.0.1 dentro de un contenedor,
+    # eso apuntaría al propio contenedor de Synapse, no al de Hydra
+    # (mismo matiz host-vs-contenedor ya documentado en app/kratos.py).
+    issuer: "http://hydra:4444/"
+    client_id: "PEGA_AQUI_EL_CLIENT_ID"
+    client_secret: "PEGA_AQUI_EL_CLIENT_SECRET"
+    client_auth_method: "client_secret_post"
+    # `issuer` solo se usa para el documento de descubrimiento (y ni
+    # siquiera hace falta que sea alcanzable desde fuera de Docker,
+    # porque cada endpoint de abajo está fijado a mano — ver por qué).
+    #
+    # A diferencia de Kratos/Outline, aquí NO hay un split real
+    # interno/público que valga para producción: la librería OIDC de
+    # Synapse (authlib) EXIGE que token_endpoint/userinfo_endpoint/
+    # jwks_uri sean "https://" de verdad — no acepta un hostname interno
+    # en http plano ni en local ni en producción (confirmado en pruebas:
+    # falla con `OidcMetadataError: "token_endpoint" MUST use "https"
+    # scheme` en cuanto se usa algo que no sea https, incluida esta
+    # URL interna de Docker). En el VPS real, la solución es usar la
+    # MISMA URL pública (`https://matrix... no, https://hydra.tu-hostname/...`)
+    # para los cuatro campos — Synapse sí puede alcanzarla desde dentro
+    # de Docker (salida a internet normal, entra de vuelta por Caddy),
+    # así que no hace falta el hostname interno de Docker para nada.
+    #
+    # En LOCAL (sin HTTPS real delante) este último tramo del login
+    # (intercambio de código por token) no se puede completar — mismo
+    # tipo de límite ya documentado para Outline en la Fase 7b. Lo que sí
+    # se verifica en local: el botón de login, la redirección a Hydra, el
+    # login/consentimiento reales (Fase 7b), y que Hydra emite un código
+    # de autorización válido y redirige de vuelta a Synapse — ver
+    # Verificación en el plan.
+    authorization_endpoint: "http://127.0.0.1:4444/oauth2/auth"
+    token_endpoint: "http://hydra:4444/oauth2/token"
+    userinfo_endpoint: "http://hydra:4444/userinfo"
+    jwks_uri: "http://hydra:4444/.well-known/jwks.json"
+    # Al desplegar en el VPS real, sustituye las cuatro URLs de arriba
+    # (issuer/authorization_endpoint/token_endpoint/userinfo_endpoint/
+    # jwks_uri) por la misma https://hydra.tu-hostname/... pública.
+    scopes: ["openid", "email", "profile"]
+    user_mapping_provider:
+      config:
+        # El email nunca contiene los caracteres que Matrix prohíbe en
+        # un localpart salvo el punto/guion, que sí admite — suficiente
+        # para identidades reales; una colisión (dos emails que
+        # normalizan al mismo localpart) es un caso límite aceptado por
+        # ahora, no bloquea el flujo normal.
+        localpart_template: "{{ user.email.split('@')[0] }}"
+        display_name_template: "{{ user.email }}"
+        confirm_localpart: false

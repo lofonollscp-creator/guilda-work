@@ -292,6 +292,78 @@ services:
       OIDC_DISPLAY_NAME: "Guilda Work"
       OIDC_SCOPES: "openid email profile"
 
+  # Element + Synapse: chat de verdad (Fase 7d) — sustituye a la idea de
+  # un chat propio dentro de Guilda Work, decisión explícita del usuario
+  # una vez Kratos/Hydra ya estaban desplegados. Sin federación (ver
+  # deploy/synapse/guilda-overrides.yaml) — el chat es solo para el
+  # equipo de Guilda Work, no para interoperar con otros servidores
+  # Matrix. Login solo vía Ory Hydra, igual que Outline.
+  postgres-synapse:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-synapse
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: ${SYNAPSE_DB_PASSWORD:-CambiaEstaClaveSynapse2026}
+      POSTGRES_DB: synapse
+      # Synapse recomienda collation C + encoding UTF8 — además, la
+      # imagen alpine de Postgres solo soporta bien la locale C de
+      # todas formas (musl libc, sin locales completas), así que fijarlo
+      # explícito no cambia nada respecto al comportamiento por defecto,
+      # solo lo deja documentado.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres-synapse-data:/var/lib/postgresql/data
+
+  # Genera /data/homeserver.yaml a partir de las variables de entorno la
+  # primera vez (mismo patrón que kratos-migrate/hydra-migrate) — esta
+  # versión de la imagen de Synapse YA NO genera la config sola al
+  # arrancar en modo `run`, hace falta este paso `migrate_config`
+  # explícito antes. Termina y no vuelve a hacer nada en arranques
+  # posteriores (el archivo ya existe en el volumen persistente).
+  synapse-migrate-config:
+    image: matrixdotorg/synapse:latest
+    container_name: guilda-work-synapse-migrate-config
+    depends_on:
+      - postgres-synapse
+    environment:
+      SYNAPSE_SERVER_NAME: ${SYNAPSE_SERVER_NAME:-chat.localhost}
+      SYNAPSE_REPORT_STATS: "no"
+      # Sin TLS dentro del propio Synapse — en el VPS real, Caddy hace de
+      # proxy TLS delante (igual que con serve.py), no hace falta que
+      # Synapse gestione certificados propios.
+      SYNAPSE_NO_TLS: "true"
+      POSTGRES_HOST: postgres-synapse
+      POSTGRES_DB: synapse
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: ${SYNAPSE_DB_PASSWORD:-CambiaEstaClaveSynapse2026}
+    volumes:
+      - synapse-data:/data
+    command: ["migrate_config"]
+    restart: "no"
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: guilda-work-synapse
+    restart: unless-stopped
+    depends_on:
+      - synapse-migrate-config
+    ports:
+      - "127.0.0.1:8008:8008"
+    volumes:
+      - synapse-data:/data
+      - ./deploy/synapse:/etc/synapse-overrides:ro
+    command: ["run", "-c", "/data/homeserver.yaml", "-c", "/etc/synapse-overrides/guilda-overrides.yaml"]
+
+  element-web:
+    image: vectorim/element-web:latest
+    container_name: guilda-work-element-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8009:80"
+    volumes:
+      - ./deploy/synapse/element-config.json:/app/config.json:ro
+
 volumes:
   metabase-data:
   minio-data:
@@ -300,3 +372,5 @@ volumes:
   postgres-hydra-data:
   postgres-outline-data:
   redis-outline-data:
+  postgres-synapse-data:
+  synapse-data:

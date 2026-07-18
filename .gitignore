@@ -13,3 +13,4 @@ dist/
 .venv/
 .pytest_cache/
 .env
+deploy/synapse/guilda-overrides.yaml
