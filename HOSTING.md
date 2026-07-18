@@ -418,13 +418,16 @@ por el widget de soporte. **No aísla datos** entre tenants — es solo una
 etiqueta de agrupación para el backoffice y para Chatwoot, no toca el
 resto del esquema ni los permisos.
 
-Gestión por CLI (no hay panel de administración todavía):
+Gestión por CLI:
 
 ```bash
 python cli.py crear-tenant "Lueira"
 python cli.py listar-tenants
 python cli.py asignar-tenant persona@ejemplo.com Lueira
 ```
+
+(También hay un backoffice web para esto — ver sección 8.13 — la CLI
+sigue funcionando igual, útil para scripts o para el primer arranque.)
 
 Para que aparezca la burbuja de "Contactar con soporte" (widget de chat
 en vivo de Chatwoot) en Guilda Work:
@@ -450,6 +453,61 @@ Verificar: inicia sesión en Guilda Work con un usuario que tenga tenant
 asignado, confirma que aparece la burbuja de chat en cualquier página, y
 que al escribir un mensaje de prueba llega a Chatwoot con el atributo
 `tenant` relleno en la conversación.
+
+### 8.13 Backoffice web de tenants y usuarios (Fase 7c)
+
+Página `/backoffice` dentro de la propia Guilda Work para crear/renombrar/
+borrar tenants y crear/asignar/quitar usuarios sin pasar por la CLI —
+protegida por `usuarios.rol = 'admin'` (columna que existe en el esquema
+desde el principio pero hasta ahora no la usaba nadie).
+
+Primer admin (imprescindible, no hay forma de auto-promoverse desde la
+UI si no hay ya un admin):
+
+```bash
+python cli.py hacer-admin tu-email@ejemplo.com
+python cli.py quitar-admin tu-email@ejemplo.com   # por si hace falta revertirlo
+```
+
+Una vez dentro de `/backoffice` (aparece un icono nuevo en el rail
+lateral solo para administradores):
+- Crear/renombrar/borrar tenants (al borrar uno, sus usuarios quedan sin
+  tenant asignado, no se borran).
+- Crear un usuario nuevo directamente (email + tenant opcional): crea la
+  identidad en Kratos con una contraseña temporal generada al vuelo, que
+  se muestra **una sola vez** en pantalla para pasársela a esa persona.
+- Reasignar el tenant de cualquier usuario desde un desplegable en la
+  propia tabla.
+- Dar/quitar el rol de admin a otros usuarios (no se puede uno quitar el
+  rol a sí mismo, para no quedarse fuera sin nadie más que lo revierta).
+
+### 8.14 `sqlite-web` (extra, opcional)
+
+Herramienta de código abierto ([coleifer/sqlite-web](https://github.com/coleifer/sqlite-web))
+para hacer consultas SQL ad-hoc sobre **toda** la base de datos —
+deliberadamente separada del backoffice de la sección 8.13: no distingue
+tenants/usuarios, no usa el login de Guilda Work (contraseña propia), y
+ve tablas sensibles (`tokens_api`, `sesiones`). Por eso el servicio en
+`docker-compose.yml` solo escucha en `127.0.0.1` (nunca detrás de
+Caddy/dominio público) y monta la base de datos **de solo lectura**
+(evita corromper el archivo mientras `serve.py` escribe en él a la vez).
+
+Añade a `.env`:
+
+```bash
+SQLITE_WEB_PASSWORD=...
+```
+
+```bash
+docker compose up -d sqlite-web
+```
+
+Acceso solo por túnel SSH, nunca abriendo el puerto al exterior:
+
+```bash
+ssh -L 8012:127.0.0.1:8012 tu-usuario@tu-vps
+# luego, en tu navegador: http://127.0.0.1:8012
+```
 
 ## 9. Backups (opcional, recomendado)
 

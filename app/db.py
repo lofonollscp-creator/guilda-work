@@ -580,6 +580,50 @@ def obtener_usuario(usuario_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
+def listar_usuarios() -> list[sqlite3.Row]:
+    """Todos los usuarios con el nombre de su tenant (si tiene), para el
+    backoffice (Fase 7c) — no existe paginación porque el uso previsto es
+    un puñado de usuarios, no miles."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT usuarios.*, tenants.nombre AS tenant_nombre "
+            "FROM usuarios LEFT JOIN tenants ON tenants.id = usuarios.tenant_id "
+            "ORDER BY usuarios.email"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def es_admin(usuario_id: int) -> bool:
+    usuario = obtener_usuario(usuario_id)
+    return usuario is not None and usuario["rol"] == "admin"
+
+
+def hacer_admin(email: str) -> None:
+    """Lanza ValueError si no existe ningún usuario con ese email."""
+    conn = get_connection()
+    try:
+        cur = conn.execute("UPDATE usuarios SET rol = 'admin' WHERE email = ?", (email.strip().lower(),))
+        if cur.rowcount == 0:
+            raise ValueError(f"No existe ningún usuario con el email '{email}'.")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def quitar_admin(email: str) -> None:
+    """Lanza ValueError si no existe ningún usuario con ese email."""
+    conn = get_connection()
+    try:
+        cur = conn.execute("UPDATE usuarios SET rol = 'usuario' WHERE email = ?", (email.strip().lower(),))
+        if cur.rowcount == 0:
+            raise ValueError(f"No existe ningún usuario con el email '{email}'.")
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def verificar_credenciales(email: str, contrasena: str) -> sqlite3.Row | None:
     """Devuelve la fila del usuario si el email existe y la contraseña es
     correcta; None en cualquier otro caso (sin distinguir el motivo, para no
@@ -655,6 +699,52 @@ def listar_tenants() -> list[sqlite3.Row]:
     conn = get_connection()
     try:
         return conn.execute("SELECT * FROM tenants ORDER BY nombre").fetchall()
+    finally:
+        conn.close()
+
+
+def listar_tenants_con_conteo() -> list[sqlite3.Row]:
+    """Como listar_tenants(), pero con el nº de usuarios asignados a cada
+    uno (columna `n_usuarios`) — para la tabla del backoffice (Fase 7c)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT tenants.*, COUNT(usuarios.id) AS n_usuarios "
+            "FROM tenants LEFT JOIN usuarios ON usuarios.tenant_id = tenants.id "
+            "GROUP BY tenants.id ORDER BY tenants.nombre"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def renombrar_tenant(tenant_id: int, nuevo_nombre: str) -> None:
+    """Lanza sqlite3.IntegrityError si el nombre ya existe (UNIQUE)."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET nombre = ? WHERE id = ?", (nuevo_nombre.strip(), tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def borrar_tenant(tenant_id: int) -> None:
+    """Desasigna primero a los usuarios que lo tuvieran (quedan sin tenant,
+    no se borran) y luego borra el tenant — no depende de ON DELETE
+    CASCADE, que la tabla no declara."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM tenants WHERE id = ?", (tenant_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def desasignar_tenant(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE id = ?", (usuario_id,))
+        conn.commit()
     finally:
         conn.close()
 

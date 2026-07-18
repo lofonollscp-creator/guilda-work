@@ -26,6 +26,7 @@ from flask import Flask, Response, abort, g, redirect, render_template, request,
 from . import ai_local, correo, db, export, herramientas, ia_asistente, importador, kratos
 from .auth import limiter, login_required
 from .rutas_api import api_bp
+from .rutas_backoffice import backoffice_bp
 from .rutas_correo import correo_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
@@ -83,6 +84,7 @@ app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
+app.register_blueprint(backoffice_bp)
 
 
 KRATOS_SESSION_COOKIE = "ory_kratos_session"
@@ -96,12 +98,14 @@ def _resolver_usuario_actual():
         if "usuario_id" not in session:
             session["usuario_id"] = db.usuario_local_id()
         g.usuario_id = session.get("usuario_id")
+        g.es_admin = db.es_admin(g.usuario_id)
         return
 
     # Modo hospedado: identidad real vía Ory Kratos. Solo se llama a Kratos
     # si hay cookie de sesión de Kratos en la petición — evita una llamada
     # HTTP en cada visita anónima (página de login, assets, etc.).
     g.usuario_id = None
+    g.es_admin = False
     if KRATOS_SESSION_COOKIE not in request.cookies:
         return
     sesion_kratos = kratos.whoami(request.cookies)
@@ -117,6 +121,7 @@ def _resolver_usuario_actual():
         g.usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     else:
         g.usuario_id = usuario["id"]
+        g.es_admin = usuario["rol"] == "admin"
 
 
 @app.context_processor

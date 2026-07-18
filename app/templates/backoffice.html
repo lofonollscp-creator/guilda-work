@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Backoffice — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Backoffice</h1>
+    <p class="subtitle">Tenants (organizaciones) y usuarios — solo visible para administradores.</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+{% if contrasena_temporal %}
+<div class="ia-result">
+  Usuario <strong>{{ email_creado }}</strong> creado. Contraseña temporal
+  (solo se muestra esta vez, pásasela para que la cambie al entrar):
+  <code>{{ contrasena_temporal }}</code>
+</div>
+{% endif %}
+
+<section class="ia-section">
+  <h3>Tenants</h3>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Usuarios</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tenants %}
+        <tr>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
+              <input type="text" name="nombre" value="{{ t.nombre }}" required>
+              <button type="submit" class="btn btn-ghost">Renombrar</button>
+            </form>
+          </td>
+          <td class="mono">{{ t.n_usuarios }}</td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
+                  onsubmit="return confirm('¿Borrar el tenant {{ t.nombre }}? Sus usuarios quedarán sin tenant asignado.');">
+              <button type="submit" class="btn btn-ghost">Borrar</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">Todavía no hay ningún tenant.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('backoffice.crear_tenant') }}" class="filters">
+    <label>Nuevo tenant <input type="text" name="nombre" placeholder="Nombre de la organización" required></label>
+    <button type="submit" class="btn btn-primary">+ Crear tenant</button>
+  </form>
+</section>
+
+<section class="ia-section">
+  <h3>Usuarios</h3>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Tenant</th>
+          <th>Rol</th>
+          <th>Alta</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>{{ u.email }}</td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.asignar_tenant_usuario', usuario_id=u.id) }}">
+              <select name="tenant_id" onchange="this.form.submit()">
+                <option value="">Sin tenant</option>
+                {% for t in tenants %}
+                <option value="{{ t.id }}" {% if u.tenant_id == t.id %}selected{% endif %}>{{ t.nombre }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <span class="log-badge {{ 'log-badge-duracion' if u.rol == 'admin' else 'log-badge-instantanea' }}">{{ u.rol }}</span>
+          </td>
+          <td class="mono">{{ u.creado_en[:10] }}</td>
+          <td>
+            {% if u.id != g.usuario_id %}
+            <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}">
+              <button type="submit" class="btn btn-ghost">{{ 'Quitar admin' if u.rol == 'admin' else 'Hacer admin' }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">Todavía no hay ningún usuario.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('backoffice.crear_usuario') }}" class="filters">
+    <label>Email <input type="email" name="email" placeholder="persona@ejemplo.com" required></label>
+    <label>Tenant
+      <select name="tenant_id">
+        <option value="">Sin tenant</option>
+        {% for t in tenants %}
+        <option value="{{ t.id }}">{{ t.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary">+ Crear usuario</button>
+  </form>
+</section>
+{% endblock %}

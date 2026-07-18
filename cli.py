@@ -14,6 +14,8 @@ Ejemplos:
     python cli.py crear-tenant "Lueira"
     python cli.py listar-tenants
     python cli.py asignar-tenant persona@ejemplo.com Lueira
+    python cli.py hacer-admin persona@ejemplo.com
+    python cli.py quitar-admin persona@ejemplo.com
 """
 import argparse
 import sys
@@ -125,6 +127,24 @@ def cmd_asignar_tenant(args):
     print(f"{args.email} asignado al tenant '{tenant['nombre']}'.")
 
 
+def cmd_hacer_admin(args):
+    try:
+        db.hacer_admin(args.email)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
+    print(f"{args.email} ahora es admin.")
+
+
+def cmd_quitar_admin(args):
+    try:
+        db.quitar_admin(args.email)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
+    print(f"{args.email} ya no es admin.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Consulta el registro de actividad de Guilda Work.")
     sub = parser.add_subparsers(dest="comando", required=True)
@@ -158,6 +178,14 @@ def main():
     p_asignar_tenant.add_argument("email")
     p_asignar_tenant.add_argument("tenant", help="Nombre o id del tenant.")
     p_asignar_tenant.set_defaults(func=cmd_asignar_tenant)
+
+    p_hacer_admin = sub.add_parser("hacer-admin", help="Da permisos de administrador (backoffice) a un usuario.")
+    p_hacer_admin.add_argument("email")
+    p_hacer_admin.set_defaults(func=cmd_hacer_admin)
+
+    p_quitar_admin = sub.add_parser("quitar-admin", help="Quita permisos de administrador a un usuario.")
+    p_quitar_admin.add_argument("email")
+    p_quitar_admin.set_defaults(func=cmd_quitar_admin)
 
     args = parser.parse_args()
     db.init_db()  # idempotente: por si es la primera vez que se usa la app

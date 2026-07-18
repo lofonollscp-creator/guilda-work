@@ -540,6 +540,29 @@ services:
     environment: *chatwoot-env
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
+  # sqlite-web (Fase 7c, extra) — visor genérico de TODA la base de datos
+  # SQLite de Guilda Work, para consultas SQL ad-hoc del admin. A propósito
+  # NO es el backoffice real (ver /backoffice en la propia app): no
+  # distingue tenants ni usuarios, no usa el login de Guilda Work, y ve
+  # tablas sensibles (tokens_api, sesiones). Por eso: solo loopback (nunca
+  # detrás de Caddy/dominio público), contraseña propia obligatoria, y el
+  # volumen montado de solo lectura para no arriesgar corromper el archivo
+  # mientras serve.py escribe en él a la vez. Acceso previsto vía túnel SSH
+  # (`ssh -L 8012:127.0.0.1:8012 ...`), nunca expuesto tal cual.
+  sqlite-web:
+    image: ghcr.io/coleifer/sqlite-web:latest
+    container_name: guilda-work-sqlite-web
+    restart: unless-stopped
+    environment:
+      SQLITE_WEB_PASSWORD: ${SQLITE_WEB_PASSWORD:?}
+    volumes:
+      - ./data:/data:ro
+    ports:
+      - "127.0.0.1:8012:8080"
+    # La contraseña la coge de SQLITE_WEB_PASSWORD (arriba) — el flag -P
+    # es para pedirla por teclado de forma interactiva, no vale en Docker.
+    command: ["sqlite_web", "-H", "0.0.0.0", "-r", "/data/registro.db"]
+
   # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
   # de verificar los flujos OIDC (Outline/Element) que en local plano
   # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —

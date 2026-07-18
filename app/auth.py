@@ -15,7 +15,7 @@ decoradores de arriba: rutas_api.py necesita decorar vistas con
 quien luego llama a `limiter.init_app(app)`."""
 from functools import wraps
 
-from flask import g, jsonify, redirect, request, url_for
+from flask import abort, g, jsonify, redirect, request, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -29,6 +29,18 @@ def login_required(vista):
     def decorada(*args, **kwargs):
         if not g.usuario_id:
             return redirect(url_for("login", siguiente=request.path))
+        return vista(*args, **kwargs)
+    return decorada
+
+
+def admin_required(vista):
+    """Para el backoffice (Fase 7c) — se apoya en `g.es_admin`, que ya
+    fija `_resolver_usuario_actual()` en main.py a partir de
+    `usuarios.rol`. Se combina siempre con `login_required` encima."""
+    @wraps(vista)
+    def decorada(*args, **kwargs):
+        if not g.get("es_admin"):
+            abort(403)
         return vista(*args, **kwargs)
     return decorada
 

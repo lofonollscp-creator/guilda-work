@@ -69,6 +69,12 @@
         <span class="icon-rail-icono">&#11014;</span>
         <span class="icon-rail-etiqueta">Importar</span>
       </a>
+      {% if g.es_admin %}
+      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('backoffice.') else '' }}" title="Backoffice">
+        <span class="icon-rail-icono">&#128737;</span>
+        <span class="icon-rail-etiqueta">Backoffice</span>
+      </a>
+      {% endif %}
       <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="Captura rápida (Ctrl+Alt+G)">
         <span class="icon-rail-icono">&#128204;</span>
         <span class="icon-rail-etiqueta">Captura rápida</span>
