@@ -604,6 +604,34 @@ services:
           - chat.localhost
           - matrix.localhost
 
+  # Caddy LAN ("opción 1": servidor en la red local, sin exponerlo a
+  # internet) — HTTPS real identificando el servidor por su IP en la LAN
+  # (ver deploy/Caddyfile.lan) en vez de *.localhost, que solo vale dentro
+  # de esta misma máquina. `profiles: ["lan"]`: nunca se arranca con un
+  # `docker compose up -d` normal, hace falta pedirlo explícito con
+  # `--profile lan`. A diferencia de caddy-local, publica en `0.0.0.0` (no
+  # solo 127.0.0.1) para que otros dispositivos de la LAN puedan alcanzarlo
+  # más adelante — hoy mismo, verificar solo desde esta máquina es
+  # suficiente antes de mover el servidor a otro equipo.
+  caddy-lan:
+    image: caddy:latest
+    container_name: guilda-work-caddy-lan
+    restart: unless-stopped
+    profiles: ["lan"]
+    environment:
+      GUILDA_LAN_IP: ${GUILDA_LAN_IP:?define la IP de esta máquina en la LAN, p.ej. 192.168.1.181}
+    ports:
+      - "0.0.0.0:8443:8443"
+      - "0.0.0.0:8444:8444"
+      - "0.0.0.0:8445:8445"
+      - "0.0.0.0:8446:8446"
+      - "0.0.0.0:8447:8447"
+    volumes:
+      - ./deploy/Caddyfile.lan:/etc/caddy/Caddyfile:ro
+      - caddy-lan-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   metabase-data:
   minio-data:
@@ -615,6 +643,7 @@ volumes:
   postgres-synapse-data:
   synapse-data:
   caddy-local-data:
+  caddy-lan-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

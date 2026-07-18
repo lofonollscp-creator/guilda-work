@@ -1,0 +1,53 @@
+# Caddyfile de Caddy LAN (Fase "opción 1": servidor accesible en la red
+# local, sin exponerlo a internet) — HTTPS real con la CA interna de Caddy
+# (`tls internal`), pero identificando el servidor por su IP en la red
+# local en vez de por *.localhost (deploy/Caddyfile.local): *.localhost es
+# un TLD especial que CUALQUIER dispositivo resuelve a su propio 127.0.0.1,
+# así que solo sirve para pruebas dentro de esta misma máquina — no vale
+# para que otro dispositivo del piso te alcance. Con una IP real de la LAN
+# sí funciona desde cualquier otro equipo de la misma red.
+#
+# `{$GUILDA_LAN_IP}` lo sustituye Caddy a partir de la variable de entorno
+# del propio contenedor (ver el servicio `caddy-lan` en docker-compose.yml)
+# — así no hay que tocar este archivo si cambia la IP (DHCP), solo la
+# variable.
+#
+# Un puerto por servicio en la misma IP (no se puede distinguir por
+# nombre de host como en Caddyfile.local, al no haber varios hostnames):
+# 8443 Guilda Work, 8444 Hydra, 8445 Outline, 8446 Synapse (homeserver),
+# 8447 Element-web.
+#
+# `default_sni`: los navegadores NO mandan SNI cuando el destino es una
+# IP literal (no un nombre de host) — es el comportamiento normal, no un
+# bug del navegador (RFC 6066 solo define SNI para hostnames). Sin este
+# global option, Caddy no sabe qué certificado servir ante una conexión
+# sin SNI y aborta el handshake con "internal_error", aunque solo haya UN
+# certificado posible (encontrado probando esta configuración en real).
+{
+	default_sni {$GUILDA_LAN_IP}
+}
+
+{$GUILDA_LAN_IP}:8443 {
+	tls internal
+	reverse_proxy host.docker.internal:8000
+}
+
+{$GUILDA_LAN_IP}:8444 {
+	tls internal
+	reverse_proxy hydra:4444
+}
+
+{$GUILDA_LAN_IP}:8445 {
+	tls internal
+	reverse_proxy outline:3000
+}
+
+{$GUILDA_LAN_IP}:8446 {
+	tls internal
+	reverse_proxy synapse:8008
+}
+
+{$GUILDA_LAN_IP}:8447 {
+	tls internal
+	reverse_proxy element-web:80
+}

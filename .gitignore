@@ -17,4 +17,6 @@ dist/
 .env
 deploy/synapse/guilda-overrides.yaml
 deploy/synapse/guilda-overrides.local-https.yaml
+deploy/synapse/guilda-overrides.lan.yaml
 caddy-local-root.crt
+caddy-lan-root.crt

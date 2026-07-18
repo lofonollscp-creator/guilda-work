@@ -1,0 +1,43 @@
+# Override para probar Element en la red local ("opción 1", ver
+# deploy/Caddyfile.lan) — nunca se usa en un `docker compose up` normal:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.synapse-lan.yml \
+#     up -d --force-recreate synapse element-web
+#
+# Mismo mecanismo que docker-compose.synapse-https-local.yml (mock de
+# *.localhost): monta la CA de caddy-lan (distinta de la de caddy-local)
+# y fija SSL_CERT_FILE para que Synapse confíe en ella, y sustituye
+# guilda-overrides.yaml por la variante .lan.yaml (con los endpoints de
+# Hydra apuntando a la IP de la LAN). Requiere haber extraído antes
+# caddy-lan-root.crt:
+#
+#   docker cp guilda-work-caddy-lan:/data/caddy/pki/authorities/local/root.crt ./caddy-lan-root.crt
+#
+# y haber copiado+rellenado deploy/synapse/guilda-overrides.lan.yaml a
+# partir de su .example.
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: guilda-work-synapse
+    restart: unless-stopped
+    depends_on:
+      - synapse-migrate-config
+    ports:
+      - "127.0.0.1:8008:8008"
+    environment:
+      SSL_CERT_FILE: /certs/caddy-lan-root.crt
+    volumes:
+      - synapse-data:/data
+      - ./deploy/synapse:/etc/synapse-overrides:ro
+      - ./deploy/synapse/guilda-overrides.lan.yaml:/etc/synapse-overrides/guilda-overrides.yaml:ro
+      - ./caddy-lan-root.crt:/certs/caddy-lan-root.crt:ro
+    command: ["run", "-c", "/data/homeserver.yaml", "-c", "/etc/synapse-overrides/guilda-overrides.yaml"]
+
+  element-web:
+    image: vectorim/element-web:latest
+    container_name: guilda-work-element-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8009:80"
+    volumes:
+      - ./deploy/synapse/element-config.lan.json:/app/config.json:ro
