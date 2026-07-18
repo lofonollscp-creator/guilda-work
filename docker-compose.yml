@@ -201,6 +201,22 @@ services:
       URLS_LOGIN: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/login
       URLS_CONSENT: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/consent
       URLS_LOGOUT: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/logout
+      # Sin esto, Hydra ve la conexión que le llega de Caddy como "http"
+      # (Caddy termina TLS y le reenvía en plano, igual que a cualquier
+      # otro servicio de este stack) — en modo `--dev`, eso hace que sus
+      # cookies de login/consent (`ory_hydra_login_csrf_...`) lleven
+      # `SameSite=None` (las necesita para sobrevivir la ida y vuelta
+      # entre dominios del login) pero SIN `Secure`, y Chrome/todos los
+      # navegadores modernos RECHAZAN EN SILENCIO cualquier cookie
+      # SameSite=None sin Secure — nunca llega a guardarse, y el login
+      # falla con "request_forbidden ... No CSRF value available in the
+      # session cookie" (encontrado depurando la Fase 8 en local, pero
+      # afecta exactamente igual al VPS — Caddy hace ahí lo mismo).
+      # `serve.cookies.secure` fuerza el flag Secure independientemente
+      # de lo que Hydra perciba — seguro fijarlo siempre a "true" porque
+      # el puerto de Hydra nunca se publica en 0.0.0.0 (ver cabecera del
+      # archivo), así que un cliente sin HTTPS real jamás llega hasta él.
+      SERVE_COOKIES_SECURE: "true"
     ports:
       - "127.0.0.1:4444:4444"   # API pública (OAuth2/OIDC) — Caddy la publica de verdad
       - "127.0.0.1:4445:4445"   # API admin (login/consent, gestión de clientes) — nunca pública

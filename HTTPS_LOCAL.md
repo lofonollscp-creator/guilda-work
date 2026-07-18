@@ -95,16 +95,37 @@ Navegador real (no el de vista previa): `https://outline.localhost:8443`
 autenticado. Necesitas `serve.py` corriendo con `GUILDA_HOST=127.0.0.1`
 (el de siempre) para el paso de login.
 
-**Verificado en esta sesión (vía `curl`, sin navegador — ver más
-abajo por qué)**: con este montaje, Outline deja de rechazar la cookie
-`secure` (el error original, "Cannot send secure cookie over unencrypted
-connection", desaparece) y todo el primer tramo del flujo — Outline →
-Hydra → puente de Guilda Work (`/hydra/login`) → inicio del login real de
-Kratos — se completa con las URLs `https://` correctas de principio a
-fin. No se completó el envío del formulario de login en sí (haría falta
-manejar a mano el `csrf_token` y las cookies de sesión con `curl`, más
-frágil que fiable) — eso queda para que lo confirmes tú en un navegador
-real la primera vez que lo necesites de verdad.
+**✅ Verificado de principio a fin en navegador real** — funciona.
+
+### Bug real encontrado y corregido: cookie de login de Hydra sin `Secure`
+
+La primera vez que se probó esto en un navegador de verdad (no solo con
+`curl`), el login se quedaba en bucle en Outline con el error real (visto
+en los logs de Hydra): `request_forbidden — No CSRF value available in
+the session cookie`. Diagnóstico completo:
+
+- El error lo genera **Hydra**, no Outline — Outline solo reenvía el
+  `error`/`error_description` que le llega en la propia URL de vuelta.
+- La cookie de Hydra para el login (`ory_hydra_login_csrf_...`) lleva
+  `SameSite=None` (la necesita para sobrevivir la ida y vuelta entre
+  `hydra.localhost` → `app.localhost` → `hydra.localhost`) — pero Hydra
+  la estaba poniendo **sin el atributo `Secure`**, porque veía la
+  conexión que le reenvía Caddy como `http` (no confiaba en
+  `X-Forwarded-Proto: https`). Chrome y todos los navegadores modernos
+  **rechazan en silencio** cualquier cookie `SameSite=None` sin
+  `Secure` — nunca llegaba a guardarse, de ahí "no hay ningún valor
+  CSRF disponible".
+- **Arreglo**: `SERVE_COOKIES_SECURE: "true"` en el servicio `hydra` de
+  `docker-compose.yml` (clave real de Ory Hydra: `serve.cookies.secure`,
+  "Sets the HTTP Cookie secure flag in development mode") — fuerza el
+  flag `Secure` sin depender de que Hydra confíe en la cabecera del
+  proxy. Seguro fijarlo siempre a `true`: el puerto de Hydra nunca se
+  publica en `0.0.0.0` (solo `127.0.0.1`), así que nada fuera de este
+  host puede alcanzarlo sin pasar por HTTPS real de todas formas.
+- **Este bug también afecta al VPS** (Caddy allí hace exactamente el
+  mismo reenvío en plano) — el arreglo está en `docker-compose.yml`, no
+  en nada específico de este mock, así que ya viene aplicado también
+  para el despliegue real sin ningún paso adicional en `HOSTING.md`.
 
 ## 5. Volver a la normalidad
 
