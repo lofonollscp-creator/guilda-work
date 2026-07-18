@@ -11,6 +11,9 @@ Ejemplos:
     python cli.py export --formato csv --menu Guilda > exports/guilda.csv
     python cli.py demo
     python cli.py backup
+    python cli.py crear-tenant "Lueira"
+    python cli.py listar-tenants
+    python cli.py asignar-tenant persona@ejemplo.com Lueira
 """
 import argparse
 import sys
@@ -95,6 +98,33 @@ def cmd_backup(args):
     print(f"Copia de seguridad al día en {db.BACKUPS_DIR}")
 
 
+def cmd_crear_tenant(args):
+    try:
+        tenant_id = db.crear_tenant(args.nombre)
+    except Exception as e:
+        print(f"No se ha podido crear el tenant '{args.nombre}': {e}", file=sys.stderr)
+        sys.exit(1)
+    print(f"Tenant '{args.nombre}' creado (id {tenant_id}).")
+
+
+def cmd_listar_tenants(args):
+    for t in db.listar_tenants():
+        print(f"{t['id']}\t{t['nombre']}")
+
+
+def cmd_asignar_tenant(args):
+    usuario = db.obtener_usuario_por_email(args.email)
+    if usuario is None:
+        print(f"No existe ningún usuario con el email '{args.email}'.", file=sys.stderr)
+        sys.exit(1)
+    tenant = db.obtener_tenant_por_nombre(args.tenant) if not args.tenant.isdigit() else db.obtener_tenant(int(args.tenant))
+    if tenant is None:
+        print(f"No existe ningún tenant '{args.tenant}'. Usa 'python cli.py crear-tenant {args.tenant}' primero.", file=sys.stderr)
+        sys.exit(1)
+    db.asignar_tenant(usuario["id"], tenant["id"])
+    print(f"{args.email} asignado al tenant '{tenant['nombre']}'.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Consulta el registro de actividad de Guilda Work.")
     sub = parser.add_subparsers(dest="comando", required=True)
@@ -116,6 +146,18 @@ def main():
 
     p_backup = sub.add_parser("backup", help="Fuerza una copia de seguridad de la base de datos ahora mismo.")
     p_backup.set_defaults(func=cmd_backup)
+
+    p_crear_tenant = sub.add_parser("crear-tenant", help="Crea un tenant (Fase 7c.3).")
+    p_crear_tenant.add_argument("nombre")
+    p_crear_tenant.set_defaults(func=cmd_crear_tenant)
+
+    p_listar_tenants = sub.add_parser("listar-tenants", help="Lista los tenants existentes.")
+    p_listar_tenants.set_defaults(func=cmd_listar_tenants)
+
+    p_asignar_tenant = sub.add_parser("asignar-tenant", help="Asigna un usuario existente a un tenant.")
+    p_asignar_tenant.add_argument("email")
+    p_asignar_tenant.add_argument("tenant", help="Nombre o id del tenant.")
+    p_asignar_tenant.set_defaults(func=cmd_asignar_tenant)
 
     args = parser.parse_args()
     db.init_db()  # idempotente: por si es la primera vez que se usa la app

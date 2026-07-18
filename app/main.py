@@ -143,6 +143,28 @@ def inyectar_ia_flotante():
     }
 
 
+@app.context_processor
+def inyectar_chatwoot_widget():
+    # Widget de chat en vivo de Chatwoot (Fase 7g + soporte de tenants,
+    # Fase 7c.3) — burbuja de "Contactar con soporte" en cualquier página
+    # con sesión. CHATWOOT_WEBSITE_TOKEN es el token PÚBLICO del canal
+    # "Website" de Chatwoot (pensado para ir embebido en HTML de cara al
+    # navegador, no es un secreto — se crea en Chatwoot: Settings →
+    # Inboxes → Add Inbox → Website). Sin la variable puesta (por
+    # defecto, incluido en local), el widget simplemente no se muestra.
+    website_token = os.environ.get("CHATWOOT_WEBSITE_TOKEN")
+    if not g.usuario_id or not website_token:
+        return {}
+    usuario = db.obtener_usuario(g.usuario_id)
+    tenant = db.tenant_de_usuario(g.usuario_id)
+    return {
+        "chatwoot_website_token": website_token,
+        "chatwoot_base_url": os.environ.get("HERRAMIENTA_CHATWOOT_URL", "http://127.0.0.1:8011"),
+        "chatwoot_usuario_email": usuario["email"] if usuario else "",
+        "chatwoot_tenant_nombre": tenant["nombre"] if tenant else "",
+    }
+
+
 # --- Autenticación (Fase 7a: Ory Kratos) --------------------------------
 #
 # El navegador ya NO postea a estas rutas — el <form> de login.html/

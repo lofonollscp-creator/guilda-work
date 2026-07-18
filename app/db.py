@@ -48,6 +48,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
     creado_en TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS tenants (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL UNIQUE,
+    creado_en TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS tokens_api (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
@@ -472,6 +478,13 @@ def init_db() -> None:
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_kratos_identity_id "
             "ON usuarios(kratos_identity_id) WHERE kratos_identity_id IS NOT NULL"
         )
+        # Tenants (Fase 7c.3): agrupar usuarios por organización. Opcional
+        # (NULL = sin asignar) — no aísla datos entre tenants, solo
+        # identifica de qué organización viene cada usuario para el
+        # panel de administración y para integraciones externas (p.ej.
+        # el widget de soporte de Chatwoot, que necesita saber a qué
+        # tenant pertenece quien escribe).
+        _asegurar_columna(conn, "usuarios", "tenant_id", "INTEGER REFERENCES tenants(id)")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -618,6 +631,69 @@ def crear_usuario_vinculado_a_kratos(email: str, identity_id: str) -> int:
         )
         conn.commit()
         return cur.lastrowid
+    finally:
+        conn.close()
+
+
+# --- Tenants (Fase 7c.3) -------------------------------------------------
+
+def crear_tenant(nombre: str) -> int:
+    """Lanza sqlite3.IntegrityError si el nombre ya existe (UNIQUE)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO tenants (nombre, creado_en) VALUES (?, ?)",
+            (nombre.strip(), now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_tenants() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM tenants ORDER BY nombre").fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_tenant(tenant_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM tenants WHERE id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def obtener_tenant_por_nombre(nombre: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM tenants WHERE nombre = ?", (nombre.strip(),)).fetchone()
+    finally:
+        conn.close()
+
+
+def asignar_tenant(usuario_id: int, tenant_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET tenant_id = ? WHERE id = ?", (tenant_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def tenant_de_usuario(usuario_id: int) -> sqlite3.Row | None:
+    """El tenant del usuario, o None si no tiene ninguno asignado todavía."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT tenants.* FROM tenants "
+            "JOIN usuarios ON usuarios.tenant_id = tenants.id "
+            "WHERE usuarios.id = ?",
+            (usuario_id,),
+        ).fetchone()
     finally:
         conn.close()
 

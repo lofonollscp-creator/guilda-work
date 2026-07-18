@@ -116,5 +116,36 @@
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
+  {% if chatwoot_website_token %}
+  <script>
+    // Widget de soporte (Chatwoot, Fase 7g/7c.3) — identifica al usuario
+    // ya logueado y le añade el atributo personalizado "tenant" (si
+    // tiene uno asignado, ver `python cli.py asignar-tenant`) para que
+    // quien atienda el soporte sepa de qué organización viene el mensaje.
+    (function (d, t) {
+      var BASE_URL = {{ chatwoot_base_url | tojson }};
+      var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+      g.src = BASE_URL + "/packs/js/sdk.js";
+      s.parentNode.insertBefore(g, s);
+      g.async = true;
+      g.onload = function () {
+        window.chatwootSDK.run({
+          websiteToken: {{ chatwoot_website_token | tojson }},
+          baseUrl: BASE_URL,
+        });
+      };
+    })(document, "script");
+
+    window.addEventListener("chatwoot:ready", function () {
+      window.$chatwoot.setUser({{ chatwoot_usuario_email | tojson }}, {
+        email: {{ chatwoot_usuario_email | tojson }},
+        name: {{ chatwoot_usuario_email | tojson }},
+      });
+      {% if chatwoot_tenant_nombre %}
+      window.$chatwoot.setCustomAttributes({ tenant: {{ chatwoot_tenant_nombre | tojson }} });
+      {% endif %}
+    });
+  </script>
+  {% endif %}
 </body>
 </html>

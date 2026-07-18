@@ -410,6 +410,47 @@ Verificar:
   trabajos en segundo plano).
 - Añade `HERRAMIENTA_CHATWOOT_URL` al bloque de la sección 8.9.
 
+### 8.12 Tenants + widget de soporte de Chatwoot (Fase 7c.3)
+
+Guilda Work incluye un modelo mínimo de "tenants" (organizaciones) para
+poder identificar de qué organización viene cada usuario cuando escribe
+por el widget de soporte. **No aísla datos** entre tenants — es solo una
+etiqueta de agrupación para el backoffice y para Chatwoot, no toca el
+resto del esquema ni los permisos.
+
+Gestión por CLI (no hay panel de administración todavía):
+
+```bash
+python cli.py crear-tenant "Lueira"
+python cli.py listar-tenants
+python cli.py asignar-tenant persona@ejemplo.com Lueira
+```
+
+Para que aparezca la burbuja de "Contactar con soporte" (widget de chat
+en vivo de Chatwoot) en Guilda Work:
+
+1. En Chatwoot: Settings → Inboxes → Add Inbox → Website. Dale un nombre
+   (p.ej. "Guilda Work") y la URL pública de Guilda Work. Al terminar,
+   Chatwoot te da un `website_token` — es el identificador **público**
+   del canal (pensado para ir embebido en HTML de cara al navegador, no
+   es un secreto).
+2. Añade a `.env` (local) o `/etc/guilda-work.env` (VPS):
+   ```bash
+   CHATWOOT_WEBSITE_TOKEN=<website_token del paso anterior>
+   ```
+3. (Opcional pero recomendado) En Chatwoot: Settings → Custom Attributes
+   → Add Attribute → crea un atributo `tenant` (tipo texto, alcance
+   Conversación o Contacto). Sin este paso, Guilda Work sigue mandando el
+   nombre del tenant vía `setCustomAttributes()`, pero no se mostrará en
+   ningún sitio dentro de Chatwoot porque el atributo no existe.
+4. Reinicia el proceso de `serve.py` (o el servicio systemd) para que
+   recoja la variable de entorno nueva.
+
+Verificar: inicia sesión en Guilda Work con un usuario que tenga tenant
+asignado, confirma que aparece la burbuja de chat en cualquier página, y
+que al escribir un mensaje de prueba llega a Chatwoot con el atributo
+`tenant` relleno en la conversación.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
