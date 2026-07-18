@@ -320,6 +320,7 @@ HERRAMIENTA_ELEMENT_URL=https://chat.tu-hostname.sslip.io
 HERRAMIENTA_METABASE_URL=https://metabase.tu-hostname.sslip.io
 HERRAMIENTA_N8N_URL=https://n8n.tu-hostname.sslip.io
 HERRAMIENTA_MINIO_URL=https://minio.tu-hostname.sslip.io
+HERRAMIENTA_OPENPROJECT_URL=https://openproject.tu-hostname.sslip.io
 EOF
 sudo systemctl restart guilda-work
 ```
@@ -329,6 +330,43 @@ todo de la lista en `app/herramientas.py` — sin la variable de entorno
 correspondiente, la página la sigue mostrando igual, apuntando a su
 puerto de desarrollo local (`127.0.0.1:...`), que en el VPS no sirve de
 nada.
+
+### 8.10 OpenProject (Fase 7f)
+
+Sin SSO (confirmado en su documentación oficial: es un Enterprise
+add-on de pago, no está en la edición community) — login aparte con el
+usuario administrador que crea el `seeder` la primera vez.
+
+Añade a `.env` (mismo patrón que el resto — genera secretos nuevos, no
+reutilices los de otro servicio):
+
+```bash
+OPENPROJECT_DB_PASSWORD=...
+OPENPROJECT_SECRET_KEY_BASE=...        # openssl rand -hex 64
+OPENPROJECT_SEED_ADMIN_USER_PASSWORD=...   # mínimo 10 caracteres
+OPENPROJECT_SEED_ADMIN_USER_MAIL=admin@tu-dominio.com
+OPENPROJECT_HTTPS=true
+OPENPROJECT_HOST_NAME=openproject.tu-hostname.sslip.io
+```
+
+Arranca el seeder primero (crea el esquema y el usuario administrador),
+luego el resto:
+
+```bash
+docker compose up -d postgres-openproject memcached-openproject openproject-seeder
+docker compose logs -f openproject-seeder   # espera a que termine (Ctrl+C al ver que sale)
+docker compose up -d openproject-web openproject-worker openproject-cron
+```
+
+Verificar:
+- `curl https://openproject.tu-hostname.sslip.io/` → redirige a `/login`.
+- Navegador: entra con `admin` / la contraseña de
+  `OPENPROJECT_SEED_ADMIN_USER_PASSWORD` — pide cambiarla en el primer
+  inicio de sesión (normal, no es un fallo). Confirma que ves los
+  proyectos de ejemplo que trae sembrados ("Scrum project", "Demo
+  project") y que puedes crear una tarea nueva en uno de ellos.
+- Añade `HERRAMIENTA_OPENPROJECT_URL` al bloque de la sección 8.9 de
+  arriba, si no lo hiciste ya.
 
 ## 9. Backups (opcional, recomendado)
 
@@ -347,8 +385,8 @@ servidor:
 
 Cuando compres un dominio:
 1. Crea un registro DNS **A** para cada subdominio que uses (`app.`,
-   `hydra.`, `outline.`, `chat.`, `matrix.`, y los opcionales que tengas
-   activos) apuntando todos a la IP del VPS.
+   `hydra.`, `outline.`, `chat.`, `matrix.`, `openproject.`, y los
+   opcionales que tengas activos) apuntando todos a la IP del VPS.
 2. Cambia `HOSTNAME` en `/etc/caddy/Caddyfile` por tu dominio (todos los
    bloques comparten el mismo `HOSTNAME`, solo cambia el prefijo de cada
    uno).

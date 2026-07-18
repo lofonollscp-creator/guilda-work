@@ -60,4 +60,15 @@ HERRAMIENTAS = [
         "url": os.environ.get("HERRAMIENTA_MINIO_URL", "http://127.0.0.1:9001"),
         "sso": False,
     },
+    {
+        "id": "openproject",
+        "nombre": "OpenProject",
+        "descripcion": "Gestión de proyectos y tareas de equipo (Kanban, Gantt).",
+        "icono": "🗂",
+        "url": os.environ.get("HERRAMIENTA_OPENPROJECT_URL", "http://127.0.0.1:8010"),
+        # Sin SSO: confirmado en la documentación oficial de OpenProject
+        # que el login OIDC/SAML es un Enterprise add-on de pago, no está
+        # en la edición community desplegada aquí (Fase 7f).
+        "sso": False,
+    },
 ]

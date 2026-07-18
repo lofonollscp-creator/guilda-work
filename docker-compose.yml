@@ -364,6 +364,84 @@ services:
     volumes:
       - ./deploy/synapse/element-config.json:/app/config.json:ro
 
+  # OpenProject: gestión de proyectos/tareas de equipo (Fase 7f) — lo que
+  # Tareas Outlook no pretende ser (asignación a varias personas, flujos
+  # de estado, vistas Kanban/Gantt). Sin SSO: confirmado en su
+  # documentación oficial que el login OIDC/SAML es un Enterprise add-on
+  # de pago, no está en la edición community que se despliega aquí —
+  # login aparte en el dashboard (app/herramientas.py), como
+  # Metabase/n8n.
+  postgres-openproject:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-openproject
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openproject
+      POSTGRES_PASSWORD: ${OPENPROJECT_DB_PASSWORD:-CambiaEstaClaveOpenProject2026}
+      POSTGRES_DB: openproject
+    volumes:
+      - postgres-openproject-data:/var/lib/postgresql/data
+
+  memcached-openproject:
+    image: memcached:alpine
+    container_name: guilda-work-memcached-openproject
+    restart: unless-stopped
+
+  # Corre una vez (crea el esquema y el usuario administrador inicial vía
+  # OPENPROJECT_SEED_ADMIN_USER_*) y termina — mismo patrón que
+  # kratos-migrate/hydra-migrate/synapse-migrate-config.
+  openproject-seeder:
+    image: openproject/openproject:${OPENPROJECT_TAG:-15-slim}
+    container_name: guilda-work-openproject-seeder
+    restart: on-failure
+    depends_on:
+      - postgres-openproject
+      - memcached-openproject
+    environment: &openproject-env
+      DATABASE_URL: postgres://openproject:${OPENPROJECT_DB_PASSWORD:-CambiaEstaClaveOpenProject2026}@postgres-openproject/openproject
+      OPENPROJECT_CACHE__MEMCACHE__SERVER: memcached-openproject:11211
+      SECRET_KEY_BASE: ${OPENPROJECT_SECRET_KEY_BASE:?define OPENPROJECT_SECRET_KEY_BASE (openssl rand -hex 64)}
+      OPENPROJECT_HTTPS: ${OPENPROJECT_HTTPS:-false}
+      OPENPROJECT_HOST__NAME: ${OPENPROJECT_HOST_NAME:-127.0.0.1:8010}
+      OPENPROJECT_SEED_ADMIN_USER_PASSWORD: ${OPENPROJECT_SEED_ADMIN_USER_PASSWORD:?define OPENPROJECT_SEED_ADMIN_USER_PASSWORD (min. 10 caracteres)}
+      OPENPROJECT_SEED_ADMIN_USER_MAIL: ${OPENPROJECT_SEED_ADMIN_USER_MAIL:-admin@guilda.local}
+    command: ["./docker/prod/seeder"]
+
+  openproject-web:
+    image: openproject/openproject:${OPENPROJECT_TAG:-15-slim}
+    container_name: guilda-work-openproject-web
+    restart: unless-stopped
+    depends_on:
+      - openproject-seeder
+    environment: *openproject-env
+    ports:
+      - "127.0.0.1:8010:8080"
+    volumes:
+      - openproject-data:/var/openproject/assets
+    command: ["./docker/prod/web"]
+
+  openproject-worker:
+    image: openproject/openproject:${OPENPROJECT_TAG:-15-slim}
+    container_name: guilda-work-openproject-worker
+    restart: unless-stopped
+    depends_on:
+      - openproject-seeder
+    environment: *openproject-env
+    volumes:
+      - openproject-data:/var/openproject/assets
+    command: ["./docker/prod/worker"]
+
+  openproject-cron:
+    image: openproject/openproject:${OPENPROJECT_TAG:-15-slim}
+    container_name: guilda-work-openproject-cron
+    restart: unless-stopped
+    depends_on:
+      - openproject-seeder
+    environment: *openproject-env
+    volumes:
+      - openproject-data:/var/openproject/assets
+    command: ["./docker/prod/cron"]
+
   # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
   # de verificar los flujos OIDC (Outline/Element) que en local plano
   # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —
@@ -410,3 +488,5 @@ volumes:
   postgres-synapse-data:
   synapse-data:
   caddy-local-data:
+  postgres-openproject-data:
+  openproject-data:

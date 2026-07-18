@@ -71,3 +71,7 @@ n8n.HOSTNAME {
 minio.HOSTNAME {
 	reverse_proxy localhost:9001
 }
+
+openproject.HOSTNAME {
+	reverse_proxy localhost:8010
+}
