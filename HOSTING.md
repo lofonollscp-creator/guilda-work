@@ -305,6 +305,31 @@ Verificar:
 - Crear una sala y enviar un mensaje, para confirmar que Synapse
   funciona de extremo a extremo y no solo el login.
 
+### 8.9 Página de Herramientas (Fase 7e)
+
+`/herramientas` (icono en el rail lateral de Guilda Work) enlaza a todo
+lo de arriba — por defecto apunta a los puertos de desarrollo local
+(`127.0.0.1:...`), hay que decirle las URLs públicas reales. Esto lo lee
+`serve.py`, así que va en `/etc/guilda-work.env` (el del paso 3), no en
+el `.env` de Docker:
+
+```bash
+sudo tee -a /etc/guilda-work.env > /dev/null << 'EOF'
+HERRAMIENTA_OUTLINE_URL=https://outline.tu-hostname.sslip.io
+HERRAMIENTA_ELEMENT_URL=https://chat.tu-hostname.sslip.io
+HERRAMIENTA_METABASE_URL=https://metabase.tu-hostname.sslip.io
+HERRAMIENTA_N8N_URL=https://n8n.tu-hostname.sslip.io
+HERRAMIENTA_MINIO_URL=https://minio.tu-hostname.sslip.io
+EOF
+sudo systemctl restart guilda-work
+```
+
+Si alguna de estas herramientas no la vas a desplegar nunca, quítala del
+todo de la lista en `app/herramientas.py` — sin la variable de entorno
+correspondiente, la página la sigue mostrando igual, apuntando a su
+puerto de desarrollo local (`127.0.0.1:...`), que en el VPS no sirve de
+nada.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

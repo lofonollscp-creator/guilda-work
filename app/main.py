@@ -23,7 +23,7 @@ from pathlib import Path
 import webview
 from flask import Flask, Response, abort, g, redirect, render_template, request, session, url_for
 
-from . import ai_local, correo, db, export, ia_asistente, importador, kratos
+from . import ai_local, correo, db, export, herramientas, ia_asistente, importador, kratos
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_correo import correo_bp
@@ -568,6 +568,12 @@ def pregunta_ia():
         return {"ok": True, "respuesta": respuesta}
     except ai_local.ErrorIALocal as e:
         return {"ok": False, "error": str(e)}
+
+
+@app.route("/herramientas", endpoint="herramientas")
+@login_required
+def herramientas_vista():
+    return render_template("herramientas.html", herramientas=herramientas.HERRAMIENTAS)
 
 
 @app.route("/estadisticas")

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Herramientas — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Herramientas</h1>
+    <p class="subtitle">Todo lo que tienes conectado a Guilda Work, en un solo sitio.</p>
+  </div>
+</header>
+
+<div class="menu-grid">
+  {% for h in herramientas %}
+  <div class="menu-card">
+    <a class="menu-card-link" href="{{ h.url }}" target="_blank" rel="noopener">
+      <div class="menu-card-top">
+        <span style="font-size: 1.3em;">{{ h.icono }}</span>
+        <h2>{{ h.nombre }}</h2>
+      </div>
+      <p class="subtitle" style="margin: 0 0 12px;">{{ h.descripcion }}</p>
+      {% if h.sso %}
+      <span class="log-badge log-badge-duracion">Entra con tu sesión de Guilda Work</span>
+      {% else %}
+      <span class="log-badge log-badge-instantanea">Inicia sesión aparte</span>
+      {% endif %}
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

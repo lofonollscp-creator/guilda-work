@@ -45,6 +45,10 @@
         <span class="icon-rail-etiqueta">Correo</span>
         {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
       </a>
+      <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="Herramientas">
+        <span class="icon-rail-icono">&#129520;</span>
+        <span class="icon-rail-etiqueta">Herramientas</span>
+      </a>
       <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="Histórico">
         <span class="icon-rail-icono">&#128337;</span>
         <span class="icon-rail-etiqueta">Histórico</span>
