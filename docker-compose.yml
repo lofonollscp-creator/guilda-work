@@ -364,6 +364,41 @@ services:
     volumes:
       - ./deploy/synapse/element-config.json:/app/config.json:ro
 
+  # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
+  # de verificar los flujos OIDC (Outline/Element) que en local plano
+  # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —
+  # ver HTTPS_LOCAL.md. `profiles: ["https-local"]` significa que un
+  # `docker compose up -d` normal NUNCA lo arranca — hace falta pedirlo
+  # explícito con `--profile https-local`, así el día a día de
+  # desarrollo (que no necesita HTTPS) no cambia en nada.
+  caddy-local:
+    image: caddy:latest
+    container_name: guilda-work-caddy-local
+    restart: unless-stopped
+    profiles: ["https-local"]
+    ports:
+      - "127.0.0.1:8443:443"
+    volumes:
+      - ./deploy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - caddy-local-data:/data
+    # Caddy resuelve *.localhost sin salir a internet (es un TLD
+    # especial, RFC 6761) — no necesita el puerto 80 para nada aquí
+    # porque `tls internal` no pasa por Let's Encrypt.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Alias en la red interna de Docker: así OTROS contenedores (no solo
+    # el navegador) pueden resolver *.localhost y llegar aquí — hace
+    # falta para Synapse, cuya librería OIDC exige HTTPS de verdad
+    # también en sus llamadas servidor-a-servidor (ver HTTPS_LOCAL.md).
+    networks:
+      default:
+        aliases:
+          - app.localhost
+          - hydra.localhost
+          - outline.localhost
+          - chat.localhost
+          - matrix.localhost
+
 volumes:
   metabase-data:
   minio-data:
@@ -374,3 +409,4 @@ volumes:
   redis-outline-data:
   postgres-synapse-data:
   synapse-data:
+  caddy-local-data:

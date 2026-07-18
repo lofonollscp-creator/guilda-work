@@ -1,0 +1,41 @@
+# Caddyfile de Caddy LOCAL (Fase 8, ver HTTPS_LOCAL.md) — HTTPS real en
+# desarrollo con la CA interna de Caddy (`tls internal`), para poder
+# terminar de verificar los flujos OIDC (Outline, Element) que en local
+# plano (http://127.0.0.1) se quedan bloqueados en el intercambio de
+# código por token (ver Fase 7b/7d del plan de integraciones).
+#
+# *.localhost lo resuelve el propio sistema operativo/navegador a
+# 127.0.0.1 sin tocar hosts/DNS — es un TLD especial (RFC 6761), no un
+# truco de este proyecto.
+#
+# A diferencia de deploy/Caddyfile (el del VPS, que corre en el host y
+# alcanza cada servicio por su puerto publicado en 127.0.0.1), este
+# Caddy corre DENTRO de Docker Compose — alcanza al resto de servicios
+# por su nombre de contenedor y puerto INTERNO (misma red por defecto
+# del propio docker-compose.yml), excepto `serve.py`, que corre fuera de
+# Docker y solo es alcanzable vía `host.docker.internal`.
+
+app.localhost:443 {
+	tls internal
+	reverse_proxy host.docker.internal:8000
+}
+
+hydra.localhost:443 {
+	tls internal
+	reverse_proxy hydra:4444
+}
+
+outline.localhost:443 {
+	tls internal
+	reverse_proxy outline:3000
+}
+
+chat.localhost:443 {
+	tls internal
+	reverse_proxy element-web:80
+}
+
+matrix.localhost:443 {
+	tls internal
+	reverse_proxy synapse:8008
+}
