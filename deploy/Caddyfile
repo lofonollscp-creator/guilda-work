@@ -40,6 +40,22 @@ outline.HOSTNAME {
 	reverse_proxy localhost:3001
 }
 
+# Element (interfaz de chat) — sirve la SPA estática.
+chat.HOSTNAME {
+	reverse_proxy localhost:8009
+}
+
+# Synapse (API de Matrix) — el navegador la visita directamente durante
+# el login SSO (mismo motivo que hydra.HOSTNAME arriba), y Synapse
+# también la usa para sus propias llamadas OIDC server-to-server (ver
+# HOSTING.md 8.9 — a diferencia de Kratos/Outline, aquí no hace falta
+# ningún hostname interno de Docker, la misma URL pública vale para todo
+# porque la librería OIDC de Synapse exige HTTPS de verdad en cualquier
+# caso).
+matrix.HOSTNAME {
+	reverse_proxy localhost:8008
+}
+
 # Opcionales — solo si quieres acceder a estos paneles desde fuera del
 # servidor. Si prefieres mantenerlos solo accesibles por SSH (túnel local,
 # `ssh -L 3000:localhost:3000 guilda@tu-servidor`), simplemente no los

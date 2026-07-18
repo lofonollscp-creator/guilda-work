@@ -136,7 +136,7 @@ Debería responder `401` con `{"ok": false, "error": "Token inválido o
 ausente."}` — confirma que Caddy y `serve.py` están sirviendo tráfico real
 con HTTPS válido.
 
-## 8. Desplegar el resto del stack (Metabase/MinIO/n8n/Kratos/Hydra/Outline)
+## 8. Desplegar el resto del stack (Metabase/MinIO/n8n/Kratos/Hydra/Outline/Element+Synapse)
 
 Todo esto vive en `docker-compose.yml`, ya en el repo que clonaste en el
 paso 2 — no hace falta clonar nada aparte. Los puertos que publica cada
@@ -234,6 +234,77 @@ docker compose ps   # todo "Up"/"healthy"
   bloqueada por exigir HTTPS), aquí Caddy sí da HTTPS de verdad, así que
   el login completo debería funcionar de principio a fin.
 
+### 8.8 Element + Synapse (chat)
+
+A diferencia de Kratos/Hydra/Outline, Synapse **no** tiene ninguna
+convención de variables de entorno para sobreescribir su configuración
+— por eso `deploy/synapse/guilda-overrides.yaml` (el archivo real, con
+el `client_secret` de Hydra) está en `.gitignore` y no llega con el
+`git clone`. Hay que crearlo a mano, una vez, en el servidor:
+
+```bash
+cd ~/guilda-work
+cp deploy/synapse/guilda-overrides.yaml.example deploy/synapse/guilda-overrides.yaml
+```
+
+Añade a `.env` (repite el patrón de contraseñas del paso 8.2):
+
+```bash
+SYNAPSE_DB_PASSWORD=...
+SYNAPSE_SERVER_NAME=chat.tu-hostname.sslip.io
+```
+
+Levanta Postgres primero y registra el cliente OAuth2 de Element (mismo
+script que Outline en 8.4):
+
+```bash
+docker compose up -d postgres-synapse
+.venv/bin/python scripts/registrar_cliente_hydra.py --nombre element \
+  --redirect-uri https://matrix.tu-hostname.sslip.io/_synapse/client/oidc/callback
+```
+
+Edita `deploy/synapse/guilda-overrides.yaml` (el real, no el `.example`)
+con un editor de texto (`nano deploy/synapse/guilda-overrides.yaml`) y
+rellena, dentro del bloque `oidc_providers`:
+
+- `client_id` / `client_secret`: los que acaba de imprimir el comando de
+  arriba.
+- **Las cuatro URLs de Hydra** (`issuer`, `authorization_endpoint`,
+  `token_endpoint`, `userinfo_endpoint`, `jwks_uri`) — sustitúyelas
+  TODAS por `https://hydra.tu-hostname.sslip.io/` seguido de la ruta que
+  ya tenga cada una (p. ej. `token_endpoint:
+  "https://hydra.tu-hostname.sslip.io/oauth2/token"`). Es importante que
+  sean las cinco `https://`, no el hostname interno de Docker
+  (`http://hydra:4444/...`) que usa el archivo por defecto para pruebas
+  en local — la librería OIDC de Synapse (`authlib`) rechaza cualquier
+  URL que no sea HTTPS de verdad para estos tres endpoints, es la razón
+  por la que la verificación en local (ver el plan de la Fase 7d) se
+  quedó bloqueada justo en este punto.
+- `public_baseurl` (al principio del archivo): cambia
+  `http://127.0.0.1:8008/` por `https://matrix.tu-hostname.sslip.io/`.
+
+Arranca el resto:
+
+```bash
+docker compose up -d postgres-synapse synapse-migrate-config synapse element-web
+docker compose up -d   # o simplemente esto, que arranca todo lo que falte
+```
+
+`synapse-migrate-config` genera `homeserver.yaml` la primera vez y
+termina solo (no se reinicia) — si `synapse` no arranca, comprueba antes
+que ese paso haya terminado bien (`docker compose logs synapse-migrate-config`).
+
+Verificar:
+- `curl https://matrix.tu-hostname.sslip.io/_matrix/client/versions` → `200`.
+- Navegador: `https://chat.tu-hostname.sslip.io` → "Iniciar sesión" →
+  "Continuar con Guilda Work" → login real de Guilda Work → de vuelta
+  dentro de Element ya autenticado (a diferencia de la verificación
+  local, que se quedaba bloqueada en el intercambio de token por la
+  misma exigencia de HTTPS de arriba — aquí sí hay HTTPS real, así que
+  el login completo debería funcionar de principio a fin).
+- Crear una sala y enviar un mensaje, para confirmar que Synapse
+  funciona de extremo a extremo y no solo el login.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
@@ -251,14 +322,17 @@ servidor:
 
 Cuando compres un dominio:
 1. Crea un registro DNS **A** para cada subdominio que uses (`app.`,
-   `hydra.`, `outline.`, y los opcionales que tengas activos) apuntando
-   todos a la IP del VPS.
+   `hydra.`, `outline.`, `chat.`, `matrix.`, y los opcionales que tengas
+   activos) apuntando todos a la IP del VPS.
 2. Cambia `HOSTNAME` en `/etc/caddy/Caddyfile` por tu dominio (todos los
    bloques comparten el mismo `HOSTNAME`, solo cambia el prefijo de cada
    uno).
 3. Actualiza también `GUILDA_ORIGIN`/`HYDRA_PUBLIC_ORIGIN`/
    `OUTLINE_PUBLIC_ORIGIN` en `.env` (sección 8.2) al nuevo dominio, y
    `docker compose up -d` para que los contenedores recojan el cambio.
+   Para Synapse (sección 8.8), edita también
+   `deploy/synapse/guilda-overrides.yaml` a mano — sus URLs no se leen
+   de `.env`.
 4. `sudo systemctl reload caddy` — Caddy pide los nuevos certificados solo.
 
 ## Fuera de alcance de esta guía
