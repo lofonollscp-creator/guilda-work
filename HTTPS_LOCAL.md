@@ -134,16 +134,76 @@ docker compose up -d --force-recreate kratos hydra outline   # sin las variables
 docker compose --profile https-local stop caddy-local
 ```
 
-## Limitación conocida: Synapse (Element) no se ha verificado con este mock
+## 6. Verificar Element (Synapse)
 
-Synapse necesita, además de todo lo de arriba, que su **propio
+A diferencia de Outline, Synapse necesita además que su **propio
 contenedor** confíe en la CA de Caddy — no solo el navegador — porque su
-librería OIDC (`authlib`) hace las llamadas de token/userinfo/jwks
-server-to-server exigiendo HTTPS real. Eso implica inyectar el
-certificado de la CA dentro del contenedor de Synapse (vía
-`SSL_CERT_FILE` o `update-ca-certificates`) además de resolver
-`hydra.localhost`/`matrix.localhost` en la red interna de Docker (ya
-resuelto — `caddy-local` tiene alias de red para esto, ver
-`docker-compose.yml`). No se ha completado ni verificado en esta sesión
-— la vía real, ya probada y funcionando, sigue siendo verificar Element
-en el VPS (Fase 7d, sección 8.8 de `HOSTING.md`).
+librería OIDC (`authlib`) exige HTTPS real hasta para las llamadas
+server-to-server (token/userinfo/jwks). Pasos, además de los 1-2 de
+arriba (caddy-local arrancado, `caddy-local-root.crt` extraído en la raíz
+del proyecto):
+
+1. Copia la plantilla y rellena el cliente Hydra:
+   ```bash
+   cp deploy/synapse/guilda-overrides.local-https.yaml.example deploy/synapse/guilda-overrides.local-https.yaml
+   .venv/Scripts/python scripts/registrar_cliente_hydra.py --nombre element-https-local \
+     --redirect-uri https://matrix.localhost:8443/_synapse/client/oidc/callback
+   ```
+   Pega el `client_id`/`client_secret` en `guilda-overrides.local-https.yaml`.
+
+2. Recrea `synapse` y `element-web` con el override que monta la CA
+   (`SSL_CERT_FILE`), la config `.local-https.yaml` y el
+   `element-config.local-https.json` (que apunta a `matrix.localhost` en
+   vez de `127.0.0.1:8008`):
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.synapse-https-local.yml \
+     up -d --force-recreate synapse element-web
+   ```
+
+3. Navegador real: `https://chat.localhost:8443` → botón de login SSO →
+   `https://app.localhost:8443/login` (Guilda Work) → de vuelta en
+   Element ya autenticado.
+
+**✅ Verificado de principio a fin por curl/logs** (discovery + JWKS
+server-to-server con `200`, redirección SSO hasta Hydra con los
+parámetros correctos) — pendiente de la pasada final en un navegador real
+(mismo matiz que Outline: el navegador de vista previa no comparte el
+almacén de certificados de Windows).
+
+### Bug real encontrado y corregido: Synapse no confiaba en el proxy (`x_forwarded`)
+
+Al probar el botón de login SSO por primera vez, `/login/sso/redirect`
+entraba en un **bucle infinito**, redirigiendo a sí mismo una y otra vez
+sin llegar nunca a Hydra. Causa: la config que genera Synapse trae
+`x_forwarded: false` por defecto en su listener — igual que con Hydra,
+Caddy termina TLS y reenvía a Synapse en plano por dentro de Docker, y
+sin confiar en `X-Forwarded-Proto` Synapse cree que la petición sigue
+siendo `http` aunque el navegador use `https` de verdad, y no completa la
+redirección a la que espera. **Mismo tipo de bug que el de Hydra
+(`SERVE_COOKIES_SECURE`)** ya corregido para Outline, solo que en la capa
+de Synapse en vez de la de Hydra.
+
+**Arreglo**: `x_forwarded: true` en el listener de `guilda-overrides.yaml`
+(y su `.example`, y la variante `.local-https`) — **este bug también
+afecta al VPS** (mismo reenvío en plano de Caddy ahí), así que el arreglo
+aplica a cualquier despliegue que use este archivo, no solo al mock
+local. Si ya tenías Element desplegado en el VPS antes de este cambio,
+hace falta actualizar `guilda-overrides.yaml` allí también y reiniciar
+`synapse` (ver sección 8.8 de `HOSTING.md`) — probablemente esto es lo
+que causaba el error de login de Element reportado originalmente.
+
+También encontrado (y ya corregido en la propia plantilla, no un bug
+nuevo, solo una confusión al escribirla): los endpoints server-to-server
+(`issuer`/`token_endpoint`/`userinfo_endpoint`/`jwks_uri`) deben usar el
+puerto **interno** de caddy-local (443, sin `:8443`) porque los llama el
+propio contenedor de Synapse dentro de la red de Docker — solo
+`authorization_endpoint` (que abre el navegador) usa el puerto publicado
+en el host (`:8443`). Ver el comentario en
+`guilda-overrides.local-https.yaml.example` para el detalle.
+
+## 7. Volver a la normalidad (Element)
+
+```bash
+docker compose up -d --force-recreate synapse element-web   # vuelve a la config normal (http://127.0.0.1:8008)
+docker compose --profile https-local stop caddy-local
+```

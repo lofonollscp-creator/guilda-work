@@ -37,6 +37,30 @@
 # Caddy).
 public_baseurl: "http://127.0.0.1:8008/"
 
+# Sin esto (`x_forwarded: false` es el valor que genera Synapse por
+# defecto), Synapse ve la conexión que le reenvía Caddy en plano — Caddy
+# termina TLS y reenvía por HTTP por detrás, tanto en el VPS real como en
+# el mock de HTTPS local (ver HTTPS_LOCAL.md) — y no confía en
+# X-Forwarded-Proto: el login SSO entra en un bucle infinito de
+# redirecciones a `/login/sso/redirect` porque Synapse cree que la
+# petición es http aunque el navegador use https de verdad. Mismo tipo de
+# bug (proxy en plano + cabecera de proxy no confiada) que el de Hydra
+# (`SERVE_COOKIES_SECURE`) ya corregido para Outline — encontrado y
+# confirmado verificando Element con el mock de HTTPS local. Sin proxy
+# delante (Synapse en `http://127.0.0.1:8008` directo, como en desarrollo
+# normal sin el mock), este flag no cambia nada.
+listeners:
+  - port: 8008
+    tls: false
+    bind_addresses: ['::']
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client]
+        compress: true
+      - names: [federation]
+        compress: false
+
 # Sin federación — el chat es solo para el equipo de Guilda Work (ver
 # Fase 7d del plan para el porqué: nada en el catálogo de herramientas
 # necesita interoperar con otros servidores Matrix, y desactivarla evita

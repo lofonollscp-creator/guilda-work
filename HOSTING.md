@@ -283,6 +283,17 @@ rellena, dentro del bloque `oidc_providers`:
 - `public_baseurl` (al principio del archivo): cambia
   `http://127.0.0.1:8008/` por `https://matrix.tu-hostname.sslip.io/`.
 
+El `.example` ya trae `listeners: ... x_forwarded: true` — imprescindible
+para que el login SSO funcione detrás de Caddy (sin esto, Synapse no
+confía en `X-Forwarded-Proto` y el botón de login entra en un bucle
+infinito de redirecciones a sí mismo; encontrado y corregido verificando
+Element con el mock de HTTPS local, ver `HTTPS_LOCAL.md`). **Si ya tenías
+Element desplegado antes de este cambio**, añade ese bloque a tu
+`guilda-overrides.yaml` real y reinicia Synapse
+(`docker compose up -d --force-recreate synapse`) — esto es
+probablemente lo que causaba el error de login de Element de las
+primeras pruebas.
+
 Arranca el resto:
 
 ```bash

@@ -1,0 +1,50 @@
+# Override SOLO para verificar el login de Element/Synapse con el mock de
+# HTTPS local (ver HTTPS_LOCAL.md, sección "Verificar Element"). Nunca se
+# usa en un `docker compose up` normal — hace falta pedirlo explícito:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.synapse-https-local.yml \
+#     up -d --force-recreate synapse element-web
+#
+# Redeclara `synapse` y `element-web` completos (no una lista parcial, para
+# no depender de cómo fusiona Compose las secuencias entre archivos):
+# - `synapse` gana un segundo mount que sustituye SOLO guilda-overrides.yaml
+#   por la variante .local-https (con los endpoints de Hydra en
+#   https://hydra.localhost:8443/...), más el certificado de la CA de
+#   caddy-local montado y SSL_CERT_FILE apuntando a él — Twisted (el motor
+#   HTTP de Synapse) delega en las rutas de verificación por defecto de
+#   OpenSSL, que sí respeta SSL_CERT_FILE (variable estándar de OpenSSL, no
+#   específica de Python), así que no hace falta tocar el almacén de
+#   certificados del sistema dentro del contenedor.
+# - `element-web` apunta a la variante .local-https de su configuración
+#   (base_url https://matrix.localhost:8443 en vez de http://127.0.0.1:8008).
+#
+# Requiere haber hecho antes los pasos 1-2 de HTTPS_LOCAL.md (caddy-local
+# arrancado, caddy-local-root.crt extraído en la raíz del proyecto) y haber
+# copiado+rellenado deploy/synapse/guilda-overrides.local-https.yaml a
+# partir de su .example (ver ese archivo para el cliente Hydra a registrar).
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: guilda-work-synapse
+    restart: unless-stopped
+    depends_on:
+      - synapse-migrate-config
+    ports:
+      - "127.0.0.1:8008:8008"
+    environment:
+      SSL_CERT_FILE: /certs/caddy-local-root.crt
+    volumes:
+      - synapse-data:/data
+      - ./deploy/synapse:/etc/synapse-overrides:ro
+      - ./deploy/synapse/guilda-overrides.local-https.yaml:/etc/synapse-overrides/guilda-overrides.yaml:ro
+      - ./caddy-local-root.crt:/certs/caddy-local-root.crt:ro
+    command: ["run", "-c", "/data/homeserver.yaml", "-c", "/etc/synapse-overrides/guilda-overrides.yaml"]
+
+  element-web:
+    image: vectorim/element-web:latest
+    container_name: guilda-work-element-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8009:80"
+    volumes:
+      - ./deploy/synapse/element-config.local-https.json:/app/config.json:ro

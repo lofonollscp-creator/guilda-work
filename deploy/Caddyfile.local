@@ -14,28 +14,42 @@
 # por su nombre de contenedor y puerto INTERNO (misma red por defecto
 # del propio docker-compose.yml), excepto `serve.py`, que corre fuera de
 # Docker y solo es alcanzable vía `host.docker.internal`.
+#
+# Escucha en 8443 (no 443) — a propósito, EL MISMO puerto que se publica
+# al host ("127.0.0.1:8443:8443" en el servicio caddy-local de
+# docker-compose.yml). Si escuchara en 443 con el host mapeando
+# 8443->443, cualquier OTRO contenedor de la red de Docker (por ejemplo
+# Synapse, que necesita hablar con Hydra por HTTPS server-to-server, ver
+# HTTPS_LOCAL.md) tendría que usar un puerto distinto (443, el interno)
+# del que ve el navegador (8443, el publicado) para la MISMA URL — y
+# encima el `iss` que emite Hydra en sus tokens siempre lleva el puerto
+# público (8443, viene de HYDRA_PUBLIC_ORIGIN), así que si Synapse
+# validara ese claim contra una URL con un puerto distinto, fallaría con
+# `invalid_claim: Invalid claim 'iss'` (encontrado verificando Element).
+# Con los dos en 8443, la misma URL "https://hydra.localhost:8443/..."
+# vale igual desde el navegador que desde dentro de cualquier contenedor.
 
-app.localhost:443 {
+app.localhost:8443 {
 	tls internal
 	reverse_proxy host.docker.internal:8000
 }
 
-hydra.localhost:443 {
+hydra.localhost:8443 {
 	tls internal
 	reverse_proxy hydra:4444
 }
 
-outline.localhost:443 {
+outline.localhost:8443 {
 	tls internal
 	reverse_proxy outline:3000
 }
 
-chat.localhost:443 {
+chat.localhost:8443 {
 	tls internal
 	reverse_proxy element-web:80
 }
 
-matrix.localhost:443 {
+matrix.localhost:8443 {
 	tls internal
 	reverse_proxy synapse:8008
 }

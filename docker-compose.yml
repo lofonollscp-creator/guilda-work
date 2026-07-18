@@ -576,7 +576,13 @@ services:
     restart: unless-stopped
     profiles: ["https-local"]
     ports:
-      - "127.0.0.1:8443:443"
+      # Mismo puerto (8443) a los dos lados a propósito — ver el comentario
+      # en deploy/Caddyfile.local sobre por qué el puerto interno también
+      # tiene que ser 8443, no 443 (Synapse necesita alcanzar el MISMO
+      # "https://hydra.localhost:8443/..." tanto desde el navegador como
+      # desde dentro de la red de Docker, para que el `iss` de los tokens
+      # de Hydra encaje con el issuer que valida su config OIDC).
+      - "127.0.0.1:8443:8443"
     volumes:
       - ./deploy/Caddyfile.local:/etc/caddy/Caddyfile:ro
       - caddy-local-data:/data

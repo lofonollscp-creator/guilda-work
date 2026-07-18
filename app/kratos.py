@@ -105,6 +105,19 @@ def whoami(cookies: dict) -> dict | None:
     return cuerpo
 
 
+def obtener_identidad(identity_id: str) -> dict | None:
+    """Identidad por id vía Admin API — usado por el puente de Hydra
+    (`app/rutas_hydra.py`) para provisionar la fila local de un usuario
+    cuya identidad ya existe en Kratos pero que Guilda Work todavía no
+    había visto (puede pasar si Hydra se salta el paso de login por
+    tener ya una sesión recordada de OTRO cliente OAuth2, sin que la
+    petición pase nunca por `_resolver_usuario_actual()`)."""
+    estado, cuerpo, _ = _peticion(f"{KRATOS_ADMIN_URL}/admin/identities/{identity_id}")
+    if estado != 200:
+        return None
+    return cuerpo
+
+
 def iniciar_flujo(tipo: str, cookies: dict) -> tuple[str, dict]:
     """Inicia un flujo self-service de navegador (login o registro) y
     devuelve (url_de_redireccion_para_el_navegador, cabeceras_set_cookie).

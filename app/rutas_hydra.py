@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 from flask import Blueprint, abort, g, redirect, request
 
-from . import db, hydra
+from . import db, hydra, kratos
 
 hydra_bp = Blueprint("hydra_bridge", __name__, url_prefix="/hydra")
 
@@ -46,7 +46,21 @@ def hydra_consent():
         abort(400)
 
     consent_request = hydra.obtener_consent_request(challenge)
-    usuario = db.usuario_por_kratos_id(consent_request.get("subject"))
+    subject = consent_request.get("subject")
+    usuario = db.usuario_por_kratos_id(subject)
+    if usuario is None:
+        # Hydra puede saltarse el paso de /hydra/login si ya recuerda una
+        # sesión de este mismo usuario iniciada para OTRO cliente OAuth2
+        # (remember=true, ver hydra.aceptar_login_request) — en ese caso
+        # la petición nunca pasa por _resolver_usuario_actual() de
+        # main.py, y la fila local puede no existir todavía aunque la
+        # identidad sea real en Kratos. Se provisiona aquí igual que allí.
+        identidad = kratos.obtener_identidad(subject)
+        if identidad:
+            email = identidad.get("traits", {}).get("email", "")
+            if email:
+                usuario_id = db.crear_usuario_vinculado_a_kratos(email, subject)
+                usuario = db.obtener_usuario(usuario_id)
     email = usuario["email"] if usuario else ""
     redirect_to = hydra.aceptar_consent_request(
         challenge, scopes=consent_request.get("requested_scope", []), email=email
