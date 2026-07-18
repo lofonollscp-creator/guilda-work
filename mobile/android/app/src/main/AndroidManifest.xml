@@ -24,6 +24,16 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Fase 9: callback del login SSO de Element/Synapse (paquete
+                 `matrix`, ver mobile/lib/services/matrix_service.dart). El
+                 flujo SSO se abre en un WebView/navegador; Synapse redirige
+                 aquí con ?loginToken=... al terminar. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="guildawork" android:host="matrix-callback"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -533,4 +533,26 @@ class ApiClient {
       throw _errorLegible(e);
     }
   }
+
+  // --- Herramientas (Fase 9) -----------------------------------------------
+
+  Future<List<Herramienta>> listarHerramientas() async {
+    try {
+      final resp = await _dio.get('/herramientas');
+      return (resp.data['data'] as List)
+          .map((h) => Herramienta.fromJson(h as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<ChatConfig> obtenerChatConfig() async {
+    try {
+      final resp = await _dio.get('/chat/config');
+      return ChatConfig.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
 }

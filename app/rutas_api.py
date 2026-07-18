@@ -20,7 +20,7 @@ from datetime import datetime
 from flask import Blueprint, Response, abort, g, jsonify, request
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, export, ia_asistente, kratos
+from . import correo, db, export, herramientas, ia_asistente, kratos
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -775,3 +775,22 @@ def guardar_ajustes_ia():
     if datos.get("borrar_api_key"):
         ia_asistente.borrar_api_key(g.usuario_id)
     return _ok()
+
+
+# --- Herramientas (Fase 9, app móvil) ---------------------------------------
+
+@api_bp.route("/herramientas", methods=["GET"])
+@token_required
+def listar_herramientas():
+    """Mismo catálogo que /herramientas en la web (app/herramientas.py),
+    excepto "chat": Element se consume desde el móvil como cliente Matrix
+    nativo (ver /chat/config), no como WebView de Element-web."""
+    return _ok([h for h in herramientas.HERRAMIENTAS if h["id"] != "chat"])
+
+
+@api_bp.route("/chat/config", methods=["GET"])
+@token_required
+def obtener_chat_config():
+    """Configuración para el cliente Matrix nativo de la app móvil — la URL
+    del homeserver de Synapse, no la de Element-web."""
+    return _ok({"homeserver_url": herramientas.MATRIX_HOMESERVER_URL})

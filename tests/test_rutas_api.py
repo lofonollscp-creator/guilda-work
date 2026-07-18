@@ -374,3 +374,31 @@ def test_un_token_no_puede_leer_mensaje_de_correo_de_otro_usuario(cliente):
 
     resp = cliente.get(f"/api/v1/correo/mensajes/{mensaje_id}", headers=_auth(token_b))
     assert resp.status_code == 404
+
+
+# --- Herramientas (Fase 9, app móvil) ----------------------------------------
+
+def test_listar_herramientas_excluye_chat(cliente):
+    token = _registrar(cliente, email="herramientas-verify@ejemplo.com")["token"]
+    resp = cliente.get("/api/v1/herramientas", headers=_auth(token))
+    assert resp.status_code == 200
+    datos = resp.get_json()["data"]
+    ids = [h["id"] for h in datos]
+    assert "chat" not in ids
+    assert "outline" in ids
+    assert "openproject" in ids
+    assert "chatwoot" in ids
+
+
+def test_herramientas_requiere_token(cliente):
+    resp = cliente.get("/api/v1/herramientas")
+    assert resp.status_code == 401
+
+
+def test_chat_config_devuelve_homeserver(cliente, monkeypatch):
+    from app import herramientas
+    monkeypatch.setattr(herramientas, "MATRIX_HOMESERVER_URL", "http://matrix-test:8008")
+    token = _registrar(cliente, email="chat-config-verify@ejemplo.com")["token"]
+    resp = cliente.get("/api/v1/chat/config", headers=_auth(token))
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["homeserver_url"] == "http://matrix-test:8008"

@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/session_service.dart';
+import '../services/matrix_service.dart';
+import 'chat_login_screen.dart';
 import 'correo_bandeja_screen.dart';
+import 'herramientas_screen.dart';
 import 'login_screen.dart';
 import 'menu_detail_screen.dart';
 import 'tareas_outlook_screen.dart';
@@ -35,11 +38,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int? _categoriaNotaSeleccionada;
   bool _guardandoNota = false;
   String? _error;
+  late final MatrixService _matrixService;
 
   @override
   void initState() {
     super.initState();
     _cargaInicial = _cargar();
+    _matrixService = MatrixService(api: widget.api);
   }
 
   Future<void> _cargar() async {
@@ -132,6 +137,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'Correo',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.apps),
+            tooltip: 'Herramientas',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => HerramientasScreen(api: widget.api)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Chat',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ChatLoginScreen(matrix: _matrixService)),
             ),
           ),
           IconButton(

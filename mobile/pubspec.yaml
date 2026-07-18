@@ -41,6 +41,10 @@ dependencies:
   file_picker: ^11.0.0
   path_provider: ^2.1.6
   open_filex: ^4.7.0
+  webview_flutter: ^4.14.1
+  matrix: ^8.1.0
+  app_links: ^7.0.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

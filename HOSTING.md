@@ -333,6 +333,7 @@ HERRAMIENTA_N8N_URL=https://n8n.tu-hostname.sslip.io
 HERRAMIENTA_MINIO_URL=https://minio.tu-hostname.sslip.io
 HERRAMIENTA_OPENPROJECT_URL=https://openproject.tu-hostname.sslip.io
 HERRAMIENTA_CHATWOOT_URL=https://chatwoot.tu-hostname.sslip.io
+HERRAMIENTA_MATRIX_HOMESERVER_URL=https://matrix.tu-hostname.sslip.io
 EOF
 sudo systemctl restart guilda-work
 ```
@@ -342,6 +343,12 @@ todo de la lista en `app/herramientas.py` — sin la variable de entorno
 correspondiente, la página la sigue mostrando igual, apuntando a su
 puerto de desarrollo local (`127.0.0.1:...`), que en el VPS no sirve de
 nada.
+
+`HERRAMIENTA_MATRIX_HOMESERVER_URL` es distinta de
+`HERRAMIENTA_ELEMENT_URL`: esta última es Element-web (la interfaz web,
+`chat.*`), la primera es el propio Synapse (`matrix.*`) — la usa el
+cliente Matrix nativo de la app móvil (Fase 9), que habla directo con el
+homeserver sin pasar por Element-web.
 
 ### 8.10 OpenProject (Fase 7f)
 

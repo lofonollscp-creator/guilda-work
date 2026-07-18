@@ -83,3 +83,9 @@ HERRAMIENTAS = [
         "sso": False,
     },
 ]
+
+# URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —
+# distinta de HERRAMIENTA_ELEMENT_URL (Element-web, la interfaz web de
+# chat.*): el cliente Matrix nativo (paquete `matrix` en Flutter) habla
+# directo con el homeserver (matrix.*), no con Element-web.
+MATRIX_HOMESERVER_URL = os.environ.get("HERRAMIENTA_MATRIX_HOMESERVER_URL", "http://127.0.0.1:8008")

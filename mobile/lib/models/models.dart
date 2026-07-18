@@ -356,3 +356,43 @@ class ArchivoAdjuntoNuevo {
 
   ArchivoAdjuntoNuevo({required this.nombre, required this.tipo, required this.bytes});
 }
+
+/// Herramienta externa conectada (app/herramientas.py), Fase 9 — se abre en
+/// un WebView. No incluye "chat" (Element): eso se consume como cliente
+/// Matrix nativo, ver ChatConfig más abajo.
+class Herramienta {
+  final String id;
+  final String nombre;
+  final String descripcion;
+  final String icono;
+  final String url;
+  final bool sso;
+
+  Herramienta({
+    required this.id,
+    required this.nombre,
+    required this.descripcion,
+    required this.icono,
+    required this.url,
+    required this.sso,
+  });
+
+  factory Herramienta.fromJson(Map<String, dynamic> json) => Herramienta(
+        id: json['id'] as String,
+        nombre: json['nombre'] as String,
+        descripcion: json['descripcion'] as String,
+        icono: json['icono'] as String,
+        url: json['url'] as String,
+        sso: json['sso'] as bool,
+      );
+}
+
+/// Configuración del chat nativo (Matrix/Synapse), Fase 9.
+class ChatConfig {
+  final String homeserverUrl;
+
+  ChatConfig({required this.homeserverUrl});
+
+  factory ChatConfig.fromJson(Map<String, dynamic> json) =>
+      ChatConfig(homeserverUrl: json['homeserver_url'] as String);
+}
