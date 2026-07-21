@@ -83,3 +83,7 @@ chatwoot.HOSTNAME {
 vaultwarden.HOSTNAME {
 	reverse_proxy localhost:8013
 }
+
+status.HOSTNAME {
+	reverse_proxy localhost:8014
+}

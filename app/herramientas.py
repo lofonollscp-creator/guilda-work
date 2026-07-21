@@ -93,6 +93,14 @@ HERRAMIENTAS = [
         # OpenProject/Chatwoot/Metabase/n8n.
         "sso": False,
     },
+    {
+        "id": "uptime-kuma",
+        "nombre": "Uptime Kuma",
+        "descripcion": "Monitorización del stack: avisa si algún servicio se cae.",
+        "icono": "📈",
+        "url": os.environ.get("HERRAMIENTA_UPTIME_KUMA_URL", "http://127.0.0.1:8014"),
+        "sso": False,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —

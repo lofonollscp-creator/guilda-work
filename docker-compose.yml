@@ -590,6 +590,24 @@ services:
     ports:
       - "127.0.0.1:8013:80"
 
+  # Uptime Kuma (monitorización, código abierto) — el stack ya son ~10
+  # contenedores; esto avisa si alguno se cae. Sin variables de entorno
+  # de credenciales: el primer acceso por navegador crea la cuenta admin
+  # directamente ahí, no hay nada que generar ni configurar antes.
+  # A propósito NO se monta /var/run/docker.sock (daría acceso
+  # equivalente a root sobre el host) — los monitores se añaden a mano
+  # desde su propia UI, apuntando a cada servicio por su nombre interno
+  # de Docker (misma red que el resto de este archivo, ver HOSTING.md
+  # 8.17 para ejemplos concretos).
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: guilda-work-uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - uptime-kuma-data:/app/data
+    ports:
+      - "127.0.0.1:8014:3001"
+
   # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
   # de verificar los flujos OIDC (Outline/Element) que en local plano
   # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —
@@ -672,6 +690,7 @@ volumes:
   caddy-local-data:
   caddy-lan-data:
   vaultwarden-data:
+  uptime-kuma-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

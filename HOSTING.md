@@ -335,6 +335,7 @@ HERRAMIENTA_OPENPROJECT_URL=https://openproject.tu-hostname.sslip.io
 HERRAMIENTA_CHATWOOT_URL=https://chatwoot.tu-hostname.sslip.io
 HERRAMIENTA_MATRIX_HOMESERVER_URL=https://matrix.tu-hostname.sslip.io
 HERRAMIENTA_VAULTWARDEN_URL=https://vaultwarden.tu-hostname.sslip.io
+HERRAMIENTA_UPTIME_KUMA_URL=https://status.tu-hostname.sslip.io
 EOF
 sudo systemctl restart guilda-work
 ```
@@ -603,6 +604,44 @@ pueda registrarse.
 El panel de administración (`/admin`, gestión de usuarios/organización a
 nivel de servidor) pide `VAULTWARDEN_ADMIN_TOKEN` — guárdalo tú también
 dentro del propio Vaultwarden una vez que lo tengas funcionando.
+
+### 8.17 Uptime Kuma (monitorización)
+
+Avisa si algún contenedor de este stack (ya son unos diez: Kratos,
+Hydra, Outline, Synapse, OpenProject, Chatwoot, Metabase, n8n, MinIO,
+Vaultwarden) se cae. Sin variables de entorno de credenciales — el
+primer acceso por navegador pide crear la cuenta admin directamente ahí.
+
+A propósito NO monta `/var/run/docker.sock` (daría acceso equivalente a
+root sobre el host) — los monitores se añaden a mano desde la propia UI,
+apuntando a cada servicio por su **nombre interno de Docker** (misma red
+que el resto de `docker-compose.yml`, así que Uptime Kuma los alcanza
+sin publicar nada nuevo). Sugerencias de monitores HTTP(S)/TCP para
+pegar directamente al crearlos ("Añadir un nuevo monitor" → tipo HTTP(s)
+o TCP Port):
+
+| Servicio | URL/host a monitorizar |
+|---|---|
+| Guilda Work | `http://host.docker.internal:8000/login` (corre fuera de Docker) |
+| Kratos | `http://kratos:4433/health/ready` |
+| Hydra | `http://hydra:4444/health/ready` |
+| Outline | `http://outline:3000` |
+| Synapse | `http://synapse:8008/health` |
+| OpenProject | `http://openproject-web:8080/health_checks/default` |
+| Chatwoot | `http://chatwoot-web:3000/` |
+| Metabase | `http://metabase:3000/api/health` |
+| n8n | `http://n8n:5678/healthz` |
+| MinIO | `http://minio:9000/minio/health/live` |
+| Vaultwarden | `http://vaultwarden:80/alive` |
+
+```bash
+docker compose up -d uptime-kuma
+```
+
+Añade a `.env` (opcional, solo si cambias la URL pública por defecto):
+```bash
+HERRAMIENTA_UPTIME_KUMA_URL=https://status.tu-hostname.sslip.io
+```
 
 ## 9. Backups (opcional, recomendado)
 
