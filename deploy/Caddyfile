@@ -79,3 +79,7 @@ openproject.HOSTNAME {
 chatwoot.HOSTNAME {
 	reverse_proxy localhost:8011
 }
+
+vaultwarden.HOSTNAME {
+	reverse_proxy localhost:8013
+}

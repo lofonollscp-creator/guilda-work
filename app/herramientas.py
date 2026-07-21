@@ -82,6 +82,17 @@ HERRAMIENTAS = [
         # desplegada aquí (Fase 7g) — mismo criterio que OpenProject.
         "sso": False,
     },
+    {
+        "id": "vaultwarden",
+        "nombre": "Vaultwarden",
+        "descripcion": "Gestor de contraseñas y tokens (compatible con Bitwarden).",
+        "icono": "🔐",
+        "url": os.environ.get("HERRAMIENTA_VAULTWARDEN_URL", "http://127.0.0.1:8013"),
+        # Sin SSO: la edición gratuita/código abierto no ofrece OIDC/SAML
+        # (eso es un add-on de pago de Bitwarden), mismo criterio que
+        # OpenProject/Chatwoot/Metabase/n8n.
+        "sso": False,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —

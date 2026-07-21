@@ -563,6 +563,33 @@ services:
     # es para pedirla por teclado de forma interactiva, no vale en Docker.
     command: ["sqlite_web", "-H", "0.0.0.0", "-r", "/data/registro.db"]
 
+  # Vaultwarden (servidor Bitwarden-compatible, código abierto) — un solo
+  # sitio cifrado para las contraseñas/tokens de todo este stack (Hydra,
+  # OpenProject, Chatwoot, MinIO...), en vez de repartidos entre .env y
+  # notas sueltas. Sin SSO: la edición gratuita no ofrece OIDC, mismo
+  # caso que OpenProject/Chatwoot/Metabase/n8n — login aparte, con la
+  # cuenta que se crea en su propio primer arranque.
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: guilda-work-vaultwarden
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${VAULTWARDEN_PUBLIC_ORIGIN:-http://127.0.0.1:8013}
+      # Token del panel /admin — generado aleatoriamente (nunca una
+      # contraseña elegida a mano, ver HOSTING.md 8.16), en texto plano:
+      # Vaultwarden también acepta un hash Argon2, pero generarlo exige
+      # un prompt interactivo (`vaultwarden hash`) que no tiene sentido
+      # aquí — el texto plano solo saca un aviso en el log, sigue siendo
+      # un secreto aleatorio fuerte como cualquier otro de este archivo.
+      ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN:?define VAULTWARDEN_ADMIN_TOKEN, p.ej. python -c "import secrets; print(secrets.token_urlsafe(48))"}
+      # true solo para crear la primera cuenta (ver HOSTING.md 8.16) —
+      # ponlo a false en tu .env en cuanto la tengas.
+      SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-true}
+    volumes:
+      - vaultwarden-data:/data
+    ports:
+      - "127.0.0.1:8013:80"
+
   # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
   # de verificar los flujos OIDC (Outline/Element) que en local plano
   # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —
@@ -644,6 +671,7 @@ volumes:
   synapse-data:
   caddy-local-data:
   caddy-lan-data:
+  vaultwarden-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

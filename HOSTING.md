@@ -334,6 +334,7 @@ HERRAMIENTA_MINIO_URL=https://minio.tu-hostname.sslip.io
 HERRAMIENTA_OPENPROJECT_URL=https://openproject.tu-hostname.sslip.io
 HERRAMIENTA_CHATWOOT_URL=https://chatwoot.tu-hostname.sslip.io
 HERRAMIENTA_MATRIX_HOMESERVER_URL=https://matrix.tu-hostname.sslip.io
+HERRAMIENTA_VAULTWARDEN_URL=https://vaultwarden.tu-hostname.sslip.io
 EOF
 sudo systemctl restart guilda-work
 ```
@@ -570,6 +571,38 @@ Limitación real de Metabase: su API no admite fijar una contraseña
 elegida — solo crea la cuenta (email/nombre). La persona tiene que
 completar el alta con "¿Olvidaste tu contraseña?" en el login de
 Metabase la primera vez.
+
+### 8.16 Vaultwarden (gestor de contraseñas)
+
+Servidor Bitwarden-compatible, código abierto — un solo sitio cifrado
+para las contraseñas/tokens de todo este stack (los de Hydra,
+OpenProject, Chatwoot, MinIO... en vez de repartidos entre `.env` y
+notas sueltas). Sin SSO: la edición gratuita no ofrece OIDC/SAML (eso es
+un add-on de pago de Bitwarden) — login aparte, con la cuenta que crees
+en su propio primer arranque.
+
+Añade a `.env`:
+
+```bash
+VAULTWARDEN_ADMIN_TOKEN=...   # python -c "import secrets; print(secrets.token_urlsafe(48))"
+VAULTWARDEN_SIGNUPS_ALLOWED=true   # ponlo a false en cuanto tengas tu cuenta creada
+VAULTWARDEN_PUBLIC_ORIGIN=https://vaultwarden.tu-hostname.sslip.io
+```
+
+```bash
+docker compose up -d vaultwarden
+```
+
+Verificar: `curl https://vaultwarden.tu-hostname.sslip.io/alive` → un
+timestamp en JSON. Entra por navegador, crea tu cuenta (arriba a la
+derecha, "Crear cuenta"), y una vez dentro pon
+`VAULTWARDEN_SIGNUPS_ALLOWED=false` en `.env` y reinicia el contenedor
+(`docker compose up -d --force-recreate vaultwarden`) para que nadie más
+pueda registrarse.
+
+El panel de administración (`/admin`, gestión de usuarios/organización a
+nivel de servidor) pide `VAULTWARDEN_ADMIN_TOKEN` — guárdalo tú también
+dentro del propio Vaultwarden una vez que lo tengas funcionando.
 
 ## 9. Backups (opcional, recomendado)
 

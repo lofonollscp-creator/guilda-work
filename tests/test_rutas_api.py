@@ -388,6 +388,7 @@ def test_listar_herramientas_excluye_chat(cliente):
     assert "outline" in ids
     assert "openproject" in ids
     assert "chatwoot" in ids
+    assert "vaultwarden" in ids
 
 
 def test_herramientas_requiere_token(cliente):
