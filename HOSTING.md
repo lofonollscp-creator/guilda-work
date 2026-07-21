@@ -494,6 +494,9 @@ lateral solo para administradores):
 - Crear un usuario nuevo directamente (email + tenant opcional): crea la
   identidad en Kratos con una contraseña temporal generada al vuelo, que
   se muestra **una sola vez** en pantalla para pasársela a esa persona.
+  Si están configurados los tokens de la sección 8.15, el mismo botón da
+  de alta a esa persona también en OpenProject y Chatwoot (con la misma
+  contraseña) y en Metabase (sin contraseña propia, ver 8.15).
 - Reasignar el tenant de cualquier usuario desde un desplegable en la
   propia tabla.
 - Dar/quitar el rol de admin a otros usuarios (no se puede uno quitar el
@@ -526,6 +529,47 @@ Acceso solo por túnel SSH, nunca abriendo el puerto al exterior:
 ssh -L 8012:127.0.0.1:8012 tu-usuario@tu-vps
 # luego, en tu navegador: http://127.0.0.1:8012
 ```
+
+### 8.15 Alta automática en OpenProject/Chatwoot/Metabase (Fase 7c)
+
+Cuando el backoffice (sección 8.13) crea un usuario nuevo, puede darlo de
+alta también en las herramientas sin SSO — evita repetirlo a mano en
+cada una. **n8n se queda fuera**: su edición community no tiene una API
+de alta de usuarios con contraseña propia sin invitación por email.
+
+Cada integración es independiente y opcional — si falta su token, esa
+herramienta simplemente no se toca (no rompe el alta del resto).
+
+**OpenProject**: inicia sesión, ve a tu cuenta → "Tokens de acceso" →
+genera uno, y añádelo a `.env`:
+```bash
+OPENPROJECT_API_TOKEN=...
+```
+
+**Chatwoot**: no tiene UI para esto en la edición self-hosted — se crea
+una sola vez por consola de Rails (usa la **Platform API**, que confirma
+el email automáticamente, a diferencia del alta normal de agentes):
+```bash
+docker exec -it guilda-work-chatwoot-web bundle exec rails runner "
+  app = PlatformApp.find_or_create_by!(name: 'Guilda Work')
+  app.platform_app_permissibles.find_or_create_by!(permissible: Account.find(1))
+  puts app.access_token.token
+"
+```
+```bash
+CHATWOOT_PLATFORM_API_TOKEN=...   # el token que imprime el comando de arriba
+CHATWOOT_ACCOUNT_ID=1             # el id de tu cuenta de Chatwoot, normalmente 1
+```
+
+**Metabase** (opcional): Admin → Configuración → Autenticación →
+Claves de API → crea una, y añádela:
+```bash
+METABASE_API_KEY=...
+```
+Limitación real de Metabase: su API no admite fijar una contraseña
+elegida — solo crea la cuenta (email/nombre). La persona tiene que
+completar el alta con "¿Olvidaste tu contraseña?" en el login de
+Metabase la primera vez.
 
 ## 9. Backups (opcional, recomendado)
 

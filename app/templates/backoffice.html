@@ -12,11 +12,26 @@
 <div class="ia-error">{{ error }}</div>
 {% endif %}
 
-{% if contrasena_temporal %}
+{% if resultados_alta %}
 <div class="ia-result">
-  Usuario <strong>{{ email_creado }}</strong> creado. Contraseña temporal
-  (solo se muestra esta vez, pásasela para que la cambie al entrar):
-  <code>{{ contrasena_temporal }}</code>
+  Alta de <strong>{{ email_creado }}</strong> — esto solo se muestra esta
+  vez, pásale las contraseñas para que las cambie al entrar:
+  <table class="historial-table" style="margin-top: 8px;">
+    <thead>
+      <tr><th>Servicio</th><th>Estado</th><th>Detalle</th></tr>
+    </thead>
+    <tbody>
+      {% for r in resultados_alta %}
+      <tr>
+        <td>{{ r.servicio }}</td>
+        <td>
+          <span class="log-badge {{ 'log-badge-duracion' if r.estado == 'creado' else 'log-badge-instantanea' }}">{{ r.estado }}</span>
+        </td>
+        <td>{{ r.detalle }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endif %}
 

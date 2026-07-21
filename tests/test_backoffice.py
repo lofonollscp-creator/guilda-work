@@ -113,6 +113,87 @@ def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     assert nuevo is not None
 
 
+def test_backoffice_crear_usuario_sin_tokens_solo_da_error_en_openproject_y_chatwoot(cliente):
+    """Sin OPENPROJECT_API_TOKEN/CHATWOOT_PLATFORM_API_TOKEN configurados
+    (caso normal en tests), las tres integraciones deben fallar de forma
+    aislada (o, para Metabase, omitirse sin más) sin tumbar el alta del
+    usuario en Guilda Work."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-integraciones@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/usuarios", data={"email": "sin-tokens@ejemplo.com", "tenant_id": ""})
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Guilda Work" in html
+    assert "OpenProject" in html
+    assert "Chatwoot" in html
+    assert "Metabase" not in html  # se omite sin más, sin API key configurada
+    assert db.obtener_usuario_por_email("sin-tokens@ejemplo.com") is not None
+
+
+def test_backoffice_crear_usuario_da_de_alta_en_openproject_y_chatwoot(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-integraciones2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    llamadas = {}
+
+    def fake_openproject_crear_usuario(email, contrasena, nombre="", apellidos=""):
+        llamadas["openproject"] = (email, contrasena)
+        return 42
+
+    def fake_chatwoot_crear_usuario(email, contrasena, nombre=""):
+        llamadas["chatwoot"] = (email, contrasena)
+        return 7
+
+    def fake_metabase_crear_usuario(email, nombre="", apellidos=""):
+        llamadas["metabase"] = email
+        return 3
+
+    monkeypatch.setattr(rutas_backoffice.openproject, "crear_usuario", fake_openproject_crear_usuario)
+    monkeypatch.setattr(rutas_backoffice.chatwoot, "crear_usuario", fake_chatwoot_crear_usuario)
+    monkeypatch.setattr(rutas_backoffice.metabase, "crear_usuario", fake_metabase_crear_usuario)
+
+    resp = cliente.post("/backoffice/usuarios", data={"email": "multi-alta@ejemplo.com", "tenant_id": ""})
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "creado" in html
+
+    assert llamadas["openproject"][0] == "multi-alta@ejemplo.com"
+    assert llamadas["chatwoot"][0] == "multi-alta@ejemplo.com"
+    # OpenProject y Chatwoot comparten LA MISMA contraseña temporal que Kratos.
+    assert llamadas["openproject"][1] == llamadas["chatwoot"][1]
+    assert llamadas["metabase"] == "multi-alta@ejemplo.com"
+
+
+def test_backoffice_crear_usuario_un_fallo_en_una_integracion_no_bloquea_las_demas(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-integraciones3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_openproject_falla(email, contrasena, nombre="", apellidos=""):
+        raise rutas_backoffice.openproject.ErrorOpenProject("fallo simulado de OpenProject")
+
+    llamadas = {}
+
+    def fake_chatwoot_ok(email, contrasena, nombre=""):
+        llamadas["chatwoot"] = email
+        return 9
+
+    monkeypatch.setattr(rutas_backoffice.openproject, "crear_usuario", fake_openproject_falla)
+    monkeypatch.setattr(rutas_backoffice.chatwoot, "crear_usuario", fake_chatwoot_ok)
+
+    resp = cliente.post("/backoffice/usuarios", data={"email": "fallo-parcial@ejemplo.com", "tenant_id": ""})
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "fallo simulado de OpenProject" in html
+    assert llamadas["chatwoot"] == "fallo-parcial@ejemplo.com"
+    # El usuario de Guilda Work se crea igual, pese al fallo de OpenProject.
+    assert db.obtener_usuario_por_email("fallo-parcial@ejemplo.com") is not None
+
+
 def test_backoffice_admin_no_puede_quitarse_el_rol_a_si_mismo(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin4@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])

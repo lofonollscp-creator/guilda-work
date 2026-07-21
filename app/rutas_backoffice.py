@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import db, kratos
+from . import chatwoot, db, kratos, metabase, openproject
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -21,8 +21,7 @@ def panel():
         "backoffice.html",
         tenants=db.listar_tenants_con_conteo(),
         usuarios=db.listar_usuarios(),
-        contrasena_temporal=None,
-        email_creado=None,
+        resultados_alta=None,
     )
 
 
@@ -73,6 +72,10 @@ def crear_usuario():
     if not email:
         return redirect(url_for("backoffice.panel"))
 
+    # Misma contraseña temporal para Guilda Work/Kratos, OpenProject y
+    # Chatwoot (una sola que compartir con la persona, no cuatro
+    # distintas) — Metabase no admite fijar una contraseña propia por API
+    # (ver app/metabase.py), así que no la usa.
     contrasena_temporal = secrets.token_urlsafe(12)
     try:
         identity_id = kratos.crear_identidad(email, contrasena_temporal)
@@ -81,19 +84,44 @@ def crear_usuario():
             "backoffice.html",
             tenants=db.listar_tenants_con_conteo(),
             usuarios=db.listar_usuarios(),
-            contrasena_temporal=None,
-            email_creado=None,
+            resultados_alta=None,
             error=str(e),
         )
     usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     if tenant_id:
         db.asignar_tenant(usuario_id, int(tenant_id))
 
+    resultados_alta = [
+        {"servicio": "Guilda Work", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"},
+    ]
+
+    try:
+        openproject.crear_usuario(email, contrasena_temporal)
+        resultados_alta.append({"servicio": "OpenProject", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+    except openproject.ErrorOpenProject as e:
+        resultados_alta.append({"servicio": "OpenProject", "estado": "error", "detalle": str(e)})
+
+    try:
+        chatwoot.crear_usuario(email, contrasena_temporal, email.split("@")[0])
+        resultados_alta.append({"servicio": "Chatwoot", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+    except chatwoot.ErrorChatwoot as e:
+        resultados_alta.append({"servicio": "Chatwoot", "estado": "error", "detalle": str(e)})
+
+    try:
+        metabase_id = metabase.crear_usuario(email)
+        if metabase_id is not None:
+            resultados_alta.append({
+                "servicio": "Metabase", "estado": "creado",
+                "detalle": "sin contraseña propia — usa \"¿Olvidaste tu contraseña?\" en su login",
+            })
+    except metabase.ErrorMetabase as e:
+        resultados_alta.append({"servicio": "Metabase", "estado": "error", "detalle": str(e)})
+
     return render_template(
         "backoffice.html",
         tenants=db.listar_tenants_con_conteo(),
         usuarios=db.listar_usuarios(),
-        contrasena_temporal=contrasena_temporal,
+        resultados_alta=resultados_alta,
         email_creado=email,
     )
 
