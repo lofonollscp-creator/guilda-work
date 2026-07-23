@@ -15,6 +15,14 @@
 # para hacer de proxy inverso con HTTPS — nada de esto queda expuesto
 # directamente a internet.
 #
+# Dos excepciones intencionadas a "NUNCA en 0.0.0.0", ninguna un
+# descuido: `caddy-lan` (perfil `lan`, ver HTTPS_LAN.md, solo pensado
+# para la red local de casa) y `openvpn` más abajo (su
+# puerto 1194/UDP es la propia puerta de entrada de red — Caddy no
+# puede hacerle de proxy, no es HTTP, así que no hay otra capa delante
+# que lo filtre; mismo criterio ya aceptado para el puerto 22/SSH vía
+# `ufw allow OpenSSH`, ver HOSTING.md sección 1).
+#
 # Metabase (Fase "integraciones de código abierto" del plan): panel de análisis
 # sobre data/registro.db. El driver de SQLite viene ya incluido en la imagen
 # oficial de Metabase — no hace falta ningún plugin aparte.
@@ -608,6 +616,34 @@ services:
     ports:
       - "127.0.0.1:8014:3001"
 
+  # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
+  # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
+  # (usa su binario real, con scripts auxiliares para gestionar la PKI
+  # sin instalar easy-rsa a mano, ver HOSTING.md 8.18). A diferencia de
+  # Kratos/Hydra, este servicio NO se autoconfigura al arrancar — hace
+  # falta `ovpn_genconfig`/`ovpn_initpki` una sola vez antes del primer
+  # `docker compose up -d openvpn` (ver HOSTING.md 8.18), si no el
+  # contenedor no tiene configuración que servir.
+  #
+  # `cap_add: NET_ADMIN` + `devices: /dev/net/tun`: imprescindibles para
+  # que el proceso pueda crear la interfaz de red virtual — sin esto no
+  # arranca. Puerto UDP publicado en `0.0.0.0` a propósito (ver la nota
+  # de cabecera de este archivo): OpenVPN no es HTTP, Caddy no puede
+  # hacerle de proxy, así que la propia VPN es la puerta de entrada de
+  # red — mismo criterio ya aceptado para el puerto 22/SSH.
+  openvpn:
+    image: kylemanna/openvpn:latest
+    container_name: guilda-work-openvpn
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - "0.0.0.0:1194:1194/udp"
+    volumes:
+      - ovpn-data:/etc/openvpn
+
   # Caddy local (Fase 8) — HTTPS real en desarrollo, para poder terminar
   # de verificar los flujos OIDC (Outline/Element) que en local plano
   # (http://127.0.0.1) se quedan bloqueados en el intercambio de token —
@@ -691,6 +727,7 @@ volumes:
   caddy-lan-data:
   vaultwarden-data:
   uptime-kuma-data:
+  ovpn-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

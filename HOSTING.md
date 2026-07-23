@@ -43,6 +43,22 @@ systemctl restart sshd
 
 A partir de aquí, conéctate siempre como `guilda`, no como `root`.
 
+**Antes de desactivar `PasswordAuthentication`**, asegúrate de tener tu
+clave ya copiada — si no, te quedas fuera. Genera un par de claves en tu
+propio equipo (no en el servidor) y cópiala:
+
+```bash
+# En tu propio equipo, no en el servidor:
+ssh-keygen -t ed25519 -C "tu-email@ejemplo.com"
+ssh-copy-id -i ~/.ssh/id_ed25519.pub guilda@TU_IP
+```
+
+Si trabajas desde varios equipos (portátil de casa, otro de la
+oficina...), repite `ssh-copy-id` con la clave pública de cada uno —
+todas quedan añadidas a `~/.ssh/authorized_keys` del usuario `guilda` en
+el servidor, sin que haga falta compartir una única clave privada entre
+dispositivos.
+
 ## 2. Instalar dependencias y traer el código
 
 ```bash
@@ -641,6 +657,63 @@ docker compose up -d uptime-kuma
 Añade a `.env` (opcional, solo si cambias la URL pública por defecto):
 ```bash
 HERRAMIENTA_UPTIME_KUMA_URL=https://status.tu-hostname.sslip.io
+```
+
+### 8.18 OpenVPN (acceso VPN al servidor)
+
+Acceso de red completo al VPS por VPN — útil para llegar a paneles que
+se quedan a propósito solo en `127.0.0.1` (`sqlite-web`, `/admin` de
+Vaultwarden) sin depender de abrir un túnel SSH puntual cada vez, y como
+capa extra de defensa en profundidad además del acceso SSH ya descrito
+en la sección 1.
+
+A diferencia del resto de servicios de `docker-compose.yml`, este NO se
+autoconfigura al arrancar — hace falta inicializar su PKI una sola vez
+antes del primer `docker compose up -d openvpn`. Su puerto (1194/UDP) es
+la única excepción real a "todo se publica en 127.0.0.1" de este
+proyecto: OpenVPN no es HTTP, Caddy no puede hacerle de proxy, así que
+la propia VPN es la puerta de entrada de red (mismo criterio ya
+aceptado para el puerto 22/SSH vía `ufw allow OpenSSH`).
+
+```bash
+ufw allow 1194/udp
+```
+
+**Inicialización, una sola vez:**
+
+```bash
+docker run -v ovpn-data:/etc/openvpn --rm kylemanna/openvpn \
+  ovpn_genconfig -u udp://TU_IP_O_HOSTNAME
+
+# Pide una passphrase para la CA — elígela tú y no la compartas.
+docker run -v ovpn-data:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
+
+docker compose up -d openvpn
+```
+
+**Generar un cliente** (uno por dispositivo, mismo criterio que las
+claves SSH de la sección 1):
+
+```bash
+docker run -v ovpn-data:/etc/openvpn --rm -it kylemanna/openvpn \
+  easyrsa build-client-full NOMBRE_DISPOSITIVO nopass
+
+docker run -v ovpn-data:/etc/openvpn --rm kylemanna/openvpn \
+  ovpn_getclient NOMBRE_DISPOSITIVO > NOMBRE_DISPOSITIVO.ovpn
+```
+
+Copia `NOMBRE_DISPOSITIVO.ovpn` a tu equipo e impórtalo en el cliente
+oficial [OpenVPN Connect](https://openvpn.net/client/) (Windows/macOS/
+Android/iOS) — paso manual, no automatizable desde aquí.
+
+**Revocar un dispositivo** (perdido, robado, o ya no lo usas):
+
+```bash
+docker run -v ovpn-data:/etc/openvpn --rm -it kylemanna/openvpn \
+  easyrsa revoke NOMBRE_DISPOSITIVO
+docker run -v ovpn-data:/etc/openvpn --rm -it kylemanna/openvpn \
+  easyrsa gen-crl
+docker compose up -d --force-recreate openvpn
 ```
 
 ## 9. Backups (opcional, recomendado)
