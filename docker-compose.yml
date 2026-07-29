@@ -616,6 +616,50 @@ services:
     ports:
       - "127.0.0.1:8014:3001"
 
+  # EspoCRM (CRM de código abierto) — único CRM libre investigado con
+  # OIDC nativo en el core gratuito (AGPL-3.0, desde v7.3), ver
+  # HOSTING.md 8.19. Aislamiento entre tenants: el claim `groups` que
+  # ahora manda Hydra en el id_token (app/hydra.py) contiene el nombre
+  # del tenant, y `oidcTeams` (config manual en EspoCRM, ver HOSTING.md)
+  # asocia al usuario solo al Equipo correspondiente en cada login — los
+  # Equipos los crea app/espocrm.py al dar de alta un tenant desde el
+  # backoffice. Instalación desatendida vía variables ESPOCRM_ADMIN_* —
+  # mismo criterio que OPENPROJECT_SEED_ADMIN_USER_* (contraseña inicial
+  # obligatoria por variable, no hay asistente interactivo como en
+  # Vaultwarden/Uptime Kuma).
+  postgres-espocrm:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-espocrm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: espocrm
+      POSTGRES_PASSWORD: ${ESPOCRM_DB_PASSWORD:-CambiaEstaClaveEspoCRM2026}
+      POSTGRES_DB: espocrm
+    volumes:
+      - postgres-espocrm-data:/var/lib/postgresql/data
+
+  espocrm:
+    image: espocrm/espocrm:latest
+    container_name: guilda-work-espocrm
+    restart: unless-stopped
+    depends_on:
+      - postgres-espocrm
+    environment:
+      ESPOCRM_DATABASE_PLATFORM: Postgresql
+      ESPOCRM_DATABASE_HOST: postgres-espocrm
+      ESPOCRM_DATABASE_USER: espocrm
+      ESPOCRM_DATABASE_PASSWORD: ${ESPOCRM_DB_PASSWORD:-CambiaEstaClaveEspoCRM2026}
+      ESPOCRM_ADMIN_USERNAME: ${ESPOCRM_ADMIN_USERNAME:-admin}
+      ESPOCRM_ADMIN_PASSWORD: ${ESPOCRM_ADMIN_PASSWORD:?define ESPOCRM_ADMIN_PASSWORD (mínimo 8 caracteres)}
+      # URL pública de verdad (https://crm.tu-hostname en el VPS) — la
+      # necesita para construir enlaces correctos, mismo criterio que
+      # OUTLINE_PUBLIC_ORIGIN/CHATWOOT_PUBLIC_ORIGIN.
+      ESPOCRM_SITE_URL: ${ESPOCRM_PUBLIC_ORIGIN:-http://127.0.0.1:8015}
+    ports:
+      - "127.0.0.1:8015:80"
+    volumes:
+      - espocrm-data:/var/www/html/data
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -728,6 +772,8 @@ volumes:
   vaultwarden-data:
   uptime-kuma-data:
   ovpn-data:
+  postgres-espocrm-data:
+  espocrm-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

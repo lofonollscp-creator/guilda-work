@@ -390,6 +390,7 @@ def test_listar_herramientas_excluye_chat(cliente):
     assert "chatwoot" in ids
     assert "vaultwarden" in ids
     assert "uptime-kuma" in ids
+    assert "crm" in ids
 
 
 def test_herramientas_requiere_token(cliente):

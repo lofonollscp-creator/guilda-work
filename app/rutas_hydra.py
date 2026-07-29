@@ -62,8 +62,12 @@ def hydra_consent():
                 usuario_id = db.crear_usuario_vinculado_a_kratos(email, subject)
                 usuario = db.obtener_usuario(usuario_id)
     email = usuario["email"] if usuario else ""
+    tenant = db.tenant_de_usuario(usuario["id"]) if usuario else None
     redirect_to = hydra.aceptar_consent_request(
-        challenge, scopes=consent_request.get("requested_scope", []), email=email
+        challenge,
+        scopes=consent_request.get("requested_scope", []),
+        email=email,
+        tenant_nombre=tenant["nombre"] if tenant else None,
     )
     return redirect(redirect_to)
 

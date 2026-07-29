@@ -28,9 +28,10 @@ def test_consent_provisiona_usuario_si_hydra_se_salta_el_login(cliente, monkeypa
     )
     capturado = {}
 
-    def fake_aceptar_consent(challenge, *, scopes, email):
+    def fake_aceptar_consent(challenge, *, scopes, email, tenant_nombre=None):
         capturado["email"] = email
         capturado["scopes"] = scopes
+        capturado["tenant_nombre"] = tenant_nombre
         return "https://matrix.localhost:8443/_synapse/client/oidc/callback?code=abc"
 
     monkeypatch.setattr(rutas_hydra.hydra, "aceptar_consent_request", fake_aceptar_consent)
@@ -62,8 +63,9 @@ def test_consent_usa_la_fila_existente_si_ya_habia_una(cliente, monkeypatch):
 
     capturado = {}
 
-    def fake_aceptar_consent(challenge, *, scopes, email):
+    def fake_aceptar_consent(challenge, *, scopes, email, tenant_nombre=None):
         capturado["email"] = email
+        capturado["tenant_nombre"] = tenant_nombre
         return "https://matrix.localhost:8443/_synapse/client/oidc/callback?code=abc"
 
     monkeypatch.setattr(rutas_hydra.hydra, "aceptar_consent_request", fake_aceptar_consent)
@@ -72,3 +74,33 @@ def test_consent_usa_la_fila_existente_si_ya_habia_una(cliente, monkeypatch):
 
     assert resp.status_code == 302
     assert capturado["email"] == "conocido@ejemplo.com"
+    assert capturado["tenant_nombre"] is None
+
+
+def test_consent_manda_el_nombre_del_tenant_como_groups(cliente, monkeypatch):
+    """Base del aislamiento entre tenants en EspoCRM (ver app/espocrm.py y
+    HOSTING.md 8.19): si el usuario tiene un tenant asignado, su nombre
+    tiene que llegar a hydra.aceptar_consent_request para que acabe en el
+    claim `groups` del id_token."""
+    identity_id = "identidad-con-tenant"
+    usuario_id = db.crear_usuario_vinculado_a_kratos("con-tenant@ejemplo.com", identity_id)
+    tenant_id = db.crear_tenant("Lueira")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    monkeypatch.setattr(
+        rutas_hydra.hydra, "obtener_consent_request",
+        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"]},
+    )
+
+    capturado = {}
+
+    def fake_aceptar_consent(challenge, *, scopes, email, tenant_nombre=None):
+        capturado["tenant_nombre"] = tenant_nombre
+        return "https://crm.localhost:8443/oauth-callback.php?code=abc"
+
+    monkeypatch.setattr(rutas_hydra.hydra, "aceptar_consent_request", fake_aceptar_consent)
+
+    resp = cliente.get("/hydra/consent?consent_challenge=abc123")
+
+    assert resp.status_code == 302
+    assert capturado["tenant_nombre"] == "Lueira"

@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import chatwoot, db, kratos, metabase, openproject
+from . import chatwoot, db, espocrm, kratos, metabase, openproject
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -35,6 +35,14 @@ def crear_tenant():
             db.crear_tenant(nombre)
         except Exception:
             pass  # nombre duplicado: no hace falta más que ignorarlo, se ve en la lista
+        try:
+            # Equipo de EspoCRM con el mismo nombre — base del aislamiento
+            # entre tenants (ver app/espocrm.py). Un fallo aquí no debe
+            # impedir que el tenant se cree en Guilda Work; si EspoCRM no
+            # está configurado (sin ESPOCRM_API_KEY) esto no hace nada.
+            espocrm.crear_equipo(nombre)
+        except espocrm.ErrorEspoCRM:
+            pass
     return redirect(url_for("backoffice.panel"))
 
 

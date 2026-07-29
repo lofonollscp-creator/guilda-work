@@ -716,6 +716,78 @@ docker run -v ovpn-data:/etc/openvpn --rm -it kylemanna/openvpn \
 docker compose up -d --force-recreate openvpn
 ```
 
+### 8.19 EspoCRM (CRM) — con SSO y aislamiento real por tenant
+
+CRM de código abierto (AGPL-3.0). Único de los evaluados con OIDC nativo
+en el core gratuito — mismo patrón exacto que Outline/Element: Ory Hydra
++ `scripts/registrar_cliente_hydra.py`, sin ningún puente SAML ni pieza
+extra.
+
+**El aislamiento entre tenants NO es automático — depende de completar
+estos pasos, sobre todo el de Roles.** El id_token que emite Hydra ya
+lleva el nombre del tenant en el claim `groups` (`app/hydra.py`,
+`app/rutas_hydra.py`), y `app/rutas_backoffice.py: crear_tenant()` ya
+crea el Equipo correspondiente en EspoCRM al darlo de alta (vía
+`app/espocrm.py`, si `ESPOCRM_API_KEY` está configurada) — pero sin el
+paso de Roles de más abajo, cualquier usuario vería los registros de
+todos los tenants igual, Equipos o no.
+
+Añade a `.env`:
+```bash
+ESPOCRM_DB_PASSWORD=...
+ESPOCRM_ADMIN_USERNAME=admin
+ESPOCRM_ADMIN_PASSWORD=...   # mínimo 8 caracteres, instalación desatendida
+ESPOCRM_PUBLIC_ORIGIN=https://crm.tu-hostname.sslip.io
+```
+
+```bash
+docker compose up -d postgres-espocrm espocrm
+```
+
+**Registrar el cliente OAuth2** (mismo comando que ya se usó para
+Outline/Element en 8.4/8.8):
+```bash
+.venv/bin/python scripts/registrar_cliente_hydra.py --nombre crm \
+  --redirect-uri https://crm.tu-hostname.sslip.io/oauth-callback.php
+```
+(confirma el path exacto de callback contra la pantalla de
+Administration → Authentication → OIDC de tu versión de EspoCRM antes de
+registrar el cliente — puede variar entre versiones).
+
+**Configurar OIDC en EspoCRM** (Administration → Authentication → método
+OIDC, una sola vez):
+- Client ID / Client Secret: los que imprime el comando de arriba.
+- Authorization Endpoint: `https://hydra.tu-hostname.sslip.io/oauth2/auth`
+  (pública, la ve el navegador).
+- Token Endpoint / Userinfo Endpoint: `http://hydra:4444/oauth2/token` /
+  `http://hydra:4444/userinfo` (hostname interno de Docker — llamadas
+  servidor-a-servidor, mismo criterio que `OIDC_TOKEN_URI`/
+  `OIDC_USERINFO_URI` de Outline en `docker-compose.yml`).
+- Group Claim: `groups`.
+
+**Configurar el mapeo de Equipos** (Administration → Authentication →
+OIDC → Team Mapping / `oidcTeams`, una sola vez por tenant nuevo):
+añade una fila por cada tenant, con el valor del claim `groups` (el
+nombre exacto del tenant en Guilda Work) apuntando al Equipo del mismo
+nombre que ya creó `app/espocrm.py`. **Verificar al desplegar** si hace
+falta esta fila explícita o si EspoCRM asocia ya por coincidencia directa
+de nombre — no confirmado sin una instancia real delante.
+
+**Configurar Roles — el paso que de verdad aísla los datos**
+(Administration → Roles → rol por defecto, una sola vez): en
+Lead/Contact/Account/Opportunity (y cualquier otra entidad con datos de
+cliente), nivel de acceso **"Team"**, no "All". Sin este cambio, el
+Equipo asignado por OIDC no restringe nada — los Equipos sin un Rol que
+los aproveche son solo una etiqueta, igual que el `tenant_id` del propio
+Guilda Work hoy (ver nota más abajo).
+
+**Nota — deuda pendiente, fuera de alcance de esta integración**: el
+modelo de tenant del resto de Guilda Work (tareas/notas/categorías) sigue
+siendo solo una etiqueta en `usuarios.tenant_id`, sin ningún filtro real
+en las consultas — a diferencia de EspoCRM (aislado de verdad tras los
+pasos de arriba), el resto de la app no lo está todavía. Señalado como
+algo a abordar en el futuro, no automatizado aquí.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

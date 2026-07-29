@@ -102,6 +102,53 @@ def test_backoffice_crear_tenant_y_asignar_usuario(cliente):
     assert db.tenant_de_usuario(usuario_id) is None
 
 
+def test_backoffice_crear_tenant_provisiona_equipo_en_espocrm(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-crm@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    llamadas = {}
+
+    def fake_crear_equipo(nombre):
+        llamadas["nombre"] = nombre
+        return "equipo-id-1"
+
+    monkeypatch.setattr(rutas_backoffice.espocrm, "crear_equipo", fake_crear_equipo)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Lueira"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["nombre"] == "Lueira"
+    assert db.obtener_tenant_por_nombre("Lueira") is not None
+
+
+def test_backoffice_crear_tenant_sin_espocrm_configurado_no_falla(cliente):
+    """Sin ESPOCRM_API_KEY (caso normal en tests), espocrm.crear_equipo
+    devuelve None sin más — el tenant se crea igual en Guilda Work."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-crm2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Guilda"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("Guilda") is not None
+
+
+def test_backoffice_crear_tenant_un_fallo_en_espocrm_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-crm3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_crear_equipo_falla(nombre):
+        raise rutas_backoffice.espocrm.ErrorEspoCRM("fallo simulado de EspoCRM")
+
+    monkeypatch.setattr(rutas_backoffice.espocrm, "crear_equipo", fake_crear_equipo_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Guilda2"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("Guilda2") is not None
+
+
 def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin3@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])

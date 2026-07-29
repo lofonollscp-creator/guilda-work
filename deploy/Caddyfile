@@ -87,3 +87,7 @@ vaultwarden.HOSTNAME {
 status.HOSTNAME {
 	reverse_proxy localhost:8014
 }
+
+crm.HOSTNAME {
+	reverse_proxy localhost:8015
+}

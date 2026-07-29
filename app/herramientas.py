@@ -101,6 +101,18 @@ HERRAMIENTAS = [
         "url": os.environ.get("HERRAMIENTA_UPTIME_KUMA_URL", "http://127.0.0.1:8014"),
         "sso": False,
     },
+    {
+        "id": "crm",
+        "nombre": "CRM",
+        "descripcion": "Gestión de clientes y oportunidades (EspoCRM).",
+        "icono": "🧾",
+        "url": os.environ.get("HERRAMIENTA_ESPOCRM_URL", "http://127.0.0.1:8015"),
+        # Con SSO de verdad — a diferencia de OpenProject/Chatwoot/Metabase/
+        # Vaultwarden, EspoCRM sí tiene OIDC nativo en su core gratuito
+        # (desde v7.3), mismo patrón que Outline/Element (Fase CRM, ver
+        # HOSTING.md 8.19).
+        "sso": True,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —

@@ -77,12 +77,23 @@ def obtener_consent_request(challenge: str) -> dict:
     return cuerpo
 
 
-def aceptar_consent_request(challenge: str, *, scopes: list, email: str) -> str:
+def aceptar_consent_request(
+    challenge: str, *, scopes: list, email: str, tenant_nombre: str | None = None
+) -> str:
     """Acepta el consentimiento sin mostrar pantalla intermedia — los únicos
     clientes OAuth2 de este Hydra son los que registra Guilda Work
     (`scripts/registrar_cliente_hydra.py`), todos con `skip_consent: true`,
     así que no hay ningún escenario real de "aplicación de terceros pidiendo
-    permiso" que justifique preguntar."""
+    permiso" que justifique preguntar.
+
+    `tenant_nombre` viaja como claim `groups` en el id_token (Fase CRM) —
+    lo usa EspoCRM (`oidcTeams`) para asociar al usuario solo al Equipo de
+    su propio tenant en cada login, base del aislamiento entre tenants. Si
+    el usuario no tiene tenant asignado, se omite la clave por completo (no
+    se manda `"groups": []`) para no confundir a clientes que no la esperan."""
+    id_token = {"email": email}
+    if tenant_nombre:
+        id_token["groups"] = [tenant_nombre]
     estado, cuerpo = _peticion(
         f"{HYDRA_ADMIN_URL}/admin/oauth2/auth/requests/consent/accept?consent_challenge={challenge}",
         metodo="PUT",
@@ -91,7 +102,7 @@ def aceptar_consent_request(challenge: str, *, scopes: list, email: str) -> str:
             "grant_access_token_audience": [],
             "remember": True,
             "remember_for": 3600 * 24 * 30,
-            "session": {"id_token": {"email": email}},
+            "session": {"id_token": id_token},
         },
     )
     if estado != 200:
