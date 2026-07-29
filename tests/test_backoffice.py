@@ -149,6 +149,41 @@ def test_backoffice_crear_tenant_un_fallo_en_espocrm_no_bloquea_el_tenant(client
     assert db.obtener_tenant_por_nombre("Guilda2") is not None
 
 
+def test_backoffice_crear_tenant_provisiona_espacio_en_nextcloud(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-drive@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    llamadas = {}
+
+    def fake_crear_espacio_tenant(nombre):
+        llamadas["nombre"] = nombre
+
+    monkeypatch.setattr(rutas_backoffice.nextcloud, "crear_espacio_tenant", fake_crear_espacio_tenant)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "LueiraDrive"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["nombre"] == "LueiraDrive"
+    assert db.obtener_tenant_por_nombre("LueiraDrive") is not None
+
+
+def test_backoffice_crear_tenant_un_fallo_en_nextcloud_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-drive2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_crear_espacio_tenant_falla(nombre):
+        raise rutas_backoffice.nextcloud.ErrorNextcloud("fallo simulado de Nextcloud")
+
+    monkeypatch.setattr(rutas_backoffice.nextcloud, "crear_espacio_tenant", fake_crear_espacio_tenant_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "GuildaDrive"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("GuildaDrive") is not None
+
+
 def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin3@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])

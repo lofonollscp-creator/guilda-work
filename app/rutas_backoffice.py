@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import chatwoot, db, espocrm, kratos, metabase, openproject
+from . import chatwoot, db, espocrm, kratos, metabase, nextcloud, openproject
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -42,6 +42,15 @@ def crear_tenant():
             # está configurado (sin ESPOCRM_API_KEY) esto no hace nada.
             espocrm.crear_equipo(nombre)
         except espocrm.ErrorEspoCRM:
+            pass
+        try:
+            # Grupo + Group Folder de Nextcloud con el mismo nombre — el
+            # espacio "tipo Drive" compartido del tenant (ver
+            # app/nextcloud.py). Mismo criterio: un fallo aquí no bloquea
+            # nada más, y sin NEXTCLOUD_ADMIN_USER/PASSWORD configurados
+            # no hace nada.
+            nextcloud.crear_espacio_tenant(nombre)
+        except nextcloud.ErrorNextcloud:
             pass
     return redirect(url_for("backoffice.panel"))
 

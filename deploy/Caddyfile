@@ -91,3 +91,7 @@ status.HOSTNAME {
 crm.HOSTNAME {
 	reverse_proxy localhost:8015
 }
+
+drive.HOSTNAME {
+	reverse_proxy localhost:8016
+}

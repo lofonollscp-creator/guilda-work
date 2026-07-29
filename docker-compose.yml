@@ -660,6 +660,52 @@ services:
     volumes:
       - espocrm-data:/var/www/html/data
 
+  # Nextcloud (espacio tipo Drive) — mismo criterio de aislamiento por
+  # tenant que EspoCRM (ver HOSTING.md 8.20): el claim `groups` que
+  # manda Hydra (app/hydra.py) se mapea a Grupos de Nextcloud vía la app
+  # oficial `user_oidc`, y app/nextcloud.py crea un Group Folder por
+  # tenant al darlo de alta desde el backoffice. El directorio de cada
+  # usuario ya es privado por diseño en Nextcloud — el ajuste que de
+  # verdad cierra el aislamiento (impedir compartir fuera del propio
+  # grupo) es manual, solo desde el panel, ver HOSTING.md.
+  #
+  # NEXTCLOUD_TRUSTED_DOMAINS es indispensable aquí (a diferencia del
+  # resto del stack): Nextcloud rechaza peticiones a un host no listado
+  # con un error explícito, no basta con levantar el contenedor.
+  postgres-nextcloud:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-nextcloud
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD:-CambiaEstaClaveNextcloud2026}
+      POSTGRES_DB: nextcloud
+    volumes:
+      - postgres-nextcloud-data:/var/lib/postgresql/data
+
+  nextcloud:
+    image: nextcloud:latest
+    container_name: guilda-work-nextcloud
+    restart: unless-stopped
+    depends_on:
+      - postgres-nextcloud
+    environment:
+      POSTGRES_HOST: postgres-nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${NEXTCLOUD_DB_PASSWORD:-CambiaEstaClaveNextcloud2026}
+      POSTGRES_DB: nextcloud
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:?define NEXTCLOUD_ADMIN_PASSWORD (mínimo 8 caracteres)}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${NEXTCLOUD_TRUSTED_DOMAINS:-127.0.0.1}
+    ports:
+      - "127.0.0.1:8016:80"
+    volumes:
+      # Solo mientras no se active MinIO como almacenamiento primario
+      # (paso manual `occ` de un solo uso, ver HOSTING.md 8.20) — tras
+      # migrar, este volumen deja de crecer con archivos de usuarios,
+      # pero se mantiene porque ahí vive la instalación en sí.
+      - nextcloud-data:/var/www/html
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -774,6 +820,8 @@ volumes:
   ovpn-data:
   postgres-espocrm-data:
   espocrm-data:
+  postgres-nextcloud-data:
+  nextcloud-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

@@ -113,6 +113,16 @@ HERRAMIENTAS = [
         # HOSTING.md 8.19).
         "sso": True,
     },
+    {
+        "id": "drive",
+        "nombre": "Drive",
+        "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",
+        "icono": "☁️",
+        "url": os.environ.get("HERRAMIENTA_NEXTCLOUD_URL", "http://127.0.0.1:8016"),
+        # Con SSO — app oficial `user_oidc` (Fase Drive, ver HOSTING.md
+        # 8.20), mismo patrón que Outline/Element/EspoCRM.
+        "sso": True,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —

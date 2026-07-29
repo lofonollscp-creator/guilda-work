@@ -788,6 +788,95 @@ en las consultas — a diferencia de EspoCRM (aislado de verdad tras los
 pasos de arriba), el resto de la app no lo está todavía. Señalado como
 algo a abordar en el futuro, no automatizado aquí.
 
+### 8.20 Nextcloud (Drive) — con SSO y aislamiento por tenant
+
+Espacio de archivos tipo Drive, código abierto (AGPLv3). El directorio
+de cada usuario ya es privado por diseño en Nextcloud — más fuerte por
+defecto que EspoCRM, que dependía de un Rol bien configurado. El riesgo
+real aquí es otro: que alguien comparta un archivo a mano con un usuario
+de otro tenant, y **eso sí exige un paso manual explícito** (ver más
+abajo).
+
+Añade a `.env`:
+```bash
+NEXTCLOUD_DB_PASSWORD=...
+NEXTCLOUD_ADMIN_USER=admin
+NEXTCLOUD_ADMIN_PASSWORD=...   # mínimo 8 caracteres, instalación desatendida
+NEXTCLOUD_TRUSTED_DOMAINS=drive.tu-hostname.sslip.io
+```
+
+```bash
+docker compose up -d postgres-nextcloud nextcloud
+```
+
+**Habilitar las apps necesarias** (una sola vez):
+```bash
+docker exec -u www-data guilda-work-nextcloud php occ app:enable user_oidc
+docker exec -u www-data guilda-work-nextcloud php occ app:enable groupfolders
+```
+
+**Registrar el cliente OAuth2** (mismo comando que EspoCRM/Outline):
+```bash
+.venv/bin/python scripts/registrar_cliente_hydra.py --nombre drive \
+  --redirect-uri https://drive.tu-hostname.sslip.io/apps/user_oidc/code
+```
+(confirma el path exacto de callback contra Configuración → Administración
+→ Autenticación OpenID Connect de tu versión de Nextcloud antes de
+registrar el cliente).
+
+**Configurar el proveedor OIDC** (Configuración → Administración →
+Autenticación OpenID Connect, una sola vez):
+- Identifier / Client ID / Client Secret: los que imprime el comando de
+  arriba.
+- Discovery endpoint: `https://hydra.tu-hostname.sslip.io/.well-known/openid-configuration`.
+- Group mapping (`mappingGroups`): claim `groups` — el mismo que ya
+  manda Hydra para EspoCRM, ningún cambio adicional en `app/hydra.py`.
+
+**Configurar Group folders** — `app/rutas_backoffice.py: crear_tenant()`
+ya crea, vía `app/nextcloud.py`, un Grupo y un Group Folder por tenant al
+darlo de alta (si `NEXTCLOUD_ADMIN_USER`/`NEXTCLOUD_ADMIN_PASSWORD` están
+en el entorno del propio Guilda Work, no solo en el contenedor). No hace
+falta nada manual aquí salvo tener la app activada (paso de arriba).
+
+**El paso que de verdad cierra el aislamiento** (Configuración →
+Administración → Compartir ficheros, una sola vez): activa
+**"Restringir a los usuarios compartir solo con usuarios de sus mismos
+grupos"** y el autocompletado limitado a los grupos propios. Sin esto,
+un usuario de un tenant puede compartir un archivo a mano con cualquier
+otro usuario del sistema, tenant o no — los Grupos por sí solos no lo
+impiden, igual que los Roles de EspoCRM.
+
+**Migrar a MinIO como almacenamiento primario** (opcional pero
+recomendado — reutiliza el MinIO ya desplegado en vez de un volumen
+nuevo; no es configurable por variables de entorno de forma fiable, hace
+falta este comando de un solo uso):
+```bash
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore class --value="OC\\Files\\ObjectStore\\S3"
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments bucket --value="nextcloud-data"
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments hostname --value="minio"
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments port --value="9000" --type=integer
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments use_ssl --value=false --type=boolean
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments key --value="guilda_admin"
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments secret --value="$MINIO_ROOT_PASSWORD"
+docker exec -u www-data guilda-work-nextcloud php occ config:system:set \
+  objectstore arguments use_path_style --value=true --type=boolean
+```
+**Solo funciona en una instalación recién creada, sin archivos todavía**
+— confirma esto contra la documentación oficial de Nextcloud antes de
+ejecutarlo si ya hay datos subidos, no está pensado como migración en
+caliente.
+
+**Nota — misma deuda pendiente que EspoCRM** (ver 8.19): el modelo de
+tenant del resto de Guilda Work sigue sin aislamiento real. No se repite
+aquí, solo se recuerda.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
