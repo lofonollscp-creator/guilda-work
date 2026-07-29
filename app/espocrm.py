@@ -88,3 +88,69 @@ def crear_equipo(nombre_tenant: str) -> str | None:
         return existente
     mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
     raise ErrorEspoCRM(f"No se ha podido crear el Equipo en EspoCRM: {mensaje}")
+
+
+# --- Registros de negocio (Fase MCP: consultas/altas para un asistente) -----
+#
+# Lead/Contact/Account comparten la misma API genérica de entidades de
+# EspoCRM (`GET/POST /api/v1/{Entidad}`) — de ahí los helpers _listar/
+# _buscar/_crear compartidos en vez de repetir la misma lógica tres veces.
+# Ninguno de estos filtra por Equipo/tenant explícitamente: EspoCRM ya lo
+# hace solo, a nivel de Rol (ver HOSTING.md 8.19) — la API Key usada aquí
+# es la del API User del propio Guilda Work, que ve todo, igual que el
+# resto de integraciones de este módulo.
+
+def _listar(entidad: str, *, texto: str | None = None, limite: int = 20) -> list[dict]:
+    if not ESPOCRM_API_KEY:
+        return []
+    parametros = {"maxSize": limite}
+    if texto:
+        parametros["textFilter"] = texto
+    estado, cuerpo = _peticion(f"{ESPOCRM_URL}/api/v1/{entidad}?{urllib.parse.urlencode(parametros)}")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorEspoCRM(f"No se ha podido listar {entidad} en EspoCRM: {mensaje}")
+    return cuerpo.get("list", [])
+
+
+def _crear(entidad: str, campos: dict) -> dict | None:
+    if not ESPOCRM_API_KEY:
+        return None
+    estado, cuerpo = _peticion(f"{ESPOCRM_URL}/api/v1/{entidad}", metodo="POST", cuerpo=campos)
+    if estado not in (200, 201):
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorEspoCRM(f"No se ha podido crear {entidad} en EspoCRM: {mensaje}")
+    return cuerpo
+
+
+def listar_leads(texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Busca/lista Leads. `texto` filtra por coincidencia parcial (nombre,
+    email...) — sin él, devuelve los más recientes."""
+    return _listar("Lead", texto=texto, limite=limite)
+
+
+def crear_lead(nombre: str, email: str = "", telefono: str = "", empresa: str = "") -> dict | None:
+    """Crea un Lead. Devuelve None si ESPOCRM_API_KEY no está configurada."""
+    return _crear("Lead", {
+        "lastName": nombre, "emailAddress": email, "phoneNumber": telefono, "accountName": empresa,
+    })
+
+
+def listar_contactos(texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Busca/lista Contactos."""
+    return _listar("Contact", texto=texto, limite=limite)
+
+
+def crear_contacto(nombre: str, email: str = "", telefono: str = "") -> dict | None:
+    """Crea un Contacto. Devuelve None si ESPOCRM_API_KEY no está configurada."""
+    return _crear("Contact", {"lastName": nombre, "emailAddress": email, "phoneNumber": telefono})
+
+
+def listar_cuentas(texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Busca/lista Cuentas (empresas/clientes)."""
+    return _listar("Account", texto=texto, limite=limite)
+
+
+def crear_cuenta(nombre: str, sitio_web: str = "") -> dict | None:
+    """Crea una Cuenta. Devuelve None si ESPOCRM_API_KEY no está configurada."""
+    return _crear("Account", {"name": nombre, "website": sitio_web})

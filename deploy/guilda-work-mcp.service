@@ -1,0 +1,27 @@
+# Plantilla de unidad systemd para mcp_server_remoto.py en un VPS Linux
+# (Fase MCP — ver HOSTING.md, sección "MCP remoto (ChatGPT)"). Copia a
+# /etc/systemd/system/guilda-work-mcp.service, ajusta USUARIO y las
+# rutas, y luego:
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now guilda-work-mcp
+#
+# Mismo patrón que guilda-work.service (serve.py) — proceso aparte, se
+# reinicia solo si muere o el servidor arranca. Requiere las dependencias
+# de requirements-mcp.txt instaladas en el mismo .venv.
+
+[Unit]
+Description=Guilda Work - servidor MCP remoto para ChatGPT (mcp_server_remoto.py)
+After=network.target
+
+[Service]
+Type=simple
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python mcp_server_remoto.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

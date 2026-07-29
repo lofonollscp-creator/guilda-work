@@ -1,15 +1,19 @@
-"""Herramientas del Asistente IA (OpenRouter): mismo catálogo que expone
-mcp_server.py a Claude/Codex vía MCP, pero en formato "tools" de OpenAI
-(que OpenRouter también acepta) para que el asistente dentro de la propia
-app pueda hacer exactamente lo mismo.
+"""Herramientas del Asistente IA (OpenRouter): mismo catálogo de
+notas/tareas/correo que expone mcp_server.py a Claude/Codex vía MCP
+(desde la Fase MCP, mcp_server.py también expone el resto del stack
+Docker — CRM/Drive/etc., ver mcp_tools.py —, pero ese catálogo ampliado
+no forma parte de este asistente interno, que se queda solo con lo
+propio de Guilda Work), en formato "tools" de OpenAI (que OpenRouter
+también acepta) para que el asistente dentro de la propia app pueda
+hacer exactamente lo mismo.
 
 No hay lógica de negocio duplicada: `ejecutar()` llama directamente a las
-funciones ya definidas en mcp_server.py (que a su vez son wrappers finos
-sobre app/db.py, app/correo.py y app/export.py) — @mcp.tool() de FastMCP no
-envuelve la función, la deja invocable como cualquier función normal de
-Python (verificado: `type(mcp_server.listar_notas) is function`).
+funciones ya definidas en mcp_tools.py (que a su vez son wrappers finos
+sobre app/db.py, app/correo.py y app/export.py) — al no llevar decorador
+`@mcp.tool()` (ver mcp_tools.py), son invocables como cualquier función
+normal de Python (verificado: `type(mcp_tools.listar_notas) is function`).
 """
-import mcp_server
+import mcp_tools
 from app.correo import ErrorCorreo
 
 
@@ -311,19 +315,19 @@ def necesita_confirmacion(nombre: str, modo_autonomo: bool) -> bool:
 
 
 def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
-    """Ejecuta una tool "como" `usuario_id` — mcp_server.py no expone ningún
-    parámetro de usuario en sus tools (un cliente MCP externo como Claude
-    Code no tiene ese concepto), así que se fija temporalmente vía la
-    contextvar `_usuario_id_actual` que sus funciones internas consultan."""
+    """Ejecuta una tool "como" `usuario_id` — ninguna tool de mcp_tools.py
+    expone un parámetro de usuario (un cliente MCP externo como Claude Code
+    no tiene ese concepto), así que se fija temporalmente vía la contextvar
+    `_usuario_id_actual` que sus funciones internas consultan."""
     if nombre not in _NOMBRES_VALIDOS:
         raise ErrorHerramientaIA(f"Herramienta desconocida: '{nombre}'.")
-    funcion = getattr(mcp_server, nombre, None)
+    funcion = getattr(mcp_tools, nombre, None)
     if funcion is None:
-        raise ErrorHerramientaIA(f"Herramienta '{nombre}' no está implementada en mcp_server.")
-    token = mcp_server._usuario_id_actual.set(usuario_id)
+        raise ErrorHerramientaIA(f"Herramienta '{nombre}' no está implementada en mcp_tools.")
+    token = mcp_tools._usuario_id_actual.set(usuario_id)
     try:
         return funcion(**argumentos)
     except (ValueError, ErrorCorreo) as e:
         raise ErrorHerramientaIA(str(e)) from e
     finally:
-        mcp_server._usuario_id_actual.reset(token)
+        mcp_tools._usuario_id_actual.reset(token)

@@ -55,6 +55,16 @@ oidc:
   subject_identifiers:
     supported_types:
       - public
+  # Registro Dinámico de Cliente (RFC7591), desactivado por defecto en
+  # Hydra — lo exige ChatGPT para darse de alta solo como cliente OAuth2
+  # del servidor MCP remoto (Fase MCP, ver mcp_server_remoto.py y
+  # HOSTING.md). A diferencia del resto de clientes de este Hydra
+  # (Outline/Element/EspoCRM/Nextcloud, dados de alta a mano con
+  # scripts/registrar_cliente_hydra.py), ChatGPT se registra solo la
+  # primera vez que se conecta — no hace falta ningún paso manual para
+  # él en concreto.
+  dynamic_client_registration:
+    enabled: true
 
 log:
   level: info

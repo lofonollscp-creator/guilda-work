@@ -1,0 +1,147 @@
+"""Tests de mcp_tools.py — el módulo compartido de tools entre
+mcp_server.py (stdio) y mcp_server_remoto.py (streamable-http/OAuth).
+
+No se prueba cada tool una por una (las de notas/tareas/correo ya tienen
+cobertura indirecta a través de app/db.py y tests/test_ia_herramientas.py,
+que las ejecuta vía app/ia_herramientas.py:ejecutar) — el foco aquí es:
+1) que TOOLS/registrar_tools sigan expuestas y coherentes tras el
+   refactor que las sacó de mcp_server.py, y
+2) que los wrappers finos de las herramientas EXTERNAS nuevas (CRM,
+   Drive, OpenProject, Chatwoot, Metabase, n8n, Outline, Synapse, MinIO,
+   Uptime Kuma) llamen de verdad a la función correcta del cliente
+   correspondiente con los argumentos correctos — mockeando esos
+   clientes, sin ningún servicio real levantado.
+"""
+from mcp.server.fastmcp import FastMCP
+
+import mcp_tools as mt
+
+
+def test_tools_no_tiene_nombres_duplicados():
+    nombres = [t.__name__ for t in mt.TOOLS]
+    assert len(nombres) == len(set(nombres))
+
+
+def test_tools_tiene_58_herramientas():
+    assert len(mt.TOOLS) == 58
+
+
+def test_registrar_tools_las_registra_todas():
+    mcp = FastMCP("test")
+    mt.registrar_tools(mcp)
+    assert len(mcp._tool_manager.list_tools()) == len(mt.TOOLS)
+
+
+def test_listar_notas_sigue_funcionando_tras_el_refactor(usuario_id):
+    resultado = mt.crear_nota("nota de prueba")
+    assert resultado["texto"] == "nota de prueba"
+    assert any(n["texto"] == "nota de prueba" for n in mt.listar_notas())
+
+
+# --- CRM (EspoCRM) -----------------------------------------------------------
+
+def test_crm_listar_leads_delega_en_espocrm(monkeypatch):
+    monkeypatch.setattr(mt.espocrm, "listar_leads", lambda **k: [{"id": "1"}])
+    assert mt.crm_listar_leads(texto="Ana") == [{"id": "1"}]
+
+
+def test_crm_crear_lead_delega_en_espocrm(monkeypatch):
+    capturado = {}
+
+    def fake_crear_lead(nombre, **k):
+        capturado["nombre"] = nombre
+        return {"id": "l1"}
+
+    monkeypatch.setattr(mt.espocrm, "crear_lead", fake_crear_lead)
+    assert mt.crm_crear_lead("Ana García")["id"] == "l1"
+    assert capturado["nombre"] == "Ana García"
+
+
+# --- Drive (Nextcloud) --------------------------------------------------------
+
+def test_drive_listar_archivos_delega_en_nextcloud(monkeypatch):
+    monkeypatch.setattr(mt.nextcloud, "listar_archivos", lambda carpeta: [{"nombre": "a.pdf"}])
+    assert mt.drive_listar_archivos("Lueira") == [{"nombre": "a.pdf"}]
+
+
+def test_drive_subir_archivo_codifica_texto_a_bytes(monkeypatch):
+    capturado = {}
+
+    def fake_subir(ruta, contenido):
+        capturado["ruta"] = ruta
+        capturado["contenido"] = contenido
+        return {"ruta": ruta, "subido": True}
+
+    monkeypatch.setattr(mt.nextcloud, "subir_archivo", fake_subir)
+    mt.drive_subir_archivo("Lueira/nota.txt", "hola")
+    assert capturado["contenido"] == b"hola"
+
+
+# --- OpenProject ---------------------------------------------------------------
+
+def test_proyectos_crear_tarea_delega_en_openproject(monkeypatch):
+    capturado = {}
+
+    def fake_crear(proyecto_id, asunto, tipo_id=1):
+        capturado["args"] = (proyecto_id, asunto, tipo_id)
+        return {"id": 5}
+
+    monkeypatch.setattr(mt.openproject, "crear_paquete_trabajo", fake_crear)
+    assert mt.proyectos_crear_tarea(1, "Nueva")["id"] == 5
+    assert capturado["args"] == (1, "Nueva", 1)
+
+
+# --- Chatwoot --------------------------------------------------------------------
+
+def test_soporte_responder_conversacion_delega_en_chatwoot(monkeypatch):
+    monkeypatch.setattr(mt.chatwoot, "responder_conversacion", lambda cid, texto: {"id": cid, "content": texto})
+    assert mt.soporte_responder_conversacion(3, "gracias") == {"id": 3, "content": "gracias"}
+
+
+# --- Metabase ---------------------------------------------------------------------
+
+def test_analitica_ejecutar_pregunta_delega_en_metabase(monkeypatch):
+    monkeypatch.setattr(mt.metabase, "ejecutar_pregunta", lambda pid: {"columnas": [], "filas": []})
+    assert mt.analitica_ejecutar_pregunta(1) == {"columnas": [], "filas": []}
+
+
+# --- n8n -----------------------------------------------------------------------------
+
+def test_automatizaciones_ejecutar_flujo_delega_en_n8n(monkeypatch):
+    monkeypatch.setattr(mt.n8n, "ejecutar_flujo", lambda fid: {"data": {"finished": True}})
+    assert mt.automatizaciones_ejecutar_flujo("42")["data"]["finished"] is True
+
+
+# --- Outline -------------------------------------------------------------------------
+
+def test_documentacion_crear_delega_en_outline(monkeypatch):
+    capturado = {}
+
+    def fake_crear(coleccion_id, titulo, texto="", publicar=True):
+        capturado["args"] = (coleccion_id, titulo, texto, publicar)
+        return {"id": "d1"}
+
+    monkeypatch.setattr(mt.outline, "crear_documento", fake_crear)
+    assert mt.documentacion_crear("col1", "Título")["id"] == "d1"
+    assert capturado["args"] == ("col1", "Título", "", True)
+
+
+# --- Synapse -------------------------------------------------------------------------
+
+def test_chat_enviar_mensaje_delega_en_synapse(monkeypatch):
+    monkeypatch.setattr(mt.synapse, "enviar_mensaje", lambda sala, texto: {"event_id": "e1"})
+    assert mt.chat_enviar_mensaje("!sala:matrix.local", "hola") == {"event_id": "e1"}
+
+
+# --- MinIO ---------------------------------------------------------------------------
+
+def test_almacenamiento_url_descarga_delega_en_minio(monkeypatch):
+    monkeypatch.setattr(mt.minio_cliente, "url_descarga", lambda bucket, nombre, expira_minutos=60: "https://url-firmada")
+    assert mt.almacenamiento_url_descarga("b", "f.pdf") == "https://url-firmada"
+
+
+# --- Uptime Kuma (solo lectura) -----------------------------------------------------
+
+def test_monitorizacion_listar_estado_delega_en_uptime_kuma(monkeypatch):
+    monkeypatch.setattr(mt.uptime_kuma, "listar_monitores", lambda: [{"nombre": "Guilda Work", "estado": "activo"}])
+    assert mt.monitorizacion_listar_estado() == [{"nombre": "Guilda Work", "estado": "activo"}]

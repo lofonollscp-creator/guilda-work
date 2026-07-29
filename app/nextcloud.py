@@ -32,6 +32,9 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
+
+_WEBDAV_NS = {"d": "DAV:"}
 
 NEXTCLOUD_URL = os.environ.get("HERRAMIENTA_NEXTCLOUD_URL", "http://127.0.0.1:8016")
 NEXTCLOUD_ADMIN_USER = os.environ.get("NEXTCLOUD_ADMIN_USER")
@@ -143,3 +146,117 @@ def crear_espacio_tenant(nombre_tenant: str) -> None:
         return
     _crear_grupo(nombre_tenant)
     _crear_carpeta_de_grupo(nombre_tenant)
+
+
+# --- Archivos vía WebDAV (Fase MCP) ------------------------------------------
+#
+# A diferencia de la API de Provisioning (OCS, JSON), WebDAV habla XML y
+# usa métodos HTTP propios (PROPFIND/SEARCH) — de ahí un helper de
+# petición aparte. Opera sobre el espacio de archivos del propio
+# NEXTCLOUD_ADMIN_USER (no hay ningún concepto de tenant aquí, mismo
+# criterio ya acordado para el MCP: un único administrador de confianza,
+# ver HOSTING.md sección MCP) — para archivos de un tenant concreto, usa
+# la ruta del Group Folder correspondiente, ej. "Lueira/contrato.pdf".
+
+_DAV_BASE = "/remote.php/dav/files"
+
+
+def _dav_url(ruta: str) -> str:
+    ruta = ruta.strip("/")
+    return f"{NEXTCLOUD_URL}{_DAV_BASE}/{urllib.parse.quote(NEXTCLOUD_ADMIN_USER)}/{urllib.parse.quote(ruta)}"
+
+
+def _peticion_webdav(url: str, *, metodo: str, cuerpo: bytes | None = None, cabeceras_extra: dict | None = None):
+    cabeceras = {**_cabecera_auth(), **(cabeceras_extra or {})}
+    req = urllib.request.Request(url, data=cuerpo, headers=cabeceras, method=metodo)
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS) as resp:
+            return resp.status, resp.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read()
+    except urllib.error.URLError as e:
+        raise ErrorNextcloud(
+            f"No se ha podido conectar con Nextcloud ({url}). ¿Está levantado el contenedor? Detalle: {e.reason}"
+        ) from e
+    except TimeoutError as e:
+        raise ErrorNextcloud(f"Tiempo de espera agotado al contactar con Nextcloud ({url}).")
+
+
+def _parsear_multistatus(cuerpo_xml: bytes, ruta_base: str) -> list[dict]:
+    raiz = ET.fromstring(cuerpo_xml)
+    resultado = []
+    for respuesta in raiz.findall("d:response", _WEBDAV_NS):
+        href = respuesta.findtext("d:href", default="", namespaces=_WEBDAV_NS)
+        nombre = urllib.parse.unquote(href.rstrip("/").rsplit("/", 1)[-1])
+        if not nombre or (ruta_base and href.rstrip("/").endswith(ruta_base.rstrip("/"))):
+            continue  # la propia carpeta consultada también aparece en el listado
+        propstat = respuesta.find("d:propstat", _WEBDAV_NS)
+        prop = propstat.find("d:prop", _WEBDAV_NS) if propstat is not None else None
+        es_carpeta = prop is not None and prop.find("d:resourcetype/d:collection", _WEBDAV_NS) is not None
+        tamano = prop.findtext("d:getcontentlength", default=None, namespaces=_WEBDAV_NS) if prop is not None else None
+        resultado.append({
+            "nombre": nombre,
+            "es_carpeta": es_carpeta,
+            "tamano_bytes": int(tamano) if tamano else None,
+        })
+    return resultado
+
+
+def listar_archivos(carpeta: str = "") -> list[dict]:
+    """Lista archivos/carpetas de `carpeta` (ruta relativa al Drive del
+    administrador, ej. "Lueira" para el Group Folder de ese tenant). Vacía
+    (`""`) lista la raíz. Devuelve [] si Nextcloud no está configurado."""
+    if not NEXTCLOUD_ADMIN_USER or not NEXTCLOUD_ADMIN_PASSWORD:
+        return []
+    url = _dav_url(carpeta)
+    estado, cuerpo = _peticion_webdav(
+        url, metodo="PROPFIND", cabeceras_extra={"Depth": "1", "Content-Type": "application/xml"},
+    )
+    if estado != 207:
+        raise ErrorNextcloud(f"No se ha podido listar '{carpeta}' en Nextcloud (HTTP {estado}).")
+    return _parsear_multistatus(cuerpo, carpeta)
+
+
+def subir_archivo(ruta: str, contenido: bytes) -> dict:
+    """Sube (o sobrescribe) un archivo en `ruta` (ej. "Lueira/contrato.pdf")."""
+    if not NEXTCLOUD_ADMIN_USER or not NEXTCLOUD_ADMIN_PASSWORD:
+        raise ErrorNextcloud("Nextcloud no está configurado (falta NEXTCLOUD_ADMIN_USER/PASSWORD).")
+    estado, _ = _peticion_webdav(_dav_url(ruta), metodo="PUT", cuerpo=contenido)
+    if estado not in (200, 201, 204):
+        raise ErrorNextcloud(f"No se ha podido subir '{ruta}' a Nextcloud (HTTP {estado}).")
+    return {"ruta": ruta, "subido": True}
+
+
+def descargar_archivo(ruta: str) -> bytes:
+    """Descarga el contenido de un archivo por su ruta."""
+    if not NEXTCLOUD_ADMIN_USER or not NEXTCLOUD_ADMIN_PASSWORD:
+        raise ErrorNextcloud("Nextcloud no está configurado (falta NEXTCLOUD_ADMIN_USER/PASSWORD).")
+    estado, cuerpo = _peticion_webdav(_dav_url(ruta), metodo="GET")
+    if estado != 200:
+        raise ErrorNextcloud(f"No se ha podido descargar '{ruta}' de Nextcloud (HTTP {estado}).")
+    return cuerpo
+
+
+def buscar_archivos(texto: str, limite: int = 20) -> list[dict]:
+    """Busca archivos por nombre en todo el Drive del administrador (vía
+    WebDAV SEARCH/DASL, soportado de forma nativa por Nextcloud)."""
+    if not NEXTCLOUD_ADMIN_USER or not NEXTCLOUD_ADMIN_PASSWORD:
+        return []
+    cuerpo_busqueda = f"""<?xml version="1.0"?>
+<d:searchrequest xmlns:d="DAV:">
+  <d:basicsearch>
+    <d:select><d:prop><d:displayname/><d:getcontentlength/><d:resourcetype/></d:prop></d:select>
+    <d:from><d:scope><d:href>{_DAV_BASE}/{urllib.parse.quote(NEXTCLOUD_ADMIN_USER)}</d:href><d:depth>infinity</d:depth></d:scope></d:from>
+    <d:where><d:like><d:prop><d:displayname/></d:prop><d:literal>%{texto}%</d:literal></d:like></d:where>
+    <d:limit><d:nresults>{limite}</d:nresults></d:limit>
+  </d:basicsearch>
+</d:searchrequest>"""
+    estado, cuerpo = _peticion_webdav(
+        f"{NEXTCLOUD_URL}{_DAV_BASE}",
+        metodo="SEARCH",
+        cuerpo=cuerpo_busqueda.encode("utf-8"),
+        cabeceras_extra={"Content-Type": "text/xml"},
+    )
+    if estado != 207:
+        raise ErrorNextcloud(f"No se ha podido buscar '{texto}' en Nextcloud (HTTP {estado}).")
+    return _parsear_multistatus(cuerpo, "")

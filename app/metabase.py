@@ -70,3 +70,46 @@ def crear_usuario(email: str, nombre: str = "", apellidos: str = "") -> int | No
         mensaje = cuerpo.get("message") or cuerpo.get("errors") or cuerpo
         raise ErrorMetabase(f"No se ha podido crear el usuario en Metabase: {mensaje}")
     return cuerpo["id"]
+
+
+# --- Preguntas/dashboards (Fase MCP: consultas para un asistente) -----------
+#
+# Solo ejecuta preguntas ("cards") y dashboards YA CREADOS desde la propia
+# UI de Metabase — no genera SQL nuevo por prompt, evita el riesgo de que
+# un prompt construya una consulta arbitraria contra la base de datos.
+
+def listar_preguntas() -> list[dict]:
+    """Lista las preguntas/consultas guardadas en Metabase. [] si
+    METABASE_API_KEY no está configurada."""
+    if not METABASE_API_KEY:
+        return []
+    estado, cuerpo = _peticion(f"{METABASE_URL}/api/card")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("errors") or cuerpo
+        raise ErrorMetabase(f"No se han podido listar las preguntas de Metabase: {mensaje}")
+    return cuerpo if isinstance(cuerpo, list) else cuerpo.get("data", [])
+
+
+def ejecutar_pregunta(pregunta_id: int) -> dict:
+    """Ejecuta una pregunta guardada y devuelve sus resultados (filas +
+    columnas)."""
+    if not METABASE_API_KEY:
+        raise ErrorMetabase("METABASE_API_KEY no está configurada.")
+    estado, cuerpo = _peticion(f"{METABASE_URL}/api/card/{pregunta_id}/query", metodo="POST")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("errors") or cuerpo
+        raise ErrorMetabase(f"No se ha podido ejecutar la pregunta {pregunta_id} de Metabase: {mensaje}")
+    datos = cuerpo.get("data", {})
+    return {"columnas": [c["name"] for c in datos.get("cols", [])], "filas": datos.get("rows", [])}
+
+
+def listar_dashboards() -> list[dict]:
+    """Lista los dashboards guardados en Metabase. [] si METABASE_API_KEY
+    no está configurada."""
+    if not METABASE_API_KEY:
+        return []
+    estado, cuerpo = _peticion(f"{METABASE_URL}/api/dashboard")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("errors") or cuerpo
+        raise ErrorMetabase(f"No se han podido listar los dashboards de Metabase: {mensaje}")
+    return cuerpo if isinstance(cuerpo, list) else cuerpo.get("data", [])

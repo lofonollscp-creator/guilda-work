@@ -184,7 +184,10 @@ cwd = "/ruta/a/ELEGANZA"
 **Claude Desktop**: en su configuración de servidores MCP (`claude_desktop_config.json`),
 añade una entrada equivalente con `command`/`args`/`cwd` apuntando a este proyecto.
 
-Tools disponibles (27): `listar_notas`/`crear_nota`/`editar_nota`,
+Tools disponibles (58, en `mcp_tools.py` — compartidas entre
+`mcp_server.py` y `mcp_server_remoto.py`, ver más abajo):
+
+**Propias de Guilda Work (27)**: `listar_notas`/`crear_nota`/`editar_nota`,
 `listar_tareas`/`crear_tarea`/`editar_tarea`/`completar_tarea`,
 `consultar_calendario`, `listar_cuentas_correo`/`sincronizar_correo`
 (todas las carpetas IMAP se descubren y sincronizan solas),
@@ -201,10 +204,42 @@ es la que de verdad lo manda — dale a tu asistente la instrucción de
 confirmar contigo el contenido antes de llamar a esa segunda tool. El `bcc`
 nunca viaja como cabecera visible del mensaje enviado.
 
+**Del resto del stack Docker (31)**: prefijo `crm_*` (EspoCRM — Leads/
+Contactos/Cuentas), `drive_*` (Nextcloud — listar/buscar/subir/descargar
+archivos), `proyectos_*` (OpenProject), `soporte_*` (Chatwoot —
+conversaciones), `analitica_*` (Metabase — preguntas/dashboards ya
+guardados, nunca SQL nuevo por prompt), `automatizaciones_*` (n8n —
+ejecutar flujos ya existentes, nunca crear/modificar uno), `documentacion_*`
+(Outline), `chat_*` (Synapse/Matrix), `almacenamiento_*` (MinIO) y
+`monitorizacion_listar_estado` (Uptime Kuma — **solo lectura**, no tiene
+API de escritura fuera de Socket.IO). Cada una es opcional por separado:
+si su variable de entorno/token no está configurada, la tool de solo
+lectura devuelve una lista vacía y la de escritura falla con un mensaje
+claro, sin tumbar el resto del servidor. **Vaultwarden queda excluido a
+propósito de todo esto**, bajo ningún concepto — es un gestor de
+contraseñas, no se expone por MCP.
+
+Sin filtrado por tenant: el MCP actúa como un único administrador global
+de confianza, igual que con notas/tareas — mismo criterio ya usado en
+`app/rutas_backoffice.py`.
+
+### Conector remoto para ChatGPT
+
+A diferencia de Claude Code/Desktop/Codex CLI (servidor local `stdio`, sin
+autenticación — confianza del propio sistema operativo), **ChatGPT solo
+admite servidores MCP remotos por HTTPS, con OAuth 2.1 y Registro
+Dinámico de Cliente** — no hay forma de conectarlo al `mcp_server.py`
+local. Para eso existe `mcp_server_remoto.py`: expone exactamente las
+mismas tools, pero por `streamable-http` y validando cada token contra
+Ory Hydra (ya desplegado como proveedor OAuth2 del resto del stack) en
+vez de gestionar su propio login. Requiere el stack Docker + Hydra
+desplegados de verdad — ver HOSTING.md, sección "MCP remoto (ChatGPT)"
+para el despliegue completo (DNS, `NEXTCLOUD_TRUSTED_DOMAINS`-equivalente
+para Hydra, activar el registro dinámico de cliente...). No aplica para
+uso puramente local en este PC.
+
 Fuera de alcance por ahora: sincronización COM en vivo con Outlook Classic
-(solo hay import/export por archivo `.ics`/`.csv`) y un conector remoto para
-ChatGPT (el soporte actual es MCP local vía stdio, pensado para Claude
-Code/Desktop y Codex CLI).
+(solo hay import/export por archivo `.ics`/`.csv`).
 
 ## Zona horaria
 

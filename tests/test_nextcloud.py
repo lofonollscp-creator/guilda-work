@@ -1,7 +1,21 @@
 """Tests del cliente de Nextcloud (app/nextcloud.py) — mismo criterio que
 tests/test_espocrm.py: se mockea nextcloud._peticion, sin un Nextcloud
 de verdad."""
+import pytest
+
 from app import nextcloud
+
+_PROPFIND_RESPUESTA = b"""<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:">
+  <d:response>
+    <d:href>/remote.php/dav/files/admin/Lueira/</d:href>
+    <d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop></d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/files/admin/Lueira/contrato.pdf</d:href>
+    <d:propstat><d:prop><d:resourcetype/><d:getcontentlength>1024</d:getcontentlength></d:prop></d:propstat>
+  </d:response>
+</d:multistatus>"""
 
 
 def test_crear_espacio_tenant_sin_credenciales_no_hace_nada(monkeypatch):
@@ -84,6 +98,83 @@ def test_crear_espacio_tenant_carpeta_ya_existente_es_idempotente(monkeypatch):
     assert ("POST", f"{nextcloud.NEXTCLOUD_URL}/apps/groupfolders/folders?format=json") not in [
         (m, u) for m, u in llamadas
     ]
+
+
+def test_listar_archivos_sin_credenciales_devuelve_vacio(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", None)
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", None)
+    assert nextcloud.listar_archivos("Lueira") == []
+
+
+def test_listar_archivos_parsea_el_multistatus(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+
+    def fake_peticion_webdav(url, *, metodo, cuerpo=None, cabeceras_extra=None):
+        assert metodo == "PROPFIND"
+        return 207, _PROPFIND_RESPUESTA
+
+    monkeypatch.setattr(nextcloud, "_peticion_webdav", fake_peticion_webdav)
+    resultado = nextcloud.listar_archivos("Lueira")
+    assert resultado == [{"nombre": "contrato.pdf", "es_carpeta": False, "tamano_bytes": 1024}]
+
+
+def test_listar_archivos_error_lanza_excepcion(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+    monkeypatch.setattr(nextcloud, "_peticion_webdav", lambda *a, **k: (404, b""))
+    with pytest.raises(nextcloud.ErrorNextcloud):
+        nextcloud.listar_archivos("NoExiste")
+
+
+def test_subir_archivo_ok(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+    capturado = {}
+
+    def fake_peticion_webdav(url, *, metodo, cuerpo=None, cabeceras_extra=None):
+        capturado["metodo"] = metodo
+        capturado["cuerpo"] = cuerpo
+        return 201, b""
+
+    monkeypatch.setattr(nextcloud, "_peticion_webdav", fake_peticion_webdav)
+    resultado = nextcloud.subir_archivo("Lueira/nota.txt", b"hola")
+    assert resultado == {"ruta": "Lueira/nota.txt", "subido": True}
+    assert capturado["metodo"] == "PUT"
+    assert capturado["cuerpo"] == b"hola"
+
+
+def test_subir_archivo_sin_credenciales_lanza_excepcion(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", None)
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", None)
+    with pytest.raises(nextcloud.ErrorNextcloud):
+        nextcloud.subir_archivo("Lueira/nota.txt", b"hola")
+
+
+def test_descargar_archivo_ok(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+    monkeypatch.setattr(nextcloud, "_peticion_webdav", lambda *a, **k: (200, b"contenido real"))
+    assert nextcloud.descargar_archivo("Lueira/nota.txt") == b"contenido real"
+
+
+def test_buscar_archivos_sin_credenciales_devuelve_vacio(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", None)
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", None)
+    assert nextcloud.buscar_archivos("contrato") == []
+
+
+def test_buscar_archivos_ok(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+
+    def fake_peticion_webdav(url, *, metodo, cuerpo=None, cabeceras_extra=None):
+        assert metodo == "SEARCH"
+        return 207, _PROPFIND_RESPUESTA
+
+    monkeypatch.setattr(nextcloud, "_peticion_webdav", fake_peticion_webdav)
+    resultado = nextcloud.buscar_archivos("contrato")
+    assert any(r["nombre"] == "contrato.pdf" for r in resultado)
 
 
 def test_crear_espacio_tenant_error_real_lanza_excepcion(monkeypatch):

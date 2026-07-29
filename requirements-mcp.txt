@@ -1,1 +1,4 @@
 mcp>=1.0
+# Único cliente HTTP que no es urllib puro en todo el proyecto — el
+# protocolo de firma S3 (SigV4) es real y complejo, ver app/minio_cliente.py.
+minio>=7.2

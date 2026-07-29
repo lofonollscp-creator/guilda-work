@@ -92,3 +92,57 @@ def crear_usuario(email: str, contrasena: str, nombre: str = "", apellidos: str 
             return existente
     mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
     raise ErrorOpenProject(f"No se ha podido crear el usuario en OpenProject: {mensaje}")
+
+
+# --- Paquetes de trabajo (Fase MCP: consultas/altas para un asistente) ------
+
+def listar_proyectos() -> list[dict]:
+    """Lista los proyectos existentes — para saber a qué `proyecto_id`
+    apuntar al crear un paquete de trabajo."""
+    if not OPENPROJECT_API_TOKEN:
+        return []
+    estado, cuerpo = _peticion(f"{OPENPROJECT_URL}/api/v3/projects")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorOpenProject(f"No se han podido listar los proyectos de OpenProject: {mensaje}")
+    return cuerpo.get("_embedded", {}).get("elements", [])
+
+
+def listar_paquetes_trabajo(proyecto_id: int | None = None, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca paquetes de trabajo (tareas). `proyecto_id` limita a un
+    proyecto; sin él, busca en todos."""
+    if not OPENPROJECT_API_TOKEN:
+        return []
+    base = (
+        f"{OPENPROJECT_URL}/api/v3/projects/{proyecto_id}/work_packages"
+        if proyecto_id is not None
+        else f"{OPENPROJECT_URL}/api/v3/work_packages"
+    )
+    parametros = {"pageSize": limite}
+    if texto:
+        parametros["filters"] = json.dumps([{"subject": {"operator": "~", "values": [texto]}}])
+    estado, cuerpo = _peticion(f"{base}?{urllib.parse.urlencode(parametros)}")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorOpenProject(f"No se han podido listar los paquetes de trabajo de OpenProject: {mensaje}")
+    return cuerpo.get("_embedded", {}).get("elements", [])
+
+
+def crear_paquete_trabajo(proyecto_id: int, asunto: str, tipo_id: int = 1) -> dict:
+    """Crea un paquete de trabajo (tarea) en un proyecto. `tipo_id`: 1 es
+    "Task" en la configuración por defecto de OpenProject — confirma el id
+    real contra `GET /api/v3/types` si el proyecto usa tipos distintos."""
+    if not OPENPROJECT_API_TOKEN:
+        raise ErrorOpenProject("OPENPROJECT_API_TOKEN no está configurado.")
+    estado, cuerpo = _peticion(
+        f"{OPENPROJECT_URL}/api/v3/projects/{proyecto_id}/work_packages",
+        metodo="POST",
+        cuerpo={
+            "subject": asunto,
+            "_links": {"type": {"href": f"/api/v3/types/{tipo_id}"}},
+        },
+    )
+    if estado != 201:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorOpenProject(f"No se ha podido crear el paquete de trabajo en OpenProject: {mensaje}")
+    return cuerpo

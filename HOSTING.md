@@ -890,6 +890,73 @@ servidor:
 0 4 * * * /home/guilda/guilda-work/.venv/bin/python -c "from app import db; db.hacer_backup_si_hace_falta()"
 ```
 
+## 10. MCP remoto (ChatGPT)
+
+`mcp_server.py` (local, `stdio`) ya vale para Claude Code/Desktop y Codex
+CLI sin nada de esto — esta sección es solo para conectar **ChatGPT**,
+que exige un servidor MCP remoto por HTTPS con OAuth 2.1 (ver README.md,
+sección "Conector remoto para ChatGPT"). `mcp_server_remoto.py` expone el
+mismo catálogo de tools que el local, pero delega toda la autorización en
+Ory Hydra (ya desplegado en la sección 8.3) — no gestiona logins propios.
+
+**1. Instalar dependencias del servidor MCP** (si no lo hiciste ya para
+`mcp_server.py`):
+```bash
+.venv/bin/pip install -r requirements-mcp.txt
+```
+
+**2. Activar el Registro Dinámico de Cliente en Hydra** — ya está en
+`deploy/hydra/hydra.yml` (`oidc.dynamic_client_registration.enabled: true`),
+solo hace falta recrear el contenedor para que lo recoja:
+```bash
+docker compose up -d --force-recreate hydra
+```
+
+**3. Variables de entorno** (añade a `.env`/`/etc/guilda-work.env`):
+```bash
+MCP_REMOTO_ORIGIN=https://mcp.tu-hostname.sslip.io
+HYDRA_PUBLIC_ORIGIN=https://hydra.tu-hostname.sslip.io   # ya definida si desplegaste Outline/EspoCRM
+MCP_REMOTO_PUERTO=8017
+```
+
+**4. Bloque de Caddy** — ya está en `deploy/Caddyfile`
+(`mcp.HOSTNAME { reverse_proxy localhost:8017 }`), solo falta que Caddy
+recargue la configuración (mismo mecanismo que el resto de subdominios de
+esta guía).
+
+**5. Arrancarlo como proceso persistente** (mismo patrón que `serve.py`
+en la sección 6): copia
+[`deploy/guilda-work-mcp.service`](deploy/guilda-work-mcp.service) a
+`/etc/systemd/system/guilda-work-mcp.service`, ajusta `USUARIO`/rutas, y:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now guilda-work-mcp
+```
+
+**6. Variables de las herramientas que quieras exponer** — cada una es
+opcional por separado (ver README.md): `ESPOCRM_API_KEY`,
+`NEXTCLOUD_ADMIN_USER`/`NEXTCLOUD_ADMIN_PASSWORD` (ya definidas si
+desplegaste el CRM/Drive), `OPENPROJECT_API_TOKEN`,
+`CHATWOOT_AGENT_API_TOKEN` (**token de un agente normal**, generado en su
+propio perfil → Ajustes de acceso a la API — distinto de
+`CHATWOOT_PLATFORM_API_TOKEN`, que solo gestiona altas de usuarios),
+`METABASE_API_KEY`, `N8N_API_KEY`, `OUTLINE_API_TOKEN`,
+`SYNAPSE_BOT_ACCESS_TOKEN` (token de un usuario "bot" dedicado —
+créalo con `register_new_matrix_user` dentro del contenedor de Synapse,
+nunca reutilices el token de una persona real), `MINIO_ROOT_PASSWORD`
+(ya definida), `UPTIME_KUMA_API_KEY`. **Vaultwarden no tiene variable
+aquí a propósito** — queda excluido del MCP bajo cualquier circunstancia.
+
+**7. Verificar**:
+```bash
+curl https://mcp.tu-hostname.sslip.io/.well-known/oauth-protected-resource
+```
+Debería devolver un JSON con `resource`/`authorization_servers` (RFC9728)
+— confirma que el servidor está sirviendo y anuncia Hydra como su
+autorización. La verificación completa (ChatGPT conectándose de verdad,
+flujo OAuth de punta a punta) solo se puede hacer añadiendo el conector
+desde los Ajustes de ChatGPT una vez todo lo de arriba esté desplegado.
+
 ## Migrar de sslip.io a un dominio propio
 
 Cuando compres un dominio:

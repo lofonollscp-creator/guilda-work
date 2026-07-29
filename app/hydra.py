@@ -12,6 +12,7 @@ para la explicación completa de esta asimetría) — de ahí
 `http://127.0.0.1:4445` en vez del nombre de host interno `hydra`."""
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 
 HYDRA_ADMIN_URL = "http://127.0.0.1:4445"
@@ -131,6 +132,32 @@ def registrar_cliente(nombre: str, redirect_uri: str) -> dict:
         mensaje = cuerpo.get("error_description") or cuerpo.get("error") or cuerpo
         raise ErrorHydra(f"No se ha podido registrar el cliente en Hydra: {mensaje}")
     return cuerpo
+
+
+def verificar_token(token: str) -> dict | None:
+    """Introspección de un token de acceso (RFC 7662) contra la Admin API
+    de Hydra — usado por el servidor MCP remoto (`mcp_server_remoto.py`,
+    Fase MCP) para validar los tokens que le manda ChatGPT antes de dejarle
+    ejecutar ninguna tool. Devuelve el cuerpo de la introspección (con
+    `active`, `client_id`, `scope`, `exp`...) si el token es válido, o
+    `None` si no lo es o Hydra no responde 200.
+
+    A diferencia del resto de peticiones de este módulo (JSON), la
+    introspección OAuth2 exige `application/x-www-form-urlencoded`
+    (estándar del RFC, no una elección de Hydra)."""
+    datos = urllib.parse.urlencode({"token": token}).encode("utf-8")
+    cabeceras = {"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
+    req = urllib.request.Request(
+        f"{HYDRA_ADMIN_URL}/admin/oauth2/introspect", data=datos, headers=cabeceras, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS) as resp:
+            if resp.status != 200:
+                return None
+            cuerpo = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+        return None
+    return cuerpo if cuerpo.get("active") else None
 
 
 def aceptar_logout_request(challenge: str) -> str:
