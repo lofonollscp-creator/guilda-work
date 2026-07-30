@@ -842,6 +842,83 @@ services:
       - paperless-data:/usr/src/paperless/data
       - paperless-media:/usr/src/paperless/media
 
+  # Baserow (hojas de cálculo tipo base de datos) — instancia compartida.
+  # Aislamiento real: el Workspace es el propio contenedor de datos de
+  # Baserow (cada base/tabla vive dentro de uno), y un token de base de
+  # datos (creado por `app/baserow.py:aprovisionar_tenant()`) queda
+  # ligado a un único Workspace — confirmado en el spec OpenAPI real, no
+  # solo en la documentación. Sin SSO (confirmado: Enterprise-only,
+  # también en self-hosted) — cada persona inicia sesión con su propia
+  # cuenta de Baserow.
+  #
+  # Imagen todo-en-uno (`baserow/baserow`, backend+frontend+workers en
+  # un solo contenedor) en vez del `docker-compose.no-caddy.yml`
+  # multi-contenedor que ofrece el propio proyecto (8 servicios) — mismo
+  # criterio de mínima huella que Documenso/Paperless-ngx.
+  # `BASEROW_CADDY_ADDRESSES=:80` desactiva el Caddy interno de la
+  # imagen (trae uno propio para HTTPS automático) — sin esto intentaría
+  # pedir un certificado Let's Encrypt real para el dominio público y
+  # entraría en conflicto con el Caddy propio del stack, que es el que
+  # de verdad da el HTTPS aquí. `SECRET_KEY` obligatoria en este modo
+  # (misma lección que `PAPERLESS_SECRET_KEY`: verificar en vivo antes
+  # de asumir que hay una por defecto segura).
+  redis-baserow:
+    image: redis:7-alpine
+    container_name: guilda-work-redis-baserow
+    restart: unless-stopped
+    # Obligatorio — verificado en vivo que sin esto los workers de
+    # Baserow no pueden conectar ("AUTH <password> called without any
+    # password configured for the default user"): la app manda
+    # REDIS_PASSWORD siempre, así que el propio Redis tiene que exigirla
+    # (mismo patrón ya usado en redis-chatwoot, no en redis-outline).
+    command: ["redis-server", "--requirepass", "${BASEROW_REDIS_PASSWORD:-CambiaEstaClaveBaserowRedis2026}"]
+    volumes:
+      - redis-baserow-data:/data
+
+  postgres-baserow:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-baserow
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: baserow
+      POSTGRES_PASSWORD: ${BASEROW_DB_PASSWORD:-CambiaEstaClaveBaserow2026}
+      POSTGRES_DB: baserow
+    volumes:
+      - postgres-baserow-data:/var/lib/postgresql/data
+
+  baserow:
+    image: baserow/baserow:latest
+    container_name: guilda-work-baserow
+    restart: unless-stopped
+    depends_on:
+      - postgres-baserow
+      - redis-baserow
+    environment:
+      DATABASE_HOST: postgres-baserow
+      DATABASE_NAME: baserow
+      DATABASE_USER: baserow
+      DATABASE_PASSWORD: ${BASEROW_DB_PASSWORD:-CambiaEstaClaveBaserow2026}
+      REDIS_HOST: redis-baserow
+      REDIS_PASSWORD: ${BASEROW_REDIS_PASSWORD:-CambiaEstaClaveBaserowRedis2026}
+      SECRET_KEY: ${BASEROW_SECRET_KEY:?define BASEROW_SECRET_KEY (openssl rand -hex 32)}
+      BASEROW_PUBLIC_URL: ${BASEROW_PUBLIC_ORIGIN:-http://127.0.0.1:8020}
+      BASEROW_CADDY_ADDRESSES: ":80"
+      EMAIL_SMTP: "True"
+      EMAIL_SMTP_HOST: ${BASEROW_SMTP_HOST:?define BASEROW_SMTP_HOST}
+      EMAIL_SMTP_PORT: ${BASEROW_SMTP_PORT:-587}
+      EMAIL_SMTP_USER: ${BASEROW_SMTP_USER:-}
+      EMAIL_SMTP_PASSWORD: ${BASEROW_SMTP_PASSWORD:-}
+      EMAIL_SMTP_USE_TLS: "True"
+      FROM_EMAIL: ${BASEROW_SMTP_FROM_ADDRESS:?define BASEROW_SMTP_FROM_ADDRESS}
+    ports:
+      - "127.0.0.1:8020:80"
+    volumes:
+      # Obligatorio — verificado en vivo que sin un volumen montado en
+      # /baserow/data el contenedor se niega a arrancar (avisa por log
+      # y sale con código 1: "Please run baserow with a mounted data
+      # folder... otherwise your data will be lost between runs").
+      - baserow-data:/baserow/data
+
   # FacturaScripts (facturación/contabilidad) — ÚNICA excepción del
   # stack a "un servicio Docker, una instancia": cada tenant necesita su
   # PROPIA instancia física de FacturaScripts (investigado y confirmado
@@ -984,6 +1061,9 @@ volumes:
   postgres-paperless-data:
   paperless-data:
   paperless-media:
+  redis-baserow-data:
+  postgres-baserow-data:
+  baserow-data:
   postgres-facturascripts-data:
   postgres-openproject-data:
   openproject-data:

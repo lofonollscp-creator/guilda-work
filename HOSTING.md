@@ -1092,6 +1092,77 @@ antes (o reasignarlos) para que no queden visibles a otros tenants —
 mismo tipo de limpieza manual que ya hace falta hoy al borrar un tenant
 de FacturaScripts con facturas ya emitidas.
 
+### 8.24 Baserow (hojas de cálculo tipo base de datos)
+
+Híbrido entre Paperless-ngx y Documenso: **sí hay API real para crear el
+Workspace y su token** de un tenant (100% automático, ver
+`app/baserow.py`), pero **no hay API para añadir un usuario ya existente
+a un Workspace** — solo invitación por email + aceptación manual (la
+persona crea su propia cuenta de Baserow, sin SSO — confirmado que SSO
+es Enterprise-only también en self-hosted).
+
+**Paso manual único, antes de dar de alta ningún tenant**: crear el
+primer superusuario admin de Baserow — a diferencia de
+`PAPERLESS_ADMIN_USER`, no hay variable de entorno que lo autocree.
+Registrarse la primera vez desde `https://hojas.tu-hostname` con el
+correo/contraseña que luego irán en `BASEROW_ADMIN_EMAIL`/
+`BASEROW_ADMIN_PASSWORD`.
+
+Añade a `.env`:
+```bash
+BASEROW_DB_PASSWORD=...
+BASEROW_REDIS_PASSWORD=...
+BASEROW_SECRET_KEY=...                  # openssl rand -hex 32 — obligatoria (misma lección que PAPERLESS_SECRET_KEY)
+BASEROW_ADMIN_EMAIL=admin@tu-hostname
+BASEROW_ADMIN_PASSWORD=...              # la misma cuenta creada a mano en el paso anterior
+BASEROW_PUBLIC_ORIGIN=https://hojas.tu-hostname.sslip.io
+BASEROW_SMTP_HOST=...
+BASEROW_SMTP_FROM_ADDRESS=hojas@tu-hostname
+```
+
+**SMTP es un requisito real aquí** (igual que Documenso): sin él, las
+invitaciones a un Workspace no se mandan, solo quedan registradas en los
+logs del worker de Baserow — el admin tendría que ir a buscarlas ahí a
+mano, nada práctico para el día a día.
+
+```bash
+docker compose up -d redis-baserow postgres-baserow baserow
+```
+
+**Flujo normal, sin pasos manuales por tenant salvo la aceptación de
+cada persona**:
+1. `crear_tenant()` provisiona su Workspace + token automáticamente.
+2. `crear_usuario()` con ese tenant asignado dispara la invitación por
+   email al Workspace automáticamente (`app/baserow.py:invitar_usuario`).
+3. La persona abre el correo y acepta — ahí crea su propia contraseña de
+   Baserow (sin SSO, cuenta separada del resto del stack).
+
+**MCP**: `hojas_listar_tablas`/`hojas_listar_filas`/`hojas_crear_fila`
+llevan un primer parámetro `tenant`, cuarto cliente del catálogo con
+este patrón (junto a `facturas_*`/`firmas_*`/`documentos_*`).
+`hojas_crear_fila` espera los nombres de columna de Baserow tal cual
+como claves del diccionario `campos` — hay que consultarlos antes con
+`hojas_listar_tablas`/la propia interfaz de Baserow, no hay
+autodescubrimiento de columnas en estas tools.
+
+**Hallazgos reales verificados en vivo, corregidos en `app/baserow.py`**:
+- Baserow **no rechaza nombres de Workspace duplicados** — a diferencia
+  de EspoCRM/Nextcloud/Paperless-ngx, `POST /api/workspaces/` siempre
+  crea uno nuevo aunque ya exista otro con el mismo nombre.
+  `aprovisionar_tenant()` busca primero por nombre antes de crear, no al
+  revés, para que reintentar no genere Workspaces duplicados.
+- `DELETE /api/workspaces/{id}/` solo manda el Workspace a la papelera
+  (soft delete) — `desaprovisionar_tenant()` hace una segunda llamada a
+  `DELETE /api/trash/workspace/{id}/` para vaciarla y borrarlo de
+  verdad. Incluso así, su token de base de datos sigue aceptándose como
+  credencial válida (devuelve listas vacías en vez de un 401/403
+  explícito) — no hay fuga de datos de otro tenant en ningún caso, solo
+  que el error no es tan explícito como cabría esperar.
+- La invitación a un Workspace exige un campo `base_url` (la URL base
+  de la página de aceptación, confirmado en el propio código fuente del
+  frontend de Baserow: `/workspace-invitation/<token>`) — sin él, la
+  API la rechaza con un 400.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

@@ -517,6 +517,15 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "paperless_user_id", "INTEGER")
         _asegurar_columna(conn, "tenants", "paperless_api_key", "TEXT")
 
+        # Baserow (hojas de cálculo tipo base de datos): instancia
+        # compartida. A diferencia de Paperless-ngx, aquí NO hay un
+        # usuario de servicio propio — el token de base de datos de
+        # Baserow queda ligado directamente al Workspace, no a ningún
+        # usuario (ver app/baserow.py) — solo hace falta guardar el
+        # Workspace y su token.
+        _asegurar_columna(conn, "tenants", "baserow_workspace_id", "INTEGER")
+        _asegurar_columna(conn, "tenants", "baserow_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -836,6 +845,21 @@ def guardar_paperless(tenant_id: int, group_id: int, user_id: int, api_key: str)
         conn.execute(
             "UPDATE tenants SET paperless_group_id = ?, paperless_user_id = ?, paperless_api_key = ? WHERE id = ?",
             (group_id, user_id, api_key, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_baserow(tenant_id: int, workspace_id: int, api_key: str) -> None:
+    """Igual que guardar_paperless: sin pasos manuales,
+    app/baserow.py:aprovisionar_tenant() crea el Workspace y su token
+    por API, esto solo los guarda."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET baserow_workspace_id = ?, baserow_api_key = ? WHERE id = ?",
+            (workspace_id, api_key, tenant_id),
         )
         conn.commit()
     finally:

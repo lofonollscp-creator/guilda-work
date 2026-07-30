@@ -61,6 +61,7 @@ import uuid
 from mcp.server.fastmcp import FastMCP
 
 from app import (
+    baserow,
     chatwoot,
     correo,
     db,
@@ -713,6 +714,41 @@ def documentos_descargar(tenant: str, documento_id: str) -> str:
     return base64.b64encode(contenido).decode("ascii")
 
 
+# --- Hojas (Baserow) — cuarto cliente con parámetro `tenant` -----------------
+#
+# El token de base de datos de Baserow ya está ligado a un único
+# Workspace (ver app/baserow.py) — `tenant` sigue haciendo falta para
+# resolver qué token usar, mismo motivo que facturas_*/firmas_*/documentos_*.
+
+def _api_key_baserow(tenant: str) -> str:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["baserow_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene Baserow aprovisionado "
+            "(sin BASEROW_ADMIN_EMAIL/PASSWORD configuradas, o creado antes de esta integración)."
+        )
+    return fila["baserow_api_key"]
+
+
+def hojas_listar_tablas(tenant: str) -> list[dict]:
+    """Lista las tablas del Workspace de un tenant en Baserow."""
+    return baserow.listar_tablas(_api_key_baserow(tenant))
+
+
+def hojas_listar_filas(tenant: str, tabla_id: int, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca filas de una tabla de un tenant."""
+    return baserow.listar_filas(_api_key_baserow(tenant), tabla_id, texto=texto, limite=limite)
+
+
+def hojas_crear_fila(tenant: str, tabla_id: int, campos: dict) -> dict:
+    """Crea una fila en una tabla de un tenant. `campos`: {"Nombre de
+    columna": valor, ...} — los nombres de columna son las propias
+    claves del diccionario."""
+    return baserow.crear_fila(_api_key_baserow(tenant), tabla_id, campos)
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -756,6 +792,8 @@ TOOLS = [
     firmas_listar_documentos, firmas_crear_documento, firmas_enviar_a_firma, firmas_descargar_firmado,
     # Documentos
     documentos_listar, documentos_subir, documentos_descargar,
+    # Hojas
+    hojas_listar_tablas, hojas_listar_filas, hojas_crear_fila,
 ]
 
 

@@ -362,6 +362,112 @@ def test_backoffice_borrar_tenant_desaprovisiona_paperless(cliente, monkeypatch)
     assert db.obtener_tenant(tenant_id) is None
 
 
+def test_backoffice_crear_tenant_aprovisiona_baserow(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-br@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    llamadas = {}
+
+    def fake_aprovisionar(nombre):
+        llamadas["nombre"] = nombre
+        return {"workspace_id": 5, "api_key": "token-real"}
+
+    monkeypatch.setattr(rutas_backoffice.baserow, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "ConBaserow"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["nombre"] == "ConBaserow"
+    tenant = db.obtener_tenant_por_nombre("ConBaserow")
+    assert tenant["baserow_workspace_id"] == 5
+    assert tenant["baserow_api_key"] == "token-real"
+
+
+def test_backoffice_crear_tenant_sin_baserow_configurado_no_falla(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-br2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinBaserow"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinBaserow") is not None
+
+
+def test_backoffice_crear_tenant_un_fallo_en_baserow_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-br3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(nombre):
+        raise rutas_backoffice.baserow.ErrorBaserow("fallo simulado de Baserow")
+
+    monkeypatch.setattr(rutas_backoffice.baserow, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinBaserow2"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinBaserow2") is not None
+
+
+def test_backoffice_crear_usuario_invita_al_workspace_de_baserow(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-br4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ConWorkspace")
+    db.guardar_baserow(tenant_id, 5, "token-real")
+
+    llamadas = {}
+
+    def fake_invitar(workspace_id, email):
+        llamadas["args"] = (workspace_id, email)
+
+    monkeypatch.setattr(rutas_backoffice.baserow, "invitar_usuario", fake_invitar)
+
+    resp = cliente.post(
+        "/backoffice/usuarios", data={"email": "ana@ejemplo.com", "tenant_id": tenant_id}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert llamadas["args"] == (5, "ana@ejemplo.com")
+
+
+def test_backoffice_crear_usuario_sin_workspace_de_baserow_no_intenta_invitar(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-br5@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("SinWorkspace")
+
+    llamado = []
+    monkeypatch.setattr(rutas_backoffice.baserow, "invitar_usuario", lambda *a: llamado.append(1))
+
+    resp = cliente.post(
+        "/backoffice/usuarios", data={"email": "ana2@ejemplo.com", "tenant_id": tenant_id}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert llamado == []
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_baserow(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-br6@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarBaserow")
+    db.guardar_baserow(tenant_id, 5, "token-real")
+
+    llamadas = {}
+    monkeypatch.setattr(rutas_backoffice.baserow, "desaprovisionar_tenant", lambda wid: llamadas.setdefault("workspace_id", wid))
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["workspace_id"] == 5
+    assert db.obtener_tenant(tenant_id) is None
+
+
 def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin3@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])

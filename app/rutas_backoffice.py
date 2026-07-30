@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject, paperless
+from . import baserow, chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject, paperless
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -80,6 +80,20 @@ def crear_tenant():
                 if resultado is not None:
                     db.guardar_paperless(tenant_id, resultado["group_id"], resultado["user_id"], resultado["api_key"])
             except paperless.ErrorPaperless:
+                pass
+            try:
+                # Workspace + token de base de datos de Baserow (ver
+                # app/baserow.py) — igual que Paperless-ngx, se crea solo
+                # por API; a diferencia de él, invitar a los USUARIOS de
+                # ese tenant al Workspace se hace aparte, en
+                # crear_usuario() (no hay API para añadirlos
+                # directamente, solo invitación+aceptación). Sin
+                # BASEROW_ADMIN_EMAIL/PASSWORD configuradas, esto no
+                # hace nada.
+                resultado = baserow.aprovisionar_tenant(nombre)
+                if resultado is not None:
+                    db.guardar_baserow(tenant_id, resultado["workspace_id"], resultado["api_key"])
+            except baserow.ErrorBaserow:
                 pass
 
     if facturascripts_creado:
@@ -165,6 +179,13 @@ def borrar_tenant(tenant_id: int):
         paperless.desaprovisionar_tenant(tenant["paperless_user_id"], tenant["paperless_group_id"])
     except paperless.ErrorPaperless:
         pass
+    try:
+        # Borra el Workspace de Baserow de este tenant (ver
+        # app/baserow.py:desaprovisionar_tenant) — mismo criterio de
+        # fallo aislado.
+        baserow.desaprovisionar_tenant(tenant["baserow_workspace_id"])
+    except baserow.ErrorBaserow:
+        pass
     db.borrar_tenant(tenant_id)
     return redirect(url_for("backoffice.panel"))
 
@@ -222,6 +243,23 @@ def crear_usuario():
             })
     except metabase.ErrorMetabase as e:
         resultados_alta.append({"servicio": "Metabase", "estado": "error", "detalle": str(e)})
+
+    if tenant_id:
+        tenant = db.obtener_tenant(int(tenant_id))
+        if tenant is not None and tenant["baserow_workspace_id"]:
+            try:
+                # Invitación al Workspace de Baserow de su tenant — no
+                # hay API para añadirlo directamente (ver
+                # app/baserow.py), así que esto solo dispara el correo;
+                # aceptarlo y crear su propia contraseña de Baserow es
+                # cosa suya.
+                baserow.invitar_usuario(tenant["baserow_workspace_id"], email)
+                resultados_alta.append({
+                    "servicio": "Baserow", "estado": "creado",
+                    "detalle": "invitación enviada por email — hay que aceptarla desde ahí",
+                })
+            except baserow.ErrorBaserow as e:
+                resultados_alta.append({"servicio": "Baserow", "estado": "error", "detalle": str(e)})
 
     return render_template(
         "backoffice.html",

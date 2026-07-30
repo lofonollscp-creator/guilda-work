@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_69_herramientas():
-    assert len(mt.TOOLS) == 69
+def test_tools_tiene_72_herramientas():
+    assert len(mt.TOOLS) == 72
 
 
 def test_registrar_tools_las_registra_todas():
@@ -314,3 +314,65 @@ def test_documentos_descargar_codifica_base64(usuario_id, monkeypatch):
 
     import base64
     assert base64.b64decode(resultado) == b"%PDF-descargado"
+
+
+# --- Hojas (Baserow) — cuarto cliente con parámetro `tenant` ----------------
+
+def test_hojas_listar_tablas_resuelve_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConHojas")
+    mt.db.guardar_baserow(tenant_id, 5, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key):
+        capturado["api_key"] = api_key
+        return [{"id": 1, "name": "Clientes"}]
+
+    monkeypatch.setattr(mt.baserow, "listar_tablas", fake_listar)
+    assert mt.hojas_listar_tablas("ConHojas") == [{"id": 1, "name": "Clientes"}]
+    assert capturado["api_key"] == "token-real"
+
+
+def test_hojas_listar_tablas_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.hojas_listar_tablas("NoExiste")
+
+
+def test_hojas_listar_filas_sin_aprovisionar_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinBaserow")
+    with pytest.raises(ValueError):
+        mt.hojas_listar_filas("SinBaserow", 42)
+
+
+def test_hojas_listar_filas_delega_en_baserow(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConHojas2")
+    mt.db.guardar_baserow(tenant_id, 5, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key, tabla_id, texto=None, limite=20):
+        capturado["args"] = (api_key, tabla_id, texto, limite)
+        return [{"id": 1, "field_1": "Ana"}]
+
+    monkeypatch.setattr(mt.baserow, "listar_filas", fake_listar)
+    resultado = mt.hojas_listar_filas("ConHojas2", 42, texto="Ana")
+
+    assert resultado == [{"id": 1, "field_1": "Ana"}]
+    assert capturado["args"] == ("token-real", 42, "Ana", 20)
+
+
+def test_hojas_crear_fila_delega_en_baserow(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConHojas3")
+    mt.db.guardar_baserow(tenant_id, 5, "token-real")
+
+    capturado = {}
+
+    def fake_crear(api_key, tabla_id, campos):
+        capturado["args"] = (api_key, tabla_id, campos)
+        return {"id": 1, "Nombre": "Ana"}
+
+    monkeypatch.setattr(mt.baserow, "crear_fila", fake_crear)
+    resultado = mt.hojas_crear_fila("ConHojas3", 42, {"Nombre": "Ana"})
+
+    assert resultado == {"id": 1, "Nombre": "Ana"}
+    assert capturado["args"] == ("token-real", 42, {"Nombre": "Ana"})

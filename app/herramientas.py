@@ -145,6 +145,17 @@ HERRAMIENTAS = [
         # mismo patrón que Drive/CRM.
         "sso": True,
     },
+    {
+        "id": "hojas",
+        "nombre": "Hojas",
+        "descripcion": "Hojas de cálculo tipo base de datos, listados estructurados (Baserow).",
+        "icono": "🗂️",
+        "url": os.environ.get("HERRAMIENTA_BASEROW_URL", "http://127.0.0.1:8020"),
+        # Sin SSO: confirmado en la documentación oficial que está solo
+        # en el plan Advanced Enterprise, también en self-hosted — mismo
+        # criterio que Documenso/FacturaScripts.
+        "sso": False,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —
