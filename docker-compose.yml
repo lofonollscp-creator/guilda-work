@@ -706,6 +706,60 @@ services:
       # pero se mantiene porque ahí vive la instalación en sí.
       - nextcloud-data:/var/www/html
 
+  # Documenso (firma electrónica) — instancia compartida, como EspoCRM/
+  # Nextcloud, pero SIN SSO (confirmado en la documentación oficial:
+  # "SSO is only available on the Enterprise plan") y SIN aprovisionamiento
+  # por API de Equipos/miembros (verificado en vivo con el spec OpenAPI
+  # real del propio contenedor: 89 endpoints, ninguno de Equipos —
+  # gestión de Equipos y altas de miembros es 100% manual desde su
+  # interfaz web, ver HOSTING.md). El aislamiento entre tenants lo da el
+  # token de API que se genera a mano dentro del Equipo de cada uno.
+  #
+  # NEXT_PRIVATE_ENCRYPTION_KEY/_SECONDARY_KEY: dos claves de cifrado
+  # distintas exigidas por la imagen oficial (rotación de claves), no un
+  # error de copiar/pegar. NEXT_PRIVATE_SIGNING_PASSPHRASE protege el
+  # certificado .p12 (ver HOSTING.md para cómo generar uno autofirmado
+  # con openssl si no hay uno de verdad todavía) que Documenso usa para
+  # firmar criptográficamente cada PDF completado — sin él, el
+  # contenedor ni arranca.
+  postgres-documenso:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-documenso
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: documenso
+      POSTGRES_PASSWORD: ${DOCUMENSO_DB_PASSWORD:-CambiaEstaClaveDocumenso2026}
+      POSTGRES_DB: documenso
+    volumes:
+      - postgres-documenso-data:/var/lib/postgresql/data
+
+  documenso:
+    image: documenso/documenso:latest
+    container_name: guilda-work-documenso
+    restart: unless-stopped
+    depends_on:
+      - postgres-documenso
+    environment:
+      PORT: 3000
+      NEXTAUTH_SECRET: ${DOCUMENSO_NEXTAUTH_SECRET:?define DOCUMENSO_NEXTAUTH_SECRET (openssl rand -hex 32)}
+      NEXT_PRIVATE_ENCRYPTION_KEY: ${DOCUMENSO_ENCRYPTION_KEY:?define DOCUMENSO_ENCRYPTION_KEY (openssl rand -hex 32)}
+      NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY: ${DOCUMENSO_ENCRYPTION_SECONDARY_KEY:?define DOCUMENSO_ENCRYPTION_SECONDARY_KEY (openssl rand -hex 32)}
+      NEXT_PUBLIC_WEBAPP_URL: ${DOCUMENSO_PUBLIC_ORIGIN:-http://127.0.0.1:8018}
+      NEXT_PRIVATE_DATABASE_URL: postgres://documenso:${DOCUMENSO_DB_PASSWORD:-CambiaEstaClaveDocumenso2026}@postgres-documenso:5432/documenso
+      NEXT_PRIVATE_DIRECT_DATABASE_URL: postgres://documenso:${DOCUMENSO_DB_PASSWORD:-CambiaEstaClaveDocumenso2026}@postgres-documenso:5432/documenso
+      NEXT_PRIVATE_SMTP_TRANSPORT: ${DOCUMENSO_SMTP_TRANSPORT:-smtp-auth}
+      NEXT_PRIVATE_SMTP_HOST: ${DOCUMENSO_SMTP_HOST:?define DOCUMENSO_SMTP_HOST}
+      NEXT_PRIVATE_SMTP_PORT: ${DOCUMENSO_SMTP_PORT:-587}
+      NEXT_PRIVATE_SMTP_USERNAME: ${DOCUMENSO_SMTP_USERNAME:-}
+      NEXT_PRIVATE_SMTP_PASSWORD: ${DOCUMENSO_SMTP_PASSWORD:-}
+      NEXT_PRIVATE_SMTP_FROM_NAME: ${DOCUMENSO_SMTP_FROM_NAME:-Guilda Work}
+      NEXT_PRIVATE_SMTP_FROM_ADDRESS: ${DOCUMENSO_SMTP_FROM_ADDRESS:?define DOCUMENSO_SMTP_FROM_ADDRESS}
+      NEXT_PRIVATE_SIGNING_PASSPHRASE: ${DOCUMENSO_SIGNING_PASSPHRASE:?define DOCUMENSO_SIGNING_PASSPHRASE}
+    ports:
+      - "127.0.0.1:8018:3000"
+    volumes:
+      - ./deploy/documenso/cert.p12:/opt/documenso/cert.p12:ro
+
   # FacturaScripts (facturación/contabilidad) — ÚNICA excepción del
   # stack a "un servicio Docker, una instancia": cada tenant necesita su
   # PROPIA instancia física de FacturaScripts (investigado y confirmado
@@ -843,6 +897,7 @@ volumes:
   espocrm-data:
   postgres-nextcloud-data:
   nextcloud-data:
+  postgres-documenso-data:
   postgres-facturascripts-data:
   postgres-openproject-data:
   openproject-data:

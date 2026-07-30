@@ -59,6 +59,7 @@
           <th>Nombre</th>
           <th>Usuarios</th>
           <th>FacturaScripts</th>
+          <th>Documenso</th>
           <th></th>
         </tr>
       </thead>
@@ -86,6 +87,16 @@
             {% endif %}
           </td>
           <td>
+            {% if t.documenso_api_key %}
+            <span class="log-badge log-badge-duracion">token guardado</span>
+            {% else %}
+            <form method="post" action="{{ url_for('backoffice.guardar_documenso_api_key', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
+              <input type="text" name="api_key" placeholder="Pega aquí el token (crear Equipo a mano primero)" required>
+              <button type="submit" class="btn btn-ghost">Guardar</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
             <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
                   onsubmit="return confirm('¿Borrar el tenant {{ t.nombre }}? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.');">
               <button type="submit" class="btn btn-ghost">Borrar</button>
@@ -93,7 +104,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="4" class="empty">Todavía no hay ningún tenant.</td></tr>
+        <tr><td colspan="5" class="empty">Todavía no hay ningún tenant.</td></tr>
         {% endfor %}
       </tbody>
     </table>

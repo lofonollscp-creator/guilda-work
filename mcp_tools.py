@@ -53,6 +53,7 @@ mensaje enviado, solo como destinatario oculto real.
 """
 from __future__ import annotations
 
+import base64
 import contextvars
 import sqlite3
 import uuid
@@ -63,6 +64,7 @@ from app import (
     chatwoot,
     correo,
     db,
+    documenso,
     espocrm,
     export,
     facturascripts,
@@ -621,6 +623,54 @@ def facturas_crear_factura(tenant: str, cliente_codigo: str, lineas: list[dict])
     return facturascripts.crear_factura(url, api_key, cliente_codigo, lineas)
 
 
+# --- Firmas (Documenso) — segundo cliente con parámetro `tenant` -------------
+#
+# Igual que FacturaScripts, `tenant` hace falta aquí porque el
+# aislamiento entre tenants no lo da una instancia física distinta (es
+# una instancia compartida, como EspoCRM/Nextcloud) sino qué token de
+# Equipo se use — sin `tenant`, no habría forma de saber qué Equipo debe
+# ver/crear cada documento. El Equipo y el token se crean a mano (ver
+# HOSTING.md) — no hay API para eso, verificado en vivo (app/documenso.py).
+
+def _api_key_documenso(tenant: str) -> str:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["documenso_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene un token de Documenso guardado "
+            "(crea su Equipo y genera un token desde dentro de él, ver HOSTING.md)."
+        )
+    return fila["documenso_api_key"]
+
+
+def firmas_listar_documentos(tenant: str, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca documentos de firma de un tenant."""
+    return documenso.listar_documentos(_api_key_documenso(tenant), texto=texto, limite=limite)
+
+
+def firmas_crear_documento(tenant: str, titulo: str, contenido_pdf_base64: str, firmantes: list[dict]) -> dict:
+    """Crea un documento para firmar (en borrador, sin enviar todavía).
+    `contenido_pdf_base64`: el PDF codificado en base64. `firmantes`:
+    lista de {"email": str, "nombre": str} — cada uno recibe un único
+    campo de firma en la primera página, posición por defecto."""
+    contenido_pdf = base64.b64decode(contenido_pdf_base64)
+    return documenso.crear_documento(_api_key_documenso(tenant), titulo, contenido_pdf, firmantes)
+
+
+def firmas_enviar_a_firma(tenant: str, documento_id: str) -> dict:
+    """Envía un documento en borrador — manda el email de firma a cada
+    destinatario."""
+    return documenso.enviar_a_firma(_api_key_documenso(tenant), documento_id)
+
+
+def firmas_descargar_firmado(tenant: str, documento_id: str) -> str:
+    """Descarga un documento (PDF en base64 — firmado del todo o no, el
+    propio PDF refleja el estado actual)."""
+    contenido = documenso.descargar_firmado(_api_key_documenso(tenant), documento_id)
+    return base64.b64encode(contenido).decode("ascii")
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -660,6 +710,8 @@ TOOLS = [
     monitorizacion_listar_estado,
     # Facturación
     facturas_listar_clientes, facturas_crear_cliente, facturas_listar_facturas, facturas_crear_factura,
+    # Firmas
+    firmas_listar_documentos, firmas_crear_documento, firmas_enviar_a_firma, firmas_descargar_firmado,
 ]
 
 

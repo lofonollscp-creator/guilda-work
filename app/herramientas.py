@@ -123,6 +123,17 @@ HERRAMIENTAS = [
         # 8.20), mismo patrón que Outline/Element/EspoCRM.
         "sso": True,
     },
+    {
+        "id": "firmas",
+        "nombre": "Firmas",
+        "descripcion": "Firma electrónica de documentos (Documenso).",
+        "icono": "✍️",
+        "url": os.environ.get("HERRAMIENTA_DOCUMENSO_URL", "http://127.0.0.1:8018"),
+        # Sin SSO: confirmado en la documentación oficial de Documenso
+        # que el SSO Portal es una función de pago (Enterprise) — mismo
+        # criterio que OpenProject/Chatwoot/Metabase/Vaultwarden.
+        "sso": False,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —

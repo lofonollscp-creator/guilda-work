@@ -497,6 +497,16 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "facturascripts_admin_pass", "TEXT")
         _asegurar_columna(conn, "tenants", "facturascripts_api_key", "TEXT")
 
+        # Documenso (firma electrónica): a diferencia de FacturaScripts,
+        # aquí la instancia SÍ es compartida (una URL global, ver
+        # HERRAMIENTA_DOCUMENSO_URL) — no hace falta guardar URL/usuario
+        # por tenant, solo el token de API generado a mano dentro del
+        # Equipo de ese tenant (verificado en vivo que no hay API para
+        # crear Equipos/invitar miembros, ver HOSTING.md). Ese token es
+        # lo único que hace falta para que el aislamiento entre tenants
+        # funcione de verdad al llamar a la API de documentos.
+        _asegurar_columna(conn, "tenants", "documenso_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -790,6 +800,18 @@ def guardar_facturascripts_api_key(tenant_id: int, api_key: str) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE tenants SET facturascripts_api_key = ? WHERE id = ?", (api_key, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_documenso_api_key(tenant_id: int, api_key: str) -> None:
+    """El token se genera a mano dentro del Equipo de Documenso de ese
+    tenant (paso manual, ver HOSTING.md) — esto solo lo guarda una vez
+    que el admin lo pega en el backoffice."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET documenso_api_key = ? WHERE id = ?", (api_key, tenant_id))
         conn.commit()
     finally:
         conn.close()

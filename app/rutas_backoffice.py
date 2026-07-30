@@ -116,6 +116,22 @@ def guardar_facturascripts_api_key(tenant_id: int):
     return redirect(url_for("backoffice.panel"))
 
 
+@backoffice_bp.route("/tenants/<int:tenant_id>/documenso-api-key", methods=["POST"])
+@login_required
+@admin_required
+def guardar_documenso_api_key(tenant_id: int):
+    """El Equipo de Documenso y su token se crean a mano — no hay API
+    para eso (verificado en vivo, ver app/documenso.py) — esto solo
+    guarda el token una vez que el admin lo pega aquí, generado desde
+    dentro de la página de ese Equipo (no desde su cuenta personal)."""
+    if db.obtener_tenant(tenant_id) is None:
+        abort(404)
+    api_key = request.form.get("api_key", "").strip()
+    if api_key:
+        db.guardar_documenso_api_key(tenant_id, api_key)
+    return redirect(url_for("backoffice.panel"))
+
+
 @backoffice_bp.route("/tenants/<int:tenant_id>/borrar", methods=["POST"])
 @login_required
 @admin_required

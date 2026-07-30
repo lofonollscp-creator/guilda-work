@@ -247,6 +247,28 @@ def test_backoffice_guardar_facturascripts_api_key(cliente, monkeypatch):
     assert db.obtener_tenant(tenant["id"])["facturascripts_api_key"] == "clave-api-real"
 
 
+def test_backoffice_guardar_documenso_api_key(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-doc@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ConFirmas")
+
+    resp = cliente.post(
+        f"/backoffice/tenants/{tenant_id}/documenso-api-key",
+        data={"api_key": "api_token_real"}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert db.obtener_tenant(tenant_id)["documenso_api_key"] == "api_token_real"
+
+
+def test_backoffice_guardar_documenso_api_key_tenant_inexistente_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-doc2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants/999999/documenso-api-key", data={"api_key": "x"})
+    assert resp.status_code == 404
+
+
 def test_backoffice_borrar_tenant_desaprovisiona_facturascripts(cliente, monkeypatch):
     from app import rutas_backoffice
 

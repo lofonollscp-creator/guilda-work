@@ -944,6 +944,64 @@ tools `facturas_listar_clientes`/`facturas_crear_cliente`/
 parámetro `tenant` (el nombre tal cual aparece en el backoffice) —
 imprescindible aquí porque cada tenant es una instancia física distinta.
 
+### 8.22 Documenso (firma electrónica de documentos)
+
+A diferencia de FacturaScripts, aquí la instancia SÍ es compartida (como
+EspoCRM/Nextcloud) — pero a diferencia de EspoCRM/Nextcloud, **no hay
+SSO** (confirmado en la documentación oficial: *"SSO is only available
+on the Enterprise plan"*) y **no hay API para crear Equipos ni invitar
+miembros** (verificado en vivo, descargando el spec OpenAPI real
+directamente de un contenedor en marcha — 89 endpoints, ninguno de
+Equipos). El aislamiento entre tenants lo da un token de API generado a
+mano **desde dentro de la página de configuración de cada Equipo**.
+
+**Certificado de firma** (obligatorio — sin él, el contenedor no
+arranca): ver [`deploy/documenso/README.md`](../deploy/documenso/README.md)
+para generar uno autofirmado con `openssl` en un minuto.
+
+Añade a `.env`:
+```bash
+DOCUMENSO_DB_PASSWORD=...
+DOCUMENSO_NEXTAUTH_SECRET=...          # openssl rand -hex 32
+DOCUMENSO_ENCRYPTION_KEY=...           # openssl rand -hex 32
+DOCUMENSO_ENCRYPTION_SECONDARY_KEY=... # openssl rand -hex 32 (una clave DISTINTA a la anterior)
+DOCUMENSO_SIGNING_PASSPHRASE=...       # la misma que usaste al generar cert.p12
+DOCUMENSO_SMTP_HOST=...
+DOCUMENSO_SMTP_FROM_ADDRESS=firmas@tu-hostname
+DOCUMENSO_PUBLIC_ORIGIN=https://firmas.tu-hostname.sslip.io
+```
+
+**SMTP es un requisito real aquí** (a diferencia del resto del stack):
+el registro de cada persona y las notificaciones de firma dependen de
+poder mandar correos — confirmado en vivo que sin esto la cuenta se crea
+pero se queda bloqueada en "confirma tu correo" para siempre.
+
+```bash
+docker compose up -d postgres-documenso documenso
+```
+
+**Por cada tenant nuevo (100% manual, sin atajo por API)**:
+1. El admin de Guilda Work se registra/inicia sesión en Documenso
+   (`https://firmas.tu-hostname`, correo + contraseña — confirma el
+   correo, hace falta SMTP funcionando de verdad).
+2. Ajustes → Organizaciones/Equipos → crea un Equipo con el nombre del
+   tenant.
+3. Invita a los usuarios de ese tenant al Equipo (por email — cada uno
+   acepta y crea su propia cuenta).
+4. **Entra en la página del Equipo** (no en tu cuenta personal) →
+   Ajustes → Tokens de API → crea uno — es el origen desde donde se
+   genera lo que le da al token el contexto de ese Equipo en concreto.
+5. Pega el token en la fila de ese tenant, en el backoffice.
+
+**MCP**: igual que FacturaScripts, `firmas_listar_documentos`/
+`firmas_crear_documento`/`firmas_enviar_a_firma`/`firmas_descargar_firmado`
+llevan un primer parámetro `tenant` — imprescindible porque el
+aislamiento depende de qué token de Equipo se use, no de una instancia
+física distinta. `firmas_crear_documento` coloca un único campo de firma
+por firmante en la primera página, en una posición por defecto — para
+colocar campos a medida (varias páginas, varios campos), usa la propia
+interfaz web de Documenso.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

@@ -96,6 +96,10 @@ drive.HOSTNAME {
 	reverse_proxy localhost:8016
 }
 
+firmas.HOSTNAME {
+	reverse_proxy localhost:8018
+}
+
 # Servidor MCP remoto (Fase MCP) — para ChatGPT, que solo admite
 # servidores MCP por HTTPS real (ver mcp_server_remoto.py, HOSTING.md).
 # Corre fuera de Docker, en el mismo host que serve.py.

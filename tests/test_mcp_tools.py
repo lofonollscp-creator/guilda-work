@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_62_herramientas():
-    assert len(mt.TOOLS) == 62
+def test_tools_tiene_66_herramientas():
+    assert len(mt.TOOLS) == 66
 
 
 def test_registrar_tools_las_registra_todas():
@@ -198,3 +198,61 @@ def test_facturas_crear_factura_delega_en_facturascripts(usuario_id, monkeypatch
 
     assert resultado == {"idfactura": "1"}
     assert capturado["args"] == ("http://127.0.0.1:8108/", "clave-api", "5", lineas)
+
+
+# --- Firmas (Documenso) — único otro cliente con parámetro `tenant` --------
+
+def test_firmas_listar_documentos_resuelve_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConFirmas")
+    mt.db.guardar_documenso_api_key(tenant_id, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key, **k):
+        capturado["api_key"] = api_key
+        return [{"id": "envelope_1"}]
+
+    monkeypatch.setattr(mt.documenso, "listar_documentos", fake_listar)
+    assert mt.firmas_listar_documentos("ConFirmas") == [{"id": "envelope_1"}]
+    assert capturado["api_key"] == "token-real"
+
+
+def test_firmas_listar_documentos_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.firmas_listar_documentos("NoExiste")
+
+
+def test_firmas_crear_documento_sin_token_pendiente_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinToken")
+    with pytest.raises(ValueError):
+        mt.firmas_crear_documento("SinToken", "Título", "cGRm", [{"email": "a@b.com"}])
+
+
+def test_firmas_crear_documento_decodifica_base64(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConFirmas2")
+    mt.db.guardar_documenso_api_key(tenant_id, "token-real")
+
+    capturado = {}
+
+    def fake_crear(api_key, titulo, contenido_pdf, firmantes):
+        capturado["args"] = (api_key, titulo, contenido_pdf, firmantes)
+        return {"id": "envelope_1"}
+
+    monkeypatch.setattr(mt.documenso, "crear_documento", fake_crear)
+    import base64
+    contenido_b64 = base64.b64encode(b"%PDF-contenido").decode("ascii")
+    resultado = mt.firmas_crear_documento("ConFirmas2", "Título", contenido_b64, [{"email": "a@b.com"}])
+
+    assert resultado == {"id": "envelope_1"}
+    assert capturado["args"][2] == b"%PDF-contenido"
+
+
+def test_firmas_descargar_firmado_codifica_base64(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConFirmas3")
+    mt.db.guardar_documenso_api_key(tenant_id, "token-real")
+
+    monkeypatch.setattr(mt.documenso, "descargar_firmado", lambda api_key, doc_id: b"%PDF-firmado")
+    resultado = mt.firmas_descargar_firmado("ConFirmas3", "envelope_1")
+
+    import base64
+    assert base64.b64decode(resultado) == b"%PDF-firmado"
