@@ -1002,6 +1002,96 @@ por firmante en la primera página, en una posición por defecto — para
 colocar campos a medida (varias páginas, varios campos), usa la propia
 interfaz web de Documenso.
 
+### 8.23 Paperless-ngx (gestión documental/OCR)
+
+A diferencia de Documenso, aquí **sí hay SSO real** (OIDC vía
+django-allauth, desde Paperless-ngx ≥ 2.5.0) y **sí hay aprovisionamiento
+100% automático por API** (Grupo + usuario de servicio + token, ver
+`app/paperless.py`) — confirmado leyendo el propio código fuente de
+Paperless-ngx, no solo su documentación. **No hace falta ningún paso
+manual por tenant.**
+
+Añade a `.env`:
+```bash
+PAPERLESS_DB_PASSWORD=...
+PAPERLESS_SECRET_KEY=...                # openssl rand -hex 32 — obligatoria, sin ella el contenedor no arranca (verificado en vivo)
+PAPERLESS_ADMIN_USER=admin
+PAPERLESS_ADMIN_PASSWORD=...            # openssl rand -hex 16 — crea el superusuario al primer arranque
+PAPERLESS_PUBLIC_ORIGIN=https://documentos.tu-hostname.sslip.io
+```
+
+**Registrar el cliente OAuth2** (mismo comando que EspoCRM/Drive/Outline;
+la ruta de callback la fija django-allauth, no es configurable —
+`/accounts/oidc/<provider_id>/login/callback/`, con `provider_id=hydra`,
+que es el que se usa en `docker-compose.yml`):
+```bash
+.venv/bin/python scripts/registrar_cliente_hydra.py --nombre documentos \
+  --redirect-uri https://documentos.tu-hostname.sslip.io/accounts/oidc/hydra/login/callback/
+```
+Añade `PAPERLESS_OIDC_CLIENT_ID`/`PAPERLESS_OIDC_CLIENT_SECRET` a `.env`
+con lo que imprima el comando.
+
+```bash
+docker compose up -d paperless-broker postgres-paperless paperless
+```
+
+**Aislamiento entre tenants**: `PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS=true`
+(ya en `docker-compose.yml`) sincroniza los Grupos del usuario contra el
+claim `groups` del id_token de Hydra **en cada login** — reutiliza el
+mismo claim que ya manda `app/hydra.py` desde la Fase CRM, cero cambios
+adicionales ahí. Los Grupos deben existir ya en Paperless-ngx cuando el
+usuario inicia sesión por primera vez — los crea
+`app/paperless.py:aprovisionar_tenant()` al dar de alta el tenant desde
+el backoffice (antes de que nadie de ese tenant haya iniciado sesión
+nunca), así que el orden normal (crear tenant → crear usuarios → que
+inicien sesión) ya deja todo listo sin intervención.
+
+El aislamiento real, a nivel de base de datos, lo aplica
+`DocumentPermissionsFilter` de Paperless-ngx (confirmado en su código
+fuente, `src/documents/views.py`) sobre el `owner`/`set_permissions` de
+cada documento — `app/paperless.py:subir_documento()` los aplica
+automáticamente al Grupo del tenant que sube el documento, no hace falta
+tocar nada a mano en la interfaz de Paperless-ngx para que funcione.
+
+**Nota de despliegue local (sin dominio real)**: django-allauth resuelve
+el documento de descubrimiento OIDC de Hydra **una sola vez, server-side,
+desde dentro del propio contenedor de Paperless-ngx** — y ese documento
+siempre reporta el origen **público** configurado en Hydra para todos sus
+endpoints (autorización, token, userinfo), a diferencia de Outline/
+Element, que sí permiten fijar por separado un endpoint interno de
+Docker para las llamadas servidor-a-servidor. En el VPS real (dominio
+público, resoluble también desde dentro de Docker) esto no es un
+problema; en local, sin dominio real, hace falta la misma alias de red
+que ya usa `caddy-local` para Synapse/Outline (ver `HTTPS_LOCAL.md`) para
+poder verificar el login SSO de verdad.
+
+**Gotenberg/Tika** (conversión de documentos de Office a PDF) quedan
+**fuera de este MVP a propósito** — Paperless-ngx funciona bien con
+PDFs/imágenes/escaneos sin ellos, que es el grueso de lo que recibe una
+gestoría. Si hace falta más adelante, añadir los servicios
+`gotenberg`/`tika` oficiales y las variables
+`PAPERLESS_TIKA_ENABLED`/`PAPERLESS_TIKA_GOTENBERG_ENDPOINT`/
+`PAPERLESS_TIKA_ENDPOINT` (ver documentación oficial de Paperless-ngx).
+
+**MCP**: igual que FacturaScripts/Documenso, `documentos_listar`/
+`documentos_subir`/`documentos_descargar` llevan un primer parámetro
+`tenant`. `documentos_subir` sube el PDF (base64), espera a que
+Paperless-ngx termine de procesarlo (OCR incluido) y le aplica los
+permisos que cierran el aislamiento — puede tardar unos segundos en
+documentos largos, es esperado.
+
+**Nota sobre `desaprovisionar_tenant` (borrar un tenant)**: solo borra el
+Grupo y el usuario de servicio en Paperless-ngx, no sus documentos —
+verificado en vivo que un documento cuyo propietario se borra queda con
+`owner: null`, y Paperless-ngx trata los documentos sin propietario como
+**visibles para cualquier usuario autenticado** con permiso de ver
+documentos (comportamiento propio de Paperless-ngx, no un fallo de
+`app/paperless.py`). Si se borra un tenant que ya tenía documentos
+subidos, hay que borrarlos a mano desde la interfaz de Paperless-ngx
+antes (o reasignarlos) para que no queden visibles a otros tenants —
+mismo tipo de limpieza manual que ya hace falta hoy al borrar un tenant
+de FacturaScripts con facturas ya emitidas.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

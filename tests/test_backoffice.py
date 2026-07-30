@@ -290,6 +290,78 @@ def test_backoffice_borrar_tenant_desaprovisiona_facturascripts(cliente, monkeyp
     assert db.obtener_tenant(tenant_id) is None
 
 
+def test_backoffice_crear_tenant_aprovisiona_paperless(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-pl@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    llamadas = {}
+
+    def fake_aprovisionar(nombre):
+        llamadas["nombre"] = nombre
+        return {"group_id": 5, "user_id": 9, "api_key": "token-real"}
+
+    monkeypatch.setattr(rutas_backoffice.paperless, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "ConPaperless"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["nombre"] == "ConPaperless"
+    tenant = db.obtener_tenant_por_nombre("ConPaperless")
+    assert tenant["paperless_group_id"] == 5
+    assert tenant["paperless_user_id"] == 9
+    assert tenant["paperless_api_key"] == "token-real"
+
+
+def test_backoffice_crear_tenant_sin_paperless_configurado_no_falla(cliente):
+    """Sin PAPERLESS_ADMIN_USER/PASSWORD (caso normal en tests),
+    paperless.aprovisionar_tenant devuelve None sin más."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-pl2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinPaperless"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinPaperless") is not None
+
+
+def test_backoffice_crear_tenant_un_fallo_en_paperless_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-pl3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(nombre):
+        raise rutas_backoffice.paperless.ErrorPaperless("fallo simulado de Paperless-ngx")
+
+    monkeypatch.setattr(rutas_backoffice.paperless, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinPaperless2"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinPaperless2") is not None
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_paperless(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-pl4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarPaperless")
+    db.guardar_paperless(tenant_id, 5, 9, "token-real")
+
+    llamadas = {}
+
+    def fake_desaprovisionar(user_id, group_id):
+        llamadas["args"] = (user_id, group_id)
+
+    monkeypatch.setattr(rutas_backoffice.paperless, "desaprovisionar_tenant", fake_desaprovisionar)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["args"] == (9, 5)
+    assert db.obtener_tenant(tenant_id) is None
+
+
 def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin3@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])

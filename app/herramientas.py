@@ -134,6 +134,17 @@ HERRAMIENTAS = [
         # criterio que OpenProject/Chatwoot/Metabase/Vaultwarden.
         "sso": False,
     },
+    {
+        "id": "documentos",
+        "nombre": "Documentos",
+        "descripcion": "Gestión documental y OCR de escaneos/PDFs (Paperless-ngx).",
+        "icono": "📄",
+        "url": os.environ.get("HERRAMIENTA_PAPERLESS_URL", "http://127.0.0.1:8019"),
+        # Con SSO — OIDC vía django-allauth desde Paperless-ngx 2.5.0,
+        # con sincronización de grupos (Fase documentos, ver HOSTING.md),
+        # mismo patrón que Drive/CRM.
+        "sso": True,
+    },
 ]
 
 # URL del homeserver de Synapse (Fase 9, chat nativo en la app móvil) —

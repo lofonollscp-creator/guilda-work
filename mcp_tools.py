@@ -76,6 +76,7 @@ from app import (
     openproject,
     outline,
     outlook_ics,
+    paperless,
     synapse,
     uptime_kuma,
 )
@@ -671,6 +672,47 @@ def firmas_descargar_firmado(tenant: str, documento_id: str) -> str:
     return base64.b64encode(contenido).decode("ascii")
 
 
+# --- Documentos (Paperless-ngx) — tercer cliente con parámetro `tenant` ------
+#
+# A diferencia de Documenso, aquí el aprovisionamiento (Grupo + usuario de
+# servicio + token) es 100% automático (ver app/rutas_backoffice.py:
+# crear_tenant() → app/paperless.py:aprovisionar_tenant()) — `tenant`
+# sigue haciendo falta porque el aislamiento depende de qué usuario de
+# servicio/Grupo se use, no de una instancia física distinta.
+
+def _datos_paperless(tenant: str) -> tuple[str, int, int]:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["paperless_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene Paperless-ngx aprovisionado "
+            "(sin PAPERLESS_ADMIN_USER/PASSWORD configuradas, o creado antes de esta integración)."
+        )
+    return fila["paperless_api_key"], fila["paperless_user_id"], fila["paperless_group_id"]
+
+
+def documentos_listar(tenant: str, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca documentos de un tenant en Paperless-ngx."""
+    api_key, _, _ = _datos_paperless(tenant)
+    return paperless.listar_documentos(api_key, texto=texto, limite=limite)
+
+
+def documentos_subir(tenant: str, titulo: str, contenido_pdf_base64: str, nombre_archivo: str) -> dict:
+    """Sube un documento (PDF en base64) a Paperless-ngx para OCR/indexado
+    — solo visible/editable por ese tenant."""
+    api_key, user_id, group_id = _datos_paperless(tenant)
+    contenido_pdf = base64.b64decode(contenido_pdf_base64)
+    return paperless.subir_documento(api_key, user_id, group_id, titulo, contenido_pdf, nombre_archivo)
+
+
+def documentos_descargar(tenant: str, documento_id: str) -> str:
+    """Descarga un documento de un tenant (PDF en base64)."""
+    api_key, _, _ = _datos_paperless(tenant)
+    contenido = paperless.descargar_documento(api_key, documento_id)
+    return base64.b64encode(contenido).decode("ascii")
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -712,6 +754,8 @@ TOOLS = [
     facturas_listar_clientes, facturas_crear_cliente, facturas_listar_facturas, facturas_crear_factura,
     # Firmas
     firmas_listar_documentos, firmas_crear_documento, firmas_enviar_a_firma, firmas_descargar_firmado,
+    # Documentos
+    documentos_listar, documentos_subir, documentos_descargar,
 ]
 
 

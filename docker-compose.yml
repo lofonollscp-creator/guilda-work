@@ -760,6 +760,88 @@ services:
     volumes:
       - ./deploy/documenso/cert.p12:/opt/documenso/cert.p12:ro
 
+  # Paperless-ngx (gestión documental/OCR) — instancia compartida, con
+  # SSO real (a diferencia de Documenso/FacturaScripts): OIDC vía
+  # django-allauth desde Paperless-ngx 2.5.0, con sincronización de
+  # grupos que reutiliza el mismo claim `groups` que ya manda Hydra
+  # desde la Fase CRM (PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS, ver
+  # HOSTING.md). Aislamiento entre tenants real y verificado en el
+  # propio código fuente (DocumentPermissionsFilter, no una convención
+  # de UI, ver app/paperless.py) — y a diferencia de Documenso, el
+  # aprovisionamiento (Grupo + usuario de servicio + token) es 100%
+  # automático por API, sin ningún paso manual.
+  #
+  # `paperless-broker`: primer broker Redis-compatible del stack — no
+  # hay ninguno reutilizable, Paperless-ngx lo necesita sí o sí para su
+  # cola de tareas de consumo/OCR. `PAPERLESS_ADMIN_USER/PASSWORD` crean
+  # un superusuario al primer arranque; sus credenciales son las que usa
+  # `app/paperless.py` para autenticarse como admin en cada llamada de
+  # aprovisionamiento. Gotenberg/Tika (conversión de Office a PDF) quedan
+  # fuera del MVP a propósito — no hacen falta para PDFs/imágenes/
+  # escaneos, que es el grueso de lo que recibe una gestoría.
+  paperless-broker:
+    image: redis:7-alpine
+    container_name: guilda-work-paperless-broker
+    restart: unless-stopped
+    volumes:
+      - paperless-broker-data:/data
+
+  postgres-paperless:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-paperless
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${PAPERLESS_DB_PASSWORD:-CambiaEstaClavePaperless2026}
+      POSTGRES_DB: paperless
+    volumes:
+      - postgres-paperless-data:/var/lib/postgresql/data
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: guilda-work-paperless
+    restart: unless-stopped
+    depends_on:
+      - postgres-paperless
+      - paperless-broker
+    environment:
+      PAPERLESS_REDIS: redis://paperless-broker:6379
+      PAPERLESS_DBHOST: postgres-paperless
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD:-CambiaEstaClavePaperless2026}
+      PAPERLESS_URL: ${PAPERLESS_PUBLIC_ORIGIN:-http://127.0.0.1:8019}
+      # Obligatoria — verificado en vivo que sin ella el contenedor no
+      # arranca (ImproperlyConfigured: "PAPERLESS_SECRET_KEY is not set
+      # or is the default 'change-me' value"), a diferencia de otros
+      # servicios del stack donde una clave de sesión por defecto al
+      # menos deja arrancar el contenedor.
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY:?define PAPERLESS_SECRET_KEY (openssl rand -hex 32)}
+      PAPERLESS_ADMIN_USER: ${PAPERLESS_ADMIN_USER:?define PAPERLESS_ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD:?define PAPERLESS_ADMIN_PASSWORD, p.ej. openssl rand -hex 16}
+      PAPERLESS_OCR_LANGUAGE: spa
+      # OIDC vía Hydra (Fase 7b, ya desplegado) — mismo patrón interno/
+      # público que Outline/EspoCRM/Nextcloud. `server_url` se resuelve
+      # UNA vez, server-to-server, desde dentro del propio contenedor —
+      # los endpoints que devuelve el documento de descubrimiento de
+      # Hydra (authorization/token/userinfo) son siempre su origen
+      # PÚBLICO (config `urls.self.issuer` de Hydra), así que en el VPS
+      # real (dominio público, resoluble también desde dentro de Docker)
+      # esto funciona sin más — en local sin dominio real, solo con las
+      # alias de red de `caddy-local` (ver HTTPS_LOCAL.md), igual que ya
+      # hace falta para verificar Outline/Element en local.
+      PAPERLESS_ENABLE_ALLAUTH: "true"
+      PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: >-
+        {"openid_connect":{"APPS":[{"provider_id":"hydra","name":"Guilda Work","client_id":"${PAPERLESS_OIDC_CLIENT_ID:?define tras ejecutar scripts/registrar_cliente_hydra.py}","secret":"${PAPERLESS_OIDC_CLIENT_SECRET:?define tras ejecutar scripts/registrar_cliente_hydra.py}","settings":{"server_url":"${HYDRA_PUBLIC_ORIGIN:-http://127.0.0.1:4444}","fetch_userinfo":true}}],"SCOPE":["openid","email","profile","groups"]}}
+      PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS: "true"
+      PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
+    ports:
+      - "127.0.0.1:8019:8000"
+    volumes:
+      - paperless-data:/usr/src/paperless/data
+      - paperless-media:/usr/src/paperless/media
+
   # FacturaScripts (facturación/contabilidad) — ÚNICA excepción del
   # stack a "un servicio Docker, una instancia": cada tenant necesita su
   # PROPIA instancia física de FacturaScripts (investigado y confirmado
@@ -898,6 +980,10 @@ volumes:
   postgres-nextcloud-data:
   nextcloud-data:
   postgres-documenso-data:
+  paperless-broker-data:
+  postgres-paperless-data:
+  paperless-data:
+  paperless-media:
   postgres-facturascripts-data:
   postgres-openproject-data:
   openproject-data:

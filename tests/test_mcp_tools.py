@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_66_herramientas():
-    assert len(mt.TOOLS) == 66
+def test_tools_tiene_69_herramientas():
+    assert len(mt.TOOLS) == 69
 
 
 def test_registrar_tools_las_registra_todas():
@@ -256,3 +256,61 @@ def test_firmas_descargar_firmado_codifica_base64(usuario_id, monkeypatch):
 
     import base64
     assert base64.b64decode(resultado) == b"%PDF-firmado"
+
+
+# --- Documentos (Paperless-ngx) — tercer cliente con parámetro `tenant` -----
+
+def test_documentos_listar_resuelve_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConDocumentos")
+    mt.db.guardar_paperless(tenant_id, 5, 9, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key, **k):
+        capturado["api_key"] = api_key
+        return [{"id": 1, "title": "Factura"}]
+
+    monkeypatch.setattr(mt.paperless, "listar_documentos", fake_listar)
+    assert mt.documentos_listar("ConDocumentos") == [{"id": 1, "title": "Factura"}]
+    assert capturado["api_key"] == "token-real"
+
+
+def test_documentos_listar_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.documentos_listar("NoExiste")
+
+
+def test_documentos_subir_sin_aprovisionar_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinPaperless")
+    with pytest.raises(ValueError):
+        mt.documentos_subir("SinPaperless", "Título", "cGRm", "doc.pdf")
+
+
+def test_documentos_subir_decodifica_base64_y_pasa_owner_y_grupo(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConDocumentos2")
+    mt.db.guardar_paperless(tenant_id, 5, 9, "token-real")
+
+    capturado = {}
+
+    def fake_subir(api_key, owner_id, group_id, titulo, contenido_pdf, nombre_archivo):
+        capturado["args"] = (api_key, owner_id, group_id, titulo, contenido_pdf, nombre_archivo)
+        return {"id": 42}
+
+    monkeypatch.setattr(mt.paperless, "subir_documento", fake_subir)
+    import base64
+    contenido_b64 = base64.b64encode(b"%PDF-contenido").decode("ascii")
+    resultado = mt.documentos_subir("ConDocumentos2", "Título", contenido_b64, "doc.pdf")
+
+    assert resultado == {"id": 42}
+    assert capturado["args"] == ("token-real", 9, 5, "Título", b"%PDF-contenido", "doc.pdf")
+
+
+def test_documentos_descargar_codifica_base64(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConDocumentos3")
+    mt.db.guardar_paperless(tenant_id, 5, 9, "token-real")
+
+    monkeypatch.setattr(mt.paperless, "descargar_documento", lambda api_key, doc_id: b"%PDF-descargado")
+    resultado = mt.documentos_descargar("ConDocumentos3", "42")
+
+    import base64
+    assert base64.b64decode(resultado) == b"%PDF-descargado"

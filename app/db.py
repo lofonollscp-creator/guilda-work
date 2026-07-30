@@ -507,6 +507,16 @@ def init_db() -> None:
         # funcione de verdad al llamar a la API de documentos.
         _asegurar_columna(conn, "tenants", "documenso_api_key", "TEXT")
 
+        # Paperless-ngx (gestión documental/OCR): instancia compartida,
+        # igual que Documenso, pero aquí SÍ hay API real de Usuarios y
+        # Grupos (verificado en el código fuente, ver app/paperless.py)
+        # — el aprovisionamiento es 100% automático, sin ningún paso
+        # manual. Guarda el Grupo y el usuario de servicio creados para
+        # ese tenant, y su token de API ya generado.
+        _asegurar_columna(conn, "tenants", "paperless_group_id", "INTEGER")
+        _asegurar_columna(conn, "tenants", "paperless_user_id", "INTEGER")
+        _asegurar_columna(conn, "tenants", "paperless_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -812,6 +822,21 @@ def guardar_documenso_api_key(tenant_id: int, api_key: str) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE tenants SET documenso_api_key = ? WHERE id = ?", (api_key, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_paperless(tenant_id: int, group_id: int, user_id: int, api_key: str) -> None:
+    """A diferencia de facturascripts/documenso, aquí no hay ningún paso
+    manual: app/paperless.py:aprovisionar_tenant() crea el Grupo, el
+    usuario de servicio y su token por API, esto solo los guarda."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET paperless_group_id = ?, paperless_user_id = ?, paperless_api_key = ? WHERE id = ?",
+            (group_id, user_id, api_key, tenant_id),
+        )
         conn.commit()
     finally:
         conn.close()

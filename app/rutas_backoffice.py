@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject
+from . import chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject, paperless
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -68,6 +68,18 @@ def crear_tenant():
                 db.guardar_facturascripts(tenant_id, resultado["url"], resultado["admin_user"], resultado["admin_pass"])
                 facturascripts_creado = resultado
             except facturascripts.ErrorFacturaScripts:
+                pass
+            try:
+                # Grupo + usuario de servicio + token de Paperless-ngx
+                # (ver app/paperless.py) — a diferencia de EspoCRM/
+                # Nextcloud/FacturaScripts, aquí SÍ hay API real de
+                # Usuarios y Grupos: el aprovisionamiento es completo,
+                # sin ningún paso manual. Sin PAPERLESS_ADMIN_USER/
+                # PASSWORD configuradas, esto no hace nada.
+                resultado = paperless.aprovisionar_tenant(nombre)
+                if resultado is not None:
+                    db.guardar_paperless(tenant_id, resultado["group_id"], resultado["user_id"], resultado["api_key"])
+            except paperless.ErrorPaperless:
                 pass
 
     if facturascripts_creado:
@@ -136,7 +148,8 @@ def guardar_documenso_api_key(tenant_id: int):
 @login_required
 @admin_required
 def borrar_tenant(tenant_id: int):
-    if db.obtener_tenant(tenant_id) is None:
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
         abort(404)
     try:
         # Para/borra el contenedor+BD dedicados de FacturaScripts antes de
@@ -144,6 +157,13 @@ def borrar_tenant(tenant_id: int):
         # borrar el tenant (ver app/facturascripts.py:desaprovisionar_tenant).
         facturascripts.desaprovisionar_tenant(tenant_id)
     except facturascripts.ErrorFacturaScripts:
+        pass
+    try:
+        # Borra el usuario de servicio y el Grupo de Paperless-ngx de este
+        # tenant (ver app/paperless.py:desaprovisionar_tenant) — mismo
+        # criterio de fallo aislado.
+        paperless.desaprovisionar_tenant(tenant["paperless_user_id"], tenant["paperless_group_id"])
+    except paperless.ErrorPaperless:
         pass
     db.borrar_tenant(tenant_id)
     return redirect(url_for("backoffice.panel"))
