@@ -12,6 +12,7 @@ que las ejecuta vía app/ia_herramientas.py:ejecutar) — el foco aquí es:
    correspondiente con los argumentos correctos — mockeando esos
    clientes, sin ningún servicio real levantado.
 """
+import pytest
 from mcp.server.fastmcp import FastMCP
 
 import mcp_tools as mt
@@ -22,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_58_herramientas():
-    assert len(mt.TOOLS) == 58
+def test_tools_tiene_62_herramientas():
+    assert len(mt.TOOLS) == 62
 
 
 def test_registrar_tools_las_registra_todas():
@@ -145,3 +146,55 @@ def test_almacenamiento_url_descarga_delega_en_minio(monkeypatch):
 def test_monitorizacion_listar_estado_delega_en_uptime_kuma(monkeypatch):
     monkeypatch.setattr(mt.uptime_kuma, "listar_monitores", lambda: [{"nombre": "Guilda Work", "estado": "activo"}])
     assert mt.monitorizacion_listar_estado() == [{"nombre": "Guilda Work", "estado": "activo"}]
+
+
+# --- Facturación (FacturaScripts) — único cliente con parámetro `tenant` -----
+
+def test_facturas_listar_clientes_resuelve_url_y_api_key_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("Lueira")
+    mt.db.guardar_facturascripts(tenant_id, "http://127.0.0.1:8107/", "admin", "pass")
+    mt.db.guardar_facturascripts_api_key(tenant_id, "clave-api")
+
+    capturado = {}
+
+    def fake_listar_clientes(url, api_key, **k):
+        capturado["url"] = url
+        capturado["api_key"] = api_key
+        return [{"nombre": "Ana"}]
+
+    monkeypatch.setattr(mt.facturascripts, "listar_clientes", fake_listar_clientes)
+    resultado = mt.facturas_listar_clientes("Lueira")
+
+    assert resultado == [{"nombre": "Ana"}]
+    assert capturado["url"] == "http://127.0.0.1:8107/"
+    assert capturado["api_key"] == "clave-api"
+
+
+def test_facturas_listar_clientes_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.facturas_listar_clientes("NoExiste")
+
+
+def test_facturas_crear_cliente_sin_api_key_pendiente_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinApiKey")
+    with pytest.raises(ValueError):
+        mt.facturas_crear_cliente("SinApiKey", "Ana")
+
+
+def test_facturas_crear_factura_delega_en_facturascripts(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConFacturas")
+    mt.db.guardar_facturascripts(tenant_id, "http://127.0.0.1:8108/", "admin", "pass")
+    mt.db.guardar_facturascripts_api_key(tenant_id, "clave-api")
+
+    capturado = {}
+
+    def fake_crear_factura(url, api_key, cliente_codigo, lineas):
+        capturado["args"] = (url, api_key, cliente_codigo, lineas)
+        return {"idfactura": "1"}
+
+    monkeypatch.setattr(mt.facturascripts, "crear_factura", fake_crear_factura)
+    lineas = [{"descripcion": "Servicio", "cantidad": 1, "precio": 50}]
+    resultado = mt.facturas_crear_factura("ConFacturas", "5", lineas)
+
+    assert resultado == {"idfactura": "1"}
+    assert capturado["args"] == ("http://127.0.0.1:8108/", "clave-api", "5", lineas)

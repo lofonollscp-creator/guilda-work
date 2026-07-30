@@ -12,6 +12,21 @@
 <div class="ia-error">{{ error }}</div>
 {% endif %}
 
+{% if facturascripts_creado %}
+<div class="ia-result">
+  FacturaScripts aprovisionado — esto solo se muestra esta vez, apunta la
+  contraseña antes de continuar (hace falta para el último paso manual:
+  entrar y crear la API Key desde Ajustes → API):
+  <table class="historial-table" style="margin-top: 8px;">
+    <tbody>
+      <tr><td>URL</td><td class="mono"><a href="{{ facturascripts_creado.url }}" target="_blank">{{ facturascripts_creado.url }}</a></td></tr>
+      <tr><td>Usuario</td><td class="mono">{{ facturascripts_creado.admin_user }}</td></tr>
+      <tr><td>Contraseña</td><td class="mono">{{ facturascripts_creado.admin_pass }}</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 {% if resultados_alta %}
 <div class="ia-result">
   Alta de <strong>{{ email_creado }}</strong> — esto solo se muestra esta
@@ -43,6 +58,7 @@
         <tr>
           <th>Nombre</th>
           <th>Usuarios</th>
+          <th>FacturaScripts</th>
           <th></th>
         </tr>
       </thead>
@@ -57,14 +73,27 @@
           </td>
           <td class="mono">{{ t.n_usuarios }}</td>
           <td>
+            {% if not t.facturascripts_url %}
+            <span class="empty">sin aprovisionar</span>
+            {% elif t.facturascripts_api_key %}
+            <a href="{{ t.facturascripts_url }}" target="_blank">{{ t.facturascripts_url }}</a>
+            {% else %}
+            <a href="{{ t.facturascripts_url }}" target="_blank">{{ t.facturascripts_url }}</a>
+            <form method="post" action="{{ url_for('backoffice.guardar_facturascripts_api_key', tenant_id=t.id) }}" class="filters" style="display:inline-flex; margin-top: 4px;">
+              <input type="text" name="api_key" placeholder="Pega aquí la API Key (Ajustes → API)" required>
+              <button type="submit" class="btn btn-ghost">Guardar</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
             <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
-                  onsubmit="return confirm('¿Borrar el tenant {{ t.nombre }}? Sus usuarios quedarán sin tenant asignado.');">
+                  onsubmit="return confirm('¿Borrar el tenant {{ t.nombre }}? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.');">
               <button type="submit" class="btn btn-ghost">Borrar</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="3" class="empty">Todavía no hay ningún tenant.</td></tr>
+        <tr><td colspan="4" class="empty">Todavía no hay ningún tenant.</td></tr>
         {% endfor %}
       </tbody>
     </table>

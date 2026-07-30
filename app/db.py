@@ -486,6 +486,17 @@ def init_db() -> None:
         # tenant pertenece quien escribe).
         _asegurar_columna(conn, "usuarios", "tenant_id", "INTEGER REFERENCES tenants(id)")
 
+        # FacturaScripts (Fase facturación): a diferencia de EspoCRM/
+        # Nextcloud (una instancia compartida), cada tenant tiene su
+        # propia instancia física — estas columnas guardan cómo llegar a
+        # la suya. Nulas hasta que app/facturascripts.py:aprovisionar_tenant()
+        # las rellena; facturascripts_api_key queda nula más tiempo
+        # todavía, es un paso manual aparte (ver HOSTING.md 8.21).
+        _asegurar_columna(conn, "tenants", "facturascripts_url", "TEXT")
+        _asegurar_columna(conn, "tenants", "facturascripts_admin_user", "TEXT")
+        _asegurar_columna(conn, "tenants", "facturascripts_admin_pass", "TEXT")
+        _asegurar_columna(conn, "tenants", "facturascripts_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -753,6 +764,33 @@ def obtener_tenant(tenant_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute("SELECT * FROM tenants WHERE id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_facturascripts(tenant_id: int, url: str, admin_user: str, admin_pass: str) -> None:
+    """Guarda cómo llegar a la instancia de FacturaScripts recién
+    aprovisionada de un tenant — ver app/facturascripts.py:aprovisionar_tenant."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET facturascripts_url = ?, facturascripts_admin_user = ?, "
+            "facturascripts_admin_pass = ? WHERE id = ?",
+            (url, admin_user, admin_pass, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_facturascripts_api_key(tenant_id: int, api_key: str) -> None:
+    """La API Key se genera a mano dentro de cada instancia (paso manual,
+    ver HOSTING.md 8.21) — esto solo la guarda una vez que el admin la
+    pega en el backoffice."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET facturascripts_api_key = ? WHERE id = ?", (api_key, tenant_id))
+        conn.commit()
     finally:
         conn.close()
 

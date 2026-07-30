@@ -65,6 +65,7 @@ from app import (
     db,
     espocrm,
     export,
+    facturascripts,
     importador,
     metabase,
     minio_cliente,
@@ -573,6 +574,53 @@ def monitorizacion_listar_estado() -> list[dict]:
     return uptime_kuma.listar_monitores()
 
 
+# --- Facturación (FacturaScripts) — ÚNICO cliente con parámetro `tenant` -----
+#
+# A diferencia de todas las demás herramientas de este catálogo (una
+# instancia compartida, sin concepto de tenant para el MCP — ver
+# docstring del módulo), FacturaScripts tiene una instancia física
+# distinta POR TENANT (aislamiento real, ver app/facturascripts.py) —
+# así que aquí sí hace falta decir de qué tenant se habla en cada
+# llamada. `tenant` es el nombre tal cual aparece en el backoffice.
+
+def _datos_facturascripts(tenant: str) -> tuple[str, str]:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["facturascripts_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene una API Key de FacturaScripts guardada "
+            "(paso manual pendiente en el backoffice, ver HOSTING.md 8.21)."
+        )
+    return fila["facturascripts_url"], fila["facturascripts_api_key"]
+
+
+def facturas_listar_clientes(tenant: str, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca clientes en la facturación de un tenant."""
+    url, api_key = _datos_facturascripts(tenant)
+    return facturascripts.listar_clientes(url, api_key, texto=texto, limite=limite)
+
+
+def facturas_crear_cliente(tenant: str, nombre: str, nif: str = "", email: str = "") -> dict:
+    """Crea un cliente en la facturación de un tenant."""
+    url, api_key = _datos_facturascripts(tenant)
+    return facturascripts.crear_cliente(url, api_key, nombre, nif=nif, email=email)
+
+
+def facturas_listar_facturas(tenant: str, cliente_codigo: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista facturas de cliente de un tenant, opcionalmente filtradas por
+    `cliente_codigo`."""
+    url, api_key = _datos_facturascripts(tenant)
+    return facturascripts.listar_facturas(url, api_key, cliente_codigo=cliente_codigo, limite=limite)
+
+
+def facturas_crear_factura(tenant: str, cliente_codigo: str, lineas: list[dict]) -> dict:
+    """Crea una factura de cliente. `lineas`: lista de
+    {"descripcion": str, "cantidad": float, "precio": float}."""
+    url, api_key = _datos_facturascripts(tenant)
+    return facturascripts.crear_factura(url, api_key, cliente_codigo, lineas)
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -610,6 +658,8 @@ TOOLS = [
     almacenamiento_listar_buckets, almacenamiento_listar_archivos, almacenamiento_url_descarga,
     # Monitorización
     monitorizacion_listar_estado,
+    # Facturación
+    facturas_listar_clientes, facturas_crear_cliente, facturas_listar_facturas, facturas_crear_factura,
 ]
 
 

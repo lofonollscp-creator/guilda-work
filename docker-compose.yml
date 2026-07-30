@@ -706,6 +706,27 @@ services:
       # pero se mantiene porque ahí vive la instalación en sí.
       - nextcloud-data:/var/www/html
 
+  # FacturaScripts (facturación/contabilidad) — ÚNICA excepción del
+  # stack a "un servicio Docker, una instancia": cada tenant necesita su
+  # PROPIA instancia física de FacturaScripts (investigado y confirmado
+  # que su plugin "MultiEmpresa" no aísla datos entre empresas, solo
+  # aplica valores por defecto — con datos económicos de por medio, no
+  # es aceptable apoyarse en eso, ver HOSTING.md 8.21). Por eso aquí solo
+  # se declara el Postgres COMPARTIDO — los contenedores
+  # `guilda-work-facturascripts-tenant-<id>` NO viven en este archivo,
+  # los crea `app/facturascripts.py:aprovisionar_tenant()` con
+  # `docker run` al dar de alta cada tenant, con su propio rol y base de
+  # datos dentro de este mismo Postgres (aislados con
+  # `REVOKE CONNECT ... FROM PUBLIC`, no solo por convención).
+  postgres-facturascripts:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-facturascripts
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD:?define FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD, p.ej. openssl rand -hex 32}
+    volumes:
+      - postgres-facturascripts-data:/var/lib/postgresql/data
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -822,6 +843,7 @@ volumes:
   espocrm-data:
   postgres-nextcloud-data:
   nextcloud-data:
+  postgres-facturascripts-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

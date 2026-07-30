@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import chatwoot, db, espocrm, kratos, metabase, nextcloud, openproject
+from . import chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -22,6 +22,7 @@ def panel():
         tenants=db.listar_tenants_con_conteo(),
         usuarios=db.listar_usuarios(),
         resultados_alta=None,
+        facturascripts_creado=None,
     )
 
 
@@ -30,9 +31,11 @@ def panel():
 @admin_required
 def crear_tenant():
     nombre = request.form.get("nombre", "").strip()
+    facturascripts_creado = None
     if nombre:
+        tenant_id = None
         try:
-            db.crear_tenant(nombre)
+            tenant_id = db.crear_tenant(nombre)
         except Exception:
             pass  # nombre duplicado: no hace falta más que ignorarlo, se ve en la lista
         try:
@@ -52,6 +55,32 @@ def crear_tenant():
             nextcloud.crear_espacio_tenant(nombre)
         except nextcloud.ErrorNextcloud:
             pass
+        if tenant_id is not None:
+            try:
+                # Instancia física propia de FacturaScripts (ver
+                # app/facturascripts.py) — a diferencia de EspoCRM/
+                # Nextcloud, aquí NO hay aislamiento lógico posible
+                # (su plugin MultiEmpresa no restringe accesos), así
+                # que cada tenant necesita su propio contenedor+BD.
+                # Sin FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD configurada,
+                # esto falla y se ignora, igual que el resto.
+                resultado = facturascripts.aprovisionar_tenant(tenant_id, nombre)
+                db.guardar_facturascripts(tenant_id, resultado["url"], resultado["admin_user"], resultado["admin_pass"])
+                facturascripts_creado = resultado
+            except facturascripts.ErrorFacturaScripts:
+                pass
+
+    if facturascripts_creado:
+        # Contraseña de admin generada al vuelo: se muestra UNA sola vez,
+        # igual que la contraseña temporal de crear_usuario() — no se
+        # vuelve a mostrar en la tabla de tenants después de este redirect.
+        return render_template(
+            "backoffice.html",
+            tenants=db.listar_tenants_con_conteo(),
+            usuarios=db.listar_usuarios(),
+            resultados_alta=None,
+            facturascripts_creado=facturascripts_creado,
+        )
     return redirect(url_for("backoffice.panel"))
 
 
@@ -70,12 +99,36 @@ def renombrar_tenant(tenant_id: int):
     return redirect(url_for("backoffice.panel"))
 
 
+@backoffice_bp.route("/tenants/<int:tenant_id>/facturascripts-api-key", methods=["POST"])
+@login_required
+@admin_required
+def guardar_facturascripts_api_key(tenant_id: int):
+    """La API Key de FacturaScripts no se puede generar por API (hace
+    falta una sesión ya iniciada, ver app/facturascripts.py) — este es el
+    único paso manual del aprovisionamiento: el admin entra una vez con
+    las credenciales generadas (tenants.facturascripts_admin_user/pass),
+    crea la clave desde Ajustes → API, y la pega aquí."""
+    if db.obtener_tenant(tenant_id) is None:
+        abort(404)
+    api_key = request.form.get("api_key", "").strip()
+    if api_key:
+        db.guardar_facturascripts_api_key(tenant_id, api_key)
+    return redirect(url_for("backoffice.panel"))
+
+
 @backoffice_bp.route("/tenants/<int:tenant_id>/borrar", methods=["POST"])
 @login_required
 @admin_required
 def borrar_tenant(tenant_id: int):
     if db.obtener_tenant(tenant_id) is None:
         abort(404)
+    try:
+        # Para/borra el contenedor+BD dedicados de FacturaScripts antes de
+        # borrar el tenant en Guilda Work — un fallo aquí no debe impedir
+        # borrar el tenant (ver app/facturascripts.py:desaprovisionar_tenant).
+        facturascripts.desaprovisionar_tenant(tenant_id)
+    except facturascripts.ErrorFacturaScripts:
+        pass
     db.borrar_tenant(tenant_id)
     return redirect(url_for("backoffice.panel"))
 

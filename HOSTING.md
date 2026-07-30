@@ -877,6 +877,73 @@ caliente.
 tenant del resto de Guilda Work sigue sin aislamiento real. No se repite
 aquí, solo se recuerda.
 
+### 8.21 FacturaScripts (facturación/contabilidad) — una instancia por tenant
+
+A diferencia de EspoCRM/Nextcloud, aquí **no hay aislamiento lógico
+posible dentro de una instancia compartida** — investigado y confirmado
+que el plugin oficial "MultiEmpresa" no restringe qué usuario ve qué
+empresa, solo aplica valores por defecto. Con datos económicos de por
+medio, cada tenant tiene su **propia instancia física** de
+FacturaScripts + su propia base de datos, aprovisionadas automáticamente
+al crear el tenant desde el backoffice (`app/facturascripts.py`).
+
+**Requisito previo — el usuario de `serve.py` necesita poder usar Docker**
+(a diferencia del resto de la app, que solo habla HTTP con contenedores
+ya existentes, aquí los crea):
+```bash
+sudo usermod -aG docker $(whoami)
+# cerrar sesión y volver a entrar para que el grupo nuevo tenga efecto
+```
+
+**Levantar el Postgres compartido** (una sola vez — las bases de cada
+tenant se crean solas dentro de él, ver más abajo):
+```bash
+# .env
+FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD=...   # openssl rand -hex 32
+
+docker compose up -d postgres-facturascripts
+```
+
+**Qué pasa al crear un tenant nuevo** (automático, sin nada que hacer a
+mano): `app/facturascripts.py:aprovisionar_tenant()` crea un rol y una
+base de datos exclusivos en el Postgres compartido
+(`REVOKE CONNECT ... FROM PUBLIC`, para que ni siquiera con las
+credenciales de otro tenant se pueda entrar), levanta un contenedor
+nuevo (`guilda-work-facturascripts-tenant-<id>`, puerto `8100 + id`) y
+lo instala. **Nota técnica** (verificado en vivo, no solo leyendo
+documentación): el instalador HTTP oficial de FacturaScripts documenta
+un modo `unattended=1` pensado para esto, pero en la versión publicada
+actualmente tiene un fallo real que lo rompe en el primer arranque —
+en vez de depender de esa vía, `aprovisionar_tenant()` escribe
+`config.php`/`.htaccess` directamente en el contenedor (mismo
+contenido que generaría el instalador) y dispara el paso de
+inicialización por consola — confirmado que el resultado es idéntico
+al de una instalación normal (login real, usuario admin creado). El
+backoffice te enseña **una sola vez**, justo después de crear el
+tenant, la URL y la contraseña de administrador generada — apúntala
+ahí, no se vuelve a mostrar.
+
+**El único paso manual que queda — crear la API Key** (no hay forma de
+generarla sin una sesión ya iniciada, así que no es automatizable sin
+scriptear también el login):
+1. Entra en la URL del tenant con el usuario/contraseña que te enseñó el
+   backoffice.
+2. Ajustes → API Keys → crear una nueva.
+3. Pégala en el campo "FacturaScripts" de la fila de ese tenant, en el
+   backoffice — sin este paso, las tools de MCP `facturas_*` para ese
+   tenant devuelven un error legible pidiéndolo, no fallan en silencio.
+
+**Al borrar un tenant**: `app/facturascripts.py:desaprovisionar_tenant()`
+para y borra su contenedor y su base de datos automáticamente — no hace
+falta limpieza manual.
+
+**MCP**: a diferencia del resto de herramientas del catálogo (una
+instancia compartida, sin necesidad de decir de cuál se habla), las
+tools `facturas_listar_clientes`/`facturas_crear_cliente`/
+`facturas_listar_facturas`/`facturas_crear_factura` llevan un primer
+parámetro `tenant` (el nombre tal cual aparece en el backoffice) —
+imprescindible aquí porque cada tenant es una instancia física distinta.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

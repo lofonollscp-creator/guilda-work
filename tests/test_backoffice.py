@@ -184,6 +184,90 @@ def test_backoffice_crear_tenant_un_fallo_en_nextcloud_no_bloquea_el_tenant(clie
     assert db.obtener_tenant_por_nombre("GuildaDrive") is not None
 
 
+def test_backoffice_crear_tenant_aprovisiona_facturascripts_y_lo_muestra_una_vez(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-fs@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar(tenant_id, nombre):
+        return {"url": "http://127.0.0.1:8199/", "admin_user": "admin", "admin_pass": "clave-generada"}
+
+    monkeypatch.setattr(rutas_backoffice.facturascripts, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Lueira FS"})
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "clave-generada" in html
+    assert "http://127.0.0.1:8199/" in html
+
+    tenant = db.obtener_tenant_por_nombre("Lueira FS")
+    assert tenant["facturascripts_url"] == "http://127.0.0.1:8199/"
+    assert tenant["facturascripts_admin_pass"] == "clave-generada"
+
+    # Un segundo GET al panel ya NO debe volver a mostrar la contraseña.
+    resp2 = cliente.get("/backoffice/")
+    assert "clave-generada" not in resp2.get_data(as_text=True)
+
+
+def test_backoffice_crear_tenant_un_fallo_en_facturascripts_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-fs2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(tenant_id, nombre):
+        raise rutas_backoffice.facturascripts.ErrorFacturaScripts("fallo simulado de FacturaScripts")
+
+    monkeypatch.setattr(rutas_backoffice.facturascripts, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinFS"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinFS") is not None
+
+
+def test_backoffice_guardar_facturascripts_api_key(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-fs3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    monkeypatch.setattr(
+        rutas_backoffice.facturascripts, "aprovisionar_tenant",
+        lambda tid, n: {"url": "http://127.0.0.1:8199/", "admin_user": "admin", "admin_pass": "x"},
+    )
+    cliente.post("/backoffice/tenants", data={"nombre": "ConApiKey"})
+    tenant = db.obtener_tenant_por_nombre("ConApiKey")
+
+    resp = cliente.post(
+        f"/backoffice/tenants/{tenant['id']}/facturascripts-api-key",
+        data={"api_key": "clave-api-real"}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert db.obtener_tenant(tenant["id"])["facturascripts_api_key"] == "clave-api-real"
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_facturascripts(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-fs4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrar")
+
+    llamadas = {}
+
+    def fake_desaprovisionar(tid):
+        llamadas["tenant_id"] = tid
+
+    monkeypatch.setattr(rutas_backoffice.facturascripts, "desaprovisionar_tenant", fake_desaprovisionar)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["tenant_id"] == tenant_id
+    assert db.obtener_tenant(tenant_id) is None
+
+
 def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin3@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
