@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% from "_iconos.html" import icono %}
 {% block title %}Herramientas — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -19,7 +18,9 @@
       <a class="tool-card" href="{{ h.url }}" target="_blank" rel="noopener"
          style="--tool-accent: {{ h.color }};">
         <div class="tool-card-top">
-          <span class="tool-card-icon">{{ icono(h.icono_svg) }}</span>
+          <span class="tool-card-icon">
+            <img src="{{ url_for('static', filename='logos/' ~ h.icono_logo) }}" alt="" loading="lazy">
+          </span>
           <span class="tool-card-go" aria-hidden="true">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
           </span>
@@ -32,6 +33,44 @@
         </span>
       </a>
       {% endfor %}
+      {% if categoria == "Documentos y datos" %}
+      {# FacturaScripts no está en `herramientas` porque no es una instancia
+         compartida: cada tenant tiene su propio contenedor con su propia
+         URL (ver app/main.py:herramientas_vista y HOSTING.md 8.21). #}
+      {% if facturascripts_url %}
+      <a class="tool-card" href="{{ facturascripts_url }}" target="_blank" rel="noopener"
+         style="--tool-accent: #2f6fce;">
+        <div class="tool-card-top">
+          <span class="tool-card-icon">
+            <img src="{{ url_for('static', filename='logos/facturacion.png') }}" alt="" loading="lazy">
+          </span>
+          <span class="tool-card-go" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+          </span>
+        </div>
+        <h3 class="tool-card-name">Facturación</h3>
+        <p class="tool-card-desc">Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).</p>
+        <span class="tool-card-status is-standalone">
+          <span class="tool-card-status-dot"></span>
+          Inicia sesión aparte
+        </span>
+      </a>
+      {% else %}
+      <div class="tool-card is-pendiente" style="--tool-accent: #2f6fce;">
+        <div class="tool-card-top">
+          <span class="tool-card-icon">
+            <img src="{{ url_for('static', filename='logos/facturacion.png') }}" alt="" loading="lazy">
+          </span>
+        </div>
+        <h3 class="tool-card-name">Facturación</h3>
+        <p class="tool-card-desc">Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).</p>
+        <span class="tool-card-status is-pendiente">
+          <span class="tool-card-status-dot"></span>
+          Aún no aprovisionada para tu cliente
+        </span>
+      </div>
+      {% endif %}
+      {% endif %}
     </div>
   </section>
   {% endfor %}

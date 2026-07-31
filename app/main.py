@@ -600,7 +600,18 @@ def pregunta_ia():
 @app.route("/herramientas", endpoint="herramientas")
 @login_required
 def herramientas_vista():
-    return render_template("herramientas.html", herramientas=herramientas.HERRAMIENTAS)
+    # FacturaScripts no está en herramientas.HERRAMIENTAS porque no es una
+    # instancia compartida con una URL fija como el resto del catálogo:
+    # cada tenant tiene su propio contenedor, aprovisionado por
+    # app/facturascripts.py:aprovisionar_tenant() al crear el tenant (ver
+    # HOSTING.md 8.21). Se resuelve aquí, por tenant del usuario actual.
+    tenant = db.tenant_de_usuario(g.usuario_id)
+    facturascripts_url = tenant["facturascripts_url"] if tenant else None
+    return render_template(
+        "herramientas.html",
+        herramientas=herramientas.HERRAMIENTAS,
+        facturascripts_url=facturascripts_url,
+    )
 
 
 @app.route("/estadisticas")

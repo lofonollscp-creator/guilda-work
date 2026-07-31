@@ -225,6 +225,19 @@ def _instalar(tenant_id: int, db_user: str, db_pass: str, db_name: str, admin_us
     if resultado.returncode != 0 or "DEPLOY_OK" not in resultado.stdout:
         raise ErrorFacturaScripts(f"Plugins::deploy() falló en el tenant {tenant_id}: {resultado.stderr.strip()}")
 
+    # Plugins::deploy() corre como root (docker exec sin --user) y crea
+    # sobre la marcha directorios de caché nuevos (MyFiles/Tmp/FileCache)
+    # que el `chmod -R o+w` de más arriba no llegó a cubrir porque aún no
+    # existían — Apache corre como www-data y sin este segundo chmod, el
+    # propio arranque real deja warnings de "Permission denied" en cada
+    # página (confirmado en vivo contra un tenant ya aprovisionado).
+    resultado = subprocess.run(
+        ["docker", "exec", contenedor, "chmod", "-R", "o+w", "/var/www/html"],
+        capture_output=True, text=True, timeout=15,
+    )
+    if resultado.returncode != 0:
+        raise ErrorFacturaScripts(f"No se han podido fijar permisos tras el deploy: {resultado.stderr.strip()}")
+
 
 def _verificar_arranque_completo(url: str) -> None:
     """Comprueba que la app responde de verdad tras la instalación (no

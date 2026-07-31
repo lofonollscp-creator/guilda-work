@@ -2136,12 +2136,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   justify-content: center;
   width: 42px;
   height: 42px;
+  padding: 7px;
   border-radius: var(--radius-md);
-  color: var(--tool-accent);
-  background: color-mix(in srgb, var(--tool-accent) 16%, transparent);
+  /* Chip fijo casi blanco (no ligado al tema) — los logotipos son los
+     reales de cada proyecto, con sus propios colores de marca (algunos
+     monocromos en negro/blanco), así que necesitan un fondo neutro y
+     constante para verse con contraste sea cual sea el tema. */
+  background: #eef0e8;
   border: 1px solid color-mix(in srgb, var(--tool-accent) 30%, transparent);
   box-shadow: 0 0 0 0 transparent;
   transition: box-shadow 0.15s ease;
+}
+.tool-card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .tool-card:hover .tool-card-icon {
   box-shadow: 0 0 18px -2px color-mix(in srgb, var(--tool-accent) 65%, transparent);
@@ -2185,6 +2194,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tool-card-status.is-standalone .tool-card-status-dot {
   background: #eab308;
   box-shadow: 0 0 6px rgba(234, 179, 8, 0.7);
+}
+.tool-card-status.is-pendiente .tool-card-status-dot {
+  background: var(--text-muted);
+}
+.tool-card.is-pendiente {
+  cursor: default;
+  opacity: 0.6;
+}
+.tool-card.is-pendiente:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {

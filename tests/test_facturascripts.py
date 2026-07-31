@@ -73,12 +73,36 @@ def test_aprovisionar_tenant_completo_ok(monkeypatch):
 
     # 3 psql (CREATE ROLE, CREATE DATABASE, REVOKE CONNECT) + docker run +
     # docker cp (config.php) + docker exec (htaccess/carpetas) + docker
-    # exec (Plugins::deploy)
+    # exec (Plugins::deploy) + docker exec (chmod final tras el deploy)
     psql = [c for c in llamadas if "psql" in c]
     assert len(psql) == 3
     assert any(c[:2] == ["docker", "run"] for c in llamadas)
     assert any(c[:2] == ["docker", "cp"] for c in llamadas)
     assert any(c[:2] == ["docker", "exec"] and "php" in c for c in llamadas)
+    # Plugins::deploy() corre como root y crea caché nueva (MyFiles/Tmp/...)
+    # no cubierta por el chmod anterior a la instalación — sin este
+    # segundo chmod, Apache (www-data) no puede escribir ahí.
+    chmods_finales = [
+        c for c in llamadas
+        if c[:2] == ["docker", "exec"] and c[3:] == ["chmod", "-R", "o+w", "/var/www/html"]
+    ]
+    assert len(chmods_finales) == 1
+
+
+def test_aprovisionar_tenant_chmod_final_falla_lanza_excepcion(monkeypatch):
+    monkeypatch.setattr(fs, "FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD", "clave-admin")
+
+    def fake_run(cmd, **kwargs):
+        if cmd[:2] == ["docker", "exec"] and "php" in cmd:
+            return _resultado_proceso_ok(stdout="DEPLOY_OK")
+        if cmd[:2] == ["docker", "exec"] and cmd[3:] == ["chmod", "-R", "o+w", "/var/www/html"]:
+            return types.SimpleNamespace(returncode=1, stdout="", stderr="no such directory")
+        return _resultado_proceso_ok()
+
+    monkeypatch.setattr(fs.subprocess, "run", fake_run)
+    monkeypatch.setattr(fs.urllib.request, "urlopen", lambda *a, **k: _RespuestaFalsa(""))
+    with pytest.raises(fs.ErrorFacturaScripts):
+        fs.aprovisionar_tenant(1, "Lueira")
 
 
 def test_aprovisionar_tenant_psql_falla_lanza_excepcion(monkeypatch):

@@ -10,12 +10,17 @@ subdominios que sirve Caddy.
 
 `icono`: emoji — lo consume `app/rutas_api.py` (API de la app móvil,
 que lo pinta tal cual) y `app/ia_asistente.py`, así que se mantiene por
-compatibilidad. `icono_svg`: clave para la biblioteca de iconos SVG en
-línea de la web (`app/templates/_iconos.html`), usada solo por
-`herramientas.html` — un mismo estilo de trazo para las 14 herramientas
-en vez de emojis sueltos de distintas fuentes/plataformas. `color`:
-acento por herramienta para la insignia del icono en la web (hex).
-`categoria`: agrupación visual en la web.
+compatibilidad. `icono_logo`: nombre de archivo dentro de
+`app/static/logos/` con el logotipo oficial real de cada herramienta
+(descargado una vez de la fuente oficial de cada proyecto — Simple
+Icons para las que están publicadas ahí, repositorio/CDN propio del
+proyecto para las que no — y servido como asset local, sin depender de
+ningún CDN externo en tiempo de ejecución), usado solo por
+`herramientas.html`. `color`: acento por herramienta para el borde y el
+resplandor de la tarjeta en la web (hex) — decorativo, no tiene que
+coincidir con el color de marca del logotipo (que ya se ve con sus
+colores reales en el logotipo mismo). `categoria`: agrupación visual en
+la web.
 
 `sso`: si es `True`, la propia herramienta sabe autenticar contra Ory
 Hydra usando la sesión de Kratos ya activa (mismo patrón que Outline,
@@ -34,7 +39,7 @@ HERRAMIENTAS = [
         "nombre": "Outline",
         "descripcion": "Guías y documentación interna del equipo.",
         "icono": "📚",
-        "icono_svg": "libro",
+        "icono_logo": "outline.svg",
         "color": "#8b5cf6",
         "categoria": "Conocimiento",
         "url": os.environ.get("HERRAMIENTA_OUTLINE_URL", "http://127.0.0.1:3001"),
@@ -45,7 +50,7 @@ HERRAMIENTAS = [
         "nombre": "Chat",
         "descripcion": "Mensajería del equipo (Element).",
         "icono": "💬",
-        "icono_svg": "chat",
+        "icono_logo": "chat.svg",
         "color": "#22c55e",
         "categoria": "Conocimiento",
         "url": os.environ.get("HERRAMIENTA_ELEMENT_URL", "http://127.0.0.1:8009"),
@@ -56,7 +61,7 @@ HERRAMIENTAS = [
         "nombre": "CRM",
         "descripcion": "Gestión de clientes y oportunidades (EspoCRM).",
         "icono": "🧾",
-        "icono_svg": "personas",
+        "icono_logo": "crm.svg",
         "color": "#3b82f6",
         "categoria": "Productividad",
         "url": os.environ.get("HERRAMIENTA_ESPOCRM_URL", "http://127.0.0.1:8015"),
@@ -71,7 +76,7 @@ HERRAMIENTAS = [
         "nombre": "OpenProject",
         "descripcion": "Gestión de proyectos y tareas de equipo (Kanban, Gantt).",
         "icono": "🗂",
-        "icono_svg": "kanban",
+        "icono_logo": "openproject.svg",
         "color": "#f59e0b",
         "categoria": "Productividad",
         "url": os.environ.get("HERRAMIENTA_OPENPROJECT_URL", "http://127.0.0.1:8010"),
@@ -85,7 +90,7 @@ HERRAMIENTAS = [
         "nombre": "Chatwoot",
         "descripcion": "Bandeja de soporte omnicanal para incidencias de clientes.",
         "icono": "🎧",
-        "icono_svg": "auriculares",
+        "icono_logo": "chatwoot.svg",
         "color": "#06b6d4",
         "categoria": "Productividad",
         "url": os.environ.get("HERRAMIENTA_CHATWOOT_URL", "http://127.0.0.1:8011"),
@@ -99,7 +104,7 @@ HERRAMIENTAS = [
         "nombre": "n8n",
         "descripcion": "Automatizaciones y flujos de trabajo.",
         "icono": "🔀",
-        "icono_svg": "flujo",
+        "icono_logo": "n8n.svg",
         "color": "#ec4899",
         "categoria": "Productividad",
         "url": os.environ.get("HERRAMIENTA_N8N_URL", "http://127.0.0.1:5678"),
@@ -110,7 +115,7 @@ HERRAMIENTAS = [
         "nombre": "Drive",
         "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",
         "icono": "☁️",
-        "icono_svg": "nube",
+        "icono_logo": "drive.svg",
         "color": "#38bdf8",
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_NEXTCLOUD_URL", "http://127.0.0.1:8016"),
@@ -123,7 +128,7 @@ HERRAMIENTAS = [
         "nombre": "Documentos",
         "descripcion": "Gestión documental y OCR de escaneos/PDFs (Paperless-ngx).",
         "icono": "📄",
-        "icono_svg": "documento",
+        "icono_logo": "documentos.svg",
         "color": "#eab308",
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_PAPERLESS_URL", "http://127.0.0.1:8019"),
@@ -137,7 +142,7 @@ HERRAMIENTAS = [
         "nombre": "Firmas",
         "descripcion": "Firma electrónica de documentos (Documenso).",
         "icono": "✍️",
-        "icono_svg": "firma",
+        "icono_logo": "firmas.png",
         "color": "#10b981",
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_DOCUMENSO_URL", "http://127.0.0.1:8018"),
@@ -151,7 +156,7 @@ HERRAMIENTAS = [
         "nombre": "Hojas",
         "descripcion": "Hojas de cálculo tipo base de datos, listados estructurados (Baserow).",
         "icono": "🗂️",
-        "icono_svg": "tabla",
+        "icono_logo": "hojas.svg",
         "color": "#84cc16",
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_BASEROW_URL", "http://127.0.0.1:8020"),
@@ -165,7 +170,7 @@ HERRAMIENTAS = [
         "nombre": "Metabase",
         "descripcion": "Paneles de análisis sobre los datos de Guilda Work.",
         "icono": "📊",
-        "icono_svg": "barras",
+        "icono_logo": "metabase.svg",
         "color": "#6366f1",
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_METABASE_URL", "http://127.0.0.1:3000"),
@@ -176,7 +181,7 @@ HERRAMIENTAS = [
         "nombre": "MinIO",
         "descripcion": "Almacenamiento de archivos (consola de administración).",
         "icono": "🗄",
-        "icono_svg": "almacen",
+        "icono_logo": "minio.svg",
         "color": "#64748b",
         "categoria": "Infraestructura",
         "url": os.environ.get("HERRAMIENTA_MINIO_URL", "http://127.0.0.1:9001"),
@@ -187,7 +192,7 @@ HERRAMIENTAS = [
         "nombre": "Vaultwarden",
         "descripcion": "Gestor de contraseñas y tokens (compatible con Bitwarden).",
         "icono": "🔐",
-        "icono_svg": "escudo",
+        "icono_logo": "vaultwarden.svg",
         "color": "#ef4444",
         "categoria": "Infraestructura",
         "url": os.environ.get("HERRAMIENTA_VAULTWARDEN_URL", "http://127.0.0.1:8013"),
@@ -201,7 +206,7 @@ HERRAMIENTAS = [
         "nombre": "Uptime Kuma",
         "descripcion": "Monitorización del stack: avisa si algún servicio se cae.",
         "icono": "📈",
-        "icono_svg": "pulso",
+        "icono_logo": "uptime-kuma.svg",
         "color": "#14b8a6",
         "categoria": "Infraestructura",
         "url": os.environ.get("HERRAMIENTA_UPTIME_KUMA_URL", "http://127.0.0.1:8014"),
