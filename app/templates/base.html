@@ -95,6 +95,7 @@
             {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
             <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="Abrir Asistente IA">🤖 Asistente IA</button>
             {% endif %}
+            <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">📚 Documentación (desarrolladores)</a>
             <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
                   onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
               <button type="submit" class="ajustes-panel-btn">&#9211; Cerrar programa</button>

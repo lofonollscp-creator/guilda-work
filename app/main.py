@@ -28,6 +28,7 @@ from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_correo import correo_bp
+from .rutas_docs import docs_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import kratos_proxy_bp
@@ -85,6 +86,7 @@ app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
+app.register_blueprint(docs_bp)
 
 
 KRATOS_SESSION_COOKIE = "ory_kratos_session"
