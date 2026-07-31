@@ -8,6 +8,15 @@ puertos que `docker-compose.yml`) y se sobreescribe por variable de
 entorno en un despliegue real (ver HOSTING.md) apuntando a los
 subdominios que sirve Caddy.
 
+`icono`: emoji — lo consume `app/rutas_api.py` (API de la app móvil,
+que lo pinta tal cual) y `app/ia_asistente.py`, así que se mantiene por
+compatibilidad. `icono_svg`: clave para la biblioteca de iconos SVG en
+línea de la web (`app/templates/_iconos.html`), usada solo por
+`herramientas.html` — un mismo estilo de trazo para las 14 herramientas
+en vez de emojis sueltos de distintas fuentes/plataformas. `color`:
+acento por herramienta para la insignia del icono en la web (hex).
+`categoria`: agrupación visual en la web.
+
 `sso`: si es `True`, la propia herramienta sabe autenticar contra Ory
 Hydra usando la sesión de Kratos ya activa (mismo patrón que Outline,
 Fase 7b) — el enlace entra sin pedir nada más. Si es `False`, la
@@ -25,6 +34,9 @@ HERRAMIENTAS = [
         "nombre": "Outline",
         "descripcion": "Guías y documentación interna del equipo.",
         "icono": "📚",
+        "icono_svg": "libro",
+        "color": "#8b5cf6",
+        "categoria": "Conocimiento",
         "url": os.environ.get("HERRAMIENTA_OUTLINE_URL", "http://127.0.0.1:3001"),
         "sso": True,
     },
@@ -33,38 +45,35 @@ HERRAMIENTAS = [
         "nombre": "Chat",
         "descripcion": "Mensajería del equipo (Element).",
         "icono": "💬",
+        "icono_svg": "chat",
+        "color": "#22c55e",
+        "categoria": "Conocimiento",
         "url": os.environ.get("HERRAMIENTA_ELEMENT_URL", "http://127.0.0.1:8009"),
         "sso": True,
     },
     {
-        "id": "metabase",
-        "nombre": "Metabase",
-        "descripcion": "Paneles de análisis sobre los datos de Guilda Work.",
-        "icono": "📊",
-        "url": os.environ.get("HERRAMIENTA_METABASE_URL", "http://127.0.0.1:3000"),
-        "sso": False,
-    },
-    {
-        "id": "n8n",
-        "nombre": "n8n",
-        "descripcion": "Automatizaciones y flujos de trabajo.",
-        "icono": "🔀",
-        "url": os.environ.get("HERRAMIENTA_N8N_URL", "http://127.0.0.1:5678"),
-        "sso": False,
-    },
-    {
-        "id": "minio",
-        "nombre": "MinIO",
-        "descripcion": "Almacenamiento de archivos (consola de administración).",
-        "icono": "🗄",
-        "url": os.environ.get("HERRAMIENTA_MINIO_URL", "http://127.0.0.1:9001"),
-        "sso": False,
+        "id": "crm",
+        "nombre": "CRM",
+        "descripcion": "Gestión de clientes y oportunidades (EspoCRM).",
+        "icono": "🧾",
+        "icono_svg": "personas",
+        "color": "#3b82f6",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_ESPOCRM_URL", "http://127.0.0.1:8015"),
+        # Con SSO de verdad — a diferencia de OpenProject/Chatwoot/Metabase/
+        # Vaultwarden, EspoCRM sí tiene OIDC nativo en su core gratuito
+        # (desde v7.3), mismo patrón que Outline/Element (Fase CRM, ver
+        # HOSTING.md 8.19).
+        "sso": True,
     },
     {
         "id": "openproject",
         "nombre": "OpenProject",
         "descripcion": "Gestión de proyectos y tareas de equipo (Kanban, Gantt).",
         "icono": "🗂",
+        "icono_svg": "kanban",
+        "color": "#f59e0b",
+        "categoria": "Productividad",
         "url": os.environ.get("HERRAMIENTA_OPENPROJECT_URL", "http://127.0.0.1:8010"),
         # Sin SSO: confirmado en la documentación oficial de OpenProject
         # que el login OIDC/SAML es un Enterprise add-on de pago, no está
@@ -76,6 +85,9 @@ HERRAMIENTAS = [
         "nombre": "Chatwoot",
         "descripcion": "Bandeja de soporte omnicanal para incidencias de clientes.",
         "icono": "🎧",
+        "icono_svg": "auriculares",
+        "color": "#06b6d4",
+        "categoria": "Productividad",
         "url": os.environ.get("HERRAMIENTA_CHATWOOT_URL", "http://127.0.0.1:8011"),
         # Sin SSO: confirmado en su documentación oficial que SAML/SSO es
         # un plan Enterprise de pago, no está en la community edition
@@ -83,10 +95,101 @@ HERRAMIENTAS = [
         "sso": False,
     },
     {
+        "id": "n8n",
+        "nombre": "n8n",
+        "descripcion": "Automatizaciones y flujos de trabajo.",
+        "icono": "🔀",
+        "icono_svg": "flujo",
+        "color": "#ec4899",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_N8N_URL", "http://127.0.0.1:5678"),
+        "sso": False,
+    },
+    {
+        "id": "drive",
+        "nombre": "Drive",
+        "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",
+        "icono": "☁️",
+        "icono_svg": "nube",
+        "color": "#38bdf8",
+        "categoria": "Documentos y datos",
+        "url": os.environ.get("HERRAMIENTA_NEXTCLOUD_URL", "http://127.0.0.1:8016"),
+        # Con SSO — app oficial `user_oidc` (Fase Drive, ver HOSTING.md
+        # 8.20), mismo patrón que Outline/Element/EspoCRM.
+        "sso": True,
+    },
+    {
+        "id": "documentos",
+        "nombre": "Documentos",
+        "descripcion": "Gestión documental y OCR de escaneos/PDFs (Paperless-ngx).",
+        "icono": "📄",
+        "icono_svg": "documento",
+        "color": "#eab308",
+        "categoria": "Documentos y datos",
+        "url": os.environ.get("HERRAMIENTA_PAPERLESS_URL", "http://127.0.0.1:8019"),
+        # Con SSO — OIDC vía django-allauth desde Paperless-ngx 2.5.0,
+        # con sincronización de grupos (Fase documentos, ver HOSTING.md),
+        # mismo patrón que Drive/CRM.
+        "sso": True,
+    },
+    {
+        "id": "firmas",
+        "nombre": "Firmas",
+        "descripcion": "Firma electrónica de documentos (Documenso).",
+        "icono": "✍️",
+        "icono_svg": "firma",
+        "color": "#10b981",
+        "categoria": "Documentos y datos",
+        "url": os.environ.get("HERRAMIENTA_DOCUMENSO_URL", "http://127.0.0.1:8018"),
+        # Sin SSO: confirmado en la documentación oficial de Documenso
+        # que el SSO Portal es una función de pago (Enterprise) — mismo
+        # criterio que OpenProject/Chatwoot/Metabase/Vaultwarden.
+        "sso": False,
+    },
+    {
+        "id": "hojas",
+        "nombre": "Hojas",
+        "descripcion": "Hojas de cálculo tipo base de datos, listados estructurados (Baserow).",
+        "icono": "🗂️",
+        "icono_svg": "tabla",
+        "color": "#84cc16",
+        "categoria": "Documentos y datos",
+        "url": os.environ.get("HERRAMIENTA_BASEROW_URL", "http://127.0.0.1:8020"),
+        # Sin SSO: confirmado en la documentación oficial que está solo
+        # en el plan Advanced Enterprise, también en self-hosted — mismo
+        # criterio que Documenso/FacturaScripts.
+        "sso": False,
+    },
+    {
+        "id": "metabase",
+        "nombre": "Metabase",
+        "descripcion": "Paneles de análisis sobre los datos de Guilda Work.",
+        "icono": "📊",
+        "icono_svg": "barras",
+        "color": "#6366f1",
+        "categoria": "Documentos y datos",
+        "url": os.environ.get("HERRAMIENTA_METABASE_URL", "http://127.0.0.1:3000"),
+        "sso": False,
+    },
+    {
+        "id": "minio",
+        "nombre": "MinIO",
+        "descripcion": "Almacenamiento de archivos (consola de administración).",
+        "icono": "🗄",
+        "icono_svg": "almacen",
+        "color": "#64748b",
+        "categoria": "Infraestructura",
+        "url": os.environ.get("HERRAMIENTA_MINIO_URL", "http://127.0.0.1:9001"),
+        "sso": False,
+    },
+    {
         "id": "vaultwarden",
         "nombre": "Vaultwarden",
         "descripcion": "Gestor de contraseñas y tokens (compatible con Bitwarden).",
         "icono": "🔐",
+        "icono_svg": "escudo",
+        "color": "#ef4444",
+        "categoria": "Infraestructura",
         "url": os.environ.get("HERRAMIENTA_VAULTWARDEN_URL", "http://127.0.0.1:8013"),
         # Sin SSO: la edición gratuita/código abierto no ofrece OIDC/SAML
         # (eso es un add-on de pago de Bitwarden), mismo criterio que
@@ -98,62 +201,10 @@ HERRAMIENTAS = [
         "nombre": "Uptime Kuma",
         "descripcion": "Monitorización del stack: avisa si algún servicio se cae.",
         "icono": "📈",
+        "icono_svg": "pulso",
+        "color": "#14b8a6",
+        "categoria": "Infraestructura",
         "url": os.environ.get("HERRAMIENTA_UPTIME_KUMA_URL", "http://127.0.0.1:8014"),
-        "sso": False,
-    },
-    {
-        "id": "crm",
-        "nombre": "CRM",
-        "descripcion": "Gestión de clientes y oportunidades (EspoCRM).",
-        "icono": "🧾",
-        "url": os.environ.get("HERRAMIENTA_ESPOCRM_URL", "http://127.0.0.1:8015"),
-        # Con SSO de verdad — a diferencia de OpenProject/Chatwoot/Metabase/
-        # Vaultwarden, EspoCRM sí tiene OIDC nativo en su core gratuito
-        # (desde v7.3), mismo patrón que Outline/Element (Fase CRM, ver
-        # HOSTING.md 8.19).
-        "sso": True,
-    },
-    {
-        "id": "drive",
-        "nombre": "Drive",
-        "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",
-        "icono": "☁️",
-        "url": os.environ.get("HERRAMIENTA_NEXTCLOUD_URL", "http://127.0.0.1:8016"),
-        # Con SSO — app oficial `user_oidc` (Fase Drive, ver HOSTING.md
-        # 8.20), mismo patrón que Outline/Element/EspoCRM.
-        "sso": True,
-    },
-    {
-        "id": "firmas",
-        "nombre": "Firmas",
-        "descripcion": "Firma electrónica de documentos (Documenso).",
-        "icono": "✍️",
-        "url": os.environ.get("HERRAMIENTA_DOCUMENSO_URL", "http://127.0.0.1:8018"),
-        # Sin SSO: confirmado en la documentación oficial de Documenso
-        # que el SSO Portal es una función de pago (Enterprise) — mismo
-        # criterio que OpenProject/Chatwoot/Metabase/Vaultwarden.
-        "sso": False,
-    },
-    {
-        "id": "documentos",
-        "nombre": "Documentos",
-        "descripcion": "Gestión documental y OCR de escaneos/PDFs (Paperless-ngx).",
-        "icono": "📄",
-        "url": os.environ.get("HERRAMIENTA_PAPERLESS_URL", "http://127.0.0.1:8019"),
-        # Con SSO — OIDC vía django-allauth desde Paperless-ngx 2.5.0,
-        # con sincronización de grupos (Fase documentos, ver HOSTING.md),
-        # mismo patrón que Drive/CRM.
-        "sso": True,
-    },
-    {
-        "id": "hojas",
-        "nombre": "Hojas",
-        "descripcion": "Hojas de cálculo tipo base de datos, listados estructurados (Baserow).",
-        "icono": "🗂️",
-        "url": os.environ.get("HERRAMIENTA_BASEROW_URL", "http://127.0.0.1:8020"),
-        # Sin SSO: confirmado en la documentación oficial que está solo
-        # en el plan Advanced Enterprise, también en self-hosted — mismo
-        # criterio que Documenso/FacturaScripts.
         "sso": False,
     },
 ]

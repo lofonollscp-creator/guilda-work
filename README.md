@@ -116,6 +116,45 @@ local...) los use para generar informes.
   anotar (con el atajo Ctrl+Alt+G). Si ya estás registrando actividad, no
   molesta — comprueba primero si ha habido movimiento reciente.
 
+## Herramientas conectadas (stack completo, opcional)
+
+Guilda Work puede desplegarse solo (registro de actividad + IA local, todo
+lo de arriba) o junto a un stack completo de herramientas de negocio
+autoalojadas (`docker-compose.yml`, ver `HOSTING.md`), todas accesibles
+desde la pantalla **Herramientas** de la app y, para la mayoría, también
+desde el Asistente de IA vía MCP (ver más abajo):
+
+- **Conocimiento**: Outline (documentación interna), Chat (Element/Matrix).
+- **Productividad**: CRM (EspoCRM), OpenProject (proyectos/Kanban/Gantt),
+  Chatwoot (soporte omnicanal), n8n (automatizaciones).
+- **Documentos y datos**: Drive (Nextcloud), Documentos (Paperless-ngx,
+  gestión documental con OCR), Firmas (Documenso, firma electrónica),
+  Hojas (Baserow, hojas de cálculo tipo base de datos), Metabase
+  (analítica/paneles), y FacturaScripts (facturación — una instancia por
+  cliente, ver más abajo).
+- **Infraestructura**: MinIO (almacenamiento S3), Vaultwarden (gestor de
+  contraseñas, **nunca expuesto por MCP**), Uptime Kuma (monitorización).
+
+**Organización por tenants (clientes/organizaciones)**: cada tenant es un
+cliente o unidad de negocio con sus propios usuarios — los datos de un
+tenant nunca son visibles para otro. Según la herramienta, el aislamiento
+se consigue de una de estas formas (investigado y verificado en vivo para
+cada una, ver `HOSTING.md`):
+- **Instancia física propia por tenant** (FacturaScripts) — su plugin
+  multiempresa no aísla de verdad, así que cada cliente tiene su propio
+  contenedor y base de datos.
+- **Aislamiento lógico con SSO real** dentro de una instancia compartida
+  (EspoCRM, Nextcloud, Paperless-ngx) — inicias sesión con tu cuenta de
+  Guilda Work y solo ves lo de tu propio tenant.
+- **Token/Equipo/Workspace propio por tenant** dentro de una instancia
+  compartida, sin SSO (Documenso, Baserow) — cada tenant tiene su propio
+  espacio de trabajo y credencial.
+
+El alta de un tenant nuevo (`Backoffice`, solo administradores) aprovisiona
+automáticamente lo que cada herramienta permite por API — sin pasos
+manuales salvo donde la propia herramienta no ofrece esa vía (documentado
+caso por caso en `HOSTING.md`).
+
 ## Acceso desde un agente de IA (Claude Code, Codex CLI...)
 
 Si tienes Claude Code o Codex CLI abierto **en esta carpeta**, ya tienen
@@ -184,7 +223,7 @@ cwd = "/ruta/a/ELEGANZA"
 **Claude Desktop**: en su configuración de servidores MCP (`claude_desktop_config.json`),
 añade una entrada equivalente con `command`/`args`/`cwd` apuntando a este proyecto.
 
-Tools disponibles (58, en `mcp_tools.py` — compartidas entre
+Tools disponibles (72, en `mcp_tools.py` — compartidas entre
 `mcp_server.py` y `mcp_server_remoto.py`, ver más abajo):
 
 **Propias de Guilda Work (27)**: `listar_notas`/`crear_nota`/`editar_nota`,
@@ -204,24 +243,36 @@ es la que de verdad lo manda — dale a tu asistente la instrucción de
 confirmar contigo el contenido antes de llamar a esa segunda tool. El `bcc`
 nunca viaja como cabecera visible del mensaje enviado.
 
-**Del resto del stack Docker (31)**: prefijo `crm_*` (EspoCRM — Leads/
-Contactos/Cuentas), `drive_*` (Nextcloud — listar/buscar/subir/descargar
-archivos), `proyectos_*` (OpenProject), `soporte_*` (Chatwoot —
-conversaciones), `analitica_*` (Metabase — preguntas/dashboards ya
-guardados, nunca SQL nuevo por prompt), `automatizaciones_*` (n8n —
-ejecutar flujos ya existentes, nunca crear/modificar uno), `documentacion_*`
-(Outline), `chat_*` (Synapse/Matrix), `almacenamiento_*` (MinIO) y
-`monitorizacion_listar_estado` (Uptime Kuma — **solo lectura**, no tiene
-API de escritura fuera de Socket.IO). Cada una es opcional por separado:
+**Del resto del stack Docker (41)**, agrupadas por prefijo — cada
+herramienta conectada tiene el suyo, y cada una es opcional por separado:
 si su variable de entorno/token no está configurada, la tool de solo
 lectura devuelve una lista vacía y la de escritura falla con un mensaje
-claro, sin tumbar el resto del servidor. **Vaultwarden queda excluido a
-propósito de todo esto**, bajo ningún concepto — es un gestor de
-contraseñas, no se expone por MCP.
+claro, sin tumbar el resto del servidor.
 
-Sin filtrado por tenant: el MCP actúa como un único administrador global
-de confianza, igual que con notas/tareas — mismo criterio ya usado en
-`app/rutas_backoffice.py`.
+- `crm_*` (EspoCRM — Leads/Contactos/Cuentas), `drive_*` (Nextcloud —
+  listar/buscar/subir/descargar archivos), `proyectos_*` (OpenProject),
+  `soporte_*` (Chatwoot — conversaciones), `analitica_*` (Metabase —
+  preguntas/dashboards ya guardados, nunca SQL nuevo por prompt),
+  `automatizaciones_*` (n8n — ejecutar flujos ya existentes, nunca crear/
+  modificar uno), `documentacion_*` (Outline), `chat_*` (Synapse/Matrix),
+  `almacenamiento_*` (MinIO) y `monitorizacion_listar_estado` (Uptime
+  Kuma — **solo lectura**, no tiene API de escritura fuera de Socket.IO).
+  Instancia compartida entre todos los tenants, sin filtrado por tenant
+  en estas — el MCP actúa como un único administrador global de
+  confianza, igual que con notas/tareas.
+- `facturas_*` (FacturaScripts), `firmas_*` (Documenso), `documentos_*`
+  (Paperless-ngx) y `hojas_*` (Baserow) son distintas: **llevan un
+  primer parámetro `tenant` explícito** porque, a diferencia del resto,
+  el aislamiento entre clientes de estas cuatro no lo da una instancia
+  compartida con permisos, sino una instancia física propia
+  (FacturaScripts) o un token/Equipo/Workspace propio por tenant
+  (Documenso/Paperless-ngx/Baserow) — sin ese `tenant`, no habría forma
+  de saber qué cliente debe ver/crear cada factura, documento o fila.
+  Ver `HOSTING.md` (secciones 8.19 a 8.24) para el detalle de
+  aislamiento de cada una.
+
+**Vaultwarden queda excluido a propósito de todo esto**, bajo ningún
+concepto — es un gestor de contraseñas, no se expone por MCP.
 
 ### Conector remoto para ChatGPT
 
