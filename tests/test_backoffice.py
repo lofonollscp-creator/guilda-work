@@ -747,3 +747,88 @@ def test_backoffice_borrar_tenant_desaprovisiona_listmonk(cliente, monkeypatch):
     assert resp.status_code == 200
     assert llamadas["args"] == (3, 5)
     assert db.obtener_tenant(tenant_id) is None
+
+
+def test_backoffice_crear_tenant_aprovisiona_stalwart_solo_si_hay_dominio(cliente, monkeypatch):
+    """Stalwart es el único proveedor que necesita un dato manual (el
+    dominio propio real del cliente) — sin él, se omite igual que si
+    STALWART_ADMIN_USER/PASSWORD no estuvieran configuradas."""
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-sw1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    llamado = []
+    monkeypatch.setattr(rutas_backoffice.stalwart, "aprovisionar_tenant", lambda *a: llamado.append(a))
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinDominioSW"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamado == []
+    assert db.obtener_tenant_por_nombre("SinDominioSW") is not None
+
+
+def test_backoffice_crear_tenant_aprovisiona_stalwart_con_dominio(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-sw2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar(tenant_id, nombre, dominio_correo):
+        return {
+            "stalwart_tenant_id": "b", "domain_id": "c", "domain_name": dominio_correo,
+            "account_id": "d", "api_key": "API_generado",
+        }
+
+    monkeypatch.setattr(rutas_backoffice.stalwart, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post(
+        "/backoffice/tenants", data={"nombre": "ConDominioSW", "dominio_correo": "clientea.com"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+    tenant = db.obtener_tenant_por_nombre("ConDominioSW")
+    assert tenant["stalwart_tenant_id"] == "b"
+    assert tenant["stalwart_domain_name"] == "clientea.com"
+    assert tenant["stalwart_api_key"] == "API_generado"
+
+
+def test_backoffice_crear_tenant_un_fallo_en_stalwart_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-sw3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(tenant_id, nombre, dominio_correo):
+        raise rutas_backoffice.stalwart.ErrorStalwart("fallo simulado de Stalwart")
+
+    monkeypatch.setattr(rutas_backoffice.stalwart, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post(
+        "/backoffice/tenants", data={"nombre": "ConFalloSW", "dominio_correo": "clientea.com"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("ConFalloSW") is not None
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_stalwart(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-sw4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarSW")
+    db.guardar_stalwart(tenant_id, "b", "c", "clientea.com", "d", "API_token")
+
+    llamadas = {}
+
+    def fake_desaprovisionar(stalwart_tenant_id, domain_id, account_id):
+        llamadas["args"] = (stalwart_tenant_id, domain_id, account_id)
+
+    monkeypatch.setattr(rutas_backoffice.stalwart, "desaprovisionar_tenant", fake_desaprovisionar)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["args"] == ("b", "c", "d")
+    assert db.obtener_tenant(tenant_id) is None

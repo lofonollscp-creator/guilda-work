@@ -555,6 +555,27 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "listmonk_list_role_id", "INTEGER")
         _asegurar_columna(conn, "tenants", "listmonk_api_key", "TEXT")
 
+        # Stalwart (correo propio, backend alternativo con mejor API para
+        # MCP que el cliente IMAP genérico de app/correo.py): instancia
+        # compartida. Verificado en vivo (contenedor real, sin licencia
+        # Enterprise) que el aislamiento por Tenant/Domain/Account es
+        # real y aplicado por el propio servidor a nivel de accountId
+        # JMAP (una llamada con el accountId de otro tenant devuelve un
+        # 403 "forbidden" real, no un filtro de cliente) — ver
+        # app/stalwart.py. Los ids de Stalwart son cadenas cortas
+        # (base32), no numéricas, de ahí TEXT. Cada tenant usa su propio
+        # dominio real (decisión del usuario, no un subdominio de
+        # guilda.cat), por eso stalwart_domain_name se guarda tal cual se
+        # introduce al aprovisionar, no se deriva de ningún otro campo.
+        # El API Key se genera 100% automático (x:ApiKey/set devuelve el
+        # secreto en la propia respuesta), sin ningún paso manual — igual
+        # que Listmonk/Paperless-ngx/Baserow.
+        _asegurar_columna(conn, "tenants", "stalwart_tenant_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stalwart_domain_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stalwart_domain_name", "TEXT")
+        _asegurar_columna(conn, "tenants", "stalwart_account_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stalwart_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -931,6 +952,31 @@ def guardar_listmonk(tenant_id: int, list_id: int, list_role_id: int, api_key: s
         conn.execute(
             "UPDATE tenants SET listmonk_list_id = ?, listmonk_list_role_id = ?, listmonk_api_key = ? WHERE id = ?",
             (list_id, list_role_id, api_key, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stalwart(
+    tenant_id: int,
+    stalwart_tenant_id: str,
+    domain_id: str,
+    domain_name: str,
+    account_id: str,
+    api_key: str,
+) -> None:
+    """Igual que guardar_listmonk: sin pasos manuales,
+    app/stalwart.py:aprovisionar_tenant() crea el Tenant, el Domain
+    (con el dominio propio real del cliente), la Account y el ApiKey por
+    API, esto solo los guarda."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET stalwart_tenant_id = ?, stalwart_domain_id = ?, "
+            "stalwart_domain_name = ?, stalwart_account_id = ?, stalwart_api_key = ? "
+            "WHERE id = ?",
+            (stalwart_tenant_id, domain_id, domain_name, account_id, api_key, tenant_id),
         )
         conn.commit()
     finally:

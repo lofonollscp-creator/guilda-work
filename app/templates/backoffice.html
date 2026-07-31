@@ -140,6 +140,7 @@
 
   <form method="post" action="{{ url_for('backoffice.crear_tenant') }}" class="filters">
     <label>Nuevo tenant <input type="text" name="nombre" placeholder="Nombre de la organización" required></label>
+    <label>Dominio de correo (Stalwart, opcional) <input type="text" name="dominio_correo" placeholder="clientea.com"></label>
     <button type="submit" class="btn btn-primary">+ Crear tenant</button>
   </form>
 </section>

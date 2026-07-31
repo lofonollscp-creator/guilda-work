@@ -120,6 +120,15 @@ newsletter.HOSTNAME {
 	reverse_proxy localhost:8023
 }
 
+# Solo el puerto de administración HTTP de Stalwart (8080 dentro del
+# contenedor, publicado en 8025 en el host) va detrás de Caddy — los
+# puertos de correo real (25/587/465/143/993/110/995/4190) se publican
+# directamente en el host, Caddy no puede hacerles de proxy (no son
+# HTTP), ver docker-compose.yml y HOSTING.md.
+correo-stalwart.HOSTNAME {
+	reverse_proxy localhost:8025
+}
+
 # Servidor MCP remoto (Fase MCP) — para ChatGPT, que solo admite
 # servidores MCP por HTTPS real (ver mcp_server_remoto.py, HOSTING.md).
 # Corre fuera de Docker, en el mismo host que serve.py.

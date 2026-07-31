@@ -140,6 +140,26 @@ HERRAMIENTAS = [
         "sso": True,
     },
     {
+        "id": "correo-stalwart",
+        "nombre": "Correo (Stalwart)",
+        "descripcion": "Servidor de correo propio con API moderna para MCP (Stalwart).",
+        "icono": "📮",
+        "icono_logo": "correo-stalwart.svg",
+        "color": "#DB2D54",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_STALWART_URL", "http://127.0.0.1:8025"),
+        # Nombre "correo-stalwart" (no "correo" a secas) para no chocar
+        # con la sección "Correo" ya existente de Guilda Work (cliente
+        # IMAP genérico, ver app/correo.py) — Stalwart es un backend
+        # alternativo, no un reemplazo forzoso. Sin SSO por ahora:
+        # Stalwart admite un directorio OIDC como backend de
+        # autenticación (visto en su propio asistente de instalación),
+        # pero mapear eso a Hydra es una fase aparte, no bloqueante para
+        # este MVP — cada tenant entra con la cuenta que le crea
+        # app/stalwart.py:aprovisionar_tenant().
+        "sso": False,
+    },
+    {
         "id": "drive",
         "nombre": "Drive",
         "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",

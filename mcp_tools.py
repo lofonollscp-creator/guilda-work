@@ -80,6 +80,7 @@ from app import (
     outline,
     outlook_ics,
     paperless,
+    stalwart,
     synapse,
     uptime_kuma,
 )
@@ -841,6 +842,41 @@ def newsletter_enviar_campana(tenant: str, campana_id: int) -> dict:
     return listmonk.enviar_campana(api_key, campana_id)
 
 
+# --- Correo Stalwart — séptimo cliente con parámetro `tenant` --------------
+#
+# Instancia compartida, aislada por Account/ApiKey JMAP (ver
+# app/stalwart.py, verificado en vivo: un accountId de otro tenant da
+# 403 "forbidden" real del servidor) — `tenant` resuelve qué token de
+# servicio usar, mismo motivo que newsletter_*/citas_*.
+
+def _api_key_stalwart(tenant: str) -> str:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["stalwart_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene Stalwart aprovisionado "
+            "(sin STALWART_ADMIN_USER/PASSWORD configuradas, sin dominio_correo "
+            "en el alta del tenant, o creado antes de esta integración)."
+        )
+    return fila["stalwart_api_key"]
+
+
+def correo_stalwart_listar_mensajes(tenant: str, mailbox: str = "INBOX", limite: int = 20) -> list[dict]:
+    """Lista los mensajes recientes de un buzón de un tenant (Stalwart)."""
+    return stalwart.listar_mensajes(_api_key_stalwart(tenant), mailbox=mailbox, limite=limite)
+
+
+def correo_stalwart_leer_mensaje(tenant: str, email_id: str) -> dict:
+    """Lee el contenido completo de un mensaje de un tenant (Stalwart)."""
+    return stalwart.leer_mensaje(_api_key_stalwart(tenant), email_id)
+
+
+def correo_stalwart_enviar_mensaje(tenant: str, para: str, asunto: str, cuerpo: str) -> dict:
+    """Envía un mensaje desde la cuenta de correo de un tenant (Stalwart)."""
+    return stalwart.enviar_mensaje(_api_key_stalwart(tenant), para, asunto, cuerpo)
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -891,6 +927,8 @@ TOOLS = [
     # Newsletter
     newsletter_listar_suscriptores, newsletter_crear_suscriptor,
     newsletter_listar_campanas, newsletter_crear_campana, newsletter_enviar_campana,
+    # Correo Stalwart
+    correo_stalwart_listar_mensajes, correo_stalwart_leer_mensaje, correo_stalwart_enviar_mensaje,
 ]
 
 

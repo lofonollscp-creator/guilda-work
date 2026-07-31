@@ -1360,6 +1360,116 @@ vez vía Hydra, Listmonk la reconoce por email.
 `newsletter_enviar_campana` llevan un primer parámetro `tenant`, sexto
 cliente del catálogo con este patrón.
 
+### 8.27 Stalwart (correo propio) — instancia compartida, sin pasos manuales, dominio propio por cliente
+
+[Stalwart Mail Server](https://stalw.art) (`stalwartlabs/stalwart`,
+Rust, AGPLv3 — un único binario JMAP+IMAP+SMTP+CalDAV/CardDAV/WebDAV) —
+backend de correo alternativo al cliente IMAP genérico de
+`app/correo.py`, con una API moderna (JSON, no IMAP crudo) mucho mejor
+para MCP.
+
+**Aviso de reputación, no técnico**: montar un servidor de correo
+SALIENTE propio implica gestionar SPF/DKIM/DMARC y la reputación de la
+IP desde cero — un dominio nuevo sin histórico tiende a caer en spam al
+principio. No es un problema de esta integración, es inherente a
+autoalojar correo saliente; ten esto en cuenta antes de mover tráfico
+real de producción.
+
+**Aislamiento entre tenants — verificado en vivo, no solo leído en la
+documentación**: la propia página de comparación de Stalwart
+(`stalw.art/compare`) marca "multi-tenancy" como función Enterprise
+(de pago) — se verificó contra un contenedor real, SIN ninguna licencia
+configurada (`"edition":"community"` confirmado en `/api/account`), que
+Tenant/Domain/Account SÍ se pueden crear gratis, y que el aislamiento es
+real: con dos Accounts de dos Tenants distintos, cada una con su propio
+ApiKey, una llamada con el `accountId` de la cuenta del OTRO tenant es
+rechazada por el propio servidor (`403 forbidden`, no un filtro de
+cliente). Lo que de verdad es Enterprise-only es la conveniencia
+administrativa (cuotas por tenant desde la UI, directorios externos por
+dominio), no el mecanismo de scoping en sí.
+
+**El punto que costó más resolver**: añadir una credencial (API Key) a
+una cuenta NUNCA se hace sobre la propia cuenta — ni siquiera la WebUI
+oficial de Stalwart puede hacerlo así (choca con el mismo error real del
+servidor, `"Secondary credentials cannot be set directly"`). El
+mecanismo real es que cada tipo de credencial secundaria es su propio
+objeto JMAP (`x:ApiKey`), creado con el `accountId` de la cuenta
+DESTINO, no del admin. Ver el docstring de `app/stalwart.py` para el
+detalle completo — quedó resuelto y 100% automático, sin ningún paso
+manual.
+
+**Dominio propio de cada cliente** (decisión tomada con el usuario, no
+un esquema de subdominios de tu propio hostname): cada tenant usa su
+dominio real (p.ej. `clientea.com`), que ese cliente debe delegar hacia
+tu servidor Stalwart:
+- **MX**: apuntando al hostname de tu instancia de Stalwart.
+- **SPF**: `TXT` autorizando la IP/hostname de tu servidor como emisor.
+- **DKIM**: Stalwart puede generar su propio par de claves DKIM (visto
+  en su asistente de instalación) — publica la clave pública que te dé
+  como registro `TXT` en el dominio del cliente.
+- **DMARC**: `TXT` con la política que decidáis (recomendado empezar en
+  modo `p=none` para observar antes de aplicar `quarantine`/`reject`).
+
+Es el único dato manual de todo el aprovisionamiento: el dominio se
+introduce al dar de alta el tenant desde `/backoffice` (campo "Dominio
+de correo (Stalwart, opcional)") — si se deja vacío, ese tenant
+simplemente no tiene Stalwart aprovisionado, sin bloquear el resto del
+alta.
+
+**Puertos — EXCEPCIÓN explícita a "todo detrás de Caddy en 443"**
+(mismo criterio ya aceptado para SSH/OpenVPN): los puertos de correo
+real no son HTTP, Caddy no puede hacerles de proxy — se publican
+directamente en el host:
+
+| Puerto | Protocolo |
+|---|---|
+| 25 | SMTP (recepción entre servidores) |
+| 587 | SMTP Submission (envío autenticado) |
+| 465 | SMTPS (envío autenticado, TLS implícito) |
+| 143 / 993 | IMAP / IMAPS |
+| 110 / 995 | POP3 / POP3S |
+| 4190 | ManageSieve |
+
+Solo el puerto de administración HTTP (8080 dentro del contenedor,
+publicado en 8025 en el host) va detrás de Caddy, como el resto de
+herramientas.
+
+**Arranque — NO admite bootstrap 100% por variables de entorno** (a
+diferencia de Kratos/Hydra/Listmonk), verificado en vivo:
+
+```bash
+docker compose up -d stalwart
+docker logs guilda-work-stalwart   # imprime un admin temporal: username + password
+```
+
+1. Entra en `https://correo-stalwart.tu-hostname/` (o
+   `http://127.0.0.1:8025/` en local) con el admin temporal.
+2. Completa el asistente de instalación (5 pasos: identidad del
+   servidor — hostname y dominio por defecto —, almacenamiento,
+   directorio de cuentas, logging, gestión de DNS). Al terminar te
+   enseña el email y la contraseña del admin PERMANENTE — apúntala, no
+   se vuelve a mostrar.
+3. Reinicia el contenedor para que el admin permanente quede activo:
+   ```bash
+   docker restart guilda-work-stalwart
+   ```
+4. Añade a `.env`:
+   ```bash
+   HERRAMIENTA_STALWART_URL=http://127.0.0.1:8025
+   STALWART_ADMIN_USER=admin@tu-hostname
+   STALWART_ADMIN_PASSWORD=...
+   ```
+5. Reinicia Guilda Work (`STALWART_ADMIN_USER`/`PASSWORD` se leen al
+   arrancar `app/stalwart.py`).
+
+**Qué pasa al crear un tenant nuevo con dominio_correo relleno** (100%
+automático): Tenant + Domain (con ese dominio real) + Account + ApiKey,
+con el token ya guardado — nada que pegar a mano.
+
+**MCP**: `correo_stalwart_listar_mensajes`/`correo_stalwart_leer_mensaje`/
+`correo_stalwart_enviar_mensaje` llevan un primer parámetro `tenant`,
+séptimo cliente del catálogo con este patrón.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

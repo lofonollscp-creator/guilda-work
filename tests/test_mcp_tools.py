@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_81_herramientas():
-    assert len(mt.TOOLS) == 81
+def test_tools_tiene_84_herramientas():
+    assert len(mt.TOOLS) == 84
 
 
 def test_registrar_tools_las_registra_todas():
@@ -530,6 +530,70 @@ def test_newsletter_enviar_campana_delega_en_listmonk(usuario_id, monkeypatch):
 
     assert resultado == {"id": 2, "status": "running"}
     assert capturado["args"] == ("token-real", 2)
+
+
+# --- Correo Stalwart — séptimo cliente con parámetro `tenant` --------------
+
+def test_correo_stalwart_listar_mensajes_resuelve_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConStalwart")
+    mt.db.guardar_stalwart(tenant_id, "t1", "d1", "clientea.com", "a1", "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key, mailbox="INBOX", limite=20):
+        capturado["args"] = (api_key, mailbox, limite)
+        return [{"subject": "Hola"}]
+
+    monkeypatch.setattr(mt.stalwart, "listar_mensajes", fake_listar)
+    resultado = mt.correo_stalwart_listar_mensajes("ConStalwart")
+
+    assert resultado == [{"subject": "Hola"}]
+    assert capturado["args"] == ("token-real", "INBOX", 20)
+
+
+def test_correo_stalwart_listar_mensajes_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.correo_stalwart_listar_mensajes("NoExiste")
+
+
+def test_correo_stalwart_leer_mensaje_sin_aprovisionar_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinStalwart")
+    with pytest.raises(ValueError):
+        mt.correo_stalwart_leer_mensaje("SinStalwart", "abc")
+
+
+def test_correo_stalwart_leer_mensaje_delega_en_stalwart(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConStalwart2")
+    mt.db.guardar_stalwart(tenant_id, "t1", "d1", "clientea.com", "a1", "token-real")
+
+    capturado = {}
+
+    def fake_leer(api_key, email_id):
+        capturado["args"] = (api_key, email_id)
+        return {"id": email_id, "subject": "Hola"}
+
+    monkeypatch.setattr(mt.stalwart, "leer_mensaje", fake_leer)
+    resultado = mt.correo_stalwart_leer_mensaje("ConStalwart2", "abc123")
+
+    assert resultado == {"id": "abc123", "subject": "Hola"}
+    assert capturado["args"] == ("token-real", "abc123")
+
+
+def test_correo_stalwart_enviar_mensaje_delega_en_stalwart(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConStalwart3")
+    mt.db.guardar_stalwart(tenant_id, "t1", "d1", "clientea.com", "a1", "token-real")
+
+    capturado = {}
+
+    def fake_enviar(api_key, para, asunto, cuerpo):
+        capturado["args"] = (api_key, para, asunto, cuerpo)
+        return {"id": "env1"}
+
+    monkeypatch.setattr(mt.stalwart, "enviar_mensaje", fake_enviar)
+    resultado = mt.correo_stalwart_enviar_mensaje("ConStalwart3", "ana@ejemplo.com", "Hola", "Cuerpo")
+
+    assert resultado == {"id": "env1"}
+    assert capturado["args"] == ("token-real", "ana@ejemplo.com", "Hola", "Cuerpo")
 
 
 def test_citas_cancelar_reserva_delega_en_calcom(usuario_id, monkeypatch):

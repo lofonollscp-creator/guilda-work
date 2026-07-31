@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, kratos, listmonk, metabase, nextcloud, openproject, paperless
+from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, kratos, listmonk, metabase, nextcloud, openproject, paperless, stalwart
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -32,6 +32,7 @@ def panel():
 @admin_required
 def crear_tenant():
     nombre = request.form.get("nombre", "").strip()
+    dominio_correo = request.form.get("dominio_correo", "").strip().lower()
     facturascripts_creado = None
     calcom_creado = None
     if nombre:
@@ -122,6 +123,24 @@ def crear_tenant():
                     db.guardar_listmonk(tenant_id, resultado["list_id"], resultado["list_role_id"], resultado["api_key"])
             except listmonk.ErrorListmonk:
                 pass
+            if dominio_correo:
+                try:
+                    # Tenant + Domain (con el dominio propio real del
+                    # cliente) + Account + ApiKey de Stalwart (ver
+                    # app/stalwart.py) — 100% automático una vez se
+                    # conoce el dominio, que es el único dato que no se
+                    # puede derivar de nada más (decisión del usuario:
+                    # cada cliente usa su propio dominio, no un
+                    # subdominio de guilda.cat). Sin
+                    # STALWART_ADMIN_USER/PASSWORD configuradas, o sin
+                    # dominio_correo en el formulario, esto no hace nada.
+                    resultado = stalwart.aprovisionar_tenant(tenant_id, nombre, dominio_correo)
+                    db.guardar_stalwart(
+                        tenant_id, resultado["stalwart_tenant_id"], resultado["domain_id"],
+                        resultado["domain_name"], resultado["account_id"], resultado["api_key"],
+                    )
+                except stalwart.ErrorStalwart:
+                    pass
 
     if facturascripts_creado or calcom_creado:
         # Contraseña de admin generada al vuelo: se muestra UNA sola vez,
@@ -241,6 +260,15 @@ def borrar_tenant(tenant_id: int):
         # de fallo aislado.
         listmonk.desaprovisionar_tenant(tenant["listmonk_list_id"], tenant["listmonk_list_role_id"])
     except listmonk.ErrorListmonk:
+        pass
+    try:
+        # Borra la Account, el Domain y el Tenant de Stalwart de este
+        # tenant (ver app/stalwart.py:desaprovisionar_tenant) — mismo
+        # criterio de fallo aislado.
+        stalwart.desaprovisionar_tenant(
+            tenant["stalwart_tenant_id"], tenant["stalwart_domain_id"], tenant["stalwart_account_id"],
+        )
+    except stalwart.ErrorStalwart:
         pass
     db.borrar_tenant(tenant_id)
     return redirect(url_for("backoffice.panel"))

@@ -1079,6 +1079,47 @@ services:
     volumes:
       - listmonk-uploads:/listmonk/uploads
 
+  # Stalwart (correo propio, backend alternativo con mejor API JMAP para
+  # MCP que el cliente IMAP genérico de app/correo.py, ver
+  # app/stalwart.py). Imagen oficial `stalwartlabs/stalwart:latest`, sin
+  # licencia Enterprise — verificado en vivo que el aislamiento por
+  # Tenant/Domain/Account es real y gratis (ver docstring de
+  # app/stalwart.py). Bundlea su propio almacenamiento (RocksDB), no
+  # necesita un contenedor de base de datos aparte.
+  #
+  # EXCEPCIÓN explícita a "todo detrás de Caddy en 443" (mismo criterio
+  # ya aceptado para SSH/OpenVPN): los puertos de correo real
+  # (SMTP/IMAP/POP3/ManageSieve) no son HTTP, Caddy no puede hacerles de
+  # proxy — tienen que publicarse directamente en `0.0.0.0`. Solo el
+  # puerto de administración HTTP (8080, usado por app/stalwart.py y por
+  # la propia WebUI) va detrás de Caddy, igual que el resto de
+  # herramientas — ver HOSTING.md.
+  #
+  # Bootstrap: a diferencia de Kratos/Hydra/Listmonk, Stalwart NO admite
+  # bootstrap 100% por variables de entorno — la primera vez que arranca
+  # imprime un admin temporal en `docker logs` y exige completar un
+  # asistente de instalación web (`/admin`) una sola vez, tras lo cual
+  # hace falta un `docker restart` para que el admin permanente generado
+  # quede activo (verificado en vivo). Ver HOSTING.md para el paso a
+  # paso — no es un fallo de esta configuración, es cómo funciona
+  # Stalwart la primera vez.
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    container_name: guilda-work-stalwart
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8080"
+      - "0.0.0.0:25:25"
+      - "0.0.0.0:587:587"
+      - "0.0.0.0:465:465"
+      - "0.0.0.0:143:143"
+      - "0.0.0.0:993:993"
+      - "0.0.0.0:110:110"
+      - "0.0.0.0:995:995"
+      - "0.0.0.0:4190:4190"
+    volumes:
+      - stalwart-data:/opt/stalwart
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -1212,3 +1253,4 @@ volumes:
   openproject-data:
   postgres-chatwoot-data:
   redis-chatwoot-data:
+  stalwart-data:
