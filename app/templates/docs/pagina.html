@@ -14,10 +14,28 @@
       <img src="{{ url_for('static', filename='logo.png') }}" alt="">
       <span>Guilda Work<em>Developers</em></span>
     </a>
+    <button type="button" id="docs-buscar-abrir" class="docs-buscar-boton">
+      <span class="docs-buscar-icono">🔍</span>
+      <span class="docs-buscar-placeholder">Buscar en la documentación...</span>
+      <span class="docs-buscar-atajo">Ctrl K</span>
+    </button>
     <nav class="docs-topbar-links">
       <a href="{{ url_for('inicio') }}">← Volver a la app</a>
     </nav>
   </header>
+
+  <div id="docs-buscar-overlay" class="docs-buscar-overlay" hidden>
+    <div class="docs-buscar-modal" role="dialog" aria-modal="true" aria-label="Buscar en la documentación">
+      <div class="docs-buscar-campo">
+        <span class="docs-buscar-icono">🔍</span>
+        <input type="text" id="docs-buscar-input" placeholder="Buscar páginas, secciones..." autocomplete="off">
+        <kbd>Esc</kbd>
+      </div>
+      <ul id="docs-buscar-resultados" class="docs-buscar-resultados"></ul>
+      <p id="docs-buscar-vacio" class="docs-buscar-vacio" hidden>Sin resultados.</p>
+    </div>
+  </div>
+  <script type="application/json" id="docs-indice-busqueda">{{ indice_busqueda | tojson }}</script>
 
   <div class="docs-shell">
     <aside class="docs-sidebar">

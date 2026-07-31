@@ -27,4 +27,5 @@ def pagina(slug: str = ""):
         pagina=datos,
         navegacion=documentacion_dev.navegacion(),
         slug_actual=datos["slug"],
+        indice_busqueda=documentacion_dev.indice_busqueda(),
     )

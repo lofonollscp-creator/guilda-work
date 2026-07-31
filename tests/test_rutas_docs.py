@@ -43,7 +43,7 @@ def test_pagina_con_tablas_incluye_sus_filas(cliente):
 def test_navegacion_agrupa_por_grupo_en_orden_de_aparicion():
     grupos = dd.navegacion()
     nombres = [g for g, _ in grupos]
-    assert nombres == ["EMPEZAR", "INTEGRACIÓN", "DESPLIEGUE"]
+    assert nombres == ["EMPEZAR", "INTEGRACIÓN", "CONFIGURACIÓN", "DESPLIEGUE"]
     for _, paginas in grupos:
         assert all(p["grupo"] is not None for p in paginas)
 
@@ -67,3 +67,78 @@ def test_link_a_documentacion_visible_en_login(cliente):
     resp = cliente.get("/login", follow_redirects=True)
     assert resp.status_code == 200
     assert b'/docs/' in resp.data
+
+
+# --- Buscador (Ctrl/Cmd+K) --------------------------------------------------
+
+def test_indice_busqueda_incluye_una_entrada_por_pagina():
+    indice = dd.indice_busqueda()
+    titulos = {e["titulo"] for e in indice}
+    for pagina in dd.PAGINAS:
+        assert pagina["titulo"] in titulos
+
+
+def test_indice_busqueda_incluye_secciones_con_href_con_ancla():
+    indice = dd.indice_busqueda()
+    entradas_asistente_ia = [e for e in indice if e["contexto"] == "Asistente de IA (MCP)"]
+    assert entradas_asistente_ia
+    assert all("#" in e["href"] for e in entradas_asistente_ia)
+    titulos_secciones = {e["titulo"] for e in entradas_asistente_ia}
+    assert "Conector remoto — ChatGPT" in titulos_secciones
+
+
+def test_indice_busqueda_no_deja_etiquetas_html_en_el_texto():
+    indice = dd.indice_busqueda()
+    for entrada in indice:
+        assert "<" not in entrada["texto"]
+        assert ">" not in entrada["texto"]
+
+
+def test_pagina_incluye_el_indice_de_busqueda_embebido(cliente):
+    resp = cliente.get("/docs/")
+    html = resp.get_data(as_text=True)
+    assert 'id="docs-indice-busqueda"' in html
+    assert "Autenticación" in html
+
+
+# --- Catálogo completo de tools (MCP) — no se puede desincronizar de mcp_tools.py
+
+def test_catalogo_tools_mcp_incluye_las_84_tools_reales(cliente):
+    import mcp_tools as mt
+
+    resp = cliente.get("/docs/catalogo-tools-mcp")
+    html = resp.get_data(as_text=True)
+    faltan = [t.__name__ for t in mt.TOOLS if f">{t.__name__}(" not in html]
+    assert faltan == [], f"tools ausentes del catálogo: {faltan}"
+
+
+def test_catalogo_tools_mcp_muestra_firmas_con_tipos(cliente):
+    resp = cliente.get("/docs/catalogo-tools-mcp")
+    html = resp.get_data(as_text=True)
+    assert "facturas_crear_factura(tenant: str, cliente_codigo: str, lineas: list[dict])" in html
+
+
+def test_modelos_de_datos_documenta_los_campos_clave(cliente):
+    resp = cliente.get("/docs/modelos-de-datos")
+    html = resp.get_data(as_text=True)
+    for campo in ("duracion_segundos", "outlook_entry_id", "papelera_en", "message_id"):
+        assert campo in html
+
+
+def test_asistente_ia_advierte_que_tareas_duracion_no_tiene_tools_mcp(cliente):
+    resp = cliente.get("/docs/asistente-ia")
+    html = resp.get_data(as_text=True)
+    assert "NO tienen tools de MCP" in html
+
+
+def test_referencia_api_no_tiene_placeholders_de_ruta_ambiguos(cliente):
+    resp = cliente.get("/docs/referencia-api")
+    html = resp.get_data(as_text=True)
+    assert "{id}/adjuntos/{id}" not in html
+    assert "{mensaje_id}/adjuntos/{adjunto_id}" in html
+
+
+def test_referencia_api_documenta_que_notas_y_tareas_no_tienen_get_de_listado(cliente):
+    resp = cliente.get("/docs/referencia-api")
+    html = resp.get_data(as_text=True)
+    assert "no tienen un endpoint" in html
