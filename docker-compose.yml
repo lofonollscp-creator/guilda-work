@@ -940,6 +940,104 @@ services:
     volumes:
       - postgres-facturascripts-data:/var/lib/postgresql/data
 
+  # Cal.diy (reserva de citas, tipo Cal.com) — a diferencia de
+  # FacturaScripts, instancia COMPARTIDA, no una por tenant:
+  # `NEXT_PUBLIC_WEBAPP_URL` de Cal.diy es una variable de COMPILACIÓN de
+  # Next.js, no de ejecución (confirmado en la documentación oficial de
+  # Docker de Cal.diy) — una imagen prehecha no puede servir URLs
+  # distintas por contenedor, así que un contenedor físico por tenant no
+  # es viable aquí. El aislamiento entre tenants es a nivel de usuario
+  # individual de Cal.diy (un usuario de servicio por tenant, ver
+  # app/calcom.py), no de instancia física — Cal.com dejó de ser open
+  # source en julio 2026, Cal.diy (MIT) es la continuación libre real,
+  # sin SSO/Equipos en la edición libre.
+  #
+  # Sin imagen prehecha publicada (verificado: ni Docker Hub ni el
+  # mirror de Scarf mencionado en su propio docker-compose.yml oficial
+  # tienen un tag descargable) — se construye desde el propio
+  # repositorio (`calcom/cal.diy`, MIT) como contexto de build remoto,
+  # así no hace falta vendorizar un monorepo de Next.js dentro de este
+  # repositorio. **Nota de honestidad**: este build remoto se diseñó
+  # leyendo el `docker-compose.yml`/`.env.example` reales del repositorio
+  # (no solo su documentación), pero no se ha podido ejecutar de punta a
+  # punta en el entorno de desarrollo de este proyecto — el monorepo es
+  # demasiado grande para compilarlo aquí (el simple `git clone` superó
+  # los 3 minutos). Compilar tarda bastante (es un monorepo Next.js/
+  # Turborepo) — verificar en vivo al desplegar, ver HOSTING.md 8.25.
+  redis-calcom:
+    image: redis:7-alpine
+    container_name: guilda-work-redis-calcom
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${CALCOM_REDIS_PASSWORD:-CambiaEstaClaveCalcomRedis2026}"]
+    volumes:
+      - redis-calcom-data:/data
+
+  postgres-calcom:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-calcom
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: calcom
+      POSTGRES_PASSWORD: ${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}
+      POSTGRES_DB: calcom
+    volumes:
+      - postgres-calcom-data:/var/lib/postgresql/data
+
+  calcom-web:
+    container_name: guilda-work-calcom-web
+    restart: unless-stopped
+    depends_on:
+      - postgres-calcom
+    build:
+      context: https://github.com/calcom/cal.diy.git#main
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* se hornean en el bundle de cliente en tiempo de
+        # build — de ahí que CALCOM_PUBLIC_ORIGIN tenga que ser el
+        # dominio público REAL antes de construir, no algo que se pueda
+        # cambiar luego solo con una variable de entorno de ejecución.
+        NEXT_PUBLIC_WEBAPP_URL: ${CALCOM_PUBLIC_ORIGIN:-http://127.0.0.1:8021}
+        NEXT_PUBLIC_API_V2_URL: ${CALCOM_API_PUBLIC_ORIGIN:-http://127.0.0.1:8022}/v2
+        NEXT_PUBLIC_LICENSE_CONSENT: "true"
+        CALCOM_TELEMETRY_DISABLED: "1"
+        NEXTAUTH_SECRET: ${CALCOM_NEXTAUTH_SECRET:?define CALCOM_NEXTAUTH_SECRET, p.ej. openssl rand -base64 32}
+        CALENDSO_ENCRYPTION_KEY: ${CALCOM_ENCRYPTION_KEY:?define CALCOM_ENCRYPTION_KEY, p.ej. openssl rand -base64 24}
+        DATABASE_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+        DATABASE_DIRECT_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+    environment:
+      DATABASE_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+      DATABASE_DIRECT_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+      NEXTAUTH_SECRET: ${CALCOM_NEXTAUTH_SECRET:?define CALCOM_NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${CALCOM_PUBLIC_ORIGIN:-http://127.0.0.1:8021}
+    ports:
+      - "127.0.0.1:8021:3000"
+
+  calcom-api:
+    container_name: guilda-work-calcom-api
+    restart: unless-stopped
+    depends_on:
+      - postgres-calcom
+      - redis-calcom
+    build:
+      context: https://github.com/calcom/cal.diy.git#main
+      dockerfile: apps/api/v2/Dockerfile
+      args:
+        DATABASE_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+        DATABASE_DIRECT_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+    environment:
+      NODE_ENV: production
+      API_PORT: "80"
+      DATABASE_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+      DATABASE_READ_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+      DATABASE_WRITE_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+      DATABASE_DIRECT_URL: postgresql://calcom:${CALCOM_DB_PASSWORD:-CambiaEstaClaveCalcom2026}@postgres-calcom:5432/calcom
+      NEXTAUTH_SECRET: ${CALCOM_NEXTAUTH_SECRET:?define CALCOM_NEXTAUTH_SECRET}
+      JWT_SECRET: ${CALCOM_JWT_SECRET:?define CALCOM_JWT_SECRET, p.ej. openssl rand -base64 32}
+      REDIS_URL: redis://:${CALCOM_REDIS_PASSWORD:-CambiaEstaClaveCalcomRedis2026}@redis-calcom:6379
+      WEB_APP_URL: ${CALCOM_PUBLIC_ORIGIN:-http://127.0.0.1:8021}
+    ports:
+      - "127.0.0.1:8022:80"
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -1065,6 +1163,8 @@ volumes:
   postgres-baserow-data:
   baserow-data:
   postgres-facturascripts-data:
+  redis-calcom-data:
+  postgres-calcom-data:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

@@ -126,7 +126,8 @@ desde el Asistente de IA vía MCP (ver más abajo):
 
 - **Conocimiento**: Outline (documentación interna), Chat (Element/Matrix).
 - **Productividad**: CRM (EspoCRM), OpenProject (proyectos/Kanban/Gantt),
-  Chatwoot (soporte omnicanal), n8n (automatizaciones).
+  Chatwoot (soporte omnicanal), n8n (automatizaciones), Citas (Cal.diy,
+  reserva de citas online — instancia compartida, ver más abajo).
 - **Documentos y datos**: Drive (Nextcloud), Documentos (Paperless-ngx,
   gestión documental con OCR), Firmas (Documenso, firma electrónica),
   Hojas (Baserow, hojas de cálculo tipo base de datos), Metabase
@@ -149,6 +150,10 @@ cada una, ver `HOSTING.md`):
 - **Token/Equipo/Workspace propio por tenant** dentro de una instancia
   compartida, sin SSO (Documenso, Baserow) — cada tenant tiene su propio
   espacio de trabajo y credencial.
+- **Cuenta de servicio propia por tenant** dentro de una instancia
+  compartida, sin SSO (Cal.diy) — a diferencia de EspoCRM/Nextcloud/
+  Paperless-ngx, el aislamiento aquí es a nivel de usuario individual,
+  no de Equipo (Cal.diy no tiene Equipos reales en su edición libre).
 
 El alta de un tenant nuevo (`Backoffice`, solo administradores) aprovisiona
 automáticamente lo que cada herramienta permite por API — sin pasos
@@ -223,7 +228,7 @@ cwd = "/ruta/a/ELEGANZA"
 **Claude Desktop**: en su configuración de servidores MCP (`claude_desktop_config.json`),
 añade una entrada equivalente con `command`/`args`/`cwd` apuntando a este proyecto.
 
-Tools disponibles (72, en `mcp_tools.py` — compartidas entre
+Tools disponibles (76, en `mcp_tools.py` — compartidas entre
 `mcp_server.py` y `mcp_server_remoto.py`, ver más abajo):
 
 **Propias de Guilda Work (27)**: `listar_notas`/`crear_nota`/`editar_nota`,
@@ -261,15 +266,15 @@ claro, sin tumbar el resto del servidor.
   en estas — el MCP actúa como un único administrador global de
   confianza, igual que con notas/tareas.
 - `facturas_*` (FacturaScripts), `firmas_*` (Documenso), `documentos_*`
-  (Paperless-ngx) y `hojas_*` (Baserow) son distintas: **llevan un
-  primer parámetro `tenant` explícito** porque, a diferencia del resto,
-  el aislamiento entre clientes de estas cuatro no lo da una instancia
-  compartida con permisos, sino una instancia física propia
-  (FacturaScripts) o un token/Equipo/Workspace propio por tenant
-  (Documenso/Paperless-ngx/Baserow) — sin ese `tenant`, no habría forma
-  de saber qué cliente debe ver/crear cada factura, documento o fila.
-  Ver `HOSTING.md` (secciones 8.19 a 8.24) para el detalle de
-  aislamiento de cada una.
+  (Paperless-ngx), `hojas_*` (Baserow) y `citas_*` (Cal.diy) son
+  distintas: **llevan un primer parámetro `tenant` explícito** porque,
+  a diferencia del resto, el aislamiento entre clientes de estas cinco
+  no lo da una instancia compartida con permisos, sino una instancia
+  física propia (FacturaScripts) o un token/Equipo/Workspace/cuenta
+  propia por tenant (Documenso/Paperless-ngx/Baserow/Cal.diy) — sin ese
+  `tenant`, no habría forma de saber qué cliente debe ver/crear cada
+  factura, documento, fila o reserva. Ver `HOSTING.md` (secciones 8.19 a
+  8.25) para el detalle de aislamiento de cada una.
 
 **Vaultwarden queda excluido a propósito de todo esto**, bajo ningún
 concepto — es un gestor de contraseñas, no se expone por MCP.

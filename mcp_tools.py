@@ -62,6 +62,7 @@ from mcp.server.fastmcp import FastMCP
 
 from app import (
     baserow,
+    calcom,
     chatwoot,
     correo,
     db,
@@ -749,6 +750,47 @@ def hojas_crear_fila(tenant: str, tabla_id: int, campos: dict) -> dict:
     return baserow.crear_fila(_api_key_baserow(tenant), tabla_id, campos)
 
 
+# --- Citas (Cal.diy) — quinto cliente con parámetro `tenant` ----------------
+#
+# Instancia compartida (a diferencia de FacturaScripts, ver app/calcom.py)
+# — el API Key aquí está ligado a la cuenta de servicio de un tenant, no a
+# una instancia física, pero `tenant` sigue haciendo falta para resolver
+# cuál usar, mismo motivo que facturas_*/firmas_*/documentos_*/hojas_*.
+
+def _api_key_calcom(tenant: str) -> str:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["calcom_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene una API Key de Cal.diy guardada "
+            "(paso manual pendiente en el backoffice, ver HOSTING.md 8.25)."
+        )
+    return fila["calcom_api_key"]
+
+
+def citas_listar_tipos_evento(tenant: str) -> list[dict]:
+    """Lista los tipos de evento (los "servicios" reservables) de un tenant."""
+    return calcom.listar_tipos_evento(_api_key_calcom(tenant))
+
+
+def citas_listar_reservas(tenant: str, desde: str | None = None, hasta: str | None = None) -> list[dict]:
+    """Lista las reservas de un tenant, opcionalmente acotadas por fecha
+    (ISO 8601)."""
+    return calcom.listar_reservas(_api_key_calcom(tenant), desde=desde, hasta=hasta)
+
+
+def citas_crear_reserva(tenant: str, tipo_evento_id: int, inicio: str, nombre_asistente: str, email_asistente: str) -> dict:
+    """Crea una reserva para un tenant. `inicio`: fecha/hora en ISO 8601
+    UTC (ej. "2026-08-01T10:00:00Z")."""
+    return calcom.crear_reserva(_api_key_calcom(tenant), tipo_evento_id, inicio, nombre_asistente, email_asistente)
+
+
+def citas_cancelar_reserva(tenant: str, reserva_uid: str, motivo: str = "") -> dict:
+    """Cancela una reserva de un tenant por su identificador (uid)."""
+    return calcom.cancelar_reserva(_api_key_calcom(tenant), reserva_uid, motivo)
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -794,6 +836,8 @@ TOOLS = [
     documentos_listar, documentos_subir, documentos_descargar,
     # Hojas
     hojas_listar_tablas, hojas_listar_filas, hojas_crear_fila,
+    # Citas
+    citas_listar_tipos_evento, citas_listar_reservas, citas_crear_reserva, citas_cancelar_reserva,
 ]
 
 

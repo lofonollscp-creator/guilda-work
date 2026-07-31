@@ -108,6 +108,14 @@ hojas.HOSTNAME {
 	reverse_proxy localhost:8020
 }
 
+# Cal.diy (reserva de citas) — instancia COMPARTIDA (no física por
+# tenant como FacturaScripts, ver docker-compose.yml y app/calcom.py).
+# La API v2 (puerto 8022) no necesita entrada propia aquí: solo la habla
+# serve.py desde dentro del host, nunca el navegador.
+citas.HOSTNAME {
+	reverse_proxy localhost:8021
+}
+
 # Servidor MCP remoto (Fase MCP) — para ChatGPT, que solo admite
 # servidores MCP por HTTPS real (ver mcp_server_remoto.py, HOSTING.md).
 # Corre fuera de Docker, en el mismo host que serve.py.

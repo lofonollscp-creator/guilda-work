@@ -526,6 +526,23 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "baserow_workspace_id", "INTEGER")
         _asegurar_columna(conn, "tenants", "baserow_api_key", "TEXT")
 
+        # Cal.diy (reserva de citas): instancia compartida, igual que
+        # Documenso/Paperless-ngx/Baserow (no una física por tenant como
+        # FacturaScripts — Cal.diy es una app Next.js con la URL pública
+        # fijada en tiempo de compilación, no de ejecución, así que un
+        # contenedor por tenant no es viable). El aislamiento aquí es a
+        # nivel de usuario individual (Cal.diy no tiene Equipos/SSO en su
+        # edición libre, ver app/calcom.py) — un usuario de servicio de
+        # Cal.diy por tenant, con su propio API Key generado a mano desde
+        # su cuenta (paso manual, igual que facturascripts_api_key).
+        # calcom_email guarda el identificador real (el endpoint de alta
+        # de Cal.diy no devuelve un id numérico, solo confirma la
+        # creación — verificado leyendo su código fuente real, ver
+        # app/calcom.py).
+        _asegurar_columna(conn, "tenants", "calcom_email", "TEXT")
+        _asegurar_columna(conn, "tenants", "calcom_admin_pass", "TEXT")
+        _asegurar_columna(conn, "tenants", "calcom_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -861,6 +878,33 @@ def guardar_baserow(tenant_id: int, workspace_id: int, api_key: str) -> None:
             "UPDATE tenants SET baserow_workspace_id = ?, baserow_api_key = ? WHERE id = ?",
             (workspace_id, api_key, tenant_id),
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_calcom(tenant_id: int, email: str, admin_pass: str) -> None:
+    """Guarda el usuario de servicio de Cal.diy recién creado para un
+    tenant — ver app/calcom.py:aprovisionar_tenant. admin_pass se enseña
+    una sola vez en el backoffice, igual que facturascripts_admin_pass."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET calcom_email = ?, calcom_admin_pass = ? WHERE id = ?",
+            (email, admin_pass, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_calcom_api_key(tenant_id: int, api_key: str) -> None:
+    """La API Key se genera a mano desde la propia cuenta de servicio
+    (paso manual, ver HOSTING.md 8.25) — esto solo la guarda una vez que
+    el admin la pega en el backoffice."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET calcom_api_key = ? WHERE id = ?", (api_key, tenant_id))
         conn.commit()
     finally:
         conn.close()

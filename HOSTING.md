@@ -1163,6 +1163,116 @@ autodescubrimiento de columnas en estas tools.
   frontend de Baserow: `/workspace-invitation/<token>`) — sin él, la
   API la rechaza con un 400.
 
+### 8.25 Cal.diy (reserva de citas, tipo Cal.com) — instancia compartida
+
+**Cal.com dejó de ser open source en julio de 2026** (el repositorio
+pasó a privado). La continuación libre real es
+[Cal.diy](https://www.cal.diy) (`github.com/calcom/cal.diy`, licencia
+MIT) — mismo motor, sin SSO/SAML ni Equipos/Organizaciones reales en la
+edición libre (el flag `ORGANIZATIONS_ENABLED` del propio
+`.env.example` del repo está marcado explícitamente "solo para
+entornos no-prod", no es una función de producción).
+
+A diferencia de FacturaScripts, aquí **no hay una instancia por
+tenant**: `NEXT_PUBLIC_WEBAPP_URL` de Cal.diy es una variable de
+**compilación** de Next.js, no de ejecución (confirmado en la
+documentación oficial de Docker de Cal.diy) — una imagen no puede
+servir URLs distintas por contenedor sin reconstruirse, así que un
+contenedor físico por tenant no es viable. En su lugar: **una única
+instancia compartida** + **un usuario de servicio de Cal.diy por
+tenant** (aislamiento a nivel de cuenta individual, ver
+`app/calcom.py`).
+
+**Nota de honestidad, igual que el resto de esta guía**: el diseño de
+`app/calcom.py` se verificó leyendo el **código fuente real** del
+repositorio (`apps/web/app/api/auth/setup/route.ts`,
+`.../signup/route.ts` y su `selfHostedHandler.ts`, no solo
+documentación), pero **no se ha podido levantar un contenedor real y
+probarlo de punta a punta** durante el desarrollo — el monorepo es
+demasiado grande para compilarlo en el entorno de desarrollo de este
+proyecto (ni siquiera el `git clone` terminó en menos de 3 minutos).
+**La primera vez que despliegues esto, trátalo como el resto de
+integraciones de este documento que sí se verificaron en vivo: revisa
+con calma que cada paso funciona como se describe, y ajusta
+`app/calcom.py` si algo no coincide** (lo más probable: nombres exactos
+de campos de la API v2, o el comportamiento exacto de
+`/api/auth/signup` en tu versión concreta).
+
+**Sin imagen prehecha publicada** (ni Docker Hub ni el mirror de Scarf
+que menciona el propio `docker-compose.yml` oficial de Cal.diy tienen
+un tag descargable) — `docker-compose.yml` construye la imagen desde el
+propio repositorio como contexto de build remoto
+(`https://github.com/calcom/cal.diy.git#main`), así no hace falta
+vendorizar un monorepo de Next.js dentro de este repositorio. Compilar
+tarda bastante (es un monorepo Next.js/Turborepo) — dale tiempo la
+primera vez.
+
+**Importante**: `NEXT_PUBLIC_WEBAPP_URL`/`NEXT_PUBLIC_API_V2_URL` se
+hornean en el bundle de cliente en el momento de construir la imagen —
+define `CALCOM_PUBLIC_ORIGIN`/`CALCOM_API_PUBLIC_ORIGIN` con tu dominio
+público REAL **antes** de construir. Si más adelante cambias de
+dominio, hay que reconstruir la imagen (`docker compose build
+calcom-web`), no basta con cambiar la variable de entorno.
+
+Añade a `.env`:
+```bash
+CALCOM_DB_PASSWORD=...
+CALCOM_REDIS_PASSWORD=...
+CALCOM_NEXTAUTH_SECRET=...        # openssl rand -base64 32
+CALCOM_ENCRYPTION_KEY=...         # openssl rand -base64 24
+CALCOM_JWT_SECRET=...             # openssl rand -base64 32
+CALCOM_ADMIN_EMAIL=admin@tu-hostname
+CALCOM_ADMIN_PASSWORD=...         # mínimo 15 caracteres, mayúscula+minúscula+número
+CALCOM_PUBLIC_ORIGIN=https://citas.tu-hostname.sslip.io
+CALCOM_API_PUBLIC_ORIGIN=https://citas-api.tu-hostname.sslip.io
+```
+
+```bash
+docker compose up -d --build redis-calcom postgres-calcom calcom-web calcom-api
+```
+
+**Bootstrap del admin de la instancia** (una sola vez, no por tenant):
+```bash
+.venv/bin/python -c "from app import calcom; calcom.bootstrap_admin()"
+```
+
+**Qué pasa al crear un tenant nuevo** (automático):
+`app/calcom.py:aprovisionar_tenant()` da de alta un usuario de servicio
+(`tenant-<slug>@calcom.local`) vía el registro estándar de Cal.diy. El
+backoffice te enseña **una sola vez**, justo después de crear el
+tenant, el email y la contraseña generada — apúntala ahí, no se vuelve
+a mostrar.
+
+**El único paso manual que queda — crear la API Key** (no se ha
+encontrado, ni en el código ni en la documentación, un endpoint admin
+para crear API Keys de otro usuario en la edición self-hosted):
+1. Entra en `https://citas.tu-hostname` con el email/contraseña que te
+   enseñó el backoffice.
+2. Configuración → Developer → API Keys → crear una nueva.
+3. Pégala en el campo "Cal.diy" de la fila de ese tenant, en el
+   backoffice — sin este paso, las tools de MCP `citas_*` para ese
+   tenant devuelven un error legible pidiéndolo, no fallan en silencio.
+
+**Al borrar un tenant**: a diferencia de FacturaScripts/Paperless-ngx/
+Baserow, aquí no hay nada que desaprovisionar por API — si quieres
+borrar también la cuenta de Cal.diy del tenant, es una acción manual
+del admin desde la propia instancia.
+
+**MCP**: `citas_listar_tipos_evento`/`citas_listar_reservas`/
+`citas_crear_reserva`/`citas_cancelar_reserva` llevan un primer
+parámetro `tenant`, quinto cliente del catálogo con este patrón (junto
+a `facturas_*`/`firmas_*`/`documentos_*`/`hojas_*`) — aquí porque el
+aislamiento depende de qué cuenta de servicio se use, no de una
+instancia física distinta.
+
+**Verificación real de aislamiento pendiente** (mismo criterio que el
+resto de integraciones de este documento): al desplegar, crea dos
+tenants de prueba, genera el API Key de cada uno desde su cuenta, y
+confirma que con el de uno no se puede listar ni cancelar reservas del
+otro — es la prueba real de que el aislamiento a nivel de cuenta
+individual (sin Equipos de pago) funciona de verdad, no algo que se
+pueda dar por hecho solo con la documentación.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_72_herramientas():
-    assert len(mt.TOOLS) == 72
+def test_tools_tiene_76_herramientas():
+    assert len(mt.TOOLS) == 76
 
 
 def test_registrar_tools_las_registra_todas():
@@ -376,3 +376,86 @@ def test_hojas_crear_fila_delega_en_baserow(usuario_id, monkeypatch):
 
     assert resultado == {"id": 1, "Nombre": "Ana"}
     assert capturado["args"] == ("token-real", 42, {"Nombre": "Ana"})
+
+
+# --- Citas (Cal.diy) — quinto cliente con parámetro `tenant` ----------------
+
+def test_citas_listar_tipos_evento_resuelve_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConCitas")
+    mt.db.guardar_calcom(tenant_id, "tenant-concitas@calcom.local", "clave-x")
+    mt.db.guardar_calcom_api_key(tenant_id, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key):
+        capturado["api_key"] = api_key
+        return [{"id": 1, "title": "Consulta inicial"}]
+
+    monkeypatch.setattr(mt.calcom, "listar_tipos_evento", fake_listar)
+    assert mt.citas_listar_tipos_evento("ConCitas") == [{"id": 1, "title": "Consulta inicial"}]
+    assert capturado["api_key"] == "token-real"
+
+
+def test_citas_listar_tipos_evento_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.citas_listar_tipos_evento("NoExiste")
+
+
+def test_citas_listar_reservas_sin_aprovisionar_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinCalcom")
+    with pytest.raises(ValueError):
+        mt.citas_listar_reservas("SinCalcom")
+
+
+def test_citas_listar_reservas_delega_en_calcom(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConCitas2")
+    mt.db.guardar_calcom(tenant_id, "tenant-concitas2@calcom.local", "clave-x")
+    mt.db.guardar_calcom_api_key(tenant_id, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key, desde=None, hasta=None):
+        capturado["args"] = (api_key, desde, hasta)
+        return [{"uid": "abc123"}]
+
+    monkeypatch.setattr(mt.calcom, "listar_reservas", fake_listar)
+    resultado = mt.citas_listar_reservas("ConCitas2", desde="2026-08-01T00:00:00Z")
+
+    assert resultado == [{"uid": "abc123"}]
+    assert capturado["args"] == ("token-real", "2026-08-01T00:00:00Z", None)
+
+
+def test_citas_crear_reserva_delega_en_calcom(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConCitas3")
+    mt.db.guardar_calcom(tenant_id, "tenant-concitas3@calcom.local", "clave-x")
+    mt.db.guardar_calcom_api_key(tenant_id, "token-real")
+
+    capturado = {}
+
+    def fake_crear(api_key, tipo_evento_id, inicio, nombre_asistente, email_asistente):
+        capturado["args"] = (api_key, tipo_evento_id, inicio, nombre_asistente, email_asistente)
+        return {"uid": "abc123"}
+
+    monkeypatch.setattr(mt.calcom, "crear_reserva", fake_crear)
+    resultado = mt.citas_crear_reserva("ConCitas3", 1, "2026-08-01T10:00:00Z", "Ana", "ana@ejemplo.com")
+
+    assert resultado == {"uid": "abc123"}
+    assert capturado["args"] == ("token-real", 1, "2026-08-01T10:00:00Z", "Ana", "ana@ejemplo.com")
+
+
+def test_citas_cancelar_reserva_delega_en_calcom(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConCitas4")
+    mt.db.guardar_calcom(tenant_id, "tenant-concitas4@calcom.local", "clave-x")
+    mt.db.guardar_calcom_api_key(tenant_id, "token-real")
+
+    capturado = {}
+
+    def fake_cancelar(api_key, reserva_uid, motivo):
+        capturado["args"] = (api_key, reserva_uid, motivo)
+        return {"uid": "abc123", "status": "cancelled"}
+
+    monkeypatch.setattr(mt.calcom, "cancelar_reserva", fake_cancelar)
+    resultado = mt.citas_cancelar_reserva("ConCitas4", "abc123", "no puede asistir")
+
+    assert resultado == {"uid": "abc123", "status": "cancelled"}
+    assert capturado["args"] == ("token-real", "abc123", "no puede asistir")

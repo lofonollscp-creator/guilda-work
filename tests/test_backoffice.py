@@ -567,3 +567,81 @@ def test_backoffice_admin_no_puede_quitarse_el_rol_a_si_mismo(cliente):
     resp = cliente.post(f"/backoffice/usuarios/{usuario_id}/rol")
     assert resp.status_code == 400
     assert db.es_admin(usuario_id) is True
+
+
+def test_backoffice_crear_tenant_aprovisiona_calcom_y_lo_muestra_una_vez(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-cc@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar(tenant_id, nombre):
+        return {"email": "tenant-lueira-cc@calcom.local", "admin_pass": "clave-generada-cc"}
+
+    monkeypatch.setattr(rutas_backoffice.calcom, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Lueira CC"})
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "clave-generada-cc" in html
+    assert "tenant-lueira-cc@calcom.local" in html
+
+    tenant = db.obtener_tenant_por_nombre("Lueira CC")
+    assert tenant["calcom_email"] == "tenant-lueira-cc@calcom.local"
+    assert tenant["calcom_admin_pass"] == "clave-generada-cc"
+
+    # Un segundo GET al panel ya NO debe volver a mostrar la contraseña.
+    resp2 = cliente.get("/backoffice/")
+    assert "clave-generada-cc" not in resp2.get_data(as_text=True)
+
+
+def test_backoffice_crear_tenant_un_fallo_en_calcom_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-cc2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(tenant_id, nombre):
+        raise rutas_backoffice.calcom.ErrorCalcom("fallo simulado de Cal.diy")
+
+    monkeypatch.setattr(rutas_backoffice.calcom, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinCalcom"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinCalcom") is not None
+
+
+def test_backoffice_guardar_calcom_api_key(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-cc3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ConCitas")
+
+    resp = cliente.post(
+        f"/backoffice/tenants/{tenant_id}/calcom-api-key",
+        data={"api_key": "cal_live_token_real"}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert db.obtener_tenant(tenant_id)["calcom_api_key"] == "cal_live_token_real"
+
+
+def test_backoffice_guardar_calcom_api_key_tenant_inexistente_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-cc4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants/999999/calcom-api-key", data={"api_key": "x"})
+    assert resp.status_code == 404
+
+
+def test_backoffice_borrar_tenant_no_falla_aunque_calcom_no_tenga_desaprovisionar(cliente):
+    """Cal.diy no tiene desaprovisionar_tenant() (ver app/calcom.py) — el
+    borrado del tenant no debe fallar por eso."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-cc5@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarCC")
+    db.guardar_calcom(tenant_id, "tenant-aborrarcc@calcom.local", "clave-x")
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant(tenant_id) is None

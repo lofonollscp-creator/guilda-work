@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject, paperless
+from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject, paperless
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -23,6 +23,7 @@ def panel():
         usuarios=db.listar_usuarios(),
         resultados_alta=None,
         facturascripts_creado=None,
+        calcom_creado=None,
     )
 
 
@@ -32,6 +33,7 @@ def panel():
 def crear_tenant():
     nombre = request.form.get("nombre", "").strip()
     facturascripts_creado = None
+    calcom_creado = None
     if nombre:
         tenant_id = None
         try:
@@ -95,8 +97,21 @@ def crear_tenant():
                     db.guardar_baserow(tenant_id, resultado["workspace_id"], resultado["api_key"])
             except baserow.ErrorBaserow:
                 pass
+            try:
+                # Usuario de servicio de Cal.diy (ver app/calcom.py) — a
+                # diferencia de FacturaScripts, Cal.diy es una instancia
+                # COMPARTIDA (no se puede tener una por tenant, su URL
+                # pública se hornea en tiempo de compilación); el
+                # aislamiento aquí es por cuenta individual, no por
+                # contenedor. Sin CALCOM_ADMIN_EMAIL/PASSWORD (o si el
+                # contenedor no está levantado) esto falla y se ignora.
+                resultado = calcom.aprovisionar_tenant(tenant_id, nombre)
+                db.guardar_calcom(tenant_id, resultado["email"], resultado["admin_pass"])
+                calcom_creado = resultado
+            except calcom.ErrorCalcom:
+                pass
 
-    if facturascripts_creado:
+    if facturascripts_creado or calcom_creado:
         # Contraseña de admin generada al vuelo: se muestra UNA sola vez,
         # igual que la contraseña temporal de crear_usuario() — no se
         # vuelve a mostrar en la tabla de tenants después de este redirect.
@@ -106,6 +121,7 @@ def crear_tenant():
             usuarios=db.listar_usuarios(),
             resultados_alta=None,
             facturascripts_creado=facturascripts_creado,
+            calcom_creado=calcom_creado,
         )
     return redirect(url_for("backoffice.panel"))
 
@@ -158,6 +174,23 @@ def guardar_documenso_api_key(tenant_id: int):
     return redirect(url_for("backoffice.panel"))
 
 
+@backoffice_bp.route("/tenants/<int:tenant_id>/calcom-api-key", methods=["POST"])
+@login_required
+@admin_required
+def guardar_calcom_api_key(tenant_id: int):
+    """La API Key de Cal.diy no se puede generar por API (no se ha
+    encontrado un endpoint admin en la edición self-hosted, ver
+    app/calcom.py) — el admin entra una vez con las credenciales
+    generadas (tenants.calcom_email/calcom_admin_pass), crea la clave
+    desde Configuración → Developer → API Keys, y la pega aquí."""
+    if db.obtener_tenant(tenant_id) is None:
+        abort(404)
+    api_key = request.form.get("api_key", "").strip()
+    if api_key:
+        db.guardar_calcom_api_key(tenant_id, api_key)
+    return redirect(url_for("backoffice.panel"))
+
+
 @backoffice_bp.route("/tenants/<int:tenant_id>/borrar", methods=["POST"])
 @login_required
 @admin_required
@@ -186,6 +219,10 @@ def borrar_tenant(tenant_id: int):
         baserow.desaprovisionar_tenant(tenant["baserow_workspace_id"])
     except baserow.ErrorBaserow:
         pass
+    # Cal.diy no tiene un desaprovisionar_tenant(): no se ha encontrado
+    # un endpoint admin para borrar la cuenta de servicio de otro usuario
+    # en la edición self-hosted (ver app/calcom.py) — borrar esa cuenta,
+    # si hace falta, es una acción manual del admin desde Cal.diy.
     db.borrar_tenant(tenant_id)
     return redirect(url_for("backoffice.panel"))
 

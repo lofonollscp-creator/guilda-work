@@ -111,6 +111,20 @@ HERRAMIENTAS = [
         "sso": False,
     },
     {
+        "id": "citas",
+        "nombre": "Citas",
+        "descripcion": "Reserva de citas online para tus clientes (Cal.diy).",
+        "icono": "📅",
+        "icono_logo": "citas.svg",
+        "color": "#292929",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_CALCOM_URL", "http://127.0.0.1:8021"),
+        # Sin SSO: Cal.diy (la continuación libre de Cal.com tras su paso
+        # a código cerrado en julio 2026) no tiene SSO/SAML en su edición
+        # gratuita — mismo criterio que Documenso/FacturaScripts/Baserow.
+        "sso": False,
+    },
+    {
         "id": "drive",
         "nombre": "Drive",
         "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",

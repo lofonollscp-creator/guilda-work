@@ -27,6 +27,20 @@
 </div>
 {% endif %}
 
+{% if calcom_creado %}
+<div class="ia-result">
+  Cal.diy aprovisionado — esto solo se muestra esta vez, apunta la
+  contraseña antes de continuar (hace falta para el último paso manual:
+  entrar y crear la API Key desde Configuración → Developer → API Keys):
+  <table class="historial-table" style="margin-top: 8px;">
+    <tbody>
+      <tr><td>Email</td><td class="mono">{{ calcom_creado.email }}</td></tr>
+      <tr><td>Contraseña</td><td class="mono">{{ calcom_creado.admin_pass }}</td></tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 {% if resultados_alta %}
 <div class="ia-result">
   Alta de <strong>{{ email_creado }}</strong> — esto solo se muestra esta
@@ -60,6 +74,7 @@
           <th>Usuarios</th>
           <th>FacturaScripts</th>
           <th>Documenso</th>
+          <th>Cal.diy</th>
           <th></th>
         </tr>
       </thead>
@@ -97,6 +112,19 @@
             {% endif %}
           </td>
           <td>
+            {% if not t.calcom_email %}
+            <span class="empty">sin aprovisionar</span>
+            {% elif t.calcom_api_key %}
+            <span class="log-badge log-badge-duracion">token guardado</span>
+            {% else %}
+            <span class="mono">{{ t.calcom_email }}</span>
+            <form method="post" action="{{ url_for('backoffice.guardar_calcom_api_key', tenant_id=t.id) }}" class="filters" style="display:inline-flex; margin-top: 4px;">
+              <input type="text" name="api_key" placeholder="Pega aquí la API Key (Configuración → Developer)" required>
+              <button type="submit" class="btn btn-ghost">Guardar</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
             <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
                   onsubmit="return confirm('¿Borrar el tenant {{ t.nombre }}? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.');">
               <button type="submit" class="btn btn-ghost">Borrar</button>
@@ -104,7 +132,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="empty">Todavía no hay ningún tenant.</td></tr>
+        <tr><td colspan="6" class="empty">Todavía no hay ningún tenant.</td></tr>
         {% endfor %}
       </tbody>
     </table>
