@@ -543,6 +543,18 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "calcom_admin_pass", "TEXT")
         _asegurar_columna(conn, "tenants", "calcom_api_key", "TEXT")
 
+        # Listmonk (newsletter/envíos masivos): instancia compartida.
+        # Verificado en vivo (contenedor real) que el aislamiento por
+        # lista es real, aplicado en el propio backend, no una
+        # convención de UI (ver app/listmonk.py) — cada tenant tiene su
+        # propia Lista + Rol de lista + usuario de servicio tipo "api",
+        # y el token viaja en la propia respuesta de creación: sin
+        # ningún paso manual, a diferencia de FacturaScripts/Documenso/
+        # Cal.diy.
+        _asegurar_columna(conn, "tenants", "listmonk_list_id", "INTEGER")
+        _asegurar_columna(conn, "tenants", "listmonk_list_role_id", "INTEGER")
+        _asegurar_columna(conn, "tenants", "listmonk_api_key", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -905,6 +917,21 @@ def guardar_calcom_api_key(tenant_id: int, api_key: str) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE tenants SET calcom_api_key = ? WHERE id = ?", (api_key, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_listmonk(tenant_id: int, list_id: int, list_role_id: int, api_key: str) -> None:
+    """Igual que guardar_paperless: sin pasos manuales,
+    app/listmonk.py:aprovisionar_tenant() crea la Lista, el Rol de lista
+    y el usuario de servicio por API, esto solo los guarda."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET listmonk_list_id = ?, listmonk_list_role_id = ?, listmonk_api_key = ? WHERE id = ?",
+            (list_id, list_role_id, api_key, tenant_id),
+        )
         conn.commit()
     finally:
         conn.close()

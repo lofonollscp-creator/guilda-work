@@ -645,3 +645,105 @@ def test_backoffice_borrar_tenant_no_falla_aunque_calcom_no_tenga_desaprovisiona
     resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
     assert resp.status_code == 200
     assert db.obtener_tenant(tenant_id) is None
+
+
+def test_backoffice_crear_tenant_aprovisiona_listmonk_sin_nada_que_mostrar(cliente, monkeypatch):
+    """A diferencia de Cal.diy/FacturaScripts, Listmonk no tiene ninguna
+    contraseña humana que enseñar — el token queda guardado directamente."""
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-lm1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar(nombre):
+        return {"list_id": 3, "list_role_id": 5, "api_key": "tenant-lueira-lm-api:tokengenerado"}
+
+    monkeypatch.setattr(rutas_backoffice.listmonk, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Lueira LM"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert "tokengenerado" not in resp.get_data(as_text=True)
+
+    tenant = db.obtener_tenant_por_nombre("Lueira LM")
+    assert tenant["listmonk_list_id"] == 3
+    assert tenant["listmonk_list_role_id"] == 5
+    assert tenant["listmonk_api_key"] == "tenant-lueira-lm-api:tokengenerado"
+
+
+def test_backoffice_crear_tenant_un_fallo_en_listmonk_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-lm2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(nombre):
+        raise rutas_backoffice.listmonk.ErrorListmonk("fallo simulado de Listmonk")
+
+    monkeypatch.setattr(rutas_backoffice.listmonk, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinListmonk"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinListmonk") is not None
+
+
+def test_backoffice_crear_usuario_da_de_alta_en_listmonk_con_el_rol_de_lista_del_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-lm3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ConListaLM")
+    db.guardar_listmonk(tenant_id, 3, 5, "tenant-conlistalm-api:token")
+
+    llamadas = {}
+
+    def fake_crear_usuario_tenant(email, list_role_id):
+        llamadas["args"] = (email, list_role_id)
+
+    monkeypatch.setattr(rutas_backoffice.listmonk, "crear_usuario_tenant", fake_crear_usuario_tenant)
+
+    resp = cliente.post(
+        "/backoffice/usuarios", data={"email": "ana-lm@ejemplo.com", "tenant_id": tenant_id}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert llamadas["args"] == ("ana-lm@ejemplo.com", 5)
+
+
+def test_backoffice_crear_usuario_sin_lista_de_listmonk_no_intenta_dar_de_alta(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-lm4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("SinListaLM")
+
+    llamado = []
+    monkeypatch.setattr(rutas_backoffice.listmonk, "crear_usuario_tenant", lambda *a: llamado.append(1))
+
+    resp = cliente.post(
+        "/backoffice/usuarios", data={"email": "ana-lm2@ejemplo.com", "tenant_id": tenant_id}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert llamado == []
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_listmonk(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-lm5@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarLM")
+    db.guardar_listmonk(tenant_id, 3, 5, "token")
+
+    llamadas = {}
+
+    def fake_desaprovisionar(list_id, list_role_id):
+        llamadas["args"] = (list_id, list_role_id)
+
+    monkeypatch.setattr(rutas_backoffice.listmonk, "desaprovisionar_tenant", fake_desaprovisionar)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["args"] == (3, 5)
+    assert db.obtener_tenant(tenant_id) is None

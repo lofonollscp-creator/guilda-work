@@ -125,6 +125,21 @@ HERRAMIENTAS = [
         "sso": False,
     },
     {
+        "id": "newsletter",
+        "nombre": "Newsletter",
+        "descripcion": "Envíos masivos y newsletters a tus clientes (Listmonk).",
+        "icono": "📧",
+        "icono_logo": "newsletter.svg",
+        "color": "#0ea5e9",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_LISTMONK_URL", "http://127.0.0.1:8023"),
+        # Con SSO real — Listmonk tiene OIDC nativo gratis (sin edición
+        # de pago, a diferencia de OpenProject/Chatwoot/Documenso/
+        # Baserow), verificado en vivo contra un contenedor real (Fase
+        # newsletter, ver HOSTING.md 8.26).
+        "sso": True,
+    },
+    {
         "id": "drive",
         "nombre": "Drive",
         "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",

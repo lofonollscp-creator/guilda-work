@@ -1038,6 +1038,47 @@ services:
     ports:
       - "127.0.0.1:8022:80"
 
+  # Listmonk (newsletter/envíos masivos) — instancia COMPARTIDA, con
+  # aislamiento real por Lista/Rol de lista (verificado en vivo contra
+  # un contenedor real, no solo leído en el código fuente — ver
+  # app/listmonk.py). 100% declarativo, copiado casi literal del
+  # docker-compose.yml oficial del propio proyecto: con
+  # LISTMONK_ADMIN_USER/PASSWORD definidas, el propio comando de
+  # arranque instala el esquema y crea el superadmin la primera vez, sin
+  # ningún script propio (a diferencia de Cal.diy).
+  postgres-listmonk:
+    image: postgres:17-alpine
+    container_name: guilda-work-postgres-listmonk
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: listmonk
+      POSTGRES_PASSWORD: ${LISTMONK_DB_PASSWORD:-CambiaEstaClaveListmonk2026}
+      POSTGRES_DB: listmonk
+    volumes:
+      - postgres-listmonk-data:/var/lib/postgresql/data
+
+  listmonk:
+    image: listmonk/listmonk:latest
+    container_name: guilda-work-listmonk
+    restart: unless-stopped
+    depends_on:
+      - postgres-listmonk
+    command: [sh, -c, "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''"]
+    environment:
+      LISTMONK_app__address: 0.0.0.0:9000
+      LISTMONK_db__user: listmonk
+      LISTMONK_db__password: ${LISTMONK_DB_PASSWORD:-CambiaEstaClaveListmonk2026}
+      LISTMONK_db__database: listmonk
+      LISTMONK_db__host: postgres-listmonk
+      LISTMONK_db__port: 5432
+      LISTMONK_db__ssl_mode: disable
+      LISTMONK_ADMIN_USER: ${LISTMONK_ADMIN_USER:?define LISTMONK_ADMIN_USER}
+      LISTMONK_ADMIN_PASSWORD: ${LISTMONK_ADMIN_PASSWORD:?define LISTMONK_ADMIN_PASSWORD}
+    ports:
+      - "127.0.0.1:8023:9000"
+    volumes:
+      - listmonk-uploads:/listmonk/uploads
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -1165,6 +1206,8 @@ volumes:
   postgres-facturascripts-data:
   redis-calcom-data:
   postgres-calcom-data:
+  postgres-listmonk-data:
+  listmonk-uploads:
   postgres-openproject-data:
   openproject-data:
   postgres-chatwoot-data:

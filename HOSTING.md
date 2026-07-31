@@ -1273,6 +1273,93 @@ otro — es la prueba real de que el aislamiento a nivel de cuenta
 individual (sin Equipos de pago) funciona de verdad, no algo que se
 pueda dar por hecho solo con la documentación.
 
+### 8.26 Listmonk (newsletter/envíos masivos) — instancia compartida, sin pasos manuales
+
+[Listmonk](https://listmonk.app) (`github.com/knadh/listmonk`, AGPLv3,
+un único binario Go + Postgres, sin edición de pago) — gestor de
+newsletters/mailing lists.
+
+**Aislamiento entre tenants — verificado en vivo, no solo leído en el
+código**: se levantó un contenedor real (Postgres + imagen oficial
+`listmonk/listmonk:latest`), se creó una Lista y un Rol de lista por
+cada uno de dos tenants de prueba, y se confirmó de verdad que el token
+de un tenant no puede leer ni escribir en la lista del otro
+(`GET /api/subscribers?list_id=<de otro tenant>` devuelve vacío,
+`POST /api/subscribers` en la lista ajena devuelve
+`403 Permission denied: lists`) — la prueba real de aislamiento, mismo
+criterio que EspoCRM/Nextcloud/Paperless-ngx/Baserow.
+
+**Diseño de dos roles, encontrado probándolo en vivo (no estaba
+documentado así de antemano)**: un Rol de lista solo puede llevar
+`list:get`/`list:manage` (Listmonk rechaza `subscribers:*`/`campaigns:*`
+ahí con `400 Invalid fields`) — los permisos de ACCIÓN
+(`subscribers:get`/`manage`, `campaigns:get`/`manage`/`send`) van en un
+Rol de USUARIO compartido por todos los tenants ("Tenant", creado una
+sola vez); lo que de verdad restringe QUÉ lista puede tocar cada tenant
+es su propio Rol de lista. Ver el docstring de `app/listmonk.py` para
+el detalle completo.
+
+**Sin ningún paso manual** — a diferencia de FacturaScripts/Documenso/
+Cal.diy: `POST /api/users` con `"type": "api"` genera el token en el
+momento y lo devuelve en la propia respuesta de creación, confirmado en
+vivo. `app/listmonk.py:aprovisionar_tenant()` encadena Lista → Rol de
+lista → usuario de servicio → guarda el token, todo automático.
+
+Añade a `.env`:
+```bash
+LISTMONK_DB_PASSWORD=...
+LISTMONK_ADMIN_USER=admin@tu-hostname
+LISTMONK_ADMIN_PASSWORD=...
+```
+
+```bash
+docker compose up -d postgres-listmonk listmonk
+```
+
+Con `LISTMONK_ADMIN_USER`/`PASSWORD` definidas, el propio comando de
+arranque (`--install --idempotent --yes`) instala el esquema y crea el
+superadmin la primera vez — no hace falta ningún script propio.
+
+**Configurar SSO (OIDC vía Hydra)** — opcional pero recomendado, un
+único paso de instancia, no por tenant:
+1. Registra el cliente OAuth2 (mismo patrón que EspoCRM/Nextcloud/
+   Paperless-ngx):
+   ```bash
+   .venv/bin/python scripts/registrar_cliente_hydra.py --nombre newsletter --redirect-uri https://newsletter.tu-hostname/admin/auth/oidc
+   ```
+2. Entra como superadmin → Ajustes → Seguridad → OIDC, y define Client
+   ID/Secret, la URL del proveedor (endpoints internos vía hostname
+   Docker `http://hydra:4444/...`, igual que Outline/EspoCRM/Nextcloud).
+3. **Nota importante, no un paso que puedas saltarte**: el campo
+   "Rol de lista por defecto" de esa pantalla solo se usa si alguien
+   entra por SSO SIN haber sido dado de alta antes desde el backoffice
+   de Guilda Work (caso raro, pero posible) — en el flujo normal, cada
+   persona ya se creó en Listmonk con el Rol de lista correcto en el
+   momento en que se le asignó su tenant (`crear_usuario()`,
+   `app/rutas_backoffice.py`), así que Listmonk la encuentra por email y
+   hereda ese Rol, no el de por defecto. Déjalo vacío o apuntando a un
+   Rol sin listas si quieres que un alta "huérfana" por SSO no vea nada
+   por error.
+
+**Requisito real**: Listmonk necesita SMTP saliente de verdad para
+mandar las campañas — no es opcional como en otras integraciones donde
+solo afecta a notificaciones. Configúralo desde Ajustes → SMTP con el
+superadmin, una sola vez.
+
+**Qué pasa al crear un tenant nuevo** (100% automático): Lista + Rol de
+lista + usuario de servicio tipo `api`, con el token ya guardado — nada
+que mostrar ni pegar a mano.
+
+**Qué pasa al dar de alta a una persona con tenant asignado**: se crea
+(o actualiza) su cuenta de Listmonk con `password_login=false` (entra
+solo por SSO) y el Rol de lista de su tenant — cuando entre por primera
+vez vía Hydra, Listmonk la reconoce por email.
+
+**MCP**: `newsletter_listar_suscriptores`/`newsletter_crear_suscriptor`/
+`newsletter_listar_campanas`/`newsletter_crear_campana`/
+`newsletter_enviar_campana` llevan un primer parámetro `tenant`, sexto
+cliente del catálogo con este patrón.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

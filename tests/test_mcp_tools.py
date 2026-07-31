@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_76_herramientas():
-    assert len(mt.TOOLS) == 76
+def test_tools_tiene_81_herramientas():
+    assert len(mt.TOOLS) == 81
 
 
 def test_registrar_tools_las_registra_todas():
@@ -441,6 +441,95 @@ def test_citas_crear_reserva_delega_en_calcom(usuario_id, monkeypatch):
 
     assert resultado == {"uid": "abc123"}
     assert capturado["args"] == ("token-real", 1, "2026-08-01T10:00:00Z", "Ana", "ana@ejemplo.com")
+
+
+# --- Newsletter (Listmonk) — sexto cliente con parámetro `tenant` ----------
+
+def test_newsletter_listar_suscriptores_resuelve_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConNewsletter")
+    mt.db.guardar_listmonk(tenant_id, 3, 5, "token-real")
+
+    capturado = {}
+
+    def fake_listar(api_key, list_id, texto=None, limite=20):
+        capturado["args"] = (api_key, list_id, texto, limite)
+        return [{"email": "a@b.com"}]
+
+    monkeypatch.setattr(mt.listmonk, "listar_suscriptores", fake_listar)
+    resultado = mt.newsletter_listar_suscriptores("ConNewsletter")
+
+    assert resultado == [{"email": "a@b.com"}]
+    assert capturado["args"] == ("token-real", 3, None, 20)
+
+
+def test_newsletter_listar_suscriptores_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.newsletter_listar_suscriptores("NoExiste")
+
+
+def test_newsletter_crear_suscriptor_sin_aprovisionar_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinListmonk")
+    with pytest.raises(ValueError):
+        mt.newsletter_crear_suscriptor("SinListmonk", "a@b.com", "Ana")
+
+
+def test_newsletter_crear_suscriptor_delega_en_listmonk(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConNewsletter2")
+    mt.db.guardar_listmonk(tenant_id, 3, 5, "token-real")
+
+    capturado = {}
+
+    def fake_crear(api_key, list_id, email, nombre, atribs):
+        capturado["args"] = (api_key, list_id, email, nombre, atribs)
+        return {"email": email}
+
+    monkeypatch.setattr(mt.listmonk, "crear_suscriptor", fake_crear)
+    resultado = mt.newsletter_crear_suscriptor("ConNewsletter2", "ana@ejemplo.com", "Ana")
+
+    assert resultado == {"email": "ana@ejemplo.com"}
+    assert capturado["args"] == ("token-real", 3, "ana@ejemplo.com", "Ana", None)
+
+
+def test_newsletter_listar_campanas_delega_en_listmonk(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConNewsletter3")
+    mt.db.guardar_listmonk(tenant_id, 3, 5, "token-real")
+
+    monkeypatch.setattr(mt.listmonk, "listar_campanas", lambda api_key: [{"id": 1}])
+    assert mt.newsletter_listar_campanas("ConNewsletter3") == [{"id": 1}]
+
+
+def test_newsletter_crear_campana_delega_en_listmonk(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConNewsletter4")
+    mt.db.guardar_listmonk(tenant_id, 3, 5, "token-real")
+
+    capturado = {}
+
+    def fake_crear(api_key, list_id, nombre, asunto, cuerpo_html):
+        capturado["args"] = (api_key, list_id, nombre, asunto, cuerpo_html)
+        return {"id": 2, "status": "draft"}
+
+    monkeypatch.setattr(mt.listmonk, "crear_campana", fake_crear)
+    resultado = mt.newsletter_crear_campana("ConNewsletter4", "Prueba", "Hola", "<p>hola</p>")
+
+    assert resultado == {"id": 2, "status": "draft"}
+    assert capturado["args"] == ("token-real", 3, "Prueba", "Hola", "<p>hola</p>")
+
+
+def test_newsletter_enviar_campana_delega_en_listmonk(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConNewsletter5")
+    mt.db.guardar_listmonk(tenant_id, 3, 5, "token-real")
+
+    capturado = {}
+
+    def fake_enviar(api_key, campana_id):
+        capturado["args"] = (api_key, campana_id)
+        return {"id": campana_id, "status": "running"}
+
+    monkeypatch.setattr(mt.listmonk, "enviar_campana", fake_enviar)
+    resultado = mt.newsletter_enviar_campana("ConNewsletter5", 2)
+
+    assert resultado == {"id": 2, "status": "running"}
+    assert capturado["args"] == ("token-real", 2)
 
 
 def test_citas_cancelar_reserva_delega_en_calcom(usuario_id, monkeypatch):

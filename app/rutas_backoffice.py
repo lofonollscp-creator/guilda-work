@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, kratos, metabase, nextcloud, openproject, paperless
+from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, kratos, listmonk, metabase, nextcloud, openproject, paperless
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -109,6 +109,18 @@ def crear_tenant():
                 db.guardar_calcom(tenant_id, resultado["email"], resultado["admin_pass"])
                 calcom_creado = resultado
             except calcom.ErrorCalcom:
+                pass
+            try:
+                # Lista + Rol de lista + usuario de servicio de
+                # Listmonk (ver app/listmonk.py) — igual que Paperless-
+                # ngx/Baserow, 100% automático, sin ningún paso manual:
+                # el token viaja en la propia respuesta de creación. Sin
+                # LISTMONK_ADMIN_USER/PASSWORD configuradas, esto no
+                # hace nada.
+                resultado = listmonk.aprovisionar_tenant(nombre)
+                if resultado is not None:
+                    db.guardar_listmonk(tenant_id, resultado["list_id"], resultado["list_role_id"], resultado["api_key"])
+            except listmonk.ErrorListmonk:
                 pass
 
     if facturascripts_creado or calcom_creado:
@@ -223,6 +235,13 @@ def borrar_tenant(tenant_id: int):
     # un endpoint admin para borrar la cuenta de servicio de otro usuario
     # en la edición self-hosted (ver app/calcom.py) — borrar esa cuenta,
     # si hace falta, es una acción manual del admin desde Cal.diy.
+    try:
+        # Borra la Lista y el Rol de lista de Listmonk de este tenant
+        # (ver app/listmonk.py:desaprovisionar_tenant) — mismo criterio
+        # de fallo aislado.
+        listmonk.desaprovisionar_tenant(tenant["listmonk_list_id"], tenant["listmonk_list_role_id"])
+    except listmonk.ErrorListmonk:
+        pass
     db.borrar_tenant(tenant_id)
     return redirect(url_for("backoffice.panel"))
 
@@ -297,6 +316,19 @@ def crear_usuario():
                 })
             except baserow.ErrorBaserow as e:
                 resultados_alta.append({"servicio": "Baserow", "estado": "error", "detalle": str(e)})
+        if tenant is not None and tenant["listmonk_list_role_id"]:
+            try:
+                # Alta directa en Listmonk con el Rol de lista de su
+                # tenant (ver app/listmonk.py) — a diferencia de
+                # Baserow, no hace falta invitación/aceptación: entra
+                # por SSO directamente con el alcance correcto.
+                listmonk.crear_usuario_tenant(email, tenant["listmonk_list_role_id"])
+                resultados_alta.append({
+                    "servicio": "Listmonk", "estado": "creado",
+                    "detalle": "entra con su sesión de Guilda Work (SSO)",
+                })
+            except listmonk.ErrorListmonk as e:
+                resultados_alta.append({"servicio": "Listmonk", "estado": "error", "detalle": str(e)})
 
     return render_template(
         "backoffice.html",

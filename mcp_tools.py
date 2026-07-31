@@ -71,6 +71,7 @@ from app import (
     export,
     facturascripts,
     importador,
+    listmonk,
     metabase,
     minio_cliente,
     n8n,
@@ -791,6 +792,55 @@ def citas_cancelar_reserva(tenant: str, reserva_uid: str, motivo: str = "") -> d
     return calcom.cancelar_reserva(_api_key_calcom(tenant), reserva_uid, motivo)
 
 
+# --- Newsletter (Listmonk) — sexto cliente con parámetro `tenant` ----------
+#
+# Instancia compartida, aislada por Lista/Rol de lista (ver
+# app/listmonk.py, verificado en vivo) — `tenant` resuelve qué Lista y
+# qué token de servicio usar, mismo motivo que facturas_*/firmas_*/
+# documentos_*/hojas_*/citas_*.
+
+def _datos_listmonk(tenant: str) -> tuple[str, int]:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["listmonk_api_key"]:
+        raise ValueError(
+            f"El tenant '{tenant}' todavía no tiene Listmonk aprovisionado "
+            "(sin LISTMONK_ADMIN_USER/PASSWORD configuradas, o creado antes de esta integración)."
+        )
+    return fila["listmonk_api_key"], fila["listmonk_list_id"]
+
+
+def newsletter_listar_suscriptores(tenant: str, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca suscriptores de la lista de un tenant."""
+    api_key, list_id = _datos_listmonk(tenant)
+    return listmonk.listar_suscriptores(api_key, list_id, texto=texto, limite=limite)
+
+
+def newsletter_crear_suscriptor(tenant: str, email: str, nombre: str, atribs: dict | None = None) -> dict:
+    """Añade un suscriptor a la lista de un tenant."""
+    api_key, list_id = _datos_listmonk(tenant)
+    return listmonk.crear_suscriptor(api_key, list_id, email, nombre, atribs)
+
+
+def newsletter_listar_campanas(tenant: str) -> list[dict]:
+    """Lista las campañas (newsletters) de un tenant."""
+    api_key, _ = _datos_listmonk(tenant)
+    return listmonk.listar_campanas(api_key)
+
+
+def newsletter_crear_campana(tenant: str, nombre: str, asunto: str, cuerpo_html: str) -> dict:
+    """Crea una campaña (newsletter) en borrador para la lista de un tenant."""
+    api_key, list_id = _datos_listmonk(tenant)
+    return listmonk.crear_campana(api_key, list_id, nombre, asunto, cuerpo_html)
+
+
+def newsletter_enviar_campana(tenant: str, campana_id: int) -> dict:
+    """Envía una campaña de un tenant ya creada."""
+    api_key, _ = _datos_listmonk(tenant)
+    return listmonk.enviar_campana(api_key, campana_id)
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -838,6 +888,9 @@ TOOLS = [
     hojas_listar_tablas, hojas_listar_filas, hojas_crear_fila,
     # Citas
     citas_listar_tipos_evento, citas_listar_reservas, citas_crear_reserva, citas_cancelar_reserva,
+    # Newsletter
+    newsletter_listar_suscriptores, newsletter_crear_suscriptor,
+    newsletter_listar_campanas, newsletter_crear_campana, newsletter_enviar_campana,
 ]
 
 
