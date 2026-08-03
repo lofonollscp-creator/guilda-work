@@ -832,3 +832,68 @@ def test_backoffice_borrar_tenant_desaprovisiona_stalwart(cliente, monkeypatch):
     assert resp.status_code == 200
     assert llamadas["args"] == ("b", "c", "d")
     assert db.obtener_tenant(tenant_id) is None
+
+
+def test_backoffice_crear_tenant_aprovisiona_ntfy(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-ntfy1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar(tenant_id, nombre):
+        return {"topic": f"guilda-{nombre.lower()}-{tenant_id}", "token": "tk_real"}
+
+    monkeypatch.setattr(rutas_backoffice.ntfy, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "ConNtfy"}, follow_redirects=True)
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant_por_nombre("ConNtfy")
+    assert tenant["ntfy_token"] == "tk_real"
+    assert tenant["ntfy_topic"] == f"guilda-conntfy-{tenant['id']}"
+
+
+def test_backoffice_crear_tenant_sin_ntfy_configurado_no_falla(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-ntfy2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinNtfy"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("SinNtfy") is not None
+
+
+def test_backoffice_crear_tenant_un_fallo_en_ntfy_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-ntfy3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(tenant_id, nombre):
+        raise rutas_backoffice.ntfy.ErrorNtfy("fallo simulado de ntfy")
+
+    monkeypatch.setattr(rutas_backoffice.ntfy, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "NtfyFalla"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("NtfyFalla") is not None
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_ntfy(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-ntfy4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarNtfy")
+    db.guardar_ntfy(tenant_id, "guilda-aborrarntfy-1", "tk_real")
+
+    llamadas = {}
+
+    def fake_desaprovisionar(t_id):
+        llamadas["tenant_id"] = t_id
+
+    monkeypatch.setattr(rutas_backoffice.ntfy, "desaprovisionar_tenant", fake_desaprovisionar)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["tenant_id"] == tenant_id
+    assert db.obtener_tenant(tenant_id) is None

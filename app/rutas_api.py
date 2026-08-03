@@ -784,8 +784,12 @@ def guardar_ajustes_ia():
 def listar_herramientas():
     """Mismo catálogo que /herramientas en la web (app/herramientas.py),
     excepto "chat": Element se consume desde el móvil como cliente Matrix
-    nativo (ver /chat/config), no como WebView de Element-web."""
-    return _ok([h for h in herramientas.HERRAMIENTAS if h["id"] != "chat"])
+    nativo (ver /chat/config), no como WebView de Element-web. Mismo
+    filtro de visibilidad por tenant que la web (ver
+    app/main.py:herramientas_vista())."""
+    tenant = db.tenant_de_usuario(g.usuario_id)
+    ocultas = db.herramientas_ocultas_de_tenant(tenant["id"]) if tenant else set()
+    return _ok([h for h in herramientas.HERRAMIENTAS if h["id"] != "chat" and h["id"] not in ocultas])
 
 
 @api_bp.route("/chat/config", methods=["GET"])

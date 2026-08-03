@@ -23,7 +23,7 @@ from pathlib import Path
 import webview
 from flask import Flask, Response, abort, g, redirect, render_template, request, session, url_for
 
-from . import ai_local, correo, db, export, herramientas, ia_asistente, importador, kratos
+from . import ai_local, busqueda, correo, db, export, herramientas, ia_asistente, importador, kratos
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -599,6 +599,27 @@ def pregunta_ia():
         return {"ok": False, "error": str(e)}
 
 
+@app.route("/busqueda/token", methods=["GET"])
+@login_required
+def token_busqueda():
+    """Tenant token de Meilisearch para el buscador global (Ctrl/Cmd+K,
+    ver app/static/busqueda.js) — el navegador llama a Meilisearch
+    DIRECTAMENTE con este token (nunca a través de esta ruta), así que
+    la clave maestra nunca sale del servidor. Corto de vida a propósito
+    (ver app/busqueda.py:generar_token_busqueda) — el frontend pide uno
+    nuevo cada vez que abre el buscador, no lo guarda entre sesiones.
+
+    Fuera de /api/v1/* a propósito: esa ruta es la API por token Bearer
+    de la app móvil (ver app/rutas_api.py), esta usa la cookie de sesión
+    de la propia web — nunca se mezclan los dos mecanismos de auth en el
+    mismo prefijo (mismo criterio que ya documenta rutas_api.py)."""
+    try:
+        token = busqueda.generar_token_busqueda(g.usuario_id)
+    except busqueda.ErrorBusqueda as e:
+        return {"ok": False, "error": str(e)}, 503
+    return {"ok": True, "token": token, "url": busqueda.MEILISEARCH_URL, "indice": busqueda.INDICE}
+
+
 @app.route("/herramientas", endpoint="herramientas")
 @login_required
 def herramientas_vista():
@@ -609,9 +630,14 @@ def herramientas_vista():
     # HOSTING.md 8.21). Se resuelve aquí, por tenant del usuario actual.
     tenant = db.tenant_de_usuario(g.usuario_id)
     facturascripts_url = tenant["facturascripts_url"] if tenant else None
+    # Visibilidad por tenant (backoffice → detalle de tenant → Herramientas):
+    # ausencia de fila en tenants_herramientas_ocultas = visible, así que un
+    # usuario sin tenant asignado ve el catálogo completo sin filtrar.
+    ocultas = db.herramientas_ocultas_de_tenant(tenant["id"]) if tenant else set()
+    visibles = [h for h in herramientas.HERRAMIENTAS if h["id"] not in ocultas]
     return render_template(
         "herramientas.html",
-        herramientas=herramientas.HERRAMIENTAS,
+        herramientas=visibles,
         facturascripts_url=facturascripts_url,
     )
 

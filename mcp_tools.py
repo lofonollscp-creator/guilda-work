@@ -71,11 +71,13 @@ from app import (
     export,
     facturascripts,
     importador,
+    jitsi,
     listmonk,
     metabase,
     minio_cliente,
     n8n,
     nextcloud,
+    ntfy,
     openproject,
     outline,
     outlook_ics,
@@ -784,8 +786,19 @@ def citas_listar_reservas(tenant: str, desde: str | None = None, hasta: str | No
 
 def citas_crear_reserva(tenant: str, tipo_evento_id: int, inicio: str, nombre_asistente: str, email_asistente: str) -> dict:
     """Crea una reserva para un tenant. `inicio`: fecha/hora en ISO 8601
-    UTC (ej. "2026-08-01T10:00:00Z")."""
-    return calcom.crear_reserva(_api_key_calcom(tenant), tipo_evento_id, inicio, nombre_asistente, email_asistente)
+    UTC (ej. "2026-08-01T10:00:00Z"). Genera automáticamente una sala de
+    videollamada de Jitsi Meet para la reserva (campo `video_url` en el
+    resultado) — si JITSI_JWT_APP_ID/SECRET no están configuradas, la
+    reserva se crea igual, sin `video_url`."""
+    resultado = calcom.crear_reserva(_api_key_calcom(tenant), tipo_evento_id, inicio, nombre_asistente, email_asistente)
+    if resultado.get("uid"):
+        try:
+            sala = jitsi.nombre_sala(tenant, resultado["uid"])
+            token = jitsi.generar_jwt_sala(tenant, nombre_asistente, sala)
+            resultado["video_url"] = jitsi.url_sala(sala, token)
+        except jitsi.ErrorJitsi:
+            pass
+    return resultado
 
 
 def citas_cancelar_reserva(tenant: str, reserva_uid: str, motivo: str = "") -> dict:
@@ -877,6 +890,48 @@ def correo_stalwart_enviar_mensaje(tenant: str, para: str, asunto: str, cuerpo: 
     return stalwart.enviar_mensaje(_api_key_stalwart(tenant), para, asunto, cuerpo)
 
 
+# --- Notificaciones (ntfy) — octavo cliente con parámetro `tenant` ---------
+#
+# Instancia compartida, aislada por usuario+topic (ver app/ntfy.py,
+# verificado en vivo) — `tenant` resuelve qué topic y qué token propio
+# usar, mismo motivo que facturas_*/firmas_*/documentos_*/hojas_*/
+# citas_*/correo_stalwart_*.
+
+def _datos_ntfy(tenant: str) -> tuple[str, str]:
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    if not fila["ntfy_token"]:
+        raise ValueError(f"El tenant '{tenant}' todavía no tiene ntfy aprovisionado.")
+    return fila["ntfy_topic"], fila["ntfy_token"]
+
+
+def notificaciones_enviar(tenant: str, titulo: str, mensaje: str, prioridad: str = "default") -> dict:
+    """Envía una notificación push al móvil/escritorio de un tenant
+    (ntfy). `prioridad`: min/low/default/high/urgent."""
+    topic, token = _datos_ntfy(tenant)
+    ntfy.enviar(topic, token, titulo, mensaje, prioridad=prioridad)
+    return {"enviado": True, "topic": topic}
+
+
+# --- Videollamadas (Jitsi Meet) — noveno cliente con parámetro `tenant` ----
+#
+# Instancia compartida (una videollamada no tiene datos persistentes que
+# aislar) — `tenant` solo sirve para prefijar el nombre de la sala (ver
+# app/jitsi.py:nombre_sala), no hay credencial ni aprovisionamiento por
+# tenant como en el resto de esta familia.
+
+def videollamadas_crear_sala(tenant: str, nombre_mostrado: str, moderador: bool = True) -> dict:
+    """Crea una sala de videollamada nueva para un tenant (Jitsi Meet) y
+    devuelve su URL. No hace falta que la sala exista de antemano — se
+    crea sola al entrar la primera persona con un enlace válido."""
+    if db.obtener_tenant_por_nombre(tenant) is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    sala = jitsi.nombre_sala(tenant, uuid.uuid4().hex[:12])
+    token = jitsi.generar_jwt_sala(tenant, nombre_mostrado, sala, moderador=moderador)
+    return {"url": jitsi.url_sala(sala, token), "sala": sala}
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -929,6 +984,10 @@ TOOLS = [
     newsletter_listar_campanas, newsletter_crear_campana, newsletter_enviar_campana,
     # Correo Stalwart
     correo_stalwart_listar_mensajes, correo_stalwart_leer_mensaje, correo_stalwart_enviar_mensaje,
+    # Notificaciones (ntfy)
+    notificaciones_enviar,
+    # Videollamadas (Jitsi Meet)
+    videollamadas_crear_sala,
 ]
 
 

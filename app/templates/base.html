@@ -87,6 +87,11 @@
           <img class="brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
           <span class="brand-name">Guilda Work</span>
         </a>
+        <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir"
+                data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}">
+          🔍 Buscar en notas, tareas y correo…
+          <span class="busqueda-atajo">Ctrl K</span>
+        </button>
         <div class="ajustes-menu">
           <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="Ajustes">&#9881;</button>
           <div class="ajustes-panel" id="ajustes-panel" hidden>
@@ -109,6 +114,19 @@
     </div>
   </div>
 
+  <div id="busqueda-overlay" class="busqueda-overlay" hidden>
+    <div class="busqueda-modal" role="dialog" aria-modal="true" aria-label="Buscar en notas, tareas y correo">
+      <div class="busqueda-campo">
+        <span>🔍</span>
+        <input type="text" id="busqueda-input" placeholder="Buscar en notas, tareas y correo..." autocomplete="off">
+        <kbd>Esc</kbd>
+      </div>
+      <ul id="busqueda-resultados" class="busqueda-resultados"></ul>
+      <p id="busqueda-vacio" class="busqueda-vacio" hidden>Sin resultados.</p>
+      <p id="busqueda-error" class="busqueda-error" hidden></p>
+    </div>
+  </div>
+
   {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
   {% from "_ia_chat_macro.html" import chat %}
   <div class="ia-panel-flotante" id="ia-panel-flotante" hidden>
@@ -123,6 +141,7 @@
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
+  <script src="{{ url_for('static', filename='busqueda.js') }}"></script>
   {% if chatwoot_website_token %}
   <script>
     // Widget de soporte (Chatwoot, Fase 7g/7c.3) — identifica al usuario

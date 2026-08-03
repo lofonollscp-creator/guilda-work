@@ -30,7 +30,8 @@ import mcp_tools as _mt
 # desincronicen de mcp_tools.py como pasó antes con README.md ---
 _PREFIJOS_TENANT = (
     "facturas_", "firmas_", "documentos_", "hojas_",
-    "citas_", "newsletter_", "correo_stalwart_",
+    "citas_", "newsletter_", "correo_stalwart_", "notificaciones_",
+    "videollamadas_",
 )
 _PROPIAS_GUILDA_WORK = {
     "listar_notas", "crear_nota", "editar_nota",
@@ -47,6 +48,7 @@ TOTAL_TOOLS = len(_mt.TOOLS)
 TOOLS_TENANT = sum(1 for t in _mt.TOOLS if t.__name__.startswith(_PREFIJOS_TENANT))
 TOOLS_PROPIAS = sum(1 for t in _mt.TOOLS if t.__name__ in _PROPIAS_GUILDA_WORK)
 TOOLS_STACK_COMPARTIDO = TOTAL_TOOLS - TOOLS_TENANT - TOOLS_PROPIAS
+NUM_FAMILIAS_TENANT = len(_PREFIJOS_TENANT)
 
 
 def _familias_tenant() -> list[tuple[str, str, int]]:
@@ -58,6 +60,8 @@ def _familias_tenant() -> list[tuple[str, str, int]]:
         ("citas_", "Cal.diy", "Reserva de citas"),
         ("newsletter_", "Listmonk", "Newsletter"),
         ("correo_stalwart_", "Stalwart", "Correo propio"),
+        ("notificaciones_", "ntfy", "Notificaciones push"),
+        ("videollamadas_", "Jitsi Meet", "Videollamadas"),
     ]
     salida = []
     for prefijo, backend, etiqueta in prefijos:
@@ -91,6 +95,8 @@ _GRUPOS_TENANT = [
     ("citas_", "Reserva de citas (Cal.diy)"),
     ("newsletter_", "Newsletter (Listmonk)"),
     ("correo_stalwart_", "Correo propio (Stalwart)"),
+    ("notificaciones_", "Notificaciones push (ntfy)"),
+    ("videollamadas_", "Videollamadas (Jitsi Meet)"),
 ]
 
 
@@ -708,9 +714,9 @@ PAGINAS = [
             ]},
             {"type": "p", "html":
                 "Las tools con <code>tenant</code> explícito existen porque, a diferencia del resto, el "
-                "aislamiento entre clientes de estas siete herramientas no lo da una instancia compartida con "
-                "permisos, sino una instancia física propia, o un token/rol/cuenta propia por tenant — sin ese "
-                "parámetro no habría forma de saber qué cliente debe ver cada dato. Ver "
+                f"aislamiento entre clientes de estas {NUM_FAMILIAS_TENANT} herramientas no lo da una instancia "
+                "compartida con permisos, sino una instancia física propia, o un token/rol/cuenta propia por "
+                "tenant — sin ese parámetro no habría forma de saber qué cliente debe ver cada dato. Ver "
                 "<a href=\"/docs/aislamiento-multicliente\">Aislamiento multi-cliente</a> para el detalle de cada "
                 "mecanismo."},
             {"type": "table", "headers": ["Herramienta", "Backend", "Tools"], "rows": [
@@ -861,10 +867,10 @@ PAGINAS = [
                 ["<code>UPTIME_KUMA_API_KEY</code>", "Uptime Kuma (Monitorización)", ""],
             ]},
             {"type": "p", "html":
-                "Las siete herramientas con parámetro <code>tenant</code> explícito no usan una única variable "
-                "global — su credencial se genera y guarda automáticamente por tenant al aprovisionarlo (backoffice "
-                "o <code>cli.py crear-tenant</code>), salvo el puñado de pasos manuales documentados en la guía de "
-                "autoalojamiento para cada una."},
+                f"Las {NUM_FAMILIAS_TENANT} herramientas con parámetro <code>tenant</code> explícito no usan una "
+                "única variable global — su credencial se genera y guarda automáticamente por tenant al "
+                "aprovisionarlo (backoffice o <code>cli.py crear-tenant</code>), salvo el puñado de pasos manuales "
+                "documentados en la guía de autoalojamiento para cada una."},
             {"type": "callout", "kind": "danger", "html":
                 "No hay ninguna variable para Vaultwarden en esta lista, a propósito — queda excluido del MCP "
                 "bajo cualquier circunstancia."},

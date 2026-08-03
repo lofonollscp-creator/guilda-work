@@ -75,6 +75,7 @@
           <th>FacturaScripts</th>
           <th>Documenso</th>
           <th>Cal.diy</th>
+          <th>Herramientas visibles</th>
           <th></th>
         </tr>
       </thead>
@@ -125,6 +126,19 @@
             {% endif %}
           </td>
           <td>
+            <div class="herramientas-toggle-wrap">
+              {% set ocultas = herramientas_ocultas_por_tenant.get(t.id, []) %}
+              {% for h in catalogo_herramientas %}
+              <form method="post" action="{{ url_for('backoffice.alternar_herramienta_tenant', tenant_id=t.id, herramienta_id=h.id) }}" style="display:inline;">
+                <button type="submit" class="herramienta-toggle-pill {{ 'is-oculta' if h.id in ocultas else '' }}"
+                        title="{{ 'Oculta para ' ~ t.nombre ~ ' — clic para mostrar' if h.id in ocultas else 'Visible para ' ~ t.nombre ~ ' — clic para ocultar' }}">
+                  {{ h.nombre }}
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </td>
+          <td>
             <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
                   onsubmit="return confirm('¿Borrar el tenant {{ t.nombre }}? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.');">
               <button type="submit" class="btn btn-ghost">Borrar</button>
@@ -132,7 +146,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="empty">Todavía no hay ningún tenant.</td></tr>
+        <tr><td colspan="7" class="empty">Todavía no hay ningún tenant.</td></tr>
         {% endfor %}
       </tbody>
     </table>

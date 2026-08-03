@@ -54,6 +54,17 @@ CREATE TABLE IF NOT EXISTS tenants (
     creado_en TEXT NOT NULL
 );
 
+-- Herramientas del catálogo (app/herramientas.py, por su `id` de texto)
+-- ocultas para un tenant concreto. Ausencia de fila = visible (así una
+-- herramienta nueva, o un tenant sin ninguna fila aquí, no pierde acceso
+-- por accidente al desplegar esto) — nunca se guarda "visible=1" a
+-- propósito, solo las excepciones.
+CREATE TABLE IF NOT EXISTS tenants_herramientas_ocultas (
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    herramienta_id TEXT NOT NULL,
+    UNIQUE (tenant_id, herramienta_id)
+);
+
 CREATE TABLE IF NOT EXISTS tokens_api (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
@@ -576,6 +587,12 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "stalwart_account_id", "TEXT")
         _asegurar_columna(conn, "tenants", "stalwart_api_key", "TEXT")
 
+        # ntfy (notificaciones push): topic + token generados por
+        # app/ntfy.py:aprovisionar_tenant() — el token no se puede volver
+        # a leer una vez generado (mismo criterio que stalwart_api_key).
+        _asegurar_columna(conn, "tenants", "ntfy_topic", "TEXT")
+        _asegurar_columna(conn, "tenants", "ntfy_token", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -824,6 +841,7 @@ def borrar_tenant(tenant_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM tenants_herramientas_ocultas WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants WHERE id = ?", (tenant_id,))
         conn.commit()
     finally:
@@ -843,6 +861,46 @@ def obtener_tenant(tenant_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute("SELECT * FROM tenants WHERE id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+# --- Visibilidad de herramientas por tenant ----------------------------------
+
+def ocultar_herramienta(tenant_id: int, herramienta_id: str) -> None:
+    """Idempotente: ocultar dos veces la misma herramienta no falla."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO tenants_herramientas_ocultas (tenant_id, herramienta_id) VALUES (?, ?)",
+            (tenant_id, herramienta_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def mostrar_herramienta(tenant_id: int, herramienta_id: str) -> None:
+    """Idempotente: quitar la ocultación de una herramienta ya visible no falla."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM tenants_herramientas_ocultas WHERE tenant_id = ? AND herramienta_id = ?",
+            (tenant_id, herramienta_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def herramientas_ocultas_de_tenant(tenant_id: int) -> set[str]:
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT herramienta_id FROM tenants_herramientas_ocultas WHERE tenant_id = ?",
+            (tenant_id,),
+        ).fetchall()
+        return {f["herramienta_id"] for f in filas}
     finally:
         conn.close()
 
@@ -977,6 +1035,21 @@ def guardar_stalwart(
             "stalwart_domain_name = ?, stalwart_account_id = ?, stalwart_api_key = ? "
             "WHERE id = ?",
             (stalwart_tenant_id, domain_id, domain_name, account_id, api_key, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_ntfy(tenant_id: int, topic: str, token: str) -> None:
+    """Igual que guardar_stalwart: sin pasos manuales,
+    app/ntfy.py:aprovisionar_tenant() crea el usuario+ACL+token, esto
+    solo los guarda."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET ntfy_topic = ?, ntfy_token = ? WHERE id = ?",
+            (topic, token, tenant_id),
         )
         conn.commit()
     finally:
@@ -1325,9 +1398,32 @@ def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> i
                 (usuario_id, nombre.strip(), categoria_id, ahora),
             )
         conn.commit()
-        return cur.lastrowid
+        tarea_id = cur.lastrowid
     finally:
         conn.close()
+    _reindexar_tarea(usuario_id, tarea_id)
+    return tarea_id
+
+
+def _reindexar_tarea(usuario_id: int, tarea_id: int) -> None:
+    """Mismo criterio que _reindexar_nota (ver más arriba) — falla en
+    silencio, es una mejora de UX, no debe romper el registro de
+    actividad en sí."""
+    from . import busqueda
+    try:
+        tarea = obtener_tarea(usuario_id, tarea_id)
+        if tarea is not None:
+            busqueda.indexar_tarea(dict(tarea))
+    except busqueda.ErrorBusqueda:
+        pass
+
+
+def _quitar_tarea_del_indice(tarea_id: int) -> None:
+    from . import busqueda
+    try:
+        busqueda.eliminar_del_indice("tarea", tarea_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def importar_tarea(
@@ -1502,6 +1598,7 @@ def editar_tarea(usuario_id: int, tarea_id: int, nombre: str) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_tarea(usuario_id, tarea_id)
 
 
 def editar_tiempos_tarea(usuario_id: int, tarea_id: int, inicio_en: str, fin_en: str | None = None) -> str | None:
@@ -1560,6 +1657,7 @@ def eliminar_tarea(usuario_id: int, tarea_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_tarea_del_indice(tarea_id)
 
 
 def restaurar_tarea(usuario_id: int, tarea_id: int) -> None:
@@ -1571,6 +1669,7 @@ def restaurar_tarea(usuario_id: int, tarea_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_tarea(usuario_id, tarea_id)
 
 
 def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
@@ -1583,6 +1682,7 @@ def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_tarea_del_indice(tarea_id)
 
 
 # --- Notas ---------------------------------------------------------------
@@ -1595,9 +1695,28 @@ def crear_nota(usuario_id: int, texto: str, categoria_id: int | None = None, tar
             (usuario_id, texto.strip(), categoria_id, tarea_id, now_iso()),
         )
         conn.commit()
-        return cur.lastrowid
+        nota_id = cur.lastrowid
     finally:
         conn.close()
+    _reindexar_nota(usuario_id, nota_id)
+    return nota_id
+
+
+def _reindexar_nota(usuario_id: int, nota_id: int) -> None:
+    """Reindexa una nota en el buscador unificado (ver app/busqueda.py)
+    tras crearla/editarla — falla en silencio si el buscador no está
+    configurado/caído, es una mejora de UX, no debe romper el registro
+    de actividad en sí. Import perezoso a propósito: db.py no depende
+    de ningún otro módulo de app/ como regla general, esta es la única
+    excepción (indexar es, por naturaleza, un efecto secundario de cada
+    escritura, no una operación de negocio más)."""
+    from . import busqueda
+    try:
+        nota = obtener_nota(usuario_id, nota_id)
+        if nota is not None:
+            busqueda.indexar_nota(dict(nota))
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def importar_nota(usuario_id: int, texto: str, categoria_id: int | None, creada_en: str) -> int:
@@ -1633,6 +1752,7 @@ def editar_nota(usuario_id: int, nota_id: int, texto: str) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_nota(usuario_id, nota_id)
 
 
 def eliminar_nota(usuario_id: int, nota_id: int) -> None:
@@ -1646,6 +1766,15 @@ def eliminar_nota(usuario_id: int, nota_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_nota_del_indice(nota_id)
+
+
+def _quitar_nota_del_indice(nota_id: int) -> None:
+    from . import busqueda
+    try:
+        busqueda.eliminar_del_indice("nota", nota_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def restaurar_nota(usuario_id: int, nota_id: int) -> None:
@@ -1657,6 +1786,7 @@ def restaurar_nota(usuario_id: int, nota_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_nota(usuario_id, nota_id)
 
 
 def eliminar_nota_definitivamente(usuario_id: int, nota_id: int) -> None:
@@ -1666,6 +1796,7 @@ def eliminar_nota_definitivamente(usuario_id: int, nota_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_nota_del_indice(nota_id)
 
 
 # --- Histórico combinado ---------------------------------------------------

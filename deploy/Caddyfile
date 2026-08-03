@@ -129,6 +129,17 @@ correo-stalwart.HOSTNAME {
 	reverse_proxy localhost:8025
 }
 
+# ntfy (notificaciones push, Fase notificaciones) — ver HOSTING.md 8.28.
+notificaciones.HOSTNAME {
+	reverse_proxy localhost:8027
+}
+
+# Jitsi Meet (videollamadas, Fase videollamadas) — ver HOSTING.md 8.29.
+# El puerto UDP del videobridge (10000) no pasa por aquí, no es HTTP.
+videollamadas.HOSTNAME {
+	reverse_proxy localhost:8028
+}
+
 # Servidor MCP remoto (Fase MCP) — para ChatGPT, que solo admite
 # servidores MCP por HTTPS real (ver mcp_server_remoto.py, HOSTING.md).
 # Corre fuera de Docker, en el mismo host que serve.py.

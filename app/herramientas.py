@@ -160,6 +160,21 @@ HERRAMIENTAS = [
         "sso": False,
     },
     {
+        "id": "videollamadas",
+        "nombre": "Videollamadas",
+        "descripcion": "Videollamadas autoalojadas para tus clientes (Jitsi Meet).",
+        "icono": "🎥",
+        "icono_logo": "videollamadas.svg",
+        "color": "#1D76BA",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_JITSI_URL", "http://127.0.0.1:8028"),
+        # Sin SSO: el acceso a una sala concreta se controla con un JWT
+        # firmado por la propia Guilda Work (ver app/jitsi.py), no con
+        # Hydra — cada sala se abre con un enlace ya autenticado, no con
+        # un login genérico a la herramienta.
+        "sso": False,
+    },
+    {
         "id": "drive",
         "nombre": "Drive",
         "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",

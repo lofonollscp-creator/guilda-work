@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_84_herramientas():
-    assert len(mt.TOOLS) == 84
+def test_tools_tiene_86_herramientas():
+    assert len(mt.TOOLS) == 86
 
 
 def test_registrar_tools_las_registra_todas():
@@ -443,6 +443,62 @@ def test_citas_crear_reserva_delega_en_calcom(usuario_id, monkeypatch):
     assert capturado["args"] == ("token-real", 1, "2026-08-01T10:00:00Z", "Ana", "ana@ejemplo.com")
 
 
+def test_citas_crear_reserva_sin_jitsi_configurado_no_incluye_video_url(usuario_id, monkeypatch):
+    """Sin JITSI_JWT_APP_ID/SECRET (caso normal en tests), la reserva se
+    crea igual, sin `video_url` — mismo criterio que el resto de
+    integraciones opcionales de este proyecto."""
+    tenant_id = mt.db.crear_tenant("ConCitasSinJitsi")
+    mt.db.guardar_calcom(tenant_id, "x@calcom.local", "clave-x")
+    mt.db.guardar_calcom_api_key(tenant_id, "token-real")
+    monkeypatch.setattr(mt.calcom, "crear_reserva", lambda *a, **k: {"uid": "abc999"})
+
+    resultado = mt.citas_crear_reserva("ConCitasSinJitsi", 1, "2026-08-01T10:00:00Z", "Ana", "ana@ejemplo.com")
+
+    assert resultado == {"uid": "abc999"}
+    assert "video_url" not in resultado
+
+
+def test_citas_crear_reserva_con_jitsi_configurado_incluye_video_url(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConCitasConJitsi")
+    mt.db.guardar_calcom(tenant_id, "x@calcom.local", "clave-x")
+    mt.db.guardar_calcom_api_key(tenant_id, "token-real")
+    monkeypatch.setattr(mt.calcom, "crear_reserva", lambda *a, **k: {"uid": "abc777"})
+    monkeypatch.setattr(mt.jitsi, "JITSI_JWT_APP_ID", "guilda_work")
+    monkeypatch.setattr(mt.jitsi, "JITSI_JWT_APP_SECRET", "secreto-de-prueba")
+
+    resultado = mt.citas_crear_reserva("ConCitasConJitsi", 1, "2026-08-01T10:00:00Z", "Ana", "ana@ejemplo.com")
+
+    assert resultado["uid"] == "abc777"
+    assert resultado["video_url"].startswith(mt.jitsi.JITSI_URL)
+    assert "concitasconjitsi" in resultado["video_url"]
+
+
+# --- Videollamadas (Jitsi Meet) — noveno cliente con parámetro `tenant` ----
+
+def test_videollamadas_crear_sala_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.videollamadas_crear_sala("NoExiste", "Ana")
+
+
+def test_videollamadas_crear_sala_sin_jitsi_configurado_lanza_error(usuario_id):
+    mt.db.crear_tenant("ConVideoSinJitsi")
+    with pytest.raises(mt.jitsi.ErrorJitsi):
+        mt.videollamadas_crear_sala("ConVideoSinJitsi", "Ana")
+
+
+def test_videollamadas_crear_sala_genera_url_con_prefijo_del_tenant(usuario_id, monkeypatch):
+    mt.db.crear_tenant("ConVideoOk")
+    monkeypatch.setattr(mt.jitsi, "JITSI_JWT_APP_ID", "guilda_work")
+    monkeypatch.setattr(mt.jitsi, "JITSI_JWT_APP_SECRET", "secreto-de-prueba")
+
+    resultado = mt.videollamadas_crear_sala("ConVideoOk", "Ana", moderador=True)
+
+    assert resultado["sala"].startswith("convideook-")
+    assert resultado["url"].startswith(mt.jitsi.JITSI_URL)
+    assert resultado["sala"] in resultado["url"]
+    assert "jwt=" in resultado["url"]
+
+
 # --- Newsletter (Listmonk) — sexto cliente con parámetro `tenant` ----------
 
 def test_newsletter_listar_suscriptores_resuelve_token_del_tenant(usuario_id, monkeypatch):
@@ -594,6 +650,34 @@ def test_correo_stalwart_enviar_mensaje_delega_en_stalwart(usuario_id, monkeypat
 
     assert resultado == {"id": "env1"}
     assert capturado["args"] == ("token-real", "ana@ejemplo.com", "Hola", "Cuerpo")
+
+
+def test_notificaciones_enviar_resuelve_topic_y_token_del_tenant(usuario_id, monkeypatch):
+    tenant_id = mt.db.crear_tenant("ConNtfy")
+    mt.db.guardar_ntfy(tenant_id, "guilda-connfty-1", "token-real")
+
+    capturado = {}
+
+    def fake_enviar(topic, token, titulo, mensaje, prioridad="default", click_url=None):
+        capturado["args"] = (topic, token, titulo, mensaje, prioridad)
+        return None
+
+    monkeypatch.setattr(mt.ntfy, "enviar", fake_enviar)
+    resultado = mt.notificaciones_enviar("ConNtfy", "Aviso", "Ha pasado algo")
+
+    assert resultado == {"enviado": True, "topic": "guilda-connfty-1"}
+    assert capturado["args"] == ("guilda-connfty-1", "token-real", "Aviso", "Ha pasado algo", "default")
+
+
+def test_notificaciones_enviar_tenant_inexistente_lanza_value_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.notificaciones_enviar("NoExiste", "Aviso", "Mensaje")
+
+
+def test_notificaciones_enviar_sin_aprovisionar_lanza_value_error(usuario_id):
+    mt.db.crear_tenant("SinNtfy")
+    with pytest.raises(ValueError):
+        mt.notificaciones_enviar("SinNtfy", "Aviso", "Mensaje")
 
 
 def test_citas_cancelar_reserva_delega_en_calcom(usuario_id, monkeypatch):

@@ -7,23 +7,36 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, kratos, listmonk, metabase, nextcloud, openproject, paperless, stalwart
+from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
+
+
+def _contexto_herramientas(tenants) -> dict:
+    """Contexto compartido por las 4 rutas que renderizan backoffice.html
+    directamente (en vez de redirigir a panel()) — la tabla de
+    visibilidad de herramientas por tenant necesita el catálogo completo
+    y qué está oculto para cada uno."""
+    return {
+        "catalogo_herramientas": herramientas.HERRAMIENTAS,
+        "herramientas_ocultas_por_tenant": {t["id"]: db.herramientas_ocultas_de_tenant(t["id"]) for t in tenants},
+    }
 
 
 @backoffice_bp.route("/")
 @login_required
 @admin_required
 def panel():
+    tenants = db.listar_tenants_con_conteo()
     return render_template(
         "backoffice.html",
-        tenants=db.listar_tenants_con_conteo(),
+        tenants=tenants,
         usuarios=db.listar_usuarios(),
         resultados_alta=None,
         facturascripts_creado=None,
         calcom_creado=None,
+        **_contexto_herramientas(tenants),
     )
 
 
@@ -141,18 +154,32 @@ def crear_tenant():
                     )
                 except stalwart.ErrorStalwart:
                     pass
+            try:
+                # Usuario + topic + ACL + token de ntfy (ver app/ntfy.py)
+                # — 100% automático salvo la concesión de ACL, que se
+                # hace por `docker exec` en vez de por API (ntfy no
+                # ofrece un endpoint HTTP para eso, ver el docstring del
+                # módulo) — no es un paso manual del admin, solo un
+                # mecanismo distinto por debajo. Sin NTFY_ADMIN_USER/
+                # PASSWORD configuradas, esto no hace nada.
+                resultado = ntfy.aprovisionar_tenant(tenant_id, nombre)
+                db.guardar_ntfy(tenant_id, resultado["topic"], resultado["token"])
+            except ntfy.ErrorNtfy:
+                pass
 
     if facturascripts_creado or calcom_creado:
         # Contraseña de admin generada al vuelo: se muestra UNA sola vez,
         # igual que la contraseña temporal de crear_usuario() — no se
         # vuelve a mostrar en la tabla de tenants después de este redirect.
+        tenants = db.listar_tenants_con_conteo()
         return render_template(
             "backoffice.html",
-            tenants=db.listar_tenants_con_conteo(),
+            tenants=tenants,
             usuarios=db.listar_usuarios(),
             resultados_alta=None,
             facturascripts_creado=facturascripts_creado,
             calcom_creado=calcom_creado,
+            **_contexto_herramientas(tenants),
         )
     return redirect(url_for("backoffice.panel"))
 
@@ -262,6 +289,14 @@ def borrar_tenant(tenant_id: int):
     except listmonk.ErrorListmonk:
         pass
     try:
+        # Borra el usuario de ntfy de este tenant (ver
+        # app/ntfy.py:desaprovisionar_tenant) — sus ACL de topic se
+        # borran solas junto con el usuario. Mismo criterio de fallo
+        # aislado que el resto.
+        ntfy.desaprovisionar_tenant(tenant_id)
+    except ntfy.ErrorNtfy:
+        pass
+    try:
         # Borra la Account, el Domain y el Tenant de Stalwart de este
         # tenant (ver app/stalwart.py:desaprovisionar_tenant) — mismo
         # criterio de fallo aislado.
@@ -271,6 +306,26 @@ def borrar_tenant(tenant_id: int):
     except stalwart.ErrorStalwart:
         pass
     db.borrar_tenant(tenant_id)
+    return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/herramientas/<herramienta_id>/alternar", methods=["POST"])
+@login_required
+@admin_required
+def alternar_herramienta_tenant(tenant_id: int, herramienta_id: str):
+    """Oculta/muestra una herramienta del catálogo (app/herramientas.py)
+    para este tenant — ver app/main.py:herramientas_vista() y
+    app/rutas_api.py:listar_herramientas() para dónde se aplica el
+    filtro. Ausencia de fila = visible, así que "alternar" sobre una
+    herramienta ya oculta la vuelve a mostrar, y viceversa."""
+    if db.obtener_tenant(tenant_id) is None:
+        abort(404)
+    if herramienta_id not in {h["id"] for h in herramientas.HERRAMIENTAS}:
+        abort(404)
+    if herramienta_id in db.herramientas_ocultas_de_tenant(tenant_id):
+        db.mostrar_herramienta(tenant_id, herramienta_id)
+    else:
+        db.ocultar_herramienta(tenant_id, herramienta_id)
     return redirect(url_for("backoffice.panel"))
 
 
@@ -291,12 +346,14 @@ def crear_usuario():
     try:
         identity_id = kratos.crear_identidad(email, contrasena_temporal)
     except kratos.ErrorKratos as e:
+        tenants = db.listar_tenants_con_conteo()
         return render_template(
             "backoffice.html",
-            tenants=db.listar_tenants_con_conteo(),
+            tenants=tenants,
             usuarios=db.listar_usuarios(),
             resultados_alta=None,
             error=str(e),
+            **_contexto_herramientas(tenants),
         )
     usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     if tenant_id:
@@ -358,12 +415,14 @@ def crear_usuario():
             except listmonk.ErrorListmonk as e:
                 resultados_alta.append({"servicio": "Listmonk", "estado": "error", "detalle": str(e)})
 
+    tenants = db.listar_tenants_con_conteo()
     return render_template(
         "backoffice.html",
-        tenants=db.listar_tenants_con_conteo(),
+        tenants=tenants,
         usuarios=db.listar_usuarios(),
         resultados_alta=resultados_alta,
         email_creado=email,
+        **_contexto_herramientas(tenants),
     )
 
 

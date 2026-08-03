@@ -1470,6 +1470,214 @@ con el token ya guardado — nada que pegar a mano.
 `correo_stalwart_enviar_mensaje` llevan un primer parámetro `tenant`,
 séptimo cliente del catálogo con este patrón.
 
+### 8.28 ntfy (notificaciones push) — instancia compartida, aislamiento por usuario+ACL de topic
+
+[ntfy](https://ntfy.sh) (`binwiederhier/ntfy`, Apache-2.0/GPLv2 dual) —
+notificaciones push autoalojadas: un topic por tenant, sin depender de
+Firebase/APNs de terceros. Pensado para enganchar con Uptime Kuma
+(alertas de caída), n8n (automatizaciones) y el propio asistente de IA
+(`notificaciones_enviar`).
+
+**Aislamiento entre tenants — verificado en vivo**: por defecto ntfy es
+público de lectura/escritura en cualquier topic (pensado para
+`ntfy.sh`) — se fuerza `NTFY_AUTH_DEFAULT_ACCESS=deny-all` para que un
+topic sin ACL explícita no sea accesible por nadie, y cada tenant tiene
+su propio usuario con acceso `read-write` únicamente a su propio topic.
+Confirmado con un token real: publicar de forma anónima en el topic de
+un tenant devuelve `403 forbidden` del propio servidor.
+
+**El punto que costó más resolver**: `ntfy access` (conceder el ACL de
+topic a un usuario) es, según su propia ayuda de la CLI, *"a server-only
+command"* que gestiona directamente el archivo `user.db` — no hay
+ningún endpoint HTTP equivalente (se probó `POST /v1/users/.../access/...`
+contra un contenedor real: `404`). La creación del usuario y la
+generación de su token sí son HTTP puro (`POST /v1/users`,
+`POST /v1/account/token`), así que solo ese paso de ACL se ejecuta por
+`docker exec` (ver `app/ntfy.py:_conceder_acceso`, mismo patrón que
+`app/facturascripts.py:_ejecutar_psql`) — no es un paso manual del
+admin, es automático, solo que por un mecanismo distinto al resto.
+
+**Arranque — un único paso manual, el alta del admin**:
+
+```bash
+docker compose up -d ntfy
+docker exec -e NTFY_PASSWORD=elige-una-contrasena ntfy user add --role=admin admin
+```
+
+Añade a `.env`:
+```bash
+HERRAMIENTA_NTFY_URL=http://127.0.0.1:8027
+NTFY_PUBLIC_ORIGIN=https://notificaciones.tu-hostname
+NTFY_ADMIN_USER=admin
+NTFY_ADMIN_PASSWORD=elige-una-contrasena
+NTFY_CONTENEDOR=guilda-work-ntfy   # opcional, ya es el valor por defecto
+```
+
+**Qué pasa al crear un tenant nuevo** (100% automático una vez el admin
+está dado de alta): usuario `tenant_<id>` + topic `guilda-<slug>-<id>` +
+ACL `read-write` exclusiva + token, con el token ya guardado — nada que
+pegar a mano. El token no se puede volver a leer una vez generado (mismo
+criterio que `stalwart_api_key`): si el aprovisionamiento falla a mitad
+y se reintenta, y el usuario de ntfy ya existe de un intento anterior,
+hace falta borrarlo a mano (`docker exec ... ntfy user del tenant_<id>`)
+antes de reintentar — caso raro, documentado en el propio
+`app/ntfy.py:aprovisionar_tenant`.
+
+**MCP**: `notificaciones_enviar` lleva un primer parámetro `tenant`,
+octavo cliente del catálogo con este patrón.
+
+### 8.29 Jitsi Meet (videollamadas) — instancia compartida, aislamiento por sala vía JWT
+
+[Jitsi Meet](https://jitsi.org) (`ghcr.io/jitsi/{web,prosody,jicofo,jvb}`,
+Apache-2.0) — videollamadas autoalojadas, integradas con Cal.diy (cada
+cita reservada genera su propia sala automáticamente) y disponibles bajo
+demanda desde el asistente de IA.
+
+**Aislamiento entre tenants**: una videollamada no tiene datos
+persistentes que aislar (la sala es efímera) — lo que de verdad aísla es
+que cada JWT emitido por Guilda Work (`app/jitsi.py:generar_jwt_sala`)
+solo es válido para **una sala concreta**, con el slug del tenant como
+prefijo de su nombre. El secreto de firma (`JITSI_JWT_APP_SECRET`) es
+compartido entre todos los tenants — no hace falta que sea distinto por
+tenant, porque el JWT en sí ya lleva grabado a qué sala da acceso.
+
+**Verificado en vivo**: se levantó el stack real de 4 servicios
+(`web`/`prosody`/`jicofo`/`jvb`) con `ENABLE_AUTH=1`/`AUTH_TYPE=jwt`
+activos — arranca limpio, Jicofo se autentica contra Prosody y descubre
+el JVB con el módulo de autenticación JWT cargado, sin errores propios
+del módulo (confirma que la configuración es válida y gratuita, sin
+ningún add-on de pago). **Lo que NO se pudo verificar de punta a punta
+en este entorno de desarrollo concreto**: un cliente real rechazado sin
+JWT y admitido con uno válido — el navegador sin cabeza (Playwright)
+nunca llegó a abrir la conexión WebSocket/XMPP tras pulsar "Unirse",
+incluso con dispositivos de medios falsos habilitados (fricción de
+WebRTC-en-Docker-Desktop-Windows, ajena a Jitsi) — mismo criterio de
+honestidad que Cal.diy en este proyecto. Queda pendiente confirmarlo
+contra el despliegue real (Linux).
+
+**El punto que costó más resolver en este entorno concreto**: el propio
+despliegue oficial de `docker-jitsi-meet` asume bind mounts con
+`chown -R 1000:1000` hecho a mano en el host antes del primer arranque
+— en Windows con Docker Desktop esto falla de forma no obvia
+("`directory '/var/lib/prosody' is not writable`") incluso después de
+`chmod 777`, por una traducción de permisos entre el host y la VM del
+propio Docker Desktop. Se resolvió usando **volúmenes con nombre** en
+vez de bind mounts (Docker gestiona los permisos internamente, sin
+chown manual) — además de evitar el problema, es un paso menos que
+documentar para quien despliegue esto.
+
+**Arranque**:
+
+```bash
+docker compose up -d jitsi-prosody jitsi-jicofo jitsi-jvb jitsi-web
+```
+
+Añade a `.env`:
+```bash
+HERRAMIENTA_JITSI_URL=http://127.0.0.1:8028
+JITSI_PUBLIC_ORIGIN=https://videollamadas.tu-hostname
+JITSI_PUBLIC_HOSTNAME=videollamadas.tu-hostname
+JITSI_JWT_APP_ID=guilda_work
+JITSI_JWT_APP_SECRET=...        # openssl rand -base64 32
+JITSI_JICOFO_COMPONENT_SECRET=... # openssl rand -base64 32
+JITSI_JVB_AUTH_PASSWORD=...       # openssl rand -base64 32
+JITSI_JICOFO_AUTH_PASSWORD=...    # openssl rand -base64 32
+JITSI_JVB_ADVERTISE_IP=...        # IP pública real del VPS (JVB la anuncia para el tráfico de medios)
+```
+
+**Puerto UDP del videobridge — EXCEPCIÓN explícita a "todo detrás de
+Caddy en 443"** (mismo criterio ya aceptado para SSH/OpenVPN/correo de
+Stalwart): el puerto 10000/UDP (tráfico RTP/SRTP de medios) no es HTTP,
+se publica directamente en el host.
+
+**Qué pasa al reservar una cita con Cal.diy**: `citas_crear_reserva`
+(MCP) genera automáticamente una sala y añade su URL (`video_url`) al
+resultado de la reserva — sin pasos manuales. El asistente de IA también
+puede generar una sala nueva en cualquier momento, sin que exista una
+cita de por medio (`videollamadas_crear_sala`).
+
+**MCP**: `videollamadas_crear_sala` lleva un primer parámetro `tenant`
+(solo para prefijar el nombre de sala, no hay credencial que resolver),
+noveno cliente del catálogo con este patrón — y `citas_crear_reserva`
+(familia de Cal.diy) queda ampliada para generar la sala automáticamente.
+
+### 8.30 Meilisearch (buscador unificado) — instancia compartida, aislamiento por tenant token
+
+[Meilisearch](https://meilisearch.com) (`getmeili/meilisearch`, MIT,
+Community Edition) — buscador unificado sobre notas, tareas con
+duración y correo, con typo-tolerancia real (Ctrl/Cmd+K desde cualquier
+pantalla de la app).
+
+**Por qué Meilisearch y no Typesense** (ambos resuelven el mismo
+problema, tenant tokens con filtro embebido): Meilisearch es MIT,
+Typesense es GPL-3.0 — dado que el resto del stack de este proyecto es
+mayoritariamente MIT/Apache-2.0 (Documenso, Baserow, Cal.diy, Listmonk,
+Jitsi Meet, ntfy...), Meilisearch es la opción más consistente. GPL-3.0
+no sería un problema real para uso puramente autoalojado, pero no hay
+razón para asumir esa complejidad legal si la alternativa MIT cubre
+exactamente lo mismo.
+
+**Por qué `usuario_id` y no `tenant_id`**: el registro de actividad
+propio de Guilda Work ya está delimitado por `usuario_id`, no por tenant
+— un tenant puede tener varios usuarios, cada uno con su propio registro
+privado (`db.py:historial`, siempre filtrado por `usuario_id`). El
+buscador respeta ese mismo límite ya existente.
+
+**Aislamiento — verificado en vivo, con un contenedor real y dos
+usuarios de prueba**: se indexaron dos documentos, uno por usuario, y se
+generó un tenant token real para cada uno (JWT con
+`searchRules: {"registro_actividad": {"filter": "usuario_id = <n>"}}`,
+firmado con una clave de búsqueda propia, nunca la clave maestra).
+Confirmado que:
+- El token del usuario A solo devuelve el documento del usuario A,
+  incluso buscando por el texto exacto del documento del usuario B (0
+  resultados, no un error).
+- Intentar mandar un `filter` propio desde el cliente para ver los datos
+  del usuario B no funciona — Meilisearch combina el filtro del cliente
+  con el del tenant token siempre en **AND**, nunca lo sustituye
+  (`(usuario_id = B) AND (usuario_id = A)` → imposible, 0 resultados).
+- Sin cabecera `Authorization`, Meilisearch rechaza la petición
+  directamente (401), no hay acceso anónimo por defecto.
+
+**Arranque**:
+
+```bash
+docker compose up -d meilisearch
+```
+
+Añade a `.env`:
+```bash
+MEILISEARCH_URL=http://127.0.0.1:8029
+MEILISEARCH_MASTER_KEY=...   # openssl rand -base64 32
+```
+
+**Sin pasos manuales**: la clave de búsqueda usada para firmar los
+tenant tokens se crea sola la primera vez que hace falta (con la clave
+maestra, ver `app/busqueda.py:_asegurar_clave_busqueda`) — nada que
+generar ni pegar a mano en el backoffice.
+
+**Qué se indexa (fase 1, ampliable)**: notas y tareas con duración (en
+cada creación/edición/borrado, ver los `_reindexar_nota`/
+`_reindexar_tarea`/`_quitar_*_del_indice` de `app/db.py`) y correo (tras
+cada sincronización con mensajes nuevos, ver
+`app/correo.py:_reindexar_mensajes_recientes`). Documentos de
+Paperless-ngx/Outline quedan fuera de esta fase — cada uno ya tiene su
+propio buscador razonable, indexarlos aquí sería duplicar sin necesidad
+clara.
+
+**Frontend**: el navegador llama a Meilisearch **directamente** con el
+tenant token (`app/static/busqueda.js`), sin pasar por Flask para cada
+tecla pulsada — solo pide un token nuevo a `/busqueda/token` (cookie de
+sesión, no `/api/v1/*`, que es la API por Bearer token de la app móvil)
+al abrir el buscador. Patrón estándar de tenant tokens: reduce carga en
+el backend, y la clave maestra nunca sale del servidor.
+
+**MCP**: ninguna tool nueva — `listar_notas`/`historial` ya cubren
+búsqueda por texto vía SQL `LIKE` para un asistente de IA; Meilisearch
+aquí es una mejora de experiencia humana (typo-tolerancia, ranking,
+buscar en correo a la vez que en notas en una sola caja), no una
+capacidad nueva para la IA.
+
 ## 9. Backups (opcional, recomendado)
 
 `app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que

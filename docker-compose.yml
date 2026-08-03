@@ -1120,6 +1120,162 @@ services:
     volumes:
       - stalwart-data:/opt/stalwart
 
+  # ntfy (notificaciones push autoalojadas, Apache-2.0/GPLv2 dual) —
+  # instancia compartida, aislamiento real por tenant vía usuario+ACL de
+  # topic nativos de ntfy (ver app/ntfy.py). Un único binario, sin base
+  # de datos aparte (el archivo de usuarios vive en el propio volumen).
+  #
+  # Bootstrap: NTFY_AUTH_DEFAULT_ACCESS=deny-all para que un topic sin
+  # ACL explícita no sea público por defecto (el valor de fábrica de
+  # ntfy es "read-write" para cualquiera, pensado para ntfy.sh público,
+  # no para un despliegue multi-tenant privado como este) — verificado
+  # en vivo que un cliente anónimo recibe 403 al publicar en un topic
+  # ajeno con este valor. El alta del usuario admin (necesario para que
+  # app/ntfy.py pueda crear usuarios de tenant por API) es un paso manual
+  # único, ver HOSTING.md.
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: guilda-work-ntfy
+    restart: unless-stopped
+    command: serve
+    environment:
+      NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_BASE_URL: ${NTFY_PUBLIC_ORIGIN:-http://127.0.0.1:8027}
+    ports:
+      - "127.0.0.1:8027:80"
+    volumes:
+      - ntfy-data:/var/lib/ntfy
+
+  # Jitsi Meet (videollamadas autoalojadas, Apache-2.0) — instancia
+  # compartida: una videollamada no tiene datos persistentes que aislar
+  # por tenant, el aislamiento real es que cada JWT solo es válido para
+  # UNA sala concreta (ver app/jitsi.py) — el secreto de firma es
+  # compartido, pero no sirve para entrar en la sala de otro tenant sin
+  # que Guilda Work te dé un JWT para esa sala en concreto.
+  #
+  # Autenticación JWT (ENABLE_AUTH/AUTH_TYPE/JWT_APP_ID/JWT_APP_SECRET) —
+  # verificado en vivo que es una función gratuita del propio proyecto
+  # (sin add-on de pago): el stack de 4 servicios arranca limpio con
+  # ella activa (Jicofo se autentica contra Prosody y descubre el JVB
+  # con el módulo de auth JWT cargado). Ver el docstring de
+  # app/jitsi.py para el detalle de qué SÍ y qué NO se pudo verificar de
+  # punta a punta en este entorno de desarrollo.
+  #
+  # Volúmenes con nombre (no bind mounts) a propósito: el propio
+  # despliegue oficial de docker-jitsi-meet exige que las carpetas del
+  # host tengan el UID 1000 del contenedor ya aplicado a mano
+  # (`chown -R 1000:1000` antes del primer arranque) — un volumen con
+  # nombre evita ese paso manual por completo, Docker gestiona los
+  # permisos internamente.
+  #
+  # Puerto UDP del videobridge — EXCEPCIÓN explícita a "todo detrás de
+  # Caddy en 443" (mismo criterio ya aceptado para SSH/OpenVPN/correo de
+  # Stalwart): el tráfico de medios (RTP/SRTP) no es HTTP.
+  jitsi-prosody:
+    image: ghcr.io/jitsi/prosody:unstable
+    container_name: guilda-work-jitsi-prosody
+    restart: unless-stopped
+    environment:
+      ENABLE_AUTH: "1"
+      AUTH_TYPE: jwt
+      JWT_APP_ID: ${JITSI_JWT_APP_ID:-guilda_work}
+      JWT_APP_SECRET: ${JITSI_JWT_APP_SECRET:?define JITSI_JWT_APP_SECRET, p.ej. openssl rand -base64 32}
+      PUBLIC_URL: ${JITSI_PUBLIC_ORIGIN:-http://127.0.0.1:8028}
+      XMPP_DOMAIN: meet.jitsi
+      XMPP_AUTH_DOMAIN: auth.meet.jitsi
+      XMPP_MUC_DOMAIN: muc.meet.jitsi
+      XMPP_INTERNAL_MUC_DOMAIN: internal-muc.meet.jitsi
+      XMPP_GUEST_DOMAIN: guest.meet.jitsi
+      JICOFO_COMPONENT_SECRET: ${JITSI_JICOFO_COMPONENT_SECRET:?define JITSI_JICOFO_COMPONENT_SECRET, p.ej. openssl rand -base64 32}
+      JVB_AUTH_PASSWORD: ${JITSI_JVB_AUTH_PASSWORD:?define JITSI_JVB_AUTH_PASSWORD, p.ej. openssl rand -base64 32}
+      JICOFO_AUTH_PASSWORD: ${JITSI_JICOFO_AUTH_PASSWORD:?define JITSI_JICOFO_AUTH_PASSWORD, p.ej. openssl rand -base64 32}
+    volumes:
+      - jitsi-prosody-config:/config
+      - jitsi-prosody-plugins:/prosody-plugins-custom
+      - jitsi-prosody-storage:/var/lib/prosody
+
+  jitsi-jicofo:
+    image: ghcr.io/jitsi/jicofo:unstable
+    container_name: guilda-work-jitsi-jicofo
+    restart: unless-stopped
+    depends_on:
+      - jitsi-prosody
+    environment:
+      XMPP_DOMAIN: meet.jitsi
+      XMPP_AUTH_DOMAIN: auth.meet.jitsi
+      XMPP_MUC_DOMAIN: muc.meet.jitsi
+      XMPP_INTERNAL_MUC_DOMAIN: internal-muc.meet.jitsi
+      XMPP_SERVER: jitsi-prosody
+      JICOFO_COMPONENT_SECRET: ${JITSI_JICOFO_COMPONENT_SECRET:?define JITSI_JICOFO_COMPONENT_SECRET}
+      JICOFO_AUTH_PASSWORD: ${JITSI_JICOFO_AUTH_PASSWORD:?define JITSI_JICOFO_AUTH_PASSWORD}
+    volumes:
+      - jitsi-jicofo-config:/config
+
+  jitsi-jvb:
+    image: ghcr.io/jitsi/jvb:unstable
+    container_name: guilda-work-jitsi-jvb
+    restart: unless-stopped
+    depends_on:
+      - jitsi-prosody
+    ports:
+      - "0.0.0.0:10000:10000/udp"
+    environment:
+      XMPP_DOMAIN: meet.jitsi
+      XMPP_AUTH_DOMAIN: auth.meet.jitsi
+      XMPP_INTERNAL_MUC_DOMAIN: internal-muc.meet.jitsi
+      XMPP_SERVER: jitsi-prosody
+      JVB_AUTH_PASSWORD: ${JITSI_JVB_AUTH_PASSWORD:?define JITSI_JVB_AUTH_PASSWORD}
+      JVB_ADVERTISE_IPS: ${JITSI_JVB_ADVERTISE_IP:-127.0.0.1}
+    volumes:
+      - jitsi-jvb-config:/config
+
+  jitsi-web:
+    image: ghcr.io/jitsi/web:unstable
+    container_name: guilda-work-jitsi-web
+    restart: unless-stopped
+    depends_on:
+      - jitsi-prosody
+      - jitsi-jicofo
+      - jitsi-jvb
+    ports:
+      - "127.0.0.1:8028:80"
+    environment:
+      ENABLE_AUTH: "1"
+      AUTH_TYPE: jwt
+      TOKEN_AUTH_URL: ""
+      JWT_APP_ID: ${JITSI_JWT_APP_ID:-guilda_work}
+      PUBLIC_URL: ${JITSI_PUBLIC_ORIGIN:-http://127.0.0.1:8028}
+      XMPP_DOMAIN: meet.jitsi
+      XMPP_AUTH_DOMAIN: auth.meet.jitsi
+      XMPP_MUC_DOMAIN: muc.meet.jitsi
+      XMPP_GUEST_DOMAIN: guest.meet.jitsi
+      XMPP_BOSH_URL_BASE: http://jitsi-prosody:5280
+      XMPP_WEBSOCKET_DOMAIN: ${JITSI_PUBLIC_HOSTNAME:-127.0.0.1}
+    volumes:
+      - jitsi-web-config:/config
+
+  # Meilisearch (buscador unificado, MIT) — instancia compartida, un
+  # único índice para notas+tareas+correo con aislamiento real por
+  # *tenant token* (JWT firmado con una clave de búsqueda propia, con un
+  # filtro `usuario_id = <n>` embebido — ver app/busqueda.py). Verificado
+  # en vivo contra un contenedor real que ese filtro es imposible de
+  # saltar desde el cliente (se aplica siempre en AND, nunca se
+  # sustituye). MIT en vez de Typesense (GPL-3.0, resuelve lo mismo) por
+  # ser la opción más consistente con el resto del stack (Documenso/
+  # Baserow/Cal.diy/Listmonk también MIT/Apache-2.0).
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: guilda-work-meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?define MEILISEARCH_MASTER_KEY, p.ej. openssl rand -base64 32}
+      MEILI_ENV: production
+    ports:
+      - "127.0.0.1:8029:7700"
+    volumes:
+      - meilisearch-data:/meili_data
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -1254,3 +1410,11 @@ volumes:
   postgres-chatwoot-data:
   redis-chatwoot-data:
   stalwart-data:
+  ntfy-data:
+  jitsi-prosody-config:
+  jitsi-prosody-plugins:
+  jitsi-prosody-storage:
+  jitsi-jicofo-config:
+  jitsi-jvb-config:
+  jitsi-web-config:
+  meilisearch-data:

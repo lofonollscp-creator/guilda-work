@@ -38,7 +38,7 @@ from email.utils import getaddresses, parsedate_to_datetime
 
 import keyring
 
-from . import db
+from . import busqueda, db
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
@@ -411,7 +411,22 @@ def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
     else:
         nuevos = _sincronizar_imap(cuenta)
     db.marcar_sincronizada_cuenta_correo(cuenta_id)
+    if nuevos:
+        _reindexar_mensajes_recientes(usuario_id, cuenta_id)
     return {"nuevos": nuevos}
+
+
+def _reindexar_mensajes_recientes(usuario_id: int, cuenta_id: int, limite: int = 200) -> None:
+    """Indexa (o reindexa, es un upsert) los mensajes más recientes de
+    esta cuenta en el buscador unificado (ver app/busqueda.py) — solo
+    tras una sincronización con mensajes nuevos, no en cada sincronización
+    vacía. Falla en silencio si el buscador no está configurado/caído:
+    es una mejora de UX, no debe romper la sincronización de correo en sí."""
+    try:
+        for mensaje in db.listar_mensajes_correo(cuenta_id, limite=limite):
+            busqueda.indexar_mensaje(dict(mensaje), usuario_id=usuario_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 CARPETA_POP3_UNICA = ("INBOX", "Bandeja de entrada")
