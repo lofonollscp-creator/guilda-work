@@ -897,3 +897,150 @@ def test_backoffice_borrar_tenant_desaprovisiona_ntfy(cliente, monkeypatch):
     assert resp.status_code == 200
     assert llamadas["tenant_id"] == tenant_id
     assert db.obtener_tenant(tenant_id) is None
+
+
+# --- Umami (analítica web) --------------------------------------------------
+
+def test_backoffice_crear_tenant_aprovisiona_umami(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-umami1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar(tenant_id, nombre):
+        return {"team_id": f"team-{tenant_id}", "website_id": f"site-{tenant_id}"}
+
+    monkeypatch.setattr(rutas_backoffice.umami, "aprovisionar_tenant", fake_aprovisionar)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "ConUmami"}, follow_redirects=True)
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant_por_nombre("ConUmami")
+    assert tenant["umami_team_id"] == f"team-{tenant['id']}"
+    assert tenant["umami_website_id"] == f"site-{tenant['id']}"
+
+
+def test_backoffice_crear_tenant_sin_umami_configurado_no_falla(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-umami2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    monkeypatch.setattr(rutas_backoffice.umami, "aprovisionar_tenant", lambda tenant_id, nombre: None)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "SinUmami"}, follow_redirects=True)
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant_por_nombre("SinUmami")
+    assert tenant is not None
+    assert tenant["umami_team_id"] is None
+
+
+def test_backoffice_crear_tenant_un_fallo_en_umami_no_bloquea_el_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-umami3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    def fake_aprovisionar_falla(tenant_id, nombre):
+        raise rutas_backoffice.umami.ErrorUmami("fallo simulado de umami")
+
+    monkeypatch.setattr(rutas_backoffice.umami, "aprovisionar_tenant", fake_aprovisionar_falla)
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "UmamiFalla"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant_por_nombre("UmamiFalla") is not None
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_umami(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-umami4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarUmami")
+    db.guardar_umami(tenant_id, "team-1", "site-1")
+
+    llamadas = {}
+
+    def fake_desaprovisionar(team_id):
+        llamadas["team_id"] = team_id
+
+    monkeypatch.setattr(rutas_backoffice.umami, "desaprovisionar_tenant", fake_desaprovisionar)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["team_id"] == "team-1"
+    assert db.obtener_tenant(tenant_id) is None
+
+
+def test_backoffice_crear_usuario_da_de_alta_en_umami_con_el_team_del_tenant(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "admin-umami5@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
+
+    tenant_id = db.crear_tenant("TenantUmami")
+    db.guardar_umami(tenant_id, "team-42", "site-42")
+
+    llamadas = {}
+
+    def fake_crear_usuario_tenant(email, team_id, contrasena):
+        llamadas["args"] = (email, team_id, contrasena)
+
+    monkeypatch.setattr(rutas_backoffice.umami, "crear_usuario_tenant", fake_crear_usuario_tenant)
+
+    resp = cliente.post(
+        "/backoffice/usuarios",
+        data={"email": "nuevo-umami@ejemplo.com", "tenant_id": tenant_id},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    email, team_id, contrasena = llamadas["args"]
+    assert email == "nuevo-umami@ejemplo.com"
+    assert team_id == "team-42"
+    assert contrasena  # contraseña temporal generada, no vacía
+
+
+def test_backoffice_crear_usuario_sin_umami_del_tenant_no_intenta_dar_de_alta(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "admin-umami6@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
+
+    tenant_id = db.crear_tenant("TenantSinUmami")
+
+    def fake_crear_usuario_tenant(*a, **k):
+        raise AssertionError("no debería llamarse")
+
+    monkeypatch.setattr(rutas_backoffice.umami, "crear_usuario_tenant", fake_crear_usuario_tenant)
+
+    resp = cliente.post(
+        "/backoffice/usuarios",
+        data={"email": "otro@ejemplo.com", "tenant_id": tenant_id},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+
+# --- Observabilidad (Grafana+Loki) — oculta por defecto ---------------------
+
+def test_backoffice_crear_tenant_oculta_observabilidad_por_defecto(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-obs1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "TenantObs"}, follow_redirects=True)
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant_por_nombre("TenantObs")
+    assert "observabilidad" in db.herramientas_ocultas_de_tenant(tenant["id"])
+
+
+def test_backoffice_admin_puede_mostrar_observabilidad_a_mano(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-obs2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "TenantObs2"}, follow_redirects=True)
+    tenant = db.obtener_tenant_por_nombre("TenantObs2")
+    assert "observabilidad" in db.herramientas_ocultas_de_tenant(tenant["id"])
+
+    ruta = f"/backoffice/tenants/{tenant['id']}/herramientas/observabilidad/alternar"
+    cliente.post(ruta, follow_redirects=True)
+    assert "observabilidad" not in db.herramientas_ocultas_de_tenant(tenant["id"])

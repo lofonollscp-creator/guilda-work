@@ -1678,17 +1678,267 @@ aquí es una mejora de experiencia humana (typo-tolerancia, ranking,
 buscar en correo a la vez que en notas en una sola caja), no una
 capacidad nueva para la IA.
 
-## 9. Backups (opcional, recomendado)
+### 8.31 Umami (analítica web) — instancia compartida, aislamiento por Team
 
-`app/db.py` ya tiene `hacer_backup_si_hace_falta()`, la misma función que
-usa la app de escritorio. Un cron simple que la invoque y copie el
-resultado fuera del VPS (a otro almacenamiento barato, o simplemente por
-`scp` a tu PC) es suficiente para no depender solo del disco del
-servidor:
+[Umami](https://umami.is) (`docker.umami.is/umami-software/umami`,
+MIT) — analítica web sin cookies para la web de cada tenant.
+
+**Por qué Umami y no Plausible**: Plausible Community Edition es
+AGPL-3.0; Umami es MIT. Ambos resuelven lo mismo (analítica sin
+cookies) — Umami es la opción más consistente con el resto del stack
+MIT/Apache-2.0 de este proyecto (mismo razonamiento que Meilisearch
+sobre Typesense, ver 8.30).
+
+**Aislamiento — verificado en vivo, con un contenedor real**: Umami
+tiene un sistema de **Teams** en su propia edición self-hosted, sin
+licencia de pago. Confirmado creando un Team, un sitio y un usuario de
+verdad:
+- Un sitio se crea ya asociado a un Team concreto (`teamId` en el
+  cuerpo de `POST /api/websites`) — no existe un endpoint separado de
+  "añadir sitio a un equipo ya creado".
+- Un usuario `team-member` de ese Team ve exactamente los sitios de su
+  Team (`GET /api/teams/{id}/websites`) y accede a sus estadísticas
+  directamente por id.
+- Ese mismo usuario, al pedir por id las estadísticas de un sitio de
+  OTRO tenant (fuera de su Team), recibe **401** del propio servidor —
+  no un filtro de cliente.
+- `DELETE /api/teams/{id}` borra en cascada el/los sitio(s) de ese
+  Team — un solo borrado basta para desaprovisionar un tenant entero.
+
+**Arranque**:
+
+```bash
+docker compose up -d postgres-umami umami
+```
+
+Añade a `.env`:
+```bash
+UMAMI_DB_PASSWORD=...
+UMAMI_APP_SECRET=...   # openssl rand -base64 32
+UMAMI_ADMIN_PASSWORD=...
+```
+
+**Hallazgo real: la contraseña del admin inicial NO se puede fijar por
+variable de entorno** (a diferencia de Listmonk/Cal.diy) — Umami crea
+siempre `admin`/`umami` de fábrica en su primera migración. Paso de
+despliegue único, tras el primer arranque:
+
+```bash
+.venv/bin/python -c "from app import umami; umami.bootstrap_admin()"
+```
+
+Cambia esa contraseña de fábrica por `UMAMI_ADMIN_PASSWORD` — verificado
+en vivo que es idempotente (si ya se ejecutó antes, no hace nada).
+
+**Otro hallazgo real, no obvio en la documentación**: actualizar un
+usuario de Umami (incluida su contraseña) es `POST /api/users/{id}`,
+NO `PUT` ni `PATCH` — ambos devuelven 405, confirmado en vivo. Mismo
+tipo de sorpresa que el `PATCH` vs `PUT` de Meilisearch (ver 8.30).
+
+**Sin pasos manuales de aprovisionamiento**: crear un tenant crea su
+Team + sitio automáticamente (`app/umami.py:aprovisionar_tenant`); el
+único dato que queda pendiente de ajustar a mano, cuando el tenant lo
+sepa, es el dominio real de su web (Umami usa el campo `domain` solo
+como etiqueta descriptiva, no restringe desde dónde se puede enviar
+tracking — se deja un valor provisional al crear el sitio).
+
+**Sin SSO**: Umami no tiene SSO/OIDC en su edición self-hosted
+gratuita — cada usuario de un tenant entra con la cuenta que le crea
+`app/umami.py:crear_usuario_tenant()` (contraseña temporal mostrada una
+vez en el backoffice, mismo criterio que OpenProject/Chatwoot).
+
+**MCP**: ninguna tool nueva — la analítica web es una métrica de
+negocio para que el propio cliente la mire desde su panel, no una
+acción que un asistente de IA necesite ejecutar (mismo criterio que
+Metabase, ya conectado sin tools de MCP tampoco).
+
+**Visibilidad por tenant**: a diferencia de Restic (infraestructura de
+servidor, fuera del catálogo por completo), Umami SÍ respeta el flag de
+visibilidad por tenant que el admin puede alternar por tenant desde el
+backoffice (`tenants_herramientas_ocultas`, ver `app/db.py` y
+`app/rutas_backoffice.py:alternar_herramienta_tenant`) y nace
+**visible** por defecto — es una herramienta de negocio del propio
+cliente, no de administración del servidor.
+
+### 8.32 Grafana + Loki + Promtail (logs centralizados) — sin aislamiento por tenant
+
+[Grafana](https://grafana.com) + [Loki](https://grafana.com/oss/loki/)
++ [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/)
+— logs de TODOS los contenedores del stack en un único sitio, para no
+depurar un fallo mirando `docker logs` uno a uno en ~20 servicios.
+
+**Licencia — AGPL-3.0**: Grafana Labs relicenció Grafana/Loki/Promtail
+desde Apache-2.0 en 2021. Esto no es un problema real en este
+despliegue: el uso es interno (dashboards de la propia infraestructura
+para quien la administra), sin modificar el código ni ofrecerlo como
+servicio a terceros — la cláusula de red de la AGPL solo se activa si
+se modifica el software Y se deja a OTROS interactuar con esa versión
+modificada por red, no por usar la imagen oficial tal cual para mirar
+tus propios logs. Mismo criterio de transparencia ya aplicado a
+Stalwart (también AGPLv3, ver 8.27).
+
+**SIN aislamiento por tenant, y hay que decirlo claro**: los logs son
+de la infraestructura compartida COMPLETA (todos los contenedores de
+todos los tenants mezclados) — no existe, ni tiene sentido que exista,
+una vista de logs solo de un tenant concreto. Esta herramienta es de
+uso exclusivo del administrador de la instancia. Por eso, a diferencia
+de TODO el resto del catálogo (que nace visible), la entrada
+`"observabilidad"` se oculta explícitamente para cada tenant nuevo
+justo al crearlo (`app/rutas_backoffice.py:crear_tenant()` llama a
+`db.ocultar_herramienta(tenant_id, "observabilidad")`) — el admin puede
+mostrarla a mano desde el backoffice si de verdad quiere que un tenant
+en concreto la vea.
+
+**Mecanismo — verificado en vivo con contenedores reales**:
+- Promtail descubre los contenedores en marcha vía **Docker Service
+  Discovery** (`docker_sd_configs` contra el socket de Docker,
+  `deploy/promtail-config.yml`) — NO lee archivos de log por bind
+  mount, es Promtail quien pregunta a la API de Docker qué contenedores
+  hay y se suscribe a sus logs. Confirmado que etiqueta cada stream con
+  el nombre real del contenedor.
+- Loki recibe y almacena esos streams — confirmado consultando
+  `GET /loki/api/v1/label/container/values` tras arrancar Promtail
+  junto a un par de contenedores de prueba: ambos nombres aparecen.
+- Grafana provisiona el datasource de Loki **automáticamente** al
+  arrancar (`deploy/grafana-datasource-loki.yml`, montado como
+  provisioning) — confirmado con `GET /api/datasources` nada más
+  arrancar, sin tocar la UI.
+
+**Arranque**:
+
+```bash
+docker compose up -d loki promtail grafana
+```
+
+Añade a `.env`:
+```bash
+GRAFANA_ADMIN_PASSWORD=...
+```
+
+Entra en `http://<host>:8031` con usuario `admin` y la contraseña de
+arriba. El datasource de Loki ya está — solo hace falta ir a
+Explore → Loki y filtrar por `{container="guilda-work-..."}` para ver
+los logs de un servicio concreto.
+
+**Socket de Docker montado en Promtail (solo lectura)**: única
+excepción de este tipo en el proyecto además de los ya aceptados para
+SSH/OpenVPN/correo de Stalwart — necesario para el Service Discovery,
+no se monta en ningún otro contenedor.
+
+## 9. Backups (recomendado)
+
+Hay **tres mecanismos de backup distintos en este proyecto, cada uno con
+un alcance diferente** — no son redundantes entre sí, cada uno cubre
+algo que los otros dos no:
+
+| Mecanismo | Qué cubre | Frecuencia | Destino |
+|---|---|---|---|
+| `db.hacer_backup_si_hace_falta()` | Solo `data/registro.db` | Diaria (cron simple) | Copia local en el propio VPS |
+| Litestream (`deploy/litestream.yml`) | Solo `data/registro.db` | Continua (streaming) | S3-compatible externo |
+| **Restic (`scripts/backup_restic.sh`)** | **Todo lo demás**: los ~15 volúmenes Docker de las herramientas conectadas (Postgres de EspoCRM/Nextcloud/Documenso/Paperless-ngx/Baserow/Chatwoot/OpenProject/FacturaScripts/Listmonk/Cal.diy/Umami, más los archivos de Nextcloud/Paperless-ngx/Baserow/Stalwart/Listmonk) | Diaria (systemd timer) | S3-compatible externo |
+
+`registro.db` ya está doblemente cubierto (copia local + réplica
+continua). **Todo el resto del stack — facturas, contratos firmados,
+CRM, correo real de los clientes — no tenía backup de ningún tipo hasta
+Restic.** Si se pierde uno de esos volúmenes sin Restic, se pierde el
+dato sin vuelta atrás.
+
+### 9.1 Backup local simple de `registro.db`
 
 ```bash
 # crontab -e (usuario guilda)
 0 4 * * * /home/guilda/guilda-work/.venv/bin/python -c "from app import db; db.hacer_backup_si_hace_falta()"
+```
+
+### 9.2 Backups completos del stack con Restic (MIT)
+
+`scripts/backup_restic.sh` respalda con [Restic](https://restic.net/)
+cada volumen Docker de la lista de arriba, uno a uno, vía
+`docker run --rm -v <volumen>:/data:ro ... restic/restic backup /data`
+(mismo patrón de contenedor de un solo uso que ya usa
+`app/facturascripts.py:_ejecutar_psql`) — no es un servicio más de
+`docker-compose.yml`, es un script de administración del servidor.
+
+**El destino tiene que ser un backend S3-compatible EXTERNO de
+verdad** (ej. Backblaze B2, o cualquier otro proveedor S3-compatible) —
+**nunca el propio MinIO de este mismo VPS**. Si el VPS entero se pierde
+(disco dañado, proveedor con un incidente, etc.), un backup guardado en
+el mismo VPS no sirve de nada; el sentido de un backup es sobrevivir a
+la pérdida de la máquina que respalda.
+
+**Variables de entorno** (en `/etc/restic.env`, con permisos `600`,
+nunca dentro del propio script ni del repo):
+
+```bash
+RESTIC_REPOSITORY=s3:https://s3.eu-central-003.backblazeb2.com/mi-bucket-backups
+RESTIC_PASSWORD=una-contraseña-larga-y-aleatoria-solo-para-restic
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+```
+
+La primera vez, inicializa el repositorio (una sola vez, antes del
+primer backup):
+
+```bash
+docker run --rm --env-file /etc/restic.env restic/restic init
+```
+
+**Programación** — timer systemd diario con margen aleatorio, para no
+golpear el backend siempre a la misma hora exacta si comparte proveedor
+con otros clientes (`deploy/restic-backup.service` +
+`deploy/restic-backup.timer`, mismo estilo que
+`deploy/guilda-work-mcp.service`):
+
+```bash
+sudo cp deploy/restic-backup.service deploy/restic-backup.timer /etc/systemd/system/
+sudo nano /etc/systemd/system/restic-backup.service   # ajustar USUARIO y rutas
+sudo systemctl daemon-reload
+sudo systemctl enable --now restic-backup.timer
+```
+
+**Retención**: el script termina con
+`restic forget --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6`
+— 7 copias diarias, 4 semanales, 6 mensuales; Restic solo almacena los
+bloques que cambian entre snapshots (deduplicación de contenido), así
+que esto no equivale a 17 copias completas en espacio real.
+
+**Prefijo de los volúmenes**: el script asume que Docker Compose nombra
+los volúmenes como `guilda-work_<nombre>` (el prefijo se deriva del
+nombre de la carpeta del proyecto — `cd guilda-work` en el paso 2 de
+esta misma guía). Si tu carpeta se llama distinto, ajusta
+`DOCKER_COMPOSE_PROJECT_PREFIX` en `/etc/restic.env`. Si una herramienta
+concreta no está desplegada en tu instancia, el script avisa y salta
+ese volumen sin fallar — no hace falta editar la lista para
+despliegues parciales.
+
+**Un backup nunca restaurado no es un backup — prueba de
+restauración real, obligatoria al menos una vez**:
+
+```bash
+# Listar snapshots disponibles
+docker run --rm --env-file /etc/restic.env -v restic-cache:/cache \
+  restic/restic snapshots
+
+# Restaurar el último snapshot de un volumen concreto a un directorio limpio
+docker run --rm --env-file /etc/restic.env -v restic-cache:/cache \
+  -v /tmp/restore-test:/restore \
+  restic/restic restore latest --target /restore --tag postgres-espocrm-data
+```
+
+**Ojo con la ruta de destino**: Restic reconstruye la ruta absoluta
+ORIGINAL de backup bajo el `--target` indicado, no la aplana. Como el
+script respalda cada volumen montado en `/data` dentro del contenedor
+efímero, `restic restore ... --target /algo` recrea el contenido en
+`/algo/data/...` (anidado), NO directamente en `/algo/...` — verificado
+en vivo reproduciendo primero el error y confirmando después la ruta
+correcta. Para una restauración real a un volumen Docker (no a un
+directorio de prueba), monta el volumen destino en la raíz del
+contenedor de restore y usa `--target /`:
+
+```bash
+docker run --rm --env-file /etc/restic.env -v restic-cache:/cache \
+  -v guilda-work_postgres-espocrm-data:/data \
+  restic/restic restore latest --target / --tag postgres-espocrm-data
 ```
 
 ## 10. MCP remoto (ChatGPT)

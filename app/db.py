@@ -593,6 +593,13 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "ntfy_topic", "TEXT")
         _asegurar_columna(conn, "tenants", "ntfy_token", "TEXT")
 
+        # Umami (analítica web, MIT): Team + sitio (website) creados por
+        # app/umami.py:aprovisionar_tenant() — 100% automático. Los ids
+        # de Umami son UUID (cadenas), no numéricos, de ahí TEXT — mismo
+        # criterio que los ids de Stalwart.
+        _asegurar_columna(conn, "tenants", "umami_team_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "umami_website_id", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -1050,6 +1057,21 @@ def guardar_ntfy(tenant_id: int, topic: str, token: str) -> None:
         conn.execute(
             "UPDATE tenants SET ntfy_topic = ?, ntfy_token = ? WHERE id = ?",
             (topic, token, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_umami(tenant_id: int, team_id: str, website_id: str) -> None:
+    """Igual que guardar_ntfy: sin pasos manuales,
+    app/umami.py:aprovisionar_tenant() crea el Team+sitio, esto solo los
+    guarda."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET umami_team_id = ?, umami_website_id = ? WHERE id = ?",
+            (team_id, website_id, tenant_id),
         )
         conn.commit()
     finally:

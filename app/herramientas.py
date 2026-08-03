@@ -266,6 +266,21 @@ HERRAMIENTAS = [
         "sso": False,
     },
     {
+        "id": "analitica-web",
+        "nombre": "Analítica web",
+        "descripcion": "Estadísticas de visitas de tu web, sin cookies (Umami).",
+        "icono": "📈",
+        "icono_logo": "analitica-web.svg",
+        "color": "#4353ff",
+        "categoria": "Productividad",
+        "url": os.environ.get("HERRAMIENTA_UMAMI_URL", "http://127.0.0.1:8030"),
+        # Sin SSO: Umami no tiene SSO/OIDC en su edición gratuita
+        # self-hosted — cada tenant entra con la cuenta que le crea
+        # app/umami.py:crear_usuario_tenant() (mismo criterio que
+        # correo-stalwart/videollamadas).
+        "sso": False,
+    },
+    {
         "id": "uptime-kuma",
         "nombre": "Uptime Kuma",
         "descripcion": "Monitorización del stack: avisa si algún servicio se cae.",
@@ -274,6 +289,25 @@ HERRAMIENTAS = [
         "color": "#14b8a6",
         "categoria": "Infraestructura",
         "url": os.environ.get("HERRAMIENTA_UPTIME_KUMA_URL", "http://127.0.0.1:8014"),
+        "sso": False,
+    },
+    {
+        "id": "observabilidad",
+        "nombre": "Observabilidad",
+        "descripcion": "Logs centralizados de todo el stack (Grafana + Loki).",
+        "icono": "📟",
+        "icono_logo": "observabilidad.svg",
+        "color": "#F46800",
+        "categoria": "Infraestructura",
+        "url": os.environ.get("HERRAMIENTA_GRAFANA_URL", "http://127.0.0.1:8031"),
+        # Sin SSO: login propio de Grafana (usuario admin único, ver
+        # HOSTING.md) — sin aislamiento por tenant posible ni tiene
+        # sentido (los logs son de la infraestructura COMPARTIDA
+        # completa, no de un tenant en concreto), así que esta
+        # herramienta nace OCULTA por defecto para tenants nuevos, a
+        # diferencia del resto del catálogo (ver
+        # app/rutas_backoffice.py:crear_tenant()) — es de uso exclusivo
+        # del administrador de la instancia.
         "sso": False,
     },
 ]

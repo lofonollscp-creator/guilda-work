@@ -1,0 +1,13 @@
+# Provisioning de Grafana: añade Loki como datasource automáticamente
+# al arrancar, sin ningún paso manual desde la UI (ver HOSTING.md,
+# sección "Grafana + Loki + Promtail"). El datasource de Loki es nativo
+# de Grafana, no hace falta ningún plugin (GF_INSTALL_PLUGINS).
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    editable: false

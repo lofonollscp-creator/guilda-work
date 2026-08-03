@@ -7,7 +7,7 @@ import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart
+from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, umami
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -166,6 +166,25 @@ def crear_tenant():
                 db.guardar_ntfy(tenant_id, resultado["topic"], resultado["token"])
             except ntfy.ErrorNtfy:
                 pass
+            try:
+                # Team + sitio de Umami (ver app/umami.py) — 100%
+                # automático, sin ningún paso manual. Sin
+                # UMAMI_ADMIN_PASSWORD configurada, esto no hace nada.
+                resultado = umami.aprovisionar_tenant(tenant_id, nombre)
+                if resultado is not None:
+                    db.guardar_umami(tenant_id, resultado["team_id"], resultado["website_id"])
+            except umami.ErrorUmami:
+                pass
+            # "observabilidad" (Grafana+Loki, ver app/herramientas.py) nace
+            # OCULTA para tenants nuevos, a diferencia del resto del
+            # catálogo (que nace visible) — no hay aislamiento por tenant
+            # posible en los logs de infraestructura compartida, así que
+            # no tiene sentido mostrarla por defecto a un cliente. Ausencia
+            # de fila en tenants_herramientas_ocultas = visible (ver
+            # db.py), así que aquí hay que ocultarla explícitamente; el
+            # admin puede mostrarla luego a mano desde el backoffice si
+            # quiere que ese tenant en concreto la vea.
+            db.ocultar_herramienta(tenant_id, "observabilidad")
 
     if facturascripts_creado or calcom_creado:
         # Contraseña de admin generada al vuelo: se muestra UNA sola vez,
@@ -297,6 +316,13 @@ def borrar_tenant(tenant_id: int):
     except ntfy.ErrorNtfy:
         pass
     try:
+        # Borra el Team (y en cascada el sitio) de Umami de este tenant
+        # (ver app/umami.py:desaprovisionar_tenant) — mismo criterio de
+        # fallo aislado.
+        umami.desaprovisionar_tenant(tenant["umami_team_id"])
+    except umami.ErrorUmami:
+        pass
+    try:
         # Borra la Account, el Domain y el Tenant de Stalwart de este
         # tenant (ver app/stalwart.py:desaprovisionar_tenant) — mismo
         # criterio de fallo aislado.
@@ -414,6 +440,16 @@ def crear_usuario():
                 })
             except listmonk.ErrorListmonk as e:
                 resultados_alta.append({"servicio": "Listmonk", "estado": "error", "detalle": str(e)})
+        if tenant is not None and tenant["umami_team_id"]:
+            try:
+                # Alta directa en Umami con el Team de su tenant (ver
+                # app/umami.py) — sin SSO, así que se muestra la misma
+                # contraseña temporal (mismo criterio que OpenProject/
+                # Chatwoot).
+                umami.crear_usuario_tenant(email, tenant["umami_team_id"], contrasena_temporal)
+                resultados_alta.append({"servicio": "Umami", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+            except umami.ErrorUmami as e:
+                resultados_alta.append({"servicio": "Umami", "estado": "error", "detalle": str(e)})
 
     tenants = db.listar_tenants_con_conteo()
     return render_template(

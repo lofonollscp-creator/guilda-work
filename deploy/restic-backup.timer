@@ -1,0 +1,20 @@
+# Plantilla de timer systemd para restic-backup.service (ver ese
+# archivo y HOSTING.md, sección "Backups con Restic"). Copia junto al
+# .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now restic-backup.timer
+#
+# RandomizedDelaySec añade hasta 30 minutos de margen aleatorio sobre
+# la hora fija (03:00) para no golpear el backend S3 siempre en el
+# mismo instante exacto que otros posibles clientes del mismo backend.
+
+[Unit]
+Description=Guilda Work - backup diario con Restic (ver restic-backup.service)
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=1800
+Persistent=true
+
+[Install]
+WantedBy=timers.target

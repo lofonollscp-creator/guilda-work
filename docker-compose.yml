@@ -1276,6 +1276,104 @@ services:
     volumes:
       - meilisearch-data:/meili_data
 
+  # Umami (analítica web sin cookies, MIT) — instancia compartida,
+  # aislamiento real por *Team*: cada sitio se crea ya asociado a un
+  # Team concreto, y un usuario de ese Team recibe 401 al intentar ver
+  # el sitio de otro tenant — verificado en vivo contra un contenedor
+  # real, sin licencia de pago (ver app/umami.py). MIT en vez de
+  # Plausible Community Edition (AGPL-3.0, resuelve lo mismo) por ser
+  # la opción más consistente con el resto del stack.
+  #
+  # La contraseña del admin inicial NO se puede fijar por variable de
+  # entorno (a diferencia de Listmonk/Cal.diy) — Umami siempre crea
+  # `admin`/`umami` de fábrica en la primera migración. El paso de
+  # despliegue `app/umami.py:bootstrap_admin()` la cambia por
+  # UMAMI_ADMIN_PASSWORD una sola vez (ver HOSTING.md).
+  postgres-umami:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-umami
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-CambiaEstaClaveUmami2026}
+      POSTGRES_DB: umami
+    volumes:
+      - postgres-umami-data:/var/lib/postgresql/data
+
+  umami:
+    image: docker.umami.is/umami-software/umami:postgresql-latest
+    container_name: guilda-work-umami
+    restart: unless-stopped
+    depends_on:
+      - postgres-umami
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-CambiaEstaClaveUmami2026}@postgres-umami:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:?define UMAMI_APP_SECRET, p.ej. openssl rand -base64 32}
+    ports:
+      - "127.0.0.1:8030:3000"
+
+  # Grafana + Loki + Promtail (observabilidad, AGPL-3.0) — logs
+  # centralizados de TODOS los contenedores del stack, para no depurar
+  # un fallo mirando `docker logs` uno a uno. SIN aislamiento por
+  # tenant (ver app/herramientas.py, id "observabilidad") — es
+  # infraestructura del propio servidor, de uso exclusivo del
+  # administrador; el flag de visibilidad por tenant aquí solo decide
+  # si aparece en el catálogo de cada tenant (oculta por defecto, a
+  # diferencia del resto de herramientas, ver app/rutas_backoffice.py).
+  #
+  # AGPL-3.0 (Grafana Labs relicenció desde Apache-2.0 en 2021): no es
+  # un problema real aquí — uso interno tal cual, sin modificar el
+  # código ni ofrecerlo como servicio a terceros (la cláusula de red
+  # solo se activa al modificar el software Y dejar que OTROS lo usen
+  # por red) — mismo criterio ya aceptado para Stalwart (también
+  # AGPLv3).
+  #
+  # Verificado en vivo con contenedores reales: Promtail descubre los
+  # contenedores vía Docker Service Discovery (socket de Docker, no
+  # bind mount de archivos de log) y los etiqueta por nombre; Loki
+  # recibe y almacena esos streams (confirmado consultando
+  # /loki/api/v1/label/container/values); Grafana provisiona el
+  # datasource de Loki automáticamente al arrancar (confirmado vía
+  # GET /api/datasources, sin ningún paso manual en la UI).
+  loki:
+    image: grafana/loki:latest
+    container_name: guilda-work-loki
+    restart: unless-stopped
+    volumes:
+      - loki-data:/loki
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: guilda-work-promtail
+    restart: unless-stopped
+    depends_on:
+      - loki
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./deploy/promtail-config.yml:/etc/promtail/config.yml:ro
+      # Socket de Docker (solo lectura) — necesario para el Service
+      # Discovery de contenedores; EXCEPCIÓN explícita al resto de
+      # servicios de este archivo, mismo criterio ya aceptado para
+      # SSH/OpenVPN/correo de Stalwart (infraestructura, no una app
+      # más). No se monta /var/run/docker.sock en NINGÚN otro
+      # contenedor de este proyecto.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: guilda-work-grafana
+    restart: unless-stopped
+    depends_on:
+      - loki
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?define GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: ${GRAFANA_PUBLIC_ORIGIN:-http://127.0.0.1:8031}
+    ports:
+      - "127.0.0.1:8031:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./deploy/grafana-datasource-loki.yml:/etc/grafana/provisioning/datasources/loki.yml:ro
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -1418,3 +1516,6 @@ volumes:
   jitsi-jvb-config:
   jitsi-web-config:
   meilisearch-data:
+  postgres-umami-data:
+  loki-data:
+  grafana-data:

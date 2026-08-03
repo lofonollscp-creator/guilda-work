@@ -1,0 +1,23 @@
+# Plantilla de unidad systemd para scripts/backup_restic.sh en un VPS
+# Linux (ver HOSTING.md, sección "Backups con Restic"). Copia a
+# /etc/systemd/system/restic-backup.service, ajusta USUARIO y las
+# rutas, guarda las credenciales reales en /etc/restic.env (mismo
+# patrón que /etc/guilda-work.env / /etc/litestream.env), y activa el
+# timer (deploy/restic-backup.timer), no esta unidad directamente —
+# .service sin .timer solo se ejecutaría una vez al arrancar.
+#
+# Requiere restic instalado en el host (o Docker, que ya hace falta
+# para el resto del stack — el script usa `docker run restic/restic`,
+# no un binario aparte).
+
+[Unit]
+Description=Guilda Work - backup con Restic de los volúmenes Docker
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/restic.env
+ExecStart=/home/USUARIO/guilda-work/scripts/backup_restic.sh
