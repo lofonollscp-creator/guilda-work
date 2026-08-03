@@ -1820,10 +1820,114 @@ arriba. El datasource de Loki ya está — solo hace falta ir a
 Explore → Loki y filtrar por `{container="guilda-work-..."}` para ver
 los logs de un servicio concreto.
 
-**Socket de Docker montado en Promtail (solo lectura)**: única
-excepción de este tipo en el proyecto además de los ya aceptados para
-SSH/OpenVPN/correo de Stalwart — necesario para el Service Discovery,
-no se monta en ningún otro contenedor.
+**Socket de Docker montado en Promtail (solo lectura)**: necesario para
+el Service Discovery — a diferencia del montaje en LECTURA-ESCRITURA
+que hace falta para Portainer (ver 8.33), aquí Promtail solo puede
+leer, nunca actuar sobre un contenedor.
+
+### 8.33 Portainer — gestión de los ~25 contenedores del stack, oculta por defecto
+
+[Portainer](https://www.portainer.io) CE (zlib) — panel web para
+inspeccionar/reiniciar/hacer `exec` en cualquier contenedor de este
+`docker-compose.yml`, sin depender de SSH + `docker compose` a mano.
+
+**Licencia — sin OAuth/OIDC/LDAP en Community Edition**: confirmado en
+la comparativa oficial de licencias de Portainer que la autenticación
+externa (OAuth, LDAP/Active Directory) es exclusiva de Business
+Edition — CE entra con cuenta local propia, mismo criterio que
+MinIO/Vaultwarden.
+
+**Hallazgo real, verificado en vivo**: Portainer CE se autobloquea si
+no se crea una cuenta admin en los primeros minutos tras el primer
+arranque (para que nadie deje una instancia recién desplegada sin
+proteger). Se evita del todo con `--admin-password-file`, que crea el
+admin de forma no interactiva nada más arrancar — confirmado en vivo
+que el login por API funciona al instante, sin tocar la UI
+(`created admin user with the given password` en el log).
+
+**La contraseña nunca toca un archivo del repo**: en vez de un archivo
+de secreto a mano, se usa el mecanismo `secrets: environment:` de
+Docker Compose (bloque `secrets:` al final de `docker-compose.yml`,
+primer uso en este archivo) — Compose toma el valor de la variable de
+entorno `PORTAINER_ADMIN_PASSWORD` y lo materializa como archivo en
+`/run/secrets/portainer_admin_password` DENTRO del contenedor.
+Confirmado en vivo que este mecanismo funciona de verdad en tiempo de
+ejecución, no solo en `docker compose config`.
+
+**`docker.sock` en LECTURA-ESCRITURA — el nivel de exposición más alto
+de todo este catálogo**: es inevitable (Portainer necesita poder
+actuar sobre contenedores, no solo leer logs como Promtail), y equivale
+a control TOTAL sobre el host — puede tocar cualquier contenedor de
+cualquier tenant. Por eso `"portainer"` nace **oculta por defecto**
+para tenants nuevos (`app/rutas_backoffice.py:crear_tenant()`, mismo
+mecanismo que `"observabilidad"`, ver 8.32).
+
+**Arranque**:
+
+```bash
+docker compose up -d portainer
+```
+
+Añade a `.env`:
+```bash
+PORTAINER_ADMIN_PASSWORD=...
+```
+
+Entra en `http://<host>:8033` (o `portainer.HOSTNAME` detrás de Caddy)
+con usuario `admin` y esa contraseña — el entorno Docker local ya
+aparece solo (se detecta el propio `docker.sock` montado), sin tener
+que darlo de alta a mano.
+
+### 8.34 Collabora Online — edición de documentos dentro de Drive, sin aprovisionamiento por tenant
+
+[Collabora Online](https://www.collaboraonline.com) (CODE, motor
+LibreOffice, protocolo WOPI) — edita `.docx`/`.xlsx`/`.odt`... en el
+navegador desde dentro de Drive (Nextcloud, ver 8.20), sin descargar el
+archivo antes.
+
+**Sin aislamiento ni aprovisionamiento propio — heredado al 100% de
+Nextcloud**: Collabora es un motor de render sin estado. Nextcloud le
+manda "edita este documento con este token de acceso firmado"
+(protocolo WOPI), Collabora edita y llama de vuelta a Nextcloud para
+guardar — no guarda nada propio por tenant. Los Group Folders y
+permisos de usuario que ya existen en Nextcloud siguen siendo el único
+límite de acceso real. Por eso no hay columnas nuevas en `tenants`, ni
+entrada nueva en `app/herramientas.py` (solo se amplió la descripción
+de `"drive"`), ni ganchos en `crear_tenant()`/`borrar_tenant()`.
+
+**Verificado en vivo, de punta a punta, contra contenedores reales**:
+un Nextcloud de prueba con la app `richdocuments` instalada y apuntada
+al contenedor de Collabora — `occ richdocuments:activate-config`
+confirma `Detected WOPI server: Collabora Online Development Edition`
+con capacidades válidas, sin ningún paso manual en la UI.
+
+**Bootstrap — CLI-only, sin equivalente HTTP**: instalar y activar
+`richdocuments` solo se puede hacer con el propio `occ` de Nextcloud
+(mismo tipo de limitación que `ntfy access`, ver 8.28) — se ejecuta por
+`docker exec` contra el contenedor de Nextcloud
+(`app/collabora.py:bootstrap_richdocuments()`, mismo patrón que
+`app/ntfy.py:_conceder_acceso`). Paso de despliegue, se llama UNA VEZ:
+
+```bash
+docker compose up -d nextcloud collabora
+.venv/bin/python -c "from app import collabora; collabora.bootstrap_richdocuments()"
+```
+
+Añade a `.env`:
+```bash
+NEXTCLOUD_PUBLIC_ORIGIN=https://drive.tu-dominio.com   # aliasgroup1 de Collabora
+COLLABORA_ADMIN_PASSWORD=...   # consola admin propia de Collabora (opcional pero recomendado)
+```
+
+**`cap_add: MKNOD`**: requisito oficial documentado para el jail de
+`coolwsd` (aislamiento de cada documento abierto) — se mantiene por ser
+la recomendación oficial, no una suposición propia.
+
+**El navegador carga el editor DIRECTAMENTE desde Collabora, no a
+través de Nextcloud** (confirmado por la propia salida de
+`occ richdocuments:activate-config`: "Collabora public URL (used in
+the browser to open Collabora)") — de ahí el subdominio propio
+`office.HOSTNAME` en el Caddyfile, aparte de `drive.HOSTNAME`.
 
 ## 9. Backups (recomendado)
 

@@ -177,14 +177,18 @@ HERRAMIENTAS = [
     {
         "id": "drive",
         "nombre": "Drive",
-        "descripcion": "Almacenamiento de archivos en la nube, tipo Drive (Nextcloud).",
+        "descripcion": "Almacenamiento y edición de documentos en el navegador, tipo Drive (Nextcloud + Collabora Online).",
         "icono": "☁️",
         "icono_logo": "drive.svg",
         "color": "#38bdf8",
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_NEXTCLOUD_URL", "http://127.0.0.1:8016"),
         # Con SSO — app oficial `user_oidc` (Fase Drive, ver HOSTING.md
-        # 8.20), mismo patrón que Outline/Element/EspoCRM.
+        # 8.20), mismo patrón que Outline/Element/EspoCRM. La edición de
+        # documentos (Collabora Online, ver HOSTING.md) vive DENTRO de
+        # esta misma pantalla — sin entrada propia en el catálogo, sin
+        # aprovisionamiento por tenant, sin aislamiento propio (hereda
+        # el de Nextcloud, ver app/collabora.py).
         "sso": True,
     },
     {
@@ -308,6 +312,26 @@ HERRAMIENTAS = [
         # diferencia del resto del catálogo (ver
         # app/rutas_backoffice.py:crear_tenant()) — es de uso exclusivo
         # del administrador de la instancia.
+        "sso": False,
+    },
+    {
+        "id": "portainer",
+        "nombre": "Portainer",
+        "descripcion": "Gestión de los contenedores Docker del servidor.",
+        "icono": "🐳",
+        "icono_logo": "portainer.svg",
+        "color": "#13BEF9",
+        "categoria": "Infraestructura",
+        "url": os.environ.get("HERRAMIENTA_PORTAINER_URL", "http://127.0.0.1:8033"),
+        # Sin SSO: Community Edition no tiene OAuth/OIDC/LDAP (exclusivo
+        # de Business Edition, confirmado en la comparativa oficial de
+        # licencias) — entra con cuenta local propia, mismo criterio que
+        # MinIO/Vaultwarden. Nace OCULTA por defecto para tenants nuevos
+        # (ver app/rutas_backoffice.py:crear_tenant()) — con docker.sock
+        # en lectura-escritura equivale a control total sobre el host
+        # (cualquier contenedor de cualquier tenant), el nivel de
+        # exposición más alto de todo este catálogo — mismo criterio que
+        # "observabilidad".
         "sso": False,
     },
 ]

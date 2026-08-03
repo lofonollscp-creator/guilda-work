@@ -1044,3 +1044,28 @@ def test_backoffice_admin_puede_mostrar_observabilidad_a_mano(cliente):
     ruta = f"/backoffice/tenants/{tenant['id']}/herramientas/observabilidad/alternar"
     cliente.post(ruta, follow_redirects=True)
     assert "observabilidad" not in db.herramientas_ocultas_de_tenant(tenant["id"])
+
+
+# --- Portainer — oculta por defecto ------------------------------------------
+
+def test_backoffice_crear_tenant_oculta_portainer_por_defecto(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-port1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "TenantPort"}, follow_redirects=True)
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant_por_nombre("TenantPort")
+    assert "portainer" in db.herramientas_ocultas_de_tenant(tenant["id"])
+
+
+def test_backoffice_admin_puede_mostrar_portainer_a_mano(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-port2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "TenantPort2"}, follow_redirects=True)
+    tenant = db.obtener_tenant_por_nombre("TenantPort2")
+    assert "portainer" in db.herramientas_ocultas_de_tenant(tenant["id"])
+
+    ruta = f"/backoffice/tenants/{tenant['id']}/herramientas/portainer/alternar"
+    cliente.post(ruta, follow_redirects=True)
+    assert "portainer" not in db.herramientas_ocultas_de_tenant(tenant["id"])

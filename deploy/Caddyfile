@@ -96,6 +96,14 @@ drive.HOSTNAME {
 	reverse_proxy localhost:8016
 }
 
+# Collabora Online (edición de documentos dentro de Drive, ver
+# HOSTING.md) — el navegador carga el editor DIRECTAMENTE desde aquí
+# (no a través de drive.HOSTNAME), confirmado por la propia salida de
+# `occ richdocuments:activate-config`.
+office.HOSTNAME {
+	reverse_proxy localhost:8032
+}
+
 firmas.HOSTNAME {
 	reverse_proxy localhost:8018
 }
@@ -145,4 +153,12 @@ videollamadas.HOSTNAME {
 # Corre fuera de Docker, en el mismo host que serve.py.
 mcp.HOSTNAME {
 	reverse_proxy localhost:8017
+}
+
+# Portainer (gestión de contenedores) — ver HOSTING.md. Se usa su
+# puerto HTTP plano (9000, publicado en 8033), no el 9443 con
+# certificado autofirmado propio: Caddy ya termina TLS aquí, igual que
+# el resto del stack.
+portainer.HOSTNAME {
+	reverse_proxy localhost:8033
 }

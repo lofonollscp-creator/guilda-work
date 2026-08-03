@@ -185,6 +185,11 @@ def crear_tenant():
             # admin puede mostrarla luego a mano desde el backoffice si
             # quiere que ese tenant en concreto la vea.
             db.ocultar_herramienta(tenant_id, "observabilidad")
+            # "portainer" (ver app/herramientas.py) nace OCULTA por el
+            # mismo motivo que "observabilidad": docker.sock en
+            # lectura-escritura equivale a control total sobre el host,
+            # no tiene sentido mostrárselo a un tenant por defecto.
+            db.ocultar_herramienta(tenant_id, "portainer")
 
     if facturascripts_creado or calcom_creado:
         # Contraseña de admin generada al vuelo: se muestra UNA sola vez,

@@ -1374,6 +1374,81 @@ services:
       - grafana-data:/var/lib/grafana
       - ./deploy/grafana-datasource-loki.yml:/etc/grafana/provisioning/datasources/loki.yml:ro
 
+  # Portainer CE (zlib) — panel de gestión de los ~25 contenedores de
+  # este stack (logs/reinicios/exec sin SSH+`docker compose` a mano).
+  # SIN OAuth/OIDC/LDAP en Community Edition (confirmado en la propia
+  # comparativa oficial de licencias de Portainer: eso es exclusivo de
+  # Business Edition) — entra con cuenta local propia, mismo patrón
+  # que MinIO/Vaultwarden.
+  #
+  # `docker.sock` en LECTURA-ESCRITURA (a diferencia del `:ro` de
+  # Promtail más arriba) — es inevitable: Portainer necesita poder
+  # actuar sobre contenedores (parar/reiniciar/exec), no solo leer
+  # logs. Esto equivale a control TOTAL sobre el host (puede tocar
+  # CUALQUIER contenedor de CUALQUIER tenant) — el nivel de exposición
+  # más alto de cualquier herramienta de este catálogo, por eso nace
+  # oculta por defecto para tenants nuevos (ver
+  # app/rutas_backoffice.py:crear_tenant(), mismo mecanismo que
+  # "observabilidad").
+  #
+  # Hallazgo verificado en vivo: Portainer CE se autobloquea si no se
+  # crea una cuenta admin en los primeros minutos tras el primer
+  # arranque — se evita del todo con `--admin-password-file`, que crea
+  # el admin de forma no interactiva nada más arrancar (confirmado:
+  # login por API funciona al instante, sin tocar la UI). La
+  # contraseña llega vía `secrets: environment:` (ver el bloque
+  # `secrets:` al final de este archivo) para que nunca toque un
+  # archivo en el repo — Compose la materializa como
+  # /run/secrets/portainer_admin_password dentro del contenedor.
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: guilda-work-portainer
+    restart: unless-stopped
+    command: ["--admin-password-file", "/run/secrets/portainer_admin_password"]
+    secrets:
+      - portainer_admin_password
+    volumes:
+      - portainer-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:8033:9000"
+
+  # Collabora Online (CODE, motor LibreOffice, protocolo WOPI) —
+  # edición de documentos en el navegador integrada con Nextcloud
+  # (Drive, ver `app/nextcloud.py`). SIN estado ni aislamiento propio
+  # por tenant: es un motor de render que solo habla WOPI con
+  # Nextcloud (que le manda "edita este documento con este token
+  # firmado", Collabora edita y llama de vuelta para guardar) — los
+  # Group Folders y permisos de usuario que ya existen en Nextcloud
+  # siguen siendo el único límite de acceso real, verificado en vivo
+  # instalando `richdocuments` contra un Nextcloud de prueba real y
+  # confirmando que detecta este servidor como WOPI server sin ningún
+  # paso manual (ver `app/collabora.py:bootstrap_richdocuments()`).
+  #
+  # `aliasgroup1`: Collabora solo acepta peticiones WOPI de orígenes en
+  # su aliasgroup — tiene que ser la URL pública real de Drive.
+  # `extra_params` con `ssl.termination=true`: Caddy termina TLS, igual
+  # que el resto del stack (mismo patrón, verificado en vivo que
+  # arranca y responde en `/hosting/discovery`).
+  # `cap_add: MKNOD`: requisito oficial documentado para el jail de
+  # `coolwsd` (aislamiento de cada documento abierto) — incluido junto
+  # con el arranque ya verificado en vivo, sin probar deliberadamente
+  # a quitarlo (es la recomendación oficial, no una suposición propia).
+  collabora:
+    image: collabora/code:latest
+    container_name: guilda-work-collabora
+    restart: unless-stopped
+    cap_add:
+      - MKNOD
+    environment:
+      aliasgroup1: ${NEXTCLOUD_PUBLIC_ORIGIN:-http://127.0.0.1:8016}
+      extra_params: --o:ssl.enable=false --o:ssl.termination=true
+      DONT_GEN_SSL_CERT: "true"
+      username: ${COLLABORA_ADMIN_USER:-admin}
+      password: ${COLLABORA_ADMIN_PASSWORD:?define COLLABORA_ADMIN_PASSWORD, p.ej. openssl rand -base64 24}
+    ports:
+      - "127.0.0.1:8032:9980"
+
   # OpenVPN (acceso VPN al VPS) — imagen `kylemanna/openvpn`, el
   # empaquetado Docker estándar del propio proyecto `openvpn/openvpn`
   # (usa su binario real, con scripts auxiliares para gestionar la PKI
@@ -1519,3 +1594,15 @@ volumes:
   postgres-umami-data:
   loki-data:
   grafana-data:
+  portainer-data:
+
+# Secreto de Portainer (ver el servicio `portainer` más arriba) —
+# `environment:` en vez de `file:` hace que Compose tome el valor de la
+# variable de entorno PORTAINER_ADMIN_PASSWORD y lo materialice como
+# archivo en /run/secrets/portainer_admin_password DENTRO del
+# contenedor, sin que la contraseña toque nunca un archivo en el repo
+# (verificado en vivo que este mecanismo funciona de verdad, no solo en
+# `docker compose config`). Primer uso de `secrets:` en este archivo.
+secrets:
+  portainer_admin_password:
+    environment: PORTAINER_ADMIN_PASSWORD
