@@ -23,6 +23,16 @@
 # que lo filtre; mismo criterio ya aceptado para el puerto 22/SSH vía
 # `ufw allow OpenSSH`, ver HOSTING.md sección 1).
 #
+# Dimensionado del VPS (ver HOSTING.md, "Dimensionar el servidor para el
+# stack completo", justo antes de este paso 8): recomendación mínima
+# `CPX22` (2 vCPU dedicadas / 4GB RAM) para un primer tenant con el
+# núcleo imprescindible + las herramientas de mayor valor levantadas.
+# Cada servicio de aquí abajo lleva una etiqueta `# Nivel: mínimo (CPX22)`
+# o `# Nivel: diferible` en su comentario — no cambia nada del propio
+# `docker compose up -d` (todo sigue arrancando junto, sin `--profile`
+# nuevo), es solo qué se recomienda tener activo desde el primer día
+# frente a lo que puede esperar a que un tenant real lo pida.
+#
 # Metabase (Fase "integraciones de código abierto" del plan): panel de análisis
 # sobre data/registro.db. El driver de SQLite viene ya incluido en la imagen
 # oficial de Metabase — no hace falta ningún plugin aparte.
@@ -38,6 +48,7 @@
 # archivos, la alternativa es apuntar Metabase a una copia periódica del .db
 # en vez de al archivo en vivo (ver plan: "vía de escape con pgloader/Postgres").
 services:
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   metabase:
     image: metabase/metabase:latest
     container_name: guilda-work-metabase
@@ -50,6 +61,8 @@ services:
     environment:
       MB_DB_FILE: /metabase-data/metabase.db
 
+  # Nivel: mínimo (CPX22) si vas a levantar Outline (arriba, lo usa para
+  # adjuntos) — si no, diferible. Ver HOSTING.md.
   # MinIO: almacenamiento de objetos compatible con S3, 100% self-hosted.
   # Uso previsto (plan "integraciones de código abierto"): destino de las
   # copias de Litestream (ver litestream.yml), sin depender de un bucket de
@@ -69,6 +82,7 @@ services:
       MINIO_ROOT_USER: guilda_admin
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-CambiaEstaClave2026}
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # n8n: automatización de flujos sobre la API REST ya existente
   # (app/rutas_api.py, Fase 2) — n8n es, para Guilda Work, "otro cliente
   # autenticado más", igual que la app móvil: llama a /api/v1/... con un
@@ -91,6 +105,7 @@ services:
     volumes:
       - n8n-data:/home/node/.n8n
 
+  # Nivel: mínimo (CPX22) — columna vertebral, ver HOSTING.md.
   # Ory Kratos: identidad real para el modo hospedado de Guilda Work
   # (Fase 7a del plan) — sustituye la comprobación de contraseña casera
   # como origen de verdad, sin tocar cli.py/mcp_server.py (usuario local,
@@ -154,6 +169,7 @@ services:
       - ./deploy/kratos:/etc/config/kratos:ro
     command: serve --config /etc/config/kratos/kratos.yml --dev
 
+  # Nivel: mínimo (CPX22) — columna vertebral, ver HOSTING.md.
   # Ory Hydra: proveedor OAuth2/OIDC (Fase 7b) — necesario porque Outline
   # (y más adelante OpenProject) no tienen login con contraseña propio,
   # solo saben delegar en un proveedor externo. El "login/consent" lo
@@ -232,6 +248,7 @@ services:
       - ./deploy/hydra:/etc/config/hydra:ro
     command: serve --config /etc/config/hydra/hydra.yml all --dev
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Outline: wiki/base de conocimiento para guías de empleados (Fase 7b).
   # No tiene login con contraseña propio — exige un proveedor OIDC externo
   # desde el primer inicio de sesión, de ahí Hydra por encima. Los
@@ -316,6 +333,8 @@ services:
       OIDC_DISPLAY_NAME: "Guilda Work"
       OIDC_SCOPES: "openid email profile"
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md — atención especial al SSO (más
+  # abajo), es la integración con más fricción de arranque del stack.
   # Element + Synapse: chat de verdad (Fase 7d) — sustituye a la idea de
   # un chat propio dentro de Guilda Work, decisión explícita del usuario
   # una vez Kratos/Hydra ya estaban desplegados. Sin federación (ver
@@ -388,6 +407,8 @@ services:
     volumes:
       - ./deploy/synapse/element-config.json:/app/config.json:ro
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md — uno de los dos puntos
+  # calientes de memoria de esta lista (con Synapse, más arriba).
   # OpenProject: gestión de proyectos/tareas de equipo (Fase 7f) — lo que
   # Tareas Outlook no pretende ser (asignación a varias personas, flujos
   # de estado, vistas Kanban/Gantt). Sin SSO: confirmado en su
@@ -466,6 +487,7 @@ services:
       - openproject-data:/var/openproject/assets
     command: ["./docker/prod/cron"]
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Chatwoot: bandeja de soporte omnicanal para incidencias de clientes
   # (Fase 7g) — la pieza más cara de operar del catálogo (Rails +
   # Postgres + Redis + Sidekiq). Sin SSO: confirmado en su documentación
@@ -548,6 +570,7 @@ services:
     environment: *chatwoot-env
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
+  # Nivel: diferible — extra opcional, ver HOSTING.md.
   # sqlite-web (Fase 7c, extra) — visor genérico de TODA la base de datos
   # SQLite de Guilda Work, para consultas SQL ad-hoc del admin. A propósito
   # NO es el backoffice real (ver /backoffice en la propia app): no
@@ -571,6 +594,7 @@ services:
     # es para pedirla por teclado de forma interactiva, no vale en Docker.
     command: ["sqlite_web", "-H", "0.0.0.0", "-r", "/data/registro.db"]
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Vaultwarden (servidor Bitwarden-compatible, código abierto) — un solo
   # sitio cifrado para las contraseñas/tokens de todo este stack (Hydra,
   # OpenProject, Chatwoot, MinIO...), en vez de repartidos entre .env y
@@ -598,6 +622,7 @@ services:
     ports:
       - "127.0.0.1:8013:80"
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Uptime Kuma (monitorización, código abierto) — el stack ya son ~10
   # contenedores; esto avisa si alguno se cae. Sin variables de entorno
   # de credenciales: el primer acceso por navegador crea la cuenta admin
@@ -616,6 +641,7 @@ services:
     ports:
       - "127.0.0.1:8014:3001"
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # EspoCRM (CRM de código abierto) — único CRM libre investigado con
   # OIDC nativo en el core gratuito (AGPL-3.0, desde v7.3), ver
   # HOSTING.md 8.19. Aislamiento entre tenants: el claim `groups` que
@@ -660,6 +686,7 @@ services:
     volumes:
       - espocrm-data:/var/www/html/data
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Nextcloud (espacio tipo Drive) — mismo criterio de aislamiento por
   # tenant que EspoCRM (ver HOSTING.md 8.20): el claim `groups` que
   # manda Hydra (app/hydra.py) se mapea a Grupos de Nextcloud vía la app
@@ -706,6 +733,7 @@ services:
       # pero se mantiene porque ahí vive la instalación en sí.
       - nextcloud-data:/var/www/html
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Documenso (firma electrónica) — instancia compartida, como EspoCRM/
   # Nextcloud, pero SIN SSO (confirmado en la documentación oficial:
   # "SSO is only available on the Enterprise plan") y SIN aprovisionamiento
@@ -760,6 +788,7 @@ services:
     volumes:
       - ./deploy/documenso/cert.p12:/opt/documenso/cert.p12:ro
 
+  # Nivel: mínimo (CPX22) — el lector OCR, ver HOSTING.md.
   # Paperless-ngx (gestión documental/OCR) — instancia compartida, con
   # SSO real (a diferencia de Documenso/FacturaScripts): OIDC vía
   # django-allauth desde Paperless-ngx 2.5.0, con sincronización de
@@ -842,6 +871,8 @@ services:
       - paperless-data:/usr/src/paperless/data
       - paperless-media:/usr/src/paperless/media
 
+  # Nivel: diferible — se solapa con OpenProject (ya en el mínimo) para
+  # llevar tareas/hojas de cálculo, ver HOSTING.md.
   # Baserow (hojas de cálculo tipo base de datos) — instancia compartida.
   # Aislamiento real: el Workspace es el propio contenedor de datos de
   # Baserow (cada base/tabla vive dentro de uno), y un token de base de
@@ -919,6 +950,8 @@ services:
       # folder... otherwise your data will be lost between runs").
       - baserow-data:/baserow/data
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md — esta cifra asume UN tenant;
+  # cada tenant adicional añade su propia instancia física (ver abajo).
   # FacturaScripts (facturación/contabilidad) — ÚNICA excepción del
   # stack a "un servicio Docker, una instancia": cada tenant necesita su
   # PROPIA instancia física de FacturaScripts (investigado y confirmado
@@ -940,6 +973,7 @@ services:
     volumes:
       - postgres-facturascripts-data:/var/lib/postgresql/data
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Cal.diy (reserva de citas, tipo Cal.com) — a diferencia de
   # FacturaScripts, instancia COMPARTIDA, no una por tenant:
   # `NEXT_PUBLIC_WEBAPP_URL` de Cal.diy es una variable de COMPILACIÓN de
@@ -1038,6 +1072,7 @@ services:
     ports:
       - "127.0.0.1:8022:80"
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Listmonk (newsletter/envíos masivos) — instancia COMPARTIDA, con
   # aislamiento real por Lista/Rol de lista (verificado en vivo contra
   # un contenedor real, no solo leído en el código fuente — ver
@@ -1079,6 +1114,7 @@ services:
     volumes:
       - listmonk-uploads:/listmonk/uploads
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Stalwart (correo propio, backend alternativo con mejor API JMAP para
   # MCP que el cliente IMAP genérico de app/correo.py, ver
   # app/stalwart.py). Imagen oficial `stalwartlabs/stalwart:latest`, sin
@@ -1120,6 +1156,7 @@ services:
     volumes:
       - stalwart-data:/opt/stalwart
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # ntfy (notificaciones push autoalojadas, Apache-2.0/GPLv2 dual) —
   # instancia compartida, aislamiento real por tenant vía usuario+ACL de
   # topic nativos de ntfy (ver app/ntfy.py). Un único binario, sin base
@@ -1147,6 +1184,8 @@ services:
     volumes:
       - ntfy-data:/var/lib/ntfy
 
+  # Nivel: diferible (los 4 servicios de Jitsi) — actívalo cuando un
+  # tenant real lo pida, ver HOSTING.md.
   # Jitsi Meet (videollamadas autoalojadas, Apache-2.0) — instancia
   # compartida: una videollamada no tiene datos persistentes que aislar
   # por tenant, el aislamiento real es que cada JWT solo es válido para
@@ -1255,6 +1294,7 @@ services:
     volumes:
       - jitsi-web-config:/config
 
+  # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Meilisearch (buscador unificado, MIT) — instancia compartida, un
   # único índice para notas+tareas+correo con aislamiento real por
   # *tenant token* (JWT firmado con una clave de búsqueda propia, con un
@@ -1276,6 +1316,7 @@ services:
     volumes:
       - meilisearch-data:/meili_data
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Umami (analítica web sin cookies, MIT) — instancia compartida,
   # aislamiento real por *Team*: cada sitio se crea ya asociado a un
   # Team concreto, y un usuario de ese Team recibe 401 al intentar ver
@@ -1312,6 +1353,8 @@ services:
     ports:
       - "127.0.0.1:8030:3000"
 
+  # Nivel: diferible (los 3 servicios) — sustituible por
+  # journalctl/logs de Docker a pelo al principio, ver HOSTING.md.
   # Grafana + Loki + Promtail (observabilidad, AGPL-3.0) — logs
   # centralizados de TODOS los contenedores del stack, para no depurar
   # un fallo mirando `docker logs` uno a uno. SIN aislamiento por
@@ -1374,6 +1417,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./deploy/grafana-datasource-loki.yml:/etc/grafana/provisioning/datasources/loki.yml:ro
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Portainer CE (zlib) — panel de gestión de los ~25 contenedores de
   # este stack (logs/reinicios/exec sin SSH+`docker compose` a mano).
   # SIN OAuth/OIDC/LDAP en Community Edition (confirmado en la propia
@@ -1413,6 +1457,7 @@ services:
     ports:
       - "127.0.0.1:8033:9000"
 
+  # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # Collabora Online (CODE, motor LibreOffice, protocolo WOPI) —
   # edición de documentos en el navegador integrada con Nextcloud
   # (Drive, ver `app/nextcloud.py`). SIN estado ni aislamiento propio
