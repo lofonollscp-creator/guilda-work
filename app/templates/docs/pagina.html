@@ -63,7 +63,14 @@
         <p class="docs-lead">{{ pagina.descripcion }}</p>
 
         {% for bloque in pagina.bloques %}
-          {% if bloque.type == 'h2' %}
+          {% if bloque.type == 'badges' %}
+            <div class="docs-badges">
+              {% for texto in bloque['items'] %}
+              <span class="docs-badge">{{ texto }}</span>
+              {% endfor %}
+            </div>
+
+          {% elif bloque.type == 'h2' %}
             <h2 id="{{ bloque.id }}">{{ bloque.text }}</h2>
 
           {% elif bloque.type == 'p' %}
@@ -124,7 +131,20 @@
         {% endfor %}
 
         <div class="docs-footer-nav">
+          {% if pagina_anterior %}
+          <a class="docs-footer-nav-adyacente" href="{{ url_for('docs.pagina', slug=pagina_anterior.slug) }}">
+            <span class="docs-footer-nav-kicker">← Anterior</span>
+            <span class="docs-footer-nav-adyacente-titulo">{{ pagina_anterior.titulo }}</span>
+          </a>
+          {% else %}
           <a href="{{ url_for('docs.pagina') }}">← Guía para desarrolladores</a>
+          {% endif %}
+          {% if pagina_siguiente %}
+          <a class="docs-footer-nav-adyacente docs-footer-nav-adyacente-siguiente" href="{{ url_for('docs.pagina', slug=pagina_siguiente.slug) }}">
+            <span class="docs-footer-nav-kicker">Siguiente →</span>
+            <span class="docs-footer-nav-adyacente-titulo">{{ pagina_siguiente.titulo }}</span>
+          </a>
+          {% endif %}
         </div>
       </div>
     </main>

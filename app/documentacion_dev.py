@@ -4,10 +4,15 @@ integrar su propio software con una instancia de Guilda Work — por API
 REST o conectando un asistente de IA por MCP — o desplegar/extender el
 propio proyecto.
 
-Es contenido, no HTML: cada página es una lista de "bloques" (`p`,
-`h2`, `callout`, `code`, `steps`, `table`, `cards`) que
+Es contenido, no HTML: cada página es una lista de "bloques" (`badges`,
+`p`, `h2`, `callout`, `code`, `steps`, `table`, `cards`) que
 `app/templates/docs/pagina.html` renderiza de forma genérica — así
-añadir o reordenar contenido no toca la plantilla ni el CSS.
+añadir o reordenar contenido no toca la plantilla ni el CSS. La única
+excepción es una página con `"interactivo": True` (hoy solo
+`explorador-api`): en vez de bloques, `app/rutas_docs.py` la renderiza
+con `docs/explorador_api.html`, una plantilla aparte cuyo contenido lo
+genera `app/static/api_explorer.js` en el cliente a partir del OpenAPI
+real (`/api/v1/openapi.json`).
 
 Refundido a partir de README.md y HOSTING.md (secciones 8.9, 8.13,
 10 y "Migrar a un dominio propio" sobre todo) — no un resumen aparte
@@ -148,6 +153,9 @@ PAGINAS = [
         "descripcion": "Integra tu propio software con una instancia de Guilda Work por API REST, "
                         "conecta un asistente de IA por MCP, o despliega/extiende el propio proyecto.",
         "bloques": [
+            {"type": "badges", "items": [
+                "REST / JSON", "Autenticación Bearer", "Búsqueda semántica (RAG)", "Webhooks HMAC", "MCP · stdio + OAuth 2.1",
+            ]},
             {"type": "h2", "id": "empezar", "text": "Empezar"},
             {"type": "cards", "items": [
                 ("Autenticación", "Consigue un token de API y autentica tus peticiones.", "autenticacion"),
@@ -155,9 +163,10 @@ PAGINAS = [
             ]},
             {"type": "h2", "id": "opciones", "text": "Opciones de integración"},
             {"type": "cards", "items": [
-                ("Referencia de la API", "Todos los endpoints REST, agrupados por recurso.", "referencia-api"),
+                ("Referencia de la API", "Todos los endpoints REST, agrupados por recurso — o el explorador interactivo generado desde el OpenAPI real.", "referencia-api"),
                 ("Modelos de datos", "La forma exacta de cada objeto: campos, tipos y notas.", "modelos-de-datos"),
                 ("Ejemplos", "Recetas completas: curl, Python y JavaScript.", "ejemplos"),
+                ("Webhooks", "Recibe notificaciones en tiempo real de eventos en tu cuenta, firmadas con HMAC.", "webhooks"),
                 ("Asistente de IA (MCP)", "Conecta Claude Code, Claude Desktop, Codex CLI o ChatGPT directamente contra tu instancia.", "asistente-ia"),
                 ("Catálogo completo de tools (MCP)", "Las tools una por una: nombre, parámetros y descripción.", "catalogo-tools-mcp"),
                 ("Aislamiento multi-cliente", "Cómo se garantiza que los datos de un tenant nunca los vea otro.", "aislamiento-multicliente"),
@@ -295,6 +304,13 @@ PAGINAS = [
                 "endpoints — generado por introspección del propio código en cada petición (no un archivo aparte "
                 "que se pueda desincronizar), sin necesitar token: es documentación pública. Las tablas de esta "
                 "página son la referencia legible; ese JSON es la máquina-legible."},
+            {"type": "cards", "items": [
+                ("Abrir explorador interactivo", "Endpoints filtrables por texto, con parámetros, cuerpo esperado y un curl de ejemplo ya generado.", "explorador-api"),
+            ]},
+            {"type": "h2", "id": "meta", "text": "Meta"},
+            {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["GET", "/api/v1/openapi.json", "Documento OpenAPI 3.0 completo, generado por introspección en cada petición. Sin token."],
+            ]},
             {"type": "h2", "id": "errores", "text": "Manejo de errores"},
             {"type": "p", "html":
                 "El sobre de error es siempre el mismo, en cualquier endpoint de esta API — incluidos los "
@@ -537,6 +553,14 @@ PAGINAS = [
         ],
     },
     {
+        "slug": "explorador-api",
+        "grupo": "INTEGRACIÓN",
+        "titulo": "Explorador de API interactivo",
+        "descripcion": "Todos los endpoints REST, filtrables, con parámetros y un curl de ejemplo — generado en el navegador a partir del OpenAPI real.",
+        "interactivo": True,
+        "bloques": [],
+    },
+    {
         "slug": "ejemplos",
         "grupo": "INTEGRACIÓN",
         "titulo": "Ejemplos",
@@ -608,11 +632,93 @@ PAGINAS = [
         ],
     },
     {
+        "slug": "webhooks",
+        "grupo": "INTEGRACIÓN",
+        "titulo": "Webhooks",
+        "descripcion": "Recibe notificaciones en tiempo real de eventos en tu cuenta, firmadas con HMAC.",
+        "bloques": [
+            {"type": "badges", "items": ["HMAC-SHA256", "3 reintentos", "4 eventos"]},
+            {"type": "p", "html":
+                "Los webhooks te avisan en el momento en que pasa algo relevante — una tarea que se finaliza, "
+                "una cita que se reserva — en vez de tener que consultar la API periódicamente para ver si algo "
+                "cambió."},
+            {"type": "h2", "id": "configuracion", "text": "Configuración"},
+            {"type": "p", "html":
+                "Da de alta un webhook desde el <b>Backoffice</b> (sección «Webhooks») indicando la URL de "
+                "destino y a qué eventos te suscribes, o por MCP con "
+                "<code>webhooks_crear(url, eventos_suscritos, tenant=None)</code>. El <code>secreto</code> "
+                "devuelto (para verificar la firma de cada entrega) <b>solo se enseña esa vez</b> — apúntalo, "
+                "no se puede volver a leer después."},
+            {"type": "code", "lang": "json", "code":
+                '{\n'
+                '  "id": 7,\n'
+                '  "tenant_id": null,\n'
+                '  "url": "https://tuservidor.com/webhooks/guilda",\n'
+                '  "eventos": ["tarea.finalizada", "nota.creada"],\n'
+                '  "secreto": "3f8a...solo-se-enseña-una-vez",\n'
+                '  "activo": 1\n'
+                "}"},
+            {"type": "h2", "id": "payload", "text": "Formato del payload"},
+            {"type": "code", "lang": "json", "code":
+                '{\n'
+                '  "evento": "tarea.finalizada",\n'
+                '  "datos": {\n'
+                '    "tarea_id": 42,\n'
+                '    "nombre": "Reunión de seguimiento",\n'
+                '    "duracion_segundos": 2460\n'
+                "  }\n"
+                "}"},
+            {"type": "h2", "id": "cabeceras", "text": "Cabeceras de cada entrega"},
+            {"type": "table", "headers": ["Cabecera", "Contenido"], "rows": [
+                ["<code>X-Guilda-Event</code>", "Nombre del evento, p. ej. <code>tarea.finalizada</code>."],
+                ["<code>X-Guilda-Signature</code>", "<code>sha256=&lt;hex&gt;</code> — HMAC-SHA256 del cuerpo, ver abajo."],
+            ]},
+            {"type": "h2", "id": "verificar-firma", "text": "Verificar la firma"},
+            {"type": "p", "html":
+                "La firma es un HMAC-SHA256 calculado sobre el <b>cuerpo crudo</b> tal cual se envía, usando el "
+                "<code>secreto</code> de ese webhook como clave — mismo esquema que GitHub/Stripe, no uno "
+                "propio. Recalcúlala y compárala con <code>X-Guilda-Signature</code> antes de procesar el "
+                "evento; hazlo siempre sobre el cuerpo recibido tal cual, nunca sobre un JSON reserializado (el "
+                "orden de las claves o los espacios pueden cambiar, y la firma no coincidiría aunque el "
+                "contenido sea «el mismo»)."},
+            {"type": "code", "lang": "python", "code":
+                "import hashlib\n"
+                "import hmac\n\n"
+                "def firma_valida(cuerpo_crudo: bytes, cabecera_recibida: str, secreto: str) -> bool:\n"
+                '    esperada = "sha256=" + hmac.new(secreto.encode(), cuerpo_crudo, hashlib.sha256).hexdigest()\n'
+                "    return hmac.compare_digest(cabecera_recibida, esperada)"},
+            {"type": "h2", "id": "reintentos", "text": "Reintentos"},
+            {"type": "p", "html":
+                "Si tu endpoint no responde con un código <b>2xx</b>, la entrega se reintenta hasta "
+                "<b>3 veces</b> con espera (inmediato, +30s, +5min) antes de darla por fallida. Cada intento "
+                "queda registrado — el log de entregas (con el código HTTP o el error de cada uno) es visible "
+                "desde el Backoffice, para depurar un webhook que no está respondiendo."},
+            {"type": "h2", "id": "eventos", "text": "Catálogo de eventos"},
+            {"type": "table", "headers": ["Evento", "Se dispara cuando..."], "rows": [
+                ["<code>tarea.finalizada</code>", "Se finaliza una tarea con duración (ver <a href=\"/docs/modelos-de-datos\">Modelos de datos</a>)."],
+                ["<code>nota.creada</code>", "Se crea una nota — no se dispara al editarla, solo al crearla."],
+                ["<code>cita.reservada</code>", "Se crea una reserva de Cal.diy vía <code>citas_crear_reserva</code>."],
+                ["<code>correo.mensaje_nuevo</code>", "Una sincronización de correo trae mensajes nuevos (uno por sincronización con novedades, no uno por mensaje)."],
+            ]},
+            {"type": "callout", "kind": "info", "html":
+                "Solo estos cuatro eventos de negocio concretos emiten un webhook — no hay un evento por cada "
+                "escritura de <code>db.py</code>, sería ruido en el uso diario normal del registro de "
+                "actividad."},
+            {"type": "h2", "id": "gestion", "text": "Gestión por MCP"},
+            {"type": "table", "headers": ["Tool", "Descripción"], "rows": [
+                ["<code>webhooks_listar(tenant=None)</code>", "Lista los webhooks configurados (sin el secreto)."],
+                ["<code>webhooks_crear(url, eventos_suscritos, tenant=None)</code>", "Da de alta un webhook nuevo."],
+                ["<code>webhooks_borrar(webhook_id)</code>", "Borra un webhook (y su historial de entregas)."],
+            ]},
+        ],
+    },
+    {
         "slug": "asistente-ia",
         "grupo": "INTEGRACIÓN",
         "titulo": "Asistente de IA (MCP)",
         "descripcion": "Conecta Claude Code, Claude Desktop, Codex CLI o ChatGPT directamente contra tu instancia.",
         "bloques": [
+            {"type": "badges", "items": ["stdio (local)", "streamable-http (remoto)", "OAuth 2.1 + DCR"]},
             {"type": "p", "html":
                 "Guilda Work expone un servidor <b>MCP</b> (Model Context Protocol) con "
                 f"<b>{TOTAL_TOOLS} tools</b> — el mismo catálogo, definido una sola vez en "
@@ -733,6 +839,28 @@ PAGINAS = [
             {"type": "cards", "items": [
                 ("Catálogo completo de tools (MCP)", f"Las {TOTAL_TOOLS} tools una por una: nombre, parámetros con tipos y descripción.", "catalogo-tools-mcp"),
             ]},
+            {"type": "h2", "id": "busqueda-semantica", "text": "Búsqueda semántica (RAG)"},
+            {"type": "p", "html":
+                "<code>buscar_semantico(consulta, tenant=None)</code> no busca coincidencias de texto exacto — "
+                "convierte la consulta en un vector con un modelo de embeddings local (Ollama) y devuelve las "
+                "notas, tareas y mensajes de correo más parecidos por significado, aunque no compartan ni una "
+                "palabra literal con la pregunta. Útil para preguntas del tipo “¿qué dije sobre el contrato de "
+                "alquiler?” cuando no recuerdas si escribiste “alquiler”, “arrendamiento” o “renta”."},
+            {"type": "code", "lang": "text", "code":
+                'buscar_semantico(consulta="problemas de facturación con un cliente")\n'
+                "→ encuentra notas que mencionan \"impago\", \"retraso en el cobro\" o \"factura pendiente\",\n"
+                "  aunque ninguna contenga literalmente la palabra \"facturación\"."},
+            {"type": "callout", "kind": "info", "html":
+                "El índice vectorial vive en Meilisearch (campo <code>_vectors</code>, <code>userProvided</code>), "
+                "reindexado por <code>scripts/reindexar_embeddings.py</code> — el aislamiento por tenant es el "
+                "mismo que el resto de la búsqueda, nunca cruza datos entre clientes."},
+            {"type": "h2", "id": "webhooks-mcp", "text": "Webhooks"},
+            {"type": "p", "html":
+                "Recibe una notificación HTTP en tiempo real cuando ocurre algo en tu cuenta (tarea finalizada, "
+                "nota creada, cita reservada, correo nuevo), en vez de tener que preguntar por sondeo. Se gestionan "
+                "con <code>webhooks_listar</code>/<code>webhooks_crear</code>/<code>webhooks_borrar</code> — ver "
+                "<a href=\"/docs/webhooks\">Webhooks</a> para el formato del payload, la firma HMAC y el catálogo "
+                "completo de eventos."},
             {"type": "callout", "kind": "danger", "html":
                 "<b>Las tareas <i>con duración</i> (iniciar/pausar/reanudar/finalizar, la función central del "
                 "registro de actividad) NO tienen tools de MCP</b> — <code>listar_tareas</code>/<code>crear_tarea</code>/"
@@ -1053,6 +1181,21 @@ def navegacion() -> list[tuple[str, list[dict]]]:
             grupos.append((grupo, indice[grupo]))
         indice[grupo].append(pagina)
     return grupos
+
+
+def pagina_adyacente(slug: str) -> tuple[dict | None, dict | None]:
+    """(anterior, siguiente) de `slug` en el mismo orden plano que ya
+    pinta la barra lateral (`navegacion()`, grupos en el orden de
+    `PAGINAS`) — la portada (`grupo is None`) no entra en esta
+    secuencia, ni aparece nunca como anterior/siguiente de nadie."""
+    orden = [p for _, paginas in navegacion() for p in paginas]
+    indices = [i for i, p in enumerate(orden) if p["slug"] == slug]
+    if not indices:
+        return None, None
+    i = indices[0]
+    anterior = orden[i - 1] if i > 0 else None
+    siguiente = orden[i + 1] if i < len(orden) - 1 else None
+    return anterior, siguiente
 
 
 _QUITA_ETIQUETAS = re.compile(r"<[^>]+>")

@@ -142,3 +142,54 @@ def test_referencia_api_documenta_que_notas_y_tareas_no_tienen_get_de_listado(cl
     resp = cliente.get("/docs/referencia-api")
     html = resp.get_data(as_text=True)
     assert "no tienen un endpoint" in html
+
+
+# --- Webhooks (/docs/webhooks) ----------------------------------------------
+
+def test_webhooks_documenta_los_cuatro_eventos_reales(cliente):
+    resp = cliente.get("/docs/webhooks")
+    html = resp.get_data(as_text=True)
+    for evento in ("tarea.finalizada", "nota.creada", "cita.reservada", "correo.mensaje_nuevo"):
+        assert evento in html
+
+
+def test_webhooks_documenta_la_cabecera_de_firma(cliente):
+    resp = cliente.get("/docs/webhooks")
+    html = resp.get_data(as_text=True)
+    assert "X-Guilda-Signature" in html
+
+
+def test_referencia_api_enlaza_al_explorador_y_a_webhooks(cliente):
+    resp = cliente.get("/docs/referencia-api")
+    html = resp.get_data(as_text=True)
+    assert "/docs/explorador-api" in html
+
+
+def test_asistente_ia_documenta_rag_y_enlaza_webhooks(cliente):
+    resp = cliente.get("/docs/asistente-ia")
+    html = resp.get_data(as_text=True)
+    assert "buscar_semantico" in html
+    assert "/docs/webhooks" in html
+
+
+# --- Explorador de API interactivo (/docs/explorador-api) -------------------
+
+def test_explorador_api_renderiza_y_carga_su_script(cliente):
+    resp = cliente.get("/docs/explorador-api")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "/static/api_explorer.js" in html
+
+
+def test_explorador_api_esta_en_el_indice_como_pagina_interactiva():
+    datos = dd.obtener_pagina("explorador-api")
+    assert datos is not None
+    assert datos.get("interactivo") is True
+
+
+# --- Navegación Anterior/Siguiente -------------------------------------------
+
+def test_pagina_intermedia_incluye_nav_anterior_y_siguiente(cliente):
+    resp = cliente.get("/docs/webhooks")
+    html = resp.get_data(as_text=True)
+    assert "docs-footer-nav-adyacente" in html

@@ -205,6 +205,44 @@ a { color: inherit; text-decoration: none; }
   margin: 0 0 30px;
 }
 
+/* --- Badges (fila de pastillas, cabecera de página) -------------------- */
+
+.docs-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 26px;
+}
+
+.docs-badge {
+  font-family: var(--docs-font-mono);
+  font-size: 0.78em;
+  color: var(--docs-text-muted);
+  background: var(--docs-surface);
+  border: 1px solid var(--docs-border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+
+/* --- Badges de método HTTP (inline, usables en tablas/párrafos) -------- */
+
+.docs-method {
+  display: inline-block;
+  font-family: var(--docs-font-mono);
+  font-size: 0.76em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  padding: 2px 7px;
+  color: #0a0a0a;
+}
+
+.docs-method-get { background: var(--docs-info); }
+.docs-method-post, .docs-method-put { background: var(--docs-accent); }
+.docs-method-patch { background: var(--docs-warn); }
+.docs-method-delete { background: var(--docs-danger); color: #fff; }
+
 .docs-content h2 {
   font-size: 1.28em;
   margin: 40px 0 14px;
@@ -396,6 +434,10 @@ a { color: inherit; text-decoration: none; }
 /* --- Pie de página de contenido --------------------------------------- */
 
 .docs-footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-top: 50px;
   padding-top: 20px;
   border-top: 1px solid var(--docs-border);
@@ -403,6 +445,28 @@ a { color: inherit; text-decoration: none; }
 
 .docs-footer-nav a { font-size: 0.88em; color: var(--docs-text-muted); }
 .docs-footer-nav a:hover { color: var(--docs-accent); }
+
+.docs-footer-nav-adyacente {
+  display: block;
+  border: 1px solid var(--docs-border);
+  border-radius: var(--docs-radius);
+  padding: 10px 16px;
+  background: var(--docs-surface);
+  transition: border-color 0.15s;
+}
+
+.docs-footer-nav-adyacente:hover { border-color: var(--docs-accent); }
+.docs-footer-nav-adyacente-siguiente { text-align: right; margin-left: auto; }
+.docs-footer-nav-kicker {
+  display: block;
+  font-family: var(--docs-font-mono);
+  font-size: 0.7em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--docs-text-muted);
+  margin-bottom: 3px;
+}
+.docs-footer-nav-adyacente-titulo { color: var(--docs-text); font-weight: 600; }
 
 /* --- Tabla de contenidos (derecha) ------------------------------------ */
 
@@ -542,4 +606,113 @@ a { color: inherit; text-decoration: none; }
   }
   .docs-content { padding: 28px 20px 80px; }
   .docs-cards { grid-template-columns: 1fr; }
+}
+
+/* --- Explorador de API interactivo (/docs/explorador-api) ------------- */
+/* Layout propio de dos columnas (lista + detalle), no el docs-shell de
+   3 columnas de las páginas de guía — aquí el contenido es dinámico,
+   generado en el cliente por api_explorer.js a partir del OpenAPI real. */
+
+.api-explorer {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.api-explorer-lista {
+  border-right: 1px solid var(--docs-border);
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+.api-explorer-buscar {
+  position: sticky;
+  top: 0;
+  background: var(--docs-bg);
+  padding: 16px;
+  border-bottom: 1px solid var(--docs-border);
+}
+
+.api-explorer-buscar input {
+  width: 100%;
+  background: var(--docs-surface);
+  border: 1px solid var(--docs-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--docs-text);
+  font-family: var(--docs-font);
+  font-size: 0.88em;
+}
+
+.api-explorer-buscar input:focus { outline: none; border-color: var(--docs-accent); }
+
+.api-explorer-cargando { color: var(--docs-text-muted); font-size: 0.85em; padding: 16px; }
+
+.api-explorer-grupo h3 {
+  font-size: 0.7em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--docs-text-muted);
+  margin: 18px 16px 6px;
+  font-weight: 600;
+}
+
+.api-explorer-endpoint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  padding: 6px 16px;
+  font-family: var(--docs-font-mono);
+  font-size: 0.82em;
+  color: var(--docs-text-muted);
+  cursor: pointer;
+}
+
+.api-explorer-endpoint:hover { background: var(--docs-surface); color: var(--docs-text); }
+.api-explorer-endpoint.is-activo {
+  background: var(--docs-accent-dim);
+  border-left-color: var(--docs-accent);
+  color: var(--docs-text);
+}
+
+.api-explorer-endpoint .docs-method { flex-shrink: 0; min-width: 44px; text-align: center; }
+.api-explorer-endpoint-ruta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.api-explorer-detalle { padding: 40px 48px 80px; max-width: 900px; }
+.api-explorer-vacio { color: var(--docs-text-muted); }
+
+.api-explorer-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.api-explorer-cabecera .docs-method { font-size: 0.85em; padding: 4px 10px; }
+.api-explorer-ruta { font-family: var(--docs-font-mono); font-size: 1.1em; color: var(--docs-text); }
+.api-explorer-resumen { color: var(--docs-text-muted); margin: 0 0 24px; }
+.api-explorer-auth {
+  display: inline-block;
+  font-size: 0.75em;
+  font-family: var(--docs-font-mono);
+  color: var(--docs-text-muted);
+  border: 1px solid var(--docs-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .api-explorer { grid-template-columns: 1fr; }
+  .api-explorer-lista { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--docs-border); }
+  .api-explorer-detalle { padding: 28px 20px 60px; }
 }

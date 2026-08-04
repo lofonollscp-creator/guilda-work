@@ -22,10 +22,15 @@ def pagina(slug: str = ""):
     datos = documentacion_dev.obtener_pagina(slug.rstrip("/"))
     if datos is None:
         abort(404)
+    if datos.get("interactivo"):
+        return render_template("docs/explorador_api.html")
+    anterior, siguiente = documentacion_dev.pagina_adyacente(datos["slug"])
     return render_template(
         "docs/pagina.html",
         pagina=datos,
         navegacion=documentacion_dev.navegacion(),
         slug_actual=datos["slug"],
         indice_busqueda=documentacion_dev.indice_busqueda(),
+        pagina_anterior=anterior,
+        pagina_siguiente=siguiente,
     )
