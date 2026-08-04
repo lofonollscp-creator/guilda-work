@@ -15,8 +15,11 @@ tu propio PC). Contratar y pagar el VPS es algo que tienes que hacer tú
 | **DigitalOcean** | ~$6 | Muy bien documentado, buena opción si es tu primer VPS. |
 | **Oracle Cloud "Always Free"** | Gratis de verdad | 4 núcleos ARM + 24GB RAM gratis para siempre, pero el proceso de alta de cuenta es errático (a veces rechaza tarjetas o "recupera" recursos sin avisar). Vale la pena intentarlo si no te importa la posible fricción inicial. |
 
-Para el uso de esta app (un solo backend Flask + SQLite, tráfico bajo), la
-oferta más pequeña de cualquiera de ellos sobra: 1 vCPU / 1-2GB RAM.
+Para el uso de esta app **sola** (un solo backend Flask + SQLite, tráfico
+bajo), la oferta más pequeña de cualquiera de ellos sobra: 1 vCPU / 1-2GB
+RAM. Si vas a levantar también el stack de herramientas conectadas (paso
+8), esa cifra ya no aplica — ver "Dimensionar el servidor para el stack
+completo" más abajo, justo antes del paso 8.
 Elige **Ubuntu 22.04 o 24.04 LTS** como sistema operativo al crear el
 servidor.
 
@@ -151,6 +154,63 @@ curl https://app.tu-hostname.sslip.io/api/v1/categorias
 Debería responder `401` con `{"ok": false, "error": "Token inválido o
 ausente."}` — confirma que Caddy y `serve.py` están sirviendo tráfico real
 con HTTPS válido.
+
+## Dimensionar el servidor para el stack completo
+
+La tabla de "Elegir proveedor" de arriba vale para la app sola. En cuanto
+entras en el paso 8 y conectas herramientas de verdad, el dimensionado
+cambia — y **conviene decidirlo antes de crear el servidor**, no después:
+migrar de tamaño de máquina en Hetzner es sencillo (para/redimensiona/
+arranca), pero perder tiempo con OOM-kills y swap constante mientras
+pruebas la instancia no lo es.
+
+**Recomendación: `CPX22` (2 vCPU dedicadas / 4GB RAM / 40GB, ~€11,49/mes)
+como mínimo**, no la `CX22` de vCPU compartida de la tabla de arriba
+(mismo nombre de tamaño, línea de producto distinta) — para un conjunto
+de servicios así de variado (Ruby/OpenProject, Python/Synapse, Node/
+Outline y Documenso, PHP/FacturaScripts y Nextcloud, Rust/Meilisearch y
+Stalwart, más sus Postgres respectivos), los picos de CPU concurrentes
+son reales y una vCPU compartida (`CX`) se nota mucho más que en el uso
+ligero de la app sola.
+
+Con `CPX22` cabe con margen razonable, para un primer tenant, el núcleo
+imprescindible más las herramientas conectadas de mayor valor:
+
+| Pieza | Por qué entra en el mínimo |
+|---|---|
+| `serve.py` + Caddy + Ory Kratos/Hydra | La columna vertebral (login, SSO, MCP remoto) — no se puede añadir más adelante sin fricción, el resto de herramientas SSO se registran contra Hydra desde el minuto uno. |
+| Guía para desarrolladores (`/docs`) | Sin coste — páginas Flask servidas por el propio `serve.py`, sin contenedor ni servicio propio. |
+| Meilisearch | Buscador unificado + base del RAG semántico — ligero (Rust), ver 8.30. |
+| Stalwart | Correo propio — ligero (Rust), ver 8.27. |
+| FacturaScripts | Facturación — una instancia por tenant, ver 8.21; esta cifra asume **un** tenant. |
+| Documenso | Firma electrónica, ver 8.22. |
+| Nextcloud | Drive con SSO, ver 8.20. |
+| Paperless-ngx | Gestión documental + OCR, ver 8.23 — el paso de OCR en sí (Tesseract) es el único pico de CPU puntual de esta lista, no un consumo sostenido. |
+| Outline | Wiki/documentación interna con SSO, ver 8.6. |
+| OpenProject | Gestión de proyectos, ver 8.10. |
+| Element + Synapse | Chat, con especial cuidado en el SSO (ver los avisos de la 8.8: es la integración con más fricción de arranque de todo el stack). |
+
+**Aviso honesto, no medido en vivo como Meilisearch/Ollama (8.30/8.35)**:
+de esta lista, **OpenProject y Synapse son los dos puntos calientes de
+memoria** — ambos proyectos recomiendan en su propia documentación
+oficial acercarse a los 2-4GB solo para ellos bajo uso real (Rails y
+Postgres uno, Python/Twisted el otro), no en el sentido de "arrancan y
+ya" sino de "van finos". En `CPX22` arrancan y funcionan para dar de
+alta el primer tenant y probar el flujo completo, pero con poco margen —
+vigila `free -h` y `docker stats` la primera semana con uso real
+simultáneo de varias herramientas. Si el presupuesto lo permite, subir a
+`CPX32` (4 vCPU / 8GB, ~€22,49/mes) da margen de verdad en vez de "cabe
+justo" — normalmente compensa el diferencial de precio en menos tiempo
+perdido depurando lentitud que no es un bug, sino falta de RAM.
+
+Herramientas que **no** hace falta meter en este mínimo, quedan igual de
+bien para cuando haya un tenant real pidiéndolas (ver también la nota de
+autoalojamiento en `/docs/autoalojamiento`): Grafana+Loki+Promtail
+(8.32, sustituible por `journalctl`/logs de Docker a pelo al principio),
+Metabase, Baserow (8.24, se solapa con OpenProject para llevar
+tareas/hojas de cálculo — con OpenProject ya en el mínimo, Baserow
+aporta poco extra al principio), Portainer (8.33), Collabora (8.34),
+Jitsi Meet (8.29) y n8n.
 
 ## 8. Desplegar el resto del stack (Metabase/MinIO/n8n/Kratos/Hydra/Outline/Element+Synapse)
 
@@ -2050,6 +2110,24 @@ correo ya existente). Limitación conocida: al ser un único hilo, un
 webhook lento con reintentos retrasa la entrega de los siguientes en la
 cola — aceptable para el volumen de eventos de negocio de este
 proyecto, no un sistema de mensajería de alto tráfico.
+
+### 8.37 Explorador de API interactivo — `/docs/explorador-api`
+
+Sin servicio nuevo, sin variable de entorno, sin paso de despliegue
+propio — es una página más de la Guía para desarrolladores (`/docs`,
+pública, sin login) servida por el propio `serve.py`. Genera su
+contenido **en el navegador**, en cada carga, a partir de
+`GET /api/v1/openapi.json` (el documento OpenAPI 3.0 real, generado por
+introspección del código en cada petición — nunca un archivo aparte
+que se pueda desincronizar, ver `app/openapi.py`), en vez de vendorizar
+Redoc/Scalar/Swagger UI: lista de endpoints filtrable agrupada por
+recurso, con parámetros, cuerpo esperado y un `curl` de ejemplo ya
+generado (`app/static/api_explorer.js`).
+
+Como `/api/v1/openapi.json` no requiere token, esta página funciona
+igual detrás de Caddy que en local — no hace falta abrir ningún puerto
+ni tocar el `Caddyfile` para que quede accesible junto al resto de
+`/docs`.
 
 ## 9. Backups (recomendado)
 

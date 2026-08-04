@@ -1120,6 +1120,7 @@ PAGINAS = [
                 ["<code>docker-compose.yml</code>", "Todos los servicios conectados — una imagen oficial por herramienta, sin forks propios."],
                 ["Caddy", "Único punto de entrada real desde internet, HTTPS automático (Let's Encrypt), proxy inverso a cada servicio por subdominio."],
                 ["Ory Kratos / Hydra", "Identidad (login/registro) y proveedor OAuth2 para el SSO de las herramientas que lo soportan, y para el conector MCP remoto."],
+                ["Ollama", "Modelo de embeddings local, usado por la búsqueda semántica (<code>buscar_semantico</code>) — ver <a href=\"/docs/asistente-ia#busqueda-semantica\">Búsqueda semántica (RAG)</a>."],
                 ["<code>serve.py</code>", "El proceso de Guilda Work en sí, fuera de Docker, en el mismo host — gestionado por <code>systemd</code> para que arranque solo y se reinicie si muere."],
             ]},
             {"type": "callout", "kind": "warn", "html":
@@ -1152,6 +1153,14 @@ PAGINAS = [
                 "con su modelo de aislamiento documentado (y, cuando aplica, verificado en vivo contra un "
                 "contenedor real antes de darlo por bueno) — vive en <code>HOSTING.md</code>, en la raíz del "
                 "repositorio."},
+            {"type": "p", "html":
+                "El modo hospedado también es lo que activa la búsqueda semántica y las notificaciones salientes "
+                "— ninguna de las dos depende de un servicio nuevo que desplegar aparte:"},
+            {"type": "cards", "items": [
+                ("Búsqueda semántica (RAG)", "Encuentra por significado, no por texto exacto — necesita Ollama, ya listado arriba.", "asistente-ia"),
+                ("Webhooks", "Notifica a una URL externa en tiempo real cuando pasa algo, firmado con HMAC.", "webhooks"),
+                ("Explorador de API interactivo", "Endpoints filtrables generados en el navegador desde el OpenAPI real, sin configuración adicional.", "explorador-api"),
+            ]},
             {"type": "callout", "kind": "info", "html":
                 "Cada aviso de reputación (p. ej. montar correo saliente propio con Stalwart) está documentado "
                 "explícitamente donde aplica — no es un problema de la integración, es inherente a autoalojar "
