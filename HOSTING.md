@@ -1929,6 +1929,128 @@ través de Nextcloud** (confirmado por la propia salida de
 the browser to open Collabora)") — de ahí el subdominio propio
 `office.HOSTNAME` en el Caddyfile, aparte de `drive.HOSTNAME`.
 
+### 8.35 Búsqueda semántica (RAG) — embeddings locales sobre Meilisearch
+
+Amplía el buscador unificado (8.30) para responder por SIGNIFICADO, no
+solo por palabra exacta — un asistente de IA puede preguntar "¿qué dijo
+el cliente X sobre el IVA?" y encontrar la nota aunque no use esas
+palabras literales.
+
+**Verificado en vivo antes de escribir esto** (Ollama + Meilisearch
+reales, no solo documentación): `POST /api/embed` de Ollama con
+`nomic-embed-text` devuelve `{"embeddings": [[...]]}` (768
+dimensiones); un embedder `{"source": "userProvided", "dimensions": 768}`
+en `PATCH /indexes/{idx}/settings/embedders` de Meilisearch funciona
+tal cual; y — el punto que de verdad importaba — **el filtro
+`usuario_id` del tenant token se sigue aplicando en búsqueda híbrida
+exactamente igual que en búsqueda por palabra clave**: probado con una
+consulta semánticamente mucho más cercana al documento de OTRO
+usuario, que con el tenant token propio sigue devolviendo solo lo del
+usuario dueño del token.
+
+**Diseño — vectores "userProvided", no un proveedor de embeddings de
+Meilisearch**: `app/embeddings.py` calcula el vector con Ollama
+(mismo servicio local ya usado para informes, ver 8.x "IA local") y lo
+manda ya hecho en `_vectors.default` al indexar
+(`app/busqueda.py:_indexar`) — evita depender de que Meilisearch
+self-hosted soporte traer el embedding él mismo desde un proveedor
+externo (terreno menos probado), y reutiliza el patrón `urllib` que ya
+tiene `app/ai_local.py`.
+
+**Arranque**:
+
+```bash
+# Ollama corriendo en el host (o en un contenedor propio, no forma
+# parte de docker-compose.yml — mismo criterio que su uso ya existente
+# para informes de IA local):
+ollama pull nomic-embed-text
+```
+
+Sin variables nuevas obligatorias — `OLLAMA_EMBED_URL` (por defecto
+`http://localhost:11434/api/embed`) y `OLLAMA_EMBED_MODEL` (por
+defecto `nomic-embed-text`) solo hace falta tocarlas si usas otro
+modelo o puerto.
+
+**Degradación con gracia**: si Ollama no está disponible o el modelo
+no está descargado, `app/embeddings.py:generar_embedding()` devuelve
+`None` (nunca lanza) — el documento se indexa igual, solo que sin
+vector: sigue siendo buscable por palabra clave exactamente como
+antes de esta fase, la búsqueda semántica es una mejora encima, nunca
+un requisito.
+
+**Contenido indexado antes de esta fase no tiene vector todavía** —
+para añadírselo:
+
+```bash
+python scripts/reindexar_embeddings.py
+```
+
+Idempotente (mismo `id` de siempre, Meilisearch sobrescribe), seguro
+de repetir.
+
+**Búsqueda híbrida — única excepción al patrón "todo directo desde el
+navegador" de 8.30**: a diferencia de la búsqueda por palabra clave, el
+navegador NO llama a Meilisearch directamente aquí — la pregunta
+necesita embeberse con Ollama, solo alcanzable desde el servidor, así
+que `GET /busqueda/hibrida?q=...` (cookie de sesión) hace la llamada
+completa server-side y devuelve los resultados ya filtrados.
+
+**MCP**: tool `buscar_semantico(texto, limite)` — cierra el círculo de
+RAG: un asistente de IA puede recuperar el contexto relevante por
+significado antes de responder, en vez de tener que adivinar las
+palabras exactas que usó el usuario.
+
+### 8.36 Webhooks salientes — Guilda Work avisa a una URL externa
+
+Cuatro eventos de negocio (no cada escritura, sería ruido en el uso
+diario): `tarea.finalizada`, `nota.creada`, `cita.reservada`,
+`correo.mensaje_nuevo` — pensados para automatización real (facturación
+por horas, disparar un flujo de n8n ya desplegado, avisar a un CRM
+externo), ver `app/eventos.py`.
+
+**Alta**: desde el Backoffice (sección "Webhooks") o por MCP
+(`webhooks_crear(url, eventos_suscritos, tenant=None)`) — `tenant=None`
+es un webhook de ámbito local/sin tenant (modo escritorio). El
+`secreto` devuelto solo se enseña esa vez, igual que el resto de
+credenciales generadas por este proyecto — apúntalo, hace falta para
+verificar la firma de cada entrega.
+
+**Formato del payload**:
+
+```json
+{"evento": "tarea.finalizada", "datos": {"tarea_id": 42, "nombre": "Reunión cliente", "duracion_segundos": 2460}}
+```
+
+**Verificar la firma — cabecera `X-Guilda-Signature`** (mismo esquema
+que GitHub/Stripe, no uno propio): `sha256=<hmac-sha256 del cuerpo
+crudo recibido, con el secreto del webhook>`. Ejemplo en Python:
+
+```python
+import hashlib
+import hmac
+
+def firma_valida(cuerpo_crudo: bytes, cabecera_recibida: str, secreto: str) -> bool:
+    esperada = "sha256=" + hmac.new(secreto.encode(), cuerpo_crudo, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(cabecera_recibida, esperada)
+```
+
+Recalcula siempre sobre el cuerpo crudo tal cual llega, no sobre un
+JSON reserializado — un reserializado puede no ser byte a byte idéntico
+(orden de claves, espacios) y la firma no coincidiría aunque el
+contenido sea "el mismo".
+
+**Reintentos**: 3 intentos con backoff (inmediato, +30s, +5min) antes
+de darlo por fallido — cada intento queda registrado (visible desde el
+Backoffice, con el código HTTP o el error de cada uno) para depurar un
+webhook que no está respondiendo.
+
+**Mecanismo — cola en memoria + un hilo, sin Redis/Celery**: no hace
+falta a esta escala (mismo patrón que la sincronización periódica de
+correo ya existente). Limitación conocida: al ser un único hilo, un
+webhook lento con reintentos retrasa la entrega de los siguientes en la
+cola — aceptable para el volumen de eventos de negocio de este
+proyecto, no un sistema de mensajería de alto tráfico.
+
 ## 9. Backups (recomendado)
 
 Hay **tres mecanismos de backup distintos en este proyecto, cada uno con

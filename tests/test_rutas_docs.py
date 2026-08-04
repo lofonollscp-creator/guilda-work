@@ -103,7 +103,7 @@ def test_pagina_incluye_el_indice_de_busqueda_embebido(cliente):
 
 # --- Catálogo completo de tools (MCP) — no se puede desincronizar de mcp_tools.py
 
-def test_catalogo_tools_mcp_incluye_las_84_tools_reales(cliente):
+def test_catalogo_tools_mcp_incluye_todas_las_tools_reales(cliente):
     import mcp_tools as mt
 
     resp = cliente.get("/docs/catalogo-tools-mcp")

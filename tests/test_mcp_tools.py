@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_86_herramientas():
-    assert len(mt.TOOLS) == 86
+def test_tools_tiene_90_herramientas():
+    assert len(mt.TOOLS) == 90
 
 
 def test_registrar_tools_las_registra_todas():
@@ -696,3 +696,50 @@ def test_citas_cancelar_reserva_delega_en_calcom(usuario_id, monkeypatch):
 
     assert resultado == {"uid": "abc123", "status": "cancelled"}
     assert capturado["args"] == ("token-real", "abc123", "no puede asistir")
+
+
+# --- Webhooks ----------------------------------------------------------------
+
+def test_webhooks_crear_de_ambito_local(usuario_id):
+    resultado = mt.webhooks_crear("https://ejemplo.com/hook", ["tarea.finalizada"])
+    assert resultado["url"] == "https://ejemplo.com/hook"
+    assert resultado["tenant_id"] is None
+    assert "secreto" in resultado  # se enseña una única vez, al crearlo
+
+
+def test_webhooks_crear_de_un_tenant(usuario_id):
+    tenant_id = mt.db.crear_tenant("TenantWebhookMcp")
+    resultado = mt.webhooks_crear("https://ejemplo.com/hook", ["cita.reservada"], tenant="TenantWebhookMcp")
+    assert resultado["tenant_id"] == tenant_id
+
+
+def test_webhooks_crear_tenant_inexistente_lanza_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.webhooks_crear("https://ejemplo.com/hook", ["nota.creada"], tenant="NoExiste")
+
+
+def test_webhooks_crear_evento_no_reconocido_lanza_error(usuario_id):
+    with pytest.raises(ValueError):
+        mt.webhooks_crear("https://ejemplo.com/hook", ["evento.inventado"])
+
+
+def test_webhooks_listar_no_incluye_el_secreto(usuario_id):
+    mt.webhooks_crear("https://ejemplo.com/hook", ["nota.creada"])
+    resultado = mt.webhooks_listar()
+    assert len(resultado) == 1
+    assert "secreto" not in resultado[0]
+
+
+def test_webhooks_listar_respeta_el_ambito_del_tenant(usuario_id):
+    tenant_id = mt.db.crear_tenant("TenantWebhookMcp2")
+    mt.webhooks_crear("https://ejemplo.com/local", ["nota.creada"])
+    mt.webhooks_crear("https://ejemplo.com/tenant", ["nota.creada"], tenant="TenantWebhookMcp2")
+
+    assert [w["url"] for w in mt.webhooks_listar()] == ["https://ejemplo.com/local"]
+    assert [w["url"] for w in mt.webhooks_listar(tenant="TenantWebhookMcp2")] == ["https://ejemplo.com/tenant"]
+
+
+def test_webhooks_borrar(usuario_id):
+    creado = mt.webhooks_crear("https://ejemplo.com/hook", ["nota.creada"])
+    mt.webhooks_borrar(creado["id"])
+    assert mt.db.obtener_webhook(creado["id"]) is None

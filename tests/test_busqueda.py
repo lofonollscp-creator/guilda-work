@@ -22,6 +22,13 @@ def _reset_cache(monkeypatch):
     monkeypatch.setattr(b, "_indice_listo", False)
 
 
+def _sin_embedding(monkeypatch):
+    """La mayoría de tests de indexar_* no les interesa el embedding en
+    sí (eso lo cubre test_embeddings.py) — se mockea a None para que no
+    intenten contactar con un Ollama real (lento/inexistente en tests)."""
+    monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: None)
+
+
 def _decodificar_payload(token: str) -> dict:
     _, payload_b64, _ = token.split(".")
     relleno = "=" * (-len(payload_b64) % 4)
@@ -113,6 +120,7 @@ def test_indexar_nota_sin_master_key_no_hace_nada(monkeypatch):
 def test_indexar_nota_construye_el_documento_correcto(monkeypatch):
     monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
     monkeypatch.setattr(b, "_asegurar_indice", lambda: None)
+    _sin_embedding(monkeypatch)
     capturado = {}
 
     def fake_peticion(endpoint, *, clave, metodo="GET", cuerpo=None):
@@ -130,6 +138,7 @@ def test_indexar_nota_construye_el_documento_correcto(monkeypatch):
 def test_indexar_tarea_construye_el_documento_correcto(monkeypatch):
     monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
     monkeypatch.setattr(b, "_asegurar_indice", lambda: None)
+    _sin_embedding(monkeypatch)
     capturado = {}
     monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo))
 
@@ -141,12 +150,46 @@ def test_indexar_tarea_construye_el_documento_correcto(monkeypatch):
 def test_indexar_mensaje_usa_el_usuario_id_pasado_explicito(monkeypatch):
     monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
     monkeypatch.setattr(b, "_asegurar_indice", lambda: None)
+    _sin_embedding(monkeypatch)
     capturado = {}
     monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo))
 
     b.indexar_mensaje({"id": 9, "asunto": "Hola", "cuerpo_texto": "Cuerpo", "fecha": "2026-01-01T10:00:00"}, usuario_id=4)
 
     assert capturado["cuerpo"] == [{"id": "mensaje-9", "tipo": "mensaje", "usuario_id": 4, "texto": "Hola Cuerpo", "creada_en": "2026-01-01T10:00:00"}]
+
+
+def test_indexar_nota_adjunta_el_vector_cuando_ollama_esta_disponible(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b, "_asegurar_indice", lambda: None)
+    monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: [0.1, 0.2, 0.3])
+    capturado = {}
+    monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo))
+
+    b.indexar_nota({"id": 7, "usuario_id": 3, "texto": "Hola", "creada_en": "2026-01-01T00:00:00", "categoria_id": 2})
+
+    assert capturado["cuerpo"][0]["_vectors"] == {"default": [0.1, 0.2, 0.3]}
+
+
+def test_asegurar_indice_configura_el_embedder_userprovided(monkeypatch):
+    _reset_cache(monkeypatch)
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    llamadas = []
+
+    def fake_peticion(endpoint, *, clave, metodo="GET", cuerpo=None):
+        llamadas.append((endpoint, metodo, cuerpo))
+        if endpoint == "/indexes" and metodo == "POST":
+            return {}
+        return None
+
+    monkeypatch.setattr(b, "_peticion", fake_peticion)
+    b._asegurar_indice()
+
+    endpoint_embedder, metodo_embedder, cuerpo_embedder = next(
+        c for c in llamadas if c[0] == f"/indexes/{b.INDICE}/settings/embedders"
+    )
+    assert metodo_embedder == "PATCH"
+    assert cuerpo_embedder == {"default": {"source": "userProvided", "dimensions": b.DIMENSIONES_EMBEDDING}}
 
 
 def test_eliminar_del_indice_sin_master_key_no_hace_nada(monkeypatch):
@@ -302,3 +345,81 @@ def test_busqueda_token_devuelve_token_url_e_indice(cliente, monkeypatch):
     datos = resp.get_json()
     assert resp.status_code == 200
     assert datos == {"ok": True, "token": "token-de-prueba", "url": "http://127.0.0.1:8029", "indice": "registro_actividad"}
+
+
+# --- buscar_hibrido (búsqueda semántica / RAG) -------------------------------
+#
+# El mecanismo en sí (embedder "userProvided", campo _vectors, y que el
+# filtro usuario_id del tenant token se sigue aplicando en modo híbrido
+# exactamente igual que en palabra clave — probado con una consulta
+# semánticamente más cercana al documento de OTRO usuario, que sigue sin
+# devolverlo) se verificó en vivo contra un Ollama y un Meilisearch
+# reales antes de escribir app/busqueda.py:buscar_hibrido — ver su
+# docstring. Aquí solo se comprueba que la función orquesta bien.
+
+def test_buscar_hibrido_sin_master_key_devuelve_lista_vacia(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", None)
+    assert b.buscar_hibrido(1, "algo") == []
+
+
+def test_buscar_hibrido_sin_ollama_devuelve_lista_vacia(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: None)
+    assert b.buscar_hibrido(1, "algo") == []
+
+
+def test_buscar_hibrido_usa_el_tenant_token_no_la_clave_maestra(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: [0.1, 0.2])
+    monkeypatch.setattr(b, "generar_token_busqueda", lambda uid, minutos_validez=60: f"token-usuario-{uid}")
+    capturado = {}
+
+    def fake_peticion(endpoint, *, clave, metodo="GET", cuerpo=None):
+        capturado["clave"] = clave
+        capturado["cuerpo"] = cuerpo
+        return {"hits": [{"id": "nota-1"}]}
+
+    monkeypatch.setattr(b, "_peticion", fake_peticion)
+    resultado = b.buscar_hibrido(5, "una pregunta")
+
+    assert capturado["clave"] == "token-usuario-5"
+    assert capturado["cuerpo"]["vector"] == [0.1, 0.2]
+    assert capturado["cuerpo"]["hybrid"] == {"embedder": "default", "semanticRatio": 0.5}
+    assert resultado == [{"id": "nota-1"}]
+
+
+def test_buscar_hibrido_respeta_el_limite(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: [0.1])
+    monkeypatch.setattr(b, "generar_token_busqueda", lambda uid, minutos_validez=60: "tok")
+    capturado = {}
+    monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo) or {"hits": []})
+
+    b.buscar_hibrido(1, "pregunta", limite=3)
+    assert capturado["cuerpo"]["limit"] == 3
+
+
+# --- app/main.py:busqueda_hibrida() (/busqueda/hibrida) ----------------------
+
+def test_busqueda_hibrida_sin_sesion_redirige_a_login(cliente):
+    resp = cliente.get("/busqueda/hibrida?q=algo")
+    assert resp.status_code == 302
+    assert "/login" in resp.headers["Location"]
+
+
+def test_busqueda_hibrida_sin_query_devuelve_lista_vacia(cliente):
+    iniciar_sesion_de_prueba(cliente, "busqueda3@ejemplo.com", "contrasena123")
+    resp = cliente.get("/busqueda/hibrida")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ok": True, "resultados": []}
+
+
+def test_busqueda_hibrida_devuelve_los_resultados_de_buscar_hibrido(cliente, monkeypatch):
+    from app import main
+
+    iniciar_sesion_de_prueba(cliente, "busqueda4@ejemplo.com", "contrasena123")
+    monkeypatch.setattr(main.busqueda, "buscar_hibrido", lambda uid, texto, limite=5: [{"id": "nota-1", "texto": "x"}])
+
+    resp = cliente.get("/busqueda/hibrida?q=algo")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ok": True, "resultados": [{"id": "nota-1", "texto": "x"}]}

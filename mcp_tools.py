@@ -62,12 +62,14 @@ from mcp.server.fastmcp import FastMCP
 
 from app import (
     baserow,
+    busqueda,
     calcom,
     chatwoot,
     correo,
     db,
     documenso,
     espocrm,
+    eventos,
     export,
     facturascripts,
     importador,
@@ -128,6 +130,18 @@ def _resolver_categoria_id(nombre_o_id: str | int | None) -> int | None:
 
 
 # --- Notas -------------------------------------------------------------------
+
+def buscar_semantico(texto: str, limite: int = 5) -> list[dict]:
+    """Busca por SIGNIFICADO (no solo palabra exacta) en notas/tareas/
+    correo del usuario actual — usa Meilisearch+embeddings locales vía
+    Ollama (ver app/busqueda.py:buscar_hibrido), aislamiento por
+    usuario_id verificado en vivo. Devuelve [] si Meilisearch u Ollama
+    no están configurados (mejora opcional sobre listar_notas/
+    historial, que siguen siendo la vía de siempre para búsqueda
+    exacta). Útil para preguntas del tipo '¿qué dijo el cliente X sobre
+    el IVA?' donde las palabras exactas pueden no coincidir."""
+    return busqueda.buscar_hibrido(_uid(), texto, limite=limite)
+
 
 def listar_notas(desde: str | None = None, hasta: str | None = None, texto: str | None = None) -> list[dict]:
     """Lista notas del log de actividad (fechas 'YYYY-MM-DD', `texto` filtra por coincidencia parcial)."""
@@ -798,12 +812,63 @@ def citas_crear_reserva(tenant: str, tipo_evento_id: int, inicio: str, nombre_as
             resultado["video_url"] = jitsi.url_sala(sala, token)
         except jitsi.ErrorJitsi:
             pass
+        try:
+            fila_tenant = db.obtener_tenant_por_nombre(tenant)
+            eventos.emitir(
+                "cita.reservada", fila_tenant["id"] if fila_tenant else None,
+                {"reserva_uid": resultado["uid"], "inicio": inicio, "nombre_asistente": nombre_asistente, "email_asistente": email_asistente},
+            )
+        except Exception:
+            pass
     return resultado
 
 
 def citas_cancelar_reserva(tenant: str, reserva_uid: str, motivo: str = "") -> dict:
     """Cancela una reserva de un tenant por su identificador (uid)."""
     return calcom.cancelar_reserva(_api_key_calcom(tenant), reserva_uid, motivo)
+
+
+# --- Webhooks salientes (ver app/eventos.py) --------------------------------
+#
+# `tenant` es opcional (None = webhooks de ámbito local/sin tenant,
+# mismo criterio nullable que el resto de app/db.py) — a diferencia de
+# facturas_*/citas_*/newsletter_*, aquí SÍ tiene sentido no pasar
+# tenant: el modo escritorio (un único usuario local) también puede
+# querer un webhook propio.
+
+def _tenant_id_por_nombre(tenant: str | None) -> int | None:
+    if tenant is None:
+        return None
+    fila = db.obtener_tenant_por_nombre(tenant)
+    if fila is None:
+        raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
+    return fila["id"]
+
+
+def webhooks_listar(tenant: str | None = None) -> list[dict]:
+    """Lista los webhooks configurados (de un tenant, o de ámbito local
+    si no se indica `tenant`) — sin el `secreto` (ver
+    webhooks_crear para eso, solo se enseña una vez al crearlo)."""
+    filas = db.listar_webhooks(_tenant_id_por_nombre(tenant))
+    return [{k: v for k, v in dict(f).items() if k != "secreto"} for f in filas]
+
+
+def webhooks_crear(url: str, eventos_suscritos: list[str], tenant: str | None = None) -> dict:
+    """Da de alta un webhook — `eventos_suscritos` de entre
+    app/eventos.py:EVENTOS (tarea.finalizada, nota.creada,
+    cita.reservada, correo.mensaje_nuevo). El `secreto` devuelto (para
+    verificar la firma HMAC de cada entrega, ver HOSTING.md) solo se
+    enseña esta vez, igual que el resto de credenciales generadas de
+    este proyecto."""
+    invalidos = [e for e in eventos_suscritos if e not in eventos.EVENTOS]
+    if invalidos:
+        raise ValueError(f"Eventos no reconocidos: {invalidos}. Válidos: {eventos.EVENTOS}")
+    return dict(db.crear_webhook(_uid(), _tenant_id_por_nombre(tenant), url, eventos_suscritos))
+
+
+def webhooks_borrar(webhook_id: int) -> None:
+    """Borra un webhook (y su historial de entregas) por id."""
+    db.borrar_webhook(webhook_id)
 
 
 # --- Newsletter (Listmonk) — sexto cliente con parámetro `tenant` ----------
@@ -936,6 +1001,8 @@ def videollamadas_crear_sala(tenant: str, nombre_mostrado: str, moderador: bool 
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
 TOOLS = [
+    # Búsqueda semántica (RAG)
+    buscar_semantico,
     # Notas
     listar_notas, crear_nota, editar_nota,
     # Tareas
@@ -979,6 +1046,8 @@ TOOLS = [
     hojas_listar_tablas, hojas_listar_filas, hojas_crear_fila,
     # Citas
     citas_listar_tipos_evento, citas_listar_reservas, citas_crear_reserva, citas_cancelar_reserva,
+    # Webhooks
+    webhooks_listar, webhooks_crear, webhooks_borrar,
     # Newsletter
     newsletter_listar_suscriptores, newsletter_crear_suscriptor,
     newsletter_listar_campanas, newsletter_crear_campana, newsletter_enviar_campana,

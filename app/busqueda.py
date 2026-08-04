@@ -33,7 +33,29 @@ mano en el backoffice.
 Mismo criterio que el resto de `app/*.py`: solo `urllib` de la librería
 estándar (el JWT se firma a mano, mismo código que `app/jitsi.py` —
 HS256 verificado de forma cruzada con un contenedor real de
-Meilisearch durante el desarrollo)."""
+Meilisearch durante el desarrollo).
+
+## Búsqueda semántica (RAG) — vectores "userProvided"
+
+Verificado en vivo (Ollama + Meilisearch reales) antes de escribir esto:
+un embedder `{"source": "userProvided", "dimensions": 768}` en
+`PATCH /indexes/{idx}/settings/embedders` funciona tal cual (confirmado
+que, a diferencia de filterable-attributes en su día, aquí PATCH sí
+aplica el cambio, no hace falta PUT); cada documento lleva su vector ya
+calculado (`app/embeddings.py`, Ollama+`nomic-embed-text`, 768
+dimensiones) en `_vectors.default`; y — el punto que de verdad
+importaba verificar — el filtro `usuario_id` del tenant token se sigue
+aplicando en búsqueda HÍBRIDA exactamente igual que en búsqueda por
+palabra clave: probado con una consulta semánticamente mucho más
+cercana al documento de OTRO usuario, que con el tenant token propio
+sigue devolviendo solo lo del usuario dueño del token (nunca lo ajeno,
+aunque sea el mejor resultado semántico posible) — la sustitución de
+`filter` que ya evita un tenant token para búsqueda de texto aplica
+igual aquí, es el mismo mecanismo por debajo.
+
+Si `app/embeddings.py:generar_embedding()` devuelve `None` (Ollama no
+disponible), el documento se indexa igual, solo que sin vector — sigue
+siendo buscable por palabra clave, se degrada, no falla."""
 import base64
 import hashlib
 import hmac
@@ -43,9 +65,12 @@ import time
 import urllib.error
 import urllib.request
 
+from . import embeddings
+
 MEILISEARCH_URL = os.environ.get("MEILISEARCH_URL", "http://127.0.0.1:8029")
 MEILISEARCH_MASTER_KEY = os.environ.get("MEILISEARCH_MASTER_KEY")
 INDICE = "registro_actividad"
+DIMENSIONES_EMBEDDING = 768
 TIMEOUT_SEGUNDOS = 10
 
 _DESCRIPCION_CLAVE_BUSQUEDA = "Guilda Work - tenant tokens de búsqueda"
@@ -91,6 +116,10 @@ def _asegurar_indice() -> None:
         if "index_already_exists" not in str(e):
             raise
     _peticion(f"/indexes/{INDICE}/settings/filterable-attributes", clave=MEILISEARCH_MASTER_KEY, metodo="PUT", cuerpo=["usuario_id", "tipo"])
+    _peticion(
+        f"/indexes/{INDICE}/settings/embedders", clave=MEILISEARCH_MASTER_KEY, metodo="PATCH",
+        cuerpo={"default": {"source": "userProvided", "dimensions": DIMENSIONES_EMBEDDING}},
+    )
     _indice_listo = True
 
 
@@ -149,6 +178,9 @@ def _indexar(documento: dict) -> None:
     if not MEILISEARCH_MASTER_KEY:
         return
     _asegurar_indice()
+    vector = embeddings.generar_embedding(documento["texto"])
+    if vector is not None:
+        documento = {**documento, "_vectors": {"default": vector}}
     _peticion(f"/indexes/{INDICE}/documents", clave=MEILISEARCH_MASTER_KEY, metodo="POST", cuerpo=[documento])
 
 
@@ -193,3 +225,33 @@ def eliminar_del_indice(tipo: str, id_: int) -> None:
     if not MEILISEARCH_MASTER_KEY:
         return
     _peticion(f"/indexes/{INDICE}/documents/{tipo}-{id_}", clave=MEILISEARCH_MASTER_KEY, metodo="DELETE")
+
+
+def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5) -> list[dict]:
+    """Búsqueda híbrida (palabra clave + semántica) — a diferencia de
+    `generar_token_busqueda()`, esto se ejecuta del lado del servidor
+    (necesita calcular el embedding de `texto` con Ollama, solo
+    alcanzable desde aquí, ver app/embeddings.py) en vez de que el
+    navegador llame a Meilisearch directamente, excepción deliberada al
+    patrón de app/static/busqueda.js (ver HOSTING.md). Reutiliza
+    `generar_token_busqueda()` (no la clave maestra) para heredar el
+    mismo aislamiento por `usuario_id` ya verificado en vivo, en vez de
+    construir el filtro a mano aquí.
+
+    Devuelve [] (no lanza) si Meilisearch u Ollama no están disponibles
+    — es una mejora sobre la búsqueda por palabra clave existente,
+    nunca debe romper nada más."""
+    if not MEILISEARCH_MASTER_KEY:
+        return []
+    vector = embeddings.generar_embedding(texto)
+    if vector is None:
+        return []
+    token = generar_token_busqueda(usuario_id, minutos_validez=2)
+    cuerpo = {
+        "q": texto,
+        "hybrid": {"embedder": "default", "semanticRatio": 0.5},
+        "vector": vector,
+        "limit": limite,
+    }
+    resultado = _peticion(f"/indexes/{INDICE}/search", clave=token, metodo="POST", cuerpo=cuerpo)
+    return resultado.get("hits", []) if resultado else []

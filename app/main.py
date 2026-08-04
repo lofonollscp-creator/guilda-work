@@ -620,6 +620,24 @@ def token_busqueda():
     return {"ok": True, "token": token, "url": busqueda.MEILISEARCH_URL, "indice": busqueda.INDICE}
 
 
+@app.route("/busqueda/hibrida", methods=["GET"])
+@login_required
+def busqueda_hibrida():
+    """Búsqueda semántica (RAG) — a diferencia de /busqueda/token, aquí
+    el navegador NO habla con Meilisearch directamente: la búsqueda
+    híbrida necesita calcular el embedding de la PREGUNTA con Ollama,
+    solo alcanzable desde el servidor, así que esta ruta hace la
+    llamada completa y devuelve los resultados ya filtrados por
+    usuario (ver app/busqueda.py:buscar_hibrido, aislamiento verificado
+    en vivo). Excepción deliberada al patrón "todo directo desde el
+    navegador" de /busqueda/token — motivo documentado en HOSTING.md."""
+    texto = request.args.get("q", "").strip()
+    if not texto:
+        return {"ok": True, "resultados": []}
+    resultados = busqueda.buscar_hibrido(g.usuario_id, texto)
+    return {"ok": True, "resultados": resultados}
+
+
 @app.route("/herramientas", endpoint="herramientas")
 @login_required
 def herramientas_vista():

@@ -42,6 +42,8 @@ _PROPIAS_GUILDA_WORK = {
     "obtener_firma_correo", "configurar_firma_correo",
     "preparar_borrador_correo", "enviar_borrador_correo",
     "exportar_historial", "importar_historial", "exportar_tareas", "importar_tareas",
+    "buscar_semantico",
+    "webhooks_listar", "webhooks_crear", "webhooks_borrar",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
@@ -287,6 +289,12 @@ PAGINAS = [
                 "<a href=\"/docs/primera-llamada\">Primera llamada a la API</a>. Para el detalle de los campos de "
                 "cada objeto (<code>Nota</code>, <code>Tarea</code>, <code>Categoria</code>...) ver "
                 "<a href=\"/docs/modelos-de-datos\">Modelos de datos</a>."},
+            {"type": "callout", "kind": "info", "html":
+                "¿Vas a importar esta API en Postman, Insomnia, o generar un cliente automáticamente? "
+                "<code>GET /api/v1/openapi.json</code> devuelve el documento OpenAPI 3.0 completo de todos estos "
+                "endpoints — generado por introspección del propio código en cada petición (no un archivo aparte "
+                "que se pueda desincronizar), sin necesitar token: es documentación pública. Las tablas de esta "
+                "página son la referencia legible; ese JSON es la máquina-legible."},
             {"type": "h2", "id": "errores", "text": "Manejo de errores"},
             {"type": "p", "html":
                 "El sobre de error es siempre el mismo, en cualquier endpoint de esta API — incluidos los "

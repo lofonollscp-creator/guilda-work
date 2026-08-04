@@ -3,11 +3,12 @@ depender solo de `cli.py`. Todas las rutas requieren `usuarios.rol = 'admin'`
 (ver `db.hacer_admin` / `python cli.py hacer-admin`) — es una sección de solo
 un puñado de administradores, no pensada para volumen ni paginación.
 """
+import json
 import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, umami
+from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, umami
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -24,6 +25,25 @@ def _contexto_herramientas(tenants) -> dict:
     }
 
 
+def _contexto_webhooks(tenants) -> dict:
+    """Igual que _contexto_herramientas: contexto compartido por las
+    mismas 4 rutas. Incluye las últimas entregas de cada webhook para
+    que el admin pueda ver por qué uno está fallando sin salir del
+    backoffice (ver app/eventos.py)."""
+    webhooks_por_tenant = {}
+    for t in [None, *[t["id"] for t in tenants]]:
+        filas = db.listar_webhooks(t)
+        webhooks_por_tenant[t] = [
+            {
+                **dict(w),
+                "eventos": json.loads(w["eventos"]),  # ya parseado: sin filtro Jinja para esto
+                "entregas": [dict(e) for e in db.entregas_de_webhook(w["id"], limite=5)],
+            }
+            for w in filas
+        ]
+    return {"webhooks_por_tenant": webhooks_por_tenant, "eventos_disponibles": eventos.EVENTOS}
+
+
 @backoffice_bp.route("/")
 @login_required
 @admin_required
@@ -37,6 +57,7 @@ def panel():
         facturascripts_creado=None,
         calcom_creado=None,
         **_contexto_herramientas(tenants),
+        **_contexto_webhooks(tenants),
     )
 
 
@@ -204,6 +225,7 @@ def crear_tenant():
             facturascripts_creado=facturascripts_creado,
             calcom_creado=calcom_creado,
             **_contexto_herramientas(tenants),
+        **_contexto_webhooks(tenants),
         )
     return redirect(url_for("backoffice.panel"))
 
@@ -385,6 +407,7 @@ def crear_usuario():
             resultados_alta=None,
             error=str(e),
             **_contexto_herramientas(tenants),
+        **_contexto_webhooks(tenants),
         )
     usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     if tenant_id:
@@ -464,6 +487,7 @@ def crear_usuario():
         resultados_alta=resultados_alta,
         email_creado=email,
         **_contexto_herramientas(tenants),
+        **_contexto_webhooks(tenants),
     )
 
 
@@ -496,4 +520,33 @@ def cambiar_rol(usuario_id: int):
         db.quitar_admin(usuario["email"])
     else:
         db.hacer_admin(usuario["email"])
+    return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/webhooks", methods=["POST"])
+@login_required
+@admin_required
+def crear_webhook():
+    """`tenant_id` vacío en el formulario = webhook de ámbito local
+    (mismo criterio NULL ya usado en otras tablas de este archivo) —
+    `eventos` llega como una lista de checkboxes marcados, ver
+    app/eventos.py:EVENTOS para los nombres válidos."""
+    url = request.form.get("url", "").strip()
+    tenant_id_raw = request.form.get("tenant_id") or None
+    eventos_marcados = [e for e in request.form.getlist("eventos") if e in eventos.EVENTOS]
+    if url and eventos_marcados:
+        tenant_id = int(tenant_id_raw) if tenant_id_raw else None
+        if tenant_id is not None and db.obtener_tenant(tenant_id) is None:
+            abort(404)
+        db.crear_webhook(g.usuario_id, tenant_id, url, eventos_marcados)
+    return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/webhooks/<int:webhook_id>/borrar", methods=["POST"])
+@login_required
+@admin_required
+def borrar_webhook(webhook_id: int):
+    if db.obtener_webhook(webhook_id) is None:
+        abort(404)
+    db.borrar_webhook(webhook_id)
     return redirect(url_for("backoffice.panel"))

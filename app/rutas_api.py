@@ -20,7 +20,7 @@ from datetime import datetime
 from flask import Blueprint, Response, abort, g, jsonify, request
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, export, herramientas, ia_asistente, kratos
+from . import correo, db, export, herramientas, ia_asistente, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -798,3 +798,16 @@ def obtener_chat_config():
     """Configuración para el cliente Matrix nativo de la app móvil — la URL
     del homeserver de Synapse, no la de Element-web."""
     return _ok({"homeserver_url": herramientas.MATRIX_HOMESERVER_URL})
+
+
+# --- Documentación --------------------------------------------------------
+
+@api_bp.route("/openapi.json", methods=["GET"])
+def openapi_json():
+    """Documento OpenAPI 3.0 de toda esta API, generado por introspección
+    en vivo de este mismo blueprint (ver app/openapi.py) — sin token: es
+    documentación pública, la necesita quien todavía no tiene uno. Se
+    devuelve tal cual (sin el sobre {"ok":...}) porque el propio formato
+    OpenAPI es el contrato esperado por herramientas externas (Postman,
+    Insomnia, generadores de cliente), no el de esta API."""
+    return jsonify(openapi.generar_spec())

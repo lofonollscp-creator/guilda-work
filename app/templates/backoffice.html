@@ -218,4 +218,75 @@
     <button type="submit" class="btn btn-primary">+ Crear usuario</button>
   </form>
 </section>
+
+<section class="ia-section">
+  <h3>Webhooks</h3>
+  <p class="subtitle">Avisa a una URL externa cuando pasa algo — ver la <a href="/docs">Guía para desarrolladores</a> para el formato del payload y cómo verificar la firma.</p>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Tenant</th>
+          <th>URL</th>
+          <th>Eventos</th>
+          <th>Últimas entregas</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tenant_id, lista in webhooks_por_tenant.items() %}
+        {% for w in lista %}
+        <tr>
+          <td>{% if tenant_id is none %}<span class="empty">sin tenant</span>{% else %}{{ tenants | selectattr('id', 'equalto', tenant_id) | map(attribute='nombre') | first }}{% endif %}</td>
+          <td class="mono">{{ w.url }}</td>
+          <td>
+            {% for ev in w.eventos %}
+            <span class="log-badge log-badge-instantanea">{{ ev }}</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% for entrega in w.entregas %}
+            <span class="log-badge {{ 'log-badge-duracion' if entrega.estado_http and entrega.estado_http < 400 else 'log-badge-error' }}"
+                  title="{{ entrega.entregado_en }}{% if entrega.error %} — {{ entrega.error }}{% endif %}">
+              {{ entrega.estado_http or 'sin respuesta' }}
+            </span>
+            {% else %}
+            <span class="empty">sin entregas todavía</span>
+            {% endfor %}
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.borrar_webhook', webhook_id=w.id) }}"
+                  onsubmit="return confirm('¿Borrar este webhook?');">
+              <button type="submit" class="btn btn-ghost">Borrar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr><td colspan="5" class="empty">Todavía no hay ningún webhook.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('backoffice.crear_webhook') }}" class="filters">
+    <label>Tenant
+      <select name="tenant_id">
+        <option value="">Sin tenant</option>
+        {% for t in tenants %}
+        <option value="{{ t.id }}">{{ t.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>URL <input type="url" name="url" placeholder="https://ejemplo.com/webhook" required></label>
+    <fieldset style="border:none; padding:0; margin:0;">
+      {% for ev in eventos_disponibles %}
+      <label style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;">
+        <input type="checkbox" name="eventos" value="{{ ev }}"> {{ ev }}
+      </label>
+      {% endfor %}
+    </fieldset>
+    <button type="submit" class="btn btn-primary">+ Crear webhook</button>
+  </form>
+</section>
 {% endblock %}

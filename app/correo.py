@@ -38,7 +38,7 @@ from email.utils import getaddresses, parsedate_to_datetime
 
 import keyring
 
-from . import busqueda, db
+from . import busqueda, db, eventos
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
@@ -413,7 +413,21 @@ def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
     db.marcar_sincronizada_cuenta_correo(cuenta_id)
     if nuevos:
         _reindexar_mensajes_recientes(usuario_id, cuenta_id)
+        _emitir_evento_correo_nuevo(usuario_id, cuenta_id, nuevos)
     return {"nuevos": nuevos}
+
+
+def _emitir_evento_correo_nuevo(usuario_id: int, cuenta_id: int, nuevos: int) -> None:
+    """Un evento por SINCRONIZACIÓN con novedades (no uno por mensaje) —
+    _reindexar_mensajes_recientes reindexa un lote de recientes, no solo
+    los nuevos de esta pasada, así que la señal de negocio real aquí es
+    "esta cuenta tiene correo nuevo", no un evento por cada mensaje del
+    lote de reindexado."""
+    try:
+        tenant = db.tenant_de_usuario(usuario_id)
+        eventos.emitir("correo.mensaje_nuevo", tenant["id"] if tenant else None, {"cuenta_id": cuenta_id, "nuevos": nuevos})
+    except Exception:
+        pass
 
 
 def _reindexar_mensajes_recientes(usuario_id: int, cuenta_id: int, limite: int = 200) -> None:

@@ -1069,3 +1069,99 @@ def test_backoffice_admin_puede_mostrar_portainer_a_mano(cliente):
     ruta = f"/backoffice/tenants/{tenant['id']}/herramientas/portainer/alternar"
     cliente.post(ruta, follow_redirects=True)
     assert "portainer" not in db.herramientas_ocultas_de_tenant(tenant["id"])
+
+
+# --- Webhooks ------------------------------------------------------------
+
+def test_backoffice_crear_webhook_de_ambito_local(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh1@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post(
+        "/backoffice/webhooks",
+        data={"tenant_id": "", "url": "https://ejemplo.com/hook", "eventos": ["tarea.finalizada", "nota.creada"]},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    webhooks = db.listar_webhooks(None)
+    assert len(webhooks) == 1
+    assert webhooks[0]["url"] == "https://ejemplo.com/hook"
+
+
+def test_backoffice_crear_webhook_de_un_tenant(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh2@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("TenantWebhook")
+
+    resp = cliente.post(
+        "/backoffice/webhooks",
+        data={"tenant_id": str(tenant_id), "url": "https://ejemplo.com/hook", "eventos": ["cita.reservada"]},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    webhooks = db.listar_webhooks(tenant_id)
+    assert len(webhooks) == 1
+
+
+def test_backoffice_crear_webhook_sin_eventos_no_lo_crea(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh3@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    cliente.post("/backoffice/webhooks", data={"tenant_id": "", "url": "https://ejemplo.com/hook"}, follow_redirects=True)
+    assert db.listar_webhooks(None) == []
+
+
+def test_backoffice_crear_webhook_ignora_eventos_no_reconocidos(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh4@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    cliente.post(
+        "/backoffice/webhooks",
+        data={"tenant_id": "", "url": "https://ejemplo.com/hook", "eventos": ["evento.inventado"]},
+        follow_redirects=True,
+    )
+    assert db.listar_webhooks(None) == []
+
+
+def test_backoffice_crear_webhook_tenant_inexistente_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh5@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post(
+        "/backoffice/webhooks",
+        data={"tenant_id": "999999", "url": "https://ejemplo.com/hook", "eventos": ["nota.creada"]},
+    )
+    assert resp.status_code == 404
+
+
+def test_backoffice_borrar_webhook(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh6@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    w = db.crear_webhook(usuario_id, None, "https://ejemplo.com/hook", ["nota.creada"])
+
+    resp = cliente.post(f"/backoffice/webhooks/{w['id']}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_webhook(w["id"]) is None
+
+
+def test_backoffice_borrar_webhook_inexistente_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh7@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/webhooks/999999/borrar")
+    assert resp.status_code == 404
+
+
+def test_backoffice_webhooks_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "usuario-normal-wh@ejemplo.com", "contrasena123")
+    resp = cliente.post("/backoffice/webhooks", data={"tenant_id": "", "url": "https://x.com", "eventos": ["nota.creada"]})
+    assert resp.status_code == 403
+
+
+def test_backoffice_panel_muestra_los_webhooks(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-wh8@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    db.crear_webhook(usuario_id, None, "https://ejemplo.com/mi-webhook-unico", ["nota.creada"])
+
+    resp = cliente.get("/backoffice/")
+    assert b"ejemplo.com/mi-webhook-unico" in resp.data

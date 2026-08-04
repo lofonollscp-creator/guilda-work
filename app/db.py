@@ -20,6 +20,7 @@ las de preferencias; se deja para una fase posterior si llega a ser un
 problema real con más de un usuario.
 """
 import hashlib
+import json
 import secrets
 import sqlite3
 import sys
@@ -72,6 +73,37 @@ CREATE TABLE IF NOT EXISTS tokens_api (
     nombre_dispositivo TEXT,
     creado_en TEXT NOT NULL,
     ultimo_uso_en TEXT
+);
+
+-- Webhooks salientes (ver app/eventos.py). tenant_id NULL = modo
+-- escritorio/usuario sin tenant (mismo criterio que otras tablas ya
+-- nullable de este archivo) — se asocia al usuario que lo dio de alta
+-- en ese caso. `secreto` se guarda en claro (no un hash, a diferencia
+-- de tokens_api): hace falta releerlo para firmar cada entrega HMAC,
+-- no solo compararlo una vez.
+CREATE TABLE IF NOT EXISTS webhooks (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER REFERENCES tenants(id),
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    url TEXT NOT NULL,
+    eventos TEXT NOT NULL,
+    secreto TEXT NOT NULL,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL
+);
+
+-- Log de entregas — para que el admin pueda ver por qué un webhook
+-- está fallando desde el backoffice, sin tener que mirar logs del
+-- servidor. Se poda a las últimas N entradas por webhook (ver
+-- app/eventos.py), no crece sin límite.
+CREATE TABLE IF NOT EXISTS webhooks_entregas (
+    id INTEGER PRIMARY KEY,
+    webhook_id INTEGER NOT NULL REFERENCES webhooks(id),
+    evento TEXT NOT NULL,
+    estado_http INTEGER,
+    intento_num INTEGER NOT NULL,
+    entregado_en TEXT NOT NULL,
+    error TEXT
 );
 
 CREATE TABLE IF NOT EXISTS categorias (
@@ -1174,6 +1206,105 @@ def revocar_token_api(token: str) -> None:
         conn.close()
 
 
+# --- Webhooks (ver app/eventos.py) --------------------------------------
+
+_MAX_ENTREGAS_POR_WEBHOOK = 50
+
+
+def crear_webhook(usuario_id: int, tenant_id: int | None, url: str, eventos: list[str]) -> dict:
+    """`eventos` es una lista de nombres (ver app/eventos.py:EVENTOS) —
+    se guarda como JSON, no una tabla aparte: no hace falta consultarlos
+    por separado, siempre se leen todos juntos para un webhook dado."""
+    secreto = secrets.token_urlsafe(32)
+    conn = get_connection()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO webhooks (tenant_id, usuario_id, url, eventos, secreto, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (tenant_id, usuario_id, url, json.dumps(eventos), secreto, now_iso()),
+        )
+        conn.commit()
+        return dict(obtener_webhook(cursor.lastrowid))
+    finally:
+        conn.close()
+
+
+def obtener_webhook(webhook_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM webhooks WHERE id = ?", (webhook_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def listar_webhooks(tenant_id: int | None) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        if tenant_id is None:
+            return conn.execute(
+                "SELECT * FROM webhooks WHERE tenant_id IS NULL ORDER BY creado_en DESC"
+            ).fetchall()
+        return conn.execute(
+            "SELECT * FROM webhooks WHERE tenant_id = ? ORDER BY creado_en DESC", (tenant_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def borrar_webhook(webhook_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM webhooks_entregas WHERE webhook_id = ?", (webhook_id,))
+        conn.execute("DELETE FROM webhooks WHERE id = ?", (webhook_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def webhooks_para_evento(evento: str, tenant_id: int | None) -> list[sqlite3.Row]:
+    """Webhooks activos de este tenant (o del ámbito local si `tenant_id`
+    es None) suscritos a `evento` — el filtro por evento se hace en
+    Python (sobre `eventos` como JSON), no en SQL: la tabla no está
+    pensada para volúmenes altos de webhooks por tenant."""
+    candidatos = listar_webhooks(tenant_id)
+    return [w for w in candidatos if w["activo"] and evento in json.loads(w["eventos"])]
+
+
+def registrar_entrega_webhook(
+    webhook_id: int, evento: str, estado_http: int | None, intento_num: int, error: str | None = None
+) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO webhooks_entregas (webhook_id, evento, estado_http, intento_num, entregado_en, error) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (webhook_id, evento, estado_http, intento_num, now_iso(), error),
+        )
+        # Poda: solo las últimas _MAX_ENTREGAS_POR_WEBHOOK por webhook —
+        # el log de entregas es para depurar, no un histórico permanente.
+        conn.execute(
+            "DELETE FROM webhooks_entregas WHERE webhook_id = ? AND id NOT IN ("
+            "  SELECT id FROM webhooks_entregas WHERE webhook_id = ? "
+            "  ORDER BY id DESC LIMIT ?"
+            ")",
+            (webhook_id, webhook_id, _MAX_ENTREGAS_POR_WEBHOOK),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def entregas_de_webhook(webhook_id: int, limite: int = 20) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM webhooks_entregas WHERE webhook_id = ? ORDER BY id DESC LIMIT ?",
+            (webhook_id, limite),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 # --- Categorías --------------------------------------------------------
 
 def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> int:
@@ -1543,7 +1674,7 @@ def finalizar_tarea(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT inicio_en, estado FROM tareas WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+            "SELECT inicio_en, estado, nombre FROM tareas WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
         ).fetchone()
         if row is None:
             return
@@ -1555,14 +1686,33 @@ def finalizar_tarea(usuario_id: int, tarea_id: int) -> None:
             )
         inicio = datetime.fromisoformat(row["inicio_en"])
         segundos_pausados = _segundos_pausados_cerrados(conn, tarea_id)
-        duracion = int((datetime.fromisoformat(fin) - inicio).total_seconds()) - segundos_pausados
+        duracion = max(int((datetime.fromisoformat(fin) - inicio).total_seconds()) - segundos_pausados, 0)
         conn.execute(
             "UPDATE tareas SET estado = 'finalizada', fin_en = ?, duracion_segundos = ? WHERE id = ?",
-            (fin, max(duracion, 0), tarea_id),
+            (fin, duracion, tarea_id),
         )
         conn.commit()
     finally:
         conn.close()
+    _emitir_evento_tarea_finalizada(usuario_id, tarea_id, row["nombre"], duracion)
+
+
+def _emitir_evento_tarea_finalizada(usuario_id: int, tarea_id: int, nombre: str, duracion_segundos: int) -> None:
+    """Segunda excepción documentada (junto a busqueda) a "db.py no
+    depende de otros app/*.py": un webhook es, por naturaleza, un
+    efecto secundario de la escritura, no una operación de negocio más
+    — mismo criterio ya aplicado a la indexación de búsqueda. Import
+    perezoso para evitar cualquier ciclo, aunque hoy app/eventos.py
+    solo importa db.py, no al revés."""
+    from . import eventos
+    try:
+        tenant = tenant_de_usuario(usuario_id)
+        eventos.emitir(
+            "tarea.finalizada", tenant["id"] if tenant else None,
+            {"tarea_id": tarea_id, "nombre": nombre, "duracion_segundos": duracion_segundos},
+        )
+    except Exception:
+        pass  # un fallo al emitir el evento no debe afectar a la tarea ya finalizada
 
 
 def tareas_activas(usuario_id: int) -> list[dict]:
@@ -1721,7 +1871,21 @@ def crear_nota(usuario_id: int, texto: str, categoria_id: int | None = None, tar
     finally:
         conn.close()
     _reindexar_nota(usuario_id, nota_id)
+    _emitir_evento_nota_creada(usuario_id, nota_id, texto.strip())
     return nota_id
+
+
+def _emitir_evento_nota_creada(usuario_id: int, nota_id: int, texto: str) -> None:
+    """Solo al CREAR — editar una nota no vuelve a emitir el evento
+    (ver _reindexar_nota, compartido entre crear/editar, que sí se
+    ejecuta en ambos casos). Mismo criterio de import perezoso que
+    _emitir_evento_tarea_finalizada."""
+    from . import eventos
+    try:
+        tenant = tenant_de_usuario(usuario_id)
+        eventos.emitir("nota.creada", tenant["id"] if tenant else None, {"nota_id": nota_id, "texto": texto})
+    except Exception:
+        pass
 
 
 def _reindexar_nota(usuario_id: int, nota_id: int) -> None:
