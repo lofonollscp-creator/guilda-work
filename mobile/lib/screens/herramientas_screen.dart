@@ -54,6 +54,47 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
             itemCount: herramientas.length,
             itemBuilder: (context, i) {
               final h = herramientas[i];
+              final contenido = Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      h.icono,
+                      style: TextStyle(fontSize: 28, color: h.disponible ? null : Theme.of(context).disabledColor),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      h.nombre,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: h.disponible ? null : Theme.of(context).disabledColor,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: Text(
+                        h.descripcion,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        overflow: TextOverflow.fade,
+                      ),
+                    ),
+                    Text(
+                      !h.disponible
+                          ? 'Aún no disponible'
+                          // El WebView de la app no comparte la cookie de sesión de
+                          // Kratos que usa el navegador: incluso las herramientas con
+                          // SSO piden iniciar sesión la primera vez aquí dentro.
+                          : h.sso
+                              ? 'Con tu cuenta de Guilda Work'
+                              : 'Inicia sesión aparte',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
+              );
+              if (!h.disponible) {
+                return Opacity(opacity: 0.6, child: Card(child: contenido));
+              }
               return Card(
                 child: InkWell(
                   onTap: () => Navigator.of(context).push(
@@ -61,29 +102,7 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
                       builder: (_) => WebviewScreen(titulo: h.nombre, url: h.url),
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(h.icono, style: const TextStyle(fontSize: 28)),
-                        const SizedBox(height: 8),
-                        Text(h.nombre, style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 4),
-                        Expanded(
-                          child: Text(
-                            h.descripcion,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            overflow: TextOverflow.fade,
-                          ),
-                        ),
-                        Text(
-                          h.sso ? 'Entra con tu sesión de Guilda Work' : 'Inicia sesión aparte',
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: contenido,
                 ),
               );
             },

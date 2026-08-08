@@ -5,6 +5,8 @@ import 'screens/login_screen.dart';
 import 'services/api_client.dart';
 import 'services/session_service.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const GuildaWorkApp());
 }
@@ -16,8 +18,15 @@ class GuildaWorkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final sesion = SessionService();
     final api = ApiClient(sesion);
+    api.onSesionExpirada = () {
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => LoginScreen(api: api, sesion: sesion)),
+        (route) => false,
+      );
+    };
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Guilda Work',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
       home: _PantallaInicial(api: api, sesion: sesion),

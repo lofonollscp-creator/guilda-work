@@ -367,6 +367,7 @@ class Herramienta {
   final String icono;
   final String url;
   final bool sso;
+  final bool disponible;
 
   Herramienta({
     required this.id,
@@ -375,6 +376,7 @@ class Herramienta {
     required this.icono,
     required this.url,
     required this.sso,
+    this.disponible = true,
   });
 
   factory Herramienta.fromJson(Map<String, dynamic> json) => Herramienta(
@@ -384,6 +386,7 @@ class Herramienta {
         icono: json['icono'] as String,
         url: json['url'] as String,
         sso: json['sso'] as bool,
+        disponible: json['disponible'] as bool? ?? true,
       );
 }
 
@@ -396,3 +399,117 @@ class ChatConfig {
   factory ChatConfig.fromJson(Map<String, dynamic> json) =>
       ChatConfig(homeserverUrl: json['homeserver_url'] as String);
 }
+
+/// Tiquet de soporte interno (errores/sugerencias sobre la propia Guilda
+/// Work) -- tablero COMPARTIDO entre todos los usuarios, a diferencia del
+/// resto de modelos de este archivo (que son siempre datos propios).
+class Tiquet {
+  final int id;
+  final String tipo;
+  final String titulo;
+  final String? descripcion;
+  final String estado;
+  final int usuarioId;
+  final String? autorEmail;
+  final String creadoEn;
+
+  Tiquet({
+    required this.id,
+    required this.tipo,
+    required this.titulo,
+    this.descripcion,
+    required this.estado,
+    required this.usuarioId,
+    this.autorEmail,
+    required this.creadoEn,
+  });
+
+  factory Tiquet.fromJson(Map<String, dynamic> json) => Tiquet(
+        id: json['id'] as int,
+        tipo: json['tipo'] as String,
+        titulo: json['titulo'] as String,
+        descripcion: json['descripcion'] as String?,
+        estado: json['estado'] as String,
+        usuarioId: json['usuario_id'] as int,
+        autorEmail: json['autor_email'] as String?,
+        creadoEn: json['creado_en'] as String,
+      );
+}
+
+const tiposTiquet = [
+  ('error', 'Error'),
+  ('sugerencia', 'Sugerencia'),
+];
+
+const estadosTiquet = [
+  ('sin_revisar', 'Sin revisar'),
+  ('en_revision', 'En revisión'),
+  ('finalizado', 'Finalizado'),
+];
+
+/// Datos personales del trabajador para el registro de fichaje (art. 34.9
+/// ET) -- hace falta rellenar nombreCompleto+dniNie antes de poder fichar.
+class FichajeDatos {
+  final String? nombreCompleto;
+  final String? dniNie;
+  final String? numeroAfiliacionSs;
+  final String? categoriaProfesional;
+  final String? tipoContrato;
+  final String? fechaAlta;
+  final double? jornadaSemanalHoras;
+  final String? convenioColectivo;
+
+  FichajeDatos({
+    this.nombreCompleto,
+    this.dniNie,
+    this.numeroAfiliacionSs,
+    this.categoriaProfesional,
+    this.tipoContrato,
+    this.fechaAlta,
+    this.jornadaSemanalHoras,
+    this.convenioColectivo,
+  });
+
+  factory FichajeDatos.fromJson(Map<String, dynamic> json) => FichajeDatos(
+        nombreCompleto: json['nombre_completo'] as String?,
+        dniNie: json['dni_nie'] as String?,
+        numeroAfiliacionSs: json['numero_afiliacion_ss'] as String?,
+        categoriaProfesional: json['categoria_profesional'] as String?,
+        tipoContrato: json['tipo_contrato'] as String?,
+        fechaAlta: json['fecha_alta'] as String?,
+        jornadaSemanalHoras: (json['jornada_semanal_horas'] as num?)?.toDouble(),
+        convenioColectivo: json['convenio_colectivo'] as String?,
+      );
+}
+
+/// Un evento de fichaje (entrada/pausa_inicio/pausa_fin/salida).
+class FichajeEvento {
+  final int id;
+  final String tipo;
+  final String marcaTiempo;
+  final String origen;
+  final String? nota;
+
+  FichajeEvento({
+    required this.id,
+    required this.tipo,
+    required this.marcaTiempo,
+    required this.origen,
+    this.nota,
+  });
+
+  factory FichajeEvento.fromJson(Map<String, dynamic> json) => FichajeEvento(
+        id: json['id'] as int,
+        tipo: json['tipo'] as String,
+        marcaTiempo: json['marca_tiempo'] as String,
+        origen: json['origen'] as String,
+        nota: json['nota'] as String?,
+      );
+}
+
+const etiquetasFichaje = {
+  'entrada': 'Entrada',
+  'pausa_inicio': 'Inicio de pausa',
+  'pausa_fin': 'Fin de pausa',
+  'salida': 'Salida',
+};

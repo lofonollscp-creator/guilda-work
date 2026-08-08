@@ -6,10 +6,12 @@ import '../services/session_service.dart';
 import '../services/matrix_service.dart';
 import 'chat_login_screen.dart';
 import 'correo_bandeja_screen.dart';
+import 'fichaje_screen.dart';
 import 'herramientas_screen.dart';
 import 'login_screen.dart';
 import 'menu_detail_screen.dart';
 import 'tareas_outlook_screen.dart';
+import 'tiquets_screen.dart';
 
 /// Dashboard (equivalente móvil de app/templates/inicio.html): stats del
 /// día, nota rápida, y las tarjetas de menú desde las que se entra al
@@ -144,6 +146,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'Herramientas',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => HerramientasScreen(api: widget.api)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.confirmation_number_outlined),
+            tooltip: 'Tiquets',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.punch_clock_outlined),
+            tooltip: 'Fichaje',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => FichajeScreen(api: widget.api)),
             ),
           ),
           IconButton(

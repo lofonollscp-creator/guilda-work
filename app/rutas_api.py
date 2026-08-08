@@ -119,7 +119,7 @@ def logout():
 @token_required
 def me():
     usuario = db.obtener_usuario(g.usuario_id)
-    return _ok({"id": usuario["id"], "email": usuario["email"]})
+    return _ok({"id": usuario["id"], "email": usuario["email"], "es_admin": usuario["rol"] == "admin"})
 
 
 # --- Menús / categorías ----------------------------------------------------
@@ -399,6 +399,155 @@ def completar_tarea_outlook(tarea_id: int):
         abort(404, "Tarea no encontrada.")
     db.completar_tarea_outlook(g.usuario_id, tarea_id)
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
+
+
+# --- Tiquets (soporte interno: errores/sugerencias) -----------------------
+#
+# Tablero COMPARTIDO entre todos los usuarios (igual que app/rutas_tiquets.py,
+# mismos permisos exactos: cualquiera lee, solo el dueño -- o un admin --
+# puede editar/borrar, y solo un admin puede mover de estado). token_required
+# no fija g.es_admin (solo lo hace la sesión web), así que aquí se comprueba
+# con db.es_admin(g.usuario_id) explícitamente donde hace falta.
+
+def _puede_borrar_tiquet(tiquet) -> bool:
+    return tiquet["usuario_id"] == g.usuario_id or db.es_admin(g.usuario_id)
+
+
+def _puede_editar_tiquet(tiquet) -> bool:
+    return tiquet["usuario_id"] == g.usuario_id and tiquet["estado"] == "sin_revisar"
+
+
+@api_bp.route("/tiquets", methods=["GET"])
+@token_required
+def listar_tiquets():
+    return _ok(_dicts(db.listar_tiquets(
+        estado=request.args.get("estado") or None,
+        tipo=request.args.get("tipo") or None,
+    )))
+
+
+@api_bp.route("/tiquets", methods=["POST"])
+@token_required
+def crear_tiquet():
+    datos = _body()
+    tipo = datos.get("tipo", "")
+    titulo = (datos.get("titulo") or "").strip()
+    if not titulo or tipo not in ("error", "sugerencia"):
+        return _err("Faltan datos: título y tipo (error/sugerencia) son obligatorios.")
+    tiquet_id = db.crear_tiquet(g.usuario_id, tipo=tipo, titulo=titulo, descripcion=datos.get("descripcion") or None)
+    return _ok(_dict(db.obtener_tiquet(tiquet_id)), 201)
+
+
+@api_bp.route("/tiquets/<int:tiquet_id>", methods=["PUT"])
+@token_required
+def editar_tiquet(tiquet_id: int):
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
+        abort(404, "Tiquet no encontrado.")
+    if not _puede_editar_tiquet(tiquet):
+        return _err("Este tiquet no es tuyo, o ya no está 'sin revisar'.", 403)
+    datos = _body()
+    titulo = (datos.get("titulo") or tiquet["titulo"]).strip()
+    tipo = datos.get("tipo") or tiquet["tipo"]
+    if not titulo or tipo not in ("error", "sugerencia"):
+        return _err("Faltan datos: título y tipo (error/sugerencia) son obligatorios.")
+    db.editar_tiquet(
+        g.usuario_id, tiquet_id, titulo=titulo,
+        descripcion=datos.get("descripcion", tiquet["descripcion"]), tipo=tipo,
+    )
+    return _ok(_dict(db.obtener_tiquet(tiquet_id)))
+
+
+@api_bp.route("/tiquets/<int:tiquet_id>", methods=["DELETE"])
+@token_required
+def eliminar_tiquet(tiquet_id: int):
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
+        abort(404, "Tiquet no encontrado.")
+    if not _puede_borrar_tiquet(tiquet):
+        return _err("Este tiquet no es tuyo.", 403)
+    db.eliminar_tiquet(tiquet_id)
+    return _ok()
+
+
+@api_bp.route("/tiquets/<int:tiquet_id>/estado", methods=["POST"])
+@token_required
+def cambiar_estado_tiquet(tiquet_id: int):
+    if not db.es_admin(g.usuario_id):
+        return _err("Solo un administrador puede mover tiquets de estado.", 403)
+    if db.obtener_tiquet(tiquet_id) is None:
+        abort(404, "Tiquet no encontrado.")
+    estado = _body().get("estado", "")
+    if estado not in ("sin_revisar", "en_revision", "finalizado"):
+        return _err("Estado no válido.")
+    db.cambiar_estado_tiquet(tiquet_id, estado)
+    return _ok(_dict(db.obtener_tiquet(tiquet_id)))
+
+
+# --- Fichaje (registro horario) -------------------------------------------
+#
+# Solo la parte de trabajador (fichar/historial/mis-datos) -- la
+# administración (resumen de un tenant, export CSV/PDF) se queda en
+# web/escritorio, no tiene sentido revisarla desde el móvil.
+
+@api_bp.route("/fichaje/estado", methods=["GET"])
+@token_required
+def estado_fichaje():
+    return _ok({
+        "estado": db.estado_actual_fichaje(g.usuario_id),
+        "datos_completos": db.fichaje_datos_completos(g.usuario_id),
+    })
+
+
+@api_bp.route("/fichaje/marcar", methods=["POST"])
+@token_required
+def marcar_fichaje():
+    tipo = _body().get("tipo", "")
+    if tipo not in ("entrada", "pausa_inicio", "pausa_fin", "salida"):
+        return _err("Tipo de fichaje no válido.")
+    if not db.fichaje_datos_completos(g.usuario_id):
+        return _err("Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Mis datos.")
+    tenant = db.tenant_de_usuario(g.usuario_id)
+    try:
+        db.fichar(g.usuario_id, tenant["id"] if tenant else None, tipo, origen="movil")
+    except ValueError as e:
+        return _err(str(e))
+    return _ok({"estado": db.estado_actual_fichaje(g.usuario_id)})
+
+
+@api_bp.route("/fichaje/historial", methods=["GET"])
+@token_required
+def historial_fichaje():
+    return _ok(_dicts(db.listar_fichajes(
+        g.usuario_id, desde=request.args.get("desde") or None, hasta=request.args.get("hasta") or None,
+    )))
+
+
+@api_bp.route("/fichaje/mis-datos", methods=["GET"])
+@token_required
+def obtener_mis_datos_fichaje():
+    return _ok(_dict(db.obtener_fichaje_datos(g.usuario_id)))
+
+
+@api_bp.route("/fichaje/mis-datos", methods=["POST"])
+@token_required
+def guardar_mis_datos_fichaje():
+    datos = _body()
+    nombre_completo = (datos.get("nombre_completo") or "").strip()
+    dni_nie = (datos.get("dni_nie") or "").strip()
+    if not nombre_completo or not dni_nie:
+        return _err("Nombre completo y DNI/NIE son obligatorios.")
+    jornada = datos.get("jornada_semanal_horas")
+    db.guardar_fichaje_datos(
+        g.usuario_id, nombre_completo, dni_nie,
+        numero_afiliacion_ss=datos.get("numero_afiliacion_ss") or None,
+        categoria_profesional=datos.get("categoria_profesional") or None,
+        tipo_contrato=datos.get("tipo_contrato") or None,
+        fecha_alta=datos.get("fecha_alta") or None,
+        jornada_semanal_horas=float(jornada) if jornada not in (None, "") else None,
+        convenio_colectivo=datos.get("convenio_colectivo") or None,
+    )
+    return _ok(_dict(db.obtener_fichaje_datos(g.usuario_id)))
 
 
 # --- Correo --------------------------------------------------------------
@@ -786,10 +935,27 @@ def listar_herramientas():
     excepto "chat": Element se consume desde el móvil como cliente Matrix
     nativo (ver /chat/config), no como WebView de Element-web. Mismo
     filtro de visibilidad por tenant que la web (ver
-    app/main.py:herramientas_vista())."""
+    app/main.py:herramientas_vista()). También incluye FacturaScripts como
+    entrada sintética, igual que hace herramientas.html, porque no vive en
+    herramientas.HERRAMIENTAS al no ser una instancia compartida (cada
+    tenant tiene su propio contenedor y URL, ver HOSTING.md 8.21) — la
+    versión móvil se había quedado sin este apartado."""
     tenant = db.tenant_de_usuario(g.usuario_id)
     ocultas = db.herramientas_ocultas_de_tenant(tenant["id"]) if tenant else set()
-    return _ok([h for h in herramientas.HERRAMIENTAS if h["id"] != "chat" and h["id"] not in ocultas])
+    lista = [h for h in herramientas.HERRAMIENTAS if h["id"] != "chat" and h["id"] not in ocultas]
+    facturascripts_url = tenant["facturascripts_url"] if tenant else None
+    lista.append({
+        "id": "facturascripts",
+        "nombre": "Facturación",
+        "descripcion": "Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).",
+        "icono": "🧮",
+        "color": "#2f6fce",
+        "categoria": "Documentos y datos",
+        "url": facturascripts_url or "",
+        "sso": False,
+        "disponible": facturascripts_url is not None,
+    })
+    return _ok(lista)
 
 
 @api_bp.route("/chat/config", methods=["GET"])

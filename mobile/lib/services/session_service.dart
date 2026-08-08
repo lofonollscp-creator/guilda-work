@@ -3,13 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Guarda el token de la API (Keystore/Keychain, vía flutter_secure_storage
 /// — nunca en claro) y la URL del servidor configurada (shared_preferences,
-/// no es un dato sensible). Ver HOSTING.md/CASERO.md en la raíz del repo:
-/// mientras no haya un hosting resuelto, el valor por defecto apunta al
-/// alias que ve el emulador Android hacia el PC anfitrión.
+/// no es un dato sensible). Por defecto apunta al servidor de producción
+/// real (guildawork.com); para desarrollo local con el emulador Android,
+/// cambiar la URL en Ajustes → Servidor a http://10.0.2.2:8000.
 class SessionService {
   static const _claveToken = 'auth_token';
   static const _claveServidor = 'server_url';
-  static const servidorPorDefecto = 'http://10.0.2.2:8000';
+  static const servidorPorDefecto = 'https://app.guildawork.com';
 
   final _almacenSeguro = const FlutterSecureStorage();
 

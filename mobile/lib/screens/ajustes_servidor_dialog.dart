@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/session_service.dart';
 
 /// Diálogo simple para cambiar la URL del servidor sin salir de la pantalla
-/// de login/registro — necesario mientras el hosting (Tailscale/VPS, ver
-/// HOSTING.md/CASERO.md) no esté resuelto: por defecto apunta al PC de
-/// desarrollo vía el alias del emulador Android, pero cualquier servidor
-/// (LAN, Tailscale, VPS) es solo cambiar este valor.
+/// de login/registro — por defecto apunta a producción (guildawork.com),
+/// pero para desarrollo local (LAN, Tailscale, emulador Android) es solo
+/// cambiar este valor.
 Future<void> mostrarAjustesServidor(
   BuildContext context,
   SessionService sesion,

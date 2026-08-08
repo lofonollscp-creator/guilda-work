@@ -18,10 +18,14 @@ class ApiException implements Exception {
 class Usuario {
   final int id;
   final String email;
-  Usuario({required this.id, required this.email});
+  final bool esAdmin;
+  Usuario({required this.id, required this.email, this.esAdmin = false});
 
-  factory Usuario.fromJson(Map<String, dynamic> json) =>
-      Usuario(id: json['id'] as int, email: json['email'] as String);
+  factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
+        id: json['id'] as int,
+        email: json['email'] as String,
+        esAdmin: json['es_admin'] as bool? ?? false,
+      );
 }
 
 /// Cliente HTTP para app/rutas_api.py (Fase 2). Todas las respuestas de la
@@ -31,6 +35,14 @@ class Usuario {
 class ApiClient {
   final SessionService sesion;
   late final Dio _dio;
+
+  /// Se llama cuando una petición que sí llevaba token vuelve con 401 (token
+  /// revocado, cuenta borrada...) para forzar la vuelta a la pantalla de
+  /// login, en vez de dejar al usuario viendo el error en crudo de la
+  /// pantalla en la que estuviera. No se dispara en /auth/login ni
+  /// /auth/registro (esas peticiones no llevan token: un 401 ahí es
+  /// simplemente "credenciales incorrectas", no una sesión caducada).
+  void Function()? onSesionExpirada;
 
   ApiClient(this.sesion) {
     _dio = Dio();
@@ -42,8 +54,16 @@ class ApiClient {
           final token = await sesion.obtenerToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
+            options.extra['conToken'] = true;
           }
           handler.next(options);
+        },
+        onError: (e, handler) async {
+          if (e.response?.statusCode == 401 && e.requestOptions.extra['conToken'] == true) {
+            await sesion.borrarToken();
+            onSesionExpirada?.call();
+          }
+          handler.next(e);
         },
       ),
     );
@@ -286,6 +306,141 @@ class ApiClient {
     try {
       final resp = await _dio.post('/tareas-outlook/$id/completar');
       return TareaOutlook.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Tiquets (soporte interno) -----------------------------------------
+
+  Future<List<Tiquet>> listarTiquets({String? estado, String? tipo}) async {
+    try {
+      final resp = await _dio.get(
+        '/tiquets',
+        queryParameters: {'estado': ?estado, 'tipo': ?tipo},
+      );
+      return (resp.data['data'] as List)
+          .map((t) => Tiquet.fromJson(t as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<Tiquet> crearTiquet({
+    required String tipo,
+    required String titulo,
+    String? descripcion,
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/tiquets',
+        data: {'tipo': tipo, 'titulo': titulo, 'descripcion': ?descripcion},
+      );
+      return Tiquet.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<Tiquet> editarTiquet(int id, {String? titulo, String? descripcion, String? tipo}) async {
+    try {
+      final resp = await _dio.put(
+        '/tiquets/$id',
+        data: {'titulo': ?titulo, 'descripcion': ?descripcion, 'tipo': ?tipo},
+      );
+      return Tiquet.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarTiquet(int id) async {
+    try {
+      await _dio.delete('/tiquets/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<Tiquet> cambiarEstadoTiquet(int id, String estado) async {
+    try {
+      final resp = await _dio.post('/tiquets/$id/estado', data: {'estado': estado});
+      return Tiquet.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Fichaje (registro horario) -----------------------------------------
+
+  Future<(String estado, bool datosCompletos)> obtenerEstadoFichaje() async {
+    try {
+      final resp = await _dio.get('/fichaje/estado');
+      final datos = resp.data['data'] as Map<String, dynamic>;
+      return (datos['estado'] as String, datos['datos_completos'] as bool);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<String> fichar(String tipo) async {
+    try {
+      final resp = await _dio.post('/fichaje/marcar', data: {'tipo': tipo});
+      return (resp.data['data'] as Map<String, dynamic>)['estado'] as String;
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<FichajeEvento>> listarMisFichajes({String? desde, String? hasta}) async {
+    try {
+      final resp = await _dio.get(
+        '/fichaje/historial',
+        queryParameters: {'desde': ?desde, 'hasta': ?hasta},
+      );
+      return (resp.data['data'] as List)
+          .map((f) => FichajeEvento.fromJson(f as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<FichajeDatos> obtenerFichajeDatos() async {
+    try {
+      final resp = await _dio.get('/fichaje/mis-datos');
+      return FichajeDatos.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<FichajeDatos> guardarFichajeDatos({
+    required String nombreCompleto,
+    required String dniNie,
+    String? numeroAfiliacionSs,
+    String? categoriaProfesional,
+    String? tipoContrato,
+    String? fechaAlta,
+    double? jornadaSemanalHoras,
+    String? convenioColectivo,
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/fichaje/mis-datos',
+        data: {
+          'nombre_completo': nombreCompleto,
+          'dni_nie': dniNie,
+          'numero_afiliacion_ss': ?numeroAfiliacionSs,
+          'categoria_profesional': ?categoriaProfesional,
+          'tipo_contrato': ?tipoContrato,
+          'fecha_alta': ?fechaAlta,
+          'jornada_semanal_horas': ?jornadaSemanalHoras,
+          'convenio_colectivo': ?convenioColectivo,
+        },
+      );
+      return FichajeDatos.fromJson(resp.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
