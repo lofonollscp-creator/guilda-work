@@ -90,6 +90,20 @@ CREATE TABLE IF NOT EXISTS leads_contacto (
     atendido INTEGER NOT NULL DEFAULT 0
 );
 
+-- Tokens FCM de la app móvil (no confundir con tokens_api: esto identifica
+-- un dispositivo para poder enviarle un push, no autentica nada). Un mismo
+-- usuario puede tener varios dispositivos; un mismo fcm_token solo puede
+-- apuntar a un usuario a la vez (si se reinstala la app con otra cuenta,
+-- REPLACE se encarga de reasignarlo, ver registrar_dispositivo_push).
+CREATE TABLE IF NOT EXISTS dispositivos_push (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    fcm_token TEXT NOT NULL UNIQUE,
+    plataforma TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT NOT NULL
+);
+
 -- Webhooks salientes (ver app/eventos.py). tenant_id NULL = modo
 -- escritorio/usuario sin tenant (mismo criterio que otras tablas ya
 -- nullable de este archivo) — se asocia al usuario que lo dio de alta
@@ -1557,6 +1571,65 @@ def marcar_lead_atendido(lead_id: int, atendido: bool) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE leads_contacto SET atendido = ? WHERE id = ?", (1 if atendido else 0, lead_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Dispositivos push (ver app/push.py) --------------------------------
+
+def registrar_dispositivo_push(usuario_id: int, fcm_token: str, plataforma: str) -> None:
+    """Alta o refresco de un token FCM. REPLACE por fcm_token (UNIQUE): si
+    el mismo dispositivo ya estaba registrado a otro usuario_id (reinstalo
+    la app con otra cuenta), se reasigna al usuario actual en vez de dejar
+    dos filas o rechazar el alta."""
+    conn = get_connection()
+    try:
+        ahora = now_iso()
+        conn.execute(
+            "INSERT INTO dispositivos_push (usuario_id, fcm_token, plataforma, creado_en, actualizado_en) "
+            "VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(fcm_token) DO UPDATE SET usuario_id = excluded.usuario_id, "
+            "plataforma = excluded.plataforma, actualizado_en = excluded.actualizado_en",
+            (usuario_id, fcm_token, plataforma, ahora, ahora),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_dispositivo_push(usuario_id: int, fcm_token: str) -> None:
+    """Se llama en logout (ver /api/v1/dispositivos-push DELETE) para dejar
+    de mandar push a un dispositivo del que el usuario ya ha cerrado
+    sesión -- exige usuario_id igual que revocar_token_api_por_id, mismo
+    motivo (que no se pueda borrar el token de otro adivinando el valor)."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM dispositivos_push WHERE fcm_token = ? AND usuario_id = ?", (fcm_token, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def tokens_push_de_usuario(usuario_id: int) -> list[str]:
+    conn = get_connection()
+    try:
+        filas = conn.execute("SELECT fcm_token FROM dispositivos_push WHERE usuario_id = ?", (usuario_id,)).fetchall()
+        return [f["fcm_token"] for f in filas]
+    finally:
+        conn.close()
+
+
+def eliminar_tokens_push(tokens: list[str]) -> None:
+    """Limpieza cuando app/push.py detecta que FCM ha rechazado un token
+    (desinstalado, expirado) -- se borra en vez de reintentar para
+    siempre."""
+    if not tokens:
+        return
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" for _ in tokens)
+        conn.execute(f"DELETE FROM dispositivos_push WHERE fcm_token IN ({marcadores})", tokens)
         conn.commit()
     finally:
         conn.close()

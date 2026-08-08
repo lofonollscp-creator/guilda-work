@@ -13,3 +13,9 @@ Pillow>=10.0
 # instalable por pip, sin binario de sistema externo (a diferencia de
 # weasyprint/wkhtmltopdf, que necesitan Pango/Cairo o un binario aparte).
 reportlab>=4.0
+# Notificaciones push a la app móvil (app/push.py) -- única excepción al
+# criterio de "solo urllib" del resto de integraciones de app/*.py: la API
+# HTTP v1 de FCM exige un JWT firmado RS256 canjeado por un token OAuth2,
+# y reimplementar eso a mano no compensa frente a la librería oficial.
+google-auth>=2.35
+requests>=2.31

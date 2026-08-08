@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
 import 'ajustes_servidor_dialog.dart';
@@ -10,8 +11,9 @@ class RegistroScreen extends StatefulWidget {
   final ApiClient api;
   final SessionService sesion;
   final SyncService sync;
+  final PushService push;
 
-  const RegistroScreen({super.key, required this.api, required this.sesion, required this.sync});
+  const RegistroScreen({super.key, required this.api, required this.sesion, required this.sync, required this.push});
 
   @override
   State<RegistroScreen> createState() => _RegistroScreenState();
@@ -51,6 +53,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
             api: widget.api,
             sesion: widget.sesion,
             sync: widget.sync,
+            push: widget.push,
           ),
         ),
         (route) => false,

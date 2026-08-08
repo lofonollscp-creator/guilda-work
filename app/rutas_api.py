@@ -982,6 +982,35 @@ def obtener_chat_config():
     return _ok({"homeserver_url": herramientas.MATRIX_HOMESERVER_URL})
 
 
+# --- Dispositivos push (Fase 10, notificaciones) ---------------------------
+
+@api_bp.route("/dispositivos-push", methods=["POST"])
+@token_required
+def registrar_dispositivo_push():
+    """La app móvil llama esto tras login y cada vez que Firebase le
+    entrega un token FCM nuevo (puede rotar) -- ver
+    mobile/lib/services/push_service.dart."""
+    datos = _body()
+    fcm_token = (datos.get("fcm_token") or "").strip()
+    plataforma = datos.get("plataforma") or ""
+    if not fcm_token or plataforma not in ("android", "ios"):
+        return _err("Faltan datos: fcm_token y plataforma (android/ios) son obligatorios.")
+    db.registrar_dispositivo_push(g.usuario_id, fcm_token, plataforma)
+    return _ok()
+
+
+@api_bp.route("/dispositivos-push", methods=["DELETE"])
+@token_required
+def eliminar_dispositivo_push():
+    """Se llama en logout para dejar de mandar push a un dispositivo del
+    que se ha cerrado sesión."""
+    fcm_token = (_body().get("fcm_token") or "").strip()
+    if not fcm_token:
+        return _err("Falta fcm_token.")
+    db.eliminar_dispositivo_push(g.usuario_id, fcm_token)
+    return _ok()
+
+
 # --- Documentación --------------------------------------------------------
 
 @api_bp.route("/openapi.json", methods=["GET"])

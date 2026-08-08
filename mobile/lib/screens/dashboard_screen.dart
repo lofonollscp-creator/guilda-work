@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/matrix_service.dart';
 import '../services/sync_service.dart';
@@ -22,6 +23,7 @@ class DashboardScreen extends StatefulWidget {
   final ApiClient api;
   final SessionService sesion;
   final SyncService sync;
+  final PushService push;
 
   const DashboardScreen({
     super.key,
@@ -29,6 +31,7 @@ class DashboardScreen extends StatefulWidget {
     required this.api,
     required this.sesion,
     required this.sync,
+    required this.push,
   });
 
   @override
@@ -50,6 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _cargaInicial = _cargar();
     _matrixService = MatrixService(api: widget.api);
+    widget.push.inicializar();
   }
 
   Future<void> _cargar() async {
@@ -127,11 +131,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _cerrarSesion() async {
+    await widget.push.alCerrarSesion();
     await widget.api.logout();
     await widget.sesion.borrarToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync)),
+      MaterialPageRoute(
+        builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push),
+      ),
       (route) => false,
     );
   }

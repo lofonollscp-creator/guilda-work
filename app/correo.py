@@ -54,7 +54,7 @@ from email.utils import getaddresses, parsedate_to_datetime
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
-from . import busqueda, db, eventos
+from . import busqueda, db, eventos, push
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
@@ -561,6 +561,8 @@ def _emitir_evento_correo_nuevo(usuario_id: int, cuenta_id: int, nuevos: int) ->
         eventos.emitir("correo.mensaje_nuevo", tenant["id"] if tenant else None, {"cuenta_id": cuenta_id, "nuevos": nuevos})
     except Exception:
         pass
+    cuerpo = "Tienes 1 mensaje nuevo." if nuevos == 1 else f"Tienes {nuevos} mensajes nuevos."
+    push.enviar_a_usuario(usuario_id, "Correo nuevo", cuerpo, {"tipo": "correo_nuevo", "cuenta_id": cuenta_id})
 
 
 def _reindexar_mensajes_recientes(usuario_id: int, cuenta_id: int, limite: int = 200) -> None:

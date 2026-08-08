@@ -149,6 +149,24 @@ class ApiClient {
     }
   }
 
+  // --- Dispositivos push (Fase 10, ver services/push_service.dart) ---------
+
+  Future<void> registrarDispositivoPush(String fcmToken, String plataforma) async {
+    try {
+      await _dio.post('/dispositivos-push', data: {'fcm_token': fcmToken, 'plataforma': plataforma});
+    } on DioException {
+      // No crítico: si falla, se reintenta en el siguiente arranque/refresco de token.
+    }
+  }
+
+  Future<void> eliminarDispositivoPush(String fcmToken) async {
+    try {
+      await _dio.delete('/dispositivos-push', data: {'fcm_token': fcmToken});
+    } on DioException {
+      // No crítico en logout: el servidor no volverá a mandar nada útil a un token sin sesión.
+    }
+  }
+
   // --- Dashboard / menús / notas / tareas con duración (Fase 4c) -----------
 
   Future<Map<String, dynamic>> dashboard() async {

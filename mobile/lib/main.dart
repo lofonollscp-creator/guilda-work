@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
+import 'screens/correo_bandeja_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/api_client.dart';
+import 'services/push_service.dart';
 import 'services/session_service.dart';
 import 'services/sync_service.dart';
 
@@ -30,6 +32,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
   late final SessionService _sesion;
   late final ApiClient _api;
   late final SyncService _sync;
+  late final PushService _push;
   StreamSubscription<List<ConnectivityResult>>? _conexionSub;
 
   @override
@@ -39,9 +42,20 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
     _sesion = SessionService();
     _api = ApiClient(_sesion);
     _sync = SyncService();
+    _push = PushService(_api);
+    // Al tocar una notificación de correo nuevo, abrir la bandeja de
+    // entrada directamente -- únicos datos que manda app/push.py hoy (ver
+    // app/correo.py:_emitir_evento_correo_nuevo).
+    _push.onTap = (datos) {
+      if (datos['tipo'] == 'correo_nuevo') {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: _api)),
+        );
+      }
+    };
     _api.onSesionExpirada = () {
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => LoginScreen(api: _api, sesion: _sesion, sync: _sync)),
+        MaterialPageRoute(builder: (_) => LoginScreen(api: _api, sesion: _sesion, sync: _sync, push: _push)),
         (route) => false,
       );
     };
@@ -73,7 +87,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
       navigatorKey: navigatorKey,
       title: 'Guilda Work',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-      home: _PantallaInicial(api: _api, sesion: _sesion, sync: _sync),
+      home: _PantallaInicial(api: _api, sesion: _sesion, sync: _sync, push: _push),
     );
   }
 }
@@ -85,20 +99,21 @@ class _PantallaInicial extends StatelessWidget {
   final ApiClient api;
   final SessionService sesion;
   final SyncService sync;
+  final PushService push;
 
-  const _PantallaInicial({required this.api, required this.sesion, required this.sync});
+  const _PantallaInicial({required this.api, required this.sesion, required this.sync, required this.push});
 
   Future<Widget> _resolverPantalla() async {
     final token = await sesion.obtenerToken();
     if (token == null) {
-      return LoginScreen(api: api, sesion: sesion, sync: sync);
+      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push);
     }
     try {
       final usuario = await api.quienSoy();
-      return DashboardScreen(usuario: usuario, api: api, sesion: sesion, sync: sync);
+      return DashboardScreen(usuario: usuario, api: api, sesion: sesion, sync: sync, push: push);
     } catch (_) {
       await sesion.borrarToken();
-      return LoginScreen(api: api, sesion: sesion, sync: sync);
+      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push);
     }
   }
 
