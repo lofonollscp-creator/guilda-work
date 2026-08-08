@@ -1424,13 +1424,27 @@ def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None) -> s
         conn.close()
 
 
+TOKEN_API_DIAS_INACTIVIDAD = 90
+
+
 def usuario_id_por_token(token: str) -> int | None:
+    """None si el token no existe, o si lleva TOKEN_API_DIAS_INACTIVIDAD días
+    sin usarse (se borra en el momento, no hace falta una tarea periódica
+    aparte: con que se compruebe en cada uso es suficiente para un catálogo
+    de tokens que no es previsible que crezca mucho)."""
     conn = get_connection()
     try:
         fila = conn.execute(
-            "SELECT usuario_id FROM tokens_api WHERE token_hash = ?", (_hash_token(token),)
+            "SELECT usuario_id, creado_en, ultimo_uso_en FROM tokens_api WHERE token_hash = ?",
+            (_hash_token(token),),
         ).fetchone()
         if fila is None:
+            return None
+        ultima_actividad = fila["ultimo_uso_en"] or fila["creado_en"]
+        limite = (datetime.now() - timedelta(days=TOKEN_API_DIAS_INACTIVIDAD)).isoformat(timespec="seconds")
+        if ultima_actividad < limite:
+            conn.execute("DELETE FROM tokens_api WHERE token_hash = ?", (_hash_token(token),))
+            conn.commit()
             return None
         conn.execute(
             "UPDATE tokens_api SET ultimo_uso_en = ? WHERE token_hash = ?",
@@ -1447,6 +1461,40 @@ def revocar_token_api(token: str) -> None:
     try:
         conn.execute("DELETE FROM tokens_api WHERE token_hash = ?", (_hash_token(token),))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_tokens_api(usuario_id: int):
+    """Dispositivos móviles con sesión activa de este usuario (para la
+    pantalla "Mis dispositivos" y, con verificación de tenant en la propia
+    ruta, para que un admin revoque los de un compañero de tenant) — nunca
+    expone el token ni su hash, solo lo necesario para reconocerlo y
+    decidir si revocarlo."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en FROM tokens_api "
+            "WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def revocar_token_api_por_id(usuario_id: int, token_id: int) -> bool:
+    """Revoca por id en vez de por token (la web nunca tiene el token en
+    claro, solo el móvil lo guarda). Exige usuario_id para que un usuario
+    no pueda revocar el token de otro solo adivinando su id — quien llame
+    a esto con el id de un compañero de tenant debe haber verificado antes
+    que puede administrar sus dispositivos (ver backoffice)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "DELETE FROM tokens_api WHERE id = ? AND usuario_id = ?", (token_id, usuario_id)
+        )
+        conn.commit()
+        return cur.rowcount > 0
     finally:
         conn.close()
 

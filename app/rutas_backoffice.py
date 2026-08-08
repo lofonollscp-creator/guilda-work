@@ -545,6 +545,32 @@ def alternar_gestor_fichajes(usuario_id: int):
     return redirect(url_for("backoffice.panel"))
 
 
+@backoffice_bp.route("/usuarios/<int:usuario_id>/dispositivos")
+@login_required
+@admin_required
+def dispositivos_usuario(usuario_id: int):
+    """Sesiones de la app móvil de un usuario cualquiera, para el caso de
+    que se vaya de la empresa sin poder (o querer) revocarlas él mismo
+    desde "Mis dispositivos" (ver main.py:mis_dispositivos) -- mismo
+    alcance que el resto del backoffice, sin restringir por tenant."""
+    usuario = db.obtener_usuario(usuario_id)
+    if usuario is None:
+        abort(404)
+    return render_template(
+        "backoffice_dispositivos.html",
+        usuario=usuario,
+        dispositivos=db.listar_tokens_api(usuario_id),
+    )
+
+
+@backoffice_bp.route("/usuarios/<int:usuario_id>/dispositivos/<int:token_id>/revocar", methods=["POST"])
+@login_required
+@admin_required
+def revocar_dispositivo_usuario(usuario_id: int, token_id: int):
+    db.revocar_token_api_por_id(usuario_id, token_id)
+    return redirect(url_for("backoffice.dispositivos_usuario", usuario_id=usuario_id))
+
+
 @backoffice_bp.route("/webhooks", methods=["POST"])
 @login_required
 @admin_required

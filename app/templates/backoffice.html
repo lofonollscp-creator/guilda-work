@@ -206,6 +206,7 @@
           </td>
           <td class="mono">{{ u.creado_en[:10] }}</td>
           <td>
+            <a class="btn btn-ghost" href="{{ url_for('backoffice.dispositivos_usuario', usuario_id=u.id) }}">Dispositivos</a>
             {% if u.id != g.usuario_id %}
             <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}">
               <button type="submit" class="btn btn-ghost">{{ 'Quitar admin' if u.rol == 'admin' else 'Hacer admin' }}</button>

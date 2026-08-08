@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Dispositivos de {{ usuario.email }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Dispositivos de {{ usuario.email }}</h1>
+    <p class="subtitle">Sesiones activas de la app móvil de Guilda Work para este usuario.</p>
+  </div>
+</header>
+
+<a class="btn btn-ghost" href="{{ url_for('backoffice.panel') }}">&larr; Volver al backoffice</a>
+
+{% if not dispositivos %}
+<p class="empty-lane" style="margin-top: 16px;">Este usuario no tiene ningún dispositivo móvil con sesión activa.</p>
+{% else %}
+<ul class="log-list" style="margin-top: 16px;">
+  {% for d in dispositivos %}
+  <li class="log-item">
+    <span class="avatar-circulo" style="--avatar-color: {{ (d.nombre_dispositivo or 'Dispositivo')|avatar_color }};">{{ (d.nombre_dispositivo or 'Dispositivo')|iniciales }}</span>
+    <span class="log-text">{{ d.nombre_dispositivo or 'Dispositivo sin nombre' }}
+      <span class="muted">(conectado {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · último uso {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %})</span>
+    </span>
+    <form action="{{ url_for('backoffice.revocar_dispositivo_usuario', usuario_id=usuario.id, token_id=d.id) }}" method="post"
+          onsubmit="return confirm('¿Revocar el acceso de «{{ d.nombre_dispositivo or 'este dispositivo' }}»? {{ usuario.email }} tendrá que iniciar sesión de nuevo en la app.');">
+      <button type="submit" class="chip-del" title="Revocar acceso">✕</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Mis dispositivos — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Mis dispositivos</h1>
+    <p class="subtitle">Sesiones activas de la app móvil de Guilda Work. Si pierdes un móvil, revócalo aquí para cortarle el acceso.</p>
+  </div>
+</header>
+
+{% if not dispositivos %}
+<p class="empty-lane">No tienes ningún dispositivo móvil con sesión activa.</p>
+{% else %}
+<ul class="log-list" style="margin-top: 16px;">
+  {% for d in dispositivos %}
+  <li class="log-item">
+    <span class="avatar-circulo" style="--avatar-color: {{ (d.nombre_dispositivo or 'Dispositivo')|avatar_color }};">{{ (d.nombre_dispositivo or 'Dispositivo')|iniciales }}</span>
+    <span class="log-text">{{ d.nombre_dispositivo or 'Dispositivo sin nombre' }}
+      <span class="muted">(conectado {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · último uso {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %})</span>
+    </span>
+    <form action="{{ url_for('revocar_dispositivo', token_id=d.id) }}" method="post"
+          onsubmit="return confirm('¿Revocar el acceso de «{{ d.nombre_dispositivo or 'este dispositivo' }}»? Tendrá que iniciar sesión de nuevo en la app.');">
+      <button type="submit" class="chip-del" title="Revocar acceso">✕</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<p class="muted" style="margin-top: 24px;">Un dispositivo que lleva más de 90 días sin usarse se desconecta automáticamente, aunque no lo revoques a mano.</p>
+{% endblock %}

@@ -683,6 +683,23 @@ def herramientas_vista():
     )
 
 
+@app.route("/mis-dispositivos")
+@login_required
+def mis_dispositivos():
+    """Sesiones de la app móvil (tokens de app/rutas_api.py) — un usuario
+    revoca aquí las suyas propias (p.ej. si pierde el móvil); un admin
+    revoca además las de sus compañeros de tenant desde el backoffice (ver
+    backoffice.dispositivos_tenant más abajo)."""
+    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id))
+
+
+@app.route("/mis-dispositivos/<int:token_id>/revocar", methods=["POST"])
+@login_required
+def revocar_dispositivo(token_id):
+    db.revocar_token_api_por_id(g.usuario_id, token_id)
+    return redirect(url_for("mis_dispositivos"))
+
+
 @app.route("/estadisticas")
 @login_required
 def estadisticas():
