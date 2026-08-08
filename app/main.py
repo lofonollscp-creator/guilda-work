@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 import webview
-from flask import Flask, Response, abort, g, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
 
 from . import ai_local, busqueda, correo, db, export, herramientas, ia_asistente, importador, kratos
 from .auth import limiter, login_required
@@ -226,6 +226,49 @@ def _flujo_o_redirigir(tipo: str):
     }
 
 
+# Orígenes de la landing pública (fuera de este repo, /var/www/landing/),
+# única fuente legítima de peticiones CORS a /contacto — no se abre CORS al
+# resto de la app, solo a este endpoint público sin autenticación.
+_ORIGENES_LANDING = {"https://guildawork.com", "https://www.guildawork.com"}
+
+
+def _con_cors_landing(resp):
+    origen = request.headers.get("Origin")
+    if origen in _ORIGENES_LANDING:
+        resp.headers["Access-Control-Allow-Origin"] = origen
+        resp.headers["Access-Control-Allow-Methods"] = "POST"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return resp
+
+
+@app.route("/contacto", methods=["POST", "OPTIONS"])
+@limiter.limit("5/hour")
+def contacto():
+    """Formulario de contacto de la landing (guildawork.com) — no crea
+    tenant ni usuario, solo guarda el interés en leads_contacto para que
+    un admin lo procese a mano desde el backoffice (ver
+    backoffice.crear_tenant/crear_usuario). Sin @login_required: lo llama
+    un visitante anónimo desde fuera de la app."""
+    if request.method == "OPTIONS":
+        return _con_cors_landing(make_response("", 204))
+
+    datos = request.get_json(silent=True) or {}
+    nombre = (datos.get("nombre") or "").strip()
+    email = (datos.get("email") or "").strip()
+    if not nombre or not email or "@" not in email:
+        return _con_cors_landing(
+            make_response(jsonify({"ok": False, "error": "Faltan datos: nombre y email son obligatorios."}), 400)
+        )
+    db.crear_lead_contacto(
+        nombre,
+        email,
+        empresa=(datos.get("empresa") or "").strip() or None,
+        telefono=(datos.get("telefono") or "").strip() or None,
+        mensaje=(datos.get("mensaje") or "").strip() or None,
+    )
+    return _con_cors_landing(make_response(jsonify({"ok": True})))
+
+
 @app.route("/registro", methods=["GET"])
 def registro():
     if g.usuario_id:
@@ -252,9 +295,23 @@ def logout():
     return redirect(url or url_for("login"))
 
 
+@app.route("/pendiente-activacion")
+@login_required
+def pendiente_activacion():
+    return render_template("pendiente_activacion.html")
+
+
 @app.route("/")
 @login_required
 def inicio():
+    # Un usuario recién registrado por /registro (Kratos) no tiene tenant
+    # hasta que un admin lo asigna a mano desde el backoffice (ver
+    # backoffice.asignar_tenant_usuario) — sin este aviso, entraba en una
+    # app completamente vacía sin ninguna pista de qué está pasando.
+    # No aplica en modo escritorio (usuario local siempre provisionado) ni
+    # a admins (jorge y compañía operan a propósito sin tenant asignado).
+    if not MODO_ESCRITORIO and g.tenant_id is None and not g.es_admin:
+        return redirect(url_for("pendiente_activacion"))
     menus = db.listar_categorias(g.usuario_id)
     activas = db.tareas_activas(g.usuario_id)
     activas_por_menu: dict[int, list] = {}

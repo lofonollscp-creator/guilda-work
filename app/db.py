@@ -75,6 +75,21 @@ CREATE TABLE IF NOT EXISTS tokens_api (
     ultimo_uso_en TEXT
 );
 
+-- Solicitudes de contacto desde la landing pública (guildawork.com) — no
+-- crea tenant ni usuario por sí sola: el alta sigue siendo manual desde el
+-- backoffice (ver app/rutas_backoffice.py:crear_tenant/crear_usuario), esto
+-- solo guarda el interés para que un admin lo procese.
+CREATE TABLE IF NOT EXISTS leads_contacto (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    empresa TEXT,
+    email TEXT NOT NULL,
+    telefono TEXT,
+    mensaje TEXT,
+    creado_en TEXT NOT NULL,
+    atendido INTEGER NOT NULL DEFAULT 0
+);
+
 -- Webhooks salientes (ver app/eventos.py). tenant_id NULL = modo
 -- escritorio/usuario sin tenant (mismo criterio que otras tablas ya
 -- nullable de este archivo) — se asocia al usuario que lo dio de alta
@@ -1495,6 +1510,42 @@ def revocar_token_api_por_id(usuario_id: int, token_id: int) -> bool:
         )
         conn.commit()
         return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def crear_lead_contacto(
+    nombre: str, email: str, empresa: str | None = None,
+    telefono: str | None = None, mensaje: str | None = None,
+) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO leads_contacto (nombre, empresa, email, telefono, mensaje, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (nombre, empresa, email, telefono, mensaje, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_leads_contacto():
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM leads_contacto ORDER BY atendido ASC, creado_en DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_lead_atendido(lead_id: int, atendido: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE leads_contacto SET atendido = ? WHERE id = ?", (1 if atendido else 0, lead_id))
+        conn.commit()
     finally:
         conn.close()
 

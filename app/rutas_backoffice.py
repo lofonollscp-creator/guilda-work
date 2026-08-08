@@ -53,6 +53,7 @@ def panel():
         "backoffice.html",
         tenants=tenants,
         usuarios=db.listar_usuarios(),
+        leads=db.listar_leads_contacto(),
         resultados_alta=None,
         facturascripts_creado=None,
         calcom_creado=None,
@@ -221,6 +222,7 @@ def crear_tenant():
             "backoffice.html",
             tenants=tenants,
             usuarios=db.listar_usuarios(),
+            leads=db.listar_leads_contacto(),
             resultados_alta=None,
             facturascripts_creado=facturascripts_creado,
             calcom_creado=calcom_creado,
@@ -412,6 +414,7 @@ def crear_usuario():
             "backoffice.html",
             tenants=tenants,
             usuarios=db.listar_usuarios(),
+            leads=db.listar_leads_contacto(),
             resultados_alta=None,
             error=str(e),
             **_contexto_herramientas(tenants),
@@ -492,6 +495,7 @@ def crear_usuario():
         "backoffice.html",
         tenants=tenants,
         usuarios=db.listar_usuarios(),
+        leads=db.listar_leads_contacto(),
         resultados_alta=resultados_alta,
         email_creado=email,
         **_contexto_herramientas(tenants),
@@ -569,6 +573,14 @@ def dispositivos_usuario(usuario_id: int):
 def revocar_dispositivo_usuario(usuario_id: int, token_id: int):
     db.revocar_token_api_por_id(usuario_id, token_id)
     return redirect(url_for("backoffice.dispositivos_usuario", usuario_id=usuario_id))
+
+
+@backoffice_bp.route("/leads/<int:lead_id>/atendido", methods=["POST"])
+@login_required
+@admin_required
+def marcar_lead_atendido(lead_id: int):
+    db.marcar_lead_atendido(lead_id, request.form.get("atendido") == "1")
+    return redirect(url_for("backoffice.panel"))
 
 
 @backoffice_bp.route("/webhooks", methods=["POST"])

@@ -65,6 +65,45 @@
 {% endif %}
 
 <section class="ia-section">
+  <h3>Leads de contacto (landing)</h3>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Empresa</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Mensaje</th>
+          <th>Recibido</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in leads %}
+        <tr>
+          <td>{{ l.nombre }}</td>
+          <td>{{ l.empresa or '—' }}</td>
+          <td><a href="mailto:{{ l.email }}">{{ l.email }}</a></td>
+          <td>{{ l.telefono or '—' }}</td>
+          <td>{{ l.mensaje or '—' }}</td>
+          <td class="mono">{{ l.creado_en[:16].replace('T', ' ') }}</td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.marcar_lead_atendido', lead_id=l.id) }}">
+              <input type="hidden" name="atendido" value="{{ '0' if l.atendido else '1' }}">
+              <button type="submit" class="btn btn-ghost">{{ 'Marcar pendiente' if l.atendido else 'Marcar atendido' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty">Todavía no ha llegado ningún lead desde la landing.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="ia-section">
   <h3>Tenants</h3>
   <div class="table-wrap">
     <table class="historial-table">
