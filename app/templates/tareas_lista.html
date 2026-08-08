@@ -43,7 +43,9 @@
   </label>
   {% endif %}
   <button type="submit" class="btn btn-primary">Filtrar</button>
-  {% if not (q or estado or prioridad or categoria) %}
+  {% if q or estado or prioridad or categoria %}
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">Limpiar</a>
+  {% else %}
   <a class="btn btn-ghost" href="{{ url_for('tareas.listar', completadas=1) }}">Ver también completadas</a>
   {% endif %}
 </form>
@@ -53,13 +55,20 @@
     <label>Nueva tarea</label>
     <div class="quick-row">
       <input type="text" name="asunto" placeholder="Asunto..." required autofocus>
-      <input type="date" name="fecha_vencimiento" title="Fecha de vencimiento">
+      <input type="datetime-local" name="fecha_inicio" title="Fecha y hora de inicio">
+      <input type="datetime-local" name="fecha_vencimiento" title="Fecha y hora de vencimiento">
       <select name="prioridad" title="Prioridad">
         {% for valor, etiqueta in prioridades %}
         <option value="{{ valor }}" {% if valor == 'normal' %}selected{% endif %}>{{ etiqueta }}</option>
         {% endfor %}
       </select>
-      <input type="text" name="categoria_outlook" placeholder="Categoría (opcional)" list="categorias-outlook-datalist">
+      {% if menus %}
+      <select name="categoria_id" title="Menú">
+        <option value="">Sin menú</option>
+        {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <input type="text" name="categoria_outlook" placeholder="Categoría Outlook (opcional)" list="categorias-outlook-datalist">
       <datalist id="categorias-outlook-datalist">
         {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
       </datalist>

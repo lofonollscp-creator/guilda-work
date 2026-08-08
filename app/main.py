@@ -29,10 +29,12 @@ from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_correo import correo_bp
 from .rutas_docs import docs_bp
+from .rutas_fichaje import fichaje_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import kratos_proxy_bp
 from .rutas_tareas import tareas_bp
+from .rutas_tiquets import tiquets_bp
 
 HOST = "127.0.0.1"
 PORT = 5057
@@ -80,6 +82,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.secret_key = os.environ.get("GUILDA_SECRET_KEY") or secrets.token_hex(32)
 limiter.init_app(app)
 app.register_blueprint(tareas_bp)
+app.register_blueprint(tiquets_bp)
+app.register_blueprint(fichaje_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
@@ -101,6 +105,9 @@ def _resolver_usuario_actual():
             session["usuario_id"] = db.usuario_local_id()
         g.usuario_id = session.get("usuario_id")
         g.es_admin = db.es_admin(g.usuario_id)
+        tenant = db.tenant_de_usuario(g.usuario_id)
+        g.tenant_id = tenant["id"] if tenant else None
+        g.gestor_fichajes = db.es_gestor_fichajes(g.usuario_id)
         return
 
     # Modo hospedado: identidad real vía Ory Kratos. Solo se llama a Kratos
@@ -108,6 +115,8 @@ def _resolver_usuario_actual():
     # HTTP en cada visita anónima (página de login, assets, etc.).
     g.usuario_id = None
     g.es_admin = False
+    g.tenant_id = None
+    g.gestor_fichajes = False
     if KRATOS_SESSION_COOKIE not in request.cookies:
         return
     sesion_kratos = kratos.whoami(request.cookies)
@@ -124,6 +133,18 @@ def _resolver_usuario_actual():
     else:
         g.usuario_id = usuario["id"]
         g.es_admin = usuario["rol"] == "admin"
+        g.tenant_id = usuario["tenant_id"]
+        g.gestor_fichajes = bool(usuario["gestor_fichajes"])
+
+
+@app.context_processor
+def inyectar_modo_escritorio():
+    # Función (no un valor fijado una vez) porque MODO_ESCRITORIO puede
+    # cambiar de False a True después de que Flask ya esté creado (ver
+    # activar_modo_escritorio() más abajo, usado por el lanzador .exe) --
+    # leerlo aquí en cada petición evita que quede congelado al valor de
+    # cuando se registró este context_processor.
+    return {"modo_escritorio": MODO_ESCRITORIO}
 
 
 @app.context_processor
@@ -386,6 +407,8 @@ def crear_tarea():
     categoria_id = request.form.get("categoria_id")
     tipo = request.form.get("tipo", "duracion")
     if nombre and categoria_id:
+        if db.obtener_categoria(g.usuario_id, int(categoria_id)) is None:
+            abort(404)
         db.crear_tarea(g.usuario_id, nombre, int(categoria_id), tipo)
     return redirect(request.referrer or url_for("inicio"))
 
@@ -744,22 +767,28 @@ def eliminar_menu_definitivamente(menu_id: int):
 @app.route("/papelera/vaciar", methods=["POST"])
 @login_required
 def vaciar_papelera():
-    # dias=0 purgaría la papelera de TODOS los usuarios (vaciar_papelera_antigua
-    # no filtra por usuario) — aceptable en modo escritorio (un único usuario
-    # real de todas formas); revisar si esto llega a servir a varios usuarios
-    # de verdad en la Fase 3 (hosting).
-    db.vaciar_papelera_antigua(dias=0)
+    db.vaciar_papelera_antigua(dias=0, usuario_id=g.usuario_id)
     return redirect(url_for("papelera"))
 
 
 @app.route("/apagar", methods=["POST"])
+@login_required
 def apagar():
     """Cierra el servidor y termina el proceso por completo (evita procesos zombis).
 
     Todo lo que ya se ha guardado (notas, tareas, menús) está en SQLite con
     commit inmediato en cada operación, así que no hay nada "pendiente" que
     perder al cerrar: no hace falta guardar nada aquí, solo terminar el proceso.
-    """
+
+    Solo tiene sentido en modo escritorio (un único proceso local de una
+    sola persona) -- en modo hospedado apagaría el servicio para TODOS los
+    tenants a la vez. Antes de este chequeo, la ruta no tenía ningún
+    control de acceso: cualquiera sin sesión podía apagar el servicio
+    entero con un POST a /apagar (encontrado en producción, corregido
+    junto con esto)."""
+    if not MODO_ESCRITORIO:
+        abort(404)
+
     def _cerrar_proceso():
         time.sleep(0.6)  # da tiempo a que la respuesta llegue a la ventana
         os._exit(0)

@@ -28,7 +28,9 @@ def _notas() -> list[dict]:
     conn = db.get_connection()
     try:
         return [dict(f) for f in conn.execute(
-            "SELECT id, usuario_id, texto, categoria_id, creada_en FROM notas WHERE papelera_en IS NULL"
+            """SELECT n.id, n.usuario_id, n.texto, n.categoria_id, n.creada_en, c.nombre AS categoria_nombre
+               FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+               WHERE n.papelera_en IS NULL"""
         )]
     finally:
         conn.close()
@@ -38,7 +40,9 @@ def _tareas() -> list[dict]:
     conn = db.get_connection()
     try:
         return [dict(f) for f in conn.execute(
-            "SELECT id, usuario_id, nombre, categoria_id, inicio_en FROM tareas WHERE papelera_en IS NULL"
+            """SELECT t.id, t.usuario_id, t.nombre, t.categoria_id, t.inicio_en, c.nombre AS categoria_nombre
+               FROM tareas t LEFT JOIN categorias c ON c.id = t.categoria_id
+               WHERE t.papelera_en IS NULL"""
         )]
     finally:
         conn.close()

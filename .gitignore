@@ -3,6 +3,7 @@ __pycache__/
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/correo-keyring.cfg
 data/backups/
 data/.*-litestream/
 exports/*.json
@@ -16,6 +17,7 @@ dist/
 .pytest_cache/
 .env
 deploy/synapse/guilda-overrides.yaml
+deploy/mas/config.yaml
 deploy/synapse/guilda-overrides.local-https.yaml
 deploy/synapse/guilda-overrides.lan.yaml
 caddy-local-root.crt

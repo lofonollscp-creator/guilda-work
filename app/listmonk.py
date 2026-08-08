@@ -307,7 +307,8 @@ def listar_suscriptores(api_key: str, list_id: int, texto: str | None = None, li
         return []
     parametros = {"list_id": list_id, "per_page": limite}
     if texto:
-        parametros["query"] = f"subscribers.email LIKE '%{texto}%' OR subscribers.name LIKE '%{texto}%'"
+        texto_seguro = texto.replace("'", "''")
+        parametros["query"] = f"subscribers.email LIKE '%{texto_seguro}%' OR subscribers.name LIKE '%{texto_seguro}%'"
     estado, cuerpo = _peticion(f"/api/subscribers?{urllib.parse.urlencode(parametros)}", cabeceras=_cabecera_token(api_key))
     if estado != 200:
         mensaje = cuerpo.get("message") or cuerpo

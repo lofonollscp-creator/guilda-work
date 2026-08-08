@@ -41,6 +41,7 @@ documentos (mismo motivo que en app/documenso.py: Paperless-ngx exige
 """
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -249,9 +250,14 @@ def subir_documento(api_key: str, owner_id: int, group_id: int, titulo: str, con
     if not api_key:
         raise ErrorPaperless("Este tenant no tiene Paperless-ngx aprovisionado todavía.")
     limite = uuid.uuid4().hex
+    # titulo/nombre_archivo viajan crudos hasta la cabecera Content-Disposition
+    # del multipart — sin esto, un valor con \r\n o " podría inyectar
+    # cabeceras/partes adicionales en la petición a Paperless-ngx.
+    titulo_seguro = re.sub(r'[\r\n"]', "", titulo)
+    nombre_archivo_seguro = re.sub(r'[\r\n"]', "", nombre_archivo)
     cuerpo = (
-        f"--{limite}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n{titulo}\r\n"
-        f"--{limite}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{nombre_archivo}\"\r\n"
+        f"--{limite}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n{titulo_seguro}\r\n"
+        f"--{limite}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{nombre_archivo_seguro}\"\r\n"
         f"Content-Type: application/pdf\r\n\r\n"
     ).encode("utf-8") + contenido_pdf + f"\r\n--{limite}--\r\n".encode("utf-8")
 

@@ -127,7 +127,7 @@
     <h3>Registro de {{ menu.nombre }}</h3>
     <form class="search-form" method="get" action="{{ url_for('ver_menu', menu_id=menu.id) }}">
       <input type="search" name="q" value="{{ q }}" placeholder="Buscar en este menú...">
-      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}">✕</a>{% endif %}
+      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="Limpiar búsqueda">✕</a>{% endif %}
     </form>
   </div>
   {% if not log %}

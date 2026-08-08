@@ -3,8 +3,13 @@ flask-limiter>=4.0
 waitress>=3.0
 icalendar>=5.0
 keyring>=24.0
+keyrings.cryptfile>=1.3.9
 pyinstaller>=6.0
 pywebview>=5.0
 pystray>=0.19
 keyboard>=0.13
 Pillow>=10.0
+# Export PDF del registro de fichaje (app/fichaje_export.py) -- puro Python
+# instalable por pip, sin binario de sistema externo (a diferencia de
+# weasyprint/wkhtmltopdf, que necesitan Pango/Cairo o un binario aparte).
+reportlab>=4.0

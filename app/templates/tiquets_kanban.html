@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Tiquets — Kanban — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Tiquets</h1>
+    <p class="subtitle">
+      {% if g.es_admin %}Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.
+      {% else %}Solo un administrador puede mover tiquets entre columnas.{% endif %}
+    </p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('tiquets.tarjetas') }}">Tarjetas</a>
+  <a class="active" href="{{ url_for('tiquets.kanban') }}">Kanban</a>
+</nav>
+
+<div class="tiquets-kanban">
+  {% for valor, etiqueta in estados %}
+  <div class="tiquets-kanban-col">
+    <h2>{{ etiqueta }} ({{ por_estado[valor]|length }})</h2>
+    <div class="tiquets-kanban-tarjetas">
+      {% for t in por_estado[valor] %}
+      <article class="tiquet-card">
+        <div class="tiquet-card-top">
+          <span class="tiquet-card-numero">#{{ t.id }}</span>
+          <span class="pill">{{ tipos|selectattr('0', 'equalto', t.tipo)|map(attribute='1')|first }}</span>
+        </div>
+        <h3 class="tiquet-card-titulo">{{ t.titulo }}</h3>
+        {% if t.descripcion %}<p class="tiquet-card-desc">{{ t.descripcion }}</p>{% endif %}
+        {% if adjuntos_por_tiquet[t.id] %}
+        <div class="correo-adjuntos">
+          {% for a in adjuntos_por_tiquet[t.id] %}
+          <a class="correo-adjunto-chip" href="{{ url_for('tiquets.descargar_adjunto', tiquet_id=t.id, adjunto_id=a.id) }}" target="_blank" rel="noopener">
+            📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="tiquet-card-pie">
+          <span class="tiquet-card-autor">{{ t.autor_email or '(usuario eliminado)' }}</span>
+          {% if puede_borrar_tiquet(t) %}
+          <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
+                onsubmit="return confirm('¿Eliminar el tiquet #{{ t.id }}? No se puede deshacer.');">
+            <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
+            <button type="submit" class="chip-del" title="Eliminar">✕</button>
+          </form>
+          {% endif %}
+        </div>
+        {% if g.es_admin %}
+        <form action="{{ url_for('tiquets.cambiar_estado', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
+          <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
+          <select name="estado" onchange="this.form.requestSubmit()">
+            {% for e_valor, e_etiqueta in estados %}
+            <option value="{{ e_valor }}" {% if e_valor == valor %}selected{% endif %}>{{ e_etiqueta }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% endif %}
+      </article>
+      {% endfor %}
+      {% if not por_estado[valor] %}
+      <p class="empty-lane">Sin tiquets aquí.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

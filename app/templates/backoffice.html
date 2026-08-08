@@ -71,6 +71,7 @@
       <thead>
         <tr>
           <th>Nombre</th>
+          <th>Fichaje (CIF / dirección fiscal)</th>
           <th>Usuarios</th>
           <th>FacturaScripts</th>
           <th>Documenso</th>
@@ -86,6 +87,14 @@
             <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
               <input type="text" name="nombre" value="{{ t.nombre }}" required>
               <button type="submit" class="btn btn-ghost">Renombrar</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
+              <input type="hidden" name="nombre" value="{{ t.nombre }}">
+              <input type="text" name="cif" value="{{ t.cif or '' }}" placeholder="CIF" style="width:90px;">
+              <input type="text" name="direccion_fiscal" value="{{ t.direccion_fiscal or '' }}" placeholder="Dirección fiscal" style="width:160px;">
+              <button type="submit" class="btn btn-ghost">Guardar</button>
             </form>
           </td>
           <td class="mono">{{ t.n_usuarios }}</td>
@@ -168,6 +177,7 @@
           <th>Email</th>
           <th>Tenant</th>
           <th>Rol</th>
+          <th>Fichaje</th>
           <th>Alta</th>
           <th></th>
         </tr>
@@ -189,6 +199,11 @@
           <td>
             <span class="log-badge {{ 'log-badge-duracion' if u.rol == 'admin' else 'log-badge-instantanea' }}">{{ u.rol }}</span>
           </td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}">
+              <button type="submit" class="btn btn-ghost">{{ 'Quitar gestor' if u.gestor_fichajes else 'Hacer gestor' }}</button>
+            </form>
+          </td>
           <td class="mono">{{ u.creado_en[:10] }}</td>
           <td>
             {% if u.id != g.usuario_id %}
@@ -199,7 +214,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="empty">Todavía no hay ningún usuario.</td></tr>
+        <tr><td colspan="6" class="empty">Todavía no hay ningún usuario.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -279,9 +294,9 @@
       </select>
     </label>
     <label>URL <input type="url" name="url" placeholder="https://ejemplo.com/webhook" required></label>
-    <fieldset style="border:none; padding:0; margin:0;">
+    <fieldset class="webhook-eventos">
       {% for ev in eventos_disponibles %}
-      <label style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;">
+      <label>
         <input type="checkbox" name="eventos" value="{{ ev }}"> {{ ev }}
       </label>
       {% endfor %}

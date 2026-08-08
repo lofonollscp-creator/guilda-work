@@ -55,9 +55,11 @@ from __future__ import annotations
 
 import base64
 import contextvars
+import secrets
 import sqlite3
 import uuid
 
+from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.fastmcp import FastMCP
 
 from app import (
@@ -74,6 +76,7 @@ from app import (
     facturascripts,
     importador,
     jitsi,
+    kratos,
     listmonk,
     metabase,
     minio_cliente,
@@ -86,6 +89,7 @@ from app import (
     paperless,
     stalwart,
     synapse,
+    umami,
     uptime_kuma,
 )
 
@@ -102,7 +106,29 @@ _usuario_id_actual: contextvars.ContextVar[int | None] = contextvars.ContextVar(
 
 
 def _uid() -> int:
-    return _usuario_id_actual.get() or db.usuario_local_id()
+    """Resuelve el usuario "actual" para esta llamada, en orden:
+    1. `_usuario_id_actual` — el Asistente IA integrado en la app lo fija
+       explícitamente al usuario que ha iniciado sesión en la web.
+    2. El `sub` del token OAuth2 verificado por `mcp_server_remoto.py`
+       (`VerificadorHydra`, ver ese archivo) — el mismo identity_id de
+       Kratos que ya usa `app/rutas_hydra.py` al aceptar el login/consent.
+       Sin esto, cualquier llamada desde un cliente MCP remoto (Claude
+       Desktop, ChatGPT) operaría siempre sobre el usuario local aunque
+       cada persona se autentique con su propia cuenta — encontrado en
+       vivo: una tarea creada así no aparecía en la web del usuario que
+       la pidió, porque quedaba guardada bajo el usuario local (id 1) en
+       vez del suyo.
+    3. `db.usuario_local_id()` — cliente MCP local (stdio) sin sesión web
+       de por medio, mismo comportamiento de siempre para Claude Code/
+       Codex CLI en modo escritorio."""
+    if _usuario_id_actual.get():
+        return _usuario_id_actual.get()
+    token = get_access_token()
+    if token is not None and token.subject:
+        usuario = db.usuario_por_kratos_id(token.subject)
+        if usuario is not None:
+            return usuario["id"]
+    return db.usuario_local_id()
 
 
 def _fila(fila: sqlite3.Row | None) -> dict | None:
@@ -181,13 +207,21 @@ def listar_tareas(
 
 def crear_tarea(
     asunto: str, prioridad: str = "normal", fecha_inicio: str | None = None,
-    fecha_vencimiento: str | None = None, categoria: str | None = None, cuerpo: str | None = None,
+    fecha_vencimiento: str | None = None, categoria: str | None = None,
+    menu: str | int | None = None, cuerpo: str | None = None,
 ) -> dict:
-    """Crea una tarea (estilo Outlook). `prioridad`: baja/normal/alta. Fechas en 'YYYY-MM-DD'."""
+    """Crea una tarea (estilo Outlook). `prioridad`: baja/normal/alta.
+    `fecha_inicio`/`fecha_vencimiento` aceptan tanto solo fecha
+    ('YYYY-MM-DD') como fecha y hora ('YYYY-MM-DD HH:MM') si quieres fijar
+    una franja horaria concreta, p.ej. de 14:00 a 15:00. `categoria` es el
+    campo de texto libre heredado de Outlook (no confundir con `menu`,
+    el nombre o id de un menú real de Guilda Work — ver listar_notas para
+    ver los menús existentes)."""
     uid = _uid()
     tarea_id = db.crear_tarea_outlook(
         uid, asunto, cuerpo=cuerpo, prioridad=prioridad, fecha_inicio=fecha_inicio,
         fecha_vencimiento=fecha_vencimiento, categoria_outlook=categoria,
+        categoria_id=_resolver_categoria_id(menu),
     )
     return _fila(db.obtener_tarea_outlook(uid, tarea_id))
 
@@ -195,14 +229,18 @@ def crear_tarea(
 def editar_tarea(
     tarea_id: int, asunto: str | None = None, cuerpo: str | None = None, estado: str | None = None,
     prioridad: str | None = None, fecha_inicio: str | None = None, fecha_vencimiento: str | None = None,
-    categoria: str | None = None,
+    categoria: str | None = None, menu: str | int | None = None,
 ) -> dict:
-    """Edita los campos indicados de una tarea existente (solo se tocan los que se pasen)."""
+    """Edita los campos indicados de una tarea existente (solo se tocan los
+    que se pasen). Mismo formato de fechas y misma distinción
+    `categoria`/`menu` que crear_tarea."""
     uid = _uid()
     campos = {
         "asunto": asunto, "cuerpo": cuerpo, "estado": estado, "prioridad": prioridad,
         "fecha_inicio": fecha_inicio, "fecha_vencimiento": fecha_vencimiento, "categoria_outlook": categoria,
     }
+    if menu is not None:
+        campos["categoria_id"] = _resolver_categoria_id(menu)
     db.editar_tarea_outlook(uid, tarea_id, **{k: v for k, v in campos.items() if v is not None})
     tarea = db.obtener_tarea_outlook(uid, tarea_id)
     if tarea is None:
@@ -226,6 +264,26 @@ def consultar_calendario(desde: str, hasta: str) -> list[dict]:
 
 
 # --- Correo --------------------------------------------------------------------
+
+def conectar_cuenta_correo(
+    nombre: str, protocolo: str, host: str, puerto: int, usuario: str, contrasena: str,
+    usa_tls: bool = True, smtp_host: str | None = None,
+    smtp_puerto: int | None = None, smtp_tls: bool = True,
+) -> dict:
+    """Conecta una cuenta de correo IMAP o POP3 nueva (protocolo: "imap" o
+    "pop3"). Prueba la conexión antes de guardar nada — si las credenciales
+    o el servidor son incorrectos, no crea la cuenta. La contraseña se
+    guarda cifrada en el almacén de credenciales del sistema, nunca en la
+    base de datos. Si no se indican smtp_host/smtp_puerto, se asume el
+    mismo servidor y la misma contraseña que para IMAP/POP3 (lo habitual en
+    la inmensa mayoría de proveedores) para enviar correo más adelante."""
+    cuenta_id = correo.guardar_cuenta(
+        _uid(), nombre=nombre, protocolo=protocolo, host=host, puerto=puerto,
+        usuario=usuario, contrasena=contrasena, usa_tls=usa_tls,
+        smtp_host=smtp_host, smtp_puerto=smtp_puerto, smtp_tls=smtp_tls,
+    )
+    return _fila(db.obtener_cuenta_correo(_uid(), cuenta_id))
+
 
 def listar_cuentas_correo() -> list[dict]:
     """Lista las cuentas de correo configuradas (sin la contraseña, que vive en keyring)."""
@@ -308,7 +366,7 @@ def asignar_categoria_correo(mensaje_id: int, categoria_id: int | None = None) -
     """Asigna una categoría a un mensaje, o la quita si `categoria_id` es None."""
     if not db.mensaje_correo_pertenece_a_usuario(_uid(), mensaje_id):
         raise ValueError(f"No existe el mensaje {mensaje_id}.")
-    correo.asignar_categoria(mensaje_id, categoria_id)
+    correo.asignar_categoria(_uid(), mensaje_id, categoria_id)
     return _fila(correo.obtener_mensaje(mensaje_id))
 
 
@@ -997,6 +1055,327 @@ def videollamadas_crear_sala(tenant: str, nombre_mostrado: str, moderador: bool 
     return {"url": jitsi.url_sala(sala, token), "sala": sala}
 
 
+# --- Tiquets (soporte interno: errores/sugerencias) -----------------------
+#
+# A diferencia del resto de este archivo, es un tablero COMPARTIDO entre
+# todos los usuarios (ver db.listar_tiquets/db.obtener_tiquet, que no
+# filtran por usuario_id) — cualquiera puede leer todos los tiquets, pero
+# solo editar/borrar los suyos propios (o cualquiera, si es admin), y solo
+# un admin puede moverlos de estado. Mismos permisos exactos que
+# app/rutas_tiquets.py, para que MCP nunca pueda hacer por API algo que la
+# web no deje hacer por la interfaz.
+
+def listar_tiquets(estado: str | None = None, tipo: str | None = None) -> list[dict]:
+    """Lista tiquets de soporte (errores/sugerencias sobre Guilda Work).
+    Tablero compartido: devuelve los de TODOS los usuarios, no solo los
+    propios. `estado`: sin_revisar/en_revision/finalizado. `tipo`: error/sugerencia."""
+    return _filas(db.listar_tiquets(estado=estado, tipo=tipo))
+
+
+def crear_tiquet(tipo: str, titulo: str, descripcion: str | None = None) -> dict:
+    """Crea un tiquet nuevo (tipo: "error" o "sugerencia"), a nombre del
+    usuario actual. Empieza siempre en estado "sin_revisar"."""
+    uid = _uid()
+    tiquet_id = db.crear_tiquet(uid, tipo=tipo, titulo=titulo, descripcion=descripcion)
+    return _fila(db.obtener_tiquet(tiquet_id))
+
+
+def editar_tiquet(
+    tiquet_id: int, titulo: str | None = None, descripcion: str | None = None, tipo: str | None = None,
+) -> dict:
+    """Edita un tiquet propio, solo mientras siga "sin_revisar" (una vez
+    entra en revisión, ya no se puede tocar el contenido)."""
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
+        raise ValueError(f"No existe el tiquet #{tiquet_id}.")
+    if tiquet["usuario_id"] != _uid():
+        raise ValueError(f"El tiquet #{tiquet_id} no es tuyo, no lo puedes editar.")
+    if tiquet["estado"] != "sin_revisar":
+        raise ValueError(f"El tiquet #{tiquet_id} ya está en revisión, no se puede editar.")
+    ok = db.editar_tiquet(
+        _uid(), tiquet_id,
+        titulo=titulo if titulo is not None else tiquet["titulo"],
+        descripcion=descripcion if descripcion is not None else tiquet["descripcion"],
+        tipo=tipo if tipo is not None else tiquet["tipo"],
+    )
+    if not ok:
+        raise ValueError(f"No se ha podido editar el tiquet #{tiquet_id}.")
+    return _fila(db.obtener_tiquet(tiquet_id))
+
+
+def eliminar_tiquet(tiquet_id: int) -> dict:
+    """Elimina un tiquet propio, o cualquiera si eres administrador."""
+    uid = _uid()
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
+        raise ValueError(f"No existe el tiquet #{tiquet_id}.")
+    if tiquet["usuario_id"] != uid and not db.es_admin(uid):
+        raise ValueError(f"El tiquet #{tiquet_id} no es tuyo, no lo puedes eliminar.")
+    db.eliminar_tiquet(tiquet_id)
+    return {"eliminado": True, "id": tiquet_id}
+
+
+def cambiar_estado_tiquet(tiquet_id: int, estado: str) -> dict:
+    """Mueve un tiquet a otro estado del Kanban (sin_revisar/en_revision/
+    finalizado). Solo administradores."""
+    if not db.es_admin(_uid()):
+        raise ValueError("Solo un administrador puede mover tiquets de estado.")
+    if db.obtener_tiquet(tiquet_id) is None:
+        raise ValueError(f"No existe el tiquet #{tiquet_id}.")
+    db.cambiar_estado_tiquet(tiquet_id, estado)
+    return _fila(db.obtener_tiquet(tiquet_id))
+
+
+# --- Fichaje (registro horario) --------------------------------------------
+#
+# Deliberadamente acotado a lo propio del usuario actual -- entrada/salida/
+# pausas y consultar su propio historial. La exportación de informes de
+# administración (CSV/PDF, ver app/fichaje_export.py) es una acción de
+# descarga de archivo y encaja mejor como acción web que como tool de IA,
+# así que no tiene equivalente aquí.
+
+def fichar(tipo: str) -> dict:
+    """Marca un fichaje del usuario actual: tipo = "entrada" | "pausa_inicio"
+    | "pausa_fin" | "salida". Lanza un error legible si la secuencia no es
+    válida (p.ej. fichar salida sin haber fichado entrada antes)."""
+    uid = _uid()
+    tenant = db.tenant_de_usuario(uid)
+    if not db.fichaje_datos_completos(uid):
+        raise ValueError("Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Fichaje → Mis datos.")
+    fichaje_id = db.fichar(uid, tenant["id"] if tenant else None, tipo, origen="ia")
+    return {"id": fichaje_id, "tipo": tipo, "estado_actual": db.estado_actual_fichaje(uid)}
+
+
+def listar_mis_fichajes(desde: str | None = None, hasta: str | None = None) -> list[dict]:
+    """Historial de fichajes del usuario actual, opcionalmente filtrado
+    por fecha (YYYY-MM-DD)."""
+    return _filas(db.listar_fichajes(_uid(), desde=desde, hasta=hasta))
+
+
+# --- Papelera ----------------------------------------------------------------
+
+_PAPELERA_RESTAURAR = {
+    "menu": db.restaurar_categoria,
+    "tarea": db.restaurar_tarea,
+    "nota": db.restaurar_nota,
+    "tarea_outlook": db.restaurar_tarea_outlook,
+}
+
+
+def listar_papelera() -> list[dict]:
+    """Lista lo que hay en la papelera del usuario actual (menús, tareas,
+    notas y tareas outlook eliminados pero no purgados todavía). Cada
+    elemento trae un campo `origen` (menu/tarea/nota/tarea_outlook) que
+    hace falta pasar a restaurar_de_papelera."""
+    return db.papelera(_uid())
+
+
+def restaurar_de_papelera(origen: str, id: int) -> dict:
+    """Restaura un elemento de la papelera (lo saca de ahí, vuelve a estar
+    activo). `origen` es el campo que devuelve listar_papelera: menu, tarea,
+    nota o tarea_outlook."""
+    funcion = _PAPELERA_RESTAURAR.get(origen)
+    if funcion is None:
+        raise ValueError(f"Origen de papelera no válido: {origen!r}. Usa uno de: {', '.join(_PAPELERA_RESTAURAR)}.")
+    funcion(_uid(), id)
+    return {"restaurado": True, "origen": origen, "id": id}
+
+
+# --- Estadísticas --------------------------------------------------------------
+
+def estadisticas_por_categoria(desde: str | None = None, hasta: str | None = None) -> list[dict]:
+    """Tiempo dedicado a tareas con duración ya finalizadas, agrupado por
+    menú, del usuario actual. `desde`/`hasta` en formato YYYY-MM-DD."""
+    return db.estadisticas_por_categoria(_uid(), desde, hasta)
+
+
+def estadisticas_por_dia(desde: str | None = None, hasta: str | None = None) -> list[dict]:
+    """Igual que estadisticas_por_categoria pero agrupado por día (y menú
+    dentro de cada día)."""
+    return db.estadisticas_por_dia(_uid(), desde, hasta)
+
+
+# --- Backoffice (gestión de tenants/usuarios) ------------------------------
+#
+# A diferencia del resto de este archivo (que actúa como "administrador de
+# confianza" de las integraciones externas sin mirar quién llama), esto SÍ
+# comprueba que quien llama es realmente admin de Guilda Work
+# (`usuarios.rol = 'admin'`) antes de dejar hacer nada -- exactamente la
+# misma condición que ya exige admin_required en la web (ver
+# app/auth.py/app/rutas_backoffice.py). El backoffice controla quién tiene
+# acceso a qué en toda la plataforma, no un tenant conectado más: MCP no
+# debería poder dar aquí más poder del que ya tendría por la web quien
+# esté detrás de la sesión.
+#
+# borrar_tenant NO tiene tool aquí a propósito: la versión web
+# (rutas_backoffice.py) desaprovisiona en cascada media docena de
+# servicios externos (FacturaScripts, Paperless, Baserow, Cal.diy,
+# Listmonk, Stalwart, ntfy, Umami) con manejo de errores propio por
+# servicio; replicarlo aquí sin esa misma cobertura dejaría cuentas
+# huérfanas en esos servicios de forma silenciosa. Se queda como acción
+# solo-web hasta que valga la pena portar esa orquestación completa.
+
+def _exigir_admin() -> None:
+    if not db.es_admin(_uid()):
+        raise ValueError("Solo un administrador de Guilda Work puede usar las herramientas de backoffice.")
+
+
+def backoffice_listar_tenants() -> list[dict]:
+    """Lista todos los tenants con su número de usuarios asignados. Solo administradores."""
+    _exigir_admin()
+    return _filas(db.listar_tenants_con_conteo())
+
+
+def backoffice_listar_usuarios() -> list[dict]:
+    """Lista todos los usuarios de la plataforma, con su tenant y rol. Solo administradores."""
+    _exigir_admin()
+    return _filas(db.listar_usuarios())
+
+
+def backoffice_crear_tenant(nombre: str) -> dict:
+    """Crea un tenant nuevo (sin aprovisionar ningún servicio externo
+    todavía -- eso se hace aparte, por ahora solo desde la web). Solo
+    administradores."""
+    _exigir_admin()
+    tenant_id = db.crear_tenant(nombre)
+    return _fila(db.obtener_tenant(tenant_id))
+
+
+def backoffice_renombrar_tenant(tenant_id: int, nombre: str) -> dict:
+    """Renombra un tenant existente. Solo administradores."""
+    _exigir_admin()
+    if db.obtener_tenant(tenant_id) is None:
+        raise ValueError(f"No existe el tenant {tenant_id}.")
+    db.renombrar_tenant(tenant_id, nombre)
+    return _fila(db.obtener_tenant(tenant_id))
+
+
+def backoffice_guardar_datos_tenant(tenant_id: int, cif: str | None = None, direccion_fiscal: str | None = None) -> dict:
+    """Guarda el CIF/dirección fiscal de un tenant (identificación de
+    empresa exigida en el registro de fichaje). Solo administradores."""
+    _exigir_admin()
+    if db.obtener_tenant(tenant_id) is None:
+        raise ValueError(f"No existe el tenant {tenant_id}.")
+    db.guardar_datos_tenant(tenant_id, cif, direccion_fiscal)
+    return _fila(db.obtener_tenant(tenant_id))
+
+
+def backoffice_alternar_herramienta_tenant(tenant_id: int, herramienta_id: str, visible: bool) -> dict:
+    """Muestra u oculta una herramienta del catálogo para un tenant
+    concreto (no afecta a los demás tenants). Solo administradores."""
+    _exigir_admin()
+    if db.obtener_tenant(tenant_id) is None:
+        raise ValueError(f"No existe el tenant {tenant_id}.")
+    if visible:
+        db.mostrar_herramienta(tenant_id, herramienta_id)
+    else:
+        db.ocultar_herramienta(tenant_id, herramienta_id)
+    return {"tenant_id": tenant_id, "herramienta_id": herramienta_id, "visible": visible}
+
+
+def backoffice_crear_usuario(email: str, tenant_id: int | None = None) -> dict:
+    """Da de alta un usuario nuevo en Guilda Work (vía Kratos) y, si se
+    aprovisionaron para su tenant, también en OpenProject/Chatwoot/
+    Metabase/Baserow/Listmonk/Umami -- mismo flujo exacto que el alta desde
+    el backoffice web. Devuelve el resultado por cada servicio (contraseña
+    temporal incluida donde aplica). Solo administradores."""
+    _exigir_admin()
+    email = email.strip().lower()
+    if not email:
+        raise ValueError("Falta el email.")
+
+    contrasena_temporal = secrets.token_urlsafe(12)
+    identity_id = kratos.crear_identidad(email, contrasena_temporal)
+    usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
+    if tenant_id:
+        db.asignar_tenant(usuario_id, tenant_id)
+
+    resultados = [{"servicio": "Guilda Work", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"}]
+
+    try:
+        openproject.crear_usuario(email, contrasena_temporal)
+        resultados.append({"servicio": "OpenProject", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+    except openproject.ErrorOpenProject as e:
+        resultados.append({"servicio": "OpenProject", "estado": "error", "detalle": str(e)})
+
+    try:
+        chatwoot.crear_usuario(email, contrasena_temporal, email.split("@")[0])
+        resultados.append({"servicio": "Chatwoot", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+    except chatwoot.ErrorChatwoot as e:
+        resultados.append({"servicio": "Chatwoot", "estado": "error", "detalle": str(e)})
+
+    try:
+        metabase_id = metabase.crear_usuario(email)
+        if metabase_id is not None:
+            resultados.append({"servicio": "Metabase", "estado": "creado", "detalle": "sin contraseña propia -- usa \"¿Olvidaste tu contraseña?\" en su login"})
+    except metabase.ErrorMetabase as e:
+        resultados.append({"servicio": "Metabase", "estado": "error", "detalle": str(e)})
+
+    tenant = db.obtener_tenant(tenant_id) if tenant_id else None
+    if tenant is not None and tenant["baserow_workspace_id"]:
+        try:
+            baserow.invitar_usuario(tenant["baserow_workspace_id"], email)
+            resultados.append({"servicio": "Baserow", "estado": "creado", "detalle": "invitación enviada por email -- hay que aceptarla desde ahí"})
+        except baserow.ErrorBaserow as e:
+            resultados.append({"servicio": "Baserow", "estado": "error", "detalle": str(e)})
+    if tenant is not None and tenant["listmonk_list_role_id"]:
+        try:
+            listmonk.crear_usuario_tenant(email, tenant["listmonk_list_role_id"])
+            resultados.append({"servicio": "Listmonk", "estado": "creado", "detalle": "entra con su sesión de Guilda Work (SSO)"})
+        except listmonk.ErrorListmonk as e:
+            resultados.append({"servicio": "Listmonk", "estado": "error", "detalle": str(e)})
+    if tenant is not None and tenant["umami_team_id"]:
+        try:
+            umami.crear_usuario_tenant(email, tenant["umami_team_id"], contrasena_temporal)
+            resultados.append({"servicio": "Umami", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+        except umami.ErrorUmami as e:
+            resultados.append({"servicio": "Umami", "estado": "error", "detalle": str(e)})
+
+    return {"usuario_id": usuario_id, "email": email, "resultados": resultados}
+
+
+def backoffice_asignar_tenant_usuario(usuario_id: int, tenant_id: int | None = None) -> dict:
+    """Asigna (o quita, con tenant_id=None) el tenant de un usuario. Solo administradores."""
+    _exigir_admin()
+    if db.obtener_usuario(usuario_id) is None:
+        raise ValueError(f"No existe el usuario {usuario_id}.")
+    if tenant_id:
+        db.asignar_tenant(usuario_id, tenant_id)
+    else:
+        db.desasignar_tenant(usuario_id)
+    return _fila(db.obtener_usuario(usuario_id))
+
+
+def backoffice_cambiar_rol(usuario_id: int, rol: str) -> dict:
+    """Cambia el rol de un usuario a 'admin' o 'usuario'. No se puede
+    quitar el rol admin a uno mismo (misma protección que la web, para no
+    quedarse fuera del backoffice sin nadie que lo devuelva). Solo
+    administradores."""
+    _exigir_admin()
+    if rol not in ("admin", "usuario"):
+        raise ValueError("rol debe ser 'admin' o 'usuario'.")
+    usuario = db.obtener_usuario(usuario_id)
+    if usuario is None:
+        raise ValueError(f"No existe el usuario {usuario_id}.")
+    if usuario_id == _uid() and rol != "admin":
+        raise ValueError("No puedes quitarte el rol de admin a ti mismo.")
+    if rol == "admin":
+        db.hacer_admin(usuario["email"])
+    else:
+        db.quitar_admin(usuario["email"])
+    return _fila(db.obtener_usuario(usuario_id))
+
+
+def backoffice_asignar_gestor_fichajes(usuario_id: int, valor: bool) -> dict:
+    """Marca o desmarca a un usuario como gestor de fichajes de su propio
+    tenant (ver app/rutas_fichaje.py). Solo administradores."""
+    _exigir_admin()
+    if db.obtener_usuario(usuario_id) is None:
+        raise ValueError(f"No existe el usuario {usuario_id}.")
+    db.asignar_gestor_fichajes(usuario_id, valor)
+    return _fila(db.obtener_usuario(usuario_id))
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -1008,6 +1387,7 @@ TOOLS = [
     # Tareas
     listar_tareas, crear_tarea, editar_tarea, completar_tarea, consultar_calendario,
     # Correo
+    conectar_cuenta_correo,
     listar_cuentas_correo, sincronizar_correo, listar_carpetas_correo, listar_bandeja_entrada,
     leer_correo, marcar_leido_correo, eliminar_correo,
     listar_categorias_correo, crear_categoria_correo, eliminar_categoria_correo, asignar_categoria_correo,
@@ -1057,6 +1437,19 @@ TOOLS = [
     notificaciones_enviar,
     # Videollamadas (Jitsi Meet)
     videollamadas_crear_sala,
+    # Tiquets
+    listar_tiquets, crear_tiquet, editar_tiquet, eliminar_tiquet, cambiar_estado_tiquet,
+    # Fichaje
+    fichar, listar_mis_fichajes,
+    # Papelera
+    listar_papelera, restaurar_de_papelera,
+    # Estadísticas
+    estadisticas_por_categoria, estadisticas_por_dia,
+    # Backoffice
+    backoffice_listar_tenants, backoffice_listar_usuarios, backoffice_crear_tenant,
+    backoffice_renombrar_tenant, backoffice_guardar_datos_tenant, backoffice_alternar_herramienta_tenant,
+    backoffice_crear_usuario, backoffice_asignar_tenant_usuario, backoffice_cambiar_rol,
+    backoffice_asignar_gestor_fichajes,
 ]
 
 

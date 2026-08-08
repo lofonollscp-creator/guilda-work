@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Fichaje — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Fichaje</h1>
+    <p class="subtitle">Registro horario diario (art. 34.9 del Estatuto de los Trabajadores).</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a class="active" href="{{ url_for('fichaje.panel') }}">Fichar</a>
+  <a href="{{ url_for('fichaje.historial') }}">Mi historial</a>
+  <a href="{{ url_for('fichaje.mis_datos') }}">Mis datos</a>
+  {% if g.es_admin or g.gestor_fichajes %}
+  <a href="{{ url_for('fichaje.admin_resumen') }}">Administración</a>
+  {% endif %}
+</nav>
+
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+
+{% if datos_incompletos %}
+<section class="fichaje-aviso">
+  <p>Antes de poder fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE.</p>
+  <a class="btn btn-primary" href="{{ url_for('fichaje.mis_datos') }}">Rellenar mis datos</a>
+</section>
+{% else %}
+<section class="fichaje-panel">
+  <div class="fichaje-estado">
+    <span class="pill {{ 'estado-dentro' if estado == 'dentro' else ('estado-en-pausa' if estado == 'en_pausa' else 'estado-fuera') }}">
+      {{ 'Dentro de jornada' if estado == 'dentro' else ('En pausa' if estado == 'en_pausa' else 'Fuera de jornada') }}
+    </span>
+  </div>
+  <div class="fichaje-botones">
+    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+      <input type="hidden" name="tipo" value="entrada">
+      <button type="submit" class="btn fichaje-btn fichaje-btn-entrada" {{ 'disabled' if estado != 'fuera' }}>Entrada</button>
+    </form>
+    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+      <input type="hidden" name="tipo" value="pausa_inicio">
+      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'dentro' }}>Iniciar pausa</button>
+    </form>
+    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+      <input type="hidden" name="tipo" value="pausa_fin">
+      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'en_pausa' }}>Fin de pausa</button>
+    </form>
+    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+      <input type="hidden" name="tipo" value="salida">
+      <button type="submit" class="btn fichaje-btn fichaje-btn-salida" {{ 'disabled' if estado == 'fuera' }}>Salida</button>
+    </form>
+  </div>
+</section>
+
+<section class="stats-section">
+  <h3>Hoy</h3>
+  {% if not hoy %}
+  <p class="empty-lane">Todavía no has fichado nada hoy.</p>
+  {% else %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead><tr><th>Hora</th><th>Tipo</th></tr></thead>
+    <tbody>
+      {% for f in hoy %}
+      <tr>
+        <td class="mono">{{ f.marca_tiempo[11:16] }}</td>
+        <td>{{ tipos_fichaje[f.tipo] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

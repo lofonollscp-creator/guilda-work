@@ -1,0 +1,43 @@
+# PLANTILLA — deploy/mas/config.yaml es gitignorado porque lleva
+# secretos en claro (clave de firma de MAS, contraseña de Postgres,
+# client_secret de Hydra, client_secret compartido con Synapse) — MAS
+# no tiene una convención de variables de entorno para esto, igual que
+# Synapse (ver deploy/synapse/guilda-overrides.yaml.example).
+#
+# Generar la base real con:
+#   docker run --rm ghcr.io/element-hq/matrix-authentication-service:latest \
+#     config generate > deploy/mas/config.yaml
+#
+# Y luego editar a mano (no hay variables de entorno equivalentes):
+#   - http.public_base / http.issuer -> https://mas.tu-hostname/
+#   - database.uri -> postgresql://mas:MAS_DB_PASSWORD@postgres-mas:5432/mas
+#     (MAS_DB_PASSWORD tiene que coincidir con el de .env)
+#   - passwords.enabled -> false (solo se entra vía Hydra)
+#   - matrix.homeserver -> el server_name real de Synapse (chat.tu-hostname)
+#   - matrix.endpoint -> http://synapse:8008/ (nombre interno de Docker)
+#   - matrix.secret -> debe coincidir con `admin_token` en
+#     deploy/synapse/guilda-overrides.yaml (experimental_features.msc3861)
+#   - clients: añadir el cliente estático de Synapse
+#       - client_id: 0000000000000000000SYNAPSE
+#         client_auth_method: client_secret_basic
+#         client_secret: "<debe coincidir con msc3861.client_secret>"
+#   - upstream_oauth2.providers: añadir el proveedor Hydra, con el
+#     client_id/client_secret que imprima
+#     `scripts/registrar_cliente_hydra.py --nombre mas --redirect-uri
+#     https://mas.tu-hostname/upstream/callback/<ULID-del-proveedor>`
+#       - id: <ULID válido, elegido a mano>
+#         issuer: https://hydra.tu-hostname/
+#         client_id: "<client_id de Hydra>"
+#         client_secret: "<client_secret de Hydra>"
+#         token_endpoint_auth_method: client_secret_post
+#         scope: "openid email profile"
+#         claims_imports:
+#           localpart:
+#             action: suggest
+#             template: "{{ user.email.split('@')[0] }}"
+#           displayname:
+#             action: suggest
+#             template: "{{ user.email }}"
+#           email:
+#             action: suggest
+#             template: "{{ user.email }}"

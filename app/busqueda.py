@@ -179,28 +179,48 @@ def _indexar(documento: dict) -> None:
         return
     _asegurar_indice()
     vector = embeddings.generar_embedding(documento["texto"])
-    if vector is not None:
-        documento = {**documento, "_vectors": {"default": vector}}
+    # El embedder `default` está configurado como `source: userProvided`
+    # (ver _asegurar_indice) — Meilisearch exige que TODO documento lleve
+    # `_vectors.default`, con el vector o con `null` explícito si no hay
+    # uno; omitir la clave por completo (lo que hacía esto antes cuando
+    # Ollama no está disponible) no es "sin vector" para Meilisearch, es
+    # un documento inválido y rechaza el lote entero con
+    # `vector_embedding_error` (encontrado en producción: toda la
+    # indexación fallaba en silencio con Ollama no desplegado).
+    documento = {**documento, "_vectors": {"default": vector}}
     _peticion(f"/indexes/{INDICE}/documents", clave=MEILISEARCH_MASTER_KEY, metodo="POST", cuerpo=[documento])
 
 
 def indexar_nota(nota: dict) -> None:
+    # El nombre del menú (categoria_nombre) se añade al TEXTO buscable,
+    # no solo a categoria_id (que es filtrable pero no se busca por
+    # palabra) — sin esto, buscar por el nombre de un menú ("Guilda",
+    # "Lueira"...) no encontraba nada aunque la nota estuviera en ese
+    # menú (encontrado en producción). `nota` tiene que venir de una
+    # consulta con LEFT JOIN categorias (ver db.py:obtener_nota) para
+    # traer esta columna — si no la trae, se indexa sin menú en el
+    # texto, se degrada, no falla.
+    categoria_nombre = nota.get("categoria_nombre")
+    texto = f"{nota['texto']} {categoria_nombre}" if categoria_nombre else nota["texto"]
     _indexar({
         "id": f"nota-{nota['id']}",
         "tipo": "nota",
         "usuario_id": nota["usuario_id"],
-        "texto": nota["texto"],
+        "texto": texto,
         "creada_en": nota["creada_en"],
         "categoria_id": nota.get("categoria_id"),
     })
 
 
 def indexar_tarea(tarea: dict) -> None:
+    # Ver comentario de indexar_nota — mismo motivo, mismo criterio.
+    categoria_nombre = tarea.get("categoria_nombre")
+    texto = f"{tarea['nombre']} {categoria_nombre}" if categoria_nombre else tarea["nombre"]
     _indexar({
         "id": f"tarea-{tarea['id']}",
         "tipo": "tarea",
         "usuario_id": tarea["usuario_id"],
-        "texto": tarea["nombre"],
+        "texto": texto,
         "creada_en": tarea.get("inicio_en"),
         "categoria_id": tarea.get("categoria_id"),
     })

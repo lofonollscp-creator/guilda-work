@@ -70,6 +70,7 @@ HERRAMIENTAS = [
         # (desde v7.3), mismo patrón que Outline/Element (Fase CRM, ver
         # HOSTING.md 8.19).
         "sso": True,
+        "disponible": False,
     },
     {
         "id": "openproject",
@@ -98,6 +99,7 @@ HERRAMIENTAS = [
         # un plan Enterprise de pago, no está en la community edition
         # desplegada aquí (Fase 7g) — mismo criterio que OpenProject.
         "sso": False,
+        "disponible": False,
     },
     {
         "id": "n8n",
@@ -123,6 +125,7 @@ HERRAMIENTAS = [
         # a código cerrado en julio 2026) no tiene SSO/SAML en su edición
         # gratuita — mismo criterio que Documenso/FacturaScripts/Baserow.
         "sso": False,
+        "disponible": False,
     },
     {
         "id": "newsletter",
@@ -138,6 +141,7 @@ HERRAMIENTAS = [
         # Baserow), verificado en vivo contra un contenedor real (Fase
         # newsletter, ver HOSTING.md 8.26).
         "sso": True,
+        "disponible": False,
     },
     {
         "id": "correo-stalwart",
@@ -173,6 +177,7 @@ HERRAMIENTAS = [
         # Hydra — cada sala se abre con un enlace ya autenticado, no con
         # un login genérico a la herramienta.
         "sso": False,
+        "disponible": False,
     },
     {
         "id": "drive",
@@ -232,6 +237,11 @@ HERRAMIENTAS = [
         # en el plan Advanced Enterprise, también en self-hosted — mismo
         # criterio que Documenso/FacturaScripts.
         "sso": False,
+        # Contenedor parado a propósito (2026-08-06, a petición del
+        # usuario) para liberar RAM mientras no se usa — reactivar
+        # quitando esta línea y con `docker compose start baserow
+        # redis-baserow postgres-baserow`.
+        "disponible": False,
     },
     {
         "id": "metabase",
@@ -243,6 +253,7 @@ HERRAMIENTAS = [
         "categoria": "Documentos y datos",
         "url": os.environ.get("HERRAMIENTA_METABASE_URL", "http://127.0.0.1:3000"),
         "sso": False,
+        "disponible": False,
     },
     {
         "id": "minio",
@@ -283,6 +294,7 @@ HERRAMIENTAS = [
         # app/umami.py:crear_usuario_tenant() (mismo criterio que
         # correo-stalwart/videollamadas).
         "sso": False,
+        "disponible": False,
     },
     {
         "id": "uptime-kuma",
@@ -313,6 +325,7 @@ HERRAMIENTAS = [
         # app/rutas_backoffice.py:crear_tenant()) — es de uso exclusivo
         # del administrador de la instancia.
         "sso": False,
+        "disponible": False,
     },
     {
         "id": "portainer",
@@ -333,6 +346,7 @@ HERRAMIENTAS = [
         # exposición más alto de todo este catálogo — mismo criterio que
         # "observabilidad".
         "sso": False,
+        "disponible": False,
     },
 ]
 

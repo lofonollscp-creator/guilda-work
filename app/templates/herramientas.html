@@ -15,6 +15,21 @@
     <h2 class="tools-section-title"><span></span>{{ categoria }}</h2>
     <div class="tools-grid">
       {% for h in herramientas if h.categoria == categoria %}
+      {% if h.disponible == false %}
+      <div class="tool-card is-pendiente" style="--tool-accent: {{ h.color }};">
+        <div class="tool-card-top">
+          <span class="tool-card-icon">
+            <img src="{{ url_for('static', filename='logos/' ~ h.icono_logo) }}" alt="" loading="lazy">
+          </span>
+        </div>
+        <h3 class="tool-card-name">{{ h.nombre }}</h3>
+        <p class="tool-card-desc">{{ h.descripcion }}</p>
+        <span class="tool-card-status is-pendiente">
+          <span class="tool-card-status-dot"></span>
+          Aún no disponible
+        </span>
+      </div>
+      {% else %}
       <a class="tool-card" href="{{ h.url }}" target="_blank" rel="noopener"
          style="--tool-accent: {{ h.color }};">
         <div class="tool-card-top">
@@ -32,6 +47,7 @@
           {{ "Entra con tu sesión de Guilda Work" if h.sso else "Inicia sesión aparte" }}
         </span>
       </a>
+      {% endif %}
       {% endfor %}
       {% if categoria == "Documentos y datos" %}
       {# FacturaScripts no está en `herramientas` porque no es una instancia

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Mis datos de fichaje — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Fichaje</h1>
+    <p class="subtitle">Datos necesarios para identificarte en el registro horario.</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fichaje.panel') }}">Fichar</a>
+  <a href="{{ url_for('fichaje.historial') }}">Mi historial</a>
+  <a class="active" href="{{ url_for('fichaje.mis_datos') }}">Mis datos</a>
+  {% if g.es_admin or g.gestor_fichajes %}
+  <a href="{{ url_for('fichaje.admin_resumen') }}">Administración</a>
+  {% endif %}
+</nav>
+
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+
+<form method="post" class="edit-form">
+  <div class="correo-form-campo">
+    <label>Nombre completo *</label>
+    <input type="text" name="nombre_completo" value="{{ datos.nombre_completo or '' }}" required>
+  </div>
+  <div class="correo-form-campo">
+    <label>DNI/NIE *</label>
+    <input type="text" name="dni_nie" value="{{ datos.dni_nie or '' }}" required>
+  </div>
+  <div class="correo-form-campo">
+    <label>Número de afiliación a la Seguridad Social</label>
+    <input type="text" name="numero_afiliacion_ss" value="{{ datos.numero_afiliacion_ss or '' }}">
+  </div>
+  <div class="correo-form-campo">
+    <label>Categoría profesional</label>
+    <input type="text" name="categoria_profesional" value="{{ datos.categoria_profesional or '' }}">
+  </div>
+  <div class="correo-form-campo">
+    <label>Tipo de contrato</label>
+    <input type="text" name="tipo_contrato" value="{{ datos.tipo_contrato or '' }}" placeholder="Indefinido, temporal, prácticas...">
+  </div>
+  <div class="correo-form-campo">
+    <label>Fecha de alta</label>
+    <input type="date" name="fecha_alta" value="{{ datos.fecha_alta or '' }}">
+  </div>
+  <div class="correo-form-campo">
+    <label>Jornada semanal contratada (horas)</label>
+    <input type="number" step="0.5" min="0" name="jornada_semanal_horas" value="{{ datos.jornada_semanal_horas or '' }}">
+  </div>
+  <div class="correo-form-campo">
+    <label>Convenio colectivo</label>
+    <input type="text" name="convenio_colectivo" value="{{ datos.convenio_colectivo or '' }}">
+  </div>
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+  </div>
+</form>
+{% endblock %}

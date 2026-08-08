@@ -9,6 +9,9 @@
 # Mismo patrón que guilda-work.service (serve.py) — proceso aparte, se
 # reinicia solo si muere o el servidor arranca. Requiere las dependencias
 # de requirements-mcp.txt instaladas en el mismo .venv.
+#
+# Restart=always (no on-failure): ver guilda-work.service para el motivo
+# -- on-failure no reinicia ante una salida "limpia" (código 0).
 
 [Unit]
 Description=Guilda Work - servidor MCP remoto para ChatGPT (mcp_server_remoto.py)
@@ -20,7 +23,7 @@ User=USUARIO
 WorkingDirectory=/home/USUARIO/guilda-work
 EnvironmentFile=/etc/guilda-work.env
 ExecStart=/home/USUARIO/guilda-work/.venv/bin/python mcp_server_remoto.py
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]

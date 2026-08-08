@@ -2,11 +2,24 @@
 
 Usa exclusivamente la librería estándar (`imaplib`, `poplib`, `smtplib`,
 `email`) para no añadir dependencias de red. La única dependencia nueva es
-`keyring`, para guardar la contraseña de cada cuenta en el almacén de
-credenciales del sistema (Windows Credential Manager en este equipo) en vez
-de en `registro.db` o en un archivo de texto. Se reutiliza la misma
-contraseña para SMTP que para IMAP/POP3 (es lo habitual en la inmensa
-mayoría de proveedores).
+`keyring`, para guardar la contraseña de cada cuenta en un almacén de
+credenciales en vez de en `registro.db` o en un archivo de texto plano. Se
+reutiliza la misma contraseña para SMTP que para IMAP/POP3 (es lo habitual
+en la inmensa mayoría de proveedores).
+
+En Windows/macOS en local, `keyring` usa el backend nativo del sistema
+(Credential Manager/Keychain) sin más configuración. En el VPS real
+(Ubuntu headless, sin sesión de escritorio ni D-Bus Secret Service) no hay
+NINGÚN backend de sistema disponible — `keyring` cae automáticamente al
+backend `fail.Keyring`, que lanza `NoKeyringError` en cualquier
+`get_password`/`set_password` (visto en producción: Internal Server Error
+al crear una cuenta de correo en /correo/cuentas). Por eso se fuerza un
+backend de archivo cifrado (`keyrings.cryptfile`, independiente del
+escritorio) más abajo, con la contraseña de cifrado derivada de
+`GUILDA_SECRET_KEY` — el mismo secreto que ya protege las sesiones de
+Flask, para no añadir un secreto más que gestionar en
+`/etc/guilda-work.env`. En local esto simplemente sustituye al backend
+nativo por uno de archivo, sin cambiar el comportamiento visible.
 
 Los correos se muestran y se redactan en HTML enriquecido (al estilo New
 Outlook): al sincronizar, las imágenes incrustadas (`cid:`) se embeben como
@@ -27,7 +40,9 @@ from __future__ import annotations
 import base64
 import email
 import html as html_lib
+import html.parser
 import imaplib
+import os
 import poplib
 import re
 import smtplib
@@ -37,11 +52,25 @@ from email.message import EmailMessage
 from email.utils import getaddresses, parsedate_to_datetime
 
 import keyring
+from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
 from . import busqueda, db, eventos
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
+
+
+def _configurar_backend_keyring() -> None:
+    """Ver docstring del módulo. `keyring_key` fijado a mano en vez de
+    dejarlo pedir por `getpass` (su comportamiento por defecto) — no hay
+    terminal interactivo en un proceso servido por systemd."""
+    backend = CryptFileKeyring()
+    backend.file_path = db.RAIZ_PROYECTO / "data" / "correo-keyring.cfg"
+    backend.keyring_key = os.environ.get("GUILDA_SECRET_KEY") or "clave-de-desarrollo-no-usar-en-produccion"
+    keyring.set_keyring(backend)
+
+
+_configurar_backend_keyring()
 
 
 class ErrorCorreo(Exception):
@@ -144,6 +173,19 @@ def probar_conexion(usuario_id: int, cuenta_id: int) -> None:
         conn.logout()
 
 
+def _decodificar_bytes(contenido: bytes, codificacion: str | None) -> str:
+    """Wrapper de `bytes.decode` que nunca lanza — algunos servidores
+    declaran codecs que no son un nombre Python real (visto en producción:
+    "unknown-8bit", una extensión no estándar de RFC 2047 que usan algunos
+    MTAs para 8 bits sin codificación declarada; `LookupError: unknown
+    encoding`). latin-1 nunca lanza `UnicodeDecodeError` (mapea 1 byte = 1
+    carácter), así que sirve de última red sin perder el mensaje entero."""
+    try:
+        return contenido.decode(codificacion or "utf-8", errors="replace")
+    except LookupError:
+        return contenido.decode("latin-1", errors="replace")
+
+
 def _decodificar(valor: str | None) -> str:
     if not valor:
         return ""
@@ -151,7 +193,7 @@ def _decodificar(valor: str | None) -> str:
     resultado = []
     for texto, codificacion in partes:
         if isinstance(texto, bytes):
-            resultado.append(texto.decode(codificacion or "utf-8", errors="replace"))
+            resultado.append(_decodificar_bytes(texto, codificacion))
         else:
             resultado.append(texto)
     return "".join(resultado)
@@ -212,7 +254,7 @@ def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None, li
             if contenido is None:
                 continue
             charset = parte.get_content_charset() or "utf-8"
-            texto_decodificado = contenido.decode(charset, errors="replace")
+            texto_decodificado = _decodificar_bytes(contenido, charset)
             if tipo == "text/plain" and texto is None:
                 texto = texto_decodificado
             elif tipo == "text/html" and html is None:
@@ -221,7 +263,7 @@ def _cuerpos(mensaje: email.message.Message) -> tuple[str | None, str | None, li
         contenido = mensaje.get_payload(decode=True)
         if contenido is not None:
             charset = mensaje.get_content_charset() or "utf-8"
-            texto_decodificado = contenido.decode(charset, errors="replace")
+            texto_decodificado = _decodificar_bytes(contenido, charset)
             if mensaje.get_content_type() == "text/html":
                 html = texto_decodificado
             else:
@@ -236,6 +278,97 @@ def texto_a_html(texto: str) -> str:
     """Convierte texto plano a HTML equivalente (escapado + saltos de línea
     como <br>), para citar mensajes que no tienen versión HTML."""
     return html_lib.escape(texto).replace("\n", "<br>")
+
+
+_ETIQUETAS_SANEADO_PERMITIDAS = {
+    "a", "b", "strong", "i", "em", "u", "s", "p", "br", "blockquote",
+    "ul", "ol", "li", "span", "div", "table", "thead", "tbody", "tr", "td", "th",
+    "h1", "h2", "h3", "h4", "h5", "h6", "img", "hr", "pre", "code", "font",
+}
+_ETIQUETAS_SANEADO_SIN_CONTENIDO = {"script", "style", "iframe", "object", "embed", "link", "meta", "base", "form", "svg"}
+_ATRIBUTOS_SANEADO_PERMITIDOS = {
+    "a": {"href", "title"},
+    "img": {"src", "alt", "width", "height"},
+    "font": {"color", "size", "face"},
+    "table": {"border", "cellpadding", "cellspacing"},
+}
+
+
+class _SaneadorHTML(html_lib.parser.HTMLParser):
+    """Filtra HTML de origen no confiable (correos entrantes) a un subconjunto
+    seguro de etiquetas/atributos, para citar en respuestas sin ejecutar
+    scripts ni gestores de eventos del remitente original."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.partes: list[str] = []
+        self._profundidad_omitida = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self._procesar_apertura(tag, attrs, autocierre=False)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self._procesar_apertura(tag, attrs, autocierre=True)
+
+    def _procesar_apertura(self, tag: str, attrs: list[tuple[str, str | None]], autocierre: bool) -> None:
+        tag = tag.lower()
+        if tag in _ETIQUETAS_SANEADO_SIN_CONTENIDO:
+            if not autocierre:
+                self._profundidad_omitida += 1
+            return
+        if self._profundidad_omitida:
+            return
+        if tag not in _ETIQUETAS_SANEADO_PERMITIDAS:
+            return
+        permitidos = _ATRIBUTOS_SANEADO_PERMITIDOS.get(tag, set())
+        trozos = [tag]
+        for nombre, valor in attrs:
+            nombre = (nombre or "").lower()
+            valor = valor or ""
+            if nombre not in permitidos:
+                continue
+            if nombre in ("href", "src"):
+                valor_norm = valor.strip().lower()
+                permitido = valor_norm.startswith(("http://", "https://", "mailto:"))
+                if nombre == "src" and tag == "img":
+                    permitido = permitido or valor_norm.startswith(("cid:", "data:image/"))
+                if not permitido:
+                    continue
+            trozos.append(f'{nombre}="{html_lib.escape(valor, quote=True)}"')
+        etiqueta = "<" + " ".join(trozos) + (" />" if autocierre else ">")
+        self.partes.append(etiqueta)
+
+    def handle_endtag(self, tag: str) -> None:
+        tag = tag.lower()
+        if tag in _ETIQUETAS_SANEADO_SIN_CONTENIDO:
+            if self._profundidad_omitida:
+                self._profundidad_omitida -= 1
+            return
+        if self._profundidad_omitida:
+            return
+        if tag in _ETIQUETAS_SANEADO_PERMITIDAS:
+            self.partes.append(f"</{tag}>")
+
+    def handle_data(self, data: str) -> None:
+        if not self._profundidad_omitida:
+            self.partes.append(html_lib.escape(data))
+
+    def resultado(self) -> str:
+        return "".join(self.partes)
+
+
+def sanear_html_externo(contenido_html: str) -> str:
+    """Limpia HTML de un correo recibido (remitente no confiable) antes de
+    incrustarlo en el editor de respuesta/reenvío, que renderiza con `|safe`
+    dentro de un `contenteditable` — sin esto, un remitente podría inyectar
+    `<script>`/`onerror=`/etc. y ejecutar en la sesión de quien responda."""
+    saneador = _SaneadorHTML()
+    try:
+        saneador.feed(contenido_html or "")
+        saneador.close()
+    except Exception:
+        return html_lib.escape(contenido_html or "")
+    return saneador.resultado()
 
 
 def html_a_texto_plano(contenido_html: str) -> str:
@@ -525,7 +658,7 @@ def _aplicar_categoria_automatica(usuario_id: int, mensaje_id: int, remitente_cr
     direccion = direccion_email(remitente_crudo)
     categoria_id = db.categoria_id_por_remitente_correo(usuario_id, direccion)
     if categoria_id is not None:
-        db.asignar_categoria_correo(mensaje_id, categoria_id)
+        db.asignar_categoria_correo(usuario_id, mensaje_id, categoria_id)
 
 
 _PATRON_IMG_REMOTA = re.compile(r'(<img\b[^>]*\bsrc=["\'])(https?://[^"\']+)(["\'])', re.IGNORECASE)
@@ -593,7 +726,10 @@ def mover_mensaje(usuario_id: int, mensaje_id: int, carpeta_destino: str) -> Non
 def crear_categoria(usuario_id: int, nombre: str, color: str) -> int:
     if not nombre.strip():
         raise ErrorCorreo("La categoría necesita un nombre.")
-    return db.crear_categoria_correo(usuario_id, nombre, color)
+    try:
+        return db.crear_categoria_correo(usuario_id, nombre, color)
+    except ValueError as e:
+        raise ErrorCorreo(str(e)) from e
 
 
 def listar_categorias(usuario_id: int):
@@ -604,8 +740,8 @@ def eliminar_categoria(usuario_id: int, categoria_id: int) -> None:
     db.eliminar_categoria_correo(usuario_id, categoria_id)
 
 
-def asignar_categoria(mensaje_id: int, categoria_id: int | None) -> None:
-    db.asignar_categoria_correo(mensaje_id, categoria_id)
+def asignar_categoria(usuario_id: int, mensaje_id: int, categoria_id: int | None) -> None:
+    db.asignar_categoria_correo(usuario_id, mensaje_id, categoria_id)
 
 
 # --- Remitentes de confianza ---------------------------------------------------
@@ -631,7 +767,10 @@ def crear_regla_categoria(usuario_id: int, remitente_patron: str, categoria_id: 
     remitente_patron = remitente_patron.strip().lower()
     if not remitente_patron:
         raise ErrorCorreo("Indica un email o un dominio (@ejemplo.com).")
-    return db.crear_regla_categoria_correo(usuario_id, remitente_patron, categoria_id)
+    try:
+        return db.crear_regla_categoria_correo(usuario_id, remitente_patron, categoria_id)
+    except ValueError as e:
+        raise ErrorCorreo(str(e)) from e
 
 
 def listar_reglas_categoria(usuario_id: int):
@@ -645,6 +784,7 @@ def eliminar_regla_categoria(usuario_id: int, regla_id: int) -> None:
 # --- Firma ---------------------------------------------------------------------
 
 def guardar_firma(usuario_id: int, cuenta_id: int, firma_html: str, en_nuevos: bool, en_respuestas: bool) -> None:
+    firma_html = sanear_html_externo(firma_html) if firma_html else firma_html
     db.guardar_firma_correo(usuario_id, cuenta_id, firma_html or None, en_nuevos, en_respuestas)
 
 

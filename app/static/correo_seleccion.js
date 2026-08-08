@@ -33,6 +33,25 @@
     actualizarBarra();
   });
 
+  // Doble clic en un mensaje: entra en "modo pantalla completa" (oculta
+  // el rail de cuentas y la lista, ver .correo-shell.es-pantalla-completa
+  // en style.css) -- pedido explícitamente porque las columnas fijas de
+  // 220px+340px dejan poco sitio para leer. Un solo clic sigue
+  // navegando tal cual (recarga con ?mensaje_id=), así que no hace
+  // falta prevenir el primer clic: en el SEGUNDO clic de un doble clic,
+  // `e.detail` vale 2 (lo reporta el propio navegador, sin temporizador
+  // a mano) -- ahí se cancela la navegación normal y se repite con
+  // &completa=1 añadido.
+  lista.querySelectorAll(".correo-fila-contenido").forEach((enlace) => {
+    enlace.addEventListener("click", (e) => {
+      if (e.detail < 2) return;
+      e.preventDefault();
+      const url = new URL(enlace.href, window.location.origin);
+      url.searchParams.set("completa", "1");
+      window.location.href = url.toString();
+    });
+  });
+
   barra.querySelectorAll("[data-accion]").forEach((boton) => {
     boton.addEventListener("click", async () => {
       const ids = idsSeleccionados();

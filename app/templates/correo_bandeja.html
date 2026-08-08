@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Correo — Guilda Work{% endblock %}
 {% block content %}
-<div class="correo-shell">
+<div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
   <div class="correo-topbar">
     <span class="correo-topbar-titulo">Correo</span>
     <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="Ajustes">⚙</a>
@@ -109,6 +109,11 @@
     {% if mensaje_seleccionado %}
     {% set cat_actual = categorias_por_id.get(mensaje_seleccionado.categoria_id) %}
     <div class="correo-lectura-header">
+      {% if completa %}
+      <a class="correo-lectura-volver"
+         href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None) }}"
+         title="Volver a la lista">← Volver</a>
+      {% endif %}
       <div class="correo-lectura-remitente">
         <span class="avatar-circulo avatar-grande" style="--avatar-color: {{ mensaje_seleccionado.remitente|avatar_color }};">{{ mensaje_seleccionado.remitente|iniciales }}</span>
         <div>

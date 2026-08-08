@@ -33,6 +33,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape as _xml_escape
 
 _WEBDAV_NS = {"d": "DAV:"}
 
@@ -242,12 +243,13 @@ def buscar_archivos(texto: str, limite: int = 20) -> list[dict]:
     WebDAV SEARCH/DASL, soportado de forma nativa por Nextcloud)."""
     if not NEXTCLOUD_ADMIN_USER or not NEXTCLOUD_ADMIN_PASSWORD:
         return []
+    texto_seguro = _xml_escape(texto)
     cuerpo_busqueda = f"""<?xml version="1.0"?>
 <d:searchrequest xmlns:d="DAV:">
   <d:basicsearch>
     <d:select><d:prop><d:displayname/><d:getcontentlength/><d:resourcetype/></d:prop></d:select>
     <d:from><d:scope><d:href>{_DAV_BASE}/{urllib.parse.quote(NEXTCLOUD_ADMIN_USER)}</d:href><d:depth>infinity</d:depth></d:scope></d:from>
-    <d:where><d:like><d:prop><d:displayname/></d:prop><d:literal>%{texto}%</d:literal></d:like></d:where>
+    <d:where><d:like><d:prop><d:displayname/></d:prop><d:literal>%{texto_seguro}%</d:literal></d:like></d:where>
     <d:limit><d:nresults>{limite}</d:nresults></d:limit>
   </d:basicsearch>
 </d:searchrequest>"""

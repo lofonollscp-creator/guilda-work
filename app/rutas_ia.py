@@ -62,7 +62,7 @@ def ajustes():
         "ia_ajustes.html",
         preferencias=db.obtener_preferencias_ia(g.usuario_id),
         modelos_sugeridos=MODELOS_SUGERIDOS,
-        api_key_configurada=bool(asistente.obtener_api_key(g.usuario_id)),
+        num_claves_configuradas=len(asistente.obtener_api_keys(g.usuario_id)),
     )
 
 
@@ -78,10 +78,10 @@ def guardar_ajustes():
         modo_autonomo=request.form.get("modo_autonomo") == "on",
     )
 
-    nueva_clave = request.form.get("api_key", "").strip()
-    if nueva_clave:
-        asistente.guardar_api_key(g.usuario_id, nueva_clave)
-    if request.form.get("borrar_api_key") == "on":
+    nuevas_claves = request.form.get("api_keys", "").splitlines()
+    if any(c.strip() for c in nuevas_claves):
+        asistente.guardar_api_keys(g.usuario_id, nuevas_claves)
+    if request.form.get("borrar_api_keys") == "on":
         asistente.borrar_api_key(g.usuario_id)
 
     return redirect(url_for("ia.ajustes"))

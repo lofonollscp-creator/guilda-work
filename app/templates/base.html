@@ -49,6 +49,14 @@
         <span class="icon-rail-icono">&#129520;</span>
         <span class="icon-rail-etiqueta">Herramientas</span>
       </a>
+      <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="Tiquets">
+        <span class="icon-rail-icono">&#127915;</span>
+        <span class="icon-rail-etiqueta">Tiquets</span>
+      </a>
+      <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="Fichaje">
+        <span class="icon-rail-icono">&#9201;</span>
+        <span class="icon-rail-etiqueta">Fichaje</span>
+      </a>
       <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="Histórico">
         <span class="icon-rail-icono">&#128337;</span>
         <span class="icon-rail-etiqueta">Histórico</span>
@@ -101,10 +109,16 @@
             <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="Abrir Asistente IA">🤖 Asistente IA</button>
             {% endif %}
             <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">📚 Documentación (desarrolladores)</a>
+            {% if modo_escritorio %}
             <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
                   onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
               <button type="submit" class="ajustes-panel-btn">&#9211; Cerrar programa</button>
             </form>
+            {% else %}
+            <form class="ajustes-panel-shutdown" action="{{ url_for('logout') }}" method="post">
+              <button type="submit" class="ajustes-panel-btn">&#9211; Cerrar sesión</button>
+            </form>
+            {% endif %}
           </div>
         </div>
       </header>

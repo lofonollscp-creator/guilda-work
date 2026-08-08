@@ -196,11 +196,19 @@ def bandeja():
     q = request.args.get("q") or None
     solo_no_leidos = request.args.get("no_leidos") == "1"
     incluir_pospuestos = request.args.get("pospuestos") == "1"
+    # Doble clic en un mensaje (ver correo_bandeja.html + static/correo.js)
+    # entra en modo "pantalla completa": oculta el rail de cuentas y la
+    # lista para leer el mensaje sin las columnas fijas de 220px+340px
+    # (que en pantallas de portátil/tablet dejan poco sitio a la
+    # lectura). No hay ruta aparte porque el panel de lectura ya vive
+    # dentro de esta misma vista -- es solo una clase CSS de más.
+    completa = request.args.get("completa") == "1"
 
     if cuenta_id is not None and db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
         abort(404)
 
     contexto = _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, None, incluir_pospuestos)
+    contexto["completa"] = completa
 
     mensaje_seleccionado = None
     mensaje_id = request.args.get("mensaje_id", type=int)
@@ -318,7 +326,7 @@ def alternar_leido(mensaje_id: int):
 def asignar_categoria(mensaje_id: int):
     mensaje = _mensaje_de_usuario_o_404(mensaje_id)
     categoria_id = request.form.get("categoria_id", type=int)
-    correo.asignar_categoria(mensaje_id, categoria_id)
+    correo.asignar_categoria(g.usuario_id, mensaje_id, categoria_id)
     return redirect(url_for(
         "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
     ))
@@ -384,7 +392,7 @@ def responder(mensaje_id: int):
     asunto = mensaje["asunto"] or ""
     if not asunto.lower().startswith("re:"):
         asunto = f"Re: {asunto}"
-    original_html = mensaje["cuerpo_html"] or correo.texto_a_html(mensaje["cuerpo_texto"] or "")
+    original_html = correo.sanear_html_externo(mensaje["cuerpo_html"]) if mensaje["cuerpo_html"] else correo.texto_a_html(mensaje["cuerpo_texto"] or "")
     cita = (
         f"<p>{correo.texto_a_html(mensaje['remitente'] or '')} escribió:</p>"
         f'<blockquote style="border-left:2px solid #ccc;margin:0 0 0 8px;padding-left:12px;color:#555;">{original_html}</blockquote>'
@@ -404,7 +412,7 @@ def responder_a_todos(mensaje_id: int):
     asunto = mensaje["asunto"] or ""
     if not asunto.lower().startswith("re:"):
         asunto = f"Re: {asunto}"
-    original_html = mensaje["cuerpo_html"] or correo.texto_a_html(mensaje["cuerpo_texto"] or "")
+    original_html = correo.sanear_html_externo(mensaje["cuerpo_html"]) if mensaje["cuerpo_html"] else correo.texto_a_html(mensaje["cuerpo_texto"] or "")
     cita = (
         f"<p>{correo.texto_a_html(mensaje['remitente'] or '')} escribió:</p>"
         f'<blockquote style="border-left:2px solid #ccc;margin:0 0 0 8px;padding-left:12px;color:#555;">{original_html}</blockquote>'
@@ -424,7 +432,7 @@ def reenviar(mensaje_id: int):
     asunto = mensaje["asunto"] or ""
     if not asunto.lower().startswith("fwd:"):
         asunto = f"Fwd: {asunto}"
-    original_html = mensaje["cuerpo_html"] or correo.texto_a_html(mensaje["cuerpo_texto"] or "")
+    original_html = correo.sanear_html_externo(mensaje["cuerpo_html"]) if mensaje["cuerpo_html"] else correo.texto_a_html(mensaje["cuerpo_texto"] or "")
     cita = (
         "<p>---------- Mensaje reenviado ----------</p>"
         f"<p>De: {correo.texto_a_html(mensaje['remitente'] or '')}<br>"

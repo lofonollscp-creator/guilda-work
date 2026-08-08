@@ -16,9 +16,9 @@
 
 <div class="cal-toolbar">
   <div class="cal-nav">
-    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=anterior) }}">&larr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=anterior) }}" title="Anterior">&larr;</a>
     <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=hoy) }}">Hoy</a>
-    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=siguiente) }}">&rarr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=siguiente) }}" title="Siguiente">&rarr;</a>
     <span class="cal-titulo">{{ titulo_rango }}</span>
   </div>
   <div class="cal-vistas">
@@ -103,7 +103,7 @@
     <input type="hidden" name="fecha_vencimiento" id="qc-fecha-vencimiento">
     <div class="cal-quick-create-header">
       <span id="qc-rango-label"></span>
-      <button type="button" class="cal-quick-close" onclick="cerrarCreacionRapidaTarea()">✕</button>
+      <button type="button" class="cal-quick-close" onclick="cerrarCreacionRapidaTarea()" title="Cerrar">✕</button>
     </div>
     <input type="text" name="asunto" id="qc-asunto" placeholder="Asunto de la tarea..." required>
     <div class="quick-row">
@@ -112,7 +112,13 @@
         <option value="{{ valor }}" {% if valor == 'normal' %}selected{% endif %}>{{ etiqueta }}</option>
         {% endfor %}
       </select>
-      <input type="text" name="categoria_outlook" placeholder="Categoría (opcional)" list="categorias-outlook-datalist-cal">
+      {% if menus %}
+      <select name="categoria_id" title="Menú">
+        <option value="">Sin menú</option>
+        {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <input type="text" name="categoria_outlook" placeholder="Categoría Outlook (opcional)" list="categorias-outlook-datalist-cal">
       <datalist id="categorias-outlook-datalist-cal">
         {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
       </datalist>

@@ -12,6 +12,7 @@
   <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
   <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
   <button type="submit" class="btn btn-primary">Filtrar</button>
+  {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('estadisticas') }}">Limpiar</a>{% endif %}
 </form>
 
 <section class="stats-section">

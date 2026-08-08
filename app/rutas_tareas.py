@@ -107,6 +107,7 @@ def listar():
         estados=ESTADOS,
         prioridades=PRIORIDADES,
         categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
+        menus=db.listar_categorias(g.usuario_id),
         estado=estado or "",
         prioridad=prioridad or "",
         categoria=categoria or "",
@@ -164,6 +165,7 @@ def calendario():
         horas=HORAS_DIA,
         prioridades=PRIORIDADES,
         categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
+        menus=db.listar_categorias(g.usuario_id),
         volver_a=url_for("tareas.calendario", vista=vista, fecha=ancla.isoformat()),
     )
 
@@ -183,6 +185,7 @@ def _titulo_rango(vista: str, ancla: date, inicio: date, fin: date) -> str:
 def crear():
     asunto = request.form.get("asunto", "").strip()
     if asunto:
+        categoria_id = request.form.get("categoria_id") or None
         db.crear_tarea_outlook(
             g.usuario_id,
             asunto=asunto,
@@ -190,6 +193,7 @@ def crear():
             fecha_inicio=request.form.get("fecha_inicio") or None,
             fecha_vencimiento=request.form.get("fecha_vencimiento") or None,
             categoria_outlook=request.form.get("categoria_outlook") or None,
+            categoria_id=int(categoria_id) if categoria_id else None,
         )
     return redirect(request.form.get("volver_a") or url_for("tareas.listar"))
 
@@ -201,13 +205,16 @@ def editar(tarea_id: int):
     if tarea is None:
         abort(404)
 
+    menus = db.listar_categorias(g.usuario_id)
+
     if request.method == "POST":
         asunto = request.form.get("asunto", "").strip()
         if not asunto:
             return render_template(
                 "tarea_outlook_editar.html", tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES,
-                error="El asunto no puede estar vacío.",
+                menus=menus, error="El asunto no puede estar vacío.",
             )
+        categoria_id = request.form.get("categoria_id") or None
         campos = {
             "asunto": asunto,
             "cuerpo": request.form.get("cuerpo", "").strip() or None,
@@ -217,6 +224,7 @@ def editar(tarea_id: int):
             "fecha_inicio": request.form.get("fecha_inicio") or None,
             "fecha_vencimiento": request.form.get("fecha_vencimiento") or None,
             "categoria_outlook": request.form.get("categoria_outlook", "").strip() or None,
+            "categoria_id": int(categoria_id) if categoria_id else None,
         }
         if campos["estado"] == "completada" and tarea["estado"] != "completada":
             db.completar_tarea_outlook(g.usuario_id, tarea_id)
@@ -225,7 +233,7 @@ def editar(tarea_id: int):
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
         return redirect(url_for("tareas.listar"))
 
-    return render_template("tarea_outlook_editar.html", tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, error=None)
+    return render_template("tarea_outlook_editar.html", tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, menus=menus, error=None)
 
 
 @tareas_bp.route("/<int:tarea_id>/completar", methods=["POST"])

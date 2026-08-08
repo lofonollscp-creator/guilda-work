@@ -41,17 +41,27 @@
   </div>
 
   <div class="ia-form-row">
-    <label>Fecha de inicio
-      <input type="date" name="fecha_inicio" value="{{ tarea.fecha_inicio[:10] if tarea.fecha_inicio else '' }}">
+    <label>Fecha y hora de inicio
+      <input type="datetime-local" name="fecha_inicio" value="{{ tarea.fecha_inicio[:16].replace(' ', 'T') if tarea.fecha_inicio else '' }}">
     </label>
-    <label>Fecha de vencimiento
-      <input type="date" name="fecha_vencimiento" value="{{ tarea.fecha_vencimiento[:10] if tarea.fecha_vencimiento else '' }}">
+    <label>Fecha y hora de vencimiento
+      <input type="datetime-local" name="fecha_vencimiento" value="{{ tarea.fecha_vencimiento[:16].replace(' ', 'T') if tarea.fecha_vencimiento else '' }}">
     </label>
   </div>
 
-  <label>Categoría
-    <input type="text" name="categoria_outlook" value="{{ tarea.categoria_outlook or '' }}" placeholder="ej. Trabajo, Personal...">
-  </label>
+  <div class="ia-form-row">
+    {% if menus %}
+    <label>Menú
+      <select name="categoria_id">
+        <option value="">Sin menú</option>
+        {% for m in menus %}<option value="{{ m.id }}" {% if tarea.categoria_id == m.id %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label>Categoría (Outlook)
+      <input type="text" name="categoria_outlook" value="{{ tarea.categoria_outlook or '' }}" placeholder="ej. Trabajo, Personal...">
+    </label>
+  </div>
 
   {% if tarea.fecha_completada %}
   <p class="muted">Completada el {{ tarea.fecha_completada[:16].replace('T', ' ') }}.</p>

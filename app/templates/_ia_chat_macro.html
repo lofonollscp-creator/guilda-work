@@ -1,5 +1,6 @@
 {% macro chat(mensajes, pendiente, contenedor_id) %}
 <div class="ia-chat" id="{{ contenedor_id }}">
+  <p class="ia-chat-aviso">🤖 Respuestas generadas por IA — pueden contener errores, comprueba lo importante.</p>
   <div class="ia-chat-mensajes" id="{{ contenedor_id }}-mensajes">
     {% for m in mensajes %}
       {% if m.rol == 'user' %}

@@ -42,6 +42,15 @@ def _tool(nombre: str, descripcion: str, propiedades: dict, requeridos: list[str
 
 HERRAMIENTAS: list[dict] = [
     _tool(
+        "buscar_semantico",
+        "Busca por significado (no solo palabra exacta) en notas/tareas/correo del usuario actual. Útil para preguntas del tipo '¿qué dijo el cliente X sobre el IVA?'.",
+        {
+            "texto": _param("string", "Qué buscar."),
+            "limite": _param("integer", "Nº máximo de resultados, por defecto 5."),
+        },
+        ["texto"],
+    ),
+    _tool(
         "listar_notas",
         "Lista notas del log de actividad (fechas 'YYYY-MM-DD', texto filtra por coincidencia parcial).",
         {
@@ -282,6 +291,103 @@ HERRAMIENTAS: list[dict] = [
         },
         ["contenido"],
     ),
+    _tool(
+        "listar_tiquets",
+        "Lista tiquets de soporte (errores/sugerencias sobre Guilda Work). Tablero compartido: de todos los usuarios, no solo el propio.",
+        {
+            "estado": _param("string", "sin_revisar/en_revision/finalizado, opcional."),
+            "tipo": _param("string", "error/sugerencia, opcional."),
+        },
+        [],
+    ),
+    _tool(
+        "crear_tiquet",
+        "Crea un tiquet de soporte (error o sugerencia) a nombre del usuario actual.",
+        {
+            "tipo": _param("string", "error o sugerencia."),
+            "titulo": _param("string", "Título del tiquet."),
+            "descripcion": _param("string", "Descripción, opcional."),
+        },
+        ["tipo", "titulo"],
+    ),
+    _tool(
+        "editar_tiquet",
+        "Edita un tiquet propio, solo mientras siga 'sin_revisar'.",
+        {
+            "tiquet_id": _param("integer", "Id/número del tiquet (el '#N' de la tarjeta)."),
+            "titulo": _param("string", "Nuevo título, opcional."),
+            "descripcion": _param("string", "Nueva descripción, opcional."),
+            "tipo": _param("string", "error o sugerencia, opcional."),
+        },
+        ["tiquet_id"],
+    ),
+    _tool(
+        "eliminar_tiquet",
+        "Elimina un tiquet propio, o cualquiera si eres administrador.",
+        {
+            "tiquet_id": _param("integer", "Id/número del tiquet."),
+        },
+        ["tiquet_id"],
+    ),
+    _tool(
+        "cambiar_estado_tiquet",
+        "Mueve un tiquet a otro estado del Kanban (sin_revisar/en_revision/finalizado). Solo administradores.",
+        {
+            "tiquet_id": _param("integer", "Id/número del tiquet."),
+            "estado": _param("string", "sin_revisar, en_revision o finalizado."),
+        },
+        ["tiquet_id", "estado"],
+    ),
+    _tool(
+        "fichar",
+        "Marca un fichaje del usuario actual (registro horario). Falla si la secuencia no es válida o si faltan los datos personales exigidos.",
+        {
+            "tipo": _param("string", "entrada, pausa_inicio, pausa_fin o salida."),
+        },
+        ["tipo"],
+    ),
+    _tool(
+        "listar_mis_fichajes",
+        "Historial de fichajes del usuario actual, opcionalmente filtrado por fecha.",
+        {
+            "desde": _param("string", "Fecha YYYY-MM-DD, opcional."),
+            "hasta": _param("string", "Fecha YYYY-MM-DD, opcional."),
+        },
+        [],
+    ),
+    _tool(
+        "listar_papelera",
+        "Lista lo que hay en la papelera del usuario actual (menús, tareas, notas, tareas outlook eliminados pero no purgados).",
+        {},
+        [],
+    ),
+    _tool(
+        "restaurar_de_papelera",
+        "Restaura un elemento de la papelera. `origen` es el campo que devuelve listar_papelera.",
+        {
+            "origen": _param("string", "menu, tarea, nota o tarea_outlook."),
+            "id": _param("integer", "Id del elemento a restaurar."),
+        },
+        ["origen", "id"],
+    ),
+    _tool(
+        "estadisticas_por_categoria",
+        "Tiempo dedicado a tareas con duración ya finalizadas, agrupado por menú.",
+        {
+            "desde": _param("string", "Fecha YYYY-MM-DD, opcional."),
+            "hasta": _param("string", "Fecha YYYY-MM-DD, opcional."),
+        },
+        [],
+    ),
+    _tool(
+        "estadisticas_por_dia",
+        "Igual que estadisticas_por_categoria pero agrupado por día.",
+        {
+            "desde": _param("string", "Fecha YYYY-MM-DD, opcional."),
+            "hasta": _param("string", "Fecha YYYY-MM-DD, opcional."),
+        },
+        [],
+    ),
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
@@ -289,7 +395,8 @@ LECTURA: set[str] = {
     "listar_notas", "listar_tareas", "consultar_calendario", "listar_cuentas_correo",
     "sincronizar_correo", "listar_carpetas_correo", "listar_bandeja_entrada", "leer_correo",
     "listar_categorias_correo", "obtener_firma_correo", "exportar_historial", "exportar_tareas",
-    "preparar_borrador_correo",
+    "preparar_borrador_correo", "listar_tiquets", "listar_mis_fichajes",
+    "buscar_semantico", "listar_papelera", "estadisticas_por_categoria", "estadisticas_por_dia",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -297,6 +404,8 @@ ESCRITURA: set[str] = {
     "crear_nota", "editar_nota", "crear_tarea", "editar_tarea", "completar_tarea",
     "marcar_leido_correo", "eliminar_correo", "crear_categoria_correo", "eliminar_categoria_correo",
     "asignar_categoria_correo", "configurar_firma_correo", "importar_historial", "importar_tareas",
+    "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet", "fichar",
+    "restaurar_de_papelera",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son

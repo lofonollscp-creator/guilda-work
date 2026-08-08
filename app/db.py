@@ -106,14 +106,22 @@ CREATE TABLE IF NOT EXISTS webhooks_entregas (
     error TEXT
 );
 
+-- UNIQUE por (usuario_id, nombre), NO solo por nombre -- antes era
+-- "nombre TEXT NOT NULL UNIQUE" a secas (global, entre TODOS los
+-- usuarios), así que dos usuarios que le pusieran el mismo nombre a un
+-- menú acababan compartiendo la misma fila sin saberlo (encontrado y
+-- reproducido en producción, revisión de lógica -- ver
+-- _migrar_categorias_unique_por_usuario para instalaciones ya
+-- existentes con el esquema viejo).
 CREATE TABLE IF NOT EXISTS categorias (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER,
-    nombre TEXT NOT NULL UNIQUE,
+    nombre TEXT NOT NULL,
     color TEXT,
     creada_en TEXT NOT NULL,
     papelera_en TEXT,
-    orden INTEGER
+    orden INTEGER,
+    UNIQUE (usuario_id, nombre)
 );
 
 CREATE TABLE IF NOT EXISTS tareas (
@@ -226,12 +234,18 @@ CREATE TABLE IF NOT EXISTS correo_carpetas (
 -- Categorías de color propias de Guilda Work (no existe un estándar real de
 -- "categorías con color" en IMAP/POP3 genérico — es propietario de
 -- Exchange/Outlook — así que estas nunca se sincronizan con el servidor).
+-- UNIQUE por (usuario_id, nombre), no solo por nombre -- mismo bug que
+-- categorias (revisión de lógica), aquí incluso peor: sin ninguna lógica
+-- de "reutilizar si ya existe", así que el segundo usuario con el mismo
+-- nombre de etiqueta de correo directamente reventaba con un
+-- IntegrityError sin capturar (500 en crudo, reproducido en vivo).
 CREATE TABLE IF NOT EXISTS correo_categorias (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER,
-    nombre TEXT NOT NULL UNIQUE,
+    nombre TEXT NOT NULL,
     color TEXT NOT NULL,
-    creada_en TEXT NOT NULL
+    creada_en TEXT NOT NULL,
+    UNIQUE (usuario_id, nombre)
 );
 
 -- Caché local de mensajes ya descargados (para no ir a red en cada
@@ -324,6 +338,77 @@ CREATE TABLE IF NOT EXISTS ia_mensajes (
     creado_en TEXT NOT NULL
 );
 
+-- Tiquets de soporte interno (errores/sugerencias sobre la propia Guilda
+-- Work) — a diferencia de notas/tareas/correo, es un tablero COMPARTIDO
+-- entre todos los usuarios, no privado por usuario_id (ver app/rutas_tiquets.py).
+-- AUTOINCREMENT para que el número mostrado (el propio id, "#N") nunca se
+-- repita ni siquiera tras borrar un tiquet -- sin esto SQLite podría
+-- reutilizar el id más alto libre.
+CREATE TABLE IF NOT EXISTS tiquets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('error', 'sugerencia')),
+    titulo TEXT NOT NULL,
+    descripcion TEXT,
+    estado TEXT NOT NULL CHECK (estado IN ('sin_revisar', 'en_revision', 'finalizado')) DEFAULT 'sin_revisar',
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+-- Adjuntos de un tiquet (capturas de pantalla, PDF...) -- mismo diseño que
+-- correo_adjuntos (BLOB en la propia base de datos, sin filesystem aparte
+-- que gestionar). ON DELETE CASCADE: al borrar un tiquet desaparecen sus
+-- adjuntos solos (get_connection() ya activa "PRAGMA foreign_keys = ON").
+CREATE TABLE IF NOT EXISTS tiquets_adjuntos (
+    id INTEGER PRIMARY KEY,
+    tiquet_id INTEGER NOT NULL,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    creado_en TEXT NOT NULL,
+    FOREIGN KEY (tiquet_id) REFERENCES tiquets(id) ON DELETE CASCADE
+);
+
+-- Fichaje de trabajadores (registro horario, art. 34.9 ET / RD-ley 8/2019).
+-- Datos personales del trabajador que exige la normativa para identificarlo
+-- ante una inspección -- fila única por usuario, igual que correo_preferencias.
+CREATE TABLE IF NOT EXISTS fichaje_datos (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
+    nombre_completo TEXT,
+    dni_nie TEXT,
+    numero_afiliacion_ss TEXT,
+    categoria_profesional TEXT,
+    tipo_contrato TEXT,
+    fecha_alta TEXT,
+    jornada_semanal_horas REAL,
+    convenio_colectivo TEXT,
+    actualizado_en TEXT
+);
+
+-- El registro horario en sí. INSERT-only a propósito -- nunca hay UPDATE
+-- ni DELETE sobre esta tabla (ni siquiera vía papelera): la norma exige
+-- conservar el registro 4 años y que no se pueda manipular a posteriori
+-- sin dejar rastro. Una corrección se hace con una fila NUEVA que
+-- referencia a la original en `corrige_a`, nunca sobrescribiendo.
+-- `tenant_id` se duplica aquí (no solo en usuarios) porque debe reflejar
+-- el tenant al que pertenecía el trabajador EN EL MOMENTO del fichaje
+-- -- un registro legal histórico no debe cambiar si más adelante se
+-- reasigna a alguien de tenant.
+CREATE TABLE IF NOT EXISTS fichajes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    tenant_id INTEGER REFERENCES tenants(id),
+    tipo TEXT NOT NULL CHECK (tipo IN ('entrada','pausa_inicio','pausa_fin','salida')),
+    marca_tiempo TEXT NOT NULL,
+    origen TEXT NOT NULL DEFAULT 'web',
+    nota TEXT,
+    corrige_a INTEGER REFERENCES fichajes(id),
+    creado_por INTEGER NOT NULL REFERENCES usuarios(id),
+    creado_en TEXT NOT NULL
+);
+
 """
 
 # Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en un
@@ -358,6 +443,8 @@ CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_remitentes_confiables_usuario ON correo_remitentes_confiables(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_reglas_categoria_usuario ON correo_reglas_categoria(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_destinatarios_recientes_usuario ON correo_destinatarios_recientes(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_fichajes_usuario_marca ON fichajes(usuario_id, marca_tiempo);
+CREATE INDEX IF NOT EXISTS idx_fichajes_tenant_marca ON fichajes(tenant_id, marca_tiempo);
 """
 
 
@@ -498,6 +585,119 @@ def _migrar_preferencias_singleton(conn: sqlite3.Connection, usuario_id_local: i
         conn.execute(f"DROP TABLE {tabla}_viejo")
 
 
+def _migrar_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> None:
+    """`categorias.nombre` tenía UNIQUE global (sin usuario_id) -- dos
+    usuarios con un menú del mismo nombre acababan compartiendo la
+    misma fila sin saberlo (bug real, reproducido en producción: el
+    segundo en crearlo recibía el id del primero en vez de uno propio,
+    y ese menú no le aparecía ni en su propio listado). SQLite no deja
+    tocar una UNIQUE con ALTER TABLE, así que se reconstruye la tabla
+    la primera vez que se detecta el esquema antiguo -- se comprueba
+    leyendo su propio SQL en sqlite_master, sin ninguna bandera aparte.
+    Llamar DESPUÉS de que existan papelera_en/orden/favorito (ver
+    llamadas a _asegurar_columna justo antes), para no perderlas al
+    reconstruir. Sin duplicados posibles que choquen con la nueva
+    UNIQUE(usuario_id, nombre): la UNIQUE(nombre) vieja ya impedía que
+    hubiera dos filas con el mismo nombre, así que a fortiori tampoco
+    hay dos con el mismo (usuario_id, nombre).
+
+    Usa su PROPIA conexión (ignora la que recibe) con
+    `PRAGMA foreign_keys = OFF`, siguiendo el procedimiento de 12 pasos
+    documentado por SQLite para tablas con FOREIGN KEY entrantes desde
+    otras tablas (notas/tareas/tareas_outlook referencian categorias) --
+    con las claves foráneas activas (lo normal en get_connection()),
+    renombrar la tabla vieja fuera y crear una nueva con el mismo nombre
+    hace que SQLite reescriba las FK de las tablas hijas para que sigan
+    apuntando al nombre viejo (¡no al nuevo!), y el DROP final de la
+    tabla vieja revienta con FOREIGN KEY constraint failed -- exactamente
+    lo que pasó la primera vez que se escribió esta función, detectado
+    y corregido a mano en el propio despliegue antes de arreglarla aquí.
+    El orden correcto es crear la tabla nueva bajo un nombre aparte,
+    copiar los datos, BORRAR la vieja (con foreign_keys=OFF esto no
+    reescribe nada en las hijas) y solo entonces renombrar la nueva al
+    nombre definitivo -- así las hijas, que nunca dejan de decir
+    "REFERENCES categorias(...)", vuelven a apuntar a una tabla real en
+    cuanto esta reaparece con ese nombre, sin necesidad de tocarlas."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        definicion = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='categorias'"
+        ).fetchone()
+        if definicion is None or "UNIQUE (usuario_id, nombre)" in definicion["sql"]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            """CREATE TABLE categorias_nueva (
+                   id INTEGER PRIMARY KEY,
+                   usuario_id INTEGER,
+                   nombre TEXT NOT NULL,
+                   color TEXT,
+                   creada_en TEXT NOT NULL,
+                   papelera_en TEXT,
+                   orden INTEGER,
+                   favorito INTEGER NOT NULL DEFAULT 0,
+                   UNIQUE (usuario_id, nombre)
+               )"""
+        )
+        conn.execute(
+            """INSERT INTO categorias_nueva (id, usuario_id, nombre, color, creada_en, papelera_en, orden, favorito)
+               SELECT id, usuario_id, nombre, color, creada_en, papelera_en, orden, favorito
+               FROM categorias"""
+        )
+        conn.execute("DROP TABLE categorias")
+        conn.execute("ALTER TABLE categorias_nueva RENAME TO categorias")
+        violaciones = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violaciones:
+            conn.rollback()
+            raise RuntimeError(f"Migración de categorias abortada: foreign_key_check encontró {violaciones}")
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.close()
+
+
+def _migrar_correo_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> None:
+    """Mismo bug, mismo arreglo que _migrar_categorias_unique_por_usuario
+    (ver su docstring para el porqué del procedimiento exacto) -- aquí
+    con correo_mensajes.categoria_id (ON DELETE SET NULL) y
+    correo_reglas_categoria.categoria_id (ON DELETE CASCADE) como tablas
+    hijas en vez de notas/tareas/tareas_outlook."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        definicion = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='correo_categorias'"
+        ).fetchone()
+        if definicion is None or "UNIQUE (usuario_id, nombre)" in definicion["sql"]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            """CREATE TABLE correo_categorias_nueva (
+                   id INTEGER PRIMARY KEY,
+                   usuario_id INTEGER,
+                   nombre TEXT NOT NULL,
+                   color TEXT NOT NULL,
+                   creada_en TEXT NOT NULL,
+                   UNIQUE (usuario_id, nombre)
+               )"""
+        )
+        conn.execute(
+            """INSERT INTO correo_categorias_nueva (id, usuario_id, nombre, color, creada_en)
+               SELECT id, usuario_id, nombre, color, creada_en FROM correo_categorias"""
+        )
+        conn.execute("DROP TABLE correo_categorias")
+        conn.execute("ALTER TABLE correo_categorias_nueva RENAME TO correo_categorias")
+        violaciones = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violaciones:
+            conn.rollback()
+            raise RuntimeError(f"Migración de correo_categorias abortada: foreign_key_check encontró {violaciones}")
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.close()
+
+
 def init_db() -> None:
     conn = get_connection()
     try:
@@ -507,6 +707,8 @@ def init_db() -> None:
         _asegurar_columna(conn, "notas", "papelera_en", "TEXT")
         _asegurar_columna(conn, "categorias", "orden", "INTEGER")
         _asegurar_columna(conn, "categorias", "favorito", "INTEGER NOT NULL DEFAULT 0")
+        _migrar_categorias_unique_por_usuario(conn)
+        _migrar_correo_categorias_unique_por_usuario(conn)
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "categoria_id", "INTEGER")
@@ -528,6 +730,19 @@ def init_db() -> None:
         # el widget de soporte de Chatwoot, que necesita saber a qué
         # tenant pertenece quien escribe).
         _asegurar_columna(conn, "usuarios", "tenant_id", "INTEGER REFERENCES tenants(id)")
+
+        # Fichaje (registro horario): quien tiene este flag administra el
+        # fichaje SOLO de su propio tenant (usuarios.tenant_id) -- distinto
+        # de rol='admin' (superadmin global de todo el backoffice, ver
+        # app/auth.py:admin_required). Lo asigna un superadmin desde el
+        # backoffice, igual que hacer_admin/quitar_admin.
+        _asegurar_columna(conn, "usuarios", "gestor_fichajes", "INTEGER NOT NULL DEFAULT 0")
+
+        # Identificación de empresa (CIF/dirección fiscal), exigida junto a
+        # la del trabajador en cualquier registro horario que se presente
+        # a una inspección -- aparece en la cabecera de los export CSV/PDF.
+        _asegurar_columna(conn, "tenants", "cif", "TEXT")
+        _asegurar_columna(conn, "tenants", "direccion_fiscal", "TEXT")
 
         # FacturaScripts (Fase facturación): a diferencia de EspoCRM/
         # Nextcloud (una instancia compartida), cada tenant tiene su
@@ -653,6 +868,10 @@ def init_db() -> None:
         _asegurar_columna(conn, "ia_preferencias", "proveedor_local", "TEXT NOT NULL DEFAULT 'ollama'")
         _asegurar_columna(conn, "ia_preferencias", "modelo_local", "TEXT NOT NULL DEFAULT ''")
 
+        # Relación opcional con un menú (categorias) para las Tareas Outlook
+        # — mismo patrón ya usado en correo_mensajes.categoria_id más arriba.
+        _asegurar_columna(conn, "tareas_outlook", "categoria_id", "INTEGER REFERENCES categorias(id)")
+
         conn.commit()
     finally:
         conn.close()
@@ -753,6 +972,20 @@ def hacer_admin(email: str) -> None:
         cur = conn.execute("UPDATE usuarios SET rol = 'admin' WHERE email = ?", (email.strip().lower(),))
         if cur.rowcount == 0:
             raise ValueError(f"No existe ningún usuario con el email '{email}'.")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def es_gestor_fichajes(usuario_id: int) -> bool:
+    usuario = obtener_usuario(usuario_id)
+    return usuario is not None and bool(usuario["gestor_fichajes"])
+
+
+def asignar_gestor_fichajes(usuario_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET gestor_fichajes = ? WHERE id = ?", (int(valor), usuario_id))
         conn.commit()
     finally:
         conn.close()
@@ -1127,6 +1360,18 @@ def asignar_tenant(usuario_id: int, tenant_id: int) -> None:
         conn.close()
 
 
+def guardar_datos_tenant(tenant_id: int, cif: str | None, direccion_fiscal: str | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tenants SET cif = ?, direccion_fiscal = ? WHERE id = ?",
+            (cif or None, direccion_fiscal or None, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def tenant_de_usuario(usuario_id: int) -> sqlite3.Row | None:
     """El tenant del usuario, o None si no tiene ninguno asignado todavía."""
     conn = get_connection()
@@ -1308,19 +1553,26 @@ def entregas_de_webhook(webhook_id: int, limite: int = 20) -> list[sqlite3.Row]:
 # --- Categorías --------------------------------------------------------
 
 def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> int:
-    """Crea un menú, o reutiliza uno existente con el mismo nombre.
+    """Crea un menú, o reutiliza uno existente del MISMO usuario con el
+    mismo nombre.
 
-    `nombre` tiene una restricción UNIQUE en la tabla, y esa restricción no
-    distingue entre menús activos y en la papelera — así que sin este
-    chequeo, crear un menú con el mismo nombre que uno ya borrado (pero
-    todavía en la papelera) reventaría con un IntegrityError. Si el que
-    existe está en la papelera, se restaura en vez de fallar.
+    `nombre` tiene una restricción UNIQUE por (usuario_id, nombre) en la
+    tabla, y esa restricción no distingue entre menús activos y en la
+    papelera — así que sin este chequeo, crear un menú con el mismo
+    nombre que uno propio ya borrado (pero todavía en la papelera)
+    reventaría con un IntegrityError. Si el que existe está en la
+    papelera, se restaura en vez de fallar.
+
+    El filtro `usuario_id = ?` de aquí abajo es imprescindible: sin él,
+    dos usuarios distintos con un menú de igual nombre acababan
+    compartiendo la misma fila sin saberlo (bug real, corregido en la
+    revisión de lógica — ver también _migrar_categorias_unique_por_usuario).
     """
     nombre = nombre.strip()
     conn = get_connection()
     try:
         existente = conn.execute(
-            "SELECT id, papelera_en FROM categorias WHERE nombre = ?", (nombre,)
+            "SELECT id, papelera_en FROM categorias WHERE nombre = ? AND usuario_id = ?", (nombre, usuario_id)
         ).fetchone()
         if existente is not None:
             if existente["papelera_en"] is not None:
@@ -1352,6 +1604,24 @@ def listar_categorias(usuario_id: int) -> list[sqlite3.Row]:
         ).fetchall()
     finally:
         conn.close()
+
+
+def _categoria_id_propio(conn: sqlite3.Connection, usuario_id: int, categoria_id: int | None) -> int | None:
+    """Defensa en profundidad: ningún punto que recibe un categoria_id ya
+    numérico (formulario manipulado a mano, o la tool de MCP cuando se le
+    pasa el id directamente en vez del nombre) comprobaba que esa
+    categoría fuera de verdad del usuario que la usa -- con la UNIQUE
+    global de antes eso ya no hacía falta que colisionara por nombre
+    para pasar desapercibido (revisión de lógica). Si no es suya, se
+    trata como si no se hubiera indicado ninguna (mismo criterio
+    permisivo que el resto de validaciones de esta app: se degrada en
+    silencio, no revienta la petición entera)."""
+    if categoria_id is None:
+        return None
+    fila = conn.execute(
+        "SELECT 1 FROM categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+    ).fetchone()
+    return categoria_id if fila is not None else None
 
 
 def mover_categoria(usuario_id: int, categoria_id: int, direccion: str) -> None:
@@ -1535,6 +1805,13 @@ def contar_entradas_hoy(usuario_id: int, categoria_id: int) -> int:
 def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> int:
     conn = get_connection()
     try:
+        # categoria_id es NOT NULL en esta tabla (a diferencia de notas/
+        # tareas_outlook, aquí el menú es obligatorio) -- así que si no es
+        # del usuario no se puede degradar a None como en el resto, hay
+        # que rechazar la petición entera (defensa en profundidad: en uso
+        # normal el <select> del formulario ya solo ofrece menús propios).
+        if _categoria_id_propio(conn, usuario_id, categoria_id) is None:
+            raise ValueError(f"La categoría/menú {categoria_id} no existe o no es tuya.")
         ahora = now_iso()
         if tipo == "instantanea":
             cur = conn.execute(
@@ -1862,6 +2139,10 @@ def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
 def crear_nota(usuario_id: int, texto: str, categoria_id: int | None = None, tarea_id: int | None = None) -> int:
     conn = get_connection()
     try:
+        # Aquí categoria_id sí es opcional -- si no es del usuario, se
+        # degrada a "sin menú" en vez de rechazar la nota entera (ver
+        # _categoria_id_propio).
+        categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
         cur = conn.execute(
             "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, ?, ?)",
             (usuario_id, texto.strip(), categoria_id, tarea_id, now_iso()),
@@ -1923,7 +2204,10 @@ def obtener_nota(usuario_id: int, nota_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM notas WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (nota_id, usuario_id)
+            """SELECT n.*, c.nombre AS categoria_nombre
+               FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+               WHERE n.id = ? AND n.usuario_id = ? AND n.papelera_en IS NULL""",
+            (nota_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
@@ -2171,14 +2455,19 @@ def eliminar_plantilla(plantilla_id: int) -> None:
 
 
 # --- Tareas al estilo Outlook (lista + calendario) --------------------------
-# Independientes de los menús y de las tareas con duración de más arriba.
-# Los campos calcan el modelo de objetos de Outlook / VTODO de iCalendar
-# para que importar y exportar sea un mapeo directo, campo a campo.
+# Independientes de las tareas con duración de más arriba (ese sistema es un
+# cronómetro en vivo, no un horario planificado de antemano). SÍ admiten un
+# menú opcional (categoria_id, relación real con la tabla categorias, mismo
+# patrón que correo_mensajes.categoria_id) además de categoria_outlook (texto
+# libre, para importar/exportar con Outlook real — son dos campos
+# independientes a propósito, no hay que confundirlos). Los campos calcan el
+# modelo de objetos de Outlook / VTODO de iCalendar para que importar y
+# exportar sea un mapeo directo, campo a campo.
 
 CAMPOS_TAREA_OUTLOOK = (
     "asunto", "cuerpo", "estado", "porcentaje_completado", "prioridad",
     "fecha_inicio", "fecha_vencimiento", "fecha_completada",
-    "categoria_outlook", "outlook_entry_id",
+    "categoria_outlook", "categoria_id", "outlook_entry_id",
 )
 
 
@@ -2192,20 +2481,22 @@ def crear_tarea_outlook(
     fecha_inicio: str | None = None,
     fecha_vencimiento: str | None = None,
     categoria_outlook: str | None = None,
+    categoria_id: int | None = None,
     outlook_entry_id: str | None = None,
 ) -> int:
     conn = get_connection()
     try:
+        categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
         cur = conn.execute(
             """INSERT INTO tareas_outlook
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
-                fecha_inicio, fecha_vencimiento, categoria_outlook,
+                fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
                 outlook_entry_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
-                (categoria_outlook or "").strip() or None, outlook_entry_id, now_iso(),
+                (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id, now_iso(),
             ),
         )
         conn.commit()
@@ -2230,7 +2521,10 @@ def listar_tareas_outlook(
     """
     conn = get_connection()
     try:
-        cond = ["usuario_id = ?", "papelera_en IS NULL"]
+        # t.usuario_id/t.papelera_en llevan el prefijo de tabla porque
+        # categorias también tiene esas dos columnas (JOIN ambiguo si no);
+        # el resto de condiciones no lo necesitan, son propias de tareas_outlook.
+        cond = ["t.usuario_id = ?", "t.papelera_en IS NULL"]
         params: list = [usuario_id]
         if estado:
             cond.append("estado = ?"); params.append(estado)
@@ -2247,8 +2541,10 @@ def listar_tareas_outlook(
             cond.append("fecha_vencimiento < ?"); params.append(_fecha_exclusiva(hasta))
         where = " AND ".join(cond)
         return conn.execute(
-            f"""SELECT * FROM tareas_outlook WHERE {where}
-                ORDER BY (fecha_vencimiento IS NULL), fecha_vencimiento, prioridad DESC""",
+            f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+                FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
+                WHERE {where}
+                ORDER BY (t.fecha_vencimiento IS NULL), t.fecha_vencimiento, t.prioridad DESC""",
             params,
         ).fetchall()
     finally:
@@ -2259,7 +2555,9 @@ def obtener_tarea_outlook(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            """SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+               FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
+               WHERE t.id = ? AND t.usuario_id = ? AND t.papelera_en IS NULL""",
             (tarea_id, usuario_id),
         ).fetchone()
     finally:
@@ -2310,6 +2608,8 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
         return
     conn = get_connection()
     try:
+        if "categoria_id" in campos:
+            campos["categoria_id"] = _categoria_id_propio(conn, usuario_id, campos["categoria_id"])
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
         conn.execute(
@@ -2498,12 +2798,21 @@ def listar_carpetas_correo(cuenta_id: int) -> list[sqlite3.Row]:
 # --- Categorías de correo (propias de Guilda Work, no se sincronizan) --------
 
 def crear_categoria_correo(usuario_id: int, nombre: str, color: str) -> int:
+    """Lanza ValueError (mensaje legible, lo traduce app/correo.py a
+    ErrorCorreo) si ya tienes una categoría de correo con ese nombre --
+    antes era un IntegrityError sin capturar, 500 en crudo (revisión de
+    lógica; la UNIQUE ahora es por (usuario_id, nombre), así que esto ya
+    NUNCA salta por culpa de OTRO usuario, solo por repetir un nombre
+    propio)."""
     conn = get_connection()
     try:
-        cur = conn.execute(
-            "INSERT INTO correo_categorias (usuario_id, nombre, color, creada_en) VALUES (?, ?, ?, ?)",
-            (usuario_id, nombre.strip(), color, now_iso()),
-        )
+        try:
+            cur = conn.execute(
+                "INSERT INTO correo_categorias (usuario_id, nombre, color, creada_en) VALUES (?, ?, ?, ?)",
+                (usuario_id, nombre.strip(), color, now_iso()),
+            )
+        except sqlite3.IntegrityError:
+            raise ValueError(f"Ya tienes una categoría de correo llamada '{nombre.strip()}'.") from None
         conn.commit()
         return cur.lastrowid
     finally:
@@ -2533,9 +2842,19 @@ def eliminar_categoria_correo(usuario_id: int, categoria_id: int) -> None:
         conn.close()
 
 
-def asignar_categoria_correo(mensaje_id: int, categoria_id: int | None) -> None:
+def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int | None) -> None:
+    """`usuario_id` solo para comprobar que `categoria_id` es suya --
+    quien llama ya tiene que haber comprobado por su cuenta que
+    `mensaje_id` es del usuario (ver _mensaje_de_usuario_o_404 en
+    rutas_correo.py), esta función no repite esa parte."""
     conn = get_connection()
     try:
+        if categoria_id is not None:
+            fila = conn.execute(
+                "SELECT 1 FROM correo_categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+            ).fetchone()
+            if fila is None:
+                categoria_id = None
         conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
         conn.commit()
     finally:
@@ -2605,6 +2924,11 @@ def es_remitente_confiable(usuario_id: int, direccion: str | None) -> bool:
 def crear_regla_categoria_correo(usuario_id: int, remitente_patron: str, categoria_id: int) -> int:
     conn = get_connection()
     try:
+        fila = conn.execute(
+            "SELECT 1 FROM correo_categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+        ).fetchone()
+        if fila is None:
+            raise ValueError(f"La categoría de correo {categoria_id} no existe o no es tuya.")
         cur = conn.execute(
             """INSERT INTO correo_reglas_categoria (usuario_id, remitente_patron, categoria_id, creada_en)
                VALUES (?, ?, ?, ?)""",
@@ -2622,7 +2946,7 @@ def listar_reglas_categoria_correo(usuario_id: int) -> list[sqlite3.Row]:
         return conn.execute(
             """SELECT r.*, c.nombre AS categoria_nombre, c.color AS categoria_color
                FROM correo_reglas_categoria r
-               JOIN correo_categorias c ON c.id = r.categoria_id
+               JOIN correo_categorias c ON c.id = r.categoria_id AND c.usuario_id = r.usuario_id
                WHERE r.usuario_id = ? ORDER BY r.remitente_patron""",
             (usuario_id,),
         ).fetchall()
@@ -3003,8 +3327,8 @@ def papelera(usuario_id: int) -> list[dict]:
                 UNION ALL
 
                 SELECT 'tarea_outlook' AS origen, tk.id AS id, tk.asunto AS texto, NULL AS tipo,
-                       tk.categoria_outlook AS categoria_nombre, NULL AS categoria_color, tk.papelera_en AS papelera_en
-                FROM tareas_outlook tk
+                       COALESCE(ck.nombre, tk.categoria_outlook) AS categoria_nombre, ck.color AS categoria_color, tk.papelera_en AS papelera_en
+                FROM tareas_outlook tk LEFT JOIN categorias ck ON ck.id = tk.categoria_id
                 WHERE tk.usuario_id = ? AND tk.papelera_en IS NOT NULL
             )
             ORDER BY papelera_en DESC
@@ -3016,31 +3340,36 @@ def papelera(usuario_id: int) -> list[dict]:
         conn.close()
 
 
-def vaciar_papelera_antigua(dias: int = 30) -> None:
+def vaciar_papelera_antigua(dias: int = 30, usuario_id: int | None = None) -> None:
     """Purga definitivamente (sin posibilidad de recuperar) lo que lleva en
-    la papelera más de `dias` días, para TODOS los usuarios. Se llama al
-    arrancar la app, igual que la copia de seguridad."""
+    la papelera más de `dias` días. Sin `usuario_id`, purga de TODOS los
+    usuarios (uso interno: se llama al arrancar la app, igual que la copia
+    de seguridad); con `usuario_id`, solo la papelera de ese usuario (uso
+    desde la ruta web "Vaciar papelera", que actúa en nombre de quien la
+    pulsa, no de todo el tenant)."""
     conn = get_connection()
     try:
         limite = (datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds")
+        filtro_usuario = " AND usuario_id = ?" if usuario_id is not None else ""
+        params = (limite, usuario_id) if usuario_id is not None else (limite,)
         ids_categorias = [
             (r["id"], r["usuario_id"]) for r in conn.execute(
-                "SELECT id, usuario_id FROM categorias WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+                f"SELECT id, usuario_id FROM categorias WHERE papelera_en IS NOT NULL AND papelera_en < ?{filtro_usuario}", params
             )
         ]
         ids_tareas = [
             (r["id"], r["usuario_id"]) for r in conn.execute(
-                "SELECT id, usuario_id FROM tareas WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+                f"SELECT id, usuario_id FROM tareas WHERE papelera_en IS NOT NULL AND papelera_en < ?{filtro_usuario}", params
             )
         ]
         ids_notas = [
             (r["id"], r["usuario_id"]) for r in conn.execute(
-                "SELECT id, usuario_id FROM notas WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+                f"SELECT id, usuario_id FROM notas WHERE papelera_en IS NOT NULL AND papelera_en < ?{filtro_usuario}", params
             )
         ]
         ids_tareas_outlook = [
             (r["id"], r["usuario_id"]) for r in conn.execute(
-                "SELECT id, usuario_id FROM tareas_outlook WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+                f"SELECT id, usuario_id FROM tareas_outlook WHERE papelera_en IS NOT NULL AND papelera_en < ?{filtro_usuario}", params
             )
         ]
     finally:
@@ -3149,3 +3478,370 @@ def vaciar_mensajes_ia(usuario_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+# ---- Tiquets (soporte interno: errores/sugerencias, tablero compartido) ----
+
+def crear_tiquet(usuario_id: int, tipo: str, titulo: str, descripcion: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO tiquets (usuario_id, tipo, titulo, descripcion, creado_en)
+               VALUES (?, ?, ?, ?, ?)""",
+            (usuario_id, tipo, titulo.strip(), (descripcion or "").strip() or None, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_tiquets(estado: str | None = None, tipo: str | None = None) -> list[sqlite3.Row]:
+    """Todos los tiquets, de cualquier usuario -- tablero compartido, a
+    diferencia de notas/tareas/correo que siempre filtran por
+    usuario_id. Ordenados por id (orden de inclusión)."""
+    conn = get_connection()
+    try:
+        cond = []
+        params: list = []
+        if estado:
+            cond.append("t.estado = ?"); params.append(estado)
+        if tipo:
+            cond.append("t.tipo = ?"); params.append(tipo)
+        where = f"WHERE {' AND '.join(cond)}" if cond else ""
+        return conn.execute(
+            f"""SELECT t.*, u.email AS autor_email
+                FROM tiquets t LEFT JOIN usuarios u ON u.id = t.usuario_id
+                {where}
+                ORDER BY t.id""",
+            params,
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_tiquet(tiquet_id: int) -> sqlite3.Row | None:
+    """Sin filtrar por usuario_id -- hay dos roles con distinto alcance
+    (dueño / admin) y quien llama (rutas_tiquets.py, mcp_tools.py) es
+    quien decide si el usuario actual puede verlo/tocarlo."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT t.*, u.email AS autor_email
+               FROM tiquets t LEFT JOIN usuarios u ON u.id = t.usuario_id
+               WHERE t.id = ?""",
+            (tiquet_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def editar_tiquet(usuario_id: int, tiquet_id: int, titulo: str, descripcion: str | None, tipo: str) -> bool:
+    """Solo actualiza si `usuario_id` es el dueño Y el tiquet sigue en
+    'sin_revisar' -- devuelve False sin tocar nada si no se cumple
+    alguna de las dos condiciones (quien llama decide qué error mostrar)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """UPDATE tiquets SET titulo = ?, descripcion = ?, tipo = ?, actualizado_en = ?
+               WHERE id = ? AND usuario_id = ? AND estado = 'sin_revisar'""",
+            (titulo.strip(), (descripcion or "").strip() or None, tipo, now_iso(), tiquet_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def cambiar_estado_tiquet(tiquet_id: int, estado: str) -> None:
+    """Sin chequeo de permisos aquí -- quien llama (ruta con
+    @admin_required, o la tool de MCP tras comprobar db.es_admin) ya
+    decidió que puede hacerlo."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tiquets SET estado = ?, actualizado_en = ? WHERE id = ?", (estado, now_iso(), tiquet_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_tiquet(tiquet_id: int) -> None:
+    """Sin chequeo de permisos aquí tampoco -- ver cambiar_estado_tiquet."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM tiquets WHERE id = ?", (tiquet_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_adjunto_tiquet(tiquet_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO tiquets_adjuntos (tiquet_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (tiquet_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_adjuntos_tiquet(tiquet_id: int) -> list[sqlite3.Row]:
+    """Sin el BLOB `contenido` -- para listar en tarjetas/edición no hace
+    falta traer los bytes enteros de cada adjunto, solo al descargar uno
+    en concreto (ver obtener_adjunto_tiquet)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT id, tiquet_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en
+               FROM tiquets_adjuntos WHERE tiquet_id = ? ORDER BY id""",
+            (tiquet_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_adjunto_tiquet(adjunto_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM tiquets_adjuntos WHERE id = ?", (adjunto_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_adjunto_tiquet(adjunto_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM tiquets_adjuntos WHERE id = ?", (adjunto_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Fichaje de trabajadores (registro horario, art. 34.9 ET) -------------
+
+def obtener_fichaje_datos(usuario_id: int) -> sqlite3.Row:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO fichaje_datos (usuario_id) VALUES (?)", (usuario_id,))
+        conn.commit()
+        return conn.execute("SELECT * FROM fichaje_datos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_fichaje_datos(
+    usuario_id: int, nombre_completo: str, dni_nie: str, numero_afiliacion_ss: str | None = None,
+    categoria_profesional: str | None = None, tipo_contrato: str | None = None,
+    fecha_alta: str | None = None, jornada_semanal_horas: float | None = None,
+    convenio_colectivo: str | None = None,
+) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO fichaje_datos (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute(
+            """UPDATE fichaje_datos SET nombre_completo = ?, dni_nie = ?, numero_afiliacion_ss = ?,
+               categoria_profesional = ?, tipo_contrato = ?, fecha_alta = ?, jornada_semanal_horas = ?,
+               convenio_colectivo = ?, actualizado_en = ? WHERE usuario_id = ?""",
+            (
+                nombre_completo.strip() or None, dni_nie.strip().upper() or None, numero_afiliacion_ss or None,
+                categoria_profesional or None, tipo_contrato or None, fecha_alta or None,
+                jornada_semanal_horas, convenio_colectivo or None, now_iso(), usuario_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def fichaje_datos_completos(usuario_id: int) -> bool:
+    """True si el trabajador ya rellenó lo mínimo exigible (nombre + DNI/
+    NIE) para identificarse ante una inspección -- se exige antes de dejar
+    fichar por primera vez (ver app/rutas_fichaje.py)."""
+    datos = obtener_fichaje_datos(usuario_id)
+    return bool(datos["nombre_completo"]) and bool(datos["dni_nie"])
+
+
+_FICHAJE_TRANSICIONES_VALIDAS = {
+    "salida": {"entrada"},
+    "entrada": {"pausa_inicio", "salida"},
+    "pausa_inicio": {"pausa_fin", "salida"},
+    "pausa_fin": {"pausa_inicio", "salida"},
+}
+
+
+def fichar(
+    usuario_id: int, tenant_id: int | None, tipo: str, origen: str = "web", creado_por: int | None = None,
+    corrige_a: int | None = None, nota: str | None = None,
+) -> int:
+    """Inserta un evento de fichaje, validando que la secuencia sea
+    coherente (no se puede fichar salida sin una entrada abierta, ni una
+    segunda entrada sin haber salido antes) -- lanza ValueError si no
+    cuadra, mismo estilo que ErrorCorreo/ErrorBusqueda. `corrige_a` es
+    para que un admin corrija un olvido sin tocar la fila original (ver
+    comentario de la tabla `fichajes`)."""
+    if tipo not in ("entrada", "pausa_inicio", "pausa_fin", "salida"):
+        raise ValueError(f"Tipo de fichaje no válido: {tipo!r}.")
+    conn = get_connection()
+    try:
+        if corrige_a is not None:
+            original = conn.execute("SELECT id FROM fichajes WHERE id = ? AND usuario_id = ?", (corrige_a, usuario_id)).fetchone()
+            if original is None:
+                raise ValueError(f"El fichaje {corrige_a} a corregir no existe o no es de este trabajador.")
+        else:
+            ultimo = conn.execute(
+                "SELECT tipo FROM fichajes WHERE usuario_id = ? ORDER BY id DESC LIMIT 1", (usuario_id,)
+            ).fetchone()
+            ultimo_tipo = ultimo["tipo"] if ultimo else "salida"  # sin fichajes previos = como si estuviera fuera
+            if tipo not in _FICHAJE_TRANSICIONES_VALIDAS.get(ultimo_tipo, set()):
+                raise ValueError(f"No se puede fichar '{tipo}' viniendo de '{ultimo_tipo}' — revisa tu último fichaje.")
+        ahora = now_iso()
+        cur = conn.execute(
+            """INSERT INTO fichajes (usuario_id, tenant_id, tipo, marca_tiempo, origen, nota, corrige_a, creado_por, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, tenant_id, tipo, ahora, origen, nota, corrige_a, creado_por or usuario_id, ahora),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def estado_actual_fichaje(usuario_id: int) -> str:
+    """'fuera' | 'dentro' | 'en_pausa', según el último evento real (no
+    cuenta si esa fila es en sí una corrección de otra anterior — el
+    último evento cronológico manda igual)."""
+    conn = get_connection()
+    try:
+        ultimo = conn.execute(
+            "SELECT tipo FROM fichajes WHERE usuario_id = ? ORDER BY id DESC LIMIT 1", (usuario_id,)
+        ).fetchone()
+        if ultimo is None or ultimo["tipo"] == "salida":
+            return "fuera"
+        if ultimo["tipo"] == "pausa_inicio":
+            return "en_pausa"
+        return "dentro"
+    finally:
+        conn.close()
+
+
+def listar_fichajes(usuario_id: int, desde: str | None = None, hasta: str | None = None) -> list[sqlite3.Row]:
+    """Historial de un trabajador -- se usa tanto para su propio
+    historial como para el detalle que ve un admin de un trabajador
+    concreto (mismos datos, distinto quién pregunta; el control de acceso
+    vive en la ruta, no aquí)."""
+    conn = get_connection()
+    try:
+        sql = "SELECT * FROM fichajes WHERE usuario_id = ?"
+        params: list = [usuario_id]
+        if desde:
+            sql += " AND marca_tiempo >= ?"
+            params.append(desde)
+        if hasta:
+            sql += " AND marca_tiempo < ?"
+            params.append(_fecha_exclusiva(hasta))
+        sql += " ORDER BY marca_tiempo DESC"
+        return conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+
+def fichajes_tenant_crudos(
+    tenant_id: int | None, desde: str | None = None, hasta: str | None = None, usuario_id: int | None = None,
+) -> list[sqlite3.Row]:
+    """Eventos de fichaje en bruto de un tenant (con email/nombre/DNI del
+    trabajador ya unidos), para que app/fichaje_export.py construya el
+    CSV/PDF -- misma idea que db.historial() alimentando a export.py, la
+    tabla en sí no sabe nada de formatos de salida."""
+    conn = get_connection()
+    try:
+        sql = (
+            "SELECT f.*, u.email, fd.nombre_completo, fd.dni_nie "
+            "FROM fichajes f "
+            "JOIN usuarios u ON u.id = f.usuario_id "
+            "LEFT JOIN fichaje_datos fd ON fd.usuario_id = f.usuario_id "
+            "WHERE (f.tenant_id = ? OR (? IS NULL AND f.tenant_id IS NULL))"
+        )
+        params: list = [tenant_id, tenant_id]
+        if usuario_id:
+            sql += " AND f.usuario_id = ?"
+            params.append(usuario_id)
+        if desde:
+            sql += " AND f.marca_tiempo >= ?"
+            params.append(desde)
+        if hasta:
+            sql += " AND f.marca_tiempo < ?"
+            params.append(_fecha_exclusiva(hasta))
+        sql += " ORDER BY f.usuario_id, f.marca_tiempo"
+        return conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+
+def resumen_fichajes_tenant(tenant_id: int | None, desde: str | None = None, hasta: str | None = None) -> list[dict]:
+    """Horas trabajadas por cada trabajador del tenant en el periodo, para
+    el panel de admin. Empareja entrada/salida y resta las pausas
+    recorriendo el log en Python (no es un problema que encaje bien en
+    SQL puro: es "diferencia entre eventos consecutivos de una serie")."""
+    conn = get_connection()
+    try:
+        sql = (
+            "SELECT f.*, u.email, fd.nombre_completo, fd.jornada_semanal_horas "
+            "FROM fichajes f "
+            "JOIN usuarios u ON u.id = f.usuario_id "
+            "LEFT JOIN fichaje_datos fd ON fd.usuario_id = f.usuario_id "
+            "WHERE (f.tenant_id = ? OR (? IS NULL AND f.tenant_id IS NULL))"
+        )
+        params: list = [tenant_id, tenant_id]
+        if desde:
+            sql += " AND f.marca_tiempo >= ?"
+            params.append(desde)
+        if hasta:
+            sql += " AND f.marca_tiempo < ?"
+            params.append(_fecha_exclusiva(hasta))
+        sql += " ORDER BY f.usuario_id, f.marca_tiempo"
+        filas = conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+    por_usuario: dict[int, dict] = {}
+    for f in filas:
+        uid = f["usuario_id"]
+        info = por_usuario.setdefault(uid, {
+            "usuario_id": uid, "email": f["email"], "nombre_completo": f["nombre_completo"],
+            "jornada_semanal_horas": f["jornada_semanal_horas"],
+            "segundos_trabajados": 0, "segundos_pausa": 0, "num_fichajes": 0,
+            "entrada_abierta": None, "pausa_abierta": None,
+        })
+        info["num_fichajes"] += 1
+        marca = datetime.fromisoformat(f["marca_tiempo"])
+        if f["tipo"] == "entrada":
+            info["entrada_abierta"] = marca
+        elif f["tipo"] == "pausa_inicio":
+            info["pausa_abierta"] = marca
+        elif f["tipo"] == "pausa_fin" and info["pausa_abierta"]:
+            info["segundos_pausa"] += (marca - info["pausa_abierta"]).total_seconds()
+            info["pausa_abierta"] = None
+        elif f["tipo"] == "salida" and info["entrada_abierta"]:
+            info["segundos_trabajados"] += (marca - info["entrada_abierta"]).total_seconds()
+            info["entrada_abierta"] = None
+
+    resultado = [
+        {
+            "usuario_id": info["usuario_id"],
+            "email": info["email"],
+            "nombre_completo": info["nombre_completo"],
+            "horas_trabajadas": round(info["segundos_trabajados"] / 3600, 2),
+            "horas_pausa": round(info["segundos_pausa"] / 3600, 2),
+            "jornada_semanal_horas": info["jornada_semanal_horas"],
+            "num_fichajes": info["num_fichajes"],
+            "jornada_abierta": info["entrada_abierta"] is not None,
+        }
+        for info in por_usuario.values()
+    ]
+    return sorted(resultado, key=lambda r: r["nombre_completo"] or r["email"])

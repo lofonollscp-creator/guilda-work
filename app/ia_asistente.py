@@ -42,19 +42,52 @@ PROMPT_SISTEMA = (
 
 
 class ErrorIA(Exception):
-    """Error legible para mostrar en el chat cuando el asistente falla."""
+    """Error legible para mostrar en el chat cuando el asistente falla.
+    `codigo_http` solo se rellena si el error viene de una respuesta HTTP
+    real de OpenRouter (None en errores de red/timeout/parseo) -- lo usa
+    _post_json_con_fallback para decidir si vale la pena probar otra clave."""
+
+    def __init__(self, mensaje: str, codigo_http: int | None = None):
+        super().__init__(mensaje)
+        self.codigo_http = codigo_http
 
 
 def _clave_keyring_api(usuario_id: int) -> str:
     return f"{CLAVE_API_OPENROUTER}-usuario-{usuario_id}"
 
 
-def guardar_api_key(usuario_id: int, clave: str) -> None:
-    keyring.set_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id), clave)
+# Códigos HTTP que indican que el problema es de ESA clave concreta (sin
+# crédito, inválida, límite de peticiones alcanzado) y por tanto vale la
+# pena reintentar con la siguiente de la lista. Cualquier otro código (400
+# de payload mal formado, 500 del propio OpenRouter...) se propaga de
+# inmediato: cambiar de clave no lo arreglaría.
+_CODIGOS_FALLBACK = {401, 402, 403, 429}
 
 
-def obtener_api_key(usuario_id: int) -> str | None:
-    return keyring.get_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id))
+def guardar_api_keys(usuario_id: int, claves: list[str]) -> None:
+    """Guarda la lista de claves en orden de preferencia (la primera se
+    prueba primero; si falla por un motivo propio de esa clave, se pasa a
+    la siguiente, ver _post_json_con_fallback). Lista vacía = borrar todo."""
+    claves = [c.strip() for c in claves if c.strip()]
+    if claves:
+        keyring.set_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id), json.dumps(claves))
+    else:
+        borrar_api_key(usuario_id)
+
+
+def obtener_api_keys(usuario_id: int) -> list[str]:
+    valor = keyring.get_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id))
+    if not valor:
+        return []
+    try:
+        datos = json.loads(valor)
+        if isinstance(datos, list):
+            return [str(c) for c in datos if c]
+    except (json.JSONDecodeError, TypeError):
+        pass
+    # Guardado antes de soportar varias claves: una sola clave en texto
+    # plano (no JSON) -- se trata como lista de una.
+    return [valor]
 
 
 def borrar_api_key(usuario_id: int) -> None:
@@ -80,13 +113,29 @@ def _post_json(url: str, payload: dict, api_key: str) -> dict:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         detalle = e.read().decode("utf-8", errors="replace")
-        raise ErrorIA(f"OpenRouter devolvió un error ({e.code}): {detalle}") from e
+        raise ErrorIA(f"OpenRouter devolvió un error ({e.code}): {detalle}", codigo_http=e.code) from e
     except urllib.error.URLError as e:
         raise ErrorIA(f"No se ha podido conectar con OpenRouter. Detalle: {e.reason}") from e
     except TimeoutError as e:
         raise ErrorIA("Tiempo de espera agotado al contactar con OpenRouter.") from e
     except (json.JSONDecodeError, ValueError) as e:
         raise ErrorIA(f"Respuesta inválida de OpenRouter: {e}") from e
+
+
+def _post_json_con_fallback(url: str, payload: dict, claves: list[str]) -> dict:
+    """Prueba cada clave en orden hasta que una funcione. Si todas fallan
+    con un código de la lista de fallback, se propaga el error de la
+    ÚLTIMA clave probada (la más informativa: ya se sabe que las
+    anteriores tampoco valían)."""
+    ultimo_error: ErrorIA | None = None
+    for clave in claves:
+        try:
+            return _post_json(url, payload, clave)
+        except ErrorIA as e:
+            if e.codigo_http not in _CODIGOS_FALLBACK:
+                raise
+            ultimo_error = e
+    raise ultimo_error
 
 
 def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
@@ -159,11 +208,11 @@ def _continuar_conversacion(usuario_id: int) -> dict:
     preferencias = db.obtener_preferencias_ia(usuario_id)
     modelo = preferencias["modelo"]
     modo_autonomo = bool(preferencias["modo_autonomo"])
-    api_key = obtener_api_key(usuario_id)
+    claves = obtener_api_keys(usuario_id)
 
     if not modelo.strip():
         raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
-    if not api_key:
+    if not claves:
         raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
 
     ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
@@ -179,10 +228,10 @@ def _continuar_conversacion(usuario_id: int) -> dict:
                 "pendiente": _pendiente_dict(tool_call),
             }
 
-        respuesta = _post_json(
+        respuesta = _post_json_con_fallback(
             OPENROUTER_URL,
             {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": herramientas.HERRAMIENTAS},
-            api_key,
+            claves,
         )
         try:
             mensaje = respuesta["choices"][0]["message"]

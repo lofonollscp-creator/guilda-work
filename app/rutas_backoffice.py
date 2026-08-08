@@ -242,6 +242,14 @@ def renombrar_tenant(tenant_id: int):
             db.renombrar_tenant(tenant_id, nuevo_nombre)
         except Exception:
             pass  # nombre duplicado: se ignora, el admin ve que no cambió
+    # CIF/dirección fiscal: identificación de empresa exigida en el
+    # registro horario (art. 34.9 ET) junto a la del trabajador — se
+    # guardan en el mismo formulario que el nombre del tenant, campos
+    # opcionales (solo hacen falta si ese tenant usa Fichaje).
+    if "cif" in request.form or "direccion_fiscal" in request.form:
+        db.guardar_datos_tenant(
+            tenant_id, request.form.get("cif", "").strip(), request.form.get("direccion_fiscal", "").strip()
+        )
     return redirect(url_for("backoffice.panel"))
 
 
@@ -520,6 +528,20 @@ def cambiar_rol(usuario_id: int):
         db.quitar_admin(usuario["email"])
     else:
         db.hacer_admin(usuario["email"])
+    return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/usuarios/<int:usuario_id>/gestor-fichajes", methods=["POST"])
+@login_required
+@admin_required
+def alternar_gestor_fichajes(usuario_id: int):
+    """Gestor de fichajes: administra el registro horario SOLO de su
+    propio tenant (usuarios.tenant_id) -- distinto de rol='admin', que
+    es superadmin de todo el backoffice (ver app/auth.py)."""
+    usuario = db.obtener_usuario(usuario_id)
+    if usuario is None:
+        abort(404)
+    db.asignar_gestor_fichajes(usuario_id, not usuario["gestor_fichajes"])
     return redirect(url_for("backoffice.panel"))
 
 

@@ -26,12 +26,13 @@
       </div>
 
       <div class="correo-form-campo">
-        <label>Clave de API de OpenRouter</label>
-        <input type="password" name="api_key" placeholder="{{ 'Ya configurada — deja en blanco para no cambiarla' if api_key_configurada else 'sk-or-...' }}">
+        <label>Claves de API de OpenRouter (una por línea, en orden de preferencia)</label>
+        <textarea name="api_keys" rows="3" placeholder="{{ ('Ya tienes ' ~ num_claves_configuradas ~ ' clave' ~ ('s' if num_claves_configuradas != 1 else '') ~ ' guardada' ~ ('s' if num_claves_configuradas != 1 else '') ~ ' — deja en blanco para no cambiarlas') if num_claves_configuradas else 'sk-or-...\nsk-or-... (clave de reserva, opcional)' }}"></textarea>
+        <p class="ia-aviso">Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente.</p>
       </div>
-      {% if api_key_configurada %}
+      {% if num_claves_configuradas %}
       <label class="correo-form-checkbox">
-        <input type="checkbox" name="borrar_api_key"> Borrar la clave guardada
+        <input type="checkbox" name="borrar_api_keys"> Borrar todas las claves guardadas
       </label>
       {% endif %}
 

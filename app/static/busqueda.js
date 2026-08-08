@@ -19,6 +19,12 @@
   var resultadosActuales = [];
   var temporizador = null;
 
+  function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
   var ETIQUETAS_TIPO = { nota: "Nota", tarea: "Tarea", mensaje: "Correo" };
   var URL_HISTORIAL = boton.dataset.urlHistorial;
   var URL_CORREO = boton.dataset.urlCorreo;
@@ -48,8 +54,8 @@
       a.className = i === 0 ? "is-activo" : "";
       var texto = hit.texto || "";
       a.innerHTML =
-        '<span class="busqueda-resultado-tipo">' + (ETIQUETAS_TIPO[hit.tipo] || hit.tipo) + "</span>" +
-        '<span class="busqueda-resultado-texto">' + texto.slice(0, 140) + "</span>";
+        '<span class="busqueda-resultado-tipo">' + escapeHtml(ETIQUETAS_TIPO[hit.tipo] || hit.tipo) + "</span>" +
+        '<span class="busqueda-resultado-texto">' + escapeHtml(texto.slice(0, 140)) + "</span>";
       li.appendChild(a);
       lista.appendChild(li);
     });

@@ -100,6 +100,16 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      # Sin esto, los flujos con webhook muestran URLs con localhost,
+      # inútiles llamadas desde fuera (hallazgo del despliegue en VPS,
+      # no documentado en HOSTING.md). Los valores por defecto preservan
+      # el comportamiento local/de desarrollo tal cual estaba.
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Madrid}
     ports:
       - "127.0.0.1:5678:5678"
     volumes:
@@ -158,6 +168,7 @@ services:
       SELFSERVICE_ALLOWED_RETURN_URLS: '["${GUILDA_ORIGIN:-http://127.0.0.1:8000}/","${GUILDA_ORIGIN:-http://127.0.0.1:8000}/hydra/login"]'
       SELFSERVICE_FLOWS_LOGIN_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
       SELFSERVICE_FLOWS_REGISTRATION_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/registro
+      SELFSERVICE_FLOWS_REGISTRATION_ENABLED: ${KRATOS_REGISTRATION_ENABLED:-true}
       SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
       SELFSERVICE_FLOWS_SETTINGS_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/ajustes-cuenta
       SELFSERVICE_FLOWS_ERROR_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
@@ -406,6 +417,39 @@ services:
       - "127.0.0.1:8009:80"
     volumes:
       - ./deploy/synapse/element-config.json:/app/config.json:ro
+
+  # MAS: Matrix Authentication Service (MSC3861) — Element X (app móvil
+  # nativa) eliminó el soporte del flujo clásico `m.login.sso` que usa
+  # Synapse+Hydra arriba, solo admite MSC3861 o contraseña propia (esta
+  # última desactivada a propósito, igual que en el resto del stack).
+  # MAS pasa a gestionar TODA la autenticación de Matrix (sustituye a
+  # `oidc_providers` de guilda-overrides.yaml) delegando a su vez en
+  # Hydra como proveedor upstream — mismo patrón de "registrar un
+  # cliente OAuth2 en Hydra" que el resto de herramientas de esta lista.
+  # Postgres propio, nunca compartido con postgres-synapse (documentado
+  # así oficialmente por MAS).
+  postgres-mas:
+    image: postgres:16-alpine
+    container_name: guilda-work-postgres-mas
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mas
+      POSTGRES_PASSWORD: ${MAS_DB_PASSWORD:-CambiaEstaClaveMas2026}
+      POSTGRES_DB: mas
+    volumes:
+      - postgres-mas-data:/var/lib/postgresql/data
+
+  mas:
+    image: ghcr.io/element-hq/matrix-authentication-service:latest
+    container_name: guilda-work-mas
+    restart: unless-stopped
+    depends_on:
+      - postgres-mas
+    ports:
+      - "127.0.0.1:8034:8080"
+    volumes:
+      - ./deploy/mas/config.yaml:/config.yaml:ro
+    command: ["server", "--config", "/config.yaml"]
 
   # Nivel: mínimo (CPX22), ver HOSTING.md — uno de los dos puntos
   # calientes de memoria de esta lista (con Synapse, más arriba).
@@ -1143,6 +1187,17 @@ services:
     image: stalwartlabs/stalwart:latest
     container_name: guilda-work-stalwart
     restart: unless-stopped
+    # Alias de red interno con el mismo hostname público — así los
+    # demás contenedores (Documenso, Baserow...) resuelven
+    # mail.guildawork.com directo a este contenedor sin salir a
+    # internet (el hairpin NAT contenedor->IP pública->mismo host no
+    # funciona en esta red de Docker, confirmado en vivo) y sin dejar
+    # de validar el certificado TLS real, que está emitido para ese
+    # mismo nombre.
+    networks:
+      default:
+        aliases:
+          - mail.guildawork.com
     ports:
       - "127.0.0.1:8025:8080"
       - "0.0.0.0:25:25"
@@ -1601,6 +1656,7 @@ volumes:
   redis-outline-data:
   postgres-synapse-data:
   synapse-data:
+  postgres-mas-data:
   caddy-local-data:
   caddy-lan-data:
   vaultwarden-data:

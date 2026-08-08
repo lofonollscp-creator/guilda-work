@@ -6,6 +6,11 @@
 #   sudo systemctl enable --now guilda-work
 #
 # El servicio se reinicia solo si el proceso muere o el servidor arranca.
+# Restart=always (no on-failure): un incidente en producción demostró que
+# on-failure NO reinicia si el proceso termina con código 0 (salida
+# "limpia", p.ej. os._exit(0) desde una ruta como /apagar) -- con always,
+# cualquier salida del proceso, sea cual sea el motivo o el código, se
+# recupera sola en unos segundos.
 
 [Unit]
 Description=Guilda Work - API REST (serve.py)
@@ -17,7 +22,7 @@ User=USUARIO
 WorkingDirectory=/home/USUARIO/guilda-work
 EnvironmentFile=/etc/guilda-work.env
 ExecStart=/home/USUARIO/guilda-work/.venv/bin/python serve.py
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]

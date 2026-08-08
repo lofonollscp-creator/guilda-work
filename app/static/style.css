@@ -729,7 +729,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.quick-row { display: flex; gap: 8px; }
+.quick-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .quick-row input[type="text"] {
   flex: 1;
   padding: 9px 12px;
@@ -774,7 +774,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   justify-content: space-between;
   gap: 8px;
   padding: 6px 10px;
-  background: #f7f8fa;
+  background: var(--bg);
   border-radius: 8px;
   font-size: 0.9em;
 }
@@ -788,7 +788,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   padding: 2px 4px;
   border-radius: 4px;
 }
-.chip-del:hover { background: #fdecea; color: var(--danger); }
+.chip-del:hover { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
 
 /* ---- Active tasks ---- */
 .active-section { margin-bottom: 28px; }
@@ -798,7 +798,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #eef3ff;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
   border-radius: var(--radius);
   padding: 10px 14px;
 }
@@ -809,20 +809,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-weight: 700;
   font-size: 0.95em;
 }
-.active-task.is-paused { background: #fff4e0; }
-.task-timer-frozen { color: #9a6400; }
+.active-task.is-paused { background: color-mix(in srgb, var(--warning) 16%, var(--surface)); }
+.task-timer-frozen { color: var(--warning); }
 .active-task-buttons { display: flex; gap: 8px; }
 
 .task-aviso {
   display: none;
   font-size: 0.78em;
-  color: #a4302a;
-  background: #fdecea;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
   padding: 3px 8px;
   border-radius: 999px;
   white-space: nowrap;
 }
-.active-task.is-olvidada { background: #fdecea; }
+.active-task.is-olvidada { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); }
 .active-task.is-olvidada .task-aviso { display: inline; }
 
 /* ---- Log list (menu page) ---- */
@@ -924,12 +924,26 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 8px;
   font-size: 0.9em;
 }
+/* Checkboxes de eventos del formulario de Webhooks -- antes un
+   <fieldset> con estilos en línea que no podía envolver sus propias
+   casillas por separado del resto de la fila (Tenant/URL/botón), se
+   veía todo apretado en una sola línea (encontrado en producción). */
+.webhook-eventos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+.webhook-eventos label { flex-direction: row; align-items: center; gap: 4px; white-space: nowrap; }
 
 .table-wrap {
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow-x: auto;
 }
 .historial-table { width: 100%; border-collapse: collapse; }
 .historial-table th, .historial-table td {
@@ -970,7 +984,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .ia-section h3 { margin: 0 0 4px; font-size: 1em; }
 .ia-section .muted { color: var(--text-muted); font-size: 0.85em; margin: 0 0 14px; }
 .ia-form { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
-.ia-form-row { display: flex; gap: 12px; }
+.ia-form-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .ia-form-row label, .ia-prompt-label {
   display: flex;
   flex-direction: column;
@@ -991,15 +1005,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 .ia-error {
   margin-top: 14px;
-  background: #fdecea;
-  color: #a4302a;
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 0.88em;
 }
 .ia-result {
   margin-top: 14px;
-  background: #f7f8fa;
+  background: var(--bg);
   border-radius: 8px;
   padding: 14px 16px;
   white-space: pre-wrap;
@@ -1046,7 +1060,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .log-item:hover .log-edit,
 .historial-table tr:hover .log-edit { opacity: 1; }
-.log-edit:hover { background: #eef0f3; }
+.log-edit:hover { background: color-mix(in srgb, var(--text-muted) 14%, transparent); }
 
 .edit-form {
   background: var(--surface);
@@ -1123,14 +1137,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .chat-msg-assistant {
   align-self: flex-start;
-  background: #f0f1f4;
+  background: var(--bg);
   color: var(--text);
   border-bottom-left-radius: 4px;
 }
 .chat-msg-error {
   align-self: flex-start;
-  background: #fdecea;
-  color: #a4302a;
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
   border-bottom-left-radius: 4px;
 }
 .chat-pensando { opacity: 0.6; }
@@ -1168,7 +1182,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-overflow: ellipsis;
 }
 .bar-track {
-  background: #f0f1f4;
+  background: var(--bg);
   border-radius: 999px;
   height: 10px;
   overflow: hidden;
@@ -1190,8 +1204,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   height: 20px;
   border-radius: 50%;
   border: 1.5px solid var(--border);
-  background: white;
-  color: white;
+  background: var(--surface);
+  color: var(--surface);
   font-size: 0.7em;
   line-height: 1;
   cursor: pointer;
@@ -1202,8 +1216,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .tarea-check:hover:not(:disabled) { border-color: var(--primary); }
 .tarea-outlook-item.is-completada .tarea-check {
-  background: #1e7a3d;
-  border-color: #1e7a3d;
+  background: var(--success);
+  border-color: var(--success);
 }
 .tarea-outlook-item.is-completada .log-text a {
   color: var(--text-muted);
@@ -1275,7 +1289,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .cal-grid-mes .cal-cell:nth-child(7n) { border-right: none; }
 .cal-cell.is-fuera-de-mes { background: var(--bg); }
 .cal-cell.is-fuera-de-mes .cal-cell-num { color: var(--text-muted); }
-.cal-cell.is-hoy { background: #eef0ff; }
+.cal-cell.is-hoy { background: color-mix(in srgb, var(--primary) 10%, transparent); }
 .cal-cell-num { font-size: 13px; font-weight: 600; }
 .cal-cell.is-hoy .cal-cell-num {
   display: inline-flex;
@@ -1295,7 +1309,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-size: 11.5px;
   padding: 2px 6px;
   border-radius: 5px;
-  background: color-mix(in srgb, var(--chip-color) 16%, white);
+  background: color-mix(in srgb, var(--chip-color) 16%, var(--surface));
   color: var(--chip-color);
   text-decoration: none;
   white-space: nowrap;
@@ -1308,7 +1322,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .cal-grid-cols { display: grid; grid-template-columns: repeat(var(--cal-cols), 1fr); align-items: stretch; }
 .cal-col { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
 .cal-grid-cols .cal-col:last-child { border-right: none; }
-.cal-col.is-hoy { background: #eef0ff; }
+.cal-col.is-hoy { background: color-mix(in srgb, var(--primary) 10%, transparent); }
 .cal-col-header {
   padding: 10px;
   text-align: center;
@@ -1324,7 +1338,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 /* ---- Selección para crear tareas desde el calendario ---- */
 .cal-seleccionable { cursor: pointer; user-select: none; }
 .cal-cell.is-seleccionada, .cal-col.is-seleccionada, .cal-hour-cell.is-seleccionada {
-  background: color-mix(in srgb, var(--primary) 18%, white);
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
   outline: 2px solid var(--primary);
   outline-offset: -2px;
 }
@@ -1391,7 +1405,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 8px;
   font-size: 0.9em;
 }
-.cal-quick-create .quick-row { display: flex; gap: 8px; }
+.cal-quick-create .quick-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .cal-quick-create-actions { display: flex; justify-content: flex-end; }
 
 /* ---- Correo ---- */
@@ -1458,10 +1472,43 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-shell {
   flex: 1;
   display: grid;
-  grid-template-columns: 220px 340px 1fr;
+  grid-template-columns: 220px 340px minmax(280px, 1fr);
   grid-template-rows: auto 1fr;
   min-height: 0;
+  /* Las dos primeras columnas son de ancho fijo (220px+340px) -- si el
+     hueco disponible no llega a esos 560px + el mínimo del panel de
+     lectura, la rejilla se desbordaba SIN scroll (overflow visible por
+     defecto), lo que se veía como texto de un panel solapado con el
+     de al lado (encontrado en producción: "Eliminar"/el asunto del
+     correo se veían fantasma detrás de la lista de mensajes). Con
+     overflow-x:auto aquí, en vez de solapar aparece una barra de
+     desplazamiento lateral para todo el shell -- justo lo pedido. */
+  overflow-x: auto;
 }
+
+/* Doble clic en un mensaje (ver static/correo_seleccion.js): oculta el
+   rail y la lista para leer a pantalla completa, sin las columnas fijas
+   de 220px+340px comiéndose el sitio. */
+.correo-shell.es-pantalla-completa {
+  grid-template-columns: 1fr;
+}
+.correo-shell.es-pantalla-completa .correo-rail,
+.correo-shell.es-pantalla-completa .correo-lista-pane {
+  display: none;
+}
+.correo-lectura-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85em;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.correo-lectura-volver:hover { color: var(--text); border-color: var(--primary); }
 
 /* Barra superior, al estilo del menú superior de New Outlook */
 .correo-topbar {
@@ -1558,6 +1605,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-lista-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 12px;
@@ -1584,7 +1632,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-bottom: 1px solid var(--border);
 }
 .correo-fila-wrap:hover { background: var(--bg); }
-.correo-fila-wrap.is-seleccionada { background: color-mix(in srgb, var(--primary) 10%, white); }
+/* Mezclado con var(--surface), no con "white" a secas -- mezclar con
+   blanco literal ignoraba el tema: en oscuro daba un fondo casi blanco
+   con el texto casi blanco (--text: #e8eae9) encima, ilegible
+   (encontrado en producción, ver captura). */
+.correo-fila-wrap.is-seleccionada { background: color-mix(in srgb, var(--primary) 12%, var(--surface)); }
 .correo-fila-check { width: auto; flex-shrink: 0; cursor: pointer; }
 .correo-fila-contenido {
   display: flex;
@@ -1805,12 +1857,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-form-campo { display: flex; flex-direction: column; gap: 4px; }
 .correo-form-campo label { font-size: 0.82em; color: var(--text-muted); font-weight: 600; }
-.correo-form-campo input, .correo-form-campo select {
+.correo-form-campo input, .correo-form-campo select, .correo-form-campo textarea {
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.95em;
+  font-family: inherit;
 }
+.correo-form-campo textarea { resize: vertical; }
 .correo-form-fila-doble { display: flex; gap: 12px; }
 .correo-form-fila-doble .correo-form-campo { flex: 1; }
 .correo-form-campo-estrecho { max-width: 110px; }
@@ -1900,7 +1954,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 /* --- Asistente IA (chat con OpenRouter) --------------------------------- */
 
-.ia-pagina { max-width: 760px; margin: 0 auto; padding: 24px; }
+/* La página completa /ia dejaba el chat con su tamaño mínimo
+   (.ia-chat-mensajes: min-height 240px) aunque sobrara página entera
+   de espacio debajo -- se veía diminuto sin mensajes (encontrado en
+   producción). Mismo patrón que .ia-panel-flotante (que si ocupa bien
+   su hueco): el contenedor se estira a toda la altura disponible del
+   contenido y el chat crece dentro con flex:1. */
+.ia-pagina { max-width: 760px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.ia-pagina .ia-chat { flex: 1; min-height: 0; }
+.ia-pagina .ia-chat-mensajes { flex: 1; max-height: none; }
+
+/* El chat (a diferencia de ajustes.html, que también usa .ia-pagina pero
+   es un formulario y debe quedarse estrecho) no tiene nada alrededor que
+   necesite una columna de lectura corta -- que ocupe todo el hueco del
+   área de contenido, igual que ya hace Correo (.content:has(> .correo-shell)). */
+.content:has(> .ia-pagina-chat) { padding: 0; max-width: none; }
+.ia-pagina-chat { max-width: none; margin: 0; padding: 24px 40px; }
 .ia-pagina-cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .ia-pagina-cabecera h1 {
   margin: 0;
@@ -1932,6 +2001,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   overflow: hidden;
 }
 
+.ia-chat-aviso {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 0.76em;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
 .ia-chat-mensajes {
   display: flex;
   flex-direction: column;
@@ -1941,6 +2019,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   min-height: 240px;
   max-height: 55vh;
 }
+
+.ia-tabla-wrap { max-width: 100%; overflow-x: auto; margin: 6px 0; }
+.ia-tabla { border-collapse: collapse; font-size: 0.9em; }
+.ia-tabla th, .ia-tabla td { padding: 5px 10px; border: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.ia-tabla th { background: color-mix(in srgb, var(--text) 6%, transparent); font-weight: 600; }
 
 .ia-msg {
   max-width: 85%;
@@ -1964,6 +2047,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border: 1px solid var(--border);
   border-bottom-left-radius: 3px;
 }
+.ia-msg-assistant code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.ia-msg-assistant a { color: inherit; text-decoration-thickness: 1px; }
 .ia-msg-tool {
   align-self: center;
   background: none;
@@ -2268,8 +2359,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   box-shadow: 0 0 6px color-mix(in srgb, var(--success) 80%, transparent);
 }
 .tool-card-status.is-standalone .tool-card-status-dot {
-  background: #eab308;
-  box-shadow: 0 0 6px rgba(234, 179, 8, 0.7);
+  background: var(--warning);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 70%, transparent);
 }
 .tool-card-status.is-pendiente .tool-card-status-dot {
   background: var(--text-muted);
@@ -2369,3 +2460,145 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .busqueda-resultado-texto { color: var(--text); font-size: 0.92em; }
 .busqueda-vacio, .busqueda-error { padding: var(--space-5) var(--space-4); text-align: center; color: var(--text-muted); font-size: 0.9em; margin: 0; }
+
+/* ---- Tiquets (soporte interno: errores/sugerencias) ---- */
+.tiquets-seccion { margin-bottom: 32px; }
+.tiquets-seccion h2 { margin-bottom: 12px; }
+.tiquets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+.tiquet-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-sm);
+}
+.tiquet-card-top { display: flex; align-items: center; justify-content: space-between; }
+.tiquet-card-numero { font-family: var(--font-mono); font-size: 0.8em; color: var(--text-muted); font-weight: 700; }
+.tiquet-card-titulo { margin: 0; font-size: 1em; }
+.tiquet-card-desc { margin: 0; font-size: 0.85em; color: var(--text-muted); }
+.tiquet-card-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.8em;
+}
+.tiquet-card-autor { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tiquet-card-acciones { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tiquet-card-acciones a { color: var(--text-muted); text-decoration: none; }
+.tiquet-card-acciones a:hover { color: var(--primary); }
+.tiquet-card-estado-form { margin-top: 4px; }
+.tiquet-card-estado-form select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82em;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.pill.estado-sin_revisar { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
+.pill.estado-en_revision { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary); }
+.pill.estado-finalizado { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
+
+.tiquets-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.tiquets-kanban-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  min-height: 120px;
+}
+.tiquets-kanban-col h2 { margin-top: 0; }
+.tiquets-kanban-tarjetas { display: flex; flex-direction: column; gap: 10px; }
+
+/* ---- Móvil en vertical ----
+   Hasta ahora no existía NINGUNA media query de ancho en toda la hoja
+   (solo prefers-color-scheme/print/prefers-reduced-motion) — el layout
+   entero (icon-rail + content con padding fijo de 40px, el shell de 3
+   paneles de Correo con columnas fijas 220px+340px, filas de formulario
+   sin flex-wrap...) estaba pensado solo para escritorio. En un móvil en
+   vertical (~375-430px de ancho) eso no cabe y se solapa; en horizontal
+   (~650px+) el ancho basta para que el mismo layout no reviente, por
+   eso allí ya se veía bien. 640px como corte está por debajo del
+   ancho en horizontal de cualquier móvil real
+   (el más estrecho ronda 650-667px), así que este bloque solo entra en
+   juego en vertical, nunca en horizontal — no se toca nada de la vista
+   que el usuario ya confirmó que funciona.
+   No es un rediseño completo para móvil (el shell de Correo, por
+   ejemplo, pasa de 3 columnas a 3 franjas apiladas con scroll, en vez
+   de un patrón "un panel a la vez con botón atrás" que requeriría JS) —
+   es la reorganización mínima para que nada quede cortado ni solapado. */
+
+/* ---- Fichaje (registro horario) ---- */
+.fichaje-aviso {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.fichaje-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 24px;
+}
+.fichaje-estado { margin-bottom: 18px; }
+.pill.estado-fuera { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
+.pill.estado-dentro { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
+.pill.estado-en-pausa { background: color-mix(in srgb, var(--warning) 16%, transparent); border-color: color-mix(in srgb, var(--warning) 35%, transparent); color: var(--warning); }
+.fichaje-botones { display: flex; gap: 12px; flex-wrap: wrap; }
+.fichaje-btn { padding: 16px 28px; font-size: 1.05em; font-weight: 700; border-radius: var(--radius); }
+.fichaje-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.fichaje-btn-entrada { background: var(--success); border-color: var(--success); color: white; }
+.fichaje-btn-entrada:hover:not(:disabled) { background: color-mix(in srgb, var(--success) 85%, black); }
+.fichaje-btn-pausa { background: color-mix(in srgb, var(--warning) 18%, var(--surface)); border-color: var(--warning); color: var(--warning); }
+.fichaje-btn-salida { background: var(--danger); border-color: var(--danger); color: white; }
+.fichaje-btn-salida:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, black); }
+
+@media (max-width: 640px) {
+  .app-shell { padding: var(--space-1); gap: var(--space-1); }
+  .content { padding: var(--space-4) var(--space-3); max-width: none; }
+
+  .top-bar { padding: 0 var(--space-3); gap: var(--space-2); }
+  .brand-name { display: none; }
+  .busqueda-boton-abrir { flex: 1 1 auto; min-width: 0; padding: 6px 8px; }
+  .busqueda-atajo { display: none; }
+
+  .menu-grid, .tools-grid { grid-template-columns: 1fr; }
+
+  /* El shell de Correo (rail de cuentas + lista de mensajes + lectura)
+     tenía columnas fijas de 220px y 340px — en un móvil de 375px eso
+     por sí solo ya desborda y solapa el resto. Se apila en 3 franjas:
+     rail y lista con una altura máxima navegable, lectura ocupando el
+     resto. */
+  .correo-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto 1fr;
+  }
+  .correo-rail { max-height: 160px; border-right: none; border-bottom: 1px solid var(--border); }
+  .correo-lista-pane { max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+
+  .cal-grid-cols, .cal-grid-mes { overflow-x: auto; }
+
+  .filters, .ia-form-row, .quick-row { flex-direction: column; align-items: stretch; }
+  .filters label, .ia-form-row label { width: 100%; }
+
+  .tiquets-kanban { grid-template-columns: 1fr; }
+
+  .fichaje-botones { flex-direction: column; }
+  .fichaje-btn { width: 100%; }
+}

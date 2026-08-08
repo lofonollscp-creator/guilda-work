@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Mi historial de fichaje — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>Fichaje</h1>
+    <p class="subtitle">Tu registro horario, siempre a tu disposición.</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fichaje.panel') }}">Fichar</a>
+  <a class="active" href="{{ url_for('fichaje.historial') }}">Mi historial</a>
+  <a href="{{ url_for('fichaje.mis_datos') }}">Mis datos</a>
+  {% if g.es_admin or g.gestor_fichajes %}
+  <a href="{{ url_for('fichaje.admin_resumen') }}">Administración</a>
+  {% endif %}
+</nav>
+
+<form class="filters" method="get">
+  <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
+  <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+  {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('fichaje.historial') }}">Limpiar</a>{% endif %}
+</form>
+
+{% if not fichajes %}
+<p class="empty-lane">Sin fichajes en este periodo.</p>
+{% else %}
+<div class="table-wrap">
+<table class="historial-table">
+  <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Origen</th></tr></thead>
+  <tbody>
+    {% for f in fichajes %}
+    <tr>
+      <td class="mono">{{ f.marca_tiempo[:10] }}</td>
+      <td class="mono">{{ f.marca_tiempo[11:16] }}</td>
+      <td>{{ tipos_fichaje[f.tipo] }}{% if f.corrige_a %} <span class="pill">corrección</span>{% endif %}</td>
+      <td class="mono">{{ f.origen }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

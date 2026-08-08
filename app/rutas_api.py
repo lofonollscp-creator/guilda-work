@@ -538,7 +538,7 @@ def posponer_mensaje_correo(mensaje_id: int):
 @token_required
 def asignar_categoria_correo(mensaje_id: int):
     _mensaje_de_usuario_o_404(mensaje_id)
-    correo.asignar_categoria(mensaje_id, _body().get("categoria_id"))
+    correo.asignar_categoria(g.usuario_id, mensaje_id, _body().get("categoria_id"))
     return _ok()
 
 
