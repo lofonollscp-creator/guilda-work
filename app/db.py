@@ -887,6 +887,18 @@ def init_db() -> None:
         # — mismo patrón ya usado en correo_mensajes.categoria_id más arriba.
         _asegurar_columna(conn, "tareas_outlook", "categoria_id", "INTEGER REFERENCES categorias(id)")
 
+        # Idempotencia para la cola offline de la app móvil (fichaje y notas
+        # creados sin cobertura, sincronizados al recuperar conexión): un
+        # cliente_uuid repetido en un reintento no debe duplicar la fila.
+        # ALTER TABLE de SQLite no admite añadir UNIQUE directamente, así que
+        # la columna se añade normal y la unicidad se fuerza con un índice
+        # parcial aparte (ignora NULL, o sea el resto de orígenes que no
+        # mandan cliente_uuid).
+        _asegurar_columna(conn, "fichajes", "cliente_uuid", "TEXT")
+        _asegurar_columna(conn, "notas", "cliente_uuid", "TEXT")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_fichajes_cliente_uuid ON fichajes(cliente_uuid) WHERE cliente_uuid IS NOT NULL")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas(cliente_uuid) WHERE cliente_uuid IS NOT NULL")
+
         conn.commit()
     finally:
         conn.close()
@@ -2235,16 +2247,29 @@ def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
 
 # --- Notas ---------------------------------------------------------------
 
-def crear_nota(usuario_id: int, texto: str, categoria_id: int | None = None, tarea_id: int | None = None) -> int:
+def crear_nota(
+    usuario_id: int, texto: str, categoria_id: int | None = None, tarea_id: int | None = None,
+    creada_en: str | None = None, cliente_uuid: str | None = None,
+) -> int:
+    """`creada_en`/`cliente_uuid`: igual que en `fichar()`, para la cola
+    offline de la app móvil -- conservan la hora real de creación y evitan
+    duplicar la nota si se reintenta la sincronización."""
     conn = get_connection()
     try:
+        if cliente_uuid is not None:
+            existente = conn.execute("SELECT id FROM notas WHERE cliente_uuid = ?", (cliente_uuid,)).fetchone()
+            if existente is not None:
+                return existente["id"]
         # Aquí categoria_id sí es opcional -- si no es del usuario, se
         # degrada a "sin menú" en vez de rechazar la nota entera (ver
         # _categoria_id_propio).
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
+        ahora = now_iso()
+        if creada_en is not None and creada_en > ahora:
+            raise ValueError("La fecha de creación de la nota no puede ser futura.")
         cur = conn.execute(
-            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, ?, ?)",
-            (usuario_id, texto.strip(), categoria_id, tarea_id, now_iso()),
+            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, cliente_uuid) VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, texto.strip(), categoria_id, tarea_id, creada_en or ahora, cliente_uuid),
         )
         conn.commit()
         nota_id = cur.lastrowid
@@ -3777,17 +3802,37 @@ _FICHAJE_TRANSICIONES_VALIDAS = {
 def fichar(
     usuario_id: int, tenant_id: int | None, tipo: str, origen: str = "web", creado_por: int | None = None,
     corrige_a: int | None = None, nota: str | None = None,
+    marca_tiempo: str | None = None, cliente_uuid: str | None = None,
 ) -> int:
     """Inserta un evento de fichaje, validando que la secuencia sea
     coherente (no se puede fichar salida sin una entrada abierta, ni una
     segunda entrada sin haber salido antes) -- lanza ValueError si no
     cuadra, mismo estilo que ErrorCorreo/ErrorBusqueda. `corrige_a` es
     para que un admin corrija un olvido sin tocar la fila original (ver
-    comentario de la tabla `fichajes`)."""
+    comentario de la tabla `fichajes`).
+
+    `marca_tiempo`/`cliente_uuid` son para la cola offline de la app móvil:
+    si el evento se pulsó sin cobertura y se sincroniza más tarde,
+    `marca_tiempo` conserva la hora real de la pulsación (si no se manda, se
+    usa la hora del servidor como siempre) y `cliente_uuid` evita duplicar
+    la fila si la sincronización se reintenta. Nota: la validación de
+    secuencia sigue mirando el último evento por orden de inserción, no por
+    `marca_tiempo` -- un evento offline que llega después de que ya se haya
+    fichado algo más reciente puede quedar fuera de secuencia y rechazarse,
+    algo inherente a fichar con retraso, no un bug de esta función."""
     if tipo not in ("entrada", "pausa_inicio", "pausa_fin", "salida"):
         raise ValueError(f"Tipo de fichaje no válido: {tipo!r}.")
     conn = get_connection()
     try:
+        if cliente_uuid is not None:
+            existente = conn.execute("SELECT id FROM fichajes WHERE cliente_uuid = ?", (cliente_uuid,)).fetchone()
+            if existente is not None:
+                return existente["id"]
+        ahora = now_iso()
+        if marca_tiempo is not None:
+            limite_pasado = (datetime.now() - timedelta(days=7)).isoformat(timespec="seconds")
+            if marca_tiempo > ahora or marca_tiempo < limite_pasado:
+                raise ValueError("La hora del fichaje enviado no es válida (demasiado futura o de hace más de 7 días).")
         if corrige_a is not None:
             original = conn.execute("SELECT id FROM fichajes WHERE id = ? AND usuario_id = ?", (corrige_a, usuario_id)).fetchone()
             if original is None:
@@ -3799,11 +3844,10 @@ def fichar(
             ultimo_tipo = ultimo["tipo"] if ultimo else "salida"  # sin fichajes previos = como si estuviera fuera
             if tipo not in _FICHAJE_TRANSICIONES_VALIDAS.get(ultimo_tipo, set()):
                 raise ValueError(f"No se puede fichar '{tipo}' viniendo de '{ultimo_tipo}' — revisa tu último fichaje.")
-        ahora = now_iso()
         cur = conn.execute(
-            """INSERT INTO fichajes (usuario_id, tenant_id, tipo, marca_tiempo, origen, nota, corrige_a, creado_por, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (usuario_id, tenant_id, tipo, ahora, origen, nota, corrige_a, creado_por or usuario_id, ahora),
+            """INSERT INTO fichajes (usuario_id, tenant_id, tipo, marca_tiempo, origen, nota, corrige_a, creado_por, creado_en, cliente_uuid)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, tenant_id, tipo, marca_tiempo or ahora, origen, nota, corrige_a, creado_por or usuario_id, ahora, cliente_uuid),
         )
         conn.commit()
         return cur.lastrowid

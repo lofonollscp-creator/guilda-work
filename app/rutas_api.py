@@ -173,11 +173,19 @@ def reordenar_categorias():
 @api_bp.route("/notas", methods=["POST"])
 @token_required
 def crear_nota():
+    """`creada_en`/`cliente_uuid` opcionales: igual que en /fichaje/marcar,
+    para la cola offline de la app móvil."""
     datos = _body()
     texto = (datos.get("texto") or "").strip()
     if not texto:
         return _err("El texto no puede estar vacío.")
-    nota_id = db.crear_nota(g.usuario_id, texto, categoria_id=datos.get("categoria_id"))
+    try:
+        nota_id = db.crear_nota(
+            g.usuario_id, texto, categoria_id=datos.get("categoria_id"),
+            creada_en=datos.get("creada_en"), cliente_uuid=datos.get("cliente_uuid"),
+        )
+    except ValueError as e:
+        return _err(str(e))
     return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)), 201)
 
 
@@ -502,14 +510,22 @@ def estado_fichaje():
 @api_bp.route("/fichaje/marcar", methods=["POST"])
 @token_required
 def marcar_fichaje():
-    tipo = _body().get("tipo", "")
+    """`marca_tiempo`/`cliente_uuid` opcionales: los manda la app móvil
+    cuando el fichaje se pulsó sin cobertura y se sincroniza más tarde (ver
+    SyncService) -- conservan la hora real de la pulsación y evitan
+    duplicar la fila si la sincronización se reintenta."""
+    datos = _body()
+    tipo = datos.get("tipo", "")
     if tipo not in ("entrada", "pausa_inicio", "pausa_fin", "salida"):
         return _err("Tipo de fichaje no válido.")
     if not db.fichaje_datos_completos(g.usuario_id):
         return _err("Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Mis datos.")
     tenant = db.tenant_de_usuario(g.usuario_id)
     try:
-        db.fichar(g.usuario_id, tenant["id"] if tenant else None, tipo, origen="movil")
+        db.fichar(
+            g.usuario_id, tenant["id"] if tenant else None, tipo, origen="movil",
+            marca_tiempo=datos.get("marca_tiempo"), cliente_uuid=datos.get("cliente_uuid"),
+        )
     except ValueError as e:
         return _err(str(e))
     return _ok({"estado": db.estado_actual_fichaje(g.usuario_id)})
