@@ -1,0 +1,27 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      # tests/conftest.py levanta y apaga Kratos de verdad (docker-compose.test.yml)
+      # como parte del propio fixture de sesión -- no hace falta nada más aquí,
+      # los runners de GitHub Actions traen Docker y "docker compose" v2 de serie.
+      - name: Ejecutar pytest
+        run: pytest

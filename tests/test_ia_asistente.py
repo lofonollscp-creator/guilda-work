@@ -11,7 +11,7 @@ from app import db, ia_asistente as a
 
 def _preparar(usuario_id, modo_autonomo=False, modelo="modelo-de-prueba"):
     db.guardar_preferencias_ia(usuario_id, modelo, modo_autonomo)
-    a.guardar_api_key(usuario_id, "clave-falsa-de-prueba")
+    a.guardar_api_keys(usuario_id, ["clave-falsa-de-prueba"])
 
 
 def _respuesta_texto(texto):
@@ -42,7 +42,7 @@ def _encolar(monkeypatch, *respuestas):
 
 
 def test_procesar_turno_sin_modelo_da_error(usuario_id):
-    a.guardar_api_key(usuario_id, "clave")
+    a.guardar_api_keys(usuario_id, ["clave"])
     with pytest.raises(a.ErrorIA):
         a.procesar_turno(usuario_id, "hola")
 

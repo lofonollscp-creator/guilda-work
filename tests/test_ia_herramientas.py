@@ -6,9 +6,9 @@ import pytest
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_27_herramientas_clasificadas():
+def test_catalogo_tiene_las_mismas_39_herramientas_clasificadas():
     nombres = {t["function"]["name"] for t in h.HERRAMIENTAS}
-    assert len(nombres) == 27
+    assert len(nombres) == 39
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)

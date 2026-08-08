@@ -23,8 +23,8 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_90_herramientas():
-    assert len(mt.TOOLS) == 90
+def test_tools_tiene_112_herramientas():
+    assert len(mt.TOOLS) == 112
 
 
 def test_registrar_tools_las_registra_todas():

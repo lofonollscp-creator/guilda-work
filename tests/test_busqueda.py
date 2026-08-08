@@ -132,7 +132,7 @@ def test_indexar_nota_construye_el_documento_correcto(monkeypatch):
     endpoint, metodo, cuerpo = capturado["args"]
     assert endpoint == f"/indexes/{b.INDICE}/documents"
     assert metodo == "POST"
-    assert cuerpo == [{"id": "nota-7", "tipo": "nota", "usuario_id": 3, "texto": "Hola", "creada_en": "2026-01-01T00:00:00", "categoria_id": 2}]
+    assert cuerpo == [{"id": "nota-7", "tipo": "nota", "usuario_id": 3, "texto": "Hola", "creada_en": "2026-01-01T00:00:00", "categoria_id": 2, "_vectors": {"default": None}}]
 
 
 def test_indexar_tarea_construye_el_documento_correcto(monkeypatch):
@@ -144,7 +144,7 @@ def test_indexar_tarea_construye_el_documento_correcto(monkeypatch):
 
     b.indexar_tarea({"id": 5, "usuario_id": 3, "nombre": "Reunión", "inicio_en": "2026-01-01T10:00:00", "categoria_id": 1})
 
-    assert capturado["cuerpo"] == [{"id": "tarea-5", "tipo": "tarea", "usuario_id": 3, "texto": "Reunión", "creada_en": "2026-01-01T10:00:00", "categoria_id": 1}]
+    assert capturado["cuerpo"] == [{"id": "tarea-5", "tipo": "tarea", "usuario_id": 3, "texto": "Reunión", "creada_en": "2026-01-01T10:00:00", "categoria_id": 1, "_vectors": {"default": None}}]
 
 
 def test_indexar_mensaje_usa_el_usuario_id_pasado_explicito(monkeypatch):
@@ -156,7 +156,7 @@ def test_indexar_mensaje_usa_el_usuario_id_pasado_explicito(monkeypatch):
 
     b.indexar_mensaje({"id": 9, "asunto": "Hola", "cuerpo_texto": "Cuerpo", "fecha": "2026-01-01T10:00:00"}, usuario_id=4)
 
-    assert capturado["cuerpo"] == [{"id": "mensaje-9", "tipo": "mensaje", "usuario_id": 4, "texto": "Hola Cuerpo", "creada_en": "2026-01-01T10:00:00"}]
+    assert capturado["cuerpo"] == [{"id": "mensaje-9", "tipo": "mensaje", "usuario_id": 4, "texto": "Hola Cuerpo", "creada_en": "2026-01-01T10:00:00", "_vectors": {"default": None}}]
 
 
 def test_indexar_nota_adjunta_el_vector_cuando_ollama_esta_disponible(monkeypatch):

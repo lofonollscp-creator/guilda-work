@@ -923,7 +923,7 @@ def vaciar_ia():
 @token_required
 def obtener_ajustes_ia():
     preferencias = _dict(db.obtener_preferencias_ia(g.usuario_id))
-    preferencias["api_key_configurada"] = bool(ia_asistente.obtener_api_key(g.usuario_id))
+    preferencias["api_key_configurada"] = bool(ia_asistente.obtener_api_keys(g.usuario_id))
     return _ok(preferencias)
 
 
@@ -936,7 +936,10 @@ def guardar_ajustes_ia():
     )
     nueva_clave = (datos.get("api_key") or "").strip()
     if nueva_clave:
-        ia_asistente.guardar_api_key(g.usuario_id, nueva_clave)
+        # La app móvil solo tiene un campo de clave (a diferencia del textarea
+        # "una por línea" de ia_ajustes.html en la web) -- fija la lista de
+        # fallback a esta única clave, sustituyendo cualquier lista anterior.
+        ia_asistente.guardar_api_keys(g.usuario_id, [nueva_clave])
     if datos.get("borrar_api_key"):
         ia_asistente.borrar_api_key(g.usuario_id)
     return _ok()

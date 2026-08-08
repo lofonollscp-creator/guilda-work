@@ -56,6 +56,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mocktail: ^1.0.4
+  # Backend FFI de sqflite para poder ejecutar tests de verdad contra SQLite
+  # sin un dispositivo/emulador real (sqflite normal habla por platform
+  # channel, que no existe en el entorno de `flutter test`).
+  sqflite_common_ffi: ^2.3.4+4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

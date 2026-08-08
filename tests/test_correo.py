@@ -606,7 +606,7 @@ def test_asignar_categoria_a_mensaje_y_eliminarla_la_deja_sin_categoria(monkeypa
     mensaje_id = correo.listar_mensajes(cuenta_id)[0]["id"]
     cat_id = correo.crear_categoria(usuario_id, "Urgente", "#e0555a")
 
-    correo.asignar_categoria(mensaje_id, cat_id)
+    correo.asignar_categoria(usuario_id, mensaje_id, cat_id)
     assert correo.obtener_mensaje(mensaje_id)["categoria_id"] == cat_id
 
     correo.eliminar_categoria(usuario_id, cat_id)

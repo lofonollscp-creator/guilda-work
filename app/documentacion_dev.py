@@ -41,14 +41,22 @@ _PREFIJOS_TENANT = (
 _PROPIAS_GUILDA_WORK = {
     "listar_notas", "crear_nota", "editar_nota",
     "listar_tareas", "crear_tarea", "editar_tarea", "completar_tarea", "consultar_calendario",
-    "listar_cuentas_correo", "sincronizar_correo", "listar_carpetas_correo", "listar_bandeja_entrada",
+    "listar_cuentas_correo", "conectar_cuenta_correo", "sincronizar_correo", "listar_carpetas_correo",
+    "listar_bandeja_entrada",
     "leer_correo", "marcar_leido_correo", "eliminar_correo",
     "listar_categorias_correo", "crear_categoria_correo", "eliminar_categoria_correo", "asignar_categoria_correo",
     "obtener_firma_correo", "configurar_firma_correo",
     "preparar_borrador_correo", "enviar_borrador_correo",
     "exportar_historial", "importar_historial", "exportar_tareas", "importar_tareas",
-    "buscar_semantico",
+    "buscar_semantico", "listar_papelera", "restaurar_de_papelera",
+    "estadisticas_por_categoria", "estadisticas_por_dia",
     "webhooks_listar", "webhooks_crear", "webhooks_borrar",
+    "listar_tiquets", "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet",
+    "fichar", "listar_mis_fichajes",
+    "backoffice_listar_tenants", "backoffice_listar_usuarios", "backoffice_crear_tenant",
+    "backoffice_renombrar_tenant", "backoffice_guardar_datos_tenant", "backoffice_alternar_herramienta_tenant",
+    "backoffice_crear_usuario", "backoffice_asignar_tenant_usuario", "backoffice_cambiar_rol",
+    "backoffice_asignar_gestor_fichajes",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
