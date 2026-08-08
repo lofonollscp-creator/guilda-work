@@ -9,7 +9,12 @@ import 'session_service.dart';
 /// Error legible para mostrar en la UI cuando falla una llamada a la API.
 class ApiException implements Exception {
   final String mensaje;
-  ApiException(this.mensaje);
+  /// true si el fallo es "no hay red/no se llega al servidor" -- lo usan
+  /// fichaje_screen.dart y dashboard_screen.dart para decidir si encolar la
+  /// acción offline en vez de mostrar el error tal cual (un error de
+  /// negocio, ej. secuencia de fichaje inválida, sigue mostrándose normal).
+  final bool esDeConexion;
+  ApiException(this.mensaje, {this.esDeConexion = false});
 
   @override
   String toString() => mensaje;
@@ -80,9 +85,10 @@ class ApiClient {
         e.type == DioExceptionType.connectionError) {
       return ApiException(
         'No se ha podido conectar con el servidor. Comprueba la URL en Ajustes.',
+        esDeConexion: true,
       );
     }
-    return ApiException('Error de red: ${e.message}');
+    return ApiException('Error de red: ${e.message}', esDeConexion: true);
   }
 
   Future<(String token, Usuario usuario)> login(
@@ -185,11 +191,16 @@ class ApiClient {
     }
   }
 
-  Future<void> crearNota(String texto, {int? categoriaId}) async {
+  Future<void> crearNota(String texto, {int? categoriaId, String? creadaEn, String? clienteUuid}) async {
     try {
       await _dio.post(
         '/notas',
-        data: {'texto': texto, 'categoria_id': ?categoriaId},
+        data: {
+          'texto': texto,
+          'categoria_id': ?categoriaId,
+          'creada_en': ?creadaEn,
+          'cliente_uuid': ?clienteUuid,
+        },
       );
     } on DioException catch (e) {
       throw _errorLegible(e);
@@ -384,9 +395,13 @@ class ApiClient {
     }
   }
 
-  Future<String> fichar(String tipo) async {
+  Future<String> fichar(String tipo, {String? marcaTiempo, String? clienteUuid}) async {
     try {
-      final resp = await _dio.post('/fichaje/marcar', data: {'tipo': tipo});
+      final resp = await _dio.post('/fichaje/marcar', data: {
+        'tipo': tipo,
+        'marca_tiempo': ?marcaTiempo,
+        'cliente_uuid': ?clienteUuid,
+      });
       return (resp.data['data'] as Map<String, dynamic>)['estado'] as String;
     } on DioException catch (e) {
       throw _errorLegible(e);

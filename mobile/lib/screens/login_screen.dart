@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
 import '../services/session_service.dart';
+import '../services/sync_service.dart';
 import 'ajustes_servidor_dialog.dart';
 import 'dashboard_screen.dart';
 import 'registro_screen.dart';
@@ -9,8 +10,9 @@ import 'registro_screen.dart';
 class LoginScreen extends StatefulWidget {
   final ApiClient api;
   final SessionService sesion;
+  final SyncService sync;
 
-  const LoginScreen({super.key, required this.api, required this.sesion});
+  const LoginScreen({super.key, required this.api, required this.sesion, required this.sync});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -40,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
             usuario: usuario,
             api: widget.api,
             sesion: widget.sesion,
+            sync: widget.sync,
           ),
         ),
         (route) => false,
@@ -99,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => RegistroScreen(api: widget.api, sesion: widget.sesion),
+                  builder: (_) => RegistroScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync),
                 ),
               ),
               child: const Text('¿No tienes cuenta? Regístrate'),

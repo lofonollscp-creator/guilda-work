@@ -4,6 +4,7 @@ import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/session_service.dart';
 import '../services/matrix_service.dart';
+import '../services/sync_service.dart';
 import 'chat_login_screen.dart';
 import 'correo_bandeja_screen.dart';
 import 'fichaje_screen.dart';
@@ -20,12 +21,14 @@ class DashboardScreen extends StatefulWidget {
   final Usuario usuario;
   final ApiClient api;
   final SessionService sesion;
+  final SyncService sync;
 
   const DashboardScreen({
     super.key,
     required this.usuario,
     required this.api,
     required this.sesion,
+    required this.sync,
   });
 
   @override
@@ -79,6 +82,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await widget.api.crearNota(texto, categoriaId: _categoriaNotaSeleccionada);
       _notaController.clear();
       await _recargar();
+    } on ApiException catch (e) {
+      if (e.esDeConexion) {
+        await widget.sync.encolarNota(texto, _categoriaNotaSeleccionada, DateTime.now());
+        _notaController.clear();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sin conexión: la nota se guardará en cuanto vuelva la red.')),
+          );
+        }
+      } else {
+        setState(() => _error = e.toString());
+      }
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -116,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await widget.sesion.borrarToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion)),
+      MaterialPageRoute(builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync)),
       (route) => false,
     );
   }
@@ -159,7 +174,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: const Icon(Icons.punch_clock_outlined),
             tooltip: 'Fichaje',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => FichajeScreen(api: widget.api)),
+              MaterialPageRoute(builder: (_) => FichajeScreen(api: widget.api, sync: widget.sync)),
             ),
           ),
           IconButton(

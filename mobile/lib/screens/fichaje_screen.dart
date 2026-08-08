@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../services/sync_service.dart';
 import 'fichaje_datos_screen.dart';
 import 'fichaje_historial_screen.dart';
 
@@ -12,8 +13,9 @@ import 'fichaje_historial_screen.dart';
 /// de móvil, se queda en web/escritorio -- ver app/rutas_fichaje.py).
 class FichajeScreen extends StatefulWidget {
   final ApiClient api;
+  final SyncService sync;
 
-  const FichajeScreen({super.key, required this.api});
+  const FichajeScreen({super.key, required this.api, required this.sync});
 
   @override
   State<FichajeScreen> createState() => _FichajeScreenState();
@@ -24,12 +26,26 @@ class _FichajeScreenState extends State<FichajeScreen> {
   Future<List<FichajeEvento>>? _hoy;
   String? _error;
   bool _marcando = false;
+  int _pendientes = 0;
 
   @override
   void initState() {
     super.initState();
     _estado = _cargar();
+    _cargarPendientes();
   }
+
+  Future<void> _cargarPendientes() async {
+    final n = await widget.sync.contarPendientes();
+    if (mounted) setState(() => _pendientes = n);
+  }
+
+  static const _estadoTrasMarcar = {
+    'entrada': 'dentro',
+    'pausa_inicio': 'en_pausa',
+    'pausa_fin': 'dentro',
+    'salida': 'fuera',
+  };
 
   Future<(String, bool)> _cargar() async {
     final estado = await widget.api.obtenerEstadoFichaje();
@@ -57,6 +73,20 @@ class _FichajeScreenState extends State<FichajeScreen> {
     try {
       await widget.api.fichar(tipo);
       await _recargar();
+    } on ApiException catch (e) {
+      if (e.esDeConexion) {
+        await widget.sync.encolarFichaje(tipo, DateTime.now());
+        await _cargarPendientes();
+        // UI optimista: refleja el nuevo estado sin esperar a sincronizar.
+        setState(() => _estado = Future.value((_estadoTrasMarcar[tipo]!, true)));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sin conexión: se ha guardado y se enviará al recuperar la red.')),
+          );
+        }
+      } else {
+        setState(() => _error = e.toString());
+      }
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -131,6 +161,15 @@ class _FichajeScreenState extends State<FichajeScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 Center(child: _pillEstado(estado)),
+                if (_pendientes > 0) ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      '$_pendientes cambio${_pendientes == 1 ? '' : 's'} pendiente${_pendientes == 1 ? '' : 's'} de sincronizar',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 if (_error != null) ...[
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
