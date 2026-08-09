@@ -7,6 +7,8 @@ import re
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
+from flask_babel import gettext as _
+from flask_babel import lazy_gettext as _l
 
 from . import correo, db
 from .auth import login_required
@@ -90,7 +92,7 @@ def _mensaje_de_usuario_o_404(mensaje_id: int):
 
 def _render_redactar(
     *, cuenta_id=None, destinatarios="", cc="", bcc="", asunto="", cuerpo_html="",
-    en_respuesta_a="", error=None, titulo="Nuevo mensaje",
+    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"),
 ):
     cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
     return render_template(
@@ -400,7 +402,7 @@ def responder(mensaje_id: int):
     cuerpo_html = correo.preparar_cuerpo_inicial(g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=cita)
     return _render_redactar(
         cuenta_id=mensaje["cuenta_id"], destinatarios=mensaje["remitente"] or "",
-        asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo="Responder",
+        asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo=_("Responder"),
     )
 
 
@@ -421,7 +423,7 @@ def responder_a_todos(mensaje_id: int):
     destinatarios = correo.destinatarios_responder_a_todos(mensaje, cuenta["usuario"] if cuenta else None)
     return _render_redactar(
         cuenta_id=mensaje["cuenta_id"], destinatarios=destinatarios,
-        asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo="Responder a todos",
+        asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo=_("Responder a todos"),
     )
 
 
@@ -440,7 +442,7 @@ def reenviar(mensaje_id: int):
         f"<blockquote style=\"border-left:2px solid #ccc;margin:0 0 0 8px;padding-left:12px;color:#555;\">{original_html}</blockquote>"
     )
     cuerpo_html = correo.preparar_cuerpo_inicial(g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=cita)
-    return _render_redactar(cuenta_id=mensaje["cuenta_id"], asunto=asunto, cuerpo_html=cuerpo_html, titulo="Reenviar")
+    return _render_redactar(cuenta_id=mensaje["cuenta_id"], asunto=asunto, cuerpo_html=cuerpo_html, titulo=_("Reenviar"))
 
 
 @correo_bp.route("/enviar", methods=["POST"])

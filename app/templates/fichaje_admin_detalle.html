@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ datos.nombre_completo or trabajador.email }} — Fichaje{% endblock %}
+{% block title %}{{ datos.nombre_completo or trabajador.email }} — {{ _('Fichaje') }}{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -8,29 +8,29 @@
   </div>
 </header>
 
-<a class="btn btn-ghost" href="{{ url_for('fichaje.admin_resumen') }}">&larr; Volver al resumen</a>
+<a class="btn btn-ghost" href="{{ url_for('fichaje.admin_resumen') }}">&larr; {{ _('Volver al resumen') }}</a>
 
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
 <form class="filters" method="get">
-  <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
-  <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
-  <button type="submit" class="btn btn-primary">Filtrar</button>
-  {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('fichaje.admin_detalle', usuario_id=trabajador.id) }}">Limpiar</a>{% endif %}
+  <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label>
+  <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+  {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('fichaje.admin_detalle', usuario_id=trabajador.id) }}">{{ _('Limpiar') }}</a>{% endif %}
 </form>
 
 {% if not fichajes %}
-<p class="empty-lane">Sin fichajes en este periodo.</p>
+<p class="empty-lane">{{ _('Sin fichajes en este periodo.') }}</p>
 {% else %}
 <div class="table-wrap">
 <table class="historial-table">
-  <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Origen</th><th>Nota</th><th></th></tr></thead>
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Hora') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Origen') }}</th><th>{{ _('Nota') }}</th><th></th></tr></thead>
   <tbody>
     {% for f in fichajes %}
     <tr>
       <td class="mono">{{ f.marca_tiempo[:10] }}</td>
       <td class="mono">{{ f.marca_tiempo[11:16] }}</td>
-      <td>{{ tipos_fichaje[f.tipo] }}{% if f.corrige_a %} <span class="pill">corrección de #{{ f.corrige_a }}</span>{% endif %}</td>
+      <td>{{ tipos_fichaje[f.tipo] }}{% if f.corrige_a %} <span class="pill">{{ _('corrección de #%(id)s', id=f.corrige_a) }}</span>{% endif %}</td>
       <td class="mono">{{ f.origen }}</td>
       <td>{{ f.nota or '' }}</td>
       <td class="mono">#{{ f.id }}</td>
@@ -42,19 +42,19 @@
 {% endif %}
 
 <section class="stats-section">
-  <h3>Corregir un olvido</h3>
-  <p class="subtitle">Añade el fichaje que faltó (p. ej. una salida no marcada) sin borrar ni tocar los existentes — queda registrado quién y cuándo hizo la corrección.</p>
+  <h3>{{ _('Corregir un olvido') }}</h3>
+  <p class="subtitle">{{ _('Añade el fichaje que faltó (p. ej. una salida no marcada) sin borrar ni tocar los existentes — queda registrado quién y cuándo hizo la corrección.') }}</p>
   <form method="post" action="{{ url_for('fichaje.admin_corregir', usuario_id=trabajador.id) }}" class="quick-row">
     <input type="hidden" name="desde" value="{{ desde }}">
     <input type="hidden" name="hasta" value="{{ hasta }}">
     <select name="tipo" required>
-      {% for valor, etiqueta in [('entrada','Entrada'), ('pausa_inicio','Inicio de pausa'), ('pausa_fin','Fin de pausa'), ('salida','Salida')] %}
+      {% for valor, etiqueta in tipos_fichaje.items() %}
       <option value="{{ valor }}">{{ etiqueta }}</option>
       {% endfor %}
     </select>
-    <input type="number" name="corrige_a" placeholder="Nº de fichaje que corrige (opcional)">
-    <input type="text" name="nota" placeholder="Motivo de la corrección" style="flex: 2;">
-    <button type="submit" class="btn btn-primary">Añadir corrección</button>
+    <input type="number" name="corrige_a" placeholder="{{ _('Nº de fichaje que corrige (opcional)') }}">
+    <input type="text" name="nota" placeholder="{{ _('Motivo de la corrección') }}" style="flex: 2;">
+    <button type="submit" class="btn btn-primary">{{ _('Añadir corrección') }}</button>
   </form>
 </section>
 {% endblock %}

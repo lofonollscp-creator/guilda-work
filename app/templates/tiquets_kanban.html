@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Tiquets — Kanban — Guilda Work{% endblock %}
+{% block title %}{{ _('Tiquets — Kanban') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Tiquets</h1>
+    <h1>{{ _('Tiquets') }}</h1>
     <p class="subtitle">
-      {% if g.es_admin %}Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.
-      {% else %}Solo un administrador puede mover tiquets entre columnas.{% endif %}
+      {% if g.es_admin %}{{ _('Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.') }}
+      {% else %}{{ _('Solo un administrador puede mover tiquets entre columnas.') }}{% endif %}
     </p>
   </div>
 </header>
 
 <nav class="tareas-subnav">
-  <a href="{{ url_for('tiquets.tarjetas') }}">Tarjetas</a>
+  <a href="{{ url_for('tiquets.tarjetas') }}">{{ _('Tarjetas') }}</a>
   <a class="active" href="{{ url_for('tiquets.kanban') }}">Kanban</a>
 </nav>
 
@@ -39,12 +39,12 @@
         </div>
         {% endif %}
         <div class="tiquet-card-pie">
-          <span class="tiquet-card-autor">{{ t.autor_email or '(usuario eliminado)' }}</span>
+          <span class="tiquet-card-autor">{{ t.autor_email or _('(usuario eliminado)') }}</span>
           {% if puede_borrar_tiquet(t) %}
           <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
-                onsubmit="return confirm('¿Eliminar el tiquet #{{ t.id }}? No se puede deshacer.');">
+                onsubmit="return confirm('{{ _('¿Eliminar el tiquet #%(id)s? No se puede deshacer.', id=t.id) }}');">
             <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
-            <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
+            <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
           </form>
           {% endif %}
         </div>
@@ -61,7 +61,7 @@
       </article>
       {% endfor %}
       {% if not por_estado[valor] %}
-      <p class="empty-lane">Sin tiquets aquí.</p>
+      <p class="empty-lane">{{ _('Sin tiquets aquí.') }}</p>
       {% endif %}
     </div>
   </div>

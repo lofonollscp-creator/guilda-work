@@ -13,6 +13,7 @@ por querystring (`?tenant_id=`).
 from datetime import datetime
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import lazy_gettext as _l
 
 from . import db, fichaje_export
 from .auth import login_required
@@ -20,10 +21,10 @@ from .auth import login_required
 fichaje_bp = Blueprint("fichaje", __name__, url_prefix="/fichaje")
 
 TIPOS_FICHAJE = [
-    ("entrada", "Entrada"),
-    ("pausa_inicio", "Inicio de pausa"),
-    ("pausa_fin", "Fin de pausa"),
-    ("salida", "Salida"),
+    ("entrada", _l("Entrada")),
+    ("pausa_inicio", _l("Inicio de pausa")),
+    ("pausa_fin", _l("Fin de pausa")),
+    ("salida", _l("Salida")),
 ]
 
 

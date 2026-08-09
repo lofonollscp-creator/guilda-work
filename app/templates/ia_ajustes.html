@@ -1,52 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Ajustes del Asistente IA · Guilda Work{% endblock %}
+{% block title %}{{ _('Ajustes del Asistente IA') }} · Guilda Work{% endblock %}
 {% block content %}
 <div class="ia-pagina">
   <div class="ia-pagina-cabecera">
-    <h1>Ajustes del Asistente IA</h1>
-    <a class="btn btn-ghost" href="{{ url_for('ia.asistente_vista') }}">&larr; Volver al chat</a>
+    <h1>{{ _('Ajustes del Asistente IA') }}</h1>
+    <a class="btn btn-ghost" href="{{ url_for('ia.asistente_vista') }}">&larr; {{ _('Volver al chat') }}</a>
   </div>
 
   <section class="correo-ajustes-seccion">
-    <h2>Modelo (OpenRouter)</h2>
+    <h2>{{ _('Modelo (OpenRouter)') }}</h2>
     <form method="post" action="{{ url_for('ia.guardar_ajustes') }}" class="correo-form-seccion">
       <div class="correo-form-campo">
-        <label>Modelo sugerido</label>
+        <label>{{ _('Modelo sugerido') }}</label>
         <select name="modelo">
-          <option value="">— elegir uno de la lista, o usar el campo de abajo —</option>
+          <option value="">— {{ _('elegir uno de la lista, o usar el campo de abajo') }} —</option>
           {% for m in modelos_sugeridos %}
           <option value="{{ m }}" {% if preferencias.modelo == m %}selected{% endif %}>{{ m }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="correo-form-campo">
-        <label>O escribe cualquier otro id de modelo de OpenRouter</label>
-        <input type="text" name="modelo_personalizado" placeholder="ej. mistralai/mistral-large"
+        <label>{{ _('O escribe cualquier otro id de modelo de OpenRouter') }}</label>
+        <input type="text" name="modelo_personalizado" placeholder="{{ _('ej. mistralai/mistral-large') }}"
                value="{{ preferencias.modelo if preferencias.modelo not in modelos_sugeridos else '' }}">
       </div>
 
       <div class="correo-form-campo">
-        <label>Claves de API de OpenRouter (una por línea, en orden de preferencia)</label>
-        <textarea name="api_keys" rows="3" placeholder="{{ ('Ya tienes ' ~ num_claves_configuradas ~ ' clave' ~ ('s' if num_claves_configuradas != 1 else '') ~ ' guardada' ~ ('s' if num_claves_configuradas != 1 else '') ~ ' — deja en blanco para no cambiarlas') if num_claves_configuradas else 'sk-or-...\nsk-or-... (clave de reserva, opcional)' }}"></textarea>
-        <p class="ia-aviso">Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente.</p>
+        <label>{{ _('Claves de API de OpenRouter (una por línea, en orden de preferencia)') }}</label>
+        <textarea name="api_keys" rows="3" placeholder="{{ ngettext('Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas', 'Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas', num_claves_configuradas) if num_claves_configuradas else _('sk-or-...\nsk-or-... (clave de reserva, opcional)') }}"></textarea>
+        <p class="ia-aviso">{{ _('Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente.') }}</p>
       </div>
       {% if num_claves_configuradas %}
       <label class="correo-form-checkbox">
-        <input type="checkbox" name="borrar_api_keys"> Borrar todas las claves guardadas
+        <input type="checkbox" name="borrar_api_keys"> {{ _('Borrar todas las claves guardadas') }}
       </label>
       {% endif %}
 
       <label class="correo-form-checkbox">
         <input type="checkbox" name="modo_autonomo" {% if preferencias.modo_autonomo %}checked{% endif %}>
-        Modo autónomo: no pedir confirmación al crear/editar/borrar contenido
+        {{ _('Modo autónomo: no pedir confirmación al crear/editar/borrar contenido') }}
       </label>
       <p class="ia-aviso ia-aviso-modo-autonomo">
-        Aunque actives el modo autónomo, <strong>enviar un correo de verdad</strong> siempre
-        pedirá confirmación explícita, y el asistente nunca podrá borrar copias de seguridad
-        (solo crearlas) porque esa herramienta no existe.
+        {{ _('Aunque actives el modo autónomo,') }} <strong>{{ _('enviar un correo de verdad') }}</strong> {{ _('siempre pedirá confirmación explícita, y el asistente nunca podrá borrar copias de seguridad (solo crearlas) porque esa herramienta no existe.') }}
       </p>
 
-      <button type="submit" class="btn btn-primary">Guardar</button>
+      <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
     </form>
   </section>
 </div>

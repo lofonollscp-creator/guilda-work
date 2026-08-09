@@ -1,28 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Calendario de tareas — Guilda Work{% endblock %}
+{% block title %}{{ _('Calendario de tareas') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Tareas</h1>
-    <p class="subtitle">Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí.</p>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí.') }}</p>
   </div>
 </header>
 
 <nav class="tareas-subnav">
-  <a href="{{ url_for('tareas.listar') }}">Lista</a>
-  <a class="active" href="{{ url_for('tareas.calendario', vista=vista, fecha=ancla.isoformat()) }}">Calendario</a>
-  <a href="{{ url_for('tareas.sincronizar') }}">Sincronizar</a>
+  <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
+  <a class="active" href="{{ url_for('tareas.calendario', vista=vista, fecha=ancla.isoformat()) }}">{{ _('Calendario') }}</a>
+  <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
 </nav>
 
 <div class="cal-toolbar">
   <div class="cal-nav">
-    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=anterior) }}" title="Anterior">&larr;</a>
-    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=hoy) }}">Hoy</a>
-    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=siguiente) }}" title="Siguiente">&rarr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=anterior) }}" title="{{ _('Anterior') }}">&larr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=hoy) }}">{{ _('Hoy') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=siguiente) }}" title="{{ _('Siguiente') }}">&rarr;</a>
     <span class="cal-titulo">{{ titulo_rango }}</span>
   </div>
   <div class="cal-vistas">
-    {% for v, etiqueta in [('dia', 'Día'), ('semana_laboral', 'Semana laboral'), ('semana', 'Semana'), ('mes', 'Mes')] %}
+    {% for v, etiqueta in [('dia', _('Día')), ('semana_laboral', _('Semana laboral')), ('semana', _('Semana')), ('mes', _('Mes'))] %}
     <a class="{{ 'active' if vista == v }}" href="{{ url_for('tareas.calendario', vista=v, fecha=ancla.isoformat()) }}">{{ etiqueta }}</a>
     {% endfor %}
   </div>
@@ -38,7 +38,7 @@
 
 {% if vista == 'mes' %}
 <div class="cal-grid cal-grid-mes">
-  {% for etiqueta in ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] %}
+  {% for etiqueta in [_('Lun'), _('Mar'), _('Mié'), _('Jue'), _('Vie'), _('Sáb'), _('Dom')] %}
   <div class="cal-weekday">{{ etiqueta }}</div>
   {% endfor %}
   {% for semana in semanas %}
@@ -47,7 +47,7 @@
       <span class="cal-cell-num">{{ dia.fecha.day }}</span>
       <div class="cal-cell-chips">
         {% for t in dia.tareas[:4] %}{{ chip(t) }}{% endfor %}
-        {% if dia.tareas|length > 4 %}<span class="cal-mas">+{{ dia.tareas|length - 4 }} más</span>{% endif %}
+        {% if dia.tareas|length > 4 %}<span class="cal-mas">{{ _('+%(n)s más', n=dia.tareas|length - 4) }}</span>{% endif %}
       </div>
     </div>
     {% endfor %}
@@ -67,7 +67,7 @@
     {% endfor %}
   </ul>
   {% else %}
-  <p class="empty-lane">No hay tareas este día. Haz clic en una franja horaria de abajo para crear una.</p>
+  <p class="empty-lane">{{ _('No hay tareas este día. Haz clic en una franja horaria de abajo para crear una.') }}</p>
   {% endif %}
 </div>
 <div class="cal-hours">
@@ -84,12 +84,12 @@
   {% for dia in dias %}
   <div class="cal-col cal-seleccionable {{ 'is-hoy' if dia.es_hoy }}" data-fecha="{{ dia.iso }}">
     <div class="cal-col-header">
-      <span class="cal-col-weekday">{{ ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][dia.fecha.weekday()] }}</span>
+      <span class="cal-col-weekday">{{ [_('Lun'),_('Mar'),_('Mié'),_('Jue'),_('Vie'),_('Sáb'),_('Dom')][dia.fecha.weekday()] }}</span>
       <span class="cal-col-num">{{ dia.fecha.day }}</span>
     </div>
     <div class="cal-col-chips">
       {% for t in dia.tareas %}{{ chip(t) }}{% endfor %}
-      {% if not dia.tareas %}<span class="cal-vacio">Sin tareas</span>{% endif %}
+      {% if not dia.tareas %}<span class="cal-vacio">{{ _('Sin tareas') }}</span>{% endif %}
     </div>
   </div>
   {% endfor %}
@@ -103,9 +103,9 @@
     <input type="hidden" name="fecha_vencimiento" id="qc-fecha-vencimiento">
     <div class="cal-quick-create-header">
       <span id="qc-rango-label"></span>
-      <button type="button" class="cal-quick-close" onclick="cerrarCreacionRapidaTarea()" title="Cerrar" aria-label="Cerrar">✕</button>
+      <button type="button" class="cal-quick-close" onclick="cerrarCreacionRapidaTarea()" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}">✕</button>
     </div>
-    <input type="text" name="asunto" id="qc-asunto" placeholder="Asunto de la tarea..." required>
+    <input type="text" name="asunto" id="qc-asunto" placeholder="{{ _('Asunto de la tarea...') }}" required>
     <div class="quick-row">
       <select name="prioridad">
         {% for valor, etiqueta in prioridades %}
@@ -113,18 +113,18 @@
         {% endfor %}
       </select>
       {% if menus %}
-      <select name="categoria_id" title="Menú">
-        <option value="">Sin menú</option>
+      <select name="categoria_id" title="{{ _('Menú') }}">
+        <option value="">{{ _('Sin menú') }}</option>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       {% endif %}
-      <input type="text" name="categoria_outlook" placeholder="Categoría Outlook (opcional)" list="categorias-outlook-datalist-cal">
+      <input type="text" name="categoria_outlook" placeholder="{{ _('Categoría Outlook (opcional)') }}" list="categorias-outlook-datalist-cal">
       <datalist id="categorias-outlook-datalist-cal">
         {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
       </datalist>
     </div>
     <div class="cal-quick-create-actions">
-      <button type="submit" class="btn btn-primary">+ Crear tarea</button>
+      <button type="submit" class="btn btn-primary">+ {{ _('Crear tarea') }}</button>
     </div>
   </form>
 </div>

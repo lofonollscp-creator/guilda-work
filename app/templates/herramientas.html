@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Herramientas — Guilda Work{% endblock %}
+{% block title %}{{ _('Herramientas') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Herramientas</h1>
-    <p class="subtitle">Todo lo que tienes conectado a Guilda Work, en un solo sitio.</p>
+    <h1>{{ _('Herramientas') }}</h1>
+    <p class="subtitle">{{ _('Todo lo que tienes conectado a Guilda Work, en un solo sitio.') }}</p>
   </div>
 </header>
 
@@ -26,7 +26,7 @@
         <p class="tool-card-desc">{{ h.descripcion }}</p>
         <span class="tool-card-status is-pendiente">
           <span class="tool-card-status-dot"></span>
-          Aún no disponible
+          {{ _('Aún no disponible') }}
         </span>
       </div>
       {% else %}
@@ -44,7 +44,7 @@
         <p class="tool-card-desc">{{ h.descripcion }}</p>
         <span class="tool-card-status {{ 'is-sso' if h.sso else 'is-standalone' }}">
           <span class="tool-card-status-dot"></span>
-          {{ "Entra con tu sesión de Guilda Work" if h.sso else "Inicia sesión aparte" }}
+          {{ _('Entra con tu sesión de Guilda Work') if h.sso else _('Inicia sesión aparte') }}
         </span>
       </a>
       {% endif %}
@@ -64,11 +64,11 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
           </span>
         </div>
-        <h3 class="tool-card-name">Facturación</h3>
-        <p class="tool-card-desc">Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).</p>
+        <h3 class="tool-card-name">{{ _('Facturación') }}</h3>
+        <p class="tool-card-desc">{{ _('Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).') }}</p>
         <span class="tool-card-status is-standalone">
           <span class="tool-card-status-dot"></span>
-          Inicia sesión aparte
+          {{ _('Inicia sesión aparte') }}
         </span>
       </a>
       {% else %}
@@ -78,11 +78,11 @@
             <img src="{{ url_for('static', filename='logos/facturacion.png') }}" alt="" loading="lazy">
           </span>
         </div>
-        <h3 class="tool-card-name">Facturación</h3>
-        <p class="tool-card-desc">Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).</p>
+        <h3 class="tool-card-name">{{ _('Facturación') }}</h3>
+        <p class="tool-card-desc">{{ _('Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).') }}</p>
         <span class="tool-card-status is-pendiente">
           <span class="tool-card-status-dot"></span>
-          Aún no aprovisionada para tu cliente
+          {{ _('Aún no aprovisionada para tu cliente') }}
         </span>
       </div>
       {% endif %}

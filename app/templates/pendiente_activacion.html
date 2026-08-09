@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Guilda Work — Cuenta pendiente de activación</title>
+  <title>Guilda Work — {{ _('Cuenta pendiente de activación') }}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <style>
     body {
@@ -45,11 +45,11 @@
 <body>
   <div class="card">
     <img class="mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
-    <h1>Tu cuenta está casi lista</h1>
-    <p>Te has registrado correctamente, pero tu cuenta todavía no está asociada a ninguna organización.</p>
-    <p>El equipo de Guilda Work la activará en breve — si has llegado hasta aquí sin haber hablado antes con nosotros, escríbenos a <a href="mailto:gestio@guilda.cat" style="color:#a3b8ff;">gestio@guilda.cat</a>.</p>
+    <h1>{{ _('Tu cuenta está casi lista') }}</h1>
+    <p>{{ _('Te has registrado correctamente, pero tu cuenta todavía no está asociada a ninguna organización.') }}</p>
+    <p>{{ _('El equipo de Guilda Work la activará en breve — si has llegado hasta aquí sin haber hablado antes con nosotros, escríbenos a') }} <a href="mailto:gestio@guilda.cat" style="color:#a3b8ff;">gestio@guilda.cat</a>.</p>
     <form action="{{ url_for('logout') }}" method="post">
-      <button type="submit">Cerrar sesión</button>
+      <button type="submit">{{ _('Cerrar sesión') }}</button>
     </form>
   </div>
 </body>

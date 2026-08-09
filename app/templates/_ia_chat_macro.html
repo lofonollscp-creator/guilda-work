@@ -1,6 +1,6 @@
 {% macro chat(mensajes, pendiente, contenedor_id) %}
 <div class="ia-chat" id="{{ contenedor_id }}">
-  <p class="ia-chat-aviso">🤖 Respuestas generadas por IA — pueden contener errores, comprueba lo importante.</p>
+  <p class="ia-chat-aviso">🤖 {{ _('Respuestas generadas por IA — pueden contener errores, comprueba lo importante.') }}</p>
   <div class="ia-chat-mensajes" id="{{ contenedor_id }}-mensajes">
     {% for m in mensajes %}
       {% if m.rol == 'user' %}
@@ -14,18 +14,18 @@
   </div>
   <div class="ia-chat-pendiente" id="{{ contenedor_id }}-pendiente" data-tool-call-id="{{ pendiente.tool_call_id if pendiente else '' }}" {{ 'hidden' if not pendiente }}>
     {% if pendiente %}
-    <p class="ia-chat-pendiente-titulo">¿Ejecuto <strong>{{ pendiente.herramienta }}</strong>?</p>
+    <p class="ia-chat-pendiente-titulo">{{ _('¿Ejecuto') }} <strong>{{ pendiente.herramienta }}</strong>?</p>
     <pre class="ia-chat-pendiente-args">{{ pendiente.argumentos }}</pre>
     {% endif %}
     <div class="ia-chat-pendiente-botones">
-      <button type="button" class="ia-chat-confirmar" data-aceptar="true">Sí, hazlo</button>
-      <button type="button" class="ia-chat-confirmar" data-aceptar="false">No</button>
+      <button type="button" class="ia-chat-confirmar" data-aceptar="true">{{ _('Sí, hazlo') }}</button>
+      <button type="button" class="ia-chat-confirmar" data-aceptar="false">{{ _('No') }}</button>
     </div>
   </div>
   <form class="ia-chat-form" id="{{ contenedor_id }}-form">
-    <textarea placeholder="Escribe un mensaje..." rows="2" required></textarea>
-    <button type="submit">Enviar</button>
+    <textarea placeholder="{{ _('Escribe un mensaje...') }}" rows="2" required></textarea>
+    <button type="submit">{{ _('Enviar') }}</button>
   </form>
-  <button type="button" class="ia-chat-vaciar" id="{{ contenedor_id }}-vaciar">Nueva conversación</button>
+  <button type="button" class="ia-chat-vaciar" id="{{ contenedor_id }}-vaciar">{{ _('Nueva conversación') }}</button>
 </div>
 {% endmacro %}

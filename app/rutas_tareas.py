@@ -7,6 +7,7 @@ import calendar as calendario_std
 from datetime import date, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import lazy_gettext as _l
 
 from . import db, outlook_ics
 from .auth import login_required
@@ -14,22 +15,22 @@ from .auth import login_required
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
 
 ESTADOS = [
-    ("no_iniciada", "No iniciada"),
-    ("en_progreso", "En progreso"),
-    ("completada", "Completada"),
-    ("esperando", "Esperando a otros"),
-    ("aplazada", "Aplazada"),
+    ("no_iniciada", _l("No iniciada")),
+    ("en_progreso", _l("En progreso")),
+    ("completada", _l("Completada")),
+    ("esperando", _l("Esperando a otros")),
+    ("aplazada", _l("Aplazada")),
 ]
 PRIORIDADES = [
-    ("baja", "Baja"),
-    ("normal", "Normal"),
-    ("alta", "Alta"),
+    ("baja", _l("Baja")),
+    ("normal", _l("Normal")),
+    ("alta", _l("Alta")),
 ]
 VISTAS_CALENDARIO = ["mes", "semana", "semana_laboral", "dia"]
 HORAS_DIA = [f"{h:02d}:00" for h in range(6, 22)]
 NOMBRES_MES = [
-    "", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-    "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+    "", _l("enero"), _l("febrero"), _l("marzo"), _l("abril"), _l("mayo"), _l("junio"), _l("julio"),
+    _l("agosto"), _l("septiembre"), _l("octubre"), _l("noviembre"), _l("diciembre"),
 ]
 
 

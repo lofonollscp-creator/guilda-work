@@ -9,6 +9,7 @@ borrar los suyos propios (o cualquiera, si es admin), y solo un admin
 puede moverlos de estado en el Kanban.
 """
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import lazy_gettext as _l
 
 from . import db
 from .auth import admin_required, login_required
@@ -16,13 +17,13 @@ from .auth import admin_required, login_required
 tiquets_bp = Blueprint("tiquets", __name__, url_prefix="/tiquets")
 
 TIPOS = [
-    ("error", "Error"),
-    ("sugerencia", "Sugerencia"),
+    ("error", _l("Error")),
+    ("sugerencia", _l("Sugerencia")),
 ]
 ESTADOS = [
-    ("sin_revisar", "Sin revisar"),
-    ("en_revision", "En revisión"),
-    ("finalizado", "Finalizado"),
+    ("sin_revisar", _l("Sin revisar")),
+    ("en_revision", _l("En revisión")),
+    ("finalizado", _l("Finalizado")),
 ]
 
 # Capturas de pantalla + PDF, nada más -- es lo que se pidió, no un

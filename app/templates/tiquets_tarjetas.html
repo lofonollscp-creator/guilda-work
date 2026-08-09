@@ -1,40 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Tiquets — Guilda Work{% endblock %}
+{% block title %}{{ _('Tiquets') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Tiquets</h1>
-    <p class="subtitle">Errores y sugerencias sobre Guilda Work. Tablero compartido: todo el mundo ve todos los tiquets.</p>
+    <h1>{{ _('Tiquets') }}</h1>
+    <p class="subtitle">{{ _('Errores y sugerencias sobre Guilda Work. Tablero compartido: todo el mundo ve todos los tiquets.') }}</p>
   </div>
 </header>
 
 <nav class="tareas-subnav">
-  <a class="active" href="{{ url_for('tiquets.tarjetas') }}">Tarjetas</a>
+  <a class="active" href="{{ url_for('tiquets.tarjetas') }}">{{ _('Tarjetas') }}</a>
   <a href="{{ url_for('tiquets.kanban') }}">Kanban</a>
 </nav>
 
 <section class="quick-actions">
   <form class="quick-card" action="{{ url_for('tiquets.crear') }}" method="post" enctype="multipart/form-data" style="grid-column: 1 / -1;">
-    <label>Nuevo tiquet</label>
+    <label>{{ _('Nuevo tiquet') }}</label>
     <div class="quick-row">
       <select name="tipo" required>
         {% for valor, etiqueta in tipos %}
         <option value="{{ valor }}">{{ etiqueta }}</option>
         {% endfor %}
       </select>
-      <input type="text" name="titulo" placeholder="Título..." required autofocus style="flex: 2;">
-      <input type="text" name="descripcion" placeholder="Descripción (opcional)..." style="flex: 3;">
+      <input type="text" name="titulo" placeholder="{{ _('Título...') }}" required autofocus style="flex: 2;">
+      <input type="text" name="descripcion" placeholder="{{ _('Descripción (opcional)...') }}" style="flex: 3;">
       <input type="file" name="adjuntos" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple>
-      <button type="submit" class="btn btn-primary">+ Crear tiquet</button>
+      <button type="submit" class="btn btn-primary">+ {{ _('Crear tiquet') }}</button>
     </div>
   </form>
 </section>
 
 {% for valor, etiqueta in tipos %}
 <section class="tiquets-seccion">
-  <h2>{{ etiqueta }}s ({{ por_tipo[valor]|length }})</h2>
+  <h2>{{ _('Errores') if valor == 'error' else _('Sugerencias') }} ({{ por_tipo[valor]|length }})</h2>
   {% if not por_tipo[valor] %}
-  <p class="empty-lane">Sin tiquets de este tipo.</p>
+  <p class="empty-lane">{{ _('Sin tiquets de este tipo.') }}</p>
   {% else %}
   <div class="tiquets-grid">
     {% for t in por_tipo[valor] %}
@@ -55,15 +55,15 @@
       </div>
       {% endif %}
       <div class="tiquet-card-pie">
-        <span class="tiquet-card-autor">{{ t.autor_email or '(usuario eliminado)' }}</span>
+        <span class="tiquet-card-autor">{{ t.autor_email or _('(usuario eliminado)') }}</span>
         <span class="tiquet-card-acciones">
           {% if puede_editar_tiquet(t) %}
-          <a href="{{ url_for('tiquets.editar', tiquet_id=t.id) }}" title="Editar" aria-label="Editar">✏</a>
+          <a href="{{ url_for('tiquets.editar', tiquet_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
           {% endif %}
           {% if puede_borrar_tiquet(t) %}
           <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
-                onsubmit="return confirm('¿Eliminar el tiquet #{{ t.id }}? No se puede deshacer.');">
-            <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
+                onsubmit="return confirm('{{ _('¿Eliminar el tiquet #%(id)s? No se puede deshacer.', id=t.id) }}');">
+            <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
           </form>
           {% endif %}
         </span>

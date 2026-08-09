@@ -7,16 +7,16 @@
     <h1>{{ menu.nombre }}</h1>
   </div>
   <details class="menu-settings">
-    <summary class="btn btn-ghost">⚙ Editar menú</summary>
+    <summary class="btn btn-ghost">⚙ {{ _('Editar menú') }}</summary>
     <div class="menu-settings-panel">
       <form class="inline-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
         <input type="text" name="nombre" value="{{ menu.nombre }}" required>
-        <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="Color del menú">
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="{{ _('Color del menú') }}">
+        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
       </form>
       <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
-            onsubmit="return confirm('¿Eliminar el menú «{{ menu.nombre }}»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.');">
-        <button type="submit" class="btn btn-stop">🗑 Eliminar menú</button>
+            onsubmit="return confirm('{{ _('¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}');">
+        <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar menú') }}</button>
       </form>
     </div>
   </details>
@@ -24,48 +24,48 @@
 
 <section class="quick-actions">
   <div class="quick-card">
-    <label>Nota rápida</label>
+    <label>{{ _('Nota rápida') }}</label>
     {% if plantillas %}
     <div class="chip-row">
       {% for p in plantillas %}
       <form class="chip" action="{{ url_for('crear_nota') }}" method="post">
         <input type="hidden" name="categoria_id" value="{{ menu.id }}">
         <input type="hidden" name="texto" value="{{ p.texto }}">
-        <button type="submit" class="chip-btn" title="Anotar «{{ p.texto }}»">{{ p.texto }}</button>
+        <button type="submit" class="chip-btn" title="{{ _('Anotar «%(texto)s»', texto=p.texto) }}">{{ p.texto }}</button>
       </form>
       {% endfor %}
     </div>
     {% endif %}
     <form action="{{ url_for('crear_nota') }}" method="post" class="quick-row">
       <input type="hidden" name="categoria_id" value="{{ menu.id }}">
-      <input type="text" id="menu-nota-texto" name="texto" placeholder="Escribe algo que ha pasado..." required autofocus>
-      <button type="submit" class="btn">📝 Anotar</button>
+      <input type="text" id="menu-nota-texto" name="texto" placeholder="{{ _('Escribe algo que ha pasado...') }}" required autofocus>
+      <button type="submit" class="btn">📝 {{ _('Anotar') }}</button>
     </form>
   </div>
 
   <form class="quick-card" action="{{ url_for('crear_tarea') }}" method="post">
     <input type="hidden" name="categoria_id" value="{{ menu.id }}">
     <input type="hidden" name="tipo" value="instantanea">
-    <label>Evento instantáneo</label>
+    <label>{{ _('Evento instantáneo') }}</label>
     <div class="quick-row">
-      <input type="text" id="menu-evento-nombre" name="nombre" placeholder="Algo puntual que acaba de ocurrir..." required>
-      <button type="submit" class="btn">⚡ Registrar</button>
+      <input type="text" id="menu-evento-nombre" name="nombre" placeholder="{{ _('Algo puntual que acaba de ocurrir...') }}" required>
+      <button type="submit" class="btn">⚡ {{ _('Registrar') }}</button>
     </div>
   </form>
 
   <form class="quick-card" action="{{ url_for('crear_tarea') }}" method="post">
     <input type="hidden" name="categoria_id" value="{{ menu.id }}">
     <input type="hidden" name="tipo" value="duracion">
-    <label>Tarea con duración</label>
+    <label>{{ _('Tarea con duración') }}</label>
     <div class="quick-row">
-      <input type="text" id="menu-tarea-nombre" name="nombre" placeholder="Nombre de la tarea a iniciar..." required>
-      <button type="submit" class="btn btn-primary">▶ Iniciar</button>
+      <input type="text" id="menu-tarea-nombre" name="nombre" placeholder="{{ _('Nombre de la tarea a iniciar...') }}" required>
+      <button type="submit" class="btn btn-primary">▶ {{ _('Iniciar') }}</button>
     </div>
   </form>
 </section>
 
 <details class="favoritas">
-  <summary class="btn btn-ghost">⭐ Gestionar frases favoritas</summary>
+  <summary class="btn btn-ghost">⭐ {{ _('Gestionar frases favoritas') }}</summary>
   <div class="favoritas-panel">
     {% if plantillas %}
     <ul class="favoritas-list">
@@ -74,24 +74,24 @@
         <span>{{ p.texto }}</span>
         <form action="{{ url_for('eliminar_plantilla', plantilla_id=p.id) }}" method="post">
           <input type="hidden" name="volver_a" value="{{ url_for('ver_menu', menu_id=menu.id) }}">
-          <button type="submit" class="chip-del" title="Quitar">×</button>
+          <button type="submit" class="chip-del" title="{{ _('Quitar') }}">×</button>
         </form>
       </li>
       {% endfor %}
     </ul>
     {% else %}
-    <p class="muted">Aún no tienes frases favoritas. Añade las que repites a menudo para anotarlas en un clic desde "Nota rápida".</p>
+    <p class="muted">{{ _('Aún no tienes frases favoritas. Añade las que repites a menudo para anotarlas en un clic desde "Nota rápida".') }}</p>
     {% endif %}
     <form class="inline-form" action="{{ url_for('crear_plantilla', menu_id=menu.id) }}" method="post">
-      <input type="text" name="texto" placeholder="Nueva frase favorita..." required>
-      <button type="submit" class="btn btn-primary">Añadir</button>
+      <input type="text" name="texto" placeholder="{{ _('Nueva frase favorita...') }}" required>
+      <button type="submit" class="btn btn-primary">{{ _('Añadir') }}</button>
     </form>
   </div>
 </details>
 
 {% if activas %}
 <section class="active-section">
-  <h3>En curso ahora</h3>
+  <h3>{{ _('En curso ahora') }}</h3>
   <div class="active-tasks">
     {% for t in activas %}
     <div class="active-task {{ 'is-paused' if t.estado == 'pausada' else '' }} {{ 'is-olvidada' if t.estado == 'pausada' and t.segundos_trabajados_congelado >= 14400 else '' }}">
@@ -101,19 +101,19 @@
       {% else %}
       <span class="task-timer" data-inicio="{{ t.inicio_en }}" data-pausado="{{ t.segundos_pausados }}">00:00:00</span>
       {% endif %}
-      <span class="task-aviso" title="Lleva mucho tiempo activa — ¿se te olvidó finalizarla?">⚠ lleva mucho rato</span>
+      <span class="task-aviso" title="{{ _('Lleva mucho tiempo activa — ¿se te olvidó finalizarla?') }}">⚠ {{ _('lleva mucho rato') }}</span>
       <div class="active-task-buttons">
         {% if t.estado == 'pausada' %}
         <form action="{{ url_for('reanudar_tarea', tarea_id=t.id) }}" method="post">
-          <button type="submit" class="btn btn-primary">▶ Reanudar</button>
+          <button type="submit" class="btn btn-primary">▶ {{ _('Reanudar') }}</button>
         </form>
         {% else %}
         <form action="{{ url_for('pausar_tarea', tarea_id=t.id) }}" method="post">
-          <button type="submit" class="btn">⏸ Pausar</button>
+          <button type="submit" class="btn">⏸ {{ _('Pausar') }}</button>
         </form>
         {% endif %}
         <form action="{{ url_for('finalizar_tarea', tarea_id=t.id) }}" method="post">
-          <button type="submit" class="btn btn-stop">⏹ Finalizar</button>
+          <button type="submit" class="btn btn-stop">⏹ {{ _('Finalizar') }}</button>
         </form>
       </div>
     </div>
@@ -124,23 +124,23 @@
 
 <section class="log-section">
   <div class="log-section-head">
-    <h3>Registro de {{ menu.nombre }}</h3>
+    <h3>{{ _('Registro de %(nombre)s', nombre=menu.nombre) }}</h3>
     <form class="search-form" method="get" action="{{ url_for('ver_menu', menu_id=menu.id) }}">
-      <input type="search" name="q" value="{{ q }}" placeholder="Buscar en este menú...">
-      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</a>{% endif %}
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar en este menú...') }}">
+      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="{{ _('Limpiar búsqueda') }}" aria-label="{{ _('Limpiar búsqueda') }}">✕</a>{% endif %}
     </form>
   </div>
   {% if not log %}
     {% if q %}
-    <p class="empty-lane">No hay resultados para «{{ q }}».</p>
+    <p class="empty-lane">{{ _('No hay resultados para «%(q)s».', q=q) }}</p>
     {% else %}
     <div class="empty-state-guiado">
       <span class="empty-state-guiado-icono">✨</span>
-      <p>Este menú todavía está vacío.</p>
-      <p class="muted">Empieza por lo que te resulte más natural ahora mismo:</p>
+      <p>{{ _('Este menú todavía está vacío.') }}</p>
+      <p class="muted">{{ _('Empieza por lo que te resulte más natural ahora mismo:') }}</p>
       <div class="empty-state-guiado-botones">
-        <button type="button" class="btn btn-primary" data-enfocar="menu-nota-texto">📝 Escribe tu primera nota</button>
-        <button type="button" class="btn" data-enfocar="menu-tarea-nombre">▶ Inicia tu primera tarea con duración</button>
+        <button type="button" class="btn btn-primary" data-enfocar="menu-nota-texto">📝 {{ _('Escribe tu primera nota') }}</button>
+        <button type="button" class="btn" data-enfocar="menu-tarea-nombre">▶ {{ _('Inicia tu primera tarea con duración') }}</button>
       </div>
     </div>
     {% endif %}
@@ -150,17 +150,17 @@
     <li class="log-item">
       <span class="log-time">{{ f.timestamp[11:16] if f.timestamp else '' }}</span>
       <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">
-        {% if f.origen == 'nota' %}Nota
-        {% elif f.tipo == 'instantanea' %}Evento
-        {% elif f.estado == 'en_curso' %}En curso
-        {% elif f.estado == 'pausada' %}En pausa
-        {% else %}Tarea{% endif %}
+        {% if f.origen == 'nota' %}{{ _('Nota') }}
+        {% elif f.tipo == 'instantanea' %}{{ _('Evento') }}
+        {% elif f.estado == 'en_curso' %}{{ _('En curso') }}
+        {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
+        {% else %}{{ _('Tarea') }}{% endif %}
       </span>
       <span class="log-text">{{ f.texto }}</span>
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar" aria-label="Editar">✏</a>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
     </li>
     {% endfor %}
   </ul>

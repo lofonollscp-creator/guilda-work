@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Editar tiquet — Guilda Work{% endblock %}
+{% block title %}{{ _('Editar tiquet') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Editar tiquet #{{ tiquet.id }}</h1>
-    <p class="subtitle">Creado el {{ tiquet.creado_en[:16].replace('T', ' ') }}</p>
+    <h1>{{ _('Editar tiquet #%(id)s', id=tiquet.id) }}</h1>
+    <p class="subtitle">{{ _('Creado el %(fecha)s', fecha=tiquet.creado_en[:16].replace('T', ' ')) }}</p>
   </div>
 </header>
 
@@ -13,22 +13,22 @@
 {% endif %}
 
 <form class="edit-form" method="post" action="{{ url_for('tiquets.editar', tiquet_id=tiquet.id) }}" enctype="multipart/form-data" style="max-width: 640px;">
-  <label>Tipo
+  <label>{{ _('Tipo') }}
     <select name="tipo">
       {% for valor, etiqueta in tipos %}
       <option value="{{ valor }}" {% if tiquet.tipo == valor %}selected{% endif %}>{{ etiqueta }}</option>
       {% endfor %}
     </select>
   </label>
-  <label>Título
+  <label>{{ _('Título') }}
     <input type="text" name="titulo" value="{{ tiquet.titulo }}" required autofocus>
   </label>
-  <label>Descripción
+  <label>{{ _('Descripción') }}
     <textarea name="descripcion" rows="4">{{ tiquet.descripcion or '' }}</textarea>
   </label>
 
   {% if adjuntos %}
-  <label>Adjuntos ya subidos
+  <label>{{ _('Adjuntos ya subidos') }}
     <div class="correo-adjuntos">
       {% for a in adjuntos %}
       <span class="correo-adjunto-chip" style="gap: 8px;">
@@ -40,32 +40,32 @@
     </div>
   </label>
   {% endif %}
-  <label>Añadir más adjuntos (capturas o PDF)
+  <label>{{ _('Añadir más adjuntos (capturas o PDF)') }}
     <input type="file" name="adjuntos" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple>
   </label>
 
   <div class="edit-form-actions">
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <a class="btn btn-ghost" href="{{ url_for('tiquets.tarjetas') }}">Cancelar</a>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('tiquets.tarjetas') }}">{{ _('Cancelar') }}</a>
   </div>
 </form>
 
 {% if adjuntos %}
 <div class="edit-form" style="max-width: 640px;">
-  <h3>Quitar un adjunto</h3>
+  <h3>{{ _('Quitar un adjunto') }}</h3>
   {% for a in adjuntos %}
   <form action="{{ url_for('tiquets.eliminar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" method="post"
         style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"
-        onsubmit="return confirm('¿Quitar {{ a.nombre_archivo }}?');">
+        onsubmit="return confirm('{{ _('¿Quitar %(nombre)s?', nombre=a.nombre_archivo) }}');">
     <span style="flex: 1;">📎 {{ a.nombre_archivo }}</span>
-    <button type="submit" class="chip-del" title="Quitar" aria-label="Quitar">✕</button>
+    <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}">✕</button>
   </form>
   {% endfor %}
 </div>
 {% endif %}
 
 <form class="edit-form-delete" method="post" action="{{ url_for('tiquets.eliminar', tiquet_id=tiquet.id) }}"
-      onsubmit="return confirm('¿Eliminar este tiquet? No se puede deshacer.');">
-  <button type="submit" class="btn btn-stop">🗑 Eliminar tiquet</button>
+      onsubmit="return confirm('{{ _('¿Eliminar este tiquet? No se puede deshacer.') }}');">
+  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar tiquet') }}</button>
 </form>
 {% endblock %}

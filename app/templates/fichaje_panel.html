@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Fichaje — Guilda Work{% endblock %}
+{% block title %}{{ _('Fichaje') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Fichaje</h1>
-    <p class="subtitle">Registro horario diario (art. 34.9 del Estatuto de los Trabajadores).</p>
+    <h1>{{ _('Fichaje') }}</h1>
+    <p class="subtitle">{{ _('Registro horario diario (art. 34.9 del Estatuto de los Trabajadores).') }}</p>
   </div>
 </header>
 
 <nav class="tareas-subnav">
-  <a class="active" href="{{ url_for('fichaje.panel') }}">Fichar</a>
-  <a href="{{ url_for('fichaje.historial') }}">Mi historial</a>
-  <a href="{{ url_for('fichaje.mis_datos') }}">Mis datos</a>
+  <a class="active" href="{{ url_for('fichaje.panel') }}">{{ _('Fichar') }}</a>
+  <a href="{{ url_for('fichaje.historial') }}">{{ _('Mi historial') }}</a>
+  <a href="{{ url_for('fichaje.mis_datos') }}">{{ _('Mis datos') }}</a>
   {% if g.es_admin or g.gestor_fichajes %}
-  <a href="{{ url_for('fichaje.admin_resumen') }}">Administración</a>
+  <a href="{{ url_for('fichaje.admin_resumen') }}">{{ _('Administración') }}</a>
   {% endif %}
 </nav>
 
@@ -21,44 +21,44 @@
 
 {% if datos_incompletos %}
 <section class="fichaje-aviso">
-  <p>Antes de poder fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE.</p>
-  <a class="btn btn-primary" href="{{ url_for('fichaje.mis_datos') }}">Rellenar mis datos</a>
+  <p>{{ _('Antes de poder fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE.') }}</p>
+  <a class="btn btn-primary" href="{{ url_for('fichaje.mis_datos') }}">{{ _('Rellenar mis datos') }}</a>
 </section>
 {% else %}
 <section class="fichaje-panel">
   <div class="fichaje-estado">
     <span class="pill {{ 'estado-dentro' if estado == 'dentro' else ('estado-en-pausa' if estado == 'en_pausa' else 'estado-fuera') }}">
-      {{ 'Dentro de jornada' if estado == 'dentro' else ('En pausa' if estado == 'en_pausa' else 'Fuera de jornada') }}
+      {{ _('Dentro de jornada') if estado == 'dentro' else (_('En pausa') if estado == 'en_pausa' else _('Fuera de jornada')) }}
     </span>
   </div>
   <div class="fichaje-botones">
     <form method="post" action="{{ url_for('fichaje.marcar') }}">
       <input type="hidden" name="tipo" value="entrada">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-entrada" {{ 'disabled' if estado != 'fuera' }}>Entrada</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-entrada" {{ 'disabled' if estado != 'fuera' }}>{{ _('Entrada') }}</button>
     </form>
     <form method="post" action="{{ url_for('fichaje.marcar') }}">
       <input type="hidden" name="tipo" value="pausa_inicio">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'dentro' }}>Iniciar pausa</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'dentro' }}>{{ _('Iniciar pausa') }}</button>
     </form>
     <form method="post" action="{{ url_for('fichaje.marcar') }}">
       <input type="hidden" name="tipo" value="pausa_fin">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'en_pausa' }}>Fin de pausa</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'en_pausa' }}>{{ _('Fin de pausa') }}</button>
     </form>
     <form method="post" action="{{ url_for('fichaje.marcar') }}">
       <input type="hidden" name="tipo" value="salida">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-salida" {{ 'disabled' if estado == 'fuera' }}>Salida</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-salida" {{ 'disabled' if estado == 'fuera' }}>{{ _('Salida') }}</button>
     </form>
   </div>
 </section>
 
 <section class="stats-section">
-  <h3>Hoy</h3>
+  <h3>{{ _('Hoy') }}</h3>
   {% if not hoy %}
-  <p class="empty-lane">Todavía no has fichado nada hoy.</p>
+  <p class="empty-lane">{{ _('Todavía no has fichado nada hoy.') }}</p>
   {% else %}
   <div class="table-wrap">
   <table class="historial-table">
-    <thead><tr><th>Hora</th><th>Tipo</th></tr></thead>
+    <thead><tr><th>{{ _('Hora') }}</th><th>{{ _('Tipo') }}</th></tr></thead>
     <tbody>
       {% for f in hoy %}
       <tr>

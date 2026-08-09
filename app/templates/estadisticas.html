@@ -1,24 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Estadísticas — Guilda Work{% endblock %}
+{% block title %}{{ _('Estadísticas') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>Estadísticas</h1>
-    <p class="subtitle">Tiempo dedicado a tareas con duración, por menú y por día.</p>
+    <h1>{{ _('Estadísticas') }}</h1>
+    <p class="subtitle">{{ _('Tiempo dedicado a tareas con duración, por menú y por día.') }}</p>
   </div>
 </header>
 
 <form class="filters" method="get">
-  <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
-  <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
-  <button type="submit" class="btn btn-primary">Filtrar</button>
-  {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('estadisticas') }}">Limpiar</a>{% endif %}
+  <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label>
+  <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+  {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('estadisticas') }}">{{ _('Limpiar') }}</a>{% endif %}
 </form>
 
 <section class="stats-section">
-  <h3>Por menú</h3>
+  <h3>{{ _('Por menú') }}</h3>
   {% if not por_categoria %}
-  <p class="empty-lane">Todavía no hay menús creados.</p>
+  <p class="empty-lane">{{ _('Todavía no hay menús creados.') }}</p>
   {% else %}
   {% set max_segundos = por_categoria|map(attribute='segundos_totales')|max %}
   {% if max_segundos %}
@@ -38,11 +38,11 @@
   <table class="historial-table">
     <thead>
       <tr>
-        <th>Menú</th>
-        <th>Tiempo en tareas</th>
-        <th>Tareas finalizadas</th>
-        <th>Eventos</th>
-        <th>Notas</th>
+        <th>{{ _('Menú') }}</th>
+        <th>{{ _('Tiempo en tareas') }}</th>
+        <th>{{ _('Tareas finalizadas') }}</th>
+        <th>{{ _('Eventos') }}</th>
+        <th>{{ _('Notas') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -62,9 +62,9 @@
 </section>
 
 <section class="stats-section">
-  <h3>Por día</h3>
+  <h3>{{ _('Por día') }}</h3>
   {% if not por_dia %}
-  <p class="empty-lane">Todavía no hay tareas con duración finalizadas en este rango.</p>
+  <p class="empty-lane">{{ _('Todavía no hay tareas con duración finalizadas en este rango.') }}</p>
   {% else %}
   {% set max_segundos_dia = por_dia|map(attribute='segundos')|max %}
   {% if max_segundos_dia %}
@@ -79,15 +79,15 @@
     </div>
     {% endfor %}
   </div>
-  {% if por_dia|length > 20 %}<p class="muted">Mostrando los 20 primeros del gráfico; la tabla de abajo tiene el resto.</p>{% endif %}
+  {% if por_dia|length > 20 %}<p class="muted">{{ _('Mostrando los 20 primeros del gráfico; la tabla de abajo tiene el resto.') }}</p>{% endif %}
   {% endif %}
   <div class="table-wrap">
   <table class="historial-table">
     <thead>
       <tr>
-        <th>Fecha</th>
-        <th>Menú</th>
-        <th>Tiempo total</th>
+        <th>{{ _('Fecha') }}</th>
+        <th>{{ _('Menú') }}</th>
+        <th>{{ _('Tiempo total') }}</th>
       </tr>
     </thead>
     <tbody>

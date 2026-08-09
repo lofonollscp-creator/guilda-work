@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Guilda Work — Cerrado</title>
+  <title>Guilda Work — {{ _('Cerrado') }}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <style>
     body {
@@ -34,10 +34,8 @@
 <body>
   <div class="card">
     <img class="mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
-    <h1>Guilda Work se ha cerrado</h1>
-    <p>Todo lo que anotaste ya estaba guardado (se escribe al instante en cada acción).
-    El programa y su servidor se han terminado por completo. Esta ventana se cerrará
-    sola en un instante.</p>
+    <h1>{{ _('Guilda Work se ha cerrado') }}</h1>
+    <p>{{ _('Todo lo que anotaste ya estaba guardado (se escribe al instante en cada acción). El programa y su servidor se han terminado por completo. Esta ventana se cerrará sola en un instante.') }}</p>
   </div>
 </body>
 </html>

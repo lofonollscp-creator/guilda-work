@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-09 21:18+0200\n"
+"POT-Creation-Date: 2026-08-09 21:42+0200\n"
 "PO-Revision-Date: 2026-08-09 21:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -16,7 +16,395 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: app/rutas_correo.py:405 app/templates/correo_bandeja.html:139
+msgid "Responder"
+msgstr "Respondre"
+
+#: app/rutas_correo.py:426
+msgid "Responder a todos"
+msgstr "Respondre a tots"
+
+#: app/rutas_correo.py:445 app/templates/correo_bandeja.html:141
+#, fuzzy
+msgid "Reenviar"
+msgstr "Crear"
+
+#: app/templates/_ia_chat_macro.html:3
+msgid "Respuestas generadas por IA — pueden contener errores, comprueba lo importante."
+msgstr "Respostes generades per IA — poden contenir errors, comprova el que sigui important."
+
+#: app/templates/_ia_chat_macro.html:17
+msgid "¿Ejecuto"
+msgstr "Executo"
+
+#: app/templates/_ia_chat_macro.html:21
+msgid "Sí, hazlo"
+msgstr "Sí, fes-ho"
+
+#: app/templates/_ia_chat_macro.html:22
+#, fuzzy
+msgid "No"
+msgstr "Nota"
+
+#: app/templates/_ia_chat_macro.html:26
+msgid "Escribe un mensaje..."
+msgstr "Escriu un missatge..."
+
+#: app/templates/_ia_chat_macro.html:27 app/templates/correo_redactar.html:83
+#: app/templates/historial.html:122
+#, fuzzy
+msgid "Enviar"
+msgstr "Entrar"
+
+#: app/templates/_ia_chat_macro.html:29 app/templates/historial.html:115
+msgid "Nueva conversación"
+msgstr "Nova conversa"
+
+#: app/templates/backoffice.html:2 app/templates/base.html:82
+#: app/templates/base.html:84
+msgid "Backoffice"
+msgstr "Backoffice"
+
+#: app/templates/backoffice.html:7
+msgid "Tenants (organizaciones) y usuarios — solo visible para administradores."
+msgstr "Tenants (organitzacions) i usuaris — només visible per a administradors."
+
+#: app/templates/backoffice.html:17
+msgid "FacturaScripts aprovisionado — esto solo se muestra esta vez, apunta la contraseña antes de continuar (hace falta para el último paso manual: entrar y crear la API Key desde Ajustes → API):"
+msgstr "FacturaScripts aprovisionat — això només es mostra aquesta vegada, apunta la contrasenya abans de continuar (cal per a l'últim pas manual: entrar i crear l'API Key des d'Ajustos → API):"
+
+#: app/templates/backoffice.html:21
+msgid "Usuario"
+msgstr "Usuari"
+
+#: app/templates/backoffice.html:22 app/templates/backoffice.html:34
+#: app/templates/correo_cuentas.html:52 app/templates/login.html:35
+msgid "Contraseña"
+msgstr "Contrasenya"
+
+#: app/templates/backoffice.html:30
+msgid "Cal.diy aprovisionado — esto solo se muestra esta vez, apunta la contraseña antes de continuar (hace falta para el último paso manual: entrar y crear la API Key desde Configuración → Developer → API Keys):"
+msgstr "Cal.diy aprovisionat — això només es mostra aquesta vegada, apunta la contrasenya abans de continuar (cal per a l'últim pas manual: entrar i crear l'API Key des de Configuració → Developer → API Keys):"
+
+#: app/templates/backoffice.html:42
+msgid "Alta de"
+msgstr "Alta de"
+
+#: app/templates/backoffice.html:42
+msgid "esto solo se muestra esta vez, pásale las contraseñas para que las cambie al entrar:"
+msgstr "això només es mostra aquesta vegada, passa-li les contrasenyes perquè les canviï en entrar:"
+
+#: app/templates/backoffice.html:45
+msgid "Servicio"
+msgstr "Servei"
+
+#: app/templates/backoffice.html:45 app/templates/fichaje_admin.html:61
+#: app/templates/tarea_outlook_editar.html:24
+#: app/templates/tareas_lista.html:19
+msgid "Estado"
+msgstr "Estat"
+
+#: app/templates/backoffice.html:45
+msgid "Detalle"
+msgstr "Detall"
+
+#: app/templates/backoffice.html:63
+msgid "Leads de contacto (landing)"
+msgstr "Contactes potencials (landing)"
+
+#: app/templates/backoffice.html:68 app/templates/backoffice.html:107
+#: app/templates/correo_cuentas.html:44 app/templates/editar_tarea.html:17
+msgid "Nombre"
+msgstr "Nom"
+
+#: app/templates/backoffice.html:69
+msgid "Empresa"
+msgstr "Empresa"
+
+#: app/templates/backoffice.html:71
+msgid "Teléfono"
+msgstr "Telèfon"
+
+#: app/templates/backoffice.html:72
+#, fuzzy
+msgid "Mensaje"
+msgstr "Menús"
+
+#: app/templates/backoffice.html:73
+msgid "Recibido"
+msgstr "Rebut"
+
+#: app/templates/backoffice.html:89
+msgid "Marcar pendiente"
+msgstr "Marcar pendent"
+
+#: app/templates/backoffice.html:89
+#, fuzzy
+msgid "Marcar atendido"
+msgstr "Saltar al contingut"
+
+#: app/templates/backoffice.html:94
+#, fuzzy
+msgid "Todavía no ha llegado ningún lead desde la landing."
+msgstr "Encara no has registrat res avui."
+
+#: app/templates/backoffice.html:102
+msgid "Tenants"
+msgstr "Tenants"
+
+#: app/templates/backoffice.html:108
+msgid "Fichaje (CIF / dirección fiscal)"
+msgstr "Fitxatge (CIF / adreça fiscal)"
+
+#: app/templates/backoffice.html:109 app/templates/backoffice.html:206
+msgid "Usuarios"
+msgstr "Usuaris"
+
+#: app/templates/backoffice.html:113
+#, fuzzy
+msgid "Herramientas visibles"
+msgstr "Eines"
+
+#: app/templates/backoffice.html:123
+#, fuzzy
+msgid "Renombrar"
+msgstr "Entrar"
+
+#: app/templates/backoffice.html:130
+msgid "Dirección fiscal"
+msgstr "Adreça fiscal"
+
+#: app/templates/backoffice.html:131 app/templates/backoffice.html:144
+#: app/templates/backoffice.html:154 app/templates/backoffice.html:167
+#: app/templates/editar_nota.html:17 app/templates/editar_tarea.html:35
+#: app/templates/fichaje_datos.html:56 app/templates/ia_ajustes.html:47
+#: app/templates/menu.html:15 app/templates/tarea_outlook_editar.html:71
+#: app/templates/tiquet_editar.html:48
+msgid "Guardar"
+msgstr "Desar"
+
+#: app/templates/backoffice.html:137 app/templates/backoffice.html:160
+msgid "sin aprovisionar"
+msgstr "sense aprovisionar"
+
+#: app/templates/backoffice.html:143
+msgid "Pega aquí la API Key (Ajustes → API)"
+msgstr "Enganxa aquí l'API Key (Ajustos → API)"
+
+#: app/templates/backoffice.html:150 app/templates/backoffice.html:162
+msgid "token guardado"
+msgstr "token desat"
+
+#: app/templates/backoffice.html:153
+msgid "Pega aquí el token (crear Equipo a mano primero)"
+msgstr "Enganxa aquí el token (crea l'Equip manualment primer)"
+
+#: app/templates/backoffice.html:166
+msgid "Pega aquí la API Key (Configuración → Developer)"
+msgstr "Enganxa aquí l'API Key (Configuració → Developer)"
+
+#: app/templates/backoffice.html:177
+#, python-format
+msgid "Oculta para %(nombre)s — clic para mostrar"
+msgstr "Ocult per a %(nombre)s — clic per mostrar"
+
+#: app/templates/backoffice.html:177
+#, python-format
+msgid "Visible para %(nombre)s — clic para ocultar"
+msgstr "Visible per a %(nombre)s — clic per ocultar"
+
+#: app/templates/backoffice.html:186
+#, python-format
+msgid "¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos."
+msgstr "Vols esborrar el tenant %(nombre)s? Els seus usuaris es quedaran sense tenant assignat, i la seva instància de FacturaScripts (si en té) s'eliminarà juntament amb les seves dades."
+
+#: app/templates/backoffice.html:187 app/templates/backoffice.html:310
+#, fuzzy
+msgid "Borrar"
+msgstr "Tancar"
+
+#: app/templates/backoffice.html:192
+#, fuzzy
+msgid "Todavía no hay ningún tenant."
+msgstr "Encara no tens cap menú."
+
+#: app/templates/backoffice.html:199
+#, fuzzy
+msgid "Nuevo tenant"
+msgstr "Nou menú"
+
+#: app/templates/backoffice.html:199
+#, fuzzy
+msgid "Nombre de la organización"
+msgstr "Nom de la tasca"
+
+#: app/templates/backoffice.html:200
+msgid "Dominio de correo (Stalwart, opcional)"
+msgstr "Domini de correu (Stalwart, opcional)"
+
+#: app/templates/backoffice.html:201
+#, fuzzy
+msgid "Crear tenant"
+msgstr "Crear compte"
+
+#: app/templates/backoffice.html:213
+msgid "Rol"
+msgstr "Rol"
+
+#: app/templates/backoffice.html:214 app/templates/base.html:57
+#: app/templates/base.html:59 app/templates/fichaje_admin_detalle.html:2
+#: app/templates/fichaje_datos.html:6 app/templates/fichaje_historial.html:6
+#: app/templates/fichaje_panel.html:2 app/templates/fichaje_panel.html:6
+msgid "Fichaje"
+msgstr "Fitxatge"
+
+#: app/templates/backoffice.html:215
+#, fuzzy
+msgid "Alta"
+msgstr "Anotar"
+
+#: app/templates/backoffice.html:226 app/templates/backoffice.html:262
+#: app/templates/backoffice.html:325
+#, fuzzy
+msgid "Sin tenant"
+msgstr "Sense menú"
+
+#: app/templates/backoffice.html:238
+#, fuzzy
+msgid "Quitar gestor"
+msgstr "Treure de preferits"
+
+#: app/templates/backoffice.html:238
+msgid "Hacer gestor"
+msgstr "Fer gestor"
+
+#: app/templates/backoffice.html:243
+#, fuzzy
+msgid "Dispositivos"
+msgstr "Els meus dispositius"
+
+#: app/templates/backoffice.html:246
+msgid "Quitar admin"
+msgstr "Treure admin"
+
+#: app/templates/backoffice.html:246
+#, fuzzy
+msgid "Hacer admin"
+msgstr "Eines"
+
+#: app/templates/backoffice.html:252
+#, fuzzy
+msgid "Todavía no hay ningún usuario."
+msgstr "Encara no tens cap menú."
+
+#: app/templates/backoffice.html:268
+#, fuzzy
+msgid "Crear usuario"
+msgstr "Crear compte"
+
+#: app/templates/backoffice.html:274
+msgid "Avisa a una URL externa cuando pasa algo — ver la"
+msgstr "Avisa una URL externa quan passa alguna cosa — vegeu la"
+
+#: app/templates/backoffice.html:274 app/templates/docs/pagina.html:43
+#: app/templates/docs/pagina.html:140
+#, fuzzy
+msgid "Guía para desarrolladores"
+msgstr "Documentació per a desenvolupadors"
+
+#: app/templates/backoffice.html:274
+msgid "para el formato del payload y cómo verificar la firma."
+msgstr "per al format del payload i com verificar la signatura."
+
+#: app/templates/backoffice.html:281 app/templates/estadisticas.html:44
+#, fuzzy
+msgid "Eventos"
+msgstr "Esdeveniment"
+
+#: app/templates/backoffice.html:282
+msgid "Últimas entregas"
+msgstr "Últimes entregues"
+
+#: app/templates/backoffice.html:290
+#, fuzzy
+msgid "sin tenant"
+msgstr "Sense menú"
+
+#: app/templates/backoffice.html:301
+#, fuzzy
+msgid "sin respuesta"
+msgstr "Sense resultats."
+
+#: app/templates/backoffice.html:304
+msgid "sin entregas todavía"
+msgstr "encara sense entregues"
+
+#: app/templates/backoffice.html:309
+msgid "¿Borrar este webhook?"
+msgstr "Vols esborrar aquest webhook?"
+
+#: app/templates/backoffice.html:316
+#, fuzzy
+msgid "Todavía no hay ningún webhook."
+msgstr "Encara no tens cap menú."
+
+#: app/templates/backoffice.html:339
+#, fuzzy
+msgid "Crear webhook"
+msgstr "Crear menú"
+
+#: app/templates/backoffice_dispositivos.html:2
+#: app/templates/backoffice_dispositivos.html:6
+#, python-format
+msgid "Dispositivos de %(email)s"
+msgstr "Dispositius de %(email)s"
+
+#: app/templates/backoffice_dispositivos.html:7
+msgid "Sesiones activas de la app móvil de Guilda Work para este usuario."
+msgstr "Sessions actives de l'app mòbil de Guilda Work per a aquest usuari."
+
+#: app/templates/backoffice_dispositivos.html:11
+#, fuzzy
+msgid "Volver al backoffice"
+msgstr "Backoffice"
+
+#: app/templates/backoffice_dispositivos.html:14
+msgid "Este usuario no tiene ningún dispositivo móvil con sesión activa."
+msgstr "Aquest usuari no té cap dispositiu mòbil amb sessió activa."
+
+#: app/templates/backoffice_dispositivos.html:20
+#: app/templates/mis_dispositivos.html:18
+#, fuzzy
+msgid "Dispositivo sin nombre"
+msgstr "Els meus dispositius"
+
+#: app/templates/backoffice_dispositivos.html:21
+#: app/templates/mis_dispositivos.html:19
+msgid "conectado"
+msgstr "connectat"
+
+#: app/templates/backoffice_dispositivos.html:21
+#: app/templates/mis_dispositivos.html:19
+msgid "último uso"
+msgstr "darrer ús"
+
+#: app/templates/backoffice_dispositivos.html:24
+#, python-format
+msgid "¿Revocar el acceso de «%(nombre)s»? %(email)s tendrá que iniciar sesión de nuevo en la app."
+msgstr "Vols revocar l'accés de «%(nombre)s»? %(email)s haurà d'iniciar sessió de nou a l'app."
+
+#: app/templates/backoffice_dispositivos.html:24
+#: app/templates/mis_dispositivos.html:22
+#, fuzzy
+msgid "este dispositivo"
+msgstr "Els meus dispositius"
+
+#: app/templates/backoffice_dispositivos.html:25
+#: app/templates/mis_dispositivos.html:23
+msgid "Revocar acceso"
+msgstr "Revocar accés"
 
 #: app/templates/base.html:30
 msgid "Saltar al contenido"
@@ -39,10 +427,14 @@ msgid "Menús"
 msgstr "Menús"
 
 #: app/templates/base.html:40 app/templates/base.html:42
+#: app/templates/tareas_calendario.html:6 app/templates/tareas_lista.html:2
+#: app/templates/tareas_lista.html:6 app/templates/tareas_outlook_sync.html:6
 msgid "Tareas"
 msgstr "Tasques"
 
 #: app/templates/base.html:44 app/templates/base.html:46
+#: app/templates/correo_bandeja.html:2 app/templates/correo_bandeja.html:6
+#: app/templates/correo_redactar.html:7
 msgid "Correo"
 msgstr "Correu"
 
@@ -51,48 +443,49 @@ msgid "sin leer"
 msgstr "sense llegir"
 
 #: app/templates/base.html:49 app/templates/base.html:51
+#: app/templates/herramientas.html:2 app/templates/herramientas.html:6
 msgid "Herramientas"
 msgstr "Eines"
 
 #: app/templates/base.html:53 app/templates/base.html:55
+#: app/templates/tiquets_kanban.html:6 app/templates/tiquets_tarjetas.html:2
+#: app/templates/tiquets_tarjetas.html:6
 msgid "Tiquets"
 msgstr "Tiquets"
 
-#: app/templates/base.html:57 app/templates/base.html:59
-msgid "Fichaje"
-msgstr "Fitxatge"
-
 #: app/templates/base.html:61 app/templates/base.html:63
+#: app/templates/historial.html:2 app/templates/historial.html:6
 msgid "Histórico"
 msgstr "Històric"
 
 #: app/templates/base.html:65 app/templates/base.html:67
 #: app/templates/base.html:110 app/templates/base.html:157
+#: app/templates/ia_asistente.html:3 app/templates/ia_asistente.html:7
 #: app/templates/inicio.html:175
 msgid "Asistente IA"
 msgstr "Assistent IA"
 
 #: app/templates/base.html:69 app/templates/base.html:71
+#: app/templates/estadisticas.html:2 app/templates/estadisticas.html:6
 msgid "Estadísticas"
 msgstr "Estadístiques"
 
 #: app/templates/base.html:73 app/templates/base.html:75
+#: app/templates/papelera.html:2 app/templates/papelera.html:6
 msgid "Papelera"
 msgstr "Paperera"
 
 #: app/templates/base.html:77 app/templates/base.html:79
+#: app/templates/historial.html:28 app/templates/importar.html:2
+#: app/templates/importar.html:19 app/templates/tareas_outlook_sync.html:43
 msgid "Importar"
 msgstr "Importar"
-
-#: app/templates/base.html:82 app/templates/base.html:84
-msgid "Backoffice"
-msgstr "Backoffice"
 
 #: app/templates/base.html:87
 msgid "Captura rápida (Ctrl+Alt+G)"
 msgstr "Captura ràpida (Ctrl+Alt+G)"
 
-#: app/templates/base.html:89
+#: app/templates/base.html:89 app/templates/captura.html:6
 msgid "Captura rápida"
 msgstr "Captura ràpida"
 
@@ -100,7 +493,8 @@ msgstr "Captura ràpida"
 msgid "Buscar en notas, tareas y correo…"
 msgstr "Cerca en notes, tasques i correu…"
 
-#: app/templates/base.html:105
+#: app/templates/base.html:105 app/templates/correo_bandeja.html:7
+#: app/templates/ia_asistente.html:8 app/templates/ia_asistente.html:11
 msgid "Ajustes"
 msgstr "Ajustos"
 
@@ -116,7 +510,7 @@ msgstr "Sistema"
 msgid "Densidad: cambiar"
 msgstr "Densitat: canviar"
 
-#: app/templates/base.html:108
+#: app/templates/base.html:108 app/templates/correo_ajustes.html:23
 msgid "Normal"
 msgstr "Normal"
 
@@ -128,7 +522,8 @@ msgstr "Obrir Assistent IA"
 msgid "Idioma"
 msgstr "Idioma"
 
-#: app/templates/base.html:119
+#: app/templates/base.html:119 app/templates/mis_dispositivos.html:2
+#: app/templates/mis_dispositivos.html:6
 msgid "Mis dispositivos"
 msgstr "Els meus dispositius"
 
@@ -137,16 +532,14 @@ msgid "Documentación (desarrolladores)"
 msgstr "Documentació (desenvolupadors)"
 
 #: app/templates/base.html:123
-msgid ""
-"¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa "
-"por completo."
+msgid "¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo."
 msgstr "Tancar Guilda Work? El que ja s'ha anotat està desat; es tancarà el programa per complet."
 
 #: app/templates/base.html:124
 msgid "Cerrar programa"
 msgstr "Tancar programa"
 
-#: app/templates/base.html:128
+#: app/templates/base.html:128 app/templates/pendiente_activacion.html:52
 msgid "Cerrar sesión"
 msgstr "Tancar sessió"
 
@@ -158,13 +551,1191 @@ msgstr "Cerca en notes, tasques i correu"
 msgid "Buscar en notas, tareas y correo..."
 msgstr "Cerca en notes, tasques i correu..."
 
-#: app/templates/base.html:148
+#: app/templates/base.html:148 app/templates/docs/pagina.html:35
 msgid "Sin resultados."
 msgstr "Sense resultats."
 
-#: app/templates/base.html:158
+#: app/templates/base.html:158 app/templates/correo_redactar.html:18
+#: app/templates/tareas_calendario.html:106
 msgid "Cerrar"
 msgstr "Tancar"
+
+#: app/templates/captura.html:58
+msgid "Apunta algo que ha pasado..."
+msgstr "Apunta alguna cosa que ha passat..."
+
+#: app/templates/captura.html:60
+msgid "Enter para guardar · Esc para cancelar"
+msgstr "Enter per desar · Esc per cancel·lar"
+
+#: app/templates/cerrado.html:6
+#, fuzzy
+msgid "Cerrado"
+msgstr "Tancar"
+
+#: app/templates/cerrado.html:37
+msgid "Guilda Work se ha cerrado"
+msgstr "Guilda Work s'ha tancat"
+
+#: app/templates/cerrado.html:38
+msgid "Todo lo que anotaste ya estaba guardado (se escribe al instante en cada acción). El programa y su servidor se han terminado por completo. Esta ventana se cerrará sola en un instante."
+msgstr "Tot el que vas anotar ja estava desat (s'escriu a l'instant a cada acció). El programa i el seu servidor s'han tancat completament. Aquesta finestra es tancarà sola d'aquí un moment."
+
+#: app/templates/correo_ajustes.html:2 app/templates/correo_ajustes.html:6
+msgid "Ajustes de correo"
+msgstr "Ajustos de correu"
+
+#: app/templates/correo_ajustes.html:7
+msgid "Preferencias, categorías y firma. La gestión de cuentas (IMAP/SMTP) está aparte."
+msgstr "Preferències, categories i signatura. La gestió de comptes (IMAP/SMTP) és a part."
+
+#: app/templates/correo_ajustes.html:11 app/templates/correo_cuentas.html:11
+#, fuzzy
+msgid "Volver al correo"
+msgstr "Anar a Correu"
+
+#: app/templates/correo_ajustes.html:18
+msgid "Preferencias generales"
+msgstr "Preferències generals"
+
+#: app/templates/correo_ajustes.html:21
+msgid "Densidad de la lista de mensajes"
+msgstr "Densitat de la llista de missatges"
+
+#: app/templates/correo_ajustes.html:24
+msgid "Compacta"
+msgstr "Compacta"
+
+#: app/templates/correo_ajustes.html:30
+msgid "Marcar como leído automáticamente al abrir un mensaje"
+msgstr "Marcar com a llegit automàticament en obrir un missatge"
+
+#: app/templates/correo_ajustes.html:34
+msgid "Mensajes a mostrar por carpeta"
+msgstr "Missatges a mostrar per carpeta"
+
+#: app/templates/correo_ajustes.html:38
+msgid "Guardar preferencias"
+msgstr "Desar preferències"
+
+#: app/templates/correo_ajustes.html:44
+msgid "Categorías"
+msgstr "Categories"
+
+#: app/templates/correo_ajustes.html:45
+msgid "Propias de Guilda Work — no se sincronizan con tu proveedor de correo."
+msgstr "Pròpies de Guilda Work — no se sincronitzen amb el teu proveïdor de correu."
+
+#: app/templates/correo_ajustes.html:53
+#, python-format
+msgid "¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se quedan sin categoría."
+msgstr "Vols eliminar la categoria «%(nombre)s»? Els missatges que la tinguessin es quedaran sense categoria."
+
+#: app/templates/correo_ajustes.html:54 app/templates/correo_ajustes.html:80
+#: app/templates/correo_ajustes.html:113 app/templates/correo_bandeja.html:72
+#: app/templates/correo_bandeja.html:134 app/templates/correo_cuentas.html:33
+#: app/templates/tareas_lista.html:107 app/templates/tiquets_kanban.html:47
+#: app/templates/tiquets_tarjetas.html:66
+msgid "Eliminar"
+msgstr "Eliminar"
+
+#: app/templates/correo_ajustes.html:62
+msgid "Nombre (ej. Importante)"
+msgstr "Nom (p. ex. Important)"
+
+#: app/templates/correo_ajustes.html:64
+msgid "Añadir categoría"
+msgstr "Afegir categoria"
+
+#: app/templates/correo_ajustes.html:70
+msgid "Reglas de categorización automática"
+msgstr "Regles de categorització automàtica"
+
+#: app/templates/correo_ajustes.html:71
+msgid "Los correos nuevos de un remitente o dominio que coincida se categorizan solos, sin tener que hacerlo a mano."
+msgstr "Els correus nous d'un remitent o domini que coincideixi es categoritzen sols, sense haver-ho de fer a mà."
+
+#: app/templates/correo_ajustes.html:79
+msgid "¿Eliminar esta regla?"
+msgstr "Vols eliminar aquesta regla?"
+
+#: app/templates/correo_ajustes.html:95
+msgid "Añadir regla"
+msgstr "Afegir regla"
+
+#: app/templates/correo_ajustes.html:99
+msgid "Crea al menos una categoría para poder definir reglas."
+msgstr "Crea almenys una categoria per poder definir regles."
+
+#: app/templates/correo_ajustes.html:104
+msgid "Remitentes de confianza"
+msgstr "Remitents de confiança"
+
+#: app/templates/correo_ajustes.html:105
+msgid "Sus imágenes remotas y adjuntos se muestran/abren sin avisar. Los de cualquier otro remitente se bloquean/avisan por privacidad."
+msgstr "Les seves imatges remotes i adjunts es mostren/obren sense avisar. Els de qualsevol altre remitent es bloquegen/avisen per privadesa."
+
+#: app/templates/correo_ajustes.html:112
+#, python-format
+msgid "¿Quitar «%(direccion)s» de la lista de confianza?"
+msgstr "Vols treure «%(direccion)s» de la llista de confiança?"
+
+#: app/templates/correo_ajustes.html:122
+msgid "Añadir remitente"
+msgstr "Afegir remitent"
+
+#: app/templates/correo_ajustes.html:128
+msgid "Firma"
+msgstr "Signatura"
+
+#: app/templates/correo_ajustes.html:130
+msgid "Añade una cuenta primero para poder configurar su firma."
+msgstr "Afegeix un compte primer per poder configurar-ne la signatura."
+
+#: app/templates/correo_ajustes.html:133
+#, fuzzy
+msgid "Cuenta"
+msgstr "Entrar"
+
+#: app/templates/correo_ajustes.html:144 app/templates/correo_redactar.html:63
+#, fuzzy
+msgid "Negrita"
+msgstr "Editar"
+
+#: app/templates/correo_ajustes.html:145 app/templates/correo_redactar.html:64
+msgid "Cursiva"
+msgstr "Cursiva"
+
+#: app/templates/correo_ajustes.html:146 app/templates/correo_redactar.html:65
+msgid "Subrayado"
+msgstr "Subratllat"
+
+#: app/templates/correo_ajustes.html:148 app/templates/correo_redactar.html:70
+msgid "Insertar enlace"
+msgstr "Inserir enllaç"
+
+#: app/templates/correo_ajustes.html:148 app/templates/correo_redactar.html:70
+msgid "Enlace"
+msgstr "Enllaç"
+
+#: app/templates/correo_ajustes.html:149 app/templates/correo_redactar.html:71
+msgid "Insertar imagen"
+msgstr "Inserir imatge"
+
+#: app/templates/correo_ajustes.html:149 app/templates/correo_redactar.html:71
+msgid "Imagen"
+msgstr "Imatge"
+
+#: app/templates/correo_ajustes.html:150 app/templates/correo_redactar.html:72
+#, fuzzy
+msgid "Quitar formato"
+msgstr "Treure de preferits"
+
+#: app/templates/correo_ajustes.html:158
+msgid "Insertar en correos nuevos"
+msgstr "Inserir en correus nous"
+
+#: app/templates/correo_ajustes.html:164
+msgid "Insertar en respuestas y reenvíos"
+msgstr "Inserir en respostes i reenviaments"
+
+#: app/templates/correo_ajustes.html:168
+msgid "Guardar firma"
+msgstr "Desar signatura"
+
+#: app/templates/correo_bandeja.html:11
+#, fuzzy
+msgid "Nuevo correo"
+msgstr "Correu"
+
+#: app/templates/correo_bandeja.html:13
+#, fuzzy
+msgid "Aún no tienes ninguna cuenta."
+msgstr "Encara no tens cap menú."
+
+#: app/templates/correo_bandeja.html:35
+#, fuzzy
+msgid "Cuentas"
+msgstr "Crear compte"
+
+#: app/templates/correo_bandeja.html:43
+#, fuzzy
+msgid "Buscar correo..."
+msgstr "Cerca en notes, tasques i correu..."
+
+#: app/templates/correo_bandeja.html:43
+#, fuzzy
+msgid "Buscar correo"
+msgstr "Anar a Correu"
+
+#: app/templates/correo_bandeja.html:45
+msgid "No leídos"
+msgstr "No llegits"
+
+#: app/templates/correo_bandeja.html:48
+msgid "Pospuestos"
+msgstr "Posposats"
+
+#: app/templates/correo_bandeja.html:54 app/templates/tareas_calendario.html:14
+#: app/templates/tareas_lista.html:14 app/templates/tareas_outlook_sync.html:14
+msgid "Sincronizar"
+msgstr "Sincronitzar"
+
+#: app/templates/correo_bandeja.html:58
+msgid "seleccionados"
+msgstr "seleccionats"
+
+#: app/templates/correo_bandeja.html:59 app/templates/correo_bandeja.html:188
+msgid "Leído"
+msgstr "Llegit"
+
+#: app/templates/correo_bandeja.html:60 app/templates/correo_bandeja.html:188
+msgid "No leído"
+msgstr "No llegit"
+
+#: app/templates/correo_bandeja.html:61 app/templates/correo_bandeja.html:160
+#: app/templates/correo_bandeja.html:162
+#, fuzzy
+msgid "Destacar"
+msgstr "Estadístiques"
+
+#: app/templates/correo_bandeja.html:62 app/templates/correo_bandeja.html:160
+#, fuzzy
+msgid "Quitar destacado"
+msgstr "Treure de preferits"
+
+#: app/templates/correo_bandeja.html:64
+msgid "Mover los mensajes seleccionados a"
+msgstr "Moure els missatges seleccionats a"
+
+#: app/templates/correo_bandeja.html:65 app/templates/correo_bandeja.html:148
+#, fuzzy
+msgid "Mover a…"
+msgstr "Moure avall"
+
+#: app/templates/correo_bandeja.html:70
+#, fuzzy
+msgid "Mover"
+msgstr "Moure avall"
+
+#: app/templates/correo_bandeja.html:73 app/templates/editar_nota.html:18
+#: app/templates/editar_tarea.html:36
+#: app/templates/tarea_outlook_editar.html:72
+#: app/templates/tiquet_editar.html:49
+#, fuzzy
+msgid "Cancelar"
+msgstr "Crear"
+
+#: app/templates/correo_bandeja.html:79
+msgid "No hay mensajes. Pulsa \"Sincronizar\" para buscar los nuevos."
+msgstr "No hi ha missatges. Prem \"Sincronitzar\" per buscar-ne de nous."
+
+#: app/templates/correo_bandeja.html:92 app/templates/correo_bandeja.html:120
+msgid "(desconocido)"
+msgstr "(desconegut)"
+
+#: app/templates/correo_bandeja.html:95 app/templates/correo_bandeja.html:219
+msgid "(sin asunto)"
+msgstr "(sense assumpte)"
+
+#: app/templates/correo_bandeja.html:104 app/templates/correo_cuentas.html:18
+#, fuzzy
+msgid "Aún no has añadido ninguna cuenta de correo."
+msgstr "Connecta un compte de correu"
+
+#: app/templates/correo_bandeja.html:104
+msgid "Añade una"
+msgstr "Afegeix-ne un"
+
+#: app/templates/correo_bandeja.html:104
+msgid "para empezar."
+msgstr "per començar."
+
+#: app/templates/correo_bandeja.html:115
+msgid "Volver a la lista"
+msgstr "Tornar a la llista"
+
+#: app/templates/correo_bandeja.html:115
+msgid "Volver"
+msgstr "Tornar"
+
+#: app/templates/correo_bandeja.html:122
+#, fuzzy
+msgid "Para:"
+msgstr "Paperera"
+
+#: app/templates/correo_bandeja.html:133
+msgid "¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer)."
+msgstr "Vols eliminar aquest missatge de la memòria cau local? No es pot desfer (si encara és al servidor, una futura sincronització el tornarà a portar)."
+
+#: app/templates/correo_bandeja.html:140
+msgid "Resp. a todos"
+msgstr "Resp. a tots"
+
+#: app/templates/correo_bandeja.html:147
+msgid "Mover el mensaje a"
+msgstr "Moure el missatge a"
+
+#: app/templates/correo_bandeja.html:169
+msgid "Fecha de aviso"
+msgstr "Data d'avís"
+
+#: app/templates/correo_bandeja.html:177
+#, fuzzy
+msgid "Categoría del mensaje"
+msgstr "Color del menú"
+
+#: app/templates/correo_bandeja.html:178
+msgid "Sin categoría"
+msgstr "Sense categoria"
+
+#: app/templates/correo_bandeja.html:186
+msgid "Marcar como no leído"
+msgstr "Marcar com a no llegit"
+
+#: app/templates/correo_bandeja.html:186
+msgid "Marcar como leído"
+msgstr "Marcar com a llegit"
+
+#: app/templates/correo_bandeja.html:196
+msgid "Posponer hasta la fecha elegida"
+msgstr "Posposar fins a la data triada"
+
+#: app/templates/correo_bandeja.html:197
+msgid "Posponer"
+msgstr "Posposar"
+
+#: app/templates/correo_bandeja.html:203 app/templates/correo_bandeja.html:204
+#, fuzzy
+msgid "Imprimir"
+msgstr "Importar"
+
+#: app/templates/correo_bandeja.html:211 app/templates/correo_bandeja.html:235
+msgid "Confiar en este remitente"
+msgstr "Confiar en aquest remitent"
+
+#: app/templates/correo_bandeja.html:212
+msgid "Confiar"
+msgstr "Confiar"
+
+#: app/templates/correo_bandeja.html:224
+msgid "Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?"
+msgstr "Aquest adjunt ve d'un remitent que no és a la teva llista de confiança. Vols obrir-lo igualment?"
+
+#: app/templates/correo_bandeja.html:232
+msgid "Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza."
+msgstr "Imatges amagades per privadesa — aquest remitent no és a la teva llista de confiança."
+
+#: app/templates/correo_bandeja.html:233
+msgid "Mostrar solo esta vez"
+msgstr "Mostrar només aquesta vegada"
+
+#: app/templates/correo_bandeja.html:246
+msgid "Este mensaje no tiene cuerpo legible."
+msgstr "Aquest missatge no té cos llegible."
+
+#: app/templates/correo_bandeja.html:252
+msgid "Selecciona un mensaje para leerlo"
+msgstr "Selecciona un missatge per llegir-lo"
+
+#: app/templates/correo_cuentas.html:2 app/templates/correo_cuentas.html:6
+#, fuzzy
+msgid "Cuentas de correo"
+msgstr "Connecta un compte de correu"
+
+#: app/templates/correo_cuentas.html:7
+msgid "IMAP/POP3. La contraseña se guarda en el almacén de credenciales de Windows, no en la base de datos."
+msgstr "IMAP/POP3. La contrasenya es desa a l'emmagatzematge de credencials de Windows, no a la base de dades."
+
+#: app/templates/correo_cuentas.html:26
+msgid "Sincronizado"
+msgstr "Sincronitzat"
+
+#: app/templates/correo_cuentas.html:29
+msgid "Probar conexión"
+msgstr "Provar connexió"
+
+#: app/templates/correo_cuentas.html:32
+#, python-format
+msgid "¿Eliminar la cuenta «%(nombre)s»? Se borrarán también sus mensajes descargados y su contraseña guardada. No se puede deshacer."
+msgstr "Vols eliminar el compte «%(nombre)s»? També s'esborraran els seus missatges descarregats i la seva contrasenya desada. No es pot desfer."
+
+#: app/templates/correo_cuentas.html:41 app/templates/correo_cuentas.html:95
+#, fuzzy
+msgid "Añadir cuenta"
+msgstr "Crear compte"
+
+#: app/templates/correo_cuentas.html:45
+#, fuzzy
+msgid "ej. Trabajo"
+msgstr "Moure avall"
+
+#: app/templates/correo_cuentas.html:48
+#, fuzzy
+msgid "Usuario / correo"
+msgstr "Anar a Correu"
+
+#: app/templates/correo_cuentas.html:53
+msgid "Contraseña (o contraseña de aplicación)"
+msgstr "Contrasenya (o contrasenya d'aplicació)"
+
+#: app/templates/correo_cuentas.html:56
+msgid "Servidor entrante"
+msgstr "Servidor d'entrada"
+
+#: app/templates/correo_cuentas.html:58
+msgid "Protocolo"
+msgstr "Protocol"
+
+#: app/templates/correo_cuentas.html:66
+msgid "Servidor"
+msgstr "Servidor"
+
+#: app/templates/correo_cuentas.html:70 app/templates/correo_cuentas.html:86
+msgid "Puerto"
+msgstr "Port"
+
+#: app/templates/correo_cuentas.html:75 app/templates/correo_cuentas.html:91
+msgid "Usar TLS/SSL"
+msgstr "Utilitzar TLS/SSL"
+
+#: app/templates/correo_cuentas.html:78
+msgid "Servidor saliente (SMTP)"
+msgstr "Servidor de sortida (SMTP)"
+
+#: app/templates/correo_cuentas.html:79
+msgid "Opcional — hace falta para poder enviar correo con esta cuenta."
+msgstr "Opcional — cal per poder enviar correu amb aquest compte."
+
+#: app/templates/correo_cuentas.html:82
+msgid "Servidor SMTP"
+msgstr "Servidor SMTP"
+
+#: app/templates/correo_redactar.html:8
+msgid "Ninguna cuenta tiene datos de SMTP configurados todavía."
+msgstr "Cap compte té dades d'SMTP configurades encara."
+
+#: app/templates/correo_redactar.html:12
+msgid "Añade los datos de SMTP a una cuenta"
+msgstr "Afegeix les dades d'SMTP a un compte"
+
+#: app/templates/correo_redactar.html:12
+msgid "para poder enviar correo."
+msgstr "per poder enviar correu."
+
+#: app/templates/correo_redactar.html:26
+msgid "¿Enviar este correo? No se puede deshacer."
+msgstr "Vols enviar aquest correu? No es pot desfer."
+
+#: app/templates/correo_redactar.html:30
+msgid "De"
+msgstr "De"
+
+#: app/templates/correo_redactar.html:38
+#, fuzzy
+msgid "Para"
+msgstr "Tasca"
+
+#: app/templates/correo_redactar.html:58
+#: app/templates/tarea_outlook_editar.html:16
+msgid "Asunto"
+msgstr "Assumpte"
+
+#: app/templates/correo_redactar.html:67
+msgid "Lista con viñetas"
+msgstr "Llista amb pics"
+
+#: app/templates/correo_redactar.html:67 app/templates/correo_redactar.html:68
+#: app/templates/tareas_calendario.html:12 app/templates/tareas_lista.html:12
+#: app/templates/tareas_outlook_sync.html:12
+#, fuzzy
+msgid "Lista"
+msgstr "Sistema"
+
+#: app/templates/correo_redactar.html:68
+msgid "Lista numerada"
+msgstr "Llista numerada"
+
+#: app/templates/correo_redactar.html:78
+msgid "Adjuntar archivos"
+msgstr "Adjuntar fitxers"
+
+#: app/templates/correo_redactar.html:84
+msgid "Descartar"
+msgstr "Descartar"
+
+#: app/templates/editar_nota.html:2 app/templates/editar_nota.html:6
+#, fuzzy
+msgid "Editar nota"
+msgstr "Editar"
+
+#: app/templates/editar_nota.html:13
+msgid "Texto"
+msgstr "Text"
+
+#: app/templates/editar_nota.html:23
+msgid "¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí."
+msgstr "Vols eliminar aquesta nota? Es mourà a la paperera — la podràs recuperar des d'allà."
+
+#: app/templates/editar_nota.html:25
+msgid "Eliminar nota"
+msgstr "Eliminar nota"
+
+#: app/templates/editar_tarea.html:2 app/templates/editar_tarea.html:6
+#, fuzzy
+msgid "Editar evento"
+msgstr "Esdeveniment"
+
+#: app/templates/editar_tarea.html:2 app/templates/editar_tarea.html:6
+#: app/templates/tarea_outlook_editar.html:2
+#: app/templates/tarea_outlook_editar.html:6
+#, fuzzy
+msgid "Editar tarea"
+msgstr "Nova tasca"
+
+#: app/templates/editar_tarea.html:21
+#, fuzzy
+msgid "Inicio"
+msgstr "Iniciar"
+
+#: app/templates/editar_tarea.html:26
+msgid "Fin"
+msgstr "Fi"
+
+#: app/templates/editar_tarea.html:29
+msgid "Duración actual:"
+msgstr "Durada actual:"
+
+#: app/templates/editar_tarea.html:29
+msgid "se recalculará al guardar."
+msgstr "es recalcularà en desar."
+
+#: app/templates/editar_tarea.html:31
+msgid "Esta tarea sigue en pausa; el fin se registrará al finalizarla."
+msgstr "Aquesta tasca segueix en pausa; el final es registrarà en finalitzar-la."
+
+#: app/templates/editar_tarea.html:31
+msgid "Esta tarea sigue en curso; el fin se registrará al finalizarla."
+msgstr "Aquesta tasca segueix en curs; el final es registrarà en finalitzar-la."
+
+#: app/templates/editar_tarea.html:41
+msgid "¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde ahí."
+msgstr "Vols eliminar aquest esdeveniment? Es mourà a la paperera — el podràs recuperar des d'allà."
+
+#: app/templates/editar_tarea.html:41
+#: app/templates/tarea_outlook_editar.html:77
+msgid "¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí."
+msgstr "Vols eliminar aquesta tasca? Es mourà a la paperera — la podràs recuperar des d'allà."
+
+#: app/templates/editar_tarea.html:43
+msgid "Eliminar evento"
+msgstr "Eliminar esdeveniment"
+
+#: app/templates/editar_tarea.html:43
+#: app/templates/tarea_outlook_editar.html:78
+#, fuzzy
+msgid "Eliminar tarea"
+msgstr "Nova tasca"
+
+#: app/templates/estadisticas.html:7
+msgid "Tiempo dedicado a tareas con duración, por menú y por día."
+msgstr "Temps dedicat a tasques amb durada, per menú i per dia."
+
+#: app/templates/estadisticas.html:12 app/templates/fichaje_admin.html:33
+#: app/templates/fichaje_admin_detalle.html:16
+#: app/templates/fichaje_historial.html:21 app/templates/historial.html:13
+msgid "Desde"
+msgstr "Des de"
+
+#: app/templates/estadisticas.html:13 app/templates/fichaje_admin.html:34
+#: app/templates/fichaje_admin_detalle.html:17
+#: app/templates/fichaje_historial.html:22 app/templates/historial.html:14
+msgid "Hasta"
+msgstr "Fins a"
+
+#: app/templates/estadisticas.html:14 app/templates/fichaje_admin.html:35
+#: app/templates/fichaje_admin_detalle.html:18
+#: app/templates/fichaje_historial.html:23 app/templates/historial.html:23
+#: app/templates/tareas_lista.html:45
+#, fuzzy
+msgid "Filtrar"
+msgstr "Entrar"
+
+#: app/templates/estadisticas.html:15 app/templates/fichaje_admin.html:36
+#: app/templates/fichaje_admin_detalle.html:19
+#: app/templates/fichaje_historial.html:24 app/templates/historial.html:24
+#: app/templates/tareas_lista.html:47
+#, fuzzy
+msgid "Limpiar"
+msgstr "Importar"
+
+#: app/templates/estadisticas.html:19
+#, fuzzy
+msgid "Por menú"
+msgstr "Nou menú"
+
+#: app/templates/estadisticas.html:21
+#, fuzzy
+msgid "Todavía no hay menús creados."
+msgstr "Encara no has registrat res avui."
+
+#: app/templates/estadisticas.html:41 app/templates/estadisticas.html:89
+#: app/templates/historial.html:15 app/templates/historial.html:36
+#: app/templates/papelera.html:25 app/templates/tarea_outlook_editar.html:54
+#: app/templates/tareas_calendario.html:116 app/templates/tareas_lista.html:66
+#, fuzzy
+msgid "Menú"
+msgstr "Menús"
+
+#: app/templates/estadisticas.html:42
+msgid "Tiempo en tareas"
+msgstr "Temps en tasques"
+
+#: app/templates/estadisticas.html:43
+msgid "Tareas finalizadas"
+msgstr "Tasques finalitzades"
+
+#: app/templates/estadisticas.html:45
+#, fuzzy
+msgid "Notas"
+msgstr "Nota"
+
+#: app/templates/estadisticas.html:65
+msgid "Por día"
+msgstr "Per dia"
+
+#: app/templates/estadisticas.html:67
+msgid "Todavía no hay tareas con duración finalizadas en este rango."
+msgstr "Encara no hi ha tasques amb durada finalitzades en aquest rang."
+
+#: app/templates/estadisticas.html:82
+msgid "Mostrando los 20 primeros del gráfico; la tabla de abajo tiene el resto."
+msgstr "Es mostren els 20 primers del gràfic; la taula de sota té la resta."
+
+#: app/templates/estadisticas.html:88
+#: app/templates/fichaje_admin_detalle.html:27
+#: app/templates/fichaje_historial.html:32
+#, fuzzy
+msgid "Fecha"
+msgstr "Fitxatge"
+
+#: app/templates/estadisticas.html:90
+#, fuzzy
+msgid "Tiempo total"
+msgstr "Importar"
+
+#: app/templates/fichaje_admin.html:2
+msgid "Administración de fichaje"
+msgstr "Administració de fitxatge"
+
+#: app/templates/fichaje_admin.html:6
+msgid "Fichaje — Administración"
+msgstr "Fitxatge — Administració"
+
+#: app/templates/fichaje_admin.html:8
+#, python-format
+msgid "Horas registradas por %(nombre)s."
+msgstr "Hores registrades per %(nombre)s."
+
+#: app/templates/fichaje_admin.html:8
+msgid "Elige un tenant para ver sus horas."
+msgstr "Tria un tenant per veure les seves hores."
+
+#: app/templates/fichaje_admin.html:14 app/templates/fichaje_datos.html:12
+#: app/templates/fichaje_historial.html:12 app/templates/fichaje_panel.html:12
+#, fuzzy
+msgid "Fichar"
+msgstr "Fitxatge"
+
+#: app/templates/fichaje_admin.html:15 app/templates/fichaje_datos.html:13
+#: app/templates/fichaje_historial.html:13 app/templates/fichaje_panel.html:13
+msgid "Mi historial"
+msgstr "El meu historial"
+
+#: app/templates/fichaje_admin.html:16 app/templates/fichaje_datos.html:14
+#: app/templates/fichaje_historial.html:14 app/templates/fichaje_panel.html:14
+msgid "Mis datos"
+msgstr "Les meves dades"
+
+#: app/templates/fichaje_admin.html:18 app/templates/fichaje_datos.html:16
+#: app/templates/fichaje_historial.html:16 app/templates/fichaje_panel.html:16
+msgid "Administración"
+msgstr "Administració"
+
+#: app/templates/fichaje_admin.html:26
+msgid "elegir"
+msgstr "triar"
+
+#: app/templates/fichaje_admin.html:41
+msgid "Este tenant no tiene CIF/dirección fiscal rellenados en el backoffice — no aparecerán en los informes exportados."
+msgstr "Aquest tenant no té el CIF/adreça fiscal emplenats al backoffice — no apareixeran als informes exportats."
+
+#: app/templates/fichaje_admin.html:45
+#, fuzzy
+msgid "Exportar CSV"
+msgstr "Importar"
+
+#: app/templates/fichaje_admin.html:46
+#, fuzzy
+msgid "Exportar PDF"
+msgstr "Importar"
+
+#: app/templates/fichaje_admin.html:50
+msgid "Sin fichajes de nadie de este tenant en este periodo."
+msgstr "Sense fitxatges de ningú d'aquest tenant en aquest període."
+
+#: app/templates/fichaje_admin.html:56
+msgid "Trabajador"
+msgstr "Treballador"
+
+#: app/templates/fichaje_admin.html:57
+msgid "Horas trabajadas"
+msgstr "Hores treballades"
+
+#: app/templates/fichaje_admin.html:58
+#, fuzzy
+msgid "Horas en pausa"
+msgstr "En pausa"
+
+#: app/templates/fichaje_admin.html:59
+msgid "Jornada contratada/sem."
+msgstr "Jornada contractada/setm."
+
+#: app/templates/fichaje_admin.html:60
+#, fuzzy
+msgid "Fichajes"
+msgstr "Fitxatge"
+
+#: app/templates/fichaje_admin.html:73
+#, fuzzy
+msgid "dentro"
+msgstr "Esdeveniment"
+
+#: app/templates/fichaje_admin.html:73
+msgid "fuera"
+msgstr "fora"
+
+#: app/templates/fichaje_admin.html:74
+msgid "Ver detalle"
+msgstr "Veure detall"
+
+#: app/templates/fichaje_admin_detalle.html:11
+msgid "Volver al resumen"
+msgstr "Tornar al resum"
+
+#: app/templates/fichaje_admin_detalle.html:23
+#: app/templates/fichaje_historial.html:28
+msgid "Sin fichajes en este periodo."
+msgstr "Sense fitxatges en aquest període."
+
+#: app/templates/fichaje_admin_detalle.html:27
+#: app/templates/fichaje_historial.html:32 app/templates/fichaje_panel.html:61
+#, fuzzy
+msgid "Hora"
+msgstr "Normal"
+
+#: app/templates/fichaje_admin_detalle.html:27
+#: app/templates/fichaje_historial.html:32 app/templates/fichaje_panel.html:61
+#: app/templates/historial.html:37 app/templates/tiquet_editar.html:16
+msgid "Tipo"
+msgstr "Tipus"
+
+#: app/templates/fichaje_admin_detalle.html:27
+#: app/templates/fichaje_historial.html:32
+msgid "Origen"
+msgstr "Origen"
+
+#: app/templates/fichaje_admin_detalle.html:27 app/templates/historial.html:50
+#: app/templates/inicio.html:156 app/templates/menu.html:153
+#: app/templates/papelera.html:26
+msgid "Nota"
+msgstr "Nota"
+
+#: app/templates/fichaje_admin_detalle.html:33
+#, python-format
+msgid "corrección de #%(id)s"
+msgstr "correcció de #%(id)s"
+
+#: app/templates/fichaje_admin_detalle.html:45
+msgid "Corregir un olvido"
+msgstr "Corregir un oblit"
+
+#: app/templates/fichaje_admin_detalle.html:46
+msgid "Añade el fichaje que faltó (p. ej. una salida no marcada) sin borrar ni tocar los existentes — queda registrado quién y cuándo hizo la corrección."
+msgstr "Afegeix el fitxatge que va faltar (p. ex. una sortida no marcada) sense esborrar ni tocar els existents — queda registrat qui i quan va fer la correcció."
+
+#: app/templates/fichaje_admin_detalle.html:55
+msgid "Nº de fichaje que corrige (opcional)"
+msgstr "Núm. de fitxatge que corregeix (opcional)"
+
+#: app/templates/fichaje_admin_detalle.html:56
+msgid "Motivo de la corrección"
+msgstr "Motiu de la correcció"
+
+#: app/templates/fichaje_admin_detalle.html:57
+msgid "Añadir corrección"
+msgstr "Afegir correcció"
+
+#: app/templates/fichaje_datos.html:2
+msgid "Mis datos de fichaje"
+msgstr "Les meves dades de fitxatge"
+
+#: app/templates/fichaje_datos.html:7
+msgid "Datos necesarios para identificarte en el registro horario."
+msgstr "Dades necessàries per identificar-te en el registre horari."
+
+#: app/templates/fichaje_datos.html:24
+msgid "Nombre completo"
+msgstr "Nom complet"
+
+#: app/templates/fichaje_datos.html:32
+msgid "Número de afiliación a la Seguridad Social"
+msgstr "Número d'afiliació a la Seguretat Social"
+
+#: app/templates/fichaje_datos.html:36
+msgid "Categoría profesional"
+msgstr "Categoria professional"
+
+#: app/templates/fichaje_datos.html:40
+msgid "Tipo de contrato"
+msgstr "Tipus de contracte"
+
+#: app/templates/fichaje_datos.html:41
+msgid "Indefinido, temporal, prácticas..."
+msgstr "Indefinit, temporal, pràctiques..."
+
+#: app/templates/fichaje_datos.html:44
+msgid "Fecha de alta"
+msgstr "Data d'alta"
+
+#: app/templates/fichaje_datos.html:48
+msgid "Jornada semanal contratada (horas)"
+msgstr "Jornada setmanal contractada (hores)"
+
+#: app/templates/fichaje_datos.html:52
+msgid "Convenio colectivo"
+msgstr "Conveni col·lectiu"
+
+#: app/templates/fichaje_historial.html:2
+msgid "Mi historial de fichaje"
+msgstr "El meu historial de fitxatge"
+
+#: app/templates/fichaje_historial.html:7
+msgid "Tu registro horario, siempre a tu disposición."
+msgstr "El teu registre horari, sempre a la teva disposició."
+
+#: app/templates/fichaje_historial.html:38
+#, fuzzy
+msgid "corrección"
+msgstr "Correu"
+
+#: app/templates/fichaje_panel.html:7
+msgid "Registro horario diario (art. 34.9 del Estatuto de los Trabajadores)."
+msgstr "Registre horari diari (art. 34.9 de l'Estatut dels Treballadors)."
+
+#: app/templates/fichaje_panel.html:24
+msgid "Antes de poder fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE."
+msgstr "Abans de poder fitxar, la normativa exigeix poder identificar-te: emplena el teu nom complet i DNI/NIE."
+
+#: app/templates/fichaje_panel.html:25
+msgid "Rellenar mis datos"
+msgstr "Emplenar les meves dades"
+
+#: app/templates/fichaje_panel.html:31
+msgid "Dentro de jornada"
+msgstr "Dins de jornada"
+
+#: app/templates/fichaje_panel.html:31 app/templates/historial.html:53
+#: app/templates/inicio.html:159 app/templates/menu.html:156
+msgid "En pausa"
+msgstr "En pausa"
+
+#: app/templates/fichaje_panel.html:31
+msgid "Fuera de jornada"
+msgstr "Fora de jornada"
+
+#: app/templates/fichaje_panel.html:37
+#, fuzzy
+msgid "Entrada"
+msgstr "Entrar"
+
+#: app/templates/fichaje_panel.html:41
+#, fuzzy
+msgid "Iniciar pausa"
+msgstr "Iniciar"
+
+#: app/templates/fichaje_panel.html:45
+#, fuzzy
+msgid "Fin de pausa"
+msgstr "En pausa"
+
+#: app/templates/fichaje_panel.html:49
+msgid "Salida"
+msgstr "Sortida"
+
+#: app/templates/fichaje_panel.html:55 app/templates/inicio.html:145
+#: app/templates/tareas_calendario.html:20
+msgid "Hoy"
+msgstr "Avui"
+
+#: app/templates/fichaje_panel.html:57
+#, fuzzy
+msgid "Todavía no has fichado nada hoy."
+msgstr "Encara no has registrat res avui."
+
+#: app/templates/herramientas.html:7
+msgid "Todo lo que tienes conectado a Guilda Work, en un solo sitio."
+msgstr "Tot el que tens connectat a Guilda Work, en un sol lloc."
+
+#: app/templates/herramientas.html:29
+msgid "Aún no disponible"
+msgstr "Encara no disponible"
+
+#: app/templates/herramientas.html:47
+msgid "Entra con tu sesión de Guilda Work"
+msgstr "Entra amb la teva sessió de Guilda Work"
+
+#: app/templates/herramientas.html:47 app/templates/herramientas.html:71
+#, fuzzy
+msgid "Inicia sesión aparte"
+msgstr "Inicia sessió"
+
+#: app/templates/herramientas.html:67 app/templates/herramientas.html:81
+msgid "Facturación"
+msgstr "Facturació"
+
+#: app/templates/herramientas.html:68 app/templates/herramientas.html:82
+msgid "Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts)."
+msgstr "Factures, pressupostos i comptabilitat del teu client (FacturaScripts)."
+
+#: app/templates/herramientas.html:85
+msgid "Aún no aprovisionada para tu cliente"
+msgstr "Encara no aprovisionada per al teu client"
+
+#: app/templates/historial.html:7
+msgid "Vista global de todos los menús, filtrable y exportable."
+msgstr "Vista global de tots els menús, filtrable i exportable."
+
+#: app/templates/historial.html:12 app/templates/tareas_lista.html:18
+msgid "Buscar"
+msgstr "Cercar"
+
+#: app/templates/historial.html:12 app/templates/tareas_lista.html:18
+msgid "Texto..."
+msgstr "Text..."
+
+#: app/templates/historial.html:17
+msgid "Todos"
+msgstr "Tots"
+
+#: app/templates/historial.html:35
+msgid "Fecha / hora"
+msgstr "Data / hora"
+
+#: app/templates/historial.html:38 app/templates/tarea_outlook_editar.html:19
+#: app/templates/tiquet_editar.html:26
+msgid "Descripción"
+msgstr "Descripció"
+
+#: app/templates/historial.html:39
+msgid "Duración"
+msgstr "Durada"
+
+#: app/templates/historial.html:51 app/templates/inicio.html:157
+#: app/templates/menu.html:154 app/templates/papelera.html:28
+msgid "Evento"
+msgstr "Esdeveniment"
+
+#: app/templates/historial.html:52 app/templates/inicio.html:158
+#: app/templates/menu.html:155
+msgid "En curso"
+msgstr "En curs"
+
+#: app/templates/historial.html:54 app/templates/inicio.html:160
+#: app/templates/menu.html:157 app/templates/papelera.html:29
+msgid "Tarea"
+msgstr "Tasca"
+
+#: app/templates/historial.html:63 app/templates/inicio.html:166
+#: app/templates/menu.html:163 app/templates/tareas_lista.html:104
+#: app/templates/tiquets_tarjetas.html:61
+msgid "Editar"
+msgstr "Editar"
+
+#: app/templates/historial.html:66
+msgid "No hay registros para este filtro."
+msgstr "No hi ha registres per a aquest filtre."
+
+#: app/templates/historial.html:73
+msgid "Generar informe con IA local"
+msgstr "Generar informe amb IA local"
+
+#: app/templates/historial.html:74
+msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio). No se envía nada a internet."
+msgstr "Envia les dades filtrades de dalt a un model que corre a la teva màquina (Ollama o LM Studio). No s'envia res a internet."
+
+#: app/templates/historial.html:81
+msgid "Proveedor"
+msgstr "Proveïdor"
+
+#: app/templates/historial.html:87
+msgid "Modelo"
+msgstr "Model"
+
+#: app/templates/historial.html:88
+msgid "ej. llama3.1"
+msgstr "p. ex. llama3.1"
+
+#: app/templates/historial.html:91
+msgid "Instrucción para la IA"
+msgstr "Instrucció per a la IA"
+
+#: app/templates/historial.html:94
+msgid "Generar informe"
+msgstr "Generar informe"
+
+#: app/templates/historial.html:106
+msgid "Preguntar a mis datos"
+msgstr "Preguntar a les meves dades"
+
+#: app/templates/historial.html:107
+msgid "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada a internet."
+msgstr "Xateja amb un model local sobre les dades filtrades a dalt (mateix rang de dates/menú). Pots fer preguntes de seguiment — no s'envia res a internet."
+
+#: app/templates/historial.html:114
+msgid "Modelo, ej. llama3.1"
+msgstr "Model, p. ex. llama3.1"
+
+#: app/templates/historial.html:121
+msgid "Pregunta algo sobre tus datos... (ej. ¿qué hice ayer en Lueira?)"
+msgstr "Pregunta alguna cosa sobre les teves dades... (p. ex. què vaig fer ahir a Lueira?)"
+
+#: app/templates/historial.html:193
+msgid "Pensando..."
+msgstr "Pensant..."
+
+#: app/templates/historial.html:217
+msgid "Error desconocido."
+msgstr "Error desconegut."
+
+#: app/templates/historial.html:221
+msgid "No se pudo contactar con el servidor."
+msgstr "No s'ha pogut contactar amb el servidor."
+
+#: app/templates/ia_ajustes.html:2 app/templates/ia_ajustes.html:6
+#, fuzzy
+msgid "Ajustes del Asistente IA"
+msgstr "Prova l'assistent IA"
+
+#: app/templates/ia_ajustes.html:7
+msgid "Volver al chat"
+msgstr "Tornar al xat"
+
+#: app/templates/ia_ajustes.html:11
+msgid "Modelo (OpenRouter)"
+msgstr "Model (OpenRouter)"
+
+#: app/templates/ia_ajustes.html:14
+msgid "Modelo sugerido"
+msgstr "Model suggerit"
+
+#: app/templates/ia_ajustes.html:16
+msgid "elegir uno de la lista, o usar el campo de abajo"
+msgstr "triar-ne un de la llista, o utilitzar el camp de sota"
+
+#: app/templates/ia_ajustes.html:23
+msgid "O escribe cualquier otro id de modelo de OpenRouter"
+msgstr "O escriu qualsevol altre id de model d'OpenRouter"
+
+#: app/templates/ia_ajustes.html:24
+msgid "ej. mistralai/mistral-large"
+msgstr "p. ex. mistralai/mistral-large"
+
+#: app/templates/ia_ajustes.html:29
+msgid "Claves de API de OpenRouter (una por línea, en orden de preferencia)"
+msgstr "Claus d'API d'OpenRouter (una per línia, en ordre de preferència)"
+
+#: app/templates/ia_ajustes.html:30
+#, python-format
+msgid "Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas"
+msgid_plural "Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas"
+msgstr[0] "Ja tens %(num)s clau desada — deixa-ho en blanc per no canviar-les"
+msgstr[1] "Ja tens %(num)s claus desades — deixa-ho en blanc per no canviar-les"
+
+#: app/templates/ia_ajustes.html:30
+msgid ""
+"sk-or-...\n"
+"sk-or-... (clave de reserva, opcional)"
+msgstr ""
+"sk-or-...\n"
+"sk-or-... (clau de reserva, opcional)"
+
+#: app/templates/ia_ajustes.html:31
+msgid "Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente."
+msgstr "Es prova primer la primera línia. Si falla per un motiu propi d'aquesta clau (sense crèdit, invàlida, límit de peticions assolit), es passa automàticament a la següent."
+
+#: app/templates/ia_ajustes.html:35
+msgid "Borrar todas las claves guardadas"
+msgstr "Esborrar totes les claus desades"
+
+#: app/templates/ia_ajustes.html:41
+msgid "Modo autónomo: no pedir confirmación al crear/editar/borrar contenido"
+msgstr "Mode autònom: no demanar confirmació en crear/editar/esborrar contingut"
+
+#: app/templates/ia_ajustes.html:44
+msgid "Aunque actives el modo autónomo,"
+msgstr "Encara que activis el mode autònom,"
+
+#: app/templates/ia_ajustes.html:44
+msgid "enviar un correo de verdad"
+msgstr "enviar un correu de veritat"
+
+#: app/templates/ia_ajustes.html:44
+msgid "siempre pedirá confirmación explícita, y el asistente nunca podrá borrar copias de seguridad (solo crearlas) porque esa herramienta no existe."
+msgstr "sempre demanarà confirmació explícita, i l'assistent mai podrà esborrar còpies de seguretat (només crear-les) perquè aquesta eina no existeix."
+
+#: app/templates/ia_asistente.html:11
+msgid "No hay ningún modelo configurado todavía. Ve a"
+msgstr "Encara no hi ha cap model configurat. Vés a"
+
+#: app/templates/ia_asistente.html:11
+msgid "para elegir un modelo y añadir tu clave de OpenRouter."
+msgstr "per triar un model i afegir la teva clau d'OpenRouter."
+
+#: app/templates/importar.html:6
+#, fuzzy
+msgid "Importar datos"
+msgstr "Importar"
+
+#: app/templates/importar.html:7
+msgid "Sube un archivo JSON o CSV exportado desde Guilda Work (o desde una copia de seguridad) para recuperarlo."
+msgstr "Puja un fitxer JSON o CSV exportat des de Guilda Work (o des d'una còpia de seguretat) per recuperar-lo."
+
+#: app/templates/importar.html:12
+msgid "Archivo (.json o .csv)"
+msgstr "Fitxer (.json o .csv)"
+
+#: app/templates/importar.html:16
+msgid "Los menús que no existan se crean automáticamente por nombre. Las notas y eventos se importan tal cual; las tareas con duración que en el archivo seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de cerrarlas solas."
+msgstr "Els menús que no existeixin es creen automàticament pel nom. Les notes i esdeveniments s'importen tal qual; les tasques amb durada que a l'arxiu seguien \"en curs\" (sense fi) s'ometen, perquè no hi ha manera segura de tancar-les soles."
+
+#: app/templates/importar.html:29 app/templates/tareas_outlook_sync.html:23
+msgid "Importación completada:"
+msgstr "Importació completada:"
+
+#: app/templates/importar.html:29
+#, fuzzy
+msgid "nota(s),"
+msgstr "Nota"
+
+#: app/templates/importar.html:29
+msgid "tarea(s)/evento(s)."
+msgstr "tasca/es i esdeveniment/s."
+
+#: app/templates/importar.html:30
+#, python-format
+msgid "Se omitieron %(n)s fila(s) por datos incompletos o inválidos."
+msgstr "S'han omès %(n)s fila/es per dades incompletes o no vàlides."
 
 #: app/templates/inicio.html:8
 msgid "Un vistazo rápido a tu día."
@@ -222,11 +1793,12 @@ msgstr "correus sense llegir"
 msgid "Atajo: Ctrl+Alt+N"
 msgstr "Drecera: Ctrl+Alt+N"
 
-#: app/templates/inicio.html:57
+#: app/templates/inicio.html:57 app/templates/menu.html:27
 msgid "Nota rápida"
 msgstr "Nota ràpida"
 
-#: app/templates/inicio.html:61
+#: app/templates/inicio.html:61 app/templates/tarea_outlook_editar.html:56
+#: app/templates/tareas_calendario.html:117 app/templates/tareas_lista.html:67
 msgid "Sin menú"
 msgstr "Sense menú"
 
@@ -234,7 +1806,7 @@ msgstr "Sense menú"
 msgid "¿Qué ha pasado?"
 msgstr "Què ha passat?"
 
-#: app/templates/inicio.html:66
+#: app/templates/inicio.html:66 app/templates/menu.html:42
 msgid "Anotar"
 msgstr "Anotar"
 
@@ -242,7 +1814,7 @@ msgstr "Anotar"
 msgid "Atajo: Ctrl+Alt+T"
 msgstr "Drecera: Ctrl+Alt+T"
 
-#: app/templates/inicio.html:73
+#: app/templates/inicio.html:73 app/templates/tareas_lista.html:55
 msgid "Nueva tarea"
 msgstr "Nova tasca"
 
@@ -250,7 +1822,7 @@ msgstr "Nova tasca"
 msgid "Nombre de la tarea"
 msgstr "Nom de la tasca"
 
-#: app/templates/inicio.html:79
+#: app/templates/inicio.html:79 app/templates/menu.html:62
 msgid "Iniciar"
 msgstr "Iniciar"
 
@@ -298,37 +1870,9 @@ msgstr "Preferits"
 msgid "Tus menús"
 msgstr "Els teus menús"
 
-#: app/templates/inicio.html:145
-msgid "Hoy"
-msgstr "Avui"
-
 #: app/templates/inicio.html:147
 msgid "Todavía no has registrado nada hoy."
 msgstr "Encara no has registrat res avui."
-
-#: app/templates/inicio.html:156
-msgid "Nota"
-msgstr "Nota"
-
-#: app/templates/inicio.html:157
-msgid "Evento"
-msgstr "Esdeveniment"
-
-#: app/templates/inicio.html:158
-msgid "En curso"
-msgstr "En curs"
-
-#: app/templates/inicio.html:159
-msgid "En pausa"
-msgstr "En pausa"
-
-#: app/templates/inicio.html:160
-msgid "Tarea"
-msgstr "Tasca"
-
-#: app/templates/inicio.html:166
-msgid "Editar"
-msgstr "Editar"
 
 #: app/templates/inicio.html:180
 msgid "Nuevo menú"
@@ -343,6 +1887,7 @@ msgid "Nombre del menú (ej. Lueira, Guilda...)"
 msgstr "Nom del menú (p. ex. Lueira, Guilda...)"
 
 #: app/templates/inicio.html:184 app/templates/inicio.html:185
+#: app/templates/menu.html:14
 msgid "Color del menú"
 msgstr "Color del menú"
 
@@ -362,10 +1907,6 @@ msgstr "No s'ha pogut comprovar el captcha. Resol-lo de nou abans d'entrar."
 msgid "Email"
 msgstr "Correu electrònic"
 
-#: app/templates/login.html:35
-msgid "Contraseña"
-msgstr "Contrasenya"
-
 #: app/templates/login.html:47
 msgid "No soy un robot"
 msgstr "No sóc un robot"
@@ -383,9 +1924,7 @@ msgid "Error al comprobar, inténtalo de nuevo"
 msgstr "Error en comprovar, torna-ho a provar"
 
 #: app/templates/login.html:49
-msgid ""
-"Demasiados intentos seguidos desde tu conexión — resuelve esto para poder"
-" entrar."
+msgid "Demasiados intentos seguidos desde tu conexión — resuelve esto para poder entrar."
 msgstr "Massa intents seguits des de la teva connexió — resol això per poder entrar."
 
 #: app/templates/login.html:52
@@ -408,6 +1947,215 @@ msgstr "Vols integrar el teu programari?"
 msgid "Documentación para desarrolladores"
 msgstr "Documentació per a desenvolupadors"
 
+#: app/templates/menu.html:10
+#, fuzzy
+msgid "Editar menú"
+msgstr "Crear menú"
+
+#: app/templates/menu.html:18
+#, python-format
+msgid "¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí."
+msgstr "Vols eliminar el menú «%(nombre)s»? Es mourà a la paperera juntament amb tot el que hi ha registrat dins (notes, esdeveniments i tasques) — el podràs recuperar des d'allà."
+
+#: app/templates/menu.html:19
+#, fuzzy
+msgid "Eliminar menú"
+msgstr "Crear menú"
+
+#: app/templates/menu.html:34
+#, python-format
+msgid "Anotar «%(texto)s»"
+msgstr "Anotar «%(texto)s»"
+
+#: app/templates/menu.html:41
+msgid "Escribe algo que ha pasado..."
+msgstr "Escriu alguna cosa que ha passat..."
+
+#: app/templates/menu.html:49
+msgid "Evento instantáneo"
+msgstr "Esdeveniment instantani"
+
+#: app/templates/menu.html:51
+msgid "Algo puntual que acaba de ocurrir..."
+msgstr "Alguna cosa puntual que acaba de passar..."
+
+#: app/templates/menu.html:52
+#, fuzzy
+msgid "Registrar"
+msgstr "Registra't"
+
+#: app/templates/menu.html:59
+#, fuzzy
+msgid "Tarea con duración"
+msgstr "tasques en curs"
+
+#: app/templates/menu.html:61
+#, fuzzy
+msgid "Nombre de la tarea a iniciar..."
+msgstr "Nom de la tasca"
+
+#: app/templates/menu.html:68
+#, fuzzy
+msgid "Gestionar frases favoritas"
+msgstr "Fixar a preferits"
+
+#: app/templates/menu.html:77 app/templates/tiquet_editar.html:61
+#, fuzzy
+msgid "Quitar"
+msgstr "Editar"
+
+#: app/templates/menu.html:83
+msgid "Aún no tienes frases favoritas. Añade las que repites a menudo para anotarlas en un clic desde \"Nota rápida\"."
+msgstr "Encara no tens frases preferides. Afegeix les que repeteixes sovint per anotar-les en un clic des de \"Nota ràpida\"."
+
+#: app/templates/menu.html:86
+msgid "Nueva frase favorita..."
+msgstr "Nova frase preferida..."
+
+#: app/templates/menu.html:87 app/templates/tareas_lista.html:75
+msgid "Añadir"
+msgstr "Afegir"
+
+#: app/templates/menu.html:94
+#, fuzzy
+msgid "En curso ahora"
+msgstr "En curs"
+
+#: app/templates/menu.html:104
+msgid "Lleva mucho tiempo activa — ¿se te olvidó finalizarla?"
+msgstr "Fa molta estona que està activa — se t'ha oblidat finalitzar-la?"
+
+#: app/templates/menu.html:104
+msgid "lleva mucho rato"
+msgstr "fa molta estona"
+
+#: app/templates/menu.html:108
+#, fuzzy
+msgid "Reanudar"
+msgstr "Crear"
+
+#: app/templates/menu.html:112
+#, fuzzy
+msgid "Pausar"
+msgstr "En pausa"
+
+#: app/templates/menu.html:116
+#, fuzzy
+msgid "Finalizar"
+msgstr "Iniciar"
+
+#: app/templates/menu.html:127
+#, python-format
+msgid "Registro de %(nombre)s"
+msgstr "Registre de %(nombre)s"
+
+#: app/templates/menu.html:129
+msgid "Buscar en este menú..."
+msgstr "Cercar en aquest menú..."
+
+#: app/templates/menu.html:130
+msgid "Limpiar búsqueda"
+msgstr "Netejar cerca"
+
+#: app/templates/menu.html:135
+#, python-format
+msgid "No hay resultados para «%(q)s»."
+msgstr "No hi ha resultats per a «%(q)s»."
+
+#: app/templates/menu.html:139
+msgid "Este menú todavía está vacío."
+msgstr "Aquest menú encara està buit."
+
+#: app/templates/menu.html:140
+msgid "Empieza por lo que te resulte más natural ahora mismo:"
+msgstr "Comença pel que et resulti més natural ara mateix:"
+
+#: app/templates/menu.html:142
+#, fuzzy
+msgid "Escribe tu primera nota"
+msgstr "Crea el teu primer menú"
+
+#: app/templates/menu.html:143
+msgid "Inicia tu primera tarea con duración"
+msgstr "Inicia la teva primera tasca amb durada"
+
+#: app/templates/mis_dispositivos.html:7
+msgid "Sesiones activas de la app móvil de Guilda Work. Si pierdes un móvil, revócalo aquí para cortarle el acceso."
+msgstr "Sessions actives de l'app mòbil de Guilda Work. Si perds un mòbil, revoca'l aquí per tallar-li l'accés."
+
+#: app/templates/mis_dispositivos.html:12
+msgid "No tienes ningún dispositivo móvil con sesión activa."
+msgstr "No tens cap dispositiu mòbil amb sessió activa."
+
+#: app/templates/mis_dispositivos.html:22
+#, python-format
+msgid "¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en la app."
+msgstr "Vols revocar l'accés de «%(nombre)s»? Haurà d'iniciar sessió de nou a l'app."
+
+#: app/templates/mis_dispositivos.html:30
+msgid "Un dispositivo que lleva más de 90 días sin usarse se desconecta automáticamente, aunque no lo revoques a mano."
+msgstr "Un dispositiu que porta més de 90 dies sense usar-se es desconnecta automàticament, encara que no el revoquis a mà."
+
+#: app/templates/papelera.html:7
+msgid "Lo que borres se queda aquí 30 días antes de purgarse solo. Puedes recuperarlo cuando quieras."
+msgstr "El que esborris es queda aquí 30 dies abans de purgar-se sol. Ho pots recuperar quan vulguis."
+
+#: app/templates/papelera.html:12
+msgid "La papelera está vacía."
+msgstr "La paperera està buida."
+
+#: app/templates/papelera.html:15
+msgid "¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma permanente. Esta acción no se puede deshacer."
+msgstr "Vols buidar la paperera del tot? S'eliminarà TOT el que hi ha aquí de forma permanent. Aquesta acció no es pot desfer."
+
+#: app/templates/papelera.html:17
+msgid "Vaciar papelera ahora"
+msgstr "Buidar paperera ara"
+
+#: app/templates/papelera.html:27
+#, fuzzy
+msgid "Tarea (lista)"
+msgstr "Tasques"
+
+#: app/templates/papelera.html:38 app/templates/papelera.html:46
+#: app/templates/papelera.html:54 app/templates/papelera.html:62
+#, fuzzy
+msgid "Restaurar"
+msgstr "Entrar"
+
+#: app/templates/papelera.html:41
+msgid "¿Eliminar este menú y todo lo que contiene para siempre? No se puede deshacer."
+msgstr "Vols eliminar aquest menú i tot el que conté per sempre? No es pot desfer."
+
+#: app/templates/papelera.html:42 app/templates/papelera.html:50
+#: app/templates/papelera.html:58 app/templates/papelera.html:66
+msgid "Eliminar para siempre"
+msgstr "Eliminar per sempre"
+
+#: app/templates/papelera.html:49
+msgid "¿Eliminar esta nota para siempre? No se puede deshacer."
+msgstr "Vols eliminar aquesta nota per sempre? No es pot desfer."
+
+#: app/templates/papelera.html:57 app/templates/papelera.html:65
+msgid "¿Eliminar esto para siempre? No se puede deshacer."
+msgstr "Vols eliminar això per sempre? No es pot desfer."
+
+#: app/templates/pendiente_activacion.html:6
+msgid "Cuenta pendiente de activación"
+msgstr "Compte pendent d'activació"
+
+#: app/templates/pendiente_activacion.html:48
+msgid "Tu cuenta está casi lista"
+msgstr "El teu compte està gairebé llest"
+
+#: app/templates/pendiente_activacion.html:49
+msgid "Te has registrado correctamente, pero tu cuenta todavía no está asociada a ninguna organización."
+msgstr "T'has registrat correctament, però el teu compte encara no està associat a cap organització."
+
+#: app/templates/pendiente_activacion.html:50
+msgid "El equipo de Guilda Work la activará en breve — si has llegado hasta aquí sin haber hablado antes con nosotros, escríbenos a"
+msgstr "L'equip de Guilda Work l'activarà aviat — si has arribat fins aquí sense haver parlat abans amb nosaltres, escriu-nos a"
+
 #: app/templates/registro.html:6 app/templates/registro.html:14
 #: app/templates/registro.html:38
 msgid "Crear cuenta"
@@ -424,4 +2172,422 @@ msgstr "Ja tens compte?"
 #: app/templates/registro.html:39
 msgid "Inicia sesión"
 msgstr "Inicia sessió"
+
+#: app/templates/tarea_outlook_editar.html:7
+#, python-format
+msgid "Creada el %(fecha)s"
+msgstr "Creada el %(fecha)s"
+
+#: app/templates/tarea_outlook_editar.html:31
+#: app/templates/tareas_lista.html:27 app/templates/tareas_lista.html:60
+msgid "Prioridad"
+msgstr "Prioritat"
+
+#: app/templates/tarea_outlook_editar.html:38
+#, fuzzy
+msgid "completado"
+msgstr "Comprovat"
+
+#: app/templates/tarea_outlook_editar.html:44
+#: app/templates/tareas_lista.html:58
+msgid "Fecha y hora de inicio"
+msgstr "Data i hora d'inici"
+
+#: app/templates/tarea_outlook_editar.html:47
+#: app/templates/tareas_lista.html:59
+msgid "Fecha y hora de vencimiento"
+msgstr "Data i hora de venciment"
+
+#: app/templates/tarea_outlook_editar.html:61
+msgid "Categoría (Outlook)"
+msgstr "Categoria (Outlook)"
+
+#: app/templates/tarea_outlook_editar.html:62
+msgid "ej. Trabajo, Personal..."
+msgstr "p. ex. Feina, Personal..."
+
+#: app/templates/tarea_outlook_editar.html:67
+#, python-format
+msgid "Completada el %(fecha)s."
+msgstr "Completada el %(fecha)s."
+
+#: app/templates/tareas_calendario.html:2
+#, fuzzy
+msgid "Calendario de tareas"
+msgstr "Amagar aquesta targeta"
+
+#: app/templates/tareas_calendario.html:7
+msgid "Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí."
+msgstr "Calendari, ubicades per data de venciment (o d'inici si no tenen venciment). Fes clic (o arrossega sobre diversos dies/hores) per crear una tasca nova allà."
+
+#: app/templates/tareas_calendario.html:13 app/templates/tareas_lista.html:13
+#: app/templates/tareas_outlook_sync.html:13
+msgid "Calendario"
+msgstr "Calendari"
+
+#: app/templates/docs/pagina.html:136 app/templates/tareas_calendario.html:19
+#, fuzzy
+msgid "Anterior"
+msgstr "Obrir"
+
+#: app/templates/docs/pagina.html:144 app/templates/tareas_calendario.html:21
+msgid "Siguiente"
+msgstr "Següent"
+
+#: app/templates/tareas_calendario.html:25
+msgid "Día"
+msgstr "Dia"
+
+#: app/templates/tareas_calendario.html:25
+msgid "Semana laboral"
+msgstr "Setmana laboral"
+
+#: app/templates/tareas_calendario.html:25
+#, fuzzy
+msgid "Semana"
+msgstr "Sistema"
+
+#: app/templates/tareas_calendario.html:25
+#, fuzzy
+msgid "Mes"
+msgstr "Menús"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+msgid "Lun"
+msgstr "Dl"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+msgid "Mar"
+msgstr "Dt"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+msgid "Mié"
+msgstr "Dc"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+#, fuzzy
+msgid "Jue"
+msgstr "Ajustos"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+msgid "Vie"
+msgstr "Dv"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+msgid "Sáb"
+msgstr "Ds"
+
+#: app/templates/tareas_calendario.html:41
+#: app/templates/tareas_calendario.html:87
+#, fuzzy
+msgid "Dom"
+msgstr "Idioma"
+
+#: app/templates/tareas_calendario.html:50
+#, python-format
+msgid "+%(n)s más"
+msgstr "+%(n)s més"
+
+#: app/templates/tareas_calendario.html:70
+msgid "No hay tareas este día. Haz clic en una franja horaria de abajo para crear una."
+msgstr "No hi ha tasques aquest dia. Fes clic en una franja horària de sota per crear-ne una."
+
+#: app/templates/tareas_calendario.html:92
+#, fuzzy
+msgid "Sin tareas"
+msgstr "Tasques"
+
+#: app/templates/tareas_calendario.html:108
+#, fuzzy
+msgid "Asunto de la tarea..."
+msgstr "Nom de la tasca"
+
+#: app/templates/tareas_calendario.html:121 app/templates/tareas_lista.html:71
+msgid "Categoría Outlook (opcional)"
+msgstr "Categoria Outlook (opcional)"
+
+#: app/templates/tareas_calendario.html:127
+#, fuzzy
+msgid "Crear tarea"
+msgstr "Nova tasca"
+
+#: app/templates/tareas_lista.html:7
+msgid "Lista de tareas estilo Outlook, independiente de tus menús. Asunto, vencimiento, prioridad y estado."
+msgstr "Llista de tasques estil Outlook, independent dels teus menús. Assumpte, venciment, prioritat i estat."
+
+#: app/templates/tareas_lista.html:21
+msgid "Todos (sin completadas)"
+msgstr "Tots (sense completades)"
+
+#: app/templates/tareas_lista.html:29 app/templates/tareas_lista.html:38
+msgid "Todas"
+msgstr "Totes"
+
+#: app/templates/tareas_lista.html:36
+msgid "Categoría"
+msgstr "Categoria"
+
+#: app/templates/tareas_lista.html:49
+msgid "Ver también completadas"
+msgstr "Veure també completades"
+
+#: app/templates/tareas_lista.html:57
+msgid "Asunto..."
+msgstr "Assumpte..."
+
+#: app/templates/tareas_lista.html:81
+msgid "No hay tareas para este filtro."
+msgstr "No hi ha tasques per a aquest filtre."
+
+#: app/templates/tareas_lista.html:87
+msgid "Marcar como completada"
+msgstr "Marcar com a completada"
+
+#: app/templates/tareas_lista.html:99
+#, python-format
+msgid "Vence %(fecha)s"
+msgstr "Venç %(fecha)s"
+
+#: app/templates/tareas_lista.html:106
+msgid "¿Eliminar esta tarea? Se moverá a la papelera."
+msgstr "Vols eliminar aquesta tasca? Es mourà a la paperera."
+
+#: app/templates/tareas_outlook_sync.html:2
+msgid "Sincronizar con Outlook"
+msgstr "Sincronitzar amb Outlook"
+
+#: app/templates/tareas_outlook_sync.html:7
+msgid "Importar y exportar con Microsoft Outlook Classic mediante archivo (.ics / .csv)."
+msgstr "Importar i exportar amb Microsoft Outlook Classic mitjançant fitxer (.ics / .csv)."
+
+#: app/templates/tareas_outlook_sync.html:23
+#, fuzzy
+msgid "creadas"
+msgstr "Crear"
+
+#: app/templates/tareas_outlook_sync.html:24
+msgid "actualizadas"
+msgstr "actualitzades"
+
+#: app/templates/tareas_outlook_sync.html:24
+msgid "omitidas."
+msgstr "omeses."
+
+#: app/templates/tareas_outlook_sync.html:30
+msgid "Exportar a Outlook"
+msgstr "Exportar a Outlook"
+
+#: app/templates/tareas_outlook_sync.html:31
+msgid "Genera un archivo con todas tus tareas activas, listo para importar en Outlook Classic (\"Archivo &gt; Abrir y exportar &gt; Importar o exportar &gt; Exportar a un archivo\", o arrastrando el .ics sobre tu carpeta de Tareas)."
+msgstr "Genera un fitxer amb totes les teves tasques actives, llest per importar a Outlook Classic (\"Fitxer &gt; Obrir i exportar &gt; Importar o exportar &gt; Exportar a un fitxer\", o arrossegant l'.ics sobre la teva carpeta de Tasques)."
+
+#: app/templates/tareas_outlook_sync.html:33
+msgid "Exportar .ics"
+msgstr "Exportar .ics"
+
+#: app/templates/tareas_outlook_sync.html:34
+msgid "Exportar .csv"
+msgstr "Exportar .csv"
+
+#: app/templates/tareas_outlook_sync.html:39
+msgid "Importar desde Outlook"
+msgstr "Importar des d'Outlook"
+
+#: app/templates/tareas_outlook_sync.html:40
+msgid "Sube un archivo .ics o .csv exportado desde la carpeta de Tareas de Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez de duplicarse (se reconocen por su UID); las de .csv se crean siempre como nuevas, porque ese formato no trae un identificador único."
+msgstr "Puja un fitxer .ics o .csv exportat des de la carpeta de Tasques d'Outlook Classic. Les tasques .ics ja importades abans s'actualitzen en lloc de duplicar-se (es reconeixen pel seu UID); les de .csv es creen sempre com a noves, perquè aquest format no porta un identificador únic."
+
+#: app/templates/tareas_outlook_sync.html:49
+msgid "La sincronización en vivo con Outlook Classic (sin exportar/importar archivos a mano) llegará en una fase posterior."
+msgstr "La sincronització en viu amb Outlook Classic (sense exportar/importar fitxers a mà) arribarà en una fase posterior."
+
+#: app/templates/tiquet_editar.html:2
+#, fuzzy
+msgid "Editar tiquet"
+msgstr "Editar"
+
+#: app/templates/tiquet_editar.html:6
+#, python-format
+msgid "Editar tiquet #%(id)s"
+msgstr "Editar tiquet #%(id)s"
+
+#: app/templates/tiquet_editar.html:7
+#, python-format
+msgid "Creado el %(fecha)s"
+msgstr "Creat el %(fecha)s"
+
+#: app/templates/tiquet_editar.html:23
+msgid "Título"
+msgstr "Títol"
+
+#: app/templates/tiquet_editar.html:31
+msgid "Adjuntos ya subidos"
+msgstr "Adjunts ja pujats"
+
+#: app/templates/tiquet_editar.html:43
+msgid "Añadir más adjuntos (capturas o PDF)"
+msgstr "Afegir més adjunts (captures o PDF)"
+
+#: app/templates/tiquet_editar.html:55
+msgid "Quitar un adjunto"
+msgstr "Treure un adjunt"
+
+#: app/templates/tiquet_editar.html:59
+#, python-format
+msgid "¿Quitar %(nombre)s?"
+msgstr "Vols treure %(nombre)s?"
+
+#: app/templates/tiquet_editar.html:68
+msgid "¿Eliminar este tiquet? No se puede deshacer."
+msgstr "Vols eliminar aquest tiquet? No es pot desfer."
+
+#: app/templates/tiquet_editar.html:69
+msgid "Eliminar tiquet"
+msgstr "Eliminar tiquet"
+
+#: app/templates/tiquets_kanban.html:2
+#, fuzzy
+msgid "Tiquets — Kanban"
+msgstr "Tiquets"
+
+#: app/templates/tiquets_kanban.html:8
+msgid "Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna."
+msgstr "Arrossega... bé, tria l'estat nou a cada targeta per moure-la de columna."
+
+#: app/templates/tiquets_kanban.html:9
+msgid "Solo un administrador puede mover tiquets entre columnas."
+msgstr "Només un administrador pot moure tiquets entre columnes."
+
+#: app/templates/tiquets_kanban.html:15 app/templates/tiquets_tarjetas.html:12
+#, fuzzy
+msgid "Tarjetas"
+msgstr "Tasques"
+
+#: app/templates/tiquets_kanban.html:42 app/templates/tiquets_tarjetas.html:58
+msgid "(usuario eliminado)"
+msgstr "(usuari eliminat)"
+
+#: app/templates/tiquets_kanban.html:45 app/templates/tiquets_tarjetas.html:65
+#, python-format
+msgid "¿Eliminar el tiquet #%(id)s? No se puede deshacer."
+msgstr "Vols eliminar el tiquet #%(id)s? No es pot desfer."
+
+#: app/templates/tiquets_kanban.html:64
+msgid "Sin tiquets aquí."
+msgstr "Sense tiquets aquí."
+
+#: app/templates/tiquets_tarjetas.html:7
+msgid "Errores y sugerencias sobre Guilda Work. Tablero compartido: todo el mundo ve todos los tiquets."
+msgstr "Errors i suggeriments sobre Guilda Work. Tauler compartit: tothom veu tots els tiquets."
+
+#: app/templates/tiquets_tarjetas.html:18
+#, fuzzy
+msgid "Nuevo tiquet"
+msgstr "Nou menú"
+
+#: app/templates/tiquets_tarjetas.html:25
+msgid "Título..."
+msgstr "Títol..."
+
+#: app/templates/tiquets_tarjetas.html:26
+msgid "Descripción (opcional)..."
+msgstr "Descripció (opcional)..."
+
+#: app/templates/tiquets_tarjetas.html:28
+#, fuzzy
+msgid "Crear tiquet"
+msgstr "Crear compte"
+
+#: app/templates/tiquets_tarjetas.html:35
+#, fuzzy
+msgid "Errores"
+msgstr "Tancar"
+
+#: app/templates/tiquets_tarjetas.html:35
+msgid "Sugerencias"
+msgstr "Suggeriments"
+
+#: app/templates/tiquets_tarjetas.html:37
+msgid "Sin tiquets de este tipo."
+msgstr "Sense tiquets d'aquest tipus."
+
+#: app/templates/docs/explorador_api.html:6
+msgid "Explorador de la API"
+msgstr "Explorador de l'API"
+
+#: app/templates/docs/explorador_api.html:7
+msgid "Referencia interactiva de /api/v1/*, generada en vivo desde el documento OpenAPI real."
+msgstr "Referència interactiva de /api/v1/*, generada en viu des del document OpenAPI real."
+
+#: app/templates/docs/explorador_api.html:18
+msgid "Referencia de la API"
+msgstr "Referència de l'API"
+
+#: app/templates/docs/explorador_api.html:25
+msgid "Filtrar endpoints..."
+msgstr "Filtrar endpoints..."
+
+#: app/templates/docs/explorador_api.html:28
+#, fuzzy
+msgid "Cargando"
+msgstr "Comprovant…"
+
+#: app/templates/docs/explorador_api.html:34
+msgid "EXPLORADOR DE API"
+msgstr "EXPLORADOR D'API"
+
+#: app/templates/docs/explorador_api.html:35
+msgid "Explorador de API interactivo"
+msgstr "Explorador d'API interactiu"
+
+#: app/templates/docs/explorador_api.html:37
+msgid "Generada en el navegador, en cada carga, a partir de"
+msgstr "Generada al navegador, a cada càrrega, a partir de"
+
+#: app/templates/docs/explorador_api.html:38
+msgid "el mismo documento OpenAPI 3.0 que puedes importar en Postman o Insomnia. Nunca se desincroniza del código real: si cambia una ruta, esto cambia solo."
+msgstr "el mateix document OpenAPI 3.0 que pots importar a Postman o Insomnia. Mai es desincronitza del codi real: si canvia una ruta, això canvia sol."
+
+#: app/templates/docs/explorador_api.html:40
+msgid "Elige un endpoint de la lista de la izquierda para ver sus parámetros, el cuerpo esperado y un"
+msgstr "Tria un endpoint de la llista de l'esquerra per veure'n els paràmetres, el cos esperat i un"
+
+#: app/templates/docs/explorador_api.html:40
+msgid "de ejemplo ya con la URL rellenada."
+msgstr "d'exemple ja amb la URL emplenada."
+
+#: app/templates/docs/pagina.html:19
+msgid "Buscar en la documentación..."
+msgstr "Cercar a la documentació..."
+
+#: app/templates/docs/pagina.html:23
+msgid "Volver a la app"
+msgstr "Tornar a l'app"
+
+#: app/templates/docs/pagina.html:28
+msgid "Buscar en la documentación"
+msgstr "Cercar a la documentació"
+
+#: app/templates/docs/pagina.html:31
+msgid "Buscar páginas, secciones..."
+msgstr "Cercar pàgines, seccions..."
+
+#: app/templates/docs/pagina.html:61
+msgid "GUILDA WORK DEVELOPERS"
+msgstr "GUILDA WORK DEVELOPERS"
+
+#: app/templates/docs/pagina.html:89
+#, fuzzy
+msgid "Copiar"
+msgstr "Iniciar"
+
+#: app/templates/docs/pagina.html:155
+msgid "EN ESTA PÁGINA"
+msgstr "EN AQUESTA PÀGINA"
 

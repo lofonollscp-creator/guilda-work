@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Captura rápida</title>
+  <title>{{ _('Captura rápida') }}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <style>
     * { box-sizing: border-box; }
@@ -55,9 +55,9 @@
       </select>
     </div>
     <div class="row">
-      <input type="text" id="texto" placeholder="Apunta algo que ha pasado..." autofocus>
+      <input type="text" id="texto" placeholder="{{ _('Apunta algo que ha pasado...') }}" autofocus>
     </div>
-    <p class="hint">Enter para guardar · Esc para cancelar</p>
+    <p class="hint">{{ _('Enter para guardar · Esc para cancelar') }}</p>
   </div>
   <script>
     function cerrarVentana() {

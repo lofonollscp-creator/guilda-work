@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,23 +16,23 @@
     </a>
     <button type="button" id="docs-buscar-abrir" class="docs-buscar-boton">
       <span class="docs-buscar-icono">🔍</span>
-      <span class="docs-buscar-placeholder">Buscar en la documentación...</span>
+      <span class="docs-buscar-placeholder">{{ _('Buscar en la documentación...') }}</span>
       <span class="docs-buscar-atajo">Ctrl K</span>
     </button>
     <nav class="docs-topbar-links">
-      <a href="{{ url_for('inicio') }}">← Volver a la app</a>
+      <a href="{{ url_for('inicio') }}">← {{ _('Volver a la app') }}</a>
     </nav>
   </header>
 
   <div id="docs-buscar-overlay" class="docs-buscar-overlay" hidden>
-    <div class="docs-buscar-modal" role="dialog" aria-modal="true" aria-label="Buscar en la documentación">
+    <div class="docs-buscar-modal" role="dialog" aria-modal="true" aria-label="{{ _('Buscar en la documentación') }}">
       <div class="docs-buscar-campo">
         <span class="docs-buscar-icono">🔍</span>
-        <input type="text" id="docs-buscar-input" placeholder="Buscar páginas, secciones..." autocomplete="off">
+        <input type="text" id="docs-buscar-input" placeholder="{{ _('Buscar páginas, secciones...') }}" autocomplete="off">
         <kbd>Esc</kbd>
       </div>
       <ul id="docs-buscar-resultados" class="docs-buscar-resultados"></ul>
-      <p id="docs-buscar-vacio" class="docs-buscar-vacio" hidden>Sin resultados.</p>
+      <p id="docs-buscar-vacio" class="docs-buscar-vacio" hidden>{{ _('Sin resultados.') }}</p>
     </div>
   </div>
   <script type="application/json" id="docs-indice-busqueda">{{ indice_busqueda | tojson }}</script>
@@ -40,7 +40,7 @@
   <div class="docs-shell">
     <aside class="docs-sidebar">
       <nav>
-        <a class="docs-sidebar-toplink {{ 'is-active' if slug_actual == '' else '' }}" href="{{ url_for('docs.pagina') }}">Guía para desarrolladores</a>
+        <a class="docs-sidebar-toplink {{ 'is-active' if slug_actual == '' else '' }}" href="{{ url_for('docs.pagina') }}">{{ _('Guía para desarrolladores') }}</a>
         {% for grupo, paginas in navegacion %}
         <div class="docs-sidebar-grupo">
           <h3>{{ grupo }}</h3>
@@ -58,7 +58,7 @@
 
     <main class="docs-content">
       <div class="docs-content-inner">
-        <p class="docs-kicker">{{ pagina.grupo or 'GUILDA WORK DEVELOPERS' }}</p>
+        <p class="docs-kicker">{{ pagina.grupo or _('GUILDA WORK DEVELOPERS') }}</p>
         <h1>{{ pagina.titulo }}</h1>
         <p class="docs-lead">{{ pagina.descripcion }}</p>
 
@@ -86,7 +86,7 @@
             <div class="docs-code">
               <div class="docs-code-cabecera">
                 <span>{{ bloque.lang }}</span>
-                <button type="button" class="docs-code-copiar" data-code="{{ bloque.code }}">Copiar</button>
+                <button type="button" class="docs-code-copiar" data-code="{{ bloque.code }}">{{ _('Copiar') }}</button>
               </div>
               <pre><code>{{ bloque.code }}</code></pre>
             </div>
@@ -133,15 +133,15 @@
         <div class="docs-footer-nav">
           {% if pagina_anterior %}
           <a class="docs-footer-nav-adyacente" href="{{ url_for('docs.pagina', slug=pagina_anterior.slug) }}">
-            <span class="docs-footer-nav-kicker">← Anterior</span>
+            <span class="docs-footer-nav-kicker">← {{ _('Anterior') }}</span>
             <span class="docs-footer-nav-adyacente-titulo">{{ pagina_anterior.titulo }}</span>
           </a>
           {% else %}
-          <a href="{{ url_for('docs.pagina') }}">← Guía para desarrolladores</a>
+          <a href="{{ url_for('docs.pagina') }}">← {{ _('Guía para desarrolladores') }}</a>
           {% endif %}
           {% if pagina_siguiente %}
           <a class="docs-footer-nav-adyacente docs-footer-nav-adyacente-siguiente" href="{{ url_for('docs.pagina', slug=pagina_siguiente.slug) }}">
-            <span class="docs-footer-nav-kicker">Siguiente →</span>
+            <span class="docs-footer-nav-kicker">{{ _('Siguiente') }} →</span>
             <span class="docs-footer-nav-adyacente-titulo">{{ pagina_siguiente.titulo }}</span>
           </a>
           {% endif %}
@@ -152,7 +152,7 @@
     <aside class="docs-toc">
       {% set titulos = pagina.bloques | selectattr('type', 'equalto', 'h2') | list %}
       {% if titulos %}
-      <p class="docs-toc-titulo">EN ESTA PÁGINA</p>
+      <p class="docs-toc-titulo">{{ _('EN ESTA PÁGINA') }}</p>
       <ul>
         {% for bloque in titulos %}
         <li><a href="#{{ bloque.id }}">{{ bloque.text }}</a></li>

@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Explorador de la API — Guilda Work Developers</title>
-  <meta name="description" content="Referencia interactiva de /api/v1/*, generada en vivo desde el documento OpenAPI real.">
+  <title>{{ _('Explorador de la API') }} — Guilda Work Developers</title>
+  <meta name="description" content="{{ _('Referencia interactiva de /api/v1/*, generada en vivo desde el documento OpenAPI real.') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='docs.css') }}">
 </head>
@@ -15,34 +15,29 @@
       <span>Guilda Work<em>Developers</em></span>
     </a>
     <nav class="docs-topbar-links">
-      <a href="{{ url_for('docs.pagina', slug='referencia-api') }}">← Referencia de la API</a>
+      <a href="{{ url_for('docs.pagina', slug='referencia-api') }}">← {{ _('Referencia de la API') }}</a>
     </nav>
   </header>
 
   <div class="api-explorer" id="api-explorer">
     <aside class="api-explorer-lista">
       <div class="api-explorer-buscar">
-        <input type="text" id="api-explorer-filtro" placeholder="Filtrar endpoints..." autocomplete="off">
+        <input type="text" id="api-explorer-filtro" placeholder="{{ _('Filtrar endpoints...') }}" autocomplete="off">
       </div>
       <div id="api-explorer-grupos" class="api-explorer-grupos">
-        <p class="api-explorer-cargando">Cargando <code>/api/v1/openapi.json</code>…</p>
+        <p class="api-explorer-cargando">{{ _('Cargando') }} <code>/api/v1/openapi.json</code>…</p>
       </div>
     </aside>
 
     <main class="api-explorer-detalle" id="api-explorer-detalle">
       <div class="api-explorer-vacio">
-        <p class="docs-kicker">EXPLORADOR DE API</p>
-        <h1>Explorador de API interactivo</h1>
+        <p class="docs-kicker">{{ _('EXPLORADOR DE API') }}</p>
+        <h1>{{ _('Explorador de API interactivo') }}</h1>
         <p class="docs-lead">
-          Generada en el navegador, en cada carga, a partir de
-          <code>GET /api/v1/openapi.json</code> — el mismo documento OpenAPI
-          3.0 que puedes importar en Postman o Insomnia. Nunca se
-          desincroniza del código real: si cambia una ruta, esto cambia
-          solo.
+          {{ _('Generada en el navegador, en cada carga, a partir de') }}
+          <code>GET /api/v1/openapi.json</code> — {{ _('el mismo documento OpenAPI 3.0 que puedes importar en Postman o Insomnia. Nunca se desincroniza del código real: si cambia una ruta, esto cambia solo.') }}
         </p>
-        <p>Elige un endpoint de la lista de la izquierda para ver sus
-        parámetros, el cuerpo esperado y un <code>curl</code> de ejemplo ya
-        con la URL rellenada.</p>
+        <p>{{ _('Elige un endpoint de la lista de la izquierda para ver sus parámetros, el cuerpo esperado y un') }} <code>curl</code> {{ _('de ejemplo ya con la URL rellenada.') }}</p>
       </div>
     </main>
   </div>
