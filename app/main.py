@@ -22,6 +22,7 @@ from pathlib import Path
 
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import ai_local, busqueda, correo, db, export, herramientas, ia_asistente, importador, kratos
 from .auth import limiter, login_required
@@ -80,6 +81,14 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 # GUILDA_SECRET_KEY como variable de entorno para que las sesiones no se
 # invaliden cada vez que se reinicie el proceso.
 app.secret_key = os.environ.get("GUILDA_SECRET_KEY") or secrets.token_hex(32)
+# En modo hospedado, Caddy reenvía a Flask por localhost -- sin esto,
+# request.remote_addr (y por tanto el rate-limit de app/auth.py y el
+# contador de fallos de login de app/rutas_kratos_proxy.py) verían siempre
+# la propia IP de Caddy (127.0.0.1), nunca la del visitante real. Caddy
+# manda X-Forwarded-For de un solo salto por defecto en `reverse_proxy`,
+# de ahí x_for=1 -- en modo escritorio (sin Caddy delante) no hay cabecera
+# que reescribir, así que esto no cambia nada allí.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 limiter.init_app(app)
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)

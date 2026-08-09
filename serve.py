@@ -33,4 +33,18 @@ if __name__ == "__main__":
     db.init_db()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))
-    serve(app, host=host, port=port)
+    # Caddy reenvía aquí por localhost (ver deploy/Caddyfile) mandando
+    # X-Forwarded-For/-Proto con la IP/protocolo real del visitante — pero
+    # Waitress, por defecto (desde la 3.0), DESCARTA esas cabeceras salvo
+    # que se le diga explícitamente en qué proxy confiar (si no, cualquiera
+    # que hable directo con este puerto podría falsificar su propia IP).
+    # trusted_proxy="127.0.0.1" es justo eso: solo se fía de lo que diga
+    # Caddy, nunca de una conexión directa. Sin esto, request.remote_addr
+    # (usado por el rate-limit de app/auth.py y por el contador de fallos
+    # de login de app/rutas_kratos_proxy.py) veía siempre 127.0.0.1.
+    serve(
+        app, host=host, port=port,
+        trusted_proxy="127.0.0.1",
+        trusted_proxy_headers={"x-forwarded-for", "x-forwarded-proto"},
+        clear_untrusted_proxy_headers=True,
+    )
