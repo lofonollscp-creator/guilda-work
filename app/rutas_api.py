@@ -276,12 +276,26 @@ def dashboard():
     activas = db.tareas_activas(g.usuario_id)
     hoy = datetime.now().strftime("%Y-%m-%d")
     log_hoy = db.historial(g.usuario_id, desde=hoy, hasta=hoy)
+    onboarding_visible = db.onboarding_visible(g.usuario_id)
     return _ok({
         "menus": _dicts(menus),
         "tareas_activas": _dicts(activas),
         "notas_hoy": len([f for f in log_hoy if f["origen"] == "nota"]),
         "correos_no_leidos": db.contar_no_leidos_total_correo(g.usuario_id),
+        # Mismo checklist calculado en caliente que en la web (app/main.py:
+        # inicio()) -- ver GuildaWorkApp/dashboard_screen.dart.
+        "onboarding_visible": onboarding_visible,
+        "onboarding_tiene_menu": bool(menus) if onboarding_visible else None,
+        "onboarding_tiene_correo": bool(db.listar_cuentas_correo(g.usuario_id)) if onboarding_visible else None,
+        "onboarding_ha_usado_ia": bool(db.listar_mensajes_ia(g.usuario_id)) if onboarding_visible else None,
     })
+
+
+@api_bp.route("/onboarding/ocultar", methods=["POST"])
+@token_required
+def ocultar_onboarding():
+    db.ocultar_onboarding(g.usuario_id)
+    return _ok()
 
 
 @api_bp.route("/historial", methods=["GET"])

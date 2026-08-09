@@ -913,6 +913,12 @@ def init_db() -> None:
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_fichajes_cliente_uuid ON fichajes(cliente_uuid) WHERE cliente_uuid IS NOT NULL")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas(cliente_uuid) WHERE cliente_uuid IS NOT NULL")
 
+        # Checklist de onboarding del dashboard (web y móvil) — los pasos en
+        # sí NO se trackean aparte (crear un menú, conectar correo, hablar
+        # con la IA ya se pueden comprobar con datos que ya existen); esta
+        # columna solo recuerda si el usuario ha pedido ocultar la tarjeta.
+        _asegurar_columna(conn, "usuarios", "onboarding_visible", "INTEGER NOT NULL DEFAULT 1")
+
         conn.commit()
     finally:
         conn.close()
@@ -982,6 +988,24 @@ def obtener_usuario(usuario_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def onboarding_visible(usuario_id: int) -> bool:
+    conn = get_connection()
+    try:
+        fila = conn.execute("SELECT onboarding_visible FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        return bool(fila["onboarding_visible"]) if fila else False
+    finally:
+        conn.close()
+
+
+def ocultar_onboarding(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET onboarding_visible = 0 WHERE id = ?", (usuario_id,))
+        conn.commit()
     finally:
         conn.close()
 

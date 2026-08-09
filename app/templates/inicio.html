@@ -9,6 +9,34 @@
   </div>
 </header>
 
+{% if onboarding %}
+<section class="onboarding-card">
+  <div class="onboarding-card-header">
+    <h3>Primeros pasos</h3>
+    <form action="{{ url_for('ocultar_onboarding') }}" method="post">
+      <button type="submit" class="btn btn-ghost" title="Ocultar esta tarjeta">Ocultar</button>
+    </form>
+  </div>
+  <ul class="onboarding-lista">
+    <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_menu }}">
+      <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.tiene_menu else '' }}</span>
+      <span>Crea tu primer menú</span>
+      {% if not onboarding.tiene_menu %}<a class="onboarding-ir" href="#new-menu">Crear</a>{% endif %}
+    </li>
+    <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_correo }}">
+      <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.tiene_correo else '' }}</span>
+      <span>Conecta una cuenta de correo</span>
+      {% if not onboarding.tiene_correo %}<a class="onboarding-ir" href="{{ url_for('correo.bandeja') }}">Ir a Correo</a>{% endif %}
+    </li>
+    <li class="onboarding-paso {{ 'is-hecho' if onboarding.ha_usado_ia }}">
+      <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.ha_usado_ia else '' }}</span>
+      <span>Prueba el asistente IA</span>
+      {% if not onboarding.ha_usado_ia %}<a class="onboarding-ir" href="{{ url_for('ia.asistente_vista') }}">Abrir</a>{% endif %}
+    </li>
+  </ul>
+</section>
+{% endif %}
+
 <section class="dash-stats">
   <div class="dash-stat">
     <span class="dash-stat-valor">{{ total_activas }}</span>
@@ -148,7 +176,7 @@
   {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-dashboard') }}
 </section>
 
-<section class="new-menu">
+<section class="new-menu" id="new-menu">
   <h3>+ Nuevo menú</h3>
   <form class="inline-form" method="post" action="{{ url_for('crear_menu') }}">
     <input type="text" name="nombre" placeholder="Nombre del menú (ej. Lueira, Guilda...)" required>

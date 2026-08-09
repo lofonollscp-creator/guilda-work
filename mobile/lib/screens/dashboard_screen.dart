@@ -217,6 +217,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (_dashboard?['onboarding_visible'] == true) ...[
+                  _tarjetaOnboarding(),
+                  const SizedBox(height: 16),
+                ],
                 _tarjetaStats(),
                 const SizedBox(height: 16),
                 _tarjetaNotaRapida(),
@@ -240,6 +244,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
       ),
     );
+  }
+
+  Widget _tarjetaOnboarding() {
+    final tieneMenu = _dashboard?['onboarding_tiene_menu'] == true;
+    final tieneCorreo = _dashboard?['onboarding_tiene_correo'] == true;
+    final haUsadoIa = _dashboard?['onboarding_ha_usado_ia'] == true;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 4, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Primeros pasos', style: Theme.of(context).textTheme.titleSmall),
+                  TextButton(onPressed: _ocultarOnboarding, child: const Text('Ocultar')),
+                ],
+              ),
+            ),
+            _pasoOnboarding(
+              'Crea tu primer menú',
+              tieneMenu,
+              onTap: tieneMenu ? null : () => _crearMenu(),
+            ),
+            _pasoOnboarding(
+              'Conecta una cuenta de correo',
+              tieneCorreo,
+              onTap: tieneCorreo
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
+                      ),
+            ),
+            // El asistente IA todavía no tiene pantalla propia en la app
+            // móvil (solo en la web) -- se deja como indicador informativo,
+            // sin enlace, en vez de inventar una navegación que no existe.
+            _pasoOnboarding('Prueba el asistente IA (desde la web)', haUsadoIa),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pasoOnboarding(String texto, bool hecho, {VoidCallback? onTap}) {
+    return ListTile(
+      dense: true,
+      leading: Icon(
+        hecho ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: hecho ? Colors.green : Theme.of(context).disabledColor,
+        size: 20,
+      ),
+      title: Text(
+        texto,
+        style: hecho ? TextStyle(decoration: TextDecoration.lineThrough, color: Theme.of(context).disabledColor) : null,
+      ),
+      trailing: onTap != null ? const Icon(Icons.chevron_right) : null,
+      onTap: onTap,
+    );
+  }
+
+  Future<void> _ocultarOnboarding() async {
+    try {
+      await widget.api.ocultarOnboarding();
+      if (!mounted) return;
+      setState(() => _dashboard = {...?_dashboard, 'onboarding_visible': false});
+    } catch (_) {
+      // Fallo silencioso: si la petición no llega, la tarjeta sigue
+      // visible y el usuario puede volver a intentar "Ocultar" sin más.
+    }
   }
 
   Widget _tarjetaStats() {

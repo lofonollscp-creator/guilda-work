@@ -345,6 +345,20 @@ def inicio():
     entradas_hoy = {m["id"]: db.contar_entradas_hoy(g.usuario_id, m["id"]) for m in menus}
     hoy = datetime.now().strftime("%Y-%m-%d")
     log_hoy = db.historial(g.usuario_id, desde=hoy, hasta=hoy)
+
+    # Checklist de onboarding: los 3 pasos se calculan en caliente a partir
+    # de datos que ya existen (nunca se trackean aparte, para que no puedan
+    # desincronizarse) — solo se calculan si la tarjeta sigue visible, para
+    # no gastar 2 consultas de más en cada visita una vez descartada.
+    mostrar_onboarding = db.onboarding_visible(g.usuario_id)
+    onboarding = None
+    if mostrar_onboarding:
+        onboarding = {
+            "tiene_menu": bool(menus),
+            "tiene_correo": bool(db.listar_cuentas_correo(g.usuario_id)),
+            "ha_usado_ia": bool(db.listar_mensajes_ia(g.usuario_id)),
+        }
+
     return render_template(
         "inicio.html",
         menus=menus,
@@ -353,7 +367,15 @@ def inicio():
         log_hoy=log_hoy,
         total_activas=len(activas),
         total_notas_hoy=len([f for f in log_hoy if f["origen"] == "nota"]),
+        onboarding=onboarding,
     )
+
+
+@app.route("/onboarding/ocultar", methods=["POST"])
+@login_required
+def ocultar_onboarding():
+    db.ocultar_onboarding(g.usuario_id)
+    return redirect(url_for("inicio"))
 
 
 @app.route("/menus", methods=["POST"])

@@ -178,6 +178,14 @@ class ApiClient {
     }
   }
 
+  Future<void> ocultarOnboarding() async {
+    try {
+      await _dio.post('/onboarding/ocultar');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
   Future<List<Categoria>> listarCategorias() async {
     try {
       final resp = await _dio.get('/categorias');
