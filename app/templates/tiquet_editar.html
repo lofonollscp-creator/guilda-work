@@ -58,7 +58,7 @@
         style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"
         onsubmit="return confirm('¿Quitar {{ a.nombre_archivo }}?');">
     <span style="flex: 1;">📎 {{ a.nombre_archivo }}</span>
-    <button type="submit" class="chip-del" title="Quitar">✕</button>
+    <button type="submit" class="chip-del" title="Quitar" aria-label="Quitar">✕</button>
   </form>
   {% endfor %}
 </div>

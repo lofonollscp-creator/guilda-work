@@ -101,10 +101,10 @@
     <span class="log-badge log-badge-{{ 'duracion' if t.estado == 'completada' else 'instantanea' }}">
       {{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}
     </span>
-    <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="Editar">✏</a>
+    <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="Editar" aria-label="Editar">✏</a>
     <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
           onsubmit="return confirm('¿Eliminar esta tarea? Se moverá a la papelera.');">
-      <button type="submit" class="chip-del" title="Eliminar">✕</button>
+      <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
     </form>
   </li>
   {% endfor %}

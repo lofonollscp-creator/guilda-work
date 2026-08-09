@@ -22,7 +22,7 @@
     </span>
     <form action="{{ url_for('backoffice.revocar_dispositivo_usuario', usuario_id=usuario.id, token_id=d.id) }}" method="post"
           onsubmit="return confirm('¿Revocar el acceso de «{{ d.nombre_dispositivo or 'este dispositivo' }}»? {{ usuario.email }} tendrá que iniciar sesión de nuevo en la app.');">
-      <button type="submit" class="chip-del" title="Revocar acceso">✕</button>
+      <button type="submit" class="chip-del" title="Revocar acceso" aria-label="Revocar acceso">✕</button>
     </form>
   </li>
   {% endfor %}

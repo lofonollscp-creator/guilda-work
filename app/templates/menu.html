@@ -127,7 +127,7 @@
     <h3>Registro de {{ menu.nombre }}</h3>
     <form class="search-form" method="get" action="{{ url_for('ver_menu', menu_id=menu.id) }}">
       <input type="search" name="q" value="{{ q }}" placeholder="Buscar en este menú...">
-      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="Limpiar búsqueda">✕</a>{% endif %}
+      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</a>{% endif %}
     </form>
   </div>
   {% if not log %}
@@ -160,7 +160,7 @@
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar">✏</a>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar" aria-label="Editar">✏</a>
     </li>
     {% endfor %}
   </ul>

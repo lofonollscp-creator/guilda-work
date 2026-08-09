@@ -15,7 +15,7 @@
 <div class="correo-compose">
   <div class="correo-compose-header">
     <h1>{{ titulo }}</h1>
-    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="Cerrar">✕</a>
+    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="Cerrar" aria-label="Cerrar">✕</a>
   </div>
 
   {% if error %}

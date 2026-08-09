@@ -60,7 +60,7 @@
           {{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m
         {% else %}—{% endif %}
       </td>
-      <td><a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar">✏</a></td>
+      <td><a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar" aria-label="Editar">✏</a></td>
     </tr>
     {% else %}
     <tr><td colspan="6" class="empty">No hay registros para este filtro.</td></tr>

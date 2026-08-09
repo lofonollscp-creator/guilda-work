@@ -95,7 +95,7 @@
   {% macro tarjeta_menu(m, es_primero, es_ultimo, mostrar_reorder) %}
   <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
     <form class="menu-card-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
-      <button type="submit" title="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}">{{ '★' if m.favorito else '☆' }}</button>
+      <button type="submit" title="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}" aria-label="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}">{{ '★' if m.favorito else '☆' }}</button>
     </form>
     <a class="menu-card-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
       <div class="menu-card-top">
@@ -163,7 +163,7 @@
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar">✏</a>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar" aria-label="Editar">✏</a>
     </li>
     {% endfor %}
   </ul>
@@ -179,8 +179,10 @@
 <section class="new-menu" id="new-menu">
   <h3>+ Nuevo menú</h3>
   <form class="inline-form" method="post" action="{{ url_for('crear_menu') }}">
-    <input type="text" name="nombre" placeholder="Nombre del menú (ej. Lueira, Guilda...)" required>
-    <input type="color" name="color" value="#4a90d9" title="Color del menú">
+    <label class="sr-only" for="nuevo-menu-nombre">Nombre del menú</label>
+    <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="Nombre del menú (ej. Lueira, Guilda...)" required>
+    <label class="sr-only" for="nuevo-menu-color">Color del menú</label>
+    <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="Color del menú" aria-label="Color del menú">
     <button type="submit" class="btn btn-primary">Crear menú</button>
   </form>
 </section>

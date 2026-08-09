@@ -51,7 +51,7 @@
       <span class="log-text">{{ cat.nombre }}</span>
       <form action="{{ url_for('correo.eliminar_categoria', categoria_id=cat.id) }}" method="post"
             onsubmit="return confirm('¿Eliminar la categoría «{{ cat.nombre }}»? Los mensajes que la tuvieran se quedan sin categoría.');">
-        <button type="submit" class="chip-del" title="Eliminar">✕</button>
+        <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
       </form>
     </li>
     {% endfor %}
@@ -77,7 +77,7 @@
       <span class="log-text">{{ regla.remitente_patron }} &rarr; {{ regla.categoria_nombre }}</span>
       <form action="{{ url_for('correo.eliminar_regla_categoria', regla_id=regla.id) }}" method="post"
             onsubmit="return confirm('¿Eliminar esta regla?');">
-        <button type="submit" class="chip-del" title="Eliminar">✕</button>
+        <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
       </form>
     </li>
     {% endfor %}
@@ -110,7 +110,7 @@
       <span class="log-text">{{ r.direccion }}</span>
       <form action="{{ url_for('correo.eliminar_remitente_confiable', remitente_id=r.id) }}" method="post"
             onsubmit="return confirm('¿Quitar «{{ r.direccion }}» de la lista de confianza?');">
-        <button type="submit" class="chip-del" title="Eliminar">✕</button>
+        <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
       </form>
     </li>
     {% endfor %}

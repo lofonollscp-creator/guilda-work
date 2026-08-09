@@ -4,7 +4,7 @@
 <div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
   <div class="correo-topbar">
     <span class="correo-topbar-titulo">Correo</span>
-    <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="Ajustes">⚙</a>
+    <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="Ajustes" aria-label="Ajustes">⚙</a>
   </div>
 
   <aside class="correo-rail">
@@ -40,7 +40,7 @@
     <form class="correo-lista-toolbar" method="get">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
       <input type="hidden" name="carpeta" value="{{ carpeta }}">
-      <input type="search" name="q" value="{{ q }}" placeholder="Buscar correo...">
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar correo..." aria-label="Buscar correo">
       <label class="correo-toolbar-check">
         <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} onchange="this.form.requestSubmit()"> No leídos
       </label>
@@ -61,7 +61,7 @@
       <button type="button" data-accion="destacar" data-valor="true">⚑ Destacar</button>
       <button type="button" data-accion="destacar" data-valor="false">Quitar destacado</button>
       {% if carpetas|length > 1 %}
-      <select id="correo-bulkbar-carpeta">
+      <select id="correo-bulkbar-carpeta" aria-label="Mover los mensajes seleccionados a">
         <option value="">Mover a…</option>
         {% for f in carpetas %}
         {% if f.nombre != carpeta %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endif %}
@@ -144,7 +144,7 @@
       {% if carpetas|length > 1 %}
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.mover_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-          <select name="carpeta_destino" class="correo-ribbon-select" onchange="this.form.requestSubmit()">
+          <select name="carpeta_destino" class="correo-ribbon-select" onchange="this.form.requestSubmit()" aria-label="Mover el mensaje a">
             <option value="">Mover a…</option>
             {% for f in carpetas %}
             {% if f.nombre != mensaje_seleccionado.carpeta %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endif %}
@@ -174,7 +174,7 @@
       <div class="correo-ribbon-grupo">
         {% if categorias %}
         <form action="{{ url_for('correo.asignar_categoria', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-          <select name="categoria_id" class="correo-categoria-select" style="{{ 'border-color: ' + cat_actual.color if cat_actual }}" onchange="this.form.requestSubmit()">
+          <select name="categoria_id" class="correo-categoria-select" style="{{ 'border-color: ' + cat_actual.color if cat_actual }}" onchange="this.form.requestSubmit()" aria-label="Categoría del mensaje">
             <option value="">Sin categoría</option>
             {% for cat in categorias %}
             <option value="{{ cat.id }}" {% if mensaje_seleccionado.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>

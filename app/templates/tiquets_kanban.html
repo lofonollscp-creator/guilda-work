@@ -44,7 +44,7 @@
           <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
                 onsubmit="return confirm('¿Eliminar el tiquet #{{ t.id }}? No se puede deshacer.');">
             <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
-            <button type="submit" class="chip-del" title="Eliminar">✕</button>
+            <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
           </form>
           {% endif %}
         </div>

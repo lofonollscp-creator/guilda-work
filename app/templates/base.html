@@ -27,9 +27,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#contenido-principal">Saltar al contenido</a>
   <div class="app-shell">
     <aside class="icon-rail">
-      <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="Expandir/contraer menú">
+      <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="Expandir/contraer menú" aria-label="Expandir o contraer el menú">
         <span class="icon-rail-icono">&#9776;</span>
       </button>
       <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="Menús / Dashboard">
@@ -101,7 +102,7 @@
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <div class="ajustes-menu">
-          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="Ajustes">&#9881;</button>
+          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="Ajustes" aria-label="Ajustes">&#9881;</button>
           <div class="ajustes-panel" id="ajustes-panel" hidden>
             <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="Tema: cambiar">🖥 Sistema</button>
             <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="Densidad: cambiar">☰ Normal</button>
@@ -123,7 +124,7 @@
           </div>
         </div>
       </header>
-      <main class="content">
+      <main class="content" id="contenido-principal">
         {% block content %}{% endblock %}
       </main>
     </div>

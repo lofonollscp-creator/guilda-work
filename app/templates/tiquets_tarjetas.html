@@ -58,12 +58,12 @@
         <span class="tiquet-card-autor">{{ t.autor_email or '(usuario eliminado)' }}</span>
         <span class="tiquet-card-acciones">
           {% if puede_editar_tiquet(t) %}
-          <a href="{{ url_for('tiquets.editar', tiquet_id=t.id) }}" title="Editar">✏</a>
+          <a href="{{ url_for('tiquets.editar', tiquet_id=t.id) }}" title="Editar" aria-label="Editar">✏</a>
           {% endif %}
           {% if puede_borrar_tiquet(t) %}
           <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
                 onsubmit="return confirm('¿Eliminar el tiquet #{{ t.id }}? No se puede deshacer.');">
-            <button type="submit" class="chip-del" title="Eliminar">✕</button>
+            <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
           </form>
           {% endif %}
         </span>

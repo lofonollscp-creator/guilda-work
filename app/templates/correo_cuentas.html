@@ -30,7 +30,7 @@
     </form>
     <form action="{{ url_for('correo.eliminar_cuenta', cuenta_id=c.id) }}" method="post"
           onsubmit="return confirm('¿Eliminar la cuenta «{{ c.nombre }}»? Se borrarán también sus mensajes descargados y su contraseña guardada. No se puede deshacer.');">
-      <button type="submit" class="chip-del" title="Eliminar">✕</button>
+      <button type="submit" class="chip-del" title="Eliminar" aria-label="Eliminar">✕</button>
     </form>
   </li>
   {% endfor %}

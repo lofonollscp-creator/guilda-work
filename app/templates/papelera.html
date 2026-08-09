@@ -39,7 +39,7 @@
     </form>
     <form action="{{ url_for('eliminar_menu_definitivamente', menu_id=item.id) }}" method="post"
           onsubmit="return confirm('¿Eliminar este menú y todo lo que contiene para siempre? No se puede deshacer.');">
-      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+      <button type="submit" class="chip-del" title="Eliminar para siempre" aria-label="Eliminar para siempre">✕</button>
     </form>
     {% elif item.origen == 'nota' %}
     <form action="{{ url_for('restaurar_nota', nota_id=item.id) }}" method="post">
@@ -47,7 +47,7 @@
     </form>
     <form action="{{ url_for('eliminar_nota_definitivamente', nota_id=item.id) }}" method="post"
           onsubmit="return confirm('¿Eliminar esta nota para siempre? No se puede deshacer.');">
-      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+      <button type="submit" class="chip-del" title="Eliminar para siempre" aria-label="Eliminar para siempre">✕</button>
     </form>
     {% elif item.origen == 'tarea_outlook' %}
     <form action="{{ url_for('tareas.restaurar', tarea_id=item.id) }}" method="post">
@@ -55,7 +55,7 @@
     </form>
     <form action="{{ url_for('tareas.eliminar_definitivamente', tarea_id=item.id) }}" method="post"
           onsubmit="return confirm('¿Eliminar esto para siempre? No se puede deshacer.');">
-      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+      <button type="submit" class="chip-del" title="Eliminar para siempre" aria-label="Eliminar para siempre">✕</button>
     </form>
     {% else %}
     <form action="{{ url_for('restaurar_tarea', tarea_id=item.id) }}" method="post">
@@ -63,7 +63,7 @@
     </form>
     <form action="{{ url_for('eliminar_tarea_definitivamente', tarea_id=item.id) }}" method="post"
           onsubmit="return confirm('¿Eliminar esto para siempre? No se puede deshacer.');">
-      <button type="submit" class="chip-del" title="Eliminar para siempre">✕</button>
+      <button type="submit" class="chip-del" title="Eliminar para siempre" aria-label="Eliminar para siempre">✕</button>
     </form>
     {% endif %}
   </li>
