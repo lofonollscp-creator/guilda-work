@@ -6,6 +6,9 @@
   <title>Iniciar sesión — Guilda Work</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% if requiere_captcha %}
+  <script async defer src="{{ url_for('static', filename='altcha.min.js') }}" type="module"></script>
+  {% endif %}
 </head>
 <body>
   <div class="auth-shell">
@@ -13,6 +16,9 @@
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>Guilda Work</h1>
       {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+      {% if captcha_fallido %}
+      <div class="ia-error">No se ha podido comprobar el captcha. Resuélvelo de nuevo antes de entrar.</div>
+      {% endif %}
 
       {% for nodo in nodos %}
         {% set attrs = nodo.attributes %}
@@ -34,6 +40,14 @@
           <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
         {% endif %}
       {% endfor %}
+
+      {% if requiere_captcha %}
+      <altcha-widget
+        challengeurl="{{ url_for('captcha_reto') }}"
+        strings='{"label":"No soy un robot","verifying":"Comprobando…","verified":"Comprobado","error":"Error al comprobar, inténtalo de nuevo"}'
+      ></altcha-widget>
+      <p class="auth-alterna">Demasiados intentos seguidos desde tu conexión — resuelve esto para poder entrar.</p>
+      {% endif %}
 
       <button type="submit" class="btn btn-primary auth-submit">Entrar</button>
       <p class="auth-alterna">¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>

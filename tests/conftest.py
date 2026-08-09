@@ -99,6 +99,25 @@ def base_de_datos_temporal(tmp_path, monkeypatch):
     yield
 
 
+@pytest.fixture(autouse=True)
+def _reiniciar_contador_captcha():
+    """El contador de fallos de login del captcha de respaldo
+    (app/rutas_kratos_proxy.py) es un diccionario a nivel de módulo, no
+    algo que dependa de la base de datos temporal -- sin resetearlo entre
+    tests, un test que provoca 3 fallos de login desde 127.0.0.1 (la IP
+    por defecto del cliente de test, sin X-Forwarded-For) deja esa IP
+    marcada para el resto de la sesión de pytest, y CUALQUIER test
+    posterior que inicie sesión de verdad (vía iniciar_sesion_de_prueba,
+    sin campo altcha) desde esa misma IP se queda sin sesión sin motivo
+    aparente. Mismo criterio de aislamiento que ya aplica
+    base_de_datos_temporal a data/registro.db."""
+    from app import rutas_kratos_proxy
+
+    rutas_kratos_proxy._fallos_por_ip.clear()
+    yield
+    rutas_kratos_proxy._fallos_por_ip.clear()
+
+
 @pytest.fixture
 def usuario_id() -> int:
     """El 'usuario local' (mismo que resuelve la app de escritorio y el MCP),

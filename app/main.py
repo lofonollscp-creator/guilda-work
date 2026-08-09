@@ -24,7 +24,7 @@ import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import ai_local, busqueda, correo, db, export, herramientas, ia_asistente, importador, kratos
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -33,7 +33,7 @@ from .rutas_docs import docs_bp
 from .rutas_fichaje import fichaje_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
-from .rutas_kratos_proxy import kratos_proxy_bp
+from .rutas_kratos_proxy import ip_requiere_captcha, kratos_proxy_bp
 from .rutas_tareas import tareas_bp
 from .rutas_tiquets import tiquets_bp
 
@@ -295,7 +295,23 @@ def login():
     datos = _flujo_o_redirigir("login")
     if datos is None:
         return g._redireccion_flujo
+    # Ver app/rutas_kratos_proxy.py: tras varios fallos seguidos desde esta
+    # IP, se exige resolver un captcha antes de que el próximo POST de
+    # login llegue a Kratos, en vez de banear directamente (eso lo sigue
+    # haciendo CrowdSec como red de respaldo).
+    datos["requiere_captcha"] = ip_requiere_captcha(request.remote_addr)
+    datos["captcha_fallido"] = request.args.get("captcha_error") == "1"
     return render_template("login.html", **datos)
+
+
+@app.route("/captcha/reto", methods=["GET"])
+@limiter.limit("30/minute")
+def captcha_reto():
+    """Reto ALTCHA para el widget de login.html (ver app/captcha.py) --
+    público y sin login_required a propósito, se pide antes de que exista
+    ninguna sesión. Rate-limited para que no sirva para acumular retos sin
+    intención de resolverlos."""
+    return jsonify(captcha.generar_reto())
 
 
 @app.route("/logout", methods=["POST"])
