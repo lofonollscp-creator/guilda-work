@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,66 +27,66 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <a class="skip-link" href="#contenido-principal">Saltar al contenido</a>
+  <a class="skip-link" href="#contenido-principal">{{ _('Saltar al contenido') }}</a>
   <div class="app-shell">
     <aside class="icon-rail">
-      <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="Expandir/contraer menú" aria-label="Expandir o contraer el menú">
+      <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="{{ _('Expandir/contraer menú') }}" aria-label="{{ _('Expandir o contraer el menú') }}">
         <span class="icon-rail-icono">&#9776;</span>
       </button>
-      <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="Menús / Dashboard">
+      <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="{{ _('Menús / Dashboard') }}">
         <span class="icon-rail-icono">&#127968;</span>
-        <span class="icon-rail-etiqueta">Menús</span>
+        <span class="icon-rail-etiqueta">{{ _('Menús') }}</span>
       </a>
-      <a href="{{ url_for('tareas.listar') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}" title="Tareas">
+      <a href="{{ url_for('tareas.listar') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}" title="{{ _('Tareas') }}">
         <span class="icon-rail-icono">&#128203;</span>
-        <span class="icon-rail-etiqueta">Tareas</span>
+        <span class="icon-rail-etiqueta">{{ _('Tareas') }}</span>
       </a>
-      <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="Correo{{ ' — ' ~ correo_no_leidos_sidebar ~ ' sin leer' if correo_no_leidos_sidebar }}">
+      <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
         <span class="icon-rail-icono">&#9993;</span>
-        <span class="icon-rail-etiqueta">Correo</span>
+        <span class="icon-rail-etiqueta">{{ _('Correo') }}</span>
         {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
       </a>
-      <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="Herramientas">
+      <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="{{ _('Herramientas') }}">
         <span class="icon-rail-icono">&#129520;</span>
-        <span class="icon-rail-etiqueta">Herramientas</span>
+        <span class="icon-rail-etiqueta">{{ _('Herramientas') }}</span>
       </a>
-      <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="Tiquets">
+      <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
         <span class="icon-rail-icono">&#127915;</span>
-        <span class="icon-rail-etiqueta">Tiquets</span>
+        <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
       </a>
-      <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="Fichaje">
+      <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="{{ _('Fichaje') }}">
         <span class="icon-rail-icono">&#9201;</span>
-        <span class="icon-rail-etiqueta">Fichaje</span>
+        <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
       </a>
-      <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="Histórico">
+      <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="{{ _('Histórico') }}">
         <span class="icon-rail-icono">&#128337;</span>
-        <span class="icon-rail-etiqueta">Histórico</span>
+        <span class="icon-rail-etiqueta">{{ _('Histórico') }}</span>
       </a>
-      <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="Asistente IA">
+      <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="{{ _('Asistente IA') }}">
         <span class="icon-rail-icono">&#129302;</span>
-        <span class="icon-rail-etiqueta">Asistente IA</span>
+        <span class="icon-rail-etiqueta">{{ _('Asistente IA') }}</span>
       </a>
-      <a href="{{ url_for('estadisticas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'estadisticas' else '' }}" title="Estadísticas">
+      <a href="{{ url_for('estadisticas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'estadisticas' else '' }}" title="{{ _('Estadísticas') }}">
         <span class="icon-rail-icono">&#128202;</span>
-        <span class="icon-rail-etiqueta">Estadísticas</span>
+        <span class="icon-rail-etiqueta">{{ _('Estadísticas') }}</span>
       </a>
-      <a href="{{ url_for('papelera') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'papelera' else '' }}" title="Papelera">
+      <a href="{{ url_for('papelera') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'papelera' else '' }}" title="{{ _('Papelera') }}">
         <span class="icon-rail-icono">&#128465;</span>
-        <span class="icon-rail-etiqueta">Papelera</span>
+        <span class="icon-rail-etiqueta">{{ _('Papelera') }}</span>
       </a>
-      <a href="{{ url_for('importar') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}" title="Importar">
+      <a href="{{ url_for('importar') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}" title="{{ _('Importar') }}">
         <span class="icon-rail-icono">&#11014;</span>
-        <span class="icon-rail-etiqueta">Importar</span>
+        <span class="icon-rail-etiqueta">{{ _('Importar') }}</span>
       </a>
       {% if g.es_admin %}
-      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('backoffice.') else '' }}" title="Backoffice">
+      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('backoffice.') else '' }}" title="{{ _('Backoffice') }}">
         <span class="icon-rail-icono">&#128737;</span>
-        <span class="icon-rail-etiqueta">Backoffice</span>
+        <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
       </a>
       {% endif %}
-      <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="Captura rápida (Ctrl+Alt+G)">
+      <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="{{ _('Captura rápida (Ctrl+Alt+G)') }}">
         <span class="icon-rail-icono">&#128204;</span>
-        <span class="icon-rail-etiqueta">Captura rápida</span>
+        <span class="icon-rail-etiqueta">{{ _('Captura rápida') }}</span>
       </button>
     </aside>
 
@@ -98,34 +98,34 @@
         </a>
         <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir"
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}">
-          🔍 Buscar en notas, tareas y correo…
+          🔍 {{ _('Buscar en notas, tareas y correo…') }}
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <div class="ajustes-menu">
-          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="Ajustes" aria-label="Ajustes">&#9881;</button>
+          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">&#9881;</button>
           <div class="ajustes-panel" id="ajustes-panel" hidden>
-            <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="Tema: cambiar">🖥 Sistema</button>
-            <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="Densidad: cambiar">☰ Normal</button>
+            <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="{{ _('Tema: cambiar') }}">🖥 {{ _('Sistema') }}</button>
+            <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="{{ _('Densidad: cambiar') }}">☰ {{ _('Normal') }}</button>
             {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
-            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="Abrir Asistente IA">🤖 Asistente IA</button>
+            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">🤖 {{ _('Asistente IA') }}</button>
             {% endif %}
-            <div class="ajustes-idiomas" role="group" aria-label="Idioma">
+            <div class="ajustes-idiomas" role="group" aria-label="{{ _('Idioma') }}">
               {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
               <form action="{{ url_for('cambiar_idioma', codigo=codigo) }}" method="post">
-                <button type="submit" class="ajustes-idioma-btn {{ 'is-activo' if idioma_actual == codigo }}" {% if idioma_actual == codigo %}aria-current="true"{% endif %}>{{ codigo|upper }}</button>
+                <button type="submit" class="ajustes-idioma-btn {{ 'is-activo' if idioma_actual == codigo }}" title="{{ nombre }}" {% if idioma_actual == codigo %}aria-current="true"{% endif %}>{{ codigo|upper }}</button>
               </form>
               {% endfor %}
             </div>
-            <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">📱 Mis dispositivos</a>
-            <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">📚 Documentación (desarrolladores)</a>
+            <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">📱 {{ _('Mis dispositivos') }}</a>
+            <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">📚 {{ _('Documentación (desarrolladores)') }}</a>
             {% if modo_escritorio %}
             <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
-                  onsubmit="return confirm('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.');">
-              <button type="submit" class="ajustes-panel-btn">&#9211; Cerrar programa</button>
+                  onsubmit="return confirm('{{ _('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.') }}');">
+              <button type="submit" class="ajustes-panel-btn">&#9211; {{ _('Cerrar programa') }}</button>
             </form>
             {% else %}
             <form class="ajustes-panel-shutdown" action="{{ url_for('logout') }}" method="post">
-              <button type="submit" class="ajustes-panel-btn">&#9211; Cerrar sesión</button>
+              <button type="submit" class="ajustes-panel-btn">&#9211; {{ _('Cerrar sesión') }}</button>
             </form>
             {% endif %}
           </div>
@@ -138,14 +138,14 @@
   </div>
 
   <div id="busqueda-overlay" class="busqueda-overlay" hidden>
-    <div class="busqueda-modal" role="dialog" aria-modal="true" aria-label="Buscar en notas, tareas y correo">
+    <div class="busqueda-modal" role="dialog" aria-modal="true" aria-label="{{ _('Buscar en notas, tareas y correo') }}">
       <div class="busqueda-campo">
         <span>🔍</span>
-        <input type="text" id="busqueda-input" placeholder="Buscar en notas, tareas y correo..." autocomplete="off">
+        <input type="text" id="busqueda-input" placeholder="{{ _('Buscar en notas, tareas y correo...') }}" autocomplete="off">
         <kbd>Esc</kbd>
       </div>
       <ul id="busqueda-resultados" class="busqueda-resultados"></ul>
-      <p id="busqueda-vacio" class="busqueda-vacio" hidden>Sin resultados.</p>
+      <p id="busqueda-vacio" class="busqueda-vacio" hidden>{{ _('Sin resultados.') }}</p>
       <p id="busqueda-error" class="busqueda-error" hidden></p>
     </div>
   </div>
@@ -154,8 +154,8 @@
   {% from "_ia_chat_macro.html" import chat %}
   <div class="ia-panel-flotante" id="ia-panel-flotante" hidden>
     <div class="ia-panel-flotante-cabecera">
-      <span>Asistente IA</span>
-      <button type="button" id="ia-panel-cerrar" title="Cerrar">&times;</button>
+      <span>{{ _('Asistente IA') }}</span>
+      <button type="button" id="ia-panel-cerrar" title="{{ _('Cerrar') }}">&times;</button>
     </div>
     {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-flotante') }}
   </div>

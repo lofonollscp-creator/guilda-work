@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Crear cuenta — Guilda Work</title>
+  <title>{{ _('Crear cuenta') }} — Guilda Work</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -11,7 +11,7 @@
   <div class="auth-shell">
     <form class="auth-card" method="post" action="{{ accion }}">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
-      <h1>Crear cuenta</h1>
+      <h1>{{ _('Crear cuenta') }}</h1>
       {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
 
       {% for nodo in nodos %}
@@ -20,13 +20,13 @@
           <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
         {% elif attrs.name == 'traits.email' %}
           <div class="correo-form-campo">
-            <label for="registro-email">Email</label>
+            <label for="registro-email">{{ _('Email') }}</label>
             <input type="email" id="registro-email" name="{{ attrs.name }}" value="{{ attrs.value or '' }}" required autofocus>
           </div>
           {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
         {% elif attrs.name == 'password' %}
           <div class="correo-form-campo">
-            <label for="registro-password">Contraseña (mínimo 8 caracteres)</label>
+            <label for="registro-password">{{ _('Contraseña (mínimo 8 caracteres)') }}</label>
             <input type="password" id="registro-password" name="{{ attrs.name }}" minlength="8" required>
           </div>
           {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
@@ -35,8 +35,8 @@
         {% endif %}
       {% endfor %}
 
-      <button type="submit" class="btn btn-primary auth-submit">Crear cuenta</button>
-      <p class="auth-alterna">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+      <button type="submit" class="btn btn-primary auth-submit">{{ _('Crear cuenta') }}</button>
+      <p class="auth-alterna">{{ _('¿Ya tienes cuenta?') }} <a href="{{ url_for('login') }}">{{ _('Inicia sesión') }}</a></p>
     </form>
   </div>
 </body>

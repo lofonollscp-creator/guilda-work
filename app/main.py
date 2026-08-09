@@ -98,6 +98,13 @@ limiter.init_app(app)
 # alguno de los soportados, y si no, castellano por defecto.
 IDIOMAS_DISPONIBLES = ["es", "ca", "en", "fr"]
 
+# Los catálogos .po/.mo viven en translations/ junto a app/ (no dentro de
+# app/), porque pybabel extract recorre app/ Y templates/ desde la raíz del
+# repo. Flask-Babel por defecto solo mira "translations" relativo a
+# app.root_path (que es BASE_DIR = .../app), así que sin esto nunca
+# encontraría los catálogos y serviría siempre castellano en silencio.
+app.config["BABEL_TRANSLATION_DIRECTORIES"] = str(BASE_DIR.parent / "translations")
+
 
 def _seleccionar_idioma():
     idioma_guardado = db.idioma_usuario(getattr(g, "usuario_id", None)) if getattr(g, "usuario_id", None) else None

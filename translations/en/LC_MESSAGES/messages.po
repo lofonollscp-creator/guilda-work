@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-09 21:07+0200\n"
+"POT-Creation-Date: 2026-08-09 21:18+0200\n"
 "PO-Revision-Date: 2026-08-09 21:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -16,5 +16,412 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app/templates/base.html:30
+msgid "Saltar al contenido"
+msgstr "Skip to content"
+
+#: app/templates/base.html:33
+msgid "Expandir/contraer menú"
+msgstr "Expand/collapse menu"
+
+#: app/templates/base.html:33
+msgid "Expandir o contraer el menú"
+msgstr "Expand or collapse the menu"
+
+#: app/templates/base.html:36
+msgid "Menús / Dashboard"
+msgstr "Menus / Dashboard"
+
+#: app/templates/base.html:38
+msgid "Menús"
+msgstr "Menus"
+
+#: app/templates/base.html:40 app/templates/base.html:42
+msgid "Tareas"
+msgstr "Tasks"
+
+#: app/templates/base.html:44 app/templates/base.html:46
+msgid "Correo"
+msgstr "Mail"
+
+#: app/templates/base.html:44
+msgid "sin leer"
+msgstr "unread"
+
+#: app/templates/base.html:49 app/templates/base.html:51
+msgid "Herramientas"
+msgstr "Tools"
+
+#: app/templates/base.html:53 app/templates/base.html:55
+msgid "Tiquets"
+msgstr "Tickets"
+
+#: app/templates/base.html:57 app/templates/base.html:59
+msgid "Fichaje"
+msgstr "Time clock"
+
+#: app/templates/base.html:61 app/templates/base.html:63
+msgid "Histórico"
+msgstr "History"
+
+#: app/templates/base.html:65 app/templates/base.html:67
+#: app/templates/base.html:110 app/templates/base.html:157
+#: app/templates/inicio.html:175
+msgid "Asistente IA"
+msgstr "AI Assistant"
+
+#: app/templates/base.html:69 app/templates/base.html:71
+msgid "Estadísticas"
+msgstr "Statistics"
+
+#: app/templates/base.html:73 app/templates/base.html:75
+msgid "Papelera"
+msgstr "Trash"
+
+#: app/templates/base.html:77 app/templates/base.html:79
+msgid "Importar"
+msgstr "Import"
+
+#: app/templates/base.html:82 app/templates/base.html:84
+msgid "Backoffice"
+msgstr "Backoffice"
+
+#: app/templates/base.html:87
+msgid "Captura rápida (Ctrl+Alt+G)"
+msgstr "Quick capture (Ctrl+Alt+G)"
+
+#: app/templates/base.html:89
+msgid "Captura rápida"
+msgstr "Quick capture"
+
+#: app/templates/base.html:101
+msgid "Buscar en notas, tareas y correo…"
+msgstr "Search notes, tasks and mail…"
+
+#: app/templates/base.html:105
+msgid "Ajustes"
+msgstr "Settings"
+
+#: app/templates/base.html:107
+msgid "Tema: cambiar"
+msgstr "Theme: change"
+
+#: app/templates/base.html:107
+msgid "Sistema"
+msgstr "System"
+
+#: app/templates/base.html:108
+msgid "Densidad: cambiar"
+msgstr "Density: change"
+
+#: app/templates/base.html:108
+msgid "Normal"
+msgstr "Normal"
+
+#: app/templates/base.html:110
+msgid "Abrir Asistente IA"
+msgstr "Open AI Assistant"
+
+#: app/templates/base.html:112
+msgid "Idioma"
+msgstr "Language"
+
+#: app/templates/base.html:119
+msgid "Mis dispositivos"
+msgstr "My devices"
+
+#: app/templates/base.html:120
+msgid "Documentación (desarrolladores)"
+msgstr "Documentation (developers)"
+
+#: app/templates/base.html:123
+msgid ""
+"¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa "
+"por completo."
+msgstr "Close Guilda Work? Everything already noted is saved; the program will close completely."
+
+#: app/templates/base.html:124
+msgid "Cerrar programa"
+msgstr "Close program"
+
+#: app/templates/base.html:128
+msgid "Cerrar sesión"
+msgstr "Log out"
+
+#: app/templates/base.html:141
+msgid "Buscar en notas, tareas y correo"
+msgstr "Search notes, tasks and mail"
+
+#: app/templates/base.html:144
+msgid "Buscar en notas, tareas y correo..."
+msgstr "Search notes, tasks and mail..."
+
+#: app/templates/base.html:148
+msgid "Sin resultados."
+msgstr "No results."
+
+#: app/templates/base.html:158
+msgid "Cerrar"
+msgstr "Close"
+
+#: app/templates/inicio.html:8
+msgid "Un vistazo rápido a tu día."
+msgstr "A quick look at your day."
+
+#: app/templates/inicio.html:15
+msgid "Primeros pasos"
+msgstr "First steps"
+
+#: app/templates/inicio.html:17
+msgid "Ocultar esta tarjeta"
+msgstr "Hide this card"
+
+#: app/templates/inicio.html:17
+msgid "Ocultar"
+msgstr "Hide"
+
+#: app/templates/inicio.html:23
+msgid "Crea tu primer menú"
+msgstr "Create your first menu"
+
+#: app/templates/inicio.html:24
+msgid "Crear"
+msgstr "Create"
+
+#: app/templates/inicio.html:28
+msgid "Conecta una cuenta de correo"
+msgstr "Connect a mail account"
+
+#: app/templates/inicio.html:29
+msgid "Ir a Correo"
+msgstr "Go to Mail"
+
+#: app/templates/inicio.html:33
+msgid "Prueba el asistente IA"
+msgstr "Try the AI assistant"
+
+#: app/templates/inicio.html:34
+msgid "Abrir"
+msgstr "Open"
+
+#: app/templates/inicio.html:43
+msgid "tareas en curso"
+msgstr "tasks in progress"
+
+#: app/templates/inicio.html:47
+msgid "notas hoy"
+msgstr "notes today"
+
+#: app/templates/inicio.html:51
+msgid "correos sin leer"
+msgstr "unread emails"
+
+#: app/templates/inicio.html:57
+msgid "Atajo: Ctrl+Alt+N"
+msgstr "Shortcut: Ctrl+Alt+N"
+
+#: app/templates/inicio.html:57
+msgid "Nota rápida"
+msgstr "Quick note"
+
+#: app/templates/inicio.html:61
+msgid "Sin menú"
+msgstr "No menu"
+
+#: app/templates/inicio.html:65
+msgid "¿Qué ha pasado?"
+msgstr "What happened?"
+
+#: app/templates/inicio.html:66
+msgid "Anotar"
+msgstr "Add note"
+
+#: app/templates/inicio.html:73
+msgid "Atajo: Ctrl+Alt+T"
+msgstr "Shortcut: Ctrl+Alt+T"
+
+#: app/templates/inicio.html:73
+msgid "Nueva tarea"
+msgstr "New task"
+
+#: app/templates/inicio.html:78
+msgid "Nombre de la tarea"
+msgstr "Task name"
+
+#: app/templates/inicio.html:79
+msgid "Iniciar"
+msgstr "Start"
+
+#: app/templates/inicio.html:85
+msgid "Buscar en el histórico"
+msgstr "Search history"
+
+#: app/templates/inicio.html:91
+msgid "Todavía no tienes ningún menú."
+msgstr "You don't have any menu yet."
+
+#: app/templates/inicio.html:92
+msgid "Crea el primero abajo para empezar a registrar actividad."
+msgstr "Create the first one below to start logging activity."
+
+#: app/templates/inicio.html:98
+msgid "Quitar de favoritos"
+msgstr "Remove from favorites"
+
+#: app/templates/inicio.html:98
+msgid "Fijar en favoritos"
+msgstr "Pin to favorites"
+
+#: app/templates/inicio.html:108
+msgid "en curso"
+msgstr "in progress"
+
+#: app/templates/inicio.html:110
+msgid "hoy"
+msgstr "today"
+
+#: app/templates/inicio.html:117
+msgid "Mover arriba"
+msgstr "Move up"
+
+#: app/templates/inicio.html:121
+msgid "Mover abajo"
+msgstr "Move down"
+
+#: app/templates/inicio.html:132
+msgid "Favoritos"
+msgstr "Favorites"
+
+#: app/templates/inicio.html:136
+msgid "Tus menús"
+msgstr "Your menus"
+
+#: app/templates/inicio.html:145
+msgid "Hoy"
+msgstr "Today"
+
+#: app/templates/inicio.html:147
+msgid "Todavía no has registrado nada hoy."
+msgstr "You haven't logged anything today yet."
+
+#: app/templates/inicio.html:156
+msgid "Nota"
+msgstr "Note"
+
+#: app/templates/inicio.html:157
+msgid "Evento"
+msgstr "Event"
+
+#: app/templates/inicio.html:158
+msgid "En curso"
+msgstr "In progress"
+
+#: app/templates/inicio.html:159
+msgid "En pausa"
+msgstr "Paused"
+
+#: app/templates/inicio.html:160
+msgid "Tarea"
+msgstr "Task"
+
+#: app/templates/inicio.html:166
+msgid "Editar"
+msgstr "Edit"
+
+#: app/templates/inicio.html:180
+msgid "Nuevo menú"
+msgstr "New menu"
+
+#: app/templates/inicio.html:182
+msgid "Nombre del menú"
+msgstr "Menu name"
+
+#: app/templates/inicio.html:183
+msgid "Nombre del menú (ej. Lueira, Guilda...)"
+msgstr "Menu name (e.g. Lueira, Guilda...)"
+
+#: app/templates/inicio.html:184 app/templates/inicio.html:185
+msgid "Color del menú"
+msgstr "Menu color"
+
+#: app/templates/inicio.html:186
+msgid "Crear menú"
+msgstr "Create menu"
+
+#: app/templates/login.html:6
+msgid "Iniciar sesión"
+msgstr "Log in"
+
+#: app/templates/login.html:20
+msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo antes de entrar."
+msgstr "The captcha could not be verified. Solve it again before logging in."
+
+#: app/templates/login.html:29 app/templates/registro.html:23
+msgid "Email"
+msgstr "Email"
+
+#: app/templates/login.html:35
+msgid "Contraseña"
+msgstr "Password"
+
+#: app/templates/login.html:47
+msgid "No soy un robot"
+msgstr "I'm not a robot"
+
+#: app/templates/login.html:47
+msgid "Comprobando…"
+msgstr "Verifying…"
+
+#: app/templates/login.html:47
+msgid "Comprobado"
+msgstr "Verified"
+
+#: app/templates/login.html:47
+msgid "Error al comprobar, inténtalo de nuevo"
+msgstr "Verification failed, try again"
+
+#: app/templates/login.html:49
+msgid ""
+"Demasiados intentos seguidos desde tu conexión — resuelve esto para poder"
+" entrar."
+msgstr "Too many consecutive attempts from your connection — solve this to log in."
+
+#: app/templates/login.html:52
+msgid "Entrar"
+msgstr "Log in"
+
+#: app/templates/login.html:53
+msgid "¿No tienes cuenta?"
+msgstr "Don't have an account?"
+
+#: app/templates/login.html:53
+msgid "Regístrate"
+msgstr "Sign up"
+
+#: app/templates/login.html:54
+msgid "¿Quieres integrar tu software?"
+msgstr "Want to integrate your software?"
+
+#: app/templates/login.html:54
+msgid "Documentación para desarrolladores"
+msgstr "Developer documentation"
+
+#: app/templates/registro.html:6 app/templates/registro.html:14
+#: app/templates/registro.html:38
+msgid "Crear cuenta"
+msgstr "Create account"
+
+#: app/templates/registro.html:29
+msgid "Contraseña (mínimo 8 caracteres)"
+msgstr "Password (minimum 8 characters)"
+
+#: app/templates/registro.html:39
+msgid "¿Ya tienes cuenta?"
+msgstr "Already have an account?"
+
+#: app/templates/registro.html:39
+msgid "Inicia sesión"
+msgstr "Log in"
 

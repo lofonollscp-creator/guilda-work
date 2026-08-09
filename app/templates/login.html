@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="{{ idioma_actual }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Iniciar sesión — Guilda Work</title>
+  <title>{{ _('Iniciar sesión') }} — Guilda Work</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% if requiere_captcha %}
@@ -17,7 +17,7 @@
       <h1>Guilda Work</h1>
       {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
       {% if captcha_fallido %}
-      <div class="ia-error">No se ha podido comprobar el captcha. Resuélvelo de nuevo antes de entrar.</div>
+      <div class="ia-error">{{ _('No se ha podido comprobar el captcha. Resuélvelo de nuevo antes de entrar.') }}</div>
       {% endif %}
 
       {% for nodo in nodos %}
@@ -26,13 +26,13 @@
           <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
         {% elif attrs.name == 'identifier' %}
           <div class="correo-form-campo">
-            <label for="login-email">Email</label>
+            <label for="login-email">{{ _('Email') }}</label>
             <input type="email" id="login-email" name="{{ attrs.name }}" value="{{ attrs.value or '' }}" required autofocus>
           </div>
           {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
         {% elif attrs.name == 'password' %}
           <div class="correo-form-campo">
-            <label for="login-password">Contraseña</label>
+            <label for="login-password">{{ _('Contraseña') }}</label>
             <input type="password" id="login-password" name="{{ attrs.name }}" required>
           </div>
           {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
@@ -44,14 +44,14 @@
       {% if requiere_captcha %}
       <altcha-widget
         challengeurl="{{ url_for('captcha_reto') }}"
-        strings='{"label":"No soy un robot","verifying":"Comprobando…","verified":"Comprobado","error":"Error al comprobar, inténtalo de nuevo"}'
+        strings='{"label":"{{ _('No soy un robot') }}","verifying":"{{ _('Comprobando…') }}","verified":"{{ _('Comprobado') }}","error":"{{ _('Error al comprobar, inténtalo de nuevo') }}"}'
       ></altcha-widget>
-      <p class="auth-alterna">Demasiados intentos seguidos desde tu conexión — resuelve esto para poder entrar.</p>
+      <p class="auth-alterna">{{ _('Demasiados intentos seguidos desde tu conexión — resuelve esto para poder entrar.') }}</p>
       {% endif %}
 
-      <button type="submit" class="btn btn-primary auth-submit">Entrar</button>
-      <p class="auth-alterna">¿No tienes cuenta? <a href="{{ url_for('registro') }}">Regístrate</a></p>
-      <p class="auth-alterna">¿Quieres integrar tu software? <a href="{{ url_for('docs.pagina') }}">Documentación para desarrolladores</a></p>
+      <button type="submit" class="btn btn-primary auth-submit">{{ _('Entrar') }}</button>
+      <p class="auth-alterna">{{ _('¿No tienes cuenta?') }} <a href="{{ url_for('registro') }}">{{ _('Regístrate') }}</a></p>
+      <p class="auth-alterna">{{ _('¿Quieres integrar tu software?') }} <a href="{{ url_for('docs.pagina') }}">{{ _('Documentación para desarrolladores') }}</a></p>
     </form>
   </div>
 </body>

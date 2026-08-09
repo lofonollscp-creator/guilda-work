@@ -5,33 +5,33 @@
 <header class="page-header dash-header">
   <div>
     <h1>Dashboard</h1>
-    <p class="subtitle">Un vistazo rápido a tu día.</p>
+    <p class="subtitle">{{ _('Un vistazo rápido a tu día.') }}</p>
   </div>
 </header>
 
 {% if onboarding %}
 <section class="onboarding-card">
   <div class="onboarding-card-header">
-    <h3>Primeros pasos</h3>
+    <h3>{{ _('Primeros pasos') }}</h3>
     <form action="{{ url_for('ocultar_onboarding') }}" method="post">
-      <button type="submit" class="btn btn-ghost" title="Ocultar esta tarjeta">Ocultar</button>
+      <button type="submit" class="btn btn-ghost" title="{{ _('Ocultar esta tarjeta') }}">{{ _('Ocultar') }}</button>
     </form>
   </div>
   <ul class="onboarding-lista">
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_menu }}">
       <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.tiene_menu else '' }}</span>
-      <span>Crea tu primer menú</span>
-      {% if not onboarding.tiene_menu %}<a class="onboarding-ir" href="#new-menu">Crear</a>{% endif %}
+      <span>{{ _('Crea tu primer menú') }}</span>
+      {% if not onboarding.tiene_menu %}<a class="onboarding-ir" href="#new-menu">{{ _('Crear') }}</a>{% endif %}
     </li>
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_correo }}">
       <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.tiene_correo else '' }}</span>
-      <span>Conecta una cuenta de correo</span>
-      {% if not onboarding.tiene_correo %}<a class="onboarding-ir" href="{{ url_for('correo.bandeja') }}">Ir a Correo</a>{% endif %}
+      <span>{{ _('Conecta una cuenta de correo') }}</span>
+      {% if not onboarding.tiene_correo %}<a class="onboarding-ir" href="{{ url_for('correo.bandeja') }}">{{ _('Ir a Correo') }}</a>{% endif %}
     </li>
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.ha_usado_ia }}">
       <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.ha_usado_ia else '' }}</span>
-      <span>Prueba el asistente IA</span>
-      {% if not onboarding.ha_usado_ia %}<a class="onboarding-ir" href="{{ url_for('ia.asistente_vista') }}">Abrir</a>{% endif %}
+      <span>{{ _('Prueba el asistente IA') }}</span>
+      {% if not onboarding.ha_usado_ia %}<a class="onboarding-ir" href="{{ url_for('ia.asistente_vista') }}">{{ _('Abrir') }}</a>{% endif %}
     </li>
   </ul>
 </section>
@@ -40,62 +40,62 @@
 <section class="dash-stats">
   <div class="dash-stat">
     <span class="dash-stat-valor">{{ total_activas }}</span>
-    <span class="dash-stat-label">tareas en curso</span>
+    <span class="dash-stat-label">{{ _('tareas en curso') }}</span>
   </div>
   <div class="dash-stat">
     <span class="dash-stat-valor">{{ total_notas_hoy }}</span>
-    <span class="dash-stat-label">notas hoy</span>
+    <span class="dash-stat-label">{{ _('notas hoy') }}</span>
   </div>
   <a class="dash-stat dash-stat-link" href="{{ url_for('correo.bandeja') }}">
     <span class="dash-stat-valor">{{ correo_no_leidos_sidebar }}</span>
-    <span class="dash-stat-label">correos sin leer</span>
+    <span class="dash-stat-label">{{ _('correos sin leer') }}</span>
   </a>
 </section>
 
 <section class="dash-acciones">
   <form class="dash-accion" action="{{ url_for('crear_nota') }}" method="post">
-    <label for="dash-nota-texto" title="Atajo: Ctrl+Alt+N">📝 Nota rápida</label>
+    <label for="dash-nota-texto" title="{{ _('Atajo: Ctrl+Alt+N') }}">📝 {{ _('Nota rápida') }}</label>
     <div class="quick-row">
       {% if menus %}
       <select name="categoria_id">
-        <option value="">Sin menú</option>
+        <option value="">{{ _('Sin menú') }}</option>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       {% endif %}
-      <input type="text" id="dash-nota-texto" name="texto" placeholder="¿Qué ha pasado?" required>
-      <button type="submit" class="btn btn-primary">Anotar</button>
+      <input type="text" id="dash-nota-texto" name="texto" placeholder="{{ _('¿Qué ha pasado?') }}" required>
+      <button type="submit" class="btn btn-primary">{{ _('Anotar') }}</button>
     </div>
   </form>
 
   {% if menus %}
   <form class="dash-accion" action="{{ url_for('crear_tarea') }}" method="post">
     <input type="hidden" name="tipo" value="duracion">
-    <label for="dash-tarea-nombre" title="Atajo: Ctrl+Alt+T">▶ Nueva tarea</label>
+    <label for="dash-tarea-nombre" title="{{ _('Atajo: Ctrl+Alt+T') }}">▶ {{ _('Nueva tarea') }}</label>
     <div class="quick-row">
       <select name="categoria_id" required>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
-      <input type="text" id="dash-tarea-nombre" name="nombre" placeholder="Nombre de la tarea" required>
-      <button type="submit" class="btn">Iniciar</button>
+      <input type="text" id="dash-tarea-nombre" name="nombre" placeholder="{{ _('Nombre de la tarea') }}" required>
+      <button type="submit" class="btn">{{ _('Iniciar') }}</button>
     </div>
   </form>
   {% endif %}
 
   <a class="dash-accion dash-accion-buscar" id="dash-accion-buscar" href="{{ url_for('historial') }}">
-    <span>🔍 Buscar en el histórico</span>
+    <span>🔍 {{ _('Buscar en el histórico') }}</span>
   </a>
 </section>
 
 {% if not menus %}
   <div class="empty-state">
-    <p>Todavía no tienes ningún menú.</p>
-    <p class="muted">Crea el primero abajo para empezar a registrar actividad.</p>
+    <p>{{ _('Todavía no tienes ningún menú.') }}</p>
+    <p class="muted">{{ _('Crea el primero abajo para empezar a registrar actividad.') }}</p>
   </div>
 {% else %}
   {% macro tarjeta_menu(m, es_primero, es_ultimo, mostrar_reorder) %}
   <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
     <form class="menu-card-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
-      <button type="submit" title="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}" aria-label="{{ 'Quitar de favoritos' if m.favorito else 'Fijar en favoritos' }}">{{ '★' if m.favorito else '☆' }}</button>
+      <button type="submit" title="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}" aria-label="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}">{{ '★' if m.favorito else '☆' }}</button>
     </form>
     <a class="menu-card-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
       <div class="menu-card-top">
@@ -105,20 +105,20 @@
       <div class="menu-card-stats">
         {% set n_activas = activas_por_menu.get(m.id, [])|length %}
         {% if n_activas %}
-          <span class="pill pill-live">{{ n_activas }} en curso</span>
+          <span class="pill pill-live">{{ n_activas }} {{ _('en curso') }}</span>
         {% endif %}
-        <span class="pill">{{ entradas_hoy.get(m.id, 0) }} hoy</span>
+        <span class="pill">{{ entradas_hoy.get(m.id, 0) }} {{ _('hoy') }}</span>
       </div>
     </a>
     {% if mostrar_reorder %}
     <div class="menu-card-reorder">
       <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
         <input type="hidden" name="direccion" value="arriba">
-        <button type="submit" class="menu-card-reorder-btn" title="Mover arriba" {{ 'disabled' if es_primero }}>↑</button>
+        <button type="submit" class="menu-card-reorder-btn" title="{{ _('Mover arriba') }}" {{ 'disabled' if es_primero }}>↑</button>
       </form>
       <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
         <input type="hidden" name="direccion" value="abajo">
-        <button type="submit" class="menu-card-reorder-btn" title="Mover abajo" {{ 'disabled' if es_ultimo }}>↓</button>
+        <button type="submit" class="menu-card-reorder-btn" title="{{ _('Mover abajo') }}" {{ 'disabled' if es_ultimo }}>↓</button>
       </form>
     </div>
     {% endif %}
@@ -129,11 +129,11 @@
   {% set resto = menus|rejectattr('favorito')|list %}
 
   {% if favoritos %}
-  <h3 class="menu-grid-titulo">★ Favoritos</h3>
+  <h3 class="menu-grid-titulo">★ {{ _('Favoritos') }}</h3>
   <div class="menu-grid">
     {% for m in favoritos %}{{ tarjeta_menu(m, loop.first, loop.last, favoritos|length > 1) }}{% endfor %}
   </div>
-  <h3 class="menu-grid-titulo">Tus menús</h3>
+  <h3 class="menu-grid-titulo">{{ _('Tus menús') }}</h3>
   {% endif %}
   <div class="menu-grid">
     {% for m in resto %}{{ tarjeta_menu(m, loop.first, loop.last, resto|length > 1) }}{% endfor %}
@@ -142,9 +142,9 @@
 
 {% if menus %}
 <section class="log-section">
-  <h3>Hoy</h3>
+  <h3>{{ _('Hoy') }}</h3>
   {% if not log_hoy %}
-  <p class="empty-lane">Todavía no has registrado nada hoy.</p>
+  <p class="empty-lane">{{ _('Todavía no has registrado nada hoy.') }}</p>
   {% else %}
   <ul class="log-list">
     {% for f in log_hoy %}
@@ -153,17 +153,17 @@
       <span class="dot" style="background: {{ f.categoria_color or '#7c8ba1' }};"></span>
       <span class="log-menu">{{ f.categoria_nombre or '—' }}</span>
       <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">
-        {% if f.origen == 'nota' %}Nota
-        {% elif f.tipo == 'instantanea' %}Evento
-        {% elif f.estado == 'en_curso' %}En curso
-        {% elif f.estado == 'pausada' %}En pausa
-        {% else %}Tarea{% endif %}
+        {% if f.origen == 'nota' %}{{ _('Nota') }}
+        {% elif f.tipo == 'instantanea' %}{{ _('Evento') }}
+        {% elif f.estado == 'en_curso' %}{{ _('En curso') }}
+        {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
+        {% else %}{{ _('Tarea') }}{% endif %}
       </span>
       <span class="log-text">{{ f.texto }}</span>
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="Editar" aria-label="Editar">✏</a>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
     </li>
     {% endfor %}
   </ul>
@@ -172,18 +172,18 @@
 {% endif %}
 
 <section class="dash-ia">
-  <h3>Asistente IA</h3>
+  <h3>{{ _('Asistente IA') }}</h3>
   {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-dashboard') }}
 </section>
 
 <section class="new-menu" id="new-menu">
-  <h3>+ Nuevo menú</h3>
+  <h3>+ {{ _('Nuevo menú') }}</h3>
   <form class="inline-form" method="post" action="{{ url_for('crear_menu') }}">
-    <label class="sr-only" for="nuevo-menu-nombre">Nombre del menú</label>
-    <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="Nombre del menú (ej. Lueira, Guilda...)" required>
-    <label class="sr-only" for="nuevo-menu-color">Color del menú</label>
-    <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="Color del menú" aria-label="Color del menú">
-    <button type="submit" class="btn btn-primary">Crear menú</button>
+    <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del menú') }}</label>
+    <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
+    <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
+    <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
+    <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
   </form>
 </section>
 {% endblock %}
