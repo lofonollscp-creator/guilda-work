@@ -22,6 +22,7 @@ from pathlib import Path
 
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
+from flask_babel import Babel
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos
@@ -90,6 +91,22 @@ app.secret_key = os.environ.get("GUILDA_SECRET_KEY") or secrets.token_hex(32)
 # que reescribir, así que esto no cambia nada allí.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 limiter.init_app(app)
+
+# Multi-idioma: castellano, catalán, inglés, francés. El usuario elegido
+# manda (columna usuarios.idioma, ver /idioma/<codigo> más abajo); mientras
+# no haya elegido ninguno, se usa el idioma del navegador si coincide con
+# alguno de los soportados, y si no, castellano por defecto.
+IDIOMAS_DISPONIBLES = ["es", "ca", "en", "fr"]
+
+
+def _seleccionar_idioma():
+    idioma_guardado = db.idioma_usuario(getattr(g, "usuario_id", None)) if getattr(g, "usuario_id", None) else None
+    if idioma_guardado in IDIOMAS_DISPONIBLES:
+        return idioma_guardado
+    return request.accept_languages.best_match(IDIOMAS_DISPONIBLES) or "es"
+
+
+babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
@@ -154,6 +171,13 @@ def inyectar_modo_escritorio():
     # leerlo aquí en cada petición evita que quede congelado al valor de
     # cuando se registró este context_processor.
     return {"modo_escritorio": MODO_ESCRITORIO}
+
+
+@app.context_processor
+def inyectar_idioma_actual():
+    from flask_babel import get_locale
+
+    return {"idioma_actual": str(get_locale()), "idiomas_disponibles": IDIOMAS_DISPONIBLES}
 
 
 @app.context_processor
@@ -375,6 +399,21 @@ def inicio():
 @login_required
 def ocultar_onboarding():
     db.ocultar_onboarding(g.usuario_id)
+    return redirect(url_for("inicio"))
+
+
+@app.route("/idioma/<codigo>", methods=["POST"])
+@login_required
+def cambiar_idioma(codigo):
+    if codigo in IDIOMAS_DISPONIBLES:
+        db.cambiar_idioma_usuario(g.usuario_id, codigo)
+    # Vuelve a la misma página desde la que se cambió el idioma (el
+    # selector vive en el panel de ajustes, presente en cualquier
+    # pantalla) -- solo se fía de un referrer del propio origen, nunca de
+    # uno externo.
+    destino = request.referrer
+    if destino and destino.startswith(request.host_url):
+        return redirect(destino)
     return redirect(url_for("inicio"))
 
 

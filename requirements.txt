@@ -22,3 +22,5 @@ requests>=2.31
 # Captcha de prueba de trabajo para el login (app/captcha.py) -- ALTCHA,
 # self-hosted, sin servicio de terceros ni CDN.
 altcha>=2.1
+# Multi-idioma (catalán, inglés, francés) -- ver babel.cfg y translations/.
+Flask-Babel>=4.0

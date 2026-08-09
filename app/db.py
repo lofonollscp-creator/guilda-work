@@ -919,6 +919,13 @@ def init_db() -> None:
         # columna solo recuerda si el usuario ha pedido ocultar la tarjeta.
         _asegurar_columna(conn, "usuarios", "onboarding_visible", "INTEGER NOT NULL DEFAULT 1")
 
+        # Multi-idioma: 'es' (por defecto, sin marcar explícitamente hasta
+        # que el usuario cambia) | 'ca' | 'en' | 'fr'. NULL se trata como
+        # "todavía no ha elegido" en el selector de locale (ver
+        # app/main.py) y cae al idioma del navegador en vez de forzar
+        # castellano a alguien que nunca lo pidió.
+        _asegurar_columna(conn, "usuarios", "idioma", "TEXT")
+
         conn.commit()
     finally:
         conn.close()
@@ -1005,6 +1012,26 @@ def ocultar_onboarding(usuario_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE usuarios SET onboarding_visible = 0 WHERE id = ?", (usuario_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def idioma_usuario(usuario_id: int) -> str | None:
+    """None si el usuario nunca ha elegido idioma explícitamente -- el
+    selector de locale (app/main.py) cae entonces al del navegador."""
+    conn = get_connection()
+    try:
+        fila = conn.execute("SELECT idioma FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        return fila["idioma"] if fila else None
+    finally:
+        conn.close()
+
+
+def cambiar_idioma_usuario(usuario_id: int, codigo: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET idioma = ? WHERE id = ?", (codigo, usuario_id))
         conn.commit()
     finally:
         conn.close()

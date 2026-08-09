@@ -109,6 +109,13 @@
             {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
             <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="Abrir Asistente IA">🤖 Asistente IA</button>
             {% endif %}
+            <div class="ajustes-idiomas" role="group" aria-label="Idioma">
+              {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
+              <form action="{{ url_for('cambiar_idioma', codigo=codigo) }}" method="post">
+                <button type="submit" class="ajustes-idioma-btn {{ 'is-activo' if idioma_actual == codigo }}" {% if idioma_actual == codigo %}aria-current="true"{% endif %}>{{ codigo|upper }}</button>
+              </form>
+              {% endfor %}
+            </div>
             <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">📱 Mis dispositivos</a>
             <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">📚 Documentación (desarrolladores)</a>
             {% if modo_escritorio %}

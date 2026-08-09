@@ -375,6 +375,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-align: left;
 }
 .ajustes-panel-btn:hover { background: var(--bg); }
+.ajustes-idiomas { display: flex; gap: 4px; padding: 4px 12px 8px; }
+.ajustes-idiomas form { flex: 1; }
+.ajustes-idioma-btn {
+  width: 100%;
+  padding: 6px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+.ajustes-idioma-btn:hover { background: var(--bg); color: var(--text); }
+.ajustes-idioma-btn.is-activo { background: var(--primary); border-color: var(--primary); color: var(--on-accent); font-weight: 600; }
 .ajustes-panel-shutdown { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; }
 .ajustes-panel-shutdown .ajustes-panel-btn:hover { background: rgba(224,85,90,0.12); color: var(--danger); }
 
