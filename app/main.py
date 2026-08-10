@@ -21,10 +21,12 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import sentry_sdk
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask_babel import Babel
 from flask_babel import gettext as _
+from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -63,6 +65,18 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
 logger = logging.getLogger("guilda")
+
+# Alertas de errores no controlados vía GlitchTip (autoalojado, protocolo
+# compatible con Sentry -- ver docker-compose.yml). Sin GLITCHTIP_DSN
+# (modo escritorio, tests, desarrollo local) sentry_sdk.init() con
+# dsn=None es un no-op documentado: no manda nada a ningún sitio, así que
+# no hace falta envolver esto en un if aparte.
+sentry_sdk.init(
+    dsn=os.environ.get("GLITCHTIP_DSN"),
+    integrations=[FlaskIntegration()],
+    traces_sample_rate=0.0,  # solo errores, sin trazas de rendimiento (evento aparte, no lo pedía este lote)
+    send_default_pii=False,  # nunca mandar datos de usuario (emails, IPs) a las trazas
+)
 
 PROMPT_IA_POR_DEFECTO = "Resume mis actividades agrupadas por categoría, destacando lo más relevante y el tiempo dedicado a cada una."
 
@@ -148,6 +162,7 @@ def _registrar_excepcion_no_controlada(error):
     if isinstance(error, HTTPException):
         return error
     logger.exception("Excepción no controlada en %s %s", request.method, request.path)
+    sentry_sdk.capture_exception(error)
     return jsonify(error=_("Ha ocurrido un error interno. Se ha registrado para revisión.")) if request.path.startswith("/api/") else (
         _("Ha ocurrido un error interno. Se ha registrado para revisión."),
         500,
@@ -649,8 +664,21 @@ def finalizar_tarea(tarea_id: int):
     return redirect(request.referrer or url_for("inicio"))
 
 
-def _contexto_historial(desde, hasta, categoria_id, q=None, **extra):
-    filas = db.historial(g.usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q)
+HISTORIAL_POR_PAGINA = 50
+
+
+def _contexto_historial(desde, hasta, categoria_id, q=None, pagina=1, **extra):
+    pagina = max(pagina or 1, 1)
+    offset = (pagina - 1) * HISTORIAL_POR_PAGINA
+    # Se pide una fila de más (limite+1) solo para saber si hay página
+    # siguiente, sin necesidad de un COUNT(*) aparte -- mismo truco que ya
+    # usa app/rutas_tareas.py para su propia paginación.
+    filas = db.historial(
+        g.usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q,
+        limite=HISTORIAL_POR_PAGINA + 1, offset=offset,
+    )
+    hay_pagina_siguiente = len(filas) > HISTORIAL_POR_PAGINA
+    filas = filas[:HISTORIAL_POR_PAGINA]
     preferencias_ia_local = db.obtener_preferencias_ia_local(g.usuario_id)
     ctx = {
         "filas": filas,
@@ -659,6 +687,9 @@ def _contexto_historial(desde, hasta, categoria_id, q=None, **extra):
         "hasta": hasta or "",
         "categoria_id": categoria_id or "",
         "q": q or "",
+        "pagina": pagina,
+        "hay_pagina_anterior": pagina > 1,
+        "hay_pagina_siguiente": hay_pagina_siguiente,
         "proveedor_ia": preferencias_ia_local["proveedor_local"],
         "modelo_ia": preferencias_ia_local["modelo_local"],
         "prompt_ia": PROMPT_IA_POR_DEFECTO,
@@ -677,7 +708,8 @@ def historial():
     categoria_id = request.args.get("categoria_id") or None
     categoria_id = int(categoria_id) if categoria_id else None
     q = request.args.get("q") or None
-    return render_template("historial.html", **_contexto_historial(desde, hasta, categoria_id, q=q))
+    pagina = request.args.get("pagina", 1, type=int)
+    return render_template("historial.html", **_contexto_historial(desde, hasta, categoria_id, q=q, pagina=pagina))
 
 
 @app.route("/export")

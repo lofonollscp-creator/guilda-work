@@ -24,3 +24,6 @@ requests>=2.31
 altcha>=2.1
 # Multi-idioma (catalán, inglés, francés) -- ver babel.cfg y translations/.
 Flask-Babel>=4.0
+# Alertas de errores no controlados -- GlitchTip autoalojado (protocolo
+# compatible con Sentry, usa el mismo cliente), ver docker-compose.yml.
+sentry-sdk[flask]>=2.0
