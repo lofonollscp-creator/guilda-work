@@ -879,6 +879,14 @@ services:
       NEXT_PRIVATE_SMTP_FROM_NAME: ${DOCUMENSO_SMTP_FROM_NAME:-Guilda Work}
       NEXT_PRIVATE_SMTP_FROM_ADDRESS: ${DOCUMENSO_SMTP_FROM_ADDRESS:?define DOCUMENSO_SMTP_FROM_ADDRESS}
       NEXT_PRIVATE_SIGNING_PASSPHRASE: ${DOCUMENSO_SIGNING_PASSPHRASE:?define DOCUMENSO_SIGNING_PASSPHRASE}
+      # Sin esto, Documenso ignora el cert.p12 montado abajo y busca su
+      # ruta de ejemplo interna (./example/cert.p12, que no existe en la
+      # imagen) -- el job interno.seal-document falla en bucle (ENOENT)
+      # y el documento se queda colgado en "Procesando documento" para
+      # siempre, sin sellar ni mandar el email de confirmación.
+      # Verificado en vivo (2026-08-10).
+      NEXT_PRIVATE_SIGNING_TRANSPORT: local
+      NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH: /opt/documenso/cert.p12
     ports:
       - "127.0.0.1:8018:3000"
     volumes:
