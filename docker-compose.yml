@@ -1452,17 +1452,28 @@ services:
     restart: unless-stopped
     depends_on:
       - livekit
-    # network_mode: host, igual que livekit -- LIVEKIT_URL apunta a
-    # 127.0.0.1:7880, que solo es el LiveKit real si este contenedor
-    # comparte el namespace de red del host (con el bridge de Docker
-    # normal, ese 127.0.0.1 sería el propio contenedor, no el host, y
-    # la creación de sala en el SFU falla con "connection refused" --
+    # network_mode: host, igual que livekit -- necesario para que
+    # LIVEKIT_URL (ver abajo) resuelva de verdad al LiveKit real y no a
+    # este propio contenedor (con el bridge de Docker normal probamos
+    # 127.0.0.1:7880 y daba "connection refused" al crear la sala --
     # visto en vivo). LIVEKIT_JWT_BIND fija el puerto a 8091 en vez del
     # 8080 por defecto porque crowdsec ya usa el 8080 del host para su
     # API local.
+    #
+    # LIVEKIT_URL tiene que ser la URL PÚBLICA (wss://.../livekit/sfu),
+    # no una interna -- lk-jwt-service usa el mismo valor para dos cosas
+    # distintas: sus propias llamadas internas a la API de LiveKit
+    # (creación de sala) Y la URL que le devuelve al cliente (Element X)
+    # para que conecte el WebSocket de señalización de verdad. Con
+    # ws://127.0.0.1:7880 la creación de sala funcionaba (llamada
+    # interna) pero el cliente recibía esa misma URL interna y no podía
+    # conectar -- "Failed to connect to Livekit server. ServerUnreachable"
+    # visto en vivo. El Caddyfile del VPS (no versionado) quita el
+    # prefijo /livekit/sfu antes de reenviar a localhost:7880, así que
+    # tanto la llamada interna como la del cliente llegan bien a LiveKit.
     network_mode: host
     environment:
-      LIVEKIT_URL: ws://127.0.0.1:7880
+      LIVEKIT_URL: wss://matrix-rtc.guildawork.com/livekit/sfu
       LIVEKIT_JWT_BIND: 127.0.0.1:8091
       LIVEKIT_KEY: ${LIVEKIT_API_KEY:?define LIVEKIT_API_KEY, p.ej. openssl rand -hex 16}
       LIVEKIT_SECRET: ${LIVEKIT_API_SECRET:?define LIVEKIT_API_SECRET, p.ej. openssl rand -base64 32}
