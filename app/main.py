@@ -300,7 +300,13 @@ def _flujo_o_redirigir(tipo: str):
     try:
         flujo = kratos.obtener_flujo(tipo, flow_id, request.cookies)
     except kratos.ErrorKratos:
-        g._redireccion_flujo = redirect(url_for(tipo if tipo == "login" else "registro"))
+        rutas_por_tipo = {
+            "login": "login",
+            "registration": "registro",
+            "verification": "verificar_email",
+            "recovery": "recuperar_contrasena",
+        }
+        g._redireccion_flujo = redirect(url_for(rutas_por_tipo.get(tipo, "login")))
         return None
     return {
         "nodos": flujo["ui"]["nodes"],
@@ -376,6 +382,24 @@ def login():
     datos["requiere_captcha"] = ip_requiere_captcha(request.remote_addr)
     datos["captcha_fallido"] = request.args.get("captcha_error") == "1"
     return render_template("login.html", **datos)
+
+
+@app.route("/verificar-email", methods=["GET"])
+def verificar_email():
+    datos = _flujo_o_redirigir("verification")
+    if datos is None:
+        return g._redireccion_flujo
+    return render_template("verificar_email.html", **datos)
+
+
+@app.route("/recuperar-contrasena", methods=["GET"])
+def recuperar_contrasena():
+    if g.usuario_id:
+        return redirect(url_for("inicio"))
+    datos = _flujo_o_redirigir("recovery")
+    if datos is None:
+        return g._redireccion_flujo
+    return render_template("recuperar_contrasena.html", **datos)
 
 
 @app.route("/captcha/reto", methods=["GET"])
