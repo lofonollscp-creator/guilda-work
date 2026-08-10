@@ -23,7 +23,25 @@
 # puertos publicados NUNCA quedan en 0.0.0.0).
 
 app.HOSTNAME {
-	reverse_proxy localhost:8000
+	log
+	encode gzip zstd
+	route {
+		# /static/* gana un Cache-Control largo (7 días) -- Flask sirve sus
+		# estáticos con "no-cache" por defecto, así que hace falta borrar
+		# esa cabecera y poner la nuestra vía header_down (no basta con la
+		# directiva `header` a secas: reverse_proxy copia las cabeceras del
+		# upstream con Add(), así que un `header` normal declarado ANTES de
+		# reverse_proxy acaba duplicado en vez de sustituido -- verificado
+		# en vivo).
+		handle /static/* {
+			reverse_proxy localhost:8000 {
+				header_down Cache-Control "public, max-age=604800"
+			}
+		}
+		handle {
+			reverse_proxy localhost:8000
+		}
+	}
 }
 
 # Hydra: el navegador la visita directamente durante el OAuth2 (a
