@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-09 21:42+0200\n"
+"POT-Creation-Date: 2026-08-10 10:55+0200\n"
 "PO-Revision-Date: 2026-08-09 21:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,11 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app/main.py:151 app/main.py:152
+msgid "Ha ocurrido un error interno. Se ha registrado para revisión."
+msgstr "Une erreur interne s'est produite. Elle a été enregistrée pour être examinée."
 
 #: app/rutas_correo.py:405 app/templates/correo_bandeja.html:139
 msgid "Responder"
@@ -32,8 +36,12 @@ msgid "Reenviar"
 msgstr "Créer"
 
 #: app/templates/_ia_chat_macro.html:3
-msgid "Respuestas generadas por IA — pueden contener errores, comprueba lo importante."
-msgstr "Réponses générées par l'IA — elles peuvent contenir des erreurs, vérifiez ce qui est important."
+msgid ""
+"Respuestas generadas por IA — pueden contener errores, comprueba lo "
+"importante."
+msgstr ""
+"Réponses générées par l'IA — elles peuvent contenir des erreurs, vérifiez"
+" ce qui est important."
 
 #: app/templates/_ia_chat_macro.html:17
 msgid "¿Ejecuto"
@@ -69,11 +77,19 @@ msgstr "Backoffice"
 
 #: app/templates/backoffice.html:7
 msgid "Tenants (organizaciones) y usuarios — solo visible para administradores."
-msgstr "Locataires (organisations) et utilisateurs — visible uniquement pour les administrateurs."
+msgstr ""
+"Locataires (organisations) et utilisateurs — visible uniquement pour les "
+"administrateurs."
 
 #: app/templates/backoffice.html:17
-msgid "FacturaScripts aprovisionado — esto solo se muestra esta vez, apunta la contraseña antes de continuar (hace falta para el último paso manual: entrar y crear la API Key desde Ajustes → API):"
-msgstr "FacturaScripts provisionné — ceci ne s'affiche qu'une seule fois, notez le mot de passe avant de continuer (nécessaire pour la dernière étape manuelle : se connecter et créer la clé API depuis Paramètres → API) :"
+msgid ""
+"FacturaScripts aprovisionado — esto solo se muestra esta vez, apunta la "
+"contraseña antes de continuar (hace falta para el último paso manual: "
+"entrar y crear la API Key desde Ajustes → API):"
+msgstr ""
+"FacturaScripts provisionné — ceci ne s'affiche qu'une seule fois, notez "
+"le mot de passe avant de continuer (nécessaire pour la dernière étape "
+"manuelle : se connecter et créer la clé API depuis Paramètres → API) :"
 
 #: app/templates/backoffice.html:21
 msgid "Usuario"
@@ -85,16 +101,27 @@ msgid "Contraseña"
 msgstr "Mot de passe"
 
 #: app/templates/backoffice.html:30
-msgid "Cal.diy aprovisionado — esto solo se muestra esta vez, apunta la contraseña antes de continuar (hace falta para el último paso manual: entrar y crear la API Key desde Configuración → Developer → API Keys):"
-msgstr "Cal.diy provisionné — ceci ne s'affiche qu'une seule fois, notez le mot de passe avant de continuer (nécessaire pour la dernière étape manuelle : se connecter et créer la clé API depuis Paramètres → Developer → API Keys) :"
+msgid ""
+"Cal.diy aprovisionado — esto solo se muestra esta vez, apunta la "
+"contraseña antes de continuar (hace falta para el último paso manual: "
+"entrar y crear la API Key desde Configuración → Developer → API Keys):"
+msgstr ""
+"Cal.diy provisionné — ceci ne s'affiche qu'une seule fois, notez le mot "
+"de passe avant de continuer (nécessaire pour la dernière étape manuelle :"
+" se connecter et créer la clé API depuis Paramètres → Developer → API "
+"Keys) :"
 
 #: app/templates/backoffice.html:42
 msgid "Alta de"
 msgstr "Création de"
 
 #: app/templates/backoffice.html:42
-msgid "esto solo se muestra esta vez, pásale las contraseñas para que las cambie al entrar:"
-msgstr "ceci ne s'affiche qu'une seule fois, transmettez les mots de passe pour qu'il/elle les change en se connectant :"
+msgid ""
+"esto solo se muestra esta vez, pásale las contraseñas para que las cambie"
+" al entrar:"
+msgstr ""
+"ceci ne s'affiche qu'une seule fois, transmettez les mots de passe pour "
+"qu'il/elle les change en se connectant :"
 
 #: app/templates/backoffice.html:45
 msgid "Servicio"
@@ -217,8 +244,14 @@ msgstr "Visible pour %(nombre)s — cliquez pour masquer"
 
 #: app/templates/backoffice.html:186
 #, python-format
-msgid "¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos."
-msgstr "Supprimer le locataire %(nombre)s ? Ses utilisateurs se retrouveront sans locataire assigné, et son instance FacturaScripts (le cas échéant) sera supprimée avec ses données."
+msgid ""
+"¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, "
+"y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus"
+" datos."
+msgstr ""
+"Supprimer le locataire %(nombre)s ? Ses utilisateurs se retrouveront sans"
+" locataire assigné, et son instance FacturaScripts (le cas échéant) sera "
+"supprimée avec ses données."
 
 #: app/templates/backoffice.html:187 app/templates/backoffice.html:310
 #, fuzzy
@@ -392,8 +425,12 @@ msgstr "dernière utilisation"
 
 #: app/templates/backoffice_dispositivos.html:24
 #, python-format
-msgid "¿Revocar el acceso de «%(nombre)s»? %(email)s tendrá que iniciar sesión de nuevo en la app."
-msgstr "Révoquer l'accès de « %(nombre)s » ? %(email)s devra se reconnecter dans l'application."
+msgid ""
+"¿Revocar el acceso de «%(nombre)s»? %(email)s tendrá que iniciar sesión "
+"de nuevo en la app."
+msgstr ""
+"Révoquer l'accès de « %(nombre)s » ? %(email)s devra se reconnecter dans "
+"l'application."
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
@@ -532,8 +569,12 @@ msgid "Documentación (desarrolladores)"
 msgstr "Documentation (développeurs)"
 
 #: app/templates/base.html:123
-msgid "¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo."
-msgstr "Fermer Guilda Work ? Ce qui a déjà été noté est enregistré ; le programme se fermera complètement."
+msgid ""
+"¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa "
+"por completo."
+msgstr ""
+"Fermer Guilda Work ? Ce qui a déjà été noté est enregistré ; le programme"
+" se fermera complètement."
 
 #: app/templates/base.html:124
 msgid "Cerrar programa"
@@ -578,16 +619,27 @@ msgid "Guilda Work se ha cerrado"
 msgstr "Guilda Work s'est fermé"
 
 #: app/templates/cerrado.html:38
-msgid "Todo lo que anotaste ya estaba guardado (se escribe al instante en cada acción). El programa y su servidor se han terminado por completo. Esta ventana se cerrará sola en un instante."
-msgstr "Tout ce que vous avez noté était déjà enregistré (cela s'écrit instantanément à chaque action). Le programme et son serveur se sont arrêtés complètement. Cette fenêtre se fermera d'elle-même dans un instant."
+msgid ""
+"Todo lo que anotaste ya estaba guardado (se escribe al instante en cada "
+"acción). El programa y su servidor se han terminado por completo. Esta "
+"ventana se cerrará sola en un instante."
+msgstr ""
+"Tout ce que vous avez noté était déjà enregistré (cela s'écrit "
+"instantanément à chaque action). Le programme et son serveur se sont "
+"arrêtés complètement. Cette fenêtre se fermera d'elle-même dans un "
+"instant."
 
 #: app/templates/correo_ajustes.html:2 app/templates/correo_ajustes.html:6
 msgid "Ajustes de correo"
 msgstr "Paramètres de messagerie"
 
 #: app/templates/correo_ajustes.html:7
-msgid "Preferencias, categorías y firma. La gestión de cuentas (IMAP/SMTP) está aparte."
-msgstr "Préférences, catégories et signature. La gestion des comptes (IMAP/SMTP) est séparée."
+msgid ""
+"Preferencias, categorías y firma. La gestión de cuentas (IMAP/SMTP) está "
+"aparte."
+msgstr ""
+"Préférences, catégories et signature. La gestion des comptes (IMAP/SMTP) "
+"est séparée."
 
 #: app/templates/correo_ajustes.html:11 app/templates/correo_cuentas.html:11
 #, fuzzy
@@ -624,12 +676,18 @@ msgstr "Catégories"
 
 #: app/templates/correo_ajustes.html:45
 msgid "Propias de Guilda Work — no se sincronizan con tu proveedor de correo."
-msgstr "Propres à Guilda Work — non synchronisées avec votre fournisseur de messagerie."
+msgstr ""
+"Propres à Guilda Work — non synchronisées avec votre fournisseur de "
+"messagerie."
 
 #: app/templates/correo_ajustes.html:53
 #, python-format
-msgid "¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se quedan sin categoría."
-msgstr "Supprimer la catégorie « %(nombre)s » ? Les messages qui l'avaient se retrouveront sans catégorie."
+msgid ""
+"¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se "
+"quedan sin categoría."
+msgstr ""
+"Supprimer la catégorie « %(nombre)s » ? Les messages qui l'avaient se "
+"retrouveront sans catégorie."
 
 #: app/templates/correo_ajustes.html:54 app/templates/correo_ajustes.html:80
 #: app/templates/correo_ajustes.html:113 app/templates/correo_bandeja.html:72
@@ -652,8 +710,12 @@ msgid "Reglas de categorización automática"
 msgstr "Règles de catégorisation automatique"
 
 #: app/templates/correo_ajustes.html:71
-msgid "Los correos nuevos de un remitente o dominio que coincida se categorizan solos, sin tener que hacerlo a mano."
-msgstr "Les nouveaux e-mails d'un expéditeur ou domaine correspondant sont catégorisés automatiquement, sans avoir à le faire manuellement."
+msgid ""
+"Los correos nuevos de un remitente o dominio que coincida se categorizan "
+"solos, sin tener que hacerlo a mano."
+msgstr ""
+"Les nouveaux e-mails d'un expéditeur ou domaine correspondant sont "
+"catégorisés automatiquement, sans avoir à le faire manuellement."
 
 #: app/templates/correo_ajustes.html:79
 msgid "¿Eliminar esta regla?"
@@ -672,8 +734,13 @@ msgid "Remitentes de confianza"
 msgstr "Expéditeurs de confiance"
 
 #: app/templates/correo_ajustes.html:105
-msgid "Sus imágenes remotas y adjuntos se muestran/abren sin avisar. Los de cualquier otro remitente se bloquean/avisan por privacidad."
-msgstr "Leurs images distantes et pièces jointes s'affichent/s'ouvrent sans avertissement. Celles de tout autre expéditeur sont bloquées/signalées par mesure de confidentialité."
+msgid ""
+"Sus imágenes remotas y adjuntos se muestran/abren sin avisar. Los de "
+"cualquier otro remitente se bloquean/avisan por privacidad."
+msgstr ""
+"Leurs images distantes et pièces jointes s'affichent/s'ouvrent sans "
+"avertissement. Celles de tout autre expéditeur sont bloquées/signalées "
+"par mesure de confidentialité."
 
 #: app/templates/correo_ajustes.html:112
 #, python-format
@@ -865,8 +932,12 @@ msgid "Para:"
 msgstr "Corbeille"
 
 #: app/templates/correo_bandeja.html:133
-msgid "¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer)."
-msgstr "Supprimer ce message du cache local ? Cette action est irréversible (s'il est toujours sur le serveur, une future synchronisation le ramènera)."
+msgid ""
+"¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue "
+"en el servidor, una futura sincronización lo volverá a traer)."
+msgstr ""
+"Supprimer ce message du cache local ? Cette action est irréversible (s'il"
+" est toujours sur le serveur, une future synchronisation le ramènera)."
 
 #: app/templates/correo_bandeja.html:140
 msgid "Resp. a todos"
@@ -919,12 +990,20 @@ msgid "Confiar"
 msgstr "Confiance"
 
 #: app/templates/correo_bandeja.html:224
-msgid "Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?"
-msgstr "Cette pièce jointe provient d'un expéditeur qui n'est pas dans votre liste de confiance. L'ouvrir quand même ?"
+msgid ""
+"Este adjunto viene de un remitente que no está en tu lista de confianza. "
+"¿Abrir igualmente?"
+msgstr ""
+"Cette pièce jointe provient d'un expéditeur qui n'est pas dans votre "
+"liste de confiance. L'ouvrir quand même ?"
 
 #: app/templates/correo_bandeja.html:232
-msgid "Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza."
-msgstr "Images masquées pour des raisons de confidentialité — cet expéditeur n'est pas dans votre liste de confiance."
+msgid ""
+"Imágenes ocultas por privacidad — este remitente no está en tu lista de "
+"confianza."
+msgstr ""
+"Images masquées pour des raisons de confidentialité — cet expéditeur "
+"n'est pas dans votre liste de confiance."
 
 #: app/templates/correo_bandeja.html:233
 msgid "Mostrar solo esta vez"
@@ -944,8 +1023,12 @@ msgid "Cuentas de correo"
 msgstr "Connectez un compte de messagerie"
 
 #: app/templates/correo_cuentas.html:7
-msgid "IMAP/POP3. La contraseña se guarda en el almacén de credenciales de Windows, no en la base de datos."
-msgstr "IMAP/POP3. Le mot de passe est stocké dans le gestionnaire d'identifiants Windows, pas dans la base de données."
+msgid ""
+"IMAP/POP3. La contraseña se guarda en el almacén de credenciales de "
+"Windows, no en la base de datos."
+msgstr ""
+"IMAP/POP3. Le mot de passe est stocké dans le gestionnaire d'identifiants"
+" Windows, pas dans la base de données."
 
 #: app/templates/correo_cuentas.html:26
 msgid "Sincronizado"
@@ -957,8 +1040,13 @@ msgstr "Tester la connexion"
 
 #: app/templates/correo_cuentas.html:32
 #, python-format
-msgid "¿Eliminar la cuenta «%(nombre)s»? Se borrarán también sus mensajes descargados y su contraseña guardada. No se puede deshacer."
-msgstr "Supprimer le compte « %(nombre)s » ? Ses messages téléchargés et son mot de passe enregistré seront également supprimés. Cette action est irréversible."
+msgid ""
+"¿Eliminar la cuenta «%(nombre)s»? Se borrarán también sus mensajes "
+"descargados y su contraseña guardada. No se puede deshacer."
+msgstr ""
+"Supprimer le compte « %(nombre)s » ? Ses messages téléchargés et son mot "
+"de passe enregistré seront également supprimés. Cette action est "
+"irréversible."
 
 #: app/templates/correo_cuentas.html:41 app/templates/correo_cuentas.html:95
 #, fuzzy
@@ -1074,8 +1162,12 @@ msgid "Texto"
 msgstr "Texte"
 
 #: app/templates/editar_nota.html:23
-msgid "¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí."
-msgstr "Supprimer cette note ? Elle sera déplacée vers la corbeille — vous pourrez la restaurer depuis là."
+msgid ""
+"¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde "
+"ahí."
+msgstr ""
+"Supprimer cette note ? Elle sera déplacée vers la corbeille — vous "
+"pourrez la restaurer depuis là."
 
 #: app/templates/editar_nota.html:25
 msgid "Eliminar nota"
@@ -1112,20 +1204,32 @@ msgstr "elle sera recalculée à l'enregistrement."
 
 #: app/templates/editar_tarea.html:31
 msgid "Esta tarea sigue en pausa; el fin se registrará al finalizarla."
-msgstr "Cette tâche est toujours en pause ; la fin sera enregistrée à sa finalisation."
+msgstr ""
+"Cette tâche est toujours en pause ; la fin sera enregistrée à sa "
+"finalisation."
 
 #: app/templates/editar_tarea.html:31
 msgid "Esta tarea sigue en curso; el fin se registrará al finalizarla."
-msgstr "Cette tâche est toujours en cours ; la fin sera enregistrée à sa finalisation."
+msgstr ""
+"Cette tâche est toujours en cours ; la fin sera enregistrée à sa "
+"finalisation."
 
 #: app/templates/editar_tarea.html:41
-msgid "¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde ahí."
-msgstr "Supprimer cet événement ? Il sera déplacé vers la corbeille — vous pourrez le restaurer depuis là."
+msgid ""
+"¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde"
+" ahí."
+msgstr ""
+"Supprimer cet événement ? Il sera déplacé vers la corbeille — vous "
+"pourrez le restaurer depuis là."
 
 #: app/templates/editar_tarea.html:41
 #: app/templates/tarea_outlook_editar.html:77
-msgid "¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí."
-msgstr "Supprimer cette tâche ? Elle sera déplacée vers la corbeille — vous pourrez la restaurer depuis là."
+msgid ""
+"¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde "
+"ahí."
+msgstr ""
+"Supprimer cette tâche ? Elle sera déplacée vers la corbeille — vous "
+"pourrez la restaurer depuis là."
 
 #: app/templates/editar_tarea.html:43
 msgid "Eliminar evento"
@@ -1210,7 +1314,9 @@ msgstr "Il n'y a pas encore de tâches avec durée terminées dans cette plage."
 
 #: app/templates/estadisticas.html:82
 msgid "Mostrando los 20 primeros del gráfico; la tabla de abajo tiene el resto."
-msgstr "Affichage des 20 premiers dans le graphique ; le tableau ci-dessous contient le reste."
+msgstr ""
+"Affichage des 20 premiers dans le graphique ; le tableau ci-dessous "
+"contient le reste."
 
 #: app/templates/estadisticas.html:88
 #: app/templates/fichaje_admin_detalle.html:27
@@ -1267,8 +1373,12 @@ msgid "elegir"
 msgstr "choisir"
 
 #: app/templates/fichaje_admin.html:41
-msgid "Este tenant no tiene CIF/dirección fiscal rellenados en el backoffice — no aparecerán en los informes exportados."
-msgstr "Ce locataire n'a pas renseigné son SIRET/adresse fiscale dans le backoffice — ils n'apparaîtront pas dans les rapports exportés."
+msgid ""
+"Este tenant no tiene CIF/dirección fiscal rellenados en el backoffice — "
+"no aparecerán en los informes exportados."
+msgstr ""
+"Ce locataire n'a pas renseigné son SIRET/adresse fiscale dans le "
+"backoffice — ils n'apparaîtront pas dans les rapports exportés."
 
 #: app/templates/fichaje_admin.html:45
 #, fuzzy
@@ -1361,8 +1471,14 @@ msgid "Corregir un olvido"
 msgstr "Corriger un oubli"
 
 #: app/templates/fichaje_admin_detalle.html:46
-msgid "Añade el fichaje que faltó (p. ej. una salida no marcada) sin borrar ni tocar los existentes — queda registrado quién y cuándo hizo la corrección."
-msgstr "Ajoutez le pointage manquant (p. ex. une sortie non marquée) sans supprimer ni toucher les existants — qui a fait la correction et quand est enregistré."
+msgid ""
+"Añade el fichaje que faltó (p. ej. una salida no marcada) sin borrar ni "
+"tocar los existentes — queda registrado quién y cuándo hizo la "
+"corrección."
+msgstr ""
+"Ajoutez le pointage manquant (p. ex. une sortie non marquée) sans "
+"supprimer ni toucher les existants — qui a fait la correction et quand "
+"est enregistré."
 
 #: app/templates/fichaje_admin_detalle.html:55
 msgid "Nº de fichaje que corrige (opcional)"
@@ -1434,8 +1550,13 @@ msgid "Registro horario diario (art. 34.9 del Estatuto de los Trabajadores)."
 msgstr "Registre horaire quotidien (art. 34.9 du Statut des travailleurs)."
 
 #: app/templates/fichaje_panel.html:24
-msgid "Antes de poder fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE."
-msgstr "Avant de pouvoir pointer, la réglementation exige de pouvoir vous identifier : renseignez votre nom complet et votre numéro de pièce d'identité."
+msgid ""
+"Antes de poder fichar, la normativa exige poder identificarte: rellena tu"
+" nombre completo y DNI/NIE."
+msgstr ""
+"Avant de pouvoir pointer, la réglementation exige de pouvoir vous "
+"identifier : renseignez votre nom complet et votre numéro de pièce "
+"d'identité."
 
 #: app/templates/fichaje_panel.html:25
 msgid "Rellenar mis datos"
@@ -1571,8 +1692,12 @@ msgid "Generar informe con IA local"
 msgstr "Générer un rapport avec l'IA locale"
 
 #: app/templates/historial.html:74
-msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio). No se envía nada a internet."
-msgstr "Envoie les données filtrées ci-dessus à un modèle exécuté sur votre machine (Ollama ou LM Studio). Rien n'est envoyé sur internet."
+msgid ""
+"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
+"(Ollama o LM Studio). No se envía nada a internet."
+msgstr ""
+"Envoie les données filtrées ci-dessus à un modèle exécuté sur votre "
+"machine (Ollama ou LM Studio). Rien n'est envoyé sur internet."
 
 #: app/templates/historial.html:81
 msgid "Proveedor"
@@ -1599,8 +1724,14 @@ msgid "Preguntar a mis datos"
 msgstr "Interroger mes données"
 
 #: app/templates/historial.html:107
-msgid "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada a internet."
-msgstr "Discutez avec un modèle local sur les données filtrées ci-dessus (même plage de dates/menu). Vous pouvez poser des questions de suivi — rien n'est envoyé sur internet."
+msgid ""
+"Chatea con un modelo local sobre los datos filtrados arriba (mismo rango "
+"de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada"
+" a internet."
+msgstr ""
+"Discutez avec un modèle local sur les données filtrées ci-dessus (même "
+"plage de dates/menu). Vous pouvez poser des questions de suivi — rien "
+"n'est envoyé sur internet."
 
 #: app/templates/historial.html:114
 msgid "Modelo, ej. llama3.1"
@@ -1659,8 +1790,12 @@ msgstr "Clés API OpenRouter (une par ligne, par ordre de préférence)"
 #, python-format
 msgid "Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas"
 msgid_plural "Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas"
-msgstr[0] "Vous avez déjà %(num)s clé enregistrée — laissez vide pour ne pas la changer"
-msgstr[1] "Vous avez déjà %(num)s clés enregistrées — laissez vide pour ne pas les changer"
+msgstr[0] ""
+"Vous avez déjà %(num)s clé enregistrée — laissez vide pour ne pas la "
+"changer"
+msgstr[1] ""
+"Vous avez déjà %(num)s clés enregistrées — laissez vide pour ne pas les "
+"changer"
 
 #: app/templates/ia_ajustes.html:30
 msgid ""
@@ -1671,8 +1806,14 @@ msgstr ""
 "sk-or-... (clé de secours, facultative)"
 
 #: app/templates/ia_ajustes.html:31
-msgid "Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente."
-msgstr "La première ligne est essayée en premier. Si elle échoue pour une raison propre à cette clé (pas de crédit, invalide, limite de requêtes atteinte), on passe automatiquement à la suivante."
+msgid ""
+"Se prueba primero la primera línea. Si falla por un motivo propio de esa "
+"clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa "
+"automáticamente a la siguiente."
+msgstr ""
+"La première ligne est essayée en premier. Si elle échoue pour une raison "
+"propre à cette clé (pas de crédit, invalide, limite de requêtes "
+"atteinte), on passe automatiquement à la suivante."
 
 #: app/templates/ia_ajustes.html:35
 msgid "Borrar todas las claves guardadas"
@@ -1680,7 +1821,9 @@ msgstr "Supprimer toutes les clés enregistrées"
 
 #: app/templates/ia_ajustes.html:41
 msgid "Modo autónomo: no pedir confirmación al crear/editar/borrar contenido"
-msgstr "Mode autonome : ne pas demander de confirmation lors de la création/modification/suppression de contenu"
+msgstr ""
+"Mode autonome : ne pas demander de confirmation lors de la "
+"création/modification/suppression de contenu"
 
 #: app/templates/ia_ajustes.html:44
 msgid "Aunque actives el modo autónomo,"
@@ -1691,8 +1834,13 @@ msgid "enviar un correo de verdad"
 msgstr "l'envoi réel d'un e-mail"
 
 #: app/templates/ia_ajustes.html:44
-msgid "siempre pedirá confirmación explícita, y el asistente nunca podrá borrar copias de seguridad (solo crearlas) porque esa herramienta no existe."
-msgstr "demandera toujours une confirmation explicite, et l'assistant ne pourra jamais supprimer de sauvegardes (seulement les créer) car cet outil n'existe pas."
+msgid ""
+"siempre pedirá confirmación explícita, y el asistente nunca podrá borrar "
+"copias de seguridad (solo crearlas) porque esa herramienta no existe."
+msgstr ""
+"demandera toujours une confirmation explicite, et l'assistant ne pourra "
+"jamais supprimer de sauvegardes (seulement les créer) car cet outil "
+"n'existe pas."
 
 #: app/templates/ia_asistente.html:11
 msgid "No hay ningún modelo configurado todavía. Ve a"
@@ -1708,16 +1856,28 @@ msgid "Importar datos"
 msgstr "Importer"
 
 #: app/templates/importar.html:7
-msgid "Sube un archivo JSON o CSV exportado desde Guilda Work (o desde una copia de seguridad) para recuperarlo."
-msgstr "Téléversez un fichier JSON ou CSV exporté depuis Guilda Work (ou depuis une sauvegarde) pour le restaurer."
+msgid ""
+"Sube un archivo JSON o CSV exportado desde Guilda Work (o desde una copia"
+" de seguridad) para recuperarlo."
+msgstr ""
+"Téléversez un fichier JSON ou CSV exporté depuis Guilda Work (ou depuis "
+"une sauvegarde) pour le restaurer."
 
 #: app/templates/importar.html:12
 msgid "Archivo (.json o .csv)"
 msgstr "Fichier (.json ou .csv)"
 
 #: app/templates/importar.html:16
-msgid "Los menús que no existan se crean automáticamente por nombre. Las notas y eventos se importan tal cual; las tareas con duración que en el archivo seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de cerrarlas solas."
-msgstr "Les menus qui n'existent pas sont créés automatiquement par leur nom. Les notes et événements sont importés tels quels ; les tâches avec durée qui dans le fichier étaient encore « en cours » (sans fin) sont ignorées, car il n'y a pas de moyen sûr de les clôturer seules."
+msgid ""
+"Los menús que no existan se crean automáticamente por nombre. Las notas y"
+" eventos se importan tal cual; las tareas con duración que en el archivo "
+"seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de "
+"cerrarlas solas."
+msgstr ""
+"Les menus qui n'existent pas sont créés automatiquement par leur nom. Les"
+" notes et événements sont importés tels quels ; les tâches avec durée qui"
+" dans le fichier étaient encore « en cours » (sans fin) sont ignorées, "
+"car il n'y a pas de moyen sûr de les clôturer seules."
 
 #: app/templates/importar.html:29 app/templates/tareas_outlook_sync.html:23
 msgid "Importación completada:"
@@ -1901,7 +2061,9 @@ msgstr "Se connecter"
 
 #: app/templates/login.html:20
 msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo antes de entrar."
-msgstr "Le captcha n'a pas pu être vérifié. Résolvez-le à nouveau avant de vous connecter."
+msgstr ""
+"Le captcha n'a pas pu être vérifié. Résolvez-le à nouveau avant de vous "
+"connecter."
 
 #: app/templates/login.html:29 app/templates/registro.html:23
 msgid "Email"
@@ -1924,8 +2086,12 @@ msgid "Error al comprobar, inténtalo de nuevo"
 msgstr "Échec de la vérification, réessayez"
 
 #: app/templates/login.html:49
-msgid "Demasiados intentos seguidos desde tu conexión — resuelve esto para poder entrar."
-msgstr "Trop de tentatives consécutives depuis votre connexion — résolvez ceci pour vous connecter."
+msgid ""
+"Demasiados intentos seguidos desde tu conexión — resuelve esto para poder"
+" entrar."
+msgstr ""
+"Trop de tentatives consécutives depuis votre connexion — résolvez ceci "
+"pour vous connecter."
 
 #: app/templates/login.html:52
 msgid "Entrar"
@@ -1954,8 +2120,14 @@ msgstr "Créer un menu"
 
 #: app/templates/menu.html:18
 #, python-format
-msgid "¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí."
-msgstr "Supprimer le menu « %(nombre)s » ? Il sera déplacé vers la corbeille avec tout ce qui y est enregistré (notes, événements et tâches) — vous pourrez le restaurer depuis là."
+msgid ""
+"¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo"
+" registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde "
+"ahí."
+msgstr ""
+"Supprimer le menu « %(nombre)s » ? Il sera déplacé vers la corbeille avec"
+" tout ce qui y est enregistré (notes, événements et tâches) — vous "
+"pourrez le restaurer depuis là."
 
 #: app/templates/menu.html:19
 #, fuzzy
@@ -2005,8 +2177,12 @@ msgid "Quitar"
 msgstr "Modifier"
 
 #: app/templates/menu.html:83
-msgid "Aún no tienes frases favoritas. Añade las que repites a menudo para anotarlas en un clic desde \"Nota rápida\"."
-msgstr "Vous n'avez pas encore de phrases favorites. Ajoutez celles que vous répétez souvent pour les noter en un clic depuis « Note rapide »."
+msgid ""
+"Aún no tienes frases favoritas. Añade las que repites a menudo para "
+"anotarlas en un clic desde \"Nota rápida\"."
+msgstr ""
+"Vous n'avez pas encore de phrases favorites. Ajoutez celles que vous "
+"répétez souvent pour les noter en un clic depuis « Note rapide »."
 
 #: app/templates/menu.html:86
 msgid "Nueva frase favorita..."
@@ -2080,8 +2256,12 @@ msgid "Inicia tu primera tarea con duración"
 msgstr "Démarrez votre première tâche avec durée"
 
 #: app/templates/mis_dispositivos.html:7
-msgid "Sesiones activas de la app móvil de Guilda Work. Si pierdes un móvil, revócalo aquí para cortarle el acceso."
-msgstr "Sessions actives de l'application mobile Guilda Work. Si vous perdez un téléphone, révoquez-le ici pour couper son accès."
+msgid ""
+"Sesiones activas de la app móvil de Guilda Work. Si pierdes un móvil, "
+"revócalo aquí para cortarle el acceso."
+msgstr ""
+"Sessions actives de l'application mobile Guilda Work. Si vous perdez un "
+"téléphone, révoquez-le ici pour couper son accès."
 
 #: app/templates/mis_dispositivos.html:12
 msgid "No tienes ningún dispositivo móvil con sesión activa."
@@ -2089,24 +2269,40 @@ msgstr "Vous n'avez aucun appareil mobile avec une session active."
 
 #: app/templates/mis_dispositivos.html:22
 #, python-format
-msgid "¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en la app."
-msgstr "Révoquer l'accès de « %(nombre)s » ? Il devra se reconnecter dans l'application."
+msgid ""
+"¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en"
+" la app."
+msgstr ""
+"Révoquer l'accès de « %(nombre)s » ? Il devra se reconnecter dans "
+"l'application."
 
 #: app/templates/mis_dispositivos.html:30
-msgid "Un dispositivo que lleva más de 90 días sin usarse se desconecta automáticamente, aunque no lo revoques a mano."
-msgstr "Un appareil qui n'a pas été utilisé depuis plus de 90 jours se déconnecte automatiquement, même si vous ne le révoquez pas manuellement."
+msgid ""
+"Un dispositivo que lleva más de 90 días sin usarse se desconecta "
+"automáticamente, aunque no lo revoques a mano."
+msgstr ""
+"Un appareil qui n'a pas été utilisé depuis plus de 90 jours se déconnecte"
+" automatiquement, même si vous ne le révoquez pas manuellement."
 
 #: app/templates/papelera.html:7
-msgid "Lo que borres se queda aquí 30 días antes de purgarse solo. Puedes recuperarlo cuando quieras."
-msgstr "Ce que vous supprimez reste ici 30 jours avant d'être purgé automatiquement. Vous pouvez le restaurer quand vous voulez."
+msgid ""
+"Lo que borres se queda aquí 30 días antes de purgarse solo. Puedes "
+"recuperarlo cuando quieras."
+msgstr ""
+"Ce que vous supprimez reste ici 30 jours avant d'être purgé "
+"automatiquement. Vous pouvez le restaurer quand vous voulez."
 
 #: app/templates/papelera.html:12
 msgid "La papelera está vacía."
 msgstr "La corbeille est vide."
 
 #: app/templates/papelera.html:15
-msgid "¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma permanente. Esta acción no se puede deshacer."
-msgstr "Vider complètement la corbeille ? TOUT ce qu'il y a ici sera supprimé définitivement. Cette action est irréversible."
+msgid ""
+"¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma "
+"permanente. Esta acción no se puede deshacer."
+msgstr ""
+"Vider complètement la corbeille ? TOUT ce qu'il y a ici sera supprimé "
+"définitivement. Cette action est irréversible."
 
 #: app/templates/papelera.html:17
 msgid "Vaciar papelera ahora"
@@ -2124,8 +2320,12 @@ msgid "Restaurar"
 msgstr "Se connecter"
 
 #: app/templates/papelera.html:41
-msgid "¿Eliminar este menú y todo lo que contiene para siempre? No se puede deshacer."
-msgstr "Supprimer définitivement ce menu et tout son contenu ? Cette action est irréversible."
+msgid ""
+"¿Eliminar este menú y todo lo que contiene para siempre? No se puede "
+"deshacer."
+msgstr ""
+"Supprimer définitivement ce menu et tout son contenu ? Cette action est "
+"irréversible."
 
 #: app/templates/papelera.html:42 app/templates/papelera.html:50
 #: app/templates/papelera.html:58 app/templates/papelera.html:66
@@ -2149,12 +2349,20 @@ msgid "Tu cuenta está casi lista"
 msgstr "Votre compte est presque prêt"
 
 #: app/templates/pendiente_activacion.html:49
-msgid "Te has registrado correctamente, pero tu cuenta todavía no está asociada a ninguna organización."
-msgstr "Vous vous êtes inscrit avec succès, mais votre compte n'est encore associé à aucune organisation."
+msgid ""
+"Te has registrado correctamente, pero tu cuenta todavía no está asociada "
+"a ninguna organización."
+msgstr ""
+"Vous vous êtes inscrit avec succès, mais votre compte n'est encore "
+"associé à aucune organisation."
 
 #: app/templates/pendiente_activacion.html:50
-msgid "El equipo de Guilda Work la activará en breve — si has llegado hasta aquí sin haber hablado antes con nosotros, escríbenos a"
-msgstr "L'équipe Guilda Work l'activera prochainement — si vous êtes arrivé ici sans nous avoir contactés au préalable, écrivez-nous à"
+msgid ""
+"El equipo de Guilda Work la activará en breve — si has llegado hasta aquí"
+" sin haber hablado antes con nosotros, escríbenos a"
+msgstr ""
+"L'équipe Guilda Work l'activera prochainement — si vous êtes arrivé ici "
+"sans nous avoir contactés au préalable, écrivez-nous à"
 
 #: app/templates/registro.html:6 app/templates/registro.html:14
 #: app/templates/registro.html:38
@@ -2217,8 +2425,14 @@ msgid "Calendario de tareas"
 msgstr "Masquer cette carte"
 
 #: app/templates/tareas_calendario.html:7
-msgid "Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí."
-msgstr "Calendrier, positionnées par date d'échéance (ou de début si sans échéance). Cliquez (ou faites glisser sur plusieurs jours/heures) pour créer une nouvelle tâche à cet endroit."
+msgid ""
+"Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen "
+"vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear "
+"una tarea nueva ahí."
+msgstr ""
+"Calendrier, positionnées par date d'échéance (ou de début si sans "
+"échéance). Cliquez (ou faites glisser sur plusieurs jours/heures) pour "
+"créer une nouvelle tâche à cet endroit."
 
 #: app/templates/tareas_calendario.html:13 app/templates/tareas_lista.html:13
 #: app/templates/tareas_outlook_sync.html:13
@@ -2295,8 +2509,12 @@ msgid "+%(n)s más"
 msgstr "+%(n)s de plus"
 
 #: app/templates/tareas_calendario.html:70
-msgid "No hay tareas este día. Haz clic en una franja horaria de abajo para crear una."
-msgstr "Aucune tâche ce jour-là. Cliquez sur une plage horaire ci-dessous pour en créer une."
+msgid ""
+"No hay tareas este día. Haz clic en una franja horaria de abajo para "
+"crear una."
+msgstr ""
+"Aucune tâche ce jour-là. Cliquez sur une plage horaire ci-dessous pour en"
+" créer une."
 
 #: app/templates/tareas_calendario.html:92
 #, fuzzy
@@ -2318,8 +2536,12 @@ msgid "Crear tarea"
 msgstr "Nouvelle tâche"
 
 #: app/templates/tareas_lista.html:7
-msgid "Lista de tareas estilo Outlook, independiente de tus menús. Asunto, vencimiento, prioridad y estado."
-msgstr "Liste de tâches façon Outlook, indépendante de vos menus. Objet, échéance, priorité et statut."
+msgid ""
+"Lista de tareas estilo Outlook, independiente de tus menús. Asunto, "
+"vencimiento, prioridad y estado."
+msgstr ""
+"Liste de tâches façon Outlook, indépendante de vos menus. Objet, "
+"échéance, priorité et statut."
 
 #: app/templates/tareas_lista.html:21
 msgid "Todos (sin completadas)"
@@ -2363,8 +2585,12 @@ msgid "Sincronizar con Outlook"
 msgstr "Synchroniser avec Outlook"
 
 #: app/templates/tareas_outlook_sync.html:7
-msgid "Importar y exportar con Microsoft Outlook Classic mediante archivo (.ics / .csv)."
-msgstr "Importer et exporter avec Microsoft Outlook Classic via fichier (.ics / .csv)."
+msgid ""
+"Importar y exportar con Microsoft Outlook Classic mediante archivo (.ics "
+"/ .csv)."
+msgstr ""
+"Importer et exporter avec Microsoft Outlook Classic via fichier (.ics / "
+".csv)."
 
 #: app/templates/tareas_outlook_sync.html:23
 #, fuzzy
@@ -2384,8 +2610,16 @@ msgid "Exportar a Outlook"
 msgstr "Exporter vers Outlook"
 
 #: app/templates/tareas_outlook_sync.html:31
-msgid "Genera un archivo con todas tus tareas activas, listo para importar en Outlook Classic (\"Archivo &gt; Abrir y exportar &gt; Importar o exportar &gt; Exportar a un archivo\", o arrastrando el .ics sobre tu carpeta de Tareas)."
-msgstr "Génère un fichier avec toutes vos tâches actives, prêt à importer dans Outlook Classic (« Fichier &gt; Ouvrir et exporter &gt; Importer/exporter &gt; Exporter vers un fichier », ou en glissant le .ics sur votre dossier Tâches)."
+msgid ""
+"Genera un archivo con todas tus tareas activas, listo para importar en "
+"Outlook Classic (\"Archivo &gt; Abrir y exportar &gt; Importar o exportar"
+" &gt; Exportar a un archivo\", o arrastrando el .ics sobre tu carpeta de "
+"Tareas)."
+msgstr ""
+"Génère un fichier avec toutes vos tâches actives, prêt à importer dans "
+"Outlook Classic (« Fichier &gt; Ouvrir et exporter &gt; Importer/exporter"
+" &gt; Exporter vers un fichier », ou en glissant le .ics sur votre "
+"dossier Tâches)."
 
 #: app/templates/tareas_outlook_sync.html:33
 msgid "Exportar .ics"
@@ -2400,12 +2634,25 @@ msgid "Importar desde Outlook"
 msgstr "Importer depuis Outlook"
 
 #: app/templates/tareas_outlook_sync.html:40
-msgid "Sube un archivo .ics o .csv exportado desde la carpeta de Tareas de Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez de duplicarse (se reconocen por su UID); las de .csv se crean siempre como nuevas, porque ese formato no trae un identificador único."
-msgstr "Téléversez un fichier .ics ou .csv exporté depuis le dossier Tâches d'Outlook Classic. Les tâches .ics déjà importées auparavant sont mises à jour au lieu d'être dupliquées (reconnues par leur UID) ; celles au format .csv sont toujours créées comme nouvelles, car ce format ne porte pas d'identifiant unique."
+msgid ""
+"Sube un archivo .ics o .csv exportado desde la carpeta de Tareas de "
+"Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez"
+" de duplicarse (se reconocen por su UID); las de .csv se crean siempre "
+"como nuevas, porque ese formato no trae un identificador único."
+msgstr ""
+"Téléversez un fichier .ics ou .csv exporté depuis le dossier Tâches "
+"d'Outlook Classic. Les tâches .ics déjà importées auparavant sont mises à"
+" jour au lieu d'être dupliquées (reconnues par leur UID) ; celles au "
+"format .csv sont toujours créées comme nouvelles, car ce format ne porte "
+"pas d'identifiant unique."
 
 #: app/templates/tareas_outlook_sync.html:49
-msgid "La sincronización en vivo con Outlook Classic (sin exportar/importar archivos a mano) llegará en una fase posterior."
-msgstr "La synchronisation en direct avec Outlook Classic (sans exporter/importer de fichiers manuellement) arrivera dans une phase ultérieure."
+msgid ""
+"La sincronización en vivo con Outlook Classic (sin exportar/importar "
+"archivos a mano) llegará en una fase posterior."
+msgstr ""
+"La synchronisation en direct avec Outlook Classic (sans exporter/importer"
+" de fichiers manuellement) arrivera dans une phase ultérieure."
 
 #: app/templates/tiquet_editar.html:2
 #, fuzzy
@@ -2457,8 +2704,12 @@ msgid "Tiquets — Kanban"
 msgstr "Tickets"
 
 #: app/templates/tiquets_kanban.html:8
-msgid "Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna."
-msgstr "Glissez... enfin, choisissez le nouveau statut sur chaque carte pour la déplacer de colonne."
+msgid ""
+"Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de "
+"columna."
+msgstr ""
+"Glissez... enfin, choisissez le nouveau statut sur chaque carte pour la "
+"déplacer de colonne."
 
 #: app/templates/tiquets_kanban.html:9
 msgid "Solo un administrador puede mover tiquets entre columnas."
@@ -2483,8 +2734,12 @@ msgid "Sin tiquets aquí."
 msgstr "Aucun ticket ici."
 
 #: app/templates/tiquets_tarjetas.html:7
-msgid "Errores y sugerencias sobre Guilda Work. Tablero compartido: todo el mundo ve todos los tiquets."
-msgstr "Erreurs et suggestions sur Guilda Work. Tableau partagé : tout le monde voit tous les tickets."
+msgid ""
+"Errores y sugerencias sobre Guilda Work. Tablero compartido: todo el "
+"mundo ve todos los tiquets."
+msgstr ""
+"Erreurs et suggestions sur Guilda Work. Tableau partagé : tout le monde "
+"voit tous les tickets."
 
 #: app/templates/tiquets_tarjetas.html:18
 #, fuzzy
@@ -2522,8 +2777,12 @@ msgid "Explorador de la API"
 msgstr "Explorateur d'API"
 
 #: app/templates/docs/explorador_api.html:7
-msgid "Referencia interactiva de /api/v1/*, generada en vivo desde el documento OpenAPI real."
-msgstr "Référence interactive de /api/v1/*, générée en direct à partir du document OpenAPI réel."
+msgid ""
+"Referencia interactiva de /api/v1/*, generada en vivo desde el documento "
+"OpenAPI real."
+msgstr ""
+"Référence interactive de /api/v1/*, générée en direct à partir du "
+"document OpenAPI réel."
 
 #: app/templates/docs/explorador_api.html:18
 msgid "Referencia de la API"
@@ -2551,12 +2810,22 @@ msgid "Generada en el navegador, en cada carga, a partir de"
 msgstr "Généré dans le navigateur, à chaque chargement, à partir de"
 
 #: app/templates/docs/explorador_api.html:38
-msgid "el mismo documento OpenAPI 3.0 que puedes importar en Postman o Insomnia. Nunca se desincroniza del código real: si cambia una ruta, esto cambia solo."
-msgstr "le même document OpenAPI 3.0 que vous pouvez importer dans Postman ou Insomnia. Il ne se désynchronise jamais du code réel : si une route change, ceci change tout seul."
+msgid ""
+"el mismo documento OpenAPI 3.0 que puedes importar en Postman o Insomnia."
+" Nunca se desincroniza del código real: si cambia una ruta, esto cambia "
+"solo."
+msgstr ""
+"le même document OpenAPI 3.0 que vous pouvez importer dans Postman ou "
+"Insomnia. Il ne se désynchronise jamais du code réel : si une route "
+"change, ceci change tout seul."
 
 #: app/templates/docs/explorador_api.html:40
-msgid "Elige un endpoint de la lista de la izquierda para ver sus parámetros, el cuerpo esperado y un"
-msgstr "Choisissez un point de terminaison dans la liste de gauche pour voir ses paramètres, le corps attendu et un"
+msgid ""
+"Elige un endpoint de la lista de la izquierda para ver sus parámetros, el"
+" cuerpo esperado y un"
+msgstr ""
+"Choisissez un point de terminaison dans la liste de gauche pour voir ses "
+"paramètres, le corps attendu et un"
 
 #: app/templates/docs/explorador_api.html:40
 msgid "de ejemplo ya con la URL rellenada."

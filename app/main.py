@@ -11,6 +11,7 @@ verdad (`/login`, `/registro`) solo hace falta cuando la app se sirve fuera
 de este modo (por ejemplo, ya alojada en internet para la futura app
 móvil — ver `serve.py`), donde `MODO_ESCRITORIO` es False.
 """
+import logging
 import os
 import secrets
 import socket
@@ -23,6 +24,8 @@ from pathlib import Path
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask_babel import Babel
+from flask_babel import gettext as _
+from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos
@@ -49,6 +52,17 @@ if sys.stdout is None:
     sys.stdout = open(os.devnull, "w")
 if sys.stderr is None:
     sys.stderr = open(os.devnull, "w")
+
+# Antes de esto no había ni un solo `logging.` en toda la app -- los errores
+# no controlados solo dejaban el traceback de Werkzeug en la salida estándar
+# capturada por systemd (journalctl), sin nivel/formato/timestamp propios.
+# Va ANTES de crear `app` para que quede listo antes de que cualquier
+# import de los módulos de rutas pueda registrar algo.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logger = logging.getLogger("guilda")
 
 PROMPT_IA_POR_DEFECTO = "Resume mis actividades agrupadas por categoría, destacando lo más relevante y el tiempo dedicado a cada una."
 
@@ -124,6 +138,20 @@ app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
 app.register_blueprint(docs_bp)
+
+
+@app.errorhandler(Exception)
+def _registrar_excepcion_no_controlada(error):
+    # Las HTTPException (404, 403, la propia abort(...) de las rutas...) no
+    # son errores de programación -- se dejan pasar tal cual para que Flask
+    # las convierta en su respuesta normal, sin registrarlas como fallo.
+    if isinstance(error, HTTPException):
+        return error
+    logger.exception("Excepción no controlada en %s %s", request.method, request.path)
+    return jsonify(error=_("Ha ocurrido un error interno. Se ha registrado para revisión.")) if request.path.startswith("/api/") else (
+        _("Ha ocurrido un error interno. Se ha registrado para revisión."),
+        500,
+    )
 
 
 KRATOS_SESSION_COOKIE = "ory_kratos_session"
