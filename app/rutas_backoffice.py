@@ -21,7 +21,7 @@ def _contexto_herramientas(tenants) -> dict:
     y qué está oculto para cada uno."""
     return {
         "catalogo_herramientas": herramientas.HERRAMIENTAS,
-        "herramientas_ocultas_por_tenant": {t["id"]: db.herramientas_ocultas_de_tenant(t["id"]) for t in tenants},
+        "herramientas_ocultas_por_tenant": db.herramientas_ocultas_de_tenants([t["id"] for t in tenants]),
     }
 
 
@@ -29,17 +29,22 @@ def _contexto_webhooks(tenants) -> dict:
     """Igual que _contexto_herramientas: contexto compartido por las
     mismas 4 rutas. Incluye las últimas entregas de cada webhook para
     que el admin pueda ver por qué uno está fallando sin salir del
-    backoffice (ver app/eventos.py)."""
+    backoffice (ver app/eventos.py). Batched en 3 consultas totales (en
+    vez de una por tenant + una por webhook) vía db.listar_todos_los_webhooks()
+    y db.entregas_de_webhooks()."""
+    todos_por_tenant = db.listar_todos_los_webhooks()
+    todos_los_webhooks = [w for filas in todos_por_tenant.values() for w in filas]
+    entregas_por_webhook = db.entregas_de_webhooks([w["id"] for w in todos_los_webhooks], limite=5)
+
     webhooks_por_tenant = {}
     for t in [None, *[t["id"] for t in tenants]]:
-        filas = db.listar_webhooks(t)
         webhooks_por_tenant[t] = [
             {
                 **dict(w),
                 "eventos": json.loads(w["eventos"]),  # ya parseado: sin filtro Jinja para esto
-                "entregas": [dict(e) for e in db.entregas_de_webhook(w["id"], limite=5)],
+                "entregas": [dict(e) for e in entregas_por_webhook.get(w["id"], [])],
             }
-            for w in filas
+            for w in todos_por_tenant.get(t, [])
         ]
     return {"webhooks_por_tenant": webhooks_por_tenant, "eventos_disponibles": eventos.EVENTOS}
 

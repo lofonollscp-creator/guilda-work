@@ -466,6 +466,7 @@ CREATE INDEX IF NOT EXISTS idx_correo_cuentas_usuario ON correo_cuentas(usuario_
 CREATE INDEX IF NOT EXISTS idx_correo_categorias_usuario ON correo_categorias(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
@@ -474,6 +475,14 @@ CREATE INDEX IF NOT EXISTS idx_correo_reglas_categoria_usuario ON correo_reglas_
 CREATE INDEX IF NOT EXISTS idx_correo_destinatarios_recientes_usuario ON correo_destinatarios_recientes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_fichajes_usuario_marca ON fichajes(usuario_id, marca_tiempo);
 CREATE INDEX IF NOT EXISTS idx_fichajes_tenant_marca ON fichajes(tenant_id, marca_tiempo);
+CREATE INDEX IF NOT EXISTS idx_webhooks_tenant ON webhooks(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_webhooks_usuario ON webhooks(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_webhooks_entregas_webhook ON webhooks_entregas(webhook_id);
+CREATE INDEX IF NOT EXISTS idx_tiquets_usuario ON tiquets(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_tiquets_adjuntos_tiquet ON tiquets_adjuntos(tiquet_id);
+CREATE INDEX IF NOT EXISTS idx_correo_carpetas_cuenta ON correo_carpetas(cuenta_id);
+CREATE INDEX IF NOT EXISTS idx_plantillas_categoria ON plantillas(categoria_id);
+CREATE INDEX IF NOT EXISTS idx_pausas_tarea ON pausas(tarea_id);
 """
 
 
@@ -1269,6 +1278,27 @@ def herramientas_ocultas_de_tenant(tenant_id: int) -> set[str]:
         conn.close()
 
 
+def herramientas_ocultas_de_tenants(tenant_ids: list[int]) -> dict[int, set[str]]:
+    """Igual que herramientas_ocultas_de_tenant() pero para varios tenants a
+    la vez (una consulta con IN en vez de una por tenant) -- usado en el
+    backoffice, que antes hacía una llamada por tenant listado."""
+    if not tenant_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tenant_ids))
+        filas = conn.execute(
+            f"SELECT tenant_id, herramienta_id FROM tenants_herramientas_ocultas WHERE tenant_id IN ({marcas})",
+            tenant_ids,
+        ).fetchall()
+        resultado: dict[int, set[str]] = {tid: set() for tid in tenant_ids}
+        for f in filas:
+            resultado[f["tenant_id"]].add(f["herramienta_id"])
+        return resultado
+    finally:
+        conn.close()
+
+
 def guardar_facturascripts(tenant_id: int, url: str, admin_user: str, admin_pass: str) -> None:
     """Guarda cómo llegar a la instancia de FacturaScripts recién
     aprovisionada de un tenant — ver app/facturascripts.py:aprovisionar_tenant."""
@@ -1731,6 +1761,21 @@ def listar_webhooks(tenant_id: int | None) -> list[sqlite3.Row]:
         conn.close()
 
 
+def listar_todos_los_webhooks() -> dict[int | None, list[sqlite3.Row]]:
+    """Igual que llamar a listar_webhooks() para None + cada tenant, pero en
+    una sola consulta -- usado en el backoffice, que antes hacía una
+    consulta por tenant listado."""
+    conn = get_connection()
+    try:
+        filas = conn.execute("SELECT * FROM webhooks ORDER BY tenant_id IS NOT NULL, tenant_id, creado_en DESC").fetchall()
+        resultado: dict[int | None, list[sqlite3.Row]] = {}
+        for w in filas:
+            resultado.setdefault(w["tenant_id"], []).append(w)
+        return resultado
+    finally:
+        conn.close()
+
+
 def borrar_webhook(webhook_id: int) -> None:
     conn = get_connection()
     try:
@@ -1781,6 +1826,30 @@ def entregas_de_webhook(webhook_id: int, limite: int = 20) -> list[sqlite3.Row]:
             "SELECT * FROM webhooks_entregas WHERE webhook_id = ? ORDER BY id DESC LIMIT ?",
             (webhook_id, limite),
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def entregas_de_webhooks(webhook_ids: list[int], limite: int = 5) -> dict[int, list[sqlite3.Row]]:
+    """Igual que entregas_de_webhook() pero para varios webhooks a la vez
+    (una consulta con ventana en vez de una por webhook) -- usado en el
+    backoffice, que antes hacía una llamada por webhook listado."""
+    if not webhook_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(webhook_ids))
+        filas = conn.execute(
+            f"""SELECT id, webhook_id, evento, estado_http, intento_num, entregado_en, error FROM (
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY webhook_id ORDER BY id DESC) AS _orden
+                    FROM webhooks_entregas WHERE webhook_id IN ({marcas})
+                ) WHERE _orden <= ?""",
+            [*webhook_ids, limite],
+        ).fetchall()
+        resultado: dict[int, list[sqlite3.Row]] = {wid: [] for wid in webhook_ids}
+        for f in filas:
+            resultado[f["webhook_id"]].append(f)
+        return resultado
     finally:
         conn.close()
 
@@ -2017,20 +2086,26 @@ def eliminar_categoria_definitivamente(usuario_id: int, categoria_id: int) -> No
         conn.close()
 
 
-def contar_entradas_hoy(usuario_id: int, categoria_id: int) -> int:
+def contar_entradas_hoy_por_usuario(usuario_id: int) -> dict[int, int]:
+    """Cuenta las entradas (notas + tareas) de hoy por menú, para todos los
+    menús del usuario a la vez (2 consultas GROUP BY en vez de una por
+    menú) -- usado en el dashboard."""
     conn = get_connection()
     try:
         hoy = datetime.now().strftime("%Y-%m-%d")
         manana = _fecha_exclusiva(hoy)
-        n = conn.execute(
-            "SELECT COUNT(*) FROM notas WHERE categoria_id = ? AND usuario_id = ? AND papelera_en IS NULL AND creada_en >= ? AND creada_en < ?",
-            (categoria_id, usuario_id, hoy, manana),
-        ).fetchone()[0]
-        t = conn.execute(
-            "SELECT COUNT(*) FROM tareas WHERE categoria_id = ? AND usuario_id = ? AND papelera_en IS NULL AND inicio_en >= ? AND inicio_en < ?",
-            (categoria_id, usuario_id, hoy, manana),
-        ).fetchone()[0]
-        return n + t
+        resultado: dict[int, int] = {}
+        for fila in conn.execute(
+            "SELECT categoria_id, COUNT(*) AS n FROM notas WHERE usuario_id = ? AND papelera_en IS NULL AND creada_en >= ? AND creada_en < ? AND categoria_id IS NOT NULL GROUP BY categoria_id",
+            (usuario_id, hoy, manana),
+        ):
+            resultado[fila["categoria_id"]] = resultado.get(fila["categoria_id"], 0) + fila["n"]
+        for fila in conn.execute(
+            "SELECT categoria_id, COUNT(*) AS n FROM tareas WHERE usuario_id = ? AND papelera_en IS NULL AND inicio_en >= ? AND inicio_en < ? AND categoria_id IS NOT NULL GROUP BY categoria_id",
+            (usuario_id, hoy, manana),
+        ):
+            resultado[fila["categoria_id"]] = resultado.get(fila["categoria_id"], 0) + fila["n"]
+        return resultado
     finally:
         conn.close()
 

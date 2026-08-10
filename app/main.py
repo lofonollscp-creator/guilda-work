@@ -373,7 +373,7 @@ def inicio():
     activas_por_menu: dict[int, list] = {}
     for t in activas:
         activas_por_menu.setdefault(t["categoria_id"], []).append(t)
-    entradas_hoy = {m["id"]: db.contar_entradas_hoy(g.usuario_id, m["id"]) for m in menus}
+    entradas_hoy = db.contar_entradas_hoy_por_usuario(g.usuario_id)
     hoy = datetime.now().strftime("%Y-%m-%d")
     log_hoy = db.historial(g.usuario_id, desde=hoy, hasta=hoy)
 
