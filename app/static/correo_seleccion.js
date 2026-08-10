@@ -52,6 +52,8 @@
     });
   });
 
+  const i18n = window.GUILDA_I18N || {};
+
   barra.querySelectorAll("[data-accion]").forEach((boton) => {
     boton.addEventListener("click", async () => {
       const ids = idsSeleccionados();
@@ -59,26 +61,43 @@
       const accion = boton.dataset.accion;
       const cuerpo = { ids };
       let url = "";
+      let mensajeOk;
 
       if (accion === "eliminar") {
         if (!confirm("¿Eliminar " + ids.length + " mensaje(s) de la caché local? No se puede deshacer.")) return;
         url = "/correo/mensajes/eliminar";
+        mensajeOk = i18n.correoEliminarOk;
       } else if (accion === "marcar-leido") {
         cuerpo.leido = boton.dataset.valor === "true";
         url = "/correo/mensajes/marcar-leido";
+        mensajeOk = i18n.correoMarcarLeidoOk;
       } else if (accion === "destacar") {
         cuerpo.destacado = boton.dataset.valor === "true";
         url = "/correo/mensajes/destacar";
+        mensajeOk = i18n.correoDestacarOk;
       } else if (accion === "mover") {
         if (!selectCarpeta || !selectCarpeta.value) return;
         cuerpo.carpeta = selectCarpeta.value;
         url = "/correo/mensajes/mover";
+        mensajeOk = i18n.correoMoverOk;
       } else {
         return;
       }
 
-      await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
-      window.location.reload();
+      try {
+        const respuesta = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cuerpo),
+        });
+        if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
+        if (window.mostrarToast && mensajeOk) window.mostrarToast(mensajeOk, "exito");
+        window.location.reload();
+      } catch (err) {
+        if (window.mostrarToast) {
+          window.mostrarToast(i18n.correoAccionError || "No se pudo completar la acción.", "error");
+        }
+      }
     });
   });
 })();

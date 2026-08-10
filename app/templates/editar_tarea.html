@@ -38,7 +38,12 @@
 </form>
 
 <form class="edit-form-delete" method="post" action="{{ url_for('eliminar_tarea', tarea_id=tarea.id) }}"
-      onsubmit="return confirm('{{ _('¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde ahí.') if tarea.tipo == 'instantanea' else _('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.') }}');">
+      data-eliminar-deshacer
+      data-confirmar="{{ _('¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde ahí.') if tarea.tipo == 'instantanea' else _('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.') }}"
+      data-mensaje-ok="{{ _('Evento eliminado.') if tarea.tipo == 'instantanea' else _('Tarea eliminada.') }}"
+      data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
+      data-restaurar-url="{{ url_for('restaurar_tarea', tarea_id=tarea.id) }}"
+      data-volver-a="{{ volver_a }}">
   <input type="hidden" name="volver_a" value="{{ volver_a }}">
   <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar evento') if tarea.tipo == 'instantanea' else _('Eliminar tarea') }}</button>
 </form>

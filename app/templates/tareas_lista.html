@@ -103,11 +103,31 @@
     </span>
     <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
     <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}');">
+          data-eliminar-deshacer
+          data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}"
+          data-mensaje-ok="{{ _('Tarea eliminada.') }}"
+          data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
+          data-restaurar-url="{{ url_for('tareas.restaurar', tarea_id=t.id) }}"
+          data-quitar-selector="li">
       <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
     </form>
   </li>
   {% endfor %}
 </ul>
+{% if hay_pagina_anterior or hay_pagina_siguiente %}
+<nav class="paginacion" aria-label="{{ _('Paginación de tareas') }}">
+  {% if hay_pagina_anterior %}
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina - 1) }}">← {{ _('Anterior') }}</a>
+  {% else %}
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">← {{ _('Anterior') }}</span>
+  {% endif %}
+  <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
+  {% if hay_pagina_siguiente %}
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina + 1) }}">{{ _('Siguiente') }} →</a>
+  {% else %}
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} →</span>
+  {% endif %}
+</nav>
+{% endif %}
 {% endif %}
 {% endblock %}

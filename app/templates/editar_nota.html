@@ -20,7 +20,12 @@
 </form>
 
 <form class="edit-form-delete" method="post" action="{{ url_for('eliminar_nota', nota_id=nota.id) }}"
-      onsubmit="return confirm('{{ _('¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí.') }}');">
+      data-eliminar-deshacer
+      data-confirmar="{{ _('¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí.') }}"
+      data-mensaje-ok="{{ _('Nota eliminada.') }}"
+      data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
+      data-restaurar-url="{{ url_for('restaurar_nota', nota_id=nota.id) }}"
+      data-volver-a="{{ volver_a }}">
   <input type="hidden" name="volver_a" value="{{ volver_a }}">
   <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar nota') }}</button>
 </form>

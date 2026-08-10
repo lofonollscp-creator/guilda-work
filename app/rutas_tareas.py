@@ -36,6 +36,8 @@ NOMBRES_MES = [
 
 PALETA_CATEGORIAS = ["#4a6cf7", "#e0555a", "#2fa66a", "#d98c1f", "#8a5cf5", "#1f9fd9", "#c94f8a", "#0f9b8e"]
 
+TAREAS_POR_PAGINA = 50
+
 
 @tareas_bp.app_template_filter("color_categoria")
 def color_categoria(nombre: str | None) -> str:
@@ -89,18 +91,24 @@ def listar():
     categoria = request.args.get("categoria") or None
     q = request.args.get("q") or None
     incluir_completadas = request.args.get("completadas") == "1"
+    pagina = max(request.args.get("pagina", 1, type=int) or 1, 1)
+    offset = (pagina - 1) * TAREAS_POR_PAGINA
 
-    if estado is None and not incluir_completadas:
-        # Vista por defecto: como el "To-Do List" de Outlook, oculta lo ya
-        # completado para que la lista no se llene de tareas resueltas.
-        tareas = [
-            t for t in db.listar_tareas_outlook(g.usuario_id, prioridad=prioridad, categoria_outlook=categoria, texto=q)
-            if t["estado"] != "completada"
-        ]
-    else:
-        tareas = db.listar_tareas_outlook(
-            g.usuario_id, estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q
-        )
+    # Vista por defecto: como el "To-Do List" de Outlook, oculta lo ya
+    # completado para que la lista no se llene de tareas resueltas. Antes
+    # ese filtro se aplicaba en Python DESPUÉS de traer las filas de la
+    # BD; se ha movido a SQL (excluir_completadas=...) para que la
+    # paginación de abajo (LIMIT/OFFSET) cuente sobre el conjunto ya
+    # filtrado, igual que hace db.listar_mensajes_correo.
+    excluir_completadas = estado is None and not incluir_completadas
+    # Se pide una fila de más para saber si hay página siguiente sin un
+    # COUNT(*) aparte.
+    tareas = db.listar_tareas_outlook(
+        g.usuario_id, estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q,
+        excluir_completadas=excluir_completadas, limite=TAREAS_POR_PAGINA + 1, offset=offset,
+    )
+    hay_pagina_siguiente = len(tareas) > TAREAS_POR_PAGINA
+    tareas = tareas[:TAREAS_POR_PAGINA]
 
     return render_template(
         "tareas_lista.html",
@@ -114,6 +122,9 @@ def listar():
         categoria=categoria or "",
         q=q or "",
         incluir_completadas=incluir_completadas,
+        pagina=pagina,
+        hay_pagina_anterior=pagina > 1,
+        hay_pagina_siguiente=hay_pagina_siguiente,
     )
 
 

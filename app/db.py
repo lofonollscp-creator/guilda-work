@@ -2600,11 +2600,17 @@ def historial(
     hasta: str | None = None,
     categoria_id: int | None = None,
     texto: str | None = None,
+    limite: int | None = None,
+    offset: int = 0,
 ):
     """Devuelve notas y tareas combinadas, ordenadas cronológicamente descendente.
 
     desde/hasta: fechas 'YYYY-MM-DD' (inclusive).
     texto: si se indica, filtra por coincidencia parcial (insensible a mayúsculas).
+    limite/offset: paginación (mismo estilo que db.listar_mensajes_correo) --
+    si `limite` es None (por defecto) devuelve todo, sin paginar, para no
+    romper a quien ya llama a esta función esperando el conjunto completo
+    (export.py, el widget "hoy" del dashboard, etc.).
     """
     conn = get_connection()
     try:
@@ -2669,7 +2675,11 @@ def historial(
             )
             ORDER BY timestamp DESC
         """
-        return conn.execute(query, [*params_n, *params_t]).fetchall()
+        params = [*params_n, *params_t]
+        if limite is not None:
+            query += " LIMIT ? OFFSET ?"
+            params += [limite, offset]
+        return conn.execute(query, params).fetchall()
     finally:
         conn.close()
 
@@ -2836,11 +2846,22 @@ def listar_tareas_outlook(
     texto: str | None = None,
     desde: str | None = None,
     hasta: str | None = None,
+    excluir_completadas: bool = False,
+    limite: int | None = None,
+    offset: int = 0,
 ) -> list[sqlite3.Row]:
     """Tareas activas (no en la papelera), filtradas opcionalmente.
 
     `desde`/`hasta` filtran por fecha_vencimiento (YYYY-MM-DD, inclusive) —
     los usa la vista calendario para pedir solo las de un rango de días.
+    `excluir_completadas`: atajo para la vista "To-Do" por defecto de
+    tareas_lista.html (solo tiene efecto si no se pasa `estado` explícito;
+    antes ese filtro se aplicaba en Python DESPUÉS de traer las filas, lo
+    que rompía la paginación por SQL de abajo).
+    `limite`/`offset`: paginación (mismo estilo que db.listar_mensajes_correo)
+    -- `limite=None` (por defecto) devuelve todo, para no romper a las
+    llamadas existentes que esperan el conjunto completo (calendario,
+    export a .ics/.csv, la API en rutas_api.py).
     """
     conn = get_connection()
     try:
@@ -2851,6 +2872,8 @@ def listar_tareas_outlook(
         params: list = [usuario_id]
         if estado:
             cond.append("estado = ?"); params.append(estado)
+        elif excluir_completadas:
+            cond.append("estado != 'completada'")
         if prioridad:
             cond.append("prioridad = ?"); params.append(prioridad)
         if categoria_outlook:
@@ -2863,13 +2886,14 @@ def listar_tareas_outlook(
         if hasta:
             cond.append("fecha_vencimiento < ?"); params.append(_fecha_exclusiva(hasta))
         where = " AND ".join(cond)
-        return conn.execute(
-            f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+        query = f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
                 FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
                 WHERE {where}
-                ORDER BY (t.fecha_vencimiento IS NULL), t.fecha_vencimiento, t.prioridad DESC""",
-            params,
-        ).fetchall()
+                ORDER BY (t.fecha_vencimiento IS NULL), t.fecha_vencimiento, t.prioridad DESC"""
+        if limite is not None:
+            query += " LIMIT ? OFFSET ?"
+            params = params + [limite, offset]
+        return conn.execute(query, params).fetchall()
     finally:
         conn.close()
 

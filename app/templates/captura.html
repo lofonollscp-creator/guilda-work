@@ -42,6 +42,13 @@
     }
     input[type="text"]:focus, select:focus { outline: 2px solid #4a6cf7; }
     .hint { margin: 0; font-size: 0.72em; color: #6b7280; -webkit-app-region: no-drag; }
+    .error {
+      margin: 0;
+      font-size: 0.78em;
+      color: #ff6b70;
+      -webkit-app-region: no-drag;
+    }
+    .error[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -57,7 +64,8 @@
     <div class="row">
       <input type="text" id="texto" placeholder="{{ _('Apunta algo que ha pasado...') }}" autofocus>
     </div>
-    <p class="hint">{{ _('Enter para guardar · Esc para cancelar') }}</p>
+    <p class="hint" id="hint">{{ _('Enter para guardar · Esc para cancelar') }}</p>
+    <p class="error" id="error" hidden>{{ _('No se pudo guardar. Comprueba tu conexión e inténtalo de nuevo.') }}</p>
   </div>
   <script>
     function cerrarVentana() {
@@ -66,15 +74,24 @@
       }
     }
     async function guardar() {
-      const texto = document.getElementById('texto').value.trim();
+      const campoTexto = document.getElementById('texto');
+      const texto = campoTexto.value.trim();
       if (!texto) { cerrarVentana(); return; }
+      const errorEl = document.getElementById('error');
       const datos = new FormData();
       datos.append('texto', texto);
       datos.append('categoria_id', document.getElementById('menu-select').value);
       try {
-        await fetch('/captura', { method: 'POST', body: datos });
-      } finally {
+        const respuesta = await fetch('/captura', { method: 'POST', body: datos });
+        if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+        errorEl.hidden = true;
         cerrarVentana();
+      } catch (e) {
+        // No cerramos la ventana en caso de fallo -- el texto ya escrito
+        // se queda visible (no se pierde) y se muestra el aviso para que
+        // el usuario pueda reintentar con Enter.
+        errorEl.hidden = false;
+        campoTexto.focus();
       }
     }
     document.getElementById('texto').addEventListener('keydown', function (e) {

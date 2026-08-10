@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-10 10:55+0200\n"
+"POT-Creation-Date: 2026-08-10 11:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,11 +56,11 @@ msgid "Escribe un mensaje..."
 msgstr ""
 
 #: app/templates/_ia_chat_macro.html:27 app/templates/correo_redactar.html:83
-#: app/templates/historial.html:122
+#: app/templates/historial.html:138
 msgid "Enviar"
 msgstr ""
 
-#: app/templates/_ia_chat_macro.html:29 app/templates/historial.html:115
+#: app/templates/_ia_chat_macro.html:29 app/templates/historial.html:131
 msgid "Nueva conversación"
 msgstr ""
 
@@ -448,7 +448,7 @@ msgid "Histórico"
 msgstr ""
 
 #: app/templates/base.html:65 app/templates/base.html:67
-#: app/templates/base.html:110 app/templates/base.html:157
+#: app/templates/base.html:111 app/templates/base.html:176
 #: app/templates/ia_asistente.html:3 app/templates/ia_asistente.html:7
 #: app/templates/inicio.html:175
 msgid "Asistente IA"
@@ -482,81 +482,155 @@ msgstr ""
 msgid "Buscar en notas, tareas y correo…"
 msgstr ""
 
-#: app/templates/base.html:105 app/templates/correo_bandeja.html:7
+#: app/templates/base.html:104
+msgid "Atajos de teclado (?)"
+msgstr ""
+
+#: app/templates/base.html:104
+msgid "Ver atajos de teclado"
+msgstr ""
+
+#: app/templates/base.html:106 app/templates/correo_bandeja.html:7
 #: app/templates/ia_asistente.html:8 app/templates/ia_asistente.html:11
 msgid "Ajustes"
 msgstr ""
 
-#: app/templates/base.html:107
+#: app/templates/base.html:108
 msgid "Tema: cambiar"
 msgstr ""
 
-#: app/templates/base.html:107
+#: app/templates/base.html:108
 msgid "Sistema"
 msgstr ""
 
-#: app/templates/base.html:108
+#: app/templates/base.html:109
 msgid "Densidad: cambiar"
 msgstr ""
 
-#: app/templates/base.html:108 app/templates/correo_ajustes.html:23
+#: app/templates/base.html:109 app/templates/correo_ajustes.html:23
 msgid "Normal"
 msgstr ""
 
-#: app/templates/base.html:110
+#: app/templates/base.html:111
 msgid "Abrir Asistente IA"
 msgstr ""
 
-#: app/templates/base.html:112
+#: app/templates/base.html:113
 msgid "Idioma"
 msgstr ""
 
-#: app/templates/base.html:119 app/templates/mis_dispositivos.html:2
+#: app/templates/base.html:120 app/templates/mis_dispositivos.html:2
 #: app/templates/mis_dispositivos.html:6
 msgid "Mis dispositivos"
 msgstr ""
 
-#: app/templates/base.html:120
+#: app/templates/base.html:121
 msgid "Documentación (desarrolladores)"
 msgstr ""
 
-#: app/templates/base.html:123
+#: app/templates/base.html:124
 msgid ""
 "¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa "
 "por completo."
 msgstr ""
 
-#: app/templates/base.html:124
+#: app/templates/base.html:125
 msgid "Cerrar programa"
 msgstr ""
 
-#: app/templates/base.html:128 app/templates/pendiente_activacion.html:52
+#: app/templates/base.html:129 app/templates/pendiente_activacion.html:52
 msgid "Cerrar sesión"
 msgstr ""
 
-#: app/templates/base.html:141
+#: app/templates/base.html:142 app/templates/base.html:165
 msgid "Buscar en notas, tareas y correo"
 msgstr ""
 
-#: app/templates/base.html:144
+#: app/templates/base.html:145
 msgid "Buscar en notas, tareas y correo..."
 msgstr ""
 
-#: app/templates/base.html:148 app/templates/docs/pagina.html:35
+#: app/templates/base.html:149 app/templates/docs/pagina.html:35
 msgid "Sin resultados."
 msgstr ""
 
-#: app/templates/base.html:158 app/templates/correo_redactar.html:18
+#: app/templates/base.html:155 app/templates/base.html:157
+msgid "Atajos de teclado"
+msgstr ""
+
+#: app/templates/base.html:158 app/templates/base.html:177
+#: app/templates/base.html:189 app/templates/correo_redactar.html:18
 #: app/templates/tareas_calendario.html:106
 msgid "Cerrar"
 msgstr ""
 
-#: app/templates/captura.html:58
+#: app/templates/base.html:161
+msgid "Captura rápida (ventana del sistema)"
+msgstr ""
+
+#: app/templates/base.html:162
+msgid "Nueva nota"
+msgstr ""
+
+#: app/templates/base.html:163 app/templates/inicio.html:73
+#: app/templates/tareas_lista.html:55
+msgid "Nueva tarea"
+msgstr ""
+
+#: app/templates/base.html:164 app/templates/inicio.html:85
+msgid "Buscar en el histórico"
+msgstr ""
+
+#: app/templates/base.html:166
+msgid "Mostrar esta ayuda"
+msgstr ""
+
+#: app/templates/base.html:167
+msgid "Cerrar ventana emergente"
+msgstr ""
+
+#: app/templates/base.html:185
+msgid "..."
+msgstr ""
+
+#: app/templates/base.html:190
+msgid "Deshacer"
+msgstr ""
+
+#: app/templates/base.html:191
+msgid "No se pudo deshacer la acción."
+msgstr ""
+
+#: app/templates/base.html:192 app/templates/base.html:193
+msgid "Mensajes actualizados."
+msgstr ""
+
+#: app/templates/base.html:194
+msgid "Mensajes movidos."
+msgstr ""
+
+#: app/templates/base.html:195
+msgid "Mensajes eliminados."
+msgstr ""
+
+#: app/templates/base.html:196
+msgid "No se pudo completar la acción. Inténtalo de nuevo."
+msgstr ""
+
+#: app/templates/base.html:197
+msgid "No se pudieron cargar las sugerencias de destinatarios."
+msgstr ""
+
+#: app/templates/captura.html:65
 msgid "Apunta algo que ha pasado..."
 msgstr ""
 
-#: app/templates/captura.html:60
+#: app/templates/captura.html:67
 msgid "Enter para guardar · Esc para cancelar"
+msgstr ""
+
+#: app/templates/captura.html:68
+msgid "No se pudo guardar. Comprueba tu conexión e inténtalo de nuevo."
 msgstr ""
 
 #: app/templates/cerrado.html:6
@@ -630,7 +704,7 @@ msgstr ""
 #: app/templates/correo_ajustes.html:54 app/templates/correo_ajustes.html:80
 #: app/templates/correo_ajustes.html:113 app/templates/correo_bandeja.html:72
 #: app/templates/correo_bandeja.html:134 app/templates/correo_cuentas.html:33
-#: app/templates/tareas_lista.html:107 app/templates/tiquets_kanban.html:47
+#: app/templates/tareas_lista.html:112 app/templates/tiquets_kanban.html:47
 #: app/templates/tiquets_tarjetas.html:66
 msgid "Eliminar"
 msgstr ""
@@ -1059,13 +1133,22 @@ msgstr ""
 msgid "Texto"
 msgstr ""
 
-#: app/templates/editar_nota.html:23
+#: app/templates/editar_nota.html:24
 msgid ""
 "¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde "
 "ahí."
 msgstr ""
 
 #: app/templates/editar_nota.html:25
+msgid "Nota eliminada."
+msgstr ""
+
+#: app/templates/editar_nota.html:26 app/templates/editar_tarea.html:44
+#: app/templates/tareas_lista.html:109
+msgid "No se pudo eliminar. Inténtalo de nuevo."
+msgstr ""
+
+#: app/templates/editar_nota.html:30
 msgid "Eliminar nota"
 msgstr ""
 
@@ -1103,13 +1186,13 @@ msgstr ""
 msgid "Esta tarea sigue en curso; el fin se registrará al finalizarla."
 msgstr ""
 
-#: app/templates/editar_tarea.html:41
+#: app/templates/editar_tarea.html:42
 msgid ""
 "¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde"
 " ahí."
 msgstr ""
 
-#: app/templates/editar_tarea.html:41
+#: app/templates/editar_tarea.html:42
 #: app/templates/tarea_outlook_editar.html:77
 msgid ""
 "¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde "
@@ -1117,10 +1200,18 @@ msgid ""
 msgstr ""
 
 #: app/templates/editar_tarea.html:43
+msgid "Evento eliminado."
+msgstr ""
+
+#: app/templates/editar_tarea.html:43 app/templates/tareas_lista.html:108
+msgid "Tarea eliminada."
+msgstr ""
+
+#: app/templates/editar_tarea.html:48
 msgid "Eliminar evento"
 msgstr ""
 
-#: app/templates/editar_tarea.html:43
+#: app/templates/editar_tarea.html:48
 #: app/templates/tarea_outlook_editar.html:78
 msgid "Eliminar tarea"
 msgstr ""
@@ -1541,63 +1632,84 @@ msgid "No hay registros para este filtro."
 msgstr ""
 
 #: app/templates/historial.html:73
+msgid "Paginación del histórico"
+msgstr ""
+
+#: app/templates/docs/pagina.html:136 app/templates/historial.html:75
+#: app/templates/historial.html:77 app/templates/tareas_calendario.html:19
+#: app/templates/tareas_lista.html:120 app/templates/tareas_lista.html:122
+msgid "Anterior"
+msgstr ""
+
+#: app/templates/historial.html:79 app/templates/tareas_lista.html:124
+#, python-format
+msgid "Página %(num)s"
+msgstr ""
+
+#: app/templates/docs/pagina.html:144 app/templates/historial.html:81
+#: app/templates/historial.html:83 app/templates/tareas_calendario.html:21
+#: app/templates/tareas_lista.html:126 app/templates/tareas_lista.html:128
+msgid "Siguiente"
+msgstr ""
+
+#: app/templates/historial.html:89
 msgid "Generar informe con IA local"
 msgstr ""
 
-#: app/templates/historial.html:74
+#: app/templates/historial.html:90
 msgid ""
 "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
 "(Ollama o LM Studio). No se envía nada a internet."
 msgstr ""
 
-#: app/templates/historial.html:81
+#: app/templates/historial.html:97
 msgid "Proveedor"
 msgstr ""
 
-#: app/templates/historial.html:87
+#: app/templates/historial.html:103
 msgid "Modelo"
 msgstr ""
 
-#: app/templates/historial.html:88
+#: app/templates/historial.html:104
 msgid "ej. llama3.1"
 msgstr ""
 
-#: app/templates/historial.html:91
+#: app/templates/historial.html:107
 msgid "Instrucción para la IA"
 msgstr ""
 
-#: app/templates/historial.html:94
+#: app/templates/historial.html:110
 msgid "Generar informe"
 msgstr ""
 
-#: app/templates/historial.html:106
+#: app/templates/historial.html:122
 msgid "Preguntar a mis datos"
 msgstr ""
 
-#: app/templates/historial.html:107
+#: app/templates/historial.html:123
 msgid ""
 "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango "
 "de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada"
 " a internet."
 msgstr ""
 
-#: app/templates/historial.html:114
+#: app/templates/historial.html:130
 msgid "Modelo, ej. llama3.1"
 msgstr ""
 
-#: app/templates/historial.html:121
+#: app/templates/historial.html:137
 msgid "Pregunta algo sobre tus datos... (ej. ¿qué hice ayer en Lueira?)"
 msgstr ""
 
-#: app/templates/historial.html:193
+#: app/templates/historial.html:209
 msgid "Pensando..."
 msgstr ""
 
-#: app/templates/historial.html:217
+#: app/templates/historial.html:233
 msgid "Error desconocido."
 msgstr ""
 
-#: app/templates/historial.html:221
+#: app/templates/historial.html:237
 msgid "No se pudo contactar con el servidor."
 msgstr ""
 
@@ -1799,20 +1911,12 @@ msgstr ""
 msgid "Atajo: Ctrl+Alt+T"
 msgstr ""
 
-#: app/templates/inicio.html:73 app/templates/tareas_lista.html:55
-msgid "Nueva tarea"
-msgstr ""
-
 #: app/templates/inicio.html:78
 msgid "Nombre de la tarea"
 msgstr ""
 
 #: app/templates/inicio.html:79 app/templates/menu.html:62
 msgid "Iniciar"
-msgstr ""
-
-#: app/templates/inicio.html:85
-msgid "Buscar en el histórico"
 msgstr ""
 
 #: app/templates/inicio.html:91
@@ -2220,14 +2324,6 @@ msgstr ""
 msgid "Calendario"
 msgstr ""
 
-#: app/templates/docs/pagina.html:136 app/templates/tareas_calendario.html:19
-msgid "Anterior"
-msgstr ""
-
-#: app/templates/docs/pagina.html:144 app/templates/tareas_calendario.html:21
-msgid "Siguiente"
-msgstr ""
-
 #: app/templates/tareas_calendario.html:25
 msgid "Día"
 msgstr ""
@@ -2345,8 +2441,12 @@ msgstr ""
 msgid "Vence %(fecha)s"
 msgstr ""
 
-#: app/templates/tareas_lista.html:106
+#: app/templates/tareas_lista.html:107
 msgid "¿Eliminar esta tarea? Se moverá a la papelera."
+msgstr ""
+
+#: app/templates/tareas_lista.html:118
+msgid "Paginación de tareas"
 msgstr ""
 
 #: app/templates/tareas_outlook_sync.html:2

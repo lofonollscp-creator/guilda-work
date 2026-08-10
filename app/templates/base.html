@@ -101,6 +101,7 @@
           🔍 {{ _('Buscar en notas, tareas y correo…') }}
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
+        <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
         <div class="ajustes-menu">
           <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">&#9881;</button>
           <div class="ajustes-panel" id="ajustes-panel" hidden>
@@ -150,6 +151,24 @@
     </div>
   </div>
 
+  <div id="atajos-ayuda-overlay" class="busqueda-overlay" hidden>
+    <div class="busqueda-modal atajos-ayuda-modal" role="dialog" aria-modal="true" aria-label="{{ _('Atajos de teclado') }}">
+      <div class="atajos-ayuda-cabecera">
+        <h2>{{ _('Atajos de teclado') }}</h2>
+        <button type="button" id="atajos-ayuda-cerrar" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}">&times;</button>
+      </div>
+      <ul class="atajos-ayuda-lista">
+        <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>G</kbd> <span>{{ _('Captura rápida (ventana del sistema)') }}</span></li>
+        <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd> <span>{{ _('Nueva nota') }}</span></li>
+        <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd> <span>{{ _('Nueva tarea') }}</span></li>
+        <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>B</kbd> <span>{{ _('Buscar en el histórico') }}</span></li>
+        <li><kbd>Ctrl</kbd> + <kbd>K</kbd> <span>{{ _('Buscar en notas, tareas y correo') }}</span></li>
+        <li><kbd>?</kbd> <span>{{ _('Mostrar esta ayuda') }}</span></li>
+        <li><kbd>Esc</kbd> <span>{{ _('Cerrar ventana emergente') }}</span></li>
+      </ul>
+    </div>
+  </div>
+
   {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
   {% from "_ia_chat_macro.html" import chat %}
   <div class="ia-panel-flotante" id="ia-panel-flotante" hidden>
@@ -161,6 +180,24 @@
   </div>
   {% endif %}
 
+  <script>
+    // Textos traducidos que necesitan los .js sueltos de app/static/ (no
+    // pasan por Jinja, así que no pueden llamar a {{ _('...') }} ellos
+    // mismos) -- ver app/static/toasts.js, correo_seleccion.js,
+    // correo_destinatarios.js.
+    window.GUILDA_I18N = {
+      cerrar: {{ _('Cerrar')|tojson }},
+      deshacer: {{ _('Deshacer')|tojson }},
+      deshacerError: {{ _('No se pudo deshacer la acción.')|tojson }},
+      correoMarcarLeidoOk: {{ _('Mensajes actualizados.')|tojson }},
+      correoDestacarOk: {{ _('Mensajes actualizados.')|tojson }},
+      correoMoverOk: {{ _('Mensajes movidos.')|tojson }},
+      correoEliminarOk: {{ _('Mensajes eliminados.')|tojson }},
+      correoAccionError: {{ _('No se pudo completar la acción. Inténtalo de nuevo.')|tojson }},
+      destinatariosError: {{ _('No se pudieron cargar las sugerencias de destinatarios.')|tojson }}
+    };
+  </script>
+  <script src="{{ url_for('static', filename='toasts.js') }}"></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>

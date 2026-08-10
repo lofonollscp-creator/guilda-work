@@ -69,6 +69,22 @@
 </table>
 </div>
 
+{% if hay_pagina_anterior or hay_pagina_siguiente %}
+<nav class="paginacion" aria-label="{{ _('Paginación del histórico') }}">
+  {% if hay_pagina_anterior %}
+  <a class="btn btn-ghost" href="{{ url_for('historial', q=q, desde=desde, hasta=hasta, categoria_id=categoria_id, pagina=pagina - 1) }}">← {{ _('Anterior') }}</a>
+  {% else %}
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">← {{ _('Anterior') }}</span>
+  {% endif %}
+  <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
+  {% if hay_pagina_siguiente %}
+  <a class="btn btn-ghost" href="{{ url_for('historial', q=q, desde=desde, hasta=hasta, categoria_id=categoria_id, pagina=pagina + 1) }}">{{ _('Siguiente') }} →</a>
+  {% else %}
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} →</span>
+  {% endif %}
+</nav>
+{% endif %}
+
 <section class="ia-section">
   <h3>{{ _('Generar informe con IA local') }}</h3>
   <p class="muted">{{ _('Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio). No se envía nada a internet.') }}</p>

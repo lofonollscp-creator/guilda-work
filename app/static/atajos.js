@@ -6,6 +6,16 @@
     return e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey && e.key.toLowerCase() === tecla;
   }
 
+  // Usado también por el atajo "?" de ayuda: evita que dispare mientras el
+  // usuario está escribiendo en un campo de texto (donde "?" es un
+  // carácter normal, no un atajo).
+  function escribiendoEnCampo(e) {
+    var el = e.target;
+    if (!el) return false;
+    var etiqueta = el.tagName;
+    return etiqueta === "INPUT" || etiqueta === "TEXTAREA" || etiqueta === "SELECT" || el.isContentEditable;
+  }
+
   document.addEventListener("keydown", function (e) {
     if (esAtajo(e, "n")) {
       e.preventDefault();
@@ -23,6 +33,9 @@
     } else if (esAtajo(e, "b")) {
       e.preventDefault();
       location.href = "/historial?enfocar=1";
+    } else if (e.key === "?" && !e.ctrlKey && !e.altKey && !e.metaKey && !escribiendoEnCampo(e)) {
+      e.preventDefault();
+      abrirAyudaAtajos();
     }
   });
 
@@ -38,5 +51,33 @@
   if (params.has("enfocar")) {
     var buscar = document.getElementById("historial-buscar-input");
     if (buscar) buscar.focus();
+  }
+
+  // ---- Modal de ayuda de atajos ("?") --------------------------------
+  var overlay = document.getElementById("atajos-ayuda-overlay");
+  var boton = document.getElementById("atajos-ayuda-abrir");
+  var botonCerrar = document.getElementById("atajos-ayuda-cerrar");
+
+  function abrirAyudaAtajos() {
+    if (!overlay) return;
+    overlay.hidden = false;
+    if (botonCerrar) botonCerrar.focus();
+  }
+
+  function cerrarAyudaAtajos() {
+    if (!overlay) return;
+    overlay.hidden = true;
+    if (boton) boton.focus();
+  }
+
+  if (boton) boton.addEventListener("click", abrirAyudaAtajos);
+  if (botonCerrar) botonCerrar.addEventListener("click", cerrarAyudaAtajos);
+  if (overlay) {
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) cerrarAyudaAtajos();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !overlay.hidden) cerrarAyudaAtajos();
+    });
   }
 })();

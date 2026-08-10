@@ -1019,6 +1019,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 8px;
   font-size: 0.9em;
 }
+
+/* ---- Paginación (historial.html, tareas_lista.html) ---- */
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+}
+.paginacion-actual { color: var(--text-muted); font-size: 0.88em; }
+.paginacion .is-deshabilitado { opacity: 0.4; pointer-events: none; }
 /* Checkboxes de eventos del formulario de Webhooks -- antes un
    <fieldset> con estilos en línea que no podía envolver sus propias
    casillas por separado del resto de la fila (Tenant/URL/botón), se
@@ -1105,6 +1116,73 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 0.88em;
+}
+
+/* ---- Toasts (sistema único de aviso, sustituye a los .ia-error /
+   burbujas JS sueltas que había repartidas por varias plantillas) ---- */
+.toast-contenedor {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(360px, calc(100vw - 2 * var(--space-4)));
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--success);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+  font-size: 0.88em;
+  color: var(--text);
+  animation: toast-entrar 0.18s ease-out;
+}
+.toast-error { border-left-color: var(--danger); }
+.toast-icono { flex-shrink: 0; line-height: 1.4; }
+.toast-exito .toast-icono { color: var(--success); }
+.toast-error .toast-icono { color: var(--danger); }
+.toast-texto { flex: 1; line-height: 1.4; }
+.toast-accion {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.95em;
+  cursor: pointer;
+  padding: 0;
+}
+.toast-accion:hover { text-decoration: underline; }
+.toast-cerrar {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1em;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+}
+.toast-cerrar:hover { color: var(--text); }
+.toast-saliendo { animation: toast-salir 0.2s ease-in forwards; }
+@keyframes toast-entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toast-salir {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .toast-saliendo { animation: none; opacity: 0; }
 }
 .ia-result {
   margin-top: 14px;
@@ -1914,6 +1992,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-autocomplete-lista[hidden] { display: none; }
 .correo-autocomplete-item { padding: 8px 12px; font-size: 0.9em; cursor: pointer; }
 .correo-autocomplete-item:hover { background: var(--bg); }
+.correo-autocomplete-aviso { padding: 8px 12px; font-size: 0.85em; color: var(--text-muted); cursor: default; }
 
 /* Densidad compacta de la lista de mensajes */
 .correo-lista-mensajes.es-compacta .correo-fila-wrap { padding: 5px 12px; gap: 4px; }
@@ -2564,6 +2643,49 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .busqueda-resultado-texto { color: var(--text); font-size: 0.92em; }
 .busqueda-vacio, .busqueda-error { padding: var(--space-5) var(--space-4); text-align: center; color: var(--text-muted); font-size: 0.9em; margin: 0; }
 
+/* ---- Ayuda de atajos de teclado ---- */
+.atajos-ayuda-boton {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+.atajos-ayuda-boton:hover { border-color: var(--primary); color: var(--text); }
+.atajos-ayuda-modal { max-height: 70vh; }
+.atajos-ayuda-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+.atajos-ayuda-cabecera h2 { margin: 0; font-size: 1.05em; }
+.atajos-ayuda-cabecera button {
+  background: none;
+  border: none;
+  font-size: 1.3em;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.atajos-ayuda-cabecera button:hover { color: var(--text); }
+.atajos-ayuda-lista { list-style: none; margin: 0; padding: var(--space-3) var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.atajos-ayuda-lista li { display: flex; align-items: center; gap: var(--space-2); font-size: 0.9em; }
+.atajos-ayuda-lista kbd {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  background: var(--bg);
+}
+.atajos-ayuda-lista span { color: var(--text-muted); }
+
 /* ---- Tiquets (soporte interno: errores/sugerencias) ---- */
 .tiquets-seccion { margin-bottom: 32px; }
 .tiquets-seccion h2 { margin-bottom: 12px; }
@@ -2631,6 +2753,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .tiquets-kanban-col h2 { margin-top: 0; }
 .tiquets-kanban-tarjetas { display: flex; flex-direction: column; gap: 10px; }
+
+/* ---- Tablet ----
+   Entre el escritorio (3 columnas fijas) y el corte a 1 columna de más
+   abajo (640px, pensado para móvil en vertical) no había nada: en un
+   ancho de tablet (~641-1024px) las 3 columnas del kanban de tiquets se
+   quedaban demasiado estrechas para ser cómodas antes de que el apilado
+   móvil entrara en juego. 2 columnas en ese rango medio. */
+@media (max-width: 1024px) and (min-width: 641px) {
+  .tiquets-kanban { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* ---- Móvil en vertical ----
    Hasta ahora no existía NINGUNA media query de ancho en toda la hoja
