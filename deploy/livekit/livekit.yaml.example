@@ -1,0 +1,24 @@
+# Plantilla -- copia a deploy/livekit/livekit.yaml (gitignorado, lleva
+# la clave/secreto de LiveKit en claro, igual que
+# deploy/synapse/guilda-overrides.yaml) y sustituye la clave/secreto por
+# los mismos valores que LIVEKIT_API_KEY/LIVEKIT_API_SECRET en .env.
+#
+# Backend MatrixRTC para Element Call/Element X (ver el bloque `livekit`
+# de docker-compose.yml para el porqué). auto_create: false es
+# obligatorio -- sin esto, LIVEKIT_FULL_ACCESS_HOMESERVERS de
+# lk-jwt-service no sirve de nada (cualquiera podría crear salas sin
+# pasar por la validación del homeserver).
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: true
+keys:
+  CAMBIA_ESTA_CLAVE_LIVEKIT: CambiaEsteSecretoLivekit2026
+room:
+  auto_create: false
+webhook:
+  api_key: CAMBIA_ESTA_CLAVE_LIVEKIT
+  urls:
+    - http://127.0.0.1:8091/sfu_webhook

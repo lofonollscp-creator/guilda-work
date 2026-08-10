@@ -1416,6 +1416,50 @@ services:
     volumes:
       - jitsi-web-config:/config
 
+  # LiveKit + lk-jwt-service: backend MatrixRTC (MSC4195) para llamadas
+  # nativas de Element Call/Element X. Jitsi (arriba) NO sirve para esto:
+  # Element X dejó de soportar llamadas por widget de Jitsi y solo
+  # entiende MatrixRTC con un SFU LiveKit anunciado en
+  # .well-known/matrix/client (org.matrix.msc4143.rtc_foci) — sin esto
+  # Element X da el error "MISSING_MATRIX_RTC_TRANSPORT" al intentar
+  # llamar. Ver deploy/livekit/livekit.yaml y el bloque
+  # matrix-rtc.guildawork.com del Caddyfile del VPS (no versionado).
+  #
+  # network_mode: host en livekit — necesario para que el rango UDP de
+  # medios (RTP/ICE) salga con la IP pública real del VPS sin NAT de
+  # Docker de por medio (mismo motivo que JVB_ADVERTISE_IPS de Jitsi
+  # arriba, pero LiveKit no tiene una var de "IP a anunciar": usa
+  # rtc.use_external_ip y necesita ver la interfaz pública directamente).
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: guilda-work-livekit
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./deploy/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    command: ["--config", "/etc/livekit.yaml"]
+
+  # Cambia el openid token de un usuario de Matrix (via Synapse) por un
+  # JWT válido para LiveKit — sin esto LiveKit no sabe si el usuario que
+  # pide entrar a una sala es de verdad un miembro autenticado de
+  # chat.guildawork.com. LIVEKIT_URL apunta al puerto interno de LiveKit
+  # (dentro del host de Docker, gracias a network_mode: host arriba);
+  # LIVEKIT_FULL_ACCESS_HOMESERVERS es el server_name de Synapse, no el
+  # hostname del propio LiveKit.
+  livekit-jwt:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: guilda-work-livekit-jwt
+    restart: unless-stopped
+    depends_on:
+      - livekit
+    ports:
+      - "127.0.0.1:8091:8080"
+    environment:
+      LIVEKIT_URL: ws://127.0.0.1:7880
+      LIVEKIT_KEY: ${LIVEKIT_API_KEY:?define LIVEKIT_API_KEY, p.ej. openssl rand -hex 16}
+      LIVEKIT_SECRET: ${LIVEKIT_API_SECRET:?define LIVEKIT_API_SECRET, p.ej. openssl rand -base64 32}
+      LIVEKIT_FULL_ACCESS_HOMESERVERS: ${SYNAPSE_SERVER_NAME:-chat.guildawork.com}
+
   # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Meilisearch (buscador unificado, MIT) — instancia compartida, un
   # único índice para notas+tareas+correo con aislamiento real por

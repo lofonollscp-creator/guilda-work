@@ -20,6 +20,7 @@ deploy/synapse/guilda-overrides.yaml
 deploy/mas/config.yaml
 deploy/synapse/guilda-overrides.local-https.yaml
 deploy/synapse/guilda-overrides.lan.yaml
+deploy/livekit/livekit.yaml
 caddy-local-root.crt
 caddy-lan-root.crt
 deploy/documenso/cert.p12
