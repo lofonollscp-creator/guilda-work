@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 
 /// Datos personales del trabajador para el fichaje (equivalente móvil de
@@ -65,10 +66,11 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
   }
 
   Future<void> _guardar() async {
+    final t = AppLocalizations.of(context);
     final nombre = _nombreController.text.trim();
     final dni = _dniController.text.trim();
     if (nombre.isEmpty || dni.isEmpty) {
-      setState(() => _error = 'Nombre completo y DNI/NIE son obligatorios: la normativa exige poder identificarte.');
+      setState(() => _error = t.fichajeDatosObligatorios);
       return;
     }
     setState(() {
@@ -98,8 +100,9 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis datos de fichaje')),
+      appBar: AppBar(title: Text(t.fichajeDatosTitulo)),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -107,52 +110,52 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
               children: [
                 TextField(
                   controller: _nombreController,
-                  decoration: const InputDecoration(labelText: 'Nombre completo *'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosNombreLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _dniController,
-                  decoration: const InputDecoration(labelText: 'DNI/NIE *'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosDniLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _numAfiliacionController,
-                  decoration: const InputDecoration(labelText: 'Nº de afiliación a la Seguridad Social'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosAfiliacionLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _categoriaController,
-                  decoration: const InputDecoration(labelText: 'Categoría profesional'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosCategoriaLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _contratoController,
-                  decoration: const InputDecoration(labelText: 'Tipo de contrato'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosContratoLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _fechaAltaController,
                   readOnly: true,
-                  decoration: const InputDecoration(labelText: 'Fecha de alta'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosFechaAltaLabel),
                   onTap: _elegirFecha,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _jornadaController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Jornada semanal contratada (horas)'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosJornadaLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _convenioController,
-                  decoration: const InputDecoration(labelText: 'Convenio colectivo'),
+                  decoration: InputDecoration(labelText: t.fichajeDatosConvenioLabel),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ],
                 const SizedBox(height: 24),
-                FilledButton(onPressed: _guardando ? null : _guardar, child: const Text('Guardar')),
+                FilledButton(onPressed: _guardando ? null : _guardar, child: Text(t.comunGuardar)),
               ],
             ),
     );

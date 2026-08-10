@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/push_service.dart';
 import '../services/session_service.dart';
+import '../services/locale_service.dart';
 import '../services/matrix_service.dart';
 import '../services/sync_service.dart';
 import 'chat_login_screen.dart';
@@ -12,6 +14,7 @@ import 'fichaje_screen.dart';
 import 'herramientas_screen.dart';
 import 'login_screen.dart';
 import 'menu_detail_screen.dart';
+import 'selector_idioma_dialog.dart';
 import 'tareas_outlook_screen.dart';
 import 'tiquets_screen.dart';
 
@@ -24,6 +27,7 @@ class DashboardScreen extends StatefulWidget {
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
+  final LocaleService locale;
 
   const DashboardScreen({
     super.key,
@@ -32,6 +36,7 @@ class DashboardScreen extends StatefulWidget {
     required this.sesion,
     required this.sync,
     required this.push,
+    required this.locale,
   });
 
   @override
@@ -76,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _anotar() async {
+    final t = AppLocalizations.of(context);
     final texto = _notaController.text.trim();
     if (texto.isEmpty) return;
     setState(() {
@@ -92,7 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _notaController.clear();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sin conexión: la nota se guardará en cuanto vuelva la red.')),
+            SnackBar(content: Text(t.dashboardSinConexionNota)),
           );
         }
       } else {
@@ -106,21 +112,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _crearMenu() async {
+    final t = AppLocalizations.of(context);
     final controlador = TextEditingController();
     final nombre = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nuevo menú'),
+        title: Text(t.dashboardNuevoMenuDialogTitulo),
         content: TextField(
           controller: controlador,
-          decoration: const InputDecoration(labelText: 'Nombre (ej. Lueira, Guilda...)'),
+          decoration: InputDecoration(labelText: t.dashboardNuevoMenuDialogLabel),
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(t.comunCancelar)),
           FilledButton(
             onPressed: () => Navigator.pop(context, controlador.text.trim()),
-            child: const Text('Crear'),
+            child: Text(t.dashboardCrearBoton),
           ),
         ],
       ),
@@ -137,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push),
+        builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push, locale: widget.locale),
       ),
       (route) => false,
     );
@@ -145,62 +152,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Guilda Work'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.language),
+            tooltip: t.comunIdioma,
+            onPressed: () => mostrarSelectorIdioma(context, widget.locale),
+          ),
+          IconButton(
             icon: const Icon(Icons.checklist),
-            tooltip: 'Tareas',
+            tooltip: t.dashboardTareasTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => TareasOutlookScreen(api: widget.api)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.mail_outline),
-            tooltip: 'Correo',
+            tooltip: t.dashboardCorreoTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.apps),
-            tooltip: 'Herramientas',
+            tooltip: t.dashboardHerramientasTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => HerramientasScreen(api: widget.api)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.confirmation_number_outlined),
-            tooltip: 'Tiquets',
+            tooltip: t.dashboardTiquetsTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.punch_clock_outlined),
-            tooltip: 'Fichaje',
+            tooltip: t.dashboardFichajeTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => FichajeScreen(api: widget.api, sync: widget.sync)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline),
-            tooltip: 'Chat',
+            tooltip: t.dashboardChatTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => ChatLoginScreen(matrix: _matrixService)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
+            tooltip: t.dashboardCerrarSesionTooltip,
             onPressed: _cerrarSesion,
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _crearMenu,
-        tooltip: 'Nuevo menú',
+        tooltip: t.dashboardNuevoMenuTooltip,
         child: const Icon(Icons.add),
       ),
       body: FutureBuilder<void>(
@@ -210,7 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+            return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
           }
           return RefreshIndicator(
             onRefresh: _recargar,
@@ -218,26 +231,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 if (_dashboard?['onboarding_visible'] == true) ...[
-                  _tarjetaOnboarding(),
+                  _tarjetaOnboarding(t),
                   const SizedBox(height: 16),
                 ],
-                _tarjetaStats(),
+                _tarjetaStats(t),
                 const SizedBox(height: 16),
-                _tarjetaNotaRapida(),
+                _tarjetaNotaRapida(t),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ],
                 const SizedBox(height: 24),
-                Text('Tus menús', style: Theme.of(context).textTheme.titleMedium),
+                Text(t.dashboardTusMenus, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (_categorias.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Text('Todavía no tienes ningún menú. Crea el primero con el botón +.'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(t.dashboardSinMenus),
                   )
                 else
-                  ..._categorias.map(_tarjetaMenu),
+                  ..._categorias.map((c) => _tarjetaMenu(c, t)),
               ],
             ),
           );
@@ -246,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _tarjetaOnboarding() {
+  Widget _tarjetaOnboarding(AppLocalizations t) {
     final tieneMenu = _dashboard?['onboarding_tiene_menu'] == true;
     final tieneCorreo = _dashboard?['onboarding_tiene_correo'] == true;
     final haUsadoIa = _dashboard?['onboarding_ha_usado_ia'] == true;
@@ -261,18 +274,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Primeros pasos', style: Theme.of(context).textTheme.titleSmall),
-                  TextButton(onPressed: _ocultarOnboarding, child: const Text('Ocultar')),
+                  Text(t.dashboardPrimerosPasos, style: Theme.of(context).textTheme.titleSmall),
+                  TextButton(onPressed: _ocultarOnboarding, child: Text(t.dashboardOcultar)),
                 ],
               ),
             ),
             _pasoOnboarding(
-              'Crea tu primer menú',
+              t.dashboardPasoCrearMenu,
               tieneMenu,
               onTap: tieneMenu ? null : () => _crearMenu(),
             ),
             _pasoOnboarding(
-              'Conecta una cuenta de correo',
+              t.dashboardPasoConectarCorreo,
               tieneCorreo,
               onTap: tieneCorreo
                   ? null
@@ -283,7 +296,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // El asistente IA todavía no tiene pantalla propia en la app
             // móvil (solo en la web) -- se deja como indicador informativo,
             // sin enlace, en vez de inventar una navegación que no existe.
-            _pasoOnboarding('Prueba el asistente IA (desde la web)', haUsadoIa),
+            _pasoOnboarding(t.dashboardPasoAsistenteIa, haUsadoIa),
           ],
         ),
       ),
@@ -318,15 +331,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Widget _tarjetaStats() {
+  Widget _tarjetaStats(AppLocalizations t) {
     final tareasActivas = (_dashboard?['tareas_activas'] as List?)?.length ?? 0;
     final notasHoy = _dashboard?['notas_hoy'] ?? 0;
     final correosNoLeidos = _dashboard?['correos_no_leidos'] ?? 0;
     return Row(
       children: [
-        Expanded(child: _stat('$tareasActivas', 'en curso')),
-        Expanded(child: _stat('$notasHoy', 'notas hoy')),
-        Expanded(child: _stat('$correosNoLeidos', 'correos sin leer')),
+        Expanded(child: _stat('$tareasActivas', t.dashboardStatEnCurso)),
+        Expanded(child: _stat('$notasHoy', t.dashboardStatNotasHoy)),
+        Expanded(child: _stat('$correosNoLeidos', t.dashboardStatCorreosSinLeer)),
       ],
     );
   }
@@ -345,22 +358,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _tarjetaNotaRapida() {
+  Widget _tarjetaNotaRapida(AppLocalizations t) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📝 Nota rápida'),
+            Text(t.dashboardNotaRapidaTitulo),
             const SizedBox(height: 8),
             if (_categorias.isNotEmpty)
               DropdownButton<int?>(
                 isExpanded: true,
                 value: _categoriaNotaSeleccionada,
-                hint: const Text('Sin menú'),
+                hint: Text(t.dashboardSinMenu),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('Sin menú')),
+                  DropdownMenuItem(value: null, child: Text(t.dashboardSinMenu)),
                   ..._categorias.map(
                     (c) => DropdownMenuItem(value: c.id, child: Text(c.nombre)),
                   ),
@@ -372,14 +385,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: TextField(
                     controller: _notaController,
-                    decoration: const InputDecoration(hintText: '¿Qué ha pasado?'),
+                    decoration: InputDecoration(hintText: t.dashboardNotaHint),
                     onSubmitted: (_) => _anotar(),
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: _guardandoNota ? null : _anotar,
-                  child: const Text('Anotar'),
+                  child: Text(t.dashboardAnotarBoton),
                 ),
               ],
             ),
@@ -389,9 +402,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _tarjetaMenu(Categoria c) {
+  Widget _tarjetaMenu(Categoria c, AppLocalizations loc) {
     final tareasActivas = (_dashboard?['tareas_activas'] as List? ?? [])
-        .where((t) => t['categoria_id'] == c.id)
+        .where((item) => item['categoria_id'] == c.id)
         .length;
     final color = _colorDesdeHex(c.color) ?? Colors.blueGrey;
     return Card(
@@ -399,7 +412,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListTile(
         leading: CircleAvatar(backgroundColor: color, radius: 8),
         title: Text(c.nombre),
-        subtitle: tareasActivas > 0 ? Text('$tareasActivas en curso') : null,
+        subtitle: tareasActivas > 0 ? Text(loc.dashboardMenuEnCurso(tareasActivas)) : null,
         trailing: const Icon(Icons.chevron_right),
         onTap: () async {
           await Navigator.of(context).push(

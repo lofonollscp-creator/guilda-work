@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/sync_service.dart';
@@ -66,6 +67,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
   }
 
   Future<void> _marcar(String tipo) async {
+    final t = AppLocalizations.of(context);
     setState(() {
       _marcando = true;
       _error = null;
@@ -81,7 +83,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
         setState(() => _estado = Future.value((_estadoTrasMarcar[tipo]!, true)));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sin conexión: se ha guardado y se enviará al recuperar la red.')),
+            SnackBar(content: Text(t.fichajeSinConexionNota)),
           );
         }
       } else {
@@ -96,20 +98,21 @@ class _FichajeScreenState extends State<FichajeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fichaje'),
+        title: Text(t.fichajeTitulo),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            tooltip: 'Mi historial',
+            tooltip: t.fichajeHistorialTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => FichajeHistorialScreen(api: widget.api)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.badge_outlined),
-            tooltip: 'Mis datos',
+            tooltip: t.fichajeMisDatosTooltip,
             onPressed: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => FichajeDatosScreen(api: widget.api)),
@@ -126,7 +129,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+            return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
           }
           final (estado, datosCompletos) = snapshot.data!;
           if (!datosCompletos) {
@@ -136,8 +139,8 @@ class _FichajeScreenState extends State<FichajeScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Antes de fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE.',
+                    Text(
+                      t.fichajeDatosIncompletos,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -148,7 +151,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
                         );
                         await _recargar();
                       },
-                      child: const Text('Rellenar mis datos'),
+                      child: Text(t.fichajeRellenarDatosBoton),
                     ),
                   ],
                 ),
@@ -160,12 +163,12 @@ class _FichajeScreenState extends State<FichajeScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Center(child: _pillEstado(estado)),
+                Center(child: _pillEstado(estado, t)),
                 if (_pendientes > 0) ...[
                   const SizedBox(height: 8),
                   Center(
                     child: Text(
-                      '$_pendientes cambio${_pendientes == 1 ? '' : 's'} pendiente${_pendientes == 1 ? '' : 's'} de sincronizar',
+                      t.fichajePendientesSinc(_pendientes),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -180,14 +183,14 @@ class _FichajeScreenState extends State<FichajeScreen> {
                   runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
-                    _botonFichar('Entrada', Colors.green, estado == 'fuera', () => _marcar('entrada')),
-                    _botonFichar('Iniciar pausa', Colors.amber.shade800, estado == 'dentro', () => _marcar('pausa_inicio')),
-                    _botonFichar('Fin de pausa', Colors.amber.shade800, estado == 'en_pausa', () => _marcar('pausa_fin')),
-                    _botonFichar('Salida', Colors.red, estado != 'fuera', () => _marcar('salida')),
+                    _botonFichar(t.fichajeEntradaBoton, Colors.green, estado == 'fuera', () => _marcar('entrada')),
+                    _botonFichar(t.fichajeIniciarPausaBoton, Colors.amber.shade800, estado == 'dentro', () => _marcar('pausa_inicio')),
+                    _botonFichar(t.fichajeFinPausaBoton, Colors.amber.shade800, estado == 'en_pausa', () => _marcar('pausa_fin')),
+                    _botonFichar(t.fichajeSalidaBoton, Colors.red, estado != 'fuera', () => _marcar('salida')),
                   ],
                 ),
                 const SizedBox(height: 32),
-                Text('Hoy', style: Theme.of(context).textTheme.titleMedium),
+                Text(t.fichajeHoyTitulo, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (_hoy != null)
                   FutureBuilder<List<FichajeEvento>>(
@@ -201,17 +204,18 @@ class _FichajeScreenState extends State<FichajeScreen> {
                       }
                       final eventos = snap.data ?? [];
                       if (eventos.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Text('Todavía no has fichado nada hoy.'),
+                        return Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(t.fichajeSinFichajesHoy),
                         );
                       }
+                      final etiquetas = etiquetasFichaje(t);
                       return Column(
                         children: eventos
                             .map((f) => ListTile(
                                   dense: true,
                                   leading: const Icon(Icons.access_time),
-                                  title: Text(etiquetasFichaje[f.tipo] ?? f.tipo),
+                                  title: Text(etiquetas[f.tipo] ?? f.tipo),
                                   trailing: Text(f.marcaTiempo.substring(11, 16)),
                                 ))
                             .toList(),
@@ -226,11 +230,11 @@ class _FichajeScreenState extends State<FichajeScreen> {
     );
   }
 
-  Widget _pillEstado(String estado) {
+  Widget _pillEstado(String estado, AppLocalizations t) {
     final (texto, color) = switch (estado) {
-      'dentro' => ('Dentro de jornada', Colors.green),
-      'en_pausa' => ('En pausa', Colors.amber.shade800),
-      _ => ('Fuera de jornada', Colors.grey),
+      'dentro' => (t.fichajeEstadoDentro, Colors.green),
+      'en_pausa' => (t.fichajeEstadoPausa, Colors.amber.shade800),
+      _ => (t.fichajeEstadoFuera, Colors.grey),
     };
     return Chip(
       label: Text(texto, style: const TextStyle(color: Colors.white)),

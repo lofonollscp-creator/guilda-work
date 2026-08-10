@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 
@@ -56,12 +57,13 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
     await _recargar();
   }
 
-  String _fecha(DateTime? d) => d == null ? 'Cualquiera' : d.toIso8601String().substring(0, 10);
+  String _fecha(DateTime? d, AppLocalizations t) => d == null ? t.fichajeHistorialCualquiera : d.toIso8601String().substring(0, 10);
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi historial de fichaje')),
+      appBar: AppBar(title: Text(t.fichajeHistorialTitulo)),
       body: Column(
         children: [
           Padding(
@@ -71,14 +73,14 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _elegirFecha(esDesde: true),
-                    child: Text('Desde: ${_fecha(_desde)}'),
+                    child: Text(t.fichajeHistorialDesde(_fecha(_desde, t))),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _elegirFecha(esDesde: false),
-                    child: Text('Hasta: ${_fecha(_hasta)}'),
+                    child: Text(t.fichajeHistorialHasta(_fecha(_hasta, t))),
                   ),
                 ),
               ],
@@ -94,28 +96,29 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error al cargar: ${snapshot.error}'));
+                    return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
                   }
                   final fichajes = snapshot.data ?? [];
                   if (fichajes.isEmpty) {
                     return ListView(
-                      children: const [
+                      children: [
                         Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('Sin fichajes en este periodo.'),
+                          padding: const EdgeInsets.all(24),
+                          child: Text(t.fichajeHistorialSinFichajes),
                         ),
                       ],
                     );
                   }
+                  final etiquetas = etiquetasFichaje(t);
                   return ListView.builder(
                     itemCount: fichajes.length,
                     itemBuilder: (context, i) {
                       final f = fichajes[i];
                       return ListTile(
                         leading: const Icon(Icons.access_time),
-                        title: Text(etiquetasFichaje[f.tipo] ?? f.tipo),
+                        title: Text(etiquetas[f.tipo] ?? f.tipo),
                         subtitle: Text('${f.marcaTiempo.substring(0, 10)} · ${f.marcaTiempo.substring(11, 16)}'),
-                        trailing: f.origen == 'correccion_admin' ? const Tooltip(message: 'Corrección de un administrador', child: Icon(Icons.info_outline)) : null,
+                        trailing: f.origen == 'correccion_admin' ? Tooltip(message: t.fichajeHistorialCorreccionAdmin, child: const Icon(Icons.info_outline)) : null,
                       );
                     },
                   );

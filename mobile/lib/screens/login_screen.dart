@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
+import '../services/locale_service.dart';
 import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
 import 'ajustes_servidor_dialog.dart';
 import 'dashboard_screen.dart';
 import 'registro_screen.dart';
+import 'selector_idioma_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   final ApiClient api;
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
+  final LocaleService locale;
 
-  const LoginScreen({super.key, required this.api, required this.sesion, required this.sync, required this.push});
+  const LoginScreen({super.key, required this.api, required this.sesion, required this.sync, required this.push, required this.locale});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -46,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
             sesion: widget.sesion,
             sync: widget.sync,
             push: widget.push,
+            locale: widget.locale,
           ),
         ),
         (route) => false,
@@ -59,13 +64,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Guilda Work'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.language),
+            tooltip: t.comunIdioma,
+            onPressed: () => mostrarSelectorIdioma(context, widget.locale),
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_ethernet),
-            tooltip: 'Servidor',
+            tooltip: t.loginServidorTooltip,
             onPressed: () => mostrarAjustesServidor(context, widget.sesion),
           ),
         ],
@@ -77,14 +88,14 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             TextField(
               controller: _email,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: t.loginEmailLabel),
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _contrasena,
-              decoration: const InputDecoration(labelText: 'Contraseña'),
+              decoration: InputDecoration(labelText: t.loginContrasenaLabel),
               obscureText: true,
             ),
             if (_error != null) ...[
@@ -100,15 +111,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Entrar'),
+                  : Text(t.loginEntrarBoton),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => RegistroScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push),
+                  builder: (_) => RegistroScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push, locale: widget.locale),
                 ),
               ),
-              child: const Text('¿No tienes cuenta? Regístrate'),
+              child: Text(t.loginRegistrateLink),
             ),
           ],
         ),
