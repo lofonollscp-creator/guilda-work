@@ -1452,10 +1452,18 @@ services:
     restart: unless-stopped
     depends_on:
       - livekit
-    ports:
-      - "127.0.0.1:8091:8080"
+    # network_mode: host, igual que livekit -- LIVEKIT_URL apunta a
+    # 127.0.0.1:7880, que solo es el LiveKit real si este contenedor
+    # comparte el namespace de red del host (con el bridge de Docker
+    # normal, ese 127.0.0.1 sería el propio contenedor, no el host, y
+    # la creación de sala en el SFU falla con "connection refused" --
+    # visto en vivo). LIVEKIT_JWT_BIND fija el puerto a 8091 en vez del
+    # 8080 por defecto porque crowdsec ya usa el 8080 del host para su
+    # API local.
+    network_mode: host
     environment:
       LIVEKIT_URL: ws://127.0.0.1:7880
+      LIVEKIT_JWT_BIND: 127.0.0.1:8091
       LIVEKIT_KEY: ${LIVEKIT_API_KEY:?define LIVEKIT_API_KEY, p.ej. openssl rand -hex 16}
       LIVEKIT_SECRET: ${LIVEKIT_API_SECRET:?define LIVEKIT_API_SECRET, p.ej. openssl rand -base64 32}
       LIVEKIT_FULL_ACCESS_HOMESERVERS: ${SYNAPSE_SERVER_NAME:-chat.guildawork.com}
