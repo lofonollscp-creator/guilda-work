@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../services/locale_service.dart';
 import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
@@ -15,6 +16,7 @@ class RegistroScreen extends StatefulWidget {
   final SyncService sync;
   final PushService push;
   final ThemeService tema;
+  final LocaleService locale;
 
   const RegistroScreen({
     super.key,
@@ -23,6 +25,7 @@ class RegistroScreen extends StatefulWidget {
     required this.sync,
     required this.push,
     required this.tema,
+    required this.locale,
   });
 
   @override
@@ -65,6 +68,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
             sync: widget.sync,
             push: widget.push,
             tema: widget.tema,
+            locale: widget.locale,
           ),
         ),
         (route) => false,

@@ -110,6 +110,15 @@ services:
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
       WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Madrid}
+      # SMTP saliente real: relay de IONOS (invitaciones a miembros del
+      # workspace, reset de contraseña de n8n).
+      N8N_EMAIL_MODE: smtp
+      N8N_SMTP_HOST: ${N8N_SMTP_HOST:-smtp.ionos.es}
+      N8N_SMTP_PORT: ${N8N_SMTP_PORT:-587}
+      N8N_SMTP_USER: ${N8N_SMTP_USER:?define N8N_SMTP_USER}
+      N8N_SMTP_PASS: ${N8N_SMTP_PASS:?define N8N_SMTP_PASS}
+      N8N_SMTP_SENDER: ${N8N_SMTP_SENDER:?define N8N_SMTP_SENDER}
+      N8N_SMTP_SSL: "false"
     ports:
       - "127.0.0.1:5678:5678"
     volumes:
@@ -172,13 +181,27 @@ services:
       SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
       SELFSERVICE_FLOWS_SETTINGS_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/ajustes-cuenta
       SELFSERVICE_FLOWS_ERROR_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/login
+      SELFSERVICE_FLOWS_VERIFICATION_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/verificar-email
+      SELFSERVICE_FLOWS_VERIFICATION_AFTER_DEFAULT_BROWSER_RETURN_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/
+      SELFSERVICE_FLOWS_RECOVERY_UI_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/recuperar-contrasena
+      SELFSERVICE_FLOWS_RECOVERY_AFTER_DEFAULT_BROWSER_RETURN_URL: ${GUILDA_ORIGIN:-http://127.0.0.1:8000}/ajustes-cuenta
       SERVE_PUBLIC_CORS_ALLOWED_ORIGINS: '["${GUILDA_ORIGIN:-http://127.0.0.1:8000}"]'
+      # SMTP saliente real: relay autenticado de IONOS (Hetzner bloquea el
+      # 25 de salida). COURIER_SMTP_CONNECTION_URI se define en
+      # /etc/guilda-work.env, nunca en claro aquí -- formato:
+      # smtp://usuario%40dominio.es:CONTRASENA@smtp.ionos.es:587/
+      COURIER_SMTP_CONNECTION_URI: ${COURIER_SMTP_CONNECTION_URI}
     ports:
       - "127.0.0.1:4433:4433"   # API pública (self-service)
       - "127.0.0.1:4434:4434"   # API admin (gestión de identidades)
     volumes:
       - ./deploy/kratos:/etc/config/kratos:ro
-    command: serve --config /etc/config/kratos/kratos.yml --dev
+    # --watch-courier: sin esto, el correo de verificación/recuperación se
+    # queda encolado para siempre (send_count nunca sube de 0) -- Kratos
+    # no lanza el worker de envío junto al proceso principal a menos que
+    # se pida explícitamente. Verificado en vivo (2026-08-10): un mensaje
+    # real se quedó "queued" sin ningún intento hasta añadir este flag.
+    command: serve --config /etc/config/kratos/kratos.yml --dev --watch-courier
 
   # Nivel: mínimo (CPX22) — columna vertebral, ver HOSTING.md.
   # Ory Hydra: proveedor OAuth2/OIDC (Fase 7b) — necesario porque Outline
@@ -318,6 +341,14 @@ services:
       URL: ${OUTLINE_PUBLIC_ORIGIN:-http://127.0.0.1:3001}
       PORT: 3000
       FORCE_HTTPS: ${OUTLINE_FORCE_HTTPS:-false}
+      # SMTP saliente real: relay de IONOS (invitaciones a documentos,
+      # notificaciones de comentarios/menciones).
+      SMTP_HOST: ${OUTLINE_SMTP_HOST:-smtp.ionos.es}
+      SMTP_PORT: ${OUTLINE_SMTP_PORT:-587}
+      SMTP_USERNAME: ${OUTLINE_SMTP_USERNAME:?define OUTLINE_SMTP_USERNAME}
+      SMTP_PASSWORD: ${OUTLINE_SMTP_PASSWORD:?define OUTLINE_SMTP_PASSWORD}
+      SMTP_FROM_EMAIL: ${OUTLINE_SMTP_FROM_EMAIL:?define OUTLINE_SMTP_FROM_EMAIL}
+      SMTP_SECURE: "false"
       # MinIO ya desplegado (integración anterior) — endpoint interno
       # (contenedor a contenedor) para las subidas, endpoint público para
       # las URLs que ve el navegador (mismo matiz que Kratos, ver app/kratos.py).
@@ -494,6 +525,18 @@ services:
       OPENPROJECT_HOST__NAME: ${OPENPROJECT_HOST_NAME:-127.0.0.1:8010}
       OPENPROJECT_SEED_ADMIN_USER_PASSWORD: ${OPENPROJECT_SEED_ADMIN_USER_PASSWORD:?define OPENPROJECT_SEED_ADMIN_USER_PASSWORD (min. 10 caracteres)}
       OPENPROJECT_SEED_ADMIN_USER_MAIL: ${OPENPROJECT_SEED_ADMIN_USER_MAIL:-admin@guilda.local}
+      # SMTP saliente real: relay de IONOS (ver app/main.py y
+      # deploy/kratos/kratos.yml para el mismo criterio) -- notificaciones
+      # de tareas/menciones no llegaban sin esto.
+      OPENPROJECT_EMAIL__DELIVERY__METHOD: smtp
+      OPENPROJECT_SMTP__ADDRESS: ${OPENPROJECT_SMTP_HOST:-smtp.ionos.es}
+      OPENPROJECT_SMTP__PORT: ${OPENPROJECT_SMTP_PORT:-587}
+      OPENPROJECT_SMTP__DOMAIN: ${OPENPROJECT_SMTP_DOMAIN:-guildawork.com}
+      OPENPROJECT_SMTP__AUTHENTICATION: login
+      OPENPROJECT_SMTP__USER__NAME: ${OPENPROJECT_SMTP_USER:?define OPENPROJECT_SMTP_USER}
+      OPENPROJECT_SMTP__PASSWORD: ${OPENPROJECT_SMTP_PASSWORD:?define OPENPROJECT_SMTP_PASSWORD}
+      OPENPROJECT_SMTP__ENABLE__STARTTLS__AUTO: "true"
+      OPENPROJECT_NOTIFICATIONS__EMAIL__FROM: ${OPENPROJECT_SMTP_FROM:?define OPENPROJECT_SMTP_FROM}
     command: ["./docker/prod/seeder"]
 
   openproject-web:
@@ -661,6 +704,15 @@ services:
       # true solo para crear la primera cuenta (ver HOSTING.md 8.16) —
       # ponlo a false en tu .env en cuanto la tengas.
       SIGNUPS_ALLOWED: ${VAULTWARDEN_SIGNUPS_ALLOWED:-true}
+      # SMTP saliente real: relay de IONOS (invitaciones de organización,
+      # verificación de email, códigos 2FA por correo).
+      SMTP_HOST: ${VAULTWARDEN_SMTP_HOST:-smtp.ionos.es}
+      SMTP_PORT: ${VAULTWARDEN_SMTP_PORT:-587}
+      SMTP_SECURITY: starttls
+      SMTP_USERNAME: ${VAULTWARDEN_SMTP_USERNAME:?define VAULTWARDEN_SMTP_USERNAME}
+      SMTP_PASSWORD: ${VAULTWARDEN_SMTP_PASSWORD:?define VAULTWARDEN_SMTP_PASSWORD}
+      SMTP_FROM: ${VAULTWARDEN_SMTP_FROM:?define VAULTWARDEN_SMTP_FROM}
+      SMTP_FROM_NAME: "Guilda Work"
     volumes:
       - vaultwarden-data:/data
     ports:
@@ -827,6 +879,14 @@ services:
       NEXT_PRIVATE_SMTP_FROM_NAME: ${DOCUMENSO_SMTP_FROM_NAME:-Guilda Work}
       NEXT_PRIVATE_SMTP_FROM_ADDRESS: ${DOCUMENSO_SMTP_FROM_ADDRESS:?define DOCUMENSO_SMTP_FROM_ADDRESS}
       NEXT_PRIVATE_SIGNING_PASSPHRASE: ${DOCUMENSO_SIGNING_PASSPHRASE:?define DOCUMENSO_SIGNING_PASSPHRASE}
+      # Sin esto, Documenso ignora el cert.p12 montado abajo y busca su
+      # ruta de ejemplo interna (./example/cert.p12, que no existe en la
+      # imagen) -- el job interno.seal-document falla en bucle (ENOENT)
+      # y el documento se queda colgado en "Procesando documento" para
+      # siempre, sin sellar ni mandar el email de confirmación.
+      # Verificado en vivo (2026-08-10).
+      NEXT_PRIVATE_SIGNING_TRANSPORT: local
+      NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH: /opt/documenso/cert.p12
     ports:
       - "127.0.0.1:8018:3000"
     volumes:
@@ -1209,7 +1269,14 @@ services:
       - "0.0.0.0:995:995"
       - "0.0.0.0:4190:4190"
     volumes:
-      - stalwart-data:/opt/stalwart
+      # OJO: la ruta real de datos de Stalwart es /var/lib/stalwart/ (ver
+      # /etc/stalwart/config.json dentro del contenedor -- el propio
+      # binario apunta ahí su RocksDB), NO /opt/stalwart. Un despliegue
+      # anterior montaba el volumen en /opt/stalwart por error: los datos
+      # reales vivían solo en la capa de escritura del contenedor, sin
+      # persistir de verdad -- un `docker compose down` (no solo restart)
+      # los habría perdido. Detectado y migrado en vivo (2026-08-10).
+      - stalwart-data:/var/lib/stalwart
 
   # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # ntfy (notificaciones push autoalojadas, Apache-2.0/GPLv2 dual) —
@@ -1348,6 +1415,69 @@ services:
       XMPP_WEBSOCKET_DOMAIN: ${JITSI_PUBLIC_HOSTNAME:-127.0.0.1}
     volumes:
       - jitsi-web-config:/config
+
+  # LiveKit + lk-jwt-service: backend MatrixRTC (MSC4195) para llamadas
+  # nativas de Element Call/Element X. Jitsi (arriba) NO sirve para esto:
+  # Element X dejó de soportar llamadas por widget de Jitsi y solo
+  # entiende MatrixRTC con un SFU LiveKit anunciado en
+  # .well-known/matrix/client (org.matrix.msc4143.rtc_foci) — sin esto
+  # Element X da el error "MISSING_MATRIX_RTC_TRANSPORT" al intentar
+  # llamar. Ver deploy/livekit/livekit.yaml y el bloque
+  # matrix-rtc.guildawork.com del Caddyfile del VPS (no versionado).
+  #
+  # network_mode: host en livekit — necesario para que el rango UDP de
+  # medios (RTP/ICE) salga con la IP pública real del VPS sin NAT de
+  # Docker de por medio (mismo motivo que JVB_ADVERTISE_IPS de Jitsi
+  # arriba, pero LiveKit no tiene una var de "IP a anunciar": usa
+  # rtc.use_external_ip y necesita ver la interfaz pública directamente).
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: guilda-work-livekit
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./deploy/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    command: ["--config", "/etc/livekit.yaml"]
+
+  # Cambia el openid token de un usuario de Matrix (via Synapse) por un
+  # JWT válido para LiveKit — sin esto LiveKit no sabe si el usuario que
+  # pide entrar a una sala es de verdad un miembro autenticado de
+  # chat.guildawork.com. LIVEKIT_URL apunta al puerto interno de LiveKit
+  # (dentro del host de Docker, gracias a network_mode: host arriba);
+  # LIVEKIT_FULL_ACCESS_HOMESERVERS es el server_name de Synapse, no el
+  # hostname del propio LiveKit.
+  livekit-jwt:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: guilda-work-livekit-jwt
+    restart: unless-stopped
+    depends_on:
+      - livekit
+    # network_mode: host, igual que livekit -- necesario para que
+    # LIVEKIT_URL (ver abajo) resuelva de verdad al LiveKit real y no a
+    # este propio contenedor (con el bridge de Docker normal probamos
+    # 127.0.0.1:7880 y daba "connection refused" al crear la sala --
+    # visto en vivo). LIVEKIT_JWT_BIND fija el puerto a 8091 en vez del
+    # 8080 por defecto porque crowdsec ya usa el 8080 del host para su
+    # API local.
+    #
+    # LIVEKIT_URL tiene que ser la URL PÚBLICA (wss://.../livekit/sfu),
+    # no una interna -- lk-jwt-service usa el mismo valor para dos cosas
+    # distintas: sus propias llamadas internas a la API de LiveKit
+    # (creación de sala) Y la URL que le devuelve al cliente (Element X)
+    # para que conecte el WebSocket de señalización de verdad. Con
+    # ws://127.0.0.1:7880 la creación de sala funcionaba (llamada
+    # interna) pero el cliente recibía esa misma URL interna y no podía
+    # conectar -- "Failed to connect to Livekit server. ServerUnreachable"
+    # visto en vivo. El Caddyfile del VPS (no versionado) quita el
+    # prefijo /livekit/sfu antes de reenviar a localhost:7880, así que
+    # tanto la llamada interna como la del cliente llegan bien a LiveKit.
+    network_mode: host
+    environment:
+      LIVEKIT_URL: wss://matrix-rtc.guildawork.com/livekit/sfu
+      LIVEKIT_JWT_BIND: 127.0.0.1:8091
+      LIVEKIT_KEY: ${LIVEKIT_API_KEY:?define LIVEKIT_API_KEY, p.ej. openssl rand -hex 16}
+      LIVEKIT_SECRET: ${LIVEKIT_API_SECRET:?define LIVEKIT_API_SECRET, p.ej. openssl rand -base64 32}
+      LIVEKIT_FULL_ACCESS_HOMESERVERS: ${SYNAPSE_SERVER_NAME:-chat.guildawork.com}
 
   # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Meilisearch (buscador unificado, MIT) — instancia compartida, un

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="{{ idioma_actual }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Recuperar contraseña') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="auth-shell">
+    <form class="auth-card" method="post" action="{{ accion }}">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Recuperar contraseña') }}</h1>
+      <p class="auth-alterna">{{ _('Te mandaremos un código de 6 dígitos por email para que puedas elegir una contraseña nueva.') }}</p>
+      {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+
+      {% for nodo in nodos %}
+        {% set attrs = nodo.attributes %}
+        {% if attrs.name == 'csrf_token' %}
+          <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
+        {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
+          {# Los botones de submit del flujo "code" incluyen tanto "enviar
+             código" (email) como "reenviar"/"volver a introducir email" —
+             se listan tal cual, Kratos decide cuáles mostrar en cada paso. #}
+          <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn btn-primary auth-submit">
+            {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else _('Continuar') }}
+          </button>
+          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+        {% elif attrs.node_type == 'input' %}
+          <div class="correo-form-campo">
+            <label for="recuperar-{{ attrs.name }}">{{ nodo.meta.label.text if nodo.meta and nodo.meta.label else attrs.name }}</label>
+            <input
+              type="{{ attrs.type }}"
+              {% if attrs.name == 'code' %}inputmode="numeric" autocomplete="one-time-code"{% endif %}
+              id="recuperar-{{ attrs.name }}"
+              name="{{ attrs.name }}"
+              value="{{ attrs.value or '' }}"
+              {% if attrs.required %}required{% endif %}
+              {% if attrs.disabled %}disabled{% endif %}
+              autofocus
+            >
+          </div>
+          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+        {% endif %}
+      {% endfor %}
+
+      <p class="auth-alterna"><a href="{{ url_for('login') }}">{{ _('Volver a iniciar sesión') }}</a></p>
+    </form>
+  </div>
+</body>
+</html>

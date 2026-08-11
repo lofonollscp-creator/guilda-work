@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../widgets/app_button.dart';
@@ -34,9 +35,10 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
   }
 
   Future<void> _guardar() async {
+    final t = AppLocalizations.of(context);
     final titulo = _tituloController.text.trim();
     if (titulo.isEmpty) {
-      setState(() => _error = 'El título no puede estar vacío.');
+      setState(() => _error = t.tiquetTituloVacio);
       return;
     }
     setState(() {
@@ -60,14 +62,15 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
   }
 
   Future<void> _eliminar() async {
+    final t = AppLocalizations.of(context);
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar este tiquet?'),
-        content: const Text('No se puede deshacer.'),
+        title: Text(t.tiquetsEliminarTitulo),
+        content: Text(t.tiquetEliminarContenidoSimple),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t.comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(t.comunEliminar)),
         ],
       ),
     );
@@ -79,26 +82,27 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Editar tiquet #${widget.tiquet.id}')),
+      appBar: AppBar(title: Text(t.tiquetEditarTitulo(widget.tiquet.id))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
             initialValue: _tipo,
-            decoration: const InputDecoration(labelText: 'Tipo'),
-            items: tiposTiquet.map((t) => DropdownMenuItem(value: t.$1, child: Text(t.$2))).toList(),
+            decoration: InputDecoration(labelText: t.tiquetTipoLabel),
+            items: tiposTiquet(t).map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2))).toList(),
             onChanged: (v) => setState(() => _tipo = v ?? _tipo),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _tituloController,
-            decoration: const InputDecoration(labelText: 'Título'),
+            decoration: InputDecoration(labelText: t.tiquetTituloLabel),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _descripcionController,
-            decoration: const InputDecoration(labelText: 'Descripción'),
+            decoration: InputDecoration(labelText: t.tiquetDescripcionLabel),
             maxLines: 5,
           ),
           if (_error != null) ...[
@@ -108,13 +112,13 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              AppButton(texto: 'Guardar', cargando: _guardando, onPressed: _guardar),
+              AppButton(texto: t.comunGuardar, cargando: _guardando, onPressed: _guardar),
               const SizedBox(width: 12),
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text(t.comunCancelar)),
             ],
           ),
           const SizedBox(height: 24),
-          OutlinedButton(onPressed: _eliminar, child: const Text('🗑 Eliminar tiquet')),
+          OutlinedButton(onPressed: _eliminar, child: Text(t.tiquetEliminarBoton)),
         ],
       ),
     );

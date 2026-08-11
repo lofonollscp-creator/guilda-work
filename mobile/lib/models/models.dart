@@ -1,3 +1,5 @@
+import '../l10n/app_localizations.dart';
+
 /// Modelos de datos para el Dashboard y Notas/Tareas con duración (Fase 4c).
 /// Reflejan los campos que ya devuelve la API de la Fase 2
 /// (app/rutas_api.py), que a su vez son los mismos que usa la web
@@ -436,16 +438,18 @@ class Tiquet {
       );
 }
 
-const tiposTiquet = [
-  ('error', 'Error'),
-  ('sugerencia', 'Sugerencia'),
-];
+/// Función (no const) porque las etiquetas dependen del idioma elegido
+/// -- ver AppLocalizations.of(context)! en cada pantalla que las usa.
+List<(String, String)> tiposTiquet(AppLocalizations t) => [
+      ('error', t.tiquetTipoError),
+      ('sugerencia', t.tiquetTipoSugerencia),
+    ];
 
-const estadosTiquet = [
-  ('sin_revisar', 'Sin revisar'),
-  ('en_revision', 'En revisión'),
-  ('finalizado', 'Finalizado'),
-];
+List<(String, String)> estadosTiquet(AppLocalizations t) => [
+      ('sin_revisar', t.tiquetEstadoSinRevisar),
+      ('en_revision', t.tiquetEstadoEnRevision),
+      ('finalizado', t.tiquetEstadoFinalizado),
+    ];
 
 /// Datos personales del trabajador para el registro de fichaje (art. 34.9
 /// ET) -- hace falta rellenar nombreCompleto+dniNie antes de poder fichar.
@@ -507,12 +511,12 @@ class FichajeEvento {
       );
 }
 
-const etiquetasFichaje = {
-  'entrada': 'Entrada',
-  'pausa_inicio': 'Inicio de pausa',
-  'pausa_fin': 'Fin de pausa',
-  'salida': 'Salida',
-};
+Map<String, String> etiquetasFichaje(AppLocalizations t) => {
+      'entrada': t.fichajeTipoEntrada,
+      'pausa_inicio': t.fichajeTipoPausaInicio,
+      'pausa_fin': t.fichajeTipoPausaFin,
+      'salida': t.fichajeTipoSalida,
+    };
 
 // --- Asistente IA (Fase 2 de paridad app/web, ver app/ia_asistente.py) -----
 

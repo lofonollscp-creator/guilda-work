@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'l10n/app_localizations.dart';
 import 'screens/correo_bandeja_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/api_client.dart';
+import 'services/locale_service.dart';
 import 'services/push_service.dart';
 import 'services/session_service.dart';
 import 'services/sync_service.dart';
@@ -36,6 +39,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
   late final SyncService _sync;
   late final PushService _push;
   late final ThemeService _tema;
+  final _locale = LocaleService();
   StreamSubscription<List<ConnectivityResult>>? _conexionSub;
 
   @override
@@ -47,6 +51,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
     _sync = SyncService();
     _push = PushService(_api);
     _tema = ThemeService()..cargar();
+    _locale.cargar();
     // Al tocar una notificación de correo nuevo, abrir la bandeja de
     // entrada directamente -- únicos datos que manda app/push.py hoy (ver
     // app/correo.py:_emitir_evento_correo_nuevo).
@@ -59,7 +64,9 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
     };
     _api.onSesionExpirada = () {
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => LoginScreen(api: _api, sesion: _sesion, sync: _sync, push: _push, tema: _tema)),
+        MaterialPageRoute(
+          builder: (_) => LoginScreen(api: _api, sesion: _sesion, sync: _sync, push: _push, tema: _tema, locale: _locale),
+        ),
         (route) => false,
       );
     };
@@ -87,16 +94,26 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _tema,
-      builder: (context, _) => MaterialApp(
-        navigatorKey: navigatorKey,
-        title: 'Guilda Work',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: _tema.modo,
-        home: _PantallaInicial(api: _api, sesion: _sesion, sync: _sync, push: _push, tema: _tema),
-      ),
+    return ListenableBuilder(
+      listenable: Listenable.merge([_tema, _locale]),
+      builder: (context, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Guilda Work',
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: _tema.modo,
+          locale: _locale.locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: _PantallaInicial(api: _api, sesion: _sesion, sync: _sync, push: _push, tema: _tema, locale: _locale),
+        );
+      },
     );
   }
 }
@@ -110,6 +127,7 @@ class _PantallaInicial extends StatelessWidget {
   final SyncService sync;
   final PushService push;
   final ThemeService tema;
+  final LocaleService locale;
 
   const _PantallaInicial({
     required this.api,
@@ -117,19 +135,20 @@ class _PantallaInicial extends StatelessWidget {
     required this.sync,
     required this.push,
     required this.tema,
+    required this.locale,
   });
 
   Future<Widget> _resolverPantalla() async {
     final token = await sesion.obtenerToken();
     if (token == null) {
-      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push, tema: tema);
+      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push, tema: tema, locale: locale);
     }
     try {
       final usuario = await api.quienSoy();
-      return DashboardScreen(usuario: usuario, api: api, sesion: sesion, sync: sync, push: push, tema: tema);
+      return DashboardScreen(usuario: usuario, api: api, sesion: sesion, sync: sync, push: push, tema: tema, locale: locale);
     } catch (_) {
       await sesion.borrarToken();
-      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push, tema: tema);
+      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push, tema: tema, locale: locale);
     }
   }
 

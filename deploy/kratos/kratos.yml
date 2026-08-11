@@ -75,17 +75,34 @@ selfservice:
       privileged_session_max_age: 15m
     error:
       ui_url: http://127.0.0.1:8000/login
+    verification:
+      enabled: true
+      ui_url: http://127.0.0.1:8000/verificar-email
+      lifespan: 15m
+      use: code
+      after:
+        default_browser_return_url: http://127.0.0.1:8000/
+    recovery:
+      enabled: true
+      ui_url: http://127.0.0.1:8000/recuperar-contrasena
+      lifespan: 15m
+      use: code
+      after:
+        default_browser_return_url: http://127.0.0.1:8000/ajustes-cuenta
 
   methods:
     password:
       enabled: true
-    # Verificación de email y recuperación de contraseña requieren SMTP
-    # saliente configurado — fuera de alcance de la Fase 7a, se documentan
-    # como pulido futuro cuando haya un proveedor de correo transaccional.
-    link:
-      enabled: false
+    # Verificación de email y recuperación de contraseña — activadas ahora
+    # que hay SMTP saliente de verdad (relay de IONOS, ver courier.smtp
+    # abajo). "code" en vez de "link": un código de 6 dígitos que se
+    # introduce en la propia app es más seguro que un enlace clicable (un
+    # enlace de recuperación reenviado o precacheado por un proxy/antivirus
+    # de correo puede consumirse sin que el usuario lo pretendiera) y
+    # funciona mejor en móvil.
     code:
-      enabled: false
+      enabled: true
+      passwordless_enabled: false
 
 identity:
   default_schema_id: default
@@ -93,11 +110,25 @@ identity:
     - id: default
       url: file:///etc/config/kratos/identity.schema.json
 
-# Requerido por Kratos aunque la verificación/recuperación estén
-# desactivadas — no se usa mientras esos flujos sigan deshabilitados.
+# SMTP saliente real: relay autenticado de IONOS (Hetzner bloquea el
+# puerto 25 de salida en VPS nuevos, así que la entrega SMTP directa no
+# es viable -- un relay autenticado por el 587 sí lo es, verificado en
+# vivo). El valor de abajo es solo el respaldo de desarrollo local (sin
+# credencial real) -- en el VPS, docker-compose.yml sobreescribe
+# courier.smtp.connection_uri vía la variable de entorno
+# COURIER_SMTP_CONNECTION_URI del contenedor kratos (mismo mecanismo de
+# override que ya usa selfservice.*, ver cabecera del fichero), leída a
+# su vez de /etc/guilda-work.env -- nunca en claro en este archivo.
+#
+# El remitente tiene que coincidir con la cuenta autenticada
+# (contacto@jorgevelasco.es): la mayoría de proveedores de correo
+# (IONOS incluido) rechazan o marcan como spam un From que no sea el de
+# la propia cuenta que se autentica, para evitar suplantación.
 courier:
   smtp:
-    connection_uri: smtps://noreply:noreply@localhost:465/?skip_ssl_verify=true
+    connection_uri: smtp://noreply:noreply@localhost:587/?skip_ssl_verify=true
+    from_address: contacto@jorgevelasco.es
+    from_name: "Guilda Work"
 
 log:
   level: info

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../widgets/status_badge.dart';
@@ -61,14 +62,15 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
   }
 
   Future<void> _eliminar(Tiquet t) async {
+    final loc = AppLocalizations.of(context);
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar este tiquet?'),
-        content: Text('"${t.titulo}" — no se puede deshacer.'),
+        title: Text(loc.tiquetsEliminarTitulo),
+        content: Text(loc.tiquetsEliminarContenido(t.titulo)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(loc.comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(loc.comunEliminar)),
         ],
       ),
     );
@@ -84,8 +86,11 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final tipos = tiposTiquet(t);
+    final estados = estadosTiquet(t);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tiquets')),
+      appBar: AppBar(title: Text(t.tiquetsTitulo)),
       body: Column(
         children: [
           Padding(
@@ -98,18 +103,18 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
                     Expanded(
                       child: TextField(
                         controller: _tituloController,
-                        decoration: const InputDecoration(hintText: 'Título del tiquet...'),
+                        decoration: InputDecoration(hintText: t.tiquetsTituloHint),
                         onSubmitted: (_) => _crear(),
                       ),
                     ),
                     const SizedBox(width: 8),
                     DropdownButton<String>(
                       value: _tipoNuevo,
-                      items: tiposTiquet.map((t) => DropdownMenuItem(value: t.$1, child: Text(t.$2))).toList(),
+                      items: tipos.map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2))).toList(),
                       onChanged: (v) => setState(() => _tipoNuevo = v ?? 'error'),
                     ),
                     const SizedBox(width: 8),
-                    FilledButton(onPressed: _crear, child: const Text('+ Crear')),
+                    FilledButton(onPressed: _crear, child: Text(t.tiquetsCrearBoton)),
                   ],
                 ),
                 if (_error != null) ...[
@@ -121,19 +126,19 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
                   spacing: 8,
                   children: [
                     ChoiceChip(
-                      label: const Text('Todos'),
+                      label: Text(t.tiquetsTodos),
                       selected: _filtroTipo == null,
                       onSelected: (_) {
                         setState(() => _filtroTipo = null);
                         _recargar();
                       },
                     ),
-                    for (final t in tiposTiquet)
+                    for (final tipo in tipos)
                       ChoiceChip(
-                        label: Text(t.$2),
-                        selected: _filtroTipo == t.$1,
+                        label: Text(tipo.$2),
+                        selected: _filtroTipo == tipo.$1,
                         onSelected: (_) {
-                          setState(() => _filtroTipo = t.$1);
+                          setState(() => _filtroTipo = tipo.$1);
                           _recargar();
                         },
                       ),
@@ -152,22 +157,22 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error al cargar: ${snapshot.error}'));
+                    return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
                   }
                   final tiquets = snapshot.data ?? [];
                   if (tiquets.isEmpty) {
                     return ListView(
-                      children: const [
+                      children: [
                         Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('No hay tiquets para este filtro.'),
+                          padding: const EdgeInsets.all(24),
+                          child: Text(t.tiquetsSinResultados),
                         ),
                       ],
                     );
                   }
                   return ListView.builder(
                     itemCount: tiquets.length,
-                    itemBuilder: (context, i) => _tarjetaTiquet(tiquets[i]),
+                    itemBuilder: (context, i) => _tarjetaTiquet(tiquets[i], t, estados),
                   );
                 },
               ),
@@ -178,8 +183,8 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
     );
   }
 
-  Widget _tarjetaTiquet(Tiquet t) {
-    final etiquetaEstado = estadosTiquet.firstWhere((e) => e.$1 == t.estado, orElse: () => (t.estado, t.estado)).$2;
+  Widget _tarjetaTiquet(Tiquet t, AppLocalizations loc, List<(String, String)> estados) {
+    final etiquetaEstado = estados.firstWhere((e) => e.$1 == t.estado, orElse: () => (t.estado, t.estado)).$2;
     final tonoEstado = switch (t.estado) {
       'finalizado' => BadgeTono.exito,
       'en_revision' => BadgeTono.aviso,
@@ -205,17 +210,17 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
         children: [
           if (widget.usuario.esAdmin)
             PopupMenuButton<String>(
-              tooltip: 'Cambiar estado',
+              tooltip: loc.tiquetsCambiarEstadoTooltip,
               icon: const Icon(Icons.swap_horiz),
               onSelected: (estado) => _cambiarEstado(t, estado),
-              itemBuilder: (context) => estadosTiquet
+              itemBuilder: (context) => estados
                   .map((e) => PopupMenuItem(value: e.$1, child: Text(e.$2)))
                   .toList(),
             ),
           if (_puedeBorrar(t))
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Eliminar',
+              tooltip: loc.tiquetsEliminarTooltip,
               onPressed: () => _eliminar(t),
             ),
         ],

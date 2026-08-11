@@ -27,6 +27,10 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+
+# Generado por flutter gen-l10n (ver l10n.yaml) a partir de los .arb --
+# se regenera solo en cada pub get/build, no hace falta versionarlo.
+lib/l10n/app_localizations*.dart
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/

@@ -50,6 +50,7 @@
       {% endif %}
 
       <button type="submit" class="btn btn-primary auth-submit">{{ _('Entrar') }}</button>
+      <p class="auth-alterna"><a href="{{ url_for('recuperar_contrasena') }}">{{ _('¿Olvidaste tu contraseña?') }}</a></p>
       <p class="auth-alterna">{{ _('¿No tienes cuenta?') }} <a href="{{ url_for('registro') }}">{{ _('Regístrate') }}</a></p>
       <p class="auth-alterna">{{ _('¿Quieres integrar tu software?') }} <a href="{{ url_for('docs.pagina') }}">{{ _('Documentación para desarrolladores') }}</a></p>
     </form>

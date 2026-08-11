@@ -74,6 +74,25 @@ matrix.HOSTNAME {
 	reverse_proxy localhost:8008
 }
 
+# Backend MatrixRTC (LiveKit + lk-jwt-service) para llamadas nativas de
+# Element Call/Element X — sin esto, Element X da "MISSING_MATRIX_RTC_TRANSPORT"
+# al intentar llamar, porque ningún transporte RTC queda anunciado en
+# .well-known/matrix/client de chat.HOSTNAME. Rutas calcadas de la guía
+# oficial de self-hosting de Element Call
+# (element-hq/element-call docs/self_hosting.md).
+matrix-rtc.HOSTNAME {
+	route {
+		@jwt_service path /livekit/jwt/sfu/get /livekit/jwt/healthz
+		handle @jwt_service {
+			uri strip_prefix /livekit/jwt
+			reverse_proxy localhost:8091
+		}
+		handle {
+			reverse_proxy localhost:7880
+		}
+	}
+}
+
 # Opcionales — solo si quieres acceder a estos paneles desde fuera del
 # servidor. Si prefieres mantenerlos solo accesibles por SSH (túnel local,
 # `ssh -L 3000:localhost:3000 guilda@tu-servidor`), simplemente no los
