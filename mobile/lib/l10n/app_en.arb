@@ -106,5 +106,18 @@
   "tiquetDescripcionLabel": "Description",
   "tiquetTituloVacio": "The title cannot be empty.",
   "tiquetEliminarContenidoSimple": "This cannot be undone.",
-  "tiquetEliminarBoton": "🗑 Delete ticket"
+  "tiquetEliminarBoton": "🗑 Delete ticket",
+  "ajustesApariencia": "Appearance",
+  "ajustesTemaSistema": "System",
+  "ajustesTemaClaro": "Light",
+  "ajustesTemaOscuro": "Dark",
+  "ajustesAsistenteIaSubtitulo": "Model and autonomous mode",
+  "ajustesCorreoSubtitulo": "Density, auto mark as read, signature…",
+  "ajustesServidorTitulo": "Server",
+  "ajustesServidorSubtitulo": "Backend URL the app connects to",
+  "herramientasTitulo": "Tools",
+  "herramientasSinConectar": "No tools connected yet.",
+  "herramientasAunNoDisponible": "Not available yet",
+  "herramientasConTuCuenta": "With your Guilda Work account",
+  "herramientasIniciaSesionAparte": "Sign in separately"
 }

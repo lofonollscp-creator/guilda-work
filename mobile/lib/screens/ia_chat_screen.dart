@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../theme/brand_colors.dart';
 import '../widgets/app_button.dart';
 import 'ia_ajustes_screen.dart';
 
@@ -254,7 +255,12 @@ class _IaChatScreenState extends State<IaChatScreen> {
               color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(m.contenido ?? ''),
+            // Color de texto explícito: primaryContainer es el lima brillante
+            // de marca en los dos temas, el texto por defecto (heredado del
+            // tema, casi blanco en oscuro) quedaba casi ilegible encima
+            // (bug encontrado en vivo) -- BrandColors.onAccent es el mismo
+            // "negro sobre lima" que ya usan los botones primarios.
+            child: Text(m.contenido ?? '', style: const TextStyle(color: BrandColors.onAccent)),
           ),
         );
       case 'tool':

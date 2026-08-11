@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import 'webview_screen.dart';
@@ -35,8 +36,9 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Herramientas')),
+      appBar: AppBar(title: Text(t.herramientasTitulo)),
       body: FutureBuilder<(List<Herramienta>, String)>(
         future: _carga,
         builder: (context, snapshot) {
@@ -48,70 +50,81 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
           }
           final (herramientas, baseUrl) = snapshot.data!;
           if (herramientas.isEmpty) {
-            return const Center(child: Text('Todavía no hay herramientas conectadas.'));
+            return Center(child: Text(t.herramientasSinConectar));
           }
+          // childAspectRatio fijo (en vez de tarjetas de altura libre)
+          // recortaba la descripción en herramientas con nombre/descripción
+          // largos (bug encontrado en vivo) -- con mainAxisExtent todas las
+          // tarjetas miden lo mismo y el texto interior decide su propio
+          // layout (Expanded + overflow controlado) en vez de que el grid
+          // les imponga una altura que no siempre le cabía al contenido.
           return GridView.builder(
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1.1,
+              mainAxisExtent: 190,
             ),
             itemCount: herramientas.length,
-            itemBuilder: (context, i) {
-              final h = herramientas[i];
-              final contenido = Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _logoHerramienta(h, baseUrl),
-                    const SizedBox(height: 8),
-                    Text(
-                      h.nombre,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: h.disponible ? null : Theme.of(context).disabledColor,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Expanded(
-                      child: Text(
-                        h.descripcion,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        overflow: TextOverflow.fade,
-                      ),
-                    ),
-                    Text(
-                      !h.disponible
-                          ? 'Aún no disponible'
-                          // El WebView de la app no comparte la cookie de sesión de
-                          // Kratos que usa el navegador: incluso las herramientas con
-                          // SSO piden iniciar sesión la primera vez aquí dentro.
-                          : h.sso
-                              ? 'Con tu cuenta de Guilda Work'
-                              : 'Inicia sesión aparte',
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
-                ),
-              );
-              if (!h.disponible) {
-                return Opacity(opacity: 0.6, child: Card(child: contenido));
-              }
-              return Card(
-                child: InkWell(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => WebviewScreen(titulo: h.nombre, url: h.url),
-                    ),
-                  ),
-                  child: contenido,
-                ),
-              );
-            },
+            itemBuilder: (context, i) => _tarjetaHerramienta(context, herramientas[i], baseUrl, t),
           );
         },
+      ),
+    );
+  }
+
+  Widget _tarjetaHerramienta(BuildContext context, Herramienta h, String baseUrl, AppLocalizations t) {
+    final contenido = Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _logoHerramienta(h, baseUrl),
+          const SizedBox(height: 8),
+          Text(
+            h.nombre,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: h.disponible ? null : Theme.of(context).disabledColor,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: Text(
+              h.descripcion,
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text(
+            !h.disponible
+                ? t.herramientasAunNoDisponible
+                // El WebView de la app no comparte la cookie de sesión de
+                // Kratos que usa el navegador: incluso las herramientas con
+                // SSO piden iniciar sesión la primera vez aquí dentro.
+                : h.sso
+                    ? t.herramientasConTuCuenta
+                    : t.herramientasIniciaSesionAparte,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+      ),
+    );
+    if (!h.disponible) {
+      return Opacity(opacity: 0.6, child: Card(child: contenido));
+    }
+    return Card(
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => WebviewScreen(titulo: h.nombre, url: h.url)),
+        ),
+        child: contenido,
       ),
     );
   }

@@ -20,6 +20,9 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: margin,
+      // Sin esto, un InkWell dentro (ej. las stats pulsables del dashboard)
+      // dibuja su ripple por encima del radio redondeado de la tarjeta.
+      clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );
   }

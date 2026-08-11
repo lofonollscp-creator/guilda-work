@@ -154,7 +154,13 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(foregroundColor: primary, textStyle: textTheme.labelLarge),
       ),
-      iconButtonTheme: IconButtonThemeData(style: IconButton.styleFrom(foregroundColor: text)),
+      // OJO: NO se fija aquí un IconButtonThemeData con foregroundColor fijo
+      // -- forzaba el mismo color de icono en TODOS los IconButton,
+      // incluidos los `.filled` (ej. el botón de enviar del chat IA, fondo
+      // lima brillante): salía un icono casi blanco sobre lima, contraste
+      // roto (bug encontrado en vivo). Sin este override, Material 3 ya
+      // resuelve bien cada variante a partir de colorScheme (onSurface para
+      // el icono normal, onPrimary/BrandColors.onAccent para `.filled`).
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,

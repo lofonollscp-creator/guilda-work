@@ -113,5 +113,18 @@
   "tiquetDescripcionLabel": "Descripción",
   "tiquetTituloVacio": "El título no puede estar vacío.",
   "tiquetEliminarContenidoSimple": "No se puede deshacer.",
-  "tiquetEliminarBoton": "🗑 Eliminar tiquet"
+  "tiquetEliminarBoton": "🗑 Eliminar tiquet",
+  "ajustesApariencia": "Apariencia",
+  "ajustesTemaSistema": "Sistema",
+  "ajustesTemaClaro": "Claro",
+  "ajustesTemaOscuro": "Oscuro",
+  "ajustesAsistenteIaSubtitulo": "Modelo y modo autónomo",
+  "ajustesCorreoSubtitulo": "Densidad, marcar leído automático, firma…",
+  "ajustesServidorTitulo": "Servidor",
+  "ajustesServidorSubtitulo": "URL del backend al que se conecta la app",
+  "herramientasTitulo": "Herramientas",
+  "herramientasSinConectar": "Todavía no hay herramientas conectadas.",
+  "herramientasAunNoDisponible": "Aún no disponible",
+  "herramientasConTuCuenta": "Con tu cuenta de Guilda Work",
+  "herramientasIniciaSesionAparte": "Inicia sesión aparte"
 }

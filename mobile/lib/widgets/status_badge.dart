@@ -27,9 +27,17 @@ class StatusBadge extends StatelessWidget {
       BadgeTono.acento => oscuro ? BrandColors.primaryDark : BrandColors.primaryLight,
       BadgeTono.neutro => Theme.of(context).colorScheme.onSurfaceVariant,
     };
-    final Color onColor = tono == BadgeTono.acento ? BrandColors.onAccent : Colors.white;
     final Color fondo = tono == BadgeTono.neutro ? color.withValues(alpha: 0.15) : color;
-    final Color colorTexto = tono == BadgeTono.neutro ? color : onColor;
+    // Blanco fijo sobre `fondo` se veía ilegible en tonos claros/brillantes
+    // (aviso en ámbar, peligro en coral claro en oscuro) -- se decide
+    // blanco/negro según el brillo real del fondo (bug encontrado en vivo),
+    // en vez de asumir que todo tono "de color" es lo bastante oscuro para
+    // texto blanco.
+    final Color colorTexto = switch (tono) {
+      BadgeTono.neutro => color,
+      BadgeTono.acento => BrandColors.onAccent,
+      _ => ThemeData.estimateBrightnessForColor(fondo) == Brightness.dark ? Colors.white : BrandColors.onAccent,
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

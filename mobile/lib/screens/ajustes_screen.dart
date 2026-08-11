@@ -57,19 +57,19 @@ class AjustesScreen extends StatelessWidget {
       appBar: AppBar(title: Text(t.dashboardAjustesTooltip)),
       body: ListView(
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('Apariencia', style: TextStyle(fontWeight: FontWeight.w600)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(t.ajustesApariencia, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
           AnimatedBuilder(
             animation: tema,
             builder: (context, _) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SegmentedButton<ThemeMode>(
-                segments: const [
-                  ButtonSegment(value: ThemeMode.system, label: Text('Sistema'), icon: Icon(Icons.brightness_auto)),
-                  ButtonSegment(value: ThemeMode.light, label: Text('Claro'), icon: Icon(Icons.light_mode_outlined)),
-                  ButtonSegment(value: ThemeMode.dark, label: Text('Oscuro'), icon: Icon(Icons.dark_mode_outlined)),
+                segments: [
+                  ButtonSegment(value: ThemeMode.system, label: Text(t.ajustesTemaSistema), icon: const Icon(Icons.brightness_auto)),
+                  ButtonSegment(value: ThemeMode.light, label: Text(t.ajustesTemaClaro), icon: const Icon(Icons.light_mode_outlined)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text(t.ajustesTemaOscuro), icon: const Icon(Icons.dark_mode_outlined)),
                 ],
                 selected: {tema.modo},
                 onSelectionChanged: (seleccion) => tema.cambiar(seleccion.first),
@@ -87,7 +87,7 @@ class AjustesScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.smart_toy_outlined),
             title: Text(t.dashboardAsistenteIaTooltip),
-            subtitle: const Text('Modelo y modo autónomo'),
+            subtitle: Text(t.ajustesAsistenteIaSubtitulo),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => IaAjustesScreen(api: api)),
@@ -96,7 +96,7 @@ class AjustesScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.mail_outline),
             title: Text(t.dashboardCorreoTooltip),
-            subtitle: const Text('Densidad, marcar leído automático, firma…'),
+            subtitle: Text(t.ajustesCorreoSubtitulo),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => CorreoAjustesScreen(api: api)),
@@ -105,8 +105,8 @@ class AjustesScreen extends StatelessWidget {
           const Divider(height: 32),
           ListTile(
             leading: const Icon(Icons.dns_outlined),
-            title: const Text('Servidor'),
-            subtitle: const Text('URL del backend al que se conecta la app'),
+            title: Text(t.ajustesServidorTitulo),
+            subtitle: Text(t.ajustesServidorSubtitulo),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => mostrarAjustesServidor(context, sesion),
           ),

@@ -106,5 +106,18 @@
   "tiquetDescripcionLabel": "Description",
   "tiquetTituloVacio": "Le titre ne peut pas être vide.",
   "tiquetEliminarContenidoSimple": "Action irréversible.",
-  "tiquetEliminarBoton": "🗑 Supprimer le ticket"
+  "tiquetEliminarBoton": "🗑 Supprimer le ticket",
+  "ajustesApariencia": "Apparence",
+  "ajustesTemaSistema": "Système",
+  "ajustesTemaClaro": "Clair",
+  "ajustesTemaOscuro": "Sombre",
+  "ajustesAsistenteIaSubtitulo": "Modèle et mode autonome",
+  "ajustesCorreoSubtitulo": "Densité, marquer comme lu automatiquement, signature…",
+  "ajustesServidorTitulo": "Serveur",
+  "ajustesServidorSubtitulo": "URL du backend auquel l'app se connecte",
+  "herramientasTitulo": "Outils",
+  "herramientasSinConectar": "Aucun outil connecté pour le moment.",
+  "herramientasAunNoDisponible": "Pas encore disponible",
+  "herramientasConTuCuenta": "Avec votre compte Guilda Work",
+  "herramientasIniciaSesionAparte": "Connexion séparée"
 }

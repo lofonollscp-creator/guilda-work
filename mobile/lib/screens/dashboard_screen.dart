@@ -5,16 +5,16 @@ import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/push_service.dart';
 import '../services/session_service.dart';
+import '../services/element_launcher.dart';
 import '../services/locale_service.dart';
-import '../services/matrix_service.dart';
 import '../services/sync_service.dart';
 import '../services/theme_service.dart';
 import '../widgets/app_card.dart';
 import 'ajustes_screen.dart';
-import 'chat_login_screen.dart';
 import 'correo_bandeja_screen.dart';
 import 'fichaje_screen.dart';
 import 'herramientas_screen.dart';
+import 'historial_rapido_screen.dart';
 import 'ia_chat_screen.dart';
 import 'menu_detail_screen.dart';
 import 'tareas_outlook_screen.dart';
@@ -62,13 +62,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int? _categoriaNotaSeleccionada;
   bool _guardandoNota = false;
   String? _error;
-  late final MatrixService _matrixService;
 
   @override
   void initState() {
     super.initState();
     _cargaInicial = _cargar();
-    _matrixService = MatrixService(api: widget.api);
     widget.push.inicializar();
   }
 
@@ -229,16 +227,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// IconButton sueltos que antes vivían en la barra superior. Cada tarjeta
   /// es más grande y lleva etiqueta, más fácil de acertar en el móvil que
   /// un icono pequeño en una barra ya apretada.
+  void _abrirPantalla(Widget Function() construir) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => construir()));
+
   Widget _rejillaAccesos(AppLocalizations t) {
     final accesos = [
-      (Icons.checklist, t.dashboardTareasTooltip, () => TareasOutlookScreen(api: widget.api)),
-      (Icons.mail_outline, t.dashboardCorreoTooltip, () => CorreoBandejaScreen(api: widget.api)),
-      (Icons.apps, t.dashboardHerramientasTooltip, () => HerramientasScreen(api: widget.api)),
-      (Icons.confirmation_number_outlined, t.dashboardTiquetsTooltip,
-          () => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
-      (Icons.punch_clock_outlined, t.dashboardFichajeTooltip, () => FichajeScreen(api: widget.api, sync: widget.sync)),
-      (Icons.smart_toy_outlined, t.dashboardAsistenteIaTooltip, () => IaChatScreen(api: widget.api)),
-      (Icons.chat_bubble_outline, t.dashboardChatTooltip, () => ChatLoginScreen(matrix: _matrixService)),
+      (Icons.checklist, t.dashboardTareasTooltip, () => _abrirPantalla(() => TareasOutlookScreen(api: widget.api))),
+      (Icons.mail_outline, t.dashboardCorreoTooltip, () => _abrirPantalla(() => CorreoBandejaScreen(api: widget.api))),
+      (Icons.apps, t.dashboardHerramientasTooltip, () => _abrirPantalla(() => HerramientasScreen(api: widget.api))),
+      (
+        Icons.confirmation_number_outlined,
+        t.dashboardTiquetsTooltip,
+        () => _abrirPantalla(() => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
+      ),
+      (
+        Icons.punch_clock_outlined,
+        t.dashboardFichajeTooltip,
+        () => _abrirPantalla(() => FichajeScreen(api: widget.api, sync: widget.sync)),
+      ),
+      (Icons.smart_toy_outlined, t.dashboardAsistenteIaTooltip, () => _abrirPantalla(() => IaChatScreen(api: widget.api))),
+      // A petición del usuario: "Chat de equipo" lanza la app nativa de
+      // Element X (o manda a la tienda si no la tiene) en vez de abrir el
+      // cliente Matrix propio de la app (chat_login_screen.dart, que se
+      // deja intacto sin usar desde aquí por si se retoma más adelante).
+      (Icons.chat_bubble_outline, t.dashboardChatTooltip, abrirElementX),
     ];
     return GridView.count(
       shrinkWrap: true,
@@ -248,16 +260,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisSpacing: 8,
       childAspectRatio: 0.95,
       children: accesos
-          .map((a) => _accesoTile(icono: a.$1, etiqueta: a.$2, abrir: a.$3))
+          .map((a) => _accesoTile(icono: a.$1, etiqueta: a.$2, onTap: a.$3))
           .toList(),
     );
   }
 
-  Widget _accesoTile({required IconData icono, required String etiqueta, required Widget Function() abrir}) {
+  Widget _accesoTile({required IconData icono, required String etiqueta, required VoidCallback onTap}) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => abrir())),
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Column(
@@ -362,21 +374,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final correosNoLeidos = _dashboard?['correos_no_leidos'] ?? 0;
     return Row(
       children: [
-        Expanded(child: _stat('$tareasActivas', t.dashboardStatEnCurso)),
-        Expanded(child: _stat('$notasHoy', t.dashboardStatNotasHoy)),
-        Expanded(child: _stat('$correosNoLeidos', t.dashboardStatCorreosSinLeer)),
+        Expanded(
+          child: _stat(
+            '$tareasActivas',
+            t.dashboardStatEnCurso,
+            onTap: () => _abrirPantalla(() => HistorialRapidoScreen(
+                  api: widget.api,
+                  filtro: FiltroHistorialRapido.enCurso,
+                  titulo: t.dashboardStatEnCurso,
+                )),
+          ),
+        ),
+        Expanded(
+          child: _stat(
+            '$notasHoy',
+            t.dashboardStatNotasHoy,
+            onTap: () => _abrirPantalla(() => HistorialRapidoScreen(
+                  api: widget.api,
+                  filtro: FiltroHistorialRapido.notasHoy,
+                  titulo: t.dashboardStatNotasHoy,
+                )),
+          ),
+        ),
+        Expanded(
+          child: _stat(
+            '$correosNoLeidos',
+            t.dashboardStatCorreosSinLeer,
+            onTap: () => _abrirPantalla(() => CorreoBandejaScreen(api: widget.api)),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _stat(String valor, String etiqueta) {
+  Widget _stat(String valor, String etiqueta, {required VoidCallback onTap}) {
     return AppCard(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        children: [
-          Text(valor, style: Theme.of(context).textTheme.headlineSmall),
-          Text(etiqueta, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
-        ],
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            children: [
+              Text(valor, style: Theme.of(context).textTheme.headlineSmall),
+              Text(etiqueta, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -106,5 +106,18 @@
   "tiquetDescripcionLabel": "Descripció",
   "tiquetTituloVacio": "El títol no pot estar buit.",
   "tiquetEliminarContenidoSimple": "No es pot desfer.",
-  "tiquetEliminarBoton": "🗑 Elimina el tiquet"
+  "tiquetEliminarBoton": "🗑 Elimina el tiquet",
+  "ajustesApariencia": "Aparença",
+  "ajustesTemaSistema": "Sistema",
+  "ajustesTemaClaro": "Clar",
+  "ajustesTemaOscuro": "Fosc",
+  "ajustesAsistenteIaSubtitulo": "Model i mode autònom",
+  "ajustesCorreoSubtitulo": "Densitat, marcar llegit automàtic, signatura…",
+  "ajustesServidorTitulo": "Servidor",
+  "ajustesServidorSubtitulo": "URL del backend a què es connecta l'app",
+  "herramientasTitulo": "Eines",
+  "herramientasSinConectar": "Encara no hi ha cap eina connectada.",
+  "herramientasAunNoDisponible": "Encara no disponible",
+  "herramientasConTuCuenta": "Amb el teu compte de Guilda Work",
+  "herramientasIniciaSesionAparte": "Inicia sessió a part"
 }
