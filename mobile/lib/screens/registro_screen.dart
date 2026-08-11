@@ -4,6 +4,8 @@ import '../services/api_client.dart';
 import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
+import '../services/theme_service.dart';
+import '../widgets/app_button.dart';
 import 'ajustes_servidor_dialog.dart';
 import 'dashboard_screen.dart';
 
@@ -12,8 +14,16 @@ class RegistroScreen extends StatefulWidget {
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
+  final ThemeService tema;
 
-  const RegistroScreen({super.key, required this.api, required this.sesion, required this.sync, required this.push});
+  const RegistroScreen({
+    super.key,
+    required this.api,
+    required this.sesion,
+    required this.sync,
+    required this.push,
+    required this.tema,
+  });
 
   @override
   State<RegistroScreen> createState() => _RegistroScreenState();
@@ -54,6 +64,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
             sesion: widget.sesion,
             sync: widget.sync,
             push: widget.push,
+            tema: widget.tema,
           ),
         ),
         (route) => false,
@@ -78,51 +89,55 @@ class _RegistroScreenState extends State<RegistroScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _email,
-              decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _contrasena,
-              decoration: const InputDecoration(
-                labelText: 'Contraseña (mínimo 8 caracteres)',
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/branding/logo.png', height: 80),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _email,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _contrasena,
+                    decoration: const InputDecoration(
+                      labelText: 'Contraseña (mínimo 8 caracteres)',
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _confirmar,
+                    decoration: const InputDecoration(labelText: 'Repite la contraseña'),
+                    obscureText: true,
+                    onSubmitted: (_) => _registrar(),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(texto: 'Crear cuenta', cargando: _cargando, onPressed: _registrar),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('¿Ya tienes cuenta? Inicia sesión'),
+                  ),
+                ],
               ),
-              obscureText: true,
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _confirmar,
-              decoration: const InputDecoration(labelText: 'Repite la contraseña'),
-              obscureText: true,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ],
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _cargando ? null : _registrar,
-              child: _cargando
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Crear cuenta'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('¿Ya tienes cuenta? Inicia sesión'),
-            ),
-          ],
+          ),
         ),
       ),
     );

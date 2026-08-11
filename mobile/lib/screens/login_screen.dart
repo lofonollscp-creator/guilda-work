@@ -4,6 +4,8 @@ import '../services/api_client.dart';
 import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
+import '../services/theme_service.dart';
+import '../widgets/app_button.dart';
 import 'ajustes_servidor_dialog.dart';
 import 'dashboard_screen.dart';
 import 'registro_screen.dart';
@@ -13,8 +15,16 @@ class LoginScreen extends StatefulWidget {
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
+  final ThemeService tema;
 
-  const LoginScreen({super.key, required this.api, required this.sesion, required this.sync, required this.push});
+  const LoginScreen({
+    super.key,
+    required this.api,
+    required this.sesion,
+    required this.sync,
+    required this.push,
+    required this.tema,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -46,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
             sesion: widget.sesion,
             sync: widget.sync,
             push: widget.push,
+            tema: widget.tema,
           ),
         ),
         (route) => false,
@@ -61,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Guilda Work'),
         actions: [
           IconButton(
@@ -70,47 +82,59 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _email,
-              decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _contrasena,
-              decoration: const InputDecoration(labelText: 'Contraseña'),
-              obscureText: true,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ],
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _cargando ? null : _iniciarSesion,
-              child: _cargando
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Entrar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => RegistroScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push),
-                ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/branding/logo.png', height: 96),
+                  const SizedBox(height: 12),
+                  Text('Guilda Work', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _email,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _contrasena,
+                    decoration: const InputDecoration(labelText: 'Contraseña'),
+                    obscureText: true,
+                    onSubmitted: (_) => _iniciarSesion(),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(texto: 'Entrar', cargando: _cargando, onPressed: _iniciarSesion),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => RegistroScreen(
+                          api: widget.api,
+                          sesion: widget.sesion,
+                          sync: widget.sync,
+                          push: widget.push,
+                          tema: widget.tema,
+                        ),
+                      ),
+                    ),
+                    child: const Text('¿No tienes cuenta? Regístrate'),
+                  ),
+                ],
               ),
-              child: const Text('¿No tienes cuenta? Regístrate'),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -6,10 +6,14 @@ import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/matrix_service.dart';
 import '../services/sync_service.dart';
+import '../services/theme_service.dart';
+import '../widgets/app_card.dart';
+import 'ajustes_screen.dart';
 import 'chat_login_screen.dart';
 import 'correo_bandeja_screen.dart';
 import 'fichaje_screen.dart';
 import 'herramientas_screen.dart';
+import 'ia_chat_screen.dart';
 import 'login_screen.dart';
 import 'menu_detail_screen.dart';
 import 'tareas_outlook_screen.dart';
@@ -24,6 +28,7 @@ class DashboardScreen extends StatefulWidget {
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
+  final ThemeService tema;
 
   const DashboardScreen({
     super.key,
@@ -32,6 +37,7 @@ class DashboardScreen extends StatefulWidget {
     required this.sesion,
     required this.sync,
     required this.push,
+    required this.tema,
   });
 
   @override
@@ -137,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push),
+        builder: (_) => LoginScreen(api: widget.api, sesion: widget.sesion, sync: widget.sync, push: widget.push, tema: widget.tema),
       ),
       (route) => false,
     );
@@ -185,10 +191,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           IconButton(
+            icon: const Icon(Icons.smart_toy_outlined),
+            tooltip: 'Asistente IA',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => IaChatScreen(api: widget.api)),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.chat_bubble_outline),
-            tooltip: 'Chat',
+            tooltip: 'Chat de equipo',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => ChatLoginScreen(matrix: _matrixService)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Ajustes',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AjustesScreen(api: widget.api, sesion: widget.sesion, tema: widget.tema),
+              ),
             ),
           ),
           IconButton(
@@ -280,10 +302,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
                       ),
             ),
-            // El asistente IA todavía no tiene pantalla propia en la app
-            // móvil (solo en la web) -- se deja como indicador informativo,
-            // sin enlace, en vez de inventar una navegación que no existe.
-            _pasoOnboarding('Prueba el asistente IA (desde la web)', haUsadoIa),
+            _pasoOnboarding(
+              'Prueba el asistente IA',
+              haUsadoIa,
+              onTap: haUsadoIa
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => IaChatScreen(api: widget.api)),
+                      ),
+            ),
           ],
         ),
       ),
@@ -332,15 +359,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _stat(String valor, String etiqueta) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          children: [
-            Text(valor, style: Theme.of(context).textTheme.headlineSmall),
-            Text(etiqueta, style: Theme.of(context).textTheme.bodySmall),
-          ],
-        ),
+    return AppCard(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          Text(valor, style: Theme.of(context).textTheme.headlineSmall),
+          Text(etiqueta, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+        ],
       ),
     );
   }

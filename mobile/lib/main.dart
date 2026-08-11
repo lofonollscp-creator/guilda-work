@@ -10,6 +10,8 @@ import 'services/api_client.dart';
 import 'services/push_service.dart';
 import 'services/session_service.dart';
 import 'services/sync_service.dart';
+import 'services/theme_service.dart';
+import 'theme/app_theme.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -33,6 +35,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
   late final ApiClient _api;
   late final SyncService _sync;
   late final PushService _push;
+  late final ThemeService _tema;
   StreamSubscription<List<ConnectivityResult>>? _conexionSub;
 
   @override
@@ -43,6 +46,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
     _api = ApiClient(_sesion);
     _sync = SyncService();
     _push = PushService(_api);
+    _tema = ThemeService()..cargar();
     // Al tocar una notificación de correo nuevo, abrir la bandeja de
     // entrada directamente -- únicos datos que manda app/push.py hoy (ver
     // app/correo.py:_emitir_evento_correo_nuevo).
@@ -55,7 +59,7 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
     };
     _api.onSesionExpirada = () {
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => LoginScreen(api: _api, sesion: _sesion, sync: _sync, push: _push)),
+        MaterialPageRoute(builder: (_) => LoginScreen(api: _api, sesion: _sesion, sync: _sync, push: _push, tema: _tema)),
         (route) => false,
       );
     };
@@ -83,11 +87,16 @@ class _GuildaWorkAppState extends State<GuildaWorkApp> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Guilda Work',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-      home: _PantallaInicial(api: _api, sesion: _sesion, sync: _sync, push: _push),
+    return AnimatedBuilder(
+      animation: _tema,
+      builder: (context, _) => MaterialApp(
+        navigatorKey: navigatorKey,
+        title: 'Guilda Work',
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: _tema.modo,
+        home: _PantallaInicial(api: _api, sesion: _sesion, sync: _sync, push: _push, tema: _tema),
+      ),
     );
   }
 }
@@ -100,20 +109,27 @@ class _PantallaInicial extends StatelessWidget {
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
+  final ThemeService tema;
 
-  const _PantallaInicial({required this.api, required this.sesion, required this.sync, required this.push});
+  const _PantallaInicial({
+    required this.api,
+    required this.sesion,
+    required this.sync,
+    required this.push,
+    required this.tema,
+  });
 
   Future<Widget> _resolverPantalla() async {
     final token = await sesion.obtenerToken();
     if (token == null) {
-      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push);
+      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push, tema: tema);
     }
     try {
       final usuario = await api.quienSoy();
-      return DashboardScreen(usuario: usuario, api: api, sesion: sesion, sync: sync, push: push);
+      return DashboardScreen(usuario: usuario, api: api, sesion: sesion, sync: sync, push: push, tema: tema);
     } catch (_) {
       await sesion.borrarToken();
-      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push);
+      return LoginScreen(api: api, sesion: sesion, sync: sync, push: push, tema: tema);
     }
   }
 
