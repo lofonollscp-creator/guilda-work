@@ -513,3 +513,107 @@ const etiquetasFichaje = {
   'pausa_fin': 'Fin de pausa',
   'salida': 'Salida',
 };
+
+// --- Asistente IA (Fase 2 de paridad app/web, ver app/ia_asistente.py) -----
+
+/// Una fila de app/db.py:ia_mensajes (rol user/assistant/tool). Refleja
+/// exactamente lo que devuelven GET /ia/mensajes y los "mensajes_nuevos" de
+/// POST /ia/mensaje y /ia/confirmar.
+class IaMensaje {
+  final int id;
+  final String rol; // 'user' | 'assistant' | 'tool'
+  final String? contenido;
+  /// Solo relleno en filas "assistant" que pidieron herramientas -- JSON en
+  /// crudo (lista de tool_calls) tal cual lo guardó ia_asistente.py. Se usa
+  /// para reconstruir si hay una confirmación pendiente al reabrir el chat
+  /// (ver _pendienteDesdeHistorial en ia_chat_screen.dart).
+  final String? toolCallsJson;
+  final String? toolCallId;
+  final String? nombreHerramienta;
+  final String creadoEn;
+
+  IaMensaje({
+    required this.id,
+    required this.rol,
+    this.contenido,
+    this.toolCallsJson,
+    this.toolCallId,
+    this.nombreHerramienta,
+    required this.creadoEn,
+  });
+
+  factory IaMensaje.fromJson(Map<String, dynamic> json) => IaMensaje(
+        id: json['id'] as int,
+        rol: json['rol'] as String,
+        contenido: json['contenido'] as String?,
+        toolCallsJson: json['tool_calls_json'] as String?,
+        toolCallId: json['tool_call_id'] as String?,
+        nombreHerramienta: json['nombre_herramienta'] as String?,
+        creadoEn: json['creado_en'] as String,
+      );
+}
+
+/// Una acción esperando confirmación explícita (ver
+/// ia_asistente._pendiente_dict) antes de que el asistente pueda seguir.
+class IaPendiente {
+  final String toolCallId;
+  final String herramienta;
+  final Map<String, dynamic> argumentos;
+
+  IaPendiente({required this.toolCallId, required this.herramienta, required this.argumentos});
+
+  factory IaPendiente.fromJson(Map<String, dynamic> json) => IaPendiente(
+        toolCallId: json['tool_call_id'] as String,
+        herramienta: json['herramienta'] as String,
+        argumentos: (json['argumentos'] as Map?)?.cast<String, dynamic>() ?? {},
+      );
+}
+
+/// Resultado de un turno (POST /ia/mensaje o /ia/confirmar): los mensajes
+/// nuevos generados en ese turno, y si hay algo esperando confirmación.
+class IaTurnoResultado {
+  final List<IaMensaje> mensajesNuevos;
+  final IaPendiente? pendiente;
+
+  IaTurnoResultado({required this.mensajesNuevos, this.pendiente});
+
+  factory IaTurnoResultado.fromJson(Map<String, dynamic> json) => IaTurnoResultado(
+        mensajesNuevos: (json['mensajes_nuevos'] as List? ?? [])
+            .map((m) => IaMensaje.fromJson(m as Map<String, dynamic>))
+            .toList(),
+        pendiente: json['pendiente'] != null
+            ? IaPendiente.fromJson(json['pendiente'] as Map<String, dynamic>)
+            : null,
+      );
+}
+
+/// Preferencias del asistente (modelo + modo autónomo, tabla
+/// ia_preferencias) más si hay clave de OpenRouter configurada. La clave en
+/// sí NUNCA viaja aquí -- solo se puede gestionar desde la web (ver
+/// ia_ajustes_screen.dart).
+class IaAjustes {
+  final String modelo;
+  final bool modoAutonomo;
+  final bool apiKeyConfigurada;
+
+  IaAjustes({required this.modelo, required this.modoAutonomo, required this.apiKeyConfigurada});
+
+  factory IaAjustes.fromJson(Map<String, dynamic> json) => IaAjustes(
+        modelo: json['modelo'] as String? ?? '',
+        modoAutonomo: (json['modo_autonomo'] is bool)
+            ? json['modo_autonomo'] as bool
+            : (json['modo_autonomo'] as int? ?? 0) != 0,
+        apiKeyConfigurada: json['api_key_configurada'] as bool? ?? false,
+      );
+}
+
+/// Un modelo gratuito de OpenRouter (ver ia_asistente.listar_modelos_gratuitos).
+class IaModelo {
+  final String id;
+  final String nombre;
+
+  IaModelo({required this.id, required this.nombre});
+
+  factory IaModelo.fromJson(Map<String, dynamic> json) =>
+      IaModelo(id: json['id'] as String, nombre: json['nombre'] as String);
+}

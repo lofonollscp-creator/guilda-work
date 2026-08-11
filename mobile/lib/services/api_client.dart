@@ -751,4 +751,78 @@ class ApiClient {
       throw _errorLegible(e);
     }
   }
+
+  // --- Asistente IA (Fase 2 de paridad app/web, ver app/rutas_api.py:900) ---
+  //
+  // A propósito NO hay ningún método aquí para escribir la clave de API de
+  // OpenRouter (aunque POST /ia/ajustes la admite) -- la clave solo se
+  // configura desde la web; el móvil solo lee si hay una configurada
+  // (IaAjustes.apiKeyConfigurada) y comparte el resto de preferencias
+  // (modelo, modo autónomo) con ella vía la misma fila de ia_preferencias.
+
+  Future<List<IaMensaje>> listarMensajesIa() async {
+    try {
+      final resp = await _dio.get('/ia/mensajes');
+      return (resp.data['data'] as List)
+          .map((m) => IaMensaje.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<IaTurnoResultado> enviarMensajeIa(String texto) async {
+    try {
+      final resp = await _dio.post('/ia/mensaje', data: {'texto': texto});
+      return IaTurnoResultado.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<IaTurnoResultado> confirmarIa(bool aceptar) async {
+    try {
+      final resp = await _dio.post('/ia/confirmar', data: {'aceptar': aceptar});
+      return IaTurnoResultado.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> vaciarIa() async {
+    try {
+      await _dio.post('/ia/vaciar');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<IaAjustes> obtenerAjustesIa() async {
+    try {
+      final resp = await _dio.get('/ia/ajustes');
+      return IaAjustes.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// Solo cambia modelo/modo autónomo -- ver nota de la clave de API arriba.
+  Future<void> guardarAjustesIa({required String modelo, required bool modoAutonomo}) async {
+    try {
+      await _dio.post('/ia/ajustes', data: {'modelo': modelo, 'modo_autonomo': modoAutonomo});
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<IaModelo>> listarModelosIa() async {
+    try {
+      final resp = await _dio.get('/ia/modelos');
+      return (resp.data['data'] as List)
+          .map((m) => IaModelo.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
 }
