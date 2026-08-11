@@ -1,11 +1,17 @@
 """Rutas del Asistente IA (chat con OpenRouter + herramientas del MCP), en
 su propio Blueprint, mismo patrón que app/rutas_correo.py."""
-from flask import Blueprint, g, jsonify, redirect, render_template, request, url_for
+import json
+
+from flask import Blueprint, Response, g, jsonify, redirect, render_template, request, stream_with_context, url_for
 
 from . import db, ia_asistente as asistente
 from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
+
+
+def _sse(evento: dict) -> str:
+    return f"data: {json.dumps(evento, ensure_ascii=False)}\n\n"
 
 
 @ia_bp.route("/")
@@ -40,6 +46,49 @@ def confirmar():
         return jsonify({"ok": True, **resultado})
     except asistente.ErrorIA as e:
         return jsonify({"ok": False, "error": str(e)})
+
+
+# --- Variantes en streaming (asistente de voz, Fase V1 del plan
+# "eventual-herding-kitten") ------------------------------------------------
+# Formato Server-Sent Events: cada línea "data: {...}\n\n" es uno de los
+# eventos que ya documenta ia_asistente.procesar_turno_stream (delta de
+# texto / mensaje persistido / confirmación pendiente / error / fin). Las
+# rutas /mensaje y /confirmar de arriba NO se tocan -- se quedan para quien
+# no necesite ir leyendo la respuesta en voz alta según llega.
+
+
+@ia_bp.route("/mensaje/stream", methods=["POST"])
+@login_required
+def enviar_mensaje_stream():
+    datos = request.get_json(silent=True) or {}
+    texto = datos.get("texto", "")
+    usuario_id = g.usuario_id
+
+    def generar():
+        try:
+            for evento in asistente.procesar_turno_stream(usuario_id, texto):
+                yield _sse(evento)
+        except Exception as e:  # noqa: BLE001 -- el stream ya está abierto, no se puede devolver un 500
+            yield _sse({"tipo": "error", "mensaje": str(e)})
+
+    return Response(stream_with_context(generar()), mimetype="text/event-stream")
+
+
+@ia_bp.route("/confirmar/stream", methods=["POST"])
+@login_required
+def confirmar_stream():
+    datos = request.get_json(silent=True) or {}
+    aceptar = bool(datos.get("aceptar"))
+    usuario_id = g.usuario_id
+
+    def generar():
+        try:
+            for evento in asistente.confirmar_pendiente_stream(usuario_id, aceptar):
+                yield _sse(evento)
+        except Exception as e:  # noqa: BLE001
+            yield _sse({"tipo": "error", "mensaje": str(e)})
+
+    return Response(stream_with_context(generar()), mimetype="text/event-stream")
 
 
 @ia_bp.route("/vaciar", methods=["POST"])

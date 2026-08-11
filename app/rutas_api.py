@@ -15,9 +15,10 @@ Formato de respuesta uniforme: `{"ok": true, "data": ...}` en éxito,
 errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 """
 import base64
+import json
 from datetime import datetime
 
-from flask import Blueprint, Response, abort, g, jsonify, request
+from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
 from . import correo, db, export, herramientas, ia_asistente, kratos, openapi
@@ -924,6 +925,48 @@ def confirmar_ia():
     except ia_asistente.ErrorIA as e:
         return _err(str(e))
     return _ok(resultado)
+
+
+def _sse(evento: dict) -> str:
+    return f"data: {json.dumps(evento, ensure_ascii=False)}\n\n"
+
+
+# Variantes en streaming (asistente de voz, Fase V1 del plan
+# "eventual-herding-kitten") -- mismo formato SSE que su equivalente web en
+# app/rutas_ia.py, ver ia_asistente.procesar_turno_stream para los tipos de
+# evento. Las rutas de arriba (/ia/mensaje, /ia/confirmar) no se tocan.
+
+
+@api_bp.route("/ia/mensaje/stream", methods=["POST"])
+@token_required
+def enviar_mensaje_ia_stream():
+    texto = _body().get("texto", "")
+    usuario_id = g.usuario_id
+
+    def generar():
+        try:
+            for evento in ia_asistente.procesar_turno_stream(usuario_id, texto):
+                yield _sse(evento)
+        except Exception as e:  # noqa: BLE001 -- el stream ya está abierto, no se puede devolver un error HTTP normal
+            yield _sse({"tipo": "error", "mensaje": str(e)})
+
+    return Response(stream_with_context(generar()), mimetype="text/event-stream")
+
+
+@api_bp.route("/ia/confirmar/stream", methods=["POST"])
+@token_required
+def confirmar_ia_stream():
+    aceptar = bool(_body().get("aceptar"))
+    usuario_id = g.usuario_id
+
+    def generar():
+        try:
+            for evento in ia_asistente.confirmar_pendiente_stream(usuario_id, aceptar):
+                yield _sse(evento)
+        except Exception as e:  # noqa: BLE001
+            yield _sse({"tipo": "error", "mensaje": str(e)})
+
+    return Response(stream_with_context(generar()), mimetype="text/event-stream")
 
 
 @api_bp.route("/ia/vaciar", methods=["POST"])

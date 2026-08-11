@@ -164,6 +164,120 @@ def test_no_se_puede_mandar_mensaje_con_confirmacion_pendiente(monkeypatch, usua
         a.procesar_turno(usuario_id, "otro mensaje mientras tanto")
 
 
+def test_mensajes_para_openrouter_usa_idioma_del_usuario(usuario_id):
+    db.cambiar_idioma_usuario(usuario_id, "en")
+    mensajes = a._mensajes_para_openrouter(usuario_id)
+    assert "inglés" in mensajes[0]["content"]
+    assert mensajes[0]["role"] == "system"
+
+
+def test_mensajes_para_openrouter_cae_a_espanol_sin_idioma_elegido(usuario_id):
+    mensajes = a._mensajes_para_openrouter(usuario_id)
+    assert "español" in mensajes[0]["content"]
+
+
+# --- Variantes en streaming (asistente de voz) ------------------------------
+
+
+def _chunks_texto(*fragmentos):
+    """Simula los chunks 'delta' que streamea OpenRouter para una respuesta
+    de texto plano, sin tool_calls."""
+    return [{"choices": [{"delta": {"content": frag}}]} for frag in fragmentos]
+
+
+def _chunks_tool_calls(*llamadas):
+    """Simula los chunks 'delta' troceados por índice para tool_calls, como
+    los manda OpenRouter en streaming de verdad: primero id+nombre, los
+    argumentos llegan fragmentados en chunks posteriores."""
+    chunks = []
+    for idx, (tid, nombre, args) in enumerate(llamadas):
+        chunks.append({"choices": [{"delta": {
+            "tool_calls": [{"index": idx, "id": tid, "function": {"name": nombre, "arguments": ""}}]
+        }}]})
+        chunks.append({"choices": [{"delta": {
+            "tool_calls": [{"index": idx, "function": {"arguments": json.dumps(args)}}]
+        }}]})
+    return chunks
+
+
+def _encolar_stream(monkeypatch, *tandas):
+    """Cada 'tanda' es la lista de chunks de UNA llamada a OpenRouter (puede
+    haber varias tandas si el asistente encadena herramientas)."""
+    cola = [list(t) for t in tandas]
+
+    def fake_stream(url, payload, claves):
+        return iter(cola.pop(0))
+
+    monkeypatch.setattr(a, "_post_json_stream_con_fallback", fake_stream)
+
+
+def test_procesar_turno_stream_respuesta_directa(monkeypatch, usuario_id):
+    _preparar(usuario_id)
+    _encolar_stream(monkeypatch, _chunks_texto("Hola, ", "¿en qué te ayudo?"))
+
+    eventos = list(a.procesar_turno_stream(usuario_id, "hola"))
+
+    deltas = [e["texto"] for e in eventos if e["tipo"] == "delta"]
+    assert deltas == ["Hola, ", "¿en qué te ayudo?"]
+    mensajes = [e["mensaje"] for e in eventos if e["tipo"] == "mensaje"]
+    assert any(m["contenido"] == "Hola, ¿en qué te ayudo?" for m in mensajes)
+    assert eventos[-1] == {"tipo": "fin"}
+    assert db.listar_mensajes_ia(usuario_id)[-1]["rol"] == "assistant"
+
+
+def test_procesar_turno_stream_tool_call_pausa_confirmacion(monkeypatch, usuario_id):
+    _preparar(usuario_id, modo_autonomo=False)
+    _encolar_stream(monkeypatch, _chunks_tool_calls(("call_1", "crear_nota", {"texto": "una nota"})))
+
+    eventos = list(a.procesar_turno_stream(usuario_id, "crea una nota"))
+
+    pendientes = [e for e in eventos if e["tipo"] == "pendiente"]
+    assert len(pendientes) == 1
+    assert pendientes[0]["pendiente"] == {
+        "tool_call_id": "call_1", "herramienta": "crear_nota", "argumentos": {"texto": "una nota"},
+    }
+    assert eventos[-1] == {"tipo": "fin"}
+    # Nada se ha ejecutado todavía, igual que en la versión no-streaming.
+    assert [n for n in db.historial(usuario_id) if n["origen"] == "nota"] == []
+
+
+def test_procesar_turno_stream_herramienta_de_lectura_encadena_segunda_llamada(monkeypatch, usuario_id):
+    _preparar(usuario_id)
+    _encolar_stream(
+        monkeypatch,
+        _chunks_tool_calls(("call_1", "listar_notas", {})),
+        _chunks_texto("No tienes notas todavía."),
+    )
+
+    eventos = list(a.procesar_turno_stream(usuario_id, "¿qué notas tengo?"))
+
+    assert not any(e["tipo"] == "pendiente" for e in eventos)
+    assert eventos[-1] == {"tipo": "fin"}
+    mensajes = db.listar_mensajes_ia(usuario_id)
+    assert any(m["rol"] == "tool" and m["nombre_herramienta"] == "listar_notas" for m in mensajes)
+    assert mensajes[-1]["contenido"] == "No tienes notas todavía."
+
+
+def test_procesar_turno_stream_sin_modelo_da_evento_error(usuario_id):
+    a.guardar_api_keys(usuario_id, ["clave"])
+    eventos = list(a.procesar_turno_stream(usuario_id, "hola"))
+    assert len(eventos) == 1
+    assert eventos[0]["tipo"] == "error"
+
+
+def test_confirmar_pendiente_stream_aceptando_ejecuta_y_continua(monkeypatch, usuario_id):
+    _preparar(usuario_id, modo_autonomo=False)
+    _encolar_stream(monkeypatch, _chunks_tool_calls(("call_1", "crear_nota", {"texto": "una nota"})))
+    list(a.procesar_turno_stream(usuario_id, "crea una nota"))
+
+    _encolar_stream(monkeypatch, _chunks_texto("Nota creada."))
+    eventos = list(a.confirmar_pendiente_stream(usuario_id, True))
+
+    assert not any(e["tipo"] == "pendiente" for e in eventos)
+    assert eventos[-1] == {"tipo": "fin"}
+    assert [n["texto"] for n in db.historial(usuario_id) if n["origen"] == "nota"] == ["una nota"]
+
+
 # --- listar_modelos_gratuitos ------------------------------------------------
 
 class _RespuestaFalsa:
