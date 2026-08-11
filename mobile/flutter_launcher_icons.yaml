@@ -1,0 +1,14 @@
+# Config de flutter_launcher_icons (Fase 4 del plan "eventual-herding-kitten").
+# Genera los assets a partir de mobile/assets/icon/*.png (compuestos con
+# Pillow desde app/static/logo.png sobre el fondo de marca #0A0A0C, ver
+# CHANGELOG del plan) -- ejecutar tras cualquier cambio de logo con:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  # Android 8+ (adaptive icon): fondo plano de marca + el logo solo,
+  # transparente, ya recortado a la "safe zone" -- ver assets/icon/icon.png.
+  adaptive_icon_background: "#0A0A0C"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true
