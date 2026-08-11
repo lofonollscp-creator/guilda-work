@@ -16,15 +16,20 @@ import 'correo_bandeja_screen.dart';
 import 'fichaje_screen.dart';
 import 'herramientas_screen.dart';
 import 'ia_chat_screen.dart';
-import 'login_screen.dart';
 import 'menu_detail_screen.dart';
-import 'selector_idioma_dialog.dart';
 import 'tareas_outlook_screen.dart';
 import 'tiquets_screen.dart';
 
 /// Dashboard (equivalente móvil de app/templates/inicio.html): stats del
-/// día, nota rápida, y las tarjetas de menú desde las que se entra al
-/// detalle de cada uno (menu_detail_screen.dart).
+/// día, nota rápida, una rejilla de accesos a las secciones de la app, y
+/// las tarjetas de menú desde las que se entra al detalle de cada uno
+/// (menu_detail_screen.dart).
+///
+/// La barra superior llegó a tener 10 iconos sueltos (idioma, 7 secciones,
+/// ajustes, cerrar sesión) -- se quedó solo con el icono de Ajustes; el
+/// resto vive ahora en la rejilla de accesos del cuerpo (más grande y con
+/// etiqueta, más fácil de acertar en el móvil) o dentro de Ajustes
+/// (idioma, cerrar sesión).
 class DashboardScreen extends StatefulWidget {
   final Usuario usuario;
   final ApiClient api;
@@ -143,26 +148,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _recargar();
   }
 
-  Future<void> _cerrarSesion() async {
-    await widget.push.alCerrarSesion();
-    await widget.api.logout();
-    await widget.sesion.borrarToken();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => LoginScreen(
-          api: widget.api,
-          sesion: widget.sesion,
-          sync: widget.sync,
-          push: widget.push,
-          tema: widget.tema,
-          locale: widget.locale,
-        ),
-      ),
-      (route) => false,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -171,72 +156,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('Guilda Work'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.language),
-            tooltip: t.comunIdioma,
-            onPressed: () => mostrarSelectorIdioma(context, widget.locale),
-          ),
-          IconButton(
-            icon: const Icon(Icons.checklist),
-            tooltip: t.dashboardTareasTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => TareasOutlookScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.mail_outline),
-            tooltip: t.dashboardCorreoTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.apps),
-            tooltip: t.dashboardHerramientasTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => HerramientasScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.confirmation_number_outlined),
-            tooltip: t.dashboardTiquetsTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.punch_clock_outlined),
-            tooltip: t.dashboardFichajeTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => FichajeScreen(api: widget.api, sync: widget.sync)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.smart_toy_outlined),
-            tooltip: 'Asistente IA',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => IaChatScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            tooltip: t.dashboardChatTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => ChatLoginScreen(matrix: _matrixService)),
-            ),
-          ),
-          IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Ajustes',
+            tooltip: t.dashboardAjustesTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => AjustesScreen(api: widget.api, sesion: widget.sesion, tema: widget.tema),
+                builder: (_) => AjustesScreen(
+                  api: widget.api,
+                  sesion: widget.sesion,
+                  sync: widget.sync,
+                  push: widget.push,
+                  tema: widget.tema,
+                  locale: widget.locale,
+                ),
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: t.dashboardCerrarSesionTooltip,
-            onPressed: _cerrarSesion,
           ),
         ],
       ),
@@ -271,6 +204,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ],
                 const SizedBox(height: 24),
+                Text(t.dashboardAccesosTitulo, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _rejillaAccesos(t),
+                const SizedBox(height: 24),
                 Text(t.dashboardTusMenus, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (_categorias.isEmpty)
@@ -284,6 +221,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Rejilla de accesos a las secciones de la app -- sustituye a los 7
+  /// IconButton sueltos que antes vivían en la barra superior. Cada tarjeta
+  /// es más grande y lleva etiqueta, más fácil de acertar en el móvil que
+  /// un icono pequeño en una barra ya apretada.
+  Widget _rejillaAccesos(AppLocalizations t) {
+    final accesos = [
+      (Icons.checklist, t.dashboardTareasTooltip, () => TareasOutlookScreen(api: widget.api)),
+      (Icons.mail_outline, t.dashboardCorreoTooltip, () => CorreoBandejaScreen(api: widget.api)),
+      (Icons.apps, t.dashboardHerramientasTooltip, () => HerramientasScreen(api: widget.api)),
+      (Icons.confirmation_number_outlined, t.dashboardTiquetsTooltip,
+          () => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
+      (Icons.punch_clock_outlined, t.dashboardFichajeTooltip, () => FichajeScreen(api: widget.api, sync: widget.sync)),
+      (Icons.smart_toy_outlined, t.dashboardAsistenteIaTooltip, () => IaChatScreen(api: widget.api)),
+      (Icons.chat_bubble_outline, t.dashboardChatTooltip, () => ChatLoginScreen(matrix: _matrixService)),
+    ];
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 3,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 0.95,
+      children: accesos
+          .map((a) => _accesoTile(icono: a.$1, etiqueta: a.$2, abrir: a.$3))
+          .toList(),
+    );
+  }
+
+  Widget _accesoTile({required IconData icono, required String etiqueta, required Widget Function() abrir}) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => abrir())),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icono, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                etiqueta,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

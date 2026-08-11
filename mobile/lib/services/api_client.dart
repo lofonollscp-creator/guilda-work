@@ -743,6 +743,15 @@ class ApiClient {
     }
   }
 
+  /// URL absoluta al logotipo real de una herramienta (Herramienta.iconoLogo),
+  /// servido como asset estático por el propio backend en
+  /// app/static/logos/ -- fuera de /api/v1 a propósito, es un fichero
+  /// estático, no una respuesta de la API.
+  Future<String> urlLogoHerramienta(String archivo) async {
+    final base = await sesion.obtenerServidor();
+    return '$base/static/logos/$archivo';
+  }
+
   Future<ChatConfig> obtenerChatConfig() async {
     try {
       final resp = await _dio.get('/chat/config');

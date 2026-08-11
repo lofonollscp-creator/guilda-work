@@ -988,6 +988,7 @@ def listar_herramientas():
         "nombre": "Facturación",
         "descripcion": "Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).",
         "icono": "🧮",
+        "icono_logo": "facturacion.png",
         "color": "#2f6fce",
         "categoria": "Documentos y datos",
         "url": facturascripts_url or "",

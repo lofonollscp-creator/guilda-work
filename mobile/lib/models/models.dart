@@ -367,6 +367,11 @@ class Herramienta {
   final String nombre;
   final String descripcion;
   final String icono;
+  /// Nombre de archivo en app/static/logos/ con el logotipo oficial real
+  /// (mismo campo que ya usa herramientas.html en la web) -- null en
+  /// entradas antiguas que todavía no lo tengan, se cae al emoji de
+  /// `icono` en ese caso (ver herramientas_screen.dart).
+  final String? iconoLogo;
   final String url;
   final bool sso;
   final bool disponible;
@@ -376,6 +381,7 @@ class Herramienta {
     required this.nombre,
     required this.descripcion,
     required this.icono,
+    this.iconoLogo,
     required this.url,
     required this.sso,
     this.disponible = true,
@@ -386,6 +392,7 @@ class Herramienta {
         nombre: json['nombre'] as String,
         descripcion: json['descripcion'] as String,
         icono: json['icono'] as String,
+        iconoLogo: json['icono_logo'] as String?,
         url: json['url'] as String,
         sso: json['sso'] as bool,
         disponible: json['disponible'] as bool? ?? true,
