@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 
 import '../services/matrix_service.dart';
+import '../widgets/app_button.dart';
 import 'salas_chat_screen.dart';
 
 /// Pantalla de entrada al chat nativo (Element/Synapse), Fase 9. Si ya
@@ -95,7 +96,7 @@ class _ChatLoginScreenState extends State<ChatLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(title: const Text('Chat de equipo')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -109,13 +110,11 @@ class _ChatLoginScreenState extends State<ChatLoginScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              if (_conectando)
-                const CircularProgressIndicator()
-              else
-                FilledButton(
-                  onPressed: _iniciarLogin,
-                  child: const Text('Entrar con tu sesión de Guilda Work'),
-                ),
+              AppButton(
+                texto: 'Entrar con tu sesión de Guilda Work',
+                cargando: _conectando,
+                onPressed: _iniciarLogin,
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),

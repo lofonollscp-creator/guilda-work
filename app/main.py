@@ -783,7 +783,7 @@ def informe_ia():
     informe_texto = None
     informe_error = None
     try:
-        informe_texto = ai_local.generar_informe(datos, prompt, proveedor, modelo)
+        informe_texto = ai_local.generar_informe(datos, prompt, proveedor, modelo, g.usuario_id)
     except ai_local.ErrorIALocal as e:
         informe_error = str(e)
 
@@ -826,7 +826,7 @@ def pregunta_ia():
 
     datos = export.construir_export(g.usuario_id, desde, hasta, categoria_id)
     try:
-        respuesta = ai_local.preguntar(datos, historial_mensajes, pregunta, proveedor, modelo)
+        respuesta = ai_local.preguntar(datos, historial_mensajes, pregunta, proveedor, modelo, g.usuario_id)
         return {"ok": True, "respuesta": respuesta}
     except ai_local.ErrorIALocal as e:
         return {"ok": False, "error": str(e)}

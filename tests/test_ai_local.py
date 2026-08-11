@@ -6,7 +6,7 @@ se construyen bien, sin depender de tener un servicio local corriendo.
 """
 import pytest
 
-from app import ai_local
+from app import ai_local, ia_asistente
 
 DATOS_EJEMPLO = {"registros": [{"texto_o_nombre": "Llamada a cliente"}]}
 
@@ -14,7 +14,7 @@ DATOS_EJEMPLO = {"registros": [{"texto_o_nombre": "Llamada a cliente"}]}
 def test_generar_informe_envia_instruccion_y_datos(monkeypatch):
     capturado = {}
 
-    def _chat_falso(proveedor, modelo, mensajes):
+    def _chat_falso(proveedor, modelo, mensajes, usuario_id=None):
         capturado["proveedor"] = proveedor
         capturado["modelo"] = modelo
         capturado["mensajes"] = mensajes
@@ -36,7 +36,7 @@ def test_generar_informe_envia_instruccion_y_datos(monkeypatch):
 def test_preguntar_antepone_sistema_con_datos_y_reenvia_historial(monkeypatch):
     capturado = {}
 
-    def _chat_falso(proveedor, modelo, mensajes):
+    def _chat_falso(proveedor, modelo, mensajes, usuario_id=None):
         capturado["mensajes"] = mensajes
         return "respuesta"
 
@@ -59,7 +59,7 @@ def test_preguntar_antepone_sistema_con_datos_y_reenvia_historial(monkeypatch):
 def test_preguntar_recorta_historial_muy_largo(monkeypatch):
     capturado = {}
 
-    def _chat_falso(proveedor, modelo, mensajes):
+    def _chat_falso(proveedor, modelo, mensajes, usuario_id=None):
         capturado["mensajes"] = mensajes
         return "ok"
 
@@ -73,7 +73,7 @@ def test_preguntar_recorta_historial_muy_largo(monkeypatch):
 
 
 def test_preguntar_sin_texto_da_error(monkeypatch):
-    monkeypatch.setattr(ai_local, "_chat", lambda p, m, msgs: "no debería llamarse")
+    monkeypatch.setattr(ai_local, "_chat", lambda p, m, msgs, usuario_id=None: "no debería llamarse")
     with pytest.raises(ai_local.ErrorIALocal):
         ai_local.preguntar(DATOS_EJEMPLO, [], "   ", "ollama", "llama3.1")
 
@@ -81,3 +81,43 @@ def test_preguntar_sin_texto_da_error(monkeypatch):
 def test_chat_sin_modelo_da_error():
     with pytest.raises(ai_local.ErrorIALocal):
         ai_local._chat("ollama", "  ", [{"role": "user", "content": "hola"}])
+
+
+def test_chat_openrouter_sin_clave_da_error_claro():
+    with pytest.raises(ai_local.ErrorIALocal, match="ninguna clave"):
+        ai_local._chat("openrouter", "modelo-x", [{"role": "user", "content": "hola"}], usuario_id=42)
+
+
+def test_chat_openrouter_usa_claves_y_url_del_asistente(monkeypatch):
+    capturado = {}
+
+    monkeypatch.setattr(ia_asistente, "obtener_api_keys", lambda usuario_id: ["sk-or-clave-1"])
+
+    def _post_falso(url, payload, claves):
+        capturado["url"] = url
+        capturado["payload"] = payload
+        capturado["claves"] = claves
+        return {"choices": [{"message": {"content": "  respuesta de openrouter  "}}]}
+
+    monkeypatch.setattr(ia_asistente, "_post_json_con_fallback", _post_falso)
+
+    resultado = ai_local._chat("openrouter", "modelo-x", [{"role": "user", "content": "hola"}], usuario_id=42)
+
+    assert resultado == "respuesta de openrouter"
+    assert capturado["url"] == ia_asistente.OPENROUTER_URL
+    assert capturado["claves"] == ["sk-or-clave-1"]
+    assert capturado["payload"]["model"] == "modelo-x"
+
+
+def test_generar_informe_openrouter_pasa_usuario_id(monkeypatch):
+    capturado = {}
+
+    def _chat_falso(proveedor, modelo, mensajes, usuario_id=None):
+        capturado["usuario_id"] = usuario_id
+        return "informe"
+
+    monkeypatch.setattr(ai_local, "_chat", _chat_falso)
+
+    ai_local.generar_informe(DATOS_EJEMPLO, "Resume", "openrouter", "modelo-x", usuario_id=7)
+
+    assert capturado["usuario_id"] == 7

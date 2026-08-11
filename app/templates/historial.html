@@ -86,8 +86,8 @@
 {% endif %}
 
 <section class="ia-section">
-  <h3>{{ _('Generar informe con IA local') }}</h3>
-  <p class="muted">{{ _('Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio). No se envía nada a internet.') }}</p>
+  <h3>{{ _('Generar informe con IA') }}</h3>
+  <p class="muted">{{ _('Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA).') }}</p>
   <form class="ia-form" method="post" action="{{ url_for('informe_ia') }}">
     <input type="hidden" name="desde" value="{{ desde }}">
     <input type="hidden" name="hasta" value="{{ hasta }}">
@@ -98,10 +98,11 @@
         <select name="proveedor" {% if informe_texto or informe_error %}data-server-set="1"{% endif %}>
           <option value="ollama" {% if proveedor_ia == 'ollama' %}selected{% endif %}>Ollama (localhost:11434)</option>
           <option value="lmstudio" {% if proveedor_ia == 'lmstudio' %}selected{% endif %}>LM Studio (localhost:1234)</option>
+          <option value="openrouter" {% if proveedor_ia == 'openrouter' %}selected{% endif %}>{{ _('OpenRouter (nube)') }}</option>
         </select>
       </label>
       <label>{{ _('Modelo') }}
-        <input type="text" name="modelo" value="{{ modelo_ia }}" placeholder="{{ _('ej. llama3.1') }}">
+        <input type="text" name="modelo" value="{{ modelo_ia }}" placeholder="{{ _('ej. llama3.1') }}" list="ia-modelos-gratuitos">
       </label>
     </div>
     <label class="ia-prompt-label">{{ _('Instrucción para la IA') }}
@@ -126,10 +127,12 @@
     <select id="chat-proveedor">
       <option value="ollama" {% if proveedor_ia == 'ollama' %}selected{% endif %}>Ollama (localhost:11434)</option>
       <option value="lmstudio" {% if proveedor_ia == 'lmstudio' %}selected{% endif %}>LM Studio (localhost:1234)</option>
+      <option value="openrouter" {% if proveedor_ia == 'openrouter' %}selected{% endif %}>{{ _('OpenRouter (nube)') }}</option>
     </select>
-    <input type="text" id="chat-modelo" placeholder="{{ _('Modelo, ej. llama3.1') }}" value="{{ modelo_ia }}">
+    <input type="text" id="chat-modelo" placeholder="{{ _('Modelo, ej. llama3.1') }}" value="{{ modelo_ia }}" list="ia-modelos-gratuitos">
     <button type="button" id="chat-reset" class="btn btn-ghost">{{ _('Nueva conversación') }}</button>
   </div>
+  <datalist id="ia-modelos-gratuitos"></datalist>
 
   <div id="chat-log" class="chat-log"></div>
 
@@ -146,6 +149,28 @@
   const CLAVE_PROVEEDOR = 'gw_ia_proveedor';
   const CLAVE_MODELO = 'gw_ia_modelo';
 
+  // Modelos gratuitos de OpenRouter para el datalist de "Modelo" -- solo se
+  // piden la primera vez que hace falta (proveedor=openrouter elegido en
+  // cualquiera de los dos selects), no en cada carga de la página.
+  let modelosGratuitosCargados = false;
+  function cargarModelosGratuitosSiHaceFalta(proveedor) {
+    if (proveedor !== 'openrouter' || modelosGratuitosCargados) return;
+    modelosGratuitosCargados = true;
+    fetch('{{ url_for("ia.modelos") }}')
+      .then(function (r) { return r.json(); })
+      .then(function (modelos) {
+        const datalist = document.getElementById('ia-modelos-gratuitos');
+        if (!datalist) return;
+        modelos.forEach(function (m) {
+          const option = document.createElement('option');
+          option.value = m.id;
+          option.label = m.nombre;
+          datalist.appendChild(option);
+        });
+      })
+      .catch(function () { /* datalist se queda vacío, el campo sigue siendo texto libre */ });
+  }
+
   function aplicarGuardado(selectProveedor, inputModelo) {
     const proveedor = localStorage.getItem(CLAVE_PROVEEDOR);
     const modelo = localStorage.getItem(CLAVE_MODELO);
@@ -161,6 +186,10 @@
   const formInforme = document.querySelector('.ia-form');
   if (formInforme) {
     aplicarGuardado(formInforme.proveedor, formInforme.modelo);
+    cargarModelosGratuitosSiHaceFalta(formInforme.proveedor.value);
+    formInforme.proveedor.addEventListener('change', function () {
+      cargarModelosGratuitosSiHaceFalta(formInforme.proveedor.value);
+    });
     formInforme.addEventListener('submit', function () {
       guardar(formInforme.proveedor.value, formInforme.modelo.value);
     });
@@ -175,6 +204,10 @@
   let historial = [];
 
   aplicarGuardado(proveedorSel, modeloInput);
+  cargarModelosGratuitosSiHaceFalta(proveedorSel.value);
+  proveedorSel.addEventListener('change', function () {
+    cargarModelosGratuitosSiHaceFalta(proveedorSel.value);
+  });
 
   const filtro = {
     desde: {{ desde|tojson }},

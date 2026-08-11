@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../theme/app_theme.dart';
+import '../widgets/app_card.dart';
+import '../widgets/status_badge.dart';
 
 /// Detalle de un menú/categoría (equivalente móvil de
 /// app/templates/menu.html): nota rápida, evento instantáneo, tarea con
@@ -177,29 +180,27 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
     required String botonTexto,
     required VoidCallback onPressed,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(etiqueta),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: controlador,
-                    decoration: InputDecoration(hintText: hint),
-                    onSubmitted: (_) => onPressed(),
-                  ),
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(etiqueta),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controlador,
+                  decoration: InputDecoration(hintText: hint),
+                  onSubmitted: (_) => onPressed(),
                 ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: onPressed, child: Text(botonTexto)),
-              ],
-            ),
-          ],
-        ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(onPressed: onPressed, child: Text(botonTexto)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -210,7 +211,13 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         title: Text(t.nombre),
-        subtitle: Text(pausada ? 'En pausa' : 'En curso'),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: StatusBadge(
+            texto: pausada ? 'En pausa' : 'En curso',
+            tono: pausada ? BadgeTono.aviso : BadgeTono.exito,
+          ),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -263,10 +270,10 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
     final hora = f.timestamp != null && f.timestamp!.length >= 16 ? f.timestamp!.substring(11, 16) : '';
     return ListTile(
       dense: true,
-      leading: Text(hora, style: Theme.of(context).textTheme.bodySmall),
+      leading: Text(hora, style: AppTheme.cifra(fontSize: 13, fontWeight: FontWeight.w400)),
       title: Text(f.texto),
       subtitle: Text(etiqueta),
-      trailing: duracion != null ? Text(duracion) : null,
+      trailing: duracion != null ? Text(duracion, style: AppTheme.cifra(fontSize: 13)) : null,
     );
   }
 }

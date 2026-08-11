@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../widgets/status_badge.dart';
 import 'tarea_outlook_edit_screen.dart';
 
 /// Lista de tareas "estilo Outlook" (equivalente móvil de
@@ -186,18 +187,18 @@ class _TareasOutlookScreenState extends State<TareasOutlookScreen> {
         t.asunto,
         style: completada ? const TextStyle(decoration: TextDecoration.lineThrough) : null,
       ),
-      subtitle: Row(
-        children: [
-          Text(t.prioridad),
-          if (t.categoriaOutlook != null) ...[
-            const SizedBox(width: 8),
-            Text('· ${t.categoriaOutlook}'),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            _pastillaPrioridad(t.prioridad),
+            if (t.categoriaOutlook != null) Text(t.categoriaOutlook!),
+            if (t.fechaVencimiento != null) Text('Vence ${t.fechaVencimiento!.substring(0, 10)}'),
           ],
-          if (t.fechaVencimiento != null) ...[
-            const SizedBox(width: 8),
-            Text('· Vence ${t.fechaVencimiento!.substring(0, 10)}'),
-          ],
-        ],
+        ),
       ),
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline),
@@ -211,5 +212,18 @@ class _TareasOutlookScreenState extends State<TareasOutlookScreen> {
         await _recargar();
       },
     );
+  }
+
+  Widget _pastillaPrioridad(String prioridad) {
+    final tono = switch (prioridad) {
+      'alta' => BadgeTono.peligro,
+      'baja' => BadgeTono.neutro,
+      _ => BadgeTono.aviso,
+    };
+    final etiqueta = prioridadesTareaOutlook.firstWhere(
+      (p) => p.$1 == prioridad,
+      orElse: () => (prioridad, prioridad),
+    ).$2;
+    return StatusBadge(texto: etiqueta, tono: tono);
   }
 }

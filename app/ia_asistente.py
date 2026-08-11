@@ -13,6 +13,7 @@ excepción dura de enviar_borrador_correo (envío real de correo, acción
 externa irreversible), que siempre pide confirmación pase lo que pase.
 """
 import json
+import time
 import urllib.error
 import urllib.request
 
@@ -24,7 +25,17 @@ SERVICIO_KEYRING_IA = "guilda-work-ia"
 CLAVE_API_OPENROUTER = "openrouter-api-key"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_MODELOS_URL = "https://openrouter.ai/api/v1/models"
 TIMEOUT_SEGUNDOS = 30
+
+# Modelos que se ofrecen si la llamada a OpenRouter falla (sin red, caído...)
+# y todavía no hay nada en caché — mismos 3 que antes vivían hardcodeados en
+# rutas_ia.py, ahora solo como último recurso.
+MODELOS_GRATUITOS_RESPALDO = [
+    {"id": "meta-llama/llama-3.1-70b-instruct:free", "nombre": "Llama 3.1 70B (gratuito)"},
+    {"id": "google/gemini-2.0-flash-exp:free", "nombre": "Gemini 2.0 Flash (gratuito)"},
+    {"id": "deepseek/deepseek-chat:free", "nombre": "DeepSeek Chat (gratuito)"},
+]
 
 # Cuántas veces puede el modelo encadenar llamadas a herramientas en un
 # mismo turno antes de forzar una respuesta final — evita bucles sin fin
@@ -136,6 +147,52 @@ def _post_json_con_fallback(url: str, payload: dict, claves: list[str]) -> dict:
                 raise
             ultimo_error = e
     raise ultimo_error
+
+
+# --- Listado de modelos gratuitos de OpenRouter -----------------------------
+# Endpoint público (sin autenticación) que devuelve TODOS los modelos
+# disponibles en OpenRouter; se filtra aquí a los gratuitos (precio 0 tanto
+# en prompt como en completion) para no mostrar en el selector modelos de
+# pago por error. Se cachea en memoria del proceso (mismo patrón que
+# _jwt_admin_cache en app/baserow.py) porque este listado cambia poco y así
+# no se golpea la API de OpenRouter en cada carga de la pantalla de ajustes.
+_CACHE_MODELOS_TTL_SEGUNDOS = 3600
+_cache_modelos_gratuitos: list[dict] | None = None
+_cache_modelos_expira_en: float = 0.0
+
+
+def _es_modelo_gratuito(modelo: dict) -> bool:
+    precios = modelo.get("pricing") or {}
+    try:
+        return float(precios.get("prompt", 1)) == 0 and float(precios.get("completion", 1)) == 0
+    except (TypeError, ValueError):
+        return str(modelo.get("id", "")).endswith(":free")
+
+
+def listar_modelos_gratuitos(*, forzar_recarga: bool = False) -> list[dict]:
+    """Devuelve [{"id": ..., "nombre": ...}] solo con los modelos gratuitos
+    de OpenRouter. Si la petición falla, devuelve la caché anterior si la
+    hay (aunque haya caducado) o si no, la lista de respaldo fija — nunca
+    lanza, para no romper ninguna pantalla que dependa de este listado."""
+    global _cache_modelos_gratuitos, _cache_modelos_expira_en
+    if not forzar_recarga and _cache_modelos_gratuitos is not None and time.monotonic() < _cache_modelos_expira_en:
+        return _cache_modelos_gratuitos
+
+    req = urllib.request.Request(OPENROUTER_MODELOS_URL, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS) as resp:
+            cuerpo = json.loads(resp.read().decode("utf-8"))
+        modelos = [
+            {"id": m["id"], "nombre": m.get("name") or m["id"]}
+            for m in cuerpo.get("data", [])
+            if m.get("id") and _es_modelo_gratuito(m)
+        ]
+        modelos.sort(key=lambda m: m["nombre"].lower())
+        _cache_modelos_gratuitos = modelos
+        _cache_modelos_expira_en = time.monotonic() + _CACHE_MODELOS_TTL_SEGUNDOS
+        return modelos
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError, KeyError):
+        return _cache_modelos_gratuitos if _cache_modelos_gratuitos is not None else list(MODELOS_GRATUITOS_RESPALDO)
 
 
 def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
