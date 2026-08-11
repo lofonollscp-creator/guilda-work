@@ -83,7 +83,20 @@ class _IaChatScreenState extends State<IaChatScreen> {
     try {
       disponible = await _speech.initialize(
         onStatus: (estado) {
-          if (mounted) setState(() => _escuchando = estado == 'listening');
+          if (!mounted) return;
+          setState(() => _escuchando = estado == 'listening');
+          // Seguro adicional: si la sesión de escucha terminó sola (p.ej.
+          // el usuario se quedó callado y saltó pauseFor) sin que
+          // onResult mandara nada, se reintenta sola en vez de quedarse
+          // muda esperando a que alguien toque el micro a mano -- así
+          // "modo Live" es de verdad manoslibres de principio a fin.
+          if (estado == stt.SpeechToText.doneStatus &&
+              _liveActivo &&
+              !_enviando &&
+              !_hablando &&
+              _pendiente == null) {
+            Future.delayed(const Duration(milliseconds: 300), _empezarEscucha);
+          }
         },
         onError: (_) {
           if (mounted) setState(() => _escuchando = false);
@@ -258,10 +271,29 @@ class _IaChatScreenState extends State<IaChatScreen> {
     _hablando = true;
     while (_colaTts.isNotEmpty) {
       final texto = _colaTts.removeAt(0);
-      await _tts.speak(texto);
+      try {
+        // awaitSpeakCompletion(true) hace que este await no vuelva hasta
+        // que el motor de voz confirme que ha terminado -- si esa
+        // confirmación no llega nunca (voz no soportada en el idioma,
+        // fallo del motor, interrupción del sistema...) el await se
+        // quedaba colgado para siempre y el modo Live dejaba de
+        // funcionar sin ningún error visible (bug real encontrado en
+        // vivo). El timeout evita que una frase problemática deje Live
+        // colgado para siempre.
+        await _tts.speak(texto).timeout(const Duration(seconds: 20), onTimeout: () => 1);
+      } catch (_) {
+        // Sigue con la siguiente frase aunque esta fallara.
+      }
     }
     _hablando = false;
-    if (mounted && _liveActivo && !_enviando) _empezarEscucha();
+    if (!mounted || !_liveActivo || _enviando) return;
+    // Pequeña pausa antes de volver a escuchar: en iOS, pasar la sesión de
+    // audio de "reproducción" (TTS) a "grabación" (STT) sin dar tiempo a
+    // que se libere el altavoz hacía que la escucha siguiente arrancara
+    // en mal estado o directamente no captara nada (bug real encontrado
+    // en vivo, típico de alternar TTS/STT en iOS).
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (mounted && _liveActivo && !_enviando && !_hablando) _empezarEscucha();
   }
 
   // Trocea el texto que va llegando por frases completas (acaban en
@@ -296,15 +328,34 @@ class _IaChatScreenState extends State<IaChatScreen> {
   Future<void> _empezarEscucha() async {
     if (!_vozDisponible || _escuchando || _enviando || _hablando || _pendiente != null) return;
     try {
+      // Cancela cualquier sesión de escucha anterior que no se hubiera
+      // cerrado del todo -- arrancar una nueva sesión encima de una a
+      // medio cerrar es una causa conocida de que speech_to_text se quede
+      // "escuchando" sin captar nada (bug real encontrado en vivo, sobre
+      // todo al reiniciar la escucha en bucle en modo Live).
+      await _speech.cancel();
       await _speech.listen(
         onResult: (resultado) {
           if (!resultado.finalResult) return;
           _controller.text = resultado.recognizedWords;
           if (_liveActivo && resultado.recognizedWords.trim().isNotEmpty) {
+            _pararEscucha();
             _enviarTexto(resultado.recognizedWords);
           }
         },
-        listenOptions: stt.SpeechListenOptions(localeId: _localeIdVoz),
+        listenOptions: stt.SpeechListenOptions(
+          localeId: _localeIdVoz,
+          cancelOnError: true,
+          listenMode: stt.ListenMode.confirmation,
+          // Sin estos dos, la escucha podía quedarse abierta
+          // indefinidamente esperando a que alguien llamara a stop() a
+          // mano en vez de finalizar sola tras un silencio -- por eso "no
+          // acababa de ir bien" el modo Live: se quedaba escuchando para
+          // siempre y nunca llegaba a mandar el mensaje (bug real
+          // encontrado en vivo).
+          pauseFor: const Duration(seconds: 3),
+          listenFor: const Duration(seconds: 30),
+        ),
       );
     } catch (_) {
       // El dispositivo denegó el permiso o el reconocedor no arrancó --
