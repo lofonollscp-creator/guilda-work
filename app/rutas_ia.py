@@ -7,12 +7,6 @@ from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
 
-MODELOS_SUGERIDOS = [
-    "anthropic/claude-sonnet-4.5",
-    "openai/gpt-4o-mini",
-    "meta-llama/llama-3.1-70b-instruct",
-]
-
 
 @ia_bp.route("/")
 @login_required
@@ -55,13 +49,22 @@ def vaciar():
     return "", 204
 
 
+@ia_bp.route("/modelos")
+@login_required
+def modelos():
+    """Modelos gratuitos de OpenRouter (ver ia_asistente.listar_modelos_gratuitos),
+    usado tanto por el <select> de /ia/ajustes como por el datalist de
+    proveedor=openrouter en /historial (informes)."""
+    return jsonify(asistente.listar_modelos_gratuitos())
+
+
 @ia_bp.route("/ajustes")
 @login_required
 def ajustes():
     return render_template(
         "ia_ajustes.html",
         preferencias=db.obtener_preferencias_ia(g.usuario_id),
-        modelos_sugeridos=MODELOS_SUGERIDOS,
+        modelos_sugeridos=asistente.listar_modelos_gratuitos(),
         num_claves_configuradas=len(asistente.obtener_api_keys(g.usuario_id)),
     )
 

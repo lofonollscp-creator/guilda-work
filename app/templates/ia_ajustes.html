@@ -13,16 +13,19 @@
       <div class="correo-form-campo">
         <label>{{ _('Modelo sugerido') }}</label>
         <select name="modelo">
-          <option value="">— {{ _('elegir uno de la lista, o usar el campo de abajo') }} —</option>
+          <option value="">— {{ _('elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo') }} —</option>
           {% for m in modelos_sugeridos %}
-          <option value="{{ m }}" {% if preferencias.modelo == m %}selected{% endif %}>{{ m }}</option>
+          <option value="{{ m.id }}" {% if preferencias.modelo == m.id %}selected{% endif %}>{{ m.nombre }}</option>
           {% endfor %}
         </select>
+        {% if not modelos_sugeridos %}
+        <p class="ia-aviso">{{ _('No se ha podido obtener el listado de modelos gratuitos de OpenRouter ahora mismo — usa el campo de abajo con el id exacto del modelo.') }}</p>
+        {% endif %}
       </div>
       <div class="correo-form-campo">
-        <label>{{ _('O escribe cualquier otro id de modelo de OpenRouter') }}</label>
+        <label>{{ _('O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)') }}</label>
         <input type="text" name="modelo_personalizado" placeholder="{{ _('ej. mistralai/mistral-large') }}"
-               value="{{ preferencias.modelo if preferencias.modelo not in modelos_sugeridos else '' }}">
+               value="{{ preferencias.modelo if preferencias.modelo not in modelos_sugeridos|map(attribute='id')|list else '' }}">
       </div>
 
       <div class="correo-form-campo">

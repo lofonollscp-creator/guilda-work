@@ -933,6 +933,12 @@ def vaciar_ia():
     return _ok()
 
 
+@api_bp.route("/ia/modelos", methods=["GET"])
+@token_required
+def listar_modelos_ia():
+    return _ok(ia_asistente.listar_modelos_gratuitos())
+
+
 @api_bp.route("/ia/ajustes", methods=["GET"])
 @token_required
 def obtener_ajustes_ia():

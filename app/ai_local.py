@@ -1,12 +1,17 @@
-"""Integración con IA local (Ollama / LM Studio) — Fase 2.
+"""Integración con IA local (Ollama / LM Studio) y con OpenRouter (nube) —
+Fase 2 + Fase 1 de paridad app/web (ver plan "eventual-herding-kitten").
 
 No añade dependencias externas: usa urllib de la librería estándar.
 Si el servicio local no está disponible, falla de forma clara y rápida
-(timeout corto) sin bloquear el resto de la aplicación.
+(timeout corto) sin bloquear el resto de la aplicación. El caso OpenRouter
+reutiliza la clave/fallback ya existentes en ia_asistente.py en vez de
+duplicar esa lógica (misma clave que usa el asistente conversacional).
 """
 import json
 import urllib.error
 import urllib.request
+
+from . import ia_asistente
 
 TIMEOUT_SEGUNDOS = 20
 
@@ -52,13 +57,30 @@ def _post_json(url: str, payload: dict) -> dict:
         raise ErrorIALocal(f"Respuesta inválida desde {url}: {e}") from e
 
 
-def _chat(proveedor: str, modelo: str, mensajes: list[dict]) -> str:
+def _chat(proveedor: str, modelo: str, mensajes: list[dict], usuario_id: int | None = None) -> str:
     """Envía una lista de mensajes (formato OpenAI/Ollama: role+content) y
-    devuelve el texto de la respuesta del asistente."""
+    devuelve el texto de la respuesta del asistente. `usuario_id` solo hace
+    falta para proveedor == "openrouter" (busca su clave en el keyring)."""
     if not modelo.strip():
-        raise ErrorIALocal("Indica el nombre del modelo cargado en tu IA local (ej. 'llama3.1').")
+        raise ErrorIALocal("Indica el modelo a usar (para Ollama/LM Studio, el nombre cargado localmente).")
 
     payload = {"model": modelo.strip(), "messages": mensajes, "stream": False}
+
+    if proveedor == "openrouter":
+        claves = ia_asistente.obtener_api_keys(usuario_id) if usuario_id is not None else []
+        if not claves:
+            raise ErrorIALocal(
+                "No tienes ninguna clave de API de OpenRouter guardada. "
+                "Añádela en Ajustes del asistente IA (solo se puede configurar desde la web)."
+            )
+        try:
+            respuesta = ia_asistente._post_json_con_fallback(ia_asistente.OPENROUTER_URL, payload, claves)
+        except ia_asistente.ErrorIA as e:
+            raise ErrorIALocal(str(e)) from e
+        try:
+            return respuesta["choices"][0]["message"]["content"].strip()
+        except (KeyError, IndexError) as e:
+            raise ErrorIALocal(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
 
     if proveedor == "lmstudio":
         respuesta = _post_json(LMSTUDIO_URL, payload)
@@ -81,9 +103,12 @@ def _datos_como_texto(datos_export: dict) -> str:
     return json.dumps(datos_export, ensure_ascii=False, indent=2)
 
 
-def generar_informe(datos_export: dict, instruccion: str, proveedor: str, modelo: str) -> str:
-    """Envía los datos exportados a un modelo local en una sola pasada y
-    devuelve el texto generado (informe/resumen, sin conversación)."""
+def generar_informe(
+    datos_export: dict, instruccion: str, proveedor: str, modelo: str, usuario_id: int | None = None
+) -> str:
+    """Envía los datos exportados a un modelo (local u OpenRouter) en una
+    sola pasada y devuelve el texto generado (informe/resumen, sin
+    conversación). `usuario_id` solo hace falta para proveedor="openrouter"."""
     prompt = (
         f"{instruccion}\n\n"
         "Estos son mis datos de actividad en formato JSON "
@@ -91,7 +116,7 @@ def generar_informe(datos_export: dict, instruccion: str, proveedor: str, modelo
         "agrupados por categoría):\n\n"
         f"{_datos_como_texto(datos_export)}"
     )
-    return _chat(proveedor, modelo, [{"role": "user", "content": prompt}])
+    return _chat(proveedor, modelo, [{"role": "user", "content": prompt}], usuario_id)
 
 
 def preguntar(
@@ -100,6 +125,7 @@ def preguntar(
     pregunta: str,
     proveedor: str,
     modelo: str,
+    usuario_id: int | None = None,
 ) -> str:
     """Modo "pregunta libre": conversación con memoria sobre los datos.
 
@@ -107,10 +133,11 @@ def preguntar(
     ([{"role": "user"|"assistant", "content": "..."}]); los datos no viajan
     ahí, se anteponen como mensaje de sistema en cada llamada para que el
     modelo siempre tenga el contexto completo aunque no tenga memoria propia.
+    `usuario_id` solo hace falta para proveedor="openrouter".
     """
     if not pregunta.strip():
         raise ErrorIALocal("Escribe una pregunta.")
 
     sistema = {"role": "system", "content": PROMPT_SISTEMA_PREGUNTAS.format(datos=_datos_como_texto(datos_export))}
     mensajes = [sistema, *historial_mensajes[-MAX_MENSAJES_HISTORIAL:], {"role": "user", "content": pregunta.strip()}]
-    return _chat(proveedor, modelo, mensajes)
+    return _chat(proveedor, modelo, mensajes, usuario_id)

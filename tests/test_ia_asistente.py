@@ -162,3 +162,77 @@ def test_no_se_puede_mandar_mensaje_con_confirmacion_pendiente(monkeypatch, usua
 
     with pytest.raises(a.ErrorIA):
         a.procesar_turno(usuario_id, "otro mensaje mientras tanto")
+
+
+# --- listar_modelos_gratuitos ------------------------------------------------
+
+class _RespuestaFalsa:
+    """Imita el objeto que devuelve urllib.request.urlopen (usado como
+    context manager, con .read())."""
+
+    def __init__(self, cuerpo: dict):
+        self._cuerpo = json.dumps(cuerpo).encode("utf-8")
+
+    def read(self):
+        return self._cuerpo
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+@pytest.fixture(autouse=True)
+def _reset_cache_modelos():
+    """La caché de listar_modelos_gratuitos vive en variables de módulo —
+    se resetea antes y después de cada test para que no se contaminen entre
+    sí (incluidos los tests de otras clases de este mismo archivo)."""
+    a._cache_modelos_gratuitos = None
+    a._cache_modelos_expira_en = 0.0
+    yield
+    a._cache_modelos_gratuitos = None
+    a._cache_modelos_expira_en = 0.0
+
+
+def test_listar_modelos_gratuitos_filtra_solo_precio_cero(monkeypatch):
+    cuerpo = {
+        "data": [
+            {"id": "meta-llama/llama-3.1-70b-instruct:free", "name": "Llama 3.1 70B (free)",
+             "pricing": {"prompt": "0", "completion": "0"}},
+            {"id": "openai/gpt-4o-mini", "name": "GPT-4o mini",
+             "pricing": {"prompt": "0.00015", "completion": "0.0006"}},
+        ]
+    }
+    monkeypatch.setattr(a.urllib.request, "urlopen", lambda req, timeout: _RespuestaFalsa(cuerpo))
+
+    modelos = a.listar_modelos_gratuitos()
+
+    assert len(modelos) == 1
+    assert modelos[0]["id"] == "meta-llama/llama-3.1-70b-instruct:free"
+
+
+def test_listar_modelos_gratuitos_cachea_entre_llamadas(monkeypatch):
+    llamadas = {"n": 0}
+
+    def urlopen_falso(req, timeout):
+        llamadas["n"] += 1
+        return _RespuestaFalsa({"data": [{"id": "a:free", "name": "A", "pricing": {"prompt": "0", "completion": "0"}}]})
+
+    monkeypatch.setattr(a.urllib.request, "urlopen", urlopen_falso)
+
+    a.listar_modelos_gratuitos()
+    a.listar_modelos_gratuitos()
+
+    assert llamadas["n"] == 1
+
+
+def test_listar_modelos_gratuitos_si_falla_devuelve_respaldo_sin_lanzar(monkeypatch):
+    def urlopen_falso(req, timeout):
+        raise a.urllib.error.URLError("sin red")
+
+    monkeypatch.setattr(a.urllib.request, "urlopen", urlopen_falso)
+
+    modelos = a.listar_modelos_gratuitos()
+
+    assert modelos == a.MODELOS_GRATUITOS_RESPALDO
