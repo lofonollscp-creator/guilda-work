@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../widgets/app_button.dart';
 
 /// Edición de un tiquet propio (equivalente móvil de
 /// app/templates/tiquet_editar.html) -- solo alcanzable mientras siga
@@ -107,7 +108,7 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              FilledButton(onPressed: _guardando ? null : _guardar, child: const Text('Guardar')),
+              AppButton(texto: 'Guardar', cargando: _guardando, onPressed: _guardar),
               const SizedBox(width: 12),
               TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
             ],

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../services/sync_service.dart';
+import '../theme/app_theme.dart';
+import '../theme/brand_colors.dart';
+import '../widgets/status_badge.dart';
 import 'fichaje_datos_screen.dart';
 import 'fichaje_historial_screen.dart';
 
@@ -180,10 +183,10 @@ class _FichajeScreenState extends State<FichajeScreen> {
                   runSpacing: 12,
                   alignment: WrapAlignment.center,
                   children: [
-                    _botonFichar('Entrada', Colors.green, estado == 'fuera', () => _marcar('entrada')),
-                    _botonFichar('Iniciar pausa', Colors.amber.shade800, estado == 'dentro', () => _marcar('pausa_inicio')),
-                    _botonFichar('Fin de pausa', Colors.amber.shade800, estado == 'en_pausa', () => _marcar('pausa_fin')),
-                    _botonFichar('Salida', Colors.red, estado != 'fuera', () => _marcar('salida')),
+                    _botonFichar('Entrada', BrandColors.success, estado == 'fuera', () => _marcar('entrada')),
+                    _botonFichar('Iniciar pausa', _colorAviso(context), estado == 'dentro', () => _marcar('pausa_inicio')),
+                    _botonFichar('Fin de pausa', _colorAviso(context), estado == 'en_pausa', () => _marcar('pausa_fin')),
+                    _botonFichar('Salida', _colorPeligro(context), estado != 'fuera', () => _marcar('salida')),
                   ],
                 ),
                 const SizedBox(height: 32),
@@ -212,7 +215,7 @@ class _FichajeScreenState extends State<FichajeScreen> {
                                   dense: true,
                                   leading: const Icon(Icons.access_time),
                                   title: Text(etiquetasFichaje[f.tipo] ?? f.tipo),
-                                  trailing: Text(f.marcaTiempo.substring(11, 16)),
+                                  trailing: Text(f.marcaTiempo.substring(11, 16), style: AppTheme.cifra(fontSize: 15)),
                                 ))
                             .toList(),
                       );
@@ -226,16 +229,19 @@ class _FichajeScreenState extends State<FichajeScreen> {
     );
   }
 
+  Color _colorAviso(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? BrandColors.warningDark : BrandColors.warningLight;
+
+  Color _colorPeligro(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? BrandColors.dangerDark : BrandColors.dangerLight;
+
   Widget _pillEstado(String estado) {
-    final (texto, color) = switch (estado) {
-      'dentro' => ('Dentro de jornada', Colors.green),
-      'en_pausa' => ('En pausa', Colors.amber.shade800),
-      _ => ('Fuera de jornada', Colors.grey),
+    final (texto, tono) = switch (estado) {
+      'dentro' => ('Dentro de jornada', BadgeTono.exito),
+      'en_pausa' => ('En pausa', BadgeTono.aviso),
+      _ => ('Fuera de jornada', BadgeTono.neutro),
     };
-    return Chip(
-      label: Text(texto, style: const TextStyle(color: Colors.white)),
-      backgroundColor: color,
-    );
+    return StatusBadge(texto: texto, tono: tono);
   }
 
   Widget _botonFichar(String texto, Color color, bool habilitado, VoidCallback onPressed) {

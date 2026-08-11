@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_client.dart';
+import '../widgets/app_button.dart';
 
 /// Datos personales del trabajador para el fichaje (equivalente móvil de
 /// app/templates/fichaje_datos.html) -- nombreCompleto+dniNie son
@@ -152,7 +153,7 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ],
                 const SizedBox(height: 24),
-                FilledButton(onPressed: _guardando ? null : _guardar, child: const Text('Guardar')),
+                AppButton(texto: 'Guardar', cargando: _guardando, onPressed: _guardar),
               ],
             ),
     );

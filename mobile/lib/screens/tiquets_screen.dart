@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../widgets/status_badge.dart';
 import 'tiquet_edit_screen.dart';
 
 /// Tablero de tiquets de soporte interno (equivalente móvil de
@@ -179,10 +180,26 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
 
   Widget _tarjetaTiquet(Tiquet t) {
     final etiquetaEstado = estadosTiquet.firstWhere((e) => e.$1 == t.estado, orElse: () => (t.estado, t.estado)).$2;
+    final tonoEstado = switch (t.estado) {
+      'finalizado' => BadgeTono.exito,
+      'en_revision' => BadgeTono.aviso,
+      _ => BadgeTono.neutro,
+    };
     return ListTile(
       leading: Icon(t.tipo == 'error' ? Icons.bug_report_outlined : Icons.lightbulb_outline),
       title: Text('#${t.id} · ${t.titulo}'),
-      subtitle: Text('${t.autorEmail ?? ''} · $etiquetaEstado'),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            if (t.autorEmail != null) Text(t.autorEmail!),
+            StatusBadge(texto: etiquetaEstado, tono: tonoEstado),
+          ],
+        ),
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

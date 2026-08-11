@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../widgets/app_button.dart';
 
 /// Redactar correo (equivalente móvil de app/templates/correo_redactar.html):
 /// cuerpo en texto plano (sin editor enriquecido), enviado como cuerpo_html
@@ -313,10 +314,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  FilledButton(
-                    onPressed: _enviando ? null : _enviar,
-                    child: const Text('Enviar'),
-                  ),
+                  AppButton(texto: 'Enviar', cargando: _enviando, onPressed: _enviar),
                   const SizedBox(width: 12),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
