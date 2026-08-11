@@ -243,7 +243,7 @@ def _instalar(tenant_id: int, db_user: str, db_pass: str, db_name: str, admin_us
             "docker", "exec", contenedor, "sh", "-c",
             "cp /var/www/html/htaccess-sample /var/www/html/.htaccess && "
             "mkdir -p /var/www/html/Plugins /var/www/html/Dinamic /var/www/html/MyFiles && "
-            "chmod -R o+w /var/www/html",
+            "chmod -R o+rw /var/www/html",
         ],
         capture_output=True, text=True, timeout=15,
     )
@@ -263,12 +263,18 @@ def _instalar(tenant_id: int, db_user: str, db_pass: str, db_name: str, admin_us
 
     # Plugins::deploy() corre como root (docker exec sin --user) y crea
     # sobre la marcha directorios de caché nuevos (MyFiles/Tmp/FileCache)
-    # que el `chmod -R o+w` de más arriba no llegó a cubrir porque aún no
+    # que el `chmod -R o+rw` de más arriba no llegó a cubrir porque aún no
     # existían — Apache corre como www-data y sin este segundo chmod, el
     # propio arranque real deja warnings de "Permission denied" en cada
-    # página (confirmado en vivo contra un tenant ya aprovisionado).
+    # página. Nota: tiene que ser `o+rw`, no solo `o+w` — www-data (uid 33)
+    # no coincide ni con el propietario ni con el grupo de estos ficheros
+    # (los crea `docker exec` como root, o vienen de `docker cp` con el uid
+    # del host que ejecuta Python), así que cae en la categoría "otros" y
+    # sin permiso de LECTURA explícito `require_once('config.php')` falla
+    # con "Permission denied" aunque el fichero exista (bug real,
+    # reproducido en vivo: el tenant de prueba "Guilda" no arrancaba).
     resultado = subprocess.run(
-        ["docker", "exec", contenedor, "chmod", "-R", "o+w", "/var/www/html"],
+        ["docker", "exec", contenedor, "chmod", "-R", "o+rw", "/var/www/html"],
         capture_output=True, text=True, timeout=15,
     )
     if resultado.returncode != 0:
