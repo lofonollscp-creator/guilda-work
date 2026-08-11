@@ -23,9 +23,17 @@
     </div>
   </div>
   <form class="ia-chat-form" id="{{ contenedor_id }}-form">
+    <button type="button" class="ia-chat-mic" id="{{ contenedor_id }}-mic" title="{{ _('Dictar mensaje') }}" aria-label="{{ _('Dictar mensaje') }}">🎙️</button>
     <textarea placeholder="{{ _('Escribe un mensaje...') }}" rows="2" required></textarea>
     <button type="submit">{{ _('Enviar') }}</button>
   </form>
-  <button type="button" class="ia-chat-vaciar" id="{{ contenedor_id }}-vaciar">{{ _('Nueva conversación') }}</button>
+  <div class="ia-chat-pie">
+    <button type="button" class="ia-chat-vaciar" id="{{ contenedor_id }}-vaciar">{{ _('Nueva conversación') }}</button>
+    <!-- Modo manoslibres: escucha -> envía -> lee la respuesta en voz alta ->
+         vuelve a escuchar, hasta que se desactiva. Se oculta con JS si el
+         navegador no soporta SpeechRecognition/speechSynthesis (Firefox,
+         Safari en algunas versiones) -- ver ia_asistente.js. -->
+    <button type="button" class="ia-chat-live" id="{{ contenedor_id }}-live" title="{{ _('Modo Live (manos libres)') }}">🎧 {{ _('Live') }}</button>
+  </div>
 </div>
 {% endmacro %}
