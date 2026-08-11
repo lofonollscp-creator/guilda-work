@@ -245,7 +245,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         t.dashboardFichajeTooltip,
         () => _abrirPantalla(() => FichajeScreen(api: widget.api, sync: widget.sync)),
       ),
-      (Icons.smart_toy_outlined, t.dashboardAsistenteIaTooltip, () => _abrirPantalla(() => IaChatScreen(api: widget.api))),
+      (Icons.smart_toy_outlined, t.dashboardAsistenteIaTooltip, () => _abrirPantalla(() => IaChatScreen(api: widget.api, locale: widget.locale))),
       // A petición del usuario: "Chat de equipo" lanza la app nativa de
       // Element X (o manda a la tienda si no la tiene) en vez de abrir el
       // cliente Matrix propio de la app (chat_login_screen.dart, que se
@@ -331,7 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: haUsadoIa
                   ? null
                   : () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => IaChatScreen(api: widget.api)),
+                        MaterialPageRoute(builder: (_) => IaChatScreen(api: widget.api, locale: widget.locale)),
                       ),
             ),
           ],

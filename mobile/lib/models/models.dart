@@ -628,3 +628,35 @@ class IaModelo {
   factory IaModelo.fromJson(Map<String, dynamic> json) =>
       IaModelo(id: json['id'] as String, nombre: json['nombre'] as String);
 }
+
+/// Un evento de /ia/mensaje/stream o /ia/confirmar/stream (Fase V del plan
+/// "eventual-herding-kitten", asistente de voz) -- mismo formato SSE que ya
+/// consume ia_asistente.js en la web, ver ia_asistente.procesar_turno_stream
+/// en el backend para los 5 tipos posibles. OJO: para tipo="error" el campo
+/// crudo del backend se llama igual que para tipo="mensaje" ("mensaje"),
+/// pero con un string en vez de un dict -- por eso fromJson mira `tipo`
+/// ANTES de decidir cómo interpretar ese campo, no puede ir por presencia.
+class IaEventoStream {
+  final String tipo; // 'delta' | 'mensaje' | 'pendiente' | 'error' | 'fin'
+  final String? texto;
+  final IaMensaje? mensaje;
+  final IaPendiente? pendiente;
+  final String? error;
+
+  IaEventoStream({required this.tipo, this.texto, this.mensaje, this.pendiente, this.error});
+
+  factory IaEventoStream.fromJson(Map<String, dynamic> json) {
+    final tipo = json['tipo'] as String;
+    return IaEventoStream(
+      tipo: tipo,
+      texto: tipo == 'delta' ? json['texto'] as String? : null,
+      mensaje: tipo == 'mensaje' && json['mensaje'] != null
+          ? IaMensaje.fromJson(json['mensaje'] as Map<String, dynamic>)
+          : null,
+      pendiente: tipo == 'pendiente' && json['pendiente'] != null
+          ? IaPendiente.fromJson(json['pendiente'] as Map<String, dynamic>)
+          : null,
+      error: tipo == 'error' ? json['mensaje'] as String? : null,
+    );
+  }
+}

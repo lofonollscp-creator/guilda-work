@@ -26,6 +26,13 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Asistente de IA con voz (Fase V3): dictado (speech_to_text) y
+	     lectura en voz alta (flutter_tts) de las respuestas, ver
+	     ia_chat_screen.dart. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Guilda Work necesita el micrófono para que puedas dictarle mensajes al asistente de IA.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Guilda Work usa el reconocimiento de voz para convertir lo que dices en texto para el asistente de IA.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

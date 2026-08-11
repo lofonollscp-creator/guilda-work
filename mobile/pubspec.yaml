@@ -56,6 +56,13 @@ dependencies:
   # desde app/static/logos/, ver herramientas_screen.dart) -- Image.network
   # de Flutter no sabe pintar SVG.
   flutter_svg: ^2.2.1
+  # Asistente de IA con voz (Fase V3 del plan "eventual-herding-kitten"):
+  # dictado (STT) y lectura en voz alta de las respuestas (TTS), ver
+  # ia_chat_screen.dart. Necesitan permiso de micrófono -- ver
+  # NSMicrophoneUsageDescription en ios/Runner/Info.plist y RECORD_AUDIO en
+  # android/app/src/main/AndroidManifest.xml.
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
   firebase_core: ^3.10.0
   firebase_messaging: ^15.2.0
   flutter_local_notifications: ^18.0.1

@@ -798,6 +798,47 @@ class ApiClient {
     }
   }
 
+  /// Variantes en streaming (Server-Sent Events) de enviarMensajeIa/
+  /// confirmarIa -- para el asistente de voz (Fase V3): sin esto habría que
+  /// esperar a que el modelo termine de pensar toda la respuesta antes de
+  /// poder empezar a leerla en voz alta (ver ia_chat_screen.dart). Mismo
+  /// formato SSE que ya consume ia_asistente.js en la web.
+  Stream<IaEventoStream> enviarMensajeIaStream(String texto) => _turnoIaStream('/ia/mensaje/stream', {'texto': texto});
+
+  Stream<IaEventoStream> confirmarIaStream(bool aceptar) =>
+      _turnoIaStream('/ia/confirmar/stream', {'aceptar': aceptar});
+
+  Stream<IaEventoStream> _turnoIaStream(String ruta, Map<String, dynamic> datos) async* {
+    final Response<ResponseBody> resp;
+    try {
+      resp = await _dio.post<ResponseBody>(ruta, data: datos, options: Options(responseType: ResponseType.stream));
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+    // Server-Sent Events: líneas "data: {...}\n\n" -- los chunks de bytes no
+    // respetan los límites de línea, así que se acumulan en un buffer hasta
+    // tener al menos un separador "\n\n" completo antes de parsear.
+    final buffer = StringBuffer();
+    await for (final trozo in resp.data!.stream) {
+      buffer.write(utf8.decode(trozo, allowMalformed: true));
+      final partes = buffer.toString().split('\n\n');
+      buffer
+        ..clear()
+        ..write(partes.removeLast());
+      for (final parte in partes) {
+        final linea = parte.trim();
+        if (!linea.startsWith('data:')) continue;
+        final crudo = linea.substring(5).trim();
+        try {
+          yield IaEventoStream.fromJson(jsonDecode(crudo) as Map<String, dynamic>);
+        } catch (_) {
+          // Línea no era JSON válido (no debería pasar) -- se ignora en vez
+          // de tirar todo el stream abajo por un chunk raro.
+        }
+      }
+    }
+  }
+
   Future<void> vaciarIa() async {
     try {
       await _dio.post('/ia/vaciar');
