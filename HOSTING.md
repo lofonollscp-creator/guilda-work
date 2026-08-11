@@ -964,13 +964,24 @@ FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD=...   # openssl rand -hex 32
 docker compose up -d postgres-facturascripts
 ```
 
+**Datos de cada tenant en el segundo disco**: `MyFiles`/`Plugins`/`Dinamic`
+del contenedor se montan (bind mount, no volumen Docker) en
+`/mnt/HC_Volume_106540289/facturascripts-tenants/tenant-<id>/` — ese disco
+extra (73G, aparte de los 75G del disco raíz) está prácticamente vacío, así
+que se reserva en exclusiva para esto. Antes de este cambio esos tres
+directorios vivían solo en la capa escribible del contenedor: efímeros
+(se perdían adjuntos de factura y plugins instalados en cualquier
+`docker rm`/recreación) y contando contra el disco raíz. Configurable con
+`FACTURASCRIPTS_DATOS_HOST` si el disco cambiara de punto de montaje.
+
 **Qué pasa al crear un tenant nuevo** (automático, sin nada que hacer a
 mano): `app/facturascripts.py:aprovisionar_tenant()` crea un rol y una
 base de datos exclusivos en el Postgres compartido
 (`REVOKE CONNECT ... FROM PUBLIC`, para que ni siquiera con las
 credenciales de otro tenant se pueda entrar), levanta un contenedor
-nuevo (`guilda-work-facturascripts-tenant-<id>`, puerto `8100 + id`) y
-lo instala. **Nota técnica** (verificado en vivo, no solo leyendo
+nuevo (`guilda-work-facturascripts-tenant-<id>`, puerto `8100 + id`) con
+sus tres directorios de datos del disco extra ya montados, y lo instala.
+**Nota técnica** (verificado en vivo, no solo leyendo
 documentación): el instalador HTTP oficial de FacturaScripts documenta
 un modo `unattended=1` pensado para esto, pero en la versión publicada
 actualmente tiene un fallo real que lo rompe en el primer arranque —
@@ -994,8 +1005,8 @@ scriptear también el login):
    tenant devuelven un error legible pidiéndolo, no fallan en silencio.
 
 **Al borrar un tenant**: `app/facturascripts.py:desaprovisionar_tenant()`
-para y borra su contenedor y su base de datos automáticamente — no hace
-falta limpieza manual.
+para y borra su contenedor, su base de datos y su directorio en el
+segundo disco automáticamente — no hace falta limpieza manual.
 
 **MCP**: a diferencia del resto de herramientas del catálogo (una
 instancia compartida, sin necesidad de decir de cuál se habla), las

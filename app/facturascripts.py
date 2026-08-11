@@ -62,6 +62,7 @@ directamente).
 import json
 import os
 import secrets
+import shutil
 import subprocess
 import tempfile
 import time
@@ -73,6 +74,17 @@ FACTURASCRIPTS_POSTGRES_HOST = "postgres-facturascripts"
 FACTURASCRIPTS_POSTGRES_CONTENEDOR = "guilda-work-postgres-facturascripts"
 FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD = os.environ.get("FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD")
 FACTURASCRIPTS_RED_DOCKER = os.environ.get("FACTURASCRIPTS_RED_DOCKER", "eleganza_default")
+# Hasta ahora _docker_run() no montaba nada: MyFiles/Plugins/Dinamic vivían
+# solo en la capa escribible del contenedor (efímera, y contando contra el
+# disco raíz de 75G). El VPS tiene un segundo disco casi vacío montado en
+# /mnt/HC_Volume_106540289 (ver `lsblk`/`fstab` en el host) — se usa aquí de
+# forma exclusiva para los datos de FacturaScripts (adjuntos de factura,
+# plugins instalados) via bind mount, uno por tenant, para que sobrevivan a
+# un `docker rm`/recreación del contenedor y no compitan por espacio con el
+# resto de volúmenes Docker (que sí viven en el disco raíz).
+FACTURASCRIPTS_DATOS_HOST = os.environ.get(
+    "FACTURASCRIPTS_DATOS_HOST", "/mnt/HC_Volume_106540289/facturascripts-tenants"
+)
 PUERTO_BASE = 8100
 TIMEOUT_SEGUNDOS = 10
 
@@ -98,6 +110,26 @@ def _nombre_bd(tenant_id: int) -> str:
     return f"facturascripts_tenant_{tenant_id}"
 
 
+def _directorio_datos_tenant(tenant_id: int) -> str:
+    return os.path.join(FACTURASCRIPTS_DATOS_HOST, f"tenant-{tenant_id}")
+
+
+def _preparar_directorios_datos(tenant_id: int) -> dict:
+    """Crea (si no existen) los tres directorios del segundo disco que se
+    montan en el contenedor — 0o777 porque Apache dentro del contenedor
+    corre como www-data con un UID que no controlamos desde el host, mismo
+    criterio de "abrir permisos al montar bind mounts sin mapear UID" que
+    ya usa este proyecto en Jitsi (ver HOSTING.md 8.15/8.19). Devuelve las
+    tres rutas para pasarlas a `docker run -v`."""
+    rutas = {}
+    for sub in ("MyFiles", "Plugins", "Dinamic"):
+        ruta = os.path.join(_directorio_datos_tenant(tenant_id), sub)
+        os.makedirs(ruta, mode=0o777, exist_ok=True)
+        os.chmod(ruta, 0o777)  # makedirs no aplica el modo si el directorio ya existía
+        rutas[sub] = ruta
+    return rutas
+
+
 def _ejecutar_psql(sql: str) -> None:
     """Ejecuta SQL contra el Postgres compartido vía `docker exec`, mismo
     patrón que ya usa este proyecto para comandos de un solo uso dentro
@@ -119,6 +151,7 @@ def _ejecutar_psql(sql: str) -> None:
 
 def _docker_run(tenant_id: int, db_user: str, db_pass: str, db_name: str) -> None:
     puerto = _puerto_tenant(tenant_id)
+    rutas = _preparar_directorios_datos(tenant_id)
     resultado = subprocess.run(
         [
             "docker", "run", "-d",
@@ -126,6 +159,9 @@ def _docker_run(tenant_id: int, db_user: str, db_pass: str, db_name: str) -> Non
             "--network", FACTURASCRIPTS_RED_DOCKER,
             "--restart", "unless-stopped",
             "-p", f"127.0.0.1:{puerto}:80",
+            "-v", f"{rutas['MyFiles']}:/var/www/html/MyFiles",
+            "-v", f"{rutas['Plugins']}:/var/www/html/Plugins",
+            "-v", f"{rutas['Dinamic']}:/var/www/html/Dinamic",
             "facturascripts/facturascripts:latest",
         ],
         capture_output=True, text=True, timeout=30,
@@ -284,10 +320,14 @@ def aprovisionar_tenant(tenant_id: int, nombre_tenant: str) -> dict:
 
 def desaprovisionar_tenant(tenant_id: int) -> None:
     """Para al borrar un tenant (app/rutas_backoffice.py:borrar_tenant) —
-    para/borra el contenedor y elimina su base de datos y rol. No falla
-    si alguna pieza ya no existe (idempotente ante reintentos)."""
+    para/borra el contenedor, su base de datos+rol, y los directorios del
+    segundo disco (MyFiles/Plugins/Dinamic, ver _preparar_directorios_datos)
+    — mismo criterio de "no dejar nada huérfano" que ya se aplica a la
+    base de datos. No falla si alguna pieza ya no existe (idempotente ante
+    reintentos)."""
     subprocess.run(["docker", "stop", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
     subprocess.run(["docker", "rm", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
+    shutil.rmtree(_directorio_datos_tenant(tenant_id), ignore_errors=True)
     if not FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD:
         return
     try:
