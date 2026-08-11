@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -79,6 +81,31 @@ class _IaChatScreenState extends State<IaChatScreen> {
     _speech = stt.SpeechToText();
     _tts = FlutterTts();
     await _tts.awaitSpeakCompletion(true);
+    // Sin esto, en iOS el TTS se quedaba mudo (bug real: "no me lee los
+    // mensajes") -- flutter_tts y speech_to_text compiten por la misma
+    // sesión de audio del sistema (AVAudioSession); sin decirle a iOS que
+    // la categoría es "reproducir Y grabar" compartiendo instancia, la
+    // sesión se quedaba en modo solo-grabación tras usar el micro (o
+    // directamente flutter_tts no conseguía activar la reproducción) y
+    // speak() no sonaba, aunque awaitSpeakCompletion(true) sí acababa
+    // "completando" igualmente (o quedaba colgado hasta el timeout).
+    if (!kIsWeb && Platform.isIOS) {
+      try {
+        await _tts.setSharedInstance(true);
+        await _tts.setIosAudioCategory(
+          IosTextToSpeechAudioCategory.playAndRecord,
+          [
+            IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+            IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+            IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          ],
+          IosTextToSpeechAudioMode.defaultMode,
+        );
+      } catch (_) {
+        // Si esto falla no hay nada mejor que hacer que seguir con la
+        // configuración por defecto -- no bloquea el resto de la voz.
+      }
+    }
     bool disponible = false;
     try {
       disponible = await _speech.initialize(
