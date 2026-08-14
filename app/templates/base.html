@@ -141,13 +141,15 @@
   <div id="busqueda-overlay" class="busqueda-overlay" hidden>
     <div class="busqueda-modal" role="dialog" aria-modal="true" aria-label="{{ _('Buscar en notas, tareas y correo') }}">
       <div class="busqueda-campo">
-        <span>🔍</span>
+        <button type="button" id="busqueda-icono" class="busqueda-icono" title="{{ _('Buscar') }}" aria-label="{{ _('Buscar') }}">🔍</button>
         <input type="text" id="busqueda-input" placeholder="{{ _('Buscar en notas, tareas y correo...') }}" autocomplete="off">
-        <kbd>Esc</kbd>
+        <button type="button" id="busqueda-cerrar" class="busqueda-cerrar-btn" title="{{ _('Cerrar (Esc)') }}" aria-label="{{ _('Cerrar búsqueda') }}"><kbd>Esc</kbd></button>
       </div>
       <ul id="busqueda-resultados" class="busqueda-resultados"></ul>
+      <p id="busqueda-cargando" class="busqueda-cargando" hidden>{{ _('Buscando…') }}</p>
       <p id="busqueda-vacio" class="busqueda-vacio" hidden>{{ _('Sin resultados.') }}</p>
       <p id="busqueda-error" class="busqueda-error" hidden></p>
+      <p id="busqueda-pie" class="busqueda-pie" hidden></p>
     </div>
   </div>
 
