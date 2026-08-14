@@ -838,15 +838,32 @@ de nombre — no confirmado sin una instancia real delante.
 Lead/Contact/Account/Opportunity (y cualquier otra entidad con datos de
 cliente), nivel de acceso **"Team"**, no "All". Sin este cambio, el
 Equipo asignado por OIDC no restringe nada — los Equipos sin un Rol que
-los aproveche son solo una etiqueta, igual que el `tenant_id` del propio
-Guilda Work hoy (ver nota más abajo).
+los aproveche son solo una etiqueta.
 
-**Nota — deuda pendiente, fuera de alcance de esta integración**: el
-modelo de tenant del resto de Guilda Work (tareas/notas/categorías) sigue
-siendo solo una etiqueta en `usuarios.tenant_id`, sin ningún filtro real
-en las consultas — a diferencia de EspoCRM (aislado de verdad tras los
-pasos de arriba), el resto de la app no lo está todavía. Señalado como
-algo a abordar en el futuro, no automatizado aquí.
+**Nota — resuelto (2026-08-14)**: esto estuvo señalado aquí como deuda
+pendiente porque `tareas`/`notas`/`categorías` no tienen columna
+`tenant_id` — solo `usuario_id`. Investigado a fondo: cada consulta de
+esas tablas YA filtra por `usuario_id` en todo lectura/escritura
+(`app/db.py`: `obtener_tarea`, `editar_tarea`, `eliminar_tarea`,
+equivalentes en notas/categorías), así que el aislamiento entre tenants
+es real, no una etiqueta — verificado con
+`tests/test_aislamiento_tenants.py` (2 tenants × 2 usuarios, capa BD y
+capa ruta, incluyendo intentos con ID adivinado). **Se decidió NO
+añadir una columna `tenant_id` duplicada** a esas 3 tablas: a
+diferencia de `fichajes` (que sí la duplica, a propósito, como
+snapshot inmutable con fin legal/auditoría — ver comentario en
+`app/db.py` sobre esa tabla), `tareas`/`notas`/`categorías` son
+registros editables y `asignar_tenant()`/`desasignar_tenant()`
+(`app/db.py`) solo actualizan `usuarios.tenant_id` — un `tenant_id`
+duplicado ahí se quedaría obsoleto en cuanto alguien cambiara de
+tenant, sería un bug nuevo en vez de una mejora.
+
+Cualquier funcionalidad futura que necesite agregar datos entre varios
+usuarios de un mismo tenant (el calendario fiscal, por ejemplo, cuyas
+tablas `clientes_fiscales`/`vencimientos_fiscales` sí llevan
+`tenant_id` real desde el principio, al ser registros de la gestoría y
+no de un usuario concreto) debe usar `db.usuarios_de_tenant(tenant_id)`
+en vez de reinventar el JOIN a mano.
 
 ### 8.20 Nextcloud (Drive) — con SSO y aislamiento por tenant
 
