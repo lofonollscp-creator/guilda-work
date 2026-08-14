@@ -55,9 +55,12 @@
     return base + "?q=" + encodeURIComponent(hit.texto.slice(0, 60));
   }
 
+  var URL_ICONOS = document.body.dataset.urlIconos;
+
   function actualizarIcono() {
     var hayTexto = input.value.trim().length > 0;
-    iconoBoton.textContent = hayTexto ? "✕" : "🔍";
+    var use = iconoBoton.querySelector("use");
+    if (use) use.setAttribute("href", URL_ICONOS + (hayTexto ? "#icono-x" : "#icono-search"));
     iconoBoton.title = hayTexto ? iconoBoton.dataset.tituloLimpiar : iconoBoton.dataset.tituloBuscar;
     iconoBoton.setAttribute("aria-label", iconoBoton.title);
   }

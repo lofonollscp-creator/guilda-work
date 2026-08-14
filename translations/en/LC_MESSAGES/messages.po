@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-10 11:20+0200\n"
+"POT-Creation-Date: 2026-08-14 13:19+0200\n"
 "PO-Revision-Date: 2026-08-09 21:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -16,9 +16,9 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
-#: app/main.py:151 app/main.py:152
+#: app/main.py:166 app/main.py:167
 msgid "Ha ocurrido un error interno. Se ha registrado para revisión."
 msgstr "An internal error occurred. It has been logged for review."
 
@@ -39,9 +39,10 @@ msgstr "Create"
 msgid ""
 "Respuestas generadas por IA — pueden contener errores, comprueba lo "
 "importante."
-msgstr "AI-generated responses — may contain errors, double-check anything important."
-"AI-generated responses — they may contain errors, double-check anything "
-"important."
+msgstr ""
+"AI-generated responses — may contain errors, double-check anything "
+"important.AI-generated responses — they may contain errors, double-check "
+"anything important."
 
 #: app/templates/_ia_chat_macro.html:17
 msgid "¿Ejecuto"
@@ -57,21 +58,35 @@ msgid "No"
 msgstr "Note"
 
 #: app/templates/_ia_chat_macro.html:26
+#, fuzzy
+msgid "Dictar mensaje"
+msgstr "Create menu"
+
+#: app/templates/_ia_chat_macro.html:27
 msgid "Escribe un mensaje..."
 msgstr "Type a message..."
 
-#: app/templates/_ia_chat_macro.html:27 app/templates/correo_redactar.html:83
-#: app/templates/historial.html:138
+#: app/templates/_ia_chat_macro.html:28 app/templates/correo_redactar.html:83
+#: app/templates/historial.html:141
 #, fuzzy
 msgid "Enviar"
 msgstr "Log in"
 
-#: app/templates/_ia_chat_macro.html:29 app/templates/historial.html:131
+#: app/templates/_ia_chat_macro.html:31 app/templates/historial.html:133
 msgid "Nueva conversación"
 msgstr "New conversation"
 
-#: app/templates/backoffice.html:2 app/templates/base.html:82
-#: app/templates/base.html:84
+#: app/templates/_ia_chat_macro.html:36
+msgid "Modo Live (manos libres)"
+msgstr ""
+
+#: app/templates/_ia_chat_macro.html:36
+#, fuzzy
+msgid "Live"
+msgstr "Back"
+
+#: app/templates/backoffice.html:2 app/templates/base.html:92
+#: app/templates/base.html:94
 msgid "Backoffice"
 msgstr "Backoffice"
 
@@ -84,10 +99,13 @@ msgid ""
 "FacturaScripts aprovisionado — esto solo se muestra esta vez, apunta la "
 "contraseña antes de continuar (hace falta para el último paso manual: "
 "entrar y crear la API Key desde Ajustes → API):"
-msgstr "FacturaScripts provisioned — this is shown only this once, write down the password before continuing (needed for the last manual step: log in and create the API Key under Settings → API):"
+msgstr ""
 "FacturaScripts provisioned — this is shown only this once, write down the"
 " password before continuing (needed for the last manual step: log in and "
-"create the API Key from Settings → API):"
+"create the API Key under Settings → API):FacturaScripts provisioned — "
+"this is shown only this once, write down the password before continuing "
+"(needed for the last manual step: log in and create the API Key from "
+"Settings → API):"
 
 #: app/templates/backoffice.html:21
 msgid "Usuario"
@@ -103,10 +121,13 @@ msgid ""
 "Cal.diy aprovisionado — esto solo se muestra esta vez, apunta la "
 "contraseña antes de continuar (hace falta para el último paso manual: "
 "entrar y crear la API Key desde Configuración → Developer → API Keys):"
-msgstr "Cal.diy provisioned — this is shown only this once, write down the password before continuing (needed for the last manual step: log in and create the API Key under Settings → Developer → API Keys):"
+msgstr ""
 "Cal.diy provisioned — this is shown only this once, write down the "
 "password before continuing (needed for the last manual step: log in and "
-"create the API Key from Settings → Developer → API Keys):"
+"create the API Key under Settings → Developer → API Keys):Cal.diy "
+"provisioned — this is shown only this once, write down the password "
+"before continuing (needed for the last manual step: log in and create the"
+" API Key from Settings → Developer → API Keys):"
 
 #: app/templates/backoffice.html:42
 msgid "Alta de"
@@ -116,9 +137,10 @@ msgstr "Sign-up for"
 msgid ""
 "esto solo se muestra esta vez, pásale las contraseñas para que las cambie"
 " al entrar:"
-msgstr "this is shown only this once, share the passwords so they can change them on first login:"
-"this is shown only this once, pass on the passwords so they can change "
-"them on login:"
+msgstr ""
+"this is shown only this once, share the passwords so they can change them"
+" on first login:this is shown only this once, pass on the passwords so "
+"they can change them on login:"
 
 #: app/templates/backoffice.html:45
 msgid "Servicio"
@@ -203,7 +225,7 @@ msgstr "Registered address"
 #: app/templates/backoffice.html:131 app/templates/backoffice.html:144
 #: app/templates/backoffice.html:154 app/templates/backoffice.html:167
 #: app/templates/editar_nota.html:17 app/templates/editar_tarea.html:35
-#: app/templates/fichaje_datos.html:56 app/templates/ia_ajustes.html:47
+#: app/templates/fichaje_datos.html:56 app/templates/ia_ajustes.html:50
 #: app/templates/menu.html:15 app/templates/tarea_outlook_editar.html:71
 #: app/templates/tiquet_editar.html:48
 msgid "Guardar"
@@ -245,10 +267,12 @@ msgid ""
 "¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, "
 "y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus"
 " datos."
-msgstr "Delete tenant %(nombre)s? Its users will be left without an assigned tenant, and its FacturaScripts instance (if any) will be deleted along with its data."
+msgstr ""
 "Delete tenant %(nombre)s? Its users will be left without an assigned "
-"tenant, and its FacturaScripts instance (if it has one) will be deleted "
-"along with its data."
+"tenant, and its FacturaScripts instance (if any) will be deleted along "
+"with its data.Delete tenant %(nombre)s? Its users will be left without an"
+" assigned tenant, and its FacturaScripts instance (if it has one) will be"
+" deleted along with its data."
 
 #: app/templates/backoffice.html:187 app/templates/backoffice.html:310
 #, fuzzy
@@ -425,9 +449,10 @@ msgstr "last used"
 msgid ""
 "¿Revocar el acceso de «%(nombre)s»? %(email)s tendrá que iniciar sesión "
 "de nuevo en la app."
-msgstr "Revoke access for \"%(nombre)s\"? %(email)s will need to log in to the app again."
-"Revoke access for \"%(nombre)s\"? %(email)s will have to log in again in "
-"the app."
+msgstr ""
+"Revoke access for \"%(nombre)s\"? %(email)s will need to log in to the "
+"app again.Revoke access for \"%(nombre)s\"? %(email)s will have to log in"
+" again in the app."
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
@@ -452,34 +477,33 @@ msgstr "Expand/collapse menu"
 msgid "Expandir o contraer el menú"
 msgstr "Expand or collapse the menu"
 
-#: app/templates/base.html:36
+#: app/templates/base.html:37
 msgid "Menús / Dashboard"
 msgstr "Menus / Dashboard"
 
-#: app/templates/base.html:38
+#: app/templates/base.html:39
 msgid "Menús"
 msgstr "Menus"
 
-#: app/templates/base.html:40 app/templates/base.html:42
+#: app/templates/base.html:43
+msgid "Trabajo diario"
+msgstr "Daily work"
+
+#: app/templates/base.html:44 app/templates/base.html:46
 #: app/templates/tareas_calendario.html:6 app/templates/tareas_lista.html:2
 #: app/templates/tareas_lista.html:6 app/templates/tareas_outlook_sync.html:6
 msgid "Tareas"
 msgstr "Tasks"
 
-#: app/templates/base.html:44 app/templates/base.html:46
+#: app/templates/base.html:48 app/templates/base.html:50
 #: app/templates/correo_bandeja.html:2 app/templates/correo_bandeja.html:6
 #: app/templates/correo_redactar.html:7
 msgid "Correo"
 msgstr "Mail"
 
-#: app/templates/base.html:44
+#: app/templates/base.html:48
 msgid "sin leer"
 msgstr "unread"
-
-#: app/templates/base.html:49 app/templates/base.html:51
-#: app/templates/herramientas.html:2 app/templates/herramientas.html:6
-msgid "Herramientas"
-msgstr "Tools"
 
 #: app/templates/base.html:53 app/templates/base.html:55
 #: app/templates/tiquets_kanban.html:6 app/templates/tiquets_tarjetas.html:2
@@ -487,192 +511,226 @@ msgstr "Tools"
 msgid "Tiquets"
 msgstr "Tickets"
 
-#: app/templates/base.html:61 app/templates/base.html:63
-#: app/templates/historial.html:2 app/templates/historial.html:6
-msgid "Histórico"
-msgstr "History"
+#: app/templates/base.html:63
+msgid "Herramientas y asistencia"
+msgstr "Tools and assistance"
 
-#: app/templates/base.html:65 app/templates/base.html:67
-#: app/templates/base.html:111 app/templates/base.html:176
+#: app/templates/base.html:64 app/templates/base.html:66
+#: app/templates/herramientas.html:2 app/templates/herramientas.html:6
+msgid "Herramientas"
+msgstr "Tools"
+
+#: app/templates/base.html:68 app/templates/base.html:70
+#: app/templates/base.html:133 app/templates/base.html:215
 #: app/templates/ia_asistente.html:3 app/templates/ia_asistente.html:7
 #: app/templates/inicio.html:175
 msgid "Asistente IA"
 msgstr "AI Assistant"
 
-#: app/templates/base.html:69 app/templates/base.html:71
+#: app/templates/base.html:74
+msgid "Datos y administración"
+msgstr "Data and administration"
+
+#: app/templates/base.html:75 app/templates/base.html:77
+#: app/templates/historial.html:2 app/templates/historial.html:6
+msgid "Histórico"
+msgstr "History"
+
+#: app/templates/base.html:79 app/templates/base.html:81
 #: app/templates/estadisticas.html:2 app/templates/estadisticas.html:6
 msgid "Estadísticas"
 msgstr "Statistics"
 
-#: app/templates/base.html:73 app/templates/base.html:75
+#: app/templates/base.html:83 app/templates/base.html:85
 #: app/templates/papelera.html:2 app/templates/papelera.html:6
 msgid "Papelera"
 msgstr "Trash"
 
-#: app/templates/base.html:77 app/templates/base.html:79
+#: app/templates/base.html:87 app/templates/base.html:89
 #: app/templates/historial.html:28 app/templates/importar.html:2
 #: app/templates/importar.html:19 app/templates/tareas_outlook_sync.html:43
 msgid "Importar"
 msgstr "Import"
 
-#: app/templates/base.html:87
+#: app/templates/base.html:98
 msgid "Captura rápida (Ctrl+Alt+G)"
 msgstr "Quick capture (Ctrl+Alt+G)"
 
-#: app/templates/base.html:89 app/templates/captura.html:6
+#: app/templates/base.html:100 app/templates/captura.html:6
 msgid "Captura rápida"
 msgstr "Quick capture"
 
-#: app/templates/base.html:101
+#: app/templates/base.html:113
 msgid "Buscar en notas, tareas y correo…"
 msgstr "Search notes, tasks and mail…"
 
-#: app/templates/base.html:104
+#: app/templates/base.html:116
 msgid "Atajos de teclado (?)"
 msgstr "Keyboard shortcuts (?)"
 
-#: app/templates/base.html:104
+#: app/templates/base.html:116
 msgid "Ver atajos de teclado"
 msgstr "View keyboard shortcuts"
 
-#: app/templates/base.html:106 app/templates/correo_bandeja.html:7
+#: app/templates/base.html:118 app/templates/correo_bandeja.html:7
 #: app/templates/ia_asistente.html:8 app/templates/ia_asistente.html:11
 msgid "Ajustes"
 msgstr "Settings"
 
-#: app/templates/base.html:108
+#: app/templates/base.html:122
 msgid "Tema: cambiar"
 msgstr "Theme: change"
 
-#: app/templates/base.html:108
+#: app/templates/base.html:124
 msgid "Sistema"
 msgstr "System"
 
-#: app/templates/base.html:109
+#: app/templates/base.html:126
 msgid "Densidad: cambiar"
 msgstr "Density: change"
 
-#: app/templates/base.html:109 app/templates/correo_ajustes.html:23
+#: app/templates/base.html:128 app/templates/correo_ajustes.html:23
 msgid "Normal"
 msgstr "Normal"
 
-#: app/templates/base.html:111
+#: app/templates/base.html:131
 msgid "Abrir Asistente IA"
 msgstr "Open AI Assistant"
 
-#: app/templates/base.html:113
+#: app/templates/base.html:136
 msgid "Idioma"
 msgstr "Language"
 
-#: app/templates/base.html:120 app/templates/mis_dispositivos.html:2
+#: app/templates/base.html:145 app/templates/mis_dispositivos.html:2
 #: app/templates/mis_dispositivos.html:6
 msgid "Mis dispositivos"
 msgstr "My devices"
 
-#: app/templates/base.html:121
+#: app/templates/base.html:149
 msgid "Documentación (desarrolladores)"
 msgstr "Documentation (developers)"
 
-#: app/templates/base.html:124
+#: app/templates/base.html:153
 msgid ""
 "¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa "
 "por completo."
-msgstr "Close Guilda Work? Everything already noted is saved; the program will close completely."
+msgstr ""
 "Close Guilda Work? Everything already noted is saved; the program will "
-"close completely."
+"close completely.Close Guilda Work? Everything already noted is saved; "
+"the program will close completely."
 
-#: app/templates/base.html:125
+#: app/templates/base.html:156
 msgid "Cerrar programa"
 msgstr "Close program"
 
-#: app/templates/base.html:129 app/templates/pendiente_activacion.html:52
+#: app/templates/base.html:163 app/templates/pendiente_activacion.html:52
 msgid "Cerrar sesión"
 msgstr "Log out"
 
-#: app/templates/base.html:142 app/templates/base.html:165
+#: app/templates/base.html:177 app/templates/base.html:204
 msgid "Buscar en notas, tareas y correo"
 msgstr "Search notes, tasks and mail"
 
-#: app/templates/base.html:145
+#: app/templates/base.html:179 app/templates/historial.html:12
+#: app/templates/tareas_lista.html:18
+msgid "Buscar"
+msgstr "Search"
+
+#: app/templates/base.html:182
 msgid "Buscar en notas, tareas y correo..."
 msgstr "Search notes, tasks and mail..."
 
-#: app/templates/base.html:149 app/templates/docs/pagina.html:35
+#: app/templates/base.html:183
+#, fuzzy
+msgid "Cerrar (Esc)"
+msgstr "Log out"
+
+#: app/templates/base.html:183
+#, fuzzy
+msgid "Cerrar búsqueda"
+msgstr "Clear search"
+
+#: app/templates/base.html:186
+#, fuzzy
+msgid "Buscando…"
+msgstr "Search"
+
+#: app/templates/base.html:187 app/templates/docs/pagina.html:35
 msgid "Sin resultados."
 msgstr "No results."
 
-#: app/templates/base.html:155 app/templates/base.html:157
+#: app/templates/base.html:194 app/templates/base.html:196
 #, fuzzy
 msgid "Atajos de teclado"
 msgstr "Remove from favorites"
 
-#: app/templates/base.html:158 app/templates/base.html:177
-#: app/templates/base.html:189 app/templates/correo_redactar.html:18
+#: app/templates/base.html:197 app/templates/base.html:216
+#: app/templates/base.html:228 app/templates/correo_redactar.html:18
 #: app/templates/tareas_calendario.html:106
 msgid "Cerrar"
 msgstr "Close"
 
-#: app/templates/base.html:161
+#: app/templates/base.html:200
 #, fuzzy
 msgid "Captura rápida (ventana del sistema)"
 msgstr "Quick capture (Ctrl+Alt+G)"
 
-#: app/templates/base.html:162
+#: app/templates/base.html:201
 #, fuzzy
 msgid "Nueva nota"
 msgstr "New task"
 
-#: app/templates/base.html:163 app/templates/inicio.html:73
+#: app/templates/base.html:202 app/templates/inicio.html:73
 #: app/templates/tareas_lista.html:55
 msgid "Nueva tarea"
 msgstr "New task"
 
-#: app/templates/base.html:164 app/templates/inicio.html:85
+#: app/templates/base.html:203 app/templates/inicio.html:85
 msgid "Buscar en el histórico"
 msgstr "Search history"
 
-#: app/templates/base.html:166
+#: app/templates/base.html:205
 #, fuzzy
 msgid "Mostrar esta ayuda"
 msgstr "Show just this once"
 
-#: app/templates/base.html:167
+#: app/templates/base.html:206
 msgid "Cerrar ventana emergente"
 msgstr "Close popup window"
 
-#: app/templates/base.html:185
+#: app/templates/base.html:224
 msgid "..."
 msgstr "..."
 
-#: app/templates/base.html:190
+#: app/templates/base.html:229
 #, fuzzy
 msgid "Deshacer"
 msgstr "Statistics"
 
-#: app/templates/base.html:191
+#: app/templates/base.html:230
 msgid "No se pudo deshacer la acción."
 msgstr "Couldn't undo the action."
 
-#: app/templates/base.html:192 app/templates/base.html:193
+#: app/templates/base.html:231 app/templates/base.html:232
 #, fuzzy
 msgid "Mensajes actualizados."
 msgstr "updated"
 
-#: app/templates/base.html:194
+#: app/templates/base.html:233
 msgid "Mensajes movidos."
 msgstr "Messages moved."
 
-#: app/templates/base.html:195
+#: app/templates/base.html:234
 #, fuzzy
 msgid "Mensajes eliminados."
 msgstr "Move the selected messages to"
 
-#: app/templates/base.html:196
+#: app/templates/base.html:235
 #, fuzzy
 msgid "No se pudo completar la acción. Inténtalo de nuevo."
 msgstr "Verification failed, try again"
 
-#: app/templates/base.html:197
+#: app/templates/base.html:236
 msgid "No se pudieron cargar las sugerencias de destinatarios."
 msgstr "Couldn't load recipient suggestions."
 
@@ -702,10 +760,12 @@ msgid ""
 "Todo lo que anotaste ya estaba guardado (se escribe al instante en cada "
 "acción). El programa y su servidor se han terminado por completo. Esta "
 "ventana se cerrará sola en un instante."
-msgstr "Everything you noted was already saved (it's written instantly on every action). The program and its server have fully shut down. This window will close on its own shortly."
-"Everything you noted down was already saved (it's written instantly on "
-"every action). The program and its server have shut down completely. This"
-" window will close by itself shortly."
+msgstr ""
+"Everything you noted was already saved (it's written instantly on every "
+"action). The program and its server have fully shut down. This window "
+"will close on its own shortly.Everything you noted down was already saved"
+" (it's written instantly on every action). The program and its server "
+"have shut down completely. This window will close by itself shortly."
 
 #: app/templates/correo_ajustes.html:2 app/templates/correo_ajustes.html:6
 msgid "Ajustes de correo"
@@ -715,9 +775,10 @@ msgstr "Mail settings"
 msgid ""
 "Preferencias, categorías y firma. La gestión de cuentas (IMAP/SMTP) está "
 "aparte."
-msgstr "Preferences, categories and signature. Account management (IMAP/SMTP) is separate."
+msgstr ""
 "Preferences, categories and signature. Account management (IMAP/SMTP) is "
-"separate."
+"separate.Preferences, categories and signature. Account management "
+"(IMAP/SMTP) is separate."
 
 #: app/templates/correo_ajustes.html:11 app/templates/correo_cuentas.html:11
 #, fuzzy
@@ -761,9 +822,10 @@ msgstr "Specific to Guilda Work — not synced with your mail provider."
 msgid ""
 "¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se "
 "quedan sin categoría."
-msgstr "Delete category \"%(nombre)s\"? Messages that had it will be left uncategorized."
-"Delete category \"%(nombre)s\"? Messages that had it will be left without"
-" a category."
+msgstr ""
+"Delete category \"%(nombre)s\"? Messages that had it will be left "
+"uncategorized.Delete category \"%(nombre)s\"? Messages that had it will "
+"be left without a category."
 
 #: app/templates/correo_ajustes.html:54 app/templates/correo_ajustes.html:80
 #: app/templates/correo_ajustes.html:113 app/templates/correo_bandeja.html:72
@@ -789,9 +851,10 @@ msgstr "Automatic categorization rules"
 msgid ""
 "Los correos nuevos de un remitente o dominio que coincida se categorizan "
 "solos, sin tener que hacerlo a mano."
-msgstr "New emails from a matching sender or domain get categorized automatically, no manual work needed."
+msgstr ""
 "New emails from a matching sender or domain get categorized "
-"automatically, without doing it by hand."
+"automatically, no manual work needed.New emails from a matching sender or"
+" domain get categorized automatically, without doing it by hand."
 
 #: app/templates/correo_ajustes.html:79
 msgid "¿Eliminar esta regla?"
@@ -813,9 +876,11 @@ msgstr "Trusted senders"
 msgid ""
 "Sus imágenes remotas y adjuntos se muestran/abren sin avisar. Los de "
 "cualquier otro remitente se bloquean/avisan por privacidad."
-msgstr "Their remote images and attachments are shown/opened without warning. Those from any other sender are blocked/flagged for privacy."
+msgstr ""
 "Their remote images and attachments are shown/opened without warning. "
-"Those from any other sender are blocked/warned about for privacy."
+"Those from any other sender are blocked/flagged for privacy.Their remote "
+"images and attachments are shown/opened without warning. Those from any "
+"other sender are blocked/warned about for privacy."
 
 #: app/templates/correo_ajustes.html:112
 #, python-format
@@ -1010,9 +1075,11 @@ msgstr "Trash"
 msgid ""
 "¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue "
 "en el servidor, una futura sincronización lo volverá a traer)."
-msgstr "Delete this message from the local cache? This can't be undone (if it's still on the server, a future sync will bring it back)."
+msgstr ""
 "Delete this message from the local cache? This can't be undone (if it's "
-"still on the server, a future sync will bring it back)."
+"still on the server, a future sync will bring it back).Delete this "
+"message from the local cache? This can't be undone (if it's still on the "
+"server, a future sync will bring it back)."
 
 #: app/templates/correo_bandeja.html:140
 msgid "Resp. a todos"
@@ -1068,9 +1135,10 @@ msgstr "Trust"
 msgid ""
 "Este adjunto viene de un remitente que no está en tu lista de confianza. "
 "¿Abrir igualmente?"
-msgstr "This attachment is from a sender not on your trusted list. Open anyway?"
-"This attachment comes from a sender that isn't in your trusted list. Open"
-" it anyway?"
+msgstr ""
+"This attachment is from a sender not on your trusted list. Open "
+"anyway?This attachment comes from a sender that isn't in your trusted "
+"list. Open it anyway?"
 
 #: app/templates/correo_bandeja.html:232
 msgid ""
@@ -1099,9 +1167,10 @@ msgstr "Connect a mail account"
 msgid ""
 "IMAP/POP3. La contraseña se guarda en el almacén de credenciales de "
 "Windows, no en la base de datos."
-msgstr "IMAP/POP3. The password is stored in the Windows credential store, not in the database."
-"IMAP/POP3. The password is stored in Windows Credential Manager, not in "
-"the database."
+msgstr ""
+"IMAP/POP3. The password is stored in the Windows credential store, not in"
+" the database.IMAP/POP3. The password is stored in Windows Credential "
+"Manager, not in the database."
 
 #: app/templates/correo_cuentas.html:26
 msgid "Sincronizado"
@@ -1116,9 +1185,11 @@ msgstr "Test connection"
 msgid ""
 "¿Eliminar la cuenta «%(nombre)s»? Se borrarán también sus mensajes "
 "descargados y su contraseña guardada. No se puede deshacer."
-msgstr "Delete account \"%(nombre)s\"? Its downloaded messages and saved password will also be deleted. This can't be undone."
-"Delete the account \"%(nombre)s\"? Its downloaded messages and saved "
-"password will also be deleted. This can't be undone."
+msgstr ""
+"Delete account \"%(nombre)s\"? Its downloaded messages and saved password"
+" will also be deleted. This can't be undone.Delete the account "
+"\"%(nombre)s\"? Its downloaded messages and saved password will also be "
+"deleted. This can't be undone."
 
 #: app/templates/correo_cuentas.html:41 app/templates/correo_cuentas.html:95
 #, fuzzy
@@ -1237,9 +1308,10 @@ msgstr "Text"
 msgid ""
 "¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde "
 "ahí."
-msgstr "Delete this note? It will move to the trash — you can restore it from there."
-"Delete this note? It'll be moved to the trash — you can restore it from "
-"there."
+msgstr ""
+"Delete this note? It will move to the trash — you can restore it from "
+"there.Delete this note? It'll be moved to the trash — you can restore it "
+"from there."
 
 #: app/templates/editar_nota.html:25
 #, fuzzy
@@ -1297,18 +1369,20 @@ msgstr "This task is still running; the end will be logged when it's finished."
 msgid ""
 "¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde"
 " ahí."
-msgstr "Delete this event? It will move to the trash — you can restore it from there."
-"Delete this event? It'll be moved to the trash — you can restore it from "
-"there."
+msgstr ""
+"Delete this event? It will move to the trash — you can restore it from "
+"there.Delete this event? It'll be moved to the trash — you can restore it"
+" from there."
 
 #: app/templates/editar_tarea.html:42
 #: app/templates/tarea_outlook_editar.html:77
 msgid ""
 "¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde "
 "ahí."
-msgstr "Delete this task? It will move to the trash — you can restore it from there."
-"Delete this task? It'll be moved to the trash — you can restore it from "
-"there."
+msgstr ""
+"Delete this task? It will move to the trash — you can restore it from "
+"there.Delete this task? It'll be moved to the trash — you can restore it "
+"from there."
 
 #: app/templates/editar_tarea.html:43
 #, fuzzy
@@ -1463,9 +1537,10 @@ msgstr "choose"
 msgid ""
 "Este tenant no tiene CIF/dirección fiscal rellenados en el backoffice — "
 "no aparecerán en los informes exportados."
-msgstr "This tenant has no tax ID/address filled in the backoffice — they won't appear in exported reports."
-"This tenant hasn't filled in Tax ID/registered address in the backoffice "
-"— they won't appear in exported reports."
+msgstr ""
+"This tenant has no tax ID/address filled in the backoffice — they won't "
+"appear in exported reports.This tenant hasn't filled in Tax ID/registered"
+" address in the backoffice — they won't appear in exported reports."
 
 #: app/templates/fichaje_admin.html:45
 #, fuzzy
@@ -1562,10 +1637,12 @@ msgid ""
 "Añade el fichaje que faltó (p. ej. una salida no marcada) sin borrar ni "
 "tocar los existentes — queda registrado quién y cuándo hizo la "
 "corrección."
-msgstr "Add the missing clock entry (e.g. an unmarked clock-out) without deleting or touching existing ones — who made the correction and when is recorded."
-"Add the missed entry (e.g. a clock-out that wasn't marked) without "
-"deleting or touching the existing ones — who made the correction and when"
-" is logged."
+msgstr ""
+"Add the missing clock entry (e.g. an unmarked clock-out) without deleting"
+" or touching existing ones — who made the correction and when is "
+"recorded.Add the missed entry (e.g. a clock-out that wasn't marked) "
+"without deleting or touching the existing ones — who made the correction "
+"and when is logged."
 
 #: app/templates/fichaje_admin_detalle.html:55
 msgid "Nº de fichaje que corrige (opcional)"
@@ -1640,9 +1717,10 @@ msgstr "Daily time record (art. 34.9 of the Workers' Statute)."
 msgid ""
 "Antes de poder fichar, la normativa exige poder identificarte: rellena tu"
 " nombre completo y DNI/NIE."
-msgstr "Before you can clock in, regulations require identifying you: fill in your full name and ID number."
-"Before you can clock in, regulations require you to be identifiable: fill"
-" in your full name and ID number."
+msgstr ""
+"Before you can clock in, regulations require identifying you: fill in "
+"your full name and ID number.Before you can clock in, regulations require"
+" you to be identifiable: fill in your full name and ID number."
 
 #: app/templates/fichaje_panel.html:25
 msgid "Rellenar mis datos"
@@ -1724,10 +1802,6 @@ msgid "Vista global de todos los menús, filtrable y exportable."
 msgstr "Global view of all menus, filterable and exportable."
 
 #: app/templates/historial.html:12 app/templates/tareas_lista.html:18
-msgid "Buscar"
-msgstr "Search"
-
-#: app/templates/historial.html:12 app/templates/tareas_lista.html:18
 msgid "Texto..."
 msgstr "Text..."
 
@@ -1797,68 +1871,80 @@ msgid "Siguiente"
 msgstr "Next"
 
 #: app/templates/historial.html:89
-msgid "Generar informe con IA local"
+#, fuzzy
+msgid "Generar informe con IA"
 msgstr "Generate report with local AI"
 
 #: app/templates/historial.html:90
+#, fuzzy
 msgid ""
 "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
-"(Ollama o LM Studio). No se envía nada a internet."
-msgstr "Sends the filtered data above to a model running on your machine (Ollama or LM Studio). Nothing is sent to the internet."
+"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
+" las claves configuradas en Ajustes del asistente IA)."
+msgstr ""
 "Sends the filtered data above to a model running on your machine (Ollama "
-"or LM Studio). Nothing is sent to the internet."
+"or LM Studio). Nothing is sent to the internet.Sends the filtered data "
+"above to a model running on your machine (Ollama or LM Studio). Nothing "
+"is sent to the internet."
 
 #: app/templates/historial.html:97
 msgid "Proveedor"
 msgstr "Provider"
 
-#: app/templates/historial.html:103
+#: app/templates/historial.html:101 app/templates/historial.html:130
+#, fuzzy
+msgid "OpenRouter (nube)"
+msgstr "Model (OpenRouter)"
+
+#: app/templates/historial.html:104
 msgid "Modelo"
 msgstr "Model"
 
-#: app/templates/historial.html:104
+#: app/templates/historial.html:105
 msgid "ej. llama3.1"
 msgstr "e.g. llama3.1"
 
-#: app/templates/historial.html:107
+#: app/templates/historial.html:108
 msgid "Instrucción para la IA"
 msgstr "Instruction for the AI"
 
-#: app/templates/historial.html:110
+#: app/templates/historial.html:111
 msgid "Generar informe"
 msgstr "Generate report"
 
-#: app/templates/historial.html:122
+#: app/templates/historial.html:123
 msgid "Preguntar a mis datos"
 msgstr "Ask my data"
 
-#: app/templates/historial.html:123
+#: app/templates/historial.html:124
 msgid ""
 "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango "
 "de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada"
 " a internet."
-msgstr "Chat with a local model about the filtered data above (same date range/menu). You can ask follow-up questions — nothing is sent to the internet."
-"Chat with a local model about the data filtered above (same date "
+msgstr ""
+"Chat with a local model about the filtered data above (same date "
 "range/menu). You can ask follow-up questions — nothing is sent to the "
+"internet.Chat with a local model about the data filtered above (same date"
+" range/menu). You can ask follow-up questions — nothing is sent to the "
 "internet."
 
-#: app/templates/historial.html:130
+#: app/templates/historial.html:132
 msgid "Modelo, ej. llama3.1"
 msgstr "Model, e.g. llama3.1"
 
-#: app/templates/historial.html:137
+#: app/templates/historial.html:140
 msgid "Pregunta algo sobre tus datos... (ej. ¿qué hice ayer en Lueira?)"
 msgstr "Ask something about your data... (e.g. what did I do yesterday at Lueira?)"
 
-#: app/templates/historial.html:209
+#: app/templates/historial.html:242
 msgid "Pensando..."
 msgstr "Thinking..."
 
-#: app/templates/historial.html:233
+#: app/templates/historial.html:266
 msgid "Error desconocido."
 msgstr "Unknown error."
 
-#: app/templates/historial.html:237
+#: app/templates/historial.html:270
 msgid "No se pudo contactar con el servidor."
 msgstr "Could not contact the server."
 
@@ -1880,71 +1966,87 @@ msgid "Modelo sugerido"
 msgstr "Suggested model"
 
 #: app/templates/ia_ajustes.html:16
-msgid "elegir uno de la lista, o usar el campo de abajo"
+#, fuzzy
+msgid "elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo"
 msgstr "choose one from the list, or use the field below"
 
-#: app/templates/ia_ajustes.html:23
-msgid "O escribe cualquier otro id de modelo de OpenRouter"
+#: app/templates/ia_ajustes.html:22
+msgid ""
+"No se ha podido obtener el listado de modelos gratuitos de OpenRouter "
+"ahora mismo — usa el campo de abajo con el id exacto del modelo."
+msgstr ""
+
+#: app/templates/ia_ajustes.html:26
+#, fuzzy
+msgid ""
+"O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de "
+"pago)"
 msgstr "Or type any other OpenRouter model id"
 
-#: app/templates/ia_ajustes.html:24
+#: app/templates/ia_ajustes.html:27
 msgid "ej. mistralai/mistral-large"
 msgstr "e.g. mistralai/mistral-large"
 
-#: app/templates/ia_ajustes.html:29
+#: app/templates/ia_ajustes.html:32
 msgid "Claves de API de OpenRouter (una por línea, en orden de preferencia)"
 msgstr "OpenRouter API keys (one per line, in order of preference)"
 
-#: app/templates/ia_ajustes.html:30
+#: app/templates/ia_ajustes.html:33
 #, python-format
 msgid "Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas"
 msgid_plural "Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas"
 msgstr[0] "You already have %(num)s key saved — leave blank to keep it unchanged"
 msgstr[1] "You already have %(num)s keys saved — leave blank to keep them unchanged"
 
-#: app/templates/ia_ajustes.html:30
+#: app/templates/ia_ajustes.html:33
 msgid ""
 "sk-or-...\n"
 "sk-or-... (clave de reserva, opcional)"
-msgstr "sk-or-...\nsk-or-... (backup key, optional)"
+msgstr ""
 "sk-or-...\n"
+"sk-or-... (backup key, optional)sk-or-...\n"
 "sk-or-... (backup key, optional)"
 
-#: app/templates/ia_ajustes.html:31
+#: app/templates/ia_ajustes.html:34
 msgid ""
 "Se prueba primero la primera línea. Si falla por un motivo propio de esa "
 "clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa "
 "automáticamente a la siguiente."
-msgstr "The first line is tried first. If it fails for a reason specific to that key (no credit, invalid, rate limit reached), it automatically falls back to the next one."
+msgstr ""
 "The first line is tried first. If it fails for a reason specific to that "
-"key (no credit, invalid, rate limit reached), it automatically moves to "
-"the next one."
+"key (no credit, invalid, rate limit reached), it automatically falls back"
+" to the next one.The first line is tried first. If it fails for a reason "
+"specific to that key (no credit, invalid, rate limit reached), it "
+"automatically moves to the next one."
 
-#: app/templates/ia_ajustes.html:35
+#: app/templates/ia_ajustes.html:38
 msgid "Borrar todas las claves guardadas"
 msgstr "Delete all saved keys"
 
-#: app/templates/ia_ajustes.html:41
-msgid "Modo autónomo: no pedir confirmación al crear/editar/borrar contenido"
-msgstr "Autonomous mode: don't ask for confirmation when creating/editing/deleting content"
-"Autonomous mode: don't ask for confirmation when "
-"creating/editing/deleting content"
-
 #: app/templates/ia_ajustes.html:44
+msgid "Modo autónomo: no pedir confirmación al crear/editar/borrar contenido"
+msgstr ""
+"Autonomous mode: don't ask for confirmation when "
+"creating/editing/deleting contentAutonomous mode: don't ask for "
+"confirmation when creating/editing/deleting content"
+
+#: app/templates/ia_ajustes.html:47
 msgid "Aunque actives el modo autónomo,"
 msgstr "Even with autonomous mode active,"
 
-#: app/templates/ia_ajustes.html:44
+#: app/templates/ia_ajustes.html:47
 msgid "enviar un correo de verdad"
 msgstr "actually sending an email"
 
-#: app/templates/ia_ajustes.html:44
+#: app/templates/ia_ajustes.html:47
 msgid ""
 "siempre pedirá confirmación explícita, y el asistente nunca podrá borrar "
 "copias de seguridad (solo crearlas) porque esa herramienta no existe."
-msgstr "will always ask for explicit confirmation, and the assistant can never delete backups (only create them) because that tool doesn't exist."
-"will always ask for explicit confirmation, and the assistant will never "
-"be able to delete backups (only create them) because that tool doesn't "
+msgstr ""
+"will always ask for explicit confirmation, and the assistant can never "
+"delete backups (only create them) because that tool doesn't exist.will "
+"always ask for explicit confirmation, and the assistant will never be "
+"able to delete backups (only create them) because that tool doesn't "
 "exist."
 
 #: app/templates/ia_asistente.html:11
@@ -1964,9 +2066,10 @@ msgstr "Import"
 msgid ""
 "Sube un archivo JSON o CSV exportado desde Guilda Work (o desde una copia"
 " de seguridad) para recuperarlo."
-msgstr "Upload a JSON or CSV file exported from Guilda Work (or from a backup) to restore it."
+msgstr ""
 "Upload a JSON or CSV file exported from Guilda Work (or from a backup) to"
-" restore it."
+" restore it.Upload a JSON or CSV file exported from Guilda Work (or from "
+"a backup) to restore it."
 
 #: app/templates/importar.html:12
 msgid "Archivo (.json o .csv)"
@@ -1978,11 +2081,14 @@ msgid ""
 " eventos se importan tal cual; las tareas con duración que en el archivo "
 "seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de "
 "cerrarlas solas."
-msgstr "Menus that don't exist yet are created automatically by name. Notes and events are imported as-is; timed tasks that were still \"in progress\" (no end) in the file are skipped, since there's no safe way to close them automatically."
+msgstr ""
 "Menus that don't exist yet are created automatically by name. Notes and "
-"events are imported as-is; duration tasks that in the file were still "
-"\"in progress\" (no end) are skipped, because there's no safe way to "
-"close them on their own."
+"events are imported as-is; timed tasks that were still \"in progress\" "
+"(no end) in the file are skipped, since there's no safe way to close them"
+" automatically.Menus that don't exist yet are created automatically by "
+"name. Notes and events are imported as-is; duration tasks that in the "
+"file were still \"in progress\" (no end) are skipped, because there's no "
+"safe way to close them on their own."
 
 #: app/templates/importar.html:29 app/templates/tareas_outlook_sync.html:23
 msgid "Importación completada:"
@@ -2191,18 +2297,22 @@ msgid "Entrar"
 msgstr "Log in"
 
 #: app/templates/login.html:53
+msgid "¿Olvidaste tu contraseña?"
+msgstr ""
+
+#: app/templates/login.html:54
 msgid "¿No tienes cuenta?"
 msgstr "Don't have an account?"
 
-#: app/templates/login.html:53
+#: app/templates/login.html:54
 msgid "Regístrate"
 msgstr "Sign up"
 
-#: app/templates/login.html:54
+#: app/templates/login.html:55
 msgid "¿Quieres integrar tu software?"
 msgstr "Want to integrate your software?"
 
-#: app/templates/login.html:54
+#: app/templates/login.html:55
 msgid "Documentación para desarrolladores"
 msgstr "Developer documentation"
 
@@ -2217,10 +2327,12 @@ msgid ""
 "¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo"
 " registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde "
 "ahí."
-msgstr "Delete menu \"%(nombre)s\"? It will move to the trash along with everything logged inside it (notes, events and tasks) — you can restore it from there."
-"Delete the menu \"%(nombre)s\"? It'll be moved to the trash along with "
+msgstr ""
+"Delete menu \"%(nombre)s\"? It will move to the trash along with "
 "everything logged inside it (notes, events and tasks) — you can restore "
-"it from there."
+"it from there.Delete the menu \"%(nombre)s\"? It'll be moved to the trash"
+" along with everything logged inside it (notes, events and tasks) — you "
+"can restore it from there."
 
 #: app/templates/menu.html:19
 #, fuzzy
@@ -2273,9 +2385,11 @@ msgstr "Edit"
 msgid ""
 "Aún no tienes frases favoritas. Añade las que repites a menudo para "
 "anotarlas en un clic desde \"Nota rápida\"."
-msgstr "You don't have any favorite phrases yet. Add the ones you repeat often to log them in one click from \"Quick note\"."
+msgstr ""
 "You don't have any favorite phrases yet. Add the ones you repeat often to"
-" note them down in one click from \"Quick note\"."
+" log them in one click from \"Quick note\".You don't have any favorite "
+"phrases yet. Add the ones you repeat often to note them down in one click"
+" from \"Quick note\"."
 
 #: app/templates/menu.html:86
 msgid "Nueva frase favorita..."
@@ -2352,9 +2466,10 @@ msgstr "Start your first duration task"
 msgid ""
 "Sesiones activas de la app móvil de Guilda Work. Si pierdes un móvil, "
 "revócalo aquí para cortarle el acceso."
-msgstr "Active sessions of the Guilda Work mobile app. If you lose a phone, revoke it here to cut off its access."
-"Active mobile app sessions for Guilda Work. If you lose a phone, revoke "
-"it here to cut off its access."
+msgstr ""
+"Active sessions of the Guilda Work mobile app. If you lose a phone, "
+"revoke it here to cut off its access.Active mobile app sessions for "
+"Guilda Work. If you lose a phone, revoke it here to cut off its access."
 
 #: app/templates/mis_dispositivos.html:12
 msgid "No tienes ningún dispositivo móvil con sesión activa."
@@ -2371,17 +2486,20 @@ msgstr "Revoke access for \"%(nombre)s\"? It will have to log in again in the ap
 msgid ""
 "Un dispositivo que lleva más de 90 días sin usarse se desconecta "
 "automáticamente, aunque no lo revoques a mano."
-msgstr "A device that hasn't been used for more than 90 days is automatically disconnected, even if you don't revoke it manually."
-"A device that hasn't been used for over 90 days is automatically "
-"disconnected, even if you don't revoke it by hand."
+msgstr ""
+"A device that hasn't been used for more than 90 days is automatically "
+"disconnected, even if you don't revoke it manually.A device that hasn't "
+"been used for over 90 days is automatically disconnected, even if you "
+"don't revoke it by hand."
 
 #: app/templates/papelera.html:7
 msgid ""
 "Lo que borres se queda aquí 30 días antes de purgarse solo. Puedes "
 "recuperarlo cuando quieras."
-msgstr "What you delete stays here for 30 days before being purged automatically. You can restore it anytime."
-"Whatever you delete stays here for 30 days before being purged "
-"automatically. You can restore it whenever you want."
+msgstr ""
+"What you delete stays here for 30 days before being purged automatically."
+" You can restore it anytime.Whatever you delete stays here for 30 days "
+"before being purged automatically. You can restore it whenever you want."
 
 #: app/templates/papelera.html:12
 msgid "La papelera está vacía."
@@ -2391,9 +2509,10 @@ msgstr "The trash is empty."
 msgid ""
 "¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma "
 "permanente. Esta acción no se puede deshacer."
-msgstr "Empty the trash completely? EVERYTHING here will be permanently deleted. This action cannot be undone."
+msgstr ""
 "Empty the trash completely? EVERYTHING here will be permanently deleted. "
-"This action can't be undone."
+"This action cannot be undone.Empty the trash completely? EVERYTHING here "
+"will be permanently deleted. This action can't be undone."
 
 #: app/templates/papelera.html:17
 msgid "Vaciar papelera ahora"
@@ -2441,17 +2560,43 @@ msgstr "Your account is almost ready"
 msgid ""
 "Te has registrado correctamente, pero tu cuenta todavía no está asociada "
 "a ninguna organización."
-msgstr "You've registered successfully, but your account isn't associated with any organization yet."
-"You've signed up successfully, but your account isn't associated with any"
-" organization yet."
+msgstr ""
+"You've registered successfully, but your account isn't associated with "
+"any organization yet.You've signed up successfully, but your account "
+"isn't associated with any organization yet."
 
 #: app/templates/pendiente_activacion.html:50
 msgid ""
 "El equipo de Guilda Work la activará en breve — si has llegado hasta aquí"
 " sin haber hablado antes con nosotros, escríbenos a"
-msgstr "The Guilda Work team will activate it shortly — if you've reached this page without having spoken to us before, write to us at"
-"The Guilda Work team will activate it shortly — if you got here without "
-"having talked to us before, write to us at"
+msgstr ""
+"The Guilda Work team will activate it shortly — if you've reached this "
+"page without having spoken to us before, write to us atThe Guilda Work "
+"team will activate it shortly — if you got here without having talked to "
+"us before, write to us at"
+
+#: app/templates/recuperar_contrasena.html:6
+#: app/templates/recuperar_contrasena.html:14
+#, fuzzy
+msgid "Recuperar contraseña"
+msgstr "Password"
+
+#: app/templates/recuperar_contrasena.html:15
+msgid ""
+"Te mandaremos un código de 6 dígitos por email para que puedas elegir una"
+" contraseña nueva."
+msgstr ""
+
+#: app/templates/recuperar_contrasena.html:27
+#: app/templates/verificar_email.html:24
+#, fuzzy
+msgid "Continuar"
+msgstr "Trust"
+
+#: app/templates/recuperar_contrasena.html:48
+#, fuzzy
+msgid "Volver a iniciar sesión"
+msgstr "Log in"
 
 #: app/templates/registro.html:6 app/templates/registro.html:14
 #: app/templates/registro.html:38
@@ -2518,9 +2663,11 @@ msgid ""
 "Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen "
 "vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear "
 "una tarea nueva ahí."
-msgstr "Calendar, placed by due date (or start date if no due date). Click (or drag across several days/hours) to create a new task there."
-"Calendar, placed by due date (or start date if there's no due date). "
-"Click (or drag across several days/hours) to create a new task there."
+msgstr ""
+"Calendar, placed by due date (or start date if no due date). Click (or "
+"drag across several days/hours) to create a new task there.Calendar, "
+"placed by due date (or start date if there's no due date). Click (or drag"
+" across several days/hours) to create a new task there."
 
 #: app/templates/tareas_calendario.html:13 app/templates/tareas_lista.html:13
 #: app/templates/tareas_outlook_sync.html:13
@@ -2616,9 +2763,10 @@ msgstr "New task"
 msgid ""
 "Lista de tareas estilo Outlook, independiente de tus menús. Asunto, "
 "vencimiento, prioridad y estado."
-msgstr "Outlook-style task list, independent from your menus. Subject, due date, priority and status."
-"Outlook-style task list, independent of your menus. Subject, due date, "
-"priority and status."
+msgstr ""
+"Outlook-style task list, independent from your menus. Subject, due date, "
+"priority and status.Outlook-style task list, independent of your menus. "
+"Subject, due date, priority and status."
 
 #: app/templates/tareas_lista.html:21
 msgid "Todos (sin completadas)"
@@ -2695,10 +2843,13 @@ msgid ""
 "Outlook Classic (\"Archivo &gt; Abrir y exportar &gt; Importar o exportar"
 " &gt; Exportar a un archivo\", o arrastrando el .ics sobre tu carpeta de "
 "Tareas)."
-msgstr "Generates a file with all your active tasks, ready to import into Outlook Classic (\"File &gt; Open &amp; Export &gt; Import/Export &gt; Export to a file\", or by dragging the .ics onto your Tasks folder)."
+msgstr ""
 "Generates a file with all your active tasks, ready to import into Outlook"
 " Classic (\"File &gt; Open &amp; Export &gt; Import/Export &gt; Export to"
-" a file\", or by dragging the .ics onto your Tasks folder)."
+" a file\", or by dragging the .ics onto your Tasks folder).Generates a "
+"file with all your active tasks, ready to import into Outlook Classic "
+"(\"File &gt; Open &amp; Export &gt; Import/Export &gt; Export to a "
+"file\", or by dragging the .ics onto your Tasks folder)."
 
 #: app/templates/tareas_outlook_sync.html:33
 msgid "Exportar .ics"
@@ -2718,19 +2869,24 @@ msgid ""
 "Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez"
 " de duplicarse (se reconocen por su UID); las de .csv se crean siempre "
 "como nuevas, porque ese formato no trae un identificador único."
-msgstr "Upload an .ics or .csv file exported from the Outlook Classic Tasks folder. Previously imported .ics tasks are updated instead of duplicated (recognized by their UID); .csv tasks are always created as new, since that format has no unique identifier."
-"Upload an .ics or .csv file exported from the Tasks folder of Outlook "
-"Classic. .ics tasks already imported before are updated instead of "
-"duplicated (recognized by their UID); .csv ones are always created as "
-"new, because that format doesn't carry a unique identifier."
+msgstr ""
+"Upload an .ics or .csv file exported from the Outlook Classic Tasks "
+"folder. Previously imported .ics tasks are updated instead of duplicated "
+"(recognized by their UID); .csv tasks are always created as new, since "
+"that format has no unique identifier.Upload an .ics or .csv file exported"
+" from the Tasks folder of Outlook Classic. .ics tasks already imported "
+"before are updated instead of duplicated (recognized by their UID); .csv "
+"ones are always created as new, because that format doesn't carry a "
+"unique identifier."
 
 #: app/templates/tareas_outlook_sync.html:49
 msgid ""
 "La sincronización en vivo con Outlook Classic (sin exportar/importar "
 "archivos a mano) llegará en una fase posterior."
-msgstr "Live sync with Outlook Classic (without manually exporting/importing files) will arrive in a later phase."
-"Live sync with Outlook Classic (without exporting/importing files by "
-"hand) will arrive in a later phase."
+msgstr ""
+"Live sync with Outlook Classic (without manually exporting/importing "
+"files) will arrive in a later phase.Live sync with Outlook Classic "
+"(without exporting/importing files by hand) will arrive in a later phase."
 
 #: app/templates/tiquet_editar.html:2
 #, fuzzy
@@ -2785,9 +2941,10 @@ msgstr "Tickets"
 msgid ""
 "Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de "
 "columna."
-msgstr "Drag… well, pick the new status on each card to move it between columns."
-"Drag… well, choose the new status on each card to move it to another "
-"column."
+msgstr ""
+"Drag… well, pick the new status on each card to move it between "
+"columns.Drag… well, choose the new status on each card to move it to "
+"another column."
 
 #: app/templates/tiquets_kanban.html:9
 msgid "Solo un administrador puede mover tiquets entre columnas."
@@ -2815,9 +2972,10 @@ msgstr "No tickets here."
 msgid ""
 "Errores y sugerencias sobre Guilda Work. Tablero compartido: todo el "
 "mundo ve todos los tiquets."
-msgstr "Bugs and suggestions about Guilda Work. Shared board: everyone sees all tickets."
-"Errors and suggestions about Guilda Work. Shared board: everyone sees all"
-" tickets."
+msgstr ""
+"Bugs and suggestions about Guilda Work. Shared board: everyone sees all "
+"tickets.Errors and suggestions about Guilda Work. Shared board: everyone "
+"sees all tickets."
 
 #: app/templates/tiquets_tarjetas.html:18
 #, fuzzy
@@ -2850,6 +3008,23 @@ msgstr "Suggestions"
 msgid "Sin tiquets de este tipo."
 msgstr "No tickets of this type."
 
+#: app/templates/verificar_email.html:6
+msgid "Verificar email"
+msgstr ""
+
+#: app/templates/verificar_email.html:14
+msgid "Verificar tu email"
+msgstr ""
+
+#: app/templates/verificar_email.html:15
+msgid "Te hemos mandado un código de 6 dígitos por email."
+msgstr ""
+
+#: app/templates/verificar_email.html:45
+#, fuzzy
+msgid "Volver al dashboard"
+msgstr "Back to chat"
+
 #: app/templates/docs/explorador_api.html:6
 msgid "Explorador de la API"
 msgstr "API Explorer"
@@ -2858,9 +3033,10 @@ msgstr "API Explorer"
 msgid ""
 "Referencia interactiva de /api/v1/*, generada en vivo desde el documento "
 "OpenAPI real."
-msgstr "Interactive reference for /api/v1/*, generated live from the actual OpenAPI document."
-"Interactive reference for /api/v1/*, generated live from the real OpenAPI"
-" document."
+msgstr ""
+"Interactive reference for /api/v1/*, generated live from the actual "
+"OpenAPI document.Interactive reference for /api/v1/*, generated live from"
+" the real OpenAPI document."
 
 #: app/templates/docs/explorador_api.html:18
 msgid "Referencia de la API"
@@ -2892,18 +3068,21 @@ msgid ""
 "el mismo documento OpenAPI 3.0 que puedes importar en Postman o Insomnia."
 " Nunca se desincroniza del código real: si cambia una ruta, esto cambia "
 "solo."
-msgstr "the same OpenAPI 3.0 document you can import into Postman or Insomnia. It never drifts from the real code: if a route changes, this changes on its own."
+msgstr ""
 "the same OpenAPI 3.0 document you can import into Postman or Insomnia. It"
-" never goes out of sync with the real code: if a route changes, this "
-"changes on its own."
+" never drifts from the real code: if a route changes, this changes on its"
+" own.the same OpenAPI 3.0 document you can import into Postman or "
+"Insomnia. It never goes out of sync with the real code: if a route "
+"changes, this changes on its own."
 
 #: app/templates/docs/explorador_api.html:40
 msgid ""
 "Elige un endpoint de la lista de la izquierda para ver sus parámetros, el"
 " cuerpo esperado y un"
-msgstr "Pick an endpoint from the list on the left to see its parameters, expected body, and a"
-"Choose an endpoint from the list on the left to see its parameters, the "
-"expected body and a"
+msgstr ""
+"Pick an endpoint from the list on the left to see its parameters, "
+"expected body, and aChoose an endpoint from the list on the left to see "
+"its parameters, the expected body and a"
 
 #: app/templates/docs/explorador_api.html:40
 msgid "de ejemplo ya con la URL rellenada."

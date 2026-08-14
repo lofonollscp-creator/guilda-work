@@ -26,66 +26,77 @@
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body data-url-iconos="{{ url_for('static', filename='iconos.svg') }}">
   <a class="skip-link" href="#contenido-principal">{{ _('Saltar al contenido') }}</a>
   <div class="app-shell">
     <aside class="icon-rail">
       <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="{{ _('Expandir/contraer menú') }}" aria-label="{{ _('Expandir o contraer el menú') }}">
-        <span class="icon-rail-icono">&#9776;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg>
       </button>
+
       <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="{{ _('Menús / Dashboard') }}">
-        <span class="icon-rail-icono">&#127968;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Menús') }}</span>
       </a>
+
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Trabajo diario') }}</span>
       <a href="{{ url_for('tareas.listar') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}" title="{{ _('Tareas') }}">
-        <span class="icon-rail-icono">&#128203;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tareas') }}</span>
       </a>
       <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
-        <span class="icon-rail-icono">&#9993;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Correo') }}</span>
         {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
       </a>
-      <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="{{ _('Herramientas') }}">
-        <span class="icon-rail-icono">&#129520;</span>
-        <span class="icon-rail-etiqueta">{{ _('Herramientas') }}</span>
-      </a>
       <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
-        <span class="icon-rail-icono">&#127915;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-ticket"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
       </a>
       <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="{{ _('Fichaje') }}">
-        <span class="icon-rail-icono">&#9201;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
       </a>
-      <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="{{ _('Histórico') }}">
-        <span class="icon-rail-icono">&#128337;</span>
-        <span class="icon-rail-etiqueta">{{ _('Histórico') }}</span>
+
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Herramientas y asistencia') }}</span>
+      <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="{{ _('Herramientas') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-wrench"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Herramientas') }}</span>
       </a>
       <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="{{ _('Asistente IA') }}">
-        <span class="icon-rail-icono">&#129302;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Asistente IA') }}</span>
       </a>
+
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Datos y administración') }}</span>
+      <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="{{ _('Histórico') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Histórico') }}</span>
+      </a>
       <a href="{{ url_for('estadisticas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'estadisticas' else '' }}" title="{{ _('Estadísticas') }}">
-        <span class="icon-rail-icono">&#128202;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Estadísticas') }}</span>
       </a>
       <a href="{{ url_for('papelera') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'papelera' else '' }}" title="{{ _('Papelera') }}">
-        <span class="icon-rail-icono">&#128465;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Papelera') }}</span>
       </a>
       <a href="{{ url_for('importar') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}" title="{{ _('Importar') }}">
-        <span class="icon-rail-icono">&#11014;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Importar') }}</span>
       </a>
       {% if g.es_admin %}
       <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('backoffice.') else '' }}" title="{{ _('Backoffice') }}">
-        <span class="icon-rail-icono">&#128737;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
       </a>
       {% endif %}
+
       <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="{{ _('Captura rápida (Ctrl+Alt+G)') }}">
-        <span class="icon-rail-icono">&#128204;</span>
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-camera"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Captura rápida') }}</span>
       </button>
     </aside>
@@ -98,17 +109,29 @@
         </a>
         <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir"
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}">
-          🔍 {{ _('Buscar en notas, tareas y correo…') }}
+          <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+          {{ _('Buscar en notas, tareas y correo…') }}
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
         <div class="ajustes-menu">
-          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">&#9881;</button>
+          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg>
+          </button>
           <div class="ajustes-panel" id="ajustes-panel" hidden>
-            <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="{{ _('Tema: cambiar') }}">🖥 {{ _('Sistema') }}</button>
-            <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="{{ _('Densidad: cambiar') }}">☰ {{ _('Normal') }}</button>
+            <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="{{ _('Tema: cambiar') }}">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-monitor"></use></svg>
+              <span class="ajustes-panel-texto">{{ _('Sistema') }}</span>
+            </button>
+            <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="{{ _('Densidad: cambiar') }}">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-list"></use></svg>
+              <span class="ajustes-panel-texto">{{ _('Normal') }}</span>
+            </button>
             {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
-            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">🤖 {{ _('Asistente IA') }}</button>
+            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
+              {{ _('Asistente IA') }}
+            </button>
             {% endif %}
             <div class="ajustes-idiomas" role="group" aria-label="{{ _('Idioma') }}">
               {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
@@ -117,16 +140,28 @@
               </form>
               {% endfor %}
             </div>
-            <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">📱 {{ _('Mis dispositivos') }}</a>
-            <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">📚 {{ _('Documentación (desarrolladores)') }}</a>
+            <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
+              {{ _('Mis dispositivos') }}
+            </a>
+            <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
+              {{ _('Documentación (desarrolladores)') }}
+            </a>
             {% if modo_escritorio %}
             <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
                   onsubmit="return confirm('{{ _('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.') }}');">
-              <button type="submit" class="ajustes-panel-btn">&#9211; {{ _('Cerrar programa') }}</button>
+              <button type="submit" class="ajustes-panel-btn">
+                <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
+                {{ _('Cerrar programa') }}
+              </button>
             </form>
             {% else %}
             <form class="ajustes-panel-shutdown" action="{{ url_for('logout') }}" method="post">
-              <button type="submit" class="ajustes-panel-btn">&#9211; {{ _('Cerrar sesión') }}</button>
+              <button type="submit" class="ajustes-panel-btn">
+                <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
+                {{ _('Cerrar sesión') }}
+              </button>
             </form>
             {% endif %}
           </div>
@@ -141,7 +176,9 @@
   <div id="busqueda-overlay" class="busqueda-overlay" hidden>
     <div class="busqueda-modal" role="dialog" aria-modal="true" aria-label="{{ _('Buscar en notas, tareas y correo') }}">
       <div class="busqueda-campo">
-        <button type="button" id="busqueda-icono" class="busqueda-icono" title="{{ _('Buscar') }}" aria-label="{{ _('Buscar') }}">🔍</button>
+        <button type="button" id="busqueda-icono" class="busqueda-icono" title="{{ _('Buscar') }}" aria-label="{{ _('Buscar') }}">
+          <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+        </button>
         <input type="text" id="busqueda-input" placeholder="{{ _('Buscar en notas, tareas y correo...') }}" autocomplete="off">
         <button type="button" id="busqueda-cerrar" class="busqueda-cerrar-btn" title="{{ _('Cerrar (Esc)') }}" aria-label="{{ _('Cerrar búsqueda') }}"><kbd>Esc</kbd></button>
       </div>

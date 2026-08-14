@@ -273,7 +273,34 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   box-shadow: 0 0 8px var(--primary);
 }
 :root[data-rail-expandido="1"] .icon-rail-link.active::before { left: 2px; }
-.icon-rail-icono { font-size: 1.2em; flex-shrink: 0; }
+.icon-rail-icono { width: 20px; height: 20px; flex-shrink: 0; }
+/* Separador entre grupos del menú (Inicio / Trabajo diario / Herramientas
+   y asistencia / Datos y administración) -- en colapsado es solo una
+   línea sutil sin texto (el hueco ya funciona como ancla visual), en
+   expandido se estira y aparece la etiqueta de sección debajo. */
+.icon-rail-separador {
+  width: 32px;
+  height: 1px;
+  margin: var(--space-2) 0;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+:root[data-rail-expandido="1"] .icon-rail-separador {
+  width: auto;
+  align-self: stretch;
+  margin: var(--space-3) var(--space-2) 0;
+}
+.icon-rail-grupo-etiqueta {
+  display: none;
+  font-size: 0.68em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sidebar-text);
+  opacity: 0.55;
+  padding: 2px 10px 0;
+}
+:root[data-rail-expandido="1"] .icon-rail-grupo-etiqueta { display: block; }
 .icon-rail-etiqueta {
   display: none;
   white-space: nowrap;
@@ -332,16 +359,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 .ajustes-menu { position: relative; }
 .ajustes-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 1.2em;
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
 }
+.ajustes-toggle svg { width: 18px; height: 18px; }
 .ajustes-toggle:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
 .ajustes-panel[hidden] { display: none; }
 .ajustes-panel {
@@ -363,6 +393,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .ajustes-panel-btn {
   display: flex;
   align-items: center;
+  gap: var(--space-2);
   width: 100%;
   padding: 9px 12px;
   border: none;
@@ -374,6 +405,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   cursor: pointer;
   text-align: left;
 }
+.ajustes-panel-icono { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-muted); }
 .ajustes-panel-btn:hover { background: var(--bg); }
 .ajustes-idiomas { display: flex; gap: 4px; padding: 4px 12px 8px; }
 .ajustes-idiomas form { flex: 1; }
@@ -2616,6 +2648,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   min-width: 220px;
 }
 .busqueda-boton-abrir:hover { border-color: var(--primary); }
+.busqueda-boton-abrir svg { width: 15px; height: 15px; flex-shrink: 0; }
 .busqueda-boton-abrir .busqueda-atajo {
   margin-left: auto;
   font-family: var(--font-mono);
@@ -2681,9 +2714,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   background: transparent;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 0.95em;
   cursor: pointer;
 }
+.busqueda-icono svg { width: 16px; height: 16px; }
 .busqueda-icono:hover { color: var(--text); background: var(--bg); }
 /* Botón que envuelve el <kbd>Esc</kbd> -- antes era solo texto
    informativo, ahora también cierra el buscador al pulsarlo. */

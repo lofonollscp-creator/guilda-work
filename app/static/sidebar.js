@@ -5,16 +5,30 @@
 // estado en el botón. La lista de menús (favoritos/reordenar) vive en el
 // Dashboard (inicio.html), no aquí.
 (function () {
+  // URL del sprite de iconos (app/static/iconos.svg), leída una vez de
+  // <body data-url-iconos="..."> -- puesta ahí en vez de en cada botón
+  // por separado para no repetir la misma URL de Jinja en varios sitios
+  // (ver base.html).
+  const URL_ICONOS = document.body.dataset.urlIconos;
+
   const CLAVE_TEMA = "guilda-work-tema";
   const ORDEN_TEMAS = ["system", "light", "dark"];
-  const ETIQUETAS_TEMA = { system: "🖥 Sistema", light: "☀ Claro", dark: "☾ Oscuro" };
+  const ETIQUETAS_TEMA = {
+    system: { icono: "monitor", texto: "Sistema" },
+    light: { icono: "sun", texto: "Claro" },
+    dark: { icono: "moon", texto: "Oscuro" },
+  };
 
   const boton = document.getElementById("theme-toggle");
   if (boton) {
+    const iconoUse = boton.querySelector(".ajustes-panel-icono use");
+    const textoSpan = boton.querySelector(".ajustes-panel-texto");
     const actualizarBoton = () => {
       const tema = localStorage.getItem(CLAVE_TEMA) || "system";
-      boton.textContent = ETIQUETAS_TEMA[tema];
-      boton.title = "Tema actual: " + ETIQUETAS_TEMA[tema].slice(2) + " (clic para cambiar)";
+      const { icono, texto } = ETIQUETAS_TEMA[tema];
+      if (iconoUse) iconoUse.setAttribute("href", URL_ICONOS + "#icono-" + icono);
+      if (textoSpan) textoSpan.textContent = texto;
+      boton.title = "Tema actual: " + texto + " (clic para cambiar)";
     };
     actualizarBoton();
 
@@ -33,14 +47,17 @@
 
   const CLAVE_DENSIDAD = "guilda-work-densidad";
   const ORDEN_DENSIDADES = ["normal", "compacta"];
-  const ETIQUETAS_DENSIDAD = { normal: "☰ Normal", compacta: "☰ Compacta" };
+  const ETIQUETAS_DENSIDAD = { normal: "Normal", compacta: "Compacta" };
 
   const botonDensidad = document.getElementById("densidad-toggle");
   if (botonDensidad) {
+    // Icono fijo (layout-list, ya en el HTML) -- solo cambia el texto,
+    // igual que antes, sin necesidad de swap de icono.
+    const textoSpanDensidad = botonDensidad.querySelector(".ajustes-panel-texto");
     const actualizarBotonDensidad = () => {
       const densidad = localStorage.getItem(CLAVE_DENSIDAD) || "normal";
-      botonDensidad.textContent = ETIQUETAS_DENSIDAD[densidad];
-      botonDensidad.title = "Densidad actual: " + ETIQUETAS_DENSIDAD[densidad].slice(2) + " (clic para cambiar)";
+      if (textoSpanDensidad) textoSpanDensidad.textContent = ETIQUETAS_DENSIDAD[densidad];
+      botonDensidad.title = "Densidad actual: " + ETIQUETAS_DENSIDAD[densidad] + " (clic para cambiar)";
     };
     actualizarBotonDensidad();
 
