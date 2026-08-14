@@ -1508,6 +1508,22 @@ def tenant_de_usuario(usuario_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
+def usuarios_de_tenant(tenant_id: int) -> list[int]:
+    """IDs de los usuarios asignados a un tenant -- patrón reutilizable para
+    cualquier consulta futura que necesite agregar entre varios usuarios de
+    un mismo tenant (p.ej. reasignar un vencimiento fiscal a otro miembro
+    del equipo), en vez de que cada función nueva reinvente el JOIN a mano.
+    Deliberadamente no se añadió `tenant_id` a tareas/notas/categorias (se
+    quedaría obsoleto si un usuario cambia de tenant) -- este helper es la
+    forma correcta de agregar por tenant sin ese problema."""
+    conn = get_connection()
+    try:
+        filas = conn.execute("SELECT id FROM usuarios WHERE tenant_id = ?", (tenant_id,)).fetchall()
+        return [f["id"] for f in filas]
+    finally:
+        conn.close()
+
+
 def usuario_local_id() -> int:
     """Para procesos locales de confianza (cli.py, mcp_server.py) que no
     pasan por login web: resuelve (o crea la primera vez) el usuario local
