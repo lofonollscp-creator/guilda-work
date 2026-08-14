@@ -150,6 +150,17 @@ def calendario():
         if fecha_efectiva:
             tareas_por_dia.setdefault(fecha_efectiva, []).append(t)
 
+    # Vencimientos fiscales del tenant (no del usuario) -- solo si hay tenant
+    # asignado; g.tenant_id es None en modo escritorio o para un admin sin
+    # tenant, y ahí simplemente no hay nada que mostrar en este bucket, sin
+    # caso especial en la plantilla.
+    vencimientos_por_dia: dict[str, list] = {}
+    if g.tenant_id is not None:
+        for v in db.listar_vencimientos_fiscales(g.tenant_id, desde=inicio.isoformat(), hasta=fin.isoformat()):
+            fecha_efectiva = (v["fecha_limite"] or "")[:10]
+            if fecha_efectiva:
+                vencimientos_por_dia.setdefault(fecha_efectiva, []).append(v)
+
     dias = []
     cursor = inicio
     while cursor <= fin:
@@ -160,6 +171,7 @@ def calendario():
             "es_hoy": cursor == date.today(),
             "es_mes_actual": cursor.month == ancla.month,
             "tareas": tareas_por_dia.get(iso, []),
+            "vencimientos": vencimientos_por_dia.get(iso, []),
         })
         cursor += timedelta(days=1)
     semanas = [dias[i:i + 7] for i in range(0, len(dias), 7)] if vista == "mes" else None

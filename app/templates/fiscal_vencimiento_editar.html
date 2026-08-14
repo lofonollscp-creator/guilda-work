@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Editar vencimiento') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Editar vencimiento') }}</h1>
+    <p class="subtitle">{{ vencimiento.cliente_nombre }}</p>
+  </div>
+</header>
+
+<form class="edit-form" method="post" action="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=vencimiento.id) }}" style="max-width: 640px;">
+  <div class="ia-form-row">
+    <label>{{ _('Modelo') }}
+      <input type="text" name="modelo" value="{{ vencimiento.modelo }}" required>
+    </label>
+    <label>{{ _('Periodo') }}
+      <input type="text" name="periodo" value="{{ vencimiento.periodo }}" required>
+    </label>
+  </div>
+
+  <div class="ia-form-row">
+    <label>{{ _('Fecha límite') }}
+      <input type="date" name="fecha_limite" value="{{ vencimiento.fecha_limite[:10] }}" required>
+    </label>
+    <label>{{ _('Estado') }}
+      <select name="estado">
+        {% for valor, etiqueta in estados %}
+        <option value="{{ valor }}" {% if vencimiento.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <label>{{ _('Asignado a') }}
+    <select name="usuario_id">
+      <option value="">{{ _('Sin asignar') }}</option>
+      {% for u in usuarios %}
+      <option value="{{ u.id }}" {% if vencimiento.usuario_id == u.id %}selected{% endif %}>{{ u.email }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>{{ _('Notas') }}
+    <textarea name="notas" rows="4">{{ vencimiento.notas or '' }}</textarea>
+  </label>
+
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos') }}">{{ _('Cancelar') }}</a>
+  </div>
+</form>
+
+<form class="edit-form-delete" method="post" action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=vencimiento.id) }}"
+      onsubmit="return confirm('{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}');">
+  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar vencimiento') }}</button>
+</form>
+{% endblock %}

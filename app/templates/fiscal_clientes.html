@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Clientes fiscales') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Calendario fiscal') }}</h1>
+    <p class="subtitle">{{ _('Clientes de la gestoría para los que se llevan vencimientos fiscales (IVA, IRPF, retenciones...).') }}</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a class="active" href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
+  <a href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
+</nav>
+
+<section class="quick-actions">
+  <form class="quick-card" action="{{ url_for('fiscal.crear_cliente') }}" method="post" style="grid-column: 1 / -1;">
+    <label>{{ _('Nuevo cliente fiscal') }}</label>
+    <div class="quick-row">
+      <input type="text" name="nombre" placeholder="{{ _('Nombre o razón social...') }}" required autofocus>
+      <input type="text" name="nif" placeholder="{{ _('NIF/CIF (opcional)') }}">
+      <button type="submit" class="btn btn-primary">+ {{ _('Añadir') }}</button>
+    </div>
+  </form>
+</section>
+
+{% if not clientes %}
+<p class="empty-lane">{{ _('Todavía no hay clientes fiscales dados de alta.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for c in clientes %}
+  <li class="log-item">
+    <span class="log-text"><a href="{{ url_for('fiscal.editar_cliente', cliente_id=c.id) }}">{{ c.nombre }}</a></span>
+    {% if c.nif %}<span class="pill">{{ c.nif }}</span>{% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=c.id) }}">{{ _('Generar vencimientos') }}</a>
+    <a class="log-edit" href="{{ url_for('fiscal.editar_cliente', cliente_id=c.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
+    <form action="{{ url_for('fiscal.eliminar_cliente', cliente_id=c.id) }}" method="post"
+          onsubmit="return confirm('{{ _('¿Eliminar este cliente fiscal? Se moverá a la papelera.') }}');">
+      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

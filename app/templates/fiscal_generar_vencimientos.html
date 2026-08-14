@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Generar vencimientos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Generar vencimientos para %(cliente)s', cliente=cliente.nombre) }}</h1>
+    <p class="subtitle">{{ _('Fechas orientativas -- la AEAT las desplaza si caen en fin de semana o festivo. Revisa y ajusta cada fecha antes de guardar.') }}</p>
+  </div>
+</header>
+
+<form class="filters" method="get" action="{{ url_for('fiscal.generar_vencimientos', cliente_id=cliente.id) }}">
+  <label>{{ _('Año fiscal') }}
+    <input type="number" name="anio" value="{{ anio }}" min="2000" max="2100">
+  </label>
+  <fieldset style="display: contents;">
+    {% for id_modelo, info in modelos_disponibles.items() %}
+    <label class="checkbox-label">
+      <input type="checkbox" name="modelo" value="{{ id_modelo }}" {% if id_modelo in modelos_pedidos %}checked{% endif %}>
+      {{ id_modelo }} — {{ info.nombre }}
+    </label>
+    {% endfor %}
+  </fieldset>
+  <button type="submit" class="btn btn-primary">{{ _('Recalcular') }}</button>
+</form>
+
+{% if not propuestas %}
+<p class="empty-lane">{{ _('Elige al menos un modelo para ver las fechas propuestas.') }}</p>
+{% else %}
+<form method="post" action="{{ url_for('fiscal.generar_vencimientos', cliente_id=cliente.id) }}">
+  <ul class="log-list">
+    {% for p in propuestas %}
+    <li class="log-item">
+      <input type="hidden" name="modelo_{{ loop.index0 }}" value="{{ p.modelo }}">
+      <input type="hidden" name="periodo_{{ loop.index0 }}" value="{{ p.periodo }}">
+      <span class="log-text">{{ p.modelo }} — {{ p.periodo }}</span>
+      <label>{{ _('Fecha límite') }}
+        <input type="date" name="fecha_limite_{{ loop.index0 }}" value="{{ p.fecha_limite }}">
+      </label>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">{{ _('Guardar vencimientos') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

@@ -36,6 +36,14 @@
 </a>
 {% endmacro %}
 
+{% macro chip_vencimiento(v) %}
+<a class="cal-chip cal-chip-fiscal {{ 'is-completada' if v.estado == 'presentado' }}"
+   href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}"
+   title="{{ v.modelo }} · {{ v.cliente_nombre }}{% if v.periodo %} · {{ v.periodo }}{% endif %}">
+  {{ v.modelo }} · {{ v.cliente_nombre }}
+</a>
+{% endmacro %}
+
 {% if vista == 'mes' %}
 <div class="cal-grid cal-grid-mes">
   {% for etiqueta in [_('Lun'), _('Mar'), _('Mié'), _('Jue'), _('Vie'), _('Sáb'), _('Dom')] %}
@@ -46,6 +54,7 @@
     <div class="cal-cell cal-seleccionable {{ 'is-hoy' if dia.es_hoy }} {{ '' if dia.es_mes_actual else 'is-fuera-de-mes' }}" data-fecha="{{ dia.iso }}">
       <span class="cal-cell-num">{{ dia.fecha.day }}</span>
       <div class="cal-cell-chips">
+        {% for v in dia.vencimientos %}{{ chip_vencimiento(v) }}{% endfor %}
         {% for t in dia.tareas[:4] %}{{ chip(t) }}{% endfor %}
         {% if dia.tareas|length > 4 %}<span class="cal-mas">{{ _('+%(n)s más', n=dia.tareas|length - 4) }}</span>{% endif %}
       </div>
@@ -56,6 +65,16 @@
 
 {% elif vista == 'dia' %}
 <div class="cal-day-tasks">
+  {% if dias[0].vencimientos %}
+  <ul class="log-list">
+    {% for v in dias[0].vencimientos %}
+    <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+      <span class="log-text"><a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }} · {{ v.cliente_nombre }}</a></span>
+      <span class="pill">{{ v.periodo }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
   {% if dias[0].tareas %}
   <ul class="log-list">
     {% for t in dias[0].tareas %}
@@ -88,8 +107,9 @@
       <span class="cal-col-num">{{ dia.fecha.day }}</span>
     </div>
     <div class="cal-col-chips">
+      {% for v in dia.vencimientos %}{{ chip_vencimiento(v) }}{% endfor %}
       {% for t in dia.tareas %}{{ chip(t) }}{% endfor %}
-      {% if not dia.tareas %}<span class="cal-vacio">{{ _('Sin tareas') }}</span>{% endif %}
+      {% if not dia.tareas and not dia.vencimientos %}<span class="cal-vacio">{{ _('Sin tareas') }}</span>{% endif %}
     </div>
   </div>
   {% endfor %}

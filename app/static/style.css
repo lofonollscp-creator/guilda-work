@@ -1523,6 +1523,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-left: 3px solid var(--chip-color);
 }
 .cal-chip.is-completada { opacity: 0.55; text-decoration: line-through; }
+/* Vencimientos fiscales: color fijo (no depende de --chip-color, que en
+   tareas viene de la categoría Outlook) para que se distingan de un vistazo
+   de las tareas normales en el mismo día -- ámbar/alerta, consistente con
+   el resto de "esto necesita atención" en la app (p.ej. .prioridad-alta). */
+.cal-chip-fiscal {
+  background: color-mix(in srgb, #d98c1f 16%, var(--surface));
+  color: #d98c1f;
+  border-left-color: #d98c1f;
+  font-weight: 600;
+}
 
 .cal-grid-cols { display: grid; grid-template-columns: repeat(var(--cal-cols), 1fr); align-items: stretch; }
 .cal-col { border-right: 1px solid var(--border); display: flex; flex-direction: column; }

@@ -30,13 +30,14 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, push
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_correo import correo_bp
 from .rutas_docs import docs_bp
 from .rutas_fichaje import fichaje_bp
+from .rutas_fiscal import fiscal_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import ip_requiere_captcha, kratos_proxy_bp
@@ -145,6 +146,7 @@ babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
+app.register_blueprint(fiscal_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
@@ -1200,6 +1202,41 @@ def _sincronizacion_correo_periodica():
                 pass  # un fallo de esta cuenta no debe impedir sincronizar las demás
 
 
+RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS = 24 * 60
+RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION = 7
+
+
+def _recordatorio_vencimientos_fiscales():
+    """Una vez al día, avisa por push a quien tenga asignado un vencimiento
+    fiscal que vence dentro de RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION
+    días. Mismo criterio defensivo que el resto de hilos periódicos: un
+    fallo puntual (BD bloqueada, push mal configurado...) no debe tumbar
+    el hilo, se reintenta en la siguiente vuelta.
+
+    A diferencia de _sincronizacion_correo_periodica/_recordatorio_periodico
+    (solo arrancan en main(), modo escritorio), este hilo se arranca TAMBIÉN
+    desde serve.py -- los vencimientos fiscales son multi-tenant, tiene que
+    funcionar en el despliegue real, no solo en la app de escritorio."""
+    while True:
+        time.sleep(RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60)
+        try:
+            proximos = db.vencimientos_fiscales_proximos(dias=RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION)
+        except Exception:
+            continue
+        for v in proximos:
+            if not v["usuario_id"]:
+                continue
+            try:
+                push.enviar_a_usuario(
+                    v["usuario_id"],
+                    "Vencimiento fiscal próximo",
+                    f"{v['modelo']} de {v['cliente_nombre']} vence el {v['fecha_limite'][:10]}.",
+                    {"tipo": "vencimiento_fiscal", "vencimiento_id": v["id"]},
+                )
+            except Exception:
+                pass
+
+
 RECORDATORIO_INTERVALO_MINUTOS = 60
 
 
@@ -1256,6 +1293,7 @@ def main():
     _registrar_atajo_global()
     threading.Thread(target=_recordatorio_periodico, daemon=True).start()
     threading.Thread(target=_sincronizacion_correo_periodica, daemon=True).start()
+    threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
 
     webview.start()
 

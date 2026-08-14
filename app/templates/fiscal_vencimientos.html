@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Vencimientos fiscales') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Calendario fiscal') }}</h1>
+    <p class="subtitle">{{ _('Vencimientos de todos los clientes de la gestoría.') }}</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
+  <a class="active" href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
+</nav>
+
+<form class="filters" method="get">
+  <label>{{ _('Estado') }}
+    <select name="estado">
+      <option value="">{{ _('Todos') }}</option>
+      {% for valor, etiqueta in estados %}
+      <option value="{{ valor }}" {% if filtro_estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>{{ _('Cliente') }}
+    <select name="cliente_id">
+      <option value="">{{ _('Todos') }}</option>
+      {% for c in clientes %}
+      <option value="{{ c.id }}" {% if filtro_cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+{% if not vencimientos %}
+<p class="empty-lane">{{ _('No hay vencimientos para este filtro.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for v in vencimientos %}
+  <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+    <form action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=v.id) }}" method="post">
+      <button type="submit" class="tarea-check" title="{{ _('Marcar como presentado') }}" {{ 'disabled' if v.estado == 'presentado' }}>
+        {{ '✓' if v.estado == 'presentado' else '' }}
+      </button>
+    </form>
+    <span class="log-text">
+      <a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }} — {{ v.cliente_nombre }}</a>
+    </span>
+    <span class="pill">{{ v.periodo }}</span>
+    <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
+    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else 'instantanea' }}">
+      {{ estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}
+    </span>
+    <a class="log-edit" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
+    <form action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=v.id) }}" method="post"
+          onsubmit="return confirm('{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}');">
+      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

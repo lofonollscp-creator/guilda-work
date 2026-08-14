@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Editar cliente fiscal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Editar cliente fiscal') }}</h1>
+  </div>
+</header>
+
+<form class="edit-form" method="post" action="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}" style="max-width: 640px;">
+  <label>{{ _('Nombre o razón social') }}
+    <input type="text" name="nombre" value="{{ cliente.nombre }}" required autofocus>
+  </label>
+  <label>{{ _('NIF/CIF') }}
+    <input type="text" name="nif" value="{{ cliente.nif or '' }}">
+  </label>
+  <label>{{ _('Notas') }}
+    <textarea name="notas" rows="4">{{ cliente.notas or '' }}</textarea>
+  </label>
+
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>
+  </div>
+</form>
+
+<form class="edit-form-delete" method="post" action="{{ url_for('fiscal.eliminar_cliente', cliente_id=cliente.id) }}"
+      onsubmit="return confirm('{{ _('¿Eliminar este cliente fiscal? Se moverá a la papelera.') }}');">
+  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar cliente') }}</button>
+</form>
+{% endblock %}

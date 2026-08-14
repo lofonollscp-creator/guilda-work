@@ -17,6 +17,7 @@ Uso:
     python serve.py
 """
 import os
+import threading
 
 if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
     # Comprobado ANTES de importar app.main a propósito: ese import ya
@@ -34,10 +35,16 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 from waitress import serve
 
 from app import db
-from app.main import app
+from app.main import _recordatorio_vencimientos_fiscales, app
 
 if __name__ == "__main__":
     db.init_db()
+    # A diferencia de _sincronizacion_correo_periodica/_recordatorio_periodico
+    # (solo pensados para la app de escritorio de un único usuario, nunca
+    # arrancados aquí), el recordatorio de vencimientos fiscales SÍ es
+    # multi-tenant y tiene que correr en el servidor real -- si no, nunca se
+    # ejecutaría en ningún despliegue hospedado.
+    threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))
     # Caddy reenvía aquí por localhost (ver deploy/Caddyfile) mandando

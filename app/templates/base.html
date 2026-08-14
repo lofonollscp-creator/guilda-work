@@ -58,6 +58,12 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
       </a>
+      {% if g.tenant_id %}
+      <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fiscal.') else '' }}" title="{{ _('Calendario fiscal') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Calendario fiscal') }}</span>
+      </a>
+      {% endif %}
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Herramientas y asistencia') }}</span>

@@ -55,6 +55,43 @@ CREATE TABLE IF NOT EXISTS tenants (
     creado_en TEXT NOT NULL
 );
 
+-- Clientes fiscales de un tenant (gestoría), para el calendario de
+-- vencimientos -- deliberadamente NO integrado con EspoCRM (app/espocrm.py):
+-- EspoCRM es opcional/ocultable por tenant (ver tabla de abajo), así que
+-- depender de él aquí dejaría el calendario fiscal roto para cualquier
+-- tenant sin EspoCRM configurado. Solo lo mínimo para identificar al
+-- cliente en un vencimiento -- nada de facturación ni contacto.
+CREATE TABLE IF NOT EXISTS clientes_fiscales (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    nombre TEXT NOT NULL,
+    nif TEXT,
+    notas TEXT,
+    creado_en TEXT NOT NULL,
+    papelera_en TEXT
+);
+
+-- Vencimientos fiscales: una fila por vencimiento CONCRETO ya fechado (no
+-- una regla de recurrencia -- no existe motor de recurrencia genérico en
+-- Guilda Work, y construir uno de propósito general es fase 2, no v1).
+-- `usuario_id` es quien debe ocuparse / recibe el aviso -- puede
+-- reasignarse dentro del mismo tenant sin más (a diferencia de fichajes,
+-- esto no es un registro legal inmutable).
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id),
+    usuario_id INTEGER REFERENCES usuarios(id),
+    modelo TEXT NOT NULL,
+    periodo TEXT NOT NULL,
+    fecha_limite TEXT NOT NULL,
+    estado TEXT NOT NULL CHECK (estado IN ('pendiente','presentado','fuera_plazo')) DEFAULT 'pendiente',
+    notas TEXT,
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT,
+    papelera_en TEXT
+);
+
 -- Herramientas del catálogo (app/herramientas.py, por su `id` de texto)
 -- ocultas para un tenant concreto. Ausencia de fila = visible (así una
 -- herramienta nueva, o un tenant sin ninguna fila aquí, no pierde acceso
@@ -483,6 +520,9 @@ CREATE INDEX IF NOT EXISTS idx_tiquets_adjuntos_tiquet ON tiquets_adjuntos(tique
 CREATE INDEX IF NOT EXISTS idx_correo_carpetas_cuenta ON correo_carpetas(cuenta_id);
 CREATE INDEX IF NOT EXISTS idx_plantillas_categoria ON plantillas(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_pausas_tarea ON pausas(tarea_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_tenant ON clientes_fiscales(tenant_id, papelera_en);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_tenant_fecha ON vencimientos_fiscales(tenant_id, fecha_limite, papelera_en);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_cliente ON vencimientos_fiscales(cliente_fiscal_id);
 """
 
 
@@ -3042,6 +3082,216 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
             (usuario_id,),
         ).fetchall()
         return [f["categoria_outlook"] for f in filas]
+    finally:
+        conn.close()
+
+
+# --- Calendario fiscal (clientes_fiscales + vencimientos_fiscales) ----------
+# A diferencia de todo lo de arriba, estas dos tablas se filtran por
+# tenant_id, no por usuario_id -- son datos de la GESTORÍA (el tenant), no
+# de un miembro del equipo concreto. Primera funcionalidad de Guilda Work
+# con este patrón; cualquier función nueva aquí recibe tenant_id como
+# primer filtro (WHERE tenant_id = ?), igual que las de arriba reciben
+# usuario_id -- las rutas siempre pasan g.tenant_id, nunca un valor del
+# request (ver app/rutas_fiscal.py).
+
+CAMPOS_CLIENTE_FISCAL = ("nombre", "nif", "notas")
+CAMPOS_VENCIMIENTO_FISCAL = ("usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas")
+
+
+def crear_cliente_fiscal(tenant_id: int, nombre: str, nif: str | None = None, notas: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, creado_en) VALUES (?, ?, ?, ?, ?)",
+            (tenant_id, nombre.strip(), (nif or "").strip() or None, (notas or "").strip() or None, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_clientes_fiscales(tenant_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL ORDER BY nombre",
+            (tenant_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_cliente_fiscal(tenant_id: int, cliente_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL",
+            (cliente_id, tenant_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def editar_cliente_fiscal(tenant_id: int, cliente_id: int, **campos) -> None:
+    columnas = [c for c in campos if c in CAMPOS_CLIENTE_FISCAL]
+    if not columnas:
+        return
+    conn = get_connection()
+    try:
+        asignaciones = ", ".join(f"{c} = ?" for c in columnas)
+        valores = [campos[c] for c in columnas]
+        conn.execute(
+            f"UPDATE clientes_fiscales SET {asignaciones} WHERE id = ? AND tenant_id = ?",
+            [*valores, cliente_id, tenant_id],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
+    """Manda el cliente a la papelera (no lo borra de verdad). No toca sus
+    vencimientos -- se quedan huérfanos visualmente (el cliente ya no
+    aparece en el listado) pero no se pierden, igual que pasa con una
+    categoría y sus tareas."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE clientes_fiscales SET papelera_en = ? WHERE id = ? AND tenant_id = ?",
+            (_marca_papelera(), cliente_id, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_vencimiento_fiscal(
+    tenant_id: int, cliente_fiscal_id: int, modelo: str, periodo: str, fecha_limite: str,
+    usuario_id: int | None = None, notas: str | None = None,
+) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO vencimientos_fiscales
+               (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, notas, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                tenant_id, cliente_fiscal_id, usuario_id, modelo.strip(), periodo.strip(),
+                fecha_limite, (notas or "").strip() or None, now_iso(),
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_vencimientos_fiscales(
+    tenant_id: int,
+    desde: str | None = None,
+    hasta: str | None = None,
+    estado: str | None = None,
+    cliente_fiscal_id: int | None = None,
+) -> list[sqlite3.Row]:
+    """`desde`/`hasta` filtran por fecha_limite (YYYY-MM-DD, inclusive/
+    exclusive respectivamente, mismo criterio que listar_tareas_outlook)."""
+    conn = get_connection()
+    try:
+        cond = ["v.tenant_id = ?", "v.papelera_en IS NULL"]
+        params: list = [tenant_id]
+        if desde:
+            cond.append("v.fecha_limite >= ?"); params.append(desde)
+        if hasta:
+            cond.append("v.fecha_limite < ?"); params.append(_fecha_exclusiva(hasta))
+        if estado:
+            cond.append("v.estado = ?"); params.append(estado)
+        if cliente_fiscal_id:
+            cond.append("v.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
+        where = " AND ".join(cond)
+        return conn.execute(
+            f"""SELECT v.*, c.nombre AS cliente_nombre
+                FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+                WHERE {where}
+                ORDER BY v.fecha_limite""",
+            params,
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT v.*, c.nombre AS cliente_nombre
+               FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+               WHERE v.id = ? AND v.tenant_id = ? AND v.papelera_en IS NULL""",
+            (vencimiento_id, tenant_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def editar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, **campos) -> None:
+    columnas = [c for c in campos if c in CAMPOS_VENCIMIENTO_FISCAL]
+    if not columnas:
+        return
+    conn = get_connection()
+    try:
+        asignaciones = ", ".join(f"{c} = ?" for c in columnas)
+        valores = [campos[c] for c in columnas]
+        conn.execute(
+            f"UPDATE vencimientos_fiscales SET {asignaciones}, actualizado_en = ? WHERE id = ? AND tenant_id = ?",
+            [*valores, now_iso(), vencimiento_id, tenant_id],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE vencimientos_fiscales SET estado = 'presentado', actualizado_en = ?
+               WHERE id = ? AND tenant_id = ?""",
+            (now_iso(), vencimiento_id, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE vencimientos_fiscales SET papelera_en = ? WHERE id = ? AND tenant_id = ?",
+            (_marca_papelera(), vencimiento_id, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def vencimientos_fiscales_proximos(dias: int) -> list[sqlite3.Row]:
+    """Cruza TODOS los tenants a propósito -- usada solo por el hilo de
+    recordatorio periódico (app/main.py:_recordatorio_vencimientos_fiscales),
+    nunca desde una ruta servida a un usuario concreto."""
+    conn = get_connection()
+    try:
+        hoy = now_iso()[:10]
+        ultimo_dia = (datetime.strptime(hoy, "%Y-%m-%d") + timedelta(days=dias)).strftime("%Y-%m-%d")
+        limite = _fecha_exclusiva(ultimo_dia)
+        return conn.execute(
+            """SELECT v.*, c.nombre AS cliente_nombre
+               FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+               WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ?""",
+            (hoy, limite),
+        ).fetchall()
     finally:
         conn.close()
 
