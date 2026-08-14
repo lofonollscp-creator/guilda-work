@@ -18,18 +18,25 @@ Uso:
 """
 import os
 
+if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
+    # Comprobado ANTES de importar app.main a propósito: ese import ya
+    # ejecuta app/captcha.py y app/correo.py, que sin GUILDA_SECRET_KEY caen
+    # a una clave fija de desarrollo (ver sus docstrings) -- pensada para la
+    # app de escritorio de un único usuario local, nunca para un servidor
+    # expuesto a internet. Cortando aquí, el proceso nunca llega a construir
+    # la app con esa clave débil en memoria.
+    raise SystemExit(
+        "Falta la variable de entorno GUILDA_SECRET_KEY. Genera una con "
+        "`python -c \"import secrets; print(secrets.token_hex(32))\"` y "
+        "fíjala antes de arrancar este servidor."
+    )
+
 from waitress import serve
 
 from app import db
 from app.main import app
 
 if __name__ == "__main__":
-    if not os.environ.get("GUILDA_SECRET_KEY"):
-        raise SystemExit(
-            "Falta la variable de entorno GUILDA_SECRET_KEY. Genera una con "
-            "`python -c \"import secrets; print(secrets.token_hex(32))\"` y "
-            "fíjala antes de arrancar este servidor."
-        )
     db.init_db()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))

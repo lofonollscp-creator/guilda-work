@@ -14,6 +14,11 @@ from datetime import datetime, timedelta
 
 import altcha
 
+# El fallback es intencional solo para la app de escritorio de un único
+# usuario local (run.py, sin GUILDA_SECRET_KEY). serve.py rechaza arrancar
+# sin la variable puesta antes de importar este módulo, así que un servidor
+# real nunca llega a usar esta clave fija -- no la quites pensando que es un
+# descuido, rompería la persistencia de la app de escritorio entre reinicios.
 _HMAC_KEY = os.environ.get("GUILDA_SECRET_KEY") or "clave-de-desarrollo-no-usar-en-produccion"
 EXPIRA_MINUTOS = 5
 

@@ -286,11 +286,9 @@ def descargar_adjunto(mensaje_id: int, adjunto_id: int):
         abort(404)
     previsualizable = adjunto["tipo_mime"].startswith("image/") or adjunto["tipo_mime"] in TIPOS_PREVISUALIZABLES
     disposicion = "inline" if previsualizable else "attachment"
-    return Response(
-        adjunto["contenido"],
-        mimetype=adjunto["tipo_mime"],
-        headers={"Content-Disposition": f'{disposicion}; filename="{adjunto["nombre_archivo"]}"'},
-    )
+    respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
+    respuesta.headers.set("Content-Disposition", disposicion, filename=adjunto["nombre_archivo"])
+    return respuesta
 
 
 @correo_bp.route("/<int:mensaje_id>/confiar-remitente", methods=["POST"])

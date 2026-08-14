@@ -674,11 +674,9 @@ def descargar_adjunto_correo(mensaje_id: int, adjunto_id: int):
     adjunto = db.obtener_adjunto_correo(adjunto_id)
     if adjunto is None or adjunto["mensaje_id"] != mensaje_id:
         abort(404, "Adjunto no encontrado.")
-    return Response(
-        adjunto["contenido"],
-        mimetype=adjunto["tipo_mime"],
-        headers={"Content-Disposition": f'attachment; filename="{adjunto["nombre_archivo"]}"'},
-    )
+    respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
+    respuesta.headers.set("Content-Disposition", "attachment", filename=adjunto["nombre_archivo"])
+    return respuesta
 
 
 @api_bp.route("/correo/mensajes/<int:mensaje_id>", methods=["DELETE"])

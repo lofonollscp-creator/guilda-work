@@ -66,6 +66,11 @@ def _configurar_backend_keyring() -> None:
     terminal interactivo en un proceso servido por systemd."""
     backend = CryptFileKeyring()
     backend.file_path = db.RAIZ_PROYECTO / "data" / "correo-keyring.cfg"
+    # Mismo motivo que el fallback de app/captcha.py: solo se usa en la app
+    # de escritorio local (serve.py exige GUILDA_SECRET_KEY antes de que
+    # este módulo se importe en un servidor real). Tiene que ser un valor
+    # ESTABLE entre reinicios -- si no, las contraseñas de correo ya
+    # guardadas quedarían indescifrables en el siguiente arranque.
     backend.keyring_key = os.environ.get("GUILDA_SECRET_KEY") or "clave-de-desarrollo-no-usar-en-produccion"
     keyring.set_keyring(backend)
 

@@ -172,11 +172,12 @@ def descargar_adjunto(tiquet_id: int, adjunto_id: int):
         abort(404)
     previsualizable = adjunto["tipo_mime"].startswith("image/") or adjunto["tipo_mime"] in TIPOS_PREVISUALIZABLES
     disposicion = "inline" if previsualizable else "attachment"
-    return Response(
-        adjunto["contenido"],
-        mimetype=adjunto["tipo_mime"],
-        headers={"Content-Disposition": f'{disposicion}; filename="{adjunto["nombre_archivo"]}"'},
-    )
+    respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
+    # .set(..., filename=...) deja que Werkzeug escape/cite el nombre según
+    # RFC 6266 -- un nombre_archivo con comillas o `;` no puede romper la
+    # cabecera (antes se interpolaba con un f-string sin escapar).
+    respuesta.headers.set("Content-Disposition", disposicion, filename=adjunto["nombre_archivo"])
+    return respuesta
 
 
 @tiquets_bp.route("/<int:tiquet_id>/adjunto/<int:adjunto_id>/eliminar", methods=["POST"])
