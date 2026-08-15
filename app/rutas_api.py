@@ -124,9 +124,14 @@ def me():
     # token_required en g.tenant_id -- expuesto aquí para que el cliente
     # Flutter sepa si mostrar o no la entrada "Calendario fiscal" del
     # dashboard, mismo criterio que ya usa la web con g.tenant_id.
+    # fichaje_geolocalizacion (Fase G3): para que el móvil sepa si tiene
+    # que pedir permiso de ubicación al fichar -- sin esto pediría el
+    # permiso siempre, aunque el tenant no la use.
+    tenant = db.obtener_tenant(g.tenant_id) if g.tenant_id else None
     return _ok({
         "id": usuario["id"], "email": usuario["email"], "es_admin": usuario["rol"] == "admin",
         "tenant_id": g.tenant_id,
+        "fichaje_geolocalizacion": bool(tenant and tenant["fichaje_geolocalizacion"]),
     })
 
 
@@ -719,10 +724,18 @@ def marcar_fichaje():
     if not db.fichaje_datos_completos(g.usuario_id):
         return _err("Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Mis datos.")
     tenant = db.tenant_de_usuario(g.usuario_id)
+    # Geolocalización (Fase G3): igual que la web, el servidor solo la
+    # guarda si el tenant la tiene activada -- no se fía de que el móvil
+    # solo la mande cuando corresponda.
+    latitud = longitud = None
+    if tenant and tenant["fichaje_geolocalizacion"]:
+        latitud = datos.get("latitud")
+        longitud = datos.get("longitud")
     try:
         db.fichar(
             g.usuario_id, tenant["id"] if tenant else None, tipo, origen="movil",
             marca_tiempo=datos.get("marca_tiempo"), cliente_uuid=datos.get("cliente_uuid"),
+            latitud=latitud, longitud=longitud,
         )
     except ValueError as e:
         return _err(str(e))

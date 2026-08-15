@@ -32,23 +32,52 @@
     </span>
   </div>
   <div class="fichaje-botones">
-    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+    <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="entrada">
       <button type="submit" class="btn fichaje-btn fichaje-btn-entrada" {{ 'disabled' if estado != 'fuera' }}>{{ _('Entrada') }}</button>
     </form>
-    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+    <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="pausa_inicio">
       <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'dentro' }}>{{ _('Iniciar pausa') }}</button>
     </form>
-    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+    <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="pausa_fin">
       <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'en_pausa' }}>{{ _('Fin de pausa') }}</button>
     </form>
-    <form method="post" action="{{ url_for('fichaje.marcar') }}">
+    <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="salida">
       <button type="submit" class="btn fichaje-btn fichaje-btn-salida" {{ 'disabled' if estado == 'fuera' }}>{{ _('Salida') }}</button>
     </form>
   </div>
+  {% if geolocalizacion_activa %}
+  <p class="subtitle">📍 {{ _('Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez.') }}</p>
+  <script>
+    // Fase G3: si el tenant tiene la geolocalización activada, se pide la
+    // ubicación justo AL PULSAR fichar (no al cargar la página, para no
+    // pedir el permiso sin que el usuario haya hecho nada todavía) y se
+    // manda como campos ocultos -- si el usuario deniega el permiso o
+    // tarda, el fichaje se envía igual sin coordenadas tras un timeout
+    // corto (nunca debe bloquear fichar).
+    document.querySelectorAll('.fichaje-form-marcar').forEach(function (form) {
+      form.addEventListener('submit', function (e) {
+        if (form.dataset.geoIntentado || !('geolocation' in navigator)) return;
+        e.preventDefault();
+        form.dataset.geoIntentado = '1';
+        var enviar = function () { form.submit(); };
+        var temporizador = setTimeout(enviar, 2000);
+        navigator.geolocation.getCurrentPosition(function (pos) {
+          clearTimeout(temporizador);
+          var lat = document.createElement('input');
+          lat.type = 'hidden'; lat.name = 'latitud'; lat.value = pos.coords.latitude;
+          var lon = document.createElement('input');
+          lon.type = 'hidden'; lon.name = 'longitud'; lon.value = pos.coords.longitude;
+          form.appendChild(lat); form.appendChild(lon);
+          enviar();
+        }, function () { clearTimeout(temporizador); enviar(); }, { timeout: 1800 });
+      });
+    });
+  </script>
+  {% endif %}
 </section>
 
 <section class="stats-section">

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Integridad del registro horario') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Integridad del registro horario') }}</h1>
+    <p class="subtitle">{{ _('Comprueba que ningún fichaje se ha alterado directamente en la base de datos desde que se creó -- cadena de hashes de toda la tabla, no solo de este tenant.') }}</p>
+  </div>
+</header>
+
+{% if resultado.integra %}
+<div class="log-item" style="border-left: 3px solid var(--success); padding-left: 12px;">
+  <p style="color: var(--success); font-weight: 600;">✅ {{ _('Cadena íntegra') }}</p>
+  <p class="subtitle">{{ _('%(total)s fichajes comprobados, ninguno se ha alterado ni borrado desde su creación.', total=resultado.total_fichajes) }}</p>
+</div>
+{% else %}
+<div class="log-item" style="border-left: 3px solid var(--danger); padding-left: 12px;">
+  <p style="color: var(--danger); font-weight: 600;">⚠️ {{ _('Cadena rota') }}</p>
+  <p class="subtitle">{{ _('El fichaje con id %(id)s (o algo entre ese punto y el anterior) no coincide con lo esperado -- puede haberse editado o borrado directamente en la base de datos, saltándose la aplicación.', id=resultado.primera_fila_rota) }}</p>
+</div>
+{% endif %}
+
+<p class="subtitle"><a href="{{ url_for('fichaje.admin_resumen', tenant_id=tenant_id) }}">{{ _('← Volver a fichaje') }}</a></p>
+{% endblock %}

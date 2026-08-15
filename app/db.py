@@ -555,6 +555,39 @@ def _marca_papelera() -> str:
     return datetime.now().isoformat(timespec="microseconds")
 
 
+_HASH_FICHAJE_GENESIS = "0" * 64
+
+
+def _hash_fichaje(hash_anterior: str, usuario_id: int, tipo: str, marca_tiempo: str, creado_por: int) -> str:
+    """Encadenado de hashes de la tabla `fichajes` (Fase G3, "registro
+    horario digital"): cada fila incluye el hash de la anterior, igual que
+    una cadena de bloques de un solo nodo -- alterar o borrar una fila
+    directamente en la BD (saltándose la app, que ya era insert-only por
+    convención) rompe la cadena a partir de ahí de forma detectable, ver
+    verificar_integridad_fichajes(). Es una única cadena GLOBAL (no una
+    por tenant/usuario): más simple de mantener y más fuerte -- cualquier
+    alteración en cualquier fila de cualquier tenant se detecta igual."""
+    base = f"{hash_anterior}|{usuario_id}|{tipo}|{marca_tiempo}|{creado_por}"
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()
+
+
+def _backfill_hash_fichajes(conn: sqlite3.Connection) -> None:
+    """Rellena `hash` para filas de `fichajes` creadas antes de que
+    existiera esta columna (migración de una BD ya en uso) -- continúa la
+    cadena desde el último hash ya calculado, o desde el génesis si no
+    hay ninguno. Se llama en cada init_db(); si no hay filas con hash
+    NULL, no hace nada (barato de comprobar en cada arranque)."""
+    ultima = conn.execute("SELECT hash FROM fichajes WHERE hash IS NOT NULL ORDER BY id DESC LIMIT 1").fetchone()
+    hash_anterior = ultima["hash"] if ultima else _HASH_FICHAJE_GENESIS
+    pendientes = conn.execute(
+        "SELECT id, usuario_id, tipo, marca_tiempo, creado_por FROM fichajes WHERE hash IS NULL ORDER BY id"
+    ).fetchall()
+    for fila in pendientes:
+        h = _hash_fichaje(hash_anterior, fila["usuario_id"], fila["tipo"], fila["marca_tiempo"], fila["creado_por"])
+        conn.execute("UPDATE fichajes SET hash = ? WHERE id = ?", (h, fila["id"]))
+        hash_anterior = h
+
+
 def get_connection() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -994,6 +1027,20 @@ def init_db() -> None:
         # castellano a alguien que nunca lo pidió.
         _asegurar_columna(conn, "usuarios", "idioma", "TEXT")
 
+        # Ampliación "fichaje 100% compliant" (Fase G3): blindaje técnico
+        # hacia el registro horario digital que se avecina en España --
+        # encadenado de hashes (ver _hash_fichaje/_backfill_hash_fichajes
+        # más abajo) para que una alteración/borrado directo en la BD deje
+        # rastro matemáticamente detectable, no solo "por convención" como
+        # hasta ahora (fichajes ya era insert-only, pero sin nada que lo
+        # verificara). Geolocalización nullable y opt-in por tenant (RGPD:
+        # una gestoría sin fichaje en remoto no tiene por qué recogerla).
+        _asegurar_columna(conn, "fichajes", "hash", "TEXT")
+        _asegurar_columna(conn, "fichajes", "latitud", "REAL")
+        _asegurar_columna(conn, "fichajes", "longitud", "REAL")
+        _asegurar_columna(conn, "tenants", "fichaje_geolocalizacion", "INTEGER NOT NULL DEFAULT 0")
+        _backfill_hash_fichajes(conn)
+
         # Ampliación "asistente de IA" (Fase G2): adjuntos subidos al chat --
         # texto/CSV pequeños que el asistente puede leer bajo demanda vía la
         # tool leer_adjunto_chat (app/ia_herramientas.py). Mismo criterio de
@@ -1184,6 +1231,18 @@ def asignar_gestor_fichajes(usuario_id: int, valor: bool) -> None:
     conn = get_connection()
     try:
         conn.execute("UPDATE usuarios SET gestor_fichajes = ? WHERE id = ?", (int(valor), usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def fijar_fichaje_geolocalizacion(tenant_id: int, valor: bool) -> None:
+    """Opt-in por tenant (Fase G3) -- una gestoría sin trabajadores en
+    remoto no tiene por qué recoger ubicación al fichar (RGPD). Ver
+    app/rutas_fichaje.py:marcar()."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET fichaje_geolocalizacion = ? WHERE id = ?", (int(valor), tenant_id))
         conn.commit()
     finally:
         conn.close()
@@ -4720,6 +4779,7 @@ def fichar(
     usuario_id: int, tenant_id: int | None, tipo: str, origen: str = "web", creado_por: int | None = None,
     corrige_a: int | None = None, nota: str | None = None,
     marca_tiempo: str | None = None, cliente_uuid: str | None = None,
+    latitud: float | None = None, longitud: float | None = None,
 ) -> int:
     """Inserta un evento de fichaje, validando que la secuencia sea
     coherente (no se puede fichar salida sin una entrada abierta, ni una
@@ -4761,15 +4821,50 @@ def fichar(
             ultimo_tipo = ultimo["tipo"] if ultimo else "salida"  # sin fichajes previos = como si estuviera fuera
             if tipo not in _FICHAJE_TRANSICIONES_VALIDAS.get(ultimo_tipo, set()):
                 raise ValueError(f"No se puede fichar '{tipo}' viniendo de '{ultimo_tipo}' — revisa tu último fichaje.")
+        marca_tiempo_final = marca_tiempo or ahora
+        creado_por_final = creado_por or usuario_id
+        ultimo_hash = conn.execute("SELECT hash FROM fichajes ORDER BY id DESC LIMIT 1").fetchone()
+        hash_anterior = ultimo_hash["hash"] if ultimo_hash and ultimo_hash["hash"] else _HASH_FICHAJE_GENESIS
+        hash_fila = _hash_fichaje(hash_anterior, usuario_id, tipo, marca_tiempo_final, creado_por_final)
         cur = conn.execute(
-            """INSERT INTO fichajes (usuario_id, tenant_id, tipo, marca_tiempo, origen, nota, corrige_a, creado_por, creado_en, cliente_uuid)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (usuario_id, tenant_id, tipo, marca_tiempo or ahora, origen, nota, corrige_a, creado_por or usuario_id, ahora, cliente_uuid),
+            """INSERT INTO fichajes
+               (usuario_id, tenant_id, tipo, marca_tiempo, origen, nota, corrige_a, creado_por, creado_en,
+                cliente_uuid, hash, latitud, longitud)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                usuario_id, tenant_id, tipo, marca_tiempo_final, origen, nota, corrige_a, creado_por_final, ahora,
+                cliente_uuid, hash_fila, latitud, longitud,
+            ),
         )
         conn.commit()
         return cur.lastrowid
     finally:
         conn.close()
+
+
+def verificar_integridad_fichajes() -> dict:
+    """Recorre TODA la cadena de hashes de `fichajes` (ver _hash_fichaje)
+    y confirma que cada fila coincide con el hash recalculado a partir de
+    la anterior -- expuesta en /fichaje/admin/verificar-integridad. Es una
+    comprobación global (no por tenant): la cadena entrelaza filas de
+    todos los tenants, así que verificarla entera es lo único que tiene
+    sentido matemáticamente; cualquier admin/gestor puede pedirla, no
+    revela contenido de otros tenants, solo si la cadena es íntegra o en
+    qué fila se rompió."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT id, usuario_id, tipo, marca_tiempo, creado_por, hash FROM fichajes ORDER BY id"
+        ).fetchall()
+    finally:
+        conn.close()
+    hash_anterior = _HASH_FICHAJE_GENESIS
+    for fila in filas:
+        esperado = _hash_fichaje(hash_anterior, fila["usuario_id"], fila["tipo"], fila["marca_tiempo"], fila["creado_por"])
+        if fila["hash"] != esperado:
+            return {"integra": False, "total_fichajes": len(filas), "primera_fila_rota": fila["id"]}
+        hash_anterior = fila["hash"]
+    return {"integra": True, "total_fichajes": len(filas), "primera_fila_rota": None}
 
 
 def estado_actual_fichaje(usuario_id: int) -> str:

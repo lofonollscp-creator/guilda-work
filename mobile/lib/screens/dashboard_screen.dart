@@ -286,7 +286,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Icons.punch_clock_outlined,
         t.dashboardFichajeTooltip,
         () => _abrirPantalla(
-          () => FichajeScreen(api: widget.api, sync: widget.sync),
+          () => FichajeScreen(api: widget.api, sync: widget.sync, usuario: widget.usuario),
         ),
       ),
       (

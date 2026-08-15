@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
@@ -18,8 +19,9 @@ import 'fichaje_historial_screen.dart';
 class FichajeScreen extends StatefulWidget {
   final ApiClient api;
   final SyncService sync;
+  final Usuario usuario;
 
-  const FichajeScreen({super.key, required this.api, required this.sync});
+  const FichajeScreen({super.key, required this.api, required this.sync, required this.usuario});
 
   @override
   State<FichajeScreen> createState() => _FichajeScreenState();
@@ -69,6 +71,31 @@ class _FichajeScreenState extends State<FichajeScreen> {
     await futuro;
   }
 
+  /// Ubicación opcional (Fase G3) -- solo se pide si el tenant la tiene
+  /// activada (widget.usuario.fichajeGeolocalizacion); nunca bloquea
+  /// fichar: si el permiso se deniega, tarda, o falla por cualquier
+  /// motivo, se sigue sin coordenadas (mismo criterio que la web).
+  Future<(double?, double?)> _ubicacionOpcional() async {
+    if (!widget.usuario.fichajeGeolocalizacion) return (null, null);
+    try {
+      final servicioActivo = await Geolocator.isLocationServiceEnabled();
+      if (!servicioActivo) return (null, null);
+      var permiso = await Geolocator.checkPermission();
+      if (permiso == LocationPermission.denied) {
+        permiso = await Geolocator.requestPermission();
+      }
+      if (permiso == LocationPermission.denied || permiso == LocationPermission.deniedForever) {
+        return (null, null);
+      }
+      final posicion = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      ).timeout(const Duration(seconds: 3));
+      return (posicion.latitude, posicion.longitude);
+    } catch (_) {
+      return (null, null);
+    }
+  }
+
   Future<void> _marcar(String tipo) async {
     final t = AppLocalizations.of(context);
     setState(() {
@@ -76,7 +103,8 @@ class _FichajeScreenState extends State<FichajeScreen> {
       _error = null;
     });
     try {
-      await widget.api.fichar(tipo);
+      final (latitud, longitud) = await _ubicacionOpcional();
+      await widget.api.fichar(tipo, latitud: latitud, longitud: longitud);
       await _recargar();
     } on ApiException catch (e) {
       if (e.esDeConexion) {

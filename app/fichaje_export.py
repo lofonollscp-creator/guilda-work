@@ -1,9 +1,10 @@
-"""Exportación CSV/PDF del registro horario -- mismo criterio que
+"""Exportación CSV/PDF/JSON del registro horario -- mismo criterio que
 app/export.py: esta tabla (fichajes, ver db.py) no sabe nada de formatos
 de salida, aquí solo se da forma a lo que devuelve
 db.fichajes_tenant_crudos()."""
 import csv
 import io
+import json
 from datetime import datetime
 
 from reportlab.lib import colors
@@ -84,6 +85,48 @@ def a_csv(tenant_id: int | None, desde: str | None = None, hasta: str | None = N
             round(f["segundos_pausa"] / 3600, 2),
         ])
     return buf.getvalue()
+
+
+def a_json(tenant_id: int | None, desde: str | None = None, hasta: str | None = None, usuario_id: int | None = None) -> str:
+    """Export interoperable (Fase G3, "registro horario digital"): detalle
+    CRUDO por evento (no el agregado diario de a_csv/a_pdf), con el hash
+    de cada fila -- pensado para poder alimentar una futura interfaz del
+    Ministerio de Trabajo sin rehacer nada cuando publiquen su
+    especificación, y como prueba exportable de integridad hoy mismo
+    (ver también /fichaje/admin/verificar-integridad,
+    db.verificar_integridad_fichajes)."""
+    tenant = db.obtener_tenant(tenant_id) if tenant_id else None
+    eventos = []
+    for f in db.fichajes_tenant_crudos(tenant_id, desde, hasta, usuario_id):
+        eventos.append({
+            "id": f["id"],
+            "trabajador_email": f["email"],
+            "trabajador_nombre_completo": f["nombre_completo"],
+            "trabajador_dni_nie": f["dni_nie"],
+            "tipo": f["tipo"],
+            "marca_tiempo": f["marca_tiempo"],
+            "origen": f["origen"],
+            "corrige_a": f["corrige_a"],
+            "creado_por": f["creado_por"],
+            "creado_en": f["creado_en"],
+            "latitud": f["latitud"],
+            "longitud": f["longitud"],
+            "hash": f["hash"],
+        })
+    documento = {
+        "generado_en": db.now_iso(),
+        "empresa": {"nombre": tenant["nombre"], "cif": tenant["cif"], "direccion_fiscal": tenant["direccion_fiscal"]} if tenant else None,
+        "filtro": {"desde": desde, "hasta": hasta, "usuario_id": usuario_id},
+        "esquema": {
+            "hash": "Encadenado sha256 de esta fila con la anterior (ver db.py:_hash_fichaje) -- "
+                    "verificable en conjunto con /fichaje/admin/verificar-integridad, no fila a fila suelta.",
+            "marca_tiempo": "ISO 8601, hora local (Europe/Madrid)",
+            "corrige_a": "id del evento original si esta fila es una corrección posterior, null si no",
+            "latitud/longitud": "null si el tenant no tiene activada la geolocalización, o si el trabajador no dio permiso",
+        },
+        "eventos": eventos,
+    }
+    return json.dumps(documento, ensure_ascii=False, indent=2)
 
 
 def a_pdf(tenant_id: int | None, desde: str | None = None, hasta: str | None = None, usuario_id: int | None = None) -> bytes:

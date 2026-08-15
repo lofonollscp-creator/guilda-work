@@ -554,6 +554,19 @@ def alternar_gestor_fichajes(usuario_id: int):
     return redirect(url_for("backoffice.panel"))
 
 
+@backoffice_bp.route("/tenants/<int:tenant_id>/fichaje-geolocalizacion", methods=["POST"])
+@login_required
+@admin_required
+def alternar_fichaje_geolocalizacion(tenant_id: int):
+    """Opt-in de geolocalización al fichar (Fase G3) -- ver
+    db.fijar_fichaje_geolocalizacion, app/rutas_fichaje.py:marcar()."""
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    db.fijar_fichaje_geolocalizacion(tenant_id, not tenant["fichaje_geolocalizacion"])
+    return redirect(url_for("backoffice.panel"))
+
+
 @backoffice_bp.route("/usuarios/<int:usuario_id>/dispositivos")
 @login_required
 @admin_required

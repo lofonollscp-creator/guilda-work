@@ -44,6 +44,8 @@
 <div class="quick-row" style="margin-bottom: 16px;">
   <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_exportar_csv', tenant_id=tenant_id, desde=desde or none, hasta=hasta or none) }}">⬇ {{ _('Exportar CSV') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_exportar_pdf', tenant_id=tenant_id, desde=desde or none, hasta=hasta or none) }}">⬇ {{ _('Exportar PDF') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_exportar_json', tenant_id=tenant_id, desde=desde or none, hasta=hasta or none) }}">⬇ {{ _('Exportar JSON (detalle + hash)') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_verificar_integridad', tenant_id=tenant_id) }}">🔒 {{ _('Verificar integridad') }}</a>
 </div>
 
 {% if not resumen %}

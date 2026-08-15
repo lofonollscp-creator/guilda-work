@@ -48,6 +48,13 @@ def _inyectar_tipos_fichaje():
 
 # --- Panel del trabajador --------------------------------------------------
 
+def _geolocalizacion_activa() -> bool:
+    if not g.tenant_id:
+        return False
+    tenant = db.obtener_tenant(g.tenant_id)
+    return bool(tenant and tenant["fichaje_geolocalizacion"])
+
+
 @fichaje_bp.route("/")
 @login_required
 def panel():
@@ -60,6 +67,7 @@ def panel():
         estado=db.estado_actual_fichaje(g.usuario_id),
         hoy=db.listar_fichajes(g.usuario_id, desde=hoy, hasta=hoy),
         error=request.args.get("error"),
+        geolocalizacion_activa=_geolocalizacion_activa(),
     )
 
 
@@ -69,8 +77,18 @@ def marcar():
     tipo = request.form.get("tipo", "")
     if tipo not in dict(TIPOS_FICHAJE):
         abort(400)
+    # Geolocalización (Fase G3): solo se guarda si el tenant la tiene
+    # activada (backoffice) -- si no, se ignora aunque el navegador la
+    # mande, ni el propio formulario debería pedirla (ver
+    # fichaje_panel.html), pero el servidor no se fía del cliente para
+    # algo con implicaciones de RGPD.
+    latitud = longitud = None
+    tenant = db.obtener_tenant(g.tenant_id) if g.tenant_id else None
+    if tenant and tenant["fichaje_geolocalizacion"]:
+        latitud = request.form.get("latitud", type=float)
+        longitud = request.form.get("longitud", type=float)
     try:
-        db.fichar(g.usuario_id, g.tenant_id, tipo, origen="web")
+        db.fichar(g.usuario_id, g.tenant_id, tipo, origen="web", latitud=latitud, longitud=longitud)
     except ValueError as e:
         return redirect(url_for("fichaje.panel", error=str(e)))
     return redirect(url_for("fichaje.panel"))
@@ -219,4 +237,44 @@ def admin_exportar_pdf():
     return Response(
         contenido, mimetype="application/pdf",
         headers={"Content-Disposition": "attachment; filename=fichajes.pdf"},
+    )
+
+
+@fichaje_bp.route("/admin/exportar.json")
+@login_required
+def admin_exportar_json():
+    """Export interoperable (Fase G3): detalle CRUDO por evento, con el
+    hash de cada fila -- a diferencia de .csv/.pdf (agregado diario para
+    lectura humana), esto es lo que se pueda necesitar dar a una futura
+    interfaz del Ministerio de Trabajo (o a Inspección directamente) sin
+    tener que rehacer nada cuando publiquen su especificación oficial."""
+    tenant_id = _tenant_id_admin_actual()
+    if not _puede_administrar(tenant_id):
+        abort(403)
+    if tenant_id is None:
+        abort(400)
+    desde = request.args.get("desde") or None
+    hasta = request.args.get("hasta") or None
+    usuario_id = request.args.get("usuario_id", type=int)
+    contenido = fichaje_export.a_json(tenant_id, desde, hasta, usuario_id)
+    return Response(
+        contenido, mimetype="application/json",
+        headers={"Content-Disposition": "attachment; filename=fichajes.json"},
+    )
+
+
+@fichaje_bp.route("/admin/verificar-integridad")
+@login_required
+def admin_verificar_integridad():
+    """Comprueba la cadena de hashes de TODA la tabla fichajes (no solo
+    de este tenant -- ver db.verificar_integridad_fichajes) y muestra si
+    está íntegra o en qué fila se rompió. Accesible a cualquier
+    admin/gestor de fichajes (no revela contenido de otros tenants)."""
+    if not (g.es_admin or g.gestor_fichajes):
+        abort(403)
+    tenant_id = _tenant_id_admin_actual()
+    return render_template(
+        "fichaje_integridad.html",
+        resultado=db.verificar_integridad_fichajes(),
+        tenant_id=tenant_id,
     )

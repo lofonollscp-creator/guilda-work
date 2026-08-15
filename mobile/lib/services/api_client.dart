@@ -30,11 +30,16 @@ class Usuario {
   // g.tenant_id (el dashboard solo enseña "Calendario fiscal" si esto no
   // es null, ver dashboard_screen.dart:_rejillaAccesos()).
   final int? tenantId;
+  // Fase G3: si el tenant tiene activada la geolocalización al fichar --
+  // fichaje_screen.dart solo pide el permiso de ubicación cuando esto es
+  // true, nunca por defecto.
+  final bool fichajeGeolocalizacion;
   Usuario({
     required this.id,
     required this.email,
     this.esAdmin = false,
     this.tenantId,
+    this.fichajeGeolocalizacion = false,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
@@ -42,6 +47,7 @@ class Usuario {
     email: json['email'] as String,
     esAdmin: json['es_admin'] as bool? ?? false,
     tenantId: json['tenant_id'] as int?,
+    fichajeGeolocalizacion: json['fichaje_geolocalizacion'] as bool? ?? false,
   );
 }
 
@@ -706,6 +712,8 @@ class ApiClient {
     String tipo, {
     String? marcaTiempo,
     String? clienteUuid,
+    double? latitud,
+    double? longitud,
   }) async {
     try {
       final resp = await _dio.post(
@@ -714,6 +722,8 @@ class ApiClient {
           'tipo': tipo,
           'marca_tiempo': ?marcaTiempo,
           'cliente_uuid': ?clienteUuid,
+          'latitud': ?latitud,
+          'longitud': ?longitud,
         },
       );
       return (resp.data['data'] as Map<String, dynamic>)['estado'] as String;

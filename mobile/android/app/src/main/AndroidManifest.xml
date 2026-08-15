@@ -3,6 +3,10 @@
          lectura en voz alta (flutter_tts) de las respuestas, ver
          ia_chat_screen.dart. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Fichaje 100% compliant (Fase G3): ubicación opcional al fichar,
+         solo si el tenant lo tiene activado -- ver fichaje_screen.dart. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="Guilda Work"
         android:name="${applicationName}"

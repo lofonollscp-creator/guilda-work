@@ -39,6 +39,10 @@
 	<string>Guilda Work necesita acceso a tus fotos para que puedas elegir una foto de perfil.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Guilda Work necesita la cámara para que puedas hacerte una foto de perfil.</string>
+	<!-- Fichaje 100% compliant (Fase G3): ubicación opcional al fichar,
+	     solo si tu gestoría lo tiene activado -- ver fichaje_screen.dart. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Guilda Work usa tu ubicación al fichar, solo si tu gestoría lo tiene activado.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

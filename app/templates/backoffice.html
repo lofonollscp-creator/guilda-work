@@ -182,6 +182,11 @@
             </div>
           </td>
           <td>
+            <form method="post" action="{{ url_for('backoffice.alternar_fichaje_geolocalizacion', tenant_id=t.id) }}" style="margin-bottom: 6px;">
+              <button type="submit" class="btn btn-ghost" title="{{ _('RGPD: solo activar si hay trabajadores fichando en remoto') }}">
+                📍 {{ _('Quitar geolocalización') if t.fichaje_geolocalizacion else _('Activar geolocalización') }}
+              </button>
+            </form>
             <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
                   onsubmit="return confirm('{{ _('¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.', nombre=t.nombre) }}');">
               <button type="submit" class="btn btn-ghost">{{ _('Borrar') }}</button>
