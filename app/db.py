@@ -3445,6 +3445,99 @@ def papelera_fiscal(tenant_id: int) -> list[dict]:
         conn.close()
 
 
+def _existe_vencimiento_fiscal(tenant_id: int, cliente_fiscal_id: int, modelo: str, periodo: str) -> bool:
+    """Da igual si está en la papelera o no -- si ya se generó/borró antes
+    este mismo periodo, no hay que volver a crearlo solo (el usuario pudo
+    haberlo eliminado a propósito). Usada por generar_vencimientos_automaticos()
+    para no duplicar en ejecuciones repetidas del cron (idempotencia)."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT 1 FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? "
+            "AND modelo = ? AND periodo = ? LIMIT 1",
+            (tenant_id, cliente_fiscal_id, modelo, periodo),
+        ).fetchone()
+        return fila is not None
+    finally:
+        conn.close()
+
+
+def generar_vencimientos_automaticos() -> int:
+    """Recurrencia automática por cron (ver scripts/generar_vencimientos_fiscales.py
+    y deploy/vencimientos-fiscales.timer) -- para cada cliente_fiscal con
+    generacion_automatica=1 y modelos_fiscales definido, en CUALQUIER
+    tenant, genera los vencimientos que falten y los inserta directamente
+    (a diferencia de "Generar vencimientos" del backoffice, que solo
+    propone y deja confirmar a mano).
+
+    Sin lógica de "qué trimestre exacto toca hoy": se calculan las
+    propuestas del año en curso y del anterior (cubre de sobra el caso
+    T4/anuales, cuyo plazo cae en enero del año siguiente al periodo) y
+    solo se inserta lo que no exista ya para ese cliente+modelo+periodo
+    (`_existe_vencimiento_fiscal`) -- así el script es 100% idempotente:
+    ejecutarlo todos los días no duplica nada, y no hace falta saber si
+    hoy es el primer día de un trimestre nuevo o no.
+
+    Devuelve cuántos vencimientos nuevos se han creado."""
+    # Import tardío: vencimientos_fiscales.py es una función pura a
+    # propósito (ver su docstring, "nunca un cron que auto-genera") y no
+    # importa db.py -- este orquestador vive aquí, no allí, precisamente
+    # para no romper esa separación.
+    from .vencimientos_fiscales import generar_vencimientos_propuestos
+
+    anio_actual = datetime.now().year
+    creados = 0
+    conn = get_connection()
+    try:
+        clientes = conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE generacion_automatica = 1 "
+            "AND modelos_fiscales IS NOT NULL AND papelera_en IS NULL"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    for cliente in clientes:
+        modelos = modelos_fiscales_de_cliente(cliente)
+        if not modelos:
+            continue
+        for anio in (anio_actual - 1, anio_actual):
+            for propuesta in generar_vencimientos_propuestos(modelos, anio):
+                if _existe_vencimiento_fiscal(
+                    cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"]
+                ):
+                    continue
+                crear_vencimiento_fiscal(
+                    cliente["tenant_id"], cliente["id"],
+                    propuesta["modelo"], propuesta["periodo"], propuesta["fecha_limite"],
+                )
+                creados += 1
+    return creados
+
+
+def sanear_vencimientos_fuera_plazo() -> int:
+    """Marca `fuera_plazo` cualquier vencimiento `pendiente` cuya
+    fecha_limite ya pasó -- llamado por el mismo cron que
+    generar_vencimientos_automaticos() (ver scripts/generar_vencimientos_fiscales.py).
+    Antes de esto, `fuera_plazo` era un estado del CHECK constraint que
+    nadie escribía nunca -- la UI ya lo pinta en rojo en caliente (ver
+    app/rutas_fiscal.py:vencimientos()) sin depender de este saneo, pero
+    sin él el ESTADO real en BD se quedaba `pendiente` para siempre, lo
+    que rompe cualquier filtro/export por estado. Devuelve cuántas filas
+    se han marcado."""
+    conn = get_connection()
+    try:
+        hoy = now_iso()[:10]
+        cur = conn.execute(
+            "UPDATE vencimientos_fiscales SET estado = 'fuera_plazo', actualizado_en = ? "
+            "WHERE estado = 'pendiente' AND papelera_en IS NULL AND fecha_limite < ?",
+            (now_iso(), hoy),
+        )
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
 # --- Correo (cuentas IMAP/POP3 + caché de mensajes) ---------------------------
 # La lógica de red (conectar, sincronizar, enviar) vive en app/correo.py; aquí
 # solo hay persistencia. La contraseña de cada cuenta NO se guarda en esta

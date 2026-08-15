@@ -2245,6 +2245,48 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now restic-backup.timer
 ```
 
+### 9.3 Recurrencia automática del calendario fiscal
+
+`scripts/generar_vencimientos_fiscales.py` genera solo los vencimientos
+de los clientes fiscales que tengan la casilla "Generación automática"
+activada en su ficha (`clientes_fiscales.generacion_automatica`, apagada
+por defecto — opt-in por cliente, editable en `/fiscal/clientes/<id>/editar`)
+y sanea el estado `fuera_plazo` de lo pendiente ya vencido
+(`db.generar_vencimientos_automaticos()` /
+`db.sanear_vencimientos_fuera_plazo()`). Es un timer systemd de verdad,
+no un hilo más dentro de `serve.py` — mismo criterio que Restic (9.2):
+esto es una tarea de administración periódica, no algo que dependa de
+que el proceso web esté vivo.
+
+**Idempotente** — se puede ejecutar cualquier número de veces sin
+duplicar nada: por cada cliente en generación automática, calcula las
+propuestas del año en curso y del anterior con la misma función pura
+que usa "Generar vencimientos" a mano
+(`vencimientos_fiscales.generar_vencimientos_propuestos()`) y solo
+inserta lo que no exista ya para ese cliente+modelo+periodo. No hace
+falta que sepa qué trimestre exacto toca hoy.
+
+**No necesita variables nuevas** — reutiliza `/etc/guilda-work.env`, el
+mismo fichero que ya usa `guilda-work.service` (a diferencia de Restic,
+esta tarea no habla con ninguna API externa, solo con `data/registro.db`).
+
+**Programación** — timer diario a las 04:00 (una hora después de
+Restic, para no competir por CPU/IO), mismo patrón que 9.2:
+
+```bash
+sudo cp deploy/vencimientos-fiscales.service deploy/vencimientos-fiscales.timer /etc/systemd/system/
+sudo nano /etc/systemd/system/vencimientos-fiscales.service   # ajustar USUARIO y rutas
+sudo systemctl daemon-reload
+sudo systemctl enable --now vencimientos-fiscales.timer
+```
+
+**Verificar que corrió**:
+
+```bash
+systemctl list-timers vencimientos-fiscales.timer
+journalctl -u vencimientos-fiscales.service -n 20
+```
+
 **Retención**: el script termina con
 `restic forget --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6`
 — 7 copias diarias, 4 semanales, 6 mensuales; Restic solo almacena los

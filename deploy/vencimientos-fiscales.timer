@@ -1,0 +1,22 @@
+# Plantilla de timer systemd para vencimientos-fiscales.service (ver ese
+# archivo y HOSTING.md, sección del calendario fiscal). Copia junto al
+# .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now vencimientos-fiscales.timer
+#
+# RandomizedDelaySec añade hasta 15 minutos de margen aleatorio sobre la
+# hora fija (04:00) -- mismo criterio que restic-backup.timer, para no
+# hacer coincidir siempre todos los cron del stack en el mismo segundo
+# exacto. 04:00 en vez de las 03:00 de Restic a propósito: que no compitan
+# por CPU/IO a la misma hora.
+
+[Unit]
+Description=Guilda Work - generación automática de vencimientos fiscales (ver vencimientos-fiscales.service)
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

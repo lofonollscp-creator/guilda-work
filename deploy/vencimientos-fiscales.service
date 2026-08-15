@@ -1,0 +1,22 @@
+# Plantilla de unidad systemd para scripts/generar_vencimientos_fiscales.py
+# en el VPS (ver ese script y HOSTING.md, sección del calendario fiscal).
+# Copia a /etc/systemd/system/vencimientos-fiscales.service, ajusta
+# USUARIO y las rutas, y activa el timer (deploy/vencimientos-fiscales.timer),
+# no esta unidad directamente -- .service sin .timer solo se ejecutaría
+# una vez al arrancar el sistema.
+#
+# Usa el mismo /etc/guilda-work.env que el servicio principal
+# (guilda-work.service) -- no hace falta un fichero de credenciales
+# aparte, esta tarea no habla con ninguna API externa, solo con la
+# base de datos local (data/registro.db).
+
+[Unit]
+Description=Guilda Work - generación automática de vencimientos fiscales
+After=network.target
+
+[Service]
+Type=oneshot
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python scripts/generar_vencimientos_fiscales.py

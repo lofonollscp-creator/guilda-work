@@ -208,6 +208,51 @@ def test_listar_clientes_fiscales_filtra_por_nombre_o_nif():
     assert db.listar_clientes_fiscales(tenant_id, q="no-existe-nada") == []
 
 
+def test_generar_vencimientos_automaticos_solo_para_clientes_opt_in_con_modelos():
+    tenant_id, _ = _tenant_con_cliente()
+    con_auto = db.crear_cliente_fiscal(tenant_id, "Con Auto", modelos_fiscales=["390"])
+    db.editar_cliente_fiscal(tenant_id, con_auto, generacion_automatica=1)
+    sin_auto = db.crear_cliente_fiscal(tenant_id, "Sin Auto", modelos_fiscales=["390"])
+    auto_sin_modelos = db.crear_cliente_fiscal(tenant_id, "Auto Sin Modelos")
+    db.editar_cliente_fiscal(tenant_id, auto_sin_modelos, generacion_automatica=1)
+
+    creados = db.generar_vencimientos_automaticos()
+    assert creados > 0
+    assert len(db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=con_auto)) > 0
+    assert db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=sin_auto) == []
+    assert db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=auto_sin_modelos) == []
+
+
+def test_generar_vencimientos_automaticos_es_idempotente():
+    tenant_id, _ = _tenant_con_cliente()
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Recurrente", modelos_fiscales=["303"])
+    db.editar_cliente_fiscal(tenant_id, cliente_id, generacion_automatica=1)
+
+    creados_1 = db.generar_vencimientos_automaticos()
+    assert creados_1 > 0
+    total_tras_primera = len(db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=cliente_id))
+
+    creados_2 = db.generar_vencimientos_automaticos()
+    assert creados_2 == 0
+    assert len(db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=cliente_id)) == total_tras_primera
+
+
+def test_sanear_vencimientos_fuera_plazo_marca_solo_lo_pendiente_vencido():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    v_vencido = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2020-T1", "2020-04-20")
+    v_futuro = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2099-T1", "2099-04-20")
+    v_presentado = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2020-T2", "2020-07-20")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, v_presentado)
+
+    saneados = db.sanear_vencimientos_fuera_plazo()
+    assert saneados == 1
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_vencido)["estado"] == "fuera_plazo"
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_futuro)["estado"] == "pendiente"
+    # Uno ya presentado no se toca aunque su fecha haya pasado -- no tiene
+    # sentido marcarlo "fuera de plazo" si ya se presentó.
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_presentado)["estado"] == "presentado"
+
+
 def test_vencimientos_fiscales_proximos_excluye_lo_ya_avisado():
     tenant_id, cliente_id = _tenant_con_cliente()
     usuario_id = db.crear_usuario_vinculado_a_kratos("dedup@ejemplo.com", "kratos-dedup")
