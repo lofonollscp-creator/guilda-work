@@ -11,6 +11,7 @@
 <nav class="tareas-subnav">
   <a href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
   <a class="active" href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
+  <a href="{{ url_for('fiscal.papelera') }}">{{ _('Papelera') }}</a>
 </nav>
 
 <form class="filters" method="get">
@@ -49,8 +50,9 @@
     </span>
     <span class="pill">{{ v.periodo }}</span>
     <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
-    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else 'instantanea' }}">
-      {{ estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}
+    {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
+    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else 'instantanea') }}">
+      {{ _('Vencido') if vencido else estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}
     </span>
     <a class="log-edit" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
     <form action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=v.id) }}" method="post"

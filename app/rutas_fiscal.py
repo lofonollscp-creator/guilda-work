@@ -126,6 +126,11 @@ def vencimientos():
         estados=ESTADOS_VENCIMIENTO,
         filtro_estado=estado,
         filtro_cliente_id=cliente_fiscal_id,
+        # Para pintar en rojo lo pendiente ya vencido sin esperar a que pase
+        # el cron de saneo (app/vencimientos_fiscales.py) que marca
+        # fuera_plazo -- ese cron corre una vez al día, esto se ve al
+        # instante en cuanto la fecha pasa.
+        hoy=date.today().isoformat(),
     )
 
 
@@ -170,3 +175,42 @@ def eliminar_vencimiento(vencimiento_id: int):
         abort(404)
     db.eliminar_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     return redirect(url_for("fiscal.vencimientos"))
+
+
+# --- Papelera del calendario fiscal -----------------------------------------
+# Aparte de /papelera (que es por g.usuario_id, ver app/main.py): estas dos
+# tablas son por tenant_id, así que tienen su propia mini-papelera aquí en
+# vez de sumarse al UNION de db.papelera(). Antes de esto, un cliente o
+# vencimiento "eliminado" (que en realidad solo va a papelera_en, ver
+# db.eliminar_cliente_fiscal/eliminar_vencimiento_fiscal) era invisible e
+# irrecuperable desde la UI pese al aviso de "se moverá a la papelera" en
+# el diálogo de confirmación de borrado.
+
+@fiscal_bp.route("/papelera")
+@login_required
+def papelera():
+    return render_template("fiscal_papelera.html", items=db.papelera_fiscal(g.tenant_id))
+
+
+@fiscal_bp.route("/papelera/<tipo>/<int:item_id>/restaurar", methods=["POST"])
+@login_required
+def restaurar_papelera(tipo: str, item_id: int):
+    if tipo == "cliente_fiscal":
+        db.restaurar_cliente_fiscal(g.tenant_id, item_id)
+    elif tipo == "vencimiento_fiscal":
+        db.restaurar_vencimiento_fiscal(g.tenant_id, item_id)
+    else:
+        abort(404)
+    return redirect(url_for("fiscal.papelera"))
+
+
+@fiscal_bp.route("/papelera/<tipo>/<int:item_id>/eliminar-definitivamente", methods=["POST"])
+@login_required
+def eliminar_definitivamente_papelera(tipo: str, item_id: int):
+    if tipo == "cliente_fiscal":
+        db.eliminar_cliente_fiscal_definitivamente(g.tenant_id, item_id)
+    elif tipo == "vencimiento_fiscal":
+        db.eliminar_vencimiento_fiscal_definitivamente(g.tenant_id, item_id)
+    else:
+        abort(404)
+    return redirect(url_for("fiscal.papelera"))

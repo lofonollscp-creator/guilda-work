@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Papelera') }} — {{ _('Calendario fiscal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Calendario fiscal') }}</h1>
+    <p class="subtitle">{{ _('Clientes y vencimientos eliminados de este tenant. Puedes recuperarlos cuando quieras.') }}</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
+  <a href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
+  <a class="active" href="{{ url_for('fiscal.papelera') }}">{{ _('Papelera') }}</a>
+</nav>
+
+{% if not items %}
+<p class="empty-lane">{{ _('La papelera del calendario fiscal está vacía.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for item in items %}
+  <li class="log-item">
+    <span class="log-time">{{ item.papelera_en[:16].replace('T', ' ') }}</span>
+    <span class="log-badge log-badge-{{ 'nota' if item.origen == 'cliente_fiscal' else 'duracion' }}">
+      {{ _('Cliente') if item.origen == 'cliente_fiscal' else _('Vencimiento') }}
+    </span>
+    {% if item.cliente_nombre %}
+    <span class="log-menu">{{ item.cliente_nombre }}</span>
+    {% endif %}
+    <span class="log-text">{{ item.texto }}</span>
+
+    <form action="{{ url_for('fiscal.restaurar_papelera', tipo=item.origen, item_id=item.id) }}" method="post">
+      <button type="submit" class="btn btn-ghost">↺ {{ _('Restaurar') }}</button>
+    </form>
+    <form action="{{ url_for('fiscal.eliminar_definitivamente_papelera', tipo=item.origen, item_id=item.id) }}" method="post"
+          onsubmit="return confirm('{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}');">
+      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}">✕</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

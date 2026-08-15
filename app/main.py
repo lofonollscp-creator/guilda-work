@@ -1233,6 +1233,11 @@ def _recordatorio_vencimientos_fiscales():
                     f"{v['modelo']} de {v['cliente_nombre']} vence el {v['fecha_limite'][:10]}.",
                     {"tipo": "vencimiento_fiscal", "vencimiento_id": v["id"]},
                 )
+                # Dedup: sin esto, vencimientos_fiscales_proximos() lo
+                # volvía a devolver cada día mientras siguiera pendiente y
+                # dentro de la ventana, reenviando el mismo aviso hasta
+                # RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION veces.
+                db.marcar_recordatorio_vencimiento_fiscal_enviado(v["id"])
             except Exception:
                 pass
 

@@ -125,3 +125,74 @@ def test_generar_vencimientos_propuestos_no_escribe_en_bd():
     tenant_id, cliente_id = _tenant_con_cliente()
     generar_vencimientos_propuestos(["303"], 2026)
     assert db.listar_vencimientos_fiscales(tenant_id) == []
+
+
+def test_restaurar_cliente_fiscal_lo_devuelve_a_la_lista():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    db.eliminar_cliente_fiscal(tenant_id, cliente_id)
+    assert db.listar_clientes_fiscales(tenant_id) == []
+    db.restaurar_cliente_fiscal(tenant_id, cliente_id)
+    assert [c["id"] for c in db.listar_clientes_fiscales(tenant_id)] == [cliente_id]
+
+
+def test_eliminar_cliente_fiscal_definitivamente_no_se_puede_restaurar():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    db.eliminar_cliente_fiscal(tenant_id, cliente_id)
+    db.eliminar_cliente_fiscal_definitivamente(tenant_id, cliente_id)
+    db.restaurar_cliente_fiscal(tenant_id, cliente_id)  # no debe fallar aunque ya no exista
+    assert db.listar_clientes_fiscales(tenant_id) == []
+
+
+def test_restaurar_y_eliminar_definitivamente_vencimiento():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T2", "2026-07-20")
+    db.eliminar_vencimiento_fiscal(tenant_id, v_id)
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id) is None
+
+    db.restaurar_vencimiento_fiscal(tenant_id, v_id)
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id) is not None
+
+    db.eliminar_vencimiento_fiscal(tenant_id, v_id)
+    db.eliminar_vencimiento_fiscal_definitivamente(tenant_id, v_id)
+    db.restaurar_vencimiento_fiscal(tenant_id, v_id)  # no debe fallar aunque ya no exista
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id) is None
+
+
+def test_papelera_fiscal_lista_clientes_y_vencimientos_eliminados():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T2", "2026-07-20")
+    otro_cliente = db.crear_cliente_fiscal(tenant_id, "Otro cliente")
+
+    assert db.papelera_fiscal(tenant_id) == []
+
+    db.eliminar_vencimiento_fiscal(tenant_id, v_id)
+    db.eliminar_cliente_fiscal(tenant_id, otro_cliente)
+
+    items = db.papelera_fiscal(tenant_id)
+    origenes = {(i["origen"], i["id"]) for i in items}
+    assert ("vencimiento_fiscal", v_id) in origenes
+    assert ("cliente_fiscal", otro_cliente) in origenes
+    # El cliente activo (no eliminado) no aparece en su propia papelera.
+    assert cliente_id not in {i["id"] for i in items if i["origen"] == "cliente_fiscal"}
+
+
+def test_papelera_fiscal_aisla_por_tenant():
+    tenant_a, cliente_a = _tenant_con_cliente("Gestoria A", "Cliente A")
+    tenant_b, cliente_b = _tenant_con_cliente("Gestoria B", "Cliente B")
+    db.eliminar_cliente_fiscal(tenant_a, cliente_a)
+    db.eliminar_cliente_fiscal(tenant_b, cliente_b)
+
+    assert {i["id"] for i in db.papelera_fiscal(tenant_a)} == {cliente_a}
+    assert {i["id"] for i in db.papelera_fiscal(tenant_b)} == {cliente_b}
+
+
+def test_vencimientos_fiscales_proximos_excluye_lo_ya_avisado():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    usuario_id = db.crear_usuario_vinculado_a_kratos("dedup@ejemplo.com", "kratos-dedup")
+    cerca = (datetime.date.today() + datetime.timedelta(days=2)).isoformat()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "T", cerca, usuario_id=usuario_id)
+
+    assert v_id in {v["id"] for v in db.vencimientos_fiscales_proximos(dias=7)}
+
+    db.marcar_recordatorio_vencimiento_fiscal_enviado(v_id)
+    assert v_id not in {v["id"] for v in db.vencimientos_fiscales_proximos(dias=7)}

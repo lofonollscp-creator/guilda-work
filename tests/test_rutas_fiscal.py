@@ -95,6 +95,67 @@ def test_usuario_de_un_tenant_no_ve_vencimientos_de_otro(cliente):
     assert v_tras_intentos["estado"] == "pendiente"
 
 
+def test_papelera_fiscal_restaurar_y_eliminar_definitivamente(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "papelera@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Papelera")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Papelera")
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/eliminar")
+    assert resp.status_code == 302
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id) is None
+
+    resp = cliente.get("/fiscal/papelera")
+    assert "Cliente Papelera" in resp.get_data(as_text=True)
+
+    resp = cliente.post(f"/fiscal/papelera/cliente_fiscal/{cliente_id}/restaurar")
+    assert resp.status_code == 302
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id) is not None
+
+    cliente.post(f"/fiscal/clientes/{cliente_id}/eliminar")
+    resp = cliente.post(f"/fiscal/papelera/cliente_fiscal/{cliente_id}/eliminar-definitivamente")
+    assert resp.status_code == 302
+    assert db.listar_clientes_fiscales(tenant_id) == []
+    assert db.papelera_fiscal(tenant_id) == []
+
+
+def test_papelera_fiscal_tipo_desconocido_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "papelera-tipo@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Papelera Tipo")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.post("/fiscal/papelera/no-existe/1/restaurar")
+    assert resp.status_code == 404
+
+
+def test_papelera_fiscal_no_toca_lo_de_otro_tenant(cliente):
+    usuario_a = iniciar_sesion_de_prueba(cliente, "papelera-a@ejemplo.com", "contrasena123")
+    tenant_a = db.crear_tenant("Gestoria Papelera A")
+    db.asignar_tenant(usuario_a, tenant_a)
+    cliente_a_id = db.crear_cliente_fiscal(tenant_a, "Cliente Papelera A")
+    db.eliminar_cliente_fiscal(tenant_a, cliente_a_id)
+
+    from app.auth import limiter
+    from app.main import app as flask_app
+
+    flask_app.config.update(TESTING=True, SERVER_NAME="127.0.0.1:8000")
+    limiter.reset()
+    with flask_app.test_client() as cliente_b_http:
+        usuario_b = iniciar_sesion_de_prueba(cliente_b_http, "papelera-b@ejemplo.com", "contrasena123")
+        tenant_b = db.crear_tenant("Gestoria Papelera B")
+        db.asignar_tenant(usuario_b, tenant_b)
+
+        # El WHERE tenant_id de restaurar_cliente_fiscal simplemente no
+        # afecta ninguna fila -- redirige igual (mismo criterio que el
+        # resto de rutas de papelera, ver app/main.py), pero el cliente de
+        # A sigue en su papelera, no se restaura para B.
+        resp = cliente_b_http.post(f"/fiscal/papelera/cliente_fiscal/{cliente_a_id}/restaurar")
+        assert resp.status_code == 302
+
+    assert db.obtener_cliente_fiscal(tenant_a, cliente_a_id) is None
+    assert {i["id"] for i in db.papelera_fiscal(tenant_a)} == {cliente_a_id}
+
+
 def test_generar_vencimientos_formulario_y_confirmacion(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "generar@ejemplo.com", "contrasena123")
     tenant_id = db.crear_tenant("Gestoria Generar")

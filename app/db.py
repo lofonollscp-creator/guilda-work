@@ -925,6 +925,14 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "umami_team_id", "TEXT")
         _asegurar_columna(conn, "tenants", "umami_website_id", "TEXT")
 
+        # Calendario fiscal — ampliación (dedup de recordatorios): sin esta
+        # columna, _recordatorio_vencimientos_fiscales (app/main.py) volvía a
+        # avisar cada día mientras el vencimiento siguiera "pendiente" y
+        # dentro de la ventana de aviso, hasta 7 veces por el mismo
+        # vencimiento. Se marca tras el primer push correcto y
+        # vencimientos_fiscales_proximos() excluye lo ya marcado.
+        _asegurar_columna(conn, "vencimientos_fiscales", "recordatorio_enviado_en", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -3167,6 +3175,27 @@ def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
         conn.close()
 
 
+def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE clientes_fiscales SET papelera_en = NULL WHERE id = ? AND tenant_id = ?",
+            (cliente_id, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM clientes_fiscales WHERE id = ? AND tenant_id = ?", (cliente_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def crear_vencimiento_fiscal(
     tenant_id: int, cliente_fiscal_id: int, modelo: str, periodo: str, fecha_limite: str,
     usuario_id: int | None = None, notas: str | None = None,
@@ -3276,10 +3305,49 @@ def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
         conn.close()
 
 
+def restaurar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE vencimientos_fiscales SET papelera_en = NULL WHERE id = ? AND tenant_id = ?",
+            (vencimiento_id, tenant_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_vencimiento_fiscal_definitivamente(tenant_id: int, vencimiento_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM vencimientos_fiscales WHERE id = ? AND tenant_id = ?", (vencimiento_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def marcar_recordatorio_vencimiento_fiscal_enviado(vencimiento_id: int) -> None:
+    """Llamada por el hilo de recordatorio (app/main.py) tras un push
+    correcto -- sin tenant_id porque ese hilo cruza todos los tenants a
+    propósito, igual que vencimientos_fiscales_proximos()."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE vencimientos_fiscales SET recordatorio_enviado_en = ? WHERE id = ?",
+            (now_iso(), vencimiento_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def vencimientos_fiscales_proximos(dias: int) -> list[sqlite3.Row]:
     """Cruza TODOS los tenants a propósito -- usada solo por el hilo de
     recordatorio periódico (app/main.py:_recordatorio_vencimientos_fiscales),
-    nunca desde una ruta servida a un usuario concreto."""
+    nunca desde una ruta servida a un usuario concreto. Excluye lo que ya
+    tenga recordatorio_enviado_en -- sin esto se reenviaba el mismo aviso
+    cada día mientras el vencimiento siguiera pendiente y dentro de la
+    ventana (hasta `dias` veces por vencimiento)."""
     conn = get_connection()
     try:
         hoy = now_iso()[:10]
@@ -3289,9 +3357,42 @@ def vencimientos_fiscales_proximos(dias: int) -> list[sqlite3.Row]:
             """SELECT v.*, c.nombre AS cliente_nombre
                FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
                WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL
+                 AND v.recordatorio_enviado_en IS NULL
                  AND v.fecha_limite >= ? AND v.fecha_limite < ?""",
             (hoy, limite),
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def papelera_fiscal(tenant_id: int) -> list[dict]:
+    """Clientes fiscales y vencimientos en la papelera de un tenant, más
+    recientes primero -- aparte de papelera() (que es por usuario_id) porque
+    estas dos tablas son por tenant_id, otra granularidad (ver comentario
+    de cabecera de la sección "Calendario fiscal" más arriba)."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """
+            SELECT * FROM (
+                SELECT 'cliente_fiscal' AS origen, c.id AS id, c.nombre AS texto,
+                       NULL AS cliente_nombre, c.papelera_en AS papelera_en
+                FROM clientes_fiscales c
+                WHERE c.tenant_id = ? AND c.papelera_en IS NOT NULL
+
+                UNION ALL
+
+                SELECT 'vencimiento_fiscal' AS origen, v.id AS id,
+                       v.modelo || ' ' || v.periodo AS texto,
+                       c.nombre AS cliente_nombre, v.papelera_en AS papelera_en
+                FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+                WHERE v.tenant_id = ? AND v.papelera_en IS NOT NULL
+            )
+            ORDER BY papelera_en DESC
+            """,
+            (tenant_id, tenant_id),
+        ).fetchall()
+        return [dict(f) for f in filas]
     finally:
         conn.close()
 
@@ -3959,7 +4060,9 @@ def vaciar_papelera_antigua(dias: int = 30, usuario_id: int | None = None) -> No
     usuarios (uso interno: se llama al arrancar la app, igual que la copia
     de seguridad); con `usuario_id`, solo la papelera de ese usuario (uso
     desde la ruta web "Vaciar papelera", que actúa en nombre de quien la
-    pulsa, no de todo el tenant)."""
+    pulsa, no de todo el tenant). clientes_fiscales/vencimientos_fiscales se
+    purgan siempre por tenant_id (ver más abajo), sin importar `usuario_id`
+    -- no tienen ese campo, son datos de la gestoría, no de un usuario."""
     conn = get_connection()
     try:
         limite = (datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds")
@@ -3985,6 +4088,16 @@ def vaciar_papelera_antigua(dias: int = 30, usuario_id: int | None = None) -> No
                 f"SELECT id, usuario_id FROM tareas_outlook WHERE papelera_en IS NOT NULL AND papelera_en < ?{filtro_usuario}", params
             )
         ]
+        ids_clientes_fiscales = [
+            (r["id"], r["tenant_id"]) for r in conn.execute(
+                "SELECT id, tenant_id FROM clientes_fiscales WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+            )
+        ]
+        ids_vencimientos_fiscales = [
+            (r["id"], r["tenant_id"]) for r in conn.execute(
+                "SELECT id, tenant_id FROM vencimientos_fiscales WHERE papelera_en IS NOT NULL AND papelera_en < ?", (limite,)
+            )
+        ]
     finally:
         conn.close()
 
@@ -3996,6 +4109,10 @@ def vaciar_papelera_antigua(dias: int = 30, usuario_id: int | None = None) -> No
         eliminar_categoria_definitivamente(uid, cid)
     for tid, uid in ids_tareas_outlook:
         eliminar_tarea_outlook_definitivamente(uid, tid)
+    for vid, tid in ids_vencimientos_fiscales:
+        eliminar_vencimiento_fiscal_definitivamente(tid, vid)
+    for cid, tid in ids_clientes_fiscales:
+        eliminar_cliente_fiscal_definitivamente(tid, cid)
 
 
 # --- Asistente IA (OpenRouter): preferencias y conversación -------------------
