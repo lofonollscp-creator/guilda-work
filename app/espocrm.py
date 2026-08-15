@@ -25,6 +25,11 @@ import urllib.parse
 import urllib.request
 
 ESPOCRM_URL = os.environ.get("HERRAMIENTA_ESPOCRM_URL", "http://127.0.0.1:8015")
+# A diferencia de ESPOCRM_URL (interna, solo alcanzable entre contenedores
+# Docker -- la usan las llamadas a la API de este módulo), esta es la URL
+# pública real (ver docker-compose.yml:ESPOCRM_SITE_URL, HOSTING.md 8.19) --
+# la única válida para un enlace que se abre en el navegador del usuario.
+ESPOCRM_PUBLIC_ORIGIN = os.environ.get("ESPOCRM_PUBLIC_ORIGIN", ESPOCRM_URL)
 ESPOCRM_API_KEY = os.environ.get("ESPOCRM_API_KEY")
 TIMEOUT_SEGUNDOS = 10
 
@@ -154,3 +159,25 @@ def listar_cuentas(texto: str | None = None, limite: int = 20) -> list[dict]:
 def crear_cuenta(nombre: str, sitio_web: str = "") -> dict | None:
     """Crea una Cuenta. Devuelve None si ESPOCRM_API_KEY no está configurada."""
     return _crear("Account", {"name": nombre, "website": sitio_web})
+
+
+def buscar_cuenta_por_nombre(nombre: str) -> str | None:
+    """Id de la primera Cuenta con ese nombre exacto, o None si no existe
+    (o si ESPOCRM_API_KEY no está configurada) -- mismo patrón que
+    _buscar_equipo_por_nombre, usado por el calendario fiscal
+    (app/rutas_fiscal.py) para enlazar un cliente_fiscal con una Cuenta ya
+    existente en vez de crear un duplicado."""
+    if not ESPOCRM_API_KEY:
+        return None
+    filtro = json.dumps([{"type": "equals", "attribute": "name", "value": nombre}])
+    estado, cuerpo = _peticion(f"{ESPOCRM_URL}/api/v1/Account?where={urllib.parse.quote(filtro)}")
+    if estado != 200:
+        return None
+    elementos = cuerpo.get("list", [])
+    return elementos[0]["id"] if elementos else None
+
+
+def url_cuenta(cuenta_id: str) -> str:
+    """URL de la interfaz web de EspoCRM para ver una Cuenta (no la API) --
+    usada solo para el enlace "Ver en EspoCRM" del calendario fiscal."""
+    return f"{ESPOCRM_PUBLIC_ORIGIN}/#Account/view/{cuenta_id}"

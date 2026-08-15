@@ -254,6 +254,67 @@ def test_export_csv_y_json(cliente):
     assert datos[0]["modelo"] == "303"
 
 
+def test_crear_cliente_sin_espocrm_api_key_no_falla_ni_rellena_nada(cliente, monkeypatch):
+    from app import espocrm
+
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", None)
+    usuario_id = iniciar_sesion_de_prueba(cliente, "sin-espocrm@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Sin EspoCRM")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.post("/fiscal/clientes", data={"nombre": "Sin EspoCRM SL"})
+    assert resp.status_code == 302
+    cliente_id = db.listar_clientes_fiscales(tenant_id)[0]["id"]
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id)["espocrm_cuenta_id"] is None
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}/espocrm")
+    assert resp.status_code == 404
+
+
+def test_crear_cliente_con_espocrm_disponible_guarda_cuenta_y_enlaza(cliente, monkeypatch):
+    from app import espocrm
+
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", "fake-key")
+    monkeypatch.setattr(espocrm, "buscar_cuenta_por_nombre", lambda nombre: None)
+    monkeypatch.setattr(espocrm, "crear_cuenta", lambda nombre, sitio_web="": {"id": "espo123"})
+    monkeypatch.setattr(espocrm, "url_cuenta", lambda cuenta_id: f"https://crm.ejemplo.com/#Account/view/{cuenta_id}")
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "con-espocrm@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Con EspoCRM")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.post("/fiscal/clientes", data={"nombre": "Con EspoCRM SL"})
+    assert resp.status_code == 302
+    cliente_id = db.listar_clientes_fiscales(tenant_id)[0]["id"]
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id)["espocrm_cuenta_id"] == "espo123"
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert "Ver en EspoCRM" in resp.get_data(as_text=True)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}/espocrm", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == "https://crm.ejemplo.com/#Account/view/espo123"
+
+
+def test_crear_cliente_con_espocrm_inalcanzable_no_bloquea_el_alta(cliente, monkeypatch):
+    from app import espocrm
+
+    def _falla(*args, **kwargs):
+        raise espocrm.ErrorEspoCRM("no se ha podido conectar")
+
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", "fake-key")
+    monkeypatch.setattr(espocrm, "buscar_cuenta_por_nombre", _falla)
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "espocrm-caido@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria EspoCRM Caido")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.post("/fiscal/clientes", data={"nombre": "EspoCRM Caído SL"})
+    assert resp.status_code == 302
+    cliente_id = db.listar_clientes_fiscales(tenant_id)[0]["id"]
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id) is not None
+
+
 def test_generar_vencimientos_formulario_y_confirmacion(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "generar@ejemplo.com", "contrasena123")
     tenant_id = db.crear_tenant("Gestoria Generar")

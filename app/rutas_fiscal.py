@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db
+from . import db, espocrm
 from .auth import login_required
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
 
@@ -55,10 +55,25 @@ def clientes():
 def crear_cliente():
     nombre = request.form.get("nombre", "").strip()
     if nombre:
-        db.crear_cliente_fiscal(
+        cliente_id = db.crear_cliente_fiscal(
             g.tenant_id, nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
             modelos_fiscales=request.form.getlist("modelos_fiscales") or None,
         )
+        # EspoCRM: opcional y best-effort, mismo idioma que el resto de
+        # integraciones tenant (ver rutas_backoffice.py:crear_tenant) --
+        # sin ESPOCRM_API_KEY configurada, buscar_cuenta_por_nombre/
+        # crear_cuenta no hacen nada y este try/except ni se entera. El
+        # calendario fiscal debe funcionar igual de bien sin EspoCRM (ver
+        # comentario de cabecera de la tabla clientes_fiscales en db.py).
+        try:
+            cuenta_id = espocrm.buscar_cuenta_por_nombre(nombre)
+            if cuenta_id is None:
+                cuenta = espocrm.crear_cuenta(nombre)
+                cuenta_id = cuenta["id"] if cuenta else None
+            if cuenta_id:
+                db.editar_cliente_fiscal(g.tenant_id, cliente_id, espocrm_cuenta_id=cuenta_id)
+        except espocrm.ErrorEspoCRM:
+            pass
     return redirect(url_for("fiscal.clientes"))
 
 
@@ -77,6 +92,15 @@ def ficha_cliente(cliente_id: int):
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
     )
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/espocrm")
+@login_required
+def ver_en_espocrm(cliente_id: int):
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None or not cliente["espocrm_cuenta_id"]:
+        abort(404)
+    return redirect(espocrm.url_cuenta(cliente["espocrm_cuenta_id"]))
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/editar", methods=["GET", "POST"])

@@ -865,6 +865,23 @@ tablas `clientes_fiscales`/`vencimientos_fiscales` sí llevan
 no de un usuario concreto) debe usar `db.usuarios_de_tenant(tenant_id)`
 en vez de reinventar el JOIN a mano.
 
+**Enlace opcional con el calendario fiscal** (`app/rutas_fiscal.py`): al
+dar de alta un cliente fiscal, se intenta (best-effort, igual que el
+resto de esta sección) enlazarlo con una Cuenta de EspoCRM del mismo
+nombre — `espocrm.buscar_cuenta_por_nombre()` reutiliza si ya existe,
+si no `espocrm.crear_cuenta()` crea una nueva, y el id se guarda en
+`clientes_fiscales.espocrm_cuenta_id`. Sin `ESPOCRM_API_KEY`, o si
+EspoCRM está caído, el alta del cliente fiscal no se entera ni falla —
+mismo criterio que el resto del stack. **No** hay sincronización en
+sentido inverso ni de más campos (NIF, dirección, facturación) —
+`clientes_fiscales` solo guarda lo mínimo para identificar al cliente
+en un vencimiento (ver comentario de cabecera de esa tabla en
+`app/db.py`), el enlace es solo un atajo de navegación ("Ver en
+EspoCRM" en la ficha del cliente). El enlace usa `ESPOCRM_PUBLIC_ORIGIN`
+(la URL real, no la interna `HERRAMIENTA_ESPOCRM_URL` que solo
+resuelve entre contenedores Docker) — sin ella configurada, cae de
+vuelta a la interna, que no abrirá en el navegador del usuario.
+
 ### 8.20 Nextcloud (Drive) — con SSO y aislamiento por tenant
 
 Espacio de archivos tipo Drive, código abierto (AGPLv3). El directorio
