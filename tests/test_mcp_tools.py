@@ -23,8 +23,12 @@ def test_tools_no_tiene_nombres_duplicados():
     assert len(nombres) == len(set(nombres))
 
 
-def test_tools_tiene_112_herramientas():
-    assert len(mt.TOOLS) == 112
+def test_tools_tiene_117_herramientas():
+    # 112 + 4 del calendario fiscal (Fase G2: listar_clientes_fiscales,
+    # crear_cliente_fiscal, listar_vencimientos_fiscales,
+    # generar_vencimientos_fiscales) + 1 de adjuntos del chat
+    # (leer_adjunto_chat).
+    assert len(mt.TOOLS) == 117
 
 
 def test_registrar_tools_las_registra_todas():

@@ -1055,6 +1055,28 @@ def videollamadas_crear_sala(tenant: str, nombre_mostrado: str, moderador: bool 
     return {"url": jitsi.url_sala(sala, token), "sala": sala}
 
 
+# --- Adjuntos del chat de IA (Fase G2) -------------------------------------
+
+_ADJUNTO_MAX_CARACTERES = 20000  # margen razonable de contexto sin reventar la ventana del modelo
+
+
+def leer_adjunto_chat(adjunto_id: int) -> dict:
+    """Devuelve el texto de un adjunto que el usuario subió al chat del
+    Asistente de IA (botón de clip, ver app/rutas_ia.py:subir_adjunto) --
+    solo texto/CSV (ya validado como UTF-8 al subirlo), truncado si es
+    muy largo. El adjunto es privado a quien lo subió."""
+    adjunto = db.obtener_adjunto_ia(_uid(), adjunto_id)
+    if adjunto is None:
+        raise ValueError(f"No existe el adjunto #{adjunto_id} (o no es tuyo).")
+    texto = adjunto["contenido"].decode("utf-8")
+    truncado = len(texto) > _ADJUNTO_MAX_CARACTERES
+    return {
+        "nombre_archivo": adjunto["nombre_archivo"],
+        "texto": texto[:_ADJUNTO_MAX_CARACTERES],
+        "truncado": truncado,
+    }
+
+
 # --- Tiquets (soporte interno: errores/sugerencias) -----------------------
 #
 # A diferencia del resto de este archivo, es un tablero COMPARTIDO entre
@@ -1124,6 +1146,70 @@ def cambiar_estado_tiquet(tiquet_id: int, estado: str) -> dict:
         raise ValueError(f"No existe el tiquet #{tiquet_id}.")
     db.cambiar_estado_tiquet(tiquet_id, estado)
     return _fila(db.obtener_tiquet(tiquet_id))
+
+
+# --- Calendario fiscal (clientes fiscales + vencimientos) ------------------
+#
+# A diferencia de tiquets (compartido entre TODOS los usuarios) o de
+# fichaje (propio de cada usuario), esto es un dato del TENANT (la
+# gestoría) -- se resuelve una vez por llamada con db.tenant_de_usuario(),
+# igual que ya hace fichar() más abajo, y se lanza un error legible si el
+# usuario no tiene tenant en vez de devolver una lista vacía silenciosa
+# (mismo criterio que la propia web/app, ver app/rutas_fiscal.py:_exigir_tenant).
+
+def _tenant_id_actual() -> int:
+    tenant = db.tenant_de_usuario(_uid())
+    if tenant is None:
+        raise ValueError("Tu usuario no tiene un tenant (gestoría) asignado -- pide a un admin que te asigne uno.")
+    return tenant["id"]
+
+
+def listar_clientes_fiscales(q: str | None = None) -> list[dict]:
+    """Lista los clientes fiscales de la gestoría del usuario actual.
+    `q` filtra por nombre/NIF, opcional."""
+    return _filas(db.listar_clientes_fiscales(_tenant_id_actual(), q=q))
+
+
+def crear_cliente_fiscal(
+    nombre: str, nif: str | None = None, notas: str | None = None, modelos_fiscales: list[str] | None = None,
+) -> dict:
+    """Da de alta un cliente fiscal. `modelos_fiscales` son los códigos de
+    modelo que presenta (ej. ["303", "130"]) -- se usan como valor por
+    defecto al generar sus vencimientos."""
+    tenant_id = _tenant_id_actual()
+    cliente_id = db.crear_cliente_fiscal(tenant_id, nombre, nif=nif, notas=notas, modelos_fiscales=modelos_fiscales)
+    return _fila(db.obtener_cliente_fiscal(tenant_id, cliente_id))
+
+
+def listar_vencimientos_fiscales(
+    estado: str | None = None, cliente_id: int | None = None, desde: str | None = None, hasta: str | None = None,
+) -> list[dict]:
+    """Vencimientos fiscales de la gestoría (modelos 303/390/130/111/115/200).
+    `estado`: pendiente/presentado/fuera_plazo, opcional."""
+    return _filas(db.listar_vencimientos_fiscales(
+        _tenant_id_actual(), desde=desde, hasta=hasta, estado=estado, cliente_fiscal_id=cliente_id,
+    ))
+
+
+def generar_vencimientos_fiscales(cliente_id: int, modelos: list[str], anio: int) -> dict:
+    """Genera e inserta directamente los vencimientos de `cliente_id` para
+    los `modelos` pedidos (códigos AEAT, ej. ["303","130"]) en el año
+    fiscal `anio` -- fechas orientativas, no vinculantes (la AEAT las
+    desplaza si caen en fin de semana/festivo). A diferencia de la web
+    (que deja revisar/editar cada fecha antes de confirmar), aquí se
+    crean tal cual; se pueden ajustar después editando el vencimiento."""
+    from app.vencimientos_fiscales import generar_vencimientos_propuestos
+
+    tenant_id = _tenant_id_actual()
+    if db.obtener_cliente_fiscal(tenant_id, cliente_id) is None:
+        raise ValueError(f"No existe el cliente fiscal #{cliente_id} en tu gestoría.")
+    creados = []
+    for propuesta in generar_vencimientos_propuestos(modelos, anio):
+        vid = db.crear_vencimiento_fiscal(
+            tenant_id, cliente_id, propuesta["modelo"], propuesta["periodo"], propuesta["fecha_limite"],
+        )
+        creados.append(_fila(db.obtener_vencimiento_fiscal(tenant_id, vid)))
+    return {"creados": len(creados), "vencimientos": creados}
 
 
 # --- Fichaje (registro horario) --------------------------------------------
@@ -1437,8 +1523,12 @@ TOOLS = [
     notificaciones_enviar,
     # Videollamadas (Jitsi Meet)
     videollamadas_crear_sala,
+    # Adjuntos del chat de IA
+    leer_adjunto_chat,
     # Tiquets
     listar_tiquets, crear_tiquet, editar_tiquet, eliminar_tiquet, cambiar_estado_tiquet,
+    # Calendario fiscal
+    listar_clientes_fiscales, crear_cliente_fiscal, listar_vencimientos_fiscales, generar_vencimientos_fiscales,
     # Fichaje
     fichar, listar_mis_fichajes,
     # Papelera

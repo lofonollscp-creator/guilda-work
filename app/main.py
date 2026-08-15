@@ -1366,6 +1366,55 @@ def _recordatorio_vencimientos_fiscales():
                 pass
 
 
+RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS = 7 * 24 * 60  # una vez por semana
+
+
+def _resumen_ia_semanal():
+    """Fase G2: resumen semanal del asistente de IA, opt-in por usuario
+    (usuario_perfil.notificar_resumen_semanal, ver /ajustes/perfil).
+    Reutiliza ai_local.generar_informe() (ya existente, usado hoy solo
+    bajo demanda desde /informe-ia) sobre los últimos 7 días de
+    actividad, y lo manda por push. Mismo criterio defensivo que el
+    resto de hilos periódicos, y mismo motivo que
+    _recordatorio_vencimientos_fiscales para arrancar también desde
+    serve.py: no es un hilo solo de escritorio.
+
+    Solo genera el resumen si el usuario tiene OpenRouter configurado
+    como proveedor de informes (ia_preferencias.proveedor_local) -- un
+    Ollama/LM Studio locales normalmente corren en el propio ordenador
+    del usuario, no son alcanzables desde este proceso (el servidor
+    hospedado, o incluso el de escritorio si está apagado en ese
+    momento), así que un resumen automático solo tiene sentido con un
+    proveedor en la nube."""
+    while True:
+        time.sleep(RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60)
+        try:
+            usuarios = db.usuarios_con_resumen_semanal_activo()
+        except Exception:
+            continue
+        hoy = datetime.now()
+        desde = (hoy - timedelta(days=7)).strftime("%Y-%m-%d")
+        hasta = hoy.strftime("%Y-%m-%d")
+        for usuario_id in usuarios:
+            try:
+                prefs = db.obtener_preferencias_ia_local(usuario_id)
+                if prefs["proveedor_local"] != "openrouter" or not prefs["modelo_local"]:
+                    continue
+                datos = export.construir_export(usuario_id, desde, hasta, None)
+                if not datos.get("registros"):
+                    continue  # nada que resumir esta semana, no molestar con un push vacío
+                resumen = ai_local.generar_informe(
+                    datos,
+                    "Resume mis actividades de esta última semana, agrupadas por categoría, en 5-8 líneas como mucho.",
+                    "openrouter", prefs["modelo_local"], usuario_id,
+                )
+                push.enviar_a_usuario(
+                    usuario_id, "Tu resumen semanal", resumen[:200], {"tipo": "resumen_ia_semanal"}
+                )
+            except Exception:
+                continue
+
+
 RECORDATORIO_INTERVALO_MINUTOS = 60
 
 
@@ -1423,6 +1472,7 @@ def main():
     threading.Thread(target=_recordatorio_periodico, daemon=True).start()
     threading.Thread(target=_sincronizacion_correo_periodica, daemon=True).start()
     threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
+    threading.Thread(target=_resumen_ia_semanal, daemon=True).start()
 
     webview.start()
 

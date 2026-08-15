@@ -35,16 +35,18 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 from waitress import serve
 
 from app import db
-from app.main import _recordatorio_vencimientos_fiscales, app
+from app.main import _recordatorio_vencimientos_fiscales, _resumen_ia_semanal, app
 
 if __name__ == "__main__":
     db.init_db()
     # A diferencia de _sincronizacion_correo_periodica/_recordatorio_periodico
     # (solo pensados para la app de escritorio de un único usuario, nunca
-    # arrancados aquí), el recordatorio de vencimientos fiscales SÍ es
-    # multi-tenant y tiene que correr en el servidor real -- si no, nunca se
-    # ejecutaría en ningún despliegue hospedado.
+    # arrancados aquí), el recordatorio de vencimientos fiscales y el
+    # resumen semanal de IA SÍ son multi-tenant/multi-usuario y tienen que
+    # correr en el servidor real -- si no, nunca se ejecutarían en ningún
+    # despliegue hospedado.
     threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
+    threading.Thread(target=_resumen_ia_semanal, daemon=True).start()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))
     # Caddy reenvía aquí por localhost (ver deploy/Caddyfile) mandando

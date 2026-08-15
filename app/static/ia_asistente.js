@@ -401,6 +401,15 @@
     function enviarMensaje(texto) {
       texto = texto.trim();
       if (!texto || enviando) return;
+      // El adjunto pendiente (si hay uno subido y sin usar) se antepone al
+      // texto para que el modelo sepa que existe y con qué id llamar a la
+      // tool leer_adjunto_chat -- no se sube el contenido entero al mensaje,
+      // solo la referencia (evita gastar contexto con algo que puede que el
+      // modelo ni necesite leer).
+      if (adjuntoPendiente) {
+        texto = "[Adjunto #" + adjuntoPendiente.id + ": " + adjuntoPendiente.nombre_archivo + "]\n" + texto;
+        limpiarAdjuntoPendiente();
+      }
       var div = document.createElement("div");
       div.className = "ia-msg ia-msg-user";
       div.textContent = texto;
@@ -414,6 +423,56 @@
       e.preventDefault();
       enviarMensaje(textareaEl.value);
     });
+
+    // ---------------------------------------------------------------------
+    // Adjuntos (Fase G2): sube el archivo en cuanto se elige (no espera al
+    // envío del mensaje) para poder avisar de un error de formato/tamaño
+    // antes de que el usuario termine de escribir su pregunta sobre él.
+    var adjuntoInputEl = document.getElementById(id + "-adjunto");
+    var adjuntoPendienteEl = document.getElementById(id + "-adjunto-pendiente");
+    var adjuntoPendiente = null;
+
+    function limpiarAdjuntoPendiente() {
+      adjuntoPendiente = null;
+      adjuntoPendienteEl.hidden = true;
+      adjuntoPendienteEl.innerHTML = "";
+      if (adjuntoInputEl) adjuntoInputEl.value = "";
+    }
+
+    if (adjuntoInputEl) {
+      adjuntoInputEl.addEventListener("change", function () {
+        var archivo = adjuntoInputEl.files[0];
+        if (!archivo) return;
+        var formData = new FormData();
+        formData.append("adjunto", archivo);
+        adjuntoPendienteEl.hidden = false;
+        adjuntoPendienteEl.textContent = "Subiendo " + archivo.name + "…";
+        fetch("/ia/adjuntos", { method: "POST", body: formData })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.ok) {
+              adjuntoPendienteEl.textContent = "⚠️ " + data.error;
+              adjuntoInputEl.value = "";
+              return;
+            }
+            adjuntoPendiente = data;
+            adjuntoPendienteEl.innerHTML = "";
+            var span = document.createElement("span");
+            span.textContent = "📎 " + data.nombre_archivo;
+            var quitar = document.createElement("button");
+            quitar.type = "button";
+            quitar.className = "ia-chat-adjunto-quitar";
+            quitar.textContent = "✕";
+            quitar.onclick = limpiarAdjuntoPendiente;
+            adjuntoPendienteEl.appendChild(span);
+            adjuntoPendienteEl.appendChild(quitar);
+          })
+          .catch(function () {
+            adjuntoPendienteEl.textContent = "⚠️ No se ha podido subir el archivo.";
+            adjuntoInputEl.value = "";
+          });
+      });
+    }
 
     if (vaciarEl) {
       vaciarEl.addEventListener("click", function () {

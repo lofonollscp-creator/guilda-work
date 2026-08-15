@@ -994,6 +994,24 @@ def init_db() -> None:
         # castellano a alguien que nunca lo pidió.
         _asegurar_columna(conn, "usuarios", "idioma", "TEXT")
 
+        # Ampliación "asistente de IA" (Fase G2): adjuntos subidos al chat --
+        # texto/CSV pequeños que el asistente puede leer bajo demanda vía la
+        # tool leer_adjunto_chat (app/ia_herramientas.py). Mismo criterio de
+        # BLOB en la propia fila que usuario_perfil.avatar_contenido (G1),
+        # sin filesystem aparte. Ligados a usuario_id (no a la conversación
+        # en sí, que no tiene su propio id) -- se listan/leen siempre
+        # filtrando por dueño, igual que el resto de recursos de este módulo.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS ia_adjuntos (
+                   id INTEGER PRIMARY KEY,
+                   usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+                   nombre_archivo TEXT NOT NULL,
+                   tipo_mime TEXT,
+                   contenido BLOB NOT NULL,
+                   creado_en TEXT NOT NULL
+               )"""
+        )
+
         # Ampliación "espacio de ajustes de usuario" (Fase G1): perfil
         # propio (nombre a mostrar, avatar, preferencias de notificación).
         # Mismo patrón singleton usuario_id PRIMARY KEY que ia_preferencias/
@@ -4375,6 +4393,48 @@ def eliminar_avatar_usuario(usuario_id: int) -> None:
             (usuario_id,),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_adjunto_ia(usuario_id: int, nombre_archivo: str, tipo_mime: str | None, contenido: bytes) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO ia_adjuntos (usuario_id, nombre_archivo, tipo_mime, contenido, creado_en) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, nombre_archivo, tipo_mime, contenido, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def obtener_adjunto_ia(usuario_id: int, adjunto_id: int) -> sqlite3.Row | None:
+    """Filtra por usuario_id -- un adjunto es privado a quien lo subió, ni
+    siquiera otro miembro del mismo tenant puede leerlo (a diferencia de
+    tiquets, esto no es un tablero compartido)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM ia_adjuntos WHERE id = ? AND usuario_id = ?", (adjunto_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def usuarios_con_resumen_semanal_activo() -> list[int]:
+    """Usados por el hilo _resumen_ia_semanal (app/main.py) -- quién ha
+    activado la casilla correspondiente en su perfil (Fase G1)."""
+    conn = get_connection()
+    try:
+        return [
+            r["usuario_id"]
+            for r in conn.execute(
+                "SELECT usuario_id FROM usuario_perfil WHERE notificar_resumen_semanal = 1"
+            ).fetchall()
+        ]
     finally:
         conn.close()
 

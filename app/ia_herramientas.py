@@ -388,6 +388,55 @@ HERRAMIENTAS: list[dict] = [
         },
         [],
     ),
+    # Calendario fiscal (Fase G2): dato del TENANT (la gestoría), no del
+    # usuario -- mcp_tools._tenant_id_actual() lanza un error legible si el
+    # usuario no tiene tenant asignado, mismo criterio que ya usan
+    # cambiar_estado_tiquet (admin-only) o fichar (necesita datos previos):
+    # se listan igual para todos, la restricción se aplica al ejecutar.
+    _tool(
+        "listar_clientes_fiscales",
+        "Lista los clientes fiscales de la gestoría del usuario actual (para quien lleve un calendario fiscal).",
+        {"q": _param("string", "Filtro por nombre o NIF, opcional.")},
+        [],
+    ),
+    _tool(
+        "crear_cliente_fiscal",
+        "Da de alta un cliente fiscal de la gestoría.",
+        {
+            "nombre": _param("string", "Nombre o razón social."),
+            "nif": _param("string", "NIF/CIF, opcional."),
+            "notas": _param("string", "Notas, opcional."),
+            "modelos_fiscales": _param("array", "Códigos de modelo que presenta, ej. ['303','130'], opcional."),
+        },
+        ["nombre"],
+    ),
+    _tool(
+        "listar_vencimientos_fiscales",
+        "Lista vencimientos fiscales (modelos 303/390/130/111/115/200) de la gestoría, opcionalmente filtrados.",
+        {
+            "estado": _param("string", "pendiente/presentado/fuera_plazo, opcional."),
+            "cliente_id": _param("integer", "Id del cliente fiscal, opcional."),
+            "desde": _param("string", "Fecha YYYY-MM-DD, opcional."),
+            "hasta": _param("string", "Fecha YYYY-MM-DD, opcional."),
+        },
+        [],
+    ),
+    _tool(
+        "leer_adjunto_chat",
+        "Lee el texto de un archivo (texto/CSV) que el usuario subió al chat con el botón de clip. Úsalo cuando el usuario mencione 'el archivo adjunto' o similar.",
+        {"adjunto_id": _param("integer", "Id del adjunto, mencionado en el mensaje del usuario.")},
+        ["adjunto_id"],
+    ),
+    _tool(
+        "generar_vencimientos_fiscales",
+        "Genera e inserta directamente los vencimientos de un cliente fiscal para los modelos y año pedidos. Fechas orientativas, no vinculantes.",
+        {
+            "cliente_id": _param("integer", "Id del cliente fiscal."),
+            "modelos": _param("array", "Códigos de modelo, ej. ['303','130']."),
+            "anio": _param("integer", "Año fiscal a generar."),
+        },
+        ["cliente_id", "modelos", "anio"],
+    ),
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
@@ -397,6 +446,7 @@ LECTURA: set[str] = {
     "listar_categorias_correo", "obtener_firma_correo", "exportar_historial", "exportar_tareas",
     "preparar_borrador_correo", "listar_tiquets", "listar_mis_fichajes",
     "buscar_semantico", "listar_papelera", "estadisticas_por_categoria", "estadisticas_por_dia",
+    "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -405,7 +455,7 @@ ESCRITURA: set[str] = {
     "marcar_leido_correo", "eliminar_correo", "crear_categoria_correo", "eliminar_categoria_correo",
     "asignar_categoria_correo", "configurar_firma_correo", "importar_historial", "importar_tareas",
     "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet", "fichar",
-    "restaurar_de_papelera",
+    "restaurar_de_papelera", "crear_cliente_fiscal", "generar_vencimientos_fiscales",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son

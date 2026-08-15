@@ -2383,6 +2383,46 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    queda hueco raro en el formulario. */
 .ia-chat-mic[hidden] { display: none; }
 
+/* Botón de adjuntar (Fase G2) -- mismo tamaño/forma redonda que .ia-chat-mic,
+   pero es un <label> envolviendo un <input type="file"> oculto, no un
+   <button>, así que necesita sus propias reglas en vez de compartir clase. */
+.ia-chat-adjuntar {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 1.1em;
+}
+.ia-chat-adjunto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 14px 6px;
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+.ia-chat-adjunto[hidden] { display: none; }
+.ia-chat-adjunto-quitar {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1em;
+}
+.ia-chat-adjunto-quitar:hover { color: var(--danger); }
+
 .ia-chat-pie { display: flex; align-items: center; justify-content: space-between; margin: 0 14px 12px; }
 
 .ia-chat-vaciar {

@@ -1,6 +1,9 @@
 """Asistente IA dentro de la propia app: chat con un modelo alojado en
-OpenRouter (nube) con acceso, vía "tool calling", a las mismas 27
-herramientas que ya expone mcp_server.py por MCP (ver app/ia_herramientas.py).
+OpenRouter (nube) con acceso, vía "tool calling", a un subconjunto de las
+herramientas que ya expone mcp_server.py por MCP (ver
+app/ia_herramientas.py:HERRAMIENTAS para el catálogo exacto y actualizado
+-- no se repite el número aquí a propósito, para no volver a quedar
+desactualizado cada vez que se añaden tools nuevas).
 
 Usa exclusivamente `urllib` de la librería estándar (mismo estilo que
 app/ai_local.py, sin dependencias nuevas). La clave de API NUNCA se guarda

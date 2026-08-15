@@ -22,8 +22,12 @@
       <button type="button" class="ia-chat-confirmar" data-aceptar="false">{{ _('No') }}</button>
     </div>
   </div>
+  <div class="ia-chat-adjunto" id="{{ contenedor_id }}-adjunto-pendiente" hidden></div>
   <form class="ia-chat-form" id="{{ contenedor_id }}-form">
     <button type="button" class="ia-chat-mic" id="{{ contenedor_id }}-mic" title="{{ _('Dictar mensaje') }}" aria-label="{{ _('Dictar mensaje') }}">🎙️</button>
+    <label class="ia-chat-adjuntar" title="{{ _('Adjuntar archivo de texto/CSV') }}" aria-label="{{ _('Adjuntar archivo de texto/CSV') }}">
+      📎<input type="file" id="{{ contenedor_id }}-adjunto" accept=".txt,.csv,.md,text/plain,text/csv" hidden>
+    </label>
     <textarea placeholder="{{ _('Escribe un mensaje...') }}" rows="2" required></textarea>
     <button type="submit">{{ _('Enviar') }}</button>
   </form>

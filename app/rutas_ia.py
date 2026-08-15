@@ -37,6 +37,31 @@ def enviar_mensaje():
         return jsonify({"ok": False, "error": str(e)})
 
 
+_ADJUNTO_TAMANO_MAXIMO_BYTES = 1 * 1024 * 1024  # 1 MB -- son ficheros de texto/CSV pequeños, no documentos grandes
+
+
+@ia_bp.route("/adjuntos", methods=["POST"])
+@login_required
+def subir_adjunto():
+    """Sube un fichero de texto/CSV al chat -- el asistente lo lee bajo
+    demanda con la tool leer_adjunto_chat (app/ia_herramientas.py) cuando
+    el usuario se refiera al id devuelto aquí. Sin soporte de PDF/binarios
+    en esta fase (no hay ninguna librería de extracción de PDF en el
+    proyecto, añadirla es una decisión aparte, no forzada por esto)."""
+    fichero = request.files.get("adjunto")
+    if not fichero or not fichero.filename:
+        return jsonify({"ok": False, "error": "Falta el archivo."})
+    datos = fichero.read(_ADJUNTO_TAMANO_MAXIMO_BYTES + 1)
+    if len(datos) > _ADJUNTO_TAMANO_MAXIMO_BYTES:
+        return jsonify({"ok": False, "error": "El archivo pesa demasiado (máximo 1 MB)."})
+    try:
+        datos.decode("utf-8")
+    except UnicodeDecodeError:
+        return jsonify({"ok": False, "error": "Solo se admiten archivos de texto o CSV (UTF-8)."})
+    adjunto_id = db.crear_adjunto_ia(g.usuario_id, fichero.filename, fichero.mimetype, datos)
+    return jsonify({"ok": True, "id": adjunto_id, "nombre_archivo": fichero.filename})
+
+
 @ia_bp.route("/confirmar", methods=["POST"])
 @login_required
 def confirmar():
