@@ -406,3 +406,81 @@ def test_chat_config_devuelve_homeserver(cliente, monkeypatch):
     resp = cliente.get("/api/v1/chat/config", headers=_auth(token))
     assert resp.status_code == 200
     assert resp.get_json()["data"]["homeserver_url"] == "http://matrix-test:8008"
+
+
+# --- Calendario fiscal (Fase F5, app móvil) -----------------------------------
+
+def _con_tenant(email: str, nombre_tenant: str) -> int:
+    """Registra un usuario ya-registrado-por-Kratos (email) con un tenant
+    asignado -- usado junto a _registrar() para los tests de /api/v1/fiscal/*."""
+    usuario_id = db.obtener_usuario_por_email(email)["id"]
+    tenant_id = db.crear_tenant(nombre_tenant)
+    db.asignar_tenant(usuario_id, tenant_id)
+    return tenant_id
+
+
+def test_auth_me_devuelve_tenant_id(cliente):
+    datos = _registrar(cliente, email="tenant-me@ejemplo.com")
+    tenant_id = _con_tenant("tenant-me@ejemplo.com", "Gestoria Me")
+    resp = cliente.get("/api/v1/auth/me", headers=_auth(datos["token"]))
+    assert resp.get_json()["data"]["tenant_id"] == tenant_id
+
+
+def test_fiscal_sin_tenant_da_403(cliente):
+    token = _registrar(cliente, email="fiscal-sin-tenant@ejemplo.com")["token"]
+    resp = cliente.get("/api/v1/fiscal/clientes", headers=_auth(token))
+    assert resp.status_code == 403
+
+
+def test_fiscal_crud_cliente_y_generar_vencimientos(cliente):
+    token = _registrar(cliente, email="fiscal-crud@ejemplo.com")["token"]
+    _con_tenant("fiscal-crud@ejemplo.com", "Gestoria CRUD Movil")
+    h = _auth(token)
+
+    resp = cliente.post("/api/v1/fiscal/clientes", json={"nombre": "Panaderia Movil", "modelos_fiscales": ["303"]}, headers=h)
+    assert resp.status_code == 201
+    cliente_id = resp.get_json()["data"]["id"]
+
+    resp = cliente.get(f"/api/v1/fiscal/clientes/{cliente_id}", headers=h)
+    assert resp.get_json()["data"]["modelos_fiscales"] == ["303"]
+
+    resp = cliente.put(f"/api/v1/fiscal/clientes/{cliente_id}", json={"generacion_automatica": True}, headers=h)
+    assert resp.get_json()["data"]["generacion_automatica"] == 1
+
+    resp = cliente.post(
+        f"/api/v1/fiscal/clientes/{cliente_id}/generar-vencimientos",
+        json={"modelos": ["303"], "anio": 2026}, headers=h,
+    )
+    assert resp.status_code == 201
+    assert resp.get_json()["data"]["creados"] == 4
+
+    resp = cliente.get("/api/v1/fiscal/vencimientos", headers=h)
+    vencimientos = resp.get_json()["data"]
+    assert len(vencimientos) == 4
+    vencimiento_id = vencimientos[0]["id"]
+
+    resp = cliente.post(f"/api/v1/fiscal/vencimientos/{vencimiento_id}/presentado", headers=h)
+    assert resp.get_json()["data"]["estado"] == "presentado"
+
+    resp = cliente.delete(f"/api/v1/fiscal/vencimientos/{vencimiento_id}", headers=h)
+    assert resp.status_code == 200
+    assert len(cliente.get("/api/v1/fiscal/vencimientos", headers=h).get_json()["data"]) == 3
+
+    resp = cliente.delete(f"/api/v1/fiscal/clientes/{cliente_id}", headers=h)
+    assert resp.status_code == 200
+    assert cliente.get("/api/v1/fiscal/clientes", headers=h).get_json()["data"] == []
+
+
+def test_fiscal_aisla_por_tenant(cliente):
+    token_a = _registrar(cliente, email="fiscal-tenant-a@ejemplo.com")["token"]
+    _con_tenant("fiscal-tenant-a@ejemplo.com", "Gestoria Movil A")
+    cliente_a_id = cliente.post(
+        "/api/v1/fiscal/clientes", json={"nombre": "Cliente A"}, headers=_auth(token_a)
+    ).get_json()["data"]["id"]
+
+    token_b = _registrar(cliente, email="fiscal-tenant-b@ejemplo.com")["token"]
+    _con_tenant("fiscal-tenant-b@ejemplo.com", "Gestoria Movil B")
+    h_b = _auth(token_b)
+
+    assert cliente.get(f"/api/v1/fiscal/clientes/{cliente_a_id}", headers=h_b).status_code == 404
+    assert cliente.get("/api/v1/fiscal/clientes", headers=h_b).get_json()["data"] == []

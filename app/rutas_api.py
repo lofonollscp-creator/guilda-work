@@ -21,7 +21,7 @@ from datetime import datetime
 from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, export, herramientas, ia_asistente, kratos, openapi
+from . import correo, db, espocrm, export, herramientas, ia_asistente, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -120,7 +120,14 @@ def logout():
 @token_required
 def me():
     usuario = db.obtener_usuario(g.usuario_id)
-    return _ok({"id": usuario["id"], "email": usuario["email"], "es_admin": usuario["rol"] == "admin"})
+    # tenant_id (Fase F5, calendario fiscal en móvil): ya lo calcula
+    # token_required en g.tenant_id -- expuesto aquí para que el cliente
+    # Flutter sepa si mostrar o no la entrada "Calendario fiscal" del
+    # dashboard, mismo criterio que ya usa la web con g.tenant_id.
+    return _ok({
+        "id": usuario["id"], "email": usuario["email"], "es_admin": usuario["rol"] == "admin",
+        "tenant_id": g.tenant_id,
+    })
 
 
 # --- Menús / categorías ----------------------------------------------------
@@ -505,6 +512,182 @@ def cambiar_estado_tiquet(tiquet_id: int):
         return _err("Estado no válido.")
     db.cambiar_estado_tiquet(tiquet_id, estado)
     return _ok(_dict(db.obtener_tiquet(tiquet_id)))
+
+
+# --- Calendario fiscal (Fase F5: paridad móvil) ----------------------------
+#
+# Mismo dato que app/rutas_fiscal.py (filtrado por g.tenant_id, no
+# g.usuario_id -- son datos de la gestoría, ver comentario de cabecera de
+# clientes_fiscales en db.py), pero como API REST para la app móvil. A
+# diferencia de la web, "generar vencimientos" aquí no tiene paso
+# intermedio de edición de fechas propuestas -- inserta directamente, para
+# no tener que replicar en Flutter esa pantalla de confirmación fila a
+# fila (quien quiera ajustar una fecha después, edita el vencimiento ya
+# creado, igual que puede hacer desde la web).
+
+def _exigir_tenant_api():
+    if g.tenant_id is None:
+        return _err("Esta cuenta no tiene un tenant asignado -- pide a un admin que te asigne uno.", 403)
+    return None
+
+
+@api_bp.route("/fiscal/clientes", methods=["GET"])
+@token_required
+def listar_clientes_fiscales():
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    return _ok(_dicts(db.listar_clientes_fiscales(g.tenant_id, q=request.args.get("q") or None)))
+
+
+@api_bp.route("/fiscal/clientes", methods=["POST"])
+@token_required
+def crear_cliente_fiscal():
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    datos = _body()
+    nombre = (datos.get("nombre") or "").strip()
+    if not nombre:
+        return _err("El nombre es obligatorio.")
+    cliente_id = db.crear_cliente_fiscal(
+        g.tenant_id, nombre, nif=datos.get("nif"), notas=datos.get("notas"),
+        modelos_fiscales=datos.get("modelos_fiscales") or None,
+    )
+    # EspoCRM opcional, mismo idioma best-effort que app/rutas_fiscal.py.
+    try:
+        cuenta_id = espocrm.buscar_cuenta_por_nombre(nombre)
+        if cuenta_id is None:
+            cuenta = espocrm.crear_cuenta(nombre)
+            cuenta_id = cuenta["id"] if cuenta else None
+        if cuenta_id:
+            db.editar_cliente_fiscal(g.tenant_id, cliente_id, espocrm_cuenta_id=cuenta_id)
+    except espocrm.ErrorEspoCRM:
+        pass
+    return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)), 201)
+
+
+@api_bp.route("/fiscal/clientes/<int:cliente_id>", methods=["GET"])
+@token_required
+def obtener_cliente_fiscal(cliente_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404, "Cliente fiscal no encontrado.")
+    datos = dict(cliente)
+    datos["modelos_fiscales"] = db.modelos_fiscales_de_cliente(cliente)
+    return _ok(datos)
+
+
+@api_bp.route("/fiscal/clientes/<int:cliente_id>", methods=["PUT"])
+@token_required
+def editar_cliente_fiscal(cliente_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404, "Cliente fiscal no encontrado.")
+    datos = _body()
+    campos = {}
+    if "nombre" in datos:
+        campos["nombre"] = (datos["nombre"] or "").strip()
+    if "nif" in datos:
+        campos["nif"] = datos["nif"]
+    if "notas" in datos:
+        campos["notas"] = datos["notas"]
+    if "modelos_fiscales" in datos:
+        campos["modelos_fiscales"] = db.serializar_modelos_fiscales(datos["modelos_fiscales"])
+    if "generacion_automatica" in datos:
+        campos["generacion_automatica"] = 1 if datos["generacion_automatica"] else 0
+    db.editar_cliente_fiscal(g.tenant_id, cliente_id, **campos)
+    return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)))
+
+
+@api_bp.route("/fiscal/clientes/<int:cliente_id>", methods=["DELETE"])
+@token_required
+def eliminar_cliente_fiscal(cliente_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404, "Cliente fiscal no encontrado.")
+    db.eliminar_cliente_fiscal(g.tenant_id, cliente_id)
+    return _ok()
+
+
+@api_bp.route("/fiscal/clientes/<int:cliente_id>/generar-vencimientos", methods=["POST"])
+@token_required
+def generar_vencimientos_fiscales(cliente_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404, "Cliente fiscal no encontrado.")
+    datos = _body()
+    modelos = datos.get("modelos") or []
+    anio = datos.get("anio") or datetime.now().year
+    if not modelos:
+        return _err("Indica al menos un modelo.")
+    from .vencimientos_fiscales import generar_vencimientos_propuestos
+    creados = []
+    for p in generar_vencimientos_propuestos(modelos, anio):
+        vid = db.crear_vencimiento_fiscal(g.tenant_id, cliente_id, p["modelo"], p["periodo"], p["fecha_limite"])
+        creados.append(vid)
+    return _ok({"creados": len(creados)}, 201)
+
+
+@api_bp.route("/fiscal/vencimientos", methods=["GET"])
+@token_required
+def listar_vencimientos_fiscales():
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    return _ok(_dicts(db.listar_vencimientos_fiscales(
+        g.tenant_id,
+        estado=request.args.get("estado") or None,
+        cliente_fiscal_id=request.args.get("cliente_id", type=int),
+    )))
+
+
+@api_bp.route("/fiscal/vencimientos/<int:vencimiento_id>", methods=["PUT"])
+@token_required
+def editar_vencimiento_fiscal(vencimiento_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
+        abort(404, "Vencimiento no encontrado.")
+    datos = _body()
+    campos = {k: datos[k] for k in db.CAMPOS_VENCIMIENTO_FISCAL if k in datos}
+    db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, **campos)
+    return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))
+
+
+@api_bp.route("/fiscal/vencimientos/<int:vencimiento_id>/presentado", methods=["POST"])
+@token_required
+def marcar_presentado_vencimiento_fiscal(vencimiento_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+        abort(404, "Vencimiento no encontrado.")
+    db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))
+
+
+@api_bp.route("/fiscal/vencimientos/<int:vencimiento_id>", methods=["DELETE"])
+@token_required
+def eliminar_vencimiento_fiscal(vencimiento_id: int):
+    error = _exigir_tenant_api()
+    if error:
+        return error
+    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+        abort(404, "Vencimiento no encontrado.")
+    db.eliminar_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    return _ok()
 
 
 # --- Fichaje (registro horario) -------------------------------------------
