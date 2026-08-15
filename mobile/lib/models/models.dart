@@ -18,11 +18,11 @@ class Categoria {
   });
 
   factory Categoria.fromJson(Map<String, dynamic> json) => Categoria(
-        id: json['id'] as int,
-        nombre: json['nombre'] as String,
-        color: json['color'] as String?,
-        favorito: (json['favorito'] as int? ?? 0) != 0,
-      );
+    id: json['id'] as int,
+    nombre: json['nombre'] as String,
+    color: json['color'] as String?,
+    favorito: (json['favorito'] as int? ?? 0) != 0,
+  );
 }
 
 /// Tarea con duración en curso o en pausa (db.tareas_activas). No incluye
@@ -42,11 +42,11 @@ class TareaActiva {
   });
 
   factory TareaActiva.fromJson(Map<String, dynamic> json) => TareaActiva(
-        id: json['id'] as int,
-        nombre: json['nombre'] as String,
-        categoriaId: json['categoria_id'] as int,
-        estado: json['estado'] as String,
-      );
+    id: json['id'] as int,
+    nombre: json['nombre'] as String,
+    categoriaId: json['categoria_id'] as int,
+    estado: json['estado'] as String,
+  );
 }
 
 /// Una fila del histórico combinado de notas y tareas (db.historial).
@@ -73,7 +73,8 @@ class EntradaHistorial {
     this.categoriaColor,
   });
 
-  factory EntradaHistorial.fromJson(Map<String, dynamic> json) => EntradaHistorial(
+  factory EntradaHistorial.fromJson(Map<String, dynamic> json) =>
+      EntradaHistorial(
         origen: json['origen'] as String,
         id: json['id'] as int,
         texto: json['texto'] as String,
@@ -112,16 +113,16 @@ class TareaOutlook {
   });
 
   factory TareaOutlook.fromJson(Map<String, dynamic> json) => TareaOutlook(
-        id: json['id'] as int,
-        asunto: json['asunto'] as String,
-        cuerpo: json['cuerpo'] as String?,
-        estado: json['estado'] as String,
-        prioridad: json['prioridad'] as String,
-        porcentajeCompletado: json['porcentaje_completado'] as int? ?? 0,
-        fechaInicio: json['fecha_inicio'] as String?,
-        fechaVencimiento: json['fecha_vencimiento'] as String?,
-        categoriaOutlook: json['categoria_outlook'] as String?,
-      );
+    id: json['id'] as int,
+    asunto: json['asunto'] as String,
+    cuerpo: json['cuerpo'] as String?,
+    estado: json['estado'] as String,
+    prioridad: json['prioridad'] as String,
+    porcentajeCompletado: json['porcentaje_completado'] as int? ?? 0,
+    fechaInicio: json['fecha_inicio'] as String?,
+    fechaVencimiento: json['fecha_vencimiento'] as String?,
+    categoriaOutlook: json['categoria_outlook'] as String?,
+  );
 }
 
 const estadosTareaOutlook = [
@@ -164,16 +165,16 @@ class CuentaCorreo {
   });
 
   factory CuentaCorreo.fromJson(Map<String, dynamic> json) => CuentaCorreo(
-        id: json['id'] as int,
-        nombre: json['nombre'] as String,
-        protocolo: json['protocolo'] as String,
-        host: json['host'] as String,
-        puerto: json['puerto'] as int,
-        usuario: json['usuario'] as String,
-        smtpHost: json['smtp_host'] as String?,
-        smtpPuerto: json['smtp_puerto'] as int?,
-        ultimaSincronizacion: json['ultima_sincronizacion'] as String?,
-      );
+    id: json['id'] as int,
+    nombre: json['nombre'] as String,
+    protocolo: json['protocolo'] as String,
+    host: json['host'] as String,
+    puerto: json['puerto'] as int,
+    usuario: json['usuario'] as String,
+    smtpHost: json['smtp_host'] as String?,
+    smtpPuerto: json['smtp_puerto'] as int?,
+    ultimaSincronizacion: json['ultima_sincronizacion'] as String?,
+  );
 }
 
 /// Carpeta IMAP de una cuenta (db.correo_carpetas / correo.listar_carpetas).
@@ -184,9 +185,9 @@ class Carpeta {
   Carpeta({required this.nombre, required this.nombreVisible});
 
   factory Carpeta.fromJson(Map<String, dynamic> json) => Carpeta(
-        nombre: json['nombre'] as String,
-        nombreVisible: json['nombre_visible'] as String,
-      );
+    nombre: json['nombre'] as String,
+    nombreVisible: json['nombre_visible'] as String,
+  );
 }
 
 /// Adjunto de un mensaje (db.correo_adjuntos) — solo metadatos, sin
@@ -205,11 +206,11 @@ class Adjunto {
   });
 
   factory Adjunto.fromJson(Map<String, dynamic> json) => Adjunto(
-        id: json['id'] as int,
-        nombreArchivo: json['nombre_archivo'] as String,
-        tipoMime: json['tipo_mime'] as String,
-        tamanoBytes: json['tamano_bytes'] as int,
-      );
+    id: json['id'] as int,
+    nombreArchivo: json['nombre_archivo'] as String,
+    tipoMime: json['tipo_mime'] as String,
+    tamanoBytes: json['tamano_bytes'] as int,
+  );
 }
 
 /// Categoría de correo (db.listar_categorias_correo) — distinta de las
@@ -219,9 +220,14 @@ class CategoriaCorreo {
   final String nombre;
   final String color;
 
-  CategoriaCorreo({required this.id, required this.nombre, required this.color});
+  CategoriaCorreo({
+    required this.id,
+    required this.nombre,
+    required this.color,
+  });
 
-  factory CategoriaCorreo.fromJson(Map<String, dynamic> json) => CategoriaCorreo(
+  factory CategoriaCorreo.fromJson(Map<String, dynamic> json) =>
+      CategoriaCorreo(
         id: json['id'] as int,
         nombre: json['nombre'] as String,
         color: json['color'] as String,
@@ -268,27 +274,27 @@ class Mensaje {
   });
 
   factory Mensaje.fromJson(Map<String, dynamic> json) => Mensaje(
-        id: json['id'] as int,
-        cuentaId: json['cuenta_id'] as int,
-        carpeta: json['carpeta'] as String,
-        asunto: json['asunto'] as String,
-        remitente: json['remitente'] as String,
-        destinatarios: json['destinatarios'] as String,
-        cc: json['cc'] as String?,
-        fecha: json['fecha'] as String?,
-        cuerpoTexto: json['cuerpo_texto'] as String?,
-        cuerpoHtml: json['cuerpo_html'] as String?,
-        leido: (json['leido'] as int? ?? 0) != 0,
-        categoriaId: json['categoria_id'] as int?,
-        destacado: (json['destacado'] as int? ?? 0) != 0,
-        messageId: json['message_id'] as String?,
-        remitenteConfiable: json['remitente_confiable'] as bool? ?? false,
-        adjuntos: json['adjuntos'] == null
-            ? const []
-            : (json['adjuntos'] as List)
-                .map((a) => Adjunto.fromJson(a as Map<String, dynamic>))
-                .toList(),
-      );
+    id: json['id'] as int,
+    cuentaId: json['cuenta_id'] as int,
+    carpeta: json['carpeta'] as String,
+    asunto: json['asunto'] as String,
+    remitente: json['remitente'] as String,
+    destinatarios: json['destinatarios'] as String,
+    cc: json['cc'] as String?,
+    fecha: json['fecha'] as String?,
+    cuerpoTexto: json['cuerpo_texto'] as String?,
+    cuerpoHtml: json['cuerpo_html'] as String?,
+    leido: (json['leido'] as int? ?? 0) != 0,
+    categoriaId: json['categoria_id'] as int?,
+    destacado: (json['destacado'] as int? ?? 0) != 0,
+    messageId: json['message_id'] as String?,
+    remitenteConfiable: json['remitente_confiable'] as bool? ?? false,
+    adjuntos: json['adjuntos'] == null
+        ? const []
+        : (json['adjuntos'] as List)
+              .map((a) => Adjunto.fromJson(a as Map<String, dynamic>))
+              .toList(),
+  );
 }
 
 /// Remitente marcado como de confianza (db.correo_remitentes_confiables),
@@ -299,7 +305,8 @@ class RemitenteConfiable {
 
   RemitenteConfiable({required this.id, required this.direccion});
 
-  factory RemitenteConfiable.fromJson(Map<String, dynamic> json) => RemitenteConfiable(
+  factory RemitenteConfiable.fromJson(Map<String, dynamic> json) =>
+      RemitenteConfiable(
         id: json['id'] as int,
         direccion: json['direccion'] as String,
       );
@@ -323,12 +330,12 @@ class ReglaCategoria {
   });
 
   factory ReglaCategoria.fromJson(Map<String, dynamic> json) => ReglaCategoria(
-        id: json['id'] as int,
-        remitentePatron: json['remitente_patron'] as String,
-        categoriaId: json['categoria_id'] as int,
-        categoriaNombre: json['categoria_nombre'] as String,
-        categoriaColor: json['categoria_color'] as String,
-      );
+    id: json['id'] as int,
+    remitentePatron: json['remitente_patron'] as String,
+    categoriaId: json['categoria_id'] as int,
+    categoriaNombre: json['categoria_nombre'] as String,
+    categoriaColor: json['categoria_color'] as String,
+  );
 }
 
 /// Destinatario al que ya se ha enviado correo antes (db.correo_destinatarios_recientes),
@@ -339,7 +346,8 @@ class DestinatarioReciente {
 
   DestinatarioReciente({required this.direccion, this.nombreMostrado});
 
-  factory DestinatarioReciente.fromJson(Map<String, dynamic> json) => DestinatarioReciente(
+  factory DestinatarioReciente.fromJson(Map<String, dynamic> json) =>
+      DestinatarioReciente(
         direccion: json['direccion'] as String,
         nombreMostrado: json['nombre_mostrado'] as String?,
       );
@@ -356,7 +364,11 @@ class ArchivoAdjuntoNuevo {
   final String tipo;
   final List<int> bytes;
 
-  ArchivoAdjuntoNuevo({required this.nombre, required this.tipo, required this.bytes});
+  ArchivoAdjuntoNuevo({
+    required this.nombre,
+    required this.tipo,
+    required this.bytes,
+  });
 }
 
 /// Herramienta externa conectada (app/herramientas.py), Fase 9 — se abre en
@@ -367,6 +379,7 @@ class Herramienta {
   final String nombre;
   final String descripcion;
   final String icono;
+
   /// Nombre de archivo en app/static/logos/ con el logotipo oficial real
   /// (mismo campo que ya usa herramientas.html en la web) -- null en
   /// entradas antiguas que todavía no lo tengan, se cae al emoji de
@@ -388,15 +401,15 @@ class Herramienta {
   });
 
   factory Herramienta.fromJson(Map<String, dynamic> json) => Herramienta(
-        id: json['id'] as String,
-        nombre: json['nombre'] as String,
-        descripcion: json['descripcion'] as String,
-        icono: json['icono'] as String,
-        iconoLogo: json['icono_logo'] as String?,
-        url: json['url'] as String,
-        sso: json['sso'] as bool,
-        disponible: json['disponible'] as bool? ?? true,
-      );
+    id: json['id'] as String,
+    nombre: json['nombre'] as String,
+    descripcion: json['descripcion'] as String,
+    icono: json['icono'] as String,
+    iconoLogo: json['icono_logo'] as String?,
+    url: json['url'] as String,
+    sso: json['sso'] as bool,
+    disponible: json['disponible'] as bool? ?? true,
+  );
 }
 
 /// Configuración del chat nativo (Matrix/Synapse), Fase 9.
@@ -434,29 +447,127 @@ class Tiquet {
   });
 
   factory Tiquet.fromJson(Map<String, dynamic> json) => Tiquet(
+    id: json['id'] as int,
+    tipo: json['tipo'] as String,
+    titulo: json['titulo'] as String,
+    descripcion: json['descripcion'] as String?,
+    estado: json['estado'] as String,
+    usuarioId: json['usuario_id'] as int,
+    autorEmail: json['autor_email'] as String?,
+    creadoEn: json['creado_en'] as String,
+  );
+}
+
+/// Cliente fiscal de la gestoría (calendario fiscal, Fase F5) -- a
+/// diferencia del resto de modelos de este archivo, no es un dato propio
+/// del usuario sino del TENANT (equipo/gestoría), igual que Tiquet lo es
+/// del equipo entero de soporte. `nif`/`notas` opcionales.
+class ClienteFiscal {
+  final int id;
+  final String nombre;
+  final String? nif;
+  final String? notas;
+  final List<String> modelosFiscales;
+  final bool generacionAutomatica;
+  final String? espocrmCuentaId;
+
+  ClienteFiscal({
+    required this.id,
+    required this.nombre,
+    this.nif,
+    this.notas,
+    this.modelosFiscales = const [],
+    this.generacionAutomatica = false,
+    this.espocrmCuentaId,
+  });
+
+  factory ClienteFiscal.fromJson(Map<String, dynamic> json) => ClienteFiscal(
+    id: json['id'] as int,
+    nombre: json['nombre'] as String,
+    nif: json['nif'] as String?,
+    notas: json['notas'] as String?,
+    // Solo /fiscal/clientes/<id> (detalle) manda esta lista ya
+    // deserializada -- el listado no la necesita y no la manda, así
+    // que por defecto queda vacía en vez de fallar el parseo.
+    modelosFiscales:
+        (json['modelos_fiscales'] as List?)?.map((m) => m as String).toList() ??
+        [],
+    generacionAutomatica: (json['generacion_automatica'] as int? ?? 0) == 1,
+    espocrmCuentaId: json['espocrm_cuenta_id'] as String?,
+  );
+}
+
+/// Vencimiento fiscal concreto (modelo 303/390/130/111/115/200...) de un
+/// ClienteFiscal -- una fila por fecha ya calculada, no una regla de
+/// recurrencia (ver ApiClient.generarVencimientosFiscales).
+class VencimientoFiscal {
+  final int id;
+  final int clienteFiscalId;
+  final String clienteNombre;
+  final String modelo;
+  final String periodo;
+  final String fechaLimite;
+  final String estado;
+  final String? notas;
+  final int? usuarioId;
+
+  VencimientoFiscal({
+    required this.id,
+    required this.clienteFiscalId,
+    required this.clienteNombre,
+    required this.modelo,
+    required this.periodo,
+    required this.fechaLimite,
+    required this.estado,
+    this.notas,
+    this.usuarioId,
+  });
+
+  factory VencimientoFiscal.fromJson(Map<String, dynamic> json) =>
+      VencimientoFiscal(
         id: json['id'] as int,
-        tipo: json['tipo'] as String,
-        titulo: json['titulo'] as String,
-        descripcion: json['descripcion'] as String?,
+        clienteFiscalId: json['cliente_fiscal_id'] as int,
+        clienteNombre: json['cliente_nombre'] as String,
+        modelo: json['modelo'] as String,
+        periodo: json['periodo'] as String,
+        fechaLimite: json['fecha_limite'] as String,
         estado: json['estado'] as String,
-        usuarioId: json['usuario_id'] as int,
-        autorEmail: json['autor_email'] as String?,
-        creadoEn: json['creado_en'] as String,
+        notas: json['notas'] as String?,
+        usuarioId: json['usuario_id'] as int?,
       );
 }
+
+/// Los 6 modelos fiscales soportados hoy (calcado de
+/// app/vencimientos_fiscales.py:MODELOS_TRIMESTRALES/MODELOS_ANUALES) --
+/// no localizado a propósito, son códigos oficiales de la AEAT, iguales
+/// en cualquier idioma.
+const modelosFiscalesDisponibles = {
+  '303': 'IVA - Declaración trimestral',
+  '130': 'IRPF - Pago fraccionado (estimación directa)',
+  '111': 'Retenciones IRPF trabajadores/profesionales',
+  '115': 'Retenciones alquileres',
+  '390': 'IVA - Resumen anual',
+  '200': 'Impuesto sobre Sociedades',
+};
+
+List<(String, String)> estadosVencimientoFiscal(AppLocalizations t) => [
+  ('pendiente', t.vencimientoFiscalEstadoPendiente),
+  ('presentado', t.vencimientoFiscalEstadoPresentado),
+  ('fuera_plazo', t.vencimientoFiscalEstadoFueraPlazo),
+];
 
 /// Función (no const) porque las etiquetas dependen del idioma elegido
 /// -- ver AppLocalizations.of(context)! en cada pantalla que las usa.
 List<(String, String)> tiposTiquet(AppLocalizations t) => [
-      ('error', t.tiquetTipoError),
-      ('sugerencia', t.tiquetTipoSugerencia),
-    ];
+  ('error', t.tiquetTipoError),
+  ('sugerencia', t.tiquetTipoSugerencia),
+];
 
 List<(String, String)> estadosTiquet(AppLocalizations t) => [
-      ('sin_revisar', t.tiquetEstadoSinRevisar),
-      ('en_revision', t.tiquetEstadoEnRevision),
-      ('finalizado', t.tiquetEstadoFinalizado),
-    ];
+  ('sin_revisar', t.tiquetEstadoSinRevisar),
+  ('en_revision', t.tiquetEstadoEnRevision),
+  ('finalizado', t.tiquetEstadoFinalizado),
+];
 
 /// Datos personales del trabajador para el registro de fichaje (art. 34.9
 /// ET) -- hace falta rellenar nombreCompleto+dniNie antes de poder fichar.
@@ -482,15 +593,15 @@ class FichajeDatos {
   });
 
   factory FichajeDatos.fromJson(Map<String, dynamic> json) => FichajeDatos(
-        nombreCompleto: json['nombre_completo'] as String?,
-        dniNie: json['dni_nie'] as String?,
-        numeroAfiliacionSs: json['numero_afiliacion_ss'] as String?,
-        categoriaProfesional: json['categoria_profesional'] as String?,
-        tipoContrato: json['tipo_contrato'] as String?,
-        fechaAlta: json['fecha_alta'] as String?,
-        jornadaSemanalHoras: (json['jornada_semanal_horas'] as num?)?.toDouble(),
-        convenioColectivo: json['convenio_colectivo'] as String?,
-      );
+    nombreCompleto: json['nombre_completo'] as String?,
+    dniNie: json['dni_nie'] as String?,
+    numeroAfiliacionSs: json['numero_afiliacion_ss'] as String?,
+    categoriaProfesional: json['categoria_profesional'] as String?,
+    tipoContrato: json['tipo_contrato'] as String?,
+    fechaAlta: json['fecha_alta'] as String?,
+    jornadaSemanalHoras: (json['jornada_semanal_horas'] as num?)?.toDouble(),
+    convenioColectivo: json['convenio_colectivo'] as String?,
+  );
 }
 
 /// Un evento de fichaje (entrada/pausa_inicio/pausa_fin/salida).
@@ -510,20 +621,20 @@ class FichajeEvento {
   });
 
   factory FichajeEvento.fromJson(Map<String, dynamic> json) => FichajeEvento(
-        id: json['id'] as int,
-        tipo: json['tipo'] as String,
-        marcaTiempo: json['marca_tiempo'] as String,
-        origen: json['origen'] as String,
-        nota: json['nota'] as String?,
-      );
+    id: json['id'] as int,
+    tipo: json['tipo'] as String,
+    marcaTiempo: json['marca_tiempo'] as String,
+    origen: json['origen'] as String,
+    nota: json['nota'] as String?,
+  );
 }
 
 Map<String, String> etiquetasFichaje(AppLocalizations t) => {
-      'entrada': t.fichajeTipoEntrada,
-      'pausa_inicio': t.fichajeTipoPausaInicio,
-      'pausa_fin': t.fichajeTipoPausaFin,
-      'salida': t.fichajeTipoSalida,
-    };
+  'entrada': t.fichajeTipoEntrada,
+  'pausa_inicio': t.fichajeTipoPausaInicio,
+  'pausa_fin': t.fichajeTipoPausaFin,
+  'salida': t.fichajeTipoSalida,
+};
 
 // --- Asistente IA (Fase 2 de paridad app/web, ver app/ia_asistente.py) -----
 
@@ -534,6 +645,7 @@ class IaMensaje {
   final int id;
   final String rol; // 'user' | 'assistant' | 'tool'
   final String? contenido;
+
   /// Solo relleno en filas "assistant" que pidieron herramientas -- JSON en
   /// crudo (lista de tool_calls) tal cual lo guardó ia_asistente.py. Se usa
   /// para reconstruir si hay una confirmación pendiente al reabrir el chat
@@ -554,14 +666,14 @@ class IaMensaje {
   });
 
   factory IaMensaje.fromJson(Map<String, dynamic> json) => IaMensaje(
-        id: json['id'] as int,
-        rol: json['rol'] as String,
-        contenido: json['contenido'] as String?,
-        toolCallsJson: json['tool_calls_json'] as String?,
-        toolCallId: json['tool_call_id'] as String?,
-        nombreHerramienta: json['nombre_herramienta'] as String?,
-        creadoEn: json['creado_en'] as String,
-      );
+    id: json['id'] as int,
+    rol: json['rol'] as String,
+    contenido: json['contenido'] as String?,
+    toolCallsJson: json['tool_calls_json'] as String?,
+    toolCallId: json['tool_call_id'] as String?,
+    nombreHerramienta: json['nombre_herramienta'] as String?,
+    creadoEn: json['creado_en'] as String,
+  );
 }
 
 /// Una acción esperando confirmación explícita (ver
@@ -571,13 +683,17 @@ class IaPendiente {
   final String herramienta;
   final Map<String, dynamic> argumentos;
 
-  IaPendiente({required this.toolCallId, required this.herramienta, required this.argumentos});
+  IaPendiente({
+    required this.toolCallId,
+    required this.herramienta,
+    required this.argumentos,
+  });
 
   factory IaPendiente.fromJson(Map<String, dynamic> json) => IaPendiente(
-        toolCallId: json['tool_call_id'] as String,
-        herramienta: json['herramienta'] as String,
-        argumentos: (json['argumentos'] as Map?)?.cast<String, dynamic>() ?? {},
-      );
+    toolCallId: json['tool_call_id'] as String,
+    herramienta: json['herramienta'] as String,
+    argumentos: (json['argumentos'] as Map?)?.cast<String, dynamic>() ?? {},
+  );
 }
 
 /// Resultado de un turno (POST /ia/mensaje o /ia/confirmar): los mensajes
@@ -588,7 +704,8 @@ class IaTurnoResultado {
 
   IaTurnoResultado({required this.mensajesNuevos, this.pendiente});
 
-  factory IaTurnoResultado.fromJson(Map<String, dynamic> json) => IaTurnoResultado(
+  factory IaTurnoResultado.fromJson(Map<String, dynamic> json) =>
+      IaTurnoResultado(
         mensajesNuevos: (json['mensajes_nuevos'] as List? ?? [])
             .map((m) => IaMensaje.fromJson(m as Map<String, dynamic>))
             .toList(),
@@ -607,15 +724,19 @@ class IaAjustes {
   final bool modoAutonomo;
   final bool apiKeyConfigurada;
 
-  IaAjustes({required this.modelo, required this.modoAutonomo, required this.apiKeyConfigurada});
+  IaAjustes({
+    required this.modelo,
+    required this.modoAutonomo,
+    required this.apiKeyConfigurada,
+  });
 
   factory IaAjustes.fromJson(Map<String, dynamic> json) => IaAjustes(
-        modelo: json['modelo'] as String? ?? '',
-        modoAutonomo: (json['modo_autonomo'] is bool)
-            ? json['modo_autonomo'] as bool
-            : (json['modo_autonomo'] as int? ?? 0) != 0,
-        apiKeyConfigurada: json['api_key_configurada'] as bool? ?? false,
-      );
+    modelo: json['modelo'] as String? ?? '',
+    modoAutonomo: (json['modo_autonomo'] is bool)
+        ? json['modo_autonomo'] as bool
+        : (json['modo_autonomo'] as int? ?? 0) != 0,
+    apiKeyConfigurada: json['api_key_configurada'] as bool? ?? false,
+  );
 }
 
 /// Un modelo gratuito de OpenRouter (ver ia_asistente.listar_modelos_gratuitos).
@@ -643,7 +764,13 @@ class IaEventoStream {
   final IaPendiente? pendiente;
   final String? error;
 
-  IaEventoStream({required this.tipo, this.texto, this.mensaje, this.pendiente, this.error});
+  IaEventoStream({
+    required this.tipo,
+    this.texto,
+    this.mensaje,
+    this.pendiente,
+    this.error,
+  });
 
   factory IaEventoStream.fromJson(Map<String, dynamic> json) {
     final tipo = json['tipo'] as String;

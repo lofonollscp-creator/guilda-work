@@ -13,6 +13,7 @@ import '../widgets/app_card.dart';
 import 'ajustes_screen.dart';
 import 'correo_bandeja_screen.dart';
 import 'fichaje_screen.dart';
+import 'fiscal_screen.dart';
 import 'herramientas_screen.dart';
 import 'historial_rapido_screen.dart';
 import 'ia_chat_screen.dart';
@@ -98,17 +99,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _error = null;
     });
     try {
-      await widget.api.crearNota(texto, categoriaId: _categoriaNotaSeleccionada);
+      await widget.api.crearNota(
+        texto,
+        categoriaId: _categoriaNotaSeleccionada,
+      );
       _notaController.clear();
       await _recargar();
     } on ApiException catch (e) {
       if (e.esDeConexion) {
-        await widget.sync.encolarNota(texto, _categoriaNotaSeleccionada, DateTime.now());
+        await widget.sync.encolarNota(
+          texto,
+          _categoriaNotaSeleccionada,
+          DateTime.now(),
+        );
         _notaController.clear();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t.dashboardSinConexionNota)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(t.dashboardSinConexionNota)));
         }
       } else {
         setState(() => _error = e.toString());
@@ -129,11 +137,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Text(t.dashboardNuevoMenuDialogTitulo),
         content: TextField(
           controller: controlador,
-          decoration: InputDecoration(labelText: t.dashboardNuevoMenuDialogLabel),
+          decoration: InputDecoration(
+            labelText: t.dashboardNuevoMenuDialogLabel,
+          ),
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(t.comunCancelar)),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t.comunCancelar),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controlador.text.trim()),
             child: Text(t.dashboardCrearBoton),
@@ -183,7 +196,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
+            return Center(
+              child: Text(t.comunErrorCargar(snapshot.error.toString())),
+            );
           }
           return RefreshIndicator(
             onRefresh: _recargar,
@@ -199,14 +214,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _tarjetaNotaRapida(t),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 24),
-                Text(t.dashboardAccesosTitulo, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  t.dashboardAccesosTitulo,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 _rejillaAccesos(t),
                 const SizedBox(height: 24),
-                Text(t.dashboardTusMenus, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  t.dashboardTusMenus,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
                 if (_categorias.isEmpty)
                   Padding(
@@ -227,30 +253,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// IconButton sueltos que antes vivían en la barra superior. Cada tarjeta
   /// es más grande y lleva etiqueta, más fácil de acertar en el móvil que
   /// un icono pequeño en una barra ya apretada.
-  void _abrirPantalla(Widget Function() construir) =>
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => construir()));
+  void _abrirPantalla(Widget Function() construir) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => construir()));
 
   Widget _rejillaAccesos(AppLocalizations t) {
     final accesos = [
-      (Icons.checklist, t.dashboardTareasTooltip, () => _abrirPantalla(() => TareasOutlookScreen(api: widget.api))),
-      (Icons.mail_outline, t.dashboardCorreoTooltip, () => _abrirPantalla(() => CorreoBandejaScreen(api: widget.api))),
-      (Icons.apps, t.dashboardHerramientasTooltip, () => _abrirPantalla(() => HerramientasScreen(api: widget.api))),
+      (
+        Icons.checklist,
+        t.dashboardTareasTooltip,
+        () => _abrirPantalla(() => TareasOutlookScreen(api: widget.api)),
+      ),
+      (
+        Icons.mail_outline,
+        t.dashboardCorreoTooltip,
+        () => _abrirPantalla(() => CorreoBandejaScreen(api: widget.api)),
+      ),
+      (
+        Icons.apps,
+        t.dashboardHerramientasTooltip,
+        () => _abrirPantalla(() => HerramientasScreen(api: widget.api)),
+      ),
       (
         Icons.confirmation_number_outlined,
         t.dashboardTiquetsTooltip,
-        () => _abrirPantalla(() => TiquetsScreen(api: widget.api, usuario: widget.usuario)),
+        () => _abrirPantalla(
+          () => TiquetsScreen(api: widget.api, usuario: widget.usuario),
+        ),
       ),
       (
         Icons.punch_clock_outlined,
         t.dashboardFichajeTooltip,
-        () => _abrirPantalla(() => FichajeScreen(api: widget.api, sync: widget.sync)),
+        () => _abrirPantalla(
+          () => FichajeScreen(api: widget.api, sync: widget.sync),
+        ),
       ),
-      (Icons.smart_toy_outlined, t.dashboardAsistenteIaTooltip, () => _abrirPantalla(() => IaChatScreen(api: widget.api, locale: widget.locale))),
+      (
+        Icons.smart_toy_outlined,
+        t.dashboardAsistenteIaTooltip,
+        () => _abrirPantalla(
+          () => IaChatScreen(api: widget.api, locale: widget.locale),
+        ),
+      ),
       // A petición del usuario: "Chat de equipo" lanza la app nativa de
       // Element X (o manda a la tienda si no la tiene) en vez de abrir el
       // cliente Matrix propio de la app (chat_login_screen.dart, que se
       // deja intacto sin usar desde aquí por si se retoma más adelante).
       (Icons.chat_bubble_outline, t.dashboardChatTooltip, abrirElementX),
+      // Fase F5 (calendario fiscal en móvil): solo visible con tenant
+      // asignado -- primera vez que el dashboard móvil hace gating por
+      // tenant, mismo criterio que ya usa la web con g.tenant_id (ver
+      // app/templates/base.html).
+      if (widget.usuario.tenantId != null)
+        (
+          Icons.calendar_month_outlined,
+          t.dashboardFiscalTooltip,
+          () => _abrirPantalla(() => FiscalScreen(api: widget.api)),
+        ),
     ];
     return GridView.count(
       shrinkWrap: true,
@@ -265,7 +324,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _accesoTile({required IconData icono, required String etiqueta, required VoidCallback onTap}) {
+  Widget _accesoTile({
+    required IconData icono,
+    required String etiqueta,
+    required VoidCallback onTap,
+  }) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -306,8 +369,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(t.dashboardPrimerosPasos, style: Theme.of(context).textTheme.titleSmall),
-                  TextButton(onPressed: _ocultarOnboarding, child: Text(t.dashboardOcultar)),
+                  Text(
+                    t.dashboardPrimerosPasos,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  TextButton(
+                    onPressed: _ocultarOnboarding,
+                    child: Text(t.dashboardOcultar),
+                  ),
                 ],
               ),
             ),
@@ -322,8 +391,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: tieneCorreo
                   ? null
                   : () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => CorreoBandejaScreen(api: widget.api)),
+                      MaterialPageRoute(
+                        builder: (_) => CorreoBandejaScreen(api: widget.api),
                       ),
+                    ),
             ),
             _pasoOnboarding(
               t.dashboardPasoAsistenteIa,
@@ -331,8 +402,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: haUsadoIa
                   ? null
                   : () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => IaChatScreen(api: widget.api, locale: widget.locale)),
+                      MaterialPageRoute(
+                        builder: (_) => IaChatScreen(
+                          api: widget.api,
+                          locale: widget.locale,
+                        ),
                       ),
+                    ),
             ),
           ],
         ),
@@ -350,7 +426,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       title: Text(
         texto,
-        style: hecho ? TextStyle(decoration: TextDecoration.lineThrough, color: Theme.of(context).disabledColor) : null,
+        style: hecho
+            ? TextStyle(
+                decoration: TextDecoration.lineThrough,
+                color: Theme.of(context).disabledColor,
+              )
+            : null,
       ),
       trailing: onTap != null ? const Icon(Icons.chevron_right) : null,
       onTap: onTap,
@@ -361,7 +442,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       await widget.api.ocultarOnboarding();
       if (!mounted) return;
-      setState(() => _dashboard = {...?_dashboard, 'onboarding_visible': false});
+      setState(
+        () => _dashboard = {...?_dashboard, 'onboarding_visible': false},
+      );
     } catch (_) {
       // Fallo silencioso: si la petición no llega, la tarjeta sigue
       // visible y el usuario puede volver a intentar "Ocultar" sin más.
@@ -378,29 +461,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _stat(
             '$tareasActivas',
             t.dashboardStatEnCurso,
-            onTap: () => _abrirPantalla(() => HistorialRapidoScreen(
-                  api: widget.api,
-                  filtro: FiltroHistorialRapido.enCurso,
-                  titulo: t.dashboardStatEnCurso,
-                )),
+            onTap: () => _abrirPantalla(
+              () => HistorialRapidoScreen(
+                api: widget.api,
+                filtro: FiltroHistorialRapido.enCurso,
+                titulo: t.dashboardStatEnCurso,
+              ),
+            ),
           ),
         ),
         Expanded(
           child: _stat(
             '$notasHoy',
             t.dashboardStatNotasHoy,
-            onTap: () => _abrirPantalla(() => HistorialRapidoScreen(
-                  api: widget.api,
-                  filtro: FiltroHistorialRapido.notasHoy,
-                  titulo: t.dashboardStatNotasHoy,
-                )),
+            onTap: () => _abrirPantalla(
+              () => HistorialRapidoScreen(
+                api: widget.api,
+                filtro: FiltroHistorialRapido.notasHoy,
+                titulo: t.dashboardStatNotasHoy,
+              ),
+            ),
           ),
         ),
         Expanded(
           child: _stat(
             '$correosNoLeidos',
             t.dashboardStatCorreosSinLeer,
-            onTap: () => _abrirPantalla(() => CorreoBandejaScreen(api: widget.api)),
+            onTap: () =>
+                _abrirPantalla(() => CorreoBandejaScreen(api: widget.api)),
           ),
         ),
       ],
@@ -417,7 +505,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             children: [
               Text(valor, style: Theme.of(context).textTheme.headlineSmall),
-              Text(etiqueta, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+              Text(
+                etiqueta,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -440,12 +532,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 value: _categoriaNotaSeleccionada,
                 hint: Text(t.dashboardSinMenu),
                 items: [
-                  DropdownMenuItem(value: null, child: Text(t.dashboardSinMenu)),
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(t.dashboardSinMenu),
+                  ),
                   ..._categorias.map(
                     (c) => DropdownMenuItem(value: c.id, child: Text(c.nombre)),
                   ),
                 ],
-                onChanged: (v) => setState(() => _categoriaNotaSeleccionada = v),
+                onChanged: (v) =>
+                    setState(() => _categoriaNotaSeleccionada = v),
               ),
             Row(
               children: [
@@ -479,7 +575,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListTile(
         leading: CircleAvatar(backgroundColor: color, radius: 8),
         title: Text(c.nombre),
-        subtitle: tareasActivas > 0 ? Text(loc.dashboardMenuEnCurso(tareasActivas)) : null,
+        subtitle: tareasActivas > 0
+            ? Text(loc.dashboardMenuEnCurso(tareasActivas))
+            : null,
         trailing: const Icon(Icons.chevron_right),
         onTap: () async {
           await Navigator.of(context).push(

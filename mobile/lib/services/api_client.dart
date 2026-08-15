@@ -9,6 +9,7 @@ import 'session_service.dart';
 /// Error legible para mostrar en la UI cuando falla una llamada a la API.
 class ApiException implements Exception {
   final String mensaje;
+
   /// true si el fallo es "no hay red/no se llega al servidor" -- lo usan
   /// fichaje_screen.dart y dashboard_screen.dart para decidir si encolar la
   /// acción offline en vez de mostrar el error tal cual (un error de
@@ -24,13 +25,24 @@ class Usuario {
   final int id;
   final String email;
   final bool esAdmin;
-  Usuario({required this.id, required this.email, this.esAdmin = false});
+  // Fase F5 (calendario fiscal en móvil): null si el usuario no tiene
+  // tenant asignado -- mismo criterio de gating que ya usa la web con
+  // g.tenant_id (el dashboard solo enseña "Calendario fiscal" si esto no
+  // es null, ver dashboard_screen.dart:_rejillaAccesos()).
+  final int? tenantId;
+  Usuario({
+    required this.id,
+    required this.email,
+    this.esAdmin = false,
+    this.tenantId,
+  });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
-        id: json['id'] as int,
-        email: json['email'] as String,
-        esAdmin: json['es_admin'] as bool? ?? false,
-      );
+    id: json['id'] as int,
+    email: json['email'] as String,
+    esAdmin: json['es_admin'] as bool? ?? false,
+    tenantId: json['tenant_id'] as int?,
+  );
 }
 
 /// Cliente HTTP para app/rutas_api.py (Fase 2). Todas las respuestas de la
@@ -64,7 +76,8 @@ class ApiClient {
           handler.next(options);
         },
         onError: (e, handler) async {
-          if (e.response?.statusCode == 401 && e.requestOptions.extra['conToken'] == true) {
+          if (e.response?.statusCode == 401 &&
+              e.requestOptions.extra['conToken'] == true) {
             await sesion.borrarToken();
             onSesionExpirada?.call();
           }
@@ -151,9 +164,15 @@ class ApiClient {
 
   // --- Dispositivos push (Fase 10, ver services/push_service.dart) ---------
 
-  Future<void> registrarDispositivoPush(String fcmToken, String plataforma) async {
+  Future<void> registrarDispositivoPush(
+    String fcmToken,
+    String plataforma,
+  ) async {
     try {
-      await _dio.post('/dispositivos-push', data: {'fcm_token': fcmToken, 'plataforma': plataforma});
+      await _dio.post(
+        '/dispositivos-push',
+        data: {'fcm_token': fcmToken, 'plataforma': plataforma},
+      );
     } on DioException {
       // No crítico: si falla, se reintenta en el siguiente arranque/refresco de token.
     }
@@ -217,7 +236,12 @@ class ApiClient {
     }
   }
 
-  Future<void> crearNota(String texto, {int? categoriaId, String? creadaEn, String? clienteUuid}) async {
+  Future<void> crearNota(
+    String texto, {
+    int? categoriaId,
+    String? creadaEn,
+    String? clienteUuid,
+  }) async {
     try {
       await _dio.post(
         '/notas',
@@ -256,15 +280,15 @@ class ApiClient {
     }
   }
 
-  Future<List<EntradaHistorial>> historial({int? categoriaId, String? q}) async {
+  Future<List<EntradaHistorial>> historial({
+    int? categoriaId,
+    String? q,
+  }) async {
     final qEfectivo = (q != null && q.isNotEmpty) ? q : null;
     try {
       final resp = await _dio.get(
         '/historial',
-        queryParameters: {
-          'categoria_id': ?categoriaId,
-          'q': ?qEfectivo,
-        },
+        queryParameters: {'categoria_id': ?categoriaId, 'q': ?qEfectivo},
       );
       return (resp.data['data'] as List)
           .map((f) => EntradaHistorial.fromJson(f as Map<String, dynamic>))
@@ -322,7 +346,10 @@ class ApiClient {
     }
   }
 
-  Future<TareaOutlook> editarTareaOutlook(int id, Map<String, dynamic> campos) async {
+  Future<TareaOutlook> editarTareaOutlook(
+    int id,
+    Map<String, dynamic> campos,
+  ) async {
     try {
       final resp = await _dio.put('/tareas-outlook/$id', data: campos);
       return TareaOutlook.fromJson(resp.data['data'] as Map<String, dynamic>);
@@ -380,7 +407,12 @@ class ApiClient {
     }
   }
 
-  Future<Tiquet> editarTiquet(int id, {String? titulo, String? descripcion, String? tipo}) async {
+  Future<Tiquet> editarTiquet(
+    int id, {
+    String? titulo,
+    String? descripcion,
+    String? tipo,
+  }) async {
     try {
       final resp = await _dio.put(
         '/tiquets/$id',
@@ -402,8 +434,181 @@ class ApiClient {
 
   Future<Tiquet> cambiarEstadoTiquet(int id, String estado) async {
     try {
-      final resp = await _dio.post('/tiquets/$id/estado', data: {'estado': estado});
+      final resp = await _dio.post(
+        '/tiquets/$id/estado',
+        data: {'estado': estado},
+      );
       return Tiquet.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  // --- Calendario fiscal (Fase F5) -----------------------------------------
+  // Solo alcanzable con tenant asignado (ver Usuario.tenantId) -- sin él,
+  // el backend devuelve 403 con un mensaje legible, no hace falta que
+  // este cliente lo compruebe también.
+
+  Future<List<ClienteFiscal>> listarClientesFiscales({String? q}) async {
+    try {
+      final resp = await _dio.get(
+        '/fiscal/clientes',
+        queryParameters: {'q': ?q},
+      );
+      return (resp.data['data'] as List)
+          .map((c) => ClienteFiscal.fromJson(c as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// El listado (listarClientesFiscales) no manda modelos_fiscales/
+  /// generacion_automatica/espocrm_cuenta_id -- solo el detalle. Se usa
+  /// antes de abrir la pantalla de edición para no perder esos campos.
+  Future<ClienteFiscal> obtenerClienteFiscal(int id) async {
+    try {
+      final resp = await _dio.get('/fiscal/clientes/$id');
+      return ClienteFiscal.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<ClienteFiscal> crearClienteFiscal({
+    required String nombre,
+    String? nif,
+    String? notas,
+    List<String>? modelosFiscales,
+  }) async {
+    try {
+      final resp = await _dio.post(
+        '/fiscal/clientes',
+        data: {
+          'nombre': nombre,
+          'nif': ?nif,
+          'notas': ?notas,
+          'modelos_fiscales': ?modelosFiscales,
+        },
+      );
+      return ClienteFiscal.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<ClienteFiscal> editarClienteFiscal(
+    int id, {
+    String? nombre,
+    String? nif,
+    String? notas,
+    List<String>? modelosFiscales,
+    bool? generacionAutomatica,
+  }) async {
+    try {
+      final resp = await _dio.put(
+        '/fiscal/clientes/$id',
+        data: {
+          'nombre': ?nombre,
+          'nif': ?nif,
+          'notas': ?notas,
+          'modelos_fiscales': ?modelosFiscales,
+          'generacion_automatica': ?generacionAutomatica,
+        },
+      );
+      return ClienteFiscal.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarClienteFiscal(int id) async {
+    try {
+      await _dio.delete('/fiscal/clientes/$id');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// Genera e inserta directamente los vencimientos propuestos para
+  /// `modelos` en `anio` -- a diferencia de la web (que deja editar cada
+  /// fecha antes de confirmar), aquí se crean tal cual; se puede ajustar
+  /// una fecha después editando el vencimiento ya creado. Devuelve
+  /// cuántos se han creado.
+  Future<int> generarVencimientosFiscales(
+    int clienteId,
+    List<String> modelos,
+    int anio,
+  ) async {
+    try {
+      final resp = await _dio.post(
+        '/fiscal/clientes/$clienteId/generar-vencimientos',
+        data: {'modelos': modelos, 'anio': anio},
+      );
+      return resp.data['data']['creados'] as int;
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<List<VencimientoFiscal>> listarVencimientosFiscales({
+    String? estado,
+    int? clienteId,
+  }) async {
+    try {
+      final resp = await _dio.get(
+        '/fiscal/vencimientos',
+        queryParameters: {'estado': ?estado, 'cliente_id': ?clienteId},
+      );
+      return (resp.data['data'] as List)
+          .map((v) => VencimientoFiscal.fromJson(v as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<VencimientoFiscal> editarVencimientoFiscal(
+    int id, {
+    String? modelo,
+    String? periodo,
+    String? fechaLimite,
+    String? estado,
+    String? notas,
+  }) async {
+    try {
+      final resp = await _dio.put(
+        '/fiscal/vencimientos/$id',
+        data: {
+          'modelo': ?modelo,
+          'periodo': ?periodo,
+          'fecha_limite': ?fechaLimite,
+          'estado': ?estado,
+          'notas': ?notas,
+        },
+      );
+      return VencimientoFiscal.fromJson(
+        resp.data['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<VencimientoFiscal> marcarPresentadoVencimientoFiscal(int id) async {
+    try {
+      final resp = await _dio.post('/fiscal/vencimientos/$id/presentado');
+      return VencimientoFiscal.fromJson(
+        resp.data['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarVencimientoFiscal(int id) async {
+    try {
+      await _dio.delete('/fiscal/vencimientos/$id');
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
@@ -421,20 +626,30 @@ class ApiClient {
     }
   }
 
-  Future<String> fichar(String tipo, {String? marcaTiempo, String? clienteUuid}) async {
+  Future<String> fichar(
+    String tipo, {
+    String? marcaTiempo,
+    String? clienteUuid,
+  }) async {
     try {
-      final resp = await _dio.post('/fichaje/marcar', data: {
-        'tipo': tipo,
-        'marca_tiempo': ?marcaTiempo,
-        'cliente_uuid': ?clienteUuid,
-      });
+      final resp = await _dio.post(
+        '/fichaje/marcar',
+        data: {
+          'tipo': tipo,
+          'marca_tiempo': ?marcaTiempo,
+          'cliente_uuid': ?clienteUuid,
+        },
+      );
       return (resp.data['data'] as Map<String, dynamic>)['estado'] as String;
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
   }
 
-  Future<List<FichajeEvento>> listarMisFichajes({String? desde, String? hasta}) async {
+  Future<List<FichajeEvento>> listarMisFichajes({
+    String? desde,
+    String? hasta,
+  }) async {
     try {
       final resp = await _dio.get(
         '/fichaje/historial',
@@ -631,11 +846,13 @@ class ApiClient {
           'en_respuesta_a': ?enRespuestaA,
           if (adjuntos.isNotEmpty)
             'adjuntos': adjuntos
-                .map((a) => {
-                      'nombre': a.nombre,
-                      'tipo': a.tipo,
-                      'contenido_base64': base64Encode(a.bytes),
-                    })
+                .map(
+                  (a) => {
+                    'nombre': a.nombre,
+                    'tipo': a.tipo,
+                    'contenido_base64': base64Encode(a.bytes),
+                  },
+                )
                 .toList(),
         },
       );
@@ -671,7 +888,10 @@ class ApiClient {
 
   Future<void> confiarEnRemitente(String direccion) async {
     try {
-      await _dio.post('/correo/remitentes-confiables', data: {'direccion': direccion});
+      await _dio.post(
+        '/correo/remitentes-confiables',
+        data: {'direccion': direccion},
+      );
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
@@ -698,11 +918,17 @@ class ApiClient {
     }
   }
 
-  Future<void> crearReglaCategoria(String remitentePatron, int categoriaId) async {
+  Future<void> crearReglaCategoria(
+    String remitentePatron,
+    int categoriaId,
+  ) async {
     try {
       await _dio.post(
         '/correo/reglas-categoria',
-        data: {'remitente_patron': remitentePatron, 'categoria_id': categoriaId},
+        data: {
+          'remitente_patron': remitentePatron,
+          'categoria_id': categoriaId,
+        },
       );
     } on DioException catch (e) {
       throw _errorLegible(e);
@@ -719,9 +945,14 @@ class ApiClient {
 
   // --- Destinatarios recientes (Fase 5) -----------------------------------
 
-  Future<List<DestinatarioReciente>> buscarDestinatariosRecientes(String q) async {
+  Future<List<DestinatarioReciente>> buscarDestinatariosRecientes(
+    String q,
+  ) async {
     try {
-      final resp = await _dio.get('/correo/destinatarios-recientes', queryParameters: {'q': q});
+      final resp = await _dio.get(
+        '/correo/destinatarios-recientes',
+        queryParameters: {'q': q},
+      );
       return (resp.data['data'] as List)
           .map((d) => DestinatarioReciente.fromJson(d as Map<String, dynamic>))
           .toList();
@@ -783,7 +1014,9 @@ class ApiClient {
   Future<IaTurnoResultado> enviarMensajeIa(String texto) async {
     try {
       final resp = await _dio.post('/ia/mensaje', data: {'texto': texto});
-      return IaTurnoResultado.fromJson(resp.data['data'] as Map<String, dynamic>);
+      return IaTurnoResultado.fromJson(
+        resp.data['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
@@ -792,7 +1025,9 @@ class ApiClient {
   Future<IaTurnoResultado> confirmarIa(bool aceptar) async {
     try {
       final resp = await _dio.post('/ia/confirmar', data: {'aceptar': aceptar});
-      return IaTurnoResultado.fromJson(resp.data['data'] as Map<String, dynamic>);
+      return IaTurnoResultado.fromJson(
+        resp.data['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
@@ -803,15 +1038,23 @@ class ApiClient {
   /// esperar a que el modelo termine de pensar toda la respuesta antes de
   /// poder empezar a leerla en voz alta (ver ia_chat_screen.dart). Mismo
   /// formato SSE que ya consume ia_asistente.js en la web.
-  Stream<IaEventoStream> enviarMensajeIaStream(String texto) => _turnoIaStream('/ia/mensaje/stream', {'texto': texto});
+  Stream<IaEventoStream> enviarMensajeIaStream(String texto) =>
+      _turnoIaStream('/ia/mensaje/stream', {'texto': texto});
 
   Stream<IaEventoStream> confirmarIaStream(bool aceptar) =>
       _turnoIaStream('/ia/confirmar/stream', {'aceptar': aceptar});
 
-  Stream<IaEventoStream> _turnoIaStream(String ruta, Map<String, dynamic> datos) async* {
+  Stream<IaEventoStream> _turnoIaStream(
+    String ruta,
+    Map<String, dynamic> datos,
+  ) async* {
     final Response<ResponseBody> resp;
     try {
-      resp = await _dio.post<ResponseBody>(ruta, data: datos, options: Options(responseType: ResponseType.stream));
+      resp = await _dio.post<ResponseBody>(
+        ruta,
+        data: datos,
+        options: Options(responseType: ResponseType.stream),
+      );
     } on DioException catch (e) {
       throw _errorLegible(e);
     }
@@ -830,7 +1073,9 @@ class ApiClient {
         if (!linea.startsWith('data:')) continue;
         final crudo = linea.substring(5).trim();
         try {
-          yield IaEventoStream.fromJson(jsonDecode(crudo) as Map<String, dynamic>);
+          yield IaEventoStream.fromJson(
+            jsonDecode(crudo) as Map<String, dynamic>,
+          );
         } catch (_) {
           // Línea no era JSON válido (no debería pasar) -- se ignora en vez
           // de tirar todo el stream abajo por un chunk raro.
@@ -857,9 +1102,15 @@ class ApiClient {
   }
 
   /// Solo cambia modelo/modo autónomo -- ver nota de la clave de API arriba.
-  Future<void> guardarAjustesIa({required String modelo, required bool modoAutonomo}) async {
+  Future<void> guardarAjustesIa({
+    required String modelo,
+    required bool modoAutonomo,
+  }) async {
     try {
-      await _dio.post('/ia/ajustes', data: {'modelo': modelo, 'modo_autonomo': modoAutonomo});
+      await _dio.post(
+        '/ia/ajustes',
+        data: {'modelo': modelo, 'modo_autonomo': modoAutonomo},
+      );
     } on DioException catch (e) {
       throw _errorLegible(e);
     }

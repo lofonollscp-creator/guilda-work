@@ -66,6 +66,13 @@ dependencies:
   firebase_core: ^3.10.0
   firebase_messaging: ^15.2.0
   flutter_local_notifications: ^18.0.1
+  # Calendario fiscal (Fase F5 de la ampliación "eventual-herding-kitten"):
+  # primera vista de calendario mensual en móvil (no existía ninguna, ni
+  # de tareas ni fiscal) -- paquete consolidado de pub.dev en vez de
+  # construir una rejilla de mes a mano, mismo criterio pragmático que al
+  # añadir speech_to_text/flutter_tts cuando hizo falta una capacidad
+  # nueva. Ver tareas_calendario_screen.dart.
+  table_calendar: ^3.1.2
 
 dev_dependencies:
   flutter_test:
