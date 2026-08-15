@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nombre }} — {{ _('Calendario fiscal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ cliente.nombre }}</h1>
+    <p class="subtitle">
+      {% if cliente.nif %}{{ cliente.nif }}{% endif %}
+      {% if modelos_cliente %} · {{ modelos_cliente|join(', ') }}{% endif %}
+      {% if cliente.generacion_automatica %} · {{ _('Generación automática activa') }}{% endif %}
+    </p>
+  </div>
+  <div class="quick-row">
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}">✏ {{ _('Editar') }}</a>
+    <a class="btn btn-primary" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=cliente.id) }}">{{ _('Generar vencimientos') }}</a>
+    {% if cliente.espocrm_cuenta_id %}
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.ver_en_espocrm', cliente_id=cliente.id) }}" target="_blank" rel="noopener">{{ _('Ver en EspoCRM') }} ↗</a>
+    {% endif %}
+  </div>
+</header>
+
+{% if cliente.notas %}
+<p class="subtitle">{{ cliente.notas }}</p>
+{% endif %}
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fiscal.clientes') }}">{{ _('← Volver a clientes') }}</a>
+</nav>
+
+{% if not vencimientos %}
+<p class="empty-lane">{{ _('Este cliente todavía no tiene vencimientos.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for v in vencimientos %}
+  <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+    <span class="log-text"><a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a></span>
+    <span class="pill">{{ v.periodo }}</span>
+    <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
+    {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
+    {% set proximo = v.estado == 'pendiente' and not vencido and v.fecha_limite[:10] <= limite_proximo %}
+    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else ('instantanea' if proximo else 'nota')) }}">
+      {{ _('Vencido') if vencido else v.estado }}
+    </span>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

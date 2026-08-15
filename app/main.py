@@ -18,7 +18,7 @@ import socket
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import sentry_sdk
@@ -459,6 +459,18 @@ def inicio():
             "ha_usado_ia": bool(db.listar_mensajes_ia(g.usuario_id)),
         }
 
+    # Tarjeta de vencimientos fiscales próximos (calendario fiscal, solo
+    # con tenant asignado -- igual que el resto de esa sección) -- mismo
+    # criterio "tarjeta pulsable" que la de correos sin leer, próximos 30
+    # días para no saturar la cifra con todo el año.
+    total_vencimientos_proximos = None
+    hasta_vencimientos_proximos = None
+    if g.tenant_id is not None:
+        hasta_vencimientos_proximos = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        total_vencimientos_proximos = len(
+            db.listar_vencimientos_fiscales(g.tenant_id, estado="pendiente", hasta=hasta_vencimientos_proximos)
+        )
+
     return render_template(
         "inicio.html",
         menus=menus,
@@ -467,6 +479,8 @@ def inicio():
         log_hoy=log_hoy,
         total_activas=len(activas),
         total_notas_hoy=len([f for f in log_hoy if f["origen"] == "nota"]),
+        total_vencimientos_proximos=total_vencimientos_proximos,
+        hasta_vencimientos_proximos=hasta_vencimientos_proximos,
         onboarding=onboarding,
     )
 

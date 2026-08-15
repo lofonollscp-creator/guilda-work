@@ -50,6 +50,12 @@
     <span class="dash-stat-valor">{{ correo_no_leidos_sidebar }}</span>
     <span class="dash-stat-label">{{ _('correos sin leer') }}</span>
   </a>
+  {% if total_vencimientos_proximos is not none %}
+  <a class="dash-stat dash-stat-link" href="{{ url_for('fiscal.vencimientos', estado='pendiente', hasta=hasta_vencimientos_proximos) }}">
+    <span class="dash-stat-valor">{{ total_vencimientos_proximos }}</span>
+    <span class="dash-stat-label">{{ _('vencimientos próximos') }}</span>
+  </a>
+  {% endif %}
 </section>
 
 <section class="dash-acciones">

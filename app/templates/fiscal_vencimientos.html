@@ -34,6 +34,12 @@
   <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
 </form>
 
+<p class="subtitle">
+  {{ _('Exportar:') }}
+  <a href="{{ url_for('fiscal.export_csv', estado=filtro_estado, cliente_id=filtro_cliente_id) }}">CSV</a> ·
+  <a href="{{ url_for('fiscal.export_json', estado=filtro_estado, cliente_id=filtro_cliente_id) }}">JSON</a>
+</p>
+
 {% if not vencimientos %}
 <p class="empty-lane">{{ _('No hay vencimientos para este filtro.') }}</p>
 {% else %}
@@ -51,7 +57,8 @@
     <span class="pill">{{ v.periodo }}</span>
     <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
     {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
-    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else 'instantanea') }}">
+    {% set proximo = v.estado == 'pendiente' and not vencido and v.fecha_limite[:10] <= limite_proximo %}
+    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else ('instantanea' if proximo else 'nota')) }}">
       {{ _('Vencido') if vencido else estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}
     </span>
     <a class="log-edit" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>

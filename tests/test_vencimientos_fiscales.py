@@ -186,6 +186,28 @@ def test_papelera_fiscal_aisla_por_tenant():
     assert {i["id"] for i in db.papelera_fiscal(tenant_b)} == {cliente_b}
 
 
+def test_modelos_fiscales_se_guardan_y_se_leen():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    cliente = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert db.modelos_fiscales_de_cliente(cliente) == []
+
+    tenant_id2 = db.crear_tenant("Gestoria Modelos")
+    c2 = db.crear_cliente_fiscal(tenant_id2, "Con modelos", modelos_fiscales=["303", "130"])
+    assert db.modelos_fiscales_de_cliente(db.obtener_cliente_fiscal(tenant_id2, c2)) == ["303", "130"]
+
+    db.editar_cliente_fiscal(tenant_id2, c2, modelos_fiscales=db.serializar_modelos_fiscales(["390"]))
+    assert db.modelos_fiscales_de_cliente(db.obtener_cliente_fiscal(tenant_id2, c2)) == ["390"]
+
+
+def test_listar_clientes_fiscales_filtra_por_nombre_o_nif():
+    tenant_id, _ = _tenant_con_cliente(nombre_cliente="Panaderia SL")
+    db.crear_cliente_fiscal(tenant_id, "Ferreteria Lopez", nif="B12345678")
+
+    assert {c["nombre"] for c in db.listar_clientes_fiscales(tenant_id, q="panad")} == {"Panaderia SL"}
+    assert {c["nombre"] for c in db.listar_clientes_fiscales(tenant_id, q="B12345678")} == {"Ferreteria Lopez"}
+    assert db.listar_clientes_fiscales(tenant_id, q="no-existe-nada") == []
+
+
 def test_vencimientos_fiscales_proximos_excluye_lo_ya_avisado():
     tenant_id, cliente_id = _tenant_con_cliente()
     usuario_id = db.crear_usuario_vinculado_a_kratos("dedup@ejemplo.com", "kratos-dedup")

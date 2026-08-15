@@ -933,6 +933,17 @@ def init_db() -> None:
         # vencimientos_fiscales_proximos() excluye lo ya marcado.
         _asegurar_columna(conn, "vencimientos_fiscales", "recordatorio_enviado_en", "TEXT")
 
+        # Calendario fiscal — ampliación (más funcionalidades): qué modelos
+        # aplica cada cliente (JSON tipo '["303","130"]'), para no tener que
+        # reescribirlos a mano cada vez en "Generar vencimientos" -- y base
+        # de la generación automática por cron (generacion_automatica).
+        _asegurar_columna(conn, "clientes_fiscales", "modelos_fiscales", "TEXT")
+        _asegurar_columna(conn, "clientes_fiscales", "generacion_automatica", "INTEGER NOT NULL DEFAULT 0")
+        # EspoCRM (opcional, best-effort -- ver app/espocrm.py): nunca se
+        # rellena si ESPOCRM_API_KEY no está configurada, el calendario
+        # fiscal sigue funcionando igual sin ella.
+        _asegurar_columna(conn, "clientes_fiscales", "espocrm_cuenta_id", "TEXT")
+
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
         for tabla in (
@@ -3103,16 +3114,46 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 # usuario_id -- las rutas siempre pasan g.tenant_id, nunca un valor del
 # request (ver app/rutas_fiscal.py).
 
-CAMPOS_CLIENTE_FISCAL = ("nombre", "nif", "notas")
+CAMPOS_CLIENTE_FISCAL = ("nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id")
 CAMPOS_VENCIMIENTO_FISCAL = ("usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas")
 
 
-def crear_cliente_fiscal(tenant_id: int, nombre: str, nif: str | None = None, notas: str | None = None) -> int:
+def serializar_modelos_fiscales(modelos: list[str] | None) -> str | None:
+    """Pública (no `_`) porque tanto crear_cliente_fiscal como la ruta de
+    edición (app/rutas_fiscal.py, que llama a editar_cliente_fiscal con el
+    whitelist genérico CAMPOS_CLIENTE_FISCAL) necesitan serializar antes de
+    guardar."""
+    return json.dumps(modelos) if modelos else None
+
+
+def modelos_fiscales_de_cliente(cliente: sqlite3.Row) -> list[str]:
+    """Deserializa clientes_fiscales.modelos_fiscales -- fila puede venir de
+    antes de que existiera la columna (None) o con JSON corrupto en teoría
+    imposible (siempre se escribe con serializar_modelos_fiscales), pero se
+    protege igual con un try/except silencioso, mismo criterio defensivo
+    que el resto de columnas JSON de este módulo."""
+    valor = cliente["modelos_fiscales"] if "modelos_fiscales" in cliente.keys() else None
+    if not valor:
+        return []
+    try:
+        return json.loads(valor)
+    except (TypeError, ValueError):
+        return []
+
+
+def crear_cliente_fiscal(
+    tenant_id: int, nombre: str, nif: str | None = None, notas: str | None = None,
+    modelos_fiscales: list[str] | None = None,
+) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, creado_en) VALUES (?, ?, ?, ?, ?)",
-            (tenant_id, nombre.strip(), (nif or "").strip() or None, (notas or "").strip() or None, now_iso()),
+            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, modelos_fiscales, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                tenant_id, nombre.strip(), (nif or "").strip() or None, (notas or "").strip() or None,
+                serializar_modelos_fiscales(modelos_fiscales), now_iso(),
+            ),
         )
         conn.commit()
         return cur.lastrowid
@@ -3120,12 +3161,19 @@ def crear_cliente_fiscal(tenant_id: int, nombre: str, nif: str | None = None, no
         conn.close()
 
 
-def listar_clientes_fiscales(tenant_id: int) -> list[sqlite3.Row]:
+def listar_clientes_fiscales(tenant_id: int, q: str | None = None) -> list[sqlite3.Row]:
+    """`q` filtra por nombre/NIF (LIKE, insensible a mayúsculas) -- tabla
+    pequeña por tenant, no hace falta Meilisearch para esto."""
     conn = get_connection()
     try:
+        cond = ["tenant_id = ?", "papelera_en IS NULL"]
+        params: list = [tenant_id]
+        if q:
+            cond.append("(nombre LIKE ? OR nif LIKE ?)")
+            comodin = f"%{q.strip()}%"
+            params.extend([comodin, comodin])
         return conn.execute(
-            "SELECT * FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL ORDER BY nombre",
-            (tenant_id,),
+            f"SELECT * FROM clientes_fiscales WHERE {' AND '.join(cond)} ORDER BY nombre", params,
         ).fetchall()
     finally:
         conn.close()

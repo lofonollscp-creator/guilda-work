@@ -18,6 +18,22 @@
     <textarea name="notas" rows="4">{{ cliente.notas or '' }}</textarea>
   </label>
 
+  <fieldset>
+    <legend>{{ _('Modelos que presenta este cliente') }}</legend>
+    {% for id_modelo, info in modelos_disponibles.items() %}
+    <label class="checkbox-label">
+      <input type="checkbox" name="modelos_fiscales" value="{{ id_modelo }}" {% if id_modelo in modelos_cliente %}checked{% endif %}>
+      {{ id_modelo }} — {{ info.nombre }}
+    </label>
+    {% endfor %}
+    <p class="subtitle">{{ _('Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática.') }}</p>
+  </fieldset>
+
+  <label class="checkbox-label">
+    <input type="checkbox" name="generacion_automatica" {% if cliente.generacion_automatica %}checked{% endif %}>
+    {{ _('Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)') }}
+  </label>
+
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
     <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>

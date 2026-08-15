@@ -25,13 +25,21 @@
   </form>
 </section>
 
+<form class="filters" method="get">
+  <label>{{ _('Buscar') }}
+    <input type="text" name="q" value="{{ filtro_q or '' }}" placeholder="{{ _('Nombre o NIF...') }}">
+  </label>
+  <button type="submit" class="btn btn-primary">{{ _('Buscar') }}</button>
+  <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos_masivo') }}">{{ _('Generar vencimientos (todos los clientes)') }}</a>
+</form>
+
 {% if not clientes %}
 <p class="empty-lane">{{ _('Todavía no hay clientes fiscales dados de alta.') }}</p>
 {% else %}
 <ul class="log-list">
   {% for c in clientes %}
   <li class="log-item">
-    <span class="log-text"><a href="{{ url_for('fiscal.editar_cliente', cliente_id=c.id) }}">{{ c.nombre }}</a></span>
+    <span class="log-text"><a href="{{ url_for('fiscal.ficha_cliente', cliente_id=c.id) }}">{{ c.nombre }}</a></span>
     {% if c.nif %}<span class="pill">{{ c.nif }}</span>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=c.id) }}">{{ _('Generar vencimientos') }}</a>
     <a class="log-edit" href="{{ url_for('fiscal.editar_cliente', cliente_id=c.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>

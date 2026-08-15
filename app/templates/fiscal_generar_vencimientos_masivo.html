@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Generar vencimientos (todos los clientes)') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Generar vencimientos para todos los clientes') }}</h1>
+    <p class="subtitle">{{ _('Solo se incluyen los clientes con al menos un modelo marcado en su ficha. Revisa antes de confirmar -- no hay paso atrás una vez guardado (aunque siempre puedes eliminar vencimientos sueltos después).') }}</p>
+  </div>
+</header>
+
+<form class="filters" method="get" action="{{ url_for('fiscal.generar_vencimientos_masivo') }}">
+  <label>{{ _('Año fiscal') }}
+    <input type="number" name="anio" value="{{ anio }}" min="2000" max="2100">
+  </label>
+  <button type="submit" class="btn btn-primary">{{ _('Recalcular') }}</button>
+</form>
+
+{% if not previa %}
+<p class="empty-lane">{{ _('Ningún cliente tiene modelos fiscales asignados todavía -- edítalos desde su ficha para poder generarlos aquí.') }}</p>
+{% else %}
+<form method="post" action="{{ url_for('fiscal.generar_vencimientos_masivo') }}">
+  <input type="hidden" name="anio" value="{{ anio }}">
+  {% for item in previa %}
+  <h3>{{ item.cliente.nombre }}</h3>
+  <ul class="log-list">
+    {% for p in item.propuestas %}
+    <li class="log-item">
+      <span class="log-text">{{ p.modelo }} — {{ p.periodo }}</span>
+      <span class="pill">{{ p.fecha_limite }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+  <div class="edit-form-actions">
+    <button type="submit" class="btn btn-primary"
+            onclick="return confirm('{{ _('¿Generar todos estos vencimientos? Se guardan tal cual se ven arriba, sin poder editar cada fecha antes.') }}');">
+      {{ _('Guardar todos los vencimientos') }}
+    </button>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

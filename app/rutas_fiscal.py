@@ -8,9 +8,12 @@ GESTORÍA -- se filtran por g.tenant_id en cada consulta a db.py. Es
 autoservicio por tenant, sin pantallas de backoffice: cualquier usuario
 con tenant asignado puede gestionar los clientes fiscales y vencimientos
 de SU tenant."""
-from datetime import date
+import csv
+import io
+import json
+from datetime import date, timedelta
 
-from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
 from . import db
@@ -37,10 +40,14 @@ def _exigir_tenant():
         abort(403)
 
 
+MODELOS_DISPONIBLES = {**MODELOS_TRIMESTRALES, **MODELOS_ANUALES}
+
+
 @fiscal_bp.route("/clientes")
 @login_required
 def clientes():
-    return render_template("fiscal_clientes.html", clientes=db.listar_clientes_fiscales(g.tenant_id))
+    q = request.args.get("q") or None
+    return render_template("fiscal_clientes.html", clientes=db.listar_clientes_fiscales(g.tenant_id, q=q), filtro_q=q)
 
 
 @fiscal_bp.route("/clientes", methods=["POST"])
@@ -48,8 +55,28 @@ def clientes():
 def crear_cliente():
     nombre = request.form.get("nombre", "").strip()
     if nombre:
-        db.crear_cliente_fiscal(g.tenant_id, nombre, nif=request.form.get("nif"), notas=request.form.get("notas"))
+        db.crear_cliente_fiscal(
+            g.tenant_id, nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
+            modelos_fiscales=request.form.getlist("modelos_fiscales") or None,
+        )
     return redirect(url_for("fiscal.clientes"))
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>")
+@login_required
+def ficha_cliente(cliente_id: int):
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    return render_template(
+        "fiscal_cliente_detalle.html",
+        cliente=cliente,
+        modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
+        modelos_disponibles=MODELOS_DISPONIBLES,
+        vencimientos=db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id),
+        hoy=date.today().isoformat(),
+        limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
+    )
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/editar", methods=["GET", "POST"])
@@ -64,9 +91,14 @@ def editar_cliente(cliente_id: int):
             db.editar_cliente_fiscal(
                 g.tenant_id, cliente_id,
                 nombre=nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
+                modelos_fiscales=db.serializar_modelos_fiscales(request.form.getlist("modelos_fiscales") or None),
+                generacion_automatica=1 if request.form.get("generacion_automatica") else 0,
             )
         return redirect(url_for("fiscal.clientes"))
-    return render_template("fiscal_cliente_editar.html", cliente=cliente)
+    return render_template(
+        "fiscal_cliente_editar.html",
+        cliente=cliente, modelos_cliente=db.modelos_fiscales_de_cliente(cliente), modelos_disponibles=MODELOS_DISPONIBLES,
+    )
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/eliminar", methods=["POST"])
@@ -85,7 +117,7 @@ def generar_vencimientos(cliente_id: int):
     if cliente is None:
         abort(404)
 
-    modelos_disponibles = {**MODELOS_TRIMESTRALES, **MODELOS_ANUALES}
+    modelos_disponibles = MODELOS_DISPONIBLES
 
     if request.method == "POST":
         # Cada propuesta llega como 3 campos indexados por posición `i`
@@ -104,7 +136,12 @@ def generar_vencimientos(cliente_id: int):
                 db.crear_vencimiento_fiscal(g.tenant_id, cliente_id, modelo, periodo, fecha_limite)
         return redirect(url_for("fiscal.vencimientos"))
 
-    modelos_pedidos = request.args.getlist("modelo") or list(modelos_disponibles.keys())
+    # Sin `modelo` explícito en la query, se parte de los modelos guardados
+    # del cliente (modelos_fiscales) si tiene alguno -- antes siempre
+    # arrancaba con TODOS los modelos marcados, así que había que
+    # desmarcar a mano los que no aplican cada vez que se generaba.
+    modelos_cliente = db.modelos_fiscales_de_cliente(cliente)
+    modelos_pedidos = request.args.getlist("modelo") or modelos_cliente or list(modelos_disponibles.keys())
     anio = request.args.get("anio", type=int) or date.today().year
     propuestas = generar_vencimientos_propuestos(modelos_pedidos, anio)
     return render_template(
@@ -114,14 +151,92 @@ def generar_vencimientos(cliente_id: int):
     )
 
 
+@fiscal_bp.route("/generar-vencimientos-masivo", methods=["GET", "POST"])
+@login_required
+def generar_vencimientos_masivo():
+    """Aplica generar_vencimientos_propuestos() a TODOS los clientes del
+    tenant que tengan modelos_fiscales definido, de una sola vez -- antes
+    había que entrar cliente a cliente en "Generar vencimientos". No
+    reescribe la función pura, solo la llama una vez por cliente."""
+    clientes_tenant = db.listar_clientes_fiscales(g.tenant_id)
+    clientes_con_modelos = [
+        (c, db.modelos_fiscales_de_cliente(c)) for c in clientes_tenant
+    ]
+    clientes_con_modelos = [(c, m) for c, m in clientes_con_modelos if m]
+
+    if request.method == "POST":
+        anio = request.form.get("anio", type=int) or date.today().year
+        creados = 0
+        for cliente, modelos in clientes_con_modelos:
+            for p in generar_vencimientos_propuestos(modelos, anio):
+                db.crear_vencimiento_fiscal(g.tenant_id, cliente["id"], p["modelo"], p["periodo"], p["fecha_limite"])
+                creados += 1
+        return redirect(url_for("fiscal.vencimientos"))
+
+    anio = request.args.get("anio", type=int) or date.today().year
+    previa = [
+        {"cliente": cliente, "propuestas": generar_vencimientos_propuestos(modelos, anio)}
+        for cliente, modelos in clientes_con_modelos
+    ]
+    return render_template("fiscal_generar_vencimientos_masivo.html", previa=previa, anio=anio)
+
+
+@fiscal_bp.route("/vencimientos/export.csv")
+@login_required
+def export_csv():
+    filas = db.listar_vencimientos_fiscales(
+        g.tenant_id,
+        desde=request.args.get("desde") or None,
+        hasta=request.args.get("hasta") or None,
+        estado=request.args.get("estado") or None,
+        cliente_fiscal_id=request.args.get("cliente_id", type=int),
+    )
+    buffer = io.StringIO()
+    escritor = csv.writer(buffer)
+    escritor.writerow(["cliente", "modelo", "periodo", "fecha_limite", "estado", "notas"])
+    for v in filas:
+        escritor.writerow([v["cliente_nombre"], v["modelo"], v["periodo"], v["fecha_limite"][:10], v["estado"], v["notas"] or ""])
+    return Response(
+        buffer.getvalue(), mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=vencimientos_fiscales.csv"},
+    )
+
+
+@fiscal_bp.route("/vencimientos/export.json")
+@login_required
+def export_json():
+    filas = db.listar_vencimientos_fiscales(
+        g.tenant_id,
+        desde=request.args.get("desde") or None,
+        hasta=request.args.get("hasta") or None,
+        estado=request.args.get("estado") or None,
+        cliente_fiscal_id=request.args.get("cliente_id", type=int),
+    )
+    datos = [
+        {
+            "cliente": v["cliente_nombre"], "modelo": v["modelo"], "periodo": v["periodo"],
+            "fecha_limite": v["fecha_limite"][:10], "estado": v["estado"], "notas": v["notas"],
+        }
+        for v in filas
+    ]
+    return Response(json.dumps(datos, ensure_ascii=False, indent=2), mimetype="application/json")
+
+
 @fiscal_bp.route("/vencimientos")
 @login_required
 def vencimientos():
     estado = request.args.get("estado") or None
     cliente_fiscal_id = request.args.get("cliente_id", type=int)
+    # desde/hasta: usados por el enlace de la tarjeta del dashboard
+    # ("Vencimientos próximos", próximos 30 días) -- opcionales, sin ellos
+    # se ve el listado completo como siempre.
+    desde = request.args.get("desde") or None
+    hasta = request.args.get("hasta") or None
     return render_template(
         "fiscal_vencimientos.html",
-        vencimientos=db.listar_vencimientos_fiscales(g.tenant_id, estado=estado, cliente_fiscal_id=cliente_fiscal_id),
+        vencimientos=db.listar_vencimientos_fiscales(
+            g.tenant_id, estado=estado, cliente_fiscal_id=cliente_fiscal_id, desde=desde, hasta=hasta,
+        ),
         clientes=db.listar_clientes_fiscales(g.tenant_id),
         estados=ESTADOS_VENCIMIENTO,
         filtro_estado=estado,
@@ -129,8 +244,10 @@ def vencimientos():
         # Para pintar en rojo lo pendiente ya vencido sin esperar a que pase
         # el cron de saneo (app/vencimientos_fiscales.py) que marca
         # fuera_plazo -- ese cron corre una vez al día, esto se ve al
-        # instante en cuanto la fecha pasa.
+        # instante en cuanto la fecha pasa. limite_proximo: a partir de qué
+        # fecha ya no se pinta en ámbar (más de 7 días vista, color neutro).
         hoy=date.today().isoformat(),
+        limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
     )
 
 
