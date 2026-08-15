@@ -169,5 +169,18 @@
 
   "vencimientoFiscalEstadoPendiente": "Pendent",
   "vencimientoFiscalEstadoPresentado": "Presentat",
-  "vencimientoFiscalEstadoFueraPlazo": "Fora de termini"
+  "vencimientoFiscalEstadoFueraPlazo": "Fora de termini",
+
+  "ajustesPerfilSubtitulo": "Nom, avatar i notificacions",
+  "perfilTitulo": "El meu perfil",
+  "perfilAvatarGaleria": "Tria de la galeria",
+  "perfilAvatarCamara": "Fes una foto",
+  "perfilAvatarQuitar": "Treu la foto",
+  "perfilNombreLabel": "Nom a mostrar",
+  "perfilNombreSubtitulo": "S'utilitza en lloc del teu email on aparegues com a autor. Deixa'l buit per seguir mostrant l'email.",
+  "perfilNotificacionesLabel": "Notificacions",
+  "perfilNotificacionesVencimientos": "Venciments fiscals propers",
+  "perfilNotificacionesTiquets": "Canvis d'estat als meus tiquets",
+  "perfilNotificacionesResumenSemanal": "Resum setmanal de l'assistent d'IA",
+  "perfilCredencialesAviso": "Per canviar la contrasenya o l'email, entra des de la web."
 }

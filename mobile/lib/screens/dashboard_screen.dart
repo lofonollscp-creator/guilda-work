@@ -173,6 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               MaterialPageRoute(
                 builder: (_) => AjustesScreen(
                   api: widget.api,
+                  usuario: widget.usuario,
                   sesion: widget.sesion,
                   sync: widget.sync,
                   push: widget.push,

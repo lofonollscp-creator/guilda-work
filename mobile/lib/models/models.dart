@@ -458,6 +458,37 @@ class Tiquet {
   );
 }
 
+/// Perfil de usuario (Fase G1: espacio de ajustes de usuario) -- a
+/// diferencia de `Usuario` (identidad de sesión: id/email/rol/tenant),
+/// esto es la parte editable por el propio usuario: nombre a mostrar,
+/// si tiene avatar subido (la imagen en sí se pide aparte, ver
+/// ApiClient.urlAvatar) y sus preferencias de notificación.
+class PerfilUsuario {
+  final String? nombreMostrado;
+  final bool tieneAvatar;
+  final bool notificarPushVencimientos;
+  final bool notificarPushTiquets;
+  final bool notificarResumenSemanal;
+
+  PerfilUsuario({
+    this.nombreMostrado,
+    required this.tieneAvatar,
+    required this.notificarPushVencimientos,
+    required this.notificarPushTiquets,
+    required this.notificarResumenSemanal,
+  });
+
+  factory PerfilUsuario.fromJson(Map<String, dynamic> json) => PerfilUsuario(
+    nombreMostrado: json['nombre_mostrado'] as String?,
+    tieneAvatar: json['tiene_avatar'] as bool? ?? false,
+    notificarPushVencimientos:
+        (json['notificar_push_vencimientos'] as int? ?? 1) == 1,
+    notificarPushTiquets: (json['notificar_push_tiquets'] as int? ?? 1) == 1,
+    notificarResumenSemanal:
+        (json['notificar_resumen_semanal'] as int? ?? 0) == 1,
+  );
+}
+
 /// Cliente fiscal de la gestoría (calendario fiscal, Fase F5) -- a
 /// diferencia del resto de modelos de este archivo, no es un dato propio
 /// del usuario sino del TENANT (equipo/gestoría), igual que Tiquet lo es

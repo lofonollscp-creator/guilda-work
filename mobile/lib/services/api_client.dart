@@ -444,6 +444,82 @@ class ApiClient {
     }
   }
 
+  // --- Perfil de usuario (Fase G1: espacio de ajustes de usuario) ---------
+
+  Future<PerfilUsuario> obtenerPerfil() async {
+    try {
+      final resp = await _dio.get('/perfil');
+      return PerfilUsuario.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<PerfilUsuario> editarPerfil({
+    String? nombreMostrado,
+    bool? notificarPushVencimientos,
+    bool? notificarPushTiquets,
+    bool? notificarResumenSemanal,
+  }) async {
+    try {
+      final resp = await _dio.put(
+        '/perfil',
+        data: {
+          'nombre_mostrado': ?nombreMostrado,
+          'notificar_push_vencimientos': ?notificarPushVencimientos,
+          'notificar_push_tiquets': ?notificarPushTiquets,
+          'notificar_resumen_semanal': ?notificarResumenSemanal,
+        },
+      );
+      return PerfilUsuario.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// `bytes`/`nombreArchivo` vienen de image_picker (perfil_screen.dart)
+  /// -- se recorta cuadrado y se redimensiona a 256×256 en el SERVIDOR
+  /// (mismo procesado que la web), este cliente solo manda el archivo tal
+  /// cual lo eligió el usuario.
+  Future<PerfilUsuario> subirAvatar(Uint8List bytes, String nombreArchivo) async {
+    try {
+      final resp = await _dio.post(
+        '/perfil/avatar',
+        data: FormData.fromMap({
+          'avatar': MultipartFile.fromBytes(bytes, filename: nombreArchivo),
+        }),
+      );
+      return PerfilUsuario.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> eliminarAvatar() async {
+    try {
+      await _dio.delete('/perfil/avatar');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// Bytes crudos del avatar, o null si el usuario no tiene ninguno (404)
+  /// -- vía Dio (no Image.network) para que el interceptor le añada el
+  /// token automáticamente sin tener que pasar cabeceras a mano en cada
+  /// pantalla que lo pinte con Image.memory.
+  Future<Uint8List?> descargarAvatar(int usuarioId) async {
+    try {
+      final resp = await _dio.get(
+        '/avatar/$usuarioId',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(resp.data as List<int>);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      throw _errorLegible(e);
+    }
+  }
+
   // --- Calendario fiscal (Fase F5) -----------------------------------------
   // Solo alcanzable con tenant asignado (ver Usuario.tenantId) -- sin él,
   // el backend devuelve 403 con un mensaje legible, no hace falta que

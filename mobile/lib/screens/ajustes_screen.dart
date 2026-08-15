@@ -11,6 +11,7 @@ import 'ajustes_servidor_dialog.dart';
 import 'correo_ajustes_screen.dart';
 import 'ia_ajustes_screen.dart';
 import 'login_screen.dart';
+import 'perfil_screen.dart';
 import 'selector_idioma_dialog.dart';
 
 /// Ajustes generales de la app -- punto de entrada único a: tema
@@ -21,6 +22,7 @@ import 'selector_idioma_dialog.dart';
 /// quede solo con lo de uso diario.
 class AjustesScreen extends StatelessWidget {
   final ApiClient api;
+  final Usuario usuario;
   final SessionService sesion;
   final SyncService sync;
   final PushService push;
@@ -30,6 +32,7 @@ class AjustesScreen extends StatelessWidget {
   const AjustesScreen({
     super.key,
     required this.api,
+    required this.usuario,
     required this.sesion,
     required this.sync,
     required this.push,
@@ -57,8 +60,18 @@ class AjustesScreen extends StatelessWidget {
       appBar: AppBar(title: Text(t.dashboardAjustesTooltip)),
       body: ListView(
         children: [
+          ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: Text(t.perfilTitulo),
+            subtitle: Text(t.ajustesPerfilSubtitulo),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => PerfilScreen(api: api, usuario: usuario)),
+            ),
+          ),
+          const Divider(height: 32),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(t.ajustesApariencia, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
           AnimatedBuilder(

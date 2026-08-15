@@ -169,5 +169,18 @@
 
   "vencimientoFiscalEstadoPendiente": "En attente",
   "vencimientoFiscalEstadoPresentado": "Déposé",
-  "vencimientoFiscalEstadoFueraPlazo": "En retard"
+  "vencimientoFiscalEstadoFueraPlazo": "En retard",
+
+  "ajustesPerfilSubtitulo": "Nom, avatar et notifications",
+  "perfilTitulo": "Mon profil",
+  "perfilAvatarGaleria": "Choisir dans la galerie",
+  "perfilAvatarCamara": "Prendre une photo",
+  "perfilAvatarQuitar": "Retirer la photo",
+  "perfilNombreLabel": "Nom affiché",
+  "perfilNombreSubtitulo": "Utilisé à la place de votre email partout où vous apparaissez comme auteur. Laissez vide pour continuer à afficher l'email.",
+  "perfilNotificacionesLabel": "Notifications",
+  "perfilNotificacionesVencimientos": "Échéances fiscales à venir",
+  "perfilNotificacionesTiquets": "Changements de statut sur mes tickets",
+  "perfilNotificacionesResumenSemanal": "Résumé hebdomadaire de l'assistant IA",
+  "perfilCredencialesAviso": "Pour changer votre mot de passe ou email, connectez-vous depuis le web."
 }

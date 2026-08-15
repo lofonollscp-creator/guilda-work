@@ -33,6 +33,12 @@
 	<string>Guilda Work necesita el micrófono para que puedas dictarle mensajes al asistente de IA.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Guilda Work usa el reconocimiento de voz para convertir lo que dices en texto para el asistente de IA.</string>
+	<!-- Espacio de ajustes de usuario (Fase G1): subir avatar desde
+	     galería o cámara, ver perfil_screen.dart. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Guilda Work necesita acceso a tus fotos para que puedas elegir una foto de perfil.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Guilda Work necesita la cámara para que puedas hacerte una foto de perfil.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

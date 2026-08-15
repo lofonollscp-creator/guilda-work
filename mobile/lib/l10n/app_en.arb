@@ -169,5 +169,18 @@
 
   "vencimientoFiscalEstadoPendiente": "Pending",
   "vencimientoFiscalEstadoPresentado": "Filed",
-  "vencimientoFiscalEstadoFueraPlazo": "Overdue"
+  "vencimientoFiscalEstadoFueraPlazo": "Overdue",
+
+  "ajustesPerfilSubtitulo": "Name, avatar and notifications",
+  "perfilTitulo": "My profile",
+  "perfilAvatarGaleria": "Choose from gallery",
+  "perfilAvatarCamara": "Take a photo",
+  "perfilAvatarQuitar": "Remove photo",
+  "perfilNombreLabel": "Display name",
+  "perfilNombreSubtitulo": "Used instead of your email wherever you appear as author. Leave it empty to keep showing your email.",
+  "perfilNotificacionesLabel": "Notifications",
+  "perfilNotificacionesVencimientos": "Upcoming tax deadlines",
+  "perfilNotificacionesTiquets": "Status changes on my tickets",
+  "perfilNotificacionesResumenSemanal": "Weekly AI assistant summary",
+  "perfilCredencialesAviso": "To change your password or email, sign in from the web."
 }

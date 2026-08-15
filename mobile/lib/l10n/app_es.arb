@@ -176,5 +176,18 @@
 
   "vencimientoFiscalEstadoPendiente": "Pendiente",
   "vencimientoFiscalEstadoPresentado": "Presentado",
-  "vencimientoFiscalEstadoFueraPlazo": "Fuera de plazo"
+  "vencimientoFiscalEstadoFueraPlazo": "Fuera de plazo",
+
+  "ajustesPerfilSubtitulo": "Nombre, avatar y notificaciones",
+  "perfilTitulo": "Mi perfil",
+  "perfilAvatarGaleria": "Elegir de la galería",
+  "perfilAvatarCamara": "Hacer una foto",
+  "perfilAvatarQuitar": "Quitar foto",
+  "perfilNombreLabel": "Nombre a mostrar",
+  "perfilNombreSubtitulo": "Se usa en vez de tu email donde aparezcas como autor. Déjalo vacío para seguir mostrando el email.",
+  "perfilNotificacionesLabel": "Notificaciones",
+  "perfilNotificacionesVencimientos": "Vencimientos fiscales próximos",
+  "perfilNotificacionesTiquets": "Cambios de estado en mis tiquets",
+  "perfilNotificacionesResumenSemanal": "Resumen semanal del asistente de IA",
+  "perfilCredencialesAviso": "Para cambiar tu contraseña o email, entra desde la web."
 }

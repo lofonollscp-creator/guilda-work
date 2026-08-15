@@ -484,3 +484,45 @@ def test_fiscal_aisla_por_tenant(cliente):
 
     assert cliente.get(f"/api/v1/fiscal/clientes/{cliente_a_id}", headers=h_b).status_code == 404
     assert cliente.get("/api/v1/fiscal/clientes", headers=h_b).get_json()["data"] == []
+
+
+# --- Perfil de usuario (Fase G1, app móvil) -----------------------------------
+
+def test_perfil_get_put_y_avatar(cliente):
+    import io
+
+    from PIL import Image
+
+    token = _registrar(cliente, email="perfil-rest@ejemplo.com")["token"]
+    h = _auth(token)
+
+    resp = cliente.get("/api/v1/perfil", headers=h)
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["tiene_avatar"] is False
+
+    resp = cliente.put("/api/v1/perfil", json={"nombre_mostrado": "Jorge Móvil"}, headers=h)
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["nombre_mostrado"] == "Jorge Móvil"
+
+    buf = io.BytesIO()
+    Image.new("RGB", (400, 300), color=(10, 200, 80)).save(buf, format="PNG")
+    buf.seek(0)
+    resp = cliente.post(
+        "/api/v1/perfil/avatar", data={"avatar": (buf, "foto.png", "image/png")},
+        content_type="multipart/form-data", headers=h,
+    )
+    assert resp.status_code == 201
+    assert resp.get_json()["data"]["tiene_avatar"] is True
+
+    usuario_id = resp.get_json()["data"]["usuario_id"]
+    resp = cliente.get(f"/api/v1/avatar/{usuario_id}", headers=h)
+    assert resp.status_code == 200
+    assert resp.mimetype == "image/jpeg"
+
+    resp = cliente.delete("/api/v1/perfil/avatar", headers=h)
+    assert resp.status_code == 200
+    assert cliente.get(f"/api/v1/avatar/{usuario_id}", headers=h).status_code == 404
+
+
+def test_perfil_requiere_token(cliente):
+    assert cliente.get("/api/v1/perfil").status_code == 401

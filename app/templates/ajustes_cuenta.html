@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Contraseña y email') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Contraseña y email') }}</h1>
+    <p class="subtitle">{{ _('Gestionado por el proveedor de identidad -- los cambios se aplican al instante.') }}</p>
+  </div>
+</header>
+
+{% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+
+{# El flujo "settings" de Kratos mezcla en la misma respuesta varios
+   sub-formularios independientes (cambiar contraseña, cambiar email/
+   traits...), diferenciados por node.group -- cada uno se pinta como su
+   propio <form> aunque todos posteen a la misma `accion`: el botón de
+   submit de cada grupo lleva el name/value que le dice a Kratos cuál de
+   los métodos se está enviando. El csrf_token vive en el grupo "default"
+   (no en "password"/"profile"), así que hay que repetirlo dentro de
+   CADA form -- si no, el submit de cualquier grupo que no sea "default"
+   fallaría por CSRF. #}
+{% set nodos_ocultos = nodos|selectattr('attributes.node_type', 'equalto', 'input')|selectattr('attributes.type', 'equalto', 'hidden')|list %}
+{% set grupos = nodos|rejectattr('group', 'in', ['default', 'link'])|groupby('group') %}
+{% for grupo, nodos_grupo in grupos %}
+  <form class="edit-form" method="post" action="{{ accion }}" style="max-width: 480px;">
+    <h2 style="font-size: 1rem;">
+      {% if grupo == 'password' %}{{ _('Contraseña') }}
+      {% elif grupo == 'profile' %}{{ _('Email') }}
+      {% else %}{{ grupo }}{% endif %}
+    </h2>
+    {% for nodo in nodos_ocultos %}
+      <input type="hidden" name="{{ nodo.attributes.name }}" value="{{ nodo.attributes.value }}">
+    {% endfor %}
+    {% for nodo in nodos_grupo %}
+      {% set attrs = nodo.attributes %}
+      {% if attrs.node_type == 'input' and attrs.type == 'submit' %}
+        <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn btn-primary">
+          {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else _('Guardar') }}
+        </button>
+        {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+      {% elif attrs.node_type == 'input' and attrs.type == 'hidden' %}
+        <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
+      {% elif attrs.node_type == 'input' %}
+        <label>
+          {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else attrs.name }}
+          <input
+            type="{{ attrs.type }}"
+            name="{{ attrs.name }}"
+            value="{{ attrs.value or '' }}"
+            {% if attrs.required %}required{% endif %}
+            {% if attrs.disabled %}disabled{% endif %}
+          >
+        </label>
+        {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+      {% endif %}
+    {% endfor %}
+  </form>
+{% endfor %}
+
+<p class="subtitle"><a href="{{ url_for('ajustes_perfil') }}">{{ _('← Volver a mi perfil') }}</a></p>
+{% endblock %}

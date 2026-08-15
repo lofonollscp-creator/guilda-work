@@ -1259,6 +1259,100 @@ def eliminar_dispositivo_push():
     return _ok()
 
 
+# --- Perfil de usuario (Fase G1: espacio de ajustes de usuario) -----------
+# Espejo de /ajustes/perfil (app/main.py) para la app móvil. Cambiar
+# contraseña/email se deja SOLO en la web (el flujo `settings` de Kratos
+# es HTML, no una API JSON limpia para Flutter) -- el móvil enlaza a la
+# web para eso, mismo criterio que ya usa con las claves de OpenRouter.
+
+def _perfil_json(perfil) -> dict:
+    """El BLOB del avatar no es serializable a JSON -- se manda solo si
+    hay uno (tiene_avatar), la imagen en sí se pide aparte a
+    GET /api/v1/avatar/<id>, igual que la web usa una URL <img> separada
+    en vez de meter el binario en el propio documento HTML."""
+    datos = dict(perfil)
+    datos["tiene_avatar"] = datos.pop("avatar_contenido") is not None
+    datos.pop("avatar_tipo_mime", None)
+    return datos
+
+
+@api_bp.route("/perfil", methods=["GET"])
+@token_required
+def obtener_perfil():
+    return _ok(_perfil_json(db.obtener_perfil_usuario(g.usuario_id)))
+
+
+@api_bp.route("/perfil", methods=["PUT"])
+@token_required
+def editar_perfil():
+    datos = _body()
+    db.guardar_perfil_usuario(
+        g.usuario_id,
+        nombre_mostrado=datos.get("nombre_mostrado"),
+        notificar_push_vencimientos=datos.get("notificar_push_vencimientos"),
+        notificar_push_tiquets=datos.get("notificar_push_tiquets"),
+        notificar_resumen_semanal=datos.get("notificar_resumen_semanal"),
+    )
+    return _ok(_perfil_json(db.obtener_perfil_usuario(g.usuario_id)))
+
+
+_AVATAR_TIPOS_PERMITIDOS_API = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP"}
+_AVATAR_TAMANO_MAXIMO_BYTES_API = 5 * 1024 * 1024
+
+
+@api_bp.route("/perfil/avatar", methods=["POST"])
+@token_required
+def subir_avatar_api():
+    """Multipart -- mismo procesado (recorte cuadrado + 256×256 + JPEG)
+    que app/main.py:subir_avatar(), duplicado a propósito en vez de
+    compartir la vista: una es multipart/HTML-redirect, la otra
+    multipart/JSON, con validaciones de error distintas (redirect con
+    query param vs {"ok": false})."""
+    fichero = request.files.get("avatar")
+    if not fichero or not fichero.filename:
+        return _err("Falta el archivo 'avatar'.")
+    if fichero.mimetype not in _AVATAR_TIPOS_PERMITIDOS_API:
+        return _err("Formato de imagen no soportado (usa JPEG, PNG o WEBP).")
+    datos = fichero.read(_AVATAR_TAMANO_MAXIMO_BYTES_API + 1)
+    if len(datos) > _AVATAR_TAMANO_MAXIMO_BYTES_API:
+        return _err("La imagen pesa demasiado (máximo 5 MB).")
+    try:
+        from io import BytesIO
+
+        from PIL import Image
+
+        imagen = Image.open(BytesIO(datos))
+        imagen = imagen.convert("RGB") if imagen.mode not in ("RGB", "RGBA") else imagen
+        lado = min(imagen.size)
+        izquierda = (imagen.width - lado) // 2
+        arriba = (imagen.height - lado) // 2
+        imagen = imagen.crop((izquierda, arriba, izquierda + lado, arriba + lado)).resize((256, 256))
+        buffer = BytesIO()
+        imagen.save(buffer, format="JPEG", quality=88)
+        db.guardar_avatar_usuario(g.usuario_id, buffer.getvalue(), "image/jpeg")
+    except Exception:
+        return _err("No se ha podido procesar la imagen -- prueba con otra.")
+    return _ok(_perfil_json(db.obtener_perfil_usuario(g.usuario_id)), 201)
+
+
+@api_bp.route("/perfil/avatar", methods=["DELETE"])
+@token_required
+def eliminar_avatar_api():
+    db.eliminar_avatar_usuario(g.usuario_id)
+    return _ok()
+
+
+@api_bp.route("/avatar/<int:usuario_id>", methods=["GET"])
+@token_required
+def avatar_api(usuario_id: int):
+    """Sin envoltorio {"ok":...}: la respuesta ES la imagen, mismo
+    criterio que /correo/mensajes/<id>/adjuntos/<id> (rutas_correo.py)."""
+    perfil = db.obtener_perfil_usuario(usuario_id)
+    if not perfil["avatar_contenido"]:
+        abort(404, "Este usuario no tiene avatar.")
+    return Response(perfil["avatar_contenido"], mimetype=perfil["avatar_tipo_mime"])
+
+
 # --- Documentación --------------------------------------------------------
 
 @api_bp.route("/openapi.json", methods=["GET"])

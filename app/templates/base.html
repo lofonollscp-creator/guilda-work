@@ -146,6 +146,10 @@
               </form>
               {% endfor %}
             </div>
+            <a href="{{ url_for('ajustes_perfil') }}" class="ajustes-panel-btn">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
+              {{ _('Mi perfil') }}
+            </a>
             <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
               {{ _('Mis dispositivos') }}

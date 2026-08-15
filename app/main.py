@@ -307,6 +307,10 @@ def _flujo_o_redirigir(tipo: str):
             "registration": "registro",
             "verification": "verificar_email",
             "recovery": "recuperar_contrasena",
+            # Fase G1: cambiar contraseña/email estando logueado -- quinto
+            # tipo de flujo Kratos, mismo mecanismo genérico que los otros
+            # cuatro (_flujo_o_redirigir no necesita ningún cambio propio).
+            "settings": "ajustes_cuenta",
         }
         g._redireccion_flujo = redirect(url_for(rutas_por_tipo.get(tipo, "login")))
         return None
@@ -948,6 +952,112 @@ def mis_dispositivos():
 def revocar_dispositivo(token_id):
     db.revocar_token_api_por_id(g.usuario_id, token_id)
     return redirect(url_for("mis_dispositivos"))
+
+
+@app.route("/ajustes/perfil", methods=["GET", "POST"])
+@login_required
+def ajustes_perfil():
+    """Espacio de ajustes de usuario (Fase G1): nombre a mostrar, avatar y
+    notificaciones -- a diferencia del dropdown "ajustes" de base.html
+    (tema/idioma/densidad, ajustes de la APLICACIÓN), esto es el perfil
+    del usuario en sí. Contraseña/email viven aparte en /ajustes/cuenta
+    (flujo Kratos, no aplica a usuarios locales de escritorio)."""
+    if request.method == "POST":
+        db.guardar_perfil_usuario(
+            g.usuario_id,
+            nombre_mostrado=request.form.get("nombre_mostrado", ""),
+            notificar_push_vencimientos="notificar_push_vencimientos" in request.form,
+            notificar_push_tiquets="notificar_push_tiquets" in request.form,
+            notificar_resumen_semanal="notificar_resumen_semanal" in request.form,
+        )
+        return redirect(url_for("ajustes_perfil"))
+    usuario = db.obtener_usuario(g.usuario_id)
+    return render_template(
+        "ajustes_perfil.html",
+        perfil=db.obtener_perfil_usuario(g.usuario_id),
+        usuario=usuario,
+        # Un usuario local (modo escritorio) nunca pasa por Kratos -- no
+        # tiene contraseña/email que cambiar desde aquí (app/db.py:
+        # es_local, ver _resolver_usuario_local).
+        puede_cambiar_credenciales=not usuario["es_local"],
+        # Sin flash() en este proyecto (ningún otro sitio lo usa) -- mismo
+        # patrón que ya sigue /login con captcha_error: un parámetro de
+        # query que la propia vista GET traduce a texto.
+        error_avatar=request.args.get("error_avatar"),
+    )
+
+
+_AVATAR_TIPOS_PERMITIDOS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP"}
+_AVATAR_TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB, generoso para una foto de móvil sin comprimir
+
+
+@app.route("/ajustes/perfil/avatar", methods=["POST"])
+@login_required
+def subir_avatar():
+    fichero = request.files.get("avatar")
+    if not fichero or not fichero.filename:
+        return redirect(url_for("ajustes_perfil"))
+    if fichero.mimetype not in _AVATAR_TIPOS_PERMITIDOS:
+        return redirect(url_for("ajustes_perfil", error_avatar="formato"))
+    datos = fichero.read(_AVATAR_TAMANO_MAXIMO_BYTES + 1)
+    if len(datos) > _AVATAR_TAMANO_MAXIMO_BYTES:
+        return redirect(url_for("ajustes_perfil", error_avatar="tamano"))
+    try:
+        # Recorte cuadrado centrado + redimensionado a 256×256 -- mismo
+        # criterio de "componer con Pillow antes de guardar" ya usado para
+        # el icono de la app móvil (ver mobile/assets/icon/), aplicado
+        # aquí a algo subido por el usuario en vez de un asset del repo.
+        from io import BytesIO
+
+        from PIL import Image
+
+        imagen = Image.open(BytesIO(datos))
+        imagen = imagen.convert("RGB") if imagen.mode not in ("RGB", "RGBA") else imagen
+        lado = min(imagen.size)
+        izquierda = (imagen.width - lado) // 2
+        arriba = (imagen.height - lado) // 2
+        imagen = imagen.crop((izquierda, arriba, izquierda + lado, arriba + lado)).resize((256, 256))
+        buffer = BytesIO()
+        imagen.save(buffer, format="JPEG", quality=88)
+        db.guardar_avatar_usuario(g.usuario_id, buffer.getvalue(), "image/jpeg")
+    except Exception:
+        return redirect(url_for("ajustes_perfil", error_avatar="procesar"))
+    return redirect(url_for("ajustes_perfil"))
+
+
+@app.route("/ajustes/perfil/avatar/eliminar", methods=["POST"])
+@login_required
+def eliminar_avatar():
+    db.eliminar_avatar_usuario(g.usuario_id)
+    return redirect(url_for("ajustes_perfil"))
+
+
+@app.route("/avatar/<int:usuario_id>")
+@login_required
+def avatar_usuario(usuario_id: int):
+    """Sirve el avatar subido, o 404 si no hay ninguno -- el llamador
+    (plantilla) ya sabe caer al círculo de iniciales (avatar_color/
+    iniciales, app/rutas_correo.py) cuando esta URL no responde 200,
+    mismo patrón que usan hoy los avatares de contactos de correo."""
+    perfil = db.obtener_perfil_usuario(usuario_id)
+    if not perfil["avatar_contenido"]:
+        abort(404)
+    return Response(perfil["avatar_contenido"], mimetype=perfil["avatar_tipo_mime"])
+
+
+@app.route("/ajustes/cuenta")
+@login_required
+def ajustes_cuenta():
+    """Cambiar contraseña/email dentro de la app -- flujo `settings` de
+    Kratos, quinto tipo (login/registration/verification/recovery ya
+    estaban cableados, ver _flujo_o_redirigir). No aplica a usuarios
+    locales de escritorio (es_local=1), que nunca pasan por Kratos."""
+    if db.obtener_usuario(g.usuario_id)["es_local"]:
+        abort(404)
+    datos = _flujo_o_redirigir("settings")
+    if datos is None:
+        return g._redireccion_flujo
+    return render_template("ajustes_cuenta.html", **datos)
 
 
 @app.route("/estadisticas")

@@ -73,6 +73,9 @@ dependencies:
   # añadir speech_to_text/flutter_tts cuando hizo falta una capacidad
   # nueva. Ver tareas_calendario_screen.dart.
   table_calendar: ^3.1.2
+  # Espacio de ajustes de usuario (Fase G1): subir avatar desde galería o
+  # cámara en perfil_screen.dart.
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

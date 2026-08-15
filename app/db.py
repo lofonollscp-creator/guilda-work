@@ -994,6 +994,26 @@ def init_db() -> None:
         # castellano a alguien que nunca lo pidió.
         _asegurar_columna(conn, "usuarios", "idioma", "TEXT")
 
+        # Ampliación "espacio de ajustes de usuario" (Fase G1): perfil
+        # propio (nombre a mostrar, avatar, preferencias de notificación).
+        # Mismo patrón singleton usuario_id PRIMARY KEY que ia_preferencias/
+        # correo_preferencias, pero como tabla nueva desde el principio (no
+        # hace falta migrar desde un esquema global anterior). El avatar se
+        # guarda como BLOB en la propia fila, igual que correo_adjuntos.contenido
+        # -- mismo criterio de "sin filesystem aparte" ya establecido en este
+        # proyecto, no una carpeta data/avatares/ nueva.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS usuario_perfil (
+                   usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
+                   nombre_mostrado TEXT,
+                   avatar_contenido BLOB,
+                   avatar_tipo_mime TEXT,
+                   notificar_push_vencimientos INTEGER NOT NULL DEFAULT 1,
+                   notificar_push_tiquets INTEGER NOT NULL DEFAULT 1,
+                   notificar_resumen_semanal INTEGER NOT NULL DEFAULT 0
+               )"""
+        )
+
         conn.commit()
     finally:
         conn.close()
@@ -4279,6 +4299,96 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -
             (modelo, int(modo_autonomo), usuario_id),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Perfil de usuario (Fase G1: espacio de ajustes de usuario) -------------
+# Mismo patrón singleton usuario_id PRIMARY KEY que ia_preferencias -- ver
+# CREATE TABLE usuario_perfil en init_db(). El avatar es un BLOB en la
+# propia fila (igual que correo_adjuntos.contenido), sin filesystem aparte.
+
+def obtener_perfil_usuario(usuario_id: int) -> sqlite3.Row:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+        conn.commit()
+        return conn.execute("SELECT * FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_perfil_usuario(
+    usuario_id: int,
+    nombre_mostrado: str | None = None,
+    notificar_push_vencimientos: bool | None = None,
+    notificar_push_tiquets: bool | None = None,
+    notificar_resumen_semanal: bool | None = None,
+) -> None:
+    """Solo actualiza los campos que se pasan explícitos (no-None) -- así
+    la ruta puede llamar con únicamente el nombre, o únicamente las
+    notificaciones, sin pisar el resto con valores por defecto."""
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+        asignaciones, valores = [], []
+        if nombre_mostrado is not None:
+            asignaciones.append("nombre_mostrado = ?")
+            valores.append(nombre_mostrado.strip() or None)
+        if notificar_push_vencimientos is not None:
+            asignaciones.append("notificar_push_vencimientos = ?")
+            valores.append(int(notificar_push_vencimientos))
+        if notificar_push_tiquets is not None:
+            asignaciones.append("notificar_push_tiquets = ?")
+            valores.append(int(notificar_push_tiquets))
+        if notificar_resumen_semanal is not None:
+            asignaciones.append("notificar_resumen_semanal = ?")
+            valores.append(int(notificar_resumen_semanal))
+        if asignaciones:
+            conn.execute(
+                f"UPDATE usuario_perfil SET {', '.join(asignaciones)} WHERE usuario_id = ?",
+                [*valores, usuario_id],
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_avatar_usuario(usuario_id: int, contenido: bytes, tipo_mime: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute(
+            "UPDATE usuario_perfil SET avatar_contenido = ?, avatar_tipo_mime = ? WHERE usuario_id = ?",
+            (contenido, tipo_mime, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_avatar_usuario(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE usuario_perfil SET avatar_contenido = NULL, avatar_tipo_mime = NULL WHERE usuario_id = ?",
+            (usuario_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def nombre_mostrado_usuario(usuario_id: int) -> str | None:
+    """Atajo de solo lectura para el resto de la app (p.ej. sustituir el
+    email crudo por el nombre elegido donde se muestre autoría) -- evita
+    que cada sitio tenga que llamar a obtener_perfil_usuario() entero."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT nombre_mostrado FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()
+        return fila["nombre_mostrado"] if fila else None
     finally:
         conn.close()
 
