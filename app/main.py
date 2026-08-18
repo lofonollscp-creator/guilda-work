@@ -1038,7 +1038,16 @@ def avatar_usuario(usuario_id: int):
     """Sirve el avatar subido, o 404 si no hay ninguno -- el llamador
     (plantilla) ya sabe caer al círculo de iniciales (avatar_color/
     iniciales, app/rutas_correo.py) cuando esta URL no responde 200,
-    mismo patrón que usan hoy los avatares de contactos de correo."""
+    mismo patrón que usan hoy los avatares de contactos de correo.
+
+    Solo el propio usuario o alguien de su mismo tenant puede pedir este
+    avatar -- usuario_id es un parámetro de ruta libre, sin este chequeo
+    cualquier sesión válida podía enumerar IDs y ver el avatar de
+    cualquiera, de cualquier tenant."""
+    if usuario_id != g.usuario_id:
+        tenant_objetivo = db.tenant_de_usuario(usuario_id)
+        if tenant_objetivo is None or tenant_objetivo["id"] != g.tenant_id:
+            abort(404)
     perfil = db.obtener_perfil_usuario(usuario_id)
     if not perfil["avatar_contenido"]:
         abort(404)

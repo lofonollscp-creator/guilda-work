@@ -1359,7 +1359,14 @@ def eliminar_avatar_api():
 @token_required
 def avatar_api(usuario_id: int):
     """Sin envoltorio {"ok":...}: la respuesta ES la imagen, mismo
-    criterio que /correo/mensajes/<id>/adjuntos/<id> (rutas_correo.py)."""
+    criterio que /correo/mensajes/<id>/adjuntos/<id> (rutas_correo.py).
+
+    Mismo chequeo de tenant que app/main.py:avatar_usuario() -- ver ahí
+    el porqué (usuario_id es un parámetro de ruta libre)."""
+    if usuario_id != g.usuario_id:
+        tenant_objetivo = db.tenant_de_usuario(usuario_id)
+        if tenant_objetivo is None or tenant_objetivo["id"] != g.tenant_id:
+            abort(404, "Este usuario no tiene avatar.")
     perfil = db.obtener_perfil_usuario(usuario_id)
     if not perfil["avatar_contenido"]:
         abort(404, "Este usuario no tiene avatar.")

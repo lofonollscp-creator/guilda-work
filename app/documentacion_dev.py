@@ -57,6 +57,9 @@ _PROPIAS_GUILDA_WORK = {
     "backoffice_renombrar_tenant", "backoffice_guardar_datos_tenant", "backoffice_alternar_herramienta_tenant",
     "backoffice_crear_usuario", "backoffice_asignar_tenant_usuario", "backoffice_cambiar_rol",
     "backoffice_asignar_gestor_fichajes",
+    "leer_adjunto_chat",
+    "listar_clientes_fiscales", "crear_cliente_fiscal",
+    "listar_vencimientos_fiscales", "generar_vencimientos_fiscales",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
