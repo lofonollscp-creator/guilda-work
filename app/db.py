@@ -4810,6 +4810,18 @@ def fichar(
             limite_pasado = (datetime.now() - timedelta(days=7)).isoformat(timespec="seconds")
             if marca_tiempo > ahora or marca_tiempo < limite_pasado:
                 raise ValueError("La hora del fichaje enviado no es válida (demasiado futura o de hace más de 7 días).")
+        # A partir de aquí, todo el bloque (validación de secuencia +
+        # lectura del último hash + INSERT) tiene que ser una sola sección
+        # crítica: dos fichajes casi simultáneos (de cualquier usuario,
+        # la cadena de hash es global -- ver verificar_integridad_fichajes)
+        # podrían leer el mismo "último tipo"/"último hash" antes de que
+        # ninguno haya insertado, y dejar la secuencia o la cadena rotas.
+        # BEGIN IMMEDIATE adquiere el lock de escritura YA, en vez de
+        # esperar a la primera escritura (comportamiento por defecto de
+        # sqlite3): un segundo fichar() concurrente se queda esperando aquí
+        # (hasta busy_timeout, ya en 5000ms en get_connection()) en vez de
+        # leer datos que están a punto de quedar obsoletos.
+        conn.execute("BEGIN IMMEDIATE")
         if corrige_a is not None:
             original = conn.execute("SELECT id FROM fichajes WHERE id = ? AND usuario_id = ?", (corrige_a, usuario_id)).fetchone()
             if original is None:
@@ -4838,6 +4850,9 @@ def fichar(
         )
         conn.commit()
         return cur.lastrowid
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
