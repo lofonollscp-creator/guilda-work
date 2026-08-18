@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Documentos') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="portal-cliente-shell">
+    <header class="page-header">
+      <div>
+        <h1>{{ vencimiento.modelo }} — {{ vencimiento.periodo }}</h1>
+        <p class="subtitle">{{ _('Vence %(fecha)s', fecha=vencimiento.fecha_limite[:10]) }}</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.dashboard') }}">{{ _('Volver') }}</a>
+    </header>
+
+    {% if error %}
+    <div class="ia-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="quick-card">
+      <label>{{ _('Subir documento (imagen o PDF, hasta 8MB)') }}
+        <input type="file" name="documento" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" required>
+      </label>
+      <button type="submit" class="btn btn-primary">{{ _('Subir') }}</button>
+    </form>
+
+    {% if not documentos %}
+    <p class="empty-lane">{{ _('Todavía no has subido ningún documento.') }}</p>
+    {% else %}
+    <ul class="log-list">
+      {% for d in documentos %}
+      <li class="log-item">
+        <span class="log-text">{{ d.nombre_archivo }}</span>
+        <span class="pill">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</body>
+</html>

@@ -54,4 +54,23 @@
       onsubmit="return confirm('{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}');">
   <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar vencimiento') }}</button>
 </form>
+
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Documentos del cliente') }}</h2>
+  <p class="subtitle">{{ _('Subidos por el cliente desde el portal, si tiene acceso configurado.') }}</p>
+  {% if not documentos_cliente %}
+  <p class="empty-lane">{{ _('El cliente todavía no ha subido ningún documento.') }}</p>
+  {% else %}
+  <ul class="log-list">
+    {% for d in documentos_cliente %}
+    <li class="log-item">
+      <span class="log-text">
+        <a href="{{ url_for('fiscal.descargar_documento_vencimiento', vencimiento_id=vencimiento.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
+      </span>
+      <span class="pill">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
 {% endblock %}

@@ -41,6 +41,7 @@ from .rutas_fiscal import fiscal_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import ip_requiere_captcha, kratos_proxy_bp
+from .rutas_portal_cliente import portal_bp
 from .rutas_tareas import tareas_bp
 from .rutas_tiquets import tiquets_bp
 
@@ -154,6 +155,7 @@ app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
 app.register_blueprint(docs_bp)
+app.register_blueprint(portal_bp)
 
 
 @app.errorhandler(Exception)

@@ -17,6 +17,10 @@
   <label>{{ _('Notas') }}
     <textarea name="notas" rows="4">{{ cliente.notas or '' }}</textarea>
   </label>
+  <label>{{ _('Email del cliente (portal)') }}
+    <input type="email" name="email" value="{{ cliente.email or '' }}">
+  </label>
+  <p class="subtitle">{{ _('Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo).') }}</p>
 
   <fieldset>
     <legend>{{ _('Modelos que presenta este cliente') }}</legend>

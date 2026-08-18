@@ -92,6 +92,34 @@ CREATE TABLE IF NOT EXISTS vencimientos_fiscales (
     papelera_en TEXT
 );
 
+-- Enlaces mágicos de un solo uso para el portal de cliente (clientes de
+-- la gestoría, no empleados -- ver app/rutas_portal_cliente.py). Vida
+-- corta y de un solo uso a propósito: es la única puerta de entrada sin
+-- contraseña, así que el margen de error tiene que ser mínimo.
+CREATE TABLE IF NOT EXISTS clientes_fiscales_accesos (
+    id INTEGER PRIMARY KEY,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id),
+    token TEXT NOT NULL UNIQUE,
+    creado_en TEXT NOT NULL,
+    expira_en TEXT NOT NULL,
+    usado_en TEXT,
+    ip_solicitante TEXT
+);
+
+-- Documentos que sube el CLIENTE (portal) para un vencimiento concreto --
+-- no confundir con vencimientos_fiscales.notas, de uso interno del
+-- equipo. Mismo diseño BLOB+MIME que tiquets_adjuntos.
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales_documentos (
+    id INTEGER PRIMARY KEY,
+    vencimiento_id INTEGER NOT NULL,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    creado_en TEXT NOT NULL,
+    FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+);
+
 -- Herramientas del catálogo (app/herramientas.py, por su `id` de texto)
 -- ocultas para un tenant concreto. Ausencia de fila = visible (así una
 -- herramienta nueva, o un tenant sin ninguna fila aquí, no pierde acceso
@@ -523,6 +551,8 @@ CREATE INDEX IF NOT EXISTS idx_pausas_tarea ON pausas(tarea_id);
 CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_tenant ON clientes_fiscales(tenant_id, papelera_en);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_tenant_fecha ON vencimientos_fiscales(tenant_id, fecha_limite, papelera_en);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_cliente ON vencimientos_fiscales(cliente_fiscal_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_token ON clientes_fiscales_accesos(token);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos(vencimiento_id);
 """
 
 
@@ -976,6 +1006,10 @@ def init_db() -> None:
         # rellena si ESPOCRM_API_KEY no está configurada, el calendario
         # fiscal sigue funcionando igual sin ella.
         _asegurar_columna(conn, "clientes_fiscales", "espocrm_cuenta_id", "TEXT")
+        # Portal de cliente (app/rutas_portal_cliente.py): nullable a
+        # propósito -- el acceso es opt-in, solo si un empleado pone el
+        # email desde la ficha del cliente puede este pedir un enlace.
+        _asegurar_columna(conn, "clientes_fiscales", "email", "TEXT")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -3211,7 +3245,14 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 # usuario_id -- las rutas siempre pasan g.tenant_id, nunca un valor del
 # request (ver app/rutas_fiscal.py).
 
-CAMPOS_CLIENTE_FISCAL = ("nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id")
+CAMPOS_CLIENTE_FISCAL = (
+    "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
+)
+_MINUTOS_VIDA_ACCESO_PORTAL = 15
+MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
+    "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf",
+}
+TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO = 8 * 1024 * 1024
 CAMPOS_VENCIMIENTO_FISCAL = ("usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas")
 
 
@@ -3240,16 +3281,16 @@ def modelos_fiscales_de_cliente(cliente: sqlite3.Row) -> list[str]:
 
 def crear_cliente_fiscal(
     tenant_id: int, nombre: str, nif: str | None = None, notas: str | None = None,
-    modelos_fiscales: list[str] | None = None,
+    modelos_fiscales: list[str] | None = None, email: str | None = None,
 ) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, modelos_fiscales, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, modelos_fiscales, email, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 tenant_id, nombre.strip(), (nif or "").strip() or None, (notas or "").strip() or None,
-                serializar_modelos_fiscales(modelos_fiscales), now_iso(),
+                serializar_modelos_fiscales(modelos_fiscales), (email or "").strip() or None, now_iso(),
             ),
         )
         conn.commit()
@@ -3631,6 +3672,153 @@ def sanear_vencimientos_fuera_plazo() -> int:
         )
         conn.commit()
         return cur.rowcount
+    finally:
+        conn.close()
+
+
+# --- Portal de cliente (app/rutas_portal_cliente.py) -------------------------
+# El "principal" aquí es un cliente_fiscal_id, no un usuario_id/tenant_id de
+# empleado -- estas funciones nunca reciben tenant_id como filtro porque el
+# propio cliente_fiscal_id/vencimiento_id ya identifica de forma única al
+# dueño (igual que las funciones de arriba filtran por usuario_id).
+
+
+def obtener_cliente_fiscal_por_id(cliente_fiscal_id: int) -> sqlite3.Row | None:
+    """A diferencia de obtener_cliente_fiscal (que exige tenant_id porque
+    lo llama personal ya autenticado en un tenant), el portal de cliente
+    solo tiene cliente_fiscal_id en su sesión -- no hay tenant_id previo
+    del que partir, es al revés: se lee de la fila devuelta."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE id = ? AND papelera_en IS NULL", (cliente_fiscal_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def clientes_fiscales_por_email(email: str) -> list[sqlite3.Row]:
+    """A diferencia de obtener_cliente_fiscal_por_email (que ya sabe el
+    tenant), esta busca en TODOS los tenants -- la usa /portal/entrar, que
+    solo recibe un email sin contexto de tenant. Simplificación consciente
+    de v1: si el mismo email está en varios tenants, se manda un enlace por
+    cada fila (ver app/rutas_portal_cliente.py)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE LOWER(email) = ? AND papelera_en IS NULL",
+            (email.strip().lower(),),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def ultimo_acceso_solicitado_en(cliente_fiscal_id: int) -> str | None:
+    """`creado_en` de la última solicitud de enlace de este cliente,
+    exista o no la fila -- usado para el cooldown de 2 minutos por email
+    en /portal/entrar (evita spamear la bandeja de alguien)."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT creado_en FROM clientes_fiscales_accesos WHERE cliente_fiscal_id = ? "
+            "ORDER BY id DESC LIMIT 1",
+            (cliente_fiscal_id,),
+        ).fetchone()
+        return fila["creado_en"] if fila else None
+    finally:
+        conn.close()
+
+
+def crear_acceso_cliente_fiscal(cliente_fiscal_id: int, ip_solicitante: str | None) -> str:
+    token = secrets.token_urlsafe(32)
+    ahora = datetime.now()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO clientes_fiscales_accesos "
+            "(cliente_fiscal_id, token, creado_en, expira_en, ip_solicitante) VALUES (?, ?, ?, ?, ?)",
+            (
+                cliente_fiscal_id, token, ahora.isoformat(timespec="seconds"),
+                (ahora + timedelta(minutes=_MINUTOS_VIDA_ACCESO_PORTAL)).isoformat(timespec="seconds"),
+                ip_solicitante,
+            ),
+        )
+        conn.commit()
+        return token
+    finally:
+        conn.close()
+
+
+def consumir_acceso_cliente_fiscal(token: str) -> int | None:
+    """Valida y marca usado el token en la MISMA transacción (BEGIN
+    IMMEDIATE) -- mismo cuidado de sección crítica que fichar() en
+    fichajes: sin esto, dos peticiones casi simultáneas con el mismo
+    token (el enlace abierto dos veces, p.ej. precarga del cliente de
+    correo) podrían leer ambas "no usado todavía" antes de que ninguna
+    marcara usado_en, y las dos entrarían con un token pensado para un
+    solo uso. Devuelve cliente_fiscal_id si el token es válido y no
+    caducado/usado, si no None."""
+    conn = get_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        fila = conn.execute(
+            "SELECT id, cliente_fiscal_id, expira_en, usado_en FROM clientes_fiscales_accesos WHERE token = ?",
+            (token,),
+        ).fetchone()
+        if fila is None or fila["usado_en"] is not None:
+            conn.rollback()
+            return None
+        if fila["expira_en"] < now_iso():
+            conn.rollback()
+            return None
+        conn.execute(
+            "UPDATE clientes_fiscales_accesos SET usado_en = ? WHERE id = ?",
+            (now_iso(), fila["id"]),
+        )
+        conn.commit()
+        return fila["cliente_fiscal_id"]
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def subir_documento_vencimiento(
+    vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes,
+) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO vencimientos_fiscales_documentos "
+            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_documentos_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
+            "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ? ORDER BY creado_en",
+            (vencimiento_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_documento_vencimiento(documento_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM vencimientos_fiscales_documentos WHERE id = ?", (documento_id,),
+        ).fetchone()
     finally:
         conn.close()
 

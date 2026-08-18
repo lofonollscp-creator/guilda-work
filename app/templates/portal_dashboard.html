@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Mis vencimientos') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="portal-cliente-shell">
+    <header class="page-header">
+      <div>
+        <h1>{{ cliente.nombre }}</h1>
+        <p class="subtitle">{{ _('Estado de tus vencimientos fiscales.') }}</p>
+      </div>
+      <form method="post" action="{{ url_for('portal_cliente.salir') }}">
+        <button type="submit" class="btn btn-ghost">{{ _('Salir') }}</button>
+      </form>
+    </header>
+
+    {% if not vencimientos %}
+    <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
+    {% else %}
+    <ul class="log-list">
+      {% for v in vencimientos %}
+      <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+        <span class="log-text">
+          <a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a>
+        </span>
+        <span class="pill">{{ v.periodo }}</span>
+        <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
+        <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else 'nota' }}">
+          {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
+        </span>
+        <a class="log-edit" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}">📎</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</body>
+</html>

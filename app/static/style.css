@@ -2527,6 +2527,23 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .auth-submit { width: 100%; justify-content: center; margin-top: var(--space-2); }
 .auth-alterna { text-align: center; font-size: 0.88em; color: var(--text-muted); margin: var(--space-2) 0 0; }
 
+/* ---- Portal de cliente (páginas independientes, sin app-shell) ----
+   Mismo criterio que .auth-shell: página propia, no hereda el layout de
+   base.html (sin icon-rail/top-bar), pero con contenido normal (listas,
+   formularios) en vez de una tarjeta de login centrada -- por eso un
+   contenedor ancho con margen, no .auth-shell/.auth-card. */
+.portal-cliente-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+.portal-cliente-shell .page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
 /* ---- Herramientas: tarjetas de app conectadas, estilo "rice" (Hyprland) ----
    Clases propias (.tools-*), NO reutiliza .menu-grid/.menu-card (esas las
    usa inicio.html para los menús/categorías del log) — así se puede tunear

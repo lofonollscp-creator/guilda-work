@@ -58,6 +58,7 @@ def crear_cliente():
         cliente_id = db.crear_cliente_fiscal(
             g.tenant_id, nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
             modelos_fiscales=request.form.getlist("modelos_fiscales") or None,
+            email=request.form.get("email"),
         )
         # EspoCRM: opcional y best-effort, mismo idioma que el resto de
         # integraciones tenant (ver rutas_backoffice.py:crear_tenant) --
@@ -117,6 +118,7 @@ def editar_cliente(cliente_id: int):
                 nombre=nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
                 modelos_fiscales=db.serializar_modelos_fiscales(request.form.getlist("modelos_fiscales") or None),
                 generacion_automatica=1 if request.form.get("generacion_automatica") else 0,
+                email=(request.form.get("email") or "").strip() or None,
             )
         return redirect(url_for("fiscal.clientes"))
     return render_template(
@@ -306,7 +308,23 @@ def editar_vencimiento(vencimiento_id: int):
     return render_template(
         "fiscal_vencimiento_editar.html",
         vencimiento=vencimiento, estados=ESTADOS_VENCIMIENTO, usuarios=usuarios_tenant,
+        # Documentos subidos por el CLIENTE desde el portal (app/rutas_portal_cliente.py)
+        # -- así el equipo los ve sin tener que entrar al portal.
+        documentos_cliente=db.listar_documentos_vencimiento(vencimiento_id),
     )
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/documentos/<int:documento_id>")
+@login_required
+def descargar_documento_vencimiento(vencimiento_id: int, documento_id: int):
+    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+        abort(404)
+    documento = db.obtener_documento_vencimiento(documento_id)
+    if documento is None or documento["vencimiento_id"] != vencimiento_id:
+        abort(404)
+    respuesta = Response(documento["contenido"], mimetype=documento["tipo_mime"])
+    respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
+    return respuesta
 
 
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/eliminar", methods=["POST"])

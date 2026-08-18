@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Portal de cliente') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Portal de cliente') }}</h1>
+
+      {% if enlace_invalido %}
+      <div class="ia-error">{{ _('Este enlace ha caducado o ya se ha usado. Pide uno nuevo abajo.') }}</div>
+      {% endif %}
+
+      {% if enviado %}
+      <p class="auth-alterna">{{ _('Si ese email está asociado a un cliente, te hemos mandado un enlace de acceso. Revisa tu bandeja de entrada.') }}</p>
+      {% else %}
+      <p class="auth-alterna">{{ _('Introduce tu email y te mandaremos un enlace de acceso, sin necesidad de contraseña.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.entrar') }}">
+        <div class="correo-form-campo">
+          <label for="portal-email">{{ _('Email') }}</label>
+          <input type="email" id="portal-email" name="email" required autofocus>
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit">{{ _('Enviarme el enlace') }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
