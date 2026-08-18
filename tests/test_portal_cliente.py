@@ -190,3 +190,159 @@ def test_enviar_enlace_portal_sin_configurar_lanza_error_legible(monkeypatch):
     assert notificaciones_email.configurado() is False
     with pytest.raises(notificaciones_email.ErrorNotificacionesEmail):
         notificaciones_email.enviar_enlace_portal("alguien@ejemplo.com", "https://guildawork.com/portal/entrar/x")
+
+
+# --- v2: mensajería bidireccional ------------------------------------------
+
+def _entrar_como_cliente(cliente_http, cliente_fiscal_id):
+    token = db.crear_acceso_cliente_fiscal(cliente_fiscal_id, "127.0.0.1")
+    cliente_http.get(f"/portal/entrar/{token}")
+
+
+def test_cliente_manda_mensaje_y_notifica_al_empleado_asignado(cliente, monkeypatch):
+    from app import rutas_portal_cliente
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="mensaje-a@ejemplo.com")
+    usuario_asignado = db.usuario_local_id()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20", usuario_id=usuario_asignado)
+    _entrar_como_cliente(cliente, cliente_id)
+
+    llamadas = []
+    monkeypatch.setattr(
+        rutas_portal_cliente.push, "enviar_a_usuario",
+        lambda usuario_id, titulo, cuerpo, datos=None: llamadas.append((usuario_id, titulo, datos)),
+    )
+
+    resp = cliente.post(f"/portal/vencimientos/{v_id}/mensajes", data={"texto": "¿Falta algo por mi parte?"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert "¿Falta algo por mi parte?" in resp.get_data(as_text=True)
+
+    mensajes = db.listar_mensajes_vencimiento(v_id)
+    assert len(mensajes) == 1
+    assert mensajes[0]["autor"] == "cliente"
+
+    assert len(llamadas) == 1
+    assert llamadas[0][0] == usuario_asignado
+    assert llamadas[0][2]["vencimiento_id"] == v_id
+
+
+def test_mensaje_sin_usuario_asignado_no_notifica(cliente, monkeypatch):
+    from app import rutas_portal_cliente
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="mensaje-b@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")  # sin usuario_id
+    _entrar_como_cliente(cliente, cliente_id)
+
+    llamadas = []
+    monkeypatch.setattr(rutas_portal_cliente.push, "enviar_a_usuario", lambda *a, **k: llamadas.append((a, k)))
+
+    resp = cliente.post(f"/portal/vencimientos/{v_id}/mensajes", data={"texto": "Hola"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert not llamadas
+
+
+def test_cliente_no_ve_mensajes_de_vencimiento_ajeno(cliente):
+    tenant_a, cliente_a = _cliente_de_prueba(nombre="MsgA", email="msg-a@ejemplo.com")
+    v_a = db.crear_vencimiento_fiscal(tenant_a, cliente_a, "303", "2026-T1", "2026-04-20")
+
+    tenant_b, cliente_b = _cliente_de_prueba(nombre="MsgB", email="msg-b@ejemplo.com")
+    v_b = db.crear_vencimiento_fiscal(tenant_b, cliente_b, "130", "2026-T1", "2026-04-20")
+
+    _entrar_como_cliente(cliente, cliente_b)
+
+    assert cliente.get(f"/portal/vencimientos/{v_b}/mensajes").status_code == 200
+    assert cliente.get(f"/portal/vencimientos/{v_a}/mensajes").status_code == 404
+
+
+def test_marcar_mensajes_leidos_solo_afecta_al_otro_autor():
+    tenant_id, cliente_id = _cliente_de_prueba(email="leidos@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.crear_mensaje_vencimiento(v_id, "cliente", "Uno")
+    db.crear_mensaje_vencimiento(v_id, "empleado", "Dos", usuario_id=db.usuario_local_id())
+
+    db.marcar_mensajes_leidos(v_id, "cliente")  # lee el cliente -> marca los de "empleado"
+
+    mensajes = {m["autor"]: m for m in db.listar_mensajes_vencimiento(v_id)}
+    assert mensajes["empleado"]["leido_en"] is not None
+    assert mensajes["cliente"]["leido_en"] is None
+
+
+# --- v2: solicitudes de acceso al portal ------------------------------------
+
+def test_solicitar_acceso_sin_captcha_valido_no_crea_solicitud(cliente):
+    resp = cliente.post(
+        "/portal/solicitar-acceso",
+        data={"nombre": "Nuevo Cliente", "email": "nuevo@ejemplo.com"},
+    )
+    assert resp.status_code == 200
+    assert not db.listar_solicitudes_acceso_portal()
+
+
+def test_solicitar_acceso_con_captcha_valido_crea_solicitud(cliente, monkeypatch):
+    from app import rutas_portal_cliente
+
+    monkeypatch.setattr(rutas_portal_cliente.captcha, "verificar_solucion", lambda payload: True)
+    resp = cliente.post(
+        "/portal/solicitar-acceso",
+        data={"nombre": "Nuevo Cliente", "email": "nuevo@ejemplo.com", "nif": "12345678Z", "mensaje": "Quiero acceso"},
+    )
+    assert resp.status_code == 200
+    solicitudes = db.listar_solicitudes_acceso_portal()
+    assert len(solicitudes) == 1
+    assert solicitudes[0]["email"] == "nuevo@ejemplo.com"
+    assert solicitudes[0]["atendida"] == 0
+
+
+def test_backoffice_vincula_solicitud_a_cliente_existente(cliente, monkeypatch):
+    from app import rutas_portal_cliente
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    monkeypatch.setattr(rutas_portal_cliente.captcha, "verificar_solucion", lambda payload: True)
+    cliente.post("/portal/solicitar-acceso", data={"nombre": "Vincular Test", "email": "vincular@ejemplo.com"})
+    solicitud_id = db.listar_solicitudes_acceso_portal()[0]["id"]
+
+    _, cliente_fiscal_id = _cliente_de_prueba(nombre="Existente", email=None)
+
+    iniciar_sesion_de_prueba(cliente, "admin-vincular@ejemplo.com", "contrasena123")
+    db.hacer_admin("admin-vincular@ejemplo.com")
+
+    resp = cliente.post(
+        f"/backoffice/solicitudes-portal/{solicitud_id}/vincular",
+        data={"cliente_fiscal_id": cliente_fiscal_id},
+    )
+    assert resp.status_code == 302
+
+    cliente_actualizado = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    assert cliente_actualizado["email"] == "vincular@ejemplo.com"
+    solicitud = db.listar_solicitudes_acceso_portal()[0]
+    assert solicitud["atendida"] == 1
+
+
+def test_backoffice_crea_cliente_nuevo_desde_solicitud(cliente, monkeypatch):
+    from app import rutas_portal_cliente
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    monkeypatch.setattr(rutas_portal_cliente.captcha, "verificar_solucion", lambda payload: True)
+    cliente.post(
+        "/portal/solicitar-acceso",
+        data={"nombre": "Cliente Nuevo Desde Solicitud", "email": "crear@ejemplo.com", "nif": "B87654321"},
+    )
+    solicitud_id = db.listar_solicitudes_acceso_portal()[0]["id"]
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "admin-crear@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Crear Desde Solicitud")
+    db.asignar_tenant(admin_id, tenant_id)
+    db.hacer_admin("admin-crear@ejemplo.com")
+
+    resp = cliente.post(
+        f"/backoffice/solicitudes-portal/{solicitud_id}/crear-cliente",
+        data={"tenant_id": tenant_id},
+    )
+    assert resp.status_code == 302
+
+    clientes_tenant = db.listar_clientes_fiscales(tenant_id)
+    assert len(clientes_tenant) == 1
+    assert clientes_tenant[0]["email"] == "crear@ejemplo.com"
+    assert clientes_tenant[0]["nif"] == "B87654321"
+    solicitud = db.listar_solicitudes_acceso_portal()[0]
+    assert solicitud["atendida"] == 1

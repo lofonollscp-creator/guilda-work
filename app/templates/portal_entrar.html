@@ -28,6 +28,7 @@
         </div>
         <button type="submit" class="btn btn-primary auth-submit">{{ _('Enviarme el enlace') }}</button>
       </form>
+      <p class="auth-alterna">{{ _('¿Todavía no tienes acceso?') }} <a href="{{ url_for('portal_cliente.solicitar_acceso') }}">{{ _('Solicítalo aquí') }}</a></p>
       {% endif %}
     </div>
   </div>

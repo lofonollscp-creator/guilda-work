@@ -59,6 +59,8 @@ def panel():
         tenants=tenants,
         usuarios=db.listar_usuarios(),
         leads=db.listar_leads_contacto(),
+        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
+        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
         resultados_alta=None,
         facturascripts_creado=None,
         calcom_creado=None,
@@ -228,6 +230,8 @@ def crear_tenant():
             tenants=tenants,
             usuarios=db.listar_usuarios(),
             leads=db.listar_leads_contacto(),
+        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
+        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
             resultados_alta=None,
             facturascripts_creado=facturascripts_creado,
             calcom_creado=calcom_creado,
@@ -420,6 +424,8 @@ def crear_usuario():
             tenants=tenants,
             usuarios=db.listar_usuarios(),
             leads=db.listar_leads_contacto(),
+        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
+        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
             resultados_alta=None,
             error=str(e),
             **_contexto_herramientas(tenants),
@@ -501,6 +507,8 @@ def crear_usuario():
         tenants=tenants,
         usuarios=db.listar_usuarios(),
         leads=db.listar_leads_contacto(),
+        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
+        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
         resultados_alta=resultados_alta,
         email_creado=email,
         **_contexto_herramientas(tenants),
@@ -598,6 +606,44 @@ def revocar_dispositivo_usuario(usuario_id: int, token_id: int):
 @admin_required
 def marcar_lead_atendido(lead_id: int):
     db.marcar_lead_atendido(lead_id, request.form.get("atendido") == "1")
+    return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/solicitudes-portal/<int:solicitud_id>/vincular", methods=["POST"])
+@login_required
+@admin_required
+def vincular_solicitud_portal(solicitud_id: int):
+    """Vincula una solicitud de acceso (app/rutas_portal_cliente.py:solicitar_acceso)
+    a un cliente_fiscal_id EXISTENTE, poniéndole el email -- mismo criterio
+    manual que db.marcar_lead_atendido, sin asignación automática por
+    dominio de email (dos gestorías podrían compartir dominio, o el
+    cliente usar Gmail)."""
+    solicitudes = {s["id"]: s for s in db.listar_solicitudes_acceso_portal()}
+    solicitud = solicitudes.get(solicitud_id)
+    cliente_fiscal_id = request.form.get("cliente_fiscal_id", type=int)
+    if solicitud is not None and cliente_fiscal_id:
+        # editar_cliente_fiscal exige tenant_id -- se resuelve del propio
+        # cliente_fiscal elegido, no del admin (que no tiene uno fijo).
+        cliente = next((c for c in db.listar_todos_los_clientes_fiscales() if c["id"] == cliente_fiscal_id), None)
+        if cliente is not None:
+            db.editar_cliente_fiscal(cliente["tenant_id"], cliente_fiscal_id, email=solicitud["email"])
+            db.marcar_solicitud_atendida(solicitud_id)
+    return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/solicitudes-portal/<int:solicitud_id>/crear-cliente", methods=["POST"])
+@login_required
+@admin_required
+def crear_cliente_desde_solicitud(solicitud_id: int):
+    """Crea un clientes_fiscales NUEVO (con el email de la solicitud ya
+    puesto) en el tenant elegido por el admin, para una solicitud sin
+    ficha previa."""
+    solicitudes = {s["id"]: s for s in db.listar_solicitudes_acceso_portal()}
+    solicitud = solicitudes.get(solicitud_id)
+    tenant_id = request.form.get("tenant_id", type=int)
+    if solicitud is not None and tenant_id:
+        db.crear_cliente_fiscal(tenant_id, solicitud["nombre"], nif=solicitud["nif"], email=solicitud["email"])
+        db.marcar_solicitud_atendida(solicitud_id)
     return redirect(url_for("backoffice.panel"))
 
 

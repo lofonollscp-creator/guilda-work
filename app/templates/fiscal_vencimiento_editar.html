@@ -73,4 +73,27 @@
   </ul>
   {% endif %}
 </section>
+
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Mensajes con el cliente') }}</h2>
+  {% if not mensajes_cliente %}
+  <p class="empty-lane">{{ _('Todavía no hay mensajes en esta conversación.') }}</p>
+  {% else %}
+  <ul class="log-list">
+    {% for m in mensajes_cliente %}
+    <li class="log-item">
+      <span class="pill">{{ _('Cliente') if m.autor == 'cliente' else (m.usuario_email or _('Equipo')) }}</span>
+      <span class="log-text">{{ m.texto }}</span>
+      <span class="log-duration">{{ m.creado_en[:16].replace('T', ' ') }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('fiscal.responder_mensaje_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
+    <label>{{ _('Responder') }}
+      <textarea name="texto" rows="2" required></textarea>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+  </form>
+</section>
 {% endblock %}

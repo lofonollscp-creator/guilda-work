@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import db
+from . import captcha, db, push
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -40,6 +40,32 @@ def cliente_login_required(vista):
             return redirect(url_for("portal_cliente.entrar"))
         return vista(*args, **kwargs)
     return decorada
+
+
+@portal_bp.route("/solicitar-acceso", methods=["GET", "POST"])
+@limiter.limit("10/hour")
+def solicitar_acceso():
+    """Cola de solicitudes para quien NO tiene ficha previa en
+    clientes_fiscales (v1 es opt-in, un empleado pone el email desde
+    /fiscal/clientes/<id>/editar) -- a diferencia de /entrar (que no
+    revela si un email existe), este SÍ es un formulario público visible
+    sin autenticar detrás de él, así que lleva ALTCHA desde el principio
+    (mismo captcha.py que /login tras varios fallos)."""
+    enviado = False
+    error = None
+    if request.method == "POST":
+        nombre = (request.form.get("nombre") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        if not nombre or not email or "@" not in email:
+            error = _("Faltan datos: nombre y email son obligatorios.")
+        elif not captcha.verificar_solucion(request.form.get("altcha")):
+            error = _("No se ha podido comprobar el captcha. Resuélvelo de nuevo.")
+        else:
+            db.crear_solicitud_acceso_portal(
+                nombre, email, nif=request.form.get("nif"), mensaje=request.form.get("mensaje"),
+            )
+            enviado = True
+    return render_template("portal_solicitar_acceso.html", enviado=enviado, error=error)
 
 
 @portal_bp.route("/entrar", methods=["GET", "POST"])
@@ -120,4 +146,30 @@ def documentos_vencimiento(vencimiento_id: int):
     return render_template(
         "portal_vencimiento_documentos.html",
         vencimiento=vencimiento, documentos=db.listar_documentos_vencimiento(vencimiento_id), error=error,
+    )
+
+
+@portal_bp.route("/vencimientos/<int:vencimiento_id>/mensajes", methods=["GET", "POST"])
+@cliente_login_required
+def mensajes_vencimiento(vencimiento_id: int):
+    vencimiento = _vencimiento_del_cliente_actual(vencimiento_id)
+    if request.method == "POST":
+        texto = (request.form.get("texto") or "").strip()
+        if texto:
+            db.crear_mensaje_vencimiento(vencimiento_id, "cliente", texto)
+            # Avisa al empleado asignado -- mismo patrón que el recordatorio
+            # de vencimientos (app/main.py) y el correo nuevo (app/correo.py):
+            # push.enviar_a_usuario nunca lanza, y si no hay usuario_id
+            # asignado simplemente no se notifica a nadie (v2 no tiene
+            # "avisar a todo el tenant" todavía).
+            if vencimiento["usuario_id"]:
+                push.enviar_a_usuario(
+                    vencimiento["usuario_id"], _("Nuevo mensaje del cliente"), texto[:100],
+                    {"tipo": "portal_mensaje_nuevo", "vencimiento_id": vencimiento_id},
+                )
+        return redirect(url_for("portal_cliente.mensajes_vencimiento", vencimiento_id=vencimiento_id))
+    db.marcar_mensajes_leidos(vencimiento_id, "cliente")
+    return render_template(
+        "portal_vencimiento_mensajes.html",
+        vencimiento=vencimiento, mensajes=db.listar_mensajes_vencimiento(vencimiento_id),
     )

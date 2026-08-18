@@ -34,6 +34,7 @@
           {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
         </span>
         <a class="log-edit" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}">📎</a>
+        <a class="log-edit" href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}">💬</a>
       </li>
       {% endfor %}
     </ul>

@@ -120,6 +120,40 @@ CREATE TABLE IF NOT EXISTS vencimientos_fiscales_documentos (
     FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
 );
 
+-- Mensajería del portal de cliente (v2): conversación ligada a un
+-- vencimiento concreto, no a un cliente_fiscal_id suelto -- mismo
+-- criterio que los documentos de arriba (contexto concreto, "el 303
+-- del T2", no un totum revolutum de mensajes sin agrupar). `leido_en`
+-- es deliberadamente simple (una marca, no "leído por quién" a nivel
+-- de usuario individual) -- solo dos partes posibles en la
+-- conversación (cliente / equipo), no hace falta más.
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales_mensajes (
+    id INTEGER PRIMARY KEY,
+    vencimiento_id INTEGER NOT NULL,
+    autor TEXT NOT NULL CHECK (autor IN ('cliente', 'empleado')),
+    usuario_id INTEGER REFERENCES usuarios(id),
+    texto TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    leido_en TEXT,
+    FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+);
+
+-- Solicitudes de acceso al portal de cliente (v2): un cliente sin
+-- ficha previa en clientes_fiscales no puede pedir un enlace mágico
+-- (v1 es opt-in, ver clientes_fiscales.email) -- esto es la cola por
+-- la que pide que un empleado lo vincule a mano, mismo patrón que
+-- leads_contacto (sin acción automática, un admin decide desde
+-- backoffice).
+CREATE TABLE IF NOT EXISTS solicitudes_acceso_portal (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    email TEXT NOT NULL,
+    nif TEXT,
+    mensaje TEXT,
+    creado_en TEXT NOT NULL,
+    atendida INTEGER NOT NULL DEFAULT 0
+);
+
 -- Herramientas del catálogo (app/herramientas.py, por su `id` de texto)
 -- ocultas para un tenant concreto. Ausencia de fila = visible (así una
 -- herramienta nueva, o un tenant sin ninguna fila aquí, no pierde acceso
@@ -552,7 +586,9 @@ CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_tenant ON clientes_fiscales(ten
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_tenant_fecha ON vencimientos_fiscales(tenant_id, fecha_limite, papelera_en);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_cliente ON vencimientos_fiscales(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_token ON clientes_fiscales_accesos(token);
+CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_cliente ON clientes_fiscales_accesos(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos(vencimiento_id);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_mensajes_vencimiento ON vencimientos_fiscales_mensajes(vencimiento_id);
 """
 
 
@@ -3819,6 +3855,97 @@ def obtener_documento_vencimiento(documento_id: int) -> sqlite3.Row | None:
         return conn.execute(
             "SELECT * FROM vencimientos_fiscales_documentos WHERE id = ?", (documento_id,),
         ).fetchone()
+    finally:
+        conn.close()
+
+
+def crear_mensaje_vencimiento(vencimiento_id: int, autor: str, texto: str, usuario_id: int | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO vencimientos_fiscales_mensajes (vencimiento_id, autor, usuario_id, texto, creado_en) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (vencimiento_id, autor, usuario_id, texto.strip(), now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_mensajes_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT m.*, u.email AS usuario_email FROM vencimientos_fiscales_mensajes m "
+            "LEFT JOIN usuarios u ON u.id = m.usuario_id "
+            "WHERE m.vencimiento_id = ? ORDER BY m.creado_en",
+            (vencimiento_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_mensajes_leidos(vencimiento_id: int, autor_que_lee: str) -> None:
+    """Marca leídos los mensajes del OTRO autor -- si lee el cliente
+    (autor_que_lee='cliente'), se marcan los de autor='empleado', y
+    viceversa. Llamado al abrir la conversación desde cada lado."""
+    otro_autor = "empleado" if autor_que_lee == "cliente" else "cliente"
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE vencimientos_fiscales_mensajes SET leido_en = ? "
+            "WHERE vencimiento_id = ? AND autor = ? AND leido_en IS NULL",
+            (now_iso(), vencimiento_id, otro_autor),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_solicitud_acceso_portal(nombre: str, email: str, nif: str | None = None, mensaje: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO solicitudes_acceso_portal (nombre, email, nif, mensaje, creado_en) VALUES (?, ?, ?, ?, ?)",
+            (nombre.strip(), email.strip(), (nif or "").strip() or None, (mensaje or "").strip() or None, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_solicitudes_acceso_portal() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM solicitudes_acceso_portal ORDER BY atendida ASC, creado_en DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_solicitud_atendida(solicitud_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE solicitudes_acceso_portal SET atendida = 1 WHERE id = ?", (solicitud_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_todos_los_clientes_fiscales() -> list[sqlite3.Row]:
+    """Para el backoffice (admin, sin tenant fijo) -- a diferencia de
+    listar_clientes_fiscales(tenant_id), esta cruza todos los tenants,
+    con el nombre del tenant para que el admin sepa a cuál pertenece
+    cada fila al vincular una solicitud de acceso."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT c.*, t.nombre AS tenant_nombre FROM clientes_fiscales c "
+            "JOIN tenants t ON t.id = c.tenant_id WHERE c.papelera_en IS NULL ORDER BY t.nombre, c.nombre"
+        ).fetchall()
     finally:
         conn.close()
 

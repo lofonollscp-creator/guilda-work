@@ -304,6 +304,7 @@ def editar_vencimiento(vencimiento_id: int):
             usuario_id=usuario_id if usuario_id else None,
         )
         return redirect(url_for("fiscal.vencimientos"))
+    db.marcar_mensajes_leidos(vencimiento_id, "empleado")
     usuarios_tenant = [db.obtener_usuario(uid) for uid in db.usuarios_de_tenant(g.tenant_id)]
     return render_template(
         "fiscal_vencimiento_editar.html",
@@ -311,7 +312,20 @@ def editar_vencimiento(vencimiento_id: int):
         # Documentos subidos por el CLIENTE desde el portal (app/rutas_portal_cliente.py)
         # -- así el equipo los ve sin tener que entrar al portal.
         documentos_cliente=db.listar_documentos_vencimiento(vencimiento_id),
+        mensajes_cliente=db.listar_mensajes_vencimiento(vencimiento_id),
     )
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/mensajes", methods=["POST"])
+@login_required
+def responder_mensaje_vencimiento(vencimiento_id: int):
+    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+        abort(404)
+    texto = (request.form.get("texto") or "").strip()
+    if texto:
+        db.crear_mensaje_vencimiento(vencimiento_id, "empleado", texto, usuario_id=g.usuario_id)
+        db.marcar_mensajes_leidos(vencimiento_id, "empleado")
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
 
 
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/documentos/<int:documento_id>")
