@@ -1,6 +1,6 @@
 {% macro chat(mensajes, pendiente, contenedor_id) %}
 <div class="ia-chat" id="{{ contenedor_id }}">
-  <p class="ia-chat-aviso">🤖 {{ _('Respuestas generadas por IA — pueden contener errores, comprueba lo importante.') }}</p>
+  <p class="ia-chat-aviso"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg> {{ _('Respuestas generadas por IA — pueden contener errores, comprueba lo importante.') }}</p>
   <div class="ia-chat-mensajes" id="{{ contenedor_id }}-mensajes">
     {% for m in mensajes %}
       {% if m.rol == 'user' %}
@@ -24,9 +24,9 @@
   </div>
   <div class="ia-chat-adjunto" id="{{ contenedor_id }}-adjunto-pendiente" hidden></div>
   <form class="ia-chat-form" id="{{ contenedor_id }}-form">
-    <button type="button" class="ia-chat-mic" id="{{ contenedor_id }}-mic" title="{{ _('Dictar mensaje') }}" aria-label="{{ _('Dictar mensaje') }}">🎙️</button>
+    <button type="button" class="ia-chat-mic" id="{{ contenedor_id }}-mic" title="{{ _('Dictar mensaje') }}" aria-label="{{ _('Dictar mensaje') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mic"></use></svg></button>
     <label class="ia-chat-adjuntar" title="{{ _('Adjuntar archivo de texto/CSV') }}" aria-label="{{ _('Adjuntar archivo de texto/CSV') }}">
-      📎<input type="file" id="{{ contenedor_id }}-adjunto" accept=".txt,.csv,.md,text/plain,text/csv" hidden>
+      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><input type="file" id="{{ contenedor_id }}-adjunto" accept=".txt,.csv,.md,text/plain,text/csv" hidden>
     </label>
     <textarea placeholder="{{ _('Escribe un mensaje...') }}" rows="2" required></textarea>
     <button type="submit">{{ _('Enviar') }}</button>
@@ -37,7 +37,7 @@
          vuelve a escuchar, hasta que se desactiva. Se oculta con JS si el
          navegador no soporta SpeechRecognition/speechSynthesis (Firefox,
          Safari en algunas versiones) -- ver ia_asistente.js. -->
-    <button type="button" class="ia-chat-live" id="{{ contenedor_id }}-live" title="{{ _('Modo Live (manos libres)') }}">🎧 {{ _('Live') }}</button>
+    <button type="button" class="ia-chat-live" id="{{ contenedor_id }}-live" title="{{ _('Modo Live (manos libres)') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-headphones"></use></svg> {{ _('Live') }}</button>
   </div>
 </div>
 {% endmacro %}

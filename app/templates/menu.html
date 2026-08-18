@@ -7,7 +7,7 @@
     <h1>{{ menu.nombre }}</h1>
   </div>
   <details class="menu-settings">
-    <summary class="btn btn-ghost">⚙ {{ _('Editar menú') }}</summary>
+    <summary class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Editar menú') }}</summary>
     <div class="menu-settings-panel">
       <form class="inline-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
         <input type="text" name="nombre" value="{{ menu.nombre }}" required>
@@ -16,7 +16,7 @@
       </form>
       <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}');">
-        <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar menú') }}</button>
+        <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar menú') }}</button>
       </form>
     </div>
   </details>
@@ -39,7 +39,7 @@
     <form action="{{ url_for('crear_nota') }}" method="post" class="quick-row">
       <input type="hidden" name="categoria_id" value="{{ menu.id }}">
       <input type="text" id="menu-nota-texto" name="texto" placeholder="{{ _('Escribe algo que ha pasado...') }}" required autofocus>
-      <button type="submit" class="btn">📝 {{ _('Anotar') }}</button>
+      <button type="submit" class="btn"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Anotar') }}</button>
     </form>
   </div>
 
@@ -49,7 +49,7 @@
     <label>{{ _('Evento instantáneo') }}</label>
     <div class="quick-row">
       <input type="text" id="menu-evento-nombre" name="nombre" placeholder="{{ _('Algo puntual que acaba de ocurrir...') }}" required>
-      <button type="submit" class="btn">⚡ {{ _('Registrar') }}</button>
+      <button type="submit" class="btn"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg> {{ _('Registrar') }}</button>
     </div>
   </form>
 
@@ -59,13 +59,13 @@
     <label>{{ _('Tarea con duración') }}</label>
     <div class="quick-row">
       <input type="text" id="menu-tarea-nombre" name="nombre" placeholder="{{ _('Nombre de la tarea a iniciar...') }}" required>
-      <button type="submit" class="btn btn-primary">▶ {{ _('Iniciar') }}</button>
+      <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Iniciar') }}</button>
     </div>
   </form>
 </section>
 
 <details class="favoritas">
-  <summary class="btn btn-ghost">⭐ {{ _('Gestionar frases favoritas') }}</summary>
+  <summary class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true" style="fill: currentColor;"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-star"></use></svg> {{ _('Gestionar frases favoritas') }}</summary>
   <div class="favoritas-panel">
     {% if plantillas %}
     <ul class="favoritas-list">
@@ -74,7 +74,7 @@
         <span>{{ p.texto }}</span>
         <form action="{{ url_for('eliminar_plantilla', plantilla_id=p.id) }}" method="post">
           <input type="hidden" name="volver_a" value="{{ url_for('ver_menu', menu_id=menu.id) }}">
-          <button type="submit" class="chip-del" title="{{ _('Quitar') }}">×</button>
+          <button type="submit" class="chip-del" title="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
         </form>
       </li>
       {% endfor %}
@@ -97,23 +97,23 @@
     <div class="active-task {{ 'is-paused' if t.estado == 'pausada' else '' }} {{ 'is-olvidada' if t.estado == 'pausada' and t.segundos_trabajados_congelado >= 14400 else '' }}">
       <span class="task-name">{{ t.nombre }}</span>
       {% if t.estado == 'pausada' %}
-      <span class="task-timer task-timer-frozen">⏸ {{ '%02d:%02d:%02d'|format(t.segundos_trabajados_congelado // 3600, (t.segundos_trabajados_congelado % 3600) // 60, t.segundos_trabajados_congelado % 60) }}</span>
+      <span class="task-timer task-timer-frozen"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pause"></use></svg> {{ '%02d:%02d:%02d'|format(t.segundos_trabajados_congelado // 3600, (t.segundos_trabajados_congelado % 3600) // 60, t.segundos_trabajados_congelado % 60) }}</span>
       {% else %}
       <span class="task-timer" data-inicio="{{ t.inicio_en }}" data-pausado="{{ t.segundos_pausados }}">00:00:00</span>
       {% endif %}
-      <span class="task-aviso" title="{{ _('Lleva mucho tiempo activa — ¿se te olvidó finalizarla?') }}">⚠ {{ _('lleva mucho rato') }}</span>
+      <span class="task-aviso" title="{{ _('Lleva mucho tiempo activa — ¿se te olvidó finalizarla?') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-triangle-alert"></use></svg> {{ _('lleva mucho rato') }}</span>
       <div class="active-task-buttons">
         {% if t.estado == 'pausada' %}
         <form action="{{ url_for('reanudar_tarea', tarea_id=t.id) }}" method="post">
-          <button type="submit" class="btn btn-primary">▶ {{ _('Reanudar') }}</button>
+          <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Reanudar') }}</button>
         </form>
         {% else %}
         <form action="{{ url_for('pausar_tarea', tarea_id=t.id) }}" method="post">
-          <button type="submit" class="btn">⏸ {{ _('Pausar') }}</button>
+          <button type="submit" class="btn"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pause"></use></svg> {{ _('Pausar') }}</button>
         </form>
         {% endif %}
         <form action="{{ url_for('finalizar_tarea', tarea_id=t.id) }}" method="post">
-          <button type="submit" class="btn btn-stop">⏹ {{ _('Finalizar') }}</button>
+          <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-square"></use></svg> {{ _('Finalizar') }}</button>
         </form>
       </div>
     </div>
@@ -127,7 +127,7 @@
     <h3>{{ _('Registro de %(nombre)s', nombre=menu.nombre) }}</h3>
     <form class="search-form" method="get" action="{{ url_for('ver_menu', menu_id=menu.id) }}">
       <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar en este menú...') }}">
-      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="{{ _('Limpiar búsqueda') }}" aria-label="{{ _('Limpiar búsqueda') }}">✕</a>{% endif %}
+      {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="{{ _('Limpiar búsqueda') }}" aria-label="{{ _('Limpiar búsqueda') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></a>{% endif %}
     </form>
   </div>
   {% if not log %}
@@ -135,12 +135,12 @@
     <p class="empty-lane">{{ _('No hay resultados para «%(q)s».', q=q) }}</p>
     {% else %}
     <div class="empty-state-guiado">
-      <span class="empty-state-guiado-icono">✨</span>
+      <svg class="empty-state-guiado-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg>
       <p>{{ _('Este menú todavía está vacío.') }}</p>
       <p class="muted">{{ _('Empieza por lo que te resulte más natural ahora mismo:') }}</p>
       <div class="empty-state-guiado-botones">
-        <button type="button" class="btn btn-primary" data-enfocar="menu-nota-texto">📝 {{ _('Escribe tu primera nota') }}</button>
-        <button type="button" class="btn" data-enfocar="menu-tarea-nombre">▶ {{ _('Inicia tu primera tarea con duración') }}</button>
+        <button type="button" class="btn btn-primary" data-enfocar="menu-nota-texto"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Escribe tu primera nota') }}</button>
+        <button type="button" class="btn" data-enfocar="menu-tarea-nombre"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Inicia tu primera tarea con duración') }}</button>
       </div>
     </div>
     {% endif %}
@@ -160,7 +160,7 @@
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
     </li>
     {% endfor %}
   </ul>

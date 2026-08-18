@@ -33,7 +33,7 @@
         <div class="correo-adjuntos">
           {% for a in adjuntos_por_tiquet[t.id] %}
           <a class="correo-adjunto-chip" href="{{ url_for('tiquets.descargar_adjunto', tiquet_id=t.id, adjunto_id=a.id) }}" target="_blank" rel="noopener">
-            📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+            <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
           </a>
           {% endfor %}
         </div>
@@ -44,7 +44,7 @@
           <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
                 onsubmit="return confirm('{{ _('¿Eliminar el tiquet #%(id)s? No se puede deshacer.', id=t.id) }}');">
             <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
-            <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+            <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
           </form>
           {% endif %}
         </div>

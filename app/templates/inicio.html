@@ -19,17 +19,17 @@
   </div>
   <ul class="onboarding-lista">
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_menu }}">
-      <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.tiene_menu else '' }}</span>
+      <span class="onboarding-check" aria-hidden="true">{% if onboarding.tiene_menu %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}</span>
       <span>{{ _('Crea tu primer menú') }}</span>
       {% if not onboarding.tiene_menu %}<a class="onboarding-ir" href="#new-menu">{{ _('Crear') }}</a>{% endif %}
     </li>
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_correo }}">
-      <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.tiene_correo else '' }}</span>
+      <span class="onboarding-check" aria-hidden="true">{% if onboarding.tiene_correo %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}</span>
       <span>{{ _('Conecta una cuenta de correo') }}</span>
       {% if not onboarding.tiene_correo %}<a class="onboarding-ir" href="{{ url_for('correo.bandeja') }}">{{ _('Ir a Correo') }}</a>{% endif %}
     </li>
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.ha_usado_ia }}">
-      <span class="onboarding-check" aria-hidden="true">{{ '✓' if onboarding.ha_usado_ia else '' }}</span>
+      <span class="onboarding-check" aria-hidden="true">{% if onboarding.ha_usado_ia %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}</span>
       <span>{{ _('Prueba el asistente IA') }}</span>
       {% if not onboarding.ha_usado_ia %}<a class="onboarding-ir" href="{{ url_for('ia.asistente_vista') }}">{{ _('Abrir') }}</a>{% endif %}
     </li>
@@ -60,7 +60,7 @@
 
 <section class="dash-acciones">
   <form class="dash-accion" action="{{ url_for('crear_nota') }}" method="post">
-    <label for="dash-nota-texto" title="{{ _('Atajo: Ctrl+Alt+N') }}">📝 {{ _('Nota rápida') }}</label>
+    <label for="dash-nota-texto" title="{{ _('Atajo: Ctrl+Alt+N') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Nota rápida') }}</label>
     <div class="quick-row">
       {% if menus %}
       <select name="categoria_id">
@@ -76,7 +76,7 @@
   {% if menus %}
   <form class="dash-accion" action="{{ url_for('crear_tarea') }}" method="post">
     <input type="hidden" name="tipo" value="duracion">
-    <label for="dash-tarea-nombre" title="{{ _('Atajo: Ctrl+Alt+T') }}">▶ {{ _('Nueva tarea') }}</label>
+    <label for="dash-tarea-nombre" title="{{ _('Atajo: Ctrl+Alt+T') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Nueva tarea') }}</label>
     <div class="quick-row">
       <select name="categoria_id" required>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
@@ -88,7 +88,7 @@
   {% endif %}
 
   <a class="dash-accion dash-accion-buscar" id="dash-accion-buscar" href="{{ url_for('historial') }}">
-    <span>🔍 {{ _('Buscar en el histórico') }}</span>
+    <span><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg> {{ _('Buscar en el histórico') }}</span>
   </a>
 </section>
 
@@ -101,7 +101,9 @@
   {% macro tarjeta_menu(m, es_primero, es_ultimo, mostrar_reorder) %}
   <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
     <form class="menu-card-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
-      <button type="submit" title="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}" aria-label="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}">{{ '★' if m.favorito else '☆' }}</button>
+      <button type="submit" title="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}" aria-label="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}">
+        <svg class="icono-inline" aria-hidden="true" style="{{ 'fill: currentColor;' if m.favorito }}"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-star"></use></svg>
+      </button>
     </form>
     <a class="menu-card-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
       <div class="menu-card-top">
@@ -120,11 +122,11 @@
     <div class="menu-card-reorder">
       <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
         <input type="hidden" name="direccion" value="arriba">
-        <button type="submit" class="menu-card-reorder-btn" title="{{ _('Mover arriba') }}" {{ 'disabled' if es_primero }}>↑</button>
+        <button type="submit" class="menu-card-reorder-btn" title="{{ _('Mover arriba') }}" {{ 'disabled' if es_primero }}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-up"></use></svg></button>
       </form>
       <form action="{{ url_for('mover_menu', menu_id=m.id) }}" method="post">
         <input type="hidden" name="direccion" value="abajo">
-        <button type="submit" class="menu-card-reorder-btn" title="{{ _('Mover abajo') }}" {{ 'disabled' if es_ultimo }}>↓</button>
+        <button type="submit" class="menu-card-reorder-btn" title="{{ _('Mover abajo') }}" {{ 'disabled' if es_ultimo }}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
       </form>
     </div>
     {% endif %}
@@ -135,7 +137,7 @@
   {% set resto = menus|rejectattr('favorito')|list %}
 
   {% if favoritos %}
-  <h3 class="menu-grid-titulo">★ {{ _('Favoritos') }}</h3>
+  <h3 class="menu-grid-titulo"><svg class="icono-inline" aria-hidden="true" style="fill: currentColor;"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-star"></use></svg> {{ _('Favoritos') }}</h3>
   <div class="menu-grid">
     {% for m in favoritos %}{{ tarjeta_menu(m, loop.first, loop.last, favoritos|length > 1) }}{% endfor %}
   </div>
@@ -169,7 +171,7 @@
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
     </li>
     {% endfor %}
   </ul>

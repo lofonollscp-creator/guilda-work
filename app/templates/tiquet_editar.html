@@ -33,7 +33,7 @@
       {% for a in adjuntos %}
       <span class="correo-adjunto-chip" style="gap: 8px;">
         <a href="{{ url_for('tiquets.descargar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" target="_blank" rel="noopener">
-          📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
         </a>
       </span>
       {% endfor %}
@@ -57,8 +57,8 @@
   <form action="{{ url_for('tiquets.eliminar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" method="post"
         style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"
         onsubmit="return confirm('{{ _('¿Quitar %(nombre)s?', nombre=a.nombre_archivo) }}');">
-    <span style="flex: 1;">📎 {{ a.nombre_archivo }}</span>
-    <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}">✕</button>
+    <span style="flex: 1;"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }}</span>
+    <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
   </form>
   {% endfor %}
 </div>
@@ -66,6 +66,6 @@
 
 <form class="edit-form-delete" method="post" action="{{ url_for('tiquets.eliminar', tiquet_id=tiquet.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar este tiquet? No se puede deshacer.') }}');">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar tiquet') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar tiquet') }}</button>
 </form>
 {% endblock %}

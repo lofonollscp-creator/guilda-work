@@ -15,7 +15,7 @@
 <div class="correo-compose">
   <div class="correo-compose-header">
     <h1>{{ titulo }}</h1>
-    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}">✕</a>
+    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></a>
   </div>
 
   {% if error %}
@@ -75,12 +75,12 @@
     <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
 
     <div class="correo-compose-campo correo-compose-adjuntos">
-      <label>📎 {{ _('Adjuntar archivos') }}</label>
+      <label><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Adjuntar archivos') }}</label>
       <input type="file" name="adjuntos" multiple>
     </div>
 
     <div class="correo-compose-acciones">
-      <button type="submit" class="btn btn-primary">✉ {{ _('Enviar') }}</button>
+      <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg> {{ _('Enviar') }}</button>
       <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">{{ _('Descartar') }}</a>
     </div>
   </form>

@@ -43,7 +43,9 @@
     var icono = document.createElement("span");
     icono.className = "toast-icono";
     icono.setAttribute("aria-hidden", "true");
-    icono.textContent = tipo === "error" ? "⚠" : "✓";
+    // No pasa por Jinja (fichero estático) -- ruta ya conocida, mismo
+    // sprite que el resto de iconos SVG de la app (ver app/templates/base.html).
+    icono.innerHTML = '<svg width="16" height="16"><use href="/static/iconos.svg#icono-' + (tipo === "error" ? "triangle-alert" : "check") + '"></use></svg>';
     toast.appendChild(icono);
 
     var texto = document.createElement("span");
@@ -77,7 +79,7 @@
     btnCerrar.type = "button";
     btnCerrar.className = "toast-cerrar";
     btnCerrar.setAttribute("aria-label", textoCerrar);
-    btnCerrar.textContent = "×";
+    btnCerrar.innerHTML = '<svg width="14" height="14" aria-hidden="true"><use href="/static/iconos.svg#icono-x"></use></svg>';
     btnCerrar.addEventListener("click", cerrar);
     toast.appendChild(btnCerrar);
 

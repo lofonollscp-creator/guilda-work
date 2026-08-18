@@ -22,10 +22,10 @@
   </label>
   <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
   {% if q or desde or hasta or categoria_id %}<a class="btn btn-ghost" href="{{ url_for('historial') }}">{{ _('Limpiar') }}</a>{% endif %}
-  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='json') }}">⬇ JSON</a>
-  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='csv') }}">⬇ CSV</a>
-  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='md') }}">⬇ Markdown</a>
-  <a class="btn btn-ghost" href="{{ url_for('importar') }}">⬆ {{ _('Importar') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='json') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> JSON</a>
+  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='csv') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> CSV</a>
+  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='md') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> Markdown</a>
+  <a class="btn btn-ghost" href="{{ url_for('importar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg> {{ _('Importar') }}</a>
 </form>
 
 <div class="table-wrap">
@@ -60,7 +60,7 @@
           {{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m
         {% else %}—{% endif %}
       </td>
-      <td><a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a></td>
+      <td><a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a></td>
     </tr>
     {% else %}
     <tr><td colspan="6" class="empty">{{ _('No hay registros para este filtro.') }}</td></tr>
@@ -72,15 +72,15 @@
 {% if hay_pagina_anterior or hay_pagina_siguiente %}
 <nav class="paginacion" aria-label="{{ _('Paginación del histórico') }}">
   {% if hay_pagina_anterior %}
-  <a class="btn btn-ghost" href="{{ url_for('historial', q=q, desde=desde, hasta=hasta, categoria_id=categoria_id, pagina=pagina - 1) }}">← {{ _('Anterior') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('historial', q=q, desde=desde, hasta=hasta, categoria_id=categoria_id, pagina=pagina - 1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</a>
   {% else %}
-  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">← {{ _('Anterior') }}</span>
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</span>
   {% endif %}
   <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
   {% if hay_pagina_siguiente %}
-  <a class="btn btn-ghost" href="{{ url_for('historial', q=q, desde=desde, hasta=hasta, categoria_id=categoria_id, pagina=pagina + 1) }}">{{ _('Siguiente') }} →</a>
+  <a class="btn btn-ghost" href="{{ url_for('historial', q=q, desde=desde, hasta=hasta, categoria_id=categoria_id, pagina=pagina + 1) }}">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></a>
   {% else %}
-  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} →</span>
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></span>
   {% endif %}
 </nav>
 {% endif %}
@@ -108,7 +108,7 @@
     <label class="ia-prompt-label">{{ _('Instrucción para la IA') }}
       <textarea name="prompt" rows="2">{{ prompt_ia }}</textarea>
     </label>
-    <button type="submit" class="btn btn-primary">🤖 {{ _('Generar informe') }}</button>
+    <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg> {{ _('Generar informe') }}</button>
   </form>
 
   {% if informe_error %}

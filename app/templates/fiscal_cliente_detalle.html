@@ -11,10 +11,10 @@
     </p>
   </div>
   <div class="quick-row">
-    <a class="btn btn-ghost" href="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}">✏ {{ _('Editar') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg> {{ _('Editar') }}</a>
     <a class="btn btn-primary" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=cliente.id) }}">{{ _('Generar vencimientos') }}</a>
     {% if cliente.espocrm_cuenta_id %}
-    <a class="btn btn-ghost" href="{{ url_for('fiscal.ver_en_espocrm', cliente_id=cliente.id) }}" target="_blank" rel="noopener">{{ _('Ver en EspoCRM') }} ↗</a>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.ver_en_espocrm', cliente_id=cliente.id) }}" target="_blank" rel="noopener">{{ _('Ver en EspoCRM') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-external-link"></use></svg></a>
     {% endif %}
   </div>
 </header>
@@ -24,7 +24,7 @@
 {% endif %}
 
 <nav class="tareas-subnav">
-  <a href="{{ url_for('fiscal.clientes') }}">{{ _('← Volver a clientes') }}</a>
+  <a href="{{ url_for('fiscal.clientes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Volver a clientes') }}</a>
 </nav>
 
 {% if not vencimientos %}

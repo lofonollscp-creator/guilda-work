@@ -50,7 +50,7 @@
     </form>
   </div>
   {% if geolocalizacion_activa %}
-  <p class="subtitle">📍 {{ _('Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez.') }}</p>
+  <p class="subtitle"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez.') }}</p>
   <script>
     // Fase G3: si el tenant tiene la geolocalización activada, se pide la
     // ubicación justo AL PULSAR fichar (no al cargar la página, para no

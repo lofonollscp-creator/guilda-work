@@ -4,7 +4,7 @@
 <div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
   <div class="correo-topbar">
     <span class="correo-topbar-titulo">{{ _('Correo') }}</span>
-    <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">⚙</a>
+    <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg></a>
   </div>
 
   <aside class="correo-rail">
@@ -25,14 +25,14 @@
       <div class="correo-carpeta-lista">
         {% for f in carpetas %}
         <a class="correo-carpeta-item {{ 'active' if f.nombre == carpeta }}"
-           href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=f.nombre) }}">📁 {{ f.nombre_visible }}</a>
+           href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=f.nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-folder"></use></svg> {{ f.nombre_visible }}</a>
         {% endfor %}
       </div>
       {% endif %}
       {% endfor %}
     </div>
     {% endif %}
-    <a class="correo-rail-ajustes" href="{{ url_for('correo.cuentas') }}">⚙ {{ _('Cuentas') }}</a>
+    <a class="correo-rail-ajustes" href="{{ url_for('correo.cuentas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Cuentas') }}</a>
   </aside>
 
   <section class="correo-lista-pane">
@@ -51,14 +51,14 @@
     <form action="{{ url_for('correo.sincronizar') }}" method="post" class="correo-sync-form">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
       <input type="hidden" name="carpeta" value="{{ carpeta }}">
-      <button type="submit" class="btn btn-ghost correo-sync-btn">⟳ {{ _('Sincronizar') }}</button>
+      <button type="submit" class="btn btn-ghost correo-sync-btn"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-refresh-cw"></use></svg> {{ _('Sincronizar') }}</button>
     </form>
 
     <div class="correo-lista-bulkbar" id="correo-bulkbar" hidden>
       <span id="correo-bulkbar-cuenta">0 {{ _('seleccionados') }}</span>
       <button type="button" data-accion="marcar-leido" data-valor="true">{{ _('Leído') }}</button>
       <button type="button" data-accion="marcar-leido" data-valor="false">{{ _('No leído') }}</button>
-      <button type="button" data-accion="destacar" data-valor="true">⚑ {{ _('Destacar') }}</button>
+      <button type="button" data-accion="destacar" data-valor="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacar') }}</button>
       <button type="button" data-accion="destacar" data-valor="false">{{ _('Quitar destacado') }}</button>
       {% if carpetas|length > 1 %}
       <select id="correo-bulkbar-carpeta" aria-label="{{ _('Mover los mensajes seleccionados a') }}">
@@ -69,7 +69,7 @@
       </select>
       <button type="button" data-accion="mover">{{ _('Mover') }}</button>
       {% endif %}
-      <button type="button" data-accion="eliminar" class="correo-bulkbar-eliminar">🗑 {{ _('Eliminar') }}</button>
+      <button type="button" data-accion="eliminar" class="correo-bulkbar-eliminar"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar') }}</button>
       <button type="button" id="correo-bulkbar-cancelar">{{ _('Cancelar') }}</button>
     </div>
 
@@ -90,7 +90,7 @@
           <div class="correo-fila-texto">
             <div class="correo-fila-top">
               <span class="correo-fila-remitente">{{ m.remitente or _('(desconocido)') }}</span>
-              <span class="correo-fila-fecha">{{ '⚑ ' if m.destacado }}{{ m.fecha|fecha_relativa }}</span>
+              <span class="correo-fila-fecha">{% if m.destacado %}<svg class="icono-inline" aria-hidden="true" style="fill: currentColor;"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg>{% endif %} {{ m.fecha|fecha_relativa }}</span>
             </div>
             <div class="correo-fila-asunto">{{ m.asunto or _('(sin asunto)') }}</div>
             <div class="correo-fila-preview">{{ m|vista_previa }}</div>
@@ -112,7 +112,7 @@
       {% if completa %}
       <a class="correo-lectura-volver"
          href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None) }}"
-         title="{{ _('Volver a la lista') }}">← {{ _('Volver') }}</a>
+         title="{{ _('Volver a la lista') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Volver') }}</a>
       {% endif %}
       <div class="correo-lectura-remitente">
         <span class="avatar-circulo avatar-grande" style="--avatar-color: {{ mensaje_seleccionado.remitente|avatar_color }};">{{ mensaje_seleccionado.remitente|iniciales }}</span>
@@ -131,14 +131,14 @@
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.eliminar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"
               onsubmit="return confirm('{{ _('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).') }}');">
-          <button type="submit" class="correo-ribbon-btn" title="{{ _('Eliminar') }}"><span class="correo-ribbon-icono">🗑</span><span class="correo-ribbon-etiqueta">{{ _('Eliminar') }}</span></button>
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Eliminar') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Eliminar') }}</span></button>
         </form>
       </div>
 
       <div class="correo-ribbon-grupo">
-        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono">↩</span><span class="correo-ribbon-etiqueta">{{ _('Responder') }}</span></a>
-        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder_a_todos', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono">↩↩</span><span class="correo-ribbon-etiqueta">{{ _('Resp. a todos') }}</span></a>
-        <a class="correo-ribbon-btn" href="{{ url_for('correo.reenviar', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono">↪</span><span class="correo-ribbon-etiqueta">{{ _('Reenviar') }}</span></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-reply"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Responder') }}</span></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder_a_todos', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-reply-all"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Resp. a todos') }}</span></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.reenviar', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-forward"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Reenviar') }}</span></a>
       </div>
 
       {% if carpetas|length > 1 %}
@@ -158,7 +158,7 @@
         <form action="{{ url_for('correo.destacar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
           <input type="hidden" name="destacado" value="{{ '' if mensaje_seleccionado.destacado else 'on' }}">
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Quitar destacado') if mensaje_seleccionado.destacado else _('Destacar') }}">
-            <span class="correo-ribbon-icono">{{ '🏳' if mensaje_seleccionado.destacado else '⚑' }}</span>
+            <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true" style="{{ 'fill: currentColor;' if mensaje_seleccionado.destacado }}"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg></span>
             <span class="correo-ribbon-etiqueta">{{ _('Destacar') }}</span>
           </button>
         </form>
@@ -184,7 +184,7 @@
         {% endif %}
         <form action="{{ url_for('correo.alternar_leido', mensaje_id=mensaje_seleccionado.id) }}" method="post">
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Marcar como no leído') if mensaje_seleccionado.leido else _('Marcar como leído') }}">
-            <span class="correo-ribbon-icono">{{ '✉' if mensaje_seleccionado.leido else '📖' }}</span>
+            <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ 'mail' if mensaje_seleccionado.leido else 'mail-open' }}"></use></svg></span>
             <span class="correo-ribbon-etiqueta">{{ _('No leído') if mensaje_seleccionado.leido else _('Leído') }}</span>
           </button>
         </form>
@@ -194,14 +194,14 @@
         <form action="{{ url_for('correo.posponer_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-ribbon-posponer">
           <input type="datetime-local" name="hasta" required>
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Posponer hasta la fecha elegida') }}">
-            <span class="correo-ribbon-icono">🕒</span><span class="correo-ribbon-etiqueta">{{ _('Posponer') }}</span>
+            <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Posponer') }}</span>
           </button>
         </form>
       </div>
 
       <div class="correo-ribbon-grupo">
         <button type="button" class="correo-ribbon-btn" onclick="window.print()" title="{{ _('Imprimir') }}">
-          <span class="correo-ribbon-icono">🖨</span><span class="correo-ribbon-etiqueta">{{ _('Imprimir') }}</span>
+          <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-printer"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Imprimir') }}</span>
         </button>
       </div>
 
@@ -209,7 +209,7 @@
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Confiar en este remitente') }}">
-            <span class="correo-ribbon-icono">🛡</span><span class="correo-ribbon-etiqueta">{{ _('Confiar') }}</span>
+            <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield-check"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Confiar') }}</span>
           </button>
         </form>
       </div>
@@ -222,14 +222,14 @@
       {% for a in adjuntos_mensaje %}
       <a class="correo-adjunto-chip" href="{{ url_for('correo.descargar_adjunto', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) }}" target="_blank" title="{{ a.nombre_archivo }}"
          {% if not remitente_confiable %}onclick="return confirm('{{ _('Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?') }}');"{% endif %}>
-        📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
       </a>
       {% endfor %}
     </div>
     {% endif %}
     {% if imagenes_bloqueadas %}
     <div class="correo-aviso-imagenes">
-      <span>🖼 {{ _('Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.') }}</span>
+      <span><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.') }}</span>
       <a href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=mensaje_seleccionado.id, mostrar_imagenes=1) }}">{{ _('Mostrar solo esta vez') }}</a>
       <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
         <button type="submit">{{ _('Confiar en este remitente') }}</button>
@@ -248,7 +248,7 @@
     </div>
     {% else %}
     <div class="correo-lectura-vacio">
-      <span class="correo-lectura-vacio-icono">✉</span>
+      <svg class="correo-lectura-vacio-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
       <p>{{ _('Selecciona un mensaje para leerlo') }}</p>
     </div>
     {% endif %}

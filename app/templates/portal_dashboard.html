@@ -33,8 +33,8 @@
         <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else 'nota' }}">
           {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
         </span>
-        <a class="log-edit" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}">📎</a>
-        <a class="log-edit" href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}">💬</a>
+        <a class="log-edit" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg></a>
+        <a class="log-edit" href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></a>
       </li>
       {% endfor %}
     </ul>

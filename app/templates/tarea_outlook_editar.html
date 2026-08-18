@@ -75,6 +75,6 @@
 
 <form class="edit-form-delete" method="post" action="{{ url_for('tareas.eliminar', tarea_id=tarea.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.') }}');">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar tarea') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar tarea') }}</button>
 </form>
 {% endblock %}

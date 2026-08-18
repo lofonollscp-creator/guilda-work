@@ -51,7 +51,7 @@
       <span class="log-text">{{ cat.nombre }}</span>
       <form action="{{ url_for('correo.eliminar_categoria', categoria_id=cat.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se quedan sin categoría.', nombre=cat.nombre) }}');">
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
     {% endfor %}
@@ -77,7 +77,7 @@
       <span class="log-text">{{ regla.remitente_patron }} &rarr; {{ regla.categoria_nombre }}</span>
       <form action="{{ url_for('correo.eliminar_regla_categoria', regla_id=regla.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar esta regla?') }}');">
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
     {% endfor %}
@@ -110,7 +110,7 @@
       <span class="log-text">{{ r.direccion }}</span>
       <form action="{{ url_for('correo.eliminar_remitente_confiable', remitente_id=r.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Quitar «%(direccion)s» de la lista de confianza?', direccion=r.direccion) }}');">
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
     {% endfor %}

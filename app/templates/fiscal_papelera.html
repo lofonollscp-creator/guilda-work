@@ -30,11 +30,11 @@
     <span class="log-text">{{ item.texto }}</span>
 
     <form action="{{ url_for('fiscal.restaurar_papelera', tipo=item.origen, item_id=item.id) }}" method="post">
-      <button type="submit" class="btn btn-ghost">↺ {{ _('Restaurar') }}</button>
+      <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('fiscal.eliminar_definitivamente_papelera', tipo=item.origen, item_id=item.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}');">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
   </li>
   {% endfor %}

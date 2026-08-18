@@ -802,7 +802,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-align: center;
   margin-bottom: var(--space-5);
 }
-.empty-state-guiado-icono { font-size: var(--font-size-xl); }
+.empty-state-guiado-icono { width: 28px; height: 28px; color: var(--text-muted); }
 .empty-state-guiado p { margin: var(--space-2) 0; }
 .empty-state-guiado .muted { color: var(--text-muted); font-size: var(--font-size-sm); }
 .empty-state-guiado-botones {
@@ -983,6 +983,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 4px;
 }
 .chip-del:hover { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+
+/* Icono SVG pequeño e inline, dentro de un botón/enlace de acción de
+   contenido (editar, eliminar, restaurar, adjunto...) -- sustituye los
+   emoji sueltos que había antes (✕/🗑/✏/📎...) en toda la app, mismo
+   tamaño consistente sea cual sea el contexto donde se use. No
+   confundir con .icon-rail-icono/.ajustes-panel-icono (esos son de la
+   navegación global, este es de contenido). */
+.icono-inline {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  vertical-align: -3px;
+}
 
 /* ---- Active tasks ---- */
 .active-section { margin-bottom: 28px; }
@@ -2072,7 +2085,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 8px;
   color: var(--text-muted);
 }
-.correo-lectura-vacio-icono { font-size: 2.4em; opacity: 0.4; }
+.correo-lectura-vacio-icono { width: 40px; height: 40px; opacity: 0.4; }
 
 /* Redactar: panel de composición estilo Outlook */
 .correo-compose { max-width: 760px; }
@@ -2225,7 +2238,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-family: inherit;
 }
 .correo-ribbon-btn:hover { background: var(--bg); border-color: var(--border); }
-.correo-ribbon-icono { font-size: 1.3em; line-height: 1; }
+.correo-ribbon-icono { line-height: 1; }
+.correo-ribbon-icono svg { width: 17px; height: 17px; vertical-align: -3px; }
 .correo-ribbon-etiqueta { white-space: nowrap; }
 .correo-ribbon-select {
   align-self: center;
@@ -2539,6 +2553,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-weight: 600;
 }
 .ia-chat-live[hidden] { display: none; }
+/* Punto de "grabando" cuando el modo Live está activo -- sustituye al
+   emoji 🔴 (app/static/ia_asistente.js), un simple círculo CSS en vez
+   de traer un icono Lucide solo para un punto de color. */
+.ia-live-punto {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 1px;
+}
 
 .ia-panel-flotante[hidden] { display: none; }
 .ia-panel-flotante {

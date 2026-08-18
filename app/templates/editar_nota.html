@@ -27,6 +27,6 @@
       data-restaurar-url="{{ url_for('restaurar_nota', nota_id=nota.id) }}"
       data-volver-a="{{ volver_a }}">
   <input type="hidden" name="volver_a" value="{{ volver_a }}">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar nota') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar nota') }}</button>
 </form>
 {% endblock %}
