@@ -125,6 +125,7 @@
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg>
           </button>
           <div class="ajustes-panel" id="ajustes-panel" hidden>
+            <span class="ajustes-panel-grupo-etiqueta">{{ _('Apariencia') }}</span>
             <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="{{ _('Tema: cambiar') }}">
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-monitor"></use></svg>
               <span class="ajustes-panel-texto">{{ _('Sistema') }}</span>
@@ -133,12 +134,6 @@
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-list"></use></svg>
               <span class="ajustes-panel-texto">{{ _('Normal') }}</span>
             </button>
-            {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
-            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
-              {{ _('Asistente IA') }}
-            </button>
-            {% endif %}
             <div class="ajustes-idiomas" role="group" aria-label="{{ _('Idioma') }}">
               {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
               <form action="{{ url_for('cambiar_idioma', codigo=codigo) }}" method="post">
@@ -146,6 +141,9 @@
               </form>
               {% endfor %}
             </div>
+
+            <div class="ajustes-panel-separador" role="separator"></div>
+            <span class="ajustes-panel-grupo-etiqueta">{{ _('Cuenta') }}</span>
             <a href="{{ url_for('ajustes_perfil') }}" class="ajustes-panel-btn">
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
               {{ _('Mi perfil') }}
@@ -154,6 +152,15 @@
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
               {{ _('Mis dispositivos') }}
             </a>
+            {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
+            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
+              {{ _('Asistente IA') }}
+            </button>
+            {% endif %}
+
+            <div class="ajustes-panel-separador" role="separator"></div>
+            <span class="ajustes-panel-grupo-etiqueta">{{ _('Ayuda y salida') }}</span>
             <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
               {{ _('Documentación (desarrolladores)') }}

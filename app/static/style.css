@@ -46,14 +46,14 @@
   --shadow-md: var(--shadow);
   --shadow-lg: 0 4px 12px rgba(16, 24, 40, 0.10), 0 2px 4px rgba(16, 24, 40, 0.08);
 
-  /* Estética "terminal/rice" (referencia: nategentile.com + el panel
-     "Orion" que mandó el usuario) — micro-rejilla de fondo + paneles
-     PLANOS (nada de vidrio esmerilado: eso era la iteración anterior,
-     esta referencia es sólida y de bordes nítidos) con el brillo de
-     acento reservado al lima. --glass-* se mantienen como nombre por
-     compatibilidad con las ~15 reglas que ya los usan, pero ahora
-     apuntan a colores sólidos del tema, sin transparencia ni blur. */
-  --grid-line: rgba(0, 0, 0, 0.06);
+  /* Estética "terminal" (referencia: nategentile.com + el panel "Orion"
+     que mandó el usuario) — paneles PLANOS (nada de vidrio esmerilado:
+     eso era la iteración anterior, esta referencia es sólida y de bordes
+     nítidos) con el brillo de acento reservado al lima, fondo liso sin
+     rejilla decorativa (quitada para dar una imagen más profesional).
+     --glass-* se mantienen como nombre por compatibilidad con las ~15
+     reglas que ya los usan, pero ahora apuntan a colores sólidos del
+     tema, sin transparencia ni blur. */
   --glass-bg: var(--surface);
   --glass-border: var(--border);
   --glass-blur: 0px;
@@ -80,7 +80,6 @@
     --warning: #eab308;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
-    --grid-line: rgba(255, 255, 255, 0.05);
     --glass-bg: var(--surface);
     --glass-border: var(--border);
   }
@@ -98,7 +97,6 @@
   --warning: #eab308;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
-  --grid-line: rgba(255, 255, 255, 0.05);
   --glass-bg: var(--surface);
   --glass-border: var(--border);
 }
@@ -108,16 +106,9 @@
 body {
   margin: 0;
   font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+  /* Fondo liso a propósito (antes había una micro-rejilla decorativa
+     aquí, quitada para dar una imagen más profesional/limpia). */
   background-color: var(--bg);
-  /* Micro-rejilla de fondo en toda la app (estética "rice"/Hyprland,
-     Fase rediseño global) — sutil a propósito, nunca debe competir con
-     el contenido; fija (no se desplaza con el scroll del contenido) así
-     no "salta" de una página a otra. */
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-attachment: fixed;
   color: var(--text);
   font-size: 15px;
 }
@@ -138,6 +129,47 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); background-clip: padding-box; }
 
 a { color: inherit; }
+
+/* Enlace de CONTENIDO/texto (dentro de una tabla, una lista, un párrafo)
+   -- no confundir con .btn-ghost u otros "botones con forma de enlace",
+   que ya tienen su propio tratamiento. Antes cada zona improvisaba su
+   propio text-decoration suelto sin criterio común; esta clase da un
+   aspecto reconocible y consistente de "esto es un enlace" en toda la
+   app, reusando las variables de color ya existentes. */
+.link {
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary-dark) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+.link:hover {
+  color: var(--primary-dark);
+  text-decoration-color: var(--primary-dark);
+  text-decoration-thickness: 2px;
+}
+/* Mismo tratamiento aplicado por contexto, sin tener que anotar
+   class="link" enlace por enlace en cada plantilla: enlaces de "volver
+   a"/alternativas en páginas de auth y portal, direcciones mailto: en
+   tablas (leads/solicitudes de backoffice), y enlaces de texto dentro
+   de una fila de lista (.log-text, historial/tareas/tiquets/fiscal). */
+.auth-alterna a,
+a[href^="mailto:"],
+.log-text a {
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary-dark) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+.auth-alterna a:hover,
+a[href^="mailto:"]:hover,
+.log-text a:hover {
+  text-decoration-color: var(--primary-dark);
+  text-decoration-thickness: 2px;
+}
 
 /* ---- Campos de formulario, base global (Fase rediseño global) ----
    Antes cada pantalla (correo, calendario, ajustes de chat…) definía su
@@ -404,9 +436,32 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  /* Este mismo selector se usa tanto en <button> (sin subrayado por
+     defecto) como en <a> (Mi perfil, Mis dispositivos, Documentación) --
+     sin esto, las versiones <a> salían con el subrayado azul por
+     defecto del navegador, fuera de lugar en un panel de botones. */
+  text-decoration: none;
 }
 .ajustes-panel-icono { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-muted); }
 .ajustes-panel-btn:hover { background: var(--bg); }
+/* Agrupación del panel (Apariencia / Cuenta / Ayuda y salida) -- mismo
+   criterio que el icon-rail ya agrupado, adaptado a este dropdown claro
+   (el rail es de fondo oscuro fijo, este panel sigue el tema). */
+.ajustes-panel-separador {
+  height: 1px;
+  margin: var(--space-2) var(--space-1);
+  background: var(--border);
+}
+.ajustes-panel-grupo-etiqueta {
+  display: block;
+  font-size: 0.68em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  opacity: 0.75;
+  padding: 2px 12px 4px;
+}
 .ajustes-idiomas { display: flex; gap: 4px; padding: 4px 12px 8px; }
 .ajustes-idiomas form { flex: 1; }
 .ajustes-idioma-btn {
@@ -823,13 +878,25 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-color: var(--primary-dark);
   box-shadow: 0 0 14px -2px color-mix(in srgb, var(--primary) 65%, transparent);
 }
+.btn-primary:active { background: var(--primary-dark); box-shadow: 0 0 6px -1px color-mix(in srgb, var(--primary) 55%, transparent); }
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
 .btn-stop { background: var(--danger); border-color: var(--danger); color: white; }
 .btn-stop:hover {
   filter: brightness(0.92);
   box-shadow: 0 0 14px -2px color-mix(in srgb, var(--danger) 65%, transparent);
 }
+.btn-stop:active { filter: brightness(0.85); box-shadow: 0 0 6px -1px color-mix(in srgb, var(--danger) 55%, transparent); }
+.btn-stop:focus-visible {
+  outline: none;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 40%, transparent);
+}
 .btn-ghost { background: transparent; }
 .btn-ghost:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--primary) 18%, transparent); }
 
 /* ---- Quick actions (menu page) ---- */
 .quick-actions {
@@ -1284,6 +1351,28 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 6px;
   font-size: 0.85em;
   color: var(--text-muted);
+}
+
+/* Fila de avatar dentro de .edit-form (app/templates/ajustes_perfil.html)
+   -- antes vivía en un .quick-card aparte con varios style="" inline;
+   ahora es una sección más del propio formulario, sin salirse de su
+   max-width ni inventar estilos sueltos. */
+.perfil-avatar-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.perfil-avatar-imagen {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.perfil-avatar-iniciales {
+  width: 64px;
+  height: 64px;
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 .edit-form input[type="text"],
 .edit-form input[type="datetime-local"],
