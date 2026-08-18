@@ -32,21 +32,16 @@ def configurado() -> bool:
     return bool(PORTAL_SMTP_HOST and PORTAL_SMTP_USUARIO and PORTAL_SMTP_CONTRASENA and PORTAL_SMTP_REMITENTE)
 
 
-def enviar_enlace_portal(email_destino: str, url_enlace: str) -> None:
+def _enviar(destinatario: str, asunto: str, cuerpo: str) -> None:
     if not configurado():
         raise ErrorNotificacionesEmail(
             "El portal de cliente no está configurado todavía (faltan las variables PORTAL_SMTP_*)."
         )
     mensaje = EmailMessage()
-    mensaje["Subject"] = "Tu enlace de acceso a Guilda Work"
+    mensaje["Subject"] = asunto
     mensaje["From"] = PORTAL_SMTP_REMITENTE
-    mensaje["To"] = email_destino
-    mensaje.set_content(
-        "Hola,\n\n"
-        "Este es tu enlace de acceso al portal de cliente. Es de un solo uso y caduca en 15 minutos:\n\n"
-        f"{url_enlace}\n\n"
-        "Si no has solicitado este enlace, puedes ignorar este correo.\n"
-    )
+    mensaje["To"] = destinatario
+    mensaje.set_content(cuerpo)
     try:
         with smtplib.SMTP(PORTAL_SMTP_HOST, PORTAL_SMTP_PUERTO, timeout=TIMEOUT_SEGUNDOS) as smtp:
             smtp.starttls()
@@ -54,3 +49,30 @@ def enviar_enlace_portal(email_destino: str, url_enlace: str) -> None:
             smtp.send_message(mensaje)
     except (smtplib.SMTPException, OSError) as e:
         raise ErrorNotificacionesEmail(f"No se ha podido enviar el correo: {e}") from e
+
+
+def enviar_enlace_portal(email_destino: str, url_enlace: str) -> None:
+    _enviar(
+        email_destino,
+        "Tu enlace de acceso a Guilda Work",
+        "Hola,\n\n"
+        "Este es tu enlace de acceso al portal de cliente. Es de un solo uso y caduca en 15 minutos:\n\n"
+        f"{url_enlace}\n\n"
+        "Si no has solicitado este enlace, puedes ignorar este correo.\n",
+    )
+
+
+def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str) -> None:
+    """Aviso de que el equipo ha respondido un mensaje en el portal --
+    NO manda un enlace mágico directo a la conversación (evitaría
+    ampliar clientes_fiscales_accesos con un destino de redirección,
+    más estado que mantener) -- enlaza a /portal/entrar sin más, el
+    cliente pide su propio enlace igual que siempre."""
+    _enviar(
+        email_destino,
+        "Tienes una respuesta nueva en Guilda Work",
+        "Hola,\n\n"
+        "Tu gestoría te ha respondido en el portal de cliente:\n\n"
+        f"\"{texto}\"\n\n"
+        f"Entra en {url_portal} para ver la conversación completa.\n",
+    )

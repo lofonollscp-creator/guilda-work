@@ -18,6 +18,7 @@ from flask_babel import lazy_gettext as _l
 
 from . import db, espocrm
 from .auth import login_required
+from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
 
 fiscal_bp = Blueprint("fiscal", __name__, url_prefix="/fiscal")
@@ -319,12 +320,22 @@ def editar_vencimiento(vencimiento_id: int):
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/mensajes", methods=["POST"])
 @login_required
 def responder_mensaje_vencimiento(vencimiento_id: int):
-    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
         abort(404)
     texto = (request.form.get("texto") or "").strip()
     if texto:
         db.crear_mensaje_vencimiento(vencimiento_id, "empleado", texto, usuario_id=g.usuario_id)
         db.marcar_mensajes_leidos(vencimiento_id, "empleado")
+        # Aviso por email al cliente -- opt-in (solo si tiene email puesto,
+        # igual que el resto del portal) y nunca debe romper la respuesta
+        # del empleado si el SMTP falla puntualmente.
+        cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+        if cliente is not None and cliente["email"]:
+            try:
+                enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True))
+            except ErrorNotificacionesEmail:
+                pass
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
 
 

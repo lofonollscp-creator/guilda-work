@@ -346,3 +346,61 @@ def test_backoffice_crea_cliente_nuevo_desde_solicitud(cliente, monkeypatch):
     assert clientes_tenant[0]["nif"] == "B87654321"
     solicitud = db.listar_solicitudes_acceso_portal()[0]
     assert solicitud["atendida"] == 1
+
+
+# --- Notificación por email al cliente cuando el equipo responde -----------
+
+def test_responder_mensaje_notifica_por_email_si_cliente_tiene_email(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="respuesta-a@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-a@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    llamadas = []
+    monkeypatch.setattr(
+        "app.rutas_fiscal.enviar_respuesta_portal",
+        lambda email, texto, url: llamadas.append((email, texto)),
+    )
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/mensajes", data={"texto": "Ya está presentado"})
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    assert llamadas[0] == ("respuesta-a@ejemplo.com", "Ya está presentado")
+
+
+def test_responder_mensaje_sin_email_del_cliente_no_notifica(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    tenant_id, cliente_id = _cliente_de_prueba(email=None)
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-b@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    llamadas = []
+    monkeypatch.setattr("app.rutas_fiscal.enviar_respuesta_portal", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/mensajes", data={"texto": "Hola"})
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_responder_mensaje_con_smtp_roto_no_rompe_la_respuesta(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+    from app.notificaciones_email import ErrorNotificacionesEmail
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="respuesta-c@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-c@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    def _falla(*a, **k):
+        raise ErrorNotificacionesEmail("SMTP caído")
+
+    monkeypatch.setattr("app.rutas_fiscal.enviar_respuesta_portal", _falla)
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/mensajes", data={"texto": "Hola"})
+    assert resp.status_code == 302
+    mensajes = db.listar_mensajes_vencimiento(v_id)
+    assert len(mensajes) == 1  # el mensaje se guardó igual, el fallo de SMTP no lo impidió
