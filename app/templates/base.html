@@ -161,6 +161,10 @@
 
             <div class="ajustes-panel-separador" role="separator"></div>
             <span class="ajustes-panel-grupo-etiqueta">{{ _('Ayuda y salida') }}</span>
+            <a href="https://help.guildawork.com" target="_blank" rel="noopener" class="ajustes-panel-btn">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
+              {{ _('Centro de ayuda') }}
+            </a>
             <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
               {{ _('Documentación (desarrolladores)') }}
