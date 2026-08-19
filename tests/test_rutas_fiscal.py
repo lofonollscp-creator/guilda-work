@@ -572,3 +572,144 @@ def test_ficha_cliente_sin_documentos_ni_mensajes_no_muestra_esas_secciones(clie
     html = resp.get_data(as_text=True)
     assert "Documentos subidos por el cliente" not in html
     assert "Últimos mensajes" not in html
+
+
+# --- Eventos de negocio (app/eventos.py) ----------------------------------
+
+def test_marcar_presentado_emite_evento_vencimiento_presentado(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-presentado@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Presentado")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    evento, tenant_emitido, payload = llamadas[0]
+    assert evento == "vencimiento.presentado"
+    assert tenant_emitido == tenant_id
+    assert payload["vencimiento_id"] == v_id
+
+
+def test_marcar_presentado_con_factura_emite_tambien_factura_emitida(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-factura@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Factura")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Factura")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="7")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_factura", lambda *a, **k: None)
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/presentado",
+        data={"factura_concepto": "Presentación 303 T1", "factura_importe": "150.5"},
+    )
+    assert resp.status_code == 302
+    eventos_emitidos = [a[0] for a in llamadas]
+    assert eventos_emitidos == ["vencimiento.presentado", "factura.emitida"]
+
+
+def test_marcar_presentado_sin_factura_no_emite_factura_emitida(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-sin-factura@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Sin Factura")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Sin Factura")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    eventos_emitidos = [a[0] for a in llamadas]
+    assert eventos_emitidos == ["vencimiento.presentado"]
+
+
+def test_marcar_presentado_un_fallo_al_emitir_el_evento_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Roto")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Roto")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise RuntimeError("boom")
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", _falla)
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["estado"] == "presentado"
+
+
+def test_enviar_a_firma_ok_emite_evento_documento_enviado_a_firma(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-firma@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Firma")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Firma", email="evento-firma-cliente@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(
+        rutas_fiscal.documenso, "crear_documento",
+        lambda api_key, titulo, contenido, firmantes: {"id": "envelope_evt"},
+    )
+    monkeypatch.setattr(rutas_fiscal.documenso, "enviar_a_firma", lambda *a, **k: None)
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    evento, tenant_emitido, payload = llamadas[0]
+    assert evento == "documento.enviado_a_firma"
+    assert tenant_emitido == tenant_id
+    assert payload["vencimiento_id"] == v_id
+
+
+def test_enviar_a_firma_roto_no_emite_evento(cliente, monkeypatch):
+    from app import rutas_fiscal
+    from app.documenso import ErrorDocumenso
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-firma-rota@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Firma Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Firma Rota", email="evento-firma-rota@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise ErrorDocumenso("caído")
+    monkeypatch.setattr(rutas_fiscal.documenso, "crear_documento", _falla)
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert not llamadas

@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, documenso, espocrm, facturascripts
+from . import db, documenso, espocrm, eventos, facturascripts
 from .auth import login_required
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal, enviar_solicitud_documento
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
@@ -345,6 +345,13 @@ def marcar_presentado(vencimiento_id: int):
     if vencimiento is None:
         abort(404)
     db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    try:
+        eventos.emitir(
+            "vencimiento.presentado", g.tenant_id,
+            {"vencimiento_id": vencimiento_id, "modelo": vencimiento["modelo"], "periodo": vencimiento["periodo"]},
+        )
+    except Exception:
+        pass  # un fallo al emitir el evento no debe afectar al vencimiento ya marcado
     # Facturación opcional (bloque 3): solo si el empleado ha rellenado
     # concepto+importe explícitamente en el formulario de la ficha del
     # vencimiento -- NUNCA se factura automáticamente sin que alguien
@@ -361,6 +368,10 @@ def marcar_presentado(vencimiento_id: int):
                     tenant["facturascripts_url"], tenant["facturascripts_api_key"],
                     cliente["facturascripts_cliente_codigo"],
                     [{"descripcion": concepto, "cantidad": 1, "precio": importe}],
+                )
+                eventos.emitir(
+                    "factura.emitida", g.tenant_id,
+                    {"cliente_fiscal_id": cliente["id"], "concepto": concepto, "importe": importe},
                 )
             except facturascripts.ErrorFacturaScripts:
                 pass
@@ -446,6 +457,10 @@ def enviar_a_firma_vencimiento(vencimiento_id: int):
             if documento_id:
                 documenso.enviar_a_firma(api_key, documento_id)
                 db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, documenso_documento_id=documento_id)
+                eventos.emitir(
+                    "documento.enviado_a_firma", g.tenant_id,
+                    {"vencimiento_id": vencimiento_id, "cliente_fiscal_id": cliente["id"]},
+                )
         except documenso.ErrorDocumenso:
             pass
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
