@@ -51,6 +51,40 @@
 </ul>
 {% endif %}
 
+{% if documentos_totales %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Documentos subidos por el cliente') }}</h2>
+  <ul class="log-list">
+    {% for d in documentos_totales %}
+    <li class="log-item">
+      <span class="pill">{{ d.vencimiento.modelo }} {{ d.vencimiento.periodo }}</span>
+      <span class="log-text">
+        <a href="{{ url_for('fiscal.descargar_documento_vencimiento', vencimiento_id=d.vencimiento.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
+      </span>
+      <span class="log-duration">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if mensajes_totales %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Últimos mensajes') }}</h2>
+  <ul class="log-list">
+    {% for m in mensajes_totales[:10] %}
+    <li class="log-item">
+      <span class="pill">{{ m.vencimiento.modelo }} {{ m.vencimiento.periodo }}</span>
+      <span class="log-text">
+        <a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=m.vencimiento.id) }}">{{ _('Cliente') if m.autor == 'cliente' else _('Equipo') }}: {{ m.texto }}</a>
+      </span>
+      <span class="log-duration">{{ m.creado_en[:16].replace('T', ' ') }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 {% if cliente.facturascripts_cliente_codigo %}
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Facturación') }}</h2>

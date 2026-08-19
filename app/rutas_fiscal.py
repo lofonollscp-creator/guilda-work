@@ -99,15 +99,32 @@ def ficha_cliente(cliente_id: int):
             )
         except facturascripts.ErrorFacturaScripts:
             facturas = []
+    # Panel de "salud del cliente" (bloque 4): documentos y mensajes del
+    # portal de cliente NO tienen una función de BD propia por
+    # cliente_fiscal_id (listar_documentos_vencimiento/
+    # listar_mensajes_vencimiento están firmadas por vencimiento_id) --
+    # se agregan aquí iterando los vencimientos ya cargados, sin tocar
+    # el esquema ni añadir funciones nuevas de BD.
+    vencimientos = db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id)
+    documentos_totales = []
+    mensajes_totales = []
+    for v in vencimientos:
+        for d in db.listar_documentos_vencimiento(v["id"]):
+            documentos_totales.append({**dict(d), "vencimiento": v})
+        for m in db.listar_mensajes_vencimiento(v["id"]):
+            mensajes_totales.append({**dict(m), "vencimiento": v})
+    mensajes_totales.sort(key=lambda m: m["creado_en"], reverse=True)
     return render_template(
         "fiscal_cliente_detalle.html",
         cliente=cliente,
         modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
         modelos_disponibles=MODELOS_DISPONIBLES,
-        vencimientos=db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id),
+        vencimientos=vencimientos,
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
         facturas=facturas,
+        documentos_totales=documentos_totales,
+        mensajes_totales=mensajes_totales,
     )
 
 

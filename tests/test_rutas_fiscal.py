@@ -534,3 +534,41 @@ def test_marcar_presentado_con_concepto_e_importe_factura(cliente, monkeypatch):
     codigo, lineas = llamadas[0]
     assert codigo == "8"
     assert lineas == [{"descripcion": "Presentación 303 T1", "cantidad": 1, "precio": 150.5}]
+
+
+# --- Panel de "salud del cliente" (documentos/mensajes agregados) ----------
+
+def test_ficha_cliente_agrega_documentos_y_mensajes_de_todos_sus_vencimientos(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "salud-cliente@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Salud Cliente")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Salud")
+    v1 = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    v2 = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "130", "2026-T1", "2026-04-20")
+
+    db.subir_documento_vencimiento(v1, "factura1.pdf", "application/pdf", b"contenido1")
+    db.subir_documento_vencimiento(v2, "factura2.pdf", "application/pdf", b"contenido2")
+    db.crear_mensaje_vencimiento(v1, "cliente", "Mensaje sobre el 303")
+    db.crear_mensaje_vencimiento(v2, "empleado", "Respuesta sobre el 130", usuario_id=usuario_id)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "factura1.pdf" in html
+    assert "factura2.pdf" in html
+    assert "Mensaje sobre el 303" in html
+    assert "Respuesta sobre el 130" in html
+
+
+def test_ficha_cliente_sin_documentos_ni_mensajes_no_muestra_esas_secciones(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "salud-cliente-vacio@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Salud Cliente Vacio")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Salud Vacio")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Documentos subidos por el cliente" not in html
+    assert "Últimos mensajes" not in html
