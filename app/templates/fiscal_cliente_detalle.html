@@ -16,6 +16,11 @@
     {% if cliente.espocrm_cuenta_id %}
     <a class="btn btn-ghost" href="{{ url_for('fiscal.ver_en_espocrm', cliente_id=cliente.id) }}" target="_blank" rel="noopener">{{ _('Ver en EspoCRM') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-external-link"></use></svg></a>
     {% endif %}
+    {% if not cliente.facturascripts_cliente_codigo %}
+    <form method="post" action="{{ url_for('fiscal.vincular_facturascripts', cliente_id=cliente.id) }}">
+      <button type="submit" class="btn btn-ghost">{{ _('Vincular con FacturaScripts') }}</button>
+    </form>
+    {% endif %}
   </div>
 </header>
 
@@ -44,5 +49,24 @@
   </li>
   {% endfor %}
 </ul>
+{% endif %}
+
+{% if cliente.facturascripts_cliente_codigo %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Facturación') }}</h2>
+  {% if not facturas %}
+  <p class="empty-lane">{{ _('Todavía no hay facturas para este cliente.') }}</p>
+  {% else %}
+  <ul class="log-list">
+    {% for f in facturas %}
+    <li class="log-item">
+      <span class="log-text">{{ f.codigo or f.numero or ('#' ~ f.idfactura) }}</span>
+      <span class="pill">{{ f.fecha }}</span>
+      <span class="log-duration">{{ f.total }} €</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
 {% endif %}
 {% endblock %}

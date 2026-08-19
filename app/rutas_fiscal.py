@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, documenso, espocrm
+from . import db, documenso, espocrm, facturascripts
 from .auth import login_required
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
@@ -85,6 +85,20 @@ def ficha_cliente(cliente_id: int):
     cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if cliente is None:
         abort(404)
+    # Facturas de FacturaScripts (bloque 3, best-effort): solo si el
+    # cliente está vinculado -- un fallo de la API no debe romper la
+    # ficha del cliente, así que se traga en silencio como el resto de
+    # integraciones opcionales de esta pantalla (EspoCRM).
+    facturas = []
+    if cliente["facturascripts_cliente_codigo"]:
+        tenant = db.obtener_tenant(g.tenant_id)
+        try:
+            facturas = facturascripts.listar_facturas(
+                tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+                cliente_codigo=cliente["facturascripts_cliente_codigo"], limite=10,
+            )
+        except facturascripts.ErrorFacturaScripts:
+            facturas = []
     return render_template(
         "fiscal_cliente_detalle.html",
         cliente=cliente,
@@ -93,6 +107,7 @@ def ficha_cliente(cliente_id: int):
         vencimientos=db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id),
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
+        facturas=facturas,
     )
 
 
@@ -103,6 +118,34 @@ def ver_en_espocrm(cliente_id: int):
     if cliente is None or not cliente["espocrm_cuenta_id"]:
         abort(404)
     return redirect(espocrm.url_cuenta(cliente["espocrm_cuenta_id"]))
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/facturascripts/vincular", methods=["POST"])
+@login_required
+def vincular_facturascripts(cliente_id: int):
+    """Busca un cliente de FacturaScripts por nombre y lo vincula; si no
+    hay ninguno, crea uno nuevo. Best-effort -- si FacturaScripts no está
+    aprovisionado para este tenant o la API falla, no rompe nada."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    tenant = db.obtener_tenant(g.tenant_id)
+    try:
+        encontrados = facturascripts.listar_clientes(
+            tenant["facturascripts_url"], tenant["facturascripts_api_key"], texto=cliente["nombre"], limite=1,
+        )
+        if encontrados:
+            codigo = encontrados[0]["codcliente"]
+        else:
+            creado = facturascripts.crear_cliente(
+                tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+                cliente["nombre"], nif=cliente["nif"] or "", email=cliente["email"] or "",
+            )
+            codigo = creado["codcliente"]
+        db.editar_cliente_fiscal(g.tenant_id, cliente_id, facturascripts_cliente_codigo=codigo)
+    except facturascripts.ErrorFacturaScripts:
+        pass
+    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id))
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/editar", methods=["GET", "POST"])
@@ -281,9 +324,29 @@ def vencimientos():
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/presentado", methods=["POST"])
 @login_required
 def marcar_presentado(vencimiento_id: int):
-    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
         abort(404)
     db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    # Facturación opcional (bloque 3): solo si el empleado ha rellenado
+    # concepto+importe explícitamente en el formulario de la ficha del
+    # vencimiento -- NUNCA se factura automáticamente sin que alguien
+    # revise el importe (el botón rápido del listado, sin este
+    # formulario, solo marca presentado, como siempre).
+    concepto = (request.form.get("factura_concepto") or "").strip()
+    importe = request.form.get("factura_importe", type=float)
+    if concepto and importe:
+        cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+        if cliente is not None and cliente["facturascripts_cliente_codigo"]:
+            tenant = db.obtener_tenant(g.tenant_id)
+            try:
+                facturascripts.crear_factura(
+                    tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+                    cliente["facturascripts_cliente_codigo"],
+                    [{"descripcion": concepto, "cantidad": 1, "precio": importe}],
+                )
+            except facturascripts.ErrorFacturaScripts:
+                pass
     return redirect(request.referrer or url_for("fiscal.vencimientos"))
 
 
@@ -319,6 +382,9 @@ def editar_vencimiento(vencimiento_id: int):
         # Firma electrónica (app/documenso.py): solo se ofrece si el tenant
         # tiene token configurado y el cliente tiene email (es el firmante).
         puede_enviar_a_firma=bool(tenant and tenant["documenso_api_key"] and cliente and cliente["email"]),
+        # Facturación (app/facturascripts.py): solo se ofrece si el cliente
+        # ya está vinculado a un código de FacturaScripts.
+        puede_facturar=bool(cliente and cliente["facturascripts_cliente_codigo"]),
     )
 
 

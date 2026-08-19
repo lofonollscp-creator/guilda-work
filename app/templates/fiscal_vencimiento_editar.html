@@ -50,9 +50,25 @@
   </div>
 </form>
 
+{% if puede_facturar and vencimiento.estado != 'presentado' %}
+<form class="edit-form" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" style="max-width: 640px;">
+  <label>{{ _('Marcar como presentado y facturar (opcional)') }}</label>
+  <p class="subtitle">{{ _('Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura.') }}</p>
+  <div class="ia-form-row">
+    <label>{{ _('Concepto') }}
+      <input type="text" name="factura_concepto" placeholder="{{ _('ej. Presentación modelo %(modelo)s %(periodo)s', modelo=vencimiento.modelo, periodo=vencimiento.periodo) }}">
+    </label>
+    <label>{{ _('Importe (€)') }}
+      <input type="number" name="factura_importe" step="0.01" min="0">
+    </label>
+  </div>
+  <button type="submit" class="btn btn-primary">{{ _('Marcar presentado') }}</button>
+</form>
+{% endif %}
+
 <form class="edit-form-delete" method="post" action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=vencimiento.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}');">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar vencimiento') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar vencimiento') }}</button>
 </form>
 
 <section style="max-width: 640px; margin-top: 2rem;">

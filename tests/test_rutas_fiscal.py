@@ -432,3 +432,105 @@ def test_enviar_a_firma_sin_email_del_cliente_no_hace_nada(cliente, monkeypatch)
     )
     assert resp.status_code == 302
     assert not llamadas
+
+
+# --- Facturación al marcar presentado (app/facturascripts.py) --------------
+
+def test_vincular_facturascripts_encuentra_cliente_existente(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fs-encontrado@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria FS Encontrado")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_facturascripts(tenant_id, "http://127.0.0.1:8107/", "admin", "clave-admin")
+    db.guardar_facturascripts_api_key(tenant_id, "clave-fs")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia FS")
+
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "listar_clientes", lambda *a, **k: [{"codcliente": "42"}])
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/facturascripts/vincular")
+    assert resp.status_code == 302
+    cliente_tras = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert cliente_tras["facturascripts_cliente_codigo"] == "42"
+
+
+def test_vincular_facturascripts_crea_cliente_si_no_existe(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fs-crear@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria FS Crear")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia Nueva")
+
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "listar_clientes", lambda *a, **k: [])
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_cliente", lambda *a, **k: {"codcliente": "99"})
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/facturascripts/vincular")
+    assert resp.status_code == 302
+    cliente_tras = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert cliente_tras["facturascripts_cliente_codigo"] == "99"
+
+
+def test_vincular_facturascripts_roto_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+    from app.facturascripts import ErrorFacturaScripts
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fs-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria FS Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia Rota")
+
+    def _falla(*a, **k):
+        raise ErrorFacturaScripts("caído")
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "listar_clientes", _falla)
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/facturascripts/vincular")
+    assert resp.status_code == 302
+    cliente_tras = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert cliente_tras["facturascripts_cliente_codigo"] is None
+
+
+def test_marcar_presentado_sin_concepto_no_factura(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "presentado-sin-concepto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Presentado Sin Concepto")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Concepto")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="7")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_factura", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    assert not llamadas
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["estado"] == "presentado"
+
+
+def test_marcar_presentado_con_concepto_e_importe_factura(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "presentado-con-concepto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Presentado Con Concepto")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Concepto")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="8")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(
+        rutas_fiscal.facturascripts, "crear_factura",
+        lambda url, api_key, codigo, lineas: llamadas.append((codigo, lineas)),
+    )
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/presentado",
+        data={"factura_concepto": "Presentación 303 T1", "factura_importe": "150.5"},
+    )
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    codigo, lineas = llamadas[0]
+    assert codigo == "8"
+    assert lineas == [{"descripcion": "Presentación 303 T1", "cantidad": 1, "precio": 150.5}]
