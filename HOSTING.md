@@ -1049,6 +1049,26 @@ tools `facturas_listar_clientes`/`facturas_crear_cliente`/
 parámetro `tenant` (el nombre tal cual aparece en el backoffice) —
 imprescindible aquí porque cada tenant es una instancia física distinta.
 
+**Nota de alcance — Veri\*Factu/SII**: España exige progresivamente
+desde 2026 que el software de facturación registre las facturas de
+forma inalterable y pueda remitirlas a la AEAT (normativa Veri\*Factu).
+Guilda Work **no genera ni registra facturas él mismo** — solo hace
+peticiones HTTP a la API de FacturaScripts, que es quien realmente
+emite, guarda y (si corresponde) declara las facturas de cada tenant.
+El cumplimiento de Veri\*Factu recae por tanto sobre **la instancia de
+FacturaScripts de cada tenant**, no sobre Guilda Work — no hay ni
+debería haber código de cumplimiento fiscal en este repo. Dos motivos
+prácticos para tenerlo anotado aquí de todos modos: (1) conviene
+verificar periódicamente que la imagen desplegada
+(`facturascripts/facturascripts:latest`) ya soporta Veri\*Factu antes
+de que la obligatoriedad alcance a los tenants afectados — comprobarlo
+entrando a cualquier instancia de tenant, Ajustes → apartado de
+facturación electrónica; (2) como plataforma multi-tenant, es
+razonable que llegue una consulta de soporte sobre esto aunque la
+responsabilidad técnica sea de FacturaScripts, no de Guilda Work — la
+respuesta correcta es señalar a la propia documentación de
+FacturaScripts, no intentar resolverlo aquí.
+
 ### 8.22 Documenso (firma electrónica de documentos)
 
 A diferencia de FacturaScripts, aquí la instancia SÍ es compartida (como
