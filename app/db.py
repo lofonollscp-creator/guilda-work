@@ -1320,6 +1320,15 @@ def init_db() -> None:
                    notificar_resumen_semanal INTEGER NOT NULL DEFAULT 0
                )"""
         )
+        # Ampliación (tercera ronda de mejoras): las 4 preferencias de
+        # notificación deberían cubrir los 4 tipos reales que emite
+        # app/notificaciones.py -- faltaban columnas para correo_nuevo y
+        # portal_mensaje_nuevo (antes solo existían para
+        # vencimiento_fiscal/tiquets, y ni siquiera esas dos se
+        # comprobaban de verdad en ningún punto de emisión, ver
+        # db.notificacion_tipo_activa()).
+        _asegurar_columna(conn, "usuario_perfil", "notificar_push_correo", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "usuario_perfil", "notificar_push_portal_mensajes", "INTEGER NOT NULL DEFAULT 1")
 
         conn.commit()
     finally:
@@ -5273,6 +5282,8 @@ def guardar_perfil_usuario(
     notificar_push_vencimientos: bool | None = None,
     notificar_push_tiquets: bool | None = None,
     notificar_resumen_semanal: bool | None = None,
+    notificar_push_correo: bool | None = None,
+    notificar_push_portal_mensajes: bool | None = None,
 ) -> None:
     """Solo actualiza los campos que se pasan explícitos (no-None) -- así
     la ruta puede llamar con únicamente el nombre, o únicamente las
@@ -5293,6 +5304,12 @@ def guardar_perfil_usuario(
         if notificar_resumen_semanal is not None:
             asignaciones.append("notificar_resumen_semanal = ?")
             valores.append(int(notificar_resumen_semanal))
+        if notificar_push_correo is not None:
+            asignaciones.append("notificar_push_correo = ?")
+            valores.append(int(notificar_push_correo))
+        if notificar_push_portal_mensajes is not None:
+            asignaciones.append("notificar_push_portal_mensajes = ?")
+            valores.append(int(notificar_push_portal_mensajes))
         if asignaciones:
             conn.execute(
                 f"UPDATE usuario_perfil SET {', '.join(asignaciones)} WHERE usuario_id = ?",
@@ -5301,6 +5318,33 @@ def guardar_perfil_usuario(
         conn.commit()
     finally:
         conn.close()
+
+
+# Qué columna de usuario_perfil gobierna cada tipo de notificación real
+# emitido por app/notificaciones.py -- un tipo sin entrada aquí (como
+# "resumen_ia_semanal", que ya tiene su propio camino en
+# usuarios_con_resumen_semanal_activo(), nunca pasa por aquí) se trata
+# como "siempre activo".
+_COLUMNAS_PREFERENCIA_NOTIFICACION = {
+    "vencimiento_fiscal": "notificar_push_vencimientos",
+    "tiquet_asignado": "notificar_push_tiquets",
+    "correo_nuevo": "notificar_push_correo",
+    "portal_mensaje_nuevo": "notificar_push_portal_mensajes",
+}
+
+
+def notificacion_tipo_activa(usuario_id: int, tipo: str) -> bool:
+    """Antes de esta función, notificar_push_vencimientos/
+    notificar_push_tiquets se podían editar desde /ajustes/perfil pero
+    NINGÚN punto de emisión las comprobaba de verdad -- desactivarlas no
+    hacía nada. Quien emite una notificación debe llamar a esto primero
+    (ver app/main.py, app/rutas_portal_cliente.py, app/correo.py,
+    app/rutas_tiquets.py)."""
+    columna = _COLUMNAS_PREFERENCIA_NOTIFICACION.get(tipo)
+    if columna is None:
+        return True
+    perfil = obtener_perfil_usuario(usuario_id)
+    return bool(perfil[columna])
 
 
 def guardar_avatar_usuario(usuario_id: int, contenido: bytes, tipo_mime: str) -> None:

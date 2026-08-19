@@ -113,3 +113,80 @@ def test_tarjetas_filtra_por_prioridad_en_la_url(cliente):
     html = resp.get_data(as_text=True)
     assert "Prioritario" in html
     assert "Normalito" not in html
+
+
+# --- Notificación al asignar un tiquet --------------------------------------
+
+def test_asignar_a_otro_usuario_le_notifica(cliente, monkeypatch):
+    from app import rutas_tiquets
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "tiquet-notif-admin@ejemplo.com", "contrasena123")
+    db.hacer_admin("tiquet-notif-admin@ejemplo.com")
+    otro_id = db.crear_usuario("tiquet-notif-otro@ejemplo.com", "contrasena123")
+    tiquet_id = db.crear_tiquet(admin_id, tipo="error", titulo="Algo que arreglar")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_tiquets.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/tiquets/{tiquet_id}/asignar", data={"prioridad": "normal", "usuario_asignado_id": str(otro_id)},
+    )
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    assert llamadas[0][0] == otro_id
+    assert llamadas[0][1] == "tiquet_asignado"
+
+
+def test_reasignar_al_mismo_usuario_no_vuelve_a_notificar(cliente, monkeypatch):
+    from app import rutas_tiquets
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "tiquet-notif-admin2@ejemplo.com", "contrasena123")
+    db.hacer_admin("tiquet-notif-admin2@ejemplo.com")
+    otro_id = db.crear_usuario("tiquet-notif-otro2@ejemplo.com", "contrasena123")
+    tiquet_id = db.crear_tiquet(admin_id, tipo="error", titulo="Algo")
+    db.asignar_tiquet(tiquet_id, "normal", otro_id)  # ya asignado de antemano
+
+    llamadas = []
+    monkeypatch.setattr(rutas_tiquets.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/tiquets/{tiquet_id}/asignar", data={"prioridad": "alta", "usuario_asignado_id": str(otro_id)},
+    )
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_autoasignarse_no_notifica(cliente, monkeypatch):
+    from app import rutas_tiquets
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "tiquet-notif-self@ejemplo.com", "contrasena123")
+    db.hacer_admin("tiquet-notif-self@ejemplo.com")
+    tiquet_id = db.crear_tiquet(admin_id, tipo="error", titulo="Algo")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_tiquets.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/tiquets/{tiquet_id}/asignar", data={"prioridad": "normal", "usuario_asignado_id": str(admin_id)},
+    )
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_asignar_no_notifica_si_el_destinatario_desactivo_la_preferencia(cliente, monkeypatch):
+    from app import rutas_tiquets
+
+    admin_id = iniciar_sesion_de_prueba(cliente, "tiquet-notif-pref@ejemplo.com", "contrasena123")
+    db.hacer_admin("tiquet-notif-pref@ejemplo.com")
+    otro_id = db.crear_usuario("tiquet-notif-pref-otro@ejemplo.com", "contrasena123")
+    db.guardar_perfil_usuario(otro_id, notificar_push_tiquets=False)
+    tiquet_id = db.crear_tiquet(admin_id, tipo="error", titulo="Algo")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_tiquets.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/tiquets/{tiquet_id}/asignar", data={"prioridad": "normal", "usuario_asignado_id": str(otro_id)},
+    )
+    assert resp.status_code == 302
+    assert not llamadas

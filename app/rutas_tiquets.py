@@ -11,7 +11,7 @@ puede moverlos de estado en el Kanban.
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db
+from . import db, notificaciones
 from .auth import admin_required, login_required
 
 tiquets_bp = Blueprint("tiquets", __name__, url_prefix="/tiquets")
@@ -178,13 +178,28 @@ def cambiar_estado(tiquet_id: int):
 @login_required
 @admin_required
 def asignar(tiquet_id: int):
-    if db.obtener_tiquet(tiquet_id) is None:
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
         abort(404)
     prioridad = request.form.get("prioridad", "normal")
     if prioridad not in dict(PRIORIDADES):
         prioridad = "normal"
     usuario_asignado_id = request.form.get("usuario_asignado_id", type=int)
     db.asignar_tiquet(tiquet_id, prioridad, usuario_asignado_id)
+    # Avisa al nuevo responsable -- solo si cambia de verdad (evita
+    # reavisar cada vez que un admin solo toca la prioridad) y nunca si
+    # se está autoasignando a sí mismo (no hace falta avisarse a uno
+    # mismo de algo que se acaba de hacer).
+    if (
+        usuario_asignado_id and usuario_asignado_id != tiquet["usuario_asignado_id"]
+        and usuario_asignado_id != g.usuario_id
+        and db.notificacion_tipo_activa(usuario_asignado_id, "tiquet_asignado")
+    ):
+        notificaciones.crear_y_enviar(
+            usuario_asignado_id, "tiquet_asignado", "Tiquet asignado",
+            f"#{tiquet_id} — {tiquet['titulo']}", url=url_for("tiquets.tarjetas"),
+            datos={"tipo": "tiquet_asignado", "tiquet_id": tiquet_id},
+        )
     return redirect(request.form.get("volver_a") or url_for("tiquets.tarjetas"))
 
 

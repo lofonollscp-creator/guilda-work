@@ -301,6 +301,25 @@ def test_mensaje_sin_usuario_asignado_no_notifica(cliente, monkeypatch):
     assert not llamadas
 
 
+def test_mensaje_no_notifica_si_el_asignado_desactivo_la_preferencia(cliente, monkeypatch):
+    from app import rutas_portal_cliente
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="mensaje-pref@ejemplo.com")
+    usuario_asignado = db.usuario_local_id()
+    db.guardar_perfil_usuario(usuario_asignado, notificar_push_portal_mensajes=False)
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20", usuario_id=usuario_asignado)
+    _entrar_como_cliente(cliente, cliente_id)
+
+    llamadas = []
+    monkeypatch.setattr(rutas_portal_cliente.notificaciones.push, "enviar_a_usuario", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/portal/vencimientos/{v_id}/mensajes", data={"texto": "Hola"}, follow_redirects=True)
+    assert resp.status_code == 200
+    assert not llamadas
+    # El mensaje se guarda igual -- desactivar el aviso no oculta datos.
+    assert len(db.listar_mensajes_vencimiento(v_id)) == 1
+
+
 def test_cliente_no_ve_mensajes_de_vencimiento_ajeno(cliente):
     tenant_a, cliente_a = _cliente_de_prueba(nombre="MsgA", email="msg-a@ejemplo.com")
     v_a = db.crear_vencimiento_fiscal(tenant_a, cliente_a, "303", "2026-T1", "2026-04-20")

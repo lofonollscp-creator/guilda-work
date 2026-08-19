@@ -173,7 +173,9 @@ def mensajes_vencimiento(vencimiento_id: int):
             # el aviso en el centro de notificaciones Y manda el push, nunca
             # lanza; si no hay usuario_id asignado simplemente no se
             # notifica a nadie (v2 no tiene "avisar a todo el tenant" todavía).
-            if vencimiento["usuario_id"]:
+            if vencimiento["usuario_id"] and db.notificacion_tipo_activa(
+                vencimiento["usuario_id"], "portal_mensaje_nuevo"
+            ):
                 notificaciones.crear_y_enviar(
                     vencimiento["usuario_id"], "portal_mensaje_nuevo", _("Nuevo mensaje del cliente"), texto[:100],
                     url=f"/fiscal/vencimientos/{vencimiento_id}/editar",

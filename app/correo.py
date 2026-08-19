@@ -566,11 +566,12 @@ def _emitir_evento_correo_nuevo(usuario_id: int, cuenta_id: int, nuevos: int) ->
         eventos.emitir("correo.mensaje_nuevo", tenant["id"] if tenant else None, {"cuenta_id": cuenta_id, "nuevos": nuevos})
     except Exception:
         pass
-    cuerpo = "Tienes 1 mensaje nuevo." if nuevos == 1 else f"Tienes {nuevos} mensajes nuevos."
-    notificaciones.crear_y_enviar(
-        usuario_id, "correo_nuevo", "Correo nuevo", cuerpo, url=f"/correo/?cuenta_id={cuenta_id}",
-        datos={"tipo": "correo_nuevo", "cuenta_id": cuenta_id},
-    )
+    if db.notificacion_tipo_activa(usuario_id, "correo_nuevo"):
+        cuerpo = "Tienes 1 mensaje nuevo." if nuevos == 1 else f"Tienes {nuevos} mensajes nuevos."
+        notificaciones.crear_y_enviar(
+            usuario_id, "correo_nuevo", "Correo nuevo", cuerpo, url=f"/correo/?cuenta_id={cuenta_id}",
+            datos={"tipo": "correo_nuevo", "cuenta_id": cuenta_id},
+        )
 
 
 def _reindexar_mensajes_recientes(usuario_id: int, cuenta_id: int, limite: int = 200) -> None:

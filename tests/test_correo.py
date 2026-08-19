@@ -1075,3 +1075,26 @@ def test_plantillas_son_privadas_por_usuario(usuario_id):
     assert correo.obtener_plantilla(otro_usuario_id, plantilla_id) is None
     correo.eliminar_plantilla(otro_usuario_id, plantilla_id)  # no-op, no debe borrarla
     assert len(correo.listar_plantillas(usuario_id)) == 1
+
+
+# --- Preferencia de notificación de correo nuevo ----------------------------
+
+def test_emitir_evento_correo_nuevo_respeta_la_preferencia_desactivada(usuario_id, monkeypatch):
+    db.guardar_perfil_usuario(usuario_id, notificar_push_correo=False)
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+
+    llamadas = []
+    monkeypatch.setattr(correo.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    correo._emitir_evento_correo_nuevo(usuario_id, cuenta_id, 2)
+    assert not llamadas
+
+
+def test_emitir_evento_correo_nuevo_avisa_si_la_preferencia_esta_activa(usuario_id, monkeypatch):
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+
+    llamadas = []
+    monkeypatch.setattr(correo.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    correo._emitir_evento_correo_nuevo(usuario_id, cuenta_id, 2)
+    assert len(llamadas) == 1

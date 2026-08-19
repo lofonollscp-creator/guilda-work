@@ -980,6 +980,8 @@ def ajustes_perfil():
             notificar_push_vencimientos="notificar_push_vencimientos" in request.form,
             notificar_push_tiquets="notificar_push_tiquets" in request.form,
             notificar_resumen_semanal="notificar_resumen_semanal" in request.form,
+            notificar_push_correo="notificar_push_correo" in request.form,
+            notificar_push_portal_mensajes="notificar_push_portal_mensajes" in request.form,
         )
         return redirect(url_for("ajustes_perfil"))
     usuario = db.obtener_usuario(g.usuario_id)
@@ -1380,6 +1382,9 @@ def _recordatorio_vencimientos_fiscales():
             if not v["usuario_id"]:
                 continue
             try:
+                if not db.notificacion_tipo_activa(v["usuario_id"], "vencimiento_fiscal"):
+                    db.marcar_recordatorio_vencimiento_fiscal_enviado(v["id"])
+                    continue
                 notificaciones.crear_y_enviar(
                     v["usuario_id"],
                     "vencimiento_fiscal",

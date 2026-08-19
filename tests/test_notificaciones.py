@@ -39,6 +39,42 @@ def test_notificaciones_son_privadas_por_usuario():
     assert db.contar_notificaciones_no_leidas(otro_usuario_id) == 0
 
 
+# --- Preferencias de notificación (db.notificacion_tipo_activa) --------
+
+def test_notificacion_tipo_activa_por_defecto_es_true(usuario_id):
+    assert db.notificacion_tipo_activa(usuario_id, "vencimiento_fiscal") is True
+    assert db.notificacion_tipo_activa(usuario_id, "tiquet_asignado") is True
+    assert db.notificacion_tipo_activa(usuario_id, "correo_nuevo") is True
+    assert db.notificacion_tipo_activa(usuario_id, "portal_mensaje_nuevo") is True
+
+
+def test_notificacion_tipo_activa_respeta_la_preferencia_desactivada(usuario_id):
+    db.guardar_perfil_usuario(usuario_id, notificar_push_vencimientos=False)
+    assert db.notificacion_tipo_activa(usuario_id, "vencimiento_fiscal") is False
+    # el resto de tipos no se ven afectados por este cambio
+    assert db.notificacion_tipo_activa(usuario_id, "correo_nuevo") is True
+
+
+def test_notificacion_tipo_activa_de_un_tipo_sin_preferencia_es_siempre_true(usuario_id):
+    assert db.notificacion_tipo_activa(usuario_id, "resumen_ia_semanal") is True
+    assert db.notificacion_tipo_activa(usuario_id, "tipo_inventado") is True
+
+
+def test_guardar_perfil_usuario_actualiza_las_4_preferencias(usuario_id):
+    db.guardar_perfil_usuario(
+        usuario_id,
+        notificar_push_vencimientos=False,
+        notificar_push_tiquets=False,
+        notificar_push_correo=False,
+        notificar_push_portal_mensajes=False,
+    )
+    perfil = db.obtener_perfil_usuario(usuario_id)
+    assert perfil["notificar_push_vencimientos"] == 0
+    assert perfil["notificar_push_tiquets"] == 0
+    assert perfil["notificar_push_correo"] == 0
+    assert perfil["notificar_push_portal_mensajes"] == 0
+
+
 # --- notificaciones.crear_y_enviar --------------------------------------
 
 def test_crear_y_enviar_registra_y_manda_push(usuario_id, monkeypatch):
