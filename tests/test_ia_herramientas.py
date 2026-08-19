@@ -6,11 +6,13 @@ import pytest
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_47_herramientas_clasificadas():
+def test_catalogo_tiene_las_mismas_52_herramientas_clasificadas():
     # 39 + 4 del calendario fiscal + 1 de adjuntos del chat (Fase G2)
-    # + 3 del calendario fiscal (marcar_presentado/editar/resumen).
+    # + 3 del calendario fiscal (marcar_presentado/editar/resumen)
+    # + 5 de la tercera ronda de mejoras (plantillas de correo, tareas
+    # recurrentes, facturación de un cliente).
     nombres = {t["function"]["name"] for t in h.HERRAMIENTAS}
-    assert len(nombres) == 47
+    assert len(nombres) == 52
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)
@@ -101,3 +103,67 @@ def test_leer_adjunto_chat_es_privado_del_usuario(usuario_id):
 
     with pytest.raises(h.ErrorHerramientaIA):
         h.ejecutar(otro_usuario_id, "leer_adjunto_chat", {"adjunto_id": adjunto_id})
+
+
+# --- Tercera ronda de mejoras: plantillas, tareas recurrentes, facturación --
+
+def test_listar_plantillas_correo_tool(usuario_id):
+    db.crear_plantilla_correo(usuario_id, "Recordatorio", "Docs pendientes", "Hola, nos falta la factura.")
+
+    resultado = h.ejecutar(usuario_id, "listar_plantillas_correo", {})
+    assert len(resultado) == 1
+    assert resultado[0]["nombre"] == "Recordatorio"
+
+
+def test_tareas_recurrentes_tool_ciclo_completo(usuario_id):
+    creada = h.ejecutar(
+        usuario_id, "crear_tarea_recurrente", {"asunto": "Revisar correo", "periodicidad": "semanal", "dia": 0},
+    )
+    assert creada["asunto"] == "Revisar correo"
+    assert creada["activa"] == 1
+
+    listado = h.ejecutar(usuario_id, "listar_tareas_recurrentes", {})
+    assert len(listado) == 1
+    assert listado[0]["id"] == creada["id"]
+
+
+def test_crear_tarea_recurrente_periodicidad_invalida_lanza_error(usuario_id):
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "crear_tarea_recurrente", {"asunto": "X", "periodicidad": "diaria", "dia": 0})
+
+
+def test_facturas_cliente_tool_ciclo_completo(usuario_id, monkeypatch):
+    from app import facturascripts
+
+    tenant_id = db.crear_tenant("Gestoria IA Facturas")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_facturascripts(tenant_id, "http://127.0.0.1:8107/", "admin", "clave-admin")
+    db.guardar_facturascripts_api_key(tenant_id, "clave-fs")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente IA Facturas")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="7")
+
+    monkeypatch.setattr(facturascripts, "listar_facturas", lambda *a, **k: [{"idfactura": 1, "total": 150.5}])
+    llamadas = []
+    monkeypatch.setattr(
+        facturascripts, "crear_factura",
+        lambda url, api_key, codigo, lineas: llamadas.append((codigo, lineas)) or {"idfactura": 2},
+    )
+
+    listado = h.ejecutar(usuario_id, "listar_facturas_cliente", {"cliente_id": cliente_id})
+    assert listado == [{"idfactura": 1, "total": 150.5}]
+
+    creada = h.ejecutar(
+        usuario_id, "crear_factura_cliente",
+        {"cliente_id": cliente_id, "concepto": "Presentación 303 T1", "importe": 150.5},
+    )
+    assert creada == {"idfactura": 2}
+    assert llamadas == [("7", [{"descripcion": "Presentación 303 T1", "cantidad": 1, "precio": 150.5}])]
+
+
+def test_listar_facturas_cliente_sin_vincular_lanza_error(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria IA Sin Vincular")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Vincular")
+
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "listar_facturas_cliente", {"cliente_id": cliente_id})

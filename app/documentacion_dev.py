@@ -61,6 +61,8 @@ _PROPIAS_GUILDA_WORK = {
     "listar_clientes_fiscales", "crear_cliente_fiscal",
     "listar_vencimientos_fiscales", "generar_vencimientos_fiscales",
     "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal", "resumen_cliente_fiscal",
+    "listar_plantillas_correo", "crear_tarea_recurrente", "listar_tareas_recurrentes",
+    "listar_facturas_cliente", "crear_factura_cliente",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)

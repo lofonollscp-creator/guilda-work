@@ -462,6 +462,48 @@ HERRAMIENTAS: list[dict] = [
         {"cliente_id": _param("integer", "Id del cliente fiscal.")},
         ["cliente_id"],
     ),
+    _tool(
+        "listar_plantillas_correo",
+        "Lista las plantillas de respuesta de correo guardadas del usuario actual (nombre, asunto y cuerpo).",
+        {},
+        [],
+    ),
+    _tool(
+        "crear_tarea_recurrente",
+        "Crea una regla que genera una tarea nueva automáticamente cada semana o cada mes -- no una tarea suelta (para eso usa crear_tarea).",
+        {
+            "asunto": _param("string", "Asunto de la tarea que se generará cada vez."),
+            "periodicidad": _param("string", "\"semanal\" o \"mensual\"."),
+            "dia": _param("integer", "Si es semanal: 0=lunes..6=domingo. Si es mensual: día del mes (1-31)."),
+            "categoria_id": _param("integer", "Id del menú al que asociar la tarea generada, opcional."),
+        },
+        ["asunto", "periodicidad", "dia"],
+    ),
+    _tool(
+        "listar_tareas_recurrentes",
+        "Lista las reglas de tarea recurrente del usuario actual (activas o pausadas).",
+        {},
+        [],
+    ),
+    _tool(
+        "listar_facturas_cliente",
+        "Últimas facturas de FacturaScripts de un cliente fiscal ya vinculado a FacturaScripts.",
+        {
+            "cliente_id": _param("integer", "Id del cliente fiscal."),
+            "limite": _param("integer", "Número máximo de facturas a devolver, opcional."),
+        },
+        ["cliente_id"],
+    ),
+    _tool(
+        "crear_factura_cliente",
+        "Crea una factura de una sola línea en FacturaScripts para un cliente fiscal ya vinculado. Confirma siempre el concepto y el importe exacto con el usuario antes de ejecutar.",
+        {
+            "cliente_id": _param("integer", "Id del cliente fiscal."),
+            "concepto": _param("string", "Descripción de la línea de la factura."),
+            "importe": _param("number", "Importe de la línea (sin IVA, según configuración de FacturaScripts)."),
+        },
+        ["cliente_id", "concepto", "importe"],
+    ),
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
@@ -472,7 +514,8 @@ LECTURA: set[str] = {
     "preparar_borrador_correo", "listar_tiquets", "listar_mis_fichajes",
     "buscar_semantico", "listar_papelera", "estadisticas_por_categoria", "estadisticas_por_dia",
     "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
-    "resumen_cliente_fiscal",
+    "resumen_cliente_fiscal", "listar_plantillas_correo", "listar_tareas_recurrentes",
+    "listar_facturas_cliente",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -483,6 +526,7 @@ ESCRITURA: set[str] = {
     "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet", "fichar",
     "restaurar_de_papelera", "crear_cliente_fiscal", "generar_vencimientos_fiscales",
     "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal",
+    "crear_tarea_recurrente", "crear_factura_cliente",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son

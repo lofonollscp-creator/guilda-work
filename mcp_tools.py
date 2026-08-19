@@ -1274,6 +1274,71 @@ def resumen_cliente_fiscal(cliente_id: int) -> dict:
     }
 
 
+def listar_plantillas_correo() -> list[dict]:
+    """Plantillas de respuesta guardadas del usuario actual (ver Correo >
+    Ajustes en la web) -- para poder reutilizar un texto ya escrito antes
+    al redactar una respuesta."""
+    from app import correo
+    return _filas(correo.listar_plantillas(_uid()))
+
+
+def crear_tarea_recurrente(asunto: str, periodicidad: str, dia: int, categoria_id: int | None = None) -> dict:
+    """Crea una regla de tarea recurrente (semanal o mensual) que genera
+    una tarea nueva automáticamente cada periodo -- no confundir con
+    crear_tarea, que crea una tarea suelta de una sola vez. `periodicidad`:
+    "semanal" o "mensual". `dia`: si es semanal, 0=lunes..6=domingo; si es
+    mensual, día del mes (1-31, se ajusta al último día si el mes no llega
+    a ese número)."""
+    if periodicidad not in ("semanal", "mensual"):
+        raise ValueError("periodicidad debe ser 'semanal' o 'mensual'.")
+    uid = _uid()
+    regla_id = db.crear_tarea_recurrente(uid, asunto, periodicidad, dia, categoria_id=categoria_id)
+    return _fila(next((r for r in db.listar_tareas_recurrentes(uid) if r["id"] == regla_id), None))
+
+
+def listar_tareas_recurrentes() -> list[dict]:
+    """Lista las reglas de tarea recurrente del usuario actual, activas o pausadas."""
+    return _filas(db.listar_tareas_recurrentes(_uid()))
+
+
+def _facturascripts_de_cliente(cliente_id: int) -> tuple[dict, dict]:
+    """Comprueba que el cliente existe en la gestoría del usuario actual y
+    está vinculado a FacturaScripts -- compartido por listar/crear factura
+    de abajo, para no repetir las mismas dos comprobaciones dos veces."""
+    tenant_id = _tenant_id_actual()
+    cliente = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    if cliente is None:
+        raise ValueError(f"No existe el cliente fiscal #{cliente_id} en tu gestoría.")
+    if not cliente["facturascripts_cliente_codigo"]:
+        raise ValueError(f"El cliente #{cliente_id} todavía no está vinculado a FacturaScripts.")
+    tenant = db.obtener_tenant(tenant_id)
+    return cliente, tenant
+
+
+def listar_facturas_cliente(cliente_id: int, limite: int = 20) -> list[dict]:
+    """Últimas facturas de FacturaScripts de un cliente fiscal ya vinculado
+    (ver "Vincular con FacturaScripts" en su ficha)."""
+    from app import facturascripts
+    cliente, tenant = _facturascripts_de_cliente(cliente_id)
+    return facturascripts.listar_facturas(
+        tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+        cliente_codigo=cliente["facturascripts_cliente_codigo"], limite=limite,
+    )
+
+
+def crear_factura_cliente(cliente_id: int, concepto: str, importe: float) -> dict:
+    """Crea una factura de una sola línea en FacturaScripts para un cliente
+    fiscal ya vinculado. Pide siempre confirmación antes de ejecutar (ver
+    ESCRITURA en app/ia_herramientas.py) -- nunca se factura sin que el
+    usuario haya visto y confirmado el importe exacto."""
+    from app import facturascripts
+    cliente, tenant = _facturascripts_de_cliente(cliente_id)
+    return facturascripts.crear_factura(
+        tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+        cliente["facturascripts_cliente_codigo"], [{"descripcion": concepto, "cantidad": 1, "precio": importe}],
+    )
+
+
 # --- Fichaje (registro horario) --------------------------------------------
 #
 # Deliberadamente acotado a lo propio del usuario actual -- entrada/salida/
@@ -1592,6 +1657,8 @@ TOOLS = [
     # Calendario fiscal
     listar_clientes_fiscales, crear_cliente_fiscal, listar_vencimientos_fiscales, generar_vencimientos_fiscales,
     marcar_presentado_vencimiento_fiscal, editar_vencimiento_fiscal, resumen_cliente_fiscal,
+    listar_plantillas_correo, crear_tarea_recurrente, listar_tareas_recurrentes,
+    listar_facturas_cliente, crear_factura_cliente,
     # Fichaje
     fichar, listar_mis_fichajes,
     # Papelera
