@@ -96,4 +96,19 @@
     <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
   </form>
 </section>
+
+{% if puede_enviar_a_firma %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Firma electrónica') }}</h2>
+  {% if vencimiento.documenso_documento_id %}
+  <p class="subtitle">{{ _('Ya se ha enviado un documento a firmar al cliente para este vencimiento.') }}</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('fiscal.enviar_a_firma_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="quick-card">
+    <label>{{ _('Subir PDF y enviar a firmar al cliente') }}
+      <input type="file" name="documento_firma" accept="application/pdf" required>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar a firma') }}</button>
+  </form>
+</section>
+{% endif %}
 {% endblock %}

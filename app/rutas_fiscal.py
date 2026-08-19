@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, espocrm
+from . import db, documenso, espocrm
 from .auth import login_required
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
@@ -307,6 +307,8 @@ def editar_vencimiento(vencimiento_id: int):
         return redirect(url_for("fiscal.vencimientos"))
     db.marcar_mensajes_leidos(vencimiento_id, "empleado")
     usuarios_tenant = [db.obtener_usuario(uid) for uid in db.usuarios_de_tenant(g.tenant_id)]
+    tenant = db.obtener_tenant(g.tenant_id)
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
     return render_template(
         "fiscal_vencimiento_editar.html",
         vencimiento=vencimiento, estados=ESTADOS_VENCIMIENTO, usuarios=usuarios_tenant,
@@ -314,7 +316,41 @@ def editar_vencimiento(vencimiento_id: int):
         # -- así el equipo los ve sin tener que entrar al portal.
         documentos_cliente=db.listar_documentos_vencimiento(vencimiento_id),
         mensajes_cliente=db.listar_mensajes_vencimiento(vencimiento_id),
+        # Firma electrónica (app/documenso.py): solo se ofrece si el tenant
+        # tiene token configurado y el cliente tiene email (es el firmante).
+        puede_enviar_a_firma=bool(tenant and tenant["documenso_api_key"] and cliente and cliente["email"]),
     )
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/enviar-a-firma", methods=["POST"])
+@login_required
+def enviar_a_firma_vencimiento(vencimiento_id: int):
+    """Sube un PDF y lo manda a firmar al cliente fiscal vía Documenso --
+    best-effort: si el tenant no tiene documenso_api_key configurada, el
+    cliente no tiene email, o Documenso falla, no rompe la edición del
+    vencimiento (mismo criterio que la integración de EspoCRM). El
+    firmante es siempre el cliente fiscal del vencimiento -- para otros
+    firmantes hay que usar la propia interfaz de Documenso."""
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
+        abort(404)
+    tenant = db.obtener_tenant(g.tenant_id)
+    api_key = tenant["documenso_api_key"] if tenant else None
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+    archivo = request.files.get("documento_firma")
+    if api_key and cliente is not None and cliente["email"] and archivo and archivo.filename:
+        try:
+            titulo = f"{vencimiento['modelo']} {vencimiento['periodo']} — {cliente['nombre']}"
+            resultado = documenso.crear_documento(
+                api_key, titulo, archivo.read(), [{"email": cliente["email"], "nombre": cliente["nombre"]}],
+            )
+            documento_id = resultado.get("id") or resultado.get("envelopeId")
+            if documento_id:
+                documenso.enviar_a_firma(api_key, documento_id)
+                db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, documenso_documento_id=documento_id)
+        except documenso.ErrorDocumenso:
+            pass
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
 
 
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/mensajes", methods=["POST"])

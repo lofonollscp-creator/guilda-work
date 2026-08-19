@@ -333,3 +333,102 @@ def test_generar_vencimientos_formulario_y_confirmacion(cliente):
     vencimientos = db.listar_vencimientos_fiscales(tenant_id)
     assert len(vencimientos) == 1
     assert vencimientos[0]["modelo"] == "303"
+
+
+# --- Firma electrónica desde un vencimiento (app/documenso.py) -------------
+
+def test_enviar_a_firma_sin_documenso_configurado_no_rompe(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-sin-config@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Sin Config")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Firma", email="cliente-firma@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    v_tras = db.obtener_vencimiento_fiscal(tenant_id, v_id)
+    assert v_tras["documenso_documento_id"] is None
+
+
+def test_enviar_a_firma_ok(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-ok@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Ok")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Firma Ok", email="cliente-firma-ok@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(
+        rutas_fiscal.documenso, "crear_documento",
+        lambda api_key, titulo, contenido, firmantes: {"id": "envelope_123"},
+    )
+    llamadas = []
+    monkeypatch.setattr(
+        rutas_fiscal.documenso, "enviar_a_firma",
+        lambda api_key, documento_id: llamadas.append((api_key, documento_id)),
+    )
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert llamadas == [("token-de-prueba", "envelope_123")]
+    v_tras = db.obtener_vencimiento_fiscal(tenant_id, v_id)
+    assert v_tras["documenso_documento_id"] == "envelope_123"
+
+
+def test_enviar_a_firma_documenso_roto_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+    from app.documenso import ErrorDocumenso
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Firma Rota", email="cliente-firma-rota@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise ErrorDocumenso("Documenso caído")
+    monkeypatch.setattr(rutas_fiscal.documenso, "crear_documento", _falla)
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+
+
+def test_enviar_a_firma_sin_email_del_cliente_no_hace_nada(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-sin-email@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Sin Email")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Email")  # sin email
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.documenso, "crear_documento", lambda *a, **k: llamadas.append(a) or {"id": "x"})
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert not llamadas

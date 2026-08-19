@@ -1046,6 +1046,15 @@ def init_db() -> None:
         # propósito -- el acceso es opt-in, solo si un empleado pone el
         # email desde la ficha del cliente puede este pedir un enlace.
         _asegurar_columna(conn, "clientes_fiscales", "email", "TEXT")
+        # Vínculo con FacturaScripts (app/facturascripts.py) -- opcional,
+        # solo si el empleado vincula el cliente fiscal a un cliente de
+        # FacturaScripts desde su ficha (mismo criterio best-effort que
+        # espocrm_cuenta_id de arriba).
+        _asegurar_columna(conn, "clientes_fiscales", "facturascripts_cliente_codigo", "TEXT")
+        # Firma electrónica desde un vencimiento (app/documenso.py) --
+        # id del envelope de Documenso una vez enviado a firma, para
+        # poder consultar su estado/descargarlo sin volver a crearlo.
+        _asegurar_columna(conn, "vencimientos_fiscales", "documenso_documento_id", "TEXT")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -3283,13 +3292,16 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
+    "facturascripts_cliente_codigo",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
     "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf",
 }
 TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO = 8 * 1024 * 1024
-CAMPOS_VENCIMIENTO_FISCAL = ("usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas")
+CAMPOS_VENCIMIENTO_FISCAL = (
+    "usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas", "documenso_documento_id",
+)
 
 
 def serializar_modelos_fiscales(modelos: list[str] | None) -> str | None:
