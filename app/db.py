@@ -2219,6 +2219,109 @@ def listar_auditoria_backoffice(limite: int = 200) -> list[sqlite3.Row]:
         conn.close()
 
 
+# --- Exportación de datos de un tenant (GDPR, solo lectura) -----------------
+#
+# MVP de "derecho de acceso": un único JSON con metadatos + enlaces de
+# descarga -- deliberadamente SIN incrustar el contenido de documentos/
+# adjuntos (BLOBs, potencialmente grandes y ya descargables uno a uno
+# desde sus propios endpoints existentes). Purga/"derecho al olvido" NO
+# está cubierto aquí -- un borrado real es mucho más delicado y se
+# diseñaría aparte si hiciera falta. `SELECT *` se evita a propósito en
+# `tenants`/`usuarios`: ambas tablas tienen columnas sensibles (API keys
+# de integraciones, hash de contraseña) que nunca deben salir en un
+# export -- se listan las columnas exportables explícitamente.
+
+def exportar_datos_tenant(tenant_id: int) -> dict:
+    tenant = obtener_tenant(tenant_id)
+    if tenant is None:
+        raise ValueError(f"No existe el tenant #{tenant_id}.")
+    usuarios_ids = usuarios_de_tenant(tenant_id)
+    conn = get_connection()
+    try:
+        usuarios = []
+        if usuarios_ids:
+            marcadores_usuarios = ",".join("?" * len(usuarios_ids))
+            usuarios = [
+                dict(u) for u in conn.execute(
+                    f"SELECT id, email, rol, creado_en FROM usuarios WHERE id IN ({marcadores_usuarios})",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+
+        clientes_fiscales = [
+            dict(c) for c in conn.execute(
+                "SELECT * FROM clientes_fiscales WHERE tenant_id = ?", (tenant_id,)
+            ).fetchall()
+        ]
+
+        vencimientos_fiscales = []
+        for v in conn.execute("SELECT * FROM vencimientos_fiscales WHERE tenant_id = ?", (tenant_id,)).fetchall():
+            v = dict(v)
+            v["documentos"] = [
+                {**dict(d), "url_descarga": f"/fiscal/vencimientos/{v['id']}/documentos/{d['id']}"}
+                for d in conn.execute(
+                    "SELECT id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
+                    "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ?",
+                    (v["id"],),
+                ).fetchall()
+            ]
+            v["mensajes"] = [
+                dict(m) for m in conn.execute(
+                    "SELECT autor, usuario_id, texto, creado_en, leido_en "
+                    "FROM vencimientos_fiscales_mensajes WHERE vencimiento_id = ?",
+                    (v["id"],),
+                ).fetchall()
+            ]
+            vencimientos_fiscales.append(v)
+
+        tareas, notas, tiquets, correos = [], [], [], []
+        if usuarios_ids:
+            marcadores = ",".join("?" * len(usuarios_ids))
+            tareas = [
+                dict(t) for t in conn.execute(
+                    f"SELECT id, usuario_id, nombre, tipo, estado, inicio_en, fin_en, duracion_segundos "
+                    f"FROM tareas WHERE usuario_id IN ({marcadores}) AND papelera_en IS NULL",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            notas = [
+                dict(n) for n in conn.execute(
+                    f"SELECT id, usuario_id, texto, creada_en FROM notas "
+                    f"WHERE usuario_id IN ({marcadores}) AND papelera_en IS NULL",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            tiquets = [
+                dict(t) for t in conn.execute(
+                    f"SELECT id, usuario_id, tipo, titulo, descripcion, estado, prioridad, "
+                    f"usuario_asignado_id, creado_en FROM tiquets WHERE usuario_id IN ({marcadores})",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            correos = [
+                dict(c) for c in conn.execute(
+                    f"""SELECT m.id, m.asunto, m.remitente, m.destinatarios, m.fecha, cu.usuario_id
+                        FROM correo_mensajes m JOIN correo_cuentas cu ON cu.id = m.cuenta_id
+                        WHERE cu.usuario_id IN ({marcadores})""",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+
+        return {
+            "tenant": {"id": tenant["id"], "nombre": tenant["nombre"], "creado_en": tenant["creado_en"]},
+            "generado_en": now_iso(),
+            "usuarios": usuarios,
+            "clientes_fiscales": clientes_fiscales,
+            "vencimientos_fiscales": vencimientos_fiscales,
+            "tareas": tareas,
+            "notas": notas,
+            "tiquets": tiquets,
+            "correos": correos,
+        }
+    finally:
+        conn.close()
+
+
 # --- Webhooks (ver app/eventos.py) --------------------------------------
 
 _MAX_ENTREGAS_POR_WEBHOOK = 50

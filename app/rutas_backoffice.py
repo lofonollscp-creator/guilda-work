@@ -6,7 +6,7 @@ un puñado de administradores, no pensada para volumen ni paginación.
 import json
 import secrets
 
-from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
 from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, umami
 from .auth import admin_required, login_required
@@ -400,6 +400,26 @@ def borrar_tenant(tenant_id: int):
     db.borrar_tenant(tenant_id)
     _auditar("borrar_tenant", tenant["nombre"])
     return redirect(url_for("backoffice.panel"))
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/exportar", methods=["POST"])
+@login_required
+@admin_required
+def exportar_datos_tenant(tenant_id: int):
+    """Exportación de datos de un tenant (MVP de "derecho de acceso" GDPR,
+    ver db.exportar_datos_tenant -- solo lectura, metadatos + enlaces de
+    descarga, sin incrustar BLOBs). Se registra en la auditoría por ser
+    una operación sensible, igual que borrar/crear un tenant."""
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    datos = db.exportar_datos_tenant(tenant_id)
+    _auditar("exportar_datos_tenant", tenant["nombre"])
+    cuerpo = json.dumps(datos, ensure_ascii=False, indent=2)
+    nombre_archivo = f"export-{tenant['nombre']}-{db.now_iso()[:10]}.json"
+    respuesta = Response(cuerpo, mimetype="application/json")
+    respuesta.headers.set("Content-Disposition", "attachment", filename=nombre_archivo)
+    return respuesta
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/herramientas/<herramienta_id>/alternar", methods=["POST"])

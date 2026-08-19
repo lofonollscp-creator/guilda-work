@@ -242,6 +242,11 @@
                 <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Quitar geolocalización') if t.fichaje_geolocalizacion else _('Activar geolocalización') }}
               </button>
             </form>
+            <form method="post" action="{{ url_for('backoffice.exportar_datos_tenant', tenant_id=t.id) }}" style="margin-bottom: 6px;">
+              <button type="submit" class="btn btn-ghost" title="{{ _('Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR).') }}">
+                <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar datos') }}
+              </button>
+            </form>
             <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
                   onsubmit="return confirm('{{ _('¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.', nombre=t.nombre) }}');">
               <button type="submit" class="btn btn-ghost">{{ _('Borrar') }}</button>

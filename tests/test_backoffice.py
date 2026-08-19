@@ -1241,3 +1241,106 @@ def test_backoffice_panel_muestra_la_tabla_de_auditoria(cliente):
 
     resp = cliente.get("/backoffice/")
     assert b"accion_visible_en_el_panel" in resp.data
+
+
+# --- Exportación de datos de un tenant (GDPR, solo lectura) -----------------
+
+def test_exportar_datos_tenant_incluye_lo_esperado(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Export")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Export", nif="B123")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+    db.crear_mensaje_vencimiento(v_id, "cliente", "¿Falta algo?")
+    cid = db.crear_categoria(usuario_id, "Guilda")
+    db.crear_tarea(usuario_id, "Tarea export", cid, "instantanea")
+    db.crear_nota(usuario_id, "Nota export")
+    db.crear_tiquet(usuario_id, tipo="error", titulo="Tiquet export")
+
+    export = db.exportar_datos_tenant(tenant_id)
+
+    assert export["tenant"]["nombre"] == "Gestoria Export"
+    assert len(export["usuarios"]) == 1
+    assert export["usuarios"][0]["id"] == usuario_id
+    assert "contrasena_hash" not in export["usuarios"][0]
+    assert len(export["clientes_fiscales"]) == 1
+    assert export["clientes_fiscales"][0]["nif"] == "B123"
+    assert len(export["vencimientos_fiscales"]) == 1
+    vencimiento_exportado = export["vencimientos_fiscales"][0]
+    assert len(vencimiento_exportado["documentos"]) == 1
+    assert vencimiento_exportado["documentos"][0]["nombre_archivo"] == "factura.pdf"
+    assert "url_descarga" in vencimiento_exportado["documentos"][0]
+    assert "contenido" not in vencimiento_exportado["documentos"][0]
+    assert len(vencimiento_exportado["mensajes"]) == 1
+    assert len(export["tareas"]) == 1
+    assert len(export["notas"]) == 1
+    assert len(export["tiquets"]) == 1
+
+
+def test_exportar_datos_tenant_no_mezcla_datos_de_otro_tenant(usuario_id):
+    tenant_a = db.crear_tenant("Gestoria Export A")
+    tenant_b = db.crear_tenant("Gestoria Export B")
+    db.asignar_tenant(usuario_id, tenant_a)
+    db.crear_cliente_fiscal(tenant_a, "Cliente A")
+    otro_id = db.crear_usuario("export-otro@ejemplo.com", "contrasena123")
+    db.asignar_tenant(otro_id, tenant_b)
+    db.crear_cliente_fiscal(tenant_b, "Cliente B")
+
+    export = db.exportar_datos_tenant(tenant_a)
+
+    assert [c["nombre"] for c in export["clientes_fiscales"]] == ["Cliente A"]
+    assert [u["id"] for u in export["usuarios"]] == [usuario_id]
+
+
+def test_exportar_datos_tenant_inexistente_lanza_value_error():
+    with pytest.raises(ValueError):
+        db.exportar_datos_tenant(999999)
+
+
+def test_exportar_datos_tenant_sin_usuarios_no_falla():
+    tenant_id = db.crear_tenant("Gestoria Export Vacia")
+    export = db.exportar_datos_tenant(tenant_id)
+    assert export["usuarios"] == []
+    assert export["tareas"] == []
+
+
+def test_backoffice_exportar_datos_tenant_devuelve_json_descargable(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "export-ruta@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("Gestoria Export Ruta")
+    db.crear_cliente_fiscal(tenant_id, "Cliente Export Ruta")
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/exportar")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/json"
+    assert "attachment" in resp.headers["Content-Disposition"]
+    datos = resp.get_json()
+    assert datos["tenant"]["nombre"] == "Gestoria Export Ruta"
+    assert len(datos["clientes_fiscales"]) == 1
+
+
+def test_backoffice_exportar_datos_tenant_deja_entrada_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "export-auditoria@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("Gestoria Export Auditoria")
+
+    cliente.post(f"/backoffice/tenants/{tenant_id}/exportar")
+
+    acciones = [e["accion"] for e in db.listar_auditoria_backoffice()]
+    assert "exportar_datos_tenant" in acciones
+
+
+def test_backoffice_exportar_datos_tenant_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "export-no-admin@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Export No Admin")
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/exportar")
+    assert resp.status_code == 403
+
+
+def test_backoffice_exportar_datos_tenant_inexistente_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "export-404@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants/999999/exportar")
+    assert resp.status_code == 404
