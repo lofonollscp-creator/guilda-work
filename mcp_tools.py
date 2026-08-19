@@ -1212,6 +1212,68 @@ def generar_vencimientos_fiscales(cliente_id: int, modelos: list[str], anio: int
     return {"creados": len(creados), "vencimientos": creados}
 
 
+def marcar_presentado_vencimiento_fiscal(vencimiento_id: int) -> dict:
+    """Marca un vencimiento fiscal como presentado."""
+    tenant_id = _tenant_id_actual()
+    if db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id) is None:
+        raise ValueError(f"No existe el vencimiento #{vencimiento_id} en tu gestoría.")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, vencimiento_id)
+    return _fila(db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id))
+
+
+def editar_vencimiento_fiscal(
+    vencimiento_id: int, modelo: str | None = None, periodo: str | None = None,
+    fecha_limite: str | None = None, estado: str | None = None, notas: str | None = None,
+) -> dict:
+    """Edita los campos indicados (los que se omitan no cambian) de un
+    vencimiento fiscal ya existente."""
+    tenant_id = _tenant_id_actual()
+    if db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id) is None:
+        raise ValueError(f"No existe el vencimiento #{vencimiento_id} en tu gestoría.")
+    campos = {
+        k: v for k, v in {
+            "modelo": modelo, "periodo": periodo, "fecha_limite": fecha_limite,
+            "estado": estado, "notas": notas,
+        }.items() if v is not None
+    }
+    db.editar_vencimiento_fiscal(tenant_id, vencimiento_id, **campos)
+    return _fila(db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id))
+
+
+def resumen_cliente_fiscal(cliente_id: int) -> dict:
+    """Resumen agregado de un cliente fiscal: sus vencimientos (con
+    estado), y cuántos documentos/mensajes hay en total en el portal de
+    cliente para cada uno -- para responder de un vistazo "¿cómo va
+    fulanito?" sin tener que consultar vencimiento a vencimiento."""
+    tenant_id = _tenant_id_actual()
+    cliente = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    if cliente is None:
+        raise ValueError(f"No existe el cliente fiscal #{cliente_id} en tu gestoría.")
+    vencimientos = db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=cliente_id)
+    total_documentos = 0
+    total_mensajes = 0
+    detalle = []
+    for v in vencimientos:
+        documentos = db.listar_documentos_vencimiento(v["id"])
+        mensajes = db.listar_mensajes_vencimiento(v["id"])
+        total_documentos += len(documentos)
+        total_mensajes += len(mensajes)
+        detalle.append({
+            "id": v["id"], "modelo": v["modelo"], "periodo": v["periodo"],
+            "fecha_limite": v["fecha_limite"], "estado": v["estado"],
+            "documentos": len(documentos), "mensajes": len(mensajes),
+        })
+    return {
+        "cliente": _fila(cliente),
+        "total_vencimientos": len(vencimientos),
+        "pendientes": sum(1 for v in vencimientos if v["estado"] == "pendiente"),
+        "fuera_de_plazo": sum(1 for v in vencimientos if v["estado"] == "fuera_plazo"),
+        "total_documentos": total_documentos,
+        "total_mensajes": total_mensajes,
+        "vencimientos": detalle,
+    }
+
+
 # --- Fichaje (registro horario) --------------------------------------------
 #
 # Deliberadamente acotado a lo propio del usuario actual -- entrada/salida/
@@ -1529,6 +1591,7 @@ TOOLS = [
     listar_tiquets, crear_tiquet, editar_tiquet, eliminar_tiquet, cambiar_estado_tiquet,
     # Calendario fiscal
     listar_clientes_fiscales, crear_cliente_fiscal, listar_vencimientos_fiscales, generar_vencimientos_fiscales,
+    marcar_presentado_vencimiento_fiscal, editar_vencimiento_fiscal, resumen_cliente_fiscal,
     # Fichaje
     fichar, listar_mis_fichajes,
     # Papelera

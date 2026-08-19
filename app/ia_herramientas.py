@@ -437,6 +437,31 @@ HERRAMIENTAS: list[dict] = [
         },
         ["cliente_id", "modelos", "anio"],
     ),
+    _tool(
+        "marcar_presentado_vencimiento_fiscal",
+        "Marca un vencimiento fiscal como presentado.",
+        {"vencimiento_id": _param("integer", "Id del vencimiento fiscal.")},
+        ["vencimiento_id"],
+    ),
+    _tool(
+        "editar_vencimiento_fiscal",
+        "Edita uno o varios campos de un vencimiento fiscal ya existente (los que se omitan no cambian).",
+        {
+            "vencimiento_id": _param("integer", "Id del vencimiento fiscal."),
+            "modelo": _param("string", "Código de modelo, opcional."),
+            "periodo": _param("string", "Periodo, ej. '2026-T2', opcional."),
+            "fecha_limite": _param("string", "Fecha YYYY-MM-DD, opcional."),
+            "estado": _param("string", "pendiente/presentado/fuera_plazo, opcional."),
+            "notas": _param("string", "Notas, opcional."),
+        },
+        ["vencimiento_id"],
+    ),
+    _tool(
+        "resumen_cliente_fiscal",
+        "Resumen agregado de un cliente fiscal: sus vencimientos con estado, y cuántos documentos/mensajes hay en el portal de cliente para cada uno. Úsalo cuando pregunten '¿cómo va [cliente]?' o similar.",
+        {"cliente_id": _param("integer", "Id del cliente fiscal.")},
+        ["cliente_id"],
+    ),
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
@@ -447,6 +472,7 @@ LECTURA: set[str] = {
     "preparar_borrador_correo", "listar_tiquets", "listar_mis_fichajes",
     "buscar_semantico", "listar_papelera", "estadisticas_por_categoria", "estadisticas_por_dia",
     "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
+    "resumen_cliente_fiscal",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -456,6 +482,7 @@ ESCRITURA: set[str] = {
     "asignar_categoria_correo", "configurar_firma_correo", "importar_historial", "importar_tareas",
     "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet", "fichar",
     "restaurar_de_papelera", "crear_cliente_fiscal", "generar_vencimientos_fiscales",
+    "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son

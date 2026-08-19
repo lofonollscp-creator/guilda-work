@@ -6,10 +6,11 @@ import pytest
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_44_herramientas_clasificadas():
-    # 39 + 4 del calendario fiscal + 1 de adjuntos del chat (Fase G2).
+def test_catalogo_tiene_las_mismas_47_herramientas_clasificadas():
+    # 39 + 4 del calendario fiscal + 1 de adjuntos del chat (Fase G2)
+    # + 3 del calendario fiscal (marcar_presentado/editar/resumen).
     nombres = {t["function"]["name"] for t in h.HERRAMIENTAS}
-    assert len(nombres) == 44
+    assert len(nombres) == 47
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)
@@ -73,6 +74,19 @@ def test_tools_fiscales_ciclo_completo(usuario_id):
 
     vencimientos = h.ejecutar(usuario_id, "listar_vencimientos_fiscales", {})
     assert len(vencimientos) == 4
+
+    v_id = vencimientos[0]["id"]
+    editado = h.ejecutar(usuario_id, "editar_vencimiento_fiscal", {"vencimiento_id": v_id, "notas": "revisado"})
+    assert editado["notas"] == "revisado"
+
+    marcado = h.ejecutar(usuario_id, "marcar_presentado_vencimiento_fiscal", {"vencimiento_id": v_id})
+    assert marcado["estado"] == "presentado"
+
+    resumen = h.ejecutar(usuario_id, "resumen_cliente_fiscal", {"cliente_id": creado["id"]})
+    assert resumen["total_vencimientos"] == 4
+    assert resumen["pendientes"] == 3
+    assert resumen["total_documentos"] == 0
+    assert resumen["total_mensajes"] == 0
 
 
 # --- Adjuntos del chat (Fase G2) ----------------------------------------------

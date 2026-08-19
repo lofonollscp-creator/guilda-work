@@ -60,6 +60,7 @@ _PROPIAS_GUILDA_WORK = {
     "leer_adjunto_chat",
     "listar_clientes_fiscales", "crear_cliente_fiscal",
     "listar_vencimientos_fiscales", "generar_vencimientos_fiscales",
+    "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal", "resumen_cliente_fiscal",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
