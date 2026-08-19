@@ -46,11 +46,32 @@
     return html;
   }
 
-  var ETIQUETAS_TIPO = { nota: "Nota", tarea: "Tarea", mensaje: "Correo" };
+  var ETIQUETAS_TIPO = {
+    nota: "Nota", tarea: "Tarea", mensaje: "Correo",
+    vencimiento_fiscal: "Vencimiento fiscal", cliente_fiscal: "Cliente fiscal",
+  };
   var URL_HISTORIAL = boton.dataset.urlHistorial;
   var URL_CORREO = boton.dataset.urlCorreo;
+  var URL_FISCAL_VENCIMIENTO = boton.dataset.urlFiscalVencimiento;
+  var URL_FISCAL_CLIENTE = boton.dataset.urlFiscalCliente;
+
+  // vencimiento_fiscal/cliente_fiscal enlazan directo a su ficha (el id
+  // real va tras el último guion del id del documento, ej.
+  // "vencimiento_fiscal-42" -> 42) -- a diferencia de nota/tarea/mensaje,
+  // que no tienen una página propia y por eso enlazan a una búsqueda de
+  // texto en historial/correo.
+  // Sustituye el segmento "0" (id de relleno usado al generar la URL
+  // base con url_for, ver base.html) por el id real del resultado.
+  function sustituirIdEnRuta(urlBase, idReal) {
+    return urlBase.split("/").map(function (seg) {
+      return seg === "0" ? String(idReal) : seg;
+    }).join("/");
+  }
 
   function urlDestino(hit) {
+    var idReal = hit.id.split("-").pop();
+    if (hit.tipo === "vencimiento_fiscal") return sustituirIdEnRuta(URL_FISCAL_VENCIMIENTO, idReal);
+    if (hit.tipo === "cliente_fiscal") return sustituirIdEnRuta(URL_FISCAL_CLIENTE, idReal);
     var base = hit.tipo === "mensaje" ? URL_CORREO : URL_HISTORIAL;
     return base + "?q=" + encodeURIComponent(hit.texto.slice(0, 60));
   }

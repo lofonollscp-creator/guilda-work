@@ -114,9 +114,11 @@
           <span class="brand-name">Guilda Work</span>
         </a>
         <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir"
-                data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}">
+                data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}"
+                data-url-fiscal-vencimiento="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=0) }}"
+                data-url-fiscal-cliente="{{ url_for('fiscal.ficha_cliente', cliente_id=0) }}">
           <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
-          {{ _('Buscar en notas, tareas y correo…') }}
+          {{ _('Buscar en notas, tareas, correo y calendario fiscal…') }}
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>

@@ -902,7 +902,7 @@ def token_busqueda():
     de la propia web — nunca se mezclan los dos mecanismos de auth en el
     mismo prefijo (mismo criterio que ya documenta rutas_api.py)."""
     try:
-        token = busqueda.generar_token_busqueda(g.usuario_id)
+        token = busqueda.generar_token_busqueda(g.usuario_id, tenant_id=g.tenant_id)
     except busqueda.ErrorBusqueda as e:
         return {"ok": False, "error": str(e)}, 503
     return {"ok": True, "token": token, "url": busqueda.MEILISEARCH_URL, "indice": busqueda.INDICE}
@@ -922,7 +922,7 @@ def busqueda_hibrida():
     texto = request.args.get("q", "").strip()
     if not texto:
         return {"ok": True, "resultados": []}
-    resultados = busqueda.buscar_hibrido(g.usuario_id, texto)
+    resultados = busqueda.buscar_hibrido(g.usuario_id, texto, tenant_id=g.tenant_id)
     return {"ok": True, "resultados": resultados}
 
 

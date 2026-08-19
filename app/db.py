@@ -3776,9 +3776,32 @@ def crear_cliente_fiscal(
             ),
         )
         conn.commit()
-        return cur.lastrowid
+        cliente_id = cur.lastrowid
     finally:
         conn.close()
+    _reindexar_cliente_fiscal(tenant_id, cliente_id)
+    return cliente_id
+
+
+def _reindexar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
+    """Falla en silencio, mismo criterio que _reindexar_tarea/_reindexar_nota
+    -- una mejora de UX (buscador global), nunca debe romper el alta/edición
+    del cliente en sí."""
+    from . import busqueda
+    try:
+        cliente = obtener_cliente_fiscal(tenant_id, cliente_id)
+        if cliente is not None:
+            busqueda.indexar_cliente_fiscal(dict(cliente))
+    except busqueda.ErrorBusqueda:
+        pass
+
+
+def _quitar_cliente_fiscal_del_indice(cliente_id: int) -> None:
+    from . import busqueda
+    try:
+        busqueda.eliminar_del_indice("cliente_fiscal", cliente_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def listar_clientes_fiscales(tenant_id: int, q: str | None = None) -> list[sqlite3.Row]:
@@ -3825,6 +3848,7 @@ def editar_cliente_fiscal(tenant_id: int, cliente_id: int, **campos) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_cliente_fiscal(tenant_id, cliente_id)
 
 
 def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -3841,6 +3865,7 @@ def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_cliente_fiscal_del_indice(cliente_id)
 
 
 def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -3853,6 +3878,7 @@ def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_cliente_fiscal(tenant_id, cliente_id)
 
 
 def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> None:
@@ -3862,6 +3888,7 @@ def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> 
         conn.commit()
     finally:
         conn.close()
+    _quitar_cliente_fiscal_del_indice(cliente_id)
 
 
 def crear_vencimiento_fiscal(
@@ -3880,9 +3907,29 @@ def crear_vencimiento_fiscal(
             ),
         )
         conn.commit()
-        return cur.lastrowid
+        vencimiento_id = cur.lastrowid
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
+    return vencimiento_id
+
+
+def _reindexar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
+    from . import busqueda
+    try:
+        vencimiento = obtener_vencimiento_fiscal(tenant_id, vencimiento_id)
+        if vencimiento is not None:
+            busqueda.indexar_vencimiento_fiscal(dict(vencimiento))
+    except busqueda.ErrorBusqueda:
+        pass
+
+
+def _quitar_vencimiento_fiscal_del_indice(vencimiento_id: int) -> None:
+    from . import busqueda
+    try:
+        busqueda.eliminar_del_indice("vencimiento_fiscal", vencimiento_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def listar_vencimientos_fiscales(
@@ -3946,6 +3993,7 @@ def editar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, **campos) -> 
         conn.commit()
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
 def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
@@ -3959,6 +4007,7 @@ def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) ->
         conn.commit()
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
 def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
@@ -3971,6 +4020,7 @@ def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_vencimiento_fiscal_del_indice(vencimiento_id)
 
 
 def restaurar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
@@ -3983,6 +4033,7 @@ def restaurar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
 def eliminar_vencimiento_fiscal_definitivamente(tenant_id: int, vencimiento_id: int) -> None:
@@ -3992,6 +4043,7 @@ def eliminar_vencimiento_fiscal_definitivamente(tenant_id: int, vencimiento_id: 
         conn.commit()
     finally:
         conn.close()
+    _quitar_vencimiento_fiscal_del_indice(vencimiento_id)
 
 
 def marcar_recordatorio_vencimiento_fiscal_enviado(vencimiento_id: int) -> None:
