@@ -84,6 +84,43 @@ def panel():
     )
 
 
+@backoffice_bp.route("/tenants/<int:tenant_id>")
+@login_required
+@admin_required
+def ficha_tenant(tenant_id: int):
+    """Ficha de un tenant -- pantalla nueva (backoffice renovado): antes
+    todo (usuarios, herramientas, configuración) vivía disperso en la
+    tabla plana de panel(); aquí queda agrupado por tenant. Ver
+    app/db.py:ultima_actividad_tenant/estadisticas_equipo_por_usuario."""
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    usuarios_ids = set(db.usuarios_de_tenant(tenant_id))
+    usuarios_del_tenant = [u for u in db.listar_usuarios() if u["id"] in usuarios_ids]
+    return render_template(
+        "backoffice_ficha_tenant.html",
+        tenant=tenant,
+        usuarios=usuarios_del_tenant,
+        ultima_actividad=db.ultima_actividad_tenant(tenant_id),
+        estadisticas_equipo=db.estadisticas_equipo_por_usuario(tenant_id),
+        catalogo_herramientas=herramientas.HERRAMIENTAS,
+        herramientas_ocultas=db.herramientas_ocultas_de_tenant(tenant_id),
+    )
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/activo", methods=["POST"])
+@login_required
+@admin_required
+def alternar_activo_tenant(tenant_id: int):
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    nuevo_valor = not tenant["activo"]
+    db.alternar_activo_tenant(tenant_id, nuevo_valor)
+    _auditar("suspender_tenant" if not nuevo_valor else "reactivar_tenant", tenant["nombre"])
+    return redirect(request.referrer or url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+
+
 @backoffice_bp.route("/tenants", methods=["POST"])
 @login_required
 @admin_required

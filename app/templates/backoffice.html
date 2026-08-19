@@ -237,6 +237,7 @@
             </div>
           </td>
           <td>
+            <a href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}" class="btn btn-primary" style="margin-bottom: 6px; display: inline-block;">{{ _('Ver ficha') }}</a>
             <form method="post" action="{{ url_for('backoffice.alternar_fichaje_geolocalizacion', tenant_id=t.id) }}" style="margin-bottom: 6px;">
               <button type="submit" class="btn btn-ghost" title="{{ _('RGPD: solo activar si hay trabajadores fichando en remoto') }}">
                 <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Quitar geolocalización') if t.fichaje_geolocalizacion else _('Activar geolocalización') }}

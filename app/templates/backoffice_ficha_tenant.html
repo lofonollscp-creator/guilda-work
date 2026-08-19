@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ tenant.nombre }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <a class="link" href="{{ url_for('backoffice.panel') }}">&larr; {{ _('Backoffice') }}</a>
+    <h1>{{ tenant.nombre }}</h1>
+    <p class="subtitle">
+      <span class="log-badge {{ 'log-badge-duracion' if tenant.activo else 'log-badge-instantanea' }}">
+        {{ _('Activo') if tenant.activo else _('Suspendido') }}
+      </span>
+      {% if ultima_actividad %}
+      {{ _('Última actividad: %(fecha)s', fecha=ultima_actividad[:16].replace('T', ' ')) }}
+      {% else %}
+      {{ _('Sin actividad todavía.') }}
+      {% endif %}
+    </p>
+  </div>
+  <form method="post" action="{{ url_for('backoffice.alternar_activo_tenant', tenant_id=tenant.id) }}">
+    <button type="submit" class="btn {{ 'btn-stop' if tenant.activo else 'btn-primary' }}">
+      {{ _('Suspender tenant') if tenant.activo else _('Reactivar tenant') }}
+    </button>
+  </form>
+</header>
+
+<section class="quick-card">
+  <label>{{ _('Usuarios') }}</label>
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>{{ _('Rol') }}</th>
+        <th>{{ _('Fichaje') }}</th>
+        <th>{{ _('Supervisor') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.email }}</td>
+        <td>
+          <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="log-badge {{ 'log-badge-duracion' if u.rol == 'admin' else 'log-badge-instantanea' }}" title="{{ _('Clic para cambiar') }}">{{ u.rol }}</button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-ghost">{{ _('Quitar gestor') if u.gestor_fichajes else _('Hacer gestor') }}</button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-ghost">{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty">{{ _('Sin usuarios asignados todavía.') }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Módulos') }}</label>
+  <div class="herramientas-toggle-wrap">
+    {% for h in catalogo_herramientas %}
+    <form method="post" action="{{ url_for('backoffice.alternar_herramienta_tenant', tenant_id=tenant.id, herramienta_id=h.id) }}" style="display:inline;">
+      <button type="submit" class="herramienta-toggle-pill {{ 'is-oculta' if h.id in herramientas_ocultas else '' }}"
+              title="{{ _('Oculto — clic para mostrar') if h.id in herramientas_ocultas else _('Visible — clic para ocultar') }}">
+        {{ h.nombre }}
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Estadísticas de equipo') }}</label>
+  {% if estadisticas_equipo %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>{{ _('Tareas finalizadas') }}</th>
+        <th>{{ _('Notas') }}</th>
+        <th>{{ _('Tiempo total') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in estadisticas_equipo %}
+      <tr>
+        <td>{{ e.email }}</td>
+        <td class="mono">{{ e.num_tareas }}</td>
+        <td class="mono">{{ e.num_notas }}</td>
+        <td class="mono">{{ (e.segundos_totales // 3600) }}h {{ (e.segundos_totales % 3600) // 60 }}m</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty">{{ _('Todavía no hay datos suficientes.') }}</p>
+  {% endif %}
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Ingresos') }}</label>
+  <p class="empty">{{ _('Sin plan asignado todavía.') }}</p>
+</section>
+{% endblock %}

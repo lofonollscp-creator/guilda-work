@@ -1292,6 +1292,11 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "fichaje_geolocalizacion", "INTEGER NOT NULL DEFAULT 0")
         _backfill_hash_fichajes(conn)
 
+        # Backoffice renovado (cuarta ronda): suspender/reactivar un tenant a
+        # mano, independiente de si paga o no (eso lo aporta la suscripción
+        # de plataforma, ver planes_guilda más abajo).
+        _asegurar_columna(conn, "tenants", "activo", "INTEGER NOT NULL DEFAULT 1")
+
         # Ampliación "asistente de IA" (Fase G2): adjuntos subidos al chat --
         # texto/CSV pequeños que el asistente puede leer bajo demanda vía la
         # tool leer_adjunto_chat (app/ia_herramientas.py). Mismo criterio de
@@ -1644,6 +1649,45 @@ def renombrar_tenant(tenant_id: int, nuevo_nombre: str) -> None:
     try:
         conn.execute("UPDATE tenants SET nombre = ? WHERE id = ?", (nuevo_nombre.strip(), tenant_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def alternar_activo_tenant(tenant_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET activo = ? WHERE id = ?", (int(valor), tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def ultima_actividad_tenant(tenant_id: int) -> str | None:
+    """Fecha/hora del registro más reciente entre tareas/notas/fichajes/
+    correo de cualquier usuario del tenant -- ISO 8601 o None si el tenant
+    no tiene ninguna actividad todavía. Solo para mostrar "hace X" en el
+    backoffice, no se usa para ninguna decisión de negocio."""
+    ids = usuarios_de_tenant(tenant_id)
+    if not ids:
+        return None
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" * len(ids))
+        fila = conn.execute(
+            f"""SELECT MAX(fecha) AS ultima FROM (
+                SELECT MAX(COALESCE(fin_en, inicio_en)) AS fecha FROM tareas WHERE usuario_id IN ({marcadores})
+                UNION ALL
+                SELECT MAX(creada_en) AS fecha FROM notas WHERE usuario_id IN ({marcadores})
+                UNION ALL
+                SELECT MAX(creado_en) AS fecha FROM fichajes WHERE usuario_id IN ({marcadores})
+                UNION ALL
+                SELECT MAX(m.fecha) AS fecha FROM correo_mensajes m
+                    JOIN correo_cuentas cu ON cu.id = m.cuenta_id
+                    WHERE cu.usuario_id IN ({marcadores})
+            )""",
+            ids * 4,
+        ).fetchone()
+        return fila["ultima"] if fila else None
     finally:
         conn.close()
 
