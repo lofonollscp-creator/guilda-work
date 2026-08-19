@@ -743,3 +743,69 @@ def test_ficha_cliente_sin_correos_vinculados_no_muestra_la_seccion(cliente):
     resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
     assert resp.status_code == 200
     assert "Correos relacionados" not in resp.get_data(as_text=True)
+
+
+# --- Descargar documento (app/db.py:contenido_documento_vencimiento) -------
+
+def test_descargar_documento_sirve_el_blob_local(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-blob@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Blob")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/documentos/{doc_id}")
+    assert resp.status_code == 200
+    assert resp.data == b"contenido-pdf"
+
+
+def test_descargar_documento_sirve_desde_nextcloud_si_esta_promovido(cliente, monkeypatch):
+    from app import nextcloud
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-nextcloud@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Nextcloud")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga Nextcloud")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(nextcloud, "subir_archivo", lambda ruta, contenido: None)
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+    monkeypatch.setattr(nextcloud, "descargar_archivo", lambda ruta: b"desde-nextcloud")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/documentos/{doc_id}")
+    assert resp.status_code == 200
+    assert resp.data == b"desde-nextcloud"
+
+
+def test_descargar_documento_nextcloud_caido_da_503(cliente, monkeypatch):
+    from app import nextcloud
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-caido@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Caida")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga Caida")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(nextcloud, "subir_archivo", lambda ruta, contenido: None)
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    def _falla(*a, **k):
+        raise nextcloud.ErrorNextcloud("caído")
+    monkeypatch.setattr(nextcloud, "descargar_archivo", _falla)
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/documentos/{doc_id}")
+    assert resp.status_code == 503
+
+
+def test_descargar_documento_de_otro_vencimiento_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-ajeno@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Ajena")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga Ajena")
+    v1_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    v2_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "130", "2026-T1", "2026-04-20")
+    doc_id = db.subir_documento_vencimiento(v1_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v2_id}/documentos/{doc_id}")
+    assert resp.status_code == 404

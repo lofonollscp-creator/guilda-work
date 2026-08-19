@@ -350,6 +350,57 @@ def test_tiempo_medio_resolucion_vencimientos_calcula_la_media_en_dias(monkeypat
     assert db.tiempo_medio_resolucion_vencimientos(tenant_id) == 4.0
 
 
+# --- Migración: vencimientos_fiscales_documentos a Nextcloud ---------------
+
+def test_migrar_documentos_vencimiento_conserva_los_ya_existentes(usuario_id):
+    """Simula una base de datos creada ANTES de este cambio (contenido
+    BLOB NOT NULL, sin ruta_nextcloud), con un documento ya subido, y
+    confirma que re-ejecutar init_db() lo conserva intacto tras
+    reconstruir la tabla (ver _migrar_documentos_vencimiento_a_nextcloud)."""
+    tenant_id = db.crear_tenant("Gestoria Migracion Docs")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Migracion")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    conn = db.get_connection()
+    try:
+        conn.execute("DROP TABLE vencimientos_fiscales_documentos")
+        conn.execute(
+            """CREATE TABLE vencimientos_fiscales_documentos (
+                   id INTEGER PRIMARY KEY,
+                   vencimiento_id INTEGER NOT NULL,
+                   nombre_archivo TEXT NOT NULL,
+                   tipo_mime TEXT NOT NULL,
+                   tamano_bytes INTEGER NOT NULL,
+                   contenido BLOB NOT NULL,
+                   creado_en TEXT NOT NULL,
+                   FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            "INSERT INTO vencimientos_fiscales_documentos "
+            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (v_id, "antiguo.pdf", "application/pdf", 7, b"viejito", db.now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    db.init_db()  # re-ejecuta las migraciones, incluida la de esta tabla
+
+    documentos = db.listar_documentos_vencimiento(v_id)
+    assert len(documentos) == 1
+    assert documentos[0]["nombre_archivo"] == "antiguo.pdf"
+    documento = db.obtener_documento_vencimiento(documentos[0]["id"])
+    assert documento["contenido"] == b"viejito"
+    assert documento["ruta_nextcloud"] is None
+
+    # La tabla ya acepta contenido NULL (columna promovida a Nextcloud) --
+    # confirma que la restricción NOT NULL desapareció de verdad.
+    nuevo_id = db.subir_documento_vencimiento(v_id, "nuevo.pdf", "application/pdf", b"nuevo-contenido")
+    assert db.obtener_documento_vencimiento(nuevo_id)["contenido"] == b"nuevo-contenido"
+
+
 # --- Copia de seguridad ----------------------------------------------------
 
 def test_backup_crea_un_archivo_y_no_lo_duplica_el_mismo_dia(usuario_id):

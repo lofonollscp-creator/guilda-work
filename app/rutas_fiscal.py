@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, documenso, espocrm, eventos, facturascripts
+from . import db, documenso, espocrm, eventos, facturascripts, nextcloud
 from .auth import login_required
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal, enviar_solicitud_documento
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
@@ -501,7 +501,11 @@ def descargar_documento_vencimiento(vencimiento_id: int, documento_id: int):
     documento = db.obtener_documento_vencimiento(documento_id)
     if documento is None or documento["vencimiento_id"] != vencimiento_id:
         abort(404)
-    respuesta = Response(documento["contenido"], mimetype=documento["tipo_mime"])
+    try:
+        contenido = db.contenido_documento_vencimiento(documento)
+    except nextcloud.ErrorNextcloud:
+        abort(503)
+    respuesta = Response(contenido, mimetype=documento["tipo_mime"])
     respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
     return respuesta
 

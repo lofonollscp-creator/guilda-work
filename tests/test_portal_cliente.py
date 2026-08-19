@@ -74,6 +74,66 @@ def test_subir_y_listar_documentos_vencimiento():
     assert documento["contenido"] == b"contenido-pdf"
 
 
+# --- Documentos fiscales: promoción a Nextcloud (app/db.py) ----------------
+
+def test_subir_documento_promociona_a_nextcloud_si_esta_configurado(monkeypatch):
+    from app import nextcloud
+
+    tenant_id, cliente_id = _cliente_de_prueba()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    subidas = []
+    monkeypatch.setattr(nextcloud, "subir_archivo", lambda ruta, contenido: subidas.append((ruta, contenido)))
+
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+    documento = db.obtener_documento_vencimiento(doc_id)
+    assert documento["contenido"] is None
+    assert documento["ruta_nextcloud"] is not None
+    assert len(subidas) == 1
+    assert subidas[0] == (documento["ruta_nextcloud"], b"contenido-pdf")
+
+
+def test_subir_documento_si_nextcloud_falla_se_queda_como_blob(monkeypatch):
+    from app import nextcloud
+
+    tenant_id, cliente_id = _cliente_de_prueba()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise nextcloud.ErrorNextcloud("Nextcloud caído")
+    monkeypatch.setattr(nextcloud, "subir_archivo", _falla)
+
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+    documento = db.obtener_documento_vencimiento(doc_id)
+    assert documento["contenido"] == b"contenido-pdf"
+    assert documento["ruta_nextcloud"] is None
+
+
+def test_contenido_documento_vencimiento_lee_blob_si_no_esta_promovido():
+    tenant_id, cliente_id = _cliente_de_prueba()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    documento = db.obtener_documento_vencimiento(doc_id)
+    assert db.contenido_documento_vencimiento(documento) == b"contenido-pdf"
+
+
+def test_contenido_documento_vencimiento_lee_de_nextcloud_si_esta_promovido(monkeypatch):
+    from app import nextcloud
+
+    tenant_id, cliente_id = _cliente_de_prueba()
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    monkeypatch.setattr(nextcloud, "subir_archivo", lambda ruta, contenido: None)
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    llamadas = []
+    monkeypatch.setattr(nextcloud, "descargar_archivo", lambda ruta: llamadas.append(ruta) or b"desde-nextcloud")
+
+    documento = db.obtener_documento_vencimiento(doc_id)
+    assert db.contenido_documento_vencimiento(documento) == b"desde-nextcloud"
+    assert llamadas == [documento["ruta_nextcloud"]]
+
+
 # --- Capa ruta -------------------------------------------------------------
 
 def test_entrar_responde_igual_exista_o_no_el_email(cliente):

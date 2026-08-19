@@ -108,14 +108,19 @@ CREATE TABLE IF NOT EXISTS clientes_fiscales_accesos (
 
 -- Documentos que sube el CLIENTE (portal) para un vencimiento concreto --
 -- no confundir con vencimientos_fiscales.notas, de uso interno del
--- equipo. Mismo diseño BLOB+MIME que tiquets_adjuntos.
+-- equipo. `contenido` (BLOB, mismo diseño que tiquets_adjuntos) y
+-- `ruta_nextcloud` son mutuamente excluyentes en la práctica: si el
+-- tenant tiene Nextcloud configurado, el contenido vive ahí y
+-- `contenido` es NULL; si no, cae a BLOB local como hasta ahora (ver
+-- db.subir_documento_vencimiento/contenido_documento_vencimiento).
 CREATE TABLE IF NOT EXISTS vencimientos_fiscales_documentos (
     id INTEGER PRIMARY KEY,
     vencimiento_id INTEGER NOT NULL,
     nombre_archivo TEXT NOT NULL,
     tipo_mime TEXT NOT NULL,
     tamano_bytes INTEGER NOT NULL,
-    contenido BLOB NOT NULL,
+    contenido BLOB,
+    ruta_nextcloud TEXT,
     creado_en TEXT NOT NULL,
     FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
 );
@@ -944,6 +949,63 @@ def _migrar_correo_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connecti
         conn.close()
 
 
+def _migrar_documentos_vencimiento_a_nextcloud(conn_ignorada: sqlite3.Connection) -> None:
+    """Documentos fiscales del portal de cliente: pasan de BLOB obligatorio
+    en SQLite a poder vivir en Nextcloud (ver app/nextcloud.py,
+    db.subir_documento_vencimiento) -- solo metadatos + `ruta_nextcloud`
+    en SQLite para los que se suben ahí, `contenido` se queda como
+    fallback para tenants sin Nextcloud configurado. Mismo procedimiento
+    de reconstrucción de tabla que _migrar_correo_categorias_unique_por_usuario
+    (ver su docstring) -- `contenido` tiene que dejar de ser NOT NULL, y
+    SQLite no permite quitar una restricción NOT NULL con ALTER TABLE."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        definicion = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='vencimientos_fiscales_documentos'"
+        ).fetchone()
+        if definicion is None or "contenido BLOB NOT NULL" not in definicion["sql"]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            """CREATE TABLE vencimientos_fiscales_documentos_nueva (
+                   id INTEGER PRIMARY KEY,
+                   vencimiento_id INTEGER NOT NULL,
+                   nombre_archivo TEXT NOT NULL,
+                   tipo_mime TEXT NOT NULL,
+                   tamano_bytes INTEGER NOT NULL,
+                   contenido BLOB,
+                   ruta_nextcloud TEXT,
+                   creado_en TEXT NOT NULL,
+                   FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            """INSERT INTO vencimientos_fiscales_documentos_nueva
+                   (id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en)
+               SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en
+               FROM vencimientos_fiscales_documentos"""
+        )
+        conn.execute("DROP TABLE vencimientos_fiscales_documentos")
+        conn.execute(
+            "ALTER TABLE vencimientos_fiscales_documentos_nueva RENAME TO vencimientos_fiscales_documentos"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento "
+            "ON vencimientos_fiscales_documentos(vencimiento_id)"
+        )
+        violaciones = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violaciones:
+            conn.rollback()
+            raise RuntimeError(
+                f"Migración de vencimientos_fiscales_documentos abortada: foreign_key_check encontró {violaciones}"
+            )
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.close()
+
+
 def init_db() -> None:
     conn = get_connection()
     try:
@@ -955,6 +1017,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "categorias", "favorito", "INTEGER NOT NULL DEFAULT 0")
         _migrar_categorias_unique_por_usuario(conn)
         _migrar_correo_categorias_unique_por_usuario(conn)
+        _migrar_documentos_vencimiento_a_nextcloud(conn)
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "categoria_id", "INTEGER")
@@ -4197,6 +4260,12 @@ def consumir_acceso_cliente_fiscal(token: str) -> int | None:
 def subir_documento_vencimiento(
     vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes,
 ) -> int:
+    """Guarda primero como BLOB local (garantiza que el documento queda
+    a salvo aunque Nextcloud falle a medias) y, solo si el tenant tiene
+    Nextcloud configurado y la subida sale bien, promueve el archivo
+    ahí y vacía el BLOB -- best-effort, mismo criterio que el resto de
+    integraciones opcionales: un fallo aquí deja el documento como BLOB,
+    nunca lo pierde ni rompe la subida."""
     conn = get_connection()
     try:
         cur = conn.execute(
@@ -4205,10 +4274,42 @@ def subir_documento_vencimiento(
             "VALUES (?, ?, ?, ?, ?, ?)",
             (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso()),
         )
+        documento_id = cur.lastrowid
         conn.commit()
-        return cur.lastrowid
+
+        try:
+            from . import nextcloud
+            fila = conn.execute(
+                """SELECT t.nombre AS tenant_nombre FROM vencimientos_fiscales v
+                   JOIN tenants t ON t.id = v.tenant_id WHERE v.id = ?""",
+                (vencimiento_id,),
+            ).fetchone()
+            if fila is not None:
+                ruta = f"{fila['tenant_nombre']}/vencimientos-fiscales/{documento_id}-{nombre_archivo}"
+                nextcloud.subir_archivo(ruta, contenido)
+                conn.execute(
+                    "UPDATE vencimientos_fiscales_documentos SET ruta_nextcloud = ?, contenido = NULL WHERE id = ?",
+                    (ruta, documento_id),
+                )
+                conn.commit()
+        except Exception:
+            pass  # se queda como BLOB local, comportamiento de siempre
+        return documento_id
     finally:
         conn.close()
+
+
+def contenido_documento_vencimiento(documento: sqlite3.Row) -> bytes:
+    """Sirve el contenido de un documento sea cual sea su almacenamiento
+    (BLOB local o Nextcloud) -- para que las rutas no tengan que saber
+    dónde vive cada documento. A diferencia de la subida, aquí SÍ deja
+    propagar un fallo de Nextcloud (app.nextcloud.ErrorNextcloud): es la
+    acción principal de esta llamada, no un efecto secundario -- quien
+    llama decide cómo mostrarlo (ver app/rutas_fiscal.py)."""
+    if documento["ruta_nextcloud"]:
+        from . import nextcloud
+        return nextcloud.descargar_archivo(documento["ruta_nextcloud"])
+    return documento["contenido"]
 
 
 def listar_documentos_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
