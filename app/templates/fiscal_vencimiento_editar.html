@@ -40,6 +40,11 @@
     </select>
   </label>
 
+  <label>{{ _('Documento solicitado al cliente (opcional)') }}
+    <input type="text" name="documento_solicitado" value="{{ vencimiento.documento_solicitado or '' }}" placeholder="{{ _('Ej.: Factura de compra del trimestre') }}">
+  </label>
+  <p class="muted">{{ _('Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal.') }}</p>
+
   <label>{{ _('Notas') }}
     <textarea name="notas" rows="4">{{ vencimiento.notas or '' }}</textarea>
   </label>

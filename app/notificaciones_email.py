@@ -62,6 +62,20 @@ def enviar_enlace_portal(email_destino: str, url_enlace: str) -> None:
     )
 
 
+def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal: str) -> None:
+    """Aviso de que el equipo pide un documento concreto para un
+    vencimiento (app/rutas_fiscal.py:editar_vencimiento) -- mismo
+    criterio que enviar_respuesta_portal: enlaza a /portal/entrar sin
+    más, el cliente pide su propio enlace mágico igual que siempre."""
+    _enviar(
+        email_destino,
+        "Tu gestoría te pide un documento",
+        "Hola,\n\n"
+        f"Tu gestoría necesita que subas el siguiente documento: \"{descripcion}\"\n\n"
+        f"Entra en {url_portal} para subirlo desde el portal de cliente.\n",
+    )
+
+
 def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str) -> None:
     """Aviso de que el equipo ha respondido un mensaje en el portal --
     NO manda un enlace mágico directo a la conversación (evitaría

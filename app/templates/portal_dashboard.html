@@ -19,6 +19,20 @@
       </form>
     </header>
 
+    {% if solicitudes_pendientes %}
+    <section class="ia-result" style="margin-bottom: 24px;">
+      <strong>{{ _('Tu gestoría te pide lo siguiente:') }}</strong>
+      <ul>
+        {% for v in solicitudes_pendientes %}
+        <li>
+          <a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.documento_solicitado }}</a>
+          <span class="muted">({{ v.modelo }} {{ v.periodo }})</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
     {% if not vencimientos %}
     <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
     {% else %}

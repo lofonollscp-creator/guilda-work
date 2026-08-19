@@ -18,7 +18,7 @@ from flask_babel import lazy_gettext as _l
 
 from . import db, documenso, espocrm, facturascripts
 from .auth import login_required
-from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal
+from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal, enviar_solicitud_documento
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
 
 fiscal_bp = Blueprint("fiscal", __name__, url_prefix="/fiscal")
@@ -375,6 +375,7 @@ def editar_vencimiento(vencimiento_id: int):
         abort(404)
     if request.method == "POST":
         usuario_id = request.form.get("usuario_id", type=int)
+        documento_solicitado = (request.form.get("documento_solicitado") or "").strip() or None
         db.editar_vencimiento_fiscal(
             g.tenant_id, vencimiento_id,
             modelo=request.form.get("modelo", vencimiento["modelo"]).strip(),
@@ -383,7 +384,21 @@ def editar_vencimiento(vencimiento_id: int):
             estado=request.form.get("estado", vencimiento["estado"]),
             notas=request.form.get("notas"),
             usuario_id=usuario_id if usuario_id else None,
+            documento_solicitado=documento_solicitado,
         )
+        # Avisar al cliente por email solo cuando la petición es NUEVA (no
+        # en cada guardado del formulario) -- best-effort, mismo criterio
+        # que el resto de integraciones opcionales: un fallo de SMTP nunca
+        # debe romper el guardado del vencimiento.
+        if documento_solicitado and documento_solicitado != vencimiento["documento_solicitado"]:
+            cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+            if cliente is not None and cliente["email"]:
+                try:
+                    enviar_solicitud_documento(
+                        cliente["email"], documento_solicitado, url_for("portal_cliente.entrar", _external=True),
+                    )
+                except ErrorNotificacionesEmail:
+                    pass
         return redirect(url_for("fiscal.vencimientos"))
     db.marcar_mensajes_leidos(vencimiento_id, "empleado")
     usuarios_tenant = [db.obtener_usuario(uid) for uid in db.usuarios_de_tenant(g.tenant_id)]

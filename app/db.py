@@ -1093,6 +1093,12 @@ def init_db() -> None:
         # id del envelope de Documenso una vez enviado a firma, para
         # poder consultar su estado/descargarlo sin volver a crearlo.
         _asegurar_columna(conn, "vencimientos_fiscales", "documenso_documento_id", "TEXT")
+        # Portal de cliente -- pedir un documento concreto
+        # (app/rutas_fiscal.py:editar_vencimiento,
+        # app/rutas_portal_cliente.py): texto libre que el empleado rellena
+        # ("Factura de compra del trimestre"), mostrado destacado en el
+        # portal si todavía no hay documento subido para este vencimiento.
+        _asegurar_columna(conn, "vencimientos_fiscales", "documento_solicitado", "TEXT")
         # Tareas recurrentes (app/db.py:generar_tareas_recurrentes): marca
         # qué regla generó esta tarea concreta, para poder comprobar si ya
         # se generó la de este periodo (idempotencia del cron) sin tener
@@ -3508,6 +3514,7 @@ MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
 TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO = 8 * 1024 * 1024
 CAMPOS_VENCIMIENTO_FISCAL = (
     "usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas", "documenso_documento_id",
+    "documento_solicitado",
 )
 
 

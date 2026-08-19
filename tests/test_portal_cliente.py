@@ -404,3 +404,127 @@ def test_responder_mensaje_con_smtp_roto_no_rompe_la_respuesta(cliente, monkeypa
     assert resp.status_code == 302
     mensajes = db.listar_mensajes_vencimiento(v_id)
     assert len(mensajes) == 1  # el mensaje se guardó igual, el fallo de SMTP no lo impidió
+
+
+# --- Portal de cliente: pedir un documento concreto ----------------------
+
+def test_guardar_documento_solicitado_nuevo_notifica_por_email(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="pide-doc@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-doc@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    llamadas = []
+    monkeypatch.setattr(
+        "app.rutas_fiscal.enviar_solicitud_documento",
+        lambda email, descripcion, url: llamadas.append((email, descripcion)),
+    )
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/editar",
+        data={
+            "modelo": "303", "periodo": "2026-T1", "fecha_limite": "2026-04-20", "estado": "pendiente",
+            "documento_solicitado": "Factura de compra del trimestre",
+        },
+    )
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    assert llamadas[0] == ("pide-doc@ejemplo.com", "Factura de compra del trimestre")
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["documento_solicitado"] == "Factura de compra del trimestre"
+
+
+def test_guardar_el_mismo_documento_solicitado_no_reenvia_email(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="pide-doc-2@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.editar_vencimiento_fiscal(tenant_id, v_id, documento_solicitado="Ya pedido antes")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-doc-2@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    llamadas = []
+    monkeypatch.setattr("app.rutas_fiscal.enviar_solicitud_documento", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/editar",
+        data={
+            "modelo": "303", "periodo": "2026-T1", "fecha_limite": "2026-04-20", "estado": "pendiente",
+            "documento_solicitado": "Ya pedido antes",
+        },
+    )
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_documento_solicitado_sin_email_del_cliente_no_notifica(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    tenant_id, cliente_id = _cliente_de_prueba(email=None)
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-doc-3@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    llamadas = []
+    monkeypatch.setattr("app.rutas_fiscal.enviar_solicitud_documento", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/editar",
+        data={
+            "modelo": "303", "periodo": "2026-T1", "fecha_limite": "2026-04-20", "estado": "pendiente",
+            "documento_solicitado": "Algo",
+        },
+    )
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_documento_solicitado_con_smtp_roto_no_rompe_el_guardado(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+    from app.notificaciones_email import ErrorNotificacionesEmail
+
+    tenant_id, cliente_id = _cliente_de_prueba(email="pide-doc-4@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    admin_id = iniciar_sesion_de_prueba(cliente, "empleado-doc-4@ejemplo.com", "contrasena123")
+    db.asignar_tenant(admin_id, tenant_id)
+
+    def _falla(*a, **k):
+        raise ErrorNotificacionesEmail("SMTP caído")
+
+    monkeypatch.setattr("app.rutas_fiscal.enviar_solicitud_documento", _falla)
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/editar",
+        data={
+            "modelo": "303", "periodo": "2026-T1", "fecha_limite": "2026-04-20", "estado": "pendiente",
+            "documento_solicitado": "Algo",
+        },
+    )
+    assert resp.status_code == 302
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["documento_solicitado"] == "Algo"
+
+
+def test_dashboard_muestra_solicitud_pendiente_sin_documento_subido(cliente):
+    tenant_id, cliente_id = _cliente_de_prueba(email="dashboard-1@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.editar_vencimiento_fiscal(tenant_id, v_id, documento_solicitado="Factura pendiente")
+    token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
+
+    cliente.get(f"/portal/entrar/{token}")
+    resp = cliente.get("/portal/")
+    assert resp.status_code == 200
+    assert "Factura pendiente" in resp.get_data(as_text=True)
+
+
+def test_dashboard_no_muestra_solicitud_ya_resuelta_con_documento_subido(cliente):
+    tenant_id, cliente_id = _cliente_de_prueba(email="dashboard-2@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.editar_vencimiento_fiscal(tenant_id, v_id, documento_solicitado="Ya subido")
+    db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido")
+    token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
+
+    cliente.get(f"/portal/entrar/{token}")
+    resp = cliente.get("/portal/")
+    assert resp.status_code == 200
+    assert "Ya subido" not in resp.get_data(as_text=True)

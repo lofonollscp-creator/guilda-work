@@ -116,7 +116,17 @@ def dashboard():
         session.pop("cliente_fiscal_id", None)
         return redirect(url_for("portal_cliente.entrar"))
     vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"])
-    return render_template("portal_dashboard.html", cliente=cliente, vencimientos=vencimientos)
+    # Peticiones de documento concreto (app/rutas_fiscal.py:editar_vencimiento)
+    # todavía sin resolver -- "sin resolver" es "no hay ningún documento
+    # subido para ese vencimiento todavía", no un campo aparte que haya que
+    # mantener sincronizado.
+    solicitudes_pendientes = [
+        v for v in vencimientos if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"])
+    ]
+    return render_template(
+        "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos,
+        solicitudes_pendientes=solicitudes_pendientes,
+    )
 
 
 def _vencimiento_del_cliente_actual(vencimiento_id: int):
