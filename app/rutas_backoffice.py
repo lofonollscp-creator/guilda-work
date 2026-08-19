@@ -609,6 +609,21 @@ def alternar_gestor_fichajes(usuario_id: int):
     return redirect(url_for("backoffice.panel"))
 
 
+@backoffice_bp.route("/usuarios/<int:usuario_id>/supervisor-tenant", methods=["POST"])
+@login_required
+@admin_required
+def alternar_supervisor_tenant(usuario_id: int):
+    """Supervisor de tenant: puede actuar sobre datos de otros usuarios de
+    SU PROPIO tenant en los módulos que lo comprueben (hoy: tiquets, ver
+    app/rutas_tiquets.py:_puede_supervisar_tiquet) -- mismo criterio que
+    gestor_fichajes, pero sin scoping a un único módulo."""
+    usuario = db.obtener_usuario(usuario_id)
+    if usuario is None:
+        abort(404)
+    db.asignar_supervisor_tenant(usuario_id, not usuario["supervisor_tenant"])
+    return redirect(url_for("backoffice.panel"))
+
+
 @backoffice_bp.route("/tenants/<int:tenant_id>/fichaje-geolocalizacion", methods=["POST"])
 @login_required
 @admin_required

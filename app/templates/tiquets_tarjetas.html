@@ -88,7 +88,7 @@
           {% endif %}
         </span>
       </div>
-      {% if g.es_admin %}
+      {% if g.es_admin or g.supervisor_tenant %}
       <form action="{{ url_for('tiquets.asignar', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
         <input type="hidden" name="volver_a" value="{{ url_for('tiquets.tarjetas') }}">
         <select name="prioridad" onchange="this.form.requestSubmit()" aria-label="{{ _('Prioridad') }}">

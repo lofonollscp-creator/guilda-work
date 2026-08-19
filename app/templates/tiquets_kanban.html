@@ -5,8 +5,8 @@
   <div>
     <h1>{{ _('Tiquets') }}</h1>
     <p class="subtitle">
-      {% if g.es_admin %}{{ _('Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.') }}
-      {% else %}{{ _('Solo un administrador puede mover tiquets entre columnas.') }}{% endif %}
+      {% if g.es_admin or g.supervisor_tenant %}{{ _('Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.') }}
+      {% else %}{{ _('Solo un administrador o supervisor puede mover tiquets entre columnas.') }}{% endif %}
     </p>
   </div>
 </header>
@@ -68,7 +68,7 @@
           </form>
           {% endif %}
         </div>
-        {% if g.es_admin %}
+        {% if g.es_admin or g.supervisor_tenant %}
         <form action="{{ url_for('tiquets.cambiar_estado', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
           <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
           <select name="estado" onchange="this.form.requestSubmit()">

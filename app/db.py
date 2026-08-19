@@ -1065,6 +1065,14 @@ def init_db() -> None:
         # backoffice, igual que hacer_admin/quitar_admin.
         _asegurar_columna(conn, "usuarios", "gestor_fichajes", "INTEGER NOT NULL DEFAULT 0")
 
+        # Rol general de "supervisor de tenant" -- mismo patrón que
+        # gestor_fichajes (flag aparte, no un tercer valor del CHECK de
+        # usuarios.rol), pero no scoped a un único módulo: permite actuar
+        # sobre datos de OTROS usuarios de su propio tenant en cualquier
+        # módulo que lo compruebe (hoy: tiquets, ver app/rutas_tiquets.py).
+        # Lo asigna un superadmin desde el backoffice.
+        _asegurar_columna(conn, "usuarios", "supervisor_tenant", "INTEGER NOT NULL DEFAULT 0")
+
         # Identificación de empresa (CIF/dirección fiscal), exigida junto a
         # la del trabajador en cualquier registro horario que se presente
         # a una inspección -- aparece en la cabecera de los export CSV/PDF.
@@ -1484,6 +1492,31 @@ def asignar_gestor_fichajes(usuario_id: int, valor: bool) -> None:
     try:
         conn.execute("UPDATE usuarios SET gestor_fichajes = ? WHERE id = ?", (int(valor), usuario_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def es_supervisor_tenant(usuario_id: int) -> bool:
+    usuario = obtener_usuario(usuario_id)
+    return usuario is not None and bool(usuario["supervisor_tenant"])
+
+
+def asignar_supervisor_tenant(usuario_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET supervisor_tenant = ? WHERE id = ?", (int(valor), usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def usuario_pertenece_a_tenant(usuario_id: int, tenant_id: int) -> bool:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id),
+        ).fetchone()
+        return fila is not None
     finally:
         conn.close()
 

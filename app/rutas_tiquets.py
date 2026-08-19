@@ -12,9 +12,23 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import lazy_gettext as _l
 
 from . import db, notificaciones
-from .auth import admin_required, login_required
+from .auth import login_required
 
 tiquets_bp = Blueprint("tiquets", __name__, url_prefix="/tiquets")
+
+
+def _puede_supervisar_tiquet(tiquet) -> bool:
+    """Un superadmin puede tocar cualquier tiquet; un supervisor de tenant
+    (ver app/db.py:es_supervisor_tenant) solo los de alguien de SU PROPIO
+    tenant -- tiquets es un tablero compartido entre todos los tenants sin
+    columna tenant_id propia, así que el tenant de un tiquet se resuelve
+    indirectamente por el tenant de quien lo creó."""
+    if g.es_admin:
+        return True
+    return bool(
+        g.supervisor_tenant and g.tenant_id is not None
+        and db.usuario_pertenece_a_tenant(tiquet["usuario_id"], g.tenant_id)
+    )
 
 TIPOS = [
     ("error", _l("Error")),
@@ -164,10 +178,12 @@ def eliminar(tiquet_id: int):
 
 @tiquets_bp.route("/<int:tiquet_id>/estado", methods=["POST"])
 @login_required
-@admin_required
 def cambiar_estado(tiquet_id: int):
-    if db.obtener_tiquet(tiquet_id) is None:
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
         abort(404)
+    if not _puede_supervisar_tiquet(tiquet):
+        abort(403)
     estado = request.form.get("estado", "")
     if estado in dict(ESTADOS):
         db.cambiar_estado_tiquet(tiquet_id, estado)
@@ -176,11 +192,12 @@ def cambiar_estado(tiquet_id: int):
 
 @tiquets_bp.route("/<int:tiquet_id>/asignar", methods=["POST"])
 @login_required
-@admin_required
 def asignar(tiquet_id: int):
     tiquet = db.obtener_tiquet(tiquet_id)
     if tiquet is None:
         abort(404)
+    if not _puede_supervisar_tiquet(tiquet):
+        abort(403)
     prioridad = request.form.get("prioridad", "normal")
     if prioridad not in dict(PRIORIDADES):
         prioridad = "normal"

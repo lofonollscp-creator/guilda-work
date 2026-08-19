@@ -194,6 +194,7 @@ def _resolver_usuario_actual():
         tenant = db.tenant_de_usuario(g.usuario_id)
         g.tenant_id = tenant["id"] if tenant else None
         g.gestor_fichajes = db.es_gestor_fichajes(g.usuario_id)
+        g.supervisor_tenant = db.es_supervisor_tenant(g.usuario_id)
         return
 
     # Modo hospedado: identidad real vía Ory Kratos. Solo se llama a Kratos
@@ -203,6 +204,7 @@ def _resolver_usuario_actual():
     g.es_admin = False
     g.tenant_id = None
     g.gestor_fichajes = False
+    g.supervisor_tenant = False
     if KRATOS_SESSION_COOKIE not in request.cookies:
         return
     sesion_kratos = kratos.whoami(request.cookies)
@@ -221,6 +223,7 @@ def _resolver_usuario_actual():
         g.es_admin = usuario["rol"] == "admin"
         g.tenant_id = usuario["tenant_id"]
         g.gestor_fichajes = bool(usuario["gestor_fichajes"])
+        g.supervisor_tenant = bool(usuario["supervisor_tenant"])
 
 
 @app.context_processor

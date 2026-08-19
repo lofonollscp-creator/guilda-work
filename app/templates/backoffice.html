@@ -277,6 +277,7 @@
           <th>Tenant</th>
           <th>{{ _('Rol') }}</th>
           <th>{{ _('Fichaje') }}</th>
+          <th>{{ _('Supervisor') }}</th>
           <th>{{ _('Alta') }}</th>
           <th></th>
         </tr>
@@ -301,6 +302,11 @@
           <td>
             <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}">
               <button type="submit" class="btn btn-ghost">{{ _('Quitar gestor') if u.gestor_fichajes else _('Hacer gestor') }}</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}">
+              <button type="submit" class="btn btn-ghost">{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}</button>
             </form>
           </td>
           <td class="mono">{{ u.creado_en[:10] }}</td>
