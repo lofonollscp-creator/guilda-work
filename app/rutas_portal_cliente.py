@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import captcha, db, push
+from . import captcha, db, notificaciones
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -159,13 +159,15 @@ def mensajes_vencimiento(vencimiento_id: int):
             db.crear_mensaje_vencimiento(vencimiento_id, "cliente", texto)
             # Avisa al empleado asignado -- mismo patrón que el recordatorio
             # de vencimientos (app/main.py) y el correo nuevo (app/correo.py):
-            # push.enviar_a_usuario nunca lanza, y si no hay usuario_id
-            # asignado simplemente no se notifica a nadie (v2 no tiene
-            # "avisar a todo el tenant" todavía).
+            # notificaciones.crear_y_enviar (app/notificaciones.py) registra
+            # el aviso en el centro de notificaciones Y manda el push, nunca
+            # lanza; si no hay usuario_id asignado simplemente no se
+            # notifica a nadie (v2 no tiene "avisar a todo el tenant" todavía).
             if vencimiento["usuario_id"]:
-                push.enviar_a_usuario(
-                    vencimiento["usuario_id"], _("Nuevo mensaje del cliente"), texto[:100],
-                    {"tipo": "portal_mensaje_nuevo", "vencimiento_id": vencimiento_id},
+                notificaciones.crear_y_enviar(
+                    vencimiento["usuario_id"], "portal_mensaje_nuevo", _("Nuevo mensaje del cliente"), texto[:100],
+                    url=f"/fiscal/vencimientos/{vencimiento_id}/editar",
+                    datos={"tipo": "portal_mensaje_nuevo", "vencimiento_id": vencimiento_id},
                 )
         return redirect(url_for("portal_cliente.mensajes_vencimiento", vencimiento_id=vencimiento_id))
     db.marcar_mensajes_leidos(vencimiento_id, "cliente")

@@ -389,6 +389,24 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   letter-spacing: 0.04em;
 }
 
+.notificaciones-menu { position: relative; }
+.notificaciones-badge { top: -2px; right: -4px; }
+.notificaciones-panel { min-width: 320px; max-width: 380px; max-height: 420px; overflow-y: auto; }
+.notificacion-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.notificacion-item:last-child { border-bottom: none; }
+.notificacion-item:hover { background: var(--bg); }
+.notificacion-item.es-no-leida { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.notificacion-item-titulo { font-weight: 600; font-size: 0.9em; }
+.notificacion-item-cuerpo { font-size: 0.85em; color: var(--text-muted); margin-top: 2px; }
+.notificacion-item-fecha { font-size: 0.75em; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+
 .ajustes-menu { position: relative; }
 .ajustes-toggle {
   display: inline-flex;

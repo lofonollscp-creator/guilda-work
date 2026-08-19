@@ -30,7 +30,7 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, push
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, notificaciones
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -41,6 +41,7 @@ from .rutas_fiscal import fiscal_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import ip_requiere_captcha, kratos_proxy_bp
+from .rutas_notificaciones import notificaciones_bp
 from .rutas_portal_cliente import portal_bp
 from .rutas_tareas import tareas_bp
 from .rutas_tiquets import tiquets_bp
@@ -156,6 +157,7 @@ app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
 app.register_blueprint(docs_bp)
 app.register_blueprint(portal_bp)
+app.register_blueprint(notificaciones_bp)
 
 
 @app.errorhandler(Exception)
@@ -243,6 +245,13 @@ def inyectar_correo_badge():
     if not g.usuario_id:
         return {}
     return {"correo_no_leidos_sidebar": db.contar_no_leidos_total_correo(g.usuario_id)}
+
+
+@app.context_processor
+def inyectar_notificaciones_badge():
+    if not g.usuario_id:
+        return {}
+    return {"notificaciones_no_leidas": db.contar_notificaciones_no_leidas(g.usuario_id)}
 
 
 @app.context_processor
@@ -1362,11 +1371,13 @@ def _recordatorio_vencimientos_fiscales():
             if not v["usuario_id"]:
                 continue
             try:
-                push.enviar_a_usuario(
+                notificaciones.crear_y_enviar(
                     v["usuario_id"],
+                    "vencimiento_fiscal",
                     "Vencimiento fiscal próximo",
                     f"{v['modelo']} de {v['cliente_nombre']} vence el {v['fecha_limite'][:10]}.",
-                    {"tipo": "vencimiento_fiscal", "vencimiento_id": v["id"]},
+                    url=f"/fiscal/vencimientos/{v['id']}/editar",
+                    datos={"tipo": "vencimiento_fiscal", "vencimiento_id": v["id"]},
                 )
                 # Dedup: sin esto, vencimientos_fiscales_proximos() lo
                 # volvía a devolver cada día mientras siguiera pendiente y
@@ -1419,8 +1430,9 @@ def _resumen_ia_semanal():
                     "Resume mis actividades de esta última semana, agrupadas por categoría, en 5-8 líneas como mucho.",
                     "openrouter", prefs["modelo_local"], usuario_id,
                 )
-                push.enviar_a_usuario(
-                    usuario_id, "Tu resumen semanal", resumen[:200], {"tipo": "resumen_ia_semanal"}
+                notificaciones.crear_y_enviar(
+                    usuario_id, "resumen_ia_semanal", "Tu resumen semanal", resumen[:200],
+                    url="/historial", datos={"tipo": "resumen_ia_semanal"},
                 )
             except Exception:
                 continue

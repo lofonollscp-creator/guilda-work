@@ -120,6 +120,17 @@
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
+        <div class="notificaciones-menu">
+          <button type="button" id="notificaciones-toggle" class="ajustes-toggle" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
+            {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
+          </button>
+          <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
+            <span class="ajustes-panel-grupo-etiqueta">{{ _('Notificaciones') }}</span>
+            <div id="notificaciones-lista"></div>
+            <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
+          </div>
+        </div>
         <div class="ajustes-menu">
           <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg>
@@ -262,6 +273,7 @@
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
   <script src="{{ url_for('static', filename='busqueda.js') }}"></script>
+  <script src="{{ url_for('static', filename='notificaciones.js') }}"></script>
   {% if chatwoot_website_token %}
   <script>
     // Widget de soporte (Chatwoot, Fase 7g/7c.3) — identifica al usuario

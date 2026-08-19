@@ -203,6 +203,23 @@ CREATE TABLE IF NOT EXISTS dispositivos_push (
     actualizado_en TEXT NOT NULL
 );
 
+-- Centro de notificaciones unificado (app/notificaciones.py): además del
+-- push FCM (efímero, solo llega si el móvil está a mano), cada aviso se
+-- registra aquí para verlo dentro de la propia app -- correo nuevo,
+-- vencimiento fiscal próximo, mensaje del portal de cliente, resumen IA
+-- semanal. `url` es la ruta a la que lleva al pulsar la notificación,
+-- nullable si el aviso no tiene destino concreto.
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    tipo TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    cuerpo TEXT,
+    url TEXT,
+    creado_en TEXT NOT NULL,
+    leido_en TEXT
+);
+
 -- Webhooks salientes (ver app/eventos.py). tenant_id NULL = modo
 -- escritorio/usuario sin tenant (mismo criterio que otras tablas ya
 -- nullable de este archivo) — se asocia al usuario que lo dio de alta
@@ -589,6 +606,7 @@ CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_token ON clientes_fisca
 CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_cliente ON clientes_fiscales_accesos(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos(vencimiento_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_mensajes_vencimiento ON vencimientos_fiscales_mensajes(vencimiento_id);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(usuario_id, leido_en, creado_en);
 """
 
 
@@ -1962,6 +1980,55 @@ def eliminar_tokens_push(tokens: list[str]) -> None:
     try:
         marcadores = ",".join("?" for _ in tokens)
         conn.execute(f"DELETE FROM dispositivos_push WHERE fcm_token IN ({marcadores})", tokens)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Centro de notificaciones (app/notificaciones.py) -----------------------
+
+def crear_notificacion(usuario_id: int, tipo: str, titulo: str, cuerpo: str | None, url: str | None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO notificaciones (usuario_id, tipo, titulo, cuerpo, url, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, tipo, titulo, cuerpo, url, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_notificaciones(usuario_id: int, limite: int = 10) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT ?",
+            (usuario_id, limite),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_notificaciones_no_leidas(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT COUNT(*) AS n FROM notificaciones WHERE usuario_id = ? AND leido_en IS NULL", (usuario_id,),
+        ).fetchone()
+        return fila["n"]
+    finally:
+        conn.close()
+
+
+def marcar_notificaciones_leidas(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE notificaciones SET leido_en = ? WHERE usuario_id = ? AND leido_en IS NULL",
+            (now_iso(), usuario_id),
+        )
         conn.commit()
     finally:
         conn.close()

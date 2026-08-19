@@ -209,7 +209,7 @@ def test_cliente_manda_mensaje_y_notifica_al_empleado_asignado(cliente, monkeypa
 
     llamadas = []
     monkeypatch.setattr(
-        rutas_portal_cliente.push, "enviar_a_usuario",
+        rutas_portal_cliente.notificaciones.push, "enviar_a_usuario",
         lambda usuario_id, titulo, cuerpo, datos=None: llamadas.append((usuario_id, titulo, datos)),
     )
 
@@ -234,7 +234,7 @@ def test_mensaje_sin_usuario_asignado_no_notifica(cliente, monkeypatch):
     _entrar_como_cliente(cliente, cliente_id)
 
     llamadas = []
-    monkeypatch.setattr(rutas_portal_cliente.push, "enviar_a_usuario", lambda *a, **k: llamadas.append((a, k)))
+    monkeypatch.setattr(rutas_portal_cliente.notificaciones.push, "enviar_a_usuario", lambda *a, **k: llamadas.append((a, k)))
 
     resp = cliente.post(f"/portal/vencimientos/{v_id}/mensajes", data={"texto": "Hola"}, follow_redirects=True)
     assert resp.status_code == 200
