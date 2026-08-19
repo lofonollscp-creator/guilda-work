@@ -35,6 +35,7 @@ from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_citas import citas_bp
+from .rutas_videollamadas import videollamadas_bp
 from .rutas_correo import correo_bp
 from .rutas_docs import docs_bp
 from .rutas_fichaje import fichaje_bp
@@ -151,6 +152,7 @@ app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
 app.register_blueprint(fiscal_bp)
 app.register_blueprint(citas_bp)
+app.register_blueprint(videollamadas_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)

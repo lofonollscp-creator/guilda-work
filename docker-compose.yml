@@ -1400,7 +1400,13 @@ services:
       - jitsi-jicofo
       - jitsi-jvb
     ports:
-      - "127.0.0.1:8028:80"
+      # El puerto interno NO es 80 en esta imagen -- verificado en vivo
+      # (nginx dentro del contenedor escucha en 8000/HTTP y 8443/HTTPS,
+      # confirmado con `docker exec ... grep listen .../site-confs/default`),
+      # a diferencia de lo que la imagen "estable" de docker-jitsi-meet
+      # documenta. Sin esto, Docker acepta la conexión TCP en el host pero
+      # nunca llega a nginx -- "Connection reset by peer" en cada petición.
+      - "127.0.0.1:8028:8000"
     environment:
       ENABLE_AUTH: "1"
       AUTH_TYPE: jwt

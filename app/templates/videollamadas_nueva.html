@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Videollamada') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Videollamada') }}</h1>
+    <p class="subtitle">{{ _('Crea una sala nueva de Jitsi Meet y compártela con quien quieras — se crea sola al entrar la primera persona, no hace falta reservarla antes.') }}</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+<form method="post" class="quick-card" style="max-width: 480px;">
+  <label>{{ _('Tu nombre en la llamada') }}
+    <input type="text" name="nombre_mostrado" placeholder="{{ _('Opcional — se usa tu email si lo dejas vacío') }}">
+  </label>
+  <button type="submit" class="btn btn-primary">
+    <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-video"></use></svg>
+    {{ _('Crear sala y entrar') }}
+  </button>
+</form>
+{% endblock %}
