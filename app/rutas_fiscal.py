@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, documenso, espocrm, eventos, facturascripts, nextcloud
+from . import calcom, db, documenso, espocrm, eventos, facturascripts, nextcloud
 from .auth import login_required
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal, enviar_solicitud_documento
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
@@ -108,6 +108,25 @@ def ficha_cliente(cliente_id: int):
             contactos_espocrm = espocrm.listar_contactos_de_cuenta(cliente["espocrm_cuenta_id"])
         except espocrm.ErrorEspoCRM:
             contactos_espocrm = []
+    # Próxima cita en Cal.diy (tercera ronda de mejoras): sin ninguna
+    # columna nueva -- Cal.diy no tiene concepto de "cliente" propio, así
+    # que se correlaciona por email (el mismo email de la ficha del
+    # cliente, si tiene uno puesto) contra el asistente de cada reserva
+    # próxima del tenant. Best-effort, mismo criterio que el resto de
+    # integraciones opcionales de esta pantalla.
+    proxima_cita = None
+    if cliente["email"]:
+        tenant_calcom = db.obtener_tenant(g.tenant_id)
+        api_key = tenant_calcom["calcom_api_key"] if tenant_calcom else None
+        if api_key:
+            try:
+                reservas = calcom.listar_reservas(api_key, desde=date.today().isoformat())
+                for r in reservas:
+                    if any(a.get("email", "").lower() == cliente["email"].lower() for a in r.get("attendees", [])):
+                        proxima_cita = r
+                        break
+            except calcom.ErrorCalcom:
+                proxima_cita = None
     # Panel de "salud del cliente" (bloque 4): documentos y mensajes del
     # portal de cliente NO tienen una función de BD propia por
     # cliente_fiscal_id (listar_documentos_vencimiento/
@@ -137,6 +156,7 @@ def ficha_cliente(cliente_id: int):
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
         facturas=facturas,
         contactos_espocrm=contactos_espocrm,
+        proxima_cita=proxima_cita,
         documentos_totales=documentos_totales,
         mensajes_totales=mensajes_totales,
         correos_relacionados=correos_relacionados,

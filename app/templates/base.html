@@ -63,6 +63,10 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Calendario fiscal') }}</span>
       </a>
+      <a href="{{ url_for('citas.agenda') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('citas.') else '' }}" title="{{ _('Agenda') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-clock"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Agenda') }}</span>
+      </a>
       {% endif %}
 
       <div class="icon-rail-separador" role="separator"></div>

@@ -99,6 +99,17 @@
 </section>
 {% endif %}
 
+{% if proxima_cita %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Próxima cita') }}</h2>
+  <p>
+    {{ proxima_cita.title or _('(sin título)') }}
+    <span class="muted">— {{ proxima_cita.start[:16].replace('T', ' ') if proxima_cita.start else '' }}</span>
+  </p>
+  <a class="btn btn-ghost" href="{{ url_for('citas.agenda') }}">{{ _('Ver agenda completa') }}</a>
+</section>
+{% endif %}
+
 {% if correos_relacionados %}
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Correos relacionados') }}</h2>

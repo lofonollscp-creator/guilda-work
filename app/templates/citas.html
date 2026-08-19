@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Agenda') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Agenda') }}</h1>
+    <p class="subtitle">{{ _('Próximas citas reservadas online (Cal.diy) — calendario compartido de toda la gestoría, no una agenda personal.') }}</p>
+  </div>
+</header>
+
+{% if not api_key_configurada %}
+<p class="empty-lane">{{ _('Tu gestoría todavía no tiene Cal.diy configurado. Pide a un administrador que active la herramienta de Citas desde el backoffice.') }}</p>
+{% elif error %}
+<div class="ia-error">{{ error }}</div>
+{% elif not reservas %}
+<p class="empty-lane">{{ _('No hay ninguna cita próxima.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for r in reservas %}
+  <li class="log-item">
+    <span class="log-text">{{ r.title or _('(sin título)') }}</span>
+    {% if r.attendees %}
+    <span class="pill">{{ r.attendees[0].name or r.attendees[0].email }}</span>
+    {% endif %}
+    <span class="log-duration">{{ r.start[:16].replace('T', ' ') if r.start else '' }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}
