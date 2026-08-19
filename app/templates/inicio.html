@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_ia_chat_macro.html" import chat %}
+{% from "_menu_icono_selector.html" import selector_icono %}
 {% block title %}Guilda Work — Dashboard{% endblock %}
 {% block content %}
 <header class="page-header dash-header">
@@ -39,19 +40,23 @@
 
 <section class="dash-stats">
   <div class="dash-stat">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg></span>
     <span class="dash-stat-valor">{{ total_activas }}</span>
     <span class="dash-stat-label">{{ _('tareas en curso') }}</span>
   </div>
   <div class="dash-stat">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></span>
     <span class="dash-stat-valor">{{ total_notas_hoy }}</span>
     <span class="dash-stat-label">{{ _('notas hoy') }}</span>
   </div>
   <a class="dash-stat dash-stat-link" href="{{ url_for('correo.bandeja') }}">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg></span>
     <span class="dash-stat-valor">{{ correo_no_leidos_sidebar }}</span>
     <span class="dash-stat-label">{{ _('correos sin leer') }}</span>
   </a>
   {% if total_vencimientos_proximos is not none %}
   <a class="dash-stat dash-stat-link" href="{{ url_for('fiscal.vencimientos', estado='pendiente', hasta=hasta_vencimientos_proximos) }}">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg></span>
     <span class="dash-stat-valor">{{ total_vencimientos_proximos }}</span>
     <span class="dash-stat-label">{{ _('vencimientos próximos') }}</span>
   </a>
@@ -107,7 +112,7 @@
     </form>
     <a class="menu-card-link" href="{{ url_for('ver_menu', menu_id=m.id) }}">
       <div class="menu-card-top">
-        <span class="menu-card-dot"></span>
+        <span class="menu-card-icon"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ m.icono or 'folder' }}"></use></svg></span>
         <h2>{{ m.nombre }}</h2>
       </div>
       <div class="menu-card-stats">
@@ -191,7 +196,9 @@
     <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
     <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
     <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
+    {{ selector_icono('folder') }}
     <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
   </form>
 </section>
+<script src="{{ url_for('static', filename='menu_icono.js') }}"></script>
 {% endblock %}

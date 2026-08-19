@@ -1015,6 +1015,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "notas", "papelera_en", "TEXT")
         _asegurar_columna(conn, "categorias", "orden", "INTEGER")
         _asegurar_columna(conn, "categorias", "favorito", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "categorias", "icono", "TEXT")
         _migrar_categorias_unique_por_usuario(conn)
         _migrar_correo_categorias_unique_por_usuario(conn)
         _migrar_documentos_vencimiento_a_nextcloud(conn)
@@ -2462,7 +2463,7 @@ def entregas_de_webhooks(webhook_ids: list[int], limite: int = 5) -> dict[int, l
 
 # --- Categorías --------------------------------------------------------
 
-def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> int:
+def crear_categoria(usuario_id: int, nombre: str, color: str | None = None, icono: str | None = None) -> int:
     """Crea un menú, o reutiliza uno existente del MISMO usuario con el
     mismo nombre.
 
@@ -2496,8 +2497,8 @@ def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> i
             "SELECT COALESCE(MAX(orden), -1) + 1 FROM categorias WHERE usuario_id = ?", (usuario_id,)
         ).fetchone()[0]
         cur = conn.execute(
-            "INSERT INTO categorias (usuario_id, nombre, color, creada_en, orden) VALUES (?, ?, ?, ?, ?)",
-            (usuario_id, nombre, color, now_iso(), siguiente_orden),
+            "INSERT INTO categorias (usuario_id, nombre, color, icono, creada_en, orden) VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, nombre, color, icono, now_iso(), siguiente_orden),
         )
         conn.commit()
         return cur.lastrowid
@@ -2607,12 +2608,12 @@ def obtener_categoria(usuario_id: int, categoria_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
-def renombrar_categoria(usuario_id: int, categoria_id: int, nombre: str, color: str | None = None) -> None:
+def renombrar_categoria(usuario_id: int, categoria_id: int, nombre: str, color: str | None = None, icono: str | None = None) -> None:
     conn = get_connection()
     try:
         conn.execute(
-            "UPDATE categorias SET nombre = ?, color = ? WHERE id = ? AND usuario_id = ?",
-            (nombre.strip(), color, categoria_id, usuario_id),
+            "UPDATE categorias SET nombre = ?, color = ?, icono = ? WHERE id = ? AND usuario_id = ?",
+            (nombre.strip(), color, icono, categoria_id, usuario_id),
         )
         conn.commit()
     finally:

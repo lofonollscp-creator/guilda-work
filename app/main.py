@@ -526,13 +526,25 @@ def cambiar_idioma(codigo):
     return redirect(url_for("inicio"))
 
 
+ICONOS_MENU_VALIDOS = {
+    "folder", "flag", "star", "zap", "book-open", "briefcase", "building-2",
+    "users", "layers", "target", "bookmark", "tag", "layout-grid",
+    "clipboard-list", "puzzle", "rocket",
+}
+
+
+def _icono_menu_valido(valor: str | None) -> str | None:
+    return valor if valor in ICONOS_MENU_VALIDOS else None
+
+
 @app.route("/menus", methods=["POST"])
 @login_required
 def crear_menu():
     nombre = request.form.get("nombre", "").strip()
     color = request.form.get("color", "").strip() or None
+    icono = _icono_menu_valido(request.form.get("icono", "").strip())
     if nombre:
-        db.crear_categoria(g.usuario_id, nombre, color)
+        db.crear_categoria(g.usuario_id, nombre, color, icono)
     return redirect(url_for("inicio"))
 
 
@@ -574,8 +586,9 @@ def renombrar_menu(menu_id: int):
         abort(404)
     nombre = request.form.get("nombre", "").strip()
     color = request.form.get("color", "").strip() or None
+    icono = _icono_menu_valido(request.form.get("icono", "").strip())
     if nombre:
-        db.renombrar_categoria(g.usuario_id, menu_id, nombre, color)
+        db.renombrar_categoria(g.usuario_id, menu_id, nombre, color, icono)
     return redirect(url_for("ver_menu", menu_id=menu_id))
 
 

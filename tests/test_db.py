@@ -43,6 +43,25 @@ def test_renombrar_categoria(usuario_id):
     assert cat["color"] == "#e0a83a"
 
 
+def test_crear_categoria_con_icono(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda", "#4a90d9", "briefcase")
+    cat = db.obtener_categoria(usuario_id, cid)
+    assert cat["icono"] == "briefcase"
+
+
+def test_crear_categoria_sin_icono_queda_nulo(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda")
+    cat = db.obtener_categoria(usuario_id, cid)
+    assert cat["icono"] is None
+
+
+def test_renombrar_categoria_actualiza_icono(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda", icono="folder")
+    db.renombrar_categoria(usuario_id, cid, "Guilda Renombrada", "#e0a83a", "rocket")
+    cat = db.obtener_categoria(usuario_id, cid)
+    assert cat["icono"] == "rocket"
+
+
 def test_eliminar_categoria_manda_a_la_papelera_no_borra_de_verdad(usuario_id):
     cid = db.crear_categoria(usuario_id, "Guilda")
     tarea_id = db.crear_tarea(usuario_id, "Proceso", cid, "duracion")

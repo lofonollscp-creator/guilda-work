@@ -67,8 +67,8 @@
       <button type="button" data-cmd="insertUnorderedList" title="{{ _('Lista con viñetas') }}">&#8226; {{ _('Lista') }}</button>
       <button type="button" data-cmd="insertOrderedList" title="{{ _('Lista numerada') }}">1. {{ _('Lista') }}</button>
       <span class="correo-editor-separador"></span>
-      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}">&#128279; {{ _('Enlace') }}</button>
-      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}">&#128247; {{ _('Imagen') }}</button>
+      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
+      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
       <button type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
       {% if plantillas %}
       <span class="correo-editor-separador"></span>

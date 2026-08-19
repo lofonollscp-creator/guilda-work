@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_menu_icono_selector.html" import selector_icono %}
 {% block title %}{{ menu.nombre }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header menu-header" style="--accent: {{ menu.color or '#7c8ba1' }};">
@@ -12,6 +13,7 @@
       <form class="inline-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
         <input type="text" name="nombre" value="{{ menu.nombre }}" required>
         <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="{{ _('Color del menú') }}">
+        {{ selector_icono(menu.icono) }}
         <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
       </form>
       <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
@@ -168,6 +170,7 @@
 </section>
 
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
+<script src="{{ url_for('static', filename='menu_icono.js') }}"></script>
 <script>
   document.querySelectorAll(".empty-state-guiado [data-enfocar]").forEach(function (boton) {
     boton.addEventListener("click", function () {
