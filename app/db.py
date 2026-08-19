@@ -3136,6 +3136,75 @@ def estadisticas_por_dia(usuario_id: int, desde: str | None = None, hasta: str |
         conn.close()
 
 
+def estadisticas_equipo_por_usuario(
+    tenant_id: int, desde: str | None = None, hasta: str | None = None,
+) -> list[dict]:
+    """Carga de trabajo por usuario de un tenant -- a diferencia de
+    estadisticas_por_categoria(), no se puede reutilizar esa misma
+    consulta ampliándola con un IN de usuarios: las categorías
+    (`categorias.usuario_id`) son propias de cada persona, no
+    compartidas por tenant, así que agregar "por categoría" mezclaría
+    categorías de nombre distinto entre sí sin ningún criterio común.
+    Aquí se agrega directamente por usuario (email), que sí es una
+    dimensión compartida con sentido a nivel de equipo."""
+    conn = get_connection()
+    try:
+        ids = usuarios_de_tenant(tenant_id)
+        if not ids:
+            return []
+        marcadores = ",".join("?" * len(ids))
+        cond_t = [f"t.usuario_id IN ({marcadores})", "t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
+        cond_n = [f"n.usuario_id IN ({marcadores})", "n.papelera_en IS NULL"]
+        params_t: list = list(ids)
+        params_n: list = list(ids)
+        hasta_excl = _fecha_exclusiva(hasta) if hasta else None
+        if desde:
+            cond_t.append("t.inicio_en >= ?"); params_t.append(desde)
+            cond_n.append("n.creada_en >= ?"); params_n.append(desde)
+        if hasta_excl:
+            cond_t.append("t.inicio_en < ?"); params_t.append(hasta_excl)
+            cond_n.append("n.creada_en < ?"); params_n.append(hasta_excl)
+
+        filas = conn.execute(
+            f"""SELECT u.id, u.email,
+                   COALESCE((SELECT SUM(t.duracion_segundos) FROM tareas t
+                             WHERE t.usuario_id = u.id AND {' AND '.join(cond_t)}), 0) AS segundos_totales,
+                   COALESCE((SELECT COUNT(*) FROM tareas t
+                             WHERE t.usuario_id = u.id AND {' AND '.join(cond_t)}), 0) AS num_tareas,
+                   COALESCE((SELECT COUNT(*) FROM notas n
+                             WHERE n.usuario_id = u.id AND {' AND '.join(cond_n)}), 0) AS num_notas
+               FROM usuarios u
+               WHERE u.id IN ({marcadores})
+               ORDER BY segundos_totales DESC, u.email""",
+            [*params_t, *params_t, *params_n, *ids],
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def tiempo_medio_resolucion_vencimientos(tenant_id: int) -> float | None:
+    """Media de días entre crear un vencimiento fiscal y marcarlo como
+    presentado -- KPI de equipo, no personal. None si no hay ningún
+    vencimiento presentado todavía (evita mostrar un falso "0 días").
+    No existe un equivalente para tiquets: son un tablero interno
+    COMPARTIDO por toda la plataforma (sin tenant_id, ver
+    app/rutas_tiquets.py), no datos de un tenant/cliente concreto --
+    calcular un tiempo de resolución "por tenant" no tendría sentido
+    ahí."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT AVG(julianday(actualizado_en) - julianday(creado_en)) AS media_dias
+               FROM vencimientos_fiscales
+               WHERE tenant_id = ? AND estado = 'presentado' AND actualizado_en IS NOT NULL""",
+            (tenant_id,),
+        ).fetchone()
+        return fila["media_dias"]
+    finally:
+        conn.close()
+
+
 # --- Frases favoritas (plantillas) ------------------------------------------
 # Se aíslan a través de categoria_id (NOT NULL, siempre de un usuario ya
 # validado por la ruta antes de llamar aquí) — no llevan usuario_id propio.

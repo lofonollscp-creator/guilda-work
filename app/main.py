@@ -1085,12 +1085,21 @@ def ajustes_cuenta():
 def estadisticas():
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
+    # Pestaña "Equipo" -- solo tiene sentido con un tenant asignado (en
+    # modo escritorio o para un admin sin tenant, g.tenant_id es None y
+    # no hay ningún equipo que agregar).
+    equipo = db.estadisticas_equipo_por_usuario(g.tenant_id, desde, hasta) if g.tenant_id is not None else []
+    tiempo_medio_resolucion = (
+        db.tiempo_medio_resolucion_vencimientos(g.tenant_id) if g.tenant_id is not None else None
+    )
     return render_template(
         "estadisticas.html",
         desde=desde or "",
         hasta=hasta or "",
         por_categoria=db.estadisticas_por_categoria(g.usuario_id, desde, hasta),
         por_dia=db.estadisticas_por_dia(g.usuario_id, desde, hasta),
+        equipo=equipo,
+        tiempo_medio_resolucion=tiempo_medio_resolucion,
     )
 
 

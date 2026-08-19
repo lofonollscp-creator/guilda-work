@@ -67,3 +67,28 @@ def test_sincronizacion_correo_periodica_una_cuenta_rota_no_bloquea_las_demas(mo
         main_module._sincronizacion_correo_periodica()
 
     assert llamadas == [id_b]
+
+
+# --- Estadísticas de equipo (app/main.py:estadisticas) ---------------------
+
+def test_estadisticas_sin_tenant_no_muestra_la_seccion_de_equipo(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    iniciar_sesion_de_prueba(cliente, "stats-sin-tenant@ejemplo.com", "contrasena123")
+    resp = cliente.get("/estadisticas")
+    assert resp.status_code == 200
+    assert "Equipo" not in resp.get_data(as_text=True)
+
+
+def test_estadisticas_con_tenant_muestra_la_seccion_de_equipo(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stats-con-tenant@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stats")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.get("/estadisticas")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Equipo" in html
+    assert "stats-con-tenant@ejemplo.com" in html

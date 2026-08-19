@@ -291,6 +291,65 @@ def test_estadisticas_por_categoria_suma_duraciones(monkeypatch, usuario_id):
     assert stats[0]["num_notas"] == 1
 
 
+def test_estadisticas_equipo_agrega_los_usuarios_del_tenant(monkeypatch, usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Equipo")
+    db.asignar_tenant(usuario_id, tenant_id)
+    otro_id = db.crear_usuario("companero@ejemplo.com", "contrasena123")
+    db.asignar_tenant(otro_id, tenant_id)
+
+    t0 = datetime(2026, 1, 1, 10, 0, 0)
+    t1 = t0 + timedelta(minutes=10)
+    monkeypatch.setattr(db, "now_iso", _reloj(t0, t0, t1, t1))
+
+    cid = db.crear_categoria(usuario_id, "Guilda")
+    tarea_id = db.crear_tarea(usuario_id, "Proceso", cid, "duracion")
+    db.finalizar_tarea(usuario_id, tarea_id)
+    db.crear_nota(usuario_id, "Nota suelta", categoria_id=cid)
+
+    equipo = db.estadisticas_equipo_por_usuario(tenant_id)
+    assert len(equipo) == 2
+    por_id = {u["id"]: u for u in equipo}
+    assert por_id[usuario_id]["segundos_totales"] == 600
+    assert por_id[usuario_id]["num_tareas"] == 1
+    assert por_id[usuario_id]["num_notas"] == 1
+    assert por_id[otro_id]["segundos_totales"] == 0
+
+
+def test_estadisticas_equipo_sin_usuarios_en_el_tenant_devuelve_vacio(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Vacia")
+    assert db.estadisticas_equipo_por_usuario(tenant_id) == []
+
+
+def test_estadisticas_equipo_no_mezcla_usuarios_de_otro_tenant(usuario_id):
+    tenant_a = db.crear_tenant("Gestoria A")
+    tenant_b = db.crear_tenant("Gestoria B")
+    db.asignar_tenant(usuario_id, tenant_a)
+    otro_id = db.crear_usuario("de-otra-gestoria@ejemplo.com", "contrasena123")
+    db.asignar_tenant(otro_id, tenant_b)
+
+    equipo_a = db.estadisticas_equipo_por_usuario(tenant_a)
+    assert [u["id"] for u in equipo_a] == [usuario_id]
+
+
+def test_tiempo_medio_resolucion_vencimientos_sin_datos_es_none(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Sin Vencimientos")
+    assert db.tiempo_medio_resolucion_vencimientos(tenant_id) is None
+
+
+def test_tiempo_medio_resolucion_vencimientos_calcula_la_media_en_dias(monkeypatch, usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Resolucion")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Resolucion")
+
+    creado = datetime(2026, 1, 1, 9, 0, 0)
+    presentado = creado + timedelta(days=4)
+    monkeypatch.setattr(db, "now_iso", _reloj(creado, presentado))
+
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, v_id)
+
+    assert db.tiempo_medio_resolucion_vencimientos(tenant_id) == 4.0
+
+
 # --- Copia de seguridad ----------------------------------------------------
 
 def test_backup_crea_un_archivo_y_no_lo_duplica_el_mismo_dia(usuario_id):
