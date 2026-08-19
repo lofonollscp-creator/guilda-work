@@ -1683,12 +1683,26 @@ sin esto, Docker aceptaba la conexión TCP pero nunca llegaba a nginx
 Bloque de Caddy añadido para `meet.guildawork.com` (reverse proxy a
 `localhost:8028`, mismo patrón que el resto de subdominios) y
 `app/jitsi.py:generar_jwt_sala()` confirmado generando un JWT
-correctamente formado contra el secreto real. **Pendiente, fuera de mi
-alcance**: el registro DNS tipo A de `meet.guildawork.com` →
-`62.238.102.126` todavía no existe (el usuario tiene que crearlo en su
-proveedor DNS) — hasta entonces no se puede completar la verificación
-de punta a punta en un navegador real (sala creada sola con JWT válido,
-rechazo sin JWT).
+correctamente formado contra el secreto real.
+
+**Verificación de punta a punta completada (2026-08-19, tras el alta del
+DNS por parte del usuario)**: con el navegador real (Chrome, sesión ya
+autenticada en `app.guildawork.com`) se creó una sala desde
+`/videollamadas/`, redirigió a `https://meet.guildawork.com/<sala>?jwt=...`
+con certificado HTTPS válido, la sala se creó sola sin aprovisionamiento
+previo, y se entró como moderador (badge "M jorge@..." visible dentro de
+la reunión, nombre y rol correctamente extraídos del JWT). Abrir la
+misma URL de sala **sin** el parámetro `jwt` en una segunda pestaña
+mostró el diálogo nativo de Jitsi "Se requiere autenticación" pidiendo
+usuario/contraseña (que no existen por este mecanismo) — confirma que
+el aislamiento por JWT-por-sala funciona de verdad, no solo en el papel.
+**Hallazgo menor, no bloqueante**: la consola muestra errores
+`service-unavailable` al pedir credenciales STUN/TURN (`extdisco:1`/`extdisco:2`
+no configurado en Prosody) — no impide crear/entrar a la sala ni afecta
+llamadas entre participantes en la misma red/NAT, pero podría dificultar
+el establecimiento de medios entre dos participantes detrás de NATs
+distintos en producción real; revisar si hace falta activar `mod_turncredentials`
+en Prosody si se detectan problemas de conexión reales entre usuarios.
 
 **Ruta web nueva**: hasta ahora solo el Asistente de IA podía generar
 una sala (`videollamadas_crear_sala`, MCP) — un empleado que quisiera
