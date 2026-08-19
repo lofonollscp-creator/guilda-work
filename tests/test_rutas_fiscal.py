@@ -809,3 +809,54 @@ def test_descargar_documento_de_otro_vencimiento_da_404(cliente):
 
     resp = cliente.get(f"/fiscal/vencimientos/{v2_id}/documentos/{doc_id}")
     assert resp.status_code == 404
+
+
+# --- Contactos EspoCRM en la ficha del cliente ------------------------------
+
+def test_ficha_cliente_muestra_contactos_de_espocrm(cliente, monkeypatch):
+    from app import espocrm
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "contactos-espocrm@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Contactos EspoCRM")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Contactos")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, espocrm_cuenta_id="cuenta-123")
+
+    monkeypatch.setattr(
+        espocrm, "listar_contactos_de_cuenta",
+        lambda cuenta_id, limite=20: [{"name": "Juana Pérez", "emailAddress": "juana@ejemplo.com", "phoneNumber": "600111222"}],
+    )
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Juana Pérez" in html
+    assert "juana@ejemplo.com" in html
+
+
+def test_ficha_cliente_sin_cuenta_espocrm_no_muestra_la_seccion(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "sin-cuenta-espocrm@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Sin Cuenta EspoCRM")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Cuenta")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    assert "Contactos</h2>" not in resp.get_data(as_text=True)
+
+
+def test_ficha_cliente_espocrm_caido_no_rompe_la_ficha(cliente, monkeypatch):
+    from app import espocrm
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "espocrm-caido@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria EspoCRM Caido")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente EspoCRM Caido")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, espocrm_cuenta_id="cuenta-456")
+
+    def _falla(*a, **k):
+        raise espocrm.ErrorEspoCRM("caído")
+    monkeypatch.setattr(espocrm, "listar_contactos_de_cuenta", _falla)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200

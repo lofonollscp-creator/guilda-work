@@ -151,6 +151,24 @@ def crear_contacto(nombre: str, email: str = "", telefono: str = "") -> dict | N
     return _crear("Contact", {"lastName": nombre, "emailAddress": email, "phoneNumber": telefono})
 
 
+def listar_contactos_de_cuenta(cuenta_id: str, limite: int = 20) -> list[dict]:
+    """A diferencia de listar_contactos() (búsqueda libre por texto),
+    esto filtra por `accountId` exacto -- para mostrar en la ficha de un
+    cliente_fiscal (app/rutas_fiscal.py) solo los contactos de SU Cuenta
+    vinculada, no una búsqueda general. Mismo patrón `where` que
+    buscar_cuenta_por_nombre."""
+    if not ESPOCRM_API_KEY:
+        return []
+    filtro = json.dumps([{"type": "equals", "attribute": "accountId", "value": cuenta_id}])
+    estado, cuerpo = _peticion(
+        f"{ESPOCRM_URL}/api/v1/Contact?maxSize={limite}&where={urllib.parse.quote(filtro)}"
+    )
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorEspoCRM(f"No se han podido listar los contactos de la cuenta en EspoCRM: {mensaje}")
+    return cuerpo.get("list", [])
+
+
 def listar_cuentas(texto: str | None = None, limite: int = 20) -> list[dict]:
     """Busca/lista Cuentas (empresas/clientes)."""
     return _listar("Account", texto=texto, limite=limite)

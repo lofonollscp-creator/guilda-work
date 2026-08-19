@@ -107,3 +107,35 @@ def test_crear_equipo_error_real_lanza_excepcion(monkeypatch):
         assert False, "debería haber lanzado ErrorEspoCRM"
     except espocrm.ErrorEspoCRM as e:
         assert "error interno" in str(e)
+
+
+def test_listar_contactos_de_cuenta_sin_api_key_devuelve_vacio(monkeypatch):
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", None)
+    assert espocrm.listar_contactos_de_cuenta("cuenta-1") == []
+
+
+def test_listar_contactos_de_cuenta_filtra_por_accountid(monkeypatch):
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", "clave")
+    capturado = {}
+
+    def fake_peticion(url, *, metodo="GET", cuerpo=None):
+        capturado["url"] = url
+        return 200, {"list": [{"id": "c1", "name": "Juana Pérez"}]}
+
+    monkeypatch.setattr(espocrm, "_peticion", fake_peticion)
+    resultado = espocrm.listar_contactos_de_cuenta("cuenta-123")
+
+    assert resultado == [{"id": "c1", "name": "Juana Pérez"}]
+    assert "Contact?" in capturado["url"]
+    assert "accountId" in capturado["url"]
+
+
+def test_listar_contactos_de_cuenta_error_lanza_excepcion(monkeypatch):
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", "clave")
+
+    def fake_peticion(url, *, metodo="GET", cuerpo=None):
+        return 500, {"message": "fallo interno"}
+
+    monkeypatch.setattr(espocrm, "_peticion", fake_peticion)
+    with pytest.raises(espocrm.ErrorEspoCRM):
+        espocrm.listar_contactos_de_cuenta("cuenta-123")

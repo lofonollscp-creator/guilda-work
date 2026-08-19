@@ -85,6 +85,20 @@
 </section>
 {% endif %}
 
+{% if contactos_espocrm %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Contactos') }}</h2>
+  <ul class="log-list">
+    {% for c in contactos_espocrm %}
+    <li class="log-item">
+      <span class="log-text">{{ c.name or c.lastName }}</span>
+      <span class="log-duration">{{ c.emailAddress or '' }}{% if c.phoneNumber %} · {{ c.phoneNumber }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 {% if correos_relacionados %}
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Correos relacionados') }}</h2>

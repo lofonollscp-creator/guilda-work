@@ -99,6 +99,15 @@ def ficha_cliente(cliente_id: int):
             )
         except facturascripts.ErrorFacturaScripts:
             facturas = []
+    # Contactos de EspoCRM (tercera ronda de mejoras): solo si el cliente
+    # ya está vinculado a una Cuenta -- best-effort, mismo criterio que
+    # facturas/documentos/mensajes/correos de esta misma ficha.
+    contactos_espocrm = []
+    if cliente["espocrm_cuenta_id"]:
+        try:
+            contactos_espocrm = espocrm.listar_contactos_de_cuenta(cliente["espocrm_cuenta_id"])
+        except espocrm.ErrorEspoCRM:
+            contactos_espocrm = []
     # Panel de "salud del cliente" (bloque 4): documentos y mensajes del
     # portal de cliente NO tienen una función de BD propia por
     # cliente_fiscal_id (listar_documentos_vencimiento/
@@ -127,6 +136,7 @@ def ficha_cliente(cliente_id: int):
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
         facturas=facturas,
+        contactos_espocrm=contactos_espocrm,
         documentos_totales=documentos_totales,
         mensajes_totales=mensajes_totales,
         correos_relacionados=correos_relacionados,
