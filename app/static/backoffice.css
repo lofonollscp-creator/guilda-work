@@ -1,0 +1,120 @@
+/* Backoffice renovado (cuarta ronda) -- solo lo que es genuinamente nuevo
+   en esta superficie: la barra de búsqueda/filtro/orden y la tarjeta de
+   tenant. Todo lo demás (rail, botones, tablas, insignias, avatares)
+   reutiliza las clases ya definidas en style.css -- ver backoffice_base.html. */
+
+.bo-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+.bo-buscador {
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+}
+.bo-buscador svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+.bo-buscador input {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--font-size-base);
+  flex: 1;
+  min-width: 0;
+}
+.bo-buscador input:focus { outline: none; }
+.bo-toolbar select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  font-size: var(--font-size-sm);
+}
+
+.bo-tenant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.bo-tenant-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--accent, #7c8ba1) 8%, var(--surface)) 0%, var(--surface) 55%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 3px solid var(--accent, #7c8ba1);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.bo-tenant-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent, #7c8ba1) 55%, var(--border));
+  box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--accent, #7c8ba1) 60%, transparent);
+}
+.bo-tenant-card-top { display: flex; align-items: flex-start; gap: var(--space-2); }
+.bo-tenant-card-top .avatar-circulo { width: 40px; height: 40px; font-size: 0.85em; flex-shrink: 0; }
+.bo-tenant-card-titulo { flex: 1; min-width: 0; }
+.bo-tenant-card-titulo h3 { margin: 0 0 2px; font-size: 1.05em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bo-tenant-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--font-size-sm); color: var(--text-muted); }
+
+.bo-tenant-card-modulos { display: flex; flex-wrap: wrap; gap: 4px; }
+.bo-modulo-badge {
+  font-size: 0.72em;
+  font-family: var(--font-mono);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: color-mix(in srgb, var(--primary-dark) 80%, var(--text));
+}
+.bo-tenant-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .bo-tenant-grid { grid-template-columns: 1fr; }
+}
+
+/* Sección "Configuración" de la ficha de tenant. */
+.bo-config-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.bo-config-fila:last-of-type { border-bottom: none; }
+.bo-config-etiqueta {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  min-width: 110px;
+  flex-shrink: 0;
+}
+.bo-config-acciones {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "backoffice_base.html" %}
 {% block title %}{{ _('Backoffice') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -59,7 +59,7 @@
 </div>
 {% endif %}
 
-<section class="ia-section">
+<section class="ia-section" id="leads">
   <h3>{{ _('Leads de contacto (landing)') }}</h3>
   <div class="table-wrap">
     <table class="historial-table">
@@ -98,7 +98,7 @@
   </div>
 </section>
 
-<section class="ia-section">
+<section class="ia-section" id="solicitudes">
   <h3>{{ _('Solicitudes de acceso al portal de cliente') }}</h3>
   <div class="table-wrap">
     <table class="historial-table">
@@ -153,115 +153,60 @@
   </div>
 </section>
 
-<section class="ia-section">
+<section class="ia-section" id="tenants">
   <h3>{{ _('Tenants') }}</h3>
-  <div class="table-wrap">
-    <table class="historial-table">
-      <thead>
-        <tr>
-          <th>{{ _('Nombre') }}</th>
-          <th>{{ _('Fichaje (CIF / dirección fiscal)') }}</th>
-          <th>{{ _('Usuarios') }}</th>
-          <th>FacturaScripts</th>
-          <th>Documenso</th>
-          <th>Cal.diy</th>
-          <th>{{ _('Herramientas visibles') }}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in tenants %}
-        <tr>
-          <td>
-            <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
-              <input type="text" name="nombre" value="{{ t.nombre }}" required>
-              <button type="submit" class="btn btn-ghost">{{ _('Renombrar') }}</button>
-            </form>
-          </td>
-          <td>
-            <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
-              <input type="hidden" name="nombre" value="{{ t.nombre }}">
-              <input type="text" name="cif" value="{{ t.cif or '' }}" placeholder="CIF" style="width:90px;">
-              <input type="text" name="direccion_fiscal" value="{{ t.direccion_fiscal or '' }}" placeholder="{{ _('Dirección fiscal') }}" style="width:160px;">
-              <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
-            </form>
-          </td>
-          <td class="mono">{{ t.n_usuarios }}</td>
-          <td>
-            {% if not t.facturascripts_url %}
-            <span class="empty">{{ _('sin aprovisionar') }}</span>
-            {% elif t.facturascripts_api_key %}
-            <a href="{{ t.facturascripts_url }}" target="_blank">{{ t.facturascripts_url }}</a>
-            {% else %}
-            <a href="{{ t.facturascripts_url }}" target="_blank">{{ t.facturascripts_url }}</a>
-            <form method="post" action="{{ url_for('backoffice.guardar_facturascripts_api_key', tenant_id=t.id) }}" class="filters" style="display:inline-flex; margin-top: 4px;">
-              <input type="text" name="api_key" placeholder="{{ _('Pega aquí la API Key (Ajustes → API)') }}" required>
-              <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
-            </form>
-            {% endif %}
-          </td>
-          <td>
-            {% if t.documenso_api_key %}
-            <span class="log-badge log-badge-duracion">{{ _('token guardado') }}</span>
-            {% else %}
-            <form method="post" action="{{ url_for('backoffice.guardar_documenso_api_key', tenant_id=t.id) }}" class="filters" style="display:inline-flex;">
-              <input type="text" name="api_key" placeholder="{{ _('Pega aquí el token (crear Equipo a mano primero)') }}" required>
-              <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
-            </form>
-            {% endif %}
-          </td>
-          <td>
-            {% if not t.calcom_email %}
-            <span class="empty">{{ _('sin aprovisionar') }}</span>
-            {% elif t.calcom_api_key %}
-            <span class="log-badge log-badge-duracion">{{ _('token guardado') }}</span>
-            {% else %}
-            <span class="mono">{{ t.calcom_email }}</span>
-            <form method="post" action="{{ url_for('backoffice.guardar_calcom_api_key', tenant_id=t.id) }}" class="filters" style="display:inline-flex; margin-top: 4px;">
-              <input type="text" name="api_key" placeholder="{{ _('Pega aquí la API Key (Configuración → Developer)') }}" required>
-              <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
-            </form>
-            {% endif %}
-          </td>
-          <td>
-            <div class="herramientas-toggle-wrap">
-              {% set ocultas = herramientas_ocultas_por_tenant.get(t.id, []) %}
-              {% for h in catalogo_herramientas %}
-              <form method="post" action="{{ url_for('backoffice.alternar_herramienta_tenant', tenant_id=t.id, herramienta_id=h.id) }}" style="display:inline;">
-                <button type="submit" class="herramienta-toggle-pill {{ 'is-oculta' if h.id in ocultas else '' }}"
-                        title="{{ _('Oculta para %(nombre)s — clic para mostrar', nombre=t.nombre) if h.id in ocultas else _('Visible para %(nombre)s — clic para ocultar', nombre=t.nombre) }}">
-                  {{ h.nombre }}
-                </button>
-              </form>
-              {% endfor %}
-            </div>
-          </td>
-          <td>
-            <a href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}" class="btn btn-primary" style="margin-bottom: 6px; display: inline-block;">{{ _('Ver ficha') }}</a>
-            <form method="post" action="{{ url_for('backoffice.alternar_fichaje_geolocalizacion', tenant_id=t.id) }}" style="margin-bottom: 6px;">
-              <button type="submit" class="btn btn-ghost" title="{{ _('RGPD: solo activar si hay trabajadores fichando en remoto') }}">
-                <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Quitar geolocalización') if t.fichaje_geolocalizacion else _('Activar geolocalización') }}
-              </button>
-            </form>
-            <form method="post" action="{{ url_for('backoffice.exportar_datos_tenant', tenant_id=t.id) }}" style="margin-bottom: 6px;">
-              <button type="submit" class="btn btn-ghost" title="{{ _('Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR).') }}">
-                <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar datos') }}
-              </button>
-            </form>
-            <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=t.id) }}"
-                  onsubmit="return confirm('{{ _('¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.', nombre=t.nombre) }}');">
-              <button type="submit" class="btn btn-ghost">{{ _('Borrar') }}</button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="7" class="empty">{{ _('Todavía no hay ningún tenant.') }}</td></tr>
+
+  <form method="get" action="{{ url_for('backoffice.panel') }}#tenants" class="bo-toolbar">
+    <div class="bo-buscador">
+      <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar tenant...') }}">
+    </div>
+    <select name="modulo" onchange="this.form.submit()">
+      <option value="">{{ _('Módulo: todos') }}</option>
+      {% for h in catalogo_herramientas %}
+      <option value="{{ h.id }}" {{ 'selected' if modulo_filtro == h.id }}>{{ h.nombre }}</option>
+      {% endfor %}
+    </select>
+    <select name="orden" onchange="this.form.submit()">
+      <option value="nombre" {{ 'selected' if orden == 'nombre' }}>{{ _('Nombre') }}</option>
+      <option value="usuarios" {{ 'selected' if orden == 'usuarios' }}>{{ _('Nº usuarios') }}</option>
+      <option value="actividad" {{ 'selected' if orden == 'actividad' }}>{{ _('Actividad reciente') }}</option>
+    </select>
+    <a href="#nuevo-tenant" class="btn btn-primary">+ {{ _('Añadir tenant') }}</a>
+  </form>
+
+  <div class="bo-tenant-grid">
+    {% for t in tenants %}
+    <div class="bo-tenant-card" style="--accent: {{ ['#7c3aed', '#0891b2', '#16a34a', '#d97706', '#dc2626'][t.id % 5] }};">
+      <div class="bo-tenant-card-top">
+        <span class="avatar-circulo" style="--avatar-color: {{ ['#7c3aed', '#0891b2', '#16a34a', '#d97706', '#dc2626'][t.id % 5] }};">{{ t.nombre|iniciales }}</span>
+        <div class="bo-tenant-card-titulo">
+          <h3>{{ t.nombre }}</h3>
+          <div class="bo-tenant-card-meta">
+            <span class="log-badge {{ 'log-badge-duracion' if t.activo else 'log-badge-instantanea' }}">{{ _('Activo') if t.activo else _('Suspendido') }}</span>
+            <span>{{ t.n_usuarios }} {{ _('usuarios') }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="bo-tenant-card-modulos">
+        {% set ocultas = herramientas_ocultas_por_tenant.get(t.id, []) %}
+        {% for h in catalogo_herramientas %}
+        {% if h.id not in ocultas %}<span class="bo-modulo-badge">{{ h.nombre }}</span>{% endif %}
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
+      <div class="bo-tenant-card-footer">
+        <span>
+          {% if t.ultima_actividad %}{{ _('Última actividad: %(fecha)s', fecha=t.ultima_actividad[:10]) }}{% else %}{{ _('Sin actividad') }}{% endif %}
+        </span>
+        <a href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}" class="btn btn-primary">{{ _('Ver ficha') }}</a>
+      </div>
+    </div>
+    {% else %}
+    <p class="empty">{{ _('Ningún tenant coincide con la búsqueda.') }}</p>
+    {% endfor %}
   </div>
 
-  <form method="post" action="{{ url_for('backoffice.crear_tenant') }}" class="filters">
+  <form method="post" action="{{ url_for('backoffice.crear_tenant') }}" class="filters" id="nuevo-tenant">
     <label>{{ _('Nuevo tenant') }} <input type="text" name="nombre" placeholder="{{ _('Nombre de la organización') }}" required></label>
     <label>{{ _('Dominio de correo (Stalwart, opcional)') }} <input type="text" name="dominio_correo" placeholder="clientea.com"></label>
     <button type="submit" class="btn btn-primary">+ {{ _('Crear tenant') }}</button>
@@ -269,7 +214,7 @@
 </section>
 
 <section class="ia-section">
-  <h3>{{ _('Usuarios') }}</h3>
+  <h3 id="usuarios">{{ _('Usuarios') }}</h3>
   <div class="table-wrap">
     <table class="historial-table">
       <thead>
@@ -342,7 +287,7 @@
 </section>
 
 <section class="ia-section">
-  <h3>Webhooks</h3>
+  <h3 id="webhooks">Webhooks</h3>
   <p class="subtitle">{{ _('Avisa a una URL externa cuando pasa algo — ver la') }} <a href="/docs">{{ _('Guía para desarrolladores') }}</a> {{ _('para el formato del payload y cómo verificar la firma.') }}</p>
   <div class="table-wrap">
     <table class="historial-table">
@@ -413,7 +358,7 @@
 </section>
 
 <section class="ia-section">
-  <h3>{{ _('Auditoría') }}</h3>
+  <h3 id="auditoria">{{ _('Auditoría') }}</h3>
   <p class="subtitle">{{ _('Últimas acciones sensibles de administración: crear/borrar tenant, cambiar rol, asignar tenant, guardar una API key. Solo lectura.') }}</p>
   <div class="table-wrap">
     <table class="historial-table">

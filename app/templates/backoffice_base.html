@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="{{ idioma_actual }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Backoffice — Guilda Work{% endblock %}</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <script>
+    (function () {
+      var tema = localStorage.getItem("guilda-work-tema") || "system";
+      if (tema !== "system") { document.documentElement.dataset.theme = tema; }
+      // El rail del backoffice no tiene botón de colapsar (a diferencia
+      // del de la app principal) -- siempre expandido, así que se fija
+      // el mismo atributo que activa las etiquetas de texto en style.css
+      // sin necesidad del toggle real.
+      document.documentElement.dataset.railExpandido = "1";
+    })();
+  </script>
+  <!-- Reutiliza el mismo sistema de diseño de la app principal (style.css:
+       tokens de color/espaciado/radio, .icon-rail, .btn, .avatar-circulo,
+       .log-badge, .historial-table...) -- este shell es standalone (no
+       extends base.html, mismo criterio que app/templates/docs/pagina.html:
+       superficie visualmente distinta, con su propio rail de grupos) pero
+       no reinventa el lenguaje visual desde cero. backoffice.css solo
+       añade lo que es genuinamente nuevo aquí: la tarjeta de tenant y la
+       barra de búsqueda/filtro/orden. -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='backoffice.css') }}">
+</head>
+<body data-url-iconos="{{ url_for('static', filename='iconos.svg') }}">
+  <div class="app-shell">
+    <aside class="icon-rail">
+      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link icon-rail-brand" title="Backoffice">
+        <img class="icon-rail-brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="">
+        <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
+      </a>
+
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Plataforma') }}</span>
+      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('backoffice.panel', 'backoffice.ficha_tenant') else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-building-2"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Tenants') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.panel') }}#usuarios" class="icon-rail-link">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Usuarios') }}</span>
+      </a>
+
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Analítica') }}</span>
+      <a href="{{ url_for('backoffice.panel') }}#auditoria" class="icon-rail-link">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Auditoría') }}</span>
+      </a>
+
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Contenido') }}</span>
+      <a href="{{ url_for('backoffice.panel') }}#leads" class="icon-rail-link">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Leads') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.panel') }}#solicitudes" class="icon-rail-link">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Solicitudes portal') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.panel') }}#webhooks" class="icon-rail-link">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Webhooks') }}</span>
+      </a>
+
+      <div style="flex: 1;"></div>
+
+      <div class="icon-rail-perfil-menu">
+        <a href="{{ url_for('inicio') }}" class="icon-rail-perfil-card" title="{{ _('Volver a la app') }}">
+          <span class="icon-rail-perfil-avatar"><span class="avatar-circulo" style="--avatar-color: #7c8ba1;">GW</span></span>
+          <span class="icon-rail-perfil-texto">
+            <span class="icon-rail-perfil-nombre">{{ _('Volver a la app') }}</span>
+          </span>
+        </a>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}" style="margin-top: 4px;">
+        <button type="submit" class="icon-rail-link" style="width: 100%; border: none; cursor: pointer;">
+          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
+          <span class="icon-rail-etiqueta">{{ _('Cerrar sesión') }}</span>
+        </button>
+      </form>
+    </aside>
+
+    <div class="app-main">
+      <main class="content" id="contenido-principal">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+</body>
+</html>

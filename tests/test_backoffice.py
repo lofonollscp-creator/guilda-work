@@ -493,7 +493,12 @@ def test_backoffice_crear_usuario_sin_tokens_solo_da_error_en_openproject_y_chat
     assert "Guilda Work" in html
     assert "OpenProject" in html
     assert "Chatwoot" in html
-    assert "Metabase" not in html  # se omite sin más, sin API key configurada
+    # Substring acotado a la fila de la propia tabla de resultados de alta
+    # (no "Metabase" a secas): el backoffice renovado también muestra el
+    # nombre de cada herramienta del catálogo como insignia en la tarjeta
+    # de cada tenant -- "Metabase" sí puede aparecer en la página por eso,
+    # legítimamente, sin que ese sea el caso que este test comprueba.
+    assert "<td>Metabase</td>" not in html  # se omite sin más, sin API key configurada
     assert db.obtener_usuario_por_email("sin-tokens@ejemplo.com") is not None
 
 

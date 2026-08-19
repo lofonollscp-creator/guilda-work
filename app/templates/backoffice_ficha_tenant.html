@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "backoffice_base.html" %}
 {% block title %}{{ tenant.nombre }} — Backoffice{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -110,5 +110,75 @@
 <section class="quick-card">
   <label>{{ _('Ingresos') }}</label>
   <p class="empty">{{ _('Sin plan asignado todavía.') }}</p>
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Configuración') }}</label>
+
+  <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=tenant.id) }}" class="filters" style="margin-bottom: 8px;">
+    <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ tenant.nombre }}" required></label>
+    <label>CIF <input type="text" name="cif" value="{{ tenant.cif or '' }}" style="width:90px;"></label>
+    <label>{{ _('Dirección fiscal') }} <input type="text" name="direccion_fiscal" value="{{ tenant.direccion_fiscal or '' }}" style="width:200px;"></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+  </form>
+
+  <div class="bo-config-fila">
+    <span class="bo-config-etiqueta">FacturaScripts</span>
+    {% if not tenant.facturascripts_url %}
+    <span class="empty">{{ _('sin aprovisionar') }}</span>
+    {% elif tenant.facturascripts_api_key %}
+    <a class="link" href="{{ tenant.facturascripts_url }}" target="_blank">{{ tenant.facturascripts_url }}</a>
+    {% else %}
+    <a class="link" href="{{ tenant.facturascripts_url }}" target="_blank">{{ tenant.facturascripts_url }}</a>
+    <form method="post" action="{{ url_for('backoffice.guardar_facturascripts_api_key', tenant_id=tenant.id) }}" class="filters">
+      <input type="text" name="api_key" placeholder="{{ _('Pega aquí la API Key (Ajustes → API)') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bo-config-fila">
+    <span class="bo-config-etiqueta">Documenso</span>
+    {% if tenant.documenso_api_key %}
+    <span class="log-badge log-badge-duracion">{{ _('token guardado') }}</span>
+    {% else %}
+    <form method="post" action="{{ url_for('backoffice.guardar_documenso_api_key', tenant_id=tenant.id) }}" class="filters">
+      <input type="text" name="api_key" placeholder="{{ _('Pega aquí el token (crear Equipo a mano primero)') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bo-config-fila">
+    <span class="bo-config-etiqueta">Cal.diy</span>
+    {% if not tenant.calcom_email %}
+    <span class="empty">{{ _('sin aprovisionar') }}</span>
+    {% elif tenant.calcom_api_key %}
+    <span class="log-badge log-badge-duracion">{{ _('token guardado') }}</span>
+    {% else %}
+    <span class="mono">{{ tenant.calcom_email }}</span>
+    <form method="post" action="{{ url_for('backoffice.guardar_calcom_api_key', tenant_id=tenant.id) }}" class="filters">
+      <input type="text" name="api_key" placeholder="{{ _('Pega aquí la API Key (Configuración → Developer)') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bo-config-acciones">
+    <form method="post" action="{{ url_for('backoffice.alternar_fichaje_geolocalizacion', tenant_id=tenant.id) }}">
+      <button type="submit" class="btn btn-ghost" title="{{ _('RGPD: solo activar si hay trabajadores fichando en remoto') }}">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Quitar geolocalización') if tenant.fichaje_geolocalizacion else _('Activar geolocalización') }}
+      </button>
+    </form>
+    <form method="post" action="{{ url_for('backoffice.exportar_datos_tenant', tenant_id=tenant.id) }}">
+      <button type="submit" class="btn btn-ghost" title="{{ _('Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR).') }}">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar datos') }}
+      </button>
+    </form>
+    <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=tenant.id) }}"
+          onsubmit="return confirm('{{ _('¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.', nombre=tenant.nombre) }}');">
+      <button type="submit" class="btn btn-stop">{{ _('Borrar tenant') }}</button>
+    </form>
+  </div>
 </section>
 {% endblock %}

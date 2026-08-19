@@ -148,11 +148,29 @@ def test_alternar_herramienta_requiere_admin(cliente):
     assert resp.status_code == 403
 
 
-def test_panel_backoffice_muestra_el_catalogo_y_los_toggles(cliente):
+def test_ficha_tenant_muestra_el_catalogo_y_los_toggles(cliente):
+    """Backoffice renovado: el toggle por herramienta se movió de la tabla
+    plana del panel a la ficha de cada tenant (app/rutas_backoffice.py:
+    ficha_tenant) -- ver también
+    test_panel_backoffice_solo_lista_los_modulos_visibles_como_insignia."""
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Lueira")
+    db.ocultar_herramienta(tenant_id, _HERRAMIENTA_EJEMPLO)
+
+    resp = cliente.get(f"/backoffice/tenants/{tenant_id}")
+    assert resp.status_code == 200
+    assert b"is-oculta" in resp.data
+
+
+def test_panel_backoffice_solo_lista_los_modulos_visibles_como_insignia(cliente):
+    """La lista de tenants (bo-tenant-grid) ya no es un editor de toggles
+    -- solo muestra los módulos VISIBLES de cada uno como insignia
+    informativa; el oculto ni aparece ahí (editarlo se hace desde la
+    ficha, ver test de arriba)."""
     _admin(cliente)
     tenant_id = db.crear_tenant("Lueira")
     db.ocultar_herramienta(tenant_id, _HERRAMIENTA_EJEMPLO)
 
     resp = cliente.get("/backoffice/")
     assert resp.status_code == 200
-    assert b"is-oculta" in resp.data
+    assert b"is-oculta" not in resp.data

@@ -68,9 +68,31 @@ def _contexto_auditoria() -> dict:
 @admin_required
 def panel():
     tenants = db.listar_tenants_con_conteo()
+    ocultas_por_tenant = db.herramientas_ocultas_de_tenants([t["id"] for t in tenants])
+
+    q = request.args.get("q", "").strip()
+    modulo_filtro = request.args.get("modulo", "").strip()
+    orden = request.args.get("orden", "nombre")
+
+    tenants = [dict(t, ultima_actividad=db.ultima_actividad_tenant(t["id"])) for t in tenants]
+    if q:
+        q_lower = q.lower()
+        tenants = [t for t in tenants if q_lower in t["nombre"].lower()]
+    if modulo_filtro:
+        tenants = [t for t in tenants if modulo_filtro not in ocultas_por_tenant.get(t["id"], set())]
+    if orden == "usuarios":
+        tenants.sort(key=lambda t: t["n_usuarios"], reverse=True)
+    elif orden == "actividad":
+        tenants.sort(key=lambda t: t["ultima_actividad"] or "", reverse=True)
+    else:
+        tenants.sort(key=lambda t: t["nombre"].lower())
+
     return render_template(
         "backoffice.html",
         tenants=tenants,
+        q=q,
+        modulo_filtro=modulo_filtro,
+        orden=orden,
         usuarios=db.listar_usuarios(),
         leads=db.listar_leads_contacto(),
         solicitudes_portal=db.listar_solicitudes_acceso_portal(),
