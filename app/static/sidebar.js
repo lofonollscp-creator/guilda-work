@@ -88,8 +88,8 @@
     });
   }
 
-  const ajustesToggle = document.getElementById("ajustes-toggle");
-  const ajustesPanel = document.getElementById("ajustes-panel");
+  const ajustesToggle = document.getElementById("perfil-toggle");
+  const ajustesPanel = document.getElementById("perfil-panel");
   if (ajustesToggle && ajustesPanel) {
     ajustesToggle.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -101,4 +101,18 @@
       }
     });
   }
+
+  // Grupos plegables del rail (Correo, Fiscal) -- el chevron alterna
+  // "is-abierto" sin navegar; el enlace padre sigue navegando normal
+  // a su hijo principal (ver base.html, mismo comportamiento en
+  // colapsado que un icono suelto de siempre).
+  document.querySelectorAll(".icon-rail-grupo-plegable").forEach((grupo) => {
+    const chevron = grupo.querySelector(".icon-rail-chevron");
+    if (!chevron) return;
+    chevron.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      grupo.classList.toggle("is-abierto");
+    });
+  });
 })();

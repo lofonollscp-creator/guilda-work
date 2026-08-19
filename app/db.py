@@ -2189,6 +2189,27 @@ def marcar_notificaciones_leidas(usuario_id: int) -> None:
         conn.close()
 
 
+def eliminar_notificacion(usuario_id: int, notificacion_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM notificaciones WHERE id = ? AND usuario_id = ?",
+            (notificacion_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_todas_notificaciones(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM notificaciones WHERE usuario_id = ?", (usuario_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # --- Log de auditoría del backoffice (app/rutas_backoffice.py) -------------
 
 def registrar_auditoria(usuario_id: int | None, accion: str, detalle: str | None = None) -> None:

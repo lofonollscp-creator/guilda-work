@@ -34,6 +34,30 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg>
       </button>
 
+      <a href="{{ url_for('inicio') }}" class="icon-rail-link icon-rail-brand" title="Guilda Work">
+        <img class="icon-rail-brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="">
+        <span class="icon-rail-etiqueta">Guilda Work</span>
+      </a>
+
+      <div class="notificaciones-menu">
+        <button type="button" id="notificaciones-toggle" class="icon-rail-link" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
+          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
+          <span class="icon-rail-etiqueta">{{ _('Notificaciones') }}</span>
+          {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
+        </button>
+        <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
+          <div class="notificaciones-panel-cabecera">
+            <span class="ajustes-panel-grupo-etiqueta">{{ _('Notificaciones') }}</span>
+            <button type="button" id="notificaciones-vaciar" class="notificaciones-vaciar-btn" hidden>{{ _('Vaciar todas') }}</button>
+          </div>
+          <div id="notificaciones-lista"></div>
+          <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
+        </div>
+      </div>
+
+      <div class="icon-rail-separador" role="separator"></div>
+
+      <div class="icon-rail-nav">
       <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="{{ _('Menús / Dashboard') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Menús') }}</span>
@@ -45,11 +69,19 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tareas') }}</span>
       </a>
-      <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Correo') }}</span>
-        {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
-      </a>
+      <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and request.endpoint.startswith('correo.') }}">
+        <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
+          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
+          <span class="icon-rail-etiqueta">{{ _('Correo') }}</span>
+          {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
+          <button type="button" class="icon-rail-chevron" aria-label="{{ _('Expandir Correo') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
+        </a>
+        <div class="icon-rail-submenu">
+          <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.bandeja' else '' }}">{{ _('Bandeja') }}</a>
+          <a href="{{ url_for('correo.cuentas') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.cuentas' else '' }}">{{ _('Cuentas') }}</a>
+          <a href="{{ url_for('correo.ajustes') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.ajustes' else '' }}">{{ _('Ajustes') }}</a>
+        </div>
+      </div>
       <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-ticket"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
@@ -59,14 +91,17 @@
         <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
       </a>
       {% if g.tenant_id %}
-      <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fiscal.') else '' }}" title="{{ _('Calendario fiscal') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Calendario fiscal') }}</span>
-      </a>
-      <a href="{{ url_for('citas.agenda') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('citas.') else '' }}" title="{{ _('Agenda') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-clock"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Agenda') }}</span>
-      </a>
+      <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.')) }}">
+        <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-link {{ 'active' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.')) else '' }}" title="{{ _('Fiscal') }}">
+          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
+          <span class="icon-rail-etiqueta">{{ _('Fiscal') }}</span>
+          <button type="button" class="icon-rail-chevron" aria-label="{{ _('Expandir Fiscal') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
+        </a>
+        <div class="icon-rail-submenu">
+          <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-sublink {{ 'active' if request.endpoint and request.endpoint.startswith('fiscal.') else '' }}">{{ _('Calendario fiscal') }}</a>
+          <a href="{{ url_for('citas.agenda') }}" class="icon-rail-sublink {{ 'active' if request.endpoint and request.endpoint.startswith('citas.') else '' }}">{{ _('Agenda') }}</a>
+        </div>
+      </div>
       <a href="{{ url_for('videollamadas.nueva') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('videollamadas.') else '' }}" title="{{ _('Videollamadas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-video"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Videollamadas') }}</span>
@@ -108,19 +143,94 @@
         <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
       </a>
       {% endif %}
+      </div>
 
       <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="{{ _('Captura rápida (Ctrl+Alt+G)') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-camera"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Captura rápida') }}</span>
       </button>
+
+      <div class="icon-rail-perfil-menu">
+        <button type="button" id="perfil-toggle" class="icon-rail-perfil-card" title="{{ _('Cuenta') }}" aria-label="{{ _('Cuenta') }}">
+          <span class="icon-rail-perfil-avatar">
+            {% if perfil_rail and perfil_rail.avatar_contenido %}
+            <img src="{{ url_for('avatar_usuario', usuario_id=g.usuario_id) }}" alt="">
+            {% else %}
+            <span class="avatar-circulo" style="--avatar-color: {{ ((perfil_rail.nombre_mostrado if perfil_rail else None) or (usuario_rail.email if usuario_rail else ''))|avatar_color }};">{{ ((perfil_rail.nombre_mostrado if perfil_rail else None) or (usuario_rail.email if usuario_rail else ''))|iniciales }}</span>
+            {% endif %}
+          </span>
+          <span class="icon-rail-perfil-texto">
+            <span class="icon-rail-perfil-nombre">{{ (perfil_rail.nombre_mostrado if perfil_rail else None) or (usuario_rail.email if usuario_rail else '') }}</span>
+            {% if tenant_rail %}<span class="icon-rail-perfil-tenant">{{ tenant_rail.nombre }}</span>{% endif %}
+          </span>
+        </button>
+        <div class="ajustes-panel icon-rail-perfil-panel" id="perfil-panel" hidden>
+          <span class="ajustes-panel-grupo-etiqueta">{{ _('Apariencia') }}</span>
+          <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="{{ _('Tema: cambiar') }}">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-monitor"></use></svg>
+            <span class="ajustes-panel-texto">{{ _('Sistema') }}</span>
+          </button>
+          <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="{{ _('Densidad: cambiar') }}">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-list"></use></svg>
+            <span class="ajustes-panel-texto">{{ _('Normal') }}</span>
+          </button>
+          <div class="ajustes-idiomas" role="group" aria-label="{{ _('Idioma') }}">
+            {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
+            <form action="{{ url_for('cambiar_idioma', codigo=codigo) }}" method="post">
+              <button type="submit" class="ajustes-idioma-btn {{ 'is-activo' if idioma_actual == codigo }}" title="{{ nombre }}" {% if idioma_actual == codigo %}aria-current="true"{% endif %}>{{ codigo|upper }}</button>
+            </form>
+            {% endfor %}
+          </div>
+
+          <div class="ajustes-panel-separador" role="separator"></div>
+          <span class="ajustes-panel-grupo-etiqueta">{{ _('Cuenta') }}</span>
+          <a href="{{ url_for('ajustes_perfil') }}" class="ajustes-panel-btn">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
+            {{ _('Mi perfil') }}
+          </a>
+          <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
+            {{ _('Mis dispositivos') }}
+          </a>
+          {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
+          <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
+            {{ _('Asistente IA') }}
+          </button>
+          {% endif %}
+
+          <div class="ajustes-panel-separador" role="separator"></div>
+          <span class="ajustes-panel-grupo-etiqueta">{{ _('Ayuda y salida') }}</span>
+          <a href="https://help.guildawork.com" target="_blank" rel="noopener" class="ajustes-panel-btn">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
+            {{ _('Centro de ayuda') }}
+          </a>
+          <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
+            {{ _('Documentación (desarrolladores)') }}
+          </a>
+          {% if modo_escritorio %}
+          <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
+                onsubmit="return confirm('{{ _('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.') }}');">
+            <button type="submit" class="ajustes-panel-btn">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
+              {{ _('Cerrar programa') }}
+            </button>
+          </form>
+          {% else %}
+          <form class="ajustes-panel-shutdown" action="{{ url_for('logout') }}" method="post">
+            <button type="submit" class="ajustes-panel-btn">
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
+              {{ _('Cerrar sesión') }}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
     </aside>
 
     <div class="app-main">
       <header class="top-bar">
-        <a class="brand" href="{{ url_for('inicio') }}">
-          <img class="brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
-          <span class="brand-name">Guilda Work</span>
-        </a>
         <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir"
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}"
                 data-url-fiscal-vencimiento="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=0) }}"
@@ -130,84 +240,6 @@
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
-        <div class="notificaciones-menu">
-          <button type="button" id="notificaciones-toggle" class="ajustes-toggle" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
-            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
-            {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
-          </button>
-          <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
-            <span class="ajustes-panel-grupo-etiqueta">{{ _('Notificaciones') }}</span>
-            <div id="notificaciones-lista"></div>
-            <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
-          </div>
-        </div>
-        <div class="ajustes-menu">
-          <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">
-            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg>
-          </button>
-          <div class="ajustes-panel" id="ajustes-panel" hidden>
-            <span class="ajustes-panel-grupo-etiqueta">{{ _('Apariencia') }}</span>
-            <button type="button" id="theme-toggle" class="ajustes-panel-btn" title="{{ _('Tema: cambiar') }}">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-monitor"></use></svg>
-              <span class="ajustes-panel-texto">{{ _('Sistema') }}</span>
-            </button>
-            <button type="button" id="densidad-toggle" class="ajustes-panel-btn" title="{{ _('Densidad: cambiar') }}">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-list"></use></svg>
-              <span class="ajustes-panel-texto">{{ _('Normal') }}</span>
-            </button>
-            <div class="ajustes-idiomas" role="group" aria-label="{{ _('Idioma') }}">
-              {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
-              <form action="{{ url_for('cambiar_idioma', codigo=codigo) }}" method="post">
-                <button type="submit" class="ajustes-idioma-btn {{ 'is-activo' if idioma_actual == codigo }}" title="{{ nombre }}" {% if idioma_actual == codigo %}aria-current="true"{% endif %}>{{ codigo|upper }}</button>
-              </form>
-              {% endfor %}
-            </div>
-
-            <div class="ajustes-panel-separador" role="separator"></div>
-            <span class="ajustes-panel-grupo-etiqueta">{{ _('Cuenta') }}</span>
-            <a href="{{ url_for('ajustes_perfil') }}" class="ajustes-panel-btn">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
-              {{ _('Mi perfil') }}
-            </a>
-            <a href="{{ url_for('mis_dispositivos') }}" class="ajustes-panel-btn">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
-              {{ _('Mis dispositivos') }}
-            </a>
-            {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
-            <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
-              {{ _('Asistente IA') }}
-            </button>
-            {% endif %}
-
-            <div class="ajustes-panel-separador" role="separator"></div>
-            <span class="ajustes-panel-grupo-etiqueta">{{ _('Ayuda y salida') }}</span>
-            <a href="https://help.guildawork.com" target="_blank" rel="noopener" class="ajustes-panel-btn">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
-              {{ _('Centro de ayuda') }}
-            </a>
-            <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
-              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
-              {{ _('Documentación (desarrolladores)') }}
-            </a>
-            {% if modo_escritorio %}
-            <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
-                  onsubmit="return confirm('{{ _('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.') }}');">
-              <button type="submit" class="ajustes-panel-btn">
-                <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
-                {{ _('Cerrar programa') }}
-              </button>
-            </form>
-            {% else %}
-            <form class="ajustes-panel-shutdown" action="{{ url_for('logout') }}" method="post">
-              <button type="submit" class="ajustes-panel-btn">
-                <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
-                {{ _('Cerrar sesión') }}
-              </button>
-            </form>
-            {% endif %}
-          </div>
-        </div>
       </header>
       <main class="content" id="contenido-principal">
         {% block content %}{% endblock %}

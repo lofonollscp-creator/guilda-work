@@ -259,6 +259,20 @@ def inyectar_notificaciones_badge():
 
 
 @app.context_processor
+def inyectar_perfil_rail():
+    """Avatar/nombre/tenant para la tarjeta de cuenta fija abajo del
+    rail (base.html) -- mismas funciones ya usadas por
+    /ajustes/perfil, sin repetir la consulta ahí."""
+    if not g.usuario_id:
+        return {}
+    return {
+        "perfil_rail": db.obtener_perfil_usuario(g.usuario_id),
+        "usuario_rail": db.obtener_usuario(g.usuario_id),
+        "tenant_rail": db.obtener_tenant(g.tenant_id) if g.tenant_id else None,
+    }
+
+
+@app.context_processor
 def inyectar_ia_flotante():
     # El panel flotante del Asistente IA vive en base.html, así que necesita
     # su propio contexto en cualquier página que no sea ya /ia (ahí la ruta

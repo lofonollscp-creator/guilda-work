@@ -254,6 +254,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .icon-rail {
   width: 64px;
   flex-shrink: 0;
+  /* Fijo a la altura de la ventana (no a la del contenido de la página,
+     que puede ser mucho más larga) -- si no, la tarjeta de cuenta de
+     abajo del todo acababa muy por debajo del fold en páginas largas.
+     align-self:flex-start es necesario porque .app-shell es flex y por
+     defecto estira sus hijos a la misma altura (stretch). */
+  position: sticky;
+  top: var(--space-2);
+  align-self: flex-start;
+  max-height: calc(100vh - var(--space-2) * 2);
   background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent 40%), var(--sidebar-bg);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
@@ -266,9 +275,24 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: var(--space-1);
   padding: var(--space-3) 0;
   transition: width 0.15s ease;
-  overflow: hidden;
+  /* Sin overflow:hidden a propósito -- la campana/tarjeta de cuenta
+     viven aquí ahora con sus paneles desplegables (position:absolute,
+     se salen del ancho del propio rail), y quedarían recortados si el
+     rail recortara su propio contenido. El colapsar etiquetas ya lo
+     resuelve display:none (ver .icon-rail-etiqueta), no este overflow. */
 }
 :root[data-rail-expandido="1"] .icon-rail { width: 200px; align-items: stretch; padding: var(--space-3) var(--space-2); }
+.icon-rail-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: inherit;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  width: 100%;
+}
 .icon-rail-link {
   position: relative;
   display: flex;
@@ -343,7 +367,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   letter-spacing: 0.04em;
 }
 :root[data-rail-expandido="1"] .icon-rail-etiqueta { display: inline; }
-.icon-rail-toggle { margin-bottom: var(--space-2); }
+.icon-rail-toggle { margin-bottom: var(--space-1); }
 .icon-rail-captura { margin-top: auto; }
 .icon-rail-badge {
   position: absolute;
@@ -364,12 +388,185 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 :root[data-rail-expandido="1"] .icon-rail-badge { position: static; margin-left: auto; }
 
-/* ---- Top bar (marca + menú de ajustes) ---- */
+/* ---- Cabecera del rail: logo + campana de notificaciones ---- */
+.icon-rail-brand-mark { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+.notificaciones-menu { position: relative; }
+.notificaciones-badge { top: -2px; right: -4px; }
+/* #id + .clase a propósito: .ajustes-panel define su propio min-width
+   más abajo en el fichero, y con la misma especificidad (una clase)
+   gana la que aparezca DESPUÉS en la cascada -- el id garantiza que
+   esta gana siempre, sin depender del orden de las reglas. */
+#notificaciones-panel.notificaciones-panel {
+  /* El rail es angosto (64-200px) -- un panel de 320-380px no cabe
+     debajo sin salirse de la pantalla, así que se abre hacia la
+     DERECHA del rail en vez de hacia abajo (comportamiento por
+     defecto heredado de .ajustes-panel). */
+  top: 0;
+  left: calc(100% + 8px);
+  right: auto;
+  min-width: 320px;
+  max-width: 380px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.notificaciones-panel-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.notificaciones-vaciar-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.notificaciones-vaciar-btn:hover { color: var(--danger); text-decoration: underline; }
+.notificacion-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  border-bottom: 1px solid var(--border);
+}
+.notificacion-item:last-child { border-bottom: none; }
+.notificacion-item:hover { background: var(--bg); }
+.notificacion-item.es-no-leida { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.notificacion-item-contenido {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 4px 10px 12px;
+  text-decoration: none;
+  color: var(--text);
+}
+.notificacion-item-titulo { font-weight: 600; font-size: 0.9em; }
+.notificacion-item-cuerpo { font-size: 0.85em; color: var(--text-muted); margin-top: 2px; }
+.notificacion-item-fecha { font-size: 0.75em; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+.notificacion-item-eliminar {
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 8px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.notificacion-item-eliminar svg { width: 13px; height: 13px; }
+.notificacion-item:hover .notificacion-item-eliminar { opacity: 1; }
+.notificacion-item-eliminar:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+
+/* ---- Tarjeta de cuenta (abajo del rail) ---- */
+.icon-rail-perfil-menu { position: relative; margin-top: var(--space-1); }
+.icon-rail-perfil-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+:root[data-rail-expandido="1"] .icon-rail-perfil-card { width: 100%; height: auto; padding: 6px 8px; }
+.icon-rail-perfil-card:hover { background: rgba(255,255,255,0.08); }
+.icon-rail-perfil-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+.icon-rail-perfil-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.icon-rail-perfil-avatar .avatar-circulo { width: 100%; height: 100%; font-size: 0.72em; }
+.icon-rail-perfil-texto { display: none; flex-direction: column; min-width: 0; text-align: left; }
+:root[data-rail-expandido="1"] .icon-rail-perfil-texto { display: flex; }
+.icon-rail-perfil-nombre {
+  font-size: 0.8em;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.icon-rail-perfil-tenant {
+  font-size: 0.7em;
+  color: var(--sidebar-text);
+  opacity: 0.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* #id + .clase: misma razón que #notificaciones-panel más arriba --
+   .ajustes-panel declara su propia posición más abajo en el fichero y
+   ganaría por orden de cascada con igual especificidad. */
+#perfil-panel.icon-rail-perfil-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  top: auto;
+  left: 0;
+  right: auto;
+}
+
+/* ---- Grupos plegables del rail (Correo, Fiscal) -- solo se comportan
+   como árbol con el rail expandido; colapsado, el padre es un enlace
+   normal a su hijo principal (mismo comportamiento de siempre). ---- */
+.icon-rail-grupo-plegable { width: 100%; display: flex; flex-direction: column; }
+.icon-rail-chevron {
+  display: none;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.icon-rail-chevron svg { width: 13px; height: 13px; }
+:root[data-rail-expandido="1"] .icon-rail-chevron { display: inline-flex; }
+.icon-rail-grupo-plegable.is-abierto .icon-rail-chevron { transform: rotate(180deg); }
+.icon-rail-submenu { display: none; flex-direction: column; padding-left: 34px; }
+:root[data-rail-expandido="1"] .icon-rail-grupo-plegable.is-abierto .icon-rail-submenu { display: flex; }
+.icon-rail-sublink {
+  display: block;
+  padding: 6px 10px;
+  font-size: 0.78em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sidebar-text);
+  opacity: 0.75;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+.icon-rail-sublink:hover { opacity: 1; background: rgba(255,255,255,0.08); }
+.icon-rail-sublink.active { opacity: 1; color: var(--sidebar-text-active); font-weight: 600; }
+
+/* ---- Top bar (buscador + atajos de teclado) ---- */
 .app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: var(--space-2); }
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: var(--space-3);
   padding: 0 var(--space-5);
   height: 56px;
   flex-shrink: 0;
@@ -380,50 +577,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--shadow-sm);
 }
-.brand { display: flex; align-items: center; gap: var(--space-2); text-decoration: none; }
-.brand-mark { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
-.brand-name {
-  color: var(--text);
-  font-weight: 700;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.notificaciones-menu { position: relative; }
-.notificaciones-badge { top: -2px; right: -4px; }
-.notificaciones-panel { min-width: 320px; max-width: 380px; max-height: 420px; overflow-y: auto; }
-.notificacion-item {
-  display: block;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  color: var(--text);
-  border-bottom: 1px solid var(--border);
-}
-.notificacion-item:last-child { border-bottom: none; }
-.notificacion-item:hover { background: var(--bg); }
-.notificacion-item.es-no-leida { background: color-mix(in srgb, var(--primary) 8%, transparent); }
-.notificacion-item-titulo { font-weight: 600; font-size: 0.9em; }
-.notificacion-item-cuerpo { font-size: 0.85em; color: var(--text-muted); margin-top: 2px; }
-.notificacion-item-fecha { font-size: 0.75em; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
-
-.ajustes-menu { position: relative; }
-.ajustes-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.ajustes-toggle svg { width: 18px; height: 18px; }
-.ajustes-toggle:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
+/* Sin marca/campana/ajustes que empujar a la derecha (se movieron al
+   rail) -- el buscador crece hasta un ancho razonable en vez de
+   quedarse pegado a la izquierda con un hueco vacío detrás. */
+.top-bar .busqueda-boton-abrir { flex: 0 1 480px; }
 .ajustes-panel[hidden] { display: none; }
 .ajustes-panel {
   position: absolute;
@@ -3195,7 +3352,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .content { padding: var(--space-4) var(--space-3); max-width: none; }
 
   .top-bar { padding: 0 var(--space-3); gap: var(--space-2); }
-  .brand-name { display: none; }
   .busqueda-boton-abrir { flex: 1 1 auto; min-width: 0; padding: 6px 8px; }
   .busqueda-atajo { display: none; }
 

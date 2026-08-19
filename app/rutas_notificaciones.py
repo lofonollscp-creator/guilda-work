@@ -31,3 +31,17 @@ def recientes():
 def marcar_leidas():
     db.marcar_notificaciones_leidas(g.usuario_id)
     return jsonify({"ok": True})
+
+
+@notificaciones_bp.route("/<int:notificacion_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar(notificacion_id: int):
+    db.eliminar_notificacion(g.usuario_id, notificacion_id)
+    return jsonify({"ok": True})
+
+
+@notificaciones_bp.route("/vaciar", methods=["POST"])
+@login_required
+def vaciar():
+    db.eliminar_todas_notificaciones(g.usuario_id)
+    return jsonify({"ok": True})

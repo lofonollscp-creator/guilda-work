@@ -39,6 +39,29 @@ def test_notificaciones_son_privadas_por_usuario():
     assert db.contar_notificaciones_no_leidas(otro_usuario_id) == 0
 
 
+def test_eliminar_notificacion_la_quita_de_la_lista(usuario_id):
+    nid = db.crear_notificacion(usuario_id, "correo_nuevo", "A", "a", None)
+    db.crear_notificacion(usuario_id, "correo_nuevo", "B", "b", None)
+    db.eliminar_notificacion(usuario_id, nid)
+    notis = db.listar_notificaciones(usuario_id)
+    assert len(notis) == 1
+    assert notis[0]["titulo"] == "B"
+
+
+def test_eliminar_notificacion_de_otro_usuario_no_hace_nada(usuario_id):
+    otro_usuario_id = db.crear_usuario_vinculado_a_kratos("otro-notif-del@ejemplo.com", "kratos-otro-notif-del")
+    nid = db.crear_notificacion(otro_usuario_id, "correo_nuevo", "Ajena", "x", None)
+    db.eliminar_notificacion(usuario_id, nid)
+    assert len(db.listar_notificaciones(otro_usuario_id)) == 1
+
+
+def test_eliminar_todas_notificaciones_vacia_la_lista(usuario_id):
+    db.crear_notificacion(usuario_id, "correo_nuevo", "A", "a", None)
+    db.crear_notificacion(usuario_id, "correo_nuevo", "B", "b", None)
+    db.eliminar_todas_notificaciones(usuario_id)
+    assert db.listar_notificaciones(usuario_id) == []
+
+
 # --- Preferencias de notificación (db.notificacion_tipo_activa) --------
 
 def test_notificacion_tipo_activa_por_defecto_es_true(usuario_id):
@@ -143,3 +166,31 @@ def test_marcar_leidas_no_afecta_a_otro_usuario(cliente):
 
     cliente.post("/notificaciones/marcar-leidas")
     assert db.contar_notificaciones_no_leidas(otro_usuario_id) == 1
+
+
+def test_eliminar_ruta_borra_la_notificacion(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "notif-eliminar-ruta@ejemplo.com", "contrasena123")
+    nid = db.crear_notificacion(usuario_id, "correo_nuevo", "A", "a", None)
+
+    resp = cliente.post(f"/notificaciones/{nid}/eliminar")
+    assert resp.status_code == 200
+    assert db.listar_notificaciones(usuario_id) == []
+
+
+def test_eliminar_ruta_no_permite_borrar_de_otro_usuario(cliente):
+    iniciar_sesion_de_prueba(cliente, "notif-eliminar-ajena@ejemplo.com", "contrasena123")
+    otro_usuario_id = db.crear_usuario_vinculado_a_kratos("notif-eliminar-otro@ejemplo.com", "kratos-notif-eliminar-otro")
+    nid = db.crear_notificacion(otro_usuario_id, "correo_nuevo", "Ajena", "x", None)
+
+    cliente.post(f"/notificaciones/{nid}/eliminar")
+    assert len(db.listar_notificaciones(otro_usuario_id)) == 1
+
+
+def test_vaciar_ruta_borra_todas_las_del_usuario(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "notif-vaciar-ruta@ejemplo.com", "contrasena123")
+    db.crear_notificacion(usuario_id, "correo_nuevo", "A", "a", None)
+    db.crear_notificacion(usuario_id, "correo_nuevo", "B", "b", None)
+
+    resp = cliente.post("/notificaciones/vaciar")
+    assert resp.status_code == 200
+    assert db.listar_notificaciones(usuario_id) == []
