@@ -220,6 +220,20 @@ CREATE TABLE IF NOT EXISTS notificaciones (
     leido_en TEXT
 );
 
+-- Log de auditoría del backoffice (app/rutas_backoffice.py) -- registro
+-- de solo lectura de acciones sensibles/destructivas de administración
+-- (crear/borrar tenant, cambiar rol, asignar tenant a un usuario,
+-- guardar una API key). Deliberadamente simple: sin niveles de
+-- severidad ni retención configurable, se puede ampliar después si
+-- hace falta de verdad -- ver db.registrar_auditoria().
+CREATE TABLE IF NOT EXISTS auditoria_backoffice (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id),
+    accion TEXT NOT NULL,
+    detalle TEXT,
+    creado_en TEXT NOT NULL
+);
+
 -- Webhooks salientes (ver app/eventos.py). tenant_id NULL = modo
 -- escritorio/usuario sin tenant (mismo criterio que otras tablas ya
 -- nullable de este archivo) — se asocia al usuario que lo dio de alta
@@ -641,6 +655,7 @@ CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_cliente ON clientes_fis
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos(vencimiento_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_mensajes_vencimiento ON vencimientos_fiscales_mensajes(vencimiento_id);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(usuario_id, leido_en, creado_en);
+CREATE INDEX IF NOT EXISTS idx_auditoria_backoffice_creado ON auditoria_backoffice(creado_en);
 CREATE INDEX IF NOT EXISTS idx_tareas_recurrentes_usuario ON tareas_recurrentes(usuario_id, activa);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_recurrente ON tareas_outlook(tarea_recurrente_id);
 """
@@ -2097,6 +2112,37 @@ def marcar_notificaciones_leidas(usuario_id: int) -> None:
             (now_iso(), usuario_id),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Log de auditoría del backoffice (app/rutas_backoffice.py) -------------
+
+def registrar_auditoria(usuario_id: int | None, accion: str, detalle: str | None = None) -> None:
+    """Nunca debe romper la acción que audita -- quien llama (rutas_backoffice.py)
+    la envuelve en su propio try/except best-effort, mismo criterio que el
+    resto de efectos secundarios "de segunda fila" del proyecto (eventos,
+    notificaciones)."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO auditoria_backoffice (usuario_id, accion, detalle, creado_en) VALUES (?, ?, ?, ?)",
+            (usuario_id, accion, detalle, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_auditoria_backoffice(limite: int = 200) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT a.*, u.email AS usuario_email
+               FROM auditoria_backoffice a LEFT JOIN usuarios u ON u.id = a.usuario_id
+               ORDER BY a.id DESC LIMIT ?""",
+            (limite,),
+        ).fetchall()
     finally:
         conn.close()
 

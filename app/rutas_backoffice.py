@@ -14,6 +14,16 @@ from .auth import admin_required, login_required
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
 
 
+def _auditar(accion: str, detalle: str | None = None) -> None:
+    """Best-effort, igual que el resto de efectos secundarios "de segunda
+    fila" de la app (eventos, notificaciones) -- un fallo al registrar la
+    auditoría nunca debe impedir la acción real de backoffice."""
+    try:
+        db.registrar_auditoria(g.usuario_id, accion, detalle)
+    except Exception:
+        pass
+
+
 def _contexto_herramientas(tenants) -> dict:
     """Contexto compartido por las 4 rutas que renderizan backoffice.html
     directamente (en vez de redirigir a panel()) — la tabla de
@@ -49,6 +59,10 @@ def _contexto_webhooks(tenants) -> dict:
     return {"webhooks_por_tenant": webhooks_por_tenant, "eventos_disponibles": eventos.EVENTOS}
 
 
+def _contexto_auditoria() -> dict:
+    return {"auditoria": db.listar_auditoria_backoffice(limite=200)}
+
+
 @backoffice_bp.route("/")
 @login_required
 @admin_required
@@ -66,6 +80,7 @@ def panel():
         calcom_creado=None,
         **_contexto_herramientas(tenants),
         **_contexto_webhooks(tenants),
+        **_contexto_auditoria(),
     )
 
 
@@ -81,6 +96,7 @@ def crear_tenant():
         tenant_id = None
         try:
             tenant_id = db.crear_tenant(nombre)
+            _auditar("crear_tenant", nombre)
         except Exception:
             pass  # nombre duplicado: no hace falta más que ignorarlo, se ve en la lista
         try:
@@ -237,6 +253,7 @@ def crear_tenant():
             calcom_creado=calcom_creado,
             **_contexto_herramientas(tenants),
         **_contexto_webhooks(tenants),
+        **_contexto_auditoria(),
         )
     return redirect(url_for("backoffice.panel"))
 
@@ -278,6 +295,7 @@ def guardar_facturascripts_api_key(tenant_id: int):
     api_key = request.form.get("api_key", "").strip()
     if api_key:
         db.guardar_facturascripts_api_key(tenant_id, api_key)
+        _auditar("guardar_facturascripts_api_key", f"tenant_id={tenant_id}")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -294,6 +312,7 @@ def guardar_documenso_api_key(tenant_id: int):
     api_key = request.form.get("api_key", "").strip()
     if api_key:
         db.guardar_documenso_api_key(tenant_id, api_key)
+        _auditar("guardar_documenso_api_key", f"tenant_id={tenant_id}")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -311,6 +330,7 @@ def guardar_calcom_api_key(tenant_id: int):
     api_key = request.form.get("api_key", "").strip()
     if api_key:
         db.guardar_calcom_api_key(tenant_id, api_key)
+        _auditar("guardar_calcom_api_key", f"tenant_id={tenant_id}")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -378,6 +398,7 @@ def borrar_tenant(tenant_id: int):
     except stalwart.ErrorStalwart:
         pass
     db.borrar_tenant(tenant_id)
+    _auditar("borrar_tenant", tenant["nombre"])
     return redirect(url_for("backoffice.panel"))
 
 
@@ -430,6 +451,7 @@ def crear_usuario():
             error=str(e),
             **_contexto_herramientas(tenants),
         **_contexto_webhooks(tenants),
+        **_contexto_auditoria(),
         )
     usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     if tenant_id:
@@ -513,6 +535,7 @@ def crear_usuario():
         email_creado=email,
         **_contexto_herramientas(tenants),
         **_contexto_webhooks(tenants),
+        **_contexto_auditoria(),
     )
 
 
@@ -525,8 +548,10 @@ def asignar_tenant_usuario(usuario_id: int):
     tenant_id = request.form.get("tenant_id") or None
     if tenant_id:
         db.asignar_tenant(usuario_id, int(tenant_id))
+        _auditar("asignar_tenant", f"usuario_id={usuario_id} tenant_id={tenant_id}")
     else:
         db.desasignar_tenant(usuario_id)
+        _auditar("desasignar_tenant", f"usuario_id={usuario_id}")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -543,8 +568,10 @@ def cambiar_rol(usuario_id: int):
         abort(400)
     if usuario["rol"] == "admin":
         db.quitar_admin(usuario["email"])
+        _auditar("quitar_admin", usuario["email"])
     else:
         db.hacer_admin(usuario["email"])
+        _auditar("hacer_admin", usuario["email"])
     return redirect(url_for("backoffice.panel"))
 
 

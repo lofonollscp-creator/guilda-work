@@ -1165,3 +1165,79 @@ def test_backoffice_panel_muestra_los_webhooks(cliente):
 
     resp = cliente.get("/backoffice/")
     assert b"ejemplo.com/mi-webhook-unico" in resp.data
+
+
+# --- Log de auditoría (app/db.py, app/rutas_backoffice.py) -----------------
+
+def test_registrar_y_listar_auditoria(usuario_id):
+    db.registrar_auditoria(usuario_id, "crear_tenant", "Lueira")
+    entradas = db.listar_auditoria_backoffice()
+    assert len(entradas) == 1
+    assert entradas[0]["accion"] == "crear_tenant"
+    assert entradas[0]["detalle"] == "Lueira"
+    assert entradas[0]["usuario_email"] is not None
+
+
+def test_listar_auditoria_orden_mas_reciente_primero(usuario_id):
+    db.registrar_auditoria(usuario_id, "primera_accion", None)
+    db.registrar_auditoria(usuario_id, "segunda_accion", None)
+    entradas = db.listar_auditoria_backoffice()
+    assert [e["accion"] for e in entradas] == ["segunda_accion", "primera_accion"]
+
+
+def test_crear_tenant_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "audit-crear@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    cliente.post("/backoffice/tenants", data={"nombre": "Auditada SL"}, follow_redirects=True)
+
+    entradas = db.listar_auditoria_backoffice()
+    acciones = [e["accion"] for e in entradas]
+    assert "crear_tenant" in acciones
+
+
+def test_borrar_tenant_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "audit-borrar@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("Para Borrar SL")
+
+    cliente.post(f"/backoffice/tenants/{tenant_id}/borrar")
+
+    entradas = db.listar_auditoria_backoffice()
+    borrados = [e for e in entradas if e["accion"] == "borrar_tenant"]
+    assert len(borrados) == 1
+    assert borrados[0]["detalle"] == "Para Borrar SL"
+
+
+def test_cambiar_rol_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    admin_id = iniciar_sesion_de_prueba(cliente, "audit-rol-admin@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
+    otro_id = db.crear_usuario("audit-rol-otro@ejemplo.com", "contrasena123")
+
+    cliente.post(f"/backoffice/usuarios/{otro_id}/rol")
+
+    entradas = db.listar_auditoria_backoffice()
+    acciones = [e["accion"] for e in entradas]
+    assert "hacer_admin" in acciones
+
+
+def test_asignar_tenant_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    admin_id = iniciar_sesion_de_prueba(cliente, "audit-asignar-admin@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
+    otro_id = db.crear_usuario("audit-asignar-otro@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Auditada")
+
+    cliente.post(f"/backoffice/usuarios/{otro_id}/tenant", data={"tenant_id": str(tenant_id)})
+
+    entradas = db.listar_auditoria_backoffice()
+    acciones = [e["accion"] for e in entradas]
+    assert "asignar_tenant" in acciones
+
+
+def test_backoffice_panel_muestra_la_tabla_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "audit-panel@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    db.registrar_auditoria(usuario_id, "accion_visible_en_el_panel", None)
+
+    resp = cliente.get("/backoffice/")
+    assert b"accion_visible_en_el_panel" in resp.data
