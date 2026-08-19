@@ -338,6 +338,24 @@ CREATE TABLE IF NOT EXISTS tareas_outlook (
     papelera_en TEXT
 );
 
+-- Reglas de recurrencia para tareas_outlook (semanal/mensual) --
+-- deliberadamente simples (un solo día por regla, sin motor de
+-- recurrencia genérico, ver comentario de vencimientos_fiscales más
+-- arriba, mismo criterio). `dia` es 0-6 (lunes-domingo) si
+-- periodicidad='semanal', o 1-31 si periodicidad='mensual' (si el mes
+-- no tiene ese día, se usa el último día del mes -- ver
+-- generar_tareas_recurrentes()).
+CREATE TABLE IF NOT EXISTS tareas_recurrentes (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    categoria_id INTEGER REFERENCES categorias(id),
+    asunto TEXT NOT NULL,
+    periodicidad TEXT NOT NULL CHECK (periodicidad IN ('semanal','mensual')),
+    dia INTEGER NOT NULL,
+    activa INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL
+);
+
 -- Cliente de correo IMAP/POP3. La contraseña de cada cuenta NO se guarda
 -- aquí: vive en el almacén de credenciales del sistema (keyring), bajo la
 -- clave "cuenta-<id>" — esta tabla solo tiene metadatos de conexión.
@@ -607,6 +625,8 @@ CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_cliente ON clientes_fis
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos(vencimiento_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_mensajes_vencimiento ON vencimientos_fiscales_mensajes(vencimiento_id);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(usuario_id, leido_en, creado_en);
+CREATE INDEX IF NOT EXISTS idx_tareas_recurrentes_usuario ON tareas_recurrentes(usuario_id, activa);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_recurrente ON tareas_outlook(tarea_recurrente_id);
 """
 
 
@@ -1073,6 +1093,14 @@ def init_db() -> None:
         # id del envelope de Documenso una vez enviado a firma, para
         # poder consultar su estado/descargarlo sin volver a crearlo.
         _asegurar_columna(conn, "vencimientos_fiscales", "documenso_documento_id", "TEXT")
+        # Tareas recurrentes (app/db.py:generar_tareas_recurrentes): marca
+        # qué regla generó esta tarea concreta, para poder comprobar si ya
+        # se generó la de este periodo (idempotencia del cron) sin tener
+        # que adivinarlo por asunto/fecha. Tiene que ir ANTES de
+        # conn.executescript(INDICES) -- ese script crea un índice sobre
+        # esta misma columna, y en una base de datos nueva (creada solo por
+        # SCHEMA, que no la incluye) todavía no existiría.
+        _asegurar_columna(conn, "tareas_outlook", "tarea_recurrente_id", "INTEGER REFERENCES tareas_recurrentes(id)")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -3134,6 +3162,7 @@ def crear_tarea_outlook(
     categoria_outlook: str | None = None,
     categoria_id: int | None = None,
     outlook_entry_id: str | None = None,
+    tarea_recurrente_id: int | None = None,
 ) -> int:
     conn = get_connection()
     try:
@@ -3142,16 +3171,127 @@ def crear_tarea_outlook(
             """INSERT INTO tareas_outlook
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
-                outlook_entry_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                outlook_entry_id, tarea_recurrente_id, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
-                (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id, now_iso(),
+                (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id,
+                tarea_recurrente_id, now_iso(),
             ),
         )
         conn.commit()
         return cur.lastrowid
+    finally:
+        conn.close()
+
+
+# --- Tareas recurrentes (app/rutas_tareas.py) --------------------------
+
+def crear_tarea_recurrente(
+    usuario_id: int, asunto: str, periodicidad: str, dia: int, categoria_id: int | None = None,
+) -> int:
+    conn = get_connection()
+    try:
+        categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
+        cur = conn.execute(
+            "INSERT INTO tareas_recurrentes (usuario_id, categoria_id, asunto, periodicidad, dia, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, categoria_id, asunto.strip(), periodicidad, dia, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_tareas_recurrentes(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM tareas_recurrentes WHERE usuario_id = ? ORDER BY creado_en DESC", (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def alternar_activa_tarea_recurrente(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tareas_recurrentes SET activa = 1 - activa WHERE id = ? AND usuario_id = ?",
+            (regla_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_tarea_recurrente(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM tareas_recurrentes WHERE id = ? AND usuario_id = ?", (regla_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _existe_tarea_generada_este_periodo(conn: sqlite3.Connection, regla_id: int, desde: str, hasta: str) -> bool:
+    fila = conn.execute(
+        "SELECT 1 FROM tareas_outlook WHERE tarea_recurrente_id = ? AND creada_en >= ? AND creada_en < ? "
+        "AND papelera_en IS NULL LIMIT 1",
+        (regla_id, desde, hasta),
+    ).fetchone()
+    return fila is not None
+
+
+def generar_tareas_recurrentes() -> int:
+    """Recurrencia automática por cron (ver scripts/generar_tareas_recurrentes.py),
+    pensado para correr una vez al día -- para cada regla activa, comprueba
+    si HOY es el día que le toca (día de la semana si es semanal, día del
+    mes si es mensual -- si el mes no tiene ese día, se usa su último día,
+    ver `dia_efectivo` abajo) y, si es así y todavía no se ha generado una
+    tarea de ESTE periodo (semana o mes en curso, ver
+    _existe_tarea_generada_este_periodo), crea una tareas_outlook nueva
+    enlazada a la regla vía tarea_recurrente_id. Idempotente -- ejecutarlo
+    varias veces el mismo día no duplica nada, mismo criterio que
+    generar_vencimientos_automaticos()."""
+    hoy = datetime.now()
+    inicio_semana = (hoy - timedelta(days=hoy.weekday())).strftime("%Y-%m-%d")
+    fin_semana = (hoy - timedelta(days=hoy.weekday()) + timedelta(days=7)).strftime("%Y-%m-%d")
+    inicio_mes = hoy.replace(day=1).strftime("%Y-%m-%d")
+    if hoy.month == 12:
+        fin_mes = hoy.replace(year=hoy.year + 1, month=1, day=1).strftime("%Y-%m-%d")
+    else:
+        fin_mes = hoy.replace(month=hoy.month + 1, day=1).strftime("%Y-%m-%d")
+    ultimo_dia_del_mes = (datetime.fromisoformat(fin_mes) - timedelta(days=1)).day
+
+    creadas = 0
+    conn = get_connection()
+    try:
+        reglas = conn.execute("SELECT * FROM tareas_recurrentes WHERE activa = 1").fetchall()
+        for regla in reglas:
+            if regla["periodicidad"] == "semanal":
+                le_toca_hoy = hoy.weekday() == regla["dia"]
+                desde, hasta = inicio_semana, fin_semana
+            else:
+                dia_efectivo = min(regla["dia"], ultimo_dia_del_mes)
+                le_toca_hoy = hoy.day == dia_efectivo
+                desde, hasta = inicio_mes, fin_mes
+            if not le_toca_hoy:
+                continue
+            if _existe_tarea_generada_este_periodo(conn, regla["id"], desde, hasta):
+                continue
+            categoria_id = _categoria_id_propio(conn, regla["usuario_id"], regla["categoria_id"])
+            conn.execute(
+                """INSERT INTO tareas_outlook
+                   (usuario_id, asunto, categoria_id, tarea_recurrente_id, creada_en)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (regla["usuario_id"], regla["asunto"], categoria_id, regla["id"], now_iso()),
+            )
+            creadas += 1
+        conn.commit()
+        return creadas
     finally:
         conn.close()
 

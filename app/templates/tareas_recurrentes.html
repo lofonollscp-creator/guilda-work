@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Tareas recurrentes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Reglas que generan una tarea nueva automáticamente cada semana o cada mes.') }}</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
+  <a href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
+  <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
+  <a class="active" href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
+</nav>
+
+<section class="quick-actions">
+  <form class="quick-card" action="{{ url_for('tareas.crear_recurrente') }}" method="post">
+    <label>{{ _('Nueva regla') }}</label>
+    <div class="quick-row">
+      <input type="text" name="asunto" placeholder="{{ _('Asunto de la tarea') }}" required>
+    </div>
+    <div class="quick-row">
+      <select name="periodicidad" required>
+        <option value="semanal">{{ _('Semanal') }}</option>
+        <option value="mensual">{{ _('Mensual') }}</option>
+      </select>
+      <select name="dia" required>
+        {% for valor, etiqueta in dias_semana %}
+        <option value="{{ valor }}">{{ etiqueta }} ({{ _('semanal') }})</option>
+        {% endfor %}
+        {% for d in range(1, 32) %}
+        <option value="{{ d }}">{{ _('Día') }} {{ d }} ({{ _('mensual') }})</option>
+        {% endfor %}
+      </select>
+      {% if menus %}
+      <select name="categoria_id">
+        <option value="">{{ _('Sin menú') }}</option>
+        {% for menu in menus %}
+        <option value="{{ menu.id }}">{{ menu.nombre }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+    </div>
+    <p class="muted">{{ _('Si eliges Semanal, el día se interpreta como día de la semana (Lunes–Domingo); si eliges Mensual, como número de día del mes (1–31).') }}</p>
+    <div class="quick-row">
+      <button type="submit" class="btn btn-primary">{{ _('Crear regla') }}</button>
+    </div>
+  </form>
+</section>
+
+{% if reglas %}
+<table class="historial-table">
+  <thead>
+    <tr>
+      <th>{{ _('Asunto') }}</th>
+      <th>{{ _('Periodicidad') }}</th>
+      <th>{{ _('Día') }}</th>
+      <th>{{ _('Estado') }}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for regla in reglas %}
+    <tr>
+      <td>{{ regla.asunto }}</td>
+      <td>{{ _('Semanal') if regla.periodicidad == 'semanal' else _('Mensual') }}</td>
+      <td>
+        {% if regla.periodicidad == 'semanal' %}
+          {% for valor, etiqueta in dias_semana %}{% if valor == regla.dia %}{{ etiqueta }}{% endif %}{% endfor %}
+        {% else %}
+          {{ _('Día') }} {{ regla.dia }}
+        {% endif %}
+      </td>
+      <td>{{ _('Activa') if regla.activa else _('Pausada') }}</td>
+      <td class="quick-row">
+        <form action="{{ url_for('tareas.alternar_recurrente', regla_id=regla.id) }}" method="post">
+          <button type="submit" class="btn btn-ghost">{{ _('Pausar') if regla.activa else _('Reactivar') }}</button>
+        </form>
+        <form action="{{ url_for('tareas.eliminar_recurrente', regla_id=regla.id) }}" method="post">
+          <button type="submit" class="btn btn-ghost">
+            <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg>
+            {{ _('Eliminar') }}
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">{{ _('Todavía no tienes ninguna regla de tarea recurrente.') }}</p>
+{% endif %}
+{% endblock %}

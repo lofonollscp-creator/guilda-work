@@ -12,6 +12,7 @@
   <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
   <a class="active" href="{{ url_for('tareas.calendario', vista=vista, fecha=ancla.isoformat()) }}">{{ _('Calendario') }}</a>
   <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
+  <a href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
 </nav>
 
 <div class="cal-toolbar">

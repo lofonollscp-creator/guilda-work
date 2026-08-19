@@ -318,6 +318,51 @@ def exportar_csv():
     )
 
 
+DIAS_SEMANA = [
+    (0, _l("Lunes")), (1, _l("Martes")), (2, _l("Miércoles")), (3, _l("Jueves")),
+    (4, _l("Viernes")), (5, _l("Sábado")), (6, _l("Domingo")),
+]
+
+
+@tareas_bp.route("/recurrentes")
+@login_required
+def recurrentes():
+    return render_template(
+        "tareas_recurrentes.html",
+        reglas=db.listar_tareas_recurrentes(g.usuario_id),
+        menus=db.listar_categorias(g.usuario_id),
+        dias_semana=DIAS_SEMANA,
+    )
+
+
+@tareas_bp.route("/recurrentes", methods=["POST"])
+@login_required
+def crear_recurrente():
+    asunto = request.form.get("asunto", "").strip()
+    periodicidad = request.form.get("periodicidad")
+    dia = request.form.get("dia", type=int)
+    if asunto and periodicidad in ("semanal", "mensual") and dia is not None:
+        categoria_id = request.form.get("categoria_id") or None
+        db.crear_tarea_recurrente(
+            g.usuario_id, asunto, periodicidad, dia, categoria_id=int(categoria_id) if categoria_id else None,
+        )
+    return redirect(url_for("tareas.recurrentes"))
+
+
+@tareas_bp.route("/recurrentes/<int:regla_id>/alternar", methods=["POST"])
+@login_required
+def alternar_recurrente(regla_id: int):
+    db.alternar_activa_tarea_recurrente(g.usuario_id, regla_id)
+    return redirect(url_for("tareas.recurrentes"))
+
+
+@tareas_bp.route("/recurrentes/<int:regla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_recurrente(regla_id: int):
+    db.eliminar_tarea_recurrente(g.usuario_id, regla_id)
+    return redirect(url_for("tareas.recurrentes"))
+
+
 @tareas_bp.route("/importar", methods=["POST"])
 @login_required
 def importar_archivo():

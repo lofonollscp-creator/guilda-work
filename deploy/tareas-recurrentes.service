@@ -1,0 +1,18 @@
+# Plantilla de unidad systemd para scripts/generar_tareas_recurrentes.py
+# en el VPS (ver ese script). Copia a
+# /etc/systemd/system/tareas-recurrentes.service, ajusta USUARIO y las
+# rutas, y activa el timer (deploy/tareas-recurrentes.timer), no esta
+# unidad directamente -- .service sin .timer solo se ejecutaría una vez
+# al arrancar el sistema. Mismo patrón exacto que
+# vencimientos-fiscales.service.
+
+[Unit]
+Description=Guilda Work - generación automática de tareas recurrentes
+After=network.target
+
+[Service]
+Type=oneshot
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python scripts/generar_tareas_recurrentes.py

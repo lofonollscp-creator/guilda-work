@@ -12,6 +12,7 @@
   <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
   <a href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
   <a class="active" href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
+  <a href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
 </nav>
 
 {% if error %}
