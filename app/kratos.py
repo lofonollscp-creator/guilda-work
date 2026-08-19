@@ -118,12 +118,20 @@ def obtener_identidad(identity_id: str) -> dict | None:
     return cuerpo
 
 
-def iniciar_flujo(tipo: str, cookies: dict) -> tuple[str, dict]:
+def iniciar_flujo(tipo: str, cookies: dict) -> tuple[str, list[str]]:
     """Inicia un flujo self-service de navegador (login o registro) y
     devuelve (url_de_redireccion_para_el_navegador, cabeceras_set_cookie).
 
     `tipo` es "login" o "registration". No sigue la redirección 303 de
-    Kratos — la propia app redirige ahí al navegador real."""
+    Kratos — la propia app redirige ahí al navegador real.
+
+    Las cabeceras `Set-Cookie` de la respuesta (Kratos fija aquí la
+    cookie anti-CSRF del flujo recién creado) hay que reenviarlas de
+    verdad al navegador -- sin ellas, el POST posterior a
+    `/.ory/self-service/{tipo}` falla la validación CSRF de Kratos
+    porque el token del formulario no tiene cookie con la que
+    contrastarlo (bug real, encontrado al ser esta función la primera
+    que llama a `iniciar_flujo` -- hasta ahora nadie la usaba)."""
     opener = opener_sin_redireccion()
     req = urllib.request.Request(
         f"{KRATOS_PUBLIC_URL}/self-service/{tipo}/browser",
@@ -132,14 +140,16 @@ def iniciar_flujo(tipo: str, cookies: dict) -> tuple[str, dict]:
     try:
         with opener.open(req, timeout=TIMEOUT_SEGUNDOS) as resp:
             ubicacion = resp.headers.get("Location", "")
+            cabeceras_set_cookie = resp.headers.get_all("Set-Cookie") or []
     except urllib.error.HTTPError as e:
         if e.code in (303, 302):
             ubicacion = e.headers.get("Location", "")
+            cabeceras_set_cookie = e.headers.get_all("Set-Cookie") or []
         else:
             raise ErrorKratos(f"Kratos devolvió un error al iniciar el flujo de {tipo}: {e.code}") from e
     except urllib.error.URLError as e:
         raise ErrorKratos(f"No se ha podido conectar con Kratos. Detalle: {e.reason}") from e
-    return ubicacion, {}
+    return ubicacion, cabeceras_set_cookie
 
 
 def obtener_flujo(tipo: str, flow_id: str, cookies: dict) -> dict:

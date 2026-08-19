@@ -18,6 +18,7 @@ import socket
 import sys
 import threading
 import time
+import urllib.parse
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -329,7 +330,36 @@ def _flujo_o_redirigir(tipo: str):
     respuesta de redirección en `g._redireccion_flujo`."""
     flow_id = request.args.get("flow")
     if not flow_id:
-        g._redireccion_flujo = redirect(f"/.ory/self-service/{tipo}/browser")
+        # Iniciar el flujo server-side (en vez de mandar al navegador
+        # directo a /.ory/self-service/.../browser) evita que Kratos
+        # decida el destino él mismo -- redirigiría a su
+        # SELFSERVICE_FLOWS_*_UI_URL configurado, que es un único valor
+        # fijo (siempre el origen "principal" de la app, ver
+        # docker-compose.yml). Sin este paso, cualquier subdominio nuevo
+        # que reutilice estas mismas rutas de login (p.ej. el backoffice,
+        # ver HOSTING.md) acabaría rebotando al usuario fuera de su
+        # propio origen a mitad del flujo -- entrar en él ahí y salir
+        # con la sesión puesta en un dominio distinto. Iniciarlo aquí y
+        # redirigir (ruta relativa, sin dominio) de vuelta a esta misma
+        # URL con ?flow=<id> mantiene TODO el flujo en el origen desde el
+        # que se entró, sea cual sea.
+        try:
+            ubicacion, cabeceras_set_cookie = kratos.iniciar_flujo(tipo, request.cookies)
+        except kratos.ErrorKratos:
+            g._redireccion_flujo = redirect(request.path)
+            return None
+        flow_id_nuevo = urllib.parse.parse_qs(urllib.parse.urlparse(ubicacion).query).get("flow", [None])[0]
+        if not flow_id_nuevo:
+            g._redireccion_flujo = redirect(request.path)
+            return None
+        respuesta = redirect(f"{request.path}?flow={flow_id_nuevo}")
+        # La cookie anti-CSRF que Kratos acaba de fijar para este flujo
+        # tiene que llegar al navegador real -- sin esto, el POST
+        # posterior al proxy falla la validación CSRF de Kratos (ver
+        # docstring de kratos.iniciar_flujo).
+        for cabecera in cabeceras_set_cookie:
+            respuesta.headers.add("Set-Cookie", cabecera)
+        g._redireccion_flujo = respuesta
         return None
     try:
         flujo = kratos.obtener_flujo(tipo, flow_id, request.cookies)
