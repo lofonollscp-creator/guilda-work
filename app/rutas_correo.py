@@ -107,6 +107,7 @@ def _render_redactar(
         en_respuesta_a=en_respuesta_a or "",
         error=error,
         titulo=titulo,
+        plantillas=db.listar_plantillas_correo(g.usuario_id),
     )
 
 
@@ -504,6 +505,7 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         cuenta_firma=cuenta_firma,
         remitentes_confiables=db.listar_remitentes_confiables(g.usuario_id),
         reglas_categoria=db.listar_reglas_categoria_correo(g.usuario_id),
+        plantillas=db.listar_plantillas_correo(g.usuario_id),
         error=error,
     )
 
@@ -545,6 +547,35 @@ def crear_categoria():
 @login_required
 def eliminar_categoria(categoria_id: int):
     correo.eliminar_categoria(g.usuario_id, categoria_id)
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/plantillas/<int:plantilla_id>.json")
+@login_required
+def plantilla_json(plantilla_id: int):
+    plantilla = correo.obtener_plantilla(g.usuario_id, plantilla_id)
+    if plantilla is None:
+        abort(404)
+    return jsonify({"asunto": plantilla["asunto"] or "", "cuerpo": plantilla["cuerpo"]})
+
+
+@correo_bp.route("/ajustes/plantillas", methods=["POST"])
+@login_required
+def crear_plantilla():
+    try:
+        correo.crear_plantilla(
+            g.usuario_id, request.form.get("nombre", ""), request.form.get("asunto"),
+            request.form.get("cuerpo", ""),
+        )
+    except correo.ErrorCorreo as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/plantillas/<int:plantilla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_plantilla(plantilla_id: int):
+    correo.eliminar_plantilla(g.usuario_id, plantilla_id)
     return redirect(url_for("correo.ajustes"))
 
 

@@ -156,3 +156,77 @@ def test_asignar_cliente_fiscal_de_mensaje_ajeno_da_404(cliente):
         db.asignar_tenant(otro_id, tenant_id)
         resp = otro_cliente.post(f"/correo/{mensaje_id}/cliente-fiscal", data={"cliente_fiscal_id": "1"})
         assert resp.status_code == 404
+
+
+# --- Ruta: plantillas de respuesta guardadas --------------------------------
+
+def test_crear_plantilla_requiere_login(cliente):
+    resp = cliente.post("/correo/ajustes/plantillas", data={"nombre": "X", "cuerpo": "Y"})
+    assert resp.status_code == 302
+    assert "/login" in resp.headers["Location"]
+
+
+def test_crear_y_eliminar_plantilla_desde_la_ruta(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    iniciar_sesion_de_prueba(cliente, "plantilla-ruta@ejemplo.com", "contrasena123")
+
+    resp = cliente.post(
+        "/correo/ajustes/plantillas",
+        data={"nombre": "Recordatorio", "asunto": "Docs pendientes", "cuerpo": "Hola, nos falta la factura."},
+    )
+    assert resp.status_code == 302
+
+    resp = cliente.get("/correo/ajustes")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Recordatorio" in html
+
+    import re
+    match = re.search(r"/correo/ajustes/plantillas/(\d+)/eliminar", html)
+    assert match is not None
+    plantilla_id = match.group(1)
+
+    resp = cliente.post(f"/correo/ajustes/plantillas/{plantilla_id}/eliminar")
+    assert resp.status_code == 302
+    # "Recordatorio" solo, a secas, seguiría apareciendo en el placeholder del
+    # propio formulario de creación ("ej. Recordatorio de documentación") --
+    # se busca el texto exacto de la fila de la lista, no la palabra suelta.
+    assert "<span class=\"log-text\">Recordatorio</span>" not in cliente.get("/correo/ajustes").get_data(as_text=True)
+
+
+def test_crear_plantilla_sin_nombre_muestra_error_y_no_crea(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    iniciar_sesion_de_prueba(cliente, "plantilla-sin-nombre@ejemplo.com", "contrasena123")
+    resp = cliente.post("/correo/ajustes/plantillas", data={"nombre": "", "cuerpo": "algo"})
+    assert resp.status_code == 200
+    assert "necesita un nombre" in resp.get_data(as_text=True)
+
+
+def test_plantilla_json_devuelve_asunto_y_cuerpo(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "plantilla-json@ejemplo.com", "contrasena123")
+    plantilla_id = db.crear_plantilla_correo(usuario_id, "Saludo", "Asunto X", "<p>Cuerpo</p>")
+
+    resp = cliente.get(f"/correo/plantillas/{plantilla_id}.json")
+    assert resp.status_code == 200
+    datos = resp.get_json()
+    assert datos == {"asunto": "Asunto X", "cuerpo": "<p>Cuerpo</p>"}
+
+
+def test_plantilla_json_de_otro_usuario_da_404(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    from app.auth import limiter
+    from app.main import app as flask_app
+
+    dueno_id = iniciar_sesion_de_prueba(cliente, "plantilla-json-dueno@ejemplo.com", "contrasena123")
+    plantilla_id = db.crear_plantilla_correo(dueno_id, "Saludo", None, "cuerpo")
+
+    flask_app.config.update(TESTING=True, SERVER_NAME="127.0.0.1:8000")
+    limiter.reset()
+    with flask_app.test_client() as otro_cliente:
+        iniciar_sesion_de_prueba(otro_cliente, "plantilla-json-otro@ejemplo.com", "contrasena123")
+        resp = otro_cliente.get(f"/correo/plantillas/{plantilla_id}.json")
+        assert resp.status_code == 404

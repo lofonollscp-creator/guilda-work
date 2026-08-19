@@ -758,6 +758,28 @@ def asignar_cliente_fiscal(tenant_id: int, mensaje_id: int, cliente_fiscal_id: i
     db.asignar_cliente_fiscal_correo(tenant_id, mensaje_id, cliente_fiscal_id)
 
 
+# --- Plantillas de respuesta guardadas -------------------------------------
+
+def crear_plantilla(usuario_id: int, nombre: str, asunto: str | None, cuerpo: str) -> int:
+    if not nombre.strip():
+        raise ErrorCorreo("La plantilla necesita un nombre.")
+    if not cuerpo.strip():
+        raise ErrorCorreo("La plantilla necesita un cuerpo.")
+    return db.crear_plantilla_correo(usuario_id, nombre, asunto, cuerpo)
+
+
+def listar_plantillas(usuario_id: int):
+    return db.listar_plantillas_correo(usuario_id)
+
+
+def obtener_plantilla(usuario_id: int, plantilla_id: int):
+    return db.obtener_plantilla_correo(usuario_id, plantilla_id)
+
+
+def eliminar_plantilla(usuario_id: int, plantilla_id: int) -> None:
+    db.eliminar_plantilla_correo(usuario_id, plantilla_id)
+
+
 # --- Remitentes de confianza ---------------------------------------------------
 
 def confiar_en_remitente(usuario_id: int, direccion: str) -> int:

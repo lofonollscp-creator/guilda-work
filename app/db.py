@@ -411,6 +411,19 @@ CREATE TABLE IF NOT EXISTS correo_categorias (
     UNIQUE (usuario_id, nombre)
 );
 
+-- Plantillas de respuesta guardadas -- mismo espíritu que `plantillas`
+-- (frases favoritas de notas rápidas) pero con asunto+cuerpo, para
+-- insertar en el editor de redactar/responder sin mandar nada
+-- automáticamente (el usuario sigue revisando antes de enviar).
+CREATE TABLE IF NOT EXISTS correo_plantillas (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    asunto TEXT,
+    cuerpo TEXT NOT NULL,
+    creada_en TEXT NOT NULL
+);
+
 -- Caché local de mensajes ya descargados (para no ir a red en cada
 -- consulta). cc: cabecera Cc del mensaje recibido. Cco (Bcc) nunca se guarda
 -- aquí porque, por diseño del propio correo electrónico, nadie salvo el
@@ -598,6 +611,7 @@ CREATE INDEX IF NOT EXISTS idx_tareas_outlook_estado ON tareas_outlook(estado);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_usuario ON tareas_outlook(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_cuentas_usuario ON correo_cuentas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_categorias_usuario ON correo_categorias(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_plantillas_usuario ON correo_plantillas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
@@ -4338,6 +4352,52 @@ def eliminar_categoria_correo(usuario_id: int, categoria_id: int) -> None:
     try:
         conn.execute(
             "DELETE FROM correo_categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Plantillas de respuesta guardadas (app/rutas_correo.py) ---------------
+
+def crear_plantilla_correo(usuario_id: int, nombre: str, asunto: str | None, cuerpo: str) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO correo_plantillas (usuario_id, nombre, asunto, cuerpo, creada_en) VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, nombre.strip(), (asunto or "").strip() or None, cuerpo, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_plantillas_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_plantillas WHERE usuario_id = ? ORDER BY nombre", (usuario_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_plantilla_correo(usuario_id: int, plantilla_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_plantillas WHERE id = ? AND usuario_id = ?", (plantilla_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_plantilla_correo(usuario_id: int, plantilla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_plantillas WHERE id = ? AND usuario_id = ?", (plantilla_id, usuario_id)
         )
         conn.commit()
     finally:

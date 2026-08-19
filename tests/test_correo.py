@@ -1043,3 +1043,35 @@ def test_listar_correos_de_cliente_fiscal_devuelve_solo_los_vinculados(usuario_i
 
     correos = db.listar_correos_de_cliente_fiscal(cliente_id)
     assert [c["id"] for c in correos] == [vinculado_id]
+
+
+# --- Plantillas de respuesta guardadas (app/rutas_correo.py) ---------------
+
+def test_crear_listar_y_eliminar_plantilla(usuario_id):
+    plantilla_id = correo.crear_plantilla(usuario_id, "Recordatorio", "Documentación pendiente", "Hola, nos falta...")
+    plantillas = correo.listar_plantillas(usuario_id)
+    assert len(plantillas) == 1
+    assert plantillas[0]["id"] == plantilla_id
+    assert plantillas[0]["nombre"] == "Recordatorio"
+    assert plantillas[0]["asunto"] == "Documentación pendiente"
+
+    correo.eliminar_plantilla(usuario_id, plantilla_id)
+    assert correo.listar_plantillas(usuario_id) == []
+
+
+def test_crear_plantilla_sin_nombre_lanza_error(usuario_id):
+    with pytest.raises(correo.ErrorCorreo):
+        correo.crear_plantilla(usuario_id, "", None, "cuerpo")
+
+
+def test_crear_plantilla_sin_cuerpo_lanza_error(usuario_id):
+    with pytest.raises(correo.ErrorCorreo):
+        correo.crear_plantilla(usuario_id, "Nombre", None, "  ")
+
+
+def test_plantillas_son_privadas_por_usuario(usuario_id):
+    otro_usuario_id = usuario_id + 999
+    plantilla_id = correo.crear_plantilla(usuario_id, "Mía", None, "cuerpo")
+    assert correo.obtener_plantilla(otro_usuario_id, plantilla_id) is None
+    correo.eliminar_plantilla(otro_usuario_id, plantilla_id)  # no-op, no debe borrarla
+    assert len(correo.listar_plantillas(usuario_id)) == 1

@@ -67,6 +67,32 @@
 </section>
 
 <section class="correo-ajustes-seccion">
+  <h2>{{ _('Plantillas de respuesta') }}</h2>
+  <p class="muted">{{ _('Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas.') }}</p>
+  {% if plantillas %}
+  <ul class="log-list">
+    {% for p in plantillas %}
+    <li class="log-item">
+      <span class="log-text">{{ p.nombre }}</span>
+      <form action="{{ url_for('correo.eliminar_plantilla', plantilla_id=p.id) }}" method="post"
+            onsubmit="return confirm('{{ _('¿Eliminar la plantilla «%(nombre)s»?', nombre=p.nombre) }}');">
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('correo.crear_plantilla') }}" class="correo-form-seccion">
+    <div class="ia-form-row">
+      <input type="text" name="nombre" placeholder="{{ _('Nombre (ej. Recordatorio de documentación)') }}" required>
+      <input type="text" name="asunto" placeholder="{{ _('Asunto (opcional)') }}">
+    </div>
+    <textarea name="cuerpo" rows="4" placeholder="{{ _('Texto de la plantilla...') }}" required></textarea>
+    <button type="submit" class="btn btn-primary">+ {{ _('Añadir plantilla') }}</button>
+  </form>
+</section>
+
+<section class="correo-ajustes-seccion">
   <h2>{{ _('Reglas de categorización automática') }}</h2>
   <p class="muted">{{ _('Los correos nuevos de un remitente o dominio que coincida se categorizan solos, sin tener que hacerlo a mano.') }}</p>
   {% if reglas_categoria %}
