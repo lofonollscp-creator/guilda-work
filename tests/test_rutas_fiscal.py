@@ -713,3 +713,33 @@ def test_enviar_a_firma_roto_no_emite_evento(cliente, monkeypatch):
     )
     assert resp.status_code == 302
     assert not llamadas
+
+
+def test_ficha_cliente_muestra_correos_vinculados(cliente):
+    from app import correo
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "correos-en-ficha@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Correos En Ficha")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Correo")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Duda sobre el IVA", remitente="cliente@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="", cuerpo_html=None,
+    )
+    correo.asignar_cliente_fiscal(tenant_id, mensaje_id, cliente_id)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    assert "Duda sobre el IVA" in resp.get_data(as_text=True)
+
+
+def test_ficha_cliente_sin_correos_vinculados_no_muestra_la_seccion(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "sin-correos-en-ficha@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Sin Correos En Ficha")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Correo")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    assert "Correos relacionados" not in resp.get_data(as_text=True)

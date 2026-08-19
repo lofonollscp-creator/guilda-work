@@ -601,6 +601,7 @@ CREATE INDEX IF NOT EXISTS idx_correo_categorias_usuario ON correo_categorias(us
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
@@ -933,6 +934,14 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
+        # Vínculo manual con un cliente fiscal (app/rutas_correo.py,
+        # app/rutas_fiscal.py:ficha_cliente) -- nullable y opt-in, el
+        # empleado lo rellena a mano desde la vista de un mensaje, sin
+        # ningún intento de adivinarlo automáticamente por remitente.
+        # Va ANTES de conn.executescript(INDICES) porque ese script crea
+        # un índice sobre esta misma columna (mismo motivo que
+        # tareas_outlook.tarea_recurrente_id más abajo).
+        _asegurar_columna(conn, "correo_mensajes", "cliente_fiscal_id", "INTEGER REFERENCES clientes_fiscales(id)")
         _asegurar_columna(conn, "usuarios", "kratos_identity_id", "TEXT")
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_kratos_identity_id "
@@ -4350,6 +4359,42 @@ def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int
                 categoria_id = None
         conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_cliente_fiscal_correo(tenant_id: int, mensaje_id: int, cliente_fiscal_id: int | None) -> None:
+    """`tenant_id` solo para comprobar que `cliente_fiscal_id` es suyo --
+    mismo criterio que asignar_categoria_correo, quien llama ya tiene
+    que haber comprobado que `mensaje_id` es del usuario actual."""
+    conn = get_connection()
+    try:
+        if cliente_fiscal_id is not None:
+            fila = conn.execute(
+                "SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL",
+                (cliente_fiscal_id, tenant_id),
+            ).fetchone()
+            if fila is None:
+                cliente_fiscal_id = None
+        conn.execute(
+            "UPDATE correo_mensajes SET cliente_fiscal_id = ? WHERE id = ?", (cliente_fiscal_id, mensaje_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_correos_de_cliente_fiscal(cliente_fiscal_id: int) -> list[sqlite3.Row]:
+    """Correos vinculados manualmente a un cliente fiscal (ver
+    asignar_cliente_fiscal_correo), para la sección "Correos
+    relacionados" de su ficha (app/rutas_fiscal.py:ficha_cliente) --
+    mismo criterio de agregación que listar_documentos_vencimiento."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_mensajes WHERE cliente_fiscal_id = ? ORDER BY fecha DESC",
+            (cliente_fiscal_id,),
+        ).fetchall()
     finally:
         conn.close()
 

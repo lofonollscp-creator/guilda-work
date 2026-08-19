@@ -754,6 +754,10 @@ def asignar_categoria(usuario_id: int, mensaje_id: int, categoria_id: int | None
     db.asignar_categoria_correo(usuario_id, mensaje_id, categoria_id)
 
 
+def asignar_cliente_fiscal(tenant_id: int, mensaje_id: int, cliente_fiscal_id: int | None) -> None:
+    db.asignar_cliente_fiscal_correo(tenant_id, mensaje_id, cliente_fiscal_id)
+
+
 # --- Remitentes de confianza ---------------------------------------------------
 
 def confiar_en_remitente(usuario_id: int, direccion: str) -> int:

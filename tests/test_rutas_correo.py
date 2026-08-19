@@ -90,3 +90,69 @@ def test_vista_previa_sin_cuerpo(usuario_id):
     )
     mensaje = db.listar_mensajes_correo(tid)[0]
     assert vista_previa(mensaje) == ""
+
+
+# --- Ruta: vincular un correo a un cliente fiscal --------------------------
+
+def test_asignar_cliente_fiscal_requiere_login(cliente):
+    resp = cliente.post("/correo/1/cliente-fiscal", data={"cliente_fiscal_id": "1"})
+    assert resp.status_code == 302
+    assert "/login" in resp.headers["Location"]
+
+
+def test_asignar_cliente_fiscal_vincula_el_mensaje(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "correo-cliente-fiscal@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Correo Ruta")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_fiscal_id = db.crear_cliente_fiscal(tenant_id, "Panaderia Ruta")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="", cuerpo_html=None,
+    )
+
+    resp = cliente.post(f"/correo/{mensaje_id}/cliente-fiscal", data={"cliente_fiscal_id": str(cliente_fiscal_id)})
+    assert resp.status_code == 302
+    mensaje = db.listar_mensajes_correo(cuenta_id)[0]
+    assert mensaje["cliente_fiscal_id"] == cliente_fiscal_id
+
+
+def test_asignar_cliente_fiscal_sin_tenant_no_hace_nada(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "correo-sin-tenant@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="", cuerpo_html=None,
+    )
+
+    resp = cliente.post(f"/correo/{mensaje_id}/cliente-fiscal", data={"cliente_fiscal_id": "1"})
+    assert resp.status_code == 302
+    mensaje = db.listar_mensajes_correo(cuenta_id)[0]
+    assert mensaje["cliente_fiscal_id"] is None
+
+
+def test_asignar_cliente_fiscal_de_mensaje_ajeno_da_404(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    from app.auth import limiter
+    from app.main import app as flask_app
+
+    dueno_id = iniciar_sesion_de_prueba(cliente, "correo-dueno@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Dueno")
+    db.asignar_tenant(dueno_id, tenant_id)
+    cuenta_id = db.crear_cuenta_correo(dueno_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="", cuerpo_html=None,
+    )
+
+    flask_app.config.update(TESTING=True, SERVER_NAME="127.0.0.1:8000")
+    limiter.reset()
+    with flask_app.test_client() as otro_cliente:
+        otro_id = iniciar_sesion_de_prueba(otro_cliente, "correo-otro@ejemplo.com", "contrasena123")
+        db.asignar_tenant(otro_id, tenant_id)
+        resp = otro_cliente.post(f"/correo/{mensaje_id}/cliente-fiscal", data={"cliente_fiscal_id": "1"})
+        assert resp.status_code == 404

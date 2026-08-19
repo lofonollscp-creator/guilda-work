@@ -170,6 +170,10 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         )
 
     categorias = db.listar_categorias_correo(g.usuario_id)
+    # Vínculo con un cliente fiscal (opt-in, solo si el usuario pertenece
+    # a un tenant con calendario fiscal -- mismo criterio que el resto de
+    # integraciones opcionales de esta sección).
+    clientes_fiscales = db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else []
     return {
         "cuentas": cuentas_disponibles,
         "cuenta_id": cuenta_id,
@@ -179,6 +183,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "no_leidos_por_cuenta": no_leidos_por_cuenta,
         "categorias": categorias,
         "categorias_por_id": {c["id"]: c for c in categorias},
+        "clientes_fiscales": clientes_fiscales,
         "densidad": preferencias["densidad"],
         "q": q or "",
         "solo_no_leidos": solo_no_leidos,
@@ -327,6 +332,18 @@ def asignar_categoria(mensaje_id: int):
     mensaje = _mensaje_de_usuario_o_404(mensaje_id)
     categoria_id = request.form.get("categoria_id", type=int)
     correo.asignar_categoria(g.usuario_id, mensaje_id, categoria_id)
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
+    ))
+
+
+@correo_bp.route("/<int:mensaje_id>/cliente-fiscal", methods=["POST"])
+@login_required
+def asignar_cliente_fiscal(mensaje_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    if g.tenant_id is not None:
+        cliente_fiscal_id = request.form.get("cliente_fiscal_id", type=int)
+        correo.asignar_cliente_fiscal(g.tenant_id, mensaje_id, cliente_fiscal_id)
     return redirect(url_for(
         "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
     ))

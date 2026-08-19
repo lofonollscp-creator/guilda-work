@@ -182,6 +182,16 @@
           </select>
         </form>
         {% endif %}
+        {% if clientes_fiscales %}
+        <form action="{{ url_for('correo.asignar_cliente_fiscal', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <select name="cliente_fiscal_id" class="correo-categoria-select" onchange="this.form.requestSubmit()" aria-label="{{ _('Cliente fiscal relacionado') }}">
+            <option value="">{{ _('Sin cliente vinculado') }}</option>
+            {% for cf in clientes_fiscales %}
+            <option value="{{ cf.id }}" {% if mensaje_seleccionado.cliente_fiscal_id == cf.id %}selected{% endif %}>{{ cf.nombre }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% endif %}
         <form action="{{ url_for('correo.alternar_leido', mensaje_id=mensaje_seleccionado.id) }}" method="post">
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Marcar como no leído') if mensaje_seleccionado.leido else _('Marcar como leído') }}">
             <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ 'mail' if mensaje_seleccionado.leido else 'mail-open' }}"></use></svg></span>

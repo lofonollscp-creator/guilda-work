@@ -114,6 +114,10 @@ def ficha_cliente(cliente_id: int):
         for m in db.listar_mensajes_vencimiento(v["id"]):
             mensajes_totales.append({**dict(m), "vencimiento": v})
     mensajes_totales.sort(key=lambda m: m["creado_en"], reverse=True)
+    # Correos vinculados manualmente desde Correo (bloque de esta ronda,
+    # ver app/rutas_correo.py:asignar_cliente_fiscal) -- no es
+    # automático, un empleado tiene que haberlo enlazado a mano.
+    correos_relacionados = db.listar_correos_de_cliente_fiscal(cliente_id)
     return render_template(
         "fiscal_cliente_detalle.html",
         cliente=cliente,
@@ -125,6 +129,7 @@ def ficha_cliente(cliente_id: int):
         facturas=facturas,
         documentos_totales=documentos_totales,
         mensajes_totales=mensajes_totales,
+        correos_relacionados=correos_relacionados,
     )
 
 

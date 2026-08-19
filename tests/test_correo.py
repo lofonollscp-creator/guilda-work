@@ -990,3 +990,56 @@ def test_buscar_destinatarios_recientes_filtra_por_texto(usuario_id):
     resultado = db.buscar_destinatarios_recientes(usuario_id, "ana")
     assert len(resultado) == 1
     assert resultado[0]["direccion"] == "ana@ejemplo.com"
+
+
+# --- Vínculo con un cliente fiscal (app/rutas_correo.py:asignar_cliente_fiscal) --
+
+def test_asignar_cliente_fiscal_a_mensaje_y_quitarlo(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Correo Cliente")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_fiscal_id = db.crear_cliente_fiscal(tenant_id, "Panaderia del Correo")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="cliente@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="hola", cuerpo_html=None,
+    )
+
+    correo.asignar_cliente_fiscal(tenant_id, mensaje_id, cliente_fiscal_id)
+    assert correo.obtener_mensaje(mensaje_id)["cliente_fiscal_id"] == cliente_fiscal_id
+
+    correo.asignar_cliente_fiscal(tenant_id, mensaje_id, None)
+    assert correo.obtener_mensaje(mensaje_id)["cliente_fiscal_id"] is None
+
+
+def test_asignar_cliente_fiscal_de_otro_tenant_no_lo_vincula(usuario_id):
+    tenant_propio = db.crear_tenant("Gestoria Propia")
+    tenant_ajeno = db.crear_tenant("Gestoria Ajena")
+    db.asignar_tenant(usuario_id, tenant_propio)
+    cliente_ajeno_id = db.crear_cliente_fiscal(tenant_ajeno, "Cliente de otra gestoria")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="cliente@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="hola", cuerpo_html=None,
+    )
+
+    correo.asignar_cliente_fiscal(tenant_propio, mensaje_id, cliente_ajeno_id)
+    assert correo.obtener_mensaje(mensaje_id)["cliente_fiscal_id"] is None
+
+
+def test_listar_correos_de_cliente_fiscal_devuelve_solo_los_vinculados(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Listar Correos")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Correos")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    vinculado_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Vinculado", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha="2026-01-01T10:00:00", cuerpo_texto="", cuerpo_html=None,
+    )
+    db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="2", asunto="Sin vincular", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha="2026-01-02T10:00:00", cuerpo_texto="", cuerpo_html=None,
+    )
+    db.asignar_cliente_fiscal_correo(tenant_id, vinculado_id, cliente_id)
+
+    correos = db.listar_correos_de_cliente_fiscal(cliente_id)
+    assert [c["id"] for c in correos] == [vinculado_id]
