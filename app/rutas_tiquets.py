@@ -25,6 +25,11 @@ ESTADOS = [
     ("en_revision", _l("En revisión")),
     ("finalizado", _l("Finalizado")),
 ]
+PRIORIDADES = [
+    ("alta", _l("Alta")),
+    ("normal", _l("Normal")),
+    ("baja", _l("Baja")),
+]
 
 # Capturas de pantalla + PDF, nada más -- es lo que se pidió, no un
 # adjuntador de archivos genérico. 8MB por archivo: de sobra para una
@@ -68,27 +73,39 @@ def _guardar_adjuntos(tiquet_id: int, campo: str = "adjuntos") -> None:
         db.guardar_adjunto_tiquet(tiquet_id, f.filename, f.mimetype, contenido)
 
 
+def _filtros_desde_query():
+    prioridad = request.args.get("prioridad") or None
+    if prioridad not in dict(PRIORIDADES):
+        prioridad = None
+    usuario_asignado_id = request.args.get("asignado", type=int)
+    return prioridad, usuario_asignado_id
+
+
 @tiquets_bp.route("/")
 @login_required
 def tarjetas():
-    tiquets = db.listar_tiquets()
+    prioridad, usuario_asignado_id = _filtros_desde_query()
+    tiquets = db.listar_tiquets(prioridad=prioridad, usuario_asignado_id=usuario_asignado_id)
     por_tipo = {clave: [t for t in tiquets if t["tipo"] == clave] for clave, _ in TIPOS}
     adjuntos_por_tiquet = {t["id"]: db.listar_adjuntos_tiquet(t["id"]) for t in tiquets}
     return render_template(
         "tiquets_tarjetas.html", por_tipo=por_tipo, tipos=TIPOS, estados=ESTADOS,
-        adjuntos_por_tiquet=adjuntos_por_tiquet,
+        adjuntos_por_tiquet=adjuntos_por_tiquet, prioridades=PRIORIDADES,
+        usuarios=db.listar_usuarios(), prioridad=prioridad or "", usuario_asignado_id=usuario_asignado_id,
     )
 
 
 @tiquets_bp.route("/kanban")
 @login_required
 def kanban():
-    tiquets = db.listar_tiquets()
+    prioridad, usuario_asignado_id = _filtros_desde_query()
+    tiquets = db.listar_tiquets(prioridad=prioridad, usuario_asignado_id=usuario_asignado_id)
     por_estado = {clave: [t for t in tiquets if t["estado"] == clave] for clave, _ in ESTADOS}
     adjuntos_por_tiquet = {t["id"]: db.listar_adjuntos_tiquet(t["id"]) for t in tiquets}
     return render_template(
         "tiquets_kanban.html", por_estado=por_estado, estados=ESTADOS, tipos=TIPOS,
-        adjuntos_por_tiquet=adjuntos_por_tiquet,
+        adjuntos_por_tiquet=adjuntos_por_tiquet, prioridades=PRIORIDADES,
+        usuarios=db.listar_usuarios(), prioridad=prioridad or "", usuario_asignado_id=usuario_asignado_id,
     )
 
 
@@ -155,6 +172,20 @@ def cambiar_estado(tiquet_id: int):
     if estado in dict(ESTADOS):
         db.cambiar_estado_tiquet(tiquet_id, estado)
     return redirect(request.form.get("volver_a") or url_for("tiquets.kanban"))
+
+
+@tiquets_bp.route("/<int:tiquet_id>/asignar", methods=["POST"])
+@login_required
+@admin_required
+def asignar(tiquet_id: int):
+    if db.obtener_tiquet(tiquet_id) is None:
+        abort(404)
+    prioridad = request.form.get("prioridad", "normal")
+    if prioridad not in dict(PRIORIDADES):
+        prioridad = "normal"
+    usuario_asignado_id = request.form.get("usuario_asignado_id", type=int)
+    db.asignar_tiquet(tiquet_id, prioridad, usuario_asignado_id)
+    return redirect(request.form.get("volver_a") or url_for("tiquets.tarjetas"))
 
 
 TIPOS_PREVISUALIZABLES = ("application/pdf",)

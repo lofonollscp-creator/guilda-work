@@ -13,6 +13,24 @@
   <a href="{{ url_for('tiquets.kanban') }}">Kanban</a>
 </nav>
 
+<form class="filters" method="get" action="{{ url_for('tiquets.tarjetas') }}">
+  <select name="prioridad" onchange="this.form.requestSubmit()">
+    <option value="">{{ _('Todas las prioridades') }}</option>
+    {% for valor, etiqueta in prioridades %}
+    <option value="{{ valor }}" {% if prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+    {% endfor %}
+  </select>
+  <select name="asignado" onchange="this.form.requestSubmit()">
+    <option value="">{{ _('Cualquier asignado') }}</option>
+    {% for u in usuarios %}
+    <option value="{{ u.id }}" {% if usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>
+    {% endfor %}
+  </select>
+  {% if prioridad or usuario_asignado_id %}
+  <a class="btn btn-ghost" href="{{ url_for('tiquets.tarjetas') }}">{{ _('Limpiar') }}</a>
+  {% endif %}
+</form>
+
 <section class="quick-actions">
   <form class="quick-card" action="{{ url_for('tiquets.crear') }}" method="post" enctype="multipart/form-data" style="grid-column: 1 / -1;">
     <label>{{ _('Nuevo tiquet') }}</label>
@@ -42,8 +60,10 @@
       <div class="tiquet-card-top">
         <span class="tiquet-card-numero">#{{ t.id }}</span>
         <span class="pill estado-{{ t.estado }}">{{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}</span>
+        <span class="pill prioridad-{{ t.prioridad }}">{{ prioridades|selectattr('0', 'equalto', t.prioridad)|map(attribute='1')|first }}</span>
       </div>
       <h3 class="tiquet-card-titulo">{{ t.titulo }}</h3>
+      {% if t.asignado_email %}<p class="muted">{{ _('Asignado a %(email)s', email=t.asignado_email) }}</p>{% endif %}
       {% if t.descripcion %}<p class="tiquet-card-desc">{{ t.descripcion }}</p>{% endif %}
       {% if adjuntos_por_tiquet[t.id] %}
       <div class="correo-adjuntos">
@@ -68,6 +88,22 @@
           {% endif %}
         </span>
       </div>
+      {% if g.es_admin %}
+      <form action="{{ url_for('tiquets.asignar', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
+        <input type="hidden" name="volver_a" value="{{ url_for('tiquets.tarjetas') }}">
+        <select name="prioridad" onchange="this.form.requestSubmit()" aria-label="{{ _('Prioridad') }}">
+          {% for valor, etiqueta in prioridades %}
+          <option value="{{ valor }}" {% if t.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+          {% endfor %}
+        </select>
+        <select name="usuario_asignado_id" onchange="this.form.requestSubmit()" aria-label="{{ _('Asignar a') }}">
+          <option value="">{{ _('Sin asignar') }}</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if t.usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      {% endif %}
     </article>
     {% endfor %}
   </div>

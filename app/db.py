@@ -628,6 +628,7 @@ CREATE INDEX IF NOT EXISTS idx_webhooks_tenant ON webhooks(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_webhooks_usuario ON webhooks(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_webhooks_entregas_webhook ON webhooks_entregas(webhook_id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_usuario ON tiquets(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_tiquets_asignado ON tiquets(usuario_asignado_id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_adjuntos_tiquet ON tiquets_adjuntos(tiquet_id);
 CREATE INDEX IF NOT EXISTS idx_correo_carpetas_cuenta ON correo_carpetas(cuenta_id);
 CREATE INDEX IF NOT EXISTS idx_plantillas_categoria ON plantillas(categoria_id);
@@ -956,6 +957,15 @@ def init_db() -> None:
         # un índice sobre esta misma columna (mismo motivo que
         # tareas_outlook.tarea_recurrente_id más abajo).
         _asegurar_columna(conn, "correo_mensajes", "cliente_fiscal_id", "INTEGER REFERENCES clientes_fiscales(id)")
+        # Tiquets: prioridad y responsable asignado (app/rutas_tiquets.py) --
+        # sin CHECK a nivel de esquema para "prioridad" (ALTER TABLE ADD
+        # COLUMN con CHECK es más frágil de migrar en SQLite que
+        # simplemente validar el valor en Python antes de escribir, mismo
+        # criterio ya aplicado a vencimientos_fiscales.modelo). Van ANTES
+        # de conn.executescript(INDICES), mismo motivo que
+        # correo_mensajes.cliente_fiscal_id justo arriba.
+        _asegurar_columna(conn, "tiquets", "prioridad", "TEXT NOT NULL DEFAULT 'normal'")
+        _asegurar_columna(conn, "tiquets", "usuario_asignado_id", "INTEGER REFERENCES usuarios(id)")
         _asegurar_columna(conn, "usuarios", "kratos_identity_id", "TEXT")
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_kratos_identity_id "
@@ -5242,10 +5252,14 @@ def crear_tiquet(usuario_id: int, tipo: str, titulo: str, descripcion: str | Non
         conn.close()
 
 
-def listar_tiquets(estado: str | None = None, tipo: str | None = None) -> list[sqlite3.Row]:
+def listar_tiquets(
+    estado: str | None = None, tipo: str | None = None,
+    prioridad: str | None = None, usuario_asignado_id: int | None = None,
+) -> list[sqlite3.Row]:
     """Todos los tiquets, de cualquier usuario -- tablero compartido, a
     diferencia de notas/tareas/correo que siempre filtran por
-    usuario_id. Ordenados por id (orden de inclusión)."""
+    usuario_id. Ordenados por prioridad (alta primero) y luego por id
+    (orden de inclusión dentro de la misma prioridad)."""
     conn = get_connection()
     try:
         cond = []
@@ -5254,12 +5268,18 @@ def listar_tiquets(estado: str | None = None, tipo: str | None = None) -> list[s
             cond.append("t.estado = ?"); params.append(estado)
         if tipo:
             cond.append("t.tipo = ?"); params.append(tipo)
+        if prioridad:
+            cond.append("t.prioridad = ?"); params.append(prioridad)
+        if usuario_asignado_id:
+            cond.append("t.usuario_asignado_id = ?"); params.append(usuario_asignado_id)
         where = f"WHERE {' AND '.join(cond)}" if cond else ""
         return conn.execute(
-            f"""SELECT t.*, u.email AS autor_email
-                FROM tiquets t LEFT JOIN usuarios u ON u.id = t.usuario_id
+            f"""SELECT t.*, u.email AS autor_email, a.email AS asignado_email
+                FROM tiquets t
+                LEFT JOIN usuarios u ON u.id = t.usuario_id
+                LEFT JOIN usuarios a ON a.id = t.usuario_asignado_id
                 {where}
-                ORDER BY t.id""",
+                ORDER BY CASE t.prioridad WHEN 'alta' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END, t.id""",
             params,
         ).fetchall()
     finally:
@@ -5273,8 +5293,10 @@ def obtener_tiquet(tiquet_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            """SELECT t.*, u.email AS autor_email
-               FROM tiquets t LEFT JOIN usuarios u ON u.id = t.usuario_id
+            """SELECT t.*, u.email AS autor_email, a.email AS asignado_email
+               FROM tiquets t
+               LEFT JOIN usuarios u ON u.id = t.usuario_id
+               LEFT JOIN usuarios a ON a.id = t.usuario_asignado_id
                WHERE t.id = ?""",
             (tiquet_id,),
         ).fetchone()
@@ -5318,6 +5340,20 @@ def eliminar_tiquet(tiquet_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute("DELETE FROM tiquets WHERE id = ?", (tiquet_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_tiquet(tiquet_id: int, prioridad: str, usuario_asignado_id: int | None) -> None:
+    """Sin chequeo de permisos aquí -- ver cambiar_estado_tiquet, mismo
+    criterio (solo admin puede llamar, comprobado en la ruta)."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tiquets SET prioridad = ?, usuario_asignado_id = ?, actualizado_en = ? WHERE id = ?",
+            (prioridad, usuario_asignado_id, now_iso(), tiquet_id),
+        )
         conn.commit()
     finally:
         conn.close()
