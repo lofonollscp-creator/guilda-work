@@ -1,0 +1,102 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Planes y extras') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Planes y extras') }}</h1>
+    <p class="subtitle">{{ _('Facturación de Guilda Work a sus tenants -- sin precios fijados todavía, edítalos aquí cuando lo decidas.') }}</p>
+  </div>
+</header>
+
+{% if not stripe_configurado %}
+<div class="ia-error">{{ _('Stripe no está configurado todavía (falta STRIPE_SECRET_KEY) -- puedes crear planes y extras, pero "Sincronizar con Stripe" no funcionará hasta entonces.') }}</div>
+{% endif %}
+
+<section class="quick-card">
+  <label>{{ _('Planes') }}</label>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Nombre') }}</th>
+          <th>{{ _('Precio mensual') }}</th>
+          <th>{{ _('Máx. usuarios') }}</th>
+          <th>Stripe</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in planes %}
+        <tr>
+          <td>{{ p.nombre }}</td>
+          <td class="mono">{{ '%.2f €'|format(p.precio_mensual_centimos / 100) if p.precio_mensual_centimos else _('sin fijar') }}</td>
+          <td class="mono">{{ p.max_usuarios or _('ilimitado') }}</td>
+          <td>
+            {% if p.stripe_price_id %}
+            <span class="log-badge log-badge-duracion">{{ _('sincronizado') }}</span>
+            {% else %}
+            <form method="post" action="{{ url_for('backoffice.sincronizar_plan_stripe', plan_id=p.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-ghost" {{ 'disabled' if not p.precio_mensual_centimos or not stripe_configurado }}>{{ _('Sincronizar con Stripe') }}</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>{{ '' if p.activo else _('(inactivo)') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">{{ _('Todavía no hay ningún plan.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('backoffice.crear_plan') }}" class="filters">
+    <label>{{ _('Nombre') }} <input type="text" name="nombre" placeholder="{{ _('Básico, Pro, Enterprise...') }}" required></label>
+    <label>{{ _('Descripción') }} <input type="text" name="descripcion"></label>
+    <label>{{ _('Precio mensual (€, opcional)') }} <input type="number" name="precio_mensual_eur" step="0.01" min="0" placeholder="29.00"></label>
+    <label>{{ _('Máx. usuarios (opcional)') }} <input type="number" name="max_usuarios" min="1"></label>
+    <button type="submit" class="btn btn-primary">+ {{ _('Crear plan') }}</button>
+  </form>
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Extras') }}</label>
+  <p class="subtitle">{{ _('Para ampliar momentáneamente el uso de un tenant (usuario adicional, almacenamiento extra...) -- se activan desde la ficha de cada tenant, con o sin fecha de caducidad.') }}</p>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Nombre') }}</th>
+          <th>{{ _('Precio') }}</th>
+          <th>Stripe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in extras %}
+        <tr>
+          <td>{{ e.nombre }}</td>
+          <td class="mono">{{ '%.2f €'|format(e.precio_centimos / 100) if e.precio_centimos else _('sin fijar') }}</td>
+          <td>
+            {% if e.stripe_price_id %}
+            <span class="log-badge log-badge-duracion">{{ _('sincronizado') }}</span>
+            {% else %}
+            <form method="post" action="{{ url_for('backoffice.sincronizar_extra_stripe', extra_id=e.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-ghost" {{ 'disabled' if not e.precio_centimos or not stripe_configurado }}>{{ _('Sincronizar con Stripe') }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">{{ _('Todavía no hay ningún extra.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('backoffice.crear_extra') }}" class="filters">
+    <label>{{ _('Nombre') }} <input type="text" name="nombre" placeholder="{{ _('Usuario adicional, almacenamiento extra...') }}" required></label>
+    <label>{{ _('Descripción') }} <input type="text" name="descripcion"></label>
+    <label>{{ _('Precio (€, opcional)') }} <input type="number" name="precio_eur" step="0.01" min="0"></label>
+    <button type="submit" class="btn btn-primary">+ {{ _('Crear extra') }}</button>
+  </form>
+</section>
+{% endblock %}

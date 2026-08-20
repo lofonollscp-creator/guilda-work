@@ -51,6 +51,7 @@ REINTENTOS_SEGUNDOS = [0, 30, 300]
 EVENTOS = [
     "tarea.finalizada", "nota.creada", "cita.reservada", "correo.mensaje_nuevo",
     "vencimiento.presentado", "factura.emitida", "documento.enviado_a_firma",
+    "factura.cobrada",
 ]
 
 _cola: "queue.Queue[tuple[dict, str, dict]]" = queue.Queue()

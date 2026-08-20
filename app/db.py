@@ -604,6 +604,59 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Facturación de plataforma (Guilda Work cobra a sus propios tenants,
+-- bloque 6 -- DISTINTO de Stripe Connect, que es cada tenant cobrando a
+-- SUS clientes finales, ver tenants.stripe_account_id más abajo).
+-- precio_mensual_centimos/precio_centimos NULL a propósito: el mecanismo
+-- se deja listo desde esta ronda, pero sin ningún precio fijado todavía
+-- -- el usuario los edita desde el backoffice cuando decida las tarifas.
+CREATE TABLE IF NOT EXISTS planes_guilda (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    precio_mensual_centimos INTEGER,
+    max_usuarios INTEGER,
+    stripe_price_id TEXT,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS extras_guilda (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    precio_centimos INTEGER,
+    stripe_price_id TEXT,
+    creado_en TEXT NOT NULL
+);
+
+-- Extras activados TEMPORALMENTE en la suscripción de un tenant --
+-- activo_hasta NULL = indefinido, con fecha = expira solo.
+CREATE TABLE IF NOT EXISTS tenants_extras_activos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    extra_id INTEGER NOT NULL REFERENCES extras_guilda(id),
+    cantidad INTEGER NOT NULL DEFAULT 1,
+    activo_desde TEXT NOT NULL,
+    activo_hasta TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tenants_extras_activos_tenant ON tenants_extras_activos(tenant_id);
+
+-- Registro local de un cobro con Stripe Connect (bloque 5) sobre un
+-- vencimiento fiscal -- no se asume que la API de FacturaScripts
+-- permita marcar una factura como cobrada, así que el estado de cobro
+-- vive aquí. stripe_checkout_session_id es UNIQUE: el webhook puede
+-- reintentar la misma entrega, esto evita duplicar el registro.
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales_pagos (
+    id INTEGER PRIMARY KEY,
+    vencimiento_id INTEGER NOT NULL REFERENCES vencimientos_fiscales(id),
+    stripe_checkout_session_id TEXT NOT NULL UNIQUE,
+    importe_centimos INTEGER NOT NULL,
+    pagado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_pagos_vencimiento ON vencimientos_fiscales_pagos(vencimiento_id);
+
 """
 
 # Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en un
@@ -1297,6 +1350,19 @@ def init_db() -> None:
         # de plataforma, ver planes_guilda más abajo).
         _asegurar_columna(conn, "tenants", "activo", "INTEGER NOT NULL DEFAULT 1")
 
+        # Stripe Connect (bloque 5) -- cada tenant cobra a SUS clientes
+        # finales con su propia cuenta Connect, el dinero le llega
+        # directo a su banco.
+        _asegurar_columna(conn, "tenants", "stripe_account_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stripe_onboarding_completado", "INTEGER NOT NULL DEFAULT 0")
+
+        # Facturación de plataforma (bloque 6) -- Guilda Work cobra a sus
+        # propios tenants por usar la app, cuenta de PLATAFORMA sin Connect.
+        _asegurar_columna(conn, "tenants", "plan_id", "INTEGER REFERENCES planes_guilda(id)")
+        _asegurar_columna(conn, "tenants", "stripe_customer_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stripe_subscription_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "suscripcion_estado", "TEXT")
+
         # Ampliación "asistente de IA" (Fase G2): adjuntos subidos al chat --
         # texto/CSV pequeños que el asistente puede leer bajo demanda vía la
         # tool leer_adjunto_chat (app/ia_herramientas.py). Mismo criterio de
@@ -1688,6 +1754,230 @@ def ultima_actividad_tenant(tenant_id: int) -> str | None:
             ids * 4,
         ).fetchone()
         return fila["ultima"] if fila else None
+    finally:
+        conn.close()
+
+
+# --- Stripe Connect (bloque 5 -- cada tenant cobra a sus clientes) --------
+
+def guardar_stripe_account_id(tenant_id: int, stripe_account_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_account_id = ? WHERE id = ?", (stripe_account_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def marcar_stripe_onboarding_completado(tenant_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_onboarding_completado = ? WHERE id = ?", (int(valor), tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def registrar_pago_vencimiento(vencimiento_id: int, stripe_checkout_session_id: str, importe_centimos: int) -> bool:
+    """True si se registró un pago nuevo, False si esta sesión de
+    Checkout ya se había procesado antes (el webhook de Stripe puede
+    reintentar la misma entrega -- stripe_checkout_session_id es UNIQUE,
+    así que un segundo intento no duplica el registro)."""
+    conn = get_connection()
+    try:
+        try:
+            conn.execute(
+                "INSERT INTO vencimientos_fiscales_pagos (vencimiento_id, stripe_checkout_session_id, importe_centimos, pagado_en) "
+                "VALUES (?, ?, ?, ?)",
+                (vencimiento_id, stripe_checkout_session_id, importe_centimos, now_iso()),
+            )
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+    finally:
+        conn.close()
+
+
+def pago_de_vencimiento(vencimiento_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM vencimientos_fiscales_pagos WHERE vencimiento_id = ? ORDER BY id DESC LIMIT 1",
+            (vencimiento_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+# --- Facturación de plataforma (bloque 6 -- Guilda Work cobra a sus tenants)
+
+def crear_plan_guilda(nombre: str, descripcion: str | None, precio_mensual_centimos: int | None, max_usuarios: int | None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO planes_guilda (nombre, descripcion, precio_mensual_centimos, max_usuarios, creado_en) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (nombre.strip(), descripcion, precio_mensual_centimos, max_usuarios, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_planes_guilda(solo_activos: bool = False) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        sql = "SELECT * FROM planes_guilda"
+        if solo_activos:
+            sql += " WHERE activo = 1"
+        sql += " ORDER BY precio_mensual_centimos IS NULL, precio_mensual_centimos, nombre"
+        return conn.execute(sql).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_plan_guilda(plan_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM planes_guilda WHERE id = ?", (plan_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def editar_plan_guilda(plan_id: int, nombre: str, descripcion: str | None, precio_mensual_centimos: int | None, max_usuarios: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE planes_guilda SET nombre = ?, descripcion = ?, precio_mensual_centimos = ?, max_usuarios = ? WHERE id = ?",
+            (nombre.strip(), descripcion, precio_mensual_centimos, max_usuarios, plan_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_price_id_plan(plan_id: int, stripe_price_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE planes_guilda SET stripe_price_id = ? WHERE id = ?", (stripe_price_id, plan_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_extra_guilda(nombre: str, descripcion: str | None, precio_centimos: int | None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO extras_guilda (nombre, descripcion, precio_centimos, creado_en) VALUES (?, ?, ?, ?)",
+            (nombre.strip(), descripcion, precio_centimos, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_extras_guilda() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM extras_guilda ORDER BY nombre").fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_extra_guilda(extra_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM extras_guilda WHERE id = ?", (extra_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_price_id_extra(extra_id: int, stripe_price_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE extras_guilda SET stripe_price_id = ? WHERE id = ?", (stripe_price_id, extra_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_plan_tenant(tenant_id: int, plan_id: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET plan_id = ? WHERE id = ?", (plan_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_customer_id(tenant_id: int, stripe_customer_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_customer_id = ? WHERE id = ?", (stripe_customer_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_subscription_id(tenant_id: int, stripe_subscription_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_subscription_id = ? WHERE id = ?", (stripe_subscription_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def actualizar_suscripcion_estado(tenant_id: int, estado: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET suscripcion_estado = ? WHERE id = ?", (estado, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def tenant_por_stripe_customer_id(stripe_customer_id: str) -> sqlite3.Row | None:
+    """Usado por el webhook de Stripe (evento ligado a un customer, no a
+    un tenant_id de Guilda Work directamente) para resolver a qué tenant
+    corresponde."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM tenants WHERE stripe_customer_id = ?", (stripe_customer_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def activar_extra_tenant(tenant_id: int, extra_id: int, cantidad: int = 1, activo_hasta: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO tenants_extras_activos (tenant_id, extra_id, cantidad, activo_desde, activo_hasta, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (tenant_id, extra_id, cantidad, now_iso(), activo_hasta, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_extras_activos_tenant(tenant_id: int) -> list[sqlite3.Row]:
+    """Solo los que no han caducado -- activo_hasta NULL es indefinido,
+    con fecha se compara contra el momento actual."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT tea.*, eg.nombre, eg.precio_centimos FROM tenants_extras_activos tea "
+            "JOIN extras_guilda eg ON eg.id = tea.extra_id "
+            "WHERE tea.tenant_id = ? AND (tea.activo_hasta IS NULL OR tea.activo_hasta >= ?) "
+            "ORDER BY tea.activo_desde DESC",
+            (tenant_id, now_iso()),
+        ).fetchall()
     finally:
         conn.close()
 
@@ -4163,6 +4453,18 @@ def listar_vencimientos_fiscales(
                 ORDER BY v.fecha_limite""",
             params,
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def tenant_id_de_vencimiento_fiscal(vencimiento_id: int) -> int | None:
+    """Resuelve el tenant de un vencimiento por su solo id -- usado por
+    el webhook de Stripe (app/rutas_stripe_webhook.py), que no tiene
+    ningún contexto de sesión/tenant propio para filtrar por él."""
+    conn = get_connection()
+    try:
+        fila = conn.execute("SELECT tenant_id FROM vencimientos_fiscales WHERE id = ?", (vencimiento_id,)).fetchone()
+        return fila["tenant_id"] if fila else None
     finally:
         conn.close()
 

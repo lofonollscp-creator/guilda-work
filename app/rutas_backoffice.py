@@ -8,7 +8,7 @@ import secrets
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, umami
+from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, stripe_pagos, umami
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -119,6 +119,18 @@ def ficha_tenant(tenant_id: int):
         abort(404)
     usuarios_ids = set(db.usuarios_de_tenant(tenant_id))
     usuarios_del_tenant = [u for u in db.listar_usuarios() if u["id"] in usuarios_ids]
+
+    # Ingresos (bloque 6) -- historial de facturas de Stripe, best-effort
+    # como el resto de integraciones opcionales de esta pantalla: un
+    # fallo (Stripe no configurado, tenant sin cliente todavía) no debe
+    # romper la ficha.
+    facturas_stripe = []
+    if tenant["stripe_customer_id"]:
+        try:
+            facturas_stripe = stripe_pagos.listar_facturas_cliente(tenant["stripe_customer_id"])
+        except stripe_pagos.ErrorStripe:
+            pass
+
     return render_template(
         "backoffice_ficha_tenant.html",
         tenant=tenant,
@@ -127,6 +139,11 @@ def ficha_tenant(tenant_id: int):
         estadisticas_equipo=db.estadisticas_equipo_por_usuario(tenant_id),
         catalogo_herramientas=herramientas.HERRAMIENTAS,
         herramientas_ocultas=db.herramientas_ocultas_de_tenant(tenant_id),
+        planes=db.listar_planes_guilda(solo_activos=True),
+        extras=db.listar_extras_guilda(),
+        extras_activos=db.listar_extras_activos_tenant(tenant_id),
+        facturas_stripe=facturas_stripe,
+        stripe_configurado=stripe_pagos.configurado(),
     )
 
 
@@ -141,6 +158,185 @@ def alternar_activo_tenant(tenant_id: int):
     db.alternar_activo_tenant(tenant_id, nuevo_valor)
     _auditar("suspender_tenant" if not nuevo_valor else "reactivar_tenant", tenant["nombre"])
     return redirect(request.referrer or url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+
+
+# --- Bloque 5: Stripe Connect (cada tenant cobra a sus propios clientes) ---
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/stripe-connect/conectar", methods=["POST"])
+@login_required
+@admin_required
+def conectar_stripe(tenant_id: int):
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    email = request.form.get("email", "").strip()
+    if not email:
+        return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+    try:
+        url_retorno = url_for("backoffice.retorno_stripe", tenant_id=tenant_id, _external=True)
+        account_id, url_onboarding = stripe_pagos.crear_cuenta_connect(email, tenant["nombre"], url_retorno, url_retorno)
+        db.guardar_stripe_account_id(tenant_id, account_id)
+        _auditar("conectar_stripe", tenant["nombre"])
+        return redirect(url_onboarding)
+    except stripe_pagos.ErrorStripe as e:
+        return render_template("backoffice_ficha_tenant.html", tenant=tenant, error=str(e),
+                                usuarios=[], estadisticas_equipo=[], catalogo_herramientas=herramientas.HERRAMIENTAS,
+                                herramientas_ocultas=set(), planes=[], extras=[], extras_activos=[],
+                                facturas_stripe=[], stripe_configurado=stripe_pagos.configurado()), 400
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/stripe-connect/retorno")
+@login_required
+@admin_required
+def retorno_stripe(tenant_id: int):
+    """Kratos de vuelta del onboarding de Stripe Connect (URL de retorno
+    Y de refresco a la vez, ver conectar_stripe -- Stripe no distingue
+    entre "completado" y "necesita retomar" en esta URL, así que se
+    confirma consultando la cuenta directamente)."""
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    if tenant["stripe_account_id"]:
+        try:
+            if stripe_pagos.cuenta_connect_lista(tenant["stripe_account_id"]):
+                db.marcar_stripe_onboarding_completado(tenant_id, True)
+        except stripe_pagos.ErrorStripe:
+            pass
+    return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+
+
+# --- Bloque 6: facturación de plataforma -----------------------------------
+
+@backoffice_bp.route("/planes")
+@login_required
+@admin_required
+def planes():
+    return render_template(
+        "backoffice_planes.html",
+        planes=db.listar_planes_guilda(),
+        extras=db.listar_extras_guilda(),
+        stripe_configurado=stripe_pagos.configurado(),
+    )
+
+
+@backoffice_bp.route("/planes", methods=["POST"])
+@login_required
+@admin_required
+def crear_plan():
+    nombre = request.form.get("nombre", "").strip()
+    if nombre:
+        precio = request.form.get("precio_mensual_eur", "").strip()
+        precio_centimos = round(float(precio) * 100) if precio else None
+        max_usuarios = request.form.get("max_usuarios", type=int)
+        db.crear_plan_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos, max_usuarios)
+        _auditar("crear_plan_guilda", nombre)
+    return redirect(url_for("backoffice.planes"))
+
+
+@backoffice_bp.route("/planes/<int:plan_id>/sincronizar-stripe", methods=["POST"])
+@login_required
+@admin_required
+def sincronizar_plan_stripe(plan_id: int):
+    plan = db.obtener_plan_guilda(plan_id)
+    if plan is None:
+        abort(404)
+    try:
+        stripe_price_id = stripe_pagos.sincronizar_plan(plan["nombre"], plan["precio_mensual_centimos"])
+        if stripe_price_id:
+            db.guardar_stripe_price_id_plan(plan_id, stripe_price_id)
+            _auditar("sincronizar_plan_stripe", plan["nombre"])
+    except stripe_pagos.ErrorStripe:
+        pass
+    return redirect(url_for("backoffice.planes"))
+
+
+@backoffice_bp.route("/extras", methods=["POST"])
+@login_required
+@admin_required
+def crear_extra():
+    nombre = request.form.get("nombre", "").strip()
+    if nombre:
+        precio = request.form.get("precio_eur", "").strip()
+        precio_centimos = round(float(precio) * 100) if precio else None
+        db.crear_extra_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos)
+        _auditar("crear_extra_guilda", nombre)
+    return redirect(url_for("backoffice.planes"))
+
+
+@backoffice_bp.route("/extras/<int:extra_id>/sincronizar-stripe", methods=["POST"])
+@login_required
+@admin_required
+def sincronizar_extra_stripe(extra_id: int):
+    extra = db.obtener_extra_guilda(extra_id)
+    if extra is None:
+        abort(404)
+    try:
+        stripe_price_id = stripe_pagos.sincronizar_extra(extra["nombre"], extra["precio_centimos"])
+        if stripe_price_id:
+            db.guardar_stripe_price_id_extra(extra_id, stripe_price_id)
+            _auditar("sincronizar_extra_stripe", extra["nombre"])
+    except stripe_pagos.ErrorStripe:
+        pass
+    return redirect(url_for("backoffice.planes"))
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/plan", methods=["POST"])
+@login_required
+@admin_required
+def asignar_plan(tenant_id: int):
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    plan_id = request.form.get("plan_id", type=int)
+    db.asignar_plan_tenant(tenant_id, plan_id)
+    _auditar("asignar_plan", tenant["nombre"])
+    return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/suscripcion/activar", methods=["POST"])
+@login_required
+@admin_required
+def activar_suscripcion(tenant_id: int):
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    plan = db.obtener_plan_guilda(tenant["plan_id"]) if tenant["plan_id"] else None
+    email = request.form.get("email", "").strip()
+    if plan is not None and plan["stripe_price_id"] and email:
+        try:
+            stripe_customer_id = tenant["stripe_customer_id"]
+            if not stripe_customer_id:
+                stripe_customer_id = stripe_pagos.crear_cliente_plataforma(email, tenant["nombre"])
+                db.guardar_stripe_customer_id(tenant_id, stripe_customer_id)
+            stripe_subscription_id = stripe_pagos.crear_suscripcion(stripe_customer_id, plan["stripe_price_id"])
+            db.guardar_stripe_subscription_id(tenant_id, stripe_subscription_id)
+            db.actualizar_suscripcion_estado(tenant_id, "activa")
+            _auditar("activar_suscripcion", tenant["nombre"])
+        except stripe_pagos.ErrorStripe:
+            pass
+    return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/extras", methods=["POST"])
+@login_required
+@admin_required
+def anadir_extra_tenant(tenant_id: int):
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    extra_id = request.form.get("extra_id", type=int)
+    extra = db.obtener_extra_guilda(extra_id) if extra_id else None
+    if extra is not None:
+        cantidad = request.form.get("cantidad", type=int) or 1
+        activo_hasta = request.form.get("activo_hasta", "").strip() or None
+        db.activar_extra_tenant(tenant_id, extra_id, cantidad, activo_hasta)
+        if tenant["stripe_subscription_id"] and extra["stripe_price_id"]:
+            try:
+                stripe_pagos.anadir_extra_a_suscripcion(tenant["stripe_subscription_id"], extra["stripe_price_id"], cantidad)
+            except stripe_pagos.ErrorStripe:
+                pass
+        _auditar("anadir_extra_tenant", f"{tenant['nombre']}: {extra['nombre']}")
+    return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
 @backoffice_bp.route("/tenants", methods=["POST"])

@@ -860,3 +860,113 @@ def test_ficha_cliente_espocrm_caido_no_rompe_la_ficha(cliente, monkeypatch):
 
     resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
     assert resp.status_code == 200
+
+
+# --- Cobro por Stripe Connect (app/stripe_pagos.py) -------------------------
+
+def test_cobrar_stripe_sin_cuenta_connect_no_rompe(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-sin-config@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Sin Config")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe", email="cliente-stripe@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+
+
+def test_cobrar_stripe_ok(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-ok@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Ok")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe Ok", email="cliente-stripe-ok@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas_stripe = []
+    monkeypatch.setattr(
+        rutas_fiscal.stripe_pagos, "crear_sesion_pago",
+        lambda account_id, importe_centimos, concepto, url_exito, url_cancelar, metadata=None:
+            llamadas_stripe.append((account_id, importe_centimos, metadata)) or "https://checkout.stripe.com/pay/cs_123",
+    )
+    llamadas_email = []
+    monkeypatch.setattr(
+        rutas_fiscal, "enviar_enlace_pago",
+        lambda email, concepto, url_pago: llamadas_email.append((email, url_pago)),
+    )
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+    assert llamadas_stripe == [("acct_123", 8000, {"vencimiento_id": v_id})]
+    assert llamadas_email == [("cliente-stripe-ok@ejemplo.com", "https://checkout.stripe.com/pay/cs_123")]
+
+
+def test_cobrar_stripe_sin_email_del_cliente_no_hace_nada(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-sin-email@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Sin Email")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Email")  # sin email
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.stripe_pagos, "crear_sesion_pago", lambda *a, **k: llamadas.append(a) or "https://x")
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_cobrar_stripe_importe_invalido_no_hace_nada(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-importe-malo@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Importe Malo")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Importe Malo", email="cliente-importe-malo@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.stripe_pagos, "crear_sesion_pago", lambda *a, **k: llamadas.append(a) or "https://x")
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "0"})
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_cobrar_stripe_roto_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe Roto", email="cliente-stripe-roto@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise rutas_fiscal.stripe_pagos.ErrorStripe("Stripe caído")
+    monkeypatch.setattr(rutas_fiscal.stripe_pagos, "crear_sesion_pago", _falla)
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+
+
+def test_ficha_vencimiento_muestra_seccion_cobrar_stripe_solo_si_procede(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-visibilidad@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Visibilidad")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Visibilidad", email="cliente-visibilidad@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/editar")
+    assert "Cobrar por Stripe" not in resp.get_data(as_text=True)
+
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/editar")
+    assert "Cobrar por Stripe" in resp.get_data(as_text=True)

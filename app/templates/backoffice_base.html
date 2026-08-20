@@ -68,6 +68,13 @@
         <span class="icon-rail-etiqueta">{{ _('Webhooks') }}</span>
       </a>
 
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Facturación') }}</span>
+      <a href="{{ url_for('backoffice.planes') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.planes' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-credit-card"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Planes y extras') }}</span>
+      </a>
+
       <div style="flex: 1;"></div>
 
       <div class="icon-rail-perfil-menu">

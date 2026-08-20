@@ -16,9 +16,11 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, db, documenso, espocrm, eventos, facturascripts, nextcloud
+from . import calcom, db, documenso, espocrm, eventos, facturascripts, nextcloud, stripe_pagos
 from .auth import login_required
-from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal, enviar_solicitud_documento
+from .notificaciones_email import (
+    ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
+)
 from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
 
 fiscal_bp = Blueprint("fiscal", __name__, url_prefix="/fiscal")
@@ -463,6 +465,10 @@ def editar_vencimiento(vencimiento_id: int):
         # Facturación (app/facturascripts.py): solo se ofrece si el cliente
         # ya está vinculado a un código de FacturaScripts.
         puede_facturar=bool(cliente and cliente["facturascripts_cliente_codigo"]),
+        # Cobro por Stripe Connect (app/stripe_pagos.py): solo si el tenant
+        # ya conectó su propia cuenta y el cliente tiene email al que
+        # mandarle el enlace de Checkout.
+        puede_cobrar_stripe=bool(tenant and tenant["stripe_account_id"] and cliente and cliente["email"]),
     )
 
 
@@ -497,6 +503,38 @@ def enviar_a_firma_vencimiento(vencimiento_id: int):
                     {"vencimiento_id": vencimiento_id, "cliente_fiscal_id": cliente["id"]},
                 )
         except documenso.ErrorDocumenso:
+            pass
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/cobrar-stripe", methods=["POST"])
+@login_required
+def cobrar_stripe_vencimiento(vencimiento_id: int):
+    """Genera un enlace de Stripe Checkout para que el cliente pague este
+    vencimiento y se lo manda por email -- best-effort, mismo criterio que
+    enviar_a_firma_vencimiento: si el tenant no tiene stripe_account_id, el
+    cliente no tiene email, el importe no es válido, o Stripe falla, no
+    rompe la edición del vencimiento. El importe se lee del formulario en
+    el momento (nunca cacheado) -- lo introduce el empleado a mano, igual
+    que el importe de "Marcar presentado y facturar"."""
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
+        abort(404)
+    tenant = db.obtener_tenant(g.tenant_id)
+    stripe_account_id = tenant["stripe_account_id"] if tenant else None
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+    importe_eur = request.form.get("importe_eur", type=float)
+    if stripe_account_id and cliente is not None and cliente["email"] and importe_eur and importe_eur > 0:
+        try:
+            concepto = f"{vencimiento['modelo']} {vencimiento['periodo']} — {cliente['nombre']}"
+            url_checkout = stripe_pagos.crear_sesion_pago(
+                stripe_account_id, round(importe_eur * 100), concepto,
+                url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, _external=True),
+                url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, _external=True),
+                metadata={"vencimiento_id": vencimiento_id},
+            )
+            enviar_enlace_pago(cliente["email"], concepto, url_checkout)
+        except (stripe_pagos.ErrorStripe, ErrorNotificacionesEmail):
             pass
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
 

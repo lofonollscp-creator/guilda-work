@@ -76,6 +76,23 @@ def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal:
     )
 
 
+def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str) -> None:
+    """Aviso de que hay un enlace de pago de Stripe Checkout disponible
+    para un vencimiento (app/rutas_fiscal.py:cobrar_stripe_vencimiento).
+    A diferencia de enviar_respuesta_portal/enviar_solicitud_documento,
+    aquí SÍ se manda la URL directa (la propia página de Stripe, alojada
+    por Stripe -- nunca se maneja un dato de tarjeta en Guilda Work) en
+    vez de enlazar a /portal/entrar, porque el pago no requiere ninguna
+    sesión del portal."""
+    _enviar(
+        email_destino,
+        "Tienes un pago pendiente",
+        "Hola,\n\n"
+        f"Tu gestoría te ha generado un enlace de pago para: \"{concepto}\"\n\n"
+        f"Puedes pagarlo aquí: {url_pago}\n",
+    )
+
+
 def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str) -> None:
     """Aviso de que el equipo ha respondido un mensaje en el portal --
     NO manda un enlace mágico directo a la conversación (evitaría

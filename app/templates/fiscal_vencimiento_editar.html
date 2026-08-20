@@ -118,6 +118,19 @@
   </form>
 </section>
 
+{% if puede_cobrar_stripe %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Cobrar por Stripe') }}</h2>
+  <p class="subtitle">{{ _('Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché.') }}</p>
+  <form method="post" action="{{ url_for('fiscal.cobrar_stripe_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
+    <label>{{ _('Importe (€)') }}
+      <input type="number" name="importe_eur" step="0.01" min="0.01" required>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar enlace de pago') }}</button>
+  </form>
+</section>
+{% endif %}
+
 {% if puede_enviar_a_firma %}
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Firma electrónica') }}</h2>

@@ -35,6 +35,7 @@ from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
+from .rutas_stripe_webhook import stripe_webhook_bp
 from .rutas_citas import citas_bp
 from .rutas_videollamadas import videollamadas_bp
 from .rutas_correo import correo_bp
@@ -160,6 +161,7 @@ app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
+app.register_blueprint(stripe_webhook_bp)
 app.register_blueprint(docs_bp)
 app.register_blueprint(portal_bp)
 app.register_blueprint(notificaciones_bp)

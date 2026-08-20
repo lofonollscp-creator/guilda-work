@@ -1,6 +1,9 @@
 {% extends "backoffice_base.html" %}
 {% block title %}{{ tenant.nombre }} — Backoffice{% endblock %}
 {% block content %}
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
 <header class="page-header">
   <div>
     <a class="link" href="{{ url_for('backoffice.panel') }}">&larr; {{ _('Backoffice') }}</a>
@@ -108,8 +111,93 @@
 </section>
 
 <section class="quick-card">
-  <label>{{ _('Ingresos') }}</label>
-  <p class="empty">{{ _('Sin plan asignado todavía.') }}</p>
+  <label>{{ _('Stripe Connect') }}</label>
+  <p class="subtitle">{{ _('Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene.') }}</p>
+  {% if not stripe_configurado %}
+  <p class="empty">{{ _('Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY).') }}</p>
+  {% elif tenant.stripe_onboarding_completado %}
+  <span class="log-badge log-badge-duracion">{{ _('Cuenta conectada y lista para cobrar') }}</span>
+  {% elif tenant.stripe_account_id %}
+  <span class="log-badge log-badge-instantanea">{{ _('Onboarding sin completar') }}</span>
+  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters" style="margin-top: 8px;">
+    <input type="hidden" name="email" value="{{ usuarios[0].email if usuarios else '' }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Reintentar onboarding') }}</button>
+  </form>
+  {% else %}
+  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Email de contacto para Stripe') }} <input type="email" name="email" value="{{ usuarios[0].email if usuarios else '' }}" required></label>
+    <button type="submit" class="btn btn-primary">{{ _('Conectar Stripe') }}</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Ingresos (suscripción de Guilda Work)') }}</label>
+  <form method="post" action="{{ url_for('backoffice.asignar_plan', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Plan') }}
+      <select name="plan_id">
+        <option value="">{{ _('Sin plan') }}</option>
+        {% for p in planes %}
+        <option value="{{ p.id }}" {{ 'selected' if tenant.plan_id == p.id }}>{{ p.nombre }}{{ ' — %.2f €/mes'|format(p.precio_mensual_centimos / 100) if p.precio_mensual_centimos }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+  </form>
+
+  {% if tenant.plan_id %}
+    {% if tenant.suscripcion_estado == 'activa' %}
+    <span class="log-badge log-badge-duracion">{{ _('Suscripción activa') }}</span>
+    {% else %}
+    <form method="post" action="{{ url_for('backoffice.activar_suscripcion', tenant_id=tenant.id) }}" class="filters" style="margin-top: 8px;">
+      <label>Email <input type="email" name="email" value="{{ usuarios[0].email if usuarios else '' }}" required></label>
+      <button type="submit" class="btn btn-primary">{{ _('Activar suscripción') }}</button>
+    </form>
+    {% endif %}
+  {% endif %}
+
+  <h4 style="margin: 16px 0 8px;">{{ _('Extras activos') }}</h4>
+  {% if extras_activos %}
+  <ul class="favoritas-list">
+    {% for ea in extras_activos %}
+    <li><span>{{ ea.nombre }} × {{ ea.cantidad }}{{ ' — ' ~ _('hasta') ~ ' ' ~ ea.activo_hasta[:10] if ea.activo_hasta }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">{{ _('Sin extras activos.') }}</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('backoffice.anadir_extra_tenant', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Extra') }}
+      <select name="extra_id" required>
+        {% for e in extras %}
+        <option value="{{ e.id }}">{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>{{ _('Cantidad') }} <input type="number" name="cantidad" value="1" min="1"></label>
+    <label>{{ _('Hasta (opcional)') }} <input type="date" name="activo_hasta"></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Añadir extra') }}</button>
+  </form>
+
+  <h4 style="margin: 16px 0 8px;">{{ _('Facturas') }}</h4>
+  {% if facturas_stripe %}
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Estado') }}</th></tr></thead>
+      <tbody>
+        {% for f in facturas_stripe %}
+        <tr>
+          <td class="mono">{{ f.created }}</td>
+          <td class="mono">{{ '%.2f €'|format(f.amount_paid / 100) if f.amount_paid is defined else '—' }}</td>
+          <td>{{ f.status }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">{{ _('Todavía no hay facturas.') }}</p>
+  {% endif %}
 </section>
 
 <section class="quick-card">
