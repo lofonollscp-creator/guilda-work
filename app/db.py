@@ -1464,6 +1464,21 @@ def hacer_backup_si_hace_falta(mantener_dias: int = 30) -> None:
             f.unlink(missing_ok=True)
 
 
+def listar_backups() -> list[dict]:
+    """Copias locales de registro.db ya hechas (ver
+    hacer_backup_si_hace_falta) -- para la pantalla "Copias de
+    seguridad" del backoffice. Lee del disco directamente, no hay
+    tabla propia: la fuente de verdad son los propios ficheros."""
+    if not BACKUPS_DIR.exists():
+        return []
+    backups = [
+        {"nombre": f.name, "fecha": f.stem.removeprefix("registro_"), "tamano_bytes": f.stat().st_size}
+        for f in BACKUPS_DIR.glob("registro_*.db")
+    ]
+    backups.sort(key=lambda b: b["fecha"], reverse=True)
+    return backups
+
+
 # --- Usuarios / autenticación ------------------------------------------------
 
 def crear_usuario(email: str, contrasena: str) -> int:
@@ -2132,6 +2147,18 @@ def herramientas_ocultas_de_tenants(tenant_ids: list[int]) -> dict[int, set[str]
         return resultado
     finally:
         conn.close()
+
+
+def adopcion_herramientas(ocultas_por_tenant: dict[int, set[str]], catalogo_ids: list[str]) -> dict[str, int]:
+    """Nº de tenants que tienen cada herramienta VISIBLE (no oculta) --
+    para la pantalla "Catálogo de herramientas" del backoffice. Cálculo
+    en Python (no SQL) porque la fuente de verdad ya está en memoria
+    tras herramientas_ocultas_de_tenants(), sin tabla propia que
+    consultar -- ausencia de fila = visible, ver db.py más arriba."""
+    return {
+        herramienta_id: sum(1 for ocultas in ocultas_por_tenant.values() if herramienta_id not in ocultas)
+        for herramienta_id in catalogo_ids
+    }
 
 
 def guardar_facturascripts(tenant_id: int, url: str, admin_user: str, admin_pass: str) -> None:

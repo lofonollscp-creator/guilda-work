@@ -1,0 +1,40 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Copias de seguridad') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Copias de seguridad') }}</h1>
+    <p class="subtitle">{{ _('Copias locales de registro.db — una al día, se conservan 30 días.') }}</p>
+  </div>
+</header>
+
+<section class="ia-section">
+  <form method="post" action="{{ url_for('backoffice.hacer_backup') }}">
+    <button type="submit" class="btn btn-primary">{{ _('Hacer copia ahora') }}</button>
+  </form>
+  <p class="subtitle" style="margin-top: 8px;">{{ _('Si ya existe una copia de hoy, no hace nada nuevo.') }}</p>
+
+  <div class="table-wrap" style="margin-top: 16px;">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Fichero') }}</th>
+          <th>{{ _('Fecha') }}</th>
+          <th>{{ _('Tamaño') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in backups %}
+        <tr>
+          <td class="mono">{{ b.nombre }}</td>
+          <td class="mono">{{ b.fecha }}</td>
+          <td class="mono">{{ (b.tamano_bytes / 1024 / 1024) | round(1) }} MB</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">{{ _('Todavía no hay ninguna copia de seguridad.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

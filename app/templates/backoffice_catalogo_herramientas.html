@@ -1,0 +1,39 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Catálogo de herramientas') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Catálogo de herramientas') }}</h1>
+    <p class="subtitle">{{ _('Cuántos tenants tienen cada herramienta activada — editar la visibilidad de una en concreto se hace desde la ficha de cada tenant.') }}</p>
+  </div>
+</header>
+
+<section class="ia-section">
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>{{ _('Herramienta') }}</th>
+          <th>{{ _('Descripción') }}</th>
+          <th>{{ _('Tenants con acceso') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in catalogo_herramientas %}
+        <tr>
+          <td>{{ h.icono }}</td>
+          <td>{{ h.nombre }}</td>
+          <td>{{ h.descripcion }}</td>
+          <td>
+            {{ adopcion.get(h.id, 0) }} / {{ total_tenants }}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">{{ _('El catálogo está vacío.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

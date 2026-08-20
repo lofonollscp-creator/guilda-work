@@ -45,6 +45,10 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Usuarios') }}</span>
       </a>
+      <a href="{{ url_for('backoffice.catalogo_herramientas_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.catalogo_herramientas_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layers"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Catálogo de herramientas') }}</span>
+      </a>
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Analítica') }}</span>
@@ -55,6 +59,10 @@
       <a href="{{ url_for('backoffice.monitorizacion_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.monitorizacion_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-activity"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Estado del sistema') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.backups_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.backups_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Copias de seguridad') }}</span>
       </a>
       <a href="{{ url_for('backoffice.auditoria_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.auditoria_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>

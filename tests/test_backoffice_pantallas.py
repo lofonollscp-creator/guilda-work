@@ -244,3 +244,72 @@ def test_ingresos_vista_lista_el_tenant_y_su_plan(cliente):
     assert resp.status_code == 200
     assert b"Ingresos Vista Unico" in resp.data
     assert b"Plan Vista Unico" in resp.data
+
+
+# --- /backoffice/backups ------------------------------------------------------
+
+def test_backups_vista_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "no-admin-backups@ejemplo.com", "contrasena123")
+    resp = cliente.get("/backoffice/backups")
+    assert resp.status_code == 403
+
+
+def test_listar_backups_vacio_sin_directorio():
+    # base_de_datos_temporal ya apunta BACKUPS_DIR a un tmp_path que
+    # todavía no existe como directorio (nadie ha hecho backup aún).
+    assert db.listar_backups() == []
+
+
+def test_hacer_backup_y_listar_backups():
+    # DB_PATH/BACKUPS_DIR ya apuntan al tmp_path aislado del test gracias
+    # al fixture autouse base_de_datos_temporal (tests/conftest.py) -- no
+    # hace falta (ni conviene) redefinirlos aquí, o se pierde el esquema
+    # ya inicializado por db.init_db().
+    db.hacer_backup_si_hace_falta()
+    backups = db.listar_backups()
+    assert len(backups) == 1
+    assert backups[0]["nombre"].startswith("registro_")
+    assert backups[0]["tamano_bytes"] > 0
+
+
+def test_backups_vista_lista_copias_reales(cliente):
+    db.BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    (db.BACKUPS_DIR / "registro_2026-01-01.db").write_bytes(b"contenido-de-prueba")
+
+    _admin(cliente, "admin-backups-lista@ejemplo.com")
+    resp = cliente.get("/backoffice/backups")
+    assert resp.status_code == 200
+    assert b"registro_2026-01-01.db" in resp.data
+
+
+def test_hacer_backup_ruta_crea_copia_y_redirige(cliente):
+    _admin(cliente, "admin-backups-crear@ejemplo.com")
+    resp = cliente.post("/backoffice/backups")
+    assert resp.status_code == 302
+    assert len(db.listar_backups()) == 1
+
+
+# --- /backoffice/catalogo-herramientas ---------------------------------------
+
+def test_catalogo_herramientas_vista_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "no-admin-catalogo@ejemplo.com", "contrasena123")
+    resp = cliente.get("/backoffice/catalogo-herramientas")
+    assert resp.status_code == 403
+
+
+def test_adopcion_herramientas_cuenta_solo_las_visibles():
+    tenant_a = db.crear_tenant("Catalogo Tenant A")
+    tenant_b = db.crear_tenant("Catalogo Tenant B")
+    db.ocultar_herramienta(tenant_a, "outline")
+
+    ocultas = db.herramientas_ocultas_de_tenants([tenant_a, tenant_b])
+    adopcion = db.adopcion_herramientas(ocultas, ["outline", "chat"])
+    assert adopcion["outline"] == 1  # oculta en A, visible en B
+    assert adopcion["chat"] == 2  # visible en ambos por defecto
+
+
+def test_catalogo_herramientas_vista_muestra_el_catalogo(cliente):
+    _admin(cliente, "admin-catalogo-vista@ejemplo.com")
+    resp = cliente.get("/backoffice/catalogo-herramientas")
+    assert resp.status_code == 200
+    assert b"Outline" in resp.data

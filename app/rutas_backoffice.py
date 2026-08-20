@@ -175,6 +175,37 @@ def ingresos_vista():
     )
 
 
+@backoffice_bp.route("/backups")
+@login_required
+@admin_required
+def backups_vista():
+    return render_template("backoffice_backups.html", backups=db.listar_backups())
+
+
+@backoffice_bp.route("/backups", methods=["POST"])
+@login_required
+@admin_required
+def hacer_backup():
+    db.hacer_backup_si_hace_falta()
+    _auditar("hacer_backup", None)
+    return redirect(url_for("backoffice.backups_vista"))
+
+
+@backoffice_bp.route("/catalogo-herramientas")
+@login_required
+@admin_required
+def catalogo_herramientas_vista():
+    tenants = db.listar_tenants()
+    ocultas_por_tenant = db.herramientas_ocultas_de_tenants([t["id"] for t in tenants])
+    catalogo_ids = [h["id"] for h in herramientas.HERRAMIENTAS]
+    return render_template(
+        "backoffice_catalogo_herramientas.html",
+        catalogo_herramientas=herramientas.HERRAMIENTAS,
+        total_tenants=len(tenants),
+        adopcion=db.adopcion_herramientas(ocultas_por_tenant, catalogo_ids),
+    )
+
+
 @backoffice_bp.route("/tenants/<int:tenant_id>")
 @login_required
 @admin_required
