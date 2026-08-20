@@ -1725,6 +1725,50 @@ def listar_tenants_con_conteo() -> list[sqlite3.Row]:
         conn.close()
 
 
+def resumen_plataforma() -> dict:
+    """Métricas agregadas para la pantalla "Resumen" del backoffice --
+    una sola función porque todas las consultas son baratas (COUNT/SUM
+    sobre tablas pequeñas) y siempre se piden juntas."""
+    conn = get_connection()
+    try:
+        tenants_total = conn.execute("SELECT COUNT(*) FROM tenants").fetchone()[0]
+        tenants_activos = conn.execute("SELECT COUNT(*) FROM tenants WHERE activo = 1").fetchone()[0]
+        usuarios_total = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+        mrr_centimos = conn.execute(
+            "SELECT COALESCE(SUM(pg.precio_mensual_centimos), 0) FROM tenants t "
+            "JOIN planes_guilda pg ON pg.id = t.plan_id "
+            "WHERE t.suscripcion_estado = 'activa'"
+        ).fetchone()[0]
+        tenants_recientes = conn.execute(
+            "SELECT id, nombre, creado_en FROM tenants ORDER BY creado_en DESC LIMIT 5"
+        ).fetchall()
+        return {
+            "tenants_total": tenants_total,
+            "tenants_activos": tenants_activos,
+            "usuarios_total": usuarios_total,
+            "mrr_centimos": mrr_centimos,
+            "tenants_recientes": tenants_recientes,
+        }
+    finally:
+        conn.close()
+
+
+def listar_suscripciones_tenants() -> list[sqlite3.Row]:
+    """Todos los tenants con su plan (si tiene) y estado de suscripción,
+    para la vista agregada de Ingresos del backoffice -- JOIN con
+    planes_guilda para traer nombre/precio en una sola consulta."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT tenants.*, planes_guilda.nombre AS plan_nombre, "
+            "planes_guilda.precio_mensual_centimos AS plan_precio_centimos "
+            "FROM tenants LEFT JOIN planes_guilda ON planes_guilda.id = tenants.plan_id "
+            "ORDER BY tenants.nombre"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 def renombrar_tenant(tenant_id: int, nuevo_nombre: str) -> None:
     """Lanza sqlite3.IntegrityError si el nombre ya existe (UNIQUE)."""
     conn = get_connection()

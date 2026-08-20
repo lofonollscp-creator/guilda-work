@@ -1,0 +1,41 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Estado del sistema') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Estado del sistema') }}</h1>
+    <p class="subtitle">{{ _('Estado en vivo de los servicios monitorizados (Uptime Kuma).') }}</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+<section class="ia-section">
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Monitor') }}</th>
+          <th>{{ _('Estado') }}</th>
+          <th>{{ _('Tiempo de respuesta') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in monitores %}
+        <tr>
+          <td>{{ m.nombre }}</td>
+          <td>
+            <span class="log-badge {{ {'activo': 'log-badge-duracion', 'caido': 'log-badge-error', 'pendiente': 'log-badge-instantanea', 'mantenimiento': 'log-badge-instantanea'}.get(m.estado, 'log-badge-instantanea') }}">{{ m.estado or _('desconocido') }}</span>
+          </td>
+          <td class="mono">{% if m.tiempo_respuesta_ms is defined %}{{ m.tiempo_respuesta_ms | round | int }} ms{% else %}—{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">{{ _('Sin monitores que mostrar — ¿está configurada UPTIME_KUMA_API_KEY?') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Ingresos') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Ingresos') }}</h1>
+    <p class="subtitle">{{ _('Suscripciones de Guilda Work a sus tenants — solo lectura, gestiona el plan/extras de cada uno desde su propia ficha.') }}</p>
+  </div>
+</header>
+
+<section class="dash-stats">
+  <div class="dash-stat">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg></span>
+    <span class="dash-stat-valor">{{ '%.2f'|format(mrr_centimos / 100) }} €</span>
+    <span class="dash-stat-label">{{ _('MRR (suscripciones activas)') }}</span>
+  </div>
+</section>
+
+<section class="ia-section">
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Tenant</th>
+          <th>{{ _('Plan') }}</th>
+          <th>{{ _('Precio') }}</th>
+          <th>{{ _('Estado de la suscripción') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tenants %}
+        <tr>
+          <td>{{ t.nombre }}</td>
+          <td>{{ t.plan_nombre or _('sin plan') }}</td>
+          <td class="mono">{% if t.plan_precio_centimos %}{{ '%.2f'|format(t.plan_precio_centimos / 100) }} €{% else %}—{% endif %}</td>
+          <td>
+            {% if t.suscripcion_estado %}
+            <span class="log-badge {{ 'log-badge-duracion' if t.suscripcion_estado == 'activa' else 'log-badge-error' }}">{{ t.suscripcion_estado }}</span>
+            {% else %}
+            <span class="empty">{{ _('sin suscripción') }}</span>
+            {% endif %}
+          </td>
+          <td><a class="btn btn-ghost" href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}">{{ _('Ver ficha') }}</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">{{ _('Todavía no hay ningún tenant.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

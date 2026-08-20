@@ -8,7 +8,7 @@ import secrets
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, stripe_pagos, umami
+from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, stripe_pagos, umami, uptime_kuma
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -143,6 +143,36 @@ def webhooks_vista():
 @admin_required
 def auditoria_vista():
     return render_template("backoffice_auditoria.html", **_contexto_auditoria())
+
+
+@backoffice_bp.route("/resumen")
+@login_required
+@admin_required
+def resumen_vista():
+    return render_template("backoffice_resumen.html", resumen=db.resumen_plataforma())
+
+
+@backoffice_bp.route("/monitorizacion")
+@login_required
+@admin_required
+def monitorizacion_vista():
+    try:
+        monitores = uptime_kuma.listar_monitores()
+        error = None
+    except uptime_kuma.ErrorUptimeKuma as e:
+        monitores, error = [], str(e)
+    return render_template("backoffice_monitorizacion.html", monitores=monitores, error=error)
+
+
+@backoffice_bp.route("/ingresos")
+@login_required
+@admin_required
+def ingresos_vista():
+    return render_template(
+        "backoffice_ingresos.html",
+        tenants=db.listar_suscripciones_tenants(),
+        mrr_centimos=db.resumen_plataforma()["mrr_centimos"],
+    )
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>")

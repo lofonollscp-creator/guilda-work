@@ -48,6 +48,14 @@
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Analítica') }}</span>
+      <a href="{{ url_for('backoffice.resumen_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.resumen_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-grid"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Resumen') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.monitorizacion_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.monitorizacion_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-activity"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Estado del sistema') }}</span>
+      </a>
       <a href="{{ url_for('backoffice.auditoria_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.auditoria_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Auditoría') }}</span>
@@ -70,6 +78,10 @@
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Facturación') }}</span>
+      <a href="{{ url_for('backoffice.ingresos_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.ingresos_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Ingresos') }}</span>
+      </a>
       <a href="{{ url_for('backoffice.planes') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.planes' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-credit-card"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Planes y extras') }}</span>
