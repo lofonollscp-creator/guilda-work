@@ -93,17 +93,56 @@ def panel():
         q=q,
         modulo_filtro=modulo_filtro,
         orden=orden,
-        usuarios=db.listar_usuarios(),
-        leads=db.listar_leads_contacto(),
-        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
-        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
-        resultados_alta=None,
         facturascripts_creado=None,
         calcom_creado=None,
         **_contexto_herramientas(tenants),
-        **_contexto_webhooks(tenants),
-        **_contexto_auditoria(),
     )
+
+
+@backoffice_bp.route("/usuarios")
+@login_required
+@admin_required
+def usuarios_vista():
+    return render_template(
+        "backoffice_usuarios.html",
+        usuarios=db.listar_usuarios(),
+        tenants=db.listar_tenants(),
+        resultados_alta=None,
+    )
+
+
+@backoffice_bp.route("/leads")
+@login_required
+@admin_required
+def leads_vista():
+    return render_template("backoffice_leads.html", leads=db.listar_leads_contacto())
+
+
+@backoffice_bp.route("/solicitudes-portal")
+@login_required
+@admin_required
+def solicitudes_portal_vista():
+    return render_template(
+        "backoffice_solicitudes_portal.html",
+        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
+        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
+        tenants=db.listar_tenants(),
+    )
+
+
+@backoffice_bp.route("/webhooks")
+@login_required
+@admin_required
+def webhooks_vista():
+    tenants = db.listar_tenants()
+    return render_template("backoffice_webhooks.html", tenants=tenants, **_contexto_webhooks(tenants))
+
+
+@backoffice_bp.route("/auditoria")
+@login_required
+@admin_required
+def auditoria_vista():
+    return render_template("backoffice_auditoria.html", **_contexto_auditoria())
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>")
@@ -514,16 +553,9 @@ def crear_tenant():
         return render_template(
             "backoffice.html",
             tenants=tenants,
-            usuarios=db.listar_usuarios(),
-            leads=db.listar_leads_contacto(),
-        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
-        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
-            resultados_alta=None,
             facturascripts_creado=facturascripts_creado,
             calcom_creado=calcom_creado,
             **_contexto_herramientas(tenants),
-        **_contexto_webhooks(tenants),
-        **_contexto_auditoria(),
         )
     return redirect(url_for("backoffice.panel"))
 
@@ -719,7 +751,7 @@ def crear_usuario():
     email = request.form.get("email", "").strip().lower()
     tenant_id = request.form.get("tenant_id") or None
     if not email:
-        return redirect(url_for("backoffice.panel"))
+        return redirect(url_for("backoffice.usuarios_vista"))
 
     # Misma contraseña temporal para Guilda Work/Kratos, OpenProject y
     # Chatwoot (una sola que compartir con la persona, no cuatro
@@ -729,19 +761,12 @@ def crear_usuario():
     try:
         identity_id = kratos.crear_identidad(email, contrasena_temporal)
     except kratos.ErrorKratos as e:
-        tenants = db.listar_tenants_con_conteo()
         return render_template(
-            "backoffice.html",
-            tenants=tenants,
+            "backoffice_usuarios.html",
             usuarios=db.listar_usuarios(),
-            leads=db.listar_leads_contacto(),
-        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
-        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
+            tenants=db.listar_tenants(),
             resultados_alta=None,
             error=str(e),
-            **_contexto_herramientas(tenants),
-        **_contexto_webhooks(tenants),
-        **_contexto_auditoria(),
         )
     usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     if tenant_id:
@@ -813,19 +838,12 @@ def crear_usuario():
             except umami.ErrorUmami as e:
                 resultados_alta.append({"servicio": "Umami", "estado": "error", "detalle": str(e)})
 
-    tenants = db.listar_tenants_con_conteo()
     return render_template(
-        "backoffice.html",
-        tenants=tenants,
+        "backoffice_usuarios.html",
         usuarios=db.listar_usuarios(),
-        leads=db.listar_leads_contacto(),
-        solicitudes_portal=db.listar_solicitudes_acceso_portal(),
-        clientes_fiscales_todos=db.listar_todos_los_clientes_fiscales(),
+        tenants=db.listar_tenants(),
         resultados_alta=resultados_alta,
         email_creado=email,
-        **_contexto_herramientas(tenants),
-        **_contexto_webhooks(tenants),
-        **_contexto_auditoria(),
     )
 
 
@@ -842,7 +860,7 @@ def asignar_tenant_usuario(usuario_id: int):
     else:
         db.desasignar_tenant(usuario_id)
         _auditar("desasignar_tenant", f"usuario_id={usuario_id}")
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.usuarios_vista"))
 
 
 @backoffice_bp.route("/usuarios/<int:usuario_id>/rol", methods=["POST"])
@@ -862,7 +880,7 @@ def cambiar_rol(usuario_id: int):
     else:
         db.hacer_admin(usuario["email"])
         _auditar("hacer_admin", usuario["email"])
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.usuarios_vista"))
 
 
 @backoffice_bp.route("/usuarios/<int:usuario_id>/gestor-fichajes", methods=["POST"])
@@ -876,7 +894,7 @@ def alternar_gestor_fichajes(usuario_id: int):
     if usuario is None:
         abort(404)
     db.asignar_gestor_fichajes(usuario_id, not usuario["gestor_fichajes"])
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.usuarios_vista"))
 
 
 @backoffice_bp.route("/usuarios/<int:usuario_id>/supervisor-tenant", methods=["POST"])
@@ -891,7 +909,7 @@ def alternar_supervisor_tenant(usuario_id: int):
     if usuario is None:
         abort(404)
     db.asignar_supervisor_tenant(usuario_id, not usuario["supervisor_tenant"])
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.usuarios_vista"))
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/fichaje-geolocalizacion", methods=["POST"])
@@ -938,7 +956,7 @@ def revocar_dispositivo_usuario(usuario_id: int, token_id: int):
 @admin_required
 def marcar_lead_atendido(lead_id: int):
     db.marcar_lead_atendido(lead_id, request.form.get("atendido") == "1")
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.leads_vista"))
 
 
 @backoffice_bp.route("/solicitudes-portal/<int:solicitud_id>/vincular", methods=["POST"])
@@ -960,7 +978,7 @@ def vincular_solicitud_portal(solicitud_id: int):
         if cliente is not None:
             db.editar_cliente_fiscal(cliente["tenant_id"], cliente_fiscal_id, email=solicitud["email"])
             db.marcar_solicitud_atendida(solicitud_id)
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.solicitudes_portal_vista"))
 
 
 @backoffice_bp.route("/solicitudes-portal/<int:solicitud_id>/crear-cliente", methods=["POST"])
@@ -976,7 +994,7 @@ def crear_cliente_desde_solicitud(solicitud_id: int):
     if solicitud is not None and tenant_id:
         db.crear_cliente_fiscal(tenant_id, solicitud["nombre"], nif=solicitud["nif"], email=solicitud["email"])
         db.marcar_solicitud_atendida(solicitud_id)
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.solicitudes_portal_vista"))
 
 
 @backoffice_bp.route("/webhooks", methods=["POST"])
@@ -995,7 +1013,7 @@ def crear_webhook():
         if tenant_id is not None and db.obtener_tenant(tenant_id) is None:
             abort(404)
         db.crear_webhook(g.usuario_id, tenant_id, url, eventos_marcados)
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.webhooks_vista"))
 
 
 @backoffice_bp.route("/webhooks/<int:webhook_id>/borrar", methods=["POST"])
@@ -1005,4 +1023,4 @@ def borrar_webhook(webhook_id: int):
     if db.obtener_webhook(webhook_id) is None:
         abort(404)
     db.borrar_webhook(webhook_id)
-    return redirect(url_for("backoffice.panel"))
+    return redirect(url_for("backoffice.webhooks_vista"))

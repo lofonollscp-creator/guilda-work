@@ -1168,7 +1168,7 @@ def test_backoffice_panel_muestra_los_webhooks(cliente):
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
     db.crear_webhook(usuario_id, None, "https://ejemplo.com/mi-webhook-unico", ["nota.creada"])
 
-    resp = cliente.get("/backoffice/")
+    resp = cliente.get("/backoffice/webhooks")
     assert b"ejemplo.com/mi-webhook-unico" in resp.data
 
 
@@ -1244,7 +1244,7 @@ def test_backoffice_panel_muestra_la_tabla_de_auditoria(cliente):
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
     db.registrar_auditoria(usuario_id, "accion_visible_en_el_panel", None)
 
-    resp = cliente.get("/backoffice/")
+    resp = cliente.get("/backoffice/auditoria")
     assert b"accion_visible_en_el_panel" in resp.data
 
 

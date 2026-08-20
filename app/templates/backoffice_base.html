@@ -41,29 +41,29 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-building-2"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tenants') }}</span>
       </a>
-      <a href="{{ url_for('backoffice.panel') }}#usuarios" class="icon-rail-link">
+      <a href="{{ url_for('backoffice.usuarios_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('backoffice.usuarios_vista', 'backoffice.dispositivos_usuario') else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Usuarios') }}</span>
       </a>
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Analítica') }}</span>
-      <a href="{{ url_for('backoffice.panel') }}#auditoria" class="icon-rail-link">
+      <a href="{{ url_for('backoffice.auditoria_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.auditoria_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Auditoría') }}</span>
       </a>
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Contenido') }}</span>
-      <a href="{{ url_for('backoffice.panel') }}#leads" class="icon-rail-link">
+      <a href="{{ url_for('backoffice.leads_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.leads_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Leads') }}</span>
       </a>
-      <a href="{{ url_for('backoffice.panel') }}#solicitudes" class="icon-rail-link">
+      <a href="{{ url_for('backoffice.solicitudes_portal_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.solicitudes_portal_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Solicitudes portal') }}</span>
       </a>
-      <a href="{{ url_for('backoffice.panel') }}#webhooks" class="icon-rail-link">
+      <a href="{{ url_for('backoffice.webhooks_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.webhooks_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Webhooks') }}</span>
       </a>
