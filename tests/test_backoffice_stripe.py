@@ -142,7 +142,13 @@ def test_asignar_plan_a_tenant(cliente):
     assert db.obtener_tenant(tenant_id)["plan_id"] == plan_id
 
 
-def test_activar_suscripcion_ok(cliente, monkeypatch):
+def test_activar_suscripcion_ok_redirige_a_checkout(cliente, monkeypatch):
+    """activar_suscripcion NUNCA crea la Subscription directamente por API
+    (Stripe la rechaza sin un método de pago ya guardado, ver hallazgo de
+    la verificación en vivo) -- redirige a una Checkout Session en modo
+    suscripción; es el webhook quien guarda stripe_subscription_id y
+    activa el estado tras completarse el pago (test aparte, ver
+    test_rutas_stripe_webhook.py)."""
     from app import rutas_backoffice
     _admin(cliente)
     tenant_id = db.crear_tenant("Gestoria Activar Suscripcion")
@@ -151,13 +157,40 @@ def test_activar_suscripcion_ok(cliente, monkeypatch):
     db.asignar_plan_tenant(tenant_id, plan_id)
 
     monkeypatch.setattr(rutas_backoffice.stripe_pagos, "crear_cliente_plataforma", lambda email, nombre: "cus_nuevo")
-    monkeypatch.setattr(rutas_backoffice.stripe_pagos, "crear_suscripcion", lambda cus, price: "sub_nueva")
+    monkeypatch.setattr(
+        rutas_backoffice.stripe_pagos, "crear_sesion_suscripcion",
+        lambda cus, price, url_exito, url_cancelar: "https://checkout.stripe.com/pay/cs_sub_1",
+    )
 
-    cliente.post(f"/backoffice/tenants/{tenant_id}/suscripcion/activar", data={"email": "facturacion@ejemplo.com"})
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/suscripcion/activar", data={"email": "facturacion@ejemplo.com"})
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == "https://checkout.stripe.com/pay/cs_sub_1"
     tenant = db.obtener_tenant(tenant_id)
     assert tenant["stripe_customer_id"] == "cus_nuevo"
-    assert tenant["stripe_subscription_id"] == "sub_nueva"
-    assert tenant["suscripcion_estado"] == "activa"
+    # Todavía sin suscripción real -- eso lo hace el webhook al completarse
+    # el pago en la página de Stripe, no esta ruta.
+    assert tenant["stripe_subscription_id"] is None
+    assert tenant["suscripcion_estado"] is None
+
+
+def test_activar_suscripcion_roto_muestra_error_sin_500(cliente, monkeypatch):
+    from app import rutas_backoffice
+    from app.stripe_pagos import ErrorStripe
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Gestoria Activar Suscripcion Rota")
+    plan_id = db.crear_plan_guilda("Pro", None, 4900, None)
+    db.guardar_stripe_price_id_plan(plan_id, "price_pro_3")
+    db.asignar_plan_tenant(tenant_id, plan_id)
+
+    monkeypatch.setattr(rutas_backoffice.stripe_pagos, "crear_cliente_plataforma", lambda email, nombre: "cus_roto")
+
+    def _falla(*a, **k):
+        raise ErrorStripe("no attached payment source")
+    monkeypatch.setattr(rutas_backoffice.stripe_pagos, "crear_sesion_suscripcion", _falla)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/suscripcion/activar", data={"email": "facturacion@ejemplo.com"})
+    assert resp.status_code == 400
+    assert "no attached payment source" in resp.get_data(as_text=True)
 
 
 def test_activar_suscripcion_sin_plan_con_price_no_hace_nada(cliente):

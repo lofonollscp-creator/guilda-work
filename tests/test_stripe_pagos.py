@@ -232,6 +232,20 @@ def test_crear_suscripcion(monkeypatch):
     assert sp.crear_suscripcion("cus_1", "price_1") == "sub_1"
 
 
+def test_crear_sesion_suscripcion(monkeypatch):
+    capturado = {}
+
+    def fake_urlopen(req, timeout=None):
+        capturado["data"] = req.data.decode("utf-8")
+        return _RespuestaFalsa({"url": "https://checkout.stripe.com/pay/cs_sub_1"})
+
+    monkeypatch.setattr(sp.urllib.request, "urlopen", fake_urlopen)
+    url = sp.crear_sesion_suscripcion("cus_1", "price_1", "https://x/exito", "https://x/cancelar")
+    assert url == "https://checkout.stripe.com/pay/cs_sub_1"
+    assert "mode=subscription" in capturado["data"]
+    assert "customer=cus_1" in capturado["data"]
+
+
 def test_anadir_extra_a_suscripcion(monkeypatch):
     capturado = {}
 

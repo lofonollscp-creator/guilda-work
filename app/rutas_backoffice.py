@@ -162,6 +162,17 @@ def alternar_activo_tenant(tenant_id: int):
 
 # --- Bloque 5: Stripe Connect (cada tenant cobra a sus propios clientes) ---
 
+def _render_ficha_tenant_error(tenant, error: str):
+    """Fallback de error para las rutas de Stripe de la ficha de tenant --
+    mismo criterio en conectar_stripe y activar_suscripcion: si Stripe
+    falla, no basta con redirigir sin más (el admin no vería el motivo),
+    así que se re-renderiza la ficha con el mensaje real de Stripe."""
+    return render_template("backoffice_ficha_tenant.html", tenant=tenant, error=error,
+                            usuarios=[], estadisticas_equipo=[], catalogo_herramientas=herramientas.HERRAMIENTAS,
+                            herramientas_ocultas=set(), planes=[], extras=[], extras_activos=[],
+                            facturas_stripe=[], stripe_configurado=stripe_pagos.configurado()), 400
+
+
 @backoffice_bp.route("/tenants/<int:tenant_id>/stripe-connect/conectar", methods=["POST"])
 @login_required
 @admin_required
@@ -179,10 +190,7 @@ def conectar_stripe(tenant_id: int):
         _auditar("conectar_stripe", tenant["nombre"])
         return redirect(url_onboarding)
     except stripe_pagos.ErrorStripe as e:
-        return render_template("backoffice_ficha_tenant.html", tenant=tenant, error=str(e),
-                                usuarios=[], estadisticas_equipo=[], catalogo_herramientas=herramientas.HERRAMIENTAS,
-                                herramientas_ocultas=set(), planes=[], extras=[], extras_activos=[],
-                                facturas_stripe=[], stripe_configurado=stripe_pagos.configurado()), 400
+        return _render_ficha_tenant_error(tenant, str(e))
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/stripe-connect/retorno")
@@ -297,24 +305,31 @@ def asignar_plan(tenant_id: int):
 @login_required
 @admin_required
 def activar_suscripcion(tenant_id: int):
+    """Redirige a una Stripe Checkout Session en modo suscripción -- NO
+    crea la Subscription directamente por API (Stripe la rechaza sin un
+    método de pago ya guardado, y un tenant recién asignado nunca lo
+    tiene). El Checkout alojado por Stripe pide la tarjeta y crea la
+    suscripción él solo; el webhook (checkout.session.completed en modo
+    subscription, ver app/rutas_stripe_webhook.py) guarda el
+    stripe_subscription_id resultante y marca el estado."""
     tenant = db.obtener_tenant(tenant_id)
     if tenant is None:
         abort(404)
     plan = db.obtener_plan_guilda(tenant["plan_id"]) if tenant["plan_id"] else None
     email = request.form.get("email", "").strip()
-    if plan is not None and plan["stripe_price_id"] and email:
-        try:
-            stripe_customer_id = tenant["stripe_customer_id"]
-            if not stripe_customer_id:
-                stripe_customer_id = stripe_pagos.crear_cliente_plataforma(email, tenant["nombre"])
-                db.guardar_stripe_customer_id(tenant_id, stripe_customer_id)
-            stripe_subscription_id = stripe_pagos.crear_suscripcion(stripe_customer_id, plan["stripe_price_id"])
-            db.guardar_stripe_subscription_id(tenant_id, stripe_subscription_id)
-            db.actualizar_suscripcion_estado(tenant_id, "activa")
-            _auditar("activar_suscripcion", tenant["nombre"])
-        except stripe_pagos.ErrorStripe:
-            pass
-    return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+    if plan is None or not plan["stripe_price_id"] or not email:
+        return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+    try:
+        stripe_customer_id = tenant["stripe_customer_id"]
+        if not stripe_customer_id:
+            stripe_customer_id = stripe_pagos.crear_cliente_plataforma(email, tenant["nombre"])
+            db.guardar_stripe_customer_id(tenant_id, stripe_customer_id)
+        url_retorno = url_for("backoffice.ficha_tenant", tenant_id=tenant_id, _external=True)
+        url_checkout = stripe_pagos.crear_sesion_suscripcion(stripe_customer_id, plan["stripe_price_id"], url_retorno, url_retorno)
+        _auditar("activar_suscripcion", tenant["nombre"])
+        return redirect(url_checkout)
+    except stripe_pagos.ErrorStripe as e:
+        return _render_ficha_tenant_error(tenant, str(e))
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/extras", methods=["POST"])

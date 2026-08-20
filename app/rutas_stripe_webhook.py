@@ -30,7 +30,9 @@ def recibir():
     tipo = evento.get("type", "")
     objeto = evento.get("data", {}).get("object", {})
 
-    if tipo == "checkout.session.completed":
+    if tipo == "checkout.session.completed" and objeto.get("mode") == "subscription":
+        _procesar_checkout_suscripcion(objeto)
+    elif tipo == "checkout.session.completed":
         _procesar_pago_vencimiento(objeto)
     elif tipo in ("invoice.paid", "invoice.payment_failed", "customer.subscription.updated", "customer.subscription.deleted"):
         _procesar_suscripcion(tipo, objeto)
@@ -55,6 +57,23 @@ def _procesar_pago_vencimiento(sesion: dict) -> None:
         eventos.emitir("factura.cobrada", tenant_id, {"vencimiento_id": int(vencimiento_id), "importe_centimos": importe})
     except Exception:
         pass
+
+
+def _procesar_checkout_suscripcion(sesion: dict) -> None:
+    """checkout.session.completed en modo suscripción (activar_suscripcion,
+    app/rutas_backoffice.py) -- a diferencia de _procesar_pago_vencimiento,
+    aquí el tenant se resuelve por stripe_customer_id (la sesión de
+    Checkout de una suscripción siempre trae customer, a diferencia de un
+    pago puntual de Connect que puede no tenerlo)."""
+    customer_id = sesion.get("customer")
+    subscription_id = sesion.get("subscription")
+    if not customer_id or not subscription_id:
+        return
+    tenant = db.tenant_por_stripe_customer_id(customer_id)
+    if tenant is None:
+        return
+    db.guardar_stripe_subscription_id(tenant["id"], subscription_id)
+    db.actualizar_suscripcion_estado(tenant["id"], "activa")
 
 
 def _procesar_suscripcion(tipo: str, objeto: dict) -> None:

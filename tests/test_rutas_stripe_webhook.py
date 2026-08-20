@@ -69,6 +69,56 @@ def test_checkout_completado_sin_metadata_no_hace_nada(cliente, monkeypatch):
     assert resp.status_code == 200
 
 
+def test_checkout_suscripcion_completada_guarda_subscription_id_y_activa(cliente, monkeypatch):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-checkout-sub@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook Checkout Sub")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_checkout_sub")
+
+    _mock_evento(monkeypatch, {
+        "type": "checkout.session.completed",
+        "data": {"object": {"mode": "subscription", "customer": "cus_checkout_sub", "subscription": "sub_desde_checkout"}},
+    })
+    resp = cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant(tenant_id)
+    assert tenant["stripe_subscription_id"] == "sub_desde_checkout"
+    assert tenant["suscripcion_estado"] == "activa"
+
+
+def test_checkout_suscripcion_sin_customer_conocido_no_rompe(cliente, monkeypatch):
+    _mock_evento(monkeypatch, {
+        "type": "checkout.session.completed",
+        "data": {"object": {"mode": "subscription", "customer": "cus_no_existe", "subscription": "sub_x"}},
+    })
+    resp = cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    assert resp.status_code == 200
+
+
+def test_checkout_pago_puntual_no_se_confunde_con_suscripcion(cliente, monkeypatch):
+    """mode="payment" (Connect, pago de un vencimiento) va por la rama de
+    _procesar_pago_vencimiento, nunca por la de suscripciones -- aunque
+    ambas comparten el mismo tipo de evento de Stripe."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-no-confundir@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook No Confundir")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_no_confundir")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente No Confundir")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    _mock_evento(monkeypatch, {
+        "type": "checkout.session.completed",
+        "data": {"object": {
+            "mode": "payment", "id": "cs_pago_puntual", "amount_total": 8000,
+            "customer": "cus_no_confundir", "metadata": {"vencimiento_id": str(v_id)},
+        }},
+    })
+    cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    assert db.pago_de_vencimiento(v_id) is not None
+    # No se ha tocado la suscripción de plataforma de ese tenant.
+    assert db.obtener_tenant(tenant_id)["suscripcion_estado"] is None
+
+
 def test_invoice_paid_marca_suscripcion_activa(cliente, monkeypatch):
     usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-invoice-paid@ejemplo.com", "contrasena123")
     tenant_id = db.crear_tenant("Gestoria Webhook Invoice Paid")

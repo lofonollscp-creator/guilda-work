@@ -221,11 +221,36 @@ def crear_cliente_plataforma(email: str, nombre_tenant: str) -> str:
 
 
 def crear_suscripcion(stripe_customer_id: str, stripe_price_id: str) -> str:
+    """Crea la Subscription DIRECTAMENTE por API -- requiere que el
+    cliente ya tenga un método de pago por defecto guardado en Stripe
+    (si no, Stripe rechaza la petición con "no attached payment source").
+    Un tenant recién asignado nunca lo tiene todavía -- para activar una
+    suscripción nueva desde cero, usar crear_sesion_suscripcion en su
+    lugar (Checkout alojado por Stripe, pide la tarjeta él solo). Esta
+    función queda para el caso de reactivar una suscripción de un cliente
+    que YA tiene tarjeta guardada de una suscripción anterior."""
     suscripcion = _peticion("/subscriptions", metodo="POST", cuerpo={
         "customer": stripe_customer_id,
         "items": [{"price": stripe_price_id}],
     })
     return suscripcion["id"]
+
+
+def crear_sesion_suscripcion(stripe_customer_id: str, stripe_price_id: str, url_exito: str, url_cancelar: str) -> str:
+    """Checkout Session en modo suscripción -- a diferencia de
+    crear_suscripcion, esta genera una página alojada por Stripe que pide
+    la tarjeta y crea la suscripción sola, sin asumir que el cliente ya
+    tiene un método de pago. El webhook (checkout.session.completed con
+    mode="subscription", ver app/rutas_stripe_webhook.py) guarda el
+    subscription_id resultante y marca el estado del tenant."""
+    sesion = _peticion("/checkout/sessions", metodo="POST", cuerpo={
+        "mode": "subscription",
+        "customer": stripe_customer_id,
+        "line_items": [{"price": stripe_price_id, "quantity": 1}],
+        "success_url": url_exito,
+        "cancel_url": url_cancelar,
+    })
+    return sesion["url"]
 
 
 def anadir_extra_a_suscripcion(stripe_subscription_id: str, stripe_price_id: str, cantidad: int = 1) -> None:
