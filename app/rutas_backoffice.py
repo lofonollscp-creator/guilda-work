@@ -380,6 +380,26 @@ def crear_plan():
     return redirect(url_for("backoffice.planes"))
 
 
+@backoffice_bp.route("/planes/<int:plan_id>/editar", methods=["POST"])
+@login_required
+@admin_required
+def editar_plan(plan_id: int):
+    plan = db.obtener_plan_guilda(plan_id)
+    if plan is None:
+        abort(404)
+    nombre = request.form.get("nombre", "").strip()
+    if nombre:
+        descripcion = request.form.get("descripcion", "").strip() or None
+        precio = request.form.get("precio_mensual_eur", "").strip()
+        precio_centimos = round(float(precio) * 100) if precio else None
+        max_usuarios = request.form.get("max_usuarios", type=int)
+        db.editar_plan_guilda(plan_id, nombre, descripcion, precio_centimos, max_usuarios)
+        if plan["stripe_price_id"] and precio_centimos != plan["precio_mensual_centimos"]:
+            db.limpiar_stripe_price_id_plan(plan_id)
+        _auditar("editar_plan_guilda", nombre)
+    return redirect(url_for("backoffice.planes"))
+
+
 @backoffice_bp.route("/planes/<int:plan_id>/sincronizar-stripe", methods=["POST"])
 @login_required
 @admin_required
@@ -407,6 +427,25 @@ def crear_extra():
         precio_centimos = round(float(precio) * 100) if precio else None
         db.crear_extra_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos)
         _auditar("crear_extra_guilda", nombre)
+    return redirect(url_for("backoffice.planes"))
+
+
+@backoffice_bp.route("/extras/<int:extra_id>/editar", methods=["POST"])
+@login_required
+@admin_required
+def editar_extra(extra_id: int):
+    extra = db.obtener_extra_guilda(extra_id)
+    if extra is None:
+        abort(404)
+    nombre = request.form.get("nombre", "").strip()
+    if nombre:
+        descripcion = request.form.get("descripcion", "").strip() or None
+        precio = request.form.get("precio_eur", "").strip()
+        precio_centimos = round(float(precio) * 100) if precio else None
+        db.editar_extra_guilda(extra_id, nombre, descripcion, precio_centimos)
+        if extra["stripe_price_id"] and precio_centimos != extra["precio_centimos"]:
+            db.limpiar_stripe_price_id_extra(extra_id)
+        _auditar("editar_extra_guilda", nombre)
     return redirect(url_for("backoffice.planes"))
 
 
@@ -484,9 +523,11 @@ def anadir_extra_tenant(tenant_id: int):
         cantidad = request.form.get("cantidad", type=int) or 1
         activo_hasta = request.form.get("activo_hasta", "").strip() or None
         db.activar_extra_tenant(tenant_id, extra_id, cantidad, activo_hasta)
-        if tenant["stripe_subscription_id"] and extra["stripe_price_id"]:
+        if tenant["stripe_subscription_id"] and tenant["stripe_customer_id"] and extra["stripe_price_id"]:
             try:
-                stripe_pagos.anadir_extra_a_suscripcion(tenant["stripe_subscription_id"], extra["stripe_price_id"], cantidad)
+                stripe_pagos.anadir_extra_a_suscripcion(
+                    tenant["stripe_customer_id"], tenant["stripe_subscription_id"], extra["stripe_price_id"], cantidad
+                )
             except stripe_pagos.ErrorStripe:
                 pass
         _auditar("anadir_extra_tenant", f"{tenant['nombre']}: {extra['nombre']}")

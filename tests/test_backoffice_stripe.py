@@ -126,6 +126,74 @@ def test_sincronizar_plan_stripe_roto_no_rompe_la_ruta(cliente, monkeypatch):
     assert db.obtener_plan_guilda(plan_id)["stripe_price_id"] is None
 
 
+def test_editar_plan_actualiza_precio(cliente):
+    _admin(cliente)
+    plan_id = db.crear_plan_guilda("Básico", None, None, None)
+    cliente.post(f"/backoffice/planes/{plan_id}/editar", data={
+        "nombre": "Básico", "descripcion": "Ahora con precio", "precio_mensual_eur": "19.00", "max_usuarios": "3",
+    })
+    plan = db.obtener_plan_guilda(plan_id)
+    assert plan["precio_mensual_centimos"] == 1900
+    assert plan["descripcion"] == "Ahora con precio"
+    assert plan["max_usuarios"] == 3
+
+
+def test_editar_plan_de_id_inexistente_da_404(cliente):
+    _admin(cliente)
+    resp = cliente.post("/backoffice/planes/999999/editar", data={"nombre": "X"})
+    assert resp.status_code == 404
+
+
+def test_editar_plan_sincronizado_al_cambiar_precio_limpia_stripe_price_id(cliente):
+    """Los Price de Stripe son inmutables -- si el plan ya estaba
+    sincronizado y se le cambia el precio, el price_id guardado deja
+    de corresponder al importe mostrado y hay que limpiarlo para que
+    "Sincronizar con Stripe" pueda crear uno nuevo con el importe
+    correcto."""
+    _admin(cliente)
+    plan_id = db.crear_plan_guilda("Pro", None, 4900, None)
+    db.guardar_stripe_price_id_plan(plan_id, "price_pro_viejo")
+
+    cliente.post(f"/backoffice/planes/{plan_id}/editar", data={"nombre": "Pro", "precio_mensual_eur": "59.00"})
+    assert db.obtener_plan_guilda(plan_id)["stripe_price_id"] is None
+
+
+def test_editar_plan_sincronizado_sin_cambiar_precio_conserva_stripe_price_id(cliente):
+    _admin(cliente)
+    plan_id = db.crear_plan_guilda("Pro", None, 4900, None)
+    db.guardar_stripe_price_id_plan(plan_id, "price_pro_1")
+
+    cliente.post(f"/backoffice/planes/{plan_id}/editar", data={"nombre": "Pro renombrado", "precio_mensual_eur": "49.00"})
+    assert db.obtener_plan_guilda(plan_id)["stripe_price_id"] == "price_pro_1"
+    assert db.obtener_plan_guilda(plan_id)["nombre"] == "Pro renombrado"
+
+
+def test_editar_extra_actualiza_precio(cliente):
+    _admin(cliente)
+    extra_id = db.crear_extra_guilda("Usuario adicional", None, None)
+    cliente.post(f"/backoffice/extras/{extra_id}/editar", data={
+        "nombre": "Usuario adicional", "descripcion": "Ahora con precio", "precio_eur": "6.50",
+    })
+    extra = db.obtener_extra_guilda(extra_id)
+    assert extra["precio_centimos"] == 650
+    assert extra["descripcion"] == "Ahora con precio"
+
+
+def test_editar_extra_de_id_inexistente_da_404(cliente):
+    _admin(cliente)
+    resp = cliente.post("/backoffice/extras/999999/editar", data={"nombre": "X"})
+    assert resp.status_code == 404
+
+
+def test_editar_extra_sincronizado_al_cambiar_precio_limpia_stripe_price_id(cliente):
+    _admin(cliente)
+    extra_id = db.crear_extra_guilda("Usuario adicional", None, 500)
+    db.guardar_stripe_price_id_extra(extra_id, "price_extra_viejo")
+
+    cliente.post(f"/backoffice/extras/{extra_id}/editar", data={"nombre": "Usuario adicional", "precio_eur": "7.00"})
+    assert db.obtener_extra_guilda(extra_id)["stripe_price_id"] is None
+
+
 def test_crear_extra_ok(cliente):
     _admin(cliente)
     cliente.post("/backoffice/extras", data={"nombre": "Usuario adicional", "precio_eur": "5.00"})
@@ -216,6 +284,7 @@ def test_anadir_extra_tenant_con_suscripcion_sincroniza_stripe(cliente, monkeypa
     from app import rutas_backoffice
     _admin(cliente)
     tenant_id = db.crear_tenant("Gestoria Extra Sincronizado")
+    db.guardar_stripe_customer_id(tenant_id, "cus_1")
     db.guardar_stripe_subscription_id(tenant_id, "sub_1")
     extra_id = db.crear_extra_guilda("Usuario adicional", None, 500)
     db.guardar_stripe_price_id_extra(extra_id, "price_extra_1")
@@ -223,10 +292,30 @@ def test_anadir_extra_tenant_con_suscripcion_sincroniza_stripe(cliente, monkeypa
     llamadas = []
     monkeypatch.setattr(
         rutas_backoffice.stripe_pagos, "anadir_extra_a_suscripcion",
-        lambda sub_id, price_id, cantidad: llamadas.append((sub_id, price_id, cantidad)),
+        lambda cus_id, sub_id, price_id, cantidad: llamadas.append((cus_id, sub_id, price_id, cantidad)),
     )
     cliente.post(f"/backoffice/tenants/{tenant_id}/extras", data={"extra_id": str(extra_id), "cantidad": "3"})
-    assert llamadas == [("sub_1", "price_extra_1", 3)]
+    assert llamadas == [("cus_1", "sub_1", "price_extra_1", 3)]
+
+
+def test_anadir_extra_tenant_con_suscripcion_pero_sin_customer_id_no_llama_a_stripe(cliente, monkeypatch):
+    """Guarda de regresión: sin stripe_customer_id no se puede formar
+    el invoiceitem (lo exige la API de Stripe) -- confirmar que la
+    ruta no intenta llamar a Stripe sin él en vez de fallar a medias."""
+    from app import rutas_backoffice
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Gestoria Extra Sin Customer")
+    db.guardar_stripe_subscription_id(tenant_id, "sub_1")
+    extra_id = db.crear_extra_guilda("Usuario adicional", None, 500)
+    db.guardar_stripe_price_id_extra(extra_id, "price_extra_1")
+
+    llamadas = []
+    monkeypatch.setattr(
+        rutas_backoffice.stripe_pagos, "anadir_extra_a_suscripcion",
+        lambda *a: llamadas.append(a),
+    )
+    cliente.post(f"/backoffice/tenants/{tenant_id}/extras", data={"extra_id": str(extra_id), "cantidad": "1"})
+    assert llamadas == []
 
 
 def test_desactivar_extra_tenant_requiere_admin(cliente):

@@ -253,9 +253,20 @@ def crear_sesion_suscripcion(stripe_customer_id: str, stripe_price_id: str, url_
     return sesion["url"]
 
 
-def anadir_extra_a_suscripcion(stripe_subscription_id: str, stripe_price_id: str, cantidad: int = 1) -> None:
-    _peticion("/subscription_items", metodo="POST", cuerpo={
-        "subscription": stripe_subscription_id, "price": stripe_price_id, "quantity": cantidad,
+def anadir_extra_a_suscripcion(stripe_customer_id: str, stripe_subscription_id: str, stripe_price_id: str, cantidad: int = 1) -> None:
+    """Añade un extra como cargo puntual a la PRÓXIMA factura de la
+    suscripción -- vía /v1/invoiceitems, no /v1/subscription_items.
+    Los Subscription Items de Stripe exigen un Price recurrente
+    (`recurring`); `sincronizar_extra` crea a propósito un Price SIN
+    `recurring` (un extra es un cargo de una vez, no una línea nueva
+    permanente de la suscripción) -- intentar añadirlo como
+    subscription_item lo rechazaría Stripe con un error de "price sin
+    definición recurrente". Un invoiceitem con `subscription` sí
+    acepta un Price no recurrente y se factura una sola vez, en el
+    siguiente ciclo de esa suscripción."""
+    _peticion("/invoiceitems", metodo="POST", cuerpo={
+        "customer": stripe_customer_id, "subscription": stripe_subscription_id,
+        "price": stripe_price_id, "quantity": cantidad,
     })
 
 

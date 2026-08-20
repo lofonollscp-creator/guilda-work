@@ -250,11 +250,17 @@ def test_anadir_extra_a_suscripcion(monkeypatch):
     capturado = {}
 
     def fake_urlopen(req, timeout=None):
+        capturado["url"] = req.full_url
         capturado["data"] = req.data.decode("utf-8")
-        return _RespuestaFalsa({"id": "si_1"})
+        return _RespuestaFalsa({"id": "ii_1"})
 
     monkeypatch.setattr(sp.urllib.request, "urlopen", fake_urlopen)
-    sp.anadir_extra_a_suscripcion("sub_1", "price_extra", cantidad=2)
+    sp.anadir_extra_a_suscripcion("cus_1", "sub_1", "price_extra", cantidad=2)
+    # Vía /v1/invoiceitems, NO /v1/subscription_items -- un Price sin
+    # `recurring` (como el que crea sincronizar_extra) no es válido en
+    # un subscription_item, Stripe lo rechazaría.
+    assert capturado["url"].endswith("/invoiceitems")
+    assert "customer=cus_1" in capturado["data"]
     assert "subscription=sub_1" in capturado["data"]
     assert "quantity=2" in capturado["data"]
 

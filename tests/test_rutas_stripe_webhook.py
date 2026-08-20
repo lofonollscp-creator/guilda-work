@@ -156,7 +156,12 @@ def test_subscription_deleted_marca_cancelada(cliente, monkeypatch):
     assert tenant["suscripcion_estado"] == "cancelada"
 
 
-def test_subscription_updated_usa_el_status_del_evento(cliente, monkeypatch):
+def test_subscription_updated_traduce_el_status_de_stripe_al_vocabulario_de_la_app(cliente, monkeypatch):
+    """El resto de la app compara suscripcion_estado contra 'activa'/
+    'pago_fallido'/'cancelada' (español) -- el status que manda Stripe
+    en este evento viene en inglés y debe traducirse, no guardarse tal
+    cual (si no, backoffice_ficha_tenant.html mostraría a un tenant
+    con la suscripción realmente activa como si no lo estuviera)."""
     usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-sub-updated@ejemplo.com", "contrasena123")
     tenant_id = db.crear_tenant("Gestoria Webhook Sub Updated")
     db.asignar_tenant(usuario_id, tenant_id)
@@ -168,7 +173,54 @@ def test_subscription_updated_usa_el_status_del_evento(cliente, monkeypatch):
     })
     cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
     tenant = db.obtener_tenant(tenant_id)
-    assert tenant["suscripcion_estado"] == "past_due"
+    assert tenant["suscripcion_estado"] == "pago_fallido"
+
+
+def test_subscription_updated_active_traduce_a_activa(cliente, monkeypatch):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-sub-updated-active@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook Sub Updated Active")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_4b")
+
+    _mock_evento(monkeypatch, {
+        "type": "customer.subscription.updated",
+        "data": {"object": {"customer": "cus_4b", "status": "active"}},
+    })
+    cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    tenant = db.obtener_tenant(tenant_id)
+    assert tenant["suscripcion_estado"] == "activa"
+
+
+def test_subscription_updated_canceled_traduce_a_cancelada(cliente, monkeypatch):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-sub-updated-canceled@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook Sub Updated Canceled")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_4c")
+
+    _mock_evento(monkeypatch, {
+        "type": "customer.subscription.updated",
+        "data": {"object": {"customer": "cus_4c", "status": "canceled"}},
+    })
+    cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    tenant = db.obtener_tenant(tenant_id)
+    assert tenant["suscripcion_estado"] == "cancelada"
+
+
+def test_subscription_updated_status_desconocido_no_rompe_ni_actualiza(cliente, monkeypatch):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-sub-updated-raro@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook Sub Updated Raro")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_4d")
+    db.actualizar_suscripcion_estado(tenant_id, "activa")
+
+    _mock_evento(monkeypatch, {
+        "type": "customer.subscription.updated",
+        "data": {"object": {"customer": "cus_4d", "status": "un-status-nuevo-que-stripe-no-tenia-antes"}},
+    })
+    resp = cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant(tenant_id)
+    assert tenant["suscripcion_estado"] == "activa"
 
 
 def test_customer_desconocido_no_rompe(cliente, monkeypatch):

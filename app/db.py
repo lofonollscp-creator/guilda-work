@@ -1980,6 +1980,43 @@ def guardar_stripe_price_id_extra(extra_id: int, stripe_price_id: str) -> None:
         conn.close()
 
 
+def editar_extra_guilda(extra_id: int, nombre: str, descripcion: str | None, precio_centimos: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE extras_guilda SET nombre = ?, descripcion = ?, precio_centimos = ? WHERE id = ?",
+            (nombre.strip(), descripcion, precio_centimos, extra_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def limpiar_stripe_price_id_plan(plan_id: int) -> None:
+    """Los Price de Stripe son inmutables -- si cambia el precio de un
+    plan ya sincronizado, el stripe_price_id guardado deja de
+    corresponder al importe mostrado. Se limpia para que
+    "Sincronizar con Stripe" vuelva a estar disponible y cree un Price
+    nuevo con el importe correcto (el Price antiguo queda huérfano en
+    Stripe, sin usarse más, pero Stripe no permite borrarlos)."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE planes_guilda SET stripe_price_id = NULL WHERE id = ?", (plan_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def limpiar_stripe_price_id_extra(extra_id: int) -> None:
+    """Mismo motivo que limpiar_stripe_price_id_plan, para extras."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE extras_guilda SET stripe_price_id = NULL WHERE id = ?", (extra_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def asignar_plan_tenant(tenant_id: int, plan_id: int | None) -> None:
     conn = get_connection()
     try:

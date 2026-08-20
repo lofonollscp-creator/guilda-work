@@ -19,6 +19,28 @@ from . import db, eventos, stripe_pagos
 
 stripe_webhook_bp = Blueprint("stripe_webhook", __name__, url_prefix="/webhooks")
 
+# El resto de la app (backoffice_ingresos.html, backoffice_ficha_tenant.html)
+# compara tenants.suscripcion_estado contra el vocabulario en español ya
+# usado por _procesar_checkout_suscripcion/_procesar_pago_vencimiento
+# ("activa"/"pago_fallido"/"cancelada") -- customer.subscription.updated es
+# el único evento que trae un status crudo de Stripe (inglés,
+# active/trialing/past_due/unpaid/incomplete/incomplete_expired/canceled/
+# paused), así que hay que traducirlo aquí antes de guardarlo. Sin esto,
+# un tenant con la suscripción realmente activa podía quedar marcado como
+# "active" (inglés) en vez de "activa", y backoffice_ficha_tenant.html
+# (que compara == 'activa') volvía a mostrarle a un admin el formulario
+# de "Activar suscripción" para un tenant que ya estaba pagando.
+_ESTADOS_SUSCRIPCION_STRIPE = {
+    "active": "activa",
+    "trialing": "activa",
+    "past_due": "pago_fallido",
+    "unpaid": "pago_fallido",
+    "incomplete": "pago_fallido",
+    "incomplete_expired": "pago_fallido",
+    "paused": "pago_fallido",
+    "canceled": "cancelada",
+}
+
 
 @stripe_webhook_bp.route("/stripe", methods=["POST"])
 def recibir():
@@ -94,6 +116,6 @@ def _procesar_suscripcion(tipo: str, objeto: dict) -> None:
     elif tipo == "customer.subscription.deleted":
         db.actualizar_suscripcion_estado(tenant["id"], "cancelada")
     elif tipo == "customer.subscription.updated":
-        estado = objeto.get("status")
+        estado = _ESTADOS_SUSCRIPCION_STRIPE.get(objeto.get("status"))
         if estado:
             db.actualizar_suscripcion_estado(tenant["id"], estado)

@@ -79,6 +79,27 @@ def test_crud_extras_guilda():
     assert any(e["id"] == extra_id for e in db.listar_extras_guilda())
 
 
+def test_editar_extra_guilda():
+    extra_id = db.crear_extra_guilda("Usuario adicional", None, 500)
+    db.editar_extra_guilda(extra_id, "Usuario adicional Plus", "Nueva descripción", 700)
+    extra = db.obtener_extra_guilda(extra_id)
+    assert extra["nombre"] == "Usuario adicional Plus"
+    assert extra["descripcion"] == "Nueva descripción"
+    assert extra["precio_centimos"] == 700
+
+
+def test_limpiar_stripe_price_id_plan_y_extra():
+    plan_id = db.crear_plan_guilda("Pro", None, 4900, None)
+    db.guardar_stripe_price_id_plan(plan_id, "price_pro_1")
+    db.limpiar_stripe_price_id_plan(plan_id)
+    assert db.obtener_plan_guilda(plan_id)["stripe_price_id"] is None
+
+    extra_id = db.crear_extra_guilda("Usuario adicional", None, 500)
+    db.guardar_stripe_price_id_extra(extra_id, "price_extra_1")
+    db.limpiar_stripe_price_id_extra(extra_id)
+    assert db.obtener_extra_guilda(extra_id)["stripe_price_id"] is None
+
+
 def test_asignar_plan_y_activar_suscripcion_tenant():
     tenant_id = db.crear_tenant("Gestoria Suscripcion")
     plan_id = db.crear_plan_guilda("Pro", None, 4900, None)
