@@ -657,6 +657,22 @@ CREATE TABLE IF NOT EXISTS vencimientos_fiscales_pagos (
 );
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_pagos_vencimiento ON vencimientos_fiscales_pagos(vencimiento_id);
 
+-- Enlaces de un solo uso para abrir FacturaScripts en facturacion.guildawork.com
+-- (app/rutas_facturacion_proxy.py) -- mismo patrón que clientes_fiscales_accesos:
+-- vida corta (1 minuto) y de un solo uso, porque solo sirve para resolver "qué
+-- tenant" antes de fijar la sesión del proxy; FacturaScripts sigue pidiendo su
+-- propio login por separado, esto no es una credencial de acceso a datos.
+CREATE TABLE IF NOT EXISTS facturacion_accesos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    token TEXT NOT NULL UNIQUE,
+    creado_en TEXT NOT NULL,
+    expira_en TEXT NOT NULL,
+    usado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_facturacion_accesos_token ON facturacion_accesos(token);
+
 """
 
 # Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en un
@@ -4815,6 +4831,59 @@ def consumir_acceso_cliente_fiscal(token: str) -> int | None:
         )
         conn.commit()
         return fila["cliente_fiscal_id"]
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+_MINUTOS_VIDA_ACCESO_FACTURACION = 1
+
+
+def crear_acceso_facturacion(tenant_id: int, usuario_id: int) -> str:
+    """Enlace de un solo uso para abrir facturacion.guildawork.com como el
+    tenant del usuario actual -- ver app/rutas_facturacion_proxy.py."""
+    token = secrets.token_urlsafe(32)
+    ahora = datetime.now()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO facturacion_accesos (tenant_id, usuario_id, token, creado_en, expira_en) VALUES (?, ?, ?, ?, ?)",
+            (
+                tenant_id, usuario_id, token, ahora.isoformat(timespec="seconds"),
+                (ahora + timedelta(minutes=_MINUTOS_VIDA_ACCESO_FACTURACION)).isoformat(timespec="seconds"),
+            ),
+        )
+        conn.commit()
+        return token
+    finally:
+        conn.close()
+
+
+def consumir_acceso_facturacion(token: str) -> int | None:
+    """Mismo cuidado de sección crítica que consumir_acceso_cliente_fiscal
+    (BEGIN IMMEDIATE, un solo uso). Devuelve tenant_id si el token es
+    válido y no caducado/usado, si no None."""
+    conn = get_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        fila = conn.execute(
+            "SELECT id, tenant_id, expira_en, usado_en FROM facturacion_accesos WHERE token = ?",
+            (token,),
+        ).fetchone()
+        if fila is None or fila["usado_en"] is not None:
+            conn.rollback()
+            return None
+        if fila["expira_en"] < now_iso():
+            conn.rollback()
+            return None
+        conn.execute(
+            "UPDATE facturacion_accesos SET usado_en = ? WHERE id = ?",
+            (now_iso(), fila["id"]),
+        )
+        conn.commit()
+        return fila["tenant_id"]
     except BaseException:
         conn.rollback()
         raise

@@ -54,7 +54,7 @@
          compartida: cada tenant tiene su propio contenedor con su propia
          URL (ver app/main.py:herramientas_vista y HOSTING.md 8.21). #}
       {% if facturascripts_url %}
-      <a class="tool-card" href="{{ facturascripts_url }}" target="_blank" rel="noopener"
+      <a class="tool-card" href="{{ url_for('abrir_facturacion') }}" target="_blank" rel="noopener"
          style="--tool-accent: #2f6fce;">
         <div class="tool-card-top">
           <span class="tool-card-icon">

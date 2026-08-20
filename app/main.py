@@ -35,6 +35,7 @@ from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
+from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
 from .rutas_stripe_webhook import stripe_webhook_bp
 from .rutas_citas import citas_bp
 from .rutas_videollamadas import videollamadas_bp
@@ -161,6 +162,7 @@ app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
+app.register_blueprint(facturacion_proxy_bp)
 app.register_blueprint(stripe_webhook_bp)
 app.register_blueprint(docs_bp)
 app.register_blueprint(portal_bp)
@@ -1012,6 +1014,20 @@ def herramientas_vista():
         herramientas=visibles,
         facturascripts_url=facturascripts_url,
     )
+
+
+@app.route("/facturacion/abrir", endpoint="abrir_facturacion")
+@login_required
+def abrir_facturacion():
+    """Enlace de un solo uso hacia facturacion.guildawork.com (ver
+    app/rutas_facturacion_proxy.py) -- reemplaza el href directo a la URL
+    interna 127.0.0.1:PUERTO, que solo era alcanzable desde dentro del
+    propio VPS."""
+    tenant = db.tenant_de_usuario(g.usuario_id)
+    if tenant is None or not tenant["facturascripts_url"]:
+        abort(404)
+    token = db.crear_acceso_facturacion(tenant["id"], g.usuario_id)
+    return redirect(f"{FACTURACION_ORIGIN}/entrar?token={token}")
 
 
 @app.route("/mis-dispositivos")
