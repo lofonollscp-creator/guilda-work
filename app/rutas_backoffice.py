@@ -5,6 +5,7 @@ un puñado de administradores, no pensada para volumen ni paginación.
 """
 import json
 import secrets
+from datetime import datetime, timezone
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
@@ -262,7 +263,10 @@ def ficha_tenant(tenant_id: int):
     facturas_stripe = []
     if tenant["stripe_customer_id"]:
         try:
-            facturas_stripe = stripe_pagos.listar_facturas_cliente(tenant["stripe_customer_id"])
+            facturas_stripe = [
+                {**f, "creada_en": datetime.fromtimestamp(f["created"], tz=timezone.utc).strftime("%Y-%m-%d")}
+                for f in stripe_pagos.listar_facturas_cliente(tenant["stripe_customer_id"])
+            ]
         except stripe_pagos.ErrorStripe:
             pass
 
@@ -486,6 +490,24 @@ def anadir_extra_tenant(tenant_id: int):
             except stripe_pagos.ErrorStripe:
                 pass
         _auditar("anadir_extra_tenant", f"{tenant['nombre']}: {extra['nombre']}")
+    return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+
+
+@backoffice_bp.route("/tenants/<int:tenant_id>/extras/<int:tenant_extra_id>/desactivar", methods=["POST"])
+@login_required
+@admin_required
+def desactivar_extra_tenant(tenant_id: int, tenant_extra_id: int):
+    """Corta un extra activo antes de su fecha de caducidad (o si no
+    tenía, indefinidamente) -- ver db.desactivar_extra_tenant(). NO
+    quita el subscription_item correspondiente en Stripe si lo hubiera
+    (anadir_extra_tenant lo crea vía anadir_extra_a_suscripcion): eso
+    se queda como paso manual desde el propio Dashboard de Stripe, no
+    está automatizado en esta ronda."""
+    tenant = db.obtener_tenant(tenant_id)
+    if tenant is None:
+        abort(404)
+    db.desactivar_extra_tenant(tenant_extra_id)
+    _auditar("desactivar_extra_tenant", f"{tenant['nombre']}: extra_activo_id={tenant_extra_id}")
     return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 

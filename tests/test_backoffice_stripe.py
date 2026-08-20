@@ -227,3 +227,46 @@ def test_anadir_extra_tenant_con_suscripcion_sincroniza_stripe(cliente, monkeypa
     )
     cliente.post(f"/backoffice/tenants/{tenant_id}/extras", data={"extra_id": str(extra_id), "cantidad": "3"})
     assert llamadas == [("sub_1", "price_extra_1", 3)]
+
+
+def test_desactivar_extra_tenant_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "no-admin-desactivar-extra@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Desactivar Extra Sin Admin")
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/extras/999999/desactivar")
+    assert resp.status_code == 403
+
+
+def test_desactivar_extra_tenant_lo_quita_de_los_activos(cliente):
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Gestoria Desactivar Extra")
+    extra_id = db.crear_extra_guilda("Almacenamiento extra", None, 300)
+    tenant_extra_id = db.activar_extra_tenant(tenant_id, extra_id, cantidad=1)
+    assert len(db.listar_extras_activos_tenant(tenant_id)) == 1
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/extras/{tenant_extra_id}/desactivar")
+    assert resp.status_code == 302
+    assert db.listar_extras_activos_tenant(tenant_id) == []
+
+
+def test_desactivar_extra_tenant_de_tenant_inexistente_da_404(cliente):
+    _admin(cliente)
+    resp = cliente.post("/backoffice/tenants/999999/extras/1/desactivar")
+    assert resp.status_code == 404
+
+
+def test_ficha_tenant_formatea_la_fecha_de_las_facturas_stripe(cliente, monkeypatch):
+    from app import rutas_backoffice
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Gestoria Fecha Factura")
+    db.guardar_stripe_customer_id(tenant_id, "cus_fecha")
+
+    # created de Stripe es un timestamp Unix (segundos), no una fecha
+    # legible -- confirma que la ficha lo formatea antes de mostrarlo.
+    monkeypatch.setattr(
+        rutas_backoffice.stripe_pagos, "listar_facturas_cliente",
+        lambda cus_id: [{"created": 1735689600, "amount_paid": 2900, "status": "paid"}],
+    )
+    resp = cliente.get(f"/backoffice/tenants/{tenant_id}")
+    html = resp.get_data(as_text=True)
+    assert "2025-01-01" in html
+    assert "1735689600" not in html

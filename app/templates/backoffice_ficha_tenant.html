@@ -160,7 +160,12 @@
   {% if extras_activos %}
   <ul class="favoritas-list">
     {% for ea in extras_activos %}
-    <li><span>{{ ea.nombre }} × {{ ea.cantidad }}{{ ' — ' ~ _('hasta') ~ ' ' ~ ea.activo_hasta[:10] if ea.activo_hasta }}</span></li>
+    <li>
+      <span>{{ ea.nombre }} × {{ ea.cantidad }}{{ ' — ' ~ _('hasta') ~ ' ' ~ ea.activo_hasta[:10] if ea.activo_hasta }}</span>
+      <form method="post" action="{{ url_for('backoffice.desactivar_extra_tenant', tenant_id=tenant.id, tenant_extra_id=ea.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-ghost">{{ _('Quitar') }}</button>
+      </form>
+    </li>
     {% endfor %}
   </ul>
   {% else %}
@@ -187,7 +192,7 @@
       <tbody>
         {% for f in facturas_stripe %}
         <tr>
-          <td class="mono">{{ f.created }}</td>
+          <td class="mono">{{ f.creada_en }}</td>
           <td class="mono">{{ '%.2f €'|format(f.amount_paid / 100) if f.amount_paid is defined else '—' }}</td>
           <td>{{ f.status }}</td>
         </tr>

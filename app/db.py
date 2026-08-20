@@ -2057,6 +2057,28 @@ def listar_extras_activos_tenant(tenant_id: int) -> list[sqlite3.Row]:
         conn.close()
 
 
+def desactivar_extra_tenant(tenant_extra_id: int) -> None:
+    """Corta un extra activo AHORA (fija activo_hasta a un instante ya
+    pasado) en vez de borrar la fila -- listar_extras_activos_tenant()
+    ya deja de devolverlo desde la siguiente consulta, pero el
+    historial de que estuvo activo se conserva, mismo criterio de "no
+    perder datos" que el resto del proyecto. Un segundo antes de ahora
+    (no exactamente ahora) porque now_iso() solo tiene precisión de
+    segundo y el filtro de listar_extras_activos_tenant es inclusive
+    (activo_hasta >= ahora) -- con el mismo instante, una consulta en
+    el mismo segundo seguiría viéndolo activo."""
+    conn = get_connection()
+    try:
+        activo_hasta = (datetime.now() - timedelta(seconds=1)).isoformat(timespec="seconds")
+        conn.execute(
+            "UPDATE tenants_extras_activos SET activo_hasta = ? WHERE id = ?",
+            (activo_hasta, tenant_extra_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def borrar_tenant(tenant_id: int) -> None:
     """Desasigna primero a los usuarios que lo tuvieran (quedan sin tenant,
     no se borran) y luego borra el tenant — no depende de ON DELETE
