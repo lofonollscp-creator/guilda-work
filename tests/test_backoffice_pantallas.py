@@ -313,3 +313,36 @@ def test_catalogo_herramientas_vista_muestra_el_catalogo(cliente):
     resp = cliente.get("/backoffice/catalogo-herramientas")
     assert resp.status_code == 200
     assert b"Outline" in resp.data
+
+
+# --- /backoffice/diagnostico --------------------------------------------------
+
+def test_diagnostico_vista_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "no-admin-diagnostico@ejemplo.com", "contrasena123")
+    resp = cliente.get("/backoffice/diagnostico")
+    assert resp.status_code == 403
+
+
+def test_diagnostico_vista_refleja_configuracion_real(cliente, monkeypatch):
+    from app import rutas_backoffice
+
+    _admin(cliente, "admin-diagnostico@ejemplo.com")
+
+    monkeypatch.setattr(rutas_backoffice.stripe_pagos, "STRIPE_SECRET_KEY", "sk_test_unico")
+    monkeypatch.setattr(rutas_backoffice.baserow, "BASEROW_ADMIN_PASSWORD", None)
+
+    resp = cliente.get("/backoffice/diagnostico")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Stripe (plataforma)" in html
+    assert "Baserow" in html
+
+
+def test_diagnostico_integraciones_devuelve_todas_las_filas():
+    from app import rutas_backoffice
+
+    filas = rutas_backoffice._diagnostico_integraciones()
+    nombres = [f["nombre"] for f in filas]
+    assert "Stripe (plataforma)" in nombres
+    assert "Uptime Kuma" in nombres
+    assert all(isinstance(f["configurado"], bool) for f in filas)

@@ -8,7 +8,7 @@ import secrets
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, stripe_pagos, umami, uptime_kuma
+from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, notificaciones_email, ntfy, openproject, paperless, push, stalwart, stripe_pagos, umami, uptime_kuma
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -204,6 +204,41 @@ def catalogo_herramientas_vista():
         total_tenants=len(tenants),
         adopcion=db.adopcion_herramientas(ocultas_por_tenant, catalogo_ids),
     )
+
+
+def _diagnostico_integraciones() -> list[dict]:
+    """Estado de configuración (variables de entorno puestas o no) de
+    cada integración externa a nivel de PLATAFORMA -- no confundir con
+    las API keys por tenant (FacturaScripts/Documenso/Cal.diy, ver
+    ficha de tenant), esto es "¿está la variable de entorno del
+    servidor rellenada?", lo mismo que hasta ahora había que comprobar
+    a mano por SSH mirando /etc/guilda-work.env o .env."""
+    return [
+        {"nombre": "Email del portal de cliente (SMTP)", "configurado": notificaciones_email.configurado()},
+        {"nombre": "Notificaciones push (FCM)", "configurado": push.configurado()},
+        {"nombre": "Stripe (plataforma)", "configurado": stripe_pagos.configurado()},
+        {"nombre": "Baserow", "configurado": bool(baserow.BASEROW_ADMIN_PASSWORD)},
+        {"nombre": "Cal.diy", "configurado": bool(calcom.CALCOM_ADMIN_PASSWORD)},
+        {"nombre": "Chatwoot", "configurado": bool(chatwoot.CHATWOOT_AGENT_API_TOKEN)},
+        {"nombre": "EspoCRM", "configurado": bool(espocrm.ESPOCRM_API_KEY)},
+        {"nombre": "FacturaScripts (aprovisionamiento)", "configurado": bool(facturascripts.FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD)},
+        {"nombre": "Listmonk", "configurado": bool(listmonk.LISTMONK_ADMIN_USER and listmonk.LISTMONK_ADMIN_PASSWORD)},
+        {"nombre": "Metabase", "configurado": bool(metabase.METABASE_API_KEY)},
+        {"nombre": "Nextcloud", "configurado": bool(nextcloud.NEXTCLOUD_ADMIN_USER and nextcloud.NEXTCLOUD_ADMIN_PASSWORD)},
+        {"nombre": "ntfy", "configurado": bool(ntfy.NTFY_ADMIN_USER and ntfy.NTFY_ADMIN_PASSWORD)},
+        {"nombre": "OpenProject", "configurado": bool(openproject.OPENPROJECT_API_TOKEN)},
+        {"nombre": "Paperless-ngx", "configurado": bool(paperless.PAPERLESS_ADMIN_USER and paperless.PAPERLESS_ADMIN_PASSWORD)},
+        {"nombre": "Stalwart (correo por tenant)", "configurado": bool(stalwart.STALWART_ADMIN_USER and stalwart.STALWART_ADMIN_PASSWORD)},
+        {"nombre": "Umami", "configurado": bool(umami.UMAMI_ADMIN_PASSWORD)},
+        {"nombre": "Uptime Kuma", "configurado": bool(uptime_kuma.UPTIME_KUMA_API_KEY)},
+    ]
+
+
+@backoffice_bp.route("/diagnostico")
+@login_required
+@admin_required
+def diagnostico_vista():
+    return render_template("backoffice_diagnostico.html", integraciones=_diagnostico_integraciones())
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>")
