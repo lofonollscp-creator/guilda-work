@@ -92,7 +92,7 @@ def _mensaje_de_usuario_o_404(mensaje_id: int):
 
 def _render_redactar(
     *, cuenta_id=None, destinatarios="", cc="", bcc="", asunto="", cuerpo_html="",
-    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"),
+    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"), borrador_id=None,
 ):
     cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
     return render_template(
@@ -108,6 +108,7 @@ def _render_redactar(
         error=error,
         titulo=titulo,
         plantillas=db.listar_plantillas_correo(g.usuario_id),
+        borrador_id=borrador_id,
     )
 
 
@@ -218,6 +219,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "categorias": categorias,
         "categorias_por_id": {c["id"]: c for c in categorias},
         "clientes_fiscales": clientes_fiscales,
+        "num_borradores": db.contar_borradores_correo(g.usuario_id),
         "densidad": preferencias["densidad"],
         "q": q or "",
         "solo_no_leidos": solo_no_leidos,
@@ -428,6 +430,17 @@ def posponer_mensaje(mensaje_id: int):
 @correo_bp.route("/redactar")
 @login_required
 def redactar():
+    borrador_id = request.args.get("borrador_id", type=int)
+    if borrador_id is not None:
+        borrador = db.obtener_borrador_correo(g.usuario_id, borrador_id)
+        if borrador is None:
+            abort(404)
+        return _render_redactar(
+            cuenta_id=borrador["cuenta_id"], destinatarios=borrador["destinatarios"] or "",
+            cc=borrador["cc"] or "", bcc=borrador["bcc"] or "", asunto=borrador["asunto"] or "",
+            cuerpo_html=borrador["cuerpo_html"] or "", en_respuesta_a=borrador["en_respuesta_a"],
+            titulo=_("Editar borrador"), borrador_id=borrador_id,
+        )
     cuenta_id = request.args.get("cuenta_id", type=int)
     if cuenta_id is None:
         cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
@@ -504,6 +517,7 @@ def enviar():
     asunto = request.form.get("asunto", "")
     cuerpo_html = request.form.get("cuerpo_html", "")
     en_respuesta_a = request.form.get("en_respuesta_a") or None
+    borrador_id = request.form.get("borrador_id", type=int)
     adjuntos = [
         {"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()}
         for f in request.files.getlist("adjuntos") if f.filename
@@ -517,9 +531,45 @@ def enviar():
     except correo.ErrorCorreo as e:
         return _render_redactar(
             cuenta_id=cuenta_id, destinatarios=destinatarios, cc=cc, bcc=bcc, asunto=asunto,
-            cuerpo_html=cuerpo_html, en_respuesta_a=en_respuesta_a, error=str(e),
+            cuerpo_html=cuerpo_html, en_respuesta_a=en_respuesta_a, error=str(e), borrador_id=borrador_id,
         )
+    if borrador_id is not None:
+        db.eliminar_borrador_correo(g.usuario_id, borrador_id)
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id))
+
+
+# --- Borradores -------------------------------------------------------------
+
+@correo_bp.route("/borradores")
+@login_required
+def borradores():
+    return render_template("correo_borradores.html", borradores=db.listar_borradores_correo(g.usuario_id))
+
+
+@correo_bp.route("/borradores/guardar", methods=["POST"])
+@login_required
+def guardar_borrador():
+    borrador_id = db.guardar_borrador_correo(
+        g.usuario_id,
+        request.form.get("borrador_id", type=int),
+        cuenta_id=request.form.get("cuenta_id", type=int),
+        destinatarios=request.form.get("destinatarios", ""),
+        cc=request.form.get("cc", ""),
+        bcc=request.form.get("bcc", ""),
+        asunto=request.form.get("asunto", ""),
+        cuerpo_html=request.form.get("cuerpo_html", ""),
+        en_respuesta_a=request.form.get("en_respuesta_a") or None,
+    )
+    return jsonify({"ok": True, "borrador_id": borrador_id})
+
+
+@correo_bp.route("/borradores/<int:borrador_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_borrador(borrador_id: int):
+    db.eliminar_borrador_correo(g.usuario_id, borrador_id)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True})
+    return redirect(url_for("correo.borradores"))
 
 
 # --- Ajustes: preferencias, categorías y firma --------------------------------

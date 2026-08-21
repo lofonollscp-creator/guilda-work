@@ -443,6 +443,21 @@ CREATE TABLE IF NOT EXISTS correo_plantillas (
     creada_en TEXT NOT NULL
 );
 
+-- Borradores al redactar -- solo locales, nunca se suben a la carpeta
+-- Drafts del servidor IMAP (evita sincronizar un borrador a medias).
+CREATE TABLE IF NOT EXISTS correo_borradores (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    cuenta_id INTEGER,
+    destinatarios TEXT,
+    cc TEXT,
+    bcc TEXT,
+    asunto TEXT,
+    cuerpo_html TEXT,
+    en_respuesta_a TEXT,
+    actualizado_en TEXT NOT NULL
+);
+
 -- Caché local de mensajes ya descargados (para no ir a red en cada
 -- consulta). cc: cabecera Cc del mensaje recibido. Cco (Bcc) nunca se guarda
 -- aquí porque, por diseño del propio correo electrónico, nadie salvo el
@@ -700,6 +715,7 @@ CREATE INDEX IF NOT EXISTS idx_tareas_outlook_usuario ON tareas_outlook(usuario_
 CREATE INDEX IF NOT EXISTS idx_correo_cuentas_usuario ON correo_cuentas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_categorias_usuario ON correo_categorias(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_plantillas_usuario ON correo_plantillas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_borradores_usuario ON correo_borradores(usuario_id, actualizado_en);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
@@ -5414,6 +5430,80 @@ def eliminar_plantilla_correo(usuario_id: int, plantilla_id: int) -> None:
     try:
         conn.execute(
             "DELETE FROM correo_plantillas WHERE id = ? AND usuario_id = ?", (plantilla_id, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Borradores al redactar (app/rutas_correo.py) --------------------------
+
+def guardar_borrador_correo(
+    usuario_id: int, borrador_id: int | None, *, cuenta_id: int | None, destinatarios: str,
+    cc: str, bcc: str, asunto: str, cuerpo_html: str, en_respuesta_a: str | None,
+) -> int:
+    """Crea el borrador si `borrador_id` es None, si no lo actualiza --
+    mismo id se reutiliza en guardados sucesivos del mismo compositor."""
+    conn = get_connection()
+    try:
+        if borrador_id is not None:
+            cur = conn.execute(
+                """UPDATE correo_borradores SET cuenta_id = ?, destinatarios = ?, cc = ?, bcc = ?,
+                   asunto = ?, cuerpo_html = ?, en_respuesta_a = ?, actualizado_en = ?
+                   WHERE id = ? AND usuario_id = ?""",
+                (cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+                 now_iso(), borrador_id, usuario_id),
+            )
+            conn.commit()
+            if cur.rowcount:
+                return borrador_id
+        cur = conn.execute(
+            """INSERT INTO correo_borradores
+               (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a, actualizado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_borradores_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_borradores WHERE usuario_id = ? ORDER BY actualizado_en DESC", (usuario_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_borradores_correo(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) AS n FROM correo_borradores WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def obtener_borrador_correo(usuario_id: int, borrador_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_borradores WHERE id = ? AND usuario_id = ?", (borrador_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_borrador_correo(usuario_id: int, borrador_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_borradores WHERE id = ? AND usuario_id = ?", (borrador_id, usuario_id)
         )
         conn.commit()
     finally:

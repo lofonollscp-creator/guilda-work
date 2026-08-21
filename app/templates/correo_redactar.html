@@ -15,6 +15,7 @@
 <div class="correo-compose">
   <div class="correo-compose-header">
     <h1>{{ titulo }}</h1>
+    <a class="correo-icon-btn" href="{{ url_for('correo.borradores') }}" title="{{ _('Borradores') }}" aria-label="{{ _('Borradores') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></a>
     <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></a>
   </div>
 
@@ -25,6 +26,7 @@
   <form method="post" action="{{ url_for('correo.enviar') }}" enctype="multipart/form-data"
         onsubmit="return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');">
     <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
+    <input type="hidden" name="borrador_id" id="correo-borrador-id" value="{{ borrador_id or '' }}">
 
     <div class="correo-compose-campo">
       <label>{{ _('De') }}</label>
@@ -97,6 +99,7 @@
 
     <div class="correo-compose-acciones">
       <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg> {{ _('Enviar') }}</button>
+      <button type="button" id="correo-guardar-borrador" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Guardar borrador') }}</button>
       <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">{{ _('Descartar') }}</a>
     </div>
   </form>
@@ -128,4 +131,29 @@
 })();
 </script>
 {% endif %}
+<script>
+(function () {
+  const boton = document.getElementById("correo-guardar-borrador");
+  const form = boton ? boton.closest("form") : null;
+  const editor = document.getElementById("correo-editor-cuerpo");
+  const campoOculto = document.getElementById("correo-editor-campo-oculto");
+  const campoBorradorId = document.getElementById("correo-borrador-id");
+  if (!boton || !form) return;
+  boton.addEventListener("click", async () => {
+    if (editor && campoOculto) campoOculto.value = editor.innerHTML;
+    try {
+      const respuesta = await fetch("{{ url_for('correo.guardar_borrador') }}", {
+        method: "POST",
+        body: new FormData(form),
+      });
+      if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
+      const datos = await respuesta.json();
+      campoBorradorId.value = datos.borrador_id;
+      if (window.mostrarToast) window.mostrarToast("{{ _('Borrador guardado.') }}", "exito");
+    } catch (err) {
+      if (window.mostrarToast) window.mostrarToast("{{ _('No se pudo guardar el borrador.') }}", "error");
+    }
+  });
+})();
+</script>
 {% endblock %}

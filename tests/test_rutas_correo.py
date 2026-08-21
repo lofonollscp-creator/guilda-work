@@ -344,3 +344,82 @@ def test_acciones_en_lote_requieren_login(cliente):
     for ruta in ("eliminar", "marcar-leido", "destacar", "mover"):
         resp = cliente.post(f"/correo/mensajes/{ruta}", json={"ids": [1]})
         assert resp.status_code == 302
+
+
+# --- Borradores ---------------------------------------------------------------
+
+def test_guardar_borrador_requiere_login(cliente):
+    resp = cliente.post("/correo/borradores/guardar", data={"asunto": "X"})
+    assert resp.status_code == 302
+    assert "/login" in resp.headers["Location"]
+
+
+def test_guardar_borrador_crea_y_reabrir_lo_precarga(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "borrador-ruta@ejemplo.com", "contrasena123")
+    db.crear_cuenta_correo(
+        usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com",
+        smtp_host="smtp.ejemplo.com",
+    )
+
+    resp = cliente.post(
+        "/correo/borradores/guardar",
+        data={"destinatarios": "a@b.com", "asunto": "Asunto guardado", "cuerpo_html": "<p>Hola</p>"},
+    )
+    assert resp.status_code == 200
+    borrador_id = resp.get_json()["borrador_id"]
+
+    resp = cliente.get("/correo/borradores")
+    assert resp.status_code == 200
+    assert "Asunto guardado" in resp.get_data(as_text=True)
+
+    resp = cliente.get(f"/correo/redactar?borrador_id={borrador_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Asunto guardado" in html
+    assert "a@b.com" in html
+
+
+def test_guardar_borrador_con_id_existente_lo_actualiza_sin_duplicar(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "borrador-actualiza@ejemplo.com", "contrasena123")
+
+    resp = cliente.post("/correo/borradores/guardar", data={"asunto": "Primero"})
+    borrador_id = resp.get_json()["borrador_id"]
+
+    resp = cliente.post("/correo/borradores/guardar", data={"borrador_id": borrador_id, "asunto": "Segundo"})
+    assert resp.get_json()["borrador_id"] == borrador_id
+    assert len(db.listar_borradores_correo(usuario_id)) == 1
+
+
+def test_redactar_con_borrador_de_otro_usuario_da_404(cliente):
+    otro_id = iniciar_sesion_de_prueba(cliente, "borrador-dueno@ejemplo.com", "contrasena123")
+    borrador_id = db.guardar_borrador_correo(
+        otro_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Ajeno", cuerpo_html="", en_respuesta_a=None,
+    )
+    cliente.post("/logout", follow_redirects=True)
+    iniciar_sesion_de_prueba(cliente, "borrador-intruso@ejemplo.com", "contrasena123")
+    resp = cliente.get(f"/correo/redactar?borrador_id={borrador_id}")
+    assert resp.status_code == 404
+
+
+def test_eliminar_borrador_lo_quita_de_la_lista(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "borrador-elimina@ejemplo.com", "contrasena123")
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="A borrar", cuerpo_html="", en_respuesta_a=None,
+    )
+    resp = cliente.post(f"/correo/borradores/{borrador_id}/eliminar")
+    assert resp.status_code == 302
+    assert db.obtener_borrador_correo(usuario_id, borrador_id) is None
+
+
+def test_eliminar_borrador_de_otro_usuario_no_hace_nada(cliente):
+    dueno_id = iniciar_sesion_de_prueba(cliente, "borrador-dueno2@ejemplo.com", "contrasena123")
+    borrador_id = db.guardar_borrador_correo(
+        dueno_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Protegido", cuerpo_html="", en_respuesta_a=None,
+    )
+    cliente.post("/logout", follow_redirects=True)
+    iniciar_sesion_de_prueba(cliente, "borrador-intruso2@ejemplo.com", "contrasena123")
+    cliente.post(f"/correo/borradores/{borrador_id}/eliminar")
+    assert db.obtener_borrador_correo(dueno_id, borrador_id) is not None

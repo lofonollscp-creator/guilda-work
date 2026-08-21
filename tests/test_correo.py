@@ -1211,3 +1211,74 @@ def test_emitir_evento_correo_nuevo_avisa_si_la_preferencia_esta_activa(usuario_
 
     correo._emitir_evento_correo_nuevo(usuario_id, cuenta_id, 2)
     assert len(llamadas) == 1
+
+
+# --- Borradores al redactar --------------------------------------------------
+
+def test_guardar_borrador_correo_crea_uno_nuevo(usuario_id):
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="a@b.com", cc="", bcc="",
+        asunto="Asunto", cuerpo_html="<p>Hola</p>", en_respuesta_a=None,
+    )
+    borrador = db.obtener_borrador_correo(usuario_id, borrador_id)
+    assert borrador["asunto"] == "Asunto"
+    assert borrador["destinatarios"] == "a@b.com"
+    assert borrador["cuerpo_html"] == "<p>Hola</p>"
+
+
+def test_guardar_borrador_correo_con_id_existente_actualiza_en_vez_de_duplicar(usuario_id):
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="a@b.com", cc="", bcc="",
+        asunto="Primero", cuerpo_html="cuerpo 1", en_respuesta_a=None,
+    )
+    segundo_id = db.guardar_borrador_correo(
+        usuario_id, borrador_id, cuenta_id=None, destinatarios="a@b.com", cc="", bcc="",
+        asunto="Segundo", cuerpo_html="cuerpo 2", en_respuesta_a=None,
+    )
+    assert segundo_id == borrador_id
+    assert len(db.listar_borradores_correo(usuario_id)) == 1
+    assert db.obtener_borrador_correo(usuario_id, borrador_id)["asunto"] == "Segundo"
+
+
+def test_listar_borradores_correo_ordena_por_mas_reciente(usuario_id, monkeypatch):
+    monkeypatch.setattr(db, "now_iso", lambda: "2026-01-01T10:00:00")
+    id1 = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Viejo", cuerpo_html="", en_respuesta_a=None,
+    )
+    monkeypatch.setattr(db, "now_iso", lambda: "2026-01-01T11:00:00")
+    id2 = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Nuevo", cuerpo_html="", en_respuesta_a=None,
+    )
+    resultado = db.listar_borradores_correo(usuario_id)
+    assert [r["id"] for r in resultado] == [id2, id1]
+
+
+def test_contar_borradores_correo(usuario_id):
+    assert db.contar_borradores_correo(usuario_id) == 0
+    db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="", cuerpo_html="", en_respuesta_a=None,
+    )
+    assert db.contar_borradores_correo(usuario_id) == 1
+
+
+def test_eliminar_borrador_correo(usuario_id):
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="", cuerpo_html="", en_respuesta_a=None,
+    )
+    db.eliminar_borrador_correo(usuario_id, borrador_id)
+    assert db.obtener_borrador_correo(usuario_id, borrador_id) is None
+
+
+def test_borradores_correo_son_privados_por_usuario(usuario_id):
+    otro_usuario_id = usuario_id + 999
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Mío", cuerpo_html="", en_respuesta_a=None,
+    )
+    assert db.obtener_borrador_correo(otro_usuario_id, borrador_id) is None
+    db.eliminar_borrador_correo(otro_usuario_id, borrador_id)  # no-op, no debe borrarlo
+    assert db.obtener_borrador_correo(usuario_id, borrador_id) is not None

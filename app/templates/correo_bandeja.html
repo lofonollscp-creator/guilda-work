@@ -9,6 +9,11 @@
 
   <aside class="correo-rail">
     <a class="correo-nuevo-btn" href="{{ url_for('correo.redactar', cuenta_id=cuenta_id) }}">+ {{ _('Nuevo correo') }}</a>
+    <a class="correo-cuenta-item" href="{{ url_for('correo.borradores') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Borradores') }}
+      {% if num_borradores %}
+      <span class="correo-badge">{{ num_borradores }}</span>
+      {% endif %}
+    </a>
     {% if not cuentas %}
     <p class="correo-rail-vacio">{{ _('Aún no tienes ninguna cuenta.') }}</p>
     {% else %}
