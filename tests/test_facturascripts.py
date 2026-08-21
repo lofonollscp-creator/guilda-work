@@ -84,7 +84,7 @@ def test_aprovisionar_tenant_completo_ok(monkeypatch):
     # segundo chmod, Apache (www-data) no puede escribir ahí.
     chmods_finales = [
         c for c in llamadas
-        if c[:2] == ["docker", "exec"] and c[3:] == ["chmod", "-R", "o+w", "/var/www/html"]
+        if c[:2] == ["docker", "exec"] and c[3:] == ["chmod", "-R", "o+rw", "/var/www/html"]
     ]
     assert len(chmods_finales) == 1
 
@@ -95,7 +95,7 @@ def test_aprovisionar_tenant_chmod_final_falla_lanza_excepcion(monkeypatch):
     def fake_run(cmd, **kwargs):
         if cmd[:2] == ["docker", "exec"] and "php" in cmd:
             return _resultado_proceso_ok(stdout="DEPLOY_OK")
-        if cmd[:2] == ["docker", "exec"] and cmd[3:] == ["chmod", "-R", "o+w", "/var/www/html"]:
+        if cmd[:2] == ["docker", "exec"] and cmd[3:] == ["chmod", "-R", "o+rw", "/var/www/html"]:
             return types.SimpleNamespace(returncode=1, stdout="", stderr="no such directory")
         return _resultado_proceso_ok()
 
