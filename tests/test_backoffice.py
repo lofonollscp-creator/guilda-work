@@ -102,6 +102,28 @@ def test_backoffice_crear_tenant_y_asignar_usuario(cliente):
     assert db.tenant_de_usuario(usuario_id) is None
 
 
+def test_backoffice_crear_tenant_sin_nombre_avisa_y_no_crea_nada(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-tenant-sin-nombre@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    antes = len(db.listar_tenants())
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "  "}, follow_redirects=True)
+    assert len(db.listar_tenants()) == antes
+    assert "obligatorio" in resp.get_data(as_text=True)
+
+
+def test_backoffice_crear_tenant_confirma_con_toast(cliente):
+    """Mismo criterio que el resto del backoffice tras conectar
+    toasts.js -- crear un tenant debe confirmarlo, no redirigir en
+    silencio."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-tenant-toast@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Tenant Toast"}, follow_redirects=True)
+    assert "mostrarToast" in resp.get_data(as_text=True)
+    assert "creado" in resp.get_data(as_text=True)
+
+
 def test_backoffice_crear_tenant_provisiona_equipo_en_espocrm(cliente, monkeypatch):
     from app import rutas_backoffice
 

@@ -590,149 +590,152 @@ def crear_tenant():
     dominio_correo = request.form.get("dominio_correo", "").strip().lower()
     facturascripts_creado = None
     calcom_creado = None
-    if nombre:
-        tenant_id = None
+    if not nombre:
+        flash("El nombre del tenant es obligatorio.", "error")
+        return redirect(url_for("backoffice.panel"))
+    tenant_id = None
+    try:
+        tenant_id = db.crear_tenant(nombre)
+        _auditar("crear_tenant", nombre)
+        flash(f"Tenant '{nombre}' creado.", "exito")
+    except Exception:
+        flash(f"No se ha podido crear '{nombre}' -- ¿ya existe un tenant con ese nombre?", "error")
+    try:
+        # Equipo de EspoCRM con el mismo nombre — base del aislamiento
+        # entre tenants (ver app/espocrm.py). Un fallo aquí no debe
+        # impedir que el tenant se cree en Guilda Work; si EspoCRM no
+        # está configurado (sin ESPOCRM_API_KEY) esto no hace nada.
+        espocrm.crear_equipo(nombre)
+    except espocrm.ErrorEspoCRM:
+        pass
+    try:
+        # Grupo + Group Folder de Nextcloud con el mismo nombre — el
+        # espacio "tipo Drive" compartido del tenant (ver
+        # app/nextcloud.py). Mismo criterio: un fallo aquí no bloquea
+        # nada más, y sin NEXTCLOUD_ADMIN_USER/PASSWORD configurados
+        # no hace nada.
+        nextcloud.crear_espacio_tenant(nombre)
+    except nextcloud.ErrorNextcloud:
+        pass
+    if tenant_id is not None:
         try:
-            tenant_id = db.crear_tenant(nombre)
-            _auditar("crear_tenant", nombre)
-        except Exception:
-            pass  # nombre duplicado: no hace falta más que ignorarlo, se ve en la lista
-        try:
-            # Equipo de EspoCRM con el mismo nombre — base del aislamiento
-            # entre tenants (ver app/espocrm.py). Un fallo aquí no debe
-            # impedir que el tenant se cree en Guilda Work; si EspoCRM no
-            # está configurado (sin ESPOCRM_API_KEY) esto no hace nada.
-            espocrm.crear_equipo(nombre)
-        except espocrm.ErrorEspoCRM:
+            # Instancia física propia de FacturaScripts (ver
+            # app/facturascripts.py) — a diferencia de EspoCRM/
+            # Nextcloud, aquí NO hay aislamiento lógico posible
+            # (su plugin MultiEmpresa no restringe accesos), así
+            # que cada tenant necesita su propio contenedor+BD.
+            # Sin FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD configurada,
+            # esto falla y se ignora, igual que el resto.
+            resultado = facturascripts.aprovisionar_tenant(tenant_id, nombre)
+            db.guardar_facturascripts(tenant_id, resultado["url"], resultado["admin_user"], resultado["admin_pass"])
+            facturascripts_creado = resultado
+        except facturascripts.ErrorFacturaScripts:
             pass
         try:
-            # Grupo + Group Folder de Nextcloud con el mismo nombre — el
-            # espacio "tipo Drive" compartido del tenant (ver
-            # app/nextcloud.py). Mismo criterio: un fallo aquí no bloquea
-            # nada más, y sin NEXTCLOUD_ADMIN_USER/PASSWORD configurados
-            # no hace nada.
-            nextcloud.crear_espacio_tenant(nombre)
-        except nextcloud.ErrorNextcloud:
+            # Grupo + usuario de servicio + token de Paperless-ngx
+            # (ver app/paperless.py) — a diferencia de EspoCRM/
+            # Nextcloud/FacturaScripts, aquí SÍ hay API real de
+            # Usuarios y Grupos: el aprovisionamiento es completo,
+            # sin ningún paso manual. Sin PAPERLESS_ADMIN_USER/
+            # PASSWORD configuradas, esto no hace nada.
+            resultado = paperless.aprovisionar_tenant(nombre)
+            if resultado is not None:
+                db.guardar_paperless(tenant_id, resultado["group_id"], resultado["user_id"], resultado["api_key"])
+        except paperless.ErrorPaperless:
             pass
-        if tenant_id is not None:
+        try:
+            # Workspace + token de base de datos de Baserow (ver
+            # app/baserow.py) — igual que Paperless-ngx, se crea solo
+            # por API; a diferencia de él, invitar a los USUARIOS de
+            # ese tenant al Workspace se hace aparte, en
+            # crear_usuario() (no hay API para añadirlos
+            # directamente, solo invitación+aceptación). Sin
+            # BASEROW_ADMIN_EMAIL/PASSWORD configuradas, esto no
+            # hace nada.
+            resultado = baserow.aprovisionar_tenant(nombre)
+            if resultado is not None:
+                db.guardar_baserow(tenant_id, resultado["workspace_id"], resultado["api_key"])
+        except baserow.ErrorBaserow:
+            pass
+        try:
+            # Usuario de servicio de Cal.diy (ver app/calcom.py) — a
+            # diferencia de FacturaScripts, Cal.diy es una instancia
+            # COMPARTIDA (no se puede tener una por tenant, su URL
+            # pública se hornea en tiempo de compilación); el
+            # aislamiento aquí es por cuenta individual, no por
+            # contenedor. Sin CALCOM_ADMIN_EMAIL/PASSWORD (o si el
+            # contenedor no está levantado) esto falla y se ignora.
+            resultado = calcom.aprovisionar_tenant(tenant_id, nombre)
+            db.guardar_calcom(tenant_id, resultado["email"], resultado["admin_pass"])
+            calcom_creado = resultado
+        except calcom.ErrorCalcom:
+            pass
+        try:
+            # Lista + Rol de lista + usuario de servicio de
+            # Listmonk (ver app/listmonk.py) — igual que Paperless-
+            # ngx/Baserow, 100% automático, sin ningún paso manual:
+            # el token viaja en la propia respuesta de creación. Sin
+            # LISTMONK_ADMIN_USER/PASSWORD configuradas, esto no
+            # hace nada.
+            resultado = listmonk.aprovisionar_tenant(nombre)
+            if resultado is not None:
+                db.guardar_listmonk(tenant_id, resultado["list_id"], resultado["list_role_id"], resultado["api_key"])
+        except listmonk.ErrorListmonk:
+            pass
+        if dominio_correo:
             try:
-                # Instancia física propia de FacturaScripts (ver
-                # app/facturascripts.py) — a diferencia de EspoCRM/
-                # Nextcloud, aquí NO hay aislamiento lógico posible
-                # (su plugin MultiEmpresa no restringe accesos), así
-                # que cada tenant necesita su propio contenedor+BD.
-                # Sin FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD configurada,
-                # esto falla y se ignora, igual que el resto.
-                resultado = facturascripts.aprovisionar_tenant(tenant_id, nombre)
-                db.guardar_facturascripts(tenant_id, resultado["url"], resultado["admin_user"], resultado["admin_pass"])
-                facturascripts_creado = resultado
-            except facturascripts.ErrorFacturaScripts:
+                # Tenant + Domain (con el dominio propio real del
+                # cliente) + Account + ApiKey de Stalwart (ver
+                # app/stalwart.py) — 100% automático una vez se
+                # conoce el dominio, que es el único dato que no se
+                # puede derivar de nada más (decisión del usuario:
+                # cada cliente usa su propio dominio, no un
+                # subdominio de guilda.cat). Sin
+                # STALWART_ADMIN_USER/PASSWORD configuradas, o sin
+                # dominio_correo en el formulario, esto no hace nada.
+                resultado = stalwart.aprovisionar_tenant(tenant_id, nombre, dominio_correo)
+                db.guardar_stalwart(
+                    tenant_id, resultado["stalwart_tenant_id"], resultado["domain_id"],
+                    resultado["domain_name"], resultado["account_id"], resultado["api_key"],
+                )
+            except stalwart.ErrorStalwart:
                 pass
-            try:
-                # Grupo + usuario de servicio + token de Paperless-ngx
-                # (ver app/paperless.py) — a diferencia de EspoCRM/
-                # Nextcloud/FacturaScripts, aquí SÍ hay API real de
-                # Usuarios y Grupos: el aprovisionamiento es completo,
-                # sin ningún paso manual. Sin PAPERLESS_ADMIN_USER/
-                # PASSWORD configuradas, esto no hace nada.
-                resultado = paperless.aprovisionar_tenant(nombre)
-                if resultado is not None:
-                    db.guardar_paperless(tenant_id, resultado["group_id"], resultado["user_id"], resultado["api_key"])
-            except paperless.ErrorPaperless:
-                pass
-            try:
-                # Workspace + token de base de datos de Baserow (ver
-                # app/baserow.py) — igual que Paperless-ngx, se crea solo
-                # por API; a diferencia de él, invitar a los USUARIOS de
-                # ese tenant al Workspace se hace aparte, en
-                # crear_usuario() (no hay API para añadirlos
-                # directamente, solo invitación+aceptación). Sin
-                # BASEROW_ADMIN_EMAIL/PASSWORD configuradas, esto no
-                # hace nada.
-                resultado = baserow.aprovisionar_tenant(nombre)
-                if resultado is not None:
-                    db.guardar_baserow(tenant_id, resultado["workspace_id"], resultado["api_key"])
-            except baserow.ErrorBaserow:
-                pass
-            try:
-                # Usuario de servicio de Cal.diy (ver app/calcom.py) — a
-                # diferencia de FacturaScripts, Cal.diy es una instancia
-                # COMPARTIDA (no se puede tener una por tenant, su URL
-                # pública se hornea en tiempo de compilación); el
-                # aislamiento aquí es por cuenta individual, no por
-                # contenedor. Sin CALCOM_ADMIN_EMAIL/PASSWORD (o si el
-                # contenedor no está levantado) esto falla y se ignora.
-                resultado = calcom.aprovisionar_tenant(tenant_id, nombre)
-                db.guardar_calcom(tenant_id, resultado["email"], resultado["admin_pass"])
-                calcom_creado = resultado
-            except calcom.ErrorCalcom:
-                pass
-            try:
-                # Lista + Rol de lista + usuario de servicio de
-                # Listmonk (ver app/listmonk.py) — igual que Paperless-
-                # ngx/Baserow, 100% automático, sin ningún paso manual:
-                # el token viaja en la propia respuesta de creación. Sin
-                # LISTMONK_ADMIN_USER/PASSWORD configuradas, esto no
-                # hace nada.
-                resultado = listmonk.aprovisionar_tenant(nombre)
-                if resultado is not None:
-                    db.guardar_listmonk(tenant_id, resultado["list_id"], resultado["list_role_id"], resultado["api_key"])
-            except listmonk.ErrorListmonk:
-                pass
-            if dominio_correo:
-                try:
-                    # Tenant + Domain (con el dominio propio real del
-                    # cliente) + Account + ApiKey de Stalwart (ver
-                    # app/stalwart.py) — 100% automático una vez se
-                    # conoce el dominio, que es el único dato que no se
-                    # puede derivar de nada más (decisión del usuario:
-                    # cada cliente usa su propio dominio, no un
-                    # subdominio de guilda.cat). Sin
-                    # STALWART_ADMIN_USER/PASSWORD configuradas, o sin
-                    # dominio_correo en el formulario, esto no hace nada.
-                    resultado = stalwart.aprovisionar_tenant(tenant_id, nombre, dominio_correo)
-                    db.guardar_stalwart(
-                        tenant_id, resultado["stalwart_tenant_id"], resultado["domain_id"],
-                        resultado["domain_name"], resultado["account_id"], resultado["api_key"],
-                    )
-                except stalwart.ErrorStalwart:
-                    pass
-            try:
-                # Usuario + topic + ACL + token de ntfy (ver app/ntfy.py)
-                # — 100% automático salvo la concesión de ACL, que se
-                # hace por `docker exec` en vez de por API (ntfy no
-                # ofrece un endpoint HTTP para eso, ver el docstring del
-                # módulo) — no es un paso manual del admin, solo un
-                # mecanismo distinto por debajo. Sin NTFY_ADMIN_USER/
-                # PASSWORD configuradas, esto no hace nada.
-                resultado = ntfy.aprovisionar_tenant(tenant_id, nombre)
-                db.guardar_ntfy(tenant_id, resultado["topic"], resultado["token"])
-            except ntfy.ErrorNtfy:
-                pass
-            try:
-                # Team + sitio de Umami (ver app/umami.py) — 100%
-                # automático, sin ningún paso manual. Sin
-                # UMAMI_ADMIN_PASSWORD configurada, esto no hace nada.
-                resultado = umami.aprovisionar_tenant(tenant_id, nombre)
-                if resultado is not None:
-                    db.guardar_umami(tenant_id, resultado["team_id"], resultado["website_id"])
-            except umami.ErrorUmami:
-                pass
-            # "observabilidad" (Grafana+Loki, ver app/herramientas.py) nace
-            # OCULTA para tenants nuevos, a diferencia del resto del
-            # catálogo (que nace visible) — no hay aislamiento por tenant
-            # posible en los logs de infraestructura compartida, así que
-            # no tiene sentido mostrarla por defecto a un cliente. Ausencia
-            # de fila en tenants_herramientas_ocultas = visible (ver
-            # db.py), así que aquí hay que ocultarla explícitamente; el
-            # admin puede mostrarla luego a mano desde el backoffice si
-            # quiere que ese tenant en concreto la vea.
-            db.ocultar_herramienta(tenant_id, "observabilidad")
-            # "portainer" (ver app/herramientas.py) nace OCULTA por el
-            # mismo motivo que "observabilidad": docker.sock en
-            # lectura-escritura equivale a control total sobre el host,
-            # no tiene sentido mostrárselo a un tenant por defecto.
-            db.ocultar_herramienta(tenant_id, "portainer")
+        try:
+            # Usuario + topic + ACL + token de ntfy (ver app/ntfy.py)
+            # — 100% automático salvo la concesión de ACL, que se
+            # hace por `docker exec` en vez de por API (ntfy no
+            # ofrece un endpoint HTTP para eso, ver el docstring del
+            # módulo) — no es un paso manual del admin, solo un
+            # mecanismo distinto por debajo. Sin NTFY_ADMIN_USER/
+            # PASSWORD configuradas, esto no hace nada.
+            resultado = ntfy.aprovisionar_tenant(tenant_id, nombre)
+            db.guardar_ntfy(tenant_id, resultado["topic"], resultado["token"])
+        except ntfy.ErrorNtfy:
+            pass
+        try:
+            # Team + sitio de Umami (ver app/umami.py) — 100%
+            # automático, sin ningún paso manual. Sin
+            # UMAMI_ADMIN_PASSWORD configurada, esto no hace nada.
+            resultado = umami.aprovisionar_tenant(tenant_id, nombre)
+            if resultado is not None:
+                db.guardar_umami(tenant_id, resultado["team_id"], resultado["website_id"])
+        except umami.ErrorUmami:
+            pass
+        # "observabilidad" (Grafana+Loki, ver app/herramientas.py) nace
+        # OCULTA para tenants nuevos, a diferencia del resto del
+        # catálogo (que nace visible) — no hay aislamiento por tenant
+        # posible en los logs de infraestructura compartida, así que
+        # no tiene sentido mostrarla por defecto a un cliente. Ausencia
+        # de fila en tenants_herramientas_ocultas = visible (ver
+        # db.py), así que aquí hay que ocultarla explícitamente; el
+        # admin puede mostrarla luego a mano desde el backoffice si
+        # quiere que ese tenant en concreto la vea.
+        db.ocultar_herramienta(tenant_id, "observabilidad")
+        # "portainer" (ver app/herramientas.py) nace OCULTA por el
+        # mismo motivo que "observabilidad": docker.sock en
+        # lectura-escritura equivale a control total sobre el host,
+        # no tiene sentido mostrárselo a un tenant por defecto.
+        db.ocultar_herramienta(tenant_id, "portainer")
 
     if facturascripts_creado or calcom_creado:
         # Contraseña de admin generada al vuelo: se muestra UNA sola vez,
@@ -759,8 +762,9 @@ def renombrar_tenant(tenant_id: int):
     if nuevo_nombre:
         try:
             db.renombrar_tenant(tenant_id, nuevo_nombre)
+            flash(f"Tenant renombrado a '{nuevo_nombre}'.", "exito")
         except Exception:
-            pass  # nombre duplicado: se ignora, el admin ve que no cambió
+            flash(f"No se ha podido renombrar a '{nuevo_nombre}' -- ¿ya existe un tenant con ese nombre?", "error")
     # CIF/dirección fiscal: identificación de empresa exigida en el
     # registro horario (art. 34.9 ET) junto a la del trabajador — se
     # guardan en el mismo formulario que el nombre del tenant, campos
@@ -787,6 +791,7 @@ def guardar_facturascripts_api_key(tenant_id: int):
     if api_key:
         db.guardar_facturascripts_api_key(tenant_id, api_key)
         _auditar("guardar_facturascripts_api_key", f"tenant_id={tenant_id}")
+        flash("API Key de FacturaScripts guardada.", "exito")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -804,6 +809,7 @@ def guardar_documenso_api_key(tenant_id: int):
     if api_key:
         db.guardar_documenso_api_key(tenant_id, api_key)
         _auditar("guardar_documenso_api_key", f"tenant_id={tenant_id}")
+        flash("Token de Documenso guardado.", "exito")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -822,6 +828,7 @@ def guardar_calcom_api_key(tenant_id: int):
     if api_key:
         db.guardar_calcom_api_key(tenant_id, api_key)
         _auditar("guardar_calcom_api_key", f"tenant_id={tenant_id}")
+        flash("API Key de Cal.diy guardada.", "exito")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -890,6 +897,7 @@ def borrar_tenant(tenant_id: int):
         pass
     db.borrar_tenant(tenant_id)
     _auditar("borrar_tenant", tenant["nombre"])
+    flash(f"Tenant '{tenant['nombre']}' borrado.", "exito")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -926,10 +934,13 @@ def alternar_herramienta_tenant(tenant_id: int, herramienta_id: str):
         abort(404)
     if herramienta_id not in {h["id"] for h in herramientas.HERRAMIENTAS}:
         abort(404)
+    nombre_herramienta = next(h["nombre"] for h in herramientas.HERRAMIENTAS if h["id"] == herramienta_id)
     if herramienta_id in db.herramientas_ocultas_de_tenant(tenant_id):
         db.mostrar_herramienta(tenant_id, herramienta_id)
+        flash(f"'{nombre_herramienta}' visible de nuevo para este tenant.", "exito")
     else:
         db.ocultar_herramienta(tenant_id, herramienta_id)
+        flash(f"'{nombre_herramienta}' ocultada para este tenant.", "exito")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -1046,9 +1057,12 @@ def asignar_tenant_usuario(usuario_id: int):
     if tenant_id:
         db.asignar_tenant(usuario_id, int(tenant_id))
         _auditar("asignar_tenant", f"usuario_id={usuario_id} tenant_id={tenant_id}")
+        tenant = db.obtener_tenant(int(tenant_id))
+        flash(f"Usuario asignado a {tenant['nombre']}." if tenant else "Usuario asignado.", "exito")
     else:
         db.desasignar_tenant(usuario_id)
         _auditar("desasignar_tenant", f"usuario_id={usuario_id}")
+        flash("Usuario desasignado de su tenant.", "exito")
     return redirect(url_for("backoffice.usuarios_vista"))
 
 
@@ -1066,9 +1080,11 @@ def cambiar_rol(usuario_id: int):
     if usuario["rol"] == "admin":
         db.quitar_admin(usuario["email"])
         _auditar("quitar_admin", usuario["email"])
+        flash(f"{usuario['email']} ya no es admin.", "exito")
     else:
         db.hacer_admin(usuario["email"])
         _auditar("hacer_admin", usuario["email"])
+        flash(f"{usuario['email']} ahora es admin.", "exito")
     return redirect(url_for("backoffice.usuarios_vista"))
 
 
@@ -1082,7 +1098,9 @@ def alternar_gestor_fichajes(usuario_id: int):
     usuario = db.obtener_usuario(usuario_id)
     if usuario is None:
         abort(404)
-    db.asignar_gestor_fichajes(usuario_id, not usuario["gestor_fichajes"])
+    nuevo_valor = not usuario["gestor_fichajes"]
+    db.asignar_gestor_fichajes(usuario_id, nuevo_valor)
+    flash(f"{usuario['email']} {'ahora es' if nuevo_valor else 'ya no es'} gestor de fichajes.", "exito")
     return redirect(url_for("backoffice.usuarios_vista"))
 
 
@@ -1097,7 +1115,9 @@ def alternar_supervisor_tenant(usuario_id: int):
     usuario = db.obtener_usuario(usuario_id)
     if usuario is None:
         abort(404)
-    db.asignar_supervisor_tenant(usuario_id, not usuario["supervisor_tenant"])
+    nuevo_valor = not usuario["supervisor_tenant"]
+    db.asignar_supervisor_tenant(usuario_id, nuevo_valor)
+    flash(f"{usuario['email']} {'ahora es' if nuevo_valor else 'ya no es'} supervisor de tenant.", "exito")
     return redirect(url_for("backoffice.usuarios_vista"))
 
 
@@ -1110,7 +1130,9 @@ def alternar_fichaje_geolocalizacion(tenant_id: int):
     tenant = db.obtener_tenant(tenant_id)
     if tenant is None:
         abort(404)
-    db.fijar_fichaje_geolocalizacion(tenant_id, not tenant["fichaje_geolocalizacion"])
+    nuevo_valor = not tenant["fichaje_geolocalizacion"]
+    db.fijar_fichaje_geolocalizacion(tenant_id, nuevo_valor)
+    flash(f"Geolocalización al fichar {'activada' if nuevo_valor else 'desactivada'} para {tenant['nombre']}.", "exito")
     return redirect(url_for("backoffice.panel"))
 
 
@@ -1137,6 +1159,7 @@ def dispositivos_usuario(usuario_id: int):
 @admin_required
 def revocar_dispositivo_usuario(usuario_id: int, token_id: int):
     db.revocar_token_api_por_id(usuario_id, token_id)
+    flash("Dispositivo revocado.", "exito")
     return redirect(url_for("backoffice.dispositivos_usuario", usuario_id=usuario_id))
 
 
@@ -1144,7 +1167,9 @@ def revocar_dispositivo_usuario(usuario_id: int, token_id: int):
 @login_required
 @admin_required
 def marcar_lead_atendido(lead_id: int):
-    db.marcar_lead_atendido(lead_id, request.form.get("atendido") == "1")
+    atendido = request.form.get("atendido") == "1"
+    db.marcar_lead_atendido(lead_id, atendido)
+    flash("Lead marcado como atendido." if atendido else "Lead marcado como pendiente.", "exito")
     return redirect(url_for("backoffice.leads_vista"))
 
 
@@ -1160,13 +1185,18 @@ def vincular_solicitud_portal(solicitud_id: int):
     solicitudes = {s["id"]: s for s in db.listar_solicitudes_acceso_portal()}
     solicitud = solicitudes.get(solicitud_id)
     cliente_fiscal_id = request.form.get("cliente_fiscal_id", type=int)
-    if solicitud is not None and cliente_fiscal_id:
-        # editar_cliente_fiscal exige tenant_id -- se resuelve del propio
-        # cliente_fiscal elegido, no del admin (que no tiene uno fijo).
-        cliente = next((c for c in db.listar_todos_los_clientes_fiscales() if c["id"] == cliente_fiscal_id), None)
-        if cliente is not None:
-            db.editar_cliente_fiscal(cliente["tenant_id"], cliente_fiscal_id, email=solicitud["email"])
-            db.marcar_solicitud_atendida(solicitud_id)
+    if solicitud is None or not cliente_fiscal_id:
+        flash("Elige un cliente para vincular la solicitud.", "error")
+        return redirect(url_for("backoffice.solicitudes_portal_vista"))
+    # editar_cliente_fiscal exige tenant_id -- se resuelve del propio
+    # cliente_fiscal elegido, no del admin (que no tiene uno fijo).
+    cliente = next((c for c in db.listar_todos_los_clientes_fiscales() if c["id"] == cliente_fiscal_id), None)
+    if cliente is None:
+        flash("Ese cliente ya no existe.", "error")
+        return redirect(url_for("backoffice.solicitudes_portal_vista"))
+    db.editar_cliente_fiscal(cliente["tenant_id"], cliente_fiscal_id, email=solicitud["email"])
+    db.marcar_solicitud_atendida(solicitud_id)
+    flash(f"Solicitud vinculada a {cliente['nombre']}.", "exito")
     return redirect(url_for("backoffice.solicitudes_portal_vista"))
 
 
@@ -1180,9 +1210,12 @@ def crear_cliente_desde_solicitud(solicitud_id: int):
     solicitudes = {s["id"]: s for s in db.listar_solicitudes_acceso_portal()}
     solicitud = solicitudes.get(solicitud_id)
     tenant_id = request.form.get("tenant_id", type=int)
-    if solicitud is not None and tenant_id:
-        db.crear_cliente_fiscal(tenant_id, solicitud["nombre"], nif=solicitud["nif"], email=solicitud["email"])
-        db.marcar_solicitud_atendida(solicitud_id)
+    if solicitud is None or not tenant_id:
+        flash("Elige un tenant para crear el cliente.", "error")
+        return redirect(url_for("backoffice.solicitudes_portal_vista"))
+    db.crear_cliente_fiscal(tenant_id, solicitud["nombre"], nif=solicitud["nif"], email=solicitud["email"])
+    db.marcar_solicitud_atendida(solicitud_id)
+    flash(f"Cliente '{solicitud['nombre']}' creado.", "exito")
     return redirect(url_for("backoffice.solicitudes_portal_vista"))
 
 
@@ -1197,11 +1230,14 @@ def crear_webhook():
     url = request.form.get("url", "").strip()
     tenant_id_raw = request.form.get("tenant_id") or None
     eventos_marcados = [e for e in request.form.getlist("eventos") if e in eventos.EVENTOS]
-    if url and eventos_marcados:
-        tenant_id = int(tenant_id_raw) if tenant_id_raw else None
-        if tenant_id is not None and db.obtener_tenant(tenant_id) is None:
-            abort(404)
-        db.crear_webhook(g.usuario_id, tenant_id, url, eventos_marcados)
+    if not url or not eventos_marcados:
+        flash("Indica una URL y al menos un evento para crear el webhook.", "error")
+        return redirect(url_for("backoffice.webhooks_vista"))
+    tenant_id = int(tenant_id_raw) if tenant_id_raw else None
+    if tenant_id is not None and db.obtener_tenant(tenant_id) is None:
+        abort(404)
+    db.crear_webhook(g.usuario_id, tenant_id, url, eventos_marcados)
+    flash("Webhook creado.", "exito")
     return redirect(url_for("backoffice.webhooks_vista"))
 
 
@@ -1212,4 +1248,5 @@ def borrar_webhook(webhook_id: int):
     if db.obtener_webhook(webhook_id) is None:
         abort(404)
     db.borrar_webhook(webhook_id)
+    flash("Webhook borrado.", "exito")
     return redirect(url_for("backoffice.webhooks_vista"))
