@@ -973,18 +973,18 @@ def crear_usuario():
         db.asignar_tenant(usuario_id, int(tenant_id))
 
     resultados_alta = [
-        {"servicio": "Guilda Work", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"},
+        {"servicio": "Guilda Work", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}", "password": contrasena_temporal},
     ]
 
     try:
         openproject.crear_usuario(email, contrasena_temporal)
-        resultados_alta.append({"servicio": "OpenProject", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+        resultados_alta.append({"servicio": "OpenProject", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}", "password": contrasena_temporal})
     except openproject.ErrorOpenProject as e:
         resultados_alta.append({"servicio": "OpenProject", "estado": "error", "detalle": str(e)})
 
     try:
         chatwoot.crear_usuario(email, contrasena_temporal, email.split("@")[0])
-        resultados_alta.append({"servicio": "Chatwoot", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+        resultados_alta.append({"servicio": "Chatwoot", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}", "password": contrasena_temporal})
     except chatwoot.ErrorChatwoot as e:
         resultados_alta.append({"servicio": "Chatwoot", "estado": "error", "detalle": str(e)})
 
@@ -1034,7 +1034,7 @@ def crear_usuario():
                 # contraseña temporal (mismo criterio que OpenProject/
                 # Chatwoot).
                 umami.crear_usuario_tenant(email, tenant["umami_team_id"], contrasena_temporal)
-                resultados_alta.append({"servicio": "Umami", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}"})
+                resultados_alta.append({"servicio": "Umami", "estado": "creado", "detalle": f"contraseña: {contrasena_temporal}", "password": contrasena_temporal})
             except umami.ErrorUmami as e:
                 resultados_alta.append({"servicio": "Umami", "estado": "error", "detalle": str(e)})
 

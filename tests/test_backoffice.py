@@ -501,6 +501,19 @@ def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     assert nuevo is not None
 
 
+def test_backoffice_crear_usuario_muestra_boton_copiar_para_la_contrasena(cliente):
+    """La contraseña temporal solo se muestra esta vez -- copiarla a mano
+    seleccionando texto es fácil de hacer mal, así que debe llevar un
+    botón "Copiar" con la contraseña real en data-password."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-copiar-pass@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/usuarios", data={"email": "copiar-pass@ejemplo.com", "tenant_id": ""})
+    html = resp.get_data(as_text=True)
+    assert "btn-copiar-password" in html
+    assert 'data-password="' in html
+
+
 def test_backoffice_crear_usuario_sin_tokens_solo_da_error_en_openproject_y_chatwoot(cliente):
     """Sin OPENPROJECT_API_TOKEN/CHATWOOT_PLATFORM_API_TOKEN configurados
     (caso normal en tests), las tres integraciones deben fallar de forma

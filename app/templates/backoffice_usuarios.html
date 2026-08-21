@@ -26,12 +26,54 @@
         <td>
           <span class="log-badge {{ 'log-badge-duracion' if r.estado == 'creado' else 'log-badge-instantanea' }}">{{ r.estado }}</span>
         </td>
-        <td>{{ r.detalle }}</td>
+        <td>
+          {{ r.detalle }}
+          {% if r.password %}
+          <button type="button" class="btn btn-ghost btn-copiar-password" data-password="{{ r.password }}" style="margin-left: 8px;">{{ _('Copiar') }}</button>
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+<script>
+  // Contraseñas temporales que solo se muestran esta vez -- copiar a mano
+  // seleccionando texto de la celda es fácil de hacer mal (seleccionar de
+  // más/de menos). Mismo patrón de "botón copiar" ya usado en /docs
+  // (app/static/docs.js), adaptado aquí sin crear un fichero nuevo para
+  // 20 líneas usadas en una sola pantalla.
+  document.querySelectorAll(".btn-copiar-password").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var textoOriginal = boton.textContent;
+      function marcarCopiado() {
+        boton.textContent = "{{ _('¡Copiado!') }}";
+        setTimeout(function () { boton.textContent = textoOriginal; }, 1500);
+      }
+      function copiaManual() {
+        var area = document.createElement("textarea");
+        area.value = boton.dataset.password;
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        try {
+          document.execCommand("copy");
+          marcarCopiado();
+        } catch (e) {
+          boton.textContent = "{{ _('Error al copiar') }}";
+          setTimeout(function () { boton.textContent = textoOriginal; }, 1500);
+        }
+        document.body.removeChild(area);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(boton.dataset.password).then(marcarCopiado, copiaManual);
+      } else {
+        copiaManual();
+      }
+    });
+  });
+</script>
 {% endif %}
 
 <section class="ia-section">
