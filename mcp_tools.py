@@ -1276,6 +1276,37 @@ def _guardar_adjunto_para_chat(nombre_archivo: str, contenido: bytes, tipo_mime:
     return {"adjunto_id": adjunto_id, "nombre_archivo": nombre_archivo, "tipo_mime": tipo_mime or "application/octet-stream"}
 
 
+_NOMBRE_ARCHIVO_CARACTERES_INVALIDOS = str.maketrans("", "", "\\/:*?\"<>|")
+
+
+def _nombre_archivo_seguro(titulo: str) -> str:
+    """Quita caracteres no válidos en nombres de fichero (Windows es el más
+    restrictivo, mismo criterio sirve para el resto) -- `titulo` lo pone el
+    LLM, no confiar en que ya venga limpio."""
+    limpio = titulo.strip().translate(_NOMBRE_ARCHIVO_CARACTERES_INVALIDOS)
+    return limpio[:100] or "documento"
+
+
+_FORMATOS_DOCUMENTO = {"csv": "text/csv", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                       "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                       "pdf": "application/pdf"}
+
+
+def generar_documento_al_chat(
+    titulo: str, formato: str, columnas: list[str], filas: list[list], notas: str | None = None,
+) -> dict:
+    """Genera un documento (csv/xlsx/docx/pdf) a partir de una tabla de
+    datos que el propio asistente ya ha reunido con otras tools
+    (tareas/correo/fiscal/facturas/CRM/hojas...) y lo manda al chat."""
+    from app import generador_documentos as gen
+    constructores = {"csv": gen.tabla_a_csv, "xlsx": gen.tabla_a_xlsx, "docx": gen.tabla_a_docx, "pdf": gen.tabla_a_pdf}
+    if formato not in constructores:
+        raise ValueError(f"Formato '{formato}' no soportado -- usa csv, xlsx, docx o pdf.")
+    contenido = constructores[formato](titulo, columnas, filas, notas)
+    nombre_archivo = f"{_nombre_archivo_seguro(titulo)}.{formato}"
+    return _guardar_adjunto_para_chat(nombre_archivo, contenido, tipo_mime=_FORMATOS_DOCUMENTO[formato])
+
+
 def listar_clientes_fiscales(q: str | None = None) -> list[dict]:
     """Lista los clientes fiscales de la gestoría del usuario actual.
     `q` filtra por nombre/NIF, opcional."""

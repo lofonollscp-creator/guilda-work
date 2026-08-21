@@ -621,6 +621,21 @@ HERRAMIENTAS: list[dict] = [
         },
         ["tabla_id"],
     ),
+    # --- Generador de documentos/informes ------------------------------------
+    _tool(
+        "generar_documento_al_chat",
+        "Genera un documento descargable (CSV, Excel, Word o PDF) a partir de una tabla de datos y lo manda al chat. "
+        "Reúne los datos primero con las herramientas de lectura que ya tienes (tareas, correo, fiscal, facturas, CRM, hojas...) "
+        "y pásalos aquí ya en forma de columnas y filas -- tú decides qué columnas según lo que se te haya pedido.",
+        {
+            "titulo": _param("string", "Título del documento (también se usa como nombre de archivo)."),
+            "formato": _param("string", "\"csv\", \"xlsx\", \"docx\" o \"pdf\"."),
+            "columnas": _param("array", "Lista de nombres de columna, en orden."),
+            "filas": _param("array", "Lista de filas -- cada fila es una lista de valores, en el mismo orden que `columnas`."),
+            "notas": _param("string", "Texto adicional para mostrar bajo el título, opcional."),
+        },
+        ["titulo", "formato", "columnas", "filas"],
+    ),
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
@@ -637,6 +652,7 @@ LECTURA: set[str] = {
     "drive_listar_archivos", "drive_buscar_archivos", "enviar_archivo_drive_al_chat",
     "listar_documentos_firma", "enviar_documento_firmado_al_chat",
     "listar_tablas_hojas", "listar_filas_hoja",
+    "generar_documento_al_chat",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.

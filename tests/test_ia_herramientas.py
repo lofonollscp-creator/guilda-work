@@ -7,14 +7,15 @@ import mcp_tools
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_68_herramientas_clasificadas():
-    # 52 de antes + 16 nuevas: CRM (6), Drive (4, incluye
-    # enviar_archivo_drive_al_chat), Firmas (4, incluye
+def test_catalogo_tiene_las_mismas_69_herramientas_clasificadas():
+    # 52 de antes + 16 de la ampliación Drive/CRM/Firmas/Hojas: CRM (6),
+    # Drive (4, incluye enviar_archivo_drive_al_chat), Firmas (4, incluye
     # enviar_documento_firmado_al_chat), Hojas solo lectura (2 --
     # hojas_crear_fila NO se registra aquí, decisión explícita del
-    # usuario).
+    # usuario) + 1 del generador de documentos/informes
+    # (generar_documento_al_chat).
     nombres = {t["function"]["name"] for t in h.HERRAMIENTAS}
-    assert len(nombres) == 68
+    assert len(nombres) == 69
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)
@@ -273,3 +274,26 @@ def test_hojas_tools_ciclo_completo(usuario_id, monkeypatch):
     # del usuario) -- confirmar que sigue rechazada como desconocida.
     with pytest.raises(h.ErrorHerramientaIA):
         h.ejecutar(usuario_id, "hojas_crear_fila", {"tabla_id": 1, "campos": {}})
+
+
+# --- Generador de documentos/informes ------------------------------------------
+
+def test_generar_documento_al_chat_cada_formato(usuario_id):
+    for formato, firma_magica in [("csv", b"\xef\xbb\xbf"), ("xlsx", b"PK\x03\x04"), ("docx", b"PK\x03\x04"), ("pdf", b"%PDF")]:
+        resultado = h.ejecutar(
+            usuario_id, "generar_documento_al_chat",
+            {"titulo": f"Informe {formato}", "formato": formato, "columnas": ["Nombre", "Importe"],
+             "filas": [["Cliente A", 100], ["Cliente B", 200]]},
+        )
+        assert resultado["nombre_archivo"] == f"Informe {formato}.{formato}"
+        adjunto = db.obtener_adjunto_ia(usuario_id, resultado["adjunto_id"])
+        assert adjunto["origen"] == "asistente"
+        assert adjunto["contenido"].startswith(firma_magica)
+
+
+def test_generar_documento_al_chat_formato_no_soportado_lanza_error(usuario_id):
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(
+            usuario_id, "generar_documento_al_chat",
+            {"titulo": "X", "formato": "txt", "columnas": ["A"], "filas": [["1"]]},
+        )
