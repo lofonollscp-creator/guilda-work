@@ -21,17 +21,77 @@
   {% for c in cuentas %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ c.nombre|avatar_color }};">{{ c.nombre|iniciales }}</span>
-    <span class="log-text">{{ c.nombre }} <span class="muted">({{ c.usuario }} · {{ c.protocolo|upper }} · {{ c.host }}:{{ c.puerto }})</span></span>
-    {% if c.ultima_sincronizacion %}
-    <span class="log-duration">{{ _('Sincronizado') }} {{ c.ultima_sincronizacion[:16].replace('T', ' ') }}</span>
-    {% endif %}
-    <form action="{{ url_for('correo.probar_cuenta', cuenta_id=c.id) }}" method="post">
-      <button type="submit" class="btn btn-ghost">{{ _('Probar conexión') }}</button>
-    </form>
-    <form action="{{ url_for('correo.eliminar_cuenta', cuenta_id=c.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar la cuenta «%(nombre)s»? Se borrarán también sus mensajes descargados y su contraseña guardada. No se puede deshacer.', nombre=c.nombre) }}');">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
-    </form>
+      <span class="log-text">{{ c.nombre }} <span class="muted">({{ c.usuario }} · {{ c.protocolo|upper }} · {{ c.host }}:{{ c.puerto }})</span></span>
+      {% if c.ultima_sincronizacion %}
+      <span class="log-duration">{{ _('Sincronizado') }} {{ c.ultima_sincronizacion[:16].replace('T', ' ') }}</span>
+      {% endif %}
+      <details class="correo-cuenta-editar">
+        <summary class="btn btn-ghost">{{ _('Editar') }}</summary>
+        <div class="correo-cuenta-editar-panel">
+          <form action="{{ url_for('correo.editar_cuenta', cuenta_id=c.id) }}" method="post" class="correo-form-seccion">
+            <div class="correo-form-campo">
+              <label>{{ _('Nombre') }}</label>
+              <input type="text" name="nombre" value="{{ c.nombre }}" required>
+            </div>
+            <div class="correo-form-campo">
+              <label>{{ _('Usuario / correo') }}</label>
+              <input type="text" name="usuario" value="{{ c.usuario }}" required>
+            </div>
+            <div class="correo-form-campo">
+              <label>{{ _('Contraseña') }}</label>
+              <input type="password" name="contrasena" placeholder="{{ _('Déjalo en blanco para mantener la actual') }}">
+            </div>
+
+            <h3 class="correo-form-subtitulo">{{ _('Servidor entrante') }}</h3>
+            <div class="correo-form-campo">
+              <label>{{ _('Protocolo') }}</label>
+              <select name="protocolo">
+                <option value="imap" {{ 'selected' if c.protocolo == 'imap' }}>IMAP</option>
+                <option value="pop3" {{ 'selected' if c.protocolo == 'pop3' }}>POP3</option>
+              </select>
+            </div>
+            <div class="correo-form-fila-doble">
+              <div class="correo-form-campo">
+                <label>{{ _('Servidor') }}</label>
+                <input type="text" name="host" value="{{ c.host }}" required>
+              </div>
+              <div class="correo-form-campo correo-form-campo-estrecho">
+                <label>{{ _('Puerto') }}</label>
+                <input type="number" name="puerto" value="{{ c.puerto }}">
+              </div>
+            </div>
+            <label class="correo-form-checkbox">
+              <input type="checkbox" name="usa_tls" {{ 'checked' if c.usa_tls }}> {{ _('Usar TLS/SSL') }}
+            </label>
+
+            <h3 class="correo-form-subtitulo">{{ _('Servidor saliente (SMTP)') }}</h3>
+            <div class="correo-form-fila-doble">
+              <div class="correo-form-campo">
+                <label>{{ _('Servidor SMTP') }}</label>
+                <input type="text" name="smtp_host" value="{{ c.smtp_host or '' }}">
+              </div>
+              <div class="correo-form-campo correo-form-campo-estrecho">
+                <label>{{ _('Puerto') }}</label>
+                <input type="number" name="smtp_puerto" value="{{ c.smtp_puerto or '' }}">
+              </div>
+            </div>
+            <label class="correo-form-checkbox">
+              <input type="checkbox" name="smtp_tls" {{ 'checked' if c.smtp_tls }}> {{ _('Usar TLS/SSL') }}
+            </label>
+
+            <div class="edit-form-actions">
+              <button type="submit" class="btn btn-primary">{{ _('Guardar cambios') }}</button>
+            </div>
+          </form>
+        </div>
+      </details>
+      <form action="{{ url_for('correo.probar_cuenta', cuenta_id=c.id) }}" method="post">
+        <button type="submit" class="btn btn-ghost">{{ _('Probar conexión') }}</button>
+      </form>
+      <form action="{{ url_for('correo.eliminar_cuenta', cuenta_id=c.id) }}" method="post"
+            onsubmit="return confirm('{{ _('¿Eliminar la cuenta «%(nombre)s»? Se borrarán también sus mensajes descargados y su contraseña guardada. No se puede deshacer.', nombre=c.nombre) }}');">
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
   </li>
   {% endfor %}
 </ul>

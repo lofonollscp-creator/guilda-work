@@ -5239,6 +5239,32 @@ def obtener_cuenta_correo(usuario_id: int, cuenta_id: int) -> sqlite3.Row | None
         conn.close()
 
 
+def editar_cuenta_correo(
+    usuario_id: int, cuenta_id: int,
+    nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
+    usa_tls: bool = True, smtp_host: str | None = None,
+    smtp_puerto: int | None = None, smtp_tls: bool = True,
+) -> None:
+    """Mismos campos que crear_cuenta_correo, pero UPDATE -- la
+    contraseña NO se toca aquí (vive en keyring, ver
+    app/correo.py:editar_cuenta), así que un error tipográfico de
+    host/puerto ya no obliga a borrar y recrear la cuenta entera
+    (que borraba también los mensajes en caché)."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE correo_cuentas
+               SET nombre = ?, protocolo = ?, host = ?, puerto = ?, usa_tls = ?, usuario = ?,
+                   smtp_host = ?, smtp_puerto = ?, smtp_tls = ?
+               WHERE id = ? AND usuario_id = ?""",
+            (nombre.strip(), protocolo, host.strip(), puerto, int(usa_tls), usuario.strip(),
+             (smtp_host or "").strip() or None, smtp_puerto, int(smtp_tls), cuenta_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def eliminar_cuenta_correo(usuario_id: int, cuenta_id: int) -> None:
     """Borra la cuenta y sus mensajes/carpetas cacheados. Sin papelera: la
     credencial en keyring se borra aparte, desde app/correo.py, antes de

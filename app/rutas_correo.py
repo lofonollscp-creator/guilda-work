@@ -139,6 +139,31 @@ def crear_cuenta():
     return redirect(url_for("correo.cuentas"))
 
 
+@correo_bp.route("/cuentas/<int:cuenta_id>/editar", methods=["POST"])
+@login_required
+def editar_cuenta(cuenta_id: int):
+    try:
+        correo.editar_cuenta(
+            g.usuario_id, cuenta_id,
+            nombre=request.form.get("nombre", ""),
+            protocolo=request.form.get("protocolo", "imap"),
+            host=request.form.get("host", ""),
+            puerto=int(request.form.get("puerto") or 993),
+            usuario=request.form.get("usuario", ""),
+            usa_tls=request.form.get("usa_tls") == "on",
+            smtp_host=request.form.get("smtp_host") or None,
+            smtp_puerto=int(request.form["smtp_puerto"]) if request.form.get("smtp_puerto") else None,
+            smtp_tls=request.form.get("smtp_tls") == "on",
+            # Contraseña opcional: vacía = mantener la ya guardada (ver
+            # correo.editar_cuenta) -- no se obliga a volver a teclearla
+            # solo para corregir un host/puerto.
+            contrasena=request.form.get("contrasena", "") or None,
+        )
+    except correo.ErrorCorreo as e:
+        return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=str(e))
+    return redirect(url_for("correo.cuentas"))
+
+
 @correo_bp.route("/cuentas/<int:cuenta_id>/eliminar", methods=["POST"])
 @login_required
 def eliminar_cuenta(cuenta_id: int):

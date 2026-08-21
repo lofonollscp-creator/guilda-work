@@ -2499,6 +2499,29 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-form-checkbox input { width: auto; }
 
+/* Desplegable "Editar" de una cuenta de correo (correo_cuentas.html) --
+   mismo patrón que .menu-settings/.menu-settings-panel (menu.html):
+   <details> con el panel flotante en position:absolute, no un ancho
+   fijo estirado dentro de la fila. */
+.correo-cuenta-editar { position: relative; display: inline-block; }
+.correo-cuenta-editar summary { list-style: none; cursor: pointer; }
+.correo-cuenta-editar summary::-webkit-details-marker { display: none; }
+.correo-cuenta-editar[open] summary { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.correo-cuenta-editar-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 14px;
+  width: min(360px, 90vw);
+  z-index: 10;
+}
+
 /* Ribbon de acciones del mensaje abierto, al estilo del ribbon "Inicio" de Outlook */
 .correo-ribbon {
   display: flex;

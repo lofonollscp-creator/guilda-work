@@ -119,6 +119,44 @@ def guardar_cuenta(
     return cuenta_id
 
 
+def editar_cuenta(
+    usuario_id: int, cuenta_id: int,
+    nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
+    usa_tls: bool = True, smtp_host: str | None = None,
+    smtp_puerto: int | None = None, smtp_tls: bool = True,
+    contrasena: str | None = None,
+) -> None:
+    """Igual que guardar_cuenta pero para una cuenta ya existente --
+    valida la conexión con los datos nuevos ANTES de guardar nada, para
+    no dejar la cuenta en un estado roto. Si `contrasena` viene vacía
+    (el usuario no tecleó una nueva), se reutiliza la ya guardada en
+    keyring tanto para la validación como para dejarla tal cual -- así
+    un error tipográfico de host/puerto se puede corregir sin tener que
+    volver a escribir la contraseña cada vez (antes, la única forma de
+    arreglarlo era borrar la cuenta entera y recrearla, lo que borraba
+    también los mensajes en caché)."""
+    if not nombre.strip() or not host.strip() or not usuario.strip():
+        raise ErrorCorreo("Faltan datos: nombre, servidor y usuario son obligatorios.")
+    if db.obtener_cuenta_correo(usuario_id, cuenta_id) is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+
+    contrasena_efectiva = contrasena if contrasena else _contrasena(cuenta_id)
+
+    if protocolo == "pop3":
+        conn = _conectar_pop3(host, puerto, usa_tls, usuario, contrasena_efectiva)
+        conn.quit()
+    else:
+        conn = _conectar_imap(host, puerto, usa_tls, usuario, contrasena_efectiva)
+        conn.logout()
+
+    db.editar_cuenta_correo(
+        usuario_id, cuenta_id, nombre=nombre, protocolo=protocolo, host=host, puerto=puerto,
+        usuario=usuario, usa_tls=usa_tls, smtp_host=smtp_host, smtp_puerto=smtp_puerto, smtp_tls=smtp_tls,
+    )
+    if contrasena:
+        keyring.set_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id), contrasena)
+
+
 def eliminar_cuenta(usuario_id: int, cuenta_id: int) -> None:
     try:
         keyring.delete_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id))

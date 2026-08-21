@@ -216,6 +216,88 @@ def test_eliminar_cuenta_borra_cuenta_mensajes_y_credencial(monkeypatch, usuario
     assert keyring.get_password(correo.SERVICIO_KEYRING, correo._clave_keyring(cuenta_id)) is None
 
 
+def test_editar_cuenta_actualiza_host_y_puerto(monkeypatch, usuario_id):
+    """Antes de esto, un error tipográfico en host/puerto obligaba a
+    borrar la cuenta entera (y sus mensajes en caché) y recrearla."""
+    _cuenta_imap(monkeypatch, {})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.viejo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.editar_cuenta(
+        usuario_id, cuenta_id,
+        nombre="Trabajo", protocolo="imap", host="imap.nuevo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    assert cuenta["host"] == "imap.nuevo.com"
+
+
+def test_editar_cuenta_sin_contrasena_nueva_reutiliza_la_existente(monkeypatch, usuario_id):
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="la-de-siempre")
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.viejo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="la-de-siempre",
+    )
+    # Sin contrasena= (o vacía): debe validar con la ya guardada en
+    # keyring, no con una vacía -- el fake IMAP de _cuenta_imap solo
+    # acepta "la-de-siempre".
+    correo.editar_cuenta(
+        usuario_id, cuenta_id,
+        nombre="Trabajo", protocolo="imap", host="imap.nuevo.com", puerto=993,
+        usuario="yo@ejemplo.com",
+    )
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    assert cuenta["host"] == "imap.nuevo.com"
+
+    import keyring
+    assert keyring.get_password(correo.SERVICIO_KEYRING, correo._clave_keyring(cuenta_id)) == "la-de-siempre"
+
+
+def test_editar_cuenta_con_contrasena_nueva_la_guarda_en_keyring(monkeypatch, usuario_id):
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="correcta")
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="nueva-contrasena")
+    correo.editar_cuenta(
+        usuario_id, cuenta_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="nueva-contrasena",
+    )
+    import keyring
+    assert keyring.get_password(correo.SERVICIO_KEYRING, correo._clave_keyring(cuenta_id)) == "nueva-contrasena"
+
+
+def test_editar_cuenta_con_credenciales_invalidas_no_guarda_cambios(monkeypatch, usuario_id):
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="correcta")
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.viejo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    with pytest.raises(correo.ErrorCorreo):
+        correo.editar_cuenta(
+            usuario_id, cuenta_id,
+            nombre="Trabajo", protocolo="imap", host="imap.nuevo.com", puerto=993,
+            usuario="yo@ejemplo.com", contrasena="incorrecta",
+        )
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    assert cuenta["host"] == "imap.viejo.com"
+
+
+def test_editar_cuenta_inexistente_lanza_error(usuario_id):
+    with pytest.raises(correo.ErrorCorreo):
+        correo.editar_cuenta(
+            usuario_id, 999,
+            nombre="X", protocolo="imap", host="x", puerto=993, usuario="y", contrasena="z",
+        )
+
+
 def test_probar_conexion_cuenta_inexistente_lanza_error(usuario_id):
     with pytest.raises(correo.ErrorCorreo):
         correo.probar_conexion(usuario_id, 999)
