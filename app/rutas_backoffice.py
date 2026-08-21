@@ -7,7 +7,7 @@ import json
 import secrets
 from datetime import datetime, timezone
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
 from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, notificaciones_email, ntfy, openproject, paperless, push, stalwart, stripe_pagos, umami, uptime_kuma
 from .auth import admin_required, login_required
@@ -267,8 +267,8 @@ def ficha_tenant(tenant_id: int):
                 {**f, "creada_en": datetime.fromtimestamp(f["created"], tz=timezone.utc).strftime("%Y-%m-%d")}
                 for f in stripe_pagos.listar_facturas_cliente(tenant["stripe_customer_id"])
             ]
-        except stripe_pagos.ErrorStripe:
-            pass
+        except stripe_pagos.ErrorStripe as e:
+            flash(f"No se han podido cargar las facturas de Stripe: {e}", "error")
 
     return render_template(
         "backoffice_ficha_tenant.html",
@@ -296,21 +296,11 @@ def alternar_activo_tenant(tenant_id: int):
     nuevo_valor = not tenant["activo"]
     db.alternar_activo_tenant(tenant_id, nuevo_valor)
     _auditar("suspender_tenant" if not nuevo_valor else "reactivar_tenant", tenant["nombre"])
+    flash(f"{tenant['nombre']} {'reactivado' if nuevo_valor else 'suspendido'}.", "exito")
     return redirect(request.referrer or url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
 # --- Bloque 5: Stripe Connect (cada tenant cobra a sus propios clientes) ---
-
-def _render_ficha_tenant_error(tenant, error: str):
-    """Fallback de error para las rutas de Stripe de la ficha de tenant --
-    mismo criterio en conectar_stripe y activar_suscripcion: si Stripe
-    falla, no basta con redirigir sin más (el admin no vería el motivo),
-    así que se re-renderiza la ficha con el mensaje real de Stripe."""
-    return render_template("backoffice_ficha_tenant.html", tenant=tenant, error=error,
-                            usuarios=[], estadisticas_equipo=[], catalogo_herramientas=herramientas.HERRAMIENTAS,
-                            herramientas_ocultas=set(), planes=[], extras=[], extras_activos=[],
-                            facturas_stripe=[], stripe_configurado=stripe_pagos.configurado()), 400
-
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/stripe-connect/conectar", methods=["POST"])
 @login_required
@@ -321,6 +311,7 @@ def conectar_stripe(tenant_id: int):
         abort(404)
     email = request.form.get("email", "").strip()
     if not email:
+        flash("Introduce un email para conectar la cuenta de Stripe.", "error")
         return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
     try:
         url_retorno = url_for("backoffice.retorno_stripe", tenant_id=tenant_id, _external=True)
@@ -329,7 +320,8 @@ def conectar_stripe(tenant_id: int):
         _auditar("conectar_stripe", tenant["nombre"])
         return redirect(url_onboarding)
     except stripe_pagos.ErrorStripe as e:
-        return _render_ficha_tenant_error(tenant, str(e))
+        flash(f"No se ha podido conectar con Stripe: {e}", "error")
+        return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/stripe-connect/retorno")
@@ -347,8 +339,11 @@ def retorno_stripe(tenant_id: int):
         try:
             if stripe_pagos.cuenta_connect_lista(tenant["stripe_account_id"]):
                 db.marcar_stripe_onboarding_completado(tenant_id, True)
-        except stripe_pagos.ErrorStripe:
-            pass
+                flash("Cuenta de Stripe Connect conectada y lista para cobrar.", "exito")
+            else:
+                flash("La cuenta de Stripe todavía no ha terminado el onboarding -- vuelve a intentarlo cuando lo completes.", "error")
+        except stripe_pagos.ErrorStripe as e:
+            flash(f"No se ha podido confirmar el estado de la cuenta de Stripe: {e}", "error")
     return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
@@ -371,12 +366,15 @@ def planes():
 @admin_required
 def crear_plan():
     nombre = request.form.get("nombre", "").strip()
-    if nombre:
-        precio = request.form.get("precio_mensual_eur", "").strip()
-        precio_centimos = round(float(precio) * 100) if precio else None
-        max_usuarios = request.form.get("max_usuarios", type=int)
-        db.crear_plan_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos, max_usuarios)
-        _auditar("crear_plan_guilda", nombre)
+    if not nombre:
+        flash("El nombre del plan es obligatorio.", "error")
+        return redirect(url_for("backoffice.planes"))
+    precio = request.form.get("precio_mensual_eur", "").strip()
+    precio_centimos = round(float(precio) * 100) if precio else None
+    max_usuarios = request.form.get("max_usuarios", type=int)
+    db.crear_plan_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos, max_usuarios)
+    _auditar("crear_plan_guilda", nombre)
+    flash(f"Plan '{nombre}' creado.", "exito")
     return redirect(url_for("backoffice.planes"))
 
 
@@ -388,15 +386,20 @@ def editar_plan(plan_id: int):
     if plan is None:
         abort(404)
     nombre = request.form.get("nombre", "").strip()
-    if nombre:
-        descripcion = request.form.get("descripcion", "").strip() or None
-        precio = request.form.get("precio_mensual_eur", "").strip()
-        precio_centimos = round(float(precio) * 100) if precio else None
-        max_usuarios = request.form.get("max_usuarios", type=int)
-        db.editar_plan_guilda(plan_id, nombre, descripcion, precio_centimos, max_usuarios)
-        if plan["stripe_price_id"] and precio_centimos != plan["precio_mensual_centimos"]:
-            db.limpiar_stripe_price_id_plan(plan_id)
-        _auditar("editar_plan_guilda", nombre)
+    if not nombre:
+        flash("El nombre del plan es obligatorio.", "error")
+        return redirect(url_for("backoffice.planes"))
+    descripcion = request.form.get("descripcion", "").strip() or None
+    precio = request.form.get("precio_mensual_eur", "").strip()
+    precio_centimos = round(float(precio) * 100) if precio else None
+    max_usuarios = request.form.get("max_usuarios", type=int)
+    db.editar_plan_guilda(plan_id, nombre, descripcion, precio_centimos, max_usuarios)
+    if plan["stripe_price_id"] and precio_centimos != plan["precio_mensual_centimos"]:
+        db.limpiar_stripe_price_id_plan(plan_id)
+        flash(f"Plan '{nombre}' actualizado -- vuelve a sincronizar con Stripe para aplicar el nuevo precio.", "exito")
+    else:
+        flash(f"Plan '{nombre}' actualizado.", "exito")
+    _auditar("editar_plan_guilda", nombre)
     return redirect(url_for("backoffice.planes"))
 
 
@@ -412,8 +415,11 @@ def sincronizar_plan_stripe(plan_id: int):
         if stripe_price_id:
             db.guardar_stripe_price_id_plan(plan_id, stripe_price_id)
             _auditar("sincronizar_plan_stripe", plan["nombre"])
-    except stripe_pagos.ErrorStripe:
-        pass
+            flash(f"Plan '{plan['nombre']}' sincronizado con Stripe.", "exito")
+        else:
+            flash(f"'{plan['nombre']}' no tiene precio fijado todavía -- fíjalo antes de sincronizar.", "error")
+    except stripe_pagos.ErrorStripe as e:
+        flash(f"No se ha podido sincronizar '{plan['nombre']}' con Stripe: {e}", "error")
     return redirect(url_for("backoffice.planes"))
 
 
@@ -422,11 +428,14 @@ def sincronizar_plan_stripe(plan_id: int):
 @admin_required
 def crear_extra():
     nombre = request.form.get("nombre", "").strip()
-    if nombre:
-        precio = request.form.get("precio_eur", "").strip()
-        precio_centimos = round(float(precio) * 100) if precio else None
-        db.crear_extra_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos)
-        _auditar("crear_extra_guilda", nombre)
+    if not nombre:
+        flash("El nombre del extra es obligatorio.", "error")
+        return redirect(url_for("backoffice.planes"))
+    precio = request.form.get("precio_eur", "").strip()
+    precio_centimos = round(float(precio) * 100) if precio else None
+    db.crear_extra_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos)
+    _auditar("crear_extra_guilda", nombre)
+    flash(f"Extra '{nombre}' creado.", "exito")
     return redirect(url_for("backoffice.planes"))
 
 
@@ -438,14 +447,19 @@ def editar_extra(extra_id: int):
     if extra is None:
         abort(404)
     nombre = request.form.get("nombre", "").strip()
-    if nombre:
-        descripcion = request.form.get("descripcion", "").strip() or None
-        precio = request.form.get("precio_eur", "").strip()
-        precio_centimos = round(float(precio) * 100) if precio else None
-        db.editar_extra_guilda(extra_id, nombre, descripcion, precio_centimos)
-        if extra["stripe_price_id"] and precio_centimos != extra["precio_centimos"]:
-            db.limpiar_stripe_price_id_extra(extra_id)
-        _auditar("editar_extra_guilda", nombre)
+    if not nombre:
+        flash("El nombre del extra es obligatorio.", "error")
+        return redirect(url_for("backoffice.planes"))
+    descripcion = request.form.get("descripcion", "").strip() or None
+    precio = request.form.get("precio_eur", "").strip()
+    precio_centimos = round(float(precio) * 100) if precio else None
+    db.editar_extra_guilda(extra_id, nombre, descripcion, precio_centimos)
+    if extra["stripe_price_id"] and precio_centimos != extra["precio_centimos"]:
+        db.limpiar_stripe_price_id_extra(extra_id)
+        flash(f"Extra '{nombre}' actualizado -- vuelve a sincronizar con Stripe para aplicar el nuevo precio.", "exito")
+    else:
+        flash(f"Extra '{nombre}' actualizado.", "exito")
+    _auditar("editar_extra_guilda", nombre)
     return redirect(url_for("backoffice.planes"))
 
 
@@ -461,8 +475,11 @@ def sincronizar_extra_stripe(extra_id: int):
         if stripe_price_id:
             db.guardar_stripe_price_id_extra(extra_id, stripe_price_id)
             _auditar("sincronizar_extra_stripe", extra["nombre"])
-    except stripe_pagos.ErrorStripe:
-        pass
+            flash(f"Extra '{extra['nombre']}' sincronizado con Stripe.", "exito")
+        else:
+            flash(f"'{extra['nombre']}' no tiene precio fijado todavía -- fíjalo antes de sincronizar.", "error")
+    except stripe_pagos.ErrorStripe as e:
+        flash(f"No se ha podido sincronizar '{extra['nombre']}' con Stripe: {e}", "error")
     return redirect(url_for("backoffice.planes"))
 
 
@@ -476,6 +493,8 @@ def asignar_plan(tenant_id: int):
     plan_id = request.form.get("plan_id", type=int)
     db.asignar_plan_tenant(tenant_id, plan_id)
     _auditar("asignar_plan", tenant["nombre"])
+    plan = db.obtener_plan_guilda(plan_id) if plan_id else None
+    flash(f"Plan asignado: {plan['nombre']}." if plan else "Plan desasignado.", "exito")
     return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
@@ -495,7 +514,11 @@ def activar_suscripcion(tenant_id: int):
         abort(404)
     plan = db.obtener_plan_guilda(tenant["plan_id"]) if tenant["plan_id"] else None
     email = request.form.get("email", "").strip()
-    if plan is None or not plan["stripe_price_id"] or not email:
+    if plan is None or not plan["stripe_price_id"]:
+        flash("El tenant no tiene un plan sincronizado con Stripe todavía.", "error")
+        return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+    if not email:
+        flash("Introduce un email para activar la suscripción.", "error")
         return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
     try:
         stripe_customer_id = tenant["stripe_customer_id"]
@@ -507,7 +530,8 @@ def activar_suscripcion(tenant_id: int):
         _auditar("activar_suscripcion", tenant["nombre"])
         return redirect(url_checkout)
     except stripe_pagos.ErrorStripe as e:
-        return _render_ficha_tenant_error(tenant, str(e))
+        flash(f"No se ha podido activar la suscripción: {e}", "error")
+        return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
 @backoffice_bp.route("/tenants/<int:tenant_id>/extras", methods=["POST"])
@@ -519,18 +543,23 @@ def anadir_extra_tenant(tenant_id: int):
         abort(404)
     extra_id = request.form.get("extra_id", type=int)
     extra = db.obtener_extra_guilda(extra_id) if extra_id else None
-    if extra is not None:
-        cantidad = request.form.get("cantidad", type=int) or 1
-        activo_hasta = request.form.get("activo_hasta", "").strip() or None
-        db.activar_extra_tenant(tenant_id, extra_id, cantidad, activo_hasta)
-        if tenant["stripe_subscription_id"] and tenant["stripe_customer_id"] and extra["stripe_price_id"]:
-            try:
-                stripe_pagos.anadir_extra_a_suscripcion(
-                    tenant["stripe_customer_id"], tenant["stripe_subscription_id"], extra["stripe_price_id"], cantidad
-                )
-            except stripe_pagos.ErrorStripe:
-                pass
-        _auditar("anadir_extra_tenant", f"{tenant['nombre']}: {extra['nombre']}")
+    if extra is None:
+        flash("Elige un extra del catálogo.", "error")
+        return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
+    cantidad = request.form.get("cantidad", type=int) or 1
+    activo_hasta = request.form.get("activo_hasta", "").strip() or None
+    db.activar_extra_tenant(tenant_id, extra_id, cantidad, activo_hasta)
+    if tenant["stripe_subscription_id"] and tenant["stripe_customer_id"] and extra["stripe_price_id"]:
+        try:
+            stripe_pagos.anadir_extra_a_suscripcion(
+                tenant["stripe_customer_id"], tenant["stripe_subscription_id"], extra["stripe_price_id"], cantidad
+            )
+            flash(f"Extra '{extra['nombre']}' añadido y sincronizado con Stripe.", "exito")
+        except stripe_pagos.ErrorStripe as e:
+            flash(f"Extra '{extra['nombre']}' añadido, pero no se ha podido facturar en Stripe: {e}", "error")
+    else:
+        flash(f"Extra '{extra['nombre']}' añadido.", "exito")
+    _auditar("anadir_extra_tenant", f"{tenant['nombre']}: {extra['nombre']}")
     return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 
@@ -549,6 +578,7 @@ def desactivar_extra_tenant(tenant_id: int, tenant_extra_id: int):
         abort(404)
     db.desactivar_extra_tenant(tenant_extra_id)
     _auditar("desactivar_extra_tenant", f"{tenant['nombre']}: extra_activo_id={tenant_extra_id}")
+    flash("Extra quitado.", "exito")
     return redirect(url_for("backoffice.ficha_tenant", tenant_id=tenant_id))
 
 

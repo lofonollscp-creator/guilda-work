@@ -48,8 +48,13 @@ def test_conectar_stripe_roto_muestra_error_sin_500(cliente, monkeypatch):
         raise ErrorStripe("Stripe caído")
     monkeypatch.setattr(rutas_backoffice.stripe_pagos, "crear_cuenta_connect", _falla)
 
-    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/stripe-connect/conectar", data={"email": "cliente@ejemplo.com"})
-    assert resp.status_code == 400
+    resp = cliente.post(
+        f"/backoffice/tenants/{tenant_id}/stripe-connect/conectar", data={"email": "cliente@ejemplo.com"}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    # tojson escapa acentos a \uXXXX en el <script> -- se busca un tramo
+    # sin acentos del propio mensaje de flash en vez del texto del mock.
+    assert "No se ha podido conectar con Stripe" in resp.get_data(as_text=True)
     assert db.obtener_tenant(tenant_id)["stripe_account_id"] is None
 
 
@@ -92,6 +97,27 @@ def test_crear_plan_ok(cliente):
     assert resp.status_code == 200
     planes = db.listar_planes_guilda()
     assert any(p["nombre"] == "Básico" and p["precio_mensual_centimos"] == 2900 for p in planes)
+
+
+def test_crear_plan_confirma_con_toast(cliente):
+    """El backoffice no tenía conectado el sistema de toast de la app
+    principal (toasts.js) -- antes de este arreglo, crear un plan
+    redirigía en silencio sin confirmar nada. Confirma que el mensaje
+    de éxito llega al HTML (vía mostrarToast(), ver backoffice_base.html)."""
+    _admin(cliente)
+    resp = cliente.post(
+        "/backoffice/planes", data={"nombre": "Basico Toast", "precio_mensual_eur": "10.00"}, follow_redirects=True,
+    )
+    assert "mostrarToast" in resp.get_data(as_text=True)
+    assert "creado" in resp.get_data(as_text=True)
+
+
+def test_crear_plan_sin_nombre_no_crea_nada_y_avisa(cliente):
+    _admin(cliente)
+    antes = len(db.listar_planes_guilda())
+    resp = cliente.post("/backoffice/planes", data={"nombre": "  "}, follow_redirects=True)
+    assert len(db.listar_planes_guilda()) == antes
+    assert "obligatorio" in resp.get_data(as_text=True)
 
 
 def test_crear_plan_sin_precio_deja_precio_nulo(cliente):
@@ -256,8 +282,10 @@ def test_activar_suscripcion_roto_muestra_error_sin_500(cliente, monkeypatch):
         raise ErrorStripe("no attached payment source")
     monkeypatch.setattr(rutas_backoffice.stripe_pagos, "crear_sesion_suscripcion", _falla)
 
-    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/suscripcion/activar", data={"email": "facturacion@ejemplo.com"})
-    assert resp.status_code == 400
+    resp = cliente.post(
+        f"/backoffice/tenants/{tenant_id}/suscripcion/activar", data={"email": "facturacion@ejemplo.com"}, follow_redirects=True,
+    )
+    assert resp.status_code == 200
     assert "no attached payment source" in resp.get_data(as_text=True)
 
 
@@ -296,6 +324,30 @@ def test_anadir_extra_tenant_con_suscripcion_sincroniza_stripe(cliente, monkeypa
     )
     cliente.post(f"/backoffice/tenants/{tenant_id}/extras", data={"extra_id": str(extra_id), "cantidad": "3"})
     assert llamadas == [("cus_1", "sub_1", "price_extra_1", 3)]
+
+
+def test_anadir_extra_tenant_con_stripe_roto_aclara_que_el_extra_si_se_anadio(cliente, monkeypatch):
+    """Si Stripe falla, el extra YA se activó en local (db.activar_extra_tenant
+    corre antes del try/except) -- el aviso debe dejar claro que la parte
+    local funcionó y solo falló la facturación, no un fallo total."""
+    from app import rutas_backoffice
+    from app.stripe_pagos import ErrorStripe
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Gestoria Extra Stripe Roto")
+    db.guardar_stripe_customer_id(tenant_id, "cus_2")
+    db.guardar_stripe_subscription_id(tenant_id, "sub_2")
+    extra_id = db.crear_extra_guilda("Usuario adicional", None, 500)
+    db.guardar_stripe_price_id_extra(extra_id, "price_extra_2")
+
+    def _falla(*a, **k):
+        raise ErrorStripe("Stripe no disponible")
+    monkeypatch.setattr(rutas_backoffice.stripe_pagos, "anadir_extra_a_suscripcion", _falla)
+
+    resp = cliente.post(
+        f"/backoffice/tenants/{tenant_id}/extras", data={"extra_id": str(extra_id), "cantidad": "1"}, follow_redirects=True,
+    )
+    assert len(db.listar_extras_activos_tenant(tenant_id)) == 1
+    assert "no se ha podido facturar" in resp.get_data(as_text=True)
 
 
 def test_anadir_extra_tenant_con_suscripcion_pero_sin_customer_id_no_llama_a_stripe(cliente, monkeypatch):

@@ -123,5 +123,19 @@
       </main>
     </div>
   </div>
+
+  <!-- Mismo sistema de toast que la app principal (app/static/toasts.js) --
+       el backoffice no lo tenía conectado (shell standalone, no extends
+       base.html) así que la mayoría de acciones (crear/editar plan,
+       sincronizar con Stripe, conectar cuenta...) redirigían en silencio
+       sin confirmar éxito ni mostrar el error real si algo fallaba. -->
+  <script src="{{ url_for('static', filename='toasts.js') }}"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+      window.mostrarToast({{ mensaje|tojson }}, {{ ("error" if categoria == "error" else "exito")|tojson }});
+      {% endfor %}
+    });
+  </script>
 </body>
 </html>

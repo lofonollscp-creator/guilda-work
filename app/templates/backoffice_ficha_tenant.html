@@ -1,9 +1,6 @@
 {% extends "backoffice_base.html" %}
 {% block title %}{{ tenant.nombre }} — Backoffice{% endblock %}
 {% block content %}
-{% if error %}
-<div class="ia-error">{{ error }}</div>
-{% endif %}
 <header class="page-header">
   <div>
     <a class="link" href="{{ url_for('backoffice.panel') }}">&larr; {{ _('Backoffice') }}</a>
