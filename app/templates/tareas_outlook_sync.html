@@ -40,7 +40,14 @@
     <label>{{ _('Importar desde Outlook') }}</label>
     <p class="muted">{{ _('Sube un archivo .ics o .csv exportado desde la carpeta de Tareas de Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez de duplicarse (se reconocen por su UID); las de .csv se crean siempre como nuevas, porque ese formato no trae un identificador único.') }}</p>
     <div class="quick-row">
-      <input type="file" name="archivo" accept=".ics,.csv" required>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Elegir archivo') }}
+          <input type="file" name="archivo" accept=".ics,.csv" required>
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
       <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg> {{ _('Importar') }}</button>
     </div>
   </form>

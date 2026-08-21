@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Guilda Work{% endblock %}</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/InterVariable.woff2') }}" crossorigin>
   <script>
     // Aplica el tema guardado ANTES de que se pinte la página, para que no
     // haya un parpadeo del tema equivocado. "system" no fija el atributo:
@@ -307,10 +308,12 @@
       correoMoverOk: {{ _('Mensajes movidos.')|tojson }},
       correoEliminarOk: {{ _('Mensajes eliminados.')|tojson }},
       correoAccionError: {{ _('No se pudo completar la acción. Inténtalo de nuevo.')|tojson }},
-      destinatariosError: {{ _('No se pudieron cargar las sugerencias de destinatarios.')|tojson }}
+      destinatariosError: {{ _('No se pudieron cargar las sugerencias de destinatarios.')|tojson }},
+      archivos: {{ _('archivos')|tojson }}
     };
   </script>
   <script src="{{ url_for('static', filename='toasts.js') }}"></script>
+  <script src="{{ url_for('static', filename='file_input.js') }}"></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>

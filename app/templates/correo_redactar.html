@@ -84,8 +84,15 @@
     <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
 
     <div class="correo-compose-campo correo-compose-adjuntos">
-      <label><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Adjuntar archivos') }}</label>
-      <input type="file" name="adjuntos" multiple>
+      <label>{{ _('Adjuntar archivos') }}</label>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Elegir archivos') }}
+          <input type="file" name="adjuntos" multiple>
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
     </div>
 
     <div class="correo-compose-acciones">

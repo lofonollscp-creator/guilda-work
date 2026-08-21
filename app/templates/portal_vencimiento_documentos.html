@@ -22,9 +22,15 @@
     {% endif %}
 
     <form method="post" action="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="quick-card">
-      <label>{{ _('Subir documento (imagen o PDF, hasta 8MB)') }}
-        <input type="file" name="documento" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" required>
-      </label>
+      <label>{{ _('Subir documento (imagen o PDF, hasta 8MB)') }}</label>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Elegir archivo') }}
+          <input type="file" name="documento" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" required>
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
       <button type="submit" class="btn btn-primary">{{ _('Subir') }}</button>
     </form>
 
@@ -41,5 +47,6 @@
     </ul>
     {% endif %}
   </div>
+  <script src="{{ url_for('static', filename='file_input.js') }}"></script>
 </body>
 </html>

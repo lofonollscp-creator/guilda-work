@@ -1,3 +1,17 @@
+/* Inter (OFL, autoalojada como el resto de assets del proyecto -- sin
+   Google Fonts ni ningún otro CDN de terceros, mismo criterio que el
+   sprite de iconos Lucide traído a mano). Fuente variable: un único
+   fichero cubre todo el rango de pesos (100-900) en vez de cargar uno
+   por peso usado. */
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/InterVariable.woff2") format("woff2-variations"),
+       url("fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #f7f8fa;
   --surface: #ffffff;
@@ -106,7 +120,7 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, Roboto, sans-serif;
   /* Fondo liso a propósito (antes había una micro-rejilla decorativa
      aquí, quitada para dar una imagen más profesional/limpia). */
   background-color: var(--bg);
@@ -830,7 +844,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 /* ---- Menu grid (home) ---- */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  /* Tope superior (280px) en vez de 1fr: con pocos menús (2-3 es
+     habitual al principio) las tarjetas ya no se estiran a ocupar
+     todo el ancho disponible, así que justify-content puede centrar
+     el bloque entero en vez de dejarlo pegado a la izquierda con un
+     hueco enorme a la derecha. Con muchos menús, simplemente llenan
+     varias filas completas -- mismo aspecto que antes. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
+  justify-content: center;
   gap: 16px;
   margin-bottom: 32px;
 }
@@ -1123,6 +1144,46 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .btn-ghost { background: transparent; }
 .btn-ghost:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
 .btn-ghost:active { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+
+/* ---- Subir archivo (componente único) ----
+   Antes cada pantalla con un <input type="file"> lo dejaba sin
+   estilizar (control nativo del navegador, gris/blanco, no encaja
+   con el resto del tema oscuro) -- este envoltorio da el mismo
+   aspecto de botón .btn.btn-ghost en todas partes, con el nombre del
+   archivo elegido a su lado (ver app/static/file_input.js). El
+   <input> real sigue siendo el mismo elemento con su mismo name/
+   accept/required/multiple -- el backend no cambia. */
+.file-input {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.file-input-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.file-input-boton input[type="file"] {
+  /* No display:none -- algunos lectores de pantalla lo ignoran del
+     todo si el input queda inalcanzable; clip lo saca visualmente
+     sin quitarlo del árbol de accesibilidad (mismo patrón que
+     .skip-link usa a la inversa). */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.file-input-nombre {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
 
 /* ---- Quick actions (menu page) ---- */
 .quick-actions {
@@ -2920,7 +2981,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  /* Mismo criterio que .menu-grid: tope superior (300px) en vez de
+     1fr, + justify-content:center, para que una fila incompleta (ej.
+     la última de una categoría) quede centrada en vez de pegada a la
+     izquierda con un hueco vacío a la derecha. */
+  grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
+  justify-content: center;
   gap: var(--space-4);
 }
 
@@ -2930,6 +2996,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  /* Alto fijo (icono + nombre de 1 línea + descripción recortada a 2
+     líneas + pastilla de estado + paddings) para que ninguna tarjeta
+     dependa de cuánto texto tenga su vecina de fila -- antes, una
+     descripción larga (p.ej. "Drive") estiraba toda la fila y dejaba
+     un hueco vacío enorme en las tarjetas con descripción corta. */
+  min-height: 200px;
   padding: var(--space-4);
   text-decoration: none;
   color: var(--text);
@@ -2996,14 +3068,38 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tool-card:hover .tool-card-go { opacity: 1; transform: translate(0, 0); color: var(--tool-accent); }
 
 .tool-card-name { margin: 0; font-size: 1.05em; font-weight: 700; }
-.tool-card-desc { margin: 0; color: var(--text-muted); font-size: 0.9em; line-height: 1.4; flex-grow: 1; }
+.tool-card-desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.4;
+  /* Recorte a 2 líneas -- ver el comentario de min-height en .tool-card:
+     limita cuánto puede crecer una descripción larga en vez de dejar
+     que dicte la altura de toda la fila. Sin flex-grow a propósito:
+     combinarlo con -webkit-line-clamp es poco fiable en Chromium (el
+     recorte deja de aplicarse) -- la pastilla de estado se ancla al
+     fondo con su propio margin-top:auto en vez de depender de que
+     este bloque crezca. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .tool-card-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  margin-top: var(--space-1);
+  /* margin-top:auto (no var(--space-1)) empuja la pastilla al fondo
+     de la tarjeta pase lo que pase con la altura de la descripción --
+     antes dependía de que .tool-card-desc tuviera flex-grow:1, pero
+     combinar flex-grow con -webkit-line-clamp (necesario para
+     recortar descripciones largas a 2 líneas) es poco fiable en
+     Chromium: el recorte dejaba de aplicarse y la tarjeta crecía sin
+     límite. Desacoplado: la descripción solo se recorta, el hueco lo
+     rellena este margen automático. */
+  margin-top: auto;
   padding: 4px 10px 4px 8px;
   border-radius: 999px;
   font-size: 0.75em;
@@ -3026,18 +3122,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   background: var(--warning);
   box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 70%, transparent);
 }
-.tool-card-status.is-pendiente .tool-card-status-dot {
-  background: var(--text-muted);
-}
-.tool-card.is-pendiente {
-  cursor: default;
-  opacity: 0.6;
-}
-.tool-card.is-pendiente:hover {
-  transform: none;
-  box-shadow: var(--shadow-sm);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .tool-card, .tool-card-icon, .tool-card-go { transition: none; }
 }

@@ -40,9 +40,15 @@
     </div>
   </label>
   {% endif %}
-  <label>{{ _('Añadir más adjuntos (capturas o PDF)') }}
-    <input type="file" name="adjuntos" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple>
-  </label>
+  <label>{{ _('Añadir más adjuntos (capturas o PDF)') }}</label>
+  <span class="file-input">
+    <label class="file-input-boton btn btn-ghost">
+      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+      {{ _('Elegir archivos') }}
+      <input type="file" name="adjuntos" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple>
+    </label>
+    <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+  </span>
 
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>

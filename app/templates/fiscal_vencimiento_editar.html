@@ -138,9 +138,15 @@
   <p class="subtitle">{{ _('Ya se ha enviado un documento a firmar al cliente para este vencimiento.') }}</p>
   {% endif %}
   <form method="post" action="{{ url_for('fiscal.enviar_a_firma_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="quick-card">
-    <label>{{ _('Subir PDF y enviar a firmar al cliente') }}
-      <input type="file" name="documento_firma" accept="application/pdf" required>
-    </label>
+    <label>{{ _('Subir PDF y enviar a firmar al cliente') }}</label>
+    <span class="file-input">
+      <label class="file-input-boton btn btn-ghost">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+        {{ _('Elegir PDF') }}
+        <input type="file" name="documento_firma" accept="application/pdf" required>
+      </label>
+      <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+    </span>
     <button type="submit" class="btn btn-primary">{{ _('Enviar a firma') }}</button>
   </form>
 </section>

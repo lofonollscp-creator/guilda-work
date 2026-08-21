@@ -182,7 +182,7 @@ HERRAMIENTAS = [
     {
         "id": "drive",
         "nombre": "Drive",
-        "descripcion": "Almacenamiento y edición de documentos en el navegador, tipo Drive (Nextcloud + Collabora Online).",
+        "descripcion": "Almacenamiento y edición de documentos (Nextcloud + Collabora Online).",
         "icono": "☁️",
         "icono_logo": "drive.svg",
         "color": "#38bdf8",

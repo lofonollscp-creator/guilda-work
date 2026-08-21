@@ -42,7 +42,14 @@
       </select>
       <input type="text" name="titulo" placeholder="{{ _('Título...') }}" required autofocus style="flex: 2;">
       <input type="text" name="descripcion" placeholder="{{ _('Descripción (opcional)...') }}" style="flex: 3;">
-      <input type="file" name="adjuntos" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Adjuntar') }}
+          <input type="file" name="adjuntos" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple>
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
       <button type="submit" class="btn btn-primary">+ {{ _('Crear tiquet') }}</button>
     </div>
   </form>
