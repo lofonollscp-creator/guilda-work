@@ -279,6 +279,12 @@
         <li><kbd>Ctrl</kbd> + <kbd>K</kbd> <span>{{ _('Buscar en notas, tareas y correo') }}</span></li>
         <li><kbd>?</kbd> <span>{{ _('Mostrar esta ayuda') }}</span></li>
         <li><kbd>Esc</kbd> <span>{{ _('Cerrar ventana emergente') }}</span></li>
+        {% if request.endpoint and request.endpoint.startswith('correo.') %}
+        <li><kbd>j</kbd> / <kbd>k</kbd> <span>{{ _('Correo: siguiente / anterior mensaje') }}</span></li>
+        <li><kbd>#</kbd> <span>{{ _('Correo: eliminar el mensaje abierto') }}</span></li>
+        <li><kbd>u</kbd> <span>{{ _('Correo: marcar como no leído') }}</span></li>
+        <li><kbd>e</kbd> <span>{{ _('Correo: archivar (si la cuenta tiene carpeta de archivo)') }}</span></li>
+        {% endif %}
       </ul>
     </div>
   </div>
@@ -309,6 +315,7 @@
       correoEliminarOk: {{ _('Mensajes eliminados.')|tojson }},
       correoAccionError: {{ _('No se pudo completar la acción. Inténtalo de nuevo.')|tojson }},
       correoParcial: {{ _('completados -- fallos:')|tojson }},
+      correoSinCarpetaArchivo: {{ _('Esta cuenta no tiene una carpeta de archivo.')|tojson }},
       destinatariosError: {{ _('No se pudieron cargar las sugerencias de destinatarios.')|tojson }},
       archivos: {{ _('archivos')|tojson }}
     };
