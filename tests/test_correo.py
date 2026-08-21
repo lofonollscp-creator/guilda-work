@@ -427,6 +427,37 @@ def test_contar_no_leidos_correo(monkeypatch, usuario_id):
     assert db.contar_no_leidos_correo(cuenta_id) == 1
 
 
+def test_contar_no_leidos_por_cuenta_y_carpeta(usuario_id):
+    """Reemplaza el N+1 de _contexto_bandeja (una llamada a
+    contar_no_leidos_correo por cuenta, y esa función solo cuenta una
+    carpeta -- por defecto INBOX, así que antes el badge de una cuenta
+    nunca reflejaba lo no leído en sus demás carpetas)."""
+    cuenta_a = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    cuenta_b = db.crear_cuenta_correo(usuario_id, "Personal", "imap", "imap.otro.com", 993, "otro@ejemplo.com")
+
+    def _guardar(cuenta_id, uid, carpeta):
+        return db.guardar_mensaje_correo(
+            cuenta_id=cuenta_id, uid=uid, asunto="Asunto", remitente="a@b.com",
+            destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+            carpeta=carpeta,
+        )
+
+    _guardar(cuenta_a, "1", "INBOX")
+    id_leido = _guardar(cuenta_a, "2", "INBOX")
+    _guardar(cuenta_a, "3", "Archivo")
+    _guardar(cuenta_b, "1", "INBOX")
+    db.marcar_leido_mensaje_correo(id_leido, True)
+
+    resultado = db.contar_no_leidos_por_cuenta_y_carpeta(usuario_id)
+    assert resultado[cuenta_a] == {"INBOX": 1, "Archivo": 1}
+    assert resultado[cuenta_b] == {"INBOX": 1}
+
+
+def test_contar_no_leidos_por_cuenta_y_carpeta_sin_mensajes_no_leidos(usuario_id):
+    db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    assert db.contar_no_leidos_por_cuenta_y_carpeta(usuario_id) == {}
+
+
 def test_sincronizar_guarda_message_id_para_poder_responder(monkeypatch, usuario_id):
     mensajes = {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo", message_id="<abc123@ejemplo.com>")}
     _cuenta_imap(monkeypatch, mensajes)

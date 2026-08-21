@@ -5895,6 +5895,30 @@ def contar_no_leidos_correo(cuenta_id: int, carpeta: str = "INBOX") -> int:
         conn.close()
 
 
+def contar_no_leidos_por_cuenta_y_carpeta(usuario_id: int) -> dict[int, dict[str, int]]:
+    """Una sola consulta agregada para el rail de Correo (cuenta_id ->
+    {carpeta: no_leidos}) -- antes _contexto_bandeja hacía una llamada a
+    contar_no_leidos_correo() POR CADA cuenta (N+1), y esa función solo
+    cuenta una carpeta a la vez (por defecto INBOX), así que el badge de
+    cada cuenta reflejaba solo lo no leído en INBOX, nunca el total real
+    de la cuenta ni el desglose por carpeta."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT m.cuenta_id, m.carpeta, COUNT(*) AS n
+               FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE c.usuario_id = ? AND m.leido = 0
+               GROUP BY m.cuenta_id, m.carpeta""",
+            (usuario_id,),
+        ).fetchall()
+        resultado: dict[int, dict[str, int]] = {}
+        for fila in filas:
+            resultado.setdefault(fila["cuenta_id"], {})[fila["carpeta"]] = fila["n"]
+        return resultado
+    finally:
+        conn.close()
+
+
 def contar_no_leidos_total_correo(usuario_id: int) -> int:
     """Total de mensajes no leídos en TODAS las cuentas y carpetas de un
     usuario (para el badge de "correo nuevo" del rail de iconos)."""

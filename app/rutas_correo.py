@@ -184,7 +184,14 @@ def probar_cuenta(cuenta_id: int):
 
 def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_pospuestos=False):
     cuentas_disponibles = db.listar_cuentas_correo(g.usuario_id)
-    no_leidos_por_cuenta = {c["id"]: db.contar_no_leidos_correo(c["id"]) for c in cuentas_disponibles}
+    # Una sola consulta agregada (antes: una llamada a
+    # contar_no_leidos_correo por cada cuenta, N+1, y solo contaba
+    # INBOX -- el badge de la cuenta no reflejaba su total real).
+    no_leidos_por_cuenta_y_carpeta = db.contar_no_leidos_por_cuenta_y_carpeta(g.usuario_id)
+    no_leidos_por_cuenta = {
+        c["id"]: sum(no_leidos_por_cuenta_y_carpeta.get(c["id"], {}).values()) for c in cuentas_disponibles
+    }
+    no_leidos_carpetas = no_leidos_por_cuenta_y_carpeta.get(cuenta_id, {}) if cuenta_id is not None else {}
     carpetas = correo.listar_carpetas(g.usuario_id, cuenta_id) if cuenta_id is not None else []
     preferencias = db.obtener_preferencias_correo(g.usuario_id)
 
@@ -207,6 +214,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "carpetas": carpetas,
         "mensajes": mensajes,
         "no_leidos_por_cuenta": no_leidos_por_cuenta,
+        "no_leidos_carpetas": no_leidos_carpetas,
         "categorias": categorias,
         "categorias_por_id": {c["id"]: c for c in categorias},
         "clientes_fiscales": clientes_fiscales,

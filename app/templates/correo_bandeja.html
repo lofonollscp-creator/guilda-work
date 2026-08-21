@@ -25,7 +25,11 @@
       <div class="correo-carpeta-lista">
         {% for f in carpetas %}
         <a class="correo-carpeta-item {{ 'active' if f.nombre == carpeta }}"
-           href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=f.nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-folder"></use></svg> {{ f.nombre_visible }}</a>
+           href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=f.nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-folder"></use></svg> {{ f.nombre_visible }}
+          {% if no_leidos_carpetas.get(f.nombre) %}
+          <span class="correo-badge">{{ no_leidos_carpetas[f.nombre] }}</span>
+          {% endif %}
+        </a>
         {% endfor %}
       </div>
       {% endif %}
@@ -173,18 +177,18 @@
 
       <div class="correo-ribbon-grupo">
         {% if categorias %}
-        <form action="{{ url_for('correo.asignar_categoria', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-          <select name="categoria_id" class="correo-categoria-select" style="{{ 'border-color: ' + cat_actual.color if cat_actual }}" onchange="this.form.requestSubmit()" aria-label="{{ _('Categoría del mensaje') }}">
-            <option value="">{{ _('Sin categoría') }}</option>
+        <form action="{{ url_for('correo.asignar_categoria', mensaje_id=mensaje_seleccionado.id) }}" method="post" data-fetch-submit data-mensaje-ok="{{ _('Categoría actualizada.') }}">
+          <select name="categoria_id" class="correo-categoria-select" style="{{ 'border-color: ' + cat_actual.color if cat_actual }}" aria-label="{{ _('Categoría del mensaje') }}">
+            <option value="" data-color="">{{ _('Sin categoría') }}</option>
             {% for cat in categorias %}
-            <option value="{{ cat.id }}" {% if mensaje_seleccionado.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+            <option value="{{ cat.id }}" data-color="{{ cat.color }}" {% if mensaje_seleccionado.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
             {% endfor %}
           </select>
         </form>
         {% endif %}
         {% if clientes_fiscales %}
-        <form action="{{ url_for('correo.asignar_cliente_fiscal', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-          <select name="cliente_fiscal_id" class="correo-categoria-select" onchange="this.form.requestSubmit()" aria-label="{{ _('Cliente fiscal relacionado') }}">
+        <form action="{{ url_for('correo.asignar_cliente_fiscal', mensaje_id=mensaje_seleccionado.id) }}" method="post" data-fetch-submit data-mensaje-ok="{{ _('Cliente vinculado.') }}">
+          <select name="cliente_fiscal_id" class="correo-categoria-select" aria-label="{{ _('Cliente fiscal relacionado') }}">
             <option value="">{{ _('Sin cliente vinculado') }}</option>
             {% for cf in clientes_fiscales %}
             <option value="{{ cf.id }}" {% if mensaje_seleccionado.cliente_fiscal_id == cf.id %}selected{% endif %}>{{ cf.nombre }}</option>
