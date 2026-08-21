@@ -10,11 +10,16 @@
   <details class="menu-settings">
     <summary class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Editar menú') }}</summary>
     <div class="menu-settings-panel">
-      <form class="inline-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
-        <input type="text" name="nombre" value="{{ menu.nombre }}" required>
-        <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="{{ _('Color del menú') }}">
-        {{ selector_icono(menu.icono) }}
-        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+      <form class="menu-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
+        <div class="inline-form">
+          <input type="text" name="nombre" value="{{ menu.nombre }}" required>
+          <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="{{ _('Color del menú') }}">
+          <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+        </div>
+        <div class="menu-form-icono">
+          <span class="menu-form-icono-label">{{ _('Icono') }}</span>
+          {{ selector_icono(menu.icono) }}
+        </div>
       </form>
       <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}');">

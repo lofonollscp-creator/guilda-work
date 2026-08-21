@@ -1072,7 +1072,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .new-menu h3 { margin: 0 0 12px; font-size: 1em; color: var(--text-muted); }
 
-.inline-form { display: flex; gap: 8px; }
+.inline-form { display: flex; gap: 8px; align-items: center; }
 .inline-form input[type="text"] {
   flex: 1;
   padding: 9px 12px;
@@ -1082,11 +1082,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .inline-form input[type="color"] {
   width: 42px;
+  height: 38px;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 2px;
   background: none;
 }
+/* .menu-form envuelve un .inline-form (nombre + color + botón) y el
+   selector de icono en filas SEPARADAS -- antes el selector de icono
+   (hasta 3 filas de botones, ver .menu-icono-selector) vivía como un
+   hijo más de .inline-form, y al ser flex sin align-items (por
+   defecto "stretch") estiraba el input de texto y el botón a esa
+   misma altura, y aplastaba el selector de color nativo a una tira
+   fina casi invisible. */
+.menu-form { display: flex; flex-direction: column; gap: var(--space-2); }
+.menu-form-icono-label { display: block; font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: 4px; }
 
 /* ---- Buttons ----
    Antes usaban colores fijos (white/#f2f3f5/#c94247) que no seguían el

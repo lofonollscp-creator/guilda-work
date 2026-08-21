@@ -191,13 +191,18 @@
 
 <section class="new-menu" id="new-menu">
   <h3>+ {{ _('Nuevo menú') }}</h3>
-  <form class="inline-form" method="post" action="{{ url_for('crear_menu') }}">
-    <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del menú') }}</label>
-    <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
-    <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
-    <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
-    {{ selector_icono('folder') }}
-    <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
+  <form class="menu-form" method="post" action="{{ url_for('crear_menu') }}">
+    <div class="inline-form">
+      <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del menú') }}</label>
+      <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
+      <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
+      <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
+      <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
+    </div>
+    <div class="menu-form-icono">
+      <span class="menu-form-icono-label">{{ _('Icono') }}</span>
+      {{ selector_icono('folder') }}
+    </div>
   </form>
 </section>
 <script src="{{ url_for('static', filename='menu_icono.js') }}"></script>
