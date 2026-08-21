@@ -1412,6 +1412,11 @@ def init_db() -> None:
                    creado_en TEXT NOT NULL
                )"""
         )
+        # 'usuario' = subido por el usuario con el clip (como hasta ahora);
+        # 'asistente' = una tool se lo manda al usuario por el chat (Drive,
+        # documento firmado...) -- distingue el sentido para pintar la
+        # burbuja correcta en el chat sin tocar el resto del esquema.
+        _asegurar_columna(conn, "ia_adjuntos", "origen", "TEXT NOT NULL DEFAULT 'usuario'")
 
         # Ampliación "espacio de ajustes de usuario" (Fase G1): perfil
         # propio (nombre a mostrar, avatar, preferencias de notificación).
@@ -6296,13 +6301,15 @@ def eliminar_avatar_usuario(usuario_id: int) -> None:
         conn.close()
 
 
-def crear_adjunto_ia(usuario_id: int, nombre_archivo: str, tipo_mime: str | None, contenido: bytes) -> int:
+def crear_adjunto_ia(
+    usuario_id: int, nombre_archivo: str, tipo_mime: str | None, contenido: bytes, origen: str = "usuario"
+) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO ia_adjuntos (usuario_id, nombre_archivo, tipo_mime, contenido, creado_en) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (usuario_id, nombre_archivo, tipo_mime, contenido, now_iso()),
+            "INSERT INTO ia_adjuntos (usuario_id, nombre_archivo, tipo_mime, contenido, creado_en, origen) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, nombre_archivo, tipo_mime, contenido, now_iso(), origen),
         )
         conn.commit()
         return cur.lastrowid

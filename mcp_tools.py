@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import base64
 import contextvars
+import mimetypes
 import secrets
 import sqlite3
 import uuid
@@ -532,6 +533,17 @@ def drive_descargar_archivo(ruta: str) -> str:
     return nextcloud.descargar_archivo(ruta).decode("utf-8", errors="replace")
 
 
+def enviar_archivo_drive_al_chat(ruta: str) -> dict:
+    """Manda un archivo del Drive (foto, PDF, cualquier tipo) al chat del
+    Asistente IA integrado -- a diferencia de drive_descargar_archivo (que
+    decodifica como texto y rompe con binarios), aquí se maneja el
+    contenido en bruto y se guarda como adjunto del chat en vez de
+    devolverlo en la respuesta de la tool."""
+    contenido = nextcloud.descargar_archivo(ruta)
+    nombre_archivo = ruta.rsplit("/", 1)[-1] or ruta
+    return _guardar_adjunto_para_chat(nombre_archivo, contenido)
+
+
 # --- OpenProject -----------------------------------------------------------------
 
 def proyectos_listar() -> list[dict]:
@@ -750,6 +762,48 @@ def firmas_descargar_firmado(tenant: str, documento_id: str) -> str:
     return base64.b64encode(contenido).decode("ascii")
 
 
+# --- Firmas -- versiones para el Asistente IA integrado, tenant resuelto solo ---
+#
+# Mismo patrón que listar_facturas_cliente/crear_factura_cliente: nada de
+# parámetro `tenant` (el usuario de la web ya tiene uno, no tiene sentido
+# pedírselo al LLM), se resuelve vía _tenant_actual().
+
+def _api_key_documenso_actual() -> str:
+    tenant = _tenant_actual()
+    if not tenant["documenso_api_key"]:
+        raise ValueError(
+            "Tu gestoría todavía no tiene un token de Documenso guardado "
+            "(pide a un admin que cree su Equipo y genere un token, ver HOSTING.md)."
+        )
+    return tenant["documenso_api_key"]
+
+
+def listar_documentos_firma(texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca documentos de firma (Documenso) de tu gestoría."""
+    return documenso.listar_documentos(_api_key_documenso_actual(), texto=texto, limite=limite)
+
+
+def crear_documento_firma(titulo: str, contenido_pdf_base64: str, firmantes: list[dict]) -> dict:
+    """Crea un documento para firmar (en borrador, sin enviar todavía).
+    `contenido_pdf_base64`: el PDF codificado en base64. `firmantes`: lista
+    de {"email": str, "nombre": str}."""
+    contenido_pdf = base64.b64decode(contenido_pdf_base64)
+    return documenso.crear_documento(_api_key_documenso_actual(), titulo, contenido_pdf, firmantes)
+
+
+def enviar_documento_a_firma(documento_id: str) -> dict:
+    """Envía un documento en borrador — manda el email de firma a cada
+    destinatario. Pide siempre confirmación antes de ejecutar."""
+    return documenso.enviar_a_firma(_api_key_documenso_actual(), documento_id)
+
+
+def enviar_documento_firmado_al_chat(documento_id: str) -> dict:
+    """Manda un documento de Documenso (firmado del todo o no, el propio
+    PDF refleja el estado actual) al chat del Asistente IA integrado."""
+    contenido = documenso.descargar_firmado(_api_key_documenso_actual(), documento_id)
+    return _guardar_adjunto_para_chat(f"documento-{documento_id}.pdf", contenido, tipo_mime="application/pdf")
+
+
 # --- Documentos (Paperless-ngx) — tercer cliente con parámetro `tenant` ------
 #
 # A diferencia de Documenso, aquí el aprovisionamiento (Grupo + usuario de
@@ -824,6 +878,29 @@ def hojas_crear_fila(tenant: str, tabla_id: int, campos: dict) -> dict:
     columna": valor, ...} — los nombres de columna son las propias
     claves del diccionario."""
     return baserow.crear_fila(_api_key_baserow(tenant), tabla_id, campos)
+
+
+# --- Hojas -- versiones para el Asistente IA integrado, tenant resuelto solo ---
+# Solo lectura por decisión del usuario -- hojas_crear_fila no se expone aquí.
+
+def _api_key_baserow_actual() -> str:
+    tenant = _tenant_actual()
+    if not tenant["baserow_api_key"]:
+        raise ValueError(
+            "Tu gestoría todavía no tiene Baserow aprovisionado "
+            "(sin BASEROW_ADMIN_EMAIL/PASSWORD configuradas, o creado antes de esta integración)."
+        )
+    return tenant["baserow_api_key"]
+
+
+def listar_tablas_hojas() -> list[dict]:
+    """Lista las tablas del Workspace de Baserow de tu gestoría."""
+    return baserow.listar_tablas(_api_key_baserow_actual())
+
+
+def listar_filas_hoja(tabla_id: int, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca filas de una tabla de tu gestoría."""
+    return baserow.listar_filas(_api_key_baserow_actual(), tabla_id, texto=texto, limite=limite)
 
 
 # --- Citas (Cal.diy) — quinto cliente con parámetro `tenant` ----------------
@@ -1162,6 +1239,41 @@ def _tenant_id_actual() -> int:
     if tenant is None:
         raise ValueError("Tu usuario no tiene un tenant (gestoría) asignado -- pide a un admin que te asigne uno.")
     return tenant["id"]
+
+
+def _tenant_actual() -> dict:
+    """Fila completa del tenant del usuario actual -- para las tools del
+    Asistente IA integrado que necesitan más que el id (p.ej. sus
+    api_key de Documenso/Baserow), sin pedirle un parámetro `tenant` al
+    LLM como sí hacen las tools MCP crudas (facturas_*/firmas_*/hojas_*)."""
+    tenant = db.obtener_tenant(_tenant_id_actual())
+    if tenant is None:
+        raise ValueError("Tu usuario no tiene un tenant (gestoría) asignado -- pide a un admin que te asigne uno.")
+    return tenant
+
+
+# Tamaño máximo de un archivo que el ASISTENTE puede mandar por el chat (p.ej.
+# un documento del Drive o un PDF firmado) -- distinto del tope de subida del
+# USUARIO (1MB, solo texto/CSV, ver app/rutas_ia.py:_ADJUNTO_TAMANO_MAXIMO_BYTES).
+TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES = 25 * 1024 * 1024
+
+
+def _guardar_adjunto_para_chat(nombre_archivo: str, contenido: bytes, tipo_mime: str | None = None) -> dict:
+    """Guarda un archivo que una tool le manda al usuario por el chat --
+    reutiliza ia_adjuntos (mismo sitio que los adjuntos que sube el propio
+    usuario), marcado con origen='asistente'. Nunca devuelve el contenido
+    en el resultado de la tool (carísimo en tokens, y el LLM no necesita
+    "ver" los bytes) -- solo la referencia para que el frontend pinte un
+    chip/preview descargable (ver ia_asistente.js:textoMensajeTool)."""
+    if len(contenido) > TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES:
+        raise ValueError(
+            f"El archivo '{nombre_archivo}' pesa más de "
+            f"{TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES // (1024 * 1024)}MB, no se puede mandar por el chat."
+        )
+    if not tipo_mime:
+        tipo_mime, _ = mimetypes.guess_type(nombre_archivo)
+    adjunto_id = db.crear_adjunto_ia(_uid(), nombre_archivo, tipo_mime, contenido, origen="asistente")
+    return {"adjunto_id": adjunto_id, "nombre_archivo": nombre_archivo, "tipo_mime": tipo_mime or "application/octet-stream"}
 
 
 def listar_clientes_fiscales(q: str | None = None) -> list[dict]:

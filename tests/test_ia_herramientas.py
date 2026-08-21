@@ -3,16 +3,18 @@ Asistente IA y su dispatcher, que reutiliza directamente las funciones ya
 definidas en mcp_server.py."""
 import pytest
 
+import mcp_tools
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_52_herramientas_clasificadas():
-    # 39 + 4 del calendario fiscal + 1 de adjuntos del chat (Fase G2)
-    # + 3 del calendario fiscal (marcar_presentado/editar/resumen)
-    # + 5 de la tercera ronda de mejoras (plantillas de correo, tareas
-    # recurrentes, facturación de un cliente).
+def test_catalogo_tiene_las_mismas_68_herramientas_clasificadas():
+    # 52 de antes + 16 nuevas: CRM (6), Drive (4, incluye
+    # enviar_archivo_drive_al_chat), Firmas (4, incluye
+    # enviar_documento_firmado_al_chat), Hojas solo lectura (2 --
+    # hojas_crear_fila NO se registra aquí, decisión explícita del
+    # usuario).
     nombres = {t["function"]["name"] for t in h.HERRAMIENTAS}
-    assert len(nombres) == 52
+    assert len(nombres) == 68
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)
@@ -167,3 +169,107 @@ def test_listar_facturas_cliente_sin_vincular_lanza_error(usuario_id):
 
     with pytest.raises(h.ErrorHerramientaIA):
         h.ejecutar(usuario_id, "listar_facturas_cliente", {"cliente_id": cliente_id})
+
+
+# --- Ampliación: CRM, Drive, Firmas, Hojas -------------------------------------
+
+def test_crm_tools(usuario_id, monkeypatch):
+    monkeypatch.setattr(mcp_tools.espocrm, "listar_leads", lambda **k: [{"id": "1", "name": "Lead X"}])
+    llamadas = []
+    monkeypatch.setattr(
+        mcp_tools.espocrm, "crear_lead",
+        lambda nombre, **k: llamadas.append((nombre, k)) or {"id": "2", "name": nombre},
+    )
+
+    listado = h.ejecutar(usuario_id, "crm_listar_leads", {"texto": "X"})
+    assert listado == [{"id": "1", "name": "Lead X"}]
+
+    creado = h.ejecutar(usuario_id, "crm_crear_lead", {"nombre": "Nuevo Lead", "email": "a@b.com"})
+    assert creado["name"] == "Nuevo Lead"
+    assert llamadas == [("Nuevo Lead", {"email": "a@b.com", "telefono": "", "empresa": ""})]
+
+
+def test_drive_listar_y_subir_tools(usuario_id, monkeypatch):
+    monkeypatch.setattr(mcp_tools.nextcloud, "listar_archivos", lambda carpeta: [{"nombre": "a.txt"}])
+    subidos = []
+    monkeypatch.setattr(
+        mcp_tools.nextcloud, "subir_archivo",
+        lambda ruta, contenido: subidos.append((ruta, contenido)) or {"ok": True},
+    )
+
+    listado = h.ejecutar(usuario_id, "drive_listar_archivos", {"carpeta": "Lueira"})
+    assert listado == [{"nombre": "a.txt"}]
+
+    h.ejecutar(usuario_id, "drive_subir_archivo", {"ruta": "Lueira/nota.txt", "contenido_texto": "hola"})
+    assert subidos == [("Lueira/nota.txt", b"hola")]
+
+
+def test_enviar_archivo_drive_al_chat_guarda_adjunto_con_origen_asistente(usuario_id, monkeypatch):
+    monkeypatch.setattr(mcp_tools.nextcloud, "descargar_archivo", lambda ruta: b"\xff\xd8\xff contenido binario")
+
+    resultado = h.ejecutar(usuario_id, "enviar_archivo_drive_al_chat", {"ruta": "Lueira/foto.jpg"})
+    assert resultado["nombre_archivo"] == "foto.jpg"
+    assert resultado["tipo_mime"] == "image/jpeg"
+
+    adjunto = db.obtener_adjunto_ia(usuario_id, resultado["adjunto_id"])
+    assert adjunto["origen"] == "asistente"
+    assert adjunto["contenido"] == b"\xff\xd8\xff contenido binario"
+
+
+def test_enviar_archivo_al_chat_respeta_el_limite_de_tamano(usuario_id, monkeypatch):
+    demasiado_grande = b"x" * (mcp_tools.TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES + 1)
+    monkeypatch.setattr(mcp_tools.nextcloud, "descargar_archivo", lambda ruta: demasiado_grande)
+
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "enviar_archivo_drive_al_chat", {"ruta": "Lueira/grande.pdf"})
+
+
+def test_firmas_tools_sin_tenant_dan_error_legible(usuario_id):
+    with pytest.raises(h.ErrorHerramientaIA, match="tenant"):
+        h.ejecutar(usuario_id, "listar_documentos_firma", {})
+
+
+def test_firmas_tools_sin_token_documenso_da_error_legible(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria IA Firmas Sin Token")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    with pytest.raises(h.ErrorHerramientaIA, match="Documenso"):
+        h.ejecutar(usuario_id, "listar_documentos_firma", {})
+
+
+def test_firmas_tools_ciclo_completo(usuario_id, monkeypatch):
+    tenant_id = db.crear_tenant("Gestoria IA Firmas")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-documenso")
+
+    monkeypatch.setattr(mcp_tools.documenso, "listar_documentos", lambda api_key, **k: [{"id": "d1"}])
+    monkeypatch.setattr(mcp_tools.documenso, "descargar_firmado", lambda api_key, documento_id: b"%PDF-contenido")
+
+    listado = h.ejecutar(usuario_id, "listar_documentos_firma", {})
+    assert listado == [{"id": "d1"}]
+
+    resultado = h.ejecutar(usuario_id, "enviar_documento_firmado_al_chat", {"documento_id": "d1"})
+    assert resultado["tipo_mime"] == "application/pdf"
+    adjunto = db.obtener_adjunto_ia(usuario_id, resultado["adjunto_id"])
+    assert adjunto["origen"] == "asistente"
+    assert adjunto["contenido"] == b"%PDF-contenido"
+
+
+def test_hojas_tools_ciclo_completo(usuario_id, monkeypatch):
+    tenant_id = db.crear_tenant("Gestoria IA Hojas")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_baserow(tenant_id, 1, "token-baserow")
+
+    monkeypatch.setattr(mcp_tools.baserow, "listar_tablas", lambda api_key: [{"id": 1, "name": "Tabla X"}])
+    monkeypatch.setattr(mcp_tools.baserow, "listar_filas", lambda api_key, tabla_id, **k: [{"id": 1}])
+
+    tablas = h.ejecutar(usuario_id, "listar_tablas_hojas", {})
+    assert tablas == [{"id": 1, "name": "Tabla X"}]
+
+    filas = h.ejecutar(usuario_id, "listar_filas_hoja", {"tabla_id": 1})
+    assert filas == [{"id": 1}]
+
+    # hojas_crear_fila NO está en el catálogo del chat interno (decisión
+    # del usuario) -- confirmar que sigue rechazada como desconocida.
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "hojas_crear_fila", {"tabla_id": 1, "campos": {}})

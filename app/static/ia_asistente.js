@@ -83,6 +83,31 @@
   // innerHTML, nunca textContent. herramienta/datos.error se escapan
   // igual que el resto del contenido del modelo (ver escaparHtml arriba):
   // nunca confiar en texto que puede venir influido por el propio LLM.
+  // Adjuntos que una tool le manda al usuario por el chat (Drive, documento
+  // firmado...) -- ver mcp_tools.py:_guardar_adjunto_para_chat, siempre
+  // devuelve {adjunto_id, nombre_archivo, tipo_mime}. En vez del texto
+  // genérico "usó X", se pinta un chip descargable + vista previa inline
+  // para imagen/PDF, mismo lenguaje visual que los adjuntos de Correo
+  // (.correo-adjunto-*, ver app/templates/correo_bandeja.html) con sus
+  // propias clases .ia-adjunto-* para no acoplar los dos módulos.
+  function chipAdjuntoTool(datos) {
+    var url = "/ia/adjuntos/" + encodeURIComponent(datos.adjunto_id);
+    var nombre = escaparHtml(datos.nombre_archivo || ("adjunto-" + datos.adjunto_id));
+    var tipoMime = datos.tipo_mime || "";
+    var html =
+      '<div class="ia-adjunto">' +
+      '<a class="ia-adjunto-chip" href="' + url + '" target="_blank" title="' + nombre + '">' +
+      iconoSvg("paperclip") + " " + nombre + "</a>";
+    if (tipoMime.indexOf("image/") === 0) {
+      html += '<a href="' + url + '" target="_blank" title="Ver a tamaño completo">' +
+        '<img class="ia-adjunto-preview-imagen" src="' + url + '" alt="' + nombre + '" loading="lazy"></a>';
+    } else if (tipoMime === "application/pdf") {
+      html += '<embed class="ia-adjunto-preview-pdf" src="' + url + '" type="application/pdf">';
+    }
+    html += "</div>";
+    return html;
+  }
+
   function textoMensajeTool(herramienta, contenidoJson) {
     var icono = iconoSvg("wrench");
     var texto = escaparHtml(herramienta);
@@ -94,6 +119,8 @@
       } else if (datos && datos.rechazado) {
         icono = iconoSvg("x");
         texto = escaparHtml(herramienta) + " (rechazada)";
+      } else if (datos && datos.adjunto_id) {
+        return chipAdjuntoTool(datos);
       }
     } catch (e) {
       // contenido no era JSON válido: se deja el texto por defecto
