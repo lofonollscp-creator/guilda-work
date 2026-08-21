@@ -1,10 +1,18 @@
 """Tests de los filtros de plantilla puros del rediseño de Correo estilo
 New Outlook (app/rutas_correo.py): avatares, fecha relativa y previsualización.
+
+También cubre las 4 rutas de acciones en lote (/correo/mensajes/eliminar,
+/marcar-leido, /destacar, /mover) -- antes sin ningún test a nivel de ruta,
+el camino de "algún mensaje falla a medias" (solo posible en /mover, la
+única que toca el servidor IMAP de verdad -- ver app/correo.py) estaba
+completamente sin probar.
 """
 from datetime import date, timedelta
 
-from app import db
+from app import db, rutas_correo
+from app.correo import ErrorCorreo
 from app.rutas_correo import fecha_relativa, iniciales, vista_previa
+from tests.conftest import iniciar_sesion_de_prueba
 
 
 def test_iniciales_con_nombre_y_apellido():
@@ -230,3 +238,109 @@ def test_plantilla_json_de_otro_usuario_da_404(cliente):
         iniciar_sesion_de_prueba(otro_cliente, "plantilla-json-otro@ejemplo.com", "contrasena123")
         resp = otro_cliente.get(f"/correo/plantillas/{plantilla_id}.json")
         assert resp.status_code == 404
+
+
+# --- Acciones en lote ------------------------------------------------------
+
+def _crear_mensaje(cuenta_id: int, uid: str) -> int:
+    return db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid=uid, asunto="Asunto", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+
+
+def test_eliminar_mensajes_lote_borra_los_del_usuario(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "lote-eliminar@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m1 = _crear_mensaje(cuenta_id, "1")
+    m2 = _crear_mensaje(cuenta_id, "2")
+
+    resp = cliente.post("/correo/mensajes/eliminar", json={"ids": [m1, m2]})
+    assert resp.status_code == 200
+    assert resp.get_json() == {"procesados": 2}
+    assert db.obtener_mensaje_correo(m1) is None
+    assert db.obtener_mensaje_correo(m2) is None
+
+
+def test_eliminar_mensajes_lote_ignora_mensajes_de_otro_usuario(cliente):
+    """_ids_propios_del_usuario debe filtrar cualquier id que no
+    pertenezca al usuario que hace la petición -- no basta con
+    confiar en la lista que manda el propio cliente."""
+    dueno_id = iniciar_sesion_de_prueba(cliente, "lote-dueno@ejemplo.com", "contrasena123")
+    cuenta_dueno = db.crear_cuenta_correo(dueno_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m_dueno = _crear_mensaje(cuenta_dueno, "1")
+
+    cliente.post("/logout", follow_redirects=True)
+    otro_id = iniciar_sesion_de_prueba(cliente, "lote-otro@ejemplo.com", "contrasena123")
+    cuenta_otro = db.crear_cuenta_correo(otro_id, "Prueba", "imap", "imap.ejemplo.com", 993, "otro@ejemplo.com")
+    m_otro = _crear_mensaje(cuenta_otro, "1")
+
+    resp = cliente.post("/correo/mensajes/eliminar", json={"ids": [m_dueno, m_otro]})
+    assert resp.status_code == 200
+    assert resp.get_json() == {"procesados": 1}  # solo m_otro, el del propio usuario
+    assert db.obtener_mensaje_correo(m_dueno) is not None  # intacto, no es suyo
+    assert db.obtener_mensaje_correo(m_otro) is None
+
+
+def test_marcar_leido_mensajes_lote(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "lote-leido@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m1 = _crear_mensaje(cuenta_id, "1")
+
+    resp = cliente.post("/correo/mensajes/marcar-leido", json={"ids": [m1], "leido": True})
+    assert resp.status_code == 200
+    assert resp.get_json() == {"procesados": 1}
+    assert db.obtener_mensaje_correo(m1)["leido"] == 1
+
+
+def test_destacar_mensajes_lote(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "lote-destacar@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m1 = _crear_mensaje(cuenta_id, "1")
+
+    resp = cliente.post("/correo/mensajes/destacar", json={"ids": [m1], "destacado": True})
+    assert resp.status_code == 200
+    assert resp.get_json() == {"procesados": 1}
+    assert db.obtener_mensaje_correo(m1)["destacado"] == 1
+
+
+def test_mover_mensajes_lote_todo_exito(cliente, monkeypatch):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "lote-mover-ok@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m1 = _crear_mensaje(cuenta_id, "1")
+    m2 = _crear_mensaje(cuenta_id, "2")
+
+    monkeypatch.setattr(rutas_correo.correo, "mover_mensaje", lambda usuario_id, mensaje_id, carpeta: None)
+
+    resp = cliente.post("/correo/mensajes/mover", json={"ids": [m1, m2], "carpeta": "Archivo"})
+    assert resp.status_code == 200
+    assert resp.get_json() == {"procesados": 2, "errores": []}
+
+
+def test_mover_mensajes_lote_reporta_fallos_parciales(cliente, monkeypatch):
+    """mover_mensaje es la única de las 4 acciones en lote que toca el
+    servidor IMAP de verdad (las otras tres son solo caché local, ver
+    app/correo.py) y puede fallar a medias -- antes de esta ronda el
+    JS ni siquiera miraba el campo `errores` de la respuesta."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "lote-mover-fallo@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m_ok = _crear_mensaje(cuenta_id, "1")
+    m_falla = _crear_mensaje(cuenta_id, "2")
+
+    def _fake_mover(usuario_id, mensaje_id, carpeta):
+        if mensaje_id == m_falla:
+            raise ErrorCorreo("No se ha podido mover ese mensaje.")
+
+    monkeypatch.setattr(rutas_correo.correo, "mover_mensaje", _fake_mover)
+
+    resp = cliente.post("/correo/mensajes/mover", json={"ids": [m_ok, m_falla], "carpeta": "Archivo"})
+    assert resp.status_code == 200
+    datos = resp.get_json()
+    assert datos["procesados"] == 1
+    assert datos["errores"] == ["No se ha podido mover ese mensaje."]
+
+
+def test_acciones_en_lote_requieren_login(cliente):
+    for ruta in ("eliminar", "marcar-leido", "destacar", "mover"):
+        resp = cliente.post(f"/correo/mensajes/{ruta}", json={"ids": [1]})
+        assert resp.status_code == 302
