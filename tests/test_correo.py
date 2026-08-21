@@ -54,6 +54,8 @@ class FakeIMAP:
 
     def uid(self, comando, *args):
         if comando == "search":
+            self.busquedas = getattr(self, "busquedas", [])
+            self.busquedas.append(args)
             uids = " ".join(self._mensajes.keys()).encode()
             return "OK", [uids]
         if comando == "fetch":
@@ -349,6 +351,69 @@ def test_sincronizar_bandeja_marca_ultima_sincronizacion(monkeypatch, usuario_id
     correo.sincronizar_bandeja(usuario_id, cuenta_id)
     cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     assert cuenta["ultima_sincronizacion"] is not None
+
+
+# --- Sincronización incremental IMAP (UID en vez de SEARCH ALL cada vez) ---
+
+def test_primera_sincronizacion_hace_search_all(monkeypatch, usuario_id):
+    fake = _cuenta_imap_instancia_compartida(monkeypatch, {"1": _mensaje_bytes("Uno", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    assert fake.busquedas == [(None, "ALL")]
+
+
+def test_segunda_sincronizacion_pide_solo_uids_por_encima_del_ultimo_visto(monkeypatch, usuario_id):
+    fake = _cuenta_imap_instancia_compartida(monkeypatch, {"5": _mensaje_bytes("Cinco", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)  # primera vez: SEARCH ALL, guarda uid=5
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)  # segunda vez: incremental
+    assert fake.busquedas[-1] == (None, "UID", "6:*")
+
+
+def test_sincronizacion_guarda_el_uid_mas_alto_visto_por_carpeta(monkeypatch, usuario_id):
+    mensajes = {
+        "3": _mensaje_bytes("Tres", "a@b.com", "cuerpo"),
+        "7": _mensaje_bytes("Siete", "a@b.com", "cuerpo"),
+    }
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    assert db.obtener_ultimo_uid_sincronizado(cuenta_id, "INBOX") == "7"
+
+
+def test_sincronizacion_sin_uid_guardado_todavia_devuelve_none(usuario_id):
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    assert db.obtener_ultimo_uid_sincronizado(cuenta_id, "INBOX") is None
+
+
+def test_sincronizacion_incremental_sigue_descargando_correo_nuevo_de_verdad(monkeypatch, usuario_id):
+    """No es solo optimización -- confirma que un mensaje con UID más alto
+    que el guardado la vez anterior SÍ se descarga en la sincronización
+    incremental (no se queda fuera del rango "UID <n+1>:*")."""
+    mensajes = {"1": _mensaje_bytes("Uno", "a@b.com", "cuerpo")}
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 1}
+
+    mensajes["2"] = _mensaje_bytes("Dos", "c@d.com", "cuerpo nuevo")
+    assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 1}
+    assert len(correo.listar_mensajes(cuenta_id)) == 2
 
 
 # --- Sincronización POP3 --------------------------------------------------------

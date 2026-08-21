@@ -492,7 +492,20 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
     if estado != "OK":
         return 0
 
-    estado, datos = conn.uid("search", None, "ALL")
+    # Sincronización incremental: en vez de pedir SIEMPRE el listado
+    # completo de UIDs de la carpeta (caro en buzones grandes, y siempre
+    # se ha usado solo para encontrar UIDs nuevos que descargar -- nunca
+    # para comprobar flags ni borrados de los UIDs ya conocidos, ni antes
+    # ni ahora), se guarda el UID más alto visto en la última sincronización
+    # y solo se pide "UID <n+1>:*" -- el servidor no tiene que enumerar
+    # miles de UIDs antiguos en cada sincronización para descubrir que no
+    # hay nada nuevo. La primera sincronización de una carpeta (sin UID
+    # guardado todavía) sigue haciendo un SEARCH ALL, como antes.
+    ultimo_uid = db.obtener_ultimo_uid_sincronizado(cuenta["id"], carpeta)
+    if ultimo_uid is None:
+        estado, datos = conn.uid("search", None, "ALL")
+    else:
+        estado, datos = conn.uid("search", None, "UID", f"{int(ultimo_uid) + 1}:*")
     if estado != "OK":
         raise ErrorCorreo(f"No se han podido listar los mensajes de la carpeta «{carpeta}».")
     uids_servidor = [u.decode() for u in datos[0].split()] if datos and datos[0] else []
@@ -524,6 +537,9 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
             db.guardar_adjuntos_correo(mensaje_id, adjuntos)
         if mensaje_id is not None:
             _aplicar_categoria_automatica(cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")))
+
+    if uids_servidor:
+        db.actualizar_ultimo_uid_sincronizado(cuenta["id"], carpeta, str(max(int(u) for u in uids_servidor)))
     return len(nuevos)
 
 

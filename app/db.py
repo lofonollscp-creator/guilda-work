@@ -1441,6 +1441,7 @@ def init_db() -> None:
         # db.notificacion_tipo_activa()).
         _asegurar_columna(conn, "usuario_perfil", "notificar_push_correo", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "usuario_perfil", "notificar_push_portal_mensajes", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
 
         conn.commit()
     finally:
@@ -5788,6 +5789,34 @@ def uids_existentes_correo(cuenta_id: int, carpeta: str = "INBOX") -> set[str]:
             (cuenta_id, carpeta),
         ).fetchall()
         return {f["uid"] for f in filas}
+    finally:
+        conn.close()
+
+
+def obtener_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str) -> str | None:
+    """UID más alto ya sincronizado de esa carpeta -- permite pedirle al
+    servidor solo "UID <n>:*" en vez de un SEARCH ALL completo. `None`
+    significa que esta carpeta nunca se ha sincronizado todavía (primera
+    sincronización, sigue haciendo falta un barrido completo)."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT ultimo_uid_sincronizado FROM correo_carpetas WHERE cuenta_id = ? AND nombre = ?",
+            (cuenta_id, carpeta),
+        ).fetchone()
+        return fila["ultimo_uid_sincronizado"] if fila else None
+    finally:
+        conn.close()
+
+
+def actualizar_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str, uid: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_carpetas SET ultimo_uid_sincronizado = ? WHERE cuenta_id = ? AND nombre = ?",
+            (uid, cuenta_id, carpeta),
+        )
+        conn.commit()
     finally:
         conn.close()
 
