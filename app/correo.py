@@ -42,6 +42,7 @@ import email
 import html as html_lib
 import html.parser
 import imaplib
+import logging
 import os
 import poplib
 import re
@@ -58,6 +59,11 @@ from . import busqueda, db, eventos, notificaciones
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
+
+# Mismo logger ya configurado por app/main.py (logging.basicConfig) --
+# reutilizarlo aquí basta con pedirlo por nombre, sin volver a
+# configurar nada.
+logger = logging.getLogger("guilda")
 
 
 def _configurar_backend_keyring() -> None:
@@ -140,7 +146,14 @@ def _conectar_imap(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
         conn.login(usuario, contrasena)
         return conn
     except (imaplib.IMAP4.error, OSError, socket.timeout) as e:
-        raise ErrorCorreo(f"No se ha podido conectar a {host}:{puerto} (IMAP): {e}") from e
+        # El detalle crudo del driver (que a veces incluye texto interno
+        # del propio servidor IMAP) se queda en el log del servidor, no
+        # en el mensaje que ve el usuario -- ver el mismo criterio ya
+        # aplicado esta sesión a los errores de Stripe en el backoffice.
+        logger.warning("Fallo de conexión IMAP a %s:%s -- %s", host, puerto, e)
+        raise ErrorCorreo(
+            f"No se ha podido conectar con el servidor de correo ({host}:{puerto}) -- revisa el servidor, el puerto y la contraseña."
+        ) from e
 
 
 def _conectar_pop3(host: str, puerto: int, usa_tls: bool, usuario: str, contrasena: str) -> poplib.POP3:
@@ -859,7 +872,10 @@ def _conectar_smtp(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
         conn.login(usuario, contrasena)
         return conn
     except (smtplib.SMTPException, OSError, socket.timeout) as e:
-        raise ErrorCorreo(f"No se ha podido conectar a {host}:{puerto} (SMTP): {e}") from e
+        logger.warning("Fallo de conexión SMTP a %s:%s -- %s", host, puerto, e)
+        raise ErrorCorreo(
+            f"No se ha podido conectar con el servidor de correo saliente ({host}:{puerto}) -- revisa el servidor, el puerto y la contraseña."
+        ) from e
 
 
 def _direcciones(cadena: str | None) -> list[str]:

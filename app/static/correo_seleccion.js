@@ -91,7 +91,20 @@
           body: JSON.stringify(cuerpo),
         });
         if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
-        if (window.mostrarToast && mensajeOk) window.mostrarToast(mensajeOk, "exito");
+        // "mover" es la única acción que toca el servidor IMAP de verdad
+        // (las otras tres son solo caché local, ver app/correo.py) -- es
+        // la única que puede fallar a medias y devolver `errores` sin que
+        // la petición entera falle. Antes esto se perdía: solo se miraba
+        // respuesta.ok, nunca el cuerpo, así que un fallo parcial se veía
+        // igual que un éxito total.
+        const datos = await respuesta.json().catch(() => ({}));
+        if (datos.errores && datos.errores.length > 0) {
+          const plantilla = i18n.correoParcial || "completados -- fallos:";
+          const mensaje = (datos.procesados || 0) + "/" + ids.length + " " + plantilla + " " + datos.errores.join(" · ");
+          if (window.mostrarToast) window.mostrarToast(mensaje, "error");
+        } else if (window.mostrarToast && mensajeOk) {
+          window.mostrarToast(mensajeOk, "exito");
+        }
         window.location.reload();
       } catch (err) {
         if (window.mostrarToast) {
