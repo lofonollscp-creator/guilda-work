@@ -239,10 +239,23 @@
     {% if adjuntos_mensaje %}
     <div class="correo-adjuntos">
       {% for a in adjuntos_mensaje %}
-      <a class="correo-adjunto-chip" href="{{ url_for('correo.descargar_adjunto', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) }}" target="_blank" title="{{ a.nombre_archivo }}"
-         {% if not remitente_confiable %}onclick="return confirm('{{ _('Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?') }}');"{% endif %}>
-        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
-      </a>
+      {% set url_adjunto = url_for('correo.descargar_adjunto', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) %}
+      {% set previsualizable = remitente_confiable and (a.tipo_mime.startswith('image/') or a.tipo_mime == 'application/pdf') %}
+      <div class="correo-adjunto {{ 'tiene-vista-previa' if previsualizable }}">
+        <a class="correo-adjunto-chip" href="{{ url_adjunto }}" target="_blank" title="{{ a.nombre_archivo }}"
+           {% if not remitente_confiable %}onclick="return confirm('{{ _('Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?') }}');"{% endif %}>
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+        </a>
+        {% if previsualizable %}
+          {% if a.tipo_mime.startswith('image/') %}
+          <a href="{{ url_adjunto }}" target="_blank" title="{{ _('Ver a tamaño completo') }}">
+            <img class="correo-adjunto-preview-imagen" src="{{ url_adjunto }}" alt="{{ a.nombre_archivo }}" loading="lazy">
+          </a>
+          {% else %}
+          <embed class="correo-adjunto-preview-pdf" src="{{ url_adjunto }}" type="application/pdf">
+          {% endif %}
+        {% endif %}
+      </div>
       {% endfor %}
     </div>
     {% endif %}

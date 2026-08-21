@@ -413,6 +413,102 @@ def test_eliminar_borrador_lo_quita_de_la_lista(cliente):
     assert db.obtener_borrador_correo(usuario_id, borrador_id) is None
 
 
+# --- Vista previa de adjuntos (imagen/PDF) en la bandeja -----------------
+
+def test_adjunto_previsualizable_de_remitente_confiable_muestra_vista_previa(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "adjunto-confiable@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Con imagen", remitente="amigo@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    db.guardar_adjuntos_correo(mensaje_id, [{"nombre": "foto.png", "tipo": "image/png", "bytes": b"fake-png"}])
+    db.confiar_en_remitente(usuario_id, "amigo@ejemplo.com")
+
+    resp = cliente.get(f"/correo/?cuenta_id={cuenta_id}&mensaje_id={mensaje_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "correo-adjunto-preview-imagen" in html
+
+
+def test_adjunto_previsualizable_de_remitente_no_confiable_no_muestra_vista_previa(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "adjunto-no-confiable@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Con imagen", remitente="desconocido@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    db.guardar_adjuntos_correo(mensaje_id, [{"nombre": "foto.png", "tipo": "image/png", "bytes": b"fake-png"}])
+
+    resp = cliente.get(f"/correo/?cuenta_id={cuenta_id}&mensaje_id={mensaje_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "correo-adjunto-preview-imagen" not in html
+    assert "foto.png" in html  # el chip de descarga se sigue mostrando
+
+
+def test_adjunto_pdf_de_remitente_confiable_muestra_embed(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "adjunto-pdf@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Con PDF", remitente="amigo@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    db.guardar_adjuntos_correo(mensaje_id, [{"nombre": "informe.pdf", "tipo": "application/pdf", "bytes": b"%PDF-fake"}])
+    db.confiar_en_remitente(usuario_id, "amigo@ejemplo.com")
+
+    resp = cliente.get(f"/correo/?cuenta_id={cuenta_id}&mensaje_id={mensaje_id}")
+    assert resp.status_code == 200
+    assert "correo-adjunto-preview-pdf" in resp.get_data(as_text=True)
+
+
+def test_adjunto_no_previsualizable_nunca_muestra_vista_previa(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "adjunto-zip@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Con zip", remitente="amigo@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    db.guardar_adjuntos_correo(mensaje_id, [{"nombre": "datos.zip", "tipo": "application/zip", "bytes": b"PK\x03\x04"}])
+    db.confiar_en_remitente(usuario_id, "amigo@ejemplo.com")
+
+    resp = cliente.get(f"/correo/?cuenta_id={cuenta_id}&mensaje_id={mensaje_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "correo-adjunto-preview-imagen" not in html
+    assert "correo-adjunto-preview-pdf" not in html
+
+
+def test_descargar_adjunto_imagen_sirve_content_disposition_inline(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "adjunto-descarga@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Con imagen", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    db.guardar_adjuntos_correo(mensaje_id, [{"nombre": "foto.png", "tipo": "image/png", "bytes": b"fake-png"}])
+    adjunto_id = db.listar_adjuntos_correo(mensaje_id)[0]["id"]
+
+    resp = cliente.get(f"/correo/{mensaje_id}/adjunto/{adjunto_id}")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Disposition"].startswith("inline")
+
+
+def test_descargar_adjunto_zip_sigue_forzando_descarga(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "adjunto-descarga-zip@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Con zip", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+    )
+    db.guardar_adjuntos_correo(mensaje_id, [{"nombre": "datos.zip", "tipo": "application/zip", "bytes": b"PK\x03\x04"}])
+    adjunto_id = db.listar_adjuntos_correo(mensaje_id)[0]["id"]
+
+    resp = cliente.get(f"/correo/{mensaje_id}/adjunto/{adjunto_id}")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Disposition"].startswith("attachment")
+
+
 def test_eliminar_borrador_de_otro_usuario_no_hace_nada(cliente):
     dueno_id = iniciar_sesion_de_prueba(cliente, "borrador-dueno2@ejemplo.com", "contrasena123")
     borrador_id = db.guardar_borrador_correo(

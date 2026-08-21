@@ -2345,6 +2345,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-adjunto-chip:hover { border-color: var(--primary); color: var(--primary); }
 .correo-adjunto-tamano { color: var(--text-muted); }
+.correo-adjunto.tiene-vista-previa { display: flex; flex-direction: column; gap: var(--space-1); }
+.correo-adjunto-preview-imagen {
+  display: block;
+  max-width: 220px;
+  max-height: 160px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.correo-adjunto-preview-pdf {
+  width: 280px;
+  height: 220px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
 
 .correo-aviso-imagenes {
   display: flex;
