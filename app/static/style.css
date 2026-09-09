@@ -1429,8 +1429,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   position: sticky;
   top: var(--space-4);
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   padding: var(--space-4);
 }
 .fiscal-detalle-vacio { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
@@ -1465,15 +1466,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 
 .log-list { list-style: none; padding: 0; margin: 0; }
+/* Fila con borde real en vez de solo sombra -- afecta a Tareas, Fiscal,
+   Histórico y "Hoy" del dashboard (todas reutilizan .log-item). Mismo
+   fallo que .bar-chart: una fila que se recorta solo con sombra se ve
+   difusa, no nítida como el .row del canvas de diseño (que sí lleva
+   border: 1px solid var(--border)). */
 .log-item {
   display: flex;
   align-items: center;
   gap: 12px;
   background: var(--surface);
+  border: 1px solid var(--border);
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 6px;
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 .log-time { font-variant-numeric: tabular-nums; color: var(--text-muted); font-size: 0.85em; width: 42px; }
 .log-menu { font-size: 0.82em; color: var(--text-muted); width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1550,9 +1557,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   align-items: end;
   margin-bottom: 20px;
   background: var(--surface);
+  border: 1px solid var(--border);
   padding: 14px 16px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
 }
 .filters label { display: flex; flex-direction: column; font-size: 0.82em; color: var(--text-muted); gap: 4px; }
 .filters input, .filters select {
@@ -1596,8 +1604,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   position: sticky;
   top: var(--space-4);
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   padding: var(--space-4);
 }
 .historial-resumen h3 { margin: 0 0 var(--space-3); font-size: 0.95em; color: var(--text-muted); }
@@ -1661,8 +1670,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .ia-section {
   margin-top: 24px;
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   padding: 18px 20px;
 }
 .ia-section h3 { margin: 0 0 4px; font-size: 1em; }
@@ -1815,8 +1825,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 .edit-form {
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   padding: 18px 20px;
   max-width: 520px;
   display: flex;
