@@ -187,13 +187,13 @@
     </ul>
     {% endif %}
   </section>
+
+  <section class="dash-ia">
+    <h3>{{ _('Asistente IA') }}</h3>
+    {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-dashboard') }}
+  </section>
 </aside>
 </div>
-
-<section class="dash-ia">
-  <h3>{{ _('Asistente IA') }}</h3>
-  {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-dashboard') }}
-</section>
 
 <section class="new-menu" id="new-menu">
   <h3>+ {{ _('Nuevo menú') }}</h3>

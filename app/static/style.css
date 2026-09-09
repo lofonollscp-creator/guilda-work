@@ -839,20 +839,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 
 /* Layout de dos columnas del dashboard: acciones+menús a la izquierda,
-   actividad de "Hoy" fija a la derecha -- el asistente IA se queda FUERA
-   de esta rejilla (sección aparte, a todo el ancho) porque es un
-   componente funcional real que necesita más aire que los 320px de la
-   barra lateral. */
-.dash-layout { display: grid; grid-template-columns: 1fr 320px; gap: var(--space-5); align-items: start; }
+   columna secundaria fija a la derecha con "Hoy" + Asistente IA juntos
+   (mismo criterio que el canvas de diseño: la columna secundaria es
+   "actividad + asistente", no solo actividad) -- se ensancha a 380px
+   (antes 320px) para que el chat de IA tenga aire suficiente ahí dentro. */
+.dash-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-5); align-items: start; }
 .dash-main { min-width: 0; }
-.dash-sidebar { position: sticky; top: var(--space-4); }
+.dash-sidebar { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-5); }
 .dash-sidebar .log-section { margin-bottom: 0; }
 @media (max-width: 900px) {
   .dash-layout { grid-template-columns: 1fr; }
   .dash-sidebar { position: static; }
 }
 
-.dash-ia { margin: var(--space-6) 0; }
+.dash-ia { margin: 0; }
 .dash-ia h3 { margin-bottom: var(--space-3); }
 .dash-ia .ia-chat { box-shadow: var(--shadow-sm); }
 
