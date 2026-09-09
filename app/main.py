@@ -232,6 +232,33 @@ def _resolver_usuario_actual():
 
 
 @app.context_processor
+def inyectar_url_for_versionado():
+    # Caddy sirve /static/* con "Cache-Control: public, max-age=604800"
+    # (deploy/Caddyfile) -- 7 días de caché de navegador para que los
+    # estáticos no viajen en cada petición. Pero la URL nunca cambiaba
+    # entre despliegues, así que un usuario con la web ya abierta (o
+    # cualquier caché intermedia) seguía sirviendo el style.css/iconos.svg
+    # VIEJO hasta que esos 7 días expiraran -- el HTML nuevo llegaba, el
+    # CSS no, y el cambio parecía "no aplicado" aunque el despliegue
+    # hubiera ido bien. Se soluciona añadiendo ?v=<mtime del fichero> a
+    # cada url_for('static', ...) generada desde una plantilla: cada
+    # despliegue cambia el mtime -> cambia la URL -> la caché de 7 días
+    # ya no puede servir el estático antiguo bajo la URL nueva. Sobrescribe
+    # el propio nombre `url_for` visible en Jinja (patrón estándar de
+    # Flask), no toca las llamadas Python a flask.url_for.
+    def url_for_versionado(endpoint, **values):
+        if endpoint == "static" and "filename" in values and "v" not in values:
+            ruta = os.path.join(app.static_folder, values["filename"])
+            try:
+                values["v"] = int(os.path.getmtime(ruta))
+            except OSError:
+                pass
+        return url_for(endpoint, **values)
+
+    return {"url_for": url_for_versionado}
+
+
+@app.context_processor
 def inyectar_modo_escritorio():
     # Función (no un valor fijado una vez) porque MODO_ESCRITORIO puede
     # cambiar de False a True después de que Flask ya esté creado (ver
