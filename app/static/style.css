@@ -3280,13 +3280,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   padding: var(--space-4);
   text-decoration: none;
   color: var(--text);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background:
-    linear-gradient(155deg, color-mix(in srgb, var(--tool-accent) 7%, var(--surface)) 0%, var(--surface) 55%);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-sm);
+  /* Fondo plano y sin desenfoque -- calco de .tool-card del canvas de
+     diseño (antes: degradado sutil + blur(14px), más "glass" que nítido). */
+  background: var(--surface);
+  box-shadow: none;
   overflow: hidden;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
@@ -3593,17 +3592,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-4);
 }
+/* Fondo plano, sin desenfoque -- calco de .tiquet-card del canvas de
+   diseño (antes: glass-bg/glass-border + blur(14px)). */
 .tiquet-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: none;
 }
 .tiquet-card-top { display: flex; align-items: center; justify-content: space-between; }
 .tiquet-card-numero { font-family: var(--font-mono); font-size: 0.8em; color: var(--text-muted); font-weight: 700; }
