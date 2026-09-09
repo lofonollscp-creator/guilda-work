@@ -1943,10 +1943,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 
 /* ---- Gráfico de barras (Estadísticas) ---- */
+/* Borde de 1px en vez de solo sombra -- coherente con el resto de
+   tarjetas planas de la app (.panel, .tool-card...); una tarjeta que
+   solo se recorta por sombra se ve más "flotante"/difusa que nítida. */
 .bar-chart {
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   padding: 16px 20px;
   margin-bottom: 14px;
   display: flex;
