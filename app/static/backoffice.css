@@ -70,7 +70,10 @@
 .bo-tenant-card-top { display: flex; align-items: flex-start; gap: var(--space-2); }
 .bo-tenant-card-top .avatar-circulo { width: 40px; height: 40px; font-size: 0.85em; flex-shrink: 0; }
 .bo-tenant-card-titulo { flex: 1; min-width: 0; }
-.bo-tenant-card-titulo h3 { margin: 0 0 2px; font-size: 1.05em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Sin el color explícito, .content :where(h3) (pensada para subtítulos
+   discretos) apaga el nombre del tenant a gris -- mismo fallo real que
+   .tool-card-name/.tiquet-card-titulo en style.css. */
+.bo-tenant-card-titulo h3 { margin: 0 0 2px; font-size: 1.05em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .bo-tenant-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--font-size-sm); color: var(--text-muted); }
 
 .bo-tenant-card-modulos { display: flex; flex-wrap: wrap; gap: 4px; }
