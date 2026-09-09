@@ -43,16 +43,17 @@
 {% if not vencimientos %}
 <p class="empty-lane">{{ _('No hay vencimientos para este filtro.') }}</p>
 {% else %}
-<ul class="log-list">
+<div class="fiscal-layout">
+<ul class="log-list fiscal-lista">
   {% for v in vencimientos %}
-  <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+  <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}" data-cliente-id="{{ v.cliente_fiscal_id }}">
     <form action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=v.id) }}" method="post">
       <button type="submit" class="tarea-check" title="{{ _('Marcar como presentado') }}" {{ 'disabled' if v.estado == 'presentado' }}>
         {% if v.estado == 'presentado' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
       </button>
     </form>
     <span class="log-text">
-      <a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }} — {{ v.cliente_nombre }}</a>
+      <button type="button" class="fiscal-cliente-btn" data-cliente-id="{{ v.cliente_fiscal_id }}">{{ v.modelo }} — {{ v.cliente_nombre }}</button>
     </span>
     <span class="pill">{{ v.periodo }}</span>
     <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
@@ -69,5 +70,54 @@
   </li>
   {% endfor %}
 </ul>
+
+<aside class="fiscal-detalle" id="fiscal-detalle">
+  <p class="fiscal-detalle-vacio">{{ _('Pulsa un vencimiento para ver la ficha rápida del cliente.') }}</p>
+</aside>
+</div>
 {% endif %}
+
+<script>
+  // Master-detail: clic en el nombre del cliente pide el resumen por
+  // AJAX (app/rutas_fiscal.py:resumen_cliente_json -- sin llamadas a
+  // APIs externas, solo BD, para que abrir el panel sea instantáneo) y
+  // lo pinta en el lateral, sin navegar. "Ver ficha completa" sigue
+  // yendo a la página de siempre (con facturas/EspoCRM/documentos...).
+  (function () {
+    var panel = document.getElementById("fiscal-detalle");
+    if (!panel) return;
+    var botones = document.querySelectorAll(".fiscal-cliente-btn");
+    var urlBase = "/fiscal/clientes/";
+
+    function pintar(datos) {
+      var modelos = (datos.modelos || []).join(", ") || "{{ _('sin modelos asignados') }}";
+      panel.innerHTML =
+        '<p class="fiscal-detalle-nombre">' + datos.nombre + '</p>' +
+        (datos.nif ? '<p class="fiscal-detalle-nif mono">' + datos.nif + '</p>' : '') +
+        '<div class="fiscal-detalle-filas">' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Modelos") }}</span><span>' + modelos + '</span></div>' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Vencimientos pendientes") }}</span><span>' + datos.vencimientos_pendientes + '</span></div>' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Generación automática") }}</span><span>' + (datos.generacion_automatica ? '{{ _("Activa") }}' : '{{ _("Inactiva") }}') + '</span></div>' +
+        (datos.espocrm_url ? '<div class="fiscal-detalle-fila"><span>EspoCRM</span><span><a href="' + datos.espocrm_url + '" target="_blank" rel="noopener">{{ _("Ver cuenta") }} ↗</a></span></div>' : '') +
+        '</div>' +
+        '<div class="fiscal-detalle-acciones">' +
+        '<a class="btn btn-ghost" href="' + datos.url_ficha + '">{{ _("Ver ficha completa") }}</a>' +
+        '<a class="btn btn-primary" href="' + datos.url_generar_vencimientos + '">{{ _("Generar vencimientos") }}</a>' +
+        '</div>';
+    }
+
+    botones.forEach(function (boton) {
+      boton.addEventListener("click", function () {
+        var clienteId = boton.dataset.clienteId;
+        panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("Cargando…") }}</p>';
+        fetch(urlBase + clienteId + "/resumen.json")
+          .then(function (r) { return r.json(); })
+          .then(pintar)
+          .catch(function () {
+            panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("No se ha podido cargar.") }}</p>';
+          });
+      });
+    });
+  })();
+</script>
 {% endblock %}

@@ -1346,6 +1346,54 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 /* ---- Log list (menu page) ---- */
 .log-section h3 { font-size: 0.95em; color: var(--text-muted); margin-bottom: 10px; }
+/* Calendario fiscal (vencimientos): master-detail -- lista a la
+   izquierda, ficha rápida del cliente fija a la derecha, poblada por
+   AJAX al pulsar un vencimiento (ver el <script> de
+   fiscal_vencimientos.html y app/rutas_fiscal.py:resumen_cliente_json).
+   No sustituye la ficha completa (facturas/EspoCRM/documentos), que
+   sigue siendo su propia página -- esto es solo para no perder el
+   contexto de la lista al mirar un dato rápido. */
+.fiscal-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--space-5); align-items: start; }
+.fiscal-lista { min-width: 0; }
+.fiscal-detalle {
+  position: sticky;
+  top: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+.fiscal-detalle-vacio { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+.fiscal-detalle-nombre { margin: 0 0 2px; font-weight: 700; font-size: 1.05em; }
+.fiscal-detalle-nif { margin: 0 0 var(--space-3); color: var(--text-muted); font-size: 0.85em; }
+.fiscal-detalle-filas { display: flex; flex-direction: column; }
+.fiscal-detalle-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+}
+.fiscal-detalle-fila:last-child { border-bottom: none; }
+.fiscal-detalle-fila span:first-child { color: var(--text-muted); }
+.fiscal-detalle-acciones { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
+.fiscal-cliente-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.fiscal-cliente-btn:hover { color: var(--primary); text-decoration: underline; }
+@media (max-width: 900px) {
+  .fiscal-layout { grid-template-columns: 1fr; }
+  .fiscal-detalle { position: static; }
+}
+
 .log-list { list-style: none; padding: 0; margin: 0; }
 .log-item {
   display: flex;

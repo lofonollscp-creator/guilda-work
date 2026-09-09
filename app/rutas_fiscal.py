@@ -165,6 +165,34 @@ def ficha_cliente(cliente_id: int):
     )
 
 
+@fiscal_bp.route("/clientes/<int:cliente_id>/resumen.json")
+@login_required
+def resumen_cliente_json(cliente_id: int):
+    """Resumen ligero para el panel lateral de /fiscal/vencimientos (patrón
+    master-detail: la lista no navega a la ficha completa al hacer clic en
+    un cliente, solo pide esto por AJAX). Deliberadamente NO reutiliza
+    ficha_cliente() de arriba -- esa vista agrega facturas/contactos
+    EspoCRM/próxima cita/documentos/mensajes con varias llamadas a APIs
+    externas, pensada para una carga de página completa; aquí solo hacen
+    falta los datos que ya tiene cliente_fiscal en BD, sin llamadas
+    externas, para que abrir el panel sea instantáneo."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    vencimientos = db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id, estado="pendiente")
+    return {
+        "id": cliente["id"],
+        "nombre": cliente["nombre"],
+        "nif": cliente["nif"],
+        "modelos": db.modelos_fiscales_de_cliente(cliente),
+        "vencimientos_pendientes": len(vencimientos),
+        "generacion_automatica": bool(cliente["generacion_automatica"]),
+        "espocrm_url": espocrm.url_cuenta(cliente["espocrm_cuenta_id"]) if cliente["espocrm_cuenta_id"] else None,
+        "url_ficha": url_for("fiscal.ficha_cliente", cliente_id=cliente["id"]),
+        "url_generar_vencimientos": url_for("fiscal.generar_vencimientos", cliente_id=cliente["id"]),
+    }
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/espocrm")
 @login_required
 def ver_en_espocrm(cliente_id: int):
