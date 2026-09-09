@@ -33,6 +33,12 @@
     } else if (esAtajo(e, "b")) {
       e.preventDefault();
       location.href = "/historial?enfocar=1";
+    } else if (esAtajo(e, "i")) {
+      // "I" de incidencia -- el formulario de /tiquets/ ya tiene autofocus
+      // en el título (tiquets_tarjetas.html), no hace falta un ?nueva=1 +
+      // JS de enfoque como con tareas/histórico.
+      e.preventDefault();
+      location.href = "/tiquets/";
     } else if (e.key === "?" && !e.ctrlKey && !e.altKey && !e.metaKey && !escribiendoEnCampo(e)) {
       e.preventDefault();
       abrirAyudaAtajos();

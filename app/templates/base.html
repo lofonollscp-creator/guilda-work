@@ -121,6 +121,18 @@
         </button>
         <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
         <div class="ajustes-menu">
+          <button type="button" id="notificaciones-toggle" class="ajustes-toggle" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
+            <span class="notificaciones-contador" id="notificaciones-contador" hidden>0</span>
+          </button>
+          <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
+            <p class="notificaciones-titulo">{{ _('Notificaciones') }}</p>
+            <div id="notificaciones-lista">
+              <p class="notificaciones-vacio">{{ _('Cargando…') }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="ajustes-menu">
           <button type="button" id="ajustes-toggle" class="ajustes-toggle" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}">
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg>
           </button>
@@ -211,6 +223,7 @@
         <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd> <span>{{ _('Nueva nota') }}</span></li>
         <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd> <span>{{ _('Nueva tarea') }}</span></li>
         <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>B</kbd> <span>{{ _('Buscar en el histórico') }}</span></li>
+        <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>I</kbd> <span>{{ _('Nuevo tiquet (incidencia/sugerencia)') }}</span></li>
         <li><kbd>Ctrl</kbd> + <kbd>K</kbd> <span>{{ _('Buscar en notas, tareas y correo') }}</span></li>
         <li><kbd>?</kbd> <span>{{ _('Mostrar esta ayuda') }}</span></li>
         <li><kbd>Esc</kbd> <span>{{ _('Cerrar ventana emergente') }}</span></li>

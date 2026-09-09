@@ -4512,6 +4512,81 @@ def nombre_mostrado_usuario(usuario_id: int) -> str | None:
         conn.close()
 
 
+# --- Centro de notificaciones (Fase G5) -------------------------------------
+# Agrega en un solo sitio eventos recientes relevantes para EL USUARIO QUE
+# MIRA (no un sistema de eventos nuevo -- reutiliza consultas ya existentes
+# de tres tablas distintas): vencimientos fiscales que se le han asignado,
+# tiquets propios cuyo estado ha cambiado, y correcciones de fichaje que le
+# afectan. Antes de esto cada cosa solo se veía entrando en su propia
+# pantalla -- no había un sitio que agregara "qué ha pasado" de un vistazo.
+
+NOTIFICACIONES_DIAS_VENTANA = 14
+
+
+def notificaciones_recientes(usuario_id: int, tenant_id: int | None) -> list[dict]:
+    conn = get_connection()
+    try:
+        limite = (datetime.now() - timedelta(days=NOTIFICACIONES_DIAS_VENTANA)).isoformat(timespec="seconds")
+        eventos: list[dict] = []
+
+        # 1) Vencimientos fiscales asignados a este usuario, próximos 7 días
+        #    y todavía pendientes -- mismo criterio que el hilo de push
+        #    (_recordatorio_vencimientos_fiscales), pero aquí se lee bajo
+        #    demanda al abrir el panel, no se manda nada por push aparte.
+        if tenant_id is not None:
+            hoy = now_iso()[:10]
+            limite_fecha = _fecha_exclusiva((datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d"))
+            for v in conn.execute(
+                """SELECT v.id, v.modelo, v.fecha_limite, c.nombre AS cliente_nombre
+                   FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+                   WHERE v.tenant_id = ? AND v.usuario_id = ? AND v.estado = 'pendiente' AND v.papelera_en IS NULL
+                     AND v.fecha_limite >= ? AND v.fecha_limite < ?""",
+                (tenant_id, usuario_id, hoy, limite_fecha),
+            ).fetchall():
+                eventos.append({
+                    "tipo": "vencimiento_fiscal",
+                    "texto": f"{v['modelo']} de {v['cliente_nombre']} vence el {v['fecha_limite'][:10]}",
+                    "url": "/fiscal/vencimientos",
+                    "fecha": v["fecha_limite"],
+                })
+
+        # 2) Tiquets propios cuyo estado ya no es 'sin_revisar' (alguien lo
+        #    ha revisado/movido) y el cambio es reciente.
+        for t in conn.execute(
+            """SELECT id, titulo, estado, actualizado_en FROM tiquets
+               WHERE usuario_id = ? AND estado != 'sin_revisar' AND actualizado_en >= ?
+               ORDER BY actualizado_en DESC LIMIT 20""",
+            (usuario_id, limite),
+        ).fetchall():
+            etiqueta_estado = "en revisión" if t["estado"] == "en_revision" else "finalizado"
+            eventos.append({
+                "tipo": "tiquet",
+                "texto": f"Tu tiquet «{t['titulo']}» está {etiqueta_estado}",
+                "url": "/tiquets",
+                "fecha": t["actualizado_en"],
+            })
+
+        # 3) Correcciones de fichaje hechas por un admin/gestor sobre este
+        #    usuario -- se entera aunque no haya entrado a su historial.
+        for f in conn.execute(
+            """SELECT id, tipo, marca_tiempo, creado_en FROM fichajes
+               WHERE usuario_id = ? AND origen = 'correccion_admin' AND creado_en >= ?
+               ORDER BY creado_en DESC LIMIT 20""",
+            (usuario_id, limite),
+        ).fetchall():
+            eventos.append({
+                "tipo": "fichaje",
+                "texto": f"Se ha corregido tu fichaje de '{f['tipo']}' del {f['marca_tiempo'][:10]}",
+                "url": "/fichaje/historial",
+                "fecha": f["creado_en"],
+            })
+
+        eventos.sort(key=lambda e: e["fecha"], reverse=True)
+        return eventos[:20]
+    finally:
+        conn.close()
+
+
 # --- IA local (Ollama/LM Studio): recordar el último proveedor/modelo usado --
 
 def obtener_preferencias_ia_local(usuario_id: int) -> sqlite3.Row:

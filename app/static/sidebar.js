@@ -101,4 +101,56 @@
       }
     });
   }
+
+  // Centro de notificaciones (Fase G5): mismo patrón toggle/click-fuera que
+  // el panel de ajustes de arriba. La campana necesita saber el contador
+  // ANTES de que el usuario abra nada (para avisar de un vistazo), así que
+  // /notificaciones se pide una vez al cargar cualquier página -- no hay
+  // "carga perezosa" real posible aquí, el clic solo enseña/oculta el
+  // panel ya relleno.
+  const notifToggle = document.getElementById("notificaciones-toggle");
+  const notifPanel = document.getElementById("notificaciones-panel");
+  const notifContador = document.getElementById("notificaciones-contador");
+  const notifLista = document.getElementById("notificaciones-lista");
+  if (notifToggle && notifPanel && notifLista) {
+    const cargar = () => {
+      fetch("/notificaciones")
+        .then((r) => r.json())
+        .then((eventos) => {
+          notifContador.hidden = eventos.length === 0;
+          notifContador.textContent = eventos.length > 9 ? "9+" : String(eventos.length);
+          if (eventos.length === 0) {
+            notifLista.innerHTML = '<p class="notificaciones-vacio">Nada nuevo por aquí.</p>';
+            return;
+          }
+          const iconoPorTipo = { vencimiento_fiscal: "calendar-days", tiquet: "ticket", fichaje: "clock" };
+          notifLista.innerHTML = eventos
+            .map((ev) => {
+              const icono = iconoPorTipo[ev.tipo] || "bell";
+              const fecha = (ev.fecha || "").slice(0, 10);
+              return (
+                '<a class="notificaciones-item" href="' + ev.url + '">' +
+                '<svg aria-hidden="true"><use href="/static/iconos.svg#icono-' + icono + '"></use></svg>' +
+                '<span class="notificaciones-item-texto">' + ev.texto + "</span>" +
+                '<span class="notificaciones-item-fecha">' + fecha + "</span>" +
+                "</a>"
+              );
+            })
+            .join("");
+        })
+        .catch(() => {
+          notifLista.innerHTML = '<p class="notificaciones-vacio">No se ha podido cargar.</p>';
+        });
+    };
+    cargar();
+    notifToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notifPanel.hidden = !notifPanel.hidden;
+    });
+    document.addEventListener("click", (e) => {
+      if (!notifPanel.hidden && !notifPanel.contains(e.target) && e.target !== notifToggle) {
+        notifPanel.hidden = true;
+      }
+    });
+  }
 })();

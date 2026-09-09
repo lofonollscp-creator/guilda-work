@@ -486,6 +486,7 @@ def inicio():
         total_vencimientos_proximos=total_vencimientos_proximos,
         hasta_vencimientos_proximos=hasta_vencimientos_proximos,
         onboarding=onboarding,
+        hoy_iso=hoy,
     )
 
 
@@ -1058,6 +1059,15 @@ def ajustes_cuenta():
     if datos is None:
         return g._redireccion_flujo
     return render_template("ajustes_cuenta.html", **datos)
+
+
+@app.route("/notificaciones")
+@login_required
+def notificaciones():
+    """JSON para el panel de campana del top-bar (Fase G5) -- sin
+    envoltorio {"ok":...} porque no es parte de la API REST móvil
+    (app/rutas_api.py), es un fetch interno de la propia web."""
+    return jsonify(db.notificaciones_recientes(g.usuario_id, g.tenant_id))
 
 
 @app.route("/estadisticas")

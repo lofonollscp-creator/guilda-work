@@ -408,6 +408,53 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .ajustes-panel-icono { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-muted); }
 .ajustes-panel-btn:hover { background: var(--bg); }
 .ajustes-idiomas { display: flex; gap: 4px; padding: 4px 12px 8px; }
+
+/* Centro de notificaciones (Fase G5) -- botón campana + panel, mismo
+   esqueleto que .ajustes-toggle/.ajustes-panel (ver base.html), con el
+   contador como una pastilla superpuesta y una lista de eventos en vez
+   de botones de acción. */
+#notificaciones-toggle { position: relative; }
+.notificaciones-contador {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  font-size: 0.62em;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+}
+.notificaciones-panel { min-width: 320px; max-width: 360px; padding: var(--space-3); }
+.notificaciones-titulo {
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-1);
+  font-size: 0.78em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+.notificaciones-vacio { margin: 0; padding: var(--space-2); color: var(--text-muted); font-size: 0.88em; }
+.notificaciones-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 9px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.85em;
+}
+.notificaciones-item:hover { background: var(--bg); }
+.notificaciones-item svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; color: var(--primary); }
+.notificaciones-item-texto { flex: 1; line-height: 1.35; }
+.notificaciones-item-fecha { color: var(--text-muted); font-size: 0.85em; font-family: var(--font-mono); white-space: nowrap; }
 .ajustes-idiomas form { flex: 1; }
 .ajustes-idioma-btn {
   width: 100%;

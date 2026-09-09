@@ -38,14 +38,14 @@
 {% endif %}
 
 <section class="dash-stats">
-  <div class="dash-stat">
+  <a class="dash-stat dash-stat-link" href="#dash-menus">
     <span class="dash-stat-valor">{{ total_activas }}</span>
     <span class="dash-stat-label">{{ _('tareas en curso') }}</span>
-  </div>
-  <div class="dash-stat">
+  </a>
+  <a class="dash-stat dash-stat-link" href="{{ url_for('historial', desde=hoy_iso, hasta=hoy_iso) }}">
     <span class="dash-stat-valor">{{ total_notas_hoy }}</span>
     <span class="dash-stat-label">{{ _('notas hoy') }}</span>
-  </div>
+  </a>
   <a class="dash-stat dash-stat-link" href="{{ url_for('correo.bandeja') }}">
     <span class="dash-stat-valor">{{ correo_no_leidos_sidebar }}</span>
     <span class="dash-stat-label">{{ _('correos sin leer') }}</span>
@@ -134,6 +134,7 @@
   {% set favoritos = menus|selectattr('favorito')|list %}
   {% set resto = menus|rejectattr('favorito')|list %}
 
+  <div id="dash-menus">
   {% if favoritos %}
   <h3 class="menu-grid-titulo">★ {{ _('Favoritos') }}</h3>
   <div class="menu-grid">
@@ -143,6 +144,7 @@
   {% endif %}
   <div class="menu-grid">
     {% for m in resto %}{{ tarjeta_menu(m, loop.first, loop.last, resto|length > 1) }}{% endfor %}
+  </div>
   </div>
 {% endif %}
 
