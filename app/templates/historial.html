@@ -28,6 +28,8 @@
   <a class="btn btn-ghost" href="{{ url_for('importar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg> {{ _('Importar') }}</a>
 </form>
 
+<div class="historial-layout">
+<div class="historial-main">
 <div class="table-wrap">
 <table class="historial-table">
   <thead>
@@ -84,6 +86,32 @@
   {% endif %}
 </nav>
 {% endif %}
+</div>
+
+<aside class="historial-resumen">
+  <h3>{{ _('Resumen del periodo') }}</h3>
+  <div class="historial-resumen-kpi">
+    <span>{{ _('Entradas') }}</span>
+    <strong>{{ resumen.total_entradas }}</strong>
+  </div>
+  <div class="historial-resumen-kpi">
+    <span>{{ _('Tiempo registrado') }}</span>
+    <strong>{{ (resumen.total_segundos // 3600) }}h {{ (resumen.total_segundos % 3600) // 60 }}m</strong>
+  </div>
+  {% if resumen.por_menu %}
+  <p class="historial-resumen-subtitulo">{{ _('Por menú') }}</p>
+  <ul class="historial-resumen-barras">
+    {% for m in resumen.por_menu %}
+    <li>
+      <span class="historial-resumen-barra-nombre">{{ m.nombre }}</span>
+      <span class="historial-resumen-barra-track"><span class="historial-resumen-barra-fill" style="width: {{ m.porcentaje }}%; background: {{ m.color }};"></span></span>
+      <span class="historial-resumen-barra-pct">{{ m.porcentaje }}%</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</aside>
+</div>
 
 <section class="ia-section">
   <h3>{{ _('Generar informe con IA') }}</h3>

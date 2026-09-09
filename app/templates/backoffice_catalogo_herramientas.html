@@ -21,12 +21,17 @@
       </thead>
       <tbody>
         {% for h in catalogo_herramientas %}
+        {% set activos = adopcion.get(h.id, 0) %}
+        {% set porcentaje = (activos / total_tenants * 100) | round | int if total_tenants else 0 %}
         <tr>
           <td>{{ h.icono }}</td>
           <td>{{ h.nombre }}</td>
           <td>{{ h.descripcion }}</td>
           <td>
-            {{ adopcion.get(h.id, 0) }} / {{ total_tenants }}
+            <div class="bo-adopcion">
+              <span class="mono">{{ activos }} / {{ total_tenants }}</span>
+              <span class="bo-adopcion-track"><span class="bo-adopcion-fill" style="width: {{ porcentaje }}%;"></span></span>
+            </div>
           </td>
         </tr>
         {% else %}

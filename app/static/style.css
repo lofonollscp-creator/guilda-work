@@ -838,6 +838,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
+/* Layout de dos columnas del dashboard: acciones+menús a la izquierda,
+   actividad de "Hoy" fija a la derecha -- el asistente IA se queda FUERA
+   de esta rejilla (sección aparte, a todo el ancho) porque es un
+   componente funcional real que necesita más aire que los 320px de la
+   barra lateral. */
+.dash-layout { display: grid; grid-template-columns: 1fr 320px; gap: var(--space-5); align-items: start; }
+.dash-main { min-width: 0; }
+.dash-sidebar { position: sticky; top: var(--space-4); }
+.dash-sidebar .log-section { margin-bottom: 0; }
+@media (max-width: 900px) {
+  .dash-layout { grid-template-columns: 1fr; }
+  .dash-sidebar { position: static; }
+}
+
 .dash-ia { margin: var(--space-6) 0; }
 .dash-ia h3 { margin-bottom: var(--space-3); }
 .dash-ia .ia-chat { box-shadow: var(--shadow-sm); }
@@ -1455,6 +1469,42 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .webhook-eventos label { flex-direction: row; align-items: center; gap: 4px; white-space: nowrap; }
 
+/* Histórico: tabla+paginación a la izquierda, resumen del periodo fijo
+   a la derecha -- mismo criterio de "actividad en un lateral" que
+   .dash-layout del dashboard. */
+.historial-layout { display: grid; grid-template-columns: 1fr 280px; gap: var(--space-5); align-items: start; }
+.historial-main { min-width: 0; }
+.historial-resumen {
+  position: sticky;
+  top: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+.historial-resumen h3 { margin: 0 0 var(--space-3); font-size: 0.95em; color: var(--text-muted); }
+.historial-resumen-kpi {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+}
+.historial-resumen-kpi:last-of-type { border-bottom: none; }
+.historial-resumen-kpi strong { font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace; font-size: 1.1em; }
+.historial-resumen-subtitulo { margin: var(--space-3) 0 var(--space-2); font-size: var(--font-size-sm); color: var(--text-muted); }
+.historial-resumen-barras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.historial-resumen-barras li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); }
+.historial-resumen-barra-nombre { width: 70px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.historial-resumen-barra-track { flex: 1; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
+.historial-resumen-barra-fill { display: block; height: 100%; border-radius: 3px; }
+.historial-resumen-barra-pct { width: 32px; flex-shrink: 0; text-align: right; color: var(--text-muted); font-size: 0.85em; }
+@media (max-width: 900px) {
+  .historial-layout { grid-template-columns: 1fr; }
+  .historial-resumen { position: static; }
+}
+
 .table-wrap {
   background: var(--surface);
   border-radius: var(--radius);
@@ -1662,6 +1712,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 6px;
   font-size: 0.85em;
   color: var(--text-muted);
+}
+
+/* Mi perfil usa dos columnas dentro del mismo .edit-form (identidad y
+   cuenta a la izquierda, preferencias a la derecha) en vez de un único
+   .max-width:520px apilado -- override solo para esta página, .edit-form
+   sigue siendo de una columna en el resto de formularios de la app. */
+.perfil-form { max-width: 760px; display: grid; grid-template-columns: 280px 1fr; gap: var(--space-5); align-items: start; }
+.perfil-form-col { display: flex; flex-direction: column; gap: 14px; }
+.perfil-cuenta-link { display: inline-flex; align-items: center; gap: var(--space-2); width: 100%; justify-content: center; }
+@media (max-width: 640px) {
+  .perfil-form { grid-template-columns: 1fr; }
 }
 
 /* Fila de avatar dentro de .edit-form (app/templates/ajustes_perfil.html)
@@ -3047,6 +3108,27 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    nada adicional — esta sección solo pone las tarjetas en vidrio
    esmerilado con un acento de color por herramienta.*/
 
+.tools-buscador {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 360px;
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  color: var(--text-muted);
+}
+.tools-buscador svg { width: 15px; height: 15px; flex-shrink: 0; }
+.tools-buscador input {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  outline: none;
+}
 .tools-section { margin-bottom: var(--space-6); }
 .tools-section:last-child { margin-bottom: 0; }
 .tools-section-title {
@@ -3505,15 +3587,27 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
 }
+/* Fichar es la acción principal de esta pantalla -- tarjeta "hero"
+   centrada a la izquierda, con el registro de hoy como referencia
+   secundaria fija a la derecha (mismo criterio que .dash-layout /
+   .historial-layout: lo accesorio va al lateral, no debajo). */
+.fichaje-layout { display: grid; grid-template-columns: 1fr 280px; gap: var(--space-5); align-items: start; }
+.fichaje-sidebar { margin-bottom: 0; position: sticky; top: var(--space-4); }
+@media (max-width: 900px) {
+  .fichaje-layout { grid-template-columns: 1fr; }
+  .fichaje-sidebar { position: static; }
+}
+
 .fichaje-panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 24px; margin-bottom: 24px;
+  padding: 32px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-4);
 }
-.fichaje-estado { margin-bottom: 18px; }
+.fichaje-estado { margin-bottom: 0; }
 .pill.estado-fuera { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
 .pill.estado-dentro { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
 .pill.estado-en-pausa { background: color-mix(in srgb, var(--warning) 16%, transparent); border-color: color-mix(in srgb, var(--warning) 35%, transparent); color: var(--warning); }
-.fichaje-botones { display: flex; gap: 12px; flex-wrap: wrap; }
+.fichaje-botones { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .fichaje-btn { padding: 16px 28px; font-size: 1.05em; font-weight: 700; border-radius: var(--radius); }
 .fichaje-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .fichaje-btn-entrada { background: var(--success); border-color: var(--success); color: white; }

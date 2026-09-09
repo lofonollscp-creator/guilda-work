@@ -8,6 +8,11 @@
   </div>
 </header>
 
+<div class="tools-buscador">
+  <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+  <input type="search" id="tools-buscar-input" placeholder="{{ _('Buscar herramienta...') }}" aria-label="{{ _('Buscar herramienta') }}">
+</div>
+
 <div class="tools-page">
   {% set categorias = herramientas | map(attribute="categoria") | unique | list %}
   {% for categoria in categorias %}
@@ -65,4 +70,30 @@
   {% endif %}
   {% endfor %}
 </div>
+
+<script>
+  // Filtro cliente-side por nombre -- el catálogo es pequeño (una
+  // decena de herramientas por tenant), no hace falta pedirlo al
+  // servidor. Oculta la sección entera de una categoría si ningún
+  // card suyo coincide, para no dejar cabeceras huérfanas sobre un
+  // hueco vacío.
+  (function () {
+    var input = document.getElementById("tools-buscar-input");
+    if (!input) return;
+    var secciones = document.querySelectorAll(".tools-section");
+    input.addEventListener("input", function () {
+      var texto = input.value.trim().toLowerCase();
+      secciones.forEach(function (seccion) {
+        var algunaVisible = false;
+        seccion.querySelectorAll(".tool-card").forEach(function (card) {
+          var nombre = (card.querySelector(".tool-card-name")?.textContent || "").toLowerCase();
+          var coincide = !texto || nombre.includes(texto);
+          card.hidden = !coincide;
+          if (coincide) algunaVisible = true;
+        });
+        seccion.hidden = !algunaVisible;
+      });
+    });
+  })();
+</script>
 {% endblock %}

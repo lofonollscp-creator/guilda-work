@@ -118,3 +118,39 @@
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
+
+/* Catálogo de herramientas: barra de adopción en vez de solo "N / M" en
+   texto plano -- se ve de un vistazo qué herramientas usa casi nadie. */
+.bo-adopcion { display: flex; align-items: center; gap: var(--space-2); }
+.bo-adopcion .mono { width: 48px; flex-shrink: 0; font-size: 0.85em; color: var(--text-muted); }
+.bo-adopcion-track { flex: 1; max-width: 140px; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
+.bo-adopcion-fill { display: block; height: 100%; border-radius: 3px; background: var(--primary); }
+
+/* Planes y extras: tarjetas en vez de tabla-formulario editable cruda --
+   mismos <input form="editar-plan-N"> ligados al form oculto de siempre
+   (app/main.py:editar_plan), solo cambia el contenedor visual. */
+.bo-planes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4); }
+.bo-plan-card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
+.bo-plan-card.is-inactivo { opacity: 0.6; }
+.bo-plan-card-fila { display: flex; align-items: center; gap: var(--space-2); }
+.bo-plan-nombre { flex: 1; font-weight: 700; font-size: 1.05em; border: none; background: none; padding: 2px 0; }
+.bo-plan-inactivo { font-size: 0.78em; color: var(--text-muted); white-space: nowrap; }
+.bo-plan-desc { border: none; background: none; color: var(--text-muted); font-size: 0.88em; padding: 2px 0; }
+.bo-plan-campo { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 0.78em; color: var(--text-muted); }
+.bo-plan-card-pie { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding-top: var(--space-2); border-top: 1px solid var(--border); }
+
+.bo-extras-lista { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
+.bo-extra-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); flex-wrap: wrap; }
+.bo-extra-nombre { font-weight: 600; border: none; background: none; width: 200px; flex-shrink: 0; }
+.bo-extra-desc { flex: 1; min-width: 160px; border: none; background: none; color: var(--text-muted); font-size: 0.9em; }
+.bo-extra-precio { width: 90px; flex-shrink: 0; }
+
+/* Auditoría: timeline en vez de tabla plana -- es un registro
+   cronológico, no datos tabulares que se comparen columna a columna. */
+.bo-auditoria-item { display: flex; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.bo-auditoria-item:last-child { border-bottom: none; }
+.bo-auditoria-dot-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.bo-auditoria-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-top: 6px; }
+.bo-auditoria-linea { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
+.bo-auditoria-cabecera { display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px; }
+.bo-auditoria-fecha { font-size: 0.82em; color: var(--text-muted); }

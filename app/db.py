@@ -3847,6 +3847,33 @@ def historial(
         conn.close()
 
 
+def resumen_historial(usuario_id: int, desde=None, hasta=None, categoria_id=None, texto=None) -> dict:
+    """Agregado del histórico para el filtro dado (panel "Resumen del
+    periodo" de /historial): total de entradas, tiempo total registrado y
+    reparto por menú. Reutiliza historial() sin paginar -- mismo criterio
+    que export.py (construir_export), que ya trae el conjunto completo del
+    filtro para generar el export; aquí solo se agrega en Python en vez de
+    escribirse como columnas, porque el dataset por usuario es pequeño
+    (nunca miles de filas) y así se evita duplicar la query UNION ALL de
+    arriba con un segundo camino de SQL a mantener en paralelo.
+    """
+    filas = historial(usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=texto)
+    total_segundos = sum(f["duracion_segundos"] or 0 for f in filas)
+    por_menu: dict[str, dict] = {}
+    for f in filas:
+        nombre = f["categoria_nombre"] or "Sin menú"
+        entrada = por_menu.setdefault(nombre, {"nombre": nombre, "color": f["categoria_color"] or "#7c8ba1", "entradas": 0})
+        entrada["entradas"] += 1
+    total_entradas = len(filas)
+    for entrada in por_menu.values():
+        entrada["porcentaje"] = round(entrada["entradas"] / total_entradas * 100) if total_entradas else 0
+    return {
+        "total_entradas": total_entradas,
+        "total_segundos": total_segundos,
+        "por_menu": sorted(por_menu.values(), key=lambda e: e["entradas"], reverse=True),
+    }
+
+
 # --- Estadísticas ----------------------------------------------------------
 
 def estadisticas_por_categoria(usuario_id: int, desde: str | None = None, hasta: str | None = None) -> list[dict]:

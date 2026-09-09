@@ -63,6 +63,8 @@
   {% endif %}
 </section>
 
+<div class="dash-layout">
+<div class="dash-main">
 <section class="dash-acciones">
   <form class="dash-accion" action="{{ url_for('crear_nota') }}" method="post">
     <label for="dash-nota-texto" title="{{ _('Atajo: Ctrl+Alt+N') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Nota rápida') }}</label>
@@ -154,37 +156,39 @@
   </div>
   </div>
 {% endif %}
+</div>
 
-{% if menus %}
-<section class="log-section">
-  <h3>{{ _('Hoy') }}</h3>
-  {% if not log_hoy %}
-  <p class="empty-lane">{{ _('Todavía no has registrado nada hoy.') }}</p>
-  {% else %}
-  <ul class="log-list">
-    {% for f in log_hoy %}
-    <li class="log-item">
-      <span class="log-time">{{ f.timestamp[11:16] if f.timestamp else '' }}</span>
-      <span class="dot" style="background: {{ f.categoria_color or '#7c8ba1' }};"></span>
-      <span class="log-menu">{{ f.categoria_nombre or '—' }}</span>
-      <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">
-        {% if f.origen == 'nota' %}{{ _('Nota') }}
-        {% elif f.tipo == 'instantanea' %}{{ _('Evento') }}
-        {% elif f.estado == 'en_curso' %}{{ _('En curso') }}
-        {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
-        {% else %}{{ _('Tarea') }}{% endif %}
-      </span>
-      <span class="log-text">{{ f.texto }}</span>
-      {% if f.duracion_segundos is not none %}
-      <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
-      {% endif %}
-      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-</section>
-{% endif %}
+<aside class="dash-sidebar">
+  <section class="log-section">
+    <h3>{{ _('Hoy') }}</h3>
+    {% if not log_hoy %}
+    <p class="empty-lane">{{ _('Todavía no has registrado nada hoy.') }}</p>
+    {% else %}
+    <ul class="log-list">
+      {% for f in log_hoy %}
+      <li class="log-item">
+        <span class="log-time">{{ f.timestamp[11:16] if f.timestamp else '' }}</span>
+        <span class="dot" style="background: {{ f.categoria_color or '#7c8ba1' }};"></span>
+        <span class="log-menu">{{ f.categoria_nombre or '—' }}</span>
+        <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">
+          {% if f.origen == 'nota' %}{{ _('Nota') }}
+          {% elif f.tipo == 'instantanea' %}{{ _('Evento') }}
+          {% elif f.estado == 'en_curso' %}{{ _('En curso') }}
+          {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
+          {% else %}{{ _('Tarea') }}{% endif %}
+        </span>
+        <span class="log-text">{{ f.texto }}</span>
+        {% if f.duracion_segundos is not none %}
+        <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
+        {% endif %}
+        <a class="log-edit" href="{{ url_for('editar_nota', nota_id=f.id) if f.origen == 'nota' else url_for('editar_tarea', tarea_id=f.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+</aside>
+</div>
 
 <section class="dash-ia">
   <h3>{{ _('Asistente IA') }}</h3>

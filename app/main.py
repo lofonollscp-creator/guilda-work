@@ -806,6 +806,7 @@ def _contexto_historial(desde, hasta, categoria_id, q=None, pagina=1, **extra):
     preferencias_ia_local = db.obtener_preferencias_ia_local(g.usuario_id)
     ctx = {
         "filas": filas,
+        "resumen": db.resumen_historial(g.usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q),
         "categorias": db.listar_categorias(g.usuario_id),
         "desde": desde or "",
         "hasta": hasta or "",

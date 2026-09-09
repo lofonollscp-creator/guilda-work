@@ -9,29 +9,26 @@
 </header>
 
 <section class="ia-section">
-  <div class="table-wrap">
-    <table class="historial-table">
-      <thead>
-        <tr>
-          <th>{{ _('Fecha') }}</th>
-          <th>{{ _('Quién') }}</th>
-          <th>{{ _('Acción') }}</th>
-          <th>{{ _('Detalle') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for a in auditoria %}
-        <tr>
-          <td class="mono">{{ a.creado_en[:16].replace('T', ' ') }}</td>
-          <td>{{ a.usuario_email or _('(usuario eliminado)') }}</td>
-          <td><span class="log-badge log-badge-instantanea">{{ a.accion }}</span></td>
-          <td>{{ a.detalle or '' }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4" class="empty">{{ _('Todavía no hay ninguna entrada de auditoría.') }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% if not auditoria %}
+  <p class="empty">{{ _('Todavía no hay ninguna entrada de auditoría.') }}</p>
+  {% else %}
+  <div class="bo-auditoria">
+    {% for a in auditoria %}
+    <div class="bo-auditoria-item">
+      <div class="bo-auditoria-dot-col">
+        <span class="bo-auditoria-dot"></span>
+        {% if not loop.last %}<div class="bo-auditoria-linea"></div>{% endif %}
+      </div>
+      <div>
+        <div class="bo-auditoria-cabecera">
+          <span class="log-badge log-badge-instantanea">{{ a.accion }}</span>
+          <span class="bo-auditoria-fecha mono">{{ a.creado_en[:16].replace('T', ' ') }}</span>
+        </div>
+        <div>{{ a.usuario_email or _('(usuario eliminado)') }}{% if a.detalle %} — {{ a.detalle }}{% endif %}</div>
+      </div>
+    </div>
+    {% endfor %}
   </div>
+  {% endif %}
 </section>
 {% endblock %}

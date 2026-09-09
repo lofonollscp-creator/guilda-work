@@ -14,44 +14,39 @@
 
 <section class="quick-card">
   <label>{{ _('Planes') }}</label>
-  <div class="table-wrap">
-    <table class="historial-table">
-      <thead>
-        <tr>
-          <th>{{ _('Nombre') }}</th>
-          <th>{{ _('Descripción') }}</th>
-          <th>{{ _('Precio mensual (€)') }}</th>
-          <th>{{ _('Máx. usuarios') }}</th>
-          <th></th>
-          <th>Stripe</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in planes %}
-        <tr>
-          <td><input type="text" name="nombre" form="editar-plan-{{ p.id }}" value="{{ p.nombre }}" required></td>
-          <td><input type="text" name="descripcion" form="editar-plan-{{ p.id }}" value="{{ p.descripcion or '' }}"></td>
-          <td><input type="number" name="precio_mensual_eur" form="editar-plan-{{ p.id }}" step="0.01" min="0" value="{{ '%.2f'|format(p.precio_mensual_centimos / 100) if p.precio_mensual_centimos else '' }}" placeholder="{{ _('sin fijar') }}"></td>
-          <td><input type="number" name="max_usuarios" form="editar-plan-{{ p.id }}" min="1" value="{{ p.max_usuarios or '' }}" placeholder="{{ _('ilimitado') }}"></td>
-          <td><button type="submit" form="editar-plan-{{ p.id }}" class="btn btn-ghost">{{ _('Guardar') }}</button></td>
-          <td>
-            {% if p.stripe_price_id %}
-            <span class="log-badge log-badge-duracion">{{ _('sincronizado') }}</span>
-            {% else %}
-            <form method="post" action="{{ url_for('backoffice.sincronizar_plan_stripe', plan_id=p.id) }}" style="display:inline;">
-              <button type="submit" class="btn btn-ghost" {{ 'disabled' if not p.precio_mensual_centimos or not stripe_configurado }}>{{ _('Sincronizar con Stripe') }}</button>
-            </form>
-            {% endif %}
-          </td>
-          <td>{{ '' if p.activo else _('(inactivo)') }}</td>
-        </tr>
+  {% if not planes %}
+  <p class="empty">{{ _('Todavía no hay ningún plan.') }}</p>
+  {% else %}
+  <div class="bo-planes-grid">
+    {% for p in planes %}
+    <div class="bo-plan-card {{ 'is-inactivo' if not p.activo }}">
+      <div class="bo-plan-card-fila">
+        <input type="text" name="nombre" form="editar-plan-{{ p.id }}" value="{{ p.nombre }}" required class="bo-plan-nombre">
+        {% if not p.activo %}<span class="bo-plan-inactivo">{{ _('(inactivo)') }}</span>{% endif %}
+      </div>
+      <input type="text" name="descripcion" form="editar-plan-{{ p.id }}" value="{{ p.descripcion or '' }}" placeholder="{{ _('Descripción') }}" class="bo-plan-desc">
+      <div class="bo-plan-card-fila">
+        <label class="bo-plan-campo">{{ _('€/mes') }}
+          <input type="number" name="precio_mensual_eur" form="editar-plan-{{ p.id }}" step="0.01" min="0" value="{{ '%.2f'|format(p.precio_mensual_centimos / 100) if p.precio_mensual_centimos else '' }}" placeholder="{{ _('sin fijar') }}">
+        </label>
+        <label class="bo-plan-campo">{{ _('Máx. usuarios') }}
+          <input type="number" name="max_usuarios" form="editar-plan-{{ p.id }}" min="1" value="{{ p.max_usuarios or '' }}" placeholder="{{ _('ilimitado') }}">
+        </label>
+      </div>
+      <div class="bo-plan-card-pie">
+        <button type="submit" form="editar-plan-{{ p.id }}" class="btn btn-ghost">{{ _('Guardar') }}</button>
+        {% if p.stripe_price_id %}
+        <span class="log-badge log-badge-duracion">{{ _('sincronizado') }}</span>
         {% else %}
-        <tr><td colspan="7" class="empty">{{ _('Todavía no hay ningún plan.') }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        <form method="post" action="{{ url_for('backoffice.sincronizar_plan_stripe', plan_id=p.id) }}">
+          <button type="submit" class="btn btn-ghost" {{ 'disabled' if not p.precio_mensual_centimos or not stripe_configurado }}>{{ _('Sincronizar con Stripe') }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
   </div>
+  {% endif %}
   {% for p in planes %}
   <form id="editar-plan-{{ p.id }}" method="post" action="{{ url_for('backoffice.editar_plan', plan_id=p.id) }}" hidden></form>
   {% endfor %}
@@ -69,40 +64,29 @@
 <section class="quick-card">
   <label>{{ _('Extras') }}</label>
   <p class="subtitle">{{ _('Para ampliar momentáneamente el uso de un tenant (usuario adicional, almacenamiento extra...) -- se activan desde la ficha de cada tenant, con o sin fecha de caducidad.') }}</p>
-  <div class="table-wrap">
-    <table class="historial-table">
-      <thead>
-        <tr>
-          <th>{{ _('Nombre') }}</th>
-          <th>{{ _('Descripción') }}</th>
-          <th>{{ _('Precio (€)') }}</th>
-          <th></th>
-          <th>Stripe</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for e in extras %}
-        <tr>
-          <td><input type="text" name="nombre" form="editar-extra-{{ e.id }}" value="{{ e.nombre }}" required></td>
-          <td><input type="text" name="descripcion" form="editar-extra-{{ e.id }}" value="{{ e.descripcion or '' }}"></td>
-          <td><input type="number" name="precio_eur" form="editar-extra-{{ e.id }}" step="0.01" min="0" value="{{ '%.2f'|format(e.precio_centimos / 100) if e.precio_centimos else '' }}" placeholder="{{ _('sin fijar') }}"></td>
-          <td><button type="submit" form="editar-extra-{{ e.id }}" class="btn btn-ghost">{{ _('Guardar') }}</button></td>
-          <td>
-            {% if e.stripe_price_id %}
-            <span class="log-badge log-badge-duracion">{{ _('sincronizado') }}</span>
-            {% else %}
-            <form method="post" action="{{ url_for('backoffice.sincronizar_extra_stripe', extra_id=e.id) }}" style="display:inline;">
-              <button type="submit" class="btn btn-ghost" {{ 'disabled' if not e.precio_centimos or not stripe_configurado }}>{{ _('Sincronizar con Stripe') }}</button>
-            </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5" class="empty">{{ _('Todavía no hay ningún extra.') }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% if not extras %}
+  <p class="empty">{{ _('Todavía no hay ningún extra.') }}</p>
+  {% else %}
+  <div class="bo-extras-lista">
+    {% for e in extras %}
+    <div class="bo-extra-row">
+      <input type="text" name="nombre" form="editar-extra-{{ e.id }}" value="{{ e.nombre }}" required class="bo-extra-nombre">
+      <input type="text" name="descripcion" form="editar-extra-{{ e.id }}" value="{{ e.descripcion or '' }}" placeholder="{{ _('Descripción') }}" class="bo-extra-desc">
+      <label class="bo-plan-campo bo-extra-precio">{{ _('€') }}
+        <input type="number" name="precio_eur" form="editar-extra-{{ e.id }}" step="0.01" min="0" value="{{ '%.2f'|format(e.precio_centimos / 100) if e.precio_centimos else '' }}" placeholder="{{ _('sin fijar') }}">
+      </label>
+      <button type="submit" form="editar-extra-{{ e.id }}" class="btn btn-ghost">{{ _('Guardar') }}</button>
+      {% if e.stripe_price_id %}
+      <span class="log-badge log-badge-duracion">{{ _('sincronizado') }}</span>
+      {% else %}
+      <form method="post" action="{{ url_for('backoffice.sincronizar_extra_stripe', extra_id=e.id) }}">
+        <button type="submit" class="btn btn-ghost" {{ 'disabled' if not e.precio_centimos or not stripe_configurado }}>{{ _('Sincronizar con Stripe') }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
   </div>
+  {% endif %}
   {% for e in extras %}
   <form id="editar-extra-{{ e.id }}" method="post" action="{{ url_for('backoffice.editar_extra', extra_id=e.id) }}" hidden></form>
   {% endfor %}

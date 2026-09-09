@@ -25,6 +25,7 @@
   <a class="btn btn-primary" href="{{ url_for('fichaje.mis_datos') }}">{{ _('Rellenar mis datos') }}</a>
 </section>
 {% else %}
+<div class="fichaje-layout">
 <section class="fichaje-panel">
   <div class="fichaje-estado">
     <span class="pill {{ 'estado-dentro' if estado == 'dentro' else ('estado-en-pausa' if estado == 'en_pausa' else 'estado-fuera') }}">
@@ -80,7 +81,7 @@
   {% endif %}
 </section>
 
-<section class="stats-section">
+<aside class="stats-section fichaje-sidebar">
   <h3>{{ _('Hoy') }}</h3>
   {% if not hoy %}
   <p class="empty-lane">{{ _('Todavía no has fichado nada hoy.') }}</p>
@@ -99,6 +100,7 @@
   </table>
   </div>
   {% endif %}
-</section>
+</aside>
+</div>
 {% endif %}
 {% endblock %}
