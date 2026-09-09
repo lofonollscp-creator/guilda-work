@@ -6,6 +6,11 @@ NO restringe qué usuario ve qué empresa — solo aplica valores por
 defecto diferenciados, no es un mecanismo de control de acceso. Con
 datos económicos de por medio, apoyarse en eso no es aceptable.
 
+Alcance de cumplimiento fiscal (Veri*Factu/SII): este módulo es solo un
+cliente HTTP, nunca genera, firma ni registra ninguna factura por su
+cuenta — eso lo hace FacturaScripts, que es quien tiene que cumplir
+Veri*Factu, no Guilda Work. Ver HOSTING.md §8.21 para el detalle.
+
 ## Aprovisionamiento (`aprovisionar_tenant`/`desaprovisionar_tenant`)
 
 Sin precedente en el resto de `app/*.py`: aquí SÍ se orquesta Docker

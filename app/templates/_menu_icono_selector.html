@@ -1,0 +1,11 @@
+{% macro selector_icono(valor_actual='folder') %}
+{% set catalogo = ['folder', 'flag', 'star', 'zap', 'book-open', 'briefcase', 'building-2', 'users', 'layers', 'target', 'bookmark', 'tag', 'layout-grid', 'clipboard-list', 'puzzle', 'rocket'] %}
+<div class="menu-icono-selector" data-icono-selector>
+  <input type="hidden" name="icono" value="{{ valor_actual or 'folder' }}">
+  {% for i in catalogo %}
+  <button type="button" class="menu-icono-opcion" data-icono="{{ i }}" aria-pressed="{{ 'true' if (valor_actual or 'folder') == i else 'false' }}" title="{{ i }}" aria-label="{{ i }}">
+    <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ i }}"></use></svg>
+  </button>
+  {% endfor %}
+</div>
+{% endmacro %}

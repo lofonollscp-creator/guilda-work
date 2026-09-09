@@ -437,6 +437,205 @@ HERRAMIENTAS: list[dict] = [
         },
         ["cliente_id", "modelos", "anio"],
     ),
+    _tool(
+        "marcar_presentado_vencimiento_fiscal",
+        "Marca un vencimiento fiscal como presentado.",
+        {"vencimiento_id": _param("integer", "Id del vencimiento fiscal.")},
+        ["vencimiento_id"],
+    ),
+    _tool(
+        "editar_vencimiento_fiscal",
+        "Edita uno o varios campos de un vencimiento fiscal ya existente (los que se omitan no cambian).",
+        {
+            "vencimiento_id": _param("integer", "Id del vencimiento fiscal."),
+            "modelo": _param("string", "Código de modelo, opcional."),
+            "periodo": _param("string", "Periodo, ej. '2026-T2', opcional."),
+            "fecha_limite": _param("string", "Fecha YYYY-MM-DD, opcional."),
+            "estado": _param("string", "pendiente/presentado/fuera_plazo, opcional."),
+            "notas": _param("string", "Notas, opcional."),
+        },
+        ["vencimiento_id"],
+    ),
+    _tool(
+        "resumen_cliente_fiscal",
+        "Resumen agregado de un cliente fiscal: sus vencimientos con estado, y cuántos documentos/mensajes hay en el portal de cliente para cada uno. Úsalo cuando pregunten '¿cómo va [cliente]?' o similar.",
+        {"cliente_id": _param("integer", "Id del cliente fiscal.")},
+        ["cliente_id"],
+    ),
+    _tool(
+        "listar_plantillas_correo",
+        "Lista las plantillas de respuesta de correo guardadas del usuario actual (nombre, asunto y cuerpo).",
+        {},
+        [],
+    ),
+    _tool(
+        "crear_tarea_recurrente",
+        "Crea una regla que genera una tarea nueva automáticamente cada semana o cada mes -- no una tarea suelta (para eso usa crear_tarea).",
+        {
+            "asunto": _param("string", "Asunto de la tarea que se generará cada vez."),
+            "periodicidad": _param("string", "\"semanal\" o \"mensual\"."),
+            "dia": _param("integer", "Si es semanal: 0=lunes..6=domingo. Si es mensual: día del mes (1-31)."),
+            "categoria_id": _param("integer", "Id del menú al que asociar la tarea generada, opcional."),
+        },
+        ["asunto", "periodicidad", "dia"],
+    ),
+    _tool(
+        "listar_tareas_recurrentes",
+        "Lista las reglas de tarea recurrente del usuario actual (activas o pausadas).",
+        {},
+        [],
+    ),
+    _tool(
+        "listar_facturas_cliente",
+        "Últimas facturas de FacturaScripts de un cliente fiscal ya vinculado a FacturaScripts.",
+        {
+            "cliente_id": _param("integer", "Id del cliente fiscal."),
+            "limite": _param("integer", "Número máximo de facturas a devolver, opcional."),
+        },
+        ["cliente_id"],
+    ),
+    _tool(
+        "crear_factura_cliente",
+        "Crea una factura de una sola línea en FacturaScripts para un cliente fiscal ya vinculado. Confirma siempre el concepto y el importe exacto con el usuario antes de ejecutar.",
+        {
+            "cliente_id": _param("integer", "Id del cliente fiscal."),
+            "concepto": _param("string", "Descripción de la línea de la factura."),
+            "importe": _param("number", "Importe de la línea (sin IVA, según configuración de FacturaScripts)."),
+        },
+        ["cliente_id", "concepto", "importe"],
+    ),
+    # --- CRM (EspoCRM) ------------------------------------------------------
+    _tool(
+        "crm_listar_leads",
+        "Busca/lista Leads del CRM. `texto` filtra por coincidencia parcial.",
+        {"texto": _param("string", "Filtro de texto, opcional."), "limite": _param("integer", "Máximo a devolver, opcional.")},
+        [],
+    ),
+    _tool(
+        "crm_crear_lead",
+        "Crea un Lead en el CRM.",
+        {
+            "nombre": _param("string", "Nombre del lead."),
+            "email": _param("string", "Email, opcional."),
+            "telefono": _param("string", "Teléfono, opcional."),
+            "empresa": _param("string", "Empresa, opcional."),
+        },
+        ["nombre"],
+    ),
+    _tool(
+        "crm_listar_contactos",
+        "Busca/lista Contactos del CRM. `texto` filtra por coincidencia parcial.",
+        {"texto": _param("string", "Filtro de texto, opcional."), "limite": _param("integer", "Máximo a devolver, opcional.")},
+        [],
+    ),
+    _tool(
+        "crm_crear_contacto",
+        "Crea un Contacto en el CRM.",
+        {
+            "nombre": _param("string", "Nombre del contacto."),
+            "email": _param("string", "Email, opcional."),
+            "telefono": _param("string", "Teléfono, opcional."),
+        },
+        ["nombre"],
+    ),
+    _tool(
+        "crm_listar_cuentas",
+        "Busca/lista Cuentas (empresas/clientes) del CRM. `texto` filtra por coincidencia parcial.",
+        {"texto": _param("string", "Filtro de texto, opcional."), "limite": _param("integer", "Máximo a devolver, opcional.")},
+        [],
+    ),
+    _tool(
+        "crm_crear_cuenta",
+        "Crea una Cuenta (empresa/cliente) en el CRM.",
+        {"nombre": _param("string", "Nombre de la cuenta."), "sitio_web": _param("string", "Sitio web, opcional.")},
+        ["nombre"],
+    ),
+    # --- Drive (Nextcloud) ---------------------------------------------------
+    _tool(
+        "drive_listar_archivos",
+        "Lista archivos/carpetas del Drive en `carpeta` (ej. 'Lueira' para el espacio de ese tenant; vacío para la raíz).",
+        {"carpeta": _param("string", "Ruta de la carpeta, opcional.")},
+        [],
+    ),
+    _tool(
+        "drive_buscar_archivos",
+        "Busca archivos por nombre en todo el Drive.",
+        {"texto": _param("string", "Texto a buscar en el nombre."), "limite": _param("integer", "Máximo a devolver, opcional.")},
+        ["texto"],
+    ),
+    _tool(
+        "drive_subir_archivo",
+        "Sube un archivo de TEXTO al Drive en `ruta` (ej. 'Lueira/nota.txt'). Solo texto plano, no binarios.",
+        {"ruta": _param("string", "Ruta destino en el Drive."), "contenido_texto": _param("string", "Contenido del archivo.")},
+        ["ruta", "contenido_texto"],
+    ),
+    _tool(
+        "enviar_archivo_drive_al_chat",
+        "Manda un archivo del Drive (foto, PDF, cualquier tipo) al chat, para que el usuario lo vea/descargue directamente. Usa `drive_listar_archivos`/`drive_buscar_archivos` antes si no conoces la ruta exacta.",
+        {"ruta": _param("string", "Ruta completa del archivo en el Drive.")},
+        ["ruta"],
+    ),
+    # --- Firmas (Documenso) --------------------------------------------------
+    _tool(
+        "listar_documentos_firma",
+        "Lista/busca documentos de firma (Documenso) de tu gestoría.",
+        {"texto": _param("string", "Filtro de texto, opcional."), "limite": _param("integer", "Máximo a devolver, opcional.")},
+        [],
+    ),
+    _tool(
+        "crear_documento_firma",
+        "Crea un documento para firmar (en borrador, sin enviar todavía). Necesita el PDF en base64.",
+        {
+            "titulo": _param("string", "Título del documento."),
+            "contenido_pdf_base64": _param("string", "Contenido del PDF codificado en base64."),
+            "firmantes": _param("array", "Lista de {\"email\": str, \"nombre\": str}, uno por firmante."),
+        },
+        ["titulo", "contenido_pdf_base64", "firmantes"],
+    ),
+    _tool(
+        "enviar_documento_a_firma",
+        "Envía un documento en borrador a firmar -- manda el email de firma a cada destinatario. Confirma siempre antes de ejecutar, es una acción irreversible sobre terceros.",
+        {"documento_id": _param("string", "Id del documento en Documenso.")},
+        ["documento_id"],
+    ),
+    _tool(
+        "enviar_documento_firmado_al_chat",
+        "Manda un documento de Documenso (firmado del todo o no, el propio PDF refleja el estado actual) al chat, para que el usuario lo vea/descargue directamente.",
+        {"documento_id": _param("string", "Id del documento en Documenso.")},
+        ["documento_id"],
+    ),
+    # --- Hojas (Baserow, solo lectura) ---------------------------------------
+    _tool(
+        "listar_tablas_hojas",
+        "Lista las tablas del Workspace de Baserow de tu gestoría.",
+        {},
+        [],
+    ),
+    _tool(
+        "listar_filas_hoja",
+        "Lista/busca filas de una tabla de Baserow. Usa `listar_tablas_hojas` antes si no conoces el id de la tabla.",
+        {
+            "tabla_id": _param("integer", "Id de la tabla."),
+            "texto": _param("string", "Filtro de texto, opcional."),
+            "limite": _param("integer", "Máximo a devolver, opcional."),
+        },
+        ["tabla_id"],
+    ),
+    # --- Generador de documentos/informes ------------------------------------
+    _tool(
+        "generar_documento_al_chat",
+        "Genera un documento descargable (CSV, Excel, Word o PDF) a partir de una tabla de datos y lo manda al chat. "
+        "Reúne los datos primero con las herramientas de lectura que ya tienes (tareas, correo, fiscal, facturas, CRM, hojas...) "
+        "y pásalos aquí ya en forma de columnas y filas -- tú decides qué columnas según lo que se te haya pedido.",
+        {
+            "titulo": _param("string", "Título del documento (también se usa como nombre de archivo)."),
+            "formato": _param("string", "\"csv\", \"xlsx\", \"docx\" o \"pdf\"."),
+            "columnas": _param("array", "Lista de nombres de columna, en orden."),
+            "filas": _param("array", "Lista de filas -- cada fila es una lista de valores, en el mismo orden que `columnas`."),
+            "notas": _param("string", "Texto adicional para mostrar bajo el título, opcional."),
+        },
+        ["titulo", "formato", "columnas", "filas"],
+    ),
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
@@ -447,6 +646,13 @@ LECTURA: set[str] = {
     "preparar_borrador_correo", "listar_tiquets", "listar_mis_fichajes",
     "buscar_semantico", "listar_papelera", "estadisticas_por_categoria", "estadisticas_por_dia",
     "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
+    "resumen_cliente_fiscal", "listar_plantillas_correo", "listar_tareas_recurrentes",
+    "listar_facturas_cliente",
+    "crm_listar_leads", "crm_listar_contactos", "crm_listar_cuentas",
+    "drive_listar_archivos", "drive_buscar_archivos", "enviar_archivo_drive_al_chat",
+    "listar_documentos_firma", "enviar_documento_firmado_al_chat",
+    "listar_tablas_hojas", "listar_filas_hoja",
+    "generar_documento_al_chat",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -456,6 +662,11 @@ ESCRITURA: set[str] = {
     "asignar_categoria_correo", "configurar_firma_correo", "importar_historial", "importar_tareas",
     "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet", "fichar",
     "restaurar_de_papelera", "crear_cliente_fiscal", "generar_vencimientos_fiscales",
+    "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal",
+    "crear_tarea_recurrente", "crear_factura_cliente",
+    "crm_crear_lead", "crm_crear_contacto", "crm_crear_cuenta",
+    "drive_subir_archivo",
+    "crear_documento_firma", "enviar_documento_a_firma",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son

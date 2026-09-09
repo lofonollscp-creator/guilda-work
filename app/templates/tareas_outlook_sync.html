@@ -12,6 +12,7 @@
   <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
   <a href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
   <a class="active" href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
+  <a href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
 </nav>
 
 {% if error %}
@@ -30,8 +31,8 @@
     <label>{{ _('Exportar a Outlook') }}</label>
     <p class="muted">{{ _('Genera un archivo con todas tus tareas activas, listo para importar en Outlook Classic ("Archivo &gt; Abrir y exportar &gt; Importar o exportar &gt; Exportar a un archivo", o arrastrando el .ics sobre tu carpeta de Tareas).') }}</p>
     <div class="quick-row">
-      <a class="btn btn-primary" href="{{ url_for('tareas.exportar_ics') }}">⬇ {{ _('Exportar .ics') }}</a>
-      <a class="btn btn-ghost" href="{{ url_for('tareas.exportar_csv') }}">⬇ {{ _('Exportar .csv') }}</a>
+      <a class="btn btn-primary" href="{{ url_for('tareas.exportar_ics') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar .ics') }}</a>
+      <a class="btn btn-ghost" href="{{ url_for('tareas.exportar_csv') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar .csv') }}</a>
     </div>
   </div>
 
@@ -39,8 +40,15 @@
     <label>{{ _('Importar desde Outlook') }}</label>
     <p class="muted">{{ _('Sube un archivo .ics o .csv exportado desde la carpeta de Tareas de Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez de duplicarse (se reconocen por su UID); las de .csv se crean siempre como nuevas, porque ese formato no trae un identificador único.') }}</p>
     <div class="quick-row">
-      <input type="file" name="archivo" accept=".ics,.csv" required>
-      <button type="submit" class="btn btn-primary">⬆ {{ _('Importar') }}</button>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Elegir archivo') }}
+          <input type="file" name="archivo" accept=".ics,.csv" required>
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
+      <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg> {{ _('Importar') }}</button>
     </div>
   </form>
 </section>

@@ -200,7 +200,9 @@
       "</div>" +
       '<p class="api-explorer-resumen">' + escapeHtml(op.summary || "") + "</p>" +
       '<span class="api-explorer-auth">' +
-      (op.security && op.security.length ? "🔒 Requiere Authorization: Bearer" : "🔓 Público") +
+      (op.security && op.security.length
+        ? '<svg class="icono-inline" aria-hidden="true"><use href="/static/iconos.svg#icono-lock"></use></svg> Requiere Authorization: Bearer'
+        : '<svg class="icono-inline" aria-hidden="true"><use href="/static/iconos.svg#icono-lock-open"></use></svg> Público') +
       "</span>" +
       tablaParametros(op.parameters) +
       tablaCuerpo(op.requestBody) +

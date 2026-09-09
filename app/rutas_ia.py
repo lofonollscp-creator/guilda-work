@@ -2,7 +2,9 @@
 su propio Blueprint, mismo patrón que app/rutas_correo.py."""
 import json
 
-from flask import Blueprint, Response, g, jsonify, redirect, render_template, request, stream_with_context, url_for
+from flask import (
+    Blueprint, Response, abort, g, jsonify, redirect, render_template, request, stream_with_context, url_for,
+)
 
 from . import db, ia_asistente as asistente
 from .auth import login_required
@@ -60,6 +62,29 @@ def subir_adjunto():
         return jsonify({"ok": False, "error": "Solo se admiten archivos de texto o CSV (UTF-8)."})
     adjunto_id = db.crear_adjunto_ia(g.usuario_id, fichero.filename, fichero.mimetype, datos)
     return jsonify({"ok": True, "id": adjunto_id, "nombre_archivo": fichero.filename})
+
+
+_TIPOS_PREVISUALIZABLES = ("application/pdf",)
+
+
+@ia_bp.route("/adjuntos/<int:adjunto_id>")
+@login_required
+def descargar_adjunto(adjunto_id: int):
+    """Sirve un adjunto del chat -- tanto los que sube el propio usuario
+    como los que le manda una tool (Drive, documento firmado...), mismo
+    criterio de privacidad que subir_adjunto/leer_adjunto_chat (solo el
+    dueño puede verlo). Inline para imagen/PDF (se ve directo en el
+    navegador), descarga forzada para el resto -- mismo patrón que
+    correo.descargar_adjunto (app/rutas_correo.py)."""
+    adjunto = db.obtener_adjunto_ia(g.usuario_id, adjunto_id)
+    if adjunto is None:
+        abort(404)
+    tipo_mime = adjunto["tipo_mime"] or "application/octet-stream"
+    previsualizable = tipo_mime.startswith("image/") or tipo_mime in _TIPOS_PREVISUALIZABLES
+    disposicion = "inline" if previsualizable else "attachment"
+    respuesta = Response(adjunto["contenido"], mimetype=tipo_mime)
+    respuesta.headers.set("Content-Disposition", disposicion, filename=adjunto["nombre_archivo"])
+    return respuesta
 
 
 @ia_bp.route("/confirmar", methods=["POST"])

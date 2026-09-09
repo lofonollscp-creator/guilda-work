@@ -1,0 +1,64 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Solicitudes de acceso al portal') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Solicitudes de acceso al portal de cliente') }}</h1>
+    <p class="subtitle">{{ _('Alguien sin ficha previa pidió acceso al portal — vincúlalo a un cliente existente o crea uno nuevo.') }}</p>
+  </div>
+</header>
+
+<section class="ia-section">
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Nombre') }}</th>
+          <th>Email</th>
+          <th>{{ _('NIF') }}</th>
+          <th>{{ _('Mensaje') }}</th>
+          <th>{{ _('Recibida') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in solicitudes_portal %}
+        <tr>
+          <td>{{ s.nombre }}</td>
+          <td><a href="mailto:{{ s.email }}">{{ s.email }}</a></td>
+          <td>{{ s.nif or '—' }}</td>
+          <td>{{ s.mensaje or '—' }}</td>
+          <td class="mono">{{ s.creado_en[:16].replace('T', ' ') }}</td>
+          <td>
+            {% if s.atendida %}
+            <span class="pill">{{ _('Atendida') }}</span>
+            {% else %}
+            <form method="post" action="{{ url_for('backoffice.vincular_solicitud_portal', solicitud_id=s.id) }}" class="quick-row">
+              <select name="cliente_fiscal_id">
+                <option value="">{{ _('Vincular a cliente existente...') }}</option>
+                {% for c in clientes_fiscales_todos %}
+                <option value="{{ c.id }}">{{ c.tenant_nombre }} — {{ c.nombre }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-ghost">{{ _('Vincular') }}</button>
+            </form>
+            <form method="post" action="{{ url_for('backoffice.crear_cliente_desde_solicitud', solicitud_id=s.id) }}" class="quick-row">
+              <select name="tenant_id">
+                <option value="">{{ _('Crear cliente nuevo en...') }}</option>
+                {% for t in tenants %}
+                <option value="{{ t.id }}">{{ t.nombre }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-ghost">{{ _('Crear') }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">{{ _('Todavía no ha llegado ninguna solicitud de acceso al portal.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

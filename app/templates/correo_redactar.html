@@ -15,7 +15,8 @@
 <div class="correo-compose">
   <div class="correo-compose-header">
     <h1>{{ titulo }}</h1>
-    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}">✕</a>
+    <a class="correo-icon-btn" href="{{ url_for('correo.borradores') }}" title="{{ _('Borradores') }}" aria-label="{{ _('Borradores') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></a>
+    <a class="correo-icon-btn" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></a>
   </div>
 
   {% if error %}
@@ -25,6 +26,7 @@
   <form method="post" action="{{ url_for('correo.enviar') }}" enctype="multipart/form-data"
         onsubmit="return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');">
     <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
+    <input type="hidden" name="borrador_id" id="correo-borrador-id" value="{{ borrador_id or '' }}">
 
     <div class="correo-compose-campo">
       <label>{{ _('De') }}</label>
@@ -67,20 +69,37 @@
       <button type="button" data-cmd="insertUnorderedList" title="{{ _('Lista con viñetas') }}">&#8226; {{ _('Lista') }}</button>
       <button type="button" data-cmd="insertOrderedList" title="{{ _('Lista numerada') }}">1. {{ _('Lista') }}</button>
       <span class="correo-editor-separador"></span>
-      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}">&#128279; {{ _('Enlace') }}</button>
-      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}">&#128247; {{ _('Imagen') }}</button>
+      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
+      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
       <button type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
+      {% if plantillas %}
+      <span class="correo-editor-separador"></span>
+      <select id="correo-plantillas-select" aria-label="{{ _('Insertar plantilla') }}">
+        <option value="">{{ _('Insertar plantilla...') }}</option>
+        {% for p in plantillas %}
+        <option value="{{ p.id }}">{{ p.nombre }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
     </div>
     <div id="correo-editor-cuerpo" class="correo-editor" contenteditable="true">{{ cuerpo_html|safe }}</div>
     <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
 
     <div class="correo-compose-campo correo-compose-adjuntos">
-      <label>📎 {{ _('Adjuntar archivos') }}</label>
-      <input type="file" name="adjuntos" multiple>
+      <label>{{ _('Adjuntar archivos') }}</label>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Elegir archivos') }}
+          <input type="file" name="adjuntos" multiple>
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
     </div>
 
     <div class="correo-compose-acciones">
-      <button type="submit" class="btn btn-primary">✉ {{ _('Enviar') }}</button>
+      <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg> {{ _('Enviar') }}</button>
+      <button type="button" id="correo-guardar-borrador" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Guardar borrador') }}</button>
       <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">{{ _('Descartar') }}</a>
     </div>
   </form>
@@ -88,4 +107,53 @@
 {% endif %}
 <script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_destinatarios.js') }}"></script>
+{% if plantillas %}
+<script>
+(function () {
+  const select = document.getElementById("correo-plantillas-select");
+  const editor = document.getElementById("correo-editor-cuerpo");
+  const asuntoInput = document.querySelector('input[name="asunto"]');
+  if (!select || !editor) return;
+  select.addEventListener("change", () => {
+    const id = select.value;
+    select.value = "";
+    if (!id) return;
+    fetch("{{ url_for('correo.plantilla_json', plantilla_id=0) }}".replace("0", id))
+      .then((resp) => resp.json())
+      .then((plantilla) => {
+        editor.focus();
+        document.execCommand("insertHTML", false, plantilla.cuerpo);
+        if (plantilla.asunto && asuntoInput && !asuntoInput.value) {
+          asuntoInput.value = plantilla.asunto;
+        }
+      });
+  });
+})();
+</script>
+{% endif %}
+<script>
+(function () {
+  const boton = document.getElementById("correo-guardar-borrador");
+  const form = boton ? boton.closest("form") : null;
+  const editor = document.getElementById("correo-editor-cuerpo");
+  const campoOculto = document.getElementById("correo-editor-campo-oculto");
+  const campoBorradorId = document.getElementById("correo-borrador-id");
+  if (!boton || !form) return;
+  boton.addEventListener("click", async () => {
+    if (editor && campoOculto) campoOculto.value = editor.innerHTML;
+    try {
+      const respuesta = await fetch("{{ url_for('correo.guardar_borrador') }}", {
+        method: "POST",
+        body: new FormData(form),
+      });
+      if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
+      const datos = await respuesta.json();
+      campoBorradorId.value = datos.borrador_id;
+      if (window.mostrarToast) window.mostrarToast("{{ _('Borrador guardado.') }}", "exito");
+    } catch (err) {
+      if (window.mostrarToast) window.mostrarToast("{{ _('No se pudo guardar el borrador.') }}", "error");
+    }
+  });
+})();
+</script>
 {% endblock %}

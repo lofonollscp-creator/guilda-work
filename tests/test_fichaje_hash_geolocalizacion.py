@@ -1,5 +1,7 @@
 """Capa BD del blindaje del fichaje (Fase G3): encadenado de hashes y
 geolocalización opcional por tenant."""
+import threading
+
 from app import db
 
 
@@ -17,6 +19,46 @@ def test_cadena_integra_tras_varios_fichajes():
     resultado = db.verificar_integridad_fichajes()
     assert resultado["integra"] is True
     assert resultado["primera_fila_rota"] is None
+
+
+def test_fichajes_concurrentes_de_varios_usuarios_no_rompen_la_cadena():
+    """Regresión: fichar() lee el último hash y hace el INSERT en pasos
+    separados -- sin BEGIN IMMEDIATE, dos fichajes casi simultáneos (de
+    CUALQUIER usuario, la cadena es global) podían leer el mismo "último
+    hash" antes de que ninguno hubiera insertado, y dejar la cadena rota.
+    Se usa una Barrier para maximizar que los hilos lean en el mismo
+    instante -- sin BEGIN IMMEDIATE esto reproducía la corrupción de forma
+    fiable en un puñado de intentos."""
+    N = 12
+    usuarios = [
+        db.crear_usuario_vinculado_a_kratos(f"fichaje-race-{i}@ejemplo.com", f"kratos-fichaje-race-{i}")
+        for i in range(N)
+    ]
+    barrera = threading.Barrier(N)
+    errores: list[Exception] = []
+
+    def fichar_uno(usuario_id: int) -> None:
+        try:
+            barrera.wait(timeout=5)
+            db.fichar(usuario_id, None, "entrada")
+        except Exception as e:  # noqa: BLE001 -- se recoge para fallar el test con detalle, no para ignorar
+            errores.append(e)
+
+    hilos = [threading.Thread(target=fichar_uno, args=(u,)) for u in usuarios]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join(timeout=10)
+
+    assert not errores, f"fichar() lanzó excepciones bajo concurrencia: {errores}"
+
+    conn = db.get_connection()
+    total = conn.execute("SELECT COUNT(*) AS n FROM fichajes").fetchone()["n"]
+    conn.close()
+    assert total == N, f"se esperaban {N} fichajes, hay {total} -- alguno se perdió o se duplicó"
+
+    resultado = db.verificar_integridad_fichajes()
+    assert resultado["integra"] is True, f"cadena de hash rota tras fichajes concurrentes: {resultado}"
 
 
 def test_manipular_tipo_directamente_en_bd_rompe_la_cadena():

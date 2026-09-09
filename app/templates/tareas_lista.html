@@ -12,6 +12,7 @@
   <a class="active" href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
   <a href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
   <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
+  <a href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
 </nav>
 
 <form class="filters" method="get">
@@ -85,7 +86,7 @@
   <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
     <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
       <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' }}>
-        {{ '✓' if t.estado == 'completada' else '' }}
+        {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
       </button>
     </form>
     <span class="log-text">
@@ -101,7 +102,7 @@
     <span class="log-badge log-badge-{{ 'duracion' if t.estado == 'completada' else 'instantanea' }}">
       {{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}
     </span>
-    <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}">✏</a>
+    <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
     <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
           data-eliminar-deshacer
           data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}"
@@ -109,7 +110,7 @@
           data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
           data-restaurar-url="{{ url_for('tareas.restaurar', tarea_id=t.id) }}"
           data-quitar-selector="li">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
   </li>
   {% endfor %}
@@ -117,15 +118,15 @@
 {% if hay_pagina_anterior or hay_pagina_siguiente %}
 <nav class="paginacion" aria-label="{{ _('Paginación de tareas') }}">
   {% if hay_pagina_anterior %}
-  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina - 1) }}">← {{ _('Anterior') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina - 1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</a>
   {% else %}
-  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">← {{ _('Anterior') }}</span>
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</span>
   {% endif %}
   <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
   {% if hay_pagina_siguiente %}
-  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina + 1) }}">{{ _('Siguiente') }} →</a>
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina + 1) }}">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></a>
   {% else %}
-  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} →</span>
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></span>
   {% endif %}
 </nav>
 {% endif %}

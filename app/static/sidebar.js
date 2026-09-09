@@ -88,8 +88,8 @@
     });
   }
 
-  const ajustesToggle = document.getElementById("ajustes-toggle");
-  const ajustesPanel = document.getElementById("ajustes-panel");
+  const ajustesToggle = document.getElementById("perfil-toggle");
+  const ajustesPanel = document.getElementById("perfil-panel");
   if (ajustesToggle && ajustesPanel) {
     ajustesToggle.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -102,55 +102,17 @@
     });
   }
 
-  // Centro de notificaciones (Fase G5): mismo patrón toggle/click-fuera que
-  // el panel de ajustes de arriba. La campana necesita saber el contador
-  // ANTES de que el usuario abra nada (para avisar de un vistazo), así que
-  // /notificaciones se pide una vez al cargar cualquier página -- no hay
-  // "carga perezosa" real posible aquí, el clic solo enseña/oculta el
-  // panel ya relleno.
-  const notifToggle = document.getElementById("notificaciones-toggle");
-  const notifPanel = document.getElementById("notificaciones-panel");
-  const notifContador = document.getElementById("notificaciones-contador");
-  const notifLista = document.getElementById("notificaciones-lista");
-  if (notifToggle && notifPanel && notifLista) {
-    const cargar = () => {
-      fetch("/notificaciones")
-        .then((r) => r.json())
-        .then((eventos) => {
-          notifContador.hidden = eventos.length === 0;
-          notifContador.textContent = eventos.length > 9 ? "9+" : String(eventos.length);
-          if (eventos.length === 0) {
-            notifLista.innerHTML = '<p class="notificaciones-vacio">Nada nuevo por aquí.</p>';
-            return;
-          }
-          const iconoPorTipo = { vencimiento_fiscal: "calendar-days", tiquet: "ticket", fichaje: "clock" };
-          notifLista.innerHTML = eventos
-            .map((ev) => {
-              const icono = iconoPorTipo[ev.tipo] || "bell";
-              const fecha = (ev.fecha || "").slice(0, 10);
-              return (
-                '<a class="notificaciones-item" href="' + ev.url + '">' +
-                '<svg aria-hidden="true"><use href="/static/iconos.svg#icono-' + icono + '"></use></svg>' +
-                '<span class="notificaciones-item-texto">' + ev.texto + "</span>" +
-                '<span class="notificaciones-item-fecha">' + fecha + "</span>" +
-                "</a>"
-              );
-            })
-            .join("");
-        })
-        .catch(() => {
-          notifLista.innerHTML = '<p class="notificaciones-vacio">No se ha podido cargar.</p>';
-        });
-    };
-    cargar();
-    notifToggle.addEventListener("click", (e) => {
+  // Grupos plegables del rail (Correo, Fiscal) -- el chevron alterna
+  // "is-abierto" sin navegar; el enlace padre sigue navegando normal
+  // a su hijo principal (ver base.html, mismo comportamiento en
+  // colapsado que un icono suelto de siempre).
+  document.querySelectorAll(".icon-rail-grupo-plegable").forEach((grupo) => {
+    const chevron = grupo.querySelector(".icon-rail-chevron");
+    if (!chevron) return;
+    chevron.addEventListener("click", (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      notifPanel.hidden = !notifPanel.hidden;
+      grupo.classList.toggle("is-abierto");
     });
-    document.addEventListener("click", (e) => {
-      if (!notifPanel.hidden && !notifPanel.contains(e.target) && e.target !== notifToggle) {
-        notifPanel.hidden = true;
-      }
-    });
-  }
+  });
 })();

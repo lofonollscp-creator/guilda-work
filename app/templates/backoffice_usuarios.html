@@ -1,0 +1,150 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Usuarios') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Usuarios') }}</h1>
+    <p class="subtitle">{{ _('Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y supervisor.') }}</p>
+  </div>
+</header>
+
+{% if error %}
+<div class="ia-error">{{ error }}</div>
+{% endif %}
+
+{% if resultados_alta %}
+<div class="ia-result">
+  {{ _('Alta de') }} <strong>{{ email_creado }}</strong> — {{ _('esto solo se muestra esta vez, pásale las contraseñas para que las cambie al entrar:') }}
+  <table class="historial-table" style="margin-top: 8px;">
+    <thead>
+      <tr><th>{{ _('Servicio') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Detalle') }}</th></tr>
+    </thead>
+    <tbody>
+      {% for r in resultados_alta %}
+      <tr>
+        <td>{{ r.servicio }}</td>
+        <td>
+          <span class="log-badge {{ 'log-badge-duracion' if r.estado == 'creado' else 'log-badge-instantanea' }}">{{ r.estado }}</span>
+        </td>
+        <td>
+          {{ r.detalle }}
+          {% if r.password %}
+          <button type="button" class="btn btn-ghost btn-copiar-password" data-password="{{ r.password }}" style="margin-left: 8px;">{{ _('Copiar') }}</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+  // Contraseñas temporales que solo se muestran esta vez -- copiar a mano
+  // seleccionando texto de la celda es fácil de hacer mal (seleccionar de
+  // más/de menos). Mismo patrón de "botón copiar" ya usado en /docs
+  // (app/static/docs.js), adaptado aquí sin crear un fichero nuevo para
+  // 20 líneas usadas en una sola pantalla.
+  document.querySelectorAll(".btn-copiar-password").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var textoOriginal = boton.textContent;
+      function marcarCopiado() {
+        boton.textContent = "{{ _('¡Copiado!') }}";
+        setTimeout(function () { boton.textContent = textoOriginal; }, 1500);
+      }
+      function copiaManual() {
+        var area = document.createElement("textarea");
+        area.value = boton.dataset.password;
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        try {
+          document.execCommand("copy");
+          marcarCopiado();
+        } catch (e) {
+          boton.textContent = "{{ _('Error al copiar') }}";
+          setTimeout(function () { boton.textContent = textoOriginal; }, 1500);
+        }
+        document.body.removeChild(area);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(boton.dataset.password).then(marcarCopiado, copiaManual);
+      } else {
+        copiaManual();
+      }
+    });
+  });
+</script>
+{% endif %}
+
+<section class="ia-section">
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Tenant</th>
+          <th>{{ _('Rol') }}</th>
+          <th>{{ _('Fichaje') }}</th>
+          <th>{{ _('Supervisor') }}</th>
+          <th>{{ _('Alta') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>{{ u.email }}</td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.asignar_tenant_usuario', usuario_id=u.id) }}">
+              <select name="tenant_id" onchange="this.form.submit()">
+                <option value="">{{ _('Sin tenant') }}</option>
+                {% for t in tenants %}
+                <option value="{{ t.id }}" {% if u.tenant_id == t.id %}selected{% endif %}>{{ t.nombre }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <span class="log-badge {{ 'log-badge-duracion' if u.rol == 'admin' else 'log-badge-instantanea' }}">{{ u.rol }}</span>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}">
+              <button type="submit" class="btn btn-ghost">{{ _('Quitar gestor') if u.gestor_fichajes else _('Hacer gestor') }}</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}">
+              <button type="submit" class="btn btn-ghost">{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}</button>
+            </form>
+          </td>
+          <td class="mono">{{ u.creado_en[:10] }}</td>
+          <td>
+            <a class="btn btn-ghost" href="{{ url_for('backoffice.dispositivos_usuario', usuario_id=u.id) }}">{{ _('Dispositivos') }}</a>
+            {% if u.id != g.usuario_id %}
+            <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}">
+              <button type="submit" class="btn btn-ghost">{{ _('Quitar admin') if u.rol == 'admin' else _('Hacer admin') }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty">{{ _('Todavía no hay ningún usuario.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post" action="{{ url_for('backoffice.crear_usuario') }}" class="filters">
+    <label>Email <input type="email" name="email" placeholder="persona@ejemplo.com" required></label>
+    <label>Tenant
+      <select name="tenant_id">
+        <option value="">{{ _('Sin tenant') }}</option>
+        {% for t in tenants %}
+        <option value="{{ t.id }}">{{ t.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary">+ {{ _('Crear usuario') }}</button>
+  </form>
+</section>
+{% endblock %}

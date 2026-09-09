@@ -103,4 +103,49 @@
   </div>
   {% endif %}
 </section>
+
+{% if equipo %}
+<section class="stats-section">
+  <h3>{{ _('Equipo') }}</h3>
+  {% if tiempo_medio_resolucion is not none %}
+  <p class="muted">{{ _('Tiempo medio hasta presentar un vencimiento fiscal: %(dias)s días.', dias=tiempo_medio_resolucion|round(1)) }}</p>
+  {% endif %}
+  {% set max_segundos_equipo = equipo|map(attribute='segundos_totales')|max %}
+  {% if max_segundos_equipo %}
+  <div class="bar-chart">
+    {% for u in equipo %}
+    <div class="bar-row">
+      <span class="bar-label">{{ u.email }}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width: {{ (u.segundos_totales / max_segundos_equipo * 100)|round(1) }}%;"></div>
+      </div>
+      <span class="bar-value mono">{{ (u.segundos_totales // 3600) }}h {{ (u.segundos_totales % 3600) // 60 }}m</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>{{ _('Persona') }}</th>
+        <th>{{ _('Tiempo en tareas') }}</th>
+        <th>{{ _('Tareas finalizadas') }}</th>
+        <th>{{ _('Notas') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in equipo %}
+      <tr>
+        <td>{{ u.email }}</td>
+        <td class="mono">{{ (u.segundos_totales // 3600) }}h {{ (u.segundos_totales % 3600) // 60 }}m</td>
+        <td class="mono">{{ u.num_tareas }}</td>
+        <td class="mono">{{ u.num_notas }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
 {% endblock %}

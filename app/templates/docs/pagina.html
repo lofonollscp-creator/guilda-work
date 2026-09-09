@@ -78,7 +78,7 @@
 
           {% elif bloque.type == 'callout' %}
             <div class="docs-callout docs-callout-{{ bloque.kind }}">
-              <span class="docs-callout-icono">{{ {'info': 'ℹ', 'warn': '⚠', 'danger': '✕'}[bloque.kind] }}</span>
+              <span class="docs-callout-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ {'info': 'info', 'warn': 'triangle-alert', 'danger': 'x'}[bloque.kind] }}"></use></svg></span>
               <div>{{ bloque.html | safe }}</div>
             </div>
 

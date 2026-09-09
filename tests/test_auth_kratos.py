@@ -18,6 +18,37 @@ def test_sin_sesion_redirige_a_login(cliente):
     assert "Iniciar sesi" in resp.get_data(as_text=True)
 
 
+def test_bootstrap_del_flujo_de_login_es_una_redireccion_relativa(cliente):
+    """El primer GET /login (sin ?flow=) tiene que quedarse en el MISMO
+    origen -- si algún día vuelve a redirigir directo a Kratos
+    (/.ory/self-service/login/browser) sin pasar por el bootstrap
+    server-side (app/main.py:_flujo_o_redirigir), Kratos acabaría
+    rebotando al navegador a su SELFSERVICE_FLOWS_LOGIN_UI_URL fijo
+    -- que es lo que rompía la sesión independiente del backoffice en
+    otro subdominio (ver HOSTING.md)."""
+    resp = cliente.get("/login")
+    assert resp.status_code == 302
+    location = resp.headers["Location"]
+    assert location.startswith("/login?flow=")
+    # Y la cookie anti-CSRF del flujo ya viene puesta en esta misma
+    # respuesta -- si no, el POST de después del siguiente hop falla la
+    # validación CSRF de Kratos (bug real corregido en
+    # kratos.iniciar_flujo, antes descartaba las Set-Cookie).
+    assert "csrf_token" in resp.headers.get("Set-Cookie", "")
+
+
+def test_iniciar_flujo_devuelve_la_cookie_anti_csrf(cliente):
+    """kratos.iniciar_flujo() -- hasta ahora sin ningún llamador, con un
+    bug real que nunca se había disparado: siempre devolvía un diccionario
+    vacío de cabeceras en vez de las Set-Cookie reales de Kratos."""
+    from app import kratos
+
+    ubicacion, cabeceras_set_cookie = kratos.iniciar_flujo("login", {})
+    assert "flow=" in ubicacion
+    assert cabeceras_set_cookie
+    assert any("csrf_token" in c for c in cabeceras_set_cookie)
+
+
 def test_login_con_contrasena_incorrecta_muestra_error(cliente):
     from app import db, kratos
 

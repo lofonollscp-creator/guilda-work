@@ -1,0 +1,274 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ tenant.nombre }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <a class="link" href="{{ url_for('backoffice.panel') }}">&larr; {{ _('Backoffice') }}</a>
+    <h1>{{ tenant.nombre }}</h1>
+    <p class="subtitle">
+      <span class="log-badge {{ 'log-badge-duracion' if tenant.activo else 'log-badge-instantanea' }}">
+        {{ _('Activo') if tenant.activo else _('Suspendido') }}
+      </span>
+      {% if ultima_actividad %}
+      {{ _('Última actividad: %(fecha)s', fecha=ultima_actividad[:16].replace('T', ' ')) }}
+      {% else %}
+      {{ _('Sin actividad todavía.') }}
+      {% endif %}
+    </p>
+  </div>
+  <form method="post" action="{{ url_for('backoffice.alternar_activo_tenant', tenant_id=tenant.id) }}">
+    <button type="submit" class="btn {{ 'btn-stop' if tenant.activo else 'btn-primary' }}">
+      {{ _('Suspender tenant') if tenant.activo else _('Reactivar tenant') }}
+    </button>
+  </form>
+</header>
+
+<section class="quick-card">
+  <label>{{ _('Usuarios') }}</label>
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>{{ _('Rol') }}</th>
+        <th>{{ _('Fichaje') }}</th>
+        <th>{{ _('Supervisor') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.email }}</td>
+        <td>
+          <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="log-badge {{ 'log-badge-duracion' if u.rol == 'admin' else 'log-badge-instantanea' }}" title="{{ _('Clic para cambiar') }}">{{ u.rol }}</button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-ghost">{{ _('Quitar gestor') if u.gestor_fichajes else _('Hacer gestor') }}</button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-ghost">{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty">{{ _('Sin usuarios asignados todavía.') }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Módulos') }}</label>
+  <div class="herramientas-toggle-wrap">
+    {% for h in catalogo_herramientas %}
+    <form method="post" action="{{ url_for('backoffice.alternar_herramienta_tenant', tenant_id=tenant.id, herramienta_id=h.id) }}" style="display:inline;">
+      <button type="submit" class="herramienta-toggle-pill {{ 'is-oculta' if h.id in herramientas_ocultas else '' }}"
+              title="{{ _('Oculto — clic para mostrar') if h.id in herramientas_ocultas else _('Visible — clic para ocultar') }}">
+        {{ h.nombre }}
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Estadísticas de equipo') }}</label>
+  {% if estadisticas_equipo %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>{{ _('Tareas finalizadas') }}</th>
+        <th>{{ _('Notas') }}</th>
+        <th>{{ _('Tiempo total') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in estadisticas_equipo %}
+      <tr>
+        <td>{{ e.email }}</td>
+        <td class="mono">{{ e.num_tareas }}</td>
+        <td class="mono">{{ e.num_notas }}</td>
+        <td class="mono">{{ (e.segundos_totales // 3600) }}h {{ (e.segundos_totales % 3600) // 60 }}m</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty">{{ _('Todavía no hay datos suficientes.') }}</p>
+  {% endif %}
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Stripe Connect') }}</label>
+  <p class="subtitle">{{ _('Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene.') }}</p>
+  {% if not stripe_configurado %}
+  <p class="empty">{{ _('Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY).') }}</p>
+  {% elif tenant.stripe_onboarding_completado %}
+  <span class="log-badge log-badge-duracion">{{ _('Cuenta conectada y lista para cobrar') }}</span>
+  {% elif tenant.stripe_account_id %}
+  <span class="log-badge log-badge-instantanea">{{ _('Onboarding sin completar') }}</span>
+  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters" style="margin-top: 8px;">
+    <input type="hidden" name="email" value="{{ usuarios[0].email if usuarios else '' }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Reintentar onboarding') }}</button>
+  </form>
+  {% else %}
+  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Email de contacto para Stripe') }} <input type="email" name="email" value="{{ usuarios[0].email if usuarios else '' }}" required></label>
+    <button type="submit" class="btn btn-primary">{{ _('Conectar Stripe') }}</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Ingresos (suscripción de Guilda Work)') }}</label>
+  <form method="post" action="{{ url_for('backoffice.asignar_plan', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Plan') }}
+      <select name="plan_id">
+        <option value="">{{ _('Sin plan') }}</option>
+        {% for p in planes %}
+        <option value="{{ p.id }}" {{ 'selected' if tenant.plan_id == p.id }}>{{ p.nombre }}{{ ' — %.2f €/mes'|format(p.precio_mensual_centimos / 100) if p.precio_mensual_centimos }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+  </form>
+
+  {% if tenant.plan_id %}
+    {% if tenant.suscripcion_estado == 'activa' %}
+    <span class="log-badge log-badge-duracion">{{ _('Suscripción activa') }}</span>
+    {% else %}
+    <form method="post" action="{{ url_for('backoffice.activar_suscripcion', tenant_id=tenant.id) }}" class="filters" style="margin-top: 8px;">
+      <label>Email <input type="email" name="email" value="{{ usuarios[0].email if usuarios else '' }}" required></label>
+      <button type="submit" class="btn btn-primary">{{ _('Activar suscripción') }}</button>
+    </form>
+    {% endif %}
+  {% endif %}
+
+  <h4 style="margin: 16px 0 8px;">{{ _('Extras activos') }}</h4>
+  {% if extras_activos %}
+  <ul class="favoritas-list">
+    {% for ea in extras_activos %}
+    <li>
+      <span>{{ ea.nombre }} × {{ ea.cantidad }}{{ ' — ' ~ _('hasta') ~ ' ' ~ ea.activo_hasta[:10] if ea.activo_hasta }}</span>
+      <form method="post" action="{{ url_for('backoffice.desactivar_extra_tenant', tenant_id=tenant.id, tenant_extra_id=ea.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-ghost">{{ _('Quitar') }}</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">{{ _('Sin extras activos.') }}</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('backoffice.anadir_extra_tenant', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Extra') }}
+      <select name="extra_id" required>
+        {% for e in extras %}
+        <option value="{{ e.id }}">{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>{{ _('Cantidad') }} <input type="number" name="cantidad" value="1" min="1"></label>
+    <label>{{ _('Hasta (opcional)') }} <input type="date" name="activo_hasta"></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Añadir extra') }}</button>
+  </form>
+
+  <h4 style="margin: 16px 0 8px;">{{ _('Facturas') }}</h4>
+  {% if facturas_stripe %}
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Estado') }}</th></tr></thead>
+      <tbody>
+        {% for f in facturas_stripe %}
+        <tr>
+          <td class="mono">{{ f.creada_en }}</td>
+          <td class="mono">{{ '%.2f €'|format(f.amount_paid / 100) if f.amount_paid is defined else '—' }}</td>
+          <td>{{ f.status }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">{{ _('Todavía no hay facturas.') }}</p>
+  {% endif %}
+</section>
+
+<section class="quick-card">
+  <label>{{ _('Configuración') }}</label>
+
+  <form method="post" action="{{ url_for('backoffice.renombrar_tenant', tenant_id=tenant.id) }}" class="filters" style="margin-bottom: 8px;">
+    <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ tenant.nombre }}" required></label>
+    <label>CIF <input type="text" name="cif" value="{{ tenant.cif or '' }}" style="width:90px;"></label>
+    <label>{{ _('Dirección fiscal') }} <input type="text" name="direccion_fiscal" value="{{ tenant.direccion_fiscal or '' }}" style="width:200px;"></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+  </form>
+
+  <div class="bo-config-fila">
+    <span class="bo-config-etiqueta">FacturaScripts</span>
+    {% if not tenant.facturascripts_url %}
+    <span class="empty">{{ _('sin aprovisionar') }}</span>
+    {% elif tenant.facturascripts_api_key %}
+    <a class="link" href="{{ tenant.facturascripts_url }}" target="_blank">{{ tenant.facturascripts_url }}</a>
+    {% else %}
+    <a class="link" href="{{ tenant.facturascripts_url }}" target="_blank">{{ tenant.facturascripts_url }}</a>
+    <form method="post" action="{{ url_for('backoffice.guardar_facturascripts_api_key', tenant_id=tenant.id) }}" class="filters">
+      <input type="text" name="api_key" placeholder="{{ _('Pega aquí la API Key (Ajustes → API)') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bo-config-fila">
+    <span class="bo-config-etiqueta">Documenso</span>
+    {% if tenant.documenso_api_key %}
+    <span class="log-badge log-badge-duracion">{{ _('token guardado') }}</span>
+    {% else %}
+    <form method="post" action="{{ url_for('backoffice.guardar_documenso_api_key', tenant_id=tenant.id) }}" class="filters">
+      <input type="text" name="api_key" placeholder="{{ _('Pega aquí el token (crear Equipo a mano primero)') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bo-config-fila">
+    <span class="bo-config-etiqueta">Cal.diy</span>
+    {% if not tenant.calcom_email %}
+    <span class="empty">{{ _('sin aprovisionar') }}</span>
+    {% elif tenant.calcom_api_key %}
+    <span class="log-badge log-badge-duracion">{{ _('token guardado') }}</span>
+    {% else %}
+    <span class="mono">{{ tenant.calcom_email }}</span>
+    <form method="post" action="{{ url_for('backoffice.guardar_calcom_api_key', tenant_id=tenant.id) }}" class="filters">
+      <input type="text" name="api_key" placeholder="{{ _('Pega aquí la API Key (Configuración → Developer)') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bo-config-acciones">
+    <form method="post" action="{{ url_for('backoffice.alternar_fichaje_geolocalizacion', tenant_id=tenant.id) }}">
+      <button type="submit" class="btn btn-ghost" title="{{ _('RGPD: solo activar si hay trabajadores fichando en remoto') }}">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Quitar geolocalización') if tenant.fichaje_geolocalizacion else _('Activar geolocalización') }}
+      </button>
+    </form>
+    <form method="post" action="{{ url_for('backoffice.exportar_datos_tenant', tenant_id=tenant.id) }}">
+      <button type="submit" class="btn btn-ghost" title="{{ _('Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR).') }}">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar datos') }}
+      </button>
+    </form>
+    <form method="post" action="{{ url_for('backoffice.borrar_tenant', tenant_id=tenant.id) }}"
+          onsubmit="return confirm('{{ _('¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus datos.', nombre=tenant.nombre) }}');">
+      <button type="submit" class="btn btn-stop">{{ _('Borrar tenant') }}</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

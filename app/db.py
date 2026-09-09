@@ -92,6 +92,73 @@ CREATE TABLE IF NOT EXISTS vencimientos_fiscales (
     papelera_en TEXT
 );
 
+-- Enlaces mágicos de un solo uso para el portal de cliente (clientes de
+-- la gestoría, no empleados -- ver app/rutas_portal_cliente.py). Vida
+-- corta y de un solo uso a propósito: es la única puerta de entrada sin
+-- contraseña, así que el margen de error tiene que ser mínimo.
+CREATE TABLE IF NOT EXISTS clientes_fiscales_accesos (
+    id INTEGER PRIMARY KEY,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id),
+    token TEXT NOT NULL UNIQUE,
+    creado_en TEXT NOT NULL,
+    expira_en TEXT NOT NULL,
+    usado_en TEXT,
+    ip_solicitante TEXT
+);
+
+-- Documentos que sube el CLIENTE (portal) para un vencimiento concreto --
+-- no confundir con vencimientos_fiscales.notas, de uso interno del
+-- equipo. `contenido` (BLOB, mismo diseño que tiquets_adjuntos) y
+-- `ruta_nextcloud` son mutuamente excluyentes en la práctica: si el
+-- tenant tiene Nextcloud configurado, el contenido vive ahí y
+-- `contenido` es NULL; si no, cae a BLOB local como hasta ahora (ver
+-- db.subir_documento_vencimiento/contenido_documento_vencimiento).
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales_documentos (
+    id INTEGER PRIMARY KEY,
+    vencimiento_id INTEGER NOT NULL,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB,
+    ruta_nextcloud TEXT,
+    creado_en TEXT NOT NULL,
+    FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+);
+
+-- Mensajería del portal de cliente (v2): conversación ligada a un
+-- vencimiento concreto, no a un cliente_fiscal_id suelto -- mismo
+-- criterio que los documentos de arriba (contexto concreto, "el 303
+-- del T2", no un totum revolutum de mensajes sin agrupar). `leido_en`
+-- es deliberadamente simple (una marca, no "leído por quién" a nivel
+-- de usuario individual) -- solo dos partes posibles en la
+-- conversación (cliente / equipo), no hace falta más.
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales_mensajes (
+    id INTEGER PRIMARY KEY,
+    vencimiento_id INTEGER NOT NULL,
+    autor TEXT NOT NULL CHECK (autor IN ('cliente', 'empleado')),
+    usuario_id INTEGER REFERENCES usuarios(id),
+    texto TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    leido_en TEXT,
+    FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+);
+
+-- Solicitudes de acceso al portal de cliente (v2): un cliente sin
+-- ficha previa en clientes_fiscales no puede pedir un enlace mágico
+-- (v1 es opt-in, ver clientes_fiscales.email) -- esto es la cola por
+-- la que pide que un empleado lo vincule a mano, mismo patrón que
+-- leads_contacto (sin acción automática, un admin decide desde
+-- backoffice).
+CREATE TABLE IF NOT EXISTS solicitudes_acceso_portal (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    email TEXT NOT NULL,
+    nif TEXT,
+    mensaje TEXT,
+    creado_en TEXT NOT NULL,
+    atendida INTEGER NOT NULL DEFAULT 0
+);
+
 -- Herramientas del catálogo (app/herramientas.py, por su `id` de texto)
 -- ocultas para un tenant concreto. Ausencia de fila = visible (así una
 -- herramienta nueva, o un tenant sin ninguna fila aquí, no pierde acceso
@@ -139,6 +206,37 @@ CREATE TABLE IF NOT EXISTS dispositivos_push (
     plataforma TEXT NOT NULL,
     creado_en TEXT NOT NULL,
     actualizado_en TEXT NOT NULL
+);
+
+-- Centro de notificaciones unificado (app/notificaciones.py): además del
+-- push FCM (efímero, solo llega si el móvil está a mano), cada aviso se
+-- registra aquí para verlo dentro de la propia app -- correo nuevo,
+-- vencimiento fiscal próximo, mensaje del portal de cliente, resumen IA
+-- semanal. `url` es la ruta a la que lleva al pulsar la notificación,
+-- nullable si el aviso no tiene destino concreto.
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    tipo TEXT NOT NULL,
+    titulo TEXT NOT NULL,
+    cuerpo TEXT,
+    url TEXT,
+    creado_en TEXT NOT NULL,
+    leido_en TEXT
+);
+
+-- Log de auditoría del backoffice (app/rutas_backoffice.py) -- registro
+-- de solo lectura de acciones sensibles/destructivas de administración
+-- (crear/borrar tenant, cambiar rol, asignar tenant a un usuario,
+-- guardar una API key). Deliberadamente simple: sin niveles de
+-- severidad ni retención configurable, se puede ampliar después si
+-- hace falta de verdad -- ver db.registrar_auditoria().
+CREATE TABLE IF NOT EXISTS auditoria_backoffice (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id),
+    accion TEXT NOT NULL,
+    detalle TEXT,
+    creado_en TEXT NOT NULL
 );
 
 -- Webhooks salientes (ver app/eventos.py). tenant_id NULL = modo
@@ -259,6 +357,24 @@ CREATE TABLE IF NOT EXISTS tareas_outlook (
     papelera_en TEXT
 );
 
+-- Reglas de recurrencia para tareas_outlook (semanal/mensual) --
+-- deliberadamente simples (un solo día por regla, sin motor de
+-- recurrencia genérico, ver comentario de vencimientos_fiscales más
+-- arriba, mismo criterio). `dia` es 0-6 (lunes-domingo) si
+-- periodicidad='semanal', o 1-31 si periodicidad='mensual' (si el mes
+-- no tiene ese día, se usa el último día del mes -- ver
+-- generar_tareas_recurrentes()).
+CREATE TABLE IF NOT EXISTS tareas_recurrentes (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    categoria_id INTEGER REFERENCES categorias(id),
+    asunto TEXT NOT NULL,
+    periodicidad TEXT NOT NULL CHECK (periodicidad IN ('semanal','mensual')),
+    dia INTEGER NOT NULL,
+    activa INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL
+);
+
 -- Cliente de correo IMAP/POP3. La contraseña de cada cuenta NO se guarda
 -- aquí: vive en el almacén de credenciales del sistema (keyring), bajo la
 -- clave "cuenta-<id>" — esta tabla solo tiene metadatos de conexión.
@@ -312,6 +428,34 @@ CREATE TABLE IF NOT EXISTS correo_categorias (
     color TEXT NOT NULL,
     creada_en TEXT NOT NULL,
     UNIQUE (usuario_id, nombre)
+);
+
+-- Plantillas de respuesta guardadas -- mismo espíritu que `plantillas`
+-- (frases favoritas de notas rápidas) pero con asunto+cuerpo, para
+-- insertar en el editor de redactar/responder sin mandar nada
+-- automáticamente (el usuario sigue revisando antes de enviar).
+CREATE TABLE IF NOT EXISTS correo_plantillas (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    asunto TEXT,
+    cuerpo TEXT NOT NULL,
+    creada_en TEXT NOT NULL
+);
+
+-- Borradores al redactar -- solo locales, nunca se suben a la carpeta
+-- Drafts del servidor IMAP (evita sincronizar un borrador a medias).
+CREATE TABLE IF NOT EXISTS correo_borradores (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    cuenta_id INTEGER,
+    destinatarios TEXT,
+    cc TEXT,
+    bcc TEXT,
+    asunto TEXT,
+    cuerpo_html TEXT,
+    en_respuesta_a TEXT,
+    actualizado_en TEXT NOT NULL
 );
 
 -- Caché local de mensajes ya descargados (para no ir a red en cada
@@ -475,6 +619,75 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Facturación de plataforma (Guilda Work cobra a sus propios tenants,
+-- bloque 6 -- DISTINTO de Stripe Connect, que es cada tenant cobrando a
+-- SUS clientes finales, ver tenants.stripe_account_id más abajo).
+-- precio_mensual_centimos/precio_centimos NULL a propósito: el mecanismo
+-- se deja listo desde esta ronda, pero sin ningún precio fijado todavía
+-- -- el usuario los edita desde el backoffice cuando decida las tarifas.
+CREATE TABLE IF NOT EXISTS planes_guilda (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    precio_mensual_centimos INTEGER,
+    max_usuarios INTEGER,
+    stripe_price_id TEXT,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS extras_guilda (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    precio_centimos INTEGER,
+    stripe_price_id TEXT,
+    creado_en TEXT NOT NULL
+);
+
+-- Extras activados TEMPORALMENTE en la suscripción de un tenant --
+-- activo_hasta NULL = indefinido, con fecha = expira solo.
+CREATE TABLE IF NOT EXISTS tenants_extras_activos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    extra_id INTEGER NOT NULL REFERENCES extras_guilda(id),
+    cantidad INTEGER NOT NULL DEFAULT 1,
+    activo_desde TEXT NOT NULL,
+    activo_hasta TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tenants_extras_activos_tenant ON tenants_extras_activos(tenant_id);
+
+-- Registro local de un cobro con Stripe Connect (bloque 5) sobre un
+-- vencimiento fiscal -- no se asume que la API de FacturaScripts
+-- permita marcar una factura como cobrada, así que el estado de cobro
+-- vive aquí. stripe_checkout_session_id es UNIQUE: el webhook puede
+-- reintentar la misma entrega, esto evita duplicar el registro.
+CREATE TABLE IF NOT EXISTS vencimientos_fiscales_pagos (
+    id INTEGER PRIMARY KEY,
+    vencimiento_id INTEGER NOT NULL REFERENCES vencimientos_fiscales(id),
+    stripe_checkout_session_id TEXT NOT NULL UNIQUE,
+    importe_centimos INTEGER NOT NULL,
+    pagado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_pagos_vencimiento ON vencimientos_fiscales_pagos(vencimiento_id);
+
+-- Enlaces de un solo uso para abrir FacturaScripts en facturacion.guildawork.com
+-- (app/rutas_facturacion_proxy.py) -- mismo patrón que clientes_fiscales_accesos:
+-- vida corta (1 minuto) y de un solo uso, porque solo sirve para resolver "qué
+-- tenant" antes de fijar la sesión del proxy; FacturaScripts sigue pidiendo su
+-- propio login por separado, esto no es una credencial de acceso a datos.
+CREATE TABLE IF NOT EXISTS facturacion_accesos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    token TEXT NOT NULL UNIQUE,
+    creado_en TEXT NOT NULL,
+    expira_en TEXT NOT NULL,
+    usado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_facturacion_accesos_token ON facturacion_accesos(token);
+
 """
 
 # Índices: sin ellos, cualquier filtro por fecha/categoría/leído acaba en un
@@ -501,9 +714,12 @@ CREATE INDEX IF NOT EXISTS idx_tareas_outlook_estado ON tareas_outlook(estado);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_usuario ON tareas_outlook(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_cuentas_usuario ON correo_cuentas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_categorias_usuario ON correo_categorias(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_plantillas_usuario ON correo_plantillas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_borradores_usuario ON correo_borradores(usuario_id, actualizado_en);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_carpeta_fecha ON correo_mensajes(cuenta_id, carpeta, fecha);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
@@ -516,6 +732,7 @@ CREATE INDEX IF NOT EXISTS idx_webhooks_tenant ON webhooks(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_webhooks_usuario ON webhooks(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_webhooks_entregas_webhook ON webhooks_entregas(webhook_id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_usuario ON tiquets(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_tiquets_asignado ON tiquets(usuario_asignado_id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_adjuntos_tiquet ON tiquets_adjuntos(tiquet_id);
 CREATE INDEX IF NOT EXISTS idx_correo_carpetas_cuenta ON correo_carpetas(cuenta_id);
 CREATE INDEX IF NOT EXISTS idx_plantillas_categoria ON plantillas(categoria_id);
@@ -523,6 +740,14 @@ CREATE INDEX IF NOT EXISTS idx_pausas_tarea ON pausas(tarea_id);
 CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_tenant ON clientes_fiscales(tenant_id, papelera_en);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_tenant_fecha ON vencimientos_fiscales(tenant_id, fecha_limite, papelera_en);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_cliente ON vencimientos_fiscales(cliente_fiscal_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_token ON clientes_fiscales_accesos(token);
+CREATE INDEX IF NOT EXISTS idx_clientes_fiscales_accesos_cliente ON clientes_fiscales_accesos(cliente_fiscal_id);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos(vencimiento_id);
+CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_mensajes_vencimiento ON vencimientos_fiscales_mensajes(vencimiento_id);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(usuario_id, leido_en, creado_en);
+CREATE INDEX IF NOT EXISTS idx_auditoria_backoffice_creado ON auditoria_backoffice(creado_en);
+CREATE INDEX IF NOT EXISTS idx_tareas_recurrentes_usuario ON tareas_recurrentes(usuario_id, activa);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_recurrente ON tareas_outlook(tarea_recurrente_id);
 """
 
 
@@ -809,6 +1034,63 @@ def _migrar_correo_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connecti
         conn.close()
 
 
+def _migrar_documentos_vencimiento_a_nextcloud(conn_ignorada: sqlite3.Connection) -> None:
+    """Documentos fiscales del portal de cliente: pasan de BLOB obligatorio
+    en SQLite a poder vivir en Nextcloud (ver app/nextcloud.py,
+    db.subir_documento_vencimiento) -- solo metadatos + `ruta_nextcloud`
+    en SQLite para los que se suben ahí, `contenido` se queda como
+    fallback para tenants sin Nextcloud configurado. Mismo procedimiento
+    de reconstrucción de tabla que _migrar_correo_categorias_unique_por_usuario
+    (ver su docstring) -- `contenido` tiene que dejar de ser NOT NULL, y
+    SQLite no permite quitar una restricción NOT NULL con ALTER TABLE."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        definicion = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='vencimientos_fiscales_documentos'"
+        ).fetchone()
+        if definicion is None or "contenido BLOB NOT NULL" not in definicion["sql"]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            """CREATE TABLE vencimientos_fiscales_documentos_nueva (
+                   id INTEGER PRIMARY KEY,
+                   vencimiento_id INTEGER NOT NULL,
+                   nombre_archivo TEXT NOT NULL,
+                   tipo_mime TEXT NOT NULL,
+                   tamano_bytes INTEGER NOT NULL,
+                   contenido BLOB,
+                   ruta_nextcloud TEXT,
+                   creado_en TEXT NOT NULL,
+                   FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            """INSERT INTO vencimientos_fiscales_documentos_nueva
+                   (id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en)
+               SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en
+               FROM vencimientos_fiscales_documentos"""
+        )
+        conn.execute("DROP TABLE vencimientos_fiscales_documentos")
+        conn.execute(
+            "ALTER TABLE vencimientos_fiscales_documentos_nueva RENAME TO vencimientos_fiscales_documentos"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento "
+            "ON vencimientos_fiscales_documentos(vencimiento_id)"
+        )
+        violaciones = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violaciones:
+            conn.rollback()
+            raise RuntimeError(
+                f"Migración de vencimientos_fiscales_documentos abortada: foreign_key_check encontró {violaciones}"
+            )
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.close()
+
+
 def init_db() -> None:
     conn = get_connection()
     try:
@@ -818,8 +1100,10 @@ def init_db() -> None:
         _asegurar_columna(conn, "notas", "papelera_en", "TEXT")
         _asegurar_columna(conn, "categorias", "orden", "INTEGER")
         _asegurar_columna(conn, "categorias", "favorito", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "categorias", "icono", "TEXT")
         _migrar_categorias_unique_por_usuario(conn)
         _migrar_correo_categorias_unique_por_usuario(conn)
+        _migrar_documentos_vencimiento_a_nextcloud(conn)
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "categoria_id", "INTEGER")
@@ -829,6 +1113,23 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
+        # Vínculo manual con un cliente fiscal (app/rutas_correo.py,
+        # app/rutas_fiscal.py:ficha_cliente) -- nullable y opt-in, el
+        # empleado lo rellena a mano desde la vista de un mensaje, sin
+        # ningún intento de adivinarlo automáticamente por remitente.
+        # Va ANTES de conn.executescript(INDICES) porque ese script crea
+        # un índice sobre esta misma columna (mismo motivo que
+        # tareas_outlook.tarea_recurrente_id más abajo).
+        _asegurar_columna(conn, "correo_mensajes", "cliente_fiscal_id", "INTEGER REFERENCES clientes_fiscales(id)")
+        # Tiquets: prioridad y responsable asignado (app/rutas_tiquets.py) --
+        # sin CHECK a nivel de esquema para "prioridad" (ALTER TABLE ADD
+        # COLUMN con CHECK es más frágil de migrar en SQLite que
+        # simplemente validar el valor en Python antes de escribir, mismo
+        # criterio ya aplicado a vencimientos_fiscales.modelo). Van ANTES
+        # de conn.executescript(INDICES), mismo motivo que
+        # correo_mensajes.cliente_fiscal_id justo arriba.
+        _asegurar_columna(conn, "tiquets", "prioridad", "TEXT NOT NULL DEFAULT 'normal'")
+        _asegurar_columna(conn, "tiquets", "usuario_asignado_id", "INTEGER REFERENCES usuarios(id)")
         _asegurar_columna(conn, "usuarios", "kratos_identity_id", "TEXT")
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_kratos_identity_id "
@@ -848,6 +1149,14 @@ def init_db() -> None:
         # app/auth.py:admin_required). Lo asigna un superadmin desde el
         # backoffice, igual que hacer_admin/quitar_admin.
         _asegurar_columna(conn, "usuarios", "gestor_fichajes", "INTEGER NOT NULL DEFAULT 0")
+
+        # Rol general de "supervisor de tenant" -- mismo patrón que
+        # gestor_fichajes (flag aparte, no un tercer valor del CHECK de
+        # usuarios.rol), pero no scoped a un único módulo: permite actuar
+        # sobre datos de OTROS usuarios de su propio tenant en cualquier
+        # módulo que lo compruebe (hoy: tiquets, ver app/rutas_tiquets.py).
+        # Lo asigna un superadmin desde el backoffice.
+        _asegurar_columna(conn, "usuarios", "supervisor_tenant", "INTEGER NOT NULL DEFAULT 0")
 
         # Identificación de empresa (CIF/dirección fiscal), exigida junto a
         # la del trabajador en cualquier registro horario que se presente
@@ -976,6 +1285,33 @@ def init_db() -> None:
         # rellena si ESPOCRM_API_KEY no está configurada, el calendario
         # fiscal sigue funcionando igual sin ella.
         _asegurar_columna(conn, "clientes_fiscales", "espocrm_cuenta_id", "TEXT")
+        # Portal de cliente (app/rutas_portal_cliente.py): nullable a
+        # propósito -- el acceso es opt-in, solo si un empleado pone el
+        # email desde la ficha del cliente puede este pedir un enlace.
+        _asegurar_columna(conn, "clientes_fiscales", "email", "TEXT")
+        # Vínculo con FacturaScripts (app/facturascripts.py) -- opcional,
+        # solo si el empleado vincula el cliente fiscal a un cliente de
+        # FacturaScripts desde su ficha (mismo criterio best-effort que
+        # espocrm_cuenta_id de arriba).
+        _asegurar_columna(conn, "clientes_fiscales", "facturascripts_cliente_codigo", "TEXT")
+        # Firma electrónica desde un vencimiento (app/documenso.py) --
+        # id del envelope de Documenso una vez enviado a firma, para
+        # poder consultar su estado/descargarlo sin volver a crearlo.
+        _asegurar_columna(conn, "vencimientos_fiscales", "documenso_documento_id", "TEXT")
+        # Portal de cliente -- pedir un documento concreto
+        # (app/rutas_fiscal.py:editar_vencimiento,
+        # app/rutas_portal_cliente.py): texto libre que el empleado rellena
+        # ("Factura de compra del trimestre"), mostrado destacado en el
+        # portal si todavía no hay documento subido para este vencimiento.
+        _asegurar_columna(conn, "vencimientos_fiscales", "documento_solicitado", "TEXT")
+        # Tareas recurrentes (app/db.py:generar_tareas_recurrentes): marca
+        # qué regla generó esta tarea concreta, para poder comprobar si ya
+        # se generó la de este periodo (idempotencia del cron) sin tener
+        # que adivinarlo por asunto/fecha. Tiene que ir ANTES de
+        # conn.executescript(INDICES) -- ese script crea un índice sobre
+        # esta misma columna, y en una base de datos nueva (creada solo por
+        # SCHEMA, que no la incluye) todavía no existiría.
+        _asegurar_columna(conn, "tareas_outlook", "tarea_recurrente_id", "INTEGER REFERENCES tareas_recurrentes(id)")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -1041,6 +1377,24 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "fichaje_geolocalizacion", "INTEGER NOT NULL DEFAULT 0")
         _backfill_hash_fichajes(conn)
 
+        # Backoffice renovado (cuarta ronda): suspender/reactivar un tenant a
+        # mano, independiente de si paga o no (eso lo aporta la suscripción
+        # de plataforma, ver planes_guilda más abajo).
+        _asegurar_columna(conn, "tenants", "activo", "INTEGER NOT NULL DEFAULT 1")
+
+        # Stripe Connect (bloque 5) -- cada tenant cobra a SUS clientes
+        # finales con su propia cuenta Connect, el dinero le llega
+        # directo a su banco.
+        _asegurar_columna(conn, "tenants", "stripe_account_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stripe_onboarding_completado", "INTEGER NOT NULL DEFAULT 0")
+
+        # Facturación de plataforma (bloque 6) -- Guilda Work cobra a sus
+        # propios tenants por usar la app, cuenta de PLATAFORMA sin Connect.
+        _asegurar_columna(conn, "tenants", "plan_id", "INTEGER REFERENCES planes_guilda(id)")
+        _asegurar_columna(conn, "tenants", "stripe_customer_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "stripe_subscription_id", "TEXT")
+        _asegurar_columna(conn, "tenants", "suscripcion_estado", "TEXT")
+
         # Ampliación "asistente de IA" (Fase G2): adjuntos subidos al chat --
         # texto/CSV pequeños que el asistente puede leer bajo demanda vía la
         # tool leer_adjunto_chat (app/ia_herramientas.py). Mismo criterio de
@@ -1058,6 +1412,11 @@ def init_db() -> None:
                    creado_en TEXT NOT NULL
                )"""
         )
+        # 'usuario' = subido por el usuario con el clip (como hasta ahora);
+        # 'asistente' = una tool se lo manda al usuario por el chat (Drive,
+        # documento firmado...) -- distingue el sentido para pintar la
+        # burbuja correcta en el chat sin tocar el resto del esquema.
+        _asegurar_columna(conn, "ia_adjuntos", "origen", "TEXT NOT NULL DEFAULT 'usuario'")
 
         # Ampliación "espacio de ajustes de usuario" (Fase G1): perfil
         # propio (nombre a mostrar, avatar, preferencias de notificación).
@@ -1078,6 +1437,16 @@ def init_db() -> None:
                    notificar_resumen_semanal INTEGER NOT NULL DEFAULT 0
                )"""
         )
+        # Ampliación (tercera ronda de mejoras): las 4 preferencias de
+        # notificación deberían cubrir los 4 tipos reales que emite
+        # app/notificaciones.py -- faltaban columnas para correo_nuevo y
+        # portal_mensaje_nuevo (antes solo existían para
+        # vencimiento_fiscal/tiquets, y ni siquiera esas dos se
+        # comprobaban de verdad en ningún punto de emisión, ver
+        # db.notificacion_tipo_activa()).
+        _asegurar_columna(conn, "usuario_perfil", "notificar_push_correo", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "usuario_perfil", "notificar_push_portal_mensajes", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
 
         conn.commit()
     finally:
@@ -1115,6 +1484,21 @@ def hacer_backup_si_hace_falta(mantener_dias: int = 30) -> None:
             continue
         if fecha < limite:
             f.unlink(missing_ok=True)
+
+
+def listar_backups() -> list[dict]:
+    """Copias locales de registro.db ya hechas (ver
+    hacer_backup_si_hace_falta) -- para la pantalla "Copias de
+    seguridad" del backoffice. Lee del disco directamente, no hay
+    tabla propia: la fuente de verdad son los propios ficheros."""
+    if not BACKUPS_DIR.exists():
+        return []
+    backups = [
+        {"nombre": f.name, "fecha": f.stem.removeprefix("registro_"), "tamano_bytes": f.stat().st_size}
+        for f in BACKUPS_DIR.glob("registro_*.db")
+    ]
+    backups.sort(key=lambda b: b["fecha"], reverse=True)
+    return backups
 
 
 # --- Usuarios / autenticación ------------------------------------------------
@@ -1236,6 +1620,31 @@ def asignar_gestor_fichajes(usuario_id: int, valor: bool) -> None:
         conn.close()
 
 
+def es_supervisor_tenant(usuario_id: int) -> bool:
+    usuario = obtener_usuario(usuario_id)
+    return usuario is not None and bool(usuario["supervisor_tenant"])
+
+
+def asignar_supervisor_tenant(usuario_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE usuarios SET supervisor_tenant = ? WHERE id = ?", (int(valor), usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def usuario_pertenece_a_tenant(usuario_id: int, tenant_id: int) -> bool:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id),
+        ).fetchone()
+        return fila is not None
+    finally:
+        conn.close()
+
+
 def fijar_fichaje_geolocalizacion(tenant_id: int, valor: bool) -> None:
     """Opt-in por tenant (Fase G3) -- una gestoría sin trabajadores en
     remoto no tiene por qué recoger ubicación al fichar (RGPD). Ver
@@ -1353,11 +1762,377 @@ def listar_tenants_con_conteo() -> list[sqlite3.Row]:
         conn.close()
 
 
+def resumen_plataforma() -> dict:
+    """Métricas agregadas para la pantalla "Resumen" del backoffice --
+    una sola función porque todas las consultas son baratas (COUNT/SUM
+    sobre tablas pequeñas) y siempre se piden juntas."""
+    conn = get_connection()
+    try:
+        tenants_total = conn.execute("SELECT COUNT(*) FROM tenants").fetchone()[0]
+        tenants_activos = conn.execute("SELECT COUNT(*) FROM tenants WHERE activo = 1").fetchone()[0]
+        usuarios_total = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+        mrr_centimos = conn.execute(
+            "SELECT COALESCE(SUM(pg.precio_mensual_centimos), 0) FROM tenants t "
+            "JOIN planes_guilda pg ON pg.id = t.plan_id "
+            "WHERE t.suscripcion_estado = 'activa'"
+        ).fetchone()[0]
+        tenants_recientes = conn.execute(
+            "SELECT id, nombre, creado_en FROM tenants ORDER BY creado_en DESC LIMIT 5"
+        ).fetchall()
+        return {
+            "tenants_total": tenants_total,
+            "tenants_activos": tenants_activos,
+            "usuarios_total": usuarios_total,
+            "mrr_centimos": mrr_centimos,
+            "tenants_recientes": tenants_recientes,
+        }
+    finally:
+        conn.close()
+
+
+def listar_suscripciones_tenants() -> list[sqlite3.Row]:
+    """Todos los tenants con su plan (si tiene) y estado de suscripción,
+    para la vista agregada de Ingresos del backoffice -- JOIN con
+    planes_guilda para traer nombre/precio en una sola consulta."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT tenants.*, planes_guilda.nombre AS plan_nombre, "
+            "planes_guilda.precio_mensual_centimos AS plan_precio_centimos "
+            "FROM tenants LEFT JOIN planes_guilda ON planes_guilda.id = tenants.plan_id "
+            "ORDER BY tenants.nombre"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 def renombrar_tenant(tenant_id: int, nuevo_nombre: str) -> None:
     """Lanza sqlite3.IntegrityError si el nombre ya existe (UNIQUE)."""
     conn = get_connection()
     try:
         conn.execute("UPDATE tenants SET nombre = ? WHERE id = ?", (nuevo_nombre.strip(), tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def alternar_activo_tenant(tenant_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET activo = ? WHERE id = ?", (int(valor), tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def ultima_actividad_tenant(tenant_id: int) -> str | None:
+    """Fecha/hora del registro más reciente entre tareas/notas/fichajes/
+    correo de cualquier usuario del tenant -- ISO 8601 o None si el tenant
+    no tiene ninguna actividad todavía. Solo para mostrar "hace X" en el
+    backoffice, no se usa para ninguna decisión de negocio."""
+    ids = usuarios_de_tenant(tenant_id)
+    if not ids:
+        return None
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" * len(ids))
+        fila = conn.execute(
+            f"""SELECT MAX(fecha) AS ultima FROM (
+                SELECT MAX(COALESCE(fin_en, inicio_en)) AS fecha FROM tareas WHERE usuario_id IN ({marcadores})
+                UNION ALL
+                SELECT MAX(creada_en) AS fecha FROM notas WHERE usuario_id IN ({marcadores})
+                UNION ALL
+                SELECT MAX(creado_en) AS fecha FROM fichajes WHERE usuario_id IN ({marcadores})
+                UNION ALL
+                SELECT MAX(m.fecha) AS fecha FROM correo_mensajes m
+                    JOIN correo_cuentas cu ON cu.id = m.cuenta_id
+                    WHERE cu.usuario_id IN ({marcadores})
+            )""",
+            ids * 4,
+        ).fetchone()
+        return fila["ultima"] if fila else None
+    finally:
+        conn.close()
+
+
+# --- Stripe Connect (bloque 5 -- cada tenant cobra a sus clientes) --------
+
+def guardar_stripe_account_id(tenant_id: int, stripe_account_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_account_id = ? WHERE id = ?", (stripe_account_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def marcar_stripe_onboarding_completado(tenant_id: int, valor: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_onboarding_completado = ? WHERE id = ?", (int(valor), tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def registrar_pago_vencimiento(vencimiento_id: int, stripe_checkout_session_id: str, importe_centimos: int) -> bool:
+    """True si se registró un pago nuevo, False si esta sesión de
+    Checkout ya se había procesado antes (el webhook de Stripe puede
+    reintentar la misma entrega -- stripe_checkout_session_id es UNIQUE,
+    así que un segundo intento no duplica el registro)."""
+    conn = get_connection()
+    try:
+        try:
+            conn.execute(
+                "INSERT INTO vencimientos_fiscales_pagos (vencimiento_id, stripe_checkout_session_id, importe_centimos, pagado_en) "
+                "VALUES (?, ?, ?, ?)",
+                (vencimiento_id, stripe_checkout_session_id, importe_centimos, now_iso()),
+            )
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+    finally:
+        conn.close()
+
+
+def pago_de_vencimiento(vencimiento_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM vencimientos_fiscales_pagos WHERE vencimiento_id = ? ORDER BY id DESC LIMIT 1",
+            (vencimiento_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+# --- Facturación de plataforma (bloque 6 -- Guilda Work cobra a sus tenants)
+
+def crear_plan_guilda(nombre: str, descripcion: str | None, precio_mensual_centimos: int | None, max_usuarios: int | None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO planes_guilda (nombre, descripcion, precio_mensual_centimos, max_usuarios, creado_en) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (nombre.strip(), descripcion, precio_mensual_centimos, max_usuarios, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_planes_guilda(solo_activos: bool = False) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        sql = "SELECT * FROM planes_guilda"
+        if solo_activos:
+            sql += " WHERE activo = 1"
+        sql += " ORDER BY precio_mensual_centimos IS NULL, precio_mensual_centimos, nombre"
+        return conn.execute(sql).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_plan_guilda(plan_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM planes_guilda WHERE id = ?", (plan_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def editar_plan_guilda(plan_id: int, nombre: str, descripcion: str | None, precio_mensual_centimos: int | None, max_usuarios: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE planes_guilda SET nombre = ?, descripcion = ?, precio_mensual_centimos = ?, max_usuarios = ? WHERE id = ?",
+            (nombre.strip(), descripcion, precio_mensual_centimos, max_usuarios, plan_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_price_id_plan(plan_id: int, stripe_price_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE planes_guilda SET stripe_price_id = ? WHERE id = ?", (stripe_price_id, plan_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_extra_guilda(nombre: str, descripcion: str | None, precio_centimos: int | None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO extras_guilda (nombre, descripcion, precio_centimos, creado_en) VALUES (?, ?, ?, ?)",
+            (nombre.strip(), descripcion, precio_centimos, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_extras_guilda() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM extras_guilda ORDER BY nombre").fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_extra_guilda(extra_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM extras_guilda WHERE id = ?", (extra_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_price_id_extra(extra_id: int, stripe_price_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE extras_guilda SET stripe_price_id = ? WHERE id = ?", (stripe_price_id, extra_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def editar_extra_guilda(extra_id: int, nombre: str, descripcion: str | None, precio_centimos: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE extras_guilda SET nombre = ?, descripcion = ?, precio_centimos = ? WHERE id = ?",
+            (nombre.strip(), descripcion, precio_centimos, extra_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def limpiar_stripe_price_id_plan(plan_id: int) -> None:
+    """Los Price de Stripe son inmutables -- si cambia el precio de un
+    plan ya sincronizado, el stripe_price_id guardado deja de
+    corresponder al importe mostrado. Se limpia para que
+    "Sincronizar con Stripe" vuelva a estar disponible y cree un Price
+    nuevo con el importe correcto (el Price antiguo queda huérfano en
+    Stripe, sin usarse más, pero Stripe no permite borrarlos)."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE planes_guilda SET stripe_price_id = NULL WHERE id = ?", (plan_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def limpiar_stripe_price_id_extra(extra_id: int) -> None:
+    """Mismo motivo que limpiar_stripe_price_id_plan, para extras."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE extras_guilda SET stripe_price_id = NULL WHERE id = ?", (extra_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_plan_tenant(tenant_id: int, plan_id: int | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET plan_id = ? WHERE id = ?", (plan_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_customer_id(tenant_id: int, stripe_customer_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_customer_id = ? WHERE id = ?", (stripe_customer_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def guardar_stripe_subscription_id(tenant_id: int, stripe_subscription_id: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET stripe_subscription_id = ? WHERE id = ?", (stripe_subscription_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def actualizar_suscripcion_estado(tenant_id: int, estado: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET suscripcion_estado = ? WHERE id = ?", (estado, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def tenant_por_stripe_customer_id(stripe_customer_id: str) -> sqlite3.Row | None:
+    """Usado por el webhook de Stripe (evento ligado a un customer, no a
+    un tenant_id de Guilda Work directamente) para resolver a qué tenant
+    corresponde."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM tenants WHERE stripe_customer_id = ?", (stripe_customer_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def activar_extra_tenant(tenant_id: int, extra_id: int, cantidad: int = 1, activo_hasta: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO tenants_extras_activos (tenant_id, extra_id, cantidad, activo_desde, activo_hasta, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (tenant_id, extra_id, cantidad, now_iso(), activo_hasta, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_extras_activos_tenant(tenant_id: int) -> list[sqlite3.Row]:
+    """Solo los que no han caducado -- activo_hasta NULL es indefinido,
+    con fecha se compara contra el momento actual."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT tea.*, eg.nombre, eg.precio_centimos FROM tenants_extras_activos tea "
+            "JOIN extras_guilda eg ON eg.id = tea.extra_id "
+            "WHERE tea.tenant_id = ? AND (tea.activo_hasta IS NULL OR tea.activo_hasta >= ?) "
+            "ORDER BY tea.activo_desde DESC",
+            (tenant_id, now_iso()),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def desactivar_extra_tenant(tenant_extra_id: int) -> None:
+    """Corta un extra activo AHORA (fija activo_hasta a un instante ya
+    pasado) en vez de borrar la fila -- listar_extras_activos_tenant()
+    ya deja de devolverlo desde la siguiente consulta, pero el
+    historial de que estuvo activo se conserva, mismo criterio de "no
+    perder datos" que el resto del proyecto. Un segundo antes de ahora
+    (no exactamente ahora) porque now_iso() solo tiene precisión de
+    segundo y el filtro de listar_extras_activos_tenant es inclusive
+    (activo_hasta >= ahora) -- con el mismo instante, una consulta en
+    el mismo segundo seguiría viéndolo activo."""
+    conn = get_connection()
+    try:
+        activo_hasta = (datetime.now() - timedelta(seconds=1)).isoformat(timespec="seconds")
+        conn.execute(
+            "UPDATE tenants_extras_activos SET activo_hasta = ? WHERE id = ?",
+            (activo_hasta, tenant_extra_id),
+        )
         conn.commit()
     finally:
         conn.close()
@@ -1453,6 +2228,18 @@ def herramientas_ocultas_de_tenants(tenant_ids: list[int]) -> dict[int, set[str]
         return resultado
     finally:
         conn.close()
+
+
+def adopcion_herramientas(ocultas_por_tenant: dict[int, set[str]], catalogo_ids: list[str]) -> dict[str, int]:
+    """Nº de tenants que tienen cada herramienta VISIBLE (no oculta) --
+    para la pantalla "Catálogo de herramientas" del backoffice. Cálculo
+    en Python (no SQL) porque la fuente de verdad ya está en memoria
+    tras herramientas_ocultas_de_tenants(), sin tabla propia que
+    consultar -- ausencia de fila = visible, ver db.py más arriba."""
+    return {
+        herramienta_id: sum(1 for ocultas in ocultas_por_tenant.values() if herramienta_id not in ocultas)
+        for herramienta_id in catalogo_ids
+    }
 
 
 def guardar_facturascripts(tenant_id: int, url: str, admin_user: str, admin_pass: str) -> None:
@@ -1888,6 +2675,210 @@ def eliminar_tokens_push(tokens: list[str]) -> None:
         conn.close()
 
 
+# --- Centro de notificaciones (app/notificaciones.py) -----------------------
+
+def crear_notificacion(usuario_id: int, tipo: str, titulo: str, cuerpo: str | None, url: str | None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO notificaciones (usuario_id, tipo, titulo, cuerpo, url, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, tipo, titulo, cuerpo, url, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_notificaciones(usuario_id: int, limite: int = 10) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT ?",
+            (usuario_id, limite),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_notificaciones_no_leidas(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT COUNT(*) AS n FROM notificaciones WHERE usuario_id = ? AND leido_en IS NULL", (usuario_id,),
+        ).fetchone()
+        return fila["n"]
+    finally:
+        conn.close()
+
+
+def marcar_notificaciones_leidas(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE notificaciones SET leido_en = ? WHERE usuario_id = ? AND leido_en IS NULL",
+            (now_iso(), usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_notificacion(usuario_id: int, notificacion_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM notificaciones WHERE id = ? AND usuario_id = ?",
+            (notificacion_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_todas_notificaciones(usuario_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM notificaciones WHERE usuario_id = ?", (usuario_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Log de auditoría del backoffice (app/rutas_backoffice.py) -------------
+
+def registrar_auditoria(usuario_id: int | None, accion: str, detalle: str | None = None) -> None:
+    """Nunca debe romper la acción que audita -- quien llama (rutas_backoffice.py)
+    la envuelve en su propio try/except best-effort, mismo criterio que el
+    resto de efectos secundarios "de segunda fila" del proyecto (eventos,
+    notificaciones)."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO auditoria_backoffice (usuario_id, accion, detalle, creado_en) VALUES (?, ?, ?, ?)",
+            (usuario_id, accion, detalle, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_auditoria_backoffice(limite: int = 200) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT a.*, u.email AS usuario_email
+               FROM auditoria_backoffice a LEFT JOIN usuarios u ON u.id = a.usuario_id
+               ORDER BY a.id DESC LIMIT ?""",
+            (limite,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+# --- Exportación de datos de un tenant (GDPR, solo lectura) -----------------
+#
+# MVP de "derecho de acceso": un único JSON con metadatos + enlaces de
+# descarga -- deliberadamente SIN incrustar el contenido de documentos/
+# adjuntos (BLOBs, potencialmente grandes y ya descargables uno a uno
+# desde sus propios endpoints existentes). Purga/"derecho al olvido" NO
+# está cubierto aquí -- un borrado real es mucho más delicado y se
+# diseñaría aparte si hiciera falta. `SELECT *` se evita a propósito en
+# `tenants`/`usuarios`: ambas tablas tienen columnas sensibles (API keys
+# de integraciones, hash de contraseña) que nunca deben salir en un
+# export -- se listan las columnas exportables explícitamente.
+
+def exportar_datos_tenant(tenant_id: int) -> dict:
+    tenant = obtener_tenant(tenant_id)
+    if tenant is None:
+        raise ValueError(f"No existe el tenant #{tenant_id}.")
+    usuarios_ids = usuarios_de_tenant(tenant_id)
+    conn = get_connection()
+    try:
+        usuarios = []
+        if usuarios_ids:
+            marcadores_usuarios = ",".join("?" * len(usuarios_ids))
+            usuarios = [
+                dict(u) for u in conn.execute(
+                    f"SELECT id, email, rol, creado_en FROM usuarios WHERE id IN ({marcadores_usuarios})",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+
+        clientes_fiscales = [
+            dict(c) for c in conn.execute(
+                "SELECT * FROM clientes_fiscales WHERE tenant_id = ?", (tenant_id,)
+            ).fetchall()
+        ]
+
+        vencimientos_fiscales = []
+        for v in conn.execute("SELECT * FROM vencimientos_fiscales WHERE tenant_id = ?", (tenant_id,)).fetchall():
+            v = dict(v)
+            v["documentos"] = [
+                {**dict(d), "url_descarga": f"/fiscal/vencimientos/{v['id']}/documentos/{d['id']}"}
+                for d in conn.execute(
+                    "SELECT id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
+                    "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ?",
+                    (v["id"],),
+                ).fetchall()
+            ]
+            v["mensajes"] = [
+                dict(m) for m in conn.execute(
+                    "SELECT autor, usuario_id, texto, creado_en, leido_en "
+                    "FROM vencimientos_fiscales_mensajes WHERE vencimiento_id = ?",
+                    (v["id"],),
+                ).fetchall()
+            ]
+            vencimientos_fiscales.append(v)
+
+        tareas, notas, tiquets, correos = [], [], [], []
+        if usuarios_ids:
+            marcadores = ",".join("?" * len(usuarios_ids))
+            tareas = [
+                dict(t) for t in conn.execute(
+                    f"SELECT id, usuario_id, nombre, tipo, estado, inicio_en, fin_en, duracion_segundos "
+                    f"FROM tareas WHERE usuario_id IN ({marcadores}) AND papelera_en IS NULL",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            notas = [
+                dict(n) for n in conn.execute(
+                    f"SELECT id, usuario_id, texto, creada_en FROM notas "
+                    f"WHERE usuario_id IN ({marcadores}) AND papelera_en IS NULL",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            tiquets = [
+                dict(t) for t in conn.execute(
+                    f"SELECT id, usuario_id, tipo, titulo, descripcion, estado, prioridad, "
+                    f"usuario_asignado_id, creado_en FROM tiquets WHERE usuario_id IN ({marcadores})",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            correos = [
+                dict(c) for c in conn.execute(
+                    f"""SELECT m.id, m.asunto, m.remitente, m.destinatarios, m.fecha, cu.usuario_id
+                        FROM correo_mensajes m JOIN correo_cuentas cu ON cu.id = m.cuenta_id
+                        WHERE cu.usuario_id IN ({marcadores})""",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+
+        return {
+            "tenant": {"id": tenant["id"], "nombre": tenant["nombre"], "creado_en": tenant["creado_en"]},
+            "generado_en": now_iso(),
+            "usuarios": usuarios,
+            "clientes_fiscales": clientes_fiscales,
+            "vencimientos_fiscales": vencimientos_fiscales,
+            "tareas": tareas,
+            "notas": notas,
+            "tiquets": tiquets,
+            "correos": correos,
+        }
+    finally:
+        conn.close()
+
+
 # --- Webhooks (ver app/eventos.py) --------------------------------------
 
 _MAX_ENTREGAS_POR_WEBHOOK = 50
@@ -2028,7 +3019,7 @@ def entregas_de_webhooks(webhook_ids: list[int], limite: int = 5) -> dict[int, l
 
 # --- Categorías --------------------------------------------------------
 
-def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> int:
+def crear_categoria(usuario_id: int, nombre: str, color: str | None = None, icono: str | None = None) -> int:
     """Crea un menú, o reutiliza uno existente del MISMO usuario con el
     mismo nombre.
 
@@ -2062,8 +3053,8 @@ def crear_categoria(usuario_id: int, nombre: str, color: str | None = None) -> i
             "SELECT COALESCE(MAX(orden), -1) + 1 FROM categorias WHERE usuario_id = ?", (usuario_id,)
         ).fetchone()[0]
         cur = conn.execute(
-            "INSERT INTO categorias (usuario_id, nombre, color, creada_en, orden) VALUES (?, ?, ?, ?, ?)",
-            (usuario_id, nombre, color, now_iso(), siguiente_orden),
+            "INSERT INTO categorias (usuario_id, nombre, color, icono, creada_en, orden) VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, nombre, color, icono, now_iso(), siguiente_orden),
         )
         conn.commit()
         return cur.lastrowid
@@ -2173,12 +3164,12 @@ def obtener_categoria(usuario_id: int, categoria_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
-def renombrar_categoria(usuario_id: int, categoria_id: int, nombre: str, color: str | None = None) -> None:
+def renombrar_categoria(usuario_id: int, categoria_id: int, nombre: str, color: str | None = None, icono: str | None = None) -> None:
     conn = get_connection()
     try:
         conn.execute(
-            "UPDATE categorias SET nombre = ?, color = ? WHERE id = ? AND usuario_id = ?",
-            (nombre.strip(), color, categoria_id, usuario_id),
+            "UPDATE categorias SET nombre = ?, color = ?, icono = ? WHERE id = ? AND usuario_id = ?",
+            (nombre.strip(), color, icono, categoria_id, usuario_id),
         )
         conn.commit()
     finally:
@@ -2923,6 +3914,75 @@ def estadisticas_por_dia(usuario_id: int, desde: str | None = None, hasta: str |
         conn.close()
 
 
+def estadisticas_equipo_por_usuario(
+    tenant_id: int, desde: str | None = None, hasta: str | None = None,
+) -> list[dict]:
+    """Carga de trabajo por usuario de un tenant -- a diferencia de
+    estadisticas_por_categoria(), no se puede reutilizar esa misma
+    consulta ampliándola con un IN de usuarios: las categorías
+    (`categorias.usuario_id`) son propias de cada persona, no
+    compartidas por tenant, así que agregar "por categoría" mezclaría
+    categorías de nombre distinto entre sí sin ningún criterio común.
+    Aquí se agrega directamente por usuario (email), que sí es una
+    dimensión compartida con sentido a nivel de equipo."""
+    conn = get_connection()
+    try:
+        ids = usuarios_de_tenant(tenant_id)
+        if not ids:
+            return []
+        marcadores = ",".join("?" * len(ids))
+        cond_t = [f"t.usuario_id IN ({marcadores})", "t.tipo = 'duracion'", "t.estado = 'finalizada'", "t.papelera_en IS NULL"]
+        cond_n = [f"n.usuario_id IN ({marcadores})", "n.papelera_en IS NULL"]
+        params_t: list = list(ids)
+        params_n: list = list(ids)
+        hasta_excl = _fecha_exclusiva(hasta) if hasta else None
+        if desde:
+            cond_t.append("t.inicio_en >= ?"); params_t.append(desde)
+            cond_n.append("n.creada_en >= ?"); params_n.append(desde)
+        if hasta_excl:
+            cond_t.append("t.inicio_en < ?"); params_t.append(hasta_excl)
+            cond_n.append("n.creada_en < ?"); params_n.append(hasta_excl)
+
+        filas = conn.execute(
+            f"""SELECT u.id, u.email,
+                   COALESCE((SELECT SUM(t.duracion_segundos) FROM tareas t
+                             WHERE t.usuario_id = u.id AND {' AND '.join(cond_t)}), 0) AS segundos_totales,
+                   COALESCE((SELECT COUNT(*) FROM tareas t
+                             WHERE t.usuario_id = u.id AND {' AND '.join(cond_t)}), 0) AS num_tareas,
+                   COALESCE((SELECT COUNT(*) FROM notas n
+                             WHERE n.usuario_id = u.id AND {' AND '.join(cond_n)}), 0) AS num_notas
+               FROM usuarios u
+               WHERE u.id IN ({marcadores})
+               ORDER BY segundos_totales DESC, u.email""",
+            [*params_t, *params_t, *params_n, *ids],
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def tiempo_medio_resolucion_vencimientos(tenant_id: int) -> float | None:
+    """Media de días entre crear un vencimiento fiscal y marcarlo como
+    presentado -- KPI de equipo, no personal. None si no hay ningún
+    vencimiento presentado todavía (evita mostrar un falso "0 días").
+    No existe un equivalente para tiquets: son un tablero interno
+    COMPARTIDO por toda la plataforma (sin tenant_id, ver
+    app/rutas_tiquets.py), no datos de un tenant/cliente concreto --
+    calcular un tiempo de resolución "por tenant" no tendría sentido
+    ahí."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT AVG(julianday(actualizado_en) - julianday(creado_en)) AS media_dias
+               FROM vencimientos_fiscales
+               WHERE tenant_id = ? AND estado = 'presentado' AND actualizado_en IS NOT NULL""",
+            (tenant_id,),
+        ).fetchone()
+        return fila["media_dias"]
+    finally:
+        conn.close()
+
+
 # --- Frases favoritas (plantillas) ------------------------------------------
 # Se aíslan a través de categoria_id (NOT NULL, siempre de un usuario ya
 # validado por la ruta antes de llamar aquí) — no llevan usuario_id propio.
@@ -2988,6 +4048,7 @@ def crear_tarea_outlook(
     categoria_outlook: str | None = None,
     categoria_id: int | None = None,
     outlook_entry_id: str | None = None,
+    tarea_recurrente_id: int | None = None,
 ) -> int:
     conn = get_connection()
     try:
@@ -2996,16 +4057,127 @@ def crear_tarea_outlook(
             """INSERT INTO tareas_outlook
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
-                outlook_entry_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                outlook_entry_id, tarea_recurrente_id, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
-                (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id, now_iso(),
+                (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id,
+                tarea_recurrente_id, now_iso(),
             ),
         )
         conn.commit()
         return cur.lastrowid
+    finally:
+        conn.close()
+
+
+# --- Tareas recurrentes (app/rutas_tareas.py) --------------------------
+
+def crear_tarea_recurrente(
+    usuario_id: int, asunto: str, periodicidad: str, dia: int, categoria_id: int | None = None,
+) -> int:
+    conn = get_connection()
+    try:
+        categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
+        cur = conn.execute(
+            "INSERT INTO tareas_recurrentes (usuario_id, categoria_id, asunto, periodicidad, dia, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, categoria_id, asunto.strip(), periodicidad, dia, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_tareas_recurrentes(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM tareas_recurrentes WHERE usuario_id = ? ORDER BY creado_en DESC", (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def alternar_activa_tarea_recurrente(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tareas_recurrentes SET activa = 1 - activa WHERE id = ? AND usuario_id = ?",
+            (regla_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_tarea_recurrente(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM tareas_recurrentes WHERE id = ? AND usuario_id = ?", (regla_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _existe_tarea_generada_este_periodo(conn: sqlite3.Connection, regla_id: int, desde: str, hasta: str) -> bool:
+    fila = conn.execute(
+        "SELECT 1 FROM tareas_outlook WHERE tarea_recurrente_id = ? AND creada_en >= ? AND creada_en < ? "
+        "AND papelera_en IS NULL LIMIT 1",
+        (regla_id, desde, hasta),
+    ).fetchone()
+    return fila is not None
+
+
+def generar_tareas_recurrentes() -> int:
+    """Recurrencia automática por cron (ver scripts/generar_tareas_recurrentes.py),
+    pensado para correr una vez al día -- para cada regla activa, comprueba
+    si HOY es el día que le toca (día de la semana si es semanal, día del
+    mes si es mensual -- si el mes no tiene ese día, se usa su último día,
+    ver `dia_efectivo` abajo) y, si es así y todavía no se ha generado una
+    tarea de ESTE periodo (semana o mes en curso, ver
+    _existe_tarea_generada_este_periodo), crea una tareas_outlook nueva
+    enlazada a la regla vía tarea_recurrente_id. Idempotente -- ejecutarlo
+    varias veces el mismo día no duplica nada, mismo criterio que
+    generar_vencimientos_automaticos()."""
+    hoy = datetime.now()
+    inicio_semana = (hoy - timedelta(days=hoy.weekday())).strftime("%Y-%m-%d")
+    fin_semana = (hoy - timedelta(days=hoy.weekday()) + timedelta(days=7)).strftime("%Y-%m-%d")
+    inicio_mes = hoy.replace(day=1).strftime("%Y-%m-%d")
+    if hoy.month == 12:
+        fin_mes = hoy.replace(year=hoy.year + 1, month=1, day=1).strftime("%Y-%m-%d")
+    else:
+        fin_mes = hoy.replace(month=hoy.month + 1, day=1).strftime("%Y-%m-%d")
+    ultimo_dia_del_mes = (datetime.fromisoformat(fin_mes) - timedelta(days=1)).day
+
+    creadas = 0
+    conn = get_connection()
+    try:
+        reglas = conn.execute("SELECT * FROM tareas_recurrentes WHERE activa = 1").fetchall()
+        for regla in reglas:
+            if regla["periodicidad"] == "semanal":
+                le_toca_hoy = hoy.weekday() == regla["dia"]
+                desde, hasta = inicio_semana, fin_semana
+            else:
+                dia_efectivo = min(regla["dia"], ultimo_dia_del_mes)
+                le_toca_hoy = hoy.day == dia_efectivo
+                desde, hasta = inicio_mes, fin_mes
+            if not le_toca_hoy:
+                continue
+            if _existe_tarea_generada_este_periodo(conn, regla["id"], desde, hasta):
+                continue
+            categoria_id = _categoria_id_propio(conn, regla["usuario_id"], regla["categoria_id"])
+            conn.execute(
+                """INSERT INTO tareas_outlook
+                   (usuario_id, asunto, categoria_id, tarea_recurrente_id, creada_en)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (regla["usuario_id"], regla["asunto"], categoria_id, regla["id"], now_iso()),
+            )
+            creadas += 1
+        conn.commit()
+        return creadas
     finally:
         conn.close()
 
@@ -3211,8 +4383,19 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 # usuario_id -- las rutas siempre pasan g.tenant_id, nunca un valor del
 # request (ver app/rutas_fiscal.py).
 
-CAMPOS_CLIENTE_FISCAL = ("nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id")
-CAMPOS_VENCIMIENTO_FISCAL = ("usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas")
+CAMPOS_CLIENTE_FISCAL = (
+    "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
+    "facturascripts_cliente_codigo",
+)
+_MINUTOS_VIDA_ACCESO_PORTAL = 15
+MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
+    "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf",
+}
+TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO = 8 * 1024 * 1024
+CAMPOS_VENCIMIENTO_FISCAL = (
+    "usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas", "documenso_documento_id",
+    "documento_solicitado",
+)
 
 
 def serializar_modelos_fiscales(modelos: list[str] | None) -> str | None:
@@ -3240,22 +4423,45 @@ def modelos_fiscales_de_cliente(cliente: sqlite3.Row) -> list[str]:
 
 def crear_cliente_fiscal(
     tenant_id: int, nombre: str, nif: str | None = None, notas: str | None = None,
-    modelos_fiscales: list[str] | None = None,
+    modelos_fiscales: list[str] | None = None, email: str | None = None,
 ) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, modelos_fiscales, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, modelos_fiscales, email, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 tenant_id, nombre.strip(), (nif or "").strip() or None, (notas or "").strip() or None,
-                serializar_modelos_fiscales(modelos_fiscales), now_iso(),
+                serializar_modelos_fiscales(modelos_fiscales), (email or "").strip() or None, now_iso(),
             ),
         )
         conn.commit()
-        return cur.lastrowid
+        cliente_id = cur.lastrowid
     finally:
         conn.close()
+    _reindexar_cliente_fiscal(tenant_id, cliente_id)
+    return cliente_id
+
+
+def _reindexar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
+    """Falla en silencio, mismo criterio que _reindexar_tarea/_reindexar_nota
+    -- una mejora de UX (buscador global), nunca debe romper el alta/edición
+    del cliente en sí."""
+    from . import busqueda
+    try:
+        cliente = obtener_cliente_fiscal(tenant_id, cliente_id)
+        if cliente is not None:
+            busqueda.indexar_cliente_fiscal(dict(cliente))
+    except busqueda.ErrorBusqueda:
+        pass
+
+
+def _quitar_cliente_fiscal_del_indice(cliente_id: int) -> None:
+    from . import busqueda
+    try:
+        busqueda.eliminar_del_indice("cliente_fiscal", cliente_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def listar_clientes_fiscales(tenant_id: int, q: str | None = None) -> list[sqlite3.Row]:
@@ -3302,6 +4508,7 @@ def editar_cliente_fiscal(tenant_id: int, cliente_id: int, **campos) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_cliente_fiscal(tenant_id, cliente_id)
 
 
 def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -3318,6 +4525,7 @@ def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_cliente_fiscal_del_indice(cliente_id)
 
 
 def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -3330,6 +4538,7 @@ def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_cliente_fiscal(tenant_id, cliente_id)
 
 
 def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> None:
@@ -3339,6 +4548,7 @@ def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> 
         conn.commit()
     finally:
         conn.close()
+    _quitar_cliente_fiscal_del_indice(cliente_id)
 
 
 def crear_vencimiento_fiscal(
@@ -3357,9 +4567,29 @@ def crear_vencimiento_fiscal(
             ),
         )
         conn.commit()
-        return cur.lastrowid
+        vencimiento_id = cur.lastrowid
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
+    return vencimiento_id
+
+
+def _reindexar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
+    from . import busqueda
+    try:
+        vencimiento = obtener_vencimiento_fiscal(tenant_id, vencimiento_id)
+        if vencimiento is not None:
+            busqueda.indexar_vencimiento_fiscal(dict(vencimiento))
+    except busqueda.ErrorBusqueda:
+        pass
+
+
+def _quitar_vencimiento_fiscal_del_indice(vencimiento_id: int) -> None:
+    from . import busqueda
+    try:
+        busqueda.eliminar_del_indice("vencimiento_fiscal", vencimiento_id)
+    except busqueda.ErrorBusqueda:
+        pass
 
 
 def listar_vencimientos_fiscales(
@@ -3395,6 +4625,18 @@ def listar_vencimientos_fiscales(
         conn.close()
 
 
+def tenant_id_de_vencimiento_fiscal(vencimiento_id: int) -> int | None:
+    """Resuelve el tenant de un vencimiento por su solo id -- usado por
+    el webhook de Stripe (app/rutas_stripe_webhook.py), que no tiene
+    ningún contexto de sesión/tenant propio para filtrar por él."""
+    conn = get_connection()
+    try:
+        fila = conn.execute("SELECT tenant_id FROM vencimientos_fiscales WHERE id = ?", (vencimiento_id,)).fetchone()
+        return fila["tenant_id"] if fila else None
+    finally:
+        conn.close()
+
+
 def obtener_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
@@ -3423,6 +4665,7 @@ def editar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, **campos) -> 
         conn.commit()
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
 def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
@@ -3436,6 +4679,7 @@ def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) ->
         conn.commit()
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
 def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
@@ -3448,6 +4692,7 @@ def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _quitar_vencimiento_fiscal_del_indice(vencimiento_id)
 
 
 def restaurar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
@@ -3460,6 +4705,7 @@ def restaurar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
         conn.commit()
     finally:
         conn.close()
+    _reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
 def eliminar_vencimiento_fiscal_definitivamente(tenant_id: int, vencimiento_id: int) -> None:
@@ -3469,6 +4715,7 @@ def eliminar_vencimiento_fiscal_definitivamente(tenant_id: int, vencimiento_id: 
         conn.commit()
     finally:
         conn.close()
+    _quitar_vencimiento_fiscal_del_indice(vencimiento_id)
 
 
 def marcar_recordatorio_vencimiento_fiscal_enviado(vencimiento_id: int) -> None:
@@ -3635,6 +4882,335 @@ def sanear_vencimientos_fuera_plazo() -> int:
         conn.close()
 
 
+# --- Portal de cliente (app/rutas_portal_cliente.py) -------------------------
+# El "principal" aquí es un cliente_fiscal_id, no un usuario_id/tenant_id de
+# empleado -- estas funciones nunca reciben tenant_id como filtro porque el
+# propio cliente_fiscal_id/vencimiento_id ya identifica de forma única al
+# dueño (igual que las funciones de arriba filtran por usuario_id).
+
+
+def obtener_cliente_fiscal_por_id(cliente_fiscal_id: int) -> sqlite3.Row | None:
+    """A diferencia de obtener_cliente_fiscal (que exige tenant_id porque
+    lo llama personal ya autenticado en un tenant), el portal de cliente
+    solo tiene cliente_fiscal_id en su sesión -- no hay tenant_id previo
+    del que partir, es al revés: se lee de la fila devuelta."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE id = ? AND papelera_en IS NULL", (cliente_fiscal_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def clientes_fiscales_por_email(email: str) -> list[sqlite3.Row]:
+    """A diferencia de obtener_cliente_fiscal_por_email (que ya sabe el
+    tenant), esta busca en TODOS los tenants -- la usa /portal/entrar, que
+    solo recibe un email sin contexto de tenant. Simplificación consciente
+    de v1: si el mismo email está en varios tenants, se manda un enlace por
+    cada fila (ver app/rutas_portal_cliente.py)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM clientes_fiscales WHERE LOWER(email) = ? AND papelera_en IS NULL",
+            (email.strip().lower(),),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def ultimo_acceso_solicitado_en(cliente_fiscal_id: int) -> str | None:
+    """`creado_en` de la última solicitud de enlace de este cliente,
+    exista o no la fila -- usado para el cooldown de 2 minutos por email
+    en /portal/entrar (evita spamear la bandeja de alguien)."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT creado_en FROM clientes_fiscales_accesos WHERE cliente_fiscal_id = ? "
+            "ORDER BY id DESC LIMIT 1",
+            (cliente_fiscal_id,),
+        ).fetchone()
+        return fila["creado_en"] if fila else None
+    finally:
+        conn.close()
+
+
+def crear_acceso_cliente_fiscal(cliente_fiscal_id: int, ip_solicitante: str | None) -> str:
+    token = secrets.token_urlsafe(32)
+    ahora = datetime.now()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO clientes_fiscales_accesos "
+            "(cliente_fiscal_id, token, creado_en, expira_en, ip_solicitante) VALUES (?, ?, ?, ?, ?)",
+            (
+                cliente_fiscal_id, token, ahora.isoformat(timespec="seconds"),
+                (ahora + timedelta(minutes=_MINUTOS_VIDA_ACCESO_PORTAL)).isoformat(timespec="seconds"),
+                ip_solicitante,
+            ),
+        )
+        conn.commit()
+        return token
+    finally:
+        conn.close()
+
+
+def consumir_acceso_cliente_fiscal(token: str) -> int | None:
+    """Valida y marca usado el token en la MISMA transacción (BEGIN
+    IMMEDIATE) -- mismo cuidado de sección crítica que fichar() en
+    fichajes: sin esto, dos peticiones casi simultáneas con el mismo
+    token (el enlace abierto dos veces, p.ej. precarga del cliente de
+    correo) podrían leer ambas "no usado todavía" antes de que ninguna
+    marcara usado_en, y las dos entrarían con un token pensado para un
+    solo uso. Devuelve cliente_fiscal_id si el token es válido y no
+    caducado/usado, si no None."""
+    conn = get_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        fila = conn.execute(
+            "SELECT id, cliente_fiscal_id, expira_en, usado_en FROM clientes_fiscales_accesos WHERE token = ?",
+            (token,),
+        ).fetchone()
+        if fila is None or fila["usado_en"] is not None:
+            conn.rollback()
+            return None
+        if fila["expira_en"] < now_iso():
+            conn.rollback()
+            return None
+        conn.execute(
+            "UPDATE clientes_fiscales_accesos SET usado_en = ? WHERE id = ?",
+            (now_iso(), fila["id"]),
+        )
+        conn.commit()
+        return fila["cliente_fiscal_id"]
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+_MINUTOS_VIDA_ACCESO_FACTURACION = 1
+
+
+def crear_acceso_facturacion(tenant_id: int, usuario_id: int) -> str:
+    """Enlace de un solo uso para abrir facturacion.guildawork.com como el
+    tenant del usuario actual -- ver app/rutas_facturacion_proxy.py."""
+    token = secrets.token_urlsafe(32)
+    ahora = datetime.now()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO facturacion_accesos (tenant_id, usuario_id, token, creado_en, expira_en) VALUES (?, ?, ?, ?, ?)",
+            (
+                tenant_id, usuario_id, token, ahora.isoformat(timespec="seconds"),
+                (ahora + timedelta(minutes=_MINUTOS_VIDA_ACCESO_FACTURACION)).isoformat(timespec="seconds"),
+            ),
+        )
+        conn.commit()
+        return token
+    finally:
+        conn.close()
+
+
+def consumir_acceso_facturacion(token: str) -> int | None:
+    """Mismo cuidado de sección crítica que consumir_acceso_cliente_fiscal
+    (BEGIN IMMEDIATE, un solo uso). Devuelve tenant_id si el token es
+    válido y no caducado/usado, si no None."""
+    conn = get_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        fila = conn.execute(
+            "SELECT id, tenant_id, expira_en, usado_en FROM facturacion_accesos WHERE token = ?",
+            (token,),
+        ).fetchone()
+        if fila is None or fila["usado_en"] is not None:
+            conn.rollback()
+            return None
+        if fila["expira_en"] < now_iso():
+            conn.rollback()
+            return None
+        conn.execute(
+            "UPDATE facturacion_accesos SET usado_en = ? WHERE id = ?",
+            (now_iso(), fila["id"]),
+        )
+        conn.commit()
+        return fila["tenant_id"]
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def subir_documento_vencimiento(
+    vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes,
+) -> int:
+    """Guarda primero como BLOB local (garantiza que el documento queda
+    a salvo aunque Nextcloud falle a medias) y, solo si el tenant tiene
+    Nextcloud configurado y la subida sale bien, promueve el archivo
+    ahí y vacía el BLOB -- best-effort, mismo criterio que el resto de
+    integraciones opcionales: un fallo aquí deja el documento como BLOB,
+    nunca lo pierde ni rompe la subida."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO vencimientos_fiscales_documentos "
+            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso()),
+        )
+        documento_id = cur.lastrowid
+        conn.commit()
+
+        try:
+            from . import nextcloud
+            fila = conn.execute(
+                """SELECT t.nombre AS tenant_nombre FROM vencimientos_fiscales v
+                   JOIN tenants t ON t.id = v.tenant_id WHERE v.id = ?""",
+                (vencimiento_id,),
+            ).fetchone()
+            if fila is not None:
+                ruta = f"{fila['tenant_nombre']}/vencimientos-fiscales/{documento_id}-{nombre_archivo}"
+                nextcloud.subir_archivo(ruta, contenido)
+                conn.execute(
+                    "UPDATE vencimientos_fiscales_documentos SET ruta_nextcloud = ?, contenido = NULL WHERE id = ?",
+                    (ruta, documento_id),
+                )
+                conn.commit()
+        except Exception:
+            pass  # se queda como BLOB local, comportamiento de siempre
+        return documento_id
+    finally:
+        conn.close()
+
+
+def contenido_documento_vencimiento(documento: sqlite3.Row) -> bytes:
+    """Sirve el contenido de un documento sea cual sea su almacenamiento
+    (BLOB local o Nextcloud) -- para que las rutas no tengan que saber
+    dónde vive cada documento. A diferencia de la subida, aquí SÍ deja
+    propagar un fallo de Nextcloud (app.nextcloud.ErrorNextcloud): es la
+    acción principal de esta llamada, no un efecto secundario -- quien
+    llama decide cómo mostrarlo (ver app/rutas_fiscal.py)."""
+    if documento["ruta_nextcloud"]:
+        from . import nextcloud
+        return nextcloud.descargar_archivo(documento["ruta_nextcloud"])
+    return documento["contenido"]
+
+
+def listar_documentos_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
+            "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ? ORDER BY creado_en",
+            (vencimiento_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_documento_vencimiento(documento_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM vencimientos_fiscales_documentos WHERE id = ?", (documento_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def crear_mensaje_vencimiento(vencimiento_id: int, autor: str, texto: str, usuario_id: int | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO vencimientos_fiscales_mensajes (vencimiento_id, autor, usuario_id, texto, creado_en) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (vencimiento_id, autor, usuario_id, texto.strip(), now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_mensajes_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT m.*, u.email AS usuario_email FROM vencimientos_fiscales_mensajes m "
+            "LEFT JOIN usuarios u ON u.id = m.usuario_id "
+            "WHERE m.vencimiento_id = ? ORDER BY m.creado_en",
+            (vencimiento_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_mensajes_leidos(vencimiento_id: int, autor_que_lee: str) -> None:
+    """Marca leídos los mensajes del OTRO autor -- si lee el cliente
+    (autor_que_lee='cliente'), se marcan los de autor='empleado', y
+    viceversa. Llamado al abrir la conversación desde cada lado."""
+    otro_autor = "empleado" if autor_que_lee == "cliente" else "cliente"
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE vencimientos_fiscales_mensajes SET leido_en = ? "
+            "WHERE vencimiento_id = ? AND autor = ? AND leido_en IS NULL",
+            (now_iso(), vencimiento_id, otro_autor),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def crear_solicitud_acceso_portal(nombre: str, email: str, nif: str | None = None, mensaje: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO solicitudes_acceso_portal (nombre, email, nif, mensaje, creado_en) VALUES (?, ?, ?, ?, ?)",
+            (nombre.strip(), email.strip(), (nif or "").strip() or None, (mensaje or "").strip() or None, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_solicitudes_acceso_portal() -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM solicitudes_acceso_portal ORDER BY atendida ASC, creado_en DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_solicitud_atendida(solicitud_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE solicitudes_acceso_portal SET atendida = 1 WHERE id = ?", (solicitud_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_todos_los_clientes_fiscales() -> list[sqlite3.Row]:
+    """Para el backoffice (admin, sin tenant fijo) -- a diferencia de
+    listar_clientes_fiscales(tenant_id), esta cruza todos los tenants,
+    con el nombre del tenant para que el admin sepa a cuál pertenece
+    cada fila al vincular una solicitud de acceso."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT c.*, t.nombre AS tenant_nombre FROM clientes_fiscales c "
+            "JOIN tenants t ON t.id = c.tenant_id WHERE c.papelera_en IS NULL ORDER BY t.nombre, c.nombre"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 # --- Correo (cuentas IMAP/POP3 + caché de mensajes) ---------------------------
 # La lógica de red (conectar, sincronizar, enviar) vive en app/correo.py; aquí
 # solo hay persistencia. La contraseña de cada cuenta NO se guarda en esta
@@ -3681,6 +5257,32 @@ def obtener_cuenta_correo(usuario_id: int, cuenta_id: int) -> sqlite3.Row | None
         return conn.execute(
             "SELECT * FROM correo_cuentas WHERE id = ? AND usuario_id = ?", (cuenta_id, usuario_id)
         ).fetchone()
+    finally:
+        conn.close()
+
+
+def editar_cuenta_correo(
+    usuario_id: int, cuenta_id: int,
+    nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
+    usa_tls: bool = True, smtp_host: str | None = None,
+    smtp_puerto: int | None = None, smtp_tls: bool = True,
+) -> None:
+    """Mismos campos que crear_cuenta_correo, pero UPDATE -- la
+    contraseña NO se toca aquí (vive en keyring, ver
+    app/correo.py:editar_cuenta), así que un error tipográfico de
+    host/puerto ya no obliga a borrar y recrear la cuenta entera
+    (que borraba también los mensajes en caché)."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE correo_cuentas
+               SET nombre = ?, protocolo = ?, host = ?, puerto = ?, usa_tls = ?, usuario = ?,
+                   smtp_host = ?, smtp_puerto = ?, smtp_tls = ?
+               WHERE id = ? AND usuario_id = ?""",
+            (nombre.strip(), protocolo, host.strip(), puerto, int(usa_tls), usuario.strip(),
+             (smtp_host or "").strip() or None, smtp_puerto, int(smtp_tls), cuenta_id, usuario_id),
+        )
+        conn.commit()
     finally:
         conn.close()
 
@@ -3794,6 +5396,126 @@ def eliminar_categoria_correo(usuario_id: int, categoria_id: int) -> None:
         conn.close()
 
 
+# --- Plantillas de respuesta guardadas (app/rutas_correo.py) ---------------
+
+def crear_plantilla_correo(usuario_id: int, nombre: str, asunto: str | None, cuerpo: str) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO correo_plantillas (usuario_id, nombre, asunto, cuerpo, creada_en) VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, nombre.strip(), (asunto or "").strip() or None, cuerpo, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_plantillas_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_plantillas WHERE usuario_id = ? ORDER BY nombre", (usuario_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_plantilla_correo(usuario_id: int, plantilla_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_plantillas WHERE id = ? AND usuario_id = ?", (plantilla_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_plantilla_correo(usuario_id: int, plantilla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_plantillas WHERE id = ? AND usuario_id = ?", (plantilla_id, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Borradores al redactar (app/rutas_correo.py) --------------------------
+
+def guardar_borrador_correo(
+    usuario_id: int, borrador_id: int | None, *, cuenta_id: int | None, destinatarios: str,
+    cc: str, bcc: str, asunto: str, cuerpo_html: str, en_respuesta_a: str | None,
+) -> int:
+    """Crea el borrador si `borrador_id` es None, si no lo actualiza --
+    mismo id se reutiliza en guardados sucesivos del mismo compositor."""
+    conn = get_connection()
+    try:
+        if borrador_id is not None:
+            cur = conn.execute(
+                """UPDATE correo_borradores SET cuenta_id = ?, destinatarios = ?, cc = ?, bcc = ?,
+                   asunto = ?, cuerpo_html = ?, en_respuesta_a = ?, actualizado_en = ?
+                   WHERE id = ? AND usuario_id = ?""",
+                (cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+                 now_iso(), borrador_id, usuario_id),
+            )
+            conn.commit()
+            if cur.rowcount:
+                return borrador_id
+        cur = conn.execute(
+            """INSERT INTO correo_borradores
+               (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a, actualizado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_borradores_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_borradores WHERE usuario_id = ? ORDER BY actualizado_en DESC", (usuario_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_borradores_correo(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) AS n FROM correo_borradores WHERE usuario_id = ?", (usuario_id,)
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def obtener_borrador_correo(usuario_id: int, borrador_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_borradores WHERE id = ? AND usuario_id = ?", (borrador_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_borrador_correo(usuario_id: int, borrador_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_borradores WHERE id = ? AND usuario_id = ?", (borrador_id, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int | None) -> None:
     """`usuario_id` solo para comprobar que `categoria_id` es suya --
     quien llama ya tiene que haber comprobado por su cuenta que
@@ -3809,6 +5531,42 @@ def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int
                 categoria_id = None
         conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_cliente_fiscal_correo(tenant_id: int, mensaje_id: int, cliente_fiscal_id: int | None) -> None:
+    """`tenant_id` solo para comprobar que `cliente_fiscal_id` es suyo --
+    mismo criterio que asignar_categoria_correo, quien llama ya tiene
+    que haber comprobado que `mensaje_id` es del usuario actual."""
+    conn = get_connection()
+    try:
+        if cliente_fiscal_id is not None:
+            fila = conn.execute(
+                "SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL",
+                (cliente_fiscal_id, tenant_id),
+            ).fetchone()
+            if fila is None:
+                cliente_fiscal_id = None
+        conn.execute(
+            "UPDATE correo_mensajes SET cliente_fiscal_id = ? WHERE id = ?", (cliente_fiscal_id, mensaje_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_correos_de_cliente_fiscal(cliente_fiscal_id: int) -> list[sqlite3.Row]:
+    """Correos vinculados manualmente a un cliente fiscal (ver
+    asignar_cliente_fiscal_correo), para la sección "Correos
+    relacionados" de su ficha (app/rutas_fiscal.py:ficha_cliente) --
+    mismo criterio de agregación que listar_documentos_vencimiento."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_mensajes WHERE cliente_fiscal_id = ? ORDER BY fecha DESC",
+            (cliente_fiscal_id,),
+        ).fetchall()
     finally:
         conn.close()
 
@@ -4040,6 +5798,34 @@ def uids_existentes_correo(cuenta_id: int, carpeta: str = "INBOX") -> set[str]:
         conn.close()
 
 
+def obtener_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str) -> str | None:
+    """UID más alto ya sincronizado de esa carpeta -- permite pedirle al
+    servidor solo "UID <n>:*" en vez de un SEARCH ALL completo. `None`
+    significa que esta carpeta nunca se ha sincronizado todavía (primera
+    sincronización, sigue haciendo falta un barrido completo)."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT ultimo_uid_sincronizado FROM correo_carpetas WHERE cuenta_id = ? AND nombre = ?",
+            (cuenta_id, carpeta),
+        ).fetchone()
+        return fila["ultimo_uid_sincronizado"] if fila else None
+    finally:
+        conn.close()
+
+
+def actualizar_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str, uid: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_carpetas SET ultimo_uid_sincronizado = ? WHERE cuenta_id = ? AND nombre = ?",
+            (uid, cuenta_id, carpeta),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def guardar_mensaje_correo(
     cuenta_id: int, uid: str, asunto: str | None, remitente: str | None,
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
@@ -4233,6 +6019,30 @@ def contar_no_leidos_correo(cuenta_id: int, carpeta: str = "INBOX") -> int:
         conn.close()
 
 
+def contar_no_leidos_por_cuenta_y_carpeta(usuario_id: int) -> dict[int, dict[str, int]]:
+    """Una sola consulta agregada para el rail de Correo (cuenta_id ->
+    {carpeta: no_leidos}) -- antes _contexto_bandeja hacía una llamada a
+    contar_no_leidos_correo() POR CADA cuenta (N+1), y esa función solo
+    cuenta una carpeta a la vez (por defecto INBOX), así que el badge de
+    cada cuenta reflejaba solo lo no leído en INBOX, nunca el total real
+    de la cuenta ni el desglose por carpeta."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT m.cuenta_id, m.carpeta, COUNT(*) AS n
+               FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE c.usuario_id = ? AND m.leido = 0
+               GROUP BY m.cuenta_id, m.carpeta""",
+            (usuario_id,),
+        ).fetchall()
+        resultado: dict[int, dict[str, int]] = {}
+        for fila in filas:
+            resultado.setdefault(fila["cuenta_id"], {})[fila["carpeta"]] = fila["n"]
+        return resultado
+    finally:
+        conn.close()
+
+
 def contar_no_leidos_total_correo(usuario_id: int) -> int:
     """Total de mensajes no leídos en TODAS las cuentas y carpetas de un
     usuario (para el badge de "correo nuevo" del rail de iconos)."""
@@ -4401,6 +6211,8 @@ def guardar_perfil_usuario(
     notificar_push_vencimientos: bool | None = None,
     notificar_push_tiquets: bool | None = None,
     notificar_resumen_semanal: bool | None = None,
+    notificar_push_correo: bool | None = None,
+    notificar_push_portal_mensajes: bool | None = None,
 ) -> None:
     """Solo actualiza los campos que se pasan explícitos (no-None) -- así
     la ruta puede llamar con únicamente el nombre, o únicamente las
@@ -4421,6 +6233,12 @@ def guardar_perfil_usuario(
         if notificar_resumen_semanal is not None:
             asignaciones.append("notificar_resumen_semanal = ?")
             valores.append(int(notificar_resumen_semanal))
+        if notificar_push_correo is not None:
+            asignaciones.append("notificar_push_correo = ?")
+            valores.append(int(notificar_push_correo))
+        if notificar_push_portal_mensajes is not None:
+            asignaciones.append("notificar_push_portal_mensajes = ?")
+            valores.append(int(notificar_push_portal_mensajes))
         if asignaciones:
             conn.execute(
                 f"UPDATE usuario_perfil SET {', '.join(asignaciones)} WHERE usuario_id = ?",
@@ -4429,6 +6247,33 @@ def guardar_perfil_usuario(
         conn.commit()
     finally:
         conn.close()
+
+
+# Qué columna de usuario_perfil gobierna cada tipo de notificación real
+# emitido por app/notificaciones.py -- un tipo sin entrada aquí (como
+# "resumen_ia_semanal", que ya tiene su propio camino en
+# usuarios_con_resumen_semanal_activo(), nunca pasa por aquí) se trata
+# como "siempre activo".
+_COLUMNAS_PREFERENCIA_NOTIFICACION = {
+    "vencimiento_fiscal": "notificar_push_vencimientos",
+    "tiquet_asignado": "notificar_push_tiquets",
+    "correo_nuevo": "notificar_push_correo",
+    "portal_mensaje_nuevo": "notificar_push_portal_mensajes",
+}
+
+
+def notificacion_tipo_activa(usuario_id: int, tipo: str) -> bool:
+    """Antes de esta función, notificar_push_vencimientos/
+    notificar_push_tiquets se podían editar desde /ajustes/perfil pero
+    NINGÚN punto de emisión las comprobaba de verdad -- desactivarlas no
+    hacía nada. Quien emite una notificación debe llamar a esto primero
+    (ver app/main.py, app/rutas_portal_cliente.py, app/correo.py,
+    app/rutas_tiquets.py)."""
+    columna = _COLUMNAS_PREFERENCIA_NOTIFICACION.get(tipo)
+    if columna is None:
+        return True
+    perfil = obtener_perfil_usuario(usuario_id)
+    return bool(perfil[columna])
 
 
 def guardar_avatar_usuario(usuario_id: int, contenido: bytes, tipo_mime: str) -> None:
@@ -4456,13 +6301,15 @@ def eliminar_avatar_usuario(usuario_id: int) -> None:
         conn.close()
 
 
-def crear_adjunto_ia(usuario_id: int, nombre_archivo: str, tipo_mime: str | None, contenido: bytes) -> int:
+def crear_adjunto_ia(
+    usuario_id: int, nombre_archivo: str, tipo_mime: str | None, contenido: bytes, origen: str = "usuario"
+) -> int:
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO ia_adjuntos (usuario_id, nombre_archivo, tipo_mime, contenido, creado_en) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (usuario_id, nombre_archivo, tipo_mime, contenido, now_iso()),
+            "INSERT INTO ia_adjuntos (usuario_id, nombre_archivo, tipo_mime, contenido, creado_en, origen) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario_id, nombre_archivo, tipo_mime, contenido, now_iso(), origen),
         )
         conn.commit()
         return cur.lastrowid
@@ -4508,81 +6355,6 @@ def nombre_mostrado_usuario(usuario_id: int) -> str | None:
             "SELECT nombre_mostrado FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)
         ).fetchone()
         return fila["nombre_mostrado"] if fila else None
-    finally:
-        conn.close()
-
-
-# --- Centro de notificaciones (Fase G5) -------------------------------------
-# Agrega en un solo sitio eventos recientes relevantes para EL USUARIO QUE
-# MIRA (no un sistema de eventos nuevo -- reutiliza consultas ya existentes
-# de tres tablas distintas): vencimientos fiscales que se le han asignado,
-# tiquets propios cuyo estado ha cambiado, y correcciones de fichaje que le
-# afectan. Antes de esto cada cosa solo se veía entrando en su propia
-# pantalla -- no había un sitio que agregara "qué ha pasado" de un vistazo.
-
-NOTIFICACIONES_DIAS_VENTANA = 14
-
-
-def notificaciones_recientes(usuario_id: int, tenant_id: int | None) -> list[dict]:
-    conn = get_connection()
-    try:
-        limite = (datetime.now() - timedelta(days=NOTIFICACIONES_DIAS_VENTANA)).isoformat(timespec="seconds")
-        eventos: list[dict] = []
-
-        # 1) Vencimientos fiscales asignados a este usuario, próximos 7 días
-        #    y todavía pendientes -- mismo criterio que el hilo de push
-        #    (_recordatorio_vencimientos_fiscales), pero aquí se lee bajo
-        #    demanda al abrir el panel, no se manda nada por push aparte.
-        if tenant_id is not None:
-            hoy = now_iso()[:10]
-            limite_fecha = _fecha_exclusiva((datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d"))
-            for v in conn.execute(
-                """SELECT v.id, v.modelo, v.fecha_limite, c.nombre AS cliente_nombre
-                   FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
-                   WHERE v.tenant_id = ? AND v.usuario_id = ? AND v.estado = 'pendiente' AND v.papelera_en IS NULL
-                     AND v.fecha_limite >= ? AND v.fecha_limite < ?""",
-                (tenant_id, usuario_id, hoy, limite_fecha),
-            ).fetchall():
-                eventos.append({
-                    "tipo": "vencimiento_fiscal",
-                    "texto": f"{v['modelo']} de {v['cliente_nombre']} vence el {v['fecha_limite'][:10]}",
-                    "url": "/fiscal/vencimientos",
-                    "fecha": v["fecha_limite"],
-                })
-
-        # 2) Tiquets propios cuyo estado ya no es 'sin_revisar' (alguien lo
-        #    ha revisado/movido) y el cambio es reciente.
-        for t in conn.execute(
-            """SELECT id, titulo, estado, actualizado_en FROM tiquets
-               WHERE usuario_id = ? AND estado != 'sin_revisar' AND actualizado_en >= ?
-               ORDER BY actualizado_en DESC LIMIT 20""",
-            (usuario_id, limite),
-        ).fetchall():
-            etiqueta_estado = "en revisión" if t["estado"] == "en_revision" else "finalizado"
-            eventos.append({
-                "tipo": "tiquet",
-                "texto": f"Tu tiquet «{t['titulo']}» está {etiqueta_estado}",
-                "url": "/tiquets",
-                "fecha": t["actualizado_en"],
-            })
-
-        # 3) Correcciones de fichaje hechas por un admin/gestor sobre este
-        #    usuario -- se entera aunque no haya entrado a su historial.
-        for f in conn.execute(
-            """SELECT id, tipo, marca_tiempo, creado_en FROM fichajes
-               WHERE usuario_id = ? AND origen = 'correccion_admin' AND creado_en >= ?
-               ORDER BY creado_en DESC LIMIT 20""",
-            (usuario_id, limite),
-        ).fetchall():
-            eventos.append({
-                "tipo": "fichaje",
-                "texto": f"Se ha corregido tu fichaje de '{f['tipo']}' del {f['marca_tiempo'][:10]}",
-                "url": "/fichaje/historial",
-                "fecha": f["creado_en"],
-            })
-
-        eventos.sort(key=lambda e: e["fecha"], reverse=True)
-        return eventos[:20]
     finally:
         conn.close()
 
@@ -4671,10 +6443,14 @@ def crear_tiquet(usuario_id: int, tipo: str, titulo: str, descripcion: str | Non
         conn.close()
 
 
-def listar_tiquets(estado: str | None = None, tipo: str | None = None) -> list[sqlite3.Row]:
+def listar_tiquets(
+    estado: str | None = None, tipo: str | None = None,
+    prioridad: str | None = None, usuario_asignado_id: int | None = None,
+) -> list[sqlite3.Row]:
     """Todos los tiquets, de cualquier usuario -- tablero compartido, a
     diferencia de notas/tareas/correo que siempre filtran por
-    usuario_id. Ordenados por id (orden de inclusión)."""
+    usuario_id. Ordenados por prioridad (alta primero) y luego por id
+    (orden de inclusión dentro de la misma prioridad)."""
     conn = get_connection()
     try:
         cond = []
@@ -4683,12 +6459,18 @@ def listar_tiquets(estado: str | None = None, tipo: str | None = None) -> list[s
             cond.append("t.estado = ?"); params.append(estado)
         if tipo:
             cond.append("t.tipo = ?"); params.append(tipo)
+        if prioridad:
+            cond.append("t.prioridad = ?"); params.append(prioridad)
+        if usuario_asignado_id:
+            cond.append("t.usuario_asignado_id = ?"); params.append(usuario_asignado_id)
         where = f"WHERE {' AND '.join(cond)}" if cond else ""
         return conn.execute(
-            f"""SELECT t.*, u.email AS autor_email
-                FROM tiquets t LEFT JOIN usuarios u ON u.id = t.usuario_id
+            f"""SELECT t.*, u.email AS autor_email, a.email AS asignado_email
+                FROM tiquets t
+                LEFT JOIN usuarios u ON u.id = t.usuario_id
+                LEFT JOIN usuarios a ON a.id = t.usuario_asignado_id
                 {where}
-                ORDER BY t.id""",
+                ORDER BY CASE t.prioridad WHEN 'alta' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END, t.id""",
             params,
         ).fetchall()
     finally:
@@ -4702,8 +6484,10 @@ def obtener_tiquet(tiquet_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            """SELECT t.*, u.email AS autor_email
-               FROM tiquets t LEFT JOIN usuarios u ON u.id = t.usuario_id
+            """SELECT t.*, u.email AS autor_email, a.email AS asignado_email
+               FROM tiquets t
+               LEFT JOIN usuarios u ON u.id = t.usuario_id
+               LEFT JOIN usuarios a ON a.id = t.usuario_asignado_id
                WHERE t.id = ?""",
             (tiquet_id,),
         ).fetchone()
@@ -4747,6 +6531,20 @@ def eliminar_tiquet(tiquet_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute("DELETE FROM tiquets WHERE id = ?", (tiquet_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def asignar_tiquet(tiquet_id: int, prioridad: str, usuario_asignado_id: int | None) -> None:
+    """Sin chequeo de permisos aquí -- ver cambiar_estado_tiquet, mismo
+    criterio (solo admin puede llamar, comprobado en la ruta)."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE tiquets SET prioridad = ?, usuario_asignado_id = ?, actualizado_en = ? WHERE id = ?",
+            (prioridad, usuario_asignado_id, now_iso(), tiquet_id),
+        )
         conn.commit()
     finally:
         conn.close()
@@ -4885,6 +6683,18 @@ def fichar(
             limite_pasado = (datetime.now() - timedelta(days=7)).isoformat(timespec="seconds")
             if marca_tiempo > ahora or marca_tiempo < limite_pasado:
                 raise ValueError("La hora del fichaje enviado no es válida (demasiado futura o de hace más de 7 días).")
+        # A partir de aquí, todo el bloque (validación de secuencia +
+        # lectura del último hash + INSERT) tiene que ser una sola sección
+        # crítica: dos fichajes casi simultáneos (de cualquier usuario,
+        # la cadena de hash es global -- ver verificar_integridad_fichajes)
+        # podrían leer el mismo "último tipo"/"último hash" antes de que
+        # ninguno haya insertado, y dejar la secuencia o la cadena rotas.
+        # BEGIN IMMEDIATE adquiere el lock de escritura YA, en vez de
+        # esperar a la primera escritura (comportamiento por defecto de
+        # sqlite3): un segundo fichar() concurrente se queda esperando aquí
+        # (hasta busy_timeout, ya en 5000ms en get_connection()) en vez de
+        # leer datos que están a punto de quedar obsoletos.
+        conn.execute("BEGIN IMMEDIATE")
         if corrige_a is not None:
             original = conn.execute("SELECT id FROM fichajes WHERE id = ? AND usuario_id = ?", (corrige_a, usuario_id)).fetchone()
             if original is None:
@@ -4913,6 +6723,9 @@ def fichar(
         )
         conn.commit()
         return cur.lastrowid
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 

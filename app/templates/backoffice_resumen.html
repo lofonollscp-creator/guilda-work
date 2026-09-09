@@ -1,0 +1,54 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Resumen') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Resumen') }}</h1>
+    <p class="subtitle">{{ _('Métricas agregadas de toda la plataforma.') }}</p>
+  </div>
+</header>
+
+<section class="dash-stats">
+  <div class="dash-stat">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-building-2"></use></svg></span>
+    <span class="dash-stat-valor">{{ resumen.tenants_activos }} / {{ resumen.tenants_total }}</span>
+    <span class="dash-stat-label">{{ _('tenants activos') }}</span>
+  </div>
+  <div class="dash-stat">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg></span>
+    <span class="dash-stat-valor">{{ resumen.usuarios_total }}</span>
+    <span class="dash-stat-label">{{ _('usuarios en total') }}</span>
+  </div>
+  <a class="dash-stat dash-stat-link" href="{{ url_for('backoffice.ingresos_vista') }}">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg></span>
+    <span class="dash-stat-valor">{{ '%.2f'|format(resumen.mrr_centimos / 100) }} €</span>
+    <span class="dash-stat-label">{{ _('MRR (suscripciones activas)') }}</span>
+  </a>
+</section>
+
+<section class="ia-section">
+  <h3>{{ _('Tenants más recientes') }}</h3>
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Nombre') }}</th>
+          <th>{{ _('Alta') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in resumen.tenants_recientes %}
+        <tr>
+          <td>{{ t.nombre }}</td>
+          <td class="mono">{{ t.creado_en[:10] }}</td>
+          <td><a class="btn btn-ghost" href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}">{{ _('Ver ficha') }}</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">{{ _('Todavía no hay ningún tenant.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

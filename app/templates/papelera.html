@@ -14,7 +14,7 @@
 <form method="post" action="{{ url_for('vaciar_papelera') }}"
       onsubmit="return confirm('{{ _('¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma permanente. Esta acción no se puede deshacer.') }}');"
       class="papelera-vaciar">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Vaciar papelera ahora') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Vaciar papelera ahora') }}</button>
 </form>
 
 <ul class="log-list">
@@ -35,35 +35,35 @@
 
     {% if item.origen == 'menu' %}
     <form action="{{ url_for('restaurar_menu', menu_id=item.id) }}" method="post">
-      <button type="submit" class="btn btn-ghost">↺ {{ _('Restaurar') }}</button>
+      <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_menu_definitivamente', menu_id=item.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Eliminar este menú y todo lo que contiene para siempre? No se puede deshacer.') }}');">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% elif item.origen == 'nota' %}
     <form action="{{ url_for('restaurar_nota', nota_id=item.id) }}" method="post">
-      <button type="submit" class="btn btn-ghost">↺ {{ _('Restaurar') }}</button>
+      <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_nota_definitivamente', nota_id=item.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Eliminar esta nota para siempre? No se puede deshacer.') }}');">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% elif item.origen == 'tarea_outlook' %}
     <form action="{{ url_for('tareas.restaurar', tarea_id=item.id) }}" method="post">
-      <button type="submit" class="btn btn-ghost">↺ {{ _('Restaurar') }}</button>
+      <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('tareas.eliminar_definitivamente', tarea_id=item.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}');">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% else %}
     <form action="{{ url_for('restaurar_tarea', tarea_id=item.id) }}" method="post">
-      <button type="submit" class="btn btn-ghost">↺ {{ _('Restaurar') }}</button>
+      <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_tarea_definitivamente', tarea_id=item.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}');">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% endif %}
   </li>

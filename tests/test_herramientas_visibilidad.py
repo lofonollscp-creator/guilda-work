@@ -82,11 +82,28 @@ def test_herramientas_vista_oculta_solo_para_el_tenant_afectado(cliente):
 
 
 def test_herramientas_vista_usuario_sin_tenant_ve_catalogo_completo(cliente):
+    """"Catálogo completo" significa todas las DISPONIBLES -- las que
+    todavía no están desplegadas (herramientas.disponible == False) no
+    se muestran en absoluto (antes salían en gris con "Aún no
+    disponible"; ver test_herramientas_no_disponibles_no_aparecen)."""
     iniciar_sesion_de_prueba(cliente, "sintenant@ejemplo.com", "contrasena123")
     resp = cliente.get("/herramientas")
     assert resp.status_code == 200
     for h in herramientas.HERRAMIENTAS:
+        if h.get("disponible") is False:
+            continue
         assert h["nombre"].encode() in resp.data
+
+
+def test_herramientas_no_disponibles_no_aparecen(cliente):
+    iniciar_sesion_de_prueba(cliente, "sintenant-nodisp@ejemplo.com", "contrasena123")
+    resp = cliente.get("/herramientas")
+    assert resp.status_code == 200
+    no_disponibles = [h for h in herramientas.HERRAMIENTAS if h.get("disponible") is False]
+    assert no_disponibles, "hace falta al menos una herramienta con disponible=False para que este test compruebe algo"
+    for h in no_disponibles:
+        assert h["nombre"].encode() not in resp.data
+    assert "Aún no disponible".encode() not in resp.data
 
 
 # --- app/rutas_api.py:listar_herramientas() (API móvil) -------------------
@@ -148,11 +165,29 @@ def test_alternar_herramienta_requiere_admin(cliente):
     assert resp.status_code == 403
 
 
-def test_panel_backoffice_muestra_el_catalogo_y_los_toggles(cliente):
+def test_ficha_tenant_muestra_el_catalogo_y_los_toggles(cliente):
+    """Backoffice renovado: el toggle por herramienta se movió de la tabla
+    plana del panel a la ficha de cada tenant (app/rutas_backoffice.py:
+    ficha_tenant) -- ver también
+    test_panel_backoffice_solo_lista_los_modulos_visibles_como_insignia."""
+    _admin(cliente)
+    tenant_id = db.crear_tenant("Lueira")
+    db.ocultar_herramienta(tenant_id, _HERRAMIENTA_EJEMPLO)
+
+    resp = cliente.get(f"/backoffice/tenants/{tenant_id}")
+    assert resp.status_code == 200
+    assert b"is-oculta" in resp.data
+
+
+def test_panel_backoffice_solo_lista_los_modulos_visibles_como_insignia(cliente):
+    """La lista de tenants (bo-tenant-grid) ya no es un editor de toggles
+    -- solo muestra los módulos VISIBLES de cada uno como insignia
+    informativa; el oculto ni aparece ahí (editarlo se hace desde la
+    ficha, ver test de arriba)."""
     _admin(cliente)
     tenant_id = db.crear_tenant("Lueira")
     db.ocultar_herramienta(tenant_id, _HERRAMIENTA_EJEMPLO)
 
     resp = cliente.get("/backoffice/")
     assert resp.status_code == 200
-    assert b"is-oculta" in resp.data
+    assert b"is-oculta" not in resp.data

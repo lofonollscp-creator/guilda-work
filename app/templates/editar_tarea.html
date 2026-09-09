@@ -45,6 +45,6 @@
       data-restaurar-url="{{ url_for('restaurar_tarea', tarea_id=tarea.id) }}"
       data-volver-a="{{ volver_a }}">
   <input type="hidden" name="volver_a" value="{{ volver_a }}">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar evento') if tarea.tipo == 'instantanea' else _('Eliminar tarea') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar evento') if tarea.tipo == 'instantanea' else _('Eliminar tarea') }}</button>
 </form>
 {% endblock %}

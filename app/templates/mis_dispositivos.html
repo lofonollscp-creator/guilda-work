@@ -20,7 +20,7 @@
     </span>
     <form action="{{ url_for('revocar_dispositivo', token_id=d.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en la app.', nombre=(d.nombre_dispositivo or _('este dispositivo'))) }}');">
-      <button type="submit" class="chip-del" title="{{ _('Revocar acceso') }}" aria-label="{{ _('Revocar acceso') }}">✕</button>
+      <button type="submit" class="chip-del" title="{{ _('Revocar acceso') }}" aria-label="{{ _('Revocar acceso') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
   </li>
   {% endfor %}

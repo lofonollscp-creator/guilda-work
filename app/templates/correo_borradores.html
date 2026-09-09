@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Borradores') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Borradores') }}</h1>
+    <p class="subtitle">{{ _('Correos que empezaste a escribir y guardaste sin enviar. Solo se guardan aquí, nunca se suben al servidor de correo.') }}</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('correo.redactar') }}">{{ _('Nuevo correo') }}</a>
+</header>
+
+{% if not borradores %}
+<p class="empty-lane">{{ _('No tienes ningún borrador guardado.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for b in borradores %}
+  <li class="log-item">
+    <span class="log-time">{{ b.actualizado_en[:16].replace('T', ' ') }}</span>
+    <span class="log-text">
+      <a href="{{ url_for('correo.redactar', borrador_id=b.id) }}">{{ b.asunto or _('(Sin asunto)') }}</a>
+      {% if b.destinatarios %} — {{ _('Para') }}: {{ b.destinatarios }}{% endif %}
+    </span>
+    <a class="btn btn-ghost" href="{{ url_for('correo.redactar', borrador_id=b.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg> {{ _('Continuar') }}</a>
+    <form action="{{ url_for('correo.eliminar_borrador', borrador_id=b.id) }}" method="post"
+          onsubmit="return confirm('{{ _('¿Eliminar este borrador? No se puede deshacer.') }}');">
+      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -54,6 +54,8 @@ class FakeIMAP:
 
     def uid(self, comando, *args):
         if comando == "search":
+            self.busquedas = getattr(self, "busquedas", [])
+            self.busquedas.append(args)
             uids = " ".join(self._mensajes.keys()).encode()
             return "OK", [uids]
         if comando == "fetch":
@@ -216,6 +218,88 @@ def test_eliminar_cuenta_borra_cuenta_mensajes_y_credencial(monkeypatch, usuario
     assert keyring.get_password(correo.SERVICIO_KEYRING, correo._clave_keyring(cuenta_id)) is None
 
 
+def test_editar_cuenta_actualiza_host_y_puerto(monkeypatch, usuario_id):
+    """Antes de esto, un error tipográfico en host/puerto obligaba a
+    borrar la cuenta entera (y sus mensajes en caché) y recrearla."""
+    _cuenta_imap(monkeypatch, {})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.viejo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.editar_cuenta(
+        usuario_id, cuenta_id,
+        nombre="Trabajo", protocolo="imap", host="imap.nuevo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    assert cuenta["host"] == "imap.nuevo.com"
+
+
+def test_editar_cuenta_sin_contrasena_nueva_reutiliza_la_existente(monkeypatch, usuario_id):
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="la-de-siempre")
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.viejo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="la-de-siempre",
+    )
+    # Sin contrasena= (o vacía): debe validar con la ya guardada en
+    # keyring, no con una vacía -- el fake IMAP de _cuenta_imap solo
+    # acepta "la-de-siempre".
+    correo.editar_cuenta(
+        usuario_id, cuenta_id,
+        nombre="Trabajo", protocolo="imap", host="imap.nuevo.com", puerto=993,
+        usuario="yo@ejemplo.com",
+    )
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    assert cuenta["host"] == "imap.nuevo.com"
+
+    import keyring
+    assert keyring.get_password(correo.SERVICIO_KEYRING, correo._clave_keyring(cuenta_id)) == "la-de-siempre"
+
+
+def test_editar_cuenta_con_contrasena_nueva_la_guarda_en_keyring(monkeypatch, usuario_id):
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="correcta")
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="nueva-contrasena")
+    correo.editar_cuenta(
+        usuario_id, cuenta_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="nueva-contrasena",
+    )
+    import keyring
+    assert keyring.get_password(correo.SERVICIO_KEYRING, correo._clave_keyring(cuenta_id)) == "nueva-contrasena"
+
+
+def test_editar_cuenta_con_credenciales_invalidas_no_guarda_cambios(monkeypatch, usuario_id):
+    _cuenta_imap(monkeypatch, {}, contrasena_valida="correcta")
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.viejo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    with pytest.raises(correo.ErrorCorreo):
+        correo.editar_cuenta(
+            usuario_id, cuenta_id,
+            nombre="Trabajo", protocolo="imap", host="imap.nuevo.com", puerto=993,
+            usuario="yo@ejemplo.com", contrasena="incorrecta",
+        )
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    assert cuenta["host"] == "imap.viejo.com"
+
+
+def test_editar_cuenta_inexistente_lanza_error(usuario_id):
+    with pytest.raises(correo.ErrorCorreo):
+        correo.editar_cuenta(
+            usuario_id, 999,
+            nombre="X", protocolo="imap", host="x", puerto=993, usuario="y", contrasena="z",
+        )
+
+
 def test_probar_conexion_cuenta_inexistente_lanza_error(usuario_id):
     with pytest.raises(correo.ErrorCorreo):
         correo.probar_conexion(usuario_id, 999)
@@ -267,6 +351,69 @@ def test_sincronizar_bandeja_marca_ultima_sincronizacion(monkeypatch, usuario_id
     correo.sincronizar_bandeja(usuario_id, cuenta_id)
     cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     assert cuenta["ultima_sincronizacion"] is not None
+
+
+# --- Sincronización incremental IMAP (UID en vez de SEARCH ALL cada vez) ---
+
+def test_primera_sincronizacion_hace_search_all(monkeypatch, usuario_id):
+    fake = _cuenta_imap_instancia_compartida(monkeypatch, {"1": _mensaje_bytes("Uno", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    assert fake.busquedas == [(None, "ALL")]
+
+
+def test_segunda_sincronizacion_pide_solo_uids_por_encima_del_ultimo_visto(monkeypatch, usuario_id):
+    fake = _cuenta_imap_instancia_compartida(monkeypatch, {"5": _mensaje_bytes("Cinco", "a@b.com", "cuerpo")})
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)  # primera vez: SEARCH ALL, guarda uid=5
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)  # segunda vez: incremental
+    assert fake.busquedas[-1] == (None, "UID", "6:*")
+
+
+def test_sincronizacion_guarda_el_uid_mas_alto_visto_por_carpeta(monkeypatch, usuario_id):
+    mensajes = {
+        "3": _mensaje_bytes("Tres", "a@b.com", "cuerpo"),
+        "7": _mensaje_bytes("Siete", "a@b.com", "cuerpo"),
+    }
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    correo.sincronizar_bandeja(usuario_id, cuenta_id)
+    assert db.obtener_ultimo_uid_sincronizado(cuenta_id, "INBOX") == "7"
+
+
+def test_sincronizacion_sin_uid_guardado_todavia_devuelve_none(usuario_id):
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    assert db.obtener_ultimo_uid_sincronizado(cuenta_id, "INBOX") is None
+
+
+def test_sincronizacion_incremental_sigue_descargando_correo_nuevo_de_verdad(monkeypatch, usuario_id):
+    """No es solo optimización -- confirma que un mensaje con UID más alto
+    que el guardado la vez anterior SÍ se descarga en la sincronización
+    incremental (no se queda fuera del rango "UID <n+1>:*")."""
+    mensajes = {"1": _mensaje_bytes("Uno", "a@b.com", "cuerpo")}
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+    assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 1}
+
+    mensajes["2"] = _mensaje_bytes("Dos", "c@d.com", "cuerpo nuevo")
+    assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 1}
+    assert len(correo.listar_mensajes(cuenta_id)) == 2
 
 
 # --- Sincronización POP3 --------------------------------------------------------
@@ -343,6 +490,37 @@ def test_contar_no_leidos_correo(monkeypatch, usuario_id):
     mensaje = correo.listar_mensajes(cuenta_id, texto="Uno")[0]
     correo.marcar_leido(mensaje["id"], True)
     assert db.contar_no_leidos_correo(cuenta_id) == 1
+
+
+def test_contar_no_leidos_por_cuenta_y_carpeta(usuario_id):
+    """Reemplaza el N+1 de _contexto_bandeja (una llamada a
+    contar_no_leidos_correo por cuenta, y esa función solo cuenta una
+    carpeta -- por defecto INBOX, así que antes el badge de una cuenta
+    nunca reflejaba lo no leído en sus demás carpetas)."""
+    cuenta_a = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    cuenta_b = db.crear_cuenta_correo(usuario_id, "Personal", "imap", "imap.otro.com", 993, "otro@ejemplo.com")
+
+    def _guardar(cuenta_id, uid, carpeta):
+        return db.guardar_mensaje_correo(
+            cuenta_id=cuenta_id, uid=uid, asunto="Asunto", remitente="a@b.com",
+            destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="cuerpo", cuerpo_html=None,
+            carpeta=carpeta,
+        )
+
+    _guardar(cuenta_a, "1", "INBOX")
+    id_leido = _guardar(cuenta_a, "2", "INBOX")
+    _guardar(cuenta_a, "3", "Archivo")
+    _guardar(cuenta_b, "1", "INBOX")
+    db.marcar_leido_mensaje_correo(id_leido, True)
+
+    resultado = db.contar_no_leidos_por_cuenta_y_carpeta(usuario_id)
+    assert resultado[cuenta_a] == {"INBOX": 1, "Archivo": 1}
+    assert resultado[cuenta_b] == {"INBOX": 1}
+
+
+def test_contar_no_leidos_por_cuenta_y_carpeta_sin_mensajes_no_leidos(usuario_id):
+    db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    assert db.contar_no_leidos_por_cuenta_y_carpeta(usuario_id) == {}
 
 
 def test_sincronizar_guarda_message_id_para_poder_responder(monkeypatch, usuario_id):
@@ -990,3 +1168,182 @@ def test_buscar_destinatarios_recientes_filtra_por_texto(usuario_id):
     resultado = db.buscar_destinatarios_recientes(usuario_id, "ana")
     assert len(resultado) == 1
     assert resultado[0]["direccion"] == "ana@ejemplo.com"
+
+
+# --- Vínculo con un cliente fiscal (app/rutas_correo.py:asignar_cliente_fiscal) --
+
+def test_asignar_cliente_fiscal_a_mensaje_y_quitarlo(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Correo Cliente")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_fiscal_id = db.crear_cliente_fiscal(tenant_id, "Panaderia del Correo")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="cliente@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="hola", cuerpo_html=None,
+    )
+
+    correo.asignar_cliente_fiscal(tenant_id, mensaje_id, cliente_fiscal_id)
+    assert correo.obtener_mensaje(mensaje_id)["cliente_fiscal_id"] == cliente_fiscal_id
+
+    correo.asignar_cliente_fiscal(tenant_id, mensaje_id, None)
+    assert correo.obtener_mensaje(mensaje_id)["cliente_fiscal_id"] is None
+
+
+def test_asignar_cliente_fiscal_de_otro_tenant_no_lo_vincula(usuario_id):
+    tenant_propio = db.crear_tenant("Gestoria Propia")
+    tenant_ajeno = db.crear_tenant("Gestoria Ajena")
+    db.asignar_tenant(usuario_id, tenant_propio)
+    cliente_ajeno_id = db.crear_cliente_fiscal(tenant_ajeno, "Cliente de otra gestoria")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Consulta", remitente="cliente@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="hola", cuerpo_html=None,
+    )
+
+    correo.asignar_cliente_fiscal(tenant_propio, mensaje_id, cliente_ajeno_id)
+    assert correo.obtener_mensaje(mensaje_id)["cliente_fiscal_id"] is None
+
+
+def test_listar_correos_de_cliente_fiscal_devuelve_solo_los_vinculados(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Listar Correos")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Correos")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    vinculado_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Vinculado", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha="2026-01-01T10:00:00", cuerpo_texto="", cuerpo_html=None,
+    )
+    db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="2", asunto="Sin vincular", remitente="a@b.com",
+        destinatarios="yo@ejemplo.com", fecha="2026-01-02T10:00:00", cuerpo_texto="", cuerpo_html=None,
+    )
+    db.asignar_cliente_fiscal_correo(tenant_id, vinculado_id, cliente_id)
+
+    correos = db.listar_correos_de_cliente_fiscal(cliente_id)
+    assert [c["id"] for c in correos] == [vinculado_id]
+
+
+# --- Plantillas de respuesta guardadas (app/rutas_correo.py) ---------------
+
+def test_crear_listar_y_eliminar_plantilla(usuario_id):
+    plantilla_id = correo.crear_plantilla(usuario_id, "Recordatorio", "Documentación pendiente", "Hola, nos falta...")
+    plantillas = correo.listar_plantillas(usuario_id)
+    assert len(plantillas) == 1
+    assert plantillas[0]["id"] == plantilla_id
+    assert plantillas[0]["nombre"] == "Recordatorio"
+    assert plantillas[0]["asunto"] == "Documentación pendiente"
+
+    correo.eliminar_plantilla(usuario_id, plantilla_id)
+    assert correo.listar_plantillas(usuario_id) == []
+
+
+def test_crear_plantilla_sin_nombre_lanza_error(usuario_id):
+    with pytest.raises(correo.ErrorCorreo):
+        correo.crear_plantilla(usuario_id, "", None, "cuerpo")
+
+
+def test_crear_plantilla_sin_cuerpo_lanza_error(usuario_id):
+    with pytest.raises(correo.ErrorCorreo):
+        correo.crear_plantilla(usuario_id, "Nombre", None, "  ")
+
+
+def test_plantillas_son_privadas_por_usuario(usuario_id):
+    otro_usuario_id = usuario_id + 999
+    plantilla_id = correo.crear_plantilla(usuario_id, "Mía", None, "cuerpo")
+    assert correo.obtener_plantilla(otro_usuario_id, plantilla_id) is None
+    correo.eliminar_plantilla(otro_usuario_id, plantilla_id)  # no-op, no debe borrarla
+    assert len(correo.listar_plantillas(usuario_id)) == 1
+
+
+# --- Preferencia de notificación de correo nuevo ----------------------------
+
+def test_emitir_evento_correo_nuevo_respeta_la_preferencia_desactivada(usuario_id, monkeypatch):
+    db.guardar_perfil_usuario(usuario_id, notificar_push_correo=False)
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+
+    llamadas = []
+    monkeypatch.setattr(correo.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    correo._emitir_evento_correo_nuevo(usuario_id, cuenta_id, 2)
+    assert not llamadas
+
+
+def test_emitir_evento_correo_nuevo_avisa_si_la_preferencia_esta_activa(usuario_id, monkeypatch):
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+
+    llamadas = []
+    monkeypatch.setattr(correo.notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a))
+
+    correo._emitir_evento_correo_nuevo(usuario_id, cuenta_id, 2)
+    assert len(llamadas) == 1
+
+
+# --- Borradores al redactar --------------------------------------------------
+
+def test_guardar_borrador_correo_crea_uno_nuevo(usuario_id):
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="a@b.com", cc="", bcc="",
+        asunto="Asunto", cuerpo_html="<p>Hola</p>", en_respuesta_a=None,
+    )
+    borrador = db.obtener_borrador_correo(usuario_id, borrador_id)
+    assert borrador["asunto"] == "Asunto"
+    assert borrador["destinatarios"] == "a@b.com"
+    assert borrador["cuerpo_html"] == "<p>Hola</p>"
+
+
+def test_guardar_borrador_correo_con_id_existente_actualiza_en_vez_de_duplicar(usuario_id):
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="a@b.com", cc="", bcc="",
+        asunto="Primero", cuerpo_html="cuerpo 1", en_respuesta_a=None,
+    )
+    segundo_id = db.guardar_borrador_correo(
+        usuario_id, borrador_id, cuenta_id=None, destinatarios="a@b.com", cc="", bcc="",
+        asunto="Segundo", cuerpo_html="cuerpo 2", en_respuesta_a=None,
+    )
+    assert segundo_id == borrador_id
+    assert len(db.listar_borradores_correo(usuario_id)) == 1
+    assert db.obtener_borrador_correo(usuario_id, borrador_id)["asunto"] == "Segundo"
+
+
+def test_listar_borradores_correo_ordena_por_mas_reciente(usuario_id, monkeypatch):
+    monkeypatch.setattr(db, "now_iso", lambda: "2026-01-01T10:00:00")
+    id1 = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Viejo", cuerpo_html="", en_respuesta_a=None,
+    )
+    monkeypatch.setattr(db, "now_iso", lambda: "2026-01-01T11:00:00")
+    id2 = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Nuevo", cuerpo_html="", en_respuesta_a=None,
+    )
+    resultado = db.listar_borradores_correo(usuario_id)
+    assert [r["id"] for r in resultado] == [id2, id1]
+
+
+def test_contar_borradores_correo(usuario_id):
+    assert db.contar_borradores_correo(usuario_id) == 0
+    db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="", cuerpo_html="", en_respuesta_a=None,
+    )
+    assert db.contar_borradores_correo(usuario_id) == 1
+
+
+def test_eliminar_borrador_correo(usuario_id):
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="", cuerpo_html="", en_respuesta_a=None,
+    )
+    db.eliminar_borrador_correo(usuario_id, borrador_id)
+    assert db.obtener_borrador_correo(usuario_id, borrador_id) is None
+
+
+def test_borradores_correo_son_privados_por_usuario(usuario_id):
+    otro_usuario_id = usuario_id + 999
+    borrador_id = db.guardar_borrador_correo(
+        usuario_id, None, cuenta_id=None, destinatarios="", cc="", bcc="",
+        asunto="Mío", cuerpo_html="", en_respuesta_a=None,
+    )
+    assert db.obtener_borrador_correo(otro_usuario_id, borrador_id) is None
+    db.eliminar_borrador_correo(otro_usuario_id, borrador_id)  # no-op, no debe borrarlo
+    assert db.obtener_borrador_correo(usuario_id, borrador_id) is not None

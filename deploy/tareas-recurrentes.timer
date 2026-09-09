@@ -1,0 +1,18 @@
+# Plantilla de timer systemd para tareas-recurrentes.service. Copia
+# junto al .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tareas-recurrentes.timer
+#
+# 04:30 -- justo después de vencimientos-fiscales.timer (04:00), mismo
+# criterio de escalonar los cron del stack para no competir por CPU/IO.
+
+[Unit]
+Description=Guilda Work - generación automática de tareas recurrentes (ver tareas-recurrentes.service)
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

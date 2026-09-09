@@ -91,10 +91,57 @@
           body: JSON.stringify(cuerpo),
         });
         if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
-        if (window.mostrarToast && mensajeOk) window.mostrarToast(mensajeOk, "exito");
+        // "mover" es la única acción que toca el servidor IMAP de verdad
+        // (las otras tres son solo caché local, ver app/correo.py) -- es
+        // la única que puede fallar a medias y devolver `errores` sin que
+        // la petición entera falle. Antes esto se perdía: solo se miraba
+        // respuesta.ok, nunca el cuerpo, así que un fallo parcial se veía
+        // igual que un éxito total.
+        const datos = await respuesta.json().catch(() => ({}));
+        if (datos.errores && datos.errores.length > 0) {
+          const plantilla = i18n.correoParcial || "completados -- fallos:";
+          const mensaje = (datos.procesados || 0) + "/" + ids.length + " " + plantilla + " " + datos.errores.join(" · ");
+          if (window.mostrarToast) window.mostrarToast(mensaje, "error");
+        } else if (window.mostrarToast && mensajeOk) {
+          window.mostrarToast(mensajeOk, "exito");
+        }
         window.location.reload();
       } catch (err) {
         if (window.mostrarToast) {
+          window.mostrarToast(i18n.correoAccionError || "No se pudo completar la acción.", "error");
+        }
+      }
+    });
+  });
+})();
+
+// Categoría / cliente fiscal del mensaje abierto: antes cada cambio en
+// el <select> mandaba `this.form.requestSubmit()` (recarga completa de
+// la página para actualizar un solo campo). Ahora se envía por fetch --
+// el color del borde del propio <select> se actualiza al momento desde
+// el data-color de la opción elegida, sin esperar a que vuelva el
+// servidor (ver categorias en correo_bandeja.html). El backend no ha
+// cambiado: la ruta sigue devolviendo un redirect normal, que fetch()
+// sigue en silencio -- solo interesa que la petición haya funcionado,
+// el cuerpo de la respuesta se descarta.
+(function () {
+  document.querySelectorAll("form[data-fetch-submit] select").forEach(function (select) {
+    var form = select.closest("form");
+    if (!form) return;
+    select.addEventListener("change", async function () {
+      var opcion = select.selectedOptions[0];
+      if (opcion && opcion.dataset.color !== undefined) {
+        select.style.borderColor = opcion.dataset.color || "";
+      }
+      try {
+        const respuesta = await fetch(form.action, { method: "POST", body: new FormData(form) });
+        if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
+        if (window.mostrarToast) {
+          window.mostrarToast(form.dataset.mensajeOk || "Guardado.", "exito");
+        }
+      } catch (err) {
+        if (window.mostrarToast) {
+          const i18n = window.GUILDA_I18N || {};
           window.mostrarToast(i18n.correoAccionError || "No se pudo completar la acción.", "error");
         }
       }

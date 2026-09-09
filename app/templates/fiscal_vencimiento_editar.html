@@ -40,6 +40,11 @@
     </select>
   </label>
 
+  <label>{{ _('Documento solicitado al cliente (opcional)') }}
+    <input type="text" name="documento_solicitado" value="{{ vencimiento.documento_solicitado or '' }}" placeholder="{{ _('Ej.: Factura de compra del trimestre') }}">
+  </label>
+  <p class="muted">{{ _('Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal.') }}</p>
+
   <label>{{ _('Notas') }}
     <textarea name="notas" rows="4">{{ vencimiento.notas or '' }}</textarea>
   </label>
@@ -50,8 +55,100 @@
   </div>
 </form>
 
+{% if puede_facturar and vencimiento.estado != 'presentado' %}
+<form class="edit-form" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" style="max-width: 640px;">
+  <label>{{ _('Marcar como presentado y facturar (opcional)') }}</label>
+  <p class="subtitle">{{ _('Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura.') }}</p>
+  <div class="ia-form-row">
+    <label>{{ _('Concepto') }}
+      <input type="text" name="factura_concepto" placeholder="{{ _('ej. Presentación modelo %(modelo)s %(periodo)s', modelo=vencimiento.modelo, periodo=vencimiento.periodo) }}">
+    </label>
+    <label>{{ _('Importe (€)') }}
+      <input type="number" name="factura_importe" step="0.01" min="0">
+    </label>
+  </div>
+  <button type="submit" class="btn btn-primary">{{ _('Marcar presentado') }}</button>
+</form>
+{% endif %}
+
 <form class="edit-form-delete" method="post" action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=vencimiento.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}');">
-  <button type="submit" class="btn btn-stop">🗑 {{ _('Eliminar vencimiento') }}</button>
+  <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar vencimiento') }}</button>
 </form>
+
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Documentos del cliente') }}</h2>
+  <p class="subtitle">{{ _('Subidos por el cliente desde el portal, si tiene acceso configurado.') }}</p>
+  {% if not documentos_cliente %}
+  <p class="empty-lane">{{ _('El cliente todavía no ha subido ningún documento.') }}</p>
+  {% else %}
+  <ul class="log-list">
+    {% for d in documentos_cliente %}
+    <li class="log-item">
+      <span class="log-text">
+        <a href="{{ url_for('fiscal.descargar_documento_vencimiento', vencimiento_id=vencimiento.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
+      </span>
+      <span class="pill">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Mensajes con el cliente') }}</h2>
+  {% if not mensajes_cliente %}
+  <p class="empty-lane">{{ _('Todavía no hay mensajes en esta conversación.') }}</p>
+  {% else %}
+  <ul class="log-list">
+    {% for m in mensajes_cliente %}
+    <li class="log-item">
+      <span class="pill">{{ _('Cliente') if m.autor == 'cliente' else (m.usuario_email or _('Equipo')) }}</span>
+      <span class="log-text">{{ m.texto }}</span>
+      <span class="log-duration">{{ m.creado_en[:16].replace('T', ' ') }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('fiscal.responder_mensaje_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
+    <label>{{ _('Responder') }}
+      <textarea name="texto" rows="2" required></textarea>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+  </form>
+</section>
+
+{% if puede_cobrar_stripe %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Cobrar por Stripe') }}</h2>
+  <p class="subtitle">{{ _('Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché.') }}</p>
+  <form method="post" action="{{ url_for('fiscal.cobrar_stripe_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
+    <label>{{ _('Importe (€)') }}
+      <input type="number" name="importe_eur" step="0.01" min="0.01" required>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar enlace de pago') }}</button>
+  </form>
+</section>
+{% endif %}
+
+{% if puede_enviar_a_firma %}
+<section style="max-width: 640px; margin-top: 2rem;">
+  <h2>{{ _('Firma electrónica') }}</h2>
+  {% if vencimiento.documenso_documento_id %}
+  <p class="subtitle">{{ _('Ya se ha enviado un documento a firmar al cliente para este vencimiento.') }}</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('fiscal.enviar_a_firma_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="quick-card">
+    <label>{{ _('Subir PDF y enviar a firmar al cliente') }}</label>
+    <span class="file-input">
+      <label class="file-input-boton btn btn-ghost">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+        {{ _('Elegir PDF') }}
+        <input type="file" name="documento_firma" accept="application/pdf" required>
+      </label>
+      <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+    </span>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar a firma') }}</button>
+  </form>
+</section>
+{% endif %}
 {% endblock %}

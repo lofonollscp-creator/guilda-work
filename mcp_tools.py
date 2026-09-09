@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import base64
 import contextvars
+import mimetypes
 import secrets
 import sqlite3
 import uuid
@@ -532,6 +533,17 @@ def drive_descargar_archivo(ruta: str) -> str:
     return nextcloud.descargar_archivo(ruta).decode("utf-8", errors="replace")
 
 
+def enviar_archivo_drive_al_chat(ruta: str) -> dict:
+    """Manda un archivo del Drive (foto, PDF, cualquier tipo) al chat del
+    Asistente IA integrado -- a diferencia de drive_descargar_archivo (que
+    decodifica como texto y rompe con binarios), aquí se maneja el
+    contenido en bruto y se guarda como adjunto del chat en vez de
+    devolverlo en la respuesta de la tool."""
+    contenido = nextcloud.descargar_archivo(ruta)
+    nombre_archivo = ruta.rsplit("/", 1)[-1] or ruta
+    return _guardar_adjunto_para_chat(nombre_archivo, contenido)
+
+
 # --- OpenProject -----------------------------------------------------------------
 
 def proyectos_listar() -> list[dict]:
@@ -750,6 +762,48 @@ def firmas_descargar_firmado(tenant: str, documento_id: str) -> str:
     return base64.b64encode(contenido).decode("ascii")
 
 
+# --- Firmas -- versiones para el Asistente IA integrado, tenant resuelto solo ---
+#
+# Mismo patrón que listar_facturas_cliente/crear_factura_cliente: nada de
+# parámetro `tenant` (el usuario de la web ya tiene uno, no tiene sentido
+# pedírselo al LLM), se resuelve vía _tenant_actual().
+
+def _api_key_documenso_actual() -> str:
+    tenant = _tenant_actual()
+    if not tenant["documenso_api_key"]:
+        raise ValueError(
+            "Tu gestoría todavía no tiene un token de Documenso guardado "
+            "(pide a un admin que cree su Equipo y genere un token, ver HOSTING.md)."
+        )
+    return tenant["documenso_api_key"]
+
+
+def listar_documentos_firma(texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca documentos de firma (Documenso) de tu gestoría."""
+    return documenso.listar_documentos(_api_key_documenso_actual(), texto=texto, limite=limite)
+
+
+def crear_documento_firma(titulo: str, contenido_pdf_base64: str, firmantes: list[dict]) -> dict:
+    """Crea un documento para firmar (en borrador, sin enviar todavía).
+    `contenido_pdf_base64`: el PDF codificado en base64. `firmantes`: lista
+    de {"email": str, "nombre": str}."""
+    contenido_pdf = base64.b64decode(contenido_pdf_base64)
+    return documenso.crear_documento(_api_key_documenso_actual(), titulo, contenido_pdf, firmantes)
+
+
+def enviar_documento_a_firma(documento_id: str) -> dict:
+    """Envía un documento en borrador — manda el email de firma a cada
+    destinatario. Pide siempre confirmación antes de ejecutar."""
+    return documenso.enviar_a_firma(_api_key_documenso_actual(), documento_id)
+
+
+def enviar_documento_firmado_al_chat(documento_id: str) -> dict:
+    """Manda un documento de Documenso (firmado del todo o no, el propio
+    PDF refleja el estado actual) al chat del Asistente IA integrado."""
+    contenido = documenso.descargar_firmado(_api_key_documenso_actual(), documento_id)
+    return _guardar_adjunto_para_chat(f"documento-{documento_id}.pdf", contenido, tipo_mime="application/pdf")
+
+
 # --- Documentos (Paperless-ngx) — tercer cliente con parámetro `tenant` ------
 #
 # A diferencia de Documenso, aquí el aprovisionamiento (Grupo + usuario de
@@ -824,6 +878,29 @@ def hojas_crear_fila(tenant: str, tabla_id: int, campos: dict) -> dict:
     columna": valor, ...} — los nombres de columna son las propias
     claves del diccionario."""
     return baserow.crear_fila(_api_key_baserow(tenant), tabla_id, campos)
+
+
+# --- Hojas -- versiones para el Asistente IA integrado, tenant resuelto solo ---
+# Solo lectura por decisión del usuario -- hojas_crear_fila no se expone aquí.
+
+def _api_key_baserow_actual() -> str:
+    tenant = _tenant_actual()
+    if not tenant["baserow_api_key"]:
+        raise ValueError(
+            "Tu gestoría todavía no tiene Baserow aprovisionado "
+            "(sin BASEROW_ADMIN_EMAIL/PASSWORD configuradas, o creado antes de esta integración)."
+        )
+    return tenant["baserow_api_key"]
+
+
+def listar_tablas_hojas() -> list[dict]:
+    """Lista las tablas del Workspace de Baserow de tu gestoría."""
+    return baserow.listar_tablas(_api_key_baserow_actual())
+
+
+def listar_filas_hoja(tabla_id: int, texto: str | None = None, limite: int = 20) -> list[dict]:
+    """Lista/busca filas de una tabla de tu gestoría."""
+    return baserow.listar_filas(_api_key_baserow_actual(), tabla_id, texto=texto, limite=limite)
 
 
 # --- Citas (Cal.diy) — quinto cliente con parámetro `tenant` ----------------
@@ -1164,6 +1241,72 @@ def _tenant_id_actual() -> int:
     return tenant["id"]
 
 
+def _tenant_actual() -> dict:
+    """Fila completa del tenant del usuario actual -- para las tools del
+    Asistente IA integrado que necesitan más que el id (p.ej. sus
+    api_key de Documenso/Baserow), sin pedirle un parámetro `tenant` al
+    LLM como sí hacen las tools MCP crudas (facturas_*/firmas_*/hojas_*)."""
+    tenant = db.obtener_tenant(_tenant_id_actual())
+    if tenant is None:
+        raise ValueError("Tu usuario no tiene un tenant (gestoría) asignado -- pide a un admin que te asigne uno.")
+    return tenant
+
+
+# Tamaño máximo de un archivo que el ASISTENTE puede mandar por el chat (p.ej.
+# un documento del Drive o un PDF firmado) -- distinto del tope de subida del
+# USUARIO (1MB, solo texto/CSV, ver app/rutas_ia.py:_ADJUNTO_TAMANO_MAXIMO_BYTES).
+TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES = 25 * 1024 * 1024
+
+
+def _guardar_adjunto_para_chat(nombre_archivo: str, contenido: bytes, tipo_mime: str | None = None) -> dict:
+    """Guarda un archivo que una tool le manda al usuario por el chat --
+    reutiliza ia_adjuntos (mismo sitio que los adjuntos que sube el propio
+    usuario), marcado con origen='asistente'. Nunca devuelve el contenido
+    en el resultado de la tool (carísimo en tokens, y el LLM no necesita
+    "ver" los bytes) -- solo la referencia para que el frontend pinte un
+    chip/preview descargable (ver ia_asistente.js:textoMensajeTool)."""
+    if len(contenido) > TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES:
+        raise ValueError(
+            f"El archivo '{nombre_archivo}' pesa más de "
+            f"{TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES // (1024 * 1024)}MB, no se puede mandar por el chat."
+        )
+    if not tipo_mime:
+        tipo_mime, _ = mimetypes.guess_type(nombre_archivo)
+    adjunto_id = db.crear_adjunto_ia(_uid(), nombre_archivo, tipo_mime, contenido, origen="asistente")
+    return {"adjunto_id": adjunto_id, "nombre_archivo": nombre_archivo, "tipo_mime": tipo_mime or "application/octet-stream"}
+
+
+_NOMBRE_ARCHIVO_CARACTERES_INVALIDOS = str.maketrans("", "", "\\/:*?\"<>|")
+
+
+def _nombre_archivo_seguro(titulo: str) -> str:
+    """Quita caracteres no válidos en nombres de fichero (Windows es el más
+    restrictivo, mismo criterio sirve para el resto) -- `titulo` lo pone el
+    LLM, no confiar en que ya venga limpio."""
+    limpio = titulo.strip().translate(_NOMBRE_ARCHIVO_CARACTERES_INVALIDOS)
+    return limpio[:100] or "documento"
+
+
+_FORMATOS_DOCUMENTO = {"csv": "text/csv", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                       "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                       "pdf": "application/pdf"}
+
+
+def generar_documento_al_chat(
+    titulo: str, formato: str, columnas: list[str], filas: list[list], notas: str | None = None,
+) -> dict:
+    """Genera un documento (csv/xlsx/docx/pdf) a partir de una tabla de
+    datos que el propio asistente ya ha reunido con otras tools
+    (tareas/correo/fiscal/facturas/CRM/hojas...) y lo manda al chat."""
+    from app import generador_documentos as gen
+    constructores = {"csv": gen.tabla_a_csv, "xlsx": gen.tabla_a_xlsx, "docx": gen.tabla_a_docx, "pdf": gen.tabla_a_pdf}
+    if formato not in constructores:
+        raise ValueError(f"Formato '{formato}' no soportado -- usa csv, xlsx, docx o pdf.")
+    contenido = constructores[formato](titulo, columnas, filas, notas)
+    nombre_archivo = f"{_nombre_archivo_seguro(titulo)}.{formato}"
+    return _guardar_adjunto_para_chat(nombre_archivo, contenido, tipo_mime=_FORMATOS_DOCUMENTO[formato])
+
+
 def listar_clientes_fiscales(q: str | None = None) -> list[dict]:
     """Lista los clientes fiscales de la gestoría del usuario actual.
     `q` filtra por nombre/NIF, opcional."""
@@ -1210,6 +1353,133 @@ def generar_vencimientos_fiscales(cliente_id: int, modelos: list[str], anio: int
         )
         creados.append(_fila(db.obtener_vencimiento_fiscal(tenant_id, vid)))
     return {"creados": len(creados), "vencimientos": creados}
+
+
+def marcar_presentado_vencimiento_fiscal(vencimiento_id: int) -> dict:
+    """Marca un vencimiento fiscal como presentado."""
+    tenant_id = _tenant_id_actual()
+    if db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id) is None:
+        raise ValueError(f"No existe el vencimiento #{vencimiento_id} en tu gestoría.")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, vencimiento_id)
+    return _fila(db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id))
+
+
+def editar_vencimiento_fiscal(
+    vencimiento_id: int, modelo: str | None = None, periodo: str | None = None,
+    fecha_limite: str | None = None, estado: str | None = None, notas: str | None = None,
+) -> dict:
+    """Edita los campos indicados (los que se omitan no cambian) de un
+    vencimiento fiscal ya existente."""
+    tenant_id = _tenant_id_actual()
+    if db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id) is None:
+        raise ValueError(f"No existe el vencimiento #{vencimiento_id} en tu gestoría.")
+    campos = {
+        k: v for k, v in {
+            "modelo": modelo, "periodo": periodo, "fecha_limite": fecha_limite,
+            "estado": estado, "notas": notas,
+        }.items() if v is not None
+    }
+    db.editar_vencimiento_fiscal(tenant_id, vencimiento_id, **campos)
+    return _fila(db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id))
+
+
+def resumen_cliente_fiscal(cliente_id: int) -> dict:
+    """Resumen agregado de un cliente fiscal: sus vencimientos (con
+    estado), y cuántos documentos/mensajes hay en total en el portal de
+    cliente para cada uno -- para responder de un vistazo "¿cómo va
+    fulanito?" sin tener que consultar vencimiento a vencimiento."""
+    tenant_id = _tenant_id_actual()
+    cliente = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    if cliente is None:
+        raise ValueError(f"No existe el cliente fiscal #{cliente_id} en tu gestoría.")
+    vencimientos = db.listar_vencimientos_fiscales(tenant_id, cliente_fiscal_id=cliente_id)
+    total_documentos = 0
+    total_mensajes = 0
+    detalle = []
+    for v in vencimientos:
+        documentos = db.listar_documentos_vencimiento(v["id"])
+        mensajes = db.listar_mensajes_vencimiento(v["id"])
+        total_documentos += len(documentos)
+        total_mensajes += len(mensajes)
+        detalle.append({
+            "id": v["id"], "modelo": v["modelo"], "periodo": v["periodo"],
+            "fecha_limite": v["fecha_limite"], "estado": v["estado"],
+            "documentos": len(documentos), "mensajes": len(mensajes),
+        })
+    return {
+        "cliente": _fila(cliente),
+        "total_vencimientos": len(vencimientos),
+        "pendientes": sum(1 for v in vencimientos if v["estado"] == "pendiente"),
+        "fuera_de_plazo": sum(1 for v in vencimientos if v["estado"] == "fuera_plazo"),
+        "total_documentos": total_documentos,
+        "total_mensajes": total_mensajes,
+        "vencimientos": detalle,
+    }
+
+
+def listar_plantillas_correo() -> list[dict]:
+    """Plantillas de respuesta guardadas del usuario actual (ver Correo >
+    Ajustes en la web) -- para poder reutilizar un texto ya escrito antes
+    al redactar una respuesta."""
+    from app import correo
+    return _filas(correo.listar_plantillas(_uid()))
+
+
+def crear_tarea_recurrente(asunto: str, periodicidad: str, dia: int, categoria_id: int | None = None) -> dict:
+    """Crea una regla de tarea recurrente (semanal o mensual) que genera
+    una tarea nueva automáticamente cada periodo -- no confundir con
+    crear_tarea, que crea una tarea suelta de una sola vez. `periodicidad`:
+    "semanal" o "mensual". `dia`: si es semanal, 0=lunes..6=domingo; si es
+    mensual, día del mes (1-31, se ajusta al último día si el mes no llega
+    a ese número)."""
+    if periodicidad not in ("semanal", "mensual"):
+        raise ValueError("periodicidad debe ser 'semanal' o 'mensual'.")
+    uid = _uid()
+    regla_id = db.crear_tarea_recurrente(uid, asunto, periodicidad, dia, categoria_id=categoria_id)
+    return _fila(next((r for r in db.listar_tareas_recurrentes(uid) if r["id"] == regla_id), None))
+
+
+def listar_tareas_recurrentes() -> list[dict]:
+    """Lista las reglas de tarea recurrente del usuario actual, activas o pausadas."""
+    return _filas(db.listar_tareas_recurrentes(_uid()))
+
+
+def _facturascripts_de_cliente(cliente_id: int) -> tuple[dict, dict]:
+    """Comprueba que el cliente existe en la gestoría del usuario actual y
+    está vinculado a FacturaScripts -- compartido por listar/crear factura
+    de abajo, para no repetir las mismas dos comprobaciones dos veces."""
+    tenant_id = _tenant_id_actual()
+    cliente = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    if cliente is None:
+        raise ValueError(f"No existe el cliente fiscal #{cliente_id} en tu gestoría.")
+    if not cliente["facturascripts_cliente_codigo"]:
+        raise ValueError(f"El cliente #{cliente_id} todavía no está vinculado a FacturaScripts.")
+    tenant = db.obtener_tenant(tenant_id)
+    return cliente, tenant
+
+
+def listar_facturas_cliente(cliente_id: int, limite: int = 20) -> list[dict]:
+    """Últimas facturas de FacturaScripts de un cliente fiscal ya vinculado
+    (ver "Vincular con FacturaScripts" en su ficha)."""
+    from app import facturascripts
+    cliente, tenant = _facturascripts_de_cliente(cliente_id)
+    return facturascripts.listar_facturas(
+        tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+        cliente_codigo=cliente["facturascripts_cliente_codigo"], limite=limite,
+    )
+
+
+def crear_factura_cliente(cliente_id: int, concepto: str, importe: float) -> dict:
+    """Crea una factura de una sola línea en FacturaScripts para un cliente
+    fiscal ya vinculado. Pide siempre confirmación antes de ejecutar (ver
+    ESCRITURA en app/ia_herramientas.py) -- nunca se factura sin que el
+    usuario haya visto y confirmado el importe exacto."""
+    from app import facturascripts
+    cliente, tenant = _facturascripts_de_cliente(cliente_id)
+    return facturascripts.crear_factura(
+        tenant["facturascripts_url"], tenant["facturascripts_api_key"],
+        cliente["facturascripts_cliente_codigo"], [{"descripcion": concepto, "cantidad": 1, "precio": importe}],
+    )
 
 
 # --- Fichaje (registro horario) --------------------------------------------
@@ -1529,6 +1799,9 @@ TOOLS = [
     listar_tiquets, crear_tiquet, editar_tiquet, eliminar_tiquet, cambiar_estado_tiquet,
     # Calendario fiscal
     listar_clientes_fiscales, crear_cliente_fiscal, listar_vencimientos_fiscales, generar_vencimientos_fiscales,
+    marcar_presentado_vencimiento_fiscal, editar_vencimiento_fiscal, resumen_cliente_fiscal,
+    listar_plantillas_correo, crear_tarea_recurrente, listar_tareas_recurrentes,
+    listar_facturas_cliente, crear_factura_cliente,
     # Fichaje
     fichar, listar_mis_fichajes,
     # Papelera

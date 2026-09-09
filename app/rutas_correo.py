@@ -92,7 +92,7 @@ def _mensaje_de_usuario_o_404(mensaje_id: int):
 
 def _render_redactar(
     *, cuenta_id=None, destinatarios="", cc="", bcc="", asunto="", cuerpo_html="",
-    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"),
+    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"), borrador_id=None,
 ):
     cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
     return render_template(
@@ -107,6 +107,8 @@ def _render_redactar(
         en_respuesta_a=en_respuesta_a or "",
         error=error,
         titulo=titulo,
+        plantillas=db.listar_plantillas_correo(g.usuario_id),
+        borrador_id=borrador_id,
     )
 
 
@@ -138,6 +140,31 @@ def crear_cuenta():
     return redirect(url_for("correo.cuentas"))
 
 
+@correo_bp.route("/cuentas/<int:cuenta_id>/editar", methods=["POST"])
+@login_required
+def editar_cuenta(cuenta_id: int):
+    try:
+        correo.editar_cuenta(
+            g.usuario_id, cuenta_id,
+            nombre=request.form.get("nombre", ""),
+            protocolo=request.form.get("protocolo", "imap"),
+            host=request.form.get("host", ""),
+            puerto=int(request.form.get("puerto") or 993),
+            usuario=request.form.get("usuario", ""),
+            usa_tls=request.form.get("usa_tls") == "on",
+            smtp_host=request.form.get("smtp_host") or None,
+            smtp_puerto=int(request.form["smtp_puerto"]) if request.form.get("smtp_puerto") else None,
+            smtp_tls=request.form.get("smtp_tls") == "on",
+            # Contraseña opcional: vacía = mantener la ya guardada (ver
+            # correo.editar_cuenta) -- no se obliga a volver a teclearla
+            # solo para corregir un host/puerto.
+            contrasena=request.form.get("contrasena", "") or None,
+        )
+    except correo.ErrorCorreo as e:
+        return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=str(e))
+    return redirect(url_for("correo.cuentas"))
+
+
 @correo_bp.route("/cuentas/<int:cuenta_id>/eliminar", methods=["POST"])
 @login_required
 def eliminar_cuenta(cuenta_id: int):
@@ -158,7 +185,14 @@ def probar_cuenta(cuenta_id: int):
 
 def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_pospuestos=False):
     cuentas_disponibles = db.listar_cuentas_correo(g.usuario_id)
-    no_leidos_por_cuenta = {c["id"]: db.contar_no_leidos_correo(c["id"]) for c in cuentas_disponibles}
+    # Una sola consulta agregada (antes: una llamada a
+    # contar_no_leidos_correo por cada cuenta, N+1, y solo contaba
+    # INBOX -- el badge de la cuenta no reflejaba su total real).
+    no_leidos_por_cuenta_y_carpeta = db.contar_no_leidos_por_cuenta_y_carpeta(g.usuario_id)
+    no_leidos_por_cuenta = {
+        c["id"]: sum(no_leidos_por_cuenta_y_carpeta.get(c["id"], {}).values()) for c in cuentas_disponibles
+    }
+    no_leidos_carpetas = no_leidos_por_cuenta_y_carpeta.get(cuenta_id, {}) if cuenta_id is not None else {}
     carpetas = correo.listar_carpetas(g.usuario_id, cuenta_id) if cuenta_id is not None else []
     preferencias = db.obtener_preferencias_correo(g.usuario_id)
 
@@ -170,6 +204,10 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         )
 
     categorias = db.listar_categorias_correo(g.usuario_id)
+    # Vínculo con un cliente fiscal (opt-in, solo si el usuario pertenece
+    # a un tenant con calendario fiscal -- mismo criterio que el resto de
+    # integraciones opcionales de esta sección).
+    clientes_fiscales = db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else []
     return {
         "cuentas": cuentas_disponibles,
         "cuenta_id": cuenta_id,
@@ -177,8 +215,11 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "carpetas": carpetas,
         "mensajes": mensajes,
         "no_leidos_por_cuenta": no_leidos_por_cuenta,
+        "no_leidos_carpetas": no_leidos_carpetas,
         "categorias": categorias,
         "categorias_por_id": {c["id"]: c for c in categorias},
+        "clientes_fiscales": clientes_fiscales,
+        "num_borradores": db.contar_borradores_correo(g.usuario_id),
         "densidad": preferencias["densidad"],
         "q": q or "",
         "solo_no_leidos": solo_no_leidos,
@@ -332,6 +373,18 @@ def asignar_categoria(mensaje_id: int):
     ))
 
 
+@correo_bp.route("/<int:mensaje_id>/cliente-fiscal", methods=["POST"])
+@login_required
+def asignar_cliente_fiscal(mensaje_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    if g.tenant_id is not None:
+        cliente_fiscal_id = request.form.get("cliente_fiscal_id", type=int)
+        correo.asignar_cliente_fiscal(g.tenant_id, mensaje_id, cliente_fiscal_id)
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
+    ))
+
+
 @correo_bp.route("/<int:mensaje_id>/mover", methods=["POST"])
 @login_required
 def mover_mensaje(mensaje_id: int):
@@ -377,6 +430,17 @@ def posponer_mensaje(mensaje_id: int):
 @correo_bp.route("/redactar")
 @login_required
 def redactar():
+    borrador_id = request.args.get("borrador_id", type=int)
+    if borrador_id is not None:
+        borrador = db.obtener_borrador_correo(g.usuario_id, borrador_id)
+        if borrador is None:
+            abort(404)
+        return _render_redactar(
+            cuenta_id=borrador["cuenta_id"], destinatarios=borrador["destinatarios"] or "",
+            cc=borrador["cc"] or "", bcc=borrador["bcc"] or "", asunto=borrador["asunto"] or "",
+            cuerpo_html=borrador["cuerpo_html"] or "", en_respuesta_a=borrador["en_respuesta_a"],
+            titulo=_("Editar borrador"), borrador_id=borrador_id,
+        )
     cuenta_id = request.args.get("cuenta_id", type=int)
     if cuenta_id is None:
         cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
@@ -453,6 +517,7 @@ def enviar():
     asunto = request.form.get("asunto", "")
     cuerpo_html = request.form.get("cuerpo_html", "")
     en_respuesta_a = request.form.get("en_respuesta_a") or None
+    borrador_id = request.form.get("borrador_id", type=int)
     adjuntos = [
         {"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()}
         for f in request.files.getlist("adjuntos") if f.filename
@@ -466,9 +531,45 @@ def enviar():
     except correo.ErrorCorreo as e:
         return _render_redactar(
             cuenta_id=cuenta_id, destinatarios=destinatarios, cc=cc, bcc=bcc, asunto=asunto,
-            cuerpo_html=cuerpo_html, en_respuesta_a=en_respuesta_a, error=str(e),
+            cuerpo_html=cuerpo_html, en_respuesta_a=en_respuesta_a, error=str(e), borrador_id=borrador_id,
         )
+    if borrador_id is not None:
+        db.eliminar_borrador_correo(g.usuario_id, borrador_id)
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id))
+
+
+# --- Borradores -------------------------------------------------------------
+
+@correo_bp.route("/borradores")
+@login_required
+def borradores():
+    return render_template("correo_borradores.html", borradores=db.listar_borradores_correo(g.usuario_id))
+
+
+@correo_bp.route("/borradores/guardar", methods=["POST"])
+@login_required
+def guardar_borrador():
+    borrador_id = db.guardar_borrador_correo(
+        g.usuario_id,
+        request.form.get("borrador_id", type=int),
+        cuenta_id=request.form.get("cuenta_id", type=int),
+        destinatarios=request.form.get("destinatarios", ""),
+        cc=request.form.get("cc", ""),
+        bcc=request.form.get("bcc", ""),
+        asunto=request.form.get("asunto", ""),
+        cuerpo_html=request.form.get("cuerpo_html", ""),
+        en_respuesta_a=request.form.get("en_respuesta_a") or None,
+    )
+    return jsonify({"ok": True, "borrador_id": borrador_id})
+
+
+@correo_bp.route("/borradores/<int:borrador_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_borrador(borrador_id: int):
+    db.eliminar_borrador_correo(g.usuario_id, borrador_id)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify({"ok": True})
+    return redirect(url_for("correo.borradores"))
 
 
 # --- Ajustes: preferencias, categorías y firma --------------------------------
@@ -487,6 +588,7 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         cuenta_firma=cuenta_firma,
         remitentes_confiables=db.listar_remitentes_confiables(g.usuario_id),
         reglas_categoria=db.listar_reglas_categoria_correo(g.usuario_id),
+        plantillas=db.listar_plantillas_correo(g.usuario_id),
         error=error,
     )
 
@@ -528,6 +630,35 @@ def crear_categoria():
 @login_required
 def eliminar_categoria(categoria_id: int):
     correo.eliminar_categoria(g.usuario_id, categoria_id)
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/plantillas/<int:plantilla_id>.json")
+@login_required
+def plantilla_json(plantilla_id: int):
+    plantilla = correo.obtener_plantilla(g.usuario_id, plantilla_id)
+    if plantilla is None:
+        abort(404)
+    return jsonify({"asunto": plantilla["asunto"] or "", "cuerpo": plantilla["cuerpo"]})
+
+
+@correo_bp.route("/ajustes/plantillas", methods=["POST"])
+@login_required
+def crear_plantilla():
+    try:
+        correo.crear_plantilla(
+            g.usuario_id, request.form.get("nombre", ""), request.form.get("asunto"),
+            request.form.get("cuerpo", ""),
+        )
+    except correo.ErrorCorreo as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/plantillas/<int:plantilla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_plantilla(plantilla_id: int):
+    correo.eliminar_plantilla(g.usuario_id, plantilla_id)
     return redirect(url_for("correo.ajustes"))
 
 

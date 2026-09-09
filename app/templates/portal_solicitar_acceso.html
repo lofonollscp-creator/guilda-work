@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Solicitar acceso al portal') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script async defer src="{{ url_for('static', filename='altcha.min.js') }}" type="module"></script>
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Solicitar acceso') }}</h1>
+
+      {% if enviado %}
+      <p class="auth-alterna">{{ _('Solicitud recibida. Tu gestoría se pondrá en contacto contigo para darte de alta.') }}</p>
+      {% else %}
+      <p class="auth-alterna">{{ _('Si todavía no tienes acceso al portal, deja tus datos y tu gestoría te dará de alta.') }}</p>
+      {% if error %}
+      <div class="ia-error">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="{{ url_for('portal_cliente.solicitar_acceso') }}">
+        <div class="correo-form-campo">
+          <label for="solicitud-nombre">{{ _('Nombre') }}</label>
+          <input type="text" id="solicitud-nombre" name="nombre" required autofocus>
+        </div>
+        <div class="correo-form-campo">
+          <label for="solicitud-email">{{ _('Email') }}</label>
+          <input type="email" id="solicitud-email" name="email" required>
+        </div>
+        <div class="correo-form-campo">
+          <label for="solicitud-nif">{{ _('NIF (opcional)') }}</label>
+          <input type="text" id="solicitud-nif" name="nif">
+        </div>
+        <div class="correo-form-campo">
+          <label for="solicitud-mensaje">{{ _('Mensaje (opcional)') }}</label>
+          <textarea id="solicitud-mensaje" name="mensaje" rows="3"></textarea>
+        </div>
+        <altcha-widget
+          challengeurl="{{ url_for('captcha_reto') }}"
+          strings='{"label":"{{ _('No soy un robot') }}","verifying":"{{ _('Comprobando…') }}","verified":"{{ _('Comprobado') }}","error":"{{ _('Error al comprobar, inténtalo de nuevo') }}"}'
+        ></altcha-widget>
+        <button type="submit" class="btn btn-primary auth-submit">{{ _('Enviar solicitud') }}</button>
+      </form>
+      {% endif %}
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.entrar') }}">{{ _('¿Ya tienes acceso? Pide tu enlace') }}</a></p>
+    </div>
+  </div>
+</body>
+</html>

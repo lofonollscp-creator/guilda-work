@@ -1,3 +1,17 @@
+/* Inter (OFL, autoalojada como el resto de assets del proyecto -- sin
+   Google Fonts ni ningún otro CDN de terceros, mismo criterio que el
+   sprite de iconos Lucide traído a mano). Fuente variable: un único
+   fichero cubre todo el rango de pesos (100-900) en vez de cargar uno
+   por peso usado. */
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/InterVariable.woff2") format("woff2-variations"),
+       url("fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #f7f8fa;
   --surface: #ffffff;
@@ -17,7 +31,7 @@
   --danger: #e0555a;
   --success: #1f9d55;
   --warning: #b8860b;
-  --radius: 4px;
+  --radius: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
 
   /* Sistema de diseño (Fase 0 del rediseño): escalas de espaciado,
@@ -36,24 +50,25 @@
   --font-size-lg: 1.15em;
   --font-size-xl: 1.5em;
 
-  /* Esquinas casi rectas a propósito (Fase rediseño "Nate Gentile") — nada
-     de tarjetas muy redondeadas, es parte central de ese look terminal. */
-  --radius-sm: 3px;
+  /* Esquinas suaves (revisado — el look "esquinas casi rectas" de la fase
+     anterior acabó leyéndose como plantilla genérica hecha con IA, no como
+     el terminal profesional que buscaba). */
+  --radius-sm: 8px;
   --radius-md: var(--radius);
-  --radius-lg: 6px;
+  --radius-lg: 16px;
 
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shadow-md: var(--shadow);
   --shadow-lg: 0 4px 12px rgba(16, 24, 40, 0.10), 0 2px 4px rgba(16, 24, 40, 0.08);
 
-  /* Estética "terminal/rice" (referencia: nategentile.com + el panel
-     "Orion" que mandó el usuario) — micro-rejilla de fondo + paneles
-     PLANOS (nada de vidrio esmerilado: eso era la iteración anterior,
-     esta referencia es sólida y de bordes nítidos) con el brillo de
-     acento reservado al lima. --glass-* se mantienen como nombre por
-     compatibilidad con las ~15 reglas que ya los usan, pero ahora
-     apuntan a colores sólidos del tema, sin transparencia ni blur. */
-  --grid-line: rgba(0, 0, 0, 0.06);
+  /* Estética "terminal" (referencia: nategentile.com + el panel "Orion"
+     que mandó el usuario) — paneles PLANOS (nada de vidrio esmerilado:
+     eso era la iteración anterior, esta referencia es sólida y de bordes
+     nítidos) con el brillo de acento reservado al lima, fondo liso sin
+     rejilla decorativa (quitada para dar una imagen más profesional).
+     --glass-* se mantienen como nombre por compatibilidad con las ~15
+     reglas que ya los usan, pero ahora apuntan a colores sólidos del
+     tema, sin transparencia ni blur. */
   --glass-bg: var(--surface);
   --glass-border: var(--border);
   --glass-blur: 0px;
@@ -80,7 +95,6 @@
     --warning: #eab308;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
-    --grid-line: rgba(255, 255, 255, 0.05);
     --glass-bg: var(--surface);
     --glass-border: var(--border);
   }
@@ -98,7 +112,6 @@
   --warning: #eab308;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
-  --grid-line: rgba(255, 255, 255, 0.05);
   --glass-bg: var(--surface);
   --glass-border: var(--border);
 }
@@ -107,17 +120,10 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+  font-family: "Inter", "Segoe UI", -apple-system, Roboto, sans-serif;
+  /* Fondo liso a propósito (antes había una micro-rejilla decorativa
+     aquí, quitada para dar una imagen más profesional/limpia). */
   background-color: var(--bg);
-  /* Micro-rejilla de fondo en toda la app (estética "rice"/Hyprland,
-     Fase rediseño global) — sutil a propósito, nunca debe competir con
-     el contenido; fija (no se desplaza con el scroll del contenido) así
-     no "salta" de una página a otra. */
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-attachment: fixed;
   color: var(--text);
   font-size: 15px;
 }
@@ -138,6 +144,47 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); background-clip: padding-box; }
 
 a { color: inherit; }
+
+/* Enlace de CONTENIDO/texto (dentro de una tabla, una lista, un párrafo)
+   -- no confundir con .btn-ghost u otros "botones con forma de enlace",
+   que ya tienen su propio tratamiento. Antes cada zona improvisaba su
+   propio text-decoration suelto sin criterio común; esta clase da un
+   aspecto reconocible y consistente de "esto es un enlace" en toda la
+   app, reusando las variables de color ya existentes. */
+.link {
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary-dark) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+.link:hover {
+  color: var(--primary-dark);
+  text-decoration-color: var(--primary-dark);
+  text-decoration-thickness: 2px;
+}
+/* Mismo tratamiento aplicado por contexto, sin tener que anotar
+   class="link" enlace por enlace en cada plantilla: enlaces de "volver
+   a"/alternativas en páginas de auth y portal, direcciones mailto: en
+   tablas (leads/solicitudes de backoffice), y enlaces de texto dentro
+   de una fila de lista (.log-text, historial/tareas/tiquets/fiscal). */
+.auth-alterna a,
+a[href^="mailto:"],
+.log-text a {
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary-dark) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+.auth-alterna a:hover,
+a[href^="mailto:"]:hover,
+.log-text a:hover {
+  text-decoration-color: var(--primary-dark);
+  text-decoration-thickness: 2px;
+}
 
 /* ---- Campos de formulario, base global (Fase rediseño global) ----
    Antes cada pantalla (correo, calendario, ajustes de chat…) definía su
@@ -221,6 +268,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .icon-rail {
   width: 64px;
   flex-shrink: 0;
+  /* Fijo a la altura de la ventana (no a la del contenido de la página,
+     que puede ser mucho más larga) -- si no, la tarjeta de cuenta de
+     abajo del todo acababa muy por debajo del fold en páginas largas.
+     align-self:flex-start es necesario porque .app-shell es flex y por
+     defecto estira sus hijos a la misma altura (stretch). */
+  position: sticky;
+  top: var(--space-2);
+  align-self: flex-start;
+  max-height: calc(100vh - var(--space-2) * 2);
   background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent 40%), var(--sidebar-bg);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
@@ -233,9 +289,24 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: var(--space-1);
   padding: var(--space-3) 0;
   transition: width 0.15s ease;
-  overflow: hidden;
+  /* Sin overflow:hidden a propósito -- la campana/tarjeta de cuenta
+     viven aquí ahora con sus paneles desplegables (position:absolute,
+     se salen del ancho del propio rail), y quedarían recortados si el
+     rail recortara su propio contenido. El colapsar etiquetas ya lo
+     resuelve display:none (ver .icon-rail-etiqueta), no este overflow. */
 }
 :root[data-rail-expandido="1"] .icon-rail { width: 200px; align-items: stretch; padding: var(--space-3) var(--space-2); }
+.icon-rail-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: inherit;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  width: 100%;
+}
 .icon-rail-link {
   position: relative;
   display: flex;
@@ -310,7 +381,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   letter-spacing: 0.04em;
 }
 :root[data-rail-expandido="1"] .icon-rail-etiqueta { display: inline; }
-.icon-rail-toggle { margin-bottom: var(--space-2); }
+.icon-rail-toggle { margin-bottom: var(--space-1); }
 .icon-rail-captura { margin-top: auto; }
 .icon-rail-badge {
   position: absolute;
@@ -331,12 +402,185 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 :root[data-rail-expandido="1"] .icon-rail-badge { position: static; margin-left: auto; }
 
-/* ---- Top bar (marca + menú de ajustes) ---- */
+/* ---- Cabecera del rail: logo + campana de notificaciones ---- */
+.icon-rail-brand-mark { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+.notificaciones-menu { position: relative; }
+.notificaciones-badge { top: -2px; right: -4px; }
+/* #id + .clase a propósito: .ajustes-panel define su propio min-width
+   más abajo en el fichero, y con la misma especificidad (una clase)
+   gana la que aparezca DESPUÉS en la cascada -- el id garantiza que
+   esta gana siempre, sin depender del orden de las reglas. */
+#notificaciones-panel.notificaciones-panel {
+  /* El rail es angosto (64-200px) -- un panel de 320-380px no cabe
+     debajo sin salirse de la pantalla, así que se abre hacia la
+     DERECHA del rail en vez de hacia abajo (comportamiento por
+     defecto heredado de .ajustes-panel). */
+  top: 0;
+  left: calc(100% + 8px);
+  right: auto;
+  min-width: 320px;
+  max-width: 380px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.notificaciones-panel-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.notificaciones-vaciar-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.notificaciones-vaciar-btn:hover { color: var(--danger); text-decoration: underline; }
+.notificacion-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  border-bottom: 1px solid var(--border);
+}
+.notificacion-item:last-child { border-bottom: none; }
+.notificacion-item:hover { background: var(--bg); }
+.notificacion-item.es-no-leida { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.notificacion-item-contenido {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 4px 10px 12px;
+  text-decoration: none;
+  color: var(--text);
+}
+.notificacion-item-titulo { font-weight: 600; font-size: 0.9em; }
+.notificacion-item-cuerpo { font-size: 0.85em; color: var(--text-muted); margin-top: 2px; }
+.notificacion-item-fecha { font-size: 0.75em; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+.notificacion-item-eliminar {
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 8px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.notificacion-item-eliminar svg { width: 13px; height: 13px; }
+.notificacion-item:hover .notificacion-item-eliminar { opacity: 1; }
+.notificacion-item-eliminar:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+
+/* ---- Tarjeta de cuenta (abajo del rail) ---- */
+.icon-rail-perfil-menu { position: relative; margin-top: var(--space-1); }
+.icon-rail-perfil-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+:root[data-rail-expandido="1"] .icon-rail-perfil-card { width: 100%; height: auto; padding: 6px 8px; }
+.icon-rail-perfil-card:hover { background: rgba(255,255,255,0.08); }
+.icon-rail-perfil-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+.icon-rail-perfil-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.icon-rail-perfil-avatar .avatar-circulo { width: 100%; height: 100%; font-size: 0.72em; }
+.icon-rail-perfil-texto { display: none; flex-direction: column; min-width: 0; text-align: left; }
+:root[data-rail-expandido="1"] .icon-rail-perfil-texto { display: flex; }
+.icon-rail-perfil-nombre {
+  font-size: 0.8em;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.icon-rail-perfil-tenant {
+  font-size: 0.7em;
+  color: var(--sidebar-text);
+  opacity: 0.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* #id + .clase: misma razón que #notificaciones-panel más arriba --
+   .ajustes-panel declara su propia posición más abajo en el fichero y
+   ganaría por orden de cascada con igual especificidad. */
+#perfil-panel.icon-rail-perfil-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  top: auto;
+  left: 0;
+  right: auto;
+}
+
+/* ---- Grupos plegables del rail (Correo, Fiscal) -- solo se comportan
+   como árbol con el rail expandido; colapsado, el padre es un enlace
+   normal a su hijo principal (mismo comportamiento de siempre). ---- */
+.icon-rail-grupo-plegable { width: 100%; display: flex; flex-direction: column; }
+.icon-rail-chevron {
+  display: none;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.icon-rail-chevron svg { width: 13px; height: 13px; }
+:root[data-rail-expandido="1"] .icon-rail-chevron { display: inline-flex; }
+.icon-rail-grupo-plegable.is-abierto .icon-rail-chevron { transform: rotate(180deg); }
+.icon-rail-submenu { display: none; flex-direction: column; padding-left: 34px; }
+:root[data-rail-expandido="1"] .icon-rail-grupo-plegable.is-abierto .icon-rail-submenu { display: flex; }
+.icon-rail-sublink {
+  display: block;
+  padding: 6px 10px;
+  font-size: 0.78em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sidebar-text);
+  opacity: 0.75;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+.icon-rail-sublink:hover { opacity: 1; background: rgba(255,255,255,0.08); }
+.icon-rail-sublink.active { opacity: 1; color: var(--sidebar-text-active); font-weight: 600; }
+
+/* ---- Top bar (buscador + atajos de teclado) ---- */
 .app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: var(--space-2); }
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: var(--space-3);
   padding: 0 var(--space-5);
   height: 56px;
   flex-shrink: 0;
@@ -347,32 +591,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--shadow-sm);
 }
-.brand { display: flex; align-items: center; gap: var(--space-2); text-decoration: none; }
-.brand-mark { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
-.brand-name {
-  color: var(--text);
-  font-weight: 700;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.ajustes-menu { position: relative; }
-.ajustes-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.ajustes-toggle svg { width: 18px; height: 18px; }
-.ajustes-toggle:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
+/* Sin marca/campana/ajustes que empujar a la derecha (se movieron al
+   rail) -- el buscador crece hasta un ancho razonable en vez de
+   quedarse pegado a la izquierda con un hueco vacío detrás. */
+.top-bar .busqueda-boton-abrir { flex: 0 1 480px; }
 .ajustes-panel[hidden] { display: none; }
 .ajustes-panel {
   position: absolute;
@@ -404,57 +626,34 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  /* Este mismo selector se usa tanto en <button> (sin subrayado por
+     defecto) como en <a> (Mi perfil, Mis dispositivos, Documentación) --
+     sin esto, las versiones <a> salían con el subrayado azul por
+     defecto del navegador, fuera de lugar en un panel de botones. */
+  text-decoration: none;
 }
 .ajustes-panel-icono { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-muted); }
 .ajustes-panel-btn:hover { background: var(--bg); }
+/* Agrupación del panel (Apariencia / Cuenta / Ayuda y salida) -- mismo
+   criterio que el icon-rail ya agrupado, adaptado a este dropdown claro
+   (el rail es de fondo oscuro fijo, este panel sigue el tema). */
+.ajustes-panel-separador {
+  height: 1px;
+  margin: var(--space-2) var(--space-1);
+  background: var(--border);
+}
+.ajustes-panel-grupo-etiqueta {
+  display: block;
+  font-size: 0.68em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  opacity: 0.75;
+  padding: 2px 12px 4px;
+}
 .ajustes-idiomas { display: flex; gap: 4px; padding: 4px 12px 8px; }
 
-/* Centro de notificaciones (Fase G5) -- botón campana + panel, mismo
-   esqueleto que .ajustes-toggle/.ajustes-panel (ver base.html), con el
-   contador como una pastilla superpuesta y una lista de eventos en vez
-   de botones de acción. */
-#notificaciones-toggle { position: relative; }
-.notificaciones-contador {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  border-radius: 999px;
-  background: var(--danger);
-  color: white;
-  font-size: 0.62em;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  line-height: 15px;
-  text-align: center;
-}
-.notificaciones-panel { min-width: 320px; max-width: 360px; padding: var(--space-3); }
-.notificaciones-titulo {
-  margin: 0 0 var(--space-2);
-  padding: 0 var(--space-1);
-  font-size: 0.78em;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-}
-.notificaciones-vacio { margin: 0; padding: var(--space-2); color: var(--text-muted); font-size: 0.88em; }
-.notificaciones-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: 9px 8px;
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  text-decoration: none;
-  font-size: 0.85em;
-}
-.notificaciones-item:hover { background: var(--bg); }
-.notificaciones-item svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; color: var(--primary); }
-.notificaciones-item-texto { flex: 1; line-height: 1.35; }
-.notificaciones-item-fecha { color: var(--text-muted); font-size: 0.85em; font-family: var(--font-mono); white-space: nowrap; }
 .ajustes-idiomas form { flex: 1; }
 .ajustes-idioma-btn {
   width: 100%;
@@ -587,6 +786,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-color: color-mix(in srgb, var(--primary) 45%, var(--glass-border));
   box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--primary) 55%, transparent);
 }
+.dash-stat-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+  margin-bottom: var(--space-1);
+}
+.dash-stat-icono svg { width: 16px; height: 16px; }
 .dash-stat-valor { font-size: var(--font-size-xl); font-weight: 700; line-height: 1; }
 .dash-stat-label { color: var(--text-muted); font-size: var(--font-size-sm); }
 
@@ -634,7 +845,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 /* ---- Menu grid (home) ---- */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  /* Tope superior (280px) en vez de 1fr: con pocos menús (2-3 es
+     habitual al principio) las tarjetas ya no se estiran a ocupar
+     todo el ancho disponible, así que justify-content puede centrar
+     el bloque entero en vez de dejarlo pegado a la izquierda con un
+     hueco enorme a la derecha. Con muchos menús, simplemente llenan
+     varias filas completas -- mismo aspecto que antes. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
+  justify-content: center;
   gap: 16px;
   margin-bottom: 32px;
 }
@@ -661,12 +879,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-decoration: none;
   color: var(--text);
 }
-.menu-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.menu-card-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--accent, #7c8ba1);
+.menu-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.menu-card-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent, #7c8ba1) 16%, var(--glass-bg));
+  color: var(--accent, #7c8ba1);
 }
-.menu-card h2 { margin: 0; font-size: 1.05em; padding-right: 44px; }
+.menu-card-icon svg { width: 20px; height: 20px; }
+.menu-card h2 { margin: 0; font-size: 1.05em; padding-right: 32px; }
 .menu-card-stats { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .menu-card-reorder {
@@ -711,6 +937,36 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   letter-spacing: 0.06em;
   color: var(--text-muted);
   margin: 0 0 var(--space-2);
+}
+
+/* Selector de icono (crear/editar menú) -- rejilla de botones tipo radio,
+   el valor elegido se guarda en un <input type="hidden" name="icono">. */
+.menu-icono-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 6px;
+  max-width: 340px;
+  margin: var(--space-2) 0;
+}
+.menu-icono-opcion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+.menu-icono-opcion svg { width: 18px; height: 18px; }
+.menu-icono-opcion:hover { border-color: var(--primary); color: var(--text); }
+.menu-icono-opcion[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
 }
 
 /* Insignias/etiquetas cortas: monoespaciadas + fondo mezclado del color
@@ -794,7 +1050,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-align: center;
   margin-bottom: var(--space-5);
 }
-.empty-state-guiado-icono { font-size: var(--font-size-xl); }
+.empty-state-guiado-icono { width: 28px; height: 28px; color: var(--text-muted); }
 .empty-state-guiado p { margin: var(--space-2) 0; }
 .empty-state-guiado .muted { color: var(--text-muted); font-size: var(--font-size-sm); }
 .empty-state-guiado-botones {
@@ -817,7 +1073,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .new-menu h3 { margin: 0 0 12px; font-size: 1em; color: var(--text-muted); }
 
-.inline-form { display: flex; gap: 8px; }
+.inline-form { display: flex; gap: 8px; align-items: center; }
 .inline-form input[type="text"] {
   flex: 1;
   padding: 9px 12px;
@@ -827,11 +1083,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .inline-form input[type="color"] {
   width: 42px;
+  height: 38px;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 2px;
   background: none;
 }
+/* .menu-form envuelve un .inline-form (nombre + color + botón) y el
+   selector de icono en filas SEPARADAS -- antes el selector de icono
+   (hasta 3 filas de botones, ver .menu-icono-selector) vivía como un
+   hijo más de .inline-form, y al ser flex sin align-items (por
+   defecto "stretch") estiraba el input de texto y el botón a esa
+   misma altura, y aplastaba el selector de color nativo a una tira
+   fina casi invisible. */
+.menu-form { display: flex; flex-direction: column; gap: var(--space-2); }
+.menu-form-icono-label { display: block; font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: 4px; }
 
 /* ---- Buttons ----
    Antes usaban colores fijos (white/#f2f3f5/#c94247) que no seguían el
@@ -870,13 +1136,65 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-color: var(--primary-dark);
   box-shadow: 0 0 14px -2px color-mix(in srgb, var(--primary) 65%, transparent);
 }
+.btn-primary:active { background: var(--primary-dark); box-shadow: 0 0 6px -1px color-mix(in srgb, var(--primary) 55%, transparent); }
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
 .btn-stop { background: var(--danger); border-color: var(--danger); color: white; }
 .btn-stop:hover {
   filter: brightness(0.92);
   box-shadow: 0 0 14px -2px color-mix(in srgb, var(--danger) 65%, transparent);
 }
+.btn-stop:active { filter: brightness(0.85); box-shadow: 0 0 6px -1px color-mix(in srgb, var(--danger) 55%, transparent); }
+.btn-stop:focus-visible {
+  outline: none;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 40%, transparent);
+}
 .btn-ghost { background: transparent; }
 .btn-ghost:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+
+/* ---- Subir archivo (componente único) ----
+   Antes cada pantalla con un <input type="file"> lo dejaba sin
+   estilizar (control nativo del navegador, gris/blanco, no encaja
+   con el resto del tema oscuro) -- este envoltorio da el mismo
+   aspecto de botón .btn.btn-ghost en todas partes, con el nombre del
+   archivo elegido a su lado (ver app/static/file_input.js). El
+   <input> real sigue siendo el mismo elemento con su mismo name/
+   accept/required/multiple -- el backend no cambia. */
+.file-input {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.file-input-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.file-input-boton input[type="file"] {
+  /* No display:none -- algunos lectores de pantalla lo ignoran del
+     todo si el input queda inalcanzable; clip lo saca visualmente
+     sin quitarlo del árbol de accesibilidad (mismo patrón que
+     .skip-link usa a la inversa). */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.file-input-nombre {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
 
 /* ---- Quick actions (menu page) ---- */
 .quick-actions {
@@ -963,6 +1281,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 4px;
 }
 .chip-del:hover { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+
+/* Icono SVG pequeño e inline, dentro de un botón/enlace de acción de
+   contenido (editar, eliminar, restaurar, adjunto...) -- sustituye los
+   emoji sueltos que había antes (✕/🗑/✏/📎...) en toda la app, mismo
+   tamaño consistente sea cual sea el contexto donde se use. No
+   confundir con .icon-rail-icono/.ajustes-panel-icono (esos son de la
+   navegación global, este es de contenido). */
+.icono-inline {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  vertical-align: -3px;
+}
 
 /* ---- Active tasks ---- */
 .active-section { margin-bottom: 28px; }
@@ -1331,6 +1662,28 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 6px;
   font-size: 0.85em;
   color: var(--text-muted);
+}
+
+/* Fila de avatar dentro de .edit-form (app/templates/ajustes_perfil.html)
+   -- antes vivía en un .quick-card aparte con varios style="" inline;
+   ahora es una sección más del propio formulario, sin salirse de su
+   max-width ni inventar estilos sueltos. */
+.perfil-avatar-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.perfil-avatar-imagen {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.perfil-avatar-iniciales {
+  width: 64px;
+  height: 64px;
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 .edit-form input[type="text"],
 .edit-form input[type="datetime-local"],
@@ -1993,6 +2346,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-adjunto-chip:hover { border-color: var(--primary); color: var(--primary); }
 .correo-adjunto-tamano { color: var(--text-muted); }
+.correo-adjunto.tiene-vista-previa { display: flex; flex-direction: column; gap: var(--space-1); }
+.correo-adjunto-preview-imagen {
+  display: block;
+  max-width: 220px;
+  max-height: 160px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.correo-adjunto-preview-pdf {
+  width: 280px;
+  height: 220px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
 
 .correo-aviso-imagenes {
   display: flex;
@@ -2030,7 +2398,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 8px;
   color: var(--text-muted);
 }
-.correo-lectura-vacio-icono { font-size: 2.4em; opacity: 0.4; }
+.correo-lectura-vacio-icono { width: 40px; height: 40px; opacity: 0.4; }
 
 /* Redactar: panel de composición estilo Outlook */
 .correo-compose { max-width: 760px; }
@@ -2147,6 +2515,29 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-form-checkbox input { width: auto; }
 
+/* Desplegable "Editar" de una cuenta de correo (correo_cuentas.html) --
+   mismo patrón que .menu-settings/.menu-settings-panel (menu.html):
+   <details> con el panel flotante en position:absolute, no un ancho
+   fijo estirado dentro de la fila. */
+.correo-cuenta-editar { position: relative; display: inline-block; }
+.correo-cuenta-editar summary { list-style: none; cursor: pointer; }
+.correo-cuenta-editar summary::-webkit-details-marker { display: none; }
+.correo-cuenta-editar[open] summary { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.correo-cuenta-editar-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 14px;
+  width: min(360px, 90vw);
+  z-index: 10;
+}
+
 /* Ribbon de acciones del mensaje abierto, al estilo del ribbon "Inicio" de Outlook */
 .correo-ribbon {
   display: flex;
@@ -2183,7 +2574,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-family: inherit;
 }
 .correo-ribbon-btn:hover { background: var(--bg); border-color: var(--border); }
-.correo-ribbon-icono { font-size: 1.3em; line-height: 1; }
+.correo-ribbon-icono { line-height: 1; }
+.correo-ribbon-icono svg { width: 17px; height: 17px; vertical-align: -3px; }
 .correo-ribbon-etiqueta { white-space: nowrap; }
 .correo-ribbon-select {
   align-self: center;
@@ -2330,6 +2722,48 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-style: italic;
   max-width: 100%;
 }
+/* Adjunto que una tool le manda al usuario por el chat (Drive, documento
+   firmado...) -- mismo lenguaje visual que .correo-adjunto-*, ver
+   app/static/style.css bloque de Correo, con su propio prefijo. */
+.ia-adjunto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-style: normal;
+  font-size: 1em;
+  max-width: 100%;
+}
+.ia-adjunto-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  max-width: 260px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ia-adjunto-chip:hover { border-color: var(--primary); color: var(--primary); }
+.ia-adjunto-preview-imagen {
+  display: block;
+  max-width: 220px;
+  max-height: 160px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.ia-adjunto-preview-pdf {
+  width: 280px;
+  height: 220px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
 .ia-msg-error {
   align-self: center;
   background: none;
@@ -2378,17 +2812,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-weight: 600;
 }
 
-.ia-chat-form { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); }
+.ia-chat-form { display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); }
 .ia-chat-form textarea {
+  /* Sin borde/fondo propios a propósito -- el contorno ya lo lleva
+     .ia-chat (border + border-radius), así se evita el efecto "caja
+     dentro de caja" que tenía antes. */
   flex: 1;
   resize: none;
   padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border: none;
+  background: transparent;
   color: var(--text);
   font-family: inherit;
 }
+.ia-chat-form textarea:focus { outline: none; }
 .ia-chat-form button {
   padding: 0 16px;
   border-radius: var(--radius-sm);
@@ -2497,6 +2934,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-weight: 600;
 }
 .ia-chat-live[hidden] { display: none; }
+/* Punto de "grabando" cuando el modo Live está activo -- sustituye al
+   emoji 🔴 (app/static/ia_asistente.js), un simple círculo CSS en vez
+   de traer un icono Lucide solo para un punto de color. */
+.ia-live-punto {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 1px;
+}
 
 .ia-panel-flotante[hidden] { display: none; }
 .ia-panel-flotante {
@@ -2574,6 +3022,23 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .auth-submit { width: 100%; justify-content: center; margin-top: var(--space-2); }
 .auth-alterna { text-align: center; font-size: 0.88em; color: var(--text-muted); margin: var(--space-2) 0 0; }
 
+/* ---- Portal de cliente (páginas independientes, sin app-shell) ----
+   Mismo criterio que .auth-shell: página propia, no hereda el layout de
+   base.html (sin icon-rail/top-bar), pero con contenido normal (listas,
+   formularios) en vez de una tarjeta de login centrada -- por eso un
+   contenedor ancho con margen, no .auth-shell/.auth-card. */
+.portal-cliente-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+.portal-cliente-shell .page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
 /* ---- Herramientas: tarjetas de app conectadas, estilo "rice" (Hyprland) ----
    Clases propias (.tools-*), NO reutiliza .menu-grid/.menu-card (esas las
    usa inicio.html para los menús/categorías del log) — así se puede tunear
@@ -2607,7 +3072,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  /* Mismo criterio que .menu-grid: tope superior (300px) en vez de
+     1fr, + justify-content:center, para que una fila incompleta (ej.
+     la última de una categoría) quede centrada en vez de pegada a la
+     izquierda con un hueco vacío a la derecha. */
+  grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
+  justify-content: center;
   gap: var(--space-4);
 }
 
@@ -2617,6 +3087,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  /* Alto fijo (icono + nombre de 1 línea + descripción recortada a 2
+     líneas + pastilla de estado + paddings) para que ninguna tarjeta
+     dependa de cuánto texto tenga su vecina de fila -- antes, una
+     descripción larga (p.ej. "Drive") estiraba toda la fila y dejaba
+     un hueco vacío enorme en las tarjetas con descripción corta. */
+  min-height: 200px;
   padding: var(--space-4);
   text-decoration: none;
   color: var(--text);
@@ -2683,14 +3159,38 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tool-card:hover .tool-card-go { opacity: 1; transform: translate(0, 0); color: var(--tool-accent); }
 
 .tool-card-name { margin: 0; font-size: 1.05em; font-weight: 700; }
-.tool-card-desc { margin: 0; color: var(--text-muted); font-size: 0.9em; line-height: 1.4; flex-grow: 1; }
+.tool-card-desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.4;
+  /* Recorte a 2 líneas -- ver el comentario de min-height en .tool-card:
+     limita cuánto puede crecer una descripción larga en vez de dejar
+     que dicte la altura de toda la fila. Sin flex-grow a propósito:
+     combinarlo con -webkit-line-clamp es poco fiable en Chromium (el
+     recorte deja de aplicarse) -- la pastilla de estado se ancla al
+     fondo con su propio margin-top:auto en vez de depender de que
+     este bloque crezca. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .tool-card-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  margin-top: var(--space-1);
+  /* margin-top:auto (no var(--space-1)) empuja la pastilla al fondo
+     de la tarjeta pase lo que pase con la altura de la descripción --
+     antes dependía de que .tool-card-desc tuviera flex-grow:1, pero
+     combinar flex-grow con -webkit-line-clamp (necesario para
+     recortar descripciones largas a 2 líneas) es poco fiable en
+     Chromium: el recorte dejaba de aplicarse y la tarjeta crecía sin
+     límite. Desacoplado: la descripción solo se recorta, el hueco lo
+     rellena este margen automático. */
+  margin-top: auto;
   padding: 4px 10px 4px 8px;
   border-radius: 999px;
   font-size: 0.75em;
@@ -2713,18 +3213,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   background: var(--warning);
   box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 70%, transparent);
 }
-.tool-card-status.is-pendiente .tool-card-status-dot {
-  background: var(--text-muted);
-}
-.tool-card.is-pendiente {
-  cursor: default;
-  opacity: 0.6;
-}
-.tool-card.is-pendiente:hover {
-  transform: none;
-  box-shadow: var(--shadow-sm);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .tool-card, .tool-card-icon, .tool-card-go { transition: none; }
 }
@@ -2964,6 +3452,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .pill.estado-sin_revisar { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
 .pill.estado-en_revision { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary); }
 .pill.estado-finalizado { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
+.pill.prioridad-alta { background: color-mix(in srgb, var(--danger) 16%, transparent); border-color: color-mix(in srgb, var(--danger) 35%, transparent); color: var(--danger); }
+.pill.prioridad-normal { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
+.pill.prioridad-baja { background: color-mix(in srgb, var(--border) 40%, transparent); color: var(--text-muted); }
 
 .tiquets-kanban {
   display: grid;
@@ -3036,7 +3527,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .content { padding: var(--space-4) var(--space-3); max-width: none; }
 
   .top-bar { padding: 0 var(--space-3); gap: var(--space-2); }
-  .brand-name { display: none; }
   .busqueda-boton-abrir { flex: 1 1 auto; min-width: 0; padding: 6px 8px; }
   .busqueda-atajo { display: none; }
 

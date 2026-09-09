@@ -524,5 +524,40 @@ def test_perfil_get_put_y_avatar(cliente):
     assert cliente.get(f"/api/v1/avatar/{usuario_id}", headers=h).status_code == 404
 
 
+def test_avatar_no_es_visible_desde_otro_tenant(cliente):
+    """Regresión: GET /api/v1/avatar/<id> (y su equivalente web,
+    app/main.py:avatar_usuario) no comprobaban tenant -- cualquier sesión
+    válida podía enumerar usuario_id y ver el avatar de cualquiera, de
+    cualquier tenant. Un compañero del MISMO tenant sí debe poder verlo
+    (no se restringe a "solo el propio usuario")."""
+    import io
+
+    from PIL import Image
+
+    token_a = _registrar(cliente, email="avatar-tenant-a@ejemplo.com")["token"]
+    _con_tenant("avatar-tenant-a@ejemplo.com", "Gestoria Avatar A")
+    buf = io.BytesIO()
+    Image.new("RGB", (10, 10), color=(200, 10, 10)).save(buf, format="PNG")
+    buf.seek(0)
+    resp = cliente.post(
+        "/api/v1/perfil/avatar", data={"avatar": (buf, "foto.png", "image/png")},
+        content_type="multipart/form-data", headers=_auth(token_a),
+    )
+    usuario_id_a = resp.get_json()["data"]["usuario_id"]
+
+    # Compañero del MISMO tenant: sí puede verlo.
+    token_a2 = _registrar(cliente, email="avatar-tenant-a2@ejemplo.com")["token"]
+    tenant_a = _con_tenant("avatar-tenant-a2@ejemplo.com", "Gestoria Avatar A bis")
+    db.asignar_tenant(usuario_id_a, tenant_a)
+    resp = cliente.get(f"/api/v1/avatar/{usuario_id_a}", headers=_auth(token_a2))
+    assert resp.status_code == 200
+
+    # Usuario de OTRO tenant: 404, no puede verlo.
+    token_b = _registrar(cliente, email="avatar-tenant-b@ejemplo.com")["token"]
+    _con_tenant("avatar-tenant-b@ejemplo.com", "Gestoria Avatar B")
+    resp = cliente.get(f"/api/v1/avatar/{usuario_id_a}", headers=_auth(token_b))
+    assert resp.status_code == 404
+
+
 def test_perfil_requiere_token(cliente):
     assert cliente.get("/api/v1/perfil").status_code == 401

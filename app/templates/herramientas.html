@@ -11,25 +11,12 @@
 <div class="tools-page">
   {% set categorias = herramientas | map(attribute="categoria") | unique | list %}
   {% for categoria in categorias %}
+  {% set disponibles_en_categoria = herramientas | selectattr("categoria", "equalto", categoria) | rejectattr("disponible", "equalto", false) | list %}
+  {% if disponibles_en_categoria or (categoria == "Documentos y datos" and facturascripts_url) %}
   <section class="tools-section">
     <h2 class="tools-section-title"><span></span>{{ categoria }}</h2>
     <div class="tools-grid">
-      {% for h in herramientas if h.categoria == categoria %}
-      {% if h.disponible == false %}
-      <div class="tool-card is-pendiente" style="--tool-accent: {{ h.color }};">
-        <div class="tool-card-top">
-          <span class="tool-card-icon">
-            <img src="{{ url_for('static', filename='logos/' ~ h.icono_logo) }}" alt="" loading="lazy">
-          </span>
-        </div>
-        <h3 class="tool-card-name">{{ h.nombre }}</h3>
-        <p class="tool-card-desc">{{ h.descripcion }}</p>
-        <span class="tool-card-status is-pendiente">
-          <span class="tool-card-status-dot"></span>
-          {{ _('Aún no disponible') }}
-        </span>
-      </div>
-      {% else %}
+      {% for h in herramientas if h.categoria == categoria and h.disponible != false %}
       <a class="tool-card" href="{{ h.url }}" target="_blank" rel="noopener"
          style="--tool-accent: {{ h.color }};">
         <div class="tool-card-top">
@@ -47,14 +34,15 @@
           {{ _('Entra con tu sesión de Guilda Work') if h.sso else _('Inicia sesión aparte') }}
         </span>
       </a>
-      {% endif %}
       {% endfor %}
-      {% if categoria == "Documentos y datos" %}
+      {% if categoria == "Documentos y datos" and facturascripts_url %}
       {# FacturaScripts no está en `herramientas` porque no es una instancia
          compartida: cada tenant tiene su propio contenedor con su propia
-         URL (ver app/main.py:herramientas_vista y HOSTING.md 8.21). #}
-      {% if facturascripts_url %}
-      <a class="tool-card" href="{{ facturascripts_url }}" target="_blank" rel="noopener"
+         URL (ver app/main.py:herramientas_vista y HOSTING.md 8.21). Sin
+         `facturascripts_url` (todavía sin aprovisionar para este tenant)
+         no se muestra nada, igual que el resto de herramientas no
+         desplegadas -- aparece sola en cuanto se aprovisiona. #}
+      <a class="tool-card" href="{{ url_for('abrir_facturacion') }}" target="_blank" rel="noopener"
          style="--tool-accent: #2f6fce;">
         <div class="tool-card-top">
           <span class="tool-card-icon">
@@ -71,24 +59,10 @@
           {{ _('Inicia sesión aparte') }}
         </span>
       </a>
-      {% else %}
-      <div class="tool-card is-pendiente" style="--tool-accent: #2f6fce;">
-        <div class="tool-card-top">
-          <span class="tool-card-icon">
-            <img src="{{ url_for('static', filename='logos/facturacion.png') }}" alt="" loading="lazy">
-          </span>
-        </div>
-        <h3 class="tool-card-name">{{ _('Facturación') }}</h3>
-        <p class="tool-card-desc">{{ _('Facturas, presupuestos y contabilidad de tu cliente (FacturaScripts).') }}</p>
-        <span class="tool-card-status is-pendiente">
-          <span class="tool-card-status-dot"></span>
-          {{ _('Aún no aprovisionada para tu cliente') }}
-        </span>
-      </div>
-      {% endif %}
       {% endif %}
     </div>
   </section>
+  {% endif %}
   {% endfor %}
 </div>
 {% endblock %}

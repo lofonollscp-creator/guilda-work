@@ -1,0 +1,35 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Diagnóstico') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Diagnóstico') }}</h1>
+    <p class="subtitle">{{ _('Qué integraciones tienen sus variables de entorno configuradas a nivel de plataforma — no confundir con las API keys por tenant (FacturaScripts, Documenso, Cal.diy), esas se gestionan desde la ficha de cada tenant.') }}</p>
+  </div>
+</header>
+
+<section class="ia-section">
+  <div class="table-wrap">
+    <table class="historial-table">
+      <thead>
+        <tr>
+          <th>{{ _('Integración') }}</th>
+          <th>{{ _('Estado') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in integraciones %}
+        <tr>
+          <td>{{ i.nombre }}</td>
+          <td>
+            <span class="log-badge {{ 'log-badge-duracion' if i.configurado else 'log-badge-instantanea' }}">
+              {{ _('configurada') if i.configurado else _('sin configurar') }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

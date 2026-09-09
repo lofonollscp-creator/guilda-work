@@ -102,6 +102,28 @@ def test_backoffice_crear_tenant_y_asignar_usuario(cliente):
     assert db.tenant_de_usuario(usuario_id) is None
 
 
+def test_backoffice_crear_tenant_sin_nombre_avisa_y_no_crea_nada(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-tenant-sin-nombre@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    antes = len(db.listar_tenants())
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "  "}, follow_redirects=True)
+    assert len(db.listar_tenants()) == antes
+    assert "obligatorio" in resp.get_data(as_text=True)
+
+
+def test_backoffice_crear_tenant_confirma_con_toast(cliente):
+    """Mismo criterio que el resto del backoffice tras conectar
+    toasts.js -- crear un tenant debe confirmarlo, no redirigir en
+    silencio."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-tenant-toast@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants", data={"nombre": "Tenant Toast"}, follow_redirects=True)
+    assert "mostrarToast" in resp.get_data(as_text=True)
+    assert "creado" in resp.get_data(as_text=True)
+
+
 def test_backoffice_crear_tenant_provisiona_equipo_en_espocrm(cliente, monkeypatch):
     from app import rutas_backoffice
 
@@ -479,6 +501,19 @@ def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     assert nuevo is not None
 
 
+def test_backoffice_crear_usuario_muestra_boton_copiar_para_la_contrasena(cliente):
+    """La contraseña temporal solo se muestra esta vez -- copiarla a mano
+    seleccionando texto es fácil de hacer mal, así que debe llevar un
+    botón "Copiar" con la contraseña real en data-password."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-copiar-pass@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/usuarios", data={"email": "copiar-pass@ejemplo.com", "tenant_id": ""})
+    html = resp.get_data(as_text=True)
+    assert "btn-copiar-password" in html
+    assert 'data-password="' in html
+
+
 def test_backoffice_crear_usuario_sin_tokens_solo_da_error_en_openproject_y_chatwoot(cliente):
     """Sin OPENPROJECT_API_TOKEN/CHATWOOT_PLATFORM_API_TOKEN configurados
     (caso normal en tests), las tres integraciones deben fallar de forma
@@ -493,7 +528,12 @@ def test_backoffice_crear_usuario_sin_tokens_solo_da_error_en_openproject_y_chat
     assert "Guilda Work" in html
     assert "OpenProject" in html
     assert "Chatwoot" in html
-    assert "Metabase" not in html  # se omite sin más, sin API key configurada
+    # Substring acotado a la fila de la propia tabla de resultados de alta
+    # (no "Metabase" a secas): el backoffice renovado también muestra el
+    # nombre de cada herramienta del catálogo como insignia en la tarjeta
+    # de cada tenant -- "Metabase" sí puede aparecer en la página por eso,
+    # legítimamente, sin que ese sea el caso que este test comprueba.
+    assert "<td>Metabase</td>" not in html  # se omite sin más, sin API key configurada
     assert db.obtener_usuario_por_email("sin-tokens@ejemplo.com") is not None
 
 
@@ -1163,5 +1203,184 @@ def test_backoffice_panel_muestra_los_webhooks(cliente):
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
     db.crear_webhook(usuario_id, None, "https://ejemplo.com/mi-webhook-unico", ["nota.creada"])
 
-    resp = cliente.get("/backoffice/")
+    resp = cliente.get("/backoffice/webhooks")
     assert b"ejemplo.com/mi-webhook-unico" in resp.data
+
+
+# --- Log de auditoría (app/db.py, app/rutas_backoffice.py) -----------------
+
+def test_registrar_y_listar_auditoria(usuario_id):
+    db.registrar_auditoria(usuario_id, "crear_tenant", "Lueira")
+    entradas = db.listar_auditoria_backoffice()
+    assert len(entradas) == 1
+    assert entradas[0]["accion"] == "crear_tenant"
+    assert entradas[0]["detalle"] == "Lueira"
+    assert entradas[0]["usuario_email"] is not None
+
+
+def test_listar_auditoria_orden_mas_reciente_primero(usuario_id):
+    db.registrar_auditoria(usuario_id, "primera_accion", None)
+    db.registrar_auditoria(usuario_id, "segunda_accion", None)
+    entradas = db.listar_auditoria_backoffice()
+    assert [e["accion"] for e in entradas] == ["segunda_accion", "primera_accion"]
+
+
+def test_crear_tenant_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "audit-crear@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    cliente.post("/backoffice/tenants", data={"nombre": "Auditada SL"}, follow_redirects=True)
+
+    entradas = db.listar_auditoria_backoffice()
+    acciones = [e["accion"] for e in entradas]
+    assert "crear_tenant" in acciones
+
+
+def test_borrar_tenant_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "audit-borrar@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("Para Borrar SL")
+
+    cliente.post(f"/backoffice/tenants/{tenant_id}/borrar")
+
+    entradas = db.listar_auditoria_backoffice()
+    borrados = [e for e in entradas if e["accion"] == "borrar_tenant"]
+    assert len(borrados) == 1
+    assert borrados[0]["detalle"] == "Para Borrar SL"
+
+
+def test_cambiar_rol_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    admin_id = iniciar_sesion_de_prueba(cliente, "audit-rol-admin@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
+    otro_id = db.crear_usuario("audit-rol-otro@ejemplo.com", "contrasena123")
+
+    cliente.post(f"/backoffice/usuarios/{otro_id}/rol")
+
+    entradas = db.listar_auditoria_backoffice()
+    acciones = [e["accion"] for e in entradas]
+    assert "hacer_admin" in acciones
+
+
+def test_asignar_tenant_desde_la_ruta_deja_entrada_de_auditoria(cliente):
+    admin_id = iniciar_sesion_de_prueba(cliente, "audit-asignar-admin@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
+    otro_id = db.crear_usuario("audit-asignar-otro@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Auditada")
+
+    cliente.post(f"/backoffice/usuarios/{otro_id}/tenant", data={"tenant_id": str(tenant_id)})
+
+    entradas = db.listar_auditoria_backoffice()
+    acciones = [e["accion"] for e in entradas]
+    assert "asignar_tenant" in acciones
+
+
+def test_backoffice_panel_muestra_la_tabla_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "audit-panel@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    db.registrar_auditoria(usuario_id, "accion_visible_en_el_panel", None)
+
+    resp = cliente.get("/backoffice/auditoria")
+    assert b"accion_visible_en_el_panel" in resp.data
+
+
+# --- Exportación de datos de un tenant (GDPR, solo lectura) -----------------
+
+def test_exportar_datos_tenant_incluye_lo_esperado(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Export")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Export", nif="B123")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+    db.crear_mensaje_vencimiento(v_id, "cliente", "¿Falta algo?")
+    cid = db.crear_categoria(usuario_id, "Guilda")
+    db.crear_tarea(usuario_id, "Tarea export", cid, "instantanea")
+    db.crear_nota(usuario_id, "Nota export")
+    db.crear_tiquet(usuario_id, tipo="error", titulo="Tiquet export")
+
+    export = db.exportar_datos_tenant(tenant_id)
+
+    assert export["tenant"]["nombre"] == "Gestoria Export"
+    assert len(export["usuarios"]) == 1
+    assert export["usuarios"][0]["id"] == usuario_id
+    assert "contrasena_hash" not in export["usuarios"][0]
+    assert len(export["clientes_fiscales"]) == 1
+    assert export["clientes_fiscales"][0]["nif"] == "B123"
+    assert len(export["vencimientos_fiscales"]) == 1
+    vencimiento_exportado = export["vencimientos_fiscales"][0]
+    assert len(vencimiento_exportado["documentos"]) == 1
+    assert vencimiento_exportado["documentos"][0]["nombre_archivo"] == "factura.pdf"
+    assert "url_descarga" in vencimiento_exportado["documentos"][0]
+    assert "contenido" not in vencimiento_exportado["documentos"][0]
+    assert len(vencimiento_exportado["mensajes"]) == 1
+    assert len(export["tareas"]) == 1
+    assert len(export["notas"]) == 1
+    assert len(export["tiquets"]) == 1
+
+
+def test_exportar_datos_tenant_no_mezcla_datos_de_otro_tenant(usuario_id):
+    tenant_a = db.crear_tenant("Gestoria Export A")
+    tenant_b = db.crear_tenant("Gestoria Export B")
+    db.asignar_tenant(usuario_id, tenant_a)
+    db.crear_cliente_fiscal(tenant_a, "Cliente A")
+    otro_id = db.crear_usuario("export-otro@ejemplo.com", "contrasena123")
+    db.asignar_tenant(otro_id, tenant_b)
+    db.crear_cliente_fiscal(tenant_b, "Cliente B")
+
+    export = db.exportar_datos_tenant(tenant_a)
+
+    assert [c["nombre"] for c in export["clientes_fiscales"]] == ["Cliente A"]
+    assert [u["id"] for u in export["usuarios"]] == [usuario_id]
+
+
+def test_exportar_datos_tenant_inexistente_lanza_value_error():
+    with pytest.raises(ValueError):
+        db.exportar_datos_tenant(999999)
+
+
+def test_exportar_datos_tenant_sin_usuarios_no_falla():
+    tenant_id = db.crear_tenant("Gestoria Export Vacia")
+    export = db.exportar_datos_tenant(tenant_id)
+    assert export["usuarios"] == []
+    assert export["tareas"] == []
+
+
+def test_backoffice_exportar_datos_tenant_devuelve_json_descargable(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "export-ruta@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("Gestoria Export Ruta")
+    db.crear_cliente_fiscal(tenant_id, "Cliente Export Ruta")
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/exportar")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/json"
+    assert "attachment" in resp.headers["Content-Disposition"]
+    datos = resp.get_json()
+    assert datos["tenant"]["nombre"] == "Gestoria Export Ruta"
+    assert len(datos["clientes_fiscales"]) == 1
+
+
+def test_backoffice_exportar_datos_tenant_deja_entrada_de_auditoria(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "export-auditoria@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+    tenant_id = db.crear_tenant("Gestoria Export Auditoria")
+
+    cliente.post(f"/backoffice/tenants/{tenant_id}/exportar")
+
+    acciones = [e["accion"] for e in db.listar_auditoria_backoffice()]
+    assert "exportar_datos_tenant" in acciones
+
+
+def test_backoffice_exportar_datos_tenant_requiere_admin(cliente):
+    iniciar_sesion_de_prueba(cliente, "export-no-admin@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Export No Admin")
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/exportar")
+    assert resp.status_code == 403
+
+
+def test_backoffice_exportar_datos_tenant_inexistente_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "export-404@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    resp = cliente.post("/backoffice/tenants/999999/exportar")
+    assert resp.status_code == 404

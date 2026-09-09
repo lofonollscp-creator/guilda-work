@@ -333,3 +333,640 @@ def test_generar_vencimientos_formulario_y_confirmacion(cliente):
     vencimientos = db.listar_vencimientos_fiscales(tenant_id)
     assert len(vencimientos) == 1
     assert vencimientos[0]["modelo"] == "303"
+
+
+# --- Firma electrónica desde un vencimiento (app/documenso.py) -------------
+
+def test_enviar_a_firma_sin_documenso_configurado_no_rompe(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-sin-config@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Sin Config")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Firma", email="cliente-firma@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    v_tras = db.obtener_vencimiento_fiscal(tenant_id, v_id)
+    assert v_tras["documenso_documento_id"] is None
+
+
+def test_enviar_a_firma_ok(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-ok@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Ok")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Firma Ok", email="cliente-firma-ok@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(
+        rutas_fiscal.documenso, "crear_documento",
+        lambda api_key, titulo, contenido, firmantes: {"id": "envelope_123"},
+    )
+    llamadas = []
+    monkeypatch.setattr(
+        rutas_fiscal.documenso, "enviar_a_firma",
+        lambda api_key, documento_id: llamadas.append((api_key, documento_id)),
+    )
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert llamadas == [("token-de-prueba", "envelope_123")]
+    v_tras = db.obtener_vencimiento_fiscal(tenant_id, v_id)
+    assert v_tras["documenso_documento_id"] == "envelope_123"
+
+
+def test_enviar_a_firma_documenso_roto_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+    from app.documenso import ErrorDocumenso
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Firma Rota", email="cliente-firma-rota@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise ErrorDocumenso("Documenso caído")
+    monkeypatch.setattr(rutas_fiscal.documenso, "crear_documento", _falla)
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+
+
+def test_enviar_a_firma_sin_email_del_cliente_no_hace_nada(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "firma-sin-email@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Firma Sin Email")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Email")  # sin email
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.documenso, "crear_documento", lambda *a, **k: llamadas.append(a) or {"id": "x"})
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+# --- Facturación al marcar presentado (app/facturascripts.py) --------------
+
+def test_vincular_facturascripts_encuentra_cliente_existente(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fs-encontrado@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria FS Encontrado")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_facturascripts(tenant_id, "http://127.0.0.1:8107/", "admin", "clave-admin")
+    db.guardar_facturascripts_api_key(tenant_id, "clave-fs")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia FS")
+
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "listar_clientes", lambda *a, **k: [{"codcliente": "42"}])
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/facturascripts/vincular")
+    assert resp.status_code == 302
+    cliente_tras = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert cliente_tras["facturascripts_cliente_codigo"] == "42"
+
+
+def test_vincular_facturascripts_crea_cliente_si_no_existe(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fs-crear@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria FS Crear")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia Nueva")
+
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "listar_clientes", lambda *a, **k: [])
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_cliente", lambda *a, **k: {"codcliente": "99"})
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/facturascripts/vincular")
+    assert resp.status_code == 302
+    cliente_tras = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert cliente_tras["facturascripts_cliente_codigo"] == "99"
+
+
+def test_vincular_facturascripts_roto_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+    from app.facturascripts import ErrorFacturaScripts
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fs-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria FS Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia Rota")
+
+    def _falla(*a, **k):
+        raise ErrorFacturaScripts("caído")
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "listar_clientes", _falla)
+
+    resp = cliente.post(f"/fiscal/clientes/{cliente_id}/facturascripts/vincular")
+    assert resp.status_code == 302
+    cliente_tras = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert cliente_tras["facturascripts_cliente_codigo"] is None
+
+
+def test_marcar_presentado_sin_concepto_no_factura(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "presentado-sin-concepto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Presentado Sin Concepto")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Concepto")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="7")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_factura", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    assert not llamadas
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["estado"] == "presentado"
+
+
+def test_marcar_presentado_con_concepto_e_importe_factura(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "presentado-con-concepto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Presentado Con Concepto")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Concepto")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="8")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(
+        rutas_fiscal.facturascripts, "crear_factura",
+        lambda url, api_key, codigo, lineas: llamadas.append((codigo, lineas)),
+    )
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/presentado",
+        data={"factura_concepto": "Presentación 303 T1", "factura_importe": "150.5"},
+    )
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    codigo, lineas = llamadas[0]
+    assert codigo == "8"
+    assert lineas == [{"descripcion": "Presentación 303 T1", "cantidad": 1, "precio": 150.5}]
+
+
+# --- Panel de "salud del cliente" (documentos/mensajes agregados) ----------
+
+def test_ficha_cliente_agrega_documentos_y_mensajes_de_todos_sus_vencimientos(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "salud-cliente@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Salud Cliente")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Salud")
+    v1 = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    v2 = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "130", "2026-T1", "2026-04-20")
+
+    db.subir_documento_vencimiento(v1, "factura1.pdf", "application/pdf", b"contenido1")
+    db.subir_documento_vencimiento(v2, "factura2.pdf", "application/pdf", b"contenido2")
+    db.crear_mensaje_vencimiento(v1, "cliente", "Mensaje sobre el 303")
+    db.crear_mensaje_vencimiento(v2, "empleado", "Respuesta sobre el 130", usuario_id=usuario_id)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "factura1.pdf" in html
+    assert "factura2.pdf" in html
+    assert "Mensaje sobre el 303" in html
+    assert "Respuesta sobre el 130" in html
+
+
+def test_ficha_cliente_sin_documentos_ni_mensajes_no_muestra_esas_secciones(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "salud-cliente-vacio@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Salud Cliente Vacio")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Salud Vacio")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Documentos subidos por el cliente" not in html
+    assert "Últimos mensajes" not in html
+
+
+# --- Eventos de negocio (app/eventos.py) ----------------------------------
+
+def test_marcar_presentado_emite_evento_vencimiento_presentado(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-presentado@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Presentado")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    evento, tenant_emitido, payload = llamadas[0]
+    assert evento == "vencimiento.presentado"
+    assert tenant_emitido == tenant_id
+    assert payload["vencimiento_id"] == v_id
+
+
+def test_marcar_presentado_con_factura_emite_tambien_factura_emitida(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-factura@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Factura")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Factura")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="7")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_factura", lambda *a, **k: None)
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/presentado",
+        data={"factura_concepto": "Presentación 303 T1", "factura_importe": "150.5"},
+    )
+    assert resp.status_code == 302
+    eventos_emitidos = [a[0] for a in llamadas]
+    assert eventos_emitidos == ["vencimiento.presentado", "factura.emitida"]
+
+
+def test_marcar_presentado_sin_factura_no_emite_factura_emitida(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-sin-factura@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Sin Factura")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Sin Factura")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    eventos_emitidos = [a[0] for a in llamadas]
+    assert eventos_emitidos == ["vencimiento.presentado"]
+
+
+def test_marcar_presentado_un_fallo_al_emitir_el_evento_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Roto")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Roto")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise RuntimeError("boom")
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", _falla)
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/presentado")
+    assert resp.status_code == 302
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["estado"] == "presentado"
+
+
+def test_enviar_a_firma_ok_emite_evento_documento_enviado_a_firma(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-firma@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Firma")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Firma", email="evento-firma-cliente@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(
+        rutas_fiscal.documenso, "crear_documento",
+        lambda api_key, titulo, contenido, firmantes: {"id": "envelope_evt"},
+    )
+    monkeypatch.setattr(rutas_fiscal.documenso, "enviar_a_firma", lambda *a, **k: None)
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert len(llamadas) == 1
+    evento, tenant_emitido, payload = llamadas[0]
+    assert evento == "documento.enviado_a_firma"
+    assert tenant_emitido == tenant_id
+    assert payload["vencimiento_id"] == v_id
+
+
+def test_enviar_a_firma_roto_no_emite_evento(cliente, monkeypatch):
+    from app import rutas_fiscal
+    from app.documenso import ErrorDocumenso
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "evento-firma-rota@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Evento Firma Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_documenso_api_key(tenant_id, "token-de-prueba")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Firma Rota", email="evento-firma-rota@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise ErrorDocumenso("caído")
+    monkeypatch.setattr(rutas_fiscal.documenso, "crear_documento", _falla)
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.eventos, "emitir", lambda *a, **k: llamadas.append(a))
+
+    import io
+    resp = cliente.post(
+        f"/fiscal/vencimientos/{v_id}/enviar-a-firma",
+        data={"documento_firma": (io.BytesIO(b"%PDF-1.4"), "doc.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_ficha_cliente_muestra_correos_vinculados(cliente):
+    from app import correo
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "correos-en-ficha@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Correos En Ficha")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Correo")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta_id, uid="1", asunto="Duda sobre el IVA", remitente="cliente@ejemplo.com",
+        destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="", cuerpo_html=None,
+    )
+    correo.asignar_cliente_fiscal(tenant_id, mensaje_id, cliente_id)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    assert "Duda sobre el IVA" in resp.get_data(as_text=True)
+
+
+def test_ficha_cliente_sin_correos_vinculados_no_muestra_la_seccion(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "sin-correos-en-ficha@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Sin Correos En Ficha")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Correo")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    assert "Correos relacionados" not in resp.get_data(as_text=True)
+
+
+# --- Descargar documento (app/db.py:contenido_documento_vencimiento) -------
+
+def test_descargar_documento_sirve_el_blob_local(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-blob@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Blob")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/documentos/{doc_id}")
+    assert resp.status_code == 200
+    assert resp.data == b"contenido-pdf"
+
+
+def test_descargar_documento_sirve_desde_nextcloud_si_esta_promovido(cliente, monkeypatch):
+    from app import nextcloud
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-nextcloud@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Nextcloud")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga Nextcloud")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(nextcloud, "subir_archivo", lambda ruta, contenido: None)
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+    monkeypatch.setattr(nextcloud, "descargar_archivo", lambda ruta: b"desde-nextcloud")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/documentos/{doc_id}")
+    assert resp.status_code == 200
+    assert resp.data == b"desde-nextcloud"
+
+
+def test_descargar_documento_nextcloud_caido_da_503(cliente, monkeypatch):
+    from app import nextcloud
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-caido@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Caida")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga Caida")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    monkeypatch.setattr(nextcloud, "subir_archivo", lambda ruta, contenido: None)
+    doc_id = db.subir_documento_vencimiento(v_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    def _falla(*a, **k):
+        raise nextcloud.ErrorNextcloud("caído")
+    monkeypatch.setattr(nextcloud, "descargar_archivo", _falla)
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/documentos/{doc_id}")
+    assert resp.status_code == 503
+
+
+def test_descargar_documento_de_otro_vencimiento_da_404(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "descarga-ajeno@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Descarga Ajena")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Descarga Ajena")
+    v1_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    v2_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "130", "2026-T1", "2026-04-20")
+    doc_id = db.subir_documento_vencimiento(v1_id, "factura.pdf", "application/pdf", b"contenido-pdf")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v2_id}/documentos/{doc_id}")
+    assert resp.status_code == 404
+
+
+# --- Contactos EspoCRM en la ficha del cliente ------------------------------
+
+def test_ficha_cliente_muestra_contactos_de_espocrm(cliente, monkeypatch):
+    from app import espocrm
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "contactos-espocrm@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Contactos EspoCRM")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Contactos")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, espocrm_cuenta_id="cuenta-123")
+
+    monkeypatch.setattr(
+        espocrm, "listar_contactos_de_cuenta",
+        lambda cuenta_id, limite=20: [{"name": "Juana Pérez", "emailAddress": "juana@ejemplo.com", "phoneNumber": "600111222"}],
+    )
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Juana Pérez" in html
+    assert "juana@ejemplo.com" in html
+
+
+def test_ficha_cliente_sin_cuenta_espocrm_no_muestra_la_seccion(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "sin-cuenta-espocrm@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Sin Cuenta EspoCRM")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Cuenta")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+    assert "Contactos</h2>" not in resp.get_data(as_text=True)
+
+
+def test_ficha_cliente_espocrm_caido_no_rompe_la_ficha(cliente, monkeypatch):
+    from app import espocrm
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "espocrm-caido@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria EspoCRM Caido")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente EspoCRM Caido")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, espocrm_cuenta_id="cuenta-456")
+
+    def _falla(*a, **k):
+        raise espocrm.ErrorEspoCRM("caído")
+    monkeypatch.setattr(espocrm, "listar_contactos_de_cuenta", _falla)
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    assert resp.status_code == 200
+
+
+# --- Cobro por Stripe Connect (app/stripe_pagos.py) -------------------------
+
+def test_cobrar_stripe_sin_cuenta_connect_no_rompe(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-sin-config@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Sin Config")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe", email="cliente-stripe@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+
+
+def test_cobrar_stripe_ok(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-ok@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Ok")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe Ok", email="cliente-stripe-ok@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas_stripe = []
+    monkeypatch.setattr(
+        rutas_fiscal.stripe_pagos, "crear_sesion_pago",
+        lambda account_id, importe_centimos, concepto, url_exito, url_cancelar, metadata=None:
+            llamadas_stripe.append((account_id, importe_centimos, metadata)) or "https://checkout.stripe.com/pay/cs_123",
+    )
+    llamadas_email = []
+    monkeypatch.setattr(
+        rutas_fiscal, "enviar_enlace_pago",
+        lambda email, concepto, url_pago: llamadas_email.append((email, url_pago)),
+    )
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+    assert llamadas_stripe == [("acct_123", 8000, {"vencimiento_id": v_id})]
+    assert llamadas_email == [("cliente-stripe-ok@ejemplo.com", "https://checkout.stripe.com/pay/cs_123")]
+
+
+def test_cobrar_stripe_sin_email_del_cliente_no_hace_nada(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-sin-email@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Sin Email")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Email")  # sin email
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.stripe_pagos, "crear_sesion_pago", lambda *a, **k: llamadas.append(a) or "https://x")
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_cobrar_stripe_importe_invalido_no_hace_nada(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-importe-malo@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Importe Malo")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Importe Malo", email="cliente-importe-malo@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas = []
+    monkeypatch.setattr(rutas_fiscal.stripe_pagos, "crear_sesion_pago", lambda *a, **k: llamadas.append(a) or "https://x")
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "0"})
+    assert resp.status_code == 302
+    assert not llamadas
+
+
+def test_cobrar_stripe_roto_no_rompe_la_ruta(cliente, monkeypatch):
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-roto@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Rota")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe Roto", email="cliente-stripe-roto@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    def _falla(*a, **k):
+        raise rutas_fiscal.stripe_pagos.ErrorStripe("Stripe caído")
+    monkeypatch.setattr(rutas_fiscal.stripe_pagos, "crear_sesion_pago", _falla)
+
+    resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
+    assert resp.status_code == 302
+
+
+def test_ficha_vencimiento_muestra_seccion_cobrar_stripe_solo_si_procede(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-visibilidad@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Visibilidad")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Visibilidad", email="cliente-visibilidad@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/editar")
+    assert "Cobrar por Stripe" not in resp.get_data(as_text=True)
+
+    db.guardar_stripe_account_id(tenant_id, "acct_123")
+    resp = cliente.get(f"/fiscal/vencimientos/{v_id}/editar")
+    assert "Cobrar por Stripe" in resp.get_data(as_text=True)

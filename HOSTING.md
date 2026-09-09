@@ -1049,6 +1049,26 @@ tools `facturas_listar_clientes`/`facturas_crear_cliente`/
 parámetro `tenant` (el nombre tal cual aparece en el backoffice) —
 imprescindible aquí porque cada tenant es una instancia física distinta.
 
+**Nota de alcance — Veri\*Factu/SII**: España exige progresivamente
+desde 2026 que el software de facturación registre las facturas de
+forma inalterable y pueda remitirlas a la AEAT (normativa Veri\*Factu).
+Guilda Work **no genera ni registra facturas él mismo** — solo hace
+peticiones HTTP a la API de FacturaScripts, que es quien realmente
+emite, guarda y (si corresponde) declara las facturas de cada tenant.
+El cumplimiento de Veri\*Factu recae por tanto sobre **la instancia de
+FacturaScripts de cada tenant**, no sobre Guilda Work — no hay ni
+debería haber código de cumplimiento fiscal en este repo. Dos motivos
+prácticos para tenerlo anotado aquí de todos modos: (1) conviene
+verificar periódicamente que la imagen desplegada
+(`facturascripts/facturascripts:latest`) ya soporta Veri\*Factu antes
+de que la obligatoriedad alcance a los tenants afectados — comprobarlo
+entrando a cualquier instancia de tenant, Ajustes → apartado de
+facturación electrónica; (2) como plataforma multi-tenant, es
+razonable que llegue una consulta de soporte sobre esto aunque la
+responsabilidad técnica sea de FacturaScripts, no de Guilda Work — la
+respuesta correcta es señalar a la propia documentación de
+FacturaScripts, no intentar resolverlo aquí.
+
 ### 8.22 Documenso (firma electrónica de documentos)
 
 A diferencia de FacturaScripts, aquí la instancia SÍ es compartida (como
@@ -1646,19 +1666,50 @@ prefijo de su nombre. El secreto de firma (`JITSI_JWT_APP_SECRET`) es
 compartido entre todos los tenants — no hace falta que sea distinto por
 tenant, porque el JWT en sí ya lleva grabado a qué sala da acceso.
 
-**Verificado en vivo**: se levantó el stack real de 4 servicios
-(`web`/`prosody`/`jicofo`/`jvb`) con `ENABLE_AUTH=1`/`AUTH_TYPE=jwt`
-activos — arranca limpio, Jicofo se autentica contra Prosody y descubre
-el JVB con el módulo de autenticación JWT cargado, sin errores propios
-del módulo (confirma que la configuración es válida y gratuita, sin
-ningún add-on de pago). **Lo que NO se pudo verificar de punta a punta
-en este entorno de desarrollo concreto**: un cliente real rechazado sin
-JWT y admitido con uno válido — el navegador sin cabeza (Playwright)
-nunca llegó a abrir la conexión WebSocket/XMPP tras pulsar "Unirse",
-incluso con dispositivos de medios falsos habilitados (fricción de
-WebRTC-en-Docker-Desktop-Windows, ajena a Jitsi) — mismo criterio de
-honestidad que Cal.diy en este proyecto. Queda pendiente confirmarlo
-contra el despliegue real (Linux).
+**Desplegado de verdad en producción (Linux real, 2026-08-19)**: los 4
+servicios (`web`/`prosody`/`jicofo`/`jvb`) corren en el VPS con
+`ENABLE_AUTH=1`/`AUTH_TYPE=jwt` activos — arranque limpio, Jicofo se
+autentica contra Prosody y descubre el JVB con el módulo de
+autenticación JWT cargado, sin errores propios del módulo. Se
+encontró y corrigió un bug real en el propio `docker-compose.yml`: el
+mapeo de puerto de `jitsi-web` estaba puesto a `80` (`127.0.0.1:8028:80`),
+pero la imagen `ghcr.io/jitsi/web:unstable` escucha en `8000`/`8443`
+internamente, no en `80` — confirmado con
+`docker exec ... grep listen .../site-confs/default` y `docker port` —
+sin esto, Docker aceptaba la conexión TCP pero nunca llegaba a nginx
+("Connection reset by peer" en cada petición). Corregido a
+`127.0.0.1:8028:8000`; confirmado con
+`curl -H 'Host: meet.guildawork.com' http://127.0.0.1:8028/` → HTTP 200.
+Bloque de Caddy añadido para `meet.guildawork.com` (reverse proxy a
+`localhost:8028`, mismo patrón que el resto de subdominios) y
+`app/jitsi.py:generar_jwt_sala()` confirmado generando un JWT
+correctamente formado contra el secreto real.
+
+**Verificación de punta a punta completada (2026-08-19, tras el alta del
+DNS por parte del usuario)**: con el navegador real (Chrome, sesión ya
+autenticada en `app.guildawork.com`) se creó una sala desde
+`/videollamadas/`, redirigió a `https://meet.guildawork.com/<sala>?jwt=...`
+con certificado HTTPS válido, la sala se creó sola sin aprovisionamiento
+previo, y se entró como moderador (badge "M jorge@..." visible dentro de
+la reunión, nombre y rol correctamente extraídos del JWT). Abrir la
+misma URL de sala **sin** el parámetro `jwt` en una segunda pestaña
+mostró el diálogo nativo de Jitsi "Se requiere autenticación" pidiendo
+usuario/contraseña (que no existen por este mecanismo) — confirma que
+el aislamiento por JWT-por-sala funciona de verdad, no solo en el papel.
+**Hallazgo menor, no bloqueante**: la consola muestra errores
+`service-unavailable` al pedir credenciales STUN/TURN (`extdisco:1`/`extdisco:2`
+no configurado en Prosody) — no impide crear/entrar a la sala ni afecta
+llamadas entre participantes en la misma red/NAT, pero podría dificultar
+el establecimiento de medios entre dos participantes detrás de NATs
+distintos en producción real; revisar si hace falta activar `mod_turncredentials`
+en Prosody si se detectan problemas de conexión reales entre usuarios.
+
+**Ruta web nueva**: hasta ahora solo el Asistente de IA podía generar
+una sala (`videollamadas_crear_sala`, MCP) — un empleado que quisiera
+iniciar una llamada sin pasar por un prompt no tenía forma de hacerlo.
+`GET/POST /videollamadas` (`app/rutas_videollamadas.py`, enlazado desde
+el rail de navegación) genera la sala y redirige directamente a la URL
+de Jitsi con el JWT ya incluido.
 
 **El punto que costó más resolver en este entorno concreto**: el propio
 despliegue oficial de `docker-jitsi-meet` asume bind mounts con

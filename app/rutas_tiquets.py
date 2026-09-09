@@ -11,10 +11,24 @@ puede moverlos de estado en el Kanban.
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db
-from .auth import admin_required, login_required
+from . import db, notificaciones
+from .auth import login_required
 
 tiquets_bp = Blueprint("tiquets", __name__, url_prefix="/tiquets")
+
+
+def _puede_supervisar_tiquet(tiquet) -> bool:
+    """Un superadmin puede tocar cualquier tiquet; un supervisor de tenant
+    (ver app/db.py:es_supervisor_tenant) solo los de alguien de SU PROPIO
+    tenant -- tiquets es un tablero compartido entre todos los tenants sin
+    columna tenant_id propia, así que el tenant de un tiquet se resuelve
+    indirectamente por el tenant de quien lo creó."""
+    if g.es_admin:
+        return True
+    return bool(
+        g.supervisor_tenant and g.tenant_id is not None
+        and db.usuario_pertenece_a_tenant(tiquet["usuario_id"], g.tenant_id)
+    )
 
 TIPOS = [
     ("error", _l("Error")),
@@ -24,6 +38,11 @@ ESTADOS = [
     ("sin_revisar", _l("Sin revisar")),
     ("en_revision", _l("En revisión")),
     ("finalizado", _l("Finalizado")),
+]
+PRIORIDADES = [
+    ("alta", _l("Alta")),
+    ("normal", _l("Normal")),
+    ("baja", _l("Baja")),
 ]
 
 # Capturas de pantalla + PDF, nada más -- es lo que se pidió, no un
@@ -68,27 +87,39 @@ def _guardar_adjuntos(tiquet_id: int, campo: str = "adjuntos") -> None:
         db.guardar_adjunto_tiquet(tiquet_id, f.filename, f.mimetype, contenido)
 
 
+def _filtros_desde_query():
+    prioridad = request.args.get("prioridad") or None
+    if prioridad not in dict(PRIORIDADES):
+        prioridad = None
+    usuario_asignado_id = request.args.get("asignado", type=int)
+    return prioridad, usuario_asignado_id
+
+
 @tiquets_bp.route("/")
 @login_required
 def tarjetas():
-    tiquets = db.listar_tiquets()
+    prioridad, usuario_asignado_id = _filtros_desde_query()
+    tiquets = db.listar_tiquets(prioridad=prioridad, usuario_asignado_id=usuario_asignado_id)
     por_tipo = {clave: [t for t in tiquets if t["tipo"] == clave] for clave, _ in TIPOS}
     adjuntos_por_tiquet = {t["id"]: db.listar_adjuntos_tiquet(t["id"]) for t in tiquets}
     return render_template(
         "tiquets_tarjetas.html", por_tipo=por_tipo, tipos=TIPOS, estados=ESTADOS,
-        adjuntos_por_tiquet=adjuntos_por_tiquet,
+        adjuntos_por_tiquet=adjuntos_por_tiquet, prioridades=PRIORIDADES,
+        usuarios=db.listar_usuarios(), prioridad=prioridad or "", usuario_asignado_id=usuario_asignado_id,
     )
 
 
 @tiquets_bp.route("/kanban")
 @login_required
 def kanban():
-    tiquets = db.listar_tiquets()
+    prioridad, usuario_asignado_id = _filtros_desde_query()
+    tiquets = db.listar_tiquets(prioridad=prioridad, usuario_asignado_id=usuario_asignado_id)
     por_estado = {clave: [t for t in tiquets if t["estado"] == clave] for clave, _ in ESTADOS}
     adjuntos_por_tiquet = {t["id"]: db.listar_adjuntos_tiquet(t["id"]) for t in tiquets}
     return render_template(
         "tiquets_kanban.html", por_estado=por_estado, estados=ESTADOS, tipos=TIPOS,
-        adjuntos_por_tiquet=adjuntos_por_tiquet,
+        adjuntos_por_tiquet=adjuntos_por_tiquet, prioridades=PRIORIDADES,
+        usuarios=db.listar_usuarios(), prioridad=prioridad or "", usuario_asignado_id=usuario_asignado_id,
     )
 
 
@@ -147,14 +178,46 @@ def eliminar(tiquet_id: int):
 
 @tiquets_bp.route("/<int:tiquet_id>/estado", methods=["POST"])
 @login_required
-@admin_required
 def cambiar_estado(tiquet_id: int):
-    if db.obtener_tiquet(tiquet_id) is None:
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
         abort(404)
+    if not _puede_supervisar_tiquet(tiquet):
+        abort(403)
     estado = request.form.get("estado", "")
     if estado in dict(ESTADOS):
         db.cambiar_estado_tiquet(tiquet_id, estado)
     return redirect(request.form.get("volver_a") or url_for("tiquets.kanban"))
+
+
+@tiquets_bp.route("/<int:tiquet_id>/asignar", methods=["POST"])
+@login_required
+def asignar(tiquet_id: int):
+    tiquet = db.obtener_tiquet(tiquet_id)
+    if tiquet is None:
+        abort(404)
+    if not _puede_supervisar_tiquet(tiquet):
+        abort(403)
+    prioridad = request.form.get("prioridad", "normal")
+    if prioridad not in dict(PRIORIDADES):
+        prioridad = "normal"
+    usuario_asignado_id = request.form.get("usuario_asignado_id", type=int)
+    db.asignar_tiquet(tiquet_id, prioridad, usuario_asignado_id)
+    # Avisa al nuevo responsable -- solo si cambia de verdad (evita
+    # reavisar cada vez que un admin solo toca la prioridad) y nunca si
+    # se está autoasignando a sí mismo (no hace falta avisarse a uno
+    # mismo de algo que se acaba de hacer).
+    if (
+        usuario_asignado_id and usuario_asignado_id != tiquet["usuario_asignado_id"]
+        and usuario_asignado_id != g.usuario_id
+        and db.notificacion_tipo_activa(usuario_asignado_id, "tiquet_asignado")
+    ):
+        notificaciones.crear_y_enviar(
+            usuario_asignado_id, "tiquet_asignado", "Tiquet asignado",
+            f"#{tiquet_id} — {tiquet['titulo']}", url=url_for("tiquets.tarjetas"),
+            datos={"tipo": "tiquet_asignado", "tiquet_id": tiquet_id},
+        )
+    return redirect(request.form.get("volver_a") or url_for("tiquets.tarjetas"))
 
 
 TIPOS_PREVISUALIZABLES = ("application/pdf",)

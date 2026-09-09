@@ -100,6 +100,26 @@ def test_generar_token_cachea_la_clave_entre_llamadas(monkeypatch):
     assert len(llamadas_keys) == 1
 
 
+def test_generar_token_con_tenant_id_combina_ambos_filtros_con_or(monkeypatch):
+    _reset_cache(monkeypatch)
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b, "_asegurar_clave_busqueda", lambda: {"uid": "u1", "key": "k1"})
+
+    token = b.generar_token_busqueda(42, tenant_id=9)
+    payload = _decodificar_payload(token)
+    assert payload["searchRules"][b.INDICE]["filter"] == "(usuario_id = 42) OR tenant_id = 9"
+
+
+def test_generar_token_sin_tenant_id_solo_filtra_por_usuario(monkeypatch):
+    _reset_cache(monkeypatch)
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b, "_asegurar_clave_busqueda", lambda: {"uid": "u1", "key": "k1"})
+
+    token = b.generar_token_busqueda(42)
+    payload = _decodificar_payload(token)
+    assert payload["searchRules"][b.INDICE]["filter"] == "usuario_id = 42"
+
+
 def test_generar_token_respeta_minutos_validez(monkeypatch):
     _reset_cache(monkeypatch)
     monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
@@ -169,6 +189,39 @@ def test_indexar_nota_adjunta_el_vector_cuando_ollama_esta_disponible(monkeypatc
     b.indexar_nota({"id": 7, "usuario_id": 3, "texto": "Hola", "creada_en": "2026-01-01T00:00:00", "categoria_id": 2})
 
     assert capturado["cuerpo"][0]["_vectors"] == {"default": [0.1, 0.2, 0.3]}
+
+
+def test_indexar_vencimiento_fiscal_construye_el_documento_correcto(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b, "_asegurar_indice", lambda: None)
+    _sin_embedding(monkeypatch)
+    capturado = {}
+    monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo))
+
+    b.indexar_vencimiento_fiscal({
+        "id": 12, "tenant_id": 3, "modelo": "303", "periodo": "2026-T1",
+        "cliente_nombre": "Panadería SL", "creado_en": "2026-01-01T00:00:00",
+    })
+
+    assert capturado["cuerpo"] == [{
+        "id": "vencimiento_fiscal-12", "tipo": "vencimiento_fiscal", "tenant_id": 3,
+        "texto": "303 2026-T1 Panadería SL", "creada_en": "2026-01-01T00:00:00", "_vectors": {"default": None},
+    }]
+
+
+def test_indexar_cliente_fiscal_construye_el_documento_correcto(monkeypatch):
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
+    monkeypatch.setattr(b, "_asegurar_indice", lambda: None)
+    _sin_embedding(monkeypatch)
+    capturado = {}
+    monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo))
+
+    b.indexar_cliente_fiscal({"id": 4, "tenant_id": 3, "nombre": "Panadería SL", "nif": "B123", "creado_en": "2026-01-01T00:00:00"})
+
+    assert capturado["cuerpo"] == [{
+        "id": "cliente_fiscal-4", "tipo": "cliente_fiscal", "tenant_id": 3,
+        "texto": "Panadería SL B123", "creada_en": "2026-01-01T00:00:00", "_vectors": {"default": None},
+    }]
 
 
 def test_asegurar_indice_configura_el_embedder_userprovided(monkeypatch):
@@ -337,7 +390,7 @@ def test_busqueda_token_devuelve_token_url_e_indice(cliente, monkeypatch):
     from app import main
 
     iniciar_sesion_de_prueba(cliente, "busqueda2@ejemplo.com", "contrasena123")
-    monkeypatch.setattr(main.busqueda, "generar_token_busqueda", lambda uid: "token-de-prueba")
+    monkeypatch.setattr(main.busqueda, "generar_token_busqueda", lambda uid, tenant_id=None: "token-de-prueba")
     monkeypatch.setattr(main.busqueda, "MEILISEARCH_URL", "http://127.0.0.1:8029")
     monkeypatch.setattr(main.busqueda, "INDICE", "registro_actividad")
 
@@ -371,7 +424,7 @@ def test_buscar_hibrido_sin_ollama_devuelve_lista_vacia(monkeypatch):
 def test_buscar_hibrido_usa_el_tenant_token_no_la_clave_maestra(monkeypatch):
     monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
     monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: [0.1, 0.2])
-    monkeypatch.setattr(b, "generar_token_busqueda", lambda uid, minutos_validez=60: f"token-usuario-{uid}")
+    monkeypatch.setattr(b, "generar_token_busqueda", lambda uid, tenant_id=None, minutos_validez=60: f"token-usuario-{uid}")
     capturado = {}
 
     def fake_peticion(endpoint, *, clave, metodo="GET", cuerpo=None):
@@ -391,7 +444,7 @@ def test_buscar_hibrido_usa_el_tenant_token_no_la_clave_maestra(monkeypatch):
 def test_buscar_hibrido_respeta_el_limite(monkeypatch):
     monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "clave-maestra")
     monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: [0.1])
-    monkeypatch.setattr(b, "generar_token_busqueda", lambda uid, minutos_validez=60: "tok")
+    monkeypatch.setattr(b, "generar_token_busqueda", lambda uid, tenant_id=None, minutos_validez=60: "tok")
     capturado = {}
     monkeypatch.setattr(b, "_peticion", lambda endpoint, *, clave, metodo="GET", cuerpo=None: capturado.update(cuerpo=cuerpo) or {"hits": []})
 
@@ -418,8 +471,131 @@ def test_busqueda_hibrida_devuelve_los_resultados_de_buscar_hibrido(cliente, mon
     from app import main
 
     iniciar_sesion_de_prueba(cliente, "busqueda4@ejemplo.com", "contrasena123")
-    monkeypatch.setattr(main.busqueda, "buscar_hibrido", lambda uid, texto, limite=5: [{"id": "nota-1", "texto": "x"}])
+    monkeypatch.setattr(main.busqueda, "buscar_hibrido", lambda uid, texto, limite=5, tenant_id=None: [{"id": "nota-1", "texto": "x"}])
 
     resp = cliente.get("/busqueda/hibrida?q=algo")
     assert resp.status_code == 200
     assert resp.get_json() == {"ok": True, "resultados": [{"id": "nota-1", "texto": "x"}]}
+
+
+# --- Ganchos de indexación: clientes y vencimientos fiscales ---------------
+
+def test_crear_cliente_fiscal_lo_indexa(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Cliente")
+    llamadas = []
+    monkeypatch.setattr(b, "indexar_cliente_fiscal", lambda cliente: llamadas.append(dict(cliente)))
+
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panadería SL", nif="B123")
+
+    assert len(llamadas) == 1
+    assert llamadas[0]["id"] == cliente_id
+    assert llamadas[0]["nombre"] == "Panadería SL"
+    assert llamadas[0]["tenant_id"] == tenant_id
+
+
+def test_editar_cliente_fiscal_lo_reindexa(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Cliente Editar")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Original")
+    llamadas = []
+    monkeypatch.setattr(b, "indexar_cliente_fiscal", lambda cliente: llamadas.append(dict(cliente)))
+
+    db.editar_cliente_fiscal(tenant_id, cliente_id, nombre="Editado")
+
+    assert len(llamadas) == 1
+    assert llamadas[0]["nombre"] == "Editado"
+
+
+def test_eliminar_cliente_fiscal_lo_quita_del_indice(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Cliente Eliminar")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "A borrar")
+    llamadas = []
+    monkeypatch.setattr(b, "eliminar_del_indice", lambda tipo, id_: llamadas.append((tipo, id_)))
+
+    db.eliminar_cliente_fiscal(tenant_id, cliente_id)
+
+    assert llamadas == [("cliente_fiscal", cliente_id)]
+
+
+def test_crear_vencimiento_fiscal_lo_indexa(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Vencimiento")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Busqueda")
+    llamadas = []
+    monkeypatch.setattr(b, "indexar_vencimiento_fiscal", lambda v: llamadas.append(dict(v)))
+
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    assert len(llamadas) == 1
+    assert llamadas[0]["id"] == v_id
+    assert llamadas[0]["tenant_id"] == tenant_id
+    assert llamadas[0]["cliente_nombre"] == "Cliente Busqueda"
+
+
+def test_marcar_presentado_reindexa_el_vencimiento(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Presentado")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Presentado")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    llamadas = []
+    monkeypatch.setattr(b, "indexar_vencimiento_fiscal", lambda v: llamadas.append(dict(v)))
+
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, v_id)
+
+    assert len(llamadas) == 1
+    assert llamadas[0]["estado"] == "presentado"
+
+
+def test_eliminar_vencimiento_fiscal_lo_quita_del_indice(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Vencimiento Eliminar")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Eliminar")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    llamadas = []
+    monkeypatch.setattr(b, "eliminar_del_indice", lambda tipo, id_: llamadas.append((tipo, id_)))
+
+    db.eliminar_vencimiento_fiscal(tenant_id, v_id)
+
+    assert llamadas == [("vencimiento_fiscal", v_id)]
+
+
+def test_un_fallo_del_buscador_no_rompe_crear_vencimiento_fiscal(usuario_id, monkeypatch):
+    from app import db
+
+    tenant_id = db.crear_tenant("Gestoria Busqueda Fallo")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Fallo")
+
+    def falla(v):
+        raise b.ErrorBusqueda("Meilisearch caído, simulado")
+
+    monkeypatch.setattr(b, "indexar_vencimiento_fiscal", falla)
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    assert db.obtener_vencimiento_fiscal(tenant_id, v_id) is not None
+
+
+# --- /busqueda/token pasa el tenant_id -------------------------------------
+
+def test_busqueda_token_pasa_el_tenant_id_del_usuario(cliente, monkeypatch):
+    from app import db, main
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "busqueda-tenant@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Busqueda Token")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    capturado = {}
+    monkeypatch.setattr(
+        main.busqueda, "generar_token_busqueda",
+        lambda uid, tenant_id=None: capturado.update(uid=uid, tenant_id=tenant_id) or "token",
+    )
+
+    resp = cliente.get("/busqueda/token")
+    assert resp.status_code == 200
+    assert capturado["tenant_id"] == tenant_id

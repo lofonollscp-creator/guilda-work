@@ -5,8 +5,8 @@
   <div>
     <h1>{{ _('Tiquets') }}</h1>
     <p class="subtitle">
-      {% if g.es_admin %}{{ _('Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.') }}
-      {% else %}{{ _('Solo un administrador puede mover tiquets entre columnas.') }}{% endif %}
+      {% if g.es_admin or g.supervisor_tenant %}{{ _('Arrastra… bueno, elige el estado nuevo en cada tarjeta para moverla de columna.') }}
+      {% else %}{{ _('Solo un administrador o supervisor puede mover tiquets entre columnas.') }}{% endif %}
     </p>
   </div>
 </header>
@@ -15,6 +15,24 @@
   <a href="{{ url_for('tiquets.tarjetas') }}">{{ _('Tarjetas') }}</a>
   <a class="active" href="{{ url_for('tiquets.kanban') }}">Kanban</a>
 </nav>
+
+<form class="filters" method="get" action="{{ url_for('tiquets.kanban') }}">
+  <select name="prioridad" onchange="this.form.requestSubmit()">
+    <option value="">{{ _('Todas las prioridades') }}</option>
+    {% for valor, etiqueta in prioridades %}
+    <option value="{{ valor }}" {% if prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+    {% endfor %}
+  </select>
+  <select name="asignado" onchange="this.form.requestSubmit()">
+    <option value="">{{ _('Cualquier asignado') }}</option>
+    {% for u in usuarios %}
+    <option value="{{ u.id }}" {% if usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>
+    {% endfor %}
+  </select>
+  {% if prioridad or usuario_asignado_id %}
+  <a class="btn btn-ghost" href="{{ url_for('tiquets.kanban') }}">{{ _('Limpiar') }}</a>
+  {% endif %}
+</form>
 
 <div class="tiquets-kanban">
   {% for valor, etiqueta in estados %}
@@ -26,14 +44,16 @@
         <div class="tiquet-card-top">
           <span class="tiquet-card-numero">#{{ t.id }}</span>
           <span class="pill">{{ tipos|selectattr('0', 'equalto', t.tipo)|map(attribute='1')|first }}</span>
+          <span class="pill prioridad-{{ t.prioridad }}">{{ prioridades|selectattr('0', 'equalto', t.prioridad)|map(attribute='1')|first }}</span>
         </div>
         <h3 class="tiquet-card-titulo">{{ t.titulo }}</h3>
+        {% if t.asignado_email %}<p class="muted">{{ _('Asignado a %(email)s', email=t.asignado_email) }}</p>{% endif %}
         {% if t.descripcion %}<p class="tiquet-card-desc">{{ t.descripcion }}</p>{% endif %}
         {% if adjuntos_por_tiquet[t.id] %}
         <div class="correo-adjuntos">
           {% for a in adjuntos_por_tiquet[t.id] %}
           <a class="correo-adjunto-chip" href="{{ url_for('tiquets.descargar_adjunto', tiquet_id=t.id, adjunto_id=a.id) }}" target="_blank" rel="noopener">
-            📎 {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
+            <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
           </a>
           {% endfor %}
         </div>
@@ -44,16 +64,30 @@
           <form action="{{ url_for('tiquets.eliminar', tiquet_id=t.id) }}" method="post"
                 onsubmit="return confirm('{{ _('¿Eliminar el tiquet #%(id)s? No se puede deshacer.', id=t.id) }}');">
             <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
-            <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+            <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
           </form>
           {% endif %}
         </div>
-        {% if g.es_admin %}
+        {% if g.es_admin or g.supervisor_tenant %}
         <form action="{{ url_for('tiquets.cambiar_estado', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
           <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
           <select name="estado" onchange="this.form.requestSubmit()">
             {% for e_valor, e_etiqueta in estados %}
             <option value="{{ e_valor }}" {% if e_valor == valor %}selected{% endif %}>{{ e_etiqueta }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        <form action="{{ url_for('tiquets.asignar', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
+          <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
+          <select name="prioridad" onchange="this.form.requestSubmit()" aria-label="{{ _('Prioridad') }}">
+            {% for valor, etiqueta in prioridades %}
+            <option value="{{ valor }}" {% if t.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+            {% endfor %}
+          </select>
+          <select name="usuario_asignado_id" onchange="this.form.requestSubmit()" aria-label="{{ _('Asignar a') }}">
+            <option value="">{{ _('Sin asignar') }}</option>
+            {% for u in usuarios %}
+            <option value="{{ u.id }}" {% if t.usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>
             {% endfor %}
           </select>
         </form>

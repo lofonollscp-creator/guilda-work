@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Mensajes') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="portal-cliente-shell">
+    <header class="page-header">
+      <div>
+        <h1>{{ vencimiento.modelo }} — {{ vencimiento.periodo }}</h1>
+        <p class="subtitle">{{ _('Mensajes con tu gestoría sobre este vencimiento.') }}</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.dashboard') }}">{{ _('Volver') }}</a>
+    </header>
+
+    {% if not mensajes %}
+    <p class="empty-lane">{{ _('Todavía no hay mensajes. Escribe el primero abajo.') }}</p>
+    {% else %}
+    <ul class="log-list">
+      {% for m in mensajes %}
+      <li class="log-item">
+        <span class="pill">{{ _('Tú') if m.autor == 'cliente' else _('Gestoría') }}</span>
+        <span class="log-text">{{ m.texto }}</span>
+        <span class="log-duration">{{ m.creado_en[:16].replace('T', ' ') }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
+      <label>{{ _('Escribe un mensaje') }}
+        <textarea name="texto" rows="3" required></textarea>
+      </label>
+      <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+    </form>
+  </div>
+</body>
+</html>

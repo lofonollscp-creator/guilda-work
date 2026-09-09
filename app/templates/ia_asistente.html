@@ -5,7 +5,7 @@
 <div class="ia-pagina ia-pagina-chat">
   <div class="ia-pagina-cabecera">
     <h1>{{ _('Asistente IA') }}</h1>
-    <a class="btn btn-ghost" href="{{ url_for('ia.ajustes') }}">&#9881; {{ _('Ajustes') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('ia.ajustes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Ajustes') }}</a>
   </div>
   {% if not preferencias.modelo %}
   <p class="ia-aviso">{{ _('No hay ningún modelo configurado todavía. Ve a') }} <a href="{{ url_for('ia.ajustes') }}">{{ _('Ajustes') }}</a> {{ _('para elegir un modelo y añadir tu clave de OpenRouter.') }}</p>

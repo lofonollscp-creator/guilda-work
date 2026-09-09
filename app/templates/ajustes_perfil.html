@@ -8,28 +8,33 @@
   </div>
 </header>
 
-<section class="quick-actions" style="max-width: 640px;">
-  <form class="quick-card" action="{{ url_for('subir_avatar') }}" method="post" enctype="multipart/form-data" style="grid-column: 1 / -1;">
-    <label>{{ _('Foto de perfil') }}</label>
-    <div class="quick-row" style="align-items: center;">
+<form class="edit-form" method="post" action="{{ url_for('ajustes_perfil') }}">
+  <fieldset>
+    <legend>{{ _('Foto de perfil') }}</legend>
+    <div class="perfil-avatar-fila">
       {% if perfil.avatar_contenido %}
-      <img src="{{ url_for('avatar_usuario', usuario_id=usuario.id) }}" alt="" width="64" height="64" style="border-radius: 50%; object-fit: cover;">
+      <img class="perfil-avatar-imagen" src="{{ url_for('avatar_usuario', usuario_id=usuario.id) }}" alt="" width="64" height="64">
       {% else %}
-      <span class="avatar-circulo" style="--avatar-color: {{ (perfil.nombre_mostrado or usuario.email)|avatar_color }}; width: 64px; height: 64px; font-size: 1.2rem;">{{ (perfil.nombre_mostrado or usuario.email)|iniciales }}</span>
+      <span class="avatar-circulo perfil-avatar-iniciales" style="--avatar-color: {{ (perfil.nombre_mostrado or usuario.email)|avatar_color }};">{{ (perfil.nombre_mostrado or usuario.email)|iniciales }}</span>
       {% endif %}
-      <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp">
-      <button type="submit" class="btn btn-primary">{{ _('Subir') }}</button>
+      <span class="file-input">
+        <label class="file-input-boton btn btn-ghost">
+          <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+          {{ _('Elegir imagen') }}
+          <input type="file" name="avatar" form="perfil-form-avatar" accept="image/jpeg,image/png,image/webp">
+        </label>
+        <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+      </span>
+      <button type="submit" form="perfil-form-avatar" class="btn btn-primary">{{ _('Subir') }}</button>
       {% if perfil.avatar_contenido %}
-      <button type="submit" formaction="{{ url_for('eliminar_avatar') }}" class="btn btn-ghost">{{ _('Quitar') }}</button>
+      <button type="submit" form="perfil-form-avatar" formaction="{{ url_for('eliminar_avatar') }}" class="btn btn-ghost">{{ _('Quitar') }}</button>
       {% endif %}
     </div>
     {% if error_avatar == 'formato' %}<p class="ia-error">{{ _('Formato no soportado -- usa JPEG, PNG o WEBP.') }}</p>{% endif %}
     {% if error_avatar == 'tamano' %}<p class="ia-error">{{ _('La imagen pesa demasiado (máximo 5 MB).') }}</p>{% endif %}
     {% if error_avatar == 'procesar' %}<p class="ia-error">{{ _('No se ha podido procesar esa imagen -- prueba con otra.') }}</p>{% endif %}
-  </form>
-</section>
+  </fieldset>
 
-<form class="edit-form" method="post" action="{{ url_for('ajustes_perfil') }}" style="max-width: 640px;">
   <label>{{ _('Nombre a mostrar') }}
     <input type="text" name="nombre_mostrado" value="{{ perfil.nombre_mostrado or '' }}" placeholder="{{ usuario.email }}">
   </label>
@@ -53,12 +58,11 @@
 
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    {% if puede_cambiar_credenciales %}
+    <a class="btn btn-ghost" href="{{ url_for('ajustes_cuenta') }}">{{ _('Cambiar contraseña o email') }}</a>
+    {% endif %}
   </div>
 </form>
 
-{% if puede_cambiar_credenciales %}
-<p class="subtitle" style="max-width: 640px;">
-  <a href="{{ url_for('ajustes_cuenta') }}">{{ _('Cambiar contraseña o email →') }}</a>
-</p>
-{% endif %}
+<form id="perfil-form-avatar" action="{{ url_for('subir_avatar') }}" method="post" enctype="multipart/form-data"></form>
 {% endblock %}

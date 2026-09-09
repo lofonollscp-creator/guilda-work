@@ -13,6 +13,11 @@ Pillow>=10.0
 # instalable por pip, sin binario de sistema externo (a diferencia de
 # weasyprint/wkhtmltopdf, que necesitan Pango/Cairo o un binario aparte).
 reportlab>=4.0
+# Generador de documentos/informes del Asistente IA (app/generador_documentos.py)
+# -- mismo criterio que reportlab: puro Python instalable por pip, sin
+# binario de sistema externo. openpyxl para XLSX, python-docx para DOCX.
+openpyxl>=3.1
+python-docx>=1.1
 # Notificaciones push a la app móvil (app/push.py) -- única excepción al
 # criterio de "solo urllib" del resto de integraciones de app/*.py: la API
 # HTTP v1 de FCM exige un JWT firmado RS256 canjeado por un token OAuth2,

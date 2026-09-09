@@ -54,11 +54,16 @@ def token_required(vista):
         if usuario_id is None:
             return jsonify({"ok": False, "error": "Token inválido o ausente."}), 401
         g.usuario_id = usuario_id
-        # Mismo cálculo que _resolver_usuario_actual() en main.py -- ninguna
-        # ruta por token lo lee todavía, pero cualquier ruta nueva que
-        # filtre por tenant (p.ej. calendario fiscal) lo necesita disponible
-        # también en el camino de autenticación por token, no solo cookie.
+        # Mismo cálculo que _resolver_usuario_actual() en main.py -- hasta
+        # ahora ninguna ruta por token leía g.es_admin/g.gestor_fichajes/
+        # g.supervisor_tenant (quedaban sin fijar, ausentes de g por
+        # completo), así que cualquier ruta de la app móvil/API que mirara
+        # alguno de esos flags fallaría con un AttributeError en vez de
+        # comportarse como el usuario que realmente es.
         tenant = db.tenant_de_usuario(usuario_id)
         g.tenant_id = tenant["id"] if tenant else None
+        g.es_admin = db.es_admin(usuario_id)
+        g.gestor_fichajes = db.es_gestor_fichajes(usuario_id)
+        g.supervisor_tenant = db.es_supervisor_tenant(usuario_id)
         return vista(*args, **kwargs)
     return decorada

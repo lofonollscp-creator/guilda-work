@@ -18,6 +18,7 @@ import socket
 import sys
 import threading
 import time
+import urllib.parse
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -30,10 +31,14 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, push
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, notificaciones
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
+from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
+from .rutas_stripe_webhook import stripe_webhook_bp
+from .rutas_citas import citas_bp
+from .rutas_videollamadas import videollamadas_bp
 from .rutas_correo import correo_bp
 from .rutas_docs import docs_bp
 from .rutas_fichaje import fichaje_bp
@@ -41,6 +46,8 @@ from .rutas_fiscal import fiscal_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import ip_requiere_captcha, kratos_proxy_bp
+from .rutas_notificaciones import notificaciones_bp
+from .rutas_portal_cliente import portal_bp
 from .rutas_tareas import tareas_bp
 from .rutas_tiquets import tiquets_bp
 
@@ -147,13 +154,19 @@ app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
 app.register_blueprint(fiscal_bp)
+app.register_blueprint(citas_bp)
+app.register_blueprint(videollamadas_bp)
 app.register_blueprint(correo_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)
 app.register_blueprint(hydra_bp)
 app.register_blueprint(backoffice_bp)
+app.register_blueprint(facturacion_proxy_bp)
+app.register_blueprint(stripe_webhook_bp)
 app.register_blueprint(docs_bp)
+app.register_blueprint(portal_bp)
+app.register_blueprint(notificaciones_bp)
 
 
 @app.errorhandler(Exception)
@@ -186,6 +199,7 @@ def _resolver_usuario_actual():
         tenant = db.tenant_de_usuario(g.usuario_id)
         g.tenant_id = tenant["id"] if tenant else None
         g.gestor_fichajes = db.es_gestor_fichajes(g.usuario_id)
+        g.supervisor_tenant = db.es_supervisor_tenant(g.usuario_id)
         return
 
     # Modo hospedado: identidad real vía Ory Kratos. Solo se llama a Kratos
@@ -195,6 +209,7 @@ def _resolver_usuario_actual():
     g.es_admin = False
     g.tenant_id = None
     g.gestor_fichajes = False
+    g.supervisor_tenant = False
     if KRATOS_SESSION_COOKIE not in request.cookies:
         return
     sesion_kratos = kratos.whoami(request.cookies)
@@ -213,6 +228,7 @@ def _resolver_usuario_actual():
         g.es_admin = usuario["rol"] == "admin"
         g.tenant_id = usuario["tenant_id"]
         g.gestor_fichajes = bool(usuario["gestor_fichajes"])
+        g.supervisor_tenant = bool(usuario["supervisor_tenant"])
 
 
 @app.context_processor
@@ -241,6 +257,27 @@ def inyectar_correo_badge():
     if not g.usuario_id:
         return {}
     return {"correo_no_leidos_sidebar": db.contar_no_leidos_total_correo(g.usuario_id)}
+
+
+@app.context_processor
+def inyectar_notificaciones_badge():
+    if not g.usuario_id:
+        return {}
+    return {"notificaciones_no_leidas": db.contar_notificaciones_no_leidas(g.usuario_id)}
+
+
+@app.context_processor
+def inyectar_perfil_rail():
+    """Avatar/nombre/tenant para la tarjeta de cuenta fija abajo del
+    rail (base.html) -- mismas funciones ya usadas por
+    /ajustes/perfil, sin repetir la consulta ahí."""
+    if not g.usuario_id:
+        return {}
+    return {
+        "perfil_rail": db.obtener_perfil_usuario(g.usuario_id),
+        "usuario_rail": db.obtener_usuario(g.usuario_id),
+        "tenant_rail": db.obtener_tenant(g.tenant_id) if g.tenant_id else None,
+    }
 
 
 @app.context_processor
@@ -297,7 +334,36 @@ def _flujo_o_redirigir(tipo: str):
     respuesta de redirección en `g._redireccion_flujo`."""
     flow_id = request.args.get("flow")
     if not flow_id:
-        g._redireccion_flujo = redirect(f"/.ory/self-service/{tipo}/browser")
+        # Iniciar el flujo server-side (en vez de mandar al navegador
+        # directo a /.ory/self-service/.../browser) evita que Kratos
+        # decida el destino él mismo -- redirigiría a su
+        # SELFSERVICE_FLOWS_*_UI_URL configurado, que es un único valor
+        # fijo (siempre el origen "principal" de la app, ver
+        # docker-compose.yml). Sin este paso, cualquier subdominio nuevo
+        # que reutilice estas mismas rutas de login (p.ej. el backoffice,
+        # ver HOSTING.md) acabaría rebotando al usuario fuera de su
+        # propio origen a mitad del flujo -- entrar en él ahí y salir
+        # con la sesión puesta en un dominio distinto. Iniciarlo aquí y
+        # redirigir (ruta relativa, sin dominio) de vuelta a esta misma
+        # URL con ?flow=<id> mantiene TODO el flujo en el origen desde el
+        # que se entró, sea cual sea.
+        try:
+            ubicacion, cabeceras_set_cookie = kratos.iniciar_flujo(tipo, request.cookies)
+        except kratos.ErrorKratos:
+            g._redireccion_flujo = redirect(request.path)
+            return None
+        flow_id_nuevo = urllib.parse.parse_qs(urllib.parse.urlparse(ubicacion).query).get("flow", [None])[0]
+        if not flow_id_nuevo:
+            g._redireccion_flujo = redirect(request.path)
+            return None
+        respuesta = redirect(f"{request.path}?flow={flow_id_nuevo}")
+        # La cookie anti-CSRF que Kratos acaba de fijar para este flujo
+        # tiene que llegar al navegador real -- sin esto, el POST
+        # posterior al proxy falla la validación CSRF de Kratos (ver
+        # docstring de kratos.iniciar_flujo).
+        for cabecera in cabeceras_set_cookie:
+            respuesta.headers.add("Set-Cookie", cabecera)
+        g._redireccion_flujo = respuesta
         return None
     try:
         flujo = kratos.obtener_flujo(tipo, flow_id, request.cookies)
@@ -512,13 +578,25 @@ def cambiar_idioma(codigo):
     return redirect(url_for("inicio"))
 
 
+ICONOS_MENU_VALIDOS = {
+    "folder", "flag", "star", "zap", "book-open", "briefcase", "building-2",
+    "users", "layers", "target", "bookmark", "tag", "layout-grid",
+    "clipboard-list", "puzzle", "rocket",
+}
+
+
+def _icono_menu_valido(valor: str | None) -> str | None:
+    return valor if valor in ICONOS_MENU_VALIDOS else None
+
+
 @app.route("/menus", methods=["POST"])
 @login_required
 def crear_menu():
     nombre = request.form.get("nombre", "").strip()
     color = request.form.get("color", "").strip() or None
+    icono = _icono_menu_valido(request.form.get("icono", "").strip())
     if nombre:
-        db.crear_categoria(g.usuario_id, nombre, color)
+        db.crear_categoria(g.usuario_id, nombre, color, icono)
     return redirect(url_for("inicio"))
 
 
@@ -560,8 +638,9 @@ def renombrar_menu(menu_id: int):
         abort(404)
     nombre = request.form.get("nombre", "").strip()
     color = request.form.get("color", "").strip() or None
+    icono = _icono_menu_valido(request.form.get("icono", "").strip())
     if nombre:
-        db.renombrar_categoria(g.usuario_id, menu_id, nombre, color)
+        db.renombrar_categoria(g.usuario_id, menu_id, nombre, color, icono)
     return redirect(url_for("ver_menu", menu_id=menu_id))
 
 
@@ -892,7 +971,7 @@ def token_busqueda():
     de la propia web — nunca se mezclan los dos mecanismos de auth en el
     mismo prefijo (mismo criterio que ya documenta rutas_api.py)."""
     try:
-        token = busqueda.generar_token_busqueda(g.usuario_id)
+        token = busqueda.generar_token_busqueda(g.usuario_id, tenant_id=g.tenant_id)
     except busqueda.ErrorBusqueda as e:
         return {"ok": False, "error": str(e)}, 503
     return {"ok": True, "token": token, "url": busqueda.MEILISEARCH_URL, "indice": busqueda.INDICE}
@@ -912,7 +991,7 @@ def busqueda_hibrida():
     texto = request.args.get("q", "").strip()
     if not texto:
         return {"ok": True, "resultados": []}
-    resultados = busqueda.buscar_hibrido(g.usuario_id, texto)
+    resultados = busqueda.buscar_hibrido(g.usuario_id, texto, tenant_id=g.tenant_id)
     return {"ok": True, "resultados": resultados}
 
 
@@ -936,6 +1015,20 @@ def herramientas_vista():
         herramientas=visibles,
         facturascripts_url=facturascripts_url,
     )
+
+
+@app.route("/facturacion/abrir", endpoint="abrir_facturacion")
+@login_required
+def abrir_facturacion():
+    """Enlace de un solo uso hacia facturacion.guildawork.com (ver
+    app/rutas_facturacion_proxy.py) -- reemplaza el href directo a la URL
+    interna 127.0.0.1:PUERTO, que solo era alcanzable desde dentro del
+    propio VPS."""
+    tenant = db.tenant_de_usuario(g.usuario_id)
+    if tenant is None or not tenant["facturascripts_url"]:
+        abort(404)
+    token = db.crear_acceso_facturacion(tenant["id"], g.usuario_id)
+    return redirect(f"{FACTURACION_ORIGIN}/entrar?token={token}")
 
 
 @app.route("/mis-dispositivos")
@@ -970,6 +1063,8 @@ def ajustes_perfil():
             notificar_push_vencimientos="notificar_push_vencimientos" in request.form,
             notificar_push_tiquets="notificar_push_tiquets" in request.form,
             notificar_resumen_semanal="notificar_resumen_semanal" in request.form,
+            notificar_push_correo="notificar_push_correo" in request.form,
+            notificar_push_portal_mensajes="notificar_push_portal_mensajes" in request.form,
         )
         return redirect(url_for("ajustes_perfil"))
     usuario = db.obtener_usuario(g.usuario_id)
@@ -1039,7 +1134,16 @@ def avatar_usuario(usuario_id: int):
     """Sirve el avatar subido, o 404 si no hay ninguno -- el llamador
     (plantilla) ya sabe caer al círculo de iniciales (avatar_color/
     iniciales, app/rutas_correo.py) cuando esta URL no responde 200,
-    mismo patrón que usan hoy los avatares de contactos de correo."""
+    mismo patrón que usan hoy los avatares de contactos de correo.
+
+    Solo el propio usuario o alguien de su mismo tenant puede pedir este
+    avatar -- usuario_id es un parámetro de ruta libre, sin este chequeo
+    cualquier sesión válida podía enumerar IDs y ver el avatar de
+    cualquiera, de cualquier tenant."""
+    if usuario_id != g.usuario_id:
+        tenant_objetivo = db.tenant_de_usuario(usuario_id)
+        if tenant_objetivo is None or tenant_objetivo["id"] != g.tenant_id:
+            abort(404)
     perfil = db.obtener_perfil_usuario(usuario_id)
     if not perfil["avatar_contenido"]:
         abort(404)
@@ -1061,26 +1165,26 @@ def ajustes_cuenta():
     return render_template("ajustes_cuenta.html", **datos)
 
 
-@app.route("/notificaciones")
-@login_required
-def notificaciones():
-    """JSON para el panel de campana del top-bar (Fase G5) -- sin
-    envoltorio {"ok":...} porque no es parte de la API REST móvil
-    (app/rutas_api.py), es un fetch interno de la propia web."""
-    return jsonify(db.notificaciones_recientes(g.usuario_id, g.tenant_id))
-
-
 @app.route("/estadisticas")
 @login_required
 def estadisticas():
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
+    # Pestaña "Equipo" -- solo tiene sentido con un tenant asignado (en
+    # modo escritorio o para un admin sin tenant, g.tenant_id es None y
+    # no hay ningún equipo que agregar).
+    equipo = db.estadisticas_equipo_por_usuario(g.tenant_id, desde, hasta) if g.tenant_id is not None else []
+    tiempo_medio_resolucion = (
+        db.tiempo_medio_resolucion_vencimientos(g.tenant_id) if g.tenant_id is not None else None
+    )
     return render_template(
         "estadisticas.html",
         desde=desde or "",
         hasta=hasta or "",
         por_categoria=db.estadisticas_por_categoria(g.usuario_id, desde, hasta),
         por_dia=db.estadisticas_por_dia(g.usuario_id, desde, hasta),
+        equipo=equipo,
+        tiempo_medio_resolucion=tiempo_medio_resolucion,
     )
 
 
@@ -1361,11 +1465,16 @@ def _recordatorio_vencimientos_fiscales():
             if not v["usuario_id"]:
                 continue
             try:
-                push.enviar_a_usuario(
+                if not db.notificacion_tipo_activa(v["usuario_id"], "vencimiento_fiscal"):
+                    db.marcar_recordatorio_vencimiento_fiscal_enviado(v["id"])
+                    continue
+                notificaciones.crear_y_enviar(
                     v["usuario_id"],
+                    "vencimiento_fiscal",
                     "Vencimiento fiscal próximo",
                     f"{v['modelo']} de {v['cliente_nombre']} vence el {v['fecha_limite'][:10]}.",
-                    {"tipo": "vencimiento_fiscal", "vencimiento_id": v["id"]},
+                    url=f"/fiscal/vencimientos/{v['id']}/editar",
+                    datos={"tipo": "vencimiento_fiscal", "vencimiento_id": v["id"]},
                 )
                 # Dedup: sin esto, vencimientos_fiscales_proximos() lo
                 # volvía a devolver cada día mientras siguiera pendiente y
@@ -1418,8 +1527,9 @@ def _resumen_ia_semanal():
                     "Resume mis actividades de esta última semana, agrupadas por categoría, en 5-8 líneas como mucho.",
                     "openrouter", prefs["modelo_local"], usuario_id,
                 )
-                push.enviar_a_usuario(
-                    usuario_id, "Tu resumen semanal", resumen[:200], {"tipo": "resumen_ia_semanal"}
+                notificaciones.crear_y_enviar(
+                    usuario_id, "resumen_ia_semanal", "Tu resumen semanal", resumen[:200],
+                    url="/historial", datos={"tipo": "resumen_ia_semanal"},
                 )
             except Exception:
                 continue

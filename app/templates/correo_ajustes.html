@@ -51,7 +51,7 @@
       <span class="log-text">{{ cat.nombre }}</span>
       <form action="{{ url_for('correo.eliminar_categoria', categoria_id=cat.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se quedan sin categoría.', nombre=cat.nombre) }}');">
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
     {% endfor %}
@@ -67,6 +67,32 @@
 </section>
 
 <section class="correo-ajustes-seccion">
+  <h2>{{ _('Plantillas de respuesta') }}</h2>
+  <p class="muted">{{ _('Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas.') }}</p>
+  {% if plantillas %}
+  <ul class="log-list">
+    {% for p in plantillas %}
+    <li class="log-item">
+      <span class="log-text">{{ p.nombre }}</span>
+      <form action="{{ url_for('correo.eliminar_plantilla', plantilla_id=p.id) }}" method="post"
+            onsubmit="return confirm('{{ _('¿Eliminar la plantilla «%(nombre)s»?', nombre=p.nombre) }}');">
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('correo.crear_plantilla') }}" class="correo-form-seccion">
+    <div class="ia-form-row">
+      <input type="text" name="nombre" placeholder="{{ _('Nombre (ej. Recordatorio de documentación)') }}" required>
+      <input type="text" name="asunto" placeholder="{{ _('Asunto (opcional)') }}">
+    </div>
+    <textarea name="cuerpo" rows="4" placeholder="{{ _('Texto de la plantilla...') }}" required></textarea>
+    <button type="submit" class="btn btn-primary">+ {{ _('Añadir plantilla') }}</button>
+  </form>
+</section>
+
+<section class="correo-ajustes-seccion">
   <h2>{{ _('Reglas de categorización automática') }}</h2>
   <p class="muted">{{ _('Los correos nuevos de un remitente o dominio que coincida se categorizan solos, sin tener que hacerlo a mano.') }}</p>
   {% if reglas_categoria %}
@@ -77,7 +103,7 @@
       <span class="log-text">{{ regla.remitente_patron }} &rarr; {{ regla.categoria_nombre }}</span>
       <form action="{{ url_for('correo.eliminar_regla_categoria', regla_id=regla.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar esta regla?') }}');">
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
     {% endfor %}
@@ -110,7 +136,7 @@
       <span class="log-text">{{ r.direccion }}</span>
       <form action="{{ url_for('correo.eliminar_remitente_confiable', remitente_id=r.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Quitar «%(direccion)s» de la lista de confianza?', direccion=r.direccion) }}');">
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">✕</button>
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
     {% endfor %}
@@ -145,8 +171,8 @@
       <button type="button" data-cmd="italic" title="{{ _('Cursiva') }}"><i>K</i></button>
       <button type="button" data-cmd="underline" title="{{ _('Subrayado') }}"><u>S</u></button>
       <span class="correo-editor-separador"></span>
-      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}">&#128279; {{ _('Enlace') }}</button>
-      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}">&#128247; {{ _('Imagen') }}</button>
+      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
+      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
       <button type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
     </div>
     <div id="firma-editor-cuerpo" class="correo-editor" data-campo-oculto="firma-campo-oculto" contenteditable="true">{{ cuenta_firma.firma_html|safe if cuenta_firma and cuenta_firma.firma_html else '' }}</div>

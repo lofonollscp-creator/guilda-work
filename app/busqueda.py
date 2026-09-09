@@ -17,13 +17,26 @@ buscador respeta ese mismo límite ya existente, no inventa uno nuevo.
 
 ## Diseño
 
-Un único índice (`registro_actividad`) para notas + tareas + correo,
-cada documento con un campo `tipo` para distinguirlos y un `id` prefijado
-por tipo (`nota-7`, `tarea-3`, `mensaje-42`) para que nunca choquen entre
-sí. El frontend llama a Meilisearch **directamente** con el tenant token
-(sin pasar por Flask) para buscar — patrón estándar de tenant tokens,
-evita cargar el backend con cada tecla pulsada; este módulo solo indexa
-(con la clave maestra, nunca expuesta al cliente) y genera el token.
+Un único índice (`registro_actividad`) para notas + tareas + correo +
+vencimientos/clientes fiscales, cada documento con un campo `tipo` para
+distinguirlos y un `id` prefijado por tipo (`nota-7`, `tarea-3`,
+`mensaje-42`, `vencimiento_fiscal-9`, `cliente_fiscal-4`) para que nunca
+choquen entre sí. El frontend llama a Meilisearch **directamente** con
+el tenant token (sin pasar por Flask) para buscar — patrón estándar de
+tenant tokens, evita cargar el backend con cada tecla pulsada; este
+módulo solo indexa (con la clave maestra, nunca expuesta al cliente) y
+genera el token.
+
+Los vencimientos/clientes fiscales son la única excepción al filtro por
+`usuario_id`: no pertenecen a un usuario concreto, sino a todo un
+tenant (una gestoría, con varios empleados) -- se filtran por
+`tenant_id` en su lugar (ver `generar_token_busqueda`, que combina
+ambos filtros con OR). Los tiquets, en cambio, NO se indexan: son un
+tablero compartido por TODA la plataforma sin ningún `tenant_id` ni
+`usuario_id` propio (cualquier usuario logueado ve todos), y forzarlos
+en este mismo modelo de filtro exigiría una tercera categoría de
+"visible para cualquiera" -- se deja fuera a propósito hasta que haga
+falta de verdad, en vez de forzar un campo `publico` solo para esto.
 
 Aprovisionamiento sin pasos manuales: la clave de búsqueda usada para
 firmar los tenant tokens se crea sola la primera vez que hace falta (ver
@@ -115,7 +128,7 @@ def _asegurar_indice() -> None:
     except ErrorBusqueda as e:
         if "index_already_exists" not in str(e):
             raise
-    _peticion(f"/indexes/{INDICE}/settings/filterable-attributes", clave=MEILISEARCH_MASTER_KEY, metodo="PUT", cuerpo=["usuario_id", "tipo"])
+    _peticion(f"/indexes/{INDICE}/settings/filterable-attributes", clave=MEILISEARCH_MASTER_KEY, metodo="PUT", cuerpo=["usuario_id", "tenant_id", "tipo"])
     _peticion(
         f"/indexes/{INDICE}/settings/embedders", clave=MEILISEARCH_MASTER_KEY, metodo="PATCH",
         cuerpo={"default": {"source": "userProvided", "dimensions": DIMENSIONES_EMBEDDING}},
@@ -158,16 +171,22 @@ def _firmar_jwt(payload: dict, secreto: str) -> str:
     return f"{segmento_cabecera}.{segmento_payload}.{_base64url(firma)}"
 
 
-def generar_token_busqueda(usuario_id: int, minutos_validez: int = 60) -> str:
+def generar_token_busqueda(usuario_id: int, tenant_id: int | None = None, minutos_validez: int = 60) -> str:
     """Tenant token de Meilisearch, válido solo para buscar dentro de
-    los documentos de este usuario. Si MEILISEARCH_MASTER_KEY no está
-    configurada, lanza ErrorBusqueda (el buscador es opcional, mismo
-    criterio que el resto de integraciones)."""
+    los documentos de este usuario -- Y, si se pasa `tenant_id`, también
+    los del calendario fiscal (vencimientos/clientes) de su gestoría,
+    que no son de un usuario_id concreto sino compartidos por todo el
+    tenant (ver app/busqueda.py:indexar_vencimiento_fiscal). Si
+    MEILISEARCH_MASTER_KEY no está configurada, lanza ErrorBusqueda (el
+    buscador es opcional, mismo criterio que el resto de integraciones)."""
     if not MEILISEARCH_MASTER_KEY:
         raise ErrorBusqueda("MEILISEARCH_MASTER_KEY no está configurada.")
     clave = _asegurar_clave_busqueda()
+    filtro = f"usuario_id = {usuario_id}"
+    if tenant_id is not None:
+        filtro = f"({filtro}) OR tenant_id = {tenant_id}"
     payload = {
-        "searchRules": {INDICE: {"filter": f"usuario_id = {usuario_id}"}},
+        "searchRules": {INDICE: {"filter": filtro}},
         "apiKeyUid": clave["uid"],
         "exp": int(time.time()) + minutos_validez * 60,
     }
@@ -241,13 +260,40 @@ def indexar_mensaje(mensaje: dict, usuario_id: int) -> None:
     })
 
 
+def indexar_vencimiento_fiscal(vencimiento: dict) -> None:
+    """A diferencia de nota/tarea/mensaje, no lleva `usuario_id` (el
+    campo existe en la tabla pero es opcional -- "quien se ocupa", no
+    "de quién es") -- se filtra por `tenant_id` (ver
+    generar_token_busqueda), porque cualquier empleado de la gestoría
+    puede necesitar encontrarlo, no solo quien lo tenga asignado.
+    `vencimiento` tiene que venir de una consulta con JOIN clientes_fiscales
+    (ver db.py:obtener_vencimiento_fiscal) para traer `cliente_nombre`."""
+    _indexar({
+        "id": f"vencimiento_fiscal-{vencimiento['id']}",
+        "tipo": "vencimiento_fiscal",
+        "tenant_id": vencimiento["tenant_id"],
+        "texto": f"{vencimiento['modelo']} {vencimiento['periodo']} {vencimiento.get('cliente_nombre', '')}".strip(),
+        "creada_en": vencimiento.get("creado_en"),
+    })
+
+
+def indexar_cliente_fiscal(cliente: dict) -> None:
+    _indexar({
+        "id": f"cliente_fiscal-{cliente['id']}",
+        "tipo": "cliente_fiscal",
+        "tenant_id": cliente["tenant_id"],
+        "texto": f"{cliente['nombre']} {cliente.get('nif') or ''}".strip(),
+        "creada_en": cliente.get("creado_en"),
+    })
+
+
 def eliminar_del_indice(tipo: str, id_: int) -> None:
     if not MEILISEARCH_MASTER_KEY:
         return
     _peticion(f"/indexes/{INDICE}/documents/{tipo}-{id_}", clave=MEILISEARCH_MASTER_KEY, metodo="DELETE")
 
 
-def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5) -> list[dict]:
+def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5, tenant_id: int | None = None) -> list[dict]:
     """Búsqueda híbrida (palabra clave + semántica) — a diferencia de
     `generar_token_busqueda()`, esto se ejecuta del lado del servidor
     (necesita calcular el embedding de `texto` con Ollama, solo
@@ -266,7 +312,7 @@ def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5) -> list[dict]:
     vector = embeddings.generar_embedding(texto)
     if vector is None:
         return []
-    token = generar_token_busqueda(usuario_id, minutos_validez=2)
+    token = generar_token_busqueda(usuario_id, tenant_id=tenant_id, minutos_validez=2)
     cuerpo = {
         "q": texto,
         "hybrid": {"embedder": "default", "semanticRatio": 0.5},

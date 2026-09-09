@@ -75,16 +75,57 @@
     return html;
   }
 
+  function iconoSvg(nombre) {
+    return '<svg class="icono-inline" aria-hidden="true"><use href="/static/iconos.svg#icono-' + nombre + '"></use></svg>';
+  }
+
+  // Devuelve HTML (no texto plano) -- el llamador debe pintarlo con
+  // innerHTML, nunca textContent. herramienta/datos.error se escapan
+  // igual que el resto del contenido del modelo (ver escaparHtml arriba):
+  // nunca confiar en texto que puede venir influido por el propio LLM.
+  // Adjuntos que una tool le manda al usuario por el chat (Drive, documento
+  // firmado...) -- ver mcp_tools.py:_guardar_adjunto_para_chat, siempre
+  // devuelve {adjunto_id, nombre_archivo, tipo_mime}. En vez del texto
+  // genérico "usó X", se pinta un chip descargable + vista previa inline
+  // para imagen/PDF, mismo lenguaje visual que los adjuntos de Correo
+  // (.correo-adjunto-*, ver app/templates/correo_bandeja.html) con sus
+  // propias clases .ia-adjunto-* para no acoplar los dos módulos.
+  function chipAdjuntoTool(datos) {
+    var url = "/ia/adjuntos/" + encodeURIComponent(datos.adjunto_id);
+    var nombre = escaparHtml(datos.nombre_archivo || ("adjunto-" + datos.adjunto_id));
+    var tipoMime = datos.tipo_mime || "";
+    var html =
+      '<div class="ia-adjunto">' +
+      '<a class="ia-adjunto-chip" href="' + url + '" target="_blank" title="' + nombre + '">' +
+      iconoSvg("paperclip") + " " + nombre + "</a>";
+    if (tipoMime.indexOf("image/") === 0) {
+      html += '<a href="' + url + '" target="_blank" title="Ver a tamaño completo">' +
+        '<img class="ia-adjunto-preview-imagen" src="' + url + '" alt="' + nombre + '" loading="lazy"></a>';
+    } else if (tipoMime === "application/pdf") {
+      html += '<embed class="ia-adjunto-preview-pdf" src="' + url + '" type="application/pdf">';
+    }
+    html += "</div>";
+    return html;
+  }
+
   function textoMensajeTool(herramienta, contenidoJson) {
-    var texto = "🔧 usó " + herramienta;
+    var icono = iconoSvg("wrench");
+    var texto = escaparHtml(herramienta);
     try {
       var datos = JSON.parse(contenidoJson || "{}");
-      if (datos && datos.error) texto = "⚠️ " + herramienta + ": " + datos.error;
-      else if (datos && datos.rechazado) texto = "❌ " + herramienta + " (rechazada)";
+      if (datos && datos.error) {
+        icono = iconoSvg("triangle-alert");
+        texto = escaparHtml(herramienta) + ": " + escaparHtml(datos.error);
+      } else if (datos && datos.rechazado) {
+        icono = iconoSvg("x");
+        texto = escaparHtml(herramienta) + " (rechazada)";
+      } else if (datos && datos.adjunto_id) {
+        return chipAdjuntoTool(datos);
+      }
     } catch (e) {
       // contenido no era JSON válido: se deja el texto por defecto
     }
-    return texto;
+    return icono + " usó " + texto;
   }
 
   // Idioma de interfaz -> BCP-47 completo, para que STT/TTS elijan una voz
@@ -110,7 +151,7 @@
     // Pinta el texto real de los mensajes "tool" ya renderizados por Jinja
     // (llevan el JSON crudo en data-contenido, ver _ia_chat_macro.html).
     mensajesEl.querySelectorAll(".ia-msg-tool").forEach(function (el) {
-      el.textContent = textoMensajeTool(el.dataset.herramienta, el.dataset.contenido);
+      el.innerHTML = textoMensajeTool(el.dataset.herramienta, el.dataset.contenido);
     });
     mensajesEl.querySelectorAll(".ia-msg-assistant").forEach(function (el) {
       el.innerHTML = renderizarMarkdown(el.textContent);
@@ -262,7 +303,7 @@
       liveEl.addEventListener("click", function () {
         liveActivo = !liveActivo;
         liveEl.classList.toggle("activo", liveActivo);
-        liveEl.textContent = liveActivo ? "🔴 Live" : "🎧 Live";
+        liveEl.innerHTML = (liveActivo ? '<span class="ia-live-punto" aria-hidden="true"></span>' : iconoSvg("headphones")) + " Live";
         if (liveActivo) {
           empezarEscucha();
         } else {
@@ -351,7 +392,7 @@
           } else if (mensaje.rol === "tool") {
             var div = document.createElement("div");
             div.className = "ia-msg ia-msg-tool";
-            div.textContent = textoMensajeTool(mensaje.nombre_herramienta, mensaje.contenido);
+            div.innerHTML = textoMensajeTool(mensaje.nombre_herramienta, mensaje.contenido);
             mensajesEl.appendChild(div);
           }
           mensajesEl.scrollTop = mensajesEl.scrollHeight;
@@ -368,7 +409,7 @@
           quitarPensando();
           var div = document.createElement("div");
           div.className = "ia-msg ia-msg-error";
-          div.textContent = "⚠️ " + (mensaje || "Ha ocurrido un error.");
+          div.innerHTML = iconoSvg("triangle-alert") + " " + escaparHtml(mensaje || "Ha ocurrido un error.");
           mensajesEl.appendChild(div);
           mensajesEl.scrollTop = mensajesEl.scrollHeight;
         },
@@ -384,7 +425,7 @@
         quitarPensando();
         var errorDiv = document.createElement("div");
         errorDiv.className = "ia-msg ia-msg-error";
-        errorDiv.textContent = "⚠️ No se pudo contactar con el servidor.";
+        errorDiv.innerHTML = iconoSvg("triangle-alert") + " No se pudo contactar con el servidor.";
         mensajesEl.appendChild(errorDiv);
         mensajesEl.scrollTop = mensajesEl.scrollHeight;
       }).finally(function () {
@@ -451,24 +492,24 @@
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (!data.ok) {
-              adjuntoPendienteEl.textContent = "⚠️ " + data.error;
+              adjuntoPendienteEl.innerHTML = iconoSvg("triangle-alert") + " " + escaparHtml(data.error);
               adjuntoInputEl.value = "";
               return;
             }
             adjuntoPendiente = data;
             adjuntoPendienteEl.innerHTML = "";
             var span = document.createElement("span");
-            span.textContent = "📎 " + data.nombre_archivo;
+            span.innerHTML = iconoSvg("paperclip") + " " + escaparHtml(data.nombre_archivo);
             var quitar = document.createElement("button");
             quitar.type = "button";
             quitar.className = "ia-chat-adjunto-quitar";
-            quitar.textContent = "✕";
+            quitar.innerHTML = iconoSvg("x");
             quitar.onclick = limpiarAdjuntoPendiente;
             adjuntoPendienteEl.appendChild(span);
             adjuntoPendienteEl.appendChild(quitar);
           })
           .catch(function () {
-            adjuntoPendienteEl.textContent = "⚠️ No se ha podido subir el archivo.";
+            adjuntoPendienteEl.innerHTML = iconoSvg("triangle-alert") + " No se ha podido subir el archivo.";
             adjuntoInputEl.value = "";
           });
       });

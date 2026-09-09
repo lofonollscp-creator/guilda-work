@@ -6,9 +6,10 @@ y el backoffice para darlos de alta).
 
 `emitir()` se llama desde un puñado de puntos concretos (ver
 `EVENTOS` más abajo) — no hay un evento por cada nota o tarea que se
-crea, sería ruido en el uso diario normal. Los cuatro eventos
-iniciales tienen valor real de automatización (facturación por horas,
-disparar un flujo de n8n, avisar a un CRM externo).
+crea, sería ruido en el uso diario normal. Cada evento tiene valor
+real de automatización (facturación por horas, disparar un flujo de
+n8n, avisar a un CRM externo, marcar en un ERP externo que un modelo
+ya se presentó).
 
 ## Cola en memoria + un único hilo de fondo
 
@@ -47,7 +48,11 @@ from . import db
 TIMEOUT_SEGUNDOS = 10
 REINTENTOS_SEGUNDOS = [0, 30, 300]
 
-EVENTOS = ["tarea.finalizada", "nota.creada", "cita.reservada", "correo.mensaje_nuevo"]
+EVENTOS = [
+    "tarea.finalizada", "nota.creada", "cita.reservada", "correo.mensaje_nuevo",
+    "vencimiento.presentado", "factura.emitida", "documento.enviado_a_firma",
+    "factura.cobrada",
+]
 
 _cola: "queue.Queue[tuple[dict, str, dict]]" = queue.Queue()
 _hilo_iniciado = False

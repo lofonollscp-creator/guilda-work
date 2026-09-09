@@ -43,6 +43,25 @@ def test_renombrar_categoria(usuario_id):
     assert cat["color"] == "#e0a83a"
 
 
+def test_crear_categoria_con_icono(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda", "#4a90d9", "briefcase")
+    cat = db.obtener_categoria(usuario_id, cid)
+    assert cat["icono"] == "briefcase"
+
+
+def test_crear_categoria_sin_icono_queda_nulo(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda")
+    cat = db.obtener_categoria(usuario_id, cid)
+    assert cat["icono"] is None
+
+
+def test_renombrar_categoria_actualiza_icono(usuario_id):
+    cid = db.crear_categoria(usuario_id, "Guilda", icono="folder")
+    db.renombrar_categoria(usuario_id, cid, "Guilda Renombrada", "#e0a83a", "rocket")
+    cat = db.obtener_categoria(usuario_id, cid)
+    assert cat["icono"] == "rocket"
+
+
 def test_eliminar_categoria_manda_a_la_papelera_no_borra_de_verdad(usuario_id):
     cid = db.crear_categoria(usuario_id, "Guilda")
     tarea_id = db.crear_tarea(usuario_id, "Proceso", cid, "duracion")
@@ -289,6 +308,116 @@ def test_estadisticas_por_categoria_suma_duraciones(monkeypatch, usuario_id):
     assert stats[0]["segundos_totales"] == 600
     assert stats[0]["num_tareas"] == 1
     assert stats[0]["num_notas"] == 1
+
+
+def test_estadisticas_equipo_agrega_los_usuarios_del_tenant(monkeypatch, usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Equipo")
+    db.asignar_tenant(usuario_id, tenant_id)
+    otro_id = db.crear_usuario("companero@ejemplo.com", "contrasena123")
+    db.asignar_tenant(otro_id, tenant_id)
+
+    t0 = datetime(2026, 1, 1, 10, 0, 0)
+    t1 = t0 + timedelta(minutes=10)
+    monkeypatch.setattr(db, "now_iso", _reloj(t0, t0, t1, t1))
+
+    cid = db.crear_categoria(usuario_id, "Guilda")
+    tarea_id = db.crear_tarea(usuario_id, "Proceso", cid, "duracion")
+    db.finalizar_tarea(usuario_id, tarea_id)
+    db.crear_nota(usuario_id, "Nota suelta", categoria_id=cid)
+
+    equipo = db.estadisticas_equipo_por_usuario(tenant_id)
+    assert len(equipo) == 2
+    por_id = {u["id"]: u for u in equipo}
+    assert por_id[usuario_id]["segundos_totales"] == 600
+    assert por_id[usuario_id]["num_tareas"] == 1
+    assert por_id[usuario_id]["num_notas"] == 1
+    assert por_id[otro_id]["segundos_totales"] == 0
+
+
+def test_estadisticas_equipo_sin_usuarios_en_el_tenant_devuelve_vacio(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Vacia")
+    assert db.estadisticas_equipo_por_usuario(tenant_id) == []
+
+
+def test_estadisticas_equipo_no_mezcla_usuarios_de_otro_tenant(usuario_id):
+    tenant_a = db.crear_tenant("Gestoria A")
+    tenant_b = db.crear_tenant("Gestoria B")
+    db.asignar_tenant(usuario_id, tenant_a)
+    otro_id = db.crear_usuario("de-otra-gestoria@ejemplo.com", "contrasena123")
+    db.asignar_tenant(otro_id, tenant_b)
+
+    equipo_a = db.estadisticas_equipo_por_usuario(tenant_a)
+    assert [u["id"] for u in equipo_a] == [usuario_id]
+
+
+def test_tiempo_medio_resolucion_vencimientos_sin_datos_es_none(usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Sin Vencimientos")
+    assert db.tiempo_medio_resolucion_vencimientos(tenant_id) is None
+
+
+def test_tiempo_medio_resolucion_vencimientos_calcula_la_media_en_dias(monkeypatch, usuario_id):
+    tenant_id = db.crear_tenant("Gestoria Resolucion")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Resolucion")
+
+    creado = datetime(2026, 1, 1, 9, 0, 0)
+    presentado = creado + timedelta(days=4)
+    monkeypatch.setattr(db, "now_iso", _reloj(creado, presentado))
+
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, v_id)
+
+    assert db.tiempo_medio_resolucion_vencimientos(tenant_id) == 4.0
+
+
+# --- Migración: vencimientos_fiscales_documentos a Nextcloud ---------------
+
+def test_migrar_documentos_vencimiento_conserva_los_ya_existentes(usuario_id):
+    """Simula una base de datos creada ANTES de este cambio (contenido
+    BLOB NOT NULL, sin ruta_nextcloud), con un documento ya subido, y
+    confirma que re-ejecutar init_db() lo conserva intacto tras
+    reconstruir la tabla (ver _migrar_documentos_vencimiento_a_nextcloud)."""
+    tenant_id = db.crear_tenant("Gestoria Migracion Docs")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Migracion")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    conn = db.get_connection()
+    try:
+        conn.execute("DROP TABLE vencimientos_fiscales_documentos")
+        conn.execute(
+            """CREATE TABLE vencimientos_fiscales_documentos (
+                   id INTEGER PRIMARY KEY,
+                   vencimiento_id INTEGER NOT NULL,
+                   nombre_archivo TEXT NOT NULL,
+                   tipo_mime TEXT NOT NULL,
+                   tamano_bytes INTEGER NOT NULL,
+                   contenido BLOB NOT NULL,
+                   creado_en TEXT NOT NULL,
+                   FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            "INSERT INTO vencimientos_fiscales_documentos "
+            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (v_id, "antiguo.pdf", "application/pdf", 7, b"viejito", db.now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    db.init_db()  # re-ejecuta las migraciones, incluida la de esta tabla
+
+    documentos = db.listar_documentos_vencimiento(v_id)
+    assert len(documentos) == 1
+    assert documentos[0]["nombre_archivo"] == "antiguo.pdf"
+    documento = db.obtener_documento_vencimiento(documentos[0]["id"])
+    assert documento["contenido"] == b"viejito"
+    assert documento["ruta_nextcloud"] is None
+
+    # La tabla ya acepta contenido NULL (columna promovida a Nextcloud) --
+    # confirma que la restricción NOT NULL desapareció de verdad.
+    nuevo_id = db.subir_documento_vencimiento(v_id, "nuevo.pdf", "application/pdf", b"nuevo-contenido")
+    assert db.obtener_documento_vencimiento(nuevo_id)["contenido"] == b"nuevo-contenido"
 
 
 # --- Copia de seguridad ----------------------------------------------------

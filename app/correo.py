@@ -42,6 +42,7 @@ import email
 import html as html_lib
 import html.parser
 import imaplib
+import logging
 import os
 import poplib
 import re
@@ -54,10 +55,15 @@ from email.utils import getaddresses, parsedate_to_datetime
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
-from . import busqueda, db, eventos, push
+from . import busqueda, db, eventos, notificaciones
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
+
+# Mismo logger ya configurado por app/main.py (logging.basicConfig) --
+# reutilizarlo aquí basta con pedirlo por nombre, sin volver a
+# configurar nada.
+logger = logging.getLogger("guilda")
 
 
 def _configurar_backend_keyring() -> None:
@@ -113,6 +119,44 @@ def guardar_cuenta(
     return cuenta_id
 
 
+def editar_cuenta(
+    usuario_id: int, cuenta_id: int,
+    nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
+    usa_tls: bool = True, smtp_host: str | None = None,
+    smtp_puerto: int | None = None, smtp_tls: bool = True,
+    contrasena: str | None = None,
+) -> None:
+    """Igual que guardar_cuenta pero para una cuenta ya existente --
+    valida la conexión con los datos nuevos ANTES de guardar nada, para
+    no dejar la cuenta en un estado roto. Si `contrasena` viene vacía
+    (el usuario no tecleó una nueva), se reutiliza la ya guardada en
+    keyring tanto para la validación como para dejarla tal cual -- así
+    un error tipográfico de host/puerto se puede corregir sin tener que
+    volver a escribir la contraseña cada vez (antes, la única forma de
+    arreglarlo era borrar la cuenta entera y recrearla, lo que borraba
+    también los mensajes en caché)."""
+    if not nombre.strip() or not host.strip() or not usuario.strip():
+        raise ErrorCorreo("Faltan datos: nombre, servidor y usuario son obligatorios.")
+    if db.obtener_cuenta_correo(usuario_id, cuenta_id) is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+
+    contrasena_efectiva = contrasena if contrasena else _contrasena(cuenta_id)
+
+    if protocolo == "pop3":
+        conn = _conectar_pop3(host, puerto, usa_tls, usuario, contrasena_efectiva)
+        conn.quit()
+    else:
+        conn = _conectar_imap(host, puerto, usa_tls, usuario, contrasena_efectiva)
+        conn.logout()
+
+    db.editar_cuenta_correo(
+        usuario_id, cuenta_id, nombre=nombre, protocolo=protocolo, host=host, puerto=puerto,
+        usuario=usuario, usa_tls=usa_tls, smtp_host=smtp_host, smtp_puerto=smtp_puerto, smtp_tls=smtp_tls,
+    )
+    if contrasena:
+        keyring.set_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id), contrasena)
+
+
 def eliminar_cuenta(usuario_id: int, cuenta_id: int) -> None:
     try:
         keyring.delete_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id))
@@ -140,7 +184,14 @@ def _conectar_imap(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
         conn.login(usuario, contrasena)
         return conn
     except (imaplib.IMAP4.error, OSError, socket.timeout) as e:
-        raise ErrorCorreo(f"No se ha podido conectar a {host}:{puerto} (IMAP): {e}") from e
+        # El detalle crudo del driver (que a veces incluye texto interno
+        # del propio servidor IMAP) se queda en el log del servidor, no
+        # en el mensaje que ve el usuario -- ver el mismo criterio ya
+        # aplicado esta sesión a los errores de Stripe en el backoffice.
+        logger.warning("Fallo de conexión IMAP a %s:%s -- %s", host, puerto, e)
+        raise ErrorCorreo(
+            f"No se ha podido conectar con el servidor de correo ({host}:{puerto}) -- revisa el servidor, el puerto y la contraseña."
+        ) from e
 
 
 def _conectar_pop3(host: str, puerto: int, usa_tls: bool, usuario: str, contrasena: str) -> poplib.POP3:
@@ -441,7 +492,20 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
     if estado != "OK":
         return 0
 
-    estado, datos = conn.uid("search", None, "ALL")
+    # Sincronización incremental: en vez de pedir SIEMPRE el listado
+    # completo de UIDs de la carpeta (caro en buzones grandes, y siempre
+    # se ha usado solo para encontrar UIDs nuevos que descargar -- nunca
+    # para comprobar flags ni borrados de los UIDs ya conocidos, ni antes
+    # ni ahora), se guarda el UID más alto visto en la última sincronización
+    # y solo se pide "UID <n+1>:*" -- el servidor no tiene que enumerar
+    # miles de UIDs antiguos en cada sincronización para descubrir que no
+    # hay nada nuevo. La primera sincronización de una carpeta (sin UID
+    # guardado todavía) sigue haciendo un SEARCH ALL, como antes.
+    ultimo_uid = db.obtener_ultimo_uid_sincronizado(cuenta["id"], carpeta)
+    if ultimo_uid is None:
+        estado, datos = conn.uid("search", None, "ALL")
+    else:
+        estado, datos = conn.uid("search", None, "UID", f"{int(ultimo_uid) + 1}:*")
     if estado != "OK":
         raise ErrorCorreo(f"No se han podido listar los mensajes de la carpeta «{carpeta}».")
     uids_servidor = [u.decode() for u in datos[0].split()] if datos and datos[0] else []
@@ -473,6 +537,9 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
             db.guardar_adjuntos_correo(mensaje_id, adjuntos)
         if mensaje_id is not None:
             _aplicar_categoria_automatica(cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")))
+
+    if uids_servidor:
+        db.actualizar_ultimo_uid_sincronizado(cuenta["id"], carpeta, str(max(int(u) for u in uids_servidor)))
     return len(nuevos)
 
 
@@ -566,8 +633,12 @@ def _emitir_evento_correo_nuevo(usuario_id: int, cuenta_id: int, nuevos: int) ->
         eventos.emitir("correo.mensaje_nuevo", tenant["id"] if tenant else None, {"cuenta_id": cuenta_id, "nuevos": nuevos})
     except Exception:
         pass
-    cuerpo = "Tienes 1 mensaje nuevo." if nuevos == 1 else f"Tienes {nuevos} mensajes nuevos."
-    push.enviar_a_usuario(usuario_id, "Correo nuevo", cuerpo, {"tipo": "correo_nuevo", "cuenta_id": cuenta_id})
+    if db.notificacion_tipo_activa(usuario_id, "correo_nuevo"):
+        cuerpo = "Tienes 1 mensaje nuevo." if nuevos == 1 else f"Tienes {nuevos} mensajes nuevos."
+        notificaciones.crear_y_enviar(
+            usuario_id, "correo_nuevo", "Correo nuevo", cuerpo, url=f"/correo/?cuenta_id={cuenta_id}",
+            datos={"tipo": "correo_nuevo", "cuenta_id": cuenta_id},
+        )
 
 
 def _reindexar_mensajes_recientes(usuario_id: int, cuenta_id: int, limite: int = 200) -> None:
@@ -751,6 +822,32 @@ def asignar_categoria(usuario_id: int, mensaje_id: int, categoria_id: int | None
     db.asignar_categoria_correo(usuario_id, mensaje_id, categoria_id)
 
 
+def asignar_cliente_fiscal(tenant_id: int, mensaje_id: int, cliente_fiscal_id: int | None) -> None:
+    db.asignar_cliente_fiscal_correo(tenant_id, mensaje_id, cliente_fiscal_id)
+
+
+# --- Plantillas de respuesta guardadas -------------------------------------
+
+def crear_plantilla(usuario_id: int, nombre: str, asunto: str | None, cuerpo: str) -> int:
+    if not nombre.strip():
+        raise ErrorCorreo("La plantilla necesita un nombre.")
+    if not cuerpo.strip():
+        raise ErrorCorreo("La plantilla necesita un cuerpo.")
+    return db.crear_plantilla_correo(usuario_id, nombre, asunto, cuerpo)
+
+
+def listar_plantillas(usuario_id: int):
+    return db.listar_plantillas_correo(usuario_id)
+
+
+def obtener_plantilla(usuario_id: int, plantilla_id: int):
+    return db.obtener_plantilla_correo(usuario_id, plantilla_id)
+
+
+def eliminar_plantilla(usuario_id: int, plantilla_id: int) -> None:
+    db.eliminar_plantilla_correo(usuario_id, plantilla_id)
+
+
 # --- Remitentes de confianza ---------------------------------------------------
 
 def confiar_en_remitente(usuario_id: int, direccion: str) -> int:
@@ -829,7 +926,10 @@ def _conectar_smtp(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
         conn.login(usuario, contrasena)
         return conn
     except (smtplib.SMTPException, OSError, socket.timeout) as e:
-        raise ErrorCorreo(f"No se ha podido conectar a {host}:{puerto} (SMTP): {e}") from e
+        logger.warning("Fallo de conexión SMTP a %s:%s -- %s", host, puerto, e)
+        raise ErrorCorreo(
+            f"No se ha podido conectar con el servidor de correo saliente ({host}:{puerto}) -- revisa el servidor, el puerto y la contraseña."
+        ) from e
 
 
 def _direcciones(cadena: str | None) -> list[str]:
