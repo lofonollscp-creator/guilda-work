@@ -45,22 +45,26 @@
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
+/* Fondo plano + acento SUPERIOR -- calco de .tenant-card del canvas de
+   diseño (antes: degradado + acento en el borde IZQUIERDO, se había
+   corregido este mismo patrón en style.css pero se quedó sin tocar
+   aquí, en backoffice.css). */
 .bo-tenant-card {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
-  background:
-    linear-gradient(155deg, color-mix(in srgb, var(--accent, #7c8ba1) 8%, var(--surface)) 0%, var(--surface) 55%);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border-left: 3px solid var(--accent, #7c8ba1);
+  border-top: 3px solid var(--accent, #7c8ba1);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 .bo-tenant-card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--accent, #7c8ba1) 55%, var(--border));
+  border-top-color: var(--accent, #7c8ba1);
   box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--accent, #7c8ba1) 60%, transparent);
 }
 .bo-tenant-card-top { display: flex; align-items: flex-start; gap: var(--space-2); }

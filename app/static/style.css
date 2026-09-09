@@ -2488,7 +2488,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-size: 1em;
 }
 .correo-icon-btn:hover { background: var(--bg); border-color: var(--primary); }
-.correo-lectura-asunto { margin: 18px 0 12px; font-size: 1.3em; }
+/* El asunto de un correo NO es una cabecera de sección -- se libra del
+   mayúsculas+mono genérico de .content :where(h2) (pensado para títulos
+   de sección tipo "Favoritos"/"Backoffice", no para texto real escrito
+   por un remitente). Encontrado al comparar con el canvas de diseño:
+   "PEDIDO DE MATERIAL - CONFIRMACIÓN" en vez de "Pedido de material —
+   confirmación". */
+.correo-lectura-asunto {
+  margin: 18px 0 12px;
+  font-size: 1.3em;
+  font-family: inherit;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+}
 
 .correo-adjuntos { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
 .correo-adjunto-chip {
@@ -3341,7 +3354,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .tool-card:hover .tool-card-go { opacity: 1; transform: translate(0, 0); color: var(--tool-accent); }
 
-.tool-card-name { margin: 0; font-size: 1.05em; font-weight: 700; }
+/* Sin esto, .content :where(h3) (pensada para subtítulos discretos)
+   pinta el nombre de la herramienta en gris apagado -- encontrado al
+   comparar con el canvas: "Outline" debía verse en texto normal
+   (var(--text)), no atenuado como si fuera metadata. */
+.tool-card-name { margin: 0; font-size: 1.05em; font-weight: 700; color: var(--text); }
 .tool-card-desc {
   margin: 0;
   color: var(--text-muted);
@@ -3606,7 +3623,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .tiquet-card-top { display: flex; align-items: center; justify-content: space-between; }
 .tiquet-card-numero { font-family: var(--font-mono); font-size: 0.8em; color: var(--text-muted); font-weight: 700; }
-.tiquet-card-titulo { margin: 0; font-size: 1em; }
+.tiquet-card-titulo { margin: 0; font-size: 1em; color: var(--text); }
 .tiquet-card-desc { margin: 0; font-size: 0.85em; color: var(--text-muted); }
 .tiquet-card-pie {
   display: flex;
