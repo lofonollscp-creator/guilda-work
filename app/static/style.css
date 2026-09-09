@@ -766,40 +766,79 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: var(--space-4);
   margin-bottom: var(--space-5);
 }
+/* Tarjeta de estadística horizontal (icono en caja de color + cifra/etiqueta
+   apiladas a la derecha) -- calco literal de .stat-card del canvas de
+   diseño (Main.dc.html), antes era una columna icono-arriba/cifra-abajo. */
 .dash-stat {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   text-decoration: none;
   color: inherit;
   transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 }
 .dash-stat-link:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--glass-border));
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
   box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--primary) 55%, transparent);
 }
 .dash-stat-icono {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
   background: color-mix(in srgb, var(--primary) 14%, transparent);
   color: var(--primary);
-  margin-bottom: var(--space-1);
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
-.dash-stat-icono svg { width: 16px; height: 16px; }
-.dash-stat-valor { font-size: var(--font-size-xl); font-weight: 700; line-height: 1; }
-.dash-stat-label { color: var(--text-muted); font-size: var(--font-size-sm); }
+.dash-stat-icono svg { width: 17px; height: 17px; }
+.dash-stat-valor { font-family: var(--font-mono); font-size: 21px; font-weight: 700; line-height: 1; }
+.dash-stat-label { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+/* Accesos rápidos: fila de chips icono+etiqueta a los destinos más
+   frecuentes -- no existía en el dashboard real, sí en el canvas
+   (sección "Accesos" entre las estadísticas y las tarjetas de acción). */
+.dash-accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.dash-acceso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.dash-acceso:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); transform: translateY(-1px); color: var(--text); }
+.dash-acceso-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.dash-acceso-icono svg { width: 16px; height: 16px; }
 
 .dash-acciones {
   display: grid;
@@ -811,13 +850,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-4);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
 }
 .dash-accion label { font-weight: 600; font-size: var(--font-size-sm); }
 .dash-accion .quick-row { display: flex; gap: var(--space-2); }
@@ -846,15 +883,31 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .dash-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-5); align-items: start; }
 .dash-main { min-width: 0; }
 .dash-sidebar { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-5); }
-.dash-sidebar .log-section { margin-bottom: 0; }
+/* "Hoy" y el Asistente IA en la barra lateral pasan a ser tarjetas de
+   verdad (antes: texto suelto sin borde) -- calco de .panel/.ia-teaser
+   del canvas de diseño. El acento de degradado en .dash-ia distingue
+   visualmente el chat de IA del resto de tarjetas planas. */
+.dash-sidebar .log-section {
+  margin-bottom: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
 @media (max-width: 900px) {
   .dash-layout { grid-template-columns: 1fr; }
   .dash-sidebar { position: static; }
 }
 
-.dash-ia { margin: 0; }
-.dash-ia h3 { margin-bottom: var(--space-3); }
-.dash-ia .ia-chat { box-shadow: var(--shadow-sm); }
+.dash-ia {
+  margin: 0;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 8%, var(--surface)), var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+}
+.dash-ia h3 { margin: 0 0 var(--space-3); display: flex; align-items: center; gap: 8px; }
+.dash-ia .ia-chat { box-shadow: none; background: none; border: none; }
 
 /* ---- Menu grid (home) ---- */
 .menu-grid {
@@ -870,21 +923,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 16px;
   margin-bottom: 32px;
 }
+/* Tarjeta de menú: borde superior de color plano, calco literal de
+   .menu-card del canvas de diseño (antes: fondo con degradado + acento
+   en el borde IZQUIERDO -- más "glass", menos nítido). */
 .menu-card {
   position: relative;
-  background:
-    linear-gradient(155deg, color-mix(in srgb, var(--accent, #7c8ba1) 8%, var(--glass-bg)) 0%, var(--glass-bg) 55%);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border-left: 3px solid var(--accent, #7c8ba1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent, #7c8ba1);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 .menu-card:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent, #7c8ba1) 55%, var(--glass-border));
+  border-color: color-mix(in srgb, var(--accent, #7c8ba1) 55%, var(--border));
+  border-top-color: var(--accent, #7c8ba1);
   box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--accent, #7c8ba1) 60%, transparent);
 }
 .menu-card-link {
