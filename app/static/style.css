@@ -1288,13 +1288,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   margin-bottom: 28px;
 }
 .quick-card {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 .quick-card label {
   display: block;
@@ -1632,10 +1630,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .historial-resumen { position: static; }
 }
 
+/* Mismo fallo que .log-item/.bar-chart: solo sombra, sin borde --
+   envuelve las tablas de Estadísticas/Histórico. */
 .table-wrap {
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   overflow-x: auto;
 }
 .historial-table { width: 100%; border-collapse: collapse; }
