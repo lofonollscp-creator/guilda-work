@@ -1108,6 +1108,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .empty-state .muted { color: var(--text-muted); font-size: 0.9em; }
 
+/* Ilustración mínima para los estados vacíos "en seco" (.empty-lane,
+   .empty-state) -- antes eran solo texto, sin ningún elemento visual.
+   Una sola bandeja/carpeta abierta trazada (mismo lenguaje que
+   iconos.svg: trazo, sin relleno) reutilizada en ambas clases via
+   ::before, para no tener que tocar las 36 plantillas que las usan. */
+.empty-lane::before, .empty-state::before {
+  content: "";
+  display: block;
+  background: no-repeat center / contain
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a9099' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.9 10.4 17 3.5c-.3-.5-.8-.9-1.5-.9H8.5c-.6 0-1.2.4-1.5.9l-3.9 6.9'/%3E%3Cpath d='M3 10.5v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7'/%3E%3Cpath d='M3 10.5h4.5l1.2 2.4c.2.4.6.6 1 .6h4.6c.4 0 .8-.2 1-.6l1.2-2.4H21'/%3E%3C/svg%3E");
+  opacity: 0.6;
+}
+.empty-state::before { width: 40px; height: 40px; margin: 0 auto 12px; }
+.empty-lane { text-align: center; padding: 18px 12px; }
+.empty-lane::before { width: 26px; height: 26px; margin: 0 auto 8px; }
+
 /* Onboarding (Fase 4): estado vacío guiado de un menú recién creado, con
    CTA directos a las acciones rápidas de arriba. */
 .empty-state-guiado {
