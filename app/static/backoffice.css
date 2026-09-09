@@ -119,6 +119,23 @@
   border-top: 1px solid var(--border);
 }
 
+/* Estado del sistema: punto de color junto al nombre del monitor,
+   antes de leer el badge de texto -- da el mismo vistazo rápido que
+   ya tienen las luces de estado de Uptime Kuma. */
+.bo-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: var(--space-2); }
+
+/* Ficha de tenant: Usuarios (lo que más se consulta) a la izquierda,
+   Stripe Connect fijo a la derecha -- el resto de secciones (Módulos,
+   Estadísticas, Ingresos, Configuración) se quedan apiladas a todo el
+   ancho debajo, tal cual, porque tienen demasiados formularios propios
+   para comprimirse en una barra lateral sin perder usabilidad. */
+.bo-ficha-layout { display: grid; grid-template-columns: 1fr 320px; gap: var(--space-4); align-items: start; margin-bottom: var(--space-4); }
+.bo-ficha-sidebar { position: sticky; top: var(--space-4); }
+@media (max-width: 900px) {
+  .bo-ficha-layout { grid-template-columns: 1fr; }
+  .bo-ficha-sidebar { position: static; }
+}
+
 /* Catálogo de herramientas: barra de adopción en vez de solo "N / M" en
    texto plano -- se ve de un vistazo qué herramientas usa casi nadie. */
 .bo-adopcion { display: flex; align-items: center; gap: var(--space-2); }

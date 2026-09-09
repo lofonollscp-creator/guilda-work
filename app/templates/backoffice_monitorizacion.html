@@ -24,8 +24,9 @@
       </thead>
       <tbody>
         {% for m in monitores %}
+        {% set color = {'activo': 'var(--success)', 'caido': 'var(--danger)'}.get(m.estado, 'var(--warning)') %}
         <tr>
-          <td>{{ m.nombre }}</td>
+          <td><span class="bo-status-dot" style="background: {{ color }};"></span>{{ m.nombre }}</td>
           <td>
             <span class="log-badge {{ {'activo': 'log-badge-duracion', 'caido': 'log-badge-error', 'pendiente': 'log-badge-instantanea', 'mantenimiento': 'log-badge-instantanea'}.get(m.estado, 'log-badge-instantanea') }}">{{ m.estado or _('desconocido') }}</span>
           </td>

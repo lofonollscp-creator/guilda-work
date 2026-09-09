@@ -23,7 +23,8 @@
   </form>
 </header>
 
-<section class="quick-card">
+<div class="bo-ficha-layout">
+<section class="quick-card bo-ficha-main">
   <label>{{ _('Usuarios') }}</label>
   <div class="table-wrap">
   <table class="historial-table">
@@ -62,6 +63,28 @@
   </table>
   </div>
 </section>
+
+<aside class="quick-card bo-ficha-sidebar">
+  <label>{{ _('Stripe Connect') }}</label>
+  <p class="subtitle">{{ _('Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene.') }}</p>
+  {% if not stripe_configurado %}
+  <p class="empty">{{ _('Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY).') }}</p>
+  {% elif tenant.stripe_onboarding_completado %}
+  <span class="log-badge log-badge-duracion">{{ _('Cuenta conectada y lista para cobrar') }}</span>
+  {% elif tenant.stripe_account_id %}
+  <span class="log-badge log-badge-instantanea">{{ _('Onboarding sin completar') }}</span>
+  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters" style="margin-top: 8px;">
+    <input type="hidden" name="email" value="{{ usuarios[0].email if usuarios else '' }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Reintentar onboarding') }}</button>
+  </form>
+  {% else %}
+  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters">
+    <label>{{ _('Email de contacto para Stripe') }} <input type="email" name="email" value="{{ usuarios[0].email if usuarios else '' }}" required></label>
+    <button type="submit" class="btn btn-primary">{{ _('Conectar Stripe') }}</button>
+  </form>
+  {% endif %}
+</aside>
+</div>
 
 <section class="quick-card">
   <label>{{ _('Módulos') }}</label>
@@ -104,27 +127,6 @@
   </div>
   {% else %}
   <p class="empty">{{ _('Todavía no hay datos suficientes.') }}</p>
-  {% endif %}
-</section>
-
-<section class="quick-card">
-  <label>{{ _('Stripe Connect') }}</label>
-  <p class="subtitle">{{ _('Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene.') }}</p>
-  {% if not stripe_configurado %}
-  <p class="empty">{{ _('Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY).') }}</p>
-  {% elif tenant.stripe_onboarding_completado %}
-  <span class="log-badge log-badge-duracion">{{ _('Cuenta conectada y lista para cobrar') }}</span>
-  {% elif tenant.stripe_account_id %}
-  <span class="log-badge log-badge-instantanea">{{ _('Onboarding sin completar') }}</span>
-  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters" style="margin-top: 8px;">
-    <input type="hidden" name="email" value="{{ usuarios[0].email if usuarios else '' }}">
-    <button type="submit" class="btn btn-ghost">{{ _('Reintentar onboarding') }}</button>
-  </form>
-  {% else %}
-  <form method="post" action="{{ url_for('backoffice.conectar_stripe', tenant_id=tenant.id) }}" class="filters">
-    <label>{{ _('Email de contacto para Stripe') }} <input type="email" name="email" value="{{ usuarios[0].email if usuarios else '' }}" required></label>
-    <button type="submit" class="btn btn-primary">{{ _('Conectar Stripe') }}</button>
-  </form>
   {% endif %}
 </section>
 
