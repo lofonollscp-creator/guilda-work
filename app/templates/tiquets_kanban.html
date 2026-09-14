@@ -69,28 +69,30 @@
           {% endif %}
         </div>
         {% if g.es_admin or g.supervisor_tenant %}
-        <form action="{{ url_for('tiquets.cambiar_estado', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
-          <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
-          <select name="estado" onchange="this.form.requestSubmit()">
-            {% for e_valor, e_etiqueta in estados %}
-            <option value="{{ e_valor }}" {% if e_valor == valor %}selected{% endif %}>{{ e_etiqueta }}</option>
-            {% endfor %}
-          </select>
-        </form>
-        <form action="{{ url_for('tiquets.asignar', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
-          <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
-          <select name="prioridad" onchange="this.form.requestSubmit()" aria-label="{{ _('Prioridad') }}">
-            {% for valor, etiqueta in prioridades %}
-            <option value="{{ valor }}" {% if t.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
-            {% endfor %}
-          </select>
-          <select name="usuario_asignado_id" onchange="this.form.requestSubmit()" aria-label="{{ _('Asignar a') }}">
-            <option value="">{{ _('Sin asignar') }}</option>
-            {% for u in usuarios %}
-            <option value="{{ u.id }}" {% if t.usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>
-            {% endfor %}
-          </select>
-        </form>
+        <div class="tiquet-card-acciones-forms">
+          <form action="{{ url_for('tiquets.cambiar_estado', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
+            <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
+            <select name="estado" onchange="this.form.requestSubmit()">
+              {% for e_valor, e_etiqueta in estados %}
+              <option value="{{ e_valor }}" {% if e_valor == valor %}selected{% endif %}>{{ e_etiqueta }}</option>
+              {% endfor %}
+            </select>
+          </form>
+          <form action="{{ url_for('tiquets.asignar', tiquet_id=t.id) }}" method="post" class="tiquet-card-estado-form">
+            <input type="hidden" name="volver_a" value="{{ url_for('tiquets.kanban') }}">
+            <select name="prioridad" onchange="this.form.requestSubmit()" aria-label="{{ _('Prioridad') }}">
+              {% for valor, etiqueta in prioridades %}
+              <option value="{{ valor }}" {% if t.prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+              {% endfor %}
+            </select>
+            <select name="usuario_asignado_id" onchange="this.form.requestSubmit()" aria-label="{{ _('Asignar a') }}">
+              <option value="">{{ _('Sin asignar') }}</option>
+              {% for u in usuarios %}
+              <option value="{{ u.id }}" {% if t.usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
         {% endif %}
       </article>
       {% endfor %}

@@ -43,16 +43,18 @@
     </select>
   </label>
   {% endif %}
-  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
-  {% if q or estado or prioridad or categoria %}
-  <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Limpiar') }}</a>
-  {% else %}
-  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', completadas=1) }}">{{ _('Ver también completadas') }}</a>
-  {% endif %}
+  <span class="action-group">
+    <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+    {% if q or estado or prioridad or categoria %}
+    <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Limpiar') }}</a>
+    {% else %}
+    <a class="btn btn-ghost" href="{{ url_for('tareas.listar', completadas=1) }}">{{ _('Ver también completadas') }}</a>
+    {% endif %}
+  </span>
 </form>
 
 <section class="quick-actions">
-  <form class="quick-card" action="{{ url_for('tareas.crear') }}" method="post" style="grid-column: 1 / -1;">
+  <form class="quick-card quick-card-full" action="{{ url_for('tareas.crear') }}" method="post">
     <label>{{ _('Nueva tarea') }}</label>
     <div class="quick-row">
       <input type="text" name="asunto" placeholder="{{ _('Asunto...') }}" required autofocus>

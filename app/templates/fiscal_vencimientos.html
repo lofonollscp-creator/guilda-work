@@ -32,13 +32,11 @@
     </select>
   </label>
   <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+  <span class="action-group">
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.export_csv', estado=filtro_estado, cliente_id=filtro_cliente_id) }}">CSV</a>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.export_json', estado=filtro_estado, cliente_id=filtro_cliente_id) }}">JSON</a>
+  </span>
 </form>
-
-<p class="subtitle">
-  {{ _('Exportar:') }}
-  <a href="{{ url_for('fiscal.export_csv', estado=filtro_estado, cliente_id=filtro_cliente_id) }}">CSV</a> ·
-  <a href="{{ url_for('fiscal.export_json', estado=filtro_estado, cliente_id=filtro_cliente_id) }}">JSON</a>
-</p>
 
 {% if not vencimientos %}
 <p class="empty-lane">{{ _('No hay vencimientos para este filtro.') }}</p>
@@ -72,7 +70,7 @@
 </ul>
 
 <aside class="fiscal-detalle" id="fiscal-detalle">
-  <p class="fiscal-detalle-vacio">{{ _('Pulsa un vencimiento para ver la ficha rápida del cliente.') }}</p>
+  <p class="fiscal-detalle-vacio empty-lane">{{ _('Pulsa un vencimiento para ver la ficha rápida del cliente.') }}</p>
 </aside>
 </div>
 {% endif %}

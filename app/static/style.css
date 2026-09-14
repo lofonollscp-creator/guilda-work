@@ -77,6 +77,12 @@
   --radius-md: var(--radius);
   --radius-lg: 22px;
 
+  /* Ancho del panel lateral fijo en el patrón "lista + ficha rápida"
+     (dashboard, calendario fiscal) -- un único token en vez de que cada
+     página fijara su propio ancho (380px / 300px, dos números para el
+     mismo patrón). */
+  --detail-rail-width: 360px;
+
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shadow-md: var(--shadow);
   --shadow-lg: 0 4px 12px rgba(16, 24, 40, 0.10), 0 2px 4px rgba(16, 24, 40, 0.08);
@@ -830,7 +836,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .dash-accesos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin-bottom: var(--space-5);
 }
 .dash-acceso {
@@ -864,6 +870,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--space-4);
+  /* Sin esto, "Nota rápida" (2-3 campos) y "Buscar" (una sola línea) se
+     estiran a la misma altura por el stretch por defecto del grid --
+     cada tarjeta pasa a medir lo que necesita su propio contenido. */
+  align-items: start;
   margin-bottom: var(--space-6);
 }
 .dash-accion {
@@ -898,15 +908,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 /* Layout de dos columnas del dashboard: acciones+menús a la izquierda,
    columna secundaria fija a la derecha con "Hoy" + Asistente IA juntos
    (mismo criterio que el canvas de diseño: la columna secundaria es
-   "actividad + asistente", no solo actividad) -- se ensancha a 380px
-   (antes 320px) para que el chat de IA tenga aire suficiente ahí dentro. */
-.dash-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-5); align-items: start; }
+   "actividad + asistente", no solo actividad). El ancho usa
+   --detail-rail-width (ver :root) -- mismo token que .fiscal-layout,
+   que es el mismo patrón "lista + panel fijo" implementado dos veces
+   con anchos distintos antes de esto. */
+.dash-layout { display: grid; grid-template-columns: 1fr var(--detail-rail-width); gap: var(--space-5); align-items: start; }
 .dash-main { min-width: 0; }
 .dash-sidebar { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-5); }
-/* "Hoy" y el Asistente IA en la barra lateral pasan a ser tarjetas de
-   verdad (antes: texto suelto sin borde) -- calco de .panel/.ia-teaser
-   del canvas de diseño. El acento de degradado en .dash-ia distingue
-   visualmente el chat de IA del resto de tarjetas planas. */
+/* "Hoy" y el Asistente IA en la barra lateral son tarjetas de verdad
+   (antes: texto suelto sin borde) -- calco de .panel/.ia-teaser del
+   canvas de diseño. .dash-ia usa exactamente el mismo tratamiento
+   plano que el resto de tarjetas de esta columna (antes llevaba su
+   propio degradado de acento, que la distinguía sin necesidad real). */
 .dash-sidebar .log-section {
   margin-bottom: 0;
   background: var(--surface);
@@ -923,8 +936,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   margin: 0;
   padding: 16px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 8%, var(--surface)), var(--surface));
-  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 .dash-ia h3 { margin: 0 0 var(--space-3); display: flex; align-items: center; gap: 8px; }
 .dash-ia .ia-chat { box-shadow: none; background: none; border: none; }
@@ -1307,6 +1320,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   gap: 14px;
   margin-bottom: 28px;
 }
+/* Para el caso de una única tarjeta que debe ocupar todo el ancho
+   (antes: style="grid-column: 1 / -1" repetido suelto en 3 plantillas) */
+.quick-card-full { grid-column: 1 / -1; }
 .quick-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1441,7 +1457,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    No sustituye la ficha completa (facturas/EspoCRM/documentos), que
    sigue siendo su propia página -- esto es solo para no perder el
    contexto de la lista al mirar un dato rápido. */
-.fiscal-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--space-5); align-items: start; }
+.fiscal-layout { display: grid; grid-template-columns: 1fr var(--detail-rail-width); gap: var(--space-5); align-items: start; }
 .fiscal-lista { min-width: 0; }
 .fiscal-detalle {
   position: sticky;
@@ -1467,6 +1483,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .fiscal-detalle-fila:last-child { border-bottom: none; }
 .fiscal-detalle-fila span:first-child { color: var(--text-muted); }
 .fiscal-detalle-acciones { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); }
+/* Fila de vencimiento: la pastilla del periodo y la fecha llevan un
+   ancho fijo (mismo criterio que .log-time/.log-menu) para que las
+   columnas alineen entre filas en vez de moverse según lo que mida el
+   texto de cada una. */
+.vencimiento-fiscal-item .pill { min-width: 44px; text-align: center; }
+.vencimiento-fiscal-item .log-duration { min-width: 84px; }
+
 .fiscal-cliente-btn {
   background: none;
   border: none;
@@ -1586,6 +1609,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.9em;
+}
+
+/* Grupo de acciones (Filtrar/Limpiar, Exportar CSV/JSON...) separado
+   visualmente de los campos que preceden -- antes eran botones/enlaces
+   sueltos al mismo nivel que los campos de filtro, sin nada que
+   marcara "esto es una acción" frente a "esto es un criterio". */
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+@media (max-width: 640px) {
+  .action-group { margin-left: 0; padding-left: 0; border-left: none; }
 }
 
 /* ---- Paginación (historial.html, tareas_lista.html) ---- */
@@ -1908,7 +1947,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   color: var(--text);
 }
 .edit-form-actions { display: flex; gap: 8px; }
-.edit-form-delete { max-width: 520px; }
+/* Separado del formulario de guardar con una línea propia -- antes no
+   llevaba ningún borde/espaciado que lo distinguiera de "otro bloque
+   más" apilado debajo, pese a ser una acción irreversible. */
+.edit-form-delete {
+  max-width: 520px;
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
 
 /* ---- Preguntar a mis datos (chat con IA local) ---- */
 .chat-config {
@@ -2914,7 +2961,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .ia-tabla th { background: color-mix(in srgb, var(--text) 6%, transparent); font-weight: 600; }
 
 .ia-msg {
-  max-width: 85%;
+  /* 85% por sí solo se vuelve enorme en una página a sangre completa
+     en un monitor ancho -- tope absoluto añadido para que el texto
+     siga siendo cómodo de leer sin reducir el ancho del contenedor
+     del chat (que sí debe ocupar todo el hueco, ver comentario de
+     .ia-pagina-chat más arriba). */
+  max-width: min(85%, 720px);
   padding: 8px 12px;
   border-radius: 12px;
   font-size: 0.92em;
@@ -3691,9 +3743,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tiquet-card-acciones { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .tiquet-card-acciones a { color: var(--text-muted); text-decoration: none; }
 .tiquet-card-acciones a:hover { color: var(--primary); }
-.tiquet-card-estado-form { margin-top: 4px; }
+/* Los 2 formularios de acción (cambiar estado, asignar+prioridad) se
+   agrupan en un bloque propio con su propio separador -- antes cada
+   uno llevaba solo un margin-top:4px suelto, sin nada que los
+   distinguiera del resto de la tarjeta como "zona de acciones". */
+.tiquet-card-acciones-forms {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.tiquet-card-estado-form { display: flex; gap: 6px; }
 .tiquet-card-estado-form select {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

@@ -32,7 +32,7 @@
 </form>
 
 <section class="quick-actions">
-  <form class="quick-card" action="{{ url_for('tiquets.crear') }}" method="post" enctype="multipart/form-data" style="grid-column: 1 / -1;">
+  <form class="quick-card quick-card-full" action="{{ url_for('tiquets.crear') }}" method="post" enctype="multipart/form-data">
     <label>{{ _('Nuevo tiquet') }}</label>
     <div class="quick-row">
       <select name="tipo" required>

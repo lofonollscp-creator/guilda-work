@@ -15,7 +15,7 @@
 </nav>
 
 <section class="quick-actions">
-  <form class="quick-card" action="{{ url_for('fiscal.crear_cliente') }}" method="post" style="grid-column: 1 / -1;">
+  <form class="quick-card quick-card-full" action="{{ url_for('fiscal.crear_cliente') }}" method="post">
     <label>{{ _('Nuevo cliente fiscal') }}</label>
     <div class="quick-row">
       <input type="text" name="nombre" placeholder="{{ _('Nombre o razón social...') }}" required autofocus>
