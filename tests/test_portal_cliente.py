@@ -252,6 +252,25 @@ def test_enviar_enlace_portal_sin_configurar_lanza_error_legible(monkeypatch):
         notificaciones_email.enviar_enlace_portal("alguien@ejemplo.com", "https://guildawork.com/portal/entrar/x")
 
 
+def test_enviar_alerta_interna_sin_admin_email_lanza_error_legible(monkeypatch):
+    monkeypatch.setattr(notificaciones_email, "ALERTAS_ADMIN_EMAIL", None)
+
+    with pytest.raises(notificaciones_email.ErrorNotificacionesEmail):
+        notificaciones_email.enviar_alerta_interna("asunto", "cuerpo")
+
+
+def test_enviar_alerta_interna_manda_al_destino_configurado(monkeypatch):
+    monkeypatch.setattr(notificaciones_email, "ALERTAS_ADMIN_EMAIL", "admin@guilda.cat")
+    llamadas = []
+    monkeypatch.setattr(
+        notificaciones_email, "_enviar", lambda destinatario, asunto, cuerpo: llamadas.append((destinatario, asunto, cuerpo))
+    )
+
+    notificaciones_email.enviar_alerta_interna("asunto de prueba", "cuerpo de prueba")
+
+    assert llamadas == [("admin@guilda.cat", "asunto de prueba", "cuerpo de prueba")]
+
+
 # --- v2: mensajería bidireccional ------------------------------------------
 
 def _entrar_como_cliente(cliente_http, cliente_fiscal_id):

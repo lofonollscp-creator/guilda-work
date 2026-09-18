@@ -23,6 +23,11 @@ PORTAL_SMTP_CONTRASENA = os.environ.get("PORTAL_SMTP_CONTRASENA")
 PORTAL_SMTP_REMITENTE = os.environ.get("PORTAL_SMTP_REMITENTE")
 TIMEOUT_SEGUNDOS = 10
 
+# Destino de los avisos operativos internos (no de cara al cliente, ver
+# enviar_alerta_interna) -- reusa el mismo canal PORTAL_SMTP_* dedicado,
+# solo cambia el destinatario.
+ALERTAS_ADMIN_EMAIL = os.environ.get("ALERTAS_ADMIN_EMAIL")
+
 
 class ErrorNotificacionesEmail(Exception):
     pass
@@ -91,6 +96,19 @@ def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str) -> None
         f"Tu gestoría te ha generado un enlace de pago para: \"{concepto}\"\n\n"
         f"Puedes pagarlo aquí: {url_pago}\n",
     )
+
+
+def enviar_alerta_interna(asunto: str, cuerpo: str) -> None:
+    """Aviso operativo interno (para el equipo de Guilda, no para un
+    cliente) -- usado hoy solo por scripts/vigilar_facturascripts.py para
+    avisar cuando repara (o no consigue reparar) un contenedor caído.
+    Requiere ALERTAS_ADMIN_EMAIL; si no está configurada, lanza
+    ErrorNotificacionesEmail igual que _enviar cuando falta PORTAL_SMTP_*
+    -- el llamante decide si eso es grave (el vigilante lo trata como
+    best-effort, ver ese script)."""
+    if not ALERTAS_ADMIN_EMAIL:
+        raise ErrorNotificacionesEmail("ALERTAS_ADMIN_EMAIL no está configurada.")
+    _enviar(ALERTAS_ADMIN_EMAIL, asunto, cuerpo)
 
 
 def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str) -> None:
