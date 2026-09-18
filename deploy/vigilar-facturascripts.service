@@ -1,0 +1,20 @@
+# Plantilla de unidad systemd para scripts/vigilar_facturascripts.py en
+# el VPS (ver ese script y HOSTING.md, sección de FacturaScripts). Copia
+# a /etc/systemd/system/vigilar-facturascripts.service, ajusta guilda y
+# las rutas si hace falta, y activa el timer
+# (deploy/vigilar-facturascripts.timer), no esta unidad directamente.
+#
+# Usa el mismo /etc/guilda-work.env que el servicio principal
+# (guilda-work.service) -- necesita FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD
+# de ahí para poder reparar.
+
+[Unit]
+Description=Guilda Work - vigilante de contenedores de FacturaScripts caídos
+After=network.target docker.service
+
+[Service]
+Type=oneshot
+User=guilda
+WorkingDirectory=/home/guilda/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/guilda/guilda-work/.venv/bin/python scripts/vigilar_facturascripts.py

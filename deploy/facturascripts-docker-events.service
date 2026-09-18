@@ -1,0 +1,37 @@
+# Registro forense persistente de eventos Docker -- pensado
+# específicamente para cazar quién/qué está tirando
+# guilda-work-facturascripts-tenant-1 la próxima vez que ocurra (ha
+# desaparecido varias veces sin causa identificada pese a investigarlo a
+# fondo cada vez, ver HOSTING.md/bitácora): `docker events` solo guarda
+# un búfer en memoria de corta duración, así que investigar DESPUÉS de
+# que ya ha pasado nunca ha encontrado nada. Este servicio corre en
+# segundo plano de forma permanente y escribe cada evento Docker (de
+# CUALQUIER contenedor, no solo FacturaScripts, por si el patrón real es
+# más amplio) a un fichero de log real en disco.
+#
+# Instalación:
+#   sudo cp deploy/facturascripts-docker-events.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now facturascripts-docker-events.service
+#
+# Revisar el log:
+#   grep facturascripts-tenant /var/log/guilda-work/docker-events.log
+#
+# Restart=always + RestartSec bajo: si dockerd se reinicia o la conexión
+# al socket se corta, este servicio debe volver a engancharse solo, no
+# quedarse muerto silenciosamente justo cuando más se necesita.
+
+[Unit]
+Description=Guilda Work - registro forense permanente de eventos Docker
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/mkdir -p /var/log/guilda-work
+ExecStart=/bin/sh -c '/usr/bin/docker events --format "{{.Time}} {{.Type}} {{.Action}} {{.Actor.Attributes.name}} ({{.Actor.ID}})" >> /var/log/guilda-work/docker-events.log 2>&1'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

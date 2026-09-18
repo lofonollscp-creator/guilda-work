@@ -154,6 +154,72 @@ def test_generar_config_php_escapa_comillas_y_barras(monkeypatch):
     assert "define('FS_DEBUG', false);" in contenido
 
 
+def test_reparar_tenant_sin_password_postgres_lanza_excepcion(monkeypatch):
+    monkeypatch.setattr(fs, "FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD", None)
+    with pytest.raises(fs.ErrorFacturaScripts):
+        fs.reparar_tenant(1)
+
+
+def test_reparar_tenant_no_crea_rol_ni_base_de_datos(monkeypatch):
+    """A diferencia de aprovisionar_tenant(), no debe haber ningún CREATE
+    ROLE/CREATE DATABASE -- fallarían, ya existen. Solo ALTER ROLE
+    (resetea la contraseña) + docker stop/rm defensivos + docker run +
+    reinstalación."""
+    monkeypatch.setattr(fs, "FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD", "clave-admin")
+    llamadas = _mock_subprocess_e_instalacion_ok(monkeypatch)
+
+    resultado = fs.reparar_tenant(1)
+
+    assert resultado["url"] == "http://127.0.0.1:8101/"
+    assert "admin_user" not in resultado and "admin_pass" not in resultado
+
+    psql = [" ".join(c) for c in llamadas if "psql" in c]
+    assert not any("CREATE ROLE" in c for c in psql)
+    assert not any("CREATE DATABASE" in c for c in psql)
+    assert any("ALTER ROLE" in c and "PASSWORD" in c for c in psql)
+    assert any(c[:2] == ["docker", "stop"] for c in llamadas)
+    assert any(c[:2] == ["docker", "rm"] for c in llamadas)
+    assert any(c[:2] == ["docker", "run"] for c in llamadas)
+    assert any(c[:2] == ["docker", "exec"] and "php" in c for c in llamadas)
+
+
+def test_reparar_tenant_docker_run_falla_lanza_excepcion(monkeypatch):
+    monkeypatch.setattr(fs, "FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD", "clave-admin")
+
+    def fake_run(cmd, **kwargs):
+        if cmd[:2] == ["docker", "run"]:
+            return types.SimpleNamespace(returncode=1, stdout="", stderr="puerto ocupado")
+        return _resultado_proceso_ok()
+
+    monkeypatch.setattr(fs.subprocess, "run", fake_run)
+    with pytest.raises(fs.ErrorFacturaScripts):
+        fs.reparar_tenant(1)
+
+
+def test_contenedor_activo_true_si_running(monkeypatch):
+    monkeypatch.setattr(
+        fs.subprocess, "run",
+        lambda cmd, **k: types.SimpleNamespace(returncode=0, stdout="true\n", stderr=""),
+    )
+    assert fs.contenedor_activo(1) is True
+
+
+def test_contenedor_activo_false_si_no_existe(monkeypatch):
+    monkeypatch.setattr(
+        fs.subprocess, "run",
+        lambda cmd, **k: types.SimpleNamespace(returncode=1, stdout="", stderr="No such object"),
+    )
+    assert fs.contenedor_activo(1) is False
+
+
+def test_contenedor_activo_false_si_parado(monkeypatch):
+    monkeypatch.setattr(
+        fs.subprocess, "run",
+        lambda cmd, **k: types.SimpleNamespace(returncode=0, stdout="false\n", stderr=""),
+    )
+    assert fs.contenedor_activo(1) is False
+
+
 def test_desaprovisionar_tenant_llama_a_docker_y_psql(monkeypatch):
     monkeypatch.setattr(fs, "FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD", "clave-admin")
     llamadas = []

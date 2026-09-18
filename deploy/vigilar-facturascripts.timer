@@ -1,0 +1,23 @@
+# Plantilla de timer systemd para vigilar-facturascripts.service (ver ese
+# archivo y HOSTING.md). Copia junto al .service a /etc/systemd/system/,
+# luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now vigilar-facturascripts.timer
+#
+# Cada 5 minutos a propósito: el contenedor ha desaparecido varias veces
+# sin causa identificada (ver reparar_tenant() en app/facturascripts.py)
+# -- 5 min mantiene la caída real acotada a minutos en vez de horas sin
+# ser una comprobación tan frecuente como para competir por recursos con
+# el resto del stack. RandomizedDelaySec pequeño, mismo criterio que el
+# resto de timers del proyecto, para no alinear siempre el segundo exacto.
+
+[Unit]
+Description=Guilda Work - vigilante de contenedores de FacturaScripts caídos (ver vigilar-facturascripts.service)
+
+[Timer]
+OnCalendar=*:0/5
+RandomizedDelaySec=20
+Persistent=true
+
+[Install]
+WantedBy=timers.target

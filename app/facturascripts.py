@@ -329,6 +329,73 @@ def aprovisionar_tenant(tenant_id: int, nombre_tenant: str) -> dict:
     return {"url": url, "admin_user": admin_user, "admin_pass": admin_pass}
 
 
+def reparar_tenant(tenant_id: int) -> dict:
+    """Reconstruye el contenedor de un tenant que YA tiene rol+base de
+    datos creados, pero cuyo contenedor Docker ha desaparecido -- visto
+    varias veces en producción contra el tenant "Guilda"
+    (`docker inspect` -> "no such object" sin ningún `docker stop`/`rm`
+    nuestro de por medio; investigado a fondo -- descartados `--rm` en
+    `_docker_run` (no se usa), `desaprovisionar_tenant`/`borrar_tenant`
+    (el tenant sigue existiendo), cron/systemd timers del host y
+    contenedores tipo watchtower/portainer (ninguno presente). Causa
+    exacta sin confirmar todavía, ver scripts/vigilar_facturascripts.py
+    y deploy/facturascripts-docker-events.service para la detección y el
+    registro forense la próxima vez que ocurra.
+
+    A diferencia de aprovisionar_tenant(), esta función NO ejecuta
+    `CREATE ROLE`/`CREATE DATABASE` -- fallaría, ya existen -- solo
+    resetea la contraseña del rol (la anterior vivía únicamente en el
+    config.php del contenedor desaparecido, en ningún otro sitio) y
+    reconstruye el contenedor + reinstala config.php/plugins sobre los
+    datos ya existentes: MyFiles/Plugins/Dinamic sobreviven en el bind
+    mount del segundo disco (ver FACTURASCRIPTS_DATOS_HOST), y la base
+    de datos entera sigue intacta en Postgres, ajena al contenedor.
+
+    El usuario admin ya existente en la tabla `users` de FacturaScripts
+    NO se toca: FS_INITIAL_USER/FS_INITIAL_PASS del config.php nuevo
+    solo se aplican de verdad si esa tabla está vacía (comportamiento
+    del propio instalador), así que el login que el usuario ya usa
+    sigue funcionando sin cambios -- por eso esta función no devuelve
+    unas credenciales de admin nuevas (a diferencia de
+    aprovisionar_tenant, donde sí son las únicas)."""
+    if not FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD:
+        raise ErrorFacturaScripts("FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD no está configurada.")
+
+    rol = _nombre_rol(tenant_id)
+    bd = _nombre_bd(tenant_id)
+    db_pass = secrets.token_urlsafe(24)
+    # Usuario/contraseña "de instalación" -- ignorados por FacturaScripts
+    # salvo que la tabla `users` esté vacía, ver docstring de arriba.
+    admin_user = "admin"
+    admin_pass = secrets.token_urlsafe(16)
+
+    _ejecutar_psql(f"ALTER ROLE {rol} PASSWORD '{db_pass}';")
+
+    # Por si el contenedor quedó en un estado intermedio (parado pero no
+    # borrado) en vez de desaparecido del todo -- no falla si ya no existe.
+    subprocess.run(["docker", "stop", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
+    subprocess.run(["docker", "rm", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
+
+    _docker_run(tenant_id, rol, db_pass, bd)
+
+    url = f"http://127.0.0.1:{_puerto_tenant(tenant_id)}/"
+    _esperar_arranque(url)
+    _instalar(tenant_id, rol, db_pass, bd, admin_user, admin_pass)
+    _verificar_arranque_completo(url)
+
+    return {"url": url}
+
+
+def contenedor_activo(tenant_id: int) -> bool:
+    """True si el contenedor del tenant existe y está en marcha (usado por
+    scripts/vigilar_facturascripts.py para decidir si hace falta reparar)."""
+    resultado = subprocess.run(
+        ["docker", "inspect", "-f", "{{.State.Running}}", _nombre_contenedor(tenant_id)],
+        capture_output=True, text=True, timeout=15,
+    )
+    return resultado.returncode == 0 and resultado.stdout.strip() == "true"
+
+
 def desaprovisionar_tenant(tenant_id: int) -> None:
     """Para al borrar un tenant (app/rutas_backoffice.py:borrar_tenant) —
     para/borra el contenedor, su base de datos+rol, y los directorios del
