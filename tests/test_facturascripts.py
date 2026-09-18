@@ -1,7 +1,8 @@
 """Tests del cliente/aprovisionador de FacturaScripts (app/facturascripts.py)
-— se mockean subprocess.run (docker cp/exec/run/psql) y urllib (espera de
-arranque + verificación final + API), sin Docker ni FacturaScripts de
-verdad.
+— se mockean subprocess.run (docker cp/exec/run/psql), urllib (espera de
+arranque + verificación final + API) y os.makedirs/os.chmod (directorios
+del segundo disco), sin Docker ni FacturaScripts de verdad, y sin tocar
+ningún directorio real del host.
 
 El flujo de instalación real (`_instalar`) se verificó en vivo contra un
 contenedor de verdad durante el desarrollo — ver el docstring del propio
@@ -14,6 +15,20 @@ import types
 import pytest
 
 from app import facturascripts as fs
+
+
+@pytest.fixture(autouse=True)
+def _sin_directorios_reales(monkeypatch):
+    """_preparar_directorios_datos() llama a os.makedirs/os.chmod contra
+    FACTURASCRIPTS_DATOS_HOST (por defecto el segundo disco de
+    producción) — se mockean para que NINGÚN test, ni siquiera en una
+    copia "aislada" del repo, toque directorios reales del host."""
+    llamadas = []
+    monkeypatch.setattr(
+        fs.os, "makedirs", lambda ruta, mode=0o777, exist_ok=True: llamadas.append(("makedirs", ruta))
+    )
+    monkeypatch.setattr(fs.os, "chmod", lambda ruta, mode: llamadas.append(("chmod", ruta)))
+    return llamadas
 
 
 class _RespuestaFalsa:
