@@ -239,6 +239,37 @@ def test_listar_clientes_fiscales_filtra_por_nombre_o_nif():
     assert db.listar_clientes_fiscales(tenant_id, q="no-existe-nada") == []
 
 
+def test_listar_clientes_fiscales_filtra_por_pais():
+    tenant_id, cliente_es = _tenant_con_cliente(nombre_cliente="Cliente España")
+    cliente_otro = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, cliente_otro, pais="OTRO")
+
+    assert {c["id"] for c in db.listar_clientes_fiscales(tenant_id, pais="ES")} == {cliente_es}
+    assert {c["id"] for c in db.listar_clientes_fiscales(tenant_id, pais="OTRO")} == {cliente_otro}
+    assert {c["id"] for c in db.listar_clientes_fiscales(tenant_id)} == {cliente_es, cliente_otro}
+
+
+def test_paises_clientes_fiscales_devuelve_distintos_en_uso():
+    tenant_id, _ = _tenant_con_cliente()
+    assert db.paises_clientes_fiscales(tenant_id) == ["ES"]
+
+    otro = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, otro, pais="OTRO")
+    assert db.paises_clientes_fiscales(tenant_id) == ["ES", "OTRO"]
+
+
+def test_listar_vencimientos_fiscales_filtra_por_pais_del_cliente():
+    tenant_id, cliente_es = _tenant_con_cliente(nombre_cliente="Cliente España")
+    cliente_otro = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, cliente_otro, pais="OTRO")
+    v_es = db.crear_vencimiento_fiscal(tenant_id, cliente_es, "303", "2026-T1", "2026-04-20")
+    v_otro = db.crear_vencimiento_fiscal(tenant_id, cliente_otro, "303", "2026-T1", "2026-04-20")
+
+    assert {v["id"] for v in db.listar_vencimientos_fiscales(tenant_id, pais="ES")} == {v_es}
+    assert {v["id"] for v in db.listar_vencimientos_fiscales(tenant_id, pais="OTRO")} == {v_otro}
+    assert {v["id"] for v in db.listar_vencimientos_fiscales(tenant_id)} == {v_es, v_otro}
+
+
 def test_generar_vencimientos_automaticos_solo_para_clientes_opt_in_con_modelos():
     tenant_id, _ = _tenant_con_cliente()
     con_auto = db.crear_cliente_fiscal(tenant_id, "Con Auto", modelos_fiscales=["390"])

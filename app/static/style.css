@@ -1528,6 +1528,60 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .fiscal-detalle { position: static; }
 }
 
+/* Bloque 3 del plan de reestructuración del calendario fiscal: vista de
+   calendario mensual, alternable con la lista (/fiscal/vencimientos.html
+   tiene el mismo toggle "Lista"/"Calendario"). Los colores de cada item
+   reutilizan las clases .log-badge-* ya existentes (solo la parte de
+   color: fondo/texto/borde), no la clase base .log-badge (que es un
+   pill de una línea, aquí cada item necesita ser un bloque truncado). */
+.fiscal-calendario-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.fiscal-calendario-titulo { font-weight: 700; font-size: 1.1em; min-width: 12ch; text-align: center; }
+.fiscal-calendario { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.fiscal-calendario-semana { display: grid; grid-template-columns: repeat(7, 1fr); }
+.fiscal-calendario-cabecera-dias { background: var(--surface); }
+.fiscal-calendario-dia-nombre {
+  padding: var(--space-2);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.fiscal-calendario-celda {
+  min-height: 84px;
+  padding: var(--space-2);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fiscal-calendario-semana .fiscal-calendario-celda:first-child { border-left: none; }
+.fiscal-calendario-celda-vacia { background: color-mix(in srgb, var(--border) 25%, transparent); }
+.fiscal-calendario-celda-hoy { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.fiscal-calendario-dia-numero { font-size: var(--font-size-sm); color: var(--text-muted); font-weight: 600; }
+.fiscal-calendario-item {
+  display: block;
+  font-size: 0.72em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+}
+@media (max-width: 900px) {
+  .fiscal-calendario-dia-nombre { font-size: 0.65em; }
+  .fiscal-calendario-celda { min-height: 56px; padding: 4px; }
+  .fiscal-calendario-item { font-size: 0.65em; }
+}
+
 .log-list { list-style: none; padding: 0; margin: 0; }
 /* Fila con borde real en vez de solo sombra -- afecta a Tareas, Fiscal,
    Histórico y "Hoy" del dashboard (todas reutilizan .log-item). Mismo

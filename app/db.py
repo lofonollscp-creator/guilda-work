@@ -4499,9 +4499,10 @@ def _quitar_cliente_fiscal_del_indice(cliente_id: int) -> None:
         pass
 
 
-def listar_clientes_fiscales(tenant_id: int, q: str | None = None) -> list[sqlite3.Row]:
+def listar_clientes_fiscales(tenant_id: int, q: str | None = None, pais: str | None = None) -> list[sqlite3.Row]:
     """`q` filtra por nombre/NIF (LIKE, insensible a mayúsculas) -- tabla
-    pequeña por tenant, no hace falta Meilisearch para esto."""
+    pequeña por tenant, no hace falta Meilisearch para esto. `pais` filtra
+    por país de tributación exacto (ver app/vencimientos_fiscales.py)."""
     conn = get_connection()
     try:
         cond = ["tenant_id = ?", "papelera_en IS NULL"]
@@ -4510,9 +4511,29 @@ def listar_clientes_fiscales(tenant_id: int, q: str | None = None) -> list[sqlit
             cond.append("(nombre LIKE ? OR nif LIKE ?)")
             comodin = f"%{q.strip()}%"
             params.extend([comodin, comodin])
+        if pais:
+            cond.append("pais = ?")
+            params.append(pais)
         return conn.execute(
             f"SELECT * FROM clientes_fiscales WHERE {' AND '.join(cond)} ORDER BY nombre", params,
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def paises_clientes_fiscales(tenant_id: int) -> list[str]:
+    """Países de tributación en uso por los clientes de este tenant
+    (distintos, orden alfabético) -- para el <select> de filtro por país
+    en /fiscal/clientes y /fiscal/vencimientos. Con un solo país en uso
+    (el caso normal hoy) el filtro no aporta mucho, pero no hace falta
+    tocar esta función cuando se añada soporte a un segundo país."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT DISTINCT pais FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL ORDER BY pais",
+            (tenant_id,),
+        ).fetchall()
+        return [f["pais"] for f in filas]
     finally:
         conn.close()
 
@@ -4633,9 +4654,13 @@ def listar_vencimientos_fiscales(
     hasta: str | None = None,
     estado: str | None = None,
     cliente_fiscal_id: int | None = None,
+    pais: str | None = None,
 ) -> list[sqlite3.Row]:
     """`desde`/`hasta` filtran por fecha_limite (YYYY-MM-DD, inclusive/
-    exclusive respectivamente, mismo criterio que listar_tareas_outlook)."""
+    exclusive respectivamente, mismo criterio que listar_tareas_outlook).
+    `pais` filtra por el país de tributación del CLIENTE (columna `c.pais`,
+    no hay columna propia en vencimientos_fiscales -- ver
+    app/vencimientos_fiscales.py)."""
     conn = get_connection()
     try:
         cond = ["v.tenant_id = ?", "v.papelera_en IS NULL"]
@@ -4648,6 +4673,8 @@ def listar_vencimientos_fiscales(
             cond.append("v.estado = ?"); params.append(estado)
         if cliente_fiscal_id:
             cond.append("v.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
+        if pais:
+            cond.append("c.pais = ?"); params.append(pais)
         where = " AND ".join(cond)
         return conn.execute(
             f"""SELECT v.*, c.nombre AS cliente_nombre

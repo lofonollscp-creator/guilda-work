@@ -8,6 +8,7 @@ GESTORÍA -- se filtran por g.tenant_id en cada consulta a db.py. Es
 autoservicio por tenant, sin pantallas de backoffice: cualquier usuario
 con tenant asignado puede gestionar los clientes fiscales y vencimientos
 de SU tenant."""
+import calendar
 import csv
 import io
 import json
@@ -32,6 +33,14 @@ ESTADOS_VENCIMIENTO = [
     ("fuera_plazo", _l("Fuera de plazo")),
 ]
 
+# Para la vista de calendario mensual (vencimientos_calendario) -- calendar.Calendar
+# usa firstweekday=0 (lunes), así que el índice 0 de estas dos listas es lunes.
+MESES = [
+    _l("Enero"), _l("Febrero"), _l("Marzo"), _l("Abril"), _l("Mayo"), _l("Junio"),
+    _l("Julio"), _l("Agosto"), _l("Septiembre"), _l("Octubre"), _l("Noviembre"), _l("Diciembre"),
+]
+DIAS_SEMANA = [_l("L"), _l("M"), _l("X"), _l("J"), _l("V"), _l("S"), _l("D")]
+
 
 @fiscal_bp.before_request
 def _exigir_tenant():
@@ -55,7 +64,13 @@ PAISES_CON_CALENDARIO = list(MODELOS_POR_PAIS.keys())
 @login_required
 def clientes():
     q = request.args.get("q") or None
-    return render_template("fiscal_clientes.html", clientes=db.listar_clientes_fiscales(g.tenant_id, q=q), filtro_q=q)
+    pais = request.args.get("pais") or None
+    return render_template(
+        "fiscal_clientes.html",
+        clientes=db.listar_clientes_fiscales(g.tenant_id, q=q, pais=pais),
+        filtro_q=q, filtro_pais=pais,
+        paises_en_uso=db.paises_clientes_fiscales(g.tenant_id),
+    )
 
 
 @fiscal_bp.route("/clientes", methods=["POST"])
@@ -355,6 +370,7 @@ def export_csv():
         hasta=request.args.get("hasta") or None,
         estado=request.args.get("estado") or None,
         cliente_fiscal_id=request.args.get("cliente_id", type=int),
+        pais=request.args.get("pais") or None,
     )
     buffer = io.StringIO()
     escritor = csv.writer(buffer)
@@ -376,6 +392,7 @@ def export_json():
         hasta=request.args.get("hasta") or None,
         estado=request.args.get("estado") or None,
         cliente_fiscal_id=request.args.get("cliente_id", type=int),
+        pais=request.args.get("pais") or None,
     )
     datos = [
         {
@@ -392,6 +409,7 @@ def export_json():
 def vencimientos():
     estado = request.args.get("estado") or None
     cliente_fiscal_id = request.args.get("cliente_id", type=int)
+    pais = request.args.get("pais") or None
     # desde/hasta: usados por el enlace de la tarjeta del dashboard
     # ("Vencimientos próximos", próximos 30 días) -- opcionales, sin ellos
     # se ve el listado completo como siempre.
@@ -400,12 +418,14 @@ def vencimientos():
     return render_template(
         "fiscal_vencimientos.html",
         vencimientos=db.listar_vencimientos_fiscales(
-            g.tenant_id, estado=estado, cliente_fiscal_id=cliente_fiscal_id, desde=desde, hasta=hasta,
+            g.tenant_id, estado=estado, cliente_fiscal_id=cliente_fiscal_id, desde=desde, hasta=hasta, pais=pais,
         ),
         clientes=db.listar_clientes_fiscales(g.tenant_id),
         estados=ESTADOS_VENCIMIENTO,
         filtro_estado=estado,
         filtro_cliente_id=cliente_fiscal_id,
+        filtro_pais=pais,
+        paises_en_uso=db.paises_clientes_fiscales(g.tenant_id),
         # Para pintar en rojo lo pendiente ya vencido sin esperar a que pase
         # el cron de saneo (app/vencimientos_fiscales.py) que marca
         # fuera_plazo -- ese cron corre una vez al día, esto se ve al
@@ -413,6 +433,56 @@ def vencimientos():
         # fecha ya no se pinta en ámbar (más de 7 días vista, color neutro).
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
+    )
+
+
+@fiscal_bp.route("/vencimientos/calendario")
+@login_required
+def vencimientos_calendario():
+    """Vista de calendario mensual, alternable con la lista de
+    /fiscal/vencimientos (mismo patrón que Tiquets tarjetas/kanban: rutas
+    separadas, no un parámetro ?vista= en la misma). Reutiliza
+    db.listar_vencimientos_fiscales acotado al mes visible en vez de una
+    consulta nueva."""
+    hoy = date.today()
+    anio = request.args.get("anio", type=int) or hoy.year
+    mes = request.args.get("mes", type=int) or hoy.month
+    if not 1 <= mes <= 12:
+        mes = hoy.month
+    estado = request.args.get("estado") or None
+    cliente_fiscal_id = request.args.get("cliente_id", type=int)
+    pais = request.args.get("pais") or None
+
+    primer_dia = date(anio, mes, 1)
+    ultimo_dia_mes = calendar.monthrange(anio, mes)[1]
+    primer_dia_siguiente = (
+        date(anio + 1, 1, 1) if mes == 12 else date(anio, mes + 1, 1)
+    )
+    vencimientos_mes = db.listar_vencimientos_fiscales(
+        g.tenant_id, desde=primer_dia.isoformat(), hasta=primer_dia_siguiente.isoformat(),
+        estado=estado, cliente_fiscal_id=cliente_fiscal_id, pais=pais,
+    )
+    por_dia: dict[int, list] = {}
+    for v in vencimientos_mes:
+        dia = int(v["fecha_limite"][8:10])
+        por_dia.setdefault(dia, []).append(v)
+
+    mes_anterior = (anio - 1, 12) if mes == 1 else (anio, mes - 1)
+    mes_siguiente = (anio + 1, 1) if mes == 12 else (anio, mes + 1)
+
+    return render_template(
+        "fiscal_vencimientos_calendario.html",
+        anio=anio, mes=mes, nombre_mes=MESES[mes - 1], dias_semana=DIAS_SEMANA,
+        semanas=calendar.Calendar(firstweekday=0).monthdayscalendar(anio, mes),
+        por_dia=por_dia,
+        clientes=db.listar_clientes_fiscales(g.tenant_id),
+        estados=ESTADOS_VENCIMIENTO,
+        filtro_estado=estado,
+        filtro_cliente_id=cliente_fiscal_id,
+        filtro_pais=pais,
+        paises_en_uso=db.paises_clientes_fiscales(g.tenant_id),
+        hoy=hoy,
+        anio_mes_anterior=mes_anterior, anio_mes_siguiente=mes_siguiente,
     )
 
 

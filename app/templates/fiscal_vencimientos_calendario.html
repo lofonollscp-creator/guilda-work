@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Calendario fiscal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Calendario fiscal') }}</h1>
+    <p class="subtitle">{{ _('Vencimientos de todos los clientes de la gestoría.') }}</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
+  <a class="active" href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
+  <a href="{{ url_for('fiscal.papelera') }}">{{ _('Papelera') }}</a>
+</nav>
+
+<nav class="tareas-subnav">
+  <a href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Lista') }}</a>
+  <a class="active" href="{{ url_for('fiscal.vencimientos_calendario', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Calendario') }}</a>
+</nav>
+
+<form class="filters" method="get">
+  <input type="hidden" name="anio" value="{{ anio }}">
+  <input type="hidden" name="mes" value="{{ mes }}">
+  <label>{{ _('Estado') }}
+    <select name="estado">
+      <option value="">{{ _('Todos') }}</option>
+      {% for valor, etiqueta in estados %}
+      <option value="{{ valor }}" {% if filtro_estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>{{ _('Cliente') }}
+    <select name="cliente_id">
+      <option value="">{{ _('Todos') }}</option>
+      {% for c in clientes %}
+      <option value="{{ c.id }}" {% if filtro_cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if paises_en_uso|length > 1 %}
+  <label>{{ _('País') }}
+    <select name="pais">
+      <option value="">{{ _('Todos') }}</option>
+      {% for p in paises_en_uso %}
+      <option value="{{ p }}" {% if filtro_pais == p %}selected{% endif %}>{{ _('España') if p == 'ES' else p }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+<div class="fiscal-calendario-cabecera">
+  <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos_calendario', anio=anio_mes_anterior[0], mes=anio_mes_anterior[1], estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">&larr; {{ _('Mes anterior') }}</a>
+  <span class="fiscal-calendario-titulo">{{ nombre_mes }} {{ anio }}</span>
+  <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos_calendario', anio=anio_mes_siguiente[0], mes=anio_mes_siguiente[1], estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Mes siguiente') }} &rarr;</a>
+</div>
+
+<div class="fiscal-calendario">
+  <div class="fiscal-calendario-semana fiscal-calendario-cabecera-dias">
+    {% for d in dias_semana %}
+    <div class="fiscal-calendario-dia-nombre">{{ d }}</div>
+    {% endfor %}
+  </div>
+  {% for semana in semanas %}
+  <div class="fiscal-calendario-semana">
+    {% for dia in semana %}
+    {% if dia == 0 %}
+    <div class="fiscal-calendario-celda fiscal-calendario-celda-vacia"></div>
+    {% else %}
+    <div class="fiscal-calendario-celda {% if '%04d-%02d-%02d'|format(anio, mes, dia) == hoy.isoformat() %}fiscal-calendario-celda-hoy{% endif %}">
+      <span class="fiscal-calendario-dia-numero">{{ dia }}</span>
+      {% for v in por_dia.get(dia, []) %}
+      <a class="fiscal-calendario-item log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if v.estado == 'fuera_plazo' or ('%04d-%02d-%02d'|format(anio, mes, dia) < hoy.isoformat() and v.estado == 'pendiente') else 'nota') }}"
+         href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ v.modelo }} — {{ v.cliente_nombre }}">
+        {{ v.modelo }} — {{ v.cliente_nombre }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

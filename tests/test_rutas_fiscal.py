@@ -66,6 +66,76 @@ def test_vencimientos_se_agrupan_por_cliente(cliente):
     assert "Cliente A" in html and "Cliente B" in html
 
 
+def test_vencimientos_calendario_muestra_los_del_mes_pedido(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "calendario@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Calendario")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_a = db.crear_cliente_fiscal(tenant_id, "Cliente Calendario")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_a, "303", "2026-T2", "2026-07-20")
+    # Fuera del mes pedido (julio) -- no debe aparecer.
+    db.crear_vencimiento_fiscal(tenant_id, cliente_a, "130", "2026-T1", "2026-04-20")
+
+    resp = cliente.get("/fiscal/vencimientos/calendario?anio=2026&mes=7")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Julio 2026" in html
+    assert "303 — Cliente Calendario" in html
+    assert "130 — Cliente Calendario" not in html
+
+
+def test_vencimientos_calendario_navegacion_mes_anterior_siguiente(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "calendario-nav@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Calendario Nav")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.get("/fiscal/vencimientos/calendario?anio=2026&mes=1")
+    html = resp.get_data(as_text=True)
+    assert "anio=2025&amp;mes=12" in html or "anio=2025&mes=12" in html
+    assert "anio=2026&amp;mes=2" in html or "anio=2026&mes=2" in html
+
+    resp = cliente.get("/fiscal/vencimientos/calendario?anio=2026&mes=12")
+    html = resp.get_data(as_text=True)
+    assert "anio=2027&amp;mes=1" in html or "anio=2027&mes=1" in html
+
+
+def test_filtro_pais_no_aparece_con_un_solo_pais_en_uso(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "un-pais@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Un Pais")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.crear_cliente_fiscal(tenant_id, "Cliente España")
+
+    for ruta in ("/fiscal/clientes", "/fiscal/vencimientos", "/fiscal/vencimientos/calendario"):
+        html = cliente.get(ruta).get_data(as_text=True)
+        assert 'name="pais"' not in html
+
+
+def test_filtro_pais_aparece_y_filtra_con_dos_paises_en_uso(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "dos-paises@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Dos Paises")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_es = db.crear_cliente_fiscal(tenant_id, "Cliente España")
+    cliente_otro = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, cliente_otro, pais="OTRO")
+
+    resp = cliente.get("/fiscal/clientes")
+    html = resp.get_data(as_text=True)
+    assert 'name="pais"' in html
+    assert "Cliente España" in html and "Cliente Extranjero" in html
+
+    resp = cliente.get("/fiscal/clientes?pais=OTRO")
+    html = resp.get_data(as_text=True)
+    assert "Cliente Extranjero" in html and "Cliente España" not in html
+
+
+def test_vencimientos_calendario_mes_invalido_cae_al_mes_actual(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "calendario-mal@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Calendario Mal")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    resp = cliente.get("/fiscal/vencimientos/calendario?anio=2026&mes=13")
+    assert resp.status_code == 200
+
+
 def test_usuario_de_un_tenant_no_ve_clientes_fiscales_de_otro(cliente):
     usuario_a = iniciar_sesion_de_prueba(cliente, "fiscal-a@ejemplo.com", "contrasena123")
     tenant_a = db.crear_tenant("Gestoria A")

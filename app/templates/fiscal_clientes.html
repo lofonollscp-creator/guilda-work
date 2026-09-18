@@ -29,6 +29,16 @@
   <label>{{ _('Buscar') }}
     <input type="text" name="q" value="{{ filtro_q or '' }}" placeholder="{{ _('Nombre o NIF...') }}">
   </label>
+  {% if paises_en_uso|length > 1 %}
+  <label>{{ _('País') }}
+    <select name="pais">
+      <option value="">{{ _('Todos') }}</option>
+      {% for p in paises_en_uso %}
+      <option value="{{ p }}" {% if filtro_pais == p %}selected{% endif %}>{{ _('España') if p == 'ES' else p }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
   <button type="submit" class="btn btn-primary">{{ _('Buscar') }}</button>
   <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos_masivo') }}">{{ _('Generar vencimientos (todos los clientes)') }}</a>
 </form>
