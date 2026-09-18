@@ -21,7 +21,8 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from .vencimientos_fiscales import MODELOS_ANUALES, MODELOS_TRIMESTRALES, generar_vencimientos_propuestos
+from .vencimientos_fiscales import MODELOS_POR_PAIS, generar_vencimientos_propuestos
+from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
 
 fiscal_bp = Blueprint("fiscal", __name__, url_prefix="/fiscal")
 
@@ -43,7 +44,11 @@ def _exigir_tenant():
         abort(403)
 
 
-MODELOS_DISPONIBLES = {**MODELOS_TRIMESTRALES, **MODELOS_ANUALES}
+# Países con algún país-calendario configurado en absoluto -- para el
+# <select> de país en fiscal_cliente_editar.html (mostrar solo los que
+# tienen o podrían tener reglas, en vez de una lista fija de países del
+# mundo). Hoy solo "ES"; ver app/vencimientos_fiscales.py:MODELOS_POR_PAIS.
+PAISES_CON_CALENDARIO = list(MODELOS_POR_PAIS.keys())
 
 
 @fiscal_bp.route("/clientes")
@@ -152,7 +157,7 @@ def ficha_cliente(cliente_id: int):
         "fiscal_cliente_detalle.html",
         cliente=cliente,
         modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
-        modelos_disponibles=MODELOS_DISPONIBLES,
+        modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
         vencimientos=vencimientos,
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
@@ -239,17 +244,25 @@ def editar_cliente(cliente_id: int):
     if request.method == "POST":
         nombre = request.form.get("nombre", "").strip()
         if nombre:
+            pais = (request.form.get("pais") or "ES").strip().upper()
             db.editar_cliente_fiscal(
                 g.tenant_id, cliente_id,
                 nombre=nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
                 modelos_fiscales=db.serializar_modelos_fiscales(request.form.getlist("modelos_fiscales") or None),
-                generacion_automatica=1 if request.form.get("generacion_automatica") else 0,
+                # Un país sin calendario configurado no tiene modelos que marcar,
+                # así que tampoco tiene sentido la generación automática --
+                # se desactiva sola en vez de dejar un checkbox activo que
+                # nunca generaría nada (ver PAISES_CON_CALENDARIO arriba).
+                generacion_automatica=1 if (request.form.get("generacion_automatica") and pais in PAISES_CON_CALENDARIO) else 0,
                 email=(request.form.get("email") or "").strip() or None,
+                pais=pais,
             )
         return redirect(url_for("fiscal.clientes"))
     return render_template(
         "fiscal_cliente_editar.html",
-        cliente=cliente, modelos_cliente=db.modelos_fiscales_de_cliente(cliente), modelos_disponibles=MODELOS_DISPONIBLES,
+        cliente=cliente, modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
+        modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
+        paises_con_calendario=PAISES_CON_CALENDARIO,
     )
 
 
@@ -269,7 +282,7 @@ def generar_vencimientos(cliente_id: int):
     if cliente is None:
         abort(404)
 
-    modelos_disponibles = MODELOS_DISPONIBLES
+    modelos_disponibles = modelos_disponibles_para_pais(cliente["pais"])
 
     if request.method == "POST":
         # Cada propuesta llega como 3 campos indexados por posición `i`
@@ -295,7 +308,7 @@ def generar_vencimientos(cliente_id: int):
     modelos_cliente = db.modelos_fiscales_de_cliente(cliente)
     modelos_pedidos = request.args.getlist("modelo") or modelos_cliente or list(modelos_disponibles.keys())
     anio = request.args.get("anio", type=int) or date.today().year
-    propuestas = generar_vencimientos_propuestos(modelos_pedidos, anio)
+    propuestas = generar_vencimientos_propuestos(modelos_pedidos, anio, pais=cliente["pais"])
     return render_template(
         "fiscal_generar_vencimientos.html",
         cliente=cliente, propuestas=propuestas, anio=anio,
@@ -320,14 +333,14 @@ def generar_vencimientos_masivo():
         anio = request.form.get("anio", type=int) or date.today().year
         creados = 0
         for cliente, modelos in clientes_con_modelos:
-            for p in generar_vencimientos_propuestos(modelos, anio):
+            for p in generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]):
                 db.crear_vencimiento_fiscal(g.tenant_id, cliente["id"], p["modelo"], p["periodo"], p["fecha_limite"])
                 creados += 1
         return redirect(url_for("fiscal.vencimientos"))
 
     anio = request.args.get("anio", type=int) or date.today().year
     previa = [
-        {"cliente": cliente, "propuestas": generar_vencimientos_propuestos(modelos, anio)}
+        {"cliente": cliente, "propuestas": generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"])}
         for cliente, modelos in clientes_con_modelos
     ]
     return render_template("fiscal_generar_vencimientos_masivo.html", previa=previa, anio=anio)

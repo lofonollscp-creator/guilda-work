@@ -23,7 +23,9 @@
   <button type="submit" class="btn btn-primary">{{ _('Recalcular') }}</button>
 </form>
 
-{% if not propuestas %}
+{% if not modelos_disponibles %}
+<p class="empty-lane">{{ _('Todavía no hay calendario fiscal configurado para el país de este cliente -- dilo y lo añadimos. Mientras tanto, crea sus vencimientos a mano desde "Editar vencimiento".') }}</p>
+{% elif not propuestas %}
 <p class="empty-lane">{{ _('Elige al menos un modelo para ver las fechas propuestas.') }}</p>
 {% else %}
 <form method="post" action="{{ url_for('fiscal.generar_vencimientos', cliente_id=cliente.id) }}">

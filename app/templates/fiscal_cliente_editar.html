@@ -22,6 +22,16 @@
   </label>
   <p class="subtitle">{{ _('Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo).') }}</p>
 
+  <label>{{ _('País de tributación') }}
+    <select name="pais">
+      <option value="ES" {% if cliente.pais == 'ES' %}selected{% endif %}>{{ _('España') }}</option>
+      <option value="OTRO" {% if cliente.pais != 'ES' %}selected{% endif %}>{{ _('Otro país (próximamente)') }}</option>
+    </select>
+  </label>
+  {% if cliente.pais not in paises_con_calendario %}
+  <p class="subtitle">{{ _('Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada.') }}</p>
+  {% endif %}
+
   <fieldset>
     <legend>{{ _('Modelos que presenta este cliente') }}</legend>
     {% for id_modelo, info in modelos_disponibles.items() %}
@@ -30,11 +40,14 @@
       {{ id_modelo }} — {{ info.nombre }}
     </label>
     {% endfor %}
+    {% if not modelos_disponibles %}
+    <p class="subtitle">{{ _('Sin modelos disponibles para el país de este cliente.') }}</p>
+    {% endif %}
     <p class="subtitle">{{ _('Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática.') }}</p>
   </fieldset>
 
   <label class="checkbox-label">
-    <input type="checkbox" name="generacion_automatica" {% if cliente.generacion_automatica %}checked{% endif %}>
+    <input type="checkbox" name="generacion_automatica" {% if cliente.generacion_automatica %}checked{% endif %} {% if cliente.pais not in paises_con_calendario %}disabled{% endif %}>
     {{ _('Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)') }}
   </label>
 

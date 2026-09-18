@@ -33,6 +33,39 @@ def test_con_tenant_puede_crear_y_ver_sus_clientes(cliente):
     assert "Panadería SL" in resp.get_data(as_text=True)
 
 
+def test_clientes_fiscales_muestra_pill_de_pais_solo_si_no_es_espana(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "pill-pais@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Pill Pais")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_es = db.crear_cliente_fiscal(tenant_id, "Cliente España")
+    cliente_otro = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, cliente_otro, pais="OTRO")
+
+    resp = cliente.get("/fiscal/clientes")
+    html = resp.get_data(as_text=True)
+    assert 'title="País de tributación">OTRO' in html
+    # El cliente español (país por defecto) no lleva pill de país -- solo
+    # se muestra cuando aporta información (país distinto de ES).
+    assert html.count('title="País de tributación"') == 1
+
+
+def test_vencimientos_se_agrupan_por_cliente(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "agrupa@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Agrupa")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_a = db.crear_cliente_fiscal(tenant_id, "Cliente A")
+    cliente_b = db.crear_cliente_fiscal(tenant_id, "Cliente B")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_a, "303", "2026-T1", "2026-04-20")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_a, "303", "2026-T2", "2026-07-20")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_b, "130", "2026-T1", "2026-04-20")
+
+    resp = cliente.get("/fiscal/vencimientos")
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert html.count('class="fiscal-grupo"') == 2
+    assert "Cliente A" in html and "Cliente B" in html
+
+
 def test_usuario_de_un_tenant_no_ve_clientes_fiscales_de_otro(cliente):
     usuario_a = iniciar_sesion_de_prueba(cliente, "fiscal-a@ejemplo.com", "contrasena123")
     tenant_a = db.crear_tenant("Gestoria A")
@@ -174,6 +207,48 @@ def test_crear_editar_cliente_con_modelos_fiscales_y_generacion_automatica(clien
     fila = db.obtener_cliente_fiscal(tenant_id, cliente_id)
     assert db.modelos_fiscales_de_cliente(fila) == ["390"]
     assert fila["generacion_automatica"] == 1
+
+
+def test_cliente_pais_otro_desactiva_generacion_automatica_aunque_se_pida(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "pais-otro@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Pais Otro")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+
+    resp = cliente.post(
+        f"/fiscal/clientes/{cliente_id}/editar",
+        data={"nombre": "Cliente Extranjero", "pais": "OTRO", "generacion_automatica": "on"},
+    )
+    assert resp.status_code == 302
+    fila = db.obtener_cliente_fiscal(tenant_id, cliente_id)
+    assert fila["pais"] == "OTRO"
+    # Un país sin calendario configurado no tiene modelos que generar --
+    # la generación automática se ignora aunque el formulario la pidiera.
+    assert fila["generacion_automatica"] == 0
+
+
+def test_editar_cliente_pagina_avisa_si_el_pais_no_tiene_calendario(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "aviso-pais@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Aviso Pais")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, pais="OTRO")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}/editar")
+    assert resp.status_code == 200
+    assert "Todavía no hay calendario fiscal configurado" in resp.get_data(as_text=True)
+
+
+def test_generar_vencimientos_pagina_avisa_si_el_pais_no_tiene_calendario(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "aviso-generar@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Aviso Generar")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Extranjero")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, pais="OTRO")
+
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}/generar-vencimientos")
+    assert resp.status_code == 200
+    assert "Todavía no hay calendario fiscal configurado" in resp.get_data(as_text=True)
 
 
 def test_ficha_cliente_muestra_sus_vencimientos_y_aisla_por_tenant(cliente):

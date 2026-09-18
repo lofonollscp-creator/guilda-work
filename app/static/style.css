@@ -1501,6 +1501,28 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-align: left;
 }
 .fiscal-cliente-btn:hover { color: var(--primary); text-decoration: underline; }
+
+/* Bloque 2 del plan de reestructuración del calendario fiscal:
+   agrupación por cliente en /fiscal/vencimientos (antes una única lista
+   plana larga). Mismo patrón visual que .menu-settings/.correo-cuenta-editar
+   (<details> sin marcador nativo, cabecera resaltada al abrir). */
+.fiscal-grupo { margin-bottom: var(--space-3); }
+.fiscal-grupo:last-child { margin-bottom: 0; }
+.fiscal-grupo-resumen {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+.fiscal-grupo-resumen::-webkit-details-marker { display: none; }
+.fiscal-grupo[open] .fiscal-grupo-resumen { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.fiscal-grupo-nombre { flex: 1; min-width: 0; }
+.fiscal-grupo .log-list { margin-top: var(--space-2); }
+
 @media (max-width: 900px) {
   .fiscal-layout { grid-template-columns: 1fr; }
   .fiscal-detalle { position: static; }

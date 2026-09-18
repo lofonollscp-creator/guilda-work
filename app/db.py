@@ -1294,6 +1294,14 @@ def init_db() -> None:
         # FacturaScripts desde su ficha (mismo criterio best-effort que
         # espocrm_cuenta_id de arriba).
         _asegurar_columna(conn, "clientes_fiscales", "facturascripts_cliente_codigo", "TEXT")
+        # País de tributación del cliente (app/vencimientos_fiscales.py:
+        # MODELOS_POR_PAIS) -- reestructuración del calendario fiscal para
+        # soportar clientes que tributan fuera de España. DEFAULT 'ES' para
+        # que todos los clientes ya existentes queden clasificados sin
+        # necesitar ninguna migración manual (hasta ahora el calendario era
+        # implícitamente España-only). Código ISO 3166-1 alfa-2 en
+        # mayúsculas (validado/normalizado en la ruta, no aquí).
+        _asegurar_columna(conn, "clientes_fiscales", "pais", "TEXT NOT NULL DEFAULT 'ES'")
         # Firma electrónica desde un vencimiento (app/documenso.py) --
         # id del envelope de Documenso una vez enviado a firma, para
         # poder consultar su estado/descargarlo sin volver a crearlo.
@@ -4412,7 +4420,7 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo",
+    "facturascripts_cliente_codigo", "pais",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -4872,7 +4880,7 @@ def generar_vencimientos_automaticos() -> int:
         if not modelos:
             continue
         for anio in (anio_actual - 1, anio_actual):
-            for propuesta in generar_vencimientos_propuestos(modelos, anio):
+            for propuesta in generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]):
                 if _existe_vencimiento_fiscal(
                     cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"]
                 ):

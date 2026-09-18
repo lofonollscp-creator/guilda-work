@@ -3,7 +3,7 @@ y el generador de propuestas de app/vencimientos_fiscales.py."""
 import datetime
 
 from app import db
-from app.vencimientos_fiscales import generar_vencimientos_propuestos
+from app.vencimientos_fiscales import generar_vencimientos_propuestos, modelos_disponibles
 
 
 def _tenant_con_cliente(nombre_tenant="Gestoria", nombre_cliente="Cliente") -> tuple[int, int]:
@@ -121,6 +121,26 @@ def test_generar_vencimientos_propuestos_modelo_desconocido_se_ignora():
     assert generar_vencimientos_propuestos(["999-no-existe"], 2026) == []
 
 
+def test_generar_vencimientos_propuestos_pais_por_defecto_es_espana():
+    # Sin pasar `pais` explícito debe comportarse exactamente igual que
+    # antes de la reestructuración por país (default "ES").
+    con_default = generar_vencimientos_propuestos(["303"], 2026)
+    explicito_es = generar_vencimientos_propuestos(["303"], 2026, pais="ES")
+    assert con_default == explicito_es
+
+
+def test_generar_vencimientos_propuestos_pais_sin_calendario_devuelve_vacio():
+    assert generar_vencimientos_propuestos(["303"], 2026, pais="FR") == []
+
+
+def test_modelos_disponibles_espana_incluye_los_6_modelos():
+    assert set(modelos_disponibles("ES")) == {"303", "130", "111", "115", "390", "200"}
+
+
+def test_modelos_disponibles_pais_sin_calendario_devuelve_vacio():
+    assert modelos_disponibles("FR") == {}
+
+
 def test_generar_vencimientos_propuestos_no_escribe_en_bd():
     tenant_id, cliente_id = _tenant_con_cliente()
     generar_vencimientos_propuestos(["303"], 2026)
@@ -197,6 +217,17 @@ def test_modelos_fiscales_se_guardan_y_se_leen():
 
     db.editar_cliente_fiscal(tenant_id2, c2, modelos_fiscales=db.serializar_modelos_fiscales(["390"]))
     assert db.modelos_fiscales_de_cliente(db.obtener_cliente_fiscal(tenant_id2, c2)) == ["390"]
+
+
+def test_cliente_fiscal_pais_por_defecto_es_espana():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id)["pais"] == "ES"
+
+
+def test_cliente_fiscal_pais_se_puede_editar():
+    tenant_id, cliente_id = _tenant_con_cliente()
+    db.editar_cliente_fiscal(tenant_id, cliente_id, pais="OTRO")
+    assert db.obtener_cliente_fiscal(tenant_id, cliente_id)["pais"] == "OTRO"
 
 
 def test_listar_clientes_fiscales_filtra_por_nombre_o_nif():
