@@ -123,9 +123,20 @@ def dashboard():
     solicitudes_pendientes = [
         v for v in vencimientos if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"])
     ]
+    # Agrupados por año (bloque 4 del plan de reestructuración del
+    # calendario fiscal) -- más reciente primero, para que un cliente con
+    # varios años de histórico no vea todo mezclado en una sola lista
+    # larga. `vencimientos` ya viene ordenado por fecha_limite ascendente
+    # (db.listar_vencimientos_fiscales), así que dentro de cada año se
+    # mantiene ese mismo orden.
+    por_anio: dict[str, list] = {}
+    for v in vencimientos:
+        por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
+    anios_ordenados = sorted(por_anio, reverse=True)
     return render_template(
         "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos,
         solicitudes_pendientes=solicitudes_pendientes,
+        por_anio=por_anio, anios_ordenados=anios_ordenados,
     )
 
 

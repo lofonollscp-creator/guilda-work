@@ -11,7 +11,9 @@
   <div class="portal-cliente-shell">
     <header class="page-header">
       <div>
-        <h1>{{ cliente.nombre }}</h1>
+        <h1>{{ cliente.nombre }}
+          {% if cliente.pais and cliente.pais != 'ES' %}<span class="pill" title="{{ _('País de tributación') }}">{{ cliente.pais }}</span>{% endif %}
+        </h1>
         <p class="subtitle">{{ _('Estado de tus vencimientos fiscales.') }}</p>
       </div>
       <form method="post" action="{{ url_for('portal_cliente.salir') }}">
@@ -36,22 +38,30 @@
     {% if not vencimientos %}
     <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
     {% else %}
-    <ul class="log-list">
-      {% for v in vencimientos %}
-      <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
-        <span class="log-text">
-          <a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a>
-        </span>
-        <span class="pill">{{ v.periodo }}</span>
-        <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
-        <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else 'nota' }}">
-          {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
-        </span>
-        <a class="log-edit" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg></a>
-        <a class="log-edit" href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></a>
-      </li>
-      {% endfor %}
-    </ul>
+    {% for anio in anios_ordenados %}
+    <details class="fiscal-grupo" {% if loop.first %}open{% endif %}>
+      <summary class="fiscal-grupo-resumen">
+        <span class="fiscal-grupo-nombre">{{ anio }}</span>
+        <span class="pill">{{ _('%(n)s vencimiento(s)', n=por_anio[anio]|length) }}</span>
+      </summary>
+      <ul class="log-list">
+        {% for v in por_anio[anio] %}
+        <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+          <span class="log-text">
+            <a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a>
+          </span>
+          <span class="pill">{{ v.periodo }}</span>
+          <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
+          <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else 'nota' }}">
+            {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
+          </span>
+          <a class="log-edit" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg></a>
+          <a class="log-edit" href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></a>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endfor %}
     {% endif %}
   </div>
 </body>

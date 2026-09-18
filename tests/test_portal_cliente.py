@@ -626,3 +626,30 @@ def test_dashboard_no_muestra_solicitud_ya_resuelta_con_documento_subido(cliente
     resp = cliente.get("/portal/")
     assert resp.status_code == 200
     assert "Ya subido" not in resp.get_data(as_text=True)
+
+
+def test_dashboard_agrupa_vencimientos_por_anio_mas_reciente_primero(cliente):
+    tenant_id, cliente_id = _cliente_de_prueba(email="dashboard-agrupa@ejemplo.com")
+    # fecha_limite (no `periodo`) es la que determina el año del grupo --
+    # ambas caen en años de calendario distintos de verdad.
+    db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2025-T2", "2025-07-20")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
+
+    cliente.get(f"/portal/entrar/{token}")
+    resp = cliente.get("/portal/")
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert html.count('class="fiscal-grupo"') == 2
+    # El año más reciente (2026) aparece antes que 2025 en el HTML.
+    assert html.index(">2026<") < html.index(">2025<")
+
+
+def test_dashboard_muestra_pais_solo_si_no_es_espana(cliente):
+    tenant_id, cliente_id = _cliente_de_prueba(email="dashboard-pais@ejemplo.com")
+    db.editar_cliente_fiscal(tenant_id, cliente_id, pais="OTRO")
+    token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
+
+    cliente.get(f"/portal/entrar/{token}")
+    resp = cliente.get("/portal/")
+    assert 'title="País de tributación">OTRO' in resp.get_data(as_text=True)
