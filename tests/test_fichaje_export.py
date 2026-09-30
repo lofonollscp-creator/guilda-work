@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+from datetime import datetime, timedelta
 
 from app import db, fichaje_export
 
@@ -33,6 +34,33 @@ def test_a_csv_incluye_cabecera_de_empresa_y_una_fila_por_dia():
     assert filas[0] == ["fecha", "trabajador", "dni_nie", "primera_entrada", "ultima_salida", "horas_trabajadas", "horas_pausa"]
     assert len(filas) == 2
     assert filas[1][1] == "fichaje-export-csv@ejemplo.com"
+
+
+def test_a_csv_reparte_horas_en_turno_que_cruza_medianoche():
+    """Bug encontrado en la auditoría de esta sesión (2026-09-30):
+    _filas_diarias() contabilizaba TODO el turno en el día de la
+    salida, dejando el día de la entrada con 0 horas."""
+    tenant_id = db.crear_tenant("Gestoria Fichaje Nocturno")
+    usuario_id = _usuario("nocturno")
+    db.asignar_tenant(usuario_id, tenant_id)
+
+    base = datetime.now() - timedelta(days=3)
+    medianoche = datetime(base.year, base.month, base.day)
+    entrada_ts = (medianoche - timedelta(hours=1)).isoformat(timespec="seconds")
+    salida_ts = (medianoche + timedelta(hours=1)).isoformat(timespec="seconds")
+    db.fichar(usuario_id, tenant_id, "entrada", marca_tiempo=entrada_ts)
+    db.fichar(usuario_id, tenant_id, "salida", marca_tiempo=salida_ts)
+
+    texto = fichaje_export.a_csv(tenant_id)
+    lineas = texto.splitlines()
+    filas = list(csv.reader(io.StringIO("\n".join(lineas[3:]))))[1:]
+    assert len(filas) == 2
+
+    horas_por_fecha = {f[0]: float(f[5]) for f in filas}
+    dia_entrada = (medianoche - timedelta(days=1)).strftime("%Y-%m-%d")
+    dia_salida = medianoche.strftime("%Y-%m-%d")
+    assert horas_por_fecha[dia_entrada] == 1.0
+    assert horas_por_fecha[dia_salida] == 1.0
 
 
 def test_a_csv_sin_tenant_no_falla():

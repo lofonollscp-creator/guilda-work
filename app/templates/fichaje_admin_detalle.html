@@ -52,6 +52,7 @@
       <option value="{{ valor }}">{{ etiqueta }}</option>
       {% endfor %}
     </select>
+    <input type="datetime-local" name="marca_tiempo" required title="{{ _('Fecha y hora real del fichaje que faltó') }}">
     <input type="number" name="corrige_a" placeholder="{{ _('Nº de fichaje que corrige (opcional)') }}">
     <input type="text" name="nota" placeholder="{{ _('Motivo de la corrección') }}" style="flex: 2;">
     <button type="submit" class="btn btn-primary">{{ _('Añadir corrección') }}</button>

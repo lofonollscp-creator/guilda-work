@@ -194,10 +194,21 @@ def admin_corregir(usuario_id: int):
     volver = {"desde": request.form.get("desde") or None, "hasta": request.form.get("hasta") or None}
     if tipo not in dict(TIPOS_FICHAJE):
         abort(400)
+    # El navegador manda "datetime-local" (YYYY-MM-DDTHH:MM, sin segundos) --
+    # se normaliza a la misma granularidad de segundos que db.now_iso() porque
+    # db.fichar() compara marca_tiempo como string ISO, no como datetime.
+    marca_tiempo_raw = request.form.get("marca_tiempo", "")
+    try:
+        marca_tiempo = datetime.strptime(marca_tiempo_raw, "%Y-%m-%dT%H:%M").isoformat(timespec="seconds")
+    except ValueError:
+        return redirect(url_for(
+            "fichaje.admin_detalle", usuario_id=usuario_id,
+            error="Indica la fecha y hora real del fichaje que se corrige.", **volver,
+        ))
     try:
         db.fichar(
             usuario_id, trabajador["tenant_id"], tipo, origen="correccion_admin",
-            creado_por=g.usuario_id, corrige_a=corrige_a, nota=nota,
+            creado_por=g.usuario_id, corrige_a=corrige_a, nota=nota, marca_tiempo=marca_tiempo,
         )
     except ValueError as e:
         return redirect(url_for("fichaje.admin_detalle", usuario_id=usuario_id, error=str(e), **volver))

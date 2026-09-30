@@ -5,7 +5,7 @@ db.fichajes_tenant_crudos()."""
 import csv
 import io
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
@@ -14,6 +14,33 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from . import db
+
+
+def _fila_vacia(uid: int, fecha_dia: str, f: dict) -> dict:
+    return {
+        "usuario_id": uid, "fecha": fecha_dia, "email": f["email"],
+        "nombre_completo": f["nombre_completo"], "dni_nie": f["dni_nie"],
+        "primera_entrada": None, "ultima_salida": None,
+        "segundos_trabajados": 0, "segundos_pausa": 0,
+    }
+
+
+def _repartir_segundos(filas: dict, orden: list, f: dict, uid: int, inicio: datetime, fin: datetime, campo: str) -> None:
+    """Reparte el intervalo [inicio, fin) entre los días naturales que
+    abarca, sumando los segundos correspondientes a filas[(uid, fecha)][campo]
+    -- crea la fila del día si no existía todavía (turno que cruza
+    medianoche, o dura más de 24h)."""
+    cursor = inicio
+    while cursor < fin:
+        fecha_dia = cursor.strftime("%Y-%m-%d")
+        medianoche_siguiente = datetime(cursor.year, cursor.month, cursor.day) + timedelta(days=1)
+        limite = min(fin, medianoche_siguiente)
+        clave = (uid, fecha_dia)
+        if clave not in filas:
+            filas[clave] = _fila_vacia(uid, fecha_dia, f)
+            orden.append(clave)
+        filas[clave][campo] += (limite - cursor).total_seconds()
+        cursor = limite
 
 
 def _filas_diarias(tenant_id: int | None, desde: str | None, hasta: str | None, usuario_id: int | None) -> list[dict]:
@@ -32,12 +59,7 @@ def _filas_diarias(tenant_id: int | None, desde: str | None, hasta: str | None, 
         fecha = f["marca_tiempo"][:10]
         clave = (uid, fecha)
         if clave not in filas:
-            filas[clave] = {
-                "usuario_id": uid, "fecha": fecha, "email": f["email"],
-                "nombre_completo": f["nombre_completo"], "dni_nie": f["dni_nie"],
-                "primera_entrada": None, "ultima_salida": None,
-                "segundos_trabajados": 0, "segundos_pausa": 0,
-            }
+            filas[clave] = _fila_vacia(uid, fecha, f)
             orden.append(clave)
         fila = filas[clave]
         marca = datetime.fromisoformat(f["marca_tiempo"])
@@ -48,10 +70,10 @@ def _filas_diarias(tenant_id: int | None, desde: str | None, hasta: str | None, 
         elif f["tipo"] == "pausa_inicio":
             pausa_abierta[uid] = marca
         elif f["tipo"] == "pausa_fin" and pausa_abierta.get(uid):
-            fila["segundos_pausa"] += (marca - pausa_abierta[uid]).total_seconds()
+            _repartir_segundos(filas, orden, f, uid, pausa_abierta[uid], marca, "segundos_pausa")
             pausa_abierta[uid] = None
         elif f["tipo"] == "salida" and entrada_abierta.get(uid):
-            fila["segundos_trabajados"] += (marca - entrada_abierta[uid]).total_seconds()
+            _repartir_segundos(filas, orden, f, uid, entrada_abierta[uid], marca, "segundos_trabajados")
             fila["ultima_salida"] = marca
             entrada_abierta[uid] = None
     return [filas[c] for c in orden]
