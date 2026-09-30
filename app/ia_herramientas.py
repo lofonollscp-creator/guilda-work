@@ -663,15 +663,19 @@ ESCRITURA: set[str] = {
     "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet", "fichar",
     "restaurar_de_papelera", "crear_cliente_fiscal", "generar_vencimientos_fiscales",
     "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal",
-    "crear_tarea_recurrente", "crear_factura_cliente",
+    "crear_tarea_recurrente",
     "crm_crear_lead", "crm_crear_contacto", "crm_crear_cuenta",
     "drive_subir_archivo",
-    "crear_documento_firma", "enviar_documento_a_firma",
+    "crear_documento_firma",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son
-# acciones externas irreversibles (enviar un correo de verdad a un tercero).
-SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo"}
+# acciones externas irreversibles hacia terceros (bug encontrado en la
+# auditoría de 2026-09-30: crear_factura_cliente/enviar_documento_a_firma
+# ya avisaban de esto en su description para el LLM, pero solo estaban en
+# ESCRITURA -- con modo autónomo activado, el propio modelo decidía si
+# confirmar o no, sin ninguna garantía en código).
+SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma"}
 
 _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
 

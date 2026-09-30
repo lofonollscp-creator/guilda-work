@@ -48,6 +48,14 @@ def test_ejecutar_propaga_value_error_como_error_de_herramienta(usuario_id):
         ("crear_nota", True, False),
         ("enviar_borrador_correo", True, True),
         ("enviar_borrador_correo", False, True),
+        # Bug encontrado en la auditoría de 2026-09-30: estas dos tienen
+        # efectos irreversibles sobre terceros (factura real, envío a
+        # firma) y no deben poder saltarse la confirmación ni con el modo
+        # autónomo activado -- antes estaban solo en ESCRITURA.
+        ("crear_factura_cliente", True, True),
+        ("crear_factura_cliente", False, True),
+        ("enviar_documento_a_firma", True, True),
+        ("enviar_documento_a_firma", False, True),
     ],
 )
 def test_necesita_confirmacion(nombre, modo_autonomo, esperado):

@@ -109,6 +109,18 @@ def _procesar_suscripcion(tipo: str, objeto: dict) -> None:
     tenant = db.tenant_por_stripe_customer_id(customer_id)
     if tenant is None:
         return
+    # El objeto es la propia Subscription en customer.subscription.*, pero
+    # un Invoice (con su suscripción en el campo "subscription") en
+    # invoice.paid/invoice.payment_failed. Se compara contra la guardada
+    # para no dejar que un evento tardío/reintentado de una suscripción YA
+    # sustituida (p.ej. cancelar y recontratar) pise el estado de la
+    # suscripción actual del mismo tenant (bug encontrado en la auditoría
+    # de 2026-09-30). Si el tenant no tiene ninguna guardada todavía
+    # (activada a mano sin pasar por checkout), se acepta el evento igual.
+    subscription_id = objeto.get("id") if tipo.startswith("customer.subscription.") else objeto.get("subscription")
+    guardada = tenant["stripe_subscription_id"]
+    if guardada and subscription_id and subscription_id != guardada:
+        return
     if tipo == "invoice.paid":
         db.actualizar_suscripcion_estado(tenant["id"], "activa")
     elif tipo == "invoice.payment_failed":

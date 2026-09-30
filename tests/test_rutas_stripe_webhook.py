@@ -223,6 +223,47 @@ def test_subscription_updated_status_desconocido_no_rompe_ni_actualiza(cliente, 
     assert tenant["suscripcion_estado"] == "activa"
 
 
+def test_invoice_payment_failed_de_suscripcion_ya_sustituida_no_pisa_el_estado(cliente, monkeypatch):
+    """Bug encontrado en la auditoría de 2026-09-30: un evento tardío o
+    reintentado de una suscripción YA sustituida por otra (cancelar y
+    recontratar) no debe pisar el estado de la suscripción actual del
+    mismo tenant."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-sub-vieja@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook Sub Vieja")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_5")
+    db.guardar_stripe_subscription_id(tenant_id, "sub_nueva")
+    db.actualizar_suscripcion_estado(tenant_id, "activa")
+
+    _mock_evento(monkeypatch, {
+        "type": "invoice.payment_failed",
+        "data": {"object": {"customer": "cus_5", "subscription": "sub_vieja_cancelada"}},
+    })
+    resp = cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    assert resp.status_code == 200
+    tenant = db.obtener_tenant(tenant_id)
+    assert tenant["suscripcion_estado"] == "activa"  # no se pisó con "pago_fallido"
+
+
+def test_invoice_payment_failed_de_la_suscripcion_actual_si_actualiza(cliente, monkeypatch):
+    """Mismo evento que arriba, pero con el subscription_id que SÍ coincide
+    con el guardado -- debe seguir actualizando como siempre."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "webhook-sub-actual@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Webhook Sub Actual")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_customer_id(tenant_id, "cus_6")
+    db.guardar_stripe_subscription_id(tenant_id, "sub_actual")
+    db.actualizar_suscripcion_estado(tenant_id, "activa")
+
+    _mock_evento(monkeypatch, {
+        "type": "invoice.payment_failed",
+        "data": {"object": {"customer": "cus_6", "subscription": "sub_actual"}},
+    })
+    cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})
+    tenant = db.obtener_tenant(tenant_id)
+    assert tenant["suscripcion_estado"] == "pago_fallido"
+
+
 def test_customer_desconocido_no_rompe(cliente, monkeypatch):
     _mock_evento(monkeypatch, {"type": "invoice.paid", "data": {"object": {"customer": "cus_no_existe"}}})
     resp = cliente.post("/webhooks/stripe", data=b"{}", headers={"Stripe-Signature": "x"})

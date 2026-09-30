@@ -13,7 +13,14 @@
   function escaparHtml(texto) {
     var d = document.createElement("div");
     d.textContent = texto;
-    return d.innerHTML;
+    // El truco textContent->innerHTML escapa &, < y > pero NO las comillas
+    // (no son especiales dentro de un nodo de texto) -- el resultado se
+    // usa luego también dentro de atributos (href="...", title="...",
+    // alt="..."), así que hay que escaparlas aparte para que el modelo no
+    // pueda cerrar el atributo e inyectar otro (bug real encontrado en la
+    // auditoría de 2026-09-30: un enlace markdown con una comilla en la
+    // URL rompía el href e inyectaba HTML).
+    return d.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   // Detecta bloques de tabla markdown ("| a | b |" + fila separadora
