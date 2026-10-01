@@ -873,42 +873,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .dash-stat-valor { font-family: var(--font-mono); font-size: 21px; font-weight: 700; line-height: 1; }
 .dash-stat-label { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
 
-/* Accesos rápidos: fila de chips icono+etiqueta a los destinos más
-   frecuentes -- no existía en el dashboard real, sí en el canvas
-   (sección "Accesos" entre las estadísticas y las tarjetas de acción). */
-.dash-accesos {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
-}
-.dash-acceso {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  text-decoration: none;
-  font-size: 13px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-.dash-acceso:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); transform: translateY(-1px); color: var(--text); }
-.dash-acceso-icono {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
-  flex-shrink: 0;
-}
-.dash-acceso-icono svg { width: 16px; height: 16px; }
-
 .dash-acciones {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -963,9 +927,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    canvas de diseño. .dash-ia usa exactamente el mismo tratamiento
    plano que el resto de tarjetas de esta columna (antes llevaba su
    propio degradado de acento, que la distinguía sin necesidad real). */
+/* Fondo --bg (el mismo de la página) en vez de --surface (el de las
+   tarjetas "importantes" como .menu-card/.dash-stat) -- da jerarquía
+   real entre columna principal y secundaria sin añadir ningún
+   componente nuevo: el contenido de gestión queda "elevado", el
+   contexto del día + el chat quedan "al ras", visualmente secundarios. */
 .dash-sidebar .log-section {
   margin-bottom: 0;
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 16px;
@@ -979,7 +948,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   margin: 0;
   padding: 16px;
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
 }
 .dash-ia h3 { margin: 0 0 var(--space-3); display: flex; align-items: center; gap: 8px; }
@@ -1132,10 +1101,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-weight: 600;
 }
 
+/* Mismo tratamiento plano que el resto del dashboard (.dash-stat,
+   .dash-accion, .menu-card) -- antes usaba el "glass" de una fase de
+   diseño anterior (superficie semitransparente, radio grande),
+   inconsistente con el resto de tarjetas de esta misma pantalla. */
 .onboarding-card {
-  background: color-mix(in srgb, var(--glass-bg) 60%, transparent);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 18px 20px;
   margin-bottom: 24px;
 }
@@ -1152,7 +1125,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   align-items: center;
   gap: 10px;
   padding: 8px 0;
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--border);
 }
 .onboarding-paso:first-child { border-top: none; }
 .onboarding-check {
@@ -1221,15 +1194,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   flex-wrap: wrap;
 }
 
+/* Ahora vive DENTRO de .dash-main, justo debajo de las tarjetas de
+   menú (antes: fuera de .dash-layout, al final de la página, con su
+   propio ancho fijo de 560px y el "glass" de una fase de diseño
+   anterior -- parecía un añadido aparte en vez de parte del mismo
+   flujo de gestión de menús). Mismo tratamiento plano que el resto. */
 .new-menu {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
-  max-width: 560px;
+  margin-top: var(--space-4);
 }
 .new-menu h3 { margin: 0 0 12px; font-size: 1em; color: var(--text-muted); }
 

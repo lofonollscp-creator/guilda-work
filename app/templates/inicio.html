@@ -71,15 +71,6 @@
   {% endif %}
 </section>
 
-<section class="dash-accesos">
-  <a class="dash-acceso" href="{{ url_for('tareas.listar') }}"><span class="dash-acceso-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg></span>{{ _('Tareas') }}</a>
-  <a class="dash-acceso" href="{{ url_for('correo.bandeja') }}"><span class="dash-acceso-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg></span>{{ _('Correo') }}</a>
-  <a class="dash-acceso" href="{{ url_for('fichaje.panel') }}"><span class="dash-acceso-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg></span>{{ _('Fichaje') }}</a>
-  {% if g.tenant_id %}
-  <a class="dash-acceso" href="{{ url_for('fiscal.vencimientos') }}"><span class="dash-acceso-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg></span>{{ _('Cal. fiscal') }}</a>
-  {% endif %}
-</section>
-
 <div class="dash-layout">
 <div class="dash-main">
 <section class="dash-acciones">
@@ -173,6 +164,23 @@
   </div>
   </div>
 {% endif %}
+
+<section class="new-menu" id="new-menu">
+  <h3>+ {{ _('Nuevo menú') }}</h3>
+  <form class="menu-form" method="post" action="{{ url_for('crear_menu') }}">
+    <div class="inline-form">
+      <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del menú') }}</label>
+      <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
+      <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
+      <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
+      <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
+    </div>
+    <div class="menu-form-icono">
+      <span class="menu-form-icono-label">{{ _('Icono') }}</span>
+      {{ selector_icono('folder') }}
+    </div>
+  </form>
+</section>
 </div>
 
 <aside class="dash-sidebar">
@@ -211,22 +219,5 @@
   </section>
 </aside>
 </div>
-
-<section class="new-menu" id="new-menu">
-  <h3>+ {{ _('Nuevo menú') }}</h3>
-  <form class="menu-form" method="post" action="{{ url_for('crear_menu') }}">
-    <div class="inline-form">
-      <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del menú') }}</label>
-      <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
-      <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
-      <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
-      <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
-    </div>
-    <div class="menu-form-icono">
-      <span class="menu-form-icono-label">{{ _('Icono') }}</span>
-      {{ selector_icono('folder') }}
-    </div>
-  </form>
-</section>
 <script src="{{ url_for('static', filename='menu_icono.js') }}"></script>
 {% endblock %}
