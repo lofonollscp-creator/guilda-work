@@ -14,15 +14,16 @@
         <h1>{{ vencimiento.modelo }} — {{ vencimiento.periodo }}</h1>
         <p class="subtitle">{{ _('Vence %(fecha)s', fecha=vencimiento.fecha_limite[:10]) }}</p>
       </div>
-      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.dashboard') }}">{{ _('Volver') }}</a>
     </header>
+
+    <a class="portal-volver" href="{{ url_for('portal_cliente.dashboard') }}">&larr; {{ _('Volver a tu expediente') }}</a>
 
     {% if error %}
     <div class="ia-error">{{ error }}</div>
     {% endif %}
 
-    <form method="post" action="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="quick-card">
-      <label>{{ _('Subir documento (imagen o PDF, hasta 8MB)') }}</label>
+    <form method="post" action="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="portal-subir">
+      <label>{{ _('Imagen o PDF, hasta 8MB') }}</label>
       <span class="file-input">
         <label class="file-input-boton btn btn-ghost">
           <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
@@ -31,20 +32,19 @@
         </label>
         <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
       </span>
-      <button type="submit" class="btn btn-primary">{{ _('Subir') }}</button>
+      <button type="submit" class="btn btn-primary" style="margin-top: var(--space-3);">{{ _('Subir') }}</button>
     </form>
 
     {% if not documentos %}
     <p class="empty-lane">{{ _('Todavía no has subido ningún documento.') }}</p>
     {% else %}
-    <ul class="log-list">
-      {% for d in documentos %}
-      <li class="log-item">
-        <span class="log-text">{{ d.nombre_archivo }}</span>
-        <span class="pill">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
-      </li>
-      {% endfor %}
-    </ul>
+    {% for d in documentos %}
+    <div class="portal-doc">
+      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+      {{ d.nombre_archivo }}
+      <span class="peso">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+    </div>
+    {% endfor %}
     {% endif %}
   </div>
   <script src="{{ url_for('static', filename='file_input.js') }}"></script>

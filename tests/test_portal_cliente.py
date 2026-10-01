@@ -640,9 +640,41 @@ def test_dashboard_agrupa_vencimientos_por_anio_mas_reciente_primero(cliente):
     resp = cliente.get("/portal/")
     html = resp.get_data(as_text=True)
     assert resp.status_code == 200
-    assert html.count('class="fiscal-grupo"') == 2
+    assert html.count('class="portal-anio-titulo"') == 2
     # El año más reciente (2026) aparece antes que 2025 en el HTML.
     assert html.index(">2026<") < html.index(">2025<")
+
+
+def test_dashboard_resumen_cuenta_presentados_y_proximo_pendiente(cliente):
+    """Rediseño del portal (dirección 'B', aprobada tras comparar
+    mockups): el anillo de resumen necesita el recuento de presentados
+    sobre el total y cuál es el próximo vencimiento pendiente."""
+    tenant_id, cliente_id = _cliente_de_prueba(email="dashboard-resumen@ejemplo.com")
+    v_presentado = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, v_presentado)
+    db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T2", "2026-07-20")
+    token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
+
+    cliente.get(f"/portal/entrar/{token}")
+    resp = cliente.get("/portal/")
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert "1 de 2 presentados" in html
+    assert "El próximo vence el 2026-07-20" in html
+
+
+def test_dashboard_resumen_todo_presentado_no_muestra_proximo(cliente):
+    tenant_id, cliente_id = _cliente_de_prueba(email="dashboard-resumen-completo@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+    db.marcar_presentado_vencimiento_fiscal(tenant_id, v_id)
+    token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
+
+    cliente.get(f"/portal/entrar/{token}")
+    resp = cliente.get("/portal/")
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert "1 de 1 presentados" in html
+    assert "Todo presentado, sin nada pendiente." in html
 
 
 def test_dashboard_muestra_pais_solo_si_no_es_espana(cliente):

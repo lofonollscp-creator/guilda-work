@@ -133,10 +133,17 @@ def dashboard():
     for v in vencimientos:
         por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
     anios_ordenados = sorted(por_anio, reverse=True)
+    # Resumen para el anillo de progreso del rediseño (dirección "B" del
+    # portal, aprobada por el usuario tras comparar mockups) -- cuántos
+    # están presentados sobre el total, y cuál es el próximo pendiente
+    # (vencimientos ya viene ordenado por fecha_limite ascendente).
+    presentados = sum(1 for v in vencimientos if v["estado"] == "presentado")
+    proximo_pendiente = next((v for v in vencimientos if v["estado"] != "presentado"), None)
     return render_template(
         "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos,
         solicitudes_pendientes=solicitudes_pendientes,
         por_anio=por_anio, anios_ordenados=anios_ordenados,
+        presentados=presentados, proximo_pendiente=proximo_pendiente,
     )
 
 

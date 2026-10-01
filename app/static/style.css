@@ -99,6 +99,24 @@
   --glass-border: var(--border);
   --glass-blur: 0px;
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+
+  /* Portal de cliente (dirección "B" del rediseño, aprobada tras comparar
+     mockups): paleta de papel cálido deliberadamente DISTINTA del
+     terminal lima/negro del resto de la app -- quien abre el portal es
+     un cliente de la gestoría, a menudo sin perfil técnico, no el
+     personal interno. El lima se conserva como acento de marca
+     reconocible, pero sobre un fondo cálido en vez de negro. */
+  --portal-paper: #faf8f3;
+  --portal-card: #ffffff;
+  --portal-line: #e4e0d4;
+  --portal-ink: #2b2a24;
+  --portal-muted: #7a7768;
+  --portal-accent: #6b8f00;
+  --portal-accent-bg: #eef5d6;
+  --portal-warn-bg: #fdf1dc;
+  --portal-warn-ink: #8a5a12;
+  --portal-ok-bg: #e9f5ea;
+  --portal-ok-ink: #2f7a3c;
 }
 
 /* Modo oscuro: sigue "Sistema" (prefers-color-scheme) salvo que el usuario
@@ -123,6 +141,20 @@
     --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
     --glass-bg: var(--surface);
     --glass-border: var(--border);
+    /* Portal de cliente: "papel oscuro" cálido, no el negro puro del
+       resto de la app -- conserva la identidad de "expediente" también
+       en oscuro, con el lima aclarado para contraste. */
+    --portal-paper: #16140f;
+    --portal-card: #1e1b14;
+    --portal-line: #332f22;
+    --portal-ink: #ece7d8;
+    --portal-muted: #a39d87;
+    --portal-accent: #c7e85c;
+    --portal-accent-bg: #2a2f12;
+    --portal-warn-bg: #3a2c10;
+    --portal-warn-ink: #e8c168;
+    --portal-ok-bg: #16301d;
+    --portal-ok-ink: #7fd996;
   }
 }
 :root[data-theme="dark"] {
@@ -140,6 +172,17 @@
   --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
   --glass-bg: var(--surface);
   --glass-border: var(--border);
+  --portal-paper: #16140f;
+  --portal-card: #1e1b14;
+  --portal-line: #332f22;
+  --portal-ink: #ece7d8;
+  --portal-muted: #a39d87;
+  --portal-accent: #c7e85c;
+  --portal-accent-bg: #2a2f12;
+  --portal-warn-bg: #3a2c10;
+  --portal-warn-ink: #e8c168;
+  --portal-ok-bg: #16301d;
+  --portal-ok-ink: #7fd996;
 }
 
 * { box-sizing: border-box; }
@@ -3380,20 +3423,218 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .auth-alterna { text-align: center; font-size: 0.88em; color: var(--text-muted); margin: var(--space-2) 0 0; }
 
 /* ---- Portal de cliente (páginas independientes, sin app-shell) ----
-   Mismo criterio que .auth-shell: página propia, no hereda el layout de
-   base.html (sin icon-rail/top-bar), pero con contenido normal (listas,
-   formularios) en vez de una tarjeta de login centrada -- por eso un
-   contenedor ancho con margen, no .auth-shell/.auth-card. */
+   Dirección "B" del rediseño (comparada con otra en un canvas de
+   mockups, aprobada por el usuario): identidad propia de "expediente
+   fiscal" sobre papel cálido -- deliberadamente NO hereda el terminal
+   lima/negro del resto de la app (ver tokens --portal-* más arriba).
+   Mismo criterio de "página propia, sin app-shell" que .auth-shell. */
 .portal-cliente-shell {
   max-width: 720px;
   margin: 0 auto;
   padding: var(--space-6) var(--space-4);
+  background: var(--portal-paper);
+  color: var(--portal-ink);
+  min-height: 100vh;
 }
 .portal-cliente-shell .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.portal-cliente-shell .page-header .subtitle { color: var(--portal-muted); }
+.portal-cliente-shell .btn-ghost {
+  border-color: var(--portal-line);
+  color: var(--portal-muted);
+  background: var(--portal-card);
+}
+
+/* Resumen con anillo de progreso (presentados/total) -- el cliente ve de
+   un vistazo cuánto le queda sin tener que contar filas. El anillo es un
+   conic-gradient puro, sin SVG ni librería de gráficos: solo dos colores
+   (acento = presentados, línea = pendientes), nunca más de una métrica. */
+.portal-resumen {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--portal-card);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.portal-resumen-anillo {
+  --pct: 0deg;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: conic-gradient(var(--portal-accent) var(--pct), var(--portal-line) var(--pct));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.portal-resumen-anillo span {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--portal-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.portal-resumen-texto strong { display: block; font-size: 1.02em; }
+.portal-resumen-texto span { font-size: 0.88em; color: var(--portal-muted); }
+
+/* Aviso de documento pedido por la gestoría -- mismo tono de advertencia
+   que .portal-carpeta.warn, para que el cliente reconozca el color antes
+   de leer el texto. */
+.portal-peticion {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  background: var(--portal-warn-bg);
+  border: 1px solid color-mix(in srgb, var(--portal-warn-ink) 35%, var(--portal-warn-bg));
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.portal-peticion svg { flex-shrink: 0; color: var(--portal-warn-ink); margin-top: 2px; }
+.portal-peticion strong { display: block; color: var(--portal-warn-ink); font-size: 0.92em; margin-bottom: 2px; }
+.portal-peticion a { color: var(--portal-ink); font-weight: 600; }
+
+.portal-anio-titulo {
+  font-size: 0.78em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--portal-muted);
+  margin: var(--space-5) 0 var(--space-3);
+}
+.portal-anio-titulo:first-of-type { margin-top: 0; }
+
+/* Cada vencimiento como una "carpeta" de expediente -- metáfora
+   deliberada (pestaña con el modelo, estado como color de la propia
+   pestaña) en vez de una fila de tabla genérica. */
+.portal-carpeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--portal-card);
+  border: 1px solid var(--portal-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
+  text-decoration: none;
+  color: inherit;
+}
+.portal-carpeta-tab {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72em;
+  font-weight: 800;
+  text-decoration: none;
+}
+.portal-carpeta.ok .portal-carpeta-tab { background: var(--portal-ok-bg); color: var(--portal-ok-ink); }
+.portal-carpeta.warn .portal-carpeta-tab { background: var(--portal-warn-bg); color: var(--portal-warn-ink); }
+.portal-carpeta-info {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+.portal-carpeta-info strong { display: block; font-size: 0.95em; }
+.portal-carpeta-info span { font-size: 0.85em; color: var(--portal-muted); }
+.portal-estado {
+  font-size: 0.78em;
+  font-weight: 700;
+  padding: 4px var(--space-2);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.portal-estado.ok { background: var(--portal-ok-bg); color: var(--portal-ok-ink); }
+.portal-estado.warn { background: var(--portal-warn-bg); color: var(--portal-warn-ink); }
+.portal-carpeta-iconos {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+.portal-carpeta-iconos a {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--portal-muted);
+  border-radius: var(--radius-sm);
+}
+.portal-carpeta-iconos a:hover { background: var(--portal-paper); color: var(--portal-ink); }
+
+.portal-volver {
+  display: inline-block;
+  font-size: 0.85em;
+  color: var(--portal-accent);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  text-decoration: none;
+}
+
+/* Subir documento: zona de soltar con borde discontinuo, mismo
+   lenguaje visual que el resto del portal (tarjeta sobre papel) en vez
+   de reusar .quick-card del panel interno. */
+.portal-subir {
+  background: var(--portal-card);
+  border: 2px dashed var(--portal-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+.portal-subir label:first-child { color: var(--portal-muted); font-size: 0.88em; display: block; margin-bottom: var(--space-3); }
+.portal-subir .btn-primary { background: var(--portal-accent); color: #fff; border-color: var(--portal-accent); }
+.portal-doc {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--portal-accent-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  font-size: 0.9em;
+}
+.portal-doc .peso { margin-left: auto; color: var(--portal-muted); font-size: 0.82em; }
+
+/* Mensajes del vencimiento: burbujas de chat simples, el cliente a la
+   derecha (acento) y la gestoría a la izquierda (neutro) -- mismo
+   patrón de lateralidad que cualquier chat reconocible, sin reusar
+   .log-item genérico. */
+.portal-hilo { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-5); }
+.portal-msg {
+  max-width: 80%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: 0.92em;
+}
+.portal-msg .fecha { display: block; font-size: 0.78em; color: var(--portal-muted); margin-top: 4px; }
+.portal-msg.cliente {
+  align-self: flex-end;
+  background: var(--portal-accent-bg);
+  border-bottom-right-radius: var(--radius-sm);
+}
+.portal-msg.gestoria {
+  align-self: flex-start;
+  background: var(--portal-card);
+  border: 1px solid var(--portal-line);
+  border-bottom-left-radius: var(--radius-sm);
 }
 
 /* ---- Herramientas: tarjetas de app conectadas, estilo "rice" (Hyprland) ----
