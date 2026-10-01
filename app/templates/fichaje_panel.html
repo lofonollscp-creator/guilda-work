@@ -31,24 +31,43 @@
     <span class="pill {{ 'estado-dentro' if estado == 'dentro' else ('estado-en-pausa' if estado == 'en_pausa' else 'estado-fuera') }}">
       {{ _('Dentro de jornada') if estado == 'dentro' else (_('En pausa') if estado == 'en_pausa' else _('Fuera de jornada')) }}
     </span>
+    {% if estado != 'fuera' and ultimo_evento %}
+    <span class="fichaje-desde">
+      {{ _('llevas') }}
+      <span class="task-timer" data-inicio="{{ ultimo_evento.marca_tiempo }}">00:00:00</span>
+      {{ _('en pausa') if estado == 'en_pausa' else _('dentro') }}
+    </span>
+    {% endif %}
   </div>
+  {# Solo se muestran las 1-2 acciones realmente válidas desde el estado
+     actual -- antes los 4 botones estaban siempre visibles y los no
+     válidos quedaban atenuados (opacity), compitiendo visualmente con
+     el que sí importa en cada momento. #}
   <div class="fichaje-botones">
+    {% if estado == 'fuera' %}
     <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="entrada">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-entrada" {{ 'disabled' if estado != 'fuera' }}>{{ _('Entrada') }}</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-entrada">{{ _('Entrada') }}</button>
     </form>
+    {% endif %}
+    {% if estado == 'dentro' %}
     <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="pausa_inicio">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'dentro' }}>{{ _('Iniciar pausa') }}</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa">{{ _('Iniciar pausa') }}</button>
     </form>
+    {% endif %}
+    {% if estado == 'en_pausa' %}
     <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="pausa_fin">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa" {{ 'disabled' if estado != 'en_pausa' }}>{{ _('Fin de pausa') }}</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-pausa">{{ _('Fin de pausa') }}</button>
     </form>
+    {% endif %}
+    {% if estado != 'fuera' %}
     <form method="post" action="{{ url_for('fichaje.marcar') }}" class="fichaje-form-marcar">
       <input type="hidden" name="tipo" value="salida">
-      <button type="submit" class="btn fichaje-btn fichaje-btn-salida" {{ 'disabled' if estado == 'fuera' }}>{{ _('Salida') }}</button>
+      <button type="submit" class="btn fichaje-btn fichaje-btn-salida">{{ _('Salida') }}</button>
     </form>
+    {% endif %}
   </div>
   {% if geolocalizacion_activa %}
   <p class="subtitle"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-map-pin"></use></svg> {{ _('Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez.') }}</p>
@@ -102,5 +121,6 @@
   {% endif %}
 </aside>
 </div>
+<script src="{{ url_for('static', filename='timer.js') }}"></script>
 {% endif %}
 {% endblock %}

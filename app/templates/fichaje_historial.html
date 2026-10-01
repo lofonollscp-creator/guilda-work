@@ -27,20 +27,34 @@
 {% if not fichajes %}
 <p class="empty-lane">{{ _('Sin fichajes en este periodo.') }}</p>
 {% else %}
-<div class="table-wrap">
-<table class="historial-table">
-  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Hora') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Origen') }}</th></tr></thead>
-  <tbody>
-    {% for f in fichajes %}
-    <tr>
-      <td class="mono">{{ f.marca_tiempo[:10] }}</td>
-      <td class="mono">{{ f.marca_tiempo[11:16] }}</td>
-      <td>{{ tipos_fichaje[f.tipo] }}{% if f.corrige_a %} <span class="pill">{{ _('corrección') }}</span>{% endif %}</td>
-      <td class="mono">{{ f.origen }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-</div>
+{% for dia in dias_ordenados %}
+{% set resumen = por_dia_resumen.get(dia) %}
+<details class="fichaje-dia" {% if loop.first %}open{% endif %}>
+  <summary class="fichaje-dia-resumen">
+    <span class="fichaje-dia-fecha mono">{{ dia }}</span>
+    {% if resumen %}
+    <span class="fichaje-dia-horas">
+      {% if resumen.primera_entrada %}{{ resumen.primera_entrada.strftime('%H:%M') }}{% if resumen.ultima_salida %} – {{ resumen.ultima_salida.strftime('%H:%M') }}{% endif %}{% endif %}
+    </span>
+    <span class="pill">{{ _('%(h)s h trabajadas', h=('%.1f'|format(resumen.segundos_trabajados / 3600))) }}</span>
+    {% if resumen.segundos_pausa %}<span class="pill">{{ _('%(h)s h pausa', h=('%.1f'|format(resumen.segundos_pausa / 3600))) }}</span>{% endif %}
+    {% endif %}
+  </summary>
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead><tr><th>{{ _('Hora') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Origen') }}</th></tr></thead>
+    <tbody>
+      {% for f in por_dia[dia] %}
+      <tr>
+        <td class="mono">{{ f.marca_tiempo[11:16] }}</td>
+        <td>{{ tipos_fichaje[f.tipo] }}{% if f.corrige_a %} <span class="pill">{{ _('corrección') }}</span>{% endif %}</td>
+        <td class="mono">{{ f.origen }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</details>
+{% endfor %}
 {% endif %}
 {% endblock %}

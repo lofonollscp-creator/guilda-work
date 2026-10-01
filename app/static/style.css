@@ -4191,18 +4191,51 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   padding: 32px; text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: var(--space-4);
 }
-.fichaje-estado { margin-bottom: 0; }
+.fichaje-estado {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.fichaje-desde {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .pill.estado-fuera { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
 .pill.estado-dentro { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
 .pill.estado-en-pausa { background: color-mix(in srgb, var(--warning) 16%, transparent); border-color: color-mix(in srgb, var(--warning) 35%, transparent); color: var(--warning); }
 .fichaje-botones { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .fichaje-btn { padding: 16px 28px; font-size: 1.05em; font-weight: 700; border-radius: var(--radius); }
-.fichaje-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .fichaje-btn-entrada { background: var(--success); border-color: var(--success); color: white; }
-.fichaje-btn-entrada:hover:not(:disabled) { background: color-mix(in srgb, var(--success) 85%, black); }
+.fichaje-btn-entrada:hover { background: color-mix(in srgb, var(--success) 85%, black); }
 .fichaje-btn-pausa { background: color-mix(in srgb, var(--warning) 18%, var(--surface)); border-color: var(--warning); color: var(--warning); }
 .fichaje-btn-salida { background: var(--danger); border-color: var(--danger); color: white; }
-.fichaje-btn-salida:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, black); }
+.fichaje-btn-salida:hover { background: color-mix(in srgb, var(--danger) 85%, black); }
+
+/* Agrupación del historial por día (mismo patrón que .fiscal-grupo --
+   clases propias para no acoplar los dos módulos, ver criterio ya
+   establecido de "tools-grid no reusa menu-grid"). */
+.fichaje-dia { margin-bottom: var(--space-3); }
+.fichaje-dia:last-child { margin-bottom: 0; }
+.fichaje-dia-resumen {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+.fichaje-dia-resumen::-webkit-details-marker { display: none; }
+.fichaje-dia[open] .fichaje-dia-resumen { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.fichaje-dia-fecha { flex: 1; min-width: 0; }
+.fichaje-dia-horas { font-size: 0.82em; color: var(--text-muted); font-weight: 400; }
+.fichaje-dia .table-wrap { margin-top: var(--space-2); }
 
 @media (max-width: 640px) {
   .app-shell { padding: var(--space-1); gap: var(--space-1); }

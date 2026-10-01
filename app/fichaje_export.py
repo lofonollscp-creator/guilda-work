@@ -43,12 +43,14 @@ def _repartir_segundos(filas: dict, orden: list, f: dict, uid: int, inicio: date
         cursor = limite
 
 
-def _filas_diarias(tenant_id: int | None, desde: str | None, hasta: str | None, usuario_id: int | None) -> list[dict]:
+def filas_diarias(tenant_id: int | None, desde: str | None, hasta: str | None, usuario_id: int | None) -> list[dict]:
     """Agrupa los eventos en bruto por trabajador y día -- primera entrada,
     última salida, horas trabajadas y de pausa de ese día. Igual que
     db.resumen_fichajes_tenant() pero por día en vez de por todo el
     periodo, que es lo que hace falta en un registro exportable de
-    verdad (no solo el total)."""
+    verdad (no solo el total). Pública (sin "_") porque también la usa
+    app/rutas_fichaje.py para agrupar el historial del propio trabajador
+    por día con sus totales, no solo la exportación."""
     crudos = db.fichajes_tenant_crudos(tenant_id, desde, hasta, usuario_id)
     filas: dict[tuple, dict] = {}
     orden: list[tuple] = []
@@ -96,7 +98,7 @@ def a_csv(tenant_id: int | None, desde: str | None = None, hasta: str | None = N
     buf.write(f"# {periodo}\n")
     writer = csv.writer(buf)
     writer.writerow(["fecha", "trabajador", "dni_nie", "primera_entrada", "ultima_salida", "horas_trabajadas", "horas_pausa"])
-    for f in _filas_diarias(tenant_id, desde, hasta, usuario_id):
+    for f in filas_diarias(tenant_id, desde, hasta, usuario_id):
         writer.writerow([
             f["fecha"],
             f["nombre_completo"] or f["email"],
@@ -154,7 +156,7 @@ def a_json(tenant_id: int | None, desde: str | None = None, hasta: str | None = 
 def a_pdf(tenant_id: int | None, desde: str | None = None, hasta: str | None = None, usuario_id: int | None = None) -> bytes:
     tenant = db.obtener_tenant(tenant_id) if tenant_id else None
     empresa, identificacion, periodo = _cabecera(tenant, desde, hasta)
-    filas = _filas_diarias(tenant_id, desde, hasta, usuario_id)
+    filas = filas_diarias(tenant_id, desde, hasta, usuario_id)
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title="Registro de fichaje")

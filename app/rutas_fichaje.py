@@ -65,6 +65,7 @@ def panel():
         "fichaje_panel.html",
         datos_incompletos=False,
         estado=db.estado_actual_fichaje(g.usuario_id),
+        ultimo_evento=db.ultimo_fichaje(g.usuario_id),
         hoy=db.listar_fichajes(g.usuario_id, desde=hoy, hasta=hoy),
         error=request.args.get("error"),
         geolocalizacion_activa=_geolocalizacion_activa(),
@@ -99,10 +100,28 @@ def marcar():
 def historial():
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
+    fichajes = db.listar_fichajes(g.usuario_id, desde, hasta)
+    # Agrupado por día con totales (reusa fichaje_export.filas_diarias(),
+    # la misma agregación que ya usan los exportables CSV/PDF) -- antes
+    # el historial era una tabla plana de eventos sueltos sin resumen de
+    # horas trabajadas por jornada, obligando a hacer cálculo mental.
+    por_dia_fecha: dict[str, dict] = {
+        fila["fecha"]: fila for fila in fichaje_export.filas_diarias(g.tenant_id, desde, hasta, g.usuario_id)
+    }
+    por_dia: dict[str, list] = {}
+    for f in fichajes:
+        por_dia.setdefault(f["marca_tiempo"][:10], []).append(f)
+    # fichajes viene ordenado por marca_tiempo DESCENDENTE (db.listar_fichajes)
+    # -- dentro de cada día se invierte para leerlo en orden cronológico
+    # normal (entrada arriba, salida abajo), el orden DESC solo tiene
+    # sentido entre días, no dentro de uno.
+    for eventos_dia in por_dia.values():
+        eventos_dia.reverse()
+    dias_ordenados = sorted(por_dia, reverse=True)
     return render_template(
         "fichaje_historial.html",
         desde=desde or "", hasta=hasta or "",
-        fichajes=db.listar_fichajes(g.usuario_id, desde, hasta),
+        fichajes=fichajes, dias_ordenados=dias_ordenados, por_dia=por_dia, por_dia_resumen=por_dia_fecha,
     )
 
 

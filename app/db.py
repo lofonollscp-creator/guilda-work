@@ -6835,6 +6835,21 @@ def estado_actual_fichaje(usuario_id: int) -> str:
         conn.close()
 
 
+def ultimo_fichaje(usuario_id: int) -> sqlite3.Row | None:
+    """La fila completa del último evento de fichaje -- a diferencia de
+    estado_actual_fichaje() (que calcula el ESTADO a partir del mismo
+    último evento pero descarta su marca_tiempo), esta sí expone la
+    marca_tiempo, para poder mostrar "llevas X tiempo dentro/en pausa"
+    en el panel del trabajador."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM fichajes WHERE usuario_id = ? ORDER BY id DESC LIMIT 1", (usuario_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
 def listar_fichajes(usuario_id: int, desde: str | None = None, hasta: str | None = None) -> list[sqlite3.Row]:
     """Historial de un trabajador -- se usa tanto para su propio
     historial como para el detalle que ve un admin de un trabajador

@@ -38,7 +38,7 @@ def test_a_csv_incluye_cabecera_de_empresa_y_una_fila_por_dia():
 
 def test_a_csv_reparte_horas_en_turno_que_cruza_medianoche():
     """Bug encontrado en la auditoría de esta sesión (2026-09-30):
-    _filas_diarias() contabilizaba TODO el turno en el día de la
+    filas_diarias() contabilizaba TODO el turno en el día de la
     salida, dejando el día de la entrada con 0 horas."""
     tenant_id = db.crear_tenant("Gestoria Fichaje Nocturno")
     usuario_id = _usuario("nocturno")

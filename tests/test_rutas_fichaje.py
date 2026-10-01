@@ -86,3 +86,76 @@ def test_admin_corregir_requiere_gestor_del_mismo_tenant(cliente):
         data={"tipo": "entrada", "marca_tiempo": "2026-01-01T10:00"},
     )
     assert resp.status_code == 403
+
+
+# --- Rediseño del panel (bloque 2 del rediseño interno, 2026-10-01) --------
+
+def test_panel_estado_fuera_solo_muestra_boton_entrada(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fichaje-panel-fuera@ejemplo.com", "contrasena123")
+    db.guardar_fichaje_datos(usuario_id, "Trabajador de Prueba", "12345678A")
+    html = cliente.get("/fichaje/").get_data(as_text=True)
+    assert 'name="tipo" value="entrada"' in html
+    assert 'name="tipo" value="pausa_inicio"' not in html
+    assert 'name="tipo" value="pausa_fin"' not in html
+    assert 'name="tipo" value="salida"' not in html
+
+
+def test_panel_estado_dentro_muestra_pausa_y_salida_no_entrada(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fichaje-panel-dentro@ejemplo.com", "contrasena123")
+    db.guardar_fichaje_datos(usuario_id, "Trabajador de Prueba", "12345678A")
+    db.fichar(usuario_id, None, "entrada")
+
+    html = cliente.get("/fichaje/").get_data(as_text=True)
+    assert 'name="tipo" value="entrada"' not in html
+    assert 'name="tipo" value="pausa_inicio"' in html
+    assert 'name="tipo" value="pausa_fin"' not in html
+    assert 'name="tipo" value="salida"' in html
+    # Feedback de tiempo transcurrido: el contador vive y arranca desde
+    # la marca_tiempo del último evento real.
+    assert 'class="task-timer" data-inicio="' in html
+
+
+def test_panel_estado_en_pausa_muestra_solo_fin_de_pausa_y_salida(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fichaje-panel-pausa@ejemplo.com", "contrasena123")
+    db.guardar_fichaje_datos(usuario_id, "Trabajador de Prueba", "12345678A")
+    db.fichar(usuario_id, None, "entrada")
+    db.fichar(usuario_id, None, "pausa_inicio")
+
+    html = cliente.get("/fichaje/").get_data(as_text=True)
+    assert 'name="tipo" value="pausa_inicio"' not in html
+    assert 'name="tipo" value="pausa_fin"' in html
+    assert 'name="tipo" value="salida"' in html
+
+
+# --- Historial agrupado por día (bloque 2 del rediseño interno) -----------
+
+def test_historial_agrupa_por_dia_con_total_de_horas(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "fichaje-historial-grupo@ejemplo.com", "contrasena123")
+    hoy = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+    db.fichar(usuario_id, None, "entrada", marca_tiempo=hoy.isoformat(timespec="seconds"))
+    db.fichar(usuario_id, None, "salida", marca_tiempo=(hoy + timedelta(hours=2)).isoformat(timespec="seconds"))
+
+    html = cliente.get("/fichaje/historial").get_data(as_text=True)
+    assert 'class="fichaje-dia"' in html
+    assert "2.0 h trabajadas" in html
+
+
+def test_historial_sin_fichajes_muestra_vacio(cliente):
+    iniciar_sesion_de_prueba(cliente, "fichaje-historial-vacio@ejemplo.com", "contrasena123")
+    html = cliente.get("/fichaje/historial").get_data(as_text=True)
+    assert "Sin fichajes en este periodo." in html
+    assert 'class="fichaje-dia"' not in html
+
+
+# --- db.ultimo_fichaje() (bloque 2 del rediseño interno) -------------------
+
+def test_ultimo_fichaje_ninguno_devuelve_none(usuario_id):
+    assert db.ultimo_fichaje(usuario_id) is None
+
+
+def test_ultimo_fichaje_devuelve_la_fila_mas_reciente(usuario_id):
+    db.fichar(usuario_id, None, "entrada")
+    db.fichar(usuario_id, None, "pausa_inicio")
+    ultimo = db.ultimo_fichaje(usuario_id)
+    assert ultimo["tipo"] == "pausa_inicio"
+    assert ultimo["marca_tiempo"] is not None
