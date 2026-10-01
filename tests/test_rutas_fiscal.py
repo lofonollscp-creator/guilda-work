@@ -33,6 +33,22 @@ def test_con_tenant_puede_crear_y_ver_sus_clientes(cliente):
     assert "Panadería SL" in resp.get_data(as_text=True)
 
 
+def test_clientes_fiscales_tiene_panel_maestro_detalle(cliente):
+    """Rediseño del calendario fiscal (2026-10-01): la lista de clientes
+    ahora tiene el mismo panel maestro-detalle que /fiscal/vencimientos
+    (clic en el nombre -> ficha rápida por AJAX), antes solo enlazaba
+    directo a la ficha completa."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "clientes-maestro-detalle@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Maestro Detalle")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Panaderia Soler")
+
+    html = cliente.get("/fiscal/clientes").get_data(as_text=True)
+    assert 'class="fiscal-cliente-btn" data-cliente-id="%d"' % cliente_id in html
+    assert 'id="fiscal-detalle"' in html
+    assert "/resumen.json" in html
+
+
 def test_clientes_fiscales_muestra_pill_de_pais_solo_si_no_es_espana(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "pill-pais@ejemplo.com", "contrasena123")
     tenant_id = db.crear_tenant("Gestoria Pill Pais")
@@ -81,6 +97,37 @@ def test_vencimientos_calendario_muestra_los_del_mes_pedido(cliente):
     assert "Julio 2026" in html
     assert "303 — Cliente Calendario" in html
     assert "130 — Cliente Calendario" not in html
+
+
+def test_vencimientos_calendario_dia_saturado_muestra_mas(cliente):
+    """Rediseño del calendario fiscal (2026-10-01): un día con muchos
+    vencimientos saturaba la celda en vez de truncar -- ahora solo
+    muestra los 3 primeros y un enlace '+N más' a la Lista filtrada a
+    ese día."""
+    usuario_id = iniciar_sesion_de_prueba(cliente, "calendario-saturado@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Calendario Saturado")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_a = db.crear_cliente_fiscal(tenant_id, "Cliente Saturado")
+    for modelo in ("303", "130", "111", "115", "349"):
+        db.crear_vencimiento_fiscal(tenant_id, cliente_a, modelo, "2026-T2", "2026-07-20")
+
+    resp = cliente.get("/fiscal/vencimientos/calendario?anio=2026&mes=7")
+    html = resp.get_data(as_text=True)
+    assert html.count("fiscal-calendario-item") == 3
+    assert "+2 más" in html
+    assert "desde=2026-07-20&amp;hasta=2026-07-20" in html or "desde=2026-07-20&hasta=2026-07-20" in html
+
+
+def test_vencimientos_calendario_dia_sin_saturar_no_muestra_mas(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "calendario-no-saturado@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Calendario No Saturado")
+    db.asignar_tenant(usuario_id, tenant_id)
+    cliente_a = db.crear_cliente_fiscal(tenant_id, "Cliente No Saturado")
+    db.crear_vencimiento_fiscal(tenant_id, cliente_a, "303", "2026-T2", "2026-07-20")
+
+    resp = cliente.get("/fiscal/vencimientos/calendario?anio=2026&mes=7")
+    html = resp.get_data(as_text=True)
+    assert "fiscal-calendario-mas" not in html
 
 
 def test_vencimientos_calendario_navegacion_mes_anterior_siguiente(cliente):

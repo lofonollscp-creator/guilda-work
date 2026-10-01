@@ -69,14 +69,25 @@
     {% if dia == 0 %}
     <div class="fiscal-calendario-celda fiscal-calendario-celda-vacia"></div>
     {% else %}
-    <div class="fiscal-calendario-celda {% if '%04d-%02d-%02d'|format(anio, mes, dia) == hoy.isoformat() %}fiscal-calendario-celda-hoy{% endif %}">
+    {% set fecha_dia = '%04d-%02d-%02d'|format(anio, mes, dia) %}
+    {% set vencimientos_dia = por_dia.get(dia, []) %}
+    <div class="fiscal-calendario-celda {% if fecha_dia == hoy.isoformat() %}fiscal-calendario-celda-hoy{% endif %}">
       <span class="fiscal-calendario-dia-numero">{{ dia }}</span>
-      {% for v in por_dia.get(dia, []) %}
-      <a class="fiscal-calendario-item log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if v.estado == 'fuera_plazo' or ('%04d-%02d-%02d'|format(anio, mes, dia) < hoy.isoformat() and v.estado == 'pendiente') else 'nota') }}"
+      {% for v in vencimientos_dia[:3] %}
+      <a class="fiscal-calendario-item fiscal-estado-{{ 'presentado' if v.estado == 'presentado' else ('vencido' if v.estado == 'fuera_plazo' or (fecha_dia < hoy.isoformat() and v.estado == 'pendiente') else 'pendiente') }}"
          href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ v.modelo }} — {{ v.cliente_nombre }}">
         {{ v.modelo }} — {{ v.cliente_nombre }}
       </a>
       {% endfor %}
+      {% if vencimientos_dia|length > 3 %}
+      {# Más de 3 no caben sin que la celda crezca descontroladamente --
+         enlaza a la vista de Lista filtrada a ese día concreto (mismos
+         filtros de estado/cliente/país ya aplicados), en vez de recortar
+         la información sin dar forma de verla entera. #}
+      <a class="fiscal-calendario-mas" href="{{ url_for('fiscal.vencimientos', desde=fecha_dia, hasta=fecha_dia, estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">
+        {{ _('+%(n)s más', n=vencimientos_dia|length - 3) }}
+      </a>
+      {% endif %}
     </div>
     {% endif %}
     {% endfor %}

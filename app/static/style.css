@@ -1548,10 +1548,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 /* Bloque 3 del plan de reestructuración del calendario fiscal: vista de
    calendario mensual, alternable con la lista (/fiscal/vencimientos.html
-   tiene el mismo toggle "Lista"/"Calendario"). Los colores de cada item
-   reutilizan las clases .log-badge-* ya existentes (solo la parte de
-   color: fondo/texto/borde), no la clase base .log-badge (que es un
-   pill de una línea, aquí cada item necesita ser un bloque truncado). */
+   tiene el mismo toggle "Lista"/"Calendario"). */
 .fiscal-calendario-cabecera {
   display: flex;
   align-items: center;
@@ -1594,10 +1591,32 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-overflow: ellipsis;
   text-decoration: none;
 }
+/* Clases propias del estado de un vencimiento en el calendario -- antes
+   reutilizaban .log-badge-duracion/nota/error (pensadas para notas/
+   tareas del histórico, nombres sin sentido semántico aquí). Mismos
+   colores de antes (verde/gris/rojo), solo con nombres que describen lo
+   que de verdad son. */
+.fiscal-estado-presentado { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+.fiscal-estado-pendiente { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); border-color: color-mix(in srgb, var(--text-muted) 22%, transparent); }
+.fiscal-estado-vencido { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+/* "+N más": cuando un día tiene más vencimientos de los que caben sin
+   que la celda crezca sin control -- enlaza a la Lista filtrada a ese
+   día concreto, en vez de recortar la información sin dar forma de
+   verla entera (antes: todos los items se pintaban igual, sin límite,
+   la celda podía saturarse de texto denso). */
+.fiscal-calendario-mas {
+  display: block;
+  font-size: 0.72em;
+  padding: 2px 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 600;
+}
+.fiscal-calendario-mas:hover { color: var(--primary); }
 @media (max-width: 900px) {
   .fiscal-calendario-dia-nombre { font-size: 0.65em; }
   .fiscal-calendario-celda { min-height: 56px; padding: 4px; }
-  .fiscal-calendario-item { font-size: 0.65em; }
+  .fiscal-calendario-item, .fiscal-calendario-mas { font-size: 0.65em; }
 }
 
 .log-list { list-style: none; padding: 0; margin: 0; }

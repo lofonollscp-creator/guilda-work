@@ -46,10 +46,12 @@
 {% if not clientes %}
 <p class="empty-lane">{{ _('Todavía no hay clientes fiscales dados de alta.') }}</p>
 {% else %}
+<div class="fiscal-layout">
+<div class="fiscal-lista">
 <ul class="log-list">
   {% for c in clientes %}
   <li class="log-item">
-    <span class="log-text"><a href="{{ url_for('fiscal.ficha_cliente', cliente_id=c.id) }}">{{ c.nombre }}</a></span>
+    <span class="log-text"><button type="button" class="fiscal-cliente-btn" data-cliente-id="{{ c.id }}">{{ c.nombre }}</button></span>
     {% if c.nif %}<span class="pill">{{ c.nif }}</span>{% endif %}
     {% if c.pais and c.pais != 'ES' %}<span class="pill" title="{{ _('País de tributación') }}">{{ c.pais }}</span>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=c.id) }}">{{ _('Generar vencimientos') }}</a>
@@ -61,5 +63,55 @@
   </li>
   {% endfor %}
 </ul>
+</div>
+
+<aside class="fiscal-detalle" id="fiscal-detalle">
+  <p class="fiscal-detalle-vacio empty-lane">{{ _('Pulsa un cliente para ver su ficha rápida.') }}</p>
+</aside>
+</div>
+
+<script>
+  // Master-detail: mismo patrón y endpoint que /fiscal/vencimientos
+  // (app/rutas_fiscal.py:resumen_cliente_json) -- antes esta lista no
+  // tenía ninguna vista alternativa, solo el enlace directo a la ficha
+  // completa (con llamadas a APIs externas, pensada para carga de
+  // página completa, no para una vista previa instantánea).
+  (function () {
+    var panel = document.getElementById("fiscal-detalle");
+    if (!panel) return;
+    var botones = document.querySelectorAll(".fiscal-cliente-btn");
+    var urlBase = "/fiscal/clientes/";
+
+    function pintar(datos) {
+      var modelos = (datos.modelos || []).join(", ") || "{{ _('sin modelos asignados') }}";
+      panel.innerHTML =
+        '<p class="fiscal-detalle-nombre">' + datos.nombre + '</p>' +
+        (datos.nif ? '<p class="fiscal-detalle-nif mono">' + datos.nif + '</p>' : '') +
+        '<div class="fiscal-detalle-filas">' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Modelos") }}</span><span>' + modelos + '</span></div>' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Vencimientos pendientes") }}</span><span>' + datos.vencimientos_pendientes + '</span></div>' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Generación automática") }}</span><span>' + (datos.generacion_automatica ? '{{ _("Activa") }}' : '{{ _("Inactiva") }}') + '</span></div>' +
+        (datos.espocrm_url ? '<div class="fiscal-detalle-fila"><span>EspoCRM</span><span><a href="' + datos.espocrm_url + '" target="_blank" rel="noopener">{{ _("Ver cuenta") }} ↗</a></span></div>' : '') +
+        '</div>' +
+        '<div class="fiscal-detalle-acciones">' +
+        '<a class="btn btn-ghost" href="' + datos.url_ficha + '">{{ _("Ver ficha completa") }}</a>' +
+        '<a class="btn btn-primary" href="' + datos.url_generar_vencimientos + '">{{ _("Generar vencimientos") }}</a>' +
+        '</div>';
+    }
+
+    botones.forEach(function (boton) {
+      boton.addEventListener("click", function () {
+        var clienteId = boton.dataset.clienteId;
+        panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("Cargando…") }}</p>';
+        fetch(urlBase + clienteId + "/resumen.json")
+          .then(function (r) { return r.json(); })
+          .then(pintar)
+          .catch(function () {
+            panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("No se ha podido cargar.") }}</p>';
+          });
+      });
+    });
+  })();
+</script>
 {% endif %}
 {% endblock %}
