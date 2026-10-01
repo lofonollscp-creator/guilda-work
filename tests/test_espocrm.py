@@ -139,3 +139,44 @@ def test_listar_contactos_de_cuenta_error_lanza_excepcion(monkeypatch):
     monkeypatch.setattr(espocrm, "_peticion", fake_peticion)
     with pytest.raises(espocrm.ErrorEspoCRM):
         espocrm.listar_contactos_de_cuenta("cuenta-123")
+
+
+# --- desaprovisionar_tenant (bloque 5 de la auditoría de 2026-09-30/10-01) ---
+
+def test_desaprovisionar_tenant_sin_api_key_no_hace_nada(monkeypatch):
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", None)
+    llamadas = []
+    monkeypatch.setattr(espocrm, "_peticion", lambda *a, **k: llamadas.append(a) or (200, {}))
+    espocrm.desaprovisionar_tenant("Lueira")
+    assert llamadas == []
+
+
+def test_desaprovisionar_tenant_sin_equipo_existente_no_hace_nada(monkeypatch):
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", "clave")
+    llamadas = []
+
+    def fake_peticion(url, *, metodo="GET", cuerpo=None):
+        llamadas.append((metodo, url))
+        return 200, {"list": []}  # búsqueda por nombre: no existe
+
+    monkeypatch.setattr(espocrm, "_peticion", fake_peticion)
+    espocrm.desaprovisionar_tenant("Lueira")
+    assert all(m == "GET" for m, _ in llamadas)  # nunca llega a mandar DELETE
+
+
+def test_desaprovisionar_tenant_borra_el_equipo_encontrado(monkeypatch):
+    monkeypatch.setattr(espocrm, "ESPOCRM_API_KEY", "clave")
+    llamadas = []
+
+    def fake_peticion(url, *, metodo="GET", cuerpo=None):
+        llamadas.append((metodo, url))
+        if metodo == "GET":
+            return 200, {"list": [{"id": "equipo-a-borrar"}]}
+        return 200, {}
+
+    monkeypatch.setattr(espocrm, "_peticion", fake_peticion)
+    espocrm.desaprovisionar_tenant("Lueira")
+
+    deletes = [(m, u) for m, u in llamadas if m == "DELETE"]
+    assert len(deletes) == 1
+    assert deletes[0][1].endswith("/Team/equipo-a-borrar")

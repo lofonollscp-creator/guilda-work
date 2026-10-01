@@ -490,6 +490,76 @@ def test_backoffice_borrar_tenant_desaprovisiona_baserow(cliente, monkeypatch):
     assert db.obtener_tenant(tenant_id) is None
 
 
+def test_backoffice_borrar_tenant_desaprovisiona_espocrm(cliente, monkeypatch):
+    """Bloque 5 de la auditoría de 2026-09-30/10-01: sin esto, el Equipo
+    de EspoCRM de un tenant borrado quedaba huérfano -- un tenant nuevo
+    que reutilizara el mismo nombre lo heredaría."""
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-espocrm-borrar@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarEspoCRM")
+
+    llamadas = {}
+    monkeypatch.setattr(
+        rutas_backoffice.espocrm, "desaprovisionar_tenant",
+        lambda nombre: llamadas.setdefault("nombre", nombre),
+    )
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["nombre"] == "ABorrarEspoCRM"
+    assert db.obtener_tenant(tenant_id) is None
+
+
+def test_backoffice_borrar_tenant_desaprovisiona_nextcloud(cliente, monkeypatch):
+    """Mismo motivo que EspoCRM arriba, pero para el Grupo + Group Folder
+    de Nextcloud."""
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-nextcloud-borrar@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarNextcloud")
+
+    llamadas = {}
+    monkeypatch.setattr(
+        rutas_backoffice.nextcloud, "desaprovisionar_tenant",
+        lambda nombre: llamadas.setdefault("nombre", nombre),
+    )
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert llamadas["nombre"] == "ABorrarNextcloud"
+    assert db.obtener_tenant(tenant_id) is None
+
+
+def test_backoffice_borrar_tenant_no_falla_si_espocrm_o_nextcloud_fallan(cliente, monkeypatch):
+    """Mismo criterio de fallo aislado que el resto de integraciones:
+    un error al desaprovisionar EspoCRM/Nextcloud no debe impedir borrar
+    el tenant en Guilda Work."""
+    from app import rutas_backoffice
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "admin-espocrm-nextcloud-roto@ejemplo.com", "contrasena123")
+    db.hacer_admin(db.obtener_usuario(usuario_id)["email"])
+
+    tenant_id = db.crear_tenant("ABorrarIntegracionesRotas")
+
+    def _falla(*a, **k):
+        raise rutas_backoffice.espocrm.ErrorEspoCRM("EspoCRM no responde")
+
+    def _falla_nc(*a, **k):
+        raise rutas_backoffice.nextcloud.ErrorNextcloud("Nextcloud no responde")
+
+    monkeypatch.setattr(rutas_backoffice.espocrm, "desaprovisionar_tenant", _falla)
+    monkeypatch.setattr(rutas_backoffice.nextcloud, "desaprovisionar_tenant", _falla_nc)
+
+    resp = cliente.post(f"/backoffice/tenants/{tenant_id}/borrar", follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.obtener_tenant(tenant_id) is None
+
+
 def test_backoffice_crear_usuario_muestra_contrasena_temporal(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "admin3@ejemplo.com", "contrasena123")
     db.hacer_admin(db.obtener_usuario(usuario_id)["email"])

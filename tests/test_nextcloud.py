@@ -193,3 +193,53 @@ def test_crear_espacio_tenant_error_real_lanza_excepcion(monkeypatch):
         assert False, "debería haber lanzado ErrorNextcloud"
     except nextcloud.ErrorNextcloud as e:
         assert "error interno" in str(e)
+
+
+# --- desaprovisionar_tenant (bloque 5 de la auditoría de 2026-09-30/10-01) ---
+
+def test_desaprovisionar_tenant_sin_credenciales_no_hace_nada(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", None)
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", None)
+    llamadas = []
+    monkeypatch.setattr(nextcloud, "_peticion", lambda *a, **k: llamadas.append(a) or (200, {}))
+    nextcloud.desaprovisionar_tenant("Lueira")
+    assert llamadas == []
+
+
+def test_desaprovisionar_tenant_borra_carpeta_y_grupo(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+
+    llamadas = []
+
+    def fake_peticion(url, *, metodo="GET", cuerpo=None):
+        llamadas.append((metodo, url))
+        if url.endswith("/apps/groupfolders/folders?format=json"):
+            return 200, {"ocs": {"data": [{"id": 7, "mount_point": "Lueira"}]}}
+        return 200, {"ocs": {"meta": {"statuscode": 100}}}
+
+    monkeypatch.setattr(nextcloud, "_peticion", fake_peticion)
+    nextcloud.desaprovisionar_tenant("Lueira")
+
+    metodos_y_urls = [(m, u) for m, u in llamadas]
+    assert ("DELETE", f"{nextcloud.NEXTCLOUD_URL}/apps/groupfolders/folders/7?format=json") in metodos_y_urls
+    assert ("DELETE", f"{nextcloud.NEXTCLOUD_URL}/ocs/v1.php/cloud/groups/Lueira?format=json") in metodos_y_urls
+
+
+def test_desaprovisionar_tenant_sin_carpeta_existente_solo_borra_el_grupo(monkeypatch):
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_USER", "admin")
+    monkeypatch.setattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", "clave")
+
+    llamadas = []
+
+    def fake_peticion(url, *, metodo="GET", cuerpo=None):
+        llamadas.append((metodo, url))
+        if url.endswith("/apps/groupfolders/folders?format=json"):
+            return 200, {"ocs": {"data": []}}  # no hay ninguna carpeta con ese mountpoint
+        return 200, {"ocs": {"meta": {"statuscode": 100}}}
+
+    monkeypatch.setattr(nextcloud, "_peticion", fake_peticion)
+    nextcloud.desaprovisionar_tenant("Lueira")
+
+    deletes = [(m, u) for m, u in llamadas if m == "DELETE"]
+    assert deletes == [("DELETE", f"{nextcloud.NEXTCLOUD_URL}/ocs/v1.php/cloud/groups/Lueira?format=json")]

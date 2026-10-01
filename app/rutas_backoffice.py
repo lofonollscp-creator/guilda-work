@@ -895,6 +895,22 @@ def borrar_tenant(tenant_id: int):
         )
     except stalwart.ErrorStalwart:
         pass
+    try:
+        # Borra el Equipo de EspoCRM de este tenant (ver
+        # app/espocrm.py:desaprovisionar_tenant) — sin esto, un tenant
+        # nuevo que reutilizara este mismo nombre heredaría el Equipo
+        # huérfano (bug encontrado en la auditoría de 2026-09-30/10-01).
+        # Mismo criterio de fallo aislado que el resto.
+        espocrm.desaprovisionar_tenant(tenant["nombre"])
+    except espocrm.ErrorEspoCRM:
+        pass
+    try:
+        # Borra el Grupo + Group Folder de Nextcloud de este tenant (ver
+        # app/nextcloud.py:desaprovisionar_tenant) — mismo motivo y
+        # criterio de fallo aislado que EspoCRM arriba.
+        nextcloud.desaprovisionar_tenant(tenant["nombre"])
+    except nextcloud.ErrorNextcloud:
+        pass
     db.borrar_tenant(tenant_id)
     _auditar("borrar_tenant", tenant["nombre"])
     flash(f"Tenant '{tenant['nombre']}' borrado.", "exito")

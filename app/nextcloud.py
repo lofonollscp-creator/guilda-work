@@ -149,6 +149,31 @@ def crear_espacio_tenant(nombre_tenant: str) -> None:
     _crear_carpeta_de_grupo(nombre_tenant)
 
 
+def desaprovisionar_tenant(nombre_tenant: str) -> None:
+    """Borra el Group Folder y el Grupo de Nextcloud de un tenant, si
+    existen. No falla si ya no existen, ni si NEXTCLOUD_ADMIN_USER/
+    NEXTCLOUD_ADMIN_PASSWORD no están configurados.
+
+    Bug encontrado en la auditoría de 2026-09-30/10-01: sin esto, el
+    Grupo/carpeta de un tenant borrado quedaban huérfanos para siempre --
+    si un tenant NUEVO reutilizaba después el mismo nombre (ahora libre
+    en la BD de Guilda Work, que sí exige `tenants.nombre` único), la
+    búsqueda-por-nombre idempotente de crear_espacio_tenant() los
+    encontraba y los reutilizaba, dando acceso al Drive compartido del
+    tenant anterior.
+
+    NOTA DE HONESTIDAD: los endpoints `DELETE` de la API de Provisioning
+    (grupos) y de Group folders siguen su documentación pública pero no
+    se han podido verificar contra una instancia real -- confirmar en
+    cuanto sea posible."""
+    if not NEXTCLOUD_ADMIN_USER or not NEXTCLOUD_ADMIN_PASSWORD:
+        return
+    folder_id = _buscar_carpeta_por_mountpoint(nombre_tenant)
+    if folder_id is not None:
+        _peticion(f"{NEXTCLOUD_URL}/apps/groupfolders/folders/{folder_id}?format=json", metodo="DELETE")
+    _peticion(f"{NEXTCLOUD_URL}/ocs/v1.php/cloud/groups/{nombre_tenant}?format=json", metodo="DELETE")
+
+
 # --- Archivos vía WebDAV (Fase MCP) ------------------------------------------
 #
 # A diferencia de la API de Provisioning (OCS, JSON), WebDAV habla XML y

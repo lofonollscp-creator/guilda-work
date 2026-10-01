@@ -95,6 +95,28 @@ def crear_equipo(nombre_tenant: str) -> str | None:
     raise ErrorEspoCRM(f"No se ha podido crear el Equipo en EspoCRM: {mensaje}")
 
 
+def desaprovisionar_tenant(nombre_tenant: str) -> None:
+    """Borra el Equipo de EspoCRM de un tenant, si existe. No falla si ya
+    no existe, ni si ESPOCRM_API_KEY no está configurada.
+
+    Bug encontrado en la auditoría de 2026-09-30/10-01: sin esto, el
+    Equipo de un tenant borrado quedaba huérfano para siempre -- si un
+    tenant NUEVO reutilizaba después el mismo nombre (ahora libre en la
+    BD de Guilda Work, que sí exige `tenants.nombre` único), la búsqueda-
+    por-nombre idempotente de crear_equipo() lo encontraba y lo
+    reutilizaba, heredando sus Leads/Contactos/Cuentas.
+
+    NOTA DE HONESTIDAD (mismo criterio que app/stripe_pagos.py): el
+    endpoint `DELETE /api/v1/Team/{id}` sigue la documentación pública de
+    la API REST de EspoCRM pero no se ha podido verificar contra una
+    instancia real -- confirmar en cuanto sea posible."""
+    if not ESPOCRM_API_KEY:
+        return
+    equipo_id = _buscar_equipo_por_nombre(nombre_tenant)
+    if equipo_id is not None:
+        _peticion(f"{ESPOCRM_URL}/api/v1/Team/{equipo_id}", metodo="DELETE")
+
+
 # --- Registros de negocio (Fase MCP: consultas/altas para un asistente) -----
 #
 # Lead/Contact/Account comparten la misma API genérica de entidades de
