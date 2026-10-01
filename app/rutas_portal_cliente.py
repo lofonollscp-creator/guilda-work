@@ -158,7 +158,10 @@ def documentos_vencimiento(vencimiento_id: int):
     if request.method == "POST":
         f = request.files.get("documento")
         if f and f.filename:
-            contenido = f.read()
+            # Igual que rutas_api.py/rutas_ia.py: se lee como mucho
+            # LIMITE+1 bytes, no el fichero entero, para no comprobar el
+            # tamaño DESPUÉS de haberlo cargado todo a memoria.
+            contenido = f.read(db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO + 1)
             if f.mimetype not in db.MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO or len(contenido) > db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO:
                 error = _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")
             else:

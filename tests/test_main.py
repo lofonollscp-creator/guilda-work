@@ -19,11 +19,20 @@ def _cuenta(usuario_id: int, nombre: str) -> int:
 
 
 def test_sincronizacion_correo_periodica_sincroniza_todas_las_cuentas(monkeypatch, usuario_id):
+    """Bug encontrado en la auditoría de 2026-10-01: la llamada real
+    (app/main.py) mandaba un solo argumento a sincronizar_bandeja(), que
+    necesita usuario_id Y cuenta_id -- TypeError silenciado en cada vuelta
+    desde siempre. El mock de este test, con la misma firma de un solo
+    argumento que la llamada rota, nunca pudo detectarlo -- ahora exige
+    los dos para no repetir el mismo punto ciego."""
     id_a = _cuenta(usuario_id, "A")
     id_b = _cuenta(usuario_id, "B")
 
     llamadas = []
-    monkeypatch.setattr(main_module.correo, "sincronizar_bandeja", lambda cid: llamadas.append(cid) or {"nuevos": 0})
+    monkeypatch.setattr(
+        main_module.correo, "sincronizar_bandeja",
+        lambda uid, cid: llamadas.append((uid, cid)) or {"nuevos": 0},
+    )
 
     vueltas = {"n": 0}
 
@@ -37,7 +46,7 @@ def test_sincronizacion_correo_periodica_sincroniza_todas_las_cuentas(monkeypatc
     with pytest.raises(_DetenerBucle):
         main_module._sincronizacion_correo_periodica()
 
-    assert sorted(llamadas) == sorted([id_a, id_b])
+    assert sorted(llamadas) == sorted([(usuario_id, id_a), (usuario_id, id_b)])
 
 
 def test_sincronizacion_correo_periodica_una_cuenta_rota_no_bloquea_las_demas(monkeypatch, usuario_id):
@@ -46,7 +55,7 @@ def test_sincronizacion_correo_periodica_una_cuenta_rota_no_bloquea_las_demas(mo
 
     llamadas = []
 
-    def fake_sincronizar(cuenta_id):
+    def fake_sincronizar(uid, cuenta_id):
         if cuenta_id == id_a:
             raise RuntimeError("cuenta A sin red")
         llamadas.append(cuenta_id)
@@ -150,3 +159,17 @@ def test_recordatorio_vencimientos_avisa_si_la_preferencia_esta_activa(monkeypat
         main_module._recordatorio_vencimientos_fiscales()
 
     assert len(llamadas) == 1
+
+
+# --- Límite global de tamaño de petición (bug encontrado en la auditoría de 2026-10-01) ---
+
+def test_max_content_length_rechaza_peticion_demasiado_grande(cliente):
+    """Sin MAX_CONTENT_LENGTH, un endpoint sin su propio chequeo explícito
+    de tamaño podía agotar memoria con peticiones grandes repetidas --
+    /webhooks/stripe no requiere login y lee el cuerpo entero con
+    request.get_data() antes de nada, así que sirve para probar el límite
+    sin depender de autenticación."""
+    limite = main_module.app.config["MAX_CONTENT_LENGTH"]
+    cuerpo_grande = b"x" * (limite + 1)
+    resp = cliente.post("/webhooks/stripe", data=cuerpo_grande, headers={"Stripe-Signature": "x"})
+    assert resp.status_code == 413

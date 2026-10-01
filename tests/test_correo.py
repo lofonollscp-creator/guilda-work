@@ -200,6 +200,26 @@ def test_guardar_cuenta_sin_datos_obligatorios_lanza_error(usuario_id):
         correo.guardar_cuenta(usuario_id, nombre="", protocolo="imap", host="x", puerto=993, usuario="y", contrasena="z")
 
 
+def test_guardar_cuenta_keyring_falla_hace_rollback_de_la_cuenta(monkeypatch, usuario_id):
+    """Bug encontrado en la auditoría de 2026-10-01: si keyring.set_password
+    falla DESPUÉS de crear la fila en BD (disco lleno, backend no
+    disponible...), quedaba una cuenta "viva" sin contraseña recuperable
+    -- ahora se deshace la creación en vez de dejar ese estado a medias."""
+    _cuenta_imap(monkeypatch, {})
+
+    def _falla(*a, **k):
+        raise RuntimeError("backend de keyring no disponible")
+
+    monkeypatch.setattr(correo.keyring, "set_password", _falla)
+    with pytest.raises(correo.ErrorCorreo):
+        correo.guardar_cuenta(
+            usuario_id,
+            nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+            usuario="yo@ejemplo.com", contrasena="correcta",
+        )
+    assert db.listar_cuentas_correo(usuario_id) == []
+
+
 def test_eliminar_cuenta_borra_cuenta_mensajes_y_credencial(monkeypatch, usuario_id):
     _cuenta_imap(monkeypatch, {"1": _mensaje_bytes("Hola", "a@b.com", "cuerpo")})
     cuenta_id = correo.guardar_cuenta(
@@ -339,6 +359,33 @@ def test_sincronizar_bandeja_no_redescarga_mensajes_ya_guardados(monkeypatch, us
     assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 1}
     assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 0}
     assert len(correo.listar_mensajes(cuenta_id)) == 1
+
+
+def test_sincronizar_bandeja_con_sincronizacion_ya_en_curso_no_hace_nada(monkeypatch, usuario_id):
+    """Bug encontrado en la auditoría de 2026-10-01: dos sincronizaciones
+    casi simultáneas de la misma cuenta (doble clic, auto-sync + manual)
+    podían contar el mismo mensaje nuevo dos veces cada una y disparar
+    notificaciones duplicadas -- el lock por cuenta hace que la segunda
+    devuelva "nada nuevo" sin tocar el servidor mientras la primera sigue
+    en marcha."""
+    mensajes = {"1": _mensaje_bytes("Único", "a@b.com", "cuerpo")}
+    _cuenta_imap(monkeypatch, mensajes)
+    cuenta_id = correo.guardar_cuenta(
+        usuario_id,
+        nombre="Trabajo", protocolo="imap", host="imap.ejemplo.com", puerto=993,
+        usuario="yo@ejemplo.com", contrasena="correcta",
+    )
+
+    lock = correo._lock_de_cuenta(cuenta_id)
+    lock.acquire()
+    try:
+        assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 0}
+        assert correo.listar_mensajes(cuenta_id) == []  # no llegó ni a tocar el servidor
+    finally:
+        lock.release()
+
+    # Liberado el lock, una sincronización normal sí funciona.
+    assert correo.sincronizar_bandeja(usuario_id, cuenta_id) == {"nuevos": 1}
 
 
 def test_sincronizar_bandeja_marca_ultima_sincronizacion(monkeypatch, usuario_id):

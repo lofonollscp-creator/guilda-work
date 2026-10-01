@@ -113,6 +113,17 @@ app = Flask(
 # (comprobar mtime en cada render) es insignificante para una app de un solo
 # usuario local.
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+# Límite global de tamaño de petición (bug encontrado en la auditoría de
+# 2026-10-01): sin esto, un endpoint sin su propio chequeo explícito de
+# tamaño (p.ej. /api/correo/enviar, que decodifica adjuntos en base64
+# desde un cuerpo JSON) podía agotar memoria con peticiones grandes
+# repetidas. 32MB da margen de sobra sobre el límite más alto ya
+# existente en la app (25MB para adjuntos que manda el asistente IA,
+# ver mcp_tools.TAMANO_MAXIMO_ADJUNTO_ASISTENTE_BYTES) más el overhead
+# de multipart/base64. Flask convierte un cuerpo más grande en un 413
+# automático (RequestEntityTooLarge, ya es una HTTPException -- el
+# manejador de errores de más abajo la deja pasar tal cual).
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 # Necesaria para firmar la cookie de sesión (login). En desarrollo/escritorio
 # se genera una aleatoria al arrancar (basta con que la sesión sobreviva
 # mientras el proceso está vivo); en un despliegue real de verdad, fija
@@ -1477,7 +1488,12 @@ def _sincronizacion_correo_periodica():
             continue
         for cuenta in cuentas:
             try:
-                correo.sincronizar_bandeja(cuenta["id"])
+                # Bug encontrado en la auditoría de 2026-09-30/10-01:
+                # faltaba usuario_id -- sincronizar_bandeja(usuario_id,
+                # cuenta_id) siempre lanzaba TypeError aquí, silenciado por
+                # el except de abajo, así que este auto-sync nunca llegó a
+                # sincronizar nada desde que existe.
+                correo.sincronizar_bandeja(usuario_id, cuenta["id"])
             except Exception:
                 pass  # un fallo de esta cuenta no debe impedir sincronizar las demás
 

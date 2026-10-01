@@ -48,6 +48,7 @@ import poplib
 import re
 import smtplib
 import socket
+import threading
 from email.header import decode_header
 from email.message import EmailMessage
 from email.utils import getaddresses, parsedate_to_datetime
@@ -115,7 +116,15 @@ def guardar_cuenta(
         usuario_id, nombre=nombre, protocolo=protocolo, host=host, puerto=puerto, usuario=usuario,
         usa_tls=usa_tls, smtp_host=smtp_host, smtp_puerto=smtp_puerto, smtp_tls=smtp_tls,
     )
-    keyring.set_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id), contrasena)
+    try:
+        keyring.set_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id), contrasena)
+    except Exception as e:
+        # Bug encontrado en la auditoría de 2026-10-01: si el keyring falla
+        # aquí (disco lleno, backend no disponible...), la cuenta ya creada
+        # en BD quedaba "viva" pero sin contraseña recuperable -- se
+        # deshace la creación en vez de dejar ese estado a medias.
+        db.eliminar_cuenta_correo(usuario_id, cuenta_id)
+        raise ErrorCorreo(f"No se ha podido guardar la contraseña de forma segura: {e}") from e
     return cuenta_id
 
 
@@ -604,22 +613,48 @@ def _sincronizar_pop3(cuenta) -> int:
             pass
 
 
+_locks_sincronizacion: dict[int, threading.Lock] = {}
+_locks_sincronizacion_guard = threading.Lock()
+
+
+def _lock_de_cuenta(cuenta_id: int) -> threading.Lock:
+    with _locks_sincronizacion_guard:
+        return _locks_sincronizacion.setdefault(cuenta_id, threading.Lock())
+
+
 def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
     """Descarga los mensajes nuevos. En IMAP, de todas las carpetas del
     servidor (descubiertas automáticamente); en POP3, de la única bandeja
-    posible. Devuelve {"nuevos": N}."""
+    posible. Devuelve {"nuevos": N}.
+
+    `correo_mensajes` ya tiene `UNIQUE(cuenta_id, carpeta, uid)` con
+    `INSERT OR IGNORE` (ver db.guardar_mensaje_correo), así que dos
+    sincronizaciones simultáneas de la misma cuenta NUNCA duplican un
+    mensaje en BD -- pero sí pueden contar el mismo mensaje nuevo dos
+    veces cada una por su cuenta y disparar dos notificaciones push
+    duplicadas (doble clic en "Sincronizar", o el botón + el auto-sync
+    casi a la vez). El lock evita eso sin bloquear la petición: si ya
+    hay una sincronización de esta cuenta en curso, se devuelve
+    "nada nuevo" en vez de esperar -- la que ya está en marcha cubre el
+    mismo rango de todas formas."""
     cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
     if cuenta is None:
         raise ErrorCorreo("Esa cuenta no existe.")
-    if cuenta["protocolo"] == "pop3":
-        nuevos = _sincronizar_pop3(cuenta)
-    else:
-        nuevos = _sincronizar_imap(cuenta)
-    db.marcar_sincronizada_cuenta_correo(cuenta_id)
-    if nuevos:
-        _reindexar_mensajes_recientes(usuario_id, cuenta_id)
-        _emitir_evento_correo_nuevo(usuario_id, cuenta_id, nuevos)
-    return {"nuevos": nuevos}
+    lock = _lock_de_cuenta(cuenta_id)
+    if not lock.acquire(blocking=False):
+        return {"nuevos": 0}
+    try:
+        if cuenta["protocolo"] == "pop3":
+            nuevos = _sincronizar_pop3(cuenta)
+        else:
+            nuevos = _sincronizar_imap(cuenta)
+        db.marcar_sincronizada_cuenta_correo(cuenta_id)
+        if nuevos:
+            _reindexar_mensajes_recientes(usuario_id, cuenta_id)
+            _emitir_evento_correo_nuevo(usuario_id, cuenta_id, nuevos)
+        return {"nuevos": nuevos}
+    finally:
+        lock.release()
 
 
 def _emitir_evento_correo_nuevo(usuario_id: int, cuenta_id: int, nuevos: int) -> None:
