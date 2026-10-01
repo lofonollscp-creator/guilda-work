@@ -120,6 +120,17 @@ def test_crear_plan_sin_nombre_no_crea_nada_y_avisa(cliente):
     assert "obligatorio" in resp.get_data(as_text=True)
 
 
+def test_crear_plan_precio_con_decimales_problematicos_no_pierde_centimos(cliente):
+    """Bug encontrado en la auditoría de 2026-09-30: round(float(precio)*100)
+    perdía un céntimo en importes como 1.005€ por el error de
+    representación binaria de los floats -- ahora pasa por
+    stripe_pagos.euros_a_centimos() (Decimal)."""
+    _admin(cliente)
+    cliente.post("/backoffice/planes", data={"nombre": "Decimales Raros", "precio_mensual_eur": "1.005"})
+    plan = next(p for p in db.listar_planes_guilda() if p["nombre"] == "Decimales Raros")
+    assert plan["precio_mensual_centimos"] == 101
+
+
 def test_crear_plan_sin_precio_deja_precio_nulo(cliente):
     _admin(cliente)
     cliente.post("/backoffice/planes", data={"nombre": "Sin precio todavía"})

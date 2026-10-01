@@ -114,3 +114,43 @@ def test_registro_real_crea_usuario_e_inicia_sesion(cliente):
 
     resp = cliente.get("/", follow_redirects=True)
     assert "Iniciar sesi" not in resp.get_data(as_text=True)
+
+
+def test_doble_registro_simultaneo_misma_identidad_no_da_500(cliente, monkeypatch):
+    """Bug encontrado en la auditoría de 2026-09-30:
+    _resolver_usuario_actual() (app/main.py) crea la fila local la
+    primera vez que ve una identidad de Kratos sin capturar
+    sqlite3.IntegrityError -- dos peticiones casi simultáneas (dos
+    pestañas, red lenta) justo tras registrarse podían chocar contra el
+    UNIQUE de kratos_identity_id y dar un 500 crudo en la segunda."""
+    import sqlite3
+
+    from app import db, kratos, main
+
+    email = "kratos-doble-registro@ejemplo.com"
+    identity_id = kratos.crear_identidad(email, "contrasena123")
+
+    crear_real = db.crear_usuario_vinculado_a_kratos
+
+    def _choca_por_carrera(email_arg, identity_id_arg):
+        # Simula que OTRA petición paralela gana la carrera e inserta la
+        # fila real justo antes del INSERT de esta -- el propio
+        # IntegrityError que dispararía el UNIQUE de verdad.
+        crear_real(email_arg, identity_id_arg)
+        raise sqlite3.IntegrityError("UNIQUE constraint failed: usuarios.kratos_identity_id")
+
+    monkeypatch.setattr(main.db, "crear_usuario_vinculado_a_kratos", _choca_por_carrera)
+
+    resp = cliente.get("/login", follow_redirects=True)
+    html = resp.get_data(as_text=True)
+    flow_id = re.search(r"[?&]flow=([0-9a-f-]+)", resp.request.url).group(1)
+    csrf = re.search(r'name="csrf_token" value="([^"]*)"', html).group(1)
+    cliente.post(
+        f"/.ory/self-service/login?flow={flow_id}",
+        data={"csrf_token": csrf, "identifier": email, "password": "contrasena123", "method": "password"},
+        follow_redirects=True,
+    )
+
+    resp = cliente.get("/", follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.usuario_por_kratos_id(identity_id) is not None

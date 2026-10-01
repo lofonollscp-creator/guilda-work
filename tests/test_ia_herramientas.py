@@ -39,6 +39,15 @@ def test_ejecutar_propaga_value_error_como_error_de_herramienta(usuario_id):
         h.ejecutar(usuario_id, "editar_nota", {"nota_id": 9999, "texto": "x"})
 
 
+def test_ejecutar_argumento_alucinado_da_error_legible_no_500(usuario_id):
+    """Bug encontrado en la auditoría de 2026-09-30: un argumento que el
+    LLM se inventa (no existe en la firma real de la tool) lanzaba
+    TypeError sin capturar -- ejecutar() no valida los argumentos contra
+    nada antes de llamar a la función real."""
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "crear_nota", {"texto": "x", "argumento_que_no_existe": "y"})
+
+
 @pytest.mark.parametrize(
     "nombre,modo_autonomo,esperado",
     [

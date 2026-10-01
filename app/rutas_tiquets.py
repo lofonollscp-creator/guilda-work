@@ -153,9 +153,19 @@ def editar(tiquet_id: int):
                 "tiquet_editar.html", tiquet=tiquet, tipos=TIPOS, adjuntos=db.listar_adjuntos_tiquet(tiquet_id),
                 error="Faltan datos: título y tipo son obligatorios.",
             )
-        db.editar_tiquet(
+        guardado = db.editar_tiquet(
             g.usuario_id, tiquet_id, titulo=titulo, descripcion=request.form.get("descripcion") or None, tipo=tipo,
         )
+        if not guardado:
+            # db.editar_tiquet() devuelve False sin tocar nada si el tiquet
+            # ya no es "sin_revisar" -- p.ej. alguien lo movió de estado
+            # justo entre el _puede_editar() de arriba y este UPDATE. Sin
+            # esto, se redirigía igual como si se hubiera guardado.
+            return render_template(
+                "tiquet_editar.html", tiquet=db.obtener_tiquet(tiquet_id), tipos=TIPOS,
+                adjuntos=db.listar_adjuntos_tiquet(tiquet_id),
+                error="No se ha podido guardar: el tiquet ya no está en estado 'sin revisar' (puede que lo hayan movido mientras lo editabas).",
+            )
         _guardar_adjuntos(tiquet_id)
         return redirect(url_for("tiquets.tarjetas"))
 

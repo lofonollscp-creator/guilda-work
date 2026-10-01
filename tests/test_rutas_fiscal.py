@@ -1048,6 +1048,31 @@ def test_cobrar_stripe_ok(cliente, monkeypatch):
     assert llamadas_email == [("cliente-stripe-ok@ejemplo.com", "https://checkout.stripe.com/pay/cs_123")]
 
 
+def test_cobrar_stripe_importe_con_decimales_problematicos_no_pierde_centimos(cliente, monkeypatch):
+    """Bug encontrado en la auditoría de 2026-09-30: round(importe_eur*100)
+    perdía un céntimo en importes como 1.005€ -- ahora pasa por
+    stripe_pagos.euros_a_centimos() (Decimal)."""
+    from app import rutas_fiscal
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "stripe-decimales@ejemplo.com", "contrasena123")
+    tenant_id = db.crear_tenant("Gestoria Stripe Decimales")
+    db.asignar_tenant(usuario_id, tenant_id)
+    db.guardar_stripe_account_id(tenant_id, "acct_decimales")
+    cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Stripe Decimales", email="cliente-decimales@ejemplo.com")
+    v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
+
+    llamadas_stripe = []
+    monkeypatch.setattr(
+        rutas_fiscal.stripe_pagos, "crear_sesion_pago",
+        lambda account_id, importe_centimos, concepto, url_exito, url_cancelar, metadata=None:
+            llamadas_stripe.append(importe_centimos) or "https://checkout.stripe.com/pay/cs_decimales",
+    )
+    monkeypatch.setattr(rutas_fiscal, "enviar_enlace_pago", lambda *a, **k: None)
+
+    cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "1.005"})
+    assert llamadas_stripe == [101]
+
+
 def test_cobrar_stripe_sin_email_del_cliente_no_hace_nada(cliente, monkeypatch):
     from app import rutas_fiscal
 

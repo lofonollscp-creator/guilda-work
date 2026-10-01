@@ -41,11 +41,24 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from decimal import Decimal, ROUND_HALF_UP
 
 STRIPE_API_URL = "https://api.stripe.com/v1"
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 TIMEOUT_SEGUNDOS = 20
+
+
+def euros_a_centimos(importe_eur) -> int:
+    """Convierte un importe en euros (float o str, tal como llega de un
+    formulario) a céntimos sin el error de redondeo de coma flotante
+    binaria de `round(importe_eur * 100)` -- p.ej. `round(2.675 * 100)`
+    da 267 en vez de 268 porque 2.675 no tiene representación exacta en
+    binario. Pasar por `Decimal(str(...))` conserva el valor que el
+    usuario realmente tecleó (str() de un float da la representación
+    decimal más corta que vuelve a dar ese mismo float, que es
+    precisamente lo que se tecleó en la inmensa mayoría de los casos)."""
+    return int((Decimal(str(importe_eur)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
 class ErrorStripe(Exception):

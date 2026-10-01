@@ -269,3 +269,24 @@ def test_listar_facturas_cliente(monkeypatch):
     monkeypatch.setattr(sp.urllib.request, "urlopen", lambda *a, **k: _RespuestaFalsa({"data": [{"id": "in_1"}]}))
     facturas = sp.listar_facturas_cliente("cus_1")
     assert facturas == [{"id": "in_1"}]
+
+
+# --- euros_a_centimos (bug encontrado en la auditoría de 2026-09-30) -------
+
+def test_euros_a_centimos_redondea_bien_casos_problematicos_con_float():
+    """round(importe_eur * 100) pierde un céntimo en casos como estos por
+    el error de representación binaria de los floats -- euros_a_centimos()
+    pasa por Decimal(str(...)) para evitarlo."""
+    assert sp.euros_a_centimos(1.005) == 101
+    assert sp.euros_a_centimos(9.995) == 1000
+    assert sp.euros_a_centimos(4.345) == 435
+
+
+def test_euros_a_centimos_casos_normales_sin_decimales_problematicos():
+    assert sp.euros_a_centimos(29.0) == 2900
+    assert sp.euros_a_centimos("19.90") == 1990
+    assert sp.euros_a_centimos(0.0) == 0
+
+
+def test_euros_a_centimos_acepta_string_del_formulario():
+    assert sp.euros_a_centimos("2.675") == 268

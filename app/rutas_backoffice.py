@@ -370,7 +370,7 @@ def crear_plan():
         flash("El nombre del plan es obligatorio.", "error")
         return redirect(url_for("backoffice.planes"))
     precio = request.form.get("precio_mensual_eur", "").strip()
-    precio_centimos = round(float(precio) * 100) if precio else None
+    precio_centimos = stripe_pagos.euros_a_centimos(float(precio)) if precio else None
     max_usuarios = request.form.get("max_usuarios", type=int)
     db.crear_plan_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos, max_usuarios)
     _auditar("crear_plan_guilda", nombre)
@@ -391,7 +391,7 @@ def editar_plan(plan_id: int):
         return redirect(url_for("backoffice.planes"))
     descripcion = request.form.get("descripcion", "").strip() or None
     precio = request.form.get("precio_mensual_eur", "").strip()
-    precio_centimos = round(float(precio) * 100) if precio else None
+    precio_centimos = stripe_pagos.euros_a_centimos(float(precio)) if precio else None
     max_usuarios = request.form.get("max_usuarios", type=int)
     db.editar_plan_guilda(plan_id, nombre, descripcion, precio_centimos, max_usuarios)
     if plan["stripe_price_id"] and precio_centimos != plan["precio_mensual_centimos"]:
@@ -432,7 +432,7 @@ def crear_extra():
         flash("El nombre del extra es obligatorio.", "error")
         return redirect(url_for("backoffice.planes"))
     precio = request.form.get("precio_eur", "").strip()
-    precio_centimos = round(float(precio) * 100) if precio else None
+    precio_centimos = stripe_pagos.euros_a_centimos(float(precio)) if precio else None
     db.crear_extra_guilda(nombre, request.form.get("descripcion", "").strip() or None, precio_centimos)
     _auditar("crear_extra_guilda", nombre)
     flash(f"Extra '{nombre}' creado.", "exito")
@@ -452,7 +452,7 @@ def editar_extra(extra_id: int):
         return redirect(url_for("backoffice.planes"))
     descripcion = request.form.get("descripcion", "").strip() or None
     precio = request.form.get("precio_eur", "").strip()
-    precio_centimos = round(float(precio) * 100) if precio else None
+    precio_centimos = stripe_pagos.euros_a_centimos(float(precio)) if precio else None
     db.editar_extra_guilda(extra_id, nombre, descripcion, precio_centimos)
     if extra["stripe_price_id"] and precio_centimos != extra["precio_centimos"]:
         db.limpiar_stripe_price_id_extra(extra_id)

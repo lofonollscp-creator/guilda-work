@@ -639,7 +639,7 @@ def cobrar_stripe_vencimiento(vencimiento_id: int):
         try:
             concepto = f"{vencimiento['modelo']} {vencimiento['periodo']} — {cliente['nombre']}"
             url_checkout = stripe_pagos.crear_sesion_pago(
-                stripe_account_id, round(importe_eur * 100), concepto,
+                stripe_account_id, stripe_pagos.euros_a_centimos(importe_eur), concepto,
                 url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, _external=True),
                 url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, _external=True),
                 metadata={"vencimiento_id": vencimiento_id},

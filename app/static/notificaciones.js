@@ -53,7 +53,11 @@
         e.preventDefault();
         e.stopPropagation();
         fetch("/notificaciones/" + n.id + "/eliminar", { method: "POST" })
-          .then(function () {
+          .then(function (r) {
+            // Sin comprobar r.ok, un 403/500 del backend dejaba la fila
+            // borrada en pantalla igual -- la UI se desincronizaba del
+            // estado real (la notificación seguía en BD).
+            if (!r.ok) throw new Error("fallo al eliminar");
             fila.remove();
             if (!lista.children.length) {
               vacio.hidden = false;
@@ -98,7 +102,8 @@
   if (vaciarBtn) {
     vaciarBtn.addEventListener("click", function () {
       fetch("/notificaciones/vaciar", { method: "POST" })
-        .then(function () {
+        .then(function (r) {
+          if (!r.ok) throw new Error("fallo al vaciar");
           lista.innerHTML = "";
           vacio.hidden = false;
           vaciarBtn.hidden = true;

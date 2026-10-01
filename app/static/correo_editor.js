@@ -21,8 +21,15 @@
         editor.focus();
         const cmd = boton.dataset.cmd;
         if (cmd === "createLink") {
-          const url = window.prompt("URL del enlace:");
-          if (url) document.execCommand(cmd, false, url);
+          const url = (window.prompt("URL del enlace:") || "").trim();
+          // Sin esto, un esquema como "javascript:" se insertaba tal cual
+          // en el href del borrador -- solo http(s)/mailto son enlaces de
+          // verdad, el resto se descarta en vez de ejecutarse al clicar.
+          if (url && /^(https?:|mailto:)/i.test(url)) {
+            document.execCommand(cmd, false, url);
+          } else if (url) {
+            window.alert("Solo se admiten enlaces http(s) o mailto.");
+          }
         } else if (cmd === "insertImageFile") {
           if (!inputArchivo) {
             inputArchivo = document.createElement("input");

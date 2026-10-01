@@ -190,3 +190,25 @@ def test_asignar_no_notifica_si_el_destinatario_desactivo_la_preferencia(cliente
     )
     assert resp.status_code == 302
     assert not llamadas
+
+
+def test_editar_tiquet_rechazado_por_bd_no_redirige_como_exito(cliente, monkeypatch):
+    """Bug encontrado en la auditoría de 2026-09-30: db.editar_tiquet()
+    devuelve False sin tocar nada si el tiquet ya no está en
+    'sin_revisar', pero la ruta ignoraba ese valor y redirigía igual
+    como si se hubiera guardado. Se simula la ventana de carrera real
+    (el estado cambia ENTRE el _puede_editar() de la ruta y el UPDATE de
+    db.editar_tiquet()) forzando _puede_editar() a True -- si no, el
+    403 de _puede_editar() dispararía antes de llegar al código que se
+    quiere probar aquí."""
+    from app import rutas_tiquets
+
+    usuario_id = iniciar_sesion_de_prueba(cliente, "tiquet-editar-race@ejemplo.com", "contrasena123")
+    tiquet_id = db.crear_tiquet(usuario_id, tipo="error", titulo="Título original")
+    db.cambiar_estado_tiquet(tiquet_id, "en_revision")  # ya no es 'sin_revisar'
+    monkeypatch.setattr(rutas_tiquets, "_puede_editar", lambda tiquet: True)
+
+    resp = cliente.post(f"/tiquets/{tiquet_id}/editar", data={"titulo": "Título nuevo", "tipo": "error"})
+    assert resp.status_code == 200  # se vuelve a mostrar el formulario con error, no redirige
+    assert "ya no está en estado" in resp.get_data(as_text=True)
+    assert db.obtener_tiquet(tiquet_id)["titulo"] == "Título original"

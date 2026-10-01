@@ -15,6 +15,7 @@ import logging
 import os
 import secrets
 import socket
+import sqlite3
 import sys
 import threading
 import time
@@ -222,7 +223,20 @@ def _resolver_usuario_actual():
         # que ya le abrió sesión automáticamente): crea la fila local
         # vinculada sobre la marcha, sin contraseña propia que guardar.
         email = sesion_kratos["identity"]["traits"]["email"]
-        g.usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
+        try:
+            g.usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
+        except sqlite3.IntegrityError:
+            # Dos peticiones casi simultáneas de la misma identidad recién
+            # registrada (dos pestañas, doble clic, red lenta) -- la otra ya
+            # ganó la carrera (kratos_identity_id es UNIQUE en `usuarios`),
+            # se reutiliza su fila en vez de dejar que el IntegrityError
+            # llegue sin capturar hasta el manejador de errores genérico.
+            usuario = db.usuario_por_kratos_id(identity_id)
+            g.usuario_id = usuario["id"]
+            g.es_admin = usuario["rol"] == "admin"
+            g.tenant_id = usuario["tenant_id"]
+            g.gestor_fichajes = bool(usuario["gestor_fichajes"])
+            g.supervisor_tenant = bool(usuario["supervisor_tenant"])
     else:
         g.usuario_id = usuario["id"]
         g.es_admin = usuario["rol"] == "admin"
@@ -748,12 +762,12 @@ def eliminar_nota(nota_id: int):
 @login_required
 def crear_tarea():
     nombre = request.form.get("nombre", "").strip()
-    categoria_id = request.form.get("categoria_id")
+    categoria_id = request.form.get("categoria_id", type=int)
     tipo = request.form.get("tipo", "duracion")
     if nombre and categoria_id:
-        if db.obtener_categoria(g.usuario_id, int(categoria_id)) is None:
+        if db.obtener_categoria(g.usuario_id, categoria_id) is None:
             abort(404)
-        db.crear_tarea(g.usuario_id, nombre, int(categoria_id), tipo)
+        db.crear_tarea(g.usuario_id, nombre, categoria_id, tipo)
     return redirect(request.referrer or url_for("inicio"))
 
 

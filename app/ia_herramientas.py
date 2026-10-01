@@ -703,5 +703,13 @@ def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
         return funcion(**argumentos)
     except (ValueError, ErrorCorreo) as e:
         raise ErrorHerramientaIA(str(e)) from e
+    except TypeError as e:
+        # El LLM manda los argumentos como JSON libre, sin que ejecutar()
+        # valide aquí su forma contra HERRAMIENTAS (eso es solo
+        # documentación para el modelo) -- un argumento alucinado, de más,
+        # o de tipo incorrecto llega tal cual a funcion(**argumentos) y
+        # Python lo rechaza con TypeError. Sin esto, se propagaba sin
+        # capturar hasta un 500 crudo en vez de un error de chat legible.
+        raise ErrorHerramientaIA(f"Argumentos inválidos para '{nombre}': {e}") from e
     finally:
         mcp_tools._usuario_id_actual.reset(token)
