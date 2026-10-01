@@ -2934,66 +2934,101 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 
 /* Ribbon de acciones del mensaje abierto, al estilo del ribbon "Inicio" de Outlook */
+/* Rediseño de la barra de acciones (dirección "A" aprobada tras comparar
+   mockups): antes era una cinta estilo Office con botones apilados
+   icono+etiqueta de 56px mínimo que desbordaba horizontalmente con
+   muchas acciones habilitadas -- el componente menos "Nate Gentile" de
+   la app. Ahora: toolbar compacta de SOLO icono (34px), con tooltip
+   nativo (title=) en vez de etiqueta visible, y flex-wrap en vez de
+   overflow-x -- a propósito, para que nunca recorte un icono: si no
+   cabe todo en una línea, pasa a una segunda en vez de esconder nada
+   tras un scroll lateral. */
 .correo-ribbon {
   display: flex;
-  align-items: stretch;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
   margin-top: 14px;
-  padding: 8px 4px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
 }
 .correo-ribbon-grupo {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 0 10px;
+  padding-right: 8px;
+  margin-right: 6px;
   border-right: 1px solid var(--border);
 }
-.correo-ribbon-grupo:last-child { border-right: none; }
+.correo-ribbon-grupo:last-child { border-right: none; padding-right: 0; margin-right: 0; }
 .correo-ribbon-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 56px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
   background: transparent;
-  color: var(--text);
+  color: var(--text-muted);
   text-decoration: none;
   cursor: pointer;
-  font-size: 0.78em;
   font-family: inherit;
 }
-.correo-ribbon-btn:hover { background: var(--bg); border-color: var(--border); }
-.correo-ribbon-icono { line-height: 1; }
-.correo-ribbon-icono svg { width: 17px; height: 17px; vertical-align: -3px; }
-.correo-ribbon-etiqueta { white-space: nowrap; }
+.correo-ribbon-btn:hover { background: var(--surface); color: var(--text); }
+.correo-ribbon-btn.esta-activo { color: var(--primary); }
+.correo-ribbon-icono { display: flex; line-height: 1; }
+.correo-ribbon-icono svg { width: 18px; height: 18px; flex-shrink: 0; }
+/* La etiqueta de texto se queda en el DOM (lectores de pantalla, y el
+   title= del botón ya da el tooltip visual) pero no ocupa espacio --
+   mismo patrón .sr-only que el resto de la app, no display:none (que
+   algunos lectores de pantalla ignoran igual que lo visual). */
+.correo-ribbon-etiqueta {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .correo-ribbon-select {
-  align-self: center;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--surface);
   color: var(--text);
-  font-size: 0.85em;
+  font-size: 0.8em;
+  max-width: 130px;
 }
-.correo-ribbon-fecha-aviso { align-self: center; margin-left: 4px; }
+/* .correo-categoria-select se reusa también en la fila de la lista de
+   mensajes (fuera del ribbon) -- aquí solo se ajusta su tamaño dentro
+   del ribbon compacto, sin tocar la regla general. */
+.correo-ribbon .correo-categoria-select {
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 0.8em;
+  max-width: 130px;
+}
+.correo-ribbon-fecha-aviso { margin-left: 2px; }
 .correo-ribbon-fecha-aviso input {
-  padding: 4px 6px;
+  padding: 5px 6px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.8em;
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.78em;
 }
-.correo-ribbon-posponer { display: flex; align-items: center; gap: 6px; }
+.correo-ribbon-posponer { display: flex; align-items: center; gap: 4px; }
 .correo-ribbon-posponer input {
-  padding: 6px 8px;
+  padding: 5px 6px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.8em;
+  border-radius: 7px;
+  font-size: 0.78em;
   color: var(--text);
   background: var(--surface);
 }

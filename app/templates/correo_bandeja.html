@@ -166,7 +166,7 @@
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.destacar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
           <input type="hidden" name="destacado" value="{{ '' if mensaje_seleccionado.destacado else 'on' }}">
-          <button type="submit" class="correo-ribbon-btn" title="{{ _('Quitar destacado') if mensaje_seleccionado.destacado else _('Destacar') }}">
+          <button type="submit" class="correo-ribbon-btn {{ 'esta-activo' if mensaje_seleccionado.destacado }}" title="{{ _('Quitar destacado') if mensaje_seleccionado.destacado else _('Destacar') }}">
             <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true" style="{{ 'fill: currentColor;' if mensaje_seleccionado.destacado }}"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg></span>
             <span class="correo-ribbon-etiqueta">{{ _('Destacar') }}</span>
           </button>
