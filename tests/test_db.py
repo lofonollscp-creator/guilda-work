@@ -699,3 +699,25 @@ def test_importar_nota_y_tarea_con_timestamps_explicitos(usuario_id):
     assert tarea["estado"] == "finalizada"
     assert tarea["duracion_segundos"] == 3600
     assert tarea["inicio_en"] == "2026-01-01T09:00:00"
+
+
+# --- Limitador de peticiones -------------------------------------------------
+
+def test_limiter_usa_memoria_por_defecto_y_respeta_la_variable_de_entorno():
+    # En un proceso aparte: recargar app.auth aquí dejaría a los demás módulos
+    # con una instancia de limiter distinta de la de app.auth.
+    import os
+    import subprocess
+    import sys
+
+    def uri(entorno_extra):
+        env = {**os.environ, **entorno_extra}
+        env.pop("GUILDA_LIMITER_URI", None) if not entorno_extra else None
+        salida = subprocess.run(
+            [sys.executable, "-c", "from app import auth; print(auth.LIMITER_STORAGE_URI)"],
+            capture_output=True, text=True, check=True, env=env, cwd=db.RAIZ_PROYECTO,
+        )
+        return salida.stdout.strip()
+
+    assert uri({}) == "memory://"
+    assert uri({"GUILDA_LIMITER_URI": "memory://otro"}) == "memory://otro"

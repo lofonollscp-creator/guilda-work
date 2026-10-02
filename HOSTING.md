@@ -94,6 +94,21 @@ sudo chmod 600 /etc/guilda-work.env
 expuesto a internet es Caddy, no `serve.py` directamente — `serve.py`
 solo escucha en local y Caddy hace de proxy inverso delante.
 
+Variables opcionales:
+
+| Variable | Por defecto | Para qué |
+|---|---|---|
+| `GUILDA_THREADS` | `16` | Hilos de waitress (su valor propio es 4). |
+| `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
+| `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
+
+**Limitador de peticiones**: por defecto sus contadores viven en la memoria
+del proceso, así que se reinician con cada reinicio del servicio y no se
+comparten entre procesos. Con un solo proceso de waitress (la instalación
+actual) es suficiente. Solo si se lanzan varios procesos haría falta un
+almacén compartido, por ejemplo `GUILDA_LIMITER_URI=redis://127.0.0.1:6379`
+(requiere instalar el paquete `redis` y tener un Redis en marcha).
+
 ## 4. Hostname sin dominio propio (sslip.io)
 
 Sin comprar un dominio todavía, usa un hostname que resuelve
