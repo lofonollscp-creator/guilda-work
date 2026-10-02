@@ -2468,7 +2468,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-shell {
   flex: 1;
   display: grid;
-  grid-template-columns: 220px 340px minmax(280px, 1fr);
+  /* La lista crece con la ventana (320px en portátil, hasta 440px en
+     pantallas anchas) para que el asunto no se corte tan pronto. Con
+     poco hueco sigue valiendo el overflow-x:auto de abajo. */
+  grid-template-columns: 220px clamp(320px, 28vw, 440px) minmax(280px, 1fr);
   grid-template-rows: auto 1fr;
   min-height: 0;
   /* Las dos primeras columnas son de ancho fijo (220px+340px) -- si el
@@ -2483,8 +2486,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 
 /* Doble clic en un mensaje (ver static/correo_seleccion.js): oculta el
-   rail y la lista para leer a pantalla completa, sin las columnas fijas
-   de 220px+340px comiéndose el sitio. */
+   rail y la lista para leer a pantalla completa, sin las columnas
+   laterales comiéndose el sitio. */
 .correo-shell.es-pantalla-completa {
   grid-template-columns: 1fr;
 }
@@ -2805,7 +2808,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
-.correo-compose-campo label { width: 44px; flex-shrink: 0; color: var(--text-muted); font-size: 0.85em; }
+.correo-compose-campo label { width: 56px; flex-shrink: 0; color: var(--text-muted); font-size: 0.85em; }
 .correo-compose-campo input, .correo-compose-campo select {
   flex: 1;
   border: none;
