@@ -899,7 +899,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   box-shadow: none;
 }
 .dash-accion label { font-weight: 600; font-size: var(--font-size-sm); }
-.dash-accion .quick-row { display: flex; gap: var(--space-2); }
+.dash-accion .quick-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.dash-accion .quick-row select, .dash-accion .quick-row input { min-width: 0; max-width: 100%; }
 .dash-accion .quick-row input[type="text"] { flex: 1; }
 .dash-accion-buscar {
   justify-content: center;
@@ -924,7 +925,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    --detail-rail-width (ver :root) -- mismo token que .fiscal-layout,
    que es el mismo patrón "lista + panel fijo" implementado dos veces
    con anchos distintos antes de esto. */
-.dash-layout { display: grid; grid-template-columns: 1fr var(--detail-rail-width); gap: var(--space-5); align-items: start; }
+.dash-layout { display: grid; grid-template-columns: minmax(0, 1fr) var(--detail-rail-width); gap: var(--space-5); align-items: start; }
 .dash-main { min-width: 0; }
 .dash-sidebar { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-5); }
 /* "Hoy" y el Asistente IA en la barra lateral son tarjetas de verdad
@@ -945,7 +946,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   padding: 16px;
 }
 @media (max-width: 900px) {
-  .dash-layout { grid-template-columns: 1fr; }
+  .dash-layout { grid-template-columns: minmax(0, 1fr); }
   .dash-sidebar { position: static; }
 }
 
@@ -1213,9 +1214,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .new-menu h3 { margin: 0 0 12px; font-size: 1em; color: var(--text-muted); }
 
-.inline-form { display: flex; gap: 8px; align-items: center; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .inline-form input[type="text"] {
   flex: 1;
+  min-width: 0;
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1556,6 +1558,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    tiene el mismo toggle "Lista"/"Calendario"). */
 .fiscal-calendario-cabecera {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
@@ -2078,6 +2081,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 /* ---- Preguntar a mis datos (chat con IA local) ---- */
 .chat-config {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
   max-width: 640px;
@@ -2090,7 +2094,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-family: inherit;
 }
 .chat-config select { flex: 0 0 auto; }
-.chat-config input[type="text"] { flex: 1; }
+.chat-config input[type="text"] { flex: 1; min-width: 0; }
 .chat-config .btn { margin-left: auto; }
 
 .chat-log {
@@ -2131,7 +2135,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .chat-pensando { opacity: 0.6; }
 
-.chat-input-row { display: flex; gap: 8px; max-width: 640px; }
+.chat-input-row { display: flex; flex-wrap: wrap; gap: 8px; max-width: 640px; }
 .chat-input-row input[type="text"] {
   flex: 1;
   padding: 9px 12px;
@@ -2216,11 +2220,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 /* ---- Subnav Lista/Calendario de Tareas ---- */
 .tareas-subnav {
   display: flex;
+  overflow-x: auto;
   gap: 4px;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 .tareas-subnav a {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 8px 14px;
   text-decoration: none;
   color: var(--text-muted);
@@ -2414,6 +2421,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 .correo-editor-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 6px;
@@ -2811,6 +2819,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-compose-campo label { width: 56px; flex-shrink: 0; color: var(--text-muted); font-size: 0.85em; }
 .correo-compose-campo input, .correo-compose-campo select {
   flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   padding: 4px 0;
@@ -2823,7 +2832,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-radius: 4px;
 }
 .correo-compose .correo-editor-toolbar { margin-top: 14px; }
-.correo-compose-acciones { display: flex; gap: 10px; margin-top: 16px; }
+.correo-compose-acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .correo-compose-cc-toggle { font-size: 0.82em; color: var(--primary-text); text-decoration: none; white-space: nowrap; }
 .correo-compose-cc-toggle:hover { text-decoration: underline; }
 .correo-compose-cc-cco[hidden] { display: none; }
@@ -4270,4 +4279,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
   .fichaje-botones { flex-direction: column; }
   .fichaje-btn { width: 100%; }
+
+  /* Rail de iconos siempre compacto: expandido (200px, el de
+     Backoffice lo fija siempre) se comía la mitad de un móvil de 390px. */
+  :root[data-rail-expandido="1"] .icon-rail { width: 64px; align-items: center; padding: var(--space-3) 0; }
+  :root[data-rail-expandido="1"] .icon-rail-link { width: 44px; justify-content: center; padding: 0; }
+  :root[data-rail-expandido="1"] .icon-rail-link.active::before { left: -1px; }
+  :root[data-rail-expandido="1"] .icon-rail-separador { width: 32px; align-self: auto; margin: var(--space-2) 0; }
+  :root[data-rail-expandido="1"] .icon-rail-grupo-etiqueta,
+  :root[data-rail-expandido="1"] .icon-rail-etiqueta { display: none; }
+  :root[data-rail-expandido="1"] .icon-rail-badge { position: absolute; margin-left: 0; }
+
+  /* Botones con texto largo ("Generar vencimientos (todos los clientes)")
+     parten línea en vez de ensanchar la página. */
+  .log-item { flex-wrap: wrap; }
+  .btn { white-space: normal; }
+  .filters .btn { width: 100%; }
+  fieldset { min-width: 0; }
 }
