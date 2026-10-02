@@ -1,3 +1,9 @@
+# Sin container_name a propósito: tests/conftest.py lanza esto con un nombre de
+# proyecto (-p) y puertos libres propios de cada ejecución, así que dos pytest
+# a la vez no se pisan (con nombres fijos, el segundo borraba los contenedores
+# del primero y daba cientos de fallos falsos). Los puertos por defecto
+# (14433/14434) solo valen para levantarlo a mano.
+#
 # Instancia de Kratos SOLO para tests (Fase 7a.6) — separada de la de
 # desarrollo en docker-compose.yml, en puertos distintos, para que
 # `docker compose -f docker-compose.test.yml down -v` (que arranca cada
@@ -9,7 +15,6 @@
 services:
   postgres-kratos-test:
     image: postgres:16-alpine
-    container_name: guilda-work-postgres-kratos-test
     environment:
       POSTGRES_USER: kratos
       POSTGRES_PASSWORD: test
@@ -17,7 +22,6 @@ services:
 
   kratos-migrate-test:
     image: oryd/kratos:latest
-    container_name: guilda-work-kratos-migrate-test
     depends_on:
       - postgres-kratos-test
     environment:
@@ -29,16 +33,15 @@ services:
 
   kratos-test:
     image: oryd/kratos:latest
-    container_name: guilda-work-kratos-test
     depends_on:
       - kratos-migrate-test
     environment:
       DSN: postgres://kratos:test@postgres-kratos-test:5432/kratos?sslmode=disable
-      SERVE_PUBLIC_BASE_URL: http://127.0.0.1:14433/
-      SERVE_ADMIN_BASE_URL: http://127.0.0.1:14434/
+      SERVE_PUBLIC_BASE_URL: http://127.0.0.1:${KRATOS_TEST_PUBLIC_PORT:-14433}/
+      SERVE_ADMIN_BASE_URL: http://127.0.0.1:${KRATOS_TEST_ADMIN_PORT:-14434}/
     ports:
-      - "14433:4433"
-      - "14434:4434"
+      - "${KRATOS_TEST_PUBLIC_PORT:-14433}:4433"
+      - "${KRATOS_TEST_ADMIN_PORT:-14434}:4434"
     volumes:
       - ./deploy/kratos:/etc/config/kratos:ro
     command: serve --config /etc/config/kratos/kratos.yml --dev

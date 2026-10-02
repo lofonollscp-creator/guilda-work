@@ -7,8 +7,9 @@ test toque nunca `data/registro.db` de verdad.
 
 Fase 7a.6: los tests que ejercitan login/registro real (vía Kratos, ver
 `app/kratos.py`) usan una instancia de Kratos DE VERDAD, separada de la de
-desarrollo — no mocks. `docker-compose.test.yml` la levanta en los puertos
-14433/14434; el fixture de sesión `kratos_test` de aquí abajo se encarga de
+desarrollo — no mocks. `docker-compose.test.yml` la levanta con un nombre de
+proyecto y un par de puertos libres propios de cada ejecución (dos pytest
+simultáneos no se pisan); el fixture de sesión `kratos_test` de aquí abajo se encarga de
 arrancarla, esperar a que esté lista, y apagarla al terminar toda la
 sesión de tests. Como Kratos vive durante TODA la sesión (no se reinicia
 por test, sería demasiado lento), el fixture `_limpiar_identidades_kratos`
@@ -16,7 +17,9 @@ borra todas las identidades después de cada test para que cada uno siga
 viendo un Kratos "vacío", igual que ya pasa con la base de datos SQLite.
 """
 import json
+import os
 import re
+import socket
 import subprocess
 import time
 import urllib.error
@@ -30,8 +33,28 @@ import pytest
 from app import db, kratos
 
 RAIZ_PROYECTO = Path(__file__).resolve().parent.parent
-KRATOS_TEST_PUBLIC_URL = "http://127.0.0.1:14433"
-KRATOS_TEST_ADMIN_URL = "http://127.0.0.1:14434"
+
+
+def _puerto_libre() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+# Puertos y proyecto de docker compose propios de ESTA ejecución de pytest
+# (ver el comentario de docker-compose.test.yml).
+KRATOS_TEST_PUBLIC_PORT = _puerto_libre()
+KRATOS_TEST_ADMIN_PORT = _puerto_libre()
+while KRATOS_TEST_ADMIN_PORT == KRATOS_TEST_PUBLIC_PORT:
+    KRATOS_TEST_ADMIN_PORT = _puerto_libre()
+KRATOS_TEST_PUBLIC_URL = f"http://127.0.0.1:{KRATOS_TEST_PUBLIC_PORT}"
+KRATOS_TEST_ADMIN_URL = f"http://127.0.0.1:{KRATOS_TEST_ADMIN_PORT}"
+COMPOSE_TEST = ["docker", "compose", "-p", f"guilda-test-{os.getpid()}", "-f", "docker-compose.test.yml"]
+ENTORNO_COMPOSE_TEST = {
+    **os.environ,
+    "KRATOS_TEST_PUBLIC_PORT": str(KRATOS_TEST_PUBLIC_PORT),
+    "KRATOS_TEST_ADMIN_PORT": str(KRATOS_TEST_ADMIN_PORT),
+}
 
 
 def _esperar_listo(url: str, timeout: float = 90) -> None:
@@ -51,8 +74,8 @@ def _esperar_listo(url: str, timeout: float = 90) -> None:
 @pytest.fixture(scope="session", autouse=True)
 def kratos_test():
     subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test.yml", "up", "-d"],
-        cwd=RAIZ_PROYECTO, check=True, timeout=180,
+        [*COMPOSE_TEST, "up", "-d"],
+        cwd=RAIZ_PROYECTO, check=True, timeout=180, env=ENTORNO_COMPOSE_TEST,
     )
     _esperar_listo(KRATOS_TEST_PUBLIC_URL)
     _esperar_listo(KRATOS_TEST_ADMIN_URL)
@@ -66,8 +89,8 @@ def kratos_test():
     yield
 
     subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test.yml", "down", "-v"],
-        cwd=RAIZ_PROYECTO, check=False, timeout=60,
+        [*COMPOSE_TEST, "down", "-v"],
+        cwd=RAIZ_PROYECTO, check=False, timeout=60, env=ENTORNO_COMPOSE_TEST,
     )
 
 
