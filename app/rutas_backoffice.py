@@ -187,7 +187,7 @@ def backups_vista():
 @login_required
 @admin_required
 def hacer_backup():
-    db.hacer_backup_si_hace_falta()
+    db.hacer_backup_si_hace_falta(forzar=True)
     _auditar("hacer_backup", None)
     return redirect(url_for("backoffice.backups_vista"))
 

@@ -18,7 +18,9 @@ Ejemplos:
     python cli.py quitar-admin persona@ejemplo.com
 """
 import argparse
+import os
 import sys
+from pathlib import Path
 
 from app import db, export
 
@@ -95,9 +97,35 @@ def cmd_demo(args):
     print("Datos de ejemplo creados: menús 'Lueira' y 'Guilda' con notas, eventos, una tarea y frases favoritas.")
 
 
+def _avisar_fallo_backup(motivo: str) -> None:
+    """Un cron que falla en silencio fue lo que dejó 6 semanas sin copia:
+    el fallo se avisa por correo además de salir con código != 0."""
+    from app import notificaciones_email
+    try:
+        notificaciones_email.enviar_alerta_interna(
+            "Guilda Work: ha fallado la copia de seguridad", motivo
+        )
+    except notificaciones_email.ErrorNotificacionesEmail as e:
+        print(f"Aviso: no se ha podido enviar el correo de alerta ({e}).", file=sys.stderr)
+
+
 def cmd_backup(args):
-    db.hacer_backup_si_hace_falta()
-    print(f"Copia de seguridad al día en {db.BACKUPS_DIR}")
+    destino = db.BACKUPS_DIR
+    # Si el destino debía ser otro disco (/mnt/...) y no está montado, no
+    # escribir en el disco raíz haciendo creer que hay copia externa.
+    if destino.parts[:2] == ("/", "mnt") and len(destino.parts) > 2 and not os.path.ismount(Path("/mnt") / destino.parts[2]):
+        motivo = f"El disco de copias /mnt/{destino.parts[2]} no está montado."
+        print(motivo, file=sys.stderr)
+        _avisar_fallo_backup(motivo)
+        sys.exit(1)
+    try:
+        db.hacer_backup_si_hace_falta(forzar=getattr(args, "forzar", False))
+    except Exception as e:
+        motivo = f"No se ha podido hacer la copia de seguridad en {destino}: {e}"
+        print(motivo, file=sys.stderr)
+        _avisar_fallo_backup(motivo)
+        sys.exit(1)
+    print(f"Copia de seguridad al día en {destino}")
 
 
 def cmd_crear_tenant(args):
@@ -165,6 +193,7 @@ def main():
     p_demo.set_defaults(func=cmd_demo)
 
     p_backup = sub.add_parser("backup", help="Fuerza una copia de seguridad de la base de datos ahora mismo.")
+    p_backup.add_argument("--forzar", action="store_true", help="Rehace la copia aunque ya exista la de hoy.")
     p_backup.set_defaults(func=cmd_backup)
 
     p_crear_tenant = sub.add_parser("crear-tenant", help="Crea un tenant (Fase 7c.3).")

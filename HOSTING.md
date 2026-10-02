@@ -2233,7 +2233,7 @@ algo que los otros dos no:
 
 | Mecanismo | Qué cubre | Frecuencia | Destino |
 |---|---|---|---|
-| `db.hacer_backup_si_hace_falta()` | Solo `data/registro.db` | Diaria (cron simple) | Copia local en el propio VPS |
+| `db.hacer_backup_si_hace_falta()` | Solo `data/registro.db` | Diaria (cron), **una única copia** | Segundo disco del VPS (`GUILDA_BACKUPS_DIR`) |
 | Litestream (`deploy/litestream.yml`) | Solo `data/registro.db` | Continua (streaming) | S3-compatible externo |
 | **Restic (`scripts/backup_restic.sh`)** | **Todo lo demás**: los ~15 volúmenes Docker de las herramientas conectadas (Postgres de EspoCRM/Nextcloud/Documenso/Paperless-ngx/Baserow/Chatwoot/OpenProject/FacturaScripts/Listmonk/Cal.diy/Umami, más los archivos de Nextcloud/Paperless-ngx/Baserow/Stalwart/Listmonk) | Diaria (systemd timer) | S3-compatible externo |
 
@@ -2245,10 +2245,23 @@ dato sin vuelta atrás.
 
 ### 9.1 Backup local simple de `registro.db`
 
+Se conserva **una sola copia**: la última verificada. Cada ejecución crea
+la copia en un `.tmp`, comprueba `PRAGMA integrity_check`, la sustituye de
+forma atómica y solo entonces borra las demás; si algo falla, la copia
+anterior queda intacta, el comando sale con código ≠ 0 y se envía un correo
+de alerta (`ALERTAS_ADMIN_EMAIL`).
+
 ```bash
 # crontab -e (usuario guilda)
-0 4 * * * /home/guilda/guilda-work/.venv/bin/python -c "from app import db; db.hacer_backup_si_hace_falta()"
+0 4 * * * cd /home/guilda/guilda-work && GUILDA_BACKUPS_DIR=/mnt/HC_Volume_106540289/guilda-backups .venv/bin/python cli.py backup >> /var/log/guilda-work/backup.log 2>&1
 ```
+
+**Importante**: el `cd` es imprescindible. Sin él Python no encuentra el
+paquete `app` (`ModuleNotFoundError`) y el cron falla cada noche sin que
+nadie lo vea (así se perdieron ~6 semanas de copias en 2026). Si el
+destino está bajo `/mnt/` y el disco no está montado, `cli.py backup`
+se niega a escribir en el disco raíz y avisa. El botón "Hacer copia ahora"
+del backoffice (`/backoffice/backups`) refresca la copia única.
 
 ### 9.2 Backups completos del stack con Restic (MIT)
 
@@ -2339,10 +2352,16 @@ journalctl -u vencimientos-fiscales.service -n 20
 ```
 
 **Retención**: el script termina con
-`restic forget --prune --keep-daily 7 --keep-weekly 4 --keep-monthly 6`
-— 7 copias diarias, 4 semanales, 6 mensuales; Restic solo almacena los
-bloques que cambian entre snapshots (deduplicación de contenido), así
-que esto no equivale a 17 copias completas en espacio real.
+`restic forget --prune --group-by host,tags --keep-last 1` — una única
+copia por volumen. El `--group-by host,tags` es obligatorio: todos los
+volúmenes se respaldan como `/data` en el mismo host, y con el agrupado
+por defecto (`host,paths`) restic los fusionaría en un solo grupo y
+borraría los snapshots de los demás volúmenes.
+
+**Destino local**: `RESTIC_REPOSITORY` puede ser una ruta absoluta (p. ej.
+`/mnt/HC_Volume_106540289/restic`, el segundo disco), sin cuenta S3. Protege
+frente a un fallo del disco principal, no frente a perder el servidor entero;
+un S3 externo sigue siendo lo único que cubre eso.
 
 **Prefijo de los volúmenes**: el script asume que Docker Compose nombra
 los volúmenes como `guilda-work_<nombre>` (el prefijo se deriva del

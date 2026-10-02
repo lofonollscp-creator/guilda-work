@@ -21,6 +21,7 @@ problema real con más de un usuario.
 """
 import hashlib
 import json
+import os
 import secrets
 import sqlite3
 import sys
@@ -37,7 +38,9 @@ else:
     RAIZ_PROYECTO = Path(__file__).resolve().parent.parent
 
 DB_PATH = RAIZ_PROYECTO / "data" / "registro.db"
-BACKUPS_DIR = RAIZ_PROYECTO / "data" / "backups"
+# GUILDA_BACKUPS_DIR permite llevar la copia a otro disco físico (en producción,
+# el volumen Hetzner montado en /mnt/...) sin tocar código.
+BACKUPS_DIR = Path(os.environ["GUILDA_BACKUPS_DIR"]) if os.environ.get("GUILDA_BACKUPS_DIR") else RAIZ_PROYECTO / "data" / "backups"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -1461,9 +1464,15 @@ def init_db() -> None:
         conn.close()
 
 
-def hacer_backup_si_hace_falta(mantener_dias: int = 30) -> None:
-    """Copia registro.db a data/backups/ una vez al día (idempotente si ya
-    existe la copia de hoy) y borra copias más antiguas que `mantener_dias`.
+def hacer_backup_si_hace_falta(forzar: bool = False) -> None:
+    """Mantiene UNA sola copia de registro.db en BACKUPS_DIR (la última
+    verificada), en vez de acumular copias diarias.
+
+    Flujo: crear (en un .tmp) -> verificar (PRAGMA integrity_check) ->
+    sustituir de forma atómica -> borrar el resto. Si algo falla, la copia
+    anterior se conserva intacta y se lanza la excepción (nunca se queda
+    uno sin copia por un backup a medias). Sin `forzar`, si ya hay copia de
+    hoy no hace nada.
 
     Usa la API de backup de sqlite3 en vez de una copia de archivo a pelo,
     para que sea segura aunque haya alguna conexión abierta en ese instante.
@@ -1473,10 +1482,15 @@ def hacer_backup_si_hace_falta(mantener_dias: int = 30) -> None:
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
     hoy = datetime.now().strftime("%Y-%m-%d")
     destino = BACKUPS_DIR / f"registro_{hoy}.db"
-    if not destino.exists():
+    if destino.exists() and not forzar:
+        return
+
+    temporal = BACKUPS_DIR / f"registro_{hoy}.db.tmp"
+    temporal.unlink(missing_ok=True)
+    try:
         origen = sqlite3.connect(DB_PATH)
         try:
-            copia = sqlite3.connect(destino)
+            copia = sqlite3.connect(temporal)
             try:
                 origen.backup(copia)
             finally:
@@ -1484,13 +1498,22 @@ def hacer_backup_si_hace_falta(mantener_dias: int = 30) -> None:
         finally:
             origen.close()
 
-    limite = datetime.now() - timedelta(days=mantener_dias)
-    for f in BACKUPS_DIR.glob("registro_*.db"):
+        verificacion = sqlite3.connect(temporal)
         try:
-            fecha = datetime.strptime(f.stem.removeprefix("registro_"), "%Y-%m-%d")
-        except ValueError:
-            continue
-        if fecha < limite:
+            resultado = verificacion.execute("PRAGMA integrity_check").fetchone()[0]
+        finally:
+            verificacion.close()
+        if resultado != "ok":
+            raise RuntimeError(f"La copia de seguridad no supera integrity_check: {resultado}")
+
+        os.replace(temporal, destino)
+    except BaseException:
+        temporal.unlink(missing_ok=True)
+        raise
+
+    # Solo llegamos aquí con la copia nueva ya verificada y en su sitio.
+    for f in BACKUPS_DIR.glob("registro_*.db"):
+        if f != destino:
             f.unlink(missing_ok=True)
 
 

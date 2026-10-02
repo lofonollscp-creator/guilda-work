@@ -4,7 +4,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Copias de seguridad') }}</h1>
-    <p class="subtitle">{{ _('Copias locales de registro.db — una al día, se conservan 30 días.') }}</p>
+    <p class="subtitle">{{ _('Copia de registro.db — se conserva una única copia: la última verificada.') }}</p>
   </div>
 </header>
 
@@ -12,7 +12,7 @@
   <form method="post" action="{{ url_for('backoffice.hacer_backup') }}">
     <button type="submit" class="btn btn-primary">{{ _('Hacer copia ahora') }}</button>
   </form>
-  <p class="subtitle" style="margin-top: 8px;">{{ _('Si ya existe una copia de hoy, no hace nada nuevo.') }}</p>
+  <p class="subtitle" style="margin-top: 8px;">{{ _('La copia nueva se verifica antes de sustituir a la anterior; si falla, se conserva la anterior.') }}</p>
 
   <div class="table-wrap" style="margin-top: 16px;">
     <table class="historial-table">

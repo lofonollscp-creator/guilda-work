@@ -9,9 +9,18 @@
 # real contra un bucket S3-compatible, byte a byte idéntico) — ver el
 # apartado de verificación de HOSTING.md.
 #
-# Requiere: RESTIC_REPOSITORY, RESTIC_PASSWORD y las credenciales del
-# backend S3-compatible (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY) en
-# /etc/restic.env — nunca en este archivo.
+# Requiere: RESTIC_REPOSITORY y RESTIC_PASSWORD en /etc/restic.env — nunca
+# en este archivo. RESTIC_REPOSITORY puede ser una ruta local absoluta
+# (p. ej. /mnt/HC_Volume_106540289/restic, el segundo disco del VPS: no
+# hace falta ninguna cuenta externa) o un bucket S3-compatible, en cuyo caso
+# hacen falta también AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY.
+#
+# Política de retención: UNA sola copia (la última) por volumen, para que los
+# backups no se acumulen. Ojo con --group-by: todos los volúmenes se respaldan
+# como "/data" en el mismo host, así que con el agrupado por defecto
+# (host,paths) restic los trataría como un único grupo y --keep-last 1 dejaría
+# un solo snapshot en TOTAL, borrando el de los demás volúmenes. Con
+# --group-by host,tags (cada volumen lleva su --tag) queda uno por volumen.
 #
 # Uso: 0 3 * * * /home/guilda/guilda-work/scripts/backup_restic.sh
 # (con RandomizedDelaySec si se llama desde un timer systemd, ver
@@ -57,6 +66,12 @@ VOLUMENES=(
 
 PREFIJO="${DOCKER_COMPOSE_PROJECT_PREFIX:-guilda-work}"
 
+# Repositorio local: el contenedor de restic tiene que ver esa ruta.
+MONTAJE_REPO=()
+case "$RESTIC_REPOSITORY" in
+  /*) mkdir -p "$RESTIC_REPOSITORY"; MONTAJE_REPO=(-v "$RESTIC_REPOSITORY:$RESTIC_REPOSITORY") ;;
+esac
+
 for volumen in "${VOLUMENES[@]}"; do
   volumen_real="${PREFIJO}_${volumen}"
   if ! docker volume inspect "$volumen_real" >/dev/null 2>&1; then
@@ -67,15 +82,17 @@ for volumen in "${VOLUMENES[@]}"; do
   docker run --rm \
     -v "$volumen_real:/data:ro" \
     -v restic-cache:/cache \
+    "${MONTAJE_REPO[@]}" \
     -e RESTIC_REPOSITORY -e RESTIC_PASSWORD \
     -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
     restic/restic backup /data --tag "$volumen" --host guilda-work
 done
 
-echo "== Purgando snapshots antiguos (política: 7 diarios, 4 semanales, 6 mensuales) =="
+echo "== Purgando snapshots antiguos (política: una única copia por volumen) =="
 docker run --rm \
   -v restic-cache:/cache \
+  "${MONTAJE_REPO[@]}" \
   -e RESTIC_REPOSITORY -e RESTIC_PASSWORD \
   -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
   restic/restic forget --prune \
-  --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --host guilda-work
+  --group-by host,tags --keep-last 1 --host guilda-work

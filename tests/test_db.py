@@ -5,6 +5,7 @@ cálculo de duración al pausar/reanudar tareas, el borrado en cascada de un
 menú, y los filtros del histórico. La base de datos de cada test es un
 archivo temporal aislado (ver conftest.py) — nunca se toca data/registro.db.
 """
+import pytest
 from datetime import datetime, timedelta
 
 from app import db
@@ -441,6 +442,106 @@ def test_backup_crea_un_archivo_y_no_lo_duplica_el_mismo_dia(usuario_id):
         assert n == 1
     finally:
         con.close()
+
+
+def test_backup_deja_una_sola_copia_aunque_haya_antiguas(usuario_id):
+    db.crear_categoria(usuario_id, "Guilda")
+    db.BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    for fecha in ("2026-01-01", "2026-02-02", "2026-03-03"):
+        (db.BACKUPS_DIR / f"registro_{fecha}.db").write_bytes(b"vieja")
+
+    db.hacer_backup_si_hace_falta()
+
+    archivos = list(db.BACKUPS_DIR.glob("registro_*.db"))
+    assert len(archivos) == 1
+    assert archivos[0].read_bytes() != b"vieja"
+    assert not list(db.BACKUPS_DIR.glob("*.tmp"))
+
+
+def test_backup_forzar_sustituye_la_copia_de_hoy(usuario_id):
+    import sqlite3
+    db.crear_categoria(usuario_id, "Guilda")
+    db.hacer_backup_si_hace_falta()
+    db.crear_categoria(usuario_id, "Otra")
+
+    db.hacer_backup_si_hace_falta()  # sin forzar: no la toca
+    archivo = next(db.BACKUPS_DIR.glob("registro_*.db"))
+    con = sqlite3.connect(archivo)
+    try:
+        assert con.execute("SELECT COUNT(*) FROM categorias").fetchone()[0] == 1
+    finally:
+        con.close()
+
+    db.hacer_backup_si_hace_falta(forzar=True)
+    assert len(list(db.BACKUPS_DIR.glob("registro_*.db"))) == 1
+    con = sqlite3.connect(next(db.BACKUPS_DIR.glob("registro_*.db")))
+    try:
+        assert con.execute("SELECT COUNT(*) FROM categorias").fetchone()[0] == 2
+    finally:
+        con.close()
+
+
+def test_backup_fallido_conserva_la_copia_anterior(usuario_id, monkeypatch):
+    import sqlite3
+    db.crear_categoria(usuario_id, "Guilda")
+    db.BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    anterior = db.BACKUPS_DIR / "registro_2026-01-01.db"
+    anterior.write_bytes(b"copia-buena-anterior")
+
+    class ConexionRota:
+        def __init__(self, real):
+            self._real = real
+
+        def execute(self, sql, *a):
+            if sql.startswith("PRAGMA integrity_check"):
+                class R:
+                    def fetchone(self_inner):
+                        return ("*** corrupta ***",)
+                return R()
+            return self._real.execute(sql, *a)
+
+        def __getattr__(self, nombre):
+            return getattr(self._real, nombre)
+
+    conectar_real = sqlite3.connect
+
+    aperturas_del_tmp = []
+
+    def conectar_falso(ruta, *a, **kw):
+        con = conectar_real(ruta, *a, **kw)
+        if str(ruta).endswith(".tmp"):
+            aperturas_del_tmp.append(1)
+            # La 1ª apertura es la escritura del backup (necesita la conexión
+            # real); la 2ª es la verificación, que simulamos corrupta.
+            if len(aperturas_del_tmp) == 2:
+                return ConexionRota(con)
+        return con
+
+    monkeypatch.setattr(db.sqlite3, "connect", conectar_falso)
+    with pytest.raises(RuntimeError):
+        db.hacer_backup_si_hace_falta()
+
+    assert anterior.read_bytes() == b"copia-buena-anterior"
+    assert not list(db.BACKUPS_DIR.glob("*.tmp"))
+    assert [f.name for f in db.BACKUPS_DIR.glob("registro_*.db")] == ["registro_2026-01-01.db"]
+
+
+def test_cli_backup_fallido_avisa_y_sale_con_error(usuario_id, monkeypatch):
+    import argparse
+    import cli
+    from app import notificaciones_email
+
+    def falla(forzar=False):
+        raise RuntimeError("disco lleno")
+
+    avisos = []
+    monkeypatch.setattr(db, "hacer_backup_si_hace_falta", falla)
+    monkeypatch.setattr(notificaciones_email, "enviar_alerta_interna", lambda a, c: avisos.append((a, c)))
+
+    with pytest.raises(SystemExit) as e:
+        cli.cmd_backup(argparse.Namespace(forzar=False))
+    assert e.value.code == 1
+    assert len(avisos) == 1 and "disco lleno" in avisos[0][1]
 
 
 # --- Papelera ------------------------------------------------------------
