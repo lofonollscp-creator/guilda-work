@@ -47,6 +47,9 @@
      demasiado claro para texto blanco legible). */
   --primary: #a6e600;
   --primary-dark: #8fc400;
+  /* Lima como TEXTO: #a6e600 sobre blanco da ~1,5:1 (ilegible); este olivo
+     da ~5:1. --primary se queda para fondos/bordes. En oscuro vale el lima. */
+  --primary-text: #4d7a00;
   --on-accent: #0a0a0a;
   --danger: #e0555a;
   --success: #1f9d55;
@@ -135,6 +138,7 @@
     --sidebar-bg: #050506;
     --primary: #ccff33;
     --primary-dark: #a6e600;
+    --primary-text: #ccff33;
     --danger: #ff6b70;
     --warning: #eab308;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -166,6 +170,7 @@
   --sidebar-bg: #050506;
   --primary: #ccff33;
   --primary-dark: #a6e600;
+  --primary-text: #ccff33;
   --danger: #ff6b70;
   --warning: #eab308;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -221,7 +226,7 @@ a { color: inherit; }
    aspecto reconocible y consistente de "esto es un enlace" en toda la
    app, reusando las variables de color ya existentes. */
 .link {
-  color: var(--primary-dark);
+  color: var(--primary-text);
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--primary-dark) 45%, transparent);
   text-decoration-thickness: 1px;
@@ -229,8 +234,8 @@ a { color: inherit; }
   transition: color 0.12s ease, text-decoration-color 0.12s ease;
 }
 .link:hover {
-  color: var(--primary-dark);
-  text-decoration-color: var(--primary-dark);
+  color: var(--primary-text);
+  text-decoration-color: var(--primary-text);
   text-decoration-thickness: 2px;
 }
 /* Mismo tratamiento aplicado por contexto, sin tener que anotar
@@ -241,7 +246,7 @@ a { color: inherit; }
 .auth-alterna a,
 a[href^="mailto:"],
 .log-text a {
-  color: var(--primary-dark);
+  color: var(--primary-text);
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--primary-dark) 45%, transparent);
   text-decoration-thickness: 1px;
@@ -251,7 +256,7 @@ a[href^="mailto:"],
 .auth-alterna a:hover,
 a[href^="mailto:"]:hover,
 .log-text a:hover {
-  text-decoration-color: var(--primary-dark);
+  text-decoration-color: var(--primary-text);
   text-decoration-thickness: 2px;
 }
 
@@ -865,7 +870,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   height: 34px;
   border-radius: 7px;
   background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
+  color: var(--primary-text);
   margin-bottom: 0;
   flex-shrink: 0;
 }
@@ -908,7 +913,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .dash-accion-buscar:hover {
   border-color: var(--primary);
-  color: var(--primary);
+  color: var(--primary-text);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
@@ -1079,7 +1084,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .menu-icono-opcion[aria-pressed="true"] {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 /* Insignias/etiquetas cortas: monoespaciadas + fondo mezclado del color
@@ -1446,7 +1451,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .task-name { flex: 1; font-weight: 500; }
 .task-timer {
   font-variant-numeric: tabular-nums;
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 700;
   font-size: 0.95em;
 }
@@ -1518,7 +1523,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   cursor: pointer;
   text-align: left;
 }
-.fiscal-cliente-btn:hover { color: var(--primary); text-decoration: underline; }
+.fiscal-cliente-btn:hover { color: var(--primary-text); text-decoration: underline; }
 
 /* Bloque 2 del plan de reestructuración del calendario fiscal:
    agrupación por cliente en /fiscal/vencimientos (antes una única lista
@@ -1612,7 +1617,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   text-decoration: none;
   font-weight: 600;
 }
-.fiscal-calendario-mas:hover { color: var(--primary); }
+.fiscal-calendario-mas:hover { color: var(--primary-text); }
 @media (max-width: 900px) {
   .fiscal-calendario-dia-nombre { font-size: 0.65em; }
   .fiscal-calendario-celda { min-height: 56px; padding: 4px; }
@@ -1914,7 +1919,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   flex-shrink: 0;
   background: none;
   border: none;
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 600;
   font-size: 0.95em;
   cursor: pointer;
@@ -2206,7 +2211,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .pill.prioridad-alta { background: color-mix(in srgb, var(--danger) 16%, transparent); border-color: color-mix(in srgb, var(--danger) 35%, transparent); color: var(--danger); }
 .pill.prioridad-normal { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
-.pill.prioridad-baja { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary); }
+.pill.prioridad-baja { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary-text); }
 
 /* ---- Subnav Lista/Calendario de Tareas ---- */
 .tareas-subnav {
@@ -2733,7 +2738,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.correo-adjunto-chip:hover { border-color: var(--primary); color: var(--primary); }
+.correo-adjunto-chip:hover { border-color: var(--primary); color: var(--primary-text); }
 .correo-adjunto-tamano { color: var(--text-muted); }
 .correo-adjunto.tiene-vista-previa { display: flex; flex-direction: column; gap: var(--space-1); }
 .correo-adjunto-preview-imagen {
@@ -2768,12 +2773,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-aviso-imagenes button {
   border: none;
   background: none;
-  color: var(--primary);
+  color: var(--primary-text);
   cursor: pointer;
   font-size: inherit;
   padding: 0;
 }
-.correo-aviso-imagenes a { color: var(--primary); }
+.correo-aviso-imagenes a { color: var(--primary-text); }
 
 .correo-compose-adjuntos input[type="file"] { font-size: var(--font-size-sm); }
 .correo-lectura-cuerpo { flex: 1; white-space: pre-wrap; }
@@ -2816,7 +2821,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .correo-compose .correo-editor-toolbar { margin-top: 14px; }
 .correo-compose-acciones { display: flex; gap: 10px; margin-top: 16px; }
-.correo-compose-cc-toggle { font-size: 0.82em; color: var(--primary); text-decoration: none; white-space: nowrap; }
+.correo-compose-cc-toggle { font-size: 0.82em; color: var(--primary-text); text-decoration: none; white-space: nowrap; }
 .correo-compose-cc-toggle:hover { text-decoration: underline; }
 .correo-compose-cc-cco[hidden] { display: none; }
 .correo-compose-cc-cco { display: flex; flex-direction: column; }
@@ -2974,7 +2979,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-family: inherit;
 }
 .correo-ribbon-btn:hover { background: var(--surface); color: var(--text); }
-.correo-ribbon-btn.esta-activo { color: var(--primary); }
+.correo-ribbon-btn.esta-activo { color: var(--primary-text); }
 .correo-ribbon-icono { display: flex; line-height: 1; }
 .correo-ribbon-icono svg { width: 18px; height: 18px; flex-shrink: 0; }
 /* La etiqueta de texto se queda en el DOM (lectores de pantalla, y el
@@ -3178,7 +3183,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.ia-adjunto-chip:hover { border-color: var(--primary); color: var(--primary); }
+.ia-adjunto-chip:hover { border-color: var(--primary); color: var(--primary-text); }
 .ia-adjunto-preview-imagen {
   display: block;
   max-width: 220px;
@@ -3989,7 +3994,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-size: 0.7em;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--primary-dark);
+  color: var(--primary-text);
   margin-right: 6px;
 }
 .busqueda-resultado-texto { color: var(--text); font-size: 0.92em; }
@@ -4088,7 +4093,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tiquet-card-autor { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tiquet-card-acciones { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .tiquet-card-acciones a { color: var(--text-muted); text-decoration: none; }
-.tiquet-card-acciones a:hover { color: var(--primary); }
+.tiquet-card-acciones a:hover { color: var(--primary-text); }
 /* Los 2 formularios de acción (cambiar estado, asignar+prioridad) se
    agrupan en un bloque propio con su propio separador -- antes cada
    uno llevaba solo un margin-top:4px suelto, sin nada que los
@@ -4114,7 +4119,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 
 .pill.estado-sin_revisar { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
-.pill.estado-en_revision { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary); }
+.pill.estado-en_revision { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--primary-text); }
 .pill.estado-finalizado { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
 .pill.prioridad-alta { background: color-mix(in srgb, var(--danger) 16%, transparent); border-color: color-mix(in srgb, var(--danger) 35%, transparent); color: var(--danger); }
 .pill.prioridad-normal { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
