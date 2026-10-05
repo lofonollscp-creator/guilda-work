@@ -21,7 +21,7 @@ from datetime import datetime
 from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, espocrm, export, herramientas, ia_asistente, kratos, openapi
+from . import correo, db, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -1267,6 +1267,32 @@ def listar_modelos_ia():
     return _ok(ia_asistente.listar_modelos_gratuitos())
 
 
+@api_bp.route("/ia/atajos", methods=["GET"])
+@token_required
+def listar_atajos_ia():
+    """Atajos de prompts: los 6 de serie (sin id) y los propios del usuario."""
+    return _ok(ia_atajos.atajos_para(g.usuario_id))
+
+
+@api_bp.route("/ia/atajos", methods=["POST"])
+@token_required
+def crear_atajo_ia():
+    datos = _body()
+    try:
+        atajo_id = db.crear_atajo_ia(g.usuario_id, datos.get("titulo", ""), datos.get("prompt", ""))
+    except ValueError as e:
+        return _err(str(e))
+    return _ok({"id": atajo_id}, 201)
+
+
+@api_bp.route("/ia/atajos/<int:atajo_id>", methods=["DELETE"])
+@token_required
+def eliminar_atajo_ia(atajo_id: int):
+    if not db.eliminar_atajo_ia(g.usuario_id, atajo_id):
+        abort(404, "Atajo no encontrado.")
+    return _ok()
+
+
 @api_bp.route("/ia/ajustes", methods=["GET"])
 @token_required
 def obtener_ajustes_ia():
@@ -1281,6 +1307,7 @@ def guardar_ajustes_ia():
     datos = _body()
     db.guardar_preferencias_ia(
         g.usuario_id, modelo=datos.get("modelo", ""), modo_autonomo=bool(datos.get("modo_autonomo", False)),
+        solo_lectura=bool(datos["solo_lectura"]) if "solo_lectura" in datos else None,
     )
     nueva_clave = (datos.get("api_key") or "").strip()
     if nueva_clave:

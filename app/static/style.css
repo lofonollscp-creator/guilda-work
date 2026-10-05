@@ -4399,3 +4399,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-programar { display: inline-block; position: relative; }
 .correo-programar summary { list-style: none; cursor: pointer; }
 .correo-programar-cuerpo { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; padding: .5rem 0; }
+
+/* Asistente IA: fuentes citadas y atajos */
+.ia-fuentes { display: flex; flex-wrap: wrap; gap: .3rem .4rem; align-items: center; margin: -.2rem 0 .6rem; font-size: .76rem; }
+.ia-fuentes-etiqueta { opacity: .7; }
+.ia-fuente { padding: .1rem .55rem; border: 1px solid var(--line, #d4d8cb); border-radius: 999px; text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ia-fuente:hover, .ia-fuente:focus-visible { text-decoration: underline; }
+.ia-atajos { display: flex; gap: .35rem; overflow-x: auto; padding: .3rem 0 .45rem; scrollbar-width: thin; }
+.ia-atajo { flex: 0 0 auto; padding: .25rem .7rem; font-size: .78rem; border: 1px solid var(--line, #d4d8cb); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+.ia-atajo:hover, .ia-atajo:focus-visible { border-color: currentColor; }

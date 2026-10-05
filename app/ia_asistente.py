@@ -24,7 +24,7 @@ from collections.abc import Iterator
 
 import keyring
 
-from . import db, ia_herramientas as herramientas
+from . import db, ia_fuentes, ia_herramientas as herramientas
 
 SERVICIO_KEYRING_IA = "guilda-work-ia"
 CLAVE_API_OPENROUTER = "openrouter-api-key"
@@ -99,6 +99,8 @@ def _prompt_sistema(usuario_id: int, idioma: str, ahora: datetime | None = None)
         "de hoy y pásalas a las herramientas en formato AAAA-MM-DD (con hora, AAAA-MM-DD HH:MM, solo si te la piden). "
         "Antes de dar por hecho un id (de nota, tarea, mensaje, proyecto o cliente) que no te haya dado "
         "explícitamente la persona usuaria, consúltalo primero con una herramienta de lectura. "
+        "Cuando una respuesta se apoye en datos de herramientas (correos, notas, tareas, clientes), di brevemente "
+        "de dónde sale cada dato. "
         "No inventes datos: si una herramienta falla o no devuelve nada, dilo. Las acciones que modifican "
         "datos pueden pedir confirmación a la persona usuaria; si la rechaza, no insistas."
     )
@@ -340,6 +342,32 @@ def listar_modelos_gratuitos(*, forzar_recarga: bool = False) -> list[dict]:
         return _cache_modelos_gratuitos if _cache_modelos_gratuitos is not None else list(MODELOS_GRATUITOS_RESPALDO)
 
 
+_ERROR_SOLO_LECTURA = json.dumps(
+    {"error": "Modo solo lectura activo: esta acción no está permitida. Solo puedes consultar datos."},
+    ensure_ascii=False,
+)
+
+
+def _herramientas_para(solo_lectura: bool) -> list[dict]:
+    """En modo solo lectura al modelo solo se le ofrecen las herramientas de lectura."""
+    if not solo_lectura:
+        return herramientas.HERRAMIENTAS
+    return [t for t in herramientas.HERRAMIENTAS if t["function"]["name"] in herramientas.LECTURA]
+
+
+def _fuentes_del_turno(usuario_id: int) -> str | None:
+    """Fuentes (JSON) de las herramientas de lectura usadas desde el último
+    mensaje de la persona usuaria, o None si no hubo ninguna."""
+    filas = db.listar_mensajes_ia(usuario_id)
+    ultimo_usuario = max((i for i, f in enumerate(filas) if f["rol"] == "user"), default=-1)
+    resultados = [(f["nombre_herramienta"], f["contenido"]) for f in filas[ultimo_usuario + 1:] if f["rol"] == "tool"]
+    try:
+        fuentes = ia_fuentes.extraer_fuentes(resultados, herramientas.LECTURA)
+    except Exception:  # noqa: BLE001 -- citar fuentes es un extra: nunca debe romper la respuesta
+        return None
+    return json.dumps(fuentes, ensure_ascii=False) if fuentes else None
+
+
 def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
     idioma = db.idioma_usuario(usuario_id) or "es"
     mensajes = [{"role": "system", "content": _prompt_sistema(usuario_id, idioma)}]
@@ -392,6 +420,10 @@ def _ejecutar_tool_call(usuario_id: int, tool_call: dict) -> str:
     listo para guardarse como contenido de un mensaje `tool`."""
     nombre = tool_call["function"]["name"]
     argumentos = json.loads(tool_call["function"]["arguments"] or "{}")
+    # Última barrera del modo solo lectura (p. ej. si se activó mientras había
+    # una acción esperando confirmación): nunca se ejecuta una herramienta de escritura.
+    if nombre not in herramientas.LECTURA and db.obtener_preferencias_ia(usuario_id)["solo_lectura"]:
+        return _ERROR_SOLO_LECTURA
     try:
         resultado = herramientas.ejecutar(usuario_id, nombre, argumentos)
         return json.dumps(resultado, ensure_ascii=False, default=str)
@@ -434,6 +466,7 @@ def _continuar_conversacion(usuario_id: int) -> dict:
     preferencias = db.obtener_preferencias_ia(usuario_id)
     modelo = preferencias["modelo"]
     modo_autonomo = bool(preferencias["modo_autonomo"])
+    solo_lectura = bool(preferencias["solo_lectura"])
     claves = obtener_api_keys(usuario_id)
 
     if not modelo.strip():
@@ -456,7 +489,7 @@ def _continuar_conversacion(usuario_id: int) -> dict:
 
         respuesta = _post_json_con_fallback(
             OPENROUTER_URL,
-            {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": herramientas.HERRAMIENTAS},
+            {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": _herramientas_para(solo_lectura)},
             claves,
         )
         try:
@@ -466,7 +499,9 @@ def _continuar_conversacion(usuario_id: int) -> dict:
 
         tool_calls = mensaje.get("tool_calls") or []
         if not tool_calls:
-            db.agregar_mensaje_ia(usuario_id, "assistant", contenido=mensaje.get("content") or "")
+            db.agregar_mensaje_ia(
+                usuario_id, "assistant", contenido=mensaje.get("content") or "", fuentes_json=_fuentes_del_turno(usuario_id),
+            )
             return {"mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes), "pendiente": None}
 
         db.agregar_mensaje_ia(
@@ -476,6 +511,12 @@ def _continuar_conversacion(usuario_id: int) -> dict:
 
         for tool_call in tool_calls:
             nombre = tool_call["function"]["name"]
+            if solo_lectura and nombre not in herramientas.LECTURA:
+                db.agregar_mensaje_ia(
+                    usuario_id, "tool", contenido=_ERROR_SOLO_LECTURA, tool_call_id=tool_call["id"],
+                    nombre_herramienta=nombre,
+                )
+                continue
             if herramientas.necesita_confirmacion(nombre, modo_autonomo):
                 return {
                     "mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes),
@@ -550,6 +591,7 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
     preferencias = db.obtener_preferencias_ia(usuario_id)
     modelo = preferencias["modelo"]
     modo_autonomo = bool(preferencias["modo_autonomo"])
+    solo_lectura = bool(preferencias["solo_lectura"])
     claves = obtener_api_keys(usuario_id)
 
     if not modelo.strip():
@@ -565,7 +607,7 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
             return
 
         ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
-        payload = {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": herramientas.HERRAMIENTAS}
+        payload = {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": _herramientas_para(solo_lectura)}
         contenido_acumulado = ""
         # Los tool_calls llegan troceados por índice a lo largo de varios
         # chunks (id/nombre/argumentos incompletos hasta que termina el
@@ -597,7 +639,9 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
         tool_calls = [tool_calls_acumulados[i] for i in sorted(tool_calls_acumulados)]
 
         if not tool_calls:
-            db.agregar_mensaje_ia(usuario_id, "assistant", contenido=contenido_acumulado)
+            db.agregar_mensaje_ia(
+                usuario_id, "assistant", contenido=contenido_acumulado, fuentes_json=_fuentes_del_turno(usuario_id),
+            )
             for mensaje in _mensajes_nuevos_desde(usuario_id, ids_antes):
                 yield {"tipo": "mensaje", "mensaje": mensaje}
             return
@@ -611,6 +655,15 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
 
         for tool_call in tool_calls:
             nombre = tool_call["function"]["name"]
+            if solo_lectura and nombre not in herramientas.LECTURA:
+                ids_antes_tool = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
+                db.agregar_mensaje_ia(
+                    usuario_id, "tool", contenido=_ERROR_SOLO_LECTURA, tool_call_id=tool_call["id"],
+                    nombre_herramienta=nombre,
+                )
+                for mensaje in _mensajes_nuevos_desde(usuario_id, ids_antes_tool):
+                    yield {"tipo": "mensaje", "mensaje": mensaje}
+                continue
             if herramientas.necesita_confirmacion(nombre, modo_autonomo):
                 yield {"tipo": "pendiente", "pendiente": _pendiente_dict(tool_call)}
                 return

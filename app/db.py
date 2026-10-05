@@ -618,6 +618,15 @@ CREATE TABLE IF NOT EXISTS ia_conversaciones (
 );
 
 -- Mensajes del Asistente IA, repartidos en conversaciones (conversacion_id).
+-- Atajos de prompts propios del usuario para el chat del asistente (máx. 20).
+CREATE TABLE IF NOT EXISTS ia_atajos (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    titulo TEXT NOT NULL,
+    prompt TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS ia_mensajes (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER,
@@ -815,6 +824,7 @@ CREATE INDEX IF NOT EXISTS idx_tareas_outlook_asignada ON tareas_outlook(asignad
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_conversacion ON ia_mensajes(conversacion_id);
 CREATE INDEX IF NOT EXISTS idx_ia_conversaciones_usuario ON ia_conversaciones(usuario_id, actualizada_en);
+CREATE INDEX IF NOT EXISTS idx_ia_atajos_usuario ON ia_atajos(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_remitentes_confiables_usuario ON correo_remitentes_confiables(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_reglas_categoria_usuario ON correo_reglas_categoria(usuario_id);
@@ -1500,6 +1510,8 @@ def init_db() -> None:
         # conversaciones. Tiene que ir ANTES de executescript(INDICES) (hay un
         # índice sobre esta columna).
         _asegurar_columna(conn, "ia_mensajes", "conversacion_id", "INTEGER")
+        # Fuentes citadas bajo la respuesta final del asistente (JSON).
+        _asegurar_columna(conn, "ia_mensajes", "fuentes_json", "TEXT")
 
         conn.executescript(INDICES)
         _asegurar_orden_categorias(conn)
@@ -1516,6 +1528,9 @@ def init_db() -> None:
         # propia tabla ia_preferencias en primer lugar.
         _asegurar_columna(conn, "ia_preferencias", "proveedor_local", "TEXT NOT NULL DEFAULT 'ollama'")
         _asegurar_columna(conn, "ia_preferencias", "modelo_local", "TEXT NOT NULL DEFAULT ''")
+        # Modo solo lectura del asistente: al modelo solo se le ofrecen (y solo
+        # se ejecutan) las herramientas de lectura.
+        _asegurar_columna(conn, "ia_preferencias", "solo_lectura", "INTEGER NOT NULL DEFAULT 0")
 
         # Relación opcional con un proyecto (categorias) para las Tareas Outlook
         # — mismo patrón ya usado en correo_mensajes.categoria_id más arriba.
@@ -7411,7 +7426,8 @@ def obtener_preferencias_ia(usuario_id: int) -> sqlite3.Row:
         conn.close()
 
 
-def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -> None:
+def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool, solo_lectura: bool | None = None) -> None:
+    """`solo_lectura` None = no tocar (los clientes antiguos no lo envían)."""
     conn = get_connection()
     try:
         conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
@@ -7419,6 +7435,10 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -
             "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE usuario_id = ?",
             (modelo, int(modo_autonomo), usuario_id),
         )
+        if solo_lectura is not None:
+            conn.execute(
+                "UPDATE ia_preferencias SET solo_lectura = ? WHERE usuario_id = ?", (int(solo_lectura), usuario_id)
+            )
         conn.commit()
     finally:
         conn.close()
@@ -7817,6 +7837,7 @@ def agregar_mensaje_ia(
     tool_calls_json: str | None = None,
     tool_call_id: str | None = None,
     nombre_herramienta: str | None = None,
+    fuentes_json: str | None = None,
 ) -> int:
     """Añade el mensaje a la conversación activa (abriéndola si no hay). El
     primer mensaje de la persona usuaria da título a la conversación."""
@@ -7832,9 +7853,11 @@ def agregar_mensaje_ia(
         ahora = now_iso()
         cursor = conn.execute(
             """INSERT INTO ia_mensajes
-               (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, ahora),
+               (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta,
+                fuentes_json, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta,
+             fuentes_json, ahora),
         )
         titulo = titulo_actual
         if not titulo and rol == "user":
@@ -7844,6 +7867,45 @@ def agregar_mensaje_ia(
         )
         conn.commit()
         return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+IA_MAX_ATAJOS = 20
+
+
+def listar_atajos_ia(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM ia_atajos WHERE usuario_id = ? ORDER BY id", (usuario_id,)).fetchall()
+    finally:
+        conn.close()
+
+
+def crear_atajo_ia(usuario_id: int, titulo: str, prompt: str) -> int:
+    titulo, prompt = (titulo or "").strip()[:40], (prompt or "").strip()[:1000]
+    if not titulo or not prompt:
+        raise ValueError("El atajo necesita un título y un texto.")
+    conn = get_connection()
+    try:
+        if conn.execute("SELECT COUNT(*) FROM ia_atajos WHERE usuario_id = ?", (usuario_id,)).fetchone()[0] >= IA_MAX_ATAJOS:
+            raise ValueError(f"Máximo {IA_MAX_ATAJOS} atajos propios.")
+        cur = conn.execute(
+            "INSERT INTO ia_atajos (usuario_id, titulo, prompt, creado_en) VALUES (?, ?, ?, ?)",
+            (usuario_id, titulo, prompt, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def eliminar_atajo_ia(usuario_id: int, atajo_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute("DELETE FROM ia_atajos WHERE id = ? AND usuario_id = ?", (atajo_id, usuario_id))
+        conn.commit()
+        return cur.rowcount > 0
     finally:
         conn.close()
 

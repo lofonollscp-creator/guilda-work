@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, notificaciones
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, ia_atajos, importador, kratos, notificaciones
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -344,6 +344,7 @@ def inyectar_ia_flotante():
     return {
         "ia_mensajes_flotante": db.listar_mensajes_ia(g.usuario_id),
         "ia_pendiente_flotante": ia_asistente.pendiente_actual(g.usuario_id),
+        "ia_atajos_flotante": ia_atajos.atajos_para(g.usuario_id),
     }
 
 

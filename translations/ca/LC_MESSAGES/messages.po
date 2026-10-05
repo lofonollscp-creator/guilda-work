@@ -49,14 +49,12 @@ msgid "Sí, hazlo"
 msgstr "Sí, fes-ho"
 
 #: app/templates/_ia_chat_macro.html:22
-#, fuzzy
 msgid "No"
-msgstr "Nota"
+msgstr "No"
 
 #: app/templates/_ia_chat_macro.html:26
-#, fuzzy
 msgid "Dictar mensaje"
-msgstr "Crear menú"
+msgstr "Dicta un missatge"
 
 #: app/templates/_ia_chat_macro.html:27
 msgid "Escribe un mensaje..."
@@ -73,12 +71,11 @@ msgstr "Nova conversa"
 
 #: app/templates/_ia_chat_macro.html:36
 msgid "Modo Live (manos libres)"
-msgstr ""
+msgstr "Mode Live (mans lliures)"
 
 #: app/templates/_ia_chat_macro.html:36
-#, fuzzy
 msgid "Live"
-msgstr "Tornar"
+msgstr "Live"
 
 #: app/templates/backoffice.html:2 app/templates/base.html:92
 #: app/templates/base.html:94
@@ -1811,9 +1808,8 @@ msgid "No se pudo contactar con el servidor."
 msgstr "No s'ha pogut contactar amb el servidor."
 
 #: app/templates/ia_ajustes.html:2 app/templates/ia_ajustes.html:6
-#, fuzzy
 msgid "Ajustes del Asistente IA"
-msgstr "Prova l'assistent IA"
+msgstr "Ajustos de l'Assistent IA"
 
 #: app/templates/ia_ajustes.html:7
 msgid "Volver al chat"
@@ -1828,22 +1824,16 @@ msgid "Modelo sugerido"
 msgstr "Model suggerit"
 
 #: app/templates/ia_ajustes.html:16
-#, fuzzy
 msgid "elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo"
-msgstr "triar-ne un de la llista, o utilitzar el camp de sota"
+msgstr "triar-ne un de la llista (només models gratuïts), o fer servir el camp de sota"
 
 #: app/templates/ia_ajustes.html:22
-msgid ""
-"No se ha podido obtener el listado de modelos gratuitos de OpenRouter "
-"ahora mismo — usa el campo de abajo con el id exacto del modelo."
-msgstr ""
+msgid "No se ha podido obtener el listado de modelos gratuitos de OpenRouter ahora mismo — usa el campo de abajo con el id exacto del modelo."
+msgstr "Ara mateix no s'ha pogut obtenir la llista de models gratuïts d'OpenRouter: fes servir el camp de sota amb l'id exacte del model."
 
 #: app/templates/ia_ajustes.html:26
-#, fuzzy
-msgid ""
-"O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de "
-"pago)"
-msgstr "O escriu qualsevol altre id de model d'OpenRouter"
+msgid "O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)"
+msgstr "O escriu qualsevol altre id de model d'OpenRouter (inclou models de pagament)"
 
 #: app/templates/ia_ajustes.html:27
 msgid "ej. mistralai/mistral-large"
@@ -1861,11 +1851,8 @@ msgstr[0] "Ja tens %(num)s clau desada — deixa-ho en blanc per no canviar-les"
 msgstr[1] "Ja tens %(num)s claus desades — deixa-ho en blanc per no canviar-les"
 
 #: app/templates/ia_ajustes.html:33
-msgid ""
-"sk-or-...\n"
-"sk-or-... (clave de reserva, opcional)"
-msgstr "sk-or-...\n"
-"sk-or-... (clau de reserva, opcional)"
+msgid "sk-or-...\\nsk-or-... (clave de reserva, opcional)"
+msgstr "sk-or-...\\nsk-or-... (clau de reserva, opcional)"
 
 #: app/templates/ia_ajustes.html:34
 msgid ""
@@ -3442,3 +3429,66 @@ msgstr "Crea el token"
 
 msgid "Token de API"
 msgstr "Token d'API"
+
+msgid "Resumen de mi día"
+msgstr "Resum del meu dia"
+
+msgid "Hazme un resumen de mi día: tareas para hoy y atrasadas, vencimientos fiscales próximos y correos importantes sin leer."
+msgstr "Fes-me un resum del meu dia: tasques per avui i endarrerides, venciments fiscals propers i correus importants sense llegir."
+
+msgid "¿Qué vence esta semana?"
+msgstr "Què venç aquesta setmana?"
+
+msgid "¿Qué vencimientos fiscales y tareas vencen esta semana?"
+msgstr "Quins venciments fiscals i tasques vencen aquesta setmana?"
+
+msgid "Correos importantes sin leer"
+msgstr "Correus importants sense llegir"
+
+msgid "Muéstrame los correos sin leer que parezcan importantes y resúmelos."
+msgstr "Mostra'm els correus sense llegir que semblin importants i resumeix-los."
+
+msgid "Tareas atrasadas"
+msgstr "Tasques endarrerides"
+
+msgid "Lista mis tareas atrasadas ordenadas por prioridad."
+msgstr "Llista les meves tasques endarrerides ordenades per prioritat."
+
+msgid "Notas de hoy"
+msgstr "Notes d'avui"
+
+msgid "Resume las notas que he escrito hoy."
+msgstr "Resumeix les notes que he escrit avui."
+
+msgid "Clientes con vencimientos"
+msgstr "Clients amb venciments"
+
+msgid "¿Qué clientes tienen vencimientos fiscales pendientes esta semana?"
+msgstr "Quins clients tenen venciments fiscals pendents aquesta setmana?"
+
+msgid "Modo solo lectura: el asistente solo puede consultar datos, nunca crear, editar ni borrar"
+msgstr "Mode de només lectura: l'assistent només pot consultar dades, mai crear, editar ni esborrar"
+
+msgid "Atajos de prompts"
+msgstr "Dreceres de prompts"
+
+msgid "Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios."
+msgstr "Apareixen sobre el quadre de text del xat. Amb un clic s'envia el text. Màxim 20 de propis."
+
+msgid "¿Eliminar este atajo?"
+msgstr "Vols eliminar aquesta drecera?"
+
+msgid "Título corto"
+msgstr "Títol curt"
+
+msgid "Texto que se enviará al asistente"
+msgstr "Text que s'enviarà a l'assistent"
+
+msgid "Añadir atajo"
+msgstr "Afegeix drecera"
+
+msgid "Atajos"
+msgstr "Dreceres"
+
+msgid "Adjuntar archivo de texto/CSV"
+msgstr "Adjunta un fitxer de text/CSV"

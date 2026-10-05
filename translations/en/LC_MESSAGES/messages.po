@@ -49,14 +49,12 @@ msgid "Sí, hazlo"
 msgstr "Yes, do it"
 
 #: app/templates/_ia_chat_macro.html:22
-#, fuzzy
 msgid "No"
-msgstr "Note"
+msgstr "No"
 
 #: app/templates/_ia_chat_macro.html:26
-#, fuzzy
 msgid "Dictar mensaje"
-msgstr "Create menu"
+msgstr "Dictate message"
 
 #: app/templates/_ia_chat_macro.html:27
 msgid "Escribe un mensaje..."
@@ -73,12 +71,11 @@ msgstr "New conversation"
 
 #: app/templates/_ia_chat_macro.html:36
 msgid "Modo Live (manos libres)"
-msgstr ""
+msgstr "Live mode (hands-free)"
 
 #: app/templates/_ia_chat_macro.html:36
-#, fuzzy
 msgid "Live"
-msgstr "Back"
+msgstr "Live"
 
 #: app/templates/backoffice.html:2 app/templates/base.html:92
 #: app/templates/base.html:94
@@ -1826,9 +1823,8 @@ msgid "No se pudo contactar con el servidor."
 msgstr "Could not contact the server."
 
 #: app/templates/ia_ajustes.html:2 app/templates/ia_ajustes.html:6
-#, fuzzy
 msgid "Ajustes del Asistente IA"
-msgstr "Try the AI assistant"
+msgstr "AI Assistant settings"
 
 #: app/templates/ia_ajustes.html:7
 msgid "Volver al chat"
@@ -1843,22 +1839,16 @@ msgid "Modelo sugerido"
 msgstr "Suggested model"
 
 #: app/templates/ia_ajustes.html:16
-#, fuzzy
 msgid "elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo"
-msgstr "choose one from the list, or use the field below"
+msgstr "pick one from the list (free models only), or use the field below"
 
 #: app/templates/ia_ajustes.html:22
-msgid ""
-"No se ha podido obtener el listado de modelos gratuitos de OpenRouter "
-"ahora mismo — usa el campo de abajo con el id exacto del modelo."
-msgstr ""
+msgid "No se ha podido obtener el listado de modelos gratuitos de OpenRouter ahora mismo — usa el campo de abajo con el id exacto del modelo."
+msgstr "The list of free OpenRouter models could not be fetched right now — use the field below with the exact model id."
 
 #: app/templates/ia_ajustes.html:26
-#, fuzzy
-msgid ""
-"O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de "
-"pago)"
-msgstr "Or type any other OpenRouter model id"
+msgid "O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)"
+msgstr "Or type any other OpenRouter model id (including paid models)"
 
 #: app/templates/ia_ajustes.html:27
 msgid "ej. mistralai/mistral-large"
@@ -1876,11 +1866,8 @@ msgstr[0] "You already have %(num)s key saved — leave blank to keep it unchang
 msgstr[1] "You already have %(num)s keys saved — leave blank to keep them unchanged"
 
 #: app/templates/ia_ajustes.html:33
-msgid ""
-"sk-or-...\n"
-"sk-or-... (clave de reserva, opcional)"
-msgstr "sk-or-...\n"
-"sk-or-... (backup key, optional)"
+msgid "sk-or-...\\nsk-or-... (clave de reserva, opcional)"
+msgstr "sk-or-...\\nsk-or-... (backup key, optional)"
 
 #: app/templates/ia_ajustes.html:34
 msgid ""
@@ -3475,3 +3462,66 @@ msgstr "Create token"
 
 msgid "Token de API"
 msgstr "API token"
+
+msgid "Resumen de mi día"
+msgstr "Summary of my day"
+
+msgid "Hazme un resumen de mi día: tareas para hoy y atrasadas, vencimientos fiscales próximos y correos importantes sin leer."
+msgstr "Give me a summary of my day: tasks for today and overdue, upcoming tax deadlines and important unread emails."
+
+msgid "¿Qué vence esta semana?"
+msgstr "What is due this week?"
+
+msgid "¿Qué vencimientos fiscales y tareas vencen esta semana?"
+msgstr "Which tax deadlines and tasks are due this week?"
+
+msgid "Correos importantes sin leer"
+msgstr "Important unread emails"
+
+msgid "Muéstrame los correos sin leer que parezcan importantes y resúmelos."
+msgstr "Show me the unread emails that look important and summarize them."
+
+msgid "Tareas atrasadas"
+msgstr "Overdue tasks"
+
+msgid "Lista mis tareas atrasadas ordenadas por prioridad."
+msgstr "List my overdue tasks ordered by priority."
+
+msgid "Notas de hoy"
+msgstr "Today's notes"
+
+msgid "Resume las notas que he escrito hoy."
+msgstr "Summarize the notes I wrote today."
+
+msgid "Clientes con vencimientos"
+msgstr "Clients with deadlines"
+
+msgid "¿Qué clientes tienen vencimientos fiscales pendientes esta semana?"
+msgstr "Which clients have tax deadlines pending this week?"
+
+msgid "Modo solo lectura: el asistente solo puede consultar datos, nunca crear, editar ni borrar"
+msgstr "Read-only mode: the assistant can only query data, never create, edit or delete"
+
+msgid "Atajos de prompts"
+msgstr "Prompt shortcuts"
+
+msgid "Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios."
+msgstr "They appear above the chat text box. One click sends the text. Up to 20 of your own."
+
+msgid "¿Eliminar este atajo?"
+msgstr "Delete this shortcut?"
+
+msgid "Título corto"
+msgstr "Short title"
+
+msgid "Texto que se enviará al asistente"
+msgstr "Text that will be sent to the assistant"
+
+msgid "Añadir atajo"
+msgstr "Add shortcut"
+
+msgid "Atajos"
+msgstr "Shortcuts"
+
+msgid "Adjuntar archivo de texto/CSV"
+msgstr "Attach a text/CSV file"
