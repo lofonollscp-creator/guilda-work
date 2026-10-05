@@ -561,3 +561,42 @@ def test_avatar_no_es_visible_desde_otro_tenant(cliente):
 
 def test_perfil_requiere_token(cliente):
     assert cliente.get("/api/v1/perfil").status_code == 401
+
+
+# --- Conversaciones del asistente IA -------------------------------------------------
+
+def test_api_conversaciones_ia_ciclo_completo(cliente):
+    datos = _registrar(cliente, email="conv-api@ejemplo.com")
+    h = _auth(datos["token"])
+    uid = db.obtener_usuario_por_email("conv-api@ejemplo.com")["id"]
+    db.agregar_mensaje_ia(uid, "user", contenido="primera")
+    primera = db.conversacion_ia_activa_id(uid)
+
+    nueva = cliente.post("/api/v1/ia/conversaciones", headers=h)
+    assert nueva.status_code == 201
+    segunda = nueva.get_json()["data"]["id"]
+    assert segunda != primera
+
+    lista = cliente.get("/api/v1/ia/conversaciones", headers=h).get_json()["data"]
+    assert lista["activa"] == segunda and len(lista["conversaciones"]) == 2
+
+    assert cliente.post(f"/api/v1/ia/conversaciones/{primera}/activar", headers=h).status_code == 200
+    mensajes = cliente.get("/api/v1/ia/mensajes", headers=h).get_json()["data"]
+    assert [m["contenido"] for m in mensajes] == ["primera"]
+
+    assert cliente.post(f"/api/v1/ia/conversaciones/{primera}/renombrar", json={"titulo": "Charla A"}, headers=h).status_code == 200
+    assert cliente.post(f"/api/v1/ia/conversaciones/{primera}/renombrar", json={"titulo": ""}, headers=h).status_code == 400
+    assert cliente.delete(f"/api/v1/ia/conversaciones/{primera}", headers=h).status_code == 200
+    assert cliente.delete(f"/api/v1/ia/conversaciones/{primera}", headers=h).status_code == 404
+
+
+def test_api_no_toca_conversaciones_de_otro_usuario(cliente):
+    a = _auth(_registrar(cliente, email="conv-a@ejemplo.com")["token"])
+    b = _registrar(cliente, email="conv-b@ejemplo.com")
+    uid_b = db.obtener_usuario_por_email("conv-b@ejemplo.com")["id"]
+    db.agregar_mensaje_ia(uid_b, "user", contenido="privado")
+    ajena = db.conversacion_ia_activa_id(uid_b)
+
+    assert cliente.post(f"/api/v1/ia/conversaciones/{ajena}/activar", headers=a).status_code == 404
+    assert cliente.delete(f"/api/v1/ia/conversaciones/{ajena}", headers=a).status_code == 404
+    assert len(db.listar_mensajes_ia(uid_b)) == 1

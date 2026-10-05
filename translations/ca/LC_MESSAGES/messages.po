@@ -196,9 +196,9 @@ msgid "Herramientas visibles"
 msgstr "Eines"
 
 #: app/templates/backoffice.html:123
-#, fuzzy
+#: app/templates/ia_asistente.html
 msgid "Renombrar"
-msgstr "Entrar"
+msgstr "Canviar el nom"
 
 #: app/templates/backoffice.html:130
 msgid "Dirección fiscal"
@@ -2920,3 +2920,15 @@ msgstr "Última sincronització fallida"
 #: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
 msgid "Error al sincronizar esta cuenta"
 msgstr "Error en sincronitzar aquest compte"
+
+#: app/templates/ia_asistente.html
+msgid "Conversación"
+msgstr "Conversa"
+
+#: app/templates/ia_asistente.html
+msgid "Nuevo título de la conversación"
+msgstr "Nou títol de la conversa"
+
+#: app/templates/ia_asistente.html
+msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
+msgstr "Vols eliminar aquesta conversa i tots els seus missatges? No es pot desfer."

@@ -448,10 +448,15 @@ PAGINAS = [
                 "El chat del asistente embebido en la propia app (distinto de conectar Claude/ChatGPT por MCP "
                 "contra tu instancia, ver <a href=\"/docs/asistente-ia\">Asistente de IA (MCP)</a> para eso)."},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
-                ["GET", "/ia/mensajes", "Histórico de la conversación con el asistente."],
+                ["GET", "/ia/mensajes", "Mensajes de la conversación activa con el asistente."],
                 ["POST", "/ia/mensaje", "Envía un mensaje al asistente."],
                 ["POST", "/ia/confirmar", "Confirma o cancela una acción sensible pendiente (p. ej. enviar un correo)."],
-                ["POST", "/ia/vaciar", "Vacía la conversación."],
+                ["POST", "/ia/vaciar", "Abre una conversación nueva en blanco (la anterior se conserva en <code>/ia/conversaciones</code>)."],
+                ["GET", "/ia/conversaciones", "Lista las conversaciones del usuario (más reciente primero) y cuál está activa."],
+                ["POST", "/ia/conversaciones", "Abre una conversación nueva y la deja activa."],
+                ["POST", "/ia/conversaciones/{id}/activar", "Cambia la conversación activa: <code>/ia/mensajes</code> y <code>/ia/mensaje</code> pasan a trabajar con ella."],
+                ["POST", "/ia/conversaciones/{id}/renombrar", "Cambia el título (<code>titulo</code>, máx. 60 caracteres). Por defecto es el inicio del primer mensaje."],
+                ["DELETE", "/ia/conversaciones/{id}", "Elimina la conversación y sus mensajes."],
                 ["GET / POST", "/ia/ajustes", "Modelo, modo autónomo y clave de API del proveedor de IA."],
             ]},
             {"type": "h2", "id": "herramientas", "text": "Herramientas conectadas"},

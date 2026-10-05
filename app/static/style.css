@@ -3089,6 +3089,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    área de contenido, igual que ya hace Correo (.content:has(> .correo-shell)). */
 .content:has(> .ia-pagina-chat) { padding: 0; max-width: none; }
 .ia-pagina-chat { max-width: none; margin: 0; padding: 24px 40px; }
+.ia-conversaciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ia-conversaciones select { flex: 1 1 220px; min-width: 0; max-width: 440px; }
 .ia-pagina-cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .ia-pagina-cabecera h1 {
   margin: 0;

@@ -523,10 +523,14 @@
     }
 
     if (vaciarEl) {
+      // "Nueva conversación": no borra nada (la anterior queda en la lista de
+      // conversaciones), así que no pide confirmación.
       vaciarEl.addEventListener("click", function () {
-        if (!confirm("¿Borrar todo el historial de esta conversación?")) return;
         if (liveActivo) liveEl.click(); // apaga Live también, no se queda escuchando sobre un chat vacío
         fetch("/ia/vaciar", { method: "POST" }).then(function () {
+          // En la página del asistente se recarga para actualizar el selector
+          // de conversaciones; en el panel flotante basta con vaciar el chat.
+          if (document.getElementById("ia-conv-select")) { location.reload(); return; }
           mensajesEl.innerHTML = "";
           pintarPendiente(null);
         });
@@ -535,6 +539,30 @@
   }
 
   document.querySelectorAll(".ia-chat").forEach(iniciarChat);
+
+  // Selector de conversaciones (solo en la página del asistente).
+  var convSelect = document.getElementById("ia-conv-select");
+  if (convSelect) {
+    var convCaja = convSelect.closest(".ia-conversaciones");
+    var accionConversacion = function (url, cuerpo) {
+      var opciones = { method: "POST" };
+      if (cuerpo) { opciones.headers = { "Content-Type": "application/json" }; opciones.body = JSON.stringify(cuerpo); }
+      return fetch(url, opciones).then(function () { location.reload(); });
+    };
+    convSelect.addEventListener("change", function () {
+      accionConversacion("/ia/conversaciones/" + convSelect.value + "/activar");
+    });
+    document.getElementById("ia-conv-renombrar").addEventListener("click", function () {
+      var opcion = convSelect.options[convSelect.selectedIndex];
+      var titulo = prompt(convCaja.dataset.promptRenombrar, opcion.dataset.titulo || "");
+      if (titulo === null || !titulo.trim()) return;
+      accionConversacion("/ia/conversaciones/" + convSelect.value + "/renombrar", { titulo: titulo });
+    });
+    document.getElementById("ia-conv-eliminar").addEventListener("click", function () {
+      if (!confirm(convCaja.dataset.confirmarEliminar)) return;
+      accionConversacion("/ia/conversaciones/" + convSelect.value + "/eliminar");
+    });
+  }
 
   var togglePanel = document.getElementById("ia-panel-toggle");
   var panel = document.getElementById("ia-panel-flotante");

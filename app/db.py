@@ -539,7 +539,18 @@ CREATE TABLE IF NOT EXISTS correo_destinatarios_recientes (
     UNIQUE (usuario_id, direccion)
 );
 
--- Historial de la conversación con el Asistente IA (un hilo por usuario).
+-- Conversaciones con el Asistente IA: cada usuario puede tener varias, una
+-- de ellas "activa" (la que ve el chat y a la que se añaden mensajes).
+CREATE TABLE IF NOT EXISTS ia_conversaciones (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    titulo TEXT,
+    creada_en TEXT NOT NULL,
+    actualizada_en TEXT NOT NULL,
+    activa INTEGER NOT NULL DEFAULT 0
+);
+
+-- Mensajes del Asistente IA, repartidos en conversaciones (conversacion_id).
 CREATE TABLE IF NOT EXISTS ia_mensajes (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER,
@@ -725,6 +736,8 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(c
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_ia_mensajes_conversacion ON ia_mensajes(conversacion_id);
+CREATE INDEX IF NOT EXISTS idx_ia_conversaciones_usuario ON ia_conversaciones(usuario_id, actualizada_en);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_remitentes_confiables_usuario ON correo_remitentes_confiables(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_reglas_categoria_usuario ON correo_reglas_categoria(usuario_id);
@@ -1337,11 +1350,17 @@ def init_db() -> None:
         ):
             _asegurar_columna(conn, tabla, "usuario_id", "INTEGER")
 
+        # Conversaciones del Asistente IA: los mensajes se reparten en
+        # conversaciones. Tiene que ir ANTES de executescript(INDICES) (hay un
+        # índice sobre esta columna).
+        _asegurar_columna(conn, "ia_mensajes", "conversacion_id", "INTEGER")
+
         conn.executescript(INDICES)
         _asegurar_orden_categorias(conn)
 
         usuario_id_local = _resolver_usuario_local(conn)
         _migrar_datos_sin_usuario(conn, usuario_id_local)
+        _migrar_conversaciones_ia(conn)
         _migrar_preferencias_singleton(conn, usuario_id_local)
 
         # IA local (Ollama/LM Studio): columnas añadidas después de la
@@ -6503,11 +6522,191 @@ def guardar_preferencias_ia_local(usuario_id: int, proveedor: str, modelo: str) 
         conn.close()
 
 
-def listar_mensajes_ia(usuario_id: int) -> list[sqlite3.Row]:
+# ---- Conversaciones del Asistente IA -----------------------------------------
+#
+# Todo el código del asistente (y la app móvil, vía la API) sigue trabajando
+# con "la conversación del usuario": listar_mensajes_ia / agregar_mensaje_ia /
+# vaciar_mensajes_ia operan sobre la conversación ACTIVA, así que añadir
+# varias conversaciones no cambia ninguna de esas llamadas.
+
+IA_MAX_CONVERSACIONES_POR_USUARIO = 50
+IA_TITULO_MAX_CARACTERES = 60
+
+
+def _titulo_desde_texto(texto: str | None) -> str | None:
+    """Título automático: primera línea del primer mensaje, recortada."""
+    if not texto:
+        return None
+    linea = " ".join(texto.strip().splitlines()[0].split()) if texto.strip() else ""
+    if not linea:
+        return None
+    return linea if len(linea) <= IA_TITULO_MAX_CARACTERES else linea[: IA_TITULO_MAX_CARACTERES - 1].rstrip() + "…"
+
+
+def _migrar_conversaciones_ia(conn: sqlite3.Connection) -> None:
+    """Idempotente: los mensajes anteriores a las conversaciones (conversacion_id
+    NULL) pasan a UNA conversación por usuario, que queda activa."""
+    for fila in conn.execute(
+        "SELECT usuario_id, MIN(creado_en) AS desde, MAX(creado_en) AS hasta FROM ia_mensajes "
+        "WHERE conversacion_id IS NULL AND usuario_id IS NOT NULL GROUP BY usuario_id"
+    ).fetchall():
+        uid = fila["usuario_id"]
+        primero = conn.execute(
+            "SELECT contenido FROM ia_mensajes WHERE usuario_id = ? AND conversacion_id IS NULL AND rol = 'user' ORDER BY id LIMIT 1",
+            (uid,),
+        ).fetchone()
+        activa = conn.execute(
+            "SELECT 1 FROM ia_conversaciones WHERE usuario_id = ? AND activa = 1", (uid,)
+        ).fetchone()
+        cur = conn.execute(
+            "INSERT INTO ia_conversaciones (usuario_id, titulo, creada_en, actualizada_en, activa) VALUES (?, ?, ?, ?, ?)",
+            (uid, _titulo_desde_texto(primero["contenido"] if primero else None), fila["desde"], fila["hasta"], 0 if activa else 1),
+        )
+        conn.execute(
+            "UPDATE ia_mensajes SET conversacion_id = ? WHERE usuario_id = ? AND conversacion_id IS NULL",
+            (cur.lastrowid, uid),
+        )
+
+
+def _crear_conversacion_ia(conn: sqlite3.Connection, usuario_id: int) -> int:
+    ahora = now_iso()
+    conn.execute("UPDATE ia_conversaciones SET activa = 0 WHERE usuario_id = ?", (usuario_id,))
+    cur = conn.execute(
+        "INSERT INTO ia_conversaciones (usuario_id, titulo, creada_en, actualizada_en, activa) VALUES (?, NULL, ?, ?, 1)",
+        (usuario_id, ahora, ahora),
+    )
+    # Tope: se descartan las más antiguas (nunca la activa).
+    sobran = conn.execute(
+        "SELECT COUNT(*) AS n FROM ia_conversaciones WHERE usuario_id = ?", (usuario_id,)
+    ).fetchone()["n"] - IA_MAX_CONVERSACIONES_POR_USUARIO
+    if sobran > 0:
+        for antigua in conn.execute(
+            "SELECT id FROM ia_conversaciones WHERE usuario_id = ? AND activa = 0 ORDER BY actualizada_en, id LIMIT ?",
+            (usuario_id, sobran),
+        ).fetchall():
+            conn.execute("DELETE FROM ia_mensajes WHERE conversacion_id = ?", (antigua["id"],))
+            conn.execute("DELETE FROM ia_conversaciones WHERE id = ?", (antigua["id"],))
+    return cur.lastrowid
+
+
+def conversacion_ia_activa_id(usuario_id: int, crear: bool = True) -> int | None:
+    """La conversación activa del usuario; si no tiene ninguna y `crear`, abre una."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT id FROM ia_conversaciones WHERE usuario_id = ? AND activa = 1", (usuario_id,)
+        ).fetchone()
+        if fila:
+            return fila["id"]
+        if not crear:
+            return None
+        nueva = _crear_conversacion_ia(conn, usuario_id)
+        conn.commit()
+        return nueva
+    finally:
+        conn.close()
+
+
+def listar_conversaciones_ia(usuario_id: int) -> list[sqlite3.Row]:
+    """Las conversaciones del usuario, la más reciente primero, con cuántos
+    mensajes suyos tiene cada una (`mensajes`)."""
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM ia_mensajes WHERE usuario_id = ? ORDER BY id", (usuario_id,)
+            """SELECT c.*, (SELECT COUNT(*) FROM ia_mensajes m WHERE m.conversacion_id = c.id AND m.rol = 'user') AS mensajes
+               FROM ia_conversaciones c WHERE c.usuario_id = ? ORDER BY c.actualizada_en DESC, c.id DESC""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def crear_conversacion_ia(usuario_id: int) -> int:
+    """Abre una conversación nueva y la deja activa. Si la activa todavía no
+    tiene ningún mensaje se reutiliza (no se acumulan conversaciones vacías)."""
+    conn = get_connection()
+    try:
+        activa = conn.execute(
+            """SELECT c.id FROM ia_conversaciones c WHERE c.usuario_id = ? AND c.activa = 1
+               AND NOT EXISTS (SELECT 1 FROM ia_mensajes m WHERE m.conversacion_id = c.id)""",
+            (usuario_id,),
+        ).fetchone()
+        if activa:
+            return activa["id"]
+        nueva = _crear_conversacion_ia(conn, usuario_id)
+        conn.commit()
+        return nueva
+    finally:
+        conn.close()
+
+
+def activar_conversacion_ia(usuario_id: int, conversacion_id: int) -> bool:
+    conn = get_connection()
+    try:
+        if not conn.execute(
+            "SELECT 1 FROM ia_conversaciones WHERE id = ? AND usuario_id = ?", (conversacion_id, usuario_id)
+        ).fetchone():
+            return False
+        conn.execute("UPDATE ia_conversaciones SET activa = (id = ?) WHERE usuario_id = ?", (conversacion_id, usuario_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def renombrar_conversacion_ia(usuario_id: int, conversacion_id: int, titulo: str) -> bool:
+    titulo = " ".join((titulo or "").split())
+    if not titulo:
+        raise ValueError("El título no puede estar vacío.")
+    titulo = titulo[:IA_TITULO_MAX_CARACTERES]
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE ia_conversaciones SET titulo = ? WHERE id = ? AND usuario_id = ?", (titulo, conversacion_id, usuario_id)
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def eliminar_conversacion_ia(usuario_id: int, conversacion_id: int) -> bool:
+    """Borra la conversación y sus mensajes. Si era la activa, pasa a serlo la
+    más reciente que quede (o ninguna: se abrirá una al escribir)."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT activa FROM ia_conversaciones WHERE id = ? AND usuario_id = ?", (conversacion_id, usuario_id)
+        ).fetchone()
+        if fila is None:
+            return False
+        conn.execute("DELETE FROM ia_mensajes WHERE conversacion_id = ?", (conversacion_id,))
+        conn.execute("DELETE FROM ia_conversaciones WHERE id = ?", (conversacion_id,))
+        if fila["activa"]:
+            reciente = conn.execute(
+                "SELECT id FROM ia_conversaciones WHERE usuario_id = ? ORDER BY actualizada_en DESC, id DESC LIMIT 1",
+                (usuario_id,),
+            ).fetchone()
+            if reciente:
+                conn.execute("UPDATE ia_conversaciones SET activa = 1 WHERE id = ?", (reciente["id"],))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def listar_mensajes_ia(usuario_id: int, conversacion_id: int | None = None) -> list[sqlite3.Row]:
+    """Mensajes de la conversación indicada o, por defecto, de la activa
+    (lista vacía si el usuario no tiene ninguna todavía)."""
+    if conversacion_id is None:
+        conversacion_id = conversacion_ia_activa_id(usuario_id, crear=False)
+        if conversacion_id is None:
+            return []
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM ia_mensajes WHERE usuario_id = ? AND conversacion_id = ? ORDER BY id",
+            (usuario_id, conversacion_id),
         ).fetchall()
     finally:
         conn.close()
@@ -6521,13 +6720,29 @@ def agregar_mensaje_ia(
     tool_call_id: str | None = None,
     nombre_herramienta: str | None = None,
 ) -> int:
+    """Añade el mensaje a la conversación activa (abriéndola si no hay). El
+    primer mensaje de la persona usuaria da título a la conversación."""
     conn = get_connection()
     try:
+        activa = conn.execute(
+            "SELECT id, titulo FROM ia_conversaciones WHERE usuario_id = ? AND activa = 1", (usuario_id,)
+        ).fetchone()
+        if activa is None:
+            conversacion_id, titulo_actual = _crear_conversacion_ia(conn, usuario_id), None
+        else:
+            conversacion_id, titulo_actual = activa["id"], activa["titulo"]
+        ahora = now_iso()
         cursor = conn.execute(
             """INSERT INTO ia_mensajes
-               (usuario_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (usuario_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, now_iso()),
+               (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, ahora),
+        )
+        titulo = titulo_actual
+        if not titulo and rol == "user":
+            titulo = _titulo_desde_texto(contenido)
+        conn.execute(
+            "UPDATE ia_conversaciones SET actualizada_en = ?, titulo = ? WHERE id = ?", (ahora, titulo, conversacion_id)
         )
         conn.commit()
         return cursor.lastrowid
@@ -6536,12 +6751,9 @@ def agregar_mensaje_ia(
 
 
 def vaciar_mensajes_ia(usuario_id: int) -> None:
-    conn = get_connection()
-    try:
-        conn.execute("DELETE FROM ia_mensajes WHERE usuario_id = ?", (usuario_id,))
-        conn.commit()
-    finally:
-        conn.close()
+    """"Nueva conversación": abre una conversación en blanco. La anterior NO se
+    borra, queda en la lista de conversaciones del usuario."""
+    crear_conversacion_ia(usuario_id)
 
 
 # ---- Tiquets (soporte interno: errores/sugerencias, tablero compartido) ----

@@ -21,6 +21,8 @@ def _sse(evento: dict) -> str:
 def asistente_vista():
     return render_template(
         "ia_asistente.html",
+        conversaciones=db.listar_conversaciones_ia(g.usuario_id),
+        conversacion_activa_id=db.conversacion_ia_activa_id(g.usuario_id, crear=False),
         mensajes=db.listar_mensajes_ia(g.usuario_id),
         pendiente=asistente.pendiente_actual(g.usuario_id),
         preferencias=db.obtener_preferencias_ia(g.usuario_id),
@@ -144,7 +146,47 @@ def confirmar_stream():
 @ia_bp.route("/vaciar", methods=["POST"])
 @login_required
 def vaciar():
+    """"Nueva conversación": la anterior se conserva en la lista."""
     db.vaciar_mensajes_ia(g.usuario_id)
+    return "", 204
+
+
+@ia_bp.route("/conversaciones")
+@login_required
+def conversaciones():
+    return jsonify({
+        "ok": True,
+        "activa": db.conversacion_ia_activa_id(g.usuario_id, crear=False),
+        "conversaciones": [dict(c) for c in db.listar_conversaciones_ia(g.usuario_id)],
+    })
+
+
+@ia_bp.route("/conversaciones/<int:conversacion_id>/activar", methods=["POST"])
+@login_required
+def activar_conversacion(conversacion_id: int):
+    if not db.activar_conversacion_ia(g.usuario_id, conversacion_id):
+        abort(404)
+    return "", 204
+
+
+@ia_bp.route("/conversaciones/<int:conversacion_id>/renombrar", methods=["POST"])
+@login_required
+def renombrar_conversacion(conversacion_id: int):
+    titulo = (request.get_json(silent=True) or {}).get("titulo", "")
+    try:
+        encontrada = db.renombrar_conversacion_ia(g.usuario_id, conversacion_id, titulo)
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    if not encontrada:
+        abort(404)
+    return "", 204
+
+
+@ia_bp.route("/conversaciones/<int:conversacion_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_conversacion(conversacion_id: int):
+    if not db.eliminar_conversacion_ia(g.usuario_id, conversacion_id):
+        abort(404)
     return "", 204
 
 

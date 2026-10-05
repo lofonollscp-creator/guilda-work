@@ -10,6 +10,20 @@
   {% if not preferencias.modelo %}
   <p class="ia-aviso">{{ _('No hay ningún modelo configurado todavía. Ve a') }} <a href="{{ url_for('ia.ajustes') }}">{{ _('Ajustes') }}</a> {{ _('para elegir un modelo y añadir tu clave de OpenRouter.') }}</p>
   {% endif %}
+  {% if conversaciones %}
+  <div class="ia-conversaciones"
+       data-prompt-renombrar="{{ _('Nuevo título de la conversación') }}"
+       data-confirmar-eliminar="{{ _('¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer.') }}">
+    <label class="sr-only" for="ia-conv-select">{{ _('Conversación') }}</label>
+    <select id="ia-conv-select">
+      {% for c in conversaciones %}
+      <option value="{{ c.id }}" data-titulo="{{ c.titulo or '' }}" {{ 'selected' if c.id == conversacion_activa_id }}>{{ c.titulo or _('Nueva conversación') }} · {{ c.actualizada_en[:10] }}</option>
+      {% endfor %}
+    </select>
+    <button type="button" class="btn btn-ghost" id="ia-conv-renombrar">{{ _('Renombrar') }}</button>
+    <button type="button" class="btn btn-ghost" id="ia-conv-eliminar">{{ _('Eliminar') }}</button>
+  </div>
+  {% endif %}
   {{ chat(mensajes, pendiente, 'ia-chat-pagina') }}
 </div>
 {% endblock %}

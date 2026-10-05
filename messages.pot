@@ -186,6 +186,7 @@ msgid "Herramientas visibles"
 msgstr ""
 
 #: app/templates/backoffice.html:123
+#: app/templates/ia_asistente.html
 msgid "Renombrar"
 msgstr ""
 
@@ -2778,4 +2779,16 @@ msgstr ""
 
 #: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
 msgid "Error al sincronizar esta cuenta"
+msgstr ""
+
+#: app/templates/ia_asistente.html
+msgid "Conversación"
+msgstr ""
+
+#: app/templates/ia_asistente.html
+msgid "Nuevo título de la conversación"
+msgstr ""
+
+#: app/templates/ia_asistente.html
+msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
 msgstr ""

@@ -1166,7 +1166,51 @@ def confirmar_ia_stream():
 @api_bp.route("/ia/vaciar", methods=["POST"])
 @token_required
 def vaciar_ia():
+    """Abre una conversación nueva (la anterior se conserva en /ia/conversaciones)."""
     db.vaciar_mensajes_ia(g.usuario_id)
+    return _ok()
+
+
+@api_bp.route("/ia/conversaciones", methods=["GET"])
+@token_required
+def listar_conversaciones_ia():
+    return _ok({
+        "activa": db.conversacion_ia_activa_id(g.usuario_id, crear=False),
+        "conversaciones": _dicts(db.listar_conversaciones_ia(g.usuario_id)),
+    })
+
+
+@api_bp.route("/ia/conversaciones", methods=["POST"])
+@token_required
+def crear_conversacion_ia():
+    return _ok({"id": db.crear_conversacion_ia(g.usuario_id)}, 201)
+
+
+@api_bp.route("/ia/conversaciones/<int:conversacion_id>/activar", methods=["POST"])
+@token_required
+def activar_conversacion_ia(conversacion_id: int):
+    if not db.activar_conversacion_ia(g.usuario_id, conversacion_id):
+        abort(404, "Conversación no encontrada.")
+    return _ok()
+
+
+@api_bp.route("/ia/conversaciones/<int:conversacion_id>/renombrar", methods=["POST"])
+@token_required
+def renombrar_conversacion_ia(conversacion_id: int):
+    try:
+        encontrada = db.renombrar_conversacion_ia(g.usuario_id, conversacion_id, _body().get("titulo", ""))
+    except ValueError as e:
+        return _err(str(e))
+    if not encontrada:
+        abort(404, "Conversación no encontrada.")
+    return _ok()
+
+
+@api_bp.route("/ia/conversaciones/<int:conversacion_id>", methods=["DELETE"])
+@token_required
+def eliminar_conversacion_ia(conversacion_id: int):
+    if not db.eliminar_conversacion_ia(g.usuario_id, conversacion_id):
+        abort(404, "Conversación no encontrada.")
     return _ok()
 
 

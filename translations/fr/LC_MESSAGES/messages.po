@@ -199,9 +199,9 @@ msgid "Herramientas visibles"
 msgstr "Outils"
 
 #: app/templates/backoffice.html:123
-#, fuzzy
+#: app/templates/ia_asistente.html
 msgid "Renombrar"
-msgstr "Se connecter"
+msgstr "Renommer"
 
 #: app/templates/backoffice.html:130
 msgid "Dirección fiscal"
@@ -2958,3 +2958,15 @@ msgstr "Dernière synchronisation échouée"
 #: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
 msgid "Error al sincronizar esta cuenta"
 msgstr "Erreur de synchronisation de ce compte"
+
+#: app/templates/ia_asistente.html
+msgid "Conversación"
+msgstr "Conversation"
+
+#: app/templates/ia_asistente.html
+msgid "Nuevo título de la conversación"
+msgstr "Nouveau titre de la conversation"
+
+#: app/templates/ia_asistente.html
+msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
+msgstr "Supprimer cette conversation et tous ses messages ? Cette action est irréversible."
