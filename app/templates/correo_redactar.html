@@ -24,7 +24,7 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('correo.enviar') }}" enctype="multipart/form-data"
-        onsubmit="return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');">
+        {% if deshacer_segundos == 0 %}onsubmit="if (event.submitter && event.submitter.name === 'programar') return true; return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');"{% endif %}>
     <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
     <input type="hidden" name="borrador_id" id="correo-borrador-id" value="{{ borrador_id or '' }}">
 
@@ -99,6 +99,13 @@
 
     <div class="correo-compose-acciones">
       <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg> {{ _('Enviar') }}</button>
+      <details class="correo-programar">
+        <summary class="btn btn-ghost">{{ _('Programar…') }}</summary>
+        <div class="correo-programar-cuerpo">
+          <label>{{ _('Enviar el') }} <input type="datetime-local" name="programar_para"></label>
+          <button type="submit" name="programar" value="1" class="btn btn-primary">{{ _('Programar envío') }}</button>
+        </div>
+      </details>
       <button type="button" id="correo-guardar-borrador" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Guardar borrador') }}</button>
       <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">{{ _('Descartar') }}</a>
     </div>

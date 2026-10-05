@@ -4384,3 +4384,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-ia-error { color: #b3261e; margin: 0 0 .6rem; }
 .correo-ia-panel textarea { width: 100%; margin-bottom: .5rem; }
 .correo-ia-tarea { display: block; margin-bottom: .3rem; }
+
+/* Correo: conversaciones */
+.correo-hilo-contador { display: inline-block; min-width: 1.3em; padding: 0 .35em; margin-left: .3em; border-radius: 999px; border: 1px solid var(--line, #d4d8cb); font-size: .72rem; text-align: center; font-weight: 600; }
+.correo-hilo { margin: .5rem 0; font-size: .88rem; }
+.correo-hilo summary { cursor: pointer; }
+.correo-hilo ul { list-style: none; margin: .4rem 0 0; padding: 0; }
+.correo-hilo li { padding: .2rem 0; border-top: 1px solid var(--line, #d4d8cb); }
+.correo-hilo li a { display: flex; justify-content: space-between; gap: .6rem; text-decoration: none; }
+
+/* Correo: envío con deshacer/programado */
+.correo-envio-banner { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .5rem .9rem; margin-bottom: .6rem; border: 1px solid var(--line, #d4d8cb); border-radius: 8px; font-size: .9rem; }
+.correo-envio-banner[hidden] { display: none; }
+.correo-programar { display: inline-block; position: relative; }
+.correo-programar summary { list-style: none; cursor: pointer; }
+.correo-programar-cuerpo { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; padding: .5rem 0; }

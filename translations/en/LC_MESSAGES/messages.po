@@ -671,9 +671,8 @@ msgid "..."
 msgstr "..."
 
 #: app/templates/base.html:229
-#, fuzzy
 msgid "Deshacer"
-msgstr "Statistics"
+msgstr "Undo"
 
 #: app/templates/base.html:230
 msgid "No se pudo deshacer la acción."
@@ -1188,9 +1187,8 @@ msgid "De"
 msgstr "From"
 
 #: app/templates/correo_redactar.html:38
-#, fuzzy
 msgid "Para"
-msgstr "Task"
+msgstr "To"
 
 #: app/templates/correo_redactar.html:58
 #: app/templates/tarea_outlook_editar.html:16
@@ -3370,3 +3368,81 @@ msgstr "Subject contains…"
 
 msgid "Sin cliente fiscal"
 msgstr "No tax client"
+
+msgid "Vuelve a adjuntar los archivos: no se conservan al deshacer el envío."
+msgstr "Attach the files again: they are not kept when you undo a send."
+
+msgid "Elige la fecha y la hora del envío programado."
+msgstr "Choose the date and time of the scheduled send."
+
+msgid "La hora del envío programado tiene que ser futura."
+msgstr "The scheduled send time must be in the future."
+
+msgid "Ya no se puede deshacer: el correo ya se ha enviado."
+msgstr "It can no longer be undone: the email has already been sent."
+
+msgid "Enviado."
+msgstr "Sent."
+
+msgid "Envío programado para el"
+msgstr "Send scheduled for"
+
+msgid "Enviando…"
+msgstr "Sending…"
+
+msgid "Cancelar envío"
+msgstr "Cancel send"
+
+msgid "Programados"
+msgstr "Scheduled"
+
+msgid "Mensajes en esta conversación"
+msgstr "Messages in this conversation"
+
+msgid "Deshacer envío"
+msgstr "Undo send"
+
+msgid "Enviar al momento"
+msgstr "Send immediately"
+
+msgid "10 segundos para deshacer"
+msgstr "10 seconds to undo"
+
+msgid "30 segundos para deshacer"
+msgstr "30 seconds to undo"
+
+msgid "Insertar plantilla"
+msgstr "Insert template"
+
+msgid "Insertar plantilla..."
+msgstr "Insert template..."
+
+msgid "Elegir archivos"
+msgstr "Choose files"
+
+msgid "Programar…"
+msgstr "Schedule…"
+
+msgid "Enviar el"
+msgstr "Send on"
+
+msgid "Programar envío"
+msgstr "Schedule send"
+
+msgid "Guardar borrador"
+msgstr "Save draft"
+
+msgid "Borrador guardado."
+msgstr "Draft saved."
+
+msgid "No se pudo guardar el borrador."
+msgstr "The draft could not be saved."
+
+msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
+msgstr "Emails that will be sent automatically at the chosen time. If you cancel one, it goes back to your drafts."
+
+msgid "No tienes ningún envío programado."
+msgstr "You have no scheduled sends."
+
+msgid "¿Cancelar este envío? Volverá a tus borradores."
+msgstr "Cancel this send? It will go back to your drafts."

@@ -110,6 +110,7 @@ def _render_redactar(
         titulo=titulo,
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         borrador_id=borrador_id,
+        deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
     )
 
 
@@ -237,6 +238,22 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
             limite=preferencias["limite_mensajes"], incluir_pospuestos=incluir_pospuestos, **filtros,
         )
 
+    # Conversaciones: un solo mensaje por hilo (el más reciente) con el nº de
+    # mensajes del hilo; el resto se ve al abrirlo.
+    hilo_total: dict[str, int] = {}
+    if mensajes:
+        hilo_total = db.contar_hilos_correo(cuenta_id, [m["hilo_clave"] for m in mensajes])
+        vistos = set()
+        unicos = []
+        for m in mensajes:
+            clave = m["hilo_clave"]
+            if clave is not None:
+                if clave in vistos:
+                    continue
+                vistos.add(clave)
+            unicos.append(m)
+        mensajes = unicos
+
     categorias = db.listar_categorias_correo(g.usuario_id)
     # Vínculo con un cliente fiscal (opt-in, solo si el usuario pertenece
     # a un tenant con calendario fiscal -- mismo criterio que el resto de
@@ -248,6 +265,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "carpeta": carpeta,
         "carpetas": carpetas,
         "mensajes": mensajes,
+        "hilo_total": hilo_total,
         "no_leidos_por_cuenta": no_leidos_por_cuenta,
         "no_leidos_carpetas": no_leidos_carpetas,
         "categorias": categorias,
@@ -290,6 +308,17 @@ def bandeja():
         cuenta_id, carpeta, q, solo_no_leidos, None, incluir_pospuestos, _filtros_de_la_peticion(),
     )
     contexto["aviso"] = request.args.get("aviso") or None
+    contexto["num_programados"] = db.contar_envios_programados(g.usuario_id)
+    contexto["envio_banner"] = None
+    envio_id = request.args.get("envio_id", type=int)
+    if envio_id is not None:
+        envio = db.obtener_envio_correo(g.usuario_id, envio_id)
+        if envio is not None and envio["estado"] == "pendiente":
+            restante = (datetime.fromisoformat(envio["enviar_en"]) - datetime.now()).total_seconds()
+            contexto["envio_banner"] = {
+                "id": envio["id"], "programado": bool(envio["programado"]),
+                "enviar_en": envio["enviar_en"].replace("T", " ")[:16], "segundos": max(0, int(restante)),
+            }
     contexto["completa"] = completa
 
     mensaje_seleccionado = None
@@ -307,6 +336,10 @@ def bandeja():
 
     contexto["mensaje_seleccionado"] = mensaje_seleccionado
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
+    contexto["hilo_mensajes"] = (
+        [h for h in db.mensajes_del_hilo_correo(cuenta_id, mensaje_seleccionado["hilo_clave"]) if h["id"] != mensaje_id]
+        if mensaje_seleccionado is not None else []
+    )
 
     remitente_confiable = False
     cuerpo_html_mostrado = None
@@ -479,6 +512,8 @@ def redactar():
             cc=borrador["cc"] or "", bcc=borrador["bcc"] or "", asunto=borrador["asunto"] or "",
             cuerpo_html=borrador["cuerpo_html"] or "", en_respuesta_a=borrador["en_respuesta_a"],
             titulo=_("Editar borrador"), borrador_id=borrador_id,
+            error=_("Vuelve a adjuntar los archivos: no se conservan al deshacer el envío.")
+            if request.args.get("sin_adjuntos") else None,
         )
     cuenta_id = request.args.get("cuenta_id", type=int)
     if cuenta_id is None:
@@ -566,7 +601,28 @@ def enviar():
         {"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()}
         for f in request.files.getlist("adjuntos") if f.filename
     ]
+    programado = request.form.get("programar") == "1"
+    deshacer = db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"]
     try:
+        enviar_en = None
+        if programado:
+            try:
+                momento = datetime.strptime((request.form.get("programar_para") or "").strip(), "%Y-%m-%dT%H:%M")
+            except ValueError:
+                raise correo.ErrorCorreo(_("Elige la fecha y la hora del envío programado.")) from None
+            if momento <= datetime.now() + timedelta(minutes=1):
+                raise correo.ErrorCorreo(_("La hora del envío programado tiene que ser futura."))
+            enviar_en = momento.isoformat(timespec="seconds")
+        elif deshacer > 0:
+            enviar_en = (datetime.now() + timedelta(seconds=deshacer)).isoformat(timespec="seconds")
+        if enviar_en is not None:
+            envio_id = correo.encolar_envio(
+                g.usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
+                en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, enviar_en=enviar_en, programado=programado,
+            )
+            if borrador_id is not None:
+                db.eliminar_borrador_correo(g.usuario_id, borrador_id)
+            return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, envio_id=envio_id))
         correo.construir_y_enviar(
             g.usuario_id,
             cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
@@ -580,6 +636,31 @@ def enviar():
     if borrador_id is not None:
         db.eliminar_borrador_correo(g.usuario_id, borrador_id)
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id))
+
+
+@correo_bp.route("/envios/<int:envio_id>/deshacer", methods=["POST"])
+@login_required
+def deshacer_envio(envio_id: int):
+    """Deshacer un envío en cuenta atrás o cancelar uno programado: el
+    correo vuelve al editor como borrador."""
+    envio = db.obtener_envio_correo(g.usuario_id, envio_id)
+    if envio is None:
+        abort(404)
+    if db.cancelar_envio_correo(g.usuario_id, envio_id):
+        borrador_id = correo.borrador_desde_envio(envio)
+        tenia_adjuntos = bool(db.adjuntos_envio_correo(envio_id))
+        db.cerrar_envio_correo(envio_id, "cancelado", borrar_adjuntos=True)
+        return redirect(url_for("correo.redactar", borrador_id=borrador_id, sin_adjuntos=1 if tenia_adjuntos else None))
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=envio["cuenta_id"],
+        aviso=_("Ya no se puede deshacer: el correo ya se ha enviado."),
+    ))
+
+
+@correo_bp.route("/programados")
+@login_required
+def programados():
+    return render_template("correo_programados.html", envios=db.listar_envios_programados(g.usuario_id))
 
 
 # --- Borradores -------------------------------------------------------------
@@ -752,6 +833,7 @@ def guardar_preferencias():
         densidad=request.form.get("densidad", "normal"),
         marcar_leido_automatico=request.form.get("marcar_leido_automatico") == "on",
         limite_mensajes=max(10, min(limite, 500)),
+        deshacer_segundos=request.form.get("deshacer_segundos", type=int),
     )
     return redirect(url_for("correo.ajustes"))
 

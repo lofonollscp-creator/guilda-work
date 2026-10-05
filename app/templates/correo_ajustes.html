@@ -34,6 +34,14 @@
       <label>{{ _('Mensajes a mostrar por carpeta') }}</label>
       <input type="number" name="limite_mensajes" value="{{ preferencias.limite_mensajes }}" min="10" max="500">
     </div>
+    <div class="correo-form-campo">
+      <label>{{ _('Deshacer envío') }}</label>
+      <select name="deshacer_segundos">
+        <option value="0" {% if preferencias.deshacer_segundos == 0 %}selected{% endif %}>{{ _('Enviar al momento') }}</option>
+        <option value="10" {% if preferencias.deshacer_segundos == 10 %}selected{% endif %}>{{ _('10 segundos para deshacer') }}</option>
+        <option value="30" {% if preferencias.deshacer_segundos == 30 %}selected{% endif %}>{{ _('30 segundos para deshacer') }}</option>
+      </select>
+    </div>
     <div class="edit-form-actions">
       <button type="submit" class="btn btn-primary">{{ _('Guardar preferencias') }}</button>
     </div>

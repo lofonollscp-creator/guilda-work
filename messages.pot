@@ -3253,3 +3253,81 @@ msgstr ""
 
 msgid "Sin cliente fiscal"
 msgstr ""
+
+msgid "Vuelve a adjuntar los archivos: no se conservan al deshacer el envío."
+msgstr ""
+
+msgid "Elige la fecha y la hora del envío programado."
+msgstr ""
+
+msgid "La hora del envío programado tiene que ser futura."
+msgstr ""
+
+msgid "Ya no se puede deshacer: el correo ya se ha enviado."
+msgstr ""
+
+msgid "Enviado."
+msgstr ""
+
+msgid "Envío programado para el"
+msgstr ""
+
+msgid "Enviando…"
+msgstr ""
+
+msgid "Cancelar envío"
+msgstr ""
+
+msgid "Programados"
+msgstr ""
+
+msgid "Mensajes en esta conversación"
+msgstr ""
+
+msgid "Deshacer envío"
+msgstr ""
+
+msgid "Enviar al momento"
+msgstr ""
+
+msgid "10 segundos para deshacer"
+msgstr ""
+
+msgid "30 segundos para deshacer"
+msgstr ""
+
+msgid "Insertar plantilla"
+msgstr ""
+
+msgid "Insertar plantilla..."
+msgstr ""
+
+msgid "Elegir archivos"
+msgstr ""
+
+msgid "Programar…"
+msgstr ""
+
+msgid "Enviar el"
+msgstr ""
+
+msgid "Programar envío"
+msgstr ""
+
+msgid "Guardar borrador"
+msgstr ""
+
+msgid "Borrador guardado."
+msgstr ""
+
+msgid "No se pudo guardar el borrador."
+msgstr ""
+
+msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
+msgstr ""
+
+msgid "No tienes ningún envío programado."
+msgstr ""
+
+msgid "¿Cancelar este envío? Volverá a tus borradores."
+msgstr ""

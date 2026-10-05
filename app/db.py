@@ -22,6 +22,7 @@ problema real con más de un usuario.
 import hashlib
 import json
 import os
+import re
 import secrets
 import sqlite3
 import sys
@@ -563,6 +564,35 @@ CREATE TABLE IF NOT EXISTS correo_reglas (
     creada_en TEXT NOT NULL
 );
 
+-- Cola de envío de correo: "deshacer envío" (retraso de unos segundos) y
+-- envío programado. Un hilo del servidor envía lo pendiente cuando llega
+-- su hora; el estado se reclama con un UPDATE condicional (dos procesos
+-- nunca envían el mismo correo).
+CREATE TABLE IF NOT EXISTS correo_envios (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    cuenta_id INTEGER NOT NULL,
+    destinatarios TEXT NOT NULL,
+    cc TEXT,
+    bcc TEXT,
+    asunto TEXT NOT NULL,
+    cuerpo_html TEXT NOT NULL,
+    en_respuesta_a TEXT,
+    enviar_en TEXT NOT NULL,
+    programado INTEGER NOT NULL DEFAULT 0,
+    estado TEXT NOT NULL DEFAULT 'pendiente',  -- pendiente | enviando | enviado | cancelado | error
+    error TEXT,
+    creado_en TEXT NOT NULL,
+    procesado_en TEXT
+);
+CREATE TABLE IF NOT EXISTS correo_envios_adjuntos (
+    id INTEGER PRIMARY KEY,
+    envio_id INTEGER NOT NULL REFERENCES correo_envios(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    contenido BLOB NOT NULL
+);
+
 -- Direcciones a las que ya se ha enviado correo, para sugerirlas al
 -- redactar uno nuevo (autocompletar). veces_usado/ultima_vez_en permiten
 -- ordenar las sugerencias por relevancia.
@@ -774,6 +804,11 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_notas_adjuntos_nota ON notas_adjuntos(nota_id);
 CREATE INDEX IF NOT EXISTS idx_correo_reglas_usuario ON correo_reglas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_envios_estado ON correo_envios(estado, enviar_en);
+CREATE INDEX IF NOT EXISTS idx_correo_envios_usuario ON correo_envios(usuario_id, estado);
+CREATE INDEX IF NOT EXISTS idx_correo_envios_adjuntos_envio ON correo_envios_adjuntos(envio_id);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_hilo ON correo_mensajes(cuenta_id, hilo_clave);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_message_id ON correo_mensajes(cuenta_id, message_id);
 CREATE INDEX IF NOT EXISTS idx_tarea_checklist_tarea ON tarea_checklist(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_tarea_outlook ON tareas(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_asignada ON tareas_outlook(asignada_a);
@@ -1222,6 +1257,11 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_cuentas", "firma_html", "TEXT")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_nuevos", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_respuestas", "INTEGER NOT NULL DEFAULT 1")
+        # Conversaciones: cabeceras de enlace y clave de hilo (ver
+        # calcular_hilo_clave). ANTES de executescript(INDICES).
+        _asegurar_columna(conn, "correo_mensajes", "in_reply_to", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "referencias", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "hilo_clave", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
@@ -1467,6 +1507,8 @@ def init_db() -> None:
         _migrar_datos_sin_usuario(conn, usuario_id_local)
         _migrar_conversaciones_ia(conn)
         _migrar_preferencias_singleton(conn, usuario_id_local)
+        _asegurar_columna(conn, "correo_preferencias", "deshacer_segundos", "INTEGER NOT NULL DEFAULT 10")
+        _rellenar_hilos_correo(conn)
 
         # IA local (Ollama/LM Studio): columnas añadidas después de la
         # migración del singleton, ya que esta es la que crea/asegura la
@@ -6579,6 +6621,168 @@ def buscar_destinatarios_recientes(usuario_id: int, q: str | None = None, limite
 
 # --- Preferencias generales de Correo (una fila por usuario) ------------------
 
+DESHACER_ENVIO_OPCIONES = (0, 10, 30)
+MAX_BYTES_ADJUNTOS_ENVIO = 25 * 1024 * 1024
+
+
+def encolar_envio_correo(
+    usuario_id: int, cuenta_id: int, destinatarios: str, cc: str, bcc: str, asunto: str,
+    cuerpo_html: str, en_respuesta_a: str | None, adjuntos: list[dict], enviar_en: str,
+    programado: bool = False,
+) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO correo_envios
+               (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+                enviar_en, programado, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+             enviar_en, int(programado), now_iso()),
+        )
+        envio_id = cur.lastrowid
+        for a in adjuntos:
+            conn.execute(
+                "INSERT INTO correo_envios_adjuntos (envio_id, nombre, tipo, contenido) VALUES (?, ?, ?, ?)",
+                (envio_id, a["nombre"], a["tipo"], a["bytes"]),
+            )
+        conn.commit()
+        return envio_id
+    finally:
+        conn.close()
+
+
+def obtener_envio_correo(usuario_id: int, envio_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_envios WHERE id = ? AND usuario_id = ?", (envio_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def listar_envios_programados(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT * FROM correo_envios WHERE usuario_id = ? AND estado = 'pendiente' AND programado = 1
+               ORDER BY enviar_en""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_envios_programados(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_envios WHERE usuario_id = ? AND estado = 'pendiente' AND programado = 1",
+            (usuario_id,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def cancelar_envio_correo(usuario_id: int, envio_id: int) -> bool:
+    """True si seguía pendiente y queda cancelado; False si ya se ha
+    enviado (o se está enviando) o no es del usuario."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE correo_envios SET estado = 'cancelado', procesado_en = ? "
+            "WHERE id = ? AND usuario_id = ? AND estado = 'pendiente'",
+            (now_iso(), envio_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def envios_correo_vencidos(ahora: str) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_envios WHERE estado = 'pendiente' AND enviar_en <= ? ORDER BY enviar_en, id LIMIT 50",
+            (ahora,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def reclamar_envio_correo(envio_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE correo_envios SET estado = 'enviando', procesado_en = ? WHERE id = ? AND estado = 'pendiente'",
+            (now_iso(), envio_id),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def adjuntos_envio_correo(envio_id: int) -> list[dict]:
+    conn = get_connection()
+    try:
+        return [
+            {"nombre": f["nombre"], "tipo": f["tipo"], "bytes": bytes(f["contenido"])}
+            for f in conn.execute(
+                "SELECT nombre, tipo, contenido FROM correo_envios_adjuntos WHERE envio_id = ? ORDER BY id", (envio_id,)
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+
+def cerrar_envio_correo(envio_id: int, estado: str, error: str | None = None, borrar_adjuntos: bool = True) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_envios SET estado = ?, error = ?, procesado_en = ? WHERE id = ?",
+            (estado, error, now_iso(), envio_id),
+        )
+        if borrar_adjuntos:
+            conn.execute("DELETE FROM correo_envios_adjuntos WHERE envio_id = ?", (envio_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def rescatar_envios_atascados(antes_de: str) -> list[sqlite3.Row]:
+    """Envíos que se quedaron en 'enviando' (el proceso murió a medias):
+    se marcan como error para que el usuario no pierda el correo."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT * FROM correo_envios WHERE estado = 'enviando' AND procesado_en < ?", (antes_de,)
+        ).fetchall()
+        for f in filas:
+            conn.execute(
+                "UPDATE correo_envios SET estado = 'error', error = ? WHERE id = ?",
+                ("El envío se interrumpió; no se sabe si llegó a salir.", f["id"]),
+            )
+        conn.commit()
+        return filas
+    finally:
+        conn.close()
+
+
+def purgar_envios_correo_antiguos(antes_de: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_envios WHERE estado IN ('enviado', 'cancelado', 'error') AND procesado_en < ?",
+            (antes_de,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
@@ -6591,10 +6795,18 @@ def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
         conn.close()
 
 
-def guardar_preferencias_correo(usuario_id: int, densidad: str, marcar_leido_automatico: bool, limite_mensajes: int) -> None:
+def guardar_preferencias_correo(
+    usuario_id: int, densidad: str, marcar_leido_automatico: bool, limite_mensajes: int,
+    deshacer_segundos: int | None = None,
+) -> None:
     conn = get_connection()
     try:
         conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        if deshacer_segundos in DESHACER_ENVIO_OPCIONES:
+            conn.execute(
+                "UPDATE correo_preferencias SET deshacer_segundos = ? WHERE usuario_id = ?",
+                (deshacer_segundos, usuario_id),
+            )
         conn.execute(
             """UPDATE correo_preferencias
                SET densidad = ?, marcar_leido_automatico = ?, limite_mensajes = ? WHERE usuario_id = ?""",
@@ -6686,24 +6898,128 @@ def actualizar_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str, uid: str) -
         conn.close()
 
 
+_PREFIJOS_ASUNTO = re.compile(r"^\s*(?:(?:re|rv|fwd?|enc|res|aw|sv|tr)\s*(?:\[\d+\])?\s*:\s*)+", re.IGNORECASE)
+_PATRON_ID_MENSAJE = re.compile(r"<[^<>\s]+>")
+
+
+def normalizar_asunto(asunto: str | None) -> str:
+    """Asunto sin prefijos de respuesta/reenvío (Re:, RE:, Rv:, Fwd:...),
+    en minúsculas y con espacios colapsados: lo que comparten los mensajes
+    de una misma conversación."""
+    return " ".join(_PREFIJOS_ASUNTO.sub("", asunto or "").lower().split())
+
+
+def _direccion_simple(texto: str | None) -> str:
+    from email.utils import parseaddr
+    return parseaddr(texto or "")[1].strip().lower()
+
+
+def _clave_hilo_por_asunto(asunto, remitente, destinatarios, direccion_propia: str) -> str | None:
+    """Sin cabeceras utilizables: asunto normalizado + contraparte (el
+    remitente si no soy yo; si no, el primer destinatario). Así dos
+    «Factura» de proveedores distintos no se mezclan. Asunto vacío = sin hilo."""
+    norm = normalizar_asunto(asunto)
+    if not norm:
+        return None
+    remitente_dir = _direccion_simple(remitente)
+    if remitente_dir and remitente_dir != direccion_propia:
+        contraparte = remitente_dir
+    else:
+        primero = (destinatarios or "").split(",")[0]
+        contraparte = _direccion_simple(primero) or remitente_dir
+    return f"{norm}|{contraparte}"[:300]
+
+
+def calcular_hilo_clave(
+    conn: sqlite3.Connection, cuenta_id: int, asunto, remitente, destinatarios,
+    in_reply_to: str | None, referencias: str | None, direccion_propia: str,
+) -> str | None:
+    """Si el mensaje responde (In-Reply-To/References) a uno ya guardado de
+    la misma cuenta, hereda su hilo; si no, se deduce del asunto y la contraparte."""
+    ids = _PATRON_ID_MENSAJE.findall(in_reply_to or "") + _PATRON_ID_MENSAJE.findall(referencias or "")[::-1]
+    for candidato in ids[:20]:
+        fila = conn.execute(
+            "SELECT hilo_clave FROM correo_mensajes WHERE cuenta_id = ? AND message_id = ? AND hilo_clave IS NOT NULL LIMIT 1",
+            (cuenta_id, candidato),
+        ).fetchone()
+        if fila:
+            return fila["hilo_clave"]
+    return _clave_hilo_por_asunto(asunto, remitente, destinatarios, direccion_propia)
+
+
+def _rellenar_hilos_correo(conn: sqlite3.Connection) -> None:
+    """Migración idempotente: da clave de hilo a los mensajes que no la
+    tienen (los guardados antes de existir las conversaciones)."""
+    pendientes = conn.execute(
+        """SELECT m.id, m.cuenta_id, m.asunto, m.remitente, m.destinatarios, lower(c.usuario) AS propia
+           FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+           WHERE m.hilo_clave IS NULL AND m.asunto IS NOT NULL AND trim(m.asunto) <> ''"""
+    ).fetchall()
+    for f in pendientes:
+        clave = _clave_hilo_por_asunto(f["asunto"], f["remitente"], f["destinatarios"], _direccion_simple(f["propia"]))
+        if clave:
+            conn.execute("UPDATE correo_mensajes SET hilo_clave = ? WHERE id = ?", (clave, f["id"]))
+    conn.commit()
+
+
+def contar_hilos_correo(cuenta_id: int, claves: list[str]) -> dict[str, int]:
+    """Nº de mensajes de la cuenta (todas las carpetas) por clave de hilo."""
+    claves = [c for c in dict.fromkeys(claves) if c]
+    if not claves:
+        return {}
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" * len(claves))
+        filas = conn.execute(
+            f"""SELECT hilo_clave, COUNT(*) AS n FROM correo_mensajes
+                WHERE cuenta_id = ? AND hilo_clave IN ({marcadores}) GROUP BY hilo_clave""",
+            [cuenta_id, *claves],
+        ).fetchall()
+        return {f["hilo_clave"]: f["n"] for f in filas}
+    finally:
+        conn.close()
+
+
+def mensajes_del_hilo_correo(cuenta_id: int, hilo_clave: str | None) -> list[sqlite3.Row]:
+    if not hilo_clave:
+        return []
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT id, carpeta, asunto, remitente, fecha, leido FROM correo_mensajes
+               WHERE cuenta_id = ? AND hilo_clave = ? ORDER BY fecha ASC, id ASC LIMIT 100""",
+            (cuenta_id, hilo_clave),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 def guardar_mensaje_correo(
     cuenta_id: int, uid: str, asunto: str | None, remitente: str | None,
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
     cuerpo_html: str | None, carpeta: str = "INBOX", message_id: str | None = None,
-    cc: str | None = None,
+    cc: str | None = None, in_reply_to: str | None = None, referencias: str | None = None,
 ) -> int | None:
     """Devuelve el id del mensaje (recién insertado, o el ya existente si
     `(cuenta_id, carpeta, uid)` ya estaba en caché) — para poder colgarle
     adjuntos justo después."""
     conn = get_connection()
     try:
+        cuenta = conn.execute("SELECT usuario FROM correo_cuentas WHERE id = ?", (cuenta_id,)).fetchone()
+        hilo = calcular_hilo_clave(
+            conn, cuenta_id, asunto, remitente, destinatarios, in_reply_to, referencias,
+            _direccion_simple(cuenta["usuario"]) if cuenta else "",
+        )
         conn.execute(
             """INSERT OR IGNORE INTO correo_mensajes
                (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
-                cc, fecha, cuerpo_texto, cuerpo_html, message_id, descargado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                cc, fecha, cuerpo_texto, cuerpo_html, message_id, in_reply_to, referencias,
+                hilo_clave, descargado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
-             cc, fecha, cuerpo_texto, cuerpo_html, message_id, now_iso()),
+             cc, fecha, cuerpo_texto, cuerpo_html, message_id,
+             (in_reply_to or None) and in_reply_to[:1000], (referencias or None) and referencias[:4000],
+             hilo, now_iso()),
         )
         conn.commit()
         fila = conn.execute(

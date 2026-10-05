@@ -671,9 +671,8 @@ msgid "..."
 msgstr "..."
 
 #: app/templates/base.html:229
-#, fuzzy
 msgid "Deshacer"
-msgstr "Estadístiques"
+msgstr "Desfés"
 
 #: app/templates/base.html:230
 msgid "No se pudo deshacer la acción."
@@ -1181,9 +1180,8 @@ msgid "De"
 msgstr "De"
 
 #: app/templates/correo_redactar.html:38
-#, fuzzy
 msgid "Para"
-msgstr "Tasca"
+msgstr "Per a"
 
 #: app/templates/correo_redactar.html:58
 #: app/templates/tarea_outlook_editar.html:16
@@ -3337,3 +3335,81 @@ msgstr "L'assumpte conté…"
 
 msgid "Sin cliente fiscal"
 msgstr "Sense client fiscal"
+
+msgid "Vuelve a adjuntar los archivos: no se conservan al deshacer el envío."
+msgstr "Torna a adjuntar els fitxers: no es conserven en desfer l'enviament."
+
+msgid "Elige la fecha y la hora del envío programado."
+msgstr "Tria la data i l'hora de l'enviament programat."
+
+msgid "La hora del envío programado tiene que ser futura."
+msgstr "L'hora de l'enviament programat ha de ser futura."
+
+msgid "Ya no se puede deshacer: el correo ya se ha enviado."
+msgstr "Ja no es pot desfer: el correu ja s'ha enviat."
+
+msgid "Enviado."
+msgstr "Enviat."
+
+msgid "Envío programado para el"
+msgstr "Enviament programat per al"
+
+msgid "Enviando…"
+msgstr "Enviant…"
+
+msgid "Cancelar envío"
+msgstr "Cancel·la l'enviament"
+
+msgid "Programados"
+msgstr "Programats"
+
+msgid "Mensajes en esta conversación"
+msgstr "Missatges en aquesta conversa"
+
+msgid "Deshacer envío"
+msgstr "Desfer enviament"
+
+msgid "Enviar al momento"
+msgstr "Envia a l'instant"
+
+msgid "10 segundos para deshacer"
+msgstr "10 segons per desfer"
+
+msgid "30 segundos para deshacer"
+msgstr "30 segons per desfer"
+
+msgid "Insertar plantilla"
+msgstr "Insereix plantilla"
+
+msgid "Insertar plantilla..."
+msgstr "Insereix plantilla..."
+
+msgid "Elegir archivos"
+msgstr "Tria fitxers"
+
+msgid "Programar…"
+msgstr "Programa…"
+
+msgid "Enviar el"
+msgstr "Envia el"
+
+msgid "Programar envío"
+msgstr "Programa l'enviament"
+
+msgid "Guardar borrador"
+msgstr "Desa l'esborrany"
+
+msgid "Borrador guardado."
+msgstr "Esborrany desat."
+
+msgid "No se pudo guardar el borrador."
+msgstr "No s'ha pogut desar l'esborrany."
+
+msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
+msgstr "Correus que s'enviaran sols a l'hora indicada. Si en cancel·les un, torna als teus esborranys."
+
+msgid "No tienes ningún envío programado."
+msgstr "No tens cap enviament programat."
+
+msgid "¿Cancelar este envío? Volverá a tus borradores."
+msgstr "Vols cancel·lar aquest enviament? Tornarà als teus esborranys."

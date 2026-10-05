@@ -38,7 +38,10 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 from waitress import serve
 
 from app import db
-from app.main import _recordatorio_vencimientos_fiscales, _resumen_ia_semanal, _sincronizacion_correo_servidor, app
+from app.main import (
+    _envios_correo_servidor, _recordatorio_vencimientos_fiscales, _resumen_ia_semanal,
+    _sincronizacion_correo_servidor, app,
+)
 
 if __name__ == "__main__":
     db.init_db()
@@ -54,6 +57,8 @@ if __name__ == "__main__":
     # 5 por defecto, 0 lo desactiva). _sincronizacion_correo_periodica sigue
     # siendo solo de escritorio; esta es su versión multi-usuario.
     threading.Thread(target=_sincronizacion_correo_servidor, daemon=True).start()
+    # Cola de envío de correo: "deshacer envío" y envíos programados.
+    threading.Thread(target=_envios_correo_servidor, daemon=True).start()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))
     # Caddy reenvía aquí por localhost (ver deploy/Caddyfile) mandando

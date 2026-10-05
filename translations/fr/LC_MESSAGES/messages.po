@@ -679,9 +679,8 @@ msgid "..."
 msgstr "..."
 
 #: app/templates/base.html:229
-#, fuzzy
 msgid "Deshacer"
-msgstr "Statistiques"
+msgstr "Annuler"
 
 #: app/templates/base.html:230
 msgid "No se pudo deshacer la acción."
@@ -1193,9 +1192,8 @@ msgid "De"
 msgstr "De"
 
 #: app/templates/correo_redactar.html:38
-#, fuzzy
 msgid "Para"
-msgstr "Tâche"
+msgstr "À"
 
 #: app/templates/correo_redactar.html:58
 #: app/templates/tarea_outlook_editar.html:16
@@ -3375,3 +3373,81 @@ msgstr "L'objet contient…"
 
 msgid "Sin cliente fiscal"
 msgstr "Sans client fiscal"
+
+msgid "Vuelve a adjuntar los archivos: no se conservan al deshacer el envío."
+msgstr "Joignez à nouveau les fichiers : ils ne sont pas conservés lors de l'annulation de l'envoi."
+
+msgid "Elige la fecha y la hora del envío programado."
+msgstr "Choisissez la date et l'heure de l'envoi programmé."
+
+msgid "La hora del envío programado tiene que ser futura."
+msgstr "L'heure de l'envoi programmé doit être dans le futur."
+
+msgid "Ya no se puede deshacer: el correo ya se ha enviado."
+msgstr "Impossible d'annuler : l'e-mail a déjà été envoyé."
+
+msgid "Enviado."
+msgstr "Envoyé."
+
+msgid "Envío programado para el"
+msgstr "Envoi programmé pour le"
+
+msgid "Enviando…"
+msgstr "Envoi…"
+
+msgid "Cancelar envío"
+msgstr "Annuler l'envoi"
+
+msgid "Programados"
+msgstr "Programmés"
+
+msgid "Mensajes en esta conversación"
+msgstr "Messages dans cette conversation"
+
+msgid "Deshacer envío"
+msgstr "Annuler l'envoi"
+
+msgid "Enviar al momento"
+msgstr "Envoyer immédiatement"
+
+msgid "10 segundos para deshacer"
+msgstr "10 secondes pour annuler"
+
+msgid "30 segundos para deshacer"
+msgstr "30 secondes pour annuler"
+
+msgid "Insertar plantilla"
+msgstr "Insérer un modèle"
+
+msgid "Insertar plantilla..."
+msgstr "Insérer un modèle..."
+
+msgid "Elegir archivos"
+msgstr "Choisir des fichiers"
+
+msgid "Programar…"
+msgstr "Programmer…"
+
+msgid "Enviar el"
+msgstr "Envoyer le"
+
+msgid "Programar envío"
+msgstr "Programmer l'envoi"
+
+msgid "Guardar borrador"
+msgstr "Enregistrer le brouillon"
+
+msgid "Borrador guardado."
+msgstr "Brouillon enregistré."
+
+msgid "No se pudo guardar el borrador."
+msgstr "Le brouillon n'a pas pu être enregistré."
+
+msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
+msgstr "E-mails qui seront envoyés automatiquement à l'heure indiquée. Si vous en annulez un, il retourne dans vos brouillons."
+
+msgid "No tienes ningún envío programado."
+msgstr "Vous n'avez aucun envoi programmé."
+
+msgid "¿Cancelar este envío? Volverá a tus borradores."
+msgstr "Annuler cet envoi ? Il retournera dans vos brouillons."

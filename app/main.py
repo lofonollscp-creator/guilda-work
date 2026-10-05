@@ -1609,6 +1609,22 @@ def _sincronizacion_correo_servidor():
         time.sleep(minutos * 60)
 
 
+ENVIOS_CORREO_INTERVALO_SEGUNDOS = 10
+
+
+def _envios_correo_servidor():
+    """Cola de envío del correo (deshacer envío y programados): cada pocos
+    segundos envía lo pendiente cuya hora ha llegado. El estado se reclama
+    con un UPDATE condicional, así que aunque corran dos procesos nunca se
+    envía el mismo correo dos veces."""
+    while True:
+        try:
+            correo.procesar_envios_pendientes()
+        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en la cola de envío de correo")
+        time.sleep(ENVIOS_CORREO_INTERVALO_SEGUNDOS)
+
+
 RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS = 24 * 60
 RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION = 7
 

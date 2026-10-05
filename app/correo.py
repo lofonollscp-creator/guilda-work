@@ -49,6 +49,7 @@ import re
 import smtplib
 import socket
 import threading
+from datetime import datetime, timedelta
 from email.header import decode_header
 from email.message import EmailMessage
 from email.utils import getaddresses, parsedate_to_datetime
@@ -541,6 +542,8 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
             cuerpo_html=html,
             carpeta=carpeta,
             message_id=mensaje.get("Message-ID"),
+            in_reply_to=_decodificar(mensaje.get("In-Reply-To")),
+            referencias=_decodificar(mensaje.get("References")),
         )
         if adjuntos and mensaje_id is not None:
             db.guardar_adjuntos_correo(mensaje_id, adjuntos)
@@ -601,6 +604,8 @@ def _sincronizar_pop3(cuenta) -> int:
                 cuerpo_html=html,
                 carpeta="INBOX",
                 message_id=mensaje.get("Message-ID"),
+                in_reply_to=_decodificar(mensaje.get("In-Reply-To")),
+                referencias=_decodificar(mensaje.get("References")),
             )
             if adjuntos and mensaje_id is not None:
                 db.guardar_adjuntos_correo(mensaje_id, adjuntos)
@@ -1049,6 +1054,85 @@ def _direcciones(cadena: str | None) -> list[str]:
     return [d.strip() for d in (cadena or "").split(",") if d.strip()]
 
 
+def validar_envio(usuario_id: int, cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str):
+    """Las comprobaciones previas a enviar (también se hacen al ENCOLAR un
+    envío, para que el error salga en el editor y no más tarde, a solas).
+    Devuelve la cuenta."""
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    if cuenta is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+    if not cuenta["smtp_host"] or not cuenta["smtp_puerto"]:
+        raise ErrorCorreo("Esta cuenta no tiene datos de SMTP configurados. Edítala para poder enviar correo.")
+    if not destinatarios or not destinatarios.strip():
+        raise ErrorCorreo("Indica al menos un destinatario.")
+    if not asunto.strip():
+        raise ErrorCorreo("El correo necesita un asunto.")
+    if not cuerpo_html or not html_a_texto_plano(cuerpo_html).strip():
+        raise ErrorCorreo("El correo no puede estar vacío.")
+    return cuenta
+
+
+def encolar_envio(
+    usuario_id: int, cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
+    cc: str = "", bcc: str = "", en_respuesta_a: str | None = None, adjuntos: list[dict] | None = None,
+    *, enviar_en: str, programado: bool = False,
+) -> int:
+    """Valida y deja el correo en la cola (se envía cuando llegue `enviar_en`,
+    ISO local). Devuelve el id del envío."""
+    validar_envio(usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html)
+    adjuntos = adjuntos or []
+    if sum(len(a["bytes"]) for a in adjuntos) > db.MAX_BYTES_ADJUNTOS_ENVIO:
+        raise ErrorCorreo("Los adjuntos superan el tamaño máximo de 25 MB.")
+    return db.encolar_envio_correo(
+        usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+        adjuntos, enviar_en, programado,
+    )
+
+
+def borrador_desde_envio(envio) -> int:
+    """Devuelve el envío al editor como borrador (deshacer/cancelar/fallo)."""
+    return db.guardar_borrador_correo(
+        envio["usuario_id"], None, cuenta_id=envio["cuenta_id"], destinatarios=envio["destinatarios"],
+        cc=envio["cc"] or "", bcc=envio["bcc"] or "", asunto=envio["asunto"], cuerpo_html=envio["cuerpo_html"],
+        en_respuesta_a=envio["en_respuesta_a"],
+    )
+
+
+def procesar_envios_pendientes(ahora: datetime | None = None) -> int:
+    """Envía los correos de la cola cuya hora ha llegado. Un fallo nunca
+    pierde el correo: queda como borrador y se avisa al usuario. Devuelve
+    cuántos se enviaron."""
+    ahora = ahora or datetime.now()
+    db.rescatar_envios_atascados((ahora - timedelta(minutes=10)).isoformat(timespec="seconds"))
+    enviados = 0
+    for envio in db.envios_correo_vencidos(ahora.isoformat(timespec="seconds")):
+        if not db.reclamar_envio_correo(envio["id"]):
+            continue  # otro proceso se lo ha quedado, o el usuario lo ha cancelado
+        try:
+            construir_y_enviar(
+                envio["usuario_id"], envio["cuenta_id"], envio["destinatarios"], envio["asunto"],
+                envio["cuerpo_html"], cc=envio["cc"] or "", bcc=envio["bcc"] or "",
+                en_respuesta_a=envio["en_respuesta_a"], adjuntos=db.adjuntos_envio_correo(envio["id"]),
+            )
+        except Exception as e:  # noqa: BLE001 -- un envío fallido no debe parar la cola
+            logger.exception("Envío de correo %s fallido", envio["id"])
+            borrador_id = borrador_desde_envio(envio)
+            db.cerrar_envio_correo(envio["id"], "error", str(e)[:500])
+            try:
+                notificaciones.crear_y_enviar(
+                    envio["usuario_id"], "correo_envio_fallido", "No se pudo enviar un correo",
+                    f"«{envio['asunto']}»: {e}. Está en tus borradores.",
+                    f"/correo/redactar?borrador_id={borrador_id}",
+                )
+            except Exception:  # noqa: BLE001
+                logger.exception("No se pudo notificar el fallo del envío %s", envio["id"])
+            continue
+        db.cerrar_envio_correo(envio["id"], "enviado")
+        enviados += 1
+    db.purgar_envios_correo_antiguos((ahora - timedelta(days=7)).isoformat(timespec="seconds"))
+    return enviados
+
+
 def construir_y_enviar(
     usuario_id: int,
     cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
@@ -1069,17 +1153,7 @@ def construir_y_enviar(
     direcciones solo se añaden a la lista de destinatarios del sobre SMTP
     (`to_addrs`), construida aquí explícitamente en vez de dejar que
     `smtplib` derive los destinatarios de las cabeceras."""
-    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
-    if cuenta is None:
-        raise ErrorCorreo("Esa cuenta no existe.")
-    if not cuenta["smtp_host"] or not cuenta["smtp_puerto"]:
-        raise ErrorCorreo("Esta cuenta no tiene datos de SMTP configurados. Edítala para poder enviar correo.")
-    if not destinatarios or not destinatarios.strip():
-        raise ErrorCorreo("Indica al menos un destinatario.")
-    if not asunto.strip():
-        raise ErrorCorreo("El correo necesita un asunto.")
-    if not cuerpo_html or not html_a_texto_plano(cuerpo_html).strip():
-        raise ErrorCorreo("El correo no puede estar vacío.")
+    cuenta = validar_envio(usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html)
 
     mensaje = EmailMessage()
     mensaje["From"] = cuenta["usuario"]
