@@ -17,6 +17,7 @@ externa irreversible), que siempre pide confirmación pase lo que pase.
 """
 import json
 import time
+from datetime import datetime
 import urllib.error
 import urllib.request
 from collections.abc import Iterator
@@ -56,16 +57,69 @@ MAX_ITERACIONES_HERRAMIENTAS = 8
 _NOMBRES_IDIOMA = {"es": "español", "ca": "catalán", "en": "inglés", "fr": "francés"}
 
 
-def _prompt_sistema(idioma: str) -> str:
+# Cuántos turnos (un turno = un mensaje de la persona usuaria y todo lo que
+# el asistente hizo en respuesta) se envían al modelo en cada llamada. Antes
+# se mandaba el historial ENTERO cada vez: más coste y latencia en cada
+# mensaje y, tarde o temprano, error de contexto con los modelos gratuitos.
+# El historial completo sigue guardado y visible en el chat; esto solo limita
+# lo que se manda al modelo.
+HISTORIAL_MAX_TURNOS = 12
+# Los resultados de herramientas de turnos ANTERIORES al actual (listados de
+# correo, de tareas...) son lo que más pesa: se recortan. Los del turno actual
+# se mandan enteros.
+TOOL_RESULTADO_MAX_CARACTERES_ANTIGUO = 2000
+
+_DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+
+
+def _prompt_sistema(usuario_id: int, idioma: str, ahora: datetime | None = None) -> str:
+    """Prompt de sistema con el contexto que el modelo no puede adivinar: qué
+    es Guilda Work, qué día y hora es (sin esto no sabe resolver "mañana" o
+    "el viernes") y para quién trabaja. Por privacidad solo se envía el nombre
+    elegido y el del despacho, nunca el correo del usuario."""
+    ahora = ahora or datetime.now()
     nombre_idioma = _NOMBRES_IDIOMA.get(idioma, _NOMBRES_IDIOMA["es"])
+    quien = []
+    nombre = db.nombre_mostrado_usuario(usuario_id)
+    if nombre:
+        quien.append(f"La persona usuaria se llama {nombre}.")
+    tenant = db.tenant_de_usuario(usuario_id)
+    if tenant:
+        quien.append(f"Trabaja en el despacho «{tenant['nombre']}».")
     return (
-        "Eres el asistente integrado en Guilda Work, una app de registro de "
-        "actividad, tareas y correo. Puedes leer y modificar los datos de la "
-        f"persona usuaria a través de las herramientas disponibles. Sé breve, "
-        f"directo y responde siempre en {nombre_idioma}. Antes de dar por hecho un id "
-        "(de nota, tarea, mensaje o categoría) que no te haya dado explícitamente "
-        "la persona usuaria, consúltalo primero con una herramienta de lectura."
+        "Eres el asistente integrado en Guilda Work, la plataforma de trabajo de una gestoría. "
+        "A través de las herramientas disponibles puedes leer y modificar los datos de la persona usuaria: "
+        "proyectos (agrupan sus tareas y notas), notas, tareas con prioridad y vencimiento, correo, "
+        "calendario fiscal y vencimientos de clientes, fichaje, tiquets, CRM, facturas, firmas y archivos. "
+        f"Hoy es {_DIAS_SEMANA[ahora.weekday()]} {ahora.strftime('%Y-%m-%d')} y son las {ahora.strftime('%H:%M')} "
+        "(hora local del despacho). "
+        + " ".join(quien) + (" " if quien else "")
+        + f"Responde siempre en {nombre_idioma}; sé breve y directo. "
+        "Interpreta las fechas relativas («mañana», «el viernes», «la semana que viene») a partir de la fecha "
+        "de hoy y pásalas a las herramientas en formato AAAA-MM-DD (con hora, AAAA-MM-DD HH:MM, solo si te la piden). "
+        "Antes de dar por hecho un id (de nota, tarea, mensaje, proyecto o cliente) que no te haya dado "
+        "explícitamente la persona usuaria, consúltalo primero con una herramienta de lectura. "
+        "No inventes datos: si una herramienta falla o no devuelve nada, dilo. Las acciones que modifican "
+        "datos pueden pedir confirmación a la persona usuaria; si la rechaza, no insistas."
     )
+
+
+def _ventana_historial(filas: list) -> list:
+    """Los últimos HISTORIAL_MAX_TURNOS turnos, empezando SIEMPRE en un mensaje
+    de la persona usuaria (así nunca queda un resultado de herramienta huérfano
+    sin la llamada que lo originó, que algunos modelos rechazan). Los resultados
+    de herramientas de turnos anteriores al último se recortan."""
+    inicios = [i for i, f in enumerate(filas) if f["rol"] == "user"]
+    desde = inicios[-HISTORIAL_MAX_TURNOS] if len(inicios) > HISTORIAL_MAX_TURNOS else 0
+    ultimo_turno = inicios[-1] if inicios else 0
+    ventana = []
+    for i in range(desde, len(filas)):
+        fila = dict(filas[i])
+        contenido = fila.get("contenido") or ""
+        if fila["rol"] == "tool" and i < ultimo_turno and len(contenido) > TOOL_RESULTADO_MAX_CARACTERES_ANTIGUO:
+            fila["contenido"] = contenido[:TOOL_RESULTADO_MAX_CARACTERES_ANTIGUO] + "… [resultado recortado]"
+        ventana.append(fila)
+    return ventana
 
 
 class ErrorIA(Exception):
@@ -288,8 +342,8 @@ def listar_modelos_gratuitos(*, forzar_recarga: bool = False) -> list[dict]:
 
 def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
     idioma = db.idioma_usuario(usuario_id) or "es"
-    mensajes = [{"role": "system", "content": _prompt_sistema(idioma)}]
-    for fila in db.listar_mensajes_ia(usuario_id):
+    mensajes = [{"role": "system", "content": _prompt_sistema(usuario_id, idioma)}]
+    for fila in _ventana_historial(db.listar_mensajes_ia(usuario_id)):
         if fila["rol"] == "assistant":
             mensaje = {"role": "assistant", "content": fila["contenido"]}
             if fila["tool_calls_json"]:

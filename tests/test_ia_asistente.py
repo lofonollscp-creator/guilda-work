@@ -176,6 +176,106 @@ def test_mensajes_para_openrouter_cae_a_espanol_sin_idioma_elegido(usuario_id):
     assert "español" in mensajes[0]["content"]
 
 
+# --- Contexto del prompt y ventana de historial ----------------------------
+
+
+def test_el_prompt_incluye_fecha_hora_y_dia_de_la_semana(usuario_id):
+    from datetime import datetime
+
+    prompt = a._prompt_sistema(usuario_id, "es", ahora=datetime(2026, 10, 5, 9, 30))
+
+    assert "lunes" in prompt and "2026-10-05" in prompt and "09:30" in prompt
+    assert "AAAA-MM-DD" in prompt
+
+
+def test_el_prompt_incluye_nombre_y_despacho_pero_nunca_el_correo(usuario_id):
+    db.guardar_perfil_usuario(usuario_id, nombre_mostrado="Ana Martínez")
+    db.asignar_tenant(usuario_id, db.crear_tenant("Gestoría Soler"))
+
+    prompt = a._prompt_sistema(usuario_id, "es")
+
+    assert "Ana Martínez" in prompt
+    assert "Gestoría Soler" in prompt
+    assert db.obtener_usuario(usuario_id)["email"] not in prompt
+
+
+def test_el_prompt_sin_nombre_ni_despacho_no_deja_huecos(usuario_id):
+    prompt = a._prompt_sistema(usuario_id, "es")
+    assert "  " not in prompt and "None" not in prompt
+
+
+def _conversacion_larga(usuario_id, turnos):
+    for n in range(turnos):
+        db.agregar_mensaje_ia(usuario_id, "user", contenido=f"pregunta {n}")
+        db.agregar_mensaje_ia(usuario_id, "assistant", contenido=f"respuesta {n}")
+
+
+def test_la_ventana_envia_solo_los_ultimos_turnos_empezando_en_un_mensaje_de_usuario(usuario_id):
+    _conversacion_larga(usuario_id, a.HISTORIAL_MAX_TURNOS + 3)
+
+    mensajes = a._mensajes_para_openrouter(usuario_id)
+
+    assert mensajes[0]["role"] == "system"
+    assert mensajes[1] == {"role": "user", "content": "pregunta 3"}
+    assert len(mensajes) == 1 + 2 * a.HISTORIAL_MAX_TURNOS
+    assert mensajes[-1]["content"] == f"respuesta {a.HISTORIAL_MAX_TURNOS + 2}"
+    # El historial completo sigue guardado: solo se limita lo que va al modelo.
+    assert len(db.listar_mensajes_ia(usuario_id)) == 2 * (a.HISTORIAL_MAX_TURNOS + 3)
+
+
+def test_una_conversacion_corta_se_envia_entera(usuario_id):
+    _conversacion_larga(usuario_id, 3)
+    assert len(a._mensajes_para_openrouter(usuario_id)) == 1 + 6
+
+
+def test_la_ventana_nunca_deja_un_resultado_de_herramienta_huerfano(usuario_id):
+    for n in range(a.HISTORIAL_MAX_TURNOS + 2):
+        db.agregar_mensaje_ia(usuario_id, "user", contenido=f"pregunta {n}")
+        llamada = [{"id": f"call_{n}", "type": "function", "function": {"name": "listar_notas", "arguments": "{}"}}]
+        db.agregar_mensaje_ia(usuario_id, "assistant", tool_calls_json=json.dumps(llamada))
+        db.agregar_mensaje_ia(usuario_id, "tool", contenido="[]", tool_call_id=f"call_{n}", nombre_herramienta="listar_notas")
+        db.agregar_mensaje_ia(usuario_id, "assistant", contenido=f"respuesta {n}")
+
+    mensajes = a._mensajes_para_openrouter(usuario_id)
+
+    assert mensajes[1]["role"] == "user"
+    llamadas = {tc["id"] for m in mensajes if m.get("tool_calls") for tc in m["tool_calls"]}
+    respondidas = {m["tool_call_id"] for m in mensajes if m["role"] == "tool"}
+    assert respondidas <= llamadas
+
+
+def test_los_resultados_de_herramientas_antiguos_se_recortan_pero_los_del_turno_actual_no(usuario_id):
+    enorme = "x" * 5000
+    for n in range(2):
+        db.agregar_mensaje_ia(usuario_id, "user", contenido=f"pregunta {n}")
+        llamada = [{"id": f"call_{n}", "type": "function", "function": {"name": "listar_notas", "arguments": "{}"}}]
+        db.agregar_mensaje_ia(usuario_id, "assistant", tool_calls_json=json.dumps(llamada))
+        db.agregar_mensaje_ia(usuario_id, "tool", contenido=enorme, tool_call_id=f"call_{n}", nombre_herramienta="listar_notas")
+
+    resultados = [m["content"] for m in a._mensajes_para_openrouter(usuario_id) if m["role"] == "tool"]
+
+    assert len(resultados[0]) < len(enorme) and resultados[0].endswith("[resultado recortado]")
+    assert resultados[1] == enorme  # el del turno actual, entero
+
+
+def test_la_llamada_al_modelo_lleva_la_ventana_y_la_confirmacion_pendiente_sigue_funcionando(monkeypatch, usuario_id):
+    _preparar(usuario_id, modo_autonomo=False)
+    _conversacion_larga(usuario_id, a.HISTORIAL_MAX_TURNOS + 5)
+    enviados = []
+
+    def fake_post_json(url, payload, api_key):
+        enviados.append(payload["messages"])
+        return _respuesta_tool_calls(("call_1", "crear_nota", {"texto": "x"}))
+
+    monkeypatch.setattr(a, "_post_json", fake_post_json)
+
+    resultado = a.procesar_turno(usuario_id, "crea una nota")
+
+    assert len(enviados[0]) <= 1 + 2 * a.HISTORIAL_MAX_TURNOS + 1
+    assert resultado["pendiente"]["herramienta"] == "crear_nota"
+    assert a.pendiente_actual(usuario_id)["tool_call_id"] == "call_1"
+
+
 # --- Variantes en streaming (asistente de voz) ------------------------------
 
 
