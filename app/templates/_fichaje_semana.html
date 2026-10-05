@@ -1,0 +1,19 @@
+{% macro barra_semana(semana) %}
+{% if semana %}
+<div class="fichaje-semana" role="group" aria-label="{{ _('Horas de esta semana') }}">
+  <div class="fichaje-semana-texto">
+    <strong>{{ _('Esta semana') }}:</strong>
+    {% if semana.contratados %}
+    {{ _('%(hechas)s de %(contratadas)s', hechas=(semana.segundos|horas_hm), contratadas=(semana.contratados|horas_hm)) }}
+    <span class="pill {{ 'estado-dentro' if semana.diferencia >= 0 else 'estado-fuera' }}">{{ ('+' if semana.diferencia >= 0 else '') ~ (semana.diferencia|horas_hm) }}</span>
+    {% else %}
+    {{ semana.segundos|horas_hm }} <span class="muted">· {{ _('indica tu jornada semanal en «Mis datos» para compararla') }}</span>
+    {% endif %}
+    {% if semana.en_curso %}<span class="muted">· {{ _('incluye la jornada en curso') }}</span>{% endif %}
+  </div>
+  {% if semana.contratados %}
+  <div class="fichaje-semana-barra" aria-hidden="true"><span style="width: {{ semana.porcentaje }}%;"></span></div>
+  {% endif %}
+</div>
+{% endif %}
+{% endmacro %}

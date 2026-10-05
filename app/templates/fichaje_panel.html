@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Fichaje') }} — Guilda Work{% endblock %}
+{% from "_fichaje_semana.html" import barra_semana %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -19,6 +20,7 @@
 
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
+{% if semana %}{{ barra_semana(semana) }}{% endif %}
 {% if datos_incompletos %}
 <section class="fichaje-aviso">
   <p>{{ _('Antes de poder fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE.') }}</p>

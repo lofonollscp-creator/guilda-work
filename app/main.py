@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, ia_atajos, importador, kratos, notificaciones
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -1640,6 +1640,20 @@ def _envios_correo_servidor():
         except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en la cola de envío de correo")
         time.sleep(ENVIOS_CORREO_INTERVALO_SEGUNDOS)
+
+
+AVISOS_FICHAJE_INTERVALO_MINUTOS = 15
+
+
+def _avisos_fichaje_servidor():
+    """Cada 15 minutos avisa de las jornadas de fichaje abiertas demasiado
+    tiempo (ver app/fichaje_avisos.py)."""
+    while True:
+        try:
+            fichaje_avisos.procesar_avisos()
+        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en los avisos de fichaje")
+        time.sleep(AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
 
 
 RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS = 24 * 60

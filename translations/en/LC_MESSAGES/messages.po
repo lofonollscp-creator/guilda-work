@@ -1407,9 +1407,8 @@ msgstr "Choose a tenant to see its hours."
 
 #: app/templates/fichaje_admin.html:14 app/templates/fichaje_datos.html:12
 #: app/templates/fichaje_historial.html:12 app/templates/fichaje_panel.html:12
-#, fuzzy
 msgid "Fichar"
-msgstr "Time clock"
+msgstr "Clock in/out"
 
 #: app/templates/fichaje_admin.html:15 app/templates/fichaje_datos.html:13
 #: app/templates/fichaje_historial.html:13 app/templates/fichaje_panel.html:13
@@ -1440,14 +1439,12 @@ msgstr ""
 " address in the backoffice — they won't appear in exported reports."
 
 #: app/templates/fichaje_admin.html:45
-#, fuzzy
 msgid "Exportar CSV"
-msgstr "Import"
+msgstr "Export CSV"
 
 #: app/templates/fichaje_admin.html:46
-#, fuzzy
 msgid "Exportar PDF"
-msgstr "Import"
+msgstr "Export PDF"
 
 #: app/templates/fichaje_admin.html:50
 msgid "Sin fichajes de nadie de este tenant en este periodo."
@@ -1462,23 +1459,20 @@ msgid "Horas trabajadas"
 msgstr "Hours worked"
 
 #: app/templates/fichaje_admin.html:58
-#, fuzzy
 msgid "Horas en pausa"
-msgstr "Paused"
+msgstr "Hours on break"
 
 #: app/templates/fichaje_admin.html:59
 msgid "Jornada contratada/sem."
 msgstr "Contracted hours/wk."
 
 #: app/templates/fichaje_admin.html:60
-#, fuzzy
 msgid "Fichajes"
-msgstr "Time clock"
+msgstr "Clock records"
 
 #: app/templates/fichaje_admin.html:73
-#, fuzzy
 msgid "dentro"
-msgstr "Event"
+msgstr "in"
 
 #: app/templates/fichaje_admin.html:73
 msgid "fuera"
@@ -1499,9 +1493,8 @@ msgstr "No time-tracking entries in this period."
 
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32 app/templates/fichaje_panel.html:61
-#, fuzzy
 msgid "Hora"
-msgstr "Normal"
+msgstr "Time"
 
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32 app/templates/fichaje_panel.html:61
@@ -1602,9 +1595,8 @@ msgid "Tu registro horario, siempre a tu disposición."
 msgstr "Your time record, always at your disposal."
 
 #: app/templates/fichaje_historial.html:38
-#, fuzzy
 msgid "corrección"
-msgstr "Mail"
+msgstr "correction"
 
 #: app/templates/fichaje_panel.html:7
 msgid "Registro horario diario (art. 34.9 del Estatuto de los Trabajadores)."
@@ -1634,19 +1626,16 @@ msgid "Fuera de jornada"
 msgstr "Outside working hours"
 
 #: app/templates/fichaje_panel.html:37
-#, fuzzy
 msgid "Entrada"
-msgstr "Log in"
+msgstr "Clock in"
 
 #: app/templates/fichaje_panel.html:41
-#, fuzzy
 msgid "Iniciar pausa"
-msgstr "Start"
+msgstr "Start break"
 
 #: app/templates/fichaje_panel.html:45
-#, fuzzy
 msgid "Fin de pausa"
-msgstr "Paused"
+msgstr "End of break"
 
 #: app/templates/fichaje_panel.html:49
 msgid "Salida"
@@ -1658,9 +1647,8 @@ msgid "Hoy"
 msgstr "Today"
 
 #: app/templates/fichaje_panel.html:57
-#, fuzzy
 msgid "Todavía no has fichado nada hoy."
-msgstr "You haven't logged anything today yet."
+msgstr "You haven't clocked anything today yet."
 
 #: app/templates/herramientas.html:7
 msgid "Todo lo que tienes conectado a Guilda Work, en un solo sitio."
@@ -3525,3 +3513,48 @@ msgstr "Shortcuts"
 
 msgid "Adjuntar archivo de texto/CSV"
 msgstr "Attach a text/CSV file"
+
+msgid "Horas de esta semana"
+msgstr "Hours this week"
+
+msgid "Esta semana"
+msgstr "This week"
+
+#, python-format
+msgid "%(hechas)s de %(contratadas)s"
+msgstr "%(hechas)s of %(contratadas)s"
+
+msgid "indica tu jornada semanal en «Mis datos» para compararla"
+msgstr "set your weekly hours in “My details” to compare them"
+
+msgid "incluye la jornada en curso"
+msgstr "includes the current shift"
+
+msgid "Exportar JSON (detalle + hash)"
+msgstr "Export JSON (detail + hash)"
+
+msgid "Verificar integridad"
+msgstr "Verify integrity"
+
+msgid "Diferencia"
+msgstr "Difference"
+
+msgid "llevas"
+msgstr "you have been"
+
+msgid "en pausa"
+msgstr "on break"
+
+msgid "Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez."
+msgstr "This firm records your location when you clock in. Your browser will ask for permission the first time."
+
+#, python-format
+msgid "%(h)s h trabajadas"
+msgstr "%(h)s h worked"
+
+#, python-format
+msgid "%(h)s h pausa"
+msgstr "%(h)s h break"
+
+msgid "Inicio de pausa"
+msgstr "Break start"

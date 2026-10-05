@@ -709,6 +709,15 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Aviso de "salida olvidada": una sola vez por jornada (la entrada abierta).
+CREATE TABLE IF NOT EXISTS fichaje_avisos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    entrada_id INTEGER NOT NULL REFERENCES fichajes(id),
+    avisado_en TEXT NOT NULL,
+    UNIQUE (usuario_id, entrada_id)
+);
+
 -- Facturación de plataforma (Guilda Work cobra a sus propios tenants,
 -- bloque 6 -- DISTINTO de Stripe Connect, que es cada tenant cobrando a
 -- SUS clientes finales, ver tenants.stripe_account_id más abajo).
@@ -8258,6 +8267,58 @@ def estado_actual_fichaje(usuario_id: int) -> str:
         if ultimo["tipo"] == "pausa_inicio":
             return "en_pausa"
         return "dentro"
+    finally:
+        conn.close()
+
+
+def jornadas_abiertas_sin_aviso(entrada_antes_de: str) -> list[sqlite3.Row]:
+    """Jornadas abiertas (el último evento del trabajador no es una salida)
+    cuya última entrada es anterior a `entrada_antes_de` (ISO) y de las que
+    todavía no se ha avisado."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT e.id AS entrada_id, e.usuario_id, e.marca_tiempo
+               FROM fichajes e
+               WHERE e.tipo = 'entrada'
+                 AND e.id = (SELECT MAX(id) FROM fichajes WHERE usuario_id = e.usuario_id AND tipo = 'entrada')
+                 AND (SELECT tipo FROM fichajes WHERE usuario_id = e.usuario_id ORDER BY id DESC LIMIT 1) != 'salida'
+                 AND e.marca_tiempo <= ?
+                 AND NOT EXISTS (SELECT 1 FROM fichaje_avisos a WHERE a.usuario_id = e.usuario_id AND a.entrada_id = e.id)""",
+            (entrada_antes_de,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def registrar_aviso_fichaje(usuario_id: int, entrada_id: int) -> bool:
+    """True si es la primera vez que se avisa de esta jornada."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO fichaje_avisos (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?)",
+            (usuario_id, entrada_id, now_iso()),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def entrada_abierta_fichaje(usuario_id: int) -> str | None:
+    """Marca de tiempo de la entrada de la jornada abierta, o None si está fuera."""
+    conn = get_connection()
+    try:
+        ultimo = conn.execute(
+            "SELECT tipo FROM fichajes WHERE usuario_id = ? ORDER BY id DESC LIMIT 1", (usuario_id,)
+        ).fetchone()
+        if ultimo is None or ultimo["tipo"] == "salida":
+            return None
+        entrada = conn.execute(
+            "SELECT marca_tiempo FROM fichajes WHERE usuario_id = ? AND tipo = 'entrada' ORDER BY id DESC LIMIT 1",
+            (usuario_id,),
+        ).fetchone()
+        return entrada["marca_tiempo"] if entrada else None
     finally:
         conn.close()
 

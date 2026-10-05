@@ -3419,3 +3419,48 @@ msgstr ""
 
 msgid "Adjuntar archivo de texto/CSV"
 msgstr ""
+
+msgid "Horas de esta semana"
+msgstr ""
+
+msgid "Esta semana"
+msgstr ""
+
+#, python-format
+msgid "%(hechas)s de %(contratadas)s"
+msgstr ""
+
+msgid "indica tu jornada semanal en «Mis datos» para compararla"
+msgstr ""
+
+msgid "incluye la jornada en curso"
+msgstr ""
+
+msgid "Exportar JSON (detalle + hash)"
+msgstr ""
+
+msgid "Verificar integridad"
+msgstr ""
+
+msgid "Diferencia"
+msgstr ""
+
+msgid "llevas"
+msgstr ""
+
+msgid "en pausa"
+msgstr ""
+
+msgid "Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez."
+msgstr ""
+
+#, python-format
+msgid "%(h)s h trabajadas"
+msgstr ""
+
+#, python-format
+msgid "%(h)s h pausa"
+msgstr ""
+
+msgid "Inicio de pausa"
+msgstr ""

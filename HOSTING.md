@@ -102,6 +102,7 @@ Variables opcionales:
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
 | `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |
+| `GUILDA_FICHAJE_AVISO_HORAS` | `10` | Horas con la jornada de fichaje abierta tras las cuales se avisa (una vez por jornada) de que quizá se olvidó la salida. `0` lo desactiva. Se comprueba cada 15 minutos. |
 
 **Sincronización del correo**: `serve.py` lanza un hilo que, cada
 `GUILDA_CORREO_SYNC_MINUTOS`, descarga el correo nuevo de las cuentas de

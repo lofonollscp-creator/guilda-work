@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Mi historial de fichaje') }} — Guilda Work{% endblock %}
+{% from "_fichaje_semana.html" import barra_semana %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -16,6 +17,8 @@
   <a href="{{ url_for('fichaje.admin_resumen') }}">{{ _('Administración') }}</a>
   {% endif %}
 </nav>
+
+{{ barra_semana(semana) }}
 
 <form class="filters" method="get">
   <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label>

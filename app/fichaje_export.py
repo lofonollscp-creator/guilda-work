@@ -81,6 +81,57 @@ def filas_diarias(tenant_id: int | None, desde: str | None, hasta: str | None, u
     return [filas[c] for c in orden]
 
 
+def _lunes(ahora: datetime) -> datetime:
+    return datetime(ahora.year, ahora.month, ahora.day) - timedelta(days=ahora.weekday())
+
+
+def segundos_por_usuario_semana(tenant_id: int | None, usuario_id: int | None = None, ahora: datetime | None = None) -> dict[int, float]:
+    """Segundos trabajados esta semana (lunes a domingo) por trabajador, con la
+    misma medida que los totales diarios (entrada -> salida). Se lee desde el
+    día anterior al lunes para repartir bien un turno que cruza la medianoche
+    del domingo; solo cuentan los días de la semana. No incluye la jornada
+    todavía abierta (ver resumen_semana)."""
+    ahora = ahora or datetime.now()
+    lunes = _lunes(ahora)
+    domingo = lunes + timedelta(days=6)
+    desde = (lunes - timedelta(days=1)).strftime("%Y-%m-%d")
+    totales: dict[int, float] = {}
+    for fila in filas_diarias(tenant_id, desde, domingo.strftime("%Y-%m-%d"), usuario_id):
+        if fila["fecha"] >= lunes.strftime("%Y-%m-%d"):
+            totales[fila["usuario_id"]] = totales.get(fila["usuario_id"], 0) + fila["segundos_trabajados"]
+    return totales
+
+
+def resumen_semana(tenant_id: int | None, usuario_id: int, ahora: datetime | None = None) -> dict:
+    """Horas de la semana de un trabajador frente a su jornada contratada.
+    `segundos` incluye la jornada abierta hasta ahora; `contratados` es None
+    si no tiene jornada semanal indicada."""
+    ahora = ahora or datetime.now()
+    segundos = segundos_por_usuario_semana(tenant_id, usuario_id, ahora).get(usuario_id, 0.0)
+    en_curso = 0.0
+    entrada = db.entrada_abierta_fichaje(usuario_id)
+    if entrada:
+        inicio = max(datetime.fromisoformat(entrada), _lunes(ahora))
+        en_curso = max((ahora - inicio).total_seconds(), 0.0)
+    jornada = db.obtener_fichaje_datos(usuario_id)["jornada_semanal_horas"]
+    contratados = float(jornada) * 3600 if jornada else None
+    total = segundos + en_curso
+    return {
+        "segundos": total, "contratados": contratados, "en_curso": entrada is not None,
+        "diferencia": (total - contratados) if contratados is not None else None,
+        "porcentaje": min(100, round(total / contratados * 100)) if contratados else None,
+    }
+
+
+def formato_horas(segundos: float | None) -> str:
+    """'24 h 30 min' (o '—' sin dato)."""
+    if segundos is None:
+        return "—"
+    minutos = int(round(abs(segundos) / 60))
+    texto = f"{minutos // 60} h {minutos % 60:02d} min"
+    return f"-{texto}" if segundos < 0 else texto
+
+
 def _cabecera(tenant, desde: str | None, hasta: str | None) -> tuple[str, str, str]:
     empresa = tenant["nombre"] if tenant else "Sin tenant"
     identificacion = f"CIF: {tenant['cif'] or '—'} · {tenant['direccion_fiscal'] or '—'}" if tenant else ""

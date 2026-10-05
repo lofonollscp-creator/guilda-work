@@ -41,6 +41,11 @@ def _tenant_id_admin_actual() -> int | None:
     return g.tenant_id
 
 
+@fichaje_bp.app_template_filter("horas_hm")
+def _horas_hm(segundos):
+    return fichaje_export.formato_horas(segundos)
+
+
 @fichaje_bp.context_processor
 def _inyectar_tipos_fichaje():
     return {"tipos_fichaje": dict(TIPOS_FICHAJE)}
@@ -67,6 +72,7 @@ def panel():
         estado=db.estado_actual_fichaje(g.usuario_id),
         ultimo_evento=db.ultimo_fichaje(g.usuario_id),
         hoy=db.listar_fichajes(g.usuario_id, desde=hoy, hasta=hoy),
+        semana=fichaje_export.resumen_semana(g.tenant_id, g.usuario_id),
         error=request.args.get("error"),
         geolocalizacion_activa=_geolocalizacion_activa(),
     )
@@ -122,6 +128,7 @@ def historial():
         "fichaje_historial.html",
         desde=desde or "", hasta=hasta or "",
         fichajes=fichajes, dias_ordenados=dias_ordenados, por_dia=por_dia, por_dia_resumen=por_dia_fecha,
+        semana=fichaje_export.resumen_semana(g.tenant_id, g.usuario_id),
     )
 
 
@@ -173,6 +180,7 @@ def admin_resumen():
         tenants=db.listar_tenants() if g.es_admin else None,
         desde=desde or "", hasta=hasta or "",
         resumen=db.resumen_fichajes_tenant(tenant_id, desde, hasta) if tenant_id else [],
+        semana_segundos=fichaje_export.segundos_por_usuario_semana(tenant_id) if tenant_id else {},
     )
 
 

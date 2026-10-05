@@ -39,7 +39,7 @@ from waitress import serve
 
 from app import db
 from app.main import (
-    _envios_correo_servidor, _recordatorio_vencimientos_fiscales, _resumen_ia_semanal,
+    _avisos_fichaje_servidor, _envios_correo_servidor, _recordatorio_vencimientos_fiscales, _resumen_ia_semanal,
     _sincronizacion_correo_servidor, app,
 )
 
@@ -59,6 +59,8 @@ if __name__ == "__main__":
     threading.Thread(target=_sincronizacion_correo_servidor, daemon=True).start()
     # Cola de envío de correo: "deshacer envío" y envíos programados.
     threading.Thread(target=_envios_correo_servidor, daemon=True).start()
+    # Aviso de "salida olvidada" del fichaje (GUILDA_FICHAJE_AVISO_HORAS, 10 por defecto).
+    threading.Thread(target=_avisos_fichaje_servidor, daemon=True).start()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))
     # Caddy reenvía aquí por localhost (ver deploy/Caddyfile) mandando
