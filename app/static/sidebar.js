@@ -2,7 +2,7 @@
 // densidad, y el menú desplegable de ajustes (⚙) de la barra superior. El
 // tema ya se aplica antes de pintar mediante el script inline en <head> de
 // base.html — este archivo solo gestiona el clic para rotarlo y refleja el
-// estado en el botón. La lista de menús (favoritos/reordenar) vive en el
+// estado en el botón. La lista de proyectos (favoritos/reordenar) vive en el
 // Dashboard (inicio.html), no aquí.
 (function () {
   // URL del sprite de iconos (app/static/iconos.svg), leída una vez de

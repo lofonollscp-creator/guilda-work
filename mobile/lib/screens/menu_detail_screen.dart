@@ -6,10 +6,10 @@ import '../theme/app_theme.dart';
 import '../widgets/app_card.dart';
 import '../widgets/status_badge.dart';
 
-/// Detalle de un menú/categoría (equivalente móvil de
+/// Detalle de un proyecto/categoría (equivalente móvil de
 /// app/templates/menu.html): nota rápida, evento instantáneo, tarea con
-/// duración, tareas activas de este menú con pausar/reanudar/finalizar, y
-/// el histórico filtrado por este menú con buscador de texto.
+/// duración, tareas activas de este proyecto con pausar/reanudar/finalizar, y
+/// el histórico filtrado por este proyecto con buscador de texto.
 class MenuDetailScreen extends StatefulWidget {
   final Categoria categoria;
   final ApiClient api;
@@ -152,7 +152,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
                 TextField(
                   controller: _buscarController,
                   decoration: const InputDecoration(
-                    hintText: 'Buscar en este menú...',
+                    hintText: 'Buscar en este proyecto...',
                     prefixIcon: Icon(Icons.search),
                   ),
                   onSubmitted: (_) => _recargar(),
@@ -161,7 +161,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
                 if (_historial.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text('Este menú todavía está vacío.'),
+                    child: Text('Este proyecto todavía está vacío.'),
                   )
                 else
                   ..._historial.map(_tarjetaHistorial),

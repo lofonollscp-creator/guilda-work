@@ -303,7 +303,7 @@ def inyectar_idioma_actual():
 @app.context_processor
 def inyectar_correo_badge():
     # El rail de iconos necesita este contador en cualquier página (para el
-    # badge sobre el icono de Correo). La lista de menús ya no vive en un
+    # badge sobre el icono de Correo). La lista de proyectos ya no vive en un
     # sidebar global — cada ruta que la necesita (inicio(), captura()) la
     # pasa explícitamente en su propio contexto.
     if not g.usuario_id:
@@ -1320,7 +1320,7 @@ def vaciar_papelera():
 def apagar():
     """Cierra el servidor y termina el proceso por completo (evita procesos zombis).
 
-    Todo lo que ya se ha guardado (notas, tareas, menús) está en SQLite con
+    Todo lo que ya se ha guardado (notas, tareas, proyectos) está en SQLite con
     commit inmediato en cada operación, así que no hay nada "pendiente" que
     perder al cerrar: no hace falta guardar nada aquí, solo terminar el proceso.
 

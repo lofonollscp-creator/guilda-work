@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS webhooks_entregas (
 -- UNIQUE por (usuario_id, nombre), NO solo por nombre -- antes era
 -- "nombre TEXT NOT NULL UNIQUE" a secas (global, entre TODOS los
 -- usuarios), así que dos usuarios que le pusieran el mismo nombre a un
--- menú acababan compartiendo la misma fila sin saberlo (encontrado y
+-- proyecto acababan compartiendo la misma fila sin saberlo (encontrado y
 -- reproducido en producción, revisión de lógica -- ver
 -- _migrar_categorias_unique_por_usuario para instalaciones ya
 -- existentes con el esquema viejo).
@@ -335,7 +335,7 @@ CREATE TABLE IF NOT EXISTS plantillas (
 );
 
 -- Tareas al estilo Microsoft Outlook (lista + calendario): independientes
--- de los menús y de las tareas con duración de arriba. Los nombres de campo
+-- de los proyectos y de las tareas con duración de arriba. Los nombres de campo
 -- calcan el modelo de objetos de Outlook (Subject, Status, PercentComplete,
 -- Importance, StartDate, DueDate, DateCompleted, Categories, EntryID) y el
 -- VTODO de iCalendar, para que el mapeo de importación/exportación sea 1:1.
@@ -776,7 +776,7 @@ def _marca_papelera() -> str:
 
     A diferencia de now_iso() (precisión de segundos, pensada para que se
     lea bien), esto se usa para poder identificar qué se borró exactamente
-    en la misma operación (p.ej. un menú y sus tareas/notas al mandarlo a la
+    en la misma operación (p.ej. un proyecto y sus tareas/notas al mandarlo a la
     papelera) y restaurarlo junto — con precisión de segundos, dos borrados
     distintos en el mismo segundo compartirían marca por error.
     """
@@ -926,10 +926,10 @@ def _migrar_preferencias_singleton(conn: sqlite3.Connection, usuario_id_local: i
 
 def _migrar_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> None:
     """`categorias.nombre` tenía UNIQUE global (sin usuario_id) -- dos
-    usuarios con un menú del mismo nombre acababan compartiendo la
+    usuarios con un proyecto del mismo nombre acababan compartiendo la
     misma fila sin saberlo (bug real, reproducido en producción: el
     segundo en crearlo recibía el id del primero en vez de uno propio,
-    y ese menú no le aparecía ni en su propio listado). SQLite no deja
+    y ese proyecto no le aparecía ni en su propio listado). SQLite no deja
     tocar una UNIQUE con ALTER TABLE, así que se reconstruye la tabla
     la primera vez que se detecta el esquema antiguo -- se comprueba
     leyendo su propio SQL en sqlite_master, sin ninguna bandera aparte.
@@ -1350,7 +1350,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "ia_preferencias", "proveedor_local", "TEXT NOT NULL DEFAULT 'ollama'")
         _asegurar_columna(conn, "ia_preferencias", "modelo_local", "TEXT NOT NULL DEFAULT ''")
 
-        # Relación opcional con un menú (categorias) para las Tareas Outlook
+        # Relación opcional con un proyecto (categorias) para las Tareas Outlook
         # — mismo patrón ya usado en correo_mensajes.categoria_id más arriba.
         _asegurar_columna(conn, "tareas_outlook", "categoria_id", "INTEGER REFERENCES categorias(id)")
 
@@ -1367,7 +1367,7 @@ def init_db() -> None:
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas(cliente_uuid) WHERE cliente_uuid IS NOT NULL")
 
         # Checklist de onboarding del dashboard (web y móvil) — los pasos en
-        # sí NO se trackean aparte (crear un menú, conectar correo, hablar
+        # sí NO se trackean aparte (crear un proyecto, conectar correo, hablar
         # con la IA ya se pueden comprobar con datos que ya existen); esta
         # columna solo recuerda si el usuario ha pedido ocultar la tarjeta.
         _asegurar_columna(conn, "usuarios", "onboarding_visible", "INTEGER NOT NULL DEFAULT 1")
@@ -3056,18 +3056,18 @@ def entregas_de_webhooks(webhook_ids: list[int], limite: int = 5) -> dict[int, l
 # --- Categorías --------------------------------------------------------
 
 def crear_categoria(usuario_id: int, nombre: str, color: str | None = None, icono: str | None = None) -> int:
-    """Crea un menú, o reutiliza uno existente del MISMO usuario con el
+    """Crea un proyecto, o reutiliza uno existente del MISMO usuario con el
     mismo nombre.
 
     `nombre` tiene una restricción UNIQUE por (usuario_id, nombre) en la
-    tabla, y esa restricción no distingue entre menús activos y en la
-    papelera — así que sin este chequeo, crear un menú con el mismo
+    tabla, y esa restricción no distingue entre proyectos activos y en la
+    papelera — así que sin este chequeo, crear un proyecto con el mismo
     nombre que uno propio ya borrado (pero todavía en la papelera)
     reventaría con un IntegrityError. Si el que existe está en la
     papelera, se restaura en vez de fallar.
 
     El filtro `usuario_id = ?` de aquí abajo es imprescindible: sin él,
-    dos usuarios distintos con un menú de igual nombre acababan
+    dos usuarios distintos con un proyecto de igual nombre acababan
     compartiendo la misma fila sin saberlo (bug real, corregido en la
     revisión de lógica — ver también _migrar_categorias_unique_por_usuario).
     """
@@ -3128,7 +3128,7 @@ def _categoria_id_propio(conn: sqlite3.Connection, usuario_id: int, categoria_id
 
 
 def mover_categoria(usuario_id: int, categoria_id: int, direccion: str) -> None:
-    """Reordena un menú un puesto arriba o abajo (`direccion`: 'arriba'/'abajo')."""
+    """Reordena un proyecto un puesto arriba o abajo (`direccion`: 'arriba'/'abajo')."""
     conn = get_connection()
     try:
         activas = conn.execute(
@@ -3157,7 +3157,7 @@ def reordenar_categorias(usuario_id: int, orden_ids: list[int]) -> None:
     """Reescribe `orden` según la lista completa recibida (0, 1, 2...), para
     el arrastrar-y-soltar de la barra lateral — a diferencia de
     `mover_categoria`, que mueve un solo puesto. Los ids que no existan (o no
-    estén activos, o no sean del usuario) se ignoran sin fallar; los menús
+    estén activos, o no sean del usuario) se ignoran sin fallar; los proyectos
     activos que falten en la lista conservan su `orden` actual, detrás de
     los que sí se han movido."""
     conn = get_connection()
@@ -3213,7 +3213,7 @@ def renombrar_categoria(usuario_id: int, categoria_id: int, nombre: str, color: 
 
 
 def eliminar_categoria(usuario_id: int, categoria_id: int) -> None:
-    """Manda un menú (y todo lo que contiene) a la papelera. No borra nada de
+    """Manda un proyecto (y todo lo que contiene) a la papelera. No borra nada de
     verdad — se puede restaurar, o purgar definitivamente desde la papelera."""
     conn = get_connection()
     try:
@@ -3236,9 +3236,9 @@ def eliminar_categoria(usuario_id: int, categoria_id: int) -> None:
 
 
 def restaurar_categoria(usuario_id: int, categoria_id: int) -> None:
-    """Saca un menú de la papelera, junto con lo que se mandó a la papelera
+    """Saca un proyecto de la papelera, junto con lo que se mandó a la papelera
     a la vez que él (no restaura notas/tareas que ya estaban en la papelera
-    por separado antes de borrar el menú)."""
+    por separado antes de borrar el proyecto)."""
     conn = get_connection()
     try:
         fila = conn.execute(
@@ -3262,7 +3262,7 @@ def restaurar_categoria(usuario_id: int, categoria_id: int) -> None:
 
 
 def eliminar_categoria_definitivamente(usuario_id: int, categoria_id: int) -> None:
-    """Borra un menú y todo lo que contiene de verdad (sin pasar por la
+    """Borra un proyecto y todo lo que contiene de verdad (sin pasar por la
     papelera). Lo usa el botón "Eliminar definitivamente" y la purga
     automática de la papelera."""
     conn = get_connection()
@@ -3286,9 +3286,9 @@ def eliminar_categoria_definitivamente(usuario_id: int, categoria_id: int) -> No
 
 
 def contar_entradas_hoy_por_usuario(usuario_id: int) -> dict[int, int]:
-    """Cuenta las entradas (notas + tareas) de hoy por menú, para todos los
-    menús del usuario a la vez (2 consultas GROUP BY en vez de una por
-    menú) -- usado en el dashboard."""
+    """Cuenta las entradas (notas + tareas) de hoy por proyecto, para todos los
+    proyectos del usuario a la vez (2 consultas GROUP BY en vez de una por
+    proyecto) -- usado en el dashboard."""
     conn = get_connection()
     try:
         hoy = datetime.now().strftime("%Y-%m-%d")
@@ -3315,12 +3315,12 @@ def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> i
     conn = get_connection()
     try:
         # categoria_id es NOT NULL en esta tabla (a diferencia de notas/
-        # tareas_outlook, aquí el menú es obligatorio) -- así que si no es
+        # tareas_outlook, aquí el proyecto es obligatorio) -- así que si no es
         # del usuario no se puede degradar a None como en el resto, hay
         # que rechazar la petición entera (defensa en profundidad: en uso
-        # normal el <select> del formulario ya solo ofrece menús propios).
+        # normal el <select> del formulario ya solo ofrece proyectos propios).
         if _categoria_id_propio(conn, usuario_id, categoria_id) is None:
-            raise ValueError(f"La categoría/menú {categoria_id} no existe o no es tuya.")
+            raise ValueError(f"La categoría/proyecto {categoria_id} no existe o no es tuya.")
         ahora = now_iso()
         if tipo == "instantanea":
             cur = conn.execute(
@@ -3659,7 +3659,7 @@ def crear_nota(
             if existente is not None:
                 return existente["id"]
         # Aquí categoria_id sí es opcional -- si no es del usuario, se
-        # degrada a "sin menú" en vez de rechazar la nota entera (ver
+        # degrada a "sin proyecto" en vez de rechazar la nota entera (ver
         # _categoria_id_propio).
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
         ahora = now_iso()
@@ -3886,7 +3886,7 @@ def historial(
 def resumen_historial(usuario_id: int, desde=None, hasta=None, categoria_id=None, texto=None) -> dict:
     """Agregado del histórico para el filtro dado (panel "Resumen del
     periodo" de /historial): total de entradas, tiempo total registrado y
-    reparto por menú. Reutiliza historial() sin paginar -- mismo criterio
+    reparto por proyecto. Reutiliza historial() sin paginar -- mismo criterio
     que export.py (construir_export), que ya trae el conjunto completo del
     filtro para generar el export; aquí solo se agrega en Python en vez de
     escribirse como columnas, porque el dataset por usuario es pequeño
@@ -3897,7 +3897,7 @@ def resumen_historial(usuario_id: int, desde=None, hasta=None, categoria_id=None
     total_segundos = sum(f["duracion_segundos"] or 0 for f in filas)
     por_menu: dict[str, dict] = {}
     for f in filas:
-        nombre = f["categoria_nombre"] or "Sin menú"
+        nombre = f["categoria_nombre"] or "Sin proyecto"
         entrada = por_menu.setdefault(nombre, {"nombre": nombre, "color": f["categoria_color"] or "#7c8ba1", "entradas": 0})
         entrada["entradas"] += 1
     total_entradas = len(filas)
@@ -4085,7 +4085,7 @@ def eliminar_plantilla(plantilla_id: int) -> None:
 # --- Tareas al estilo Outlook (lista + calendario) --------------------------
 # Independientes de las tareas con duración de más arriba (ese sistema es un
 # cronómetro en vivo, no un horario planificado de antemano). SÍ admiten un
-# menú opcional (categoria_id, relación real con la tabla categorias, mismo
+# proyecto opcional (categoria_id, relación real con la tabla categorias, mismo
 # patrón que correo_mensajes.categoria_id) además de categoria_outlook (texto
 # libre, para importar/exportar con Outlook real — son dos campos
 # independientes a propósito, no hay que confundirlos). Los campos calcan el
@@ -6178,7 +6178,7 @@ def contar_no_leidos_total_correo(usuario_id: int) -> int:
 # --- Papelera ----------------------------------------------------------------
 
 def papelera(usuario_id: int) -> list[dict]:
-    """Menús, tareas/eventos y notas que están en la papelera, más recientes primero."""
+    """Proyectos, tareas/eventos y notas que están en la papelera, más recientes primero."""
     conn = get_connection()
     try:
         filas = conn.execute(

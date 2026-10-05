@@ -36,7 +36,7 @@
       </select>
       {% if menus %}
       <select name="categoria_id">
-        <option value="">{{ _('Sin menú') }}</option>
+        <option value="">{{ _('Sin proyecto') }}</option>
         {% for menu in menus %}
         <option value="{{ menu.id }}">{{ menu.nombre }}</option>
         {% endfor %}

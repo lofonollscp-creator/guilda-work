@@ -135,7 +135,7 @@ def me():
     })
 
 
-# --- Menús / categorías ----------------------------------------------------
+# --- Proyectos / categorías ----------------------------------------------------
 
 @api_bp.route("/categorias", methods=["GET"])
 @token_required
@@ -158,7 +158,7 @@ def crear_categoria():
 @token_required
 def eliminar_categoria(categoria_id: int):
     if db.obtener_categoria(g.usuario_id, categoria_id) is None:
-        abort(404, "Menú no encontrado.")
+        abort(404, "Proyecto no encontrado.")
     db.eliminar_categoria(g.usuario_id, categoria_id)
     return _ok()
 
@@ -167,7 +167,7 @@ def eliminar_categoria(categoria_id: int):
 @token_required
 def alternar_favorito_categoria(categoria_id: int):
     if db.obtener_categoria(g.usuario_id, categoria_id) is None:
-        abort(404, "Menú no encontrado.")
+        abort(404, "Proyecto no encontrado.")
     db.alternar_favorito_categoria(g.usuario_id, categoria_id)
     return _ok(_dict(db.obtener_categoria(g.usuario_id, categoria_id)))
 
@@ -234,7 +234,7 @@ def crear_tarea():
     if not nombre or not categoria_id:
         return _err("nombre y categoria_id son obligatorios.")
     if db.obtener_categoria(g.usuario_id, int(categoria_id)) is None:
-        abort(404, "Menú no encontrado.")
+        abort(404, "Proyecto no encontrado.")
     tarea_id = db.crear_tarea(g.usuario_id, nombre, int(categoria_id), datos.get("tipo", "duracion"))
     return _ok(_dict(db.obtener_tarea(g.usuario_id, tarea_id)), 201)
 

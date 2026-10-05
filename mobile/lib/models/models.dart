@@ -87,7 +87,7 @@ class EntradaHistorial {
       );
 }
 
-/// Tarea "estilo Outlook" (independiente de los menús), Fase 4d — mismos
+/// Tarea "estilo Outlook" (independiente de los proyectos), Fase 4d — mismos
 /// campos que app/templates/tarea_outlook_editar.html.
 class TareaOutlook {
   final int id;
@@ -214,7 +214,7 @@ class Adjunto {
 }
 
 /// Categoría de correo (db.listar_categorias_correo) — distinta de las
-/// categorías/menús de Notas y Tareas.
+/// categorías/proyectos de Notas y Tareas.
 class CategoriaCorreo {
   final int id;
   final String nombre;

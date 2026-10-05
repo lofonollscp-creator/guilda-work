@@ -4,24 +4,24 @@
   <img src="assets/repo-logo.png" alt="Guilda Work logo" width="420">
 </p>
 
-Registro diario de actividad organizado en **menús** (carriles independientes,
-ej. "Lueira", "Guilda"): entras en un menú y ahí anotas notas, eventos
+Registro diario de actividad organizado en **proyectos** (carriles independientes,
+ej. "Lueira", "Guilda"): entras en un proyecto y ahí anotas notas, eventos
 instantáneos y tareas con duración, viendo su propio registro cronológico.
 Pensado para exportar los datos y que una IA (Claude, ChatGPT, un modelo
 local...) los use para generar informes.
 
 ## Estado actual: Fase 1 + Fase 2 + Fase 3 completas
 
-- Menús (internamente siguen siendo la tabla `categorias`), cada uno con su
+- Proyectos (internamente siguen siendo la tabla `categorias`), cada uno con su
   propia página y su propio registro cronológico.
-- Crear, renombrar/cambiar color y eliminar un menú (al eliminar se borra en
+- Crear, renombrar/cambiar color y eliminar un proyecto (al eliminar se borra en
   cascada todo lo registrado dentro: notas, eventos y tareas).
-- Notas rápidas dentro de un menú.
+- Notas rápidas dentro de un proyecto.
 - Eventos instantáneos (un clic, un único timestamp).
 - Tareas con duración: iniciar / finalizar / **pausar / reanudar**, duración
   calculada automáticamente descontando el tiempo en pausa, cronómetro en
   vivo mientras está en curso (congelado mientras está pausada).
-- Histórico global filtrable por fecha y menú.
+- Histórico global filtrable por fecha y proyecto.
 - Exportación a JSON, CSV y resumen en Markdown desde el histórico.
 - **Informe con IA local**: desde el histórico, envía los datos filtrados a
   un modelo corriendo en Ollama (`localhost:11434`) o LM Studio
@@ -35,8 +35,8 @@ local...) los use para generar informes.
   total?") en vez de un informe de una sola vez. La conversación vive en el
   navegador (el servidor no la guarda); en cada pregunta se reenvían los
   datos filtrados más el historial visible de la charla.
-- **Estadísticas**: tiempo total dedicado por menú (más nº de tareas,
-  eventos y notas) y desglose de tiempo por día y menú, filtrable por fecha.
+- **Estadísticas**: tiempo total dedicado por proyecto (más nº de tareas,
+  eventos y notas) y desglose de tiempo por día y proyecto, filtrable por fecha.
 - **Empaquetado `.exe`**: compilado y verificado con PyInstaller (ver más
   abajo); funciona standalone sin Python instalado.
 - **Botón "Cerrar programa"** (abajo del todo en el menú lateral): termina el
@@ -52,21 +52,21 @@ local...) los use para generar informes.
   cada entrada del registro y del histórico), incluyendo **ajustar
   manualmente el inicio y el fin** de una tarea con duración (por si te
   olvidas de darle a "Iniciar" a tiempo) — la duración se recalcula sola.
-- **Buscador de texto** en el registro de cada menú y en el histórico global.
+- **Buscador de texto** en el registro de cada proyecto y en el histórico global.
 - **Icono en la bandeja del sistema**: al cerrar la ventana con la X, la app
   no se cierra — se oculta y sigue corriendo en la bandeja (icono junto al
   reloj). Clic para reabrirla, o usar "Cerrar" en su menú para salir de
   verdad. Si el entorno no soporta bandeja, la X cierra la app como antes
   (nunca te quedas sin forma de volver a abrirla).
 - **Captura rápida**: un cuadro de texto flotante minimalista para anotar
-  algo en 1-2 clics sin abrir la ventana principal, con selector de menú.
+  algo en 1-2 clics sin abrir la ventana principal, con selector de proyecto.
   Se abre con el atajo global **Ctrl+Alt+G** (funciona aunque la app esté en
   segundo plano), desde el icono de la bandeja, o desde "📌 Captura rápida"
   en el menú lateral. Enter guarda y cierra, Esc cancela.
-- **Frases favoritas**: guarda textos que repites a menudo por menú (ej.
+- **Frases favoritas**: guarda textos que repites a menudo por proyecto (ej.
   "Llamada a cliente") y regístralos con un solo clic desde "Nota rápida",
   sin escribir nada. Se gestionan desde "⭐ Gestionar frases favoritas" en
-  cada menú.
+  cada proyecto.
 - **Copia de seguridad automática**: al arrancar la app, si no existe ya la
   copia de hoy, se guarda una en `data/backups/registro_AAAA-MM-DD.db`
   (usando la API de backup de SQLite, segura aunque haya algo escribiendo a
@@ -75,35 +75,35 @@ local...) los use para generar informes.
   archivo de `data/backups/` que quieras, y vuelve a abrir.
 - **Tests automatizados** (`tests/`, pytest): cubren sobre todo el cálculo de
   duración al pausar/reanudar tareas (la lógica más delicada de toda la
-  app), el borrado en cascada de un menú, los filtros del histórico y el
+  app), el borrado en cascada de un proyecto, los filtros del histórico y el
   backup. Cada test corre contra una base de datos temporal aislada — nunca
   tocan `data/registro.db`.
-- **Datos de ejemplo**: `python cli.py demo` crea los menús "Lueira" y
+- **Datos de ejemplo**: `python cli.py demo` crea los proyectos "Lueira" y
   "Guilda" con notas, eventos, una tarea y frases favoritas, para probar o
   hacer una demo rápida sin rellenar todo a mano.
 - **Gráficos en Estadísticas**: barras horizontales (SVG/CSS, sin librerías)
-  junto a las tablas, tanto por menú como por día.
+  junto a las tablas, tanto por proyecto como por día.
 - **Vista "Hoy"** en el panel de inicio: registro cronológico de todos los
-  menús del día actual en un solo sitio, sin tener que entrar menú por menú.
+  proyectos del día actual en un solo sitio, sin tener que entrar proyecto por proyecto.
 - **La IA recuerda el proveedor/modelo** (Ollama/LM Studio + nombre del
   modelo) entre visitas, tanto en el informe como en el chat — no hay que
   volver a escribirlo cada vez (se guarda en el navegador, no en el servidor).
 - **Aviso de tarea olvidada**: una tarea con duración que lleva más de 4h
   activa (en curso o en pausa) se marca visualmente por si se te olvidó
   finalizarla.
-- **Papelera**: eliminar un menú, una tarea/evento o una nota ya no borra
+- **Papelera**: eliminar un proyecto, una tarea/evento o una nota ya no borra
   nada de verdad — se mueve a la Papelera, desde donde se puede **restaurar**
   o **eliminar definitivamente**. Se purga sola a los 30 días. Al restaurar
-  un menú, se recupera junto con lo que se borró a la vez que él (no lo que
+  un proyecto, se recupera junto con lo que se borró a la vez que él (no lo que
   ya estaba en la papelera de antes). Las frases favoritas no pasan por la
-  papelera (se pierden al eliminar el menú, pero son triviales de recrear).
+  papelera (se pierden al eliminar el proyecto, pero son triviales de recrear).
 - **Importar datos** ("⬆ Importar" en el menú lateral o desde Histórico):
   sube un JSON o CSV exportado desde esta misma app (o desde una copia de
-  seguridad antigua) y se vuelve a cargar en la base — los menús que no
+  seguridad antigua) y se vuelve a cargar en la base — los proyectos que no
   existan se crean solos por nombre. Cada fila se valida por separado: lo
   que esté incompleto o inválido se omite y se cuenta aparte, sin abortar el
   resto de la importación.
-- **Reordenar menús** con los botones ↑/↓ en el panel de inicio (y el orden
+- **Reordenar proyectos** con los botones ↑/↓ en el panel de inicio (y el orden
   se refleja también en el menú lateral). Antes salían siempre por orden
   alfabético.
 - **Exportación automática nocturna**: al arrancar la app, si falta el
@@ -167,7 +167,7 @@ acceso de lectura al proyecto — no hace falta usar la interfaz web ni tener
 el servidor arrancado. Dos formas de consultar los datos:
 
 ```bash
-# Listar los menús existentes
+# Listar los proyectos existentes
 python cli.py menus
 
 # Exportar todo el histórico (o filtrado) a stdout o a un archivo
@@ -351,7 +351,7 @@ ejecuciones aunque muevas el `.exe` a otra ubicación — llévate la carpeta
 
 La **X de la ventana ya no cierra la app** — la oculta y la deja corriendo en
 la bandeja del sistema (pensado para una app que quieres tener abierta todo
-el día sin perder los menús/tareas activas). Para salir de verdad:
+el día sin perder los proyectos/tareas activas). Para salir de verdad:
 - **"Cerrar"** en el menú del icono de la bandeja (junto al reloj), o
 - El botón **"⏻ Cerrar programa"** al final del menú lateral, dentro de la app.
 

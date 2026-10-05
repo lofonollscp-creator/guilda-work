@@ -134,8 +134,8 @@
         {% endfor %}
       </select>
       {% if menus %}
-      <select name="categoria_id" title="{{ _('Menú') }}">
-        <option value="">{{ _('Sin menú') }}</option>
+      <select name="categoria_id" title="{{ _('Proyecto') }}">
+        <option value="">{{ _('Sin proyecto') }}</option>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       {% endif %}

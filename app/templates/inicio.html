@@ -21,7 +21,7 @@
   <ul class="onboarding-lista">
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_menu }}">
       <span class="onboarding-check" aria-hidden="true">{% if onboarding.tiene_menu %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}</span>
-      <span>{{ _('Crea tu primer menú') }}</span>
+      <span>{{ _('Crea tu primer proyecto') }}</span>
       {% if not onboarding.tiene_menu %}<a class="onboarding-ir" href="#new-menu">{{ _('Crear') }}</a>{% endif %}
     </li>
     <li class="onboarding-paso {{ 'is-hecho' if onboarding.tiene_correo }}">
@@ -79,7 +79,7 @@
     <div class="quick-row">
       {% if menus %}
       <select name="categoria_id">
-        <option value="">{{ _('Sin menú') }}</option>
+        <option value="">{{ _('Sin proyecto') }}</option>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       {% endif %}
@@ -109,7 +109,7 @@
 
 {% if not menus %}
   <div class="empty-state">
-    <p>{{ _('Todavía no tienes ningún menú.') }}</p>
+    <p>{{ _('Todavía no tienes ningún proyecto.') }}</p>
     <p class="muted">{{ _('Crea el primero abajo para empezar a registrar actividad.') }}</p>
   </div>
 {% else %}
@@ -157,7 +157,7 @@
   <div class="menu-grid">
     {% for m in favoritos %}{{ tarjeta_menu(m, loop.first, loop.last, favoritos|length > 1) }}{% endfor %}
   </div>
-  <h3 class="menu-grid-titulo">{{ _('Tus menús') }}</h3>
+  <h3 class="menu-grid-titulo">{{ _('Tus proyectos') }}</h3>
   {% endif %}
   <div class="menu-grid">
     {% for m in resto %}{{ tarjeta_menu(m, loop.first, loop.last, resto|length > 1) }}{% endfor %}
@@ -166,14 +166,14 @@
 {% endif %}
 
 <section class="new-menu" id="new-menu">
-  <h3>+ {{ _('Nuevo menú') }}</h3>
+  <h3>+ {{ _('Nuevo proyecto') }}</h3>
   <form class="menu-form" method="post" action="{{ url_for('crear_menu') }}">
     <div class="inline-form">
-      <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del menú') }}</label>
-      <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del menú (ej. Lueira, Guilda...)') }}" required>
-      <label class="sr-only" for="nuevo-menu-color">{{ _('Color del menú') }}</label>
-      <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del menú') }}" aria-label="{{ _('Color del menú') }}">
-      <button type="submit" class="btn btn-primary">{{ _('Crear menú') }}</button>
+      <label class="sr-only" for="nuevo-menu-nombre">{{ _('Nombre del proyecto') }}</label>
+      <input type="text" id="nuevo-menu-nombre" name="nombre" placeholder="{{ _('Nombre del proyecto (ej. Lueira, Guilda...)') }}" required>
+      <label class="sr-only" for="nuevo-menu-color">{{ _('Color del proyecto') }}</label>
+      <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del proyecto') }}" aria-label="{{ _('Color del proyecto') }}">
+      <button type="submit" class="btn btn-primary">{{ _('Crear proyecto') }}</button>
     </div>
     <div class="menu-form-icono">
       <span class="menu-form-icono-label">{{ _('Icono') }}</span>

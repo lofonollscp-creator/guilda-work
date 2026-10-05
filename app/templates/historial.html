@@ -4,7 +4,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Histórico') }}</h1>
-    <p class="subtitle">{{ _('Vista global de todos los menús, filtrable y exportable.') }}</p>
+    <p class="subtitle">{{ _('Vista global de todos los proyectos, filtrable y exportable.') }}</p>
   </div>
 </header>
 
@@ -12,7 +12,7 @@
   <label>{{ _('Buscar') }} <input type="search" name="q" id="historial-buscar-input" value="{{ q }}" placeholder="{{ _('Texto...') }}"></label>
   <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label>
   <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label>
-  <label>{{ _('Menú') }}
+  <label>{{ _('Proyecto') }}
     <select name="categoria_id">
       <option value="">{{ _('Todos') }}</option>
       {% for c in categorias %}
@@ -35,7 +35,7 @@
   <thead>
     <tr>
       <th>{{ _('Fecha / hora') }}</th>
-      <th>{{ _('Menú') }}</th>
+      <th>{{ _('Proyecto') }}</th>
       <th>{{ _('Tipo') }}</th>
       <th>{{ _('Descripción') }}</th>
       <th>{{ _('Duración') }}</th>
@@ -99,7 +99,7 @@
     <strong>{{ (resumen.total_segundos // 3600) }}h {{ (resumen.total_segundos % 3600) // 60 }}m</strong>
   </div>
   {% if resumen.por_menu %}
-  <p class="historial-resumen-subtitulo">{{ _('Por menú') }}</p>
+  <p class="historial-resumen-subtitulo">{{ _('Por proyecto') }}</p>
   <ul class="historial-resumen-barras">
     {% for m in resumen.por_menu %}
     <li>
@@ -149,7 +149,7 @@
 
 <section class="ia-section">
   <h3>{{ _('Preguntar a mis datos') }}</h3>
-  <p class="muted">{{ _('Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada a internet.') }}</p>
+  <p class="muted">{{ _('Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/proyecto). Puedes hacer preguntas de seguimiento — no se envía nada a internet.') }}</p>
 
   <div class="chat-config">
     <select id="chat-proveedor">

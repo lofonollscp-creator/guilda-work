@@ -141,7 +141,7 @@ def _filas(filas) -> list[dict]:
 
 
 def _resolver_categoria_id(nombre_o_id: str | int | None) -> int | None:
-    """Acepta tanto el id numérico como el nombre del menú/categoría."""
+    """Acepta tanto el id numérico como el nombre del proyecto/categoría."""
     if nombre_o_id in (None, ""):
         return None
     if isinstance(nombre_o_id, int) or str(nombre_o_id).isdigit():
@@ -151,7 +151,7 @@ def _resolver_categoria_id(nombre_o_id: str | int | None) -> int | None:
         if c["nombre"].lower() == str(nombre_o_id).lower():
             return c["id"]
     raise ValueError(
-        f"No existe ningún menú/categoría llamado '{nombre_o_id}'. "
+        f"No existe ningún proyecto/categoría llamado '{nombre_o_id}'. "
         f"Disponibles: {', '.join(c['nombre'] for c in db.listar_categorias(uid))}"
     )
 
@@ -177,7 +177,7 @@ def listar_notas(desde: str | None = None, hasta: str | None = None, texto: str 
 
 
 def crear_nota(texto: str, categoria: str | int | None = None) -> dict:
-    """Crea una nota rápida con el timestamp actual. `categoria` puede ser el nombre o el id del menú."""
+    """Crea una nota rápida con el timestamp actual. `categoria` puede ser el nombre o el id del proyecto."""
     uid = _uid()
     categoria_id = _resolver_categoria_id(categoria)
     nota_id = db.crear_nota(uid, texto, categoria_id=categoria_id)
@@ -216,8 +216,8 @@ def crear_tarea(
     ('YYYY-MM-DD') como fecha y hora ('YYYY-MM-DD HH:MM') si quieres fijar
     una franja horaria concreta, p.ej. de 14:00 a 15:00. `categoria` es el
     campo de texto libre heredado de Outlook (no confundir con `menu`,
-    el nombre o id de un menú real de Guilda Work — ver listar_notas para
-    ver los menús existentes)."""
+    el nombre o id de un proyecto real de Guilda Work — ver listar_notas para
+    ver los proyectos existentes)."""
     uid = _uid()
     tarea_id = db.crear_tarea_outlook(
         uid, asunto, cuerpo=cuerpo, prioridad=prioridad, fecha_inicio=fecha_inicio,
@@ -1519,7 +1519,7 @@ _PAPELERA_RESTAURAR = {
 
 
 def listar_papelera() -> list[dict]:
-    """Lista lo que hay en la papelera del usuario actual (menús, tareas,
+    """Lista lo que hay en la papelera del usuario actual (proyectos, tareas,
     notas y tareas outlook eliminados pero no purgados todavía). Cada
     elemento trae un campo `origen` (menu/tarea/nota/tarea_outlook) que
     hace falta pasar a restaurar_de_papelera."""
@@ -1541,12 +1541,12 @@ def restaurar_de_papelera(origen: str, id: int) -> dict:
 
 def estadisticas_por_categoria(desde: str | None = None, hasta: str | None = None) -> list[dict]:
     """Tiempo dedicado a tareas con duración ya finalizadas, agrupado por
-    menú, del usuario actual. `desde`/`hasta` en formato YYYY-MM-DD."""
+    proyecto, del usuario actual. `desde`/`hasta` en formato YYYY-MM-DD."""
     return db.estadisticas_por_categoria(_uid(), desde, hasta)
 
 
 def estadisticas_por_dia(desde: str | None = None, hasta: str | None = None) -> list[dict]:
-    """Igual que estadisticas_por_categoria pero agrupado por día (y menú
+    """Igual que estadisticas_por_categoria pero agrupado por día (y proyecto
     dentro de cada día)."""
     return db.estadisticas_por_dia(_uid(), desde, hasta)
 

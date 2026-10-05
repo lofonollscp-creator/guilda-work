@@ -98,7 +98,7 @@ def _familias_tenant() -> list[tuple[str, str, int]]:
 _GRUPOS_STACK_COMPARTIDO = [
     ("crm_", "CRM (EspoCRM)"),
     ("drive_", "Drive (Nextcloud)"),
-    ("proyectos_", "Proyectos (OpenProject)"),
+    ("proyectos_", "OpenProject (gestión de proyectos de equipo)"),
     ("soporte_", "Soporte (Chatwoot)"),
     ("analitica_", "Analítica (Metabase)"),
     ("automatizaciones_", "Automatizaciones (n8n)"),
@@ -268,17 +268,17 @@ PAGINAS = [
                 "estándar (404, 405...), que nunca devuelven HTML."},
             {"type": "steps", "items": [
                 ("Consigue un token", "Sigue la página de <a href=\"/docs/autenticacion\">Autenticación</a> para registrarte o iniciar sesión."),
-                ("Crea un menú (categoría)", "Las notas y tareas viven dentro de un menú — necesitas uno antes de crear nada."),
-                ("Crea la nota", "Con el <code>id</code> del menú, ya puedes anotar algo."),
+                ("Crea un proyecto (categoría)", "Las notas y tareas viven dentro de un proyecto — necesitas uno antes de crear nada."),
+                ("Crea la nota", "Con el <code>id</code> del proyecto, ya puedes anotar algo."),
             ]},
             {"type": "code", "lang": "bash", "code":
                 'TOKEN="kf83h2n..."\n\n'
-                '# 1. Crea un menú\n'
+                '# 1. Crea un proyecto\n'
                 'curl -X POST https://tu-hostname/api/v1/categorias \\\n'
                 '  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \\\n'
                 "  -d '{\"nombre\": \"Cliente Alfa\"}'\n"
                 "# -> {\"ok\":true,\"data\":{\"id\":7,\"nombre\":\"Cliente Alfa\", ...}}\n\n"
-                '# 2. Crea la nota en ese menú\n'
+                '# 2. Crea la nota en ese proyecto\n'
                 'curl -X POST https://tu-hostname/api/v1/notas \\\n'
                 '  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \\\n'
                 "  -d '{\"texto\": \"Primera nota desde la API\", \"categoria_id\": 7}'\n"
@@ -345,7 +345,7 @@ PAGINAS = [
                 "automatizadas, añade tu propio límite en Caddy o en el proxy inverso que tengas delante."},
             {"type": "callout", "kind": "info", "html":
                 "<b>Notas y tareas con duración no tienen un endpoint <code>GET</code> de listado propio</b> — se "
-                "leen siempre a través de <code>GET /historial</code> (filtrable por fecha/menú/texto) o de "
+                "leen siempre a través de <code>GET /historial</code> (filtrable por fecha/proyecto/texto) o de "
                 "<code>GET /dashboard</code> (resumen del día). Es la misma vía que usa la propia app web: el "
                 "registro cronológico combinado es el modelo mental central de Guilda Work, no una lista por "
                 "tipo de objeto. Las tareas estilo Outlook (<a href=\"#tareas-outlook\">más abajo</a>) sí tienen "
@@ -357,13 +357,13 @@ PAGINAS = [
                 ["POST", "/auth/logout", "Revoca el token de la propia petición."],
                 ["GET", "/auth/me", "Datos de la cuenta autenticada."],
             ]},
-            {"type": "h2", "id": "categorias", "text": "Menús (categorías)"},
+            {"type": "h2", "id": "categorias", "text": "Proyectos (categorías)"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
-                ["GET", "/categorias", "Lista los menús del usuario."],
-                ["POST", "/categorias", "Crea un menú nuevo (<code>nombre</code>, <code>color</code> opcional)."],
-                ["DELETE", "/categorias/{id}", "Elimina un menú (va a la papelera)."],
-                ["POST", "/categorias/{id}/favorito", "Alterna si el menú está marcado como favorito."],
-                ["POST", "/categorias/reordenar", "Reordena los menús (<code>orden</code>: lista de ids)."],
+                ["GET", "/categorias", "Lista los proyectos del usuario."],
+                ["POST", "/categorias", "Crea un proyecto nuevo (<code>nombre</code>, <code>color</code> opcional)."],
+                ["DELETE", "/categorias/{id}", "Elimina un proyecto (va a la papelera)."],
+                ["POST", "/categorias/{id}/favorito", "Alterna si el proyecto está marcado como favorito."],
+                ["POST", "/categorias/reordenar", "Reordena los proyectos (<code>orden</code>: lista de ids)."],
             ]},
             {"type": "h2", "id": "notas", "text": "Notas"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
@@ -400,13 +400,13 @@ PAGINAS = [
             ]},
             {"type": "h2", "id": "dashboard-historico", "text": "Dashboard, histórico y exportación"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
-                ["GET", "/dashboard", "Resumen del día: menús, tareas activas, notas de hoy, correos sin leer."],
+                ["GET", "/dashboard", "Resumen del día: proyectos, tareas activas, notas de hoy, correos sin leer."],
                 ["GET", "/historial", "Histórico filtrable por <code>desde</code>/<code>hasta</code>/<code>categoria_id</code>/<code>q</code>."],
                 ["GET", "/export", "Exporta el histórico — <code>formato</code>: <code>json</code> (por defecto) | <code>csv</code> | <code>md</code>, más <code>desde</code>/<code>hasta</code>/<code>categoria_id</code>."],
             ]},
             {"type": "h2", "id": "papelera", "text": "Papelera"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
-                ["GET", "/papelera", "Lista los elementos borrados (notas, tareas, menús)."],
+                ["GET", "/papelera", "Lista los elementos borrados (notas, tareas, proyectos)."],
                 ["POST", "/papelera/{tipo}/{id}/restaurar", "Restaura un elemento — <code>tipo</code>: <code>nota</code>|<code>tarea</code>|<code>menu</code>."],
                 ["POST", "/papelera/{tipo}/{id}/eliminar-definitivamente", "Borra un elemento sin posibilidad de restaurarlo."],
             ]},
@@ -476,7 +476,7 @@ PAGINAS = [
                 "lo que ves aquí es lo que te devuelve la API, sin una capa de serialización intermedia que "
                 "pueda renombrar nada. Todos los timestamps son <b>ISO 8601 en hora local del servidor, sin "
                 "offset</b> (ej. <code>2026-07-10T14:32:05</code>), nunca UTC ni con zona horaria explícita."},
-            {"type": "h2", "id": "categoria", "text": "Categoria (menú)"},
+            {"type": "h2", "id": "categoria", "text": "Categoria (proyecto)"},
             {"type": "table", "headers": ["Campo", "Tipo", "Notas"], "rows": [
                 ["<code>id</code>", "integer", ""],
                 ["<code>nombre</code>", "string", "Único por usuario."],
@@ -502,7 +502,7 @@ PAGINAS = [
             {"type": "table", "headers": ["Campo", "Tipo", "Notas"], "rows": [
                 ["<code>id</code>", "integer", ""],
                 ["<code>nombre</code>", "string", ""],
-                ["<code>categoria_id</code>", "integer", "Obligatorio — a diferencia de <code>Nota</code>, una tarea con duración siempre pertenece a un menú."],
+                ["<code>categoria_id</code>", "integer", "Obligatorio — a diferencia de <code>Nota</code>, una tarea con duración siempre pertenece a un proyecto."],
                 ["<code>tipo</code>", "<code>\"duracion\"</code> | <code>\"instantanea\"</code>", "Fijo desde la creación, no se puede cambiar."],
                 ["<code>estado</code>", "<code>\"pendiente\"</code> | <code>\"en_curso\"</code> | <code>\"pausada\"</code> | <code>\"finalizada\"</code>", "Una <code>instantanea</code> nace directamente en <code>finalizada</code>."],
                 ["<code>inicio_en</code>", "string (ISO 8601) | null", ""],
@@ -525,7 +525,7 @@ PAGINAS = [
                 ["<code>fecha_inicio</code>", "string (ISO 8601) | null", ""],
                 ["<code>fecha_vencimiento</code>", "string (ISO 8601) | null", ""],
                 ["<code>fecha_completada</code>", "string (ISO 8601) | null", "Se rellena sola al completar."],
-                ["<code>categoria_outlook</code>", "string | null", "Texto libre — no es una <code>Categoria</code>/menú, es la categoría de color propia de Outlook."],
+                ["<code>categoria_outlook</code>", "string | null", "Texto libre — no es una <code>Categoria</code>/proyecto, es la categoría de color propia de Outlook."],
                 ["<code>outlook_entry_id</code>", "string | null", "EntryID de Outlook, para reconciliar en reimportaciones repetidas del mismo archivo."],
                 ["<code>creada_en</code> / <code>actualizada_en</code>", "string (ISO 8601)", ""],
                 ["<code>papelera_en</code>", "string (ISO 8601) | null", ""],
@@ -581,7 +581,7 @@ PAGINAS = [
         "descripcion": "Recetas completas: curl, Python y JavaScript.",
         "bloques": [
             {"type": "p", "html":
-                "Tres formas equivalentes de hacer lo mismo — registrar (o reutilizar) una cuenta, crear un menú "
+                "Tres formas equivalentes de hacer lo mismo — registrar (o reutilizar) una cuenta, crear un proyecto "
                 "y anotar una tarea con duración ya finalizada — para que elijas la que mejor encaje con tu stack."},
             {"type": "h2", "id": "curl", "text": "curl / bash"},
             {"type": "code", "lang": "bash", "code":
@@ -758,7 +758,7 @@ PAGINAS = [
                 'claude mcp add guilda-work -- "C:\\ruta\\a\\tu\\instancia\\.venv\\Scripts\\python.exe" "C:\\ruta\\a\\tu\\instancia\\mcp_server.py"'},
             {"type": "p", "html":
                 "Verifica que Claude Code lo ve con <code>claude mcp list</code> — debería aparecer "
-                "<code>guilda-work</code> con estado conectado. Pídele algo simple como “lista mis menús” para "
+                "<code>guilda-work</code> con estado conectado. Pídele algo simple como “lista mis proyectos” para "
                 "confirmar de punta a punta."},
             {"type": "h2", "id": "codex-cli", "text": "Codex CLI"},
             {"type": "p", "html": "Añade en tu <code>config.toml</code> (o el equivalente que use tu instalación):"},
@@ -837,7 +837,7 @@ PAGINAS = [
             {"type": "h2", "id": "catalogo", "text": "Catálogo de tools"},
             {"type": "table", "headers": ["Grupo", "Tools", "Detalle"], "rows": [
                 ["Propias de Guilda Work", str(TOOLS_PROPIAS), "Notas, tareas estilo Outlook, calendario, correo integrado, categorías de correo, firma, exportar/importar."],
-                ["Stack compartido (sin <code>tenant</code>)", str(TOOLS_STACK_COMPARTIDO), "CRM, Drive, Proyectos, Soporte, Analítica, Automatizaciones, Documentación, Chat, Almacenamiento, Monitorización — instancia compartida entre todos los tenants, sin filtrado por tenant en estas tools."],
+                ["Stack compartido (sin <code>tenant</code>)", str(TOOLS_STACK_COMPARTIDO), "CRM, Drive, OpenProject, Soporte, Analítica, Automatizaciones, Documentación, Chat, Almacenamiento, Monitorización — instancia compartida entre todos los tenants, sin filtrado por tenant en estas tools."],
                 ["Con parámetro <code>tenant</code> explícito", str(TOOLS_TENANT), "Ver tabla de familias abajo."],
             ]},
             {"type": "p", "html":
@@ -1007,7 +1007,7 @@ PAGINAS = [
             {"type": "table", "headers": ["Variable", "Herramienta", "Nota"], "rows": [
                 ["<code>ESPOCRM_API_KEY</code>", "EspoCRM (CRM)", ""],
                 ["<code>NEXTCLOUD_ADMIN_USER</code> / <code>_PASSWORD</code>", "Nextcloud (Drive)", ""],
-                ["<code>OPENPROJECT_API_TOKEN</code>", "OpenProject (Proyectos)", ""],
+                ["<code>OPENPROJECT_API_TOKEN</code>", "OpenProject (gestión de proyectos de equipo)", ""],
                 ["<code>CHATWOOT_AGENT_API_TOKEN</code>", "Chatwoot (Soporte)", "Token de un <b>agente normal</b> (su perfil → Ajustes de acceso a la API) — distinto de <code>CHATWOOT_PLATFORM_API_TOKEN</code>, que solo gestiona altas de usuarios."],
                 ["<code>METABASE_API_KEY</code>", "Metabase (Analítica)", ""],
                 ["<code>N8N_API_KEY</code>", "n8n (Automatizaciones)", ""],

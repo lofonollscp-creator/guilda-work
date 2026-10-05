@@ -192,7 +192,7 @@ class ApiClient {
     }
   }
 
-  // --- Dashboard / menús / notas / tareas con duración (Fase 4c) -----------
+  // --- Dashboard / proyectos / notas / tareas con duración (Fase 4c) -----------
 
   Future<Map<String, dynamic>> dashboard() async {
     try {

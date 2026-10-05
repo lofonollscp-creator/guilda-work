@@ -211,13 +211,13 @@ def _indexar(documento: dict) -> None:
 
 
 def indexar_nota(nota: dict) -> None:
-    # El nombre del menú (categoria_nombre) se añade al TEXTO buscable,
+    # El nombre del proyecto (categoria_nombre) se añade al TEXTO buscable,
     # no solo a categoria_id (que es filtrable pero no se busca por
-    # palabra) — sin esto, buscar por el nombre de un menú ("Guilda",
+    # palabra) — sin esto, buscar por el nombre de un proyecto ("Guilda",
     # "Lueira"...) no encontraba nada aunque la nota estuviera en ese
-    # menú (encontrado en producción). `nota` tiene que venir de una
+    # proyecto (encontrado en producción). `nota` tiene que venir de una
     # consulta con LEFT JOIN categorias (ver db.py:obtener_nota) para
-    # traer esta columna — si no la trae, se indexa sin menú en el
+    # traer esta columna — si no la trae, se indexa sin proyecto en el
     # texto, se degrada, no falla.
     categoria_nombre = nota.get("categoria_nombre")
     texto = f"{nota['texto']} {categoria_nombre}" if categoria_nombre else nota["texto"]

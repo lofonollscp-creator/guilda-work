@@ -301,7 +301,7 @@ def construir():
     story.append(Paragraph("// 02", estilo_kicker))
     story.append(Paragraph("El registro diario de actividad", estilo_h1))
     story.append(Paragraph(
-        "El núcleo de Guilda Work: un registro cronológico organizado en <b>menús</b> (un carril por cliente, "
+        "El núcleo de Guilda Work: un registro cronológico organizado en <b>proyectos</b> (un carril por cliente, "
         "proyecto o área) que no interfieren entre sí. Puedes tener varias cosas en marcha a la vez sin perder "
         "el hilo de ninguna.", estilo_cuerpo,
     ))

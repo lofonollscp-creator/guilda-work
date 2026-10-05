@@ -452,12 +452,12 @@ msgid "Expandir o contraer el menú"
 msgstr "Expand or collapse the menu"
 
 #: app/templates/base.html:37
-msgid "Menús / Dashboard"
-msgstr "Menus / Dashboard"
+msgid "Proyectos / Dashboard"
+msgstr "Projects / Dashboard"
 
 #: app/templates/base.html:39
-msgid "Menús"
-msgstr "Menus"
+msgid "Proyectos"
+msgstr "Projects"
 
 #: app/templates/base.html:43
 msgid "Trabajo diario"
@@ -1342,8 +1342,8 @@ msgid "Eliminar tarea"
 msgstr "New task"
 
 #: app/templates/estadisticas.html:7
-msgid "Tiempo dedicado a tareas con duración, por menú y por día."
-msgstr "Time spent on duration tasks, by menu and by day."
+msgid "Tiempo dedicado a tareas con duración, por proyecto y por día."
+msgstr "Time spent on duration tasks, by project and by day."
 
 #: app/templates/estadisticas.html:12 app/templates/fichaje_admin.html:33
 #: app/templates/fichaje_admin_detalle.html:16
@@ -1374,22 +1374,19 @@ msgid "Limpiar"
 msgstr "Import"
 
 #: app/templates/estadisticas.html:19
-#, fuzzy
-msgid "Por menú"
-msgstr "New menu"
+msgid "Por proyecto"
+msgstr "By project"
 
 #: app/templates/estadisticas.html:21
-#, fuzzy
-msgid "Todavía no hay menús creados."
-msgstr "You haven't logged anything today yet."
+msgid "Todavía no hay proyectos creados."
+msgstr "No projects created yet."
 
 #: app/templates/estadisticas.html:41 app/templates/estadisticas.html:89
 #: app/templates/historial.html:15 app/templates/historial.html:36
 #: app/templates/papelera.html:25 app/templates/tarea_outlook_editar.html:54
 #: app/templates/tareas_calendario.html:116 app/templates/tareas_lista.html:66
-#, fuzzy
-msgid "Menú"
-msgstr "Menus"
+msgid "Proyecto"
+msgstr "Project"
 
 #: app/templates/estadisticas.html:42
 msgid "Tiempo en tareas"
@@ -1732,8 +1729,8 @@ msgid "Aún no aprovisionada para tu cliente"
 msgstr "Not provisioned for your client yet"
 
 #: app/templates/historial.html:7
-msgid "Vista global de todos los menús, filtrable y exportable."
-msgstr "Global view of all menus, filterable and exportable."
+msgid "Vista global de todos los proyectos, filtrable y exportable."
+msgstr "Global view of all projects, filterable and exportable."
 
 #: app/templates/historial.html:12 app/templates/tareas_lista.html:18
 msgid "Texto..."
@@ -1847,11 +1844,8 @@ msgid "Preguntar a mis datos"
 msgstr "Ask my data"
 
 #: app/templates/historial.html:124
-msgid ""
-"Chatea con un modelo local sobre los datos filtrados arriba (mismo rango "
-"de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada"
-" a internet."
-msgstr "Chat with a local model about the data filtered above (same date range/menu). You can ask follow-up questions — nothing is sent to the internet."
+msgid "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/proyecto). Puedes hacer preguntas de seguimiento — no se envía nada a internet."
+msgstr "Chat with a local model about the data filtered above (same date range/project). You can ask follow-up questions — nothing is sent to the internet."
 
 #: app/templates/historial.html:132
 msgid "Modelo, ej. llama3.1"
@@ -1983,12 +1977,8 @@ msgid "Archivo (.json o .csv)"
 msgstr "File (.json or .csv)"
 
 #: app/templates/importar.html:16
-msgid ""
-"Los menús que no existan se crean automáticamente por nombre. Las notas y"
-" eventos se importan tal cual; las tareas con duración que en el archivo "
-"seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de "
-"cerrarlas solas."
-msgstr "Menus that don't exist yet are created automatically by name. Notes and events are imported as-is; duration tasks that in the file were still \"in progress\" (no end) are skipped, because there's no safe way to close them on their own."
+msgid "Los proyectos que no existan se crean automáticamente por nombre. Las notas y eventos se importan tal cual; las tareas con duración que en el archivo seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de cerrarlas solas."
+msgstr "Projects that don't exist yet are created automatically by name. Notes and events are imported as-is; duration tasks that in the file were still \"in progress\" (no end) are skipped, because there's no safe way to close them on their own."
 
 #: app/templates/importar.html:29 app/templates/tareas_outlook_sync.html:23
 msgid "Importación completada:"
@@ -2025,8 +2015,8 @@ msgid "Ocultar"
 msgstr "Hide"
 
 #: app/templates/inicio.html:23
-msgid "Crea tu primer menú"
-msgstr "Create your first menu"
+msgid "Crea tu primer proyecto"
+msgstr "Create your first project"
 
 #: app/templates/inicio.html:24
 msgid "Crear"
@@ -2070,8 +2060,8 @@ msgstr "Quick note"
 
 #: app/templates/inicio.html:61 app/templates/tarea_outlook_editar.html:56
 #: app/templates/tareas_calendario.html:117 app/templates/tareas_lista.html:67
-msgid "Sin menú"
-msgstr "No menu"
+msgid "Sin proyecto"
+msgstr "No project"
 
 #: app/templates/inicio.html:65
 msgid "¿Qué ha pasado?"
@@ -2094,8 +2084,8 @@ msgid "Iniciar"
 msgstr "Start"
 
 #: app/templates/inicio.html:91
-msgid "Todavía no tienes ningún menú."
-msgstr "You don't have any menu yet."
+msgid "Todavía no tienes ningún proyecto."
+msgstr "You don't have any project yet."
 
 #: app/templates/inicio.html:92
 msgid "Crea el primero abajo para empezar a registrar actividad."
@@ -2130,33 +2120,33 @@ msgid "Favoritos"
 msgstr "Favorites"
 
 #: app/templates/inicio.html:136
-msgid "Tus menús"
-msgstr "Your menus"
+msgid "Tus proyectos"
+msgstr "Your projects"
 
 #: app/templates/inicio.html:147
 msgid "Todavía no has registrado nada hoy."
 msgstr "You haven't logged anything today yet."
 
 #: app/templates/inicio.html:180
-msgid "Nuevo menú"
-msgstr "New menu"
+msgid "Nuevo proyecto"
+msgstr "New project"
 
 #: app/templates/inicio.html:182
-msgid "Nombre del menú"
-msgstr "Menu name"
+msgid "Nombre del proyecto"
+msgstr "Project name"
 
 #: app/templates/inicio.html:183
-msgid "Nombre del menú (ej. Lueira, Guilda...)"
-msgstr "Menu name (e.g. Lueira, Guilda...)"
+msgid "Nombre del proyecto (ej. Lueira, Guilda...)"
+msgstr "Project name (e.g. Lueira, Guilda...)"
 
 #: app/templates/inicio.html:184 app/templates/inicio.html:185
 #: app/templates/menu.html:14
-msgid "Color del menú"
-msgstr "Menu color"
+msgid "Color del proyecto"
+msgstr "Project color"
 
 #: app/templates/inicio.html:186
-msgid "Crear menú"
-msgstr "Create menu"
+msgid "Crear proyecto"
+msgstr "Create project"
 
 #: app/templates/login.html:6
 msgid "Iniciar sesión"
@@ -2217,27 +2207,17 @@ msgid "Documentación para desarrolladores"
 msgstr "Developer documentation"
 
 #: app/templates/menu.html:10
-#, fuzzy
-msgid "Editar menú"
-msgstr "Create menu"
+msgid "Editar proyecto"
+msgstr "Edit project"
 
 #: app/templates/menu.html:18
 #, python-format
-msgid ""
-"¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo"
-" registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde "
-"ahí."
-msgstr ""
-"Delete menu \"%(nombre)s\"? It will move to the trash along with "
-"everything logged inside it (notes, events and tasks) — you can restore "
-"it from there.Delete the menu \"%(nombre)s\"? It'll be moved to the trash"
-" along with everything logged inside it (notes, events and tasks) — you "
-"can restore it from there."
+msgid "¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí."
+msgstr "Delete project \"%(nombre)s\"? It will move to the trash along with everything logged inside it (notes, events and tasks) — you can restore it from there.Delete the project \"%(nombre)s\"? It'll be moved to the trash along with everything logged inside it (notes, events and tasks) — you can restore it from there."
 
 #: app/templates/menu.html:19
-#, fuzzy
-msgid "Eliminar menú"
-msgstr "Create menu"
+msgid "Eliminar proyecto"
+msgstr "Delete project"
 
 #: app/templates/menu.html:34
 #, python-format
@@ -2329,8 +2309,8 @@ msgid "Registro de %(nombre)s"
 msgstr "Log for %(nombre)s"
 
 #: app/templates/menu.html:129
-msgid "Buscar en este menú..."
-msgstr "Search in this menu..."
+msgid "Buscar en este proyecto..."
+msgstr "Search in this project..."
 
 #: app/templates/menu.html:130
 msgid "Limpiar búsqueda"
@@ -2342,8 +2322,8 @@ msgid "No hay resultados para «%(q)s»."
 msgstr "No results for \"%(q)s\"."
 
 #: app/templates/menu.html:139
-msgid "Este menú todavía está vacío."
-msgstr "This menu is still empty."
+msgid "Este proyecto todavía está vacío."
+msgstr "This project is still empty."
 
 #: app/templates/menu.html:140
 msgid "Empieza por lo que te resulte más natural ahora mismo:"
@@ -2419,10 +2399,8 @@ msgid "Restaurar"
 msgstr "Log in"
 
 #: app/templates/papelera.html:41
-msgid ""
-"¿Eliminar este menú y todo lo que contiene para siempre? No se puede "
-"deshacer."
-msgstr "Delete this menu and everything it contains forever? This can't be undone."
+msgid "¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer."
+msgstr "Delete this project and everything it contains forever? This can't be undone."
 
 #: app/templates/papelera.html:42 app/templates/papelera.html:50
 #: app/templates/papelera.html:58 app/templates/papelera.html:66
@@ -2641,10 +2619,8 @@ msgid "Crear tarea"
 msgstr "New task"
 
 #: app/templates/tareas_lista.html:7
-msgid ""
-"Lista de tareas estilo Outlook, independiente de tus menús. Asunto, "
-"vencimiento, prioridad y estado."
-msgstr "Outlook-style task list, independent of your menus. Subject, due date, priority and status."
+msgid "Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado."
+msgstr "Outlook-style task list, independent of your projects. Subject, due date, priority and status."
 
 #: app/templates/tareas_lista.html:21
 msgid "Todos (sin completadas)"

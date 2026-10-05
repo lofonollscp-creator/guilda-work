@@ -23,7 +23,7 @@ import 'tiquets_screen.dart';
 
 /// Dashboard (equivalente móvil de app/templates/inicio.html): stats del
 /// día, nota rápida, una rejilla de accesos a las secciones de la app, y
-/// las tarjetas de menú desde las que se entra al detalle de cada uno
+/// las tarjetas de proyecto desde las que se entra al detalle de cada uno
 /// (menu_detail_screen.dart).
 ///
 /// La barra superior llegó a tener 10 iconos sueltos (idioma, 7 secciones,

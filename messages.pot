@@ -420,11 +420,11 @@ msgid "Expandir o contraer el menú"
 msgstr ""
 
 #: app/templates/base.html:37
-msgid "Menús / Dashboard"
+msgid "Proyectos / Dashboard"
 msgstr ""
 
 #: app/templates/base.html:39
-msgid "Menús"
+msgid "Proyectos"
 msgstr ""
 
 #: app/templates/base.html:43
@@ -1258,7 +1258,7 @@ msgid "Eliminar tarea"
 msgstr ""
 
 #: app/templates/estadisticas.html:7
-msgid "Tiempo dedicado a tareas con duración, por menú y por día."
+msgid "Tiempo dedicado a tareas con duración, por proyecto y por día."
 msgstr ""
 
 #: app/templates/estadisticas.html:12 app/templates/fichaje_admin.html:33
@@ -1288,18 +1288,18 @@ msgid "Limpiar"
 msgstr ""
 
 #: app/templates/estadisticas.html:19
-msgid "Por menú"
+msgid "Por proyecto"
 msgstr ""
 
 #: app/templates/estadisticas.html:21
-msgid "Todavía no hay menús creados."
+msgid "Todavía no hay proyectos creados."
 msgstr ""
 
 #: app/templates/estadisticas.html:41 app/templates/estadisticas.html:89
 #: app/templates/historial.html:15 app/templates/historial.html:36
 #: app/templates/papelera.html:25 app/templates/tarea_outlook_editar.html:54
 #: app/templates/tareas_calendario.html:116 app/templates/tareas_lista.html:66
-msgid "Menú"
+msgid "Proyecto"
 msgstr ""
 
 #: app/templates/estadisticas.html:42
@@ -1619,7 +1619,7 @@ msgid "Aún no aprovisionada para tu cliente"
 msgstr ""
 
 #: app/templates/historial.html:7
-msgid "Vista global de todos los menús, filtrable y exportable."
+msgid "Vista global de todos los proyectos, filtrable y exportable."
 msgstr ""
 
 #: app/templates/historial.html:12 app/templates/tareas_lista.html:18
@@ -1729,10 +1729,7 @@ msgid "Preguntar a mis datos"
 msgstr ""
 
 #: app/templates/historial.html:124
-msgid ""
-"Chatea con un modelo local sobre los datos filtrados arriba (mismo rango "
-"de fechas/menú). Puedes hacer preguntas de seguimiento — no se envía nada"
-" a internet."
+msgid "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/proyecto). Puedes hacer preguntas de seguimiento — no se envía nada a internet."
 msgstr ""
 
 #: app/templates/historial.html:132
@@ -1860,11 +1857,7 @@ msgid "Archivo (.json o .csv)"
 msgstr ""
 
 #: app/templates/importar.html:16
-msgid ""
-"Los menús que no existan se crean automáticamente por nombre. Las notas y"
-" eventos se importan tal cual; las tareas con duración que en el archivo "
-"seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de "
-"cerrarlas solas."
+msgid "Los proyectos que no existan se crean automáticamente por nombre. Las notas y eventos se importan tal cual; las tareas con duración que en el archivo seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de cerrarlas solas."
 msgstr ""
 
 #: app/templates/importar.html:29 app/templates/tareas_outlook_sync.html:23
@@ -1901,7 +1894,7 @@ msgid "Ocultar"
 msgstr ""
 
 #: app/templates/inicio.html:23
-msgid "Crea tu primer menú"
+msgid "Crea tu primer proyecto"
 msgstr ""
 
 #: app/templates/inicio.html:24
@@ -1946,7 +1939,7 @@ msgstr ""
 
 #: app/templates/inicio.html:61 app/templates/tarea_outlook_editar.html:56
 #: app/templates/tareas_calendario.html:117 app/templates/tareas_lista.html:67
-msgid "Sin menú"
+msgid "Sin proyecto"
 msgstr ""
 
 #: app/templates/inicio.html:65
@@ -1970,7 +1963,7 @@ msgid "Iniciar"
 msgstr ""
 
 #: app/templates/inicio.html:91
-msgid "Todavía no tienes ningún menú."
+msgid "Todavía no tienes ningún proyecto."
 msgstr ""
 
 #: app/templates/inicio.html:92
@@ -2006,7 +1999,7 @@ msgid "Favoritos"
 msgstr ""
 
 #: app/templates/inicio.html:136
-msgid "Tus menús"
+msgid "Tus proyectos"
 msgstr ""
 
 #: app/templates/inicio.html:147
@@ -2014,24 +2007,24 @@ msgid "Todavía no has registrado nada hoy."
 msgstr ""
 
 #: app/templates/inicio.html:180
-msgid "Nuevo menú"
+msgid "Nuevo proyecto"
 msgstr ""
 
 #: app/templates/inicio.html:182
-msgid "Nombre del menú"
+msgid "Nombre del proyecto"
 msgstr ""
 
 #: app/templates/inicio.html:183
-msgid "Nombre del menú (ej. Lueira, Guilda...)"
+msgid "Nombre del proyecto (ej. Lueira, Guilda...)"
 msgstr ""
 
 #: app/templates/inicio.html:184 app/templates/inicio.html:185
 #: app/templates/menu.html:14
-msgid "Color del menú"
+msgid "Color del proyecto"
 msgstr ""
 
 #: app/templates/inicio.html:186
-msgid "Crear menú"
+msgid "Crear proyecto"
 msgstr ""
 
 #: app/templates/login.html:6
@@ -2093,19 +2086,16 @@ msgid "Documentación para desarrolladores"
 msgstr ""
 
 #: app/templates/menu.html:10
-msgid "Editar menú"
+msgid "Editar proyecto"
 msgstr ""
 
 #: app/templates/menu.html:18
 #, python-format
-msgid ""
-"¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo"
-" registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde "
-"ahí."
+msgid "¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí."
 msgstr ""
 
 #: app/templates/menu.html:19
-msgid "Eliminar menú"
+msgid "Eliminar proyecto"
 msgstr ""
 
 #: app/templates/menu.html:34
@@ -2189,7 +2179,7 @@ msgid "Registro de %(nombre)s"
 msgstr ""
 
 #: app/templates/menu.html:129
-msgid "Buscar en este menú..."
+msgid "Buscar en este proyecto..."
 msgstr ""
 
 #: app/templates/menu.html:130
@@ -2202,7 +2192,7 @@ msgid "No hay resultados para «%(q)s»."
 msgstr ""
 
 #: app/templates/menu.html:139
-msgid "Este menú todavía está vacío."
+msgid "Este proyecto todavía está vacío."
 msgstr ""
 
 #: app/templates/menu.html:140
@@ -2270,9 +2260,7 @@ msgid "Restaurar"
 msgstr ""
 
 #: app/templates/papelera.html:41
-msgid ""
-"¿Eliminar este menú y todo lo que contiene para siempre? No se puede "
-"deshacer."
+msgid "¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer."
 msgstr ""
 
 #: app/templates/papelera.html:42 app/templates/papelera.html:50
@@ -2477,9 +2465,7 @@ msgid "Crear tarea"
 msgstr ""
 
 #: app/templates/tareas_lista.html:7
-msgid ""
-"Lista de tareas estilo Outlook, independiente de tus menús. Asunto, "
-"vencimiento, prioridad y estado."
+msgid "Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado."
 msgstr ""
 
 #: app/templates/tareas_lista.html:21

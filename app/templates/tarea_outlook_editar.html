@@ -51,9 +51,9 @@
 
   <div class="ia-form-row">
     {% if menus %}
-    <label>{{ _('Menú') }}
+    <label>{{ _('Proyecto') }}
       <select name="categoria_id">
-        <option value="">{{ _('Sin menú') }}</option>
+        <option value="">{{ _('Sin proyecto') }}</option>
         {% for m in menus %}<option value="{{ m.id }}" {% if tarea.categoria_id == m.id %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}
       </select>
     </label>

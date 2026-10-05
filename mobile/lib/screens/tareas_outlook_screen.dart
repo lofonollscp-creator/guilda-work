@@ -6,7 +6,7 @@ import '../widgets/status_badge.dart';
 import 'tarea_outlook_edit_screen.dart';
 
 /// Lista de tareas "estilo Outlook" (equivalente móvil de
-/// app/templates/tareas_lista.html): independiente de los menús, con
+/// app/templates/tareas_lista.html): independiente de los proyectos, con
 /// asunto, prioridad, vencimiento y estado.
 class TareasOutlookScreen extends StatefulWidget {
   final ApiClient api;

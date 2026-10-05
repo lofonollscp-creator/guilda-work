@@ -4,7 +4,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Tareas') }}</h1>
-    <p class="subtitle">{{ _('Lista de tareas estilo Outlook, independiente de tus menús. Asunto, vencimiento, prioridad y estado.') }}</p>
+    <p class="subtitle">{{ _('Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado.') }}</p>
   </div>
 </header>
 
@@ -66,8 +66,8 @@
         {% endfor %}
       </select>
       {% if menus %}
-      <select name="categoria_id" title="{{ _('Menú') }}">
-        <option value="">{{ _('Sin menú') }}</option>
+      <select name="categoria_id" title="{{ _('Proyecto') }}">
+        <option value="">{{ _('Sin proyecto') }}</option>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       {% endif %}

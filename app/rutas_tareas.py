@@ -1,7 +1,7 @@
 """Rutas de la pestaña "Tareas" (estilo Microsoft Outlook): lista, calendario
 e import/export con Outlook. Vive en su propio Blueprint para no seguir
 haciendo crecer app/main.py — es, en la práctica, una sección independiente
-dentro de la app (sin relación con los menús ni con las tareas con duración).
+dentro de la app (sin relación con los proyectos ni con las tareas con duración).
 """
 import calendar as calendario_std
 from datetime import date, timedelta
@@ -41,7 +41,7 @@ TAREAS_POR_PAGINA = 50
 
 @tareas_bp.app_template_filter("color_categoria")
 def color_categoria(nombre: str | None) -> str:
-    """Color estable por nombre de categoría (misma idea que el color por menú)."""
+    """Color estable por nombre de categoría (misma idea que el color por proyecto)."""
     if not nombre:
         return "#7c8ba1"
     indice = sum(ord(c) for c in nombre) % len(PALETA_CATEGORIAS)

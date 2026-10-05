@@ -65,7 +65,7 @@ HERRAMIENTAS: list[dict] = [
         "Crea una nota rápida con el timestamp actual.",
         {
             "texto": _param("string", "Contenido de la nota."),
-            "categoria": _param("string", "Nombre o id del menú/categoría, opcional."),
+            "categoria": _param("string", "Nombre o id del proyecto/categoría, opcional."),
         },
         ["texto"],
     ),
@@ -259,7 +259,7 @@ HERRAMIENTAS: list[dict] = [
             "formato": _param("string", "json, csv o md. Por defecto json."),
             "desde": _param("string", "Fecha inicial YYYY-MM-DD, opcional."),
             "hasta": _param("string", "Fecha final YYYY-MM-DD, opcional."),
-            "categoria": _param("string", "Nombre o id del menú/categoría, opcional."),
+            "categoria": _param("string", "Nombre o id del proyecto/categoría, opcional."),
         },
         [],
     ),
@@ -357,7 +357,7 @@ HERRAMIENTAS: list[dict] = [
     ),
     _tool(
         "listar_papelera",
-        "Lista lo que hay en la papelera del usuario actual (menús, tareas, notas, tareas outlook eliminados pero no purgados).",
+        "Lista lo que hay en la papelera del usuario actual (proyectos, tareas, notas, tareas outlook eliminados pero no purgados).",
         {},
         [],
     ),
@@ -372,7 +372,7 @@ HERRAMIENTAS: list[dict] = [
     ),
     _tool(
         "estadisticas_por_categoria",
-        "Tiempo dedicado a tareas con duración ya finalizadas, agrupado por menú.",
+        "Tiempo dedicado a tareas con duración ya finalizadas, agrupado por proyecto.",
         {
             "desde": _param("string", "Fecha YYYY-MM-DD, opcional."),
             "hasta": _param("string", "Fecha YYYY-MM-DD, opcional."),
@@ -475,7 +475,7 @@ HERRAMIENTAS: list[dict] = [
             "asunto": _param("string", "Asunto de la tarea que se generará cada vez."),
             "periodicidad": _param("string", "\"semanal\" o \"mensual\"."),
             "dia": _param("integer", "Si es semanal: 0=lunes..6=domingo. Si es mensual: día del mes (1-31)."),
-            "categoria_id": _param("integer", "Id del menú al que asociar la tarea generada, opcional."),
+            "categoria_id": _param("integer", "Id del proyecto al que asociar la tarea generada, opcional."),
         },
         ["asunto", "periodicidad", "dia"],
     ),

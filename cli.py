@@ -34,7 +34,7 @@ def _resolver_menu_id(usuario_id: int, nombre_o_id: str | None) -> int | None:
         if c["nombre"].lower() == nombre_o_id.lower():
             return c["id"]
     disponibles = ", ".join(c["nombre"] for c in db.listar_categorias(usuario_id))
-    print(f"Menú '{nombre_o_id}' no encontrado. Disponibles: {disponibles}", file=sys.stderr)
+    print(f"Proyecto '{nombre_o_id}' no encontrado. Disponibles: {disponibles}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -63,7 +63,7 @@ def cmd_export(args):
 
 
 def _categoria_o_crear(usuario_id: int, nombre: str, color: str) -> int:
-    """Reutiliza el menú si ya existe uno con ese nombre (evita chocar con la
+    """Reutiliza el proyecto si ya existe uno con ese nombre (evita chocar con la
     restricción UNIQUE al volver a ejecutar `demo --forzar`)."""
     for c in db.listar_categorias(usuario_id):
         if c["nombre"] == nombre:
@@ -75,7 +75,7 @@ def cmd_demo(args):
     usuario_id = db.usuario_local_id()
     if db.listar_categorias(usuario_id) and not args.forzar:
         print(
-            "Ya hay menús creados. Usa --forzar si quieres añadir datos de ejemplo de todas formas.",
+            "Ya hay proyectos creados. Usa --forzar si quieres añadir datos de ejemplo de todas formas.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -94,7 +94,7 @@ def cmd_demo(args):
     db.crear_tarea(usuario_id, "Reunión rápida con el equipo", lueira, "instantanea")
     db.crear_plantilla(guilda, "Avance en desarrollo")
 
-    print("Datos de ejemplo creados: menús 'Lueira' y 'Guilda' con notas, eventos, una tarea y frases favoritas.")
+    print("Datos de ejemplo creados: proyectos 'Lueira' y 'Guilda' con notas, eventos, una tarea y frases favoritas.")
 
 
 def _avisar_fallo_backup(motivo: str) -> None:
@@ -177,19 +177,19 @@ def main():
     parser = argparse.ArgumentParser(description="Consulta el registro de actividad de Guilda Work.")
     sub = parser.add_subparsers(dest="comando", required=True)
 
-    p_menus = sub.add_parser("menus", help="Lista los menús (categorías) existentes.")
+    p_menus = sub.add_parser("menus", help="Lista los proyectos (categorías) existentes.")
     p_menus.set_defaults(func=cmd_menus)
 
     p_export = sub.add_parser("export", help="Exporta el histórico de actividad.")
     p_export.add_argument("--formato", choices=["json", "csv", "md"], default="json")
     p_export.add_argument("--desde", help="Fecha inicial YYYY-MM-DD (inclusive).")
     p_export.add_argument("--hasta", help="Fecha final YYYY-MM-DD (inclusive).")
-    p_export.add_argument("--menu", help="Nombre o id del menú. Si se omite, incluye todos.")
+    p_export.add_argument("--menu", help="Nombre o id del proyecto. Si se omite, incluye todos.")
     p_export.add_argument("--salida", help="Ruta de archivo donde guardar. Si se omite, imprime por stdout.")
     p_export.set_defaults(func=cmd_export)
 
-    p_demo = sub.add_parser("demo", help="Crea menús y datos de ejemplo para pruebas/demos.")
-    p_demo.add_argument("--forzar", action="store_true", help="Añade los datos aunque ya existan menús.")
+    p_demo = sub.add_parser("demo", help="Crea proyectos y datos de ejemplo para pruebas/demos.")
+    p_demo.add_argument("--forzar", action="store_true", help="Añade los datos aunque ya existan proyectos.")
     p_demo.set_defaults(func=cmd_demo)
 
     p_backup = sub.add_parser("backup", help="Fuerza una copia de seguridad de la base de datos ahora mismo.")

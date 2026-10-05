@@ -4,7 +4,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Estadísticas') }}</h1>
-    <p class="subtitle">{{ _('Tiempo dedicado a tareas con duración, por menú y por día.') }}</p>
+    <p class="subtitle">{{ _('Tiempo dedicado a tareas con duración, por proyecto y por día.') }}</p>
   </div>
 </header>
 
@@ -16,9 +16,9 @@
 </form>
 
 <section class="stats-section">
-  <h3>{{ _('Por menú') }}</h3>
+  <h3>{{ _('Por proyecto') }}</h3>
   {% if not por_categoria %}
-  <p class="empty-lane">{{ _('Todavía no hay menús creados.') }}</p>
+  <p class="empty-lane">{{ _('Todavía no hay proyectos creados.') }}</p>
   {% else %}
   {% set max_segundos = por_categoria|map(attribute='segundos_totales')|max %}
   {% if max_segundos %}
@@ -38,7 +38,7 @@
   <table class="historial-table">
     <thead>
       <tr>
-        <th>{{ _('Menú') }}</th>
+        <th>{{ _('Proyecto') }}</th>
         <th>{{ _('Tiempo en tareas') }}</th>
         <th>{{ _('Tareas finalizadas') }}</th>
         <th>{{ _('Eventos') }}</th>
@@ -86,7 +86,7 @@
     <thead>
       <tr>
         <th>{{ _('Fecha') }}</th>
-        <th>{{ _('Menú') }}</th>
+        <th>{{ _('Proyecto') }}</th>
         <th>{{ _('Tiempo total') }}</th>
       </tr>
     </thead>

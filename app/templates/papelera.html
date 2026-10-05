@@ -22,7 +22,7 @@
   <li class="log-item">
     <span class="log-time">{{ item.papelera_en[:16].replace('T', ' ') }}</span>
     <span class="log-badge log-badge-{% if item.origen in ('menu', 'nota') %}nota{% elif item.origen == 'tarea_outlook' %}duracion{% elif item.tipo == 'instantanea' %}instantanea{% else %}duracion{% endif %}">
-      {% if item.origen == 'menu' %}{{ _('Menú') }}
+      {% if item.origen == 'menu' %}{{ _('Proyecto') }}
       {% elif item.origen == 'nota' %}{{ _('Nota') }}
       {% elif item.origen == 'tarea_outlook' %}{{ _('Tarea (lista)') }}
       {% elif item.tipo == 'instantanea' %}{{ _('Evento') }}
@@ -38,7 +38,7 @@
       <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_menu_definitivamente', menu_id=item.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar este menú y todo lo que contiene para siempre? No se puede deshacer.') }}');">
+          onsubmit="return confirm('{{ _('¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer.') }}');">
       <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% elif item.origen == 'nota' %}

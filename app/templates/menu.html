@@ -8,12 +8,12 @@
     <h1>{{ menu.nombre }}</h1>
   </div>
   <details class="menu-settings">
-    <summary class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Editar menú') }}</summary>
+    <summary class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Editar proyecto') }}</summary>
     <div class="menu-settings-panel">
       <form class="menu-form" action="{{ url_for('renombrar_menu', menu_id=menu.id) }}" method="post">
         <div class="inline-form">
           <input type="text" name="nombre" value="{{ menu.nombre }}" required>
-          <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="{{ _('Color del menú') }}">
+          <input type="color" name="color" value="{{ menu.color or '#4a90d9' }}" title="{{ _('Color del proyecto') }}">
           <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
         </div>
         <div class="menu-form-icono">
@@ -22,8 +22,8 @@
         </div>
       </form>
       <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Eliminar el menú «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}');">
-        <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar menú') }}</button>
+            onsubmit="return confirm('{{ _('¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}');">
+        <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar proyecto') }}</button>
       </form>
     </div>
   </details>
@@ -133,7 +133,7 @@
   <div class="log-section-head">
     <h3>{{ _('Registro de %(nombre)s', nombre=menu.nombre) }}</h3>
     <form class="search-form" method="get" action="{{ url_for('ver_menu', menu_id=menu.id) }}">
-      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar en este menú...') }}">
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar en este proyecto...') }}">
       {% if q %}<a class="search-clear" href="{{ url_for('ver_menu', menu_id=menu.id) }}" title="{{ _('Limpiar búsqueda') }}" aria-label="{{ _('Limpiar búsqueda') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></a>{% endif %}
     </form>
   </div>
@@ -143,7 +143,7 @@
     {% else %}
     <div class="empty-state-guiado">
       <svg class="empty-state-guiado-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg>
-      <p>{{ _('Este menú todavía está vacío.') }}</p>
+      <p>{{ _('Este proyecto todavía está vacío.') }}</p>
       <p class="muted">{{ _('Empieza por lo que te resulte más natural ahora mismo:') }}</p>
       <div class="empty-state-guiado-botones">
         <button type="button" class="btn btn-primary" data-enfocar="menu-nota-texto"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Escribe tu primera nota') }}</button>
