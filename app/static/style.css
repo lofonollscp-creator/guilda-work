@@ -4369,3 +4369,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .filters .btn { width: 100%; }
   fieldset { min-width: 0; }
 }
+
+/* Correo: filtros, acciones rápidas e IA bajo demanda */
+.correo-filtros { flex-basis: 100%; }
+.correo-filtros summary { cursor: pointer; font-size: .85rem; }
+.correo-filtros-cuerpo { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: end; padding: .5rem 0; font-size: .85rem; }
+.correo-filtros-cuerpo label { display: flex; flex-direction: column; gap: .15rem; }
+.correo-filtros-cuerpo .correo-toolbar-check { flex-direction: row; align-items: center; }
+.correo-aviso-accion { margin: .5rem 0; padding: .4rem .7rem; border: 1px solid var(--line, #d4d8cb); border-radius: 6px; font-size: .9rem; }
+.correo-ia-panel { margin: .5rem 0 1rem; padding: .7rem .9rem; border: 1px solid var(--line, #d4d8cb); border-radius: 8px; background: var(--surface, transparent); }
+.correo-ia-panel[hidden] { display: none; }
+.correo-ia-privacidad { margin: 0 0 .5rem; font-size: .78rem; opacity: .75; }
+.correo-ia-texto { white-space: pre-wrap; margin: 0 0 .6rem; }
+.correo-ia-error { color: #b3261e; margin: 0 0 .6rem; }
+.correo-ia-panel textarea { width: 100%; margin-bottom: .5rem; }
+.correo-ia-tarea { display: block; margin-bottom: .3rem; }

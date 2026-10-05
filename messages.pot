@@ -3105,3 +3105,151 @@ msgstr ""
 
 msgid "Entradas"
 msgstr ""
+
+msgid "Nuevo mensaje"
+msgstr ""
+
+msgid "Editar borrador"
+msgstr ""
+
+msgid "Correo de {remitente}"
+msgstr ""
+
+msgid "Tarea creada."
+msgstr ""
+
+msgid "De: {remitente}"
+msgstr ""
+
+msgid "Nota guardada."
+msgstr ""
+
+msgid "{n} tareas creadas."
+msgstr ""
+
+msgid "Borradores"
+msgstr ""
+
+msgid "Filtros"
+msgstr ""
+
+msgid "Con adjuntos"
+msgstr ""
+
+msgid "Destacados"
+msgstr ""
+
+msgid "Aplicar"
+msgstr ""
+
+msgid "Quitar filtros"
+msgstr ""
+
+msgid "Categoría actualizada."
+msgstr ""
+
+msgid "Cliente vinculado."
+msgstr ""
+
+msgid "Cliente fiscal relacionado"
+msgstr ""
+
+msgid "Sin cliente vinculado"
+msgstr ""
+
+msgid "Crear una tarea con este correo"
+msgstr ""
+
+msgid "Guardar este correo como nota"
+msgstr ""
+
+msgid "Guardar nota"
+msgstr ""
+
+msgid "Resumir con IA"
+msgstr ""
+
+msgid "Resumir"
+msgstr ""
+
+msgid "Proponer una respuesta con IA"
+msgstr ""
+
+msgid "Proponer respuesta"
+msgstr ""
+
+msgid "Extraer tareas con IA"
+msgstr ""
+
+msgid "Extraer tareas"
+msgstr ""
+
+msgid "Pensando…"
+msgstr ""
+
+msgid "No se ha podido completar la acción."
+msgstr ""
+
+msgid "Usar como borrador"
+msgstr ""
+
+msgid "Crear las marcadas"
+msgstr ""
+
+msgid "No se han encontrado tareas en este correo."
+msgstr ""
+
+msgid "El contenido de este correo se envía al proveedor de IA que tienes configurado."
+msgstr ""
+
+msgid "Ver a tamaño completo"
+msgstr ""
+
+msgid "Plantillas de respuesta"
+msgstr ""
+
+msgid "Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas."
+msgstr ""
+
+#, python-format
+msgid "¿Eliminar la plantilla «%(nombre)s»?"
+msgstr ""
+
+msgid "Nombre (ej. Recordatorio de documentación)"
+msgstr ""
+
+msgid "Asunto (opcional)"
+msgstr ""
+
+msgid "Texto de la plantilla..."
+msgstr ""
+
+msgid "Añadir plantilla"
+msgstr ""
+
+msgid "Reglas avanzadas"
+msgstr ""
+
+msgid "Se aplican a los correos nuevos que cumplan todas las condiciones indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, destacar y vincular a un cliente fiscal."
+msgstr ""
+
+msgid "Remitente"
+msgstr ""
+
+msgid "Asunto contiene"
+msgstr ""
+
+msgid "marcar como leído"
+msgstr ""
+
+msgid "destacar"
+msgstr ""
+
+msgid "Remitente: email@ejemplo.com, @dominio.com o texto"
+msgstr ""
+
+msgid "El asunto contiene…"
+msgstr ""
+
+msgid "Sin cliente fiscal"
+msgstr ""

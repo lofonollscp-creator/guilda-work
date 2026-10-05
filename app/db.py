@@ -548,6 +548,21 @@ CREATE TABLE IF NOT EXISTS correo_reglas_categoria (
     FOREIGN KEY (categoria_id) REFERENCES correo_categorias(id) ON DELETE CASCADE
 );
 
+-- Reglas avanzadas de correo: condiciones por remitente y/o asunto y varias
+-- acciones a la vez (categoría, marcar como leído, destacar, cliente fiscal).
+-- Conviven con correo_reglas_categoria (la regla simple de siempre).
+CREATE TABLE IF NOT EXISTS correo_reglas (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    remitente_patron TEXT,
+    asunto_patron TEXT,
+    categoria_id INTEGER REFERENCES correo_categorias(id) ON DELETE SET NULL,
+    marcar_leido INTEGER NOT NULL DEFAULT 0,
+    destacar INTEGER NOT NULL DEFAULT 0,
+    cliente_fiscal_id INTEGER,
+    creada_en TEXT NOT NULL
+);
+
 -- Direcciones a las que ya se ha enviado correo, para sugerirlas al
 -- redactar uno nuevo (autocompletar). veces_usado/ultima_vez_en permiten
 -- ordenar las sugerencias por relevancia.
@@ -758,6 +773,7 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(c
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_notas_adjuntos_nota ON notas_adjuntos(nota_id);
+CREATE INDEX IF NOT EXISTS idx_correo_reglas_usuario ON correo_reglas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tarea_checklist_tarea ON tarea_checklist(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_tarea_outlook ON tareas(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_asignada ON tareas_outlook(asignada_a);
@@ -6412,6 +6428,86 @@ def eliminar_regla_categoria_correo(usuario_id: int, regla_id: int) -> None:
         conn.close()
 
 
+def crear_regla_correo(
+    usuario_id: int, remitente_patron: str | None = None, asunto_patron: str | None = None,
+    categoria_id: int | None = None, marcar_leido: bool = False, destacar: bool = False,
+    cliente_fiscal_id: int | None = None,
+) -> int:
+    """Regla avanzada. Necesita al menos una condición (remitente o asunto) y
+    al menos una acción; categoría y cliente se validan contra el usuario."""
+    remitente_patron = (remitente_patron or "").strip().lower() or None
+    asunto_patron = (asunto_patron or "").strip().lower() or None
+    if not remitente_patron and not asunto_patron:
+        raise ValueError("Indica al menos una condición: remitente o asunto.")
+    conn = get_connection()
+    try:
+        if categoria_id is not None and conn.execute(
+            "SELECT 1 FROM correo_categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+        ).fetchone() is None:
+            raise ValueError("La categoría elegida no existe.")
+        cliente_fiscal_id = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        if categoria_id is None and not marcar_leido and not destacar and cliente_fiscal_id is None:
+            raise ValueError("Elige al menos una acción para la regla.")
+        cur = conn.execute(
+            """INSERT INTO correo_reglas
+               (usuario_id, remitente_patron, asunto_patron, categoria_id, marcar_leido, destacar, cliente_fiscal_id, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, remitente_patron, asunto_patron, categoria_id, 1 if marcar_leido else 0,
+             1 if destacar else 0, cliente_fiscal_id, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_reglas_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT r.*, c.nombre AS categoria_nombre, c.color AS categoria_color, cf.nombre AS cliente_fiscal_nombre
+               FROM correo_reglas r LEFT JOIN correo_categorias c ON c.id = r.categoria_id
+               LEFT JOIN clientes_fiscales cf ON cf.id = r.cliente_fiscal_id
+               WHERE r.usuario_id = ? ORDER BY r.id""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_regla_correo(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM correo_reglas WHERE id = ? AND usuario_id = ?", (regla_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def reglas_correo_aplicables(usuario_id: int, direccion: str | None, asunto: str | None) -> list[sqlite3.Row]:
+    """Reglas avanzadas cuyas condiciones (todas las indicadas) coinciden.
+    Remitente: "@dominio.com" = dominio, "x@y.com" = exacto, otro texto = contiene.
+    Asunto: contiene, sin distinguir mayúsculas."""
+    direccion = (direccion or "").strip().lower()
+    asunto_min = (asunto or "").lower()
+    resultado = []
+    for r in listar_reglas_correo(usuario_id):
+        rp, ap = r["remitente_patron"], r["asunto_patron"]
+        if rp:
+            if rp.startswith("@"):
+                ok = direccion.endswith(rp)
+            elif "@" in rp:
+                ok = direccion == rp
+            else:
+                ok = rp in direccion
+            if not ok:
+                continue
+        if ap and ap not in asunto_min:
+            continue
+        resultado.append(r)
+    return resultado
+
+
 def categoria_id_por_remitente_correo(usuario_id: int, direccion: str | None) -> int | None:
     """Busca primero una regla de email exacto, luego una de dominio
     (`remitente_patron` empezando por "@")."""
@@ -6619,10 +6715,20 @@ def guardar_mensaje_correo(
         conn.close()
 
 
+def _like_literal(texto: str) -> str:
+    """Patrón LIKE que busca `texto` tal cual (sin que % y _ hagan de comodín)."""
+    return "%" + texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
 def listar_mensajes_correo(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
     texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
+    con_adjuntos: bool = False, categoria_id: int | None = None, desde: str | None = None,
+    hasta: str | None = None, solo_destacados: bool = False, cliente_fiscal_id: int | None = None,
 ) -> list[sqlite3.Row]:
+    """`texto` busca en asunto, remitente, destinatarios y CUERPO del mensaje.
+    Filtros: con adjuntos, categoría, rango de fechas (YYYY-MM-DD, `hasta`
+    inclusive), destacados y cliente fiscal vinculado."""
     conn = get_connection()
     try:
         cond = ["cuenta_id = ?", "carpeta = ?"]
@@ -6630,8 +6736,23 @@ def listar_mensajes_correo(
         if solo_no_leidos:
             cond.append("leido = 0")
         if texto:
-            cond.append("(asunto LIKE ? OR remitente LIKE ?)")
-            params.extend([f"%{texto}%", f"%{texto}%"])
+            cond.append(
+                "(asunto LIKE ? ESCAPE '\\' OR remitente LIKE ? ESCAPE '\\' OR destinatarios LIKE ? ESCAPE '\\' "
+                "OR cuerpo_texto LIKE ? ESCAPE '\\')"
+            )
+            params.extend([_like_literal(texto)] * 4)
+        if con_adjuntos:
+            cond.append("EXISTS (SELECT 1 FROM correo_adjuntos a WHERE a.mensaje_id = correo_mensajes.id)")
+        if categoria_id is not None:
+            cond.append("categoria_id = ?"); params.append(categoria_id)
+        if cliente_fiscal_id is not None:
+            cond.append("cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
+        if solo_destacados:
+            cond.append("destacado = 1")
+        if desde:
+            cond.append("fecha >= ?"); params.append(desde)
+        if hasta:
+            cond.append("fecha < ?"); params.append(_fecha_exclusiva(hasta))
         if not incluir_pospuestos:
             cond.append("(pospuesto_hasta IS NULL OR pospuesto_hasta <= ?)")
             params.append(now_iso())

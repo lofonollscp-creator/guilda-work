@@ -545,7 +545,9 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
         if adjuntos and mensaje_id is not None:
             db.guardar_adjuntos_correo(mensaje_id, adjuntos)
         if mensaje_id is not None:
-            _aplicar_categoria_automatica(cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")))
+            _aplicar_categoria_automatica(
+                cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
+            )
 
     if uids_servidor:
         db.actualizar_ultimo_uid_sincronizado(cuenta["id"], carpeta, str(max(int(u) for u in uids_servidor)))
@@ -603,7 +605,9 @@ def _sincronizar_pop3(cuenta) -> int:
             if adjuntos and mensaje_id is not None:
                 db.guardar_adjuntos_correo(mensaje_id, adjuntos)
             if mensaje_id is not None:
-                _aplicar_categoria_automatica(cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")))
+                _aplicar_categoria_automatica(
+                cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
+            )
             nuevos_count += 1
         return nuevos_count
     finally:
@@ -760,10 +764,12 @@ def listar_carpetas(usuario_id: int, cuenta_id: int) -> list[dict]:
 def listar_mensajes(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
     texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
+    **filtros,
 ):
+    """`filtros`: con_adjuntos, categoria_id, desde, hasta, solo_destacados, cliente_fiscal_id."""
     return db.listar_mensajes_correo(
         cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto,
-        limite=limite, incluir_pospuestos=incluir_pospuestos,
+        limite=limite, incluir_pospuestos=incluir_pospuestos, **filtros,
     )
 
 
@@ -819,14 +825,31 @@ def destinatarios_responder_a_todos(mensaje, direccion_propia: str | None) -> st
     return ", ".join(resultado)
 
 
-def _aplicar_categoria_automatica(usuario_id: int, mensaje_id: int, remitente_crudo: str | None) -> None:
-    """Aplica, si existe, la regla de categorización cuyo patrón coincide
-    con el remitente del mensaje recién insertado (email exacto o
-    "@dominio.com")."""
+def _aplicar_categoria_automatica(
+    usuario_id: int, mensaje_id: int, remitente_crudo: str | None, asunto: str | None = None,
+) -> None:
+    """Aplica al mensaje recién insertado la regla simple de categoría por
+    remitente (email exacto o "@dominio.com") y después las reglas avanzadas
+    (remitente y/o asunto -> categoría, leído, destacar, cliente fiscal).
+    Un fallo en una regla nunca debe romper la sincronización."""
     direccion = direccion_email(remitente_crudo)
     categoria_id = db.categoria_id_por_remitente_correo(usuario_id, direccion)
     if categoria_id is not None:
         db.asignar_categoria_correo(usuario_id, mensaje_id, categoria_id)
+    try:
+        for regla in db.reglas_correo_aplicables(usuario_id, direccion, asunto):
+            if regla["categoria_id"] is not None:
+                db.asignar_categoria_correo(usuario_id, mensaje_id, regla["categoria_id"])
+            if regla["marcar_leido"]:
+                db.marcar_leido_mensaje_correo(mensaje_id, True)
+            if regla["destacar"]:
+                db.destacar_mensaje_correo(mensaje_id, True)
+            if regla["cliente_fiscal_id"] is not None:
+                tenant = db.tenant_de_usuario(usuario_id)
+                if tenant is not None:
+                    db.asignar_cliente_fiscal_correo(tenant["id"], mensaje_id, regla["cliente_fiscal_id"])
+    except Exception:  # noqa: BLE001
+        logger.exception("Regla de correo fallida (mensaje %s)", mensaje_id)
 
 
 _PATRON_IMG_REMOTA = re.compile(r'(<img\b[^>]*\bsrc=["\'])(https?://[^"\']+)(["\'])', re.IGNORECASE)

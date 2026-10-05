@@ -407,6 +407,29 @@ def _pendiente_dict(tool_call: dict) -> dict:
     }
 
 
+def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
+    """Llamada puntual al modelo del usuario, sin herramientas ni historial
+    (la usan las acciones de IA del correo). Lanza ErrorIA si no hay modelo
+    o clave configurados."""
+    modelo = db.obtener_preferencias_ia(usuario_id)["modelo"]
+    claves = obtener_api_keys(usuario_id)
+    if not modelo.strip():
+        raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
+    if not claves:
+        raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    respuesta = _post_json_con_fallback(
+        OPENROUTER_URL,
+        {"model": modelo, "messages": [
+            {"role": "system", "content": sistema}, {"role": "user", "content": contenido},
+        ]},
+        claves,
+    )
+    try:
+        return (respuesta["choices"][0]["message"].get("content") or "").strip()
+    except (KeyError, IndexError, AttributeError) as e:
+        raise ErrorIA(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
+
+
 def _continuar_conversacion(usuario_id: int) -> dict:
     preferencias = db.obtener_preferencias_ia(usuario_id)
     modelo = preferencias["modelo"]

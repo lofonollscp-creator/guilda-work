@@ -31,9 +31,8 @@ msgid "Responder a todos"
 msgstr "Respondre a tots"
 
 #: app/rutas_correo.py:445 app/templates/correo_bandeja.html:141
-#, fuzzy
 msgid "Reenviar"
-msgstr "Crear"
+msgstr "Reenvia"
 
 #: app/templates/_ia_chat_macro.html:3
 msgid ""
@@ -742,9 +741,8 @@ msgid ""
 msgstr "Preferències, categories i signatura. La gestió de comptes (IMAP/SMTP) és a part."
 
 #: app/templates/correo_ajustes.html:11 app/templates/correo_cuentas.html:11
-#, fuzzy
 msgid "Volver al correo"
-msgstr "Anar a Correu"
+msgstr "Torna al correu"
 
 #: app/templates/correo_ajustes.html:18
 msgid "Preferencias generales"
@@ -851,14 +849,12 @@ msgid "Añade una cuenta primero para poder configurar su firma."
 msgstr "Afegeix un compte primer per poder configurar-ne la signatura."
 
 #: app/templates/correo_ajustes.html:133
-#, fuzzy
 msgid "Cuenta"
-msgstr "Entrar"
+msgstr "Compte"
 
 #: app/templates/correo_ajustes.html:144 app/templates/correo_redactar.html:63
-#, fuzzy
 msgid "Negrita"
-msgstr "Editar"
+msgstr "Negreta"
 
 #: app/templates/correo_ajustes.html:145 app/templates/correo_redactar.html:64
 msgid "Cursiva"
@@ -885,9 +881,8 @@ msgid "Imagen"
 msgstr "Imatge"
 
 #: app/templates/correo_ajustes.html:150 app/templates/correo_redactar.html:72
-#, fuzzy
 msgid "Quitar formato"
-msgstr "Treure de preferits"
+msgstr "Treu el format"
 
 #: app/templates/correo_ajustes.html:158
 msgid "Insertar en correos nuevos"
@@ -902,29 +897,24 @@ msgid "Guardar firma"
 msgstr "Desar signatura"
 
 #: app/templates/correo_bandeja.html:11
-#, fuzzy
 msgid "Nuevo correo"
-msgstr "Correu"
+msgstr "Nou correu"
 
 #: app/templates/correo_bandeja.html:13
-#, fuzzy
 msgid "Aún no tienes ninguna cuenta."
-msgstr "Encara no tens cap menú."
+msgstr "Encara no tens cap compte."
 
 #: app/templates/correo_bandeja.html:35
-#, fuzzy
 msgid "Cuentas"
-msgstr "Crear compte"
+msgstr "Comptes"
 
 #: app/templates/correo_bandeja.html:43
-#, fuzzy
 msgid "Buscar correo..."
-msgstr "Cerca en notes, tasques i correu..."
+msgstr "Cerca correu..."
 
 #: app/templates/correo_bandeja.html:43
-#, fuzzy
 msgid "Buscar correo"
-msgstr "Anar a Correu"
+msgstr "Cerca correu"
 
 #: app/templates/correo_bandeja.html:45
 msgid "No leídos"
@@ -953,23 +943,20 @@ msgstr "No llegit"
 
 #: app/templates/correo_bandeja.html:61 app/templates/correo_bandeja.html:160
 #: app/templates/correo_bandeja.html:162
-#, fuzzy
 msgid "Destacar"
-msgstr "Estadístiques"
+msgstr "Destaca"
 
 #: app/templates/correo_bandeja.html:62 app/templates/correo_bandeja.html:160
-#, fuzzy
 msgid "Quitar destacado"
-msgstr "Treure de preferits"
+msgstr "Treu el destacat"
 
 #: app/templates/correo_bandeja.html:64
 msgid "Mover los mensajes seleccionados a"
 msgstr "Moure els missatges seleccionats a"
 
 #: app/templates/correo_bandeja.html:65 app/templates/correo_bandeja.html:148
-#, fuzzy
 msgid "Mover a…"
-msgstr "Moure avall"
+msgstr "Mou a…"
 
 #: app/templates/correo_bandeja.html:70
 msgid "Mover"
@@ -995,9 +982,8 @@ msgid "(sin asunto)"
 msgstr "(sense assumpte)"
 
 #: app/templates/correo_bandeja.html:104 app/templates/correo_cuentas.html:18
-#, fuzzy
 msgid "Aún no has añadido ninguna cuenta de correo."
-msgstr "Connecta un compte de correu"
+msgstr "Encara no has afegit cap compte de correu."
 
 #: app/templates/correo_bandeja.html:104
 msgid "Añade una"
@@ -1016,9 +1002,8 @@ msgid "Volver"
 msgstr "Tornar"
 
 #: app/templates/correo_bandeja.html:122
-#, fuzzy
 msgid "Para:"
-msgstr "Paperera"
+msgstr "Per a:"
 
 #: app/templates/correo_bandeja.html:133
 msgid ""
@@ -1039,9 +1024,8 @@ msgid "Fecha de aviso"
 msgstr "Data d'avís"
 
 #: app/templates/correo_bandeja.html:177
-#, fuzzy
 msgid "Categoría del mensaje"
-msgstr "Color del menú"
+msgstr "Categoria del missatge"
 
 #: app/templates/correo_bandeja.html:178
 msgid "Sin categoría"
@@ -1064,9 +1048,8 @@ msgid "Posponer"
 msgstr "Posposar"
 
 #: app/templates/correo_bandeja.html:203 app/templates/correo_bandeja.html:204
-#, fuzzy
 msgid "Imprimir"
-msgstr "Importar"
+msgstr "Imprimeix"
 
 #: app/templates/correo_bandeja.html:211 app/templates/correo_bandeja.html:235
 msgid "Confiar en este remitente"
@@ -3206,3 +3189,151 @@ msgstr "Resum del període"
 
 msgid "Entradas"
 msgstr "Entrades"
+
+msgid "Nuevo mensaje"
+msgstr "Nou missatge"
+
+msgid "Editar borrador"
+msgstr "Edita l'esborrany"
+
+msgid "Correo de {remitente}"
+msgstr "Correu de {remitente}"
+
+msgid "Tarea creada."
+msgstr "Tasca creada."
+
+msgid "De: {remitente}"
+msgstr "De: {remitente}"
+
+msgid "Nota guardada."
+msgstr "Nota desada."
+
+msgid "{n} tareas creadas."
+msgstr "{n} tasques creades."
+
+msgid "Borradores"
+msgstr "Esborranys"
+
+msgid "Filtros"
+msgstr "Filtres"
+
+msgid "Con adjuntos"
+msgstr "Amb adjunts"
+
+msgid "Destacados"
+msgstr "Destacats"
+
+msgid "Aplicar"
+msgstr "Aplica"
+
+msgid "Quitar filtros"
+msgstr "Treu els filtres"
+
+msgid "Categoría actualizada."
+msgstr "Categoria actualitzada."
+
+msgid "Cliente vinculado."
+msgstr "Client vinculat."
+
+msgid "Cliente fiscal relacionado"
+msgstr "Client fiscal relacionat"
+
+msgid "Sin cliente vinculado"
+msgstr "Sense client vinculat"
+
+msgid "Crear una tarea con este correo"
+msgstr "Crea una tasca amb aquest correu"
+
+msgid "Guardar este correo como nota"
+msgstr "Desa aquest correu com a nota"
+
+msgid "Guardar nota"
+msgstr "Desa nota"
+
+msgid "Resumir con IA"
+msgstr "Resumeix amb IA"
+
+msgid "Resumir"
+msgstr "Resumeix"
+
+msgid "Proponer una respuesta con IA"
+msgstr "Proposa una resposta amb IA"
+
+msgid "Proponer respuesta"
+msgstr "Proposa resposta"
+
+msgid "Extraer tareas con IA"
+msgstr "Extreu tasques amb IA"
+
+msgid "Extraer tareas"
+msgstr "Extreu tasques"
+
+msgid "Pensando…"
+msgstr "Pensant…"
+
+msgid "No se ha podido completar la acción."
+msgstr "No s'ha pogut completar l'acció."
+
+msgid "Usar como borrador"
+msgstr "Usa com a esborrany"
+
+msgid "Crear las marcadas"
+msgstr "Crea les marcades"
+
+msgid "No se han encontrado tareas en este correo."
+msgstr "No s'han trobat tasques en aquest correu."
+
+msgid "El contenido de este correo se envía al proveedor de IA que tienes configurado."
+msgstr "El contingut d'aquest correu s'envia al proveïdor d'IA que tens configurat."
+
+msgid "Ver a tamaño completo"
+msgstr "Veure a mida completa"
+
+msgid "Plantillas de respuesta"
+msgstr "Plantilles de resposta"
+
+msgid "Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas."
+msgstr "Disponibles des del selector de l'editor en redactar o respondre: s'insereixen al cos i mai s'envien soles."
+
+#, python-format
+msgid "¿Eliminar la plantilla «%(nombre)s»?"
+msgstr "Vols eliminar la plantilla «%(nombre)s»?"
+
+msgid "Nombre (ej. Recordatorio de documentación)"
+msgstr "Nom (p. ex. Recordatori de documentació)"
+
+msgid "Asunto (opcional)"
+msgstr "Assumpte (opcional)"
+
+msgid "Texto de la plantilla..."
+msgstr "Text de la plantilla..."
+
+msgid "Añadir plantilla"
+msgstr "Afegeix plantilla"
+
+msgid "Reglas avanzadas"
+msgstr "Regles avançades"
+
+msgid "Se aplican a los correos nuevos que cumplan todas las condiciones indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, destacar y vincular a un cliente fiscal."
+msgstr "S'apliquen als correus nous que compleixin totes les condicions indicades (remitent i/o assumpte). Poden categoritzar, marcar com a llegit, destacar i vincular a un client fiscal."
+
+msgid "Remitente"
+msgstr "Remitent"
+
+msgid "Asunto contiene"
+msgstr "L'assumpte conté"
+
+msgid "marcar como leído"
+msgstr "marcar com a llegit"
+
+msgid "destacar"
+msgstr "destacar"
+
+msgid "Remitente: email@ejemplo.com, @dominio.com o texto"
+msgstr "Remitent: email@exemple.com, @domini.com o text"
+
+msgid "El asunto contiene…"
+msgstr "L'assumpte conté…"
+
+msgid "Sin cliente fiscal"
+msgstr "Sense client fiscal"
