@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, outlook_ics
+from . import db, notificaciones, outlook_ics
 from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
@@ -37,6 +37,17 @@ NOMBRES_MES = [
 PALETA_CATEGORIAS = ["#4a6cf7", "#e0555a", "#2fa66a", "#d98c1f", "#8a5cf5", "#1f9fd9", "#c94f8a", "#0f9b8e"]
 
 TAREAS_POR_PAGINA = 50
+
+
+@tareas_bp.app_template_filter("duracion_hm")
+def duracion_hm(segundos: int | None) -> str:
+    """Tiempo registrado en formato corto: "2 h 05 min", "35 min" o "<1 min"."""
+    segundos = int(segundos or 0)
+    horas, resto = divmod(segundos, 3600)
+    minutos = resto // 60
+    if horas:
+        return f"{horas} h {minutos:02d} min"
+    return f"{minutos} min" if minutos else "<1 min"
 
 
 @tareas_bp.app_template_filter("color_categoria")
@@ -103,20 +114,26 @@ def listar():
     excluir_completadas = estado is None and not incluir_completadas
     # Se pide una fila de más para saber si hay página siguiente sin un
     # COUNT(*) aparte.
+    vista = request.args.get("vista") or ""
+    if vista not in ("mias", "asignadas"):
+        vista = ""
     tareas = db.listar_tareas_outlook(
         g.usuario_id, estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q,
         excluir_completadas=excluir_completadas, limite=TAREAS_POR_PAGINA + 1, offset=offset,
+        incluir_asignadas=vista == "", solo_asignadas=vista == "asignadas",
     )
     hay_pagina_siguiente = len(tareas) > TAREAS_POR_PAGINA
     tareas = tareas[:TAREAS_POR_PAGINA]
 
     return render_template(
         "tareas_lista.html",
+        **_contexto_filas(tareas),
+        vista=vista,
+        error=(request.args.get("error") or "")[:200] or None,
         tareas=tareas,
         estados=ESTADOS,
         prioridades=PRIORIDADES,
         categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
-        menus=db.listar_categorias(g.usuario_id),
         estado=estado or "",
         prioridad=prioridad or "",
         categoria=categoria or "",
@@ -126,6 +143,52 @@ def listar():
         hay_pagina_anterior=pagina > 1,
         hay_pagina_siguiente=hay_pagina_siguiente,
     )
+
+
+def _contexto_filas(tareas) -> dict:
+    """Lo que necesita cada fila de tarea (lista, "Mi día", tablero): el
+    cronómetro y el checklist de cada una, y los selectores de proyecto,
+    compañero y cliente."""
+    ids = [t["id"] for t in tareas]
+    return {
+        "cronometros": db.cronometros_de_tareas_outlook(g.usuario_id, ids),
+        "checklists": db.resumen_checklist(ids),
+        "menus": db.listar_categorias(g.usuario_id),
+        "companeros": db.listar_companeros_tenant(g.usuario_id),
+        "clientes_fiscales": db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+    }
+
+
+def _int_o_none(valor):
+    try:
+        return int(valor) if valor not in (None, "") else None
+    except ValueError:
+        return None
+
+
+def _notificar_asignacion(origen_id: int, tarea_id: int, destino_id: int | None) -> None:
+    """Avisa al compañero (en la app y por push) de que le han asignado una
+    tarea. Un fallo al avisar nunca debe romper la asignación."""
+    if destino_id is None or destino_id == origen_id:
+        return
+    try:
+        if not db.notificacion_tipo_activa(destino_id, "tarea_asignada"):
+            return
+        tarea = db.obtener_tarea_outlook_visible(destino_id, tarea_id)
+        if tarea is None:
+            return
+        quien = db.nombre_mostrado_usuario(origen_id) or (db.obtener_usuario(origen_id)["email"])
+        notificaciones.crear_y_enviar(
+            destino_id, "tarea_asignada", "Tarea asignada", f"{quien} te ha asignado: {tarea['asunto']}",
+            url=url_for("tareas.listar", vista="asignadas"),
+            datos={"tipo": "tarea_asignada", "tarea_id": tarea_id},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _volver_con_error(mensaje: str):
+    return redirect(url_for("tareas.listar", error=mensaje))
 
 
 @tareas_bp.route("/calendario")
@@ -210,7 +273,8 @@ def crear():
     asunto = request.form.get("asunto", "").strip()
     if asunto:
         categoria_id = request.form.get("categoria_id") or None
-        db.crear_tarea_outlook(
+        asignada_a = _int_o_none(request.form.get("asignada_a"))
+        tarea_id = db.crear_tarea_outlook(
             g.usuario_id,
             asunto=asunto,
             prioridad=request.form.get("prioridad", "normal"),
@@ -218,7 +282,15 @@ def crear():
             fecha_vencimiento=request.form.get("fecha_vencimiento") or None,
             categoria_outlook=request.form.get("categoria_outlook") or None,
             categoria_id=int(categoria_id) if categoria_id else None,
+            cliente_fiscal_id=_int_o_none(request.form.get("cliente_fiscal_id")),
+            asignada_a=asignada_a,
         )
+        _notificar_asignacion(g.usuario_id, tarea_id, asignada_a)
+        if request.form.get("con_cronometro"):
+            try:
+                db.iniciar_cronometro_tarea_outlook(g.usuario_id, tarea_id)
+            except ValueError as e:
+                return _volver_con_error(str(e))
     return redirect(request.form.get("volver_a") or url_for("tareas.listar"))
 
 
@@ -231,13 +303,19 @@ def editar(tarea_id: int):
 
     menus = db.listar_categorias(g.usuario_id)
 
+    def _contexto_edicion(tarea, error=None):
+        return dict(
+            tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, menus=menus, error=error,
+            checklist=db.listar_checklist(tarea["id"]),
+            companeros=db.listar_companeros_tenant(g.usuario_id),
+            clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+            cronometro=db.cronometros_de_tareas_outlook(g.usuario_id, [tarea["id"]]).get(tarea["id"]),
+        )
+
     if request.method == "POST":
         asunto = request.form.get("asunto", "").strip()
         if not asunto:
-            return render_template(
-                "tarea_outlook_editar.html", tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES,
-                menus=menus, error="El asunto no puede estar vacío.",
-            )
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, "El asunto no puede estar vacío."))
         categoria_id = request.form.get("categoria_id") or None
         campos = {
             "asunto": asunto,
@@ -249,15 +327,95 @@ def editar(tarea_id: int):
             "fecha_vencimiento": request.form.get("fecha_vencimiento") or None,
             "categoria_outlook": request.form.get("categoria_outlook", "").strip() or None,
             "categoria_id": int(categoria_id) if categoria_id else None,
+            "cliente_fiscal_id": _int_o_none(request.form.get("cliente_fiscal_id")),
         }
         if campos["estado"] == "completada" and tarea["estado"] != "completada":
             db.completar_tarea_outlook(g.usuario_id, tarea_id)
             campos.pop("estado")
             campos.pop("porcentaje_completado")
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        nueva_asignacion = _int_o_none(request.form.get("asignada_a"))
+        if nueva_asignacion != tarea["asignada_a"] and db.asignar_tarea_outlook(g.usuario_id, tarea_id, nueva_asignacion):
+            _notificar_asignacion(g.usuario_id, tarea_id, nueva_asignacion)
         return redirect(url_for("tareas.listar"))
 
-    return render_template("tarea_outlook_editar.html", tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, menus=menus, error=None)
+    return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea))
+
+
+@tareas_bp.route("/hoy")
+@login_required
+def hoy():
+    """"Mi día": vencidas, de hoy, en progreso y asignadas a mí."""
+    secciones = db.tareas_para_hoy(g.usuario_id)
+    todas = [t for lista in secciones.values() for t in lista]
+    return render_template(
+        "tareas_hoy.html", secciones=secciones, estados=ESTADOS, vista="hoy",
+        error=(request.args.get("error") or "")[:200] or None, **_contexto_filas(todas),
+    )
+
+
+@tareas_bp.route("/tablero")
+@login_required
+def tablero():
+    """Tablero por estado. Sin arrastrar: cada tarjeta tiene botones para moverla."""
+    tareas = db.listar_tareas_outlook(g.usuario_id, incluir_asignadas=True)
+    columnas = {valor: [] for valor, _etiqueta in ESTADOS}
+    for t in tareas:
+        columnas[t["estado"]].append(t)
+    # Las completadas son muchas con el tiempo: solo las más recientes.
+    columnas["completada"] = sorted(columnas["completada"], key=lambda t: t["fecha_completada"] or "", reverse=True)[:15]
+    return render_template("tareas_tablero.html", estados=ESTADOS, columnas=columnas, vista="tablero")
+
+
+@tareas_bp.route("/<int:tarea_id>/estado", methods=["POST"])
+@login_required
+def cambiar_estado(tarea_id: int):
+    if not db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, request.form.get("estado", "")):
+        abort(404)
+    return redirect(request.referrer or url_for("tareas.tablero"))
+
+
+@tareas_bp.route("/<int:tarea_id>/cronometro/iniciar", methods=["POST"])
+@login_required
+def iniciar_cronometro(tarea_id: int):
+    try:
+        db.iniciar_cronometro_tarea_outlook(g.usuario_id, tarea_id, _int_o_none(request.form.get("categoria_id")))
+    except ValueError as e:
+        return _volver_con_error(str(e))
+    return redirect(request.referrer or url_for("tareas.listar"))
+
+
+@tareas_bp.route("/<int:tarea_id>/checklist", methods=["POST"])
+@login_required
+def agregar_checklist(tarea_id: int):
+    db.agregar_item_checklist(g.usuario_id, tarea_id, request.form.get("texto", ""))
+    return redirect(url_for("tareas.editar", tarea_id=tarea_id) + "#checklist")
+
+
+@tareas_bp.route("/checklist/<int:item_id>/alternar", methods=["POST"])
+@login_required
+def alternar_checklist(item_id: int):
+    if not db.alternar_item_checklist(g.usuario_id, item_id):
+        abort(404)
+    return redirect(request.referrer or url_for("tareas.listar"))
+
+
+@tareas_bp.route("/checklist/<int:item_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_checklist(item_id: int):
+    if not db.eliminar_item_checklist(g.usuario_id, item_id):
+        abort(404)
+    return redirect(request.referrer or url_for("tareas.listar"))
+
+
+@tareas_bp.route("/<int:tarea_id>/asignar", methods=["POST"])
+@login_required
+def asignar(tarea_id: int):
+    destino = _int_o_none(request.form.get("asignada_a"))
+    if not db.asignar_tarea_outlook(g.usuario_id, tarea_id, destino):
+        abort(404)
+    _notificar_asignacion(g.usuario_id, tarea_id, destino)
+    return redirect(request.referrer or url_for("tareas.listar"))
 
 
 @tareas_bp.route("/<int:tarea_id>/completar", methods=["POST"])
@@ -324,6 +482,17 @@ DIAS_SEMANA = [
 ]
 
 
+PERIODICIDADES = [
+    ("diaria", _l("Cada día")),
+    ("laborables", _l("Cada día laborable (lunes a viernes)")),
+    ("semanal", _l("Cada semana")),
+    ("mensual", _l("Cada mes")),
+    ("trimestral", _l("Cada trimestre (enero, abril, julio, octubre)")),
+    ("anual", _l("Cada año")),
+]
+NOMBRES_MES_SELECT = [(i, NOMBRES_MES[i]) for i in range(1, 13)]
+
+
 @tareas_bp.route("/recurrentes")
 @login_required
 def recurrentes():
@@ -332,6 +501,9 @@ def recurrentes():
         reglas=db.listar_tareas_recurrentes(g.usuario_id),
         menus=db.listar_categorias(g.usuario_id),
         dias_semana=DIAS_SEMANA,
+        periodicidades=PERIODICIDADES,
+        meses=NOMBRES_MES_SELECT,
+        etiquetas_periodicidad=dict(PERIODICIDADES),
     )
 
 
@@ -340,11 +512,23 @@ def recurrentes():
 def crear_recurrente():
     asunto = request.form.get("asunto", "").strip()
     periodicidad = request.form.get("periodicidad")
-    dia = request.form.get("dia", type=int)
-    if asunto and periodicidad in ("semanal", "mensual") and dia is not None:
+    dia = request.form.get("dia", type=int)  # formulario antiguo: un solo selector de día
+    if dia is None:
+        dia = request.form.get("dia_semana" if periodicidad == "semanal" else "dia_mes", type=int)
+    mes = request.form.get("mes", type=int)
+    if periodicidad in ("diaria", "laborables"):
+        dia = 0
+    if asunto and periodicidad in db.PERIODICIDADES_RECURRENTES and dia is not None:
+        if periodicidad == "semanal" and not 0 <= dia <= 6:
+            return redirect(url_for("tareas.recurrentes"))
+        if periodicidad in ("mensual", "trimestral", "anual") and not 1 <= dia <= 31:
+            return redirect(url_for("tareas.recurrentes"))
+        if periodicidad == "anual" and not (mes and 1 <= mes <= 12):
+            return redirect(url_for("tareas.recurrentes"))
         categoria_id = request.form.get("categoria_id") or None
         db.crear_tarea_recurrente(
             g.usuario_id, asunto, periodicidad, dia, categoria_id=int(categoria_id) if categoria_id else None,
+            mes=mes if periodicidad == "anual" else None,
         )
     return redirect(url_for("tareas.recurrentes"))
 

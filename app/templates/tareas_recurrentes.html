@@ -4,16 +4,12 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Tareas') }}</h1>
-    <p class="subtitle">{{ _('Reglas que generan una tarea nueva automáticamente cada semana o cada mes.') }}</p>
+    <p class="subtitle">{{ _('Reglas que generan una tarea nueva automáticamente: cada día, semana, mes, trimestre o año.') }}</p>
   </div>
 </header>
 
-<nav class="tareas-subnav">
-  <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
-  <a href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
-  <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
-  <a class="active" href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
-</nav>
+{% set subnav_activa = 'recurrentes' %}
+{% include "_tareas_subnav.html" %}
 
 <section class="quick-actions">
   <form class="quick-card" action="{{ url_for('tareas.crear_recurrente') }}" method="post">
@@ -22,18 +18,24 @@
       <input type="text" name="asunto" placeholder="{{ _('Asunto de la tarea') }}" required>
     </div>
     <div class="quick-row">
-      <select name="periodicidad" required>
-        <option value="semanal">{{ _('Semanal') }}</option>
-        <option value="mensual">{{ _('Mensual') }}</option>
+      <select name="periodicidad" required aria-label="{{ _('Periodicidad') }}">
+        {% for valor, etiqueta in periodicidades %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
       </select>
-      <select name="dia" required>
-        {% for valor, etiqueta in dias_semana %}
-        <option value="{{ valor }}">{{ etiqueta }} ({{ _('semanal') }})</option>
-        {% endfor %}
-        {% for d in range(1, 32) %}
-        <option value="{{ d }}">{{ _('Día') }} {{ d }} ({{ _('mensual') }})</option>
-        {% endfor %}
-      </select>
+      <label class="muted">{{ _('Día de la semana (si es semanal)') }}
+        <select name="dia_semana">
+          {% for valor, etiqueta in dias_semana %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="muted">{{ _('Día del mes (si es mensual, trimestral o anual)') }}
+        <select name="dia_mes">
+          {% for d in range(1, 32) %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="muted">{{ _('Mes (si es anual)') }}
+        <select name="mes">
+          {% for valor, etiqueta in meses %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
+        </select>
+      </label>
       {% if menus %}
       <select name="categoria_id">
         <option value="">{{ _('Sin proyecto') }}</option>
@@ -43,7 +45,7 @@
       </select>
       {% endif %}
     </div>
-    <p class="muted">{{ _('Si eliges Semanal, el día se interpreta como día de la semana (Lunes–Domingo); si eliges Mensual, como número de día del mes (1–31).') }}</p>
+    <p class="muted">{{ _('Solo se usa el día o el mes que corresponde a la periodicidad elegida; en cada día y cada día laborable no hace falta ninguno.') }}</p>
     <div class="quick-row">
       <button type="submit" class="btn btn-primary">{{ _('Crear regla') }}</button>
     </div>
@@ -65,13 +67,15 @@
     {% for regla in reglas %}
     <tr>
       <td>{{ regla.asunto }}</td>
-      <td>{{ _('Semanal') if regla.periodicidad == 'semanal' else _('Mensual') }}</td>
+      <td>{{ etiquetas_periodicidad[regla.periodicidad] }}</td>
       <td>
-        {% if regla.periodicidad == 'semanal' %}
+        {% if regla.periodicidad in ('semanal',) %}
           {% for valor, etiqueta in dias_semana %}{% if valor == regla.dia %}{{ etiqueta }}{% endif %}{% endfor %}
-        {% else %}
+        {% elif regla.periodicidad == 'anual' %}
+          {{ _('Día') }} {{ regla.dia }} · {% for valor, etiqueta in meses %}{% if valor == regla.mes %}{{ etiqueta }}{% endif %}{% endfor %}
+        {% elif regla.periodicidad in ('mensual', 'trimestral') %}
           {{ _('Día') }} {{ regla.dia }}
-        {% endif %}
+        {% else %}—{% endif %}
       </td>
       <td>{{ _('Activa') if regla.activa else _('Pausada') }}</td>
       <td class="quick-row">

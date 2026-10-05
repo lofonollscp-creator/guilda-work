@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_tarea_fila.html" import fila with context %}
+{% block title %}{{ _('Mi día') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas en marcha y lo que te han asignado.') }}</p>
+  </div>
+</header>
+
+{% set subnav_activa = 'hoy' %}
+{% include "_tareas_subnav.html" %}
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+
+{% set total = secciones.vencidas|length + secciones.hoy|length + secciones.en_progreso|length + secciones.asignadas|length %}
+{% if not total %}
+<p class="empty-lane">{{ _('No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.') }}</p>
+{% endif %}
+
+{% for clave, titulo in (('vencidas', _('Vencidas')), ('hoy', _('Vencen hoy')), ('en_progreso', _('En progreso')), ('asignadas', _('Asignadas a mí'))) %}
+{% if secciones[clave] %}
+<section class="tareas-dia-seccion tareas-dia-{{ clave }}">
+  <h2 class="tareas-dia-titulo">{{ titulo }} <span class="pill">{{ secciones[clave]|length }}</span></h2>
+  <ul class="log-list">
+    {% for t in secciones[clave] %}
+    {{ fila(t, estados, cronometros, checklists, menus, mostrar_estado=False) }}
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endfor %}
+{% endblock %}

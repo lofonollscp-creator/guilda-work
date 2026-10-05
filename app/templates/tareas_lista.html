@@ -1,21 +1,29 @@
 {% extends "base.html" %}
+{% from "_tarea_fila.html" import fila with context %}
 {% block title %}{{ _('Tareas') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
     <h1>{{ _('Tareas') }}</h1>
-    <p class="subtitle">{{ _('Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado.') }}</p>
+    <p class="subtitle">{{ _('Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado.') }}</p>
   </div>
 </header>
 
-<nav class="tareas-subnav">
-  <a class="active" href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
-  <a href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
-  <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
-  <a href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
-</nav>
+{% set subnav_activa = 'lista' %}
+{% include "_tareas_subnav.html" %}
+
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
 <form class="filters" method="get">
+  {% if companeros %}
+  <label>{{ _('Mostrar') }}
+    <select name="vista">
+      <option value="" {% if not vista %}selected{% endif %}>{{ _('Mías y asignadas a mí') }}</option>
+      <option value="mias" {% if vista == 'mias' %}selected{% endif %}>{{ _('Solo las mías') }}</option>
+      <option value="asignadas" {% if vista == 'asignadas' %}selected{% endif %}>{{ _('Asignadas a mí') }}</option>
+    </select>
+  </label>
+  {% endif %}
   <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Texto...') }}"></label>
   <label>{{ _('Estado') }}
     <select name="estado">
@@ -45,7 +53,7 @@
   {% endif %}
   <span class="action-group">
     <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
-    {% if q or estado or prioridad or categoria %}
+    {% if q or estado or prioridad or categoria or vista %}
     <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Limpiar') }}</a>
     {% else %}
     <a class="btn btn-ghost" href="{{ url_for('tareas.listar', completadas=1) }}">{{ _('Ver también completadas') }}</a>
@@ -71,10 +79,23 @@
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       {% endif %}
+      {% if clientes_fiscales %}
+      <select name="cliente_fiscal_id" title="{{ _('Cliente') }}">
+        <option value="">{{ _('Sin cliente') }}</option>
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      {% if companeros %}
+      <select name="asignada_a" title="{{ _('Asignar a') }}">
+        <option value="">{{ _('Sin asignar') }}</option>
+        {% for u in companeros %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
       <input type="text" name="categoria_outlook" placeholder="{{ _('Categoría Outlook (opcional)') }}" list="categorias-outlook-datalist">
       <datalist id="categorias-outlook-datalist">
         {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
       </datalist>
+      <label class="tarea-con-cronometro"><input type="checkbox" name="con_cronometro" value="1"> {{ _('Iniciar cronómetro') }}</label>
       <button type="submit" class="btn btn-primary">+ {{ _('Añadir') }}</button>
     </div>
   </form>
@@ -85,48 +106,19 @@
 {% else %}
 <ul class="log-list">
   {% for t in tareas %}
-  <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
-    <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
-      <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' }}>
-        {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
-      </button>
-    </form>
-    <span class="log-text">
-      <a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a>
-    </span>
-    {% if t.categoria_outlook %}
-    <span class="pill">{{ t.categoria_outlook }}</span>
-    {% endif %}
-    <span class="pill prioridad-{{ t.prioridad }}">{{ t.prioridad }}</span>
-    {% if t.fecha_vencimiento %}
-    <span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>
-    {% endif %}
-    <span class="log-badge log-badge-{{ 'duracion' if t.estado == 'completada' else 'instantanea' }}">
-      {{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}
-    </span>
-    <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
-    <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
-          data-eliminar-deshacer
-          data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}"
-          data-mensaje-ok="{{ _('Tarea eliminada.') }}"
-          data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
-          data-restaurar-url="{{ url_for('tareas.restaurar', tarea_id=t.id) }}"
-          data-quitar-selector="li">
-      <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
-    </form>
-  </li>
+  {{ fila(t, estados, cronometros, checklists, menus) }}
   {% endfor %}
 </ul>
 {% if hay_pagina_anterior or hay_pagina_siguiente %}
 <nav class="paginacion" aria-label="{{ _('Paginación de tareas') }}">
   {% if hay_pagina_anterior %}
-  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina - 1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, vista=vista or none, completadas=('1' if incluir_completadas else none), pagina=pagina - 1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</a>
   {% else %}
   <span class="btn btn-ghost is-deshabilitado" aria-disabled="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</span>
   {% endif %}
   <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
   {% if hay_pagina_siguiente %}
-  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, completadas=('1' if incluir_completadas else none), pagina=pagina + 1) }}">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></a>
+  <a class="btn btn-ghost" href="{{ url_for('tareas.listar', q=q, estado=estado, prioridad=prioridad, categoria=categoria, vista=vista or none, completadas=('1' if incluir_completadas else none), pagina=pagina + 1) }}">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></a>
   {% else %}
   <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></span>
   {% endif %}

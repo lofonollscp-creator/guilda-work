@@ -600,6 +600,7 @@ def inicio():
         entradas_hoy=entradas_hoy,
         log_hoy=log_hoy,
         total_activas=len(activas),
+        total_mi_dia=_total_mi_dia(g.usuario_id),
         total_notas_hoy=len([f for f in log_hoy if f["origen"] == "nota"]),
         total_vencimientos_proximos=total_vencimientos_proximos,
         hasta_vencimientos_proximos=hasta_vencimientos_proximos,
@@ -652,6 +653,12 @@ def crear_menu():
     return redirect(url_for("inicio"))
 
 
+def _total_mi_dia(usuario_id: int) -> int:
+    """Cuántas tareas piden atención hoy (vencidas, de hoy y asignadas a mí)."""
+    secciones = db.tareas_para_hoy(usuario_id)
+    return len(secciones["vencidas"]) + len(secciones["hoy"]) + len(secciones["asignadas"])
+
+
 @app.route("/menu/<int:menu_id>")
 @login_required
 def ver_menu(menu_id: int):
@@ -662,7 +669,13 @@ def ver_menu(menu_id: int):
     activas = [t for t in db.tareas_activas(g.usuario_id) if t["categoria_id"] == menu_id]
     log = db.historial(g.usuario_id, categoria_id=menu_id, texto=q)
     plantillas = db.listar_plantillas(menu_id)
-    return render_template("menu.html", menu=menu, activas=activas, log=log, q=q or "", plantillas=plantillas)
+    tareas_pendientes = db.listar_tareas_outlook(
+        g.usuario_id, categoria_id=menu_id, excluir_completadas=True, incluir_asignadas=True,
+    )
+    return render_template(
+        "menu.html", menu=menu, activas=activas, log=log, q=q or "", plantillas=plantillas,
+        tareas_pendientes=tareas_pendientes,
+    )
 
 
 @app.route("/menu/<int:menu_id>/plantillas", methods=["POST"])

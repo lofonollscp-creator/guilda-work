@@ -46,6 +46,13 @@
       <span class="dash-stat-label">{{ _('tareas en curso') }}</span>
     </span>
   </a>
+  <a class="dash-stat dash-stat-link" href="{{ url_for('tareas.hoy') }}">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clipboard-list"></use></svg></span>
+    <span>
+      <span class="dash-stat-valor">{{ total_mi_dia }}</span>
+      <span class="dash-stat-label">{{ _('tareas para hoy') }}</span>
+    </span>
+  </a>
   <a class="dash-stat dash-stat-link" href="{{ url_for('historial', desde=hoy_iso, hasta=hoy_iso) }}">
     <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></span>
     <span>

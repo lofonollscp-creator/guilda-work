@@ -2237,6 +2237,43 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 }
 .tareas-subnav a.active { color: var(--text); border-bottom-color: var(--primary); }
 
+/* ---- Tareas unificadas: lista, Mi día, tablero, checklist ---- */
+.tarea-outlook-item { flex-wrap: wrap; }
+.tarea-outlook-item .log-text { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.pill.tarea-proyecto {
+  border-color: color-mix(in srgb, var(--pill-color, var(--text-muted)) 55%, transparent);
+  background: color-mix(in srgb, var(--pill-color, var(--text-muted)) 14%, transparent);
+}
+.pill.tarea-cliente, .pill.tarea-correo, .pill.tarea-asignada, .pill.tarea-checklist {
+  display: inline-flex; align-items: center; gap: 4px; text-decoration: none;
+}
+.tarea-cronometro { display: inline-flex; align-items: center; gap: 4px; }
+.tarea-cronometro .btn, .tarea-cronometro-form .btn { padding: 4px 8px; }
+.tarea-cronometro-form { display: inline-flex; align-items: center; gap: 6px; }
+.tarea-cronometro-form select { max-width: 150px; }
+.tarea-con-cronometro { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); }
+.tareas-dia-seccion { margin-bottom: var(--space-5); }
+.tareas-dia-titulo { font-size: 1.05em; display: flex; align-items: center; gap: 8px; }
+.tareas-dia-vencidas .tareas-dia-titulo { color: var(--danger); }
+.tareas-tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; align-items: start; }
+.tareas-columna { display: grid; gap: 10px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.tareas-columna-titulo { display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; }
+.tareas-columna-vacia { margin: 0; font-size: 0.85em; }
+.tareas-tarjeta { display: grid; gap: 6px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: var(--radius-sm); }
+.prioridad-borde-alta { border-left-color: var(--danger); }
+.prioridad-borde-normal { border-left-color: var(--text-muted); }
+.prioridad-borde-baja { border-left-color: var(--primary); }
+.tareas-tarjeta-titulo { font-weight: 600; overflow-wrap: anywhere; text-decoration: none; }
+.tareas-tarjeta-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tareas-tarjeta-mover { display: flex; gap: 6px; }
+.tareas-tarjeta-mover select { flex: 1; min-width: 0; }
+.tarea-checklist-bloque, .tarea-tiempo-bloque { margin-top: var(--space-5); }
+.tarea-bloque-titulo { font-size: 1em; }
+.tarea-checklist-lista { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.tarea-checklist-item { display: flex; align-items: center; gap: 10px; }
+.tarea-checklist-texto { flex: 1; overflow-wrap: anywhere; }
+.tarea-checklist-item.is-hecha .tarea-checklist-texto { text-decoration: line-through; color: var(--text-muted); }
+
 /* ---- Calendario de Tareas ---- */
 .cal-toolbar {
   display: flex;

@@ -8,12 +8,8 @@
   </div>
 </header>
 
-<nav class="tareas-subnav">
-  <a href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
-  <a class="active" href="{{ url_for('tareas.calendario', vista=vista, fecha=ancla.isoformat()) }}">{{ _('Calendario') }}</a>
-  <a href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
-  <a href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
-</nav>
+{% set subnav_activa = 'calendario' %}
+{% include "_tareas_subnav.html" %}
 
 <div class="cal-toolbar">
   <div class="cal-nav">

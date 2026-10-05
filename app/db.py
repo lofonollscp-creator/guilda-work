@@ -372,10 +372,20 @@ CREATE TABLE IF NOT EXISTS tareas_recurrentes (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
     categoria_id INTEGER REFERENCES categorias(id),
     asunto TEXT NOT NULL,
-    periodicidad TEXT NOT NULL CHECK (periodicidad IN ('semanal','mensual')),
+    periodicidad TEXT NOT NULL CHECK (periodicidad IN ('diaria','laborables','semanal','mensual','trimestral','anual')),
     dia INTEGER NOT NULL,
+    mes INTEGER,
     activa INTEGER NOT NULL DEFAULT 1,
     creado_en TEXT NOT NULL
+);
+
+-- Checklist (subtareas) de una tarea de la lista (tareas_outlook).
+CREATE TABLE IF NOT EXISTS tarea_checklist (
+    id INTEGER PRIMARY KEY,
+    tarea_outlook_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    texto TEXT NOT NULL,
+    hecha INTEGER NOT NULL DEFAULT 0,
+    orden INTEGER NOT NULL DEFAULT 0
 );
 
 -- Cliente de correo IMAP/POP3. La contraseña de cada cuenta NO se guarda
@@ -735,6 +745,9 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
+CREATE INDEX IF NOT EXISTS idx_tarea_checklist_tarea ON tarea_checklist(tarea_outlook_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_tarea_outlook ON tareas(tarea_outlook_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_asignada ON tareas_outlook(asignada_a);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_conversacion ON ia_mensajes(conversacion_id);
 CREATE INDEX IF NOT EXISTS idx_ia_conversaciones_usuario ON ia_conversaciones(usuario_id, actualizada_en);
@@ -1009,6 +1022,54 @@ def _migrar_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> 
         conn.close()
 
 
+def _migrar_tareas_recurrentes_periodicidades(conn_ignorada: sqlite3.Connection) -> None:
+    """`tareas_recurrentes.periodicidad` solo admitía 'semanal' y 'mensual'
+    (CHECK) y no tenía mes. SQLite no deja cambiar un CHECK con ALTER TABLE,
+    así que se reconstruye la tabla la primera vez que se detecta el esquema
+    antiguo (se comprueba leyendo su SQL en sqlite_master). Mismo
+    procedimiento que _migrar_categorias_unique_por_usuario -- ver su
+    docstring: conexión propia con foreign_keys=OFF, tabla nueva con otro
+    nombre, copia, DROP de la vieja y renombrado -- porque
+    tareas_outlook.tarea_recurrente_id apunta a esta tabla."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        definicion = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='tareas_recurrentes'"
+        ).fetchone()
+        if definicion is None or "'trimestral'" in definicion["sql"]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            """CREATE TABLE tareas_recurrentes_nueva (
+                   id INTEGER PRIMARY KEY,
+                   usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+                   categoria_id INTEGER REFERENCES categorias(id),
+                   asunto TEXT NOT NULL,
+                   periodicidad TEXT NOT NULL CHECK (periodicidad IN
+                       ('diaria','laborables','semanal','mensual','trimestral','anual')),
+                   dia INTEGER NOT NULL,
+                   mes INTEGER,
+                   activa INTEGER NOT NULL DEFAULT 1,
+                   creado_en TEXT NOT NULL
+               )"""
+        )
+        conn.execute(
+            """INSERT INTO tareas_recurrentes_nueva (id, usuario_id, categoria_id, asunto, periodicidad, dia, activa, creado_en)
+               SELECT id, usuario_id, categoria_id, asunto, periodicidad, dia, activa, creado_en FROM tareas_recurrentes"""
+        )
+        conn.execute("DROP TABLE tareas_recurrentes")
+        conn.execute("ALTER TABLE tareas_recurrentes_nueva RENAME TO tareas_recurrentes")
+        violaciones = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violaciones:
+            conn.rollback()
+            raise RuntimeError(f"Migración de tareas_recurrentes abortada: foreign_key_check encontró {violaciones}")
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.close()
+
+
 def _migrar_correo_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> None:
     """Mismo bug, mismo arreglo que _migrar_categorias_unique_por_usuario
     (ver su docstring para el porqué del procedimiento exacto) -- aquí
@@ -1119,6 +1180,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "categorias", "icono", "TEXT")
         _migrar_categorias_unique_por_usuario(conn)
         _migrar_correo_categorias_unique_por_usuario(conn)
+        _migrar_tareas_recurrentes_periodicidades(conn)
         _migrar_documentos_vencimiento_a_nextcloud(conn)
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
@@ -1341,6 +1403,13 @@ def init_db() -> None:
         # esta misma columna, y en una base de datos nueva (creada solo por
         # SCHEMA, que no la incluye) todavía no existiría.
         _asegurar_columna(conn, "tareas_outlook", "tarea_recurrente_id", "INTEGER REFERENCES tareas_recurrentes(id)")
+        # Tareas unificadas: asignación a un compañero del despacho, vínculo con
+        # un cliente fiscal y con el correo del que nació; y el enlace de cada
+        # registro de tiempo (tareas) con la tarea de la lista a la que se dedicó.
+        _asegurar_columna(conn, "tareas_outlook", "asignada_a", "INTEGER")
+        _asegurar_columna(conn, "tareas_outlook", "cliente_fiscal_id", "INTEGER")
+        _asegurar_columna(conn, "tareas_outlook", "mensaje_correo_id", "INTEGER")
+        _asegurar_columna(conn, "tareas", "tarea_outlook_id", "INTEGER")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -3330,7 +3399,7 @@ def contar_entradas_hoy_por_usuario(usuario_id: int) -> dict[int, int]:
 
 # --- Tareas / eventos ---------------------------------------------------
 
-def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> int:
+def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str, tarea_outlook_id: int | None = None) -> int:
     conn = get_connection()
     try:
         # categoria_id es NOT NULL en esta tabla (a diferencia de notas/
@@ -3351,9 +3420,9 @@ def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> i
         else:
             cur = conn.execute(
                 """INSERT INTO tareas
-                   (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
-                   VALUES (?, ?, ?, 'duracion', 'en_curso', ?, NULL, NULL)""",
-                (usuario_id, nombre.strip(), categoria_id, ahora),
+                   (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos, tarea_outlook_id)
+                   VALUES (?, ?, ?, 'duracion', 'en_curso', ?, NULL, NULL, ?)""",
+                (usuario_id, nombre.strip(), categoria_id, ahora, tarea_outlook_id),
             )
         conn.commit()
         tarea_id = cur.lastrowid
@@ -4131,21 +4200,28 @@ def crear_tarea_outlook(
     categoria_id: int | None = None,
     outlook_entry_id: str | None = None,
     tarea_recurrente_id: int | None = None,
+    cliente_fiscal_id: int | None = None,
+    mensaje_correo_id: int | None = None,
+    asignada_a: int | None = None,
 ) -> int:
     conn = get_connection()
     try:
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
+        cliente_fiscal_id = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        mensaje_correo_id = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
+        asignada_a = _companero_del_tenant(conn, usuario_id, asignada_a)
         cur = conn.execute(
             """INSERT INTO tareas_outlook
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
-                outlook_entry_id, tarea_recurrente_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                outlook_entry_id, tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id,
+                asignada_a, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
                 (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id,
-                tarea_recurrente_id, now_iso(),
+                tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id, asignada_a, now_iso(),
             ),
         )
         conn.commit()
@@ -4154,18 +4230,80 @@ def crear_tarea_outlook(
         conn.close()
 
 
+def _cliente_fiscal_id_del_tenant(conn: sqlite3.Connection, usuario_id: int, cliente_fiscal_id: int | None) -> int | None:
+    """Solo se enlaza un cliente fiscal del propio despacho (mismo criterio
+    permisivo que _categoria_id_propio: si no es válido, se ignora)."""
+    if cliente_fiscal_id is None:
+        return None
+    fila = conn.execute(
+        """SELECT c.id FROM clientes_fiscales c JOIN usuarios u ON u.tenant_id = c.tenant_id
+           WHERE c.id = ? AND u.id = ? AND c.papelera_en IS NULL""",
+        (cliente_fiscal_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def _mensaje_correo_id_propio(conn: sqlite3.Connection, usuario_id: int, mensaje_id: int | None) -> int | None:
+    if mensaje_id is None:
+        return None
+    fila = conn.execute(
+        """SELECT m.id FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+           WHERE m.id = ? AND c.usuario_id = ?""",
+        (mensaje_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def _companero_del_tenant(conn: sqlite3.Connection, usuario_id: int, otro_id: int | None) -> int | None:
+    """Solo se puede asignar a alguien del MISMO despacho (y no a uno mismo:
+    la tarea ya es suya). Si no, se ignora."""
+    if otro_id is None or otro_id == usuario_id:
+        return None
+    fila = conn.execute(
+        """SELECT o.id FROM usuarios o JOIN usuarios yo ON yo.tenant_id = o.tenant_id
+           WHERE o.id = ? AND yo.id = ? AND yo.tenant_id IS NOT NULL""",
+        (otro_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def listar_companeros_tenant(usuario_id: int) -> list[sqlite3.Row]:
+    """Compañeros del mismo despacho (sin el propio usuario), con el nombre
+    elegido o, en su defecto, el correo -- para el selector de asignación."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT o.id, COALESCE(NULLIF(p.nombre_mostrado, ''), o.email) AS nombre
+               FROM usuarios o JOIN usuarios yo ON yo.tenant_id = o.tenant_id
+               LEFT JOIN usuario_perfil p ON p.usuario_id = o.id
+               WHERE yo.id = ? AND yo.tenant_id IS NOT NULL AND o.id != ? ORDER BY nombre""",
+            (usuario_id, usuario_id),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 # --- Tareas recurrentes (app/rutas_tareas.py) --------------------------
+
+PERIODICIDADES_RECURRENTES = ("diaria", "laborables", "semanal", "mensual", "trimestral", "anual")
+
 
 def crear_tarea_recurrente(
     usuario_id: int, asunto: str, periodicidad: str, dia: int, categoria_id: int | None = None,
+    mes: int | None = None,
 ) -> int:
+    """`dia`: 0-6 (lunes-domingo) si es semanal; 1-31 si es mensual, trimestral
+    (primer mes de cada trimestre) o anual; sin uso (0) en diaria/laborables.
+    `mes` (1-12) solo se usa en anual."""
+    if periodicidad not in PERIODICIDADES_RECURRENTES:
+        raise ValueError(f"Periodicidad no válida: {periodicidad}")
     conn = get_connection()
     try:
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
         cur = conn.execute(
-            "INSERT INTO tareas_recurrentes (usuario_id, categoria_id, asunto, periodicidad, dia, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (usuario_id, categoria_id, asunto.strip(), periodicidad, dia, now_iso()),
+            "INSERT INTO tareas_recurrentes (usuario_id, categoria_id, asunto, periodicidad, dia, mes, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (usuario_id, categoria_id, asunto.strip(), periodicidad, dia, mes, now_iso()),
         )
         conn.commit()
         return cur.lastrowid
@@ -4225,6 +4363,9 @@ def generar_tareas_recurrentes() -> int:
     varias veces el mismo día no duplica nada, mismo criterio que
     generar_vencimientos_automaticos()."""
     hoy = datetime.now()
+    hoy_iso = hoy.strftime("%Y-%m-%d")
+    manana_iso = (hoy + timedelta(days=1)).strftime("%Y-%m-%d")
+    inicio_anio, fin_anio = f"{hoy.year}-01-01", f"{hoy.year + 1}-01-01"
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).strftime("%Y-%m-%d")
     fin_semana = (hoy - timedelta(days=hoy.weekday()) + timedelta(days=7)).strftime("%Y-%m-%d")
     inicio_mes = hoy.replace(day=1).strftime("%Y-%m-%d")
@@ -4239,10 +4380,22 @@ def generar_tareas_recurrentes() -> int:
     try:
         reglas = conn.execute("SELECT * FROM tareas_recurrentes WHERE activa = 1").fetchall()
         for regla in reglas:
-            if regla["periodicidad"] == "semanal":
+            periodicidad = regla["periodicidad"]
+            if periodicidad == "diaria":
+                le_toca_hoy, (desde, hasta) = True, (hoy_iso, manana_iso)
+            elif periodicidad == "laborables":
+                le_toca_hoy, (desde, hasta) = hoy.weekday() < 5, (hoy_iso, manana_iso)
+            elif periodicidad == "semanal":
                 le_toca_hoy = hoy.weekday() == regla["dia"]
                 desde, hasta = inicio_semana, fin_semana
-            else:
+            elif periodicidad == "trimestral":
+                # Primer mes de cada trimestre (enero, abril, julio, octubre).
+                le_toca_hoy = hoy.month in (1, 4, 7, 10) and hoy.day == min(regla["dia"], ultimo_dia_del_mes)
+                desde, hasta = inicio_mes, fin_mes
+            elif periodicidad == "anual":
+                le_toca_hoy = hoy.month == (regla["mes"] or 1) and hoy.day == min(regla["dia"], ultimo_dia_del_mes)
+                desde, hasta = inicio_anio, fin_anio
+            else:  # mensual
                 dia_efectivo = min(regla["dia"], ultimo_dia_del_mes)
                 le_toca_hoy = hoy.day == dia_efectivo
                 desde, hasta = inicio_mes, fin_mes
@@ -4275,8 +4428,17 @@ def listar_tareas_outlook(
     excluir_completadas: bool = False,
     limite: int | None = None,
     offset: int = 0,
+    incluir_asignadas: bool = False,
+    solo_asignadas: bool = False,
+    categoria_id: int | None = None,
+    cliente_fiscal_id: int | None = None,
 ) -> list[sqlite3.Row]:
     """Tareas activas (no en la papelera), filtradas opcionalmente.
+
+    Por defecto solo las del propio usuario (las llamadas existentes -- API,
+    MCP, exportaciones -- no cambian). `incluir_asignadas`: añade las que un
+    compañero le ha asignado; `solo_asignadas`: solo esas. `categoria_id`
+    filtra por proyecto y `cliente_fiscal_id` por cliente.
 
     `desde`/`hasta` filtran por fecha_vencimiento (YYYY-MM-DD, inclusive) —
     los usa la vista calendario para pedir solo las de un rango de días.
@@ -4294,8 +4456,16 @@ def listar_tareas_outlook(
         # t.usuario_id/t.papelera_en llevan el prefijo de tabla porque
         # categorias también tiene esas dos columnas (JOIN ambiguo si no);
         # el resto de condiciones no lo necesitan, son propias de tareas_outlook.
-        cond = ["t.usuario_id = ?", "t.papelera_en IS NULL"]
-        params: list = [usuario_id]
+        if solo_asignadas:
+            cond, params = ["t.asignada_a = ?", "t.papelera_en IS NULL"], [usuario_id]
+        elif incluir_asignadas:
+            cond, params = ["(t.usuario_id = ? OR t.asignada_a = ?)", "t.papelera_en IS NULL"], [usuario_id, usuario_id]
+        else:
+            cond, params = ["t.usuario_id = ?", "t.papelera_en IS NULL"], [usuario_id]
+        if categoria_id is not None:
+            cond.append("t.categoria_id = ?"); params.append(categoria_id)
+        if cliente_fiscal_id is not None:
+            cond.append("t.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
         if estado:
             cond.append("estado = ?"); params.append(estado)
         elif excluir_completadas:
@@ -4312,8 +4482,14 @@ def listar_tareas_outlook(
         if hasta:
             cond.append("fecha_vencimiento < ?"); params.append(_fecha_exclusiva(hasta))
         where = " AND ".join(cond)
-        query = f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+        query = f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color,
+                       COALESCE(NULLIF(pa.nombre_mostrado, ''), ua.email) AS asignada_nombre,
+                       COALESCE(NULLIF(po.nombre_mostrado, ''), uo.email) AS creador_nombre,
+                       cf.nombre AS cliente_fiscal_nombre
                 FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
+                LEFT JOIN usuarios ua ON ua.id = t.asignada_a LEFT JOIN usuario_perfil pa ON pa.usuario_id = t.asignada_a
+                LEFT JOIN usuarios uo ON uo.id = t.usuario_id LEFT JOIN usuario_perfil po ON po.usuario_id = t.usuario_id
+                LEFT JOIN clientes_fiscales cf ON cf.id = t.cliente_fiscal_id
                 WHERE {where}
                 ORDER BY (t.fecha_vencimiento IS NULL), t.fecha_vencimiento, t.prioridad DESC"""
         if limite is not None:
@@ -4332,6 +4508,22 @@ def obtener_tarea_outlook(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
                FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
                WHERE t.id = ? AND t.usuario_id = ? AND t.papelera_en IS NULL""",
             (tarea_id, usuario_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def obtener_tarea_outlook_visible(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
+    """Como obtener_tarea_outlook, pero también para quien la tiene ASIGNADA:
+    puede verla, completarla, cambiarle el estado, marcar su checklist y
+    dedicarle tiempo; editarla o eliminarla sigue siendo solo del dueño."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+               FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
+               WHERE t.id = ? AND (t.usuario_id = ? OR t.asignada_a = ?) AND t.papelera_en IS NULL""",
+            (tarea_id, usuario_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
@@ -4376,13 +4568,17 @@ def upsert_tarea_outlook_por_entry_id(usuario_id: int, outlook_entry_id: str | N
 
 def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
     """Actualiza los campos indicados (cualquiera de CAMPOS_TAREA_OUTLOOK)."""
-    columnas = [c for c in campos if c in CAMPOS_TAREA_OUTLOOK]
+    columnas = [c for c in campos if c in CAMPOS_TAREA_OUTLOOK or c in ("cliente_fiscal_id", "mensaje_correo_id")]
     if not columnas:
         return
     conn = get_connection()
     try:
         if "categoria_id" in campos:
             campos["categoria_id"] = _categoria_id_propio(conn, usuario_id, campos["categoria_id"])
+        if "cliente_fiscal_id" in campos:
+            campos["cliente_fiscal_id"] = _cliente_fiscal_id_del_tenant(conn, usuario_id, campos["cliente_fiscal_id"])
+        if "mensaje_correo_id" in campos:
+            campos["mensaje_correo_id"] = _mensaje_correo_id_propio(conn, usuario_id, campos["mensaje_correo_id"])
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
         conn.execute(
@@ -4395,18 +4591,258 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
 
 
 def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
+    """Completa la tarea (la puede completar su dueño o quien la tiene
+    asignada) y cierra los cronómetros que siguieran en marcha sobre ella."""
     conn = get_connection()
     try:
-        conn.execute(
+        cur = conn.execute(
             """UPDATE tareas_outlook
                SET estado = 'completada', porcentaje_completado = 100,
                    fecha_completada = ?, actualizada_en = ?
-               WHERE id = ? AND usuario_id = ?""",
-            (now_iso(), now_iso(), tarea_id, usuario_id),
+               WHERE id = ? AND (usuario_id = ? OR asignada_a = ?)""",
+            (now_iso(), now_iso(), tarea_id, usuario_id, usuario_id),
         )
         conn.commit()
+        abiertos = conn.execute(
+            "SELECT id, usuario_id FROM tareas WHERE tarea_outlook_id = ? AND tipo = 'duracion' "
+            "AND estado IN ('en_curso', 'pausada') AND papelera_en IS NULL",
+            (tarea_id,),
+        ).fetchall() if cur.rowcount else []
     finally:
         conn.close()
+    for abierto in abiertos:
+        finalizar_tarea(abierto["usuario_id"], abierto["id"])
+
+
+def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) -> bool:
+    """Cambia el estado (tablero). 'completada' pasa por completar_tarea_outlook
+    (porcentaje, fecha y cronómetros); al reabrir una completada se limpia su fecha."""
+    estados = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
+    if estado not in estados or obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        return False
+    if estado == "completada":
+        completar_tarea_outlook(usuario_id, tarea_id)
+        return True
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE tareas_outlook SET estado = ?, fecha_completada = NULL, actualizada_en = ?,
+                   porcentaje_completado = CASE WHEN estado = 'completada' THEN 0 ELSE porcentaje_completado END
+               WHERE id = ? AND (usuario_id = ? OR asignada_a = ?)""",
+            (estado, now_iso(), tarea_id, usuario_id, usuario_id),
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None) -> bool:
+    """Asigna la tarea a un compañero del mismo despacho (o la desasigna con
+    None). Solo su dueño. Devuelve False si no es suya o el compañero no es
+    válido."""
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+        ).fetchone() is None:
+            return False
+        destino = _companero_del_tenant(conn, usuario_id, asignada_a)
+        if asignada_a is not None and destino is None:
+            return False
+        conn.execute(
+            "UPDATE tareas_outlook SET asignada_a = ?, actualizada_en = ? WHERE id = ?", (destino, now_iso(), tarea_id)
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+# ---- Cronómetro enlazado a una tarea de la lista ---------------------------
+
+def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_id: int | None = None) -> int:
+    """Pone en marcha un registro de tiempo (tareas) enlazado a esta tarea de
+    la lista. Quien lo inicia es quien registra el tiempo. Necesita un
+    proyecto: el de la tarea o el indicado."""
+    tarea = obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if tarea is None:
+        raise ValueError("La tarea no existe.")
+    conn = get_connection()
+    try:
+        en_marcha = conn.execute(
+            "SELECT 1 FROM tareas WHERE tarea_outlook_id = ? AND usuario_id = ? AND estado IN ('en_curso', 'pausada') "
+            "AND papelera_en IS NULL",
+            (tarea_id, usuario_id),
+        ).fetchone()
+    finally:
+        conn.close()
+    if en_marcha:
+        raise ValueError("Esta tarea ya tiene el cronómetro en marcha.")
+    proyecto = categoria_id or tarea["categoria_id"]
+    if proyecto is None:
+        raise ValueError("Elige un proyecto para registrar el tiempo de esta tarea.")
+    nuevo = crear_tarea(usuario_id, tarea["asunto"], proyecto, "duracion", tarea_outlook_id=tarea_id)
+    if tarea["estado"] == "no_iniciada":
+        cambiar_estado_tarea_outlook(usuario_id, tarea_id, "en_progreso")
+    return nuevo
+
+
+def cronometros_de_tareas_outlook(usuario_id: int, tarea_ids: list[int]) -> dict[int, dict]:
+    """Por tarea de la lista: el tiempo ya registrado por este usuario
+    (`total_segundos`, cronómetros finalizados) y su cronómetro en marcha o
+    en pausa, si lo hay (`activo`, con el formato de tareas_activas)."""
+    if not tarea_ids:
+        return {}
+    resultado = {i: {"total_segundos": 0, "activo": None} for i in tarea_ids}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        for f in conn.execute(
+            f"""SELECT tarea_outlook_id, COALESCE(SUM(duracion_segundos), 0) AS total FROM tareas
+                WHERE usuario_id = ? AND estado = 'finalizada' AND papelera_en IS NULL
+                  AND tarea_outlook_id IN ({marcas}) GROUP BY tarea_outlook_id""",
+            [usuario_id, *tarea_ids],
+        ):
+            resultado[f["tarea_outlook_id"]]["total_segundos"] = f["total"]
+    finally:
+        conn.close()
+    for activa in tareas_activas(usuario_id):
+        enlace = activa.get("tarea_outlook_id")
+        if enlace in resultado:
+            resultado[enlace]["activo"] = activa
+    return resultado
+
+
+# ---- Checklist (subtareas) -------------------------------------------------
+
+CHECKLIST_MAX_ITEMS = 50
+CHECKLIST_MAX_CARACTERES = 200
+
+
+def listar_checklist(tarea_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM tarea_checklist WHERE tarea_outlook_id = ? ORDER BY orden, id", (tarea_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def resumen_checklist(tarea_ids: list[int]) -> dict[int, tuple[int, int]]:
+    """{tarea_id: (hechas, total)} solo para las tareas que tienen items."""
+    if not tarea_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        return {
+            f["tarea_outlook_id"]: (f["hechas"], f["total"])
+            for f in conn.execute(
+                f"""SELECT tarea_outlook_id, SUM(hecha) AS hechas, COUNT(*) AS total FROM tarea_checklist
+                    WHERE tarea_outlook_id IN ({marcas}) GROUP BY tarea_outlook_id""",
+                tarea_ids,
+            )
+        }
+    finally:
+        conn.close()
+
+
+def _recalcular_porcentaje_checklist(conn: sqlite3.Connection, tarea_id: int) -> None:
+    fila = conn.execute(
+        "SELECT SUM(hecha) AS hechas, COUNT(*) AS total FROM tarea_checklist WHERE tarea_outlook_id = ?", (tarea_id,)
+    ).fetchone()
+    if fila["total"]:
+        conn.execute(
+            "UPDATE tareas_outlook SET porcentaje_completado = ? WHERE id = ? AND estado != 'completada'",
+            (round(100 * (fila["hechas"] or 0) / fila["total"]), tarea_id),
+        )
+
+
+def agregar_item_checklist(usuario_id: int, tarea_id: int, texto: str) -> int | None:
+    """Solo el dueño de la tarea. Devuelve el id, o None si no procede."""
+    texto = " ".join((texto or "").split())[:CHECKLIST_MAX_CARACTERES]
+    if not texto:
+        return None
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+        ).fetchone() is None:
+            return None
+        actuales = conn.execute("SELECT COUNT(*) AS n, COALESCE(MAX(orden), 0) AS m FROM tarea_checklist WHERE tarea_outlook_id = ?", (tarea_id,)).fetchone()
+        if actuales["n"] >= CHECKLIST_MAX_ITEMS:
+            return None
+        cur = conn.execute(
+            "INSERT INTO tarea_checklist (tarea_outlook_id, texto, orden) VALUES (?, ?, ?)", (tarea_id, texto, actuales["m"] + 1)
+        )
+        _recalcular_porcentaje_checklist(conn, tarea_id)
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def alternar_item_checklist(usuario_id: int, item_id: int) -> bool:
+    """Marca o desmarca un item: lo puede hacer el dueño o quien tiene la tarea asignada."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
+               WHERE i.id = ? AND (t.usuario_id = ? OR t.asignada_a = ?) AND t.papelera_en IS NULL""",
+            (item_id, usuario_id, usuario_id),
+        ).fetchone()
+        if fila is None:
+            return False
+        conn.execute("UPDATE tarea_checklist SET hecha = 1 - hecha WHERE id = ?", (item_id,))
+        _recalcular_porcentaje_checklist(conn, fila["tarea_outlook_id"])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def eliminar_item_checklist(usuario_id: int, item_id: int) -> bool:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
+               WHERE i.id = ? AND t.usuario_id = ?""",
+            (item_id, usuario_id),
+        ).fetchone()
+        if fila is None:
+            return False
+        conn.execute("DELETE FROM tarea_checklist WHERE id = ?", (item_id,))
+        _recalcular_porcentaje_checklist(conn, fila["tarea_outlook_id"])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def tareas_para_hoy(usuario_id: int) -> dict[str, list]:
+    """"Mi día": lo pendiente (propio o asignado) que hay que mirar hoy.
+    `vencidas` (vencimiento anterior a hoy), `hoy` (vence hoy), `en_progreso`
+    (en progreso sin vencimiento hoy/anterior) y `asignadas` (asignadas a mí,
+    pendientes, que no estén ya en otra sección)."""
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    vistas: set[int] = set()
+    secciones: dict[str, list] = {"vencidas": [], "hoy": [], "en_progreso": [], "asignadas": []}
+    for t in listar_tareas_outlook(usuario_id, excluir_completadas=True, incluir_asignadas=True):
+        fecha = (t["fecha_vencimiento"] or "")[:10]
+        if fecha and fecha < hoy:
+            secciones["vencidas"].append(t)
+        elif fecha == hoy:
+            secciones["hoy"].append(t)
+        elif t["estado"] == "en_progreso":
+            secciones["en_progreso"].append(t)
+        elif t["asignada_a"] == usuario_id:
+            secciones["asignadas"].append(t)
+        else:
+            continue
+        vistas.add(t["id"])
+    return secciones
 
 
 def eliminar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:

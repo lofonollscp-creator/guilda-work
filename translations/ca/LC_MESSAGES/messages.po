@@ -292,9 +292,8 @@ msgid "Fichaje"
 msgstr "Fitxatge"
 
 #: app/templates/backoffice.html:215
-#, fuzzy
 msgid "Alta"
-msgstr "Anotar"
+msgstr "Alta"
 
 #: app/templates/backoffice.html:226 app/templates/backoffice.html:262
 #: app/templates/backoffice.html:325
@@ -974,17 +973,15 @@ msgid "Mover a…"
 msgstr "Moure avall"
 
 #: app/templates/correo_bandeja.html:70
-#, fuzzy
 msgid "Mover"
-msgstr "Moure avall"
+msgstr "Mou"
 
 #: app/templates/correo_bandeja.html:73 app/templates/editar_nota.html:18
 #: app/templates/editar_tarea.html:36
 #: app/templates/tarea_outlook_editar.html:72
 #: app/templates/tiquet_editar.html:49
-#, fuzzy
 msgid "Cancelar"
-msgstr "Crear"
+msgstr "Cancel·la"
 
 #: app/templates/correo_bandeja.html:79
 msgid "No hay mensajes. Pulsa \"Sincronizar\" para buscar los nuevos."
@@ -1218,9 +1215,8 @@ msgstr "Llista amb pics"
 #: app/templates/correo_redactar.html:67 app/templates/correo_redactar.html:68
 #: app/templates/tareas_calendario.html:12 app/templates/tareas_lista.html:12
 #: app/templates/tareas_outlook_sync.html:12
-#, fuzzy
 msgid "Lista"
-msgstr "Sistema"
+msgstr "Llista"
 
 #: app/templates/correo_redactar.html:68
 msgid "Lista numerada"
@@ -1256,9 +1252,8 @@ msgstr "Nota ràpida"
 
 #: app/templates/editar_nota.html:26 app/templates/editar_tarea.html:44
 #: app/templates/tareas_lista.html:109
-#, fuzzy
 msgid "No se pudo eliminar. Inténtalo de nuevo."
-msgstr "Error en comprovar, torna-ho a provar"
+msgstr "No s'ha pogut eliminar. Torna-ho a provar."
 
 #: app/templates/editar_nota.html:30
 msgid "Eliminar nota"
@@ -1272,9 +1267,8 @@ msgstr "Esdeveniment"
 #: app/templates/editar_tarea.html:2 app/templates/editar_tarea.html:6
 #: app/templates/tarea_outlook_editar.html:2
 #: app/templates/tarea_outlook_editar.html:6
-#, fuzzy
 msgid "Editar tarea"
-msgstr "Nova tasca"
+msgstr "Edita la tasca"
 
 #: app/templates/editar_tarea.html:21
 #, fuzzy
@@ -1320,9 +1314,8 @@ msgid "Evento eliminado."
 msgstr "Esdeveniment instantani"
 
 #: app/templates/editar_tarea.html:43 app/templates/tareas_lista.html:108
-#, fuzzy
 msgid "Tarea eliminada."
-msgstr "Tasques finalitzades"
+msgstr "Tasca eliminada."
 
 #: app/templates/editar_tarea.html:48
 msgid "Eliminar evento"
@@ -1330,9 +1323,8 @@ msgstr "Eliminar esdeveniment"
 
 #: app/templates/editar_tarea.html:48
 #: app/templates/tarea_outlook_editar.html:78
-#, fuzzy
 msgid "Eliminar tarea"
-msgstr "Nova tasca"
+msgstr "Elimina la tasca"
 
 #: app/templates/estadisticas.html:7
 msgid "Tiempo dedicado a tareas con duración, por proyecto y por día."
@@ -1354,17 +1346,15 @@ msgstr "Fins a"
 #: app/templates/fichaje_admin_detalle.html:18
 #: app/templates/fichaje_historial.html:23 app/templates/historial.html:23
 #: app/templates/tareas_lista.html:45
-#, fuzzy
 msgid "Filtrar"
-msgstr "Entrar"
+msgstr "Filtra"
 
 #: app/templates/estadisticas.html:15 app/templates/fichaje_admin.html:36
 #: app/templates/fichaje_admin_detalle.html:19
 #: app/templates/fichaje_historial.html:24 app/templates/historial.html:24
 #: app/templates/tareas_lista.html:47
-#, fuzzy
 msgid "Limpiar"
-msgstr "Importar"
+msgstr "Neteja"
 
 #: app/templates/estadisticas.html:19
 msgid "Por proyecto"
@@ -1771,9 +1761,8 @@ msgstr "Cerca a l'històric"
 #: app/templates/docs/pagina.html:136 app/templates/historial.html:75
 #: app/templates/historial.html:77 app/templates/tareas_calendario.html:19
 #: app/templates/tareas_lista.html:120 app/templates/tareas_lista.html:122
-#, fuzzy
 msgid "Anterior"
-msgstr "Obrir"
+msgstr "Anterior"
 
 #: app/templates/historial.html:79 app/templates/tareas_lista.html:124
 #, python-format
@@ -2222,29 +2211,24 @@ msgid "Algo puntual que acaba de ocurrir..."
 msgstr "Alguna cosa puntual que acaba de passar..."
 
 #: app/templates/menu.html:52
-#, fuzzy
 msgid "Registrar"
-msgstr "Registra't"
+msgstr "Registrar"
 
 #: app/templates/menu.html:59
-#, fuzzy
 msgid "Tarea con duración"
-msgstr "tasques en curs"
+msgstr "Tasca amb durada"
 
 #: app/templates/menu.html:61
-#, fuzzy
 msgid "Nombre de la tarea a iniciar..."
-msgstr "Nom de la tasca"
+msgstr "Nom de la tasca a iniciar..."
 
 #: app/templates/menu.html:68
-#, fuzzy
 msgid "Gestionar frases favoritas"
-msgstr "Fixar a preferits"
+msgstr "Gestiona les frases preferides"
 
 #: app/templates/menu.html:77 app/templates/tiquet_editar.html:61
-#, fuzzy
 msgid "Quitar"
-msgstr "Editar"
+msgstr "Treure"
 
 #: app/templates/menu.html:83
 msgid ""
@@ -2261,9 +2245,8 @@ msgid "Añadir"
 msgstr "Afegir"
 
 #: app/templates/menu.html:94
-#, fuzzy
 msgid "En curso ahora"
-msgstr "En curs"
+msgstr "En curs ara"
 
 #: app/templates/menu.html:104
 msgid "Lleva mucho tiempo activa — ¿se te olvidó finalizarla?"
@@ -2274,19 +2257,16 @@ msgid "lleva mucho rato"
 msgstr "fa molta estona"
 
 #: app/templates/menu.html:108
-#, fuzzy
 msgid "Reanudar"
-msgstr "Crear"
+msgstr "Represa"
 
 #: app/templates/menu.html:112
-#, fuzzy
 msgid "Pausar"
-msgstr "En pausa"
+msgstr "Pausa"
 
 #: app/templates/menu.html:116
-#, fuzzy
 msgid "Finalizar"
-msgstr "Iniciar"
+msgstr "Finalitza"
 
 #: app/templates/menu.html:127
 #, python-format
@@ -2315,9 +2295,8 @@ msgid "Empieza por lo que te resulte más natural ahora mismo:"
 msgstr "Comença pel que et resulti més natural ara mateix:"
 
 #: app/templates/menu.html:142
-#, fuzzy
 msgid "Escribe tu primera nota"
-msgstr "Crea el teu primer menú"
+msgstr "Escriu la teva primera nota"
 
 #: app/templates/menu.html:143
 msgid "Inicia tu primera tarea con duración"
@@ -2465,9 +2444,8 @@ msgid "Prioridad"
 msgstr "Prioritat"
 
 #: app/templates/tarea_outlook_editar.html:38
-#, fuzzy
 msgid "completado"
-msgstr "Comprovat"
+msgstr "completat"
 
 #: app/templates/tarea_outlook_editar.html:44
 #: app/templates/tareas_lista.html:58
@@ -2493,9 +2471,8 @@ msgid "Completada el %(fecha)s."
 msgstr "Completada el %(fecha)s."
 
 #: app/templates/tareas_calendario.html:2
-#, fuzzy
 msgid "Calendario de tareas"
-msgstr "Amagar aquesta targeta"
+msgstr "Calendari de tasques"
 
 #: app/templates/tareas_calendario.html:7
 msgid ""
@@ -2518,14 +2495,12 @@ msgid "Semana laboral"
 msgstr "Setmana laboral"
 
 #: app/templates/tareas_calendario.html:25
-#, fuzzy
 msgid "Semana"
-msgstr "Sistema"
+msgstr "Setmana"
 
 #: app/templates/tareas_calendario.html:25
-#, fuzzy
 msgid "Mes"
-msgstr "Menús"
+msgstr "Mes"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
@@ -2544,9 +2519,8 @@ msgstr "Dc"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
-#, fuzzy
 msgid "Jue"
-msgstr "Ajustos"
+msgstr "Dj"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
@@ -2560,9 +2534,8 @@ msgstr "Ds"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
-#, fuzzy
 msgid "Dom"
-msgstr "Idioma"
+msgstr "Dg"
 
 #: app/templates/tareas_calendario.html:50
 #, python-format
@@ -2576,23 +2549,20 @@ msgid ""
 msgstr "No hi ha tasques aquest dia. Fes clic en una franja horària de sota per crear-ne una."
 
 #: app/templates/tareas_calendario.html:92
-#, fuzzy
 msgid "Sin tareas"
-msgstr "Tasques"
+msgstr "Sense tasques"
 
 #: app/templates/tareas_calendario.html:108
-#, fuzzy
 msgid "Asunto de la tarea..."
-msgstr "Nom de la tasca"
+msgstr "Assumpte de la tasca..."
 
 #: app/templates/tareas_calendario.html:121 app/templates/tareas_lista.html:71
 msgid "Categoría Outlook (opcional)"
 msgstr "Categoria Outlook (opcional)"
 
 #: app/templates/tareas_calendario.html:127
-#, fuzzy
 msgid "Crear tarea"
-msgstr "Nova tasca"
+msgstr "Crea la tasca"
 
 #: app/templates/tareas_lista.html:7
 msgid "Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado."
@@ -2636,9 +2606,8 @@ msgid "¿Eliminar esta tarea? Se moverá a la papelera."
 msgstr "Vols eliminar aquesta tasca? Es mourà a la paperera."
 
 #: app/templates/tareas_lista.html:118
-#, fuzzy
 msgid "Paginación de tareas"
-msgstr "Administració de fitxatge"
+msgstr "Paginació de tasques"
 
 #: app/templates/tareas_outlook_sync.html:2
 msgid "Sincronizar con Outlook"
@@ -2651,9 +2620,8 @@ msgid ""
 msgstr "Importar i exportar amb Microsoft Outlook Classic mitjançant fitxer (.ics / .csv)."
 
 #: app/templates/tareas_outlook_sync.html:23
-#, fuzzy
 msgid "creadas"
-msgstr "Crear"
+msgstr "creades"
 
 #: app/templates/tareas_outlook_sync.html:24
 msgid "actualizadas"
@@ -2932,3 +2900,278 @@ msgstr "Nou títol de la conversa"
 #: app/templates/ia_asistente.html
 msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
 msgstr "Vols eliminar aquesta conversa i tots els seus missatges? No es pot desfer."
+
+msgid "No iniciada"
+msgstr "No iniciada"
+
+msgid "En progreso"
+msgstr "En curs"
+
+msgid "Completada"
+msgstr "Completada"
+
+msgid "Esperando a otros"
+msgstr "Esperant altres"
+
+msgid "Aplazada"
+msgstr "Ajornada"
+
+msgid "Baja"
+msgstr "Baixa"
+
+msgid "enero"
+msgstr "gener"
+
+msgid "febrero"
+msgstr "febrer"
+
+msgid "marzo"
+msgstr "març"
+
+msgid "abril"
+msgstr "abril"
+
+msgid "mayo"
+msgstr "maig"
+
+msgid "junio"
+msgstr "juny"
+
+msgid "julio"
+msgstr "juliol"
+
+msgid "agosto"
+msgstr "agost"
+
+msgid "septiembre"
+msgstr "setembre"
+
+msgid "octubre"
+msgstr "octubre"
+
+msgid "noviembre"
+msgstr "novembre"
+
+msgid "diciembre"
+msgstr "desembre"
+
+msgid "Lunes"
+msgstr "Dilluns"
+
+msgid "Martes"
+msgstr "Dimarts"
+
+msgid "Miércoles"
+msgstr "Dimecres"
+
+msgid "Jueves"
+msgstr "Dijous"
+
+msgid "Viernes"
+msgstr "Divendres"
+
+msgid "Sábado"
+msgstr "Dissabte"
+
+msgid "Domingo"
+msgstr "Diumenge"
+
+msgid "Cada día"
+msgstr "Cada dia"
+
+msgid "Cada día laborable (lunes a viernes)"
+msgstr "Cada dia laborable (de dilluns a divendres)"
+
+msgid "Cada semana"
+msgstr "Cada setmana"
+
+msgid "Cada mes"
+msgstr "Cada mes"
+
+msgid "Cada trimestre (enero, abril, julio, octubre)"
+msgstr "Cada trimestre (gener, abril, juliol, octubre)"
+
+msgid "Cada año"
+msgstr "Cada any"
+
+msgid "tareas para hoy"
+msgstr "tasques per avui"
+
+msgid "vencimientos próximos"
+msgstr "venciments propers"
+
+msgid "Icono"
+msgstr "Icona"
+
+msgid "Tareas pendientes"
+msgstr "Tasques pendents"
+
+msgid "Ver todas"
+msgstr "Veure-les totes"
+
+msgid "Cliente"
+msgstr "Client"
+
+msgid "Sin cliente"
+msgstr "Sense client"
+
+msgid "Asignar a"
+msgstr "Assigna a"
+
+msgid "Sin asignar"
+msgstr "Sense assignar"
+
+msgid "Subtareas"
+msgstr "Subtasques"
+
+msgid "Marcar o desmarcar"
+msgstr "Marca o desmarca"
+
+msgid "Nueva subtarea"
+msgstr "Nova subtasca"
+
+msgid "Añadir una subtarea..."
+msgstr "Afegeix una subtasca..."
+
+msgid "Tiempo dedicado"
+msgstr "Temps dedicat"
+
+msgid "Registrado hasta ahora:"
+msgstr "Registrat fins ara:"
+
+msgid "Todavía no has registrado tiempo en esta tarea."
+msgstr "Encara no has registrat temps en aquesta tasca."
+
+msgid "Hay un cronómetro en marcha: páralo desde la lista de tareas."
+msgstr "Hi ha un cronòmetre en marxa: atura'l des de la llista de tasques."
+
+msgid "Proyecto en el que registrar el tiempo"
+msgstr "Projecte on registrar el temps"
+
+msgid "Proyecto..."
+msgstr "Projecte..."
+
+msgid "Iniciar el cronómetro"
+msgstr "Inicia el cronòmetre"
+
+msgid "Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado."
+msgstr "Les teves tasques amb venciment, prioritat i estat, amb cronòmetre opcional per registrar el temps dedicat."
+
+msgid "Mostrar"
+msgstr "Mostra"
+
+msgid "Mías y asignadas a mí"
+msgstr "Meves i assignades a mi"
+
+msgid "Solo las mías"
+msgstr "Només les meves"
+
+msgid "Asignadas a mí"
+msgstr "Assignades a mi"
+
+msgid "Iniciar cronómetro"
+msgstr "Inicia el cronòmetre"
+
+msgid "Elegir archivo"
+msgstr "Tria un fitxer"
+
+msgid "Ningún archivo elegido"
+msgstr "Cap fitxer triat"
+
+msgid "Tareas recurrentes"
+msgstr "Tasques recurrents"
+
+msgid "Reglas que generan una tarea nueva automáticamente: cada día, semana, mes, trimestre o año."
+msgstr "Regles que generen una tasca nova automàticament: cada dia, setmana, mes, trimestre o any."
+
+msgid "Nueva regla"
+msgstr "Nova regla"
+
+msgid "Asunto de la tarea"
+msgstr "Assumpte de la tasca"
+
+msgid "Periodicidad"
+msgstr "Periodicitat"
+
+msgid "Día de la semana (si es semanal)"
+msgstr "Dia de la setmana (si és setmanal)"
+
+msgid "Día del mes (si es mensual, trimestral o anual)"
+msgstr "Dia del mes (si és mensual, trimestral o anual)"
+
+msgid "Mes (si es anual)"
+msgstr "Mes (si és anual)"
+
+msgid "Solo se usa el día o el mes que corresponde a la periodicidad elegida; en cada día y cada día laborable no hace falta ninguno."
+msgstr "Només s'utilitza el dia o el mes que correspon a la periodicitat triada; en cada dia i cada dia laborable no cal cap."
+
+msgid "Crear regla"
+msgstr "Crea la regla"
+
+msgid "Activa"
+msgstr "Activa"
+
+msgid "Pausada"
+msgstr "En pausa"
+
+msgid "Reactivar"
+msgstr "Reactiva"
+
+msgid "Todavía no tienes ninguna regla de tarea recurrente."
+msgstr "Encara no tens cap regla de tasca recurrent."
+
+msgid "Correo de origen"
+msgstr "Correu d'origen"
+
+msgid "Asignada"
+msgstr "Assignada"
+
+#, python-format
+msgid "De %(quien)s"
+msgstr "De %(quien)s"
+
+#, python-format
+msgid "Para %(quien)s"
+msgstr "Per a %(quien)s"
+
+msgid "Detener el cronómetro"
+msgstr "Atura el cronòmetre"
+
+msgid "Cronómetro"
+msgstr "Cronòmetre"
+
+msgid "Tiempo registrado"
+msgstr "Temps registrat"
+
+msgid "Mi día"
+msgstr "El meu dia"
+
+msgid "Tablero"
+msgstr "Kanban"
+
+msgid "Recurrentes"
+msgstr "Recurrents"
+
+msgid "Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas en marcha y lo que te han asignado."
+msgstr "El que has de mirar avui: el que ha vençut, el que venç avui, el que portes en marxa i el que t'han assignat."
+
+msgid "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo."
+msgstr "No tens res pendent per a avui. Bon moment per avançar feina."
+
+msgid "Vencidas"
+msgstr "Vençudes"
+
+msgid "Vencen hoy"
+msgstr "Venceixen avui"
+
+msgid "Tablero de tareas"
+msgstr "Tauler de tasques"
+
+msgid "Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna."
+msgstr "Les teves tasques per estat. Fes servir el selector de cada targeta per moure-la de columna."
+
+msgid "Mover a"
+msgstr "Mou a"
+
+msgid "Nada aquí"
+msgstr "Res aquí"

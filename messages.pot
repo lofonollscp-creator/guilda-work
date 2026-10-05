@@ -2792,3 +2792,278 @@ msgstr ""
 #: app/templates/ia_asistente.html
 msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
 msgstr ""
+
+msgid "No iniciada"
+msgstr ""
+
+msgid "En progreso"
+msgstr ""
+
+msgid "Completada"
+msgstr ""
+
+msgid "Esperando a otros"
+msgstr ""
+
+msgid "Aplazada"
+msgstr ""
+
+msgid "Baja"
+msgstr ""
+
+msgid "enero"
+msgstr ""
+
+msgid "febrero"
+msgstr ""
+
+msgid "marzo"
+msgstr ""
+
+msgid "abril"
+msgstr ""
+
+msgid "mayo"
+msgstr ""
+
+msgid "junio"
+msgstr ""
+
+msgid "julio"
+msgstr ""
+
+msgid "agosto"
+msgstr ""
+
+msgid "septiembre"
+msgstr ""
+
+msgid "octubre"
+msgstr ""
+
+msgid "noviembre"
+msgstr ""
+
+msgid "diciembre"
+msgstr ""
+
+msgid "Lunes"
+msgstr ""
+
+msgid "Martes"
+msgstr ""
+
+msgid "Miércoles"
+msgstr ""
+
+msgid "Jueves"
+msgstr ""
+
+msgid "Viernes"
+msgstr ""
+
+msgid "Sábado"
+msgstr ""
+
+msgid "Domingo"
+msgstr ""
+
+msgid "Cada día"
+msgstr ""
+
+msgid "Cada día laborable (lunes a viernes)"
+msgstr ""
+
+msgid "Cada semana"
+msgstr ""
+
+msgid "Cada mes"
+msgstr ""
+
+msgid "Cada trimestre (enero, abril, julio, octubre)"
+msgstr ""
+
+msgid "Cada año"
+msgstr ""
+
+msgid "tareas para hoy"
+msgstr ""
+
+msgid "vencimientos próximos"
+msgstr ""
+
+msgid "Icono"
+msgstr ""
+
+msgid "Tareas pendientes"
+msgstr ""
+
+msgid "Ver todas"
+msgstr ""
+
+msgid "Cliente"
+msgstr ""
+
+msgid "Sin cliente"
+msgstr ""
+
+msgid "Asignar a"
+msgstr ""
+
+msgid "Sin asignar"
+msgstr ""
+
+msgid "Subtareas"
+msgstr ""
+
+msgid "Marcar o desmarcar"
+msgstr ""
+
+msgid "Nueva subtarea"
+msgstr ""
+
+msgid "Añadir una subtarea..."
+msgstr ""
+
+msgid "Tiempo dedicado"
+msgstr ""
+
+msgid "Registrado hasta ahora:"
+msgstr ""
+
+msgid "Todavía no has registrado tiempo en esta tarea."
+msgstr ""
+
+msgid "Hay un cronómetro en marcha: páralo desde la lista de tareas."
+msgstr ""
+
+msgid "Proyecto en el que registrar el tiempo"
+msgstr ""
+
+msgid "Proyecto..."
+msgstr ""
+
+msgid "Iniciar el cronómetro"
+msgstr ""
+
+msgid "Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado."
+msgstr ""
+
+msgid "Mostrar"
+msgstr ""
+
+msgid "Mías y asignadas a mí"
+msgstr ""
+
+msgid "Solo las mías"
+msgstr ""
+
+msgid "Asignadas a mí"
+msgstr ""
+
+msgid "Iniciar cronómetro"
+msgstr ""
+
+msgid "Elegir archivo"
+msgstr ""
+
+msgid "Ningún archivo elegido"
+msgstr ""
+
+msgid "Tareas recurrentes"
+msgstr ""
+
+msgid "Reglas que generan una tarea nueva automáticamente: cada día, semana, mes, trimestre o año."
+msgstr ""
+
+msgid "Nueva regla"
+msgstr ""
+
+msgid "Asunto de la tarea"
+msgstr ""
+
+msgid "Periodicidad"
+msgstr ""
+
+msgid "Día de la semana (si es semanal)"
+msgstr ""
+
+msgid "Día del mes (si es mensual, trimestral o anual)"
+msgstr ""
+
+msgid "Mes (si es anual)"
+msgstr ""
+
+msgid "Solo se usa el día o el mes que corresponde a la periodicidad elegida; en cada día y cada día laborable no hace falta ninguno."
+msgstr ""
+
+msgid "Crear regla"
+msgstr ""
+
+msgid "Activa"
+msgstr ""
+
+msgid "Pausada"
+msgstr ""
+
+msgid "Reactivar"
+msgstr ""
+
+msgid "Todavía no tienes ninguna regla de tarea recurrente."
+msgstr ""
+
+msgid "Correo de origen"
+msgstr ""
+
+msgid "Asignada"
+msgstr ""
+
+#, python-format
+msgid "De %(quien)s"
+msgstr ""
+
+#, python-format
+msgid "Para %(quien)s"
+msgstr ""
+
+msgid "Detener el cronómetro"
+msgstr ""
+
+msgid "Cronómetro"
+msgstr ""
+
+msgid "Tiempo registrado"
+msgstr ""
+
+msgid "Mi día"
+msgstr ""
+
+msgid "Tablero"
+msgstr ""
+
+msgid "Recurrentes"
+msgstr ""
+
+msgid "Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas en marcha y lo que te han asignado."
+msgstr ""
+
+msgid "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo."
+msgstr ""
+
+msgid "Vencidas"
+msgstr ""
+
+msgid "Vencen hoy"
+msgstr ""
+
+msgid "Tablero de tareas"
+msgstr ""
+
+msgid "Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna."
+msgstr ""
+
+msgid "Mover a"
+msgstr ""
+
+msgid "Nada aquí"
+msgstr ""

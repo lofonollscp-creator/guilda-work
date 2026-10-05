@@ -1,0 +1,9 @@
+{# Navegación de la sección Tareas. `subnav_activa`: lista | hoy | tablero | calendario | sincronizar | recurrentes #}
+<nav class="tareas-subnav">
+  <a class="{{ 'active' if subnav_activa == 'lista' }}" href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'hoy' }}" href="{{ url_for('tareas.hoy') }}">{{ _('Mi día') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'tablero' }}" href="{{ url_for('tareas.tablero') }}">{{ _('Tablero') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'calendario' }}" href="{{ url_for('tareas.calendario') }}">{{ _('Calendario') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'sincronizar' }}" href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'recurrentes' }}" href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
+</nav>

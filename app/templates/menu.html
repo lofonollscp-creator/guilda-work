@@ -129,6 +129,24 @@
 </section>
 {% endif %}
 
+{% if tareas_pendientes %}
+<section class="active-section">
+  <h3>{{ _('Tareas pendientes') }} <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Ver todas') }}</a></h3>
+  <ul class="log-list">
+    {% for t in tareas_pendientes %}
+    <li class="log-item tarea-outlook-item">
+      <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
+        <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}"></button>
+      </form>
+      <span class="log-text">{{ t.asunto }}</span>
+      <span class="pill prioridad-{{ t.prioridad }}">{{ t.prioridad }}</span>
+      {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 <section class="log-section">
   <div class="log-section-head">
     <h3>{{ _('Registro de %(nombre)s', nombre=menu.nombre) }}</h3>
