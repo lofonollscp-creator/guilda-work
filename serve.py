@@ -13,6 +13,8 @@ Variables de entorno:
     GUILDA_HOST         Dirección de escucha (por defecto 0.0.0.0).
     GUILDA_PORT         Puerto de escucha (por defecto 8000).
     GUILDA_THREADS      Hilos de waitress (por defecto 16; waitress trae 4).
+    GUILDA_CORREO_SYNC_MINUTOS  Cada cuántos minutos se sincroniza el correo de
+                        todas las cuentas (por defecto 5; 0 lo desactiva).
 
 Uso:
     python serve.py
@@ -36,7 +38,7 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 from waitress import serve
 
 from app import db
-from app.main import _recordatorio_vencimientos_fiscales, _resumen_ia_semanal, app
+from app.main import _recordatorio_vencimientos_fiscales, _resumen_ia_semanal, _sincronizacion_correo_servidor, app
 
 if __name__ == "__main__":
     db.init_db()
@@ -48,6 +50,10 @@ if __name__ == "__main__":
     # despliegue hospedado.
     threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
     threading.Thread(target=_resumen_ia_semanal, daemon=True).start()
+    # Auto-sync del correo de todas las cuentas (GUILDA_CORREO_SYNC_MINUTOS,
+    # 5 por defecto, 0 lo desactiva). _sincronizacion_correo_periodica sigue
+    # siendo solo de escritorio; esta es su versión multi-usuario.
+    threading.Thread(target=_sincronizacion_correo_servidor, daemon=True).start()
     host = os.environ.get("GUILDA_HOST", "0.0.0.0")
     port = int(os.environ.get("GUILDA_PORT", "8000"))
     # Caddy reenvía aquí por localhost (ver deploy/Caddyfile) mandando

@@ -1110,6 +1110,11 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "categoria_id", "INTEGER")
+        # Error de la última sincronización AUTOMÁTICA de la cuenta (ver
+        # correo.sincronizar_todas_las_cuentas): se muestra en Cuentas y en la
+        # bandeja para que una contraseña caducada no pase desapercibida.
+        _asegurar_columna(conn, "correo_cuentas", "ultimo_error_sincronizacion", "TEXT")
+        _asegurar_columna(conn, "correo_cuentas", "ultimo_error_sincronizacion_en", "TEXT")
         _asegurar_columna(conn, "correo_cuentas", "firma_html", "TEXT")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_nuevos", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_respuestas", "INTEGER NOT NULL DEFAULT 1")
@@ -5858,13 +5863,40 @@ def guardar_preferencias_correo(usuario_id: int, densidad: str, marcar_leido_aut
 
 
 def marcar_sincronizada_cuenta_correo(cuenta_id: int) -> None:
+    """Anota la sincronización correcta y limpia el último error."""
     conn = get_connection()
     try:
         conn.execute(
-            "UPDATE correo_cuentas SET ultima_sincronizacion = ? WHERE id = ?",
+            """UPDATE correo_cuentas
+               SET ultima_sincronizacion = ?, ultimo_error_sincronizacion = NULL,
+                   ultimo_error_sincronizacion_en = NULL
+               WHERE id = ?""",
             (now_iso(), cuenta_id),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+def marcar_error_sincronizacion_cuenta_correo(cuenta_id: int, error: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_cuentas SET ultimo_error_sincronizacion = ?, ultimo_error_sincronizacion_en = ? WHERE id = ?",
+            (error[:300], now_iso(), cuenta_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_todas_las_cuentas_correo() -> list[sqlite3.Row]:
+    """Cuentas de correo de TODOS los usuarios (id y usuario_id): las usa
+    la sincronización automática del servidor, que no tiene un usuario
+    concreto detrás."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT id, usuario_id FROM correo_cuentas ORDER BY id").fetchall()
     finally:
         conn.close()
 

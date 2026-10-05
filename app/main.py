@@ -1498,6 +1498,37 @@ def _sincronizacion_correo_periodica():
                 pass  # un fallo de esta cuenta no debe impedir sincronizar las demás
 
 
+SINCRONIZACION_CORREO_SERVIDOR_MINUTOS_POR_DEFECTO = 5
+SINCRONIZACION_CORREO_SERVIDOR_ESPERA_INICIAL_SEGUNDOS = 60
+
+
+def minutos_sincronizacion_correo_servidor() -> int:
+    """Intervalo (minutos) del auto-sync del servidor: GUILDA_CORREO_SYNC_MINUTOS,
+    5 por defecto; 0 (o un valor negativo) lo desactiva."""
+    try:
+        return int(os.environ.get("GUILDA_CORREO_SYNC_MINUTOS", SINCRONIZACION_CORREO_SERVIDOR_MINUTOS_POR_DEFECTO))
+    except ValueError:
+        return SINCRONIZACION_CORREO_SERVIDOR_MINUTOS_POR_DEFECTO
+
+
+def _sincronizacion_correo_servidor():
+    """Auto-sync del correo en el SERVIDOR (multi-usuario). A diferencia de
+    _sincronizacion_correo_periodica -- solo para la app de escritorio, un
+    único usuario --, recorre las cuentas de todos los usuarios. Sin esto,
+    en producción el correo solo se descargaba al pulsar "Sincronizar"
+    (sin avisos de correo nuevo, bandeja desactualizada)."""
+    minutos = minutos_sincronizacion_correo_servidor()
+    if minutos <= 0:
+        return
+    time.sleep(SINCRONIZACION_CORREO_SERVIDOR_ESPERA_INICIAL_SEGUNDOS)
+    while True:
+        try:
+            correo.sincronizar_todas_las_cuentas()
+        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en el auto-sync de correo del servidor")
+        time.sleep(minutos * 60)
+
+
 RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS = 24 * 60
 RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION = 7
 

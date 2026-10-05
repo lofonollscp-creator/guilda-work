@@ -1394,3 +1394,137 @@ def test_borradores_correo_son_privados_por_usuario(usuario_id):
     assert db.obtener_borrador_correo(otro_usuario_id, borrador_id) is None
     db.eliminar_borrador_correo(otro_usuario_id, borrador_id)  # no-op, no debe borrarlo
     assert db.obtener_borrador_correo(usuario_id, borrador_id) is not None
+
+
+# --- Sincronización automática de todas las cuentas (servidor) -------------
+
+@pytest.fixture
+def _estado_limpio_de_sincronizacion():
+    correo._fallos_consecutivos.clear()
+    correo._ciclos_omitidos.clear()
+    yield
+    correo._fallos_consecutivos.clear()
+    correo._ciclos_omitidos.clear()
+
+
+def _dos_cuentas_de_dos_usuarios(usuario_id):
+    otro = db.crear_usuario("otro-sync@ejemplo.com", "contrasena123")
+    c1 = db.crear_cuenta_correo(usuario_id, "A", "imap", "imap.a.com", 993, "a@a.com")
+    c2 = db.crear_cuenta_correo(otro, "B", "imap", "imap.b.com", 993, "b@b.com")
+    return c1, c2
+
+
+def _error_de(cuenta_id):
+    conn = db.get_connection()
+    try:
+        return conn.execute(
+            "SELECT ultimo_error_sincronizacion AS e FROM correo_cuentas WHERE id = ?", (cuenta_id,)
+        ).fetchone()["e"]
+    finally:
+        conn.close()
+
+
+def test_sincronizar_todas_procesa_las_cuentas_de_todos_los_usuarios(monkeypatch, usuario_id, _estado_limpio_de_sincronizacion):
+    c1, c2 = _dos_cuentas_de_dos_usuarios(usuario_id)
+    llamadas = []
+    monkeypatch.setattr(correo, "sincronizar_bandeja", lambda uid, cid: llamadas.append((uid, cid)) or {"nuevos": 2})
+
+    resumen = correo.sincronizar_todas_las_cuentas()
+
+    assert sorted(c for _, c in llamadas) == sorted([c1, c2])
+    assert len({u for u, _ in llamadas}) == 2  # cada cuenta con SU usuario
+    assert resumen == {"cuentas": 2, "nuevos": 4, "errores": 0, "omitidas": 0}
+
+
+def test_un_fallo_no_detiene_las_demas_y_queda_guardado_el_error(monkeypatch, usuario_id, _estado_limpio_de_sincronizacion):
+    c1, c2 = _dos_cuentas_de_dos_usuarios(usuario_id)
+
+    def sincronizar(uid, cid):
+        if cid == c1:
+            raise correo.ErrorCorreo("Usuario o contraseña incorrectos.")
+        return {"nuevos": 1}
+
+    monkeypatch.setattr(correo, "sincronizar_bandeja", sincronizar)
+    resumen = correo.sincronizar_todas_las_cuentas()
+
+    assert resumen["errores"] == 1 and resumen["nuevos"] == 1
+    assert _error_de(c1) == "Usuario o contraseña incorrectos."
+    assert _error_de(c2) is None
+
+
+def test_un_error_inesperado_tampoco_tumba_el_ciclo(monkeypatch, usuario_id, _estado_limpio_de_sincronizacion):
+    c1, c2 = _dos_cuentas_de_dos_usuarios(usuario_id)
+
+    def sincronizar(uid, cid):
+        if cid == c1:
+            raise RuntimeError("detalle interno con datos que no deben mostrarse")
+        return {"nuevos": 0}
+
+    monkeypatch.setattr(correo, "sincronizar_bandeja", sincronizar)
+    resumen = correo.sincronizar_todas_las_cuentas()
+
+    assert resumen["errores"] == 1
+    assert "detalle interno" not in _error_de(c1)  # solo el tipo, no el mensaje
+    assert "RuntimeError" in _error_de(c1)
+
+
+def test_el_error_se_limpia_al_sincronizar_bien(usuario_id):
+    c1 = db.crear_cuenta_correo(usuario_id, "A", "imap", "imap.a.com", 993, "a@a.com")
+    db.marcar_error_sincronizacion_cuenta_correo(c1, "Fallo")
+    assert _error_de(c1) == "Fallo"
+
+    db.marcar_sincronizada_cuenta_correo(c1)
+    assert _error_de(c1) is None
+
+
+def test_tras_tres_fallos_la_cuenta_se_reintenta_solo_cada_seis_ciclos(monkeypatch, usuario_id, _estado_limpio_de_sincronizacion):
+    db.crear_cuenta_correo(usuario_id, "A", "imap", "imap.a.com", 993, "a@a.com")
+    intentos = []
+
+    def siempre_falla(uid, cid):
+        intentos.append(cid)
+        raise correo.ErrorCorreo("Sin conexión.")
+
+    monkeypatch.setattr(correo, "sincronizar_bandeja", siempre_falla)
+
+    for _ in range(correo.FALLOS_PARA_FRENAR):
+        correo.sincronizar_todas_las_cuentas()
+    assert len(intentos) == correo.FALLOS_PARA_FRENAR
+
+    # Los siguientes ciclos (hasta el sexto) se omiten sin tocar el servidor.
+    omitidas = 0
+    for _ in range(correo.CICLOS_ENTRE_REINTENTOS_TRAS_FRENO - 1):
+        omitidas += correo.sincronizar_todas_las_cuentas()["omitidas"]
+    assert omitidas == correo.CICLOS_ENTRE_REINTENTOS_TRAS_FRENO - 1
+    assert len(intentos) == correo.FALLOS_PARA_FRENAR
+
+    correo.sincronizar_todas_las_cuentas()  # el sexto ciclo vuelve a intentarlo
+    assert len(intentos) == correo.FALLOS_PARA_FRENAR + 1
+
+
+def test_una_sincronizacion_correcta_quita_el_freno(monkeypatch, usuario_id, _estado_limpio_de_sincronizacion):
+    c1 = db.crear_cuenta_correo(usuario_id, "A", "imap", "imap.a.com", 993, "a@a.com")
+    correo._fallos_consecutivos[c1] = correo.FALLOS_PARA_FRENAR
+    correo._ciclos_omitidos[c1] = 2
+
+    class IMAPVacio(FakeIMAP):
+        pass
+
+    monkeypatch.setattr(correo, "_conectar_imap_cuenta", lambda cuenta: IMAPVacio({}))
+    monkeypatch.setattr(correo, "_contrasena", lambda cuenta_id: "correcta")
+    correo.sincronizar_bandeja(usuario_id, c1)
+
+    assert c1 not in correo._fallos_consecutivos and c1 not in correo._ciclos_omitidos
+
+
+def test_intervalo_del_autosync_del_servidor_por_variable_de_entorno(monkeypatch):
+    from app import main
+
+    monkeypatch.delenv("GUILDA_CORREO_SYNC_MINUTOS", raising=False)
+    assert main.minutos_sincronizacion_correo_servidor() == 5
+    monkeypatch.setenv("GUILDA_CORREO_SYNC_MINUTOS", "10")
+    assert main.minutos_sincronizacion_correo_servidor() == 10
+    monkeypatch.setenv("GUILDA_CORREO_SYNC_MINUTOS", "0")
+    assert main.minutos_sincronizacion_correo_servidor() == 0
+    monkeypatch.setenv("GUILDA_CORREO_SYNC_MINUTOS", "abc")
+    assert main.minutos_sincronizacion_correo_servidor() == 5

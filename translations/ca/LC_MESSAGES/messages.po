@@ -2932,3 +2932,10 @@ msgstr "Iniciar"
 msgid "EN ESTA PÁGINA"
 msgstr "EN AQUESTA PÀGINA"
 
+#: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
+msgid "Última sincronización fallida"
+msgstr "Última sincronització fallida"
+
+#: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
+msgid "Error al sincronizar esta cuenta"
+msgstr "Error en sincronitzar aquest compte"

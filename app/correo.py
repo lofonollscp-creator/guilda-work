@@ -649,12 +649,67 @@ def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
         else:
             nuevos = _sincronizar_imap(cuenta)
         db.marcar_sincronizada_cuenta_correo(cuenta_id)
+        _fallos_consecutivos.pop(cuenta_id, None)
+        _ciclos_omitidos.pop(cuenta_id, None)
         if nuevos:
             _reindexar_mensajes_recientes(usuario_id, cuenta_id)
             _emitir_evento_correo_nuevo(usuario_id, cuenta_id, nuevos)
         return {"nuevos": nuevos}
     finally:
         lock.release()
+
+
+# --- Sincronización automática de todas las cuentas (servidor) ---------------
+
+FALLOS_PARA_FRENAR = 3
+CICLOS_ENTRE_REINTENTOS_TRAS_FRENO = 6
+_fallos_consecutivos: dict[int, int] = {}
+_ciclos_omitidos: dict[int, int] = {}
+
+
+def sincronizar_todas_las_cuentas() -> dict:
+    """Sincroniza las cuentas de correo de TODOS los usuarios, una a una.
+
+    La llama el hilo periódico del servidor (app/main.py). Cada cuenta va en
+    su propio try/except: un fallo (contraseña caducada, servidor caído) se
+    guarda como error de esa cuenta -- se ve en Cuentas y en la bandeja -- y
+    no impide sincronizar las demás.
+
+    Tras FALLOS_PARA_FRENAR errores seguidos, una cuenta solo se reintenta
+    cada CICLOS_ENTRE_REINTENTOS_TRAS_FRENO pasadas: no tiene sentido
+    insistir cada pocos minutos con una contraseña que ya sabemos mala (y
+    algunos proveedores bloquean la cuenta por intentos repetidos).
+    Devuelve un resumen {"cuentas", "nuevos", "errores", "omitidas"}."""
+    resumen = {"cuentas": 0, "nuevos": 0, "errores": 0, "omitidas": 0}
+    for fila in db.listar_todas_las_cuentas_correo():
+        cuenta_id, usuario_id = fila["id"], fila["usuario_id"]
+        resumen["cuentas"] += 1
+        if _fallos_consecutivos.get(cuenta_id, 0) >= FALLOS_PARA_FRENAR:
+            omitidos = _ciclos_omitidos.get(cuenta_id, 0) + 1
+            if omitidos < CICLOS_ENTRE_REINTENTOS_TRAS_FRENO:
+                _ciclos_omitidos[cuenta_id] = omitidos
+                resumen["omitidas"] += 1
+                continue
+            _ciclos_omitidos[cuenta_id] = 0
+        try:
+            resultado = sincronizar_bandeja(usuario_id, cuenta_id)
+            resumen["nuevos"] += resultado.get("nuevos", 0)
+        except ErrorCorreo as e:
+            _registrar_fallo_sincronizacion(cuenta_id, str(e))
+            resumen["errores"] += 1
+        except Exception as e:  # noqa: BLE001 -- nada debe tumbar el hilo ni las demás cuentas
+            logger.exception("Error inesperado sincronizando la cuenta de correo %s", cuenta_id)
+            _registrar_fallo_sincronizacion(cuenta_id, f"Error inesperado ({type(e).__name__}).")
+            resumen["errores"] += 1
+    return resumen
+
+
+def _registrar_fallo_sincronizacion(cuenta_id: int, mensaje: str) -> None:
+    _fallos_consecutivos[cuenta_id] = _fallos_consecutivos.get(cuenta_id, 0) + 1
+    try:
+        db.marcar_error_sincronizacion_cuenta_correo(cuenta_id, mensaje)
+    except Exception:  # noqa: BLE001
+        logger.exception("No se ha podido guardar el error de sincronización de la cuenta %s", cuenta_id)
 
 
 def _emitir_evento_correo_nuevo(usuario_id: int, cuenta_id: int, nuevos: int) -> None:

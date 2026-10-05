@@ -519,3 +519,23 @@ def test_eliminar_borrador_de_otro_usuario_no_hace_nada(cliente):
     iniciar_sesion_de_prueba(cliente, "borrador-intruso2@ejemplo.com", "contrasena123")
     cliente.post(f"/correo/borradores/{borrador_id}/eliminar")
     assert db.obtener_borrador_correo(dueno_id, borrador_id) is not None
+
+
+def test_el_error_de_sincronizacion_se_muestra_en_cuentas_y_en_la_bandeja(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "sync-error@ejemplo.com", "contrasena123")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Trabajo", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+
+    sin_error = cliente.get(f"/correo/?cuenta_id={cuenta_id}").get_data(as_text=True)
+    assert "Error al sincronizar esta cuenta" not in sin_error
+
+    db.marcar_error_sincronizacion_cuenta_correo(cuenta_id, "Usuario o contraseña incorrectos.")
+
+    cuentas = cliente.get("/correo/cuentas").get_data(as_text=True)
+    assert "Última sincronización fallida" in cuentas
+    assert "Usuario o contraseña incorrectos." in cuentas
+    bandeja = cliente.get(f"/correo/?cuenta_id={cuenta_id}").get_data(as_text=True)
+    assert "Error al sincronizar esta cuenta" in bandeja
+
+    db.marcar_sincronizada_cuenta_correo(cuenta_id)
+    despues = cliente.get(f"/correo/?cuenta_id={cuenta_id}").get_data(as_text=True)
+    assert "Error al sincronizar esta cuenta" not in despues

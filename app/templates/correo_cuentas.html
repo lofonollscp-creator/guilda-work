@@ -25,6 +25,9 @@
       {% if c.ultima_sincronizacion %}
       <span class="log-duration">{{ _('Sincronizado') }} {{ c.ultima_sincronizacion[:16].replace('T', ' ') }}</span>
       {% endif %}
+      {% if c.ultimo_error_sincronizacion %}
+      <span class="correo-sync-error" role="alert">{{ _('Última sincronización fallida') }} ({{ c.ultimo_error_sincronizacion_en[:16].replace('T', ' ') }}): {{ c.ultimo_error_sincronizacion }}</span>
+      {% endif %}
       <details class="correo-cuenta-editar">
         <summary class="btn btn-ghost">{{ _('Editar') }}</summary>
         <div class="correo-cuenta-editar-panel">

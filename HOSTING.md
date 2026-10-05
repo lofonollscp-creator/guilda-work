@@ -101,6 +101,16 @@ Variables opcionales:
 | `GUILDA_THREADS` | `16` | Hilos de waitress (su valor propio es 4). |
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
+| `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |
+
+**Sincronización del correo**: `serve.py` lanza un hilo que, cada
+`GUILDA_CORREO_SYNC_MINUTOS`, descarga el correo nuevo de las cuentas de
+todos los usuarios (a los 60 s de arrancar y luego a intervalos). Sin él, el
+correo solo se descargaba al pulsar "Sincronizar". Si una cuenta falla
+(contraseña caducada, servidor caído), el error se muestra en *Correo →
+Cuentas* y en la bandeja; tras 3 fallos seguidos solo se reintenta cada 6
+ciclos para no insistir con credenciales malas. Para comprobarlo:
+`ultima_sincronizacion` de `correo_cuentas` debe avanzar cada pocos minutos.
 
 **Limitador de peticiones**: por defecto sus contadores viven en la memoria
 del proceso, así que se reinician con cada reinicio del servicio y no se

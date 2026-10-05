@@ -4,6 +4,10 @@
 <div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
   <div class="correo-topbar">
     <span class="correo-topbar-titulo">{{ _('Correo') }}</span>
+    {% set cuenta_activa = (cuentas | selectattr('id', 'equalto', cuenta_id) | list | first) if cuenta_id else None %}
+    {% if cuenta_activa and cuenta_activa.ultimo_error_sincronizacion %}
+    <a class="correo-sync-aviso" href="{{ url_for('correo.cuentas') }}" title="{{ cuenta_activa.ultimo_error_sincronizacion }}">{{ _('Error al sincronizar esta cuenta') }}</a>
+    {% endif %}
     <a class="correo-icon-btn" href="{{ url_for('correo.ajustes') }}" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg></a>
   </div>
 
