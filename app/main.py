@@ -1171,7 +1171,23 @@ def mis_dispositivos():
     revoca aquí las suyas propias (p.ej. si pierde el móvil); un admin
     revoca además las de sus compañeros de tenant desde el backoffice (ver
     backoffice.dispositivos_tenant más abajo)."""
-    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id))
+    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), token_nuevo=None)
+
+
+@app.route("/mis-dispositivos/token", methods=["POST"])
+@login_required
+def crear_token_desde_web():
+    """Token de API para una integración (permisos completos o solo lectura).
+    Se muestra una única vez en la propia respuesta: no viaja por URL ni se guarda en claro."""
+    permisos = request.form.get("permisos") or "completo"
+    if permisos not in db.PERMISOS_TOKEN_API:
+        abort(400)
+    nombre = (request.form.get("nombre") or "").strip()[:80] or _("Token de API")
+    token = db.crear_token_api(g.usuario_id, nombre, permisos)
+    return render_template(
+        "mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id),
+        token_nuevo={"token": token, "nombre": nombre, "permisos": permisos},
+    )
 
 
 @app.route("/mis-dispositivos/<int:token_id>/revocar", methods=["POST"])

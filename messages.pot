@@ -3331,3 +3331,34 @@ msgstr ""
 
 msgid "¿Cancelar este envío? Volverá a tus borradores."
 msgstr ""
+
+#, python-format
+msgid "Token creado: «%(nombre)s»"
+msgstr ""
+
+msgid "Cópialo ahora: no se volverá a mostrar."
+msgstr ""
+
+msgid "Crear un token de API"
+msgstr ""
+
+msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
+msgstr ""
+
+msgid "Nombre (ej. Panel de Grafana)"
+msgstr ""
+
+msgid "Permisos"
+msgstr ""
+
+msgid "Acceso completo"
+msgstr ""
+
+msgid "Solo lectura"
+msgstr ""
+
+msgid "Crear token"
+msgstr ""
+
+msgid "Token de API"
+msgstr ""

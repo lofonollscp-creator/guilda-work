@@ -33,7 +33,8 @@ def test_tools_tiene_125_herramientas():
     # (listar_plantillas_correo, crear_tarea_recurrente,
     # listar_tareas_recurrentes, listar_facturas_cliente,
     # crear_factura_cliente).
-    assert len(mt.TOOLS) == 125
+    # + 22 del Bloque 4 (acciones de correo, proyectos, papelera, mi día, checklist, asignación).
+    assert len(mt.TOOLS) == 147
 
 
 def test_registrar_tools_las_registra_todas():

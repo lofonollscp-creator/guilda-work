@@ -176,18 +176,22 @@ def listar_notas(desde: str | None = None, hasta: str | None = None, texto: str 
     return [dict(f) for f in filas if f["origen"] == "nota"]
 
 
-def crear_nota(texto: str, categoria: str | int | None = None) -> dict:
-    """Crea una nota rápida con el timestamp actual. `categoria` puede ser el nombre o el id del proyecto."""
+def crear_nota(texto: str, categoria: str | int | None = None, titulo: str | None = None) -> dict:
+    """Crea una nota rápida con el timestamp actual. `categoria` puede ser el nombre o el id del proyecto.
+    `titulo` es opcional; el texto admite formato Markdown sencillo (**negrita**, *cursiva*, listas, enlaces)."""
     uid = _uid()
     categoria_id = _resolver_categoria_id(categoria)
-    nota_id = db.crear_nota(uid, texto, categoria_id=categoria_id)
+    nota_id = db.crear_nota(uid, texto, categoria_id=categoria_id, titulo=titulo)
     return _fila(db.obtener_nota(uid, nota_id))
 
 
-def editar_nota(nota_id: int, texto: str) -> dict:
-    """Edita el texto de una nota existente."""
+def editar_nota(nota_id: int, texto: str, titulo: str | None = None) -> dict:
+    """Edita el texto de una nota existente (y su título, si se indica)."""
     uid = _uid()
-    db.editar_nota(uid, nota_id, texto)
+    if titulo is None:
+        db.editar_nota(uid, nota_id, texto)
+    else:
+        db.editar_nota(uid, nota_id, texto, titulo=titulo)
     nota = db.obtener_nota(uid, nota_id)
     if nota is None:
         raise ValueError(f"No existe la nota {nota_id} (o está en la papelera).")
@@ -306,12 +310,18 @@ def listar_carpetas_correo(cuenta_id: int) -> list[dict]:
 
 def listar_bandeja_entrada(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
-    texto: str | None = None, limite: int = 20,
+    texto: str | None = None, limite: int = 20, con_adjuntos: bool = False,
+    desde: str | None = None, hasta: str | None = None, solo_destacados: bool = False,
 ) -> list[dict]:
     """Lista mensajes ya descargados de una carpeta de una cuenta (usa
     sincronizar_correo antes si quieres los más recientes; listar_carpetas_correo
-    para ver qué carpetas existen)."""
-    return _filas(correo.listar_mensajes(cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite))
+    para ver qué carpetas existen). `texto` busca en asunto, remitente,
+    destinatarios y cuerpo. Filtros opcionales: `con_adjuntos`, `solo_destacados`
+    y fechas `desde`/`hasta` (YYYY-MM-DD, `hasta` inclusive)."""
+    return _filas(correo.listar_mensajes(
+        cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite,
+        con_adjuntos=con_adjuntos, desde=desde or None, hasta=hasta or None, solo_destacados=solo_destacados,
+    ))
 
 
 def leer_correo(mensaje_id: int) -> dict:
@@ -1732,6 +1742,203 @@ def backoffice_asignar_gestor_fichajes(usuario_id: int, valor: bool) -> dict:
     return _fila(db.obtener_usuario(usuario_id))
 
 
+# --- Acciones de correo, proyectos, papelera y tareas ampliadas (Bloque 4) --------
+
+def _mensaje_propio(mensaje_id: int):
+    if not db.mensaje_correo_pertenece_a_usuario(_uid(), mensaje_id):
+        raise ValueError(f"No existe el mensaje {mensaje_id}.")
+    return db.obtener_mensaje_correo(mensaje_id)
+
+
+def mover_correo(mensaje_id: int, carpeta_destino: str) -> dict:
+    """Mueve un mensaje a otra carpeta del servidor IMAP (listar_carpetas_correo
+    muestra las que existen). Actúa de verdad en el servidor; POP3 no tiene carpetas."""
+    _mensaje_propio(mensaje_id)
+    correo.mover_mensaje(_uid(), mensaje_id, carpeta_destino)
+    return {"movido": True, "carpeta": carpeta_destino}
+
+
+def destacar_correo(mensaje_id: int, destacado: bool = True, fecha_aviso: str | None = None) -> dict:
+    """Destaca (o quita el destacado de) un mensaje; `fecha_aviso` (YYYY-MM-DD) es un recordatorio opcional."""
+    _mensaje_propio(mensaje_id)
+    correo.destacar_mensaje(mensaje_id, destacado, fecha_aviso)
+    return _fila(correo.obtener_mensaje(mensaje_id))
+
+
+def posponer_correo(mensaje_id: int, hasta: str | None = None) -> dict:
+    """Oculta un mensaje de la bandeja hasta la fecha `hasta` (YYYY-MM-DD). Sin fecha, deja de estar pospuesto."""
+    _mensaje_propio(mensaje_id)
+    correo.posponer_mensaje(mensaje_id, hasta or None)
+    return _fila(correo.obtener_mensaje(mensaje_id))
+
+
+def listar_reglas_correo() -> list[dict]:
+    """Reglas avanzadas de correo (condición por remitente y/o asunto + acciones sobre los correos nuevos)."""
+    return _filas(db.listar_reglas_correo(_uid()))
+
+
+def crear_regla_correo(
+    remitente: str | None = None, asunto_contiene: str | None = None, categoria_id: int | None = None,
+    marcar_leido: bool = False, destacar: bool = False, cliente_fiscal_id: int | None = None,
+) -> dict:
+    """Crea una regla que se aplica a los correos NUEVOS que cumplan todas las condiciones.
+    `remitente`: "x@y.com" exacto, "@dominio.com" o texto contenido. Al menos una condición
+    (remitente o asunto) y una acción (categoría, marcar leído, destacar, cliente fiscal)."""
+    regla_id = db.crear_regla_correo(
+        _uid(), remitente, asunto_contiene, categoria_id=categoria_id, marcar_leido=marcar_leido,
+        destacar=destacar, cliente_fiscal_id=cliente_fiscal_id,
+    )
+    return {"id": regla_id}
+
+
+def eliminar_regla_correo(regla_id: int) -> dict:
+    """Elimina una regla avanzada de correo (no afecta a los mensajes ya procesados)."""
+    db.eliminar_regla_correo(_uid(), regla_id)
+    return {"eliminada": True}
+
+
+def listar_conversacion_correo(mensaje_id: int) -> list[dict]:
+    """Los mensajes de la misma conversación (hilo) que `mensaje_id`, del más antiguo al más reciente."""
+    mensaje = _mensaje_propio(mensaje_id)
+    return _filas(db.mensajes_del_hilo_correo(mensaje["cuenta_id"], mensaje["hilo_clave"])) or [
+        {"id": mensaje["id"], "asunto": mensaje["asunto"], "remitente": mensaje["remitente"], "fecha": mensaje["fecha"]}
+    ]
+
+
+def crear_tarea_desde_correo(mensaje_id: int, fecha_vencimiento: str | None = None) -> dict:
+    """Crea una tarea a partir de un correo (asunto del correo, vinculada a él y a su cliente fiscal)."""
+    mensaje = _mensaje_propio(mensaje_id)
+    uid = _uid()
+    tarea_id = db.crear_tarea_outlook(
+        uid, (mensaje["asunto"] or "(sin asunto)").strip()[:200],
+        cuerpo=f"Correo de {mensaje['remitente'] or ''}", fecha_vencimiento=fecha_vencimiento or None,
+        cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+    )
+    return _fila(db.obtener_tarea_outlook(uid, tarea_id))
+
+
+def guardar_nota_desde_correo(mensaje_id: int) -> dict:
+    """Guarda un correo como nota (título = asunto, texto = extracto del cuerpo, vinculada al correo)."""
+    mensaje = _mensaje_propio(mensaje_id)
+    uid = _uid()
+    texto = f"De: {mensaje['remitente'] or ''}\n\n{(mensaje['cuerpo_texto'] or '').strip()[:2000]}"
+    nota_id = db.crear_nota(
+        uid, texto, titulo=(mensaje["asunto"] or "(sin asunto)").strip()[:120],
+        cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+    )
+    return _fila(db.obtener_nota(uid, nota_id))
+
+
+# Proyectos de Guilda Work (los "menús" donde se agrupan notas y tareas;
+# nada que ver con proyectos_* de OpenProject).
+
+def listar_proyectos() -> list[dict]:
+    """Proyectos propios de Guilda Work (donde se agrupan notas y tareas con cronómetro)."""
+    return _filas(db.listar_categorias(_uid()))
+
+
+def crear_proyecto(nombre: str, color: str | None = None) -> dict:
+    """Crea un proyecto. `color` opcional en hexadecimal, ej. "#4f8cff"."""
+    uid = _uid()
+    if not nombre.strip():
+        raise ValueError("El proyecto necesita un nombre.")
+    proyecto_id = db.crear_categoria(uid, nombre.strip(), color)
+    return _fila(db.obtener_categoria(uid, proyecto_id))
+
+
+def renombrar_proyecto(proyecto: str | int, nombre: str, color: str | None = None) -> dict:
+    """Renombra un proyecto (por nombre o id) y, si se indica, cambia su color."""
+    uid = _uid()
+    proyecto_id = _resolver_categoria_id(proyecto)
+    if proyecto_id is None or db.obtener_categoria(uid, proyecto_id) is None:
+        raise ValueError(f"No existe el proyecto {proyecto!r}.")
+    if not nombre.strip():
+        raise ValueError("El proyecto necesita un nombre.")
+    db.renombrar_categoria(uid, proyecto_id, nombre.strip(), color)
+    return _fila(db.obtener_categoria(uid, proyecto_id))
+
+
+def eliminar_proyecto(proyecto: str | int) -> dict:
+    """Manda un proyecto, con sus notas y tareas, a la PAPELERA (recuperable con
+    restaurar_de_papelera durante 30 días; no borra nada de verdad)."""
+    uid = _uid()
+    proyecto_id = _resolver_categoria_id(proyecto)
+    if proyecto_id is None or db.obtener_categoria(uid, proyecto_id) is None:
+        raise ValueError(f"No existe el proyecto {proyecto!r}.")
+    db.eliminar_categoria(uid, proyecto_id)
+    return {"en_papelera": True, "origen": "menu", "id": proyecto_id}
+
+
+def eliminar_nota(nota_id: int) -> dict:
+    """Manda una nota a la PAPELERA (recuperable con restaurar_de_papelera)."""
+    uid = _uid()
+    if db.obtener_nota(uid, nota_id) is None:
+        raise ValueError(f"No existe la nota {nota_id} (o ya está en la papelera).")
+    db.eliminar_nota(uid, nota_id)
+    return {"en_papelera": True, "origen": "nota", "id": nota_id}
+
+
+def eliminar_tarea(tarea_id: int) -> dict:
+    """Manda una tarea (de la lista) a la PAPELERA (recuperable con restaurar_de_papelera)."""
+    uid = _uid()
+    if db.obtener_tarea_outlook(uid, tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o ya está en la papelera).")
+    db.eliminar_tarea_outlook(uid, tarea_id)
+    return {"en_papelera": True, "origen": "tarea_outlook", "id": tarea_id}
+
+
+def fijar_nota(nota_id: int, fijada: bool = True) -> dict:
+    """Fija (o desfija) una nota: las fijadas salen primero en su proyecto."""
+    uid = _uid()
+    nota = db.obtener_nota(uid, nota_id)
+    if nota is None:
+        raise ValueError(f"No existe la nota {nota_id} (o está en la papelera).")
+    if bool(nota["fijada"]) != bool(fijada):
+        db.alternar_fijada_nota(uid, nota_id)
+    return _fila(db.obtener_nota(uid, nota_id))
+
+
+def listar_tareas_hoy() -> dict:
+    """"Mi día": tareas vencidas, que vencen hoy, en curso y asignadas a mí, pendientes."""
+    return {seccion: _filas(filas) for seccion, filas in db.tareas_para_hoy(_uid()).items()}
+
+
+def listar_companeros() -> list[dict]:
+    """Compañeros del mismo despacho a quienes se puede asignar una tarea (id y nombre)."""
+    return _filas(db.listar_companeros_tenant(_uid()))
+
+
+def asignar_tarea(tarea_id: int, companero_id: int | None = None) -> dict:
+    """Asigna una tarea propia a un compañero del despacho (ver listar_companeros) o,
+    sin `companero_id`, la desasigna. El compañero la ve y puede completarla."""
+    uid = _uid()
+    if not db.asignar_tarea_outlook(uid, tarea_id, companero_id):
+        raise ValueError("No se puede asignar: la tarea no es tuya o el compañero no es de tu despacho.")
+    return _fila(db.obtener_tarea_outlook(uid, tarea_id))
+
+
+def listar_checklist_tarea(tarea_id: int) -> list[dict]:
+    """Subtareas (checklist) de una tarea."""
+    if db.obtener_tarea_outlook_visible(_uid(), tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id}.")
+    return _filas(db.listar_checklist(tarea_id))
+
+
+def agregar_item_checklist(tarea_id: int, texto: str) -> dict:
+    """Añade una subtarea al checklist de una tarea propia (máx. 50, 200 caracteres cada una)."""
+    item_id = db.agregar_item_checklist(_uid(), tarea_id, texto)
+    if item_id is None:
+        raise ValueError("No se ha podido añadir: la tarea no es tuya, el texto está vacío o el checklist está lleno.")
+    return {"id": item_id, "checklist": _filas(db.listar_checklist(tarea_id))}
+
+
+def alternar_item_checklist(item_id: int) -> dict:
+    """Marca o desmarca una subtarea del checklist (recalcula el porcentaje de la tarea)."""
+    if not db.alternar_item_checklist(_uid(), item_id):
+        raise ValueError(f"No existe la subtarea {item_id} o no tienes acceso.")
+    return {"alternada": True}
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -1804,6 +2011,12 @@ TOOLS = [
     listar_facturas_cliente, crear_factura_cliente,
     # Fichaje
     fichar, listar_mis_fichajes,
+    # Correo (acciones), proyectos, papelera y tareas ampliadas
+    mover_correo, destacar_correo, posponer_correo, listar_reglas_correo, crear_regla_correo,
+    eliminar_regla_correo, listar_conversacion_correo, crear_tarea_desde_correo, guardar_nota_desde_correo,
+    listar_proyectos, crear_proyecto, renombrar_proyecto, eliminar_proyecto, eliminar_nota, eliminar_tarea,
+    fijar_nota, listar_tareas_hoy, listar_companeros, asignar_tarea, listar_checklist_tarea,
+    agregar_item_checklist, alternar_item_checklist,
     # Papelera
     listar_papelera, restaurar_de_papelera,
     # Estadísticas

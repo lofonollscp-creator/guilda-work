@@ -1259,6 +1259,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_cuentas", "firma_en_respuestas", "INTEGER NOT NULL DEFAULT 1")
         # Conversaciones: cabeceras de enlace y clave de hilo (ver
         # calcular_hilo_clave). ANTES de executescript(INDICES).
+        _asegurar_columna(conn, "tokens_api", "permisos", "TEXT NOT NULL DEFAULT 'completo'")
         _asegurar_columna(conn, "correo_mensajes", "in_reply_to", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "referencias", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "hilo_clave", "TEXT")
@@ -2692,14 +2693,21 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None) -> str:
+PERMISOS_TOKEN_API = ("completo", "solo_lectura")
+
+
+def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None, permisos: str = "completo") -> str:
+    """`permisos`: "completo" (como siempre) o "solo_lectura" (solo GET: lo
+    aplica auth.token_required)."""
+    if permisos not in PERMISOS_TOKEN_API:
+        raise ValueError("Permisos de token no válidos.")
     token = secrets.token_urlsafe(32)
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en) "
-            "VALUES (?, ?, ?, ?)",
-            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso()),
+            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en, permisos) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso(), permisos),
         )
         conn.commit()
         return token
@@ -2711,14 +2719,20 @@ TOKEN_API_DIAS_INACTIVIDAD = 90
 
 
 def usuario_id_por_token(token: str) -> int | None:
-    """None si el token no existe, o si lleva TOKEN_API_DIAS_INACTIVIDAD días
-    sin usarse (se borra en el momento, no hace falta una tarea periódica
-    aparte: con que se compruebe en cada uso es suficiente para un catálogo
-    de tokens que no es previsible que crezca mucho)."""
+    autenticado = autenticar_token(token)
+    return autenticado[0] if autenticado else None
+
+
+def autenticar_token(token: str) -> tuple[int, str] | None:
+    """(usuario_id, permisos), o None si el token no existe, o si lleva
+    TOKEN_API_DIAS_INACTIVIDAD días sin usarse (se borra en el momento, no
+    hace falta una tarea periódica aparte: con que se compruebe en cada uso
+    es suficiente para un catálogo de tokens que no es previsible que
+    crezca mucho)."""
     conn = get_connection()
     try:
         fila = conn.execute(
-            "SELECT usuario_id, creado_en, ultimo_uso_en FROM tokens_api WHERE token_hash = ?",
+            "SELECT usuario_id, creado_en, ultimo_uso_en, permisos FROM tokens_api WHERE token_hash = ?",
             (_hash_token(token),),
         ).fetchone()
         if fila is None:
@@ -2734,7 +2748,7 @@ def usuario_id_por_token(token: str) -> int | None:
             (now_iso(), _hash_token(token)),
         )
         conn.commit()
-        return fila["usuario_id"]
+        return fila["usuario_id"], fila["permisos"]
     finally:
         conn.close()
 
@@ -2757,7 +2771,7 @@ def listar_tokens_api(usuario_id: int):
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en FROM tokens_api "
+            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos FROM tokens_api "
             "WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
             (usuario_id,),
         ).fetchall()
@@ -3649,6 +3663,17 @@ def finalizar_tarea(usuario_id: int, tarea_id: int) -> None:
     _emitir_evento_tarea_finalizada(usuario_id, tarea_id, row["nombre"], duracion)
 
 
+def _emitir_evento(usuario_id: int, evento: str, payload: dict) -> None:
+    """Webhook saliente del tenant del usuario (ver app/eventos.py). Un fallo
+    al emitir nunca afecta a la operación ya hecha."""
+    from . import eventos
+    try:
+        tenant = tenant_de_usuario(usuario_id)
+        eventos.emitir(evento, tenant["id"] if tenant else None, payload)
+    except Exception:
+        pass
+
+
 def _emitir_evento_tarea_finalizada(usuario_id: int, tarea_id: int, nombre: str, duracion_segundos: int) -> None:
     """Segunda excepción documentada (junto a busqueda) a "db.py no
     depende de otros app/*.py": un webhook es, por naturaleza, un
@@ -3958,6 +3983,7 @@ def editar_nota(
     finally:
         conn.close()
     _reindexar_nota(usuario_id, nota_id)
+    _emitir_evento(usuario_id, "nota.editada", {"nota_id": nota_id})
 
 
 def alternar_fijada_nota(usuario_id: int, nota_id: int) -> bool:
@@ -4475,9 +4501,11 @@ def crear_tarea_outlook(
             ),
         )
         conn.commit()
-        return cur.lastrowid
+        tarea_id = cur.lastrowid
     finally:
         conn.close()
+    _emitir_evento(usuario_id, "tarea.creada", {"tarea_id": tarea_id, "asunto": asunto.strip(), "asignada_a": asignada_a})
+    return tarea_id
 
 
 def _cliente_fiscal_id_del_tenant(conn: sqlite3.Connection, usuario_id: int, cliente_fiscal_id: int | None) -> int | None:
@@ -4858,10 +4886,13 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
             "AND estado IN ('en_curso', 'pausada') AND papelera_en IS NULL",
             (tarea_id,),
         ).fetchall() if cur.rowcount else []
+        completada = cur.rowcount > 0
     finally:
         conn.close()
     for abierto in abiertos:
         finalizar_tarea(abierto["usuario_id"], abierto["id"])
+    if completada:
+        _emitir_evento(usuario_id, "tarea.completada", {"tarea_id": tarea_id, "completada_por": usuario_id})
 
 
 def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) -> bool:
@@ -4904,9 +4935,11 @@ def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None
             "UPDATE tareas_outlook SET asignada_a = ?, actualizada_en = ? WHERE id = ?", (destino, now_iso(), tarea_id)
         )
         conn.commit()
-        return True
     finally:
         conn.close()
+    if destino is not None:
+        _emitir_evento(usuario_id, "tarea.asignada", {"tarea_id": tarea_id, "asignada_a": destino})
+    return True
 
 
 # ---- Cronómetro enlazado a una tarea de la lista ---------------------------

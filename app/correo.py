@@ -1194,3 +1194,11 @@ def construir_y_enviar(
     for nombre, direccion in getaddresses([destinatarios, cc, bcc]):
         if direccion.strip():
             db.registrar_destinatario_reciente(usuario_id, direccion.strip(), nombre.strip() or None)
+    try:
+        tenant = db.tenant_de_usuario(usuario_id)
+        eventos.emitir(
+            "correo.enviado", tenant["id"] if tenant else None,
+            {"cuenta_id": cuenta_id, "destinatarios": destinatarios.strip(), "asunto": asunto.strip()},
+        )
+    except Exception:  # noqa: BLE001 -- un webhook fallido no debe afectar a un correo ya enviado
+        logger.exception("No se pudo emitir el evento correo.enviado")

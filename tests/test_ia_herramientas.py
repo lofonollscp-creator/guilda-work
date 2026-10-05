@@ -7,7 +7,7 @@ import mcp_tools
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_69_herramientas_clasificadas():
+def test_catalogo_tiene_las_mismas_91_herramientas_clasificadas():
     # 52 de antes + 16 de la ampliación Drive/CRM/Firmas/Hojas: CRM (6),
     # Drive (4, incluye enviar_archivo_drive_al_chat), Firmas (4, incluye
     # enviar_documento_firmado_al_chat), Hojas solo lectura (2 --
@@ -15,7 +15,8 @@ def test_catalogo_tiene_las_mismas_69_herramientas_clasificadas():
     # usuario) + 1 del generador de documentos/informes
     # (generar_documento_al_chat).
     nombres = {t["function"]["name"] for t in h.HERRAMIENTAS}
-    assert len(nombres) == 69
+    # + 22 del Bloque 4: acciones de correo, proyectos, papelera, mi día, checklist, asignación.
+    assert len(nombres) == 91
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)

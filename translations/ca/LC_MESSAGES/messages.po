@@ -404,9 +404,8 @@ msgstr "Aquest usuari no té cap dispositiu mòbil amb sessió activa."
 
 #: app/templates/backoffice_dispositivos.html:20
 #: app/templates/mis_dispositivos.html:18
-#, fuzzy
 msgid "Dispositivo sin nombre"
-msgstr "Els meus dispositius"
+msgstr "Dispositiu sense nom"
 
 #: app/templates/backoffice_dispositivos.html:21
 #: app/templates/mis_dispositivos.html:19
@@ -427,9 +426,8 @@ msgstr "Vols revocar l'accés de «%(nombre)s»? %(email)s haurà d'iniciar sess
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
-#, fuzzy
 msgid "este dispositivo"
-msgstr "Els meus dispositius"
+msgstr "aquest dispositiu"
 
 #: app/templates/backoffice_dispositivos.html:25
 #: app/templates/mis_dispositivos.html:23
@@ -3413,3 +3411,34 @@ msgstr "No tens cap enviament programat."
 
 msgid "¿Cancelar este envío? Volverá a tus borradores."
 msgstr "Vols cancel·lar aquest enviament? Tornarà als teus esborranys."
+
+#, python-format
+msgid "Token creado: «%(nombre)s»"
+msgstr "Token creat: «%(nombre)s»"
+
+msgid "Cópialo ahora: no se volverá a mostrar."
+msgstr "Copia'l ara: no es tornarà a mostrar."
+
+msgid "Crear un token de API"
+msgstr "Crea un token d'API"
+
+msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
+msgstr "Per a integracions i scripts (capçalera Authorization: Bearer). Un token de només lectura només pot consultar dades."
+
+msgid "Nombre (ej. Panel de Grafana)"
+msgstr "Nom (p. ex. Tauler de Grafana)"
+
+msgid "Permisos"
+msgstr "Permisos"
+
+msgid "Acceso completo"
+msgstr "Accés complet"
+
+msgid "Solo lectura"
+msgstr "Només lectura"
+
+msgid "Crear token"
+msgstr "Crea el token"
+
+msgid "Token de API"
+msgstr "Token d'API"

@@ -412,9 +412,8 @@ msgstr "Cet utilisateur n'a aucun appareil mobile avec une session active."
 
 #: app/templates/backoffice_dispositivos.html:20
 #: app/templates/mis_dispositivos.html:18
-#, fuzzy
 msgid "Dispositivo sin nombre"
-msgstr "Mes appareils"
+msgstr "Appareil sans nom"
 
 #: app/templates/backoffice_dispositivos.html:21
 #: app/templates/mis_dispositivos.html:19
@@ -435,9 +434,8 @@ msgstr "Révoquer l'accès de « %(nombre)s » ? %(email)s devra se reconnecter 
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
-#, fuzzy
 msgid "este dispositivo"
-msgstr "Mes appareils"
+msgstr "cet appareil"
 
 #: app/templates/backoffice_dispositivos.html:25
 #: app/templates/mis_dispositivos.html:23
@@ -3451,3 +3449,34 @@ msgstr "Vous n'avez aucun envoi programmé."
 
 msgid "¿Cancelar este envío? Volverá a tus borradores."
 msgstr "Annuler cet envoi ? Il retournera dans vos brouillons."
+
+#, python-format
+msgid "Token creado: «%(nombre)s»"
+msgstr "Jeton créé : « %(nombre)s »"
+
+msgid "Cópialo ahora: no se volverá a mostrar."
+msgstr "Copiez-le maintenant : il ne sera plus affiché."
+
+msgid "Crear un token de API"
+msgstr "Créer un jeton d'API"
+
+msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
+msgstr "Pour les intégrations et les scripts (en-tête Authorization: Bearer). Un jeton en lecture seule ne peut que consulter les données."
+
+msgid "Nombre (ej. Panel de Grafana)"
+msgstr "Nom (p. ex. Tableau Grafana)"
+
+msgid "Permisos"
+msgstr "Autorisations"
+
+msgid "Acceso completo"
+msgstr "Accès complet"
+
+msgid "Solo lectura"
+msgstr "Lecture seule"
+
+msgid "Crear token"
+msgstr "Créer le jeton"
+
+msgid "Token de API"
+msgstr "Jeton d'API"

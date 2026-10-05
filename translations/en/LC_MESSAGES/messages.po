@@ -404,9 +404,8 @@ msgstr "This user has no mobile device with an active session."
 
 #: app/templates/backoffice_dispositivos.html:20
 #: app/templates/mis_dispositivos.html:18
-#, fuzzy
 msgid "Dispositivo sin nombre"
-msgstr "My devices"
+msgstr "Unnamed device"
 
 #: app/templates/backoffice_dispositivos.html:21
 #: app/templates/mis_dispositivos.html:19
@@ -427,9 +426,8 @@ msgstr "Revoke access for \"%(nombre)s\"? %(email)s will have to log in again in
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
-#, fuzzy
 msgid "este dispositivo"
-msgstr "My devices"
+msgstr "this device"
 
 #: app/templates/backoffice_dispositivos.html:25
 #: app/templates/mis_dispositivos.html:23
@@ -3446,3 +3444,34 @@ msgstr "You have no scheduled sends."
 
 msgid "¿Cancelar este envío? Volverá a tus borradores."
 msgstr "Cancel this send? It will go back to your drafts."
+
+#, python-format
+msgid "Token creado: «%(nombre)s»"
+msgstr "Token created: “%(nombre)s”"
+
+msgid "Cópialo ahora: no se volverá a mostrar."
+msgstr "Copy it now: it will not be shown again."
+
+msgid "Crear un token de API"
+msgstr "Create an API token"
+
+msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
+msgstr "For integrations and scripts (Authorization: Bearer header). A read-only token can only query data."
+
+msgid "Nombre (ej. Panel de Grafana)"
+msgstr "Name (e.g. Grafana dashboard)"
+
+msgid "Permisos"
+msgstr "Permissions"
+
+msgid "Acceso completo"
+msgstr "Full access"
+
+msgid "Solo lectura"
+msgstr "Read only"
+
+msgid "Crear token"
+msgstr "Create token"
+
+msgid "Token de API"
+msgstr "API token"
