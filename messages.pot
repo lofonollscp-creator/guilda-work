@@ -1695,10 +1695,7 @@ msgid "Generar informe con IA"
 msgstr ""
 
 #: app/templates/historial.html:90
-msgid ""
-"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
-"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
-" las claves configuradas en Ajustes del asistente IA)."
+msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA)."
 msgstr ""
 
 #: app/templates/historial.html:97
@@ -3066,4 +3063,45 @@ msgid "Mover a"
 msgstr ""
 
 msgid "Nada aquí"
+msgstr ""
+
+msgid "opcional"
+msgstr ""
+
+msgid "Un título corto para encontrarla fácilmente"
+msgstr ""
+
+msgid "Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con [texto](https://...) y direcciones web."
+msgstr ""
+
+msgid "Fijar esta nota arriba en su proyecto"
+msgstr ""
+
+msgid "Archivos adjuntos"
+msgstr ""
+
+msgid "Archivos para adjuntar"
+msgstr ""
+
+msgid "Adjuntar"
+msgstr ""
+
+#, python-format
+msgid "Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota."
+msgstr ""
+
+#, python-format
+msgid "Has llegado al máximo de %(num)s adjuntos en esta nota."
+msgstr ""
+
+msgid "Fijada"
+msgstr ""
+
+msgid "Notas fijadas"
+msgstr ""
+
+msgid "Resumen del periodo"
+msgstr ""
+
+msgid "Entradas"
 msgstr ""

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_registro_texto.html" import texto as texto_registro with context %}
 {% from "_ia_chat_macro.html" import chat %}
 {% from "_menu_icono_selector.html" import selector_icono %}
 {% block title %}Guilda Work — Dashboard{% endblock %}
@@ -209,7 +210,7 @@
           {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
           {% else %}{{ _('Tarea') }}{% endif %}
         </span>
-        <span class="log-text">{{ f.texto }}</span>
+        <span class="log-text">{{ texto_registro(f) }}</span>
         {% if f.duracion_segundos is not none %}
         <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
         {% endif %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_registro_texto.html" import texto as texto_registro with context %}
 {% from "_menu_icono_selector.html" import selector_icono %}
 {% block title %}{{ menu.nombre }} — Guilda Work{% endblock %}
 {% block content %}
@@ -129,6 +130,21 @@
 </section>
 {% endif %}
 
+{% if notas_fijadas %}
+<section class="active-section notas-fijadas">
+  <h3>{{ _('Notas fijadas') }}</h3>
+  <ul class="log-list">
+    {% for n in notas_fijadas %}
+    <li class="log-item">
+      <span class="log-time">{{ n.creada_en[:10] }}</span>
+      <span class="log-text">{{ texto_registro({'origen': 'nota', 'fijada': 1, 'titulo': n.titulo, 'texto': n.texto}) }}</span>
+      <a class="log-edit" href="{{ url_for('editar_nota', nota_id=n.id) }}?volver_a={{ request.full_path|urlencode }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 {% if tareas_pendientes %}
 <section class="active-section">
   <h3>{{ _('Tareas pendientes') }} <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Ver todas') }}</a></h3>
@@ -181,7 +197,7 @@
         {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
         {% else %}{{ _('Tarea') }}{% endif %}
       </span>
-      <span class="log-text">{{ f.texto }}</span>
+      <span class="log-text">{{ texto_registro(f) }}</span>
       {% if f.duracion_segundos is not none %}
       <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
       {% endif %}

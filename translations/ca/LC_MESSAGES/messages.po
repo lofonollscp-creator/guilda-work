@@ -65,9 +65,8 @@ msgstr "Escriu un missatge..."
 
 #: app/templates/_ia_chat_macro.html:28 app/templates/correo_redactar.html:83
 #: app/templates/historial.html:141
-#, fuzzy
 msgid "Enviar"
-msgstr "Entrar"
+msgstr "Envia"
 
 #: app/templates/_ia_chat_macro.html:31 app/templates/historial.html:133
 msgid "Nueva conversación"
@@ -1231,9 +1230,8 @@ msgid "Descartar"
 msgstr "Descartar"
 
 #: app/templates/editar_nota.html:2 app/templates/editar_nota.html:6
-#, fuzzy
 msgid "Editar nota"
-msgstr "Editar"
+msgstr "Edita la nota"
 
 #: app/templates/editar_nota.html:13
 msgid "Texto"
@@ -1246,9 +1244,8 @@ msgid ""
 msgstr "Vols eliminar aquesta nota? Es mourà a la paperera — la podràs recuperar des d'allà."
 
 #: app/templates/editar_nota.html:25
-#, fuzzy
 msgid "Nota eliminada."
-msgstr "Nota ràpida"
+msgstr "Nota eliminada."
 
 #: app/templates/editar_nota.html:26 app/templates/editar_tarea.html:44
 #: app/templates/tareas_lista.html:109
@@ -1754,9 +1751,8 @@ msgid "No hay registros para este filtro."
 msgstr "No hi ha registres per a aquest filtre."
 
 #: app/templates/historial.html:73
-#, fuzzy
 msgid "Paginación del histórico"
-msgstr "Cerca a l'històric"
+msgstr "Paginació de l'històric"
 
 #: app/templates/docs/pagina.html:136 app/templates/historial.html:75
 #: app/templates/historial.html:77 app/templates/tareas_calendario.html:19
@@ -1776,26 +1772,20 @@ msgid "Siguiente"
 msgstr "Següent"
 
 #: app/templates/historial.html:89
-#, fuzzy
 msgid "Generar informe con IA"
-msgstr "Generar informe amb IA local"
+msgstr "Genera un informe amb IA"
 
 #: app/templates/historial.html:90
-#, fuzzy
-msgid ""
-"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
-"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
-" las claves configuradas en Ajustes del asistente IA)."
-msgstr "Envia les dades filtrades de dalt a un model que corre a la teva màquina (Ollama o LM Studio). No s'envia res a internet."
+msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA)."
+msgstr "Envia les dades filtrades de dalt a un model que s'executa a la teva màquina (Ollama o LM Studio, res no surt a internet) o a OpenRouter al núvol (fa servir les claus configurades a Ajustos de l'assistent IA)."
 
 #: app/templates/historial.html:97
 msgid "Proveedor"
 msgstr "Proveïdor"
 
 #: app/templates/historial.html:101 app/templates/historial.html:130
-#, fuzzy
 msgid "OpenRouter (nube)"
-msgstr "Model (OpenRouter)"
+msgstr "OpenRouter (núvol)"
 
 #: app/templates/historial.html:104
 msgid "Modelo"
@@ -3175,3 +3165,44 @@ msgstr "Mou a"
 
 msgid "Nada aquí"
 msgstr "Res aquí"
+
+msgid "opcional"
+msgstr "opcional"
+
+msgid "Un título corto para encontrarla fácilmente"
+msgstr "Un títol curt per trobar-la fàcilment"
+
+msgid "Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con [texto](https://...) y direcciones web."
+msgstr "Format: **negreta**, *cursiva*, llistes amb \"-\" o \"1.\", enllaços amb [text](https://...) i adreces web."
+
+msgid "Fijar esta nota arriba en su proyecto"
+msgstr "Fixa aquesta nota a dalt en el seu projecte"
+
+msgid "Archivos adjuntos"
+msgstr "Fitxers adjunts"
+
+msgid "Archivos para adjuntar"
+msgstr "Fitxers per adjuntar"
+
+msgid "Adjuntar"
+msgstr "Adjunta"
+
+#, python-format
+msgid "Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota."
+msgstr "Imatges, PDF o text; fins a 5 MB cadascun i %(num)s per nota."
+
+#, python-format
+msgid "Has llegado al máximo de %(num)s adjuntos en esta nota."
+msgstr "Has arribat al màxim de %(num)s adjunts en aquesta nota."
+
+msgid "Fijada"
+msgstr "Fixada"
+
+msgid "Notas fijadas"
+msgstr "Notes fixades"
+
+msgid "Resumen del periodo"
+msgstr "Resum del període"
+
+msgid "Entradas"
+msgstr "Entrades"

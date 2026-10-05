@@ -2274,6 +2274,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tarea-checklist-texto { flex: 1; overflow-wrap: anywhere; }
 .tarea-checklist-item.is-hecha .tarea-checklist-texto { text-decoration: line-through; color: var(--text-muted); }
 
+/* ---- Notas: título, formato, fijadas y adjuntos ---- */
+.nota-titulo { font-weight: 700; }
+.nota-cuerpo p { display: inline; margin: 0; }
+.nota-cuerpo p + p::before { content: " "; }
+.nota-cuerpo ul, .nota-cuerpo ol { margin: 4px 0 4px 1.2em; padding: 0; }
+.nota-cuerpo a { text-decoration: underline; text-underline-offset: 2px; }
+.nota-fijada-icono { color: var(--primary-text); }
+.nota-ayuda-formato { font-size: 0.85em; margin-top: -4px; }
+.nota-fijar { display: inline-flex; align-items: center; gap: 8px; }
+.nota-adjuntos-bloque { margin-top: var(--space-5); max-width: 640px; }
+.nota-adjuntos-lista { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.nota-adjunto { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.nota-adjunto-miniatura { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
 /* ---- Calendario de Tareas ---- */
 .cal-toolbar {
   display: flex;

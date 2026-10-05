@@ -65,9 +65,8 @@ msgstr "Type a message..."
 
 #: app/templates/_ia_chat_macro.html:28 app/templates/correo_redactar.html:83
 #: app/templates/historial.html:141
-#, fuzzy
 msgid "Enviar"
-msgstr "Log in"
+msgstr "Send"
 
 #: app/templates/_ia_chat_macro.html:31 app/templates/historial.html:133
 msgid "Nueva conversación"
@@ -1238,9 +1237,8 @@ msgid "Descartar"
 msgstr "Discard"
 
 #: app/templates/editar_nota.html:2 app/templates/editar_nota.html:6
-#, fuzzy
 msgid "Editar nota"
-msgstr "Edit"
+msgstr "Edit note"
 
 #: app/templates/editar_nota.html:13
 msgid "Texto"
@@ -1253,9 +1251,8 @@ msgid ""
 msgstr "Delete this note? It'll be moved to the trash — you can restore it from there."
 
 #: app/templates/editar_nota.html:25
-#, fuzzy
 msgid "Nota eliminada."
-msgstr "Quick note"
+msgstr "Note deleted."
 
 #: app/templates/editar_nota.html:26 app/templates/editar_tarea.html:44
 #: app/templates/tareas_lista.html:109
@@ -1769,9 +1766,8 @@ msgid "No hay registros para este filtro."
 msgstr "There are no records for this filter."
 
 #: app/templates/historial.html:73
-#, fuzzy
 msgid "Paginación del histórico"
-msgstr "Search history"
+msgstr "History pagination"
 
 #: app/templates/docs/pagina.html:136 app/templates/historial.html:75
 #: app/templates/historial.html:77 app/templates/tareas_calendario.html:19
@@ -1791,26 +1787,20 @@ msgid "Siguiente"
 msgstr "Next"
 
 #: app/templates/historial.html:89
-#, fuzzy
 msgid "Generar informe con IA"
-msgstr "Generate report with local AI"
+msgstr "Generate AI report"
 
 #: app/templates/historial.html:90
-#, fuzzy
-msgid ""
-"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
-"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
-" las claves configuradas en Ajustes del asistente IA)."
-msgstr "Sends the filtered data above to a model running on your machine (Ollama or LM Studio). Nothing is sent to the internet."
+msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA)."
+msgstr "Sends the filtered data above to a model running on your machine (Ollama or LM Studio, nothing leaves your computer) or to OpenRouter in the cloud (uses the keys set in AI assistant Settings)."
 
 #: app/templates/historial.html:97
 msgid "Proveedor"
 msgstr "Provider"
 
 #: app/templates/historial.html:101 app/templates/historial.html:130
-#, fuzzy
 msgid "OpenRouter (nube)"
-msgstr "Model (OpenRouter)"
+msgstr "OpenRouter (cloud)"
 
 #: app/templates/historial.html:104
 msgid "Modelo"
@@ -3208,3 +3198,44 @@ msgstr "Move to"
 
 msgid "Nada aquí"
 msgstr "Nothing here"
+
+msgid "opcional"
+msgstr "optional"
+
+msgid "Un título corto para encontrarla fácilmente"
+msgstr "A short title to find it easily"
+
+msgid "Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con [texto](https://...) y direcciones web."
+msgstr "Formatting: **bold**, *italic*, lists with \"-\" or \"1.\", links with [text](https://...) and web addresses."
+
+msgid "Fijar esta nota arriba en su proyecto"
+msgstr "Pin this note at the top of its project"
+
+msgid "Archivos adjuntos"
+msgstr "Attachments"
+
+msgid "Archivos para adjuntar"
+msgstr "Files to attach"
+
+msgid "Adjuntar"
+msgstr "Attach"
+
+#, python-format
+msgid "Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota."
+msgstr "Images, PDF or text; up to 5 MB each and %(num)s per note."
+
+#, python-format
+msgid "Has llegado al máximo de %(num)s adjuntos en esta nota."
+msgstr "You have reached the maximum of %(num)s attachments on this note."
+
+msgid "Fijada"
+msgstr "Pinned"
+
+msgid "Notas fijadas"
+msgstr "Pinned notes"
+
+msgid "Resumen del periodo"
+msgstr "Period summary"
+
+msgid "Entradas"
+msgstr "Entries"

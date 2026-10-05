@@ -379,6 +379,18 @@ CREATE TABLE IF NOT EXISTS tareas_recurrentes (
     creado_en TEXT NOT NULL
 );
 
+-- Adjuntos de una nota (imágenes, PDF, texto): se guardan en la propia base de
+-- datos, con tope de tamaño y de número por nota (ver NOTAS_ADJUNTOS_*).
+CREATE TABLE IF NOT EXISTS notas_adjuntos (
+    id INTEGER PRIMARY KEY,
+    nota_id INTEGER NOT NULL REFERENCES notas(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    creado_en TEXT NOT NULL
+);
+
 -- Checklist (subtareas) de una tarea de la lista (tareas_outlook).
 CREATE TABLE IF NOT EXISTS tarea_checklist (
     id INTEGER PRIMARY KEY,
@@ -745,6 +757,7 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
+CREATE INDEX IF NOT EXISTS idx_notas_adjuntos_nota ON notas_adjuntos(nota_id);
 CREATE INDEX IF NOT EXISTS idx_tarea_checklist_tarea ON tarea_checklist(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_tarea_outlook ON tareas(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_asignada ON tareas_outlook(asignada_a);
@@ -1410,6 +1423,13 @@ def init_db() -> None:
         _asegurar_columna(conn, "tareas_outlook", "cliente_fiscal_id", "INTEGER")
         _asegurar_columna(conn, "tareas_outlook", "mensaje_correo_id", "INTEGER")
         _asegurar_columna(conn, "tareas", "tarea_outlook_id", "INTEGER")
+        # Notas con título, fijadas y vinculadas a un cliente fiscal, a una tarea
+        # de la lista y al correo del que nacieron.
+        _asegurar_columna(conn, "notas", "titulo", "TEXT")
+        _asegurar_columna(conn, "notas", "fijada", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "notas", "cliente_fiscal_id", "INTEGER")
+        _asegurar_columna(conn, "notas", "tarea_outlook_id", "INTEGER")
+        _asegurar_columna(conn, "notas", "mensaje_correo_id", "INTEGER")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -3736,6 +3756,8 @@ def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
 def crear_nota(
     usuario_id: int, texto: str, categoria_id: int | None = None, tarea_id: int | None = None,
     creada_en: str | None = None, cliente_uuid: str | None = None,
+    titulo: str | None = None, fijada: bool = False, cliente_fiscal_id: int | None = None,
+    tarea_outlook_id: int | None = None, mensaje_correo_id: int | None = None,
 ) -> int:
     """`creada_en`/`cliente_uuid`: igual que en `fichar()`, para la cola
     offline de la app móvil -- conservan la hora real de creación y evitan
@@ -3754,8 +3776,16 @@ def crear_nota(
         if creada_en is not None and creada_en > ahora:
             raise ValueError("La fecha de creación de la nota no puede ser futura.")
         cur = conn.execute(
-            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, cliente_uuid) VALUES (?, ?, ?, ?, ?, ?)",
-            (usuario_id, texto.strip(), categoria_id, tarea_id, creada_en or ahora, cliente_uuid),
+            """INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, cliente_uuid,
+                                  titulo, fijada, cliente_fiscal_id, tarea_outlook_id, mensaje_correo_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                usuario_id, texto.strip(), categoria_id, tarea_id, creada_en or ahora, cliente_uuid,
+                _titulo_nota(titulo), 1 if fijada else 0,
+                _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id),
+                _tarea_outlook_id_propia(conn, usuario_id, tarea_outlook_id),
+                _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id),
+            ),
         )
         conn.commit()
         nota_id = cur.lastrowid
@@ -3796,13 +3826,13 @@ def _reindexar_nota(usuario_id: int, nota_id: int) -> None:
         pass
 
 
-def importar_nota(usuario_id: int, texto: str, categoria_id: int | None, creada_en: str) -> int:
+def importar_nota(usuario_id: int, texto: str, categoria_id: int | None, creada_en: str, titulo: str | None = None) -> int:
     """Inserta una nota con un timestamp explícito (importación de datos exportados)."""
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, NULL, ?)",
-            (usuario_id, texto.strip(), categoria_id, creada_en),
+            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, titulo) VALUES (?, ?, ?, NULL, ?, ?)",
+            (usuario_id, texto.strip(), categoria_id, creada_en, _titulo_nota(titulo)),
         )
         conn.commit()
         return cur.lastrowid
@@ -3814,8 +3844,9 @@ def obtener_nota(usuario_id: int, nota_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            """SELECT n.*, c.nombre AS categoria_nombre
+            """SELECT n.*, c.nombre AS categoria_nombre, cf.nombre AS cliente_fiscal_nombre
                FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+               LEFT JOIN clientes_fiscales cf ON cf.id = n.cliente_fiscal_id
                WHERE n.id = ? AND n.usuario_id = ? AND n.papelera_en IS NULL""",
             (nota_id, usuario_id),
         ).fetchone()
@@ -3823,16 +3854,173 @@ def obtener_nota(usuario_id: int, nota_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
-def editar_nota(usuario_id: int, nota_id: int, texto: str) -> None:
+NOTA_TITULO_MAX_CARACTERES = 120
+_SIN_CAMBIO = object()
+
+
+def _titulo_nota(titulo: str | None) -> str | None:
+    titulo = " ".join((titulo or "").split())[:NOTA_TITULO_MAX_CARACTERES]
+    return titulo or None
+
+
+def _tarea_outlook_id_propia(conn: sqlite3.Connection, usuario_id: int, tarea_id: int | None) -> int | None:
+    if tarea_id is None:
+        return None
+    fila = conn.execute(
+        "SELECT id FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def editar_nota(
+    usuario_id: int, nota_id: int, texto: str, *, titulo=_SIN_CAMBIO, fijada=_SIN_CAMBIO,
+    cliente_fiscal_id=_SIN_CAMBIO, tarea_outlook_id=_SIN_CAMBIO, mensaje_correo_id=_SIN_CAMBIO,
+) -> None:
+    """Actualiza el texto y, si se indican, el título, si está fijada y sus
+    vínculos (cliente fiscal, tarea de la lista, correo). Lo no indicado no se toca."""
     conn = get_connection()
     try:
+        cambios = {"texto": texto.strip()}
+        if titulo is not _SIN_CAMBIO:
+            cambios["titulo"] = _titulo_nota(titulo)
+        if fijada is not _SIN_CAMBIO:
+            cambios["fijada"] = 1 if fijada else 0
+        if cliente_fiscal_id is not _SIN_CAMBIO:
+            cambios["cliente_fiscal_id"] = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        if tarea_outlook_id is not _SIN_CAMBIO:
+            cambios["tarea_outlook_id"] = _tarea_outlook_id_propia(conn, usuario_id, tarea_outlook_id)
+        if mensaje_correo_id is not _SIN_CAMBIO:
+            cambios["mensaje_correo_id"] = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
+        asignaciones = ", ".join(f"{c} = ?" for c in cambios)
         conn.execute(
-            "UPDATE notas SET texto = ? WHERE id = ? AND usuario_id = ?", (texto.strip(), nota_id, usuario_id)
+            f"UPDATE notas SET {asignaciones} WHERE id = ? AND usuario_id = ?",
+            [*cambios.values(), nota_id, usuario_id],
         )
         conn.commit()
     finally:
         conn.close()
     _reindexar_nota(usuario_id, nota_id)
+
+
+def alternar_fijada_nota(usuario_id: int, nota_id: int) -> bool:
+    """Fija o desfija la nota. Devuelve False si no es del usuario."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE notas SET fijada = 1 - fijada WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (nota_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def listar_notas_fijadas(usuario_id: int, categoria_id: int | None = None) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        cond, params = ["n.usuario_id = ?", "n.fijada = 1", "n.papelera_en IS NULL"], [usuario_id]
+        if categoria_id is not None:
+            cond.append("n.categoria_id = ?"); params.append(categoria_id)
+        return conn.execute(
+            f"""SELECT n.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+                FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+                WHERE {' AND '.join(cond)} ORDER BY n.creada_en DESC""",
+            params,
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+# ---- Adjuntos de nota ---------------------------------------------------------
+
+NOTAS_ADJUNTOS_MIME = {
+    "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "text/plain", "text/csv",
+}
+NOTAS_ADJUNTOS_TAMANO_MAXIMO = 5 * 1024 * 1024
+NOTAS_ADJUNTOS_MAXIMO_POR_NOTA = 5
+
+
+def agregar_adjunto_nota(usuario_id: int, nota_id: int, nombre: str, tipo_mime: str, contenido: bytes) -> int:
+    """Adjunta un fichero a una nota propia. Lanza ValueError con un mensaje
+    para la persona usuaria si no procede (tipo, tamaño, límite, nota ajena)."""
+    nombre = (nombre or "").replace("\\", "/").split("/")[-1].strip()[:200] or "adjunto"
+    if tipo_mime not in NOTAS_ADJUNTOS_MIME:
+        raise ValueError("Tipo de archivo no permitido: solo imágenes, PDF o texto.")
+    if len(contenido) > NOTAS_ADJUNTOS_TAMANO_MAXIMO:
+        raise ValueError("El archivo pesa demasiado (máximo 5 MB).")
+    if not contenido:
+        raise ValueError("El archivo está vacío.")
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM notas WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (nota_id, usuario_id)
+        ).fetchone() is None:
+            raise ValueError("La nota no existe.")
+        if conn.execute("SELECT COUNT(*) FROM notas_adjuntos WHERE nota_id = ?", (nota_id,)).fetchone()[0] >= NOTAS_ADJUNTOS_MAXIMO_POR_NOTA:
+            raise ValueError(f"Una nota admite como máximo {NOTAS_ADJUNTOS_MAXIMO_POR_NOTA} adjuntos.")
+        cur = conn.execute(
+            "INSERT INTO notas_adjuntos (nota_id, nombre, tipo_mime, tamano, contenido, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+            (nota_id, nombre, tipo_mime, len(contenido), contenido, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_adjuntos_nota(nota_id: int) -> list[sqlite3.Row]:
+    """Sin el contenido (BLOB): solo lo necesario para listarlos."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT id, nota_id, nombre, tipo_mime, tamano, creado_en FROM notas_adjuntos WHERE nota_id = ? ORDER BY id",
+            (nota_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_adjuntos_notas(nota_ids: list[int]) -> dict[int, int]:
+    if not nota_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(nota_ids))
+        return {
+            f["nota_id"]: f["n"]
+            for f in conn.execute(f"SELECT nota_id, COUNT(*) AS n FROM notas_adjuntos WHERE nota_id IN ({marcas}) GROUP BY nota_id", nota_ids)
+        }
+    finally:
+        conn.close()
+
+
+def obtener_adjunto_nota(usuario_id: int, adjunto_id: int) -> sqlite3.Row | None:
+    """Con contenido; solo si la nota es del usuario."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT a.* FROM notas_adjuntos a JOIN notas n ON n.id = a.nota_id
+               WHERE a.id = ? AND n.usuario_id = ?""",
+            (adjunto_id, usuario_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_adjunto_nota(usuario_id: int, adjunto_id: int) -> bool:
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM notas_adjuntos a JOIN notas n ON n.id = a.nota_id WHERE a.id = ? AND n.usuario_id = ?",
+            (adjunto_id, usuario_id),
+        ).fetchone() is None:
+            return False
+        conn.execute("DELETE FROM notas_adjuntos WHERE id = ?", (adjunto_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 
 def eliminar_nota(usuario_id: int, nota_id: int) -> None:
@@ -3923,7 +4111,7 @@ def historial(
             cond_n.append("n.categoria_id = ?"); params_n.append(categoria_id)
             cond_t.append("t.categoria_id = ?"); params_t.append(categoria_id)
         if texto:
-            cond_n.append("n.texto LIKE ?"); params_n.append(f"%{texto}%")
+            cond_n.append("(n.texto LIKE ? OR n.titulo LIKE ?)"); params_n.extend([f"%{texto}%", f"%{texto}%"])
             cond_t.append("t.nombre LIKE ?"); params_t.append(f"%{texto}%")
 
         query = f"""
@@ -3939,7 +4127,9 @@ def historial(
                     NULL AS duracion_segundos,
                     n.categoria_id AS categoria_id,
                     c.nombre AS categoria_nombre,
-                    c.color AS categoria_color
+                    c.color AS categoria_color,
+                    n.titulo AS titulo,
+                    n.fijada AS fijada
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
                 WHERE {' AND '.join(cond_n)}
 
@@ -3956,7 +4146,9 @@ def historial(
                     t.duracion_segundos AS duracion_segundos,
                     t.categoria_id AS categoria_id,
                     c.nombre AS categoria_nombre,
-                    c.color AS categoria_color
+                    c.color AS categoria_color,
+                    NULL AS titulo,
+                    0 AS fijada
                 FROM tareas t JOIN categorias c ON c.id = t.categoria_id
                 WHERE {' AND '.join(cond_t)}
             )

@@ -17,6 +17,7 @@ def construir_export(usuario_id: int, desde: str | None, hasta: str | None, cate
             "origen": f["origen"],  # 'nota' o 'tarea'
             "id": f["id"],
             "texto_o_nombre": f["texto"],
+            "titulo": f["titulo"],  # solo notas (opcional); el CSV conserva su formato de siempre
             "tipo": f["tipo"],  # 'duracion' | 'instantanea' | null para notas
             "estado": f["estado"],
             "categoria": f["categoria_nombre"],
@@ -47,7 +48,7 @@ def a_csv(usuario_id: int, desde=None, hasta=None, categoria_id=None) -> str:
     buf = io.StringIO()
     campos = ["origen", "id", "texto_o_nombre", "tipo", "estado", "categoria",
               "timestamp_inicio", "timestamp_fin", "duracion_segundos"]
-    writer = csv.DictWriter(buf, fieldnames=campos)
+    writer = csv.DictWriter(buf, fieldnames=campos, extrasaction="ignore")
     writer.writeheader()
     for r in data["registros"]:
         writer.writerow(r)
@@ -85,7 +86,8 @@ def a_markdown(usuario_id: int, desde=None, hasta=None, categoria_id=None) -> st
             else:
                 dur = r["duracion_segundos"]
                 etiqueta = f"Tarea ({dur // 60}min)" if dur is not None else "Tarea (en curso)"
-            lineas.append(f"- `{hora}` **{etiqueta}** — {r['texto_o_nombre']}")
+            texto_md = f"**{r['titulo']}**: {r['texto_o_nombre']}" if r.get("titulo") else r["texto_o_nombre"]
+            lineas.append(f"- `{hora}` **{etiqueta}** — {texto_md}")
         lineas.append("")
 
     return "\n".join(lineas)

@@ -1,0 +1,3 @@
+{# Texto de una fila del registro (proyecto, histórico, dashboard). Las notas
+   pueden llevar título, estar fijadas y tener formato (negrita, listas, enlaces). #}
+{% macro texto(f) %}{% if f.origen == 'nota' %}{% if f.fijada %}<svg class="icono-inline nota-fijada-icono" aria-hidden="true" title="{{ _('Fijada') }}"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bookmark"></use></svg> {% endif %}{% if f.titulo %}<strong class="nota-titulo">{{ f.titulo }}</strong> {% endif %}<span class="nota-cuerpo">{{ f.texto|nota_html }}</span>{% else %}{{ f.texto }}{% endif %}{% endmacro %}

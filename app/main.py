@@ -32,6 +32,7 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .notas_formato import nota_a_html
 from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, notificaciones
 from .auth import limiter, login_required
 from .rutas_api import api_bp
@@ -162,6 +163,7 @@ def _seleccionar_idioma():
 
 
 babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
+app.add_template_filter(nota_a_html, "nota_html")
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
@@ -674,7 +676,7 @@ def ver_menu(menu_id: int):
     )
     return render_template(
         "menu.html", menu=menu, activas=activas, log=log, q=q or "", plantillas=plantillas,
-        tareas_pendientes=tareas_pendientes,
+        tareas_pendientes=tareas_pendientes, notas_fijadas=db.listar_notas_fijadas(g.usuario_id, menu_id),
     )
 
 
@@ -751,9 +753,10 @@ def eliminar_menu(menu_id: int):
 @login_required
 def crear_nota():
     texto = request.form.get("texto", "").strip()
+    titulo = request.form.get("titulo", "").strip()
     categoria_id = request.form.get("categoria_id") or None
-    if texto:
-        db.crear_nota(g.usuario_id, texto, categoria_id=categoria_id)
+    if texto or titulo:
+        db.crear_nota(g.usuario_id, texto, categoria_id=categoria_id, titulo=titulo or None)
     return redirect(request.referrer or url_for("inicio"))
 
 
@@ -765,12 +768,76 @@ def editar_nota(nota_id: int):
         abort(404)
     if request.method == "POST":
         texto = request.form.get("texto", "").strip()
+        titulo = request.form.get("titulo", "").strip()
         volver_a = request.form.get("volver_a") or url_for("inicio")
-        if texto:
-            db.editar_nota(g.usuario_id, nota_id, texto)
+        if texto or titulo:
+            cliente = request.form.get("cliente_fiscal_id", type=int)
+            db.editar_nota(
+                g.usuario_id, nota_id, texto, titulo=titulo or None, fijada=request.form.get("fijada") == "1",
+                cliente_fiscal_id=cliente,
+            )
         return redirect(volver_a)
     volver_a = request.args.get("volver_a") or request.referrer or url_for("inicio")
-    return render_template("editar_nota.html", nota=nota, volver_a=volver_a)
+    return render_template(
+        "editar_nota.html", nota=nota, volver_a=volver_a,
+        adjuntos=db.listar_adjuntos_nota(nota_id),
+        clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+        adjuntos_max=db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA,
+        error=(request.args.get("error") or "")[:200] or None,
+    )
+
+
+@app.route("/nota/<int:nota_id>/fijar", methods=["POST"])
+@login_required
+def fijar_nota(nota_id: int):
+    if not db.alternar_fijada_nota(g.usuario_id, nota_id):
+        abort(404)
+    return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
+
+
+@app.route("/nota/<int:nota_id>/adjuntos", methods=["POST"])
+@login_required
+def subir_adjuntos_nota(nota_id: int):
+    """Sube uno o varios archivos a la nota. Si alguno no es válido se avisa del
+    primer error; los válidos anteriores ya quedan adjuntos."""
+    if db.obtener_nota(g.usuario_id, nota_id) is None:
+        abort(404)
+    volver_a = request.form.get("volver_a") or url_for("inicio")
+    error = None
+    for fichero in request.files.getlist("adjunto"):
+        if not fichero or not fichero.filename:
+            continue
+        # Se lee como mucho LIMITE+1 bytes: no se carga un archivo enorme entero en memoria.
+        contenido = fichero.read(db.NOTAS_ADJUNTOS_TAMANO_MAXIMO + 1)
+        try:
+            db.agregar_adjunto_nota(g.usuario_id, nota_id, fichero.filename, fichero.mimetype, contenido)
+        except ValueError as e:
+            error = error or f"{fichero.filename}: {e}"
+    return redirect(url_for("editar_nota", nota_id=nota_id, volver_a=volver_a, error=error))
+
+
+@app.route("/nota/adjunto/<int:adjunto_id>")
+@login_required
+def descargar_adjunto_nota(adjunto_id: int):
+    adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
+    if adjunto is None:
+        abort(404)
+    en_linea = request.args.get("ver") == "1" and adjunto["tipo_mime"].startswith("image/")
+    respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
+    nombre = adjunto["nombre"].replace('"', "")
+    respuesta.headers["Content-Disposition"] = f'{"inline" if en_linea else "attachment"}; filename="{nombre}"'
+    respuesta.headers["X-Content-Type-Options"] = "nosniff"
+    return respuesta
+
+
+@app.route("/nota/adjunto/<int:adjunto_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_adjunto_nota(adjunto_id: int):
+    adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
+    if adjunto is None:
+        abort(404)
+    db.eliminar_adjunto_nota(g.usuario_id, adjunto_id)
+    return redirect(url_for("editar_nota", nota_id=adjunto["nota_id"], volver_a=request.form.get("volver_a") or url_for("inicio")))
 
 
 @app.route("/nota/<int:nota_id>/eliminar", methods=["POST"])
