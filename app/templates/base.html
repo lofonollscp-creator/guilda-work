@@ -252,21 +252,49 @@
 
     <div class="app-main">
       <header class="top-bar">
-        <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir"
+        {# Disparador del buscador global (lo abre el campo "Buscar" de la barra lateral y Ctrl+K); ya no se muestra aquí. #}
+        <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir" hidden aria-hidden="true" tabindex="-1"
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}"
                 data-url-fiscal-vencimiento="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=0) }}"
-                data-url-fiscal-cliente="{{ url_for('fiscal.ficha_cliente', cliente_id=0) }}">
-          <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
-          {{ _('Buscar en notas, tareas, correo y calendario fiscal…') }}
-          <span class="busqueda-atajo">Ctrl K</span>
-        </button>
-        <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
-        {% if chip_jornada %}
-        <a class="fichaje-chip fichaje-chip-{{ chip_jornada.estado }}" href="{{ url_for('fichaje.panel') }}">
-          <span class="fichaje-chip-punto" aria-hidden="true"></span>
-          {% if chip_jornada.estado == 'en_pausa' %}{{ _('En pausa') }}{% else %}{{ _('Dentro de jornada') }}{% endif %}{% if chip_jornada.desde %} · {{ _('desde las %(h)s', h=chip_jornada.desde) }}{% endif %}
-        </a>
-        {% endif %}
+                data-url-fiscal-cliente="{{ url_for('fiscal.ficha_cliente', cliente_id=0) }}"></button>
+        <p class="top-bar-fecha">{{ barra_fecha }}</p>
+        <div class="top-bar-acciones">
+          <details class="top-bar-nuevo">
+            <summary class="btn btn-primary top-bar-nuevo-btn">+ {{ _('Nuevo') }}</summary>
+            <div class="top-bar-menu">
+              <a href="{{ url_for('lista_notas', nueva=1) }}">{{ _('Nota') }}</a>
+              <a href="{{ url_for('tareas.listar') }}">{{ _('Tarea') }}</a>
+              <a href="{{ url_for('correo.bandeja') }}">{{ _('Correo') }}</a>
+            </div>
+          </details>
+          {% if barra_cronometro %}
+          <a class="top-bar-pildora top-bar-crono" href="{{ url_for('tareas.hoy') }}" title="{{ barra_cronometro.nombre }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
+            <span class="top-bar-crono-nombre">{{ barra_cronometro.nombre|truncate(24, True) }}{% if barra_cronometro.mas %} +{{ barra_cronometro.mas }}{% endif %}</span>
+            <span class="top-bar-vivo" data-inicio="{{ barra_cronometro.inicio }}" data-pausado="{{ barra_cronometro.pausado }}">00:00:00</span>
+          </a>
+          {% endif %}
+          {% if barra_mi_dia %}
+          <a class="top-bar-pildora {{ 'is-alerta' if barra_mi_dia_vencidas }}" href="{{ url_for('tareas.hoy') }}" title="{{ _('Tareas vencidas o que vencen hoy') }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sun"></use></svg>
+            {{ ngettext('%(n)s para hoy', '%(n)s para hoy', barra_mi_dia, n=barra_mi_dia) }}
+          </a>
+          {% endif %}
+          {% if correo_no_leidos_sidebar %}
+          <a class="top-bar-pildora" href="{{ url_for('correo.bandeja') }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
+            {{ ngettext('%(n)s sin leer', '%(n)s sin leer', correo_no_leidos_sidebar, n=correo_no_leidos_sidebar) }}
+          </a>
+          {% endif %}
+          {% if chip_jornada %}
+          <a class="fichaje-chip fichaje-chip-{{ chip_jornada.estado }}" href="{{ url_for('fichaje.panel') }}">
+            <span class="fichaje-chip-punto" aria-hidden="true"></span>
+            {% if chip_jornada.estado == 'en_pausa' %}{{ _('En pausa') }}{% else %}{{ _('Dentro de jornada') }}{% endif %}{% if chip_jornada.desde %} · {{ _('desde las %(h)s', h=chip_jornada.desde) }}{% endif %}
+            {% if chip_jornada.desde_iso %}<span class="top-bar-vivo" data-inicio="{{ chip_jornada.desde_iso }}">00:00:00</span>{% endif %}
+          </a>
+          {% endif %}
+          <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
+        </div>
       </header>
       <main class="content" id="contenido-principal">
         {% block content %}{% endblock %}
@@ -347,6 +375,7 @@
       archivos: {{ _('archivos')|tojson }}
     };
   </script>
+  <script src="{{ url_for('static', filename='barra.js') }}"></script>
   <script src="{{ url_for('static', filename='toasts.js') }}"></script>
   <script src="{{ url_for('static', filename='file_input.js') }}"></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>

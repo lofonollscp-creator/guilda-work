@@ -336,9 +336,33 @@ def inyectar_chip_jornada():
         if estado not in ("dentro", "en_pausa"):
             return {"chip_jornada": None}
         entrada = db.entrada_abierta_fichaje(g.usuario_id)
-        return {"chip_jornada": {"estado": estado, "desde": entrada[11:16] if entrada else None}}
+        return {"chip_jornada": {"estado": estado, "desde": entrada[11:16] if entrada else None, "desde_iso": entrada}}
     except Exception:
         return {"chip_jornada": None}
+
+
+@app.context_processor
+def inyectar_barra_superior():
+    """Datos de la barra superior (base.html): fecha, pendientes de "Mi día",
+    cronómetro de tarea en curso. Es un atajo informativo: si algo falla la
+    barra se queda sin ese dato, nunca rompe la página."""
+    if not g.usuario_id:
+        return {}
+    datos = {"barra_fecha": format_date(datetime.now().date(), "full"), "barra_mi_dia": 0, "barra_cronometro": None}
+    try:
+        sec = db.tareas_para_hoy(g.usuario_id)
+        datos["barra_mi_dia"] = len(sec["vencidas"]) + len(sec["hoy"])
+        datos["barra_mi_dia_vencidas"] = len(sec["vencidas"])
+    except Exception:
+        pass
+    try:
+        activas = [t for t in db.tareas_activas(g.usuario_id) if t["estado"] == "en_curso"]
+        if activas:
+            t = activas[0]
+            datos["barra_cronometro"] = {"nombre": t["nombre"], "inicio": t["inicio_en"], "pausado": t.get("segundos_pausados", 0), "mas": len(activas) - 1}
+    except Exception:
+        pass
+    return datos
 
 
 @app.context_processor

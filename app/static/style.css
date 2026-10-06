@@ -4515,7 +4515,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 
 /* Chip de jornada en la barra superior (canvas: Panel). Verde dentro de
    jornada, ámbar en pausa; enlaza al panel de fichaje. */
-.fichaje-chip { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); font: 600 12px var(--font-mono); color: var(--text); text-decoration: none; white-space: nowrap; }
+.fichaje-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--text); text-decoration: none; white-space: nowrap; }
 .fichaje-chip:hover { border-color: var(--text-muted); text-decoration: none; }
 .fichaje-chip-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
 .fichaje-chip-en_pausa .fichaje-chip-punto { background: var(--warning); }
@@ -4629,3 +4629,25 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tools-chip { font: 600 12px var(--font-mono); padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; }
 .tools-chip:hover { border-color: var(--text-muted); color: var(--text); }
 .tools-chip.is-activo { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
+
+/* ---- Barra superior: fecha, acciones rápidas y estado del día ---- */
+.top-bar { justify-content: space-between; }
+.top-bar-fecha { margin: 0; color: var(--text-muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-bar-acciones { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; margin-left: auto; min-width: 0; }
+.top-bar-pildora { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.2; text-decoration: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.top-bar-pildora:hover { border-color: var(--text-muted); text-decoration: none; }
+.top-bar-pildora svg { width: 14px; height: 14px; flex-shrink: 0; }
+.top-bar-pildora.is-alerta { border-color: var(--danger, #f87171); color: var(--danger, #f87171); }
+.top-bar-crono-nombre { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.top-bar-vivo { color: var(--text-muted); font-weight: 500; }
+.top-bar-nuevo { position: relative; }
+.top-bar-nuevo summary { list-style: none; cursor: pointer; padding: 6px 14px; font-size: 13px; }
+.top-bar-nuevo summary::-webkit-details-marker { display: none; }
+.top-bar-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 150px; display: flex; flex-direction: column; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); z-index: 30; }
+.top-bar-menu a { padding: 8px 10px; border-radius: 8px; color: var(--text); font-size: 13px; text-decoration: none; }
+.top-bar-menu a:hover { background: rgba(255,255,255,0.07); }
+@media (max-width: 900px) { .top-bar-crono-nombre, .top-bar-fecha, .fichaje-chip .top-bar-vivo { display: none; } }
+@media (max-width: 700px) { .top-bar-pildora { font-size: 0; gap: 0; padding: 8px; } .top-bar-pildora svg { width: 16px; height: 16px; } }
+.top-bar .busqueda-boton-abrir[hidden] { display: none; }
+.top-bar-fecha::first-letter { text-transform: uppercase; }
+.top-bar-nuevo summary { font-family: inherit; text-transform: none; letter-spacing: 0; font-weight: 700; }
