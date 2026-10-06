@@ -4540,3 +4540,31 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .auth-hero { display: none; }
   .auth-panel { flex: 1; }
 }
+
+/* ---- Pantalla Notas: lista + editor (canvas Interfaces Guilda Work) ---- */
+.notas-layout { display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+@media (max-width: 900px) { .notas-layout { grid-template-columns: 1fr; } }
+.notas-lista { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.notas-filtros { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border); }
+.notas-filtros input[type="search"] { grid-column: 1 / -1; }
+.notas-filtros select { min-width: 0; }
+.notas-items { list-style: none; margin: 0; padding: 0; max-height: 70vh; overflow-y: auto; }
+.notas-grupo { padding: 12px 16px 6px; font: 700 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.nota-item { display: grid; gap: 4px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.nota-item:hover { background: color-mix(in srgb, var(--text) 5%, transparent); text-decoration: none; }
+.nota-item.is-activa { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.nota-item-titulo { overflow-wrap: anywhere; }
+.nota-item-vista { color: var(--text-muted); font-size: 0.88em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nota-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.8em; color: var(--text-muted); }
+.nota-item-proyecto { display: inline-flex; align-items: center; gap: 6px; }
+.notas-editor { min-width: 0; display: grid; gap: var(--space-4); }
+.notas-doc { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; }
+.notas-doc-titulo { margin: 0 0 8px; font-family: inherit; text-transform: none; letter-spacing: -0.01em; font-size: 1.6em; color: var(--text); }
+.notas-doc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; color: var(--text-muted); font-size: 0.85em; }
+.notas-doc-cuerpo { line-height: 1.6; max-width: 70ch; }
+.notas-doc-cuerpo p { display: block; margin: 0 0 0.8em; }
+.notas-vinculos { display: flex; flex-wrap: wrap; gap: 10px; }
+.notas-vinculo { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; color: var(--text); text-decoration: none; font-size: 0.9em; }
+.notas-vinculo:hover { border-color: var(--text-muted); text-decoration: none; }
+.notas-form { max-width: none; margin-bottom: 0; }
+.notas-editor-titulo { margin: 0; }

@@ -77,6 +77,10 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tareas') }}</span>
       </a>
+      <a href="{{ url_for('lista_notas') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('lista_notas', 'editar_nota') else '' }}" title="{{ _('Notas') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Notas') }}</span>
+      </a>
       <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and request.endpoint.startswith('correo.') }}">
         <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
           <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>

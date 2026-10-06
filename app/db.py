@@ -4118,6 +4118,28 @@ def listar_notas_fijadas(usuario_id: int, categoria_id: int | None = None) -> li
         conn.close()
 
 
+def listar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | None = None, limite: int = 300) -> list[sqlite3.Row]:
+    """Notas del usuario para la pantalla Notas: las fijadas primero y luego
+    las más recientes; filtro opcional por proyecto y por texto/título."""
+    conn = get_connection()
+    try:
+        cond, params = ["n.usuario_id = ?", "n.papelera_en IS NULL"], [usuario_id]
+        if categoria_id is not None:
+            cond.append("n.categoria_id = ?"); params.append(categoria_id)
+        if texto:
+            patron = "%" + texto.replace("%", r"\%").replace("_", r"\_") + "%"
+            cond.append("(n.texto LIKE ? ESCAPE '\\' OR n.titulo LIKE ? ESCAPE '\\')"); params += [patron, patron]
+        return conn.execute(
+            f"""SELECT n.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+                FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+                WHERE {' AND '.join(cond)}
+                ORDER BY n.fijada DESC, n.creada_en DESC LIMIT ?""",
+            params + [limite],
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 # ---- Adjuntos de nota ---------------------------------------------------------
 
 NOTAS_ADJUNTOS_MIME = {

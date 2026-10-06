@@ -805,6 +805,42 @@ def eliminar_menu(menu_id: int):
     return redirect(url_for("inicio"))
 
 
+@app.route("/notas", methods=["GET"])
+@login_required
+def lista_notas():
+    """Pantalla Notas: lista (fijadas primero, filtro por proyecto y
+    búsqueda) con el editor de la nota elegida al lado."""
+    categoria_id = request.args.get("categoria_id", type=int)
+    q = (request.args.get("q") or "").strip() or None
+    notas = db.listar_notas(g.usuario_id, categoria_id=categoria_id, texto=q)
+    nota_id = request.args.get("nota", type=int)
+    nueva = request.args.get("nueva") == "1"
+    nota = None
+    if not nueva:
+        nota = next((n for n in notas if n["id"] == nota_id), None) if nota_id else None
+        if nota is None and nota_id is None and notas:
+            nota = notas[0]
+    detalle = None
+    if nota is not None:
+        completa = db.obtener_nota(g.usuario_id, nota["id"])
+        tarea = db.obtener_tarea_outlook(g.usuario_id, completa["tarea_outlook_id"]) if completa["tarea_outlook_id"] else None
+        mensaje = None
+        if completa["mensaje_correo_id"] and db.mensaje_correo_pertenece_a_usuario(g.usuario_id, completa["mensaje_correo_id"]):
+            mensaje = db.obtener_mensaje_correo(completa["mensaje_correo_id"])
+        detalle = {
+            "nota": completa, "tarea": tarea, "mensaje": mensaje,
+            "adjuntos": db.listar_adjuntos_nota(nota["id"]),
+        }
+    return render_template(
+        "notas.html",
+        notas=notas, detalle=detalle, nueva=nueva, q=q or "", categoria_id=categoria_id,
+        menus=db.listar_categorias(g.usuario_id),
+        clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+        adjuntos_max=db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA,
+        adjuntos_por_nota=db.contar_adjuntos_notas([n["id"] for n in notas]),
+    )
+
+
 @app.route("/notas", methods=["POST"])
 @login_required
 def crear_nota():

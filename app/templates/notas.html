@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Notas') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set filtros = {'categoria_id': categoria_id, 'q': q or None} %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Notas') }}</h1>
+    <p class="subtitle">{{ _('Tus notas con título y formato. Las fijadas salen primero.') }}</p>
+  </div>
+</header>
+
+<div class="notas-layout">
+  <aside class="notas-lista" aria-label="{{ _('Lista de notas') }}">
+    <form class="notas-filtros" method="get" action="{{ url_for('lista_notas') }}">
+      <label class="sr-only" for="notas-q">{{ _('Buscar nota') }}</label>
+      <input type="search" id="notas-q" name="q" value="{{ q }}" placeholder="{{ _('Buscar nota') }}">
+      <label class="sr-only" for="notas-proyecto">{{ _('Proyecto') }}</label>
+      <select id="notas-proyecto" name="categoria_id" onchange="this.form.requestSubmit()">
+        <option value="">{{ _('Todos los proyectos') }}</option>
+        {% for m in menus %}<option value="{{ m.id }}" {{ 'selected' if categoria_id == m.id }}>{{ m.nombre }}</option>{% endfor %}
+      </select>
+      <a class="btn btn-primary" href="{{ url_for('lista_notas', nueva=1, **filtros) }}">+ {{ _('Nueva') }}</a>
+    </form>
+
+    {% if not notas %}
+    <p class="empty-lane">{{ _('No hay notas para este filtro.') }}</p>
+    {% else %}
+    {% set ns = namespace(grupo='') %}
+    <ul class="notas-items">
+      {% for n in notas %}
+      {% set grupo = 'fijadas' if n.fijada else 'recientes' %}
+      {% if grupo != ns.grupo %}
+      {% set ns.grupo = grupo %}
+      <li class="notas-grupo" aria-hidden="true">{{ _('Fijadas') if n.fijada else _('Recientes') }}</li>
+      {% endif %}
+      <li>
+        <a class="nota-item {{ 'is-activa' if detalle and detalle.nota.id == n.id }}" href="{{ url_for('lista_notas', nota=n.id, **filtros) }}" {% if detalle and detalle.nota.id == n.id %}aria-current="true"{% endif %}>
+          <strong class="nota-item-titulo">{{ n.titulo or (n.texto.split('\n')[0]|truncate(60, True)) }}</strong>
+          {% if n.titulo and n.texto %}<span class="nota-item-vista">{{ n.texto|replace('**', '')|replace('*', '')|truncate(110, True) }}</span>{% endif %}
+          <span class="nota-item-meta">
+            {% if n.categoria_nombre %}<span class="nota-item-proyecto"><span class="dot" style="background: {{ n.categoria_color or '#7c8ba1' }};"></span>{{ n.categoria_nombre }}</span>{% endif %}
+            <span class="mono">{{ n.creada_en[:10] }}</span>
+            {% if adjuntos_por_nota.get(n.id) %}<span class="mono">{{ ngettext('%(n)s adjunto', '%(n)s adjuntos', adjuntos_por_nota[n.id], n=adjuntos_por_nota[n.id]) }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </aside>
+
+  <section class="notas-editor" aria-label="{{ _('Editor de nota') }}">
+    {% if nueva %}
+    <form class="edit-form notas-form" method="post" action="{{ url_for('crear_nota') }}">
+      <h2 class="notas-editor-titulo">{{ _('Nueva nota') }}</h2>
+      <label>{{ _('Título') }} <span class="muted">({{ _('opcional') }})</span>
+        <input type="text" name="titulo" maxlength="120" placeholder="{{ _('Un título corto para encontrarla fácilmente') }}" autofocus>
+      </label>
+      <label>{{ _('Texto') }}
+        <textarea name="texto" rows="10" required></textarea>
+      </label>
+      <label>{{ _('Proyecto') }}
+        <select name="categoria_id">
+          <option value="">{{ _('Sin proyecto') }}</option>
+          {% for m in menus %}<option value="{{ m.id }}" {{ 'selected' if categoria_id == m.id }}>{{ m.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <p class="muted nota-ayuda-formato">{{ _('Formato: **negrita**, *cursiva*, listas con "-" o "1.", enlaces con [texto](https://...) y direcciones web.') }}</p>
+      <div class="edit-form-actions">
+        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+        <a class="btn btn-ghost" href="{{ url_for('lista_notas', **filtros) }}">{{ _('Cancelar') }}</a>
+      </div>
+    </form>
+
+    {% elif detalle %}
+    {% set nota = detalle.nota %}
+    {% set volver = url_for('lista_notas', nota=nota.id, **filtros) %}
+    <article class="notas-doc">
+      <h2 class="notas-doc-titulo">{{ nota.titulo or _('Sin título') }}</h2>
+      <p class="notas-doc-meta">
+        {% if nota.fijada %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bookmark"></use></svg> {{ _('Fijada') }}</span>{% endif %}
+        {% if nota.categoria_nombre %}<span class="pill">{{ nota.categoria_nombre }}</span>{% endif %}
+        <span class="mono">{{ nota.creada_en }}</span>
+      </p>
+      <div class="notas-doc-cuerpo nota-cuerpo">{{ nota.texto|nota_html }}</div>
+    </article>
+
+    {% if nota.cliente_fiscal_nombre or detalle.tarea or detalle.mensaje or detalle.adjuntos %}
+    <div class="notas-vinculos" aria-label="{{ _('Vínculos y archivos') }}">
+      {% if nota.cliente_fiscal_nombre %}<a class="notas-vinculo" href="{{ url_for('fiscal.ficha_cliente', cliente_id=nota.cliente_fiscal_id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-building-2"></use></svg> {{ nota.cliente_fiscal_nombre }}</a>{% endif %}
+      {% if detalle.tarea %}<a class="notas-vinculo" href="{{ url_for('tareas.editar', tarea_id=detalle.tarea.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg> {{ _('Tarea') }}: {{ detalle.tarea.asunto|truncate(40, True) }}</a>{% endif %}
+      {% if detalle.mensaje %}<a class="notas-vinculo" href="{{ url_for('correo.bandeja', cuenta_id=detalle.mensaje.cuenta_id, carpeta=detalle.mensaje.carpeta, mensaje_id=detalle.mensaje.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg> {{ _('Correo') }}: {{ (detalle.mensaje.asunto or _('(sin asunto)'))|truncate(40, True) }}</a>{% endif %}
+      {% for a in detalle.adjuntos %}<a class="notas-vinculo" href="{{ url_for('descargar_adjunto_nota', adjunto_id=a.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre }} <span class="mono">{{ (a.tamano / 1024)|round(0)|int }} KB</span></a>{% endfor %}
+    </div>
+    {% endif %}
+
+    <form class="edit-form notas-form" method="post" action="{{ url_for('editar_nota', nota_id=nota.id) }}">
+      <h3 class="notas-editor-titulo">{{ _('Editar') }}</h3>
+      <input type="hidden" name="volver_a" value="{{ volver }}">
+      <label>{{ _('Título') }} <span class="muted">({{ _('opcional') }})</span>
+        <input type="text" name="titulo" maxlength="120" value="{{ nota.titulo or '' }}">
+      </label>
+      <label>{{ _('Texto') }}
+        <textarea name="texto" rows="8">{{ nota.texto }}</textarea>
+      </label>
+      <p class="muted nota-ayuda-formato">{{ _('Formato: **negrita**, *cursiva*, listas con "-" o "1.", enlaces con [texto](https://...) y direcciones web.') }}</p>
+      <div class="ia-form-row">
+        {% if clientes_fiscales %}
+        <label>{{ _('Cliente') }}
+          <select name="cliente_fiscal_id">
+            <option value="">{{ _('Sin cliente') }}</option>
+            {% for c in clientes_fiscales %}<option value="{{ c.id }}" {{ 'selected' if nota.cliente_fiscal_id == c.id }}>{{ c.nombre }}</option>{% endfor %}
+          </select>
+        </label>
+        {% endif %}
+        <label class="checkbox-label nota-fijar"><input type="checkbox" name="fijada" value="1" {{ 'checked' if nota.fijada }}> {{ _('Fijar esta nota arriba') }}</label>
+      </div>
+      <div class="edit-form-actions">
+        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+        <a class="btn btn-ghost" href="{{ url_for('editar_nota', nota_id=nota.id, volver_a=volver) }}#adjuntos"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Gestionar adjuntos') }}</a>
+      </div>
+    </form>
+
+    <form class="edit-form-delete" method="post" action="{{ url_for('eliminar_nota', nota_id=nota.id) }}"
+          data-eliminar-deshacer
+          data-confirmar="{{ _('¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí.') }}"
+          data-mensaje-ok="{{ _('Nota eliminada.') }}"
+          data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
+          data-restaurar-url="{{ url_for('restaurar_nota', nota_id=nota.id) }}"
+          data-volver-a="{{ url_for('lista_notas', **filtros) }}">
+      <input type="hidden" name="volver_a" value="{{ url_for('lista_notas', **filtros) }}">
+      <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar nota') }}</button>
+    </form>
+
+    {% else %}
+    <div class="empty-state">
+      <p>{{ _('Elige una nota de la lista o crea una nueva.') }}</p>
+      <a class="btn btn-primary" href="{{ url_for('lista_notas', nueva=1, **filtros) }}">+ {{ _('Nueva nota') }}</a>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
