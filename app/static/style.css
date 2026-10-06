@@ -751,7 +751,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: flex;
   flex-direction: column;
   padding: 32px 40px;
-  max-width: 1100px;
+  max-width: min(1680px, 100%);
 }
 /* Pantallas de "shell" a pantalla completa (ej. Correo, con su propio grid
    de 3 paneles) no deben quedar recortadas por el max-width/padding
@@ -4461,3 +4461,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .dash-accion .quick-row select, .dash-accion .quick-row input[type="text"] { flex: 1 1 100%; }
 }
 .dash-accion-buscar { grid-column: 1 / -1; padding-block: 10px; }
+
+/* Anchura global: las pantallas aprovechan el ancho; el texto corrido y los
+   formularios sueltos conservan su propio tope de lectura. */
+@media (max-width: 700px) { .content { padding-inline: var(--space-4, 16px); } }
+.page-header + p, .subtitle { max-width: 78ch; }
+.content .empty-lane, .content .empty-state { max-width: 78ch; }
+.quick-card-full .quick-row { flex-wrap: wrap; }
+.quick-card-full .quick-row input[name="asunto"] { flex: 3 1 260px; }
+.quick-card-full .quick-row input[type="text"]:not([name="asunto"]) { flex: 1 1 160px; }
+.quick-card-full .quick-row input[type="datetime-local"] { flex: 0 1 190px; }
+.quick-card-full .quick-row select { flex: 0 1 170px; }
