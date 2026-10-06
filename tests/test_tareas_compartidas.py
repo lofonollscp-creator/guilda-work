@@ -418,3 +418,93 @@ def test_rutas_dependencias(cliente):
     assert db.obtener_tarea_outlook(uid, b)["estado"] == "completada"
     r = cliente.post(f"/tareas/{a}/dependencias", data={"depende_de_id": b})   # ciclo
     assert "error=" in r.headers["Location"]
+
+
+# --- Recordatorios por tarea -----------------------------------------------------------
+
+def test_recordatorios_propios_relativos_y_pospuestos(monkeypatch):
+    from datetime import datetime
+    _, (ana, luis, eva) = _despacho("ana18@comp.com", "luis18@comp.com", "eva18@comp.com")
+    tarea = db.crear_tarea_outlook(ana, "Presentar 303", fecha_vencimiento="2026-10-20T10:00")
+    db.compartir_tarea_outlook(ana, tarea, luis, "observa")
+
+    assert db.anadir_recordatorio_tarea(eva, tarea, "2026-10-19T09:00") is None        # no la ve
+    assert db.anadir_recordatorio_tarea(ana, tarea, "no es una fecha") is None
+    r1 = db.recordatorio_relativo(ana, tarea, "1d_antes", ["app", "correo", "raro"])
+    r2 = db.anadir_recordatorio_tarea(luis, tarea, "2026-10-18T08:00")                  # un observador también puede
+    assert db.recordatorio_relativo(ana, tarea, "inventado") is None
+    mios = db.listar_recordatorios_tarea(ana, tarea)
+    assert [(r["avisar_en"], r["canales"]) for r in mios] == [("2026-10-19T10:00:00", "app,correo")]  # solo los propios
+    assert [r["avisar_en"] for r in db.listar_recordatorios_tarea(luis, tarea)] == ["2026-10-18T08:00:00"]
+
+    antes = datetime(2026, 10, 18, 7, 0)
+    assert db.recordatorios_de_tarea_pendientes_de_aviso(antes) == []
+    despues = datetime(2026, 10, 19, 12, 0)
+    assert {r["id"] for r in db.recordatorios_de_tarea_pendientes_de_aviso(despues)} == {r1, r2}
+    db.marcar_recordatorio_tarea_enviado(r1)
+    assert [r["id"] for r in db.recordatorios_de_tarea_pendientes_de_aviso(despues)] == [r2]
+
+    assert db.posponer_recordatorio_tarea(eva, r1, "1h") is False                       # ajeno
+    assert db.posponer_recordatorio_tarea(ana, r1, "rara") is False
+    assert db.posponer_recordatorio_tarea(ana, r1, "manana", ahora=datetime(2026, 10, 19, 12, 0)) is True
+    assert db.listar_recordatorios_tarea(ana, tarea)[0]["avisar_en"] == "2026-10-20T09:00:00"
+    assert db.listar_recordatorios_tarea(ana, tarea)[0]["enviado_en"] is None            # vuelve a estar pendiente
+
+    db.completar_tarea_outlook(ana, tarea)                                               # tarea cerrada: no avisa
+    assert db.recordatorios_de_tarea_pendientes_de_aviso(datetime(2027, 1, 1)) == []
+    assert db.eliminar_recordatorio_tarea(luis, r2) is True
+
+
+def test_procesar_recordatorios_envia_por_cada_canal_y_solo_una_vez(monkeypatch):
+    from datetime import datetime
+    from app import notificaciones, notificaciones_email, ntfy, recordatorios_tareas
+    _, (ana,) = _despacho("ana19@comp.com")
+    tid = db.tenant_de_usuario(ana)["id"]
+    db.guardar_ntfy(tid, "tenant_x", "tk_secreto")
+    tarea = db.crear_tarea_outlook(ana, "Llamar", fecha_vencimiento="2026-10-20T10:00")
+    db.anadir_recordatorio_tarea(ana, tarea, "2026-10-19T09:00", ["app", "correo", "ntfy"])
+
+    enviados = []
+    monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda *a, **k: enviados.append(("app", a[0], a[2])))
+    monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda dest, asunto, cuerpo: enviados.append(("correo", dest)))
+    monkeypatch.setattr(ntfy, "enviar", lambda topic, token, titulo, msg, **k: enviados.append(("ntfy", topic)))
+
+    assert recordatorios_tareas.procesar_recordatorios(datetime(2026, 10, 19, 8, 0)) == 0
+    assert recordatorios_tareas.procesar_recordatorios(datetime(2026, 10, 19, 9, 1)) == 1
+    assert sorted(e[0] for e in enviados) == ["app", "correo", "ntfy"]
+    assert ("correo", "ana19@comp.com") in enviados and ("ntfy", "tenant_x") in enviados
+    assert recordatorios_tareas.procesar_recordatorios(datetime(2026, 10, 19, 9, 5)) == 0   # no se repite
+
+
+def test_un_canal_roto_no_impide_los_demas(monkeypatch):
+    from datetime import datetime
+    from app import notificaciones, notificaciones_email, recordatorios_tareas
+    _, (ana,) = _despacho("ana20@comp.com")
+    tarea = db.crear_tarea_outlook(ana, "X")
+    db.anadir_recordatorio_tarea(ana, tarea, "2026-10-19T09:00", ["correo", "app"])
+    llamadas = []
+    monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda *a: (_ for _ in ()).throw(RuntimeError("smtp caído")))
+    monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda *a, **k: llamadas.append(a[0]))
+    assert recordatorios_tareas.procesar_recordatorios(datetime(2026, 10, 19, 10, 0)) == 1
+    assert llamadas == [ana]
+
+
+def test_rutas_recordatorios(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno7@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho recordatorios")
+    db.asignar_tenant(uid, tenant)
+    tarea = db.crear_tarea_outlook(uid, "Con aviso", fecha_vencimiento="2026-12-20T10:00")
+    r = cliente.post(f"/tareas/{tarea}/recordatorios", data={"atajo": "1d_antes", "canales": ["app", "correo"]})
+    assert r.status_code == 302 and "error=" not in r.headers["Location"]
+    r = cliente.post(f"/tareas/{tarea}/recordatorios", data={"avisar_en": ""})
+    assert "error=" in r.headers["Location"]
+    html = cliente.get(f"/tareas/{tarea}").get_data(as_text=True)
+    assert "2026-12-19 10:00" in html and "Recordatorios" in html
+    rid = db.listar_recordatorios_tarea(uid, tarea)[0]["id"]
+    assert cliente.post(f"/tareas/recordatorios/{rid}/posponer", data={"opcion": "1h"}).status_code == 302
+    assert cliente.get(f"/tareas/{tarea}/editar").status_code == 200
+    assert cliente.post(f"/tareas/recordatorios/{rid}/eliminar").status_code == 302
+    assert db.listar_recordatorios_tarea(uid, tarea) == []
+    assert cliente.post(f"/tareas/recordatorios/{rid}/eliminar").status_code == 404

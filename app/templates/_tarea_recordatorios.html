@@ -1,0 +1,50 @@
+{# Recordatorios propios de una tarea. Variables: tarea, recordatorios. #}
+{% macro bloque(tarea, recordatorios) %}
+<section class="tarea-recordatorios" id="recordatorios" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Recordatorios') }}</h2>
+  {% if recordatorios %}
+  <ul class="tarea-participantes">
+    {% for r in recordatorios %}
+    <li>
+      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
+      <span class="tarea-participante-nombre">{{ r.avisar_en[:16].replace('T', ' ') }}
+        <small class="muted">· {{ r.canales.split(',')|map('replace', 'app', _('app y móvil'))|map('replace', 'correo', _('correo'))|join(', ') }}</small></span>
+      <span class="pill">{{ _('Enviado') if r.enviado_en else _('Pendiente') }}</span>
+      <form action="{{ url_for('tareas.posponer_recordatorio', recordatorio_id=r.id) }}" method="post" class="recordatorio-posponer">
+        <select name="opcion" aria-label="{{ _('Posponer') }}" onchange="this.form.requestSubmit()">
+          <option value="">{{ _('Posponer…') }}</option>
+          <option value="1h">{{ _('1 hora') }}</option>
+          <option value="manana">{{ _('Mañana a las 9:00') }}</option>
+          <option value="1s">{{ _('1 semana') }}</option>
+        </select>
+      </form>
+      <form action="{{ url_for('tareas.eliminar_recordatorio', recordatorio_id=r.id) }}" method="post">
+        <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('No tienes recordatorios en esta tarea.') }}</p>
+  {% endif %}
+  {% if tarea.estado != 'completada' %}
+  <form class="quick-row" action="{{ url_for('tareas.anadir_recordatorio', tarea_id=tarea.id) }}" method="post">
+    <select name="atajo" aria-label="{{ _('Atajo') }}" onchange="this.form.avisar_en.required = !this.value">
+      <option value="">{{ _('A una hora concreta…') }}</option>
+      {% if tarea.fecha_vencimiento %}
+      <option value="1d_antes">{{ _('1 día antes del vencimiento') }}</option>
+      <option value="1h_antes">{{ _('1 hora antes del vencimiento') }}</option>
+      <option value="al_vencer">{{ _('Al vencer') }}</option>
+      {% endif %}
+    </select>
+    <input type="datetime-local" name="avisar_en" aria-label="{{ _('Fecha y hora') }}">
+    <span class="recordatorio-canales">
+      <label class="checkbox-label"><input type="checkbox" name="canales" value="app" checked> {{ _('App y móvil') }}</label>
+      <label class="checkbox-label"><input type="checkbox" name="canales" value="correo"> {{ _('Correo') }}</label>
+      <label class="checkbox-label"><input type="checkbox" name="canales" value="ntfy"> ntfy</label>
+    </span>
+    <button type="submit" class="btn btn-ghost">{{ _('Añadir recordatorio') }}</button>
+  </form>
+  {% endif %}
+</section>
+{% endmacro %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_tarea_comentarios.html" import hilo, equipo_y_actividad %}
+{% from "_tarea_recordatorios.html" import bloque as bloque_recordatorios %}
 {% block title %}{{ tarea.asunto }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -14,6 +15,7 @@
   {% if puede_editar %}<a class="btn btn-ghost" href="{{ url_for('tareas.editar', tarea_id=tarea.id) }}">{{ _('Editar') }}</a>{% endif %}
 </header>
 
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 <section style="max-width: 640px;">
   {% if tarea.cuerpo %}<p>{{ tarea.cuerpo }}</p>{% else %}<p class="muted">{{ _('Sin descripción.') }}</p>{% endif %}
   <p>
@@ -32,6 +34,7 @@
   {% endif %}
 </section>
 
+{{ bloque_recordatorios(tarea, recordatorios) }}
 {{ hilo(tarea, comentarios, personas_mencionables) }}
 {{ equipo_y_actividad(tiempo_equipo, actividad) }}
 {% endblock %}

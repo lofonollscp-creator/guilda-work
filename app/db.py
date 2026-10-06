@@ -413,6 +413,20 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
 );
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
+-- Recordatorios de una tarea: cada persona pone los suyos. `canales` es una
+-- lista separada por comas de app (centro de avisos + push del móvil), correo
+-- y ntfy; `enviado_en` NULL = pendiente (al posponer vuelve a NULL).
+CREATE TABLE IF NOT EXISTS tarea_recordatorios (
+    id INTEGER PRIMARY KEY,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    avisar_en TEXT NOT NULL,
+    canales TEXT NOT NULL DEFAULT 'app',
+    enviado_en TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_recordatorios_pendientes ON tarea_recordatorios(enviado_en, avisar_en);
+
 -- Dependencias: `tarea_id` espera a `depende_de_id` (no se puede iniciar ni
 -- completar hasta que la otra esté completada).
 CREATE TABLE IF NOT EXISTS tareas_dependencias (
@@ -5912,6 +5926,131 @@ def tareas_desbloqueadas_por(tarea_id: int) -> list[dict]:
     return [dict(c) for c in candidatas if not pendientes.get(c["id"])]
 
 
+# ---- Recordatorios por tarea ----------------------------------------------------
+
+CANALES_RECORDATORIO = ("app", "correo", "ntfy")
+
+
+def _canales_validos(canales) -> str:
+    elegidos = [c for c in CANALES_RECORDATORIO if c in (canales or [])]
+    return ",".join(elegidos or ["app"])
+
+
+def anadir_recordatorio_tarea(usuario_id: int, tarea_id: int, avisar_en: str, canales=None) -> int | None:
+    """Pone un recordatorio propio en una tarea que el usuario ve. `avisar_en`
+    es una fecha y hora ISO (YYYY-MM-DDTHH:MM). None si no procede."""
+    if rol_en_tarea(usuario_id, tarea_id) is None:
+        return None
+    try:
+        momento = datetime.fromisoformat(avisar_en.strip().replace(" ", "T")[:19])
+    except (ValueError, AttributeError):
+        return None
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO tarea_recordatorios (tarea_id, usuario_id, avisar_en, canales, creado_en) VALUES (?, ?, ?, ?, ?)",
+            (tarea_id, usuario_id, momento.isoformat(timespec="seconds"), _canales_validos(canales), now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def recordatorio_relativo(usuario_id: int, tarea_id: int, clave: str, canales=None) -> int | None:
+    """Atajos respecto al vencimiento: 'al_vencer', '1h_antes', '1d_antes'. None si la
+    tarea no tiene vencimiento."""
+    tarea = obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if tarea is None or not tarea["fecha_vencimiento"]:
+        return None
+    try:
+        vence = datetime.fromisoformat(tarea["fecha_vencimiento"].replace(" ", "T")[:19])
+    except ValueError:
+        return None
+    restas = {"al_vencer": timedelta(0), "1h_antes": timedelta(hours=1), "1d_antes": timedelta(days=1)}
+    if clave not in restas:
+        return None
+    return anadir_recordatorio_tarea(usuario_id, tarea_id, (vence - restas[clave]).isoformat(timespec="seconds"), canales)
+
+
+def listar_recordatorios_tarea(usuario_id: int, tarea_id: int) -> list[dict]:
+    """Los recordatorios del propio usuario en esa tarea (si la ve)."""
+    if rol_en_tarea(usuario_id, tarea_id) is None:
+        return []
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            "SELECT * FROM tarea_recordatorios WHERE tarea_id = ? AND usuario_id = ? ORDER BY avisar_en",
+            (tarea_id, usuario_id),
+        )]
+    finally:
+        conn.close()
+
+
+def eliminar_recordatorio_tarea(usuario_id: int, recordatorio_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "DELETE FROM tarea_recordatorios WHERE id = ? AND usuario_id = ?", (recordatorio_id, usuario_id)
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def posponer_recordatorio_tarea(usuario_id: int, recordatorio_id: int, opcion: str, ahora: datetime | None = None) -> bool:
+    """Reprograma un recordatorio propio (vuelve a estar pendiente): '1h' (dentro de
+    una hora), 'manana' (mañana a las 9:00) o '1s' (dentro de una semana, 9:00)."""
+    ahora = ahora or datetime.now()
+    if opcion == "1h":
+        nuevo = ahora + timedelta(hours=1)
+    elif opcion == "manana":
+        nuevo = (ahora + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
+    elif opcion == "1s":
+        nuevo = (ahora + timedelta(days=7)).replace(hour=9, minute=0, second=0, microsecond=0)
+    else:
+        return False
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE tarea_recordatorios SET avisar_en = ?, enviado_en = NULL WHERE id = ? AND usuario_id = ?",
+            (nuevo.isoformat(timespec="seconds"), recordatorio_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def recordatorios_de_tarea_pendientes_de_aviso(ahora: datetime | None = None) -> list[dict]:
+    """Recordatorios cuyo momento ya ha llegado y no se han enviado, de tareas que
+    siguen abiertas, con los datos para avisar."""
+    ahora = ahora or datetime.now()
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            """SELECT r.id, r.tarea_id, r.usuario_id, r.avisar_en, r.canales, t.asunto, t.fecha_vencimiento,
+                      u.email, tn.ntfy_topic, tn.ntfy_token
+               FROM tarea_recordatorios r JOIN tareas_outlook t ON t.id = r.tarea_id
+               JOIN usuarios u ON u.id = r.usuario_id LEFT JOIN tenants tn ON tn.id = u.tenant_id
+               WHERE r.enviado_en IS NULL AND r.avisar_en <= ? AND t.papelera_en IS NULL AND t.estado != 'completada'
+               ORDER BY r.avisar_en""",
+            (ahora.isoformat(timespec="seconds"),),
+        )]
+    finally:
+        conn.close()
+
+
+def marcar_recordatorio_tarea_enviado(recordatorio_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tarea_recordatorios SET enviado_en = ? WHERE id = ?", (now_iso(), recordatorio_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def carga_equipo(usuario_id: int) -> list[dict]:
     """Carga de trabajo por persona sobre las tareas abiertas que el usuario ve
     (propias, asignadas a él o compartidas con él). Cada tarea cuenta para su
@@ -6237,6 +6376,7 @@ def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> No
             conn.execute("DELETE FROM tarea_comentarios WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tarea_actividad WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tareas_dependencias WHERE tarea_id = ? OR depende_de_id = ?", (tarea_id, tarea_id))
+            conn.execute("DELETE FROM tarea_recordatorios WHERE tarea_id = ?", (tarea_id,))
         conn.execute("DELETE FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:

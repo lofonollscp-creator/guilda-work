@@ -525,6 +525,7 @@ def ver(tarea_id: int):
         checklist=db.listar_checklist(tarea_id), participantes=db.participantes_de_tarea(tarea_id),
         dueno_nombre=db.nombre_mostrado_usuario(tarea["usuario_id"]),
         puede_editar=db.puede_editar_tarea(g.usuario_id, tarea_id),
+        error=(request.args.get("error") or "")[:200] or None,
         **_contexto_comentarios(tarea_id),
     )
 
@@ -534,6 +535,7 @@ def _contexto_comentarios(tarea_id: int) -> dict:
         "comentarios": db.listar_comentarios_tarea(g.usuario_id, tarea_id),
         "actividad": db.actividad_de_tarea(g.usuario_id, tarea_id),
         "dependencias": db.dependencias_de_tarea(tarea_id),
+        "recordatorios": db.listar_recordatorios_tarea(g.usuario_id, tarea_id),
         "tiempo_equipo": db.tiempo_equipo_tarea(g.usuario_id, tarea_id),
         "personas_mencionables": [p for p in db.personas_de_tarea(g.usuario_id, tarea_id) if p["id"] != g.usuario_id],
     }
@@ -576,6 +578,37 @@ def quitar_dependencia(tarea_id: int):
     if not db.quitar_dependencia_tarea(g.usuario_id, tarea_id, _int_o_none(request.form.get("depende_de_id")) or 0):
         abort(404)
     return redirect(url_for("tareas.editar", tarea_id=tarea_id) + "#dependencias")
+
+
+@tareas_bp.route("/<int:tarea_id>/recordatorios", methods=["POST"])
+@login_required
+def anadir_recordatorio(tarea_id: int):
+    canales = request.form.getlist("canales") or ["app"]
+    atajo = request.form.get("atajo", "")
+    if atajo:
+        nuevo = db.recordatorio_relativo(g.usuario_id, tarea_id, atajo, canales)
+    else:
+        nuevo = db.anadir_recordatorio_tarea(g.usuario_id, tarea_id, request.form.get("avisar_en", ""), canales)
+    if nuevo is None and db.rol_en_tarea(g.usuario_id, tarea_id) is None:
+        abort(404)
+    destino = url_for("tareas.ver", tarea_id=tarea_id, **({} if nuevo else {"error": "No se pudo crear el recordatorio: indica una fecha y hora (o pon antes un vencimiento a la tarea)."}))
+    return redirect(destino + "#recordatorios")
+
+
+@tareas_bp.route("/recordatorios/<int:recordatorio_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_recordatorio(recordatorio_id: int):
+    if not db.eliminar_recordatorio_tarea(g.usuario_id, recordatorio_id):
+        abort(404)
+    return redirect(request.referrer or url_for("tareas.listar"))
+
+
+@tareas_bp.route("/recordatorios/<int:recordatorio_id>/posponer", methods=["POST"])
+@login_required
+def posponer_recordatorio(recordatorio_id: int):
+    if not db.posponer_recordatorio_tarea(g.usuario_id, recordatorio_id, request.form.get("opcion", "")):
+        abort(404)
+    return redirect(request.referrer or url_for("tareas.listar"))
 
 
 @tareas_bp.route("/<int:tarea_id>/compartir", methods=["POST"])

@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios, salud
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -1915,6 +1915,19 @@ def _avisos_fichaje_servidor():
             logging.getLogger("guilda").exception("Fallo en los avisos de fichaje")
             salud.registrar_error("avisos_fichaje", AVISOS_FICHAJE_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
         time.sleep(AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
+
+
+def _recordatorios_tareas_servidor():
+    """Cada minuto envía los recordatorios de tarea que ya han llegado a su hora
+    (ver app/recordatorios_tareas.py)."""
+    while True:
+        try:
+            recordatorios_tareas.procesar_recordatorios()
+            salud.registrar_ok("recordatorios_tareas", 180, minimo_segundos=300)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en los recordatorios de tareas")
+            salud.registrar_error("recordatorios_tareas", 180, f"{type(e).__name__}: {e}")
+        time.sleep(60)
 
 
 RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS = 24 * 60
