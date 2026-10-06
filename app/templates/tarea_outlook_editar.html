@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_tarea_comentarios.html" import hilo %}
+{% from "_tarea_comentarios.html" import hilo, equipo_y_actividad %}
 {% block title %}{{ _('Editar tarea') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -184,6 +184,7 @@
 </section>
 
 {{ hilo(tarea, comentarios, personas_mencionables) }}
+{{ equipo_y_actividad(tiempo_equipo, actividad) }}
 
 {% if es_dueno %}<form class="edit-form-delete" method="post" action="{{ url_for('tareas.eliminar', tarea_id=tarea.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.') }}');">

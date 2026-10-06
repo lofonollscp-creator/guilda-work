@@ -49,3 +49,43 @@
 })();
 </script>
 {% endmacro %}
+
+{# Tiempo del equipo e historial de actividad de la tarea. #}
+{% macro equipo_y_actividad(tiempo_equipo, actividad) %}
+{% if tiempo_equipo and tiempo_equipo.personas %}
+<section class="tarea-tiempo-equipo" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Tiempo del equipo') }} <span class="pill">{{ tiempo_equipo.total|duracion_hm }}</span></h2>
+  <ul class="tarea-participantes">
+    {% for p in tiempo_equipo.personas %}
+    <li><span class="tarea-participante-nombre">{{ p.nombre }}</span><span class="mono">{{ p.segundos|duracion_hm }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% if actividad %}
+<section class="tarea-actividad" id="actividad" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Actividad') }}</h2>
+  <ul class="actividad-lista">
+    {% for a in actividad %}
+    <li>
+      <span class="muted mono">{{ a.creado_en[:16].replace('T', ' ') }}</span>
+      <strong>{{ a.autor }}</strong>
+      {% if a.tipo == 'creada' %}{{ _('creó la tarea') }}
+      {% elif a.tipo == 'editada' %}{{ _('editó') }} {{ a.detalle }}
+      {% elif a.tipo == 'estado' %}{{ _('cambió el estado a') }} {{ a.detalle|replace('_', ' ') }}
+      {% elif a.tipo == 'completada' %}{{ _('completó la tarea') }}
+      {% elif a.tipo == 'asignada' %}{% if a.detalle %}{{ _('asignó la tarea a') }} {{ a.detalle }}{% else %}{{ _('quitó la asignación') }}{% endif %}
+      {% elif a.tipo == 'compartida' %}{{ _('compartió con') }} {{ a.detalle }}
+      {% elif a.tipo == 'dejo_compartir' %}{{ _('dejó de compartir con') }} {{ a.detalle }}
+      {% elif a.tipo == 'comentario' %}{{ _('comentó') }}
+      {% elif a.tipo == 'cronometro' %}{{ _('inició el cronómetro') }}
+      {% elif a.tipo == 'subtarea_nueva' %}{{ _('añadió la subtarea') }} «{{ a.detalle }}»
+      {% elif a.tipo == 'subtarea_hecha' %}{{ _('marcó como hecha') }} «{{ a.detalle }}»
+      {% elif a.tipo == 'subtarea_reabierta' %}{{ _('reabrió') }} «{{ a.detalle }}»
+      {% else %}{{ a.tipo }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endmacro %}

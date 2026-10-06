@@ -158,3 +158,62 @@ def test_rutas_comentar_con_mencion_y_ver(cliente):
     assert cliente.get(f"/tareas/{tarea}/editar").status_code == 200
     assert "tarea-comentarios-pill" in cliente.get("/tareas/").get_data(as_text=True)
     assert cliente.get("/tareas/99999").status_code == 404
+
+
+# --- Historial de actividad y tiempo del equipo ----------------------------------------
+
+def test_historial_registra_quien_hizo_que_y_solo_lo_ve_quien_ve_la_tarea():
+    _, (ana, luis, eva) = _despacho("ana7@comp.com", "luis7@comp.com", "eva7@comp.com")
+    tarea = db.crear_tarea_outlook(ana, "Con historial")
+    db.compartir_tarea_outlook(ana, tarea, luis, "colabora")
+    db.editar_tarea_outlook(luis, tarea, asunto="Con historial v2", prioridad="alta")
+    item = db.agregar_item_checklist(luis, tarea, "paso 1")
+    db.alternar_item_checklist(ana, item)
+    db.cambiar_estado_tarea_outlook(luis, tarea, "en_progreso")
+    db.comentar_tarea_outlook(ana, tarea, "ok")
+    db.completar_tarea_outlook(luis, tarea)
+    db.dejar_de_compartir_tarea_outlook(ana, tarea, luis)
+
+    tipos = [a["tipo"] for a in db.actividad_de_tarea(ana, tarea)]
+    assert tipos[0] == "dejo_compartir" and tipos[-1] == "creada"  # lo más reciente primero
+    assert {"compartida", "editada", "subtarea_nueva", "subtarea_hecha", "estado", "comentario", "completada"} <= set(tipos)
+    editada = next(a for a in db.actividad_de_tarea(ana, tarea) if a["tipo"] == "editada")
+    assert editada["autor"] == "luis7@comp.com" and "asunto" in editada["detalle"] and "prioridad" in editada["detalle"]
+    assert db.actividad_de_tarea(eva, tarea) == []      # eva no la ve
+    assert db.actividad_de_tarea(luis, tarea) == []     # ya no participa
+
+
+def test_edicion_sin_cambios_no_ensucia_el_historial():
+    _, (ana,) = _despacho("ana8@comp.com")
+    tarea = db.crear_tarea_outlook(ana, "Igual", prioridad="normal")
+    db.editar_tarea_outlook(ana, tarea, asunto="Igual", prioridad="normal")
+    assert [a["tipo"] for a in db.actividad_de_tarea(ana, tarea)] == ["creada"]
+
+
+def test_tiempo_del_equipo_suma_por_persona():
+    _, (ana, luis, eva) = _despacho("ana9@comp.com", "luis9@comp.com", "eva9@comp.com")
+    proyecto_a = db.crear_categoria(ana, "A")
+    proyecto_l = db.crear_categoria(luis, "L")
+    tarea = db.crear_tarea_outlook(ana, "Tiempo", categoria_id=proyecto_a)
+    db.compartir_tarea_outlook(ana, tarea, luis, "colabora")
+    for uid, proyecto, segundos in ((ana, proyecto_a, 600), (luis, proyecto_l, 1800)):
+        t = db.crear_tarea(uid, "Tiempo", proyecto, "duracion", tarea_outlook_id=tarea)
+        conn = db.get_connection()
+        conn.execute("UPDATE tareas SET estado = 'finalizada', duracion_segundos = ? WHERE id = ?", (segundos, t))
+        conn.commit(); conn.close()
+
+    r = db.tiempo_equipo_tarea(ana, tarea)
+    assert r["total"] == 2400
+    assert [(p["nombre"], p["segundos"]) for p in r["personas"]] == [("luis9@comp.com", 1800), ("ana9@comp.com", 600)]
+    assert db.tiempo_equipo_tarea(eva, tarea) == {"total": 0, "personas": []}
+
+
+def test_ficha_muestra_actividad_y_tiempo(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno3@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho historial")
+    db.asignar_tenant(uid, tenant)
+    tarea = db.crear_tarea_outlook(uid, "Ficha")
+    db.editar_tarea_outlook(uid, tarea, prioridad="alta")
+    for url in (f"/tareas/{tarea}", f"/tareas/{tarea}/editar"):
+        html = cliente.get(url).get_data(as_text=True)
+        assert "Actividad" in html and "creó la tarea" in html and "editó" in html

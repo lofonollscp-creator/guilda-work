@@ -413,6 +413,17 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
 );
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
+-- Historial de actividad de una tarea (quién hizo qué y cuándo).
+CREATE TABLE IF NOT EXISTS tarea_actividad (
+    id INTEGER PRIMARY KEY,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    tipo TEXT NOT NULL,
+    detalle TEXT NOT NULL DEFAULT '',
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_actividad_tarea ON tarea_actividad(tarea_id, id);
+
 -- Comentarios de una tarea compartida; `menciones` lleva los ids de usuario
 -- mencionados con @ (separados por comas).
 CREATE TABLE IF NOT EXISTS tarea_comentarios (
@@ -4659,6 +4670,23 @@ CAMPOS_TAREA_OUTLOOK = (
 )
 
 
+def registrar_actividad_tarea(usuario_id: int, tarea_id: int, tipo: str, detalle: str = "") -> None:
+    """Anota una línea en el historial de la tarea. Es solo un registro: un fallo
+    aquí nunca debe romper la acción que se está registrando."""
+    try:
+        conn = get_connection()
+        try:
+            conn.execute(
+                "INSERT INTO tarea_actividad (tarea_id, usuario_id, tipo, detalle, creado_en) VALUES (?, ?, ?, ?, ?)",
+                (tarea_id, usuario_id, tipo, (detalle or "")[:200], now_iso()),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def crear_tarea_outlook(
     usuario_id: int,
     asunto: str,
@@ -4700,6 +4728,7 @@ def crear_tarea_outlook(
         tarea_id = cur.lastrowid
     finally:
         conn.close()
+    registrar_actividad_tarea(usuario_id, tarea_id, "creada")
     _emitir_evento(usuario_id, "tarea.creada", {"tarea_id": tarea_id, "asunto": asunto.strip(), "asignada_a": asignada_a})
     return tarea_id
 
@@ -5047,6 +5076,13 @@ def upsert_tarea_outlook_por_entry_id(usuario_id: int, outlook_entry_id: str | N
     return tid, True
 
 
+ETIQUETAS_CAMPO_TAREA = {
+    "asunto": "asunto", "cuerpo": "descripción", "prioridad": "prioridad", "estado": "estado",
+    "fecha_inicio": "inicio", "fecha_vencimiento": "vencimiento", "cliente_fiscal_id": "cliente",
+    "categoria_id": "proyecto", "categoria_outlook": "categoría",
+}
+
+
 def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
     """Actualiza los campos indicados (cualquiera de CAMPOS_TAREA_OUTLOOK)."""
     columnas = [c for c in campos if c in CAMPOS_TAREA_OUTLOOK or c in ("cliente_fiscal_id", "mensaje_correo_id")]
@@ -5071,11 +5107,18 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
             campos["mensaje_correo_id"] = _mensaje_correo_id_propio(conn, usuario_id, campos["mensaje_correo_id"])
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
+        antes = conn.execute("SELECT * FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
         conn.execute(
             f"UPDATE tareas_outlook SET {asignaciones}, actualizada_en = ? WHERE id = ?",
             [*valores, now_iso(), tarea_id],
         )
         conn.commit()
+        cambiados = [
+            ETIQUETAS_CAMPO_TAREA[c] for c in columnas
+            if c in ETIQUETAS_CAMPO_TAREA and antes is not None and (antes[c] or None) != (campos[c] or None)
+        ]
+        if cambiados:
+            registrar_actividad_tarea(usuario_id, tarea_id, "editada", ", ".join(cambiados))
     finally:
         conn.close()
 
@@ -5105,6 +5148,7 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     for abierto in abiertos:
         finalizar_tarea(abierto["usuario_id"], abierto["id"])
     if completada:
+        registrar_actividad_tarea(usuario_id, tarea_id, "completada")
         _emitir_evento(usuario_id, "tarea.completada", {"tarea_id": tarea_id, "completada_por": usuario_id})
 
 
@@ -5127,9 +5171,10 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
             (estado, now_iso(), tarea_id, usuario_id, usuario_id, usuario_id),
         )
         conn.commit()
-        return True
     finally:
         conn.close()
+    registrar_actividad_tarea(usuario_id, tarea_id, "estado", estado)
+    return True
 
 
 # ---- Compartir tareas con compañeros del tenant ---------------------------
@@ -5198,6 +5243,9 @@ def compartir_tarea_outlook(usuario_id: int, tarea_id: int, otro_id: int, rol: s
         conn.commit()
     finally:
         conn.close()
+    registrar_actividad_tarea(
+        usuario_id, tarea_id, "compartida", f"{nombre_mostrado_usuario(destino) or destino} ({'colabora' if rol == 'colabora' else 'solo lectura'})"
+    )
     _emitir_evento(usuario_id, "tarea.compartida", {"tarea_id": tarea_id, "con": destino, "rol": rol})
     return True
 
@@ -5211,9 +5259,12 @@ def dejar_de_compartir_tarea_outlook(usuario_id: int, tarea_id: int, otro_id: in
             return False
         cur = conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ? AND usuario_id = ?", (tarea_id, otro_id))
         conn.commit()
-        return cur.rowcount > 0
+        quitado = cur.rowcount > 0
     finally:
         conn.close()
+    if quitado:
+        registrar_actividad_tarea(usuario_id, tarea_id, "dejo_compartir", nombre_mostrado_usuario(otro_id) or str(otro_id))
+    return quitado
 
 
 def participantes_de_tarea(tarea_id: int) -> list[sqlite3.Row]:
@@ -5319,6 +5370,7 @@ def comentar_tarea_outlook(usuario_id: int, tarea_id: int, texto: str) -> dict |
         nuevo = cur.lastrowid
     finally:
         conn.close()
+    registrar_actividad_tarea(usuario_id, tarea_id, "comentario")
     _emitir_evento(usuario_id, "tarea.comentada", {"tarea_id": tarea_id, "comentario_id": nuevo, "menciones": menciones})
     otros = [p["id"] for p in personas if p["id"] != usuario_id and p["id"] not in menciones]
     return {"id": nuevo, "menciones": menciones, "otros": otros}
@@ -5388,6 +5440,48 @@ def contar_comentarios_tareas(tarea_ids: list[int]) -> dict[int, int]:
         conn.close()
 
 
+def actividad_de_tarea(usuario_id: int, tarea_id: int, limite: int = 40) -> list[dict]:
+    """Historial de la tarea (lo más reciente primero), solo para quien la ve."""
+    if rol_en_tarea(usuario_id, tarea_id) is None:
+        return []
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT a.tipo, a.detalle, a.creado_en, a.usuario_id,
+                      COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS autor
+               FROM tarea_actividad a JOIN usuarios u ON u.id = a.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = a.usuario_id
+               WHERE a.tarea_id = ? ORDER BY a.id DESC LIMIT ?""",
+            (tarea_id, limite),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def tiempo_equipo_tarea(usuario_id: int, tarea_id: int) -> dict:
+    """Tiempo registrado en la tarea por cada persona (cronómetros finalizados) y
+    el total del equipo. Solo si el usuario la ve; {'total': 0, 'personas': []} si no."""
+    vacio = {"total": 0, "personas": []}
+    if rol_en_tarea(usuario_id, tarea_id) is None:
+        return vacio
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT t.usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre,
+                      COALESCE(SUM(t.duracion_segundos), 0) AS segundos
+               FROM tareas t JOIN usuarios u ON u.id = t.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = t.usuario_id
+               WHERE t.tarea_outlook_id = ? AND t.estado = 'finalizada' AND t.papelera_en IS NULL
+               GROUP BY t.usuario_id ORDER BY segundos DESC""",
+            (tarea_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    personas = [dict(f) for f in filas if f["segundos"]]
+    return {"total": sum(p["segundos"] for p in personas), "personas": personas}
+
+
 def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None) -> bool:
     """Asigna la tarea a un compañero del mismo despacho (o la desasigna con
     None). Solo su dueño. Devuelve False si no es suya o el compañero no es
@@ -5407,6 +5501,7 @@ def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None
         conn.commit()
     finally:
         conn.close()
+    registrar_actividad_tarea(usuario_id, tarea_id, "asignada", (nombre_mostrado_usuario(destino) or "") if destino else "")
     if destino is not None:
         _emitir_evento(usuario_id, "tarea.asignada", {"tarea_id": tarea_id, "asignada_a": destino})
     return True
@@ -5436,6 +5531,7 @@ def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_i
     if proyecto is None:
         raise ValueError("Elige un proyecto para registrar el tiempo de esta tarea.")
     nuevo = crear_tarea(usuario_id, tarea["asunto"], proyecto, "duracion", tarea_outlook_id=tarea_id)
+    registrar_actividad_tarea(usuario_id, tarea_id, "cronometro")
     if tarea["estado"] == "no_iniciada":
         cambiar_estado_tarea_outlook(usuario_id, tarea_id, "en_progreso")
     return nuevo
@@ -5535,10 +5631,11 @@ def agregar_item_checklist(usuario_id: int, tarea_id: int, texto: str) -> int | 
         )
         _recalcular_porcentaje_checklist(conn, tarea_id)
         conn.commit()
-        return cur.lastrowid
+        nuevo_item = cur.lastrowid
     finally:
         conn.close()
-
+    registrar_actividad_tarea(usuario_id, tarea_id, "subtarea_nueva", texto)
+    return nuevo_item
 
 def alternar_item_checklist(usuario_id: int, item_id: int) -> bool:
     """Marca o desmarca un item: lo puede hacer el dueño o quien tiene la tarea asignada."""
@@ -5556,10 +5653,12 @@ def alternar_item_checklist(usuario_id: int, item_id: int) -> bool:
         conn.execute("UPDATE tarea_checklist SET hecha = 1 - hecha WHERE id = ?", (item_id,))
         _recalcular_porcentaje_checklist(conn, fila["tarea_outlook_id"])
         conn.commit()
-        return True
+        item = conn.execute("SELECT texto, hecha FROM tarea_checklist WHERE id = ?", (item_id,)).fetchone()
+        tarea_del_item = fila["tarea_outlook_id"]
     finally:
         conn.close()
-
+    registrar_actividad_tarea(usuario_id, tarea_del_item, "subtarea_hecha" if item["hecha"] else "subtarea_reabierta", item["texto"])
+    return True
 
 def eliminar_item_checklist(usuario_id: int, item_id: int) -> bool:
     conn = get_connection()
@@ -5633,6 +5732,7 @@ def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> No
         if conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone():
             conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tarea_comentarios WHERE tarea_id = ?", (tarea_id,))
+            conn.execute("DELETE FROM tarea_actividad WHERE tarea_id = ?", (tarea_id,))
         conn.execute("DELETE FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:

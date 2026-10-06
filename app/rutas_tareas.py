@@ -493,6 +493,8 @@ def ver(tarea_id: int):
 def _contexto_comentarios(tarea_id: int) -> dict:
     return {
         "comentarios": db.listar_comentarios_tarea(g.usuario_id, tarea_id),
+        "actividad": db.actividad_de_tarea(g.usuario_id, tarea_id),
+        "tiempo_equipo": db.tiempo_equipo_tarea(g.usuario_id, tarea_id),
         "personas_mencionables": [p for p in db.personas_de_tarea(g.usuario_id, tarea_id) if p["id"] != g.usuario_id],
     }
 
