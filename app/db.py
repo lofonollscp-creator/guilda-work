@@ -413,6 +413,28 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
 );
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
+-- Plantillas de tareas / proyectos ("alta de cliente", "cierre trimestral"):
+-- un conjunto de tareas con plazos relativos a la fecha de inicio. Las
+-- compartidas las ven y usan todos los del despacho; editarlas es del autor.
+CREATE TABLE IF NOT EXISTS plantillas_tareas (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    compartida INTEGER NOT NULL DEFAULT 0,
+    creada_en TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS plantilla_tareas_items (
+    id INTEGER PRIMARY KEY,
+    plantilla_id INTEGER NOT NULL REFERENCES plantillas_tareas(id) ON DELETE CASCADE,
+    orden INTEGER NOT NULL,
+    asunto TEXT NOT NULL,
+    prioridad TEXT NOT NULL DEFAULT 'normal',
+    dias INTEGER NOT NULL DEFAULT 0,
+    checklist TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_plantilla_items_plantilla ON plantilla_tareas_items(plantilla_id, orden);
+
 -- Participantes de una nota compartida (mismos roles que en las tareas).
 CREATE TABLE IF NOT EXISTS notas_participantes (
     nota_id INTEGER NOT NULL REFERENCES notas(id) ON DELETE CASCADE,
@@ -5580,6 +5602,178 @@ def contar_comentarios_tareas(tarea_ids: list[int]) -> dict[int, int]:
         }
     finally:
         conn.close()
+
+
+# ---- Plantillas de tareas ---------------------------------------------------
+
+PLANTILLA_MAX_ITEMS = 40
+
+
+def parsear_items_plantilla(texto: str) -> list[dict]:
+    """Una tarea por línea con el formato `asunto | días | prioridad` (días y
+    prioridad son opcionales: días desde la fecha de inicio, prioridad baja/
+    normal/alta). Las líneas que empiezan por `- ` son subtareas de la tarea
+    anterior. Ignora líneas vacías y los valores que no se entienden."""
+    items: list[dict] = []
+    for linea in (texto or "").splitlines():
+        linea = linea.strip()
+        if not linea:
+            continue
+        if linea.startswith("- "):
+            if items and linea[2:].strip():
+                items[-1]["checklist"].append(" ".join(linea[2:].split())[:CHECKLIST_MAX_CARACTERES])
+            continue
+        partes = [p.strip() for p in linea.split("|")]
+        asunto = " ".join(partes[0].split())[:200]
+        if not asunto:
+            continue
+        dias = 0
+        if len(partes) > 1 and partes[1].lstrip("+-").isdigit():
+            dias = max(-3650, min(3650, int(partes[1])))
+        prioridad = partes[2].lower() if len(partes) > 2 and partes[2].lower() in ("baja", "normal", "alta") else "normal"
+        items.append({"asunto": asunto, "dias": dias, "prioridad": prioridad, "checklist": []})
+        if len(items) >= PLANTILLA_MAX_ITEMS:
+            break
+    return items
+
+
+def items_a_texto(items) -> str:
+    """Inversa de parsear_items_plantilla (para volver a mostrar la plantilla al editarla)."""
+    lineas = []
+    for i in items:
+        lineas.append(f"{i['asunto']} | {i['dias']} | {i['prioridad']}")
+        lineas += [f"- {c}" for c in (i["checklist"].split("\n") if isinstance(i["checklist"], str) else i["checklist"]) if c]
+    return "\n".join(lineas)
+
+
+def crear_plantilla_tareas(usuario_id: int, nombre: str, descripcion: str | None, texto_items: str, compartida: bool = False) -> int | None:
+    """None si no tiene nombre o no hay ninguna tarea válida."""
+    nombre = " ".join((nombre or "").split())[:120]
+    items = parsear_items_plantilla(texto_items)
+    if not nombre or not items:
+        return None
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO plantillas_tareas (usuario_id, nombre, descripcion, compartida, creada_en) VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, nombre, (descripcion or "").strip()[:500] or None, 1 if compartida else 0, now_iso()),
+        )
+        plantilla_id = cur.lastrowid
+        _guardar_items_plantilla(conn, plantilla_id, items)
+        conn.commit()
+        return plantilla_id
+    finally:
+        conn.close()
+
+
+def _guardar_items_plantilla(conn: sqlite3.Connection, plantilla_id: int, items: list[dict]) -> None:
+    conn.execute("DELETE FROM plantilla_tareas_items WHERE plantilla_id = ?", (plantilla_id,))
+    for orden, i in enumerate(items, 1):
+        conn.execute(
+            "INSERT INTO plantilla_tareas_items (plantilla_id, orden, asunto, prioridad, dias, checklist) VALUES (?, ?, ?, ?, ?, ?)",
+            (plantilla_id, orden, i["asunto"], i["prioridad"], i["dias"], "\n".join(i["checklist"])),
+        )
+
+
+def editar_plantilla_tareas(usuario_id: int, plantilla_id: int, nombre: str, descripcion: str | None, texto_items: str, compartida: bool) -> bool:
+    nombre = " ".join((nombre or "").split())[:120]
+    items = parsear_items_plantilla(texto_items)
+    if not nombre or not items:
+        return False
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE plantillas_tareas SET nombre = ?, descripcion = ?, compartida = ? WHERE id = ? AND usuario_id = ?",
+            (nombre, (descripcion or "").strip()[:500] or None, 1 if compartida else 0, plantilla_id, usuario_id),
+        )
+        if cur.rowcount == 0:
+            return False
+        _guardar_items_plantilla(conn, plantilla_id, items)
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def eliminar_plantilla_tareas(usuario_id: int, plantilla_id: int) -> bool:
+    conn = get_connection()
+    try:
+        if conn.execute("SELECT 1 FROM plantillas_tareas WHERE id = ? AND usuario_id = ?", (plantilla_id, usuario_id)).fetchone() is None:
+            return False
+        conn.execute("DELETE FROM plantilla_tareas_items WHERE plantilla_id = ?", (plantilla_id,))
+        conn.execute("DELETE FROM plantillas_tareas WHERE id = ?", (plantilla_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def listar_plantillas_tareas(usuario_id: int) -> list[dict]:
+    """Las propias y las compartidas por compañeros del mismo despacho."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT p.*, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS autor,
+                      (SELECT COUNT(*) FROM plantilla_tareas_items i WHERE i.plantilla_id = p.id) AS n_tareas
+               FROM plantillas_tareas p JOIN usuarios u ON u.id = p.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = p.usuario_id
+               WHERE p.usuario_id = ? OR (p.compartida = 1 AND u.tenant_id IS NOT NULL
+                     AND u.tenant_id = (SELECT tenant_id FROM usuarios WHERE id = ?))
+               ORDER BY p.nombre""",
+            (usuario_id, usuario_id),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def obtener_plantilla_tareas(usuario_id: int, plantilla_id: int) -> dict | None:
+    """Con sus tareas (`items`), si es del usuario o está compartida en su despacho."""
+    visibles = {p["id"]: p for p in listar_plantillas_tareas(usuario_id)}
+    p = visibles.get(plantilla_id)
+    if p is None:
+        return None
+    conn = get_connection()
+    try:
+        p["items"] = [
+            dict(i) for i in conn.execute(
+                "SELECT asunto, prioridad, dias, checklist FROM plantilla_tareas_items WHERE plantilla_id = ? ORDER BY orden",
+                (plantilla_id,),
+            )
+        ]
+    finally:
+        conn.close()
+    return p
+
+
+def aplicar_plantilla_tareas(
+    usuario_id: int, plantilla_id: int, fecha_inicio: str, *, categoria_id: int | None = None,
+    nuevo_proyecto: str | None = None, cliente_fiscal_id: int | None = None, asignada_a: int | None = None,
+) -> list[int]:
+    """Crea las tareas de la plantilla con vencimiento = fecha de inicio + sus días
+    (YYYY-MM-DD). `nuevo_proyecto` crea (o reutiliza) un proyecto con ese nombre.
+    Devuelve los ids de las tareas creadas ([] si la plantilla no es visible)."""
+    plantilla = obtener_plantilla_tareas(usuario_id, plantilla_id)
+    if plantilla is None:
+        return []
+    try:
+        base = datetime.strptime(fecha_inicio[:10], "%Y-%m-%d").date()
+    except ValueError:
+        base = datetime.now().date()
+    if nuevo_proyecto and nuevo_proyecto.strip():
+        categoria_id = crear_categoria(usuario_id, nuevo_proyecto.strip()[:80])
+    ids = []
+    for item in plantilla["items"]:
+        vence = (base + timedelta(days=item["dias"])).strftime("%Y-%m-%dT09:00")
+        tarea_id = crear_tarea_outlook(
+            usuario_id, item["asunto"], prioridad=item["prioridad"], fecha_inicio=base.strftime("%Y-%m-%dT09:00"),
+            fecha_vencimiento=vence, categoria_id=categoria_id, cliente_fiscal_id=cliente_fiscal_id, asignada_a=asignada_a,
+        )
+        for texto in (item["checklist"] or "").split("\n"):
+            if texto:
+                agregar_item_checklist(usuario_id, tarea_id, texto)
+        ids.append(tarea_id)
+    return ids
 
 
 def carga_equipo(usuario_id: int) -> list[dict]:

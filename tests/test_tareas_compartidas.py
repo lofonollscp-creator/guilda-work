@@ -287,3 +287,62 @@ def test_rutas_notas_compartidas(cliente):
     db.asignar_tenant(otro, db.crear_tenant("Otro despacho"))
     assert cliente.post(f"/nota/{nota}/compartir", data={"usuario_id": otro}).status_code == 404
     assert cliente.get("/notas?compartidas=1").status_code == 200
+
+
+# --- Plantillas de tareas --------------------------------------------------------------
+
+def test_parsear_items_de_plantilla():
+    items = db.parsear_items_plantilla(
+        "Pedir documentación | 0 | alta\n- Copia del DNI\n- Escrituras\n\nDar de alta | +3\nSeguimiento | x | rara\n| 5"
+    )
+    assert [(i["asunto"], i["dias"], i["prioridad"]) for i in items] == [
+        ("Pedir documentación", 0, "alta"), ("Dar de alta", 3, "normal"), ("Seguimiento", 0, "normal"),
+    ]
+    assert items[0]["checklist"] == ["Copia del DNI", "Escrituras"]
+    assert db.parsear_items_plantilla("- suelta sin tarea") == []
+    assert db.parsear_items_plantilla(db.items_a_texto([{**i, "checklist": "\n".join(i["checklist"])} for i in items])) == items
+
+
+def test_plantilla_crea_las_tareas_con_plazos_relativos():
+    _, (ana, luis) = _despacho("ana13@comp.com", "luis13@comp.com")
+    assert db.crear_plantilla_tareas(ana, "", None, "algo") is None
+    assert db.crear_plantilla_tareas(ana, "Vacía", None, "   ") is None
+    pid = db.crear_plantilla_tareas(ana, "Alta de cliente", "Proceso estándar", "Pedir documentación | 0 | alta\n- DNI\nDar de alta | 3")
+    ids = db.aplicar_plantilla_tareas(ana, pid, "2026-10-01", nuevo_proyecto="Cliente Nuevo SL", asignada_a=luis)
+    assert len(ids) == 2
+    t1, t2 = (db.obtener_tarea_outlook(ana, i) for i in ids)
+    assert t1["fecha_vencimiento"].startswith("2026-10-01") and t2["fecha_vencimiento"].startswith("2026-10-04")
+    assert t1["prioridad"] == "alta" and t1["asignada_a"] == luis and t1["categoria_nombre"] == "Cliente Nuevo SL"
+    assert [c["texto"] for c in db.listar_checklist(ids[0])] == ["DNI"]
+
+
+def test_plantillas_compartidas_se_ven_en_el_despacho_pero_solo_las_edita_el_autor():
+    _, (ana, luis) = _despacho("ana14@comp.com", "luis14@comp.com")
+    _, (ajeno,) = _despacho("ajeno14@otro.com")
+    privada = db.crear_plantilla_tareas(ana, "Privada", None, "Tarea A")
+    comun = db.crear_plantilla_tareas(ana, "Común", None, "Tarea B", compartida=True)
+    assert [p["nombre"] for p in db.listar_plantillas_tareas(luis)] == ["Común"]
+    assert db.listar_plantillas_tareas(ajeno) == []
+    assert db.aplicar_plantilla_tareas(luis, privada, "2026-10-01") == []
+    assert len(db.aplicar_plantilla_tareas(luis, comun, "2026-10-01")) == 1
+    assert db.editar_plantilla_tareas(luis, comun, "Hackeada", None, "x", True) is False
+    assert db.eliminar_plantilla_tareas(luis, comun) is False
+    assert db.editar_plantilla_tareas(ana, comun, "Común v2", None, "Tarea B\nTarea C", True) is True
+    assert db.obtener_plantilla_tareas(luis, comun)["n_tareas"] == 2
+    assert db.eliminar_plantilla_tareas(ana, comun) is True
+
+
+def test_rutas_plantillas(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno5@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho plantillas")
+    db.asignar_tenant(uid, tenant)
+    r = cliente.post("/tareas/plantillas", data={"nombre": "Cierre", "items": "Revisar IVA | 0\nPresentar 303 | 5 | alta"})
+    assert r.status_code == 302
+    assert "Cierre" in cliente.get("/tareas/plantillas").get_data(as_text=True)
+    pid = db.listar_plantillas_tareas(uid)[0]["id"]
+    assert cliente.get(f"/tareas/plantillas?editar={pid}").status_code == 200
+    r = cliente.post(f"/tareas/plantillas/{pid}/aplicar", data={"fecha_inicio": "2026-10-01"})
+    assert r.status_code == 302 and "plantilla_creadas=2" in r.headers["Location"]
+    assert "Presentar 303" in cliente.get("/tareas/").get_data(as_text=True)
+    assert cliente.post("/tareas/plantillas", data={"nombre": "", "items": ""}).status_code == 302
+    assert cliente.post(f"/tareas/plantillas/{pid}/eliminar").status_code == 302

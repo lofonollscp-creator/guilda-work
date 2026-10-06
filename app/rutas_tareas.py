@@ -130,6 +130,7 @@ def listar():
         "tareas_lista.html",
         **_contexto_filas(tareas),
         vista=vista,
+        plantilla_creadas=request.args.get("plantilla_creadas", type=int),
         error=(request.args.get("error") or "")[:200] or None,
         tareas=tareas,
         estados=ESTADOS,
@@ -616,6 +617,68 @@ PERIODICIDADES = [
     ("anual", _l("Cada año")),
 ]
 NOMBRES_MES_SELECT = [(i, NOMBRES_MES[i]) for i in range(1, 13)]
+
+
+@tareas_bp.route("/plantillas")
+@login_required
+def plantillas():
+    editando = request.args.get("editar", type=int)
+    plantilla = db.obtener_plantilla_tareas(g.usuario_id, editando) if editando else None
+    if plantilla is not None and plantilla["usuario_id"] != g.usuario_id:
+        plantilla = None
+    return render_template(
+        "tareas_plantillas.html",
+        lista=db.listar_plantillas_tareas(g.usuario_id), editando=plantilla,
+        texto_items=db.items_a_texto(plantilla["items"]) if plantilla else "",
+        menus=db.listar_categorias(g.usuario_id), companeros=db.listar_companeros_tenant(g.usuario_id),
+        clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+        hoy=date.today().isoformat(), error=(request.args.get("error") or "")[:200] or None,
+        creadas=request.args.get("creadas", type=int),
+    )
+
+
+@tareas_bp.route("/plantillas", methods=["POST"])
+@login_required
+def guardar_plantilla():
+    campos = (
+        request.form.get("nombre", ""), request.form.get("descripcion"), request.form.get("items", ""),
+    )
+    compartida = request.form.get("compartida") == "1"
+    editar_id = _int_o_none(request.form.get("plantilla_id"))
+    if editar_id:
+        ok = db.editar_plantilla_tareas(g.usuario_id, editar_id, *campos, compartida)
+    else:
+        ok = db.crear_plantilla_tareas(g.usuario_id, *campos, compartida=compartida) is not None
+    if not ok:
+        return redirect(url_for("tareas.plantillas", error="Pon un nombre y al menos una tarea (una por línea)."))
+    return redirect(url_for("tareas.plantillas"))
+
+
+@tareas_bp.route("/plantillas/<int:plantilla_id>/aplicar", methods=["POST"])
+@login_required
+def aplicar_plantilla(plantilla_id: int):
+    ids = db.aplicar_plantilla_tareas(
+        g.usuario_id, plantilla_id, request.form.get("fecha_inicio") or date.today().isoformat(),
+        categoria_id=_int_o_none(request.form.get("categoria_id")),
+        nuevo_proyecto=request.form.get("nuevo_proyecto"),
+        cliente_fiscal_id=_int_o_none(request.form.get("cliente_fiscal_id")),
+        asignada_a=_int_o_none(request.form.get("asignada_a")),
+    )
+    if not ids:
+        abort(404)
+    destino = _int_o_none(request.form.get("asignada_a"))
+    if destino:
+        for tarea_id in ids:
+            _notificar_asignacion(g.usuario_id, tarea_id, destino)
+    return redirect(url_for("tareas.listar", plantilla_creadas=len(ids)))
+
+
+@tareas_bp.route("/plantillas/<int:plantilla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_plantilla(plantilla_id: int):
+    if not db.eliminar_plantilla_tareas(g.usuario_id, plantilla_id):
+        abort(404)
+    return redirect(url_for("tareas.plantillas"))
 
 
 @tareas_bp.route("/recurrentes")

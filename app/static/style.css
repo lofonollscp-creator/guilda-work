@@ -4724,3 +4724,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .dash-equipo-nombre small { color: var(--text-muted); font-weight: 500; }
 .dash-equipo-barra { grid-column: 1 / -1; height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; }
 .dash-equipo-barra span { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+
+/* ---- Plantillas de tareas ---- */
+.plantillas-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.plantillas-lista { display: flex; flex-direction: column; gap: var(--space-3); }
+.plantilla-tarjeta h2 { margin: 0; font-size: 1.05em; }
+.plantilla-acciones { display: flex; gap: 8px; margin-top: 10px; }
+.plantilla-form .edit-form textarea { font-family: var(--font-mono); font-size: 13px; }
+@media (max-width: 900px) { .plantillas-layout { grid-template-columns: 1fr; } }

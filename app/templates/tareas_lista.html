@@ -12,6 +12,9 @@
 {% set subnav_activa = 'lista' %}
 {% include "_tareas_subnav.html" %}
 
+{% if plantilla_creadas %}
+<div class="onboarding" role="status" style="margin-bottom: 12px;">{{ ngettext('Se ha creado %(n)s tarea desde la plantilla.', 'Se han creado %(n)s tareas desde la plantilla.', plantilla_creadas, n=plantilla_creadas) }}</div>
+{% endif %}
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
 <form class="filters" method="get">

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Plantillas de tareas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Plantillas: un conjunto de tareas que se crean de golpe, con plazos relativos a la fecha de inicio (alta de cliente, cierre trimestral…).') }}</p>
+  </div>
+</header>
+
+{% set subnav_activa = 'plantillas' %}
+{% include "_tareas_subnav.html" %}
+
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+
+<div class="plantillas-layout">
+<section class="plantillas-lista">
+  {% if not lista %}
+  <p class="empty-lane">{{ _('Todavía no hay plantillas. Crea la primera con el formulario.') }}</p>
+  {% endif %}
+  {% for p in lista %}
+  <article class="dash-panel plantilla-tarjeta">
+    <div class="dash-panel-cab">
+      <h2>{{ p.nombre }}</h2>
+      <span class="pill">{{ ngettext('%(n)s tarea', '%(n)s tareas', p.n_tareas, n=p.n_tareas) }}</span>
+    </div>
+    {% if p.descripcion %}<p class="muted">{{ p.descripcion }}</p>{% endif %}
+    <p class="muted">
+      {% if p.usuario_id != g.usuario_id %}{{ _('De %(quien)s', quien=p.autor) }}{% elif p.compartida %}{{ _('Compartida con el despacho') }}{% else %}{{ _('Solo tuya') }}{% endif %}
+    </p>
+    <form class="quick-row" action="{{ url_for('tareas.aplicar_plantilla', plantilla_id=p.id) }}" method="post">
+      <label>{{ _('Empieza el') }} <input type="date" name="fecha_inicio" value="{{ hoy }}" required></label>
+      {% if menus %}
+      <select name="categoria_id" aria-label="{{ _('Proyecto') }}">
+        <option value="">{{ _('Sin proyecto') }}</option>
+        {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <input type="text" name="nuevo_proyecto" maxlength="80" placeholder="{{ _('…o un proyecto nuevo') }}" aria-label="{{ _('Proyecto nuevo') }}">
+      {% if clientes_fiscales %}
+      <select name="cliente_fiscal_id" aria-label="{{ _('Cliente') }}">
+        <option value="">{{ _('Sin cliente') }}</option>
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      {% if companeros %}
+      <select name="asignada_a" aria-label="{{ _('Asignar a') }}">
+        <option value="">{{ _('Sin asignar') }}</option>
+        {% for u in companeros %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">{{ _('Crear tareas') }}</button>
+    </form>
+    {% if p.usuario_id == g.usuario_id %}
+    <div class="plantilla-acciones">
+      <a class="btn btn-ghost" href="{{ url_for('tareas.plantillas', editar=p.id) }}#formulario">{{ _('Editar') }}</a>
+      <form action="{{ url_for('tareas.eliminar_plantilla', plantilla_id=p.id) }}" method="post" onsubmit="return confirm('{{ _('¿Eliminar esta plantilla? Las tareas ya creadas no se tocan.') }}');">
+        <button type="submit" class="btn btn-ghost">{{ _('Eliminar') }}</button>
+      </form>
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+
+<section class="plantilla-form" id="formulario">
+  <form class="edit-form" action="{{ url_for('tareas.guardar_plantilla') }}" method="post">
+    <h2 class="tarea-bloque-titulo">{{ _('Editar plantilla') if editando else _('Nueva plantilla') }}</h2>
+    {% if editando %}<input type="hidden" name="plantilla_id" value="{{ editando.id }}">{% endif %}
+    <label>{{ _('Nombre') }}
+      <input type="text" name="nombre" maxlength="120" required value="{{ editando.nombre if editando else '' }}" placeholder="{{ _('Alta de cliente') }}">
+    </label>
+    <label>{{ _('Descripción') }} <span class="muted">({{ _('opcional') }})</span>
+      <input type="text" name="descripcion" maxlength="500" value="{{ (editando.descripcion or '') if editando else '' }}">
+    </label>
+    <label>{{ _('Tareas') }}
+      <textarea name="items" rows="10" required placeholder="{{ _('Una tarea por línea: asunto | días desde el inicio | prioridad') }}&#10;Pedir documentación | 0 | alta&#10;- Copia del DNI&#10;- Escrituras&#10;Dar de alta en el sistema | 3&#10;Reunión de seguimiento | 15 | baja">{{ texto_items }}</textarea>
+    </label>
+    <p class="muted nota-ayuda-formato">{{ _('Formato: «asunto | días | prioridad» (los días y la prioridad son opcionales; prioridad baja, normal o alta). Las líneas que empiezan por «- » son subtareas de la tarea anterior.') }}</p>
+    {% if g.tenant_id %}
+    <label class="checkbox-label"><input type="checkbox" name="compartida" value="1" {{ 'checked' if editando and editando.compartida }}> {{ _('Compartir con todo el despacho') }}</label>
+    {% endif %}
+    <div class="edit-form-actions">
+      <button type="submit" class="btn btn-primary">{{ _('Guardar plantilla') }}</button>
+      {% if editando %}<a class="btn btn-ghost" href="{{ url_for('tareas.plantillas') }}">{{ _('Cancelar') }}</a>{% endif %}
+    </div>
+  </form>
+</section>
+</div>
+{% endblock %}
