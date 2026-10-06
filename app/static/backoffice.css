@@ -247,3 +247,5 @@ button.bo-permiso.is-on { cursor: pointer; }
 .bo-matriz-celda.is-off { color: var(--text-muted); opacity: .6; }
 .bo-matriz tbody th { text-align: left; font-weight: 500; position: sticky; left: 0; background: var(--surface); }
 .bo-buscador input[type="search"] { border: none; padding: 0; box-shadow: none; background: transparent; outline: none; }
+.bo-tabla-usuarios + * , .table-wrap + form.filters { margin-top: var(--space-4); }
+.bo-matriz { width: auto; min-width: 60%; }
