@@ -15,6 +15,16 @@
   {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('estadisticas') }}">{{ _('Limpiar') }}</a>{% endif %}
 </form>
 
+{% if por_categoria %}
+{% set seg_total = por_categoria|sum(attribute='segundos_totales') %}
+<section class="dash-stats" aria-label="{{ _('Totales del periodo') }}">
+  <div class="dash-stat"><span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg></span><span><span class="dash-stat-valor">{{ (seg_total // 3600)|int }}h {{ ((seg_total % 3600) // 60)|int }}m</span><span class="dash-stat-label">{{ _('tiempo en tareas') }}</span></span></div>
+  <div class="dash-stat"><span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg></span><span><span class="dash-stat-valor">{{ por_categoria|sum(attribute='num_tareas') }}</span><span class="dash-stat-label">{{ _('tareas finalizadas') }}</span></span></div>
+  <div class="dash-stat"><span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg></span><span><span class="dash-stat-valor">{{ por_categoria|sum(attribute='num_eventos') }}</span><span class="dash-stat-label">{{ _('eventos') }}</span></span></div>
+  <div class="dash-stat"><span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></span><span><span class="dash-stat-valor">{{ por_categoria|sum(attribute='num_notas') }}</span><span class="dash-stat-label">{{ _('notas') }}</span></span></div>
+</section>
+{% endif %}
+
 <section class="stats-section">
   <h3>{{ _('Por proyecto') }}</h3>
   {% if not por_categoria %}
