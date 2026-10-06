@@ -22,6 +22,7 @@ problema real con más de un usuario.
 import hashlib
 import json
 import os
+import re
 import secrets
 import sqlite3
 import sys
@@ -107,6 +108,15 @@ CREATE TABLE IF NOT EXISTS clientes_fiscales_accesos (
     expira_en TEXT NOT NULL,
     usado_en TEXT,
     ip_solicitante TEXT
+);
+
+-- Recordatorios del portal ya enviados por correo al cliente (uno por
+-- vencimiento y antelación: 7 y 2 días), para no repetirlos nunca.
+CREATE TABLE IF NOT EXISTS vencimientos_recordatorios (
+    vencimiento_id INTEGER NOT NULL REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE,
+    dias_antes INTEGER NOT NULL,
+    enviado_en TEXT NOT NULL,
+    PRIMARY KEY (vencimiento_id, dias_antes)
 );
 
 -- Documentos que sube el CLIENTE (portal) para un vencimiento concreto --
@@ -372,10 +382,32 @@ CREATE TABLE IF NOT EXISTS tareas_recurrentes (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
     categoria_id INTEGER REFERENCES categorias(id),
     asunto TEXT NOT NULL,
-    periodicidad TEXT NOT NULL CHECK (periodicidad IN ('semanal','mensual')),
+    periodicidad TEXT NOT NULL CHECK (periodicidad IN ('diaria','laborables','semanal','mensual','trimestral','anual')),
     dia INTEGER NOT NULL,
+    mes INTEGER,
     activa INTEGER NOT NULL DEFAULT 1,
     creado_en TEXT NOT NULL
+);
+
+-- Adjuntos de una nota (imágenes, PDF, texto): se guardan en la propia base de
+-- datos, con tope de tamaño y de número por nota (ver NOTAS_ADJUNTOS_*).
+CREATE TABLE IF NOT EXISTS notas_adjuntos (
+    id INTEGER PRIMARY KEY,
+    nota_id INTEGER NOT NULL REFERENCES notas(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    creado_en TEXT NOT NULL
+);
+
+-- Checklist (subtareas) de una tarea de la lista (tareas_outlook).
+CREATE TABLE IF NOT EXISTS tarea_checklist (
+    id INTEGER PRIMARY KEY,
+    tarea_outlook_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    texto TEXT NOT NULL,
+    hecha INTEGER NOT NULL DEFAULT 0,
+    orden INTEGER NOT NULL DEFAULT 0
 );
 
 -- Cliente de correo IMAP/POP3. La contraseña de cada cuenta NO se guarda
@@ -461,6 +493,15 @@ CREATE TABLE IF NOT EXISTS correo_borradores (
     actualizado_en TEXT NOT NULL
 );
 
+-- Adjuntos de un borrador (los que venían de un envío deshecho o fallido).
+CREATE TABLE IF NOT EXISTS correo_borradores_adjuntos (
+    id INTEGER PRIMARY KEY,
+    borrador_id INTEGER NOT NULL REFERENCES correo_borradores(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    contenido BLOB NOT NULL
+);
+
 -- Caché local de mensajes ya descargados (para no ir a red en cada
 -- consulta). cc: cabecera Cc del mensaje recibido. Cco (Bcc) nunca se guarda
 -- aquí porque, por diseño del propio correo electrónico, nadie salvo el
@@ -526,6 +567,50 @@ CREATE TABLE IF NOT EXISTS correo_reglas_categoria (
     FOREIGN KEY (categoria_id) REFERENCES correo_categorias(id) ON DELETE CASCADE
 );
 
+-- Reglas avanzadas de correo: condiciones por remitente y/o asunto y varias
+-- acciones a la vez (categoría, marcar como leído, destacar, cliente fiscal).
+-- Conviven con correo_reglas_categoria (la regla simple de siempre).
+CREATE TABLE IF NOT EXISTS correo_reglas (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    remitente_patron TEXT,
+    asunto_patron TEXT,
+    categoria_id INTEGER REFERENCES correo_categorias(id) ON DELETE SET NULL,
+    marcar_leido INTEGER NOT NULL DEFAULT 0,
+    destacar INTEGER NOT NULL DEFAULT 0,
+    cliente_fiscal_id INTEGER,
+    creada_en TEXT NOT NULL
+);
+
+-- Cola de envío de correo: "deshacer envío" (retraso de unos segundos) y
+-- envío programado. Un hilo del servidor envía lo pendiente cuando llega
+-- su hora; el estado se reclama con un UPDATE condicional (dos procesos
+-- nunca envían el mismo correo).
+CREATE TABLE IF NOT EXISTS correo_envios (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    cuenta_id INTEGER NOT NULL,
+    destinatarios TEXT NOT NULL,
+    cc TEXT,
+    bcc TEXT,
+    asunto TEXT NOT NULL,
+    cuerpo_html TEXT NOT NULL,
+    en_respuesta_a TEXT,
+    enviar_en TEXT NOT NULL,
+    programado INTEGER NOT NULL DEFAULT 0,
+    estado TEXT NOT NULL DEFAULT 'pendiente',  -- pendiente | enviando | enviado | cancelado | error
+    error TEXT,
+    creado_en TEXT NOT NULL,
+    procesado_en TEXT
+);
+CREATE TABLE IF NOT EXISTS correo_envios_adjuntos (
+    id INTEGER PRIMARY KEY,
+    envio_id INTEGER NOT NULL REFERENCES correo_envios(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    contenido BLOB NOT NULL
+);
+
 -- Direcciones a las que ya se ha enviado correo, para sugerirlas al
 -- redactar uno nuevo (autocompletar). veces_usado/ultima_vez_en permiten
 -- ordenar las sugerencias por relevancia.
@@ -551,6 +636,15 @@ CREATE TABLE IF NOT EXISTS ia_conversaciones (
 );
 
 -- Mensajes del Asistente IA, repartidos en conversaciones (conversacion_id).
+-- Atajos de prompts propios del usuario para el chat del asistente (máx. 20).
+CREATE TABLE IF NOT EXISTS ia_atajos (
+    id INTEGER PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    titulo TEXT NOT NULL,
+    prompt TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS ia_mensajes (
     id INTEGER PRIMARY KEY,
     usuario_id INTEGER,
@@ -631,6 +725,32 @@ CREATE TABLE IF NOT EXISTS fichajes (
     corrige_a INTEGER REFERENCES fichajes(id),
     creado_por INTEGER NOT NULL REFERENCES usuarios(id),
     creado_en TEXT NOT NULL
+);
+
+-- Latidos de las tareas periódicas del servidor (panel de salud del backoffice).
+CREATE TABLE IF NOT EXISTS latidos (
+    nombre TEXT PRIMARY KEY,
+    ultimo_ok TEXT,
+    ultimo_error TEXT,
+    detalle TEXT,
+    intervalo_segundos INTEGER NOT NULL DEFAULT 0
+);
+
+-- Avisos del vigilante de salud ya enviados (uno por motivo y día).
+CREATE TABLE IF NOT EXISTS salud_alertas (
+    motivo TEXT NOT NULL,
+    dia TEXT NOT NULL,
+    enviada_en TEXT NOT NULL,
+    PRIMARY KEY (motivo, dia)
+);
+
+-- Aviso de "salida olvidada": una sola vez por jornada (la entrada abierta).
+CREATE TABLE IF NOT EXISTS fichaje_avisos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    entrada_id INTEGER NOT NULL REFERENCES fichajes(id),
+    avisado_en TEXT NOT NULL,
+    UNIQUE (usuario_id, entrada_id)
 );
 
 -- Facturación de plataforma (Guilda Work cobra a sus propios tenants,
@@ -735,9 +855,21 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_leido ON correo_mensajes(leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cuenta_leido ON correo_mensajes(cuenta_id, leido);
 CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes(cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
+CREATE INDEX IF NOT EXISTS idx_notas_adjuntos_nota ON notas_adjuntos(nota_id);
+CREATE INDEX IF NOT EXISTS idx_correo_reglas_usuario ON correo_reglas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_borradores_adjuntos ON correo_borradores_adjuntos(borrador_id);
+CREATE INDEX IF NOT EXISTS idx_correo_envios_estado ON correo_envios(estado, enviar_en);
+CREATE INDEX IF NOT EXISTS idx_correo_envios_usuario ON correo_envios(usuario_id, estado);
+CREATE INDEX IF NOT EXISTS idx_correo_envios_adjuntos_envio ON correo_envios_adjuntos(envio_id);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_hilo ON correo_mensajes(cuenta_id, hilo_clave);
+CREATE INDEX IF NOT EXISTS idx_correo_mensajes_message_id ON correo_mensajes(cuenta_id, message_id);
+CREATE INDEX IF NOT EXISTS idx_tarea_checklist_tarea ON tarea_checklist(tarea_outlook_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_tarea_outlook ON tareas(tarea_outlook_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_asignada ON tareas_outlook(asignada_a);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_conversacion ON ia_mensajes(conversacion_id);
 CREATE INDEX IF NOT EXISTS idx_ia_conversaciones_usuario ON ia_conversaciones(usuario_id, actualizada_en);
+CREATE INDEX IF NOT EXISTS idx_ia_atajos_usuario ON ia_atajos(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_api_usuario ON tokens_api(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_remitentes_confiables_usuario ON correo_remitentes_confiables(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_reglas_categoria_usuario ON correo_reglas_categoria(usuario_id);
@@ -1009,6 +1141,54 @@ def _migrar_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> 
         conn.close()
 
 
+def _migrar_tareas_recurrentes_periodicidades(conn_ignorada: sqlite3.Connection) -> None:
+    """`tareas_recurrentes.periodicidad` solo admitía 'semanal' y 'mensual'
+    (CHECK) y no tenía mes. SQLite no deja cambiar un CHECK con ALTER TABLE,
+    así que se reconstruye la tabla la primera vez que se detecta el esquema
+    antiguo (se comprueba leyendo su SQL en sqlite_master). Mismo
+    procedimiento que _migrar_categorias_unique_por_usuario -- ver su
+    docstring: conexión propia con foreign_keys=OFF, tabla nueva con otro
+    nombre, copia, DROP de la vieja y renombrado -- porque
+    tareas_outlook.tarea_recurrente_id apunta a esta tabla."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        definicion = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='tareas_recurrentes'"
+        ).fetchone()
+        if definicion is None or "'trimestral'" in definicion["sql"]:
+            return
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            """CREATE TABLE tareas_recurrentes_nueva (
+                   id INTEGER PRIMARY KEY,
+                   usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+                   categoria_id INTEGER REFERENCES categorias(id),
+                   asunto TEXT NOT NULL,
+                   periodicidad TEXT NOT NULL CHECK (periodicidad IN
+                       ('diaria','laborables','semanal','mensual','trimestral','anual')),
+                   dia INTEGER NOT NULL,
+                   mes INTEGER,
+                   activa INTEGER NOT NULL DEFAULT 1,
+                   creado_en TEXT NOT NULL
+               )"""
+        )
+        conn.execute(
+            """INSERT INTO tareas_recurrentes_nueva (id, usuario_id, categoria_id, asunto, periodicidad, dia, activa, creado_en)
+               SELECT id, usuario_id, categoria_id, asunto, periodicidad, dia, activa, creado_en FROM tareas_recurrentes"""
+        )
+        conn.execute("DROP TABLE tareas_recurrentes")
+        conn.execute("ALTER TABLE tareas_recurrentes_nueva RENAME TO tareas_recurrentes")
+        violaciones = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violaciones:
+            conn.rollback()
+            raise RuntimeError(f"Migración de tareas_recurrentes abortada: foreign_key_check encontró {violaciones}")
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.close()
+
+
 def _migrar_correo_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> None:
     """Mismo bug, mismo arreglo que _migrar_categorias_unique_por_usuario
     (ver su docstring para el porqué del procedimiento exacto) -- aquí
@@ -1119,6 +1299,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "categorias", "icono", "TEXT")
         _migrar_categorias_unique_por_usuario(conn)
         _migrar_correo_categorias_unique_por_usuario(conn)
+        _migrar_tareas_recurrentes_periodicidades(conn)
         _migrar_documentos_vencimiento_a_nextcloud(conn)
         _asegurar_columna(conn, "correo_mensajes", "message_id", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "cc", "TEXT")
@@ -1131,6 +1312,12 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_cuentas", "firma_html", "TEXT")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_nuevos", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "correo_cuentas", "firma_en_respuestas", "INTEGER NOT NULL DEFAULT 1")
+        # Conversaciones: cabeceras de enlace y clave de hilo (ver
+        # calcular_hilo_clave). ANTES de executescript(INDICES).
+        _asegurar_columna(conn, "tokens_api", "permisos", "TEXT NOT NULL DEFAULT 'completo'")
+        _asegurar_columna(conn, "correo_mensajes", "in_reply_to", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "referencias", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "hilo_clave", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
@@ -1310,6 +1497,14 @@ def init_db() -> None:
         # propósito -- el acceso es opt-in, solo si un empleado pone el
         # email desde la ficha del cliente puede este pedir un enlace.
         _asegurar_columna(conn, "clientes_fiscales", "email", "TEXT")
+        # Recordatorios automáticos por correo de los vencimientos próximos
+        # (activos por defecto; el cliente puede quedar fuera desde su ficha).
+        _asegurar_columna(conn, "clientes_fiscales", "recordatorios_portal", "INTEGER NOT NULL DEFAULT 1")
+        # Idioma de los correos que se le mandan al cliente (es/ca/en/fr).
+        _asegurar_columna(conn, "clientes_fiscales", "idioma", "TEXT NOT NULL DEFAULT 'es'")
+        # Quién subió el documento: 'cliente' (portal), 'justificante'
+        # (oficial, lo sube el equipo) o 'constancia' (PDF generado por la app).
+        _asegurar_columna(conn, "vencimientos_fiscales_documentos", "origen", "TEXT NOT NULL DEFAULT 'cliente'")
         # Vínculo con FacturaScripts (app/facturascripts.py) -- opcional,
         # solo si el empleado vincula el cliente fiscal a un cliente de
         # FacturaScripts desde su ficha (mismo criterio best-effort que
@@ -1341,6 +1536,20 @@ def init_db() -> None:
         # esta misma columna, y en una base de datos nueva (creada solo por
         # SCHEMA, que no la incluye) todavía no existiría.
         _asegurar_columna(conn, "tareas_outlook", "tarea_recurrente_id", "INTEGER REFERENCES tareas_recurrentes(id)")
+        # Tareas unificadas: asignación a un compañero del despacho, vínculo con
+        # un cliente fiscal y con el correo del que nació; y el enlace de cada
+        # registro de tiempo (tareas) con la tarea de la lista a la que se dedicó.
+        _asegurar_columna(conn, "tareas_outlook", "asignada_a", "INTEGER")
+        _asegurar_columna(conn, "tareas_outlook", "cliente_fiscal_id", "INTEGER")
+        _asegurar_columna(conn, "tareas_outlook", "mensaje_correo_id", "INTEGER")
+        _asegurar_columna(conn, "tareas", "tarea_outlook_id", "INTEGER")
+        # Notas con título, fijadas y vinculadas a un cliente fiscal, a una tarea
+        # de la lista y al correo del que nacieron.
+        _asegurar_columna(conn, "notas", "titulo", "TEXT")
+        _asegurar_columna(conn, "notas", "fijada", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "notas", "cliente_fiscal_id", "INTEGER")
+        _asegurar_columna(conn, "notas", "tarea_outlook_id", "INTEGER")
+        _asegurar_columna(conn, "notas", "mensaje_correo_id", "INTEGER")
 
         # Multiusuario: por si SCHEMA no llegó a crear la tabla con la
         # columna (bases de datos migradas desde una versión sin ella).
@@ -1354,6 +1563,8 @@ def init_db() -> None:
         # conversaciones. Tiene que ir ANTES de executescript(INDICES) (hay un
         # índice sobre esta columna).
         _asegurar_columna(conn, "ia_mensajes", "conversacion_id", "INTEGER")
+        # Fuentes citadas bajo la respuesta final del asistente (JSON).
+        _asegurar_columna(conn, "ia_mensajes", "fuentes_json", "TEXT")
 
         conn.executescript(INDICES)
         _asegurar_orden_categorias(conn)
@@ -1362,12 +1573,17 @@ def init_db() -> None:
         _migrar_datos_sin_usuario(conn, usuario_id_local)
         _migrar_conversaciones_ia(conn)
         _migrar_preferencias_singleton(conn, usuario_id_local)
+        _asegurar_columna(conn, "correo_preferencias", "deshacer_segundos", "INTEGER NOT NULL DEFAULT 10")
+        _rellenar_hilos_correo(conn)
 
         # IA local (Ollama/LM Studio): columnas añadidas después de la
         # migración del singleton, ya que esta es la que crea/asegura la
         # propia tabla ia_preferencias en primer lugar.
         _asegurar_columna(conn, "ia_preferencias", "proveedor_local", "TEXT NOT NULL DEFAULT 'ollama'")
         _asegurar_columna(conn, "ia_preferencias", "modelo_local", "TEXT NOT NULL DEFAULT ''")
+        # Modo solo lectura del asistente: al modelo solo se le ofrecen (y solo
+        # se ejecutan) las herramientas de lectura.
+        _asegurar_columna(conn, "ia_preferencias", "solo_lectura", "INTEGER NOT NULL DEFAULT 0")
 
         # Relación opcional con un proyecto (categorias) para las Tareas Outlook
         # — mismo patrón ya usado en correo_mensajes.categoria_id más arriba.
@@ -1813,6 +2029,40 @@ def listar_tenants_con_conteo() -> list[sqlite3.Row]:
             "FROM tenants LEFT JOIN usuarios ON usuarios.tenant_id = tenants.id "
             "GROUP BY tenants.id ORDER BY tenants.nombre"
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def resumen_equipos_tenants() -> dict[int, dict]:
+    """Por tenant: usuarios totales, administradores, gestores de fichajes,
+    supervisores, clientes fiscales activos y nombre del plan -- una sola
+    consulta para las pantallas de visión global del backoffice."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT t.id,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id) AS usuarios,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.rol = 'admin') AS admins,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.gestor_fichajes = 1) AS gestores,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.supervisor_tenant = 1) AS supervisores,
+                      (SELECT COUNT(*) FROM clientes_fiscales c WHERE c.tenant_id = t.id AND c.papelera_en IS NULL) AS clientes,
+                      (SELECT p.nombre FROM planes_guilda p WHERE p.id = t.plan_id) AS plan
+               FROM tenants t"""
+        ).fetchall()
+        return {f["id"]: dict(f) for f in filas}
+    finally:
+        conn.close()
+
+
+def resumen_usuarios_backoffice() -> dict[int, dict]:
+    """Por usuario: nº de dispositivos/tokens y último uso de cualquiera de ellos."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT usuario_id, COUNT(*) AS dispositivos, MAX(COALESCE(ultimo_uso_en, creado_en)) AS ultimo_uso
+               FROM tokens_api GROUP BY usuario_id"""
+        ).fetchall()
+        return {f["usuario_id"]: dict(f) for f in filas}
     finally:
         conn.close()
 
@@ -2545,14 +2795,21 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None) -> str:
+PERMISOS_TOKEN_API = ("completo", "solo_lectura")
+
+
+def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None, permisos: str = "completo") -> str:
+    """`permisos`: "completo" (como siempre) o "solo_lectura" (solo GET: lo
+    aplica auth.token_required)."""
+    if permisos not in PERMISOS_TOKEN_API:
+        raise ValueError("Permisos de token no válidos.")
     token = secrets.token_urlsafe(32)
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en) "
-            "VALUES (?, ?, ?, ?)",
-            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso()),
+            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en, permisos) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso(), permisos),
         )
         conn.commit()
         return token
@@ -2564,14 +2821,20 @@ TOKEN_API_DIAS_INACTIVIDAD = 90
 
 
 def usuario_id_por_token(token: str) -> int | None:
-    """None si el token no existe, o si lleva TOKEN_API_DIAS_INACTIVIDAD días
-    sin usarse (se borra en el momento, no hace falta una tarea periódica
-    aparte: con que se compruebe en cada uso es suficiente para un catálogo
-    de tokens que no es previsible que crezca mucho)."""
+    autenticado = autenticar_token(token)
+    return autenticado[0] if autenticado else None
+
+
+def autenticar_token(token: str) -> tuple[int, str] | None:
+    """(usuario_id, permisos), o None si el token no existe, o si lleva
+    TOKEN_API_DIAS_INACTIVIDAD días sin usarse (se borra en el momento, no
+    hace falta una tarea periódica aparte: con que se compruebe en cada uso
+    es suficiente para un catálogo de tokens que no es previsible que
+    crezca mucho)."""
     conn = get_connection()
     try:
         fila = conn.execute(
-            "SELECT usuario_id, creado_en, ultimo_uso_en FROM tokens_api WHERE token_hash = ?",
+            "SELECT usuario_id, creado_en, ultimo_uso_en, permisos FROM tokens_api WHERE token_hash = ?",
             (_hash_token(token),),
         ).fetchone()
         if fila is None:
@@ -2587,7 +2850,7 @@ def usuario_id_por_token(token: str) -> int | None:
             (now_iso(), _hash_token(token)),
         )
         conn.commit()
-        return fila["usuario_id"]
+        return fila["usuario_id"], fila["permisos"]
     finally:
         conn.close()
 
@@ -2610,7 +2873,7 @@ def listar_tokens_api(usuario_id: int):
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en FROM tokens_api "
+            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos FROM tokens_api "
             "WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
             (usuario_id,),
         ).fetchall()
@@ -3330,7 +3593,7 @@ def contar_entradas_hoy_por_usuario(usuario_id: int) -> dict[int, int]:
 
 # --- Tareas / eventos ---------------------------------------------------
 
-def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> int:
+def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str, tarea_outlook_id: int | None = None) -> int:
     conn = get_connection()
     try:
         # categoria_id es NOT NULL en esta tabla (a diferencia de notas/
@@ -3351,9 +3614,9 @@ def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str) -> i
         else:
             cur = conn.execute(
                 """INSERT INTO tareas
-                   (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos)
-                   VALUES (?, ?, ?, 'duracion', 'en_curso', ?, NULL, NULL)""",
-                (usuario_id, nombre.strip(), categoria_id, ahora),
+                   (usuario_id, nombre, categoria_id, tipo, estado, inicio_en, fin_en, duracion_segundos, tarea_outlook_id)
+                   VALUES (?, ?, ?, 'duracion', 'en_curso', ?, NULL, NULL, ?)""",
+                (usuario_id, nombre.strip(), categoria_id, ahora, tarea_outlook_id),
             )
         conn.commit()
         tarea_id = cur.lastrowid
@@ -3500,6 +3763,17 @@ def finalizar_tarea(usuario_id: int, tarea_id: int) -> None:
     finally:
         conn.close()
     _emitir_evento_tarea_finalizada(usuario_id, tarea_id, row["nombre"], duracion)
+
+
+def _emitir_evento(usuario_id: int, evento: str, payload: dict) -> None:
+    """Webhook saliente del tenant del usuario (ver app/eventos.py). Un fallo
+    al emitir nunca afecta a la operación ya hecha."""
+    from . import eventos
+    try:
+        tenant = tenant_de_usuario(usuario_id)
+        eventos.emitir(evento, tenant["id"] if tenant else None, payload)
+    except Exception:
+        pass
 
 
 def _emitir_evento_tarea_finalizada(usuario_id: int, tarea_id: int, nombre: str, duracion_segundos: int) -> None:
@@ -3667,6 +3941,8 @@ def eliminar_tarea_definitivamente(usuario_id: int, tarea_id: int) -> None:
 def crear_nota(
     usuario_id: int, texto: str, categoria_id: int | None = None, tarea_id: int | None = None,
     creada_en: str | None = None, cliente_uuid: str | None = None,
+    titulo: str | None = None, fijada: bool = False, cliente_fiscal_id: int | None = None,
+    tarea_outlook_id: int | None = None, mensaje_correo_id: int | None = None,
 ) -> int:
     """`creada_en`/`cliente_uuid`: igual que en `fichar()`, para la cola
     offline de la app móvil -- conservan la hora real de creación y evitan
@@ -3685,8 +3961,16 @@ def crear_nota(
         if creada_en is not None and creada_en > ahora:
             raise ValueError("La fecha de creación de la nota no puede ser futura.")
         cur = conn.execute(
-            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, cliente_uuid) VALUES (?, ?, ?, ?, ?, ?)",
-            (usuario_id, texto.strip(), categoria_id, tarea_id, creada_en or ahora, cliente_uuid),
+            """INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, cliente_uuid,
+                                  titulo, fijada, cliente_fiscal_id, tarea_outlook_id, mensaje_correo_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                usuario_id, texto.strip(), categoria_id, tarea_id, creada_en or ahora, cliente_uuid,
+                _titulo_nota(titulo), 1 if fijada else 0,
+                _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id),
+                _tarea_outlook_id_propia(conn, usuario_id, tarea_outlook_id),
+                _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id),
+            ),
         )
         conn.commit()
         nota_id = cur.lastrowid
@@ -3727,13 +4011,13 @@ def _reindexar_nota(usuario_id: int, nota_id: int) -> None:
         pass
 
 
-def importar_nota(usuario_id: int, texto: str, categoria_id: int | None, creada_en: str) -> int:
+def importar_nota(usuario_id: int, texto: str, categoria_id: int | None, creada_en: str, titulo: str | None = None) -> int:
     """Inserta una nota con un timestamp explícito (importación de datos exportados)."""
     conn = get_connection()
     try:
         cur = conn.execute(
-            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en) VALUES (?, ?, ?, NULL, ?)",
-            (usuario_id, texto.strip(), categoria_id, creada_en),
+            "INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, titulo) VALUES (?, ?, ?, NULL, ?, ?)",
+            (usuario_id, texto.strip(), categoria_id, creada_en, _titulo_nota(titulo)),
         )
         conn.commit()
         return cur.lastrowid
@@ -3745,8 +4029,9 @@ def obtener_nota(usuario_id: int, nota_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
         return conn.execute(
-            """SELECT n.*, c.nombre AS categoria_nombre
+            """SELECT n.*, c.nombre AS categoria_nombre, cf.nombre AS cliente_fiscal_nombre
                FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+               LEFT JOIN clientes_fiscales cf ON cf.id = n.cliente_fiscal_id
                WHERE n.id = ? AND n.usuario_id = ? AND n.papelera_en IS NULL""",
             (nota_id, usuario_id),
         ).fetchone()
@@ -3754,16 +4039,174 @@ def obtener_nota(usuario_id: int, nota_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
-def editar_nota(usuario_id: int, nota_id: int, texto: str) -> None:
+NOTA_TITULO_MAX_CARACTERES = 120
+_SIN_CAMBIO = object()
+
+
+def _titulo_nota(titulo: str | None) -> str | None:
+    titulo = " ".join((titulo or "").split())[:NOTA_TITULO_MAX_CARACTERES]
+    return titulo or None
+
+
+def _tarea_outlook_id_propia(conn: sqlite3.Connection, usuario_id: int, tarea_id: int | None) -> int | None:
+    if tarea_id is None:
+        return None
+    fila = conn.execute(
+        "SELECT id FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def editar_nota(
+    usuario_id: int, nota_id: int, texto: str, *, titulo=_SIN_CAMBIO, fijada=_SIN_CAMBIO,
+    cliente_fiscal_id=_SIN_CAMBIO, tarea_outlook_id=_SIN_CAMBIO, mensaje_correo_id=_SIN_CAMBIO,
+) -> None:
+    """Actualiza el texto y, si se indican, el título, si está fijada y sus
+    vínculos (cliente fiscal, tarea de la lista, correo). Lo no indicado no se toca."""
     conn = get_connection()
     try:
+        cambios = {"texto": texto.strip()}
+        if titulo is not _SIN_CAMBIO:
+            cambios["titulo"] = _titulo_nota(titulo)
+        if fijada is not _SIN_CAMBIO:
+            cambios["fijada"] = 1 if fijada else 0
+        if cliente_fiscal_id is not _SIN_CAMBIO:
+            cambios["cliente_fiscal_id"] = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        if tarea_outlook_id is not _SIN_CAMBIO:
+            cambios["tarea_outlook_id"] = _tarea_outlook_id_propia(conn, usuario_id, tarea_outlook_id)
+        if mensaje_correo_id is not _SIN_CAMBIO:
+            cambios["mensaje_correo_id"] = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
+        asignaciones = ", ".join(f"{c} = ?" for c in cambios)
         conn.execute(
-            "UPDATE notas SET texto = ? WHERE id = ? AND usuario_id = ?", (texto.strip(), nota_id, usuario_id)
+            f"UPDATE notas SET {asignaciones} WHERE id = ? AND usuario_id = ?",
+            [*cambios.values(), nota_id, usuario_id],
         )
         conn.commit()
     finally:
         conn.close()
     _reindexar_nota(usuario_id, nota_id)
+    _emitir_evento(usuario_id, "nota.editada", {"nota_id": nota_id})
+
+
+def alternar_fijada_nota(usuario_id: int, nota_id: int) -> bool:
+    """Fija o desfija la nota. Devuelve False si no es del usuario."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE notas SET fijada = 1 - fijada WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL",
+            (nota_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def listar_notas_fijadas(usuario_id: int, categoria_id: int | None = None) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        cond, params = ["n.usuario_id = ?", "n.fijada = 1", "n.papelera_en IS NULL"], [usuario_id]
+        if categoria_id is not None:
+            cond.append("n.categoria_id = ?"); params.append(categoria_id)
+        return conn.execute(
+            f"""SELECT n.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+                FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
+                WHERE {' AND '.join(cond)} ORDER BY n.creada_en DESC""",
+            params,
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+# ---- Adjuntos de nota ---------------------------------------------------------
+
+NOTAS_ADJUNTOS_MIME = {
+    "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "text/plain", "text/csv",
+}
+NOTAS_ADJUNTOS_TAMANO_MAXIMO = 5 * 1024 * 1024
+NOTAS_ADJUNTOS_MAXIMO_POR_NOTA = 5
+
+
+def agregar_adjunto_nota(usuario_id: int, nota_id: int, nombre: str, tipo_mime: str, contenido: bytes) -> int:
+    """Adjunta un fichero a una nota propia. Lanza ValueError con un mensaje
+    para la persona usuaria si no procede (tipo, tamaño, límite, nota ajena)."""
+    nombre = (nombre or "").replace("\\", "/").split("/")[-1].strip()[:200] or "adjunto"
+    if tipo_mime not in NOTAS_ADJUNTOS_MIME:
+        raise ValueError("Tipo de archivo no permitido: solo imágenes, PDF o texto.")
+    if len(contenido) > NOTAS_ADJUNTOS_TAMANO_MAXIMO:
+        raise ValueError("El archivo pesa demasiado (máximo 5 MB).")
+    if not contenido:
+        raise ValueError("El archivo está vacío.")
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM notas WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (nota_id, usuario_id)
+        ).fetchone() is None:
+            raise ValueError("La nota no existe.")
+        if conn.execute("SELECT COUNT(*) FROM notas_adjuntos WHERE nota_id = ?", (nota_id,)).fetchone()[0] >= NOTAS_ADJUNTOS_MAXIMO_POR_NOTA:
+            raise ValueError(f"Una nota admite como máximo {NOTAS_ADJUNTOS_MAXIMO_POR_NOTA} adjuntos.")
+        cur = conn.execute(
+            "INSERT INTO notas_adjuntos (nota_id, nombre, tipo_mime, tamano, contenido, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+            (nota_id, nombre, tipo_mime, len(contenido), contenido, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_adjuntos_nota(nota_id: int) -> list[sqlite3.Row]:
+    """Sin el contenido (BLOB): solo lo necesario para listarlos."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT id, nota_id, nombre, tipo_mime, tamano, creado_en FROM notas_adjuntos WHERE nota_id = ? ORDER BY id",
+            (nota_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_adjuntos_notas(nota_ids: list[int]) -> dict[int, int]:
+    if not nota_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(nota_ids))
+        return {
+            f["nota_id"]: f["n"]
+            for f in conn.execute(f"SELECT nota_id, COUNT(*) AS n FROM notas_adjuntos WHERE nota_id IN ({marcas}) GROUP BY nota_id", nota_ids)
+        }
+    finally:
+        conn.close()
+
+
+def obtener_adjunto_nota(usuario_id: int, adjunto_id: int) -> sqlite3.Row | None:
+    """Con contenido; solo si la nota es del usuario."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT a.* FROM notas_adjuntos a JOIN notas n ON n.id = a.nota_id
+               WHERE a.id = ? AND n.usuario_id = ?""",
+            (adjunto_id, usuario_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_adjunto_nota(usuario_id: int, adjunto_id: int) -> bool:
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM notas_adjuntos a JOIN notas n ON n.id = a.nota_id WHERE a.id = ? AND n.usuario_id = ?",
+            (adjunto_id, usuario_id),
+        ).fetchone() is None:
+            return False
+        conn.execute("DELETE FROM notas_adjuntos WHERE id = ?", (adjunto_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 
 def eliminar_nota(usuario_id: int, nota_id: int) -> None:
@@ -3854,7 +4297,7 @@ def historial(
             cond_n.append("n.categoria_id = ?"); params_n.append(categoria_id)
             cond_t.append("t.categoria_id = ?"); params_t.append(categoria_id)
         if texto:
-            cond_n.append("n.texto LIKE ?"); params_n.append(f"%{texto}%")
+            cond_n.append("(n.texto LIKE ? OR n.titulo LIKE ?)"); params_n.extend([f"%{texto}%", f"%{texto}%"])
             cond_t.append("t.nombre LIKE ?"); params_t.append(f"%{texto}%")
 
         query = f"""
@@ -3870,7 +4313,9 @@ def historial(
                     NULL AS duracion_segundos,
                     n.categoria_id AS categoria_id,
                     c.nombre AS categoria_nombre,
-                    c.color AS categoria_color
+                    c.color AS categoria_color,
+                    n.titulo AS titulo,
+                    n.fijada AS fijada
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
                 WHERE {' AND '.join(cond_n)}
 
@@ -3887,7 +4332,9 @@ def historial(
                     t.duracion_segundos AS duracion_segundos,
                     t.categoria_id AS categoria_id,
                     c.nombre AS categoria_nombre,
-                    c.color AS categoria_color
+                    c.color AS categoria_color,
+                    NULL AS titulo,
+                    0 AS fijada
                 FROM tareas t JOIN categorias c ON c.id = t.categoria_id
                 WHERE {' AND '.join(cond_t)}
             )
@@ -4131,41 +4578,112 @@ def crear_tarea_outlook(
     categoria_id: int | None = None,
     outlook_entry_id: str | None = None,
     tarea_recurrente_id: int | None = None,
+    cliente_fiscal_id: int | None = None,
+    mensaje_correo_id: int | None = None,
+    asignada_a: int | None = None,
 ) -> int:
     conn = get_connection()
     try:
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
+        cliente_fiscal_id = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        mensaje_correo_id = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
+        asignada_a = _companero_del_tenant(conn, usuario_id, asignada_a)
         cur = conn.execute(
             """INSERT INTO tareas_outlook
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
-                outlook_entry_id, tarea_recurrente_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                outlook_entry_id, tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id,
+                asignada_a, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
                 (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id,
-                tarea_recurrente_id, now_iso(),
+                tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id, asignada_a, now_iso(),
             ),
         )
         conn.commit()
-        return cur.lastrowid
+        tarea_id = cur.lastrowid
+    finally:
+        conn.close()
+    _emitir_evento(usuario_id, "tarea.creada", {"tarea_id": tarea_id, "asunto": asunto.strip(), "asignada_a": asignada_a})
+    return tarea_id
+
+
+def _cliente_fiscal_id_del_tenant(conn: sqlite3.Connection, usuario_id: int, cliente_fiscal_id: int | None) -> int | None:
+    """Solo se enlaza un cliente fiscal del propio despacho (mismo criterio
+    permisivo que _categoria_id_propio: si no es válido, se ignora)."""
+    if cliente_fiscal_id is None:
+        return None
+    fila = conn.execute(
+        """SELECT c.id FROM clientes_fiscales c JOIN usuarios u ON u.tenant_id = c.tenant_id
+           WHERE c.id = ? AND u.id = ? AND c.papelera_en IS NULL""",
+        (cliente_fiscal_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def _mensaje_correo_id_propio(conn: sqlite3.Connection, usuario_id: int, mensaje_id: int | None) -> int | None:
+    if mensaje_id is None:
+        return None
+    fila = conn.execute(
+        """SELECT m.id FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+           WHERE m.id = ? AND c.usuario_id = ?""",
+        (mensaje_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def _companero_del_tenant(conn: sqlite3.Connection, usuario_id: int, otro_id: int | None) -> int | None:
+    """Solo se puede asignar a alguien del MISMO despacho (y no a uno mismo:
+    la tarea ya es suya). Si no, se ignora."""
+    if otro_id is None or otro_id == usuario_id:
+        return None
+    fila = conn.execute(
+        """SELECT o.id FROM usuarios o JOIN usuarios yo ON yo.tenant_id = o.tenant_id
+           WHERE o.id = ? AND yo.id = ? AND yo.tenant_id IS NOT NULL""",
+        (otro_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+def listar_companeros_tenant(usuario_id: int) -> list[sqlite3.Row]:
+    """Compañeros del mismo despacho (sin el propio usuario), con el nombre
+    elegido o, en su defecto, el correo -- para el selector de asignación."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT o.id, COALESCE(NULLIF(p.nombre_mostrado, ''), o.email) AS nombre
+               FROM usuarios o JOIN usuarios yo ON yo.tenant_id = o.tenant_id
+               LEFT JOIN usuario_perfil p ON p.usuario_id = o.id
+               WHERE yo.id = ? AND yo.tenant_id IS NOT NULL AND o.id != ? ORDER BY nombre""",
+            (usuario_id, usuario_id),
+        ).fetchall()
     finally:
         conn.close()
 
 
 # --- Tareas recurrentes (app/rutas_tareas.py) --------------------------
 
+PERIODICIDADES_RECURRENTES = ("diaria", "laborables", "semanal", "mensual", "trimestral", "anual")
+
+
 def crear_tarea_recurrente(
     usuario_id: int, asunto: str, periodicidad: str, dia: int, categoria_id: int | None = None,
+    mes: int | None = None,
 ) -> int:
+    """`dia`: 0-6 (lunes-domingo) si es semanal; 1-31 si es mensual, trimestral
+    (primer mes de cada trimestre) o anual; sin uso (0) en diaria/laborables.
+    `mes` (1-12) solo se usa en anual."""
+    if periodicidad not in PERIODICIDADES_RECURRENTES:
+        raise ValueError(f"Periodicidad no válida: {periodicidad}")
     conn = get_connection()
     try:
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
         cur = conn.execute(
-            "INSERT INTO tareas_recurrentes (usuario_id, categoria_id, asunto, periodicidad, dia, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (usuario_id, categoria_id, asunto.strip(), periodicidad, dia, now_iso()),
+            "INSERT INTO tareas_recurrentes (usuario_id, categoria_id, asunto, periodicidad, dia, mes, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (usuario_id, categoria_id, asunto.strip(), periodicidad, dia, mes, now_iso()),
         )
         conn.commit()
         return cur.lastrowid
@@ -4225,6 +4743,9 @@ def generar_tareas_recurrentes() -> int:
     varias veces el mismo día no duplica nada, mismo criterio que
     generar_vencimientos_automaticos()."""
     hoy = datetime.now()
+    hoy_iso = hoy.strftime("%Y-%m-%d")
+    manana_iso = (hoy + timedelta(days=1)).strftime("%Y-%m-%d")
+    inicio_anio, fin_anio = f"{hoy.year}-01-01", f"{hoy.year + 1}-01-01"
     inicio_semana = (hoy - timedelta(days=hoy.weekday())).strftime("%Y-%m-%d")
     fin_semana = (hoy - timedelta(days=hoy.weekday()) + timedelta(days=7)).strftime("%Y-%m-%d")
     inicio_mes = hoy.replace(day=1).strftime("%Y-%m-%d")
@@ -4239,10 +4760,22 @@ def generar_tareas_recurrentes() -> int:
     try:
         reglas = conn.execute("SELECT * FROM tareas_recurrentes WHERE activa = 1").fetchall()
         for regla in reglas:
-            if regla["periodicidad"] == "semanal":
+            periodicidad = regla["periodicidad"]
+            if periodicidad == "diaria":
+                le_toca_hoy, (desde, hasta) = True, (hoy_iso, manana_iso)
+            elif periodicidad == "laborables":
+                le_toca_hoy, (desde, hasta) = hoy.weekday() < 5, (hoy_iso, manana_iso)
+            elif periodicidad == "semanal":
                 le_toca_hoy = hoy.weekday() == regla["dia"]
                 desde, hasta = inicio_semana, fin_semana
-            else:
+            elif periodicidad == "trimestral":
+                # Primer mes de cada trimestre (enero, abril, julio, octubre).
+                le_toca_hoy = hoy.month in (1, 4, 7, 10) and hoy.day == min(regla["dia"], ultimo_dia_del_mes)
+                desde, hasta = inicio_mes, fin_mes
+            elif periodicidad == "anual":
+                le_toca_hoy = hoy.month == (regla["mes"] or 1) and hoy.day == min(regla["dia"], ultimo_dia_del_mes)
+                desde, hasta = inicio_anio, fin_anio
+            else:  # mensual
                 dia_efectivo = min(regla["dia"], ultimo_dia_del_mes)
                 le_toca_hoy = hoy.day == dia_efectivo
                 desde, hasta = inicio_mes, fin_mes
@@ -4275,8 +4808,17 @@ def listar_tareas_outlook(
     excluir_completadas: bool = False,
     limite: int | None = None,
     offset: int = 0,
+    incluir_asignadas: bool = False,
+    solo_asignadas: bool = False,
+    categoria_id: int | None = None,
+    cliente_fiscal_id: int | None = None,
 ) -> list[sqlite3.Row]:
     """Tareas activas (no en la papelera), filtradas opcionalmente.
+
+    Por defecto solo las del propio usuario (las llamadas existentes -- API,
+    MCP, exportaciones -- no cambian). `incluir_asignadas`: añade las que un
+    compañero le ha asignado; `solo_asignadas`: solo esas. `categoria_id`
+    filtra por proyecto y `cliente_fiscal_id` por cliente.
 
     `desde`/`hasta` filtran por fecha_vencimiento (YYYY-MM-DD, inclusive) —
     los usa la vista calendario para pedir solo las de un rango de días.
@@ -4294,8 +4836,16 @@ def listar_tareas_outlook(
         # t.usuario_id/t.papelera_en llevan el prefijo de tabla porque
         # categorias también tiene esas dos columnas (JOIN ambiguo si no);
         # el resto de condiciones no lo necesitan, son propias de tareas_outlook.
-        cond = ["t.usuario_id = ?", "t.papelera_en IS NULL"]
-        params: list = [usuario_id]
+        if solo_asignadas:
+            cond, params = ["t.asignada_a = ?", "t.papelera_en IS NULL"], [usuario_id]
+        elif incluir_asignadas:
+            cond, params = ["(t.usuario_id = ? OR t.asignada_a = ?)", "t.papelera_en IS NULL"], [usuario_id, usuario_id]
+        else:
+            cond, params = ["t.usuario_id = ?", "t.papelera_en IS NULL"], [usuario_id]
+        if categoria_id is not None:
+            cond.append("t.categoria_id = ?"); params.append(categoria_id)
+        if cliente_fiscal_id is not None:
+            cond.append("t.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
         if estado:
             cond.append("estado = ?"); params.append(estado)
         elif excluir_completadas:
@@ -4312,8 +4862,14 @@ def listar_tareas_outlook(
         if hasta:
             cond.append("fecha_vencimiento < ?"); params.append(_fecha_exclusiva(hasta))
         where = " AND ".join(cond)
-        query = f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+        query = f"""SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color,
+                       COALESCE(NULLIF(pa.nombre_mostrado, ''), ua.email) AS asignada_nombre,
+                       COALESCE(NULLIF(po.nombre_mostrado, ''), uo.email) AS creador_nombre,
+                       cf.nombre AS cliente_fiscal_nombre
                 FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
+                LEFT JOIN usuarios ua ON ua.id = t.asignada_a LEFT JOIN usuario_perfil pa ON pa.usuario_id = t.asignada_a
+                LEFT JOIN usuarios uo ON uo.id = t.usuario_id LEFT JOIN usuario_perfil po ON po.usuario_id = t.usuario_id
+                LEFT JOIN clientes_fiscales cf ON cf.id = t.cliente_fiscal_id
                 WHERE {where}
                 ORDER BY (t.fecha_vencimiento IS NULL), t.fecha_vencimiento, t.prioridad DESC"""
         if limite is not None:
@@ -4332,6 +4888,22 @@ def obtener_tarea_outlook(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
                FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
                WHERE t.id = ? AND t.usuario_id = ? AND t.papelera_en IS NULL""",
             (tarea_id, usuario_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def obtener_tarea_outlook_visible(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
+    """Como obtener_tarea_outlook, pero también para quien la tiene ASIGNADA:
+    puede verla, completarla, cambiarle el estado, marcar su checklist y
+    dedicarle tiempo; editarla o eliminarla sigue siendo solo del dueño."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
+               FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
+               WHERE t.id = ? AND (t.usuario_id = ? OR t.asignada_a = ?) AND t.papelera_en IS NULL""",
+            (tarea_id, usuario_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
@@ -4376,13 +4948,17 @@ def upsert_tarea_outlook_por_entry_id(usuario_id: int, outlook_entry_id: str | N
 
 def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
     """Actualiza los campos indicados (cualquiera de CAMPOS_TAREA_OUTLOOK)."""
-    columnas = [c for c in campos if c in CAMPOS_TAREA_OUTLOOK]
+    columnas = [c for c in campos if c in CAMPOS_TAREA_OUTLOOK or c in ("cliente_fiscal_id", "mensaje_correo_id")]
     if not columnas:
         return
     conn = get_connection()
     try:
         if "categoria_id" in campos:
             campos["categoria_id"] = _categoria_id_propio(conn, usuario_id, campos["categoria_id"])
+        if "cliente_fiscal_id" in campos:
+            campos["cliente_fiscal_id"] = _cliente_fiscal_id_del_tenant(conn, usuario_id, campos["cliente_fiscal_id"])
+        if "mensaje_correo_id" in campos:
+            campos["mensaje_correo_id"] = _mensaje_correo_id_propio(conn, usuario_id, campos["mensaje_correo_id"])
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
         conn.execute(
@@ -4395,18 +4971,263 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
 
 
 def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
+    """Completa la tarea (la puede completar su dueño o quien la tiene
+    asignada) y cierra los cronómetros que siguieran en marcha sobre ella."""
     conn = get_connection()
     try:
-        conn.execute(
+        cur = conn.execute(
             """UPDATE tareas_outlook
                SET estado = 'completada', porcentaje_completado = 100,
                    fecha_completada = ?, actualizada_en = ?
-               WHERE id = ? AND usuario_id = ?""",
-            (now_iso(), now_iso(), tarea_id, usuario_id),
+               WHERE id = ? AND (usuario_id = ? OR asignada_a = ?)""",
+            (now_iso(), now_iso(), tarea_id, usuario_id, usuario_id),
+        )
+        conn.commit()
+        abiertos = conn.execute(
+            "SELECT id, usuario_id FROM tareas WHERE tarea_outlook_id = ? AND tipo = 'duracion' "
+            "AND estado IN ('en_curso', 'pausada') AND papelera_en IS NULL",
+            (tarea_id,),
+        ).fetchall() if cur.rowcount else []
+        completada = cur.rowcount > 0
+    finally:
+        conn.close()
+    for abierto in abiertos:
+        finalizar_tarea(abierto["usuario_id"], abierto["id"])
+    if completada:
+        _emitir_evento(usuario_id, "tarea.completada", {"tarea_id": tarea_id, "completada_por": usuario_id})
+
+
+def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) -> bool:
+    """Cambia el estado (tablero). 'completada' pasa por completar_tarea_outlook
+    (porcentaje, fecha y cronómetros); al reabrir una completada se limpia su fecha."""
+    estados = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
+    if estado not in estados or obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        return False
+    if estado == "completada":
+        completar_tarea_outlook(usuario_id, tarea_id)
+        return True
+    conn = get_connection()
+    try:
+        conn.execute(
+            """UPDATE tareas_outlook SET estado = ?, fecha_completada = NULL, actualizada_en = ?,
+                   porcentaje_completado = CASE WHEN estado = 'completada' THEN 0 ELSE porcentaje_completado END
+               WHERE id = ? AND (usuario_id = ? OR asignada_a = ?)""",
+            (estado, now_iso(), tarea_id, usuario_id, usuario_id),
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None) -> bool:
+    """Asigna la tarea a un compañero del mismo despacho (o la desasigna con
+    None). Solo su dueño. Devuelve False si no es suya o el compañero no es
+    válido."""
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+        ).fetchone() is None:
+            return False
+        destino = _companero_del_tenant(conn, usuario_id, asignada_a)
+        if asignada_a is not None and destino is None:
+            return False
+        conn.execute(
+            "UPDATE tareas_outlook SET asignada_a = ?, actualizada_en = ? WHERE id = ?", (destino, now_iso(), tarea_id)
         )
         conn.commit()
     finally:
         conn.close()
+    if destino is not None:
+        _emitir_evento(usuario_id, "tarea.asignada", {"tarea_id": tarea_id, "asignada_a": destino})
+    return True
+
+
+# ---- Cronómetro enlazado a una tarea de la lista ---------------------------
+
+def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_id: int | None = None) -> int:
+    """Pone en marcha un registro de tiempo (tareas) enlazado a esta tarea de
+    la lista. Quien lo inicia es quien registra el tiempo. Necesita un
+    proyecto: el de la tarea o el indicado."""
+    tarea = obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if tarea is None:
+        raise ValueError("La tarea no existe.")
+    conn = get_connection()
+    try:
+        en_marcha = conn.execute(
+            "SELECT 1 FROM tareas WHERE tarea_outlook_id = ? AND usuario_id = ? AND estado IN ('en_curso', 'pausada') "
+            "AND papelera_en IS NULL",
+            (tarea_id, usuario_id),
+        ).fetchone()
+    finally:
+        conn.close()
+    if en_marcha:
+        raise ValueError("Esta tarea ya tiene el cronómetro en marcha.")
+    proyecto = categoria_id or tarea["categoria_id"]
+    if proyecto is None:
+        raise ValueError("Elige un proyecto para registrar el tiempo de esta tarea.")
+    nuevo = crear_tarea(usuario_id, tarea["asunto"], proyecto, "duracion", tarea_outlook_id=tarea_id)
+    if tarea["estado"] == "no_iniciada":
+        cambiar_estado_tarea_outlook(usuario_id, tarea_id, "en_progreso")
+    return nuevo
+
+
+def cronometros_de_tareas_outlook(usuario_id: int, tarea_ids: list[int]) -> dict[int, dict]:
+    """Por tarea de la lista: el tiempo ya registrado por este usuario
+    (`total_segundos`, cronómetros finalizados) y su cronómetro en marcha o
+    en pausa, si lo hay (`activo`, con el formato de tareas_activas)."""
+    if not tarea_ids:
+        return {}
+    resultado = {i: {"total_segundos": 0, "activo": None} for i in tarea_ids}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        for f in conn.execute(
+            f"""SELECT tarea_outlook_id, COALESCE(SUM(duracion_segundos), 0) AS total FROM tareas
+                WHERE usuario_id = ? AND estado = 'finalizada' AND papelera_en IS NULL
+                  AND tarea_outlook_id IN ({marcas}) GROUP BY tarea_outlook_id""",
+            [usuario_id, *tarea_ids],
+        ):
+            resultado[f["tarea_outlook_id"]]["total_segundos"] = f["total"]
+    finally:
+        conn.close()
+    for activa in tareas_activas(usuario_id):
+        enlace = activa.get("tarea_outlook_id")
+        if enlace in resultado:
+            resultado[enlace]["activo"] = activa
+    return resultado
+
+
+# ---- Checklist (subtareas) -------------------------------------------------
+
+CHECKLIST_MAX_ITEMS = 50
+CHECKLIST_MAX_CARACTERES = 200
+
+
+def listar_checklist(tarea_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM tarea_checklist WHERE tarea_outlook_id = ? ORDER BY orden, id", (tarea_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def resumen_checklist(tarea_ids: list[int]) -> dict[int, tuple[int, int]]:
+    """{tarea_id: (hechas, total)} solo para las tareas que tienen items."""
+    if not tarea_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        return {
+            f["tarea_outlook_id"]: (f["hechas"], f["total"])
+            for f in conn.execute(
+                f"""SELECT tarea_outlook_id, SUM(hecha) AS hechas, COUNT(*) AS total FROM tarea_checklist
+                    WHERE tarea_outlook_id IN ({marcas}) GROUP BY tarea_outlook_id""",
+                tarea_ids,
+            )
+        }
+    finally:
+        conn.close()
+
+
+def _recalcular_porcentaje_checklist(conn: sqlite3.Connection, tarea_id: int) -> None:
+    fila = conn.execute(
+        "SELECT SUM(hecha) AS hechas, COUNT(*) AS total FROM tarea_checklist WHERE tarea_outlook_id = ?", (tarea_id,)
+    ).fetchone()
+    if fila["total"]:
+        conn.execute(
+            "UPDATE tareas_outlook SET porcentaje_completado = ? WHERE id = ? AND estado != 'completada'",
+            (round(100 * (fila["hechas"] or 0) / fila["total"]), tarea_id),
+        )
+
+
+def agregar_item_checklist(usuario_id: int, tarea_id: int, texto: str) -> int | None:
+    """Solo el dueño de la tarea. Devuelve el id, o None si no procede."""
+    texto = " ".join((texto or "").split())[:CHECKLIST_MAX_CARACTERES]
+    if not texto:
+        return None
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+        ).fetchone() is None:
+            return None
+        actuales = conn.execute("SELECT COUNT(*) AS n, COALESCE(MAX(orden), 0) AS m FROM tarea_checklist WHERE tarea_outlook_id = ?", (tarea_id,)).fetchone()
+        if actuales["n"] >= CHECKLIST_MAX_ITEMS:
+            return None
+        cur = conn.execute(
+            "INSERT INTO tarea_checklist (tarea_outlook_id, texto, orden) VALUES (?, ?, ?)", (tarea_id, texto, actuales["m"] + 1)
+        )
+        _recalcular_porcentaje_checklist(conn, tarea_id)
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def alternar_item_checklist(usuario_id: int, item_id: int) -> bool:
+    """Marca o desmarca un item: lo puede hacer el dueño o quien tiene la tarea asignada."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
+               WHERE i.id = ? AND (t.usuario_id = ? OR t.asignada_a = ?) AND t.papelera_en IS NULL""",
+            (item_id, usuario_id, usuario_id),
+        ).fetchone()
+        if fila is None:
+            return False
+        conn.execute("UPDATE tarea_checklist SET hecha = 1 - hecha WHERE id = ?", (item_id,))
+        _recalcular_porcentaje_checklist(conn, fila["tarea_outlook_id"])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def eliminar_item_checklist(usuario_id: int, item_id: int) -> bool:
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
+               WHERE i.id = ? AND t.usuario_id = ?""",
+            (item_id, usuario_id),
+        ).fetchone()
+        if fila is None:
+            return False
+        conn.execute("DELETE FROM tarea_checklist WHERE id = ?", (item_id,))
+        _recalcular_porcentaje_checklist(conn, fila["tarea_outlook_id"])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def tareas_para_hoy(usuario_id: int) -> dict[str, list]:
+    """"Mi día": lo pendiente (propio o asignado) que hay que mirar hoy.
+    `vencidas` (vencimiento anterior a hoy), `hoy` (vence hoy), `en_progreso`
+    (en progreso sin vencimiento hoy/anterior) y `asignadas` (asignadas a mí,
+    pendientes, que no estén ya en otra sección)."""
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    vistas: set[int] = set()
+    secciones: dict[str, list] = {"vencidas": [], "hoy": [], "en_progreso": [], "asignadas": []}
+    for t in listar_tareas_outlook(usuario_id, excluir_completadas=True, incluir_asignadas=True):
+        fecha = (t["fecha_vencimiento"] or "")[:10]
+        if fecha and fecha < hoy:
+            secciones["vencidas"].append(t)
+        elif fecha == hoy:
+            secciones["hoy"].append(t)
+        elif t["estado"] == "en_progreso":
+            secciones["en_progreso"].append(t)
+        elif t["asignada_a"] == usuario_id:
+            secciones["asignadas"].append(t)
+        else:
+            continue
+        vistas.add(t["id"])
+    return secciones
 
 
 def eliminar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
@@ -4467,7 +5288,7 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais",
+    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -5152,8 +5973,11 @@ def consumir_acceso_facturacion(token: str) -> int | None:
         conn.close()
 
 
+ORIGENES_DOCUMENTO_VENCIMIENTO = ("cliente", "justificante", "constancia")
+
+
 def subir_documento_vencimiento(
-    vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes,
+    vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes, origen: str = "cliente",
 ) -> int:
     """Guarda primero como BLOB local (garantiza que el documento queda
     a salvo aunque Nextcloud falle a medias) y, solo si el tenant tiene
@@ -5165,9 +5989,10 @@ def subir_documento_vencimiento(
     try:
         cur = conn.execute(
             "INSERT INTO vencimientos_fiscales_documentos "
-            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso()),
+            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en, origen) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso(),
+             origen if origen in ORIGENES_DOCUMENTO_VENCIMIENTO else "cliente"),
         )
         documento_id = cur.lastrowid
         conn.commit()
@@ -5207,14 +6032,68 @@ def contenido_documento_vencimiento(documento: sqlite3.Row) -> bytes:
     return documento["contenido"]
 
 
-def listar_documentos_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
+def listar_documentos_vencimiento(vencimiento_id: int, origen: str | None = None) -> list[sqlite3.Row]:
+    """Todos los documentos del vencimiento, o solo los de un `origen`
+    ('cliente' = lo que ha subido el cliente desde el portal)."""
+    conn = get_connection()
+    try:
+        sql = (
+            "SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en, origen "
+            "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ?"
+        )
+        params: list = [vencimiento_id]
+        if origen is not None:
+            sql += " AND origen = ?"
+            params.append(origen)
+        return conn.execute(sql + " ORDER BY creado_en, id", params).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_documentos_vencimiento_por_origen(vencimiento_id: int, origen: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ? AND origen = ?",
+            (vencimiento_id, origen),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int) -> list[sqlite3.Row]:
+    """Vencimientos pendientes que vencen justo `fecha_objetivo` (YYYY-MM-DD),
+    de clientes con email y recordatorios activos, y a los que todavía no se
+    ha enviado el recordatorio de esta antelación. Cruza todos los tenants:
+    solo la usa el hilo periódico del servidor."""
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
-            "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ? ORDER BY creado_en",
-            (vencimiento_id,),
+            """SELECT v.*, c.nombre AS cliente_nombre, c.email AS cliente_email, c.idioma AS cliente_idioma,
+                      t.nombre AS tenant_nombre
+               FROM vencimientos_fiscales v
+               JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+               JOIN tenants t ON t.id = v.tenant_id
+               WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
+                 AND c.recordatorios_portal = 1 AND c.email IS NOT NULL AND trim(c.email) <> ''
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ?
+                 AND NOT EXISTS (SELECT 1 FROM vencimientos_recordatorios r
+                                 WHERE r.vencimiento_id = v.id AND r.dias_antes = ?)""",
+            (fecha_objetivo, _fecha_exclusiva(fecha_objetivo), dias_antes),
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_recordatorio_portal_enviado(vencimiento_id: int, dias_antes: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO vencimientos_recordatorios (vencimiento_id, dias_antes, enviado_en) VALUES (?, ?, ?)",
+            (vencimiento_id, dias_antes, now_iso()),
+        )
+        conn.commit()
     finally:
         conn.close()
 
@@ -5614,9 +6493,58 @@ def obtener_borrador_correo(usuario_id: int, borrador_id: int) -> sqlite3.Row | 
         conn.close()
 
 
+def listar_adjuntos_borrador(usuario_id: int, borrador_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT a.id, a.nombre, a.tipo, length(a.contenido) AS tamano
+               FROM correo_borradores_adjuntos a JOIN correo_borradores b ON b.id = a.borrador_id
+               WHERE a.borrador_id = ? AND b.usuario_id = ? ORDER BY a.id""",
+            (borrador_id, usuario_id),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def adjuntos_borrador_para_enviar(usuario_id: int, borrador_id: int, ids: list[int]) -> list[dict]:
+    """Contenido de los adjuntos guardados del borrador cuyos ids se indican."""
+    if not ids:
+        return []
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" * len(ids))
+        filas = conn.execute(
+            f"""SELECT a.id, a.nombre, a.tipo, a.contenido FROM correo_borradores_adjuntos a
+                JOIN correo_borradores b ON b.id = a.borrador_id
+                WHERE a.borrador_id = ? AND b.usuario_id = ? AND a.id IN ({marcadores}) ORDER BY a.id""",
+            [borrador_id, usuario_id, *ids],
+        ).fetchall()
+        return [{"nombre": f["nombre"], "tipo": f["tipo"], "bytes": bytes(f["contenido"])} for f in filas]
+    finally:
+        conn.close()
+
+
+def copiar_adjuntos_envio_a_borrador(envio_id: int, borrador_id: int) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO correo_borradores_adjuntos (borrador_id, nombre, tipo, contenido)
+               SELECT ?, nombre, tipo, contenido FROM correo_envios_adjuntos WHERE envio_id = ? ORDER BY id""",
+            (borrador_id, envio_id),
+        )
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
 def eliminar_borrador_correo(usuario_id: int, borrador_id: int) -> None:
     conn = get_connection()
     try:
+        conn.execute(
+            "DELETE FROM correo_borradores_adjuntos WHERE borrador_id IN "
+            "(SELECT id FROM correo_borradores WHERE id = ? AND usuario_id = ?)", (borrador_id, usuario_id)
+        )
         conn.execute(
             "DELETE FROM correo_borradores WHERE id = ? AND usuario_id = ?", (borrador_id, usuario_id)
         )
@@ -5784,6 +6712,86 @@ def eliminar_regla_categoria_correo(usuario_id: int, regla_id: int) -> None:
         conn.close()
 
 
+def crear_regla_correo(
+    usuario_id: int, remitente_patron: str | None = None, asunto_patron: str | None = None,
+    categoria_id: int | None = None, marcar_leido: bool = False, destacar: bool = False,
+    cliente_fiscal_id: int | None = None,
+) -> int:
+    """Regla avanzada. Necesita al menos una condición (remitente o asunto) y
+    al menos una acción; categoría y cliente se validan contra el usuario."""
+    remitente_patron = (remitente_patron or "").strip().lower() or None
+    asunto_patron = (asunto_patron or "").strip().lower() or None
+    if not remitente_patron and not asunto_patron:
+        raise ValueError("Indica al menos una condición: remitente o asunto.")
+    conn = get_connection()
+    try:
+        if categoria_id is not None and conn.execute(
+            "SELECT 1 FROM correo_categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
+        ).fetchone() is None:
+            raise ValueError("La categoría elegida no existe.")
+        cliente_fiscal_id = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        if categoria_id is None and not marcar_leido and not destacar and cliente_fiscal_id is None:
+            raise ValueError("Elige al menos una acción para la regla.")
+        cur = conn.execute(
+            """INSERT INTO correo_reglas
+               (usuario_id, remitente_patron, asunto_patron, categoria_id, marcar_leido, destacar, cliente_fiscal_id, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, remitente_patron, asunto_patron, categoria_id, 1 if marcar_leido else 0,
+             1 if destacar else 0, cliente_fiscal_id, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_reglas_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT r.*, c.nombre AS categoria_nombre, c.color AS categoria_color, cf.nombre AS cliente_fiscal_nombre
+               FROM correo_reglas r LEFT JOIN correo_categorias c ON c.id = r.categoria_id
+               LEFT JOIN clientes_fiscales cf ON cf.id = r.cliente_fiscal_id
+               WHERE r.usuario_id = ? ORDER BY r.id""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_regla_correo(usuario_id: int, regla_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM correo_reglas WHERE id = ? AND usuario_id = ?", (regla_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def reglas_correo_aplicables(usuario_id: int, direccion: str | None, asunto: str | None) -> list[sqlite3.Row]:
+    """Reglas avanzadas cuyas condiciones (todas las indicadas) coinciden.
+    Remitente: "@dominio.com" = dominio, "x@y.com" = exacto, otro texto = contiene.
+    Asunto: contiene, sin distinguir mayúsculas."""
+    direccion = (direccion or "").strip().lower()
+    asunto_min = (asunto or "").lower()
+    resultado = []
+    for r in listar_reglas_correo(usuario_id):
+        rp, ap = r["remitente_patron"], r["asunto_patron"]
+        if rp:
+            if rp.startswith("@"):
+                ok = direccion.endswith(rp)
+            elif "@" in rp:
+                ok = direccion == rp
+            else:
+                ok = rp in direccion
+            if not ok:
+                continue
+        if ap and ap not in asunto_min:
+            continue
+        resultado.append(r)
+    return resultado
+
+
 def categoria_id_por_remitente_correo(usuario_id: int, direccion: str | None) -> int | None:
     """Busca primero una regla de email exacto, luego una de dominio
     (`remitente_patron` empezando por "@")."""
@@ -5855,6 +6863,168 @@ def buscar_destinatarios_recientes(usuario_id: int, q: str | None = None, limite
 
 # --- Preferencias generales de Correo (una fila por usuario) ------------------
 
+DESHACER_ENVIO_OPCIONES = (0, 10, 30)
+MAX_BYTES_ADJUNTOS_ENVIO = 25 * 1024 * 1024
+
+
+def encolar_envio_correo(
+    usuario_id: int, cuenta_id: int, destinatarios: str, cc: str, bcc: str, asunto: str,
+    cuerpo_html: str, en_respuesta_a: str | None, adjuntos: list[dict], enviar_en: str,
+    programado: bool = False,
+) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO correo_envios
+               (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+                enviar_en, programado, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
+             enviar_en, int(programado), now_iso()),
+        )
+        envio_id = cur.lastrowid
+        for a in adjuntos:
+            conn.execute(
+                "INSERT INTO correo_envios_adjuntos (envio_id, nombre, tipo, contenido) VALUES (?, ?, ?, ?)",
+                (envio_id, a["nombre"], a["tipo"], a["bytes"]),
+            )
+        conn.commit()
+        return envio_id
+    finally:
+        conn.close()
+
+
+def obtener_envio_correo(usuario_id: int, envio_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_envios WHERE id = ? AND usuario_id = ?", (envio_id, usuario_id)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def listar_envios_programados(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT * FROM correo_envios WHERE usuario_id = ? AND estado = 'pendiente' AND programado = 1
+               ORDER BY enviar_en""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_envios_programados(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_envios WHERE usuario_id = ? AND estado = 'pendiente' AND programado = 1",
+            (usuario_id,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def cancelar_envio_correo(usuario_id: int, envio_id: int) -> bool:
+    """True si seguía pendiente y queda cancelado; False si ya se ha
+    enviado (o se está enviando) o no es del usuario."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE correo_envios SET estado = 'cancelado', procesado_en = ? "
+            "WHERE id = ? AND usuario_id = ? AND estado = 'pendiente'",
+            (now_iso(), envio_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def envios_correo_vencidos(ahora: str) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_envios WHERE estado = 'pendiente' AND enviar_en <= ? ORDER BY enviar_en, id LIMIT 50",
+            (ahora,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def reclamar_envio_correo(envio_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE correo_envios SET estado = 'enviando', procesado_en = ? WHERE id = ? AND estado = 'pendiente'",
+            (now_iso(), envio_id),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def adjuntos_envio_correo(envio_id: int) -> list[dict]:
+    conn = get_connection()
+    try:
+        return [
+            {"nombre": f["nombre"], "tipo": f["tipo"], "bytes": bytes(f["contenido"])}
+            for f in conn.execute(
+                "SELECT nombre, tipo, contenido FROM correo_envios_adjuntos WHERE envio_id = ? ORDER BY id", (envio_id,)
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+
+def cerrar_envio_correo(envio_id: int, estado: str, error: str | None = None, borrar_adjuntos: bool = True) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_envios SET estado = ?, error = ?, procesado_en = ? WHERE id = ?",
+            (estado, error, now_iso(), envio_id),
+        )
+        if borrar_adjuntos:
+            conn.execute("DELETE FROM correo_envios_adjuntos WHERE envio_id = ?", (envio_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def rescatar_envios_atascados(antes_de: str) -> list[sqlite3.Row]:
+    """Envíos que se quedaron en 'enviando' (el proceso murió a medias):
+    se marcan como error para que el usuario no pierda el correo."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT * FROM correo_envios WHERE estado = 'enviando' AND procesado_en < ?", (antes_de,)
+        ).fetchall()
+        for f in filas:
+            conn.execute(
+                "UPDATE correo_envios SET estado = 'error', error = ? WHERE id = ?",
+                ("El envío se interrumpió; no se sabe si llegó a salir.", f["id"]),
+            )
+        conn.commit()
+        return filas
+    finally:
+        conn.close()
+
+
+def purgar_envios_correo_antiguos(antes_de: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM correo_envios WHERE estado IN ('enviado', 'cancelado', 'error') AND procesado_en < ?",
+            (antes_de,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
@@ -5867,10 +7037,18 @@ def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
         conn.close()
 
 
-def guardar_preferencias_correo(usuario_id: int, densidad: str, marcar_leido_automatico: bool, limite_mensajes: int) -> None:
+def guardar_preferencias_correo(
+    usuario_id: int, densidad: str, marcar_leido_automatico: bool, limite_mensajes: int,
+    deshacer_segundos: int | None = None,
+) -> None:
     conn = get_connection()
     try:
         conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        if deshacer_segundos in DESHACER_ENVIO_OPCIONES:
+            conn.execute(
+                "UPDATE correo_preferencias SET deshacer_segundos = ? WHERE usuario_id = ?",
+                (deshacer_segundos, usuario_id),
+            )
         conn.execute(
             """UPDATE correo_preferencias
                SET densidad = ?, marcar_leido_automatico = ?, limite_mensajes = ? WHERE usuario_id = ?""",
@@ -5905,6 +7083,101 @@ def marcar_error_sincronizacion_cuenta_correo(cuenta_id: int, error: str) -> Non
             (error[:300], now_iso(), cuenta_id),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+def registrar_latido(nombre: str, ok: bool, intervalo_segundos: int, detalle: str | None = None) -> None:
+    """Anota que una tarea periódica ha terminado una pasada (bien o con error)."""
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO latidos (nombre, intervalo_segundos) VALUES (?, ?)", (nombre, intervalo_segundos))
+        if ok:
+            conn.execute(
+                "UPDATE latidos SET ultimo_ok = ?, detalle = ?, intervalo_segundos = ? WHERE nombre = ?",
+                (now_iso(), (detalle or None) and detalle[:300], intervalo_segundos, nombre),
+            )
+        else:
+            conn.execute(
+                "UPDATE latidos SET ultimo_error = ?, detalle = ?, intervalo_segundos = ? WHERE nombre = ?",
+                (now_iso(), (detalle or None) and detalle[:300], intervalo_segundos, nombre),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_latidos() -> dict[str, sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return {f["nombre"]: f for f in conn.execute("SELECT * FROM latidos").fetchall()}
+    finally:
+        conn.close()
+
+
+def alerta_salud_enviada(motivo: str, dia: str) -> bool:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM salud_alertas WHERE motivo = ? AND dia = ?", (motivo, dia)).fetchone() is not None
+    finally:
+        conn.close()
+
+
+def marcar_alerta_salud(motivo: str, dia: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO salud_alertas (motivo, dia, enviada_en) VALUES (?, ?, ?)", (motivo, dia, now_iso())
+        )
+        limite = (datetime.strptime(dia, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+        conn.execute("DELETE FROM salud_alertas WHERE dia < ?", (limite,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def estado_cuentas_correo_global() -> list[sqlite3.Row]:
+    """Todas las cuentas de correo con su última sincronización y error (panel de salud)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT c.id, c.nombre, u.email AS usuario_email, c.ultima_sincronizacion,
+                      c.ultimo_error_sincronizacion, c.ultimo_error_sincronizacion_en
+               FROM correo_cuentas c JOIN usuarios u ON u.id = c.usuario_id ORDER BY c.id"""
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_entregas_webhook_fallidas(desde: str) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT COUNT(*) FROM webhooks_entregas
+               WHERE entregado_en >= ? AND NOT (estado_http IS NOT NULL AND estado_http BETWEEN 200 AND 299)""",
+            (desde,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def contar_envios_correo_fallidos(desde: str) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_envios WHERE estado = 'error' AND procesado_en >= ?", (desde,)
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def contar_envios_correo_atascados(vencidos_antes_de: str) -> int:
+    """Envíos pendientes cuya hora pasó hace rato: el hilo de envíos no está trabajando."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_envios WHERE estado = 'pendiente' AND enviar_en < ?", (vencidos_antes_de,)
+        ).fetchone()[0]
     finally:
         conn.close()
 
@@ -5962,24 +7235,128 @@ def actualizar_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str, uid: str) -
         conn.close()
 
 
+_PREFIJOS_ASUNTO = re.compile(r"^\s*(?:(?:re|rv|fwd?|enc|res|aw|sv|tr)\s*(?:\[\d+\])?\s*:\s*)+", re.IGNORECASE)
+_PATRON_ID_MENSAJE = re.compile(r"<[^<>\s]+>")
+
+
+def normalizar_asunto(asunto: str | None) -> str:
+    """Asunto sin prefijos de respuesta/reenvío (Re:, RE:, Rv:, Fwd:...),
+    en minúsculas y con espacios colapsados: lo que comparten los mensajes
+    de una misma conversación."""
+    return " ".join(_PREFIJOS_ASUNTO.sub("", asunto or "").lower().split())
+
+
+def _direccion_simple(texto: str | None) -> str:
+    from email.utils import parseaddr
+    return parseaddr(texto or "")[1].strip().lower()
+
+
+def _clave_hilo_por_asunto(asunto, remitente, destinatarios, direccion_propia: str) -> str | None:
+    """Sin cabeceras utilizables: asunto normalizado + contraparte (el
+    remitente si no soy yo; si no, el primer destinatario). Así dos
+    «Factura» de proveedores distintos no se mezclan. Asunto vacío = sin hilo."""
+    norm = normalizar_asunto(asunto)
+    if not norm:
+        return None
+    remitente_dir = _direccion_simple(remitente)
+    if remitente_dir and remitente_dir != direccion_propia:
+        contraparte = remitente_dir
+    else:
+        primero = (destinatarios or "").split(",")[0]
+        contraparte = _direccion_simple(primero) or remitente_dir
+    return f"{norm}|{contraparte}"[:300]
+
+
+def calcular_hilo_clave(
+    conn: sqlite3.Connection, cuenta_id: int, asunto, remitente, destinatarios,
+    in_reply_to: str | None, referencias: str | None, direccion_propia: str,
+) -> str | None:
+    """Si el mensaje responde (In-Reply-To/References) a uno ya guardado de
+    la misma cuenta, hereda su hilo; si no, se deduce del asunto y la contraparte."""
+    ids = _PATRON_ID_MENSAJE.findall(in_reply_to or "") + _PATRON_ID_MENSAJE.findall(referencias or "")[::-1]
+    for candidato in ids[:20]:
+        fila = conn.execute(
+            "SELECT hilo_clave FROM correo_mensajes WHERE cuenta_id = ? AND message_id = ? AND hilo_clave IS NOT NULL LIMIT 1",
+            (cuenta_id, candidato),
+        ).fetchone()
+        if fila:
+            return fila["hilo_clave"]
+    return _clave_hilo_por_asunto(asunto, remitente, destinatarios, direccion_propia)
+
+
+def _rellenar_hilos_correo(conn: sqlite3.Connection) -> None:
+    """Migración idempotente: da clave de hilo a los mensajes que no la
+    tienen (los guardados antes de existir las conversaciones)."""
+    pendientes = conn.execute(
+        """SELECT m.id, m.cuenta_id, m.asunto, m.remitente, m.destinatarios, lower(c.usuario) AS propia
+           FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+           WHERE m.hilo_clave IS NULL AND m.asunto IS NOT NULL AND trim(m.asunto) <> ''"""
+    ).fetchall()
+    for f in pendientes:
+        clave = _clave_hilo_por_asunto(f["asunto"], f["remitente"], f["destinatarios"], _direccion_simple(f["propia"]))
+        if clave:
+            conn.execute("UPDATE correo_mensajes SET hilo_clave = ? WHERE id = ?", (clave, f["id"]))
+    conn.commit()
+
+
+def contar_hilos_correo(cuenta_id: int, claves: list[str]) -> dict[str, int]:
+    """Nº de mensajes de la cuenta (todas las carpetas) por clave de hilo."""
+    claves = [c for c in dict.fromkeys(claves) if c]
+    if not claves:
+        return {}
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" * len(claves))
+        filas = conn.execute(
+            f"""SELECT hilo_clave, COUNT(*) AS n FROM correo_mensajes
+                WHERE cuenta_id = ? AND hilo_clave IN ({marcadores}) GROUP BY hilo_clave""",
+            [cuenta_id, *claves],
+        ).fetchall()
+        return {f["hilo_clave"]: f["n"] for f in filas}
+    finally:
+        conn.close()
+
+
+def mensajes_del_hilo_correo(cuenta_id: int, hilo_clave: str | None) -> list[sqlite3.Row]:
+    if not hilo_clave:
+        return []
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT id, carpeta, asunto, remitente, fecha, leido FROM correo_mensajes
+               WHERE cuenta_id = ? AND hilo_clave = ? ORDER BY fecha ASC, id ASC LIMIT 100""",
+            (cuenta_id, hilo_clave),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 def guardar_mensaje_correo(
     cuenta_id: int, uid: str, asunto: str | None, remitente: str | None,
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
     cuerpo_html: str | None, carpeta: str = "INBOX", message_id: str | None = None,
-    cc: str | None = None,
+    cc: str | None = None, in_reply_to: str | None = None, referencias: str | None = None,
 ) -> int | None:
     """Devuelve el id del mensaje (recién insertado, o el ya existente si
     `(cuenta_id, carpeta, uid)` ya estaba en caché) — para poder colgarle
     adjuntos justo después."""
     conn = get_connection()
     try:
+        cuenta = conn.execute("SELECT usuario FROM correo_cuentas WHERE id = ?", (cuenta_id,)).fetchone()
+        hilo = calcular_hilo_clave(
+            conn, cuenta_id, asunto, remitente, destinatarios, in_reply_to, referencias,
+            _direccion_simple(cuenta["usuario"]) if cuenta else "",
+        )
         conn.execute(
             """INSERT OR IGNORE INTO correo_mensajes
                (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
-                cc, fecha, cuerpo_texto, cuerpo_html, message_id, descargado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                cc, fecha, cuerpo_texto, cuerpo_html, message_id, in_reply_to, referencias,
+                hilo_clave, descargado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
-             cc, fecha, cuerpo_texto, cuerpo_html, message_id, now_iso()),
+             cc, fecha, cuerpo_texto, cuerpo_html, message_id,
+             (in_reply_to or None) and in_reply_to[:1000], (referencias or None) and referencias[:4000],
+             hilo, now_iso()),
         )
         conn.commit()
         fila = conn.execute(
@@ -5991,10 +7368,20 @@ def guardar_mensaje_correo(
         conn.close()
 
 
+def _like_literal(texto: str) -> str:
+    """Patrón LIKE que busca `texto` tal cual (sin que % y _ hagan de comodín)."""
+    return "%" + texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
 def listar_mensajes_correo(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
     texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
+    con_adjuntos: bool = False, categoria_id: int | None = None, desde: str | None = None,
+    hasta: str | None = None, solo_destacados: bool = False, cliente_fiscal_id: int | None = None,
 ) -> list[sqlite3.Row]:
+    """`texto` busca en asunto, remitente, destinatarios y CUERPO del mensaje.
+    Filtros: con adjuntos, categoría, rango de fechas (YYYY-MM-DD, `hasta`
+    inclusive), destacados y cliente fiscal vinculado."""
     conn = get_connection()
     try:
         cond = ["cuenta_id = ?", "carpeta = ?"]
@@ -6002,8 +7389,23 @@ def listar_mensajes_correo(
         if solo_no_leidos:
             cond.append("leido = 0")
         if texto:
-            cond.append("(asunto LIKE ? OR remitente LIKE ?)")
-            params.extend([f"%{texto}%", f"%{texto}%"])
+            cond.append(
+                "(asunto LIKE ? ESCAPE '\\' OR remitente LIKE ? ESCAPE '\\' OR destinatarios LIKE ? ESCAPE '\\' "
+                "OR cuerpo_texto LIKE ? ESCAPE '\\')"
+            )
+            params.extend([_like_literal(texto)] * 4)
+        if con_adjuntos:
+            cond.append("EXISTS (SELECT 1 FROM correo_adjuntos a WHERE a.mensaje_id = correo_mensajes.id)")
+        if categoria_id is not None:
+            cond.append("categoria_id = ?"); params.append(categoria_id)
+        if cliente_fiscal_id is not None:
+            cond.append("cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
+        if solo_destacados:
+            cond.append("destacado = 1")
+        if desde:
+            cond.append("fecha >= ?"); params.append(desde)
+        if hasta:
+            cond.append("fecha < ?"); params.append(_fecha_exclusiva(hasta))
         if not incluir_pospuestos:
             cond.append("(pospuesto_hasta IS NULL OR pospuesto_hasta <= ?)")
             params.append(now_iso())
@@ -6313,7 +7715,8 @@ def obtener_preferencias_ia(usuario_id: int) -> sqlite3.Row:
         conn.close()
 
 
-def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -> None:
+def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool, solo_lectura: bool | None = None) -> None:
+    """`solo_lectura` None = no tocar (los clientes antiguos no lo envían)."""
     conn = get_connection()
     try:
         conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
@@ -6321,6 +7724,10 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool) -
             "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE usuario_id = ?",
             (modelo, int(modo_autonomo), usuario_id),
         )
+        if solo_lectura is not None:
+            conn.execute(
+                "UPDATE ia_preferencias SET solo_lectura = ? WHERE usuario_id = ?", (int(solo_lectura), usuario_id)
+            )
         conn.commit()
     finally:
         conn.close()
@@ -6719,6 +8126,7 @@ def agregar_mensaje_ia(
     tool_calls_json: str | None = None,
     tool_call_id: str | None = None,
     nombre_herramienta: str | None = None,
+    fuentes_json: str | None = None,
 ) -> int:
     """Añade el mensaje a la conversación activa (abriéndola si no hay). El
     primer mensaje de la persona usuaria da título a la conversación."""
@@ -6734,9 +8142,11 @@ def agregar_mensaje_ia(
         ahora = now_iso()
         cursor = conn.execute(
             """INSERT INTO ia_mensajes
-               (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta, ahora),
+               (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta,
+                fuentes_json, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (usuario_id, conversacion_id, rol, contenido, tool_calls_json, tool_call_id, nombre_herramienta,
+             fuentes_json, ahora),
         )
         titulo = titulo_actual
         if not titulo and rol == "user":
@@ -6746,6 +8156,45 @@ def agregar_mensaje_ia(
         )
         conn.commit()
         return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+IA_MAX_ATAJOS = 20
+
+
+def listar_atajos_ia(usuario_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM ia_atajos WHERE usuario_id = ? ORDER BY id", (usuario_id,)).fetchall()
+    finally:
+        conn.close()
+
+
+def crear_atajo_ia(usuario_id: int, titulo: str, prompt: str) -> int:
+    titulo, prompt = (titulo or "").strip()[:40], (prompt or "").strip()[:1000]
+    if not titulo or not prompt:
+        raise ValueError("El atajo necesita un título y un texto.")
+    conn = get_connection()
+    try:
+        if conn.execute("SELECT COUNT(*) FROM ia_atajos WHERE usuario_id = ?", (usuario_id,)).fetchone()[0] >= IA_MAX_ATAJOS:
+            raise ValueError(f"Máximo {IA_MAX_ATAJOS} atajos propios.")
+        cur = conn.execute(
+            "INSERT INTO ia_atajos (usuario_id, titulo, prompt, creado_en) VALUES (?, ?, ?, ?)",
+            (usuario_id, titulo, prompt, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def eliminar_atajo_ia(usuario_id: int, atajo_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute("DELETE FROM ia_atajos WHERE id = ? AND usuario_id = ?", (atajo_id, usuario_id))
+        conn.commit()
+        return cur.rowcount > 0
     finally:
         conn.close()
 
@@ -7098,6 +8547,58 @@ def estado_actual_fichaje(usuario_id: int) -> str:
         if ultimo["tipo"] == "pausa_inicio":
             return "en_pausa"
         return "dentro"
+    finally:
+        conn.close()
+
+
+def jornadas_abiertas_sin_aviso(entrada_antes_de: str) -> list[sqlite3.Row]:
+    """Jornadas abiertas (el último evento del trabajador no es una salida)
+    cuya última entrada es anterior a `entrada_antes_de` (ISO) y de las que
+    todavía no se ha avisado."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT e.id AS entrada_id, e.usuario_id, e.marca_tiempo
+               FROM fichajes e
+               WHERE e.tipo = 'entrada'
+                 AND e.id = (SELECT MAX(id) FROM fichajes WHERE usuario_id = e.usuario_id AND tipo = 'entrada')
+                 AND (SELECT tipo FROM fichajes WHERE usuario_id = e.usuario_id ORDER BY id DESC LIMIT 1) != 'salida'
+                 AND e.marca_tiempo <= ?
+                 AND NOT EXISTS (SELECT 1 FROM fichaje_avisos a WHERE a.usuario_id = e.usuario_id AND a.entrada_id = e.id)""",
+            (entrada_antes_de,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def registrar_aviso_fichaje(usuario_id: int, entrada_id: int) -> bool:
+    """True si es la primera vez que se avisa de esta jornada."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO fichaje_avisos (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?)",
+            (usuario_id, entrada_id, now_iso()),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
+def entrada_abierta_fichaje(usuario_id: int) -> str | None:
+    """Marca de tiempo de la entrada de la jornada abierta, o None si está fuera."""
+    conn = get_connection()
+    try:
+        ultimo = conn.execute(
+            "SELECT tipo FROM fichajes WHERE usuario_id = ? ORDER BY id DESC LIMIT 1", (usuario_id,)
+        ).fetchone()
+        if ultimo is None or ultimo["tipo"] == "salida":
+            return None
+        entrada = conn.execute(
+            "SELECT marca_tiempo FROM fichajes WHERE usuario_id = ? AND tipo = 'entrada' ORDER BY id DESC LIMIT 1",
+            (usuario_id,),
+        ).fetchone()
+        return entrada["marca_tiempo"] if entrada else None
     finally:
         conn.close()
 

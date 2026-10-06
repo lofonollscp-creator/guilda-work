@@ -56,7 +56,7 @@
 </form>
 
 {% if puede_facturar and vencimiento.estado != 'presentado' %}
-<form class="edit-form" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" style="max-width: 640px;">
+<form class="edit-form" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" style="max-width: 640px;">
   <label>{{ _('Marcar como presentado y facturar (opcional)') }}</label>
   <p class="subtitle">{{ _('Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura.') }}</p>
   <div class="ia-form-row">
@@ -67,6 +67,9 @@
       <input type="number" name="factura_importe" step="0.01" min="0">
     </label>
   </div>
+  <label>{{ _('Justificante oficial (opcional)') }}
+    <input type="file" name="justificante" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf">
+  </label>
   <button type="submit" class="btn btn-primary">{{ _('Marcar presentado') }}</button>
 </form>
 {% endif %}
@@ -78,7 +81,19 @@
 
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Documentos del cliente') }}</h2>
-  <p class="subtitle">{{ _('Subidos por el cliente desde el portal, si tiene acceso configurado.') }}</p>
+  <p class="subtitle">{{ _('Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal.') }}</p>
+  <form method="post" action="{{ url_for('fiscal.subir_justificante', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="ia-form-row">
+    <label>{{ _('Subir justificante oficial') }}
+      <input type="file" name="justificante" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" required>
+    </label>
+    <button type="submit" class="btn btn-ghost">{{ _('Subir') }}</button>
+  </form>
+  {% if vencimiento.estado == 'presentado' %}
+  <form method="post" action="{{ url_for('fiscal.regenerar_constancia', vencimiento_id=vencimiento.id) }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Generar constancia de presentación (PDF)') }}</button>
+    <span class="muted">{{ _('No sustituye al justificante oficial.') }}</span>
+  </form>
+  {% endif %}
   {% if not documentos_cliente %}
   <p class="empty-lane">{{ _('El cliente todavía no ha subido ningún documento.') }}</p>
   {% else %}
@@ -87,6 +102,8 @@
     <li class="log-item">
       <span class="log-text">
         <a href="{{ url_for('fiscal.descargar_documento_vencimiento', vencimiento_id=vencimiento.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
+        {% if d.origen == 'justificante' %}<span class="pill">{{ _('Justificante oficial') }}</span>
+        {% elif d.origen == 'constancia' %}<span class="pill">{{ _('Constancia de presentación') }}</span>{% endif %}
       </span>
       <span class="pill">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
     </li>

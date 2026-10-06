@@ -1,0 +1,82 @@
+{# Fila de una tarea de la lista, compartida por Lista y Mi día. Se importa con
+   contexto (necesita g.usuario_id). Variables: t, estados, cronometros, checklists. #}
+{% macro fila(t, estados, cronometros, checklists, menus, mostrar_estado=True) %}
+{% set cr = cronometros.get(t.id) %}
+{% set es_mia = t.usuario_id == g.usuario_id %}
+<li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
+  <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
+    <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' }}>
+      {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
+    </button>
+  </form>
+  <span class="log-text">
+    {% if es_mia %}<a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a>{% else %}{{ t.asunto }}{% endif %}
+  </span>
+  {% if t.categoria_nombre %}
+  <span class="pill tarea-proyecto" style="--pill-color: {{ t.categoria_color or (t.categoria_nombre|color_categoria) }};">{{ t.categoria_nombre }}</span>
+  {% endif %}
+  {% if t.categoria_outlook %}<span class="pill">{{ t.categoria_outlook }}</span>{% endif %}
+  <span class="pill prioridad-{{ t.prioridad }}">{{ t.prioridad }}</span>
+  {% if t.cliente_fiscal_nombre %}
+  <a class="pill tarea-cliente" href="{{ url_for('fiscal.ficha_cliente', cliente_id=t.cliente_fiscal_id) }}" title="{{ _('Cliente') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-briefcase"></use></svg> {{ t.cliente_fiscal_nombre }}</a>
+  {% endif %}
+  {% if t.mensaje_correo_id and es_mia %}
+  <a class="pill tarea-correo" href="{{ url_for('correo.bandeja', mensaje_id=t.mensaje_correo_id) }}" title="{{ _('Correo de origen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg></a>
+  {% endif %}
+  {% if t.asignada_a %}
+  <span class="pill tarea-asignada" title="{{ _('Asignada') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
+    {% if t.asignada_a == g.usuario_id %}{{ _('De %(quien)s', quien=t.creador_nombre) }}{% else %}{{ _('Para %(quien)s', quien=t.asignada_nombre) }}{% endif %}</span>
+  {% endif %}
+  {% if checklists.get(t.id) %}
+  {% set hechas, total = checklists[t.id] %}
+  <span class="pill tarea-checklist" title="{{ _('Subtareas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg> {{ hechas|int }}/{{ total }}</span>
+  {% endif %}
+  {% if t.fecha_vencimiento %}
+  <span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>
+  {% endif %}
+  {% if t.estado != 'completada' %}
+  {% if cr and cr.activo %}
+  <span class="tarea-cronometro">
+    {% if cr.activo.estado == 'pausada' %}
+    <span class="task-timer task-timer-frozen"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pause"></use></svg> {{ '%02d:%02d:%02d'|format(cr.activo.segundos_trabajados_congelado // 3600, (cr.activo.segundos_trabajados_congelado % 3600) // 60, cr.activo.segundos_trabajados_congelado % 60) }}</span>
+    <form action="{{ url_for('reanudar_tarea', tarea_id=cr.activo.id) }}" method="post"><button type="submit" class="btn btn-ghost" title="{{ _('Reanudar') }}" aria-label="{{ _('Reanudar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg></button></form>
+    {% else %}
+    <span class="task-timer" data-inicio="{{ cr.activo.inicio_en }}" data-pausado="{{ cr.activo.segundos_pausados }}">00:00:00</span>
+    <form action="{{ url_for('pausar_tarea', tarea_id=cr.activo.id) }}" method="post"><button type="submit" class="btn btn-ghost" title="{{ _('Pausar') }}" aria-label="{{ _('Pausar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pause"></use></svg></button></form>
+    {% endif %}
+    <form action="{{ url_for('finalizar_tarea', tarea_id=cr.activo.id) }}" method="post"><button type="submit" class="btn btn-ghost" title="{{ _('Detener el cronómetro') }}" aria-label="{{ _('Detener el cronómetro') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-square"></use></svg></button></form>
+  </span>
+  {% else %}
+  <form class="tarea-cronometro-form" action="{{ url_for('tareas.iniciar_cronometro', tarea_id=t.id) }}" method="post">
+    {% if not t.categoria_id and menus %}
+    <select name="categoria_id" required title="{{ _('Proyecto en el que registrar el tiempo') }}" aria-label="{{ _('Proyecto en el que registrar el tiempo') }}">
+      <option value="">{{ _('Proyecto...') }}</option>
+      {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <button type="submit" class="btn btn-ghost" title="{{ _('Iniciar el cronómetro') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Cronómetro') }}</button>
+  </form>
+  {% endif %}
+  {% endif %}
+  {% if cr and cr.total_segundos %}
+  <span class="log-duration" title="{{ _('Tiempo registrado') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg> {{ cr.total_segundos|duracion_hm }}</span>
+  {% endif %}
+  {% if mostrar_estado %}
+  <span class="log-badge log-badge-{{ 'duracion' if t.estado == 'completada' else 'instantanea' }}">
+    {{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}
+  </span>
+  {% endif %}
+  {% if es_mia %}
+  <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
+  <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
+        data-eliminar-deshacer
+        data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}"
+        data-mensaje-ok="{{ _('Tarea eliminada.') }}"
+        data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
+        data-restaurar-url="{{ url_for('tareas.restaurar', tarea_id=t.id) }}"
+        data-quitar-selector="li">
+    <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+  </form>
+  {% endif %}
+</li>
+{% endmacro %}

@@ -63,6 +63,11 @@ _PROPIAS_GUILDA_WORK = {
     "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal", "resumen_cliente_fiscal",
     "listar_plantillas_correo", "crear_tarea_recurrente", "listar_tareas_recurrentes",
     "listar_facturas_cliente", "crear_factura_cliente",
+    "mover_correo", "destacar_correo", "posponer_correo", "listar_reglas_correo", "crear_regla_correo",
+    "eliminar_regla_correo", "listar_conversacion_correo", "crear_tarea_desde_correo", "guardar_nota_desde_correo",
+    "listar_proyectos", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto", "eliminar_nota",
+    "eliminar_tarea", "fijar_nota", "listar_tareas_hoy", "listar_companeros", "asignar_tarea",
+    "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
@@ -254,6 +259,20 @@ PAGINAS = [
                 "Los endpoints de <code>/auth/registro</code> y <code>/auth/login</code> están limitados a "
                 "<b>10 peticiones por minuto</b> por IP (protección de fuerza bruta) — si automatizas la creación "
                 "de cuentas, ten en cuenta ese límite."},
+            {"type": "h2", "id": "tokens-solo-lectura", "text": "Tokens de solo lectura"},
+            {"type": "p", "html":
+                "Para una integración que solo debe consultar (un panel, un informe), crea un token con "
+                "<code>permisos: \"solo_lectura\"</code>: puede hacer <code>GET</code> pero cualquier otro método "
+                "responde <b>403</b> <code>Este token es de solo lectura.</code>. Se crea desde "
+                "<b>Mis dispositivos</b> en la web o con <code>POST /tokens</code> "
+                "(<code>{\"nombre\": \"...\", \"permisos\": \"completo|solo_lectura\"}</code>); el token en claro "
+                "solo se devuelve en ese momento. <code>GET /tokens</code> los lista y "
+                "<code>DELETE /tokens/{id}</code> revoca uno."},
+            {"type": "h2", "id": "paginacion", "text": "Paginación opcional"},
+            {"type": "p", "html":
+                "Los listados de historial, tareas, tiques, clientes y vencimientos fiscales y mensajes de correo "
+                "aceptan <code>limit</code> (1–1000) y <code>offset</code>. Sin ellos devuelven todo, como siempre. "
+                "La cabecera <code>X-Total-Count</code> lleva el total sin paginar."},
         ],
     },
     {
@@ -718,9 +737,15 @@ PAGINAS = [
                 ["<code>nota.creada</code>", "Se crea una nota — no se dispara al editarla, solo al crearla."],
                 ["<code>cita.reservada</code>", "Se crea una reserva de Cal.diy vía <code>citas_crear_reserva</code>."],
                 ["<code>correo.mensaje_nuevo</code>", "Una sincronización de correo trae mensajes nuevos (uno por sincronización con novedades, no uno por mensaje)."],
+                ["<code>tarea.creada</code>", "Se crea una tarea de la lista (payload: <code>tarea_id</code>, <code>asunto</code>, <code>asignada_a</code>)."],
+                ["<code>tarea.completada</code>", "Se completa una tarea de la lista, también desde el tablero o por quien la tiene asignada."],
+                ["<code>tarea.asignada</code>", "Se asigna una tarea a un compañero del despacho (no al desasignarla)."],
+                ["<code>correo.enviado</code>", "Sale un correo por SMTP (payload: cuenta, destinatarios y asunto; nunca el cuerpo)."],
+                ["<code>nota.editada</code>", "Se edita una nota existente."],
+                ["<code>vencimiento.presentado</code>", "Se marca como presentado un vencimiento del calendario fiscal."],
             ]},
             {"type": "callout", "kind": "info", "html":
-                "Solo estos cuatro eventos de negocio concretos emiten un webhook — no hay un evento por cada "
+                "Solo estos eventos de negocio concretos emiten un webhook — no hay un evento por cada "
                 "escritura de <code>db.py</code>, sería ruido en el uso diario normal del registro de "
                 "actividad."},
             {"type": "h2", "id": "gestion", "text": "Gestión por MCP"},

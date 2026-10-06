@@ -32,7 +32,8 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, ia_asistente, importador, kratos, notificaciones
+from .notas_formato import nota_a_html
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -162,6 +163,7 @@ def _seleccionar_idioma():
 
 
 babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
+app.add_template_filter(nota_a_html, "nota_html")
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
@@ -342,6 +344,7 @@ def inyectar_ia_flotante():
     return {
         "ia_mensajes_flotante": db.listar_mensajes_ia(g.usuario_id),
         "ia_pendiente_flotante": ia_asistente.pendiente_actual(g.usuario_id),
+        "ia_atajos_flotante": ia_atajos.atajos_para(g.usuario_id),
     }
 
 
@@ -600,6 +603,7 @@ def inicio():
         entradas_hoy=entradas_hoy,
         log_hoy=log_hoy,
         total_activas=len(activas),
+        total_mi_dia=_total_mi_dia(g.usuario_id),
         total_notas_hoy=len([f for f in log_hoy if f["origen"] == "nota"]),
         total_vencimientos_proximos=total_vencimientos_proximos,
         hasta_vencimientos_proximos=hasta_vencimientos_proximos,
@@ -652,6 +656,12 @@ def crear_menu():
     return redirect(url_for("inicio"))
 
 
+def _total_mi_dia(usuario_id: int) -> int:
+    """Cuántas tareas piden atención hoy (vencidas, de hoy y asignadas a mí)."""
+    secciones = db.tareas_para_hoy(usuario_id)
+    return len(secciones["vencidas"]) + len(secciones["hoy"]) + len(secciones["asignadas"])
+
+
 @app.route("/menu/<int:menu_id>")
 @login_required
 def ver_menu(menu_id: int):
@@ -662,7 +672,13 @@ def ver_menu(menu_id: int):
     activas = [t for t in db.tareas_activas(g.usuario_id) if t["categoria_id"] == menu_id]
     log = db.historial(g.usuario_id, categoria_id=menu_id, texto=q)
     plantillas = db.listar_plantillas(menu_id)
-    return render_template("menu.html", menu=menu, activas=activas, log=log, q=q or "", plantillas=plantillas)
+    tareas_pendientes = db.listar_tareas_outlook(
+        g.usuario_id, categoria_id=menu_id, excluir_completadas=True, incluir_asignadas=True,
+    )
+    return render_template(
+        "menu.html", menu=menu, activas=activas, log=log, q=q or "", plantillas=plantillas,
+        tareas_pendientes=tareas_pendientes, notas_fijadas=db.listar_notas_fijadas(g.usuario_id, menu_id),
+    )
 
 
 @app.route("/menu/<int:menu_id>/plantillas", methods=["POST"])
@@ -738,9 +754,10 @@ def eliminar_menu(menu_id: int):
 @login_required
 def crear_nota():
     texto = request.form.get("texto", "").strip()
+    titulo = request.form.get("titulo", "").strip()
     categoria_id = request.form.get("categoria_id") or None
-    if texto:
-        db.crear_nota(g.usuario_id, texto, categoria_id=categoria_id)
+    if texto or titulo:
+        db.crear_nota(g.usuario_id, texto, categoria_id=categoria_id, titulo=titulo or None)
     return redirect(request.referrer or url_for("inicio"))
 
 
@@ -752,12 +769,76 @@ def editar_nota(nota_id: int):
         abort(404)
     if request.method == "POST":
         texto = request.form.get("texto", "").strip()
+        titulo = request.form.get("titulo", "").strip()
         volver_a = request.form.get("volver_a") or url_for("inicio")
-        if texto:
-            db.editar_nota(g.usuario_id, nota_id, texto)
+        if texto or titulo:
+            cliente = request.form.get("cliente_fiscal_id", type=int)
+            db.editar_nota(
+                g.usuario_id, nota_id, texto, titulo=titulo or None, fijada=request.form.get("fijada") == "1",
+                cliente_fiscal_id=cliente,
+            )
         return redirect(volver_a)
     volver_a = request.args.get("volver_a") or request.referrer or url_for("inicio")
-    return render_template("editar_nota.html", nota=nota, volver_a=volver_a)
+    return render_template(
+        "editar_nota.html", nota=nota, volver_a=volver_a,
+        adjuntos=db.listar_adjuntos_nota(nota_id),
+        clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+        adjuntos_max=db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA,
+        error=(request.args.get("error") or "")[:200] or None,
+    )
+
+
+@app.route("/nota/<int:nota_id>/fijar", methods=["POST"])
+@login_required
+def fijar_nota(nota_id: int):
+    if not db.alternar_fijada_nota(g.usuario_id, nota_id):
+        abort(404)
+    return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
+
+
+@app.route("/nota/<int:nota_id>/adjuntos", methods=["POST"])
+@login_required
+def subir_adjuntos_nota(nota_id: int):
+    """Sube uno o varios archivos a la nota. Si alguno no es válido se avisa del
+    primer error; los válidos anteriores ya quedan adjuntos."""
+    if db.obtener_nota(g.usuario_id, nota_id) is None:
+        abort(404)
+    volver_a = request.form.get("volver_a") or url_for("inicio")
+    error = None
+    for fichero in request.files.getlist("adjunto"):
+        if not fichero or not fichero.filename:
+            continue
+        # Se lee como mucho LIMITE+1 bytes: no se carga un archivo enorme entero en memoria.
+        contenido = fichero.read(db.NOTAS_ADJUNTOS_TAMANO_MAXIMO + 1)
+        try:
+            db.agregar_adjunto_nota(g.usuario_id, nota_id, fichero.filename, fichero.mimetype, contenido)
+        except ValueError as e:
+            error = error or f"{fichero.filename}: {e}"
+    return redirect(url_for("editar_nota", nota_id=nota_id, volver_a=volver_a, error=error))
+
+
+@app.route("/nota/adjunto/<int:adjunto_id>")
+@login_required
+def descargar_adjunto_nota(adjunto_id: int):
+    adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
+    if adjunto is None:
+        abort(404)
+    en_linea = request.args.get("ver") == "1" and adjunto["tipo_mime"].startswith("image/")
+    respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
+    nombre = adjunto["nombre"].replace('"', "")
+    respuesta.headers["Content-Disposition"] = f'{"inline" if en_linea else "attachment"}; filename="{nombre}"'
+    respuesta.headers["X-Content-Type-Options"] = "nosniff"
+    return respuesta
+
+
+@app.route("/nota/adjunto/<int:adjunto_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_adjunto_nota(adjunto_id: int):
+    adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
+    if adjunto is None:
+        abort(404)
+    db.eliminar_adjunto_nota(g.usuario_id, adjunto_id)
+    return redirect(url_for("editar_nota", nota_id=adjunto["nota_id"], volver_a=request.form.get("volver_a") or url_for("inicio")))
 
 
 @app.route("/nota/<int:nota_id>/eliminar", methods=["POST"])
@@ -1091,7 +1172,23 @@ def mis_dispositivos():
     revoca aquí las suyas propias (p.ej. si pierde el móvil); un admin
     revoca además las de sus compañeros de tenant desde el backoffice (ver
     backoffice.dispositivos_tenant más abajo)."""
-    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id))
+    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), token_nuevo=None)
+
+
+@app.route("/mis-dispositivos/token", methods=["POST"])
+@login_required
+def crear_token_desde_web():
+    """Token de API para una integración (permisos completos o solo lectura).
+    Se muestra una única vez en la propia respuesta: no viaja por URL ni se guarda en claro."""
+    permisos = request.form.get("permisos") or "completo"
+    if permisos not in db.PERMISOS_TOKEN_API:
+        abort(400)
+    nombre = (request.form.get("nombre") or "").strip()[:80] or _("Token de API")
+    token = db.crear_token_api(g.usuario_id, nombre, permisos)
+    return render_template(
+        "mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id),
+        token_nuevo={"token": token, "nombre": nombre, "permisos": permisos},
+    )
 
 
 @app.route("/mis-dispositivos/<int:token_id>/revocar", methods=["POST"])
@@ -1523,10 +1620,84 @@ def _sincronizacion_correo_servidor():
     time.sleep(SINCRONIZACION_CORREO_SERVIDOR_ESPERA_INICIAL_SEGUNDOS)
     while True:
         try:
-            correo.sincronizar_todas_las_cuentas()
-        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            resumen = correo.sincronizar_todas_las_cuentas()
+            salud.registrar_ok("correo_sync", minutos * 60, f"{resumen.get('cuentas', 0)} cuenta(s), {resumen.get('errores', 0)} con error")
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en el auto-sync de correo del servidor")
+            salud.registrar_error("correo_sync", minutos * 60, f"{type(e).__name__}: {e}")
         time.sleep(minutos * 60)
+
+
+ENVIOS_CORREO_INTERVALO_SEGUNDOS = 10
+
+
+def _envios_correo_servidor():
+    """Cola de envío del correo (deshacer envío y programados): cada pocos
+    segundos envía lo pendiente cuya hora ha llegado. El estado se reclama
+    con un UPDATE condicional, así que aunque corran dos procesos nunca se
+    envía el mismo correo dos veces."""
+    while True:
+        try:
+            correo.procesar_envios_pendientes()
+            salud.registrar_ok("correo_envios", ENVIOS_CORREO_INTERVALO_SEGUNDOS, minimo_segundos=60)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en la cola de envío de correo")
+            salud.registrar_error("correo_envios", ENVIOS_CORREO_INTERVALO_SEGUNDOS, f"{type(e).__name__}: {e}")
+        time.sleep(ENVIOS_CORREO_INTERVALO_SEGUNDOS)
+
+
+VIGILANTE_SALUD_INTERVALO_MINUTOS = 60
+
+
+def _vigilante_salud_servidor():
+    """Cada hora revisa el panel de salud y avisa por correo (ALERTAS_ADMIN_EMAIL)
+    de lo que esté en rojo, como mucho una vez al día por motivo (ver app/salud.py).
+    Espera 10 minutos tras arrancar para que las demás tareas ya hayan dado señales."""
+    time.sleep(600)
+    while True:
+        try:
+            salud.vigilar()
+            salud.registrar_ok("vigilante_salud", VIGILANTE_SALUD_INTERVALO_MINUTOS * 60)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en el vigilante de salud")
+            salud.registrar_error("vigilante_salud", VIGILANTE_SALUD_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
+        time.sleep(VIGILANTE_SALUD_INTERVALO_MINUTOS * 60)
+
+
+RECORDATORIOS_PORTAL_INTERVALO_HORAS = 6
+
+
+def _recordatorios_portal_servidor():
+    """Cada 6 horas envía a los clientes los recordatorios de vencimientos a 7
+    y 2 días (ver app/portal_recordatorios.py). Se repite varias veces al día
+    a propósito: si el correo falla, se reintenta, y nunca se duplica porque
+    cada envío correcto queda registrado."""
+    salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, "arrancado")
+    time.sleep(300)
+    while True:
+        try:
+            enviados = portal_recordatorios.procesar_recordatorios()
+            salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{enviados} enviado(s)")
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en los recordatorios del portal")
+            salud.registrar_error("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{type(e).__name__}: {e}")
+        time.sleep(RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600)
+
+
+AVISOS_FICHAJE_INTERVALO_MINUTOS = 15
+
+
+def _avisos_fichaje_servidor():
+    """Cada 15 minutos avisa de las jornadas de fichaje abiertas demasiado
+    tiempo (ver app/fichaje_avisos.py)."""
+    while True:
+        try:
+            fichaje_avisos.procesar_avisos()
+            salud.registrar_ok("avisos_fichaje", AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en los avisos de fichaje")
+            salud.registrar_error("avisos_fichaje", AVISOS_FICHAJE_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
+        time.sleep(AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
 
 
 RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS = 24 * 60
@@ -1544,12 +1715,15 @@ def _recordatorio_vencimientos_fiscales():
     (solo arrancan en main(), modo escritorio), este hilo se arranca TAMBIÉN
     desde serve.py -- los vencimientos fiscales son multi-tenant, tiene que
     funcionar en el despliegue real, no solo en la app de escritorio."""
+    salud.registrar_ok("recordatorios_vencimientos", RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60, "arrancado")
     while True:
         time.sleep(RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60)
         try:
             proximos = db.vencimientos_fiscales_proximos(dias=RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION)
-        except Exception:
+        except Exception as e:
+            salud.registrar_error("recordatorios_vencimientos", RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
             continue
+        salud.registrar_ok("recordatorios_vencimientos", RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60)
         for v in proximos:
             if not v["usuario_id"]:
                 continue
@@ -1594,12 +1768,15 @@ def _resumen_ia_semanal():
     hospedado, o incluso el de escritorio si está apagado en ese
     momento), así que un resumen automático solo tiene sentido con un
     proveedor en la nube."""
+    salud.registrar_ok("resumen_ia_semanal", RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60, "arrancado")
     while True:
         time.sleep(RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60)
         try:
             usuarios = db.usuarios_con_resumen_semanal_activo()
-        except Exception:
+        except Exception as e:
+            salud.registrar_error("resumen_ia_semanal", RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
             continue
+        salud.registrar_ok("resumen_ia_semanal", RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60)
         hoy = datetime.now()
         desde = (hoy - timedelta(days=7)).strftime("%Y-%m-%d")
         hasta = hoy.strftime("%Y-%m-%d")

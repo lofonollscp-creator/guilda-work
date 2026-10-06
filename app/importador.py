@@ -42,7 +42,7 @@ def _importar_registro(usuario_id: int, registro: dict, resumen: dict) -> None:
     categoria_id = db.crear_categoria(usuario_id, categoria_nombre) if categoria_nombre else None
 
     if origen == "nota":
-        db.importar_nota(usuario_id, texto, categoria_id, timestamp_inicio)
+        db.importar_nota(usuario_id, texto, categoria_id, timestamp_inicio, titulo=registro.get("titulo"))
         resumen["notas"] += 1
         return
 

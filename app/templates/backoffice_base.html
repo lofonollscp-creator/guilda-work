@@ -29,13 +29,14 @@
 </head>
 <body data-url-iconos="{{ url_for('static', filename='iconos.svg') }}">
   <div class="app-shell">
-    <aside class="icon-rail">
+    <aside class="icon-rail bo-rail">
       <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link icon-rail-brand" title="Backoffice">
         <img class="icon-rail-brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="">
         <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
       </a>
 
       <div class="icon-rail-separador" role="separator"></div>
+      <nav class="icon-rail-nav" aria-label="{{ _('Backoffice') }}">
       <span class="icon-rail-grupo-etiqueta">{{ _('Plataforma') }}</span>
       <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('backoffice.panel', 'backoffice.ficha_tenant') else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-building-2"></use></svg>
@@ -44,6 +45,10 @@
       <a href="{{ url_for('backoffice.usuarios_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('backoffice.usuarios_vista', 'backoffice.dispositivos_usuario') else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Usuarios') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.mapa_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.mapa_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Mapa de acceso') }}</span>
       </a>
       <a href="{{ url_for('backoffice.catalogo_herramientas_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.catalogo_herramientas_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layers"></use></svg>
@@ -59,6 +64,10 @@
       <a href="{{ url_for('backoffice.monitorizacion_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.monitorizacion_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-activity"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Estado del sistema') }}</span>
+      </a>
+      <a href="{{ url_for('backoffice.salud_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.salud_vista' else '' }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-circle-check-big"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Salud') }}</span>
       </a>
       <a href="{{ url_for('backoffice.diagnostico_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'backoffice.diagnostico_vista' else '' }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield-check"></use></svg>
@@ -99,7 +108,7 @@
         <span class="icon-rail-etiqueta">{{ _('Planes y extras') }}</span>
       </a>
 
-      <div style="flex: 1;"></div>
+      </nav>
 
       <div class="icon-rail-perfil-menu">
         <a href="{{ url_for('inicio') }}" class="icon-rail-perfil-card" title="{{ _('Volver a la app') }}">

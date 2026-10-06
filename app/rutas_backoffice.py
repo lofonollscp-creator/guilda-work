@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, notificaciones_email, ntfy, openproject, paperless, push, stalwart, stripe_pagos, umami, uptime_kuma
+from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, notificaciones_email, ntfy, openproject, paperless, push, salud, stalwart, stripe_pagos, umami, uptime_kuma
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -75,7 +75,23 @@ def panel():
     modulo_filtro = request.args.get("modulo", "").strip()
     orden = request.args.get("orden", "nombre")
 
-    tenants = [dict(t, ultima_actividad=db.ultima_actividad_tenant(t["id"])) for t in tenants]
+    equipos = db.resumen_equipos_tenants()
+    n_modulos = len(herramientas.HERRAMIENTAS)
+    tenants = [
+        dict(
+            t, ultima_actividad=db.ultima_actividad_tenant(t["id"]), **{
+                k: equipos.get(t["id"], {}).get(k) for k in ("admins", "gestores", "supervisores", "clientes", "plan")
+            },
+            modulos_activos=n_modulos - len(ocultas_por_tenant.get(t["id"], set())), modulos_total=n_modulos,
+        )
+        for t in tenants
+    ]
+    resumen_global = {
+        "tenants": len(tenants), "activos": sum(1 for t in tenants if t["activo"]),
+        "usuarios": sum(t["n_usuarios"] for t in tenants),
+        "sin_tenant": sum(1 for u in db.listar_usuarios() if u["tenant_id"] is None),
+        "sin_usuarios": sum(1 for t in tenants if not t["n_usuarios"]),
+    }
     if q:
         q_lower = q.lower()
         tenants = [t for t in tenants if q_lower in t["nombre"].lower()]
@@ -94,10 +110,40 @@ def panel():
         q=q,
         modulo_filtro=modulo_filtro,
         orden=orden,
+        resumen_global=resumen_global,
         facturascripts_creado=None,
         calcom_creado=None,
         **_contexto_herramientas(tenants),
     )
+
+
+def _contexto_usuarios(q: str = "", tenant_filtro: str = "", rol_filtro: str = "") -> dict:
+    """Usuarios filtrados y agrupados por tenant, para backoffice_usuarios.html
+    (lo comparten el listado y las pantallas que lo vuelven a mostrar tras un alta)."""
+    usuarios = [dict(u) for u in db.listar_usuarios()]
+    uso = db.resumen_usuarios_backoffice()
+    for u in usuarios:
+        u.update(dispositivos=uso.get(u["id"], {}).get("dispositivos", 0), ultimo_uso=uso.get(u["id"], {}).get("ultimo_uso"))
+    if q.strip():
+        usuarios = [u for u in usuarios if q.strip().lower() in u["email"].lower()]
+    if tenant_filtro == "ninguno":
+        usuarios = [u for u in usuarios if u["tenant_id"] is None]
+    elif tenant_filtro.isdigit():
+        usuarios = [u for u in usuarios if u["tenant_id"] == int(tenant_filtro)]
+    if rol_filtro == "admin":
+        usuarios = [u for u in usuarios if u["rol"] == "admin"]
+    elif rol_filtro == "gestor":
+        usuarios = [u for u in usuarios if u["gestor_fichajes"]]
+    elif rol_filtro == "supervisor":
+        usuarios = [u for u in usuarios if u["supervisor_tenant"]]
+    # Los que no tienen tenant van primero y destacados: son los que hay que asignar.
+    grupos: dict[str, list] = {}
+    for u in sorted(usuarios, key=lambda u: ((u["tenant_nombre"] or "").lower() or "\0", u["email"])):
+        grupos.setdefault(u["tenant_nombre"] or "", []).append(u)
+    return {
+        "usuarios": usuarios, "grupos": grupos, "tenants": db.listar_tenants(),
+        "q": q, "tenant_filtro": tenant_filtro, "rol_filtro": rol_filtro,
+    }
 
 
 @backoffice_bp.route("/usuarios")
@@ -106,9 +152,30 @@ def panel():
 def usuarios_vista():
     return render_template(
         "backoffice_usuarios.html",
-        usuarios=db.listar_usuarios(),
-        tenants=db.listar_tenants(),
+        **_contexto_usuarios(
+            request.args.get("q", ""), request.args.get("tenant", "").strip(), request.args.get("rol", "").strip(),
+        ),
         resultados_alta=None,
+    )
+
+
+@backoffice_bp.route("/mapa")
+@login_required
+@admin_required
+def mapa_vista():
+    """Visión cruzada: qué módulos tiene cada tenant y qué personas con qué
+    roles trabajan en él."""
+    tenants = db.listar_tenants_con_conteo()
+    ocultas = db.herramientas_ocultas_de_tenants([t["id"] for t in tenants])
+    equipos = db.resumen_equipos_tenants()
+    usuarios_por_tenant: dict[int, list] = {}
+    for u in db.listar_usuarios():
+        if u["tenant_id"] is not None:
+            usuarios_por_tenant.setdefault(u["tenant_id"], []).append(u)
+    return render_template(
+        "backoffice_mapa.html",
+        tenants=tenants, ocultas=ocultas, equipos=equipos, usuarios_por_tenant=usuarios_por_tenant,
+        catalogo_herramientas=herramientas.HERRAMIENTAS,
     )
 
 
@@ -174,6 +241,17 @@ def ingresos_vista():
         tenants=db.listar_suscripciones_tenants(),
         mrr_centimos=db.resumen_plataforma()["mrr_centimos"],
     )
+
+
+@backoffice_bp.route("/salud")
+@login_required
+@admin_required
+def salud_vista():
+    items = salud.panel()
+    grupos: dict[str, list] = {}
+    for i in items:
+        grupos.setdefault(i["grupo"], []).append(i)
+    return render_template("backoffice_salud.html", grupos=grupos, estado_general=salud.peor_estado(items))
 
 
 @backoffice_bp.route("/backups")
@@ -270,9 +348,12 @@ def ficha_tenant(tenant_id: int):
         except stripe_pagos.ErrorStripe as e:
             flash(f"No se han podido cargar las facturas de Stripe: {e}", "error")
 
+    equipo = db.resumen_equipos_tenants().get(tenant_id, {})
     return render_template(
         "backoffice_ficha_tenant.html",
         tenant=tenant,
+        equipo=equipo,
+        modulos_total=len(herramientas.HERRAMIENTAS),
         usuarios=usuarios_del_tenant,
         ultima_actividad=db.ultima_actividad_tenant(tenant_id),
         estadisticas_equipo=db.estadisticas_equipo_por_usuario(tenant_id),
@@ -977,13 +1058,7 @@ def crear_usuario():
     try:
         identity_id = kratos.crear_identidad(email, contrasena_temporal)
     except kratos.ErrorKratos as e:
-        return render_template(
-            "backoffice_usuarios.html",
-            usuarios=db.listar_usuarios(),
-            tenants=db.listar_tenants(),
-            resultados_alta=None,
-            error=str(e),
-        )
+        return render_template("backoffice_usuarios.html", **_contexto_usuarios(), resultados_alta=None, error=str(e))
     usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
     if tenant_id:
         db.asignar_tenant(usuario_id, int(tenant_id))
@@ -1055,11 +1130,7 @@ def crear_usuario():
                 resultados_alta.append({"servicio": "Umami", "estado": "error", "detalle": str(e)})
 
     return render_template(
-        "backoffice_usuarios.html",
-        usuarios=db.listar_usuarios(),
-        tenants=db.listar_tenants(),
-        resultados_alta=resultados_alta,
-        email_creado=email,
+        "backoffice_usuarios.html", **_contexto_usuarios(), resultados_alta=resultados_alta, email_creado=email,
     )
 
 

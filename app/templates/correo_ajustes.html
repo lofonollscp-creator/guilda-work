@@ -34,6 +34,14 @@
       <label>{{ _('Mensajes a mostrar por carpeta') }}</label>
       <input type="number" name="limite_mensajes" value="{{ preferencias.limite_mensajes }}" min="10" max="500">
     </div>
+    <div class="correo-form-campo">
+      <label>{{ _('Deshacer envío') }}</label>
+      <select name="deshacer_segundos">
+        <option value="0" {% if preferencias.deshacer_segundos == 0 %}selected{% endif %}>{{ _('Enviar al momento') }}</option>
+        <option value="10" {% if preferencias.deshacer_segundos == 10 %}selected{% endif %}>{{ _('10 segundos para deshacer') }}</option>
+        <option value="30" {% if preferencias.deshacer_segundos == 30 %}selected{% endif %}>{{ _('30 segundos para deshacer') }}</option>
+      </select>
+    </div>
     <div class="edit-form-actions">
       <button type="submit" class="btn btn-primary">{{ _('Guardar preferencias') }}</button>
     </div>
@@ -124,6 +132,54 @@
   {% else %}
   <p class="empty-lane">{{ _('Crea al menos una categoría para poder definir reglas.') }}</p>
   {% endif %}
+</section>
+
+<section class="correo-ajustes-seccion">
+  <h2>{{ _('Reglas avanzadas') }}</h2>
+  <p class="muted">{{ _('Se aplican a los correos nuevos que cumplan todas las condiciones indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, destacar y vincular a un cliente fiscal.') }}</p>
+  {% if reglas_avanzadas %}
+  <ul class="log-list">
+    {% for r in reglas_avanzadas %}
+    <li class="log-item">
+      <span class="log-text">
+        {% if r.remitente_patron %}{{ _('Remitente') }}: {{ r.remitente_patron }}{% endif %}
+        {% if r.remitente_patron and r.asunto_patron %} · {% endif %}
+        {% if r.asunto_patron %}{{ _('Asunto contiene') }}: {{ r.asunto_patron }}{% endif %}
+        &rarr;
+        {% if r.categoria_nombre %}{{ r.categoria_nombre }}{% endif %}
+        {% if r.marcar_leido %} · {{ _('marcar como leído') }}{% endif %}
+        {% if r.destacar %} · {{ _('destacar') }}{% endif %}
+        {% if r.cliente_fiscal_nombre %} · {{ r.cliente_fiscal_nombre }}{% endif %}
+      </span>
+      <form action="{{ url_for('correo.eliminar_regla_avanzada', regla_id=r.id) }}" method="post"
+            onsubmit="return confirm('{{ _('¿Eliminar esta regla?') }}');">
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('correo.crear_regla_avanzada') }}" class="correo-form-seccion">
+    <div class="ia-form-row">
+      <input type="text" name="remitente_patron" placeholder="{{ _('Remitente: email@ejemplo.com, @dominio.com o texto') }}">
+      <input type="text" name="asunto_patron" placeholder="{{ _('El asunto contiene…') }}">
+    </div>
+    <div class="ia-form-row">
+      <select name="categoria_id">
+        <option value="">{{ _('Sin categoría') }}</option>
+        {% for cat in categorias %}<option value="{{ cat.id }}">{{ cat.nombre }}</option>{% endfor %}
+      </select>
+      {% if clientes_fiscales %}
+      <select name="cliente_fiscal_id">
+        <option value="">{{ _('Sin cliente fiscal') }}</option>
+        {% for cf in clientes_fiscales %}<option value="{{ cf.id }}">{{ cf.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <label class="correo-toolbar-check"><input type="checkbox" name="marcar_leido"> {{ _('Marcar como leído') }}</label>
+      <label class="correo-toolbar-check"><input type="checkbox" name="destacar"> {{ _('Destacar') }}</label>
+      <button type="submit" class="btn btn-primary">+ {{ _('Añadir regla') }}</button>
+    </div>
+  </form>
 </section>
 
 <section class="correo-ajustes-seccion">

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_registro_texto.html" import texto as texto_registro with context %}
 {% block title %}{{ _('Histórico') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -56,7 +57,7 @@
         {% else %}{{ _('Tarea') }}{% endif %}
         </span>
       </td>
-      <td>{{ f.texto }}</td>
+      <td>{{ texto_registro(f) }}</td>
       <td class="mono">
         {% if f.duracion_segundos is not none %}
           {{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m

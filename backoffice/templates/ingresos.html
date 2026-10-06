@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Ingresos{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Ingresos</h1><p class="muted">Suscripciones de los tenants a Guilda Work.</p></header>
+<section class="rejilla rejilla-4">
+  <article class="tarjeta kpi"><header><span>MRR</span>{{ icono('arrow-up') }}</header><strong>{{ mrr|eur }}</strong><small>{{ n_activas }} suscripción(es) activa(s)</small></article>
+  <article class="tarjeta kpi"><header><span>ARR</span>{{ icono('arrow-up') }}</header><strong>{{ (mrr * 12)|eur }}</strong><small>MRR × 12</small></article>
+</section>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Tenant</th><th>Plan</th><th>Precio / mes</th><th>Suscripción</th></tr></thead>
+  <tbody>
+    {% for t in tenants %}
+    <tr><td><a href="{{ url_for('rutas.tenant', tenant_id=t.id, seccion='suscripcion') }}">{{ t.nombre }}</a></td><td>{{ t.plan_nombre or '—' }}</td>
+      <td>{% if t.plan_precio_centimos is not none %}{{ t.plan_precio_centimos|eur }}{% else %}—{% endif %}</td>
+      <td>{% if t.suscripcion_estado %}<span class="insignia {{ 'insignia-ok' if t.suscripcion_estado == 'activa' else 'insignia-riesgo' }}">{{ t.suscripcion_estado|upper|replace('_', ' ') }}</span>{% else %}—{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4" class="vacio">Todavía no hay tenants.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}

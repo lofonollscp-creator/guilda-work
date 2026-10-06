@@ -52,6 +52,7 @@ EVENTOS = [
     "tarea.finalizada", "nota.creada", "cita.reservada", "correo.mensaje_nuevo",
     "vencimiento.presentado", "factura.emitida", "documento.enviado_a_firma",
     "factura.cobrada",
+    "tarea.creada", "tarea.completada", "tarea.asignada", "correo.enviado", "nota.editada",
 ]
 
 _cola: "queue.Queue[tuple[dict, str, dict]]" = queue.Queue()

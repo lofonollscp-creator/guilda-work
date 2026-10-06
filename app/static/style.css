@@ -751,7 +751,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   display: flex;
   flex-direction: column;
   padding: 32px 40px;
-  max-width: 1100px;
+  max-width: min(1680px, 100%);
 }
 /* Pantallas de "shell" a pantalla completa (ej. Correo, con su propio grid
    de 3 paneles) no deben quedar recortadas por el max-width/padding
@@ -2236,6 +2236,57 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   border-bottom: 2px solid transparent;
 }
 .tareas-subnav a.active { color: var(--text); border-bottom-color: var(--primary); }
+
+/* ---- Tareas unificadas: lista, Mi día, tablero, checklist ---- */
+.tarea-outlook-item { flex-wrap: wrap; }
+.tarea-outlook-item .log-text { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.pill.tarea-proyecto {
+  border-color: color-mix(in srgb, var(--pill-color, var(--text-muted)) 55%, transparent);
+  background: color-mix(in srgb, var(--pill-color, var(--text-muted)) 14%, transparent);
+}
+.pill.tarea-cliente, .pill.tarea-correo, .pill.tarea-asignada, .pill.tarea-checklist {
+  display: inline-flex; align-items: center; gap: 4px; text-decoration: none;
+}
+.tarea-cronometro { display: inline-flex; align-items: center; gap: 4px; }
+.tarea-cronometro .btn, .tarea-cronometro-form .btn { padding: 4px 8px; }
+.tarea-cronometro-form { display: inline-flex; align-items: center; gap: 6px; }
+.tarea-cronometro-form select { max-width: 150px; }
+.tarea-con-cronometro { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; color: var(--text-muted); }
+.tareas-dia-seccion { margin-bottom: var(--space-5); }
+.tareas-dia-titulo { font-size: 1.05em; display: flex; align-items: center; gap: 8px; }
+.tareas-dia-vencidas .tareas-dia-titulo { color: var(--danger); }
+.tareas-tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 14px; align-items: start; }
+.tareas-columna { min-width: 0; display: grid; gap: 10px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.tareas-columna-titulo { display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; }
+.tareas-columna-vacia { margin: 0; font-size: 0.85em; }
+.tareas-tarjeta { min-width: 0; display: grid; gap: 6px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: var(--radius-sm); }
+.prioridad-borde-alta { border-left-color: var(--danger); }
+.prioridad-borde-normal { border-left-color: var(--text-muted); }
+.prioridad-borde-baja { border-left-color: var(--primary); }
+.tareas-tarjeta-titulo { font-weight: 600; overflow-wrap: anywhere; text-decoration: none; }
+.tareas-tarjeta-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tareas-tarjeta-mover { display: flex; gap: 6px; }
+.tareas-tarjeta-mover select { flex: 1; min-width: 0; width: 100%; }
+.tarea-checklist-bloque, .tarea-tiempo-bloque { margin-top: var(--space-5); }
+.tarea-bloque-titulo { font-size: 1em; }
+.tarea-checklist-lista { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.tarea-checklist-item { display: flex; align-items: center; gap: 10px; }
+.tarea-checklist-texto { flex: 1; overflow-wrap: anywhere; }
+.tarea-checklist-item.is-hecha .tarea-checklist-texto { text-decoration: line-through; color: var(--text-muted); }
+
+/* ---- Notas: título, formato, fijadas y adjuntos ---- */
+.nota-titulo { font-weight: 700; }
+.nota-cuerpo p { display: inline; margin: 0; }
+.nota-cuerpo p + p::before { content: " "; }
+.nota-cuerpo ul, .nota-cuerpo ol { margin: 4px 0 4px 1.2em; padding: 0; }
+.nota-cuerpo a { text-decoration: underline; text-underline-offset: 2px; }
+.nota-fijada-icono { color: var(--primary-text); }
+.nota-ayuda-formato { font-size: 0.85em; margin-top: -4px; }
+.nota-fijar { display: inline-flex; align-items: center; gap: 8px; }
+.nota-adjuntos-bloque { margin-top: var(--space-5); max-width: 640px; }
+.nota-adjuntos-lista { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.nota-adjunto { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.nota-adjunto-miniatura { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
 /* ---- Calendario de Tareas ---- */
 .cal-toolbar {
@@ -4318,3 +4369,114 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .filters .btn { width: 100%; }
   fieldset { min-width: 0; }
 }
+
+/* Correo: filtros, acciones rápidas e IA bajo demanda */
+.correo-filtros { flex-basis: 100%; }
+.correo-filtros summary { cursor: pointer; font-size: .85rem; }
+.correo-filtros-cuerpo { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: end; padding: .5rem 0; font-size: .85rem; }
+.correo-filtros-cuerpo label { display: flex; flex-direction: column; gap: .15rem; }
+.correo-filtros-cuerpo .correo-toolbar-check { flex-direction: row; align-items: center; }
+.correo-aviso-accion { margin: .5rem 0; padding: .4rem .7rem; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; }
+.correo-ia-panel { margin: .5rem 0 1rem; padding: .7rem .9rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.correo-ia-panel[hidden] { display: none; }
+.correo-ia-privacidad { margin: 0 0 .5rem; font-size: .78rem; opacity: .75; }
+.correo-ia-texto { white-space: pre-wrap; margin: 0 0 .6rem; }
+.correo-ia-error { color: var(--danger); margin: 0 0 .6rem; }
+.correo-ia-panel textarea { width: 100%; margin-bottom: .5rem; }
+.correo-ia-tarea { display: block; margin-bottom: .3rem; }
+
+/* Correo: conversaciones */
+.correo-hilo-contador { display: inline-block; min-width: 1.3em; padding: 0 .35em; margin-left: .3em; border-radius: 999px; border: 1px solid var(--border); font-size: .72rem; text-align: center; font-weight: 600; }
+.correo-hilo { margin: .5rem 0; font-size: .88rem; }
+.correo-hilo summary { cursor: pointer; }
+.correo-hilo ul { list-style: none; margin: .4rem 0 0; padding: 0; }
+.correo-hilo li { padding: .2rem 0; border-top: 1px solid var(--border); }
+.correo-hilo li a { display: flex; justify-content: space-between; gap: .6rem; text-decoration: none; }
+
+/* Correo: envío con deshacer/programado */
+.correo-envio-banner { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .5rem .9rem; margin-bottom: .6rem; border: 1px solid var(--border); border-radius: 8px; font-size: .9rem; }
+.correo-envio-banner[hidden] { display: none; }
+.correo-programar { display: inline-block; position: relative; }
+.correo-programar summary { list-style: none; cursor: pointer; }
+.correo-programar-cuerpo { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; padding: .5rem 0; }
+
+/* Asistente IA: fuentes citadas y atajos */
+.ia-fuentes { display: flex; flex-wrap: wrap; gap: .3rem .4rem; align-items: center; margin: -.2rem 0 .6rem; font-size: .76rem; }
+.ia-fuentes-etiqueta { opacity: .7; }
+.ia-fuente { padding: .1rem .55rem; border: 1px solid var(--border); border-radius: 999px; text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ia-fuente:hover, .ia-fuente:focus-visible { text-decoration: underline; }
+.ia-atajos { display: flex; gap: .35rem; overflow-x: auto; padding: .3rem 0 .45rem; scrollbar-width: thin; }
+.ia-atajo { flex: 0 0 auto; padding: .25rem .7rem; font-size: .78rem; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+.ia-atajo:hover, .ia-atajo:focus-visible { border-color: currentColor; }
+
+/* Fichaje: horas de la semana frente a la jornada contratada */
+.fichaje-semana { margin: 0 0 1rem; padding: .6rem .9rem; border: 1px solid var(--border); border-radius: 8px; }
+.fichaje-semana-texto { display: flex; flex-wrap: wrap; gap: .4rem .6rem; align-items: center; font-size: .92rem; }
+.fichaje-semana-barra { margin-top: .5rem; height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.fichaje-semana-barra span { display: block; height: 100%; background: var(--primary); }
+
+/* Portal: resultado de la subida de varios documentos */
+.portal-resultados { list-style: none; margin: 0 0 1rem; padding: 0; font-size: .9rem; }
+.portal-resultados li { padding: .25rem 0; }
+.portal-resultados li.ko { color: var(--danger); }
+
+/* Alineación de filtros y formulario de nueva tarea */
+.filters input, .filters select { height: 36px; box-sizing: border-box; }
+.filters .action-group { flex-wrap: wrap; }
+.quick-row { align-items: center; }
+.quick-row input, .quick-row select { height: 38px; box-sizing: border-box; min-width: 0; }
+.tarea-con-cronometro { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; margin: 0; }
+.tarea-con-cronometro input { height: auto; }
+.correo-form-seccion .ia-form-row { flex-wrap: wrap; align-items: center; }
+.correo-form-seccion .ia-form-row input[type="text"] { flex: 1 1 220px; min-width: 0; }
+.correo-form-seccion .ia-form-row select { flex: 0 1 auto; }
+
+.correo-adjuntos-guardados ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+.correo-adjuntos-guardados li label { display: inline-flex; gap: .4rem; align-items: center; }
+.correo-form-seccion .correo-toolbar-check, .correo-ajustes-seccion .correo-toolbar-check { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
+.correo-form-seccion .ia-form-row select { min-width: 150px; }
+.ia-atajos { padding: .5rem .75rem .55rem; }
+
+/* ---- Dashboard: aprovecha el ancho disponible y se adapta al redimensionar ---- */
+.content:has(.dash-layout) { max-width: min(1680px, 100%); }
+.dash-stats { grid-template-columns: repeat(auto-fit, minmax(clamp(170px, 18vw, 230px), 1fr)); }
+.dash-stat { min-width: 0; }
+.dash-stat > span:last-child { min-width: 0; display: flex; flex-direction: column; }
+.dash-stat-valor { white-space: nowrap; }
+.dash-acciones { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); align-items: stretch; }
+.dash-accion .quick-row { flex-wrap: nowrap; align-items: center; }
+.dash-accion .quick-row select { flex: 0 1 38%; min-width: 110px; }
+.dash-accion .quick-row input[type="text"] { flex: 1 1 auto; min-width: 120px; }
+.dash-accion .quick-row .btn { flex: 0 0 auto; }
+.dash-layout { grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 440px); gap: var(--space-6, 32px); }
+.menu-grid { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); justify-content: stretch; }
+.dash-main .menu-card { min-width: 0; }
+@media (max-width: 1100px) {
+  .dash-layout { grid-template-columns: minmax(0, 1fr); }
+  .dash-sidebar { position: static; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
+}
+@media (max-width: 700px) {
+  .content:has(.dash-layout) { padding-inline: var(--space-4, 16px); }
+  .dash-accion .quick-row { flex-wrap: wrap; }
+  .dash-accion .quick-row select, .dash-accion .quick-row input[type="text"] { flex: 1 1 100%; }
+}
+.dash-accion-buscar { grid-column: 1 / -1; padding-block: 10px; }
+
+/* Anchura global: las pantallas aprovechan el ancho; el texto corrido y los
+   formularios sueltos conservan su propio tope de lectura. */
+@media (max-width: 700px) { .content { padding-inline: var(--space-4, 16px); } }
+.page-header + p, .subtitle { max-width: 78ch; }
+.quick-card-full .quick-row { flex-wrap: wrap; }
+.quick-card-full .quick-row input[name="asunto"] { flex: 3 1 260px; }
+.quick-card-full .quick-row input[type="text"]:not([name="asunto"]) { flex: 1 1 160px; }
+.quick-card-full .quick-row input[type="datetime-local"] { flex: 0 1 190px; }
+.quick-card-full .quick-row select { flex: 0 1 170px; }
+
+/* Casillas con su texto en línea (la clase se usaba sin estilo y las dejaba apiladas) y fieldsets coherentes */
+.checkbox-label, .edit-form .checkbox-label { display: flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 400; cursor: pointer; }
+.checkbox-label input[type="checkbox"] { flex: 0 0 auto; width: auto; margin: 0; }
+.edit-form fieldset { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin: 0; display: grid; gap: 10px; min-width: 0; }
+.edit-form fieldset legend { padding: 0 6px; font-size: 0.85em; font-weight: 600; color: var(--text-muted); }
+.perfil-form { max-width: 960px; grid-template-columns: minmax(260px, 320px) 1fr; }
+.edit-form .ia-form-row { align-items: end; flex-wrap: wrap; gap: 12px 20px; }
+.nota-adjuntos-bloque .quick-row { align-items: center; }

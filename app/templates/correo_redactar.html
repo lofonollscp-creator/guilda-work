@@ -24,7 +24,7 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('correo.enviar') }}" enctype="multipart/form-data"
-        onsubmit="return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');">
+        {% if deshacer_segundos == 0 %}onsubmit="if (event.submitter && event.submitter.name === 'programar') return true; return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');"{% endif %}>
     <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
     <input type="hidden" name="borrador_id" id="correo-borrador-id" value="{{ borrador_id or '' }}">
 
@@ -85,6 +85,16 @@
     <div id="correo-editor-cuerpo" class="correo-editor" contenteditable="true">{{ cuerpo_html|safe }}</div>
     <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
 
+    {% if adjuntos_borrador %}
+    <div class="correo-compose-campo correo-adjuntos-guardados">
+      <label>{{ _('Adjuntos guardados en este borrador') }}</label>
+      <ul>
+        {% for a in adjuntos_borrador %}
+        <li><label><input type="checkbox" name="mantener_adjuntos" value="{{ a.id }}" checked> {{ a.nombre }} <span class="muted">({{ (a.tamano / 1024)|round|int }} KB)</span></label></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
     <div class="correo-compose-campo correo-compose-adjuntos">
       <label>{{ _('Adjuntar archivos') }}</label>
       <span class="file-input">
@@ -99,6 +109,13 @@
 
     <div class="correo-compose-acciones">
       <button type="submit" class="btn btn-primary"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg> {{ _('Enviar') }}</button>
+      <details class="correo-programar">
+        <summary class="btn btn-ghost">{{ _('Programar…') }}</summary>
+        <div class="correo-programar-cuerpo">
+          <label>{{ _('Enviar el') }} <input type="datetime-local" name="programar_para"></label>
+          <button type="submit" name="programar" value="1" class="btn btn-primary">{{ _('Programar envío') }}</button>
+        </div>
+      </details>
       <button type="button" id="correo-guardar-borrador" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Guardar borrador') }}</button>
       <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">{{ _('Descartar') }}</a>
     </div>

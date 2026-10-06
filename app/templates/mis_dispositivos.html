@@ -8,6 +8,27 @@
   </div>
 </header>
 
+{% if token_nuevo %}
+<div class="ia-error" style="border-color: var(--border); color: inherit;" role="status">
+  <strong>{{ _('Token creado: «%(nombre)s»', nombre=token_nuevo.nombre) }}</strong>
+  <p class="muted">{{ _('Cópialo ahora: no se volverá a mostrar.') }}</p>
+  <code style="word-break: break-all; user-select: all;">{{ token_nuevo.token }}</code>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('crear_token_desde_web') }}" class="correo-form-seccion" style="margin-top: 16px;">
+  <h2 style="font-size: 1rem;">{{ _('Crear un token de API') }}</h2>
+  <p class="muted">{{ _('Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos.') }}</p>
+  <div class="ia-form-row">
+    <input type="text" name="nombre" maxlength="80" placeholder="{{ _('Nombre (ej. Panel de Grafana)') }}">
+    <select name="permisos" aria-label="{{ _('Permisos') }}">
+      <option value="completo">{{ _('Acceso completo') }}</option>
+      <option value="solo_lectura">{{ _('Solo lectura') }}</option>
+    </select>
+    <button type="submit" class="btn btn-primary">{{ _('Crear token') }}</button>
+  </div>
+</form>
+
 {% if not dispositivos %}
 <p class="empty-lane">{{ _('No tienes ningún dispositivo móvil con sesión activa.') }}</p>
 {% else %}
@@ -15,7 +36,7 @@
   {% for d in dispositivos %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ (d.nombre_dispositivo or 'Dispositivo')|avatar_color }};">{{ (d.nombre_dispositivo or 'Dispositivo')|iniciales }}</span>
-    <span class="log-text">{{ d.nombre_dispositivo or _('Dispositivo sin nombre') }}
+    <span class="log-text">{{ d.nombre_dispositivo or _('Dispositivo sin nombre') }}{% if d.permisos == 'solo_lectura' %} <span class="correo-hilo-contador">{{ _('Solo lectura') }}</span>{% endif %}
       <span class="muted">({{ _('conectado') }} {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · {{ _('último uso') }} {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %})</span>
     </span>
     <form action="{{ url_for('revocar_dispositivo', token_id=d.id) }}" method="post"

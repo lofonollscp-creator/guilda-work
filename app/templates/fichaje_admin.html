@@ -59,6 +59,8 @@
       <th>{{ _('Horas trabajadas') }}</th>
       <th>{{ _('Horas en pausa') }}</th>
       <th>{{ _('Jornada contratada/sem.') }}</th>
+      <th>{{ _('Esta semana') }}</th>
+      <th>{{ _('Diferencia') }}</th>
       <th>{{ _('Fichajes') }}</th>
       <th>{{ _('Estado') }}</th>
       <th></th>
@@ -71,6 +73,9 @@
       <td class="mono">{{ r.horas_trabajadas }}h</td>
       <td class="mono">{{ r.horas_pausa }}h</td>
       <td class="mono">{{ r.jornada_semanal_horas or '—' }}</td>
+      {% set seg = semana_segundos.get(r.usuario_id, 0) %}
+      <td class="mono">{{ seg|horas_hm }}</td>
+      <td class="mono">{% if r.jornada_semanal_horas %}{% set dif = seg - r.jornada_semanal_horas * 3600 %}<span class="pill {{ 'estado-dentro' if dif >= 0 else 'estado-fuera' }}">{{ ('+' if dif >= 0 else '') ~ (dif|horas_hm) }}</span>{% else %}—{% endif %}</td>
       <td class="mono">{{ r.num_fichajes }}</td>
       <td><span class="pill {{ 'estado-dentro' if r.jornada_abierta else 'estado-fuera' }}">{{ _('dentro') if r.jornada_abierta else _('fuera') }}</span></td>
       <td><a class="btn btn-ghost" href="{{ url_for('fichaje.admin_detalle', usuario_id=r.usuario_id, desde=desde or none, hasta=hasta or none) }}">{{ _('Ver detalle') }}</a></td>

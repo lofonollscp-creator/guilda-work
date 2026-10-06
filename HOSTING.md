@@ -102,6 +102,8 @@ Variables opcionales:
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
 | `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |
+| `GUILDA_URL_PUBLICA` | _(vacío)_ | URL pública de la app (p. ej. `https://work.tudominio.com`), sin barra final. La usan los correos que se mandan sin petición web de por medio —recordatorios de vencimientos a clientes— para enlazar al portal. Sin ella el correo sale sin enlace. |
+| `GUILDA_FICHAJE_AVISO_HORAS` | `10` | Horas con la jornada de fichaje abierta tras las cuales se avisa (una vez por jornada) de que quizá se olvidó la salida. `0` lo desactiva. Se comprueba cada 15 minutos. |
 
 **Sincronización del correo**: `serve.py` lanza un hilo que, cada
 `GUILDA_CORREO_SYNC_MINUTOS`, descarga el correo nuevo de las cuentas de
@@ -2517,3 +2519,22 @@ Cuando compres un dominio:
   PC de escritorio si usas las dos a la vez — hoy serían dos bases de
   datos independientes. Si llega a hacer falta, se plantea como una fase
   aparte.
+
+
+## Backoffice independiente (backoffice.guildawork.com)
+
+El backoffice es una aplicación aparte (`backoffice/`, proceso `serve_backoffice.py`
+en `127.0.0.1:8001`, unidad `deploy/guilda-backoffice.service`): **no usa Kratos ni la
+sesión de `app.guildawork.com`**. Tiene sus propios administradores
+(`data/backoffice.db`, contraseñas con scrypt), sesión propia (cookie `bo_session`,
+caduca a la hora de inactividad y a las 12 h), protección CSRF, bloqueo tras 5 intentos
+fallidos en 15 minutos y registro de actividad. Comparte únicamente la base de datos de
+la plataforma (`registro.db`) para administrar tenants y usuarios.
+
+- Crear o cambiar un administrador (la contraseña generada se muestra una sola vez):
+  `.venv/bin/python scripts/crear_admin_backoffice.py USUARIO [--nombre "Nombre"] [--cambiar]`
+- Variables opcionales: `BACKOFFICE_PORT` (8001), `BACKOFFICE_DB`, `BACKOFFICE_SECRET_KEY`
+  (si no, se genera `data/backoffice_secret.key`, permisos 0600).
+- Caddy: bloque de `deploy/Caddyfile.backoffice`.
+- Las rutas antiguas `/backoffice/...` de `app.guildawork.com` siguen existiendo (con el
+  login de la app) hasta que se retiren.

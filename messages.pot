@@ -1695,10 +1695,7 @@ msgid "Generar informe con IA"
 msgstr ""
 
 #: app/templates/historial.html:90
-msgid ""
-"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
-"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
-" las claves configuradas en Ajustes del asistente IA)."
+msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA)."
 msgstr ""
 
 #: app/templates/historial.html:97
@@ -1774,15 +1771,11 @@ msgid "elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo
 msgstr ""
 
 #: app/templates/ia_ajustes.html:22
-msgid ""
-"No se ha podido obtener el listado de modelos gratuitos de OpenRouter "
-"ahora mismo — usa el campo de abajo con el id exacto del modelo."
+msgid "No se ha podido obtener el listado de modelos gratuitos de OpenRouter ahora mismo — usa el campo de abajo con el id exacto del modelo."
 msgstr ""
 
 #: app/templates/ia_ajustes.html:26
-msgid ""
-"O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de "
-"pago)"
+msgid "O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)"
 msgstr ""
 
 #: app/templates/ia_ajustes.html:27
@@ -1801,9 +1794,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/templates/ia_ajustes.html:33
-msgid ""
-"sk-or-...\n"
-"sk-or-... (clave de reserva, opcional)"
+msgid "sk-or-...\\nsk-or-... (clave de reserva, opcional)"
 msgstr ""
 
 #: app/templates/ia_ajustes.html:34
@@ -2792,3 +2783,1510 @@ msgstr ""
 #: app/templates/ia_asistente.html
 msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
 msgstr ""
+
+msgid "No iniciada"
+msgstr ""
+
+msgid "En progreso"
+msgstr ""
+
+msgid "Completada"
+msgstr ""
+
+msgid "Esperando a otros"
+msgstr ""
+
+msgid "Aplazada"
+msgstr ""
+
+msgid "Baja"
+msgstr ""
+
+msgid "enero"
+msgstr ""
+
+msgid "febrero"
+msgstr ""
+
+msgid "marzo"
+msgstr ""
+
+msgid "abril"
+msgstr ""
+
+msgid "mayo"
+msgstr ""
+
+msgid "junio"
+msgstr ""
+
+msgid "julio"
+msgstr ""
+
+msgid "agosto"
+msgstr ""
+
+msgid "septiembre"
+msgstr ""
+
+msgid "octubre"
+msgstr ""
+
+msgid "noviembre"
+msgstr ""
+
+msgid "diciembre"
+msgstr ""
+
+msgid "Lunes"
+msgstr ""
+
+msgid "Martes"
+msgstr ""
+
+msgid "Miércoles"
+msgstr ""
+
+msgid "Jueves"
+msgstr ""
+
+msgid "Viernes"
+msgstr ""
+
+msgid "Sábado"
+msgstr ""
+
+msgid "Domingo"
+msgstr ""
+
+msgid "Cada día"
+msgstr ""
+
+msgid "Cada día laborable (lunes a viernes)"
+msgstr ""
+
+msgid "Cada semana"
+msgstr ""
+
+msgid "Cada mes"
+msgstr ""
+
+msgid "Cada trimestre (enero, abril, julio, octubre)"
+msgstr ""
+
+msgid "Cada año"
+msgstr ""
+
+msgid "tareas para hoy"
+msgstr ""
+
+msgid "vencimientos próximos"
+msgstr ""
+
+msgid "Icono"
+msgstr ""
+
+msgid "Tareas pendientes"
+msgstr ""
+
+msgid "Ver todas"
+msgstr ""
+
+msgid "Cliente"
+msgstr ""
+
+msgid "Sin cliente"
+msgstr ""
+
+msgid "Asignar a"
+msgstr ""
+
+msgid "Sin asignar"
+msgstr ""
+
+msgid "Subtareas"
+msgstr ""
+
+msgid "Marcar o desmarcar"
+msgstr ""
+
+msgid "Nueva subtarea"
+msgstr ""
+
+msgid "Añadir una subtarea..."
+msgstr ""
+
+msgid "Tiempo dedicado"
+msgstr ""
+
+msgid "Registrado hasta ahora:"
+msgstr ""
+
+msgid "Todavía no has registrado tiempo en esta tarea."
+msgstr ""
+
+msgid "Hay un cronómetro en marcha: páralo desde la lista de tareas."
+msgstr ""
+
+msgid "Proyecto en el que registrar el tiempo"
+msgstr ""
+
+msgid "Proyecto..."
+msgstr ""
+
+msgid "Iniciar el cronómetro"
+msgstr ""
+
+msgid "Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado."
+msgstr ""
+
+msgid "Mostrar"
+msgstr ""
+
+msgid "Mías y asignadas a mí"
+msgstr ""
+
+msgid "Solo las mías"
+msgstr ""
+
+msgid "Asignadas a mí"
+msgstr ""
+
+msgid "Iniciar cronómetro"
+msgstr ""
+
+msgid "Elegir archivo"
+msgstr ""
+
+msgid "Ningún archivo elegido"
+msgstr ""
+
+msgid "Tareas recurrentes"
+msgstr ""
+
+msgid "Reglas que generan una tarea nueva automáticamente: cada día, semana, mes, trimestre o año."
+msgstr ""
+
+msgid "Nueva regla"
+msgstr ""
+
+msgid "Asunto de la tarea"
+msgstr ""
+
+msgid "Periodicidad"
+msgstr ""
+
+msgid "Día de la semana (si es semanal)"
+msgstr ""
+
+msgid "Día del mes (si es mensual, trimestral o anual)"
+msgstr ""
+
+msgid "Mes (si es anual)"
+msgstr ""
+
+msgid "Solo se usa el día o el mes que corresponde a la periodicidad elegida; en cada día y cada día laborable no hace falta ninguno."
+msgstr ""
+
+msgid "Crear regla"
+msgstr ""
+
+msgid "Activa"
+msgstr ""
+
+msgid "Pausada"
+msgstr ""
+
+msgid "Reactivar"
+msgstr ""
+
+msgid "Todavía no tienes ninguna regla de tarea recurrente."
+msgstr ""
+
+msgid "Correo de origen"
+msgstr ""
+
+msgid "Asignada"
+msgstr ""
+
+#, python-format
+msgid "De %(quien)s"
+msgstr ""
+
+#, python-format
+msgid "Para %(quien)s"
+msgstr ""
+
+msgid "Detener el cronómetro"
+msgstr ""
+
+msgid "Cronómetro"
+msgstr ""
+
+msgid "Tiempo registrado"
+msgstr ""
+
+msgid "Mi día"
+msgstr ""
+
+msgid "Tablero"
+msgstr ""
+
+msgid "Recurrentes"
+msgstr ""
+
+msgid "Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas en marcha y lo que te han asignado."
+msgstr ""
+
+msgid "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo."
+msgstr ""
+
+msgid "Vencidas"
+msgstr ""
+
+msgid "Vencen hoy"
+msgstr ""
+
+msgid "Tablero de tareas"
+msgstr ""
+
+msgid "Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna."
+msgstr ""
+
+msgid "Mover a"
+msgstr ""
+
+msgid "Nada aquí"
+msgstr ""
+
+msgid "opcional"
+msgstr ""
+
+msgid "Un título corto para encontrarla fácilmente"
+msgstr ""
+
+msgid "Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con [texto](https://...) y direcciones web."
+msgstr ""
+
+msgid "Fijar esta nota arriba en su proyecto"
+msgstr ""
+
+msgid "Archivos adjuntos"
+msgstr ""
+
+msgid "Archivos para adjuntar"
+msgstr ""
+
+msgid "Adjuntar"
+msgstr ""
+
+#, python-format
+msgid "Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota."
+msgstr ""
+
+#, python-format
+msgid "Has llegado al máximo de %(num)s adjuntos en esta nota."
+msgstr ""
+
+msgid "Fijada"
+msgstr ""
+
+msgid "Notas fijadas"
+msgstr ""
+
+msgid "Resumen del periodo"
+msgstr ""
+
+msgid "Entradas"
+msgstr ""
+
+msgid "Nuevo mensaje"
+msgstr ""
+
+msgid "Editar borrador"
+msgstr ""
+
+msgid "Correo de {remitente}"
+msgstr ""
+
+msgid "Tarea creada."
+msgstr ""
+
+msgid "De: {remitente}"
+msgstr ""
+
+msgid "Nota guardada."
+msgstr ""
+
+msgid "{n} tareas creadas."
+msgstr ""
+
+msgid "Borradores"
+msgstr ""
+
+msgid "Filtros"
+msgstr ""
+
+msgid "Con adjuntos"
+msgstr ""
+
+msgid "Destacados"
+msgstr ""
+
+msgid "Aplicar"
+msgstr ""
+
+msgid "Quitar filtros"
+msgstr ""
+
+msgid "Categoría actualizada."
+msgstr ""
+
+msgid "Cliente vinculado."
+msgstr ""
+
+msgid "Cliente fiscal relacionado"
+msgstr ""
+
+msgid "Sin cliente vinculado"
+msgstr ""
+
+msgid "Crear una tarea con este correo"
+msgstr ""
+
+msgid "Guardar este correo como nota"
+msgstr ""
+
+msgid "Guardar nota"
+msgstr ""
+
+msgid "Resumir con IA"
+msgstr ""
+
+msgid "Resumir"
+msgstr ""
+
+msgid "Proponer una respuesta con IA"
+msgstr ""
+
+msgid "Proponer respuesta"
+msgstr ""
+
+msgid "Extraer tareas con IA"
+msgstr ""
+
+msgid "Extraer tareas"
+msgstr ""
+
+msgid "Pensando…"
+msgstr ""
+
+msgid "No se ha podido completar la acción."
+msgstr ""
+
+msgid "Usar como borrador"
+msgstr ""
+
+msgid "Crear las marcadas"
+msgstr ""
+
+msgid "No se han encontrado tareas en este correo."
+msgstr ""
+
+msgid "El contenido de este correo se envía al proveedor de IA que tienes configurado."
+msgstr ""
+
+msgid "Ver a tamaño completo"
+msgstr ""
+
+msgid "Plantillas de respuesta"
+msgstr ""
+
+msgid "Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas."
+msgstr ""
+
+#, python-format
+msgid "¿Eliminar la plantilla «%(nombre)s»?"
+msgstr ""
+
+msgid "Nombre (ej. Recordatorio de documentación)"
+msgstr ""
+
+msgid "Asunto (opcional)"
+msgstr ""
+
+msgid "Texto de la plantilla..."
+msgstr ""
+
+msgid "Añadir plantilla"
+msgstr ""
+
+msgid "Reglas avanzadas"
+msgstr ""
+
+msgid "Se aplican a los correos nuevos que cumplan todas las condiciones indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, destacar y vincular a un cliente fiscal."
+msgstr ""
+
+msgid "Remitente"
+msgstr ""
+
+msgid "Asunto contiene"
+msgstr ""
+
+msgid "marcar como leído"
+msgstr ""
+
+msgid "destacar"
+msgstr ""
+
+msgid "Remitente: email@ejemplo.com, @dominio.com o texto"
+msgstr ""
+
+msgid "El asunto contiene…"
+msgstr ""
+
+msgid "Sin cliente fiscal"
+msgstr ""
+
+msgid "Vuelve a adjuntar los archivos: no se conservan al deshacer el envío."
+msgstr ""
+
+msgid "Elige la fecha y la hora del envío programado."
+msgstr ""
+
+msgid "La hora del envío programado tiene que ser futura."
+msgstr ""
+
+msgid "Ya no se puede deshacer: el correo ya se ha enviado."
+msgstr ""
+
+msgid "Enviado."
+msgstr ""
+
+msgid "Envío programado para el"
+msgstr ""
+
+msgid "Enviando…"
+msgstr ""
+
+msgid "Cancelar envío"
+msgstr ""
+
+msgid "Programados"
+msgstr ""
+
+msgid "Mensajes en esta conversación"
+msgstr ""
+
+msgid "Deshacer envío"
+msgstr ""
+
+msgid "Enviar al momento"
+msgstr ""
+
+msgid "10 segundos para deshacer"
+msgstr ""
+
+msgid "30 segundos para deshacer"
+msgstr ""
+
+msgid "Insertar plantilla"
+msgstr ""
+
+msgid "Insertar plantilla..."
+msgstr ""
+
+msgid "Elegir archivos"
+msgstr ""
+
+msgid "Programar…"
+msgstr ""
+
+msgid "Enviar el"
+msgstr ""
+
+msgid "Programar envío"
+msgstr ""
+
+msgid "Guardar borrador"
+msgstr ""
+
+msgid "Borrador guardado."
+msgstr ""
+
+msgid "No se pudo guardar el borrador."
+msgstr ""
+
+msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
+msgstr ""
+
+msgid "No tienes ningún envío programado."
+msgstr ""
+
+msgid "¿Cancelar este envío? Volverá a tus borradores."
+msgstr ""
+
+#, python-format
+msgid "Token creado: «%(nombre)s»"
+msgstr ""
+
+msgid "Cópialo ahora: no se volverá a mostrar."
+msgstr ""
+
+msgid "Crear un token de API"
+msgstr ""
+
+msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
+msgstr ""
+
+msgid "Nombre (ej. Panel de Grafana)"
+msgstr ""
+
+msgid "Permisos"
+msgstr ""
+
+msgid "Acceso completo"
+msgstr ""
+
+msgid "Solo lectura"
+msgstr ""
+
+msgid "Crear token"
+msgstr ""
+
+msgid "Token de API"
+msgstr ""
+
+msgid "Resumen de mi día"
+msgstr ""
+
+msgid "Hazme un resumen de mi día: tareas para hoy y atrasadas, vencimientos fiscales próximos y correos importantes sin leer."
+msgstr ""
+
+msgid "¿Qué vence esta semana?"
+msgstr ""
+
+msgid "¿Qué vencimientos fiscales y tareas vencen esta semana?"
+msgstr ""
+
+msgid "Correos importantes sin leer"
+msgstr ""
+
+msgid "Muéstrame los correos sin leer que parezcan importantes y resúmelos."
+msgstr ""
+
+msgid "Tareas atrasadas"
+msgstr ""
+
+msgid "Lista mis tareas atrasadas ordenadas por prioridad."
+msgstr ""
+
+msgid "Notas de hoy"
+msgstr ""
+
+msgid "Resume las notas que he escrito hoy."
+msgstr ""
+
+msgid "Clientes con vencimientos"
+msgstr ""
+
+msgid "¿Qué clientes tienen vencimientos fiscales pendientes esta semana?"
+msgstr ""
+
+msgid "Modo solo lectura: el asistente solo puede consultar datos, nunca crear, editar ni borrar"
+msgstr ""
+
+msgid "Atajos de prompts"
+msgstr ""
+
+msgid "Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios."
+msgstr ""
+
+msgid "¿Eliminar este atajo?"
+msgstr ""
+
+msgid "Título corto"
+msgstr ""
+
+msgid "Texto que se enviará al asistente"
+msgstr ""
+
+msgid "Añadir atajo"
+msgstr ""
+
+msgid "Atajos"
+msgstr ""
+
+msgid "Adjuntar archivo de texto/CSV"
+msgstr ""
+
+msgid "Horas de esta semana"
+msgstr ""
+
+msgid "Esta semana"
+msgstr ""
+
+#, python-format
+msgid "%(hechas)s de %(contratadas)s"
+msgstr ""
+
+msgid "indica tu jornada semanal en «Mis datos» para compararla"
+msgstr ""
+
+msgid "incluye la jornada en curso"
+msgstr ""
+
+msgid "Exportar JSON (detalle + hash)"
+msgstr ""
+
+msgid "Verificar integridad"
+msgstr ""
+
+msgid "Diferencia"
+msgstr ""
+
+msgid "llevas"
+msgstr ""
+
+msgid "en pausa"
+msgstr ""
+
+msgid "Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez."
+msgstr ""
+
+#, python-format
+msgid "%(h)s h trabajadas"
+msgstr ""
+
+#, python-format
+msgid "%(h)s h pausa"
+msgstr ""
+
+msgid "Inicio de pausa"
+msgstr ""
+
+msgid "Documentos"
+msgstr ""
+
+msgid "Volver a tu expediente"
+msgstr ""
+
+msgid "Imágenes o PDF, hasta 8MB cada uno y 10 archivos a la vez"
+msgstr ""
+
+msgid "Subir"
+msgstr ""
+
+msgid "Todavía no hay ningún documento."
+msgstr ""
+
+msgid "Justificante oficial"
+msgstr ""
+
+msgid "Constancia de presentación"
+msgstr ""
+
+msgid "Editar vencimiento"
+msgstr ""
+
+msgid "Periodo"
+msgstr ""
+
+msgid "Fecha límite"
+msgstr ""
+
+msgid "Asignado a"
+msgstr ""
+
+msgid "Documento solicitado al cliente (opcional)"
+msgstr ""
+
+msgid "Ej.: Factura de compra del trimestre"
+msgstr ""
+
+msgid "Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal."
+msgstr ""
+
+msgid "Marcar como presentado y facturar (opcional)"
+msgstr ""
+
+msgid "Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura."
+msgstr ""
+
+msgid "Concepto"
+msgstr ""
+
+#, python-format
+msgid "ej. Presentación modelo %(modelo)s %(periodo)s"
+msgstr ""
+
+msgid "Importe (€)"
+msgstr ""
+
+msgid "Justificante oficial (opcional)"
+msgstr ""
+
+msgid "Marcar presentado"
+msgstr ""
+
+msgid "¿Eliminar este vencimiento? Se moverá a la papelera."
+msgstr ""
+
+msgid "Eliminar vencimiento"
+msgstr ""
+
+msgid "Documentos del cliente"
+msgstr ""
+
+msgid "Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal."
+msgstr ""
+
+msgid "Subir justificante oficial"
+msgstr ""
+
+msgid "Generar constancia de presentación (PDF)"
+msgstr ""
+
+msgid "No sustituye al justificante oficial."
+msgstr ""
+
+msgid "El cliente todavía no ha subido ningún documento."
+msgstr ""
+
+msgid "Mensajes con el cliente"
+msgstr ""
+
+msgid "Todavía no hay mensajes en esta conversación."
+msgstr ""
+
+msgid "Equipo"
+msgstr ""
+
+msgid "Cobrar por Stripe"
+msgstr ""
+
+msgid "Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché."
+msgstr ""
+
+msgid "Enviar enlace de pago"
+msgstr ""
+
+msgid "Firma electrónica"
+msgstr ""
+
+msgid "Ya se ha enviado un documento a firmar al cliente para este vencimiento."
+msgstr ""
+
+msgid "Subir PDF y enviar a firmar al cliente"
+msgstr ""
+
+msgid "Elegir PDF"
+msgstr ""
+
+msgid "Enviar a firma"
+msgstr ""
+
+msgid "Editar cliente fiscal"
+msgstr ""
+
+msgid "Nombre o razón social"
+msgstr ""
+
+msgid "NIF/CIF"
+msgstr ""
+
+msgid "Email del cliente (portal)"
+msgstr ""
+
+msgid "Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo)."
+msgstr ""
+
+msgid "País de tributación"
+msgstr ""
+
+msgid "España"
+msgstr ""
+
+msgid "Otro país (próximamente)"
+msgstr ""
+
+msgid "Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada."
+msgstr ""
+
+msgid "Modelos que presenta este cliente"
+msgstr ""
+
+msgid "Sin modelos disponibles para el país de este cliente."
+msgstr ""
+
+msgid "Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática."
+msgstr ""
+
+msgid "Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)"
+msgstr ""
+
+msgid "Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)"
+msgstr ""
+
+msgid "¿Eliminar este cliente fiscal? Se moverá a la papelera."
+msgstr ""
+
+msgid "Eliminar cliente"
+msgstr ""
+
+msgid "Faltan datos: nombre y email son obligatorios."
+msgstr ""
+
+msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo."
+msgstr ""
+
+#, python-format
+msgid "Puedes subir hasta %(n)s archivos a la vez."
+msgstr ""
+
+msgid "Archivo no válido: solo imágenes o PDF, hasta 8MB."
+msgstr ""
+
+msgid "Subido."
+msgstr ""
+
+msgid "Nuevo mensaje del cliente"
+msgstr ""
+
+msgid "Pendiente"
+msgstr ""
+
+msgid "Presentado"
+msgstr ""
+
+msgid "Fuera de plazo"
+msgstr ""
+
+msgid "Enero"
+msgstr ""
+
+msgid "Febrero"
+msgstr ""
+
+msgid "Marzo"
+msgstr ""
+
+msgid "Abril"
+msgstr ""
+
+msgid "Mayo"
+msgstr ""
+
+msgid "Junio"
+msgstr ""
+
+msgid "Julio"
+msgstr ""
+
+msgid "Agosto"
+msgstr ""
+
+msgid "Septiembre"
+msgstr ""
+
+msgid "Octubre"
+msgstr ""
+
+msgid "Noviembre"
+msgstr ""
+
+msgid "Diciembre"
+msgstr ""
+
+msgid "L"
+msgstr ""
+
+msgid "M"
+msgstr ""
+
+msgid "X"
+msgstr ""
+
+msgid "J"
+msgstr ""
+
+msgid "V"
+msgstr ""
+
+msgid "S"
+msgstr ""
+
+msgid "D"
+msgstr ""
+
+msgid "NIF"
+msgstr ""
+
+msgid "Marcado como presentado el"
+msgstr ""
+
+msgid "Adjunto en el portal"
+msgstr ""
+
+msgid "Pendiente de adjuntar"
+msgstr ""
+
+#, python-format
+msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
+msgstr ""
+
+msgid "Salud del sistema"
+msgstr ""
+
+msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr ""
+
+msgid "Todo en orden"
+msgstr ""
+
+msgid "Atención"
+msgstr ""
+
+msgid "Hay algo en rojo"
+msgstr ""
+
+msgid "Sin datos"
+msgstr ""
+
+msgid "Copias de seguridad"
+msgstr ""
+
+msgid "Integraciones"
+msgstr ""
+
+msgid "Tareas periódicas"
+msgstr ""
+
+msgid "Correcto"
+msgstr ""
+
+msgid "Rojo"
+msgstr ""
+
+msgid "Salud"
+msgstr ""
+
+msgid "Plataforma"
+msgstr ""
+
+msgid "Catálogo de herramientas"
+msgstr ""
+
+msgid "Analítica"
+msgstr ""
+
+msgid "Resumen"
+msgstr ""
+
+msgid "Estado del sistema"
+msgstr ""
+
+msgid "Diagnóstico"
+msgstr ""
+
+msgid "Auditoría"
+msgstr ""
+
+msgid "Contenido"
+msgstr ""
+
+msgid "Leads"
+msgstr ""
+
+msgid "Solicitudes portal"
+msgstr ""
+
+msgid "Webhooks"
+msgstr ""
+
+msgid "Ingresos"
+msgstr ""
+
+msgid "Planes y extras"
+msgstr ""
+
+msgid "tarea en curso"
+msgid_plural "tareas en curso"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "tarea para hoy"
+msgid_plural "tareas para hoy"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "nota hoy"
+msgid_plural "notas hoy"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "correo sin leer"
+msgid_plural "correos sin leer"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "vencimiento próximo"
+msgid_plural "vencimientos próximos"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Sincronización de correo"
+msgstr ""
+
+msgid "Cola de envío de correo"
+msgstr ""
+
+msgid "Recordatorios de vencimientos (equipo)"
+msgstr ""
+
+msgid "Recordatorios del portal (clientes)"
+msgstr ""
+
+msgid "Avisos de fichaje"
+msgstr ""
+
+msgid "Resumen semanal de IA"
+msgstr ""
+
+msgid "Vigilante de salud"
+msgstr ""
+
+msgid "Sin datos todavía (no se ha ejecutado desde el último arranque)."
+msgstr ""
+
+#, python-format
+msgid "Último intento con error hace %(hace)s: %(detalle)s"
+msgstr ""
+
+msgid "sin detalle"
+msgstr ""
+
+#, python-format
+msgid "Última pasada correcta hace %(hace)s."
+msgstr ""
+
+msgid "Última copia de seguridad"
+msgstr ""
+
+msgid "No hay ninguna copia."
+msgstr ""
+
+#, python-format
+msgid "%(nombre)s — hace %(hace)s (%(mb)s MB)."
+msgstr ""
+
+msgid "Espacio libre en disco"
+msgstr ""
+
+#, python-format
+msgid "%(libre)s %% libre (%(gb)s GB de %(total)s GB)."
+msgstr ""
+
+msgid "Tamaño de la base de datos"
+msgstr ""
+
+#, python-format
+msgid "%(mb)s MB."
+msgstr ""
+
+#, python-format
+msgid "Correo: %(nombre)s (%(usuario)s)"
+msgstr ""
+
+#, python-format
+msgid "Error de sincronización: %(error)s"
+msgstr ""
+
+msgid "Todavía no se ha sincronizado."
+msgstr ""
+
+#, python-format
+msgid "Última sincronización hace %(hace)s."
+msgstr ""
+
+msgid "Entregas de webhooks fallidas (24 h)"
+msgstr ""
+
+#, python-format
+msgid "%(n)s intento(s) fallido(s)."
+msgstr ""
+
+msgid "Envíos de correo fallidos (24 h)"
+msgstr ""
+
+#, python-format
+msgid "%(n)s envío(s) fallido(s)."
+msgstr ""
+
+msgid "Envíos pendientes con la hora vencida"
+msgstr ""
+
+#, python-format
+msgid "%(n)s envío(s) sin enviar pasados 5 minutos de su hora."
+msgstr ""
+
+msgid "Ninguno."
+msgstr ""
+
+msgid "No se pudo comprobar."
+msgstr ""
+
+msgid "Envíos de correo"
+msgstr ""
+
+msgid "Entregas de webhooks"
+msgstr ""
+
+msgid "mañana"
+msgstr ""
+
+#, python-format
+msgid "dentro de %(n)s días"
+msgstr ""
+
+#, python-format
+msgid "Hola, %(cliente)s:"
+msgstr ""
+
+#, python-format
+msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
+msgstr ""
+
+#, python-format
+msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
+msgstr ""
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente:"
+msgstr ""
+
+msgid "Un saludo,"
+msgstr ""
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr ""
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
+msgstr ""
+
+msgid "Idioma de los correos al cliente"
+msgstr ""
+
+msgid "Adjuntos guardados en este borrador"
+msgstr ""
+
+msgid "Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y supervisor."
+msgstr ""
+
+msgid "¡Copiado!"
+msgstr ""
+
+msgid "Error al copiar"
+msgstr ""
+
+msgid "Buscar por email..."
+msgstr ""
+
+msgid "Tenant"
+msgstr ""
+
+msgid "Todos los tenants"
+msgstr ""
+
+msgid "Todos los roles"
+msgstr ""
+
+msgid "Administradores"
+msgstr ""
+
+msgid "Gestores de fichajes"
+msgstr ""
+
+msgid "Supervisores"
+msgstr ""
+
+msgid "Sin tenant (hay que asignarlos)"
+msgstr ""
+
+msgid "tú"
+msgstr ""
+
+msgid "No puedes quitarte el rol de admin a ti mismo"
+msgstr ""
+
+msgid "Quitar gestor de fichajes"
+msgstr ""
+
+msgid "Hacer gestor de fichajes"
+msgstr ""
+
+msgid "Gestor de fichajes"
+msgstr ""
+
+msgid "Quitar supervisor"
+msgstr ""
+
+msgid "Hacer supervisor"
+msgstr ""
+
+msgid "Supervisor"
+msgstr ""
+
+msgid "Ningún usuario coincide."
+msgstr ""
+
+msgid "Mapa de acceso"
+msgstr ""
+
+msgid "Qué módulos tiene activos cada tenant y quién trabaja en él, con qué roles. Para cambiar algo, entra en la ficha del tenant."
+msgstr ""
+
+msgid "Equipos y roles"
+msgstr ""
+
+msgid "Activo"
+msgstr ""
+
+msgid "Suspendido"
+msgstr ""
+
+msgid "sin plan"
+msgstr ""
+
+msgid "Sin usuarios asignados todavía."
+msgstr ""
+
+msgid "Módulos por tenant"
+msgstr ""
+
+msgid "Módulo"
+msgstr ""
+
+msgid "Tenants con acceso"
+msgstr ""
+
+msgid "activo"
+msgstr ""
+
+msgid "oculto"
+msgstr ""
+
+msgid "Organizaciones (gestorías) dadas de alta en Guilda Work."
+msgstr ""
+
+msgid "Resumen de la plataforma"
+msgstr ""
+
+msgid "tenants"
+msgstr ""
+
+msgid "activos"
+msgstr ""
+
+msgid "usuarios en tenants"
+msgstr ""
+
+msgid "usuarios sin tenant"
+msgstr ""
+
+msgid "tenants sin usuarios"
+msgstr ""
+
+msgid "Mapa de acceso por tenant"
+msgstr ""
+
+msgid "Buscar tenant..."
+msgstr ""
+
+msgid "Módulo: todos"
+msgstr ""
+
+msgid "Nº usuarios"
+msgstr ""
+
+msgid "Actividad reciente"
+msgstr ""
+
+msgid "Añadir tenant"
+msgstr ""
+
+msgid "Plan"
+msgstr ""
+
+msgid "Clientes fiscales"
+msgstr ""
+
+msgid "Módulos"
+msgstr ""
+
+msgid "Roles"
+msgstr ""
+
+msgid "gestor"
+msgstr ""
+
+msgid "supervisor"
+msgstr ""
+
+#, python-format
+msgid "Actividad: %(fecha)s"
+msgstr ""
+
+msgid "Sin actividad"
+msgstr ""
+
+msgid "Ver ficha"
+msgstr ""
+
+msgid "Ningún tenant coincide con la búsqueda."
+msgstr ""
+
+#, python-format
+msgid "Última actividad: %(fecha)s"
+msgstr ""
+
+msgid "Sin actividad todavía."
+msgstr ""
+
+msgid "Suspender tenant"
+msgstr ""
+
+msgid "Reactivar tenant"
+msgstr ""
+
+msgid "Resumen del tenant"
+msgstr ""
+
+msgid "usuarios"
+msgstr ""
+
+msgid "administradores"
+msgstr ""
+
+msgid "gestores de fichajes"
+msgstr ""
+
+msgid "supervisores"
+msgstr ""
+
+msgid "clientes fiscales"
+msgstr ""
+
+msgid "módulos activos"
+msgstr ""
+
+msgid "plan"
+msgstr ""
+
+msgid "Clic para cambiar"
+msgstr ""
+
+msgid "Stripe Connect"
+msgstr ""
+
+msgid "Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene."
+msgstr ""
+
+msgid "Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY)."
+msgstr ""
+
+msgid "Cuenta conectada y lista para cobrar"
+msgstr ""
+
+msgid "Onboarding sin completar"
+msgstr ""
+
+msgid "Reintentar onboarding"
+msgstr ""
+
+msgid "Email de contacto para Stripe"
+msgstr ""
+
+msgid "Conectar Stripe"
+msgstr ""
+
+msgid "Oculto — clic para mostrar"
+msgstr ""
+
+msgid "Visible — clic para ocultar"
+msgstr ""
+
+msgid "Estadísticas de equipo"
+msgstr ""
+
+msgid "Todavía no hay datos suficientes."
+msgstr ""
+
+msgid "Ingresos (suscripción de Guilda Work)"
+msgstr ""
+
+msgid "Sin plan"
+msgstr ""
+
+msgid "Suscripción activa"
+msgstr ""
+
+msgid "Activar suscripción"
+msgstr ""
+
+msgid "Extras activos"
+msgstr ""
+
+msgid "hasta"
+msgstr ""
+
+msgid "Sin extras activos."
+msgstr ""
+
+msgid "Extra"
+msgstr ""
+
+msgid "Cantidad"
+msgstr ""
+
+msgid "Hasta (opcional)"
+msgstr ""
+
+msgid "Añadir extra"
+msgstr ""
+
+msgid "Facturas"
+msgstr ""
+
+msgid "Importe"
+msgstr ""
+
+msgid "Todavía no hay facturas."
+msgstr ""
+
+msgid "Configuración"
+msgstr ""
+
+msgid "RGPD: solo activar si hay trabajadores fichando en remoto"
+msgstr ""
+
+msgid "Quitar geolocalización"
+msgstr ""
+
+msgid "Activar geolocalización"
+msgstr ""
+
+msgid "Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR)."
+msgstr ""
+
+msgid "Exportar datos"
+msgstr ""
+
+msgid "Borrar tenant"
+msgstr ""
+
+#, python-format
+msgid "%(n)s usuario"
+msgid_plural "%(n)s usuarios"
+msgstr[0] ""
+msgstr[1] ""

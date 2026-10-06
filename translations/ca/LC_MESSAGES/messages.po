@@ -31,9 +31,8 @@ msgid "Responder a todos"
 msgstr "Respondre a tots"
 
 #: app/rutas_correo.py:445 app/templates/correo_bandeja.html:141
-#, fuzzy
 msgid "Reenviar"
-msgstr "Crear"
+msgstr "Reenvia"
 
 #: app/templates/_ia_chat_macro.html:3
 msgid ""
@@ -50,14 +49,12 @@ msgid "Sí, hazlo"
 msgstr "Sí, fes-ho"
 
 #: app/templates/_ia_chat_macro.html:22
-#, fuzzy
 msgid "No"
-msgstr "Nota"
+msgstr "No"
 
 #: app/templates/_ia_chat_macro.html:26
-#, fuzzy
 msgid "Dictar mensaje"
-msgstr "Crear menú"
+msgstr "Dicta un missatge"
 
 #: app/templates/_ia_chat_macro.html:27
 msgid "Escribe un mensaje..."
@@ -65,9 +62,8 @@ msgstr "Escriu un missatge..."
 
 #: app/templates/_ia_chat_macro.html:28 app/templates/correo_redactar.html:83
 #: app/templates/historial.html:141
-#, fuzzy
 msgid "Enviar"
-msgstr "Entrar"
+msgstr "Envia"
 
 #: app/templates/_ia_chat_macro.html:31 app/templates/historial.html:133
 msgid "Nueva conversación"
@@ -75,12 +71,11 @@ msgstr "Nova conversa"
 
 #: app/templates/_ia_chat_macro.html:36
 msgid "Modo Live (manos libres)"
-msgstr ""
+msgstr "Mode Live (mans lliures)"
 
 #: app/templates/_ia_chat_macro.html:36
-#, fuzzy
 msgid "Live"
-msgstr "Tornar"
+msgstr "Live"
 
 #: app/templates/backoffice.html:2 app/templates/base.html:92
 #: app/templates/base.html:94
@@ -257,28 +252,24 @@ msgid "Borrar"
 msgstr "Tancar"
 
 #: app/templates/backoffice.html:192
-#, fuzzy
 msgid "Todavía no hay ningún tenant."
-msgstr "Encara no tens cap menú."
+msgstr "Encara no hi ha cap tenant."
 
 #: app/templates/backoffice.html:199
-#, fuzzy
 msgid "Nuevo tenant"
-msgstr "Nou menú"
+msgstr "Nou tenant"
 
 #: app/templates/backoffice.html:199
-#, fuzzy
 msgid "Nombre de la organización"
-msgstr "Nom de la tasca"
+msgstr "Nom de l'organització"
 
 #: app/templates/backoffice.html:200
 msgid "Dominio de correo (Stalwart, opcional)"
 msgstr "Domini de correu (Stalwart, opcional)"
 
 #: app/templates/backoffice.html:201
-#, fuzzy
 msgid "Crear tenant"
-msgstr "Crear compte"
+msgstr "Crea tenant"
 
 #: app/templates/backoffice.html:213
 msgid "Rol"
@@ -292,15 +283,13 @@ msgid "Fichaje"
 msgstr "Fitxatge"
 
 #: app/templates/backoffice.html:215
-#, fuzzy
 msgid "Alta"
-msgstr "Anotar"
+msgstr "Alta"
 
 #: app/templates/backoffice.html:226 app/templates/backoffice.html:262
 #: app/templates/backoffice.html:325
-#, fuzzy
 msgid "Sin tenant"
-msgstr "Sense menú"
+msgstr "Sense tenant"
 
 #: app/templates/backoffice.html:238
 #, fuzzy
@@ -312,18 +301,16 @@ msgid "Hacer gestor"
 msgstr "Fer gestor"
 
 #: app/templates/backoffice.html:243
-#, fuzzy
 msgid "Dispositivos"
-msgstr "Els meus dispositius"
+msgstr "Dispositius"
 
 #: app/templates/backoffice.html:246
 msgid "Quitar admin"
 msgstr "Treure admin"
 
 #: app/templates/backoffice.html:246
-#, fuzzy
 msgid "Hacer admin"
-msgstr "Eines"
+msgstr "Fes admin"
 
 #: app/templates/backoffice.html:252
 #, fuzzy
@@ -331,9 +318,8 @@ msgid "Todavía no hay ningún usuario."
 msgstr "Encara no tens cap menú."
 
 #: app/templates/backoffice.html:268
-#, fuzzy
 msgid "Crear usuario"
-msgstr "Crear compte"
+msgstr "Crea usuari"
 
 #: app/templates/backoffice.html:274
 msgid "Avisa a una URL externa cuando pasa algo — ver la"
@@ -407,9 +393,8 @@ msgstr "Aquest usuari no té cap dispositiu mòbil amb sessió activa."
 
 #: app/templates/backoffice_dispositivos.html:20
 #: app/templates/mis_dispositivos.html:18
-#, fuzzy
 msgid "Dispositivo sin nombre"
-msgstr "Els meus dispositius"
+msgstr "Dispositiu sense nom"
 
 #: app/templates/backoffice_dispositivos.html:21
 #: app/templates/mis_dispositivos.html:19
@@ -430,9 +415,8 @@ msgstr "Vols revocar l'accés de «%(nombre)s»? %(email)s haurà d'iniciar sess
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
-#, fuzzy
 msgid "este dispositivo"
-msgstr "Els meus dispositius"
+msgstr "aquest dispositiu"
 
 #: app/templates/backoffice_dispositivos.html:25
 #: app/templates/mis_dispositivos.html:23
@@ -674,9 +658,8 @@ msgid "..."
 msgstr "..."
 
 #: app/templates/base.html:229
-#, fuzzy
 msgid "Deshacer"
-msgstr "Estadístiques"
+msgstr "Desfés"
 
 #: app/templates/base.html:230
 msgid "No se pudo deshacer la acción."
@@ -744,9 +727,8 @@ msgid ""
 msgstr "Preferències, categories i signatura. La gestió de comptes (IMAP/SMTP) és a part."
 
 #: app/templates/correo_ajustes.html:11 app/templates/correo_cuentas.html:11
-#, fuzzy
 msgid "Volver al correo"
-msgstr "Anar a Correu"
+msgstr "Torna al correu"
 
 #: app/templates/correo_ajustes.html:18
 msgid "Preferencias generales"
@@ -853,14 +835,12 @@ msgid "Añade una cuenta primero para poder configurar su firma."
 msgstr "Afegeix un compte primer per poder configurar-ne la signatura."
 
 #: app/templates/correo_ajustes.html:133
-#, fuzzy
 msgid "Cuenta"
-msgstr "Entrar"
+msgstr "Compte"
 
 #: app/templates/correo_ajustes.html:144 app/templates/correo_redactar.html:63
-#, fuzzy
 msgid "Negrita"
-msgstr "Editar"
+msgstr "Negreta"
 
 #: app/templates/correo_ajustes.html:145 app/templates/correo_redactar.html:64
 msgid "Cursiva"
@@ -887,9 +867,8 @@ msgid "Imagen"
 msgstr "Imatge"
 
 #: app/templates/correo_ajustes.html:150 app/templates/correo_redactar.html:72
-#, fuzzy
 msgid "Quitar formato"
-msgstr "Treure de preferits"
+msgstr "Treu el format"
 
 #: app/templates/correo_ajustes.html:158
 msgid "Insertar en correos nuevos"
@@ -904,29 +883,24 @@ msgid "Guardar firma"
 msgstr "Desar signatura"
 
 #: app/templates/correo_bandeja.html:11
-#, fuzzy
 msgid "Nuevo correo"
-msgstr "Correu"
+msgstr "Nou correu"
 
 #: app/templates/correo_bandeja.html:13
-#, fuzzy
 msgid "Aún no tienes ninguna cuenta."
-msgstr "Encara no tens cap menú."
+msgstr "Encara no tens cap compte."
 
 #: app/templates/correo_bandeja.html:35
-#, fuzzy
 msgid "Cuentas"
-msgstr "Crear compte"
+msgstr "Comptes"
 
 #: app/templates/correo_bandeja.html:43
-#, fuzzy
 msgid "Buscar correo..."
-msgstr "Cerca en notes, tasques i correu..."
+msgstr "Cerca correu..."
 
 #: app/templates/correo_bandeja.html:43
-#, fuzzy
 msgid "Buscar correo"
-msgstr "Anar a Correu"
+msgstr "Cerca correu"
 
 #: app/templates/correo_bandeja.html:45
 msgid "No leídos"
@@ -955,36 +929,31 @@ msgstr "No llegit"
 
 #: app/templates/correo_bandeja.html:61 app/templates/correo_bandeja.html:160
 #: app/templates/correo_bandeja.html:162
-#, fuzzy
 msgid "Destacar"
-msgstr "Estadístiques"
+msgstr "Destaca"
 
 #: app/templates/correo_bandeja.html:62 app/templates/correo_bandeja.html:160
-#, fuzzy
 msgid "Quitar destacado"
-msgstr "Treure de preferits"
+msgstr "Treu el destacat"
 
 #: app/templates/correo_bandeja.html:64
 msgid "Mover los mensajes seleccionados a"
 msgstr "Moure els missatges seleccionats a"
 
 #: app/templates/correo_bandeja.html:65 app/templates/correo_bandeja.html:148
-#, fuzzy
 msgid "Mover a…"
-msgstr "Moure avall"
+msgstr "Mou a…"
 
 #: app/templates/correo_bandeja.html:70
-#, fuzzy
 msgid "Mover"
-msgstr "Moure avall"
+msgstr "Mou"
 
 #: app/templates/correo_bandeja.html:73 app/templates/editar_nota.html:18
 #: app/templates/editar_tarea.html:36
 #: app/templates/tarea_outlook_editar.html:72
 #: app/templates/tiquet_editar.html:49
-#, fuzzy
 msgid "Cancelar"
-msgstr "Crear"
+msgstr "Cancel·la"
 
 #: app/templates/correo_bandeja.html:79
 msgid "No hay mensajes. Pulsa \"Sincronizar\" para buscar los nuevos."
@@ -999,9 +968,8 @@ msgid "(sin asunto)"
 msgstr "(sense assumpte)"
 
 #: app/templates/correo_bandeja.html:104 app/templates/correo_cuentas.html:18
-#, fuzzy
 msgid "Aún no has añadido ninguna cuenta de correo."
-msgstr "Connecta un compte de correu"
+msgstr "Encara no has afegit cap compte de correu."
 
 #: app/templates/correo_bandeja.html:104
 msgid "Añade una"
@@ -1020,9 +988,8 @@ msgid "Volver"
 msgstr "Tornar"
 
 #: app/templates/correo_bandeja.html:122
-#, fuzzy
 msgid "Para:"
-msgstr "Paperera"
+msgstr "Per a:"
 
 #: app/templates/correo_bandeja.html:133
 msgid ""
@@ -1043,9 +1010,8 @@ msgid "Fecha de aviso"
 msgstr "Data d'avís"
 
 #: app/templates/correo_bandeja.html:177
-#, fuzzy
 msgid "Categoría del mensaje"
-msgstr "Color del menú"
+msgstr "Categoria del missatge"
 
 #: app/templates/correo_bandeja.html:178
 msgid "Sin categoría"
@@ -1068,9 +1034,8 @@ msgid "Posponer"
 msgstr "Posposar"
 
 #: app/templates/correo_bandeja.html:203 app/templates/correo_bandeja.html:204
-#, fuzzy
 msgid "Imprimir"
-msgstr "Importar"
+msgstr "Imprimeix"
 
 #: app/templates/correo_bandeja.html:211 app/templates/correo_bandeja.html:235
 msgid "Confiar en este remitente"
@@ -1105,9 +1070,8 @@ msgid "Selecciona un mensaje para leerlo"
 msgstr "Selecciona un missatge per llegir-lo"
 
 #: app/templates/correo_cuentas.html:2 app/templates/correo_cuentas.html:6
-#, fuzzy
 msgid "Cuentas de correo"
-msgstr "Connecta un compte de correu"
+msgstr "Comptes de correu"
 
 #: app/templates/correo_cuentas.html:7
 msgid ""
@@ -1202,9 +1166,8 @@ msgid "De"
 msgstr "De"
 
 #: app/templates/correo_redactar.html:38
-#, fuzzy
 msgid "Para"
-msgstr "Tasca"
+msgstr "Per a"
 
 #: app/templates/correo_redactar.html:58
 #: app/templates/tarea_outlook_editar.html:16
@@ -1218,9 +1181,8 @@ msgstr "Llista amb pics"
 #: app/templates/correo_redactar.html:67 app/templates/correo_redactar.html:68
 #: app/templates/tareas_calendario.html:12 app/templates/tareas_lista.html:12
 #: app/templates/tareas_outlook_sync.html:12
-#, fuzzy
 msgid "Lista"
-msgstr "Sistema"
+msgstr "Llista"
 
 #: app/templates/correo_redactar.html:68
 msgid "Lista numerada"
@@ -1235,9 +1197,8 @@ msgid "Descartar"
 msgstr "Descartar"
 
 #: app/templates/editar_nota.html:2 app/templates/editar_nota.html:6
-#, fuzzy
 msgid "Editar nota"
-msgstr "Editar"
+msgstr "Edita la nota"
 
 #: app/templates/editar_nota.html:13
 msgid "Texto"
@@ -1250,15 +1211,13 @@ msgid ""
 msgstr "Vols eliminar aquesta nota? Es mourà a la paperera — la podràs recuperar des d'allà."
 
 #: app/templates/editar_nota.html:25
-#, fuzzy
 msgid "Nota eliminada."
-msgstr "Nota ràpida"
+msgstr "Nota eliminada."
 
 #: app/templates/editar_nota.html:26 app/templates/editar_tarea.html:44
 #: app/templates/tareas_lista.html:109
-#, fuzzy
 msgid "No se pudo eliminar. Inténtalo de nuevo."
-msgstr "Error en comprovar, torna-ho a provar"
+msgstr "No s'ha pogut eliminar. Torna-ho a provar."
 
 #: app/templates/editar_nota.html:30
 msgid "Eliminar nota"
@@ -1272,9 +1231,8 @@ msgstr "Esdeveniment"
 #: app/templates/editar_tarea.html:2 app/templates/editar_tarea.html:6
 #: app/templates/tarea_outlook_editar.html:2
 #: app/templates/tarea_outlook_editar.html:6
-#, fuzzy
 msgid "Editar tarea"
-msgstr "Nova tasca"
+msgstr "Edita la tasca"
 
 #: app/templates/editar_tarea.html:21
 #, fuzzy
@@ -1320,9 +1278,8 @@ msgid "Evento eliminado."
 msgstr "Esdeveniment instantani"
 
 #: app/templates/editar_tarea.html:43 app/templates/tareas_lista.html:108
-#, fuzzy
 msgid "Tarea eliminada."
-msgstr "Tasques finalitzades"
+msgstr "Tasca eliminada."
 
 #: app/templates/editar_tarea.html:48
 msgid "Eliminar evento"
@@ -1330,9 +1287,8 @@ msgstr "Eliminar esdeveniment"
 
 #: app/templates/editar_tarea.html:48
 #: app/templates/tarea_outlook_editar.html:78
-#, fuzzy
 msgid "Eliminar tarea"
-msgstr "Nova tasca"
+msgstr "Elimina la tasca"
 
 #: app/templates/estadisticas.html:7
 msgid "Tiempo dedicado a tareas con duración, por proyecto y por día."
@@ -1354,17 +1310,15 @@ msgstr "Fins a"
 #: app/templates/fichaje_admin_detalle.html:18
 #: app/templates/fichaje_historial.html:23 app/templates/historial.html:23
 #: app/templates/tareas_lista.html:45
-#, fuzzy
 msgid "Filtrar"
-msgstr "Entrar"
+msgstr "Filtra"
 
 #: app/templates/estadisticas.html:15 app/templates/fichaje_admin.html:36
 #: app/templates/fichaje_admin_detalle.html:19
 #: app/templates/fichaje_historial.html:24 app/templates/historial.html:24
 #: app/templates/tareas_lista.html:47
-#, fuzzy
 msgid "Limpiar"
-msgstr "Importar"
+msgstr "Neteja"
 
 #: app/templates/estadisticas.html:19
 msgid "Por proyecto"
@@ -1390,9 +1344,8 @@ msgid "Tareas finalizadas"
 msgstr "Tasques finalitzades"
 
 #: app/templates/estadisticas.html:45
-#, fuzzy
 msgid "Notas"
-msgstr "Nota"
+msgstr "Notes"
 
 #: app/templates/estadisticas.html:65
 msgid "Por día"
@@ -1409,14 +1362,12 @@ msgstr "Es mostren els 20 primers del gràfic; la taula de sota té la resta."
 #: app/templates/estadisticas.html:88
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32
-#, fuzzy
 msgid "Fecha"
-msgstr "Fitxatge"
+msgstr "Data"
 
 #: app/templates/estadisticas.html:90
-#, fuzzy
 msgid "Tiempo total"
-msgstr "Importar"
+msgstr "Temps total"
 
 #: app/templates/fichaje_admin.html:2
 msgid "Administración de fichaje"
@@ -1437,9 +1388,8 @@ msgstr "Tria un tenant per veure les seves hores."
 
 #: app/templates/fichaje_admin.html:14 app/templates/fichaje_datos.html:12
 #: app/templates/fichaje_historial.html:12 app/templates/fichaje_panel.html:12
-#, fuzzy
 msgid "Fichar"
-msgstr "Fitxatge"
+msgstr "Fitxar"
 
 #: app/templates/fichaje_admin.html:15 app/templates/fichaje_datos.html:13
 #: app/templates/fichaje_historial.html:13 app/templates/fichaje_panel.html:13
@@ -1467,14 +1417,12 @@ msgid ""
 msgstr "Aquest tenant no té el CIF/adreça fiscal emplenats al backoffice — no apareixeran als informes exportats."
 
 #: app/templates/fichaje_admin.html:45
-#, fuzzy
 msgid "Exportar CSV"
-msgstr "Importar"
+msgstr "Exporta CSV"
 
 #: app/templates/fichaje_admin.html:46
-#, fuzzy
 msgid "Exportar PDF"
-msgstr "Importar"
+msgstr "Exporta PDF"
 
 #: app/templates/fichaje_admin.html:50
 msgid "Sin fichajes de nadie de este tenant en este periodo."
@@ -1489,23 +1437,20 @@ msgid "Horas trabajadas"
 msgstr "Hores treballades"
 
 #: app/templates/fichaje_admin.html:58
-#, fuzzy
 msgid "Horas en pausa"
-msgstr "En pausa"
+msgstr "Hores en pausa"
 
 #: app/templates/fichaje_admin.html:59
 msgid "Jornada contratada/sem."
 msgstr "Jornada contractada/setm."
 
 #: app/templates/fichaje_admin.html:60
-#, fuzzy
 msgid "Fichajes"
-msgstr "Fitxatge"
+msgstr "Fitxatges"
 
 #: app/templates/fichaje_admin.html:73
-#, fuzzy
 msgid "dentro"
-msgstr "Esdeveniment"
+msgstr "dins"
 
 #: app/templates/fichaje_admin.html:73
 msgid "fuera"
@@ -1526,9 +1471,8 @@ msgstr "Sense fitxatges en aquest període."
 
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32 app/templates/fichaje_panel.html:61
-#, fuzzy
 msgid "Hora"
-msgstr "Normal"
+msgstr "Hora"
 
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32 app/templates/fichaje_panel.html:61
@@ -1624,9 +1568,8 @@ msgid "Tu registro horario, siempre a tu disposición."
 msgstr "El teu registre horari, sempre a la teva disposició."
 
 #: app/templates/fichaje_historial.html:38
-#, fuzzy
 msgid "corrección"
-msgstr "Correu"
+msgstr "correcció"
 
 #: app/templates/fichaje_panel.html:7
 msgid "Registro horario diario (art. 34.9 del Estatuto de los Trabajadores)."
@@ -1656,19 +1599,16 @@ msgid "Fuera de jornada"
 msgstr "Fora de jornada"
 
 #: app/templates/fichaje_panel.html:37
-#, fuzzy
 msgid "Entrada"
-msgstr "Entrar"
+msgstr "Entrada"
 
 #: app/templates/fichaje_panel.html:41
-#, fuzzy
 msgid "Iniciar pausa"
-msgstr "Iniciar"
+msgstr "Inicia la pausa"
 
 #: app/templates/fichaje_panel.html:45
-#, fuzzy
 msgid "Fin de pausa"
-msgstr "En pausa"
+msgstr "Fi de la pausa"
 
 #: app/templates/fichaje_panel.html:49
 msgid "Salida"
@@ -1680,9 +1620,8 @@ msgid "Hoy"
 msgstr "Avui"
 
 #: app/templates/fichaje_panel.html:57
-#, fuzzy
 msgid "Todavía no has fichado nada hoy."
-msgstr "Encara no has registrat res avui."
+msgstr "Encara no has fitxat res avui."
 
 #: app/templates/herramientas.html:7
 msgid "Todo lo que tienes conectado a Guilda Work, en un solo sitio."
@@ -1764,16 +1703,14 @@ msgid "No hay registros para este filtro."
 msgstr "No hi ha registres per a aquest filtre."
 
 #: app/templates/historial.html:73
-#, fuzzy
 msgid "Paginación del histórico"
-msgstr "Cerca a l'històric"
+msgstr "Paginació de l'històric"
 
 #: app/templates/docs/pagina.html:136 app/templates/historial.html:75
 #: app/templates/historial.html:77 app/templates/tareas_calendario.html:19
 #: app/templates/tareas_lista.html:120 app/templates/tareas_lista.html:122
-#, fuzzy
 msgid "Anterior"
-msgstr "Obrir"
+msgstr "Anterior"
 
 #: app/templates/historial.html:79 app/templates/tareas_lista.html:124
 #, python-format
@@ -1787,26 +1724,20 @@ msgid "Siguiente"
 msgstr "Següent"
 
 #: app/templates/historial.html:89
-#, fuzzy
 msgid "Generar informe con IA"
-msgstr "Generar informe amb IA local"
+msgstr "Genera un informe amb IA"
 
 #: app/templates/historial.html:90
-#, fuzzy
-msgid ""
-"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
-"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
-" las claves configuradas en Ajustes del asistente IA)."
-msgstr "Envia les dades filtrades de dalt a un model que corre a la teva màquina (Ollama o LM Studio). No s'envia res a internet."
+msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA)."
+msgstr "Envia les dades filtrades de dalt a un model que s'executa a la teva màquina (Ollama o LM Studio, res no surt a internet) o a OpenRouter al núvol (fa servir les claus configurades a Ajustos de l'assistent IA)."
 
 #: app/templates/historial.html:97
 msgid "Proveedor"
 msgstr "Proveïdor"
 
 #: app/templates/historial.html:101 app/templates/historial.html:130
-#, fuzzy
 msgid "OpenRouter (nube)"
-msgstr "Model (OpenRouter)"
+msgstr "OpenRouter (núvol)"
 
 #: app/templates/historial.html:104
 msgid "Modelo"
@@ -1853,9 +1784,8 @@ msgid "No se pudo contactar con el servidor."
 msgstr "No s'ha pogut contactar amb el servidor."
 
 #: app/templates/ia_ajustes.html:2 app/templates/ia_ajustes.html:6
-#, fuzzy
 msgid "Ajustes del Asistente IA"
-msgstr "Prova l'assistent IA"
+msgstr "Ajustos de l'Assistent IA"
 
 #: app/templates/ia_ajustes.html:7
 msgid "Volver al chat"
@@ -1870,22 +1800,16 @@ msgid "Modelo sugerido"
 msgstr "Model suggerit"
 
 #: app/templates/ia_ajustes.html:16
-#, fuzzy
 msgid "elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo"
-msgstr "triar-ne un de la llista, o utilitzar el camp de sota"
+msgstr "triar-ne un de la llista (només models gratuïts), o fer servir el camp de sota"
 
 #: app/templates/ia_ajustes.html:22
-msgid ""
-"No se ha podido obtener el listado de modelos gratuitos de OpenRouter "
-"ahora mismo — usa el campo de abajo con el id exacto del modelo."
-msgstr ""
+msgid "No se ha podido obtener el listado de modelos gratuitos de OpenRouter ahora mismo — usa el campo de abajo con el id exacto del modelo."
+msgstr "Ara mateix no s'ha pogut obtenir la llista de models gratuïts d'OpenRouter: fes servir el camp de sota amb l'id exacte del model."
 
 #: app/templates/ia_ajustes.html:26
-#, fuzzy
-msgid ""
-"O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de "
-"pago)"
-msgstr "O escriu qualsevol altre id de model d'OpenRouter"
+msgid "O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)"
+msgstr "O escriu qualsevol altre id de model d'OpenRouter (inclou models de pagament)"
 
 #: app/templates/ia_ajustes.html:27
 msgid "ej. mistralai/mistral-large"
@@ -1903,11 +1827,8 @@ msgstr[0] "Ja tens %(num)s clau desada — deixa-ho en blanc per no canviar-les"
 msgstr[1] "Ja tens %(num)s claus desades — deixa-ho en blanc per no canviar-les"
 
 #: app/templates/ia_ajustes.html:33
-msgid ""
-"sk-or-...\n"
-"sk-or-... (clave de reserva, opcional)"
-msgstr "sk-or-...\n"
-"sk-or-... (clau de reserva, opcional)"
+msgid "sk-or-...\\nsk-or-... (clave de reserva, opcional)"
+msgstr "sk-or-...\\nsk-or-... (clau de reserva, opcional)"
 
 #: app/templates/ia_ajustes.html:34
 msgid ""
@@ -2222,29 +2143,24 @@ msgid "Algo puntual que acaba de ocurrir..."
 msgstr "Alguna cosa puntual que acaba de passar..."
 
 #: app/templates/menu.html:52
-#, fuzzy
 msgid "Registrar"
-msgstr "Registra't"
+msgstr "Registrar"
 
 #: app/templates/menu.html:59
-#, fuzzy
 msgid "Tarea con duración"
-msgstr "tasques en curs"
+msgstr "Tasca amb durada"
 
 #: app/templates/menu.html:61
-#, fuzzy
 msgid "Nombre de la tarea a iniciar..."
-msgstr "Nom de la tasca"
+msgstr "Nom de la tasca a iniciar..."
 
 #: app/templates/menu.html:68
-#, fuzzy
 msgid "Gestionar frases favoritas"
-msgstr "Fixar a preferits"
+msgstr "Gestiona les frases preferides"
 
 #: app/templates/menu.html:77 app/templates/tiquet_editar.html:61
-#, fuzzy
 msgid "Quitar"
-msgstr "Editar"
+msgstr "Treure"
 
 #: app/templates/menu.html:83
 msgid ""
@@ -2261,9 +2177,8 @@ msgid "Añadir"
 msgstr "Afegir"
 
 #: app/templates/menu.html:94
-#, fuzzy
 msgid "En curso ahora"
-msgstr "En curs"
+msgstr "En curs ara"
 
 #: app/templates/menu.html:104
 msgid "Lleva mucho tiempo activa — ¿se te olvidó finalizarla?"
@@ -2274,19 +2189,16 @@ msgid "lleva mucho rato"
 msgstr "fa molta estona"
 
 #: app/templates/menu.html:108
-#, fuzzy
 msgid "Reanudar"
-msgstr "Crear"
+msgstr "Represa"
 
 #: app/templates/menu.html:112
-#, fuzzy
 msgid "Pausar"
-msgstr "En pausa"
+msgstr "Pausa"
 
 #: app/templates/menu.html:116
-#, fuzzy
 msgid "Finalizar"
-msgstr "Iniciar"
+msgstr "Finalitza"
 
 #: app/templates/menu.html:127
 #, python-format
@@ -2315,9 +2227,8 @@ msgid "Empieza por lo que te resulte más natural ahora mismo:"
 msgstr "Comença pel que et resulti més natural ara mateix:"
 
 #: app/templates/menu.html:142
-#, fuzzy
 msgid "Escribe tu primera nota"
-msgstr "Crea el teu primer menú"
+msgstr "Escriu la teva primera nota"
 
 #: app/templates/menu.html:143
 msgid "Inicia tu primera tarea con duración"
@@ -2465,9 +2376,8 @@ msgid "Prioridad"
 msgstr "Prioritat"
 
 #: app/templates/tarea_outlook_editar.html:38
-#, fuzzy
 msgid "completado"
-msgstr "Comprovat"
+msgstr "completat"
 
 #: app/templates/tarea_outlook_editar.html:44
 #: app/templates/tareas_lista.html:58
@@ -2493,9 +2403,8 @@ msgid "Completada el %(fecha)s."
 msgstr "Completada el %(fecha)s."
 
 #: app/templates/tareas_calendario.html:2
-#, fuzzy
 msgid "Calendario de tareas"
-msgstr "Amagar aquesta targeta"
+msgstr "Calendari de tasques"
 
 #: app/templates/tareas_calendario.html:7
 msgid ""
@@ -2518,14 +2427,12 @@ msgid "Semana laboral"
 msgstr "Setmana laboral"
 
 #: app/templates/tareas_calendario.html:25
-#, fuzzy
 msgid "Semana"
-msgstr "Sistema"
+msgstr "Setmana"
 
 #: app/templates/tareas_calendario.html:25
-#, fuzzy
 msgid "Mes"
-msgstr "Menús"
+msgstr "Mes"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
@@ -2544,9 +2451,8 @@ msgstr "Dc"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
-#, fuzzy
 msgid "Jue"
-msgstr "Ajustos"
+msgstr "Dj"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
@@ -2560,9 +2466,8 @@ msgstr "Ds"
 
 #: app/templates/tareas_calendario.html:41
 #: app/templates/tareas_calendario.html:87
-#, fuzzy
 msgid "Dom"
-msgstr "Idioma"
+msgstr "Dg"
 
 #: app/templates/tareas_calendario.html:50
 #, python-format
@@ -2576,23 +2481,20 @@ msgid ""
 msgstr "No hi ha tasques aquest dia. Fes clic en una franja horària de sota per crear-ne una."
 
 #: app/templates/tareas_calendario.html:92
-#, fuzzy
 msgid "Sin tareas"
-msgstr "Tasques"
+msgstr "Sense tasques"
 
 #: app/templates/tareas_calendario.html:108
-#, fuzzy
 msgid "Asunto de la tarea..."
-msgstr "Nom de la tasca"
+msgstr "Assumpte de la tasca..."
 
 #: app/templates/tareas_calendario.html:121 app/templates/tareas_lista.html:71
 msgid "Categoría Outlook (opcional)"
 msgstr "Categoria Outlook (opcional)"
 
 #: app/templates/tareas_calendario.html:127
-#, fuzzy
 msgid "Crear tarea"
-msgstr "Nova tasca"
+msgstr "Crea la tasca"
 
 #: app/templates/tareas_lista.html:7
 msgid "Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado."
@@ -2636,9 +2538,8 @@ msgid "¿Eliminar esta tarea? Se moverá a la papelera."
 msgstr "Vols eliminar aquesta tasca? Es mourà a la paperera."
 
 #: app/templates/tareas_lista.html:118
-#, fuzzy
 msgid "Paginación de tareas"
-msgstr "Administració de fitxatge"
+msgstr "Paginació de tasques"
 
 #: app/templates/tareas_outlook_sync.html:2
 msgid "Sincronizar con Outlook"
@@ -2651,9 +2552,8 @@ msgid ""
 msgstr "Importar i exportar amb Microsoft Outlook Classic mitjançant fitxer (.ics / .csv)."
 
 #: app/templates/tareas_outlook_sync.html:23
-#, fuzzy
 msgid "creadas"
-msgstr "Crear"
+msgstr "creades"
 
 #: app/templates/tareas_outlook_sync.html:24
 msgid "actualizadas"
@@ -2905,9 +2805,8 @@ msgid "GUILDA WORK DEVELOPERS"
 msgstr "GUILDA WORK DEVELOPERS"
 
 #: app/templates/docs/pagina.html:89
-#, fuzzy
 msgid "Copiar"
-msgstr "Iniciar"
+msgstr "Copia"
 
 #: app/templates/docs/pagina.html:155
 msgid "EN ESTA PÁGINA"
@@ -2932,3 +2831,1510 @@ msgstr "Nou títol de la conversa"
 #: app/templates/ia_asistente.html
 msgid "¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer."
 msgstr "Vols eliminar aquesta conversa i tots els seus missatges? No es pot desfer."
+
+msgid "No iniciada"
+msgstr "No iniciada"
+
+msgid "En progreso"
+msgstr "En curs"
+
+msgid "Completada"
+msgstr "Completada"
+
+msgid "Esperando a otros"
+msgstr "Esperant altres"
+
+msgid "Aplazada"
+msgstr "Ajornada"
+
+msgid "Baja"
+msgstr "Baixa"
+
+msgid "enero"
+msgstr "gener"
+
+msgid "febrero"
+msgstr "febrer"
+
+msgid "marzo"
+msgstr "març"
+
+msgid "abril"
+msgstr "abril"
+
+msgid "mayo"
+msgstr "maig"
+
+msgid "junio"
+msgstr "juny"
+
+msgid "julio"
+msgstr "juliol"
+
+msgid "agosto"
+msgstr "agost"
+
+msgid "septiembre"
+msgstr "setembre"
+
+msgid "octubre"
+msgstr "octubre"
+
+msgid "noviembre"
+msgstr "novembre"
+
+msgid "diciembre"
+msgstr "desembre"
+
+msgid "Lunes"
+msgstr "Dilluns"
+
+msgid "Martes"
+msgstr "Dimarts"
+
+msgid "Miércoles"
+msgstr "Dimecres"
+
+msgid "Jueves"
+msgstr "Dijous"
+
+msgid "Viernes"
+msgstr "Divendres"
+
+msgid "Sábado"
+msgstr "Dissabte"
+
+msgid "Domingo"
+msgstr "Diumenge"
+
+msgid "Cada día"
+msgstr "Cada dia"
+
+msgid "Cada día laborable (lunes a viernes)"
+msgstr "Cada dia laborable (de dilluns a divendres)"
+
+msgid "Cada semana"
+msgstr "Cada setmana"
+
+msgid "Cada mes"
+msgstr "Cada mes"
+
+msgid "Cada trimestre (enero, abril, julio, octubre)"
+msgstr "Cada trimestre (gener, abril, juliol, octubre)"
+
+msgid "Cada año"
+msgstr "Cada any"
+
+msgid "tareas para hoy"
+msgstr "tasques per avui"
+
+msgid "vencimientos próximos"
+msgstr "venciments propers"
+
+msgid "Icono"
+msgstr "Icona"
+
+msgid "Tareas pendientes"
+msgstr "Tasques pendents"
+
+msgid "Ver todas"
+msgstr "Veure-les totes"
+
+msgid "Cliente"
+msgstr "Client"
+
+msgid "Sin cliente"
+msgstr "Sense client"
+
+msgid "Asignar a"
+msgstr "Assigna a"
+
+msgid "Sin asignar"
+msgstr "Sense assignar"
+
+msgid "Subtareas"
+msgstr "Subtasques"
+
+msgid "Marcar o desmarcar"
+msgstr "Marca o desmarca"
+
+msgid "Nueva subtarea"
+msgstr "Nova subtasca"
+
+msgid "Añadir una subtarea..."
+msgstr "Afegeix una subtasca..."
+
+msgid "Tiempo dedicado"
+msgstr "Temps dedicat"
+
+msgid "Registrado hasta ahora:"
+msgstr "Registrat fins ara:"
+
+msgid "Todavía no has registrado tiempo en esta tarea."
+msgstr "Encara no has registrat temps en aquesta tasca."
+
+msgid "Hay un cronómetro en marcha: páralo desde la lista de tareas."
+msgstr "Hi ha un cronòmetre en marxa: atura'l des de la llista de tasques."
+
+msgid "Proyecto en el que registrar el tiempo"
+msgstr "Projecte on registrar el temps"
+
+msgid "Proyecto..."
+msgstr "Projecte..."
+
+msgid "Iniciar el cronómetro"
+msgstr "Inicia el cronòmetre"
+
+msgid "Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado."
+msgstr "Les teves tasques amb venciment, prioritat i estat, amb cronòmetre opcional per registrar el temps dedicat."
+
+msgid "Mostrar"
+msgstr "Mostra"
+
+msgid "Mías y asignadas a mí"
+msgstr "Meves i assignades a mi"
+
+msgid "Solo las mías"
+msgstr "Només les meves"
+
+msgid "Asignadas a mí"
+msgstr "Assignades a mi"
+
+msgid "Iniciar cronómetro"
+msgstr "Inicia el cronòmetre"
+
+msgid "Elegir archivo"
+msgstr "Tria un fitxer"
+
+msgid "Ningún archivo elegido"
+msgstr "Cap fitxer triat"
+
+msgid "Tareas recurrentes"
+msgstr "Tasques recurrents"
+
+msgid "Reglas que generan una tarea nueva automáticamente: cada día, semana, mes, trimestre o año."
+msgstr "Regles que generen una tasca nova automàticament: cada dia, setmana, mes, trimestre o any."
+
+msgid "Nueva regla"
+msgstr "Nova regla"
+
+msgid "Asunto de la tarea"
+msgstr "Assumpte de la tasca"
+
+msgid "Periodicidad"
+msgstr "Periodicitat"
+
+msgid "Día de la semana (si es semanal)"
+msgstr "Dia de la setmana (si és setmanal)"
+
+msgid "Día del mes (si es mensual, trimestral o anual)"
+msgstr "Dia del mes (si és mensual, trimestral o anual)"
+
+msgid "Mes (si es anual)"
+msgstr "Mes (si és anual)"
+
+msgid "Solo se usa el día o el mes que corresponde a la periodicidad elegida; en cada día y cada día laborable no hace falta ninguno."
+msgstr "Només s'utilitza el dia o el mes que correspon a la periodicitat triada; en cada dia i cada dia laborable no cal cap."
+
+msgid "Crear regla"
+msgstr "Crea la regla"
+
+msgid "Activa"
+msgstr "Activa"
+
+msgid "Pausada"
+msgstr "En pausa"
+
+msgid "Reactivar"
+msgstr "Reactiva"
+
+msgid "Todavía no tienes ninguna regla de tarea recurrente."
+msgstr "Encara no tens cap regla de tasca recurrent."
+
+msgid "Correo de origen"
+msgstr "Correu d'origen"
+
+msgid "Asignada"
+msgstr "Assignada"
+
+#, python-format
+msgid "De %(quien)s"
+msgstr "De %(quien)s"
+
+#, python-format
+msgid "Para %(quien)s"
+msgstr "Per a %(quien)s"
+
+msgid "Detener el cronómetro"
+msgstr "Atura el cronòmetre"
+
+msgid "Cronómetro"
+msgstr "Cronòmetre"
+
+msgid "Tiempo registrado"
+msgstr "Temps registrat"
+
+msgid "Mi día"
+msgstr "El meu dia"
+
+msgid "Tablero"
+msgstr "Kanban"
+
+msgid "Recurrentes"
+msgstr "Recurrents"
+
+msgid "Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas en marcha y lo que te han asignado."
+msgstr "El que has de mirar avui: el que ha vençut, el que venç avui, el que portes en marxa i el que t'han assignat."
+
+msgid "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo."
+msgstr "No tens res pendent per a avui. Bon moment per avançar feina."
+
+msgid "Vencidas"
+msgstr "Vençudes"
+
+msgid "Vencen hoy"
+msgstr "Venceixen avui"
+
+msgid "Tablero de tareas"
+msgstr "Tauler de tasques"
+
+msgid "Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna."
+msgstr "Les teves tasques per estat. Fes servir el selector de cada targeta per moure-la de columna."
+
+msgid "Mover a"
+msgstr "Mou a"
+
+msgid "Nada aquí"
+msgstr "Res aquí"
+
+msgid "opcional"
+msgstr "opcional"
+
+msgid "Un título corto para encontrarla fácilmente"
+msgstr "Un títol curt per trobar-la fàcilment"
+
+msgid "Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con [texto](https://...) y direcciones web."
+msgstr "Format: **negreta**, *cursiva*, llistes amb \"-\" o \"1.\", enllaços amb [text](https://...) i adreces web."
+
+msgid "Fijar esta nota arriba en su proyecto"
+msgstr "Fixa aquesta nota a dalt en el seu projecte"
+
+msgid "Archivos adjuntos"
+msgstr "Fitxers adjunts"
+
+msgid "Archivos para adjuntar"
+msgstr "Fitxers per adjuntar"
+
+msgid "Adjuntar"
+msgstr "Adjunta"
+
+#, python-format
+msgid "Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota."
+msgstr "Imatges, PDF o text; fins a 5 MB cadascun i %(num)s per nota."
+
+#, python-format
+msgid "Has llegado al máximo de %(num)s adjuntos en esta nota."
+msgstr "Has arribat al màxim de %(num)s adjunts en aquesta nota."
+
+msgid "Fijada"
+msgstr "Fixada"
+
+msgid "Notas fijadas"
+msgstr "Notes fixades"
+
+msgid "Resumen del periodo"
+msgstr "Resum del període"
+
+msgid "Entradas"
+msgstr "Entrades"
+
+msgid "Nuevo mensaje"
+msgstr "Nou missatge"
+
+msgid "Editar borrador"
+msgstr "Edita l'esborrany"
+
+msgid "Correo de {remitente}"
+msgstr "Correu de {remitente}"
+
+msgid "Tarea creada."
+msgstr "Tasca creada."
+
+msgid "De: {remitente}"
+msgstr "De: {remitente}"
+
+msgid "Nota guardada."
+msgstr "Nota desada."
+
+msgid "{n} tareas creadas."
+msgstr "{n} tasques creades."
+
+msgid "Borradores"
+msgstr "Esborranys"
+
+msgid "Filtros"
+msgstr "Filtres"
+
+msgid "Con adjuntos"
+msgstr "Amb adjunts"
+
+msgid "Destacados"
+msgstr "Destacats"
+
+msgid "Aplicar"
+msgstr "Aplica"
+
+msgid "Quitar filtros"
+msgstr "Treu els filtres"
+
+msgid "Categoría actualizada."
+msgstr "Categoria actualitzada."
+
+msgid "Cliente vinculado."
+msgstr "Client vinculat."
+
+msgid "Cliente fiscal relacionado"
+msgstr "Client fiscal relacionat"
+
+msgid "Sin cliente vinculado"
+msgstr "Sense client vinculat"
+
+msgid "Crear una tarea con este correo"
+msgstr "Crea una tasca amb aquest correu"
+
+msgid "Guardar este correo como nota"
+msgstr "Desa aquest correu com a nota"
+
+msgid "Guardar nota"
+msgstr "Desa nota"
+
+msgid "Resumir con IA"
+msgstr "Resumeix amb IA"
+
+msgid "Resumir"
+msgstr "Resumeix"
+
+msgid "Proponer una respuesta con IA"
+msgstr "Proposa una resposta amb IA"
+
+msgid "Proponer respuesta"
+msgstr "Proposa resposta"
+
+msgid "Extraer tareas con IA"
+msgstr "Extreu tasques amb IA"
+
+msgid "Extraer tareas"
+msgstr "Extreu tasques"
+
+msgid "Pensando…"
+msgstr "Pensant…"
+
+msgid "No se ha podido completar la acción."
+msgstr "No s'ha pogut completar l'acció."
+
+msgid "Usar como borrador"
+msgstr "Usa com a esborrany"
+
+msgid "Crear las marcadas"
+msgstr "Crea les marcades"
+
+msgid "No se han encontrado tareas en este correo."
+msgstr "No s'han trobat tasques en aquest correu."
+
+msgid "El contenido de este correo se envía al proveedor de IA que tienes configurado."
+msgstr "El contingut d'aquest correu s'envia al proveïdor d'IA que tens configurat."
+
+msgid "Ver a tamaño completo"
+msgstr "Veure a mida completa"
+
+msgid "Plantillas de respuesta"
+msgstr "Plantilles de resposta"
+
+msgid "Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas."
+msgstr "Disponibles des del selector de l'editor en redactar o respondre: s'insereixen al cos i mai s'envien soles."
+
+#, python-format
+msgid "¿Eliminar la plantilla «%(nombre)s»?"
+msgstr "Vols eliminar la plantilla «%(nombre)s»?"
+
+msgid "Nombre (ej. Recordatorio de documentación)"
+msgstr "Nom (p. ex. Recordatori de documentació)"
+
+msgid "Asunto (opcional)"
+msgstr "Assumpte (opcional)"
+
+msgid "Texto de la plantilla..."
+msgstr "Text de la plantilla..."
+
+msgid "Añadir plantilla"
+msgstr "Afegeix plantilla"
+
+msgid "Reglas avanzadas"
+msgstr "Regles avançades"
+
+msgid "Se aplican a los correos nuevos que cumplan todas las condiciones indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, destacar y vincular a un cliente fiscal."
+msgstr "S'apliquen als correus nous que compleixin totes les condicions indicades (remitent i/o assumpte). Poden categoritzar, marcar com a llegit, destacar i vincular a un client fiscal."
+
+msgid "Remitente"
+msgstr "Remitent"
+
+msgid "Asunto contiene"
+msgstr "L'assumpte conté"
+
+msgid "marcar como leído"
+msgstr "marcar com a llegit"
+
+msgid "destacar"
+msgstr "destacar"
+
+msgid "Remitente: email@ejemplo.com, @dominio.com o texto"
+msgstr "Remitent: email@exemple.com, @domini.com o text"
+
+msgid "El asunto contiene…"
+msgstr "L'assumpte conté…"
+
+msgid "Sin cliente fiscal"
+msgstr "Sense client fiscal"
+
+msgid "Vuelve a adjuntar los archivos: no se conservan al deshacer el envío."
+msgstr "Torna a adjuntar els fitxers: no es conserven en desfer l'enviament."
+
+msgid "Elige la fecha y la hora del envío programado."
+msgstr "Tria la data i l'hora de l'enviament programat."
+
+msgid "La hora del envío programado tiene que ser futura."
+msgstr "L'hora de l'enviament programat ha de ser futura."
+
+msgid "Ya no se puede deshacer: el correo ya se ha enviado."
+msgstr "Ja no es pot desfer: el correu ja s'ha enviat."
+
+msgid "Enviado."
+msgstr "Enviat."
+
+msgid "Envío programado para el"
+msgstr "Enviament programat per al"
+
+msgid "Enviando…"
+msgstr "Enviant…"
+
+msgid "Cancelar envío"
+msgstr "Cancel·la l'enviament"
+
+msgid "Programados"
+msgstr "Programats"
+
+msgid "Mensajes en esta conversación"
+msgstr "Missatges en aquesta conversa"
+
+msgid "Deshacer envío"
+msgstr "Desfer enviament"
+
+msgid "Enviar al momento"
+msgstr "Envia a l'instant"
+
+msgid "10 segundos para deshacer"
+msgstr "10 segons per desfer"
+
+msgid "30 segundos para deshacer"
+msgstr "30 segons per desfer"
+
+msgid "Insertar plantilla"
+msgstr "Insereix plantilla"
+
+msgid "Insertar plantilla..."
+msgstr "Insereix plantilla..."
+
+msgid "Elegir archivos"
+msgstr "Tria fitxers"
+
+msgid "Programar…"
+msgstr "Programa…"
+
+msgid "Enviar el"
+msgstr "Envia el"
+
+msgid "Programar envío"
+msgstr "Programa l'enviament"
+
+msgid "Guardar borrador"
+msgstr "Desa l'esborrany"
+
+msgid "Borrador guardado."
+msgstr "Esborrany desat."
+
+msgid "No se pudo guardar el borrador."
+msgstr "No s'ha pogut desar l'esborrany."
+
+msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
+msgstr "Correus que s'enviaran sols a l'hora indicada. Si en cancel·les un, torna als teus esborranys."
+
+msgid "No tienes ningún envío programado."
+msgstr "No tens cap enviament programat."
+
+msgid "¿Cancelar este envío? Volverá a tus borradores."
+msgstr "Vols cancel·lar aquest enviament? Tornarà als teus esborranys."
+
+#, python-format
+msgid "Token creado: «%(nombre)s»"
+msgstr "Token creat: «%(nombre)s»"
+
+msgid "Cópialo ahora: no se volverá a mostrar."
+msgstr "Copia'l ara: no es tornarà a mostrar."
+
+msgid "Crear un token de API"
+msgstr "Crea un token d'API"
+
+msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
+msgstr "Per a integracions i scripts (capçalera Authorization: Bearer). Un token de només lectura només pot consultar dades."
+
+msgid "Nombre (ej. Panel de Grafana)"
+msgstr "Nom (p. ex. Tauler de Grafana)"
+
+msgid "Permisos"
+msgstr "Permisos"
+
+msgid "Acceso completo"
+msgstr "Accés complet"
+
+msgid "Solo lectura"
+msgstr "Només lectura"
+
+msgid "Crear token"
+msgstr "Crea el token"
+
+msgid "Token de API"
+msgstr "Token d'API"
+
+msgid "Resumen de mi día"
+msgstr "Resum del meu dia"
+
+msgid "Hazme un resumen de mi día: tareas para hoy y atrasadas, vencimientos fiscales próximos y correos importantes sin leer."
+msgstr "Fes-me un resum del meu dia: tasques per avui i endarrerides, venciments fiscals propers i correus importants sense llegir."
+
+msgid "¿Qué vence esta semana?"
+msgstr "Què venç aquesta setmana?"
+
+msgid "¿Qué vencimientos fiscales y tareas vencen esta semana?"
+msgstr "Quins venciments fiscals i tasques vencen aquesta setmana?"
+
+msgid "Correos importantes sin leer"
+msgstr "Correus importants sense llegir"
+
+msgid "Muéstrame los correos sin leer que parezcan importantes y resúmelos."
+msgstr "Mostra'm els correus sense llegir que semblin importants i resumeix-los."
+
+msgid "Tareas atrasadas"
+msgstr "Tasques endarrerides"
+
+msgid "Lista mis tareas atrasadas ordenadas por prioridad."
+msgstr "Llista les meves tasques endarrerides ordenades per prioritat."
+
+msgid "Notas de hoy"
+msgstr "Notes d'avui"
+
+msgid "Resume las notas que he escrito hoy."
+msgstr "Resumeix les notes que he escrit avui."
+
+msgid "Clientes con vencimientos"
+msgstr "Clients amb venciments"
+
+msgid "¿Qué clientes tienen vencimientos fiscales pendientes esta semana?"
+msgstr "Quins clients tenen venciments fiscals pendents aquesta setmana?"
+
+msgid "Modo solo lectura: el asistente solo puede consultar datos, nunca crear, editar ni borrar"
+msgstr "Mode de només lectura: l'assistent només pot consultar dades, mai crear, editar ni esborrar"
+
+msgid "Atajos de prompts"
+msgstr "Dreceres de prompts"
+
+msgid "Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios."
+msgstr "Apareixen sobre el quadre de text del xat. Amb un clic s'envia el text. Màxim 20 de propis."
+
+msgid "¿Eliminar este atajo?"
+msgstr "Vols eliminar aquesta drecera?"
+
+msgid "Título corto"
+msgstr "Títol curt"
+
+msgid "Texto que se enviará al asistente"
+msgstr "Text que s'enviarà a l'assistent"
+
+msgid "Añadir atajo"
+msgstr "Afegeix drecera"
+
+msgid "Atajos"
+msgstr "Dreceres"
+
+msgid "Adjuntar archivo de texto/CSV"
+msgstr "Adjunta un fitxer de text/CSV"
+
+msgid "Horas de esta semana"
+msgstr "Hores d'aquesta setmana"
+
+msgid "Esta semana"
+msgstr "Aquesta setmana"
+
+#, python-format
+msgid "%(hechas)s de %(contratadas)s"
+msgstr "%(hechas)s de %(contratadas)s"
+
+msgid "indica tu jornada semanal en «Mis datos» para compararla"
+msgstr "indica la teva jornada setmanal a «Les meves dades» per comparar-la"
+
+msgid "incluye la jornada en curso"
+msgstr "inclou la jornada en curs"
+
+msgid "Exportar JSON (detalle + hash)"
+msgstr "Exporta JSON (detall + hash)"
+
+msgid "Verificar integridad"
+msgstr "Verifica la integritat"
+
+msgid "Diferencia"
+msgstr "Diferència"
+
+msgid "llevas"
+msgstr "portes"
+
+msgid "en pausa"
+msgstr "en pausa"
+
+msgid "Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez."
+msgstr "Aquesta gestoria registra la ubicació en fitxar. El teu navegador demanarà permís la primera vegada."
+
+#, python-format
+msgid "%(h)s h trabajadas"
+msgstr "%(h)s h treballades"
+
+#, python-format
+msgid "%(h)s h pausa"
+msgstr "%(h)s h de pausa"
+
+msgid "Inicio de pausa"
+msgstr "Inici de pausa"
+
+msgid "Documentos"
+msgstr "Documents"
+
+msgid "Volver a tu expediente"
+msgstr "Torna al teu expedient"
+
+msgid "Imágenes o PDF, hasta 8MB cada uno y 10 archivos a la vez"
+msgstr "Imatges o PDF, fins a 8 MB cadascun i 10 fitxers alhora"
+
+msgid "Subir"
+msgstr "Puja"
+
+msgid "Todavía no hay ningún documento."
+msgstr "Encara no hi ha cap document."
+
+msgid "Justificante oficial"
+msgstr "Justificant oficial"
+
+msgid "Constancia de presentación"
+msgstr "Constància de presentació"
+
+msgid "Editar vencimiento"
+msgstr "Edita el venciment"
+
+msgid "Periodo"
+msgstr "Període"
+
+msgid "Fecha límite"
+msgstr "Data límit"
+
+msgid "Asignado a"
+msgstr "Assignat a"
+
+msgid "Documento solicitado al cliente (opcional)"
+msgstr "Document sol·licitat al client (opcional)"
+
+msgid "Ej.: Factura de compra del trimestre"
+msgstr "P. ex.: Factura de compra del trimestre"
+
+msgid "Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal."
+msgstr "Si el client té correu a la fitxa, en desar un text nou aquí se'l avisa per correu perquè el pugi des del portal."
+
+msgid "Marcar como presentado y facturar (opcional)"
+msgstr "Marca com a presentat i factura (opcional)"
+
+msgid "Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura."
+msgstr "Deixa el concepte i l'import en blanc si només vols marcar-lo com a presentat, sense generar factura."
+
+msgid "Concepto"
+msgstr "Concepte"
+
+#, python-format
+msgid "ej. Presentación modelo %(modelo)s %(periodo)s"
+msgstr "p. ex. Presentació model %(modelo)s %(periodo)s"
+
+msgid "Importe (€)"
+msgstr "Import (€)"
+
+msgid "Justificante oficial (opcional)"
+msgstr "Justificant oficial (opcional)"
+
+msgid "Marcar presentado"
+msgstr "Marca com a presentat"
+
+msgid "¿Eliminar este vencimiento? Se moverá a la papelera."
+msgstr "Vols eliminar aquest venciment? Anirà a la paperera."
+
+msgid "Eliminar vencimiento"
+msgstr "Elimina el venciment"
+
+msgid "Documentos del cliente"
+msgstr "Documents del client"
+
+msgid "Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal."
+msgstr "El que puja el client des del portal i, de part teva, el justificant oficial i la constància de presentació: el client els veu i els descarrega al seu portal."
+
+msgid "Subir justificante oficial"
+msgstr "Puja el justificant oficial"
+
+msgid "Generar constancia de presentación (PDF)"
+msgstr "Genera la constància de presentació (PDF)"
+
+msgid "No sustituye al justificante oficial."
+msgstr "No substitueix el justificant oficial."
+
+msgid "El cliente todavía no ha subido ningún documento."
+msgstr "El client encara no ha pujat cap document."
+
+msgid "Mensajes con el cliente"
+msgstr "Missatges amb el client"
+
+msgid "Todavía no hay mensajes en esta conversación."
+msgstr "Encara no hi ha missatges en aquesta conversa."
+
+msgid "Equipo"
+msgstr "Equip"
+
+msgid "Cobrar por Stripe"
+msgstr "Cobra per Stripe"
+
+msgid "Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché."
+msgstr "Genera un enllaç de pagament i l'envia al client per correu. L'import es llegeix ara mateix, mai es desa a la memòria cau."
+
+msgid "Enviar enlace de pago"
+msgstr "Envia l'enllaç de pagament"
+
+msgid "Firma electrónica"
+msgstr "Signatura electrònica"
+
+msgid "Ya se ha enviado un documento a firmar al cliente para este vencimiento."
+msgstr "Ja s'ha enviat un document a signar al client per a aquest venciment."
+
+msgid "Subir PDF y enviar a firmar al cliente"
+msgstr "Puja un PDF i envia'l a signar al client"
+
+msgid "Elegir PDF"
+msgstr "Tria un PDF"
+
+msgid "Enviar a firma"
+msgstr "Envia a signar"
+
+msgid "Editar cliente fiscal"
+msgstr "Edita el client fiscal"
+
+msgid "Nombre o razón social"
+msgstr "Nom o raó social"
+
+msgid "NIF/CIF"
+msgstr "NIF/CIF"
+
+msgid "Email del cliente (portal)"
+msgstr "Correu del client (portal)"
+
+msgid "Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo)."
+msgstr "Si hi poses un correu, el client podrà entrar al portal per veure els seus venciments i pujar documents, sense compte ni contrasenya (enllaç d'accés per correu)."
+
+msgid "País de tributación"
+msgstr "País de tributació"
+
+msgid "España"
+msgstr "Espanya"
+
+msgid "Otro país (próximamente)"
+msgstr "Un altre país (pròximament)"
+
+msgid "Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada."
+msgstr "Encara no hi ha calendari fiscal configurat per a aquest país: digues-ho i l'afegim. Mentrestant, els venciments d'aquest client s'han de crear a mà i la generació automàtica queda desactivada."
+
+msgid "Modelos que presenta este cliente"
+msgstr "Models que presenta aquest client"
+
+msgid "Sin modelos disponibles para el país de este cliente."
+msgstr "Sense models disponibles per al país d'aquest client."
+
+msgid "Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática."
+msgstr "S'utilitzen com a selecció per defecte en generar venciments, i són els que es generen sols si actives la generació automàtica."
+
+msgid "Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)"
+msgstr "Genera els venciments automàticament cada període (cal almenys un model marcat a dalt)"
+
+msgid "Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)"
+msgstr "Envia al client recordatoris per correu 7 i 2 dies abans de cada venciment (cal el seu correu)"
+
+msgid "¿Eliminar este cliente fiscal? Se moverá a la papelera."
+msgstr "Vols eliminar aquest client fiscal? Anirà a la paperera."
+
+msgid "Eliminar cliente"
+msgstr "Elimina el client"
+
+msgid "Faltan datos: nombre y email son obligatorios."
+msgstr "Falten dades: el nom i el correu són obligatoris."
+
+msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo."
+msgstr "No s'ha pogut comprovar el captcha. Resol-lo de nou."
+
+#, python-format
+msgid "Puedes subir hasta %(n)s archivos a la vez."
+msgstr "Pots pujar fins a %(n)s fitxers alhora."
+
+msgid "Archivo no válido: solo imágenes o PDF, hasta 8MB."
+msgstr "Fitxer no vàlid: només imatges o PDF, fins a 8 MB."
+
+msgid "Subido."
+msgstr "Pujat."
+
+msgid "Nuevo mensaje del cliente"
+msgstr "Nou missatge del client"
+
+msgid "Pendiente"
+msgstr "Pendent"
+
+msgid "Presentado"
+msgstr "Presentat"
+
+msgid "Fuera de plazo"
+msgstr "Fora de termini"
+
+msgid "Enero"
+msgstr "Gener"
+
+msgid "Febrero"
+msgstr "Febrer"
+
+msgid "Marzo"
+msgstr "Març"
+
+msgid "Abril"
+msgstr "Abril"
+
+msgid "Mayo"
+msgstr "Maig"
+
+msgid "Junio"
+msgstr "Juny"
+
+msgid "Julio"
+msgstr "Juliol"
+
+msgid "Agosto"
+msgstr "Agost"
+
+msgid "Septiembre"
+msgstr "Setembre"
+
+msgid "Octubre"
+msgstr "Octubre"
+
+msgid "Noviembre"
+msgstr "Novembre"
+
+msgid "Diciembre"
+msgstr "Desembre"
+
+msgid "L"
+msgstr "Dl"
+
+msgid "M"
+msgstr "Dt"
+
+msgid "X"
+msgstr "Dc"
+
+msgid "J"
+msgstr "Dj"
+
+msgid "V"
+msgstr "Dv"
+
+msgid "S"
+msgstr "Ds"
+
+msgid "D"
+msgstr "Dg"
+
+msgid "NIF"
+msgstr "NIF"
+
+msgid "Marcado como presentado el"
+msgstr "Marcat com a presentat el"
+
+msgid "Adjunto en el portal"
+msgstr "Adjuntat al portal"
+
+msgid "Pendiente de adjuntar"
+msgstr "Pendent d'adjuntar"
+
+#, python-format
+msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
+msgstr "Aquest document és una constància interna emesa per %(gestoria)s i no substitueix el justificant oficial de presentació emès per l'administració tributària."
+
+msgid "Salud del sistema"
+msgstr "Salut del sistema"
+
+msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr "Còpies de seguretat, correu, tasques periòdiques, integracions i servidor d'un cop d'ull. Un vigilant ho revisa cada hora i avisa per correu del que estigui en vermell (com a molt una vegada al dia per motiu)."
+
+msgid "Todo en orden"
+msgstr "Tot en ordre"
+
+msgid "Atención"
+msgstr "Atenció"
+
+msgid "Hay algo en rojo"
+msgstr "Hi ha alguna cosa en vermell"
+
+msgid "Sin datos"
+msgstr "Sense dades"
+
+msgid "Copias de seguridad"
+msgstr "Còpies de seguretat"
+
+msgid "Integraciones"
+msgstr "Integracions"
+
+msgid "Tareas periódicas"
+msgstr "Tasques periòdiques"
+
+msgid "Correcto"
+msgstr "Correcte"
+
+msgid "Rojo"
+msgstr "Vermell"
+
+msgid "Salud"
+msgstr "Salut"
+
+msgid "Plataforma"
+msgstr "Plataforma"
+
+msgid "Catálogo de herramientas"
+msgstr "Catàleg d'eines"
+
+msgid "Analítica"
+msgstr "Analítica"
+
+msgid "Resumen"
+msgstr "Resum"
+
+msgid "Estado del sistema"
+msgstr "Estat del sistema"
+
+msgid "Diagnóstico"
+msgstr "Diagnòstic"
+
+msgid "Auditoría"
+msgstr "Auditoria"
+
+msgid "Contenido"
+msgstr "Contingut"
+
+msgid "Leads"
+msgstr "Leads"
+
+msgid "Solicitudes portal"
+msgstr "Sol·licituds del portal"
+
+msgid "Webhooks"
+msgstr "Webhooks"
+
+msgid "Ingresos"
+msgstr "Ingressos"
+
+msgid "Planes y extras"
+msgstr "Plans i extres"
+
+msgid "tarea en curso"
+msgid_plural "tareas en curso"
+msgstr[0] "tasca en curs"
+msgstr[1] "tasques en curs"
+
+msgid "tarea para hoy"
+msgid_plural "tareas para hoy"
+msgstr[0] "tasca per avui"
+msgstr[1] "tasques per avui"
+
+msgid "nota hoy"
+msgid_plural "notas hoy"
+msgstr[0] "nota avui"
+msgstr[1] "notes avui"
+
+msgid "correo sin leer"
+msgid_plural "correos sin leer"
+msgstr[0] "correu sense llegir"
+msgstr[1] "correus sense llegir"
+
+msgid "vencimiento próximo"
+msgid_plural "vencimientos próximos"
+msgstr[0] "venciment proper"
+msgstr[1] "venciments propers"
+
+msgid "Sincronización de correo"
+msgstr "Sincronització del correu"
+
+msgid "Cola de envío de correo"
+msgstr "Cua d'enviament de correu"
+
+msgid "Recordatorios de vencimientos (equipo)"
+msgstr "Recordatoris de venciments (equip)"
+
+msgid "Recordatorios del portal (clientes)"
+msgstr "Recordatoris del portal (clients)"
+
+msgid "Avisos de fichaje"
+msgstr "Avisos de fitxatge"
+
+msgid "Resumen semanal de IA"
+msgstr "Resum setmanal d'IA"
+
+msgid "Vigilante de salud"
+msgstr "Vigilant de salut"
+
+msgid "Sin datos todavía (no se ha ejecutado desde el último arranque)."
+msgstr "Encara sense dades (no s'ha executat des de l'últim arrencada)."
+
+#, python-format
+msgid "Último intento con error hace %(hace)s: %(detalle)s"
+msgstr "Últim intent amb error fa %(hace)s: %(detalle)s"
+
+msgid "sin detalle"
+msgstr "sense detall"
+
+#, python-format
+msgid "Última pasada correcta hace %(hace)s."
+msgstr "Última passada correcta fa %(hace)s."
+
+msgid "Última copia de seguridad"
+msgstr "Última còpia de seguretat"
+
+msgid "No hay ninguna copia."
+msgstr "No hi ha cap còpia."
+
+#, python-format
+msgid "%(nombre)s — hace %(hace)s (%(mb)s MB)."
+msgstr "%(nombre)s — fa %(hace)s (%(mb)s MB)."
+
+msgid "Espacio libre en disco"
+msgstr "Espai lliure al disc"
+
+#, python-format
+msgid "%(libre)s %% libre (%(gb)s GB de %(total)s GB)."
+msgstr "%(libre)s %% lliure (%(gb)s GB de %(total)s GB)."
+
+msgid "Tamaño de la base de datos"
+msgstr "Mida de la base de dades"
+
+#, python-format
+msgid "%(mb)s MB."
+msgstr "%(mb)s MB."
+
+#, python-format
+msgid "Correo: %(nombre)s (%(usuario)s)"
+msgstr "Correu: %(nombre)s (%(usuario)s)"
+
+#, python-format
+msgid "Error de sincronización: %(error)s"
+msgstr "Error de sincronització: %(error)s"
+
+msgid "Todavía no se ha sincronizado."
+msgstr "Encara no s'ha sincronitzat."
+
+#, python-format
+msgid "Última sincronización hace %(hace)s."
+msgstr "Última sincronització fa %(hace)s."
+
+msgid "Entregas de webhooks fallidas (24 h)"
+msgstr "Lliuraments de webhooks fallits (24 h)"
+
+#, python-format
+msgid "%(n)s intento(s) fallido(s)."
+msgstr "%(n)s intent(s) fallit(s)."
+
+msgid "Envíos de correo fallidos (24 h)"
+msgstr "Enviaments de correu fallits (24 h)"
+
+#, python-format
+msgid "%(n)s envío(s) fallido(s)."
+msgstr "%(n)s enviament(s) fallit(s)."
+
+msgid "Envíos pendientes con la hora vencida"
+msgstr "Enviaments pendents amb l'hora vençuda"
+
+#, python-format
+msgid "%(n)s envío(s) sin enviar pasados 5 minutos de su hora."
+msgstr "%(n)s enviament(s) sense enviar passats 5 minuts de la seva hora."
+
+msgid "Ninguno."
+msgstr "Cap."
+
+msgid "No se pudo comprobar."
+msgstr "No s'ha pogut comprovar."
+
+msgid "Envíos de correo"
+msgstr "Enviaments de correu"
+
+msgid "Entregas de webhooks"
+msgstr "Lliuraments de webhooks"
+
+msgid "mañana"
+msgstr "demà"
+
+#, python-format
+msgid "dentro de %(n)s días"
+msgstr "d'aquí a %(n)s dies"
+
+#, python-format
+msgid "Hola, %(cliente)s:"
+msgstr "Hola, %(cliente)s:"
+
+#, python-format
+msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
+msgstr "Et recordem que el model %(modelo)s (%(periodo)s) venç %(cuando)s, el %(fecha)s."
+
+#, python-format
+msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
+msgstr "Per preparar-lo necessitem de part teva: %(documento)s."
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente:"
+msgstr "Pots pujar documentació i escriure'ns des del teu portal de client:"
+
+msgid "Un saludo,"
+msgstr "Salutacions,"
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr "Rebs aquest avís perquè la teva gestoria té activats els recordatoris del portal. Si prefereixes no rebre'ls, digues-ho i els desactivarà."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
+msgstr "Recordatori: el %(modelo)s venç %(cuando)s"
+
+msgid "Idioma de los correos al cliente"
+msgstr "Idioma dels correus al client"
+
+msgid "Adjuntos guardados en este borrador"
+msgstr "Adjunts desats en aquest esborrany"
+
+msgid "Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y supervisor."
+msgstr "Alta d'usuaris i assignació a tenant, rol, gestor de fitxatges i supervisor."
+
+msgid "¡Copiado!"
+msgstr "Copiat!"
+
+msgid "Error al copiar"
+msgstr "Error en copiar"
+
+msgid "Buscar por email..."
+msgstr "Cerca per correu..."
+
+msgid "Tenant"
+msgstr "Tenant"
+
+msgid "Todos los tenants"
+msgstr "Tots els tenants"
+
+msgid "Todos los roles"
+msgstr "Tots els rols"
+
+msgid "Administradores"
+msgstr "Administradors"
+
+msgid "Gestores de fichajes"
+msgstr "Gestors de fitxatges"
+
+msgid "Supervisores"
+msgstr "Supervisors"
+
+msgid "Sin tenant (hay que asignarlos)"
+msgstr "Sense tenant (cal assignar-los)"
+
+msgid "tú"
+msgstr "tu"
+
+msgid "No puedes quitarte el rol de admin a ti mismo"
+msgstr "No et pots treure el rol d'admin a tu mateix"
+
+msgid "Quitar gestor de fichajes"
+msgstr "Treu gestor de fitxatges"
+
+msgid "Hacer gestor de fichajes"
+msgstr "Fes gestor de fitxatges"
+
+msgid "Gestor de fichajes"
+msgstr "Gestor de fitxatges"
+
+msgid "Quitar supervisor"
+msgstr "Treu supervisor"
+
+msgid "Hacer supervisor"
+msgstr "Fes supervisor"
+
+msgid "Supervisor"
+msgstr "Supervisor"
+
+msgid "Ningún usuario coincide."
+msgstr "Cap usuari coincideix."
+
+msgid "Mapa de acceso"
+msgstr "Mapa d'accés"
+
+msgid "Qué módulos tiene activos cada tenant y quién trabaja en él, con qué roles. Para cambiar algo, entra en la ficha del tenant."
+msgstr "Quins mòduls té actius cada tenant i qui hi treballa, amb quins rols. Per canviar res, entra a la fitxa del tenant."
+
+msgid "Equipos y roles"
+msgstr "Equips i rols"
+
+msgid "Activo"
+msgstr "Actiu"
+
+msgid "Suspendido"
+msgstr "Suspès"
+
+msgid "sin plan"
+msgstr "sense pla"
+
+msgid "Sin usuarios asignados todavía."
+msgstr "Encara sense usuaris assignats."
+
+msgid "Módulos por tenant"
+msgstr "Mòduls per tenant"
+
+msgid "Módulo"
+msgstr "Mòdul"
+
+msgid "Tenants con acceso"
+msgstr "Tenants amb accés"
+
+msgid "activo"
+msgstr "actiu"
+
+msgid "oculto"
+msgstr "ocult"
+
+msgid "Organizaciones (gestorías) dadas de alta en Guilda Work."
+msgstr "Organitzacions (gestories) donades d'alta a Guilda Work."
+
+msgid "Resumen de la plataforma"
+msgstr "Resum de la plataforma"
+
+msgid "tenants"
+msgstr "tenants"
+
+msgid "activos"
+msgstr "actius"
+
+msgid "usuarios en tenants"
+msgstr "usuaris en tenants"
+
+msgid "usuarios sin tenant"
+msgstr "usuaris sense tenant"
+
+msgid "tenants sin usuarios"
+msgstr "tenants sense usuaris"
+
+msgid "Mapa de acceso por tenant"
+msgstr "Mapa d'accés per tenant"
+
+msgid "Buscar tenant..."
+msgstr "Cerca tenant..."
+
+msgid "Módulo: todos"
+msgstr "Mòdul: tots"
+
+msgid "Nº usuarios"
+msgstr "N.º d'usuaris"
+
+msgid "Actividad reciente"
+msgstr "Activitat recent"
+
+msgid "Añadir tenant"
+msgstr "Afegeix tenant"
+
+msgid "Plan"
+msgstr "Pla"
+
+msgid "Clientes fiscales"
+msgstr "Clients fiscals"
+
+msgid "Módulos"
+msgstr "Mòduls"
+
+msgid "Roles"
+msgstr "Rols"
+
+msgid "gestor"
+msgstr "gestor"
+
+msgid "supervisor"
+msgstr "supervisor"
+
+#, python-format
+msgid "Actividad: %(fecha)s"
+msgstr "Activitat: %(fecha)s"
+
+msgid "Sin actividad"
+msgstr "Sense activitat"
+
+msgid "Ver ficha"
+msgstr "Veure fitxa"
+
+msgid "Ningún tenant coincide con la búsqueda."
+msgstr "Cap tenant coincideix amb la cerca."
+
+#, python-format
+msgid "Última actividad: %(fecha)s"
+msgstr "Última activitat: %(fecha)s"
+
+msgid "Sin actividad todavía."
+msgstr "Encara sense activitat."
+
+msgid "Suspender tenant"
+msgstr "Suspèn el tenant"
+
+msgid "Reactivar tenant"
+msgstr "Reactiva el tenant"
+
+msgid "Resumen del tenant"
+msgstr "Resum del tenant"
+
+msgid "usuarios"
+msgstr "usuaris"
+
+msgid "administradores"
+msgstr "administradors"
+
+msgid "gestores de fichajes"
+msgstr "gestors de fitxatges"
+
+msgid "supervisores"
+msgstr "supervisors"
+
+msgid "clientes fiscales"
+msgstr "clients fiscals"
+
+msgid "módulos activos"
+msgstr "mòduls actius"
+
+msgid "plan"
+msgstr "pla"
+
+msgid "Clic para cambiar"
+msgstr "Clic per canviar"
+
+msgid "Stripe Connect"
+msgstr "Stripe Connect"
+
+msgid "Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene."
+msgstr "Perquè aquest tenant pugui cobrar els SEUS clients: els diners li arriben directament al seu banc, Guilda Work mai els reté."
+
+msgid "Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY)."
+msgstr "Stripe encara no està configurat al servidor (falta STRIPE_SECRET_KEY)."
+
+msgid "Cuenta conectada y lista para cobrar"
+msgstr "Compte connectat i a punt per cobrar"
+
+msgid "Onboarding sin completar"
+msgstr "Onboarding sense completar"
+
+msgid "Reintentar onboarding"
+msgstr "Reintenta l'onboarding"
+
+msgid "Email de contacto para Stripe"
+msgstr "Correu de contacte per a Stripe"
+
+msgid "Conectar Stripe"
+msgstr "Connecta Stripe"
+
+msgid "Oculto — clic para mostrar"
+msgstr "Ocult — clic per mostrar"
+
+msgid "Visible — clic para ocultar"
+msgstr "Visible — clic per ocultar"
+
+msgid "Estadísticas de equipo"
+msgstr "Estadístiques d'equip"
+
+msgid "Todavía no hay datos suficientes."
+msgstr "Encara no hi ha prou dades."
+
+msgid "Ingresos (suscripción de Guilda Work)"
+msgstr "Ingressos (subscripció de Guilda Work)"
+
+msgid "Sin plan"
+msgstr "Sense pla"
+
+msgid "Suscripción activa"
+msgstr "Subscripció activa"
+
+msgid "Activar suscripción"
+msgstr "Activa la subscripció"
+
+msgid "Extras activos"
+msgstr "Extres actius"
+
+msgid "hasta"
+msgstr "fins a"
+
+msgid "Sin extras activos."
+msgstr "Sense extres actius."
+
+msgid "Extra"
+msgstr "Extra"
+
+msgid "Cantidad"
+msgstr "Quantitat"
+
+msgid "Hasta (opcional)"
+msgstr "Fins a (opcional)"
+
+msgid "Añadir extra"
+msgstr "Afegeix extra"
+
+msgid "Facturas"
+msgstr "Factures"
+
+msgid "Importe"
+msgstr "Import"
+
+msgid "Todavía no hay facturas."
+msgstr "Encara no hi ha factures."
+
+msgid "Configuración"
+msgstr "Configuració"
+
+msgid "RGPD: solo activar si hay trabajadores fichando en remoto"
+msgstr "RGPD: activa-ho només si hi ha treballadors fitxant en remot"
+
+msgid "Quitar geolocalización"
+msgstr "Treu la geolocalització"
+
+msgid "Activar geolocalización"
+msgstr "Activa la geolocalització"
+
+msgid "Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR)."
+msgstr "Exporta clients, venciments, tasques, notes, tiquets i metadades de correu/documents d'aquest tenant en un JSON (dret d'accés RGPD)."
+
+msgid "Exportar datos"
+msgstr "Exporta dades"
+
+msgid "Borrar tenant"
+msgstr "Esborra el tenant"
+
+#, python-format
+msgid "%(n)s usuario"
+msgid_plural "%(n)s usuarios"
+msgstr[0] "%(n)s usuari"
+msgstr[1] "%(n)s usuaris"

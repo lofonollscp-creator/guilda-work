@@ -23,25 +23,35 @@
     {% endif %}
 
     <form method="post" action="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="portal-subir">
-      <label>{{ _('Imagen o PDF, hasta 8MB') }}</label>
+      <label>{{ _('Imágenes o PDF, hasta 8MB cada uno y 10 archivos a la vez') }}</label>
       <span class="file-input">
         <label class="file-input-boton btn btn-ghost">
           <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
-          {{ _('Elegir archivo') }}
-          <input type="file" name="documento" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" required>
+          {{ _('Elegir archivos') }}
+          <input type="file" name="documento" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple required>
         </label>
         <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
       </span>
       <button type="submit" class="btn btn-primary" style="margin-top: var(--space-3);">{{ _('Subir') }}</button>
     </form>
 
+    {% if resultados %}
+    <ul class="portal-resultados" aria-live="polite">
+      {% for r in resultados %}
+      <li class="{{ 'ok' if r.ok else 'ko' }}"><strong>{{ r.nombre }}</strong> — {{ r.mensaje }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
     {% if not documentos %}
-    <p class="empty-lane">{{ _('Todavía no has subido ningún documento.') }}</p>
+    <p class="empty-lane">{{ _('Todavía no hay ningún documento.') }}</p>
     {% else %}
     {% for d in documentos %}
     <div class="portal-doc">
       <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
-      {{ d.nombre_archivo }}
+      <a href="{{ url_for('portal_cliente.descargar_documento', vencimiento_id=vencimiento.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
+      {% if d.origen == 'justificante' %}<span class="pill">{{ _('Justificante oficial') }}</span>
+      {% elif d.origen == 'constancia' %}<span class="pill">{{ _('Constancia de presentación') }}</span>{% endif %}
       <span class="peso">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
     </div>
     {% endfor %}

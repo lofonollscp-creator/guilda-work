@@ -51,6 +51,19 @@
     {{ _('Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)') }}
   </label>
 
+  <label>{{ _('Idioma de los correos al cliente') }}
+    <select name="idioma">
+      {% for cod, nombre in (('es', 'Español'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')) %}
+      <option value="{{ cod }}" {% if cliente.idioma == cod %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="checkbox-label">
+    <input type="checkbox" name="recordatorios_portal" {% if cliente.recordatorios_portal %}checked{% endif %}>
+    {{ _('Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)') }}
+  </label>
+
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
     <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>

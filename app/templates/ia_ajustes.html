@@ -47,7 +47,38 @@
         {{ _('Aunque actives el modo autónomo,') }} <strong>{{ _('enviar un correo de verdad') }}</strong> {{ _('siempre pedirá confirmación explícita, y el asistente nunca podrá borrar copias de seguridad (solo crearlas) porque esa herramienta no existe.') }}
       </p>
 
+      <label class="correo-form-checkbox">
+        <input type="checkbox" name="solo_lectura" {% if preferencias.solo_lectura %}checked{% endif %}>
+        {{ _('Modo solo lectura: el asistente solo puede consultar datos, nunca crear, editar ni borrar') }}
+      </label>
+
       <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    </form>
+  </section>
+
+  <section class="correo-ajustes-seccion">
+    <h2>{{ _('Atajos de prompts') }}</h2>
+    <p class="muted">{{ _('Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios.') }}</p>
+    {% if error %}<p class="ia-error">{{ error }}</p>{% endif %}
+    {% if atajos_propios %}
+    <ul class="log-list">
+      {% for a in atajos_propios %}
+      <li class="log-item">
+        <span class="log-text"><strong>{{ a.titulo }}</strong> — {{ a.prompt }}</span>
+        <form action="{{ url_for('ia.eliminar_atajo', atajo_id=a.id) }}" method="post"
+              onsubmit="return confirm('{{ _('¿Eliminar este atajo?') }}');">
+          <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <form method="post" action="{{ url_for('ia.crear_atajo') }}" class="correo-form-seccion">
+      <div class="ia-form-row">
+        <input type="text" name="titulo" maxlength="40" placeholder="{{ _('Título corto') }}" required>
+        <input type="text" name="prompt" maxlength="1000" placeholder="{{ _('Texto que se enviará al asistente') }}" required>
+        <button type="submit" class="btn btn-primary">+ {{ _('Añadir atajo') }}</button>
+      </div>
     </form>
   </section>
 </div>

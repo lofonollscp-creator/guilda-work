@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Tablero de tareas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna.') }}</p>
+  </div>
+</header>
+
+{% set subnav_activa = 'tablero' %}
+{% include "_tareas_subnav.html" %}
+
+<div class="tareas-tablero">
+  {% for valor, etiqueta in estados %}
+  <section class="tareas-columna" aria-labelledby="col-{{ valor }}">
+    <h2 id="col-{{ valor }}" class="tareas-columna-titulo">{{ etiqueta }} <span class="pill">{{ columnas[valor]|length }}</span></h2>
+    {% for t in columnas[valor] %}
+    <article class="tareas-tarjeta prioridad-borde-{{ t.prioridad }}">
+      <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if t.usuario_id == g.usuario_id else '#' }}">{{ t.asunto }}</a>
+      <div class="tareas-tarjeta-meta">
+        {% if t.categoria_nombre %}<span class="pill">{{ t.categoria_nombre }}</span>{% endif %}
+        {% if t.fecha_vencimiento %}<span class="log-duration">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
+        {% if t.asignada_a %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg> {{ (t.creador_nombre if t.asignada_a == g.usuario_id else t.asignada_nombre) }}</span>{% endif %}
+      </div>
+      <form class="tareas-tarjeta-mover" action="{{ url_for('tareas.cambiar_estado', tarea_id=t.id) }}" method="post">
+        <label class="sr-only" for="mover-{{ t.id }}">{{ _('Mover a') }}</label>
+        <select id="mover-{{ t.id }}" name="estado">
+          {% for v, e in estados %}<option value="{{ v }}" {{ 'selected' if v == t.estado }}>{{ e }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost">{{ _('Mover') }}</button>
+      </form>
+    </article>
+    {% else %}
+    <p class="muted tareas-columna-vacia">{{ _('Nada aquí') }}</p>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

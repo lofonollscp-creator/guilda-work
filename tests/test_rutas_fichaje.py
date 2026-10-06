@@ -131,7 +131,9 @@ def test_panel_estado_en_pausa_muestra_solo_fin_de_pausa_y_salida(cliente):
 
 def test_historial_agrupa_por_dia_con_total_de_horas(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "fichaje-historial-grupo@ejemplo.com", "contrasena123")
-    hoy = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+    # Ayer, no hoy: db.fichar rechaza marcas futuras, y "hoy a las 9:00" lo es
+    # si el test se ejecuta antes de las 11:00 (hacía fallar la suite de madrugada).
+    hoy = (datetime.now() - timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
     db.fichar(usuario_id, None, "entrada", marca_tiempo=hoy.isoformat(timespec="seconds"))
     db.fichar(usuario_id, None, "salida", marca_tiempo=(hoy + timedelta(hours=2)).isoformat(timespec="seconds"))
 

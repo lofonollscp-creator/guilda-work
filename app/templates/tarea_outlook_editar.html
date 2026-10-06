@@ -63,6 +63,27 @@
     </label>
   </div>
 
+  {% if clientes_fiscales or companeros %}
+  <div class="ia-form-row">
+    {% if clientes_fiscales %}
+    <label>{{ _('Cliente') }}
+      <select name="cliente_fiscal_id">
+        <option value="">{{ _('Sin cliente') }}</option>
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}" {% if tarea.cliente_fiscal_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if companeros %}
+    <label>{{ _('Asignar a') }}
+      <select name="asignada_a">
+        <option value="">{{ _('Sin asignar') }}</option>
+        {% for u in companeros %}<option value="{{ u.id }}" {% if tarea.asignada_a == u.id %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% if tarea.fecha_completada %}
   <p class="muted">{{ _('Completada el %(fecha)s.', fecha=tarea.fecha_completada[:16].replace('T', ' ')) }}</p>
   {% endif %}
@@ -72,6 +93,54 @@
     <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Cancelar') }}</a>
   </div>
 </form>
+
+<section class="tarea-checklist-bloque" id="checklist" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Subtareas') }}</h2>
+  {% if checklist %}
+  <ul class="tarea-checklist-lista">
+    {% for item in checklist %}
+    <li class="tarea-checklist-item {{ 'is-hecha' if item.hecha }}">
+      <form action="{{ url_for('tareas.alternar_checklist', item_id=item.id) }}" method="post">
+        <button type="submit" class="tarea-check" title="{{ _('Marcar o desmarcar') }}" aria-pressed="{{ 'true' if item.hecha else 'false' }}">
+          {% if item.hecha %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
+        </button>
+      </form>
+      <span class="tarea-checklist-texto">{{ item.texto }}</span>
+      <form action="{{ url_for('tareas.eliminar_checklist', item_id=item.id) }}" method="post">
+        <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form class="quick-row" action="{{ url_for('tareas.agregar_checklist', tarea_id=tarea.id) }}" method="post">
+    <label class="sr-only" for="checklist-nuevo">{{ _('Nueva subtarea') }}</label>
+    <input type="text" id="checklist-nuevo" name="texto" maxlength="200" placeholder="{{ _('Añadir una subtarea...') }}" required>
+    <button type="submit" class="btn btn-ghost">+ {{ _('Añadir') }}</button>
+  </form>
+</section>
+
+<section class="tarea-tiempo-bloque" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Tiempo dedicado') }}</h2>
+  {% if cronometro and cronometro.total_segundos %}
+  <p>{{ _('Registrado hasta ahora:') }} <strong>{{ cronometro.total_segundos|duracion_hm }}</strong></p>
+  {% else %}
+  <p class="muted">{{ _('Todavía no has registrado tiempo en esta tarea.') }}</p>
+  {% endif %}
+  {% if cronometro and cronometro.activo %}
+  <p class="muted">{{ _('Hay un cronómetro en marcha: páralo desde la lista de tareas.') }}</p>
+  {% elif tarea.estado != 'completada' %}
+  <form class="quick-row" action="{{ url_for('tareas.iniciar_cronometro', tarea_id=tarea.id) }}" method="post">
+    {% if not tarea.categoria_id and menus %}
+    <select name="categoria_id" required aria-label="{{ _('Proyecto en el que registrar el tiempo') }}">
+      <option value="">{{ _('Proyecto...') }}</option>
+      {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Iniciar el cronómetro') }}</button>
+  </form>
+  {% endif %}
+</section>
 
 <form class="edit-form-delete" method="post" action="{{ url_for('tareas.eliminar', tarea_id=tarea.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.') }}');">

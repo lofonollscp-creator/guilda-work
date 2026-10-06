@@ -10,14 +10,69 @@
 
 <form class="edit-form" method="post" action="{{ url_for('editar_nota', nota_id=nota.id) }}">
   <input type="hidden" name="volver_a" value="{{ volver_a }}">
-  <label>{{ _('Texto') }}
-    <textarea name="texto" rows="4" required autofocus>{{ nota.texto }}</textarea>
+  {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+  <label><span>{{ _('Título') }} <span class="muted">({{ _('opcional') }})</span></span>
+    <input type="text" name="titulo" maxlength="120" value="{{ nota.titulo or '' }}" placeholder="{{ _('Un título corto para encontrarla fácilmente') }}">
   </label>
+  <label>{{ _('Texto') }}
+    <textarea name="texto" rows="8" autofocus>{{ nota.texto }}</textarea>
+  </label>
+  <p class="muted nota-ayuda-formato">{{ _('Formato: **negrita**, *cursiva*, listas con "-" o "1.", enlaces con [texto](https://...) y direcciones web.') }}</p>
+  <div class="ia-form-row">
+    {% if clientes_fiscales %}
+    <label>{{ _('Cliente') }}
+      <select name="cliente_fiscal_id">
+        <option value="">{{ _('Sin cliente') }}</option>
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}" {% if nota.cliente_fiscal_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label class="checkbox-label nota-fijar"><input type="checkbox" name="fijada" value="1" {% if nota.fijada %}checked{% endif %}> {{ _('Fijar esta nota arriba en su proyecto') }}</label>
+  </div>
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
     <a class="btn btn-ghost" href="{{ volver_a }}">{{ _('Cancelar') }}</a>
   </div>
 </form>
+
+<section class="nota-adjuntos-bloque" id="adjuntos">
+  <h2 class="tarea-bloque-titulo">{{ _('Archivos adjuntos') }}</h2>
+  {% if adjuntos %}
+  <ul class="nota-adjuntos-lista">
+    {% for a in adjuntos %}
+    <li class="nota-adjunto">
+      {% if a.tipo_mime.startswith('image/') %}
+      <a href="{{ url_for('descargar_adjunto_nota', adjunto_id=a.id, ver=1) }}" target="_blank" rel="noopener"><img class="nota-adjunto-miniatura" src="{{ url_for('descargar_adjunto_nota', adjunto_id=a.id, ver=1) }}" alt="{{ a.nombre }}" loading="lazy"></a>
+      {% endif %}
+      <a href="{{ url_for('descargar_adjunto_nota', adjunto_id=a.id) }}">{{ a.nombre }}</a>
+      <span class="muted">{{ (a.tamano / 1024)|round(0)|int }} KB</span>
+      <form action="{{ url_for('eliminar_adjunto_nota', adjunto_id=a.id) }}" method="post">
+        <input type="hidden" name="volver_a" value="{{ volver_a }}">
+        <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if adjuntos|length < adjuntos_max %}
+  <form class="quick-row" action="{{ url_for('subir_adjuntos_nota', nota_id=nota.id) }}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="volver_a" value="{{ volver_a }}">
+    <label class="sr-only" for="nota-adjunto-input">{{ _('Archivos para adjuntar') }}</label>
+    <span class="file-input">
+      <label class="file-input-boton btn btn-ghost">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+        {{ _('Elegir archivos') }}
+        <input type="file" id="nota-adjunto-input" name="adjunto" multiple accept="image/*,.pdf,.txt,.csv" required>
+      </label>
+      <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+    </span>
+    <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Adjuntar') }}</button>
+  </form>
+  <p class="muted">{{ _('Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota.', num=adjuntos_max) }}</p>
+  {% else %}
+  <p class="muted">{{ _('Has llegado al máximo de %(num)s adjuntos en esta nota.', num=adjuntos_max) }}</p>
+  {% endif %}
+</section>
 
 <form class="edit-form-delete" method="post" action="{{ url_for('eliminar_nota', nota_id=nota.id) }}"
       data-eliminar-deshacer

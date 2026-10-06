@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Copias de seguridad{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Copias de seguridad</h1><p class="muted">Copia verificada de la base de datos de la plataforma (se conserva la última).</p></header>
+<form method="post" action="{{ url_for('rutas.hacer_copia') }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-primario">{{ icono('download') }} Hacer copia ahora</button></form>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Copia</th><th>Fecha</th><th>Tamaño</th></tr></thead>
+  <tbody>{% for c in copias %}<tr><td class="mono">{{ c.nombre }}</td><td>{{ c.fecha }}</td><td>{{ (c.tamano_bytes / 1024 / 1024)|round(1) }} MB</td></tr>
+    {% else %}<tr><td colspan="3" class="vacio">Todavía no hay ninguna copia.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

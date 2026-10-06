@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Error {{ codigo }}{% endblock %}
+{% block contenido %}
+<section class="vacio">
+  <h1>{{ codigo }}</h1>
+  <p class="muted">{{ mensaje }}</p>
+  <a class="boton" href="{{ url_for('rutas.dashboard') }}">Volver al dashboard</a>
+</section>
+{% endblock %}

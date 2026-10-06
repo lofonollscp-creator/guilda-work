@@ -2,6 +2,19 @@
 {% block title %}{{ _('Correo') }} — Guilda Work{% endblock %}
 {% block content %}
 <div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
+  {% if envio_banner %}
+  <div class="correo-envio-banner" role="status" id="correo-envio-banner" data-segundos="{{ envio_banner.segundos }}"
+       data-t-enviado="{{ _('Enviado.') }}">
+    {% if envio_banner.programado %}
+    <span>{{ _('Envío programado para el') }} {{ envio_banner.enviar_en }}.</span>
+    {% else %}
+    <span class="correo-envio-texto">{{ _('Enviando…') }} <span id="correo-envio-cuenta">{{ envio_banner.segundos }}</span> s</span>
+    {% endif %}
+    <form action="{{ url_for('correo.deshacer_envio', envio_id=envio_banner.id) }}" method="post" id="correo-envio-deshacer">
+      <button type="submit" class="btn btn-ghost">{{ _('Deshacer') if not envio_banner.programado else _('Cancelar envío') }}</button>
+    </form>
+  </div>
+  {% endif %}
   <div class="correo-topbar">
     <span class="correo-topbar-titulo">{{ _('Correo') }}</span>
     {% set cuenta_activa = (cuentas | selectattr('id', 'equalto', cuenta_id) | list | first) if cuenta_id else None %}
@@ -17,6 +30,9 @@
       {% if num_borradores %}
       <span class="correo-badge">{{ num_borradores }}</span>
       {% endif %}
+    </a>
+    <a class="correo-cuenta-item" href="{{ url_for('correo.programados') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg> {{ _('Programados') }}
+      {% if num_programados %}<span class="correo-badge">{{ num_programados }}</span>{% endif %}
     </a>
     {% if not cuentas %}
     <p class="correo-rail-vacio">{{ _('Aún no tienes ninguna cuenta.') }}</p>
@@ -60,6 +76,31 @@
       <label class="correo-toolbar-check">
         <input type="checkbox" name="pospuestos" value="1" {% if incluir_pospuestos %}checked{% endif %} onchange="this.form.requestSubmit()"> {{ _('Pospuestos') }}
       </label>
+      <details class="correo-filtros" {% if filtros %}open{% endif %}>
+        <summary>{{ _('Filtros') }}{% if filtros %} ({{ filtros|length }}){% endif %}</summary>
+        <div class="correo-filtros-cuerpo">
+          <label class="correo-toolbar-check"><input type="checkbox" name="adjuntos" value="1" {% if filtros.con_adjuntos %}checked{% endif %}> {{ _('Con adjuntos') }}</label>
+          <label class="correo-toolbar-check"><input type="checkbox" name="destacados" value="1" {% if filtros.solo_destacados %}checked{% endif %}> {{ _('Destacados') }}</label>
+          <label>{{ _('Categoría') }}
+            <select name="categoria">
+              <option value="">{{ _('Todas') }}</option>
+              {% for c in categorias %}<option value="{{ c.id }}" {% if filtros.categoria_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+            </select>
+          </label>
+          {% if clientes_fiscales %}
+          <label>{{ _('Cliente') }}
+            <select name="cliente">
+              <option value="">{{ _('Todos') }}</option>
+              {% for cf in clientes_fiscales %}<option value="{{ cf.id }}" {% if filtros.cliente_fiscal_id == cf.id %}selected{% endif %}>{{ cf.nombre }}</option>{% endfor %}
+            </select>
+          </label>
+          {% endif %}
+          <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ filtros.desde or '' }}"></label>
+          <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ filtros.hasta or '' }}"></label>
+          <button type="submit" class="boton-secundario">{{ _('Aplicar') }}</button>
+          <a href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta) }}">{{ _('Quitar filtros') }}</a>
+        </div>
+      </details>
     </form>
     <form action="{{ url_for('correo.sincronizar') }}" method="post" class="correo-sync-form">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
@@ -94,18 +135,18 @@
     <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }}" id="correo-lista-mensajes">
       {% for m in mensajes %}
       {% set cat = categorias_por_id.get(m.categoria_id) %}
-      <li class="correo-fila-wrap {{ 'is-no-leido' if not m.leido }} {{ 'is-seleccionada' if mensaje_seleccionado and mensaje_seleccionado.id == m.id }}"
+      <li class="correo-fila-wrap {{ 'is-no-leido' if not m.leido }} {{ 'is-seleccionada' if mensaje_seleccionado and (mensaje_seleccionado.id == m.id or (m.hilo_clave and mensaje_seleccionado.hilo_clave == m.hilo_clave)) }}"
           style="{{ 'border-left: 4px solid ' + cat.color + ';' if cat else '' }}">
         <input type="checkbox" class="correo-fila-check" data-mensaje-id="{{ m.id }}">
         <a class="correo-fila-contenido"
-           href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=m.id, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None) }}">
+           href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=m.id, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None, **filtros_url) }}">
           <span class="avatar-circulo" style="--avatar-color: {{ m.remitente|avatar_color }};">{{ m.remitente|iniciales }}</span>
           <div class="correo-fila-texto">
             <div class="correo-fila-top">
               <span class="correo-fila-remitente">{{ m.remitente or _('(desconocido)') }}</span>
               <span class="correo-fila-fecha">{% if m.destacado %}<svg class="icono-inline" aria-hidden="true" style="fill: currentColor;"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg>{% endif %} {{ m.fecha|fecha_relativa }}</span>
             </div>
-            <div class="correo-fila-asunto">{{ m.asunto or _('(sin asunto)') }}</div>
+            <div class="correo-fila-asunto">{{ m.asunto or _('(sin asunto)') }}{% if m.hilo_clave and hilo_total.get(m.hilo_clave, 1) > 1 %} <span class="correo-hilo-contador" title="{{ _('Mensajes en esta conversación') }}">{{ hilo_total[m.hilo_clave] }}</span>{% endif %}</div>
             <div class="correo-fila-preview">{{ m|vista_previa }}</div>
           </div>
         </a>
@@ -124,7 +165,7 @@
     <div class="correo-lectura-header">
       {% if completa %}
       <a class="correo-lectura-volver"
-         href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None) }}"
+         href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None, **filtros_url) }}"
          title="{{ _('Volver a la lista') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Volver') }}</a>
       {% endif %}
       <div class="correo-lectura-remitente">
@@ -228,6 +269,20 @@
         </button>
       </div>
 
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.crear_tarea_desde_correo', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Crear una tarea con este correo') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clipboard-list"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Crear tarea') }}</span></button>
+        </form>
+        <form action="{{ url_for('correo.guardar_nota_desde_correo', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Guardar este correo como nota') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Guardar nota') }}</span></button>
+        </form>
+      </div>
+      <div class="correo-ribbon-grupo" data-correo-ia="{{ mensaje_seleccionado.id }}">
+        <button type="button" class="correo-ribbon-btn" data-ia-accion="resumir" title="{{ _('Resumir con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Resumir') }}</span></button>
+        <button type="button" class="correo-ribbon-btn" data-ia-accion="responder" title="{{ _('Proponer una respuesta con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Proponer respuesta') }}</span></button>
+        <button type="button" class="correo-ribbon-btn" data-ia-accion="tareas" title="{{ _('Extraer tareas con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Extraer tareas') }}</span></button>
+      </div>
+
       {% if not remitente_confiable %}
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
@@ -239,7 +294,33 @@
       {% endif %}
     </div>
 
+    {% if aviso %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or _('(sin asunto)') }}</h2>
+    {% if hilo_mensajes %}
+    <details class="correo-hilo">
+      <summary>{{ _('Conversación') }} ({{ hilo_mensajes|length + 1 }})</summary>
+      <ul>
+        {% for h in hilo_mensajes %}
+        <li>
+          <a href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=h.carpeta, mensaje_id=h.id) }}">
+            <strong>{{ h.remitente or _('(desconocido)') }}</strong>
+            <span class="muted">{{ h.fecha|fecha_relativa }}{% if h.carpeta != 'INBOX' %} · {{ h.carpeta }}{% endif %}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    <section class="correo-ia-panel" id="correo-ia-panel" hidden aria-live="polite"
+             data-url-base="{{ url_for('correo.ia_sobre_correo', mensaje_id=mensaje_seleccionado.id, accion='ACCION') }}"
+             data-url-borrador="{{ url_for('correo.ia_borrador_respuesta', mensaje_id=mensaje_seleccionado.id) }}"
+             data-url-tareas="{{ url_for('correo.crear_tareas_marcadas', mensaje_id=mensaje_seleccionado.id) }}"
+             data-t-cargando="{{ _('Pensando…') }}" data-t-error="{{ _('No se ha podido completar la acción.') }}"
+             data-t-usar="{{ _('Usar como borrador') }}" data-t-crear="{{ _('Crear las marcadas') }}"
+             data-t-sin-tareas="{{ _('No se han encontrado tareas en este correo.') }}" data-t-cerrar="{{ _('Cerrar') }}">
+      <p class="correo-ia-privacidad">{{ _('El contenido de este correo se envía al proveedor de IA que tienes configurado.') }}</p>
+      <div class="correo-ia-resultado"></div>
+    </section>
     {% if adjuntos_mensaje %}
     <div class="correo-adjuntos">
       {% for a in adjuntos_mensaje %}
@@ -291,5 +372,7 @@
   </section>
 </div>
 <script src="{{ url_for('static', filename='correo_seleccion.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_ia.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_envio.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_atajos.js') }}"></script>
 {% endblock %}

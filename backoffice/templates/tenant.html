@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono, insignia_rol %}
+{% block titulo %}{{ t.nombre }}{% endblock %}
+{% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'integraciones': ('Integraciones', 'zap'), 'actividad': ('Actividad', 'activity'), 'avanzado': ('Avanzado', 'shield-check')} %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div>
+    <a class="migas" href="{{ url_for('rutas.tenants') }}">‹ Tenants</a>
+    <h1>{{ t.nombre }}</h1>
+    <p class="muted">ID {{ t.id }} · creado {{ t.creado_en|fecha }}</p>
+  </div>
+  <form method="post" action="{{ url_for('rutas.alternar_activo', tenant_id=t.id) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton {{ 'boton-peligro' if t.activo else 'boton-primario' }}" {% if t.activo %}data-confirmar="¿Suspender este tenant? Sus usuarios dejarán de poder usarlo."{% endif %}>{{ 'Suspender tenant' if t.activo else 'Reactivar tenant' }}</button>
+  </form>
+</header>
+
+<div class="ficha">
+  <nav class="subnav" aria-label="Secciones del tenant">
+    {% for clave in secciones %}
+    <a class="nav-enlace {{ 'activo' if seccion == clave }}" href="{{ url_for('rutas.tenant', tenant_id=t.id, seccion=clave) }}">{{ icono(etiquetas[clave][1]) }}<span>{{ etiquetas[clave][0] }}</span></a>
+    {% endfor %}
+  </nav>
+
+  <section class="tarjeta ficha-centro">
+    {% if seccion == 'resumen' %}
+    <h2>Información del tenant</h2>
+    <dl class="datos-fila">
+      <div><dt>ID</dt><dd class="mono">{{ t.id }}</dd></div>
+      <div><dt>Plan</dt><dd>{{ t.plan or '—' }}</dd></div>
+      <div><dt>Creado</dt><dd>{{ t.creado_en|fecha }}</dd></div>
+    </dl>
+    <form method="post" action="{{ url_for('rutas.renombrar_tenant', tenant_id=t.id) }}" class="formulario">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Nombre *<input type="text" name="nombre" value="{{ t.nombre }}" maxlength="120" required></label>
+      <div><button type="submit" class="boton boton-primario">Guardar nombre</button></div>
+    </form>
+    <h3>Configuración</h3>
+    <form method="post" action="{{ url_for('rutas.alternar_geolocalizacion', tenant_id=t.id) }}" class="fila-interruptor">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div><strong>Geolocalización del fichaje</strong><p class="muted">RGPD: actívala solo si hay trabajadores fichando en remoto.</p></div>
+      <button type="submit" class="interruptor {{ 'on' if t.fichaje_geolocalizacion }}" role="switch" aria-checked="{{ 'true' if t.fichaje_geolocalizacion else 'false' }}" aria-label="Geolocalización del fichaje"></button>
+    </form>
+    <h3>Módulos</h3>
+    <p class="muted">{{ d.modulos|selectattr('activo')|list|length }} de {{ d.modulos|length }} activos. <a href="{{ url_for('rutas.tenant', tenant_id=t.id, seccion='modulos') }}">Gestionar módulos</a></p>
+
+    {% elif seccion == 'usuarios' %}
+    <h2>Usuarios del tenant</h2>
+    <div class="tabla-caja">
+      <table class="tabla">
+        <thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Alta</th><th></th></tr></thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr><td><a class="celda-usuario" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}"><span class="avatar" style="--c: {{ u.nombre|color_avatar }}">{{ u.nombre|iniciales }}</span><strong>{{ u.nombre }}</strong></a></td>
+            <td>{{ u.email }}</td><td>{{ insignia_rol(u) }}</td><td>{{ u.creado_en|fecha }}</td>
+            <td class="acciones"><a class="boton-icono" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}" aria-label="Abrir {{ u.email }}">{{ icono('arrow-right') }}</a></td></tr>
+          {% else %}<tr><td colspan="5" class="vacio">Este tenant todavía no tiene usuarios.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% elif seccion == 'modulos' %}
+    <h2>Módulos</h2>
+    <p class="muted">Qué herramientas ve este tenant. Los módulos desactivados quedan ocultos para sus usuarios.</p>
+    <div class="rejilla rejilla-modulos">
+      {% for m in d.modulos %}
+      <form method="post" action="{{ url_for('rutas.alternar_modulo', tenant_id=t.id, modulo_id=m.id) }}" class="tarjeta modulo">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="seccion" value="modulos">
+        <div><strong>{{ m.nombre }}</strong><p class="muted">{{ m.descripcion }}</p></div>
+        <button type="submit" class="interruptor {{ 'on' if m.activo }}" role="switch" aria-checked="{{ 'true' if m.activo else 'false' }}" aria-label="{{ m.nombre }}"></button>
+      </form>
+      {% endfor %}
+    </div>
+
+    {% elif seccion == 'suscripcion' %}
+    <h2>Suscripción</h2>
+    {% if not stripe_configurado %}<p class="aviso aviso-error">Stripe no está configurado en el servidor (falta STRIPE_SECRET_KEY).</p>{% endif %}
+    <dl class="datos-fila">
+      <div><dt>Plan</dt><dd>{{ t.plan or 'Sin plan' }}</dd></div>
+      <div><dt>Precio mensual</dt><dd>{% if t.plan_precio is not none %}{{ t.plan_precio|eur }}{% else %}—{% endif %}</dd></div>
+      <div><dt>Estado</dt><dd>{% if t.suscripcion_estado %}<span class="insignia {{ 'insignia-ok' if t.suscripcion_estado == 'activa' else 'insignia-riesgo' }}">{{ t.suscripcion_estado|upper|replace('_', ' ') }}</span>{% else %}—{% endif %}</dd></div>
+    </dl>
+    <form method="post" action="{{ url_for('rutas.asignar_plan', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Plan asignado<select name="plan_id"><option value="">Sin plan</option>{% for p in planes_todos %}<option value="{{ p.id }}" {{ 'selected' if t.plan_id == p.id }}>{{ p.nombre }}{% if p.precio_mensual_centimos is not none %} · {{ p.precio_mensual_centimos|eur }}/mes{% endif %}</option>{% endfor %}</select></label>
+      <button type="submit" class="boton boton-primario">Asignar</button>
+    </form>
+    <form method="post" action="{{ url_for('rutas.activar_suscripcion', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Email de facturación<input type="email" name="email" value="{{ email_contacto }}" required></label>
+      <button type="submit" class="boton boton-primario" {% if not stripe_configurado %}disabled{% endif %}>Activar suscripción en Stripe</button>
+    </form>
+    <p class="muted">Te lleva al Checkout de Stripe, donde el tenant introduce la tarjeta. Al terminar, la suscripción se marca como activa automáticamente.</p>
+
+    <h3>Cobro puntual</h3>
+    <form method="post" action="{{ url_for('rutas.crear_cobro', tenant_id=t.id) }}" class="formulario">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Concepto<input type="text" name="concepto" maxlength="200" placeholder="Ej. Formación inicial" required></label>
+      <label>Importe (€)<input type="text" name="importe" inputmode="decimal" placeholder="250,00" required></label>
+      <label>Email de facturación<input type="email" name="email" value="{{ email_contacto }}" required></label>
+      <div><button type="submit" class="boton boton-primario" {% if not stripe_configurado %}disabled{% endif %}>Crear enlace de pago</button></div>
+    </form>
+    {% if cobros %}
+    <div class="tabla-caja"><table class="tabla">
+      <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for c in cobros %}
+        <tr><td>{{ c.creado_en|fecha }}</td><td>{{ c.concepto }}</td><td>{{ c.importe_centimos|eur }}</td>
+          <td><span class="insignia {{ 'insignia-ok' if c.estado == 'pagado' else ('insignia-riesgo' if c.estado == 'caducado' else '') }}">{{ c.estado|upper }}</span></td>
+          <td class="acciones">
+            <span class="oculto-visual" id="cobro-url-{{ c.id }}">{{ c.url }}</span>
+            <button type="button" class="boton" data-copiar="cobro-url-{{ c.id }}">Copiar enlace</button>
+            <form method="post" action="{{ url_for('rutas.actualizar_cobro', tenant_id=t.id, cobro_id=c.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Actualizar estado</button></form>
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% endif %}
+
+    <h3>Extras activos</h3>
+    {% if d.extras %}
+    <ul class="lista-datos">{% for e in d.extras %}<li><span>{{ e.nombre }} × {{ e.cantidad or 1 }} <span class="muted">· {% if e.activo_hasta %}hasta {{ e.activo_hasta[:10] }}{% else %}indefinido{% endif %}</span></span>
+      <form method="post" action="{{ url_for('rutas.quitar_extra', tenant_id=t.id, extra_activo_id=e.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-peligro" data-confirmar="¿Quitar este extra?">Quitar</button></form></li>{% endfor %}</ul>
+    {% else %}<p class="muted">Sin extras activos.</p>{% endif %}
+    {% if extras_catalogo %}
+    <form method="post" action="{{ url_for('rutas.anadir_extra', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Añadir extra<select name="extra_id">{% for e in extras_catalogo %}<option value="{{ e.id }}">{{ e.nombre }}{% if e.precio_centimos is not none %} · {{ e.precio_centimos|eur }}{% endif %}</option>{% endfor %}</select></label>
+      <button type="submit" class="boton">Añadir</button>
+    </form>
+    {% endif %}
+
+    <h3>Facturas</h3>
+    {% if error_facturas %}<p class="aviso aviso-error">No se pudieron cargar las facturas: {{ error_facturas }}</p>
+    {% elif facturas %}
+    <div class="tabla-caja"><table class="tabla"><thead><tr><th>Fecha</th><th>Importe</th><th>Estado</th><th></th></tr></thead><tbody>
+      {% for f in facturas %}<tr><td>{{ f.fecha }}</td><td>{{ f.importe|eur }}</td><td>{{ f.estado|upper }}</td><td class="acciones">{% if f.url %}<a class="boton" href="{{ f.url }}" target="_blank" rel="noopener noreferrer">Ver factura</a>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="muted">Todavía no hay facturas.</p>{% endif %}
+
+    <h3>Stripe Connect</h3>
+    {% if t.stripe_onboarding_completado %}
+    <p><span class="insignia insignia-ok">CUENTA CONECTADA Y LISTA PARA COBRAR</span></p>
+    {% else %}
+    <p class="muted">Para que este tenant cobre a SUS clientes (el dinero va directo a su banco).{% if t.stripe_account_id %} <span class="insignia">ONBOARDING SIN COMPLETAR</span>{% endif %}</p>
+    <form method="post" action="{{ url_for('rutas.conectar_stripe', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Email de contacto para Stripe<input type="email" name="email" value="{{ email_contacto }}" required></label>
+      <button type="submit" class="boton" {% if not stripe_configurado %}disabled{% endif %}>{{ 'Reintentar onboarding' if t.stripe_account_id else 'Conectar Stripe' }}</button>
+    </form>
+    {% endif %}
+
+    {% elif seccion == 'integraciones' %}
+    <h2>Integraciones</h2>
+    <p class="muted">Estado de las herramientas aprovisionadas para este tenant. Los valores (contraseñas y claves) no se muestran.</p>
+    <ul class="lista-datos">
+      {% for nombre, activo in (
+          ('FacturaScripts (instancia)', t.facturascripts_url), ('Paperless-ngx', t.paperless_user_id), ('Baserow', t.baserow_workspace_id),
+          ('Cal.diy (cuenta de servicio)', t.calcom_email), ('Listmonk', t.listmonk_list_id), ('Correo (Stalwart)', t.stalwart_domain_name),
+          ('ntfy', t.ntfy_topic), ('Umami', t.umami_team_id)) %}
+      <li><span>{{ nombre }}</span><span class="insignia {{ 'insignia-ok' if activo else '' }}">{{ 'APROVISIONADO' if activo else 'NO' }}</span></li>
+      {% endfor %}
+    </ul>
+    <h3>Claves de API (paso manual)</h3>
+    <p class="muted">No se pueden generar por API: se crean dentro de cada servicio y se pegan aquí.</p>
+    {% for clave, etiqueta, puesta in (('facturascripts', 'FacturaScripts · Ajustes → API', t.facturascripts_api_key), ('documenso', 'Documenso · token del equipo', t.documenso_api_key), ('calcom', 'Cal.diy · Configuración → Developer → API Keys', t.calcom_api_key)) %}
+    <form method="post" action="{{ url_for('rutas.guardar_clave_api', tenant_id=t.id, servicio=clave) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>{{ etiqueta }} {% if puesta %}<span class="insignia insignia-ok">GUARDADA</span>{% endif %}<input type="password" name="api_key" maxlength="500" autocomplete="off" placeholder="{{ 'Pega una nueva para sustituirla' if puesta else 'Pega la clave' }}" required></label>
+      <button type="submit" class="boton">Guardar</button>
+    </form>
+    {% endfor %}
+
+    {% elif seccion == 'avanzado' %}
+    <h2>Avanzado</h2>
+    <h3>Exportar datos (derecho de acceso RGPD)</h3>
+    <p class="muted">Clientes, vencimientos, tareas, notas, tiquets y metadatos de correo y documentos de este tenant, en un JSON. Queda registrado en la actividad.</p>
+    <form method="post" action="{{ url_for('rutas.exportar_tenant', tenant_id=t.id) }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">{{ icono('download') }} Exportar datos</button></form>
+    <div class="tarjeta zona-peligro">
+      <h3>Borrar tenant</h3>
+      <p>Acción <strong>irreversible</strong>: retira sus instancias en las herramientas conectadas y elimina el tenant. Para confirmar, escribe su nombre exacto: <code>{{ t.nombre }}</code></p>
+      <form method="post" action="{{ url_for('rutas.borrar_tenant', tenant_id=t.id) }}" class="formulario fila-form">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <label>Nombre del tenant<input type="text" name="confirmacion" autocomplete="off" required></label>
+        <button type="submit" class="boton boton-peligro" data-confirmar="¿Seguro? Se borrará «{{ t.nombre }}» y sus instancias en las herramientas. No se puede deshacer.">Borrar definitivamente</button>
+      </form>
+    </div>
+
+    {% else %}
+    <h2>Actividad del equipo</h2>
+    <p class="muted">Última actividad: {{ d.ultima_actividad|fecha }}</p>
+    <div class="tabla-caja">
+      <table class="tabla">
+        <thead><tr><th>Usuario</th><th>Tareas finalizadas</th><th>Notas</th><th>Tiempo total</th></tr></thead>
+        <tbody>
+          {% for e in d.equipo %}
+          <tr><td>{{ e.email }}</td><td>{{ e.num_tareas }}</td><td>{{ e.num_notas }}</td><td class="mono">{{ e.segundos_totales // 3600 }} h {{ (e.segundos_totales % 3600) // 60 }} min</td></tr>
+          {% else %}<tr><td colspan="4" class="vacio">Todavía no hay datos suficientes.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="ficha-lado">
+    <section class="tarjeta">
+      <h2>Estado</h2>
+      <p>{% if t.activo %}<span class="insignia insignia-ok">ACTIVO</span>{% else %}<span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</p>
+      <dl class="datos-lista">
+        <div><dt>Tenant ID</dt><dd class="mono">{{ t.id }}</dd></div>
+        <div><dt>Usuarios</dt><dd>{{ d.n_usuarios }}</dd></div>
+        <div><dt>Clientes fiscales</dt><dd>{{ d.n_clientes }}</dd></div>
+        <div><dt>Módulos activos</dt><dd>{{ d.modulos|selectattr('activo')|list|length }}/{{ d.modulos|length }}</dd></div>
+        <div><dt>Última actividad</dt><dd>{{ d.ultima_actividad|fecha }}</dd></div>
+      </dl>
+      <a class="boton boton-ancho" href="{{ url_for('rutas.usuarios', tenant=t.id) }}">{{ icono('users') }} Ver usuarios</a>
+    </section>
+  </aside>
+</div>
+{% endblock %}

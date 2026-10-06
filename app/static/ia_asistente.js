@@ -141,6 +141,29 @@
   // más navegadores).
   var LOCALE_VOZ = { es: "es-ES", ca: "ca-ES", en: "en-US", fr: "fr-FR" };
 
+  // Fuentes citadas bajo la burbuja del asistente: enlaces internos (solo
+  // rutas que empiezan por "/"), creados con textContent/href, nunca con innerHTML.
+  function pintarFuentes(burbuja, fuentes) {
+    if (!burbuja || !fuentes || !fuentes.length) return;
+    var caja = document.createElement("div");
+    caja.className = "ia-fuentes";
+    var etiqueta = document.createElement("span");
+    etiqueta.className = "ia-fuentes-etiqueta";
+    etiqueta.textContent = document.documentElement.lang === "ca" ? "Fonts:" :
+      document.documentElement.lang === "en" ? "Sources:" :
+      document.documentElement.lang === "fr" ? "Sources :" : "Fuentes:";
+    caja.appendChild(etiqueta);
+    fuentes.forEach(function (f) {
+      if (!f || typeof f.url !== "string" || f.url.charAt(0) !== "/" || f.url.charAt(1) === "/") return;
+      var a = document.createElement("a");
+      a.className = "ia-fuente ia-fuente-" + String(f.tipo || "").replace(/[^a-z]/g, "");
+      a.href = f.url;
+      a.textContent = String(f.titulo || f.url);
+      caja.appendChild(a);
+    });
+    if (caja.children.length > 1) burbuja.insertAdjacentElement("afterend", caja);
+  }
+
   function iniciarChat(contenedor) {
     var id = contenedor.id;
     var mensajesEl = document.getElementById(id + "-mensajes");
@@ -163,6 +186,21 @@
     mensajesEl.querySelectorAll(".ia-msg-assistant").forEach(function (el) {
       el.innerHTML = renderizarMarkdown(el.textContent);
     });
+    // Fuentes de los mensajes ya guardados (las pinta Jinja como contenedores vacíos).
+    mensajesEl.querySelectorAll(".ia-fuentes[data-fuentes]").forEach(function (caja) {
+      var previo = caja.previousElementSibling;
+      var datos = [];
+      try { datos = JSON.parse(caja.dataset.fuentes); } catch (e) { datos = []; }
+      caja.remove();
+      pintarFuentes(previo, datos);
+    });
+    // Atajos: un clic envía el texto del atajo.
+    var atajosEl = document.getElementById(id + "-atajos");
+    if (atajosEl) {
+      atajosEl.querySelectorAll(".ia-atajo").forEach(function (b) {
+        b.addEventListener("click", function () { enviarMensaje(b.dataset.prompt || ""); });
+      });
+    }
 
     function adjuntarBotonesPendiente() {
       pendienteEl.querySelectorAll(".ia-chat-confirmar").forEach(function (btn) {
@@ -395,6 +433,11 @@
           if (mensaje.rol === "assistant" && mensaje.contenido) {
             if (!bubbujaViva) iniciarBurbujaViva();
             bubbujaViva.innerHTML = renderizarMarkdown(mensaje.contenido);
+            if (mensaje.fuentes_json) {
+              var fuentesVivas = [];
+              try { fuentesVivas = JSON.parse(mensaje.fuentes_json); } catch (e) { fuentesVivas = []; }
+              pintarFuentes(bubbujaViva, fuentesVivas);
+            }
             bubbujaViva = null;
           } else if (mensaje.rol === "tool") {
             var div = document.createElement("div");

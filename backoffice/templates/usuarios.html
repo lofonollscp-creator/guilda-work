@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono, insignia_rol, paginacion %}
+{% block titulo %}Usuarios{% endblock %}
+{% macro args(pagina=None) %}{{ {'q': q, 'tenant': tenant_f, 'rol': rol, 'orden': orden, 'vista': vista, 'por_pagina': pag.por_pagina, 'pagina': pagina or 1}|urlencode }}{% endmacro %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div><h1>Usuarios</h1><p class="muted">Personas con acceso a la plataforma, su tenant y sus permisos.</p></div>
+  <button type="button" class="boton boton-primario" data-abrir="dialogo-usuario">{{ icono('users') }} Crear nuevo usuario</button>
+</header>
+
+{% if creado %}
+<section class="tarjeta destacada" role="status">
+  <h2>Usuario creado: {{ creado.email }}</h2>
+  <p>Esta contraseña temporal <strong>solo se muestra ahora</strong>. Pásasela para que la cambie al entrar:</p>
+  <p class="clave"><code id="clave-temporal">{{ creado.contrasena }}</code> <button type="button" class="boton" data-copiar="clave-temporal">Copiar</button></p>
+  {% if creado.pasos %}
+  <h3>Altas en herramientas conectadas</h3>
+  <div class="tabla-caja"><table class="tabla"><thead><tr><th>Servicio</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>
+    {% for p in creado.pasos %}<tr><td>{{ p.servicio }}</td><td><span class="insignia {{ 'insignia-ok' if p.estado == 'creado' else ('insignia-riesgo' if p.estado == 'error' else '') }}">{{ p.estado|upper }}</span></td>
+      <td>{% if p.datos %}{% for k, v in p.datos.items() %}<span class="muted">{{ k }}:</span> <code>{{ v }}</code> {% endfor %}{% else %}<span class="muted">{{ p.detalle }}</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endif %}
+  <p><a class="boton" href="{{ url_for('rutas.usuario', usuario_id=creado.id) }}">Abrir ficha</a></p>
+</section>
+{% endif %}
+
+<form class="herramientas" method="get">
+  <label class="buscador">{{ icono('search') }}<input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o email…" aria-label="Buscar usuario"></label>
+  <details class="desplegable">
+    <summary class="boton">{{ icono('settings') }} Filtros{% if tenant_f or rol %} ({{ (1 if tenant_f else 0) + (1 if rol else 0) }}){% endif %}</summary>
+    <div class="panel-flotante">
+      <label>Tenant
+        <select name="tenant"><option value="">Todos</option><option value="ninguno" {{ 'selected' if tenant_f == 'ninguno' }}>Sin tenant</option>
+          {% for t in tenants %}<option value="{{ t.id }}" {{ 'selected' if tenant_f == t.id|string }}>{{ t.nombre }}</option>{% endfor %}</select></label>
+      <label>Rol
+        <select name="rol"><option value="">Todos</option>
+          <option value="admin" {{ 'selected' if rol == 'admin' }}>Administradores</option>
+          <option value="gestor" {{ 'selected' if rol == 'gestor' }}>Gestores de fichajes</option>
+          <option value="supervisor" {{ 'selected' if rol == 'supervisor' }}>Supervisores</option>
+          <option value="usuario" {{ 'selected' if rol == 'usuario' }}>Solo usuario</option></select></label>
+      <label>Ordenar por
+        <select name="orden"><option value="creado" {{ 'selected' if orden == 'creado' }}>Más recientes</option>
+          <option value="nombre" {{ 'selected' if orden == 'nombre' }}>Nombre</option>
+          <option value="email" {{ 'selected' if orden == 'email' }}>Email</option></select></label>
+      <button type="submit" class="boton boton-primario">Aplicar</button>
+    </div>
+  </details>
+  <select name="por_pagina" data-autoenviar aria-label="Resultados por página">{% for n in por_pagina_opciones %}<option value="{{ n }}" {{ 'selected' if pag.por_pagina == n }}>{{ n }}</option>{% endfor %}</select>
+  <span class="grupo-vista">
+    <button type="submit" name="vista" value="lista" class="boton-icono {{ 'activo' if vista == 'lista' }}" aria-label="Vista de lista" title="Lista">{{ icono('layout-list') }}</button>
+    <button type="submit" name="vista" value="rejilla" class="boton-icono {{ 'activo' if vista == 'rejilla' }}" aria-label="Vista de cuadrícula" title="Cuadrícula">{{ icono('layout-grid') }}</button>
+  </span>
+  <button type="submit" class="boton">Buscar</button>
+</form>
+
+{% if vista == 'rejilla' %}
+<section class="rejilla rejilla-cartas">
+  {% for u in usuarios %}
+  <a class="tarjeta carta" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}">
+    <header><span class="avatar" style="--c: {{ u.nombre|color_avatar }}">{{ u.nombre|iniciales }}</span>
+      <div><strong>{{ u.nombre }}</strong><span class="muted">{{ u.email }}</span></div></header>
+    <p>{{ insignia_rol(u) }}</p>
+    <small class="muted">{{ u.tenant or 'Sin tenant' }} · alta {{ u.creado_en|fecha }}</small>
+  </a>
+  {% else %}<p class="vacio">Ningún usuario coincide.</p>{% endfor %}
+</section>
+{% else %}
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Usuario</th><th>Tenant</th><th>Email</th><th>Rol</th><th>Idioma</th><th>Alta</th><th>Activo</th><th>Acciones</th></tr></thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td><a class="celda-usuario" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}"><span class="avatar" style="--c: {{ u.nombre|color_avatar }}">{{ u.nombre|iniciales }}</span><strong>{{ u.nombre }}</strong></a></td>
+        <td>{% if u.tenant_id %}<a href="{{ url_for('rutas.tenant', tenant_id=u.tenant_id) }}">{{ u.tenant }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td><a href="{{ url_for('rutas.usuario', usuario_id=u.id) }}">{{ u.email }}</a></td>
+        <td>{{ insignia_rol(u) }}{% if u.tenant and (u.rol == 'admin' or u.gestor_fichajes or u.supervisor_tenant) %}<small class="muted bloque">{{ u.tenant }}</small>{% endif %}</td>
+        <td>{% if u.idioma %}<span class="insignia insignia-ok">{{ u.idioma }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{{ u.creado_en|fecha }}</td>
+        <td>{% if u.tenant_id is none or u.tenant_activo %}<span class="ok" title="Activo">✓</span>{% else %}<span class="ko" title="Su tenant está suspendido">✕</span>{% endif %}</td>
+        <td class="acciones"><a class="boton-icono" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}" aria-label="Abrir {{ u.email }}">{{ icono('user') }}</a></td>
+      </tr>
+      {% else %}<tr><td colspan="8" class="vacio">Ningún usuario coincide.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {{ paginacion(pag, args) }}
+</div>
+{% endif %}
+
+<dialog id="dialogo-usuario" class="dialogo">
+  <form method="post" action="{{ url_for('rutas.crear_usuario') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <h2>Crear nuevo usuario</h2>
+    <label>Email<input type="email" name="email" maxlength="254" required></label>
+    <label>Tenant<select name="tenant_id"><option value="">Sin tenant</option>{% for t in tenants %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select></label>
+    <p class="muted">Se genera una contraseña temporal que verás una sola vez.</p>
+    <div class="dialogo-pie"><button type="button" class="boton" data-cerrar>Cancelar</button><button type="submit" class="boton boton-primario">Crear usuario</button></div>
+  </form>
+</dialog>
+{% endblock %}

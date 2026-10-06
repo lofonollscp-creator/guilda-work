@@ -21,7 +21,7 @@ from datetime import datetime
 from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, espocrm, export, herramientas, ia_asistente, kratos, openapi
+from . import correo, db, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -46,6 +46,23 @@ def _ok(data=None, status: int = 200):
     if data is not None:
         cuerpo["data"] = data
     return jsonify(cuerpo), status
+
+
+def _ok_paginado(filas):
+    """Respuesta de listado con paginación OPCIONAL: sin `limit`/`offset` devuelve
+    todo, igual que siempre (la app móvil no cambia); con ellos devuelve esa
+    página. En ambos casos la cabecera `X-Total-Count` lleva el total sin paginar."""
+    filas = list(filas)
+    total = len(filas)
+    offset = max(0, request.args.get("offset", default=0, type=int) or 0)
+    limit = request.args.get("limit", type=int)
+    if limit is not None:
+        filas = filas[offset:offset + max(1, min(limit, 1000))]
+    elif offset:
+        filas = filas[offset:]
+    respuesta, status = _ok(_dicts(filas))
+    respuesta.headers["X-Total-Count"] = str(total)
+    return respuesta, status
 
 
 def _err(mensaje: str, status: int = 400):
@@ -113,6 +130,36 @@ def logout():
     token = _token_de_cabecera()
     if token:
         db.revocar_token_api(token)
+    return _ok()
+
+
+@api_bp.route("/tokens", methods=["GET"])
+@token_required
+def listar_tokens():
+    """Tokens de acceso del usuario (nunca el token ni su hash)."""
+    return _ok(_dicts(db.listar_tokens_api(g.usuario_id)))
+
+
+@api_bp.route("/tokens", methods=["POST"])
+@token_required
+def crear_token():
+    """Crea otro token (p. ej. de solo lectura para una integración). El token
+    en claro solo se devuelve aquí, una vez. Un token de solo lectura no puede
+    llamar a esto (lo corta token_required)."""
+    datos = _body()
+    permisos = datos.get("permisos") or "completo"
+    if permisos not in db.PERMISOS_TOKEN_API:
+        return _err("permisos debe ser 'completo' o 'solo_lectura'.")
+    nombre = (datos.get("nombre") or "").strip()[:80] or None
+    token = db.crear_token_api(g.usuario_id, nombre, permisos)
+    return _ok({"token": token, "permisos": permisos, "nombre": nombre}, 201)
+
+
+@api_bp.route("/tokens/<int:token_id>", methods=["DELETE"])
+@token_required
+def revocar_token(token_id: int):
+    if not db.revocar_token_api_por_id(g.usuario_id, token_id):
+        abort(404, "Token no encontrado.")
     return _ok()
 
 
@@ -319,7 +366,7 @@ def historial():
     categoria_id = request.args.get("categoria_id", type=int)
     q = request.args.get("q") or None
     filas = db.historial(g.usuario_id, desde=desde, hasta=hasta, categoria_id=categoria_id, texto=q)
-    return _ok(_dicts(filas))
+    return _ok_paginado(filas)
 
 
 @api_bp.route("/export", methods=["GET"])
@@ -374,13 +421,13 @@ def eliminar_definitivamente_de_papelera(tipo: str, item_id: int):
 @api_bp.route("/tareas-outlook", methods=["GET"])
 @token_required
 def listar_tareas_outlook():
-    return _ok(_dicts(db.listar_tareas_outlook(
+    return _ok_paginado(db.listar_tareas_outlook(
         g.usuario_id,
         estado=request.args.get("estado") or None,
         prioridad=request.args.get("prioridad") or None,
         categoria_outlook=request.args.get("categoria") or None,
         texto=request.args.get("q") or None,
-    )))
+    ))
 
 
 @api_bp.route("/tareas-outlook", methods=["POST"])
@@ -455,10 +502,10 @@ def _puede_editar_tiquet(tiquet) -> bool:
 @api_bp.route("/tiquets", methods=["GET"])
 @token_required
 def listar_tiquets():
-    return _ok(_dicts(db.listar_tiquets(
+    return _ok_paginado(db.listar_tiquets(
         estado=request.args.get("estado") or None,
         tipo=request.args.get("tipo") or None,
-    )))
+    ))
 
 
 @api_bp.route("/tiquets", methods=["POST"])
@@ -542,7 +589,7 @@ def listar_clientes_fiscales():
     error = _exigir_tenant_api()
     if error:
         return error
-    return _ok(_dicts(db.listar_clientes_fiscales(g.tenant_id, q=request.args.get("q") or None)))
+    return _ok_paginado(db.listar_clientes_fiscales(g.tenant_id, q=request.args.get("q") or None))
 
 
 @api_bp.route("/fiscal/clientes", methods=["POST"])
@@ -649,11 +696,11 @@ def listar_vencimientos_fiscales():
     error = _exigir_tenant_api()
     if error:
         return error
-    return _ok(_dicts(db.listar_vencimientos_fiscales(
+    return _ok_paginado(db.listar_vencimientos_fiscales(
         g.tenant_id,
         estado=request.args.get("estado") or None,
         cliente_fiscal_id=request.args.get("cliente_id", type=int),
-    )))
+    ))
 
 
 @api_bp.route("/fiscal/vencimientos/<int:vencimiento_id>", methods=["PUT"])
@@ -848,7 +895,7 @@ def listar_mensajes_correo():
         limite=preferencias["limite_mensajes"],
         incluir_pospuestos=request.args.get("pospuestos") == "1",
     )
-    return _ok(_dicts(mensajes))
+    return _ok_paginado(mensajes)
 
 
 @api_bp.route("/correo/mensajes/<int:mensaje_id>", methods=["GET"])
@@ -1220,6 +1267,32 @@ def listar_modelos_ia():
     return _ok(ia_asistente.listar_modelos_gratuitos())
 
 
+@api_bp.route("/ia/atajos", methods=["GET"])
+@token_required
+def listar_atajos_ia():
+    """Atajos de prompts: los 6 de serie (sin id) y los propios del usuario."""
+    return _ok(ia_atajos.atajos_para(g.usuario_id))
+
+
+@api_bp.route("/ia/atajos", methods=["POST"])
+@token_required
+def crear_atajo_ia():
+    datos = _body()
+    try:
+        atajo_id = db.crear_atajo_ia(g.usuario_id, datos.get("titulo", ""), datos.get("prompt", ""))
+    except ValueError as e:
+        return _err(str(e))
+    return _ok({"id": atajo_id}, 201)
+
+
+@api_bp.route("/ia/atajos/<int:atajo_id>", methods=["DELETE"])
+@token_required
+def eliminar_atajo_ia(atajo_id: int):
+    if not db.eliminar_atajo_ia(g.usuario_id, atajo_id):
+        abort(404, "Atajo no encontrado.")
+    return _ok()
+
+
 @api_bp.route("/ia/ajustes", methods=["GET"])
 @token_required
 def obtener_ajustes_ia():
@@ -1234,6 +1307,7 @@ def guardar_ajustes_ia():
     datos = _body()
     db.guardar_preferencias_ia(
         g.usuario_id, modelo=datos.get("modelo", ""), modo_autonomo=bool(datos.get("modo_autonomo", False)),
+        solo_lectura=bool(datos["solo_lectura"]) if "solo_lectura" in datos else None,
     )
     nueva_clave = (datos.get("api_key") or "").strip()
     if nueva_clave:

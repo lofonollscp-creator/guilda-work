@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es" data-tema="oscuro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block titulo %}Backoffice{% endblock %} · Guilda Work</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='backoffice.css') }}">
+  <script src="{{ url_for('static', filename='tema.js') }}"></script>
+</head>
+<body>
+{% from "_macros.html" import icono, enlace %}
+<div class="shell">
+  {% if admin %}
+  <aside class="lateral" id="lateral">
+    <a class="marca" href="{{ url_for('rutas.dashboard') }}" aria-label="Guilda Work · Backoffice">
+      <span class="marca-logo">GUILDA</span><span class="marca-sub">backoffice</span>
+    </a>
+    <nav class="nav" aria-label="Navegación principal">
+      <p class="nav-grupo">Plataforma</p>
+      {{ enlace(url_for('rutas.dashboard'), 'Dashboard', 'layout-grid', endpoint == 'rutas.dashboard') }}
+      {{ enlace(url_for('rutas.tenants'), 'Tenants', 'layers', endpoint in ('rutas.tenants', 'rutas.tenant')) }}
+      {{ enlace(url_for('rutas.usuarios'), 'Usuarios', 'users', endpoint in ('rutas.usuarios', 'rutas.usuario')) }}
+      {{ enlace(url_for('rutas.catalogo'), 'Herramientas', 'puzzle', endpoint == 'rutas.catalogo') }}
+      <p class="nav-grupo">Comercial</p>
+      {{ enlace(url_for('rutas.leads'), 'Leads', 'mail', endpoint == 'rutas.leads') }}
+      {{ enlace(url_for('rutas.solicitudes'), 'Solicitudes del portal', 'message-circle', endpoint == 'rutas.solicitudes') }}
+      <p class="nav-grupo">Facturación</p>
+      {{ enlace(url_for('rutas.planes'), 'Planes y extras', 'credit-card', endpoint == 'rutas.planes') }}
+      {{ enlace(url_for('rutas.ingresos'), 'Ingresos', 'bar-chart-3', endpoint == 'rutas.ingresos') }}
+      <p class="nav-grupo">Sistema</p>
+      {{ enlace(url_for('rutas.salud_vista'), 'Salud', 'circle-check-big', endpoint == 'rutas.salud_vista') }}
+      {{ enlace(url_for('rutas.estado'), 'Estado del sistema', 'activity', endpoint == 'rutas.estado') }}
+      {{ enlace(url_for('rutas.diagnostico_vista'), 'Diagnóstico', 'shield-check', endpoint == 'rutas.diagnostico_vista') }}
+      {{ enlace(url_for('rutas.copias'), 'Copias de seguridad', 'download', endpoint == 'rutas.copias') }}
+      {{ enlace(url_for('rutas.webhooks'), 'Webhooks', 'zap', endpoint == 'rutas.webhooks') }}
+      {{ enlace(url_for('rutas.actividad'), 'Actividad', 'history', endpoint == 'rutas.actividad') }}
+    </nav>
+    <div class="lateral-pie">
+      <div class="admin-chip">
+        <span class="avatar" style="--c: {{ admin.usuario|color_avatar }}">{{ (admin.nombre or admin.usuario)|iniciales }}</span>
+        <span class="admin-nombre">{{ admin.nombre or admin.usuario }}</span>
+      </div>
+      <button type="button" class="boton-icono" data-accion="tema" title="Cambiar tema" aria-label="Cambiar tema">{{ icono('moon') }}</button>
+      <form method="post" action="{{ url_for('rutas.logout') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button type="submit" class="boton-icono" title="Cerrar sesión" aria-label="Cerrar sesión">{{ icono('log-out') }}</button>
+      </form>
+    </div>
+  </aside>
+  {% endif %}
+  <div class="principal">
+    {% if admin %}
+    <header class="barra">
+      <button type="button" class="boton-icono" data-accion="lateral" aria-label="Mostrar u ocultar el menú" aria-controls="lateral">{{ icono('panel-left') }}</button>
+      {% block barra %}{% endblock %}
+    </header>
+    {% endif %}
+    <main class="contenido" id="contenido">
+      {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+      <div class="avisos" role="status">
+        {% for categoria, mensaje in mensajes %}<p class="aviso aviso-{{ categoria }}">{{ mensaje }}</p>{% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+      {% block contenido %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='backoffice.js') }}"></script>
+</body>
+</html>

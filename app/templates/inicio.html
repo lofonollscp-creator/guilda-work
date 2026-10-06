@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_registro_texto.html" import texto as texto_registro with context %}
 {% from "_ia_chat_macro.html" import chat %}
 {% from "_menu_icono_selector.html" import selector_icono %}
 {% block title %}Guilda Work — Dashboard{% endblock %}
@@ -43,21 +44,28 @@
     <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg></span>
     <span>
       <span class="dash-stat-valor">{{ total_activas }}</span>
-      <span class="dash-stat-label">{{ _('tareas en curso') }}</span>
+      <span class="dash-stat-label">{{ ngettext('tarea en curso', 'tareas en curso', total_activas) }}</span>
+    </span>
+  </a>
+  <a class="dash-stat dash-stat-link" href="{{ url_for('tareas.hoy') }}">
+    <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clipboard-list"></use></svg></span>
+    <span>
+      <span class="dash-stat-valor">{{ total_mi_dia }}</span>
+      <span class="dash-stat-label">{{ ngettext('tarea para hoy', 'tareas para hoy', total_mi_dia) }}</span>
     </span>
   </a>
   <a class="dash-stat dash-stat-link" href="{{ url_for('historial', desde=hoy_iso, hasta=hoy_iso) }}">
     <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg></span>
     <span>
       <span class="dash-stat-valor">{{ total_notas_hoy }}</span>
-      <span class="dash-stat-label">{{ _('notas hoy') }}</span>
+      <span class="dash-stat-label">{{ ngettext('nota hoy', 'notas hoy', total_notas_hoy) }}</span>
     </span>
   </a>
   <a class="dash-stat dash-stat-link" href="{{ url_for('correo.bandeja') }}">
     <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg></span>
     <span>
       <span class="dash-stat-valor">{{ correo_no_leidos_sidebar }}</span>
-      <span class="dash-stat-label">{{ _('correos sin leer') }}</span>
+      <span class="dash-stat-label">{{ ngettext('correo sin leer', 'correos sin leer', correo_no_leidos_sidebar) }}</span>
     </span>
   </a>
   {% if total_vencimientos_proximos is not none %}
@@ -65,7 +73,7 @@
     <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg></span>
     <span>
       <span class="dash-stat-valor">{{ total_vencimientos_proximos }}</span>
-      <span class="dash-stat-label">{{ _('vencimientos próximos') }}</span>
+      <span class="dash-stat-label">{{ ngettext('vencimiento próximo', 'vencimientos próximos', total_vencimientos_proximos) }}</span>
     </span>
   </a>
   {% endif %}
@@ -202,7 +210,7 @@
           {% elif f.estado == 'pausada' %}{{ _('En pausa') }}
           {% else %}{{ _('Tarea') }}{% endif %}
         </span>
-        <span class="log-text">{{ f.texto }}</span>
+        <span class="log-text">{{ texto_registro(f) }}</span>
         {% if f.duracion_segundos is not none %}
         <span class="log-duration">{{ (f.duracion_segundos // 3600) }}h {{ (f.duracion_segundos % 3600) // 60 }}m</span>
         {% endif %}

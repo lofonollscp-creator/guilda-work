@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Tenant borrado{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Tenant borrado</h1><p class="muted">El tenant se ha eliminado de la plataforma.</p></header>
+<p>«{{ nombre }}» ya no existe. Resultado de retirar sus herramientas conectadas:</p>
+<div class="tabla-caja"><table class="tabla"><thead><tr><th>Servicio</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>
+  {% for p in pasos %}<tr><td>{{ p.servicio }}</td><td><span class="insignia {{ 'insignia-ok' if p.estado == 'creado' else ('insignia-riesgo' if p.estado == 'error' else '') }}">{{ ('RETIRADO' if p.estado == 'creado' else p.estado)|upper }}</span></td><td class="muted">{{ p.detalle }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p><a class="boton" href="{{ url_for('rutas.tenants') }}">Volver a tenants</a></p>
+{% endblock %}

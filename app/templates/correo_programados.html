@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Programados') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Programados') }}</h1>
+    <p class="subtitle">{{ _('Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">{{ _('Volver al correo') }}</a>
+</header>
+
+{% if not envios %}
+<p class="empty-lane">{{ _('No tienes ningún envío programado.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for e in envios %}
+  <li class="log-item">
+    <span class="log-time">{{ e.enviar_en[:16].replace('T', ' ') }}</span>
+    <span class="log-text">{{ e.asunto }} — {{ _('Para') }}: {{ e.destinatarios }}</span>
+    <form action="{{ url_for('correo.deshacer_envio', envio_id=e.id) }}" method="post"
+          onsubmit="return confirm('{{ _('¿Cancelar este envío? Volverá a tus borradores.') }}');">
+      <button type="submit" class="btn btn-ghost">{{ _('Cancelar envío') }}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

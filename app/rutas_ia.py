@@ -6,7 +6,7 @@ from flask import (
     Blueprint, Response, abort, g, jsonify, redirect, render_template, request, stream_with_context, url_for,
 )
 
-from . import db, ia_asistente as asistente
+from . import db, ia_asistente as asistente, ia_atajos
 from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
@@ -26,6 +26,7 @@ def asistente_vista():
         mensajes=db.listar_mensajes_ia(g.usuario_id),
         pendiente=asistente.pendiente_actual(g.usuario_id),
         preferencias=db.obtener_preferencias_ia(g.usuario_id),
+        ia_atajos=ia_atajos.atajos_para(g.usuario_id),
         panel_flotante=False,
     )
 
@@ -207,7 +208,26 @@ def ajustes():
         preferencias=db.obtener_preferencias_ia(g.usuario_id),
         modelos_sugeridos=asistente.listar_modelos_gratuitos(),
         num_claves_configuradas=len(asistente.obtener_api_keys(g.usuario_id)),
+        atajos_propios=db.listar_atajos_ia(g.usuario_id),
+        error=request.args.get("error"),
     )
+
+
+@ia_bp.route("/ajustes/atajos", methods=["POST"])
+@login_required
+def crear_atajo():
+    try:
+        db.crear_atajo_ia(g.usuario_id, request.form.get("titulo", ""), request.form.get("prompt", ""))
+    except ValueError as e:
+        return redirect(url_for("ia.ajustes", error=str(e)))
+    return redirect(url_for("ia.ajustes"))
+
+
+@ia_bp.route("/ajustes/atajos/<int:atajo_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_atajo(atajo_id: int):
+    db.eliminar_atajo_ia(g.usuario_id, atajo_id)
+    return redirect(url_for("ia.ajustes"))
 
 
 @ia_bp.route("/ajustes", methods=["POST"])
@@ -220,6 +240,7 @@ def guardar_ajustes():
         g.usuario_id,
         modelo=modelo,
         modo_autonomo=request.form.get("modo_autonomo") == "on",
+        solo_lectura=request.form.get("solo_lectura") == "on",
     )
 
     nuevas_claves = request.form.get("api_keys", "").splitlines()

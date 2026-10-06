@@ -7,10 +7,11 @@ import re
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
+from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, db
+from . import correo, correo_ia, db, ia_asistente
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -109,6 +110,8 @@ def _render_redactar(
         titulo=titulo,
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         borrador_id=borrador_id,
+        adjuntos_borrador=db.listar_adjuntos_borrador(g.usuario_id, borrador_id) if borrador_id else [],
+        deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
     )
 
 
@@ -183,7 +186,40 @@ def probar_cuenta(cuenta_id: int):
     return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=error)
 
 
-def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_pospuestos=False):
+def _filtros_de_la_peticion() -> dict:
+    """Filtros avanzados de la bandeja leídos de la URL (solo los activos)."""
+    filtros = {}
+    if request.args.get("adjuntos") == "1":
+        filtros["con_adjuntos"] = True
+    if request.args.get("destacados") == "1":
+        filtros["solo_destacados"] = True
+    for clave, destino in (("categoria", "categoria_id"), ("cliente", "cliente_fiscal_id")):
+        valor = request.args.get(clave, type=int)
+        if valor is not None:
+            filtros[destino] = valor
+    for clave in ("desde", "hasta"):
+        valor = (request.args.get(clave) or "").strip()
+        try:
+            datetime.strptime(valor, "%Y-%m-%d")
+        except ValueError:
+            continue
+        filtros[clave] = valor
+    return filtros
+
+
+def _filtros_para_url(filtros: dict) -> dict:
+    """Los mismos filtros con los nombres de parámetro de la URL, para
+    propagarlos en los enlaces de la lista (`url_for(..., **filtros_url)`)."""
+    return {
+        "adjuntos": 1 if filtros.get("con_adjuntos") else None,
+        "destacados": 1 if filtros.get("solo_destacados") else None,
+        "categoria": filtros.get("categoria_id"), "cliente": filtros.get("cliente_fiscal_id"),
+        "desde": filtros.get("desde"), "hasta": filtros.get("hasta"),
+    }
+
+
+def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_pospuestos=False, filtros=None):
+    filtros = filtros or {}
     cuentas_disponibles = db.listar_cuentas_correo(g.usuario_id)
     # Una sola consulta agregada (antes: una llamada a
     # contar_no_leidos_correo por cada cuenta, N+1, y solo contaba
@@ -200,8 +236,24 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
     if cuenta_id is not None:
         mensajes = correo.listar_mensajes(
             cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=q,
-            limite=preferencias["limite_mensajes"], incluir_pospuestos=incluir_pospuestos,
+            limite=preferencias["limite_mensajes"], incluir_pospuestos=incluir_pospuestos, **filtros,
         )
+
+    # Conversaciones: un solo mensaje por hilo (el más reciente) con el nº de
+    # mensajes del hilo; el resto se ve al abrirlo.
+    hilo_total: dict[str, int] = {}
+    if mensajes:
+        hilo_total = db.contar_hilos_correo(cuenta_id, [m["hilo_clave"] for m in mensajes])
+        vistos = set()
+        unicos = []
+        for m in mensajes:
+            clave = m["hilo_clave"]
+            if clave is not None:
+                if clave in vistos:
+                    continue
+                vistos.add(clave)
+            unicos.append(m)
+        mensajes = unicos
 
     categorias = db.listar_categorias_correo(g.usuario_id)
     # Vínculo con un cliente fiscal (opt-in, solo si el usuario pertenece
@@ -214,6 +266,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "carpeta": carpeta,
         "carpetas": carpetas,
         "mensajes": mensajes,
+        "hilo_total": hilo_total,
         "no_leidos_por_cuenta": no_leidos_por_cuenta,
         "no_leidos_carpetas": no_leidos_carpetas,
         "categorias": categorias,
@@ -224,6 +277,8 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "q": q or "",
         "solo_no_leidos": solo_no_leidos,
         "incluir_pospuestos": incluir_pospuestos,
+        "filtros": filtros,
+        "filtros_url": _filtros_para_url(filtros),
         "error": error,
     }
 
@@ -250,7 +305,21 @@ def bandeja():
     if cuenta_id is not None and db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
         abort(404)
 
-    contexto = _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, None, incluir_pospuestos)
+    contexto = _contexto_bandeja(
+        cuenta_id, carpeta, q, solo_no_leidos, None, incluir_pospuestos, _filtros_de_la_peticion(),
+    )
+    contexto["aviso"] = request.args.get("aviso") or None
+    contexto["num_programados"] = db.contar_envios_programados(g.usuario_id)
+    contexto["envio_banner"] = None
+    envio_id = request.args.get("envio_id", type=int)
+    if envio_id is not None:
+        envio = db.obtener_envio_correo(g.usuario_id, envio_id)
+        if envio is not None and envio["estado"] == "pendiente":
+            restante = (datetime.fromisoformat(envio["enviar_en"]) - datetime.now()).total_seconds()
+            contexto["envio_banner"] = {
+                "id": envio["id"], "programado": bool(envio["programado"]),
+                "enviar_en": envio["enviar_en"].replace("T", " ")[:16], "segundos": max(0, int(restante)),
+            }
     contexto["completa"] = completa
 
     mensaje_seleccionado = None
@@ -268,6 +337,10 @@ def bandeja():
 
     contexto["mensaje_seleccionado"] = mensaje_seleccionado
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
+    contexto["hilo_mensajes"] = (
+        [h for h in db.mensajes_del_hilo_correo(cuenta_id, mensaje_seleccionado["hilo_clave"]) if h["id"] != mensaje_id]
+        if mensaje_seleccionado is not None else []
+    )
 
     remitente_confiable = False
     cuerpo_html_mostrado = None
@@ -449,6 +522,14 @@ def redactar():
     return _render_redactar(cuenta_id=cuenta_id, cuerpo_html=cuerpo_html)
 
 
+def _cita_de(mensaje) -> str:
+    original_html = correo.sanear_html_externo(mensaje["cuerpo_html"]) if mensaje["cuerpo_html"] else correo.texto_a_html(mensaje["cuerpo_texto"] or "")
+    return (
+        f"<p>{correo.texto_a_html(mensaje['remitente'] or '')} escribió:</p>"
+        f'<blockquote style="border-left:2px solid #ccc;margin:0 0 0 8px;padding-left:12px;color:#555;">{original_html}</blockquote>'
+    )
+
+
 @correo_bp.route("/<int:mensaje_id>/responder")
 @login_required
 def responder(mensaje_id: int):
@@ -456,12 +537,9 @@ def responder(mensaje_id: int):
     asunto = mensaje["asunto"] or ""
     if not asunto.lower().startswith("re:"):
         asunto = f"Re: {asunto}"
-    original_html = correo.sanear_html_externo(mensaje["cuerpo_html"]) if mensaje["cuerpo_html"] else correo.texto_a_html(mensaje["cuerpo_texto"] or "")
-    cita = (
-        f"<p>{correo.texto_a_html(mensaje['remitente'] or '')} escribió:</p>"
-        f'<blockquote style="border-left:2px solid #ccc;margin:0 0 0 8px;padding-left:12px;color:#555;">{original_html}</blockquote>'
+    cuerpo_html = correo.preparar_cuerpo_inicial(
+        g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=_cita_de(mensaje),
     )
-    cuerpo_html = correo.preparar_cuerpo_inicial(g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=cita)
     return _render_redactar(
         cuenta_id=mensaje["cuenta_id"], destinatarios=mensaje["remitente"] or "",
         asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"], titulo=_("Responder"),
@@ -522,7 +600,31 @@ def enviar():
         {"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()}
         for f in request.files.getlist("adjuntos") if f.filename
     ]
+    if borrador_id is not None:  # adjuntos que ya traía el borrador (envío deshecho o fallido) y se siguen queriendo
+        ids_mantener = [i for i in request.form.getlist("mantener_adjuntos") if i.isdigit()]
+        adjuntos = db.adjuntos_borrador_para_enviar(g.usuario_id, borrador_id, [int(i) for i in ids_mantener]) + adjuntos
+    programado = request.form.get("programar") == "1"
+    deshacer = db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"]
     try:
+        enviar_en = None
+        if programado:
+            try:
+                momento = datetime.strptime((request.form.get("programar_para") or "").strip(), "%Y-%m-%dT%H:%M")
+            except ValueError:
+                raise correo.ErrorCorreo(_("Elige la fecha y la hora del envío programado.")) from None
+            if momento <= datetime.now() + timedelta(minutes=1):
+                raise correo.ErrorCorreo(_("La hora del envío programado tiene que ser futura."))
+            enviar_en = momento.isoformat(timespec="seconds")
+        elif deshacer > 0:
+            enviar_en = (datetime.now() + timedelta(seconds=deshacer)).isoformat(timespec="seconds")
+        if enviar_en is not None:
+            envio_id = correo.encolar_envio(
+                g.usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
+                en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, enviar_en=enviar_en, programado=programado,
+            )
+            if borrador_id is not None:
+                db.eliminar_borrador_correo(g.usuario_id, borrador_id)
+            return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, envio_id=envio_id))
         correo.construir_y_enviar(
             g.usuario_id,
             cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
@@ -536,6 +638,30 @@ def enviar():
     if borrador_id is not None:
         db.eliminar_borrador_correo(g.usuario_id, borrador_id)
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id))
+
+
+@correo_bp.route("/envios/<int:envio_id>/deshacer", methods=["POST"])
+@login_required
+def deshacer_envio(envio_id: int):
+    """Deshacer un envío en cuenta atrás o cancelar uno programado: el
+    correo vuelve al editor como borrador."""
+    envio = db.obtener_envio_correo(g.usuario_id, envio_id)
+    if envio is None:
+        abort(404)
+    if db.cancelar_envio_correo(g.usuario_id, envio_id):
+        borrador_id = correo.borrador_desde_envio(envio)
+        db.cerrar_envio_correo(envio_id, "cancelado", borrar_adjuntos=True)
+        return redirect(url_for("correo.redactar", borrador_id=borrador_id))
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=envio["cuenta_id"],
+        aviso=_("Ya no se puede deshacer: el correo ya se ha enviado."),
+    ))
+
+
+@correo_bp.route("/programados")
+@login_required
+def programados():
+    return render_template("correo_programados.html", envios=db.listar_envios_programados(g.usuario_id))
 
 
 # --- Borradores -------------------------------------------------------------
@@ -572,6 +698,100 @@ def eliminar_borrador(borrador_id: int):
     return redirect(url_for("correo.borradores"))
 
 
+# --- Del correo a la acción: tarea, nota e IA bajo demanda ----------------------
+
+def _volver_a_mensaje(mensaje, aviso: str):
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"],
+        mensaje_id=mensaje["id"], aviso=aviso,
+    ))
+
+
+def _asunto_de(mensaje) -> str:
+    return (mensaje["asunto"] or _("(sin asunto)")).strip()[:200]
+
+
+@correo_bp.route("/<int:mensaje_id>/crear-tarea", methods=["POST"])
+@login_required
+def crear_tarea_desde_correo(mensaje_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    vence = (request.form.get("vence") or "").strip() or None
+    if vence:
+        try:
+            datetime.strptime(vence, "%Y-%m-%d")
+        except ValueError:
+            vence = None
+    db.crear_tarea_outlook(
+        g.usuario_id, _asunto_de(mensaje), cuerpo=_("Correo de {remitente}").format(remitente=mensaje["remitente"] or ""),
+        fecha_vencimiento=vence, cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+    )
+    return _volver_a_mensaje(mensaje, _("Tarea creada."))
+
+
+@correo_bp.route("/<int:mensaje_id>/guardar-nota", methods=["POST"])
+@login_required
+def guardar_nota_desde_correo(mensaje_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    cuerpo = (mensaje["cuerpo_texto"] or "").strip()
+    if not cuerpo and mensaje["cuerpo_html"]:
+        cuerpo = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", mensaje["cuerpo_html"])).strip()
+    texto = _("De: {remitente}").format(remitente=mensaje["remitente"] or "") + "\n\n" + cuerpo[:2000]
+    db.crear_nota(
+        g.usuario_id, texto, titulo=_asunto_de(mensaje)[:120],
+        cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+    )
+    return _volver_a_mensaje(mensaje, _("Nota guardada."))
+
+
+@correo_bp.route("/<int:mensaje_id>/ia/<accion>", methods=["POST"])
+@login_required
+def ia_sobre_correo(mensaje_id: int, accion: str):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    if accion not in correo_ia.ACCIONES:
+        abort(404)
+    try:
+        return jsonify({"ok": True, **correo_ia.ejecutar(g.usuario_id, accion, mensaje, str(get_locale() or "es")[:2])})
+    except ia_asistente.ErrorIA as e:
+        return jsonify({"ok": False, "error": str(e)}), 502
+
+
+@correo_bp.route("/<int:mensaje_id>/ia-borrador", methods=["POST"])
+@login_required
+def ia_borrador_respuesta(mensaje_id: int):
+    """Genera la respuesta con IA y la deja como borrador (texto de la IA
+    arriba, luego firma y cita) para revisarla y enviarla desde el editor."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    texto = (request.form.get("texto") or "").strip()
+    if not texto:
+        abort(400)
+    asunto = mensaje["asunto"] or ""
+    if not asunto.lower().startswith("re:"):
+        asunto = f"Re: {asunto}"
+    cuerpo_html = correo.texto_a_html(texto) + correo.preparar_cuerpo_inicial(
+        g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=_cita_de(mensaje),
+    )
+    borrador_id = db.guardar_borrador_correo(
+        g.usuario_id, None, cuenta_id=mensaje["cuenta_id"], destinatarios=mensaje["remitente"] or "",
+        cc="", bcc="", asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"],
+    )
+    return redirect(url_for("correo.redactar", borrador_id=borrador_id))
+
+
+@correo_bp.route("/<int:mensaje_id>/tareas-ia", methods=["POST"])
+@login_required
+def crear_tareas_marcadas(mensaje_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    creadas = 0
+    for asunto in request.form.getlist("tarea")[:correo_ia.MAX_TAREAS]:
+        asunto = " ".join(asunto.split())[:correo_ia.MAX_LONGITUD_TAREA]
+        if asunto:
+            db.crear_tarea_outlook(
+                g.usuario_id, asunto, cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+            )
+            creadas += 1
+    return _volver_a_mensaje(mensaje, _("{n} tareas creadas.").format(n=creadas))
+
+
 # --- Ajustes: preferencias, categorías y firma --------------------------------
 
 def _render_ajustes(*, error=None, cuenta_firma_id=None):
@@ -588,6 +808,8 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         cuenta_firma=cuenta_firma,
         remitentes_confiables=db.listar_remitentes_confiables(g.usuario_id),
         reglas_categoria=db.listar_reglas_categoria_correo(g.usuario_id),
+        reglas_avanzadas=db.listar_reglas_correo(g.usuario_id),
+        clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         error=error,
     )
@@ -612,6 +834,7 @@ def guardar_preferencias():
         densidad=request.form.get("densidad", "normal"),
         marcar_leido_automatico=request.form.get("marcar_leido_automatico") == "on",
         limite_mensajes=max(10, min(limite, 500)),
+        deshacer_segundos=request.form.get("deshacer_segundos", type=int),
     )
     return redirect(url_for("correo.ajustes"))
 
@@ -697,6 +920,29 @@ def crear_regla_categoria():
 @login_required
 def eliminar_regla_categoria(regla_id: int):
     correo.eliminar_regla_categoria(g.usuario_id, regla_id)
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/reglas-avanzadas", methods=["POST"])
+@login_required
+def crear_regla_avanzada():
+    try:
+        db.crear_regla_correo(
+            g.usuario_id, request.form.get("remitente_patron"), request.form.get("asunto_patron"),
+            categoria_id=request.form.get("categoria_id", type=int),
+            marcar_leido=request.form.get("marcar_leido") == "on",
+            destacar=request.form.get("destacar") == "on",
+            cliente_fiscal_id=request.form.get("cliente_fiscal_id", type=int),
+        )
+    except ValueError as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/reglas-avanzadas/<int:regla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_regla_avanzada(regla_id: int):
+    db.eliminar_regla_correo(g.usuario_id, regla_id)
     return redirect(url_for("correo.ajustes"))
 
 

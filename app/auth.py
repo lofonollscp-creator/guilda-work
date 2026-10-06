@@ -56,10 +56,18 @@ def token_required(vista):
     def decorada(*args, **kwargs):
         cabecera = request.headers.get("Authorization", "")
         token = cabecera[7:] if cabecera.startswith("Bearer ") else None
-        usuario_id = db.usuario_id_por_token(token) if token else None
-        if usuario_id is None:
+        autenticado = db.autenticar_token(token) if token else None
+        if autenticado is None:
             return jsonify({"ok": False, "error": "Token inválido o ausente."}), 401
+        usuario_id, permisos = autenticado
+        # Un token de solo lectura únicamente puede consultar (GET): cualquier
+        # otro método se rechaza aquí, antes de llegar a la vista. La única
+        # excepción es cerrar su propia sesión (revocarse a sí mismo).
+        if permisos == "solo_lectura" and request.method not in ("GET", "HEAD", "OPTIONS") \
+                and request.endpoint != "api.logout":
+            return jsonify({"ok": False, "error": "Este token es de solo lectura."}), 403
         g.usuario_id = usuario_id
+        g.permisos_token = permisos
         # Mismo cálculo que _resolver_usuario_actual() en main.py -- hasta
         # ahora ninguna ruta por token leía g.es_admin/g.gestor_fichajes/
         # g.supervisor_tenant (quedaban sin fijar, ausentes de g por

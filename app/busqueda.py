@@ -221,6 +221,8 @@ def indexar_nota(nota: dict) -> None:
     # texto, se degrada, no falla.
     categoria_nombre = nota.get("categoria_nombre")
     texto = f"{nota['texto']} {categoria_nombre}" if categoria_nombre else nota["texto"]
+    if nota.get("titulo"):
+        texto = f"{nota['titulo']} {texto}"
     _indexar({
         "id": f"nota-{nota['id']}",
         "tipo": "nota",
