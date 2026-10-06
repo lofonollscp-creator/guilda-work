@@ -4436,3 +4436,28 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-form-seccion .correo-toolbar-check, .correo-ajustes-seccion .correo-toolbar-check { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
 .correo-form-seccion .ia-form-row select { min-width: 150px; }
 .ia-atajos { padding: .5rem .75rem .55rem; }
+
+/* ---- Dashboard: aprovecha el ancho disponible y se adapta al redimensionar ---- */
+.content:has(.dash-layout) { max-width: min(1680px, 100%); }
+.dash-stats { grid-template-columns: repeat(auto-fit, minmax(clamp(170px, 18vw, 230px), 1fr)); }
+.dash-stat { min-width: 0; }
+.dash-stat > span:last-child { min-width: 0; display: flex; flex-direction: column; }
+.dash-stat-valor { white-space: nowrap; }
+.dash-acciones { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); align-items: stretch; }
+.dash-accion .quick-row { flex-wrap: nowrap; align-items: center; }
+.dash-accion .quick-row select { flex: 0 1 38%; min-width: 110px; }
+.dash-accion .quick-row input[type="text"] { flex: 1 1 auto; min-width: 120px; }
+.dash-accion .quick-row .btn { flex: 0 0 auto; }
+.dash-layout { grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 440px); gap: var(--space-6, 32px); }
+.menu-grid { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); justify-content: stretch; }
+.dash-main .menu-card { min-width: 0; }
+@media (max-width: 1100px) {
+  .dash-layout { grid-template-columns: minmax(0, 1fr); }
+  .dash-sidebar { position: static; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
+}
+@media (max-width: 700px) {
+  .content:has(.dash-layout) { padding-inline: var(--space-4, 16px); }
+  .dash-accion .quick-row { flex-wrap: wrap; }
+  .dash-accion .quick-row select, .dash-accion .quick-row input[type="text"] { flex: 1 1 100%; }
+}
+.dash-accion-buscar { grid-column: 1 / -1; padding-block: 10px; }
