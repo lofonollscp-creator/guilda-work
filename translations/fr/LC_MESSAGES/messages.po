@@ -473,7 +473,7 @@ msgstr "Tâches"
 #: app/templates/correo_bandeja.html:2 app/templates/correo_bandeja.html:6
 #: app/templates/correo_redactar.html:7
 msgid "Correo"
-msgstr "Courrier"
+msgstr "E-mail"
 
 #: app/templates/base.html:48
 msgid "sin leer"
@@ -3832,3 +3832,78 @@ msgstr "En attente de pièce jointe"
 #, python-format
 msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
 msgstr "Ce document est une attestation interne émise par %(gestoria)s et ne remplace pas le justificatif officiel de dépôt délivré par l'administration fiscale."
+
+msgid "Salud del sistema"
+msgstr "Santé du système"
+
+msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr "Sauvegardes, e-mail, tâches périodiques, intégrations et serveur en un coup d'œil. Un veilleur vérifie tout cela chaque heure et vous prévient par e-mail de ce qui est au rouge (au plus une fois par jour et par motif)."
+
+msgid "Todo en orden"
+msgstr "Tout va bien"
+
+msgid "Atención"
+msgstr "Attention"
+
+msgid "Hay algo en rojo"
+msgstr "Il y a du rouge"
+
+msgid "Sin datos"
+msgstr "Pas de données"
+
+msgid "Copias de seguridad"
+msgstr "Sauvegardes"
+
+msgid "Integraciones"
+msgstr "Intégrations"
+
+msgid "Tareas periódicas"
+msgstr "Tâches périodiques"
+
+msgid "Correcto"
+msgstr "Correct"
+
+msgid "Rojo"
+msgstr "Rouge"
+
+msgid "Salud"
+msgstr "Santé"
+
+msgid "Plataforma"
+msgstr "Plateforme"
+
+msgid "Catálogo de herramientas"
+msgstr "Catalogue d'outils"
+
+msgid "Analítica"
+msgstr "Analytique"
+
+msgid "Resumen"
+msgstr "Résumé"
+
+msgid "Estado del sistema"
+msgstr "État du système"
+
+msgid "Diagnóstico"
+msgstr "Diagnostic"
+
+msgid "Auditoría"
+msgstr "Audit"
+
+msgid "Contenido"
+msgstr "Contenu"
+
+msgid "Leads"
+msgstr "Prospects"
+
+msgid "Solicitudes portal"
+msgstr "Demandes du portail"
+
+msgid "Webhooks"
+msgstr "Webhooks"
+
+msgid "Ingresos"
+msgstr "Revenus"
+
+msgid "Planes y extras"
+msgstr "Forfaits et options"

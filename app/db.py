@@ -718,6 +718,23 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Latidos de las tareas periódicas del servidor (panel de salud del backoffice).
+CREATE TABLE IF NOT EXISTS latidos (
+    nombre TEXT PRIMARY KEY,
+    ultimo_ok TEXT,
+    ultimo_error TEXT,
+    detalle TEXT,
+    intervalo_segundos INTEGER NOT NULL DEFAULT 0
+);
+
+-- Avisos del vigilante de salud ya enviados (uno por motivo y día).
+CREATE TABLE IF NOT EXISTS salud_alertas (
+    motivo TEXT NOT NULL,
+    dia TEXT NOT NULL,
+    enviada_en TEXT NOT NULL,
+    PRIMARY KEY (motivo, dia)
+);
+
 -- Aviso de "salida olvidada": una sola vez por jornada (la entrada abierta).
 CREATE TABLE IF NOT EXISTS fichaje_avisos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -6970,6 +6987,101 @@ def marcar_error_sincronizacion_cuenta_correo(cuenta_id: int, error: str) -> Non
             (error[:300], now_iso(), cuenta_id),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+def registrar_latido(nombre: str, ok: bool, intervalo_segundos: int, detalle: str | None = None) -> None:
+    """Anota que una tarea periódica ha terminado una pasada (bien o con error)."""
+    conn = get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO latidos (nombre, intervalo_segundos) VALUES (?, ?)", (nombre, intervalo_segundos))
+        if ok:
+            conn.execute(
+                "UPDATE latidos SET ultimo_ok = ?, detalle = ?, intervalo_segundos = ? WHERE nombre = ?",
+                (now_iso(), (detalle or None) and detalle[:300], intervalo_segundos, nombre),
+            )
+        else:
+            conn.execute(
+                "UPDATE latidos SET ultimo_error = ?, detalle = ?, intervalo_segundos = ? WHERE nombre = ?",
+                (now_iso(), (detalle or None) and detalle[:300], intervalo_segundos, nombre),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def listar_latidos() -> dict[str, sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return {f["nombre"]: f for f in conn.execute("SELECT * FROM latidos").fetchall()}
+    finally:
+        conn.close()
+
+
+def alerta_salud_enviada(motivo: str, dia: str) -> bool:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM salud_alertas WHERE motivo = ? AND dia = ?", (motivo, dia)).fetchone() is not None
+    finally:
+        conn.close()
+
+
+def marcar_alerta_salud(motivo: str, dia: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO salud_alertas (motivo, dia, enviada_en) VALUES (?, ?, ?)", (motivo, dia, now_iso())
+        )
+        limite = (datetime.strptime(dia, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+        conn.execute("DELETE FROM salud_alertas WHERE dia < ?", (limite,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def estado_cuentas_correo_global() -> list[sqlite3.Row]:
+    """Todas las cuentas de correo con su última sincronización y error (panel de salud)."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT c.id, c.nombre, u.email AS usuario_email, c.ultima_sincronizacion,
+                      c.ultimo_error_sincronizacion, c.ultimo_error_sincronizacion_en
+               FROM correo_cuentas c JOIN usuarios u ON u.id = c.usuario_id ORDER BY c.id"""
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_entregas_webhook_fallidas(desde: str) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT COUNT(*) FROM webhooks_entregas
+               WHERE entregado_en >= ? AND NOT (estado_http IS NOT NULL AND estado_http BETWEEN 200 AND 299)""",
+            (desde,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def contar_envios_correo_fallidos(desde: str) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_envios WHERE estado = 'error' AND procesado_en >= ?", (desde,)
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def contar_envios_correo_atascados(vencidos_antes_de: str) -> int:
+    """Envíos pendientes cuya hora pasó hace rato: el hilo de envíos no está trabajando."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_envios WHERE estado = 'pendiente' AND enviar_en < ?", (vencidos_antes_de,)
+        ).fetchone()[0]
     finally:
         conn.close()
 

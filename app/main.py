@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -1620,9 +1620,11 @@ def _sincronizacion_correo_servidor():
     time.sleep(SINCRONIZACION_CORREO_SERVIDOR_ESPERA_INICIAL_SEGUNDOS)
     while True:
         try:
-            correo.sincronizar_todas_las_cuentas()
-        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            resumen = correo.sincronizar_todas_las_cuentas()
+            salud.registrar_ok("correo_sync", minutos * 60, f"{resumen.get('cuentas', 0)} cuenta(s), {resumen.get('errores', 0)} con error")
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en el auto-sync de correo del servidor")
+            salud.registrar_error("correo_sync", minutos * 60, f"{type(e).__name__}: {e}")
         time.sleep(minutos * 60)
 
 
@@ -1637,9 +1639,29 @@ def _envios_correo_servidor():
     while True:
         try:
             correo.procesar_envios_pendientes()
-        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            salud.registrar_ok("correo_envios", ENVIOS_CORREO_INTERVALO_SEGUNDOS, minimo_segundos=60)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en la cola de envío de correo")
+            salud.registrar_error("correo_envios", ENVIOS_CORREO_INTERVALO_SEGUNDOS, f"{type(e).__name__}: {e}")
         time.sleep(ENVIOS_CORREO_INTERVALO_SEGUNDOS)
+
+
+VIGILANTE_SALUD_INTERVALO_MINUTOS = 60
+
+
+def _vigilante_salud_servidor():
+    """Cada hora revisa el panel de salud y avisa por correo (ALERTAS_ADMIN_EMAIL)
+    de lo que esté en rojo, como mucho una vez al día por motivo (ver app/salud.py).
+    Espera 10 minutos tras arrancar para que las demás tareas ya hayan dado señales."""
+    time.sleep(600)
+    while True:
+        try:
+            salud.vigilar()
+            salud.registrar_ok("vigilante_salud", VIGILANTE_SALUD_INTERVALO_MINUTOS * 60)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en el vigilante de salud")
+            salud.registrar_error("vigilante_salud", VIGILANTE_SALUD_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
+        time.sleep(VIGILANTE_SALUD_INTERVALO_MINUTOS * 60)
 
 
 RECORDATORIOS_PORTAL_INTERVALO_HORAS = 6
@@ -1650,12 +1672,15 @@ def _recordatorios_portal_servidor():
     y 2 días (ver app/portal_recordatorios.py). Se repite varias veces al día
     a propósito: si el correo falla, se reintenta, y nunca se duplica porque
     cada envío correcto queda registrado."""
+    salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, "arrancado")
     time.sleep(300)
     while True:
         try:
-            portal_recordatorios.procesar_recordatorios()
-        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            enviados = portal_recordatorios.procesar_recordatorios()
+            salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{enviados} enviado(s)")
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en los recordatorios del portal")
+            salud.registrar_error("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{type(e).__name__}: {e}")
         time.sleep(RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600)
 
 
@@ -1668,8 +1693,10 @@ def _avisos_fichaje_servidor():
     while True:
         try:
             fichaje_avisos.procesar_avisos()
-        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            salud.registrar_ok("avisos_fichaje", AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en los avisos de fichaje")
+            salud.registrar_error("avisos_fichaje", AVISOS_FICHAJE_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
         time.sleep(AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
 
 
@@ -1688,12 +1715,15 @@ def _recordatorio_vencimientos_fiscales():
     (solo arrancan en main(), modo escritorio), este hilo se arranca TAMBIÉN
     desde serve.py -- los vencimientos fiscales son multi-tenant, tiene que
     funcionar en el despliegue real, no solo en la app de escritorio."""
+    salud.registrar_ok("recordatorios_vencimientos", RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60, "arrancado")
     while True:
         time.sleep(RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60)
         try:
             proximos = db.vencimientos_fiscales_proximos(dias=RECORDATORIO_VENCIMIENTOS_DIAS_ANTELACION)
-        except Exception:
+        except Exception as e:
+            salud.registrar_error("recordatorios_vencimientos", RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
             continue
+        salud.registrar_ok("recordatorios_vencimientos", RECORDATORIO_VENCIMIENTOS_INTERVALO_MINUTOS * 60)
         for v in proximos:
             if not v["usuario_id"]:
                 continue
@@ -1738,12 +1768,15 @@ def _resumen_ia_semanal():
     hospedado, o incluso el de escritorio si está apagado en ese
     momento), así que un resumen automático solo tiene sentido con un
     proveedor en la nube."""
+    salud.registrar_ok("resumen_ia_semanal", RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60, "arrancado")
     while True:
         time.sleep(RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60)
         try:
             usuarios = db.usuarios_con_resumen_semanal_activo()
-        except Exception:
+        except Exception as e:
+            salud.registrar_error("resumen_ia_semanal", RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60, f"{type(e).__name__}: {e}")
             continue
+        salud.registrar_ok("resumen_ia_semanal", RESUMEN_IA_SEMANAL_INTERVALO_MINUTOS * 60)
         hoy = datetime.now()
         desde = (hoy - timedelta(days=7)).strftime("%Y-%m-%d")
         hasta = hoy.strftime("%Y-%m-%d")

@@ -178,3 +178,17 @@
 .bo-auditoria-linea { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
 .bo-auditoria-cabecera { display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px; }
 .bo-auditoria-fecha { font-size: 0.82em; color: var(--text-muted); }
+
+/* Panel de salud */
+.salud-lista { list-style: none; margin: 0; padding: 0; }
+.salud-fila { display: flex; gap: .8rem; align-items: flex-start; padding: .6rem 0; border-top: 1px solid var(--line, #d4d8cb); }
+.salud-fila:first-child { border-top: 0; }
+.salud-punto { flex: 0 0 auto; width: .85rem; height: .85rem; margin-top: .3rem; border-radius: 50%; background: #8b8f84; }
+.salud-punto.salud-verde { background: #2e9e57; }
+.salud-punto.salud-ambar { background: #e0a526; }
+.salud-punto.salud-rojo { background: #d6453d; }
+.salud-chip { padding: .3rem .8rem; border-radius: 999px; border: 1px solid currentColor; font-size: .85rem; font-weight: 600; }
+.salud-chip.salud-verde { color: #2e9e57; }
+.salud-chip.salud-ambar { color: #b8860b; }
+.salud-chip.salud-rojo { color: #d6453d; }
+.salud-chip.salud-gris { color: #8b8f84; }

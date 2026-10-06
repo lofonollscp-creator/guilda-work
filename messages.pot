@@ -3734,3 +3734,78 @@ msgstr ""
 #, python-format
 msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
 msgstr ""
+
+msgid "Salud del sistema"
+msgstr ""
+
+msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr ""
+
+msgid "Todo en orden"
+msgstr ""
+
+msgid "Atención"
+msgstr ""
+
+msgid "Hay algo en rojo"
+msgstr ""
+
+msgid "Sin datos"
+msgstr ""
+
+msgid "Copias de seguridad"
+msgstr ""
+
+msgid "Integraciones"
+msgstr ""
+
+msgid "Tareas periódicas"
+msgstr ""
+
+msgid "Correcto"
+msgstr ""
+
+msgid "Rojo"
+msgstr ""
+
+msgid "Salud"
+msgstr ""
+
+msgid "Plataforma"
+msgstr ""
+
+msgid "Catálogo de herramientas"
+msgstr ""
+
+msgid "Analítica"
+msgstr ""
+
+msgid "Resumen"
+msgstr ""
+
+msgid "Estado del sistema"
+msgstr ""
+
+msgid "Diagnóstico"
+msgstr ""
+
+msgid "Auditoría"
+msgstr ""
+
+msgid "Contenido"
+msgstr ""
+
+msgid "Leads"
+msgstr ""
+
+msgid "Solicitudes portal"
+msgstr ""
+
+msgid "Webhooks"
+msgstr ""
+
+msgid "Ingresos"
+msgstr ""
+
+msgid "Planes y extras"
+msgstr ""

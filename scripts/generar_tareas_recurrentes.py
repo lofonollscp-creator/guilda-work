@@ -14,11 +14,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import db  # noqa: E402
+from app import db, salud  # noqa: E402
 
 
 def main() -> None:
-    creadas = db.generar_tareas_recurrentes()
+    try:
+        creadas = db.generar_tareas_recurrentes()
+    except Exception as e:
+        salud.registrar_error("tareas_recurrentes", 24 * 3600, f"{type(e).__name__}: {e}")
+        raise
+    salud.registrar_ok("tareas_recurrentes", 24 * 3600, f"{creadas} creada(s)")
     print(f"Tareas recurrentes generadas: {creadas}")
 
 

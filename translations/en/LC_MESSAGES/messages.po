@@ -465,7 +465,7 @@ msgstr "Tasks"
 #: app/templates/correo_bandeja.html:2 app/templates/correo_bandeja.html:6
 #: app/templates/correo_redactar.html:7
 msgid "Correo"
-msgstr "Mail"
+msgstr "Email"
 
 #: app/templates/base.html:48
 msgid "sin leer"
@@ -3827,3 +3827,78 @@ msgstr "Pending attachment"
 #, python-format
 msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
 msgstr "This document is an internal record issued by %(gestoria)s and does not replace the official proof of filing issued by the tax authority."
+
+msgid "Salud del sistema"
+msgstr "System health"
+
+msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr "Backups, email, periodic tasks, integrations and server at a glance. A watchdog checks this every hour and emails you about anything in red (at most once a day per reason)."
+
+msgid "Todo en orden"
+msgstr "All good"
+
+msgid "Atención"
+msgstr "Attention"
+
+msgid "Hay algo en rojo"
+msgstr "Something is red"
+
+msgid "Sin datos"
+msgstr "No data"
+
+msgid "Copias de seguridad"
+msgstr "Backups"
+
+msgid "Integraciones"
+msgstr "Integrations"
+
+msgid "Tareas periódicas"
+msgstr "Periodic tasks"
+
+msgid "Correcto"
+msgstr "OK"
+
+msgid "Rojo"
+msgstr "Red"
+
+msgid "Salud"
+msgstr "Health"
+
+msgid "Plataforma"
+msgstr "Platform"
+
+msgid "Catálogo de herramientas"
+msgstr "Tool catalogue"
+
+msgid "Analítica"
+msgstr "Analytics"
+
+msgid "Resumen"
+msgstr "Summary"
+
+msgid "Estado del sistema"
+msgstr "System status"
+
+msgid "Diagnóstico"
+msgstr "Diagnostics"
+
+msgid "Auditoría"
+msgstr "Audit"
+
+msgid "Contenido"
+msgstr "Content"
+
+msgid "Leads"
+msgstr "Leads"
+
+msgid "Solicitudes portal"
+msgstr "Portal requests"
+
+msgid "Webhooks"
+msgstr "Webhooks"
+
+msgid "Ingresos"
+msgstr "Revenue"
+
+msgid "Planes y extras"
+msgstr "Plans and extras"

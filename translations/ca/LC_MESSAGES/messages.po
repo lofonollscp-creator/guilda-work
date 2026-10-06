@@ -3794,3 +3794,78 @@ msgstr "Pendent d'adjuntar"
 #, python-format
 msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
 msgstr "Aquest document és una constància interna emesa per %(gestoria)s i no substitueix el justificant oficial de presentació emès per l'administració tributària."
+
+msgid "Salud del sistema"
+msgstr "Salut del sistema"
+
+msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr "Còpies de seguretat, correu, tasques periòdiques, integracions i servidor d'un cop d'ull. Un vigilant ho revisa cada hora i avisa per correu del que estigui en vermell (com a molt una vegada al dia per motiu)."
+
+msgid "Todo en orden"
+msgstr "Tot en ordre"
+
+msgid "Atención"
+msgstr "Atenció"
+
+msgid "Hay algo en rojo"
+msgstr "Hi ha alguna cosa en vermell"
+
+msgid "Sin datos"
+msgstr "Sense dades"
+
+msgid "Copias de seguridad"
+msgstr "Còpies de seguretat"
+
+msgid "Integraciones"
+msgstr "Integracions"
+
+msgid "Tareas periódicas"
+msgstr "Tasques periòdiques"
+
+msgid "Correcto"
+msgstr "Correcte"
+
+msgid "Rojo"
+msgstr "Vermell"
+
+msgid "Salud"
+msgstr "Salut"
+
+msgid "Plataforma"
+msgstr "Plataforma"
+
+msgid "Catálogo de herramientas"
+msgstr "Catàleg d'eines"
+
+msgid "Analítica"
+msgstr "Analítica"
+
+msgid "Resumen"
+msgstr "Resum"
+
+msgid "Estado del sistema"
+msgstr "Estat del sistema"
+
+msgid "Diagnóstico"
+msgstr "Diagnòstic"
+
+msgid "Auditoría"
+msgstr "Auditoria"
+
+msgid "Contenido"
+msgstr "Contingut"
+
+msgid "Leads"
+msgstr "Leads"
+
+msgid "Solicitudes portal"
+msgstr "Sol·licituds del portal"
+
+msgid "Webhooks"
+msgstr "Webhooks"
+
+msgid "Ingresos"
+msgstr "Ingressos"
+
+msgid "Planes y extras"
+msgstr "Plans i extres"

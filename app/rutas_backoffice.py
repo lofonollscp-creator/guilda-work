@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
-from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, notificaciones_email, ntfy, openproject, paperless, push, stalwart, stripe_pagos, umami, uptime_kuma
+from . import baserow, calcom, chatwoot, db, espocrm, eventos, facturascripts, herramientas, kratos, listmonk, metabase, nextcloud, notificaciones_email, ntfy, openproject, paperless, push, salud, stalwart, stripe_pagos, umami, uptime_kuma
 from .auth import admin_required, login_required
 
 backoffice_bp = Blueprint("backoffice", __name__, url_prefix="/backoffice")
@@ -174,6 +174,17 @@ def ingresos_vista():
         tenants=db.listar_suscripciones_tenants(),
         mrr_centimos=db.resumen_plataforma()["mrr_centimos"],
     )
+
+
+@backoffice_bp.route("/salud")
+@login_required
+@admin_required
+def salud_vista():
+    items = salud.panel()
+    grupos: dict[str, list] = {}
+    for i in items:
+        grupos.setdefault(i["grupo"], []).append(i)
+    return render_template("backoffice_salud.html", grupos=grupos, estado_general=salud.peor_estado(items))
 
 
 @backoffice_bp.route("/backups")
