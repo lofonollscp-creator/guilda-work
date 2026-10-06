@@ -181,7 +181,7 @@
 
 /* Panel de salud */
 .salud-lista { list-style: none; margin: 0; padding: 0; }
-.salud-fila { display: flex; gap: .8rem; align-items: flex-start; padding: .6rem 0; border-top: 1px solid var(--line, #d4d8cb); }
+.salud-fila { display: flex; gap: .8rem; align-items: flex-start; padding: .6rem 0; border-top: 1px solid var(--border); }
 .salud-fila:first-child { border-top: 0; }
 .salud-punto { flex: 0 0 auto; width: .85rem; height: .85rem; margin-top: .3rem; border-radius: 50%; background: #8b8f84; }
 .salud-punto.salud-verde { background: #2e9e57; }

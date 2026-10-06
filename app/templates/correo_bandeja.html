@@ -279,8 +279,8 @@
       </div>
       <div class="correo-ribbon-grupo" data-correo-ia="{{ mensaje_seleccionado.id }}">
         <button type="button" class="correo-ribbon-btn" data-ia-accion="resumir" title="{{ _('Resumir con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Resumir') }}</span></button>
-        <button type="button" class="correo-ribbon-btn" data-ia-accion="responder" title="{{ _('Proponer una respuesta con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Proponer respuesta') }}</span></button>
-        <button type="button" class="correo-ribbon-btn" data-ia-accion="tareas" title="{{ _('Extraer tareas con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Extraer tareas') }}</span></button>
+        <button type="button" class="correo-ribbon-btn" data-ia-accion="responder" title="{{ _('Proponer una respuesta con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Proponer respuesta') }}</span></button>
+        <button type="button" class="correo-ribbon-btn" data-ia-accion="tareas" title="{{ _('Extraer tareas con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Extraer tareas') }}</span></button>
       </div>
 
       {% if not remitente_confiable %}

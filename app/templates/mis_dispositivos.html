@@ -9,7 +9,7 @@
 </header>
 
 {% if token_nuevo %}
-<div class="ia-error" style="border-color: var(--line); color: inherit;" role="status">
+<div class="ia-error" style="border-color: var(--border); color: inherit;" role="status">
   <strong>{{ _('Token creado: «%(nombre)s»', nombre=token_nuevo.nombre) }}</strong>
   <p class="muted">{{ _('Cópialo ahora: no se volverá a mostrar.') }}</p>
   <code style="word-break: break-all; user-select: all;">{{ token_nuevo.token }}</code>
