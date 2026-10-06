@@ -2259,10 +2259,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .tareas-columna { min-width: 0; display: grid; gap: 10px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
 .tareas-columna-titulo { display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; }
 .tareas-columna-vacia { margin: 0; font-size: 0.85em; }
-.tareas-tarjeta { min-width: 0; display: grid; gap: 6px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: var(--radius-sm); }
-.prioridad-borde-alta { border-left-color: var(--danger); }
-.prioridad-borde-normal { border-left-color: var(--text-muted); }
-.prioridad-borde-baja { border-left-color: var(--primary); }
+.tareas-tarjeta { min-width: 0; display: grid; gap: 8px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+/* Reloj y progreso del checklist en la tarjeta (canvas Interfaces Guilda Work: Tablero). */
+.tareas-tarjeta-reloj { display: flex; align-items: center; gap: 8px; font: 600 0.85em var(--font-mono); color: var(--primary-text); }
+.tareas-tarjeta-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+.tareas-tarjeta-checklist { display: grid; gap: 4px; font-size: 0.8em; color: var(--text-muted); }
+.tareas-tarjeta-barra { display: block; height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--text) 14%, transparent); overflow: hidden; }
+.tareas-tarjeta-barra > span { display: block; height: 100%; background: var(--primary); }
 .tareas-tarjeta-titulo { font-weight: 600; overflow-wrap: anywhere; text-decoration: none; }
 .tareas-tarjeta-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .tareas-tarjeta-mover { display: flex; gap: 6px; }

@@ -364,7 +364,10 @@ def tablero():
         columnas[t["estado"]].append(t)
     # Las completadas son muchas con el tiempo: solo las más recientes.
     columnas["completada"] = sorted(columnas["completada"], key=lambda t: t["fecha_completada"] or "", reverse=True)[:15]
-    return render_template("tareas_tablero.html", estados=ESTADOS, columnas=columnas, vista="tablero")
+    visibles = [t for lista in columnas.values() for t in lista]
+    return render_template(
+        "tareas_tablero.html", estados=ESTADOS, columnas=columnas, vista="tablero", **_contexto_filas(visibles)
+    )
 
 
 @tareas_bp.route("/<int:tarea_id>/estado", methods=["POST"])

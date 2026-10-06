@@ -16,9 +16,27 @@
   <section class="tareas-columna" aria-labelledby="col-{{ valor }}">
     <h2 id="col-{{ valor }}" class="tareas-columna-titulo">{{ etiqueta }} <span class="pill">{{ columnas[valor]|length }}</span></h2>
     {% for t in columnas[valor] %}
-    <article class="tareas-tarjeta prioridad-borde-{{ t.prioridad }}">
+    {% set cr = cronometros.get(t.id) %}
+    <article class="tareas-tarjeta">
       <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if t.usuario_id == g.usuario_id else '#' }}">{{ t.asunto }}</a>
+      {% if cr and cr.activo %}
+      <div class="tareas-tarjeta-reloj">
+        {% if cr.activo.estado == 'pausada' %}
+        <span class="task-timer task-timer-frozen"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pause"></use></svg> {{ '%02d:%02d:%02d'|format(cr.activo.segundos_trabajados_congelado // 3600, (cr.activo.segundos_trabajados_congelado % 3600) // 60, cr.activo.segundos_trabajados_congelado % 60) }}</span>
+        {% else %}
+        <span class="tareas-tarjeta-punto" aria-hidden="true"></span><span class="task-timer" data-inicio="{{ cr.activo.inicio_en }}" data-pausado="{{ cr.activo.segundos_pausados }}">00:00:00</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if checklists.get(t.id) %}
+      {% set hechas, total = checklists[t.id] %}
+      <div class="tareas-tarjeta-checklist" title="{{ _('Subtareas') }}">
+        <span class="tareas-tarjeta-barra" role="progressbar" aria-valuemin="0" aria-valuemax="{{ total }}" aria-valuenow="{{ hechas|int }}"><span style="width: {{ ((hechas|int) / total * 100)|round|int }}%"></span></span>
+        <span>{{ _('%(h)s de %(t)s pasos', h=hechas|int, t=total) }}</span>
+      </div>
+      {% endif %}
       <div class="tareas-tarjeta-meta">
+        {% if t.prioridad == 'alta' %}<span class="pill prioridad-alta">{{ _('Alta') }}</span>{% elif t.prioridad == 'baja' %}<span class="pill">{{ _('Baja') }}</span>{% endif %}
         {% if t.categoria_nombre %}<span class="pill">{{ t.categoria_nombre }}</span>{% endif %}
         {% if t.fecha_vencimiento %}<span class="log-duration">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
         {% if t.asignada_a %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg> {{ (t.creador_nombre if t.asignada_a == g.usuario_id else t.asignada_nombre) }}</span>{% endif %}
@@ -37,4 +55,5 @@
   </section>
   {% endfor %}
 </div>
+<script src="{{ url_for('static', filename='timer.js') }}"></script>
 {% endblock %}
