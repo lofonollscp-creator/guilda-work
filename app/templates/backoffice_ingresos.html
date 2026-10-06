@@ -11,8 +11,10 @@
 <section class="dash-stats">
   <div class="dash-stat">
     <span class="dash-stat-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg></span>
-    <span class="dash-stat-valor">{{ '%.2f'|format(mrr_centimos / 100) }} €</span>
-    <span class="dash-stat-label">{{ _('MRR (suscripciones activas)') }}</span>
+    <span>
+      <span class="dash-stat-valor">{{ '%.2f'|format(mrr_centimos / 100) }} €</span>
+      <span class="dash-stat-label">{{ _('MRR (suscripciones activas)') }}</span>
+    </span>
   </div>
 </section>
 
