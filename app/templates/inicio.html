@@ -208,6 +208,21 @@
 </div>
 
 <aside class="dash-sidebar">
+  {% if carga_equipo %}
+  <section class="dash-panel" aria-labelledby="dash-equipo-t">
+    <div class="dash-panel-cab"><h2 id="dash-equipo-t">{{ _('Equipo') }}</h2><a href="{{ url_for('tareas.listar', vista='compartidas') }}">{{ _('Ver tareas') }}</a></div>
+    <ul class="dash-equipo">
+      {% for p in carga_equipo[:6] %}
+      <li>
+        <span class="dash-equipo-nombre">{{ p.nombre }}{% if p.responsable_id == g.usuario_id %} <small>({{ _('tú') }})</small>{% endif %}</span>
+        {% if p.atrasadas %}<span class="pill prioridad-alta" title="{{ _('Atrasadas') }}">{{ ngettext('%(n)s atrasada', '%(n)s atrasadas', p.atrasadas, n=p.atrasadas) }}</span>{% endif %}
+        <span class="pill" title="{{ _('Tareas abiertas') }}">{{ ngettext('%(n)s abierta', '%(n)s abiertas', p.abiertas, n=p.abiertas) }}</span>
+        <span class="dash-equipo-barra" aria-hidden="true"><span style="width: {{ ((p.abiertas / (carga_equipo|map(attribute='abiertas')|max)) * 100)|round|int }}%"></span></span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
   {% if vencimientos_proximos %}
   <section class="dash-panel" aria-labelledby="dash-venc-t">
     <div class="dash-panel-cab"><h2 id="dash-venc-t">{{ _('Próximos vencimientos') }}</h2><a href="{{ url_for('fiscal.vencimientos', estado='pendiente') }}">{{ _('Calendario') }}</a></div>

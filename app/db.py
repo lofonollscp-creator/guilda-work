@@ -5440,6 +5440,35 @@ def contar_comentarios_tareas(tarea_ids: list[int]) -> dict[int, int]:
         conn.close()
 
 
+def carga_equipo(usuario_id: int) -> list[dict]:
+    """Carga de trabajo por persona sobre las tareas abiertas que el usuario ve
+    (propias, asignadas a él o compartidas con él). Cada tarea cuenta para su
+    responsable: el asignado o, si no hay, el dueño. Así nunca se revela nada de
+    tareas privadas de otros. Ordenado por más atrasadas y más abiertas."""
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT COALESCE(t.asignada_a, t.usuario_id) AS responsable_id,
+                      COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre,
+                      COUNT(*) AS abiertas,
+                      SUM(CASE WHEN t.fecha_vencimiento IS NOT NULL AND substr(t.fecha_vencimiento, 1, 10) < ? THEN 1 ELSE 0 END) AS atrasadas,
+                      SUM(CASE WHEN substr(t.fecha_vencimiento, 1, 10) = ? THEN 1 ELSE 0 END) AS hoy,
+                      SUM(CASE WHEN t.estado = 'en_progreso' THEN 1 ELSE 0 END) AS en_progreso
+               FROM tareas_outlook t
+               JOIN usuarios u ON u.id = COALESCE(t.asignada_a, t.usuario_id)
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id
+               WHERE t.papelera_en IS NULL AND t.estado != 'completada'
+                 AND (t.usuario_id = ? OR t.asignada_a = ?
+                      OR t.id IN (SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?))
+               GROUP BY responsable_id ORDER BY atrasadas DESC, abiertas DESC, nombre""",
+            (hoy, hoy, usuario_id, usuario_id, usuario_id),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
 def actividad_de_tarea(usuario_id: int, tarea_id: int, limite: int = 40) -> list[dict]:
     """Historial de la tarea (lo más reciente primero), solo para quien la ve."""
     if rol_en_tarea(usuario_id, tarea_id) is None:

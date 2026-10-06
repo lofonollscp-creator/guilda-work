@@ -217,3 +217,17 @@ def test_ficha_muestra_actividad_y_tiempo(cliente):
     for url in (f"/tareas/{tarea}", f"/tareas/{tarea}/editar"):
         html = cliente.get(url).get_data(as_text=True)
         assert "Actividad" in html and "creó la tarea" in html and "editó" in html
+
+
+def test_carga_equipo_solo_cuenta_lo_que_el_usuario_ve():
+    _, (ana, luis, eva) = _despacho("ana10@comp.com", "luis10@comp.com", "eva10@comp.com")
+    t1 = db.crear_tarea_outlook(ana, "Propia de Ana", fecha_vencimiento="2000-01-01T10:00")
+    t2 = db.crear_tarea_outlook(ana, "Para Luis", asignada_a=luis)
+    t3 = db.crear_tarea_outlook(eva, "Privada de Eva")  # Ana no la ve
+    db.completar_tarea_outlook(ana, db.crear_tarea_outlook(ana, "Hecha"))
+    carga = {p["responsable_id"]: p for p in db.carga_equipo(ana)}
+    assert set(carga) == {ana, luis}                      # Eva no aparece
+    assert carga[ana]["abiertas"] == 1 and carga[ana]["atrasadas"] == 1
+    assert carga[luis]["abiertas"] == 1 and carga[luis]["atrasadas"] == 0
+    assert [p["responsable_id"] for p in db.carga_equipo(ana)][0] == ana  # las atrasadas primero
+    assert {p["responsable_id"] for p in db.carga_equipo(eva)} == {eva}

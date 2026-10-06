@@ -634,6 +634,15 @@ def pendiente_activacion():
     return render_template("pendiente_activacion.html")
 
 
+def _carga_equipo_para_inicio(usuario_id):
+    """Panel del equipo: solo tiene sentido si hay más de una persona implicada."""
+    try:
+        carga = db.carga_equipo(usuario_id)
+    except Exception:
+        return []
+    return carga if len(carga) > 1 else []
+
+
 @app.route("/")
 @login_required
 def inicio():
@@ -716,6 +725,7 @@ def inicio():
         log_hoy=log_hoy,
         total_activas=len(activas),
         total_mi_dia=len(mi_dia),
+        carga_equipo=_carga_equipo_para_inicio(g.usuario_id),
         mi_dia=mi_dia[:5],
         vencimientos_proximos=vencimientos_proximos,
         saludo=saludo,
