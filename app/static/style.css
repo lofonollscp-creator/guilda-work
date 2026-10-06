@@ -4480,3 +4480,20 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .perfil-form { max-width: 960px; grid-template-columns: minmax(260px, 320px) 1fr; }
 .edit-form .ia-form-row { align-items: end; flex-wrap: wrap; gap: 12px 20px; }
 .nota-adjuntos-bloque .quick-row { align-items: center; }
+
+/* ---- Dashboard: saludo, "Mi día" y "Próximos vencimientos" ----
+   Del canvas "Interfaces Guilda Work" (Panel): paneles planos con borde,
+   cabecera en mono mayúsculas y filas separadas por línea fina. */
+.page-header .dash-saludo { font-family: inherit; text-transform: none; letter-spacing: -0.01em; font-size: 1.75em; font-weight: 700; }
+.dash-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; margin-bottom: var(--space-5); }
+.dash-sidebar .dash-panel { margin-bottom: var(--space-4); }
+.dash-panel-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.dash-panel-cab h2 { margin: 0; }
+.dash-panel-cab a { font-size: 0.85em; }
+.dash-mi-dia, .dash-venc { list-style: none; margin: 0; padding: 0; }
+.dash-mi-dia li, .dash-venc li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--border); }
+.dash-mi-dia li:first-child, .dash-venc li:first-child { border-top: 0; }
+.dash-mi-dia-pto { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--text-muted); flex-shrink: 0; }
+.dash-mi-dia-txt, .dash-venc-txt { flex: 1; min-width: 0; color: var(--text); text-decoration: none; }
+.dash-mi-dia-txt:hover { text-decoration: underline; }
+.dash-mi-dia-txt small, .dash-venc-txt small { display: block; color: var(--text-muted); font-size: 0.82em; }

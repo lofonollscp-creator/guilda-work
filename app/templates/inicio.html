@@ -6,8 +6,8 @@
 {% block content %}
 <header class="page-header dash-header">
   <div>
-    <h1>Dashboard</h1>
-    <p class="subtitle">{{ _('Un vistazo rápido a tu día.') }}</p>
+    <h1 class="dash-saludo">{{ saludo }}, {{ nombre_usuario }}</h1>
+    <p class="subtitle">{{ fecha_larga|capitalize }} · {{ ngettext('%(n)s tarea para hoy', '%(n)s tareas para hoy', total_mi_dia, n=total_mi_dia) }}{% if total_vencimientos_proximos %} · {{ ngettext('%(n)s vencimiento fiscal este mes', '%(n)s vencimientos fiscales este mes', total_vencimientos_proximos, n=total_vencimientos_proximos) }}{% endif %}</p>
   </div>
 </header>
 
@@ -81,6 +81,22 @@
 
 <div class="dash-layout">
 <div class="dash-main">
+<section class="dash-panel" aria-labelledby="dash-mi-dia-t">
+  <div class="dash-panel-cab"><h2 id="dash-mi-dia-t">{{ _('Mi día') }}</h2><a href="{{ url_for('tareas.hoy') }}">{{ _('Ver todas las tareas') }}</a></div>
+  {% if not mi_dia %}
+  <p class="empty-lane">{{ _('Nada pendiente para hoy.') }}</p>
+  {% else %}
+  <ul class="dash-mi-dia">
+    {% for t in mi_dia %}
+    <li>
+      <span class="dash-mi-dia-pto"></span>
+      <a class="dash-mi-dia-txt" href="{{ url_for('tareas.editar', tarea_id=t.id) if t.mia else url_for('tareas.hoy') }}">{{ t.asunto }}<small>{{ t.vencimiento if t.vencimiento else _('Sin fecha') }}</small></a>
+      {% if t.vencida %}<span class="pill prioridad-alta">{{ _('Vencida') }}</span>{% elif t.prioridad == 'alta' %}<span class="pill prioridad-alta">{{ _('Alta') }}</span>{% else %}<span class="pill">{{ _('Normal') if t.prioridad == 'normal' else _('Baja') }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
 <section class="dash-acciones">
   <form class="dash-accion" action="{{ url_for('crear_nota') }}" method="post">
     <label for="dash-nota-texto" title="{{ _('Atajo: Ctrl+Alt+N') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Nota rápida') }}</label>
@@ -192,6 +208,17 @@
 </div>
 
 <aside class="dash-sidebar">
+  {% if vencimientos_proximos %}
+  <section class="dash-panel" aria-labelledby="dash-venc-t">
+    <div class="dash-panel-cab"><h2 id="dash-venc-t">{{ _('Próximos vencimientos') }}</h2><a href="{{ url_for('fiscal.vencimientos', estado='pendiente') }}">{{ _('Calendario') }}</a></div>
+    <ul class="dash-venc">
+      {% for v in vencimientos_proximos %}
+      <li><span class="dash-venc-txt">{{ _('Modelo %(m)s', m=v.modelo) }} · {{ v.cliente }}<small>{{ v.fecha }}</small></span>
+        <span class="pill {{ 'prioridad-alta' if v.dias < 0 else ('estado-en_revision' if v.dias <= 14 else '') }}">{% if v.dias < 0 %}{{ _('Vencido') }}{% elif v.dias == 0 %}{{ _('Hoy') }}{% else %}{{ ngettext('%(n)s día', '%(n)s días', v.dias, n=v.dias) }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
   <section class="log-section">
     <h3>{{ _('Hoy') }}</h3>
     {% if not log_hoy %}

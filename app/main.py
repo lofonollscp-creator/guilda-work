@@ -26,7 +26,7 @@ from pathlib import Path
 import sentry_sdk
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
-from flask_babel import Babel
+from flask_babel import Babel, format_date
 from flask_babel import gettext as _
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
@@ -590,11 +590,40 @@ def inicio():
     # días para no saturar la cifra con todo el año.
     total_vencimientos_proximos = None
     hasta_vencimientos_proximos = None
+    vencimientos_proximos = []
     if g.tenant_id is not None:
         hasta_vencimientos_proximos = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
-        total_vencimientos_proximos = len(
-            db.listar_vencimientos_fiscales(g.tenant_id, estado="pendiente", hasta=hasta_vencimientos_proximos)
+        pendientes = db.listar_vencimientos_fiscales(
+            g.tenant_id, estado="pendiente", hasta=hasta_vencimientos_proximos
         )
+        total_vencimientos_proximos = len(pendientes)
+        # Panel "Próximos vencimientos": los 4 más cercanos con los días que
+        # faltan (negativo = ya vencido), calculados aquí para que la
+        # plantilla solo pinte.
+        for v in sorted(pendientes, key=lambda v: v["fecha_limite"])[:4]:
+            dias = (datetime.strptime(v["fecha_limite"][:10], "%Y-%m-%d").date() - datetime.now().date()).days
+            vencimientos_proximos.append({
+                "modelo": v["modelo"], "cliente": v["cliente_nombre"],
+                "fecha": v["fecha_limite"][:10], "dias": dias,
+            })
+
+    # Saludo y panel "Mi día" (vencidas + de hoy + asignadas a mí).
+    hora = datetime.now().hour
+    saludo = _("Buenos días") if hora < 14 else (_("Buenas tardes") if hora < 21 else _("Buenas noches"))
+    perfil = db.obtener_perfil_usuario(g.usuario_id)
+    nombre_usuario = ((perfil["nombre_mostrado"] if perfil else None) or "").strip()
+    if not nombre_usuario:
+        nombre_usuario = (db.obtener_usuario(g.usuario_id)["email"] or "").split("@")[0]
+    secciones_mi_dia = db.tareas_para_hoy(g.usuario_id)
+    mi_dia = []
+    for clave in ("vencidas", "hoy", "asignadas"):
+        for t in secciones_mi_dia[clave]:
+            if all(t["id"] != x["id"] for x in mi_dia):
+                mi_dia.append({
+                    "id": t["id"], "asunto": t["asunto"], "prioridad": t["prioridad"],
+                    "vencimiento": (t["fecha_vencimiento"] or "")[:16], "vencida": clave == "vencidas",
+                    "mia": t["usuario_id"] == g.usuario_id,
+                })
 
     return render_template(
         "inicio.html",
@@ -603,7 +632,12 @@ def inicio():
         entradas_hoy=entradas_hoy,
         log_hoy=log_hoy,
         total_activas=len(activas),
-        total_mi_dia=_total_mi_dia(g.usuario_id),
+        total_mi_dia=len(mi_dia),
+        mi_dia=mi_dia[:5],
+        vencimientos_proximos=vencimientos_proximos,
+        saludo=saludo,
+        nombre_usuario=nombre_usuario,
+        fecha_larga=format_date(datetime.now().date(), "full"),
         total_notas_hoy=len([f for f in log_hoy if f["origen"] == "nota"]),
         total_vencimientos_proximos=total_vencimientos_proximos,
         hasta_vencimientos_proximos=hasta_vencimientos_proximos,
