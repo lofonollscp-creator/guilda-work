@@ -3,6 +3,7 @@ cuando un vencimiento pendiente está a 7 y a 2 días. Solo a clientes con email
 y con los recordatorios activos (opt-out en su ficha), una vez por vencimiento
 y antelación (tabla vencimientos_recordatorios). Necesita el canal PORTAL_SMTP_*;
 el enlace al portal sale de GUILDA_URL_PUBLICA (si no está, el correo va sin enlace)."""
+import contextlib
 import logging
 import os
 from datetime import datetime, timedelta
@@ -19,6 +20,21 @@ def url_portal() -> str | None:
     return f"{base}/portal/entrar" if base else None
 
 
+@contextlib.contextmanager
+def _en_idioma(idioma: str | None):
+    """Contexto de aplicación + idioma del cliente para traducir el correo. Si
+    la app no está disponible (tests sin ella), se manda en español."""
+    try:
+        from flask_babel import force_locale
+
+        from .main import app
+    except Exception:  # noqa: BLE001
+        yield
+        return
+    with app.app_context(), force_locale(idioma if idioma in ("es", "ca", "en", "fr") else "es"):
+        yield
+
+
 def procesar_recordatorios(hoy: datetime | None = None) -> int:
     """Devuelve cuántos recordatorios se enviaron. Sin SMTP configurado no
     hace nada (y no marca nada: se enviarán cuando lo esté, si aún es a tiempo)."""
@@ -30,10 +46,11 @@ def procesar_recordatorios(hoy: datetime | None = None) -> int:
         objetivo = (hoy + timedelta(days=dias)).strftime("%Y-%m-%d")
         for v in db.vencimientos_para_recordatorio_portal(objetivo, dias):
             try:
-                notificaciones_email.enviar_recordatorio_vencimiento(
-                    v["cliente_email"].strip(), v["cliente_nombre"], v["modelo"], v["periodo"], v["fecha_limite"],
-                    dias, url_portal(), v["tenant_nombre"], v["documento_solicitado"],
-                )
+                with _en_idioma(v["cliente_idioma"]):
+                    notificaciones_email.enviar_recordatorio_vencimiento(
+                        v["cliente_email"].strip(), v["cliente_nombre"], v["modelo"], v["periodo"], v["fecha_limite"],
+                        dias, url_portal(), v["tenant_nombre"], v["documento_solicitado"],
+                    )
             except Exception:  # noqa: BLE001 -- un cliente con el buzón roto no debe frenar al resto
                 logger.exception("No se pudo enviar el recordatorio del vencimiento %s", v["id"])
                 continue

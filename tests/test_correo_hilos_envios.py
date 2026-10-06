@@ -153,14 +153,34 @@ def test_deshacer_devuelve_el_correo_a_borradores_y_no_se_envia(cliente, smtp_fa
     assert correo.procesar_envios_pendientes(futuro) == 0 and smtp_falso == []
 
 
-def test_deshacer_con_adjuntos_avisa_de_que_se_pierden(cliente, smtp_falso):
+def test_deshacer_conserva_los_adjuntos_en_el_borrador_y_se_pueden_reenviar_o_quitar(cliente, smtp_falso):
     import io
     uid, cuenta = _montar(cliente, "c3b-adj@ejemplo.com")
-    resp = cliente.post("/correo/enviar", data={"cuenta_id": cuenta, **DATOS, "adjuntos": (io.BytesIO(b"datos"), "a.txt")}, content_type="multipart/form-data")
+    resp = cliente.post("/correo/enviar", data={"cuenta_id": cuenta, **DATOS, "adjuntos": [(io.BytesIO(b"datos"), "a.txt"), (io.BytesIO(b"mas"), "b.txt")]}, content_type="multipart/form-data")
     envio_id = int(resp.headers["Location"].split("envio_id=")[1])
     destino = cliente.post(f"/correo/envios/{envio_id}/deshacer").headers["Location"]
-    assert "sin_adjuntos=1" in destino
-    assert "Vuelve a adjuntar" in cliente.get(destino).get_data(as_text=True)
+    borrador = db.listar_borradores_correo(uid)[0]
+    guardados = db.listar_adjuntos_borrador(uid, borrador["id"])
+    assert [a["nombre"] for a in guardados] == ["a.txt", "b.txt"]
+    html = cliente.get(destino).get_data(as_text=True)
+    assert "Adjuntos guardados en este borrador" in html and "a.txt" in html and "b.txt" in html
+    # se reenvía conservando solo el marcado
+    resp = cliente.post("/correo/enviar", data={"cuenta_id": cuenta, **DATOS, "borrador_id": borrador["id"], "mantener_adjuntos": [str(guardados[0]["id"])]})
+    nuevo_envio = int(resp.headers["Location"].split("envio_id=")[1])
+    assert [a["nombre"] for a in db.adjuntos_envio_correo(nuevo_envio)] == ["a.txt"]
+    assert db.listar_borradores_correo(uid) == []
+
+
+def test_adjuntos_de_un_borrador_ajeno_no_se_pueden_enviar(cliente, smtp_falso):
+    import io
+    uid, cuenta = _montar(cliente, "c3b-adj-ajeno@ejemplo.com")
+    resp = cliente.post("/correo/enviar", data={"cuenta_id": cuenta, **DATOS, "adjuntos": (io.BytesIO(b"x"), "x.txt")}, content_type="multipart/form-data")
+    cliente.post(f"/correo/envios/{int(resp.headers['Location'].split('envio_id=')[1])}/deshacer")
+    borrador = db.listar_borradores_correo(uid)[0]
+    adjunto = db.listar_adjuntos_borrador(uid, borrador["id"])[0]["id"]
+    otro = db.crear_usuario_vinculado_a_kratos("c3b-adj-otro@ejemplo.com", "kratos-c3b-adj-otro")
+    assert db.listar_adjuntos_borrador(otro, borrador["id"]) == []
+    assert db.adjuntos_borrador_para_enviar(otro, borrador["id"], [adjunto]) == []
 
 
 def test_el_hilo_envia_cuando_llega_la_hora_y_solo_una_vez(cliente, smtp_falso):
@@ -198,6 +218,16 @@ def test_envio_fallido_no_pierde_el_correo(cliente, monkeypatch):
     envio = db.obtener_envio_correo(uid, envio_id)
     assert envio["estado"] == "error" and "SMTP caído" in envio["error"]
     assert db.listar_borradores_correo(uid)[0]["asunto"] == "Hola"
+
+
+def test_envio_fallido_con_adjuntos_los_deja_en_el_borrador(cliente, monkeypatch):
+    uid, cuenta = _montar(cliente, "c3b-fallo-adj@ejemplo.com")
+    monkeypatch.setattr(correo, "construir_y_enviar", lambda *a, **k: (_ for _ in ()).throw(correo.ErrorCorreo("caído")))
+    monkeypatch.setattr(correo.notificaciones.push, "enviar_a_usuario", lambda *a, **k: None)
+    correo.encolar_envio(uid, cuenta, "a@b.com", "x", "<p>x</p>", adjuntos=[{"nombre": "f.pdf", "tipo": "application/pdf", "bytes": b"%PDF"}], enviar_en=db.now_iso())
+    correo.procesar_envios_pendientes(datetime.now() + timedelta(minutes=1))
+    borrador = db.listar_borradores_correo(uid)[0]
+    assert [a["nombre"] for a in db.listar_adjuntos_borrador(uid, borrador["id"])] == ["f.pdf"]
 
 
 def test_envio_atascado_en_enviando_se_rescata_como_error(cliente, smtp_falso):

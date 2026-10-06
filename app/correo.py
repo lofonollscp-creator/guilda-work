@@ -1091,11 +1091,13 @@ def encolar_envio(
 
 def borrador_desde_envio(envio) -> int:
     """Devuelve el envío al editor como borrador (deshacer/cancelar/fallo)."""
-    return db.guardar_borrador_correo(
+    borrador_id = db.guardar_borrador_correo(
         envio["usuario_id"], None, cuenta_id=envio["cuenta_id"], destinatarios=envio["destinatarios"],
         cc=envio["cc"] or "", bcc=envio["bcc"] or "", asunto=envio["asunto"], cuerpo_html=envio["cuerpo_html"],
         en_respuesta_a=envio["en_respuesta_a"],
     )
+    db.copiar_adjuntos_envio_a_borrador(envio["id"], borrador_id)  # los adjuntos viajan con el borrador
+    return borrador_id
 
 
 def procesar_envios_pendientes(ahora: datetime | None = None) -> int:

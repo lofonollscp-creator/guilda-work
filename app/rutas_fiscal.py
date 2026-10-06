@@ -273,6 +273,7 @@ def editar_cliente(cliente_id: int):
                 email=(request.form.get("email") or "").strip() or None,
                 pais=pais,
                 recordatorios_portal=1 if request.form.get("recordatorios_portal") else 0,
+                idioma=request.form.get("idioma") if request.form.get("idioma") in ("es", "ca", "en", "fr") else "es",
             )
         return redirect(url_for("fiscal.clientes"))
     return render_template(

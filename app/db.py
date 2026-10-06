@@ -493,6 +493,15 @@ CREATE TABLE IF NOT EXISTS correo_borradores (
     actualizado_en TEXT NOT NULL
 );
 
+-- Adjuntos de un borrador (los que venían de un envío deshecho o fallido).
+CREATE TABLE IF NOT EXISTS correo_borradores_adjuntos (
+    id INTEGER PRIMARY KEY,
+    borrador_id INTEGER NOT NULL REFERENCES correo_borradores(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    contenido BLOB NOT NULL
+);
+
 -- Caché local de mensajes ya descargados (para no ir a red en cada
 -- consulta). cc: cabecera Cc del mensaje recibido. Cco (Bcc) nunca se guarda
 -- aquí porque, por diseño del propio correo electrónico, nadie salvo el
@@ -848,6 +857,7 @@ CREATE INDEX IF NOT EXISTS idx_correo_mensajes_cliente_fiscal ON correo_mensajes
 CREATE INDEX IF NOT EXISTS idx_correo_adjuntos_mensaje ON correo_adjuntos(mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_notas_adjuntos_nota ON notas_adjuntos(nota_id);
 CREATE INDEX IF NOT EXISTS idx_correo_reglas_usuario ON correo_reglas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_correo_borradores_adjuntos ON correo_borradores_adjuntos(borrador_id);
 CREATE INDEX IF NOT EXISTS idx_correo_envios_estado ON correo_envios(estado, enviar_en);
 CREATE INDEX IF NOT EXISTS idx_correo_envios_usuario ON correo_envios(usuario_id, estado);
 CREATE INDEX IF NOT EXISTS idx_correo_envios_adjuntos_envio ON correo_envios_adjuntos(envio_id);
@@ -1490,6 +1500,8 @@ def init_db() -> None:
         # Recordatorios automáticos por correo de los vencimientos próximos
         # (activos por defecto; el cliente puede quedar fuera desde su ficha).
         _asegurar_columna(conn, "clientes_fiscales", "recordatorios_portal", "INTEGER NOT NULL DEFAULT 1")
+        # Idioma de los correos que se le mandan al cliente (es/ca/en/fr).
+        _asegurar_columna(conn, "clientes_fiscales", "idioma", "TEXT NOT NULL DEFAULT 'es'")
         # Quién subió el documento: 'cliente' (portal), 'justificante'
         # (oficial, lo sube el equipo) o 'constancia' (PDF generado por la app).
         _asegurar_columna(conn, "vencimientos_fiscales_documentos", "origen", "TEXT NOT NULL DEFAULT 'cliente'")
@@ -5242,7 +5254,7 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais", "recordatorios_portal",
+    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -6024,7 +6036,8 @@ def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int) 
     conn = get_connection()
     try:
         return conn.execute(
-            """SELECT v.*, c.nombre AS cliente_nombre, c.email AS cliente_email, t.nombre AS tenant_nombre
+            """SELECT v.*, c.nombre AS cliente_nombre, c.email AS cliente_email, c.idioma AS cliente_idioma,
+                      t.nombre AS tenant_nombre
                FROM vencimientos_fiscales v
                JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
                JOIN tenants t ON t.id = v.tenant_id
@@ -6446,9 +6459,58 @@ def obtener_borrador_correo(usuario_id: int, borrador_id: int) -> sqlite3.Row | 
         conn.close()
 
 
+def listar_adjuntos_borrador(usuario_id: int, borrador_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT a.id, a.nombre, a.tipo, length(a.contenido) AS tamano
+               FROM correo_borradores_adjuntos a JOIN correo_borradores b ON b.id = a.borrador_id
+               WHERE a.borrador_id = ? AND b.usuario_id = ? ORDER BY a.id""",
+            (borrador_id, usuario_id),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def adjuntos_borrador_para_enviar(usuario_id: int, borrador_id: int, ids: list[int]) -> list[dict]:
+    """Contenido de los adjuntos guardados del borrador cuyos ids se indican."""
+    if not ids:
+        return []
+    conn = get_connection()
+    try:
+        marcadores = ",".join("?" * len(ids))
+        filas = conn.execute(
+            f"""SELECT a.id, a.nombre, a.tipo, a.contenido FROM correo_borradores_adjuntos a
+                JOIN correo_borradores b ON b.id = a.borrador_id
+                WHERE a.borrador_id = ? AND b.usuario_id = ? AND a.id IN ({marcadores}) ORDER BY a.id""",
+            [borrador_id, usuario_id, *ids],
+        ).fetchall()
+        return [{"nombre": f["nombre"], "tipo": f["tipo"], "bytes": bytes(f["contenido"])} for f in filas]
+    finally:
+        conn.close()
+
+
+def copiar_adjuntos_envio_a_borrador(envio_id: int, borrador_id: int) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """INSERT INTO correo_borradores_adjuntos (borrador_id, nombre, tipo, contenido)
+               SELECT ?, nombre, tipo, contenido FROM correo_envios_adjuntos WHERE envio_id = ? ORDER BY id""",
+            (borrador_id, envio_id),
+        )
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
 def eliminar_borrador_correo(usuario_id: int, borrador_id: int) -> None:
     conn = get_connection()
     try:
+        conn.execute(
+            "DELETE FROM correo_borradores_adjuntos WHERE borrador_id IN "
+            "(SELECT id FROM correo_borradores WHERE id = ? AND usuario_id = ?)", (borrador_id, usuario_id)
+        )
         conn.execute(
             "DELETE FROM correo_borradores WHERE id = ? AND usuario_id = ?", (borrador_id, usuario_id)
         )

@@ -98,25 +98,34 @@ def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str) -> None
     )
 
 
+def _(mensaje: str, **valores) -> str:
+    """Texto traducible; sin contexto de aplicación devuelve el español."""
+    from flask_babel import gettext
+    try:
+        return gettext(mensaje, **valores)
+    except RuntimeError:
+        return mensaje % valores if valores else mensaje
+
+
 def enviar_recordatorio_vencimiento(
     email_destino: str, cliente_nombre: str, modelo: str, periodo: str, fecha_limite: str, dias: int,
     url_portal: str | None, gestoria: str, documento_solicitado: str | None = None,
 ) -> None:
-    cuando = "mañana" if dias == 1 else f"dentro de {dias} días"
-    cuerpo = (
-        f"Hola, {cliente_nombre}:\n\n"
-        f"Te recordamos que el modelo {modelo} ({periodo}) vence {cuando}, el {fecha_limite[:10]}.\n"
-    )
+    """El llamante fija el idioma del cliente (ver app/portal_recordatorios.py)."""
+    cuando = _("mañana") if dias == 1 else _("dentro de %(n)s días", n=dias)
+    cuerpo = _("Hola, %(cliente)s:", cliente=cliente_nombre) + "\n\n" + _(
+        "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s.",
+        modelo=modelo, periodo=periodo, cuando=cuando, fecha=fecha_limite[:10],
+    ) + "\n"
     if documento_solicitado:
-        cuerpo += f"\nPara prepararlo necesitamos de tu parte: {documento_solicitado}.\n"
+        cuerpo += "\n" + _("Para prepararlo necesitamos de tu parte: %(documento)s.", documento=documento_solicitado) + "\n"
     if url_portal:
-        cuerpo += f"\nPuedes subir documentación y escribirnos desde tu portal de cliente:\n{url_portal}\n"
-    cuerpo += (
-        f"\nUn saludo,\n{gestoria}\n\n"
+        cuerpo += "\n" + _("Puedes subir documentación y escribirnos desde tu portal de cliente:") + f"\n{url_portal}\n"
+    cuerpo += "\n" + _("Un saludo,") + f"\n{gestoria}\n\n" + _(
         "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. "
-        "Si prefieres no recibirlos, díselo y los desactivará.\n"
-    )
-    _enviar(email_destino, f"Recordatorio: el {modelo} vence {cuando}", cuerpo)
+        "Si prefieres no recibirlos, díselo y los desactivará."
+    ) + "\n"
+    _enviar(email_destino, _("Recordatorio: el %(modelo)s vence %(cuando)s", modelo=modelo, cuando=cuando), cuerpo)
 
 
 def enviar_alerta_interna(asunto: str, cuerpo: str) -> None:

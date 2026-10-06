@@ -1078,9 +1078,8 @@ msgid "Selecciona un mensaje para leerlo"
 msgstr "Selecciona un missatge per llegir-lo"
 
 #: app/templates/correo_cuentas.html:2 app/templates/correo_cuentas.html:6
-#, fuzzy
 msgid "Cuentas de correo"
-msgstr "Connecta un compte de correu"
+msgstr "Comptes de correu"
 
 #: app/templates/correo_cuentas.html:7
 msgid ""
@@ -3869,3 +3868,173 @@ msgstr "Ingressos"
 
 msgid "Planes y extras"
 msgstr "Plans i extres"
+
+msgid "tarea en curso"
+msgid_plural "tareas en curso"
+msgstr[0] "tasca en curs"
+msgstr[1] "tasques en curs"
+
+msgid "tarea para hoy"
+msgid_plural "tareas para hoy"
+msgstr[0] "tasca per avui"
+msgstr[1] "tasques per avui"
+
+msgid "nota hoy"
+msgid_plural "notas hoy"
+msgstr[0] "nota avui"
+msgstr[1] "notes avui"
+
+msgid "correo sin leer"
+msgid_plural "correos sin leer"
+msgstr[0] "correu sense llegir"
+msgstr[1] "correus sense llegir"
+
+msgid "vencimiento próximo"
+msgid_plural "vencimientos próximos"
+msgstr[0] "venciment proper"
+msgstr[1] "venciments propers"
+
+msgid "Sincronización de correo"
+msgstr "Sincronització del correu"
+
+msgid "Cola de envío de correo"
+msgstr "Cua d'enviament de correu"
+
+msgid "Recordatorios de vencimientos (equipo)"
+msgstr "Recordatoris de venciments (equip)"
+
+msgid "Recordatorios del portal (clientes)"
+msgstr "Recordatoris del portal (clients)"
+
+msgid "Avisos de fichaje"
+msgstr "Avisos de fitxatge"
+
+msgid "Resumen semanal de IA"
+msgstr "Resum setmanal d'IA"
+
+msgid "Vigilante de salud"
+msgstr "Vigilant de salut"
+
+msgid "Sin datos todavía (no se ha ejecutado desde el último arranque)."
+msgstr "Encara sense dades (no s'ha executat des de l'últim arrencada)."
+
+#, python-format
+msgid "Último intento con error hace %(hace)s: %(detalle)s"
+msgstr "Últim intent amb error fa %(hace)s: %(detalle)s"
+
+msgid "sin detalle"
+msgstr "sense detall"
+
+#, python-format
+msgid "Última pasada correcta hace %(hace)s."
+msgstr "Última passada correcta fa %(hace)s."
+
+msgid "Última copia de seguridad"
+msgstr "Última còpia de seguretat"
+
+msgid "No hay ninguna copia."
+msgstr "No hi ha cap còpia."
+
+#, python-format
+msgid "%(nombre)s — hace %(hace)s (%(mb)s MB)."
+msgstr "%(nombre)s — fa %(hace)s (%(mb)s MB)."
+
+msgid "Espacio libre en disco"
+msgstr "Espai lliure al disc"
+
+#, python-format
+msgid "%(libre)s %% libre (%(gb)s GB de %(total)s GB)."
+msgstr "%(libre)s %% lliure (%(gb)s GB de %(total)s GB)."
+
+msgid "Tamaño de la base de datos"
+msgstr "Mida de la base de dades"
+
+#, python-format
+msgid "%(mb)s MB."
+msgstr "%(mb)s MB."
+
+#, python-format
+msgid "Correo: %(nombre)s (%(usuario)s)"
+msgstr "Correu: %(nombre)s (%(usuario)s)"
+
+#, python-format
+msgid "Error de sincronización: %(error)s"
+msgstr "Error de sincronització: %(error)s"
+
+msgid "Todavía no se ha sincronizado."
+msgstr "Encara no s'ha sincronitzat."
+
+#, python-format
+msgid "Última sincronización hace %(hace)s."
+msgstr "Última sincronització fa %(hace)s."
+
+msgid "Entregas de webhooks fallidas (24 h)"
+msgstr "Lliuraments de webhooks fallits (24 h)"
+
+#, python-format
+msgid "%(n)s intento(s) fallido(s)."
+msgstr "%(n)s intent(s) fallit(s)."
+
+msgid "Envíos de correo fallidos (24 h)"
+msgstr "Enviaments de correu fallits (24 h)"
+
+#, python-format
+msgid "%(n)s envío(s) fallido(s)."
+msgstr "%(n)s enviament(s) fallit(s)."
+
+msgid "Envíos pendientes con la hora vencida"
+msgstr "Enviaments pendents amb l'hora vençuda"
+
+#, python-format
+msgid "%(n)s envío(s) sin enviar pasados 5 minutos de su hora."
+msgstr "%(n)s enviament(s) sense enviar passats 5 minuts de la seva hora."
+
+msgid "Ninguno."
+msgstr "Cap."
+
+msgid "No se pudo comprobar."
+msgstr "No s'ha pogut comprovar."
+
+msgid "Envíos de correo"
+msgstr "Enviaments de correu"
+
+msgid "Entregas de webhooks"
+msgstr "Lliuraments de webhooks"
+
+msgid "mañana"
+msgstr "demà"
+
+#, python-format
+msgid "dentro de %(n)s días"
+msgstr "d'aquí a %(n)s dies"
+
+#, python-format
+msgid "Hola, %(cliente)s:"
+msgstr "Hola, %(cliente)s:"
+
+#, python-format
+msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
+msgstr "Et recordem que el model %(modelo)s (%(periodo)s) venç %(cuando)s, el %(fecha)s."
+
+#, python-format
+msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
+msgstr "Per preparar-lo necessitem de part teva: %(documento)s."
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente:"
+msgstr "Pots pujar documentació i escriure'ns des del teu portal de client:"
+
+msgid "Un saludo,"
+msgstr "Salutacions,"
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr "Rebs aquest avís perquè la teva gestoria té activats els recordatoris del portal. Si prefereixes no rebre'ls, digues-ho i els desactivarà."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
+msgstr "Recordatori: el %(modelo)s venç %(cuando)s"
+
+msgid "Idioma de los correos al cliente"
+msgstr "Idioma dels correus al client"
+
+msgid "Adjuntos guardados en este borrador"
+msgstr "Adjunts desats en aquest esborrany"

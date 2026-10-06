@@ -1081,9 +1081,8 @@ msgid "Selecciona un mensaje para leerlo"
 msgstr "Select a message to read it"
 
 #: app/templates/correo_cuentas.html:2 app/templates/correo_cuentas.html:6
-#, fuzzy
 msgid "Cuentas de correo"
-msgstr "Connect a mail account"
+msgstr "Email accounts"
 
 #: app/templates/correo_cuentas.html:7
 msgid ""
@@ -3902,3 +3901,173 @@ msgstr "Revenue"
 
 msgid "Planes y extras"
 msgstr "Plans and extras"
+
+msgid "tarea en curso"
+msgid_plural "tareas en curso"
+msgstr[0] "task in progress"
+msgstr[1] "tasks in progress"
+
+msgid "tarea para hoy"
+msgid_plural "tareas para hoy"
+msgstr[0] "task for today"
+msgstr[1] "tasks for today"
+
+msgid "nota hoy"
+msgid_plural "notas hoy"
+msgstr[0] "note today"
+msgstr[1] "notes today"
+
+msgid "correo sin leer"
+msgid_plural "correos sin leer"
+msgstr[0] "unread email"
+msgstr[1] "unread emails"
+
+msgid "vencimiento próximo"
+msgid_plural "vencimientos próximos"
+msgstr[0] "upcoming deadline"
+msgstr[1] "upcoming deadlines"
+
+msgid "Sincronización de correo"
+msgstr "Email sync"
+
+msgid "Cola de envío de correo"
+msgstr "Email send queue"
+
+msgid "Recordatorios de vencimientos (equipo)"
+msgstr "Deadline reminders (team)"
+
+msgid "Recordatorios del portal (clientes)"
+msgstr "Portal reminders (clients)"
+
+msgid "Avisos de fichaje"
+msgstr "Clock-in alerts"
+
+msgid "Resumen semanal de IA"
+msgstr "Weekly AI summary"
+
+msgid "Vigilante de salud"
+msgstr "Health watchdog"
+
+msgid "Sin datos todavía (no se ha ejecutado desde el último arranque)."
+msgstr "No data yet (it has not run since the last start)."
+
+#, python-format
+msgid "Último intento con error hace %(hace)s: %(detalle)s"
+msgstr "Last attempt failed %(hace)s ago: %(detalle)s"
+
+msgid "sin detalle"
+msgstr "no details"
+
+#, python-format
+msgid "Última pasada correcta hace %(hace)s."
+msgstr "Last successful run %(hace)s ago."
+
+msgid "Última copia de seguridad"
+msgstr "Latest backup"
+
+msgid "No hay ninguna copia."
+msgstr "There is no backup."
+
+#, python-format
+msgid "%(nombre)s — hace %(hace)s (%(mb)s MB)."
+msgstr "%(nombre)s — %(hace)s ago (%(mb)s MB)."
+
+msgid "Espacio libre en disco"
+msgstr "Free disk space"
+
+#, python-format
+msgid "%(libre)s %% libre (%(gb)s GB de %(total)s GB)."
+msgstr "%(libre)s %% free (%(gb)s GB of %(total)s GB)."
+
+msgid "Tamaño de la base de datos"
+msgstr "Database size"
+
+#, python-format
+msgid "%(mb)s MB."
+msgstr "%(mb)s MB."
+
+#, python-format
+msgid "Correo: %(nombre)s (%(usuario)s)"
+msgstr "Email: %(nombre)s (%(usuario)s)"
+
+#, python-format
+msgid "Error de sincronización: %(error)s"
+msgstr "Sync error: %(error)s"
+
+msgid "Todavía no se ha sincronizado."
+msgstr "It has not synced yet."
+
+#, python-format
+msgid "Última sincronización hace %(hace)s."
+msgstr "Last sync %(hace)s ago."
+
+msgid "Entregas de webhooks fallidas (24 h)"
+msgstr "Failed webhook deliveries (24 h)"
+
+#, python-format
+msgid "%(n)s intento(s) fallido(s)."
+msgstr "%(n)s failed attempt(s)."
+
+msgid "Envíos de correo fallidos (24 h)"
+msgstr "Failed email sends (24 h)"
+
+#, python-format
+msgid "%(n)s envío(s) fallido(s)."
+msgstr "%(n)s failed send(s)."
+
+msgid "Envíos pendientes con la hora vencida"
+msgstr "Pending sends past their time"
+
+#, python-format
+msgid "%(n)s envío(s) sin enviar pasados 5 minutos de su hora."
+msgstr "%(n)s send(s) not sent 5 minutes after their time."
+
+msgid "Ninguno."
+msgstr "None."
+
+msgid "No se pudo comprobar."
+msgstr "Could not be checked."
+
+msgid "Envíos de correo"
+msgstr "Email sends"
+
+msgid "Entregas de webhooks"
+msgstr "Webhook deliveries"
+
+msgid "mañana"
+msgstr "tomorrow"
+
+#, python-format
+msgid "dentro de %(n)s días"
+msgstr "in %(n)s days"
+
+#, python-format
+msgid "Hola, %(cliente)s:"
+msgstr "Hello, %(cliente)s:"
+
+#, python-format
+msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
+msgstr "We remind you that form %(modelo)s (%(periodo)s) is due %(cuando)s, on %(fecha)s."
+
+#, python-format
+msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
+msgstr "To prepare it we need from you: %(documento)s."
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente:"
+msgstr "You can upload documents and write to us from your client portal:"
+
+msgid "Un saludo,"
+msgstr "Kind regards,"
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr "You receive this notice because your firm has portal reminders enabled. If you prefer not to receive them, tell them and they will turn them off."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
+msgstr "Reminder: %(modelo)s is due %(cuando)s"
+
+msgid "Idioma de los correos al cliente"
+msgstr "Language of emails to the client"
+
+msgid "Adjuntos guardados en este borrador"
+msgstr "Attachments saved in this draft"

@@ -3809,3 +3809,173 @@ msgstr ""
 
 msgid "Planes y extras"
 msgstr ""
+
+msgid "tarea en curso"
+msgid_plural "tareas en curso"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "tarea para hoy"
+msgid_plural "tareas para hoy"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "nota hoy"
+msgid_plural "notas hoy"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "correo sin leer"
+msgid_plural "correos sin leer"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "vencimiento próximo"
+msgid_plural "vencimientos próximos"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Sincronización de correo"
+msgstr ""
+
+msgid "Cola de envío de correo"
+msgstr ""
+
+msgid "Recordatorios de vencimientos (equipo)"
+msgstr ""
+
+msgid "Recordatorios del portal (clientes)"
+msgstr ""
+
+msgid "Avisos de fichaje"
+msgstr ""
+
+msgid "Resumen semanal de IA"
+msgstr ""
+
+msgid "Vigilante de salud"
+msgstr ""
+
+msgid "Sin datos todavía (no se ha ejecutado desde el último arranque)."
+msgstr ""
+
+#, python-format
+msgid "Último intento con error hace %(hace)s: %(detalle)s"
+msgstr ""
+
+msgid "sin detalle"
+msgstr ""
+
+#, python-format
+msgid "Última pasada correcta hace %(hace)s."
+msgstr ""
+
+msgid "Última copia de seguridad"
+msgstr ""
+
+msgid "No hay ninguna copia."
+msgstr ""
+
+#, python-format
+msgid "%(nombre)s — hace %(hace)s (%(mb)s MB)."
+msgstr ""
+
+msgid "Espacio libre en disco"
+msgstr ""
+
+#, python-format
+msgid "%(libre)s %% libre (%(gb)s GB de %(total)s GB)."
+msgstr ""
+
+msgid "Tamaño de la base de datos"
+msgstr ""
+
+#, python-format
+msgid "%(mb)s MB."
+msgstr ""
+
+#, python-format
+msgid "Correo: %(nombre)s (%(usuario)s)"
+msgstr ""
+
+#, python-format
+msgid "Error de sincronización: %(error)s"
+msgstr ""
+
+msgid "Todavía no se ha sincronizado."
+msgstr ""
+
+#, python-format
+msgid "Última sincronización hace %(hace)s."
+msgstr ""
+
+msgid "Entregas de webhooks fallidas (24 h)"
+msgstr ""
+
+#, python-format
+msgid "%(n)s intento(s) fallido(s)."
+msgstr ""
+
+msgid "Envíos de correo fallidos (24 h)"
+msgstr ""
+
+#, python-format
+msgid "%(n)s envío(s) fallido(s)."
+msgstr ""
+
+msgid "Envíos pendientes con la hora vencida"
+msgstr ""
+
+#, python-format
+msgid "%(n)s envío(s) sin enviar pasados 5 minutos de su hora."
+msgstr ""
+
+msgid "Ninguno."
+msgstr ""
+
+msgid "No se pudo comprobar."
+msgstr ""
+
+msgid "Envíos de correo"
+msgstr ""
+
+msgid "Entregas de webhooks"
+msgstr ""
+
+msgid "mañana"
+msgstr ""
+
+#, python-format
+msgid "dentro de %(n)s días"
+msgstr ""
+
+#, python-format
+msgid "Hola, %(cliente)s:"
+msgstr ""
+
+#, python-format
+msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
+msgstr ""
+
+#, python-format
+msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
+msgstr ""
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente:"
+msgstr ""
+
+msgid "Un saludo,"
+msgstr ""
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr ""
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
+msgstr ""
+
+msgid "Idioma de los correos al cliente"
+msgstr ""
+
+msgid "Adjuntos guardados en este borrador"
+msgstr ""

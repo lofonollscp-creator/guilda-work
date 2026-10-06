@@ -85,6 +85,16 @@
     <div id="correo-editor-cuerpo" class="correo-editor" contenteditable="true">{{ cuerpo_html|safe }}</div>
     <input type="hidden" name="cuerpo_html" id="correo-editor-campo-oculto">
 
+    {% if adjuntos_borrador %}
+    <div class="correo-compose-campo correo-adjuntos-guardados">
+      <label>{{ _('Adjuntos guardados en este borrador') }}</label>
+      <ul>
+        {% for a in adjuntos_borrador %}
+        <li><label><input type="checkbox" name="mantener_adjuntos" value="{{ a.id }}" checked> {{ a.nombre }} <span class="muted">({{ (a.tamano / 1024)|round|int }} KB)</span></label></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
     <div class="correo-compose-campo correo-compose-adjuntos">
       <label>{{ _('Adjuntar archivos') }}</label>
       <span class="file-input">

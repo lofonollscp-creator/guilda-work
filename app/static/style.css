@@ -4430,3 +4430,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-form-seccion .ia-form-row { flex-wrap: wrap; align-items: center; }
 .correo-form-seccion .ia-form-row input[type="text"] { flex: 1 1 220px; min-width: 0; }
 .correo-form-seccion .ia-form-row select { flex: 0 1 auto; }
+
+.correo-adjuntos-guardados ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+.correo-adjuntos-guardados li label { display: inline-flex; gap: .4rem; align-items: center; }
+.correo-form-seccion .correo-toolbar-check, .correo-ajustes-seccion .correo-toolbar-check { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
+.correo-form-seccion .ia-form-row select { min-width: 150px; }
+.ia-atajos { padding: .5rem .75rem .55rem; }

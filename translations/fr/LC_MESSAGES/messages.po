@@ -1090,9 +1090,8 @@ msgid "Selecciona un mensaje para leerlo"
 msgstr "Sélectionnez un message pour le lire"
 
 #: app/templates/correo_cuentas.html:2 app/templates/correo_cuentas.html:6
-#, fuzzy
 msgid "Cuentas de correo"
-msgstr "Connectez un compte de messagerie"
+msgstr "Comptes de messagerie"
 
 #: app/templates/correo_cuentas.html:7
 msgid ""
@@ -3907,3 +3906,173 @@ msgstr "Revenus"
 
 msgid "Planes y extras"
 msgstr "Forfaits et options"
+
+msgid "tarea en curso"
+msgid_plural "tareas en curso"
+msgstr[0] "tâche en cours"
+msgstr[1] "tâches en cours"
+
+msgid "tarea para hoy"
+msgid_plural "tareas para hoy"
+msgstr[0] "tâche pour aujourd'hui"
+msgstr[1] "tâches pour aujourd'hui"
+
+msgid "nota hoy"
+msgid_plural "notas hoy"
+msgstr[0] "note aujourd'hui"
+msgstr[1] "notes aujourd'hui"
+
+msgid "correo sin leer"
+msgid_plural "correos sin leer"
+msgstr[0] "e-mail non lu"
+msgstr[1] "e-mails non lus"
+
+msgid "vencimiento próximo"
+msgid_plural "vencimientos próximos"
+msgstr[0] "échéance proche"
+msgstr[1] "échéances proches"
+
+msgid "Sincronización de correo"
+msgstr "Synchronisation du courrier"
+
+msgid "Cola de envío de correo"
+msgstr "File d'envoi des e-mails"
+
+msgid "Recordatorios de vencimientos (equipo)"
+msgstr "Rappels d'échéances (équipe)"
+
+msgid "Recordatorios del portal (clientes)"
+msgstr "Rappels du portail (clients)"
+
+msgid "Avisos de fichaje"
+msgstr "Alertes de pointage"
+
+msgid "Resumen semanal de IA"
+msgstr "Résumé hebdomadaire IA"
+
+msgid "Vigilante de salud"
+msgstr "Veilleur de santé"
+
+msgid "Sin datos todavía (no se ha ejecutado desde el último arranque)."
+msgstr "Pas encore de données (non exécuté depuis le dernier démarrage)."
+
+#, python-format
+msgid "Último intento con error hace %(hace)s: %(detalle)s"
+msgstr "Dernière tentative en erreur il y a %(hace)s : %(detalle)s"
+
+msgid "sin detalle"
+msgstr "sans détail"
+
+#, python-format
+msgid "Última pasada correcta hace %(hace)s."
+msgstr "Dernier passage réussi il y a %(hace)s."
+
+msgid "Última copia de seguridad"
+msgstr "Dernière sauvegarde"
+
+msgid "No hay ninguna copia."
+msgstr "Aucune sauvegarde."
+
+#, python-format
+msgid "%(nombre)s — hace %(hace)s (%(mb)s MB)."
+msgstr "%(nombre)s — il y a %(hace)s (%(mb)s Mo)."
+
+msgid "Espacio libre en disco"
+msgstr "Espace disque libre"
+
+#, python-format
+msgid "%(libre)s %% libre (%(gb)s GB de %(total)s GB)."
+msgstr "%(libre)s %% libre (%(gb)s Go sur %(total)s Go)."
+
+msgid "Tamaño de la base de datos"
+msgstr "Taille de la base de données"
+
+#, python-format
+msgid "%(mb)s MB."
+msgstr "%(mb)s Mo."
+
+#, python-format
+msgid "Correo: %(nombre)s (%(usuario)s)"
+msgstr "E-mail : %(nombre)s (%(usuario)s)"
+
+#, python-format
+msgid "Error de sincronización: %(error)s"
+msgstr "Erreur de synchronisation : %(error)s"
+
+msgid "Todavía no se ha sincronizado."
+msgstr "Pas encore synchronisé."
+
+#, python-format
+msgid "Última sincronización hace %(hace)s."
+msgstr "Dernière synchronisation il y a %(hace)s."
+
+msgid "Entregas de webhooks fallidas (24 h)"
+msgstr "Livraisons de webhooks échouées (24 h)"
+
+#, python-format
+msgid "%(n)s intento(s) fallido(s)."
+msgstr "%(n)s tentative(s) échouée(s)."
+
+msgid "Envíos de correo fallidos (24 h)"
+msgstr "Envois d'e-mail échoués (24 h)"
+
+#, python-format
+msgid "%(n)s envío(s) fallido(s)."
+msgstr "%(n)s envoi(s) échoué(s)."
+
+msgid "Envíos pendientes con la hora vencida"
+msgstr "Envois en attente dont l'heure est passée"
+
+#, python-format
+msgid "%(n)s envío(s) sin enviar pasados 5 minutos de su hora."
+msgstr "%(n)s envoi(s) non envoyé(s) 5 minutes après leur heure."
+
+msgid "Ninguno."
+msgstr "Aucun."
+
+msgid "No se pudo comprobar."
+msgstr "Vérification impossible."
+
+msgid "Envíos de correo"
+msgstr "Envois d'e-mails"
+
+msgid "Entregas de webhooks"
+msgstr "Livraisons de webhooks"
+
+msgid "mañana"
+msgstr "demain"
+
+#, python-format
+msgid "dentro de %(n)s días"
+msgstr "dans %(n)s jours"
+
+#, python-format
+msgid "Hola, %(cliente)s:"
+msgstr "Bonjour %(cliente)s,"
+
+#, python-format
+msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
+msgstr "Nous vous rappelons que le modèle %(modelo)s (%(periodo)s) arrive à échéance %(cuando)s, le %(fecha)s."
+
+#, python-format
+msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
+msgstr "Pour le préparer, nous avons besoin de votre part : %(documento)s."
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente:"
+msgstr "Vous pouvez téléverser des documents et nous écrire depuis votre portail client :"
+
+msgid "Un saludo,"
+msgstr "Cordialement,"
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr "Vous recevez cet avis car votre cabinet a activé les rappels du portail. Si vous préférez ne plus les recevoir, dites-le-lui et il les désactivera."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
+msgstr "Rappel : le %(modelo)s arrive à échéance %(cuando)s"
+
+msgid "Idioma de los correos al cliente"
+msgstr "Langue des e-mails au client"
+
+msgid "Adjuntos guardados en este borrador"
+msgstr "Pièces jointes enregistrées dans ce brouillon"

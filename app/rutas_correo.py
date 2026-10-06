@@ -110,6 +110,7 @@ def _render_redactar(
         titulo=titulo,
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         borrador_id=borrador_id,
+        adjuntos_borrador=db.listar_adjuntos_borrador(g.usuario_id, borrador_id) if borrador_id else [],
         deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
     )
 
@@ -512,8 +513,6 @@ def redactar():
             cc=borrador["cc"] or "", bcc=borrador["bcc"] or "", asunto=borrador["asunto"] or "",
             cuerpo_html=borrador["cuerpo_html"] or "", en_respuesta_a=borrador["en_respuesta_a"],
             titulo=_("Editar borrador"), borrador_id=borrador_id,
-            error=_("Vuelve a adjuntar los archivos: no se conservan al deshacer el envío.")
-            if request.args.get("sin_adjuntos") else None,
         )
     cuenta_id = request.args.get("cuenta_id", type=int)
     if cuenta_id is None:
@@ -601,6 +600,9 @@ def enviar():
         {"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()}
         for f in request.files.getlist("adjuntos") if f.filename
     ]
+    if borrador_id is not None:  # adjuntos que ya traía el borrador (envío deshecho o fallido) y se siguen queriendo
+        ids_mantener = [i for i in request.form.getlist("mantener_adjuntos") if i.isdigit()]
+        adjuntos = db.adjuntos_borrador_para_enviar(g.usuario_id, borrador_id, [int(i) for i in ids_mantener]) + adjuntos
     programado = request.form.get("programar") == "1"
     deshacer = db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"]
     try:
@@ -648,9 +650,8 @@ def deshacer_envio(envio_id: int):
         abort(404)
     if db.cancelar_envio_correo(g.usuario_id, envio_id):
         borrador_id = correo.borrador_desde_envio(envio)
-        tenia_adjuntos = bool(db.adjuntos_envio_correo(envio_id))
         db.cerrar_envio_correo(envio_id, "cancelado", borrar_adjuntos=True)
-        return redirect(url_for("correo.redactar", borrador_id=borrador_id, sin_adjuntos=1 if tenia_adjuntos else None))
+        return redirect(url_for("correo.redactar", borrador_id=borrador_id))
     return redirect(url_for(
         "correo.bandeja", cuenta_id=envio["cuenta_id"],
         aviso=_("Ya no se puede deshacer: el correo ya se ha enviado."),
