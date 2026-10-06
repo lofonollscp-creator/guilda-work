@@ -884,7 +884,10 @@ def lista_notas():
     búsqueda) con el editor de la nota elegida al lado."""
     categoria_id = request.args.get("categoria_id", type=int)
     q = (request.args.get("q") or "").strip() or None
-    notas = db.listar_notas(g.usuario_id, categoria_id=categoria_id, texto=q)
+    solo_compartidas = request.args.get("compartidas") == "1"
+    notas = db.listar_notas(
+        g.usuario_id, categoria_id=categoria_id, texto=q, incluir_compartidas=not solo_compartidas, solo_compartidas=solo_compartidas
+    )
     nota_id = request.args.get("nota", type=int)
     nueva = request.args.get("nueva") == "1"
     nota = None
@@ -894,18 +897,24 @@ def lista_notas():
             nota = notas[0]
     detalle = None
     if nota is not None:
-        completa = db.obtener_nota(g.usuario_id, nota["id"])
-        tarea = db.obtener_tarea_outlook(g.usuario_id, completa["tarea_outlook_id"]) if completa["tarea_outlook_id"] else None
+        completa = db.obtener_nota_visible(g.usuario_id, nota["id"])
+        rol_nota = db.rol_en_nota(g.usuario_id, nota["id"])
+        es_dueno_nota = rol_nota == "dueno"
+        # Los vínculos (tarea, correo) son del dueño: a un compañero no se le muestran.
+        tarea = db.obtener_tarea_outlook(g.usuario_id, completa["tarea_outlook_id"]) if es_dueno_nota and completa["tarea_outlook_id"] else None
         mensaje = None
-        if completa["mensaje_correo_id"] and db.mensaje_correo_pertenece_a_usuario(g.usuario_id, completa["mensaje_correo_id"]):
+        if es_dueno_nota and completa["mensaje_correo_id"] and db.mensaje_correo_pertenece_a_usuario(g.usuario_id, completa["mensaje_correo_id"]):
             mensaje = db.obtener_mensaje_correo(completa["mensaje_correo_id"])
         detalle = {
             "nota": completa, "tarea": tarea, "mensaje": mensaje,
             "adjuntos": db.listar_adjuntos_nota(nota["id"]),
+            "rol": rol_nota, "participantes": db.participantes_de_nota(nota["id"]),
         }
     return render_template(
         "notas.html",
         notas=notas, detalle=detalle, nueva=nueva, q=q or "", categoria_id=categoria_id,
+        solo_compartidas=solo_compartidas, companeros=db.listar_companeros_tenant(g.usuario_id),
+        n_participantes=db.contar_participantes_notas([n["id"] for n in notas]),
         menus=db.listar_categorias(g.usuario_id),
         clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
         adjuntos_max=db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA,
@@ -927,9 +936,15 @@ def crear_nota():
 @app.route("/nota/<int:nota_id>/editar", methods=["GET", "POST"])
 @login_required
 def editar_nota(nota_id: int):
-    nota = db.obtener_nota(g.usuario_id, nota_id)
+    if db.rol_en_nota(g.usuario_id, nota_id) not in ("dueno", "colabora"):
+        abort(404)
+    nota = db.obtener_nota_visible(g.usuario_id, nota_id)
     if nota is None:
         abort(404)
+    # Esta ficha antigua (adjuntos, fijar, borrar) es del dueño: un colaborador
+    # edita desde la pantalla Notas.
+    if request.method == "GET" and nota["usuario_id"] != g.usuario_id:
+        return redirect(url_for("lista_notas", nota=nota_id))
     if request.method == "POST":
         texto = request.form.get("texto", "").strip()
         titulo = request.form.get("titulo", "").strip()
@@ -949,6 +964,45 @@ def editar_nota(nota_id: int):
         adjuntos_max=db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA,
         error=(request.args.get("error") or "")[:200] or None,
     )
+
+
+@app.route("/nota/<int:nota_id>/compartir", methods=["POST"])
+@login_required
+def compartir_nota(nota_id: int):
+    """Solo el dueño: comparte la nota con un compañero del despacho."""
+    try:
+        otro = int(request.form.get("usuario_id", ""))
+    except ValueError:
+        abort(404)
+    rol = request.form.get("rol", "colabora")
+    if not db.compartir_nota(g.usuario_id, nota_id, otro, rol):
+        abort(404)
+    try:
+        if db.notificacion_tipo_activa(otro, "tarea_asignada"):
+            nota = db.obtener_nota_visible(otro, nota_id)
+            quien = db.nombre_mostrado_usuario(g.usuario_id) or db.obtener_usuario(g.usuario_id)["email"]
+            titulo = (nota["titulo"] or nota["texto"].split("\n")[0])[:60]
+            notificaciones.crear_y_enviar(
+                otro, "tarea_asignada", "Nota compartida", f"{quien} ha compartido contigo la nota: {titulo}",
+                url=url_for("lista_notas", nota=nota_id, compartidas=1), datos={"tipo": "nota_compartida", "nota_id": nota_id},
+            )
+    except Exception:  # noqa: BLE001
+        pass
+    return redirect(url_for("lista_notas", nota=nota_id))
+
+
+@app.route("/nota/<int:nota_id>/compartir/quitar", methods=["POST"])
+@login_required
+def dejar_de_compartir_nota(nota_id: int):
+    try:
+        otro = int(request.form.get("usuario_id", ""))
+    except ValueError:
+        abort(404)
+    if not db.dejar_de_compartir_nota(g.usuario_id, nota_id, otro):
+        abort(404)
+    if otro == g.usuario_id:
+        return redirect(url_for("lista_notas"))
+    return redirect(url_for("lista_notas", nota=nota_id))
 
 
 @app.route("/nota/<int:nota_id>/fijar", methods=["POST"])

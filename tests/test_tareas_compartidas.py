@@ -231,3 +231,59 @@ def test_carga_equipo_solo_cuenta_lo_que_el_usuario_ve():
     assert carga[luis]["abiertas"] == 1 and carga[luis]["atrasadas"] == 0
     assert [p["responsable_id"] for p in db.carga_equipo(ana)][0] == ana  # las atrasadas primero
     assert {p["responsable_id"] for p in db.carga_equipo(eva)} == {eva}
+
+
+# --- Notas compartidas -----------------------------------------------------------------
+
+def test_compartir_nota_colabora_edita_texto_pero_no_lo_del_dueno():
+    _, (ana, luis, eva) = _despacho("ana11@comp.com", "luis11@comp.com", "eva11@comp.com")
+    _, (ajeno,) = _despacho("ajeno11@otro.com")
+    nota = db.crear_nota(ana, "Texto original", titulo="Acta")
+    assert db.compartir_nota(ana, nota, ajeno) is False
+    assert db.compartir_nota(luis, nota, eva) is False        # no es suya
+    assert db.compartir_nota(ana, nota, luis, "colabora") is True
+    assert db.compartir_nota(ana, nota, eva, "observa") is True
+
+    assert [n["id"] for n in db.listar_notas(luis)] == []                        # por defecto, solo las propias
+    assert [n["id"] for n in db.listar_notas(luis, incluir_compartidas=True)] == [nota]
+    assert [n["id"] for n in db.listar_notas(luis, solo_compartidas=True)] == [nota]
+    assert db.obtener_nota_visible(luis, nota)["dueno_nombre"] == "ana11@comp.com"
+
+    db.editar_nota(luis, nota, "Texto de Luis", titulo="Acta v2", fijada=True)
+    n = db.obtener_nota(ana, nota)
+    assert n["texto"] == "Texto de Luis" and n["titulo"] == "Acta v2" and not n["fijada"]  # fijar es del dueño
+
+    db.editar_nota(eva, nota, "Hackeada")                                       # solo lectura
+    assert db.obtener_nota(ana, nota)["texto"] == "Texto de Luis"
+    assert db.obtener_nota_visible(eva, nota) is not None
+    db.eliminar_nota(luis, nota)
+    assert db.obtener_nota(ana, nota) is not None                                # borrar es del dueño
+
+
+def test_dejar_de_compartir_nota_y_adjuntos_visibles_solo_para_participantes():
+    _, (ana, luis, eva) = _despacho("ana12@comp.com", "luis12@comp.com", "eva12@comp.com")
+    nota = db.crear_nota(ana, "Con adjunto")
+    adj = db.agregar_adjunto_nota(ana, nota, "a.txt", "text/plain", b"hola")
+    db.compartir_nota(ana, nota, luis)
+    assert db.obtener_adjunto_nota(luis, adj) is not None
+    assert db.obtener_adjunto_nota(eva, adj) is None
+    assert db.dejar_de_compartir_nota(eva, nota, luis) is False
+    assert db.dejar_de_compartir_nota(luis, nota, luis) is True                  # salirse
+    assert db.obtener_adjunto_nota(luis, adj) is None
+    assert db.rol_en_nota(luis, nota) is None
+
+
+def test_rutas_notas_compartidas(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno4@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho notas")
+    db.asignar_tenant(uid, tenant)
+    compi = db.crear_usuario("compi4@comp.com", "contrasena123")
+    db.asignar_tenant(compi, tenant)
+    nota = db.crear_nota(uid, "Nota para compartir", titulo="Compartible")
+    assert cliente.post(f"/nota/{nota}/compartir", data={"usuario_id": compi, "rol": "colabora"}).status_code == 302
+    html = cliente.get(f"/notas?nota={nota}").get_data(as_text=True)
+    assert "Compartida con" in html and "compi4@comp.com" in html
+    otro = db.crear_usuario("ajeno4@otro.com", "contrasena123")
+    db.asignar_tenant(otro, db.crear_tenant("Otro despacho"))
+    assert cliente.post(f"/nota/{nota}/compartir", data={"usuario_id": otro}).status_code == 404
+    assert cliente.get("/notas?compartidas=1").status_code == 200

@@ -21,6 +21,10 @@
       </select>
       <a class="btn btn-primary" href="{{ url_for('lista_notas', nueva=1, **filtros) }}">+ {{ _('Nueva') }}</a>
     </form>
+    <nav class="tareas-subnav notas-vistas" aria-label="{{ _('Vista') }}">
+      <a class="{{ '' if solo_compartidas else 'active' }}" href="{{ url_for('lista_notas', categoria_id=categoria_id, q=q or none) }}">{{ _('Todas') }}</a>
+      <a class="{{ 'active' if solo_compartidas }}" href="{{ url_for('lista_notas', compartidas=1, categoria_id=categoria_id, q=q or none) }}">{{ _('Compartidas conmigo') }}</a>
+    </nav>
 
     {% if not notas %}
     <p class="empty-lane">{{ _('No hay notas para este filtro.') }}</p>
@@ -38,6 +42,7 @@
           <strong class="nota-item-titulo">{{ n.titulo or (n.texto.split('\n')[0]|truncate(60, True)) }}</strong>
           {% if n.titulo and n.texto %}<span class="nota-item-vista">{{ n.texto|replace('**', '')|replace('*', '')|truncate(110, True) }}</span>{% endif %}
           <span class="nota-item-meta">
+            {% if n.usuario_id != g.usuario_id %}<span class="pill tarea-compartida">{{ _('De %(quien)s', quien=n.dueno_nombre) }}</span>{% elif n_participantes.get(n.id) %}<span class="pill tarea-compartida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ n_participantes[n.id] }}</span>{% endif %}
             {% if n.categoria_nombre %}<span class="nota-item-proyecto"><span class="dot" style="background: {{ n.categoria_color or '#7c8ba1' }};"></span>{{ n.categoria_nombre }}</span>{% endif %}
             <span class="mono">{{ n.creada_en[:10] }}</span>
             {% if adjuntos_por_nota.get(n.id) %}<span class="mono">{{ ngettext('%(n)s adjunto', '%(n)s adjuntos', adjuntos_por_nota[n.id], n=adjuntos_por_nota[n.id]) }}</span>{% endif %}
@@ -78,6 +83,7 @@
     <article class="notas-doc">
       <h2 class="notas-doc-titulo">{{ nota.titulo or _('Sin título') }}</h2>
       <p class="notas-doc-meta">
+        {% if detalle.rol != 'dueno' %}<span class="pill tarea-compartida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('De %(quien)s', quien=nota.dueno_nombre) }} · {{ _('colabora') if detalle.rol == 'colabora' else _('solo lectura') }}</span>{% endif %}
         {% if nota.fijada %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bookmark"></use></svg> {{ _('Fijada') }}</span>{% endif %}
         {% if nota.categoria_nombre %}<span class="pill">{{ nota.categoria_nombre }}</span>{% endif %}
         <span class="mono">{{ nota.creada_en }}</span>
@@ -94,6 +100,7 @@
     </div>
     {% endif %}
 
+    {% if detalle.rol in ('dueno', 'colabora') %}
     <form class="edit-form notas-form" method="post" action="{{ url_for('editar_nota', nota_id=nota.id) }}">
       <h3 class="notas-editor-titulo">{{ _('Editar') }}</h3>
       <input type="hidden" name="volver_a" value="{{ volver }}">
@@ -105,7 +112,7 @@
       </label>
       <p class="muted nota-ayuda-formato">{{ _('Formato: **negrita**, *cursiva*, listas con "-" o "1.", enlaces con [texto](https://...) y direcciones web.') }}</p>
       <div class="ia-form-row">
-        {% if clientes_fiscales %}
+        {% if clientes_fiscales and detalle.rol == 'dueno' %}
         <label>{{ _('Cliente') }}
           <select name="cliente_fiscal_id">
             <option value="">{{ _('Sin cliente') }}</option>
@@ -113,14 +120,56 @@
           </select>
         </label>
         {% endif %}
-        <label class="checkbox-label nota-fijar"><input type="checkbox" name="fijada" value="1" {{ 'checked' if nota.fijada }}> {{ _('Fijar esta nota arriba') }}</label>
+        {% if detalle.rol == 'dueno' %}<label class="checkbox-label nota-fijar"><input type="checkbox" name="fijada" value="1" {{ 'checked' if nota.fijada }}> {{ _('Fijar esta nota arriba') }}</label>{% endif %}
       </div>
       <div class="edit-form-actions">
         <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
-        <a class="btn btn-ghost" href="{{ url_for('editar_nota', nota_id=nota.id, volver_a=volver) }}#adjuntos"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Gestionar adjuntos') }}</a>
+        {% if detalle.rol == 'dueno' %}<a class="btn btn-ghost" href="{{ url_for('editar_nota', nota_id=nota.id, volver_a=volver) }}#adjuntos"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Gestionar adjuntos') }}</a>{% endif %}
       </div>
     </form>
+    {% endif %}
 
+    {% if detalle.rol == 'dueno' %}
+    <section class="tarea-compartir-bloque" id="compartir">
+      <h3 class="notas-editor-titulo">{{ _('Compartida con') }}</h3>
+      {% if detalle.participantes %}
+      <ul class="tarea-participantes">
+        {% for p in detalle.participantes %}
+        <li>
+          <span class="tarea-participante-nombre">{{ p.nombre }}</span>
+          <span class="pill">{{ _('Colabora') if p.rol == 'colabora' else _('Solo lectura') }}</span>
+          <form action="{{ url_for('dejar_de_compartir_nota', nota_id=nota.id) }}" method="post">
+            <input type="hidden" name="usuario_id" value="{{ p.usuario_id }}">
+            <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">{{ _('Nadie más ve esta nota.') }}</p>
+      {% endif %}
+      {% if companeros %}
+      <form class="quick-row" action="{{ url_for('compartir_nota', nota_id=nota.id) }}" method="post">
+        <select name="usuario_id" required aria-label="{{ _('Compañero') }}">
+          <option value="">{{ _('Compañero...') }}</option>
+          {% for u in companeros %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+        </select>
+        <select name="rol" aria-label="{{ _('Permiso') }}">
+          <option value="colabora">{{ _('Puede editar') }}</option>
+          <option value="observa">{{ _('Solo lectura') }}</option>
+        </select>
+        <button type="submit" class="btn btn-ghost">{{ _('Compartir') }}</button>
+      </form>
+      {% endif %}
+    </section>
+    {% else %}
+    <form action="{{ url_for('dejar_de_compartir_nota', nota_id=nota.id) }}" method="post">
+      <input type="hidden" name="usuario_id" value="{{ g.usuario_id }}">
+      <button type="submit" class="btn btn-ghost">{{ _('Salir de esta nota') }}</button>
+    </form>
+    {% endif %}
+
+    {% if detalle.rol == 'dueno' %}
     <form class="edit-form-delete" method="post" action="{{ url_for('eliminar_nota', nota_id=nota.id) }}"
           data-eliminar-deshacer
           data-confirmar="{{ _('¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde ahí.') }}"
@@ -131,6 +180,7 @@
       <input type="hidden" name="volver_a" value="{{ url_for('lista_notas', **filtros) }}">
       <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar nota') }}</button>
     </form>
+    {% endif %}
 
     {% else %}
     <div class="empty-state">
