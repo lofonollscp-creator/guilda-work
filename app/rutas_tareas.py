@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, notificaciones, outlook_ics
+from . import calcom, db, fichaje_export, notificaciones, outlook_ics
 from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
@@ -255,7 +255,7 @@ def calendario():
     # cada tarea se ubica en el día de su vencimiento o, si no tiene, en el de
     # inicio — ese cálculo se hace aquí, no es un filtro directo de columna.
     tareas_por_dia: dict[str, list] = {}
-    for t in db.listar_tareas_outlook(g.usuario_id):
+    for t in db.listar_tareas_outlook(g.usuario_id, incluir_asignadas=True):
         fecha_efectiva = (t["fecha_vencimiento"] or t["fecha_inicio"] or "")[:10]
         if fecha_efectiva:
             tareas_por_dia.setdefault(fecha_efectiva, []).append(t)
@@ -271,6 +271,9 @@ def calendario():
             if fecha_efectiva:
                 vencimientos_por_dia.setdefault(fecha_efectiva, []).append(v)
 
+    citas_por_dia, aviso_citas = _citas_por_dia(inicio, fin)
+    fichado_por_dia = _fichado_por_dia(inicio, fin)
+
     dias = []
     cursor = inicio
     while cursor <= fin:
@@ -282,6 +285,8 @@ def calendario():
             "es_mes_actual": cursor.month == ancla.month,
             "tareas": tareas_por_dia.get(iso, []),
             "vencimientos": vencimientos_por_dia.get(iso, []),
+            "citas": citas_por_dia.get(iso, []),
+            "fichado": fichado_por_dia.get(iso),
         })
         cursor += timedelta(days=1)
     semanas = [dias[i:i + 7] for i in range(0, len(dias), 7)] if vista == "mes" else None
@@ -298,10 +303,44 @@ def calendario():
         hoy=date.today().isoformat(),
         horas=HORAS_DIA,
         prioridades=PRIORIDADES,
+        aviso_citas=aviso_citas,
         categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
         menus=db.listar_categorias(g.usuario_id),
         volver_a=url_for("tareas.calendario", vista=vista, fecha=ancla.isoformat()),
     )
+
+
+def _citas_por_dia(inicio: date, fin: date) -> tuple[dict[str, list], str | None]:
+    """Reservas de Cal.diy del despacho en el rango (si lo tiene configurado). Un fallo
+    de Cal.diy nunca rompe el calendario: se avisa y se sigue sin citas."""
+    if g.tenant_id is None:
+        return {}, None
+    tenant = db.obtener_tenant(g.tenant_id)
+    api_key = tenant["calcom_api_key"] if tenant else None
+    if not api_key:
+        return {}, None
+    por_dia: dict[str, list] = {}
+    try:
+        for r in calcom.listar_reservas(api_key, desde=inicio.isoformat(), hasta=(fin + timedelta(days=1)).isoformat()):
+            dia = (r.get("start") or "")[:10]
+            if dia:
+                por_dia.setdefault(dia, []).append(r)
+    except Exception as e:  # noqa: BLE001
+        return {}, str(e)[:160]
+    return por_dia, None
+
+
+def _fichado_por_dia(inicio: date, fin: date) -> dict[str, float]:
+    """Segundos trabajados por el propio usuario en cada día del rango."""
+    try:
+        filas = fichaje_export.filas_diarias(g.tenant_id, inicio.isoformat(), fin.isoformat(), g.usuario_id)
+    except Exception:  # noqa: BLE001
+        return {}
+    por_dia: dict[str, float] = {}
+    for f in filas:
+        if f["usuario_id"] == g.usuario_id and f["segundos_trabajados"]:
+            por_dia[f["fecha"]] = por_dia.get(f["fecha"], 0) + f["segundos_trabajados"]
+    return por_dia
 
 
 def _titulo_rango(vista: str, ancla: date, inicio: date, fin: date) -> str:

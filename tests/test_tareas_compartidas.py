@@ -508,3 +508,37 @@ def test_rutas_recordatorios(cliente):
     assert cliente.post(f"/tareas/recordatorios/{rid}/eliminar").status_code == 302
     assert db.listar_recordatorios_tarea(uid, tarea) == []
     assert cliente.post(f"/tareas/recordatorios/{rid}/eliminar").status_code == 404
+
+
+# --- Calendario unificado --------------------------------------------------------------
+
+def test_calendario_unifica_tareas_compartidas_citas_y_fichajes(cliente, monkeypatch):
+    from datetime import date
+    from app import calcom
+    uid = iniciar_sesion_de_prueba(cliente, "dueno8@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho calendario")
+    db.asignar_tenant(uid, tenant)
+    compi = db.crear_usuario("compi8@comp.com", "contrasena123")
+    db.asignar_tenant(compi, tenant)
+    hoy = date.today().isoformat()
+    propia = db.crear_tarea_outlook(uid, "Propia del día", fecha_vencimiento=f"{hoy}T10:00")
+    ajena = db.crear_tarea_outlook(compi, "Compartida conmigo", fecha_vencimiento=f"{hoy}T11:00")
+    db.compartir_tarea_outlook(compi, ajena, uid, "observa")
+    privada = db.crear_tarea_outlook(compi, "Privada del compañero", fecha_vencimiento=f"{hoy}T12:00")
+
+    conn = db.get_connection()
+    conn.execute("UPDATE tenants SET calcom_api_key = 'k' WHERE id = ?", (tenant,))
+    conn.commit(); conn.close()
+    monkeypatch.setattr(calcom, "listar_reservas", lambda *a, **k: [{"title": "Reunión con cliente", "start": f"{hoy}T09:30:00.000Z"}])
+
+    html = cliente.get("/tareas/calendario?vista=dia").get_data(as_text=True)
+    assert "Propia del día" in html and "Compartida conmigo" in html
+    assert f"/tareas/{ajena}" in html and f"/tareas/{ajena}/editar" not in html   # solo lectura: a la ficha
+    assert "Privada del compañero" not in html
+    assert "Reunión con cliente" in html and 'data-capa="citas"' in html
+
+    def roto(*a, **k):
+        raise calcom.ErrorCalcom("caído")
+    monkeypatch.setattr(calcom, "listar_reservas", roto)
+    html = cliente.get("/tareas/calendario").get_data(as_text=True)
+    assert "No se han podido cargar las citas" in html and "Propia del día" in html

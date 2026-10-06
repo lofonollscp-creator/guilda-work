@@ -4,13 +4,20 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Tareas') }}</h1>
-    <p class="subtitle">{{ _('Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí.') }}</p>
+    <p class="subtitle">{{ _('Calendario unificado: tareas (por vencimiento o inicio), vencimientos fiscales, citas y horas fichadas. Haz clic (o arrastra sobre varios días/horas) para crear una tarea nueva ahí.') }}</p>
   </div>
 </header>
 
 {% set subnav_activa = 'calendario' %}
 {% include "_tareas_subnav.html" %}
 
+{% if aviso_citas %}<div class="ia-error">{{ _('No se han podido cargar las citas: %(e)s', e=aviso_citas) }}</div>{% endif %}
+<div class="cal-capas" role="group" aria-label="{{ _('Qué mostrar') }}">
+  <label class="checkbox-label cal-capa cal-capa-tareas"><input type="checkbox" data-capa="tareas" checked> {{ _('Tareas') }}</label>
+  <label class="checkbox-label cal-capa cal-capa-fiscal"><input type="checkbox" data-capa="fiscal" checked> {{ _('Vencimientos fiscales') }}</label>
+  <label class="checkbox-label cal-capa cal-capa-citas"><input type="checkbox" data-capa="citas" checked> {{ _('Citas') }}</label>
+  <label class="checkbox-label cal-capa cal-capa-fichaje"><input type="checkbox" data-capa="fichaje" checked> {{ _('Fichajes') }}</label>
+</div>
 <div class="cal-toolbar">
   <div class="cal-nav">
     <a class="btn btn-ghost" href="{{ url_for('tareas.calendario', vista=vista, fecha=anterior) }}" title="{{ _('Anterior') }}">&larr;</a>
@@ -26,15 +33,23 @@
 </div>
 
 {% macro chip(t) %}
-<a class="cal-chip {{ 'is-completada' if t.estado == 'completada' }}"
+<a class="cal-chip cal-capa-item-tareas {{ 'is-completada' if t.estado == 'completada' }}"
    style="--chip-color: {{ t.categoria_outlook|color_categoria }};"
-   href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ t.asunto }}{% if t.categoria_outlook %} · {{ t.categoria_outlook }}{% endif %}">
+   href="{{ url_for('tareas.editar' if t.usuario_id == g.usuario_id else 'tareas.ver', tarea_id=t.id) }}" title="{{ t.asunto }}{% if t.categoria_outlook %} · {{ t.categoria_outlook }}{% endif %}">
   {{ t.asunto }}
 </a>
 {% endmacro %}
 
+{% macro chip_cita(r) %}
+<span class="cal-chip cal-chip-cita cal-capa-item-citas" title="{{ r.title or '' }}">{{ r.start[11:16] if r.start else '' }} {{ r.title or _('Cita') }}</span>
+{% endmacro %}
+
+{% macro chip_fichaje(segundos) %}
+<span class="cal-chip cal-chip-fichaje cal-capa-item-fichaje" title="{{ _('Horas fichadas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg> {{ (segundos // 3600)|int }} h {{ '%02d'|format(((segundos % 3600) // 60)|int) }}</span>
+{% endmacro %}
+
 {% macro chip_vencimiento(v) %}
-<a class="cal-chip cal-chip-fiscal {{ 'is-completada' if v.estado == 'presentado' }}"
+<a class="cal-chip cal-chip-fiscal cal-capa-item-fiscal {{ 'is-completada' if v.estado == 'presentado' }}"
    href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}"
    title="{{ v.modelo }} · {{ v.cliente_nombre }}{% if v.periodo %} · {{ v.periodo }}{% endif %}">
   {{ v.modelo }} · {{ v.cliente_nombre }}
@@ -51,7 +66,9 @@
     <div class="cal-cell cal-seleccionable {{ 'is-hoy' if dia.es_hoy }} {{ '' if dia.es_mes_actual else 'is-fuera-de-mes' }}" data-fecha="{{ dia.iso }}">
       <span class="cal-cell-num">{{ dia.fecha.day }}</span>
       <div class="cal-cell-chips">
+        {% if dia.fichado %}{{ chip_fichaje(dia.fichado) }}{% endif %}
         {% for v in dia.vencimientos %}{{ chip_vencimiento(v) }}{% endfor %}
+        {% for r in dia.citas %}{{ chip_cita(r) }}{% endfor %}
         {% for t in dia.tareas[:4] %}{{ chip(t) }}{% endfor %}
         {% if dia.tareas|length > 4 %}<span class="cal-mas">{{ _('+%(n)s más', n=dia.tareas|length - 4) }}</span>{% endif %}
       </div>
@@ -62,6 +79,9 @@
 
 {% elif vista == 'dia' %}
 <div class="cal-day-tasks">
+  {% if dias[0].fichado or dias[0].citas %}
+  <p class="cal-dia-extra">{% if dias[0].fichado %}{{ chip_fichaje(dias[0].fichado) }}{% endif %}{% for r in dias[0].citas %}{{ chip_cita(r) }}{% endfor %}</p>
+  {% endif %}
   {% if dias[0].vencimientos %}
   <ul class="log-list">
     {% for v in dias[0].vencimientos %}
@@ -76,7 +96,7 @@
   <ul class="log-list">
     {% for t in dias[0].tareas %}
     <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
-      <span class="log-text"><a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a></span>
+      <span class="log-text"><a href="{{ url_for('tareas.editar' if t.usuario_id == g.usuario_id else 'tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a></span>
       {% if t.categoria_outlook %}<span class="pill">{{ t.categoria_outlook }}</span>{% endif %}
       <span class="pill prioridad-{{ t.prioridad }}">{{ t.prioridad }}</span>
     </li>
@@ -104,9 +124,11 @@
       <span class="cal-col-num">{{ dia.fecha.day }}</span>
     </div>
     <div class="cal-col-chips">
+      {% if dia.fichado %}{{ chip_fichaje(dia.fichado) }}{% endif %}
       {% for v in dia.vencimientos %}{{ chip_vencimiento(v) }}{% endfor %}
+      {% for r in dia.citas %}{{ chip_cita(r) }}{% endfor %}
       {% for t in dia.tareas %}{{ chip(t) }}{% endfor %}
-      {% if not dia.tareas and not dia.vencimientos %}<span class="cal-vacio">{{ _('Sin tareas') }}</span>{% endif %}
+      {% if not dia.tareas and not dia.vencimientos and not dia.citas and not dia.fichado %}<span class="cal-vacio">{{ _('Sin tareas') }}</span>{% endif %}
     </div>
   </div>
   {% endfor %}
@@ -147,4 +169,26 @@
 </div>
 
 <script src="{{ url_for('static', filename='calendario_tareas.js') }}"></script>
+<script>
+// Capas del calendario unificado: se recuerdan en este navegador.
+(function () {
+  var cajas = document.querySelectorAll(".cal-capas input[data-capa]");
+  var guardado = {};
+  try { guardado = JSON.parse(localStorage.getItem("cal-capas") || "{}"); } catch (e) {}
+  function aplicar() {
+    cajas.forEach(function (c) {
+      document.querySelectorAll(".cal-capa-item-" + c.dataset.capa).forEach(function (el) { el.hidden = !c.checked; });
+    });
+  }
+  cajas.forEach(function (c) {
+    if (guardado[c.dataset.capa] === false) c.checked = false;
+    c.addEventListener("change", function () {
+      guardado[c.dataset.capa] = c.checked;
+      try { localStorage.setItem("cal-capas", JSON.stringify(guardado)); } catch (e) {}
+      aplicar();
+    });
+  });
+  aplicar();
+})();
+</script>
 {% endblock %}

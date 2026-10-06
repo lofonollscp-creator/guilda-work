@@ -4735,3 +4735,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .pill.tarea-bloqueada { display: inline-flex; align-items: center; gap: 5px; color: var(--warning); border-color: var(--warning); }
 .recordatorio-canales { display: inline-flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .recordatorio-posponer select { font-size: 12px; padding: 4px 8px; }
+
+/* ---- Calendario unificado: capas ---- */
+.cal-capas { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 var(--space-3); font-size: 13px; }
+.cal-capa { display: inline-flex; align-items: center; gap: 6px; }
+.cal-chip-cita { background: color-mix(in srgb, #4a90d9 22%, transparent); color: var(--text); border-left: 3px solid #4a90d9; }
+.cal-chip-fichaje { background: transparent; color: var(--text-muted); border: 1px dashed var(--border); display: inline-flex; align-items: center; gap: 5px; }
+.cal-dia-extra { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 var(--space-3); }
+[hidden].cal-chip { display: none !important; }
