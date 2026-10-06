@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Salud del sistema{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Salud del sistema</h1><p class="muted">Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo.</p></header>
+<p><span class="insignia {{ {'verde': 'insignia-ok', 'rojo': 'insignia-riesgo'}.get(general, '') }}">{{ {'verde': 'TODO EN ORDEN', 'ambar': 'ATENCIÓN', 'rojo': 'HAY ALGO EN ROJO', 'gris': 'SIN DATOS'}[general] }}</span></p>
+{% for grupo, items in grupos.items() %}
+<section class="tarjeta"><h2>{{ grupo }}</h2>
+  <ul class="lista-salud">
+    {% for i in items %}
+    <li><span class="punto punto-{{ i.estado }}" role="img" aria-label="{{ i.estado }}"></span><div><strong>{{ i.titulo }}</strong><div class="muted">{{ i.detalle }}</div></div></li>
+    {% endfor %}
+  </ul></section>
+{% endfor %}
+{% endblock %}

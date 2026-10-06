@@ -13,7 +13,14 @@
   <h2>Usuario creado: {{ creado.email }}</h2>
   <p>Esta contraseña temporal <strong>solo se muestra ahora</strong>. Pásasela para que la cambie al entrar:</p>
   <p class="clave"><code id="clave-temporal">{{ creado.contrasena }}</code> <button type="button" class="boton" data-copiar="clave-temporal">Copiar</button></p>
-  <a class="boton" href="{{ url_for('rutas.usuario', usuario_id=creado.id) }}">Abrir ficha</a>
+  {% if creado.pasos %}
+  <h3>Altas en herramientas conectadas</h3>
+  <div class="tabla-caja"><table class="tabla"><thead><tr><th>Servicio</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>
+    {% for p in creado.pasos %}<tr><td>{{ p.servicio }}</td><td><span class="insignia {{ 'insignia-ok' if p.estado == 'creado' else ('insignia-riesgo' if p.estado == 'error' else '') }}">{{ p.estado|upper }}</span></td>
+      <td>{% if p.datos %}{% for k, v in p.datos.items() %}<span class="muted">{{ k }}:</span> <code>{{ v }}</code> {% endfor %}{% else %}<span class="muted">{{ p.detalle }}</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endif %}
+  <p><a class="boton" href="{{ url_for('rutas.usuario', usuario_id=creado.id) }}">Abrir ficha</a></p>
 </section>
 {% endif %}
 

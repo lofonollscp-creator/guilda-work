@@ -106,7 +106,7 @@ def crear_tenant():
     return render_template("tenant_creado.html", t=plataforma.obtener_tenant(tenant_id), pasos=pasos)
 
 
-SECCIONES_TENANT = ("resumen", "usuarios", "modulos", "suscripcion", "actividad")
+SECCIONES_TENANT = ("resumen", "usuarios", "modulos", "suscripcion", "integraciones", "actividad", "avanzado")
 
 
 @bp.route("/tenants/<int:tenant_id>")
@@ -408,14 +408,16 @@ def crear_usuario():
     except ValueError as e:
         flash(str(e), "error")
         return redirect(request.referrer and _destino_seguro(urlparse(request.referrer).path) or url_for("rutas.usuarios"))
-    auth.auditar("usuario.crear", f"usuario {usuario_id}: {request.form.get('email', '').strip().lower()}")
+    email_nuevo = request.form.get("email", "").strip().lower()
+    pasos = aprovisionamiento.aprovisionar_usuario(email_nuevo, tenant_id, temporal)
+    auth.auditar("usuario.crear", f"usuario {usuario_id}: {email_nuevo}")
     # La contraseña temporal se muestra UNA vez en esta respuesta (no se guarda ni viaja por URL).
     filas, pag = datos.listar_usuarios(por_pagina=25)
     tenants_todos, _ = datos.listar_tenants(por_pagina=100)
     return render_template(
         "usuarios.html", usuarios=filas, pag=pag, q="", tenant_f="", rol="", orden="creado", vista="lista",
         tenants=tenants_todos, por_pagina_opciones=datos.POR_PAGINA_OPCIONES,
-        creado={"id": usuario_id, "email": request.form.get("email", "").strip().lower(), "contrasena": temporal},
+        creado={"id": usuario_id, "email": email_nuevo, "contrasena": temporal, "pasos": pasos},
     )
 
 
@@ -478,4 +480,4 @@ def revocar_dispositivo(usuario_id: int, token_id: int):
 @bp.route("/actividad")
 @auth.login_required
 def actividad():
-    return render_template("actividad.html", registros=auth.listar_auditoria(300))
+    return render_template("actividad.html", registros=auth.listar_auditoria(300), antiguo=plataforma.listar_auditoria_backoffice(limite=100))

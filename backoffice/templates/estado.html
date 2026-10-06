@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Estado del sistema{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Estado del sistema</h1><p class="muted">Monitores de Uptime Kuma.</p></header>
+{% if error %}<p class="aviso aviso-error">{{ error }}</p>{% endif %}
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Monitor</th><th>Estado</th><th>Tiempo de respuesta</th></tr></thead>
+  <tbody>
+    {% for m in monitores %}
+    <tr><td><span class="punto punto-{{ {'activo': 'verde', 'caido': 'rojo'}.get(m.estado, 'ambar') }}"></span> {{ m.nombre }}</td><td>{{ (m.estado or 'desconocido')|upper }}</td>
+      <td class="mono">{% if m.tiempo_respuesta_ms is defined and m.tiempo_respuesta_ms is not none %}{{ m.tiempo_respuesta_ms|round|int }} ms{% else %}—{% endif %}</td></tr>
+    {% else %}<tr><td colspan="3" class="vacio">Sin monitores que mostrar. ¿Está configurada UPTIME_KUMA_API_KEY?</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Leads{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Leads</h1><p class="muted">Solicitudes de contacto llegadas desde la landing.</p></header>
+<div class="herramientas">
+  <a class="boton {{ 'activo' if estado == 'pendientes' }}" href="{{ url_for('rutas.leads', estado='pendientes') }}">Pendientes</a>
+  <a class="boton {{ 'activo' if estado == 'todos' }}" href="{{ url_for('rutas.leads', estado='todos') }}">Todos</a>
+</div>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Nombre</th><th>Empresa</th><th>Email</th><th>Teléfono</th><th>Mensaje</th><th>Recibido</th><th></th></tr></thead>
+  <tbody>
+    {% for l in leads %}
+    <tr><td>{{ l.nombre }}</td><td>{{ l.empresa or '—' }}</td><td><a href="mailto:{{ l.email }}">{{ l.email }}</a></td><td>{{ l.telefono or '—' }}</td>
+      <td class="celda-larga">{{ l.mensaje or '—' }}</td><td>{{ l.creado_en|fecha }}</td>
+      <td class="acciones"><form method="post" action="{{ url_for('rutas.lead_atendido', lead_id=l.id) }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="atendido" value="{{ '0' if l.atendido else '1' }}"><input type="hidden" name="estado" value="{{ estado }}">
+        <button type="submit" class="boton">{{ 'Marcar pendiente' if l.atendido else 'Marcar atendido' }}</button></form></td></tr>
+    {% else %}<tr><td colspan="7" class="vacio">No hay leads {{ 'pendientes' if estado == 'pendientes' else '' }}.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}

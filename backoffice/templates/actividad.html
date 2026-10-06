@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icono %}
-{% block titulo %}Actividad{% endblock %}
+{% block titulo %}Actividad{% if antiguo %}
+<header class="cabecera"><h2>Panel antiguo (solo lectura)</h2><p class="muted">Acciones registradas por el panel de administración anterior de la app.</p></header>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
+  <tbody>{% for r in antiguo %}<tr><td>{{ r.creado_en|fecha }}</td><td>{{ r.usuario_email or '—' }}</td><td><code>{{ r.accion }}</code></td><td>{{ r.detalle or '' }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+{% endblock %}
 {% block contenido %}
 <header class="cabecera"><h1>Actividad</h1><p class="muted">Registro de lo que se hace desde este backoffice (quién, qué y desde dónde).</p></header>
 <div class="tabla-caja">

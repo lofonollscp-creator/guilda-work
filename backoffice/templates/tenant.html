@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icono, insignia_rol %}
 {% block titulo %}{{ t.nombre }}{% endblock %}
-{% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'actividad': ('Actividad', 'activity')} %}
+{% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'integraciones': ('Integraciones', 'zap'), 'actividad': ('Actividad', 'activity'), 'avanzado': ('Avanzado', 'shield-check')} %}
 {% block contenido %}
 <header class="cabecera cabecera-fila">
   <div>
@@ -149,6 +149,42 @@
       <button type="submit" class="boton" {% if not stripe_configurado %}disabled{% endif %}>{{ 'Reintentar onboarding' if t.stripe_account_id else 'Conectar Stripe' }}</button>
     </form>
     {% endif %}
+
+    {% elif seccion == 'integraciones' %}
+    <h2>Integraciones</h2>
+    <p class="muted">Estado de las herramientas aprovisionadas para este tenant. Los valores (contraseñas y claves) no se muestran.</p>
+    <ul class="lista-datos">
+      {% for nombre, activo in (
+          ('FacturaScripts (instancia)', t.facturascripts_url), ('Paperless-ngx', t.paperless_user_id), ('Baserow', t.baserow_workspace_id),
+          ('Cal.diy (cuenta de servicio)', t.calcom_email), ('Listmonk', t.listmonk_list_id), ('Correo (Stalwart)', t.stalwart_domain_name),
+          ('ntfy', t.ntfy_topic), ('Umami', t.umami_team_id)) %}
+      <li><span>{{ nombre }}</span><span class="insignia {{ 'insignia-ok' if activo else '' }}">{{ 'APROVISIONADO' if activo else 'NO' }}</span></li>
+      {% endfor %}
+    </ul>
+    <h3>Claves de API (paso manual)</h3>
+    <p class="muted">No se pueden generar por API: se crean dentro de cada servicio y se pegan aquí.</p>
+    {% for clave, etiqueta, puesta in (('facturascripts', 'FacturaScripts · Ajustes → API', t.facturascripts_api_key), ('documenso', 'Documenso · token del equipo', t.documenso_api_key), ('calcom', 'Cal.diy · Configuración → Developer → API Keys', t.calcom_api_key)) %}
+    <form method="post" action="{{ url_for('rutas.guardar_clave_api', tenant_id=t.id, servicio=clave) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>{{ etiqueta }} {% if puesta %}<span class="insignia insignia-ok">GUARDADA</span>{% endif %}<input type="password" name="api_key" maxlength="500" autocomplete="off" placeholder="{{ 'Pega una nueva para sustituirla' if puesta else 'Pega la clave' }}" required></label>
+      <button type="submit" class="boton">Guardar</button>
+    </form>
+    {% endfor %}
+
+    {% elif seccion == 'avanzado' %}
+    <h2>Avanzado</h2>
+    <h3>Exportar datos (derecho de acceso RGPD)</h3>
+    <p class="muted">Clientes, vencimientos, tareas, notas, tiquets y metadatos de correo y documentos de este tenant, en un JSON. Queda registrado en la actividad.</p>
+    <form method="post" action="{{ url_for('rutas.exportar_tenant', tenant_id=t.id) }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">{{ icono('download') }} Exportar datos</button></form>
+    <div class="tarjeta zona-peligro">
+      <h3>Borrar tenant</h3>
+      <p>Acción <strong>irreversible</strong>: retira sus instancias en las herramientas conectadas y elimina el tenant. Para confirmar, escribe su nombre exacto: <code>{{ t.nombre }}</code></p>
+      <form method="post" action="{{ url_for('rutas.borrar_tenant', tenant_id=t.id) }}" class="formulario fila-form">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <label>Nombre del tenant<input type="text" name="confirmacion" autocomplete="off" required></label>
+        <button type="submit" class="boton boton-peligro" data-confirmar="¿Seguro? Se borrará «{{ t.nombre }}» y sus instancias en las herramientas. No se puede deshacer.">Borrar definitivamente</button>
+      </form>
+    </div>
 
     {% else %}
     <h2>Actividad del equipo</h2>

@@ -22,9 +22,19 @@
       {{ enlace(url_for('rutas.dashboard'), 'Dashboard', 'layout-grid', endpoint == 'rutas.dashboard') }}
       {{ enlace(url_for('rutas.tenants'), 'Tenants', 'layers', endpoint in ('rutas.tenants', 'rutas.tenant')) }}
       {{ enlace(url_for('rutas.usuarios'), 'Usuarios', 'users', endpoint in ('rutas.usuarios', 'rutas.usuario')) }}
+      {{ enlace(url_for('rutas.catalogo'), 'Herramientas', 'puzzle', endpoint == 'rutas.catalogo') }}
+      <p class="nav-grupo">Comercial</p>
+      {{ enlace(url_for('rutas.leads'), 'Leads', 'mail', endpoint == 'rutas.leads') }}
+      {{ enlace(url_for('rutas.solicitudes'), 'Solicitudes del portal', 'message-circle', endpoint == 'rutas.solicitudes') }}
       <p class="nav-grupo">Facturación</p>
       {{ enlace(url_for('rutas.planes'), 'Planes y extras', 'credit-card', endpoint == 'rutas.planes') }}
+      {{ enlace(url_for('rutas.ingresos'), 'Ingresos', 'bar-chart-3', endpoint == 'rutas.ingresos') }}
       <p class="nav-grupo">Sistema</p>
+      {{ enlace(url_for('rutas.salud_vista'), 'Salud', 'circle-check-big', endpoint == 'rutas.salud_vista') }}
+      {{ enlace(url_for('rutas.estado'), 'Estado del sistema', 'activity', endpoint == 'rutas.estado') }}
+      {{ enlace(url_for('rutas.diagnostico_vista'), 'Diagnóstico', 'shield-check', endpoint == 'rutas.diagnostico_vista') }}
+      {{ enlace(url_for('rutas.copias'), 'Copias de seguridad', 'download', endpoint == 'rutas.copias') }}
+      {{ enlace(url_for('rutas.webhooks'), 'Webhooks', 'zap', endpoint == 'rutas.webhooks') }}
       {{ enlace(url_for('rutas.actividad'), 'Actividad', 'history', endpoint == 'rutas.actividad') }}
     </nav>
     <div class="lateral-pie">

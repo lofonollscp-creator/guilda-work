@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Diagnóstico{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Diagnóstico</h1><p class="muted">Qué integraciones tienen sus variables de entorno configuradas a nivel de plataforma (no confundir con las claves por tenant).</p></header>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Integración</th><th>Estado</th></tr></thead>
+  <tbody>{% for i in integraciones %}<tr><td>{{ i.nombre }}</td><td><span class="insignia {{ 'insignia-ok' if i.configurado else '' }}">{{ 'CONFIGURADA' if i.configurado else 'SIN CONFIGURAR' }}</span></td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

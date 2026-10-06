@@ -58,6 +58,8 @@ def create_app(testing: bool = False) -> Flask:
 
     from .rutas import bp
 
+    from . import rutas_sistema  # noqa: F401 -- registra el resto de rutas en el mismo blueprint
+
     app.register_blueprint(bp)
 
     @app.before_request

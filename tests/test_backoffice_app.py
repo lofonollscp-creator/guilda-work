@@ -17,6 +17,8 @@ def bo(tmp_path, monkeypatch):
     monkeypatch.setattr(auth, "DB_PATH", tmp_path / "backoffice.db")
     monkeypatch.setattr(auth, "SECRET_PATH", tmp_path / "bo_secret.key")
     auth.crear_admin("jorge", CLAVE, "Jorge")
+    from backoffice import aprovisionamiento
+    monkeypatch.setattr(aprovisionamiento, "aprovisionar_usuario", lambda *a, **k: [])
     return create_app(testing=True).test_client()
 
 

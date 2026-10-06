@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Herramientas{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Herramientas</h1><p class="muted">Catálogo de herramientas conectadas y en cuántos tenants están visibles.</p></header>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Herramienta</th><th>Descripción</th><th>Tenants con acceso</th></tr></thead>
+  <tbody>
+    {% for h in catalogo %}
+    <tr><td><strong>{{ h.nombre }}</strong></td><td class="muted">{{ h.descripcion }}</td><td>{{ adopcion[h.id] }} / {{ total }}</td></tr>
+    {% endfor %}
+  </tbody></table></div>
+<p class="muted">Para mostrar u ocultar una herramienta a un tenant, usa la sección Módulos de su ficha.</p>
+{% endblock %}

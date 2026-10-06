@@ -136,3 +136,15 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .oculto-visual { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .lista-datos li form { margin: 0; }
 @media (max-width: 1100px) { .fila-catalogo, .fila-catalogo.nueva { grid-template-columns: 1fr 1fr; } }
+
+/* ---- Sistema y comercial ---- */
+.celda-larga { max-width: 360px; overflow-wrap: anywhere; }
+.compacta { grid-template-columns: minmax(0, 1fr) auto; margin-bottom: 6px; max-width: 520px; }
+.boton.activo { background: var(--acento-suave); border-color: var(--acento); }
+.lista-salud { list-style: none; margin: 0; padding: 0; } .lista-salud li { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--borde); } .lista-salud li:first-child { border-top: 0; }
+.punto { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--apagado); flex: 0 0 12px; margin-top: 5px; }
+.punto-verde { background: var(--ok); } .punto-ambar { background: var(--aviso); } .punto-rojo { background: var(--riesgo); }
+.webhook { padding: 12px 0; border-top: 1px solid var(--borde); } .webhook:first-of-type { border-top: 0; } .webhook-cab { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.eventos { border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin: 0 0 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; } .eventos legend { padding: 0 6px; }
+.casilla { display: flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 400; margin: 0; } .casilla input { min-height: 0; }
+.zona-peligro { border-color: color-mix(in srgb, var(--riesgo) 55%, var(--borde)); }

@@ -6,7 +6,7 @@ del resultado de cada uno. Las credenciales de administración que generan
 algunos servicios se devuelven para mostrarlas UNA sola vez."""
 from __future__ import annotations
 
-from app import baserow, calcom, espocrm, facturascripts, listmonk, nextcloud, ntfy, paperless, stalwart, umami
+from app import baserow, calcom, chatwoot, espocrm, facturascripts, listmonk, metabase, nextcloud, ntfy, openproject, paperless, stalwart, umami
 from app import db as plataforma
 
 CREADO, OMITIDO, ERROR = "creado", "no configurado", "error"
@@ -112,3 +112,58 @@ def aprovisionar(tenant_id: int, nombre: str, dominio_correo: str | None = None)
 
 def nextcloud_configurado() -> bool:
     return bool(getattr(nextcloud, "NEXTCLOUD_ADMIN_USER", None) and getattr(nextcloud, "NEXTCLOUD_ADMIN_PASSWORD", None))
+
+
+def aprovisionar_usuario(email: str, tenant_id: int | None, contrasena_temporal: str) -> list[dict]:
+    """Altas de una persona en las herramientas conectadas (la misma
+    contraseña temporal para las que no tienen SSO). Cada paso es independiente."""
+    pasos = []
+
+    def _con_clave(servicio, funcion, errores):
+        paso = _ejecutar(servicio, lambda: (funcion(), {"Contraseña": contrasena_temporal})[1], errores)
+        return paso
+
+    pasos.append(_con_clave("OpenProject", lambda: openproject.crear_usuario(email, contrasena_temporal), (openproject.ErrorOpenProject,)))
+    pasos.append(_con_clave("Chatwoot", lambda: chatwoot.crear_usuario(email, contrasena_temporal, email.split("@")[0]), (chatwoot.ErrorChatwoot,)))
+
+    def _metabase():
+        r = metabase.crear_usuario(email)
+        return {"Acceso": "sin contraseña propia: usa «¿Olvidaste tu contraseña?» en su login"} if r is not None else None
+
+    pasos.append(_ejecutar("Metabase", _metabase, (metabase.ErrorMetabase,)))
+    tenant = plataforma.obtener_tenant(tenant_id) if tenant_id else None
+    if tenant is not None:
+        if tenant["baserow_workspace_id"]:
+            pasos.append(_ejecutar("Baserow", lambda: (baserow.invitar_usuario(tenant["baserow_workspace_id"], email),
+                                                       {"Acceso": "invitación enviada por email: hay que aceptarla desde ahí"})[1], (baserow.ErrorBaserow,)))
+        if tenant["listmonk_list_role_id"]:
+            pasos.append(_ejecutar("Listmonk", lambda: (listmonk.crear_usuario_tenant(email, tenant["listmonk_list_role_id"]),
+                                                        {"Acceso": "entra con su sesión de Guilda Work (SSO)"})[1], (listmonk.ErrorListmonk,)))
+        if tenant["umami_team_id"]:
+            pasos.append(_con_clave("Umami", lambda: umami.crear_usuario_tenant(email, tenant["umami_team_id"], contrasena_temporal), (umami.ErrorUmami,)))
+    return pasos
+
+
+def desaprovisionar_tenant(tenant) -> list[dict]:
+    """Retira las instancias/espacios de un tenant en las herramientas conectadas
+    antes de borrarlo. Un fallo no impide el borrado; se informa de cada paso."""
+    pasos = []
+
+    def paso(servicio, funcion, errores):
+        def ejecutar():
+            funcion()
+            return {}
+        pasos.append(_ejecutar(servicio, ejecutar, errores))
+
+    tid = tenant["id"]
+    paso("FacturaScripts", lambda: facturascripts.desaprovisionar_tenant(tid), (facturascripts.ErrorFacturaScripts,))
+    paso("Paperless-ngx", lambda: paperless.desaprovisionar_tenant(tenant["paperless_user_id"], tenant["paperless_group_id"]), (paperless.ErrorPaperless,))
+    paso("Baserow", lambda: baserow.desaprovisionar_tenant(tenant["baserow_workspace_id"]), (baserow.ErrorBaserow,))
+    paso("Listmonk", lambda: listmonk.desaprovisionar_tenant(tenant["listmonk_list_id"], tenant["listmonk_list_role_id"]), (listmonk.ErrorListmonk,))
+    paso("ntfy", lambda: ntfy.desaprovisionar_tenant(tid), (ntfy.ErrorNtfy,))
+    paso("Umami", lambda: umami.desaprovisionar_tenant(tenant["umami_team_id"]), (umami.ErrorUmami,))
+    paso("Correo (Stalwart)", lambda: stalwart.desaprovisionar_tenant(
+        tenant["stalwart_tenant_id"], tenant["stalwart_domain_id"], tenant["stalwart_account_id"]), (stalwart.ErrorStalwart,))
+    paso("EspoCRM", lambda: espocrm.desaprovisionar_tenant(tenant["nombre"]), (espocrm.ErrorEspoCRM,))
+    paso("Nextcloud", lambda: nextcloud.desaprovisionar_tenant(tenant["nombre"]), (nextcloud.ErrorNextcloud,))
+    return pasos

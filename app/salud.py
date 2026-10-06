@@ -50,7 +50,7 @@ def _(mensaje: str, **valores) -> str:
     aplicación (hilo del vigilante, tests) devuelve el texto en español."""
     try:
         return _gettext(mensaje, **valores)
-    except RuntimeError:
+    except (RuntimeError, KeyError, AttributeError):  # sin app/Babel (hilo del vigilante, backoffice independiente, tests)
         return mensaje % valores if valores else mensaje
 
 

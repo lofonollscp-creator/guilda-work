@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Solicitudes del portal{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Solicitudes del portal</h1><p class="muted">Peticiones de acceso al portal de cliente: vincúlalas a un cliente existente o crea uno nuevo.</p></header>
+<div class="herramientas">
+  <a class="boton {{ 'activo' if estado == 'pendientes' }}" href="{{ url_for('rutas.solicitudes', estado='pendientes') }}">Pendientes</a>
+  <a class="boton {{ 'activo' if estado == 'todas' }}" href="{{ url_for('rutas.solicitudes', estado='todas') }}">Todas</a>
+</div>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Nombre</th><th>Email</th><th>NIF</th><th>Mensaje</th><th>Recibida</th><th>Acción</th></tr></thead>
+  <tbody>
+    {% for s in solicitudes %}
+    <tr><td>{{ s.nombre }}</td><td><a href="mailto:{{ s.email }}">{{ s.email }}</a></td><td>{{ s.nif or '—' }}</td><td class="celda-larga">{{ s.mensaje or '—' }}</td><td>{{ s.creado_en|fecha }}</td>
+      <td>{% if s.atendida %}<span class="insignia insignia-ok">ATENDIDA</span>{% else %}
+        <form method="post" action="{{ url_for('rutas.vincular_solicitud', solicitud_id=s.id) }}" class="fila-form compacta"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <select name="cliente_fiscal_id" aria-label="Cliente existente"><option value="">Vincular a cliente existente…</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.tenant_nombre }} — {{ c.nombre }}</option>{% endfor %}</select>
+          <button type="submit" class="boton">Vincular</button></form>
+        <form method="post" action="{{ url_for('rutas.crear_cliente_solicitud', solicitud_id=s.id) }}" class="fila-form compacta"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <select name="tenant_id" aria-label="Tenant"><option value="">Crear cliente nuevo en…</option>{% for t in tenants %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select>
+          <button type="submit" class="boton">Crear</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="6" class="vacio">No hay solicitudes.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}
