@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Planes y extras{% endblock %}
+{% block contenido %}
+<header class="cabecera">
+  <h1>Planes y extras</h1>
+  <p class="muted">Catálogo con el que Guilda Work cobra a sus tenants. Sincronízalo con Stripe para poder activar suscripciones y cobros.</p>
+  {% if not stripe_configurado %}<p class="aviso aviso-error">Stripe no está configurado en el servidor (falta STRIPE_SECRET_KEY): puedes editar el catálogo, pero no sincronizarlo.</p>{% endif %}
+</header>
+
+<section class="tarjeta">
+  <h2>{{ icono('layers') }} Planes</h2>
+  <div class="tabla-caja">
+    <table class="tabla">
+      <tbody>
+        {% for p in planes %}
+        <tr>
+          <td colspan="6">
+            <form method="post" action="{{ url_for('rutas.editar_plan', plan_id=p.id) }}" class="fila-catalogo">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+              <input type="text" name="nombre" value="{{ p.nombre }}" maxlength="80" required aria-label="Nombre">
+              <input type="text" name="descripcion" value="{{ p.descripcion or '' }}" maxlength="200" aria-label="Descripción">
+              <input type="text" name="precio" value="{{ '%.2f'|format(p.precio_mensual_centimos / 100) if p.precio_mensual_centimos is not none else '' }}" inputmode="decimal" size="8" aria-label="Precio mensual">
+              <input type="number" name="max_usuarios" value="{{ p.max_usuarios or '' }}" min="1" max="100000" aria-label="Máximo de usuarios">
+              <span>{% if p.stripe_price_id %}<span class="insignia insignia-ok">SINCRONIZADO</span>{% else %}<span class="insignia">SIN SINCRONIZAR</span>{% endif %}</span>
+              <span class="acciones"><button type="submit" class="boton">Guardar</button>
+                <button type="submit" class="boton" formaction="{{ url_for('rutas.sincronizar_plan', plan_id=p.id) }}" {% if not stripe_configurado %}disabled{% endif %}>Sincronizar</button></span>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="6" class="vacio">Todavía no hay planes.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="{{ url_for('rutas.crear_plan') }}" class="fila-catalogo nueva">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="text" name="nombre" placeholder="Nombre del plan" maxlength="80" required>
+    <input type="text" name="descripcion" placeholder="Descripción" maxlength="200">
+    <input type="text" name="precio" placeholder="Precio/mes (€)" inputmode="decimal" size="8">
+    <input type="number" name="max_usuarios" placeholder="Máx. usuarios" min="1" max="100000">
+    <button type="submit" class="boton boton-primario">Crear plan</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>{{ icono('puzzle') }} Extras</h2>
+  <div class="tabla-caja">
+    <table class="tabla">
+      <tbody>
+        {% for e in extras %}
+        <tr>
+          <td colspan="5">
+            <form method="post" action="{{ url_for('rutas.editar_extra', extra_id=e.id) }}" class="fila-catalogo">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+              <input type="text" name="nombre" value="{{ e.nombre }}" maxlength="80" required aria-label="Nombre">
+              <input type="text" name="descripcion" value="{{ e.descripcion or '' }}" maxlength="200" aria-label="Descripción">
+              <input type="text" name="precio" value="{{ '%.2f'|format(e.precio_centimos / 100) if e.precio_centimos is not none else '' }}" inputmode="decimal" size="8" aria-label="Precio">
+              <span>{% if e.stripe_price_id %}<span class="insignia insignia-ok">SINCRONIZADO</span>{% else %}<span class="insignia">SIN SINCRONIZAR</span>{% endif %}</span>
+              <span class="acciones"><button type="submit" class="boton">Guardar</button>
+                <button type="submit" class="boton" formaction="{{ url_for('rutas.sincronizar_extra', extra_id=e.id) }}" {% if not stripe_configurado %}disabled{% endif %}>Sincronizar</button></span>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="5" class="vacio">Todavía no hay extras.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="{{ url_for('rutas.crear_extra') }}" class="fila-catalogo nueva">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="text" name="nombre" placeholder="Nombre del extra" maxlength="80" required>
+    <input type="text" name="descripcion" placeholder="Descripción" maxlength="200">
+    <input type="text" name="precio" placeholder="Precio (€)" inputmode="decimal" size="8">
+    <button type="submit" class="boton boton-primario">Crear extra</button>
+  </form>
+</section>
+{% endblock %}

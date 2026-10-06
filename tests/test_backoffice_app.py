@@ -172,10 +172,12 @@ def test_busqueda_trata_comodines_como_texto(bo):
     assert "Cien%Seguro" in html and "Ciento Uno" not in html
 
 
-def test_crear_renombrar_suspender_y_modulos_de_un_tenant(bo):
+def test_crear_renombrar_suspender_y_modulos_de_un_tenant(bo, monkeypatch):
+    from backoffice import aprovisionamiento
+    monkeypatch.setattr(aprovisionamiento, "aprovisionar", lambda *a, **k: [])
     entrar(bo)
     r = post(bo, "/tenants", nombre="Nueva Gestoría")
-    assert r.status_code == 302
+    assert r.status_code == 200 and "Tenant creado: Nueva Gestoría" in r.get_data(as_text=True)
     tid = db.listar_tenants()[0]["id"]
     assert post(bo, "/tenants", nombre="Nueva Gestoría").status_code == 302  # duplicado: aviso, sin crash
     assert "Ya existe un tenant" in bo.get("/tenants").get_data(as_text=True)

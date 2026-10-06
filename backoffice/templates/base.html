@@ -22,6 +22,8 @@
       {{ enlace(url_for('rutas.dashboard'), 'Dashboard', 'layout-grid', endpoint == 'rutas.dashboard') }}
       {{ enlace(url_for('rutas.tenants'), 'Tenants', 'layers', endpoint in ('rutas.tenants', 'rutas.tenant')) }}
       {{ enlace(url_for('rutas.usuarios'), 'Usuarios', 'users', endpoint in ('rutas.usuarios', 'rutas.usuario')) }}
+      <p class="nav-grupo">Facturación</p>
+      {{ enlace(url_for('rutas.planes'), 'Planes y extras', 'credit-card', endpoint == 'rutas.planes') }}
       <p class="nav-grupo">Sistema</p>
       {{ enlace(url_for('rutas.actividad'), 'Actividad', 'history', endpoint == 'rutas.actividad') }}
     </nav>

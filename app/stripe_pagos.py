@@ -283,6 +283,37 @@ def anadir_extra_a_suscripcion(stripe_customer_id: str, stripe_subscription_id: 
     })
 
 
+def crear_sesion_cobro(
+    stripe_customer_id: str, importe_centimos: int, concepto: str, url_exito: str, url_cancelar: str,
+    moneda: str = "eur", metadata: dict | None = None,
+) -> dict:
+    """Cobro puntual a un cliente de la PLATAFORMA (un tenant): Checkout
+    Session en modo pago contra el cliente de Stripe del tenant. Devuelve
+    {"id", "url"}; la URL se puede compartir con quien tenga que pagar."""
+    if importe_centimos <= 0:
+        raise ErrorStripe("El importe debe ser mayor que cero.")
+    cuerpo = {
+        "mode": "payment",
+        "customer": stripe_customer_id,
+        "line_items": [{
+            "price_data": {"currency": moneda, "unit_amount": importe_centimos, "product_data": {"name": concepto}},
+            "quantity": 1,
+        }],
+        "success_url": url_exito,
+        "cancel_url": url_cancelar,
+    }
+    if metadata:
+        cuerpo["metadata"] = metadata
+    sesion = _peticion("/checkout/sessions", metodo="POST", cuerpo=cuerpo)
+    return {"id": sesion["id"], "url": sesion["url"]}
+
+
+def estado_sesion(session_id: str) -> dict:
+    """Estado de una Checkout Session: {"estado": open|complete|expired, "pago": paid|unpaid|...}."""
+    sesion = _peticion(f"/checkout/sessions/{session_id}")
+    return {"estado": sesion.get("status"), "pago": sesion.get("payment_status")}
+
+
 def listar_facturas_cliente(stripe_customer_id: str, limite: int = 10) -> list[dict]:
     parametros = urllib.parse.urlencode({"customer": stripe_customer_id, "limit": limite})
     resultado = _peticion(f"/invoices?{parametros}")

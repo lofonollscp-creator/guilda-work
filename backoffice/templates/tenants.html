@@ -74,6 +74,9 @@
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <h2>Crear nuevo tenant</h2>
     <label>Nombre de la organización<input type="text" name="nombre" maxlength="120" required></label>
+    <label>Plan<select name="plan_id"><option value="">Sin plan por ahora</option>{% for p in planes %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select></label>
+    <label>Dominio de correo (opcional)<input type="text" name="dominio_correo" placeholder="cliente.com" maxlength="120"></label>
+    <p class="muted">Al crearlo se aprovisionan sus herramientas conectadas (CRM, Drive, facturación, correo…). Verás el resultado de cada una.</p>
     <div class="dialogo-pie"><button type="button" class="boton" data-cerrar>Cancelar</button><button type="submit" class="boton boton-primario">Crear tenant</button></div>
   </form>
 </dialog>

@@ -7,7 +7,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from app import db as plataforma
 
-from . import auth, datos
+from . import aprovisionamiento, auth, datos, facturacion
 
 bp = Blueprint("rutas", __name__)
 
@@ -85,14 +85,25 @@ def tenants():
 @bp.route("/tenants", methods=["POST"])
 @auth.login_required
 def crear_tenant():
+    """Alta de tenant con aprovisionamiento de sus herramientas. Las
+    credenciales que generen algunos servicios se muestran UNA vez en la
+    propia respuesta (no se guardan en esta página ni viajan por URL)."""
+    nombre = request.form.get("nombre", "")
     try:
-        tenant_id = datos.crear_tenant(request.form.get("nombre", ""))
+        tenant_id = datos.crear_tenant(nombre)
     except ValueError as e:
         flash(str(e), "error")
         return redirect(url_for("rutas.tenants"))
-    auth.auditar("tenant.crear", f"tenant {tenant_id}: {request.form.get('nombre', '').strip()}")
-    flash("Tenant creado.", "ok")
-    return redirect(url_for("rutas.tenant", tenant_id=tenant_id))
+    plan_id = request.form.get("plan_id", type=int)
+    if plan_id:
+        try:
+            facturacion.asignar_plan(tenant_id, plan_id)
+        except ValueError:
+            plan_id = None
+    dominio = request.form.get("dominio_correo", "").strip().lower()
+    pasos = aprovisionamiento.aprovisionar(tenant_id, nombre.strip(), dominio or None)
+    auth.auditar("tenant.crear", f"tenant {tenant_id}: {nombre.strip()} (plan {plan_id or 'ninguno'}, dominio {dominio or '-'})")
+    return render_template("tenant_creado.html", t=plataforma.obtener_tenant(tenant_id), pasos=pasos)
 
 
 SECCIONES_TENANT = ("resumen", "usuarios", "modulos", "suscripcion", "actividad")
@@ -108,9 +119,18 @@ def tenant(tenant_id: int):
     if seccion not in SECCIONES_TENANT:
         seccion = "resumen"
     usuarios, _ = datos.listar_usuarios(tenant=str(tenant_id), por_pagina=100) if seccion == "usuarios" else ([], None)
+    extra = {}
+    if seccion == "suscripcion":
+        facturas, error_facturas = facturacion.facturas(tenant_id) if facturacion.configurado() else ([], None)
+        extra = {
+            "planes_todos": [dict(p) for p in plataforma.listar_planes_guilda(solo_activos=True)],
+            "extras_catalogo": [dict(e) for e in plataforma.listar_extras_guilda()],
+            "stripe_configurado": facturacion.configurado(), "email_contacto": facturacion.email_de_contacto(tenant_id),
+            "facturas": facturas, "error_facturas": error_facturas, "cobros": facturacion.listar_cobros(tenant_id),
+        }
     return render_template(
         "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, secciones=SECCIONES_TENANT,
-        usuarios=usuarios, planes=datos.planes(),
+        usuarios=usuarios, planes=datos.planes(), **extra,
     )
 
 
@@ -171,6 +191,196 @@ def alternar_geolocalizacion(tenant_id: int):
     auth.auditar("tenant.geolocalizacion", f"tenant {tenant_id}: {'on' if nuevo else 'off'}")
     flash("Geolocalización del fichaje " + ("activada." if nuevo else "desactivada."), "ok")
     return _volver_a_tenant(tenant_id)
+
+
+# --- Facturación (Stripe) ----------------------------------------------------
+
+def _volver_suscripcion(tenant_id: int):
+    return redirect(url_for("rutas.tenant", tenant_id=tenant_id, seccion="suscripcion"))
+
+
+def _a_stripe(url: str):
+    """Redirección (303) a una página alojada por Stripe."""
+    return redirect(url, code=303)
+
+
+@bp.route("/tenants/<int:tenant_id>/plan", methods=["POST"])
+@auth.login_required
+def asignar_plan(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        nombre = facturacion.asignar_plan(tenant_id, request.form.get("plan_id", type=int))
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("tenant.plan", f"tenant {tenant_id}: {nombre or 'sin plan'}")
+        flash(f"Plan asignado: {nombre}." if nombre else "Plan retirado.", "ok")
+    return _volver_suscripcion(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/suscripcion/activar", methods=["POST"])
+@auth.login_required
+def activar_suscripcion(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        url = facturacion.url_activar_suscripcion(
+            tenant_id, request.form.get("email", ""), url_for("rutas.tenant", tenant_id=tenant_id, seccion="suscripcion", _external=True),
+        )
+    except ValueError as e:
+        flash(str(e), "error")
+        return _volver_suscripcion(tenant_id)
+    auth.auditar("tenant.suscripcion", f"tenant {tenant_id}: checkout creado")
+    return _a_stripe(url)
+
+
+@bp.route("/tenants/<int:tenant_id>/extras", methods=["POST"])
+@auth.login_required
+def anadir_extra(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        aviso = facturacion.anadir_extra(
+            tenant_id, request.form.get("extra_id", type=int) or 0, request.form.get("cantidad", type=int) or 1,
+            request.form.get("activo_hasta", "").strip() or None,
+        )
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("tenant.extra", f"tenant {tenant_id}: extra {request.form.get('extra_id')}")
+        flash(aviso, "ok")
+    return _volver_suscripcion(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/extras/<int:extra_activo_id>/quitar", methods=["POST"])
+@auth.login_required
+def quitar_extra(tenant_id: int, extra_activo_id: int):
+    _tenant_o_404(tenant_id)
+    plataforma.desactivar_extra_tenant(extra_activo_id)
+    auth.auditar("tenant.extra", f"tenant {tenant_id}: extra activo {extra_activo_id} quitado")
+    flash("Extra quitado (si ya estaba facturado en Stripe, se retira desde su dashboard).", "ok")
+    return _volver_suscripcion(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/stripe/conectar", methods=["POST"])
+@auth.login_required
+def conectar_stripe(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        url = facturacion.url_conectar_stripe(
+            tenant_id, request.form.get("email", ""), url_for("rutas.retorno_stripe", tenant_id=tenant_id, _external=True),
+        )
+    except ValueError as e:
+        flash(str(e), "error")
+        return _volver_suscripcion(tenant_id)
+    auth.auditar("tenant.stripe_connect", f"tenant {tenant_id}: onboarding iniciado")
+    return _a_stripe(url)
+
+
+@bp.route("/tenants/<int:tenant_id>/stripe/retorno")
+@auth.login_required
+def retorno_stripe(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        lista = facturacion.confirmar_connect(tenant_id)
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        flash("Cuenta de Stripe Connect conectada y lista para cobrar." if lista else
+              "La cuenta de Stripe todavía no ha terminado el onboarding: vuelve a intentarlo cuando lo completes.", "ok" if lista else "error")
+    return _volver_suscripcion(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/cobros", methods=["POST"])
+@auth.login_required
+def crear_cobro(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        cobro = facturacion.crear_cobro(
+            tenant_id, request.form.get("concepto", ""), request.form.get("importe", ""), request.form.get("email", ""),
+            url_for("rutas.tenant", tenant_id=tenant_id, seccion="suscripcion", _external=True),
+        )
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("tenant.cobro", f"tenant {tenant_id}: cobro {cobro['id']} de {cobro['importe_centimos']} céntimos")
+        flash("Cobro creado: copia el enlace de pago y compártelo con el tenant.", "ok")
+    return _volver_suscripcion(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/cobros/<int:cobro_id>/actualizar", methods=["POST"])
+@auth.login_required
+def actualizar_cobro(tenant_id: int, cobro_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        estado = facturacion.refrescar_cobro(tenant_id, cobro_id)
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        flash(f"Estado del cobro: {estado}.", "ok")
+    return _volver_suscripcion(tenant_id)
+
+
+@bp.route("/planes")
+@auth.login_required
+def planes():
+    return render_template(
+        "planes.html", planes=plataforma.listar_planes_guilda(), extras=plataforma.listar_extras_guilda(),
+        stripe_configurado=facturacion.configurado(),
+    )
+
+
+def _accion_catalogo(auditoria: str, funcion, *args, mensaje_ok: str):
+    try:
+        resultado = funcion(*args)
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar(auditoria, str(resultado))
+        flash(mensaje_ok if not isinstance(resultado, bool) or not resultado else mensaje_ok + " Vuelve a sincronizar con Stripe para aplicar el nuevo precio.", "ok")
+    return redirect(url_for("rutas.planes"))
+
+
+def _max_usuarios():
+    return request.form.get("max_usuarios", type=int)
+
+
+@bp.route("/planes", methods=["POST"])
+@auth.login_required
+def crear_plan():
+    return _accion_catalogo("plan.crear", facturacion.crear_plan, request.form.get("nombre", ""), request.form.get("descripcion", ""),
+                            request.form.get("precio", ""), _max_usuarios(), mensaje_ok="Plan creado.")
+
+
+@bp.route("/planes/<int:plan_id>/editar", methods=["POST"])
+@auth.login_required
+def editar_plan(plan_id: int):
+    return _accion_catalogo("plan.editar", facturacion.editar_plan, plan_id, request.form.get("nombre", ""), request.form.get("descripcion", ""),
+                            request.form.get("precio", ""), _max_usuarios(), mensaje_ok="Plan actualizado.")
+
+
+@bp.route("/planes/<int:plan_id>/sincronizar", methods=["POST"])
+@auth.login_required
+def sincronizar_plan(plan_id: int):
+    return _accion_catalogo("plan.sincronizar", facturacion.sincronizar_plan, plan_id, mensaje_ok="Plan sincronizado con Stripe.")
+
+
+@bp.route("/extras", methods=["POST"])
+@auth.login_required
+def crear_extra():
+    return _accion_catalogo("extra.crear", facturacion.crear_extra, request.form.get("nombre", ""), request.form.get("descripcion", ""),
+                            request.form.get("precio", ""), mensaje_ok="Extra creado.")
+
+
+@bp.route("/extras/<int:extra_id>/editar", methods=["POST"])
+@auth.login_required
+def editar_extra(extra_id: int):
+    return _accion_catalogo("extra.editar", facturacion.editar_extra, extra_id, request.form.get("nombre", ""), request.form.get("descripcion", ""),
+                            request.form.get("precio", ""), mensaje_ok="Extra actualizado.")
+
+
+@bp.route("/extras/<int:extra_id>/sincronizar", methods=["POST"])
+@auth.login_required
+def sincronizar_extra(extra_id: int):
+    return _accion_catalogo("extra.sincronizar", facturacion.sincronizar_extra, extra_id, mensaje_ok="Extra sincronizado con Stripe.")
 
 
 # --- Usuarios ---------------------------------------------------------------

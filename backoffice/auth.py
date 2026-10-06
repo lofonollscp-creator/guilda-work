@@ -54,6 +54,19 @@ CREATE TABLE IF NOT EXISTS auditoria (
     ip TEXT,
     creado_en TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS cobros (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    concepto TEXT NOT NULL,
+    importe_centimos INTEGER NOT NULL,
+    stripe_session_id TEXT NOT NULL,
+    url TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'pendiente',
+    admin_usuario TEXT,
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_cobros_tenant ON cobros(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_intentos_login ON intentos_login(usuario, creado_en);
 """
 

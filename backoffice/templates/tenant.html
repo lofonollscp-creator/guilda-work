@@ -74,16 +74,81 @@
 
     {% elif seccion == 'suscripcion' %}
     <h2>Suscripción</h2>
+    {% if not stripe_configurado %}<p class="aviso aviso-error">Stripe no está configurado en el servidor (falta STRIPE_SECRET_KEY).</p>{% endif %}
     <dl class="datos-fila">
       <div><dt>Plan</dt><dd>{{ t.plan or 'Sin plan' }}</dd></div>
       <div><dt>Precio mensual</dt><dd>{% if t.plan_precio is not none %}{{ t.plan_precio|eur }}{% else %}—{% endif %}</dd></div>
       <div><dt>Estado</dt><dd>{% if t.suscripcion_estado %}<span class="insignia {{ 'insignia-ok' if t.suscripcion_estado == 'activa' else 'insignia-riesgo' }}">{{ t.suscripcion_estado|upper|replace('_', ' ') }}</span>{% else %}—{% endif %}</dd></div>
     </dl>
+    <form method="post" action="{{ url_for('rutas.asignar_plan', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Plan asignado<select name="plan_id"><option value="">Sin plan</option>{% for p in planes_todos %}<option value="{{ p.id }}" {{ 'selected' if t.plan_id == p.id }}>{{ p.nombre }}{% if p.precio_mensual_centimos is not none %} · {{ p.precio_mensual_centimos|eur }}/mes{% endif %}</option>{% endfor %}</select></label>
+      <button type="submit" class="boton boton-primario">Asignar</button>
+    </form>
+    <form method="post" action="{{ url_for('rutas.activar_suscripcion', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Email de facturación<input type="email" name="email" value="{{ email_contacto }}" required></label>
+      <button type="submit" class="boton boton-primario" {% if not stripe_configurado %}disabled{% endif %}>Activar suscripción en Stripe</button>
+    </form>
+    <p class="muted">Te lleva al Checkout de Stripe, donde el tenant introduce la tarjeta. Al terminar, la suscripción se marca como activa automáticamente.</p>
+
+    <h3>Cobro puntual</h3>
+    <form method="post" action="{{ url_for('rutas.crear_cobro', tenant_id=t.id) }}" class="formulario">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Concepto<input type="text" name="concepto" maxlength="200" placeholder="Ej. Formación inicial" required></label>
+      <label>Importe (€)<input type="text" name="importe" inputmode="decimal" placeholder="250,00" required></label>
+      <label>Email de facturación<input type="email" name="email" value="{{ email_contacto }}" required></label>
+      <div><button type="submit" class="boton boton-primario" {% if not stripe_configurado %}disabled{% endif %}>Crear enlace de pago</button></div>
+    </form>
+    {% if cobros %}
+    <div class="tabla-caja"><table class="tabla">
+      <thead><tr><th>Fecha</th><th>Concepto</th><th>Importe</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for c in cobros %}
+        <tr><td>{{ c.creado_en|fecha }}</td><td>{{ c.concepto }}</td><td>{{ c.importe_centimos|eur }}</td>
+          <td><span class="insignia {{ 'insignia-ok' if c.estado == 'pagado' else ('insignia-riesgo' if c.estado == 'caducado' else '') }}">{{ c.estado|upper }}</span></td>
+          <td class="acciones">
+            <span class="oculto-visual" id="cobro-url-{{ c.id }}">{{ c.url }}</span>
+            <button type="button" class="boton" data-copiar="cobro-url-{{ c.id }}">Copiar enlace</button>
+            <form method="post" action="{{ url_for('rutas.actualizar_cobro', tenant_id=t.id, cobro_id=c.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Actualizar estado</button></form>
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% endif %}
+
     <h3>Extras activos</h3>
     {% if d.extras %}
-    <ul class="lista-datos">{% for e in d.extras %}<li><span>{{ e.nombre }} × {{ e.cantidad or 1 }}</span><span class="muted">{% if e.activo_hasta %}hasta {{ e.activo_hasta[:10] }}{% else %}indefinido{% endif %}</span></li>{% endfor %}</ul>
+    <ul class="lista-datos">{% for e in d.extras %}<li><span>{{ e.nombre }} × {{ e.cantidad or 1 }} <span class="muted">· {% if e.activo_hasta %}hasta {{ e.activo_hasta[:10] }}{% else %}indefinido{% endif %}</span></span>
+      <form method="post" action="{{ url_for('rutas.quitar_extra', tenant_id=t.id, extra_activo_id=e.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-peligro" data-confirmar="¿Quitar este extra?">Quitar</button></form></li>{% endfor %}</ul>
     {% else %}<p class="muted">Sin extras activos.</p>{% endif %}
-    <p class="muted">El cambio de plan y la facturación con Stripe se siguen gestionando desde el panel de la plataforma.</p>
+    {% if extras_catalogo %}
+    <form method="post" action="{{ url_for('rutas.anadir_extra', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Añadir extra<select name="extra_id">{% for e in extras_catalogo %}<option value="{{ e.id }}">{{ e.nombre }}{% if e.precio_centimos is not none %} · {{ e.precio_centimos|eur }}{% endif %}</option>{% endfor %}</select></label>
+      <button type="submit" class="boton">Añadir</button>
+    </form>
+    {% endif %}
+
+    <h3>Facturas</h3>
+    {% if error_facturas %}<p class="aviso aviso-error">No se pudieron cargar las facturas: {{ error_facturas }}</p>
+    {% elif facturas %}
+    <div class="tabla-caja"><table class="tabla"><thead><tr><th>Fecha</th><th>Importe</th><th>Estado</th><th></th></tr></thead><tbody>
+      {% for f in facturas %}<tr><td>{{ f.fecha }}</td><td>{{ f.importe|eur }}</td><td>{{ f.estado|upper }}</td><td class="acciones">{% if f.url %}<a class="boton" href="{{ f.url }}" target="_blank" rel="noopener noreferrer">Ver factura</a>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="muted">Todavía no hay facturas.</p>{% endif %}
+
+    <h3>Stripe Connect</h3>
+    {% if t.stripe_onboarding_completado %}
+    <p><span class="insignia insignia-ok">CUENTA CONECTADA Y LISTA PARA COBRAR</span></p>
+    {% else %}
+    <p class="muted">Para que este tenant cobre a SUS clientes (el dinero va directo a su banco).{% if t.stripe_account_id %} <span class="insignia">ONBOARDING SIN COMPLETAR</span>{% endif %}</p>
+    <form method="post" action="{{ url_for('rutas.conectar_stripe', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Email de contacto para Stripe<input type="email" name="email" value="{{ email_contacto }}" required></label>
+      <button type="submit" class="boton" {% if not stripe_configurado %}disabled{% endif %}>{{ 'Reintentar onboarding' if t.stripe_account_id else 'Conectar Stripe' }}</button>
+    </form>
+    {% endif %}
 
     {% else %}
     <h2>Actividad del equipo</h2>

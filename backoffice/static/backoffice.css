@@ -127,3 +127,12 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
   .subnav .nav-enlace { white-space: nowrap; }
 }
 @media (max-width: 560px) { .contenido { padding-inline: 14px; } .cabecera-fila .boton { width: 100%; } }
+
+/* ---- Facturación ---- */
+.fila-catalogo { display: grid; grid-template-columns: 1.2fr 2fr 110px 120px auto auto; gap: 10px; align-items: center; padding: 6px 0; }
+.fila-catalogo.nueva { padding: 14px 0 0; grid-template-columns: 1.2fr 2fr 140px 140px auto; }
+.fila-catalogo input { min-width: 0; width: 100%; }
+.en-linea { display: inline; margin: 0; }
+.oculto-visual { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lista-datos li form { margin: 0; }
+@media (max-width: 1100px) { .fila-catalogo, .fila-catalogo.nueva { grid-template-columns: 1fr 1fr; } }

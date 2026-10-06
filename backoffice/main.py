@@ -76,7 +76,7 @@ def create_app(testing: bool = False) -> Flask:
         resp.headers["Referrer-Policy"] = "same-origin"
         resp.headers["Content-Security-Policy"] = (
             "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
-            "frame-ancestors 'none'; form-action 'self'; base-uri 'self'"
+            "frame-ancestors 'none'; form-action 'self' https://checkout.stripe.com https://connect.stripe.com; base-uri 'self'"
         )
         if request.endpoint != "static":
             resp.headers["Cache-Control"] = "no-store"
