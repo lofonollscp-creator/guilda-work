@@ -4568,3 +4568,57 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .notas-vinculo:hover { border-color: var(--text-muted); text-decoration: none; }
 .notas-form { max-width: none; margin-bottom: 0; }
 .notas-editor-titulo { margin: 0; }
+
+/* ---- Barra lateral refinada (referencia: menús del producto hermano) ----
+   Objetivo: que colapsada y expandida compartan la MISMA columna de
+   iconos (centro a 32px del borde, sin saltos al expandir), etiquetas
+   legibles (sans, no mono en mayúsculas), activo como píldora suave,
+   grupos con chevron visible y submenús con guía, buscador arriba y la
+   campana al lado de la marca. Va al final del fichero para ganar a las
+   reglas anteriores del rail; las reglas "expandido" quedan dentro de
+   min-width:641px para no pisar el rail siempre compacto del móvil. */
+.icon-rail-cabecera { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.icon-rail-link.active {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  color: var(--primary);
+  box-shadow: none;
+}
+.icon-rail-link.active::before { display: none; }
+.icon-rail-brand-mark { width: 20px; height: 20px; }
+/* Los grupos plegables (Correo, Fiscal) se quedaban a la izquierda al colapsar: 9px de descuadre. */
+.icon-rail-grupo-plegable { align-items: center; }
+.icon-rail-grupo-plegable > .icon-rail-link { width: 44px; }
+.icon-rail-buscar { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); }
+.icon-rail-buscar:hover { background: rgba(255, 255, 255, 0.11); }
+.icon-rail-atajo { display: none; margin-left: auto; font: 600 10px var(--font-mono); padding: 1px 6px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.18); color: var(--sidebar-text); background: transparent; }
+.icon-rail-etiqueta { font-family: inherit; text-transform: none; letter-spacing: 0; font-size: 0.92rem; font-weight: 500; }
+.icon-rail-chevron svg { width: 15px; height: 15px; }
+.icon-rail-sublink { font-family: inherit; text-transform: none; letter-spacing: 0; font-size: 0.86rem; padding: 7px 12px; }
+.icon-rail-sublink.active { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.icon-rail-perfil-nombre { font-family: inherit; font-size: 0.88rem; font-weight: 600; }
+.icon-rail-perfil-tenant { font-size: 0.76rem; }
+
+@media (min-width: 641px) {
+  :root[data-rail-expandido="1"] .icon-rail { width: 232px; padding: var(--space-3) 9px; }
+  :root[data-rail-expandido="1"] .icon-rail-grupo-plegable { align-items: stretch; }
+  :root[data-rail-expandido="1"] .icon-rail-grupo-plegable > .icon-rail-link { width: 100%; }
+  :root[data-rail-expandido="1"] .icon-rail-link { padding: 0 12px; }
+  :root[data-rail-expandido="1"] .icon-rail-cabecera { flex-direction: row; align-items: center; gap: var(--space-1); }
+  :root[data-rail-expandido="1"] .icon-rail-cabecera .icon-rail-brand { flex: 1; min-width: 0; font-weight: 700; }
+  :root[data-rail-expandido="1"] .icon-rail-cabecera .notificaciones-menu .icon-rail-link { width: 44px; padding: 0; justify-content: center; }
+  :root[data-rail-expandido="1"] .icon-rail-cabecera .notificaciones-menu .icon-rail-etiqueta { display: none; }
+  :root[data-rail-expandido="1"] .icon-rail-cabecera .icon-rail-badge { position: absolute; margin-left: 0; }
+  :root[data-rail-expandido="1"] .icon-rail-buscar { padding-left: 11px; padding-right: 11px; }
+  :root[data-rail-expandido="1"] .icon-rail-atajo { display: inline-block; }
+  :root[data-rail-expandido="1"] .icon-rail-separador { margin: var(--space-3) 4px 0; }
+  :root[data-rail-expandido="1"] .icon-rail-grupo-etiqueta {
+    font-family: inherit; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;
+    opacity: 0.5; padding: 6px 12px 4px;
+  }
+  :root[data-rail-expandido="1"] .icon-rail-submenu {
+    padding-left: 0; margin: 2px 0 4px 21px; border-left: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  :root[data-rail-expandido="1"] .icon-rail-sublink { margin-left: 10px; }
+  :root[data-rail-expandido="1"] .icon-rail-perfil-card { padding: 6px 0; }
+}
+.icon-rail-nav { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }

@@ -102,6 +102,16 @@
     });
   }
 
+  // Buscador del rail: abre el mismo modal que el botón de la barra
+  // superior (static/busqueda.js escucha ese botón, no hay que duplicarlo).
+  const railBuscar = document.getElementById("rail-buscar");
+  if (railBuscar) {
+    railBuscar.addEventListener("click", () => {
+      const abrir = document.getElementById("busqueda-abrir");
+      if (abrir) abrir.click();
+    });
+  }
+
   // Grupos plegables del rail (Correo, Fiscal) -- el chevron alterna
   // "is-abierto" sin navegar; el enlace padre sigue navegando normal
   // a su hijo principal (ver base.html, mismo comportamiento en

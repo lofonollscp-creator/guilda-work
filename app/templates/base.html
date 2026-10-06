@@ -42,6 +42,7 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg>
       </button>
 
+      <div class="icon-rail-cabecera">
       <a href="{{ url_for('inicio') }}" class="icon-rail-link icon-rail-brand" title="Guilda Work">
         <img class="icon-rail-brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="">
         <span class="icon-rail-etiqueta">Guilda Work</span>
@@ -62,6 +63,14 @@
           <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
         </div>
       </div>
+
+      </div>
+
+      <button type="button" class="icon-rail-link icon-rail-buscar" id="rail-buscar" title="{{ _('Buscar') }} (Ctrl K)" aria-label="{{ _('Buscar') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Buscar') }}</span>
+        <kbd class="icon-rail-atajo" aria-hidden="true">Ctrl K</kbd>
+      </button>
 
       <div class="icon-rail-separador" role="separator"></div>
 
