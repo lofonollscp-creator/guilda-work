@@ -248,6 +248,12 @@
           <span class="busqueda-atajo">Ctrl K</span>
         </button>
         <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
+        {% if chip_jornada %}
+        <a class="fichaje-chip fichaje-chip-{{ chip_jornada.estado }}" href="{{ url_for('fichaje.panel') }}">
+          <span class="fichaje-chip-punto" aria-hidden="true"></span>
+          {% if chip_jornada.estado == 'en_pausa' %}{{ _('En pausa') }}{% else %}{{ _('Dentro de jornada') }}{% endif %}{% if chip_jornada.desde %} · {{ _('desde las %(h)s', h=chip_jornada.desde) }}{% endif %}
+        </a>
+        {% endif %}
       </header>
       <main class="content" id="contenido-principal">
         {% block content %}{% endblock %}

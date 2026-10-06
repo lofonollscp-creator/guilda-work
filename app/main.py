@@ -321,6 +321,26 @@ def inyectar_notificaciones_badge():
 
 
 @app.context_processor
+def inyectar_chip_jornada():
+    """Estado de la jornada para el chip de la barra superior (base.html):
+    'dentro' o 'en_pausa' con la hora de la entrada; None si el usuario no
+    ha fichado hoy, no ha completado sus datos de fichaje o algo falla (el
+    chip es solo un atajo, nunca debe romper una página)."""
+    if not g.usuario_id:
+        return {}
+    try:
+        if not db.fichaje_datos_completos(g.usuario_id):
+            return {"chip_jornada": None}
+        estado = db.estado_actual_fichaje(g.usuario_id)
+        if estado not in ("dentro", "en_pausa"):
+            return {"chip_jornada": None}
+        entrada = db.entrada_abierta_fichaje(g.usuario_id)
+        return {"chip_jornada": {"estado": estado, "desde": entrada[11:16] if entrada else None}}
+    except Exception:
+        return {"chip_jornada": None}
+
+
+@app.context_processor
 def inyectar_perfil_rail():
     """Avatar/nombre/tenant para la tarjeta de cuenta fija abajo del
     rail (base.html) -- mismas funciones ya usadas por

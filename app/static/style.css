@@ -4497,3 +4497,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .dash-mi-dia-txt, .dash-venc-txt { flex: 1; min-width: 0; color: var(--text); text-decoration: none; }
 .dash-mi-dia-txt:hover { text-decoration: underline; }
 .dash-mi-dia-txt small, .dash-venc-txt small { display: block; color: var(--text-muted); font-size: 0.82em; }
+
+/* Chip de jornada en la barra superior (canvas: Panel). Verde dentro de
+   jornada, ámbar en pausa; enlaza al panel de fichaje. */
+.fichaje-chip { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); font: 600 12px var(--font-mono); color: var(--text); text-decoration: none; white-space: nowrap; }
+.fichaje-chip:hover { border-color: var(--text-muted); text-decoration: none; }
+.fichaje-chip-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+.fichaje-chip-en_pausa .fichaje-chip-punto { background: var(--warning); }
+@media (max-width: 700px) { .fichaje-chip { font-size: 0; gap: 0; padding: 8px; } }
