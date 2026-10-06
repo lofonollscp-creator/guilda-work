@@ -4466,9 +4466,17 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    formularios sueltos conservan su propio tope de lectura. */
 @media (max-width: 700px) { .content { padding-inline: var(--space-4, 16px); } }
 .page-header + p, .subtitle { max-width: 78ch; }
-.content .empty-lane, .content .empty-state { max-width: 78ch; }
 .quick-card-full .quick-row { flex-wrap: wrap; }
 .quick-card-full .quick-row input[name="asunto"] { flex: 3 1 260px; }
 .quick-card-full .quick-row input[type="text"]:not([name="asunto"]) { flex: 1 1 160px; }
 .quick-card-full .quick-row input[type="datetime-local"] { flex: 0 1 190px; }
 .quick-card-full .quick-row select { flex: 0 1 170px; }
+
+/* Casillas con su texto en línea (la clase se usaba sin estilo y las dejaba apiladas) y fieldsets coherentes */
+.checkbox-label, .edit-form .checkbox-label { display: flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 400; cursor: pointer; }
+.checkbox-label input[type="checkbox"] { flex: 0 0 auto; width: auto; margin: 0; }
+.edit-form fieldset { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin: 0; display: grid; gap: 10px; min-width: 0; }
+.edit-form fieldset legend { padding: 0 6px; font-size: 0.85em; font-weight: 600; color: var(--text-muted); }
+.perfil-form { max-width: 960px; grid-template-columns: minmax(260px, 320px) 1fr; }
+.edit-form .ia-form-row { align-items: end; flex-wrap: wrap; gap: 12px 20px; }
+.nota-adjuntos-bloque .quick-row { align-items: center; }

@@ -11,7 +11,7 @@
 <form class="edit-form" method="post" action="{{ url_for('editar_nota', nota_id=nota.id) }}">
   <input type="hidden" name="volver_a" value="{{ volver_a }}">
   {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
-  <label>{{ _('Título') }} <span class="muted">({{ _('opcional') }})</span>
+  <label><span>{{ _('Título') }} <span class="muted">({{ _('opcional') }})</span></span>
     <input type="text" name="titulo" maxlength="120" value="{{ nota.titulo or '' }}" placeholder="{{ _('Un título corto para encontrarla fácilmente') }}">
   </label>
   <label>{{ _('Texto') }}
@@ -27,7 +27,7 @@
       </select>
     </label>
     {% endif %}
-    <label class="nota-fijar"><input type="checkbox" name="fijada" value="1" {% if nota.fijada %}checked{% endif %}> {{ _('Fijar esta nota arriba en su proyecto') }}</label>
+    <label class="checkbox-label nota-fijar"><input type="checkbox" name="fijada" value="1" {% if nota.fijada %}checked{% endif %}> {{ _('Fijar esta nota arriba en su proyecto') }}</label>
   </div>
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
@@ -58,7 +58,14 @@
   <form class="quick-row" action="{{ url_for('subir_adjuntos_nota', nota_id=nota.id) }}" method="post" enctype="multipart/form-data">
     <input type="hidden" name="volver_a" value="{{ volver_a }}">
     <label class="sr-only" for="nota-adjunto-input">{{ _('Archivos para adjuntar') }}</label>
-    <input type="file" id="nota-adjunto-input" name="adjunto" multiple accept="image/*,.pdf,.txt,.csv" required>
+    <span class="file-input">
+      <label class="file-input-boton btn btn-ghost">
+        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
+        {{ _('Elegir archivos') }}
+        <input type="file" id="nota-adjunto-input" name="adjunto" multiple accept="image/*,.pdf,.txt,.csv" required>
+      </label>
+      <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+    </span>
     <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Adjuntar') }}</button>
   </form>
   <p class="muted">{{ _('Imágenes, PDF o texto; hasta 5 MB cada uno y %(num)s por nota.', num=adjuntos_max) }}</p>
