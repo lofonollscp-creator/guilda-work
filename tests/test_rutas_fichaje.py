@@ -112,7 +112,7 @@ def test_panel_estado_dentro_muestra_pausa_y_salida_no_entrada(cliente):
     assert 'name="tipo" value="salida"' in html
     # Feedback de tiempo transcurrido: el contador vive y arranca desde
     # la marca_tiempo del último evento real.
-    assert 'class="task-timer" data-inicio="' in html
+    assert 'class="task-timer fichaje-reloj" data-inicio="' in html
 
 
 def test_panel_estado_en_pausa_muestra_solo_fin_de_pausa_y_salida(cliente):
