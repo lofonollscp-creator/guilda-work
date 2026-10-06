@@ -3464,3 +3464,273 @@ msgstr ""
 
 msgid "Inicio de pausa"
 msgstr ""
+
+msgid "Documentos"
+msgstr ""
+
+msgid "Volver a tu expediente"
+msgstr ""
+
+msgid "Imágenes o PDF, hasta 8MB cada uno y 10 archivos a la vez"
+msgstr ""
+
+msgid "Subir"
+msgstr ""
+
+msgid "Todavía no hay ningún documento."
+msgstr ""
+
+msgid "Justificante oficial"
+msgstr ""
+
+msgid "Constancia de presentación"
+msgstr ""
+
+msgid "Editar vencimiento"
+msgstr ""
+
+msgid "Periodo"
+msgstr ""
+
+msgid "Fecha límite"
+msgstr ""
+
+msgid "Asignado a"
+msgstr ""
+
+msgid "Documento solicitado al cliente (opcional)"
+msgstr ""
+
+msgid "Ej.: Factura de compra del trimestre"
+msgstr ""
+
+msgid "Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal."
+msgstr ""
+
+msgid "Marcar como presentado y facturar (opcional)"
+msgstr ""
+
+msgid "Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura."
+msgstr ""
+
+msgid "Concepto"
+msgstr ""
+
+#, python-format
+msgid "ej. Presentación modelo %(modelo)s %(periodo)s"
+msgstr ""
+
+msgid "Importe (€)"
+msgstr ""
+
+msgid "Justificante oficial (opcional)"
+msgstr ""
+
+msgid "Marcar presentado"
+msgstr ""
+
+msgid "¿Eliminar este vencimiento? Se moverá a la papelera."
+msgstr ""
+
+msgid "Eliminar vencimiento"
+msgstr ""
+
+msgid "Documentos del cliente"
+msgstr ""
+
+msgid "Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal."
+msgstr ""
+
+msgid "Subir justificante oficial"
+msgstr ""
+
+msgid "Generar constancia de presentación (PDF)"
+msgstr ""
+
+msgid "No sustituye al justificante oficial."
+msgstr ""
+
+msgid "El cliente todavía no ha subido ningún documento."
+msgstr ""
+
+msgid "Mensajes con el cliente"
+msgstr ""
+
+msgid "Todavía no hay mensajes en esta conversación."
+msgstr ""
+
+msgid "Equipo"
+msgstr ""
+
+msgid "Cobrar por Stripe"
+msgstr ""
+
+msgid "Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché."
+msgstr ""
+
+msgid "Enviar enlace de pago"
+msgstr ""
+
+msgid "Firma electrónica"
+msgstr ""
+
+msgid "Ya se ha enviado un documento a firmar al cliente para este vencimiento."
+msgstr ""
+
+msgid "Subir PDF y enviar a firmar al cliente"
+msgstr ""
+
+msgid "Elegir PDF"
+msgstr ""
+
+msgid "Enviar a firma"
+msgstr ""
+
+msgid "Editar cliente fiscal"
+msgstr ""
+
+msgid "Nombre o razón social"
+msgstr ""
+
+msgid "NIF/CIF"
+msgstr ""
+
+msgid "Email del cliente (portal)"
+msgstr ""
+
+msgid "Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo)."
+msgstr ""
+
+msgid "País de tributación"
+msgstr ""
+
+msgid "España"
+msgstr ""
+
+msgid "Otro país (próximamente)"
+msgstr ""
+
+msgid "Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada."
+msgstr ""
+
+msgid "Modelos que presenta este cliente"
+msgstr ""
+
+msgid "Sin modelos disponibles para el país de este cliente."
+msgstr ""
+
+msgid "Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática."
+msgstr ""
+
+msgid "Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)"
+msgstr ""
+
+msgid "Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)"
+msgstr ""
+
+msgid "¿Eliminar este cliente fiscal? Se moverá a la papelera."
+msgstr ""
+
+msgid "Eliminar cliente"
+msgstr ""
+
+msgid "Faltan datos: nombre y email son obligatorios."
+msgstr ""
+
+msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo."
+msgstr ""
+
+#, python-format
+msgid "Puedes subir hasta %(n)s archivos a la vez."
+msgstr ""
+
+msgid "Archivo no válido: solo imágenes o PDF, hasta 8MB."
+msgstr ""
+
+msgid "Subido."
+msgstr ""
+
+msgid "Nuevo mensaje del cliente"
+msgstr ""
+
+msgid "Pendiente"
+msgstr ""
+
+msgid "Presentado"
+msgstr ""
+
+msgid "Fuera de plazo"
+msgstr ""
+
+msgid "Enero"
+msgstr ""
+
+msgid "Febrero"
+msgstr ""
+
+msgid "Marzo"
+msgstr ""
+
+msgid "Abril"
+msgstr ""
+
+msgid "Mayo"
+msgstr ""
+
+msgid "Junio"
+msgstr ""
+
+msgid "Julio"
+msgstr ""
+
+msgid "Agosto"
+msgstr ""
+
+msgid "Septiembre"
+msgstr ""
+
+msgid "Octubre"
+msgstr ""
+
+msgid "Noviembre"
+msgstr ""
+
+msgid "Diciembre"
+msgstr ""
+
+msgid "L"
+msgstr ""
+
+msgid "M"
+msgstr ""
+
+msgid "X"
+msgstr ""
+
+msgid "J"
+msgstr ""
+
+msgid "V"
+msgstr ""
+
+msgid "S"
+msgstr ""
+
+msgid "D"
+msgstr ""
+
+msgid "NIF"
+msgstr ""
+
+msgid "Marcado como presentado el"
+msgstr ""
+
+msgid "Adjunto en el portal"
+msgstr ""
+
+msgid "Pendiente de adjuntar"
+msgstr ""
+
+#, python-format
+msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
+msgstr ""

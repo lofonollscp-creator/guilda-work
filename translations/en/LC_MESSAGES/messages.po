@@ -1360,9 +1360,8 @@ msgid "Tareas finalizadas"
 msgstr "Finished tasks"
 
 #: app/templates/estadisticas.html:45
-#, fuzzy
 msgid "Notas"
-msgstr "Note"
+msgstr "Notes"
 
 #: app/templates/estadisticas.html:65
 msgid "Por día"
@@ -1768,7 +1767,7 @@ msgstr "OpenRouter (cloud)"
 
 #: app/templates/historial.html:104
 msgid "Modelo"
-msgstr "Model"
+msgstr "Form"
 
 #: app/templates/historial.html:105
 msgid "ej. llama3.1"
@@ -3558,3 +3557,273 @@ msgstr "%(h)s h break"
 
 msgid "Inicio de pausa"
 msgstr "Break start"
+
+msgid "Documentos"
+msgstr "Documents"
+
+msgid "Volver a tu expediente"
+msgstr "Back to your file"
+
+msgid "Imágenes o PDF, hasta 8MB cada uno y 10 archivos a la vez"
+msgstr "Images or PDF, up to 8 MB each and 10 files at a time"
+
+msgid "Subir"
+msgstr "Upload"
+
+msgid "Todavía no hay ningún documento."
+msgstr "There are no documents yet."
+
+msgid "Justificante oficial"
+msgstr "Official proof of filing"
+
+msgid "Constancia de presentación"
+msgstr "Filing record"
+
+msgid "Editar vencimiento"
+msgstr "Edit deadline"
+
+msgid "Periodo"
+msgstr "Period"
+
+msgid "Fecha límite"
+msgstr "Due date"
+
+msgid "Asignado a"
+msgstr "Assigned to"
+
+msgid "Documento solicitado al cliente (opcional)"
+msgstr "Document requested from the client (optional)"
+
+msgid "Ej.: Factura de compra del trimestre"
+msgstr "E.g.: Purchase invoice for the quarter"
+
+msgid "Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal."
+msgstr "If the client has an email on file, saving a new text here notifies them by email so they can upload it from the portal."
+
+msgid "Marcar como presentado y facturar (opcional)"
+msgstr "Mark as filed and invoice (optional)"
+
+msgid "Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura."
+msgstr "Leave the description and amount blank if you only want to mark it as filed, without creating an invoice."
+
+msgid "Concepto"
+msgstr "Description"
+
+#, python-format
+msgid "ej. Presentación modelo %(modelo)s %(periodo)s"
+msgstr "e.g. Filing of form %(modelo)s %(periodo)s"
+
+msgid "Importe (€)"
+msgstr "Amount (€)"
+
+msgid "Justificante oficial (opcional)"
+msgstr "Official proof of filing (optional)"
+
+msgid "Marcar presentado"
+msgstr "Mark as filed"
+
+msgid "¿Eliminar este vencimiento? Se moverá a la papelera."
+msgstr "Delete this deadline? It will be moved to the trash."
+
+msgid "Eliminar vencimiento"
+msgstr "Delete deadline"
+
+msgid "Documentos del cliente"
+msgstr "Client documents"
+
+msgid "Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal."
+msgstr "What the client uploads from the portal and, from your side, the official proof of filing and the filing record: the client sees and downloads them in their portal."
+
+msgid "Subir justificante oficial"
+msgstr "Upload official proof of filing"
+
+msgid "Generar constancia de presentación (PDF)"
+msgstr "Generate filing record (PDF)"
+
+msgid "No sustituye al justificante oficial."
+msgstr "It does not replace the official proof of filing."
+
+msgid "El cliente todavía no ha subido ningún documento."
+msgstr "The client has not uploaded any document yet."
+
+msgid "Mensajes con el cliente"
+msgstr "Messages with the client"
+
+msgid "Todavía no hay mensajes en esta conversación."
+msgstr "There are no messages in this conversation yet."
+
+msgid "Equipo"
+msgstr "Team"
+
+msgid "Cobrar por Stripe"
+msgstr "Charge via Stripe"
+
+msgid "Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché."
+msgstr "Creates a payment link and emails it to the client. The amount is read right now, never cached."
+
+msgid "Enviar enlace de pago"
+msgstr "Send payment link"
+
+msgid "Firma electrónica"
+msgstr "Electronic signature"
+
+msgid "Ya se ha enviado un documento a firmar al cliente para este vencimiento."
+msgstr "A document has already been sent to the client for signature for this deadline."
+
+msgid "Subir PDF y enviar a firmar al cliente"
+msgstr "Upload PDF and send to the client for signature"
+
+msgid "Elegir PDF"
+msgstr "Choose PDF"
+
+msgid "Enviar a firma"
+msgstr "Send for signature"
+
+msgid "Editar cliente fiscal"
+msgstr "Edit tax client"
+
+msgid "Nombre o razón social"
+msgstr "Name or company name"
+
+msgid "NIF/CIF"
+msgstr "Tax ID (NIF/CIF)"
+
+msgid "Email del cliente (portal)"
+msgstr "Client email (portal)"
+
+msgid "Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo)."
+msgstr "If you set an email, the client can enter the portal to see their deadlines and upload documents, without an account or password (access link by email)."
+
+msgid "País de tributación"
+msgstr "Tax country"
+
+msgid "España"
+msgstr "Spain"
+
+msgid "Otro país (próximamente)"
+msgstr "Other country (coming soon)"
+
+msgid "Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada."
+msgstr "There is no tax calendar configured for this country yet -- let us know and we will add it. Meanwhile, this client's deadlines must be created by hand and automatic generation is disabled."
+
+msgid "Modelos que presenta este cliente"
+msgstr "Forms this client files"
+
+msgid "Sin modelos disponibles para el país de este cliente."
+msgstr "No forms available for this client's country."
+
+msgid "Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática."
+msgstr "They are used as the default selection when generating deadlines, and are the ones generated automatically if you enable automatic generation."
+
+msgid "Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)"
+msgstr "Generate deadlines automatically each period (needs at least one form checked above)"
+
+msgid "Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)"
+msgstr "Email the client reminders 7 and 2 days before each deadline (needs their email)"
+
+msgid "¿Eliminar este cliente fiscal? Se moverá a la papelera."
+msgstr "Delete this tax client? It will be moved to the trash."
+
+msgid "Eliminar cliente"
+msgstr "Delete client"
+
+msgid "Faltan datos: nombre y email son obligatorios."
+msgstr "Missing data: name and email are required."
+
+msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo."
+msgstr "The captcha could not be verified. Solve it again."
+
+#, python-format
+msgid "Puedes subir hasta %(n)s archivos a la vez."
+msgstr "You can upload up to %(n)s files at a time."
+
+msgid "Archivo no válido: solo imágenes o PDF, hasta 8MB."
+msgstr "Invalid file: images or PDF only, up to 8 MB."
+
+msgid "Subido."
+msgstr "Uploaded."
+
+msgid "Nuevo mensaje del cliente"
+msgstr "New message from the client"
+
+msgid "Pendiente"
+msgstr "Pending"
+
+msgid "Presentado"
+msgstr "Filed"
+
+msgid "Fuera de plazo"
+msgstr "Overdue"
+
+msgid "Enero"
+msgstr "January"
+
+msgid "Febrero"
+msgstr "February"
+
+msgid "Marzo"
+msgstr "March"
+
+msgid "Abril"
+msgstr "April"
+
+msgid "Mayo"
+msgstr "May"
+
+msgid "Junio"
+msgstr "June"
+
+msgid "Julio"
+msgstr "July"
+
+msgid "Agosto"
+msgstr "August"
+
+msgid "Septiembre"
+msgstr "September"
+
+msgid "Octubre"
+msgstr "October"
+
+msgid "Noviembre"
+msgstr "November"
+
+msgid "Diciembre"
+msgstr "December"
+
+msgid "L"
+msgstr "M"
+
+msgid "M"
+msgstr "T"
+
+msgid "X"
+msgstr "W"
+
+msgid "J"
+msgstr "T"
+
+msgid "V"
+msgstr "F"
+
+msgid "S"
+msgstr "S"
+
+msgid "D"
+msgstr "S"
+
+msgid "NIF"
+msgstr "Tax ID"
+
+msgid "Marcado como presentado el"
+msgstr "Marked as filed on"
+
+msgid "Adjunto en el portal"
+msgstr "Attached in the portal"
+
+msgid "Pendiente de adjuntar"
+msgstr "Pending attachment"
+
+#, python-format
+msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
+msgstr "This document is an internal record issued by %(gestoria)s and does not replace the official proof of filing issued by the tax authority."

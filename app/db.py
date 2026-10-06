@@ -110,6 +110,15 @@ CREATE TABLE IF NOT EXISTS clientes_fiscales_accesos (
     ip_solicitante TEXT
 );
 
+-- Recordatorios del portal ya enviados por correo al cliente (uno por
+-- vencimiento y antelación: 7 y 2 días), para no repetirlos nunca.
+CREATE TABLE IF NOT EXISTS vencimientos_recordatorios (
+    vencimiento_id INTEGER NOT NULL REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE,
+    dias_antes INTEGER NOT NULL,
+    enviado_en TEXT NOT NULL,
+    PRIMARY KEY (vencimiento_id, dias_antes)
+);
+
 -- Documentos que sube el CLIENTE (portal) para un vencimiento concreto --
 -- no confundir con vencimientos_fiscales.notas, de uso interno del
 -- equipo. `contenido` (BLOB, mismo diseño que tiquets_adjuntos) y
@@ -1461,6 +1470,12 @@ def init_db() -> None:
         # propósito -- el acceso es opt-in, solo si un empleado pone el
         # email desde la ficha del cliente puede este pedir un enlace.
         _asegurar_columna(conn, "clientes_fiscales", "email", "TEXT")
+        # Recordatorios automáticos por correo de los vencimientos próximos
+        # (activos por defecto; el cliente puede quedar fuera desde su ficha).
+        _asegurar_columna(conn, "clientes_fiscales", "recordatorios_portal", "INTEGER NOT NULL DEFAULT 1")
+        # Quién subió el documento: 'cliente' (portal), 'justificante'
+        # (oficial, lo sube el equipo) o 'constancia' (PDF generado por la app).
+        _asegurar_columna(conn, "vencimientos_fiscales_documentos", "origen", "TEXT NOT NULL DEFAULT 'cliente'")
         # Vínculo con FacturaScripts (app/facturascripts.py) -- opcional,
         # solo si el empleado vincula el cliente fiscal a un cliente de
         # FacturaScripts desde su ficha (mismo criterio best-effort que
@@ -5210,7 +5225,7 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais",
+    "facturascripts_cliente_codigo", "pais", "recordatorios_portal",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -5895,8 +5910,11 @@ def consumir_acceso_facturacion(token: str) -> int | None:
         conn.close()
 
 
+ORIGENES_DOCUMENTO_VENCIMIENTO = ("cliente", "justificante", "constancia")
+
+
 def subir_documento_vencimiento(
-    vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes,
+    vencimiento_id: int, nombre_archivo: str, tipo_mime: str, contenido: bytes, origen: str = "cliente",
 ) -> int:
     """Guarda primero como BLOB local (garantiza que el documento queda
     a salvo aunque Nextcloud falle a medias) y, solo si el tenant tiene
@@ -5908,9 +5926,10 @@ def subir_documento_vencimiento(
     try:
         cur = conn.execute(
             "INSERT INTO vencimientos_fiscales_documentos "
-            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso()),
+            "(vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en, origen) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (vencimiento_id, nombre_archivo, tipo_mime, len(contenido), contenido, now_iso(),
+             origen if origen in ORIGENES_DOCUMENTO_VENCIMIENTO else "cliente"),
         )
         documento_id = cur.lastrowid
         conn.commit()
@@ -5950,14 +5969,67 @@ def contenido_documento_vencimiento(documento: sqlite3.Row) -> bytes:
     return documento["contenido"]
 
 
-def listar_documentos_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
+def listar_documentos_vencimiento(vencimiento_id: int, origen: str | None = None) -> list[sqlite3.Row]:
+    """Todos los documentos del vencimiento, o solo los de un `origen`
+    ('cliente' = lo que ha subido el cliente desde el portal)."""
+    conn = get_connection()
+    try:
+        sql = (
+            "SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en, origen "
+            "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ?"
+        )
+        params: list = [vencimiento_id]
+        if origen is not None:
+            sql += " AND origen = ?"
+            params.append(origen)
+        return conn.execute(sql + " ORDER BY creado_en, id", params).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_documentos_vencimiento_por_origen(vencimiento_id: int, origen: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "DELETE FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ? AND origen = ?",
+            (vencimiento_id, origen),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int) -> list[sqlite3.Row]:
+    """Vencimientos pendientes que vencen justo `fecha_objetivo` (YYYY-MM-DD),
+    de clientes con email y recordatorios activos, y a los que todavía no se
+    ha enviado el recordatorio de esta antelación. Cruza todos los tenants:
+    solo la usa el hilo periódico del servidor."""
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT id, vencimiento_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
-            "FROM vencimientos_fiscales_documentos WHERE vencimiento_id = ? ORDER BY creado_en",
-            (vencimiento_id,),
+            """SELECT v.*, c.nombre AS cliente_nombre, c.email AS cliente_email, t.nombre AS tenant_nombre
+               FROM vencimientos_fiscales v
+               JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+               JOIN tenants t ON t.id = v.tenant_id
+               WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
+                 AND c.recordatorios_portal = 1 AND c.email IS NOT NULL AND trim(c.email) <> ''
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ?
+                 AND NOT EXISTS (SELECT 1 FROM vencimientos_recordatorios r
+                                 WHERE r.vencimiento_id = v.id AND r.dias_antes = ?)""",
+            (fecha_objetivo, _fecha_exclusiva(fecha_objetivo), dias_antes),
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_recordatorio_portal_enviado(vencimiento_id: int, dias_antes: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO vencimientos_recordatorios (vencimiento_id, dias_antes, enviado_en) VALUES (?, ?, ?)",
+            (vencimiento_id, dias_antes, now_iso()),
+        )
+        conn.commit()
     finally:
         conn.close()
 

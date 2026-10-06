@@ -12,12 +12,13 @@ import calendar
 import csv
 import io
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, db, documenso, espocrm, eventos, facturascripts, nextcloud, stripe_pagos
+from . import calcom, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, stripe_pagos
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
@@ -271,6 +272,7 @@ def editar_cliente(cliente_id: int):
                 generacion_automatica=1 if (request.form.get("generacion_automatica") and pais in PAISES_CON_CALENDARIO) else 0,
                 email=(request.form.get("email") or "").strip() or None,
                 pais=pais,
+                recordatorios_portal=1 if request.form.get("recordatorios_portal") else 0,
             )
         return redirect(url_for("fiscal.clientes"))
     return render_template(
@@ -486,6 +488,57 @@ def vencimientos_calendario():
     )
 
 
+def _guardar_justificante(vencimiento_id: int, archivo) -> bool:
+    """Guarda el justificante oficial subido por el equipo (imagen o PDF, máx.
+    8 MB). False si no hay archivo o no es válido."""
+    if archivo is None or not archivo.filename:
+        return False
+    contenido = archivo.read(db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO + 1)
+    if archivo.mimetype not in db.MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO or len(contenido) > db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO:
+        return False
+    db.subir_documento_vencimiento(vencimiento_id, archivo.filename, archivo.mimetype, contenido, origen="justificante")
+    return True
+
+
+def _generar_constancia(vencimiento) -> None:
+    """(Re)genera la constancia de presentación en PDF; sustituye a la anterior."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+    tenant = db.obtener_tenant(g.tenant_id)
+    con_justificante = bool(db.listar_documentos_vencimiento(vencimiento["id"], origen="justificante"))
+    pdf = constancia_presentacion.generar_pdf(
+        tenant["nombre"] if tenant else "", cliente["nombre"] if cliente else "", cliente["nif"] if cliente else None,
+        vencimiento["modelo"], vencimiento["periodo"], vencimiento["fecha_limite"], datetime.now(), con_justificante,
+    )
+    db.eliminar_documentos_vencimiento_por_origen(vencimiento["id"], "constancia")
+    db.subir_documento_vencimiento(
+        vencimiento["id"], f"constancia-{vencimiento['modelo']}-{vencimiento['periodo']}.pdf".replace("/", "-"),
+        "application/pdf", pdf, origen="constancia",
+    )
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/constancia", methods=["POST"])
+@login_required
+def regenerar_constancia(vencimiento_id: int):
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
+        abort(404)
+    _generar_constancia(vencimiento)
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/justificante", methods=["POST"])
+@login_required
+def subir_justificante(vencimiento_id: int):
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
+        abort(404)
+    if not _guardar_justificante(vencimiento_id, request.files.get("justificante")):
+        abort(400, _("Archivo no válido: solo imágenes o PDF, hasta 8MB."))
+    if vencimiento["estado"] == "presentado" and db.listar_documentos_vencimiento(vencimiento_id, origen="constancia"):
+        _generar_constancia(vencimiento)  # actualiza "Justificante oficial: adjunto"
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
+
+
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/presentado", methods=["POST"])
 @login_required
 def marcar_presentado(vencimiento_id: int):
@@ -493,6 +546,14 @@ def marcar_presentado(vencimiento_id: int):
     if vencimiento is None:
         abort(404)
     db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    # Justificante oficial (opcional, si el formulario lo trae) y constancia
+    # de presentación en PDF: ambos visibles para el cliente en su portal. Un
+    # fallo al generar la constancia nunca debe deshacer el "presentado".
+    _guardar_justificante(vencimiento_id, request.files.get("justificante"))
+    try:
+        _generar_constancia(vencimiento)
+    except Exception:  # noqa: BLE001
+        pass
     try:
         eventos.emitir(
             "vencimiento.presentado", g.tenant_id,

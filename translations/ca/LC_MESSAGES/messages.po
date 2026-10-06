@@ -1353,9 +1353,8 @@ msgid "Tareas finalizadas"
 msgstr "Tasques finalitzades"
 
 #: app/templates/estadisticas.html:45
-#, fuzzy
 msgid "Notas"
-msgstr "Nota"
+msgstr "Notes"
 
 #: app/templates/estadisticas.html:65
 msgid "Por día"
@@ -3525,3 +3524,273 @@ msgstr "%(h)s h de pausa"
 
 msgid "Inicio de pausa"
 msgstr "Inici de pausa"
+
+msgid "Documentos"
+msgstr "Documents"
+
+msgid "Volver a tu expediente"
+msgstr "Torna al teu expedient"
+
+msgid "Imágenes o PDF, hasta 8MB cada uno y 10 archivos a la vez"
+msgstr "Imatges o PDF, fins a 8 MB cadascun i 10 fitxers alhora"
+
+msgid "Subir"
+msgstr "Puja"
+
+msgid "Todavía no hay ningún documento."
+msgstr "Encara no hi ha cap document."
+
+msgid "Justificante oficial"
+msgstr "Justificant oficial"
+
+msgid "Constancia de presentación"
+msgstr "Constància de presentació"
+
+msgid "Editar vencimiento"
+msgstr "Edita el venciment"
+
+msgid "Periodo"
+msgstr "Període"
+
+msgid "Fecha límite"
+msgstr "Data límit"
+
+msgid "Asignado a"
+msgstr "Assignat a"
+
+msgid "Documento solicitado al cliente (opcional)"
+msgstr "Document sol·licitat al client (opcional)"
+
+msgid "Ej.: Factura de compra del trimestre"
+msgstr "P. ex.: Factura de compra del trimestre"
+
+msgid "Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal."
+msgstr "Si el client té correu a la fitxa, en desar un text nou aquí se'l avisa per correu perquè el pugi des del portal."
+
+msgid "Marcar como presentado y facturar (opcional)"
+msgstr "Marca com a presentat i factura (opcional)"
+
+msgid "Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura."
+msgstr "Deixa el concepte i l'import en blanc si només vols marcar-lo com a presentat, sense generar factura."
+
+msgid "Concepto"
+msgstr "Concepte"
+
+#, python-format
+msgid "ej. Presentación modelo %(modelo)s %(periodo)s"
+msgstr "p. ex. Presentació model %(modelo)s %(periodo)s"
+
+msgid "Importe (€)"
+msgstr "Import (€)"
+
+msgid "Justificante oficial (opcional)"
+msgstr "Justificant oficial (opcional)"
+
+msgid "Marcar presentado"
+msgstr "Marca com a presentat"
+
+msgid "¿Eliminar este vencimiento? Se moverá a la papelera."
+msgstr "Vols eliminar aquest venciment? Anirà a la paperera."
+
+msgid "Eliminar vencimiento"
+msgstr "Elimina el venciment"
+
+msgid "Documentos del cliente"
+msgstr "Documents del client"
+
+msgid "Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal."
+msgstr "El que puja el client des del portal i, de part teva, el justificant oficial i la constància de presentació: el client els veu i els descarrega al seu portal."
+
+msgid "Subir justificante oficial"
+msgstr "Puja el justificant oficial"
+
+msgid "Generar constancia de presentación (PDF)"
+msgstr "Genera la constància de presentació (PDF)"
+
+msgid "No sustituye al justificante oficial."
+msgstr "No substitueix el justificant oficial."
+
+msgid "El cliente todavía no ha subido ningún documento."
+msgstr "El client encara no ha pujat cap document."
+
+msgid "Mensajes con el cliente"
+msgstr "Missatges amb el client"
+
+msgid "Todavía no hay mensajes en esta conversación."
+msgstr "Encara no hi ha missatges en aquesta conversa."
+
+msgid "Equipo"
+msgstr "Equip"
+
+msgid "Cobrar por Stripe"
+msgstr "Cobra per Stripe"
+
+msgid "Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché."
+msgstr "Genera un enllaç de pagament i l'envia al client per correu. L'import es llegeix ara mateix, mai es desa a la memòria cau."
+
+msgid "Enviar enlace de pago"
+msgstr "Envia l'enllaç de pagament"
+
+msgid "Firma electrónica"
+msgstr "Signatura electrònica"
+
+msgid "Ya se ha enviado un documento a firmar al cliente para este vencimiento."
+msgstr "Ja s'ha enviat un document a signar al client per a aquest venciment."
+
+msgid "Subir PDF y enviar a firmar al cliente"
+msgstr "Puja un PDF i envia'l a signar al client"
+
+msgid "Elegir PDF"
+msgstr "Tria un PDF"
+
+msgid "Enviar a firma"
+msgstr "Envia a signar"
+
+msgid "Editar cliente fiscal"
+msgstr "Edita el client fiscal"
+
+msgid "Nombre o razón social"
+msgstr "Nom o raó social"
+
+msgid "NIF/CIF"
+msgstr "NIF/CIF"
+
+msgid "Email del cliente (portal)"
+msgstr "Correu del client (portal)"
+
+msgid "Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo)."
+msgstr "Si hi poses un correu, el client podrà entrar al portal per veure els seus venciments i pujar documents, sense compte ni contrasenya (enllaç d'accés per correu)."
+
+msgid "País de tributación"
+msgstr "País de tributació"
+
+msgid "España"
+msgstr "Espanya"
+
+msgid "Otro país (próximamente)"
+msgstr "Un altre país (pròximament)"
+
+msgid "Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada."
+msgstr "Encara no hi ha calendari fiscal configurat per a aquest país: digues-ho i l'afegim. Mentrestant, els venciments d'aquest client s'han de crear a mà i la generació automàtica queda desactivada."
+
+msgid "Modelos que presenta este cliente"
+msgstr "Models que presenta aquest client"
+
+msgid "Sin modelos disponibles para el país de este cliente."
+msgstr "Sense models disponibles per al país d'aquest client."
+
+msgid "Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática."
+msgstr "S'utilitzen com a selecció per defecte en generar venciments, i són els que es generen sols si actives la generació automàtica."
+
+msgid "Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)"
+msgstr "Genera els venciments automàticament cada període (cal almenys un model marcat a dalt)"
+
+msgid "Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)"
+msgstr "Envia al client recordatoris per correu 7 i 2 dies abans de cada venciment (cal el seu correu)"
+
+msgid "¿Eliminar este cliente fiscal? Se moverá a la papelera."
+msgstr "Vols eliminar aquest client fiscal? Anirà a la paperera."
+
+msgid "Eliminar cliente"
+msgstr "Elimina el client"
+
+msgid "Faltan datos: nombre y email son obligatorios."
+msgstr "Falten dades: el nom i el correu són obligatoris."
+
+msgid "No se ha podido comprobar el captcha. Resuélvelo de nuevo."
+msgstr "No s'ha pogut comprovar el captcha. Resol-lo de nou."
+
+#, python-format
+msgid "Puedes subir hasta %(n)s archivos a la vez."
+msgstr "Pots pujar fins a %(n)s fitxers alhora."
+
+msgid "Archivo no válido: solo imágenes o PDF, hasta 8MB."
+msgstr "Fitxer no vàlid: només imatges o PDF, fins a 8 MB."
+
+msgid "Subido."
+msgstr "Pujat."
+
+msgid "Nuevo mensaje del cliente"
+msgstr "Nou missatge del client"
+
+msgid "Pendiente"
+msgstr "Pendent"
+
+msgid "Presentado"
+msgstr "Presentat"
+
+msgid "Fuera de plazo"
+msgstr "Fora de termini"
+
+msgid "Enero"
+msgstr "Gener"
+
+msgid "Febrero"
+msgstr "Febrer"
+
+msgid "Marzo"
+msgstr "Març"
+
+msgid "Abril"
+msgstr "Abril"
+
+msgid "Mayo"
+msgstr "Maig"
+
+msgid "Junio"
+msgstr "Juny"
+
+msgid "Julio"
+msgstr "Juliol"
+
+msgid "Agosto"
+msgstr "Agost"
+
+msgid "Septiembre"
+msgstr "Setembre"
+
+msgid "Octubre"
+msgstr "Octubre"
+
+msgid "Noviembre"
+msgstr "Novembre"
+
+msgid "Diciembre"
+msgstr "Desembre"
+
+msgid "L"
+msgstr "Dl"
+
+msgid "M"
+msgstr "Dt"
+
+msgid "X"
+msgstr "Dc"
+
+msgid "J"
+msgstr "Dj"
+
+msgid "V"
+msgstr "Dv"
+
+msgid "S"
+msgstr "Ds"
+
+msgid "D"
+msgstr "Dg"
+
+msgid "NIF"
+msgstr "NIF"
+
+msgid "Marcado como presentado el"
+msgstr "Marcat com a presentat el"
+
+msgid "Adjunto en el portal"
+msgstr "Adjuntat al portal"
+
+msgid "Pendiente de adjuntar"
+msgstr "Pendent d'adjuntar"
+
+#, python-format
+msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
+msgstr "Aquest document és una constància interna emesa per %(gestoria)s i no substitueix el justificant oficial de presentació emès per l'administració tributària."

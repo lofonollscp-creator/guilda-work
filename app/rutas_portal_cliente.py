@@ -14,7 +14,7 @@ empleado pone el email desde /fiscal/clientes/<id>/editar), mensajería
 cliente<->gestoría, ni contraseña (solo enlace mágico)."""
 from datetime import datetime, timedelta
 
-from flask import Blueprint, abort, g, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
 from . import captcha, db, notificaciones
@@ -24,6 +24,7 @@ from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 portal_bp = Blueprint("portal_cliente", __name__, url_prefix="/portal")
 
 _MINUTOS_COOLDOWN_ENVIO = 2
+MAX_ARCHIVOS_POR_SUBIDA = 10
 
 
 @portal_bp.before_request
@@ -121,7 +122,8 @@ def dashboard():
     # subido para ese vencimiento todavía", no un campo aparte que haya que
     # mantener sincronizado.
     solicitudes_pendientes = [
-        v for v in vencimientos if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"])
+        v for v in vencimientos
+        if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"], origen="cliente")
     ]
     # Agrupados por año (bloque 4 del plan de reestructuración del
     # calendario fiscal) -- más reciente primero, para que un cliente con
@@ -162,22 +164,48 @@ def _vencimiento_del_cliente_actual(vencimiento_id: int):
 def documentos_vencimiento(vencimiento_id: int):
     vencimiento = _vencimiento_del_cliente_actual(vencimiento_id)
     error = None
+    resultados = []
     if request.method == "POST":
-        f = request.files.get("documento")
-        if f and f.filename:
+        archivos = [f for f in request.files.getlist("documento") if f and f.filename]
+        if len(archivos) > MAX_ARCHIVOS_POR_SUBIDA:
+            error = _("Puedes subir hasta %(n)s archivos a la vez.", n=MAX_ARCHIVOS_POR_SUBIDA)
+        for f in ([] if error else archivos):
             # Igual que rutas_api.py/rutas_ia.py: se lee como mucho
             # LIMITE+1 bytes, no el fichero entero, para no comprobar el
             # tamaño DESPUÉS de haberlo cargado todo a memoria.
             contenido = f.read(db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO + 1)
             if f.mimetype not in db.MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO or len(contenido) > db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO:
-                error = _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")
+                resultados.append({"nombre": f.filename, "ok": False,
+                                   "mensaje": _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")})
             else:
                 db.subir_documento_vencimiento(vencimiento_id, f.filename, f.mimetype, contenido)
-                return redirect(url_for("portal_cliente.documentos_vencimiento", vencimiento_id=vencimiento_id))
+                resultados.append({"nombre": f.filename, "ok": True, "mensaje": _("Subido.")})
+        if archivos and not error and all(r["ok"] for r in resultados):
+            return redirect(url_for("portal_cliente.documentos_vencimiento", vencimiento_id=vencimiento_id))
     return render_template(
         "portal_vencimiento_documentos.html",
         vencimiento=vencimiento, documentos=db.listar_documentos_vencimiento(vencimiento_id), error=error,
+        resultados=resultados,
     )
+
+
+@portal_bp.route("/vencimientos/<int:vencimiento_id>/documentos/<int:documento_id>")
+@cliente_login_required
+def descargar_documento(vencimiento_id: int, documento_id: int):
+    """El cliente descarga cualquier documento de SU vencimiento: lo que subió
+    él, el justificante oficial y la constancia de presentación."""
+    _vencimiento_del_cliente_actual(vencimiento_id)
+    documento = db.obtener_documento_vencimiento(documento_id)
+    if documento is None or documento["vencimiento_id"] != vencimiento_id:
+        abort(404)
+    try:
+        contenido = db.contenido_documento_vencimiento(documento)
+    except Exception:  # noqa: BLE001 -- almacenamiento externo caído
+        abort(503)
+    respuesta = Response(contenido, mimetype=documento["tipo_mime"])
+    respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
+    respuesta.headers.set("X-Content-Type-Options", "nosniff")
+    return respuesta
 
 
 @portal_bp.route("/vencimientos/<int:vencimiento_id>/mensajes", methods=["GET", "POST"])

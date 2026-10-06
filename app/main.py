@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -1640,6 +1640,23 @@ def _envios_correo_servidor():
         except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en la cola de envío de correo")
         time.sleep(ENVIOS_CORREO_INTERVALO_SEGUNDOS)
+
+
+RECORDATORIOS_PORTAL_INTERVALO_HORAS = 6
+
+
+def _recordatorios_portal_servidor():
+    """Cada 6 horas envía a los clientes los recordatorios de vencimientos a 7
+    y 2 días (ver app/portal_recordatorios.py). Se repite varias veces al día
+    a propósito: si el correo falla, se reintenta, y nunca se duplica porque
+    cada envío correcto queda registrado."""
+    time.sleep(300)
+    while True:
+        try:
+            portal_recordatorios.procesar_recordatorios()
+        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en los recordatorios del portal")
+        time.sleep(RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600)
 
 
 AVISOS_FICHAJE_INTERVALO_MINUTOS = 15

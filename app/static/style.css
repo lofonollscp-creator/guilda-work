@@ -4414,3 +4414,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .fichaje-semana-texto { display: flex; flex-wrap: wrap; gap: .4rem .6rem; align-items: center; font-size: .92rem; }
 .fichaje-semana-barra { margin-top: .5rem; height: 8px; border-radius: 999px; background: var(--line, #d4d8cb); overflow: hidden; }
 .fichaje-semana-barra span { display: block; height: 100%; background: currentColor; opacity: .7; }
+
+/* Portal: resultado de la subida de varios documentos */
+.portal-resultados { list-style: none; margin: 0 0 1rem; padding: 0; font-size: .9rem; }
+.portal-resultados li { padding: .25rem 0; }
+.portal-resultados li.ko { color: #b3261e; }
