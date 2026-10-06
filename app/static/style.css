@@ -4622,3 +4622,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   :root[data-rail-expandido="1"] .icon-rail-perfil-card { padding: 6px 0; }
 }
 .icon-rail-nav { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
+
+/* Chips de categoría en Herramientas (canvas Interfaces Guilda Work). */
+.tools-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-4); }
+.tools-chips:empty { display: none; }
+.tools-chip { font: 600 12px var(--font-mono); padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; }
+.tools-chip:hover { border-color: var(--text-muted); color: var(--text); }
+.tools-chip.is-activo { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }

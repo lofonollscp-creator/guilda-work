@@ -13,12 +13,14 @@
   <input type="search" id="tools-buscar-input" placeholder="{{ _('Buscar herramienta...') }}" aria-label="{{ _('Buscar herramienta') }}">
 </div>
 
+<div class="tools-chips" id="tools-chips" role="group" aria-label="{{ _('Categorías') }}"></div>
+
 <div class="tools-page">
   {% set categorias = herramientas | map(attribute="categoria") | unique | list %}
   {% for categoria in categorias %}
   {% set disponibles_en_categoria = herramientas | selectattr("categoria", "equalto", categoria) | rejectattr("disponible", "equalto", false) | list %}
   {% if disponibles_en_categoria or (categoria == "Documentos y datos" and facturascripts_url) %}
-  <section class="tools-section">
+  <section class="tools-section" data-categoria="{{ categoria }}">
     <h2 class="tools-section-title"><span></span>{{ categoria }}</h2>
     <div class="tools-grid">
       {% for h in herramientas if h.categoria == categoria and h.disponible != false %}
@@ -72,18 +74,22 @@
 </div>
 
 <script>
-  // Filtro cliente-side por nombre -- el catálogo es pequeño (una
-  // decena de herramientas por tenant), no hace falta pedirlo al
-  // servidor. Oculta la sección entera de una categoría si ningún
-  // card suyo coincide, para no dejar cabeceras huérfanas sobre un
-  // hueco vacío.
+  // Filtro cliente-side por nombre y por categoría -- el catálogo es
+  // pequeño (una decena de herramientas por tenant), no hace falta
+  // pedirlo al servidor. Oculta la sección entera de una categoría si
+  // ningún card suyo coincide, para no dejar cabeceras huérfanas sobre un
+  // hueco vacío. Los chips de categoría se construyen aquí a partir de las
+  // secciones que ya pintó el servidor (sin JS la página sigue completa).
   (function () {
     var input = document.getElementById("tools-buscar-input");
-    if (!input) return;
     var secciones = document.querySelectorAll(".tools-section");
-    input.addEventListener("input", function () {
-      var texto = input.value.trim().toLowerCase();
+    var chips = document.getElementById("tools-chips");
+    var categoria = "";
+
+    function aplicar() {
+      var texto = input ? input.value.trim().toLowerCase() : "";
       secciones.forEach(function (seccion) {
+        var enCategoria = !categoria || seccion.dataset.categoria === categoria;
         var algunaVisible = false;
         seccion.querySelectorAll(".tool-card").forEach(function (card) {
           var nombre = (card.querySelector(".tool-card-name")?.textContent || "").toLowerCase();
@@ -91,9 +97,32 @@
           card.hidden = !coincide;
           if (coincide) algunaVisible = true;
         });
-        seccion.hidden = !algunaVisible;
+        seccion.hidden = !enCategoria || !algunaVisible;
       });
-    });
+    }
+
+    if (chips && secciones.length > 1) {
+      var nombres = [""].concat(Array.prototype.map.call(secciones, function (s) { return s.dataset.categoria; }));
+      nombres.forEach(function (nombre) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "tools-chip" + (nombre === "" ? " is-activo" : "");
+        b.textContent = nombre || "{{ _('Todas') }}";
+        b.setAttribute("aria-pressed", nombre === "" ? "true" : "false");
+        b.addEventListener("click", function () {
+          categoria = nombre;
+          chips.querySelectorAll(".tools-chip").forEach(function (c) {
+            var activo = c === b;
+            c.classList.toggle("is-activo", activo);
+            c.setAttribute("aria-pressed", activo ? "true" : "false");
+          });
+          aplicar();
+        });
+        chips.appendChild(b);
+      });
+    }
+
+    if (input) input.addEventListener("input", aplicar);
   })();
 </script>
 {% endblock %}
