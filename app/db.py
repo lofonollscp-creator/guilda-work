@@ -413,6 +413,15 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
 );
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
+-- Dependencias: `tarea_id` espera a `depende_de_id` (no se puede iniciar ni
+-- completar hasta que la otra esté completada).
+CREATE TABLE IF NOT EXISTS tareas_dependencias (
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    depende_de_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    PRIMARY KEY (tarea_id, depende_de_id)
+);
+CREATE INDEX IF NOT EXISTS idx_tareas_dependencias_origen ON tareas_dependencias(depende_de_id);
+
 -- Plantillas de tareas / proyectos ("alta de cliente", "cierre trimestral"):
 -- un conjunto de tareas con plazos relativos a la fecha de inicio. Las
 -- compartidas las ven y usan todos los del despacho; editarlas es del autor.
@@ -5289,7 +5298,10 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
 
 def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     """Completa la tarea (la puede completar su dueño o quien la tiene
-    asignada) y cierra los cronómetros que siguieran en marcha sobre ella."""
+    asignada) y cierra los cronómetros que siguieran en marcha sobre ella.
+    No hace nada si aún espera a otras tareas (ver tarea_bloqueada)."""
+    if tarea_bloqueada(tarea_id):
+        return
     conn = get_connection()
     try:
         cur = conn.execute(
@@ -5313,6 +5325,9 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
         finalizar_tarea(abierto["usuario_id"], abierto["id"])
     if completada:
         registrar_actividad_tarea(usuario_id, tarea_id, "completada")
+        for libre in tareas_desbloqueadas_por(tarea_id):
+            registrar_actividad_tarea(usuario_id, libre["id"], "desbloqueada", _asunto_tarea(tarea_id))
+            _emitir_evento(usuario_id, "tarea.desbloqueada", {"tarea_id": libre["id"], "responsable_id": libre["responsable_id"]})
         _emitir_evento(usuario_id, "tarea.completada", {"tarea_id": tarea_id, "completada_por": usuario_id})
 
 
@@ -5321,6 +5336,8 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
     (porcentaje, fecha y cronómetros); al reabrir una completada se limpia su fecha."""
     estados = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
     if estado not in estados or not puede_trabajar_tarea(usuario_id, tarea_id):
+        return False
+    if estado in ("en_progreso", "completada") and tarea_bloqueada(tarea_id):
         return False
     if estado == "completada":
         completar_tarea_outlook(usuario_id, tarea_id)
@@ -5749,9 +5766,11 @@ def obtener_plantilla_tareas(usuario_id: int, plantilla_id: int) -> dict | None:
 def aplicar_plantilla_tareas(
     usuario_id: int, plantilla_id: int, fecha_inicio: str, *, categoria_id: int | None = None,
     nuevo_proyecto: str | None = None, cliente_fiscal_id: int | None = None, asignada_a: int | None = None,
+    encadenar: bool = False,
 ) -> list[int]:
     """Crea las tareas de la plantilla con vencimiento = fecha de inicio + sus días
     (YYYY-MM-DD). `nuevo_proyecto` crea (o reutiliza) un proyecto con ese nombre.
+    `encadenar`: cada tarea espera a que se complete la anterior.
     Devuelve los ids de las tareas creadas ([] si la plantilla no es visible)."""
     plantilla = obtener_plantilla_tareas(usuario_id, plantilla_id)
     if plantilla is None:
@@ -5772,8 +5791,125 @@ def aplicar_plantilla_tareas(
         for texto in (item["checklist"] or "").split("\n"):
             if texto:
                 agregar_item_checklist(usuario_id, tarea_id, texto)
+        if encadenar and ids:
+            anadir_dependencia_tarea(usuario_id, tarea_id, ids[-1])  # cada tarea espera a la anterior
         ids.append(tarea_id)
     return ids
+
+
+# ---- Dependencias entre tareas -----------------------------------------------
+
+def _depende_transitivamente(conn: sqlite3.Connection, tarea_id: int, objetivo_id: int) -> bool:
+    """¿`tarea_id` depende (directa o indirectamente) de `objetivo_id`?"""
+    visto: set[int] = set()
+    pendientes = [tarea_id]
+    while pendientes:
+        actual = pendientes.pop()
+        if actual == objetivo_id:
+            return True
+        if actual in visto:
+            continue
+        visto.add(actual)
+        pendientes += [f["depende_de_id"] for f in conn.execute(
+            "SELECT depende_de_id FROM tareas_dependencias WHERE tarea_id = ?", (actual,))]
+    return False
+
+
+def anadir_dependencia_tarea(usuario_id: int, tarea_id: int, depende_de_id: int) -> bool:
+    """`tarea_id` pasa a esperar a `depende_de_id`. Hace falta poder editar la
+    primera y ver la segunda; no se permiten ciclos ni auto-dependencias."""
+    if tarea_id == depende_de_id or not puede_editar_tarea(usuario_id, tarea_id):
+        return False
+    if rol_en_tarea(usuario_id, depende_de_id) is None:
+        return False
+    conn = get_connection()
+    try:
+        if _depende_transitivamente(conn, depende_de_id, tarea_id):
+            return False  # crearía un ciclo
+        conn.execute(
+            "INSERT OR IGNORE INTO tareas_dependencias (tarea_id, depende_de_id) VALUES (?, ?)", (tarea_id, depende_de_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    registrar_actividad_tarea(usuario_id, tarea_id, "dependencia", _asunto_tarea(depende_de_id))
+    return True
+
+
+def quitar_dependencia_tarea(usuario_id: int, tarea_id: int, depende_de_id: int) -> bool:
+    if not puede_editar_tarea(usuario_id, tarea_id):
+        return False
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "DELETE FROM tareas_dependencias WHERE tarea_id = ? AND depende_de_id = ?", (tarea_id, depende_de_id)
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def _asunto_tarea(tarea_id: int) -> str:
+    conn = get_connection()
+    try:
+        f = conn.execute("SELECT asunto FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+        return f["asunto"][:80] if f else ""
+    finally:
+        conn.close()
+
+
+def dependencias_de_tarea(tarea_id: int) -> list[dict]:
+    """De qué tareas depende (con su estado); las eliminadas no cuentan."""
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            """SELECT t.id, t.asunto, t.estado FROM tareas_dependencias d JOIN tareas_outlook t ON t.id = d.depende_de_id
+               WHERE d.tarea_id = ? AND t.papelera_en IS NULL ORDER BY t.id""",
+            (tarea_id,),
+        )]
+    finally:
+        conn.close()
+
+
+def bloqueos_de_tareas(tarea_ids: list[int]) -> dict[int, int]:
+    """{tarea_id: nº de tareas previas sin completar}, solo para las bloqueadas."""
+    if not tarea_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        return {
+            f["tarea_id"]: f["n"] for f in conn.execute(
+                f"""SELECT d.tarea_id, COUNT(*) AS n FROM tareas_dependencias d JOIN tareas_outlook t ON t.id = d.depende_de_id
+                    WHERE d.tarea_id IN ({marcas}) AND t.papelera_en IS NULL AND t.estado != 'completada'
+                    GROUP BY d.tarea_id""",
+                tarea_ids,
+            )
+        }
+    finally:
+        conn.close()
+
+
+def tarea_bloqueada(tarea_id: int) -> bool:
+    return bool(bloqueos_de_tareas([tarea_id]).get(tarea_id))
+
+
+def tareas_desbloqueadas_por(tarea_id: int) -> list[dict]:
+    """Tareas abiertas que esperaban a `tarea_id` y que ya no esperan a nadie
+    (con su responsable: el asignado o, si no, el dueño)."""
+    conn = get_connection()
+    try:
+        candidatas = conn.execute(
+            """SELECT t.id, t.asunto, COALESCE(t.asignada_a, t.usuario_id) AS responsable_id
+               FROM tareas_dependencias d JOIN tareas_outlook t ON t.id = d.tarea_id
+               WHERE d.depende_de_id = ? AND t.papelera_en IS NULL AND t.estado != 'completada'""",
+            (tarea_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    pendientes = bloqueos_de_tareas([c["id"] for c in candidatas])
+    return [dict(c) for c in candidatas if not pendientes.get(c["id"])]
 
 
 def carga_equipo(usuario_id: int) -> list[dict]:
@@ -5881,6 +6017,8 @@ def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_i
     tarea = obtener_tarea_outlook_visible(usuario_id, tarea_id)
     if tarea is None or not puede_trabajar_tarea(usuario_id, tarea_id):
         raise ValueError("La tarea no existe.")
+    if tarea_bloqueada(tarea_id):
+        raise ValueError("Esta tarea espera a otras que todavía no están completadas.")
     conn = get_connection()
     try:
         en_marcha = conn.execute(
@@ -6098,6 +6236,7 @@ def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> No
             conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tarea_comentarios WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tarea_actividad WHERE tarea_id = ?", (tarea_id,))
+            conn.execute("DELETE FROM tareas_dependencias WHERE tarea_id = ? OR depende_de_id = ?", (tarea_id, tarea_id))
         conn.execute("DELETE FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:

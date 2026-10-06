@@ -156,6 +156,7 @@ def _contexto_filas(tareas) -> dict:
         "cronometros": db.cronometros_de_tareas_outlook(g.usuario_id, ids),
         "checklists": db.resumen_checklist(ids),
         "participantes": db.participantes_de_tareas(ids),
+        "bloqueos": db.bloqueos_de_tareas(ids),
         "n_comentarios": db.contar_comentarios_tareas(ids),
         "menus": db.listar_categorias(g.usuario_id),
         "companeros": db.listar_companeros_tenant(g.usuario_id),
@@ -206,6 +207,29 @@ def _notificar_compartida(origen_id: int, tarea_id: int, destino_id: int, rol: s
             url=url_for("tareas.listar", vista="compartidas"),
             datos={"tipo": "tarea_compartida", "tarea_id": tarea_id},
         )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+MENSAJE_BLOQUEADA = "Esta tarea espera a otras que todavía no están completadas."
+
+
+def _avisar_desbloqueos(autor_id: int, tarea_id: int, estaba_completada: bool) -> None:
+    """Si completar la tarea deja libres a otras que la esperaban, avisa a sus
+    responsables. Nunca rompe la acción."""
+    try:
+        tarea = db.obtener_tarea_outlook_visible(autor_id, tarea_id)
+        if estaba_completada or tarea is None or tarea["estado"] != "completada":
+            return
+        quien = db.nombre_mostrado_usuario(autor_id) or db.obtener_usuario(autor_id)["email"]
+        for libre in db.tareas_desbloqueadas_por(tarea_id):
+            if libre["responsable_id"] == autor_id or not db.notificacion_tipo_activa(libre["responsable_id"], "tarea_asignada"):
+                continue
+            notificaciones.crear_y_enviar(
+                libre["responsable_id"], "tarea_asignada", "Ya puedes empezar",
+                f"{quien} ha completado «{tarea['asunto']}»; «{libre['asunto']}» ya está libre.",
+                url=url_for("tareas.ver", tarea_id=libre["id"]), datos={"tipo": "tarea_desbloqueada", "tarea_id": libre["id"]},
+            )
     except Exception:  # noqa: BLE001
         pass
 
@@ -333,6 +357,10 @@ def editar(tarea_id: int):
     def _contexto_edicion(tarea, error=None):
         return dict(
             **_contexto_comentarios(tarea["id"]),
+            candidatas_dependencia=[
+                t for t in db.listar_tareas_outlook(g.usuario_id, incluir_asignadas=True, excluir_completadas=True, limite=200)
+                if t["id"] != tarea["id"] and t["id"] not in {d["id"] for d in db.dependencias_de_tarea(tarea["id"])}
+            ],
             es_dueno=es_dueno, dueno_nombre=db.nombre_mostrado_usuario(tarea["usuario_id"]),
             participantes=db.participantes_de_tarea(tarea["id"]),
             tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, menus=menus, error=error,
@@ -361,8 +389,11 @@ def editar(tarea_id: int):
         }
         if not es_dueno:
             campos.pop("categoria_id")
+        if campos["estado"] in ("en_progreso", "completada") and campos["estado"] != tarea["estado"] and db.tarea_bloqueada(tarea_id):
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, MENSAJE_BLOQUEADA))
         if campos["estado"] == "completada" and tarea["estado"] != "completada":
             db.completar_tarea_outlook(g.usuario_id, tarea_id)
+            _avisar_desbloqueos(g.usuario_id, tarea_id, False)
             campos.pop("estado")
             campos.pop("porcentaje_completado")
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
@@ -371,7 +402,9 @@ def editar(tarea_id: int):
             _notificar_asignacion(g.usuario_id, tarea_id, nueva_asignacion)
         return redirect(url_for("tareas.listar"))
 
-    return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea))
+    return render_template(
+        "tarea_outlook_editar.html", **_contexto_edicion(tarea, (request.args.get("error") or "")[:200] or None)
+    )
 
 
 @tareas_bp.route("/hoy")
@@ -405,8 +438,13 @@ def tablero():
 @tareas_bp.route("/<int:tarea_id>/estado", methods=["POST"])
 @login_required
 def cambiar_estado(tarea_id: int):
+    previa = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    estaba_completada = previa is not None and previa["estado"] == "completada"
     if not db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, request.form.get("estado", "")):
+        if previa is not None and db.tarea_bloqueada(tarea_id) and request.form.get("estado") in ("en_progreso", "completada"):
+            return _volver_con_error(MENSAJE_BLOQUEADA)
         abort(404)
+    _avisar_desbloqueos(g.usuario_id, tarea_id, estaba_completada)
     return redirect(request.referrer or url_for("tareas.tablero"))
 
 
@@ -495,6 +533,7 @@ def _contexto_comentarios(tarea_id: int) -> dict:
     return {
         "comentarios": db.listar_comentarios_tarea(g.usuario_id, tarea_id),
         "actividad": db.actividad_de_tarea(g.usuario_id, tarea_id),
+        "dependencias": db.dependencias_de_tarea(tarea_id),
         "tiempo_equipo": db.tiempo_equipo_tarea(g.usuario_id, tarea_id),
         "personas_mencionables": [p for p in db.personas_de_tarea(g.usuario_id, tarea_id) if p["id"] != g.usuario_id],
     }
@@ -518,6 +557,25 @@ def eliminar_comentario(tarea_id: int, comentario_id: int):
     if not db.eliminar_comentario_tarea(g.usuario_id, tarea_id, comentario_id):
         abort(404)
     return redirect(url_for("tareas.ver", tarea_id=tarea_id) + "#comentarios")
+
+
+@tareas_bp.route("/<int:tarea_id>/dependencias", methods=["POST"])
+@login_required
+def anadir_dependencia(tarea_id: int):
+    espera_a = _int_o_none(request.form.get("depende_de_id"))
+    if espera_a is None or not db.puede_editar_tarea(g.usuario_id, tarea_id):
+        abort(404)
+    if not db.anadir_dependencia_tarea(g.usuario_id, tarea_id, espera_a):
+        return redirect(url_for("tareas.editar", tarea_id=tarea_id, error="No se puede enlazar: crearía un ciclo o no tienes acceso a esa tarea.") + "#dependencias")
+    return redirect(url_for("tareas.editar", tarea_id=tarea_id) + "#dependencias")
+
+
+@tareas_bp.route("/<int:tarea_id>/dependencias/quitar", methods=["POST"])
+@login_required
+def quitar_dependencia(tarea_id: int):
+    if not db.quitar_dependencia_tarea(g.usuario_id, tarea_id, _int_o_none(request.form.get("depende_de_id")) or 0):
+        abort(404)
+    return redirect(url_for("tareas.editar", tarea_id=tarea_id) + "#dependencias")
 
 
 @tareas_bp.route("/<int:tarea_id>/compartir", methods=["POST"])
@@ -547,7 +605,11 @@ def dejar_de_compartir(tarea_id: int):
 @tareas_bp.route("/<int:tarea_id>/completar", methods=["POST"])
 @login_required
 def completar(tarea_id: int):
+    previa = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    if previa is not None and db.tarea_bloqueada(tarea_id):
+        return _volver_con_error(MENSAJE_BLOQUEADA)
     db.completar_tarea_outlook(g.usuario_id, tarea_id)
+    _avisar_desbloqueos(g.usuario_id, tarea_id, previa is not None and previa["estado"] == "completada")
     return redirect(request.referrer or url_for("tareas.listar"))
 
 
@@ -663,6 +725,7 @@ def aplicar_plantilla(plantilla_id: int):
         nuevo_proyecto=request.form.get("nuevo_proyecto"),
         cliente_fiscal_id=_int_o_none(request.form.get("cliente_fiscal_id")),
         asignada_a=_int_o_none(request.form.get("asignada_a")),
+        encadenar=request.form.get("encadenar") == "1",
     )
     if not ids:
         abort(404)

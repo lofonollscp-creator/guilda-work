@@ -98,6 +98,37 @@
   </div>
 </form>
 
+<section class="tarea-dependencias-bloque" id="dependencias" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Espera a') }}</h2>
+  {% if dependencias %}
+  <ul class="tarea-participantes">
+    {% for d in dependencias %}
+    <li>
+      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ 'check' if d.estado == 'completada' else 'lock' }}"></use></svg>
+      <span class="tarea-participante-nombre">{{ d.asunto }}</span>
+      <span class="pill">{{ _('Completada') if d.estado == 'completada' else _('Pendiente') }}</span>
+      <form action="{{ url_for('tareas.quitar_dependencia', tarea_id=tarea.id) }}" method="post">
+        <input type="hidden" name="depende_de_id" value="{{ d.id }}">
+        <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('No espera a ninguna otra tarea.') }}</p>
+  {% endif %}
+  {% if candidatas_dependencia %}
+  <form class="quick-row" action="{{ url_for('tareas.anadir_dependencia', tarea_id=tarea.id) }}" method="post">
+    <select name="depende_de_id" required aria-label="{{ _('Tarea previa') }}">
+      <option value="">{{ _('Esperar a la tarea…') }}</option>
+      {% for c in candidatas_dependencia %}<option value="{{ c.id }}">{{ c.asunto|truncate(60, True) }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-ghost">{{ _('Añadir') }}</button>
+  </form>
+  <p class="muted nota-ayuda-formato">{{ _('Mientras alguna tarea previa no esté completada, esta no se puede iniciar ni completar.') }}</p>
+  {% endif %}
+</section>
+
 <section class="tarea-compartir-bloque" id="compartir" style="max-width: 640px;">
   <h2 class="tarea-bloque-titulo">{{ _('Compartida con') }}</h2>
   {% if participantes %}

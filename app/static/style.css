@@ -4732,3 +4732,4 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .plantilla-acciones { display: flex; gap: 8px; margin-top: 10px; }
 .plantilla-form .edit-form textarea { font-family: var(--font-mono); font-size: 13px; }
 @media (max-width: 900px) { .plantillas-layout { grid-template-columns: 1fr; } }
+.pill.tarea-bloqueada { display: inline-flex; align-items: center; gap: 5px; color: var(--warning); border-color: var(--warning); }

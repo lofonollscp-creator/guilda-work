@@ -1,5 +1,7 @@
 """Tareas compartidas entre usuarios del mismo despacho: el colaborador puede
 editar y completar; el observador solo ve; nada cruza de un tenant a otro."""
+import pytest
+
 from app import db
 from tests.conftest import iniciar_sesion_de_prueba
 
@@ -346,3 +348,73 @@ def test_rutas_plantillas(cliente):
     assert "Presentar 303" in cliente.get("/tareas/").get_data(as_text=True)
     assert cliente.post("/tareas/plantillas", data={"nombre": "", "items": ""}).status_code == 302
     assert cliente.post(f"/tareas/plantillas/{pid}/eliminar").status_code == 302
+
+
+# --- Dependencias entre tareas ---------------------------------------------------------
+
+def test_dependencia_bloquea_hasta_completar_la_previa_y_evita_ciclos():
+    _, (ana, luis) = _despacho("ana15@comp.com", "luis15@comp.com")
+    a = db.crear_tarea_outlook(ana, "Recoger datos")
+    b = db.crear_tarea_outlook(ana, "Preparar informe")
+    c = db.crear_tarea_outlook(ana, "Enviar", asignada_a=luis)
+    assert db.anadir_dependencia_tarea(ana, b, a) is True
+    assert db.anadir_dependencia_tarea(ana, c, b) is True
+    assert db.anadir_dependencia_tarea(ana, a, c) is False   # ciclo a -> c -> b -> a
+    assert db.anadir_dependencia_tarea(ana, a, a) is False   # consigo misma
+    assert db.bloqueos_de_tareas([a, b, c]) == {b: 1, c: 1}
+
+    db.completar_tarea_outlook(ana, b)                        # b espera a a: no se completa
+    assert db.obtener_tarea_outlook(ana, b)["estado"] != "completada"
+    assert db.cambiar_estado_tarea_outlook(ana, b, "en_progreso") is False
+    with pytest.raises(ValueError):
+        db.iniciar_cronometro_tarea_outlook(ana, b, db.crear_categoria(ana, "P"))
+
+    db.completar_tarea_outlook(ana, a)
+    assert [t["id"] for t in db.tareas_desbloqueadas_por(a)] == [b]
+    assert db.bloqueos_de_tareas([b, c]) == {c: 1}
+    db.completar_tarea_outlook(ana, b)
+    assert [(t["id"], t["responsable_id"]) for t in db.tareas_desbloqueadas_por(b)] == [(c, luis)]
+    assert "desbloqueada" in [x["tipo"] for x in db.actividad_de_tarea(ana, c)]
+    assert db.bloqueos_de_tareas([c]) == {}
+
+
+def test_dependencias_respetan_permisos_y_borrados():
+    _, (ana, luis, eva) = _despacho("ana16@comp.com", "luis16@comp.com", "eva16@comp.com")
+    a = db.crear_tarea_outlook(ana, "A")
+    b = db.crear_tarea_outlook(ana, "B")
+    privada = db.crear_tarea_outlook(eva, "Privada de Eva")
+    db.compartir_tarea_outlook(ana, b, luis, "observa")
+    assert db.anadir_dependencia_tarea(luis, b, a) is False       # solo lectura: no puede editar
+    assert db.anadir_dependencia_tarea(ana, b, privada) is False  # no ve la tarea de Eva
+    assert db.anadir_dependencia_tarea(ana, b, a) is True
+    assert db.quitar_dependencia_tarea(luis, b, a) is False
+    db.eliminar_tarea_outlook(ana, a)                              # una previa en la papelera ya no bloquea
+    assert db.bloqueos_de_tareas([b]) == {}
+    assert db.quitar_dependencia_tarea(ana, b, a) is True
+
+
+def test_plantilla_encadenada_crea_la_cadena():
+    _, (ana,) = _despacho("ana17@comp.com")
+    pid = db.crear_plantilla_tareas(ana, "Cadena", None, "Uno | 0\nDos | 1\nTres | 2")
+    ids = db.aplicar_plantilla_tareas(ana, pid, "2026-10-01", encadenar=True)
+    assert db.bloqueos_de_tareas(ids) == {ids[1]: 1, ids[2]: 1}
+    assert [d["id"] for d in db.dependencias_de_tarea(ids[2])] == [ids[1]]
+
+
+def test_rutas_dependencias(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno6@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho dependencias")
+    db.asignar_tenant(uid, tenant)
+    a = db.crear_tarea_outlook(uid, "Primera")
+    b = db.crear_tarea_outlook(uid, "Segunda")
+    assert cliente.post(f"/tareas/{b}/dependencias", data={"depende_de_id": a}).status_code == 302
+    assert "Espera a" in cliente.get(f"/tareas/{b}/editar").get_data(as_text=True)
+    assert "Espera a 1 tarea" in cliente.get("/tareas/").get_data(as_text=True)
+    r = cliente.post(f"/tareas/{b}/completar")
+    assert r.status_code == 302 and "error=" in r.headers["Location"]
+    assert db.obtener_tarea_outlook(uid, b)["estado"] != "completada"
+    cliente.post(f"/tareas/{a}/completar")
+    cliente.post(f"/tareas/{b}/completar")
+    assert db.obtener_tarea_outlook(uid, b)["estado"] == "completada"
+    r = cliente.post(f"/tareas/{a}/dependencias", data={"depende_de_id": b})   # ciclo
+    assert "error=" in r.headers["Location"]

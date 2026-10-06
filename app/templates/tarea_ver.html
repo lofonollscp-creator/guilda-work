@@ -21,6 +21,10 @@
     {% if tarea.categoria_nombre %}<span class="pill">{{ tarea.categoria_nombre }}</span>{% endif %}
     {% if participantes %}<span class="pill tarea-compartida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ participantes|map(attribute='nombre')|join(', ') }}</span>{% endif %}
   </p>
+  {% if dependencias %}
+  <p class="muted"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Espera a') }}:
+    {% for d in dependencias %}<a href="{{ url_for('tareas.ver', tarea_id=d.id) }}">{{ d.asunto }}</a>{{ ' ✓' if d.estado == 'completada' }}{{ ', ' if not loop.last }}{% endfor %}</p>
+  {% endif %}
   {% if checklist %}
   <ul class="tarea-checklist-lista">
     {% for item in checklist %}<li class="tarea-checklist-item {{ 'is-hecha' if item.hecha }}"><span class="tarea-checklist-texto">{{ item.texto }}</span></li>{% endfor %}

@@ -36,6 +36,9 @@
   {% elif mi_rol %}
   <span class="pill tarea-compartida" title="{{ _('Compartida contigo por %(quien)s', quien=t.creador_nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('De %(quien)s', quien=t.creador_nombre) }} · {{ _('colabora') if mi_rol == 'colabora' else _('solo lectura') }}</span>
   {% endif %}
+  {% if bloqueos is defined and bloqueos.get(t.id) and t.estado != 'completada' %}
+  <span class="pill tarea-bloqueada" title="{{ _('Espera a otras tareas que aún no están completadas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ ngettext('Espera a %(n)s tarea', 'Espera a %(n)s tareas', bloqueos[t.id], n=bloqueos[t.id]) }}</span>
+  {% endif %}
   {% if n_comentarios is defined and n_comentarios.get(t.id) %}
   <a class="pill tarea-comentarios-pill" href="{{ url_for('tareas.ver', tarea_id=t.id) }}#comentarios" title="{{ _('Comentarios') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg> {{ n_comentarios[t.id] }}</a>
   {% endif %}

@@ -78,6 +78,8 @@
       {% elif a.tipo == 'compartida' %}{{ _('compartió con') }} {{ a.detalle }}
       {% elif a.tipo == 'dejo_compartir' %}{{ _('dejó de compartir con') }} {{ a.detalle }}
       {% elif a.tipo == 'comentario' %}{{ _('comentó') }}
+      {% elif a.tipo == 'dependencia' %}{{ _('la dejó esperando a') }} «{{ a.detalle }}»
+      {% elif a.tipo == 'desbloqueada' %}{{ _('la desbloqueó al completar') }} «{{ a.detalle }}»
       {% elif a.tipo == 'cronometro' %}{{ _('inició el cronómetro') }}
       {% elif a.tipo == 'subtarea_nueva' %}{{ _('añadió la subtarea') }} «{{ a.detalle }}»
       {% elif a.tipo == 'subtarea_hecha' %}{{ _('marcó como hecha') }} «{{ a.detalle }}»

@@ -49,6 +49,7 @@
         {% for u in companeros %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
       </select>
       {% endif %}
+      <label class="checkbox-label" title="{{ _('Cada tarea espera a que se complete la anterior') }}"><input type="checkbox" name="encadenar" value="1"> {{ _('Encadenar') }}</label>
       <button type="submit" class="btn btn-primary">{{ _('Crear tareas') }}</button>
     </form>
     {% if p.usuario_id == g.usuario_id %}
