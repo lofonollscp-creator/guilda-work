@@ -2519,3 +2519,22 @@ Cuando compres un dominio:
   PC de escritorio si usas las dos a la vez — hoy serían dos bases de
   datos independientes. Si llega a hacer falta, se plantea como una fase
   aparte.
+
+
+## Backoffice independiente (backoffice.guildawork.com)
+
+El backoffice es una aplicación aparte (`backoffice/`, proceso `serve_backoffice.py`
+en `127.0.0.1:8001`, unidad `deploy/guilda-backoffice.service`): **no usa Kratos ni la
+sesión de `app.guildawork.com`**. Tiene sus propios administradores
+(`data/backoffice.db`, contraseñas con scrypt), sesión propia (cookie `bo_session`,
+caduca a la hora de inactividad y a las 12 h), protección CSRF, bloqueo tras 5 intentos
+fallidos en 15 minutos y registro de actividad. Comparte únicamente la base de datos de
+la plataforma (`registro.db`) para administrar tenants y usuarios.
+
+- Crear o cambiar un administrador (la contraseña generada se muestra una sola vez):
+  `.venv/bin/python scripts/crear_admin_backoffice.py USUARIO [--nombre "Nombre"] [--cambiar]`
+- Variables opcionales: `BACKOFFICE_PORT` (8001), `BACKOFFICE_DB`, `BACKOFFICE_SECRET_KEY`
+  (si no, se genera `data/backoffice_secret.key`, permisos 0600).
+- Caddy: bloque de `deploy/Caddyfile.backoffice`.
+- Las rutas antiguas `/backoffice/...` de `app.guildawork.com` siguen existiendo (con el
+  login de la app) hasta que se retiren.

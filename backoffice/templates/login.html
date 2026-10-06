@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es" data-tema="oscuro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Acceso · Backoffice Guilda Work</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='backoffice.css') }}">
+  <script src="{{ url_for('static', filename='tema.js') }}"></script>
+</head>
+<body class="pagina-login">
+  <main class="login-caja">
+    <div class="marca marca-grande"><span class="marca-logo">GUILDA</span><span class="marca-sub">backoffice</span></div>
+    <h1>Acceso al backoffice</h1>
+    <p class="muted">Zona restringida a la administración de la plataforma.</p>
+    {% if error %}<p class="aviso aviso-error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" autocomplete="on">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Usuario
+        <input type="text" name="usuario" value="{{ usuario }}" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+      </label>
+      <label>Contraseña
+        <input type="password" name="contrasena" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="boton boton-primario boton-ancho">Entrar</button>
+    </form>
+  </main>
+  <script src="{{ url_for('static', filename='backoffice.js') }}"></script>
+</body>
+</html>

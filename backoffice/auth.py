@@ -1,0 +1,256 @@
+"""Autenticación PROPIA del backoffice, sin relación con Kratos ni con la
+sesión de app.guildawork.com: administradores en su propia base SQLite
+(data/backoffice.db), contraseñas con scrypt, bloqueo por intentos fallidos,
+sesión firmada de cookie propia (bo_session), caducidad por inactividad y
+protección CSRF en todo POST."""
+from __future__ import annotations
+
+import hmac
+import os
+import secrets
+import sqlite3
+import time
+from datetime import datetime, timedelta
+from functools import wraps
+from pathlib import Path
+
+from flask import abort, g, redirect, request, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app import db as plataforma
+
+DB_PATH = Path(os.environ.get("BACKOFFICE_DB") or (plataforma.RAIZ_PROYECTO / "data" / "backoffice.db"))
+SECRET_PATH = Path(os.environ.get("BACKOFFICE_SECRET_FILE") or (plataforma.RAIZ_PROYECTO / "data" / "backoffice_secret.key"))
+
+MIN_LONGITUD_CONTRASENA = 12
+INTENTOS_MAX_POR_USUARIO = 5
+INTENTOS_MAX_POR_IP = 25
+VENTANA_BLOQUEO_MIN = 15
+INACTIVIDAD_MAX_MIN = 60
+SESION_MAX_HORAS = 12
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY,
+    usuario TEXT NOT NULL UNIQUE,
+    nombre TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL,
+    ultimo_acceso TEXT
+);
+CREATE TABLE IF NOT EXISTS intentos_login (
+    id INTEGER PRIMARY KEY,
+    usuario TEXT NOT NULL,
+    ip TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS auditoria (
+    id INTEGER PRIMARY KEY,
+    admin_id INTEGER,
+    admin_usuario TEXT,
+    accion TEXT NOT NULL,
+    detalle TEXT,
+    ip TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_intentos_login ON intentos_login(usuario, creado_en);
+"""
+
+
+def _ahora() -> str:
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def conectar() -> sqlite3.Connection:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 5000")
+    conn.executescript(SCHEMA)
+    return conn
+
+
+def clave_secreta() -> str:
+    """Clave de firma de la sesión: variable de entorno o fichero propio (0600),
+    generado la primera vez. Distinta de cualquier clave de la app."""
+    valor = os.environ.get("BACKOFFICE_SECRET_KEY")
+    if valor:
+        return valor
+    if not SECRET_PATH.exists():
+        SECRET_PATH.parent.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(SECRET_PATH, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w") as f:
+            f.write(secrets.token_urlsafe(64))
+    return SECRET_PATH.read_text().strip()
+
+
+# --- Administradores ---------------------------------------------------------
+
+def validar_contrasena(contrasena: str) -> None:
+    if len(contrasena) < MIN_LONGITUD_CONTRASENA:
+        raise ValueError(f"La contraseña debe tener al menos {MIN_LONGITUD_CONTRASENA} caracteres.")
+
+
+def crear_admin(usuario: str, contrasena: str, nombre: str | None = None) -> int:
+    usuario = usuario.strip().lower()
+    if not usuario or len(usuario) > 64 or not all(c.isalnum() or c in "._-@" for c in usuario):
+        raise ValueError("Usuario no válido (letras, números y . _ - @).")
+    validar_contrasena(contrasena)
+    conn = conectar()
+    try:
+        cur = conn.execute(
+            "INSERT INTO admins (usuario, nombre, password_hash, creado_en) VALUES (?, ?, ?, ?)",
+            (usuario, (nombre or usuario).strip(), generate_password_hash(contrasena), _ahora()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def cambiar_contrasena(usuario: str, contrasena: str) -> bool:
+    validar_contrasena(contrasena)
+    conn = conectar()
+    try:
+        cur = conn.execute(
+            "UPDATE admins SET password_hash = ? WHERE usuario = ?",
+            (generate_password_hash(contrasena), usuario.strip().lower()),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+_HASH_FALSO = generate_password_hash("contrasena-que-nadie-tiene")
+
+
+def bloqueado(conn: sqlite3.Connection, usuario: str, ip: str) -> bool:
+    desde = (datetime.now() - timedelta(minutes=VENTANA_BLOQUEO_MIN)).isoformat(timespec="seconds")
+    por_usuario = conn.execute(
+        "SELECT COUNT(*) FROM intentos_login WHERE usuario = ? AND creado_en >= ?", (usuario, desde)
+    ).fetchone()[0]
+    por_ip = conn.execute(
+        "SELECT COUNT(*) FROM intentos_login WHERE ip = ? AND creado_en >= ?", (ip, desde)
+    ).fetchone()[0]
+    return por_usuario >= INTENTOS_MAX_POR_USUARIO or por_ip >= INTENTOS_MAX_POR_IP
+
+
+def verificar(usuario: str, contrasena: str, ip: str) -> tuple[sqlite3.Row | None, str | None]:
+    """(admin, None) si las credenciales valen; (None, motivo) si no. El motivo
+    es genérico a propósito ("incorrectas") salvo el bloqueo temporal."""
+    usuario = usuario.strip().lower()
+    conn = conectar()
+    try:
+        if bloqueado(conn, usuario, ip):
+            return None, "bloqueado"
+        admin = conn.execute("SELECT * FROM admins WHERE usuario = ? AND activo = 1", (usuario,)).fetchone()
+        # Se comprueba siempre un hash (aunque el usuario no exista) para que
+        # el tiempo de respuesta no delate qué usuarios existen.
+        correcto = check_password_hash(admin["password_hash"] if admin else _HASH_FALSO, contrasena)
+        if admin is None or not correcto:
+            conn.execute("INSERT INTO intentos_login (usuario, ip, creado_en) VALUES (?, ?, ?)", (usuario, ip, _ahora()))
+            conn.commit()
+            return None, "incorrectas"
+        conn.execute("DELETE FROM intentos_login WHERE usuario = ?", (usuario,))
+        conn.execute("UPDATE admins SET ultimo_acceso = ? WHERE id = ?", (_ahora(), admin["id"]))
+        conn.commit()
+        return admin, None
+    finally:
+        conn.close()
+
+
+def obtener_admin(admin_id: int) -> sqlite3.Row | None:
+    conn = conectar()
+    try:
+        return conn.execute("SELECT * FROM admins WHERE id = ? AND activo = 1", (admin_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+def auditar(accion: str, detalle: str | None = None) -> None:
+    """Registro de acciones del backoffice (quién, qué, desde qué IP). Nunca
+    rompe la acción que audita."""
+    try:
+        conn = conectar()
+        try:
+            admin = g.get("admin")
+            conn.execute(
+                "INSERT INTO auditoria (admin_id, admin_usuario, accion, detalle, ip, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+                (admin["id"] if admin else None, admin["usuario"] if admin else None, accion, detalle, ip_cliente(), _ahora()),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def listar_auditoria(limite: int = 200) -> list[sqlite3.Row]:
+    conn = conectar()
+    try:
+        return conn.execute("SELECT * FROM auditoria ORDER BY id DESC LIMIT ?", (limite,)).fetchall()
+    finally:
+        conn.close()
+
+
+# --- Sesión, CSRF y decoradores ---------------------------------------------
+
+def ip_cliente() -> str:
+    return request.remote_addr or "desconocida"
+
+
+def iniciar_sesion(admin: sqlite3.Row) -> None:
+    session.clear()  # nueva sesión: evita fijación de sesión
+    ahora = int(time.time())
+    session["admin_id"] = admin["id"]
+    session["inicio"] = ahora
+    session["visto"] = ahora
+    session["csrf"] = secrets.token_urlsafe(32)
+    session.permanent = False
+
+
+def cerrar_sesion() -> None:
+    session.clear()
+
+
+def token_csrf() -> str:
+    if "csrf" not in session:
+        session["csrf"] = secrets.token_urlsafe(32)
+    return session["csrf"]
+
+
+def comprobar_csrf() -> None:
+    enviado = request.form.get("_csrf") or request.headers.get("X-CSRF-Token") or ""
+    esperado = session.get("csrf") or ""
+    if not esperado or not hmac.compare_digest(enviado, esperado):
+        abort(400, "Petición no válida (token CSRF).")
+
+
+def sesion_valida() -> bool:
+    admin_id = session.get("admin_id")
+    if not admin_id:
+        return False
+    ahora = int(time.time())
+    if ahora - session.get("inicio", 0) > SESION_MAX_HORAS * 3600:
+        return False
+    if ahora - session.get("visto", 0) > INACTIVIDAD_MAX_MIN * 60:
+        return False
+    admin = obtener_admin(admin_id)
+    if admin is None:
+        return False
+    session["visto"] = ahora
+    g.admin = admin
+    return True
+
+
+def login_required(vista):
+    @wraps(vista)
+    def decorada(*args, **kwargs):
+        if not sesion_valida():
+            session.clear()
+            return redirect(url_for("rutas.login", siguiente=request.path if request.method == "GET" else None))
+        return vista(*args, **kwargs)
+    return decorada

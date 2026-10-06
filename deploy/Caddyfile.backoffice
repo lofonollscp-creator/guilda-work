@@ -1,0 +1,10 @@
+# Bloque de Caddy para el backoffice independiente (sustituye al antiguo que
+# apuntaba al puerto 8000 con rewrite a /backoffice). Va en /etc/caddy/Caddyfile.
+backoffice.guildawork.com {
+	log
+	encode gzip zstd
+	route {
+		crowdsec
+		reverse_proxy localhost:8001
+	}
+}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono, paginacion %}
+{% block titulo %}Tenants{% endblock %}
+{% macro args(pagina=None) %}{{ {'q': q, 'estado': estado, 'plan': plan, 'orden': orden, 'vista': vista, 'por_pagina': pag.por_pagina, 'pagina': pagina or 1}|urlencode }}{% endmacro %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div><h1>Tenants</h1><p class="muted">Organizaciones (gestorías) dadas de alta en la plataforma.</p></div>
+  <button type="button" class="boton boton-primario" data-abrir="dialogo-tenant">{{ icono('layers') }} Crear nuevo tenant</button>
+</header>
+
+<form class="herramientas" method="get">
+  <label class="buscador">{{ icono('search') }}<input type="search" name="q" value="{{ q }}" placeholder="Buscar tenant…" aria-label="Buscar tenant"></label>
+  <details class="desplegable">
+    <summary class="boton">{{ icono('settings') }} Filtros{% if estado or plan %} ({{ (1 if estado else 0) + (1 if plan else 0) }}){% endif %}</summary>
+    <div class="panel-flotante">
+      <label>Estado
+        <select name="estado"><option value="">Todos</option>
+          <option value="activo" {{ 'selected' if estado == 'activo' }}>Activos</option>
+          <option value="suspendido" {{ 'selected' if estado == 'suspendido' }}>Suspendidos</option></select></label>
+      <label>Plan
+        <select name="plan"><option value="">Todos</option><option value="ninguno" {{ 'selected' if plan == 'ninguno' }}>Sin plan</option>
+          {% for p in planes %}<option value="{{ p.id }}" {{ 'selected' if plan == p.id|string }}>{{ p.nombre }}</option>{% endfor %}</select></label>
+      <label>Ordenar por
+        <select name="orden"><option value="nombre" {{ 'selected' if orden == 'nombre' }}>Nombre</option>
+          <option value="usuarios" {{ 'selected' if orden == 'usuarios' }}>Nº de usuarios</option>
+          <option value="recientes" {{ 'selected' if orden == 'recientes' }}>Más recientes</option></select></label>
+      <button type="submit" class="boton boton-primario">Aplicar</button>
+    </div>
+  </details>
+  <select name="por_pagina" data-autoenviar aria-label="Resultados por página">{% for n in por_pagina_opciones %}<option value="{{ n }}" {{ 'selected' if pag.por_pagina == n }}>{{ n }}</option>{% endfor %}</select>
+  <span class="grupo-vista">
+    <button type="submit" name="vista" value="lista" class="boton-icono {{ 'activo' if vista == 'lista' }}" aria-label="Vista de lista" title="Lista">{{ icono('layout-list') }}</button>
+    <button type="submit" name="vista" value="rejilla" class="boton-icono {{ 'activo' if vista == 'rejilla' }}" aria-label="Vista de cuadrícula" title="Cuadrícula">{{ icono('layout-grid') }}</button>
+  </span>
+  <button type="submit" class="boton">Buscar</button>
+</form>
+
+{% if vista == 'rejilla' %}
+<section class="rejilla rejilla-cartas">
+  {% for t in tenants %}
+  <a class="tarjeta carta" href="{{ url_for('rutas.tenant', tenant_id=t.id) }}">
+    <header><span class="avatar" style="--c: {{ t.nombre|color_avatar }}">{{ t.nombre|iniciales }}</span>
+      <div><strong>{{ t.nombre }}</strong><span class="muted">{{ t.plan or 'Sin plan' }}</span></div></header>
+    <p>{% if t.activo %}<span class="insignia insignia-ok">ACTIVO</span>{% else %}<span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</p>
+    <dl class="datos-mini"><div><dt>Usuarios</dt><dd>{{ t.n_usuarios }}</dd></div><div><dt>Clientes</dt><dd>{{ t.n_clientes }}</dd></div></dl>
+    <small class="muted">Actividad: {{ t.ultima_actividad|fecha }}</small>
+  </a>
+  {% else %}<p class="vacio">Ningún tenant coincide con la búsqueda.</p>{% endfor %}
+</section>
+{% else %}
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Tenant</th><th>Plan</th><th>Suscripción</th><th>Usuarios</th><th>Clientes</th><th>Creado</th><th>Actividad</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tenants %}
+      <tr>
+        <td><a class="celda-usuario" href="{{ url_for('rutas.tenant', tenant_id=t.id) }}"><span class="avatar" style="--c: {{ t.nombre|color_avatar }}">{{ t.nombre|iniciales }}</span><strong>{{ t.nombre }}</strong></a></td>
+        <td>{{ t.plan or '—' }}</td>
+        <td>{% if t.suscripcion_estado %}<span class="insignia {{ 'insignia-ok' if t.suscripcion_estado == 'activa' else 'insignia-riesgo' }}">{{ t.suscripcion_estado|upper|replace('_', ' ') }}</span>{% else %}—{% endif %}</td>
+        <td>{{ t.n_usuarios }}</td><td>{{ t.n_clientes }}</td>
+        <td>{{ t.creado_en|fecha }}</td><td>{{ t.ultima_actividad|fecha }}</td>
+        <td>{% if t.activo %}<span class="ok" title="Activo">✓</span>{% else %}<span class="ko" title="Suspendido">✕</span>{% endif %}</td>
+        <td class="acciones"><a class="boton-icono" href="{{ url_for('rutas.tenant', tenant_id=t.id) }}" aria-label="Abrir {{ t.nombre }}">{{ icono('arrow-right') }}</a></td>
+      </tr>
+      {% else %}<tr><td colspan="9" class="vacio">Ningún tenant coincide con la búsqueda.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {{ paginacion(pag, args) }}
+</div>
+{% endif %}
+
+<dialog id="dialogo-tenant" class="dialogo">
+  <form method="post" action="{{ url_for('rutas.crear_tenant') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <h2>Crear nuevo tenant</h2>
+    <label>Nombre de la organización<input type="text" name="nombre" maxlength="120" required></label>
+    <div class="dialogo-pie"><button type="button" class="boton" data-cerrar>Cancelar</button><button type="submit" class="boton boton-primario">Crear tenant</button></div>
+  </form>
+</dialog>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono, insignia_rol %}
+{% block titulo %}{{ t.nombre }}{% endblock %}
+{% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'actividad': ('Actividad', 'activity')} %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div>
+    <a class="migas" href="{{ url_for('rutas.tenants') }}">‹ Tenants</a>
+    <h1>{{ t.nombre }}</h1>
+    <p class="muted">ID {{ t.id }} · creado {{ t.creado_en|fecha }}</p>
+  </div>
+  <form method="post" action="{{ url_for('rutas.alternar_activo', tenant_id=t.id) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton {{ 'boton-peligro' if t.activo else 'boton-primario' }}" {% if t.activo %}data-confirmar="¿Suspender este tenant? Sus usuarios dejarán de poder usarlo."{% endif %}>{{ 'Suspender tenant' if t.activo else 'Reactivar tenant' }}</button>
+  </form>
+</header>
+
+<div class="ficha">
+  <nav class="subnav" aria-label="Secciones del tenant">
+    {% for clave in secciones %}
+    <a class="nav-enlace {{ 'activo' if seccion == clave }}" href="{{ url_for('rutas.tenant', tenant_id=t.id, seccion=clave) }}">{{ icono(etiquetas[clave][1]) }}<span>{{ etiquetas[clave][0] }}</span></a>
+    {% endfor %}
+  </nav>
+
+  <section class="tarjeta ficha-centro">
+    {% if seccion == 'resumen' %}
+    <h2>Información del tenant</h2>
+    <dl class="datos-fila">
+      <div><dt>ID</dt><dd class="mono">{{ t.id }}</dd></div>
+      <div><dt>Plan</dt><dd>{{ t.plan or '—' }}</dd></div>
+      <div><dt>Creado</dt><dd>{{ t.creado_en|fecha }}</dd></div>
+    </dl>
+    <form method="post" action="{{ url_for('rutas.renombrar_tenant', tenant_id=t.id) }}" class="formulario">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Nombre *<input type="text" name="nombre" value="{{ t.nombre }}" maxlength="120" required></label>
+      <div><button type="submit" class="boton boton-primario">Guardar nombre</button></div>
+    </form>
+    <h3>Configuración</h3>
+    <form method="post" action="{{ url_for('rutas.alternar_geolocalizacion', tenant_id=t.id) }}" class="fila-interruptor">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div><strong>Geolocalización del fichaje</strong><p class="muted">RGPD: actívala solo si hay trabajadores fichando en remoto.</p></div>
+      <button type="submit" class="interruptor {{ 'on' if t.fichaje_geolocalizacion }}" role="switch" aria-checked="{{ 'true' if t.fichaje_geolocalizacion else 'false' }}" aria-label="Geolocalización del fichaje"></button>
+    </form>
+    <h3>Módulos</h3>
+    <p class="muted">{{ d.modulos|selectattr('activo')|list|length }} de {{ d.modulos|length }} activos. <a href="{{ url_for('rutas.tenant', tenant_id=t.id, seccion='modulos') }}">Gestionar módulos</a></p>
+
+    {% elif seccion == 'usuarios' %}
+    <h2>Usuarios del tenant</h2>
+    <div class="tabla-caja">
+      <table class="tabla">
+        <thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Alta</th><th></th></tr></thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr><td><a class="celda-usuario" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}"><span class="avatar" style="--c: {{ u.nombre|color_avatar }}">{{ u.nombre|iniciales }}</span><strong>{{ u.nombre }}</strong></a></td>
+            <td>{{ u.email }}</td><td>{{ insignia_rol(u) }}</td><td>{{ u.creado_en|fecha }}</td>
+            <td class="acciones"><a class="boton-icono" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}" aria-label="Abrir {{ u.email }}">{{ icono('arrow-right') }}</a></td></tr>
+          {% else %}<tr><td colspan="5" class="vacio">Este tenant todavía no tiene usuarios.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% elif seccion == 'modulos' %}
+    <h2>Módulos</h2>
+    <p class="muted">Qué herramientas ve este tenant. Los módulos desactivados quedan ocultos para sus usuarios.</p>
+    <div class="rejilla rejilla-modulos">
+      {% for m in d.modulos %}
+      <form method="post" action="{{ url_for('rutas.alternar_modulo', tenant_id=t.id, modulo_id=m.id) }}" class="tarjeta modulo">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="seccion" value="modulos">
+        <div><strong>{{ m.nombre }}</strong><p class="muted">{{ m.descripcion }}</p></div>
+        <button type="submit" class="interruptor {{ 'on' if m.activo }}" role="switch" aria-checked="{{ 'true' if m.activo else 'false' }}" aria-label="{{ m.nombre }}"></button>
+      </form>
+      {% endfor %}
+    </div>
+
+    {% elif seccion == 'suscripcion' %}
+    <h2>Suscripción</h2>
+    <dl class="datos-fila">
+      <div><dt>Plan</dt><dd>{{ t.plan or 'Sin plan' }}</dd></div>
+      <div><dt>Precio mensual</dt><dd>{% if t.plan_precio is not none %}{{ t.plan_precio|eur }}{% else %}—{% endif %}</dd></div>
+      <div><dt>Estado</dt><dd>{% if t.suscripcion_estado %}<span class="insignia {{ 'insignia-ok' if t.suscripcion_estado == 'activa' else 'insignia-riesgo' }}">{{ t.suscripcion_estado|upper|replace('_', ' ') }}</span>{% else %}—{% endif %}</dd></div>
+    </dl>
+    <h3>Extras activos</h3>
+    {% if d.extras %}
+    <ul class="lista-datos">{% for e in d.extras %}<li><span>{{ e.nombre }} × {{ e.cantidad or 1 }}</span><span class="muted">{% if e.activo_hasta %}hasta {{ e.activo_hasta[:10] }}{% else %}indefinido{% endif %}</span></li>{% endfor %}</ul>
+    {% else %}<p class="muted">Sin extras activos.</p>{% endif %}
+    <p class="muted">El cambio de plan y la facturación con Stripe se siguen gestionando desde el panel de la plataforma.</p>
+
+    {% else %}
+    <h2>Actividad del equipo</h2>
+    <p class="muted">Última actividad: {{ d.ultima_actividad|fecha }}</p>
+    <div class="tabla-caja">
+      <table class="tabla">
+        <thead><tr><th>Usuario</th><th>Tareas finalizadas</th><th>Notas</th><th>Tiempo total</th></tr></thead>
+        <tbody>
+          {% for e in d.equipo %}
+          <tr><td>{{ e.email }}</td><td>{{ e.num_tareas }}</td><td>{{ e.num_notas }}</td><td class="mono">{{ e.segundos_totales // 3600 }} h {{ (e.segundos_totales % 3600) // 60 }} min</td></tr>
+          {% else %}<tr><td colspan="4" class="vacio">Todavía no hay datos suficientes.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="ficha-lado">
+    <section class="tarjeta">
+      <h2>Estado</h2>
+      <p>{% if t.activo %}<span class="insignia insignia-ok">ACTIVO</span>{% else %}<span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</p>
+      <dl class="datos-lista">
+        <div><dt>Tenant ID</dt><dd class="mono">{{ t.id }}</dd></div>
+        <div><dt>Usuarios</dt><dd>{{ d.n_usuarios }}</dd></div>
+        <div><dt>Clientes fiscales</dt><dd>{{ d.n_clientes }}</dd></div>
+        <div><dt>Módulos activos</dt><dd>{{ d.modulos|selectattr('activo')|list|length }}/{{ d.modulos|length }}</dd></div>
+        <div><dt>Última actividad</dt><dd>{{ d.ultima_actividad|fecha }}</dd></div>
+      </dl>
+      <a class="boton boton-ancho" href="{{ url_for('rutas.usuarios', tenant=t.id) }}">{{ icono('users') }} Ver usuarios</a>
+    </section>
+  </aside>
+</div>
+{% endblock %}

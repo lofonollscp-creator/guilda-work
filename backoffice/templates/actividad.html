@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Actividad{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Actividad</h1><p class="muted">Registro de lo que se hace desde este backoffice (quién, qué y desde dónde).</p></header>
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Fecha</th><th>Administrador</th><th>Acción</th><th>Detalle</th><th>IP</th></tr></thead>
+    <tbody>
+      {% for r in registros %}
+      <tr><td>{{ r.creado_en|fecha }}</td><td>{{ r.admin_usuario or '—' }}</td><td><code>{{ r.accion }}</code></td><td>{{ r.detalle or '' }}</td><td class="mono">{{ r.ip or '' }}</td></tr>
+      {% else %}<tr><td colspan="5" class="vacio">Todavía no hay actividad registrada.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

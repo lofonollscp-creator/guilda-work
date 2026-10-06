@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono, insignia_rol %}
+{% block titulo %}{{ u.nombre }}{% endblock %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div>
+    <a class="migas" href="{{ url_for('rutas.usuarios') }}">‹ Usuarios</a>
+    <h1>{{ u.nombre }}</h1>
+    <p class="muted">{{ u.email }} · alta {{ u.creado_en|fecha }}</p>
+  </div>
+</header>
+
+<div class="ficha ficha-dos">
+  <section class="tarjeta ficha-centro">
+    <h2>Tenant</h2>
+    <form method="post" action="{{ url_for('rutas.asignar_tenant', usuario_id=u.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Asignado a
+        <select name="tenant_id"><option value="">Sin tenant</option>
+          {% for t in tenants %}<option value="{{ t.id }}" {{ 'selected' if u.tenant_id == t.id }}>{{ t.nombre }}</option>{% endfor %}</select></label>
+      <button type="submit" class="boton boton-primario">Guardar</button>
+    </form>
+
+    <h2>Permisos</h2>
+    <div class="permisos">
+      {% for clave, etiqueta, ayuda, activo in (
+          ('admin', 'Administrador', 'Acceso de administración en la plataforma.', u.rol == 'admin'),
+          ('gestor', 'Gestor de fichajes', 'Ve y corrige el fichaje de su tenant.', u.gestor_fichajes),
+          ('supervisor', 'Supervisor', 'Supervisa la actividad del equipo de su tenant.', u.supervisor_tenant)) %}
+      <form method="post" action="{{ url_for('rutas.alternar_permiso', usuario_id=u.id, permiso=clave) }}" class="fila-interruptor">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div><strong>{{ etiqueta }}</strong><p class="muted">{{ ayuda }}</p></div>
+        <button type="submit" class="interruptor {{ 'on' if activo }}" role="switch" aria-checked="{{ 'true' if activo else 'false' }}" aria-label="{{ etiqueta }}"
+                {% if clave == 'admin' and activo %}data-confirmar="¿Quitar el rol de administrador a {{ u.email }}?"{% endif %}></button>
+      </form>
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside class="ficha-lado">
+    <section class="tarjeta">
+      <h2>Resumen</h2>
+      <p>{{ insignia_rol(u) }}</p>
+      <dl class="datos-lista">
+        <div><dt>ID</dt><dd class="mono">{{ u.id }}</dd></div>
+        <div><dt>Tenant</dt><dd>{% if u.tenant_id %}<a href="{{ url_for('rutas.tenant', tenant_id=u.tenant_id) }}">{{ u.tenant }}</a>{% else %}—{% endif %}</dd></div>
+        <div><dt>Idioma</dt><dd>{{ u.idioma or '—' }}</dd></div>
+        <div><dt>Dispositivos</dt><dd>{{ dispositivos|length }}</dd></div>
+      </dl>
+    </section>
+  </aside>
+</div>
+
+<section class="tarjeta">
+  <h2>Dispositivos y tokens de API</h2>
+  {% if dispositivos %}
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>Dispositivo</th><th>Permisos</th><th>Creado</th><th>Último uso</th><th></th></tr></thead>
+    <tbody>
+      {% for d in dispositivos %}
+      <tr><td>{{ d.nombre_dispositivo or 'Dispositivo sin nombre' }}</td><td>{{ 'Solo lectura' if d.permisos == 'solo_lectura' else 'Completo' }}</td>
+        <td>{{ d.creado_en|fecha }}</td><td>{{ d.ultimo_uso_en|fecha }}</td>
+        <td class="acciones"><form method="post" action="{{ url_for('rutas.revocar_dispositivo', usuario_id=u.id, token_id=d.id) }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-peligro" data-confirmar="¿Revocar el acceso de este dispositivo?">Revocar</button></form></td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="muted">Este usuario no tiene dispositivos conectados.</p>{% endif %}
+</section>
+{% endblock %}

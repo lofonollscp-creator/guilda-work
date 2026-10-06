@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Dashboard{% endblock %}
+{% block contenido %}
+<header class="cabecera">
+  <h1>Dashboard</h1>
+  <p class="muted">Resumen global de la plataforma Guilda Work</p>
+</header>
+
+<section class="rejilla rejilla-4">
+  <article class="tarjeta kpi">
+    <header><span>Suscripciones activas</span>{{ icono('layers') }}</header>
+    <strong>{{ k.suscripciones_activas }}</strong><small>de {{ k.tenants }} tenants</small>
+  </article>
+  <article class="tarjeta kpi">
+    <header><span>MRR</span>{{ icono('arrow-up') }}</header>
+    <strong>{{ k.mrr|eur }}</strong><small>ingresos mensuales</small>
+  </article>
+  <article class="tarjeta kpi">
+    <header><span>ARR</span>{{ icono('arrow-up') }}</header>
+    <strong>{{ k.arr|eur }}</strong><small>ingresos anuales</small>
+  </article>
+  <article class="tarjeta kpi {{ 'kpi-riesgo' if k.pagos_en_riesgo }}">
+    <header><span>Pagos en riesgo</span>{{ icono('triangle-alert') }}</header>
+    <strong>{{ k.pagos_en_riesgo }}</strong><small>PAGO FALLIDO · IMPAGADO</small>
+  </article>
+</section>
+
+<section class="rejilla rejilla-3">
+  <article class="tarjeta">
+    <h2>{{ icono('layers') }} Distribución por plan</h2>
+    {% if k.tiers %}
+    <ul class="lista-datos">
+      {% for t in k.tiers %}<li><span>{{ t.nombre }}</span><strong>{{ t.n }}</strong></li>{% endfor %}
+    </ul>
+    {% else %}<p class="muted">Todavía no hay tenants.</p>{% endif %}
+  </article>
+  <article class="tarjeta">
+    <h2>{{ icono('triangle-alert') }} Tenants en riesgo de churn</h2>
+    <strong class="cifra">{{ k.churn|length }}</strong>
+    {% if k.churn %}
+    <ul class="lista-datos">
+      {% for c in k.churn[:5] %}<li><a href="{{ url_for('rutas.tenant', tenant_id=c.id) }}">{{ c.nombre }}</a><span class="muted">{{ c.motivo }}</span></li>{% endfor %}
+    </ul>
+    {% else %}<small class="muted">PAGO FALLIDO · SUSPENDIDO · SIN ACTIVIDAD 30 D</small>{% endif %}
+  </article>
+  <article class="tarjeta">
+    <h2>{{ icono('zap') }} Webhooks fallidos (24 h)</h2>
+    <strong class="cifra {{ 'texto-riesgo' if k.webhooks_fallidos }}">{{ k.webhooks_fallidos }}</strong>
+    <small class="muted">entregas sin respuesta 2xx en las últimas 24 horas</small>
+  </article>
+</section>
+
+<section class="rejilla rejilla-3">
+  <article class="tarjeta">
+    <h2>{{ icono('shield-check') }} Extras activos</h2>
+    <strong class="cifra">{{ k.extras_activos }}</strong>
+    <small class="muted">extras vigentes (sin caducar) en suscripciones</small>
+  </article>
+  <article class="tarjeta">
+    <h2>{{ icono('credit-card') }} Facturación anual (ARR)</h2>
+    <strong class="cifra">{{ k.arr|eur }}</strong>
+    <small class="muted">MRR × 12, suscripciones activas</small>
+  </article>
+  <article class="tarjeta">
+    <h2>{{ icono('credit-card') }} MRR en riesgo</h2>
+    <strong class="cifra {{ 'texto-riesgo' if k.mrr_en_riesgo }}">{{ k.mrr_en_riesgo|eur }}</strong>
+    <small class="muted">{{ k.pagos_en_riesgo }} suscripción(es) con pago pendiente</small>
+  </article>
+</section>
+
+<section class="rejilla rejilla-4">
+  <a class="tarjeta kpi enlace-tarjeta" href="{{ url_for('rutas.tenants') }}"><header><span>Tenants</span>{{ icono('layers') }}</header><strong>{{ k.tenants }}</strong><small>{{ k.tenants_activos }} activos</small></a>
+  <a class="tarjeta kpi enlace-tarjeta" href="{{ url_for('rutas.usuarios') }}"><header><span>Usuarios</span>{{ icono('users') }}</header><strong>{{ k.usuarios }}</strong><small>{{ k.usuarios_sin_tenant }} sin tenant</small></a>
+  <article class="tarjeta kpi"><header><span>Clientes fiscales</span>{{ icono('briefcase') }}</header><strong>{{ k.clientes }}</strong><small>en todos los tenants</small></article>
+</section>
+{% endblock %}

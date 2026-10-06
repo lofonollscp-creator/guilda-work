@@ -1,0 +1,18 @@
+{% macro icono(nombre) %}<svg class="ico" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ nombre }}"></use></svg>{% endmacro %}
+{% macro enlace(destino, etiqueta, ico, activo) %}<a class="nav-enlace {{ 'activo' if activo }}" href="{{ destino }}">{{ icono(ico) }}<span>{{ etiqueta }}</span></a>{% endmacro %}
+{% macro insignia_rol(u) %}
+  {% if u.rol == 'admin' %}<span class="insignia insignia-admin">ADMIN</span>{% endif %}
+  {% if u.gestor_fichajes %}<span class="insignia insignia-gestor">GESTOR</span>{% endif %}
+  {% if u.supervisor_tenant %}<span class="insignia insignia-supervisor">SUPERVISOR</span>{% endif %}
+  {% if u.rol != 'admin' and not u.gestor_fichajes and not u.supervisor_tenant %}<span class="insignia">USUARIO</span>{% endif %}
+{% endmacro %}
+{% macro paginacion(pag, argumentos) %}
+<div class="paginacion">
+  <span class="muted">{% if pag.total %}Mostrando {{ pag.desde }}–{{ pag.hasta }} de {{ pag.total }}{% else %}Sin resultados{% endif %}</span>
+  <span class="paginacion-botones">
+    {% if pag.pagina > 1 %}<a class="boton-icono" aria-label="Página anterior" href="?{{ argumentos(pagina=pag.pagina - 1) }}">‹</a>{% else %}<span class="boton-icono desactivado" aria-hidden="true">‹</span>{% endif %}
+    <span>{{ pag.pagina }} de {{ pag.paginas }}</span>
+    {% if pag.pagina < pag.paginas %}<a class="boton-icono" aria-label="Página siguiente" href="?{{ argumentos(pagina=pag.pagina + 1) }}">›</a>{% else %}<span class="boton-icono desactivado" aria-hidden="true">›</span>{% endif %}
+  </span>
+</div>
+{% endmacro %}
