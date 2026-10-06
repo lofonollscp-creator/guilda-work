@@ -165,6 +165,22 @@ def _seleccionar_idioma():
 babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
 app.add_template_filter(nota_a_html, "nota_html")
 app.add_template_filter(lambda d: format_date(d, "EEEEE").upper(), "dia_inicial")
+
+
+def _comentario_html(texto, mencionados=()):
+    """Escapa el comentario, resalta las @menciones y respeta los saltos de línea."""
+    import re
+
+    from markupsafe import Markup, escape
+
+    html = str(escape(texto or ""))
+    for nombre in sorted(mencionados or (), key=len, reverse=True):
+        marca = "@" + str(escape(nombre))
+        html = re.sub(re.escape(marca), lambda m: f'<span class="mencion">{m.group(0)}</span>', html, flags=re.IGNORECASE)
+    return Markup(html.replace("\n", "<br>"))
+
+
+app.add_template_filter(_comentario_html, "comentario_html")
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)

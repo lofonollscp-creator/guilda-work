@@ -1,0 +1,51 @@
+{# Hilo de comentarios de una tarea, con menciones @. Variables: tarea, comentarios, personas_mencionables. #}
+{% macro hilo(tarea, comentarios, personas_mencionables) %}
+<section class="tarea-comentarios" id="comentarios" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Comentarios') }}{% if comentarios %} <span class="pill">{{ comentarios|length }}</span>{% endif %}</h2>
+  {% if comentarios %}
+  <ul class="comentarios-lista">
+    {% for c in comentarios %}
+    <li class="comentario {{ 'es-mio' if c.mio }}">
+      <div class="comentario-cabecera">
+        <strong>{{ c.autor }}</strong>
+        <span class="muted mono">{{ c.creado_en[:16].replace('T', ' ') }}</span>
+        {% if c.puede_borrar %}
+        <form action="{{ url_for('tareas.eliminar_comentario', tarea_id=tarea.id, comentario_id=c.id) }}" method="post" class="comentario-borrar">
+          <button type="submit" class="chip-del" title="{{ _('Borrar comentario') }}" aria-label="{{ _('Borrar comentario') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+        </form>
+        {% endif %}
+      </div>
+      <p class="comentario-texto">{{ c.texto|comentario_html(c.mencionados) }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('Todavía no hay comentarios.') }}</p>
+  {% endif %}
+  <form class="comentario-form" action="{{ url_for('tareas.comentar', tarea_id=tarea.id) }}" method="post">
+    <label class="sr-only" for="comentario-texto">{{ _('Escribe un comentario') }}</label>
+    <textarea id="comentario-texto" name="texto" rows="3" maxlength="2000" required placeholder="{{ _('Escribe un comentario… usa @ para mencionar a alguien') }}"></textarea>
+    <div class="comentario-acciones">
+      {% if personas_mencionables %}
+      <span class="comentario-menciones" role="group" aria-label="{{ _('Mencionar') }}">
+        {% for p in personas_mencionables %}<button type="button" class="btn btn-ghost comentario-mencionar" data-nombre="{{ p.nombre }}">@{{ p.nombre }}</button>{% endfor %}
+      </span>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">{{ _('Comentar') }}</button>
+    </div>
+  </form>
+</section>
+<script>
+(function () {
+  var area = document.getElementById("comentario-texto");
+  if (!area) return;
+  document.querySelectorAll(".comentario-mencionar").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = area.value, pre = t && !/\s$/.test(t) ? " " : "";
+      area.value = t + pre + "@" + b.dataset.nombre + " ";
+      area.focus();
+    });
+  });
+})();
+</script>
+{% endmacro %}

@@ -20,7 +20,7 @@
     {% set parts = participantes.get(t.id, []) %}
     {% set mi_rol = (parts|selectattr('usuario_id', 'equalto', g.usuario_id)|map(attribute='rol')|first) if parts else none %}
     <article class="tareas-tarjeta">
-      <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if (t.usuario_id == g.usuario_id or mi_rol == 'colabora') else '#' }}">{{ t.asunto }}</a>
+      <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if (t.usuario_id == g.usuario_id or mi_rol == 'colabora') else url_for('tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a>
       {% if cr and cr.activo %}
       <div class="tareas-tarjeta-reloj">
         {% if cr.activo.estado == 'pausada' %}

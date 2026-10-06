@@ -155,6 +155,7 @@ def _contexto_filas(tareas) -> dict:
         "cronometros": db.cronometros_de_tareas_outlook(g.usuario_id, ids),
         "checklists": db.resumen_checklist(ids),
         "participantes": db.participantes_de_tareas(ids),
+        "n_comentarios": db.contar_comentarios_tareas(ids),
         "menus": db.listar_categorias(g.usuario_id),
         "companeros": db.listar_companeros_tenant(g.usuario_id),
         "clientes_fiscales": db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
@@ -330,6 +331,7 @@ def editar(tarea_id: int):
 
     def _contexto_edicion(tarea, error=None):
         return dict(
+            **_contexto_comentarios(tarea["id"]),
             es_dueno=es_dueno, dueno_nombre=db.nombre_mostrado_usuario(tarea["usuario_id"]),
             participantes=db.participantes_de_tarea(tarea["id"]),
             tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, menus=menus, error=error,
@@ -448,6 +450,71 @@ def asignar(tarea_id: int):
         abort(404)
     _notificar_asignacion(g.usuario_id, tarea_id, destino)
     return redirect(request.referrer or url_for("tareas.listar"))
+
+
+def _notificar_comentario(autor_id: int, tarea_id: int, resultado: dict) -> None:
+    """Avisa a los mencionados ("te ha mencionado") y al resto de implicados
+    ("ha comentado"). Un fallo al avisar nunca rompe el comentario."""
+    try:
+        tarea = db.obtener_tarea_outlook_visible(autor_id, tarea_id)
+        quien = db.nombre_mostrado_usuario(autor_id) or db.obtener_usuario(autor_id)["email"]
+        for destino, titulo, cuerpo in (
+            [(u, "Te han mencionado", f"{quien} te ha mencionado en: {tarea['asunto']}") for u in resultado["menciones"]]
+            + [(u, "Nuevo comentario", f"{quien} ha comentado en: {tarea['asunto']}") for u in resultado["otros"]]
+        ):
+            if not db.notificacion_tipo_activa(destino, "tarea_asignada"):
+                continue
+            notificaciones.crear_y_enviar(
+                destino, "tarea_asignada", titulo, cuerpo,
+                url=url_for("tareas.ver", tarea_id=tarea_id) + "#comentarios",
+                datos={"tipo": "tarea_comentario", "tarea_id": tarea_id},
+            )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@tareas_bp.route("/<int:tarea_id>")
+@login_required
+def ver(tarea_id: int):
+    """Ficha de solo lectura de una tarea para quien la ve (también observadores y
+    asignados): datos, subtareas, participantes y comentarios."""
+    tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    if tarea is None:
+        abort(404)
+    return render_template(
+        "tarea_ver.html", tarea=tarea, estados=ESTADOS,
+        checklist=db.listar_checklist(tarea_id), participantes=db.participantes_de_tarea(tarea_id),
+        dueno_nombre=db.nombre_mostrado_usuario(tarea["usuario_id"]),
+        puede_editar=db.puede_editar_tarea(g.usuario_id, tarea_id),
+        **_contexto_comentarios(tarea_id),
+    )
+
+
+def _contexto_comentarios(tarea_id: int) -> dict:
+    return {
+        "comentarios": db.listar_comentarios_tarea(g.usuario_id, tarea_id),
+        "personas_mencionables": [p for p in db.personas_de_tarea(g.usuario_id, tarea_id) if p["id"] != g.usuario_id],
+    }
+
+
+@tareas_bp.route("/<int:tarea_id>/comentarios", methods=["POST"])
+@login_required
+def comentar(tarea_id: int):
+    resultado = db.comentar_tarea_outlook(g.usuario_id, tarea_id, request.form.get("texto", ""))
+    if resultado is None:
+        if db.rol_en_tarea(g.usuario_id, tarea_id) is None:
+            abort(404)
+        return redirect(url_for("tareas.ver", tarea_id=tarea_id) + "#comentarios")
+    _notificar_comentario(g.usuario_id, tarea_id, resultado)
+    return redirect(url_for("tareas.ver", tarea_id=tarea_id) + "#comentarios")
+
+
+@tareas_bp.route("/<int:tarea_id>/comentarios/<int:comentario_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_comentario(tarea_id: int, comentario_id: int):
+    if not db.eliminar_comentario_tarea(g.usuario_id, tarea_id, comentario_id):
+        abort(404)
+    return redirect(url_for("tareas.ver", tarea_id=tarea_id) + "#comentarios")
 
 
 @tareas_bp.route("/<int:tarea_id>/compartir", methods=["POST"])

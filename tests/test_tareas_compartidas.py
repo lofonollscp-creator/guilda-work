@@ -97,3 +97,64 @@ def test_rutas_compartir_y_edicion_por_colaborador(cliente):
     ajeno = db.crear_usuario("ajeno2@otro.com", "contrasena123")
     db.asignar_tenant(ajeno, db.crear_tenant("Otro"))
     assert cliente.post(f"/tareas/{tarea}/compartir", data={"usuario_id": ajeno}).status_code == 404
+
+
+# --- Comentarios con menciones ---------------------------------------------------------
+
+def test_comentar_detecta_menciones_solo_entre_quienes_ven_la_tarea():
+    _, (ana, luis, eva) = _despacho("ana5@comp.com", "luis5@comp.com", "eva5@comp.com")
+    tarea = db.crear_tarea_outlook(ana, "Con hilo")
+    db.compartir_tarea_outlook(ana, tarea, luis, "observa")  # eva no la ve
+
+    r = db.comentar_tarea_outlook(ana, tarea, "Mirad esto @luis5@comp.com y @eva5@comp.com")
+    assert r["menciones"] == [luis]          # eva no ve la tarea: no se le menciona
+    assert r["otros"] == []                  # luis ya está mencionado, nadie más implicado
+    assert db.comentar_tarea_outlook(eva, tarea, "intruso") is None
+    assert db.comentar_tarea_outlook(ana, tarea, "   ") is None
+
+    # un observador también puede comentar
+    r2 = db.comentar_tarea_outlook(luis, tarea, "visto, gracias")
+    assert r2["menciones"] == [] and r2["otros"] == [ana]
+    hilo = db.listar_comentarios_tarea(luis, tarea)
+    assert [c["texto"] for c in hilo][-1] == "visto, gracias"
+    assert hilo[0]["mencionados"] == ["luis5@comp.com"]
+    assert db.listar_comentarios_tarea(eva, tarea) == []
+
+
+def test_menciones_prefieren_el_nombre_mas_largo():
+    personas = [{"id": 1, "nombre": "Ana"}, {"id": 2, "nombre": "Ana Ruiz"}]
+    assert db.detectar_menciones("hola @Ana Ruiz", personas) == [2]
+    assert sorted(db.detectar_menciones("@ana y @Ana Ruiz", personas)) == [1, 2]
+    assert db.detectar_menciones("hola @Ana", personas, excluir_id=1) == []
+
+
+def test_borrar_comentario_solo_autor_o_dueno():
+    _, (ana, luis, eva) = _despacho("ana6@comp.com", "luis6@comp.com", "eva6@comp.com")
+    tarea = db.crear_tarea_outlook(ana, "Hilo")
+    db.compartir_tarea_outlook(ana, tarea, luis)
+    db.compartir_tarea_outlook(ana, tarea, eva)
+    c_luis = db.comentar_tarea_outlook(luis, tarea, "mío")["id"]
+    assert db.eliminar_comentario_tarea(eva, tarea, c_luis) is False
+    assert db.eliminar_comentario_tarea(ana, tarea, c_luis) is True      # el dueño modera
+    c2 = db.comentar_tarea_outlook(luis, tarea, "otro")["id"]
+    assert db.eliminar_comentario_tarea(luis, tarea, c2) is True         # el autor
+    assert db.contar_comentarios_tareas([tarea]) == {}
+
+
+def test_rutas_comentar_con_mencion_y_ver(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno2@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho comentarios")
+    db.asignar_tenant(uid, tenant)
+    compi = db.crear_usuario("compi2@comp.com", "contrasena123")
+    db.asignar_tenant(compi, tenant)
+    tarea = db.crear_tarea_outlook(uid, "Hablemos")
+    db.compartir_tarea_outlook(uid, tarea, compi, "colabora")
+
+    r = cliente.post(f"/tareas/{tarea}/comentarios", data={"texto": "Hola @compi2@comp.com <b>x</b>"})
+    assert r.status_code == 302
+    html = cliente.get(f"/tareas/{tarea}").get_data(as_text=True)
+    assert 'class="mencion"' in html and "&lt;b&gt;x&lt;/b&gt;" in html  # menciones resaltadas y HTML escapado
+    assert "Comentarios" in html
+    assert cliente.get(f"/tareas/{tarea}/editar").status_code == 200
+    assert "tarea-comentarios-pill" in cliente.get("/tareas/").get_data(as_text=True)
+    assert cliente.get("/tareas/99999").status_code == 404

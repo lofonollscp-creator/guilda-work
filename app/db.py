@@ -413,6 +413,18 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
 );
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
+-- Comentarios de una tarea compartida; `menciones` lleva los ids de usuario
+-- mencionados con @ (separados por comas).
+CREATE TABLE IF NOT EXISTS tarea_comentarios (
+    id INTEGER PRIMARY KEY,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    texto TEXT NOT NULL,
+    menciones TEXT NOT NULL DEFAULT '',
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_comentarios_tarea ON tarea_comentarios(tarea_id, id);
+
 -- Checklist (subtareas) de una tarea de la lista (tareas_outlook).
 CREATE TABLE IF NOT EXISTS tarea_checklist (
     id INTEGER PRIMARY KEY,
@@ -5240,6 +5252,142 @@ def participantes_de_tareas(tarea_ids: list[int]) -> dict[int, list[dict]]:
     return resultado
 
 
+# ---- Comentarios con menciones ---------------------------------------------
+
+COMENTARIO_MAX_CARACTERES = 2000
+
+
+def personas_de_tarea(usuario_id: int, tarea_id: int) -> list[dict]:
+    """Quienes ven la tarea (dueño, asignado y participantes), con su nombre y
+    rol: las únicas personas a las que se puede mencionar. [] si el usuario no la ve."""
+    if rol_en_tarea(usuario_id, tarea_id) is None:
+        return []
+    conn = get_connection()
+    try:
+        t = conn.execute("SELECT usuario_id, asignada_a FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+        ids: dict[int, str] = {t["usuario_id"]: "dueno"}
+        if t["asignada_a"]:
+            ids.setdefault(t["asignada_a"], "asignada")
+        for p in conn.execute("SELECT usuario_id, rol FROM tareas_participantes WHERE tarea_id = ?", (tarea_id,)):
+            ids.setdefault(p["usuario_id"], p["rol"])
+        resultado = []
+        for uid, rol in ids.items():
+            f = conn.execute(
+                """SELECT COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre FROM usuarios u
+                   LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id WHERE u.id = ?""",
+                (uid,),
+            ).fetchone()
+            if f:
+                resultado.append({"id": uid, "nombre": f["nombre"], "rol": rol})
+        return sorted(resultado, key=lambda x: x["nombre"].lower())
+    finally:
+        conn.close()
+
+
+def detectar_menciones(texto: str, personas: list[dict], excluir_id: int | None = None) -> list[int]:
+    """Ids de las personas citadas como @Nombre en el texto (el nombre completo,
+    sin distinguir mayúsculas; el más largo primero para que '@Ana Ruiz' no se
+    confunda con '@Ana')."""
+    bajo = (texto or "").lower()
+    encontradas: list[int] = []
+    consumido = bajo
+    for p in sorted(personas, key=lambda x: len(x["nombre"]), reverse=True):
+        marca = "@" + p["nombre"].lower()
+        if marca in consumido and p["id"] != excluir_id and p["id"] not in encontradas:
+            encontradas.append(p["id"])
+            consumido = consumido.replace(marca, " " * len(marca))
+    return encontradas
+
+
+def comentar_tarea_outlook(usuario_id: int, tarea_id: int, texto: str) -> dict | None:
+    """Añade un comentario (lo puede hacer cualquiera que vea la tarea, también
+    un observador). Devuelve {id, menciones, destinatarios} o None si no procede."""
+    texto = (texto or "").strip()[:COMENTARIO_MAX_CARACTERES]
+    if not texto:
+        return None
+    personas = personas_de_tarea(usuario_id, tarea_id)
+    if not personas:
+        return None
+    menciones = detectar_menciones(texto, personas, excluir_id=usuario_id)
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO tarea_comentarios (tarea_id, usuario_id, texto, menciones, creado_en) VALUES (?, ?, ?, ?, ?)",
+            (tarea_id, usuario_id, texto, ",".join(str(i) for i in menciones), now_iso()),
+        )
+        conn.commit()
+        nuevo = cur.lastrowid
+    finally:
+        conn.close()
+    _emitir_evento(usuario_id, "tarea.comentada", {"tarea_id": tarea_id, "comentario_id": nuevo, "menciones": menciones})
+    otros = [p["id"] for p in personas if p["id"] != usuario_id and p["id"] not in menciones]
+    return {"id": nuevo, "menciones": menciones, "otros": otros}
+
+
+def listar_comentarios_tarea(usuario_id: int, tarea_id: int) -> list[dict]:
+    """Comentarios de la tarea (viejos primero), solo si el usuario la ve. Cada uno
+    lleva `autor`, `mios` y los nombres de lo mencionado en `mencionados`."""
+    personas = personas_de_tarea(usuario_id, tarea_id)
+    if not personas:
+        return []
+    nombres = {p["id"]: p["nombre"] for p in personas}
+    dueno = next((p["id"] for p in personas if p["rol"] == "dueno"), None)
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT c.*, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS autor
+               FROM tarea_comentarios c JOIN usuarios u ON u.id = c.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = c.usuario_id
+               WHERE c.tarea_id = ? ORDER BY c.id""",
+            (tarea_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    resultado = []
+    for f in filas:
+        d = dict(f)
+        ids = [int(i) for i in d["menciones"].split(",") if i]
+        d["mencionados"] = [nombres[i] for i in ids if i in nombres]
+        d["mio"] = d["usuario_id"] == usuario_id
+        d["puede_borrar"] = d["mio"] or usuario_id == dueno
+        resultado.append(d)
+    return resultado
+
+
+def eliminar_comentario_tarea(usuario_id: int, tarea_id: int, comentario_id: int) -> bool:
+    """Lo borra su autor o el dueño de la tarea."""
+    es_dueno = rol_en_tarea(usuario_id, tarea_id) == "dueno"
+    conn = get_connection()
+    try:
+        c = conn.execute(
+            "SELECT usuario_id FROM tarea_comentarios WHERE id = ? AND tarea_id = ?", (comentario_id, tarea_id)
+        ).fetchone()
+        if c is None or not (es_dueno or c["usuario_id"] == usuario_id) or rol_en_tarea(usuario_id, tarea_id) is None:
+            return False
+        conn.execute("DELETE FROM tarea_comentarios WHERE id = ?", (comentario_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def contar_comentarios_tareas(tarea_ids: list[int]) -> dict[int, int]:
+    if not tarea_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        return {
+            f["tarea_id"]: f["n"]
+            for f in conn.execute(
+                f"SELECT tarea_id, COUNT(*) AS n FROM tarea_comentarios WHERE tarea_id IN ({marcas}) GROUP BY tarea_id",
+                tarea_ids,
+            )
+        }
+    finally:
+        conn.close()
+
+
 def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None) -> bool:
     """Asigna la tarea a un compañero del mismo despacho (o la desasigna con
     None). Solo su dueño. Devuelve False si no es suya o el compañero no es
@@ -5484,6 +5632,7 @@ def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> No
     try:
         if conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone():
             conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ?", (tarea_id,))
+            conn.execute("DELETE FROM tarea_comentarios WHERE tarea_id = ?", (tarea_id,))
         conn.execute("DELETE FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:

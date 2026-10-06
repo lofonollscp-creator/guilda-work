@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_tarea_comentarios.html" import hilo %}
+{% block title %}{{ tarea.asunto }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ tarea.asunto }}</h1>
+    <p class="subtitle">
+      {% if tarea.usuario_id != g.usuario_id %}{{ _('De %(quien)s', quien=dueno_nombre or '') }} · {% endif %}
+      {{ estados|selectattr('0', 'equalto', tarea.estado)|map(attribute='1')|first }}
+      {% if tarea.fecha_vencimiento %} · {{ _('Vence %(fecha)s', fecha=tarea.fecha_vencimiento[:10]) }}{% endif %}
+    </p>
+  </div>
+  {% if puede_editar %}<a class="btn btn-ghost" href="{{ url_for('tareas.editar', tarea_id=tarea.id) }}">{{ _('Editar') }}</a>{% endif %}
+</header>
+
+<section style="max-width: 640px;">
+  {% if tarea.cuerpo %}<p>{{ tarea.cuerpo }}</p>{% else %}<p class="muted">{{ _('Sin descripción.') }}</p>{% endif %}
+  <p>
+    <span class="pill prioridad-{{ tarea.prioridad }}">{{ tarea.prioridad }}</span>
+    {% if tarea.categoria_nombre %}<span class="pill">{{ tarea.categoria_nombre }}</span>{% endif %}
+    {% if participantes %}<span class="pill tarea-compartida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ participantes|map(attribute='nombre')|join(', ') }}</span>{% endif %}
+  </p>
+  {% if checklist %}
+  <ul class="tarea-checklist-lista">
+    {% for item in checklist %}<li class="tarea-checklist-item {{ 'is-hecha' if item.hecha }}"><span class="tarea-checklist-texto">{{ item.texto }}</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+{{ hilo(tarea, comentarios, personas_mencionables) }}
+{% endblock %}
