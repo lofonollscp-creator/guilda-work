@@ -1371,6 +1371,7 @@ def init_db() -> None:
         # a una inspección -- aparece en la cabecera de los export CSV/PDF.
         _asegurar_columna(conn, "tenants", "cif", "TEXT")
         _asegurar_columna(conn, "tenants", "direccion_fiscal", "TEXT")
+        _asegurar_columna(conn, "tenants", "zona_horaria", "TEXT")
 
         # FacturaScripts (Fase facturación): a diferencia de EspoCRM/
         # Nextcloud (una instancia compartida), cada tenant tiene su
@@ -2737,6 +2738,53 @@ def guardar_datos_tenant(tenant_id: int, cif: str | None, direccion_fiscal: str 
             "UPDATE tenants SET cif = ?, direccion_fiscal = ? WHERE id = ?",
             (cif or None, direccion_fiscal or None, tenant_id),
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+ZONA_HORARIA_DEFECTO = "Europe/Madrid"  # hora oficial de España peninsular
+ZONAS_HORARIAS = [
+    ("Europe/Madrid", "España peninsular (Europe/Madrid)"),
+    ("Atlantic/Canary", "Canarias (Atlantic/Canary)"),
+    ("Europe/Lisbon", "Portugal (Europe/Lisbon)"),
+    ("Europe/London", "Reino Unido (Europe/London)"),
+    ("Europe/Paris", "Europa central (Europe/Paris)"),
+    ("UTC", "UTC"),
+    ("America/Mexico_City", "México (America/Mexico_City)"),
+    ("America/Bogota", "Colombia (America/Bogota)"),
+    ("America/Lima", "Perú (America/Lima)"),
+    ("America/Santiago", "Chile (America/Santiago)"),
+    ("America/Argentina/Buenos_Aires", "Argentina (America/Argentina/Buenos_Aires)"),
+    ("America/New_York", "Este de EE. UU. (America/New_York)"),
+]
+
+
+def zona_horaria_valida(nombre: str | None) -> bool:
+    from zoneinfo import ZoneInfo
+
+    try:
+        ZoneInfo(nombre or "")
+        return bool(nombre)
+    except Exception:
+        return False
+
+
+def zona_horaria_tenant(tenant_id: int | None) -> str:
+    """Huso horario IANA del tenant; por defecto la hora oficial de España peninsular."""
+    if tenant_id:
+        tenant = obtener_tenant(tenant_id)
+        if tenant and tenant["zona_horaria"] and zona_horaria_valida(tenant["zona_horaria"]):
+            return tenant["zona_horaria"]
+    return ZONA_HORARIA_DEFECTO
+
+
+def guardar_zona_horaria_tenant(tenant_id: int, zona: str) -> None:
+    if not zona_horaria_valida(zona):
+        raise ValueError("Huso horario no válido")
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tenants SET zona_horaria = ? WHERE id = ?", (zona, tenant_id))
         conn.commit()
     finally:
         conn.close()

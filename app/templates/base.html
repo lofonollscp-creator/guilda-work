@@ -94,91 +94,16 @@
         <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
           <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
           <span class="icon-rail-etiqueta">{{ _('Correo') }}</span>
-          {% if correo_no_leidos_sidebar %}<span class="icon-rail-badge">{{ correo_no_leidos_sidebar }}</span>{% endif %}
-          <button type="button" class="icon-rail-chevron" aria-label="{{ _('Expandir Correo') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
-        </a>
-        <div class="icon-rail-submenu">
-          <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.bandeja' else '' }}">{{ _('Bandeja') }}</a>
-          <a href="{{ url_for('correo.cuentas') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.cuentas' else '' }}">{{ _('Cuentas') }}</a>
-          <a href="{{ url_for('correo.ajustes') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.ajustes' else '' }}">{{ _('Ajustes') }}</a>
-        </div>
-      </div>
-      <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-ticket"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
-      </a>
-      <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="{{ _('Fichaje') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
-      </a>
-      {% if g.tenant_id %}
-      <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.')) }}">
-        <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-link {{ 'active' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.')) else '' }}" title="{{ _('Fiscal') }}">
-          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
-          <span class="icon-rail-etiqueta">{{ _('Fiscal') }}</span>
-          <button type="button" class="icon-rail-chevron" aria-label="{{ _('Expandir Fiscal') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
-        </a>
-        <div class="icon-rail-submenu">
-          <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-sublink {{ 'active' if request.endpoint and request.endpoint.startswith('fiscal.') else '' }}">{{ _('Calendario fiscal') }}</a>
-          <a href="{{ url_for('citas.agenda') }}" class="icon-rail-sublink {{ 'active' if request.endpoint and request.endpoint.startswith('citas.') else '' }}">{{ _('Agenda') }}</a>
-        </div>
-      </div>
-      <a href="{{ url_for('videollamadas.nueva') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('videollamadas.') else '' }}" title="{{ _('Videollamadas') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-video"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Videollamadas') }}</span>
-      </a>
-      {% endif %}
-
-      <div class="icon-rail-separador" role="separator"></div>
-      <span class="icon-rail-grupo-etiqueta">{{ _('Herramientas y asistencia') }}</span>
-      <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="{{ _('Herramientas') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-wrench"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Herramientas') }}</span>
-      </a>
-      <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="{{ _('Asistente IA') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Asistente IA') }}</span>
-      </a>
-
-      <div class="icon-rail-separador" role="separator"></div>
-      <span class="icon-rail-grupo-etiqueta">{{ _('Datos y administración') }}</span>
-      <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="{{ _('Histórico') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Histórico') }}</span>
-      </a>
-      <a href="{{ url_for('estadisticas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'estadisticas' else '' }}" title="{{ _('Estadísticas') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Estadísticas') }}</span>
-      </a>
-      <a href="{{ url_for('papelera') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'papelera' else '' }}" title="{{ _('Papelera') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Papelera') }}</span>
-      </a>
-      <a href="{{ url_for('importar') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}" title="{{ _('Importar') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Importar') }}</span>
-      </a>
-      {% if g.es_admin %}
-      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('backoffice.') else '' }}" title="{{ _('Backoffice') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
-      </a>
-      {% endif %}
-      </div>
-
-      <button type="button" class="icon-rail-link icon-rail-captura" onclick="if(window.pywebview && window.pywebview.api){window.pywebview.api.abrir_captura();}" title="{{ _('Captura rápida (Ctrl+Alt+G)') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-camera"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Captura rápida') }}</span>
-      </button>
-
-      <div class="icon-rail-perfil-menu">
-        <button type="button" id="perfil-toggle" class="icon-rail-perfil-card" title="{{ _('Cuenta') }}" aria-label="{{ _('Cuenta') }}">
-          <span class="icon-rail-perfil-avatar">
-            {% if perfil_rail and perfil_rail.avatar_contenido %}
-            <img src="{{ url_for('avatar_usuario', usuario_id=g.usuario_id) }}" alt="">
-            {% else %}
-            <span class="avatar-circulo" style="--avatar-color: {{ ((perfil_rail.nombre_mostrado if perfil_rail else None) or (usuario_rail.email if usuario_rail else ''))|avatar_color }};">{{ ((perfil_rail.nombre_mostrado if perfil_rail else None) or (usuario_rail.email if usuario_rail else ''))|iniciales }}</span>
+          {% if correo_no_leidos_sidebar or barra_correo %}
+          <a class="top-bar-pildora {{ 'is-alerta' if barra_correo and barra_correo.error }}" href="{{ url_for('correo.bandeja') }}"
+             title="{% if barra_correo and barra_correo.error %}{{ _('Error de sincronización') }}: {{ barra_correo.error }}{% elif barra_correo and barra_correo.minutos is not none %}{{ _('Correo sincronizado') }}{% endif %}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
+            {% if correo_no_leidos_sidebar %}{{ ngettext('%(n)s sin leer', '%(n)s sin leer', correo_no_leidos_sidebar, n=correo_no_leidos_sidebar) }}{% else %}{{ _('Correo') }}{% endif %}
+            {% if barra_correo %}
+            <span class="top-bar-vivo top-bar-sync">{% if barra_correo.error %}{{ _('error de sincronización') }}{% elif barra_correo.minutos is none %}{{ _('sin sincronizar') }}{% elif barra_correo.minutos < 1 %}{{ _('sincronizado ahora') }}{% elif barra_correo.minutos < 60 %}{{ _('sincronizado hace %(n)s min', n=barra_correo.minutos) }}{% elif barra_correo.minutos < 1440 %}{{ _('sincronizado hace %(n)s h', n=barra_correo.minutos // 60) }}{% else %}{{ _('sincronizado hace %(n)s d', n=barra_correo.minutos // 1440) }}{% endif %}</span>
             {% endif %}
+          </a>
+          {% endif %}
           </span>
           <span class="icon-rail-perfil-texto">
             <span class="icon-rail-perfil-nombre">{{ (perfil_rail.nombre_mostrado if perfil_rail else None) or (usuario_rail.email if usuario_rail else '') }}</span>
@@ -257,7 +182,7 @@
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}"
                 data-url-fiscal-vencimiento="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=0) }}"
                 data-url-fiscal-cliente="{{ url_for('fiscal.ficha_cliente', cliente_id=0) }}"></button>
-        <p class="top-bar-fecha">{{ barra_fecha }}</p>
+        <p class="top-bar-fecha" data-zona="{{ barra_zona }}" title="{{ barra_zona }}"><span class="top-bar-fecha-dia">{{ barra_fecha }}</span> <span class="top-bar-fecha-hora">{{ barra_hora }}</span></p>
         <div class="top-bar-acciones">
           <details class="top-bar-nuevo">
             <summary class="btn btn-primary top-bar-nuevo-btn">+ {{ _('Nuevo') }}</summary>

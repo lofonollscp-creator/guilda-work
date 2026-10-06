@@ -352,6 +352,8 @@ def ficha_tenant(tenant_id: int):
     return render_template(
         "backoffice_ficha_tenant.html",
         tenant=tenant,
+        zonas_horarias=db.ZONAS_HORARIAS,
+        zona_defecto=db.ZONA_HORARIA_DEFECTO,
         equipo=equipo,
         modulos_total=len(herramientas.HERRAMIENTAS),
         usuarios=usuarios_del_tenant,
@@ -854,6 +856,12 @@ def renombrar_tenant(tenant_id: int):
         db.guardar_datos_tenant(
             tenant_id, request.form.get("cif", "").strip(), request.form.get("direccion_fiscal", "").strip()
         )
+    zona = request.form.get("zona_horaria", "").strip()
+    if zona:
+        try:
+            db.guardar_zona_horaria_tenant(tenant_id, zona)
+        except ValueError:
+            flash("Huso horario no válido.", "error")
     return redirect(url_for("backoffice.panel"))
 
 

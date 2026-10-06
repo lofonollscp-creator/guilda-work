@@ -721,3 +721,18 @@ def test_limiter_usa_memoria_por_defecto_y_respeta_la_variable_de_entorno():
 
     assert uri({}) == "memory://"
     assert uri({"GUILDA_LIMITER_URI": "memory://otro"}) == "memory://otro"
+
+
+def test_zona_horaria_tenant_por_defecto_es_espana_peninsular(usuario_id):
+    tid = db.crear_tenant("Zona")
+    assert db.zona_horaria_tenant(tid) == "Europe/Madrid"
+    assert db.zona_horaria_tenant(None) == "Europe/Madrid"
+
+
+def test_zona_horaria_tenant_se_guarda_y_rechaza_valores_invalidos(usuario_id):
+    tid = db.crear_tenant("Zona2")
+    db.guardar_zona_horaria_tenant(tid, "Atlantic/Canary")
+    assert db.zona_horaria_tenant(tid) == "Atlantic/Canary"
+    with pytest.raises(ValueError):
+        db.guardar_zona_horaria_tenant(tid, "Marte/Olimpo")
+    assert db.zona_horaria_tenant(tid) == "Atlantic/Canary"

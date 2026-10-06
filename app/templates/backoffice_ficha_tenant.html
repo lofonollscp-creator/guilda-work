@@ -222,6 +222,13 @@
     <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ tenant.nombre }}" required></label>
     <label>CIF <input type="text" name="cif" value="{{ tenant.cif or '' }}" style="width:90px;"></label>
     <label>{{ _('Dirección fiscal') }} <input type="text" name="direccion_fiscal" value="{{ tenant.direccion_fiscal or '' }}" style="width:200px;"></label>
+    <label>{{ _('Huso horario') }}
+      <select name="zona_horaria">
+        {% set zona_actual = tenant.zona_horaria or zona_defecto %}
+        {% for codigo, etiqueta in zonas_horarias %}<option value="{{ codigo }}" {{ 'selected' if codigo == zona_actual }}>{{ etiqueta }}</option>{% endfor %}
+        {% if zona_actual not in zonas_horarias|map(attribute=0)|list %}<option value="{{ zona_actual }}" selected>{{ zona_actual }}</option>{% endif %}
+      </select>
+    </label>
     <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
   </form>
 

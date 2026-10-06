@@ -4651,3 +4651,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .top-bar .busqueda-boton-abrir[hidden] { display: none; }
 .top-bar-fecha::first-letter { text-transform: uppercase; }
 .top-bar-nuevo summary { font-family: inherit; text-transform: none; letter-spacing: 0; font-weight: 700; }
+.top-bar-fecha-hora { margin-left: 8px; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.top-bar-sync { font-size: 12px; }
+@media (max-width: 1100px) { .top-bar-sync { display: none; } }

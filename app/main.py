@@ -348,7 +348,29 @@ def inyectar_barra_superior():
     barra se queda sin ese dato, nunca rompe la página."""
     if not g.usuario_id:
         return {}
-    datos = {"barra_fecha": format_date(datetime.now().date(), "full"), "barra_mi_dia": 0, "barra_cronometro": None}
+    from zoneinfo import ZoneInfo
+
+    zona = db.zona_horaria_tenant(g.tenant_id)
+    ahora_zona = datetime.now(ZoneInfo(zona))
+    datos = {
+        "barra_fecha": format_date(ahora_zona.date(), "full"),
+        "barra_hora": ahora_zona.strftime("%H:%M:%S"),
+        "barra_zona": zona,
+        "barra_mi_dia": 0,
+        "barra_cronometro": None,
+        "barra_correo": None,
+    }
+    try:
+        cuentas = db.listar_cuentas_correo(g.usuario_id)
+        if cuentas:
+            error = next((c for c in cuentas if c["ultimo_error_sincronizacion"]), None)
+            ultimas = [c["ultima_sincronizacion"] for c in cuentas if c["ultima_sincronizacion"]]
+            minutos = None
+            if ultimas:
+                minutos = max(0, int((datetime.now() - datetime.fromisoformat(max(ultimas))).total_seconds() // 60))
+            datos["barra_correo"] = {"error": error["ultimo_error_sincronizacion"] if error else None, "minutos": minutos}
+    except Exception:
+        pass
     try:
         sec = db.tareas_para_hoy(g.usuario_id)
         datos["barra_mi_dia"] = len(sec["vencidas"]) + len(sec["hoy"])
