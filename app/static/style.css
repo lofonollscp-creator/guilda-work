@@ -4285,9 +4285,21 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-size: 0.85em;
   color: var(--text-muted);
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 6px;
 }
+/* Reloj grande de la jornada (canvas Interfaces Guilda Work: Fichaje). */
+.fichaje-reloj { font-family: var(--font-mono); font-size: 3.6rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+@media (max-width: 700px) { .fichaje-reloj { font-size: 2.6rem; } }
+/* Barras de la semana en la barra lateral. */
+.fichaje-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; height: 150px; margin-bottom: var(--space-4); }
+.fichaje-dia-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; min-width: 0; }
+.fichaje-dia-col b { font: 600 10px var(--font-mono); color: var(--text-muted); white-space: nowrap; }
+.fichaje-dia-col small { font: 700 11px var(--font-mono); color: var(--text-muted); }
+.fichaje-dia-barra { display: block; width: 100%; max-width: 30px; border-radius: 8px 8px 3px 3px; background: color-mix(in srgb, var(--text) 22%, transparent); }
+.fichaje-dia-barra.is-hoy { background: var(--primary); }
+.fichaje-dia-barra.is-futuro { opacity: 0.4; }
 .pill.estado-fuera { background: color-mix(in srgb, var(--text-muted) 14%, transparent); color: var(--text-muted); }
 .pill.estado-dentro { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: color-mix(in srgb, var(--success) 35%, transparent); color: var(--success); }
 .pill.estado-en-pausa { background: color-mix(in srgb, var(--warning) 16%, transparent); border-color: color-mix(in srgb, var(--warning) 35%, transparent); color: var(--warning); }

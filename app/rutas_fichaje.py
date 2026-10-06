@@ -73,6 +73,7 @@ def panel():
         ultimo_evento=db.ultimo_fichaje(g.usuario_id),
         hoy=db.listar_fichajes(g.usuario_id, desde=hoy, hasta=hoy),
         semana=fichaje_export.resumen_semana(g.tenant_id, g.usuario_id),
+        dias_semana=fichaje_export.semana_por_dias(g.tenant_id, g.usuario_id),
         error=request.args.get("error"),
         geolocalizacion_activa=_geolocalizacion_activa(),
     )

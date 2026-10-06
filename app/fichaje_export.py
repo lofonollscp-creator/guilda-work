@@ -123,6 +123,37 @@ def resumen_semana(tenant_id: int | None, usuario_id: int, ahora: datetime | Non
     }
 
 
+def semana_por_dias(tenant_id: int | None, usuario_id: int, ahora: datetime | None = None) -> list[dict]:
+    """Segundos trabajados en cada día (lunes a domingo) de la semana en
+    curso, con la misma medida que los totales diarios. Hoy incluye la
+    jornada todavía abierta. `altura` es el % de barra (100 = la mayor de
+    las jornadas o 8 h, lo que sea más) para pintar el gráfico semanal."""
+    ahora = ahora or datetime.now()
+    lunes = _lunes(ahora)
+    domingo = lunes + timedelta(days=6)
+    por_dia: dict[str, float] = {}
+    # Desde el día anterior al lunes, como segundos_por_usuario_semana, para
+    # repartir bien un turno que cruza la medianoche del domingo.
+    for fila in filas_diarias(tenant_id, (lunes - timedelta(days=1)).strftime("%Y-%m-%d"), domingo.strftime("%Y-%m-%d"), usuario_id):
+        if fila["usuario_id"] == usuario_id:
+            por_dia[fila["fecha"]] = por_dia.get(fila["fecha"], 0) + fila["segundos_trabajados"]
+    en_curso = 0.0
+    entrada = db.entrada_abierta_fichaje(usuario_id)
+    if entrada:
+        inicio = max(datetime.fromisoformat(entrada), datetime(ahora.year, ahora.month, ahora.day))
+        en_curso = max((ahora - inicio).total_seconds(), 0.0)
+    dias = []
+    for i in range(7):
+        d = (lunes + timedelta(days=i)).date()
+        fecha = d.strftime("%Y-%m-%d")
+        segundos = por_dia.get(fecha, 0.0) + (en_curso if d == ahora.date() else 0.0)
+        dias.append({"fecha": d, "segundos": segundos, "hoy": d == ahora.date(), "futuro": d > ahora.date()})
+    escala = max(max(x["segundos"] for x in dias), 8 * 3600)
+    for x in dias:
+        x["altura"] = max(round(x["segundos"] / escala * 100), 3)
+    return dias
+
+
 def formato_horas(segundos: float | None) -> str:
     """'24 h 30 min' (o '—' sin dato)."""
     if segundos is None:

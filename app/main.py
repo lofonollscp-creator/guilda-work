@@ -164,6 +164,7 @@ def _seleccionar_idioma():
 
 babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
 app.add_template_filter(nota_a_html, "nota_html")
+app.add_template_filter(lambda d: format_date(d, "EEEEE").upper(), "dia_inicial")
 app.register_blueprint(tareas_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)

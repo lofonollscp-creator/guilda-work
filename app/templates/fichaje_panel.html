@@ -35,9 +35,8 @@
     </span>
     {% if estado != 'fuera' and ultimo_evento %}
     <span class="fichaje-desde">
-      {{ _('llevas') }}
-      <span class="task-timer" data-inicio="{{ ultimo_evento.marca_tiempo }}">00:00:00</span>
-      {{ _('en pausa') if estado == 'en_pausa' else _('dentro') }}
+      <span class="task-timer fichaje-reloj" data-inicio="{{ ultimo_evento.marca_tiempo }}" aria-label="{{ _('Tiempo transcurrido') }}">00:00:00</span>
+      <span>{{ _('en pausa') if estado == 'en_pausa' else _('dentro') }} · {{ _('desde las %(h)s', h=ultimo_evento.marca_tiempo[11:16]) }}</span>
     </span>
     {% endif %}
   </div>
@@ -103,6 +102,18 @@
 </section>
 
 <aside class="stats-section fichaje-sidebar">
+  {% if dias_semana %}
+  <h3>{{ _('Esta semana') }}</h3>
+  <div class="fichaje-dias" role="img" aria-label="{{ _('Horas trabajadas cada día de esta semana') }}">
+    {% for d in dias_semana %}
+    <div class="fichaje-dia-col">
+      <b>{% if d.segundos %}{{ (d.segundos // 3600)|int }}h {{ '%02d'|format(((d.segundos % 3600) // 60)|int) }}{% else %}—{% endif %}</b>
+      <span class="fichaje-dia-barra {{ 'is-hoy' if d.hoy }} {{ 'is-futuro' if d.futuro or not d.segundos }}" style="height: {{ d.altura }}%"></span>
+      <small>{{ d.fecha|dia_inicial }}</small>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
   <h3>{{ _('Hoy') }}</h3>
   {% if not hoy %}
   <p class="empty-lane">{{ _('Todavía no has fichado nada hoy.') }}</p>
