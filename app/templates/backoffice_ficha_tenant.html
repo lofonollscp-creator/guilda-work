@@ -23,6 +23,16 @@
   </form>
 </header>
 
+<section class="bo-resumen" aria-label="{{ _('Resumen del tenant') }}">
+  <div class="bo-kpi"><strong>{{ equipo.usuarios or 0 }}</strong><span>{{ _('usuarios') }}</span></div>
+  <div class="bo-kpi"><strong>{{ equipo.admins or 0 }}</strong><span>{{ _('administradores') }}</span></div>
+  <div class="bo-kpi"><strong>{{ equipo.gestores or 0 }}</strong><span>{{ _('gestores de fichajes') }}</span></div>
+  <div class="bo-kpi"><strong>{{ equipo.supervisores or 0 }}</strong><span>{{ _('supervisores') }}</span></div>
+  <div class="bo-kpi"><strong>{{ equipo.clientes or 0 }}</strong><span>{{ _('clientes fiscales') }}</span></div>
+  <div class="bo-kpi"><strong>{{ modulos_total - herramientas_ocultas|length }}/{{ modulos_total }}</strong><span>{{ _('módulos activos') }}</span></div>
+  <div class="bo-kpi"><strong>{{ equipo.plan or '—' }}</strong><span>{{ _('plan') }}</span></div>
+</section>
+
 <div class="bo-ficha-layout">
 <section class="quick-card bo-ficha-main">
   <label>{{ _('Usuarios') }}</label>
@@ -32,8 +42,7 @@
       <tr>
         <th>Email</th>
         <th>{{ _('Rol') }}</th>
-        <th>{{ _('Fichaje') }}</th>
-        <th>{{ _('Supervisor') }}</th>
+        <th>{{ _('Permisos') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -46,18 +55,20 @@
           </form>
         </td>
         <td>
-          <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-ghost">{{ _('Quitar gestor') if u.gestor_fichajes else _('Hacer gestor') }}</button>
-          </form>
-        </td>
-        <td>
-          <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-ghost">{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}</button>
-          </form>
+          <div class="bo-permisos">
+            <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}">
+              <button type="submit" class="bo-permiso {{ 'is-on' if u.gestor_fichajes }}" aria-pressed="{{ 'true' if u.gestor_fichajes else 'false' }}"
+                      title="{{ _('Quitar gestor de fichajes') if u.gestor_fichajes else _('Hacer gestor de fichajes') }}">{{ _('Gestor de fichajes') }}</button>
+            </form>
+            <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}">
+              <button type="submit" class="bo-permiso {{ 'is-on' if u.supervisor_tenant }}" aria-pressed="{{ 'true' if u.supervisor_tenant else 'false' }}"
+                      title="{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}">{{ _('Supervisor') }}</button>
+            </form>
+          </div>
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="4" class="empty">{{ _('Sin usuarios asignados todavía.') }}</td></tr>
+      <tr><td colspan="3" class="empty">{{ _('Sin usuarios asignados todavía.') }}</td></tr>
       {% endfor %}
     </tbody>
   </table>

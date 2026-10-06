@@ -1,0 +1,76 @@
+{% extends "backoffice_base.html" %}
+{% block title %}{{ _('Mapa de acceso') }} — Backoffice{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Mapa de acceso') }}</h1>
+    <p class="subtitle">{{ _('Qué módulos tiene activos cada tenant y quién trabaja en él, con qué roles. Para cambiar algo, entra en la ficha del tenant.') }}</p>
+  </div>
+</header>
+
+{% if not tenants %}
+<p class="empty-lane">{{ _('Todavía no hay ningún tenant.') }}</p>
+{% else %}
+<section class="ia-section">
+  <h2>{{ _('Equipos y roles') }}</h2>
+  <div class="bo-mapa-equipos">
+    {% for t in tenants %}
+    {% set e = equipos.get(t.id, {}) %}
+    <article class="bo-mapa-tenant {{ 'is-suspendido' if not t.activo }}">
+      <header>
+        <h3><a href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}">{{ t.nombre }}</a></h3>
+        <span class="log-badge {{ 'log-badge-duracion' if t.activo else 'log-badge-instantanea' }}">{{ _('Activo') if t.activo else _('Suspendido') }}</span>
+        <span class="muted">{{ e.plan or _('sin plan') }}</span>
+      </header>
+      <ul class="bo-mapa-usuarios">
+        {% for u in usuarios_por_tenant.get(t.id, []) %}
+        <li>
+          <span class="bo-mapa-email">{{ u.email }}</span>
+          <span class="bo-permisos">
+            {% if u.rol == 'admin' %}<span class="bo-permiso is-on">Admin</span>{% endif %}
+            {% if u.gestor_fichajes %}<span class="bo-permiso is-on">{{ _('Gestor de fichajes') }}</span>{% endif %}
+            {% if u.supervisor_tenant %}<span class="bo-permiso is-on">{{ _('Supervisor') }}</span>{% endif %}
+            {% if u.rol != 'admin' and not u.gestor_fichajes and not u.supervisor_tenant %}<span class="muted">{{ _('Usuario') }}</span>{% endif %}
+          </span>
+        </li>
+        {% else %}
+        <li class="muted">{{ _('Sin usuarios asignados todavía.') }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="ia-section">
+  <h2>{{ _('Módulos por tenant') }}</h2>
+  <div class="table-wrap">
+    <table class="historial-table bo-matriz">
+      <thead>
+        <tr>
+          <th>{{ _('Módulo') }}</th>
+          {% for t in tenants %}<th class="bo-matriz-col"><a href="{{ url_for('backoffice.ficha_tenant', tenant_id=t.id) }}">{{ t.nombre }}</a></th>{% endfor %}
+          <th class="bo-matriz-col">{{ _('Tenants con acceso') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in catalogo_herramientas %}
+        {% set ns = namespace(n=0) %}
+        <tr>
+          <th scope="row">{{ h.nombre }}</th>
+          {% for t in tenants %}
+          {% set activa = h.id not in ocultas.get(t.id, []) %}
+          {% if activa %}{% set ns.n = ns.n + 1 %}{% endif %}
+          <td class="bo-matriz-celda {{ 'is-on' if activa else 'is-off' }}" title="{{ t.nombre }} — {{ _('activo') if activa else _('oculto') }}">
+            <span aria-hidden="true">{{ '●' if activa else '○' }}</span><span class="sr-only">{{ _('activo') if activa else _('oculto') }}</span>
+          </td>
+          {% endfor %}
+          <td class="bo-matriz-celda mono">{{ ns.n }}/{{ tenants|length }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -77,26 +77,49 @@
 {% endif %}
 
 <section class="ia-section">
+  <form method="get" action="{{ url_for('backoffice.usuarios_vista') }}" class="bo-toolbar">
+    <div class="bo-buscador">
+      <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar por email...') }}">
+    </div>
+    <select name="tenant" onchange="this.form.submit()" aria-label="{{ _('Tenant') }}">
+      <option value="">{{ _('Todos los tenants') }}</option>
+      <option value="ninguno" {{ 'selected' if tenant_filtro == 'ninguno' }}>{{ _('Sin tenant') }}</option>
+      {% for t in tenants %}<option value="{{ t.id }}" {{ 'selected' if tenant_filtro == t.id|string }}>{{ t.nombre }}</option>{% endfor %}
+    </select>
+    <select name="rol" onchange="this.form.submit()" aria-label="{{ _('Rol') }}">
+      <option value="">{{ _('Todos los roles') }}</option>
+      <option value="admin" {{ 'selected' if rol_filtro == 'admin' }}>{{ _('Administradores') }}</option>
+      <option value="gestor" {{ 'selected' if rol_filtro == 'gestor' }}>{{ _('Gestores de fichajes') }}</option>
+      <option value="supervisor" {{ 'selected' if rol_filtro == 'supervisor' }}>{{ _('Supervisores') }}</option>
+    </select>
+    <button type="submit" class="btn btn-ghost">{{ _('Filtrar') }}</button>
+    {% if q or tenant_filtro or rol_filtro %}<a class="btn btn-ghost" href="{{ url_for('backoffice.usuarios_vista') }}">{{ _('Limpiar') }}</a>{% endif %}
+  </form>
+  <p class="muted">{{ ngettext('%(n)s usuario', '%(n)s usuarios', usuarios|length, n=usuarios|length) }}</p>
+
   <div class="table-wrap">
-    <table class="historial-table">
+    <table class="historial-table bo-tabla-usuarios">
       <thead>
         <tr>
           <th>Email</th>
-          <th>Tenant</th>
-          <th>{{ _('Rol') }}</th>
-          <th>{{ _('Fichaje') }}</th>
-          <th>{{ _('Supervisor') }}</th>
+          <th>{{ _('Tenant') }}</th>
+          <th>{{ _('Permisos') }}</th>
+          <th>{{ _('Dispositivos') }}</th>
           <th>{{ _('Alta') }}</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
-        {% for u in usuarios %}
+        {% for nombre_tenant, miembros in grupos.items() %}
+        <tr class="bo-grupo {{ 'bo-grupo-aviso' if not nombre_tenant }}">
+          <th colspan="5">{{ nombre_tenant or _('Sin tenant (hay que asignarlos)') }} <span class="muted">· {{ miembros|length }}</span></th>
+        </tr>
+        {% for u in miembros %}
         <tr>
-          <td>{{ u.email }}</td>
+          <td>{{ u.email }}{% if u.id == g.usuario_id %} <span class="muted">({{ _('tú') }})</span>{% endif %}</td>
           <td>
             <form method="post" action="{{ url_for('backoffice.asignar_tenant_usuario', usuario_id=u.id) }}">
-              <select name="tenant_id" onchange="this.form.submit()">
+              <select name="tenant_id" onchange="this.form.submit()" aria-label="{{ _('Tenant') }}">
                 <option value="">{{ _('Sin tenant') }}</option>
                 {% for t in tenants %}
                 <option value="{{ t.id }}" {% if u.tenant_id == t.id %}selected{% endif %}>{{ t.nombre }}</option>
@@ -105,30 +128,33 @@
             </form>
           </td>
           <td>
-            <span class="log-badge {{ 'log-badge-duracion' if u.rol == 'admin' else 'log-badge-instantanea' }}">{{ u.rol }}</span>
+            <div class="bo-permisos">
+              {% if u.id != g.usuario_id %}
+              <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}">
+                <button type="submit" class="bo-permiso {{ 'is-on' if u.rol == 'admin' }}" aria-pressed="{{ 'true' if u.rol == 'admin' else 'false' }}"
+                        title="{{ _('Quitar admin') if u.rol == 'admin' else _('Hacer admin') }}">Admin</button>
+              </form>
+              {% else %}
+              <span class="bo-permiso is-on" title="{{ _('No puedes quitarte el rol de admin a ti mismo') }}">Admin</span>
+              {% endif %}
+              <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}">
+                <button type="submit" class="bo-permiso {{ 'is-on' if u.gestor_fichajes }}" aria-pressed="{{ 'true' if u.gestor_fichajes else 'false' }}"
+                        title="{{ _('Quitar gestor de fichajes') if u.gestor_fichajes else _('Hacer gestor de fichajes') }}">{{ _('Gestor de fichajes') }}</button>
+              </form>
+              <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}">
+                <button type="submit" class="bo-permiso {{ 'is-on' if u.supervisor_tenant }}" aria-pressed="{{ 'true' if u.supervisor_tenant else 'false' }}"
+                        title="{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}">{{ _('Supervisor') }}</button>
+              </form>
+            </div>
           </td>
           <td>
-            <form method="post" action="{{ url_for('backoffice.alternar_gestor_fichajes', usuario_id=u.id) }}">
-              <button type="submit" class="btn btn-ghost">{{ _('Quitar gestor') if u.gestor_fichajes else _('Hacer gestor') }}</button>
-            </form>
-          </td>
-          <td>
-            <form method="post" action="{{ url_for('backoffice.alternar_supervisor_tenant', usuario_id=u.id) }}">
-              <button type="submit" class="btn btn-ghost">{{ _('Quitar supervisor') if u.supervisor_tenant else _('Hacer supervisor') }}</button>
-            </form>
+            <a class="btn btn-ghost" href="{{ url_for('backoffice.dispositivos_usuario', usuario_id=u.id) }}">{{ u.dispositivos }}{% if u.ultimo_uso %} · {{ u.ultimo_uso[:10] }}{% endif %}</a>
           </td>
           <td class="mono">{{ u.creado_en[:10] }}</td>
-          <td>
-            <a class="btn btn-ghost" href="{{ url_for('backoffice.dispositivos_usuario', usuario_id=u.id) }}">{{ _('Dispositivos') }}</a>
-            {% if u.id != g.usuario_id %}
-            <form method="post" action="{{ url_for('backoffice.cambiar_rol', usuario_id=u.id) }}">
-              <button type="submit" class="btn btn-ghost">{{ _('Quitar admin') if u.rol == 'admin' else _('Hacer admin') }}</button>
-            </form>
-            {% endif %}
-          </td>
         </tr>
+        {% endfor %}
         {% else %}
-        <tr><td colspan="7" class="empty">{{ _('Todavía no hay ningún usuario.') }}</td></tr>
+        <tr><td colspan="5" class="empty">{{ _('Ningún usuario coincide.') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -192,3 +192,58 @@
 .salud-chip.salud-ambar { color: #b8860b; }
 .salud-chip.salud-rojo { color: #d6453d; }
 .salud-chip.salud-gris { color: #8b8f84; }
+
+/* ---- Rail del backoffice: más ancho, con scroll propio y pie fijo ---- */
+:root[data-rail-expandido="1"] .icon-rail.bo-rail { width: 232px; }
+.bo-rail .icon-rail-nav { scrollbar-width: thin; }
+.bo-rail .icon-rail-link { min-width: 0; width: auto; }
+.bo-rail .icon-rail-etiqueta { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bo-rail .icon-rail-perfil-menu, .bo-rail > form { flex-shrink: 0; }
+
+/* ---- Resumen (KPI) ---- */
+.bo-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-5); }
+.bo-kpi { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); text-decoration: none; color: inherit; min-width: 0; }
+.bo-kpi strong { font-family: var(--font-mono); font-size: 1.4em; line-height: 1.1; overflow-wrap: anywhere; }
+.bo-kpi span { color: var(--text-muted); font-size: 0.82em; }
+a.bo-kpi:hover { border-color: var(--primary); }
+.bo-kpi-aviso { border-color: var(--danger); }
+.bo-kpi-aviso strong { color: var(--danger); }
+
+/* ---- Tarjeta de tenant ---- */
+.bo-tenant-datos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
+.bo-tenant-datos div { min-width: 0; }
+.bo-tenant-datos dt { color: var(--text-muted); font-size: 0.75em; text-transform: uppercase; letter-spacing: .04em; }
+.bo-tenant-datos dd { margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bo-roles { display: flex; flex-wrap: wrap; gap: 6px; }
+.bo-rol { padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-size: 0.78em; }
+.bo-rol-vacio { color: var(--text-muted); opacity: .6; }
+.bo-actividad { color: var(--text-muted); font-size: 0.85em; }
+.bo-tenant-card-footer { gap: 8px; flex-wrap: wrap; }
+
+/* ---- Usuarios: permisos como interruptores y grupos por tenant ---- */
+.bo-permisos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bo-permisos form { margin: 0; }
+.bo-permiso { padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--text-muted); font: inherit; font-size: 0.8em; cursor: pointer; }
+button.bo-permiso:hover { border-color: var(--primary); color: var(--text); }
+.bo-permiso.is-on { background: color-mix(in srgb, var(--primary) 18%, transparent); border-color: var(--primary); color: var(--text); font-weight: 600; cursor: default; }
+button.bo-permiso.is-on { cursor: pointer; }
+.bo-grupo th { text-align: left; background: var(--bg); font-family: var(--font-mono); font-size: 0.8em; text-transform: uppercase; letter-spacing: .04em; padding: 8px 12px; }
+.bo-grupo-aviso th { color: var(--danger); }
+.bo-tabla-usuarios td { vertical-align: middle; }
+
+/* ---- Mapa de acceso ---- */
+.bo-mapa-equipos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: var(--space-4); }
+.bo-mapa-tenant { padding: var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); min-width: 0; }
+.bo-mapa-tenant.is-suspendido { opacity: .75; }
+.bo-mapa-tenant header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.bo-mapa-tenant h3 { margin: 0; font-size: 1em; }
+.bo-mapa-usuarios { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.bo-mapa-usuarios li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; padding-top: 6px; border-top: 1px solid var(--border); }
+.bo-mapa-email { overflow-wrap: anywhere; }
+.bo-matriz th, .bo-matriz td { white-space: nowrap; }
+.bo-matriz-col { text-align: center; }
+.bo-matriz-celda { text-align: center; }
+.bo-matriz-celda.is-on { color: var(--primary-text); }
+.bo-matriz-celda.is-off { color: var(--text-muted); opacity: .6; }
+.bo-matriz tbody th { text-align: left; font-weight: 500; position: sticky; left: 0; background: var(--surface); }
+.bo-buscador input[type="search"] { border: none; padding: 0; box-shadow: none; background: transparent; outline: none; }

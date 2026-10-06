@@ -260,28 +260,24 @@ msgid "Borrar"
 msgstr "Fermer"
 
 #: app/templates/backoffice.html:192
-#, fuzzy
 msgid "Todavía no hay ningún tenant."
-msgstr "Vous n'avez encore aucun menu."
+msgstr "Il n'y a encore aucun tenant."
 
 #: app/templates/backoffice.html:199
-#, fuzzy
 msgid "Nuevo tenant"
-msgstr "Nouveau menu"
+msgstr "Nouveau tenant"
 
 #: app/templates/backoffice.html:199
-#, fuzzy
 msgid "Nombre de la organización"
-msgstr "Nom de la tâche"
+msgstr "Nom de l'organisation"
 
 #: app/templates/backoffice.html:200
 msgid "Dominio de correo (Stalwart, opcional)"
 msgstr "Domaine de messagerie (Stalwart, facultatif)"
 
 #: app/templates/backoffice.html:201
-#, fuzzy
 msgid "Crear tenant"
-msgstr "Créer un compte"
+msgstr "Créer le tenant"
 
 #: app/templates/backoffice.html:213
 msgid "Rol"
@@ -300,9 +296,8 @@ msgstr "Haute"
 
 #: app/templates/backoffice.html:226 app/templates/backoffice.html:262
 #: app/templates/backoffice.html:325
-#, fuzzy
 msgid "Sin tenant"
-msgstr "Sans menu"
+msgstr "Sans tenant"
 
 #: app/templates/backoffice.html:238
 #, fuzzy
@@ -314,18 +309,16 @@ msgid "Hacer gestor"
 msgstr "Nommer gestionnaire"
 
 #: app/templates/backoffice.html:243
-#, fuzzy
 msgid "Dispositivos"
-msgstr "Mes appareils"
+msgstr "Appareils"
 
 #: app/templates/backoffice.html:246
 msgid "Quitar admin"
 msgstr "Retirer admin"
 
 #: app/templates/backoffice.html:246
-#, fuzzy
 msgid "Hacer admin"
-msgstr "Outils"
+msgstr "Rendre admin"
 
 #: app/templates/backoffice.html:252
 #, fuzzy
@@ -333,9 +326,8 @@ msgid "Todavía no hay ningún usuario."
 msgstr "Vous n'avez encore aucun menu."
 
 #: app/templates/backoffice.html:268
-#, fuzzy
 msgid "Crear usuario"
-msgstr "Créer un compte"
+msgstr "Créer l'utilisateur"
 
 #: app/templates/backoffice.html:274
 msgid "Avisa a una URL externa cuando pasa algo — ver la"
@@ -1382,14 +1374,12 @@ msgstr "Affichage des 20 premiers dans le graphique ; le tableau ci-dessous cont
 #: app/templates/estadisticas.html:88
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32
-#, fuzzy
 msgid "Fecha"
-msgstr "Pointage"
+msgstr "Date"
 
 #: app/templates/estadisticas.html:90
-#, fuzzy
 msgid "Tiempo total"
-msgstr "Importer"
+msgstr "Temps total"
 
 #: app/templates/fichaje_admin.html:2
 msgid "Administración de fichaje"
@@ -2853,9 +2843,8 @@ msgid "GUILDA WORK DEVELOPERS"
 msgstr "GUILDA WORK DEVELOPERS"
 
 #: app/templates/docs/pagina.html:89
-#, fuzzy
 msgid "Copiar"
-msgstr "Démarrer"
+msgstr "Copier"
 
 #: app/templates/docs/pagina.html:155
 msgid "EN ESTA PÁGINA"
@@ -4076,3 +4065,314 @@ msgstr "Langue des e-mails au client"
 
 msgid "Adjuntos guardados en este borrador"
 msgstr "Pièces jointes enregistrées dans ce brouillon"
+
+msgid "Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y supervisor."
+msgstr "Création d'utilisateurs et affectation à un tenant, rôle, gestionnaire de pointage et superviseur."
+
+msgid "¡Copiado!"
+msgstr "Copié !"
+
+msgid "Error al copiar"
+msgstr "Échec de la copie"
+
+msgid "Buscar por email..."
+msgstr "Rechercher par e-mail..."
+
+msgid "Tenant"
+msgstr "Tenant"
+
+msgid "Todos los tenants"
+msgstr "Tous les tenants"
+
+msgid "Todos los roles"
+msgstr "Tous les rôles"
+
+msgid "Administradores"
+msgstr "Administrateurs"
+
+msgid "Gestores de fichajes"
+msgstr "Gestionnaires de pointage"
+
+msgid "Supervisores"
+msgstr "Superviseurs"
+
+msgid "Sin tenant (hay que asignarlos)"
+msgstr "Sans tenant (à affecter)"
+
+msgid "tú"
+msgstr "vous"
+
+msgid "No puedes quitarte el rol de admin a ti mismo"
+msgstr "Vous ne pouvez pas retirer votre propre rôle d'admin"
+
+msgid "Quitar gestor de fichajes"
+msgstr "Retirer gestionnaire de pointage"
+
+msgid "Hacer gestor de fichajes"
+msgstr "Rendre gestionnaire de pointage"
+
+msgid "Gestor de fichajes"
+msgstr "Gestionnaire de pointage"
+
+msgid "Quitar supervisor"
+msgstr "Retirer superviseur"
+
+msgid "Hacer supervisor"
+msgstr "Rendre superviseur"
+
+msgid "Supervisor"
+msgstr "Superviseur"
+
+msgid "Ningún usuario coincide."
+msgstr "Aucun utilisateur ne correspond."
+
+msgid "Mapa de acceso"
+msgstr "Carte des accès"
+
+msgid "Qué módulos tiene activos cada tenant y quién trabaja en él, con qué roles. Para cambiar algo, entra en la ficha del tenant."
+msgstr "Quels modules chaque tenant a activés et qui y travaille, avec quels rôles. Pour modifier, ouvrez la fiche du tenant."
+
+msgid "Equipos y roles"
+msgstr "Équipes et rôles"
+
+msgid "Activo"
+msgstr "Actif"
+
+msgid "Suspendido"
+msgstr "Suspendu"
+
+msgid "sin plan"
+msgstr "sans forfait"
+
+msgid "Sin usuarios asignados todavía."
+msgstr "Aucun utilisateur affecté pour l'instant."
+
+msgid "Módulos por tenant"
+msgstr "Modules par tenant"
+
+msgid "Módulo"
+msgstr "Module"
+
+msgid "Tenants con acceso"
+msgstr "Tenants avec accès"
+
+msgid "activo"
+msgstr "actif"
+
+msgid "oculto"
+msgstr "masqué"
+
+msgid "Organizaciones (gestorías) dadas de alta en Guilda Work."
+msgstr "Organisations (cabinets) inscrites dans Guilda Work."
+
+msgid "Resumen de la plataforma"
+msgstr "Résumé de la plateforme"
+
+msgid "tenants"
+msgstr "tenants"
+
+msgid "activos"
+msgstr "actifs"
+
+msgid "usuarios en tenants"
+msgstr "utilisateurs dans des tenants"
+
+msgid "usuarios sin tenant"
+msgstr "utilisateurs sans tenant"
+
+msgid "tenants sin usuarios"
+msgstr "tenants sans utilisateurs"
+
+msgid "Mapa de acceso por tenant"
+msgstr "Carte des accès par tenant"
+
+msgid "Buscar tenant..."
+msgstr "Rechercher un tenant..."
+
+msgid "Módulo: todos"
+msgstr "Module : tous"
+
+msgid "Nº usuarios"
+msgstr "Nb d'utilisateurs"
+
+msgid "Actividad reciente"
+msgstr "Activité récente"
+
+msgid "Añadir tenant"
+msgstr "Ajouter un tenant"
+
+msgid "Plan"
+msgstr "Forfait"
+
+msgid "Clientes fiscales"
+msgstr "Clients fiscaux"
+
+msgid "Módulos"
+msgstr "Modules"
+
+msgid "Roles"
+msgstr "Rôles"
+
+msgid "gestor"
+msgstr "gestionnaire"
+
+msgid "supervisor"
+msgstr "superviseur"
+
+#, python-format
+msgid "Actividad: %(fecha)s"
+msgstr "Activité : %(fecha)s"
+
+msgid "Sin actividad"
+msgstr "Aucune activité"
+
+msgid "Ver ficha"
+msgstr "Voir la fiche"
+
+msgid "Ningún tenant coincide con la búsqueda."
+msgstr "Aucun tenant ne correspond à la recherche."
+
+#, python-format
+msgid "Última actividad: %(fecha)s"
+msgstr "Dernière activité : %(fecha)s"
+
+msgid "Sin actividad todavía."
+msgstr "Pas encore d'activité."
+
+msgid "Suspender tenant"
+msgstr "Suspendre le tenant"
+
+msgid "Reactivar tenant"
+msgstr "Réactiver le tenant"
+
+msgid "Resumen del tenant"
+msgstr "Résumé du tenant"
+
+msgid "usuarios"
+msgstr "utilisateurs"
+
+msgid "administradores"
+msgstr "administrateurs"
+
+msgid "gestores de fichajes"
+msgstr "gestionnaires de pointage"
+
+msgid "supervisores"
+msgstr "superviseurs"
+
+msgid "clientes fiscales"
+msgstr "clients fiscaux"
+
+msgid "módulos activos"
+msgstr "modules actifs"
+
+msgid "plan"
+msgstr "forfait"
+
+msgid "Clic para cambiar"
+msgstr "Cliquer pour changer"
+
+msgid "Stripe Connect"
+msgstr "Stripe Connect"
+
+msgid "Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene."
+msgstr "Pour que ce tenant puisse encaisser SES clients -- l'argent arrive directement sur sa banque, Guilda Work ne le retient jamais."
+
+msgid "Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY)."
+msgstr "Stripe n'est pas encore configuré sur le serveur (STRIPE_SECRET_KEY manquante)."
+
+msgid "Cuenta conectada y lista para cobrar"
+msgstr "Compte connecté et prêt à encaisser"
+
+msgid "Onboarding sin completar"
+msgstr "Onboarding non terminé"
+
+msgid "Reintentar onboarding"
+msgstr "Réessayer l'onboarding"
+
+msgid "Email de contacto para Stripe"
+msgstr "E-mail de contact pour Stripe"
+
+msgid "Conectar Stripe"
+msgstr "Connecter Stripe"
+
+msgid "Oculto — clic para mostrar"
+msgstr "Masqué — cliquer pour afficher"
+
+msgid "Visible — clic para ocultar"
+msgstr "Visible — cliquer pour masquer"
+
+msgid "Estadísticas de equipo"
+msgstr "Statistiques d'équipe"
+
+msgid "Todavía no hay datos suficientes."
+msgstr "Pas encore assez de données."
+
+msgid "Ingresos (suscripción de Guilda Work)"
+msgstr "Revenus (abonnement Guilda Work)"
+
+msgid "Sin plan"
+msgstr "Sans forfait"
+
+msgid "Suscripción activa"
+msgstr "Abonnement actif"
+
+msgid "Activar suscripción"
+msgstr "Activer l'abonnement"
+
+msgid "Extras activos"
+msgstr "Options actives"
+
+msgid "hasta"
+msgstr "jusqu'au"
+
+msgid "Sin extras activos."
+msgstr "Aucune option active."
+
+msgid "Extra"
+msgstr "Option"
+
+msgid "Cantidad"
+msgstr "Quantité"
+
+msgid "Hasta (opcional)"
+msgstr "Jusqu'au (facultatif)"
+
+msgid "Añadir extra"
+msgstr "Ajouter une option"
+
+msgid "Facturas"
+msgstr "Factures"
+
+msgid "Importe"
+msgstr "Montant"
+
+msgid "Todavía no hay facturas."
+msgstr "Il n'y a pas encore de factures."
+
+msgid "Configuración"
+msgstr "Configuration"
+
+msgid "RGPD: solo activar si hay trabajadores fichando en remoto"
+msgstr "RGPD : à activer uniquement si des employés pointent à distance"
+
+msgid "Quitar geolocalización"
+msgstr "Retirer la géolocalisation"
+
+msgid "Activar geolocalización"
+msgstr "Activer la géolocalisation"
+
+msgid "Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR)."
+msgstr "Exporte les clients, échéances, tâches, notes, tickets et métadonnées de courrier/documents de ce tenant en JSON (droit d'accès RGPD)."
+
+msgid "Exportar datos"
+msgstr "Exporter les données"
+
+msgid "Borrar tenant"
+msgstr "Supprimer le tenant"
+
+#, python-format
+msgid "%(n)s usuario"
+msgid_plural "%(n)s usuarios"
+msgstr[0] "%(n)s utilisateur"
+msgstr[1] "%(n)s utilisateurs"

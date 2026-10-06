@@ -2033,6 +2033,40 @@ def listar_tenants_con_conteo() -> list[sqlite3.Row]:
         conn.close()
 
 
+def resumen_equipos_tenants() -> dict[int, dict]:
+    """Por tenant: usuarios totales, administradores, gestores de fichajes,
+    supervisores, clientes fiscales activos y nombre del plan -- una sola
+    consulta para las pantallas de visión global del backoffice."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT t.id,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id) AS usuarios,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.rol = 'admin') AS admins,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.gestor_fichajes = 1) AS gestores,
+                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.supervisor_tenant = 1) AS supervisores,
+                      (SELECT COUNT(*) FROM clientes_fiscales c WHERE c.tenant_id = t.id AND c.papelera_en IS NULL) AS clientes,
+                      (SELECT p.nombre FROM planes_guilda p WHERE p.id = t.plan_id) AS plan
+               FROM tenants t"""
+        ).fetchall()
+        return {f["id"]: dict(f) for f in filas}
+    finally:
+        conn.close()
+
+
+def resumen_usuarios_backoffice() -> dict[int, dict]:
+    """Por usuario: nº de dispositivos/tokens y último uso de cualquiera de ellos."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT usuario_id, COUNT(*) AS dispositivos, MAX(COALESCE(ultimo_uso_en, creado_en)) AS ultimo_uso
+               FROM tokens_api GROUP BY usuario_id"""
+        ).fetchall()
+        return {f["usuario_id"]: dict(f) for f in filas}
+    finally:
+        conn.close()
+
+
 def resumen_plataforma() -> dict:
     """Métricas agregadas para la pantalla "Resumen" del backoffice --
     una sola función porque todas las consultas son baratas (COUNT/SUM

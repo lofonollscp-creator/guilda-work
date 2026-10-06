@@ -252,28 +252,24 @@ msgid "Borrar"
 msgstr "Tancar"
 
 #: app/templates/backoffice.html:192
-#, fuzzy
 msgid "Todavía no hay ningún tenant."
-msgstr "Encara no tens cap menú."
+msgstr "Encara no hi ha cap tenant."
 
 #: app/templates/backoffice.html:199
-#, fuzzy
 msgid "Nuevo tenant"
-msgstr "Nou menú"
+msgstr "Nou tenant"
 
 #: app/templates/backoffice.html:199
-#, fuzzy
 msgid "Nombre de la organización"
-msgstr "Nom de la tasca"
+msgstr "Nom de l'organització"
 
 #: app/templates/backoffice.html:200
 msgid "Dominio de correo (Stalwart, opcional)"
 msgstr "Domini de correu (Stalwart, opcional)"
 
 #: app/templates/backoffice.html:201
-#, fuzzy
 msgid "Crear tenant"
-msgstr "Crear compte"
+msgstr "Crea tenant"
 
 #: app/templates/backoffice.html:213
 msgid "Rol"
@@ -292,9 +288,8 @@ msgstr "Alta"
 
 #: app/templates/backoffice.html:226 app/templates/backoffice.html:262
 #: app/templates/backoffice.html:325
-#, fuzzy
 msgid "Sin tenant"
-msgstr "Sense menú"
+msgstr "Sense tenant"
 
 #: app/templates/backoffice.html:238
 #, fuzzy
@@ -306,18 +301,16 @@ msgid "Hacer gestor"
 msgstr "Fer gestor"
 
 #: app/templates/backoffice.html:243
-#, fuzzy
 msgid "Dispositivos"
-msgstr "Els meus dispositius"
+msgstr "Dispositius"
 
 #: app/templates/backoffice.html:246
 msgid "Quitar admin"
 msgstr "Treure admin"
 
 #: app/templates/backoffice.html:246
-#, fuzzy
 msgid "Hacer admin"
-msgstr "Eines"
+msgstr "Fes admin"
 
 #: app/templates/backoffice.html:252
 #, fuzzy
@@ -325,9 +318,8 @@ msgid "Todavía no hay ningún usuario."
 msgstr "Encara no tens cap menú."
 
 #: app/templates/backoffice.html:268
-#, fuzzy
 msgid "Crear usuario"
-msgstr "Crear compte"
+msgstr "Crea usuari"
 
 #: app/templates/backoffice.html:274
 msgid "Avisa a una URL externa cuando pasa algo — ver la"
@@ -1370,14 +1362,12 @@ msgstr "Es mostren els 20 primers del gràfic; la taula de sota té la resta."
 #: app/templates/estadisticas.html:88
 #: app/templates/fichaje_admin_detalle.html:27
 #: app/templates/fichaje_historial.html:32
-#, fuzzy
 msgid "Fecha"
-msgstr "Fitxatge"
+msgstr "Data"
 
 #: app/templates/estadisticas.html:90
-#, fuzzy
 msgid "Tiempo total"
-msgstr "Importar"
+msgstr "Temps total"
 
 #: app/templates/fichaje_admin.html:2
 msgid "Administración de fichaje"
@@ -2815,9 +2805,8 @@ msgid "GUILDA WORK DEVELOPERS"
 msgstr "GUILDA WORK DEVELOPERS"
 
 #: app/templates/docs/pagina.html:89
-#, fuzzy
 msgid "Copiar"
-msgstr "Iniciar"
+msgstr "Copia"
 
 #: app/templates/docs/pagina.html:155
 msgid "EN ESTA PÁGINA"
@@ -4038,3 +4027,314 @@ msgstr "Idioma dels correus al client"
 
 msgid "Adjuntos guardados en este borrador"
 msgstr "Adjunts desats en aquest esborrany"
+
+msgid "Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y supervisor."
+msgstr "Alta d'usuaris i assignació a tenant, rol, gestor de fitxatges i supervisor."
+
+msgid "¡Copiado!"
+msgstr "Copiat!"
+
+msgid "Error al copiar"
+msgstr "Error en copiar"
+
+msgid "Buscar por email..."
+msgstr "Cerca per correu..."
+
+msgid "Tenant"
+msgstr "Tenant"
+
+msgid "Todos los tenants"
+msgstr "Tots els tenants"
+
+msgid "Todos los roles"
+msgstr "Tots els rols"
+
+msgid "Administradores"
+msgstr "Administradors"
+
+msgid "Gestores de fichajes"
+msgstr "Gestors de fitxatges"
+
+msgid "Supervisores"
+msgstr "Supervisors"
+
+msgid "Sin tenant (hay que asignarlos)"
+msgstr "Sense tenant (cal assignar-los)"
+
+msgid "tú"
+msgstr "tu"
+
+msgid "No puedes quitarte el rol de admin a ti mismo"
+msgstr "No et pots treure el rol d'admin a tu mateix"
+
+msgid "Quitar gestor de fichajes"
+msgstr "Treu gestor de fitxatges"
+
+msgid "Hacer gestor de fichajes"
+msgstr "Fes gestor de fitxatges"
+
+msgid "Gestor de fichajes"
+msgstr "Gestor de fitxatges"
+
+msgid "Quitar supervisor"
+msgstr "Treu supervisor"
+
+msgid "Hacer supervisor"
+msgstr "Fes supervisor"
+
+msgid "Supervisor"
+msgstr "Supervisor"
+
+msgid "Ningún usuario coincide."
+msgstr "Cap usuari coincideix."
+
+msgid "Mapa de acceso"
+msgstr "Mapa d'accés"
+
+msgid "Qué módulos tiene activos cada tenant y quién trabaja en él, con qué roles. Para cambiar algo, entra en la ficha del tenant."
+msgstr "Quins mòduls té actius cada tenant i qui hi treballa, amb quins rols. Per canviar res, entra a la fitxa del tenant."
+
+msgid "Equipos y roles"
+msgstr "Equips i rols"
+
+msgid "Activo"
+msgstr "Actiu"
+
+msgid "Suspendido"
+msgstr "Suspès"
+
+msgid "sin plan"
+msgstr "sense pla"
+
+msgid "Sin usuarios asignados todavía."
+msgstr "Encara sense usuaris assignats."
+
+msgid "Módulos por tenant"
+msgstr "Mòduls per tenant"
+
+msgid "Módulo"
+msgstr "Mòdul"
+
+msgid "Tenants con acceso"
+msgstr "Tenants amb accés"
+
+msgid "activo"
+msgstr "actiu"
+
+msgid "oculto"
+msgstr "ocult"
+
+msgid "Organizaciones (gestorías) dadas de alta en Guilda Work."
+msgstr "Organitzacions (gestories) donades d'alta a Guilda Work."
+
+msgid "Resumen de la plataforma"
+msgstr "Resum de la plataforma"
+
+msgid "tenants"
+msgstr "tenants"
+
+msgid "activos"
+msgstr "actius"
+
+msgid "usuarios en tenants"
+msgstr "usuaris en tenants"
+
+msgid "usuarios sin tenant"
+msgstr "usuaris sense tenant"
+
+msgid "tenants sin usuarios"
+msgstr "tenants sense usuaris"
+
+msgid "Mapa de acceso por tenant"
+msgstr "Mapa d'accés per tenant"
+
+msgid "Buscar tenant..."
+msgstr "Cerca tenant..."
+
+msgid "Módulo: todos"
+msgstr "Mòdul: tots"
+
+msgid "Nº usuarios"
+msgstr "N.º d'usuaris"
+
+msgid "Actividad reciente"
+msgstr "Activitat recent"
+
+msgid "Añadir tenant"
+msgstr "Afegeix tenant"
+
+msgid "Plan"
+msgstr "Pla"
+
+msgid "Clientes fiscales"
+msgstr "Clients fiscals"
+
+msgid "Módulos"
+msgstr "Mòduls"
+
+msgid "Roles"
+msgstr "Rols"
+
+msgid "gestor"
+msgstr "gestor"
+
+msgid "supervisor"
+msgstr "supervisor"
+
+#, python-format
+msgid "Actividad: %(fecha)s"
+msgstr "Activitat: %(fecha)s"
+
+msgid "Sin actividad"
+msgstr "Sense activitat"
+
+msgid "Ver ficha"
+msgstr "Veure fitxa"
+
+msgid "Ningún tenant coincide con la búsqueda."
+msgstr "Cap tenant coincideix amb la cerca."
+
+#, python-format
+msgid "Última actividad: %(fecha)s"
+msgstr "Última activitat: %(fecha)s"
+
+msgid "Sin actividad todavía."
+msgstr "Encara sense activitat."
+
+msgid "Suspender tenant"
+msgstr "Suspèn el tenant"
+
+msgid "Reactivar tenant"
+msgstr "Reactiva el tenant"
+
+msgid "Resumen del tenant"
+msgstr "Resum del tenant"
+
+msgid "usuarios"
+msgstr "usuaris"
+
+msgid "administradores"
+msgstr "administradors"
+
+msgid "gestores de fichajes"
+msgstr "gestors de fitxatges"
+
+msgid "supervisores"
+msgstr "supervisors"
+
+msgid "clientes fiscales"
+msgstr "clients fiscals"
+
+msgid "módulos activos"
+msgstr "mòduls actius"
+
+msgid "plan"
+msgstr "pla"
+
+msgid "Clic para cambiar"
+msgstr "Clic per canviar"
+
+msgid "Stripe Connect"
+msgstr "Stripe Connect"
+
+msgid "Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene."
+msgstr "Perquè aquest tenant pugui cobrar els SEUS clients: els diners li arriben directament al seu banc, Guilda Work mai els reté."
+
+msgid "Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY)."
+msgstr "Stripe encara no està configurat al servidor (falta STRIPE_SECRET_KEY)."
+
+msgid "Cuenta conectada y lista para cobrar"
+msgstr "Compte connectat i a punt per cobrar"
+
+msgid "Onboarding sin completar"
+msgstr "Onboarding sense completar"
+
+msgid "Reintentar onboarding"
+msgstr "Reintenta l'onboarding"
+
+msgid "Email de contacto para Stripe"
+msgstr "Correu de contacte per a Stripe"
+
+msgid "Conectar Stripe"
+msgstr "Connecta Stripe"
+
+msgid "Oculto — clic para mostrar"
+msgstr "Ocult — clic per mostrar"
+
+msgid "Visible — clic para ocultar"
+msgstr "Visible — clic per ocultar"
+
+msgid "Estadísticas de equipo"
+msgstr "Estadístiques d'equip"
+
+msgid "Todavía no hay datos suficientes."
+msgstr "Encara no hi ha prou dades."
+
+msgid "Ingresos (suscripción de Guilda Work)"
+msgstr "Ingressos (subscripció de Guilda Work)"
+
+msgid "Sin plan"
+msgstr "Sense pla"
+
+msgid "Suscripción activa"
+msgstr "Subscripció activa"
+
+msgid "Activar suscripción"
+msgstr "Activa la subscripció"
+
+msgid "Extras activos"
+msgstr "Extres actius"
+
+msgid "hasta"
+msgstr "fins a"
+
+msgid "Sin extras activos."
+msgstr "Sense extres actius."
+
+msgid "Extra"
+msgstr "Extra"
+
+msgid "Cantidad"
+msgstr "Quantitat"
+
+msgid "Hasta (opcional)"
+msgstr "Fins a (opcional)"
+
+msgid "Añadir extra"
+msgstr "Afegeix extra"
+
+msgid "Facturas"
+msgstr "Factures"
+
+msgid "Importe"
+msgstr "Import"
+
+msgid "Todavía no hay facturas."
+msgstr "Encara no hi ha factures."
+
+msgid "Configuración"
+msgstr "Configuració"
+
+msgid "RGPD: solo activar si hay trabajadores fichando en remoto"
+msgstr "RGPD: activa-ho només si hi ha treballadors fitxant en remot"
+
+msgid "Quitar geolocalización"
+msgstr "Treu la geolocalització"
+
+msgid "Activar geolocalización"
+msgstr "Activa la geolocalització"
+
+msgid "Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR)."
+msgstr "Exporta clients, venciments, tasques, notes, tiquets i metadades de correu/documents d'aquest tenant en un JSON (dret d'accés RGPD)."
+
+msgid "Exportar datos"
+msgstr "Exporta dades"
+
+msgid "Borrar tenant"
+msgstr "Esborra el tenant"
+
+#, python-format
+msgid "%(n)s usuario"
+msgid_plural "%(n)s usuarios"
+msgstr[0] "%(n)s usuari"
+msgstr[1] "%(n)s usuaris"
