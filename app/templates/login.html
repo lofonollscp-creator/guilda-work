@@ -18,7 +18,20 @@
   {% endif %}
 </head>
 <body>
-  <div class="auth-shell">
+  <div class="auth-shell auth-dividido">
+    <section class="auth-hero" aria-label="{{ _('Presentación') }}">
+      <div class="auth-hero-marca"><img src="{{ url_for('static', filename='logo.png') }}" alt="" width="36" height="36"><span>Guilda Work</span></div>
+      <div>
+        <p class="auth-hero-titulo">{{ _('Todo lo que usa tu gestoría, en un mismo sitio.') }}</p>
+        <p class="auth-hero-texto">{{ _('Correo, tareas, calendario fiscal y firma electrónica, conectados entre sí y alojados en tu propio servidor.') }}</p>
+      </div>
+      <ul class="auth-hero-lista">
+        <li><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{{ _('Vencimientos fiscales con aviso antes de que lleguen') }}</li>
+        <li><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{{ _('Registro de jornada verificable') }}</li>
+        <li><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{{ _('Portal para que tus clientes vean su expediente') }}</li>
+      </ul>
+    </section>
+    <div class="auth-panel">
     <form class="auth-card" method="post" action="{{ accion }}">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>Guilda Work</h1>
@@ -61,6 +74,7 @@
       <p class="auth-alterna">{{ _('¿No tienes cuenta?') }} <a href="{{ url_for('registro') }}">{{ _('Regístrate') }}</a></p>
       <p class="auth-alterna">{{ _('¿Quieres integrar tu software?') }} <a href="{{ url_for('docs.pagina') }}">{{ _('Documentación para desarrolladores') }}</a></p>
     </form>
+    </div>
   </div>
 </body>
 </html>

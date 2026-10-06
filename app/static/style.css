@@ -4505,3 +4505,23 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .fichaje-chip-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
 .fichaje-chip-en_pausa .fichaje-chip-punto { background: var(--warning); }
 @media (max-width: 700px) { .fichaje-chip { font-size: 0; gap: 0; padding: 8px; } }
+
+/* ---- Acceso: pantalla dividida (canvas Interfaces Guilda Work) ----
+   Solo login: mensaje de valor a la izquierda (siempre oscuro, como el
+   rail) y el formulario a la derecha. Por debajo de 820px se oculta el
+   mensaje y queda la tarjeta de siempre. */
+.auth-dividido { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: stretch; justify-content: initial; }
+.auth-dividido::before { display: none; }
+.auth-hero { background: var(--sidebar-bg); color: #e8eae9; border-right: 1px solid #1d1f23; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
+.auth-hero-marca { display: flex; align-items: center; gap: 12px; font: 700 15px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.auth-hero-titulo { margin: 0; font-size: 2.6em; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; max-width: 14ch; }
+.auth-hero-texto { margin: 18px 0 0; color: #a3a9b1; font-size: 1.1em; max-width: 42ch; }
+.auth-hero-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; color: #c9cdd4; }
+.auth-hero-lista li { display: flex; align-items: center; gap: 12px; }
+.auth-hero-lista svg { width: 18px; height: 18px; flex-shrink: 0; color: #ccff33; }
+.auth-panel { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+@media (max-width: 820px) {
+  .auth-dividido { display: flex; }
+  .auth-hero { display: none; }
+  .auth-panel { flex: 1; }
+}
