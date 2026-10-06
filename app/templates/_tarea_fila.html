@@ -3,14 +3,18 @@
 {% macro fila(t, estados, cronometros, checklists, menus, mostrar_estado=True) %}
 {% set cr = cronometros.get(t.id) %}
 {% set es_mia = t.usuario_id == g.usuario_id %}
+{% set parts = participantes.get(t.id, []) if participantes is defined else [] %}
+{% set mi_rol = (parts|selectattr('usuario_id', 'equalto', g.usuario_id)|map(attribute='rol')|first) if parts else none %}
+{% set puede_editar = es_mia or mi_rol == 'colabora' %}
+{% set solo_ve = mi_rol == 'observa' %}
 <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
   <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
-    <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' }}>
+    <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' or solo_ve }}>
       {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
     </button>
   </form>
   <span class="log-text">
-    {% if es_mia %}<a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a>{% else %}{{ t.asunto }}{% endif %}
+    {% if puede_editar %}<a href="{{ url_for('tareas.editar', tarea_id=t.id) }}">{{ t.asunto }}</a>{% else %}{{ t.asunto }}{% endif %}
   </span>
   {% if t.categoria_nombre %}
   <span class="pill tarea-proyecto" style="--pill-color: {{ t.categoria_color or (t.categoria_nombre|color_categoria) }};">{{ t.categoria_nombre }}</span>
@@ -27,6 +31,11 @@
   <span class="pill tarea-asignada" title="{{ _('Asignada') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
     {% if t.asignada_a == g.usuario_id %}{{ _('De %(quien)s', quien=t.creador_nombre) }}{% else %}{{ _('Para %(quien)s', quien=t.asignada_nombre) }}{% endif %}</span>
   {% endif %}
+  {% if parts and es_mia %}
+  <span class="pill tarea-compartida" title="{{ parts|map(attribute='nombre')|join(', ') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ ngettext('Con %(n)s persona', 'Con %(n)s personas', parts|length, n=parts|length) }}</span>
+  {% elif mi_rol %}
+  <span class="pill tarea-compartida" title="{{ _('Compartida contigo por %(quien)s', quien=t.creador_nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('De %(quien)s', quien=t.creador_nombre) }} · {{ _('colabora') if mi_rol == 'colabora' else _('solo lectura') }}</span>
+  {% endif %}
   {% if checklists.get(t.id) %}
   {% set hechas, total = checklists[t.id] %}
   <span class="pill tarea-checklist" title="{{ _('Subtareas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg> {{ hechas|int }}/{{ total }}</span>
@@ -34,7 +43,7 @@
   {% if t.fecha_vencimiento %}
   <span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>
   {% endif %}
-  {% if t.estado != 'completada' %}
+  {% if t.estado != 'completada' and not solo_ve %}
   {% if cr and cr.activo %}
   <span class="tarea-cronometro">
     {% if cr.activo.estado == 'pausada' %}
@@ -66,8 +75,9 @@
     {{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}
   </span>
   {% endif %}
-  {% if es_mia %}
+  {% if puede_editar %}
   <a class="log-edit" href="{{ url_for('tareas.editar', tarea_id=t.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
+  {% if es_mia %}
   <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
         data-eliminar-deshacer
         data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}"
@@ -77,6 +87,7 @@
         data-quitar-selector="li">
     <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
   </form>
+  {% endif %}
   {% endif %}
 </li>
 {% endmacro %}

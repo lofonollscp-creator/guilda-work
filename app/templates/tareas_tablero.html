@@ -17,8 +17,10 @@
     <h2 id="col-{{ valor }}" class="tareas-columna-titulo">{{ etiqueta }} <span class="pill">{{ columnas[valor]|length }}</span></h2>
     {% for t in columnas[valor] %}
     {% set cr = cronometros.get(t.id) %}
+    {% set parts = participantes.get(t.id, []) %}
+    {% set mi_rol = (parts|selectattr('usuario_id', 'equalto', g.usuario_id)|map(attribute='rol')|first) if parts else none %}
     <article class="tareas-tarjeta">
-      <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if t.usuario_id == g.usuario_id else '#' }}">{{ t.asunto }}</a>
+      <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if (t.usuario_id == g.usuario_id or mi_rol == 'colabora') else '#' }}">{{ t.asunto }}</a>
       {% if cr and cr.activo %}
       <div class="tareas-tarjeta-reloj">
         {% if cr.activo.estado == 'pausada' %}
@@ -40,7 +42,9 @@
         {% if t.categoria_nombre %}<span class="pill">{{ t.categoria_nombre }}</span>{% endif %}
         {% if t.fecha_vencimiento %}<span class="log-duration">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
         {% if t.asignada_a %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg> {{ (t.creador_nombre if t.asignada_a == g.usuario_id else t.asignada_nombre) }}</span>{% endif %}
+        {% if parts or mi_rol %}<span class="pill" title="{{ parts|map(attribute='nombre')|join(', ') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ parts|length + 1 }}</span>{% endif %}
       </div>
+      {% if mi_rol != 'observa' %}
       <form class="tareas-tarjeta-mover" action="{{ url_for('tareas.cambiar_estado', tarea_id=t.id) }}" method="post">
         <label class="sr-only" for="mover-{{ t.id }}">{{ _('Mover a') }}</label>
         <select id="mover-{{ t.id }}" name="estado">
@@ -48,6 +52,7 @@
         </select>
         <button type="submit" class="btn btn-ghost">{{ _('Mover') }}</button>
       </form>
+      {% endif %}
     </article>
     {% else %}
     <p class="muted tareas-columna-vacia">{{ _('Nada aquí') }}</p>

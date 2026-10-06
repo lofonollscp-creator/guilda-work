@@ -12,6 +12,9 @@
 <div class="ia-error">{{ error }}</div>
 {% endif %}
 
+{% if not es_dueno %}
+<p class="muted" style="max-width: 640px;"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('Tarea compartida contigo por %(quien)s: puedes editarla y completarla.', quien=dueno_nombre or '') }}</p>
+{% endif %}
 <form class="edit-form" method="post" action="{{ url_for('tareas.editar', tarea_id=tarea.id) }}" style="max-width: 640px;">
   <label>{{ _('Asunto') }}
     <input type="text" name="asunto" value="{{ tarea.asunto }}" required autofocus>
@@ -50,7 +53,7 @@
   </div>
 
   <div class="ia-form-row">
-    {% if menus %}
+    {% if menus and es_dueno %}
     <label>{{ _('Proyecto') }}
       <select name="categoria_id">
         <option value="">{{ _('Sin proyecto') }}</option>
@@ -63,7 +66,7 @@
     </label>
   </div>
 
-  {% if clientes_fiscales or companeros %}
+  {% if clientes_fiscales or (companeros and es_dueno) %}
   <div class="ia-form-row">
     {% if clientes_fiscales %}
     <label>{{ _('Cliente') }}
@@ -73,7 +76,7 @@
       </select>
     </label>
     {% endif %}
-    {% if companeros %}
+    {% if companeros and es_dueno %}
     <label>{{ _('Asignar a') }}
       <select name="asignada_a">
         <option value="">{{ _('Sin asignar') }}</option>
@@ -93,6 +96,43 @@
     <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Cancelar') }}</a>
   </div>
 </form>
+
+<section class="tarea-compartir-bloque" id="compartir" style="max-width: 640px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Compartida con') }}</h2>
+  {% if participantes %}
+  <ul class="tarea-participantes">
+    {% for p in participantes %}
+    <li>
+      <span class="tarea-participante-nombre">{{ p.nombre }}</span>
+      <span class="pill">{{ _('Colabora') if p.rol == 'colabora' else _('Solo lectura') }}</span>
+      {% if es_dueno or p.usuario_id == g.usuario_id %}
+      <form action="{{ url_for('tareas.dejar_de_compartir', tarea_id=tarea.id) }}" method="post">
+        <input type="hidden" name="usuario_id" value="{{ p.usuario_id }}">
+        <button type="submit" class="chip-del" title="{{ _('Quitar') if es_dueno else _('Salir de la tarea') }}" aria-label="{{ _('Quitar') if es_dueno else _('Salir de la tarea') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('Nadie más ve esta tarea.') }}</p>
+  {% endif %}
+  {% if es_dueno and companeros %}
+  <form class="quick-row" action="{{ url_for('tareas.compartir', tarea_id=tarea.id) }}" method="post">
+    <select name="usuario_id" required aria-label="{{ _('Compañero') }}">
+      <option value="">{{ _('Compañero...') }}</option>
+      {% for u in companeros %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+    </select>
+    <select name="rol" aria-label="{{ _('Permiso') }}">
+      <option value="colabora">{{ _('Puede editar y completar') }}</option>
+      <option value="observa">{{ _('Solo lectura') }}</option>
+    </select>
+    <button type="submit" class="btn btn-ghost">{{ _('Compartir') }}</button>
+  </form>
+  {% elif es_dueno %}
+  <p class="muted">{{ _('No hay más usuarios en tu despacho con quien compartir.') }}</p>
+  {% endif %}
+</section>
 
 <section class="tarea-checklist-bloque" id="checklist" style="max-width: 640px;">
   <h2 class="tarea-bloque-titulo">{{ _('Subtareas') }}</h2>
@@ -142,8 +182,8 @@
   {% endif %}
 </section>
 
-<form class="edit-form-delete" method="post" action="{{ url_for('tareas.eliminar', tarea_id=tarea.id) }}"
+{% if es_dueno %}<form class="edit-form-delete" method="post" action="{{ url_for('tareas.eliminar', tarea_id=tarea.id) }}"
       onsubmit="return confirm('{{ _('¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde ahí.') }}');">
   <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar tarea') }}</button>
-</form>
+</form>{% endif %}
 {% endblock %}

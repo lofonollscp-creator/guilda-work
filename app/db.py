@@ -401,6 +401,18 @@ CREATE TABLE IF NOT EXISTS notas_adjuntos (
     creado_en TEXT NOT NULL
 );
 
+-- Participantes de una tarea compartida (además del dueño y del asignado):
+-- 'colabora' puede editarla, completarla y trabajar su checklist/cronómetro;
+-- 'observa' solo la ve. Siempre del mismo tenant que el dueño.
+CREATE TABLE IF NOT EXISTS tareas_participantes (
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    rol TEXT NOT NULL CHECK (rol IN ('colabora', 'observa')) DEFAULT 'colabora',
+    compartida_en TEXT NOT NULL,
+    PRIMARY KEY (tarea_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
+
 -- Checklist (subtareas) de una tarea de la lista (tareas_outlook).
 CREATE TABLE IF NOT EXISTS tarea_checklist (
     id INTEGER PRIMARY KEY,
@@ -4882,6 +4894,7 @@ def listar_tareas_outlook(
     solo_asignadas: bool = False,
     categoria_id: int | None = None,
     cliente_fiscal_id: int | None = None,
+    solo_compartidas: bool = False,
 ) -> list[sqlite3.Row]:
     """Tareas activas (no en la papelera), filtradas opcionalmente.
 
@@ -4906,10 +4919,13 @@ def listar_tareas_outlook(
         # t.usuario_id/t.papelera_en llevan el prefijo de tabla porque
         # categorias también tiene esas dos columnas (JOIN ambiguo si no);
         # el resto de condiciones no lo necesitan, son propias de tareas_outlook.
-        if solo_asignadas:
+        compartida = "t.id IN (SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?)"
+        if solo_compartidas:
+            cond, params = [compartida, "t.papelera_en IS NULL"], [usuario_id]
+        elif solo_asignadas:
             cond, params = ["t.asignada_a = ?", "t.papelera_en IS NULL"], [usuario_id]
         elif incluir_asignadas:
-            cond, params = ["(t.usuario_id = ? OR t.asignada_a = ?)", "t.papelera_en IS NULL"], [usuario_id, usuario_id]
+            cond, params = [f"(t.usuario_id = ? OR t.asignada_a = ? OR {compartida})", "t.papelera_en IS NULL"], [usuario_id, usuario_id, usuario_id]
         else:
             cond, params = ["t.usuario_id = ?", "t.papelera_en IS NULL"], [usuario_id]
         if categoria_id is not None:
@@ -4966,14 +4982,17 @@ def obtener_tarea_outlook(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
 def obtener_tarea_outlook_visible(usuario_id: int, tarea_id: int) -> sqlite3.Row | None:
     """Como obtener_tarea_outlook, pero también para quien la tiene ASIGNADA:
     puede verla, completarla, cambiarle el estado, marcar su checklist y
-    dedicarle tiempo; editarla o eliminarla sigue siendo solo del dueño."""
+    dedicarle tiempo; y también para sus participantes (ver rol_en_tarea).
+    Eliminarla o compartirla sigue siendo solo del dueño."""
     conn = get_connection()
     try:
         return conn.execute(
             """SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
                FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
-               WHERE t.id = ? AND (t.usuario_id = ? OR t.asignada_a = ?) AND t.papelera_en IS NULL""",
-            (tarea_id, usuario_id, usuario_id),
+               WHERE t.id = ? AND (t.usuario_id = ? OR t.asignada_a = ? OR t.id IN (
+                         SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?))
+                 AND t.papelera_en IS NULL""",
+            (tarea_id, usuario_id, usuario_id, usuario_id),
         ).fetchone()
     finally:
         conn.close()
@@ -5023,6 +5042,15 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
         return
     conn = get_connection()
     try:
+        # Dueño o colaborador. El proyecto y el correo enlazado son del dueño:
+        # un colaborador no los cambia (sus propios proyectos no valen aquí).
+        es_dueno = conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone()
+        if not es_dueno:
+            if not _es_colaborador(conn, usuario_id, tarea_id):
+                return
+            columnas = [c for c in columnas if c not in ("categoria_id", "mensaje_correo_id")]
+            if not columnas:
+                return
         if "categoria_id" in campos:
             campos["categoria_id"] = _categoria_id_propio(conn, usuario_id, campos["categoria_id"])
         if "cliente_fiscal_id" in campos:
@@ -5032,8 +5060,8 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
         conn.execute(
-            f"UPDATE tareas_outlook SET {asignaciones}, actualizada_en = ? WHERE id = ? AND usuario_id = ?",
-            [*valores, now_iso(), tarea_id, usuario_id],
+            f"UPDATE tareas_outlook SET {asignaciones}, actualizada_en = ? WHERE id = ?",
+            [*valores, now_iso(), tarea_id],
         )
         conn.commit()
     finally:
@@ -5049,8 +5077,9 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
             """UPDATE tareas_outlook
                SET estado = 'completada', porcentaje_completado = 100,
                    fecha_completada = ?, actualizada_en = ?
-               WHERE id = ? AND (usuario_id = ? OR asignada_a = ?)""",
-            (now_iso(), now_iso(), tarea_id, usuario_id, usuario_id),
+               WHERE id = ? AND (usuario_id = ? OR asignada_a = ? OR id IN (
+                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))""",
+            (now_iso(), now_iso(), tarea_id, usuario_id, usuario_id, usuario_id),
         )
         conn.commit()
         abiertos = conn.execute(
@@ -5071,7 +5100,7 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
     """Cambia el estado (tablero). 'completada' pasa por completar_tarea_outlook
     (porcentaje, fecha y cronómetros); al reabrir una completada se limpia su fecha."""
     estados = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
-    if estado not in estados or obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+    if estado not in estados or not puede_trabajar_tarea(usuario_id, tarea_id):
         return False
     if estado == "completada":
         completar_tarea_outlook(usuario_id, tarea_id)
@@ -5081,13 +5110,134 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
         conn.execute(
             """UPDATE tareas_outlook SET estado = ?, fecha_completada = NULL, actualizada_en = ?,
                    porcentaje_completado = CASE WHEN estado = 'completada' THEN 0 ELSE porcentaje_completado END
-               WHERE id = ? AND (usuario_id = ? OR asignada_a = ?)""",
-            (estado, now_iso(), tarea_id, usuario_id, usuario_id),
+               WHERE id = ? AND (usuario_id = ? OR asignada_a = ? OR id IN (
+                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))""",
+            (estado, now_iso(), tarea_id, usuario_id, usuario_id, usuario_id),
         )
         conn.commit()
         return True
     finally:
         conn.close()
+
+
+# ---- Compartir tareas con compañeros del tenant ---------------------------
+
+ROLES_PARTICIPANTE = ("colabora", "observa")
+
+
+def _es_colaborador(conn: sqlite3.Connection, usuario_id: int, tarea_id: int) -> bool:
+    return conn.execute(
+        "SELECT 1 FROM tareas_participantes WHERE tarea_id = ? AND usuario_id = ? AND rol = 'colabora'",
+        (tarea_id, usuario_id),
+    ).fetchone() is not None
+
+
+def rol_en_tarea(usuario_id: int, tarea_id: int) -> str | None:
+    """'dueno', 'asignada', 'colabora', 'observa' o None si no la ve."""
+    conn = get_connection()
+    try:
+        t = conn.execute(
+            "SELECT usuario_id, asignada_a FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)
+        ).fetchone()
+        if t is None:
+            return None
+        if t["usuario_id"] == usuario_id:
+            return "dueno"
+        p = conn.execute(
+            "SELECT rol FROM tareas_participantes WHERE tarea_id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+        ).fetchone()
+        if p is not None:
+            return p["rol"]
+        return "asignada" if t["asignada_a"] == usuario_id else None
+    finally:
+        conn.close()
+
+
+def puede_trabajar_tarea(usuario_id: int, tarea_id: int) -> bool:
+    """Completar, cambiar estado, checklist y cronómetro: dueño, asignado y
+    colaboradores (los observadores solo ven)."""
+    return rol_en_tarea(usuario_id, tarea_id) in ("dueno", "asignada", "colabora")
+
+
+def puede_editar_tarea(usuario_id: int, tarea_id: int) -> bool:
+    """Editar los datos de la tarea: dueño y colaboradores."""
+    return rol_en_tarea(usuario_id, tarea_id) in ("dueno", "colabora")
+
+
+def compartir_tarea_outlook(usuario_id: int, tarea_id: int, otro_id: int, rol: str = "colabora") -> bool:
+    """El dueño comparte la tarea con un compañero del mismo tenant (o cambia
+    su rol). False si no es suya, el compañero no es del tenant o el rol no vale."""
+    if rol not in ROLES_PARTICIPANTE:
+        return False
+    conn = get_connection()
+    try:
+        if conn.execute(
+            "SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
+        ).fetchone() is None:
+            return False
+        destino = _companero_del_tenant(conn, usuario_id, otro_id)
+        if destino is None:
+            return False
+        conn.execute(
+            """INSERT INTO tareas_participantes (tarea_id, usuario_id, rol, compartida_en) VALUES (?, ?, ?, ?)
+               ON CONFLICT(tarea_id, usuario_id) DO UPDATE SET rol = excluded.rol""",
+            (tarea_id, destino, rol, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    _emitir_evento(usuario_id, "tarea.compartida", {"tarea_id": tarea_id, "con": destino, "rol": rol})
+    return True
+
+
+def dejar_de_compartir_tarea_outlook(usuario_id: int, tarea_id: int, otro_id: int) -> bool:
+    """El dueño quita a un participante; el propio participante puede salirse."""
+    conn = get_connection()
+    try:
+        dueno = conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone()
+        if not dueno and otro_id != usuario_id:
+            return False
+        cur = conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ? AND usuario_id = ?", (tarea_id, otro_id))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def participantes_de_tarea(tarea_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT p.usuario_id, p.rol, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre
+               FROM tareas_participantes p JOIN usuarios u ON u.id = p.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = p.usuario_id
+               WHERE p.tarea_id = ? ORDER BY nombre""",
+            (tarea_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def participantes_de_tareas(tarea_ids: list[int]) -> dict[int, list[dict]]:
+    """Participantes por tarea (para mostrar las insignias en lista/tablero)."""
+    if not tarea_ids:
+        return {}
+    conn = get_connection()
+    try:
+        marcas = ",".join("?" * len(tarea_ids))
+        filas = conn.execute(
+            f"""SELECT p.tarea_id, p.usuario_id, p.rol, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre
+                FROM tareas_participantes p JOIN usuarios u ON u.id = p.usuario_id
+                LEFT JOIN usuario_perfil pf ON pf.usuario_id = p.usuario_id
+                WHERE p.tarea_id IN ({marcas}) ORDER BY nombre""",
+            tarea_ids,
+        ).fetchall()
+    finally:
+        conn.close()
+    resultado: dict[int, list[dict]] = {}
+    for f in filas:
+        resultado.setdefault(f["tarea_id"], []).append(dict(f))
+    return resultado
 
 
 def asignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None) -> bool:
@@ -5121,7 +5271,7 @@ def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_i
     la lista. Quien lo inicia es quien registra el tiempo. Necesita un
     proyecto: el de la tarea o el indicado."""
     tarea = obtener_tarea_outlook_visible(usuario_id, tarea_id)
-    if tarea is None:
+    if tarea is None or not puede_trabajar_tarea(usuario_id, tarea_id):
         raise ValueError("La tarea no existe.")
     conn = get_connection()
     try:
@@ -5216,7 +5366,7 @@ def _recalcular_porcentaje_checklist(conn: sqlite3.Connection, tarea_id: int) ->
 
 
 def agregar_item_checklist(usuario_id: int, tarea_id: int, texto: str) -> int | None:
-    """Solo el dueño de la tarea. Devuelve el id, o None si no procede."""
+    """El dueño o un colaborador. Devuelve el id, o None si no procede."""
     texto = " ".join((texto or "").split())[:CHECKLIST_MAX_CARACTERES]
     if not texto:
         return None
@@ -5224,7 +5374,10 @@ def agregar_item_checklist(usuario_id: int, tarea_id: int, texto: str) -> int | 
     try:
         if conn.execute(
             "SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (tarea_id, usuario_id)
-        ).fetchone() is None:
+        ).fetchone() is None and not (
+            _es_colaborador(conn, usuario_id, tarea_id)
+            and conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()
+        ):
             return None
         actuales = conn.execute("SELECT COUNT(*) AS n, COALESCE(MAX(orden), 0) AS m FROM tarea_checklist WHERE tarea_outlook_id = ?", (tarea_id,)).fetchone()
         if actuales["n"] >= CHECKLIST_MAX_ITEMS:
@@ -5245,8 +5398,10 @@ def alternar_item_checklist(usuario_id: int, item_id: int) -> bool:
     try:
         fila = conn.execute(
             """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
-               WHERE i.id = ? AND (t.usuario_id = ? OR t.asignada_a = ?) AND t.papelera_en IS NULL""",
-            (item_id, usuario_id, usuario_id),
+               WHERE i.id = ? AND (t.usuario_id = ? OR t.asignada_a = ? OR t.id IN (
+                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))
+                 AND t.papelera_en IS NULL""",
+            (item_id, usuario_id, usuario_id, usuario_id),
         ).fetchone()
         if fila is None:
             return False
@@ -5263,8 +5418,9 @@ def eliminar_item_checklist(usuario_id: int, item_id: int) -> bool:
     try:
         fila = conn.execute(
             """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
-               WHERE i.id = ? AND t.usuario_id = ?""",
-            (item_id, usuario_id),
+               WHERE i.id = ? AND (t.usuario_id = ? OR t.id IN (
+                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))""",
+            (item_id, usuario_id, usuario_id),
         ).fetchone()
         if fila is None:
             return False
@@ -5326,6 +5482,8 @@ def restaurar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
 def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> None:
     conn = get_connection()
     try:
+        if conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone():
+            conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ?", (tarea_id,))
         conn.execute("DELETE FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id))
         conn.commit()
     finally:

@@ -115,12 +115,13 @@ def listar():
     # Se pide una fila de más para saber si hay página siguiente sin un
     # COUNT(*) aparte.
     vista = request.args.get("vista") or ""
-    if vista not in ("mias", "asignadas"):
+    if vista not in ("mias", "asignadas", "compartidas"):
         vista = ""
     tareas = db.listar_tareas_outlook(
         g.usuario_id, estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q,
         excluir_completadas=excluir_completadas, limite=TAREAS_POR_PAGINA + 1, offset=offset,
         incluir_asignadas=vista == "", solo_asignadas=vista == "asignadas",
+        solo_compartidas=vista == "compartidas",
     )
     hay_pagina_siguiente = len(tareas) > TAREAS_POR_PAGINA
     tareas = tareas[:TAREAS_POR_PAGINA]
@@ -153,6 +154,7 @@ def _contexto_filas(tareas) -> dict:
     return {
         "cronometros": db.cronometros_de_tareas_outlook(g.usuario_id, ids),
         "checklists": db.resumen_checklist(ids),
+        "participantes": db.participantes_de_tareas(ids),
         "menus": db.listar_categorias(g.usuario_id),
         "companeros": db.listar_companeros_tenant(g.usuario_id),
         "clientes_fiscales": db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
@@ -182,6 +184,25 @@ def _notificar_asignacion(origen_id: int, tarea_id: int, destino_id: int | None)
             destino_id, "tarea_asignada", "Tarea asignada", f"{quien} te ha asignado: {tarea['asunto']}",
             url=url_for("tareas.listar", vista="asignadas"),
             datos={"tipo": "tarea_asignada", "tarea_id": tarea_id},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _notificar_compartida(origen_id: int, tarea_id: int, destino_id: int, rol: str) -> None:
+    """Avisa al compañero de que le han compartido una tarea (nunca rompe la acción)."""
+    try:
+        if not db.notificacion_tipo_activa(destino_id, "tarea_asignada"):
+            return
+        tarea = db.obtener_tarea_outlook_visible(destino_id, tarea_id)
+        if tarea is None:
+            return
+        quien = db.nombre_mostrado_usuario(origen_id) or (db.obtener_usuario(origen_id)["email"])
+        que = "para colaborar" if rol == "colabora" else "en solo lectura"
+        notificaciones.crear_y_enviar(
+            destino_id, "tarea_asignada", "Tarea compartida", f"{quien} ha compartido contigo ({que}): {tarea['asunto']}",
+            url=url_for("tareas.listar", vista="compartidas"),
+            datos={"tipo": "tarea_compartida", "tarea_id": tarea_id},
         )
     except Exception:  # noqa: BLE001
         pass
@@ -297,14 +318,20 @@ def crear():
 @tareas_bp.route("/<int:tarea_id>/editar", methods=["GET", "POST"])
 @login_required
 def editar(tarea_id: int):
-    tarea = db.obtener_tarea_outlook(g.usuario_id, tarea_id)
+    # Dueño o colaborador (los demás ni la editan ni llegan aquí).
+    if not db.puede_editar_tarea(g.usuario_id, tarea_id):
+        abort(404)
+    tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
     if tarea is None:
         abort(404)
+    es_dueno = tarea["usuario_id"] == g.usuario_id
 
     menus = db.listar_categorias(g.usuario_id)
 
     def _contexto_edicion(tarea, error=None):
         return dict(
+            es_dueno=es_dueno, dueno_nombre=db.nombre_mostrado_usuario(tarea["usuario_id"]),
+            participantes=db.participantes_de_tarea(tarea["id"]),
             tarea=tarea, estados=ESTADOS, prioridades=PRIORIDADES, menus=menus, error=error,
             checklist=db.listar_checklist(tarea["id"]),
             companeros=db.listar_companeros_tenant(g.usuario_id),
@@ -329,13 +356,15 @@ def editar(tarea_id: int):
             "categoria_id": int(categoria_id) if categoria_id else None,
             "cliente_fiscal_id": _int_o_none(request.form.get("cliente_fiscal_id")),
         }
+        if not es_dueno:
+            campos.pop("categoria_id")
         if campos["estado"] == "completada" and tarea["estado"] != "completada":
             db.completar_tarea_outlook(g.usuario_id, tarea_id)
             campos.pop("estado")
             campos.pop("porcentaje_completado")
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
         nueva_asignacion = _int_o_none(request.form.get("asignada_a"))
-        if nueva_asignacion != tarea["asignada_a"] and db.asignar_tarea_outlook(g.usuario_id, tarea_id, nueva_asignacion):
+        if es_dueno and nueva_asignacion != tarea["asignada_a"] and db.asignar_tarea_outlook(g.usuario_id, tarea_id, nueva_asignacion):
             _notificar_asignacion(g.usuario_id, tarea_id, nueva_asignacion)
         return redirect(url_for("tareas.listar"))
 
@@ -419,6 +448,30 @@ def asignar(tarea_id: int):
         abort(404)
     _notificar_asignacion(g.usuario_id, tarea_id, destino)
     return redirect(request.referrer or url_for("tareas.listar"))
+
+
+@tareas_bp.route("/<int:tarea_id>/compartir", methods=["POST"])
+@login_required
+def compartir(tarea_id: int):
+    """Solo el dueño: comparte la tarea con un compañero del tenant."""
+    otro = _int_o_none(request.form.get("usuario_id"))
+    rol = request.form.get("rol", "colabora")
+    if otro is None or not db.compartir_tarea_outlook(g.usuario_id, tarea_id, otro, rol):
+        abort(404)
+    _notificar_compartida(g.usuario_id, tarea_id, otro, rol)
+    return redirect(url_for("tareas.editar", tarea_id=tarea_id) + "#compartir")
+
+
+@tareas_bp.route("/<int:tarea_id>/compartir/quitar", methods=["POST"])
+@login_required
+def dejar_de_compartir(tarea_id: int):
+    """El dueño quita a un participante; un participante puede salirse él mismo."""
+    otro = _int_o_none(request.form.get("usuario_id"))
+    if otro is None or not db.dejar_de_compartir_tarea_outlook(g.usuario_id, tarea_id, otro):
+        abort(404)
+    if otro == g.usuario_id:
+        return redirect(url_for("tareas.listar"))
+    return redirect(url_for("tareas.editar", tarea_id=tarea_id) + "#compartir")
 
 
 @tareas_bp.route("/<int:tarea_id>/completar", methods=["POST"])

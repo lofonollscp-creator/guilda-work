@@ -21,6 +21,7 @@
       <option value="" {% if not vista %}selected{% endif %}>{{ _('Mías y asignadas a mí') }}</option>
       <option value="mias" {% if vista == 'mias' %}selected{% endif %}>{{ _('Solo las mías') }}</option>
       <option value="asignadas" {% if vista == 'asignadas' %}selected{% endif %}>{{ _('Asignadas a mí') }}</option>
+      <option value="compartidas" {% if vista == 'compartidas' %}selected{% endif %}>{{ _('Compartidas conmigo') }}</option>
     </select>
   </label>
   {% endif %}
