@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Correo de equipo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Correo de equipo') }}</h1>
+    <p class="subtitle">{{ _('Correos que un compañero te ha asignado o compartido. No se comparten cuentas: solo los mensajes concretos, en solo lectura.') }}</p>
+  </div>
+</header>
+
+<nav class="tareas-subnav">
+  <a class="{{ 'active' if vista == 'asignados' }}" href="{{ url_for('correo.equipo', vista='asignados') }}">{{ _('Asignados a mí') }}{% if abiertos %} <span class="pill">{{ abiertos }}</span>{% endif %}</a>
+  <a class="{{ 'active' if vista == 'compartidos' }}" href="{{ url_for('correo.equipo', vista='compartidos') }}">{{ _('Compartidos conmigo') }}</a>
+  <a class="{{ 'active' if vista == 'enviados' }}" href="{{ url_for('correo.equipo', vista='enviados') }}">{{ _('Los que he pasado') }}</a>
+</nav>
+
+{% if not mensajes %}
+<p class="empty-lane">{{ _('No hay correos aquí. Abre un correo de tu bandeja y usa el panel «Equipo» para asignarlo o compartirlo.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for m in mensajes %}
+  <li class="log-item {{ 'is-completada' if m.estado == 'resuelto' }}">
+    <span class="log-text"><a href="{{ url_for('correo.equipo_mensaje', mensaje_id=m.id) }}">{{ m.asunto or _('(sin asunto)') }}</a>
+      <small class="muted">{{ m.remitente }}</small></span>
+    {% if vista != 'enviados' %}<span class="pill">{{ _('De %(quien)s', quien=m.dueno_nombre) }}</span>{% elif m.asignado_nombre %}<span class="pill">{{ _('Para %(quien)s', quien=m.asignado_nombre) }}</span>{% endif %}
+    {% if m.n_notas %}<span class="pill">{{ ngettext('%(n)s nota', '%(n)s notas', m.n_notas, n=m.n_notas) }}</span>{% endif %}
+    <span class="pill {{ 'estado-dentro' if m.estado == 'resuelto' }}">{{ _('Resuelto') if m.estado == 'resuelto' else _('Abierto') }}</span>
+    <span class="log-duration">{{ (m.fecha or '')[:16].replace('T', ' ') }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

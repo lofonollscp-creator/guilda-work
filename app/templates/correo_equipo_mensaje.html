@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ m.asunto or _('(sin asunto)') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ m.asunto or _('(sin asunto)') }}</h1>
+    <p class="subtitle">
+      {{ m.remitente }} · {{ (m.fecha or '')[:16].replace('T', ' ') }}
+      {% if m.rol != 'dueno' %} · {{ _('De %(quien)s', quien=m.dueno_nombre) }}{% endif %}
+    </p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('correo.equipo') }}">&larr; {{ _('Correo de equipo') }}</a>
+</header>
+
+<section style="max-width: 760px;">
+  <p>
+    {% if m.asignado_nombre %}<span class="pill">{{ _('Asignado a %(quien)s', quien=m.asignado_nombre) }}</span>{% endif %}
+    <span class="pill {{ 'estado-dentro' if m.estado == 'resuelto' }}">{{ _('Resuelto') if m.estado == 'resuelto' else _('Abierto') }}</span>
+    {% for c in m.compartidos %}<span class="pill">{{ c.nombre }}</span>{% endfor %}
+  </p>
+  {% if m.rol in ('dueno', 'asignado') %}
+  <form action="{{ url_for('correo.equipo_estado', mensaje_id=m.id) }}" method="post" class="quick-row">
+    <input type="hidden" name="estado" value="{{ 'abierto' if m.estado == 'resuelto' else 'resuelto' }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Reabrir') if m.estado == 'resuelto' else _('Marcar como resuelto') }}</button>
+  </form>
+  {% endif %}
+  {% if m.rol == 'dueno' %}
+  <p class="muted"><a href="{{ url_for('correo.bandeja', mensaje_id=m.id) }}">{{ _('Abrir en mi bandeja (responder, adjuntos, asignar…)') }}</a></p>
+  {% else %}
+  <form action="{{ url_for('correo.equipo_quitar', mensaje_id=m.id) }}" method="post" class="quick-row">
+    <input type="hidden" name="usuario_id" value="{{ g.usuario_id }}">
+    {% if m.rol == 'compartido' %}<button type="submit" class="btn btn-ghost">{{ _('Dejar de ver este correo') }}</button>{% endif %}
+  </form>
+  {% endif %}
+  <pre class="correo-equipo-cuerpo">{{ m.cuerpo_texto or _('(Este correo no tiene versión en texto; ábrelo en la bandeja de quien lo recibió.)') }}</pre>
+</section>
+
+<section class="tarea-comentarios" id="notas" style="max-width: 760px;">
+  <h2 class="tarea-bloque-titulo">{{ _('Notas internas') }}</h2>
+  <p class="muted">{{ _('Solo las ve el equipo con acceso a este correo; nunca se envían al remitente.') }}</p>
+  {% if notas %}
+  <ul class="comentarios-lista">
+    {% for n in notas %}
+    <li class="comentario {{ 'es-mio' if n.mia }}">
+      <div class="comentario-cabecera">
+        <strong>{{ n.autor }}</strong><span class="muted mono">{{ n.creado_en[:16].replace('T', ' ') }}</span>
+        {% if n.puede_borrar %}
+        <form action="{{ url_for('correo.equipo_nota_eliminar', mensaje_id=m.id, nota_id=n.id) }}" method="post" class="comentario-borrar">
+          <button type="submit" class="chip-del" title="{{ _('Borrar') }}" aria-label="{{ _('Borrar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+        </form>
+        {% endif %}
+      </div>
+      <p class="comentario-texto">{{ n.texto|comentario_html }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('Todavía no hay notas internas.') }}</p>
+  {% endif %}
+  <form class="comentario-form" action="{{ url_for('correo.equipo_nota', mensaje_id=m.id) }}" method="post">
+    <textarea name="texto" rows="3" maxlength="2000" required placeholder="{{ _('Escribe una nota interna…') }}"></textarea>
+    <div class="comentario-acciones"><span></span><button type="submit" class="btn btn-primary">{{ _('Añadir nota') }}</button></div>
+  </form>
+</section>
+{% endblock %}

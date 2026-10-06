@@ -4743,3 +4743,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .cal-chip-fichaje { background: transparent; color: var(--text-muted); border: 1px dashed var(--border); display: inline-flex; align-items: center; gap: 5px; }
 .cal-dia-extra { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 var(--space-3); }
 [hidden].cal-chip { display: none !important; }
+
+/* ---- Correo de equipo ---- */
+.correo-equipo-panel { margin: 8px 0 12px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.correo-equipo-panel summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.correo-equipo-panel .quick-row { margin-top: 8px; }
+.correo-equipo-cuerpo { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; line-height: 1.55; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }

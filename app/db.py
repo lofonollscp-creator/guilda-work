@@ -413,6 +413,35 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
 );
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
+-- Correo de equipo: no se comparten cuentas ni contraseñas, solo mensajes
+-- concretos. El dueño del mensaje puede asignarlo a un compañero del despacho
+-- (que pasa a verlo, en solo lectura, y a llevar su estado) o compartirlo sin
+-- asignar; las notas internas las ven todos los que tienen acceso y nunca
+-- salen hacia el remitente.
+CREATE TABLE IF NOT EXISTS correo_equipo (
+    mensaje_id INTEGER PRIMARY KEY REFERENCES correo_mensajes(id) ON DELETE CASCADE,
+    asignado_a INTEGER REFERENCES usuarios(id),
+    asignado_por INTEGER REFERENCES usuarios(id),
+    estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'resuelto')),
+    actualizado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_correo_equipo_asignado ON correo_equipo(asignado_a, estado);
+CREATE TABLE IF NOT EXISTS correo_compartidos (
+    mensaje_id INTEGER NOT NULL REFERENCES correo_mensajes(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    compartido_en TEXT NOT NULL,
+    PRIMARY KEY (mensaje_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS idx_correo_compartidos_usuario ON correo_compartidos(usuario_id);
+CREATE TABLE IF NOT EXISTS correo_notas_internas (
+    id INTEGER PRIMARY KEY,
+    mensaje_id INTEGER NOT NULL REFERENCES correo_mensajes(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    texto TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_correo_notas_internas_mensaje ON correo_notas_internas(mensaje_id, id);
+
 -- Recordatorios de una tarea: cada persona pone los suyos. `canales` es una
 -- lista separada por comas de app (centro de avisos + push del móvil), correo
 -- y ntfy; `enviado_en` NULL = pendiente (al posponer vuelve a NULL).
@@ -5924,6 +5953,260 @@ def tareas_desbloqueadas_por(tarea_id: int) -> list[dict]:
         conn.close()
     pendientes = bloqueos_de_tareas([c["id"] for c in candidatas])
     return [dict(c) for c in candidatas if not pendientes.get(c["id"])]
+
+
+# ---- Correo de equipo (mensajes asignados / compartidos / notas internas) ------
+
+def _dueno_del_mensaje(conn: sqlite3.Connection, mensaje_id: int) -> int | None:
+    f = conn.execute(
+        "SELECT c.usuario_id FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id WHERE m.id = ?", (mensaje_id,)
+    ).fetchone()
+    return f["usuario_id"] if f else None
+
+
+def rol_en_correo(usuario_id: int, mensaje_id: int) -> str | None:
+    """'dueno', 'asignado', 'compartido' o None si no lo ve."""
+    conn = get_connection()
+    try:
+        dueno = _dueno_del_mensaje(conn, mensaje_id)
+        if dueno is None:
+            return None
+        if dueno == usuario_id:
+            return "dueno"
+        eq = conn.execute("SELECT asignado_a FROM correo_equipo WHERE mensaje_id = ?", (mensaje_id,)).fetchone()
+        if eq and eq["asignado_a"] == usuario_id:
+            return "asignado"
+        if conn.execute(
+            "SELECT 1 FROM correo_compartidos WHERE mensaje_id = ? AND usuario_id = ?", (mensaje_id, usuario_id)
+        ).fetchone():
+            return "compartido"
+        return None
+    finally:
+        conn.close()
+
+
+def asignar_correo(usuario_id: int, mensaje_id: int, destino_id: int | None) -> bool:
+    """El dueño asigna el mensaje a un compañero del despacho (que además pasa a
+    verlo) o quita la asignación con None. Cada asignación nueva reabre el estado."""
+    conn = get_connection()
+    try:
+        if _dueno_del_mensaje(conn, mensaje_id) != usuario_id:
+            return False
+        destino = None
+        if destino_id is not None:
+            destino = _companero_del_tenant(conn, usuario_id, destino_id)
+            if destino is None:
+                return False
+        conn.execute(
+            """INSERT INTO correo_equipo (mensaje_id, asignado_a, asignado_por, estado, actualizado_en)
+               VALUES (?, ?, ?, 'abierto', ?)
+               ON CONFLICT(mensaje_id) DO UPDATE SET asignado_a = excluded.asignado_a,
+                   asignado_por = excluded.asignado_por, estado = 'abierto', actualizado_en = excluded.actualizado_en""",
+            (mensaje_id, destino, usuario_id, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    _emitir_evento(usuario_id, "correo.asignado", {"mensaje_id": mensaje_id, "asignado_a": destino})
+    return True
+
+
+def compartir_correo(usuario_id: int, mensaje_id: int, otro_id: int) -> bool:
+    """El dueño comparte el mensaje (solo lectura) con un compañero del despacho."""
+    conn = get_connection()
+    try:
+        if _dueno_del_mensaje(conn, mensaje_id) != usuario_id:
+            return False
+        destino = _companero_del_tenant(conn, usuario_id, otro_id)
+        if destino is None:
+            return False
+        conn.execute(
+            "INSERT OR IGNORE INTO correo_compartidos (mensaje_id, usuario_id, compartido_en) VALUES (?, ?, ?)",
+            (mensaje_id, destino, now_iso()),
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def dejar_de_compartir_correo(usuario_id: int, mensaje_id: int, otro_id: int) -> bool:
+    """El dueño quita a alguien; cada persona puede salirse. No toca la asignación."""
+    conn = get_connection()
+    try:
+        if _dueno_del_mensaje(conn, mensaje_id) != usuario_id and otro_id != usuario_id:
+            return False
+        cur = conn.execute("DELETE FROM correo_compartidos WHERE mensaje_id = ? AND usuario_id = ?", (mensaje_id, otro_id))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def cambiar_estado_correo_equipo(usuario_id: int, mensaje_id: int, estado: str) -> bool:
+    """'abierto' o 'resuelto': lo cambia el dueño o quien lo tiene asignado."""
+    if estado not in ("abierto", "resuelto") or rol_en_correo(usuario_id, mensaje_id) not in ("dueno", "asignado"):
+        return False
+    conn = get_connection()
+    try:
+        conn.execute(
+            """INSERT INTO correo_equipo (mensaje_id, asignado_a, asignado_por, estado, actualizado_en)
+               VALUES (?, NULL, ?, ?, ?)
+               ON CONFLICT(mensaje_id) DO UPDATE SET estado = excluded.estado, actualizado_en = excluded.actualizado_en""",
+            (mensaje_id, usuario_id, estado, now_iso()),
+        )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def estado_correo_equipo(mensaje_id: int) -> dict:
+    """Asignación, estado y personas con acceso de un mensaje (sin comprobar permisos:
+    el llamante ya ha comprobado que el usuario lo ve)."""
+    conn = get_connection()
+    try:
+        eq = conn.execute(
+            """SELECT e.asignado_a, e.estado, e.actualizado_en,
+                      COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS asignado_nombre
+               FROM correo_equipo e LEFT JOIN usuarios u ON u.id = e.asignado_a
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = e.asignado_a WHERE e.mensaje_id = ?""",
+            (mensaje_id,),
+        ).fetchone()
+        compartidos = [dict(f) for f in conn.execute(
+            """SELECT c.usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre
+               FROM correo_compartidos c JOIN usuarios u ON u.id = c.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = c.usuario_id
+               WHERE c.mensaje_id = ? ORDER BY nombre""",
+            (mensaje_id,),
+        )]
+    finally:
+        conn.close()
+    base = dict(eq) if eq else {"asignado_a": None, "estado": "abierto", "actualizado_en": None, "asignado_nombre": None}
+    base["compartidos"] = compartidos
+    return base
+
+
+def obtener_correo_equipo(usuario_id: int, mensaje_id: int) -> dict | None:
+    """El mensaje (sin HTML ni adjuntos: solo texto) para quien lo ve por estar
+    asignado o compartido, con su rol y el nombre del dueño."""
+    rol = rol_en_correo(usuario_id, mensaje_id)
+    if rol is None:
+        return None
+    conn = get_connection()
+    try:
+        f = conn.execute(
+            """SELECT m.id, m.asunto, m.remitente, m.destinatarios, m.fecha, m.cuerpo_texto,
+                      COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS dueno_nombre, c.usuario_id AS dueno_id
+               FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+               JOIN usuarios u ON u.id = c.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = c.usuario_id
+               WHERE m.id = ?""",
+            (mensaje_id,),
+        ).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        return None
+    d = dict(f)
+    d["rol"] = rol
+    d.update({k: v for k, v in estado_correo_equipo(mensaje_id).items()})
+    return d
+
+
+def listar_correo_equipo(usuario_id: int, vista: str = "asignados") -> list[dict]:
+    """'asignados' (a mí), 'compartidos' (conmigo) o 'enviados' (los míos que he
+    asignado o compartido). Lo resuelto va al final."""
+    conn = get_connection()
+    try:
+        base = """SELECT m.id, m.asunto, m.remitente, m.fecha, COALESCE(e.estado, 'abierto') AS estado, e.asignado_a,
+                         COALESCE(NULLIF(pfd.nombre_mostrado, ''), ud.email) AS dueno_nombre,
+                         COALESCE(NULLIF(pfa.nombre_mostrado, ''), ua.email) AS asignado_nombre,
+                         (SELECT COUNT(*) FROM correo_notas_internas n WHERE n.mensaje_id = m.id) AS n_notas
+                  FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+                  JOIN usuarios ud ON ud.id = c.usuario_id LEFT JOIN usuario_perfil pfd ON pfd.usuario_id = c.usuario_id
+                  LEFT JOIN correo_equipo e ON e.mensaje_id = m.id
+                  LEFT JOIN usuarios ua ON ua.id = e.asignado_a LEFT JOIN usuario_perfil pfa ON pfa.usuario_id = e.asignado_a"""
+        if vista == "compartidos":
+            donde, params = "WHERE m.id IN (SELECT mensaje_id FROM correo_compartidos WHERE usuario_id = ?)", [usuario_id]
+        elif vista == "enviados":
+            donde, params = (
+                "WHERE c.usuario_id = ? AND (e.asignado_a IS NOT NULL OR m.id IN (SELECT mensaje_id FROM correo_compartidos))",
+                [usuario_id],
+            )
+        else:
+            donde, params = "WHERE e.asignado_a = ?", [usuario_id]
+        filas = conn.execute(
+            f"{base} {donde} ORDER BY (COALESCE(e.estado, 'abierto') = 'resuelto'), m.fecha DESC LIMIT 200", params
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def contar_correo_asignado_abierto(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) AS n FROM correo_equipo WHERE asignado_a = ? AND estado = 'abierto'", (usuario_id,)
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+
+
+NOTA_INTERNA_MAX_CARACTERES = 2000
+
+
+def anadir_nota_interna_correo(usuario_id: int, mensaje_id: int, texto: str) -> int | None:
+    """Nota interna del equipo sobre un mensaje: la puede escribir cualquiera que lo vea."""
+    texto = (texto or "").strip()[:NOTA_INTERNA_MAX_CARACTERES]
+    if not texto or rol_en_correo(usuario_id, mensaje_id) is None:
+        return None
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO correo_notas_internas (mensaje_id, usuario_id, texto, creado_en) VALUES (?, ?, ?, ?)",
+            (mensaje_id, usuario_id, texto, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_notas_internas_correo(usuario_id: int, mensaje_id: int) -> list[dict]:
+    rol = rol_en_correo(usuario_id, mensaje_id)
+    if rol is None:
+        return []
+    conn = get_connection()
+    try:
+        return [
+            {**dict(f), "mia": f["usuario_id"] == usuario_id, "puede_borrar": f["usuario_id"] == usuario_id or rol == "dueno"}
+            for f in conn.execute(
+                """SELECT n.id, n.usuario_id, n.texto, n.creado_en, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS autor
+                   FROM correo_notas_internas n JOIN usuarios u ON u.id = n.usuario_id
+                   LEFT JOIN usuario_perfil pf ON pf.usuario_id = n.usuario_id
+                   WHERE n.mensaje_id = ? ORDER BY n.id""",
+                (mensaje_id,),
+            )
+        ]
+    finally:
+        conn.close()
+
+
+def eliminar_nota_interna_correo(usuario_id: int, mensaje_id: int, nota_id: int) -> bool:
+    rol = rol_en_correo(usuario_id, mensaje_id)
+    if rol is None:
+        return False
+    conn = get_connection()
+    try:
+        n = conn.execute("SELECT usuario_id FROM correo_notas_internas WHERE id = ? AND mensaje_id = ?", (nota_id, mensaje_id)).fetchone()
+        if n is None or not (n["usuario_id"] == usuario_id or rol == "dueno"):
+            return False
+        conn.execute("DELETE FROM correo_notas_internas WHERE id = ?", (nota_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 
 # ---- Recordatorios por tarea ----------------------------------------------------

@@ -11,7 +11,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, db, ia_asistente
+from . import correo, correo_ia, db, ia_asistente, notificaciones
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -336,6 +336,9 @@ def bandeja():
             contexto["no_leidos_por_cuenta"][cuenta_id] = db.contar_no_leidos_correo(cuenta_id)
 
     contexto["mensaje_seleccionado"] = mensaje_seleccionado
+    contexto["equipo_correo"] = db.estado_correo_equipo(mensaje_id) if mensaje_seleccionado is not None else None
+    contexto["notas_internas"] = db.listar_notas_internas_correo(g.usuario_id, mensaje_id) if mensaje_seleccionado is not None else []
+    contexto["companeros"] = db.listar_companeros_tenant(g.usuario_id) if mensaje_seleccionado is not None else []
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
     contexto["hilo_mensajes"] = (
         [h for h in db.mensajes_del_hilo_correo(cuenta_id, mensaje_seleccionado["hilo_clave"]) if h["id"] != mensaje_id]
@@ -359,6 +362,124 @@ def bandeja():
     contexto["cuerpo_html_mostrado"] = cuerpo_html_mostrado
     contexto["imagenes_bloqueadas"] = imagenes_bloqueadas
     return render_template("correo_bandeja.html", **contexto)
+
+
+# ---- Correo de equipo: asignar / compartir mensajes y notas internas ----------
+# No se comparten cuentas ni contraseñas: el dueño de un mensaje lo asigna o
+# comparte con un compañero del despacho, que lo ve en solo lectura (texto, sin
+# adjuntos ni HTML) y puede dejar notas internas. Nada de esto sale al remitente.
+
+def _avisar_correo(origen_id: int, destino_id: int, mensaje_id: int, titulo: str, verbo: str) -> None:
+    try:
+        if destino_id == origen_id or not db.notificacion_tipo_activa(destino_id, "tarea_asignada"):
+            return
+        m = db.obtener_correo_equipo(destino_id, mensaje_id)
+        if m is None:
+            return
+        quien = db.nombre_mostrado_usuario(origen_id) or db.obtener_usuario(origen_id)["email"]
+        notificaciones.crear_y_enviar(
+            destino_id, "tarea_asignada", titulo, f"{quien} {verbo}: {m['asunto'] or '(sin asunto)'}",
+            url=url_for("correo.equipo_mensaje", mensaje_id=mensaje_id), datos={"tipo": "correo_equipo", "mensaje_id": mensaje_id},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@correo_bp.route("/equipo")
+@login_required
+def equipo():
+    vista = request.args.get("vista", "asignados")
+    if vista not in ("asignados", "compartidos", "enviados"):
+        vista = "asignados"
+    return render_template(
+        "correo_equipo.html", vista=vista, mensajes=db.listar_correo_equipo(g.usuario_id, vista),
+        abiertos=db.contar_correo_asignado_abierto(g.usuario_id),
+    )
+
+
+@correo_bp.route("/equipo/<int:mensaje_id>")
+@login_required
+def equipo_mensaje(mensaje_id: int):
+    m = db.obtener_correo_equipo(g.usuario_id, mensaje_id)
+    if m is None:
+        abort(404)
+    return render_template(
+        "correo_equipo_mensaje.html", m=m, notas=db.listar_notas_internas_correo(g.usuario_id, mensaje_id),
+        companeros=db.listar_companeros_tenant(g.usuario_id),
+    )
+
+
+@correo_bp.route("/<int:mensaje_id>/equipo/asignar", methods=["POST"])
+@login_required
+def equipo_asignar(mensaje_id: int):
+    try:
+        destino = int(request.form.get("usuario_id") or 0) or None
+    except ValueError:
+        abort(404)
+    if not db.asignar_correo(g.usuario_id, mensaje_id, destino):
+        abort(404)
+    if destino:
+        _avisar_correo(g.usuario_id, destino, mensaje_id, "Correo asignado", "te ha asignado un correo")
+    return redirect(request.referrer or url_for("correo.equipo", vista="enviados"))
+
+
+@correo_bp.route("/<int:mensaje_id>/equipo/compartir", methods=["POST"])
+@login_required
+def equipo_compartir(mensaje_id: int):
+    try:
+        otro = int(request.form.get("usuario_id", ""))
+    except ValueError:
+        abort(404)
+    if not db.compartir_correo(g.usuario_id, mensaje_id, otro):
+        abort(404)
+    _avisar_correo(g.usuario_id, otro, mensaje_id, "Correo compartido", "ha compartido contigo un correo")
+    return redirect(request.referrer or url_for("correo.equipo", vista="enviados"))
+
+
+@correo_bp.route("/<int:mensaje_id>/equipo/quitar", methods=["POST"])
+@login_required
+def equipo_quitar(mensaje_id: int):
+    try:
+        otro = int(request.form.get("usuario_id", ""))
+    except ValueError:
+        abort(404)
+    if not db.dejar_de_compartir_correo(g.usuario_id, mensaje_id, otro):
+        abort(404)
+    if otro == g.usuario_id and db.rol_en_correo(g.usuario_id, mensaje_id) is None:
+        return redirect(url_for("correo.equipo", vista="compartidos"))
+    return redirect(request.referrer or url_for("correo.equipo", vista="enviados"))
+
+
+@correo_bp.route("/equipo/<int:mensaje_id>/estado", methods=["POST"])
+@login_required
+def equipo_estado(mensaje_id: int):
+    if not db.cambiar_estado_correo_equipo(g.usuario_id, mensaje_id, request.form.get("estado", "")):
+        abort(404)
+    return redirect(url_for("correo.equipo_mensaje", mensaje_id=mensaje_id))
+
+
+@correo_bp.route("/equipo/<int:mensaje_id>/notas", methods=["POST"])
+@login_required
+def equipo_nota(mensaje_id: int):
+    if db.rol_en_correo(g.usuario_id, mensaje_id) is None:
+        abort(404)
+    nueva = db.anadir_nota_interna_correo(g.usuario_id, mensaje_id, request.form.get("texto", ""))
+    if nueva:
+        # Avisa al resto de implicados (dueño, asignado y compartidos).
+        implicados = {db.estado_correo_equipo(mensaje_id)["asignado_a"], *[c["usuario_id"] for c in db.estado_correo_equipo(mensaje_id)["compartidos"]]}
+        m = db.obtener_correo_equipo(g.usuario_id, mensaje_id)
+        implicados.add(m["dueno_id"])
+        for u in implicados - {None, g.usuario_id}:
+            _avisar_correo(g.usuario_id, u, mensaje_id, "Nota interna en un correo", "ha escrito una nota interna en")
+    return redirect(url_for("correo.equipo_mensaje", mensaje_id=mensaje_id) + "#notas")
+
+
+@correo_bp.route("/equipo/<int:mensaje_id>/notas/<int:nota_id>/eliminar", methods=["POST"])
+@login_required
+def equipo_nota_eliminar(mensaje_id: int, nota_id: int):
+    if not db.eliminar_nota_interna_correo(g.usuario_id, mensaje_id, nota_id):
+        abort(404)
+    return redirect(url_for("correo.equipo_mensaje", mensaje_id=mensaje_id) + "#notas")
 
 
 @correo_bp.route("/sincronizar", methods=["POST"])

@@ -296,6 +296,41 @@
 
     {% if aviso %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or _('(sin asunto)') }}</h2>
+    {% if equipo_correo and (companeros or equipo_correo.asignado_a or equipo_correo.compartidos or notas_internas) %}
+    <details class="correo-equipo-panel" {{ 'open' if equipo_correo.asignado_a or notas_internas }}>
+      <summary><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg>
+        {{ _('Equipo') }}
+        {% if equipo_correo.asignado_a %}<span class="pill">{{ _('Asignado a %(quien)s', quien=equipo_correo.asignado_nombre) }}{{ ' · ' ~ _('resuelto') if equipo_correo.estado == 'resuelto' }}</span>{% endif %}
+        {% if notas_internas %}<span class="pill">{{ ngettext('%(n)s nota interna', '%(n)s notas internas', notas_internas|length, n=notas_internas|length) }}</span>{% endif %}
+      </summary>
+      {% if companeros %}
+      <form class="quick-row" action="{{ url_for('correo.equipo_asignar', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+        <select name="usuario_id" aria-label="{{ _('Asignar a') }}">
+          <option value="">{{ _('Sin asignar') }}</option>
+          {% for u in companeros %}<option value="{{ u.id }}" {{ 'selected' if equipo_correo.asignado_a == u.id }}>{{ u.nombre }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost">{{ _('Asignar') }}</button>
+      </form>
+      <form class="quick-row" action="{{ url_for('correo.equipo_compartir', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+        <select name="usuario_id" required aria-label="{{ _('Compartir con') }}">
+          <option value="">{{ _('Compartir (solo lectura) con…') }}</option>
+          {% for u in companeros %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost">{{ _('Compartir') }}</button>
+      </form>
+      {% endif %}
+      {% if equipo_correo.compartidos %}
+      <ul class="tarea-participantes">
+        {% for c in equipo_correo.compartidos %}
+        <li><span class="tarea-participante-nombre">{{ c.nombre }}</span><span class="pill">{{ _('Solo lectura') }}</span>
+          <form action="{{ url_for('correo.equipo_quitar', mensaje_id=mensaje_seleccionado.id) }}" method="post"><input type="hidden" name="usuario_id" value="{{ c.usuario_id }}">
+            <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></form></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="muted"><a href="{{ url_for('correo.equipo_mensaje', mensaje_id=mensaje_seleccionado.id) }}#notas">{{ _('Ver y escribir notas internas') }}</a> · {{ _('Nunca se envían al remitente.') }}</p>
+    </details>
+    {% endif %}
     {% if hilo_mensajes %}
     <details class="correo-hilo">
       <summary>{{ _('Conversación') }} ({{ hilo_mensajes|length + 1 }})</summary>

@@ -542,3 +542,82 @@ def test_calendario_unifica_tareas_compartidas_citas_y_fichajes(cliente, monkeyp
     monkeypatch.setattr(calcom, "listar_reservas", roto)
     html = cliente.get("/tareas/calendario").get_data(as_text=True)
     assert "No se han podido cargar las citas" in html and "Propia del día" in html
+
+
+# --- Correo de equipo ------------------------------------------------------------------
+
+def _correo(usuario, uid="1", asunto="Consulta sobre el 303"):
+    cuenta = db.crear_cuenta_correo(usuario, "Trabajo", "imap", "imap.ejemplo.com", 993, f"yo{usuario}@ejemplo.com")
+    return db.guardar_mensaje_correo(cuenta, uid, asunto, "cliente@x.com", "yo@ejemplo.com", "2026-10-01T09:00:00", "Hola, ¿puedes mirar esto?", "<p>Hola</p>")
+
+
+def test_correo_asignado_lo_ve_el_compañero_en_texto_y_nada_mas():
+    _, (ana, luis, eva) = _despacho("ana21@comp.com", "luis21@comp.com", "eva21@comp.com")
+    _, (ajeno,) = _despacho("ajeno21@otro.com")
+    msg = _correo(ana)
+    assert db.rol_en_correo(luis, msg) is None and db.obtener_correo_equipo(luis, msg) is None
+
+    assert db.asignar_correo(ana, msg, ajeno) is False        # otro despacho
+    assert db.asignar_correo(luis, msg, eva) is False         # no es su mensaje
+    assert db.asignar_correo(ana, msg, luis) is True
+    assert db.rol_en_correo(luis, msg) == "asignado" and db.rol_en_correo(eva, msg) is None
+    visto = db.obtener_correo_equipo(luis, msg)
+    assert visto["asunto"] == "Consulta sobre el 303" and visto["dueno_nombre"] == "ana21@comp.com"
+    assert "cuerpo_html" not in visto                          # solo texto: ni HTML ni adjuntos
+    assert [m["id"] for m in db.listar_correo_equipo(luis, "asignados")] == [msg]
+    assert [m["id"] for m in db.listar_correo_equipo(ana, "enviados")] == [msg]
+    assert db.contar_correo_asignado_abierto(luis) == 1
+
+    assert db.cambiar_estado_correo_equipo(eva, msg, "resuelto") is False
+    assert db.cambiar_estado_correo_equipo(luis, msg, "resuelto") is True
+    assert db.contar_correo_asignado_abierto(luis) == 0
+    assert db.asignar_correo(ana, msg, luis) is True           # reasignar reabre
+    assert db.estado_correo_equipo(msg)["estado"] == "abierto"
+    assert db.asignar_correo(ana, msg, None) is True           # quitar asignación
+    assert db.rol_en_correo(luis, msg) is None
+
+
+def test_correo_compartido_en_solo_lectura_con_notas_internas():
+    _, (ana, luis, eva) = _despacho("ana22@comp.com", "luis22@comp.com", "eva22@comp.com")
+    msg = _correo(ana, "2")
+    assert db.compartir_correo(luis, msg, eva) is False       # solo el dueño comparte
+    assert db.compartir_correo(ana, msg, luis) is True
+    assert db.rol_en_correo(luis, msg) == "compartido"
+    assert db.cambiar_estado_correo_equipo(luis, msg, "resuelto") is False   # compartido: no gestiona el estado
+
+    assert db.anadir_nota_interna_correo(eva, msg, "intruso") is None
+    n1 = db.anadir_nota_interna_correo(luis, msg, "Yo lo llevo con el cliente")
+    n2 = db.anadir_nota_interna_correo(ana, msg, "Gracias")
+    notas = db.listar_notas_internas_correo(ana, msg)
+    assert [n["texto"] for n in notas] == ["Yo lo llevo con el cliente", "Gracias"]
+    assert db.listar_notas_internas_correo(eva, msg) == []
+    assert db.eliminar_nota_interna_correo(luis, msg, n2) is False           # no es suya y no es el dueño
+    assert db.eliminar_nota_interna_correo(ana, msg, n1) is True              # el dueño modera
+    assert db.eliminar_nota_interna_correo(luis, msg, n2) is False
+
+    assert db.dejar_de_compartir_correo(eva, msg, luis) is False
+    assert db.dejar_de_compartir_correo(luis, msg, luis) is True              # salirse
+    assert db.rol_en_correo(luis, msg) is None
+
+
+def test_rutas_correo_de_equipo(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "dueno9@comp.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho correo")
+    db.asignar_tenant(uid, tenant)
+    compi = db.crear_usuario("compi9@comp.com", "contrasena123")
+    db.asignar_tenant(compi, tenant)
+    msg = _correo(uid, "9", "Factura pendiente")
+
+    assert cliente.get("/correo/equipo").status_code == 200
+    r = cliente.post(f"/correo/{msg}/equipo/asignar", data={"usuario_id": compi})
+    assert r.status_code == 302
+    assert "Factura pendiente" in cliente.get("/correo/equipo?vista=enviados").get_data(as_text=True)
+    html = cliente.get(f"/correo/?mensaje_id={msg}", follow_redirects=True).get_data(as_text=True)
+    assert "Asignado a compi9@comp.com" in html
+    assert cliente.post(f"/correo/equipo/{msg}/notas", data={"texto": "Revisar <b>hoy</b>"}).status_code == 302
+    html = cliente.get(f"/correo/equipo/{msg}").get_data(as_text=True)
+    assert "Revisar &lt;b&gt;hoy&lt;/b&gt;" in html and "nunca se envían al remitente" in html.lower() or "Nunca se envían" in html
+    assert cliente.post(f"/correo/{msg}/equipo/compartir", data={"usuario_id": 99999}).status_code == 404
+    assert cliente.post(f"/correo/equipo/{msg}/estado", data={"estado": "resuelto"}).status_code == 302
+    assert db.estado_correo_equipo(msg)["estado"] == "resuelto"
+    assert cliente.get("/correo/equipo/999999").status_code == 404

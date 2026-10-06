@@ -99,6 +99,7 @@
         </a>
         <div class="icon-rail-submenu">
           <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.bandeja' else '' }}">{{ _('Bandeja') }}</a>
+          <a href="{{ url_for('correo.equipo') }}" class="icon-rail-sublink {{ 'active' if request.endpoint and request.endpoint.startswith('correo.equipo') else '' }}">{{ _('Equipo') }}</a>
           <a href="{{ url_for('correo.cuentas') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.cuentas' else '' }}">{{ _('Cuentas') }}</a>
           <a href="{{ url_for('correo.ajustes') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.ajustes' else '' }}">{{ _('Ajustes') }}</a>
         </div>
