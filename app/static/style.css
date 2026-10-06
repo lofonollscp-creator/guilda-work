@@ -4654,3 +4654,39 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .top-bar-sync { font-size: 12px; }
 @media (max-width: 1100px) { .top-bar-sync { display: none; } }
 .fichaje-chip-fuera .fichaje-chip-punto { background: var(--text-muted); }
+
+/* ---- Compositor del chat IA: botones del mismo alto y alineados ---- */
+.ia-chat-form { align-items: flex-end; gap: 10px; padding: 14px 16px; }
+.ia-chat-form .ia-chat-adjuntar { order: 1; }
+.ia-chat-form .ia-chat-mic { order: 2; }
+.ia-chat-form textarea { order: 3; min-height: 40px; padding: 10px 6px; line-height: 1.4; }
+.ia-chat-form button[type="submit"] { order: 4; }
+.ia-chat-form .ia-chat-mic,
+.ia-chat-form .ia-chat-adjuntar {
+  width: 40px !important; height: 40px !important; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50% !important; padding: 0 !important;
+  background: transparent !important; color: var(--text-muted) !important;
+  border: 1px solid var(--border) !important;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.ia-chat-form .ia-chat-mic:hover,
+.ia-chat-form .ia-chat-adjuntar:hover { color: var(--text) !important; border-color: var(--text-muted) !important; }
+.ia-chat-form .ia-chat-mic svg, .ia-chat-form .ia-chat-adjuntar svg { width: 18px; height: 18px; }
+.ia-chat-form button[type="submit"] {
+  height: 40px; padding: 0 22px; border-radius: 999px;
+  font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: 0; text-transform: none;
+  transition: filter .15s;
+}
+.ia-chat-form button[type="submit"]:hover { filter: brightness(1.08); }
+.ia-chat-pie { margin: 0 16px 14px; }
+.ia-chat-vaciar, .ia-chat-live {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px;
+  border: 1px solid var(--border); border-radius: 999px; background: transparent;
+  color: var(--text-muted); font-family: inherit; font-size: 13px; font-weight: 600;
+  text-decoration: none; cursor: pointer; transition: color .15s, border-color .15s;
+}
+.ia-chat-vaciar:hover, .ia-chat-live:hover { color: var(--text); border-color: var(--text-muted); }
+.ia-chat-live svg { width: 15px; height: 15px; }
+.ia-chat-live.activo { background: var(--danger); border-color: var(--danger); color: #fff; }
+.ia-chat-live[hidden], .ia-chat-mic[hidden] { display: none !important; }
