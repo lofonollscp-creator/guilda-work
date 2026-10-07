@@ -1514,6 +1514,7 @@ def init_db() -> None:
         # un índice sobre esta misma columna (mismo motivo que
         # tareas_outlook.tarea_recurrente_id más abajo).
         _asegurar_columna(conn, "correo_mensajes", "cliente_fiscal_id", "INTEGER REFERENCES clientes_fiscales(id)")
+        _asegurar_columna(conn, "correo_cuentas", "auth_tipo", "TEXT NOT NULL DEFAULT 'password'")
         # Tiquets: prioridad y responsable asignado (app/rutas_tiquets.py) --
         # sin CHECK a nivel de esquema para "prioridad" (ALTER TABLE ADD
         # COLUMN con CHECK es más frágil de migrar en SQLite que
@@ -7947,18 +7948,21 @@ def crear_cuenta_correo(
     usuario_id: int,
     nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
     usa_tls: bool = True, smtp_host: str | None = None,
-    smtp_puerto: int | None = None, smtp_tls: bool = True,
+    smtp_puerto: int | None = None, smtp_tls: bool = True, auth_tipo: str = "password",
 ) -> int:
+    """`auth_tipo`: 'password' (contraseña en el almacén de credenciales), 'google' o 'microsoft' (OAuth2)."""
+    if auth_tipo not in ("password", "google", "microsoft"):
+        raise ValueError("auth_tipo no válido")
     conn = get_connection()
     try:
         cur = conn.execute(
             """INSERT INTO correo_cuentas
                (usuario_id, nombre, protocolo, host, puerto, usa_tls, usuario,
-                smtp_host, smtp_puerto, smtp_tls, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                smtp_host, smtp_puerto, smtp_tls, auth_tipo, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (usuario_id, nombre.strip(), protocolo, host.strip(), puerto, int(usa_tls),
              usuario.strip(), (smtp_host or "").strip() or None, smtp_puerto,
-             int(smtp_tls), now_iso()),
+             int(smtp_tls), auth_tipo, now_iso()),
         )
         conn.commit()
         return cur.lastrowid

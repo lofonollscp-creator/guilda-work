@@ -58,7 +58,7 @@ from email.utils import getaddresses, parsedate_to_datetime
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
-from . import busqueda, db, eventos, notificaciones
+from . import busqueda, correo_oauth, db, eventos, notificaciones
 from .texto_html import html_a_texto_indexable
 
 SERVICIO_KEYRING = "guilda-work-correo"
@@ -131,6 +131,34 @@ def guardar_cuenta(
     return cuenta_id
 
 
+def conectar_cuenta_oauth(usuario_id: int, proveedor: str, autorizacion: dict, nombre: str | None = None) -> int:
+    """Crea la cuenta (IMAP + SMTP con XOAUTH2) a partir del resultado de `correo_oauth.canjear_codigo`, o,
+    si ya existe una cuenta del mismo proveedor y dirección, le renueva la autorización. Comprueba antes
+    que el servidor acepta el token. Devuelve el id de la cuenta."""
+    ajustes = correo_oauth.PROVEEDORES[proveedor]
+    host, puerto = ajustes["imap"]
+    smtp_host, smtp_puerto = ajustes["smtp"]
+    email = autorizacion["email"]
+    conn = _conectar_imap(host, puerto, True, email, correo_oauth.TokenOAuth(autorizacion["access_token"]))
+    conn.logout()
+    existente = next((c for c in db.listar_cuentas_correo(usuario_id) if c["usuario"].lower() == email and c["auth_tipo"] == proveedor), None)
+    if existente is not None:
+        cuenta_id = existente["id"]
+    else:
+        cuenta_id = db.crear_cuenta_correo(
+            usuario_id, nombre=(nombre or "").strip() or email, protocolo="imap", host=host, puerto=puerto, usuario=email,
+            usa_tls=True, smtp_host=smtp_host, smtp_puerto=smtp_puerto, smtp_tls=True, auth_tipo=proveedor,
+        )
+    try:
+        correo_oauth.guardar_refresh_token(cuenta_id, autorizacion["refresh_token"])
+    except Exception as e:  # noqa: BLE001 -- mismo criterio que guardar_cuenta: sin secreto no se deja la cuenta a medias
+        if existente is None:
+            db.eliminar_cuenta_correo(usuario_id, cuenta_id)
+        raise ErrorCorreo(f"No se ha podido guardar la autorización de forma segura: {e}") from e
+    correo_oauth.olvidar(cuenta_id)
+    return cuenta_id
+
+
 def editar_cuenta(
     usuario_id: int, cuenta_id: int,
     nombre: str, protocolo: str, host: str, puerto: int, usuario: str,
@@ -152,7 +180,12 @@ def editar_cuenta(
     if db.obtener_cuenta_correo(usuario_id, cuenta_id) is None:
         raise ErrorCorreo("Esa cuenta no existe.")
 
-    contrasena_efectiva = contrasena if contrasena else _contrasena(cuenta_id)
+    cuenta_actual = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    if es_oauth(cuenta_actual):
+        contrasena = None          # entra con OAuth2: no hay contraseña que cambiar
+        contrasena_efectiva = _credencial(cuenta_actual, "imap")
+    else:
+        contrasena_efectiva = contrasena if contrasena else _contrasena(cuenta_id)
 
     if protocolo == "pop3":
         conn = _conectar_pop3(host, puerto, usa_tls, usuario, contrasena_efectiva)
@@ -170,6 +203,7 @@ def editar_cuenta(
 
 
 def eliminar_cuenta(usuario_id: int, cuenta_id: int) -> None:
+    correo_oauth.olvidar(cuenta_id)
     try:
         keyring.delete_password(SERVICIO_KEYRING, _clave_keyring(cuenta_id))
     except keyring.errors.PasswordDeleteError:
@@ -193,7 +227,11 @@ def _conectar_imap(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
             conn = imaplib.IMAP4_SSL(host, puerto, timeout=TIMEOUT_SEGUNDOS)
         else:
             conn = imaplib.IMAP4(host, puerto, timeout=TIMEOUT_SEGUNDOS)
-        conn.login(usuario, contrasena)
+        if isinstance(contrasena, correo_oauth.TokenOAuth):
+            cadena = correo_oauth.cadena_xoauth2(usuario, contrasena).encode()
+            conn.authenticate("XOAUTH2", lambda _respuesta: cadena)
+        else:
+            conn.login(usuario, contrasena)
         return conn
     except (imaplib.IMAP4.error, OSError, socket.timeout) as e:
         # El detalle crudo del driver (que a veces incluye texto interno
@@ -219,8 +257,25 @@ def _conectar_pop3(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
         raise ErrorCorreo(f"No se ha podido conectar a {host}:{puerto} (POP3): {e}") from e
 
 
+def es_oauth(cuenta) -> bool:
+    try:
+        return cuenta["auth_tipo"] in correo_oauth.PROVEEDORES
+    except (KeyError, IndexError):
+        return False
+
+
+def _credencial(cuenta, recurso: str = "imap"):
+    """La contraseña de la cuenta o, si entra con OAuth2, un token de acceso vigente."""
+    if es_oauth(cuenta):
+        try:
+            return correo_oauth.token_de_acceso(cuenta["id"], cuenta["auth_tipo"], recurso)
+        except correo_oauth.ErrorOAuth as e:
+            raise ErrorCorreo(str(e)) from e
+    return _contrasena(cuenta["id"])
+
+
 def _conectar_imap_cuenta(cuenta) -> imaplib.IMAP4:
-    return _conectar_imap(cuenta["host"], cuenta["puerto"], cuenta["usa_tls"], cuenta["usuario"], _contrasena(cuenta["id"]))
+    return _conectar_imap(cuenta["host"], cuenta["puerto"], cuenta["usa_tls"], cuenta["usuario"], _credencial(cuenta, "imap"))
 
 
 def _conectar_pop3_cuenta(cuenta) -> poplib.POP3:
@@ -1513,7 +1568,12 @@ def _conectar_smtp(host: str, puerto: int, usa_tls: bool, usuario: str, contrase
             conn = smtplib.SMTP(host, puerto, timeout=TIMEOUT_SEGUNDOS)
             if usa_tls:
                 conn.starttls()
-        conn.login(usuario, contrasena)
+        if isinstance(contrasena, correo_oauth.TokenOAuth):
+            cadena = correo_oauth.cadena_xoauth2(usuario, contrasena)
+            conn.ehlo_or_helo_if_needed()
+            conn.auth("XOAUTH2", lambda challenge=None: cadena)
+        else:
+            conn.login(usuario, contrasena)
         return conn
     except (smtplib.SMTPException, OSError, socket.timeout) as e:
         logger.warning("Fallo de conexión SMTP a %s:%s -- %s", host, puerto, e)
@@ -1650,7 +1710,7 @@ def construir_y_enviar(
 
     todos_los_destinatarios = _direcciones(destinatarios) + _direcciones(cc) + _direcciones(bcc)
 
-    contrasena = _contrasena(cuenta_id)
+    contrasena = _credencial(cuenta, "smtp")
     conn = _conectar_smtp(
         cuenta["smtp_host"], cuenta["smtp_puerto"], bool(cuenta["smtp_tls"]),
         cuenta["usuario"], contrasena,

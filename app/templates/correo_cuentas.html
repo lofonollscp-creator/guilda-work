@@ -14,6 +14,19 @@
 <div class="ia-error" style="margin-top: 16px;">{{ error }}</div>
 {% endif %}
 
+{% if proveedores_oauth %}
+<section class="proyecto-bloque" id="conectar-oauth">
+  <h2>{{ _('Conectar con tu proveedor') }}</h2>
+  <p class="muted">{{ _('Inicias sesión en Google o Microsoft y autorizas a Guilda Work; no hace falta contraseña de aplicación y puedes revocar el acceso cuando quieras.') }}</p>
+  {% for pr in proveedores_oauth %}
+  <form action="{{ url_for('correo.oauth_iniciar', proveedor=pr.clave) }}" method="get" class="inline-form">
+    <input type="text" name="nombre" maxlength="80" placeholder="{{ _('Nombre de la cuenta (opcional)') }}" aria-label="{{ _('Nombre de la cuenta (opcional)') }}">
+    <button type="submit" class="btn btn-primary">{{ _('Conectar %(proveedor)s', proveedor=pr.nombre) }}</button>
+  </form>
+  {% endfor %}
+</section>
+{% endif %}
+
 {% if operaciones_error %}
 <section class="proyecto-bloque" id="operaciones-error">
   <h2>{{ _('Cambios que no se han podido aplicar en el servidor') }}</h2>
@@ -43,7 +56,7 @@
   {% for c in cuentas %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ c.nombre|avatar_color }};">{{ c.nombre|iniciales }}</span>
-      <span class="log-text">{{ c.nombre }} <span class="muted">({{ c.usuario }} · {{ c.protocolo|upper }} · {{ c.host }}:{{ c.puerto }})</span></span>
+      <span class="log-text">{{ c.nombre }} <span class="muted">({{ c.usuario }} · {{ c.protocolo|upper }}{% if c.auth_tipo != 'password' %} · OAuth2{% endif %} · {{ c.host }}:{{ c.puerto }})</span></span>
       {% if c.ultima_sincronizacion %}
       <span class="log-duration">{{ _('Sincronizado') }} {{ c.ultima_sincronizacion[:16].replace('T', ' ') }}</span>
       {% endif %}
@@ -62,10 +75,16 @@
               <label>{{ _('Usuario / correo') }}</label>
               <input type="text" name="usuario" value="{{ c.usuario }}" required>
             </div>
+            {% if c.auth_tipo == 'password' %}
             <div class="correo-form-campo">
               <label>{{ _('Contraseña') }}</label>
               <input type="password" name="contrasena" placeholder="{{ _('Déjalo en blanco para mantener la actual') }}">
             </div>
+            {% elif c.auth_tipo in proveedores_oauth|map(attribute='clave') %}
+            <p class="muted">{{ _('Esta cuenta entra con OAuth2, sin contraseña.') }} <a href="{{ url_for('correo.oauth_iniciar', proveedor=c.auth_tipo, correo=c.usuario, nombre=c.nombre) }}">{{ _('Reconectar') }}</a></p>
+            {% else %}
+            <p class="muted">{{ _('Esta cuenta entra con OAuth2, sin contraseña.') }}</p>
+            {% endif %}
 
             <h3 class="correo-form-subtitulo">{{ _('Servidor entrante') }}</h3>
             <div class="correo-form-campo">

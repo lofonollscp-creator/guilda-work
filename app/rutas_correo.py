@@ -3,16 +3,18 @@ vista de bandeja de 3 paneles al estilo New Outlook (rail de cuentas +
 carpetas + lista de mensajes + panel de lectura, todo en la misma ruta
 `/correo/`). Vive en su propio Blueprint, mismo patrón que app/rutas_tareas.py.
 """
-import threading
+import os
 import re
+import secrets
+import threading
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, db, ia_asistente, notificaciones, peticion
+from . import correo, correo_ia, correo_oauth, db, ia_asistente, notificaciones, peticion
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -134,7 +136,7 @@ def _render_redactar(
 @login_required
 def cuentas():
     return render_template(
-        "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=None,
+        "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=None, proveedores_oauth=correo_oauth.proveedores_disponibles(),
         operaciones_error=db.operaciones_correo_con_error(g.usuario_id),
     )
 
@@ -144,6 +146,48 @@ def _ids_de_operaciones():
     if request.form.get("todas") == "1":
         return None
     return [int(i) for i in request.form.getlist("id") if i.isdigit()]
+
+
+def _redirect_uri_oauth(proveedor: str) -> str:
+    base = os.environ.get("GUILDA_PUBLIC_URL", "").strip().rstrip("/")
+    ruta = url_for("correo.oauth_callback", proveedor=proveedor)
+    return base + ruta if base else url_for("correo.oauth_callback", proveedor=proveedor, _external=True)
+
+
+@correo_bp.route("/oauth/<proveedor>/iniciar")
+@login_required
+def oauth_iniciar(proveedor: str):
+    if not correo_oauth.disponible(proveedor):
+        abort(404)
+    verificador, desafio = correo_oauth.nuevo_pkce()
+    estado = secrets.token_urlsafe(24)
+    session["oauth_correo"] = {"estado": estado, "verificador": verificador, "proveedor": proveedor, "nombre": (request.args.get("nombre") or "")[:80]}
+    return redirect(correo_oauth.url_autorizacion(proveedor, _redirect_uri_oauth(proveedor), estado, desafio, (request.args.get("correo") or "").strip() or None))
+
+
+@correo_bp.route("/oauth/<proveedor>/callback")
+@login_required
+def oauth_callback(proveedor: str):
+    guardado = session.pop("oauth_correo", None)
+    if not correo_oauth.disponible(proveedor):
+        abort(404)
+
+    def fallo(mensaje):
+        return render_template(
+            "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=mensaje,
+            operaciones_error=db.operaciones_correo_con_error(g.usuario_id),
+        )
+
+    if not guardado or guardado.get("proveedor") != proveedor or not secrets.compare_digest(guardado["estado"], request.args.get("state", "")):
+        return fallo(_("La conexión con el proveedor ha caducado o no es válida. Inténtalo de nuevo."))
+    if request.args.get("error") or not request.args.get("code"):
+        return fallo(_("No se ha concedido el acceso a la cuenta."))
+    try:
+        autorizacion = correo_oauth.canjear_codigo(proveedor, request.args["code"], _redirect_uri_oauth(proveedor), guardado["verificador"])
+        correo.conectar_cuenta_oauth(g.usuario_id, proveedor, autorizacion, guardado.get("nombre"))
+    except (correo_oauth.ErrorOAuth, correo.ErrorCorreo) as e:
+        return fallo(str(e))
+    return redirect(url_for("correo.cuentas"))
 
 
 @correo_bp.route("/cuentas/operaciones/reintentar", methods=["POST"])

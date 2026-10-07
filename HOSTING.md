@@ -123,6 +123,39 @@ actual) es suficiente. Solo si se lanzan varios procesos haría falta un
 almacén compartido, por ejemplo `GUILDA_LIMITER_URI=redis://127.0.0.1:6379`
 (requiere instalar el paquete `redis` y tener un Redis en marcha).
 
+### Correo con OAuth2 (Gmail y Microsoft 365)
+
+Opcional. Si no se configura, la opción «Conectar con Google/Microsoft» no aparece en Correo → Cuentas
+y siguen funcionando las cuentas con contraseña (o contraseña de aplicación). Cada instalación registra
+**su propia aplicación** y la configura por entorno:
+
+| Variable | Descripción |
+|---|---|
+| `GUILDA_OAUTH_GOOGLE_CLIENT_ID` / `GUILDA_OAUTH_GOOGLE_CLIENT_SECRET` | Cliente OAuth de Google Cloud. |
+| `GUILDA_OAUTH_MICROSOFT_CLIENT_ID` / `GUILDA_OAUTH_MICROSOFT_CLIENT_SECRET` | Registro de aplicación de Azure (Entra ID). |
+| `GUILDA_OAUTH_MICROSOFT_TENANT` | `common` (por defecto: cuentas de trabajo y personales) u `organizations`, o el id de un tenant concreto. |
+| `GUILDA_PUBLIC_URL` | Opcional. Dirección pública (`https://work.ejemplo.com`) para construir la URI de retorno si el proxy no la transmite bien. |
+
+**URIs de redirección** (registrarlas tal cual en cada proveedor):
+`https://TU-DOMINIO/correo/oauth/google/callback` y `https://TU-DOMINIO/correo/oauth/microsoft/callback`.
+
+**Google Cloud** (console.cloud.google.com): proyecto → *APIs y servicios* → (no hace falta habilitar la Gmail API) 
+con la *Pantalla de consentimiento OAuth* (tipo *Externo*, o *Interno* si todos los usuarios son de un mismo Workspace)
+→ añadir el ámbito `https://mail.google.com/` → *Credenciales* → *ID de cliente OAuth* de tipo *Aplicación web*
+con la URI de retorno de arriba. Ojo: `https://mail.google.com/` es un ámbito **restringido**. Mientras la app esté en
+modo *Pruebas* solo funciona con las cuentas dadas de alta como *usuarios de prueba* (y el permiso caduca a los 7 días).
+Para uso real con cuentas Gmail ajenas Google exige verificación de la aplicación y una evaluación de seguridad; con
+Workspace *Interno* no hace falta.
+
+**Microsoft** (portal.azure.com → *Microsoft Entra ID* → *Registros de aplicaciones* → *Nuevo registro*): plataforma
+*Web* con la URI de retorno; *Certificados y secretos* → nuevo secreto de cliente (el **valor**, no el id);
+*Permisos de API* → *Microsoft Graph*… no: **Office 365 Exchange Online** (delegados) `IMAP.AccessAsUser.All` y `SMTP.Send`,
+más `offline_access`, `openid` y `email`. En el tenant de la organización el administrador puede tener que
+conceder el consentimiento, y el buzón debe tener IMAP y *SMTP autenticado* habilitados en Exchange Online.
+
+El token de refresco se guarda en el almacén de credenciales (como las contraseñas); el de acceso solo en memoria.
+Si el proveedor revoca el permiso, la cuenta muestra «vuelve a conectarla» y se reconecta desde Correo → Cuentas.
+
 ## 4. Hostname sin dominio propio (sslip.io)
 
 Sin comprar un dominio todavía, usa un hostname que resuelve

@@ -6772,3 +6772,35 @@ msgstr ""
 msgid "No se ha encontrado una única coincidencia para: %(cosas)s"
 msgstr "Aucune correspondance unique pour : %(cosas)s"
 
+msgid ""
+"La conexión con el proveedor ha caducado o no es válida. Inténtalo de "
+"nuevo."
+msgstr "La connexion avec le fournisseur a expiré ou n'est pas valide. Réessayez."
+
+msgid "No se ha concedido el acceso a la cuenta."
+msgstr "L'accès au compte n'a pas été accordé."
+
+msgid "Conectar con tu proveedor"
+msgstr "Se connecter avec votre fournisseur"
+
+msgid ""
+"Inicias sesión en Google o Microsoft y autorizas a Guilda Work; no hace "
+"falta contraseña de aplicación y puedes revocar el acceso cuando quieras."
+msgstr ""
+"Vous vous connectez à Google ou Microsoft et autorisez Guilda Work ; "
+"aucun mot de passe d'application n'est nécessaire et vous pouvez révoquer"
+" l'accès à tout moment."
+
+msgid "Nombre de la cuenta (opcional)"
+msgstr "Nom du compte (facultatif)"
+
+#, python-format
+msgid "Conectar %(proveedor)s"
+msgstr "Connecter %(proveedor)s"
+
+msgid "Esta cuenta entra con OAuth2, sin contraseña."
+msgstr "Ce compte se connecte avec OAuth2, sans mot de passe."
+
+msgid "Reconectar"
+msgstr "Reconnecter"
+
