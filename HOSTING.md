@@ -2543,5 +2543,14 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Caddy: bloque de `deploy/Caddyfile.backoffice`.
 - Las rutas antiguas `/backoffice/...` de `app.guildawork.com` ya no existen como panel:
   redirigen (solo GET) a las pantallas equivalentes de este backoffice.
+- Tareas periódicas del propio backoffice (hilo en `serve_backoffice.py`, cada 10 min, latido
+  `backoffice_tareas` en Salud): foto diaria de la cartera (histórico de MRR, altas, bajas y
+  cambios de plan en Ingresos), revisión de los cobros puntuales pendientes en Stripe y resumen
+  semanal por correo (lunes 8:00, a `ALERTAS_ADMIN_EMAIL`, una vez por semana; también se puede
+  enviar a mano desde Alertas). Salud de cada tenant: 0-100 según actividad, usuarios que
+  entran, funciones en uso y estado del pago (≥70 sano, 40-69 atención, <40 en riesgo).
+- Borrar un tenant elimina también sus clientes fiscales, vencimientos, documentos, webhooks y
+  extras. Si tiene fichajes se rechaza (hay que conservarlos 4 años) salvo que se marque la
+  casilla expresa; la comprobación se hace antes de retirar nada de las herramientas conectadas.
 - El último acceso de cada usuario (`usuarios.ultimo_acceso`) lo anota la app como mucho
   una vez cada 10 minutos; el backoffice lo muestra si la columna ya existe.

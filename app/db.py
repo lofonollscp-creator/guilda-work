@@ -2575,16 +2575,54 @@ def desactivar_extra_tenant(tenant_extra_id: int) -> None:
         conn.close()
 
 
-def borrar_tenant(tenant_id: int) -> None:
-    """Desasigna primero a los usuarios que lo tuvieran (quedan sin tenant,
-    no se borran) y luego borra el tenant — no depende de ON DELETE
-    CASCADE, que la tabla no declara."""
+def contar_fichajes_tenant(tenant_id: int) -> int:
     conn = get_connection()
     try:
-        conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+        return conn.execute("SELECT COUNT(*) FROM fichajes WHERE tenant_id = ?", (tenant_id,)).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
+    """Borra el tenant y todo lo que cuelga de él (clientes fiscales con sus
+    vencimientos, documentos, mensajes, pagos y accesos del portal; webhooks y
+    sus entregas; extras y accesos de facturación). Los usuarios quedan sin
+    tenant, no se borran, igual que sus tareas, notas y correo.
+
+    El registro de jornada (fichajes) hay que conservarlo cuatro años por ley
+    (art. 34.9 ET): si el tenant tiene fichajes, se rechaza el borrado salvo que
+    se pida expresamente `incluir_fichajes`. Todo ocurre en una sola
+    transacción: o se borra todo o no se toca nada."""
+    conn = get_connection()
+    try:
+        if not incluir_fichajes:
+            n = conn.execute("SELECT COUNT(*) FROM fichajes WHERE tenant_id = ?", (tenant_id,)).fetchone()[0]
+            if n:
+                raise ValueError(
+                    f"El tenant tiene {n} fichajes, que la ley obliga a conservar cuatro años. "
+                    "Expórtalos y confirma que quieres borrarlos también."
+                )
+        venc = "SELECT id FROM vencimientos_fiscales WHERE tenant_id = ?"
+        clientes = "SELECT id FROM clientes_fiscales WHERE tenant_id = ?"
+        conn.execute(f"DELETE FROM vencimientos_fiscales_pagos WHERE vencimiento_id IN ({venc})", (tenant_id,))
+        conn.execute("DELETE FROM vencimientos_fiscales WHERE tenant_id = ?", (tenant_id,))  # documentos, mensajes y recordatorios en cascada
+        for tabla in ("correo_mensajes", "tareas_outlook", "notas", "correo_reglas"):
+            conn.execute(f"UPDATE {tabla} SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id IN ({clientes})", (tenant_id,))
+        conn.execute(f"DELETE FROM clientes_fiscales_accesos WHERE cliente_fiscal_id IN ({clientes})", (tenant_id,))
+        conn.execute("DELETE FROM clientes_fiscales WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM webhooks_entregas WHERE webhook_id IN (SELECT id FROM webhooks WHERE tenant_id = ?)", (tenant_id,))
+        conn.execute("DELETE FROM webhooks WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM fichaje_avisos WHERE entrada_id IN (SELECT id FROM fichajes WHERE tenant_id = ?)", (tenant_id,))
+        conn.execute("DELETE FROM fichajes WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM tenants_extras_activos WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM facturacion_accesos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants_herramientas_ocultas WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants WHERE id = ?", (tenant_id,))
         conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -3381,6 +3419,44 @@ def exportar_datos_tenant(tenant_id: int) -> dict:
                 ).fetchall()
             ]
 
+        tareas_lista, comentarios_tareas, notas_internas_correo, asignaciones_correo = [], [], [], []
+        fichajes = [
+            dict(f) for f in conn.execute(
+                "SELECT id, usuario_id, tipo, marca_tiempo, origen, nota, corrige_a, creado_por, creado_en "
+                "FROM fichajes WHERE tenant_id = ? ORDER BY marca_tiempo", (tenant_id,),
+            ).fetchall()
+        ]
+        if usuarios_ids:
+            marcadores = ",".join("?" * len(usuarios_ids))
+            tareas_lista = [
+                dict(t) for t in conn.execute(
+                    f"""SELECT id, usuario_id, asunto, cuerpo, estado, prioridad, fecha_vencimiento, fecha_completada,
+                               asignada_a, cliente_fiscal_id, creada_en
+                        FROM tareas_outlook WHERE usuario_id IN ({marcadores}) AND papelera_en IS NULL""",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            if tareas_lista:
+                ids_tareas = [t["id"] for t in tareas_lista]
+                comentarios_tareas = [
+                    dict(c) for c in conn.execute(
+                        f"SELECT tarea_id, usuario_id, texto, creado_en FROM tarea_comentarios "
+                        f"WHERE tarea_id IN ({','.join('?' * len(ids_tareas))})", ids_tareas,
+                    ).fetchall()
+                ]
+            notas_internas_correo = [
+                dict(n) for n in conn.execute(
+                    f"SELECT mensaje_id, usuario_id, texto, creado_en FROM correo_notas_internas WHERE usuario_id IN ({marcadores})",
+                    usuarios_ids,
+                ).fetchall()
+            ]
+            asignaciones_correo = [
+                dict(a) for a in conn.execute(
+                    f"SELECT mensaje_id, asignado_a, asignado_por, estado, actualizado_en FROM correo_equipo "
+                    f"WHERE asignado_a IN ({marcadores}) OR asignado_por IN ({marcadores})",
+                    usuarios_ids + usuarios_ids,
+                ).fetchall()
+            ]
         return {
             "tenant": {"id": tenant["id"], "nombre": tenant["nombre"], "creado_en": tenant["creado_en"]},
             "generado_en": now_iso(),
@@ -3388,9 +3464,14 @@ def exportar_datos_tenant(tenant_id: int) -> dict:
             "clientes_fiscales": clientes_fiscales,
             "vencimientos_fiscales": vencimientos_fiscales,
             "tareas": tareas,
+            "tareas_lista": tareas_lista,
+            "comentarios_tareas": comentarios_tareas,
             "notas": notas,
             "tiquets": tiquets,
             "correos": correos,
+            "correo_equipo_asignaciones": asignaciones_correo,
+            "correo_equipo_notas_internas": notas_internas_correo,
+            "fichajes": fichajes,
         }
     finally:
         conn.close()

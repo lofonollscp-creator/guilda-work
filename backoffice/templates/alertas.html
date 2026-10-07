@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Alertas{% endblock %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div><h1>Alertas</h1><p class="muted">Lo que se enviaría ahora en el resumen semanal (los lunes a las 8:00, a la dirección de alertas del sistema).</p></div>
+  <form method="post" action="{{ url_for('rutas.enviar_alertas') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton boton-primario" data-confirmar="¿Enviar ahora el resumen por correo?">{{ icono('send') }} Enviar ahora</button>
+  </form>
+</header>
+<section class="rejilla rejilla-4">
+  <article class="tarjeta kpi"><header><span>En riesgo</span></header><strong class="{{ 'texto-riesgo' if r.cartera.riesgo }}">{{ r.cartera.riesgo }}</strong></article>
+  <article class="tarjeta kpi"><header><span>Piden atención</span></header><strong>{{ r.cartera.atencion }}</strong></article>
+  <article class="tarjeta kpi"><header><span>Cobros sin pagar</span></header><strong>{{ r.cobros_pendientes|length }}</strong><small>más de 3 días</small></article>
+  <article class="tarjeta kpi"><header><span>Webhooks fallidos</span></header><strong>{{ r.webhooks_fallidos_7d }}</strong><small>últimos 7 días</small></article>
+</section>
+<section class="tarjeta">
+  <h2>Texto del resumen</h2>
+  <pre class="resumen-texto">{{ texto }}</pre>
+  {% if ultimos %}<p class="muted">Enviados: {% for u in ultimos %}{{ u.enviado_en|fecha }}{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+</section>
+{% endblock %}

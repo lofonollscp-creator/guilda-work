@@ -4447,3 +4447,6 @@ msgstr "deleted an internal note"
 
 msgid "Todavía no hay actividad."
 msgstr "There is no activity yet."
+
+msgid "Tareas del backoffice (histórico, cobros y resumen semanal)"
+msgstr "Backoffice tasks (history, payments and weekly summary)"

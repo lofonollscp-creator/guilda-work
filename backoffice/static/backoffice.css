@@ -164,3 +164,12 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .lista-notas { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
 .lista-notas li { border: 1px solid var(--borde); border-radius: 10px; padding: 12px 14px; background: var(--superficie-2); } .lista-notas p { white-space: pre-wrap; margin: 0 0 6px; }
 .en-linea { display: inline; } .enlace-boton { background: none; border: 0; color: var(--riesgo); cursor: pointer; font: inherit; padding: 0 0 0 8px; }
+
+/* ---- Salud, ingresos y alertas ---- */
+.insignia-aviso { background: color-mix(in srgb, var(--aviso) 22%, transparent); border-color: var(--aviso); }
+.barras { display: flex; align-items: flex-end; gap: 10px; height: 170px; margin: 14px 0 22px; overflow-x: auto; }
+.barra-col { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; min-width: 64px; height: 100%; }
+.barra { display: block; width: 70%; min-height: 3px; background: var(--acento-fuerte); border-radius: 6px 6px 0 0; }
+.barra-valor { font-size: .72rem; font-weight: 700; } .barra-mes { font-size: .72rem; color: var(--apagado); }
+.resumen-texto { white-space: pre-wrap; background: var(--superficie-2); border: 1px solid var(--borde); border-radius: 10px; padding: 14px; margin: 0; font: inherit; }
+.casilla { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; font-weight: 400; }

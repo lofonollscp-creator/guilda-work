@@ -16,3 +16,4 @@
   </span>
 </div>
 {% endmacro %}
+{% macro salud_insignia(s) %}{% if s.puntos is none %}<span class="insignia">{{ s.etiqueta|upper }}</span>{% else %}<span class="insignia {{ 'insignia-ok' if s.nivel == 'sano' else ('insignia-aviso' if s.nivel == 'atencion' else 'insignia-riesgo') }}" title="{{ s.motivos|join('; ') }}">{{ s.puntos }} · {{ s.etiqueta|upper }}</span>{% endif %}{% endmacro %}

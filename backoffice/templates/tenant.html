@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icono, insignia_rol %}
+{% from "_macros.html" import icono, insignia_rol, salud_insignia %}
 {% block titulo %}{{ t.nombre }}{% endblock %}
 {% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'integraciones': ('Integraciones', 'zap'), 'actividad': ('Actividad', 'activity'), 'avanzado': ('Avanzado', 'shield-check')} %}
 {% block contenido %}
@@ -197,6 +197,7 @@
       <form method="post" action="{{ url_for('rutas.borrar_tenant', tenant_id=t.id) }}" class="formulario fila-form">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <label>Nombre del tenant<input type="text" name="confirmacion" autocomplete="off" required></label>
+        {% if n_fichajes %}<label class="casilla"><input type="checkbox" name="borrar_fichajes" value="1"> Borrar también los {{ n_fichajes }} fichajes (la ley obliga a conservarlos 4 años: exporta los datos antes)</label>{% endif %}
         <button type="submit" class="boton boton-peligro" data-confirmar="¿Seguro? Se borrará «{{ t.nombre }}» y sus instancias en las herramientas. No se puede deshacer.">Borrar definitivamente</button>
       </form>
     </div>
@@ -207,6 +208,17 @@
       <span class="punto punto-{{ act.estado[0] }}" aria-hidden="true"></span>
       <div><strong class="grande">{{ act.estado[1] }}</strong><p class="muted">Última actividad {{ act.ultima|hace }}</p></div>
       <div class="derecha"><span class="muted">Última actividad global</span><strong>{{ act.ultima|fecha if act.ultima else '—' }}</strong></div>
+    </div>
+    <div class="tarjeta">
+      <h3 class="sin-margen">{{ icono('shield-check') }} Salud del cliente {{ salud_insignia(salud) }}</h3>
+      {% if salud.factores %}
+      <ul class="lista-datos">
+        {% for nombre, pts, maximo, detalle in salud.factores %}
+        <li><span>{{ nombre }} <span class="muted">· {{ detalle }}</span></span><strong>{{ pts }}/{{ maximo }}</strong></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if salud.motivos %}<p class="muted">{{ salud.motivos|join(' · ') }}</p>{% endif %}
     </div>
     <div class="rejilla rejilla-2">
       <div class="tarjeta"><h3 class="sin-margen">{{ icono('list-checks') }} Tareas</h3>

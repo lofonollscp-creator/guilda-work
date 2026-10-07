@@ -4414,3 +4414,6 @@ msgstr "ha esborrat una nota interna"
 
 msgid "Todavía no hay actividad."
 msgstr "Encara no hi ha activitat."
+
+msgid "Tareas del backoffice (histórico, cobros y resumen semanal)"
+msgstr "Tasques del backoffice (històric, cobraments i resum setmanal)"

@@ -8,7 +8,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 from app import db as plataforma
 from app import herramientas
 
-from . import aprovisionamiento, auth, datos, facturacion, metricas
+from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas
 
 bp = Blueprint("rutas", __name__)
 
@@ -65,7 +65,7 @@ def healthz():
 @bp.route("/")
 @auth.login_required
 def dashboard():
-    return render_template("dashboard.html", k=datos.kpis_dashboard())
+    return render_template("dashboard.html", k=datos.kpis_dashboard(), cartera=cartera.cartera())
 
 
 # --- Tenants ----------------------------------------------------------------
@@ -76,6 +76,8 @@ def tenants():
     q, estado, plan = request.args.get("q", ""), request.args.get("estado", ""), request.args.get("plan", "")
     orden = request.args.get("orden", "nombre")
     filas, pag = datos.listar_tenants(q, estado, plan, orden, _entero(request.args.get("pagina")), _entero(request.args.get("por_pagina"), 25))
+    for f in filas:
+        f["salud"] = cartera.puntuacion_tenant(f["id"])
     return render_template(
         "tenants.html", tenants=filas, pag=pag, q=q, estado=estado, plan=plan, orden=orden,
         vista="rejilla" if request.args.get("vista") == "rejilla" else "lista", planes=datos.planes(),
@@ -130,9 +132,10 @@ def tenant(tenant_id: int):
             "facturas": facturas, "error_facturas": error_facturas, "cobros": facturacion.listar_cobros(tenant_id),
         }
     if seccion == "actividad":
-        extra = {"act": metricas.actividad_tenant(tenant_id, detalle["modulos"]), "notas_internas": metricas.notas_tenant(tenant_id)}
+        act = metricas.actividad_tenant(tenant_id, detalle["modulos"])
+        extra = {"act": act, "salud": cartera.puntuacion_tenant(tenant_id, act), "notas_internas": metricas.notas_tenant(tenant_id)}
     return render_template(
-        "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, zonas=plataforma.ZONAS_HORARIAS, zona_defecto=plataforma.ZONA_HORARIA_DEFECTO, secciones=SECCIONES_TENANT,
+        "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, n_fichajes=plataforma.contar_fichajes_tenant(tenant_id) if seccion == "avanzado" else 0, zonas=plataforma.ZONAS_HORARIAS, zona_defecto=plataforma.ZONA_HORARIA_DEFECTO, secciones=SECCIONES_TENANT,
         usuarios=usuarios, planes=datos.planes(), **extra,
     )
 

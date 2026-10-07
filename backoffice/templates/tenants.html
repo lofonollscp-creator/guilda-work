@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icono, paginacion %}
+{% from "_macros.html" import salud_insignia, icono, paginacion %}
 {% block titulo %}Tenants{% endblock %}
 {% macro args(pagina=None) %}{{ {'q': q, 'estado': estado, 'plan': plan, 'orden': orden, 'vista': vista, 'por_pagina': pag.por_pagina, 'pagina': pagina or 1}|urlencode }}{% endmacro %}
 {% block contenido %}
@@ -41,7 +41,7 @@
   <a class="tarjeta carta" href="{{ url_for('rutas.tenant', tenant_id=t.id) }}">
     <header><span class="avatar" style="--c: {{ t.nombre|color_avatar }}">{{ t.nombre|iniciales }}</span>
       <div><strong>{{ t.nombre }}</strong><span class="muted">{{ t.plan or 'Sin plan' }}</span></div></header>
-    <p>{% if t.activo %}<span class="insignia insignia-ok">ACTIVO</span>{% else %}<span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</p>
+    <p>{% if t.activo %}<span class="insignia insignia-ok">ACTIVO</span>{% else %}<span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %} {{ salud_insignia(t.salud) }}</p>
     <dl class="datos-mini"><div><dt>Usuarios</dt><dd>{{ t.n_usuarios }}</dd></div><div><dt>Clientes</dt><dd>{{ t.n_clientes }}</dd></div></dl>
     <small class="muted">Actividad: {{ t.ultima_actividad|fecha }}</small>
   </a>
@@ -50,19 +50,20 @@
 {% else %}
 <div class="tabla-caja">
   <table class="tabla">
-    <thead><tr><th>Tenant</th><th>Plan</th><th>Suscripción</th><th>Usuarios</th><th>Clientes</th><th>Creado</th><th>Actividad</th><th>Estado</th><th></th></tr></thead>
+    <thead><tr><th>Tenant</th><th>Plan</th><th>Suscripción</th><th>Salud</th><th>Usuarios</th><th>Clientes</th><th>Creado</th><th>Actividad</th><th>Estado</th><th></th></tr></thead>
     <tbody>
       {% for t in tenants %}
       <tr>
         <td><a class="celda-usuario" href="{{ url_for('rutas.tenant', tenant_id=t.id) }}"><span class="avatar" style="--c: {{ t.nombre|color_avatar }}">{{ t.nombre|iniciales }}</span><strong>{{ t.nombre }}</strong></a></td>
         <td>{{ t.plan or '—' }}</td>
         <td>{% if t.suscripcion_estado %}<span class="insignia {{ 'insignia-ok' if t.suscripcion_estado == 'activa' else 'insignia-riesgo' }}">{{ t.suscripcion_estado|upper|replace('_', ' ') }}</span>{% else %}—{% endif %}</td>
+        <td>{{ salud_insignia(t.salud) }}</td>
         <td>{{ t.n_usuarios }}</td><td>{{ t.n_clientes }}</td>
         <td>{{ t.creado_en|fecha }}</td><td>{{ t.ultima_actividad|fecha }}</td>
         <td>{% if t.activo %}<span class="ok" title="Activo">✓</span>{% else %}<span class="ko" title="Suspendido">✕</span>{% endif %}</td>
         <td class="acciones"><a class="boton-icono" href="{{ url_for('rutas.tenant', tenant_id=t.id) }}" aria-label="Abrir {{ t.nombre }}">{{ icono('arrow-right') }}</a></td>
       </tr>
-      {% else %}<tr><td colspan="9" class="vacio">Ningún tenant coincide con la búsqueda.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="10" class="vacio">Ningún tenant coincide con la búsqueda.</td></tr>{% endfor %}
     </tbody>
   </table>
   {{ paginacion(pag, args) }}

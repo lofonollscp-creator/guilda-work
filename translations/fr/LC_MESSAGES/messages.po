@@ -4452,3 +4452,6 @@ msgstr "a supprimé une note interne"
 
 msgid "Todavía no hay actividad."
 msgstr "Il n'y a pas encore d'activité."
+
+msgid "Tareas del backoffice (histórico, cobros y resumen semanal)"
+msgstr "Tâches du backoffice (historique, paiements et résumé hebdomadaire)"

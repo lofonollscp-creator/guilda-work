@@ -26,6 +26,7 @@
       {{ enlace(url_for('rutas.catalogo'), 'Herramientas', 'puzzle', endpoint == 'rutas.catalogo') }}
       <p class="nav-grupo">Analítica</p>
       {{ enlace(url_for('rutas.journey'), 'Customer Journey', 'rocket', endpoint == 'rutas.journey') }}
+      {{ enlace(url_for('rutas.alertas'), 'Alertas', 'bell', endpoint in ('rutas.alertas', 'rutas.enviar_alertas')) }}
       <p class="nav-grupo">Comercial</p>
       {{ enlace(url_for('rutas.leads'), 'Leads', 'mail', endpoint == 'rutas.leads') }}
       {{ enlace(url_for('rutas.solicitudes'), 'Solicitudes del portal', 'message-circle', endpoint == 'rutas.solicitudes') }}

@@ -11,7 +11,7 @@ from flask import Response, abort, flash, redirect, render_template, request, ur
 from app import db as plataforma
 from app import eventos, herramientas, salud, uptime_kuma
 
-from . import aprovisionamiento, auth, diagnostico, datos
+from . import aprovisionamiento, auth, cartera, diagnostico, datos
 from .rutas import _tenant_o_404, bp
 
 
@@ -101,7 +101,33 @@ def ingresos():
     activos = [t for t in filas if t["suscripcion_estado"] == "activa" and t["plan_precio_centimos"]]
     return render_template(
         "ingresos.html", tenants=filas, mrr=sum(t["plan_precio_centimos"] for t in activos), n_activas=len(activos),
+        hist=cartera.historial_ingresos(),
     )
+
+
+@bp.route("/alertas")
+@auth.login_required
+def alertas():
+    r = cartera.construir_resumen()
+    bo = auth.conectar()
+    try:
+        ultimos = [dict(f) for f in bo.execute("SELECT * FROM resumenes_enviados ORDER BY enviado_en DESC LIMIT 5")]
+    finally:
+        bo.close()
+    return render_template("alertas.html", r=r, texto=cartera.texto_resumen(r), ultimos=ultimos)
+
+
+@bp.route("/alertas/enviar", methods=["POST"])
+@auth.login_required
+def enviar_alertas():
+    try:
+        cartera.enviar_resumen()
+    except Exception as e:  # noqa: BLE001 -- ErrorNotificacionesEmail: sin SMTP o sin ALERTAS_ADMIN_EMAIL
+        flash(f"No se ha podido enviar: {e}", "error")
+    else:
+        auth.auditar("alertas.enviar", "resumen semanal enviado a mano")
+        flash("Resumen enviado.", "ok")
+    return redirect(url_for("rutas.alertas"))
 
 
 # --- Sistema ----------------------------------------------------------------------
@@ -255,7 +281,14 @@ def borrar_tenant(tenant_id: int):
     if request.form.get("confirmacion", "").strip() != t["nombre"]:
         flash("Para borrar el tenant escribe su nombre exacto en la confirmación.", "error")
         return redirect(url_for("rutas.tenant", tenant_id=tenant_id, seccion="avanzado"))
+    incluir_fichajes = request.form.get("borrar_fichajes") == "1"
+    n_fichajes = plataforma.contar_fichajes_tenant(tenant_id)
+    if n_fichajes and not incluir_fichajes:
+        # Se comprueba ANTES de retirar nada de las herramientas conectadas.
+        flash(f"Este tenant tiene {n_fichajes} fichajes, que la ley obliga a conservar cuatro años. "
+              "Expórtalos y marca la casilla si aun así quieres borrarlos.", "error")
+        return redirect(url_for("rutas.tenant", tenant_id=tenant_id, seccion="avanzado"))
     pasos = aprovisionamiento.desaprovisionar_tenant(t)
-    plataforma.borrar_tenant(tenant_id)
-    auth.auditar("tenant.borrar", f"tenant {tenant_id}: {t['nombre']}")
+    plataforma.borrar_tenant(tenant_id, incluir_fichajes=incluir_fichajes)
+    auth.auditar("tenant.borrar", f"tenant {tenant_id}: {t['nombre']}" + (f" (con {n_fichajes} fichajes)" if n_fichajes else ""))
     return render_template("tenant_borrado.html", nombre=t["nombre"], pasos=pasos)

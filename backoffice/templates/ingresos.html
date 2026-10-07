@@ -7,6 +7,30 @@
   <article class="tarjeta kpi"><header><span>MRR</span>{{ icono('arrow-up') }}</header><strong>{{ mrr|eur }}</strong><small>{{ n_activas }} suscripción(es) activa(s)</small></article>
   <article class="tarjeta kpi"><header><span>ARR</span>{{ icono('arrow-up') }}</header><strong>{{ (mrr * 12)|eur }}</strong><small>MRR × 12</small></article>
 </section>
+<section class="tarjeta">
+  <h2>{{ icono('bar-chart-3') }} Evolución</h2>
+  {% if hist.meses %}
+  <p class="muted">Se registra una foto de la cartera cada día desde {{ hist.desde|fecha }}; las altas, bajas y cambios de plan se deducen de ellas.</p>
+  {% set maximo = (hist.meses|map(attribute='mrr')|max) or 1 %}
+  <div class="barras">
+    {% for m in hist.meses %}
+    <div class="barra-col" title="{{ m.mes }}: {{ m.mrr|eur }} · {{ m.pagan }} suscripciones"><span class="barra-valor">{{ m.mrr|eur }}</span><span class="barra" style="height: {{ (m.mrr * 100 // maximo) }}%"></span><span class="barra-mes">{{ m.mes }}</span></div>
+    {% endfor %}
+  </div>
+  {% if hist.resumen_mes %}
+  <p>Este mes: <strong>{{ hist.resumen_mes.altas }}</strong> altas · <strong>{{ hist.resumen_mes.bajas }}</strong> bajas · <strong>{{ hist.resumen_mes.cambios }}</strong> cambios de plan · MRR neto <strong>{{ hist.resumen_mes.mrr_neto|eur }}</strong></p>
+  {% endif %}
+  {% if hist.eventos %}
+  <div class="tabla-caja"><table class="tabla"><thead><tr><th>Fecha</th><th>Tenant</th><th>Movimiento</th><th>MRR</th></tr></thead><tbody>
+    {% for e in hist.eventos %}
+    <tr><td>{{ e.fecha|fecha }}</td><td><a href="{{ url_for('rutas.tenant', tenant_id=e.tenant_id, seccion='suscripcion') }}">{{ e.tenant }}</a></td>
+      <td><span class="insignia {{ 'insignia-ok' if e.tipo in ('alta', 'mejora') else ('insignia-riesgo' if e.tipo in ('baja', 'reduccion') else '') }}">{{ e.tipo|upper }}</span> {{ e.detalle }}</td>
+      <td>{% if e.delta %}<span class="{{ 'ok' if e.delta > 0 else 'ko' }}">{{ '+' if e.delta > 0 }}{{ e.delta|eur }}</span>{% else %}—{% endif %}</td></tr>
+    {% endfor %}
+  </tbody></table></div>
+  {% else %}<p class="muted">Todavía no hay movimientos entre un día y otro.</p>{% endif %}
+  {% else %}<p class="muted">Todavía no hay histórico: la primera foto se guarda en cuanto arranca el backoffice y después una al día.</p>{% endif %}
+</section>
 <div class="tabla-caja"><table class="tabla">
   <thead><tr><th>Tenant</th><th>Plan</th><th>Precio / mes</th><th>Suscripción</th></tr></thead>
   <tbody>

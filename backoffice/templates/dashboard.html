@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icono %}
+{% from "_macros.html" import icono, salud_insignia %}
 {% block titulo %}Dashboard{% endblock %}
 {% block contenido %}
 <header class="cabecera">
@@ -24,6 +24,25 @@
     <header><span>Pagos en riesgo</span>{{ icono('triangle-alert') }}</header>
     <strong>{{ k.pagos_en_riesgo }}</strong><small>PAGO FALLIDO · IMPAGADO</small>
   </article>
+</section>
+
+<section class="tarjeta">
+  <h2>{{ icono('activity') }} Salud de la cartera</h2>
+  <div class="rejilla rejilla-4">
+    <div><strong class="cifra ok">{{ cartera.cuenta.sano }}</strong><small class="muted">SANOS</small></div>
+    <div><strong class="cifra">{{ cartera.cuenta.atencion }}</strong><small class="muted">PIDEN ATENCIÓN</small></div>
+    <div><strong class="cifra {{ 'texto-riesgo' if cartera.cuenta.riesgo }}">{{ cartera.cuenta.riesgo }}</strong><small class="muted">EN RIESGO</small></div>
+    <div><strong class="cifra">{{ cartera.cuenta.nuevo }}</strong><small class="muted">NUEVOS</small></div>
+  </div>
+  {% set peores = cartera.filas|selectattr('nivel', 'in', ['riesgo', 'atencion'])|list %}
+  {% if peores %}
+  <ul class="lista-datos">
+    {% for f in peores[:6] %}
+    <li><span><a href="{{ url_for('rutas.tenant', tenant_id=f.id, seccion='actividad') }}">{{ f.nombre }}</a> <span class="muted">{{ f.motivos|join(' · ') }}</span></span>{{ salud_insignia(f) }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p class="muted"><a href="{{ url_for('rutas.alertas') }}">Ver el resumen semanal →</a></p>
 </section>
 
 <section class="rejilla rejilla-3">

@@ -75,6 +75,19 @@ CREATE TABLE IF NOT EXISTS notas_tenant (
     creado_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notas_tenant ON notas_tenant(tenant_id);
+CREATE TABLE IF NOT EXISTS snapshots_tenants (
+    fecha TEXT NOT NULL,
+    tenant_id INTEGER NOT NULL,
+    plan_id INTEGER,
+    precio_centimos INTEGER NOT NULL DEFAULT 0,
+    activo INTEGER NOT NULL DEFAULT 1,
+    suscripcion_estado TEXT,
+    PRIMARY KEY (fecha, tenant_id)
+);
+CREATE TABLE IF NOT EXISTS resumenes_enviados (
+    clave TEXT PRIMARY KEY,
+    enviado_en TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_intentos_login ON intentos_login(usuario, creado_en);
 """
 

@@ -40,6 +40,7 @@ ETIQUETAS_LATIDOS = {
     "resumen_ia_semanal": lambda: _("Resumen semanal de IA"),
     "tareas_recurrentes": lambda: _("Tareas recurrentes"),
     "vigilante_salud": lambda: _("Vigilante de salud"),
+    "backoffice_tareas": lambda: _("Tareas del backoffice (histórico, cobros y resumen semanal)"),
 }
 
 _ultimo_latido_escrito: dict[str, float] = {}
