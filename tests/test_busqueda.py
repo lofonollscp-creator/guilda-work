@@ -347,7 +347,7 @@ def test_sincronizar_bandeja_reindexa_mensajes_tras_sincronizar_con_novedades(us
     from app import correo
 
     llamadas = []
-    monkeypatch.setattr(correo, "_sincronizar_imap", lambda cuenta: 2)
+    monkeypatch.setattr(correo, "_sincronizar_imap", lambda cuenta: {"descargados": 2, "no_leidos": 2, "estados": 0, "borrados": 0})
     monkeypatch.setattr(correo.db, "obtener_cuenta_correo", lambda uid, cid: {"id": cid, "protocolo": "imap"})
     monkeypatch.setattr(correo.db, "marcar_sincronizada_cuenta_correo", lambda cid: None)
     monkeypatch.setattr(correo.db, "listar_mensajes_correo", lambda cid, limite=200: [{"id": 1, "asunto": "Hola"}])
@@ -362,7 +362,7 @@ def test_sincronizar_bandeja_reindexa_mensajes_tras_sincronizar_con_novedades(us
 def test_sincronizar_bandeja_sin_mensajes_nuevos_no_reindexa(usuario_id, monkeypatch):
     from app import correo
 
-    monkeypatch.setattr(correo, "_sincronizar_imap", lambda cuenta: 0)
+    monkeypatch.setattr(correo, "_sincronizar_imap", lambda cuenta: {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0})
     monkeypatch.setattr(correo.db, "obtener_cuenta_correo", lambda uid, cid: {"id": cid, "protocolo": "imap"})
     monkeypatch.setattr(correo.db, "marcar_sincronizada_cuenta_correo", lambda cid: None)
     monkeypatch.setattr(correo.db, "listar_mensajes_correo", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debería reindexar")))

@@ -49,6 +49,7 @@ import re
 import smtplib
 import socket
 import threading
+import time
 from datetime import datetime, timedelta
 from email.header import decode_header
 from email.message import EmailMessage
@@ -58,6 +59,7 @@ import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
 from . import busqueda, db, eventos, notificaciones
+from .texto_html import html_a_texto_indexable
 
 SERVICIO_KEYRING = "guilda-work-correo"
 TIMEOUT_SEGUNDOS = 15
@@ -497,69 +499,242 @@ def _nombre_visible_carpeta(nombre: str) -> str:
     return ETIQUETAS_CARPETA.get(ultimo.lower(), ultimo)
 
 
-def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> int:
-    estado, _ = conn.select(f'"{carpeta}"')
+# --- Sincronización IMAP en ambos sentidos -----------------------------------------------
+#
+# Hacia aquí: mensajes nuevos (con su estado leído/destacado del servidor), cambios de
+# estado hechos desde otros clientes y mensajes borrados en el servidor. Hacia allá: los
+# cambios hechos en Guilda se encolan (correo_operaciones) y se aplican al servidor en
+# segundo plano. Nada de esto toca los mensajes POP3 (POP3 no tiene estado en el servidor).
+
+VENTANA_RECIENTES = 500            # mensajes más recientes cuyo estado y borrado se comprueban en cada pasada
+DESCARGAS_POR_CICLO = 2000         # mensajes que se descargan como máximo por carpeta y pasada
+SEGUNDOS_POR_CARPETA = 60          # y tiempo máximo: un buzón enorme se baja en varias pasadas sin bloquear la cuenta
+LOTE_DESCARGA = 10                 # mensajes por orden FETCH
+PASADA_COMPLETA_CADA = timedelta(minutes=60)
+_omitidos: dict[tuple[int, str], set[str]] = {}   # UIDs que no se han podido descargar (no se insiste en cada pasada)
+
+_RE_UID_FETCH = re.compile(rb"\bUID\s+(\d+)", re.IGNORECASE)
+_RE_FLAGS_FETCH = re.compile(rb"\bFLAGS\s*\(([^)]*)\)", re.IGNORECASE)
+
+
+def _flags_de(texto: bytes) -> set[str] | None:
+    m = _RE_FLAGS_FETCH.search(texto)
+    if not m:
+        return None
+    return {f.decode("ascii", "replace").lower() for f in m.group(1).split()}
+
+
+def _parsear_fetch(datos) -> list[dict]:
+    """Interpreta la respuesta de `UID FETCH` de imaplib: [{"uid", "flags", "crudo"}].
+    Tolera las dos formas habituales: tuplas (cabecera, literal) seguidas de una cola
+    tipo b')' o b' FLAGS (\\Seen))', y líneas sueltas b'1 (UID 5 FLAGS (\\Seen))'."""
+    resultado: list[dict] = []
+    actual: dict | None = None
+    for item in datos or []:
+        if isinstance(item, tuple):
+            cabecera = item[0] if isinstance(item[0], (bytes, bytearray)) else b""
+            m = _RE_UID_FETCH.search(bytes(cabecera))
+            if not m:
+                actual = None
+                continue
+            actual = {"uid": int(m.group(1)), "flags": _flags_de(bytes(cabecera)), "crudo": item[1] if len(item) > 1 else None}
+            resultado.append(actual)
+        elif isinstance(item, (bytes, bytearray)):
+            texto = bytes(item)
+            if actual is not None and not re.match(rb"\s*\d+\s+\(", texto):
+                # cola tras el literal (algunos servidores ponen aquí los FLAGS)
+                f = _flags_de(texto)
+                if f is not None and actual["flags"] is None:
+                    actual["flags"] = f
+                continue
+            m = _RE_UID_FETCH.search(texto)
+            if m:
+                actual = {"uid": int(m.group(1)), "flags": _flags_de(texto), "crudo": None}
+                resultado.append(actual)
+    for r in resultado:
+        if r["flags"] is None:
+            r["flags"] = set()
+    return resultado
+
+
+def _uidvalidity(conn) -> str | None:
+    try:
+        _, datos = conn.response("UIDVALIDITY")
+        if datos and datos[0]:
+            return datos[0].decode() if isinstance(datos[0], bytes) else str(datos[0])
+    except Exception:  # noqa: BLE001 -- servidores/dobles sin la respuesta: se sincroniza igual
+        pass
+    return None
+
+
+def _uids_busqueda(conn, *criterio) -> list[int]:
+    estado, datos = conn.uid("search", None, *criterio)
     if estado != "OK":
-        return 0
+        raise ErrorCorreo("El servidor de correo no ha podido listar los mensajes de la carpeta.")
+    return sorted(int(u) for u in (datos[0].split() if datos and datos[0] else []))
 
-    # Sincronización incremental: en vez de pedir SIEMPRE el listado
-    # completo de UIDs de la carpeta (caro en buzones grandes, y siempre
-    # se ha usado solo para encontrar UIDs nuevos que descargar -- nunca
-    # para comprobar flags ni borrados de los UIDs ya conocidos, ni antes
-    # ni ahora), se guarda el UID más alto visto en la última sincronización
-    # y solo se pide "UID <n+1>:*" -- el servidor no tiene que enumerar
-    # miles de UIDs antiguos en cada sincronización para descubrir que no
-    # hay nada nuevo. La primera sincronización de una carpeta (sin UID
-    # guardado todavía) sigue haciendo un SEARCH ALL, como antes.
-    ultimo_uid = db.obtener_ultimo_uid_sincronizado(cuenta["id"], carpeta)
-    if ultimo_uid is None:
-        estado, datos = conn.uid("search", None, "ALL")
-    else:
-        estado, datos = conn.uid("search", None, "UID", f"{int(ultimo_uid) + 1}:*")
+
+def _pasada_completa_vencida(ultima: str | None, ahora: datetime) -> bool:
+    if not ultima:
+        return True
+    try:
+        return ahora - datetime.fromisoformat(ultima) >= PASADA_COMPLETA_CADA
+    except ValueError:
+        return True
+
+
+def _estados_servidor(conn, rango: str) -> dict[int, set[str]]:
+    estado, datos = conn.uid("fetch", rango, "(FLAGS)")
     if estado != "OK":
-        raise ErrorCorreo(f"No se han podido listar los mensajes de la carpeta «{carpeta}».")
-    uids_servidor = [u.decode() for u in datos[0].split()] if datos and datos[0] else []
+        return {}
+    return {r["uid"]: r["flags"] for r in _parsear_fetch(datos)}
 
-    ya_descargados = db.uids_existentes_correo(cuenta["id"], carpeta)
-    nuevos = [u for u in uids_servidor if u not in ya_descargados]
 
-    for uid in nuevos:
-        estado, datos_msg = conn.uid("fetch", uid, "(RFC822)")
-        if estado != "OK" or not datos_msg or datos_msg[0] is None:
-            continue
-        crudo = datos_msg[0][1]
-        mensaje = email.message_from_bytes(crudo)
-        texto, html, adjuntos = _cuerpos(mensaje)
-        mensaje_id = db.guardar_mensaje_correo(
-            cuenta_id=cuenta["id"],
-            uid=uid,
-            asunto=_decodificar(mensaje.get("Subject")),
-            remitente=_decodificar(mensaje.get("From")),
-            destinatarios=_decodificar(mensaje.get("To")),
-            cc=_decodificar(mensaje.get("Cc")) or None,
-            fecha=_fecha_iso(mensaje),
-            cuerpo_texto=texto,
-            cuerpo_html=html,
-            carpeta=carpeta,
-            message_id=mensaje.get("Message-ID"),
-            in_reply_to=_decodificar(mensaje.get("In-Reply-To")),
-            referencias=_decodificar(mensaje.get("References")),
+def _texto_para_indexar(texto: str | None, html: str | None) -> str | None:
+    """Los correos solo-HTML no traen texto plano; se saca del HTML para poder buscarlos por su cuerpo."""
+    if texto or not html:
+        return texto
+    return html_a_texto_indexable(html) or None
+
+
+def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: set[str]) -> tuple[int | None, bool]:
+    mensaje = email.message_from_bytes(crudo)
+    texto, html, adjuntos = _cuerpos(mensaje)
+    texto = _texto_para_indexar(texto, html)
+    leido = "\\seen" in flags
+    mensaje_id = db.guardar_mensaje_correo(
+        cuenta_id=cuenta["id"], uid=uid,
+        asunto=_decodificar(mensaje.get("Subject")), remitente=_decodificar(mensaje.get("From")),
+        destinatarios=_decodificar(mensaje.get("To")), cc=_decodificar(mensaje.get("Cc")) or None,
+        fecha=_fecha_iso(mensaje), cuerpo_texto=texto, cuerpo_html=html, carpeta=carpeta,
+        message_id=mensaje.get("Message-ID"), in_reply_to=_decodificar(mensaje.get("In-Reply-To")),
+        referencias=_decodificar(mensaje.get("References")),
+        leido=leido, destacado="\\flagged" in flags,
+    )
+    if adjuntos and mensaje_id is not None:
+        db.guardar_adjuntos_correo(mensaje_id, adjuntos)
+    if mensaje_id is not None:
+        _aplicar_categoria_automatica(
+            cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
         )
-        if adjuntos and mensaje_id is not None:
-            db.guardar_adjuntos_correo(mensaje_id, adjuntos)
-        if mensaje_id is not None:
-            _aplicar_categoria_automatica(
-                cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
-            )
-
-    if uids_servidor:
-        db.actualizar_ultimo_uid_sincronizado(cuenta["id"], carpeta, str(max(int(u) for u in uids_servidor)))
-    return len(nuevos)
+    return mensaje_id, leido
 
 
-def _sincronizar_imap(cuenta) -> int:
+def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> dict:
+    """Sincroniza una carpeta y devuelve {"descargados", "no_leidos", "estados", "borrados"}.
+
+    Cada pasada mira los nuevos (UID mayor que el último visto) y, de los `VENTANA_RECIENTES`
+    más recientes, su estado y si siguen existiendo. Una pasada COMPLETA (la primera, tras un
+    cambio de UIDVALIDITY, mientras quede historial por bajar y cada hora) revisa toda la
+    carpeta. La descarga está acotada (`DESCARGAS_POR_CICLO`, lo más reciente primero): un
+    buzón de decenas de miles de correos se baja en varias pasadas sin bloquear la sincronización."""
+    resumen = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0}
+    estado, datos_select = conn.select(f'"{carpeta}"')
+    if estado != "OK":
+        return resumen
+    cid = cuenta["id"]
+    try:
+        existentes = int(datos_select[0]) if datos_select and datos_select[0] else None
+    except (ValueError, TypeError):
+        existentes = None
+    validez = _uidvalidity(conn)
+    fila = db.estado_carpeta_correo(cid, carpeta)
+    if fila is not None and fila["uidvalidity"] and validez and fila["uidvalidity"] != validez:
+        logger.warning("UIDVALIDITY de «%s» cambiado en la cuenta %s: se vuelve a descargar la carpeta", carpeta, cid)
+        db.vaciar_carpeta_correo(cid, carpeta)
+        _omitidos.pop((cid, carpeta), None)
+        fila = db.estado_carpeta_correo(cid, carpeta)
+    ultimo = int(fila["ultimo_uid_sincronizado"]) if fila is not None and fila["ultimo_uid_sincronizado"] else None
+    ahora = datetime.now()
+    completa = ultimo is None or bool(fila and fila["descarga_pendiente"]) or _pasada_completa_vencida(fila["ultima_pasada_completa"] if fila else None, ahora)
+
+    pendientes = db.operaciones_por_mensaje_correo(cid, carpeta)
+    conocidos = db.uids_existentes_correo(cid, carpeta)
+    omitidos = _omitidos.setdefault((cid, carpeta), set())
+
+    if completa:
+        servidor = _uids_busqueda(conn, "ALL")
+        candidatos = servidor
+        borrables = sorted(int(u) for u in conocidos if int(u) not in set(servidor))
+        # Salvaguarda: si la búsqueda no cuadra con lo que el servidor dice tener, no se borra nada.
+        if existentes is not None and existentes != len(servidor):
+            logger.warning("Carpeta «%s» (cuenta %s): SEARCH ALL devuelve %s y EXISTS %s; no se borra nada", carpeta, cid, len(servidor), existentes)
+            borrables = []
+        minimo_estado = None
+        vistos_servidor = servidor
+    else:
+        recientes = sorted((int(u) for u in conocidos), reverse=True)[:VENTANA_RECIENTES]
+        minimo_estado = recientes[-1] if recientes else None
+        en_ventana = _uids_busqueda(conn, "UID", f"{minimo_estado}:*") if minimo_estado is not None else []
+        presentes = set(en_ventana)
+        borrables = [u for u in sorted(recientes) if u not in presentes]
+        candidatos = [u for u in _uids_busqueda(conn, "UID", f"{ultimo + 1}:*") if u > ultimo]
+        vistos_servidor = sorted(presentes | set(candidatos))
+
+    if borrables:
+        resumen["borrados"] = db.eliminar_mensajes_correo_por_uid(cid, carpeta, [str(u) for u in borrables])
+        conocidos -= {str(u) for u in borrables}
+
+    faltan = sorted(
+        (u for u in candidatos if str(u) not in conocidos and str(u) not in omitidos and "eliminar" not in pendientes.get(str(u), ())),
+        reverse=True,
+    )
+    a_descargar = faltan[:DESCARGAS_POR_CICLO]
+    limite_tiempo = time.monotonic() + SEGUNDOS_POR_CARPETA
+    intentados = 0
+    for inicio in range(0, len(a_descargar), LOTE_DESCARGA):
+        if time.monotonic() > limite_tiempo:
+            break
+        lote = a_descargar[inicio:inicio + LOTE_DESCARGA]
+        intentados += len(lote)
+        estado, datos = conn.uid("fetch", ",".join(str(u) for u in lote), "(BODY.PEEK[] FLAGS)")
+        recibidos = {r["uid"]: r for r in _parsear_fetch(datos)} if estado == "OK" else {}
+        for uid in lote:
+            r = recibidos.get(uid)
+            if r is None or not r["crudo"]:
+                omitidos.add(str(uid))
+                continue
+            _, leido = _guardar_mensaje_imap(cuenta, carpeta, str(uid), r["crudo"], r["flags"])
+            resumen["descargados"] += 1
+            if not leido:
+                resumen["no_leidos"] += 1
+
+    # Estado (leído/destacado) tal como está en el servidor, salvo lo que aquí está pendiente de enviar.
+    rango = "1:*" if completa else (f"{minimo_estado}:*" if minimo_estado is not None else None)
+    if rango:
+        pendientes = db.operaciones_por_mensaje_correo(cid, carpeta)   # incluye lo que acaban de encolar las reglas al descargar
+        servidor_flags = _estados_servidor(conn, rango)
+        locales = db.estados_mensajes_correo(cid, carpeta, None if completa else minimo_estado)
+        cambios = []
+        for uid, (leido, destacado) in locales.items():
+            flags = servidor_flags.get(int(uid))
+            if flags is None:
+                continue
+            pend = pendientes.get(uid, set())
+            nuevo_leido = leido if pend & {"leido", "no_leido"} else int("\\seen" in flags)
+            nuevo_destacado = destacado if pend & {"destacar", "quitar_destacar"} else int("\\flagged" in flags)
+            if (nuevo_leido, nuevo_destacado) != (leido, destacado):
+                cambios.append((uid, nuevo_leido, nuevo_destacado))
+        db.aplicar_estados_servidor_correo(cid, carpeta, cambios)
+        resumen["estados"] = len(cambios)
+
+    actualizar = {"uidvalidity": validez}
+    maximo = max([*vistos_servidor, ultimo or 0], default=0)
+    if maximo:
+        actualizar["ultimo_uid_sincronizado"] = str(maximo)
+    if completa:
+        actualizar["ultima_pasada_completa"] = ahora.isoformat(timespec="seconds")
+    actualizar["descarga_pendiente"] = int(len(faltan) > intentados)
+    db.guardar_estado_carpeta_correo(cid, carpeta, **actualizar)
+    return resumen
+
+
+def _sincronizar_imap(cuenta) -> dict:
     conn = _conectar_imap_cuenta(cuenta)
     try:
+        # Primero lo que se hizo aquí (leído, borrado…) y después lo que ha cambiado allí: así un
+        # cambio local reciente nunca lo pisa el estado antiguo del servidor.
+        _aplicar_operaciones(conn, cuenta)
         estado, lineas = conn.list()
         if estado != "OK":
             raise ErrorCorreo("No se han podido listar las carpetas del servidor.")
@@ -567,16 +742,165 @@ def _sincronizar_imap(cuenta) -> int:
         db.guardar_carpetas_correo(
             cuenta["id"], [(n, _nombre_visible_carpeta(n)) for n in nombres_carpetas]
         )
-
-        total_nuevos = 0
+        total = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0}
         for nombre in nombres_carpetas:
-            total_nuevos += _sincronizar_carpeta_imap(conn, cuenta, nombre)
-        return total_nuevos
+            for clave, valor in _sincronizar_carpeta_imap(conn, cuenta, nombre).items():
+                total[clave] += valor
+        return total
     finally:
         try:
             conn.logout()
         except Exception:
             pass
+
+
+# --- Cola de cambios hacia el servidor --------------------------------------------------
+
+_locks_operaciones: dict[int, threading.Lock] = {}
+
+
+def _carpeta_papelera(conn) -> str | None:
+    """Carpeta de eliminados del servidor: la marcada \\Trash (RFC 6154) o, si no, por nombre habitual."""
+    try:
+        estado, lineas = conn.list()
+    except Exception:  # noqa: BLE001
+        return None
+    if estado != "OK":
+        return None
+    candidata = None
+    for linea in lineas or []:
+        texto = linea.decode("utf-8", "replace") if isinstance(linea, bytes) else str(linea)
+        m = _PATRON_LISTA_IMAP.match(texto.strip())
+        if not m:
+            continue
+        nombre = m.group(3)
+        if nombre.startswith('"') and nombre.endswith('"'):
+            nombre = nombre[1:-1]
+        if "\\trash" in texto.lower():
+            return nombre
+        if nombre.rsplit("/", 1)[-1].rsplit(".", 1)[-1].lower() in ("trash", "papelera", "deleted items", "deleted messages", "elementos eliminados", "bin"):
+            candidata = candidata or nombre
+    return candidata
+
+
+def _aplicar_operaciones(conn, cuenta) -> dict:
+    """Aplica en el servidor los cambios pendientes de la cuenta, agrupando por carpeta. Una
+    operación que falla se reintenta en la siguiente pasada (y a las 5 se da por perdida)."""
+    hechas = fallidas = 0
+    pendientes = db.operaciones_pendientes_correo(cuenta["id"])
+    if not pendientes:
+        return {"hechas": 0, "fallidas": 0}
+    papelera = None
+    papelera_buscada = False
+    por_carpeta: dict[str, list] = {}
+    for op in pendientes:
+        por_carpeta.setdefault(op["carpeta"], []).append(op)
+    for carpeta, ops in por_carpeta.items():
+        estado, _ = conn.select(f'"{carpeta}"')
+        if estado != "OK":
+            for op in ops:
+                db.fallar_operacion_correo(op["id"], f"No se pudo abrir la carpeta «{carpeta}».")
+                fallidas += 1
+            continue
+        validez = _uidvalidity(conn)
+        # Última orden de estado por mensaje: marcar y desmarcar seguidos se reducen a la final.
+        ultima_de_estado: dict[tuple[str, str], int] = {}
+        for op in ops:
+            grupo = "leido" if op["operacion"] in ("leido", "no_leido") else ("destacado" if op["operacion"] in ("destacar", "quitar_destacar") else None)
+            if grupo:
+                ultima_de_estado[(op["uid"], grupo)] = op["id"]
+        for op in ops:
+            try:
+                if op["uidvalidity"] and validez and op["uidvalidity"] != validez:
+                    db.cerrar_operacion_correo(op["id"])  # los UID de esa carpeta ya no son los mismos: no se puede aplicar
+                    continue
+                accion = op["operacion"]
+                grupo = "leido" if accion in ("leido", "no_leido") else ("destacado" if accion in ("destacar", "quitar_destacar") else None)
+                if grupo and ultima_de_estado.get((op["uid"], grupo)) != op["id"]:
+                    db.cerrar_operacion_correo(op["id"])  # superada por otra posterior
+                    continue
+                if accion in ("leido", "no_leido", "destacar", "quitar_destacar"):
+                    signo = "+" if accion in ("leido", "destacar") else "-"
+                    bandera = "\\Seen" if accion in ("leido", "no_leido") else "\\Flagged"
+                    estado, _ = conn.uid("store", op["uid"], f"{signo}FLAGS.SILENT", f"({bandera})")
+                    if estado != "OK":
+                        raise ErrorCorreo("El servidor no ha aceptado el cambio de estado.")
+                elif accion == "eliminar":
+                    if not papelera_buscada:
+                        papelera, papelera_buscada = _carpeta_papelera(conn), True
+                        conn.select(f'"{carpeta}"')  # LIST no cambia la carpeta, pero así se garantiza
+                    if papelera and papelera != carpeta:
+                        estado, _ = conn.uid("copy", op["uid"], f'"{papelera}"')
+                        if estado != "OK":
+                            raise ErrorCorreo("No se ha podido mover el mensaje a la papelera.")
+                    estado, _ = conn.uid("store", op["uid"], "+FLAGS.SILENT", "(\\Deleted)")
+                    if estado != "OK":
+                        raise ErrorCorreo("El servidor no ha aceptado el borrado.")
+                    if "UIDPLUS" in tuple(getattr(conn, "capabilities", ()) or ()):
+                        conn.uid("expunge", op["uid"])  # solo ESTE mensaje (EXPUNGE a secas barre todos los marcados)
+                    else:
+                        conn.expunge()
+                db.cerrar_operacion_correo(op["id"])
+                hechas += 1
+            except (ErrorCorreo, imaplib.IMAP4.error, OSError) as e:
+                db.fallar_operacion_correo(op["id"], str(e))
+                fallidas += 1
+                if isinstance(e, (imaplib.IMAP4.abort, OSError)):
+                    return {"hechas": hechas, "fallidas": fallidas + 1}  # la conexión ya no vale; se sigue en la próxima pasada
+    return {"hechas": hechas, "fallidas": fallidas}
+
+
+def procesar_operaciones_cuenta(cuenta_id: int, espera: float = 0.0) -> dict:
+    """Aplica las operaciones pendientes de una cuenta con su propia conexión (sin esperar a la
+    siguiente sincronización). `espera`: segundos antes de empezar, para agrupar una ráfaga de
+    cambios (p. ej. marcar 20 mensajes como leídos) en una sola conexión. Nunca lanza: lo que
+    falle se reintenta."""
+    if espera:
+        time.sleep(espera)
+    lock = _locks_operaciones.setdefault(cuenta_id, threading.Lock())
+    if not lock.acquire(blocking=False):
+        return {"hechas": 0, "fallidas": 0}
+    total = {"hechas": 0, "fallidas": 0}
+    try:
+        cuenta = db.obtener_cuenta_correo_por_id(cuenta_id)
+        if cuenta is None or cuenta["protocolo"] == "pop3" or not db.operaciones_pendientes_correo(cuenta_id):
+            return total
+        try:
+            conn = _conectar_imap_cuenta(cuenta)
+        except ErrorCorreo:
+            return total
+        try:
+            for _ in range(3):  # lo que se encole mientras tanto se recoge en la misma conexión
+                r = _aplicar_operaciones(conn, cuenta)
+                total["hechas"] += r["hechas"]
+                total["fallidas"] += r["fallidas"]
+                if r["fallidas"] or not db.operaciones_pendientes_correo(cuenta_id):
+                    break
+            return total
+        finally:
+            try:
+                conn.logout()
+            except Exception:  # noqa: BLE001
+                pass
+    except Exception:  # noqa: BLE001
+        logger.exception("No se pudieron aplicar las operaciones pendientes de la cuenta %s", cuenta_id)
+        return {"hechas": 0, "fallidas": 0}
+    finally:
+        lock.release()
+
+
+def _encolar_y_lanzar(mensaje, operacion: str) -> None:
+    """Encola un cambio sobre un mensaje IMAP y lo aplica en segundo plano (si no, la próxima
+    sincronización lo hará). Las cuentas POP3 no tienen estado en el servidor."""
+    cuenta = db.obtener_cuenta_correo_por_id(mensaje["cuenta_id"])
+    if cuenta is None or cuenta["protocolo"] == "pop3":
+        return
+    db.encolar_operacion_correo(mensaje["cuenta_id"], mensaje["carpeta"], mensaje["uid"], operacion)
+    if not _SIN_SEGUNDO_PLANO:
+        threading.Thread(target=procesar_operaciones_cuenta, args=(mensaje["cuenta_id"], 1.5), daemon=True).start()
+
+
+_SIN_SEGUNDO_PLANO = False   # los tests lo activan para aplicar las operaciones de forma determinista
 
 
 def _sincronizar_pop3(cuenta) -> int:
@@ -592,6 +916,7 @@ def _sincronizar_pop3(cuenta) -> int:
             crudo = b"\n".join(conn.retr(indice)[1])
             mensaje = email.message_from_bytes(crudo)
             texto, html, adjuntos = _cuerpos(mensaje)
+            texto = _texto_para_indexar(texto, html)
             mensaje_id = db.guardar_mensaje_correo(
                 cuenta_id=cuenta["id"],
                 uid=uid,
@@ -654,15 +979,20 @@ def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
         return {"nuevos": 0}
     try:
         if cuenta["protocolo"] == "pop3":
-            nuevos = _sincronizar_pop3(cuenta)
+            nuevos = sin_leer = _sincronizar_pop3(cuenta)
+            detalle = {}
         else:
-            nuevos = _sincronizar_imap(cuenta)
+            detalle = _sincronizar_imap(cuenta)
+            nuevos, sin_leer = detalle["descargados"], detalle["no_leidos"]
         db.marcar_sincronizada_cuenta_correo(cuenta_id)
         _fallos_consecutivos.pop(cuenta_id, None)
         _ciclos_omitidos.pop(cuenta_id, None)
         if nuevos:
             _reindexar_mensajes_recientes(usuario_id, cuenta_id)
-            _emitir_evento_correo_nuevo(usuario_id, cuenta_id, nuevos)
+        if sin_leer:
+            # Solo avisa de lo que de verdad es nuevo para el usuario: el historial que ya
+            # estaba leído en el servidor (primera sincronización) no genera notificaciones.
+            _emitir_evento_correo_nuevo(usuario_id, cuenta_id, sin_leer)
         return {"nuevos": nuevos}
     finally:
         lock.release()
@@ -783,15 +1113,27 @@ def obtener_mensaje(mensaje_id: int):
 
 
 def marcar_leido(mensaje_id: int, leido: bool = True) -> None:
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
+    if mensaje is None or bool(mensaje["leido"]) == bool(leido):
+        db.marcar_leido_mensaje_correo(mensaje_id, leido)
+        return
     db.marcar_leido_mensaje_correo(mensaje_id, leido)
+    _encolar_y_lanzar(mensaje, "leido" if leido else "no_leido")
 
 
 def eliminar_mensaje(mensaje_id: int) -> None:
+    """Lo quita de aquí y, en las cuentas IMAP, del servidor (a la papelera si la tiene)."""
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
     db.eliminar_mensaje_correo(mensaje_id)
+    if mensaje is not None:
+        _encolar_y_lanzar(mensaje, "eliminar")
 
 
 def destacar_mensaje(mensaje_id: int, destacado: bool, fecha_aviso: str | None = None) -> None:
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
     db.destacar_mensaje_correo(mensaje_id, destacado, fecha_aviso)
+    if mensaje is not None and bool(mensaje["destacado"]) != bool(destacado):
+        _encolar_y_lanzar(mensaje, "destacar" if destacado else "quitar_destacar")
 
 
 def posponer_mensaje(mensaje_id: int, hasta: str | None) -> None:
@@ -846,9 +1188,9 @@ def _aplicar_categoria_automatica(
             if regla["categoria_id"] is not None:
                 db.asignar_categoria_correo(usuario_id, mensaje_id, regla["categoria_id"])
             if regla["marcar_leido"]:
-                db.marcar_leido_mensaje_correo(mensaje_id, True)
+                marcar_leido(mensaje_id, True)
             if regla["destacar"]:
-                db.destacar_mensaje_correo(mensaje_id, True)
+                destacar_mensaje(mensaje_id, True)
             if regla["cliente_fiscal_id"] is not None:
                 tenant = db.tenant_de_usuario(usuario_id)
                 if tenant is not None:

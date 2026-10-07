@@ -35,11 +35,31 @@ def _mensaje_con_adjunto_bytes(asunto: str, remitente: str, cuerpo: str, nombre_
     return bytes(msg)
 
 
+def _expandir_uids(especificacion: str, existentes: list[int]) -> list[int]:
+    """"3", "1,2,5", "4:9" o "4:*" -> UIDs que existen (como hace un servidor IMAP)."""
+    resultado: set[int] = set()
+    for trozo in str(especificacion).split(","):
+        if ":" in trozo:
+            a, b = trozo.split(":")
+            maximo = max(existentes, default=0)
+            hasta = maximo if b == "*" else int(b)
+            desde = maximo if a == "*" else int(a)
+            bajo, alto = sorted((desde, hasta))
+            resultado.update(u for u in existentes if bajo <= u <= alto)
+            if b == "*" and existentes:
+                resultado.add(maximo)  # "n:*" siempre incluye el último mensaje (rareza de IMAP)
+        elif trozo.isdigit():
+            resultado.add(int(trozo))
+    return sorted(u for u in resultado if u in existentes)
+
+
 class FakeIMAP:
     def __init__(self, mensajes: dict[str, bytes], contrasena_valida: str = "correcta", carpetas=("INBOX",)):
         self._mensajes = mensajes
         self._contrasena_valida = contrasena_valida
         self._carpetas = carpetas
+        self._flags: dict[str, set[str]] = {}
+        self.uidvalidity = b"1"
 
     def login(self, usuario, contrasena):
         if contrasena != self._contrasena_valida:
@@ -50,7 +70,10 @@ class FakeIMAP:
         return "OK", [f'(\\HasNoChildren) "/" "{c}"'.encode() for c in self._carpetas]
 
     def select(self, carpeta):
-        return "OK", [b"1"]
+        return "OK", [str(len(self._mensajes)).encode()]
+
+    def response(self, codigo):
+        return codigo, [self.uidvalidity]
 
     def uid(self, comando, *args):
         if comando == "search":
@@ -59,10 +82,19 @@ class FakeIMAP:
             uids = " ".join(self._mensajes.keys()).encode()
             return "OK", [uids]
         if comando == "fetch":
-            uid = args[0]
-            if uid not in self._mensajes:
-                return "OK", [None]
-            return "OK", [(b"1 (RFC822 {n})", self._mensajes[uid])]
+            existentes = sorted(int(u) for u in self._mensajes)
+            pedidos = _expandir_uids(args[0], existentes)
+            con_cuerpo = any(x in str(args[1]) for x in ("BODY", "RFC822"))
+            respuesta = []
+            for n, uid in enumerate(pedidos, 1):
+                banderas = " ".join(sorted(self._flags.get(str(uid), set())))
+                if con_cuerpo:
+                    crudo = self._mensajes[str(uid)]
+                    respuesta.append((f"{n} (UID {uid} FLAGS ({banderas}) BODY[] {{{len(crudo)}}}".encode(), crudo))
+                    respuesta.append(b")")
+                else:
+                    respuesta.append(f"{n} (UID {uid} FLAGS ({banderas}))".encode())
+            return "OK", respuesta or [None]
         if comando == "copy":
             self.copiados = getattr(self, "copiados", [])
             self.copiados.append(args)
@@ -70,6 +102,12 @@ class FakeIMAP:
         if comando == "store":
             self.marcados = getattr(self, "marcados", [])
             self.marcados.append(args)
+            uid, modo, banderas = args[0], args[1], args[2].strip("()")
+            conjunto = self._flags.setdefault(str(uid), set())
+            if modo.startswith("+FLAGS"):
+                conjunto.update(banderas.split())
+            elif modo.startswith("-FLAGS"):
+                conjunto.difference_update(banderas.split())
             return "OK", [b"STORE completed"]
         raise AssertionError(f"comando IMAP inesperado: {comando}")
 

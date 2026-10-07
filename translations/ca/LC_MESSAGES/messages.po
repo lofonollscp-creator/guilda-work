@@ -6325,3 +6325,9 @@ msgid_plural "Mostrar las %(n)s restantes"
 msgstr[0] "Mostra la %(n)s restant"
 msgstr[1] "Mostra les %(n)s restants"
 
+#, python-format
+msgid "%(n)s cambio no ha llegado al servidor de correo"
+msgid_plural "%(n)s cambios no han llegado al servidor de correo"
+msgstr[0] "%(n)s canvi no ha arribat al servidor de correu"
+msgstr[1] "%(n)s canvis no han arribat al servidor de correu"
+

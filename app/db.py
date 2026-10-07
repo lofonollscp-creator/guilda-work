@@ -579,6 +579,23 @@ CREATE TABLE IF NOT EXISTS correo_carpetas (
     UNIQUE (cuenta_id, nombre)
 );
 
+-- Cambios hechos aquí (leído, destacado, borrado) que aún hay que reflejar en el
+-- servidor IMAP. Se aplican en segundo plano y se reintentan; la sincronización
+-- de entrada no pisa un mensaje que tenga una operación pendiente.
+CREATE TABLE IF NOT EXISTS correo_operaciones (
+    id INTEGER PRIMARY KEY,
+    cuenta_id INTEGER NOT NULL REFERENCES correo_cuentas(id) ON DELETE CASCADE,
+    carpeta TEXT NOT NULL,
+    uid TEXT NOT NULL,
+    uidvalidity TEXT,
+    operacion TEXT NOT NULL CHECK (operacion IN ('leido', 'no_leido', 'destacar', 'quitar_destacar', 'eliminar')),
+    creada_en TEXT NOT NULL,
+    intentos INTEGER NOT NULL DEFAULT 0,
+    ultimo_error TEXT,
+    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'error'))
+);
+CREATE INDEX IF NOT EXISTS idx_correo_operaciones_cuenta ON correo_operaciones(cuenta_id, estado, id);
+
 -- Categorías de color propias de Guilda Work (no existe un estándar real de
 -- "categorías con color" en IMAP/POP3 genérico — es propietario de
 -- Exchange/Outlook — así que estas nunca se sincronizan con el servidor).
@@ -1832,6 +1849,10 @@ def init_db() -> None:
         _asegurar_columna(conn, "usuario_perfil", "notificar_push_correo", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "usuario_perfil", "notificar_push_portal_mensajes", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
+        _asegurar_columna(conn, "correo_carpetas", "uidvalidity", "TEXT")
+        _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")
+        _asegurar_columna(conn, "correo_carpetas", "descarga_pendiente", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_fts_correo(conn)
 
         conn.commit()
     finally:
@@ -8938,6 +8959,287 @@ def actualizar_ultimo_uid_sincronizado(cuenta_id: int, carpeta: str, uid: str) -
         conn.close()
 
 
+def obtener_cuenta_correo_por_id(cuenta_id: int) -> sqlite3.Row | None:
+    """Sin comprobar el usuario: solo para tareas internas (segundo plano) que ya parten de un mensaje del usuario."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT * FROM correo_cuentas WHERE id = ?", (cuenta_id,)).fetchone()
+    finally:
+        conn.close()
+
+
+_FTS_CORREO_COLUMNAS = "asunto, remitente, destinatarios, cuerpo_texto"
+
+
+def _asegurar_fts_correo(conn: sqlite3.Connection) -> bool:
+    """Índice de texto completo (FTS5) del correo: asunto, remitente, destinatarios y cuerpo,
+    sin distinguir mayúsculas ni acentos y con búsqueda por prefijo. Es un índice «externo»:
+    no duplica el texto, solo guarda el índice, y unos disparadores lo mantienen al día. Se
+    crea y se rellena una sola vez; devuelve False si este SQLite no tiene FTS5 (entonces la
+    búsqueda sigue usando LIKE)."""
+    try:
+        existia = conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone() is not None
+        conn.execute(
+            f"CREATE VIRTUAL TABLE IF NOT EXISTS correo_fts USING fts5({_FTS_CORREO_COLUMNAS}, "
+            "content='correo_mensajes', content_rowid='id', tokenize='unicode61 remove_diacritics 2', prefix='2 3')"
+        )
+    except sqlite3.OperationalError:
+        return False
+    if not existia:
+        # Primero el texto de los solo-HTML y la reconstrucción, SIN disparadores: un 'delete' de
+        # una fila que el índice aún no contiene lo corrompería.
+        for t in ("correo_fts_ai", "correo_fts_ad", "correo_fts_au"):
+            conn.execute(f"DROP TRIGGER IF EXISTS {t}")
+        _rellenar_texto_de_correos_html(conn)
+        conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('rebuild')")
+    nuevas = ", ".join(f"new.{c.strip()}" for c in _FTS_CORREO_COLUMNAS.split(","))
+    viejas = ", ".join(f"old.{c.strip()}" for c in _FTS_CORREO_COLUMNAS.split(","))
+    conn.execute(f"CREATE TRIGGER IF NOT EXISTS correo_fts_ai AFTER INSERT ON correo_mensajes BEGIN "
+                 f"INSERT INTO correo_fts(rowid, {_FTS_CORREO_COLUMNAS}) VALUES (new.id, {nuevas}); END")
+    conn.execute(f"CREATE TRIGGER IF NOT EXISTS correo_fts_ad AFTER DELETE ON correo_mensajes BEGIN "
+                 f"INSERT INTO correo_fts(correo_fts, rowid, {_FTS_CORREO_COLUMNAS}) VALUES ('delete', old.id, {viejas}); END")
+    conn.execute(f"CREATE TRIGGER IF NOT EXISTS correo_fts_au AFTER UPDATE OF {_FTS_CORREO_COLUMNAS} ON correo_mensajes BEGIN "
+                 f"INSERT INTO correo_fts(correo_fts, rowid, {_FTS_CORREO_COLUMNAS}) VALUES ('delete', old.id, {viejas}); "
+                 f"INSERT INTO correo_fts(rowid, {_FTS_CORREO_COLUMNAS}) VALUES (new.id, {nuevas}); END")
+    return True
+
+
+def _rellenar_texto_de_correos_html(conn: sqlite3.Connection) -> None:
+    """Los correos solo-HTML no tenían texto plano y por eso no se encontraban por su cuerpo: se
+    les saca el texto del HTML (una sola vez, al crear el índice)."""
+    from .texto_html import html_a_texto_indexable
+    filas = conn.execute("SELECT id, cuerpo_html FROM correo_mensajes WHERE (cuerpo_texto IS NULL OR cuerpo_texto = '') AND cuerpo_html IS NOT NULL").fetchall()
+    for f in filas:
+        texto = html_a_texto_indexable(f["cuerpo_html"])
+        if texto:
+            conn.execute("UPDATE correo_mensajes SET cuerpo_texto = ? WHERE id = ?", (texto, f["id"]))
+
+
+def reconstruir_indice_correo() -> int:
+    """Vuelve a construir el índice de búsqueda del correo desde cero (por si se desincroniza)."""
+    conn = get_connection()
+    try:
+        if not _asegurar_fts_correo(conn):
+            return 0
+        conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('rebuild')")
+        conn.commit()
+        return conn.execute("SELECT COUNT(*) FROM correo_mensajes").fetchone()[0]
+    finally:
+        conn.close()
+
+
+def fts_correo_disponible() -> bool:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone() is not None
+    finally:
+        conn.close()
+
+
+_TROZO_BUSQUEDA = re.compile(r'"([^"]+)"|(\S+)')
+
+
+def consulta_fts(texto: str) -> str | None:
+    """Texto escrito por el usuario -> expresión FTS5 segura. Cada palabra busca por prefijo
+    («fact» encuentra «factura»), lo que va entre comillas busca la frase exacta, y se exigen
+    todas. Todo va entre comillas para que ningún carácter se interprete como operador."""
+    # Con símbolos que el índice descarta (% _ $ € # & /) o sin ninguna letra/dígito, el usuario
+    # busca el texto literal: ahí se usa LIKE, que sí lo respeta («50%» no es «500»).
+    if not re.search(r"[^\W_]", texto or "") or re.search(r"[%_$€#&/\\]", texto or ""):
+        return None
+    partes = []
+    for m in _TROZO_BUSQUEDA.finditer(texto or ""):
+        frase, palabra = m.group(1), m.group(2)
+        if frase:
+            partes.append('"' + frase.replace('"', '""') + '"')
+        elif palabra:
+            partes.append('"' + palabra.replace('"', '""') + '"*')
+    return " ".join(partes) or None
+
+
+def estado_carpeta_correo(cuenta_id: int, carpeta: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_carpetas WHERE cuenta_id = ? AND nombre = ?", (cuenta_id, carpeta)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def guardar_estado_carpeta_correo(cuenta_id: int, carpeta: str, **campos) -> None:
+    """Actualiza uidvalidity, ultimo_uid_sincronizado, ultima_pasada_completa y descarga_pendiente."""
+    permitidos = ("uidvalidity", "ultimo_uid_sincronizado", "ultima_pasada_completa", "descarga_pendiente")
+    columnas = [c for c in campos if c in permitidos]
+    if not columnas:
+        return
+    conn = get_connection()
+    try:
+        conn.execute(
+            f"UPDATE correo_carpetas SET {', '.join(c + ' = ?' for c in columnas)} WHERE cuenta_id = ? AND nombre = ?",
+            [campos[c] for c in columnas] + [cuenta_id, carpeta],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def vaciar_carpeta_correo(cuenta_id: int, carpeta: str) -> None:
+    """El servidor ha cambiado el UIDVALIDITY de la carpeta: los UID guardados ya no
+    valen. Se borra lo cacheado de esa carpeta (se volverá a descargar) y las operaciones
+    pendientes sobre ella."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ?", (cuenta_id, carpeta))
+        conn.execute("DELETE FROM correo_operaciones WHERE cuenta_id = ? AND carpeta = ?", (cuenta_id, carpeta))
+        conn.execute(
+            "UPDATE correo_carpetas SET ultimo_uid_sincronizado = NULL, ultima_pasada_completa = NULL, descarga_pendiente = 0 "
+            "WHERE cuenta_id = ? AND nombre = ?", (cuenta_id, carpeta),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Cola de cambios hacia el servidor (correo_operaciones) ---------------------------
+
+MAX_INTENTOS_OPERACION_CORREO = 5
+
+
+def encolar_operacion_correo(cuenta_id: int, carpeta: str, uid: str, operacion: str, uidvalidity: str | None = None) -> int:
+    conn = get_connection()
+    try:
+        if uidvalidity is None:
+            fila = conn.execute("SELECT uidvalidity FROM correo_carpetas WHERE cuenta_id = ? AND nombre = ?", (cuenta_id, carpeta)).fetchone()
+            uidvalidity = fila["uidvalidity"] if fila else None
+        cur = conn.execute(
+            "INSERT INTO correo_operaciones (cuenta_id, carpeta, uid, uidvalidity, operacion, creada_en) VALUES (?, ?, ?, ?, ?, ?)",
+            (cuenta_id, carpeta, uid, uidvalidity, operacion, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def operaciones_pendientes_correo(cuenta_id: int) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_operaciones WHERE cuenta_id = ? AND estado = 'pendiente' ORDER BY id", (cuenta_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def operaciones_por_mensaje_correo(cuenta_id: int, carpeta: str) -> dict[str, set[str]]:
+    """{uid: {operaciones pendientes}} de una carpeta: la sincronización de entrada no
+    pisa el estado de esos mensajes ni vuelve a descargar los que se están borrando."""
+    conn = get_connection()
+    try:
+        resultado: dict[str, set[str]] = {}
+        for f in conn.execute(
+            "SELECT uid, operacion FROM correo_operaciones WHERE cuenta_id = ? AND carpeta = ? AND estado = 'pendiente'", (cuenta_id, carpeta)
+        ):
+            resultado.setdefault(f["uid"], set()).add(f["operacion"])
+        return resultado
+    finally:
+        conn.close()
+
+
+def cerrar_operacion_correo(operacion_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM correo_operaciones WHERE id = ?", (operacion_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def fallar_operacion_correo(operacion_id: int, error: str) -> None:
+    """Un intento fallido: se reintentará; tras MAX_INTENTOS_OPERACION_CORREO pasa a 'error'."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE correo_operaciones SET intentos = intentos + 1, ultimo_error = ?, "
+            "estado = CASE WHEN intentos + 1 >= ? THEN 'error' ELSE estado END WHERE id = ?",
+            (error[:300], MAX_INTENTOS_OPERACION_CORREO, operacion_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def contar_operaciones_correo_con_error(usuario_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM correo_operaciones o JOIN correo_cuentas c ON c.id = o.cuenta_id "
+            "WHERE c.usuario_id = ? AND o.estado = 'error'", (usuario_id,),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def mensaje_correo_por_uid(cuenta_id: int, carpeta: str, uid: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ? AND uid = ?", (cuenta_id, carpeta, uid)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def estados_mensajes_correo(cuenta_id: int, carpeta: str, uid_minimo: int | None = None) -> dict[str, tuple[int, int]]:
+    """{uid: (leido, destacado)} de los mensajes cacheados, opcionalmente solo desde un UID."""
+    conn = get_connection()
+    try:
+        sql = "SELECT uid, leido, destacado FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ?"
+        params: list = [cuenta_id, carpeta]
+        if uid_minimo is not None:
+            sql += " AND CAST(uid AS INTEGER) >= ?"
+            params.append(uid_minimo)
+        return {f["uid"]: (f["leido"], f["destacado"]) for f in conn.execute(sql, params)}
+    finally:
+        conn.close()
+
+
+def aplicar_estados_servidor_correo(cuenta_id: int, carpeta: str, cambios: list[tuple[str, int, int]]) -> None:
+    """`cambios`: (uid, leido, destacado) que el servidor tiene distinto de lo cacheado."""
+    if not cambios:
+        return
+    conn = get_connection()
+    try:
+        conn.executemany(
+            "UPDATE correo_mensajes SET leido = ?, destacado = ? WHERE cuenta_id = ? AND carpeta = ? AND uid = ?",
+            [(leido, destacado, cuenta_id, carpeta, uid) for uid, leido, destacado in cambios],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_mensajes_correo_por_uid(cuenta_id: int, carpeta: str, uids: list[str]) -> int:
+    """Quita de la caché los mensajes que ya no existen en el servidor."""
+    if not uids:
+        return 0
+    conn = get_connection()
+    try:
+        total = 0
+        for inicio in range(0, len(uids), 500):
+            lote = uids[inicio:inicio + 500]
+            cur = conn.execute(
+                f"DELETE FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ? AND uid IN ({','.join('?' * len(lote))})",
+                [cuenta_id, carpeta, *lote],
+            )
+            total += cur.rowcount
+        conn.commit()
+        return total
+    finally:
+        conn.close()
+
+
 _PREFIJOS_ASUNTO = re.compile(r"^\s*(?:(?:re|rv|fwd?|enc|res|aw|sv|tr)\s*(?:\[\d+\])?\s*:\s*)+", re.IGNORECASE)
 _PATRON_ID_MENSAJE = re.compile(r"<[^<>\s]+>")
 
@@ -9039,8 +9341,10 @@ def guardar_mensaje_correo(
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
     cuerpo_html: str | None, carpeta: str = "INBOX", message_id: str | None = None,
     cc: str | None = None, in_reply_to: str | None = None, referencias: str | None = None,
+    leido: bool = False, destacado: bool = False,
 ) -> int | None:
-    """Devuelve el id del mensaje (recién insertado, o el ya existente si
+    """`leido`/`destacado`: el estado que ya tiene el mensaje en el servidor.
+    Devuelve el id del mensaje (recién insertado, o el ya existente si
     `(cuenta_id, carpeta, uid)` ya estaba en caché) — para poder colgarle
     adjuntos justo después."""
     conn = get_connection()
@@ -9054,12 +9358,12 @@ def guardar_mensaje_correo(
             """INSERT OR IGNORE INTO correo_mensajes
                (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
                 cc, fecha, cuerpo_texto, cuerpo_html, message_id, in_reply_to, referencias,
-                hilo_clave, descargado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                hilo_clave, descargado_en, leido, destacado)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
              cc, fecha, cuerpo_texto, cuerpo_html, message_id,
              (in_reply_to or None) and in_reply_to[:1000], (referencias or None) and referencias[:4000],
-             hilo, now_iso()),
+             hilo, now_iso(), int(leido), int(destacado)),
         )
         conn.commit()
         fila = conn.execute(
@@ -9092,11 +9396,18 @@ def listar_mensajes_correo(
         if solo_no_leidos:
             cond.append("leido = 0")
         if texto:
-            cond.append(
-                "(asunto LIKE ? ESCAPE '\\' OR remitente LIKE ? ESCAPE '\\' OR destinatarios LIKE ? ESCAPE '\\' "
-                "OR cuerpo_texto LIKE ? ESCAPE '\\')"
-            )
-            params.extend([_like_literal(texto)] * 4)
+            expresion = consulta_fts(texto) if conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone() else None
+            if expresion:
+                # Índice de texto completo: instantáneo aunque haya decenas de miles de correos
+                # (LIKE '%x%' recorría todos los cuerpos). Sin acentos ni mayúsculas, por prefijo.
+                cond.append("id IN (SELECT rowid FROM correo_fts WHERE correo_fts MATCH ?)")
+                params.append(expresion)
+            else:
+                cond.append(
+                    "(asunto LIKE ? ESCAPE '\\' OR remitente LIKE ? ESCAPE '\\' OR destinatarios LIKE ? ESCAPE '\\' "
+                    "OR cuerpo_texto LIKE ? ESCAPE '\\')"
+                )
+                params.extend([_like_literal(texto)] * 4)
         if con_adjuntos:
             cond.append("EXISTS (SELECT 1 FROM correo_adjuntos a WHERE a.mensaje_id = correo_mensajes.id)")
         if categoria_id is not None:

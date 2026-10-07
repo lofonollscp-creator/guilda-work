@@ -277,8 +277,8 @@
           </a>
           {% endif %}
           {% if correo_no_leidos_sidebar or barra_correo %}
-          <a class="top-bar-pildora {{ 'is-alerta' if barra_correo and barra_correo.error }}" href="{{ url_for('correo.bandeja') }}"
-             title="{% if barra_correo and barra_correo.error %}{{ _('Error de sincronización') }}: {{ barra_correo.error }}{% else %}{{ _('Correo sincronizado') }}{% endif %}">
+          <a class="top-bar-pildora {{ 'is-alerta' if barra_correo and (barra_correo.error or barra_correo.sin_enviar) }}" href="{{ url_for('correo.bandeja') }}"
+             title="{% if barra_correo and barra_correo.error %}{{ _('Error de sincronización') }}: {{ barra_correo.error }}{% elif barra_correo and barra_correo.sin_enviar %}{{ ngettext('%(n)s cambio no ha llegado al servidor de correo', '%(n)s cambios no han llegado al servidor de correo', barra_correo.sin_enviar, n=barra_correo.sin_enviar) }}{% else %}{{ _('Correo sincronizado') }}{% endif %}">
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
             {% if correo_no_leidos_sidebar %}{{ ngettext('%(n)s sin leer', '%(n)s sin leer', correo_no_leidos_sidebar, n=correo_no_leidos_sidebar) }}{% else %}{{ _('Correo') }}{% endif %}
             {% if barra_correo %}

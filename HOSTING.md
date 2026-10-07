@@ -2549,6 +2549,14 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
   semanal por correo (lunes 8:00, a `ALERTAS_ADMIN_EMAIL`, una vez por semana; también se puede
   enviar a mano desde Alertas). Salud de cada tenant: 0-100 según actividad, usuarios que
   entran, funciones en uso y estado del pago (≥70 sano, 40-69 atención, <40 en riesgo).
+- **Correo IMAP en ambos sentidos**: leer, destacar y borrar aquí se refleja en el servidor (un borrado va a
+  la papelera de la cuenta; sin papelera, se borra), y lo hecho desde el móvil u otro cliente se refleja aquí
+  (estado de los 500 mensajes más recientes en cada pasada y de toda la carpeta cada hora, y los borrados en el
+  servidor). Los cambios se encolan en `correo_operaciones` y se reintentan hasta 5 veces; si el servidor los
+  rechaza se avisa en la barra superior. Descargar correo ya no lo marca como leído en el servidor (BODY.PEEK) y
+  un buzón grande se baja por tandas (lo más reciente primero, máx. 60 s o 2.000 mensajes por carpeta y pasada).
+  Cuentas POP3: sin cambios. La búsqueda usa un índice de texto completo (FTS5) que se crea y rellena solo al
+  migrar; `db.reconstruir_indice_correo()` lo regenera si hiciera falta.
 - **Seguridad del acceso** (página «Mi cuenta»): verificación en dos pasos con app de autenticación
   (TOTP, 6 dígitos; el secreto se guarda cifrado y se dan 8 códigos de recuperación de un solo uso)
   y caducidad de contraseña (`BACKOFFICE_CADUCIDAD_DIAS`, 180 por defecto, 0 = nunca). Con

@@ -401,7 +401,11 @@ def inyectar_barra_superior():
             minutos = None
             if ultimas:
                 minutos = max(0, int((datetime.now() - datetime.fromisoformat(max(ultimas))).total_seconds() // 60))
-            datos["barra_correo"] = {"error": error["ultimo_error_sincronizacion"] if error else None, "minutos": minutos}
+            datos["barra_correo"] = {
+                "error": error["ultimo_error_sincronizacion"] if error else None, "minutos": minutos,
+                # Cambios hechos aquí (leído, borrado…) que el servidor de correo rechazó tras varios intentos.
+                "sin_enviar": db.contar_operaciones_correo_con_error(g.usuario_id),
+            }
     except Exception:
         pass
     try:

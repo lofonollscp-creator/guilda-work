@@ -22,7 +22,8 @@ sys.path.insert(0, str(RAIZ))
 
 PANTALLAS = [
     "/", "/tareas/", "/tareas/?vista=asignadas", "/tareas/hoy", "/tareas/tablero", "/tareas/calendario", "/notas",
-    "/correo/?cuenta_id={cuenta}", "/correo/?cuenta_id={cuenta}&q=factura", "/correo/?cuenta_id={cuenta}&mensaje_id=5",
+    "/correo/?cuenta_id={cuenta}", "/correo/?cuenta_id={cuenta}&q=factura", "/correo/?cuenta_id={cuenta}&q=inexistentezzz",
+    "/correo/?cuenta_id={cuenta}&q=lorem+ipsum", "/correo/?cuenta_id={cuenta}&mensaje_id=5",
     "/historial", "/estadisticas", "/fiscal/vencimientos", "/menu/{proyecto}",
 ]
 
