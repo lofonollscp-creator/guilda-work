@@ -32,25 +32,8 @@ def test_usuario_pertenece_a_tenant():
 
 # --- Backoffice: toggle ---------------------------------------------------
 
-def test_alternar_supervisor_tenant_requiere_admin(cliente):
-    iniciar_sesion_de_prueba(cliente, "roles-no-admin@ejemplo.com", "contrasena123")
-    otro_id = db.crear_usuario_vinculado_a_kratos("roles-objetivo@ejemplo.com", "kratos-roles-objetivo")
-    resp = cliente.post(f"/backoffice/usuarios/{otro_id}/supervisor-tenant")
-    assert resp.status_code == 403
-    assert db.es_supervisor_tenant(otro_id) is False
 
 
-def test_alternar_supervisor_tenant_como_admin(cliente):
-    admin_id = iniciar_sesion_de_prueba(cliente, "roles-admin@ejemplo.com", "contrasena123")
-    db.hacer_admin(db.obtener_usuario(admin_id)["email"])
-    objetivo_id = db.crear_usuario_vinculado_a_kratos("roles-objetivo2@ejemplo.com", "kratos-roles-objetivo2")
-
-    resp = cliente.post(f"/backoffice/usuarios/{objetivo_id}/supervisor-tenant")
-    assert resp.status_code == 302
-    assert db.es_supervisor_tenant(objetivo_id) is True
-
-    cliente.post(f"/backoffice/usuarios/{objetivo_id}/supervisor-tenant")
-    assert db.es_supervisor_tenant(objetivo_id) is False
 
 
 # --- Aislamiento en tiquets ------------------------------------------------

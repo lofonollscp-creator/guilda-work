@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
+from app import herramientas
 
 from . import aprovisionamiento, auth, datos, facturacion, metricas
 
@@ -131,7 +132,7 @@ def tenant(tenant_id: int):
     if seccion == "actividad":
         extra = {"act": metricas.actividad_tenant(tenant_id, detalle["modulos"]), "notas_internas": metricas.notas_tenant(tenant_id)}
     return render_template(
-        "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, secciones=SECCIONES_TENANT,
+        "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, zonas=plataforma.ZONAS_HORARIAS, zona_defecto=plataforma.ZONA_HORARIA_DEFECTO, secciones=SECCIONES_TENANT,
         usuarios=usuarios, planes=datos.planes(), **extra,
     )
 
@@ -145,6 +146,33 @@ def _tenant_o_404(tenant_id: int):
     if t is None:
         abort(404)
     return t
+
+
+@bp.route("/tenants/<int:tenant_id>/datos", methods=["POST"])
+@auth.login_required
+def guardar_datos_tenant(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    cif = request.form.get("cif", "").strip()[:40]
+    direccion = request.form.get("direccion_fiscal", "").strip()[:300]
+    zona = request.form.get("zona_horaria", "").strip()
+    if zona and not plataforma.zona_horaria_valida(zona):
+        flash("Zona horaria no válida.", "error")
+        return _volver_a_tenant(tenant_id)
+    plataforma.guardar_datos_tenant(tenant_id, cif, direccion)
+    if zona:
+        plataforma.guardar_zona_horaria_tenant(tenant_id, zona)
+    auth.auditar("tenant.datos", f"tenant {tenant_id}: cif={'sí' if cif else 'no'}, zona={zona or '—'}")
+    flash("Datos del tenant guardados.", "ok")
+    return _volver_a_tenant(tenant_id)
+
+
+@bp.route("/mapa")
+@auth.login_required
+def mapa():
+    """Matriz tenants × módulos: qué ve cada organización."""
+    tenants = [dict(t) for t in plataforma.listar_tenants()]
+    ocultas = plataforma.herramientas_ocultas_de_tenants([t["id"] for t in tenants])
+    return render_template("mapa.html", tenants=tenants, modulos=herramientas.HERRAMIENTAS, ocultas=ocultas)
 
 
 @bp.route("/tenants/<int:tenant_id>/notas", methods=["POST"])

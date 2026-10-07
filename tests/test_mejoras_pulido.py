@@ -20,12 +20,6 @@ def test_dashboard_usa_singular_y_plural(cliente):
     assert 'dash-stat-label">tasques per avui<' in cliente.get("/").get_data(as_text=True)
 
 
-def test_panel_de_salud_se_traduce_al_idioma_del_usuario(cliente):
-    uid = iniciar_sesion_de_prueba(cliente, "pulido-salud@ejemplo.com", "contrasena123")
-    db.hacer_admin("pulido-salud@ejemplo.com")
-    db.cambiar_idioma_usuario(uid, "en")
-    html = cliente.get("/backoffice/salud").get_data(as_text=True)
-    assert "Latest backup" in html and "Free disk space" in html and "Última copia de seguridad" not in html
 
 
 def test_salud_sin_contexto_de_aplicacion_devuelve_espanol():

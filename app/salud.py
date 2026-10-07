@@ -1,5 +1,5 @@
 """Salud de la plataforma: latidos de las tareas periódicas del servidor, el
-panel `/backoffice/salud` (semáforo por elemento) y el vigilante diario que
+panel `/salud` del backoffice (semáforo por elemento) y el vigilante diario que
 avisa por correo cuando algo está en rojo.
 
 Estados: verde (todo bien), ámbar (atención), rojo (hay que actuar) y gris
@@ -214,7 +214,7 @@ def vigilar(ahora: datetime | None = None) -> list[str]:
     # El correo va siempre en español y sin contexto de petición (lo manda un hilo).
     cuerpo = "El vigilante de salud de Guilda Work ha detectado:\n\n" + "\n".join(
         f"- {i['titulo']}: {i['detalle']}" for i in nuevos
-    ) + "\n\nDetalle en /backoffice/salud. Solo se repite el aviso de cada punto una vez al día.\n"
+    ) + "\n\nDetalle en el panel Salud del backoffice. Solo se repite el aviso de cada punto una vez al día.\n"
     try:
         notificaciones_email.enviar_alerta_interna(f"[Guilda Work] {len(nuevos)} punto(s) en rojo en el panel de salud", cuerpo)
     except Exception:  # noqa: BLE001 -- sin SMTP/destinatario configurado no se puede avisar: se reintenta en la siguiente pasada

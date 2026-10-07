@@ -204,6 +204,13 @@ def alternar_modulo(tenant_id: int, modulo_id: str) -> bool:
 
 # --- Usuarios ---------------------------------------------------------------
 
+def _col_acceso(conn) -> str:
+    """`u.ultimo_acceso` si la app ya migró la columna; si no, NULL (el backoffice
+    es otro proceso y puede arrancar antes que la app principal)."""
+    cols = {f[1] for f in conn.execute("PRAGMA table_info(usuarios)")}
+    return "u.ultimo_acceso" if "ultimo_acceso" in cols else "NULL"
+
+
 def listar_usuarios(q: str = "", tenant: str = "", rol: str = "", orden: str = "creado", pagina: int = 1, por_pagina: int = 25):
     donde, params = ["1=1"], []
     if q.strip():
@@ -232,7 +239,7 @@ def listar_usuarios(q: str = "", tenant: str = "", rol: str = "", orden: str = "
         total = conn.execute(f"SELECT COUNT(*) {base}", params).fetchone()[0]
         pag = paginar(total, pagina, por_pagina)
         filas = conn.execute(
-            f"""SELECT u.id, u.email, u.rol, u.gestor_fichajes, u.supervisor_tenant, u.tenant_id, u.idioma, u.creado_en,
+            f"""SELECT u.id, u.email, u.rol, u.gestor_fichajes, u.supervisor_tenant, u.tenant_id, u.idioma, u.creado_en, {_col_acceso(conn)} AS ultimo_acceso,
                        COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre, t.nombre AS tenant, t.activo AS tenant_activo,
                        (SELECT COUNT(*) FROM tokens_api k WHERE k.usuario_id = u.id) AS dispositivos
                 {base} ORDER BY {ordenes.get(orden, ordenes['creado'])} LIMIT ? OFFSET ?""",
@@ -247,7 +254,7 @@ def detalle_usuario(usuario_id: int) -> dict | None:
     conn = _con()
     try:
         u = conn.execute(
-            """SELECT u.id, u.email, u.rol, u.gestor_fichajes, u.supervisor_tenant, u.tenant_id, u.idioma, u.creado_en,
+            """SELECT u.id, u.email, u.rol, u.gestor_fichajes, u.supervisor_tenant, u.tenant_id, u.idioma, u.creado_en, """ + _col_acceso(conn) + """ AS ultimo_acceso,
                       COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre, t.nombre AS tenant
                FROM usuarios u LEFT JOIN usuario_perfil p ON p.usuario_id = u.id LEFT JOIN tenants t ON t.id = u.tenant_id
                WHERE u.id = ?""", (usuario_id,),

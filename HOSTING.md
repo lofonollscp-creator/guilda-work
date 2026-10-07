@@ -579,7 +579,12 @@ que al escribir un mensaje de prueba llega a Chatwoot con el atributo
 
 ### 8.13 Backoffice web de tenants y usuarios (Fase 7c)
 
-Página `/backoffice` dentro de la propia Guilda Work para crear/renombrar/
+> **Panel retirado (2026-10-07):** esto vivía en `app.guildawork.com/backoffice`. Ahora las
+> URLs `/backoffice/...` de la app solo redirigen a https://backoffice.guildawork.com (variable
+> opcional `GUILDA_BACKOFFICE_URL`); el icono del rail para administradores abre el backoffice
+> nuevo. Lo que sigue describe las funciones, que se mantienen en el backoffice independiente.
+
+Página de backoffice para crear/renombrar/
 borrar tenants y crear/asignar/quitar usuarios sin pasar por la CLI —
 protegida por `usuarios.rol = 'admin'` (columna que existe en el esquema
 desde el principio pero hasta ahora no la usaba nadie).
@@ -2536,5 +2541,7 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Variables opcionales: `BACKOFFICE_PORT` (8001), `BACKOFFICE_DB`, `BACKOFFICE_SECRET_KEY`
   (si no, se genera `data/backoffice_secret.key`, permisos 0600).
 - Caddy: bloque de `deploy/Caddyfile.backoffice`.
-- Las rutas antiguas `/backoffice/...` de `app.guildawork.com` siguen existiendo (con el
-  login de la app) hasta que se retiren.
+- Las rutas antiguas `/backoffice/...` de `app.guildawork.com` ya no existen como panel:
+  redirigen (solo GET) a las pantallas equivalentes de este backoffice.
+- El último acceso de cada usuario (`usuarios.ultimo_acceso`) lo anota la app como mucho
+  una vez cada 10 minutos; el backoffice lo muestra si la columna ya existe.

@@ -22,6 +22,7 @@
       {{ enlace(url_for('rutas.dashboard'), 'Dashboard', 'layout-grid', endpoint == 'rutas.dashboard') }}
       {{ enlace(url_for('rutas.tenants'), 'Tenants', 'layers', endpoint in ('rutas.tenants', 'rutas.tenant')) }}
       {{ enlace(url_for('rutas.usuarios'), 'Usuarios', 'users', endpoint in ('rutas.usuarios', 'rutas.usuario')) }}
+      {{ enlace(url_for('rutas.mapa'), 'Mapa de acceso', 'layout-list', endpoint == 'rutas.mapa') }}
       {{ enlace(url_for('rutas.catalogo'), 'Herramientas', 'puzzle', endpoint == 'rutas.catalogo') }}
       <p class="nav-grupo">Analítica</p>
       {{ enlace(url_for('rutas.journey'), 'Customer Journey', 'rocket', endpoint == 'rutas.journey') }}

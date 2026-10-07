@@ -1733,6 +1733,7 @@ def init_db() -> None:
         # app/main.py) y cae al idioma del navegador en vez de forzar
         # castellano a alguien que nunca lo pidió.
         _asegurar_columna(conn, "usuarios", "idioma", "TEXT")
+        _asegurar_columna(conn, "usuarios", "ultimo_acceso", "TEXT")
 
         # Ampliación "fichaje 100% compliant" (Fase G3): blindaje técnico
         # hacia el registro horario digital que se avecina en España --
@@ -2907,6 +2908,26 @@ def guardar_zona_horaria_tenant(tenant_id: int, zona: str) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+def registrar_acceso(usuario_id: int, cada_minutos: int = 10) -> None:
+    """Anota `usuarios.ultimo_acceso` (solo para mostrarlo en el backoffice).
+    Como mucho una escritura cada `cada_minutos` por usuario, para no cargar
+    SQLite con una escritura por petición; un fallo nunca rompe la petición."""
+    ahora = datetime.now()
+    limite = (ahora - timedelta(minutes=cada_minutos)).isoformat(timespec="seconds")
+    try:
+        conn = get_connection()
+        try:
+            conn.execute(
+                "UPDATE usuarios SET ultimo_acceso = ? WHERE id = ? AND (ultimo_acceso IS NULL OR ultimo_acceso < ?)",
+                (ahora.isoformat(timespec="seconds"), usuario_id, limite),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        pass
 
 
 def tenant_de_usuario(usuario_id: int) -> sqlite3.Row | None:

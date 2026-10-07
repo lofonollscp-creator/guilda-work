@@ -160,7 +160,7 @@
         <span class="icon-rail-etiqueta">{{ _('Importar') }}</span>
       </a>
       {% if g.es_admin %}
-      <a href="{{ url_for('backoffice.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('backoffice.') else '' }}" title="{{ _('Backoffice') }}">
+      <a href="{{ backoffice_url }}" target="_blank" rel="noopener" class="icon-rail-link" title="{{ _('Backoffice') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Backoffice') }}</span>
       </a>

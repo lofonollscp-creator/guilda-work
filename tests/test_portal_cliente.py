@@ -391,59 +391,8 @@ def test_solicitar_acceso_con_captcha_valido_crea_solicitud(cliente, monkeypatch
     assert solicitudes[0]["atendida"] == 0
 
 
-def test_backoffice_vincula_solicitud_a_cliente_existente(cliente, monkeypatch):
-    from app import rutas_portal_cliente
-    from tests.conftest import iniciar_sesion_de_prueba
-
-    monkeypatch.setattr(rutas_portal_cliente.captcha, "verificar_solucion", lambda payload: True)
-    cliente.post("/portal/solicitar-acceso", data={"nombre": "Vincular Test", "email": "vincular@ejemplo.com"})
-    solicitud_id = db.listar_solicitudes_acceso_portal()[0]["id"]
-
-    _, cliente_fiscal_id = _cliente_de_prueba(nombre="Existente", email=None)
-
-    iniciar_sesion_de_prueba(cliente, "admin-vincular@ejemplo.com", "contrasena123")
-    db.hacer_admin("admin-vincular@ejemplo.com")
-
-    resp = cliente.post(
-        f"/backoffice/solicitudes-portal/{solicitud_id}/vincular",
-        data={"cliente_fiscal_id": cliente_fiscal_id},
-    )
-    assert resp.status_code == 302
-
-    cliente_actualizado = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
-    assert cliente_actualizado["email"] == "vincular@ejemplo.com"
-    solicitud = db.listar_solicitudes_acceso_portal()[0]
-    assert solicitud["atendida"] == 1
 
 
-def test_backoffice_crea_cliente_nuevo_desde_solicitud(cliente, monkeypatch):
-    from app import rutas_portal_cliente
-    from tests.conftest import iniciar_sesion_de_prueba
-
-    monkeypatch.setattr(rutas_portal_cliente.captcha, "verificar_solucion", lambda payload: True)
-    cliente.post(
-        "/portal/solicitar-acceso",
-        data={"nombre": "Cliente Nuevo Desde Solicitud", "email": "crear@ejemplo.com", "nif": "B87654321"},
-    )
-    solicitud_id = db.listar_solicitudes_acceso_portal()[0]["id"]
-
-    admin_id = iniciar_sesion_de_prueba(cliente, "admin-crear@ejemplo.com", "contrasena123")
-    tenant_id = db.crear_tenant("Gestoria Crear Desde Solicitud")
-    db.asignar_tenant(admin_id, tenant_id)
-    db.hacer_admin("admin-crear@ejemplo.com")
-
-    resp = cliente.post(
-        f"/backoffice/solicitudes-portal/{solicitud_id}/crear-cliente",
-        data={"tenant_id": tenant_id},
-    )
-    assert resp.status_code == 302
-
-    clientes_tenant = db.listar_clientes_fiscales(tenant_id)
-    assert len(clientes_tenant) == 1
-    assert clientes_tenant[0]["email"] == "crear@ejemplo.com"
-    assert clientes_tenant[0]["nif"] == "B87654321"
-    solicitud = db.listar_solicitudes_acceso_portal()[0]
-    assert solicitud["atendida"] == 1
 
 
 # --- Notificación por email al cliente cuando el equipo responde -----------

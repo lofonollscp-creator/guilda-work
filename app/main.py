@@ -273,6 +273,8 @@ def _resolver_usuario_actual():
         g.tenant_id = usuario["tenant_id"]
         g.gestor_fichajes = bool(usuario["gestor_fichajes"])
         g.supervisor_tenant = bool(usuario["supervisor_tenant"])
+        if request.endpoint != "static":
+            db.registrar_acceso(usuario["id"])
 
 
 @app.context_processor

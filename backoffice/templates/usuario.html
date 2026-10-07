@@ -44,6 +44,7 @@
       <dl class="datos-lista">
         <div><dt>ID</dt><dd class="mono">{{ u.id }}</dd></div>
         <div><dt>Tenant</dt><dd>{% if u.tenant_id %}<a href="{{ url_for('rutas.tenant', tenant_id=u.tenant_id) }}">{{ u.tenant }}</a>{% else %}—{% endif %}</dd></div>
+        <div><dt>Último acceso</dt><dd>{{ u.ultimo_acceso|hace if u.ultimo_acceso else '—' }}</dd></div>
         <div><dt>Idioma</dt><dd>{{ u.idioma or '—' }}</dd></div>
         <div><dt>Dispositivos</dt><dd>{{ dispositivos|length }}</dd></div>
       </dl>

@@ -67,7 +67,7 @@
 {% else %}
 <div class="tabla-caja">
   <table class="tabla">
-    <thead><tr><th>Usuario</th><th>Tenant</th><th>Email</th><th>Rol</th><th>Idioma</th><th>Alta</th><th>Activo</th><th>Acciones</th></tr></thead>
+    <thead><tr><th>Usuario</th><th>Tenant</th><th>Email</th><th>Rol</th><th>Idioma</th><th>Alta</th><th>Último acceso</th><th>Activo</th><th>Acciones</th></tr></thead>
     <tbody>
       {% for u in usuarios %}
       <tr>
@@ -77,6 +77,7 @@
         <td>{{ insignia_rol(u) }}{% if u.tenant and (u.rol == 'admin' or u.gestor_fichajes or u.supervisor_tenant) %}<small class="muted bloque">{{ u.tenant }}</small>{% endif %}</td>
         <td>{% if u.idioma %}<span class="insignia insignia-ok">{{ u.idioma }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
         <td>{{ u.creado_en|fecha }}</td>
+        <td>{{ u.ultimo_acceso|hace if u.ultimo_acceso else '—' }}</td>
         <td>{% if u.tenant_id is none or u.tenant_activo %}<span class="ok" title="Activo">✓</span>{% else %}<span class="ko" title="Su tenant está suspendido">✕</span>{% endif %}</td>
         <td class="acciones"><a class="boton-icono" href="{{ url_for('rutas.usuario', usuario_id=u.id) }}" aria-label="Abrir {{ u.email }}">{{ icono('user') }}</a></td>
       </tr>

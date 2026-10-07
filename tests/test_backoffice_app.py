@@ -319,3 +319,16 @@ def test_admin_cli_crea_y_cambia_contrasena(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["x", "nuevo.admin", "--cambiar"])
     assert modulo.main() == 0
     assert auth.verificar("nuevo.admin", clave, "1.1.1.1")[0] is None
+
+
+# --- Rutas antiguas del panel retirado --------------------------------------
+
+def test_las_urls_antiguas_de_la_app_redirigen_al_backoffice_nuevo():
+    from app.main import app as app_principal
+    c = app_principal.test_client()
+    r = c.get("/backoffice/tenants/3")
+    assert r.status_code == 302 and r.headers["Location"].endswith("backoffice.guildawork.com/tenants/3")
+    assert c.get("/backoffice/auditoria").headers["Location"].endswith("/actividad")
+    assert c.get("/backoffice/").headers["Location"].rstrip("/").endswith("backoffice.guildawork.com")
+    assert c.get("/backoffice/cosa-rara").status_code == 404
+    assert c.post("/backoffice/tenants").status_code in (404, 405)  # nunca se reenvían POST

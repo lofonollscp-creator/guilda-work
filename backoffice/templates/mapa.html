@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Mapa de acceso{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Mapa de acceso</h1><p class="muted">Qué módulos ve cada tenant. Pulsa un tenant para cambiarlos.</p></header>
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Tenant</th>{% for m in modulos %}<th title="{{ m.nombre }}">{{ m.nombre }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for t in tenants %}
+      <tr><td><a href="{{ url_for('rutas.tenant', tenant_id=t.id, seccion='modulos') }}"><strong>{{ t.nombre }}</strong></a></td>
+        {% for m in modulos %}<td>{% if m.id in ocultas.get(t.id, []) %}<span class="muted">—</span>{% else %}<span class="ok">✓</span>{% endif %}</td>{% endfor %}</tr>
+      {% else %}<tr><td colspan="{{ modulos|length + 1 }}" class="vacio">Todavía no hay tenants.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

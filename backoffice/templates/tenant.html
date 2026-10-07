@@ -35,6 +35,21 @@
       <label>Nombre *<input type="text" name="nombre" value="{{ t.nombre }}" maxlength="120" required></label>
       <div><button type="submit" class="boton boton-primario">Guardar nombre</button></div>
     </form>
+    <h3>Datos fiscales y zona horaria</h3>
+    <form method="post" action="{{ url_for('rutas.guardar_datos_tenant', tenant_id=t.id) }}" class="formulario">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>CIF<input type="text" name="cif" value="{{ t.cif or '' }}" maxlength="40" autocomplete="off"></label>
+      <label>Dirección fiscal<input type="text" name="direccion_fiscal" value="{{ t.direccion_fiscal or '' }}" maxlength="300" autocomplete="off"></label>
+      <label>Zona horaria
+        <select name="zona_horaria">
+          {% set actual = t.zona_horaria or zona_defecto %}
+          {% for valor, etiqueta in zonas %}<option value="{{ valor }}" {{ 'selected' if valor == actual }}>{{ etiqueta }}</option>{% endfor %}
+          {% if actual not in zonas|map(attribute=0) %}<option value="{{ actual }}" selected>{{ actual }}</option>{% endif %}
+        </select>
+      </label>
+      <p class="muted">El CIF y la dirección fiscal son obligatorios en el registro horario (art. 34.9 ET) si el tenant usa Fichaje. La zona horaria rige el reloj y los avisos del tenant.</p>
+      <div><button type="submit" class="boton boton-primario">Guardar datos</button></div>
+    </form>
     <h3>Configuración</h3>
     <form method="post" action="{{ url_for('rutas.alternar_geolocalizacion', tenant_id=t.id) }}" class="fila-interruptor">
       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">

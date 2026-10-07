@@ -147,7 +147,7 @@ def test_vigilante_avisa_una_vez_al_dia_por_motivo(monkeypatch, backups_tmp):
     # backup inexistente = rojo
     primeras = salud.vigilar(AHORA)
     assert "backup" in primeras and len(enviados) == 1
-    assert "Última copia de seguridad" in enviados[0][1] and "/backoffice/salud" in enviados[0][1]
+    assert "Última copia de seguridad" in enviados[0][1] and "panel Salud del backoffice" in enviados[0][1]
     assert salud.vigilar(AHORA + timedelta(hours=3)) == [] and len(enviados) == 1  # mismo día: nada nuevo
     # al día siguiente vuelve a avisar del mismo motivo
     assert "backup" in salud.vigilar(AHORA + timedelta(days=1)) and len(enviados) == 2
@@ -177,17 +177,6 @@ def test_solo_ambar_o_gris_no_avisa(monkeypatch, backups_tmp):
 
 # --- página del backoffice --------------------------------------------------
 
-def test_pagina_de_salud_solo_para_admin_y_muestra_los_semaforos(cliente, backups_tmp):
-    iniciar_sesion_de_prueba(cliente, "b8-noadmin@ejemplo.com", "contrasena123")
-    assert cliente.get("/backoffice/salud").status_code == 403
-    uid = db.obtener_usuario_por_email("b8-noadmin@ejemplo.com")["id"]
-    db.hacer_admin("b8-noadmin@ejemplo.com")
-    resp = cliente.get("/backoffice/salud")
-    html = resp.get_data(as_text=True)
-    assert resp.status_code == 200 and "Salud del sistema" in html and "salud-punto salud-rojo" in html
-    assert "Última copia de seguridad" in html and "Sincronización de correo" in html
-    assert "/backoffice/salud" in cliente.get("/backoffice/").get_data(as_text=True)  # enlace en el menú
-    assert uid
 
 
 def test_script_de_tareas_recurrentes_deja_su_latido(monkeypatch):
