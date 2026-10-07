@@ -67,6 +67,14 @@ CREATE TABLE IF NOT EXISTS cobros (
     actualizado_en TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_cobros_tenant ON cobros(tenant_id);
+CREATE TABLE IF NOT EXISTS notas_tenant (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    texto TEXT NOT NULL,
+    admin_usuario TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notas_tenant ON notas_tenant(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_intentos_login ON intentos_login(usuario, creado_en);
 """
 

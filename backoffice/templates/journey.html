@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Customer Journey{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Customer Journey</h1><p class="muted">Dónde se queda cada tenant desde el alta hasta el pago. Sirve para ver quién necesita ayuda con la puesta en marcha.</p></header>
+<div class="rejilla rejilla-6">
+  {% for e in j.totales %}
+  <div class="tarjeta kpi"><header><span>{{ e.nombre }}</span></header><strong>{{ e.n }}</strong><small>de {{ j.n }} tenants</small>
+    <div class="barra-progreso"><span style="width: {{ (e.n * 100 // j.n) if j.n else 0 }}%"></span></div></div>
+  {% endfor %}
+</div>
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Tenant</th>{% for k, n in etapas %}<th>{{ n }}</th>{% endfor %}<th>Siguiente paso</th><th>Última actividad</th></tr></thead>
+    <tbody>
+      {% for f in j.filas %}
+      <tr><td><a href="{{ url_for('rutas.tenant', tenant_id=f.id) }}"><strong>{{ f.nombre }}</strong></a>{% if not f.activo %} <span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</td>
+        {% for k, n in etapas %}<td>{% if f.logros[k] %}<span class="ok">✓</span>{% else %}<span class="muted">—</span>{% endif %}</td>{% endfor %}
+        <td>{{ f.siguiente or 'Completo' }}</td><td>{{ f.ultima|hace }}</td></tr>
+      {% else %}<tr><td colspan="9" class="vacio">Todavía no hay tenants.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

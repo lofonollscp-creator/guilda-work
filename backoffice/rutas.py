@@ -7,7 +7,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from app import db as plataforma
 
-from . import aprovisionamiento, auth, datos, facturacion
+from . import aprovisionamiento, auth, datos, facturacion, metricas
 
 bp = Blueprint("rutas", __name__)
 
@@ -128,6 +128,8 @@ def tenant(tenant_id: int):
             "stripe_configurado": facturacion.configurado(), "email_contacto": facturacion.email_de_contacto(tenant_id),
             "facturas": facturas, "error_facturas": error_facturas, "cobros": facturacion.listar_cobros(tenant_id),
         }
+    if seccion == "actividad":
+        extra = {"act": metricas.actividad_tenant(tenant_id, detalle["modulos"]), "notas_internas": metricas.notas_tenant(tenant_id)}
     return render_template(
         "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, secciones=SECCIONES_TENANT,
         usuarios=usuarios, planes=datos.planes(), **extra,
@@ -143,6 +145,35 @@ def _tenant_o_404(tenant_id: int):
     if t is None:
         abort(404)
     return t
+
+
+@bp.route("/tenants/<int:tenant_id>/notas", methods=["POST"])
+@auth.login_required
+def añadir_nota_tenant(tenant_id: int):
+    _tenant_o_404(tenant_id)
+    try:
+        metricas.añadir_nota(tenant_id, request.form.get("texto", ""), g.admin["usuario"])
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("tenant.nota", f"tenant {tenant_id}")
+        flash("Nota guardada.", "ok")
+    return _volver_a_tenant(tenant_id, "actividad")
+
+
+@bp.route("/tenants/<int:tenant_id>/notas/<int:nota_id>/borrar", methods=["POST"])
+@auth.login_required
+def borrar_nota_tenant(tenant_id: int, nota_id: int):
+    _tenant_o_404(tenant_id)
+    metricas.borrar_nota(tenant_id, nota_id)
+    auth.auditar("tenant.nota_borrar", f"tenant {tenant_id} nota {nota_id}")
+    return _volver_a_tenant(tenant_id, "actividad")
+
+
+@bp.route("/journey")
+@auth.login_required
+def journey():
+    return render_template("journey.html", j=metricas.journey(), etapas=metricas.ETAPAS)
 
 
 @bp.route("/tenants/<int:tenant_id>/renombrar", methods=["POST"])

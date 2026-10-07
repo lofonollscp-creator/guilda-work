@@ -9,7 +9,7 @@ from pathlib import Path
 
 from flask import Flask, g, render_template, request, session
 
-from . import auth
+from . import auth, metricas
 
 AQUI = Path(__file__).resolve().parent
 
@@ -54,7 +54,7 @@ def create_app(testing: bool = False) -> Flask:
         MAX_CONTENT_LENGTH=1024 * 1024,
         TESTING=testing,
     )
-    app.jinja_env.filters.update(eur=eur, fecha=fecha, iniciales=iniciales, color_avatar=color_avatar)
+    app.jinja_env.filters.update(eur=eur, fecha=fecha, iniciales=iniciales, color_avatar=color_avatar, hace=metricas.hace)
 
     from .rutas import bp
 

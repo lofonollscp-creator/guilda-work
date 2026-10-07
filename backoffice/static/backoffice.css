@@ -148,3 +148,19 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .eventos { border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin: 0 0 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; } .eventos legend { padding: 0 6px; }
 .casilla { display: flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 400; margin: 0; } .casilla input { min-height: 0; }
 .zona-peligro { border-color: color-mix(in srgb, var(--riesgo) 55%, var(--borde)); }
+
+/* ---- Actividad del tenant ---- */
+.estado-actividad { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.estado-actividad .derecha { margin-left: auto; text-align: right; display: grid; }
+.estado-actividad .grande { font-size: 1.4rem; }
+.punto { width: 22px; height: 22px; border-radius: 50%; background: var(--apagado); flex: 0 0 22px; }
+.punto-ok { background: var(--ok); } .punto-riesgo { background: var(--riesgo); } .punto-nuevo { background: var(--aviso); }
+.rejilla-2 { grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
+.rejilla-6 { grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); }
+.sin-margen { margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+.cuadricula { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; margin: 0; }
+.cuadricula dt { color: var(--apagado); font-size: .82rem; } .cuadricula dd { margin: 2px 0 0; font-weight: 700; font-size: 1.05rem; }
+.barra-progreso { height: 6px; border-radius: 999px; background: var(--superficie-2); margin-top: 10px; overflow: hidden; } .barra-progreso span { display: block; height: 100%; background: var(--acento); }
+.lista-notas { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
+.lista-notas li { border: 1px solid var(--borde); border-radius: 10px; padding: 12px 14px; background: var(--superficie-2); } .lista-notas p { white-space: pre-wrap; margin: 0 0 6px; }
+.en-linea { display: inline; } .enlace-boton { background: none; border: 0; color: var(--riesgo); cursor: pointer; font: inherit; padding: 0 0 0 8px; }

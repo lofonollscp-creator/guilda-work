@@ -187,8 +187,45 @@
     </div>
 
     {% else %}
-    <h2>Actividad del equipo</h2>
-    <p class="muted">Última actividad: {{ d.ultima_actividad|fecha }}</p>
+    <h2>{{ icono('activity') }} Actividad</h2>
+    <div class="tarjeta estado-actividad">
+      <span class="punto punto-{{ act.estado[0] }}" aria-hidden="true"></span>
+      <div><strong class="grande">{{ act.estado[1] }}</strong><p class="muted">Última actividad {{ act.ultima|hace }}</p></div>
+      <div class="derecha"><span class="muted">Última actividad global</span><strong>{{ act.ultima|fecha if act.ultima else '—' }}</strong></div>
+    </div>
+    <div class="rejilla rejilla-2">
+      <div class="tarjeta"><h3 class="sin-margen">{{ icono('list-checks') }} Tareas</h3>
+        <dl class="cuadricula"><div><dt>Última tarea</dt><dd>{{ act.tareas.ultima|fecha if act.tareas.ultima else '—' }}</dd></div><div><dt>Total</dt><dd>{{ act.tareas.total }}</dd></div>
+        <div><dt>Tareas (30d)</dt><dd>{{ act.tareas.d30 }}</dd></div><div><dt>Tareas (90d)</dt><dd>{{ act.tareas.d90 }}</dd></div></dl></div>
+      <div class="tarjeta"><h3 class="sin-margen">{{ icono('mail') }} Correo</h3>
+        <dl class="cuadricula"><div><dt>Cuentas conectadas</dt><dd>{{ act.correo.cuentas }}</dd></div><div><dt>Último mensaje</dt><dd>{{ act.correo.ultima|fecha if act.correo.ultima else '—' }}</dd></div>
+        <div><dt>Recibidos (30d)</dt><dd>{{ act.correo.d30 }}</dd></div><div><dt>Enviados (30d)</dt><dd>{{ act.correo.enviados_30 }}</dd></div></dl></div>
+      <div class="tarjeta"><h3 class="sin-margen">{{ icono('credit-card') }} Pagos</h3>
+        <dl class="cuadricula"><div><dt>¿Cobra online?</dt><dd><span class="insignia {{ 'insignia-ok' if act.pagos.cobra_online }}">{{ 'Sí' if act.pagos.cobra_online else 'No' }}</span></dd></div><div><dt>Último pago</dt><dd>{{ act.pagos.ultimo_pago|fecha if act.pagos.ultimo_pago else '—' }}</dd></div>
+        <div><dt>Cobrado (30d)</dt><dd>{{ act.pagos.cobrado_30|eur }}</dd></div><div><dt>Cobrado (90d)</dt><dd>{{ act.pagos.cobrado_90|eur }}</dd></div></dl>
+        {% if act.pagos.pendientes %}<p class="muted">{{ act.pagos.pendientes }} cobro(s) pendiente(s) de pago.</p>{% endif %}</div>
+      <div class="tarjeta"><h3 class="sin-margen">{{ icono('users') }} Usuarios</h3>
+        <dl class="cuadricula"><div><dt>Nº de usuarios</dt><dd>{{ act.usuarios.n }}</dd></div><div><dt>Último creado</dt><dd>{{ act.usuarios.ultimo|fecha if act.usuarios.ultimo else '—' }}</dd></div>
+        <div><dt>Con uso (30d)</dt><dd>{{ act.usuarios.activos_30 }}</dd></div><div><dt>Fichajes (30d)</dt><dd>{{ act.fichaje.d30 }}</dd></div></dl></div>
+      <div class="tarjeta"><h3 class="sin-margen">{{ icono('clipboard-list') }} Gestoría</h3>
+        <dl class="cuadricula"><div><dt>Clientes fiscales</dt><dd>{{ act.vencimientos.clientes }}</dd></div><div><dt>Vencimientos</dt><dd>{{ act.vencimientos.total }}</dd></div>
+        <div><dt>Presentados</dt><dd>{{ act.vencimientos.presentados }}</dd></div><div><dt>Última gestión</dt><dd>{{ act.vencimientos.ultima|fecha if act.vencimientos.ultima else '—' }}</dd></div></dl></div>
+    </div>
+
+    <div class="tarjeta">
+      <h3 class="sin-margen">{{ icono('puzzle') }} Funciones: activado vs. uso real</h3>
+      <p class="muted">Uso de las últimas 4 semanas. {{ act.modulos_ocultos }} de {{ act.modulos_total }} módulos externos están ocultos para este tenant.</p>
+      <div class="tabla-caja"><table class="tabla">
+        <thead><tr><th>Función</th><th>Estado</th><th>Registros (30d)</th><th>Usuarios (30d)</th><th>Última vez</th></tr></thead>
+        <tbody>{% for f in act.funciones %}
+          <tr><td><strong>{{ f.nombre }}</strong>{% if f.extra %}<br><span class="muted">{{ f.extra }}</span>{% endif %}</td>
+            <td><span class="insignia {{ 'insignia-ok' if f.estado == 'en uso' else ('insignia-riesgo' if f.estado == 'sin uso reciente' else '') }}">{{ f.estado|upper }}</span></td>
+            <td>{{ f.d30 }}</td><td>{{ f.usuarios or '—' }}</td><td>{{ f.ultima|hace if f.ultima else '—' }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </div>
+
+    <h3>Rendimiento por usuario</h3>
     <div class="tabla-caja">
       <table class="tabla">
         <thead><tr><th>Usuario</th><th>Tareas finalizadas</th><th>Notas</th><th>Tiempo total</th></tr></thead>
@@ -199,6 +236,20 @@
         </tbody>
       </table>
     </div>
+
+    <h3>Notas internas de Guilda</h3>
+    <p class="muted">Solo las ve el equipo del backoffice; el cliente no las ve nunca.</p>
+    <form method="post" action="{{ url_for('rutas.añadir_nota_tenant', tenant_id=t.id) }}" class="formulario">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Nueva nota<textarea name="texto" rows="3" maxlength="2000" required placeholder="Contexto comercial, incidencias, acuerdos…"></textarea></label>
+      <div><button type="submit" class="boton boton-primario">Guardar nota</button></div>
+    </form>
+    <ul class="lista-notas">
+      {% for n in notas_internas %}
+      <li><p>{{ n.texto }}</p><div class="muted">{{ n.admin_usuario }} · {{ n.creado_en|fecha }}
+        <form method="post" action="{{ url_for('rutas.borrar_nota_tenant', tenant_id=t.id, nota_id=n.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="enlace-boton" data-confirmar="¿Borrar esta nota?">Borrar</button></form></div></li>
+      {% endfor %}
+    </ul>
     {% endif %}
   </section>
 
