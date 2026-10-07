@@ -39,6 +39,7 @@ ETIQUETAS_LATIDOS = {
     "avisos_fichaje": lambda: _("Avisos de fichaje"),
     "resumen_ia_semanal": lambda: _("Resumen semanal de IA"),
     "tareas_recurrentes": lambda: _("Tareas recurrentes"),
+    "recordatorios_tareas": lambda: _("Recordatorios de tareas"),
     "vigilante_salud": lambda: _("Vigilante de salud"),
     "backoffice_tareas": lambda: _("Tareas del backoffice (histórico, cobros y resumen semanal)"),
 }

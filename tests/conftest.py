@@ -71,8 +71,39 @@ def _esperar_listo(url: str, timeout: float = 90) -> None:
     raise RuntimeError(f"Kratos de test no respondió a tiempo en {url}: {ultimo_error}")
 
 
+SIN_KRATOS = os.environ.get("GUILDA_SIN_KRATOS") == "1"
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "kratos: necesita la instancia real de Kratos (login/registro reales)")
+
+
+def pytest_collection_modifyitems(config, items):
+    """Marca como `kratos` los tests que necesitan Kratos de verdad (los que usan el
+    cliente HTTP `cliente`, o cuyo fichero inicia sesión real / habla con kratos).
+    Con GUILDA_SIN_KRATOS=1 (scripts/probar.sh --rapida) se saltan y Kratos ni se
+    arranca: es el modo rápido para comprobar lógica de datos sin Docker."""
+    huella = ("iniciar_sesion_de_prueba", "kratos_test", "crear_identidad")
+    cache: dict[str, bool] = {}
+    descartados = []
+    for item in items:
+        ruta = str(item.fspath)
+        if ruta not in cache:
+            cache[ruta] = any(h in Path(ruta).read_text(encoding="utf-8", errors="ignore") for h in huella)
+        if "cliente" in item.fixturenames or cache[ruta]:
+            item.add_marker(pytest.mark.kratos)
+            if SIN_KRATOS:
+                descartados.append(item)
+    if descartados:
+        config.hook.pytest_deselected(items=descartados)
+        items[:] = [i for i in items if i not in descartados]
+
+
 @pytest.fixture(scope="session", autouse=True)
 def kratos_test():
+    if SIN_KRATOS:
+        yield
+        return
     subprocess.run(
         [*COMPOSE_TEST, "up", "-d"],
         cwd=RAIZ_PROYECTO, check=True, timeout=180, env=ENTORNO_COMPOSE_TEST,
@@ -97,6 +128,8 @@ def kratos_test():
 @pytest.fixture(autouse=True)
 def _limpiar_identidades_kratos(kratos_test):
     yield
+    if SIN_KRATOS:
+        return
     try:
         with urllib.request.urlopen(
             f"{KRATOS_TEST_ADMIN_URL}/admin/identities?per_page=1000", timeout=5
@@ -114,11 +147,33 @@ def _limpiar_identidades_kratos(kratos_test):
             pass
 
 
+@pytest.fixture(scope="session")
+def _plantilla_bd(tmp_path_factory):
+    """Esquema ya creado UNA vez por sesión: init_db() (decenas de tablas y
+    migraciones) tarda ~0,2 s y se repetía en cada uno de los ~1500 tests; copiar
+    el fichero ya inicializado es casi instantáneo y deja exactamente lo mismo."""
+    import sqlite3
+    ruta = tmp_path_factory.mktemp("plantilla") / "plantilla.db"
+    original = db.DB_PATH
+    db.DB_PATH = ruta
+    try:
+        db.init_db()
+    finally:
+        db.DB_PATH = original
+    conexion = sqlite3.connect(ruta)
+    conexion.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conexion.execute("PRAGMA journal_mode = DELETE")
+    conexion.close()
+    return ruta
+
+
 @pytest.fixture(autouse=True)
-def base_de_datos_temporal(tmp_path, monkeypatch):
+def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd):
+    import shutil
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "test.db")
     monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path / "backups")
-    db.init_db()
+    shutil.copyfile(_plantilla_bd, db.DB_PATH)
+    db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
     yield
 
 

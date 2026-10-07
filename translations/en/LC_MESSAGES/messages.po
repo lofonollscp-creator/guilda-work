@@ -6299,3 +6299,6 @@ msgstr "Under review"
 msgid "Finalizado"
 msgstr "Done"
 
+msgid "Recordatorios de tareas"
+msgstr "Task reminders"
+

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Mi cuenta{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Mi cuenta</h1><p class="muted">{{ a.usuario }} · seguridad del acceso al backoffice</p></header>
+
+{% if forzar == 'clave' %}<p class="aviso aviso-error" role="alert">Tu contraseña ha caducado: cámbiala para seguir usando el backoffice.</p>
+{% elif forzar == '2fa' %}<p class="aviso aviso-error" role="alert">En este backoffice es obligatorio el segundo factor: actívalo para seguir.</p>{% endif %}
+
+{% if codigos %}
+<section class="tarjeta destacada">
+  <h2>{{ icono('shield-check') }} Códigos de recuperación</h2>
+  <p>Guárdalos en un sitio seguro. Cada uno sirve <strong>una sola vez</strong> si pierdes el móvil, y <strong>no se vuelven a mostrar</strong>.</p>
+  <pre class="resumen-texto">{{ codigos|join('\n') }}</pre>
+</section>
+{% endif %}
+
+<section class="tarjeta">
+  <h2>{{ icono('lock') }} Contraseña</h2>
+  {% if dias is none %}<p class="muted">Tu contraseña no caduca.</p>
+  {% elif dias < 0 %}<p class="texto-riesgo">Caducada hace {{ -dias }} día(s).</p>
+  {% else %}<p class="muted">Caduca en {{ dias }} día(s) (cada {{ limite }} días).{% if dias <= 14 %} <strong>Cámbiala pronto.</strong>{% endif %}</p>{% endif %}
+  <form method="post" action="{{ url_for('rutas.cuenta_clave') }}" class="formulario">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label>Contraseña actual<input type="password" name="actual" autocomplete="current-password" required></label>
+    <label>Contraseña nueva (mínimo {{ minimo }} caracteres)<input type="password" name="nueva" autocomplete="new-password" minlength="{{ minimo }}" required></label>
+    <label>Repite la nueva<input type="password" name="repetir" autocomplete="new-password" minlength="{{ minimo }}" required></label>
+    <div><button type="submit" class="boton boton-primario">Cambiar contraseña</button></div>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>{{ icono('shield') }} Verificación en dos pasos</h2>
+  {% if a.totp_activo %}
+    <p><span class="insignia insignia-ok">ACTIVADA</span> Al entrar te pediremos el código de tu app de autenticación.</p>
+    {% if not obligatorio %}
+    <form method="post" action="{{ url_for('rutas.cuenta_2fa_desactivar') }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Contraseña actual<input type="password" name="actual" autocomplete="current-password" required></label>
+      <button type="submit" class="boton boton-peligro" data-confirmar="¿Desactivar el segundo factor? Tu cuenta quedará protegida solo por la contraseña.">Desactivar</button>
+    </form>
+    {% endif %}
+  {% elif secreto %}
+    <p>1. Añade una cuenta en tu app de autenticación (Google Authenticator, Aegis, 1Password…) con esta clave:</p>
+    <p class="clave"><code id="clave-totp">{{ secreto }}</code> <button type="button" class="boton" data-copiar="clave-totp">Copiar</button></p>
+    <p class="muted">Tipo «basada en tiempo», 6 dígitos. O enlace directo para apps que lo admiten: <code>{{ uri }}</code></p>
+    <p>2. Escribe el código que te muestre para confirmar:</p>
+    <form method="post" action="{{ url_for('rutas.cuenta_2fa_confirmar') }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Código de 6 dígitos<input type="text" name="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required></label>
+      <button type="submit" class="boton boton-primario">Activar</button>
+    </form>
+  {% else %}
+    <p class="muted">No está activada. Protege el acceso con un código de tu móvil además de la contraseña.</p>
+    <form method="post" action="{{ url_for('rutas.cuenta_2fa_activar') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="boton boton-primario">Configurar verificación en dos pasos</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

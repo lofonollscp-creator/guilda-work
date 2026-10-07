@@ -2549,6 +2549,20 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
   semanal por correo (lunes 8:00, a `ALERTAS_ADMIN_EMAIL`, una vez por semana; también se puede
   enviar a mano desde Alertas). Salud de cada tenant: 0-100 según actividad, usuarios que
   entran, funciones en uso y estado del pago (≥70 sano, 40-69 atención, <40 en riesgo).
+- **Seguridad del acceso** (página «Mi cuenta»): verificación en dos pasos con app de autenticación
+  (TOTP, 6 dígitos; el secreto se guarda cifrado y se dan 8 códigos de recuperación de un solo uso)
+  y caducidad de contraseña (`BACKOFFICE_CADUCIDAD_DIAS`, 180 por defecto, 0 = nunca). Con
+  `BACKOFFICE_2FA_OBLIGATORIO=1` nadie navega sin tenerlo activado. Si un administrador pierde el móvil
+  y los códigos: `.venv/bin/python scripts/crear_admin_backoffice.py USUARIO --quitar-2fa`.
+- **Vigilancia desde fuera**: el backoffice repasa los latidos de la app (aviso por correo, una vez al día
+  por motivo) y comprueba que responde en `GUILDA_PORT`; tras 2 sondas seguidas fallidas (~20 min) avisa.
+- **Auditoría de dependencias** (semanal; página Dependencias): envía a osv.dev SOLO nombre y versión de
+  cada paquete de Python; desactivable con `BACKOFFICE_AUDITORIA_DEPENDENCIAS=0`. Avisa además de las
+  imágenes de Docker sin versión fijada (`:latest`).
+- **Pruebas y despliegue**: `scripts/probar.sh` ejecuta la suite en una copia aislada que borra al terminar
+  (`--rapida`: sin Kratos ni Docker, ~1 min; completa ~5 min). `scripts/comprobar_migraciones.py` aplica las
+  migraciones del código nuevo a una copia de la base real; `scripts/desplegar.sh` lo ejecuta ANTES de
+  hacer `git pull` y cancela el despliegue si algo falla.
 - Borrar un tenant elimina también sus clientes fiscales, vencimientos, documentos, webhooks y
   extras. Si tiene fichajes se rechaza (hay que conservarlos 4 años) salvo que se marque la
   casilla expresa; la comprobación se hace antes de retirar nada de las herramientas conectadas.

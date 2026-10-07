@@ -20,8 +20,21 @@ def main() -> int:
     parser.add_argument("usuario")
     parser.add_argument("--nombre")
     parser.add_argument("--cambiar", action="store_true", help="cambia la contraseña de un administrador existente")
+    parser.add_argument("--quitar-2fa", action="store_true", help="desactiva el segundo factor de ese administrador (si ha perdido el móvil y los códigos)")
     parser.add_argument("--contrasena", help="contraseña a usar (si se omite, se genera una aleatoria)")
     args = parser.parse_args()
+    if args.quitar_2fa:
+        conn = auth.conectar()
+        try:
+            admin = conn.execute("SELECT id FROM admins WHERE usuario = ?", (args.usuario.strip().lower(),)).fetchone()
+        finally:
+            conn.close()
+        if admin is None:
+            print("No existe ese administrador.", file=sys.stderr)
+            return 1
+        auth.desactivar_2fa(admin["id"])
+        print("Segundo factor desactivado.")
+        return 0
     contrasena = args.contrasena or secrets.token_urlsafe(18)
     try:
         if args.cambiar:

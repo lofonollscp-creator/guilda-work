@@ -37,15 +37,16 @@
       {{ enlace(url_for('rutas.salud_vista'), 'Salud', 'circle-check-big', endpoint == 'rutas.salud_vista') }}
       {{ enlace(url_for('rutas.estado'), 'Estado del sistema', 'activity', endpoint == 'rutas.estado') }}
       {{ enlace(url_for('rutas.diagnostico_vista'), 'Diagnóstico', 'shield-check', endpoint == 'rutas.diagnostico_vista') }}
+      {{ enlace(url_for('rutas.dependencias_vista'), 'Dependencias', 'puzzle', endpoint in ('rutas.dependencias_vista', 'rutas.comprobar_dependencias')) }}
       {{ enlace(url_for('rutas.copias'), 'Copias de seguridad', 'download', endpoint == 'rutas.copias') }}
       {{ enlace(url_for('rutas.webhooks'), 'Webhooks', 'zap', endpoint == 'rutas.webhooks') }}
       {{ enlace(url_for('rutas.actividad'), 'Actividad', 'history', endpoint == 'rutas.actividad') }}
     </nav>
     <div class="lateral-pie">
-      <div class="admin-chip">
+      <a class="admin-chip" href="{{ url_for('rutas.cuenta') }}" title="Mi cuenta: contraseña y verificación en dos pasos">
         <span class="avatar" style="--c: {{ admin.usuario|color_avatar }}">{{ (admin.nombre or admin.usuario)|iniciales }}</span>
         <span class="admin-nombre">{{ admin.nombre or admin.usuario }}</span>
-      </div>
+      </a>
       <button type="button" class="boton-icono" data-accion="tema" title="Cambiar tema" aria-label="Cambiar tema">{{ icono('moon') }}</button>
       <form method="post" action="{{ url_for('rutas.logout') }}">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">

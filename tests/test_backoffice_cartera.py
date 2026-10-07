@@ -147,6 +147,8 @@ def test_si_falla_el_envio_no_se_reintenta_cada_pasada(bo):
 
 
 def test_paso_periodico_aisla_fallos_y_deja_latido(bo, monkeypatch):
+    monkeypatch.setattr(cartera, "vigilar_app", lambda ahora=None: [])
+    monkeypatch.setattr(cartera.dependencias, "auditar_si_toca", lambda ahora=None: False)
     monkeypatch.setattr(cartera, "refrescar_cobros_pendientes", lambda: (_ for _ in ()).throw(RuntimeError("stripe caído")))
     r = cartera.paso_periodico(datetime(2026, 10, 6, 10, 0), enviar=lambda: None)
     assert r["snapshot"] is True and any("cobros" in e for e in r["errores"])

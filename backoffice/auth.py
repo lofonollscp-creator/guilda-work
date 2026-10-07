@@ -5,9 +5,13 @@ sesión firmada de cookie propia (bo_session), caducidad por inactividad y
 protección CSRF en todo POST."""
 from __future__ import annotations
 
+import base64
+import hashlib
 import hmac
+import json
 import os
 import secrets
+import struct
 import sqlite3
 import time
 from datetime import datetime, timedelta
@@ -28,6 +32,20 @@ INTENTOS_MAX_POR_IP = 25
 VENTANA_BLOQUEO_MIN = 15
 INACTIVIDAD_MAX_MIN = 60
 SESION_MAX_HORAS = 12
+PRE2FA_MAX_SEGUNDOS = 300       # tiempo para teclear el código tras acertar la contraseña
+CODIGOS_RECUPERACION = 8
+
+
+def caducidad_contrasena_dias() -> int:
+    """Días de vida de una contraseña (0 = no caduca). BACKOFFICE_CADUCIDAD_DIAS, 180 por defecto."""
+    try:
+        return max(0, int(os.environ.get("BACKOFFICE_CADUCIDAD_DIAS", "180")))
+    except ValueError:
+        return 180
+
+
+def segundo_factor_obligatorio() -> bool:
+    return os.environ.get("BACKOFFICE_2FA_OBLIGATORIO") == "1"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS admins (
@@ -84,6 +102,11 @@ CREATE TABLE IF NOT EXISTS snapshots_tenants (
     suscripcion_estado TEXT,
     PRIMARY KEY (fecha, tenant_id)
 );
+CREATE TABLE IF NOT EXISTS auditorias_dependencias (
+    id INTEGER PRIMARY KEY,
+    fecha TEXT NOT NULL,
+    resultado TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS resumenes_enviados (
     clave TEXT PRIMARY KEY,
     enviado_en TEXT NOT NULL
@@ -103,6 +126,14 @@ def conectar() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA busy_timeout = 5000")
     conn.executescript(SCHEMA)
+    existentes = {f[1] for f in conn.execute("PRAGMA table_info(admins)")}
+    for columna, tipo in (
+        ("totp_secreto", "TEXT"), ("totp_activo", "INTEGER NOT NULL DEFAULT 0"), ("totp_ultimo_paso", "INTEGER NOT NULL DEFAULT 0"),
+        ("codigos_recuperacion", "TEXT"), ("password_cambiada_en", "TEXT"),
+    ):
+        if columna not in existentes:
+            conn.execute(f"ALTER TABLE admins ADD COLUMN {columna} {tipo}")
+    conn.commit()
     return conn
 
 
@@ -135,8 +166,8 @@ def crear_admin(usuario: str, contrasena: str, nombre: str | None = None) -> int
     conn = conectar()
     try:
         cur = conn.execute(
-            "INSERT INTO admins (usuario, nombre, password_hash, creado_en) VALUES (?, ?, ?, ?)",
-            (usuario, (nombre or usuario).strip(), generate_password_hash(contrasena), _ahora()),
+            "INSERT INTO admins (usuario, nombre, password_hash, creado_en, password_cambiada_en) VALUES (?, ?, ?, ?, ?)",
+            (usuario, (nombre or usuario).strip(), generate_password_hash(contrasena), _ahora(), _ahora()),
         )
         conn.commit()
         return cur.lastrowid
@@ -149,8 +180,8 @@ def cambiar_contrasena(usuario: str, contrasena: str) -> bool:
     conn = conectar()
     try:
         cur = conn.execute(
-            "UPDATE admins SET password_hash = ? WHERE usuario = ?",
-            (generate_password_hash(contrasena), usuario.strip().lower()),
+            "UPDATE admins SET password_hash = ?, password_cambiada_en = ? WHERE usuario = ?",
+            (generate_password_hash(contrasena), _ahora(), usuario.strip().lower()),
         )
         conn.commit()
         return cur.rowcount > 0
@@ -192,6 +223,131 @@ def verificar(usuario: str, contrasena: str, ip: str) -> tuple[sqlite3.Row | Non
         conn.execute("UPDATE admins SET ultimo_acceso = ? WHERE id = ?", (_ahora(), admin["id"]))
         conn.commit()
         return admin, None
+    finally:
+        conn.close()
+
+
+# --- Caducidad de la contraseña ------------------------------------------------
+
+def dias_para_caducar(admin) -> int | None:
+    """Días que le quedan a la contraseña (negativo = caducada); None si no caduca."""
+    limite = caducidad_contrasena_dias()
+    if not limite:
+        return None
+    desde = admin["password_cambiada_en"] or admin["creado_en"]
+    try:
+        edad = (datetime.now() - datetime.fromisoformat(desde)).days
+    except (TypeError, ValueError):
+        return None
+    return limite - edad
+
+
+# --- Segundo factor (TOTP, RFC 6238: 6 dígitos, 30 s, SHA-1) ---------------------
+
+def _fernet():
+    from cryptography.fernet import Fernet
+    return Fernet(base64.urlsafe_b64encode(hashlib.sha256(("totp:" + clave_secreta()).encode()).digest()))
+
+
+def generar_secreto_totp() -> str:
+    return base64.b32encode(secrets.token_bytes(20)).decode().rstrip("=")
+
+
+def codigo_totp(secreto: str, paso: int) -> str:
+    clave = base64.b32decode(secreto + "=" * (-len(secreto) % 8))
+    resumen = hmac.new(clave, struct.pack(">Q", paso), hashlib.sha1).digest()
+    desplazamiento = resumen[-1] & 0x0F
+    valor = (struct.unpack(">I", resumen[desplazamiento:desplazamiento + 4])[0] & 0x7FFFFFFF) % 1_000_000
+    return f"{valor:06d}"
+
+
+def uri_totp(usuario: str, secreto: str) -> str:
+    from urllib.parse import quote
+    return f"otpauth://totp/{quote('Guilda Backoffice')}:{quote(usuario)}?secret={secreto}&issuer={quote('Guilda Backoffice')}&digits=6&period=30"
+
+
+def _paso_actual() -> int:
+    return int(time.time() // 30)
+
+
+def comprobar_codigo_totp(secreto: str, codigo: str, minimo_paso: int = 0) -> int | None:
+    """Paso (ventana de 30 s) al que corresponde el código, tolerando ±1 por desfase de
+    reloj; None si no vale o si ya se usó (`minimo_paso`: el último aceptado)."""
+    codigo = (codigo or "").strip().replace(" ", "")
+    if len(codigo) != 6 or not codigo.isdigit():
+        return None
+    actual = _paso_actual()
+    for paso in (actual - 1, actual, actual + 1):
+        if paso > minimo_paso and hmac.compare_digest(codigo_totp(secreto, paso), codigo):
+            return paso
+    return None
+
+
+def _hash_recuperacion(codigo: str) -> str:
+    return hashlib.sha256(("rec:" + clave_secreta() + codigo.strip().lower().replace("-", "")).encode()).hexdigest()
+
+
+def activar_2fa(admin_id: int, secreto: str, codigo: str) -> list[str]:
+    """Confirma el alta del segundo factor con un código válido y devuelve los códigos de
+    recuperación (se muestran UNA vez; solo se guarda su hash)."""
+    paso = comprobar_codigo_totp(secreto, codigo)
+    if paso is None:
+        raise ValueError("El código no es correcto. Comprueba la hora del móvil y vuelve a probar.")
+    codigos = [f"{secrets.token_hex(2)}-{secrets.token_hex(2)}" for _ in range(CODIGOS_RECUPERACION)]
+    conn = conectar()
+    try:
+        conn.execute(
+            "UPDATE admins SET totp_secreto = ?, totp_activo = 1, totp_ultimo_paso = ?, codigos_recuperacion = ? WHERE id = ?",
+            (_fernet().encrypt(secreto.encode()).decode(), paso, json.dumps([_hash_recuperacion(c) for c in codigos]), admin_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return codigos
+
+
+def desactivar_2fa(admin_id: int) -> None:
+    conn = conectar()
+    try:
+        conn.execute(
+            "UPDATE admins SET totp_secreto = NULL, totp_activo = 0, totp_ultimo_paso = 0, codigos_recuperacion = NULL WHERE id = ?",
+            (admin_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def verificar_segundo_factor(admin_id: int, codigo: str, ip: str) -> tuple[sqlite3.Row | None, str | None]:
+    """Segundo paso del acceso: código TOTP o uno de recuperación (de un solo uso).
+    Comparte el bloqueo por intentos con la contraseña."""
+    conn = conectar()
+    try:
+        admin = conn.execute("SELECT * FROM admins WHERE id = ? AND activo = 1", (admin_id,)).fetchone()
+        if admin is None or not admin["totp_activo"]:
+            return None, "incorrectas"
+        clave_intentos = "2fa:" + admin["usuario"]
+        if bloqueado(conn, clave_intentos, ip):
+            return None, "bloqueado"
+        codigo = (codigo or "").strip()
+        secreto = _fernet().decrypt(admin["totp_secreto"].encode()).decode()
+        paso = comprobar_codigo_totp(secreto, codigo, admin["totp_ultimo_paso"])
+        if paso is not None:
+            conn.execute("UPDATE admins SET totp_ultimo_paso = ? WHERE id = ?", (paso, admin_id))
+            conn.execute("DELETE FROM intentos_login WHERE usuario = ?", (clave_intentos,))
+            conn.commit()
+            return admin, None
+        hashes = json.loads(admin["codigos_recuperacion"] or "[]")
+        candidato = _hash_recuperacion(codigo)
+        if candidato in hashes and len(codigo.replace("-", "")) == 8:
+            hashes.remove(candidato)
+            conn.execute("UPDATE admins SET codigos_recuperacion = ? WHERE id = ?", (json.dumps(hashes), admin_id))
+            conn.execute("DELETE FROM intentos_login WHERE usuario = ?", (clave_intentos,))
+            conn.commit()
+            return admin, "recuperacion"
+        conn.execute("INSERT INTO intentos_login (usuario, ip, creado_en) VALUES (?, ?, ?)", (clave_intentos, ip, _ahora()))
+        conn.commit()
+        return None, "incorrectas"
     finally:
         conn.close()
 
@@ -240,6 +396,13 @@ def iniciar_sesion(admin: sqlite3.Row) -> None:
     session.clear()  # nueva sesión: evita fijación de sesión
     ahora = int(time.time())
     session["admin_id"] = admin["id"]
+    # Hasta cumplir lo que falte (cambiar una contraseña caducada o activar el 2FA si es
+    # obligatorio) solo se puede entrar en «Mi cuenta».
+    caduca = dias_para_caducar(admin)
+    if caduca is not None and caduca < 0:
+        session["forzar"] = "clave"
+    elif segundo_factor_obligatorio() and not admin["totp_activo"]:
+        session["forzar"] = "2fa"
     session["inicio"] = ahora
     session["visto"] = ahora
     session["csrf"] = secrets.token_urlsafe(32)
@@ -280,11 +443,18 @@ def sesion_valida() -> bool:
     return True
 
 
+ENDPOINTS_CUENTA = ("rutas.cuenta", "rutas.cuenta_clave", "rutas.cuenta_2fa_activar", "rutas.cuenta_2fa_confirmar",
+                    "rutas.cuenta_2fa_desactivar", "rutas.logout")
+
+
 def login_required(vista):
     @wraps(vista)
     def decorada(*args, **kwargs):
         if not sesion_valida():
-            session.clear()
+            for clave in ("admin_id", "inicio", "visto", "forzar"):
+                session.pop(clave, None)  # conserva la verificación en dos pasos en curso, si la hay
             return redirect(url_for("rutas.login", siguiente=request.path if request.method == "GET" else None))
+        if session.get("forzar") and request.endpoint not in ENDPOINTS_CUENTA:
+            return redirect(url_for("rutas.cuenta"))
         return vista(*args, **kwargs)
     return decorada

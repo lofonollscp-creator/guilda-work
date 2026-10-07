@@ -6307,3 +6307,6 @@ msgstr "En revisió"
 msgid "Finalizado"
 msgstr "Finalitzat"
 
+msgid "Recordatorios de tareas"
+msgstr "Recordatoris de tasques"
+

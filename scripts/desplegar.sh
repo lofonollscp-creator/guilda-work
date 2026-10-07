@@ -7,6 +7,21 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 SERVICIO="${GUILDA_SERVICIO:-guilda-work.service}"
 
+# Antes de tocar nada: el código nuevo tiene que migrar bien una COPIA de la base real.
+git fetch -q
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse '@{u}')" ] && [ -f data/registro.db ]; then
+  nuevo=$(mktemp -d)
+  git archive '@{u}' | tar -x -C "$nuevo"
+  echo "== Comprobando las migraciones del código nuevo sobre una copia de la base real =="
+  if .venv/bin/python "$nuevo/scripts/comprobar_migraciones.py" --codigo "$nuevo"; then
+    rm -rf "$nuevo"
+  else
+    rm -rf "$nuevo"
+    echo "Despliegue CANCELADO: no se ha cambiado nada ni reiniciado el servicio." >&2
+    exit 1
+  fi
+fi
+
 antes=$(git rev-parse HEAD)
 git pull --ff-only
 despues=$(git rev-parse HEAD)

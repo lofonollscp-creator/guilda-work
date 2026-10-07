@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 
 from app import db as plataforma
 
-from . import auth, metricas
+from . import auth, dependencias, metricas
 from .datos import ESTADOS_RIESGO
 
 ESTADOS_RIESGO_PAGO = ESTADOS_RIESGO
@@ -239,6 +239,7 @@ def construir_resumen(ahora: datetime | None = None) -> dict:
         "generado": ahora.isoformat(timespec="seconds"), "cartera": c["cuenta"], "riesgo": riesgo, "atencion": atencion,
         "pagos_fallidos": pagos_fallidos, "cobros_pendientes": cobros, "errores_correo": errores_correo,
         "webhooks_fallidos_7d": webhooks, "mes": hist["resumen_mes"],
+        "dependencias": dependencias.ultima(),
     }
 
 
@@ -271,6 +272,9 @@ def texto_resumen(r: dict) -> str:
         lineas.append(f"Cuentas de correo con error de sincronización: {r['errores_correo']}")
     if r["webhooks_fallidos_7d"]:
         lineas.append(f"Entregas de webhooks fallidas (7 días): {r['webhooks_fallidos_7d']}")
+    dep = r.get("dependencias")
+    if dep and dep.get("vulnerables"):
+        lineas.append("DEPENDENCIAS CON VULNERABILIDADES: " + ", ".join(f"{v['paquete']} {v['version']}" for v in dep["vulnerables"][:10]))
     m = r["mes"]
     if m:
         lineas += ["", f"Este mes: {m['altas']} altas, {m['bajas']} bajas, {m['cambios']} cambios de plan · MRR neto {_euros(m['mrr_neto'])}"]
@@ -338,6 +342,55 @@ def refrescar_cobros_pendientes(max_dias: int = 14) -> int:
     return cambiados
 
 
+# --- Vigilancia desde fuera de la app principal --------------------------------------------------
+# El vigilante de salud de la app vive en el MISMO proceso que las tareas que vigila: si ese
+# proceso se cuelga o se cae, nadie avisa. El backoffice es otro proceso, así que repasa los
+# latidos y comprueba que la app responde.
+
+FALLOS_SONDA_PARA_AVISAR = 2
+_fallos_sonda = 0
+
+
+def sonda_app() -> bool:
+    """¿Responde la app principal por HTTP en local? (cualquier respuesta cuenta: es una sonda de vida)."""
+    import os
+    import urllib.error
+    import urllib.request
+
+    url = f"http://127.0.0.1:{os.environ.get('GUILDA_PORT', '8000')}/"
+    try:
+        with urllib.request.urlopen(url, timeout=8):
+            return True
+    except urllib.error.HTTPError:
+        return True  # contesta (aunque sea con un error): el proceso está vivo
+    except (urllib.error.URLError, OSError):
+        return False
+
+
+def vigilar_app(ahora: datetime | None = None, sonda=None, enviar=None) -> list[str]:
+    """Latidos atrasados (por correo, una vez al día por motivo, vía salud.vigilar) y sonda de la app.
+    Devuelve los motivos avisados."""
+    global _fallos_sonda
+    from app import notificaciones_email, salud
+
+    ahora = ahora or datetime.now()
+    avisados = list(salud.vigilar(ahora))
+    if (sonda or sonda_app)():
+        _fallos_sonda = 0
+        return avisados
+    _fallos_sonda += 1
+    dia = ahora.strftime("%Y-%m-%d")
+    if _fallos_sonda >= FALLOS_SONDA_PARA_AVISAR and not plataforma.alerta_salud_enviada("app_caida", dia):
+        (enviar or notificaciones_email.enviar_alerta_interna)(
+            "[Guilda Work] la app no responde",
+            f"El backoffice no consigue hablar con la app principal desde hace {_fallos_sonda} comprobaciones seguidas "
+            f"({_fallos_sonda * INTERVALO_SEGUNDOS // 60} min o más). Revisa: systemctl status guilda-work.service\n",
+        )
+        plataforma.marcar_alerta_salud("app_caida", dia)
+        avisados.append("app_caida")
+    return avisados
+
+
 # --- Tareas periódicas del proceso del backoffice --------------------------------------------------
 
 INTERVALO_SEGUNDOS = 600
@@ -354,6 +407,8 @@ def paso_periodico(ahora: datetime | None = None, enviar=None) -> dict:
         ("snapshot", lambda: tomar_snapshot(ahora.date())),
         ("cobros", refrescar_cobros_pendientes),
         ("resumen", lambda: resumen_semanal_si_toca(ahora, enviar=enviar)),
+        ("vigilancia", lambda: vigilar_app(ahora)),
+        ("dependencias", lambda: dependencias.auditar_si_toca(ahora)),
     ):
         try:
             resultado[nombre] = fn()

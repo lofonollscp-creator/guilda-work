@@ -11,7 +11,7 @@ from flask import Response, abort, flash, redirect, render_template, request, ur
 from app import db as plataforma
 from app import eventos, herramientas, salud, uptime_kuma
 
-from . import aprovisionamiento, auth, cartera, diagnostico, datos
+from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico
 from .rutas import _tenant_o_404, bp
 
 
@@ -103,6 +103,22 @@ def ingresos():
         "ingresos.html", tenants=filas, mrr=sum(t["plan_precio_centimos"] for t in activos), n_activas=len(activos),
         hist=cartera.historial_ingresos(),
     )
+
+
+@bp.route("/dependencias")
+@auth.login_required
+def dependencias_vista():
+    return render_template("dependencias.html", d=dependencias.ultima(), activa=dependencias.activa())
+
+
+@bp.route("/dependencias/comprobar", methods=["POST"])
+@auth.login_required
+def comprobar_dependencias():
+    resultado = dependencias.auditar()
+    auth.auditar("dependencias.auditar", f"{len(resultado['vulnerables'])} con vulnerabilidades")
+    if resultado["error"]:
+        flash(resultado["error"], "error")
+    return redirect(url_for("rutas.dependencias_vista"))
 
 
 @bp.route("/alertas")

@@ -1,9 +1,11 @@
 """Rutas del backoffice independiente."""
 from __future__ import annotations
 
+import secrets
+import time
 from urllib.parse import urlparse
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
 from app import db as plataforma
 from app import herramientas
@@ -38,13 +40,134 @@ def login():
             mensaje = ("Demasiados intentos fallidos. Espera unos minutos y vuelve a probar."
                        if motivo == "bloqueado" else "Usuario o contraseña incorrectos.")
             return render_template("login.html", error=mensaje, usuario=request.form.get("usuario", "")), 429 if motivo == "bloqueado" else 401
+        if admin["totp_activo"]:
+            # Contraseña correcta, falta el segundo factor: todavía NO hay sesión de administrador.
+            session.clear()
+            session["pre2fa"] = {"id": admin["id"], "ts": int(time.time())}
+            session["csrf"] = secrets.token_urlsafe(32)
+            return redirect(url_for("rutas.login_2fa", siguiente=request.args.get("siguiente")))
         auth.iniciar_sesion(admin)
         g.admin = admin
         auth.auditar("login")
+        if session.get("forzar"):
+            return redirect(url_for("rutas.cuenta"))
         return redirect(_destino_seguro(request.args.get("siguiente")))
     if auth.sesion_valida():
         return redirect(url_for("rutas.dashboard"))
     return render_template("login.html", error=None, usuario="")
+
+
+def _pre2fa_valido() -> int | None:
+    datos_previos = session.get("pre2fa")
+    if not datos_previos or time.time() - datos_previos.get("ts", 0) > auth.PRE2FA_MAX_SEGUNDOS:
+        return None
+    return datos_previos["id"]
+
+
+@bp.route("/login/2fa", methods=["GET", "POST"])
+def login_2fa():
+    admin_id = _pre2fa_valido()
+    if admin_id is None:
+        session.pop("pre2fa", None)
+        flash("La verificación ha caducado. Vuelve a entrar.", "error")
+        return redirect(url_for("rutas.login"))
+    if request.method == "POST":
+        admin, motivo = auth.verificar_segundo_factor(admin_id, request.form.get("codigo", ""), auth.ip_cliente())
+        if admin is None:
+            g.admin = None
+            mensaje = ("Demasiados intentos fallidos. Espera unos minutos y vuelve a probar."
+                       if motivo == "bloqueado" else "Código incorrecto.")
+            return render_template("login_2fa.html", error=mensaje), 429 if motivo == "bloqueado" else 401
+        auth.iniciar_sesion(admin)
+        g.admin = admin
+        auth.auditar("login" if motivo is None else "login.recuperacion", "con segundo factor" if motivo is None else "con código de recuperación")
+        if session.get("forzar"):
+            return redirect(url_for("rutas.cuenta"))
+        return redirect(_destino_seguro(request.args.get("siguiente")))
+    g.admin = None
+    return render_template("login_2fa.html", error=None)
+
+
+# --- Mi cuenta: contraseña y segundo factor ---------------------------------------
+
+@bp.route("/cuenta")
+@auth.login_required
+def cuenta():
+    pendiente = session.get("totp_pendiente")
+    return render_template(
+        "cuenta.html", a=g.admin, dias=auth.dias_para_caducar(g.admin), forzar=session.get("forzar"),
+        secreto=pendiente, uri=auth.uri_totp(g.admin["usuario"], pendiente) if pendiente else None,
+        codigos=session.pop("codigos_nuevos", None), obligatorio=auth.segundo_factor_obligatorio(),
+        limite=auth.caducidad_contrasena_dias(), minimo=auth.MIN_LONGITUD_CONTRASENA,
+    )
+
+
+@bp.route("/cuenta/clave", methods=["POST"])
+@auth.login_required
+def cuenta_clave():
+    admin, _motivo = auth.verificar(g.admin["usuario"], request.form.get("actual", ""), auth.ip_cliente())
+    nueva = request.form.get("nueva", "")
+    try:
+        if admin is None:
+            raise ValueError("La contraseña actual no es correcta.")
+        if nueva != request.form.get("repetir", ""):
+            raise ValueError("Las dos contraseñas nuevas no coinciden.")
+        if nueva == request.form.get("actual", ""):
+            raise ValueError("La contraseña nueva tiene que ser distinta de la actual.")
+        auth.cambiar_contrasena(g.admin["usuario"], nueva)
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("cuenta.clave", "contraseña cambiada")
+        if session.get("forzar") == "clave":
+            session.pop("forzar")
+            if auth.segundo_factor_obligatorio() and not g.admin["totp_activo"]:
+                session["forzar"] = "2fa"
+        flash("Contraseña cambiada.", "ok")
+    return redirect(url_for("rutas.cuenta"))
+
+
+@bp.route("/cuenta/2fa/activar", methods=["POST"])
+@auth.login_required
+def cuenta_2fa_activar():
+    session["totp_pendiente"] = auth.generar_secreto_totp()
+    return redirect(url_for("rutas.cuenta"))
+
+
+@bp.route("/cuenta/2fa/confirmar", methods=["POST"])
+@auth.login_required
+def cuenta_2fa_confirmar():
+    secreto = session.get("totp_pendiente")
+    if not secreto:
+        return redirect(url_for("rutas.cuenta"))
+    try:
+        codigos = auth.activar_2fa(g.admin["id"], secreto, request.form.get("codigo", ""))
+    except ValueError as e:
+        flash(str(e), "error")
+        return redirect(url_for("rutas.cuenta"))
+    session.pop("totp_pendiente", None)
+    if session.get("forzar") == "2fa":
+        session.pop("forzar")
+    session["codigos_nuevos"] = codigos
+    auth.auditar("cuenta.2fa_activar")
+    flash("Segundo factor activado. Guarda los códigos de recuperación: no se vuelven a mostrar.", "ok")
+    return redirect(url_for("rutas.cuenta"))
+
+
+@bp.route("/cuenta/2fa/desactivar", methods=["POST"])
+@auth.login_required
+def cuenta_2fa_desactivar():
+    if auth.segundo_factor_obligatorio():
+        flash("El segundo factor es obligatorio en este backoffice: no se puede desactivar.", "error")
+        return redirect(url_for("rutas.cuenta"))
+    admin, _motivo = auth.verificar(g.admin["usuario"], request.form.get("actual", ""), auth.ip_cliente())
+    if admin is None:
+        flash("La contraseña no es correcta.", "error")
+    else:
+        auth.desactivar_2fa(g.admin["id"])
+        auth.auditar("cuenta.2fa_desactivar")
+        flash("Segundo factor desactivado.", "ok")
+    return redirect(url_for("rutas.cuenta"))
 
 
 @bp.route("/logout", methods=["POST"])

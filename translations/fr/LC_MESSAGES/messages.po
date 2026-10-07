@@ -6374,3 +6374,6 @@ msgstr "En cours d'examen"
 msgid "Finalizado"
 msgstr "Terminé"
 
+msgid "Recordatorios de tareas"
+msgstr "Rappels de tâches"
+

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Dependencias{% endblock %}
+{% block contenido %}
+<header class="cabecera cabecera-fila">
+  <div><h1>Dependencias</h1><p class="muted">Paquetes de Python con vulnerabilidades conocidas (osv.dev) e imágenes de Docker sin versión fijada. Se comprueba una vez por semana{% if not activa %} (<strong>desactivado</strong> por BACKOFFICE_AUDITORIA_DEPENDENCIAS=0){% endif %}.</p></div>
+  <form method="post" action="{{ url_for('rutas.comprobar_dependencias') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton boton-primario" data-confirmar="Se enviará a osv.dev el nombre y la versión de cada paquete instalado (nada más). ¿Comprobar ahora?">{{ icono('refresh-cw') }} Comprobar ahora</button>
+  </form>
+</header>
+{% if not d %}
+<p class="vacio">Todavía no se ha hecho ninguna comprobación.</p>
+{% else %}
+<section class="rejilla rejilla-4">
+  <article class="tarjeta kpi"><header><span>Paquetes revisados</span></header><strong>{{ d.n_paquetes }}</strong><small>{{ d.fecha|fecha }}</small></article>
+  <article class="tarjeta kpi {{ 'kpi-riesgo' if d.vulnerables }}"><header><span>Con vulnerabilidades</span></header><strong>{{ d.vulnerables|length }}</strong></article>
+  <article class="tarjeta kpi"><header><span>Imágenes sin fijar</span></header><strong>{{ d.imagenes|length }}</strong><small>:latest o sin etiqueta</small></article>
+</section>
+{% if d.error %}<p class="aviso aviso-error">{{ d.error }}</p>{% endif %}
+{% if d.vulnerables %}
+<h2>Paquetes afectados</h2>
+<div class="tabla-caja"><table class="tabla"><thead><tr><th>Paquete</th><th>Versión</th><th>Avisos</th><th>Se arregla en</th><th>Resumen</th></tr></thead><tbody>
+  {% for v in d.vulnerables %}
+  <tr><td><strong>{{ v.paquete }}</strong></td><td class="mono">{{ v.version }}</td>
+    <td>{% for i in v.ids[:3] %}<a href="https://osv.dev/vulnerability/{{ i }}" target="_blank" rel="noopener noreferrer">{{ i }}</a>{{ ', ' if not loop.last }}{% endfor %}{% if v.ids|length > 3 %} +{{ v.ids|length - 3 }}{% endif %}</td>
+    <td class="mono">{{ v.arreglado_en or '—' }}</td><td>{{ v.resumen or '—' }}</td></tr>
+  {% endfor %}
+</tbody></table></div>
+{% elif not d.error %}<p class="muted">Ningún paquete instalado tiene avisos conocidos.</p>{% endif %}
+{% if d.imagenes %}
+<h2>Imágenes de Docker sin versión fijada</h2>
+<p class="muted">Con <code>:latest</code> un <code>docker compose pull</code> puede cambiar de versión sin que nadie lo revise. Conviene fijar una versión estable de cada servicio.</p>
+<div class="tabla-caja"><table class="tabla"><thead><tr><th>Imagen</th><th>Etiqueta</th><th>Fichero</th></tr></thead><tbody>
+  {% for i in d.imagenes %}<tr><td class="mono">{{ i.imagen }}</td><td>{{ i.etiqueta }}</td><td>{{ i.fichero }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% endif %}
+{% endif %}
+{% endblock %}
