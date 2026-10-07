@@ -6578,3 +6578,160 @@ msgstr ""
 "Objet... (vous pouvez ajouter « vendredi 10h », « @luis », « !alta », « "
 "#projet »)"
 
+msgid "No se ha podido guardar la nota."
+msgstr "La note n'a pas pu être enregistrée."
+
+msgid "No se ha podido aplicar la plantilla."
+msgstr "Le modèle n'a pas pu être appliqué."
+
+msgid "Cierre trimestral"
+msgstr "Clôture trimestrielle"
+
+msgid "Recoger documentación, contabilizar y presentar los modelos del trimestre."
+msgstr ""
+"Recueillir les documents, comptabiliser et déposer les déclarations du "
+"trimestre."
+
+msgid "Recoger documentación"
+msgstr "Recueillir les documents"
+
+msgid "Pedir extractos bancarios"
+msgstr "Demander les relevés bancaires"
+
+msgid "Pedir facturas emitidas y recibidas"
+msgstr "Demander les factures émises et reçues"
+
+msgid "Contabilizar"
+msgstr "Comptabiliser"
+
+msgid "Contabilizar facturas y bancos"
+msgstr "Comptabiliser factures et banques"
+
+msgid "Cuadrar IVA soportado y repercutido"
+msgstr "Rapprocher la TVA déductible et collectée"
+
+msgid "Presentar"
+msgstr "Déposer"
+
+msgid "Preparar los modelos del trimestre"
+msgstr "Préparer les déclarations du trimestre"
+
+msgid "Revisar con el cliente y presentar"
+msgstr "Vérifier avec le client et déposer"
+
+msgid "Enviar justificantes al cliente"
+msgstr "Envoyer les justificatifs au client"
+
+msgid "Alta de cliente nuevo"
+msgstr "Intégration d'un nouveau client"
+
+msgid "Datos, autorizaciones y primeros pasos con un cliente que empieza."
+msgstr "Données, autorisations et premiers pas avec un nouveau client."
+
+msgid "Datos y documentos"
+msgstr "Données et documents"
+
+msgid "Pedir DNI/CIF y escrituras"
+msgstr "Demander pièce d'identité/NIF et statuts"
+
+msgid "Firmar la hoja de encargo"
+msgstr "Signer la lettre de mission"
+
+msgid "Accesos y autorizaciones"
+msgstr "Accès et autorisations"
+
+msgid "Tramitar apoderamiento en la Agencia Tributaria"
+msgstr "Obtenir la procuration auprès de l'administration fiscale"
+
+msgid "Solicitar acceso a la banca online"
+msgstr "Demander l'accès à la banque en ligne"
+
+msgid "Puesta en marcha"
+msgstr "Mise en route"
+
+msgid "Crear el cliente y su calendario fiscal"
+msgstr "Créer le client et son calendrier fiscal"
+
+msgid "Declaración de la renta"
+msgstr "Déclaration de revenus"
+
+msgid "Campaña de renta de un cliente, de los datos al envío."
+msgstr "Campagne de déclaration d'un client, des données à l'envoi."
+
+msgid "Datos"
+msgstr "Données"
+
+msgid "Pedir datos fiscales y certificados"
+msgstr "Demander les données fiscales et attestations"
+
+msgid "Pedir justificantes de deducciones"
+msgstr "Demander les justificatifs de déductions"
+
+msgid "Borrador"
+msgstr "Brouillon"
+
+msgid "Preparar el borrador"
+msgstr "Préparer le brouillon"
+
+msgid "Revisar el borrador con el cliente"
+msgstr "Vérifier le brouillon avec le client"
+
+msgid "Presentar y enviar el justificante"
+msgstr "Déposer et envoyer le justificatif"
+
+msgid ""
+"Notas del equipo: las ve todo el que participa en el proyecto. Tu "
+"registro personal sigue siendo privado."
+msgstr ""
+"Notes d'équipe : tous les participants du projet les voient. Votre "
+"journal personnel reste privé."
+
+msgid "Quitar fijado"
+msgstr "Détacher"
+
+msgid "Fijar"
+msgstr "Épingler"
+
+msgid "Todavía no hay notas en este proyecto."
+msgstr "Il n'y a pas encore de notes dans ce projet."
+
+msgid "añadió una nota"
+msgstr "a ajouté une note"
+
+msgid "Aún no hay actividad en este proyecto."
+msgstr "Il n'y a pas encore d'activité dans ce projet."
+
+msgid "Sin vencimientos pendientes."
+msgstr "Aucune échéance en attente."
+
+msgid "Tus últimos correos del cliente"
+msgstr "Vos derniers courriels du client"
+
+msgid "Ningún correo vinculado a este cliente en tus cuentas."
+msgstr "Aucun courriel lié à ce client dans vos comptes."
+
+msgid "Añadir secciones y tareas de una plantilla"
+msgstr "Ajouter des sections et tâches d'un modèle"
+
+msgid ""
+"Se añade a lo que ya hay; no se borra nada. Las fechas se calculan desde "
+"hoy."
+msgstr ""
+"Cela s'ajoute à l'existant ; rien n'est supprimé. Les dates sont "
+"calculées à partir d'aujourd'hui."
+
+msgid "Guardar este proyecto como plantilla del despacho"
+msgstr "Enregistrer ce projet comme modèle du cabinet"
+
+msgid "Nombre de la plantilla"
+msgstr "Nom du modèle"
+
+msgid "Mi registro"
+msgstr "Mon journal"
+
+msgid "Empezar desde una plantilla"
+msgstr "Commencer à partir d'un modèle"
+
+msgid "Proyecto vacío"
+msgstr "Projet vide"
+

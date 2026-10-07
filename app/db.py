@@ -27,7 +27,7 @@ import re
 import secrets
 import sqlite3
 import sys
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -429,6 +429,25 @@ CREATE TABLE IF NOT EXISTS proyecto_secciones (
     orden INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_proyecto_secciones_categoria ON proyecto_secciones(categoria_id, orden);
+-- Notas compartidas del proyecto (distintas del registro privado de cada persona) y plantillas guardadas por el despacho.
+CREATE TABLE IF NOT EXISTS proyecto_notas (
+    id INTEGER PRIMARY KEY,
+    categoria_id INTEGER NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    texto TEXT NOT NULL,
+    fijada INTEGER NOT NULL DEFAULT 0,
+    creada_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_proyecto_notas_categoria ON proyecto_notas(categoria_id, fijada, id);
+CREATE TABLE IF NOT EXISTS proyecto_plantillas (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    nombre TEXT NOT NULL,
+    estructura TEXT NOT NULL,
+    creada_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_proyecto_plantillas_tenant ON proyecto_plantillas(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
 -- Correo de equipo: no se comparten cuentas ni contraseñas, solo mensajes
@@ -10137,6 +10156,238 @@ def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
             "proximo_hito": dict(hito) if hito else None, "vencimiento_cliente": dict(vencimiento_cliente) if vencimiento_cliente else None,
             "carga": carga, "horas_por_persona": por_persona,
         }
+    finally:
+        conn.close()
+
+
+# --- Proyectos, fase 3: notas compartidas, actividad, plantillas y datos del cliente -----------
+
+MAX_NOTAS_PROYECTO = 500
+MAX_PLANTILLAS_TENANT = 50
+
+
+def crear_nota_proyecto(usuario_id: int, categoria_id: int, texto: str) -> int | None:
+    texto = (texto or "").strip()[:4000]
+    conn = get_connection()
+    try:
+        if not texto or not _puede_organizar_proyecto(conn, usuario_id, categoria_id):
+            return None
+        if conn.execute("SELECT COUNT(*) FROM proyecto_notas WHERE categoria_id = ?", (categoria_id,)).fetchone()[0] >= MAX_NOTAS_PROYECTO:
+            return None
+        cur = conn.execute(
+            "INSERT INTO proyecto_notas (categoria_id, usuario_id, texto, creada_en) VALUES (?, ?, ?, ?)",
+            (categoria_id, usuario_id, texto, now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_notas_proyecto(usuario_id: int, categoria_id: int) -> list[dict]:
+    """Notas del proyecto, fijadas primero y luego las más recientes. `puede_borrar`: su autor o el dueño."""
+    conn = get_connection()
+    try:
+        rol = _rol_en_proyecto(conn, usuario_id, categoria_id)
+        if rol is None:
+            return []
+        filas = conn.execute(
+            """SELECT n.*, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS autor
+               FROM proyecto_notas n JOIN usuarios u ON u.id = n.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = n.usuario_id
+               WHERE n.categoria_id = ? ORDER BY n.fijada DESC, n.id DESC""",
+            (categoria_id,),
+        ).fetchall()
+        return [dict(f, puede_borrar=rol == "dueno" or f["usuario_id"] == usuario_id, puede_fijar=rol in ("dueno", "colabora")) for f in filas]
+    finally:
+        conn.close()
+
+
+def fijar_nota_proyecto(usuario_id: int, categoria_id: int, nota_id: int, fijada: bool) -> bool:
+    conn = get_connection()
+    try:
+        if not _puede_organizar_proyecto(conn, usuario_id, categoria_id):
+            return False
+        cur = conn.execute("UPDATE proyecto_notas SET fijada = ? WHERE id = ? AND categoria_id = ?", (1 if fijada else 0, nota_id, categoria_id))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def eliminar_nota_proyecto(usuario_id: int, categoria_id: int, nota_id: int) -> bool:
+    """La borra su autor o el dueño del proyecto (y solo mientras siga pudiendo organizar)."""
+    conn = get_connection()
+    try:
+        rol = _rol_en_proyecto(conn, usuario_id, categoria_id)
+        n = conn.execute("SELECT usuario_id FROM proyecto_notas WHERE id = ? AND categoria_id = ?", (nota_id, categoria_id)).fetchone()
+        if n is None or not (rol == "dueno" or (rol == "colabora" and n["usuario_id"] == usuario_id)):
+            return False
+        conn.execute("DELETE FROM proyecto_notas WHERE id = ?", (nota_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def actividad_proyecto(usuario_id: int, categoria_id: int, limite: int = 80) -> list[dict]:
+    """Línea de tiempo del proyecto: lo que se hace en sus tareas (historial y comentarios) y sus notas.
+    Cada entrada: `cuando`, `quien`, `tipo` ('actividad' | 'comentario' | 'nota'), `detalle`, `tarea_id`, `tarea`."""
+    conn = get_connection()
+    try:
+        if _rol_en_proyecto(conn, usuario_id, categoria_id) is None:
+            return []
+        filas = conn.execute(
+            """SELECT * FROM (
+                 SELECT a.creado_en AS cuando, a.usuario_id AS uid, a.tipo AS subtipo, 'actividad' AS tipo, a.detalle AS detalle,
+                        t.id AS tarea_id, t.asunto AS tarea
+                 FROM tarea_actividad a JOIN tareas_outlook t ON t.id = a.tarea_id
+                 WHERE t.categoria_id = ? AND t.papelera_en IS NULL AND a.tipo != 'comentario'
+                 UNION ALL
+                 SELECT c.creado_en, c.usuario_id, 'comentario', 'comentario', c.texto, t.id, t.asunto
+                 FROM tarea_comentarios c JOIN tareas_outlook t ON t.id = c.tarea_id
+                 WHERE t.categoria_id = ? AND t.papelera_en IS NULL
+                 UNION ALL
+                 SELECT n.creada_en, n.usuario_id, 'nota', 'nota', n.texto, NULL, NULL
+                 FROM proyecto_notas n WHERE n.categoria_id = ?
+               ) ORDER BY cuando DESC LIMIT ?""",
+            (categoria_id, categoria_id, categoria_id, max(1, min(limite, 300))),
+        ).fetchall()
+        nombres = {
+            f["id"]: f["nombre"] for f in conn.execute(
+                "SELECT u.id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre FROM usuarios u LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id"
+                " WHERE u.id IN (%s)" % ",".join("?" * len({f["uid"] for f in filas})),
+                list({f["uid"] for f in filas}),
+            )
+        } if filas else {}
+        return [dict(f, quien=nombres.get(f["uid"], "")) for f in filas]
+    finally:
+        conn.close()
+
+
+def _estructura_valida(estructura) -> list[dict]:
+    """Normaliza {secciones: [{nombre, tareas: [{asunto, dias}]}]} y descarta lo que no cuadre (máx. 20 secciones, 40 tareas cada una)."""
+    resultado = []
+    if not isinstance(estructura, list):
+        return resultado
+    for s in estructura[:20]:
+        if not isinstance(s, dict):
+            continue
+        nombre = str(s.get("nombre") or "").strip()[:80]
+        if not nombre:
+            continue
+        tareas = []
+        for t in (s.get("tareas") if isinstance(s.get("tareas"), list) else [])[:40]:
+            if not isinstance(t, dict):
+                continue
+            asunto = str(t.get("asunto") or "").strip()[:200]
+            dias = t.get("dias")
+            if asunto:
+                tareas.append({"asunto": asunto, "dias": dias if isinstance(dias, int) and 0 <= dias <= 730 else None})
+        resultado.append({"nombre": nombre, "tareas": tareas})
+    return resultado
+
+
+def aplicar_plantilla_proyecto(usuario_id: int, categoria_id: int, estructura, hoy: date | None = None) -> dict | None:
+    """Añade al proyecto las secciones y tareas de una plantilla (nunca borra nada). Las fechas son «días desde hoy».
+    Devuelve {'secciones': n, 'tareas': n} o None si no se puede organizar el proyecto."""
+    hoy = hoy or date.today()
+    estructura = _estructura_valida(estructura)
+    conn = get_connection()
+    try:
+        if not _puede_organizar_proyecto(conn, usuario_id, categoria_id):
+            return None
+    finally:
+        conn.close()
+    n_secciones = n_tareas = 0
+    for s in estructura:
+        seccion_id = crear_seccion(usuario_id, categoria_id, s["nombre"])
+        if seccion_id is None:
+            continue
+        n_secciones += 1
+        for t in s["tareas"]:
+            fecha = (hoy + timedelta(days=t["dias"])).isoformat() if t["dias"] is not None else None
+            if crear_tarea_en_proyecto(usuario_id, categoria_id, t["asunto"], seccion_id=seccion_id, fecha_vencimiento=fecha):
+                n_tareas += 1
+    return {"secciones": n_secciones, "tareas": n_tareas}
+
+
+def guardar_plantilla_desde_proyecto(usuario_id: int, categoria_id: int, nombre: str) -> int | None:
+    """Guarda las secciones y los asuntos de las tareas abiertas del proyecto como plantilla del despacho
+    (sin fechas, personas ni comentarios). Solo el dueño."""
+    nombre = (nombre or "").strip()[:80]
+    conn = get_connection()
+    try:
+        u = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        if not nombre or u is None or u["tenant_id"] is None or _rol_en_proyecto(conn, usuario_id, categoria_id) != "dueno":
+            return None
+        if conn.execute("SELECT COUNT(*) FROM proyecto_plantillas WHERE tenant_id = ?", (u["tenant_id"],)).fetchone()[0] >= MAX_PLANTILLAS_TENANT:
+            return None
+        secciones = conn.execute("SELECT id, nombre FROM proyecto_secciones WHERE categoria_id = ? ORDER BY orden, id", (categoria_id,)).fetchall()
+        tareas = conn.execute(
+            """SELECT asunto, seccion_id FROM tareas_outlook WHERE categoria_id = ? AND papelera_en IS NULL AND estado != 'completada'
+               ORDER BY orden_proyecto, id""",
+            (categoria_id,),
+        ).fetchall()
+        estructura = [{"nombre": s["nombre"], "tareas": [{"asunto": t["asunto"]} for t in tareas if t["seccion_id"] == s["id"]]} for s in secciones]
+        sueltas = [{"asunto": t["asunto"]} for t in tareas if t["seccion_id"] is None]
+        if sueltas:
+            estructura.insert(0, {"nombre": nombre, "tareas": sueltas})
+        estructura = _estructura_valida(estructura)
+        if not estructura:
+            return None
+        cur = conn.execute(
+            "INSERT INTO proyecto_plantillas (tenant_id, usuario_id, nombre, estructura, creada_en) VALUES (?, ?, ?, ?, ?)",
+            (u["tenant_id"], usuario_id, nombre, json.dumps(estructura, ensure_ascii=False), now_iso()),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_plantillas_proyecto(usuario_id: int) -> list[dict]:
+    """Plantillas guardadas por el despacho del usuario (`estructura` ya como lista)."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT p.* FROM proyecto_plantillas p JOIN usuarios u ON u.tenant_id = p.tenant_id WHERE u.id = ? ORDER BY p.nombre""",
+            (usuario_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    resultado = []
+    for f in filas:
+        try:
+            resultado.append(dict(f, estructura=_estructura_valida(json.loads(f["estructura"]))))
+        except (ValueError, TypeError):
+            continue
+    return resultado
+
+
+def eliminar_plantilla_proyecto(usuario_id: int, plantilla_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "DELETE FROM proyecto_plantillas WHERE id = ? AND tenant_id = (SELECT tenant_id FROM usuarios WHERE id = ?)",
+            (plantilla_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def correos_de_cliente_para(usuario_id: int, cliente_fiscal_id: int, limite: int = 5) -> list[dict]:
+    """Los últimos correos de SUS cuentas vinculados al cliente (el correo es privado: cada quien ve solo los suyos)."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT m.id, m.asunto, m.remitente, m.fecha, m.leido FROM correo_mensajes m
+               JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE c.usuario_id = ? AND m.cliente_fiscal_id = ? ORDER BY m.fecha DESC, m.id DESC LIMIT ?""",
+            (usuario_id, cliente_fiscal_id, max(1, min(limite, 20))),
+        ).fetchall()
+        return [dict(f) for f in filas]
     finally:
         conn.close()
 

@@ -216,6 +216,15 @@
       <input type="color" id="nuevo-menu-color" name="color" value="#4a90d9" title="{{ _('Color del proyecto') }}" aria-label="{{ _('Color del proyecto') }}">
       <button type="submit" class="btn btn-primary">{{ _('Crear proyecto') }}</button>
     </div>
+    {% if plantillas_proyecto %}
+    <div class="inline-form">
+      <label for="nuevo-menu-plantilla">{{ _('Empezar desde una plantilla') }}</label>
+      <select id="nuevo-menu-plantilla" name="plantilla">
+        <option value="">{{ _('Proyecto vacío') }}</option>
+        {% for pl in plantillas_proyecto %}<option value="{{ pl.clave }}">{{ pl.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <div class="menu-form-icono">
       <span class="menu-form-icono-label">{{ _('Icono') }}</span>
       {{ selector_icono('folder') }}

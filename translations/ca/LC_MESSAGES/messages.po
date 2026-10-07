@@ -6509,3 +6509,160 @@ msgstr ""
 msgid "Asunto... (puedes añadir «viernes 10h», «@luis», «!alta», «#proyecto»)"
 msgstr "Assumpte... (pots afegir «divendres 10h», «@lluis», «!alta», «#projecte»)"
 
+msgid "No se ha podido guardar la nota."
+msgstr "No s'ha pogut desar la nota."
+
+msgid "No se ha podido aplicar la plantilla."
+msgstr "No s'ha pogut aplicar la plantilla."
+
+msgid "Cierre trimestral"
+msgstr "Tancament trimestral"
+
+msgid "Recoger documentación, contabilizar y presentar los modelos del trimestre."
+msgstr ""
+"Recollir documentació, comptabilitzar i presentar els models del "
+"trimestre."
+
+msgid "Recoger documentación"
+msgstr "Recollir documentació"
+
+msgid "Pedir extractos bancarios"
+msgstr "Demanar extractes bancaris"
+
+msgid "Pedir facturas emitidas y recibidas"
+msgstr "Demanar factures emeses i rebudes"
+
+msgid "Contabilizar"
+msgstr "Comptabilitzar"
+
+msgid "Contabilizar facturas y bancos"
+msgstr "Comptabilitzar factures i bancs"
+
+msgid "Cuadrar IVA soportado y repercutido"
+msgstr "Quadrar IVA suportat i repercutit"
+
+msgid "Presentar"
+msgstr "Presentar"
+
+msgid "Preparar los modelos del trimestre"
+msgstr "Preparar els models del trimestre"
+
+msgid "Revisar con el cliente y presentar"
+msgstr "Revisar amb el client i presentar"
+
+msgid "Enviar justificantes al cliente"
+msgstr "Enviar justificants al client"
+
+msgid "Alta de cliente nuevo"
+msgstr "Alta de client nou"
+
+msgid "Datos, autorizaciones y primeros pasos con un cliente que empieza."
+msgstr "Dades, autoritzacions i primers passos amb un client que comença."
+
+msgid "Datos y documentos"
+msgstr "Dades i documents"
+
+msgid "Pedir DNI/CIF y escrituras"
+msgstr "Demanar DNI/CIF i escriptures"
+
+msgid "Firmar la hoja de encargo"
+msgstr "Signar el full d'encàrrec"
+
+msgid "Accesos y autorizaciones"
+msgstr "Accessos i autoritzacions"
+
+msgid "Tramitar apoderamiento en la Agencia Tributaria"
+msgstr "Tramitar l'apoderament a l'Agència Tributària"
+
+msgid "Solicitar acceso a la banca online"
+msgstr "Sol·licitar accés a la banca en línia"
+
+msgid "Puesta en marcha"
+msgstr "Posada en marxa"
+
+msgid "Crear el cliente y su calendario fiscal"
+msgstr "Crear el client i el seu calendari fiscal"
+
+msgid "Declaración de la renta"
+msgstr "Declaració de la renda"
+
+msgid "Campaña de renta de un cliente, de los datos al envío."
+msgstr "Campanya de renda d'un client, de les dades a l'enviament."
+
+msgid "Datos"
+msgstr "Dades"
+
+msgid "Pedir datos fiscales y certificados"
+msgstr "Demanar dades fiscals i certificats"
+
+msgid "Pedir justificantes de deducciones"
+msgstr "Demanar justificants de deduccions"
+
+msgid "Borrador"
+msgstr "Esborrany"
+
+msgid "Preparar el borrador"
+msgstr "Preparar l'esborrany"
+
+msgid "Revisar el borrador con el cliente"
+msgstr "Revisar l'esborrany amb el client"
+
+msgid "Presentar y enviar el justificante"
+msgstr "Presentar i enviar el justificant"
+
+msgid ""
+"Notas del equipo: las ve todo el que participa en el proyecto. Tu "
+"registro personal sigue siendo privado."
+msgstr ""
+"Notes de l'equip: les veu tothom qui participa en el projecte. El teu "
+"registre personal continua sent privat."
+
+msgid "Quitar fijado"
+msgstr "Deixa de fixar"
+
+msgid "Fijar"
+msgstr "Fixa"
+
+msgid "Todavía no hay notas en este proyecto."
+msgstr "Encara no hi ha notes en aquest projecte."
+
+msgid "añadió una nota"
+msgstr "ha afegit una nota"
+
+msgid "Aún no hay actividad en este proyecto."
+msgstr "Encara no hi ha activitat en aquest projecte."
+
+msgid "Sin vencimientos pendientes."
+msgstr "Sense venciments pendents."
+
+msgid "Tus últimos correos del cliente"
+msgstr "Els teus últims correus del client"
+
+msgid "Ningún correo vinculado a este cliente en tus cuentas."
+msgstr "Cap correu vinculat a aquest client als teus comptes."
+
+msgid "Añadir secciones y tareas de una plantilla"
+msgstr "Afegeix seccions i tasques d'una plantilla"
+
+msgid ""
+"Se añade a lo que ya hay; no se borra nada. Las fechas se calculan desde "
+"hoy."
+msgstr ""
+"S'afegeix al que ja hi ha; no s'esborra res. Les dates es calculen des "
+"d'avui."
+
+msgid "Guardar este proyecto como plantilla del despacho"
+msgstr "Desa aquest projecte com a plantilla del despatx"
+
+msgid "Nombre de la plantilla"
+msgstr "Nom de la plantilla"
+
+msgid "Mi registro"
+msgstr "El meu registre"
+
+msgid "Empezar desde una plantilla"
+msgstr "Comença des d'una plantilla"
+
+msgid "Proyecto vacío"
+msgstr "Projecte buit"
+

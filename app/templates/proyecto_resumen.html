@@ -50,6 +50,54 @@
   </section>
 </div>
 
+{% if p.cliente_fiscal_id %}
+<section class="proyecto-bloque" id="cliente">
+  <h2>{{ _('Cliente') }}: <a href="{{ url_for('fiscal.ficha_cliente', cliente_id=p.cliente_fiscal_id) }}">{{ p.cliente_nombre }}</a></h2>
+  <div class="proyecto-rejilla">
+    <div>
+      <h3>{{ _('Vencimientos pendientes') }}</h3>
+      {% if vencimientos_cliente %}
+      <ul class="dash-equipo">{% for v in vencimientos_cliente %}<li><span class="dash-equipo-nombre">{{ _('Modelo %(m)s', m=v.modelo) }} · {{ v.periodo }}</span><span class="pill">{{ v.fecha_limite[:10] }}</span></li>{% endfor %}</ul>
+      {% else %}<p class="muted">{{ _('Sin vencimientos pendientes.') }}</p>{% endif %}
+    </div>
+    <div>
+      <h3>{{ _('Tus últimos correos del cliente') }}</h3>
+      {% if correos_cliente %}
+      <ul class="dash-equipo">{% for c in correos_cliente %}<li><span class="dash-equipo-nombre"><a href="{{ url_for('correo.ver_mensaje', mensaje_id=c.id) }}">{{ c.asunto or _('(sin asunto)') }}</a></span><span class="pill">{{ (c.fecha or '')[:10] }}</span></li>{% endfor %}</ul>
+      {% else %}<p class="muted">{{ _('Ningún correo vinculado a este cliente en tus cuentas.') }}</p>{% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if organiza %}
+<section class="proyecto-bloque" id="plantillas">
+  <h2>{{ _('Plantillas') }}</h2>
+  {% if plantillas %}
+  <form class="proyecto-form" action="{{ url_for('proyectos.aplicar_plantilla', proyecto_id=p.id) }}" method="post">
+    <label>{{ _('Añadir secciones y tareas de una plantilla') }}
+      <select name="plantilla">{% for pl in plantillas %}<option value="{{ pl.clave }}">{{ pl.nombre }}</option>{% endfor %}</select>
+    </label>
+    <button type="submit" class="btn btn-ghost">{{ _('Aplicar') }}</button>
+  </form>
+  <p class="muted">{{ _('Se añade a lo que ya hay; no se borra nada. Las fechas se calculan desde hoy.') }}</p>
+  {% endif %}
+  {% if es_dueno %}
+  <form class="proyecto-form" action="{{ url_for('proyectos.guardar_plantilla', proyecto_id=p.id) }}" method="post">
+    <label>{{ _('Guardar este proyecto como plantilla del despacho') }} <input type="text" name="nombre" maxlength="80" required placeholder="{{ _('Nombre de la plantilla') }}"></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Guardar plantilla') }}</button>
+  </form>
+  {% for pl in plantillas if pl.propia %}
+  {% if loop.first %}<ul class="log-list">{% endif %}
+    <li class="log-item"><span class="log-text">{{ pl.nombre }}</span>
+      <form action="{{ url_for('proyectos.eliminar_plantilla', plantilla_id=pl.id) }}" method="post"><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></form>
+    </li>
+  {% if loop.last %}</ul>{% endif %}
+  {% endfor %}
+  {% endif %}
+</section>
+{% endif %}
+
 {% if es_dueno %}
 <details class="proyecto-ajustes" id="ajustes">
   <summary class="btn btn-ghost">{{ _('Ajustes y miembros') }}</summary>

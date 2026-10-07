@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, salud
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_proyectos import proyectos_bp
@@ -751,6 +751,7 @@ def inicio():
         total_activas=len(activas),
         total_mi_dia=len(mi_dia),
         proyectos_compartidos=db.listar_proyectos_compartidos_conmigo(g.usuario_id),
+        plantillas_proyecto=proyecto_plantillas.catalogo(g.usuario_id),
         carga_equipo=_carga_equipo_para_inicio(g.usuario_id),
         mi_dia=mi_dia[:5],
         vencimientos_proximos=vencimientos_proximos,
@@ -805,7 +806,12 @@ def crear_menu():
     color = request.form.get("color", "").strip() or None
     icono = _icono_menu_valido(request.form.get("icono", "").strip())
     if nombre:
-        db.crear_categoria(g.usuario_id, nombre, color, icono)
+        categoria_id = db.crear_categoria(g.usuario_id, nombre, color, icono)
+        clave = request.form.get("plantilla", "").strip()
+        estructura = proyecto_plantillas.estructura_de(g.usuario_id, clave) if clave else None
+        if estructura:
+            db.aplicar_plantilla_proyecto(g.usuario_id, categoria_id, estructura)
+            return redirect(url_for("proyectos.lista", proyecto_id=categoria_id))
     return redirect(url_for("inicio"))
 
 

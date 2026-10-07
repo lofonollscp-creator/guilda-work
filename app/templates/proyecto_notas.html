@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Notas') }} · {{ p.nombre }} — Guilda Work{% endblock %}
+{% block content %}
+{% include "_proyecto_cabecera.html" %}
+
+<section class="proyecto-bloque">
+  <p class="muted">{{ _('Notas del equipo: las ve todo el que participa en el proyecto. Tu registro personal sigue siendo privado.') }}</p>
+  {% if error %}<p class="texto-peligro" role="alert">{{ error }}</p>{% endif %}
+  {% if organiza %}
+  <form class="proyecto-form" action="{{ url_for('proyectos.crear_nota', proyecto_id=p.id) }}" method="post">
+    <label class="proyecto-form-ancha">{{ _('Nueva nota') }} <textarea name="texto" rows="3" maxlength="4000" required></textarea></label>
+    <button type="submit" class="btn btn-primary">{{ _('Añadir nota') }}</button>
+  </form>
+  {% endif %}
+  {% if notas %}
+  <ul class="log-list proyecto-notas">
+    {% for n in notas %}
+    <li class="log-item {{ 'nota-fijada' if n.fijada }}">
+      <div class="log-text">
+        <p style="white-space: pre-wrap; margin: 0;">{{ n.texto }}</p>
+        <span class="muted">{{ n.autor }} · {{ n.creada_en[:16].replace('T', ' ') }}{% if n.fijada %} · {{ _('Fijada') }}{% endif %}</span>
+      </div>
+      {% if n.puede_fijar %}
+      <form action="{{ url_for('proyectos.fijar_nota', proyecto_id=p.id, nota_id=n.id) }}" method="post">
+        <input type="hidden" name="fijada" value="{{ 0 if n.fijada else 1 }}">
+        <button type="submit" class="btn btn-ghost">{{ _('Quitar fijado') if n.fijada else _('Fijar') }}</button>
+      </form>
+      {% endif %}
+      {% if n.puede_borrar %}
+      <form action="{{ url_for('proyectos.eliminar_nota', proyecto_id=p.id, nota_id=n.id) }}" method="post">
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay notas en este proyecto.') }}</p>{% endif %}
+</section>
+{% endblock %}

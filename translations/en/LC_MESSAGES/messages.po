@@ -6501,3 +6501,158 @@ msgstr ""
 msgid "Asunto... (puedes añadir «viernes 10h», «@luis», «!alta», «#proyecto»)"
 msgstr "Subject... (you can add “friday 10am”, “@luis”, “!alta”, “#project”)"
 
+msgid "No se ha podido guardar la nota."
+msgstr "The note could not be saved."
+
+msgid "No se ha podido aplicar la plantilla."
+msgstr "The template could not be applied."
+
+msgid "Cierre trimestral"
+msgstr "Quarterly close"
+
+msgid "Recoger documentación, contabilizar y presentar los modelos del trimestre."
+msgstr "Collect documents, post the books and file the quarter's returns."
+
+msgid "Recoger documentación"
+msgstr "Collect documents"
+
+msgid "Pedir extractos bancarios"
+msgstr "Request bank statements"
+
+msgid "Pedir facturas emitidas y recibidas"
+msgstr "Request issued and received invoices"
+
+msgid "Contabilizar"
+msgstr "Post the books"
+
+msgid "Contabilizar facturas y bancos"
+msgstr "Post invoices and bank entries"
+
+msgid "Cuadrar IVA soportado y repercutido"
+msgstr "Reconcile input and output VAT"
+
+msgid "Presentar"
+msgstr "File"
+
+msgid "Preparar los modelos del trimestre"
+msgstr "Prepare the quarter's returns"
+
+msgid "Revisar con el cliente y presentar"
+msgstr "Review with the client and file"
+
+msgid "Enviar justificantes al cliente"
+msgstr "Send receipts to the client"
+
+msgid "Alta de cliente nuevo"
+msgstr "New client onboarding"
+
+msgid "Datos, autorizaciones y primeros pasos con un cliente que empieza."
+msgstr "Data, authorisations and first steps with a new client."
+
+msgid "Datos y documentos"
+msgstr "Data and documents"
+
+msgid "Pedir DNI/CIF y escrituras"
+msgstr "Request ID/tax ID and deeds"
+
+msgid "Firmar la hoja de encargo"
+msgstr "Sign the engagement letter"
+
+msgid "Accesos y autorizaciones"
+msgstr "Access and authorisations"
+
+msgid "Tramitar apoderamiento en la Agencia Tributaria"
+msgstr "Arrange power of representation with the tax agency"
+
+msgid "Solicitar acceso a la banca online"
+msgstr "Request online banking access"
+
+msgid "Puesta en marcha"
+msgstr "Getting started"
+
+msgid "Crear el cliente y su calendario fiscal"
+msgstr "Create the client and their tax calendar"
+
+msgid "Declaración de la renta"
+msgstr "Income tax return"
+
+msgid "Campaña de renta de un cliente, de los datos al envío."
+msgstr "A client's income tax campaign, from data to filing."
+
+msgid "Datos"
+msgstr "Data"
+
+msgid "Pedir datos fiscales y certificados"
+msgstr "Request tax data and certificates"
+
+msgid "Pedir justificantes de deducciones"
+msgstr "Request deduction receipts"
+
+msgid "Borrador"
+msgstr "Draft"
+
+msgid "Preparar el borrador"
+msgstr "Prepare the draft"
+
+msgid "Revisar el borrador con el cliente"
+msgstr "Review the draft with the client"
+
+msgid "Presentar y enviar el justificante"
+msgstr "File and send the receipt"
+
+msgid ""
+"Notas del equipo: las ve todo el que participa en el proyecto. Tu "
+"registro personal sigue siendo privado."
+msgstr ""
+"Team notes: everyone in the project can see them. Your personal log stays"
+" private."
+
+msgid "Quitar fijado"
+msgstr "Unpin"
+
+msgid "Fijar"
+msgstr "Pin"
+
+msgid "Todavía no hay notas en este proyecto."
+msgstr "There are no notes in this project yet."
+
+msgid "añadió una nota"
+msgstr "added a note"
+
+msgid "Aún no hay actividad en este proyecto."
+msgstr "There is no activity in this project yet."
+
+msgid "Sin vencimientos pendientes."
+msgstr "No pending deadlines."
+
+msgid "Tus últimos correos del cliente"
+msgstr "Your latest emails from the client"
+
+msgid "Ningún correo vinculado a este cliente en tus cuentas."
+msgstr "No email linked to this client in your accounts."
+
+msgid "Añadir secciones y tareas de una plantilla"
+msgstr "Add sections and tasks from a template"
+
+msgid ""
+"Se añade a lo que ya hay; no se borra nada. Las fechas se calculan desde "
+"hoy."
+msgstr ""
+"It is added to what is already there; nothing is deleted. Dates are "
+"counted from today."
+
+msgid "Guardar este proyecto como plantilla del despacho"
+msgstr "Save this project as an office template"
+
+msgid "Nombre de la plantilla"
+msgstr "Template name"
+
+msgid "Mi registro"
+msgstr "My log"
+
+msgid "Empezar desde una plantilla"
+msgstr "Start from a template"
+
+msgid "Proyecto vacío"
+msgstr "Empty project"
+

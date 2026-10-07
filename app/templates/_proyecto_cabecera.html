@@ -39,5 +39,7 @@
   <a href="{{ url_for('proyectos.lista', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'lista' }}" {{ 'aria-current=page' if pestana == 'lista' }}>{{ _('Lista') }}</a>
   <a href="{{ url_for('proyectos.tablero', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'tablero' }}" {{ 'aria-current=page' if pestana == 'tablero' }}>{{ _('Tablero') }}</a>
   <a href="{{ url_for('proyectos.calendario', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'calendario' }}" {{ 'aria-current=page' if pestana == 'calendario' }}>{{ _('Calendario') }}</a>
-  {% if es_dueno %}<a href="{{ url_for('ver_menu', menu_id=p.id, registro=1) }}">{{ _('Registro') }}</a>{% endif %}
+  <a href="{{ url_for('proyectos.notas', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'notas' }}" {{ 'aria-current=page' if pestana == 'notas' }}>{{ _('Notas') }}</a>
+  <a href="{{ url_for('proyectos.actividad', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'actividad' }}" {{ 'aria-current=page' if pestana == 'actividad' }}>{{ _('Actividad') }}</a>
+  {% if es_dueno %}<a href="{{ url_for('ver_menu', menu_id=p.id, registro=1) }}">{{ _('Mi registro') }}</a>{% endif %}
 </nav>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Actividad') }} · {{ p.nombre }} — Guilda Work{% endblock %}
+{% block content %}
+{% include "_proyecto_cabecera.html" %}
+
+<section class="proyecto-bloque">
+  {% if entradas %}
+  <ul class="actividad-lista">
+    {% for a in entradas %}
+    <li>
+      <span class="muted mono">{{ a.cuando[:16].replace('T', ' ') }}</span>
+      <strong>{{ a.quien }}</strong>
+      {% if a.tipo == 'nota' %}{{ _('añadió una nota') }}: «{{ a.detalle[:120] }}{{ '…' if a.detalle|length > 120 }}»
+      {% else %}
+        {% if a.tipo == 'comentario' %}{{ _('comentó') }}
+        {% elif a.subtipo == 'creada' %}{{ _('creó la tarea') }}
+        {% elif a.subtipo == 'editada' %}{{ _('editó') }} {{ a.detalle }}
+        {% elif a.subtipo == 'estado' %}{{ _('cambió el estado a') }} {{ a.detalle|replace('_', ' ') }}
+        {% elif a.subtipo == 'completada' %}{{ _('completó la tarea') }}
+        {% elif a.subtipo == 'asignada' %}{% if a.detalle %}{{ _('asignó la tarea a') }} {{ a.detalle }}{% else %}{{ _('quitó la asignación') }}{% endif %}
+        {% elif a.subtipo == 'compartida' %}{{ _('compartió con') }} {{ a.detalle }}
+        {% elif a.subtipo == 'dejo_compartir' %}{{ _('dejó de compartir con') }} {{ a.detalle }}
+        {% elif a.subtipo == 'dependencia' %}{{ _('la dejó esperando a') }} «{{ a.detalle }}»
+        {% elif a.subtipo == 'desbloqueada' %}{{ _('la desbloqueó al completar') }} «{{ a.detalle }}»
+        {% elif a.subtipo == 'cronometro' %}{{ _('inició el cronómetro') }}
+        {% elif a.subtipo == 'subtarea_nueva' %}{{ _('añadió la subtarea') }} «{{ a.detalle }}»
+        {% elif a.subtipo == 'subtarea_hecha' %}{{ _('marcó como hecha') }} «{{ a.detalle }}»
+        {% elif a.subtipo == 'subtarea_reabierta' %}{{ _('reabrió') }} «{{ a.detalle }}»
+        {% else %}{{ a.subtipo }}{% endif %}
+        · <a href="{{ url_for('tareas.ver', tarea_id=a.tarea_id) }}">{{ a.tarea }}</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Aún no hay actividad en este proyecto.') }}</p>{% endif %}
+</section>
+{% endblock %}

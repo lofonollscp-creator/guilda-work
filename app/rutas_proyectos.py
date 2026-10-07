@@ -1,4 +1,4 @@
-"""Página de proyecto (fase 1): resumen, lista con secciones y compartir con el despacho.
+"""Página de proyecto: resumen, lista, tablero, calendario, notas compartidas, actividad y plantillas.
 Un proyecto es una categoría de siempre; aquí se ve y se trabaja en equipo. El registro cronológico
 de notas y eventos de cada persona sigue en /menu/<id>?registro=1 (pestaña «Registro»)."""
 from datetime import date, datetime
@@ -8,7 +8,7 @@ from flask_babel import format_date
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import db, quickadd
+from . import db, proyecto_plantillas, quickadd
 from .auth import login_required
 from .rutas_tareas import ESTADOS, _mover_ancla, _rango_para_vista, _titulo_rango
 
@@ -56,7 +56,12 @@ def resumen(proyecto_id: int):
     abiertas = [t for t in db.tareas_de_proyecto(g.usuario_id, proyecto_id, incluir_completadas=False)]
     abiertas.sort(key=lambda t: (t["fecha_vencimiento"] is None, t["fecha_vencimiento"] or "", t["id"]))
     hoy = datetime.now().strftime("%Y-%m-%d")
-    contexto.update({"proximas": abiertas[:8], "hoy": hoy})
+    contexto.update({"proximas": abiertas[:8], "hoy": hoy, "plantillas": proyecto_plantillas.catalogo(g.usuario_id) if contexto["organiza"] else []})
+    if proyecto["cliente_fiscal_id"]:
+        contexto.update({
+            "vencimientos_cliente": db.listar_vencimientos_fiscales(g.tenant_id, estado="pendiente", cliente_fiscal_id=proyecto["cliente_fiscal_id"])[:5] if g.tenant_id is not None else [],
+            "correos_cliente": db.correos_de_cliente_para(g.usuario_id, proyecto["cliente_fiscal_id"]),
+        })
     if contexto["es_dueno"]:
         contexto.update({
             "clientes": db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
@@ -340,3 +345,84 @@ def reordenar_tarea(proyecto_id: int, tarea_id: int):
     if not db.mover_tarea_en_proyecto(g.usuario_id, tarea_id, _entero(request.form.get("seccion_id")), _entero(request.form.get("antes_de"))):
         return _responder(False, _("No se ha podido mover la tarea."), "proyectos.lista", proyecto_id, 403)
     return _responder(True, None, "proyectos.lista", proyecto_id, **anterior)
+
+
+# --- Fase 3: notas compartidas, actividad, plantillas y datos del cliente ---------------------------------
+
+
+@proyectos_bp.route("/<int:proyecto_id>/notas")
+@login_required
+def notas(proyecto_id: int):
+    proyecto = _proyecto_o_404(proyecto_id)
+    contexto = _contexto(proyecto, "notas")
+    contexto.update({"notas": db.listar_notas_proyecto(g.usuario_id, proyecto_id), "error": (request.args.get("error") or "")[:200] or None})
+    return render_template("proyecto_notas.html", **contexto)
+
+
+@proyectos_bp.route("/<int:proyecto_id>/notas", methods=["POST"])
+@login_required
+def crear_nota(proyecto_id: int):
+    proyecto = _proyecto_o_404(proyecto_id)
+    if not _organiza(proyecto):
+        abort(403)
+    if db.crear_nota_proyecto(g.usuario_id, proyecto_id, request.form.get("texto", "")) is None:
+        return _volver(proyecto_id, "proyectos.notas", error=_("No se ha podido guardar la nota."))
+    return _volver(proyecto_id, "proyectos.notas")
+
+
+@proyectos_bp.route("/<int:proyecto_id>/notas/<int:nota_id>/fijar", methods=["POST"])
+@login_required
+def fijar_nota(proyecto_id: int, nota_id: int):
+    proyecto = _proyecto_o_404(proyecto_id)
+    if not _organiza(proyecto):
+        abort(403)
+    db.fijar_nota_proyecto(g.usuario_id, proyecto_id, nota_id, request.form.get("fijada") == "1")
+    return _volver(proyecto_id, "proyectos.notas")
+
+
+@proyectos_bp.route("/<int:proyecto_id>/notas/<int:nota_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_nota(proyecto_id: int, nota_id: int):
+    _proyecto_o_404(proyecto_id)
+    if not db.eliminar_nota_proyecto(g.usuario_id, proyecto_id, nota_id):
+        abort(403)
+    return _volver(proyecto_id, "proyectos.notas")
+
+
+@proyectos_bp.route("/<int:proyecto_id>/actividad")
+@login_required
+def actividad(proyecto_id: int):
+    proyecto = _proyecto_o_404(proyecto_id)
+    contexto = _contexto(proyecto, "actividad")
+    contexto.update({"entradas": db.actividad_proyecto(g.usuario_id, proyecto_id)})
+    return render_template("proyecto_actividad.html", **contexto)
+
+
+@proyectos_bp.route("/<int:proyecto_id>/plantilla", methods=["POST"])
+@login_required
+def aplicar_plantilla(proyecto_id: int):
+    proyecto = _proyecto_o_404(proyecto_id)
+    if not _organiza(proyecto):
+        abort(403)
+    estructura = proyecto_plantillas.estructura_de(g.usuario_id, request.form.get("plantilla", ""))
+    if not estructura or db.aplicar_plantilla_proyecto(g.usuario_id, proyecto_id, estructura) is None:
+        return _volver(proyecto_id, error=_("No se ha podido aplicar la plantilla."))
+    return _volver(proyecto_id)
+
+
+@proyectos_bp.route("/<int:proyecto_id>/plantilla/guardar", methods=["POST"])
+@login_required
+def guardar_plantilla(proyecto_id: int):
+    proyecto = _proyecto_o_404(proyecto_id)
+    if proyecto["rol"] != "dueno":
+        abort(403)
+    db.guardar_plantilla_desde_proyecto(g.usuario_id, proyecto_id, request.form.get("nombre", ""))
+    return _volver(proyecto_id, "proyectos.resumen", _anchor="plantillas")
+
+
+@proyectos_bp.route("/plantillas/<int:plantilla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_plantilla(plantilla_id: int):
+    if not db.eliminar_plantilla_proyecto(g.usuario_id, plantilla_id):
+        abort(404)
+    return redirect(request.referrer or url_for("inicio"))
