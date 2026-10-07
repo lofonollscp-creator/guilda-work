@@ -8963,7 +8963,7 @@ def listar_todas_las_cuentas_correo() -> list[sqlite3.Row]:
     concreto detrás."""
     conn = get_connection()
     try:
-        return conn.execute("SELECT id, usuario_id FROM correo_cuentas ORDER BY id").fetchall()
+        return conn.execute("SELECT id, usuario_id, protocolo FROM correo_cuentas ORDER BY id").fetchall()
     finally:
         conn.close()
 
@@ -9266,6 +9266,66 @@ def contar_operaciones_correo_con_error(usuario_id: int) -> int:
         conn.close()
 
 
+def operaciones_correo_con_error(usuario_id: int) -> list[dict]:
+    """Cambios hechos aquí (leído, destacado, borrado) que no se han podido aplicar en el servidor tras
+    varios intentos, con la cuenta y el asunto del mensaje si todavía está en la base."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT o.id, o.cuenta_id, o.carpeta, o.operacion, o.intentos, o.ultimo_error, o.creada_en,
+                      c.nombre AS cuenta_nombre, m.asunto AS asunto
+               FROM correo_operaciones o JOIN correo_cuentas c ON c.id = o.cuenta_id
+               LEFT JOIN correo_mensajes m ON m.cuenta_id = o.cuenta_id AND m.carpeta = o.carpeta AND m.uid = o.uid
+               WHERE c.usuario_id = ? AND o.estado = 'error' ORDER BY o.id LIMIT 200""",
+            (usuario_id,),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def reintentar_operaciones_correo(usuario_id: int, ids: list[int] | None = None) -> list[int]:
+    """Devuelve a la cola (intentos a cero) las operaciones con error del usuario (todas o las de `ids`).
+    Devuelve los ids de las cuentas afectadas."""
+    conn = get_connection()
+    try:
+        filtro, params = "", [usuario_id]
+        if ids is not None:
+            if not ids:
+                return []
+            filtro = f" AND o.id IN ({','.join('?' * len(ids))})"
+            params += ids
+        cuentas = [f[0] for f in conn.execute(
+            f"SELECT DISTINCT o.cuenta_id FROM correo_operaciones o JOIN correo_cuentas c ON c.id = o.cuenta_id "
+            f"WHERE c.usuario_id = ? AND o.estado = 'error'{filtro}", params)]
+        conn.execute(
+            f"UPDATE correo_operaciones SET estado = 'pendiente', intentos = 0, ultimo_error = NULL WHERE estado = 'error' AND id IN "
+            f"(SELECT o.id FROM correo_operaciones o JOIN correo_cuentas c ON c.id = o.cuenta_id WHERE c.usuario_id = ?{filtro})", params)
+        conn.commit()
+        return cuentas
+    finally:
+        conn.close()
+
+
+def descartar_operaciones_correo(usuario_id: int, ids: list[int] | None = None) -> int:
+    """Olvida las operaciones con error (el mensaje se queda como esté aquí; el servidor no se toca)."""
+    conn = get_connection()
+    try:
+        filtro, params = "", [usuario_id]
+        if ids is not None:
+            if not ids:
+                return 0
+            filtro = f" AND o.id IN ({','.join('?' * len(ids))})"
+            params += ids
+        cur = conn.execute(
+            f"DELETE FROM correo_operaciones WHERE estado = 'error' AND id IN "
+            f"(SELECT o.id FROM correo_operaciones o JOIN correo_cuentas c ON c.id = o.cuenta_id WHERE c.usuario_id = ?{filtro})", params)
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
 def mensaje_correo_por_uid(cuenta_id: int, carpeta: str, uid: str) -> sqlite3.Row | None:
     conn = get_connection()
     try:
@@ -9470,8 +9530,10 @@ def listar_mensajes_correo(
     texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
     con_adjuntos: bool = False, categoria_id: int | None = None, desde: str | None = None,
     hasta: str | None = None, solo_destacados: bool = False, cliente_fiscal_id: int | None = None,
+    remitente: str | None = None, destinatarios: str | None = None, asunto: str | None = None,
 ) -> list[sqlite3.Row]:
-    """`texto` busca en asunto, remitente, destinatarios y CUERPO del mensaje.
+    """`remitente`, `destinatarios` y `asunto` filtran por esa columna (contiene, sin distinguir mayúsculas).
+    `texto` busca en asunto, remitente, destinatarios y CUERPO del mensaje.
     Filtros: con adjuntos, categoría, rango de fechas (YYYY-MM-DD, `hasta`
     inclusive), destacados y cliente fiscal vinculado."""
     conn = get_connection()
@@ -9493,6 +9555,9 @@ def listar_mensajes_correo(
                     "OR cuerpo_texto LIKE ? ESCAPE '\\')"
                 )
                 params.extend([_like_literal(texto)] * 4)
+        for columna, valor in (("remitente", remitente), ("destinatarios", destinatarios), ("asunto", asunto)):
+            if valor:
+                cond.append(f"{columna} LIKE ? ESCAPE '\\'"); params.append(_like_literal(valor))
         if con_adjuntos:
             cond.append("EXISTS (SELECT 1 FROM correo_adjuntos a WHERE a.mensaje_id = correo_mensajes.id)")
         if categoria_id is not None:

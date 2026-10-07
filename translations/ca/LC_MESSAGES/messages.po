@@ -6666,3 +6666,40 @@ msgstr "Comença des d'una plantilla"
 msgid "Proyecto vacío"
 msgstr "Projecte buit"
 
+msgid "Cambios que no se han podido aplicar en el servidor"
+msgstr "Canvis que no s'han pogut aplicar al servidor"
+
+msgid ""
+"Marcaste estos correos aquí pero el servidor no los aceptó tras varios "
+"intentos. Puedes reintentarlos o descartarlos (el correo se queda como "
+"está en Guilda Work)."
+msgstr ""
+"Has marcat aquests correus aquí però el servidor no els ha acceptat "
+"després de diversos intents. Pots reintentar-los o descartar-los (el "
+"correu es queda com està a Guilda Work)."
+
+msgid "cambio"
+msgstr "canvi"
+
+msgid "Reintentar los marcados"
+msgstr "Reintenta els marcats"
+
+msgid "Descartar los marcados"
+msgstr "Descarta els marcats"
+
+msgid "Reintentar todos"
+msgstr "Reintenta'ls tots"
+
+msgid ""
+"Operadores: de:ana  para:luis  asunto:factura  adjunto:  es:noleido  "
+"es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nombre  "
+"categoria:Nombre"
+msgstr ""
+"Operadors: de:ana  para:luis  asunto:factura  adjunto:  es:noleido  "
+"es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nom  "
+"categoria:Nom"
+
+#, python-format
+msgid "No se ha encontrado una única coincidencia para: %(cosas)s"
+msgstr "No s'ha trobat una única coincidència per a: %(cosas)s"
+

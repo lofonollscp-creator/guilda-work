@@ -102,6 +102,8 @@ Variables opcionales:
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
 | `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |
+| `GUILDA_CORREO_IDLE` | `1` | Correo casi instantáneo con IMAP IDLE: una conexión en espera por cuenta IMAP que sincroniza al aviso del servidor. `0` lo desactiva (queda el auto-sync periódico). |
+| `GUILDA_CORREO_IDLE_MAX` | `100` | Máximo de cuentas con IDLE a la vez (una conexión y un hilo por cuenta). |
 | `GUILDA_URL_PUBLICA` | _(vacío)_ | URL pública de la app (p. ej. `https://work.tudominio.com`), sin barra final. La usan los correos que se mandan sin petición web de por medio —recordatorios de vencimientos a clientes— para enlazar al portal. Sin ella el correo sale sin enlace. |
 | `GUILDA_FICHAJE_AVISO_HORAS` | `10` | Horas con la jornada de fichaje abierta tras las cuales se avisa (una vez por jornada) de que quizá se olvidó la salida. `0` lo desactiva. Se comprueba cada 15 minutos. |
 

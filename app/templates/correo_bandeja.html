@@ -69,7 +69,8 @@
     <form class="correo-lista-toolbar" method="get">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
       <input type="hidden" name="carpeta" value="{{ carpeta }}">
-      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar correo...') }}" aria-label="{{ _('Buscar correo') }}">
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar correo...') }}" aria-label="{{ _('Buscar correo') }}" title="{{ _('Operadores: de:ana  para:luis  asunto:factura  adjunto:  es:noleido  es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nombre  categoria:Nombre') }}">
+      {% if busqueda_sin_resolver %}<p class="muted texto-peligro" role="status">{{ _('No se ha encontrado una única coincidencia para: %(cosas)s', cosas=busqueda_sin_resolver|join(', ')) }}</p>{% endif %}
       <label class="correo-toolbar-check">
         <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} onchange="this.form.requestSubmit()"> {{ _('No leídos') }}
       </label>

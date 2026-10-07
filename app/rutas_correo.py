@@ -3,6 +3,7 @@ vista de bandeja de 3 paneles al estilo New Outlook (rail de cuentas +
 carpetas + lista de mensajes + panel de lectura, todo en la misma ruta
 `/correo/`). Vive en su propio Blueprint, mismo patrón que app/rutas_tareas.py.
 """
+import threading
 import re
 from datetime import date, datetime, timedelta
 
@@ -132,7 +133,32 @@ def _render_redactar(
 @correo_bp.route("/cuentas")
 @login_required
 def cuentas():
-    return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=None)
+    return render_template(
+        "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=None,
+        operaciones_error=db.operaciones_correo_con_error(g.usuario_id),
+    )
+
+
+def _ids_de_operaciones():
+    """None = todas; si no, los ids marcados (solo enteros)."""
+    if request.form.get("todas") == "1":
+        return None
+    return [int(i) for i in request.form.getlist("id") if i.isdigit()]
+
+
+@correo_bp.route("/cuentas/operaciones/reintentar", methods=["POST"])
+@login_required
+def reintentar_operaciones():
+    for cuenta_id in db.reintentar_operaciones_correo(g.usuario_id, _ids_de_operaciones()):
+        threading.Thread(target=correo.procesar_operaciones_cuenta, args=(cuenta_id, 0), daemon=True).start()
+    return redirect(url_for("correo.cuentas"))
+
+
+@correo_bp.route("/cuentas/operaciones/descartar", methods=["POST"])
+@login_required
+def descartar_operaciones():
+    db.descartar_operaciones_correo(g.usuario_id, _ids_de_operaciones())
+    return redirect(url_for("correo.cuentas"))
 
 
 @correo_bp.route("/cuentas", methods=["POST"])
@@ -248,10 +274,12 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
     preferencias = db.obtener_preferencias_correo(g.usuario_id)
 
     mensajes = []
+    consulta = correo.consulta_de_busqueda(g.usuario_id, g.tenant_id, q)
     if cuenta_id is not None:
+        # Los operadores de la caja («de:ana adjunto:») se suman a los filtros de la barra; si chocan, gana el operador.
         mensajes = correo.listar_mensajes(
-            cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=q,
-            limite=preferencias["limite_mensajes"], incluir_pospuestos=incluir_pospuestos, **filtros,
+            cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos or consulta.solo_no_leidos, texto=consulta.texto or None,
+            limite=preferencias["limite_mensajes"], incluir_pospuestos=incluir_pospuestos, **{**filtros, **consulta.filtros},
         )
 
     # Conversaciones: un solo mensaje por hilo (el más reciente) con el nº de
@@ -290,6 +318,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "num_borradores": db.contar_borradores_correo(g.usuario_id),
         "densidad": preferencias["densidad"],
         "q": q or "",
+        "busqueda_sin_resolver": consulta.sin_resolver,
         "solo_no_leidos": solo_no_leidos,
         "incluir_pospuestos": incluir_pospuestos,
         "filtros": filtros,

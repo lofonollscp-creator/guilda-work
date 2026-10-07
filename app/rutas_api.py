@@ -920,11 +920,13 @@ def listar_mensajes_correo():
     if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
         abort(404, "Cuenta no encontrada.")
     preferencias = db.obtener_preferencias_correo(g.usuario_id)
+    consulta = correo.consulta_de_busqueda(g.usuario_id, getattr(g, "tenant_id", None), request.args.get("q"))
     mensajes = correo.listar_mensajes(
         cuenta_id,
         carpeta=request.args.get("carpeta", "INBOX"),
-        solo_no_leidos=request.args.get("no_leidos") == "1",
-        texto=request.args.get("q") or None,
+        solo_no_leidos=request.args.get("no_leidos") == "1" or consulta.solo_no_leidos,
+        texto=consulta.texto or None,
+        **consulta.filtros,
         limite=preferencias["limite_mensajes"],
         incluir_pospuestos=request.args.get("pospuestos") == "1",
     )

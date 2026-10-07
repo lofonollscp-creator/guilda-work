@@ -39,7 +39,7 @@ from waitress import serve
 
 from app import db
 from app.main import (
-    _avisos_fichaje_servidor, _envios_correo_servidor, _recordatorios_tareas_servidor, _recordatorio_vencimientos_fiscales, _recordatorios_portal_servidor,
+    _avisos_fichaje_servidor, _envios_correo_servidor, _idle_correo_servidor, _recordatorios_tareas_servidor, _recordatorio_vencimientos_fiscales, _recordatorios_portal_servidor,
     _resumen_ia_semanal,
     _sincronizacion_correo_servidor, _vigilante_salud_servidor, app,
 )
@@ -58,6 +58,8 @@ if __name__ == "__main__":
     # 5 por defecto, 0 lo desactiva). _sincronizacion_correo_periodica sigue
     # siendo solo de escritorio; esta es su versión multi-usuario.
     threading.Thread(target=_sincronizacion_correo_servidor, daemon=True).start()
+    # Correo casi instantáneo con IMAP IDLE (GUILDA_CORREO_IDLE=0 lo desactiva).
+    threading.Thread(target=_idle_correo_servidor, daemon=True).start()
     # Cola de envío de correo: "deshacer envío" y envíos programados.
     threading.Thread(target=_envios_correo_servidor, daemon=True).start()
     # Aviso de "salida olvidada" del fichaje (GUILDA_FICHAJE_AVISO_HORAS, 10 por defecto).

@@ -1108,6 +1108,17 @@ def listar_mensajes(
     )
 
 
+def consulta_de_busqueda(usuario_id: int, tenant_id: int | None, q: str | None):
+    """Texto de la caja de búsqueda -> `busqueda_correo.Consulta` (operadores resueltos con las categorías
+    del usuario y los clientes de su despacho)."""
+    from . import busqueda_correo
+    if not q or ":" not in q:
+        return busqueda_correo.Consulta(texto=(q or "").strip())
+    categorias = [(c["id"], c["nombre"]) for c in db.listar_categorias_correo(usuario_id)]
+    clientes = [(c["id"], c["nombre"]) for c in db.listar_clientes_fiscales(tenant_id)] if tenant_id is not None else []
+    return busqueda_correo.interpretar(q, categorias, clientes)
+
+
 def obtener_mensaje(mensaje_id: int):
     return db.obtener_mensaje_correo(mensaje_id)
 

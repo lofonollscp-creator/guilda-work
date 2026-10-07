@@ -6735,3 +6735,40 @@ msgstr "Commencer à partir d'un modèle"
 msgid "Proyecto vacío"
 msgstr "Projet vide"
 
+msgid "Cambios que no se han podido aplicar en el servidor"
+msgstr "Modifications non appliquées sur le serveur"
+
+msgid ""
+"Marcaste estos correos aquí pero el servidor no los aceptó tras varios "
+"intentos. Puedes reintentarlos o descartarlos (el correo se queda como "
+"está en Guilda Work)."
+msgstr ""
+"Vous avez marqué ces courriels ici mais le serveur n'a pas accepté après "
+"plusieurs tentatives. Vous pouvez réessayer ou abandonner (le courriel "
+"reste tel quel dans Guilda Work)."
+
+msgid "cambio"
+msgstr "modification"
+
+msgid "Reintentar los marcados"
+msgstr "Réessayer la sélection"
+
+msgid "Descartar los marcados"
+msgstr "Abandonner la sélection"
+
+msgid "Reintentar todos"
+msgstr "Tout réessayer"
+
+msgid ""
+"Operadores: de:ana  para:luis  asunto:factura  adjunto:  es:noleido  "
+"es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nombre  "
+"categoria:Nombre"
+msgstr ""
+"Opérateurs : de:ana  para:luis  asunto:factura  adjunto:  es:noleido  "
+"es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nom  "
+"categoria:Nom"
+
+#, python-format
+msgid "No se ha encontrado una única coincidencia para: %(cosas)s"
+msgstr "Aucune correspondance unique pour : %(cosas)s"
+

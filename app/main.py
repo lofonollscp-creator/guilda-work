@@ -1883,6 +1883,23 @@ def _sincronizacion_correo_servidor():
         time.sleep(minutos * 60)
 
 
+def _idle_correo_servidor():
+    """Correo casi instantáneo (IMAP IDLE): mantiene una conexión en espera por cada cuenta IMAP y
+    sincroniza al momento cuando el servidor avisa. GUILDA_CORREO_IDLE=0 lo desactiva y
+    GUILDA_CORREO_IDLE_MAX (100) limita cuántas cuentas a la vez. El auto-sync periódico sigue activo."""
+    from . import correo_idle
+    if not correo_idle.habilitado():
+        return
+    gestor = correo_idle.GestorIdle(correo_idle.maximo_cuentas())
+    time.sleep(SINCRONIZACION_CORREO_SERVIDOR_ESPERA_INICIAL_SEGUNDOS)
+    while True:
+        try:
+            gestor.revisar()
+        except Exception:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en el gestor de IMAP IDLE")
+        time.sleep(60)
+
+
 ENVIOS_CORREO_INTERVALO_SEGUNDOS = 10
 
 
