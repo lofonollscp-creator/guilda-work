@@ -447,14 +447,23 @@ def editar(tarea_id: int):
     )
 
 
+LIMITE_SECCION = 30    # tareas que enseña cada sección de "Mi día" antes de «ver más»
+LIMITE_COLUMNA = 25    # tarjetas por columna del tablero antes de «mostrar más»
+
+
 @tareas_bp.route("/hoy")
 @login_required
 def hoy():
     """"Mi día": vencidas, de hoy, en progreso y asignadas a mí."""
-    secciones = db.tareas_para_hoy(g.usuario_id)
+    completas = db.tareas_para_hoy(g.usuario_id)
+    totales = {clave: len(lista) for clave, lista in completas.items()}
+    # Con cientos de vencidas la página pesaba casi 1 MB: cada sección enseña las primeras
+    # LIMITE_SECCION y un enlace «ver las N restantes» (?todas=<sección>).
+    expandida = request.args.get("todas")
+    secciones = {clave: (lista if expandida in (clave, "*") else lista[:LIMITE_SECCION]) for clave, lista in completas.items()}
     todas = [t for lista in secciones.values() for t in lista]
     return render_template(
-        "tareas_hoy.html", secciones=secciones, estados=ESTADOS, vista="hoy",
+        "tareas_hoy.html", secciones=secciones, totales=totales, estados=ESTADOS, vista="hoy",
         error=(request.args.get("error") or "")[:200] or None, **_contexto_filas(todas),
     )
 
@@ -469,9 +478,12 @@ def tablero():
         columnas[t["estado"]].append(t)
     # Las completadas son muchas con el tiempo: solo las más recientes.
     columnas["completada"] = sorted(columnas["completada"], key=lambda t: t["fecha_completada"] or "", reverse=True)[:15]
+    totales = {valor: len(lista) for valor, lista in columnas.items()}
+    ampliada = request.args.get("mas")
+    columnas = {v: (lista if ampliada in (v, "*") else lista[:LIMITE_COLUMNA]) for v, lista in columnas.items()}
     visibles = [t for lista in columnas.values() for t in lista]
     return render_template(
-        "tareas_tablero.html", estados=ESTADOS, columnas=columnas, vista="tablero", **_contexto_filas(visibles)
+        "tareas_tablero.html", estados=ESTADOS, columnas=columnas, totales=totales, vista="tablero", **_contexto_filas(visibles)
     )
 
 

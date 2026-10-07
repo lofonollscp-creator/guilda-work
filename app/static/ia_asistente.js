@@ -610,8 +610,31 @@
   var togglePanel = document.getElementById("ia-panel-toggle");
   var panel = document.getElementById("ia-panel-flotante");
   var cerrarPanel = document.getElementById("ia-panel-cerrar");
+  // El contenido del panel flotante se pide la primera vez que se abre (no viaja en cada
+  // página: el historial del chat puede ser largo) y se inicializa igual que el resto.
+  var panelCargado = false;
+  function cargarPanel() {
+    var cont = document.getElementById("ia-panel-contenido");
+    if (panelCargado || !cont) return;
+    panelCargado = true;
+    cont.textContent = panel.dataset.cargando || "…";
+    fetch(panel.dataset.url, { credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        cont.innerHTML = html;
+        var chat = cont.querySelector(".ia-chat");
+        if (chat) iniciarChat(chat);
+      })
+      .catch(function () {
+        panelCargado = false;
+        cont.textContent = panel.dataset.error || "";
+      });
+  }
   if (togglePanel && panel) {
-    togglePanel.addEventListener("click", function () { panel.hidden = !panel.hidden; });
+    togglePanel.addEventListener("click", function () {
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) cargarPanel();
+    });
   }
   if (cerrarPanel && panel) {
     cerrarPanel.addEventListener("click", function () { panel.hidden = true; });

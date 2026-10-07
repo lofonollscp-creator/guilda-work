@@ -6377,3 +6377,18 @@ msgstr "Terminé"
 msgid "Recordatorios de tareas"
 msgstr "Rappels de tâches"
 
+msgid "No se pudo cargar el asistente. Inténtalo de nuevo."
+msgstr "Impossible de charger l'assistant. Réessayez."
+
+#, python-format
+msgid "Ver la %(n)s restante"
+msgid_plural "Ver las %(n)s restantes"
+msgstr[0] "Voir la %(n)s restante"
+msgstr[1] "Voir les %(n)s restantes"
+
+#, python-format
+msgid "Mostrar la %(n)s restante"
+msgid_plural "Mostrar las %(n)s restantes"
+msgstr[0] "Afficher la %(n)s restante"
+msgstr[1] "Afficher les %(n)s restantes"
+

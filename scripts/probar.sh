@@ -4,6 +4,7 @@
 #
 #   scripts/probar.sh                      suite completa (con Kratos real en Docker)
 #   scripts/probar.sh --rapida             sin Kratos ni Docker: solo los tests que no inician sesión real
+#   scripts/probar.sh --perfil             mide tiempos/consultas de las pantallas con datos sintéticos (no ejecuta tests)
 #   scripts/probar.sh -n 2                 con 2 procesos en paralelo (cada uno arranca su Kratos)
 #   scripts/probar.sh tests/test_x.py -k y cualquier otro argumento de pytest
 #
@@ -16,10 +17,12 @@ BASE="${GUILDA_TMP:-/tmp}"
 MIN_LIBRE_MB="${GUILDA_MIN_LIBRE_MB:-1500}"
 WORKERS=""
 RAPIDA=0
+PERFIL=0
 ARGS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --rapida) RAPIDA=1 ;;
+    --perfil) PERFIL=1 ;;
     -n) WORKERS="$2"; shift ;;
     *) ARGS+=("$1") ;;
   esac
@@ -45,6 +48,11 @@ cd "$REPO"
 git ls-files -z --cached --others --exclude-standard | grep -zv -e '^data/' -e '^mobile/build/' | rsync -a --files-from=- --from0 ./ "$DESTINO/"
 ln -s "$REPO/.venv" "$DESTINO/.venv"
 cd "$DESTINO"
+
+if [ "$PERFIL" = 1 ]; then
+  nice -n 10 .venv/bin/python scripts/perfil_pantallas.py "${ARGS[@]}"
+  exit $?
+fi
 
 OPCIONES=(-q -p no:cacheprovider "--basetemp=$DESTINO/_bt")
 [ -n "$WORKERS" ] && OPCIONES+=(-n "$WORKERS")

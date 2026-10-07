@@ -1,5 +1,9 @@
-{# Fila de una tarea de la lista, compartida por Lista y Mi día. Se importa con
+{# Fila de una tarea de la lista, compartida por Lista y Mi día. Los textos del borrado con «deshacer»
+   (iguales en todas las filas) van una vez en el <ul> contenedor: ver macro `defecto_eliminar` más abajo. Se importa con
    contexto (necesita g.usuario_id). Variables: t, estados, cronometros, checklists. #}
+{% macro defecto_eliminar() -%}
+data-eliminar-defecto data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}" data-mensaje-ok="{{ _('Tarea eliminada.') }}" data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}" data-quitar-selector="li"
+{%- endmacro %}
 {% macro fila(t, estados, cronometros, checklists, menus, mostrar_estado=True) %}
 {% set cr = cronometros.get(t.id) %}
 {% set es_mia = t.usuario_id == g.usuario_id %}
@@ -86,11 +90,7 @@
   {% if es_mia %}
   <form action="{{ url_for('tareas.eliminar', tarea_id=t.id) }}" method="post"
         data-eliminar-deshacer
-        data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}"
-        data-mensaje-ok="{{ _('Tarea eliminada.') }}"
-        data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}"
-        data-restaurar-url="{{ url_for('tareas.restaurar', tarea_id=t.id) }}"
-        data-quitar-selector="li">
+        data-restaurar-url="{{ url_for('tareas.restaurar', tarea_id=t.id) }}">
     <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
   </form>
   {% endif %}

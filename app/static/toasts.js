@@ -167,15 +167,19 @@
       form.dataset.deshacerWired = "1";
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        var confirmar = form.dataset.confirmar;
+        // Los textos iguales para todas las filas de una lista van una vez en el contenedor
+        // (data-eliminar-defecto); los de la propia fila tienen preferencia.
+        var defecto = (form.closest("[data-eliminar-defecto]") || { dataset: {} }).dataset;
+        var dato = function (clave) { return form.dataset[clave] || defecto[clave] || ""; };
+        var confirmar = dato("confirmar");
         if (confirmar && !window.confirm(confirmar)) return;
 
-        var mensajeOk = form.dataset.mensajeOk || "";
-        var mensajeError = form.dataset.mensajeError || mensajeOk;
+        var mensajeOk = dato("mensajeOk");
+        var mensajeError = dato("mensajeError") || mensajeOk;
         var restaurarUrl = form.dataset.restaurarUrl || "";
         var textoDeshacer = (window.GUILDA_I18N && window.GUILDA_I18N.deshacer) || "Deshacer";
         var volverA = form.dataset.volverA || "";
-        var quitarSelector = form.dataset.quitarSelector || "";
+        var quitarSelector = dato("quitarSelector");
 
         try {
           const resp = await fetch(form.action, { method: "POST" });

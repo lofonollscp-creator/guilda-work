@@ -6310,3 +6310,18 @@ msgstr "Finalitzat"
 msgid "Recordatorios de tareas"
 msgstr "Recordatoris de tasques"
 
+msgid "No se pudo cargar el asistente. Inténtalo de nuevo."
+msgstr "No s'ha pogut carregar l'assistent. Torna-ho a provar."
+
+#, python-format
+msgid "Ver la %(n)s restante"
+msgid_plural "Ver las %(n)s restantes"
+msgstr[0] "Veure la %(n)s restant"
+msgstr[1] "Veure les %(n)s restants"
+
+#, python-format
+msgid "Mostrar la %(n)s restante"
+msgid_plural "Mostrar las %(n)s restantes"
+msgstr[0] "Mostra la %(n)s restant"
+msgstr[1] "Mostra les %(n)s restants"
+

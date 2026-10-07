@@ -409,6 +409,6 @@ def test_dashboard_y_pagina_de_proyecto_muestran_las_tareas(cliente):
     db.crear_tarea_outlook(uid, "Vence hoy", categoria_id=proyecto, fecha_vencimiento=datetime.now().strftime("%Y-%m-%d"))
 
     inicio = cliente.get("/").get_data(as_text=True)
-    assert "tareas para hoy" in inicio and "/tareas/hoy" in inicio
+    assert "1 tarea para hoy" in inicio and "/tareas/hoy" in inicio  # antes pasaba por casualidad con el texto de un atajo del asistente
     pagina = cliente.get(f"/menu/{proyecto}").get_data(as_text=True)
     assert "Tareas pendientes" in pagina and "Vence hoy" in pagina

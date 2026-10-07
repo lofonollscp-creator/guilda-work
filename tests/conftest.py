@@ -173,6 +173,7 @@ def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd):
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "test.db")
     monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path / "backups")
     shutil.copyfile(_plantilla_bd, db.DB_PATH)
+    db._ULTIMO_ACCESO_ANOTADO.clear()  # memoria del proceso: no puede arrastrarse de un test a otro
     db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
     yield
 

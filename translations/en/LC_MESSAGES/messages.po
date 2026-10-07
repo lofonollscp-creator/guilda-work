@@ -6302,3 +6302,18 @@ msgstr "Done"
 msgid "Recordatorios de tareas"
 msgstr "Task reminders"
 
+msgid "No se pudo cargar el asistente. Inténtalo de nuevo."
+msgstr "The assistant could not be loaded. Try again."
+
+#, python-format
+msgid "Ver la %(n)s restante"
+msgid_plural "Ver las %(n)s restantes"
+msgstr[0] "View the %(n)s remaining one"
+msgstr[1] "View the %(n)s remaining"
+
+#, python-format
+msgid "Mostrar la %(n)s restante"
+msgid_plural "Mostrar las %(n)s restantes"
+msgstr[0] "Show the %(n)s remaining one"
+msgstr[1] "Show the %(n)s remaining"
+

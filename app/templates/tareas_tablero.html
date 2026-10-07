@@ -14,7 +14,7 @@
 <div class="tareas-tablero">
   {% for valor, etiqueta in estados %}
   <section class="tareas-columna" aria-labelledby="col-{{ valor }}">
-    <h2 id="col-{{ valor }}" class="tareas-columna-titulo">{{ etiqueta }} <span class="pill">{{ columnas[valor]|length }}</span></h2>
+    <h2 id="col-{{ valor }}" class="tareas-columna-titulo">{{ etiqueta }} <span class="pill">{{ totales[valor] }}</span></h2>
     {% for t in columnas[valor] %}
     {% set cr = cronometros.get(t.id) %}
     {% set parts = participantes.get(t.id, []) %}
@@ -57,6 +57,9 @@
     {% else %}
     <p class="muted tareas-columna-vacia">{{ _('Nada aquí') }}</p>
     {% endfor %}
+    {% if totales[valor] > columnas[valor]|length %}
+    <p class="muted tareas-columna-mas"><a href="{{ url_for('tareas.tablero', mas=valor) }}#col-{{ valor }}">{{ ngettext('Mostrar la %(n)s restante', 'Mostrar las %(n)s restantes', totales[valor] - columnas[valor]|length, n=totales[valor] - columnas[valor]|length) }}</a></p>
+    {% endif %}
   </section>
   {% endfor %}
 </div>

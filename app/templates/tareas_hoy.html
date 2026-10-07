@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_tarea_fila.html" import fila with context %}
+{% from "_tarea_fila.html" import fila, defecto_eliminar with context %}
 {% block title %}{{ _('Mi día') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -13,20 +13,23 @@
 {% include "_tareas_subnav.html" %}
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
-{% set total = secciones.vencidas|length + secciones.hoy|length + secciones.en_progreso|length + secciones.asignadas|length + secciones.compartidas|length %}
+{% set total = totales.vencidas + totales.hoy + totales.en_progreso + totales.asignadas + totales.compartidas %}
 {% if not total %}
 <p class="empty-lane">{{ _('No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.') }}</p>
 {% endif %}
 
 {% for clave, titulo in (('vencidas', _('Vencidas')), ('hoy', _('Vencen hoy')), ('en_progreso', _('En progreso')), ('asignadas', _('Asignadas a mí')), ('compartidas', _('Compartidas conmigo'))) %}
 {% if secciones[clave] %}
-<section class="tareas-dia-seccion tareas-dia-{{ clave }}">
-  <h2 class="tareas-dia-titulo">{{ titulo }} <span class="pill">{{ secciones[clave]|length }}</span></h2>
-  <ul class="log-list">
+<section class="tareas-dia-seccion tareas-dia-{{ clave }}" id="seccion-{{ clave }}">
+  <h2 class="tareas-dia-titulo">{{ titulo }} <span class="pill">{{ totales[clave] }}</span></h2>
+  <ul class="log-list" {{ defecto_eliminar() }}>
     {% for t in secciones[clave] %}
     {{ fila(t, estados, cronometros, checklists, menus, mostrar_estado=False) }}
     {% endfor %}
   </ul>
+  {% if totales[clave] > secciones[clave]|length %}
+  <p class="muted"><a href="{{ url_for('tareas.hoy', todas=clave) }}#seccion-{{ clave }}">{{ ngettext('Ver la %(n)s restante', 'Ver las %(n)s restantes', totales[clave] - secciones[clave]|length, n=totales[clave] - secciones[clave]|length) }}</a></p>
+  {% endif %}
 </section>
 {% endif %}
 {% endfor %}

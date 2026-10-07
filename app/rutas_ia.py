@@ -31,6 +31,17 @@ def asistente_vista():
     )
 
 
+@ia_bp.route("/panel")
+@login_required
+def panel_flotante():
+    """Contenido del panel flotante del asistente. Se pide al abrirlo (no va en cada
+    página): el historial de la conversación puede ser largo."""
+    return render_template(
+        "_ia_panel_flotante.html", mensajes=db.listar_mensajes_ia(g.usuario_id),
+        pendiente=asistente.pendiente_actual(g.usuario_id), atajos=ia_atajos.atajos_para(g.usuario_id),
+    )
+
+
 @ia_bp.route("/mensaje", methods=["POST"])
 @login_required
 def enviar_mensaje():

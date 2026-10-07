@@ -349,13 +349,12 @@
   </div>
 
   {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
-  {% from "_ia_chat_macro.html" import chat %}
-  <div class="ia-panel-flotante" id="ia-panel-flotante" hidden>
+  <div class="ia-panel-flotante" id="ia-panel-flotante" hidden data-url="{{ url_for('ia.panel_flotante') }}" data-cargando="{{ _('Cargando…') }}" data-error="{{ _('No se pudo cargar el asistente. Inténtalo de nuevo.') }}">
     <div class="ia-panel-flotante-cabecera">
       <span>{{ _('Asistente IA') }}</span>
       <button type="button" id="ia-panel-cerrar" title="{{ _('Cerrar') }}">&times;</button>
     </div>
-    {{ chat(ia_mensajes_flotante, ia_pendiente_flotante, 'ia-chat-flotante', ia_atajos_flotante) }}
+    <div id="ia-panel-contenido"></div>
   </div>
   {% endif %}
 

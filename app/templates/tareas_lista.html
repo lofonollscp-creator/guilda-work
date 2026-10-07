@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_tarea_fila.html" import fila with context %}
+{% from "_tarea_fila.html" import fila, defecto_eliminar with context %}
 {% block title %}{{ _('Tareas') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -108,7 +108,7 @@
 {% if not tareas %}
 <p class="empty-lane">{{ _('No hay tareas para este filtro.') }}</p>
 {% else %}
-<ul class="log-list">
+<ul class="log-list" {{ defecto_eliminar() }}>
   {% for t in tareas %}
   {{ fila(t, estados, cronometros, checklists, menus) }}
   {% endfor %}

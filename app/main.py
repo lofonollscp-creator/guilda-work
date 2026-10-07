@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, portal_recordatorios, salud
+from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_backoffice import backoffice_bp
@@ -277,6 +277,9 @@ def _resolver_usuario_actual():
             db.registrar_acceso(usuario["id"])
 
 
+_URL_ESTATICA: dict[str, tuple[float, str]] = {}
+
+
 @app.context_processor
 def inyectar_url_for_versionado():
     # Caddy sirve /static/* con "Cache-Control: public, max-age=604800"
@@ -294,11 +297,21 @@ def inyectar_url_for_versionado():
     # Flask), no toca las llamadas Python a flask.url_for.
     def url_for_versionado(endpoint, **values):
         if endpoint == "static" and "filename" in values and "v" not in values:
+            # Una fila de tarea pinta ~8 iconos y cada url_for hacía un stat() del fichero
+            # más construir la URL (3.400 por página en "Mi día"): se recuerda 30 s por fichero.
+            if set(values) == {"filename"}:
+                guardada = _URL_ESTATICA.get(values["filename"])
+                if guardada and time.monotonic() - guardada[0] < 30:
+                    return guardada[1]
             ruta = os.path.join(app.static_folder, values["filename"])
             try:
                 values["v"] = int(os.path.getmtime(ruta))
             except OSError:
                 pass
+            url = url_for(endpoint, **values)
+            if set(values) <= {"filename", "v"}:
+                _URL_ESTATICA[values["filename"]] = (time.monotonic(), url)
+            return url
         return url_for(endpoint, **values)
 
     return {"url_for": url_for_versionado}
@@ -329,7 +342,8 @@ def inyectar_correo_badge():
     # pasa explícitamente en su propio contexto.
     if not g.usuario_id:
         return {}
-    return {"correo_no_leidos_sidebar": db.contar_no_leidos_total_correo(g.usuario_id)}
+    por_cuenta = peticion.memo("no_leidos", lambda: db.contar_no_leidos_por_cuenta_y_carpeta(g.usuario_id))
+    return {"correo_no_leidos_sidebar": sum(sum(c.values()) for c in por_cuenta.values())}
 
 
 @app.context_processor
@@ -368,7 +382,8 @@ def inyectar_barra_superior():
         return {}
     from zoneinfo import ZoneInfo
 
-    zona = db.zona_horaria_tenant(g.tenant_id)
+    tenant = peticion.memo("tenant", lambda: db.obtener_tenant(g.tenant_id) if g.tenant_id else None)
+    zona = tenant["zona_horaria"] if tenant and tenant["zona_horaria"] and db.zona_horaria_valida(tenant["zona_horaria"]) else db.ZONA_HORARIA_DEFECTO
     ahora_zona = datetime.now(ZoneInfo(zona))
     datos = {
         "barra_fecha": format_date(ahora_zona.date(), "full"),
@@ -390,9 +405,9 @@ def inyectar_barra_superior():
     except Exception:
         pass
     try:
-        sec = db.tareas_para_hoy(g.usuario_id)
-        datos["barra_mi_dia"] = len(sec["vencidas"]) + len(sec["hoy"])
-        datos["barra_mi_dia_vencidas"] = len(sec["vencidas"])
+        vencidas, de_hoy = db.contar_mi_dia(g.usuario_id)
+        datos["barra_mi_dia"] = vencidas + de_hoy
+        datos["barra_mi_dia_vencidas"] = vencidas
     except Exception:
         pass
     try:
@@ -414,8 +429,8 @@ def inyectar_perfil_rail():
         return {}
     return {
         "perfil_rail": db.obtener_perfil_usuario(g.usuario_id),
-        "usuario_rail": db.obtener_usuario(g.usuario_id),
-        "tenant_rail": db.obtener_tenant(g.tenant_id) if g.tenant_id else None,
+        "usuario_rail": peticion.memo("usuario", lambda: db.obtener_usuario(g.usuario_id)),
+        "tenant_rail": peticion.memo("tenant", lambda: db.obtener_tenant(g.tenant_id) if g.tenant_id else None),
     }
 
 
@@ -424,12 +439,14 @@ def inyectar_ia_flotante():
     # El panel flotante del Asistente IA vive en base.html, así que necesita
     # su propio contexto en cualquier página que no sea ya /ia (ahí la ruta
     # pasa mensajes/pendiente explícitamente para el chat de página completa).
-    if not g.usuario_id or (request.endpoint and request.endpoint.startswith("ia.")):
+    # El panel flotante YA NO lleva el historial del chat en cada página (era todo el
+    # historial de la conversación activa, sin límite, oculto, en cada vista): se pide a
+    # /ia/panel al abrirlo. Solo el inicio pinta su chat de dashboard en la propia página.
+    if not g.usuario_id or request.endpoint != "inicio":
         return {}
     return {
         "ia_mensajes_flotante": db.listar_mensajes_ia(g.usuario_id),
         "ia_pendiente_flotante": ia_asistente.pendiente_actual(g.usuario_id),
-        "ia_atajos_flotante": ia_atajos.atajos_para(g.usuario_id),
     }
 
 

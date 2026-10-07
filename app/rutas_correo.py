@@ -11,7 +11,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, db, ia_asistente, notificaciones
+from . import correo, correo_ia, db, ia_asistente, notificaciones, peticion
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -238,7 +238,8 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
     # Una sola consulta agregada (antes: una llamada a
     # contar_no_leidos_correo por cada cuenta, N+1, y solo contaba
     # INBOX -- el badge de la cuenta no reflejaba su total real).
-    no_leidos_por_cuenta_y_carpeta = db.contar_no_leidos_por_cuenta_y_carpeta(g.usuario_id)
+    # Misma consulta que el badge del rail: una sola por petición.
+    no_leidos_por_cuenta_y_carpeta = peticion.memo("no_leidos", lambda: db.contar_no_leidos_por_cuenta_y_carpeta(g.usuario_id))
     no_leidos_por_cuenta = {
         c["id"]: sum(no_leidos_por_cuenta_y_carpeta.get(c["id"], {}).values()) for c in cuentas_disponibles
     }

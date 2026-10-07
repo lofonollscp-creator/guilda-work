@@ -21,6 +21,7 @@ problema real con más de un usuario.
 """
 import hashlib
 import json
+import time
 import os
 import re
 import secrets
@@ -965,6 +966,7 @@ CREATE INDEX IF NOT EXISTS idx_facturacion_accesos_token ON facturacion_accesos(
 # el mismo `executescript(SCHEMA)`, fallaría en cualquier base de datos ya
 # existente donde la tabla ya existe pero todavía no tiene esa columna.
 INDICES = """
+CREATE INDEX IF NOT EXISTS idx_correo_no_leidos ON correo_mensajes(cuenta_id, carpeta) WHERE leido = 0;
 CREATE INDEX IF NOT EXISTS idx_notas_categoria_creada ON notas(categoria_id, creada_en);
 CREATE INDEX IF NOT EXISTS idx_notas_papelera ON notas(papelera_en);
 CREATE INDEX IF NOT EXISTS idx_notas_usuario ON notas(usuario_id);
@@ -2959,10 +2961,19 @@ def guardar_zona_horaria_tenant(tenant_id: int, zona: str) -> None:
         conn.close()
 
 
+_ULTIMO_ACCESO_ANOTADO: dict[int, float] = {}
+
+
 def registrar_acceso(usuario_id: int, cada_minutos: int = 10) -> None:
     """Anota `usuarios.ultimo_acceso` (solo para mostrarlo en el backoffice).
     Como mucho una escritura cada `cada_minutos` por usuario, para no cargar
     SQLite con una escritura por petición; un fallo nunca rompe la petición."""
+    # Memoria del proceso: sin esto cada petición ejecutaba el UPDATE (aunque no cambiara
+    # ninguna fila) y con él una transacción de escritura por página vista.
+    marca = time.monotonic()
+    if marca - _ULTIMO_ACCESO_ANOTADO.get(usuario_id, -1e9) < cada_minutos * 60:
+        return
+    _ULTIMO_ACCESO_ANOTADO[usuario_id] = marca
     ahora = datetime.now()
     limite = (ahora - timedelta(minutes=cada_minutos)).isoformat(timespec="seconds")
     try:
@@ -6029,20 +6040,36 @@ def dependencias_de_tarea(tarea_id: int) -> list[dict]:
 
 
 def bloqueos_de_tareas(tarea_ids: list[int]) -> dict[int, int]:
-    """{tarea_id: nº de tareas previas sin completar}, solo para las bloqueadas."""
+    """{tarea_id: nº de tareas previas sin completar}, solo para las bloqueadas.
+
+    Dos consultas simples en vez de un JOIN: el planificador de SQLite arrancaba el
+    JOIN recorriendo TODAS las tareas (60-135 ms con 3.000 y la tabla vacía); así
+    se parte de las dependencias, que casi siempre son pocas o ninguna."""
     if not tarea_ids:
         return {}
     conn = get_connection()
     try:
-        marcas = ",".join("?" * len(tarea_ids))
-        return {
-            f["tarea_id"]: f["n"] for f in conn.execute(
-                f"""SELECT d.tarea_id, COUNT(*) AS n FROM tareas_dependencias d JOIN tareas_outlook t ON t.id = d.depende_de_id
-                    WHERE d.tarea_id IN ({marcas}) AND t.papelera_en IS NULL AND t.estado != 'completada'
-                    GROUP BY d.tarea_id""",
-                tarea_ids,
+        previas: dict[int, list[int]] = {}
+        for inicio in range(0, len(tarea_ids), 500):
+            lote = tarea_ids[inicio:inicio + 500]
+            for f in conn.execute(
+                f"SELECT tarea_id, depende_de_id FROM tareas_dependencias WHERE tarea_id IN ({','.join('?' * len(lote))})", lote
+            ):
+                previas.setdefault(f["tarea_id"], []).append(f["depende_de_id"])
+        if not previas:
+            return {}
+        todas = sorted({d for lista in previas.values() for d in lista})
+        abiertas: set[int] = set()
+        for inicio in range(0, len(todas), 500):
+            lote = todas[inicio:inicio + 500]
+            abiertas.update(
+                f["id"] for f in conn.execute(
+                    f"SELECT id FROM tareas_outlook WHERE id IN ({','.join('?' * len(lote))}) AND papelera_en IS NULL AND estado != 'completada'",
+                    lote,
+                )
             )
-        }
+        cuentas = {tid: sum(1 for d in lista if d in abiertas) for tid, lista in previas.items()}
+        return {tid: n for tid, n in cuentas.items() if n}
     finally:
         conn.close()
 
@@ -6830,6 +6857,28 @@ def tareas_para_hoy(usuario_id: int) -> dict[str, list]:
             continue
         vistas.add(t["id"])
     return secciones
+
+
+def contar_mi_dia(usuario_id: int) -> tuple[int, int]:
+    """(vencidas, de hoy) de "Mi día" SIN cargar las tareas: lo pide la barra
+    superior en cada página y antes traía todas las tareas abiertas (con sus
+    JOINs) solo para contarlas. Mismo criterio que tareas_para_hoy."""
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            """SELECT COALESCE(SUM(substr(t.fecha_vencimiento, 1, 10) < ?), 0) AS vencidas,
+                      COALESCE(SUM(substr(t.fecha_vencimiento, 1, 10) = ?), 0) AS hoy
+               FROM tareas_outlook t
+               WHERE t.papelera_en IS NULL AND t.estado != 'completada'
+                 AND t.fecha_vencimiento IS NOT NULL AND substr(t.fecha_vencimiento, 1, 10) <= ?
+                 AND (t.usuario_id = ? OR t.asignada_a = ?
+                      OR t.id IN (SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?))""",
+            (hoy, hoy, hoy, usuario_id, usuario_id, usuario_id),
+        ).fetchone()
+        return int(fila["vencidas"]), int(fila["hoy"])
+    finally:
+        conn.close()
 
 
 def eliminar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
@@ -8672,14 +8721,21 @@ def purgar_envios_correo_antiguos(antes_de: str) -> None:
         conn.close()
 
 
+def _obtener_o_crear(conn: sqlite3.Connection, tabla: str, usuario_id: int) -> sqlite3.Row:
+    """Fila de `tabla` (clave usuario_id), creándola con sus valores por defecto solo si no
+    existe: leerla en cada petición no debe abrir una transacción de escritura."""
+    fila = conn.execute(f"SELECT * FROM {tabla} WHERE usuario_id = ?", (usuario_id,)).fetchone()
+    if fila is None:
+        conn.execute(f"INSERT OR IGNORE INTO {tabla} (usuario_id) VALUES (?)", (usuario_id,))
+        conn.commit()
+        fila = conn.execute(f"SELECT * FROM {tabla} WHERE usuario_id = ?", (usuario_id,)).fetchone()
+    return fila
+
+
 def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
-        conn.commit()
-        return conn.execute(
-            "SELECT * FROM correo_preferencias WHERE usuario_id = ?", (usuario_id,)
-        ).fetchone()
+        return _obtener_o_crear(conn, "correo_preferencias", usuario_id)
     finally:
         conn.close()
 
@@ -9213,11 +9269,12 @@ def contar_no_leidos_por_cuenta_y_carpeta(usuario_id: int) -> dict[int, dict[str
     de la cuenta ni el desglose por carpeta."""
     conn = get_connection()
     try:
+        # Parte de las cuentas del usuario y cuenta sobre el índice parcial
+        # idx_correo_no_leidos (solo no leídos, cubriente): O(no leídos) sin tocar las filas.
         filas = conn.execute(
-            """SELECT m.cuenta_id, m.carpeta, COUNT(*) AS n
-               FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
-               WHERE c.usuario_id = ? AND m.leido = 0
-               GROUP BY m.cuenta_id, m.carpeta""",
+            """SELECT cuenta_id, carpeta, COUNT(*) AS n FROM correo_mensajes
+               WHERE leido = 0 AND cuenta_id IN (SELECT id FROM correo_cuentas WHERE usuario_id = ?)
+               GROUP BY cuenta_id, carpeta""",
             (usuario_id,),
         ).fetchall()
         resultado: dict[int, dict[str, int]] = {}
@@ -9234,9 +9291,8 @@ def contar_no_leidos_total_correo(usuario_id: int) -> int:
     conn = get_connection()
     try:
         return conn.execute(
-            """SELECT COUNT(*) AS n FROM correo_mensajes m
-               JOIN correo_cuentas c ON c.id = m.cuenta_id
-               WHERE c.usuario_id = ? AND m.leido = 0""",
+            """SELECT COUNT(*) AS n FROM correo_mensajes
+               WHERE leido = 0 AND cuenta_id IN (SELECT id FROM correo_cuentas WHERE usuario_id = ?)""",
             (usuario_id,),
         ).fetchone()["n"]
     finally:
@@ -9353,11 +9409,7 @@ def vaciar_papelera_antigua(dias: int = 30, usuario_id: int | None = None) -> No
 def obtener_preferencias_ia(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
-        conn.commit()
-        return conn.execute(
-            "SELECT * FROM ia_preferencias WHERE usuario_id = ?", (usuario_id,)
-        ).fetchone()
+        return _obtener_o_crear(conn, "ia_preferencias", usuario_id)
     finally:
         conn.close()
 
@@ -9388,9 +9440,14 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool, s
 def obtener_perfil_usuario(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
-        conn.commit()
-        return conn.execute("SELECT * FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)).fetchone()
+        # Solo se escribe la primera vez: un INSERT OR IGNORE en cada visita abría una
+        # transacción de escritura por página vista aunque la fila ya existiera.
+        fila = conn.execute("SELECT * FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)).fetchone()
+        if fila is None:
+            conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+            conn.commit()
+            fila = conn.execute("SELECT * FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)).fetchone()
+        return fila
     finally:
         conn.close()
 
@@ -9554,11 +9611,7 @@ def nombre_mostrado_usuario(usuario_id: int) -> str | None:
 def obtener_preferencias_ia_local(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
-        conn.commit()
-        return conn.execute(
-            "SELECT * FROM ia_preferencias WHERE usuario_id = ?", (usuario_id,)
-        ).fetchone()
+        return _obtener_o_crear(conn, "ia_preferencias", usuario_id)
     finally:
         conn.close()
 
@@ -10026,9 +10079,12 @@ def eliminar_adjunto_tiquet(adjunto_id: int) -> None:
 def obtener_fichaje_datos(usuario_id: int) -> sqlite3.Row:
     conn = get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO fichaje_datos (usuario_id) VALUES (?)", (usuario_id,))
-        conn.commit()
-        return conn.execute("SELECT * FROM fichaje_datos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+        fila = conn.execute("SELECT * FROM fichaje_datos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+        if fila is None:  # solo la primera vez (ver obtener_perfil_usuario)
+            conn.execute("INSERT OR IGNORE INTO fichaje_datos (usuario_id) VALUES (?)", (usuario_id,))
+            conn.commit()
+            fila = conn.execute("SELECT * FROM fichaje_datos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+        return fila
     finally:
         conn.close()
 
