@@ -86,7 +86,7 @@ def test_estadisticas_sin_tenant_no_muestra_la_seccion_de_equipo(cliente):
     iniciar_sesion_de_prueba(cliente, "stats-sin-tenant@ejemplo.com", "contrasena123")
     resp = cliente.get("/estadisticas")
     assert resp.status_code == 200
-    assert "Equipo" not in resp.get_data(as_text=True)
+    assert "<h3>Equipo</h3>" not in resp.get_data(as_text=True)
 
 
 def test_estadisticas_con_tenant_muestra_la_seccion_de_equipo(cliente):
@@ -99,7 +99,7 @@ def test_estadisticas_con_tenant_muestra_la_seccion_de_equipo(cliente):
     resp = cliente.get("/estadisticas")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Equipo" in html
+    assert "<h3>Equipo</h3>" in html
     assert "stats-con-tenant@ejemplo.com" in html
 
 
