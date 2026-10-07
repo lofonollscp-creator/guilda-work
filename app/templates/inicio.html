@@ -210,7 +210,7 @@
 <aside class="dash-sidebar">
   {% if carga_equipo %}
   <section class="dash-panel" aria-labelledby="dash-equipo-t">
-    <div class="dash-panel-cab"><h2 id="dash-equipo-t">{{ _('Equipo') }}</h2><a href="{{ url_for('tareas.listar', vista='compartidas') }}">{{ _('Ver tareas') }}</a></div>
+    <div class="dash-panel-cab"><h2 id="dash-equipo-t">{{ _('Equipo') }}</h2><span><a href="{{ url_for('tareas.listar', vista='compartidas') }}">{{ _('Ver tareas') }}</a> · <a href="{{ url_for('tareas.exportar_carga_equipo') }}">{{ _('Exportar CSV') }}</a></span></div>
     <ul class="dash-equipo">
       {% for p in carga_equipo[:6] %}
       <li>

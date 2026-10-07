@@ -24,7 +24,8 @@ def procesar_recordatorios(ahora: datetime | None = None) -> int:
     (un aviso perdido es mejor que un spam); cada canal falla por separado."""
     enviados = 0
     for r in db.recordatorios_de_tarea_pendientes_de_aviso(ahora):
-        db.marcar_recordatorio_tarea_enviado(r["id"])
+        if not db.reservar_recordatorio_tarea(r["id"]):
+            continue  # otro hilo o proceso se ha quedado ya con este aviso
         titulo, cuerpo = _texto(r)
         url = f"/tareas/{r['tarea_id']}#recordatorios"
         for canal in r["canales"].split(","):

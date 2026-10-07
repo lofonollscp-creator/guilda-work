@@ -38,7 +38,9 @@ msgstr "Forward"
 msgid ""
 "Respuestas generadas por IA — pueden contener errores, comprueba lo "
 "importante."
-msgstr "AI-generated responses — they may contain errors, double-check anything important."
+msgstr ""
+"AI-generated responses — they may contain errors, double-check anything "
+"important."
 
 #: app/templates/_ia_chat_macro.html:17
 msgid "¿Ejecuto"
@@ -91,7 +93,10 @@ msgid ""
 "FacturaScripts aprovisionado — esto solo se muestra esta vez, apunta la "
 "contraseña antes de continuar (hace falta para el último paso manual: "
 "entrar y crear la API Key desde Ajustes → API):"
-msgstr "FacturaScripts provisioned — this is shown only this once, write down the password before continuing (needed for the last manual step: log in and create the API Key from Settings → API):"
+msgstr ""
+"FacturaScripts provisioned — this is shown only this once, write down the"
+" password before continuing (needed for the last manual step: log in and "
+"create the API Key from Settings → API):"
 
 #: app/templates/backoffice.html:21
 msgid "Usuario"
@@ -107,7 +112,10 @@ msgid ""
 "Cal.diy aprovisionado — esto solo se muestra esta vez, apunta la "
 "contraseña antes de continuar (hace falta para el último paso manual: "
 "entrar y crear la API Key desde Configuración → Developer → API Keys):"
-msgstr "Cal.diy provisioned — this is shown only this once, write down the password before continuing (needed for the last manual step: log in and create the API Key from Settings → Developer → API Keys):"
+msgstr ""
+"Cal.diy provisioned — this is shown only this once, write down the "
+"password before continuing (needed for the last manual step: log in and "
+"create the API Key from Settings → Developer → API Keys):"
 
 #: app/templates/backoffice.html:42
 msgid "Alta de"
@@ -117,7 +125,9 @@ msgstr "Sign-up for"
 msgid ""
 "esto solo se muestra esta vez, pásale las contraseñas para que las cambie"
 " al entrar:"
-msgstr "this is shown only this once, pass on the passwords so they can change them on login:"
+msgstr ""
+"this is shown only this once, pass on the passwords so they can change "
+"them on login:"
 
 #: app/templates/backoffice.html:45
 msgid "Servicio"
@@ -190,8 +200,7 @@ msgstr "Users"
 msgid "Herramientas visibles"
 msgstr "Tools"
 
-#: app/templates/backoffice.html:123
-#: app/templates/ia_asistente.html
+#: app/templates/backoffice.html:123 app/templates/ia_asistente.html
 msgid "Renombrar"
 msgstr "Rename"
 
@@ -244,12 +253,14 @@ msgid ""
 "¿Borrar el tenant %(nombre)s? Sus usuarios quedarán sin tenant asignado, "
 "y su instancia de FacturaScripts (si la tiene) se eliminará junto con sus"
 " datos."
-msgstr "Delete tenant %(nombre)s? Its users will be left without an assigned tenant, and its FacturaScripts instance (if it has one) will be deleted along with its data."
+msgstr ""
+"Delete tenant %(nombre)s? Its users will be left without an assigned "
+"tenant, and its FacturaScripts instance (if it has one) will be deleted "
+"along with its data."
 
 #: app/templates/backoffice.html:187 app/templates/backoffice.html:310
-#, fuzzy
 msgid "Borrar"
-msgstr "Close"
+msgstr "Delete"
 
 #: app/templates/backoffice.html:192
 msgid "Todavía no hay ningún tenant."
@@ -327,18 +338,16 @@ msgstr "Notify an external URL when something happens — see the"
 
 #: app/templates/backoffice.html:274 app/templates/docs/pagina.html:43
 #: app/templates/docs/pagina.html:140
-#, fuzzy
 msgid "Guía para desarrolladores"
-msgstr "Developer documentation"
+msgstr "Developer guide"
 
 #: app/templates/backoffice.html:274
 msgid "para el formato del payload y cómo verificar la firma."
 msgstr "for the payload format and how to verify the signature."
 
 #: app/templates/backoffice.html:281 app/templates/estadisticas.html:44
-#, fuzzy
 msgid "Eventos"
-msgstr "Event"
+msgstr "Events"
 
 #: app/templates/backoffice.html:282
 msgid "Últimas entregas"
@@ -411,7 +420,9 @@ msgstr "last used"
 msgid ""
 "¿Revocar el acceso de «%(nombre)s»? %(email)s tendrá que iniciar sesión "
 "de nuevo en la app."
-msgstr "Revoke access for \"%(nombre)s\"? %(email)s will have to log in again in the app."
+msgstr ""
+"Revoke access for \"%(nombre)s\"? %(email)s will have to log in again in "
+"the app."
 
 #: app/templates/backoffice_dispositivos.html:24
 #: app/templates/mis_dispositivos.html:22
@@ -572,7 +583,9 @@ msgstr "Documentation (developers)"
 msgid ""
 "¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa "
 "por completo."
-msgstr "Close Guilda Work? Everything already noted is saved; the program will close completely."
+msgstr ""
+"Close Guilda Work? Everything already noted is saved; the program will "
+"close completely."
 
 #: app/templates/base.html:156
 msgid "Cerrar programa"
@@ -596,28 +609,24 @@ msgid "Buscar en notas, tareas y correo..."
 msgstr "Search notes, tasks and mail..."
 
 #: app/templates/base.html:183
-#, fuzzy
 msgid "Cerrar (Esc)"
-msgstr "Log out"
+msgstr "Close (Esc)"
 
 #: app/templates/base.html:183
-#, fuzzy
 msgid "Cerrar búsqueda"
-msgstr "Clear search"
+msgstr "Close search"
 
 #: app/templates/base.html:186
-#, fuzzy
 msgid "Buscando…"
-msgstr "Search"
+msgstr "Searching…"
 
 #: app/templates/base.html:187 app/templates/docs/pagina.html:35
 msgid "Sin resultados."
 msgstr "No results."
 
 #: app/templates/base.html:194 app/templates/base.html:196
-#, fuzzy
 msgid "Atajos de teclado"
-msgstr "Remove from favorites"
+msgstr "Keyboard shortcuts"
 
 #: app/templates/base.html:197 app/templates/base.html:216
 #: app/templates/base.html:228 app/templates/correo_redactar.html:18
@@ -631,9 +640,8 @@ msgid "Captura rápida (ventana del sistema)"
 msgstr "Quick capture (Ctrl+Alt+G)"
 
 #: app/templates/base.html:201
-#, fuzzy
 msgid "Nueva nota"
-msgstr "New task"
+msgstr "New note"
 
 #: app/templates/base.html:202 app/templates/inicio.html:73
 #: app/templates/tareas_lista.html:55
@@ -645,9 +653,8 @@ msgid "Buscar en el histórico"
 msgstr "Search history"
 
 #: app/templates/base.html:205
-#, fuzzy
 msgid "Mostrar esta ayuda"
-msgstr "Show just this once"
+msgstr "Show this help"
 
 #: app/templates/base.html:206
 msgid "Cerrar ventana emergente"
@@ -666,23 +673,20 @@ msgid "No se pudo deshacer la acción."
 msgstr "Couldn't undo the action."
 
 #: app/templates/base.html:231 app/templates/base.html:232
-#, fuzzy
 msgid "Mensajes actualizados."
-msgstr "updated"
+msgstr "Messages updated."
 
 #: app/templates/base.html:233
 msgid "Mensajes movidos."
 msgstr "Messages moved."
 
 #: app/templates/base.html:234
-#, fuzzy
 msgid "Mensajes eliminados."
-msgstr "Move the selected messages to"
+msgstr "Messages deleted."
 
 #: app/templates/base.html:235
-#, fuzzy
 msgid "No se pudo completar la acción. Inténtalo de nuevo."
-msgstr "Verification failed, try again"
+msgstr "The action could not be completed. Try again."
 
 #: app/templates/base.html:236
 msgid "No se pudieron cargar las sugerencias de destinatarios."
@@ -701,9 +705,8 @@ msgid "No se pudo guardar. Comprueba tu conexión e inténtalo de nuevo."
 msgstr "Couldn't save. Check your connection and try again."
 
 #: app/templates/cerrado.html:6
-#, fuzzy
 msgid "Cerrado"
-msgstr "Close"
+msgstr "Closed"
 
 #: app/templates/cerrado.html:37
 msgid "Guilda Work se ha cerrado"
@@ -714,7 +717,10 @@ msgid ""
 "Todo lo que anotaste ya estaba guardado (se escribe al instante en cada "
 "acción). El programa y su servidor se han terminado por completo. Esta "
 "ventana se cerrará sola en un instante."
-msgstr "Everything you noted down was already saved (it's written instantly on every action). The program and its server have shut down completely. This window will close by itself shortly."
+msgstr ""
+"Everything you noted down was already saved (it's written instantly on "
+"every action). The program and its server have shut down completely. This"
+" window will close by itself shortly."
 
 #: app/templates/correo_ajustes.html:2 app/templates/correo_ajustes.html:6
 msgid "Ajustes de correo"
@@ -724,7 +730,9 @@ msgstr "Mail settings"
 msgid ""
 "Preferencias, categorías y firma. La gestión de cuentas (IMAP/SMTP) está "
 "aparte."
-msgstr "Preferences, categories and signature. Account management (IMAP/SMTP) is separate."
+msgstr ""
+"Preferences, categories and signature. Account management (IMAP/SMTP) is "
+"separate."
 
 #: app/templates/correo_ajustes.html:11 app/templates/correo_cuentas.html:11
 msgid "Volver al correo"
@@ -767,7 +775,9 @@ msgstr "Specific to Guilda Work — not synced with your mail provider."
 msgid ""
 "¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se "
 "quedan sin categoría."
-msgstr "Delete category \"%(nombre)s\"? Messages that had it will be left without a category."
+msgstr ""
+"Delete category \"%(nombre)s\"? Messages that had it will be left without"
+" a category."
 
 #: app/templates/correo_ajustes.html:54 app/templates/correo_ajustes.html:80
 #: app/templates/correo_ajustes.html:113 app/templates/correo_bandeja.html:72
@@ -793,7 +803,9 @@ msgstr "Automatic categorization rules"
 msgid ""
 "Los correos nuevos de un remitente o dominio que coincida se categorizan "
 "solos, sin tener que hacerlo a mano."
-msgstr "New emails from a matching sender or domain get categorized automatically, without doing it by hand."
+msgstr ""
+"New emails from a matching sender or domain get categorized "
+"automatically, without doing it by hand."
 
 #: app/templates/correo_ajustes.html:79
 msgid "¿Eliminar esta regla?"
@@ -815,7 +827,9 @@ msgstr "Trusted senders"
 msgid ""
 "Sus imágenes remotas y adjuntos se muestran/abren sin avisar. Los de "
 "cualquier otro remitente se bloquean/avisan por privacidad."
-msgstr "Their remote images and attachments are shown/opened without warning. Those from any other sender are blocked/warned about for privacy."
+msgstr ""
+"Their remote images and attachments are shown/opened without warning. "
+"Those from any other sender are blocked/warned about for privacy."
 
 #: app/templates/correo_ajustes.html:112
 #, python-format
@@ -995,7 +1009,9 @@ msgstr "To:"
 msgid ""
 "¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue "
 "en el servidor, una futura sincronización lo volverá a traer)."
-msgstr "Delete this message from the local cache? This can't be undone (if it's still on the server, a future sync will bring it back)."
+msgstr ""
+"Delete this message from the local cache? This can't be undone (if it's "
+"still on the server, a future sync will bring it back)."
 
 #: app/templates/correo_bandeja.html:140
 msgid "Resp. a todos"
@@ -1080,7 +1096,9 @@ msgstr "Email accounts"
 msgid ""
 "IMAP/POP3. La contraseña se guarda en el almacén de credenciales de "
 "Windows, no en la base de datos."
-msgstr "IMAP/POP3. The password is stored in Windows Credential Manager, not in the database."
+msgstr ""
+"IMAP/POP3. The password is stored in Windows Credential Manager, not in "
+"the database."
 
 #: app/templates/correo_cuentas.html:26
 msgid "Sincronizado"
@@ -1102,19 +1120,16 @@ msgstr ""
 "deleted. This can't be undone."
 
 #: app/templates/correo_cuentas.html:41 app/templates/correo_cuentas.html:95
-#, fuzzy
 msgid "Añadir cuenta"
-msgstr "Create account"
+msgstr "Add account"
 
 #: app/templates/correo_cuentas.html:45
-#, fuzzy
 msgid "ej. Trabajo"
-msgstr "Move down"
+msgstr "e.g. Work"
 
 #: app/templates/correo_cuentas.html:48
-#, fuzzy
 msgid "Usuario / correo"
-msgstr "Go to Mail"
+msgstr "Username / email"
 
 #: app/templates/correo_cuentas.html:53
 msgid "Contraseña (o contraseña de aplicación)"
@@ -1215,7 +1230,9 @@ msgstr "Text"
 msgid ""
 "¿Eliminar esta nota? Se moverá a la papelera — podrás recuperarla desde "
 "ahí."
-msgstr "Delete this note? It'll be moved to the trash — you can restore it from there."
+msgstr ""
+"Delete this note? It'll be moved to the trash — you can restore it from "
+"there."
 
 #: app/templates/editar_nota.html:25
 msgid "Nota eliminada."
@@ -1231,9 +1248,8 @@ msgid "Eliminar nota"
 msgstr "Delete note"
 
 #: app/templates/editar_tarea.html:2 app/templates/editar_tarea.html:6
-#, fuzzy
 msgid "Editar evento"
-msgstr "Event"
+msgstr "Edit event"
 
 #: app/templates/editar_tarea.html:2 app/templates/editar_tarea.html:6
 #: app/templates/tarea_outlook_editar.html:2
@@ -1242,9 +1258,8 @@ msgid "Editar tarea"
 msgstr "Edit task"
 
 #: app/templates/editar_tarea.html:21
-#, fuzzy
 msgid "Inicio"
-msgstr "Start"
+msgstr "Home"
 
 #: app/templates/editar_tarea.html:26
 msgid "Fin"
@@ -1270,19 +1285,22 @@ msgstr "This task is still running; the end will be logged when it's finished."
 msgid ""
 "¿Eliminar este evento? Se moverá a la papelera — podrás recuperarla desde"
 " ahí."
-msgstr "Delete this event? It'll be moved to the trash — you can restore it from there."
+msgstr ""
+"Delete this event? It'll be moved to the trash — you can restore it from "
+"there."
 
 #: app/templates/editar_tarea.html:42
 #: app/templates/tarea_outlook_editar.html:77
 msgid ""
 "¿Eliminar esta tarea? Se moverá a la papelera — podrás recuperarla desde "
 "ahí."
-msgstr "Delete this task? It'll be moved to the trash — you can restore it from there."
+msgstr ""
+"Delete this task? It'll be moved to the trash — you can restore it from "
+"there."
 
 #: app/templates/editar_tarea.html:43
-#, fuzzy
 msgid "Evento eliminado."
-msgstr "Instant event"
+msgstr "Event deleted."
 
 #: app/templates/editar_tarea.html:43 app/templates/tareas_lista.html:108
 msgid "Tarea eliminada."
@@ -1594,7 +1612,9 @@ msgstr "Daily time record (art. 34.9 of the Workers' Statute)."
 msgid ""
 "Antes de poder fichar, la normativa exige poder identificarte: rellena tu"
 " nombre completo y DNI/NIE."
-msgstr "Before you can clock in, regulations require you to be identifiable: fill in your full name and ID number."
+msgstr ""
+"Before you can clock in, regulations require you to be identifiable: fill"
+" in your full name and ID number."
 
 #: app/templates/fichaje_panel.html:25
 msgid "Rellenar mis datos"
@@ -1651,9 +1671,8 @@ msgid "Entra con tu sesión de Guilda Work"
 msgstr "Log in with your Guilda Work session"
 
 #: app/templates/herramientas.html:47 app/templates/herramientas.html:71
-#, fuzzy
 msgid "Inicia sesión aparte"
-msgstr "Log in"
+msgstr "Sign in separately"
 
 #: app/templates/herramientas.html:67 app/templates/herramientas.html:81
 msgid "Facturación"
@@ -1743,8 +1762,14 @@ msgid "Generar informe con IA"
 msgstr "Generate AI report"
 
 #: app/templates/historial.html:90
-msgid "Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA)."
-msgstr "Sends the filtered data above to a model running on your machine (Ollama or LM Studio, nothing leaves your computer) or to OpenRouter in the cloud (uses the keys set in AI assistant Settings)."
+msgid ""
+"Envía los datos filtrados de arriba a un modelo corriendo en tu máquina "
+"(Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa"
+" las claves configuradas en Ajustes del asistente IA)."
+msgstr ""
+"Sends the filtered data above to a model running on your machine (Ollama "
+"or LM Studio, nothing leaves your computer) or to OpenRouter in the cloud"
+" (uses the keys set in AI assistant Settings)."
 
 #: app/templates/historial.html:97
 msgid "Proveedor"
@@ -1775,8 +1800,14 @@ msgid "Preguntar a mis datos"
 msgstr "Ask my data"
 
 #: app/templates/historial.html:124
-msgid "Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/proyecto). Puedes hacer preguntas de seguimiento — no se envía nada a internet."
-msgstr "Chat with a local model about the data filtered above (same date range/project). You can ask follow-up questions — nothing is sent to the internet."
+msgid ""
+"Chatea con un modelo local sobre los datos filtrados arriba (mismo rango "
+"de fechas/proyecto). Puedes hacer preguntas de seguimiento — no se envía "
+"nada a internet."
+msgstr ""
+"Chat with a local model about the data filtered above (same date "
+"range/project). You can ask follow-up questions — nothing is sent to the "
+"internet."
 
 #: app/templates/historial.html:132
 msgid "Modelo, ej. llama3.1"
@@ -1819,11 +1850,17 @@ msgid "elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo
 msgstr "pick one from the list (free models only), or use the field below"
 
 #: app/templates/ia_ajustes.html:22
-msgid "No se ha podido obtener el listado de modelos gratuitos de OpenRouter ahora mismo — usa el campo de abajo con el id exacto del modelo."
-msgstr "The list of free OpenRouter models could not be fetched right now — use the field below with the exact model id."
+msgid ""
+"No se ha podido obtener el listado de modelos gratuitos de OpenRouter "
+"ahora mismo — usa el campo de abajo con el id exacto del modelo."
+msgstr ""
+"The list of free OpenRouter models could not be fetched right now — use "
+"the field below with the exact model id."
 
 #: app/templates/ia_ajustes.html:26
-msgid "O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)"
+msgid ""
+"O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de "
+"pago)"
 msgstr "Or type any other OpenRouter model id (including paid models)"
 
 #: app/templates/ia_ajustes.html:27
@@ -1850,7 +1887,10 @@ msgid ""
 "Se prueba primero la primera línea. Si falla por un motivo propio de esa "
 "clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa "
 "automáticamente a la siguiente."
-msgstr "The first line is tried first. If it fails for a reason specific to that key (no credit, invalid, rate limit reached), it automatically moves to the next one."
+msgstr ""
+"The first line is tried first. If it fails for a reason specific to that "
+"key (no credit, invalid, rate limit reached), it automatically moves to "
+"the next one."
 
 #: app/templates/ia_ajustes.html:38
 msgid "Borrar todas las claves guardadas"
@@ -1858,7 +1898,9 @@ msgstr "Delete all saved keys"
 
 #: app/templates/ia_ajustes.html:44
 msgid "Modo autónomo: no pedir confirmación al crear/editar/borrar contenido"
-msgstr "Autonomous mode: don't ask for confirmation when creating/editing/deleting content"
+msgstr ""
+"Autonomous mode: don't ask for confirmation when "
+"creating/editing/deleting content"
 
 #: app/templates/ia_ajustes.html:47
 msgid "Aunque actives el modo autónomo,"
@@ -1872,7 +1914,10 @@ msgstr "actually sending an email"
 msgid ""
 "siempre pedirá confirmación explícita, y el asistente nunca podrá borrar "
 "copias de seguridad (solo crearlas) porque esa herramienta no existe."
-msgstr "will always ask for explicit confirmation, and the assistant will never be able to delete backups (only create them) because that tool doesn't exist."
+msgstr ""
+"will always ask for explicit confirmation, and the assistant will never "
+"be able to delete backups (only create them) because that tool doesn't "
+"exist."
 
 #: app/templates/ia_asistente.html:11
 msgid "No hay ningún modelo configurado todavía. Ve a"
@@ -1883,32 +1928,40 @@ msgid "para elegir un modelo y añadir tu clave de OpenRouter."
 msgstr "to choose a model and add your OpenRouter key."
 
 #: app/templates/importar.html:6
-#, fuzzy
 msgid "Importar datos"
-msgstr "Import"
+msgstr "Import data"
 
 #: app/templates/importar.html:7
 msgid ""
 "Sube un archivo JSON o CSV exportado desde Guilda Work (o desde una copia"
 " de seguridad) para recuperarlo."
-msgstr "Upload a JSON or CSV file exported from Guilda Work (or from a backup) to restore it."
+msgstr ""
+"Upload a JSON or CSV file exported from Guilda Work (or from a backup) to"
+" restore it."
 
 #: app/templates/importar.html:12
 msgid "Archivo (.json o .csv)"
 msgstr "File (.json or .csv)"
 
 #: app/templates/importar.html:16
-msgid "Los proyectos que no existan se crean automáticamente por nombre. Las notas y eventos se importan tal cual; las tareas con duración que en el archivo seguían \"en curso\" (sin fin) se omiten, porque no hay forma segura de cerrarlas solas."
-msgstr "Projects that don't exist yet are created automatically by name. Notes and events are imported as-is; duration tasks that in the file were still \"in progress\" (no end) are skipped, because there's no safe way to close them on their own."
+msgid ""
+"Los proyectos que no existan se crean automáticamente por nombre. Las "
+"notas y eventos se importan tal cual; las tareas con duración que en el "
+"archivo seguían \"en curso\" (sin fin) se omiten, porque no hay forma "
+"segura de cerrarlas solas."
+msgstr ""
+"Projects that don't exist yet are created automatically by name. Notes "
+"and events are imported as-is; duration tasks that in the file were still"
+" \"in progress\" (no end) are skipped, because there's no safe way to "
+"close them on their own."
 
 #: app/templates/importar.html:29 app/templates/tareas_outlook_sync.html:23
 msgid "Importación completada:"
 msgstr "Import completed:"
 
 #: app/templates/importar.html:29
-#, fuzzy
 msgid "nota(s),"
-msgstr "Note"
+msgstr "note(s),"
 
 #: app/templates/importar.html:29
 msgid "tarea(s)/evento(s)."
@@ -2109,7 +2162,7 @@ msgstr "Log in"
 
 #: app/templates/login.html:53
 msgid "¿Olvidaste tu contraseña?"
-msgstr ""
+msgstr "Forgot your password?"
 
 #: app/templates/login.html:54
 msgid "¿No tienes cuenta?"
@@ -2133,8 +2186,16 @@ msgstr "Edit project"
 
 #: app/templates/menu.html:18
 #, python-format
-msgid "¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí."
-msgstr "Delete project \"%(nombre)s\"? It will move to the trash along with everything logged inside it (notes, events and tasks) — you can restore it from there.Delete the project \"%(nombre)s\"? It'll be moved to the trash along with everything logged inside it (notes, events and tasks) — you can restore it from there."
+msgid ""
+"¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con "
+"todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo "
+"desde ahí."
+msgstr ""
+"Delete project \"%(nombre)s\"? It will move to the trash along with "
+"everything logged inside it (notes, events and tasks) — you can restore "
+"it from there.Delete the project \"%(nombre)s\"? It'll be moved to the "
+"trash along with everything logged inside it (notes, events and tasks) — "
+"you can restore it from there."
 
 #: app/templates/menu.html:19
 msgid "Eliminar proyecto"
@@ -2181,7 +2242,9 @@ msgstr "Remove"
 msgid ""
 "Aún no tienes frases favoritas. Añade las que repites a menudo para "
 "anotarlas en un clic desde \"Nota rápida\"."
-msgstr "You don't have any favorite phrases yet. Add the ones you repeat often to note them down in one click from \"Quick note\"."
+msgstr ""
+"You don't have any favorite phrases yet. Add the ones you repeat often to"
+" note them down in one click from \"Quick note\"."
 
 #: app/templates/menu.html:86
 msgid "Nueva frase favorita..."
@@ -2273,7 +2336,9 @@ msgstr "Revoke access for \"%(nombre)s\"? It will have to log in again in the ap
 msgid ""
 "Un dispositivo que lleva más de 90 días sin usarse se desconecta "
 "automáticamente, aunque no lo revoques a mano."
-msgstr "A device that hasn't been used for over 90 days is automatically disconnected, even if you don't revoke it by hand."
+msgstr ""
+"A device that hasn't been used for over 90 days is automatically "
+"disconnected, even if you don't revoke it by hand."
 
 #: app/templates/papelera.html:7
 msgid ""
@@ -2292,26 +2357,30 @@ msgstr "The trash is empty."
 msgid ""
 "¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma "
 "permanente. Esta acción no se puede deshacer."
-msgstr "Empty the trash completely? EVERYTHING here will be permanently deleted. This action can't be undone."
+msgstr ""
+"Empty the trash completely? EVERYTHING here will be permanently deleted. "
+"This action can't be undone."
 
 #: app/templates/papelera.html:17
 msgid "Vaciar papelera ahora"
 msgstr "Empty trash now"
 
 #: app/templates/papelera.html:27
-#, fuzzy
 msgid "Tarea (lista)"
-msgstr "Tasks"
+msgstr "Task (list)"
 
 #: app/templates/papelera.html:38 app/templates/papelera.html:46
 #: app/templates/papelera.html:54 app/templates/papelera.html:62
-#, fuzzy
 msgid "Restaurar"
-msgstr "Log in"
+msgstr "Restore"
 
 #: app/templates/papelera.html:41
-msgid "¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer."
-msgstr "Delete this project and everything it contains forever? This can't be undone."
+msgid ""
+"¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede "
+"deshacer."
+msgstr ""
+"Delete this project and everything it contains forever? This can't be "
+"undone."
 
 #: app/templates/papelera.html:42 app/templates/papelera.html:50
 #: app/templates/papelera.html:58 app/templates/papelera.html:66
@@ -2347,30 +2416,29 @@ msgstr ""
 msgid ""
 "El equipo de Guilda Work la activará en breve — si has llegado hasta aquí"
 " sin haber hablado antes con nosotros, escríbenos a"
-msgstr "The Guilda Work team will activate it shortly — if you got here without having talked to us before, write to us at"
+msgstr ""
+"The Guilda Work team will activate it shortly — if you got here without "
+"having talked to us before, write to us at"
 
 #: app/templates/recuperar_contrasena.html:6
 #: app/templates/recuperar_contrasena.html:14
-#, fuzzy
 msgid "Recuperar contraseña"
-msgstr "Password"
+msgstr "Recover password"
 
 #: app/templates/recuperar_contrasena.html:15
 msgid ""
 "Te mandaremos un código de 6 dígitos por email para que puedas elegir una"
 " contraseña nueva."
-msgstr ""
+msgstr "We will email you a 6-digit code so you can choose a new password."
 
 #: app/templates/recuperar_contrasena.html:27
 #: app/templates/verificar_email.html:24
-#, fuzzy
 msgid "Continuar"
-msgstr "Trust"
+msgstr "Continue"
 
 #: app/templates/recuperar_contrasena.html:48
-#, fuzzy
 msgid "Volver a iniciar sesión"
-msgstr "Log in"
+msgstr "Back to sign in"
 
 #: app/templates/registro.html:6 app/templates/registro.html:14
 #: app/templates/registro.html:38
@@ -2435,7 +2503,9 @@ msgid ""
 "Calendario, ubicadas por fecha de vencimiento (o de inicio si no tienen "
 "vencimiento). Haz clic (o arrastra sobre varios días/horas) para crear "
 "una tarea nueva ahí."
-msgstr "Calendar, placed by due date (or start date if there's no due date). Click (or drag across several days/hours) to create a new task there."
+msgstr ""
+"Calendar, placed by due date (or start date if there's no due date). "
+"Click (or drag across several days/hours) to create a new task there."
 
 #: app/templates/tareas_calendario.html:13 app/templates/tareas_lista.html:13
 #: app/templates/tareas_outlook_sync.html:13
@@ -2521,8 +2591,12 @@ msgid "Crear tarea"
 msgstr "Create task"
 
 #: app/templates/tareas_lista.html:7
-msgid "Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, vencimiento, prioridad y estado."
-msgstr "Outlook-style task list, independent of your projects. Subject, due date, priority and status."
+msgid ""
+"Lista de tareas estilo Outlook, independiente de tus proyectos. Asunto, "
+"vencimiento, prioridad y estado."
+msgstr ""
+"Outlook-style task list, independent of your projects. Subject, due date,"
+" priority and status."
 
 #: app/templates/tareas_lista.html:21
 msgid "Todos (sin completadas)"
@@ -2597,7 +2671,10 @@ msgid ""
 "Outlook Classic (\"Archivo &gt; Abrir y exportar &gt; Importar o exportar"
 " &gt; Exportar a un archivo\", o arrastrando el .ics sobre tu carpeta de "
 "Tareas)."
-msgstr "Generates a file with all your active tasks, ready to import into Outlook Classic (\"File &gt; Open &amp; Export &gt; Import/Export &gt; Export to a file\", or by dragging the .ics onto your Tasks folder)."
+msgstr ""
+"Generates a file with all your active tasks, ready to import into Outlook"
+" Classic (\"File &gt; Open &amp; Export &gt; Import/Export &gt; Export to"
+" a file\", or by dragging the .ics onto your Tasks folder)."
 
 #: app/templates/tareas_outlook_sync.html:33
 msgid "Exportar .ics"
@@ -2617,18 +2694,23 @@ msgid ""
 "Outlook Classic. Las tareas .ics ya importadas antes se actualizan en vez"
 " de duplicarse (se reconocen por su UID); las de .csv se crean siempre "
 "como nuevas, porque ese formato no trae un identificador único."
-msgstr "Upload an .ics or .csv file exported from the Tasks folder of Outlook Classic. .ics tasks already imported before are updated instead of duplicated (recognized by their UID); .csv ones are always created as new, because that format doesn't carry a unique identifier."
+msgstr ""
+"Upload an .ics or .csv file exported from the Tasks folder of Outlook "
+"Classic. .ics tasks already imported before are updated instead of "
+"duplicated (recognized by their UID); .csv ones are always created as "
+"new, because that format doesn't carry a unique identifier."
 
 #: app/templates/tareas_outlook_sync.html:49
 msgid ""
 "La sincronización en vivo con Outlook Classic (sin exportar/importar "
 "archivos a mano) llegará en una fase posterior."
-msgstr "Live sync with Outlook Classic (without exporting/importing files by hand) will arrive in a later phase."
+msgstr ""
+"Live sync with Outlook Classic (without exporting/importing files by "
+"hand) will arrive in a later phase."
 
 #: app/templates/tiquet_editar.html:2
-#, fuzzy
 msgid "Editar tiquet"
-msgstr "Edit"
+msgstr "Edit ticket"
 
 #: app/templates/tiquet_editar.html:6
 #, python-format
@@ -2670,9 +2752,8 @@ msgid "Eliminar tiquet"
 msgstr "Delete ticket"
 
 #: app/templates/tiquets_kanban.html:2
-#, fuzzy
 msgid "Tiquets — Kanban"
-msgstr "Tickets"
+msgstr "Tickets — Kanban"
 
 #: app/templates/tiquets_kanban.html:8
 msgid ""
@@ -2688,9 +2769,8 @@ msgid "Solo un administrador puede mover tiquets entre columnas."
 msgstr "Only an administrator can move tickets between columns."
 
 #: app/templates/tiquets_kanban.html:15 app/templates/tiquets_tarjetas.html:12
-#, fuzzy
 msgid "Tarjetas"
-msgstr "Tasks"
+msgstr "Cards"
 
 #: app/templates/tiquets_kanban.html:42 app/templates/tiquets_tarjetas.html:58
 msgid "(usuario eliminado)"
@@ -2715,9 +2795,8 @@ msgstr ""
 "sees all tickets."
 
 #: app/templates/tiquets_tarjetas.html:18
-#, fuzzy
 msgid "Nuevo tiquet"
-msgstr "New menu"
+msgstr "New ticket"
 
 #: app/templates/tiquets_tarjetas.html:25
 msgid "Título..."
@@ -2728,14 +2807,12 @@ msgid "Descripción (opcional)..."
 msgstr "Description (optional)..."
 
 #: app/templates/tiquets_tarjetas.html:28
-#, fuzzy
 msgid "Crear tiquet"
-msgstr "Create account"
+msgstr "Create ticket"
 
 #: app/templates/tiquets_tarjetas.html:35
-#, fuzzy
 msgid "Errores"
-msgstr "Close"
+msgstr "Errors"
 
 #: app/templates/tiquets_tarjetas.html:35
 msgid "Sugerencias"
@@ -2747,20 +2824,19 @@ msgstr "No tickets of this type."
 
 #: app/templates/verificar_email.html:6
 msgid "Verificar email"
-msgstr ""
+msgstr "Verify email"
 
 #: app/templates/verificar_email.html:14
 msgid "Verificar tu email"
-msgstr ""
+msgstr "Verify your email"
 
 #: app/templates/verificar_email.html:15
 msgid "Te hemos mandado un código de 6 dígitos por email."
-msgstr ""
+msgstr "We have emailed you a 6-digit code."
 
 #: app/templates/verificar_email.html:45
-#, fuzzy
 msgid "Volver al dashboard"
-msgstr "Back to chat"
+msgstr "Back to dashboard"
 
 #: app/templates/docs/explorador_api.html:6
 msgid "Explorador de la API"
@@ -2770,7 +2846,9 @@ msgstr "API Explorer"
 msgid ""
 "Referencia interactiva de /api/v1/*, generada en vivo desde el documento "
 "OpenAPI real."
-msgstr "Interactive reference for /api/v1/*, generated live from the real OpenAPI document."
+msgstr ""
+"Interactive reference for /api/v1/*, generated live from the real OpenAPI"
+" document."
 
 #: app/templates/docs/explorador_api.html:18
 msgid "Referencia de la API"
@@ -2781,9 +2859,8 @@ msgid "Filtrar endpoints..."
 msgstr "Filter endpoints..."
 
 #: app/templates/docs/explorador_api.html:28
-#, fuzzy
 msgid "Cargando"
-msgstr "Verifying…"
+msgstr "Loading"
 
 #: app/templates/docs/explorador_api.html:34
 msgid "EXPLORADOR DE API"
@@ -2802,7 +2879,10 @@ msgid ""
 "el mismo documento OpenAPI 3.0 que puedes importar en Postman o Insomnia."
 " Nunca se desincroniza del código real: si cambia una ruta, esto cambia "
 "solo."
-msgstr "the same OpenAPI 3.0 document you can import into Postman or Insomnia. It never goes out of sync with the real code: if a route changes, this changes on its own."
+msgstr ""
+"the same OpenAPI 3.0 document you can import into Postman or Insomnia. It"
+" never goes out of sync with the real code: if a route changes, this "
+"changes on its own."
 
 #: app/templates/docs/explorador_api.html:40
 msgid ""
@@ -2845,11 +2925,11 @@ msgstr "Copy"
 msgid "EN ESTA PÁGINA"
 msgstr "ON THIS PAGE"
 
-#: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
+#: app/templates/correo_bandeja.html app/templates/correo_cuentas.html
 msgid "Última sincronización fallida"
 msgstr "Last sync failed"
 
-#: app/templates/correo_cuentas.html app/templates/correo_bandeja.html
+#: app/templates/correo_bandeja.html app/templates/correo_cuentas.html
 msgid "Error al sincronizar esta cuenta"
 msgstr "Error syncing this account"
 
@@ -3018,8 +3098,12 @@ msgstr "Project..."
 msgid "Iniciar el cronómetro"
 msgstr "Start the timer"
 
-msgid "Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado."
-msgstr "Your tasks with due date, priority and status, with an optional timer to log the time spent."
+msgid ""
+"Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional "
+"para registrar el tiempo dedicado."
+msgstr ""
+"Your tasks with due date, priority and status, with an optional timer to "
+"log the time spent."
 
 msgid "Mostrar"
 msgstr "Show"
@@ -3045,8 +3129,12 @@ msgstr "No file chosen"
 msgid "Tareas recurrentes"
 msgstr "Recurring tasks"
 
-msgid "Reglas que generan una tarea nueva automáticamente: cada día, semana, mes, trimestre o año."
-msgstr "Rules that automatically create a new task: every day, week, month, quarter or year."
+msgid ""
+"Reglas que generan una tarea nueva automáticamente: cada día, semana, "
+"mes, trimestre o año."
+msgstr ""
+"Rules that automatically create a new task: every day, week, month, "
+"quarter or year."
 
 msgid "Nueva regla"
 msgstr "New rule"
@@ -3066,8 +3154,12 @@ msgstr "Day of the month (if monthly, quarterly or yearly)"
 msgid "Mes (si es anual)"
 msgstr "Month (if yearly)"
 
-msgid "Solo se usa el día o el mes que corresponde a la periodicidad elegida; en cada día y cada día laborable no hace falta ninguno."
-msgstr "Only the day or month that matches the chosen frequency is used; for every day and every working day none is needed."
+msgid ""
+"Solo se usa el día o el mes que corresponde a la periodicidad elegida; en"
+" cada día y cada día laborable no hace falta ninguno."
+msgstr ""
+"Only the day or month that matches the chosen frequency is used; for "
+"every day and every working day none is needed."
 
 msgid "Crear regla"
 msgstr "Create rule"
@@ -3116,8 +3208,12 @@ msgstr "Board"
 msgid "Recurrentes"
 msgstr "Recurring"
 
-msgid "Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas en marcha y lo que te han asignado."
-msgstr "What to look at today: what's overdue, what's due today, what you have in progress and what has been assigned to you."
+msgid ""
+"Lo que tienes que mirar hoy: lo vencido, lo que vence hoy, lo que llevas "
+"en marcha y lo que te han asignado."
+msgstr ""
+"What to look at today: what's overdue, what's due today, what you have in"
+" progress and what has been assigned to you."
 
 msgid "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo."
 msgstr "You have nothing pending for today. A good time to get ahead."
@@ -3131,8 +3227,12 @@ msgstr "Due today"
 msgid "Tablero de tareas"
 msgstr "Task board"
 
-msgid "Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna."
-msgstr "Your tasks by status. Use the selector on each card to move it to another column."
+msgid ""
+"Tus tareas por estado. Usa el selector de cada tarjeta para moverla de "
+"columna."
+msgstr ""
+"Your tasks by status. Use the selector on each card to move it to another"
+" column."
 
 msgid "Mover a"
 msgstr "Move to"
@@ -3146,8 +3246,12 @@ msgstr "optional"
 msgid "Un título corto para encontrarla fácilmente"
 msgstr "A short title to find it easily"
 
-msgid "Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con [texto](https://...) y direcciones web."
-msgstr "Formatting: **bold**, *italic*, lists with \"-\" or \"1.\", links with [text](https://...) and web addresses."
+msgid ""
+"Formato: **negrita**, *cursiva*, listas con \"-\" o \"1.\", enlaces con "
+"[texto](https://...) y direcciones web."
+msgstr ""
+"Formatting: **bold**, *italic*, lists with \"-\" or \"1.\", links with "
+"[text](https://...) and web addresses."
 
 msgid "Fijar esta nota arriba en su proyecto"
 msgstr "Pin this note at the top of its project"
@@ -3187,18 +3291,21 @@ msgstr "New message"
 msgid "Editar borrador"
 msgstr "Edit draft"
 
+#, python-brace-format
 msgid "Correo de {remitente}"
 msgstr "Email from {remitente}"
 
 msgid "Tarea creada."
 msgstr "Task created."
 
+#, python-brace-format
 msgid "De: {remitente}"
 msgstr "From: {remitente}"
 
 msgid "Nota guardada."
 msgstr "Note saved."
 
+#, python-brace-format
 msgid "{n} tareas creadas."
 msgstr "{n} tasks created."
 
@@ -3274,7 +3381,9 @@ msgstr "Create the selected ones"
 msgid "No se han encontrado tareas en este correo."
 msgstr "No tasks were found in this email."
 
-msgid "El contenido de este correo se envía al proveedor de IA que tienes configurado."
+msgid ""
+"El contenido de este correo se envía al proveedor de IA que tienes "
+"configurado."
 msgstr "The content of this email is sent to the AI provider you have configured."
 
 msgid "Ver a tamaño completo"
@@ -3283,8 +3392,12 @@ msgstr "View full size"
 msgid "Plantillas de respuesta"
 msgstr "Reply templates"
 
-msgid "Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas."
-msgstr "Available from the editor selector when composing or replying: they are inserted into the body and never sent on their own."
+msgid ""
+"Disponibles desde el selector del editor al redactar o responder — se "
+"insertan en el cuerpo, nunca se envían solas."
+msgstr ""
+"Available from the editor selector when composing or replying: they are "
+"inserted into the body and never sent on their own."
 
 #, python-format
 msgid "¿Eliminar la plantilla «%(nombre)s»?"
@@ -3305,8 +3418,14 @@ msgstr "Add template"
 msgid "Reglas avanzadas"
 msgstr "Advanced rules"
 
-msgid "Se aplican a los correos nuevos que cumplan todas las condiciones indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, destacar y vincular a un cliente fiscal."
-msgstr "They apply to new emails that meet all the given conditions (sender and/or subject). They can categorize, mark as read, flag and link to a tax client."
+msgid ""
+"Se aplican a los correos nuevos que cumplan todas las condiciones "
+"indicadas (remitente y/o asunto). Pueden categorizar, marcar como leído, "
+"destacar y vincular a un cliente fiscal."
+msgstr ""
+"They apply to new emails that meet all the given conditions (sender "
+"and/or subject). They can categorize, mark as read, flag and link to a "
+"tax client."
 
 msgid "Remitente"
 msgstr "Sender"
@@ -3398,8 +3517,12 @@ msgstr "Draft saved."
 msgid "No se pudo guardar el borrador."
 msgstr "The draft could not be saved."
 
-msgid "Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve a tus borradores."
-msgstr "Emails that will be sent automatically at the chosen time. If you cancel one, it goes back to your drafts."
+msgid ""
+"Correos que se enviarán solos a la hora indicada. Si cancelas uno, vuelve"
+" a tus borradores."
+msgstr ""
+"Emails that will be sent automatically at the chosen time. If you cancel "
+"one, it goes back to your drafts."
 
 msgid "No tienes ningún envío programado."
 msgstr "You have no scheduled sends."
@@ -3417,8 +3540,12 @@ msgstr "Copy it now: it will not be shown again."
 msgid "Crear un token de API"
 msgstr "Create an API token"
 
-msgid "Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos."
-msgstr "For integrations and scripts (Authorization: Bearer header). A read-only token can only query data."
+msgid ""
+"Para integraciones y scripts (cabecera Authorization: Bearer). Un token "
+"de solo lectura únicamente puede consultar datos."
+msgstr ""
+"For integrations and scripts (Authorization: Bearer header). A read-only "
+"token can only query data."
 
 msgid "Nombre (ej. Panel de Grafana)"
 msgstr "Name (e.g. Grafana dashboard)"
@@ -3441,8 +3568,12 @@ msgstr "API token"
 msgid "Resumen de mi día"
 msgstr "Summary of my day"
 
-msgid "Hazme un resumen de mi día: tareas para hoy y atrasadas, vencimientos fiscales próximos y correos importantes sin leer."
-msgstr "Give me a summary of my day: tasks for today and overdue, upcoming tax deadlines and important unread emails."
+msgid ""
+"Hazme un resumen de mi día: tareas para hoy y atrasadas, vencimientos "
+"fiscales próximos y correos importantes sin leer."
+msgstr ""
+"Give me a summary of my day: tasks for today and overdue, upcoming tax "
+"deadlines and important unread emails."
 
 msgid "¿Qué vence esta semana?"
 msgstr "What is due this week?"
@@ -3474,14 +3605,22 @@ msgstr "Clients with deadlines"
 msgid "¿Qué clientes tienen vencimientos fiscales pendientes esta semana?"
 msgstr "Which clients have tax deadlines pending this week?"
 
-msgid "Modo solo lectura: el asistente solo puede consultar datos, nunca crear, editar ni borrar"
-msgstr "Read-only mode: the assistant can only query data, never create, edit or delete"
+msgid ""
+"Modo solo lectura: el asistente solo puede consultar datos, nunca crear, "
+"editar ni borrar"
+msgstr ""
+"Read-only mode: the assistant can only query data, never create, edit or "
+"delete"
 
 msgid "Atajos de prompts"
 msgstr "Prompt shortcuts"
 
-msgid "Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios."
-msgstr "They appear above the chat text box. One click sends the text. Up to 20 of your own."
+msgid ""
+"Aparecen sobre el cuadro de texto del chat. Con un clic se envía el "
+"texto. Máximo 20 propios."
+msgstr ""
+"They appear above the chat text box. One click sends the text. Up to 20 "
+"of your own."
 
 msgid "¿Eliminar este atajo?"
 msgstr "Delete this shortcut?"
@@ -3532,8 +3671,12 @@ msgstr "you have been"
 msgid "en pausa"
 msgstr "on break"
 
-msgid "Esta gestoría registra la ubicación al fichar. Tu navegador pedirá permiso la primera vez."
-msgstr "This firm records your location when you clock in. Your browser will ask for permission the first time."
+msgid ""
+"Esta gestoría registra la ubicación al fichar. Tu navegador pedirá "
+"permiso la primera vez."
+msgstr ""
+"This firm records your location when you clock in. Your browser will ask "
+"for permission the first time."
 
 #, python-format
 msgid "%(h)s h trabajadas"
@@ -3585,14 +3728,22 @@ msgstr "Document requested from the client (optional)"
 msgid "Ej.: Factura de compra del trimestre"
 msgstr "E.g.: Purchase invoice for the quarter"
 
-msgid "Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se le avisa por correo para que lo suba desde el portal."
-msgstr "If the client has an email on file, saving a new text here notifies them by email so they can upload it from the portal."
+msgid ""
+"Si el cliente tiene email en su ficha, al guardar un texto nuevo aquí se "
+"le avisa por correo para que lo suba desde el portal."
+msgstr ""
+"If the client has an email on file, saving a new text here notifies them "
+"by email so they can upload it from the portal."
 
 msgid "Marcar como presentado y facturar (opcional)"
 msgstr "Mark as filed and invoice (optional)"
 
-msgid "Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura."
-msgstr "Leave the description and amount blank if you only want to mark it as filed, without creating an invoice."
+msgid ""
+"Deja el concepto y el importe en blanco si solo quieres marcarlo como "
+"presentado, sin generar factura."
+msgstr ""
+"Leave the description and amount blank if you only want to mark it as "
+"filed, without creating an invoice."
 
 msgid "Concepto"
 msgstr "Description"
@@ -3619,8 +3770,14 @@ msgstr "Delete deadline"
 msgid "Documentos del cliente"
 msgstr "Client documents"
 
-msgid "Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal."
-msgstr "What the client uploads from the portal and, from your side, the official proof of filing and the filing record: the client sees and downloads them in their portal."
+msgid ""
+"Lo que sube el cliente desde el portal y, de tu parte, el justificante "
+"oficial y la constancia de presentación: el cliente los ve y los descarga"
+" en su portal."
+msgstr ""
+"What the client uploads from the portal and, from your side, the official"
+" proof of filing and the filing record: the client sees and downloads "
+"them in their portal."
 
 msgid "Subir justificante oficial"
 msgstr "Upload official proof of filing"
@@ -3646,8 +3803,12 @@ msgstr "Team"
 msgid "Cobrar por Stripe"
 msgstr "Charge via Stripe"
 
-msgid "Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché."
-msgstr "Creates a payment link and emails it to the client. The amount is read right now, never cached."
+msgid ""
+"Genera un enlace de pago y se lo envía al cliente por email. El importe "
+"se lee ahora mismo, nunca se guarda en caché."
+msgstr ""
+"Creates a payment link and emails it to the client. The amount is read "
+"right now, never cached."
 
 msgid "Enviar enlace de pago"
 msgstr "Send payment link"
@@ -3656,7 +3817,9 @@ msgid "Firma electrónica"
 msgstr "Electronic signature"
 
 msgid "Ya se ha enviado un documento a firmar al cliente para este vencimiento."
-msgstr "A document has already been sent to the client for signature for this deadline."
+msgstr ""
+"A document has already been sent to the client for signature for this "
+"deadline."
 
 msgid "Subir PDF y enviar a firmar al cliente"
 msgstr "Upload PDF and send to the client for signature"
@@ -3679,8 +3842,14 @@ msgstr "Tax ID (NIF/CIF)"
 msgid "Email del cliente (portal)"
 msgstr "Client email (portal)"
 
-msgid "Si pones un email, el cliente podrá entrar al portal para ver sus vencimientos y subir documentos, sin necesidad de cuenta ni contraseña (enlace de acceso por correo)."
-msgstr "If you set an email, the client can enter the portal to see their deadlines and upload documents, without an account or password (access link by email)."
+msgid ""
+"Si pones un email, el cliente podrá entrar al portal para ver sus "
+"vencimientos y subir documentos, sin necesidad de cuenta ni contraseña "
+"(enlace de acceso por correo)."
+msgstr ""
+"If you set an email, the client can enter the portal to see their "
+"deadlines and upload documents, without an account or password (access "
+"link by email)."
 
 msgid "País de tributación"
 msgstr "Tax country"
@@ -3691,8 +3860,14 @@ msgstr "Spain"
 msgid "Otro país (próximamente)"
 msgstr "Other country (coming soon)"
 
-msgid "Todavía no hay calendario fiscal configurado para este país -- dilo y lo añadimos. Mientras tanto, los vencimientos de este cliente hay que crearlos a mano y la generación automática queda desactivada."
-msgstr "There is no tax calendar configured for this country yet -- let us know and we will add it. Meanwhile, this client's deadlines must be created by hand and automatic generation is disabled."
+msgid ""
+"Todavía no hay calendario fiscal configurado para este país -- dilo y lo "
+"añadimos. Mientras tanto, los vencimientos de este cliente hay que "
+"crearlos a mano y la generación automática queda desactivada."
+msgstr ""
+"There is no tax calendar configured for this country yet -- let us know "
+"and we will add it. Meanwhile, this client's deadlines must be created by"
+" hand and automatic generation is disabled."
 
 msgid "Modelos que presenta este cliente"
 msgstr "Forms this client files"
@@ -3700,14 +3875,26 @@ msgstr "Forms this client files"
 msgid "Sin modelos disponibles para el país de este cliente."
 msgstr "No forms available for this client's country."
 
-msgid "Se usan como selección por defecto al generar vencimientos, y son los que se generan solos si activas la generación automática."
-msgstr "They are used as the default selection when generating deadlines, and are the ones generated automatically if you enable automatic generation."
+msgid ""
+"Se usan como selección por defecto al generar vencimientos, y son los que"
+" se generan solos si activas la generación automática."
+msgstr ""
+"They are used as the default selection when generating deadlines, and are"
+" the ones generated automatically if you enable automatic generation."
 
-msgid "Generar vencimientos automáticamente cada periodo (necesita al menos un modelo marcado arriba)"
-msgstr "Generate deadlines automatically each period (needs at least one form checked above)"
+msgid ""
+"Generar vencimientos automáticamente cada periodo (necesita al menos un "
+"modelo marcado arriba)"
+msgstr ""
+"Generate deadlines automatically each period (needs at least one form "
+"checked above)"
 
-msgid "Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)"
-msgstr "Email the client reminders 7 and 2 days before each deadline (needs their email)"
+msgid ""
+"Enviar al cliente recordatorios por correo 7 y 2 días antes de cada "
+"vencimiento (necesita su email)"
+msgstr ""
+"Email the client reminders 7 and 2 days before each deadline (needs their"
+" email)"
 
 msgid "¿Eliminar este cliente fiscal? Se moverá a la papelera."
 msgstr "Delete this tax client? It will be moved to the trash."
@@ -3813,14 +4000,25 @@ msgid "Pendiente de adjuntar"
 msgstr "Pending attachment"
 
 #, python-format
-msgid "Este documento es una constancia interna emitida por %(gestoria)s y no sustituye al justificante oficial de presentación emitido por la administración tributaria."
-msgstr "This document is an internal record issued by %(gestoria)s and does not replace the official proof of filing issued by the tax authority."
+msgid ""
+"Este documento es una constancia interna emitida por %(gestoria)s y no "
+"sustituye al justificante oficial de presentación emitido por la "
+"administración tributaria."
+msgstr ""
+"This document is an internal record issued by %(gestoria)s and does not "
+"replace the official proof of filing issued by the tax authority."
 
 msgid "Salud del sistema"
 msgstr "System health"
 
-msgid "Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de lo que esté en rojo (como mucho una vez al día por motivo)."
-msgstr "Backups, email, periodic tasks, integrations and server at a glance. A watchdog checks this every hour and emails you about anything in red (at most once a day per reason)."
+msgid ""
+"Copias de seguridad, correo, tareas periódicas, integraciones y servidor "
+"de un vistazo. Un vigilante revisa esto cada hora y avisa por correo de "
+"lo que esté en rojo (como mucho una vez al día por motivo)."
+msgstr ""
+"Backups, email, periodic tasks, integrations and server at a glance. A "
+"watchdog checks this every hour and emails you about anything in red (at "
+"most once a day per reason)."
 
 msgid "Todo en orden"
 msgstr "All good"
@@ -4035,8 +4233,12 @@ msgid "Hola, %(cliente)s:"
 msgstr "Hello, %(cliente)s:"
 
 #, python-format
-msgid "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s."
-msgstr "We remind you that form %(modelo)s (%(periodo)s) is due %(cuando)s, on %(fecha)s."
+msgid ""
+"Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el"
+" %(fecha)s."
+msgstr ""
+"We remind you that form %(modelo)s (%(periodo)s) is due %(cuando)s, on "
+"%(fecha)s."
 
 #, python-format
 msgid "Para prepararlo necesitamos de tu parte: %(documento)s."
@@ -4048,8 +4250,12 @@ msgstr "You can upload documents and write to us from your client portal:"
 msgid "Un saludo,"
 msgstr "Kind regards,"
 
-msgid "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."
-msgstr "You receive this notice because your firm has portal reminders enabled. If you prefer not to receive them, tell them and they will turn them off."
+msgid ""
+"Recibes este aviso porque tu gestoría tiene activados los recordatorios "
+"del portal. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr ""
+"You receive this notice because your firm has portal reminders enabled. "
+"If you prefer not to receive them, tell them and they will turn them off."
 
 #, python-format
 msgid "Recordatorio: el %(modelo)s vence %(cuando)s"
@@ -4061,8 +4267,12 @@ msgstr "Language of emails to the client"
 msgid "Adjuntos guardados en este borrador"
 msgstr "Attachments saved in this draft"
 
-msgid "Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y supervisor."
-msgstr "Create users and assign them to a tenant, role, clock-in manager and supervisor."
+msgid ""
+"Alta de usuarios y su asignación a tenant, rol, gestor de fichajes y "
+"supervisor."
+msgstr ""
+"Create users and assign them to a tenant, role, clock-in manager and "
+"supervisor."
 
 msgid "¡Copiado!"
 msgstr "Copied!"
@@ -4124,8 +4334,12 @@ msgstr "No user matches."
 msgid "Mapa de acceso"
 msgstr "Access map"
 
-msgid "Qué módulos tiene activos cada tenant y quién trabaja en él, con qué roles. Para cambiar algo, entra en la ficha del tenant."
-msgstr "Which modules each tenant has active and who works in it, with which roles. To change anything, open the tenant's page."
+msgid ""
+"Qué módulos tiene activos cada tenant y quién trabaja en él, con qué "
+"roles. Para cambiar algo, entra en la ficha del tenant."
+msgstr ""
+"Which modules each tenant has active and who works in it, with which "
+"roles. To change anything, open the tenant's page."
 
 msgid "Equipos y roles"
 msgstr "Teams and roles"
@@ -4270,10 +4484,16 @@ msgstr "Click to change"
 msgid "Stripe Connect"
 msgstr "Stripe Connect"
 
-msgid "Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega directo a su propio banco, Guilda Work nunca lo retiene."
-msgstr "So this tenant can charge ITS clients -- the money goes straight to its own bank; Guilda Work never holds it."
+msgid ""
+"Para que este tenant pueda cobrar a SUS clientes -- el dinero le llega "
+"directo a su propio banco, Guilda Work nunca lo retiene."
+msgstr ""
+"So this tenant can charge ITS clients -- the money goes straight to its "
+"own bank; Guilda Work never holds it."
 
-msgid "Stripe no está configurado todavía en el servidor (falta STRIPE_SECRET_KEY)."
+msgid ""
+"Stripe no está configurado todavía en el servidor (falta "
+"STRIPE_SECRET_KEY)."
 msgstr "Stripe is not configured on the server yet (STRIPE_SECRET_KEY missing)."
 
 msgid "Cuenta conectada y lista para cobrar"
@@ -4357,8 +4577,12 @@ msgstr "Remove geolocation"
 msgid "Activar geolocalización"
 msgstr "Enable geolocation"
 
-msgid "Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de correo/documentos de este tenant en un JSON (derecho de acceso GDPR)."
-msgstr "Export this tenant's clients, deadlines, tasks, notes, tickets and email/document metadata as JSON (GDPR right of access)."
+msgid ""
+"Exportar clientes, vencimientos, tareas, notas, tiquets y metadatos de "
+"correo/documentos de este tenant en un JSON (derecho de acceso GDPR)."
+msgstr ""
+"Export this tenant's clients, deadlines, tasks, notes, tickets and "
+"email/document metadata as JSON (GDPR right of access)."
 
 msgid "Exportar datos"
 msgstr "Export data"
@@ -4387,11 +4611,19 @@ msgstr "Attachment saved to the deadline."
 msgid "Puedes usar variables que se rellenan al insertar la plantilla:"
 msgstr "You can use variables that are filled in when the template is inserted:"
 
-msgid "las del cliente y del vencimiento se rellenan si el correo está enlazado a un cliente fiscal o lo eliges en el editor."
-msgstr "the client and deadline ones are filled in if the email is linked to a tax client or you pick one in the editor."
+msgid ""
+"las del cliente y del vencimiento se rellenan si el correo está enlazado "
+"a un cliente fiscal o lo eliges en el editor."
+msgstr ""
+"the client and deadline ones are filled in if the email is linked to a "
+"tax client or you pick one in the editor."
 
-msgid "Los correos nuevos se enlazan solos con el cliente fiscal cuyo email coincide con el remitente (si solo hay uno)."
-msgstr "New emails are linked automatically to the tax client whose email matches the sender (if there is only one)."
+msgid ""
+"Los correos nuevos se enlazan solos con el cliente fiscal cuyo email "
+"coincide con el remitente (si solo hay uno)."
+msgstr ""
+"New emails are linked automatically to the tax client whose email matches"
+" the sender (if there is only one)."
 
 #, python-format
 msgid "Correos enlazados: %(n)s"
@@ -4407,14 +4639,20 @@ msgid "Cliente para rellenar las variables de la plantilla"
 msgstr "Client used to fill in the template variables"
 
 msgid "Faltan datos para estas variables (elige un cliente o rellénalas a mano):"
-msgstr "Data is missing for these variables (pick a client or fill them in by hand):"
+msgstr ""
+"Data is missing for these variables (pick a client or fill them in by "
+"hand):"
 
 msgid "Quién ha hecho qué"
 msgstr "Who did what"
 
 #, python-format
-msgid "Solo lo ves tú, como dueño del correo. Un correo se puede compartir con un máximo de %(n)s personas."
-msgstr "Only you can see this, as the owner of the email. An email can be shared with at most %(n)s people."
+msgid ""
+"Solo lo ves tú, como dueño del correo. Un correo se puede compartir con "
+"un máximo de %(n)s personas."
+msgstr ""
+"Only you can see this, as the owner of the email. An email can be shared "
+"with at most %(n)s people."
 
 #, python-format
 msgid "Un correo se puede compartir con un máximo de %(n)s personas."
@@ -4450,3 +4688,1614 @@ msgstr "There is no activity yet."
 
 msgid "Tareas del backoffice (histórico, cobros y resumen semanal)"
 msgstr "Backoffice tasks (history, payments and weekly summary)"
+
+#: app/main.py:706
+msgid "Buenos días"
+msgstr "Good morning"
+
+#: app/main.py:706
+msgid "Buenas tardes"
+msgstr "Good afternoon"
+
+#: app/main.py:706
+msgid "Buenas noches"
+msgstr "Good evening"
+
+#: app/rutas_tareas.py:744 app/templates/estadisticas.html:141
+msgid "Persona"
+msgstr "Person"
+
+#: app/rutas_tareas.py:744
+msgid "Abiertas"
+msgstr "Open"
+
+#: app/rutas_tareas.py:744 app/templates/inicio.html:218
+msgid "Atrasadas"
+msgstr "Overdue"
+
+#: app/templates/_tarea_comentarios.html:4 app/templates/_tarea_fila.html:43
+msgid "Comentarios"
+msgstr "Comments"
+
+#: app/templates/_tarea_comentarios.html:14
+msgid "Borrar comentario"
+msgstr "Delete comment"
+
+#: app/templates/_tarea_comentarios.html:23
+msgid "Todavía no hay comentarios."
+msgstr "There are no comments yet."
+
+#: app/templates/_tarea_comentarios.html:26
+msgid "Escribe un comentario"
+msgstr "Write a comment"
+
+#: app/templates/_tarea_comentarios.html:27
+msgid "Escribe un comentario… usa @ para mencionar a alguien"
+msgstr "Write a comment… use @ to mention someone"
+
+#: app/templates/_tarea_comentarios.html:30
+msgid "Mencionar"
+msgstr "Mention"
+
+#: app/templates/_tarea_comentarios.html:34
+msgid "Comentar"
+msgstr "Comment"
+
+#: app/templates/_tarea_comentarios.html:57
+msgid "Tiempo del equipo"
+msgstr "Team time"
+
+#: app/templates/_tarea_comentarios.html:67
+msgid "Actividad"
+msgstr "Activity"
+
+#: app/templates/_tarea_comentarios.html:73
+msgid "creó la tarea"
+msgstr "created the task"
+
+#: app/templates/_tarea_comentarios.html:74
+msgid "editó"
+msgstr "edited"
+
+#: app/templates/_tarea_comentarios.html:75
+msgid "cambió el estado a"
+msgstr "changed the status to"
+
+#: app/templates/_tarea_comentarios.html:76
+msgid "completó la tarea"
+msgstr "completed the task"
+
+#: app/templates/_tarea_comentarios.html:77
+msgid "asignó la tarea a"
+msgstr "assigned the task to"
+
+#: app/templates/_tarea_comentarios.html:77
+msgid "quitó la asignación"
+msgstr "removed the assignment"
+
+#: app/templates/_tarea_comentarios.html:78
+msgid "compartió con"
+msgstr "shared with"
+
+#: app/templates/_tarea_comentarios.html:79
+msgid "dejó de compartir con"
+msgstr "stopped sharing with"
+
+#: app/templates/_tarea_comentarios.html:80
+msgid "comentó"
+msgstr "commented"
+
+#: app/templates/_tarea_comentarios.html:81
+msgid "la dejó esperando a"
+msgstr "made it wait for"
+
+#: app/templates/_tarea_comentarios.html:82
+msgid "la desbloqueó al completar"
+msgstr "unblocked it by completing"
+
+#: app/templates/_tarea_comentarios.html:83
+msgid "inició el cronómetro"
+msgstr "started the timer"
+
+#: app/templates/_tarea_comentarios.html:84
+msgid "añadió la subtarea"
+msgstr "added the subtask"
+
+#: app/templates/_tarea_comentarios.html:85
+msgid "marcó como hecha"
+msgstr "marked as done"
+
+#: app/templates/_tarea_comentarios.html:86
+msgid "reabrió"
+msgstr "reopened"
+
+#: app/templates/_tarea_fila.html:35
+#, python-format
+msgid "Con %(n)s persona"
+msgid_plural "Con %(n)s personas"
+msgstr[0] "With %(n)s person"
+msgstr[1] "With %(n)s people"
+
+#: app/templates/_tarea_fila.html:37
+#, python-format
+msgid "Compartida contigo por %(quien)s"
+msgstr "Shared with you by %(quien)s"
+
+#: app/templates/_tarea_fila.html:37 app/templates/notas.html:86
+msgid "colabora"
+msgstr "collaborates"
+
+#: app/templates/_tarea_fila.html:37 app/templates/notas.html:86
+msgid "solo lectura"
+msgstr "read-only"
+
+#: app/templates/_tarea_fila.html:40
+msgid "Espera a otras tareas que aún no están completadas"
+msgstr "Waiting for other tasks that are not yet completed"
+
+#: app/templates/_tarea_fila.html:40
+#, python-format
+msgid "Espera a %(n)s tarea"
+msgid_plural "Espera a %(n)s tareas"
+msgstr[0] "Waiting for %(n)s task"
+msgstr[1] "Waiting for %(n)s tasks"
+
+#: app/templates/_tarea_recordatorios.html:4
+msgid "Recordatorios"
+msgstr "Reminders"
+
+#: app/templates/_tarea_recordatorios.html:11
+msgid "app y móvil"
+msgstr "app and mobile"
+
+#: app/templates/_tarea_recordatorios.html:11
+msgid "correo"
+msgstr "email"
+
+#: app/templates/_tarea_recordatorios.html:12
+msgid "Enviado"
+msgstr "Sent"
+
+#: app/templates/_tarea_recordatorios.html:15
+msgid "Posponer…"
+msgstr "Snooze…"
+
+#: app/templates/_tarea_recordatorios.html:16
+msgid "1 hora"
+msgstr "1 hour"
+
+#: app/templates/_tarea_recordatorios.html:17
+msgid "Mañana a las 9:00"
+msgstr "Tomorrow at 9:00"
+
+#: app/templates/_tarea_recordatorios.html:18
+msgid "1 semana"
+msgstr "1 week"
+
+#: app/templates/_tarea_recordatorios.html:28
+msgid "No tienes recordatorios en esta tarea."
+msgstr "You have no reminders on this task."
+
+#: app/templates/_tarea_recordatorios.html:32
+msgid "Atajo"
+msgstr "Shortcut"
+
+#: app/templates/_tarea_recordatorios.html:33
+msgid "A una hora concreta…"
+msgstr "At a specific time…"
+
+#: app/templates/_tarea_recordatorios.html:35
+msgid "1 día antes del vencimiento"
+msgstr "1 day before the deadline"
+
+#: app/templates/_tarea_recordatorios.html:36
+msgid "1 hora antes del vencimiento"
+msgstr "1 hour before the deadline"
+
+#: app/templates/_tarea_recordatorios.html:37
+msgid "Al vencer"
+msgstr "When due"
+
+#: app/templates/_tarea_recordatorios.html:40
+msgid "Fecha y hora"
+msgstr "Date and time"
+
+#: app/templates/_tarea_recordatorios.html:42
+msgid "App y móvil"
+msgstr "App and mobile"
+
+#: app/templates/_tarea_recordatorios.html:46
+msgid "Añadir recordatorio"
+msgstr "Add reminder"
+
+#: app/templates/_tareas_subnav.html:8
+msgid "Plantillas"
+msgstr "Templates"
+
+#: app/templates/ajustes_cuenta.html:2 app/templates/ajustes_cuenta.html:6
+msgid "Contraseña y email"
+msgstr "Password and email"
+
+#: app/templates/ajustes_cuenta.html:7
+msgid ""
+"Gestionado por el proveedor de identidad -- los cambios se aplican al "
+"instante."
+msgstr "Managed by the identity provider — changes apply instantly."
+
+#: app/templates/ajustes_cuenta.html:60
+msgid "← Volver a mi perfil"
+msgstr "← Back to my profile"
+
+#: app/templates/ajustes_perfil.html:2 app/templates/ajustes_perfil.html:6
+#: app/templates/base.html:206
+msgid "Mi perfil"
+msgstr "My profile"
+
+#: app/templates/ajustes_perfil.html:7
+msgid "Cómo apareces en Guilda Work y qué avisos quieres recibir."
+msgstr "How you appear in Guilda Work and which notifications you want to receive."
+
+#: app/templates/ajustes_perfil.html:14
+msgid "Foto de perfil"
+msgstr "Profile picture"
+
+#: app/templates/ajustes_perfil.html:24
+msgid "Elegir imagen"
+msgstr "Choose image"
+
+#: app/templates/ajustes_perfil.html:34
+msgid "Formato no soportado -- usa JPEG, PNG o WEBP."
+msgstr "Unsupported format — use JPEG, PNG or WEBP."
+
+#: app/templates/ajustes_perfil.html:35
+msgid "La imagen pesa demasiado (máximo 5 MB)."
+msgstr "The image is too large (maximum 5 MB)."
+
+#: app/templates/ajustes_perfil.html:36
+msgid "No se ha podido procesar esa imagen -- prueba con otra."
+msgstr "That image could not be processed — try another one."
+
+#: app/templates/ajustes_perfil.html:44
+msgid "Cambiar contraseña o email"
+msgstr "Change password or email"
+
+#: app/templates/ajustes_perfil.html:51
+msgid "Nombre a mostrar"
+msgstr "Display name"
+
+#: app/templates/ajustes_perfil.html:54
+msgid ""
+"Se usa en vez de tu email donde aparezcas como autor (tiquets, "
+"histórico...). Déjalo vacío para seguir mostrando el email."
+msgstr ""
+"Used instead of your email wherever you appear as author (tickets, "
+"history...). Leave it empty to keep showing your email."
+
+#: app/templates/ajustes_perfil.html:57 app/templates/base.html:52
+#: app/templates/base.html:54 app/templates/base.html:59
+msgid "Notificaciones"
+msgstr "Notifications"
+
+#: app/templates/ajustes_perfil.html:60
+msgid "Vencimientos fiscales próximos"
+msgstr "Upcoming tax deadlines"
+
+#: app/templates/ajustes_perfil.html:64
+msgid "Cambios de estado en mis tiquets"
+msgstr "Status changes on my tickets"
+
+#: app/templates/ajustes_perfil.html:68
+msgid "Resumen semanal del asistente de IA"
+msgstr "Weekly AI assistant summary"
+
+#: app/templates/base.html:60
+msgid "Vaciar todas"
+msgstr "Clear all"
+
+#: app/templates/base.html:63
+msgid "No tienes notificaciones."
+msgstr "You have no notifications."
+
+#: app/templates/base.html:98
+msgid "Expandir Correo"
+msgstr "Expand Mail"
+
+#: app/templates/base.html:101
+msgid "Bandeja"
+msgstr "Inbox"
+
+#: app/templates/base.html:117 app/templates/base.html:119
+msgid "Fiscal"
+msgstr "Tax"
+
+#: app/templates/base.html:120
+msgid "Expandir Fiscal"
+msgstr "Expand Tax"
+
+#: app/templates/base.html:123 app/templates/fiscal_cliente_detalle.html:2
+#: app/templates/fiscal_clientes.html:6 app/templates/fiscal_papelera.html:2
+#: app/templates/fiscal_papelera.html:6
+#: app/templates/fiscal_vencimientos.html:6
+#: app/templates/fiscal_vencimientos_calendario.html:2
+#: app/templates/fiscal_vencimientos_calendario.html:6
+msgid "Calendario fiscal"
+msgstr "Tax calendar"
+
+#: app/templates/base.html:124 app/templates/citas.html:2
+#: app/templates/citas.html:6
+msgid "Agenda"
+msgstr "Agenda"
+
+#: app/templates/base.html:127 app/templates/base.html:129
+msgid "Videollamadas"
+msgstr "Video calls"
+
+#: app/templates/base.html:185
+msgid "Apariencia"
+msgstr "Appearance"
+
+#: app/templates/base.html:220
+msgid "Ayuda y salida"
+msgstr "Help and sign out"
+
+#: app/templates/base.html:223
+msgid "Centro de ayuda"
+msgstr "Help centre"
+
+#: app/templates/base.html:259
+msgid "Nuevo"
+msgstr "New"
+
+#: app/templates/base.html:274
+msgid "Tareas vencidas o que vencen hoy"
+msgstr "Overdue tasks or tasks due today"
+
+#: app/templates/base.html:276
+#, python-format
+msgid "%(n)s para hoy"
+msgid_plural "%(n)s para hoy"
+msgstr[0] "%(n)s for today"
+msgstr[1] "%(n)s for today"
+
+#: app/templates/base.html:281
+msgid "Error de sincronización"
+msgstr "Sync error"
+
+#: app/templates/base.html:281
+msgid "Correo sincronizado"
+msgstr "Mail synced"
+
+#: app/templates/base.html:283
+#, python-format
+msgid "%(n)s sin leer"
+msgid_plural "%(n)s sin leer"
+msgstr[0] "%(n)s unread"
+msgstr[1] "%(n)s unread"
+
+#: app/templates/base.html:285
+msgid "error de sincronización"
+msgstr "sync error"
+
+#: app/templates/base.html:285
+msgid "sin sincronizar"
+msgstr "not synced"
+
+#: app/templates/base.html:285
+msgid "sincronizado ahora"
+msgstr "synced just now"
+
+#: app/templates/base.html:285
+#, python-format
+msgid "sincronizado hace %(n)s min"
+msgstr "synced %(n)s min ago"
+
+#: app/templates/base.html:285
+#, python-format
+msgid "sincronizado hace %(n)s h"
+msgstr "synced %(n)s h ago"
+
+#: app/templates/base.html:285
+#, python-format
+msgid "sincronizado hace %(n)s d"
+msgstr "synced %(n)s d ago"
+
+#: app/templates/base.html:292 app/templates/fichaje_panel.html:39
+#, python-format
+msgid "desde las %(h)s"
+msgstr "since %(h)s"
+
+#: app/templates/base.html:337
+msgid "Nuevo tiquet (incidencia/sugerencia)"
+msgstr "New ticket (issue/suggestion)"
+
+#: app/templates/base.html:342
+msgid "Correo: siguiente / anterior mensaje"
+msgstr "Mail: next / previous message"
+
+#: app/templates/base.html:343
+msgid "Correo: eliminar el mensaje abierto"
+msgstr "Mail: delete the open message"
+
+#: app/templates/base.html:344
+msgid "Correo: marcar como no leído"
+msgstr "Mail: mark as unread"
+
+#: app/templates/base.html:345
+msgid "Correo: archivar (si la cuenta tiene carpeta de archivo)"
+msgstr "Mail: archive (if the account has an archive folder)"
+
+#: app/templates/base.html:376
+msgid "completados -- fallos:"
+msgstr "completed — failures:"
+
+#: app/templates/base.html:377
+msgid "Esta cuenta no tiene una carpeta de archivo."
+msgstr "This account has no archive folder."
+
+#: app/templates/base.html:379
+msgid "archivos"
+msgstr "files"
+
+#: app/templates/citas.html:7
+msgid ""
+"Próximas citas reservadas online (Cal.diy) — calendario compartido de "
+"toda la gestoría, no una agenda personal."
+msgstr ""
+"Upcoming online bookings (Cal.diy) — a calendar shared by the whole firm,"
+" not a personal agenda."
+
+#: app/templates/citas.html:12
+msgid ""
+"Tu gestoría todavía no tiene Cal.diy configurado. Pide a un administrador"
+" que active la herramienta de Citas desde el backoffice."
+msgstr ""
+"Your firm has not set up Cal.diy yet. Ask an administrator to enable the "
+"Appointments tool from the backoffice."
+
+#: app/templates/citas.html:16
+msgid "No hay ninguna cita próxima."
+msgstr "There are no upcoming appointments."
+
+#: app/templates/citas.html:21 app/templates/fiscal_cliente_detalle.html:106
+msgid "(sin título)"
+msgstr "(untitled)"
+
+#: app/templates/correo_bandeja.html:303
+#: app/templates/correo_equipo_mensaje.html:17
+#, python-format
+msgid "Asignado a %(quien)s"
+msgstr "Assigned to %(quien)s"
+
+#: app/templates/correo_bandeja.html:303
+msgid "resuelto"
+msgstr "resolved"
+
+#: app/templates/correo_bandeja.html:304
+#, python-format
+msgid "%(n)s nota interna"
+msgid_plural "%(n)s notas internas"
+msgstr[0] "%(n)s internal note"
+msgstr[1] "%(n)s internal notes"
+
+#: app/templates/correo_bandeja.html:312
+msgid "Asignar"
+msgstr "Assign"
+
+#: app/templates/correo_bandeja.html:315
+msgid "Compartir con"
+msgstr "Share with"
+
+#: app/templates/correo_bandeja.html:316
+msgid "Compartir (solo lectura) con…"
+msgstr "Share (read-only) with…"
+
+#: app/templates/correo_bandeja.html:319 app/templates/notas.html:161
+#: app/templates/tarea_outlook_editar.html:163
+msgid "Compartir"
+msgstr "Share"
+
+#: app/templates/correo_bandeja.html:331
+msgid "Ver y escribir notas internas"
+msgstr "View and write internal notes"
+
+#: app/templates/correo_bandeja.html:331
+msgid "Nunca se envían al remitente."
+msgstr "They are never sent to the sender."
+
+#: app/templates/correo_borradores.html:7
+msgid ""
+"Correos que empezaste a escribir y guardaste sin enviar. Solo se guardan "
+"aquí, nunca se suben al servidor de correo."
+msgstr ""
+"Emails you started writing and saved without sending. They are only "
+"stored here, never uploaded to the mail server."
+
+#: app/templates/correo_borradores.html:13
+msgid "No tienes ningún borrador guardado."
+msgstr "You have no saved drafts."
+
+#: app/templates/correo_borradores.html:20
+msgid "(Sin asunto)"
+msgstr "(No subject)"
+
+#: app/templates/correo_borradores.html:25
+msgid "¿Eliminar este borrador? No se puede deshacer."
+msgstr "Delete this draft? This cannot be undone."
+
+#: app/templates/correo_cuentas.html:7
+msgid ""
+"IMAP/POP3. La contraseña se guarda cifrada en el servidor, nunca en texto"
+" plano ni en la base de datos."
+msgstr ""
+"IMAP/POP3. The password is stored encrypted on the server, never in plain"
+" text or in the database."
+
+#: app/templates/correo_cuentas.html:45
+msgid "Déjalo en blanco para mantener la actual"
+msgstr "Leave blank to keep the current one"
+
+#: app/templates/correo_cuentas.html:86
+msgid "Guardar cambios"
+msgstr "Save changes"
+
+#: app/templates/correo_equipo.html:2 app/templates/correo_equipo.html:6
+#: app/templates/correo_equipo_mensaje.html:12
+msgid "Correo de equipo"
+msgstr "Team mail"
+
+#: app/templates/correo_equipo.html:7
+msgid ""
+"Correos que un compañero te ha asignado o compartido. No se comparten "
+"cuentas: solo los mensajes concretos, en solo lectura."
+msgstr ""
+"Emails a colleague has assigned or shared with you. Accounts are not "
+"shared: only the specific messages, read-only."
+
+#: app/templates/correo_equipo.html:12
+msgid "Asignados a mí"
+msgstr "Assigned to me"
+
+#: app/templates/correo_equipo.html:13
+msgid "Compartidos conmigo"
+msgstr "Shared with me"
+
+#: app/templates/correo_equipo.html:14
+msgid "Los que he pasado"
+msgstr "Ones I passed on"
+
+#: app/templates/correo_equipo.html:18
+msgid ""
+"No hay correos aquí. Abre un correo de tu bandeja y usa el panel «Equipo»"
+" para asignarlo o compartirlo."
+msgstr ""
+"There are no emails here. Open an email in your inbox and use the “Team” "
+"panel to assign or share it."
+
+#: app/templates/correo_equipo.html:26
+#, python-format
+msgid "%(n)s nota"
+msgid_plural "%(n)s notas"
+msgstr[0] "%(n)s note"
+msgstr[1] "%(n)s notes"
+
+#: app/templates/correo_equipo.html:27
+#: app/templates/correo_equipo_mensaje.html:18
+msgid "Resuelto"
+msgstr "Resolved"
+
+#: app/templates/correo_equipo.html:27
+#: app/templates/correo_equipo_mensaje.html:18
+msgid "Abierto"
+msgstr "Open"
+
+#: app/templates/correo_equipo_mensaje.html:24
+msgid "Reabrir"
+msgstr "Reopen"
+
+#: app/templates/correo_equipo_mensaje.html:24
+msgid "Marcar como resuelto"
+msgstr "Mark as resolved"
+
+#: app/templates/correo_equipo_mensaje.html:28
+msgid "Abrir en mi bandeja (responder, adjuntos, asignar…)"
+msgstr "Open in my inbox (reply, attachments, assign…)"
+
+#: app/templates/correo_equipo_mensaje.html:32
+msgid "Dejar de ver este correo"
+msgstr "Stop seeing this email"
+
+#: app/templates/correo_equipo_mensaje.html:35
+msgid ""
+"(Este correo no tiene versión en texto; ábrelo en la bandeja de quien lo "
+"recibió.)"
+msgstr ""
+"(This email has no text version; open it in the inbox of the person who "
+"received it.)"
+
+#: app/templates/correo_equipo_mensaje.html:39
+msgid "Notas internas"
+msgstr "Internal notes"
+
+#: app/templates/correo_equipo_mensaje.html:40
+msgid ""
+"Solo las ve el equipo con acceso a este correo; nunca se envían al "
+"remitente."
+msgstr ""
+"Only the team with access to this email can see them; they are never sent"
+" to the sender."
+
+#: app/templates/correo_equipo_mensaje.html:58
+msgid "Todavía no hay notas internas."
+msgstr "There are no internal notes yet."
+
+#: app/templates/correo_equipo_mensaje.html:61
+msgid "Escribe una nota interna…"
+msgstr "Write an internal note…"
+
+#: app/templates/correo_equipo_mensaje.html:62
+msgid "Añadir nota"
+msgstr "Add note"
+
+#: app/templates/estadisticas.html:20
+msgid "Totales del periodo"
+msgstr "Period totals"
+
+#: app/templates/estadisticas.html:21
+msgid "tiempo en tareas"
+msgstr "time on tasks"
+
+#: app/templates/estadisticas.html:22
+msgid "tareas finalizadas"
+msgstr "completed tasks"
+
+#: app/templates/estadisticas.html:23
+msgid "eventos"
+msgstr "events"
+
+#: app/templates/estadisticas.html:24
+msgid "notas"
+msgstr "notes"
+
+#: app/templates/estadisticas.html:121
+#, python-format
+msgid "Tiempo medio hasta presentar un vencimiento fiscal: %(dias)s días."
+msgstr "Average time to file a tax deadline: %(dias)s days."
+
+#: app/templates/fichaje_admin_detalle.html:55
+msgid "Fecha y hora real del fichaje que faltó"
+msgstr "Actual date and time of the missing clock-in"
+
+#: app/templates/fichaje_integridad.html:2
+#: app/templates/fichaje_integridad.html:6
+msgid "Integridad del registro horario"
+msgstr "Time-record integrity"
+
+#: app/templates/fichaje_integridad.html:7
+msgid ""
+"Comprueba que ningún fichaje se ha alterado directamente en la base de "
+"datos desde que se creó -- cadena de hashes de toda la tabla, no solo de "
+"este tenant."
+msgstr ""
+"Checks that no clock record has been altered directly in the database "
+"since it was created — hash chain of the whole table, not just this "
+"tenant."
+
+#: app/templates/fichaje_integridad.html:14
+msgid "Cadena íntegra"
+msgstr "Chain intact"
+
+#: app/templates/fichaje_integridad.html:16
+#, python-format
+msgid ""
+"%(total)s fichajes comprobados, ninguno se ha alterado ni borrado desde "
+"su creación."
+msgstr ""
+"%(total)s clock records checked, none has been altered or deleted since "
+"its creation."
+
+#: app/templates/fichaje_integridad.html:21
+msgid "Cadena rota"
+msgstr "Chain broken"
+
+#: app/templates/fichaje_integridad.html:23
+#, python-format
+msgid ""
+"El fichaje con id %(id)s (o algo entre ese punto y el anterior) no "
+"coincide con lo esperado -- puede haberse editado o borrado directamente "
+"en la base de datos, saltándose la aplicación."
+msgstr ""
+"The clock record with id %(id)s (or something between that point and the "
+"previous one) does not match what was expected — it may have been edited "
+"or deleted directly in the database, bypassing the application."
+
+#: app/templates/fichaje_integridad.html:27
+msgid "Volver a fichaje"
+msgstr "Back to clock-in"
+
+#: app/templates/fichaje_panel.html:38
+msgid "Tiempo transcurrido"
+msgstr "Elapsed time"
+
+#: app/templates/fichaje_panel.html:107
+msgid "Horas trabajadas cada día de esta semana"
+msgstr "Hours worked each day this week"
+
+#: app/templates/fiscal_cliente_detalle.html:10
+msgid "Generación automática activa"
+msgstr "Automatic generation on"
+
+#: app/templates/fiscal_cliente_detalle.html:15
+#: app/templates/fiscal_clientes.html:57 app/templates/fiscal_clientes.html:98
+#: app/templates/fiscal_generar_vencimientos.html:2
+#: app/templates/fiscal_vencimientos.html:128
+msgid "Generar vencimientos"
+msgstr "Generate deadlines"
+
+#: app/templates/fiscal_cliente_detalle.html:17
+msgid "Ver en EspoCRM"
+msgstr "View in EspoCRM"
+
+#: app/templates/fiscal_cliente_detalle.html:21
+msgid "Vincular con FacturaScripts"
+msgstr "Link with FacturaScripts"
+
+#: app/templates/fiscal_cliente_detalle.html:32
+msgid "Volver a clientes"
+msgstr "Back to clients"
+
+#: app/templates/fiscal_cliente_detalle.html:36
+msgid "Este cliente todavía no tiene vencimientos."
+msgstr "This client has no deadlines yet."
+
+#: app/templates/fiscal_cliente_detalle.html:47
+#: app/templates/fiscal_vencimientos.html:83 app/templates/inicio.html:232
+msgid "Vencido"
+msgstr "Overdue"
+
+#: app/templates/fiscal_cliente_detalle.html:56
+msgid "Documentos subidos por el cliente"
+msgstr "Documents uploaded by the client"
+
+#: app/templates/fiscal_cliente_detalle.html:73
+msgid "Últimos mensajes"
+msgstr "Latest messages"
+
+#: app/templates/fiscal_cliente_detalle.html:90
+msgid "Contactos"
+msgstr "Contacts"
+
+#: app/templates/fiscal_cliente_detalle.html:104
+msgid "Próxima cita"
+msgstr "Next appointment"
+
+#: app/templates/fiscal_cliente_detalle.html:109
+msgid "Ver agenda completa"
+msgstr "View full agenda"
+
+#: app/templates/fiscal_cliente_detalle.html:115
+msgid "Correos relacionados"
+msgstr "Related emails"
+
+#: app/templates/fiscal_cliente_detalle.html:133
+msgid "Todavía no hay facturas para este cliente."
+msgstr "There are no invoices for this client yet."
+
+#: app/templates/fiscal_clientes.html:7
+msgid ""
+"Clientes de la gestoría para los que se llevan vencimientos fiscales "
+"(IVA, IRPF, retenciones...)."
+msgstr ""
+"Firm clients for whom tax deadlines are managed (VAT, income tax, "
+"withholdings...)."
+
+#: app/templates/fiscal_clientes.html:12 app/templates/fiscal_papelera.html:12
+#: app/templates/fiscal_vencimientos.html:12
+#: app/templates/fiscal_vencimientos_calendario.html:12
+msgid "Clientes"
+msgstr "Clients"
+
+#: app/templates/fiscal_clientes.html:13 app/templates/fiscal_papelera.html:13
+#: app/templates/fiscal_vencimientos.html:13
+#: app/templates/fiscal_vencimientos_calendario.html:13
+msgid "Vencimientos"
+msgstr "Deadlines"
+
+#: app/templates/fiscal_clientes.html:19
+msgid "Nuevo cliente fiscal"
+msgstr "New tax client"
+
+#: app/templates/fiscal_clientes.html:21
+msgid "Nombre o razón social..."
+msgstr "Name or company name..."
+
+#: app/templates/fiscal_clientes.html:22
+msgid "NIF/CIF (opcional)"
+msgstr "Tax ID (optional)"
+
+#: app/templates/fiscal_clientes.html:30
+msgid "Nombre o NIF..."
+msgstr "Name or tax ID..."
+
+#: app/templates/fiscal_clientes.html:33
+#: app/templates/fiscal_vencimientos.html:40
+#: app/templates/fiscal_vencimientos_calendario.html:42
+msgid "País"
+msgstr "Country"
+
+#: app/templates/fiscal_clientes.html:43
+#: app/templates/fiscal_generar_vencimientos_masivo.html:2
+msgid "Generar vencimientos (todos los clientes)"
+msgstr "Generate deadlines (all clients)"
+
+#: app/templates/fiscal_clientes.html:47
+msgid "Todavía no hay clientes fiscales dados de alta."
+msgstr "No tax clients have been added yet."
+
+#: app/templates/fiscal_clientes.html:69
+msgid "Pulsa un cliente para ver su ficha rápida."
+msgstr "Click a client to see their quick profile."
+
+#: app/templates/fiscal_clientes.html:86
+#: app/templates/fiscal_vencimientos.html:116
+msgid "sin modelos asignados"
+msgstr "no models assigned"
+
+#: app/templates/fiscal_clientes.html:91
+#: app/templates/fiscal_vencimientos.html:121
+msgid "Modelos"
+msgstr "Forms"
+
+#: app/templates/fiscal_clientes.html:92
+#: app/templates/fiscal_vencimientos.html:122
+msgid "Vencimientos pendientes"
+msgstr "Pending deadlines"
+
+#: app/templates/fiscal_clientes.html:93
+#: app/templates/fiscal_vencimientos.html:123
+msgid "Generación automática"
+msgstr "Automatic generation"
+
+#: app/templates/fiscal_clientes.html:93
+#: app/templates/fiscal_vencimientos.html:123
+msgid "Inactiva"
+msgstr "Inactive"
+
+#: app/templates/fiscal_clientes.html:94
+#: app/templates/fiscal_vencimientos.html:124
+msgid "Ver cuenta"
+msgstr "View account"
+
+#: app/templates/fiscal_clientes.html:97
+#: app/templates/fiscal_vencimientos.html:127
+msgid "Ver ficha completa"
+msgstr "View full profile"
+
+#: app/templates/fiscal_clientes.html:105
+#: app/templates/fiscal_vencimientos.html:135
+msgid "Cargando…"
+msgstr "Loading…"
+
+#: app/templates/fiscal_clientes.html:110
+#: app/templates/fiscal_vencimientos.html:140
+msgid "No se ha podido cargar."
+msgstr "Could not be loaded."
+
+#: app/templates/fiscal_generar_vencimientos.html:6
+#, python-format
+msgid "Generar vencimientos para %(cliente)s"
+msgstr "Generate deadlines for %(cliente)s"
+
+#: app/templates/fiscal_generar_vencimientos.html:7
+msgid ""
+"Fechas orientativas -- la AEAT las desplaza si caen en fin de semana o "
+"festivo. Revisa y ajusta cada fecha antes de guardar."
+msgstr ""
+"Indicative dates — the tax agency moves them if they fall on a weekend or"
+" holiday. Review and adjust each date before saving."
+
+#: app/templates/fiscal_generar_vencimientos.html:12
+#: app/templates/fiscal_generar_vencimientos_masivo.html:12
+msgid "Año fiscal"
+msgstr "Tax year"
+
+#: app/templates/fiscal_generar_vencimientos.html:23
+#: app/templates/fiscal_generar_vencimientos_masivo.html:15
+msgid "Recalcular"
+msgstr "Recalculate"
+
+#: app/templates/fiscal_generar_vencimientos.html:27
+msgid ""
+"Todavía no hay calendario fiscal configurado para el país de este cliente"
+" -- dilo y lo añadimos. Mientras tanto, crea sus vencimientos a mano "
+"desde \"Editar vencimiento\"."
+msgstr ""
+"There is no tax calendar set up for this client's country yet — let us "
+"know and we will add it. In the meantime, create its deadlines by hand "
+"from “Edit deadline”."
+
+#: app/templates/fiscal_generar_vencimientos.html:29
+msgid "Elige al menos un modelo para ver las fechas propuestas."
+msgstr "Choose at least one form to see the proposed dates."
+
+#: app/templates/fiscal_generar_vencimientos.html:45
+msgid "Guardar vencimientos"
+msgstr "Save deadlines"
+
+#: app/templates/fiscal_generar_vencimientos_masivo.html:6
+msgid "Generar vencimientos para todos los clientes"
+msgstr "Generate deadlines for all clients"
+
+#: app/templates/fiscal_generar_vencimientos_masivo.html:7
+msgid ""
+"Solo se incluyen los clientes con al menos un modelo marcado en su ficha."
+" Revisa antes de confirmar -- no hay paso atrás una vez guardado (aunque "
+"siempre puedes eliminar vencimientos sueltos después)."
+msgstr ""
+"Only clients with at least one form ticked in their profile are included."
+" Review before confirming — there is no going back once saved (though you"
+" can always delete individual deadlines afterwards)."
+
+#: app/templates/fiscal_generar_vencimientos_masivo.html:19
+msgid ""
+"Ningún cliente tiene modelos fiscales asignados todavía -- edítalos desde"
+" su ficha para poder generarlos aquí."
+msgstr ""
+"No client has tax forms assigned yet — edit them from their profile to "
+"generate them here."
+
+#: app/templates/fiscal_generar_vencimientos_masivo.html:36
+msgid ""
+"¿Generar todos estos vencimientos? Se guardan tal cual se ven arriba, sin"
+" poder editar cada fecha antes."
+msgstr ""
+"Generate all these deadlines? They are saved exactly as shown above, "
+"without being able to edit each date first."
+
+#: app/templates/fiscal_generar_vencimientos_masivo.html:37
+msgid "Guardar todos los vencimientos"
+msgstr "Save all deadlines"
+
+#: app/templates/fiscal_papelera.html:7
+msgid ""
+"Clientes y vencimientos eliminados de este tenant. Puedes recuperarlos "
+"cuando quieras."
+msgstr ""
+"Clients and deadlines deleted from this tenant. You can recover them "
+"whenever you like."
+
+#: app/templates/fiscal_papelera.html:18
+msgid "La papelera del calendario fiscal está vacía."
+msgstr "The tax calendar bin is empty."
+
+#: app/templates/fiscal_vencimientos.html:2
+#: app/templates/tareas_calendario.html:17
+msgid "Vencimientos fiscales"
+msgstr "Tax deadlines"
+
+#: app/templates/fiscal_vencimientos.html:7
+#: app/templates/fiscal_vencimientos_calendario.html:7
+msgid "Vencimientos de todos los clientes de la gestoría."
+msgstr "Deadlines of all the firm's clients."
+
+#: app/templates/fiscal_vencimientos.html:57
+msgid "No hay vencimientos para este filtro."
+msgstr "There are no deadlines for this filter."
+
+#: app/templates/fiscal_vencimientos.html:65
+#, python-format
+msgid "%(n)s vencimiento(s)"
+msgstr "%(n)s deadline(s)"
+
+#: app/templates/fiscal_vencimientos.html:71
+msgid "Marcar como presentado"
+msgstr "Mark as filed"
+
+#: app/templates/fiscal_vencimientos.html:98
+msgid "Pulsa un vencimiento para ver la ficha rápida del cliente."
+msgstr "Click a deadline to see the client's quick profile."
+
+#: app/templates/fiscal_vencimientos_calendario.html:55
+msgid "Mes anterior"
+msgstr "Previous month"
+
+#: app/templates/fiscal_vencimientos_calendario.html:57
+msgid "Mes siguiente"
+msgstr "Next month"
+
+#: app/templates/herramientas.html:13
+msgid "Buscar herramienta..."
+msgstr "Search tool..."
+
+#: app/templates/herramientas.html:13
+msgid "Buscar herramienta"
+msgstr "Search tool"
+
+#: app/templates/ia_ajustes.html:33
+msgid ""
+"sk-or-...\n"
+"sk-or-... (clave de reserva, opcional)"
+msgstr ""
+"sk-or-...\n"
+"sk-or-... (backup key, optional)"
+
+#: app/templates/inicio.html:10
+#, python-format
+msgid "%(n)s tarea para hoy"
+msgid_plural "%(n)s tareas para hoy"
+msgstr[0] "%(n)s task for today"
+msgstr[1] "%(n)s tasks for today"
+
+#: app/templates/inicio.html:10
+#, python-format
+msgid "%(n)s vencimiento fiscal este mes"
+msgid_plural "%(n)s vencimientos fiscales este mes"
+msgstr[0] "%(n)s tax deadline this month"
+msgstr[1] "%(n)s tax deadlines this month"
+
+#: app/templates/inicio.html:85
+msgid "Ver todas las tareas"
+msgstr "View all tasks"
+
+#: app/templates/inicio.html:87
+msgid "Nada pendiente para hoy."
+msgstr "Nothing pending for today."
+
+#: app/templates/inicio.html:93
+msgid "Sin fecha"
+msgstr "No date"
+
+#: app/templates/inicio.html:94
+msgid "Vencida"
+msgstr "Overdue"
+
+#: app/templates/inicio.html:213
+msgid "Ver tareas"
+msgstr "View tasks"
+
+#: app/templates/inicio.html:218
+#, python-format
+msgid "%(n)s atrasada"
+msgid_plural "%(n)s atrasadas"
+msgstr[0] "%(n)s overdue"
+msgstr[1] "%(n)s overdue"
+
+#: app/templates/inicio.html:219
+msgid "Tareas abiertas"
+msgstr "Open tasks"
+
+#: app/templates/inicio.html:219
+#, python-format
+msgid "%(n)s abierta"
+msgid_plural "%(n)s abiertas"
+msgstr[0] "%(n)s open"
+msgstr[1] "%(n)s open"
+
+#: app/templates/inicio.html:228
+msgid "Próximos vencimientos"
+msgstr "Upcoming deadlines"
+
+#: app/templates/inicio.html:231
+#, python-format
+msgid "Modelo %(m)s"
+msgstr "Form %(m)s"
+
+#: app/templates/inicio.html:232
+#, python-format
+msgid "%(n)s día"
+msgid_plural "%(n)s días"
+msgstr[0] "%(n)s day"
+msgstr[1] "%(n)s days"
+
+#: app/templates/login.html:22
+msgid "Presentación"
+msgstr "Filing"
+
+#: app/templates/login.html:25
+msgid "Todo lo que usa tu gestoría, en un mismo sitio."
+msgstr "Everything your firm uses, in one place."
+
+#: app/templates/login.html:26
+msgid ""
+"Correo, tareas, calendario fiscal y firma electrónica, conectados entre "
+"sí y alojados en tu propio servidor."
+msgstr ""
+"Mail, tasks, tax calendar and e-signature, connected to each other and "
+"hosted on your own server."
+
+#: app/templates/login.html:29
+msgid "Vencimientos fiscales con aviso antes de que lleguen"
+msgstr "Tax deadlines with a reminder before they arrive"
+
+#: app/templates/login.html:30
+msgid "Registro de jornada verificable"
+msgstr "Verifiable working-time record"
+
+#: app/templates/login.html:31
+msgid "Portal para que tus clientes vean su expediente"
+msgstr "Portal for your clients to see their file"
+
+#: app/templates/notas.html:8
+msgid "Tus notas con título y formato. Las fijadas salen primero."
+msgstr "Your notes with title and formatting. Pinned ones come first."
+
+#: app/templates/notas.html:13
+msgid "Lista de notas"
+msgstr "Notes list"
+
+#: app/templates/notas.html:15 app/templates/notas.html:16
+msgid "Buscar nota"
+msgstr "Search notes"
+
+#: app/templates/notas.html:19
+msgid "Todos los proyectos"
+msgstr "All projects"
+
+#: app/templates/notas.html:22
+msgid "Nueva"
+msgstr "New"
+
+#: app/templates/notas.html:24
+msgid "Vista"
+msgstr "View"
+
+#: app/templates/notas.html:26 app/templates/tareas_hoy.html:21
+#: app/templates/tareas_lista.html:27
+msgid "Compartidas conmigo"
+msgstr "Shared with me"
+
+#: app/templates/notas.html:30
+msgid "No hay notas para este filtro."
+msgstr "There are no notes for this filter."
+
+#: app/templates/notas.html:38
+msgid "Fijadas"
+msgstr "Pinned"
+
+#: app/templates/notas.html:38
+msgid "Recientes"
+msgstr "Recent"
+
+#: app/templates/notas.html:48
+#, python-format
+msgid "%(n)s adjunto"
+msgid_plural "%(n)s adjuntos"
+msgstr[0] "%(n)s attachment"
+msgstr[1] "%(n)s attachments"
+
+#: app/templates/notas.html:57
+msgid "Editor de nota"
+msgstr "Note editor"
+
+#: app/templates/notas.html:84
+msgid "Sin título"
+msgstr "Untitled"
+
+#: app/templates/notas.html:95
+msgid "Vínculos y archivos"
+msgstr "Links and files"
+
+#: app/templates/notas.html:123
+msgid "Fijar esta nota arriba"
+msgstr "Pin this note to the top"
+
+#: app/templates/notas.html:127
+msgid "Gestionar adjuntos"
+msgstr "Manage attachments"
+
+#: app/templates/notas.html:134 app/templates/tarea_outlook_editar.html:134
+msgid "Compartida con"
+msgstr "Shared with"
+
+#: app/templates/notas.html:140 app/templates/tarea_outlook_editar.html:140
+msgid "Colabora"
+msgstr "Collaborates"
+
+#: app/templates/notas.html:149
+msgid "Nadie más ve esta nota."
+msgstr "Nobody else sees this note."
+
+#: app/templates/notas.html:153 app/templates/tarea_outlook_editar.html:155
+msgid "Compañero"
+msgstr "Colleague"
+
+#: app/templates/notas.html:154 app/templates/tarea_outlook_editar.html:156
+msgid "Compañero..."
+msgstr "Colleague..."
+
+#: app/templates/notas.html:157 app/templates/tarea_outlook_editar.html:159
+msgid "Permiso"
+msgstr "Permission"
+
+#: app/templates/notas.html:158
+msgid "Puede editar"
+msgstr "Can edit"
+
+#: app/templates/notas.html:168
+msgid "Salir de esta nota"
+msgstr "Leave this note"
+
+#: app/templates/notas.html:187
+msgid "Elige una nota de la lista o crea una nueva."
+msgstr "Choose a note from the list or create a new one."
+
+#: app/templates/portal_dashboard.html:6
+msgid "Mis vencimientos"
+msgstr "My deadlines"
+
+#: app/templates/portal_dashboard.html:17
+msgid "Tu expediente fiscal."
+msgstr "Your tax file."
+
+#: app/templates/portal_dashboard.html:20
+msgid "Salir"
+msgstr "Sign out"
+
+#: app/templates/portal_dashboard.html:30
+#, python-format
+msgid "%(n)s de %(total)s presentados este año"
+msgstr "%(n)s of %(total)s filed this year"
+
+#: app/templates/portal_dashboard.html:32
+#, python-format
+msgid "El próximo vence el %(fecha)s"
+msgstr "The next one is due on %(fecha)s"
+
+#: app/templates/portal_dashboard.html:34
+msgid "Todo presentado, sin nada pendiente."
+msgstr "All filed, nothing pending."
+
+#: app/templates/portal_dashboard.html:44
+msgid "Tu gestoría necesita un documento tuyo"
+msgstr "Your firm needs a document from you"
+
+#: app/templates/portal_dashboard.html:53
+msgid "Todavía no hay vencimientos registrados."
+msgstr "No deadlines have been registered yet."
+
+#: app/templates/portal_dashboard.html:63
+#, python-format
+msgid "Presentado el %(fecha)s"
+msgstr "Filed on %(fecha)s"
+
+#: app/templates/portal_dashboard.html:64
+#, python-format
+msgid "Vence el %(fecha)s"
+msgstr "Due on %(fecha)s"
+
+#: app/templates/portal_dashboard.html:71
+msgid "Subir documento"
+msgstr "Upload document"
+
+#: app/templates/portal_dashboard.html:72
+#: app/templates/portal_vencimiento_mensajes.html:6
+msgid "Mensajes"
+msgstr "Messages"
+
+#: app/templates/portal_entrar.html:6 app/templates/portal_entrar.html:7
+#: app/templates/portal_entrar.html:21
+msgid "Portal de cliente"
+msgstr "Client portal"
+
+#: app/templates/portal_entrar.html:24
+msgid "Este enlace ha caducado o ya se ha usado. Pide uno nuevo abajo."
+msgstr "This link has expired or has already been used. Request a new one below."
+
+#: app/templates/portal_entrar.html:28
+msgid ""
+"Si ese email está asociado a un cliente, te hemos mandado un enlace de "
+"acceso. Revisa tu bandeja de entrada."
+msgstr ""
+"If that email is linked to a client, we have sent you an access link. "
+"Check your inbox."
+
+#: app/templates/portal_entrar.html:30
+msgid ""
+"Introduce tu email y te mandaremos un enlace de acceso, sin necesidad de "
+"contraseña."
+msgstr "Enter your email and we will send you an access link, no password needed."
+
+#: app/templates/portal_entrar.html:36
+msgid "Enviarme el enlace"
+msgstr "Send me the link"
+
+#: app/templates/portal_entrar.html:38
+msgid "¿Todavía no tienes acceso?"
+msgstr "Don't have access yet?"
+
+#: app/templates/portal_entrar.html:38
+msgid "Solicítalo aquí"
+msgstr "Request it here"
+
+#: app/templates/portal_solicitar_acceso.html:6
+#: app/templates/portal_solicitar_acceso.html:7
+msgid "Solicitar acceso al portal"
+msgstr "Request portal access"
+
+#: app/templates/portal_solicitar_acceso.html:22
+msgid "Solicitar acceso"
+msgstr "Request access"
+
+#: app/templates/portal_solicitar_acceso.html:25
+msgid ""
+"Solicitud recibida. Tu gestoría se pondrá en contacto contigo para darte "
+"de alta."
+msgstr "Request received. Your firm will contact you to set up your access."
+
+#: app/templates/portal_solicitar_acceso.html:27
+msgid ""
+"Si todavía no tienes acceso al portal, deja tus datos y tu gestoría te "
+"dará de alta."
+msgstr ""
+"If you do not have portal access yet, leave your details and your firm "
+"will set you up."
+
+#: app/templates/portal_solicitar_acceso.html:41
+msgid "NIF (opcional)"
+msgstr "Tax ID (optional)"
+
+#: app/templates/portal_solicitar_acceso.html:45
+msgid "Mensaje (opcional)"
+msgstr "Message (optional)"
+
+#: app/templates/portal_solicitar_acceso.html:52
+msgid "Enviar solicitud"
+msgstr "Send request"
+
+#: app/templates/portal_solicitar_acceso.html:55
+msgid "¿Ya tienes acceso? Pide tu enlace"
+msgstr "Already have access? Request your link"
+
+#: app/templates/portal_vencimiento_mensajes.html:15
+msgid "Mensajes con tu gestoría sobre este vencimiento."
+msgstr "Messages with your firm about this deadline."
+
+#: app/templates/portal_vencimiento_mensajes.html:22
+msgid "Todavía no hay mensajes. Escribe el primero abajo."
+msgstr "There are no messages yet. Write the first one below."
+
+#: app/templates/portal_vencimiento_mensajes.html:35
+msgid "Escribe un mensaje"
+msgstr "Write a message"
+
+#: app/templates/tarea_outlook_editar.html:18
+#, python-format
+msgid "Tarea compartida contigo por %(quien)s: puedes editarla y completarla."
+msgstr "Task shared with you by %(quien)s: you can edit and complete it."
+
+#: app/templates/tarea_outlook_editar.html:103 app/templates/tarea_ver.html:27
+msgid "Espera a"
+msgstr "Waiting for"
+
+#: app/templates/tarea_outlook_editar.html:119
+msgid "No espera a ninguna otra tarea."
+msgstr "It is not waiting for any other task."
+
+#: app/templates/tarea_outlook_editar.html:123
+msgid "Tarea previa"
+msgstr "Previous task"
+
+#: app/templates/tarea_outlook_editar.html:124
+msgid "Esperar a la tarea…"
+msgstr "Wait for task…"
+
+#: app/templates/tarea_outlook_editar.html:129
+msgid ""
+"Mientras alguna tarea previa no esté completada, esta no se puede iniciar"
+" ni completar."
+msgstr ""
+"While any previous task is not completed, this one cannot be started or "
+"completed."
+
+#: app/templates/tarea_outlook_editar.html:144
+msgid "Salir de la tarea"
+msgstr "Leave the task"
+
+#: app/templates/tarea_outlook_editar.html:151
+msgid "Nadie más ve esta tarea."
+msgstr "Nobody else sees this task."
+
+#: app/templates/tarea_outlook_editar.html:160
+msgid "Puede editar y completar"
+msgstr "Can edit and complete"
+
+#: app/templates/tarea_outlook_editar.html:166
+msgid "No hay más usuarios en tu despacho con quien compartir."
+msgstr "There are no other users in your firm to share with."
+
+#: app/templates/tarea_ver.html:20
+msgid "Sin descripción."
+msgstr "No description."
+
+#: app/templates/tareas_calendario.html:7
+msgid ""
+"Calendario unificado: tareas (por vencimiento o inicio), vencimientos "
+"fiscales, citas y horas fichadas. Haz clic (o arrastra sobre varios "
+"días/horas) para crear una tarea nueva ahí."
+msgstr ""
+"Unified calendar: tasks (by due or start date), tax deadlines, "
+"appointments and clocked hours. Click (or drag across several days/hours)"
+" to create a new task there."
+
+#: app/templates/tareas_calendario.html:14
+#, python-format
+msgid "No se han podido cargar las citas: %(e)s"
+msgstr "Appointments could not be loaded: %(e)s"
+
+#: app/templates/tareas_calendario.html:15
+msgid "Qué mostrar"
+msgstr "What to show"
+
+#: app/templates/tareas_calendario.html:18
+msgid "Citas"
+msgstr "Appointments"
+
+#: app/templates/tareas_calendario.html:44
+msgid "Cita"
+msgstr "Appointment"
+
+#: app/templates/tareas_calendario.html:48
+msgid "Horas fichadas"
+msgstr "Clocked hours"
+
+#: app/templates/tareas_lista.html:16
+#, python-format
+msgid "Se ha creado %(n)s tarea desde la plantilla."
+msgid_plural "Se han creado %(n)s tareas desde la plantilla."
+msgstr[0] "%(n)s task was created from the template."
+msgstr[1] "%(n)s tasks were created from the template."
+
+#: app/templates/tareas_plantillas.html:2
+msgid "Plantillas de tareas"
+msgstr "Task templates"
+
+#: app/templates/tareas_plantillas.html:7
+msgid ""
+"Plantillas: un conjunto de tareas que se crean de golpe, con plazos "
+"relativos a la fecha de inicio (alta de cliente, cierre trimestral…)."
+msgstr ""
+"Templates: a set of tasks created at once, with deadlines relative to the"
+" start date (client onboarding, quarterly close…)."
+
+#: app/templates/tareas_plantillas.html:19
+msgid "Todavía no hay plantillas. Crea la primera con el formulario."
+msgstr "There are no templates yet. Create the first one with the form."
+
+#: app/templates/tareas_plantillas.html:25
+#, python-format
+msgid "%(n)s tarea"
+msgid_plural "%(n)s tareas"
+msgstr[0] "%(n)s task"
+msgstr[1] "%(n)s tasks"
+
+#: app/templates/tareas_plantillas.html:29
+msgid "Compartida con el despacho"
+msgstr "Shared with the firm"
+
+#: app/templates/tareas_plantillas.html:29
+msgid "Solo tuya"
+msgstr "Only yours"
+
+#: app/templates/tareas_plantillas.html:32
+msgid "Empieza el"
+msgstr "Starts on"
+
+#: app/templates/tareas_plantillas.html:39
+msgid "…o un proyecto nuevo"
+msgstr "…or a new project"
+
+#: app/templates/tareas_plantillas.html:39
+msgid "Proyecto nuevo"
+msgstr "New project"
+
+#: app/templates/tareas_plantillas.html:52
+msgid "Cada tarea espera a que se complete la anterior"
+msgstr "Each task waits for the previous one to be completed"
+
+#: app/templates/tareas_plantillas.html:52
+msgid "Encadenar"
+msgstr "Chain"
+
+#: app/templates/tareas_plantillas.html:53
+msgid "Crear tareas"
+msgstr "Create tasks"
+
+#: app/templates/tareas_plantillas.html:58
+msgid "¿Eliminar esta plantilla? Las tareas ya creadas no se tocan."
+msgstr "Delete this template? Tasks already created are not affected."
+
+#: app/templates/tareas_plantillas.html:69
+msgid "Editar plantilla"
+msgstr "Edit template"
+
+#: app/templates/tareas_plantillas.html:69
+msgid "Nueva plantilla"
+msgstr "New template"
+
+#: app/templates/tareas_plantillas.html:72
+msgid "Alta de cliente"
+msgstr "Client onboarding"
+
+#: app/templates/tareas_plantillas.html:78
+msgid "Una tarea por línea: asunto | días desde el inicio | prioridad"
+msgstr "One task per line: subject | days from start | priority"
+
+#: app/templates/tareas_plantillas.html:80
+msgid ""
+"Formato: «asunto | días | prioridad» (los días y la prioridad son "
+"opcionales; prioridad baja, normal o alta). Las líneas que empiezan por "
+"«- » son subtareas de la tarea anterior."
+msgstr ""
+"Format: “subject | days | priority” (days and priority are optional; "
+"priority low, normal or high). Lines starting with “- ” are subtasks of "
+"the previous task."
+
+#: app/templates/tareas_plantillas.html:82
+msgid "Compartir con todo el despacho"
+msgstr "Share with the whole firm"
+
+#: app/templates/tareas_plantillas.html:85
+msgid "Guardar plantilla"
+msgstr "Save template"
+
+#: app/templates/tareas_tablero.html:37
+#, python-format
+msgid "%(h)s de %(t)s pasos"
+msgstr "%(h)s of %(t)s steps"
+
+#: app/templates/tiquets_kanban.html:9
+msgid "Solo un administrador o supervisor puede mover tiquets entre columnas."
+msgstr "Only an administrator or supervisor can move tickets between columns."
+
+#: app/templates/tiquets_kanban.html:21 app/templates/tiquets_tarjetas.html:18
+msgid "Todas las prioridades"
+msgstr "All priorities"
+
+#: app/templates/tiquets_kanban.html:27 app/templates/tiquets_tarjetas.html:24
+msgid "Cualquier asignado"
+msgstr "Any assignee"
+
+#: app/templates/tiquets_kanban.html:50 app/templates/tiquets_tarjetas.html:73
+#, python-format
+msgid "Asignado a %(email)s"
+msgstr "Assigned to %(email)s"
+
+#: app/templates/videollamadas_nueva.html:2
+#: app/templates/videollamadas_nueva.html:6
+msgid "Videollamada"
+msgstr "Video call"
+
+#: app/templates/videollamadas_nueva.html:7
+msgid ""
+"Crea una sala nueva de Jitsi Meet y compártela con quien quieras — se "
+"crea sola al entrar la primera persona, no hace falta reservarla antes."
+msgstr ""
+"Create a new Jitsi Meet room and share it with whoever you like — it is "
+"created by itself when the first person joins, no need to book it first."
+
+#: app/templates/videollamadas_nueva.html:16
+msgid "Tu nombre en la llamada"
+msgstr "Your name in the call"
+
+#: app/templates/videollamadas_nueva.html:17
+msgid "Opcional — se usa tu email si lo dejas vacío"
+msgstr "Optional — your email is used if you leave it empty"
+
+#: app/templates/videollamadas_nueva.html:21
+msgid "Crear sala y entrar"
+msgstr "Create room and join"
+
+msgid "Error"
+msgstr "Bug"
+
+msgid "Sugerencia"
+msgstr "Suggestion"
+
+msgid "Sin revisar"
+msgstr "Not reviewed"
+
+msgid "En revisión"
+msgstr "Under review"
+
+msgid "Finalizado"
+msgstr "Done"
+

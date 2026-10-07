@@ -7,6 +7,7 @@ import calendar as calendario_std
 from datetime import date, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
 from . import calcom, db, fichaje_export, notificaciones, outlook_ics
@@ -722,6 +723,30 @@ def exportar_ics():
         contenido,
         mimetype="text/calendar",
         headers={"Content-Disposition": "attachment; filename=guilda_work_tareas.ics"},
+    )
+
+
+def _celda_segura(valor) -> str:
+    """Evita que Excel/Calc interprete un nombre como fórmula (=, +, -, @)."""
+    texto = "" if valor is None else str(valor)
+    return "'" + texto if texto[:1] in ("=", "+", "-", "@", "\t", "\r") else texto
+
+
+@tareas_bp.route("/carga.csv")
+@login_required
+def exportar_carga_equipo():
+    """Carga de trabajo del equipo (solo sobre las tareas que quien exporta ve)."""
+    import csv
+    import io
+
+    salida = io.StringIO()
+    escritor = csv.writer(salida, delimiter=";")
+    escritor.writerow([_("Persona"), _("Abiertas"), _("Atrasadas"), _("Vencen hoy"), _("En progreso")])
+    for p in db.carga_equipo(g.usuario_id):
+        escritor.writerow([_celda_segura(p["nombre"]), p["abiertas"], p["atrasadas"] or 0, p["hoy"] or 0, p["en_progreso"] or 0])
+    return Response(
+        "\ufeff" + salida.getvalue(), mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename=guilda_work_carga_equipo_{date.today():%Y-%m-%d}.csv"},
     )
 
 

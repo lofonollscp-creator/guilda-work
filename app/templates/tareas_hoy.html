@@ -13,12 +13,12 @@
 {% include "_tareas_subnav.html" %}
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
-{% set total = secciones.vencidas|length + secciones.hoy|length + secciones.en_progreso|length + secciones.asignadas|length %}
+{% set total = secciones.vencidas|length + secciones.hoy|length + secciones.en_progreso|length + secciones.asignadas|length + secciones.compartidas|length %}
 {% if not total %}
 <p class="empty-lane">{{ _('No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.') }}</p>
 {% endif %}
 
-{% for clave, titulo in (('vencidas', _('Vencidas')), ('hoy', _('Vencen hoy')), ('en_progreso', _('En progreso')), ('asignadas', _('Asignadas a mí'))) %}
+{% for clave, titulo in (('vencidas', _('Vencidas')), ('hoy', _('Vencen hoy')), ('en_progreso', _('En progreso')), ('asignadas', _('Asignadas a mí')), ('compartidas', _('Compartidas conmigo'))) %}
 {% if secciones[clave] %}
 <section class="tareas-dia-seccion tareas-dia-{{ clave }}">
   <h2 class="tareas-dia-titulo">{{ titulo }} <span class="pill">{{ secciones[clave]|length }}</span></h2>

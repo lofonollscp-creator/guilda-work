@@ -421,13 +421,30 @@ def eliminar_definitivamente_de_papelera(tipo: str, item_id: int):
 @api_bp.route("/tareas-outlook", methods=["GET"])
 @token_required
 def listar_tareas_outlook():
-    return _ok_paginado(db.listar_tareas_outlook(
+    """`ambito` (opcional): `propias` (por defecto, como siempre), `asignadas`
+    (las que me han asignado), `compartidas` (compartidas conmigo) o `todas`.
+    Cada fila lleva `rol`: dueno, asignada o compartida."""
+    ambito = request.args.get("ambito") or "propias"
+    if ambito not in ("propias", "asignadas", "compartidas", "todas"):
+        return _err("ambito debe ser propias, asignadas, compartidas o todas.")
+    filas = db.listar_tareas_outlook(
         g.usuario_id,
         estado=request.args.get("estado") or None,
         prioridad=request.args.get("prioridad") or None,
         categoria_outlook=request.args.get("categoria") or None,
         texto=request.args.get("q") or None,
-    ))
+        incluir_asignadas=ambito == "todas",
+        solo_asignadas=ambito == "asignadas",
+        solo_compartidas=ambito == "compartidas",
+    )
+    if ambito == "propias":
+        return _ok_paginado(filas)
+    resultado = []
+    for f in filas:
+        fila = dict(f)
+        fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
+        resultado.append(fila)
+    return _ok_paginado(resultado)
 
 
 @api_bp.route("/tareas-outlook", methods=["POST"])
@@ -787,6 +804,22 @@ def marcar_fichaje():
     except ValueError as e:
         return _err(str(e))
     return _ok({"estado": db.estado_actual_fichaje(g.usuario_id)})
+
+
+@api_bp.route("/fichaje/resumen-semana", methods=["GET"])
+@token_required
+def resumen_semana_fichaje():
+    """Horas de la semana en curso frente a la jornada contratada, y su reparto
+    por días (lunes a domingo), para el panel de fichaje de la app."""
+    from . import fichaje_export
+
+    resumen = fichaje_export.resumen_semana(g.tenant_id, g.usuario_id)
+    dias = fichaje_export.semana_por_dias(g.tenant_id, g.usuario_id)
+    return _ok({
+        "segundos": resumen["segundos"], "contratados": resumen["contratados"], "diferencia": resumen["diferencia"],
+        "porcentaje": resumen["porcentaje"], "en_curso": resumen["en_curso"],
+        "dias": [{"fecha": d["fecha"].isoformat(), "segundos": d["segundos"], "hoy": d["hoy"]} for d in dias],
+    })
 
 
 @api_bp.route("/fichaje/historial", methods=["GET"])

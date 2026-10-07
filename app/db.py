@@ -6506,6 +6506,21 @@ def recordatorios_de_tarea_pendientes_de_aviso(ahora: datetime | None = None) ->
         conn.close()
 
 
+def reservar_recordatorio_tarea(recordatorio_id: int) -> bool:
+    """Se queda con el recordatorio de forma atómica: devuelve True solo a UNA
+    de las llamadas (hilo o proceso) que lo intenten a la vez; el resto ve False
+    y no lo envía, así no hay avisos duplicados aunque haya varios workers."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE tarea_recordatorios SET enviado_en = ? WHERE id = ? AND enviado_en IS NULL", (now_iso(), recordatorio_id)
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
 def marcar_recordatorio_tarea_enviado(recordatorio_id: int) -> None:
     conn = get_connection()
     try:
@@ -6792,7 +6807,13 @@ def tareas_para_hoy(usuario_id: int) -> dict[str, list]:
     pendientes, que no estén ya en otra sección)."""
     hoy = datetime.now().strftime("%Y-%m-%d")
     vistas: set[int] = set()
-    secciones: dict[str, list] = {"vencidas": [], "hoy": [], "en_progreso": [], "asignadas": []}
+    secciones: dict[str, list] = {"vencidas": [], "hoy": [], "en_progreso": [], "asignadas": [], "compartidas": []}
+    conn = get_connection()
+    try:
+        compartidas_conmigo = {f["tarea_id"] for f in conn.execute(
+            "SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?", (usuario_id,))}
+    finally:
+        conn.close()
     for t in listar_tareas_outlook(usuario_id, excluir_completadas=True, incluir_asignadas=True):
         fecha = (t["fecha_vencimiento"] or "")[:10]
         if fecha and fecha < hoy:
@@ -6803,6 +6824,8 @@ def tareas_para_hoy(usuario_id: int) -> dict[str, list]:
             secciones["en_progreso"].append(t)
         elif t["asignada_a"] == usuario_id:
             secciones["asignadas"].append(t)
+        elif t["id"] in compartidas_conmigo and t["usuario_id"] != usuario_id:
+            secciones["compartidas"].append(t)  # compartidas conmigo, sin fecha ni en curso
         else:
             continue
         vistas.add(t["id"])

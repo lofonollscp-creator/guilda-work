@@ -411,7 +411,7 @@ PAGINAS = [
                 "cuerpo, prioridad, fechas de inicio/vencimiento y categoría al estilo de Outlook To-Do "
                 "(pensado para import/export <code>.ics</code>/<code>.csv</code> compatible)."},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
-                ["GET", "/tareas-outlook", "Lista, filtrable por <code>estado</code>/<code>prioridad</code>/<code>categoria</code>/<code>q</code>."],
+                ["GET", "/tareas-outlook", "Lista, filtrable por <code>estado</code>/<code>prioridad</code>/<code>categoria</code>/<code>q</code>. <code>ambito</code> opcional: <code>propias</code> (por defecto), <code>asignadas</code>, <code>compartidas</code> o <code>todas</code>; con él cada fila lleva <code>rol</code> (<code>dueno</code>, <code>asignada</code>, <code>compartida</code>)."],
                 ["POST", "/tareas-outlook", "Crea una (<code>asunto</code> obligatorio; <code>cuerpo</code>, <code>prioridad</code>, <code>fecha_inicio</code>, <code>fecha_vencimiento</code>, <code>categoria_outlook</code>)."],
                 ["PUT", "/tareas-outlook/{id}", "Edita cualquier subconjunto de campos (solo actualiza los presentes en el body)."],
                 ["DELETE", "/tareas-outlook/{id}", "Elimina."],
