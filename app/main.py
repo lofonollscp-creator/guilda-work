@@ -36,6 +36,7 @@ from .notas_formato import nota_a_html
 from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
+from .rutas_proyectos import proyectos_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
 from .rutas_stripe_webhook import stripe_webhook_bp
@@ -182,6 +183,7 @@ def _comentario_html(texto, mencionados=()):
 
 app.add_template_filter(_comentario_html, "comentario_html")
 app.register_blueprint(tareas_bp)
+app.register_blueprint(proyectos_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
 app.register_blueprint(fiscal_bp)
@@ -748,6 +750,7 @@ def inicio():
         log_hoy=log_hoy,
         total_activas=len(activas),
         total_mi_dia=len(mi_dia),
+        proyectos_compartidos=db.listar_proyectos_compartidos_conmigo(g.usuario_id),
         carga_equipo=_carga_equipo_para_inicio(g.usuario_id),
         mi_dia=mi_dia[:5],
         vencimientos_proximos=vencimientos_proximos,
@@ -815,6 +818,12 @@ def _total_mi_dia(usuario_id: int) -> int:
 @app.route("/menu/<int:menu_id>")
 @login_required
 def ver_menu(menu_id: int):
+    if request.args.get("registro") != "1":
+        # Un proyecto compartido (o uno propio) se abre en su página de proyecto; el registro cronológico
+        # de notas y eventos de siempre queda en la pestaña «Registro» (?registro=1).
+        if db.obtener_proyecto(g.usuario_id, menu_id) is None:
+            abort(404)
+        return redirect(url_for("proyectos.resumen", proyecto_id=menu_id))
     menu = db.obtener_categoria(g.usuario_id, menu_id)
     if menu is None:
         abort(404)

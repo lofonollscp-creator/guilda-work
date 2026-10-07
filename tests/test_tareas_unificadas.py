@@ -410,5 +410,7 @@ def test_dashboard_y_pagina_de_proyecto_muestran_las_tareas(cliente):
 
     inicio = cliente.get("/").get_data(as_text=True)
     assert "1 tarea para hoy" in inicio and "/tareas/hoy" in inicio  # antes pasaba por casualidad con el texto de un atajo del asistente
-    pagina = cliente.get(f"/menu/{proyecto}").get_data(as_text=True)
-    assert "Tareas pendientes" in pagina and "Vence hoy" in pagina
+    pagina = cliente.get(f"/menu/{proyecto}?registro=1").get_data(as_text=True)
+    assert "Tareas pendientes" in pagina and "Vence hoy" in pagina          # el registro de siempre
+    nueva = cliente.get(f"/menu/{proyecto}", follow_redirects=True).get_data(as_text=True)
+    assert "Próximas tareas" in nueva and "Vence hoy" in nueva              # y la página de proyecto

@@ -1,0 +1,41 @@
+{# Cabecera común de la página de proyecto: nombre, estado, miembros, progreso, cifras y pestañas. #}
+<header class="page-header proyecto-cabecera" style="--accent: {{ p.color or '#7c8ba1' }};">
+  <div class="proyecto-titulo">
+    <span class="proyecto-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ p.icono or 'folder' }}"></use></svg></span>
+    <div>
+      <h1>{{ p.nombre }} <span class="pill proyecto-estado proyecto-estado-{{ p.estado }}">{{ etiquetas_estado[p.estado] }}</span></h1>
+      <p class="subtitle">
+        {% if p.cliente_nombre %}{{ _('Cliente') }}: <a href="{{ url_for('fiscal.ficha_cliente', cliente_id=p.cliente_fiscal_id) }}">{{ p.cliente_nombre }}</a> · {% endif %}
+        {% if p.fecha_objetivo %}{{ _('Objetivo') }}: {{ p.fecha_objetivo }} · {% endif %}
+        {% if p.responsable_nombre %}{{ _('Responsable') }}: {{ p.responsable_nombre }} · {% endif %}
+        {% if not es_dueno %}{{ _('De %(quien)s', quien=p.dueno_nombre) }} · {{ _('colabora') if p.rol == 'colabora' else _('solo lectura') }}{% elif p.compartido %}{{ _('Compartido con el despacho') }}{% else %}{{ _('Solo tuyo') }}{% endif %}
+      </p>
+    </div>
+  </div>
+  {% if equipo|length > 1 %}
+  <div class="proyecto-miembros" aria-label="{{ _('Miembros') }}">
+    {% for m in equipo[:5] %}<span class="proyecto-avatar" title="{{ m.nombre }}">{{ iniciales(m.nombre) }}</span>{% endfor %}
+    {% if equipo|length > 5 %}<span class="proyecto-avatar proyecto-avatar-mas">+{{ equipo|length - 5 }}</span>{% endif %}
+  </div>
+  {% endif %}
+</header>
+
+<div class="proyecto-progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ resumen.porcentaje }}" aria-label="{{ _('Progreso') }}">
+  <span class="proyecto-progreso-barra"><span style="width: {{ resumen.porcentaje }}%"></span></span>
+  <span class="muted">{{ resumen.porcentaje }} % · {{ _('%(h)s de %(t)s tareas', h=resumen.hechas, t=resumen.total) }}</span>
+</div>
+
+<div class="proyecto-metricas">
+  <div class="proyecto-metrica"><span class="muted">{{ _('Abiertas') }}</span><strong>{{ resumen.abiertas }}</strong></div>
+  <div class="proyecto-metrica"><span class="muted">{{ _('Vencidas') }}</span><strong class="{{ 'texto-peligro' if resumen.vencidas }}">{{ resumen.vencidas }}</strong></div>
+  <div class="proyecto-metrica"><span class="muted">{{ _('Horas esta semana') }}</span><strong>{{ resumen.segundos_semana|duracion_hm if resumen.segundos_semana else '—' }}</strong></div>
+  <div class="proyecto-metrica"><span class="muted">{{ _('Próximo hito') }}</span>
+    <strong>{% if resumen.proximo_hito %}{{ resumen.proximo_hito.fecha_vencimiento[:10] }}{% elif resumen.vencimiento_cliente %}{{ resumen.vencimiento_cliente.modelo }} · {{ resumen.vencimiento_cliente.fecha_limite[:10] }}{% else %}—{% endif %}</strong>
+  </div>
+</div>
+
+<nav class="proyecto-pestanas" aria-label="{{ _('Secciones del proyecto') }}">
+  <a href="{{ url_for('proyectos.resumen', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'resumen' }}" {{ 'aria-current=page' if pestana == 'resumen' }}>{{ _('Resumen') }}</a>
+  <a href="{{ url_for('proyectos.lista', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'lista' }}" {{ 'aria-current=page' if pestana == 'lista' }}>{{ _('Lista') }}</a>
+  {% if es_dueno %}<a href="{{ url_for('ver_menu', menu_id=p.id, registro=1) }}">{{ _('Registro') }}</a>{% endif %}
+</nav>

@@ -4785,3 +4785,43 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   .chip-del { min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
   input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
 }
+
+/* ---- Página de proyecto ---- */
+.proyecto-cabecera { align-items: flex-start; }
+.proyecto-titulo { display: flex; gap: var(--space-3); align-items: center; }
+.proyecto-icono { width: 40px; height: 40px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); flex: none; }
+.proyecto-estado-activo { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success-text); }
+.proyecto-estado-en_pausa { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning-text); }
+.proyecto-estado-archivado, .proyecto-estado-completado { color: var(--text-muted); }
+.proyecto-miembros { display: flex; }
+.proyecto-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 2px solid var(--bg); display: inline-flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; margin-left: -8px; color: var(--primary-text); box-shadow: 0 0 0 1px var(--border); }
+.proyecto-avatar:first-child { margin-left: 0; }
+.proyecto-progreso { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-3) 0; }
+.proyecto-progreso-barra { flex: 1; height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.proyecto-progreso-barra > span { display: block; height: 100%; background: var(--primary-dark); }
+.proyecto-metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
+.proyecto-metrica { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); display: grid; gap: 2px; }
+.proyecto-metrica strong { font-size: 1.25rem; }
+.texto-peligro { color: var(--danger-text); }
+.proyecto-pestanas { display: flex; gap: var(--space-2); border-bottom: 1px solid var(--border); margin-bottom: var(--space-4); overflow-x: auto; }
+.proyecto-pestanas a { padding: var(--space-2) var(--space-4); text-decoration: none; color: var(--text-muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.proyecto-pestanas a.activa { color: var(--primary-text); border-bottom-color: var(--primary-dark); font-weight: 600; }
+.proyecto-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-5); margin-bottom: var(--space-5); }
+.proyecto-bloque h2 { margin-top: 0; }
+.proyecto-descripcion { white-space: pre-wrap; color: var(--text-muted); max-width: 70ch; }
+.proyecto-ajustes { margin: var(--space-5) 0; }
+.proyecto-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); margin: var(--space-3) 0; align-items: end; }
+.proyecto-form label { display: grid; gap: 4px; }
+.proyecto-form-ancha { grid-column: 1 / -1; }
+.proyecto-miembro-form select { min-width: 130px; }
+.proyecto-alta { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-5); }
+.proyecto-alta input[type="text"] { flex: 1 1 260px; }
+.proyecto-seccion { margin-bottom: var(--space-5); }
+.proyecto-seccion-cab { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.proyecto-seccion-cab h2 { font-size: 1rem; margin: var(--space-2) 0; }
+.proyecto-seccion-ajustes { position: relative; }
+.proyecto-seccion-ajustes[open] { padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.proyecto-mover select { max-width: 160px; }
+.proyecto-nueva-seccion { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+.proyecto-nueva-seccion input { flex: 1; max-width: 420px; }
+.proyecto-salir { margin-top: var(--space-5); }

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ p.nombre }} — Guilda Work{% endblock %}
+{% macro fila_tarea(t) %}
+  {% set edita = organiza or t.usuario_id == g.usuario_id %}
+  <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
+    <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
+      <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' or not edita }}>
+        {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
+      </button>
+    </form>
+    <span class="log-text"><a href="{{ url_for('tareas.editar' if edita else 'tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a></span>
+    {% if t.prioridad == 'alta' %}<span class="pill prioridad-alta">{{ _('Alta') }}</span>{% endif %}
+    {% if t.asignada_nombre %}<span class="pill" title="{{ _('Asignada') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg> {{ t.asignada_nombre }}</span>{% endif %}
+    {% if t.items_total %}<span class="pill" title="{{ _('Subtareas') }}">{{ t.items_hechos|int }}/{{ t.items_total }}</span>{% endif %}
+    {% if t.estado != 'completada' and t.fecha_vencimiento %}<span class="log-duration {{ 'texto-peligro' if t.fecha_vencimiento[:10] < hoy }}">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
+    {% if organiza and secciones %}
+    <form action="{{ url_for('proyectos.mover_tarea', proyecto_id=p.id, tarea_id=t.id) }}" method="post" class="proyecto-mover">
+      <select name="seccion_id" aria-label="{{ _('Mover a la sección') }}" onchange="this.form.submit()">
+        <option value="">{{ _('Sin sección') }}</option>
+        {% for s in secciones %}<option value="{{ s.id }}" {{ 'selected' if s.id == t.seccion_id }}>{{ s.nombre }}</option>{% endfor %}
+      </select>
+    </form>
+    {% endif %}
+  </li>
+{% endmacro %}
+{% block content %}
+{% include "_proyecto_cabecera.html" %}
+{% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
+
+{% if organiza %}
+<form class="proyecto-alta" action="{{ url_for('proyectos.crear_tarea', proyecto_id=p.id) }}" method="post">
+  <label class="sr-only" for="alta-asunto">{{ _('Nueva tarea') }}</label>
+  <input type="text" id="alta-asunto" name="asunto" placeholder="{{ _('Añadir una tarea…') }}" maxlength="300" required>
+  {% if secciones %}
+  <select name="seccion_id" aria-label="{{ _('Sección') }}"><option value="">{{ _('Sin sección') }}</option>{% for s in secciones %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}</select>
+  {% endif %}
+  <input type="date" name="fecha_vencimiento" aria-label="{{ _('Vencimiento') }}">
+  <select name="asignada_a" aria-label="{{ _('Asignar a') }}"><option value="">{{ _('Sin asignar') }}</option>{% for m in asignables %}<option value="{{ m.usuario_id }}">{{ m.nombre }}</option>{% endfor %}</select>
+  <button type="submit" class="btn btn-primary">{{ _('Añadir') }}</button>
+</form>
+{% endif %}
+
+{% for s in secciones %}
+<section class="proyecto-seccion">
+  <div class="proyecto-seccion-cab">
+    <h2>{{ s.nombre }} <span class="pill">{{ por_seccion[s.id]|length }}</span></h2>
+    {% if organiza %}
+    <details class="proyecto-seccion-ajustes">
+      <summary class="btn btn-ghost" aria-label="{{ _('Opciones de la sección') }}">&hellip;</summary>
+      <form action="{{ url_for('proyectos.renombrar_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post" class="inline-form">
+        <input type="text" name="nombre" value="{{ s.nombre }}" maxlength="80" required aria-label="{{ _('Nombre de la sección') }}">
+        <button type="submit" class="btn btn-ghost">{{ _('Renombrar') }}</button>
+      </form>
+      <div class="inline-form">
+        <form action="{{ url_for('proyectos.mover_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post"><input type="hidden" name="direccion" value="arriba"><button type="submit" class="btn btn-ghost" {{ 'disabled' if loop.first }}>&uarr; {{ _('Subir') }}</button></form>
+        <form action="{{ url_for('proyectos.mover_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post"><input type="hidden" name="direccion" value="abajo"><button type="submit" class="btn btn-ghost" {{ 'disabled' if loop.last }}>&darr; {{ _('Bajar') }}</button></form>
+        <form action="{{ url_for('proyectos.eliminar_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post" onsubmit="return confirm('{{ _('¿Eliminar la sección? Sus tareas no se borran.') }}');"><button type="submit" class="btn btn-stop">{{ _('Eliminar sección') }}</button></form>
+      </div>
+    </details>
+    {% endif %}
+  </div>
+  {% if por_seccion[s.id] %}<ul class="log-list">{% for t in por_seccion[s.id] %}{{ fila_tarea(t) }}{% endfor %}</ul>{% else %}<p class="muted">{{ _('Sin tareas en esta sección.') }}</p>{% endif %}
+</section>
+{% endfor %}
+
+{% if por_seccion[None] or not secciones %}
+<section class="proyecto-seccion">
+  {% if secciones %}<div class="proyecto-seccion-cab"><h2>{{ _('Sin sección') }} <span class="pill">{{ por_seccion[None]|length }}</span></h2></div>{% endif %}
+  {% if por_seccion[None] %}<ul class="log-list">{% for t in por_seccion[None] %}{{ fila_tarea(t) }}{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay tareas en este proyecto.') }}</p>{% endif %}
+</section>
+{% endif %}
+
+{% if organiza %}
+<form class="proyecto-nueva-seccion" action="{{ url_for('proyectos.crear_seccion', proyecto_id=p.id) }}" method="post">
+  <label class="sr-only" for="nueva-seccion">{{ _('Nueva sección') }}</label>
+  <input type="text" id="nueva-seccion" name="nombre" placeholder="{{ _('Nueva sección (p. ej. «1. Recoger documentación»)') }}" maxlength="80" required>
+  <button type="submit" class="btn btn-ghost">{{ _('Añadir sección') }}</button>
+</form>
+{% endif %}
+{% endblock %}

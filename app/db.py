@@ -412,6 +412,23 @@ CREATE TABLE IF NOT EXISTS tareas_participantes (
     compartida_en TEXT NOT NULL,
     PRIMARY KEY (tarea_id, usuario_id)
 );
+
+-- Proyectos compartidos con compañeros del despacho (categorias = proyectos).
+CREATE TABLE IF NOT EXISTS proyecto_miembros (
+    categoria_id INTEGER NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    rol TEXT NOT NULL CHECK (rol IN ('colabora', 'observa')),
+    anadido_en TEXT NOT NULL,
+    PRIMARY KEY (categoria_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS idx_proyecto_miembros_usuario ON proyecto_miembros(usuario_id);
+CREATE TABLE IF NOT EXISTS proyecto_secciones (
+    id INTEGER PRIMARY KEY,
+    categoria_id INTEGER NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    orden INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_proyecto_secciones_categoria ON proyecto_secciones(categoria_id, orden);
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
 -- Correo de equipo: no se comparten cuentas ni contraseñas, solo mensajes
@@ -1853,6 +1870,17 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "descarga_pendiente", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_fts_correo(conn)
+        for columna, definicion in (
+            # Con prefijo `proy_`: `estado`, `cliente_fiscal_id`… ya existen en las tablas que se unen con categorias y
+            # sin prefijo harían ambiguas decenas de consultas.
+            ("proy_compartido", "INTEGER NOT NULL DEFAULT 0"), ("proy_estado", "TEXT NOT NULL DEFAULT 'activo'"), ("proy_descripcion", "TEXT"),
+            ("proy_fecha_objetivo", "TEXT"), ("proy_responsable_id", "INTEGER"), ("proy_cliente_id", "INTEGER"),
+        ):
+            _asegurar_columna(conn, "categorias", columna, definicion)
+        _asegurar_columna(conn, "tareas_outlook", "seccion_id", "INTEGER")
+        _asegurar_columna(conn, "tareas_outlook", "orden_proyecto", "INTEGER NOT NULL DEFAULT 0")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_tareas_outlook_proyecto ON tareas_outlook(categoria_id, seccion_id)")
+        _crear_vista_participantes_todos(conn)
 
         conn.commit()
     finally:
@@ -3718,7 +3746,10 @@ def _categoria_id_propio(conn: sqlite3.Connection, usuario_id: int, categoria_id
     fila = conn.execute(
         "SELECT 1 FROM categorias WHERE id = ? AND usuario_id = ?", (categoria_id, usuario_id)
     ).fetchone()
-    return categoria_id if fila is not None else None
+    if fila is not None:
+        return categoria_id
+    # También un proyecto compartido del despacho en el que se puede colaborar.
+    return categoria_id if _rol_en_proyecto(conn, usuario_id, categoria_id) == "colabora" else None
 
 
 def mover_categoria(usuario_id: int, categoria_id: int, direccion: str) -> None:
@@ -5392,7 +5423,7 @@ def obtener_tarea_outlook_visible(usuario_id: int, tarea_id: int) -> sqlite3.Row
             """SELECT t.*, c.nombre AS categoria_nombre, c.color AS categoria_color
                FROM tareas_outlook t LEFT JOIN categorias c ON c.id = t.categoria_id
                WHERE t.id = ? AND (t.usuario_id = ? OR t.asignada_a = ? OR t.id IN (
-                         SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?))
+                         SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ?))
                  AND t.papelera_en IS NULL""",
             (tarea_id, usuario_id, usuario_id, usuario_id),
         ).fetchone()
@@ -5497,7 +5528,7 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
                SET estado = 'completada', porcentaje_completado = 100,
                    fecha_completada = ?, actualizada_en = ?
                WHERE id = ? AND (usuario_id = ? OR asignada_a = ? OR id IN (
-                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))""",
+                     SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ? AND rol = 'colabora'))""",
             (now_iso(), now_iso(), tarea_id, usuario_id, usuario_id, usuario_id),
         )
         conn.commit()
@@ -5536,7 +5567,7 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
             """UPDATE tareas_outlook SET estado = ?, fecha_completada = NULL, actualizada_en = ?,
                    porcentaje_completado = CASE WHEN estado = 'completada' THEN 0 ELSE porcentaje_completado END
                WHERE id = ? AND (usuario_id = ? OR asignada_a = ? OR id IN (
-                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))""",
+                     SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ? AND rol = 'colabora'))""",
             (estado, now_iso(), tarea_id, usuario_id, usuario_id, usuario_id),
         )
         conn.commit()
@@ -5553,7 +5584,7 @@ ROLES_PARTICIPANTE = ("colabora", "observa")
 
 def _es_colaborador(conn: sqlite3.Connection, usuario_id: int, tarea_id: int) -> bool:
     return conn.execute(
-        "SELECT 1 FROM tareas_participantes WHERE tarea_id = ? AND usuario_id = ? AND rol = 'colabora'",
+        "SELECT 1 FROM tareas_participantes_todos WHERE tarea_id = ? AND usuario_id = ? AND rol = 'colabora'",
         (tarea_id, usuario_id),
     ).fetchone() is not None
 
@@ -5570,7 +5601,8 @@ def rol_en_tarea(usuario_id: int, tarea_id: int) -> str | None:
         if t["usuario_id"] == usuario_id:
             return "dueno"
         p = conn.execute(
-            "SELECT rol FROM tareas_participantes WHERE tarea_id = ? AND usuario_id = ?", (tarea_id, usuario_id)
+            "SELECT rol FROM tareas_participantes_todos WHERE tarea_id = ? AND usuario_id = ? ORDER BY rol = 'colabora' DESC",
+            (tarea_id, usuario_id),
         ).fetchone()
         if p is not None:
             return p["rol"]
@@ -6813,7 +6845,7 @@ def alternar_item_checklist(usuario_id: int, item_id: int) -> bool:
         fila = conn.execute(
             """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
                WHERE i.id = ? AND (t.usuario_id = ? OR t.asignada_a = ? OR t.id IN (
-                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))
+                     SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ? AND rol = 'colabora'))
                  AND t.papelera_en IS NULL""",
             (item_id, usuario_id, usuario_id, usuario_id),
         ).fetchone()
@@ -6835,7 +6867,7 @@ def eliminar_item_checklist(usuario_id: int, item_id: int) -> bool:
         fila = conn.execute(
             """SELECT i.tarea_outlook_id FROM tarea_checklist i JOIN tareas_outlook t ON t.id = i.tarea_outlook_id
                WHERE i.id = ? AND (t.usuario_id = ? OR t.id IN (
-                     SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ? AND rol = 'colabora'))""",
+                     SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ? AND rol = 'colabora'))""",
             (item_id, usuario_id, usuario_id),
         ).fetchone()
         if fila is None:
@@ -9057,6 +9089,40 @@ def consulta_fts(texto: str) -> str | None:
     return " ".join(partes) or None
 
 
+def _crear_vista_participantes_todos(conn: sqlite3.Connection) -> None:
+    """`tareas_participantes_todos`: quién puede ver/trabajar cada tarea, sumando a los
+    participantes explícitos (tareas_participantes) los del PROYECTO compartido en que está la
+    tarea: los miembros con su rol, el dueño del proyecto como colaborador y los supervisores del
+    despacho como observadores. Solo para comprobar PERMISOS: las listas generales («Mis tareas»,
+    «Mi día») siguen usando solo la tabla explícita, o se llenarían con todo lo del equipo.
+    Siempre exige el mismo despacho que el dueño del proyecto (quien sale del despacho lo pierde)."""
+    conn.execute("DROP VIEW IF EXISTS tareas_participantes_todos")
+    conn.execute(
+        """CREATE VIEW tareas_participantes_todos AS
+           SELECT tarea_id, usuario_id, rol FROM tareas_participantes
+           UNION
+           SELECT t.id, m.usuario_id, m.rol
+             FROM tareas_outlook t
+             JOIN categorias c ON c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL
+             JOIN proyecto_miembros m ON m.categoria_id = c.id
+             JOIN usuarios um ON um.id = m.usuario_id
+             JOIN usuarios uo ON uo.id = c.usuario_id
+            WHERE um.tenant_id IS NOT NULL AND um.tenant_id = uo.tenant_id
+           UNION
+           SELECT t.id, c.usuario_id, 'colabora'
+             FROM tareas_outlook t
+             JOIN categorias c ON c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL
+            WHERE t.usuario_id != c.usuario_id
+           UNION
+           SELECT t.id, us.id, 'observa'
+             FROM tareas_outlook t
+             JOIN categorias c ON c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL
+             JOIN usuarios uo ON uo.id = c.usuario_id
+             JOIN usuarios us ON us.tenant_id = uo.tenant_id AND us.supervisor_tenant = 1
+            WHERE uo.tenant_id IS NOT NULL AND us.id != t.usuario_id AND us.id != c.usuario_id"""
+    )
+
+
 def estado_carpeta_correo(cuenta_id: int, carpeta: str) -> sqlite3.Row | None:
     conn = get_connection()
     try:
@@ -9606,6 +9672,417 @@ def contar_no_leidos_total_correo(usuario_id: int) -> int:
                WHERE leido = 0 AND cuenta_id IN (SELECT id FROM correo_cuentas WHERE usuario_id = ?)""",
             (usuario_id,),
         ).fetchone()["n"]
+    finally:
+        conn.close()
+
+
+# --- Proyectos compartidos -----------------------------------------------------------------
+#
+# Un proyecto es una fila de `categorias`. Por defecto es personal; su dueño puede compartirlo con
+# compañeros de SU despacho (rol «colabora» o «observa»). Los miembros ven las tareas del proyecto,
+# y los que colaboran las crean, editan y completan; la tabla de miembros nunca cruza de despacho:
+# `_rol_en_proyecto` exige el mismo tenant que el dueño cada vez que se consulta.
+
+ESTADOS_PROYECTO = ("activo", "en_pausa", "completado", "archivado")
+ROLES_PROYECTO = ("colabora", "observa")
+MAX_MIEMBROS_PROYECTO = 50
+
+
+def _rol_en_proyecto(conn: sqlite3.Connection, usuario_id: int, categoria_id: int | None) -> str | None:
+    """'dueno', 'colabora', 'observa' o None. Un supervisor del despacho ve (solo lectura) todo proyecto compartido."""
+    if categoria_id is None:
+        return None
+    c = conn.execute("SELECT usuario_id, proy_compartido FROM categorias WHERE id = ? AND papelera_en IS NULL", (categoria_id,)).fetchone()
+    if c is None:
+        return None
+    if c["usuario_id"] == usuario_id:
+        return "dueno"
+    if not c["proy_compartido"]:
+        return None
+    m = conn.execute(
+        """SELECT m.rol FROM proyecto_miembros m
+           JOIN usuarios um ON um.id = m.usuario_id JOIN usuarios uo ON uo.id = ?
+           WHERE m.categoria_id = ? AND m.usuario_id = ? AND um.tenant_id IS NOT NULL AND um.tenant_id = uo.tenant_id""",
+        (c["usuario_id"], categoria_id, usuario_id),
+    ).fetchone()
+    if m is not None:
+        return m["rol"]
+    sup = conn.execute(
+        """SELECT 1 FROM usuarios us JOIN usuarios uo ON uo.id = ?
+           WHERE us.id = ? AND us.supervisor_tenant = 1 AND uo.tenant_id IS NOT NULL AND us.tenant_id = uo.tenant_id""",
+        (c["usuario_id"], usuario_id),
+    ).fetchone()
+    return "observa" if sup else None
+
+
+def rol_en_proyecto(usuario_id: int, categoria_id: int) -> str | None:
+    conn = get_connection()
+    try:
+        return _rol_en_proyecto(conn, usuario_id, categoria_id)
+    finally:
+        conn.close()
+
+
+def obtener_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
+    """El proyecto (con `rol` y el nombre de su dueño y de su responsable) si el usuario puede verlo."""
+    conn = get_connection()
+    try:
+        rol = _rol_en_proyecto(conn, usuario_id, categoria_id)
+        if rol is None:
+            return None
+        f = conn.execute(
+            """SELECT c.*, COALESCE(NULLIF(pd.nombre_mostrado, ''), ud.email) AS dueno_nombre,
+                      COALESCE(NULLIF(pr.nombre_mostrado, ''), ur.email) AS responsable_nombre, cf.nombre AS cliente_nombre,
+                      c.proy_estado AS estado, c.proy_descripcion AS descripcion, c.proy_fecha_objetivo AS fecha_objetivo,
+                      c.proy_responsable_id AS responsable_id, c.proy_cliente_id AS cliente_fiscal_id, c.proy_compartido AS compartido
+               FROM categorias c JOIN usuarios ud ON ud.id = c.usuario_id LEFT JOIN usuario_perfil pd ON pd.usuario_id = c.usuario_id
+               LEFT JOIN usuarios ur ON ur.id = c.proy_responsable_id LEFT JOIN usuario_perfil pr ON pr.usuario_id = c.proy_responsable_id
+               LEFT JOIN clientes_fiscales cf ON cf.id = c.proy_cliente_id
+               WHERE c.id = ?""",
+            (categoria_id,),
+        ).fetchone()
+        proyecto = dict(f)
+        proyecto["rol"] = rol
+        return proyecto
+    finally:
+        conn.close()
+
+
+def listar_proyectos_compartidos_conmigo(usuario_id: int) -> list[dict]:
+    """Proyectos de otros que el usuario puede ver: como miembro o, si es supervisor, todos los compartidos
+    del despacho (solo lectura). Una sola consulta (se pide en el inicio); mismas reglas que _rol_en_proyecto."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT c.*, COALESCE(NULLIF(pd.nombre_mostrado, ''), ud.email) AS dueno_nombre, COALESCE(m.rol, 'observa') AS rol
+               FROM categorias c
+               JOIN usuarios ud ON ud.id = c.usuario_id LEFT JOIN usuario_perfil pd ON pd.usuario_id = c.usuario_id
+               JOIN usuarios yo ON yo.id = ?
+               LEFT JOIN proyecto_miembros m ON m.categoria_id = c.id AND m.usuario_id = yo.id
+               WHERE c.proy_compartido = 1 AND c.papelera_en IS NULL AND c.usuario_id != yo.id AND c.proy_estado != 'archivado'
+                 AND yo.tenant_id IS NOT NULL AND yo.tenant_id = ud.tenant_id
+                 AND (m.usuario_id IS NOT NULL OR yo.supervisor_tenant = 1)
+               ORDER BY c.nombre""",
+            (usuario_id,),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def listar_proyectos_usables(usuario_id: int) -> list[dict]:
+    """Proyectos en los que se pueden poner tareas: los propios y los compartidos donde se colabora."""
+    propios = [dict(c, propio=True, rol="dueno") for c in listar_categorias(usuario_id)]
+    ajenos = [dict(c, propio=False) for c in listar_proyectos_compartidos_conmigo(usuario_id) if c["rol"] == "colabora"]
+    return propios + ajenos
+
+
+def miembros_de_proyecto(categoria_id: int) -> list[dict]:
+    conn = get_connection()
+    try:
+        c = conn.execute("SELECT usuario_id FROM categorias WHERE id = ?", (categoria_id,)).fetchone()
+        if c is None:
+            return []
+        filas = conn.execute(
+            """SELECT m.usuario_id, m.rol, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, u.email
+               FROM proyecto_miembros m JOIN usuarios u ON u.id = m.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = m.usuario_id
+               JOIN usuarios uo ON uo.id = ? WHERE m.categoria_id = ? AND u.tenant_id IS NOT NULL AND u.tenant_id = uo.tenant_id
+               ORDER BY nombre""",
+            (c["usuario_id"], categoria_id),
+        ).fetchall()
+        return [dict(f, es_dueno=False) for f in filas]
+    finally:
+        conn.close()
+
+
+def compartir_proyecto(usuario_id: int, categoria_id: int, otro_id: int, rol: str = "colabora") -> bool:
+    """El dueño añade (o cambia el rol de) un compañero de su despacho. False si no procede."""
+    if rol not in ROLES_PROYECTO:
+        return False
+    conn = get_connection()
+    try:
+        if _rol_en_proyecto(conn, usuario_id, categoria_id) != "dueno":
+            return False
+        destino = _companero_del_tenant(conn, usuario_id, otro_id)
+        if destino is None:
+            return False
+        ya = conn.execute("SELECT 1 FROM proyecto_miembros WHERE categoria_id = ? AND usuario_id = ?", (categoria_id, destino)).fetchone()
+        if ya is None and conn.execute("SELECT COUNT(*) FROM proyecto_miembros WHERE categoria_id = ?", (categoria_id,)).fetchone()[0] >= MAX_MIEMBROS_PROYECTO:
+            return False
+        conn.execute(
+            """INSERT INTO proyecto_miembros (categoria_id, usuario_id, rol, anadido_en) VALUES (?, ?, ?, ?)
+               ON CONFLICT (categoria_id, usuario_id) DO UPDATE SET rol = excluded.rol""",
+            (categoria_id, destino, rol, now_iso()),
+        )
+        conn.execute("UPDATE categorias SET proy_compartido = 1 WHERE id = ?", (categoria_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def quitar_miembro_proyecto(usuario_id: int, categoria_id: int, otro_id: int) -> bool:
+    """El dueño quita a quien quiera; cada miembro puede salirse. Sin miembros, el proyecto vuelve a ser personal."""
+    conn = get_connection()
+    try:
+        rol = _rol_en_proyecto(conn, usuario_id, categoria_id)
+        if rol is None or (rol != "dueno" and otro_id != usuario_id):
+            return False
+        cur = conn.execute("DELETE FROM proyecto_miembros WHERE categoria_id = ? AND usuario_id = ?", (categoria_id, otro_id))
+        if conn.execute("SELECT COUNT(*) FROM proyecto_miembros WHERE categoria_id = ?", (categoria_id,)).fetchone()[0] == 0:
+            conn.execute("UPDATE categorias SET proy_compartido = 0 WHERE id = ?", (categoria_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def actualizar_proyecto(
+    usuario_id: int, categoria_id: int, estado: str | None = None, descripcion: str | None = None,
+    fecha_objetivo: str | None = None, responsable_id: int | None = None, cliente_fiscal_id: int | None = None,
+    cambiar_responsable: bool = False, cambiar_cliente: bool = False,
+) -> bool:
+    """Datos del proyecto (solo el dueño). `responsable_id` ha de ser el propio dueño o un miembro; el cliente, del despacho."""
+    conn = get_connection()
+    try:
+        if _rol_en_proyecto(conn, usuario_id, categoria_id) != "dueno":
+            return False
+        campos: dict = {}
+        if estado is not None:
+            if estado not in ESTADOS_PROYECTO:
+                return False
+            campos["proy_estado"] = estado
+        if descripcion is not None:
+            campos["proy_descripcion"] = descripcion.strip()[:2000] or None
+        if fecha_objetivo is not None:
+            try:
+                campos["proy_fecha_objetivo"] = datetime.strptime(fecha_objetivo.strip()[:10], "%Y-%m-%d").strftime("%Y-%m-%d") if fecha_objetivo.strip() else None
+            except ValueError:
+                return False
+        if cambiar_responsable:
+            if responsable_id is not None and responsable_id != usuario_id and conn.execute(
+                "SELECT 1 FROM proyecto_miembros WHERE categoria_id = ? AND usuario_id = ?", (categoria_id, responsable_id)
+            ).fetchone() is None:
+                return False
+            campos["proy_responsable_id"] = responsable_id
+        if cambiar_cliente:
+            campos["proy_cliente_id"] = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id) if cliente_fiscal_id else None
+        if not campos:
+            return True
+        conn.execute(f"UPDATE categorias SET {', '.join(c + ' = ?' for c in campos)} WHERE id = ?", [*campos.values(), categoria_id])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+# --- secciones y tareas del proyecto ---
+
+def listar_secciones(categoria_id: int) -> list[dict]:
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute("SELECT * FROM proyecto_secciones WHERE categoria_id = ? ORDER BY orden, id", (categoria_id,))]
+    finally:
+        conn.close()
+
+
+def _puede_organizar_proyecto(conn: sqlite3.Connection, usuario_id: int, categoria_id: int) -> bool:
+    return _rol_en_proyecto(conn, usuario_id, categoria_id) in ("dueno", "colabora")
+
+
+def crear_seccion(usuario_id: int, categoria_id: int, nombre: str) -> int | None:
+    nombre = (nombre or "").strip()[:80]
+    conn = get_connection()
+    try:
+        if not nombre or not _puede_organizar_proyecto(conn, usuario_id, categoria_id):
+            return None
+        siguiente = conn.execute("SELECT COALESCE(MAX(orden), -1) + 1 FROM proyecto_secciones WHERE categoria_id = ?", (categoria_id,)).fetchone()[0]
+        cur = conn.execute("INSERT INTO proyecto_secciones (categoria_id, nombre, orden) VALUES (?, ?, ?)", (categoria_id, nombre, siguiente))
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def _categoria_de_seccion(conn: sqlite3.Connection, seccion_id: int) -> int | None:
+    f = conn.execute("SELECT categoria_id FROM proyecto_secciones WHERE id = ?", (seccion_id,)).fetchone()
+    return f["categoria_id"] if f else None
+
+
+def renombrar_seccion(usuario_id: int, seccion_id: int, nombre: str) -> bool:
+    nombre = (nombre or "").strip()[:80]
+    conn = get_connection()
+    try:
+        categoria = _categoria_de_seccion(conn, seccion_id)
+        if not nombre or categoria is None or not _puede_organizar_proyecto(conn, usuario_id, categoria):
+            return False
+        conn.execute("UPDATE proyecto_secciones SET nombre = ? WHERE id = ?", (nombre, seccion_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def eliminar_seccion(usuario_id: int, seccion_id: int) -> bool:
+    """Borra la sección; sus tareas no se tocan (quedan «sin sección»)."""
+    conn = get_connection()
+    try:
+        categoria = _categoria_de_seccion(conn, seccion_id)
+        if categoria is None or not _puede_organizar_proyecto(conn, usuario_id, categoria):
+            return False
+        conn.execute("UPDATE tareas_outlook SET seccion_id = NULL WHERE seccion_id = ?", (seccion_id,))
+        conn.execute("DELETE FROM proyecto_secciones WHERE id = ?", (seccion_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def mover_seccion(usuario_id: int, seccion_id: int, direccion: str) -> bool:
+    conn = get_connection()
+    try:
+        categoria = _categoria_de_seccion(conn, seccion_id)
+        if categoria is None or direccion not in ("arriba", "abajo") or not _puede_organizar_proyecto(conn, usuario_id, categoria):
+            return False
+        ids = [f["id"] for f in conn.execute("SELECT id FROM proyecto_secciones WHERE categoria_id = ? ORDER BY orden, id", (categoria,))]
+        i = ids.index(seccion_id)
+        j = i - 1 if direccion == "arriba" else i + 1
+        if not 0 <= j < len(ids):
+            return False
+        ids[i], ids[j] = ids[j], ids[i]
+        conn.executemany("UPDATE proyecto_secciones SET orden = ? WHERE id = ?", [(n, sid) for n, sid in enumerate(ids)])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def asignar_seccion_tarea(usuario_id: int, tarea_id: int, seccion_id: int | None) -> bool:
+    """Mueve una tarea a una sección de SU proyecto (o la deja sin sección). Quien puede editar la tarea."""
+    if not puede_editar_tarea(usuario_id, tarea_id):
+        return False
+    conn = get_connection()
+    try:
+        t = conn.execute("SELECT categoria_id FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()
+        if t is None or t["categoria_id"] is None:
+            return False
+        if seccion_id is not None and _categoria_de_seccion(conn, seccion_id) != t["categoria_id"]:
+            return False
+        conn.execute("UPDATE tareas_outlook SET seccion_id = ? WHERE id = ?", (seccion_id, tarea_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def crear_tarea_en_proyecto(
+    usuario_id: int, categoria_id: int, asunto: str, seccion_id: int | None = None, prioridad: str = "normal",
+    fecha_vencimiento: str | None = None, asignada_a: int | None = None,
+) -> int | None:
+    """Alta de una tarea dentro de un proyecto: la puede crear el dueño o un colaborador. Hereda el cliente del proyecto."""
+    conn = get_connection()
+    try:
+        if not _puede_organizar_proyecto(conn, usuario_id, categoria_id):
+            return None
+        if seccion_id is not None and _categoria_de_seccion(conn, seccion_id) != categoria_id:
+            seccion_id = None
+        cliente = conn.execute("SELECT proy_cliente_id FROM categorias WHERE id = ?", (categoria_id,)).fetchone()["proy_cliente_id"]
+        orden = conn.execute("SELECT COALESCE(MAX(orden_proyecto), 0) + 1 FROM tareas_outlook WHERE categoria_id = ?", (categoria_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    tarea_id = crear_tarea_outlook(
+        usuario_id, asunto, prioridad=prioridad, fecha_vencimiento=fecha_vencimiento, categoria_id=categoria_id,
+        cliente_fiscal_id=cliente, asignada_a=asignada_a,
+    )
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE tareas_outlook SET seccion_id = ?, orden_proyecto = ? WHERE id = ?", (seccion_id, orden, tarea_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return tarea_id
+
+
+def tareas_de_proyecto(usuario_id: int, categoria_id: int, incluir_completadas: bool = True) -> list[dict]:
+    """Todas las tareas del proyecto, sea quien sea su creador (si el usuario puede ver el proyecto)."""
+    conn = get_connection()
+    try:
+        if _rol_en_proyecto(conn, usuario_id, categoria_id) is None:
+            return []
+        filas = conn.execute(
+            f"""SELECT t.*, COALESCE(NULLIF(pc.nombre_mostrado, ''), uc.email) AS creador_nombre,
+                       COALESCE(NULLIF(pa.nombre_mostrado, ''), ua.email) AS asignada_nombre,
+                       (SELECT COUNT(*) FROM tarea_checklist i WHERE i.tarea_outlook_id = t.id) AS items_total,
+                       (SELECT COALESCE(SUM(i.hecha), 0) FROM tarea_checklist i WHERE i.tarea_outlook_id = t.id) AS items_hechos
+                FROM tareas_outlook t
+                JOIN usuarios uc ON uc.id = t.usuario_id LEFT JOIN usuario_perfil pc ON pc.usuario_id = t.usuario_id
+                LEFT JOIN usuarios ua ON ua.id = t.asignada_a LEFT JOIN usuario_perfil pa ON pa.usuario_id = t.asignada_a
+                WHERE t.categoria_id = ? AND t.papelera_en IS NULL {'' if incluir_completadas else "AND t.estado != 'completada'"}
+                ORDER BY (t.estado = 'completada'), t.orden_proyecto, (t.fecha_vencimiento IS NULL), t.fecha_vencimiento, t.id""",
+            (categoria_id,),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
+    """Cifras de la cabecera y del Resumen: progreso, vencidas, horas, próximo hito, carga por persona."""
+    conn = get_connection()
+    try:
+        rol = _rol_en_proyecto(conn, usuario_id, categoria_id)
+        if rol is None:
+            return None
+        hoy = datetime.now().strftime("%Y-%m-%d")
+        lunes = (datetime.now() - timedelta(days=datetime.now().weekday())).strftime("%Y-%m-%d")
+        t = conn.execute(
+            """SELECT COUNT(*) AS total, COALESCE(SUM(estado = 'completada'), 0) AS hechas,
+                      COALESCE(SUM(estado != 'completada' AND fecha_vencimiento IS NOT NULL AND substr(fecha_vencimiento, 1, 10) < ?), 0) AS vencidas
+               FROM tareas_outlook WHERE categoria_id = ? AND papelera_en IS NULL""",
+            (hoy, categoria_id),
+        ).fetchone()
+        total, hechas = t["total"], int(t["hechas"])
+        horas = conn.execute(
+            """SELECT COALESCE(SUM(duracion_segundos), 0) AS total,
+                      COALESCE(SUM(CASE WHEN substr(inicio_en, 1, 10) >= ? THEN duracion_segundos ELSE 0 END), 0) AS semana
+               FROM tareas WHERE categoria_id = ? AND estado = 'finalizada' AND papelera_en IS NULL""",
+            (lunes, categoria_id),
+        ).fetchone()
+        hito = conn.execute(
+            """SELECT asunto, fecha_vencimiento FROM tareas_outlook WHERE categoria_id = ? AND papelera_en IS NULL AND estado != 'completada'
+               AND fecha_vencimiento IS NOT NULL AND substr(fecha_vencimiento, 1, 10) >= ? ORDER BY fecha_vencimiento LIMIT 1""",
+            (categoria_id, hoy),
+        ).fetchone()
+        proyecto = conn.execute("SELECT proy_cliente_id AS cliente_fiscal_id FROM categorias WHERE id = ?", (categoria_id,)).fetchone()
+        vencimiento_cliente = None
+        if proyecto["cliente_fiscal_id"]:
+            vencimiento_cliente = conn.execute(
+                """SELECT modelo, periodo, fecha_limite FROM vencimientos_fiscales WHERE cliente_fiscal_id = ? AND estado = 'pendiente'
+                   AND papelera_en IS NULL ORDER BY fecha_limite LIMIT 1""",
+                (proyecto["cliente_fiscal_id"],),
+            ).fetchone()
+        carga = [dict(f) for f in conn.execute(
+            """SELECT COALESCE(t.asignada_a, t.usuario_id) AS usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, COUNT(*) AS abiertas
+               FROM tareas_outlook t JOIN usuarios u ON u.id = COALESCE(t.asignada_a, t.usuario_id) LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id
+               WHERE t.categoria_id = ? AND t.papelera_en IS NULL AND t.estado != 'completada' GROUP BY 1 ORDER BY abiertas DESC, nombre""",
+            (categoria_id,),
+        )]
+        por_persona = []
+        if rol in ("dueno", "observa"):
+            # El desglose de horas por persona solo lo ven el dueño y los supervisores; el resto, los totales.
+            por_persona = [dict(f) for f in conn.execute(
+                """SELECT t.usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, COALESCE(SUM(t.duracion_segundos), 0) AS segundos
+                   FROM tareas t JOIN usuarios u ON u.id = t.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = t.usuario_id
+                   WHERE t.categoria_id = ? AND t.estado = 'finalizada' AND t.papelera_en IS NULL GROUP BY t.usuario_id ORDER BY segundos DESC""",
+                (categoria_id,),
+            )] if (rol == "dueno" or conn.execute("SELECT supervisor_tenant FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()[0]) else []
+        return {
+            "total": total, "hechas": hechas, "abiertas": total - hechas, "vencidas": int(t["vencidas"]),
+            "porcentaje": round(hechas * 100 / total) if total else 0,
+            "segundos_total": horas["total"], "segundos_semana": horas["semana"],
+            "proximo_hito": dict(hito) if hito else None, "vencimiento_cliente": dict(vencimiento_cliente) if vencimiento_cliente else None,
+            "carga": carga, "horas_por_persona": por_persona,
+        }
     finally:
         conn.close()
 

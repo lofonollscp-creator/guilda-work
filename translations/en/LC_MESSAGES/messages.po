@@ -6323,3 +6323,137 @@ msgid_plural "%(n)s cambios no han llegado al servidor de correo"
 msgstr[0] "%(n)s change did not reach the mail server"
 msgstr[1] "%(n)s changes did not reach the mail server"
 
+msgid "Completado"
+msgstr "Completed"
+
+msgid "Archivado"
+msgstr "Archived"
+
+msgid "Escribe qué hay que hacer."
+msgstr "Write what needs to be done."
+
+msgid "Objetivo"
+msgstr "Target"
+
+msgid "Responsable"
+msgstr "Owner"
+
+msgid "Compartido con el despacho"
+msgstr "Shared with the firm"
+
+msgid "Solo tuyo"
+msgstr "Only yours"
+
+msgid "Miembros"
+msgstr "Members"
+
+msgid "Progreso"
+msgstr "Progress"
+
+#, python-format
+msgid "%(h)s de %(t)s tareas"
+msgstr "%(h)s of %(t)s tasks"
+
+msgid "Horas esta semana"
+msgstr "Hours this week"
+
+msgid "Próximo hito"
+msgstr "Next milestone"
+
+msgid "Secciones del proyecto"
+msgstr "Project sections"
+
+msgid "Registro"
+msgstr "Log"
+
+msgid "Mover a la sección"
+msgstr "Move to section"
+
+msgid "Sin sección"
+msgstr "No section"
+
+msgid "Añadir una tarea…"
+msgstr "Add a task…"
+
+msgid "Sección"
+msgstr "Section"
+
+msgid "Opciones de la sección"
+msgstr "Section options"
+
+msgid "Nombre de la sección"
+msgstr "Section name"
+
+msgid "Bajar"
+msgstr "Move down"
+
+msgid "¿Eliminar la sección? Sus tareas no se borran."
+msgstr "Delete the section? Its tasks are not deleted."
+
+msgid "Eliminar sección"
+msgstr "Delete section"
+
+msgid "Sin tareas en esta sección."
+msgstr "No tasks in this section."
+
+msgid "Todavía no hay tareas en este proyecto."
+msgstr "There are no tasks in this project yet."
+
+msgid "Nueva sección"
+msgstr "New section"
+
+msgid "Nueva sección (p. ej. «1. Recoger documentación»)"
+msgstr "New section (e.g. “1. Collect documents”)"
+
+msgid "Añadir sección"
+msgstr "Add section"
+
+msgid "Próximas tareas"
+msgstr "Upcoming tasks"
+
+msgid "Ver toda la lista"
+msgstr "View the whole list"
+
+msgid "No hay tareas abiertas."
+msgstr "There are no open tasks."
+
+msgid "Añadir la primera"
+msgstr "Add the first one"
+
+msgid "Carga por persona"
+msgstr "Workload per person"
+
+msgid "Nada pendiente."
+msgstr "Nothing pending."
+
+msgid "Próximo vencimiento del cliente"
+msgstr "Client's next deadline"
+
+msgid "Horas"
+msgstr "Hours"
+
+msgid "Total registrado"
+msgstr "Total logged"
+
+msgid "Ajustes y miembros"
+msgstr "Settings and members"
+
+msgid "Fecha objetivo"
+msgstr "Target date"
+
+msgid "Sin responsable"
+msgstr "No owner"
+
+msgid ""
+"Quien colabora puede crear, editar y completar tareas del proyecto; quien"
+" solo lee, verlas."
+msgstr ""
+"Collaborators can create, edit and complete project tasks; read-only "
+"members can only view them."
+
+msgid "Dueño"
+msgstr "Owner"
+
+msgid "Salir del proyecto"
+msgstr "Leave the project"
+

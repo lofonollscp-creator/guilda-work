@@ -136,7 +136,7 @@ def test_presupuesto_de_consultas_por_pantalla(cliente, monkeypatch):
     for ruta in ("/", "/tareas/", "/tareas/hoy", "/tareas/tablero", "/notas", f"/correo/?cuenta_id={cuenta}", "/fiscal/vencimientos"):
         cliente.get(ruta)
     registro = _sentencias(monkeypatch)
-    tope = {"/": 28, "/tareas/": 24, "/tareas/hoy": 24, "/tareas/tablero": 24, "/notas": 24, f"/correo/?cuenta_id={cuenta}": 28, "/fiscal/vencimientos": 20}
+    tope = {"/": 30, "/tareas/": 24, "/tareas/hoy": 24, "/tareas/tablero": 24, "/notas": 24, f"/correo/?cuenta_id={cuenta}": 30, "/fiscal/vencimientos": 20}
     for ruta, maximo in tope.items():
         registro.clear()
         cliente.get(ruta)

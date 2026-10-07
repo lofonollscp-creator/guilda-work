@@ -6398,3 +6398,137 @@ msgid_plural "%(n)s cambios no han llegado al servidor de correo"
 msgstr[0] "%(n)s modification n'a pas atteint le serveur de messagerie"
 msgstr[1] "%(n)s modifications n'ont pas atteint le serveur de messagerie"
 
+msgid "Completado"
+msgstr "Terminé"
+
+msgid "Archivado"
+msgstr "Archivé"
+
+msgid "Escribe qué hay que hacer."
+msgstr "Écrivez ce qu'il faut faire."
+
+msgid "Objetivo"
+msgstr "Objectif"
+
+msgid "Responsable"
+msgstr "Responsable"
+
+msgid "Compartido con el despacho"
+msgstr "Partagé avec le cabinet"
+
+msgid "Solo tuyo"
+msgstr "Uniquement à vous"
+
+msgid "Miembros"
+msgstr "Membres"
+
+msgid "Progreso"
+msgstr "Progression"
+
+#, python-format
+msgid "%(h)s de %(t)s tareas"
+msgstr "%(h)s sur %(t)s tâches"
+
+msgid "Horas esta semana"
+msgstr "Heures cette semaine"
+
+msgid "Próximo hito"
+msgstr "Prochaine étape"
+
+msgid "Secciones del proyecto"
+msgstr "Sections du projet"
+
+msgid "Registro"
+msgstr "Journal"
+
+msgid "Mover a la sección"
+msgstr "Déplacer vers la section"
+
+msgid "Sin sección"
+msgstr "Sans section"
+
+msgid "Añadir una tarea…"
+msgstr "Ajouter une tâche…"
+
+msgid "Sección"
+msgstr "Section"
+
+msgid "Opciones de la sección"
+msgstr "Options de la section"
+
+msgid "Nombre de la sección"
+msgstr "Nom de la section"
+
+msgid "Bajar"
+msgstr "Descendre"
+
+msgid "¿Eliminar la sección? Sus tareas no se borran."
+msgstr "Supprimer la section ? Ses tâches ne sont pas supprimées."
+
+msgid "Eliminar sección"
+msgstr "Supprimer la section"
+
+msgid "Sin tareas en esta sección."
+msgstr "Aucune tâche dans cette section."
+
+msgid "Todavía no hay tareas en este proyecto."
+msgstr "Il n'y a pas encore de tâches dans ce projet."
+
+msgid "Nueva sección"
+msgstr "Nouvelle section"
+
+msgid "Nueva sección (p. ej. «1. Recoger documentación»)"
+msgstr "Nouvelle section (p. ex. « 1. Recueillir les documents »)"
+
+msgid "Añadir sección"
+msgstr "Ajouter une section"
+
+msgid "Próximas tareas"
+msgstr "Prochaines tâches"
+
+msgid "Ver toda la lista"
+msgstr "Voir toute la liste"
+
+msgid "No hay tareas abiertas."
+msgstr "Aucune tâche ouverte."
+
+msgid "Añadir la primera"
+msgstr "Ajouter la première"
+
+msgid "Carga por persona"
+msgstr "Charge par personne"
+
+msgid "Nada pendiente."
+msgstr "Rien en attente."
+
+msgid "Próximo vencimiento del cliente"
+msgstr "Prochaine échéance du client"
+
+msgid "Horas"
+msgstr "Heures"
+
+msgid "Total registrado"
+msgstr "Total enregistré"
+
+msgid "Ajustes y miembros"
+msgstr "Réglages et membres"
+
+msgid "Fecha objetivo"
+msgstr "Date cible"
+
+msgid "Sin responsable"
+msgstr "Sans responsable"
+
+msgid ""
+"Quien colabora puede crear, editar y completar tareas del proyecto; quien"
+" solo lee, verlas."
+msgstr ""
+"Les collaborateurs peuvent créer, modifier et terminer les tâches du "
+"projet ; les lecteurs peuvent seulement les consulter."
+
+msgid "Dueño"
+msgstr "Propriétaire"
+
+msgid "Salir del proyecto"
+msgstr "Quitter le projet"
+

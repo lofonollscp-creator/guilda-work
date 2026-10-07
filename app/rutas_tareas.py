@@ -159,7 +159,7 @@ def _contexto_filas(tareas) -> dict:
         "participantes": db.participantes_de_tareas(ids),
         "bloqueos": db.bloqueos_de_tareas(ids),
         "n_comentarios": db.contar_comentarios_tareas(ids),
-        "menus": db.listar_categorias(g.usuario_id),
+        "menus": db.listar_proyectos_usables(g.usuario_id),
         "companeros": db.listar_companeros_tenant(g.usuario_id),
         "clientes_fiscales": db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
     }
@@ -306,7 +306,7 @@ def calendario():
         prioridades=PRIORIDADES,
         aviso_citas=aviso_citas,
         categorias_outlook=db.listar_categorias_outlook(g.usuario_id),
-        menus=db.listar_categorias(g.usuario_id),
+        menus=db.listar_proyectos_usables(g.usuario_id),
         volver_a=url_for("tareas.calendario", vista=vista, fecha=ancla.isoformat()),
     )
 
@@ -392,7 +392,7 @@ def editar(tarea_id: int):
         abort(404)
     es_dueno = tarea["usuario_id"] == g.usuario_id
 
-    menus = db.listar_categorias(g.usuario_id)
+    menus = db.listar_proyectos_usables(g.usuario_id)
 
     def _contexto_edicion(tarea, error=None):
         return dict(
@@ -801,7 +801,7 @@ def plantillas():
         "tareas_plantillas.html",
         lista=db.listar_plantillas_tareas(g.usuario_id), editando=plantilla,
         texto_items=db.items_a_texto(plantilla["items"]) if plantilla else "",
-        menus=db.listar_categorias(g.usuario_id), companeros=db.listar_companeros_tenant(g.usuario_id),
+        menus=db.listar_proyectos_usables(g.usuario_id), companeros=db.listar_companeros_tenant(g.usuario_id),
         clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
         hoy=date.today().isoformat(), error=(request.args.get("error") or "")[:200] or None,
         creadas=request.args.get("creadas", type=int),
@@ -859,7 +859,7 @@ def recurrentes():
     return render_template(
         "tareas_recurrentes.html",
         reglas=db.listar_tareas_recurrentes(g.usuario_id),
-        menus=db.listar_categorias(g.usuario_id),
+        menus=db.listar_proyectos_usables(g.usuario_id),
         dias_semana=DIAS_SEMANA,
         periodicidades=PERIODICIDADES,
         meses=NOMBRES_MES_SELECT,

@@ -2557,6 +2557,13 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
   un buzón grande se baja por tandas (lo más reciente primero, máx. 60 s o 2.000 mensajes por carpeta y pasada).
   Cuentas POP3: sin cambios. La búsqueda usa un índice de texto completo (FTS5) que se crea y rellena solo al
   migrar; `db.reconstruir_indice_correo()` lo regenera si hiciera falta.
+- **Proyectos compartidos** (`/proyecto/<id>`): un proyecto (categoría) puede compartirse con compañeros del MISMO despacho
+  como «colabora» o «solo lectura»; el dueño ve y trabaja las tareas de los miembros y viceversa (vista
+  `tareas_participantes_todos`, solo para permisos: las listas generales y «Mi día» no se llenan con lo del equipo). Quien
+  sale del despacho pierde el acceso al instante; los supervisores ven (solo lectura) los proyectos compartidos del despacho.
+  Los proyectos de siempre siguen privados hasta que su dueño los comparte. Columnas nuevas con prefijo `proy_` en
+  `categorias`; tablas `proyecto_miembros` y `proyecto_secciones`. `/menu/<id>` redirige a la página nueva; el registro
+  cronológico de notas y eventos sigue en `/menu/<id>?registro=1` (pestaña «Registro»).
 - **Seguridad del acceso** (página «Mi cuenta»): verificación en dos pasos con app de autenticación
   (TOTP, 6 dígitos; el secreto se guarda cifrado y se dan 8 códigos de recuperación de un solo uso)
   y caducidad de contraseña (`BACKOFFICE_CADUCIDAD_DIAS`, 180 por defecto, 0 = nunca). Con

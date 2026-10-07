@@ -189,7 +189,7 @@ def test_editor_guarda_titulo_fijada_y_cliente_y_el_registro_las_pinta(cliente):
     fila = db.obtener_nota(uid, nota)
     assert (fila["titulo"], fila["fijada"], fila["cliente_fiscal_id"]) == ("Acta de la reunión", 1, cf)
 
-    pagina = cliente.get(f"/menu/{proyecto}").get_data(as_text=True)
+    pagina = cliente.get(f"/menu/{proyecto}?registro=1").get_data(as_text=True)
     assert "Notas fijadas" in pagina and "Acta de la reunión" in pagina
     assert "<li>punto uno</li>" in pagina and "<strong>punto dos</strong>" in pagina
     editor = cliente.get(f"/nota/{nota}/editar").get_data(as_text=True)

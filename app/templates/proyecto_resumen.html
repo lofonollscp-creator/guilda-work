@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}{{ p.nombre }} — Guilda Work{% endblock %}
+{% block content %}
+{% include "_proyecto_cabecera.html" %}
+
+{% if p.descripcion %}<p class="proyecto-descripcion">{{ p.descripcion }}</p>{% endif %}
+
+<div class="proyecto-rejilla">
+  <section class="proyecto-bloque">
+    <h2>{{ _('Próximas tareas') }}</h2>
+    {% if proximas %}
+    <ul class="log-list">
+      {% for t in proximas %}
+      <li class="log-item tarea-outlook-item">
+        <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
+          <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if not organiza and t.usuario_id != g.usuario_id }}></button>
+        </form>
+        <span class="log-text"><a href="{{ url_for('tareas.editar' if (organiza or t.usuario_id == g.usuario_id) else 'tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a></span>
+        {% if t.asignada_nombre %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg> {{ t.asignada_nombre }}</span>{% endif %}
+        {% if t.fecha_vencimiento %}<span class="log-duration {{ 'texto-peligro' if t.fecha_vencimiento[:10] < hoy }}">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="muted"><a href="{{ url_for('proyectos.lista', proyecto_id=p.id) }}">{{ _('Ver toda la lista') }}</a></p>
+    {% else %}
+    <p class="muted">{{ _('No hay tareas abiertas.') }} <a href="{{ url_for('proyectos.lista', proyecto_id=p.id) }}">{{ _('Añadir la primera') }}</a></p>
+    {% endif %}
+  </section>
+
+  <section class="proyecto-bloque">
+    <h2>{{ _('Carga por persona') }}</h2>
+    {% if resumen.carga %}
+    <ul class="dash-equipo">
+      {% for c in resumen.carga %}<li><span class="dash-equipo-nombre">{{ c.nombre }}</span><span class="pill">{{ ngettext('%(n)s abierta', '%(n)s abiertas', c.abiertas, n=c.abiertas) }}</span></li>{% endfor %}
+    </ul>
+    {% else %}<p class="muted">{{ _('Nada pendiente.') }}</p>{% endif %}
+
+    {% if resumen.vencimiento_cliente %}
+    <h3>{{ _('Próximo vencimiento del cliente') }}</h3>
+    <p>{{ _('Modelo %(m)s', m=resumen.vencimiento_cliente.modelo) }} · {{ resumen.vencimiento_cliente.periodo }} · <strong>{{ resumen.vencimiento_cliente.fecha_limite[:10] }}</strong></p>
+    {% endif %}
+
+    <h3>{{ _('Horas') }}</h3>
+    <p>{{ _('Total registrado') }}: <strong>{{ resumen.segundos_total|duracion_hm if resumen.segundos_total else '—' }}</strong></p>
+    {% if resumen.horas_por_persona %}
+    <ul class="dash-equipo">
+      {% for h in resumen.horas_por_persona %}<li><span class="dash-equipo-nombre">{{ h.nombre }}</span><span class="pill">{{ h.segundos|duracion_hm }}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+</div>
+
+{% if es_dueno %}
+<details class="proyecto-ajustes" id="ajustes">
+  <summary class="btn btn-ghost">{{ _('Ajustes y miembros') }}</summary>
+  <form class="proyecto-form" action="{{ url_for('proyectos.ajustes', proyecto_id=p.id) }}" method="post">
+    <label>{{ _('Estado') }}
+      <select name="estado">{% for e in estados %}<option value="{{ e }}" {{ 'selected' if e == p.estado }}>{{ etiquetas_estado[e] }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ _('Fecha objetivo') }} <input type="date" name="fecha_objetivo" value="{{ p.fecha_objetivo or '' }}"></label>
+    <label>{{ _('Responsable') }}
+      <select name="responsable_id"><option value="">{{ _('Sin responsable') }}</option>
+        {% for m in asignables %}<option value="{{ m.usuario_id }}" {{ 'selected' if m.usuario_id == p.responsable_id }}>{{ m.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>{{ _('Cliente') }}
+      <select name="cliente_fiscal_id"><option value="">{{ _('Sin cliente') }}</option>
+        {% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == p.cliente_fiscal_id }}>{{ c.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="proyecto-form-ancha">{{ _('Descripción') }} <textarea name="descripcion" rows="3" maxlength="2000">{{ p.descripcion or '' }}</textarea></label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+
+  <h3>{{ _('Miembros') }}</h3>
+  <p class="muted">{{ _('Quien colabora puede crear, editar y completar tareas del proyecto; quien solo lee, verlas.') }}</p>
+  <ul class="log-list">
+    {% for m in equipo %}
+    <li class="log-item"><span class="log-text">{{ m.nombre }}</span>
+      <span class="pill">{{ _('Dueño') if m.es_dueno else (_('colabora') if m.rol == 'colabora' else _('solo lectura')) }}</span>
+      {% if not m.es_dueno %}
+      <form action="{{ url_for('proyectos.compartir', proyecto_id=p.id) }}" method="post" class="proyecto-miembro-form">
+        <input type="hidden" name="usuario_id" value="{{ m.usuario_id }}">
+        <select name="rol" aria-label="{{ _('Permiso') }}" onchange="this.form.submit()">
+          <option value="colabora" {{ 'selected' if m.rol == 'colabora' }}>{{ _('Colabora') }}</option>
+          <option value="observa" {{ 'selected' if m.rol == 'observa' }}>{{ _('Solo lectura') }}</option>
+        </select>
+      </form>
+      <form action="{{ url_for('proyectos.quitar_miembro', proyecto_id=p.id, otro_id=m.usuario_id) }}" method="post">
+        <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if companeros %}
+  <form class="proyecto-form" action="{{ url_for('proyectos.compartir', proyecto_id=p.id) }}" method="post">
+    <label>{{ _('Compañero') }}
+      <select name="usuario_id" required>{% for c in companeros %}<option value="{{ c.id }}">{{ c.nombre or c.email }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ _('Permiso') }}
+      <select name="rol"><option value="colabora">{{ _('Colabora') }}</option><option value="observa">{{ _('Solo lectura') }}</option></select>
+    </label>
+    <button type="submit" class="btn btn-ghost">{{ _('Compartir') }}</button>
+  </form>
+  {% else %}<p class="muted">{{ _('No hay más usuarios en tu despacho con quien compartir.') }}</p>{% endif %}
+</details>
+{% elif p.rol != 'dueno' and equipo|selectattr('usuario_id', 'equalto', g.usuario_id)|list %}
+<form action="{{ url_for('proyectos.quitar_miembro', proyecto_id=p.id, otro_id=g.usuario_id) }}" method="post" class="proyecto-salir">
+  <button type="submit" class="btn btn-ghost">{{ _('Salir del proyecto') }}</button>
+</form>
+{% endif %}
+{% endblock %}

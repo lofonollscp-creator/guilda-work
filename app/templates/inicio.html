@@ -189,6 +189,23 @@
   </div>
 {% endif %}
 
+{% if proyectos_compartidos %}
+<h3 class="menu-grid-titulo"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('Compartidos conmigo') }}</h3>
+<div class="menu-grid">
+  {% for m in proyectos_compartidos %}
+  <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
+    <a class="menu-card-link" href="{{ url_for('proyectos.resumen', proyecto_id=m.id) }}">
+      <div class="menu-card-top">
+        <span class="menu-card-icon"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ m.icono or 'folder' }}"></use></svg></span>
+        <h2>{{ m.nombre }}</h2>
+      </div>
+      <div class="menu-card-stats"><span class="pill">{{ _('De %(quien)s', quien=m.dueno_nombre) }}</span><span class="pill">{{ _('colabora') if m.rol == 'colabora' else _('solo lectura') }}</span></div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <section class="new-menu" id="new-menu">
   <h3>+ {{ _('Nuevo proyecto') }}</h3>
   <form class="menu-form" method="post" action="{{ url_for('crear_menu') }}">

@@ -6331,3 +6331,137 @@ msgid_plural "%(n)s cambios no han llegado al servidor de correo"
 msgstr[0] "%(n)s canvi no ha arribat al servidor de correu"
 msgstr[1] "%(n)s canvis no han arribat al servidor de correu"
 
+msgid "Completado"
+msgstr "Completat"
+
+msgid "Archivado"
+msgstr "Arxivat"
+
+msgid "Escribe qué hay que hacer."
+msgstr "Escriu què cal fer."
+
+msgid "Objetivo"
+msgstr "Objectiu"
+
+msgid "Responsable"
+msgstr "Responsable"
+
+msgid "Compartido con el despacho"
+msgstr "Compartit amb el despatx"
+
+msgid "Solo tuyo"
+msgstr "Només teu"
+
+msgid "Miembros"
+msgstr "Membres"
+
+msgid "Progreso"
+msgstr "Progrés"
+
+#, python-format
+msgid "%(h)s de %(t)s tareas"
+msgstr "%(h)s de %(t)s tasques"
+
+msgid "Horas esta semana"
+msgstr "Hores aquesta setmana"
+
+msgid "Próximo hito"
+msgstr "Proper fita"
+
+msgid "Secciones del proyecto"
+msgstr "Seccions del projecte"
+
+msgid "Registro"
+msgstr "Registre"
+
+msgid "Mover a la sección"
+msgstr "Mou a la secció"
+
+msgid "Sin sección"
+msgstr "Sense secció"
+
+msgid "Añadir una tarea…"
+msgstr "Afegeix una tasca…"
+
+msgid "Sección"
+msgstr "Secció"
+
+msgid "Opciones de la sección"
+msgstr "Opcions de la secció"
+
+msgid "Nombre de la sección"
+msgstr "Nom de la secció"
+
+msgid "Bajar"
+msgstr "Baixa"
+
+msgid "¿Eliminar la sección? Sus tareas no se borran."
+msgstr "Vols eliminar la secció? Les seves tasques no s'esborren."
+
+msgid "Eliminar sección"
+msgstr "Elimina la secció"
+
+msgid "Sin tareas en esta sección."
+msgstr "Sense tasques en aquesta secció."
+
+msgid "Todavía no hay tareas en este proyecto."
+msgstr "Encara no hi ha tasques en aquest projecte."
+
+msgid "Nueva sección"
+msgstr "Nova secció"
+
+msgid "Nueva sección (p. ej. «1. Recoger documentación»)"
+msgstr "Nova secció (p. ex. «1. Recollir documentació»)"
+
+msgid "Añadir sección"
+msgstr "Afegeix secció"
+
+msgid "Próximas tareas"
+msgstr "Properes tasques"
+
+msgid "Ver toda la lista"
+msgstr "Veure tota la llista"
+
+msgid "No hay tareas abiertas."
+msgstr "No hi ha tasques obertes."
+
+msgid "Añadir la primera"
+msgstr "Afegeix la primera"
+
+msgid "Carga por persona"
+msgstr "Càrrega per persona"
+
+msgid "Nada pendiente."
+msgstr "Res pendent."
+
+msgid "Próximo vencimiento del cliente"
+msgstr "Proper venciment del client"
+
+msgid "Horas"
+msgstr "Hores"
+
+msgid "Total registrado"
+msgstr "Total registrat"
+
+msgid "Ajustes y miembros"
+msgstr "Ajustos i membres"
+
+msgid "Fecha objetivo"
+msgstr "Data objectiu"
+
+msgid "Sin responsable"
+msgstr "Sense responsable"
+
+msgid ""
+"Quien colabora puede crear, editar y completar tareas del proyecto; quien"
+" solo lee, verlas."
+msgstr ""
+"Qui col·labora pot crear, editar i completar tasques del projecte; qui "
+"només llegeix, veure-les."
+
+msgid "Dueño"
+msgstr "Propietari"
+
+msgid "Salir del proyecto"
+msgstr "Surt del projecte"
+

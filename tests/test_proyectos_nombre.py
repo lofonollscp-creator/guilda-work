@@ -58,7 +58,7 @@ def test_historial_estadisticas_y_papelera_dicen_proyecto(cliente, idioma):
         assert f"{palabra}</" in html, f"{idioma} {ruta}"
         assert f">{antigua}<" not in html, f"{idioma} {ruta}"
 
-    pagina = cliente.get(f"/menu/{categoria_id}")
+    pagina = cliente.get(f"/menu/{categoria_id}?registro=1")
     assert pagina.status_code == 200
     assert palabra.lower() in pagina.get_data(as_text=True).lower()
 
