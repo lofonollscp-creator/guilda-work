@@ -10,7 +10,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, db, fichaje_export, notificaciones, outlook_ics
+from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd
 from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
@@ -359,14 +359,23 @@ def _titulo_rango(vista: str, ancla: date, inicio: date, fin: date) -> str:
 def crear():
     asunto = request.form.get("asunto", "").strip()
     if asunto:
-        categoria_id = request.form.get("categoria_id") or None
-        asignada_a = _int_o_none(request.form.get("asignada_a"))
+        # Texto libre: «viernes 10h pedir extractos @luis !alta #proyecto». Lo que el formulario trae
+        # relleno manda; el texto solo rellena lo que está vacío.
+        entendido = quickadd.interpretar(
+            asunto, date.today(),
+            [(c["id"], c["nombre"], c["email"] if "email" in c.keys() else "") for c in db.listar_companeros_tenant(g.usuario_id)],
+            [(m["id"], m["nombre"]) for m in db.listar_proyectos_usables(g.usuario_id)],
+        )
+        asunto = entendido.asunto
+        categoria_id = request.form.get("categoria_id") or entendido.etiqueta_id
+        asignada_a = _int_o_none(request.form.get("asignada_a")) or entendido.persona_id
+        prioridad_formulario = request.form.get("prioridad", "normal")
         tarea_id = db.crear_tarea_outlook(
             g.usuario_id,
             asunto=asunto,
-            prioridad=request.form.get("prioridad", "normal"),
+            prioridad=prioridad_formulario if prioridad_formulario != "normal" else (entendido.prioridad or "normal"),
             fecha_inicio=request.form.get("fecha_inicio") or None,
-            fecha_vencimiento=request.form.get("fecha_vencimiento") or None,
+            fecha_vencimiento=request.form.get("fecha_vencimiento") or entendido.vencimiento,
             categoria_outlook=request.form.get("categoria_outlook") or None,
             categoria_id=int(categoria_id) if categoria_id else None,
             cliente_fiscal_id=_int_o_none(request.form.get("cliente_fiscal_id")),

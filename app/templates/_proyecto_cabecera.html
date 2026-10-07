@@ -37,5 +37,7 @@
 <nav class="proyecto-pestanas" aria-label="{{ _('Secciones del proyecto') }}">
   <a href="{{ url_for('proyectos.resumen', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'resumen' }}" {{ 'aria-current=page' if pestana == 'resumen' }}>{{ _('Resumen') }}</a>
   <a href="{{ url_for('proyectos.lista', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'lista' }}" {{ 'aria-current=page' if pestana == 'lista' }}>{{ _('Lista') }}</a>
+  <a href="{{ url_for('proyectos.tablero', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'tablero' }}" {{ 'aria-current=page' if pestana == 'tablero' }}>{{ _('Tablero') }}</a>
+  <a href="{{ url_for('proyectos.calendario', proyecto_id=p.id) }}" class="{{ 'activa' if pestana == 'calendario' }}" {{ 'aria-current=page' if pestana == 'calendario' }}>{{ _('Calendario') }}</a>
   {% if es_dueno %}<a href="{{ url_for('ver_menu', menu_id=p.id, registro=1) }}">{{ _('Registro') }}</a>{% endif %}
 </nav>

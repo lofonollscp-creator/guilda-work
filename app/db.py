@@ -9975,6 +9975,60 @@ def asignar_seccion_tarea(usuario_id: int, tarea_id: int, seccion_id: int | None
         conn.close()
 
 
+def mover_tarea_en_proyecto(usuario_id: int, tarea_id: int, seccion_id: int | None, antes_de_id: int | None = None) -> bool:
+    """Coloca una tarea en una sección (o sin sección) justo ANTES de otra tarea de esa sección, o al final si
+    `antes_de_id` es None. Es lo que hace arrastrar y soltar en la lista del proyecto."""
+    if not puede_editar_tarea(usuario_id, tarea_id):
+        return False
+    conn = get_connection()
+    try:
+        t = conn.execute("SELECT categoria_id FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()
+        if t is None or t["categoria_id"] is None:
+            return False
+        categoria = t["categoria_id"]
+        if seccion_id is not None and _categoria_de_seccion(conn, seccion_id) != categoria:
+            return False
+        ids = [f["id"] for f in conn.execute(
+            """SELECT id FROM tareas_outlook WHERE categoria_id = ? AND papelera_en IS NULL AND id != ?
+               AND COALESCE(seccion_id, 0) = COALESCE(?, 0) ORDER BY orden_proyecto, id""",
+            (categoria, tarea_id, seccion_id),
+        )]
+        if antes_de_id is not None and antes_de_id not in ids:
+            return False
+        posicion = ids.index(antes_de_id) if antes_de_id is not None else len(ids)
+        ids.insert(posicion, tarea_id)
+        conn.execute("UPDATE tareas_outlook SET seccion_id = ? WHERE id = ?", (seccion_id, tarea_id))
+        conn.executemany("UPDATE tareas_outlook SET orden_proyecto = ? WHERE id = ?", [(n + 1, i) for n, i in enumerate(ids)])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def cambiar_fecha_tarea_proyecto(usuario_id: int, tarea_id: int, fecha: str | None) -> bool:
+    """Cambia el DÍA de vencimiento conservando la hora si la tenía (arrastrar en el calendario). `fecha`: YYYY-MM-DD o None."""
+    if not puede_editar_tarea(usuario_id, tarea_id):
+        return False
+    if fecha:
+        try:
+            fecha = datetime.strptime(fecha[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
+        except ValueError:
+            return False
+    conn = get_connection()
+    try:
+        t = conn.execute("SELECT fecha_vencimiento FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()
+        if t is None:
+            return False
+        antigua = t["fecha_vencimiento"] or ""
+        nueva = (fecha + antigua[10:]) if fecha and len(antigua) > 10 else (fecha or None)
+        conn.execute("UPDATE tareas_outlook SET fecha_vencimiento = ?, actualizada_en = ? WHERE id = ?", (nueva, now_iso(), tarea_id))
+        conn.commit()
+    finally:
+        conn.close()
+    registrar_actividad_tarea(usuario_id, tarea_id, "editada", f"vencimiento {fecha or '—'}")
+    return True
+
+
 def crear_tarea_en_proyecto(
     usuario_id: int, categoria_id: int, asunto: str, seccion_id: int | None = None, prioridad: str = "normal",
     fecha_vencimiento: str | None = None, asignada_a: int | None = None,

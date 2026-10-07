@@ -4825,3 +4825,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .proyecto-nueva-seccion { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
 .proyecto-nueva-seccion input { flex: 1; max-width: 420px; }
 .proyecto-salir { margin-top: var(--space-5); }
+
+/* Arrastrar y soltar en la página de proyecto */
+.is-arrastrando { opacity: .45; }
+.proyecto-zona.is-destino { outline: 2px dashed var(--focus-ring); outline-offset: 2px; background: color-mix(in srgb, var(--primary) 10%, transparent); }
+[draggable="true"] { cursor: grab; }
+.proyecto-previa { flex-basis: 100%; margin: 0; font-size: .85rem; color: var(--primary-text); }
+.proyecto-alta-ayuda { flex-basis: 100%; margin: 0; font-size: .8rem; }
+.proyecto-zona:empty { min-height: 14px; }

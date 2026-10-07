@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ p.nombre }} — Guilda Work{% endblock %}
+{% block content %}
+{% include "_proyecto_cabecera.html" %}
+<div class="cal-toolbar">
+  <div class="cal-nav">
+    <a class="btn btn-ghost" href="{{ url_for('proyectos.calendario', proyecto_id=p.id, fecha=anterior) }}" title="{{ _('Anterior') }}">&larr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('proyectos.calendario', proyecto_id=p.id, fecha=hoy) }}">{{ _('Hoy') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('proyectos.calendario', proyecto_id=p.id, fecha=siguiente) }}" title="{{ _('Siguiente') }}">&rarr;</a>
+    <span class="cal-titulo">{{ titulo_rango }}</span>
+  </div>
+</div>
+{% if organiza %}<p class="muted">{{ _('Arrastra una tarea a otro día para cambiar su vencimiento.') }}</p>{% endif %}
+
+<div class="cal-grid cal-grid-mes" data-dnd="calendario" data-url-fecha="{{ url_for('proyectos.cambiar_fecha', proyecto_id=p.id, tarea_id=0) }}"
+     data-t-movida="{{ _('Vencimiento cambiado') }}" data-t-deshacer="{{ _('Deshacer') }}" data-t-error="{{ _('No se ha podido cambiar la fecha.') }}">
+  {% for etiqueta in [_('Lun'), _('Mar'), _('Mié'), _('Jue'), _('Vie'), _('Sáb'), _('Dom')] %}<div class="cal-weekday">{{ etiqueta }}</div>{% endfor %}
+  {% for semana in semanas %}{% for dia in semana %}
+  <div class="cal-cell proyecto-zona {{ 'is-hoy' if dia.es_hoy }} {{ '' if dia.es_mes_actual else 'is-fuera-de-mes' }}" data-fecha="{{ dia.iso }}">
+    <span class="cal-cell-num">{{ dia.fecha.day }}</span>
+    <div class="cal-cell-chips">
+      {% for t in dia.tareas %}
+      <a class="cal-chip {{ 'is-completada' if t.estado == 'completada' }}" data-tarea="{{ t.id }}" {% if organiza %}draggable="true"{% endif %}
+         href="{{ url_for('tareas.editar' if (organiza or t.usuario_id == g.usuario_id) else 'tareas.ver', tarea_id=t.id) }}" title="{{ t.asunto }}">{{ t.asunto }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}{% endfor %}
+</div>
+
+{% if sin_fecha %}
+<section class="proyecto-bloque">
+  <h2>{{ _('Sin fecha') }} <span class="pill">{{ sin_fecha|length }}</span></h2>
+  <ul class="log-list">
+    {% for t in sin_fecha %}
+    <li class="log-item"><span class="log-text"><a href="{{ url_for('tareas.editar' if (organiza or t.usuario_id == g.usuario_id) else 'tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a></span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+<script src="{{ url_for('static', filename='proyecto.js') }}"></script>
+{% endblock %}

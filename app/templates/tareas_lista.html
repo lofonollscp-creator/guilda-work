@@ -69,7 +69,7 @@
   <form class="quick-card quick-card-full" action="{{ url_for('tareas.crear') }}" method="post">
     <label>{{ _('Nueva tarea') }}</label>
     <div class="quick-row">
-      <input type="text" name="asunto" placeholder="{{ _('Asunto...') }}" required autofocus>
+      <input type="text" name="asunto" placeholder="{{ _('Asunto... (puedes añadir «viernes 10h», «@luis», «!alta», «#proyecto»)') }}" required autofocus autocomplete="off">
       <input type="datetime-local" name="fecha_inicio" title="{{ _('Fecha y hora de inicio') }}">
       <input type="datetime-local" name="fecha_vencimiento" title="{{ _('Fecha y hora de vencimiento') }}">
       <select name="prioridad" title="{{ _('Prioridad') }}">

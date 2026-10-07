@@ -2,7 +2,7 @@
 {% block title %}{{ p.nombre }} — Guilda Work{% endblock %}
 {% macro fila_tarea(t) %}
   {% set edita = organiza or t.usuario_id == g.usuario_id %}
-  <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
+  <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}" data-tarea="{{ t.id }}" {% if organiza %}draggable="true" tabindex="0" title="{{ _('Arrastra para reordenar (o Alt + ↑ / ↓)') }}"{% endif %}>
     <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
       <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' or not edita }}>
         {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
@@ -30,16 +30,21 @@
 {% if organiza %}
 <form class="proyecto-alta" action="{{ url_for('proyectos.crear_tarea', proyecto_id=p.id) }}" method="post">
   <label class="sr-only" for="alta-asunto">{{ _('Nueva tarea') }}</label>
-  <input type="text" id="alta-asunto" name="asunto" placeholder="{{ _('Añadir una tarea…') }}" maxlength="300" required>
+  <input type="text" id="alta-asunto" name="asunto" placeholder="{{ _('Añadir una tarea…') }}" maxlength="300" required autocomplete="off"
+         data-interpretar="{{ url_for('proyectos.interpretar', proyecto_id=p.id) }}" aria-describedby="alta-ayuda alta-previa">
   {% if secciones %}
   <select name="seccion_id" aria-label="{{ _('Sección') }}"><option value="">{{ _('Sin sección') }}</option>{% for s in secciones %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}</select>
   {% endif %}
   <input type="date" name="fecha_vencimiento" aria-label="{{ _('Vencimiento') }}">
   <select name="asignada_a" aria-label="{{ _('Asignar a') }}"><option value="">{{ _('Sin asignar') }}</option>{% for m in asignables %}<option value="{{ m.usuario_id }}">{{ m.nombre }}</option>{% endfor %}</select>
   <button type="submit" class="btn btn-primary">{{ _('Añadir') }}</button>
+  <p class="muted proyecto-alta-ayuda" id="alta-ayuda">{{ _('Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta #sección».') }}</p>
+  <p class="proyecto-previa" id="alta-previa" aria-live="polite" hidden></p>
 </form>
 {% endif %}
 
+<div data-dnd="lista" data-url-orden="{{ url_for('proyectos.reordenar_tarea', proyecto_id=p.id, tarea_id=0) }}"
+     data-t-movida="{{ _('Tarea movida') }}" data-t-deshacer="{{ _('Deshacer') }}" data-t-error="{{ _('No se ha podido mover la tarea.') }}">
 {% for s in secciones %}
 <section class="proyecto-seccion">
   <div class="proyecto-seccion-cab">
@@ -59,17 +64,19 @@
     </details>
     {% endif %}
   </div>
-  {% if por_seccion[s.id] %}<ul class="log-list">{% for t in por_seccion[s.id] %}{{ fila_tarea(t) }}{% endfor %}</ul>{% else %}<p class="muted">{{ _('Sin tareas en esta sección.') }}</p>{% endif %}
+  <ul class="log-list proyecto-zona" data-seccion="{{ s.id }}">{% for t in por_seccion[s.id] %}{{ fila_tarea(t) }}{% endfor %}</ul>
+  {% if not por_seccion[s.id] %}<p class="muted proyecto-vacio">{{ _('Sin tareas en esta sección.') }}</p>{% endif %}
 </section>
 {% endfor %}
 
 {% if por_seccion[None] or not secciones %}
 <section class="proyecto-seccion">
   {% if secciones %}<div class="proyecto-seccion-cab"><h2>{{ _('Sin sección') }} <span class="pill">{{ por_seccion[None]|length }}</span></h2></div>{% endif %}
-  {% if por_seccion[None] %}<ul class="log-list">{% for t in por_seccion[None] %}{{ fila_tarea(t) }}{% endfor %}</ul>
-  {% else %}<p class="muted">{{ _('Todavía no hay tareas en este proyecto.') }}</p>{% endif %}
+  <ul class="log-list proyecto-zona" data-seccion="">{% for t in por_seccion[None] %}{{ fila_tarea(t) }}{% endfor %}</ul>
+  {% if not por_seccion[None] %}<p class="muted proyecto-vacio">{{ _('Todavía no hay tareas en este proyecto.') }}</p>{% endif %}
 </section>
 {% endif %}
+</div>
 
 {% if organiza %}
 <form class="proyecto-nueva-seccion" action="{{ url_for('proyectos.crear_seccion', proyecto_id=p.id) }}" method="post">
@@ -78,4 +85,5 @@
   <button type="submit" class="btn btn-ghost">{{ _('Añadir sección') }}</button>
 </form>
 {% endif %}
+<script src="{{ url_for('static', filename='proyecto.js') }}"></script>
 {% endblock %}

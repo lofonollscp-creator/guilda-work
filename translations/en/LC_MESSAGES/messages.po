@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
 
 #: app/main.py:166 app/main.py:167
 msgid "Ha ocurrido un error interno. Se ha registrado para revisión."
@@ -6456,4 +6456,48 @@ msgstr "Owner"
 
 msgid "Salir del proyecto"
 msgstr "Leave the project"
+
+msgid "Estado no válido."
+msgstr "Invalid status."
+
+msgid "No tienes permiso para cambiar esta tarea."
+msgstr "You don't have permission to change this task."
+
+msgid "Esta tarea espera a otras que aún no están completadas."
+msgstr "This task is waiting for others that are not completed yet."
+
+msgid "No se ha podido cambiar la fecha."
+msgstr "The date could not be changed."
+
+msgid "No se ha podido mover la tarea."
+msgstr "The task could not be moved."
+
+msgid ""
+"Arrastra una tarjeta a otra columna para cambiar su estado; también "
+"puedes usar el selector de cada tarjeta."
+msgstr ""
+"Drag a card to another column to change its status; you can also use each"
+" card's selector."
+
+msgid "Tarea movida"
+msgstr "Task moved"
+
+msgid "Arrastra una tarea a otro día para cambiar su vencimiento."
+msgstr "Drag a task to another day to change its due date."
+
+msgid "Vencimiento cambiado"
+msgstr "Due date changed"
+
+msgid "Arrastra para reordenar (o Alt + ↑ / ↓)"
+msgstr "Drag to reorder (or Alt + ↑ / ↓)"
+
+msgid ""
+"Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta "
+"#sección»."
+msgstr ""
+"You can type it all together: “friday 10am request statements @luis !high"
+" #section”."
+
+msgid "Asunto... (puedes añadir «viernes 10h», «@luis», «!alta», «#proyecto»)"
+msgstr "Subject... (you can add “friday 10am”, “@luis”, “!alta”, “#project”)"
 
