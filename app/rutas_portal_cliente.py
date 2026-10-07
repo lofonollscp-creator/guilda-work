@@ -184,7 +184,7 @@ def documentos_vencimiento(vencimiento_id: int):
             return redirect(url_for("portal_cliente.documentos_vencimiento", vencimiento_id=vencimiento_id))
     return render_template(
         "portal_vencimiento_documentos.html",
-        vencimiento=vencimiento, documentos=db.listar_documentos_vencimiento(vencimiento_id), error=error,
+        vencimiento=vencimiento, documentos=db.listar_documentos_vencimiento(vencimiento_id, excluir_origenes=db.ORIGENES_INTERNOS_DOCUMENTO_VENCIMIENTO), error=error,
         resultados=resultados,
     )
 
@@ -196,7 +196,10 @@ def descargar_documento(vencimiento_id: int, documento_id: int):
     él, el justificante oficial y la constancia de presentación."""
     _vencimiento_del_cliente_actual(vencimiento_id)
     documento = db.obtener_documento_vencimiento(documento_id)
-    if documento is None or documento["vencimiento_id"] != vencimiento_id:
+    if (
+        documento is None or documento["vencimiento_id"] != vencimiento_id
+        or documento["origen"] in db.ORIGENES_INTERNOS_DOCUMENTO_VENCIMIENTO  # adjuntos internos guardados desde el correo
+    ):
         abort(404)
     try:
         contenido = db.contenido_documento_vencimiento(documento)

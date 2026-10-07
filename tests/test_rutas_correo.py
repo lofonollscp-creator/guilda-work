@@ -221,7 +221,7 @@ def test_plantilla_json_devuelve_asunto_y_cuerpo(cliente):
     resp = cliente.get(f"/correo/plantillas/{plantilla_id}.json")
     assert resp.status_code == 200
     datos = resp.get_json()
-    assert datos == {"asunto": "Asunto X", "cuerpo": "<p>Cuerpo</p>"}
+    assert datos == {"asunto": "Asunto X", "cuerpo": "<p>Cuerpo</p>", "sin_resolver": []}
 
 
 def test_plantilla_json_de_otro_usuario_da_404(cliente):

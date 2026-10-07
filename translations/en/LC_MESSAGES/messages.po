@@ -4371,3 +4371,79 @@ msgid "%(n)s usuario"
 msgid_plural "%(n)s usuarios"
 msgstr[0] "%(n)s user"
 msgstr[1] "%(n)s users"
+
+msgid "Guardar en un vencimiento"
+msgstr "Save to a deadline"
+
+msgid "Vencimiento"
+msgstr "Deadline"
+
+msgid "Que lo vea el cliente en su portal"
+msgstr "Let the client see it in their portal"
+
+msgid "Adjunto guardado en el vencimiento."
+msgstr "Attachment saved to the deadline."
+
+msgid "Puedes usar variables que se rellenan al insertar la plantilla:"
+msgstr "You can use variables that are filled in when the template is inserted:"
+
+msgid "las del cliente y del vencimiento se rellenan si el correo está enlazado a un cliente fiscal o lo eliges en el editor."
+msgstr "the client and deadline ones are filled in if the email is linked to a tax client or you pick one in the editor."
+
+msgid "Los correos nuevos se enlazan solos con el cliente fiscal cuyo email coincide con el remitente (si solo hay uno)."
+msgstr "New emails are linked automatically to the tax client whose email matches the sender (if there is only one)."
+
+#, python-format
+msgid "Correos enlazados: %(n)s"
+msgstr "Emails linked: %(n)s"
+
+msgid "Enlazar también los correos antiguos"
+msgstr "Also link older emails"
+
+msgid "Cliente para rellenar la plantilla"
+msgstr "Client to fill in the template"
+
+msgid "Cliente para rellenar las variables de la plantilla"
+msgstr "Client used to fill in the template variables"
+
+msgid "Faltan datos para estas variables (elige un cliente o rellénalas a mano):"
+msgstr "Data is missing for these variables (pick a client or fill them in by hand):"
+
+msgid "Quién ha hecho qué"
+msgstr "Who did what"
+
+#, python-format
+msgid "Solo lo ves tú, como dueño del correo. Un correo se puede compartir con un máximo de %(n)s personas."
+msgstr "Only you can see this, as the owner of the email. An email can be shared with at most %(n)s people."
+
+#, python-format
+msgid "Un correo se puede compartir con un máximo de %(n)s personas."
+msgstr "An email can be shared with at most %(n)s people."
+
+msgid "ha abierto el correo"
+msgstr "opened the email"
+
+msgid "ha asignado el correo"
+msgstr "assigned the email"
+
+msgid "ha quitado la asignación"
+msgstr "removed the assignment"
+
+msgid "ha compartido el correo"
+msgstr "shared the email"
+
+msgid "ha dejado de compartir el correo"
+msgstr "stopped sharing the email"
+
+#, python-format
+msgid "ha cambiado el estado a %(estado)s"
+msgstr "changed the status to %(estado)s"
+
+msgid "ha escrito una nota interna"
+msgstr "wrote an internal note"
+
+msgid "ha borrado una nota interna"
+msgstr "deleted an internal note"
+
+msgid "Todavía no hay actividad."
+msgstr "There is no activity yet."

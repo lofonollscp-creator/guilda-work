@@ -4338,3 +4338,79 @@ msgid "%(n)s usuario"
 msgid_plural "%(n)s usuarios"
 msgstr[0] "%(n)s usuari"
 msgstr[1] "%(n)s usuaris"
+
+msgid "Guardar en un vencimiento"
+msgstr "Desa en un venciment"
+
+msgid "Vencimiento"
+msgstr "Venciment"
+
+msgid "Que lo vea el cliente en su portal"
+msgstr "Que el vegi el client al seu portal"
+
+msgid "Adjunto guardado en el vencimiento."
+msgstr "Adjunt desat al venciment."
+
+msgid "Puedes usar variables que se rellenan al insertar la plantilla:"
+msgstr "Pots fer servir variables que s'omplen en inserir la plantilla:"
+
+msgid "las del cliente y del vencimiento se rellenan si el correo está enlazado a un cliente fiscal o lo eliges en el editor."
+msgstr "les del client i del venciment s'omplen si el correu està enllaçat a un client fiscal o el tries a l'editor."
+
+msgid "Los correos nuevos se enlazan solos con el cliente fiscal cuyo email coincide con el remitente (si solo hay uno)."
+msgstr "Els correus nous s'enllacen sols amb el client fiscal l'email del qual coincideix amb el remitent (si només n'hi ha un)."
+
+#, python-format
+msgid "Correos enlazados: %(n)s"
+msgstr "Correus enllaçats: %(n)s"
+
+msgid "Enlazar también los correos antiguos"
+msgstr "Enllaça també els correus antics"
+
+msgid "Cliente para rellenar la plantilla"
+msgstr "Client per omplir la plantilla"
+
+msgid "Cliente para rellenar las variables de la plantilla"
+msgstr "Client per omplir les variables de la plantilla"
+
+msgid "Faltan datos para estas variables (elige un cliente o rellénalas a mano):"
+msgstr "Falten dades per a aquestes variables (tria un client o omple-les a mà):"
+
+msgid "Quién ha hecho qué"
+msgstr "Qui ha fet què"
+
+#, python-format
+msgid "Solo lo ves tú, como dueño del correo. Un correo se puede compartir con un máximo de %(n)s personas."
+msgstr "Només el veus tu, com a propietari del correu. Un correu es pot compartir amb un màxim de %(n)s persones."
+
+#, python-format
+msgid "Un correo se puede compartir con un máximo de %(n)s personas."
+msgstr "Un correu es pot compartir amb un màxim de %(n)s persones."
+
+msgid "ha abierto el correo"
+msgstr "ha obert el correu"
+
+msgid "ha asignado el correo"
+msgstr "ha assignat el correu"
+
+msgid "ha quitado la asignación"
+msgstr "ha retirat l'assignació"
+
+msgid "ha compartido el correo"
+msgstr "ha compartit el correu"
+
+msgid "ha dejado de compartir el correo"
+msgstr "ha deixat de compartir el correu"
+
+#, python-format
+msgid "ha cambiado el estado a %(estado)s"
+msgstr "ha canviat l'estat a %(estado)s"
+
+msgid "ha escrito una nota interna"
+msgstr "ha escrit una nota interna"
+
+msgid "ha borrado una nota interna"
+msgstr "ha esborrat una nota interna"
+
+msgid "Todavía no hay actividad."
+msgstr "Encara no hi ha activitat."

@@ -80,6 +80,12 @@
         <option value="{{ p.id }}">{{ p.nombre }}</option>
         {% endfor %}
       </select>
+      {% if clientes_fiscales %}
+      <select id="correo-plantilla-cliente" aria-label="{{ _('Cliente para rellenar la plantilla') }}" title="{{ _('Cliente para rellenar las variables de la plantilla') }}">
+        <option value="">{{ _('Sin cliente') }}</option>
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}" {{ 'selected' if cliente_plantilla_id == c.id }}>{{ c.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
       {% endif %}
     </div>
     <div id="correo-editor-cuerpo" class="correo-editor" contenteditable="true">{{ cuerpo_html|safe }}</div>
@@ -135,13 +141,21 @@
     const id = select.value;
     select.value = "";
     if (!id) return;
-    fetch("{{ url_for('correo.plantilla_json', plantilla_id=0) }}".replace("0", id))
+    const cliente = document.getElementById("correo-plantilla-cliente");
+    const respuesta = document.querySelector('input[name="en_respuesta_a"]');
+    const params = new URLSearchParams();
+    if (cliente && cliente.value) params.set("cliente_fiscal_id", cliente.value);
+    if (respuesta && respuesta.value) params.set("en_respuesta_a", respuesta.value);
+    fetch("{{ url_for('correo.plantilla_json', plantilla_id=0) }}".replace("0", id) + "?" + params.toString())
       .then((resp) => resp.json())
       .then((plantilla) => {
         editor.focus();
         document.execCommand("insertHTML", false, plantilla.cuerpo);
         if (plantilla.asunto && asuntoInput && !asuntoInput.value) {
           asuntoInput.value = plantilla.asunto;
+        }
+        if (plantilla.sin_resolver && plantilla.sin_resolver.length) {
+          alert("{{ _('Faltan datos para estas variables (elige un cliente o rellénalas a mano):') }} " + plantilla.sin_resolver.join(", "));
         }
       });
   });

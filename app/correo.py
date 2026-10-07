@@ -855,6 +855,125 @@ def _aplicar_categoria_automatica(
                     db.asignar_cliente_fiscal_correo(tenant["id"], mensaje_id, regla["cliente_fiscal_id"])
     except Exception:  # noqa: BLE001
         logger.exception("Regla de correo fallida (mensaje %s)", mensaje_id)
+    try:
+        _vincular_cliente_por_remitente(usuario_id, mensaje_id, direccion)
+    except Exception:  # noqa: BLE001
+        logger.exception("Vínculo automático con cliente fiscal fallido (mensaje %s)", mensaje_id)
+
+
+def _vincular_cliente_por_remitente(usuario_id: int, mensaje_id: int, direccion: str | None) -> bool:
+    """Si el remitente es el email de un cliente fiscal del despacho (y solo de
+    uno), enlaza el mensaje con él. No pisa un vínculo ya puesto por una regla
+    o a mano. Devuelve True si ha vinculado."""
+    if not direccion:
+        return False
+    tenant = db.tenant_de_usuario(usuario_id)
+    if tenant is None:
+        return False
+    cliente_id = db.cliente_fiscal_id_por_email(tenant["id"], direccion)
+    if cliente_id is None:
+        return False
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
+    if mensaje is None or mensaje["cliente_fiscal_id"] is not None:
+        return False
+    db.asignar_cliente_fiscal_correo(tenant["id"], mensaje_id, cliente_id)
+    return True
+
+
+def vincular_correos_a_clientes(usuario_id: int) -> int:
+    """Pasa por los mensajes sin cliente del usuario y enlaza los que vienen del
+    email de un cliente fiscal. Devuelve cuántos ha vinculado."""
+    tenant = db.tenant_de_usuario(usuario_id)
+    if tenant is None:
+        return 0
+    n = 0
+    for fila in db.mensajes_correo_sin_cliente(usuario_id):
+        cliente_id = db.cliente_fiscal_id_por_email(tenant["id"], direccion_email(fila["remitente"]))
+        if cliente_id is not None:
+            db.asignar_cliente_fiscal_correo(tenant["id"], fila["id"], cliente_id)
+            n += 1
+    return n
+
+
+# --- Plantillas con variables --------------------------------------------------
+
+VARIABLES_PLANTILLA = (
+    ("cliente", "Nombre del cliente fiscal"), ("nif", "NIF del cliente"), ("modelo", "Modelo del próximo vencimiento"),
+    ("periodo", "Periodo del próximo vencimiento"), ("fecha_limite", "Fecha límite del próximo vencimiento"),
+    ("mi_nombre", "Tu nombre"), ("despacho", "Nombre de tu despacho"), ("fecha", "Fecha de hoy"),
+)
+_PATRON_VARIABLE = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
+
+
+def contexto_plantilla(usuario_id: int, cliente_fiscal_id: int | None = None) -> dict[str, str]:
+    """Valores de las variables para este usuario y, si se indica, ese cliente
+    fiscal (solo si es de su despacho) con su próximo vencimiento pendiente."""
+    tenant = db.tenant_de_usuario(usuario_id)
+    usuario = db.obtener_usuario(usuario_id)
+    valores = {
+        "mi_nombre": (db.nombre_mostrado_usuario(usuario_id) or (usuario["email"] if usuario else "")),
+        "despacho": tenant["nombre"] if tenant else "",
+        "fecha": datetime.now().strftime("%d/%m/%Y"),
+    }
+    if tenant is not None and cliente_fiscal_id:
+        cliente = db.obtener_cliente_fiscal(tenant["id"], cliente_fiscal_id)
+        if cliente is not None:
+            valores["cliente"] = cliente["nombre"] or ""
+            valores["nif"] = cliente["nif"] or ""
+            proximos = db.listar_vencimientos_fiscales(tenant["id"], estado="pendiente", cliente_fiscal_id=cliente_fiscal_id)
+            if proximos:
+                v = min(proximos, key=lambda f: f["fecha_limite"])
+                valores["modelo"], valores["periodo"] = v["modelo"] or "", v["periodo"] or ""
+                try:
+                    valores["fecha_limite"] = datetime.strptime(v["fecha_limite"][:10], "%Y-%m-%d").strftime("%d/%m/%Y")
+                except ValueError:
+                    valores["fecha_limite"] = v["fecha_limite"] or ""
+    return valores
+
+
+def rellenar_plantilla(texto: str | None, valores: dict[str, str], html: bool = False) -> tuple[str, list[str]]:
+    """Sustituye `{{variable}}`. Las que no se pueden resolver se dejan tal cual
+    (para que se vea qué falta) y se devuelven en la lista. Con `html=True` el
+    valor se escapa, porque el cuerpo se inserta como HTML."""
+    sin_resolver: list[str] = []
+
+    def cambiar(m):
+        nombre = m.group(1)
+        if nombre in valores and valores[nombre] != "":
+            return html_lib.escape(valores[nombre]) if html else valores[nombre]
+        if nombre in dict(VARIABLES_PLANTILLA) and nombre not in sin_resolver:
+            sin_resolver.append(nombre)
+        return m.group(0)
+
+    return _PATRON_VARIABLE.sub(cambiar, texto or ""), sin_resolver
+
+
+# --- Adjuntos del correo -> documentos de un vencimiento -------------------------
+
+def guardar_adjunto_en_vencimiento(usuario_id: int, mensaje_id: int, adjunto_id: int, vencimiento_id: int, visible_cliente: bool = False) -> int:
+    """Copia el adjunto de un correo del usuario como documento de un vencimiento
+    de su despacho. Por defecto es interno (el cliente no lo ve en el portal);
+    solo se puede enseñar al cliente si es imagen o PDF. Devuelve el id del
+    documento."""
+    tenant = db.tenant_de_usuario(usuario_id)
+    if tenant is None:
+        raise ErrorCorreo("Tu usuario no pertenece a ningún despacho.")
+    if not db.adjunto_correo_pertenece_a_usuario(usuario_id, adjunto_id):
+        raise ErrorCorreo("Adjunto no encontrado.")
+    adjunto = db.obtener_adjunto_correo(adjunto_id)
+    if adjunto is None or adjunto["mensaje_id"] != mensaje_id:
+        raise ErrorCorreo("Adjunto no encontrado.")
+    if db.obtener_vencimiento_fiscal(tenant["id"], vencimiento_id) is None:
+        raise ErrorCorreo("Vencimiento no encontrado.")
+    contenido = adjunto["contenido"] or b""
+    if len(contenido) > db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO:
+        raise ErrorCorreo("El adjunto supera el tamaño máximo (8 MB).")
+    if visible_cliente and adjunto["tipo_mime"] not in db.MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO:
+        raise ErrorCorreo("Solo se pueden enseñar al cliente imágenes o PDF.")
+    return db.subir_documento_vencimiento(
+        vencimiento_id, adjunto["nombre_archivo"], adjunto["tipo_mime"], contenido,
+        origen="correo_compartido" if visible_cliente else "correo",
+    )
 
 
 _PATRON_IMG_REMOTA = re.compile(r'(<img\b[^>]*\bsrc=["\'])(https?://[^"\']+)(["\'])', re.IGNORECASE)

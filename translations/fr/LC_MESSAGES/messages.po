@@ -4376,3 +4376,79 @@ msgid "%(n)s usuario"
 msgid_plural "%(n)s usuarios"
 msgstr[0] "%(n)s utilisateur"
 msgstr[1] "%(n)s utilisateurs"
+
+msgid "Guardar en un vencimiento"
+msgstr "Enregistrer dans une échéance"
+
+msgid "Vencimiento"
+msgstr "Échéance"
+
+msgid "Que lo vea el cliente en su portal"
+msgstr "Que le client le voie dans son portail"
+
+msgid "Adjunto guardado en el vencimiento."
+msgstr "Pièce jointe enregistrée dans l'échéance."
+
+msgid "Puedes usar variables que se rellenan al insertar la plantilla:"
+msgstr "Vous pouvez utiliser des variables remplies à l'insertion du modèle :"
+
+msgid "las del cliente y del vencimiento se rellenan si el correo está enlazado a un cliente fiscal o lo eliges en el editor."
+msgstr "celles du client et de l'échéance sont remplies si le courriel est lié à un client fiscal ou si vous en choisissez un dans l'éditeur."
+
+msgid "Los correos nuevos se enlazan solos con el cliente fiscal cuyo email coincide con el remitente (si solo hay uno)."
+msgstr "Les nouveaux courriels sont liés automatiquement au client fiscal dont l'adresse correspond à l'expéditeur (s'il n'y en a qu'un)."
+
+#, python-format
+msgid "Correos enlazados: %(n)s"
+msgstr "Courriels liés : %(n)s"
+
+msgid "Enlazar también los correos antiguos"
+msgstr "Lier aussi les anciens courriels"
+
+msgid "Cliente para rellenar la plantilla"
+msgstr "Client pour remplir le modèle"
+
+msgid "Cliente para rellenar las variables de la plantilla"
+msgstr "Client utilisé pour remplir les variables du modèle"
+
+msgid "Faltan datos para estas variables (elige un cliente o rellénalas a mano):"
+msgstr "Il manque des données pour ces variables (choisissez un client ou remplissez-les à la main) :"
+
+msgid "Quién ha hecho qué"
+msgstr "Qui a fait quoi"
+
+#, python-format
+msgid "Solo lo ves tú, como dueño del correo. Un correo se puede compartir con un máximo de %(n)s personas."
+msgstr "Vous seul le voyez, en tant que propriétaire du courriel. Un courriel peut être partagé avec %(n)s personnes au maximum."
+
+#, python-format
+msgid "Un correo se puede compartir con un máximo de %(n)s personas."
+msgstr "Un courriel peut être partagé avec %(n)s personnes au maximum."
+
+msgid "ha abierto el correo"
+msgstr "a ouvert le courriel"
+
+msgid "ha asignado el correo"
+msgstr "a assigné le courriel"
+
+msgid "ha quitado la asignación"
+msgstr "a retiré l'assignation"
+
+msgid "ha compartido el correo"
+msgstr "a partagé le courriel"
+
+msgid "ha dejado de compartir el correo"
+msgstr "a cessé de partager le courriel"
+
+#, python-format
+msgid "ha cambiado el estado a %(estado)s"
+msgstr "a changé le statut en %(estado)s"
+
+msgid "ha escrito una nota interna"
+msgstr "a écrit une note interne"
+
+msgid "ha borrado una nota interna"
+msgstr "a supprimé une note interne"
+
+msgid "Todavía no hay actividad."
+msgstr "Il n'y a pas encore d'activité."

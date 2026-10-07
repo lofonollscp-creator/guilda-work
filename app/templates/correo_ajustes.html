@@ -74,9 +74,23 @@
   </form>
 </section>
 
+{% if clientes_fiscales %}
+<section class="correo-ajustes-seccion">
+  <h2>{{ _('Clientes fiscales') }}</h2>
+  <p class="muted">{{ _('Los correos nuevos se enlazan solos con el cliente fiscal cuyo email coincide con el remitente (si solo hay uno).') }}</p>
+  {% if request.args.get('vinculados') is not none %}<p class="correo-aviso-accion" role="status">{{ _('Correos enlazados: %(n)s', n=request.args.get('vinculados')) }}</p>{% endif %}
+  <form method="post" action="{{ url_for('correo.vincular_clientes') }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Enlazar también los correos antiguos') }}</button>
+  </form>
+</section>
+{% endif %}
+
 <section class="correo-ajustes-seccion">
   <h2>{{ _('Plantillas de respuesta') }}</h2>
   <p class="muted">{{ _('Disponibles desde el selector del editor al redactar o responder — se insertan en el cuerpo, nunca se envían solas.') }}</p>
+  <p class="muted">{{ _('Puedes usar variables que se rellenan al insertar la plantilla:') }}
+    {% for v, _d in variables_plantilla %}<code>{{ '{{' }}{{ v }}{{ '}}' }}</code> {% endfor %}
+    — {{ _('las del cliente y del vencimiento se rellenan si el correo está enlazado a un cliente fiscal o lo eliges en el editor.') }}</p>
   {% if plantillas %}
   <ul class="log-list">
     {% for p in plantillas %}

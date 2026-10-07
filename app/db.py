@@ -441,6 +441,17 @@ CREATE TABLE IF NOT EXISTS correo_notas_internas (
     creado_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_correo_notas_internas_mensaje ON correo_notas_internas(mensaje_id, id);
+-- Quién hizo qué con un correo compartido (asignar, compartir, quitar, estado,
+-- notas y primeras lecturas de cada día): lo ve el dueño del mensaje.
+CREATE TABLE IF NOT EXISTS correo_equipo_auditoria (
+    id INTEGER PRIMARY KEY,
+    mensaje_id INTEGER NOT NULL REFERENCES correo_mensajes(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    accion TEXT NOT NULL,
+    detalle TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_correo_equipo_auditoria_mensaje ON correo_equipo_auditoria(mensaje_id, id);
 
 -- Recordatorios de una tarea: cada persona pone los suyos. `canales` es una
 -- lista separada por comas de app (centro de avisos + push del móvil), correo
@@ -5994,6 +6005,14 @@ def rol_en_correo(usuario_id: int, mensaje_id: int) -> str | None:
             return None
         if dueno == usuario_id:
             return "dueno"
+        # Quien ya no está en el despacho del dueño pierde el acceso aunque
+        # siga figurando como asignado o compartido.
+        mismo_despacho = conn.execute(
+            "SELECT 1 FROM usuarios a JOIN usuarios b ON b.tenant_id = a.tenant_id "
+            "WHERE a.id = ? AND b.id = ? AND a.tenant_id IS NOT NULL", (usuario_id, dueno),
+        ).fetchone()
+        if mismo_despacho is None:
+            return None
         eq = conn.execute("SELECT asignado_a FROM correo_equipo WHERE mensaje_id = ?", (mensaje_id,)).fetchone()
         if eq and eq["asignado_a"] == usuario_id:
             return "asignado"
@@ -6002,6 +6021,53 @@ def rol_en_correo(usuario_id: int, mensaje_id: int) -> str | None:
         ).fetchone():
             return "compartido"
         return None
+    finally:
+        conn.close()
+
+
+MAX_COMPARTIDOS_POR_MENSAJE = 10
+MAX_NOTAS_INTERNAS_POR_MENSAJE = 100
+
+
+def _auditar_correo_equipo(conn: sqlite3.Connection, mensaje_id: int, usuario_id: int, accion: str, detalle: str | None = None) -> None:
+    conn.execute(
+        "INSERT INTO correo_equipo_auditoria (mensaje_id, usuario_id, accion, detalle, creado_en) VALUES (?, ?, ?, ?, ?)",
+        (mensaje_id, usuario_id, accion, detalle, now_iso()),
+    )
+
+
+def registrar_lectura_correo_equipo(usuario_id: int, mensaje_id: int) -> None:
+    """Anota que un compañero (no el dueño) ha abierto el mensaje: una vez por
+    persona y día, para saber quién lo ha visto sin llenar el historial."""
+    hoy = now_iso()[:10]
+    conn = get_connection()
+    try:
+        if _dueno_del_mensaje(conn, mensaje_id) in (None, usuario_id):
+            return
+        ya = conn.execute(
+            "SELECT 1 FROM correo_equipo_auditoria WHERE mensaje_id = ? AND usuario_id = ? AND accion = 'leer' AND creado_en >= ?",
+            (mensaje_id, usuario_id, hoy),
+        ).fetchone()
+        if ya is None:
+            _auditar_correo_equipo(conn, mensaje_id, usuario_id, "leer")
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def historial_correo_equipo(usuario_id: int, mensaje_id: int) -> list[dict]:
+    """Solo el dueño del mensaje ve quién ha hecho qué con él."""
+    conn = get_connection()
+    try:
+        if _dueno_del_mensaje(conn, mensaje_id) != usuario_id:
+            return []
+        return [dict(f) for f in conn.execute(
+            """SELECT a.accion, a.detalle, a.creado_en, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS autor
+               FROM correo_equipo_auditoria a JOIN usuarios u ON u.id = a.usuario_id
+               LEFT JOIN usuario_perfil pf ON pf.usuario_id = a.usuario_id
+               WHERE a.mensaje_id = ? ORDER BY a.id DESC LIMIT 100""",
+            (mensaje_id,),
+        )]
     finally:
         conn.close()
 
@@ -6025,6 +6091,7 @@ def asignar_correo(usuario_id: int, mensaje_id: int, destino_id: int | None) -> 
                    asignado_por = excluded.asignado_por, estado = 'abierto', actualizado_en = excluded.actualizado_en""",
             (mensaje_id, destino, usuario_id, now_iso()),
         )
+        _auditar_correo_equipo(conn, mensaje_id, usuario_id, "asignar" if destino else "desasignar", str(destino) if destino else None)
         conn.commit()
     finally:
         conn.close()
@@ -6041,11 +6108,16 @@ def compartir_correo(usuario_id: int, mensaje_id: int, otro_id: int) -> bool:
         destino = _companero_del_tenant(conn, usuario_id, otro_id)
         if destino is None:
             return False
-        conn.execute(
-            "INSERT OR IGNORE INTO correo_compartidos (mensaje_id, usuario_id, compartido_en) VALUES (?, ?, ?)",
-            (mensaje_id, destino, now_iso()),
-        )
-        conn.commit()
+        ya = conn.execute("SELECT 1 FROM correo_compartidos WHERE mensaje_id = ? AND usuario_id = ?", (mensaje_id, destino)).fetchone()
+        if ya is None:
+            if conn.execute("SELECT COUNT(*) FROM correo_compartidos WHERE mensaje_id = ?", (mensaje_id,)).fetchone()[0] >= MAX_COMPARTIDOS_POR_MENSAJE:
+                return False
+            conn.execute(
+                "INSERT INTO correo_compartidos (mensaje_id, usuario_id, compartido_en) VALUES (?, ?, ?)",
+                (mensaje_id, destino, now_iso()),
+            )
+            _auditar_correo_equipo(conn, mensaje_id, usuario_id, "compartir", str(destino))
+            conn.commit()
         return True
     finally:
         conn.close()
@@ -6058,6 +6130,8 @@ def dejar_de_compartir_correo(usuario_id: int, mensaje_id: int, otro_id: int) ->
         if _dueno_del_mensaje(conn, mensaje_id) != usuario_id and otro_id != usuario_id:
             return False
         cur = conn.execute("DELETE FROM correo_compartidos WHERE mensaje_id = ? AND usuario_id = ?", (mensaje_id, otro_id))
+        if cur.rowcount > 0:
+            _auditar_correo_equipo(conn, mensaje_id, usuario_id, "quitar", str(otro_id))
         conn.commit()
         return cur.rowcount > 0
     finally:
@@ -6076,6 +6150,7 @@ def cambiar_estado_correo_equipo(usuario_id: int, mensaje_id: int, estado: str) 
                ON CONFLICT(mensaje_id) DO UPDATE SET estado = excluded.estado, actualizado_en = excluded.actualizado_en""",
             (mensaje_id, usuario_id, estado, now_iso()),
         )
+        _auditar_correo_equipo(conn, mensaje_id, usuario_id, "estado", estado)
         conn.commit()
         return True
     finally:
@@ -6184,10 +6259,13 @@ def anadir_nota_interna_correo(usuario_id: int, mensaje_id: int, texto: str) -> 
         return None
     conn = get_connection()
     try:
+        if conn.execute("SELECT COUNT(*) FROM correo_notas_internas WHERE mensaje_id = ?", (mensaje_id,)).fetchone()[0] >= MAX_NOTAS_INTERNAS_POR_MENSAJE:
+            return None
         cur = conn.execute(
             "INSERT INTO correo_notas_internas (mensaje_id, usuario_id, texto, creado_en) VALUES (?, ?, ?, ?)",
             (mensaje_id, usuario_id, texto, now_iso()),
         )
+        _auditar_correo_equipo(conn, mensaje_id, usuario_id, "nota")
         conn.commit()
         return cur.lastrowid
     finally:
@@ -6224,6 +6302,7 @@ def eliminar_nota_interna_correo(usuario_id: int, mensaje_id: int, nota_id: int)
         if n is None or not (n["usuario_id"] == usuario_id or rol == "dueno"):
             return False
         conn.execute("DELETE FROM correo_notas_internas WHERE id = ?", (nota_id,))
+        _auditar_correo_equipo(conn, mensaje_id, usuario_id, "nota_borrada")
         conn.commit()
         return True
     finally:
@@ -7398,7 +7477,10 @@ def consumir_acceso_facturacion(token: str) -> int | None:
         conn.close()
 
 
-ORIGENES_DOCUMENTO_VENCIMIENTO = ("cliente", "justificante", "constancia")
+# "correo" = adjunto guardado desde un correo: interno, el cliente NO lo ve en el portal;
+# "correo_compartido" = el mismo, pero el equipo ha decidido enseñárselo al cliente.
+ORIGENES_DOCUMENTO_VENCIMIENTO = ("cliente", "justificante", "constancia", "correo", "correo_compartido")
+ORIGENES_INTERNOS_DOCUMENTO_VENCIMIENTO = ("correo",)
 
 
 def subir_documento_vencimiento(
@@ -7457,7 +7539,9 @@ def contenido_documento_vencimiento(documento: sqlite3.Row) -> bytes:
     return documento["contenido"]
 
 
-def listar_documentos_vencimiento(vencimiento_id: int, origen: str | None = None) -> list[sqlite3.Row]:
+def listar_documentos_vencimiento(
+    vencimiento_id: int, origen: str | None = None, excluir_origenes: tuple[str, ...] = (),
+) -> list[sqlite3.Row]:
     """Todos los documentos del vencimiento, o solo los de un `origen`
     ('cliente' = lo que ha subido el cliente desde el portal)."""
     conn = get_connection()
@@ -7470,6 +7554,9 @@ def listar_documentos_vencimiento(vencimiento_id: int, origen: str | None = None
         if origen is not None:
             sql += " AND origen = ?"
             params.append(origen)
+        if excluir_origenes:
+            sql += f" AND origen NOT IN ({','.join('?' * len(excluir_origenes))})"
+            params.extend(excluir_origenes)
         return conn.execute(sql + " ORDER BY creado_en, id", params).fetchall()
     finally:
         conn.close()
@@ -7993,6 +8080,37 @@ def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int
                 categoria_id = None
         conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def cliente_fiscal_id_por_email(tenant_id: int, email: str | None) -> int | None:
+    """El cliente fiscal cuyo email coincide con `email` (sin distinguir
+    mayúsculas), solo si es único en el despacho: con dos clientes con el mismo
+    correo no se adivina y no se vincula ninguno."""
+    email = (email or "").strip().lower()
+    if not email:
+        return None
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT id FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL AND LOWER(TRIM(email)) = ? LIMIT 2",
+            (tenant_id, email),
+        ).fetchall()
+        return filas[0]["id"] if len(filas) == 1 else None
+    finally:
+        conn.close()
+
+
+def mensajes_correo_sin_cliente(usuario_id: int, limite: int = 5000) -> list[sqlite3.Row]:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT m.id, m.remitente FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE c.usuario_id = ? AND m.cliente_fiscal_id IS NULL AND m.remitente IS NOT NULL
+               ORDER BY m.id DESC LIMIT ?""",
+            (usuario_id, limite),
+        ).fetchall()
     finally:
         conn.close()
 

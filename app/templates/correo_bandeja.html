@@ -375,6 +375,20 @@
           <embed class="correo-adjunto-preview-pdf" src="{{ url_adjunto }}" type="application/pdf">
           {% endif %}
         {% endif %}
+        {% if vencimientos_cliente %}
+        <details class="correo-adjunto-guardar">
+          <summary>{{ _('Guardar en un vencimiento') }}</summary>
+          <form method="post" action="{{ url_for('correo.guardar_adjunto_en_vencimiento', mensaje_id=mensaje_seleccionado.id, adjunto_id=a.id) }}">
+            <select name="vencimiento_id" required aria-label="{{ _('Vencimiento') }}">
+              {% for v in vencimientos_cliente %}<option value="{{ v.id }}">{{ v.modelo }} {{ v.periodo }} · {{ v.fecha_limite[:10] }}</option>{% endfor %}
+            </select>
+            {% if a.tipo_mime.startswith('image/') or a.tipo_mime == 'application/pdf' %}
+            <label class="correo-adjunto-visible"><input type="checkbox" name="visible_cliente" value="1"> {{ _('Que lo vea el cliente en su portal') }}</label>
+            {% endif %}
+            <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+          </form>
+        </details>
+        {% endif %}
       </div>
       {% endfor %}
     </div>

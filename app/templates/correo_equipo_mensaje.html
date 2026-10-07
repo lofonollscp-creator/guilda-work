@@ -62,4 +62,27 @@
     <div class="comentario-acciones"><span></span><button type="submit" class="btn btn-primary">{{ _('Añadir nota') }}</button></div>
   </form>
 </section>
+{% if m.rol == 'dueno' %}
+<section style="max-width: 760px;" id="historial">
+  <h2>{{ _('Quién ha hecho qué') }}</h2>
+  <p class="muted">{{ _('Solo lo ves tú, como dueño del correo. Un correo se puede compartir con un máximo de %(n)s personas.', n=max_compartidos) }}</p>
+  {% if historial %}
+  <ul class="log-list">
+    {% for h in historial %}
+    <li class="log-item"><span class="log-text">
+      <strong>{{ h.autor }}</strong>
+      {% if h.accion == 'leer' %}{{ _('ha abierto el correo') }}
+      {% elif h.accion == 'asignar' %}{{ _('ha asignado el correo') }}
+      {% elif h.accion == 'desasignar' %}{{ _('ha quitado la asignación') }}
+      {% elif h.accion == 'compartir' %}{{ _('ha compartido el correo') }}
+      {% elif h.accion == 'quitar' %}{{ _('ha dejado de compartir el correo') }}
+      {% elif h.accion == 'estado' %}{{ _('ha cambiado el estado a %(estado)s', estado=h.detalle) }}
+      {% elif h.accion == 'nota' %}{{ _('ha escrito una nota interna') }}
+      {% elif h.accion == 'nota_borrada' %}{{ _('ha borrado una nota interna') }}{% endif %}
+      <span class="muted">· {{ (h.creado_en or '')[:16].replace('T', ' ') }}</span></span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay actividad.') }}</p>{% endif %}
+</section>
+{% endif %}
 {% endblock %}

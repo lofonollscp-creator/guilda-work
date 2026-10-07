@@ -4749,3 +4749,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .correo-equipo-panel summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .correo-equipo-panel .quick-row { margin-top: 8px; }
 .correo-equipo-cuerpo { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; line-height: 1.55; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+
+/* Guardar un adjunto de correo en un vencimiento */
+.correo-adjunto-guardar { margin-top: var(--space-2); font-size: .85rem; }
+.correo-adjunto-guardar summary { cursor: pointer; color: var(--primary-text); }
+.correo-adjunto-guardar form { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-2); }
+.correo-adjunto-visible { display: inline-flex; gap: .4rem; align-items: center; }

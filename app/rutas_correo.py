@@ -91,6 +91,18 @@ def _mensaje_de_usuario_o_404(mensaje_id: int):
     return correo.obtener_mensaje(mensaje_id)
 
 
+def _cliente_del_mensaje_respondido(mensaje_id) -> int | None:
+    """Cliente fiscal enlazado al mensaje que se responde (si es del usuario)."""
+    try:
+        mensaje_id = int(mensaje_id)
+    except (TypeError, ValueError):
+        return None
+    if not db.mensaje_correo_pertenece_a_usuario(g.usuario_id, mensaje_id):
+        return None
+    mensaje = correo.obtener_mensaje(mensaje_id)
+    return mensaje["cliente_fiscal_id"] if mensaje is not None else None
+
+
 def _render_redactar(
     *, cuenta_id=None, destinatarios="", cc="", bcc="", asunto="", cuerpo_html="",
     en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"), borrador_id=None,
@@ -109,6 +121,8 @@ def _render_redactar(
         error=error,
         titulo=titulo,
         plantillas=db.listar_plantillas_correo(g.usuario_id),
+        clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
+        cliente_plantilla_id=_cliente_del_mensaje_respondido(en_respuesta_a),
         borrador_id=borrador_id,
         adjuntos_borrador=db.listar_adjuntos_borrador(g.usuario_id, borrador_id) if borrador_id else [],
         deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
@@ -340,6 +354,11 @@ def bandeja():
     contexto["notas_internas"] = db.listar_notas_internas_correo(g.usuario_id, mensaje_id) if mensaje_seleccionado is not None else []
     contexto["companeros"] = db.listar_companeros_tenant(g.usuario_id) if mensaje_seleccionado is not None else []
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
+    # Para guardar un adjunto en un vencimiento del cliente enlazado al mensaje.
+    contexto["vencimientos_cliente"] = (
+        db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=mensaje_seleccionado["cliente_fiscal_id"])
+        if mensaje_seleccionado is not None and mensaje_seleccionado["cliente_fiscal_id"] and g.tenant_id is not None else []
+    )
     contexto["hilo_mensajes"] = (
         [h for h in db.mensajes_del_hilo_correo(cuenta_id, mensaje_seleccionado["hilo_clave"]) if h["id"] != mensaje_id]
         if mensaje_seleccionado is not None else []
@@ -403,9 +422,12 @@ def equipo_mensaje(mensaje_id: int):
     m = db.obtener_correo_equipo(g.usuario_id, mensaje_id)
     if m is None:
         abort(404)
+    db.registrar_lectura_correo_equipo(g.usuario_id, mensaje_id)
     return render_template(
         "correo_equipo_mensaje.html", m=m, notas=db.listar_notas_internas_correo(g.usuario_id, mensaje_id),
         companeros=db.listar_companeros_tenant(g.usuario_id),
+        historial=db.historial_correo_equipo(g.usuario_id, mensaje_id),
+        max_compartidos=db.MAX_COMPARTIDOS_POR_MENSAJE,
     )
 
 
@@ -431,6 +453,8 @@ def equipo_compartir(mensaje_id: int):
     except ValueError:
         abort(404)
     if not db.compartir_correo(g.usuario_id, mensaje_id, otro):
+        if db.rol_en_correo(g.usuario_id, mensaje_id) == "dueno" and len(db.estado_correo_equipo(mensaje_id)["compartidos"]) >= db.MAX_COMPARTIDOS_POR_MENSAJE:
+            abort(400, description=_("Un correo se puede compartir con un máximo de %(n)s personas.", n=db.MAX_COMPARTIDOS_POR_MENSAJE))
         abort(404)
     _avisar_correo(g.usuario_id, otro, mensaje_id, "Correo compartido", "ha compartido contigo un correo")
     return redirect(request.referrer or url_for("correo.equipo", vista="enviados"))
@@ -576,6 +600,34 @@ def asignar_cliente_fiscal(mensaje_id: int):
         correo.asignar_cliente_fiscal(g.tenant_id, mensaje_id, cliente_fiscal_id)
     return redirect(url_for(
         "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id,
+    ))
+
+
+@correo_bp.route("/ajustes/vincular-clientes", methods=["POST"])
+@login_required
+def vincular_clientes():
+    """Enlaza los correos antiguos con el cliente fiscal cuyo email es el remitente."""
+    n = correo.vincular_correos_a_clientes(g.usuario_id) if g.tenant_id is not None else 0
+    return redirect(url_for("correo.ajustes", vinculados=n))
+
+
+@correo_bp.route("/<int:mensaje_id>/adjunto/<int:adjunto_id>/guardar-vencimiento", methods=["POST"])
+@login_required
+def guardar_adjunto_en_vencimiento(mensaje_id: int, adjunto_id: int):
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    vencimiento_id = request.form.get("vencimiento_id", type=int)
+    aviso = None
+    try:
+        if vencimiento_id is None:
+            raise correo.ErrorCorreo("Elige un vencimiento.")
+        correo.guardar_adjunto_en_vencimiento(
+            g.usuario_id, mensaje_id, adjunto_id, vencimiento_id, visible_cliente=request.form.get("visible_cliente") == "1",
+        )
+        aviso = _("Adjunto guardado en el vencimiento.")
+    except correo.ErrorCorreo as e:
+        aviso = str(e)
+    return redirect(url_for(
+        "correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], mensaje_id=mensaje_id, aviso=aviso,
     ))
 
 
@@ -932,6 +984,7 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         reglas_avanzadas=db.listar_reglas_correo(g.usuario_id),
         clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
         plantillas=db.listar_plantillas_correo(g.usuario_id),
+        variables_plantilla=correo.VARIABLES_PLANTILLA,
         error=error,
     )
 
@@ -983,7 +1036,13 @@ def plantilla_json(plantilla_id: int):
     plantilla = correo.obtener_plantilla(g.usuario_id, plantilla_id)
     if plantilla is None:
         abort(404)
-    return jsonify({"asunto": plantilla["asunto"] or "", "cuerpo": plantilla["cuerpo"]})
+    cliente_id = request.args.get("cliente_fiscal_id", type=int)
+    if cliente_id is None:
+        cliente_id = _cliente_del_mensaje_respondido(request.args.get("en_respuesta_a"))
+    valores = correo.contexto_plantilla(g.usuario_id, cliente_id)
+    asunto, faltan_asunto = correo.rellenar_plantilla(plantilla["asunto"], valores)
+    cuerpo, faltan_cuerpo = correo.rellenar_plantilla(plantilla["cuerpo"], valores, html=True)
+    return jsonify({"asunto": asunto, "cuerpo": cuerpo, "sin_resolver": sorted(set(faltan_asunto + faltan_cuerpo))})
 
 
 @correo_bp.route("/ajustes/plantillas", methods=["POST"])
