@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, stripe_pagos
+from . import calcom, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, stripe_pagos
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
@@ -226,6 +226,44 @@ def eliminar_documento_cliente(cliente_id: int, documento_id: int):
     if not db.eliminar_documento_cliente(g.usuario_id, cliente_id, documento_id):
         abort(404)
     return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
+
+
+def _vista_previa_recordatorio(config: dict) -> dict | None:
+    """Cómo quedaría el correo con el texto propio, con datos de ejemplo."""
+    if not (config["asunto"] and config["cuerpo"]):
+        return None
+    valores = notificaciones_email.valores_plantilla(
+        "Panadería López", "303", "2T 2026", "2026-07-20", 3, notificaciones_email.texto_cuando(3), "https://app.ejemplo.com/portal/entrar",
+        "Tu despacho", "extractos bancarios de junio",
+    )
+    return {"asunto": notificaciones_email.rellenar_plantilla(config["asunto"], valores), "cuerpo": notificaciones_email.rellenar_plantilla(config["cuerpo"], valores)}
+
+
+@fiscal_bp.route("/recordatorios", methods=["GET", "POST"])
+@login_required
+def recordatorios():
+    """Cuándo y cómo se recuerda a los clientes sus vencimientos (portal): días de aviso, aviso al equipo y texto propio."""
+    if g.tenant_id is None:
+        abort(404)
+    error = None
+    guardado = False
+    if request.method == "POST":
+        try:
+            config = db.guardar_config_recordatorios(
+                g.tenant_id, request.form.get("dias_antes"), request.form.get("dias_despues"), request.form.get("avisar_equipo") == "on",
+                request.form.get("asunto", ""), request.form.get("cuerpo", ""),
+            )
+            guardado = True
+        except ValueError as e:
+            error = str(e)
+            config = db.obtener_config_recordatorios(g.tenant_id)
+    else:
+        config = db.obtener_config_recordatorios(g.tenant_id)
+    return render_template(
+        "fiscal_recordatorios.html", config=config, error=error, guardado=guardado, marcas=notificaciones_email.MARCAS_PLANTILLA,
+        vista_previa=_vista_previa_recordatorio(config), smtp_configurado=notificaciones_email.configurado(),
+        max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES,
+    )
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/resumen.json")

@@ -161,9 +161,8 @@ msgid "Teléfono"
 msgstr "Telèfon"
 
 #: app/templates/backoffice.html:72
-#, fuzzy
 msgid "Mensaje"
-msgstr "Menús"
+msgstr "Missatge"
 
 #: app/templates/backoffice.html:73
 msgid "Recibido"
@@ -6852,4 +6851,111 @@ msgstr "Cal triar el client. Els logotips i les imatges petites no s'arxiven."
 
 msgid "Archivar adjuntos en el expediente"
 msgstr "Arxiva els adjunts a l'expedient"
+
+msgid "ayer"
+msgstr "ahir"
+
+#, python-format
+msgid "hace %(n)s días"
+msgstr "fa %(n)s dies"
+
+#, python-format
+msgid ""
+"Te recordamos que el modelo %(modelo)s (%(periodo)s) venció %(cuando)s, "
+"el %(fecha)s, y seguimos pendientes de tu parte."
+msgstr ""
+"Et recordem que el model %(modelo)s (%(periodo)s) va vèncer %(cuando)s, "
+"el %(fecha)s, i continuem pendents de la teva part."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s venció %(cuando)s"
+msgstr "Recordatori: el %(modelo)s va vèncer %(cuando)s"
+
+#, python-format
+msgid "%(cliente)s no ha entregado la documentación"
+msgstr "%(cliente)s no ha lliurat la documentació"
+
+#, python-format
+msgid ""
+"El modelo %(modelo)s (%(periodo)s) vence el %(fecha)s y sigue pendiente: "
+"%(documento)s."
+msgstr ""
+"El model %(modelo)s (%(periodo)s) venç el %(fecha)s i continua pendent: "
+"%(documento)s."
+
+msgid "Recordatorios a clientes"
+msgstr "Recordatoris als clients"
+
+msgid ""
+"Cuándo y cómo recuerda tu despacho a sus clientes los vencimientos "
+"pendientes desde el portal."
+msgstr ""
+"Quan i com recorda el teu despatx als clients els venciments pendents des"
+" del portal."
+
+msgid "Volver a los vencimientos"
+msgstr "Torna als venciments"
+
+msgid ""
+"El correo del portal no está configurado en el servidor: no se enviarán "
+"recordatorios a los clientes (los avisos internos al equipo sí)."
+msgstr ""
+"El correu del portal no està configurat al servidor: no s'enviaran "
+"recordatoris als clients (els avisos interns a l'equip sí)."
+
+msgid "Guardado."
+msgstr "Desat."
+
+msgid "Días antes del vencimiento"
+msgstr "Dies abans del venciment"
+
+#, python-format
+msgid ""
+"Separados por comas, de 0 (el mismo día) a 60. Hasta %(n)s avisos. Por "
+"ejemplo: 14, 7, 3, 1."
+msgstr ""
+"Separats per comes, de 0 (el mateix dia) a 60. Fins a %(n)s avisos. Per "
+"exemple: 14, 7, 3, 1."
+
+msgid "Días después del vencimiento"
+msgstr "Dies després del venciment"
+
+#, python-format
+msgid ""
+"Para lo que siga pendiente tras la fecha límite: de 1 a 30 días, hasta "
+"%(n)s avisos. Déjalo vacío para no insistir."
+msgstr ""
+"Per al que continuï pendent després de la data límit: d'1 a 30 dies, fins"
+" a %(n)s avisos. Deixa-ho buit per no insistir."
+
+msgid "Avisar al equipo si el cliente no ha entregado la documentación pedida"
+msgstr "Avisa l'equip si el client no ha lliurat la documentació demanada"
+
+msgid ""
+"Cuando llega el último aviso previo, el responsable del vencimiento (o "
+"los supervisores) recibe una notificación si se pidió un documento y el "
+"cliente no ha subido nada."
+msgstr ""
+"Quan arriba l'últim avís previ, el responsable del venciment (o els "
+"supervisors) rep una notificació si es va demanar un document i el client"
+" no ha pujat res."
+
+msgid "Texto del correo"
+msgstr "Text del correu"
+
+msgid ""
+"Déjalo vacío para usar el texto estándar, que se envía en el idioma de "
+"cada cliente. Si escribes el tuyo, se envía tal cual a todos. Puedes "
+"usar:"
+msgstr ""
+"Deixa-ho buit per fer servir el text estàndard, que s'envia en l'idioma "
+"de cada client. Si escrius el teu, s'envia tal qual a tothom. Pots fer "
+"servir:"
+
+#, python-brace-format
+msgid "Recordatorio: el {modelo} vence {cuando}"
+msgstr "Recordatori: el {modelo} venç {cuando}"
+
+msgid "Vista previa (con datos de ejemplo)"
+msgstr "Vista prèvia (amb dades d'exemple)"
 

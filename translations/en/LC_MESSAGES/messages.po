@@ -161,9 +161,8 @@ msgid "Teléfono"
 msgstr "Phone"
 
 #: app/templates/backoffice.html:72
-#, fuzzy
 msgid "Mensaje"
-msgstr "Menus"
+msgstr "Message"
 
 #: app/templates/backoffice.html:73
 msgid "Recibido"
@@ -6844,4 +6843,110 @@ msgstr "Requires choosing the client. Logos and small images are not filed."
 
 msgid "Archivar adjuntos en el expediente"
 msgstr "File attachments in the client file"
+
+msgid "ayer"
+msgstr "yesterday"
+
+#, python-format
+msgid "hace %(n)s días"
+msgstr "%(n)s days ago"
+
+#, python-format
+msgid ""
+"Te recordamos que el modelo %(modelo)s (%(periodo)s) venció %(cuando)s, "
+"el %(fecha)s, y seguimos pendientes de tu parte."
+msgstr ""
+"A reminder that form %(modelo)s (%(periodo)s) was due %(cuando)s, on "
+"%(fecha)s, and we are still waiting on you."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s venció %(cuando)s"
+msgstr "Reminder: %(modelo)s was due %(cuando)s"
+
+#, python-format
+msgid "%(cliente)s no ha entregado la documentación"
+msgstr "%(cliente)s has not delivered the documents"
+
+#, python-format
+msgid ""
+"El modelo %(modelo)s (%(periodo)s) vence el %(fecha)s y sigue pendiente: "
+"%(documento)s."
+msgstr ""
+"Form %(modelo)s (%(periodo)s) is due on %(fecha)s and is still pending: "
+"%(documento)s."
+
+msgid "Recordatorios a clientes"
+msgstr "Client reminders"
+
+msgid ""
+"Cuándo y cómo recuerda tu despacho a sus clientes los vencimientos "
+"pendientes desde el portal."
+msgstr ""
+"When and how your office reminds clients of pending deadlines through the"
+" portal."
+
+msgid "Volver a los vencimientos"
+msgstr "Back to deadlines"
+
+msgid ""
+"El correo del portal no está configurado en el servidor: no se enviarán "
+"recordatorios a los clientes (los avisos internos al equipo sí)."
+msgstr ""
+"The portal email is not configured on the server: no reminders will be "
+"sent to clients (internal team alerts still are)."
+
+msgid "Guardado."
+msgstr "Saved."
+
+msgid "Días antes del vencimiento"
+msgstr "Days before the deadline"
+
+#, python-format
+msgid ""
+"Separados por comas, de 0 (el mismo día) a 60. Hasta %(n)s avisos. Por "
+"ejemplo: 14, 7, 3, 1."
+msgstr ""
+"Comma-separated, from 0 (the same day) to 60. Up to %(n)s reminders. For "
+"example: 14, 7, 3, 1."
+
+msgid "Días después del vencimiento"
+msgstr "Days after the deadline"
+
+#, python-format
+msgid ""
+"Para lo que siga pendiente tras la fecha límite: de 1 a 30 días, hasta "
+"%(n)s avisos. Déjalo vacío para no insistir."
+msgstr ""
+"For anything still pending after the deadline: 1 to 30 days, up to %(n)s "
+"reminders. Leave empty to not insist."
+
+msgid "Avisar al equipo si el cliente no ha entregado la documentación pedida"
+msgstr "Alert the team if the client has not delivered the requested documents"
+
+msgid ""
+"Cuando llega el último aviso previo, el responsable del vencimiento (o "
+"los supervisores) recibe una notificación si se pidió un documento y el "
+"cliente no ha subido nada."
+msgstr ""
+"When the last advance reminder arrives, the person in charge of the "
+"deadline (or the supervisors) is notified if a document was requested and"
+" the client has uploaded nothing."
+
+msgid "Texto del correo"
+msgstr "Email text"
+
+msgid ""
+"Déjalo vacío para usar el texto estándar, que se envía en el idioma de "
+"cada cliente. Si escribes el tuyo, se envía tal cual a todos. Puedes "
+"usar:"
+msgstr ""
+"Leave empty to use the standard text, sent in each client's language. If "
+"you write your own, it is sent as is to everyone. You can use:"
+
+#, python-brace-format
+msgid "Recordatorio: el {modelo} vence {cuando}"
+msgstr "Reminder: {modelo} is due {cuando}"
+
+msgid "Vista previa (con datos de ejemplo)"
+msgstr "Preview (with sample data)"
 

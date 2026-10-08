@@ -468,6 +468,24 @@ CREATE TABLE IF NOT EXISTS cliente_documentos (
 );
 CREATE INDEX IF NOT EXISTS idx_cliente_documentos_cliente ON cliente_documentos(cliente_fiscal_id, creado_en);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cliente_documentos_unico ON cliente_documentos(cliente_fiscal_id, hash_sha256);
+-- Cómo recuerda cada despacho a sus clientes (portal): qué días antes/después del vencimiento, si avisa al equipo
+-- cuando el cliente no ha entregado lo que se le pidió y, opcionalmente, su propio texto. Sin fila = valores de siempre (7 y 2 días).
+CREATE TABLE IF NOT EXISTS portal_recordatorios_config (
+    tenant_id INTEGER PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+    dias_antes TEXT NOT NULL DEFAULT '7,2',
+    dias_despues TEXT NOT NULL DEFAULT '',
+    avisar_equipo INTEGER NOT NULL DEFAULT 0,
+    asunto TEXT,
+    cuerpo TEXT,
+    actualizado_en TEXT
+);
+-- Avisos internos ya hechos («el cliente no ha entregado lo pedido»), uno por vencimiento y antelación.
+CREATE TABLE IF NOT EXISTS vencimientos_escalados (
+    vencimiento_id INTEGER NOT NULL REFERENCES vencimientos_fiscales(id) ON DELETE CASCADE,
+    dias_antes INTEGER NOT NULL,
+    avisado_en TEXT NOT NULL,
+    PRIMARY KEY (vencimiento_id, dias_antes)
+);
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
 -- Correo de equipo: no se comparten cuentas ni contraseñas, solo mensajes
@@ -7948,11 +7966,117 @@ def eliminar_documentos_vencimiento_por_origen(vencimiento_id: int, origen: str)
         conn.close()
 
 
-def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int) -> list[sqlite3.Row]:
+CONFIG_RECORDATORIOS_DEFECTO = {"dias_antes": [7, 2], "dias_despues": [], "avisar_equipo": False, "asunto": "", "cuerpo": ""}
+MAX_AVISOS_ANTES = 6
+MAX_AVISOS_DESPUES = 4
+
+
+def _lista_de_dias(texto, minimo: int, maximo: int, tope: int) -> list[int]:
+    """«14, 7 3» -> [14, 7, 3] (sin repetidos, de mayor a menor). Lanza ValueError si algo no es un número del rango."""
+    if isinstance(texto, (list, tuple)):
+        trozos = [str(t) for t in texto]
+    else:
+        trozos = [t for t in re.split(r"[\s,;]+", str(texto or "")) if t]
+    dias = set()
+    for t in trozos:
+        if not t.isdigit() or not minimo <= int(t) <= maximo:
+            raise ValueError(f"«{t}» no es un número de días válido ({minimo} a {maximo}).")
+        dias.add(int(t))
+    if len(dias) > tope:
+        raise ValueError(f"Como máximo {tope} avisos.")
+    return sorted(dias, reverse=True)
+
+
+def obtener_config_recordatorios(tenant_id: int) -> dict:
+    conn = get_connection()
+    try:
+        f = conn.execute("SELECT * FROM portal_recordatorios_config WHERE tenant_id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        return {**CONFIG_RECORDATORIOS_DEFECTO, "dias_antes": list(CONFIG_RECORDATORIOS_DEFECTO["dias_antes"]), "dias_despues": []}
+    try:
+        antes = _lista_de_dias(f["dias_antes"], 0, 60, 99)
+        despues = _lista_de_dias(f["dias_despues"], 1, 30, 99)
+    except ValueError:
+        antes, despues = list(CONFIG_RECORDATORIOS_DEFECTO["dias_antes"]), []
+    return {"dias_antes": antes, "dias_despues": sorted(despues), "avisar_equipo": bool(f["avisar_equipo"]),
+            "asunto": f["asunto"] or "", "cuerpo": f["cuerpo"] or ""}
+
+
+def guardar_config_recordatorios(tenant_id: int, dias_antes, dias_despues, avisar_equipo: bool, asunto: str = "", cuerpo: str = "") -> dict:
+    """Valida y guarda. `dias_antes`: de 0 (el mismo día) a 60, hasta 6 avisos; `dias_despues`: de 1 a 30, hasta 4.
+    Lanza ValueError con un mensaje legible si algo no vale."""
+    antes = _lista_de_dias(dias_antes, 0, 60, MAX_AVISOS_ANTES)
+    despues = sorted(_lista_de_dias(dias_despues, 1, 30, MAX_AVISOS_DESPUES))
+    asunto, cuerpo = (asunto or "").strip()[:150], (cuerpo or "").strip()[:2000]
+    if bool(asunto) != bool(cuerpo):
+        raise ValueError("Para usar tu propio texto rellena el asunto y el cuerpo (o deja los dos vacíos).")
+    conn = get_connection()
+    try:
+        conn.execute(
+            """INSERT INTO portal_recordatorios_config (tenant_id, dias_antes, dias_despues, avisar_equipo, asunto, cuerpo, actualizado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(tenant_id) DO UPDATE SET dias_antes = excluded.dias_antes, dias_despues = excluded.dias_despues,
+                   avisar_equipo = excluded.avisar_equipo, asunto = excluded.asunto, cuerpo = excluded.cuerpo, actualizado_en = excluded.actualizado_en""",
+            (tenant_id, ",".join(map(str, antes)), ",".join(map(str, despues)), 1 if avisar_equipo else 0, asunto or None, cuerpo or None, now_iso()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return obtener_config_recordatorios(tenant_id)
+
+
+def vencimientos_sin_documentos_del_cliente(tenant_id: int, fecha_objetivo: str, dias_antes: int) -> list[sqlite3.Row]:
+    """Vencimientos pendientes de `fecha_objetivo` en los que se pidió un documento y el cliente no ha subido nada,
+    aún sin avisar al equipo de esta antelación. Con el responsable (`usuario_id`) si lo tiene."""
+    conn = get_connection()
+    try:
+        return conn.execute(
+            """SELECT v.id, v.modelo, v.periodo, v.fecha_limite, v.documento_solicitado, v.usuario_id, c.nombre AS cliente_nombre
+               FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
+               WHERE v.tenant_id = ? AND v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ?
+                 AND trim(COALESCE(v.documento_solicitado, '')) <> ''
+                 AND NOT EXISTS (SELECT 1 FROM vencimientos_fiscales_documentos d WHERE d.vencimiento_id = v.id AND d.origen = 'cliente')
+                 AND NOT EXISTS (SELECT 1 FROM vencimientos_escalados e WHERE e.vencimiento_id = v.id AND e.dias_antes = ?)""",
+            (tenant_id, fecha_objetivo, _fecha_exclusiva(fecha_objetivo), dias_antes),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_vencimiento_escalado(vencimiento_id: int, dias_antes: int) -> bool:
+    """True si es la primera vez que se avisa al equipo de este vencimiento y antelación."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO vencimientos_escalados (vencimiento_id, dias_antes, avisado_en) VALUES (?, ?, ?)",
+            (vencimiento_id, dias_antes, now_iso()),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def destinatarios_aviso_vencimiento(tenant_id: int, usuario_id: int | None) -> list[int]:
+    """A quién avisar de un vencimiento: su responsable si sigue en el despacho; si no, los supervisores."""
+    conn = get_connection()
+    try:
+        if usuario_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone():
+            return [usuario_id]
+        return [f["id"] for f in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (tenant_id,))]
+    finally:
+        conn.close()
+
+
+def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int, tenant_id: int | None = None) -> list[sqlite3.Row]:
     """Vencimientos pendientes que vencen justo `fecha_objetivo` (YYYY-MM-DD),
     de clientes con email y recordatorios activos, y a los que todavía no se
-    ha enviado el recordatorio de esta antelación. Cruza todos los tenants:
-    solo la usa el hilo periódico del servidor."""
+    ha enviado el recordatorio de esta antelación (negativa = después del
+    vencimiento). Sin `tenant_id` cruza todos los despachos: solo la usa el
+    hilo periódico del servidor."""
     conn = get_connection()
     try:
         return conn.execute(
@@ -7963,10 +8087,10 @@ def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int) 
                JOIN tenants t ON t.id = v.tenant_id
                WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
                  AND c.recordatorios_portal = 1 AND c.email IS NOT NULL AND trim(c.email) <> ''
-                 AND v.fecha_limite >= ? AND v.fecha_limite < ?
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ? AND (? IS NULL OR v.tenant_id = ?)
                  AND NOT EXISTS (SELECT 1 FROM vencimientos_recordatorios r
                                  WHERE r.vencimiento_id = v.id AND r.dias_antes = ?)""",
-            (fecha_objetivo, _fecha_exclusiva(fecha_objetivo), dias_antes),
+            (fecha_objetivo, _fecha_exclusiva(fecha_objetivo), tenant_id, tenant_id, dias_antes),
         ).fetchall()
     finally:
         conn.close()

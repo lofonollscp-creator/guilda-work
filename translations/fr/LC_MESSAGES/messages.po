@@ -167,9 +167,8 @@ msgid "Teléfono"
 msgstr "Téléphone"
 
 #: app/templates/backoffice.html:72
-#, fuzzy
 msgid "Mensaje"
-msgstr "Menus"
+msgstr "Message"
 
 #: app/templates/backoffice.html:73
 msgid "Recibido"
@@ -6925,4 +6924,112 @@ msgstr ""
 
 msgid "Archivar adjuntos en el expediente"
 msgstr "Classer les pièces jointes dans le dossier"
+
+msgid "ayer"
+msgstr "hier"
+
+#, python-format
+msgid "hace %(n)s días"
+msgstr "il y a %(n)s jours"
+
+#, python-format
+msgid ""
+"Te recordamos que el modelo %(modelo)s (%(periodo)s) venció %(cuando)s, "
+"el %(fecha)s, y seguimos pendientes de tu parte."
+msgstr ""
+"Nous vous rappelons que le modèle %(modelo)s (%(periodo)s) était à "
+"échéance %(cuando)s, le %(fecha)s, et nous attendons toujours votre "
+"retour."
+
+#, python-format
+msgid "Recordatorio: el %(modelo)s venció %(cuando)s"
+msgstr "Rappel : le %(modelo)s était à échéance %(cuando)s"
+
+#, python-format
+msgid "%(cliente)s no ha entregado la documentación"
+msgstr "%(cliente)s n'a pas remis les documents"
+
+#, python-format
+msgid ""
+"El modelo %(modelo)s (%(periodo)s) vence el %(fecha)s y sigue pendiente: "
+"%(documento)s."
+msgstr ""
+"Le modèle %(modelo)s (%(periodo)s) est à échéance le %(fecha)s et reste "
+"en attente : %(documento)s."
+
+msgid "Recordatorios a clientes"
+msgstr "Rappels aux clients"
+
+msgid ""
+"Cuándo y cómo recuerda tu despacho a sus clientes los vencimientos "
+"pendientes desde el portal."
+msgstr ""
+"Quand et comment votre cabinet rappelle à ses clients les échéances en "
+"attente via le portail."
+
+msgid "Volver a los vencimientos"
+msgstr "Retour aux échéances"
+
+msgid ""
+"El correo del portal no está configurado en el servidor: no se enviarán "
+"recordatorios a los clientes (los avisos internos al equipo sí)."
+msgstr ""
+"Le courriel du portail n'est pas configuré sur le serveur : aucun rappel "
+"ne sera envoyé aux clients (les alertes internes à l'équipe, si)."
+
+msgid "Guardado."
+msgstr "Enregistré."
+
+msgid "Días antes del vencimiento"
+msgstr "Jours avant l'échéance"
+
+#, python-format
+msgid ""
+"Separados por comas, de 0 (el mismo día) a 60. Hasta %(n)s avisos. Por "
+"ejemplo: 14, 7, 3, 1."
+msgstr ""
+"Séparés par des virgules, de 0 (le jour même) à 60. Jusqu'à %(n)s "
+"rappels. Par exemple : 14, 7, 3, 1."
+
+msgid "Días después del vencimiento"
+msgstr "Jours après l'échéance"
+
+#, python-format
+msgid ""
+"Para lo que siga pendiente tras la fecha límite: de 1 a 30 días, hasta "
+"%(n)s avisos. Déjalo vacío para no insistir."
+msgstr ""
+"Pour ce qui reste en attente après la date limite : de 1 à 30 jours, "
+"jusqu'à %(n)s rappels. Laissez vide pour ne pas insister."
+
+msgid "Avisar al equipo si el cliente no ha entregado la documentación pedida"
+msgstr "Alerter l'équipe si le client n'a pas remis les documents demandés"
+
+msgid ""
+"Cuando llega el último aviso previo, el responsable del vencimiento (o "
+"los supervisores) recibe una notificación si se pidió un documento y el "
+"cliente no ha subido nada."
+msgstr ""
+"Lorsque le dernier rappel préalable arrive, le responsable de l'échéance "
+"(ou les superviseurs) est notifié si un document a été demandé et que le "
+"client n'a rien téléversé."
+
+msgid "Texto del correo"
+msgstr "Texte du courriel"
+
+msgid ""
+"Déjalo vacío para usar el texto estándar, que se envía en el idioma de "
+"cada cliente. Si escribes el tuyo, se envía tal cual a todos. Puedes "
+"usar:"
+msgstr ""
+"Laissez vide pour utiliser le texte standard, envoyé dans la langue de "
+"chaque client. Si vous écrivez le vôtre, il est envoyé tel quel à tous. "
+"Vous pouvez utiliser :"
+
+#, python-brace-format
+msgid "Recordatorio: el {modelo} vence {cuando}"
+msgstr "Rappel : le {modelo} est à échéance {cuando}"
+
+msgid "Vista previa (con datos de ejemplo)"
+msgstr "Aperçu (avec des données d'exemple)"
 

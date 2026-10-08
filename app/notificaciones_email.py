@@ -13,6 +13,7 @@ ErrorNotificacionesEmail con un mensaje legible -- el llamante debe
 capturarlo (ver app/rutas_portal_cliente.py) y mostrar que el portal no
 está configurado todavía, en vez de dejar pasar un 500 en crudo."""
 import os
+import re
 import smtplib
 from email.message import EmailMessage
 
@@ -107,16 +108,45 @@ def _(mensaje: str, **valores) -> str:
         return mensaje % valores if valores else mensaje
 
 
+def texto_cuando(dias: int) -> str:
+    """«hoy», «mañana», «dentro de 3 días», «ayer», «hace 2 días»."""
+    if dias == 0:
+        return _("hoy")
+    if dias == 1:
+        return _("mañana")
+    if dias > 1:
+        return _("dentro de %(n)s días", n=dias)
+    if dias == -1:
+        return _("ayer")
+    return _("hace %(n)s días", n=-dias)
+
+
 def enviar_recordatorio_vencimiento(
     email_destino: str, cliente_nombre: str, modelo: str, periodo: str, fecha_limite: str, dias: int,
     url_portal: str | None, gestoria: str, documento_solicitado: str | None = None,
+    plantilla: tuple[str, str] | None = None,
 ) -> None:
-    """El llamante fija el idioma del cliente (ver app/portal_recordatorios.py)."""
-    cuando = _("mañana") if dias == 1 else _("dentro de %(n)s días", n=dias)
-    cuerpo = _("Hola, %(cliente)s:", cliente=cliente_nombre) + "\n\n" + _(
-        "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s.",
-        modelo=modelo, periodo=periodo, cuando=cuando, fecha=fecha_limite[:10],
-    ) + "\n"
+    """`dias` > 0: faltan; 0: vence hoy; < 0: venció hace -dias. El llamante fija el idioma del cliente (ver
+    app/portal_recordatorios.py). `plantilla` = (asunto, cuerpo) con el texto propio del despacho, con
+    {marcas} (ver `valores_plantilla`); sin ella, el texto de siempre."""
+    cuando = texto_cuando(dias)
+    if plantilla:
+        valores = valores_plantilla(cliente_nombre, modelo, periodo, fecha_limite, dias, cuando, url_portal, gestoria, documento_solicitado)
+        _enviar(email_destino, rellenar_plantilla(plantilla[0], valores), rellenar_plantilla(plantilla[1], valores))
+        return
+    if dias >= 0:
+        linea = _(
+            "Te recordamos que el modelo %(modelo)s (%(periodo)s) vence %(cuando)s, el %(fecha)s.",
+            modelo=modelo, periodo=periodo, cuando=cuando, fecha=fecha_limite[:10],
+        )
+        asunto = _("Recordatorio: el %(modelo)s vence %(cuando)s", modelo=modelo, cuando=cuando)
+    else:
+        linea = _(
+            "Te recordamos que el modelo %(modelo)s (%(periodo)s) venció %(cuando)s, el %(fecha)s, y seguimos pendientes de tu parte.",
+            modelo=modelo, periodo=periodo, cuando=cuando, fecha=fecha_limite[:10],
+        )
+        asunto = _("Recordatorio: el %(modelo)s venció %(cuando)s", modelo=modelo, cuando=cuando)
+    cuerpo = _("Hola, %(cliente)s:", cliente=cliente_nombre) + "\n\n" + linea + "\n"
     if documento_solicitado:
         cuerpo += "\n" + _("Para prepararlo necesitamos de tu parte: %(documento)s.", documento=documento_solicitado) + "\n"
     if url_portal:
@@ -125,7 +155,23 @@ def enviar_recordatorio_vencimiento(
         "Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. "
         "Si prefieres no recibirlos, díselo y los desactivará."
     ) + "\n"
-    _enviar(email_destino, _("Recordatorio: el %(modelo)s vence %(cuando)s", modelo=modelo, cuando=cuando), cuerpo)
+    _enviar(email_destino, asunto, cuerpo)
+
+
+MARCAS_PLANTILLA = ("cliente", "modelo", "periodo", "fecha_limite", "dias", "cuando", "documento", "enlace", "despacho")
+
+
+def valores_plantilla(cliente_nombre, modelo, periodo, fecha_limite, dias, cuando, url_portal, gestoria, documento) -> dict:
+    return {
+        "cliente": cliente_nombre, "modelo": modelo, "periodo": periodo, "fecha_limite": (fecha_limite or "")[:10], "dias": str(abs(int(dias))),
+        "cuando": cuando, "documento": documento or "", "enlace": url_portal or "", "despacho": gestoria,
+    }
+
+
+def rellenar_plantilla(texto: str, valores: dict) -> str:
+    """Cambia cada {marca} conocida por su valor; lo demás (llaves sueltas, marcas desconocidas) se deja como está.
+    Sin `str.format`, para que nadie pueda colar atributos u otras expresiones."""
+    return re.sub(r"\{(\w+)\}", lambda m: str(valores[m.group(1)]) if m.group(1) in valores else m.group(0), texto or "")
 
 
 def enviar_alerta_interna(asunto: str, cuerpo: str) -> None:

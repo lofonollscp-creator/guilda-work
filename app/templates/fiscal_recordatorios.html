@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Recordatorios a clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Recordatorios a clientes') }}</h1>
+    <p class="subtitle">{{ _('Cuándo y cómo recuerda tu despacho a sus clientes los vencimientos pendientes desde el portal.') }}</p>
+  </div>
+</header>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos') }}">&larr; {{ _('Volver a los vencimientos') }}</a>
+
+{% if not smtp_configurado %}<div class="ia-error" style="margin-top: 16px;">{{ _('El correo del portal no está configurado en el servidor: no se enviarán recordatorios a los clientes (los avisos internos al equipo sí).') }}</div>{% endif %}
+{% if error %}<div class="ia-error" style="margin-top: 16px;" role="alert">{{ error }}</div>{% endif %}
+{% if guardado %}<p class="muted" role="status" style="margin-top: 16px;">{{ _('Guardado.') }}</p>{% endif %}
+
+<form method="post" class="proyecto-form" style="margin-top: 16px; max-width: 720px;">
+  <label>{{ _('Días antes del vencimiento') }}
+    <input type="text" name="dias_antes" value="{{ config.dias_antes|join(', ') }}" placeholder="7, 2" aria-describedby="ayuda-antes">
+  </label>
+  <p class="muted" id="ayuda-antes">{{ _('Separados por comas, de 0 (el mismo día) a 60. Hasta %(n)s avisos. Por ejemplo: 14, 7, 3, 1.', n=max_antes) }}</p>
+  <label>{{ _('Días después del vencimiento') }}
+    <input type="text" name="dias_despues" value="{{ config.dias_despues|join(', ') }}" placeholder="2, 7" aria-describedby="ayuda-despues">
+  </label>
+  <p class="muted" id="ayuda-despues">{{ _('Para lo que siga pendiente tras la fecha límite: de 1 a 30 días, hasta %(n)s avisos. Déjalo vacío para no insistir.', n=max_despues) }}</p>
+  <label class="checkbox-label"><input type="checkbox" name="avisar_equipo" {{ 'checked' if config.avisar_equipo }}> {{ _('Avisar al equipo si el cliente no ha entregado la documentación pedida') }}</label>
+  <p class="muted">{{ _('Cuando llega el último aviso previo, el responsable del vencimiento (o los supervisores) recibe una notificación si se pidió un documento y el cliente no ha subido nada.') }}</p>
+
+  <h2>{{ _('Texto del correo') }}</h2>
+  <p class="muted">{{ _('Déjalo vacío para usar el texto estándar, que se envía en el idioma de cada cliente. Si escribes el tuyo, se envía tal cual a todos. Puedes usar:') }}
+    {% for m in marcas %}<code>{{ '{' ~ m ~ '}' }}</code> {% endfor %}</p>
+  <label>{{ _('Asunto') }} <input type="text" name="asunto" maxlength="150" value="{{ config.asunto }}" placeholder="{{ _('Recordatorio: el {modelo} vence {cuando}') }}"></label>
+  <label class="proyecto-form-ancha">{{ _('Mensaje') }} <textarea name="cuerpo" rows="8" maxlength="2000">{{ config.cuerpo }}</textarea></label>
+  <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+</form>
+
+{% if vista_previa %}
+<section class="proyecto-bloque" style="max-width: 720px; margin-top: 24px;">
+  <h2>{{ _('Vista previa (con datos de ejemplo)') }}</h2>
+  <p><strong>{{ vista_previa.asunto }}</strong></p>
+  <pre style="white-space: pre-wrap; font-family: inherit;">{{ vista_previa.cuerpo }}</pre>
+</section>
+{% endif %}
+{% endblock %}
