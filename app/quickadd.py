@@ -67,12 +67,55 @@ _CONECTORES_FINALES = re.compile(r"(?:\s+(?:para\s+el|para|per\s+al|per|for|pour
 _CONECTORES_INICIALES = re.compile(r"^\s*(?:para\s+el|para|per\s+al|for|pour\s+le|el|al|on)\s+")
 
 
+_UNIDAD_H = r"(?:h|hr|hrs|hora|horas|hores|hour|hours|heure|heures)"
+_UNIDAD_M = r"(?:m|min|mins|minuto|minutos|minut|minuts|minute|minutes)"
+_DURACION = rf"(?:(\d+(?:[.,]\d+)?)\s*{_UNIDAD_H}(?:\s*(\d{{1,2}})(?:\s*{_UNIDAD_M})?)?|(\d+)\s*{_UNIDAD_M})"
+_RE_ESTIMACION = re.compile(rf"(?<![\w~])~\s*{_DURACION}(?!\w)")
+_RE_DURACION_SOLA = re.compile(rf"\s*{_DURACION}\s*")
+MAX_ESTIMACION_MIN = 6000          # 100 horas: más es casi seguro un error de tecleo
+
+
+def _minutos_de(m: re.Match) -> int | None:
+    if m.group(3) is not None:
+        total = int(m.group(3))
+    else:
+        total = round(float(m.group(1).replace(",", ".")) * 60) + int(m.group(2) or 0)
+    return total if 1 <= total <= MAX_ESTIMACION_MIN else None
+
+
+def duracion_a_minutos(texto: str | None) -> int | None:
+    """«1h30», «90», «90m», «1,5 h», «2 horas»… -> minutos. Un número solo se entiende como horas (admite
+    decimales) hasta 24 y como minutos por encima. None si está vacío o no se entiende."""
+    texto = _sin_acentos((texto or "").strip().lower())
+    if not texto:
+        return None
+    m = _RE_DURACION_SOLA.fullmatch(texto)
+    if m:
+        return _minutos_de(m)
+    if re.fullmatch(r"\d+(?:[.,]\d+)?", texto):
+        numero = float(texto.replace(",", "."))
+        total = round(numero * 60) if numero <= 24 else round(numero)       # «2» son 2 horas; «90», 90 minutos
+        return total if 1 <= total <= MAX_ESTIMACION_MIN else None
+    return None
+
+
+def formatear_minutos(minutos: int | None) -> str:
+    """90 -> «1h 30», 120 -> «2h», 45 -> «45 min»."""
+    if not minutos:
+        return ""
+    h, m = divmod(int(minutos), 60)
+    if h and m:
+        return f"{h}h {m:02d}"
+    return f"{h}h" if h else f"{m} min"
+
+
 @dataclass
 class Interpretacion:
     asunto: str
     fecha: date | None = None
     hora: str | None = None                    # "HH:MM"
     prioridad: str | None = None               # "alta" | "baja" | "normal"
+    estimacion_min: int | None = None          # «~2h», «~90m», «~1h30»
     persona_id: int | None = None
     etiqueta_id: int | None = None             # proyecto o sección, según quién llame
     sin_resolver: list[str] = field(default_factory=list)
@@ -187,6 +230,14 @@ def interpretar(texto: str, hoy: date, personas=(), etiquetas=()) -> Interpretac
             t.quitar(m.start(), m.end())
             break
 
+    # 1b. ~estimación
+    for m in list(_RE_ESTIMACION.finditer(t.plano)):
+        minutos = _minutos_de(m)
+        if minutos:
+            r.estimacion_min = minutos
+            t.quitar(m.start(), m.end())
+            break
+
     # 2. @persona (varias menciones: se queda la primera que se resuelva; las demás se dejan en el texto)
     for m in list(_RE_MENCION.finditer(t.plano)):
         original = t.original[m.start():m.end()]
@@ -251,7 +302,7 @@ def interpretar(texto: str, hoy: date, personas=(), etiquetas=()) -> Interpretac
     # 6. título: lo que queda, sin conectores sueltos
     restante = re.sub(r"\s+", " ", t.original).strip(" ,;:-–")
     plano = re.sub(r"\s+", " ", t.plano).strip(" ,;:-–")
-    if (r.fecha or r.persona_id or r.prioridad or r.etiqueta_id) and restante:
+    if (r.fecha or r.persona_id or r.prioridad or r.etiqueta_id or r.estimacion_min) and restante:
         recorte = _CONECTORES_FINALES.search(plano)
         if recorte:
             restante = restante[:recorte.start()].rstrip(" ,;:-–")

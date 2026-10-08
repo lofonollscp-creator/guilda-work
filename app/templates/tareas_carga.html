@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Carga del equipo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Plan de la semana por persona: horas estimadas de las tareas que vencen cada día frente a la jornada. Arrastra una tarea a otra persona para reasignarla o a otro día para cambiar su vencimiento.') }}</p>
+  </div>
+</header>
+
+{% include "_tareas_subnav.html" %}
+
+<div class="cal-toolbar">
+  <div class="cal-nav">
+    <a class="btn btn-ghost" href="{{ url_for('tareas.carga', semana=anterior) }}" title="{{ _('Anterior') }}">&larr;</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.carga', semana=esta_semana) }}">{{ _('Esta semana') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('tareas.carga', semana=siguiente) }}" title="{{ _('Siguiente') }}">&rarr;</a>
+    <span class="cal-titulo">{{ titulo_semana }}</span>
+  </div>
+</div>
+
+{% macro celda(c, persona, fecha, capacidad) %}
+{% set nivel = '' %}
+{% if capacidad and c.min %}{% set nivel = 'carga-roja' if c.min > capacidad else ('carga-ambar' if c.min >= capacidad * 0.7 else 'carga-verde') %}{% endif %}
+<td class="carga-celda {{ nivel }}" data-persona="{{ persona.id }}" data-fecha="{{ fecha or '' }}">
+  {% if c.n %}
+  <div class="carga-total">{{ c.min|minutos_corto or '—' }}{% if capacidad %}<span class="muted"> / {{ capacidad|minutos_corto }}</span>{% endif %}</div>
+  {% if c.sin_estimar %}<div class="muted carga-sin">{{ ngettext('%(n)s sin estimar', '%(n)s sin estimar', c.sin_estimar, n=c.sin_estimar) }}</div>{% endif %}
+  <ul class="carga-tareas">
+    {% for t in c.tareas %}
+    <li class="carga-tarea prioridad-{{ t.prioridad }}" draggable="true" data-tarea="{{ t.id }}" tabindex="0" title="{{ t.asunto }}">
+      <a href="{{ url_for('tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a>
+      {% if t.estimacion_min %}<span class="muted">{{ t.estimacion_min|minutos_corto }}</span>{% endif %}
+    </li>
+    {% endfor %}
+    {% if c.mas %}<li class="muted">{{ _('y %(n)s más', n=c.mas) }}</li>{% endif %}
+  </ul>
+  {% endif %}
+</td>
+{% endmacro %}
+
+{% if personas|length < 2 %}
+<p class="muted">{{ _('Aquí verás la carga de tu equipo cuando haya más personas en tu despacho.') }}</p>
+{% endif %}
+<div class="carga-envoltorio" data-url-mover="{{ url_for('tareas.carga_mover') }}" data-t-error="{{ _('No se ha podido mover la tarea.') }}" data-t-ok="{{ _('Tarea movida') }}">
+<table class="carga-tabla">
+  <thead>
+    <tr>
+      <th scope="col">{{ _('Persona') }}</th>
+      <th scope="col" class="carga-atrasadas">{{ _('Atrasadas') }}</th>
+      {% for d in dias %}
+      <th scope="col" class="{{ 'carga-hoy' if d.isoformat() == hoy }} {{ 'carga-finde' if d.weekday() > 4 }}">{{ d|fecha_corta }}</th>
+      {% endfor %}
+      <th scope="col">{{ _('Sin fecha') }}</th>
+      <th scope="col">{{ _('Semana') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in personas %}
+    <tr>
+      <th scope="row" class="carga-persona">{{ p.nombre }}{% if p.yo %} <span class="muted">({{ _('tú') }})</span>{% endif %}</th>
+      {{ celda(p.atrasadas, p, '', 0) }}
+      {% for d in dias %}{{ celda(p.dias[d.isoformat()], p, d.isoformat(), p.capacidad_dia_min if d.weekday() < 5 else 0) }}{% endfor %}
+      {{ celda(p.sin_fecha, p, '', 0) }}
+      <td class="carga-semana"><strong>{{ p.semana_min|minutos_corto or '—' }}</strong><span class="muted"> / {{ p.capacidad_semana_min|minutos_corto }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="muted">{{ _('Solo cuenta lo que tú puedes ver: tus tareas y las compartidas contigo o de proyectos compartidos. La capacidad sale de la jornada semanal del fichaje (o 8 h al día).') }}</p>
+<script src="{{ url_for('static', filename='carga.js') }}" defer></script>
+{% endblock %}

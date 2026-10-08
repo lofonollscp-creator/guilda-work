@@ -6726,3 +6726,74 @@ msgstr "This account signs in with OAuth2, without a password."
 msgid "Reconectar"
 msgstr "Reconnect"
 
+msgid "Estimación"
+msgstr "Estimate"
+
+msgid "ej. 1h30, 45 min, 2"
+msgstr "e.g. 1h30, 45 min, 2"
+
+msgid ""
+"Tiempo que calculas que llevará. Un número solo son horas (hasta 24) o "
+"minutos."
+msgstr ""
+"Time you expect it to take. A bare number means hours (up to 24) or "
+"minutes."
+
+msgid "Registrado"
+msgstr "Logged"
+
+msgid "Registrado / estimado"
+msgstr "Logged / estimated"
+
+msgid "Estimado pendiente"
+msgstr "Estimated remaining"
+
+msgid ""
+"Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta "
+"~2h #sección»."
+msgstr ""
+"You can type it all together: “friday 10am request statements @luis !high"
+" ~2h #section”."
+
+#, python-format
+msgid "%(n)s sin estimar"
+msgid_plural "%(n)s sin estimar"
+msgstr[0] "%(n)s not estimated"
+msgstr[1] "%(n)s not estimated"
+
+msgid "No tienes permiso para reasignar esta tarea a esa persona."
+msgstr "You don't have permission to reassign this task to that person."
+
+msgid "Carga del equipo"
+msgstr "Team workload"
+
+msgid ""
+"Plan de la semana por persona: horas estimadas de las tareas que vencen "
+"cada día frente a la jornada. Arrastra una tarea a otra persona para "
+"reasignarla o a otro día para cambiar su vencimiento."
+msgstr ""
+"Weekly plan per person: estimated hours of the tasks due each day against"
+" the working day. Drag a task to another person to reassign it, or to "
+"another day to change its due date."
+
+#, python-format
+msgid "y %(n)s más"
+msgstr "and %(n)s more"
+
+msgid "Aquí verás la carga de tu equipo cuando haya más personas en tu despacho."
+msgstr ""
+"You will see your team's workload here once there are more people in your"
+" office."
+
+msgid ""
+"Solo cuenta lo que tú puedes ver: tus tareas y las compartidas contigo o "
+"de proyectos compartidos. La capacidad sale de la jornada semanal del "
+"fichaje (o 8 h al día)."
+msgstr ""
+"It only counts what you can see: your tasks and those shared with you or "
+"in shared projects. Capacity comes from the weekly working hours in time "
+"clocking (or 8 h a day)."
+
+msgid "Carga"
+msgstr "Workload"
+

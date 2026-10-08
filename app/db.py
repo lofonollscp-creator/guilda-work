@@ -1900,6 +1900,7 @@ def init_db() -> None:
             _asegurar_columna(conn, "categorias", columna, definicion)
         _asegurar_columna(conn, "tareas_outlook", "seccion_id", "INTEGER")
         _asegurar_columna(conn, "tareas_outlook", "orden_proyecto", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "tareas_outlook", "estimacion_min", "INTEGER")        # tiempo estimado, en minutos
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tareas_outlook_proyecto ON tareas_outlook(categoria_id, seccion_id)")
         _crear_vista_participantes_todos(conn)
 
@@ -5079,8 +5080,17 @@ def eliminar_plantilla(plantilla_id: int) -> None:
 CAMPOS_TAREA_OUTLOOK = (
     "asunto", "cuerpo", "estado", "porcentaje_completado", "prioridad",
     "fecha_inicio", "fecha_vencimiento", "fecha_completada",
-    "categoria_outlook", "categoria_id", "outlook_entry_id",
+    "categoria_outlook", "categoria_id", "outlook_entry_id", "estimacion_min",
 )
+
+
+def estimacion_valida(valor) -> int | None:
+    """Minutos de estimación (1 a 6000) o None. Lo que no sea un entero razonable se ignora."""
+    try:
+        minutos = int(valor)
+    except (TypeError, ValueError):
+        return None
+    return minutos if 1 <= minutos <= 6000 else None
 
 
 def registrar_actividad_tarea(usuario_id: int, tarea_id: int, tipo: str, detalle: str = "") -> None:
@@ -5116,7 +5126,9 @@ def crear_tarea_outlook(
     cliente_fiscal_id: int | None = None,
     mensaje_correo_id: int | None = None,
     asignada_a: int | None = None,
+    estimacion_min: int | None = None,
 ) -> int:
+    estimacion_min = estimacion_valida(estimacion_min)
     conn = get_connection()
     try:
         categoria_id = _categoria_id_propio(conn, usuario_id, categoria_id)
@@ -5128,13 +5140,13 @@ def crear_tarea_outlook(
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
                 outlook_entry_id, tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id,
-                asignada_a, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                asignada_a, estimacion_min, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
                 (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id,
-                tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id, asignada_a, now_iso(),
+                tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id, asignada_a, estimacion_min, now_iso(),
             ),
         )
         conn.commit()
@@ -5492,7 +5504,7 @@ def upsert_tarea_outlook_por_entry_id(usuario_id: int, outlook_entry_id: str | N
 ETIQUETAS_CAMPO_TAREA = {
     "asunto": "asunto", "cuerpo": "descripción", "prioridad": "prioridad", "estado": "estado",
     "fecha_inicio": "inicio", "fecha_vencimiento": "vencimiento", "cliente_fiscal_id": "cliente",
-    "categoria_id": "proyecto", "categoria_outlook": "categoría",
+    "categoria_id": "proyecto", "categoria_outlook": "categoría", "estimacion_min": "estimación",
 }
 
 
@@ -5512,6 +5524,8 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
             columnas = [c for c in columnas if c not in ("categoria_id", "mensaje_correo_id")]
             if not columnas:
                 return
+        if "estimacion_min" in campos:
+            campos["estimacion_min"] = estimacion_valida(campos["estimacion_min"])
         if "categoria_id" in campos:
             campos["categoria_id"] = _categoria_id_propio(conn, usuario_id, campos["categoria_id"])
         if "cliente_fiscal_id" in campos:
@@ -6660,6 +6674,110 @@ def carga_equipo(usuario_id: int) -> list[dict]:
         conn.close()
 
 
+HORAS_DIA_DEFECTO = 8.0
+TAREAS_POR_CELDA = 6
+
+
+def _celda_vacia() -> dict:
+    return {"min": 0, "n": 0, "sin_estimar": 0, "tareas": [], "mas": 0}
+
+
+def _sumar_a_celda(celda: dict, t: dict) -> None:
+    celda["n"] += 1
+    if t["estimacion_min"]:
+        celda["min"] += t["estimacion_min"]
+    else:
+        celda["sin_estimar"] += 1
+    if len(celda["tareas"]) < TAREAS_POR_CELDA:
+        celda["tareas"].append(t)
+    else:
+        celda["mas"] += 1
+
+
+def carga_semanal(usuario_id: int, lunes: date) -> dict:
+    """Plan de la semana (lunes a domingo) por persona: minutos estimados de las tareas abiertas que vencen
+    cada día, frente a la capacidad diaria (jornada semanal / 5 del fichaje si está, o 8 h). Aparte, las
+    atrasadas y las que no tienen fecha. Cada tarea cuenta para su responsable (el asignado o, si no, el
+    dueño). Solo entra lo que el usuario puede ver (suyas, asignadas, compartidas o de proyectos
+    compartidos con él): nunca se revela una tarea privada de otra persona."""
+    dias = [lunes + timedelta(days=i) for i in range(7)]
+    desde, hasta = dias[0].isoformat(), dias[-1].isoformat()
+    conn = get_connection()
+    try:
+        yo = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        if yo is None:
+            return {"personas": [], "dias": dias}
+        personas_filas = conn.execute(
+            """SELECT u.id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, fd.jornada_semanal_horas AS jornada
+               FROM usuarios u LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id LEFT JOIN fichaje_datos fd ON fd.usuario_id = u.id
+               WHERE u.id = ? OR (? IS NOT NULL AND u.tenant_id = ?) ORDER BY (u.id = ?) DESC, nombre""",
+            (usuario_id, yo["tenant_id"], yo["tenant_id"], usuario_id),
+        ).fetchall()
+        filas = conn.execute(
+            """SELECT t.id, t.asunto, t.estimacion_min, t.prioridad, t.estado, substr(t.fecha_vencimiento, 1, 10) AS fecha,
+                      COALESCE(t.asignada_a, t.usuario_id) AS responsable_id, t.categoria_id
+               FROM tareas_outlook t
+               WHERE t.papelera_en IS NULL AND t.estado != 'completada'
+                 AND (t.fecha_vencimiento IS NULL OR substr(t.fecha_vencimiento, 1, 10) <= ?)
+                 AND (t.usuario_id = ? OR t.asignada_a = ?
+                      OR t.id IN (SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ?))
+               ORDER BY t.fecha_vencimiento, CASE t.prioridad WHEN 'alta' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END, t.id""",
+            (hasta, usuario_id, usuario_id, usuario_id),
+        ).fetchall()
+    finally:
+        conn.close()
+    personas = {}
+    for f in personas_filas:
+        capacidad = round(f["jornada"] * 60 / 5) if f["jornada"] and f["jornada"] > 0 else round(HORAS_DIA_DEFECTO * 60)
+        personas[f["id"]] = {
+            "id": f["id"], "nombre": f["nombre"], "capacidad_dia_min": capacidad, "yo": f["id"] == usuario_id,
+            "dias": {d.isoformat(): _celda_vacia() for d in dias}, "atrasadas": _celda_vacia(), "sin_fecha": _celda_vacia(),
+        }
+    for f in filas:
+        persona = personas.get(f["responsable_id"])
+        if persona is None:
+            continue
+        t = dict(f)
+        if not f["fecha"]:
+            _sumar_a_celda(persona["sin_fecha"], t)
+        elif f["fecha"] < desde:
+            _sumar_a_celda(persona["atrasadas"], t)
+        else:
+            _sumar_a_celda(persona["dias"][f["fecha"]], t)
+    for p in personas.values():
+        p["semana_min"] = sum(c["min"] for c in p["dias"].values())
+        p["capacidad_semana_min"] = p["capacidad_dia_min"] * 5
+    return {"personas": list(personas.values()), "dias": dias}
+
+
+def reasignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | None) -> bool:
+    """Cambia quién hace la tarea: su dueño (a cualquier compañero del despacho) o, en un proyecto, quien lo
+    organiza (a su dueño o a un colaborador). None la devuelve a su dueño."""
+    conn = get_connection()
+    try:
+        t = conn.execute("SELECT usuario_id, categoria_id FROM tareas_outlook WHERE id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()
+        if t is None:
+            return False
+        if t["usuario_id"] == usuario_id:
+            pass
+        elif t["categoria_id"] is not None and _puede_organizar_proyecto(conn, usuario_id, t["categoria_id"]):
+            if asignada_a is not None and asignada_a != t["usuario_id"] and _rol_en_proyecto(conn, asignada_a, t["categoria_id"]) != "colabora":
+                return False
+            conn.execute("UPDATE tareas_outlook SET asignada_a = ?, actualizada_en = ? WHERE id = ?",
+                         (None if asignada_a in (None, t["usuario_id"]) else asignada_a, now_iso(), tarea_id))
+            conn.commit()
+            destino = asignada_a if asignada_a not in (None, t["usuario_id"]) else None
+            registrar_actividad_tarea(usuario_id, tarea_id, "asignada", (nombre_mostrado_usuario(destino) or "") if destino else "")
+            if destino is not None:
+                _emitir_evento(usuario_id, "tarea.asignada", {"tarea_id": tarea_id, "asignada_a": destino})
+            return True
+        else:
+            return False
+    finally:
+        conn.close()
+    return asignar_tarea_outlook(usuario_id, tarea_id, asignada_a)
+
+
 def actividad_de_tarea(usuario_id: int, tarea_id: int, limite: int = 40) -> list[dict]:
     """Historial de la tarea (lo más reciente primero), solo para quien la ve."""
     if rol_en_tarea(usuario_id, tarea_id) is None:
@@ -6765,10 +6883,18 @@ def cronometros_de_tareas_outlook(usuario_id: int, tarea_ids: list[int]) -> dict
     en pausa, si lo hay (`activo`, con el formato de tareas_activas)."""
     if not tarea_ids:
         return {}
-    resultado = {i: {"total_segundos": 0, "activo": None} for i in tarea_ids}
+    resultado = {i: {"total_segundos": 0, "equipo_segundos": 0, "activo": None} for i in tarea_ids}
     conn = get_connection()
     try:
         marcas = ",".join("?" * len(tarea_ids))
+        # Tiempo de todas las personas que han trabajado en la tarea (para compararlo con la estimación).
+        for f in conn.execute(
+            f"""SELECT tarea_outlook_id, COALESCE(SUM(duracion_segundos), 0) AS total FROM tareas
+                WHERE estado = 'finalizada' AND papelera_en IS NULL AND tarea_outlook_id IN ({marcas})
+                GROUP BY tarea_outlook_id""",
+            tarea_ids,
+        ):
+            resultado[f["tarea_outlook_id"]]["equipo_segundos"] = f["total"]
         for f in conn.execute(
             f"""SELECT tarea_outlook_id, COALESCE(SUM(duracion_segundos), 0) AS total FROM tareas
                 WHERE usuario_id = ? AND estado = 'finalizada' AND papelera_en IS NULL
@@ -10120,7 +10246,7 @@ def cambiar_fecha_tarea_proyecto(usuario_id: int, tarea_id: int, fecha: str | No
 
 def crear_tarea_en_proyecto(
     usuario_id: int, categoria_id: int, asunto: str, seccion_id: int | None = None, prioridad: str = "normal",
-    fecha_vencimiento: str | None = None, asignada_a: int | None = None,
+    fecha_vencimiento: str | None = None, asignada_a: int | None = None, estimacion_min: int | None = None,
 ) -> int | None:
     """Alta de una tarea dentro de un proyecto: la puede crear el dueño o un colaborador. Hereda el cliente del proyecto."""
     conn = get_connection()
@@ -10135,7 +10261,7 @@ def crear_tarea_en_proyecto(
         conn.close()
     tarea_id = crear_tarea_outlook(
         usuario_id, asunto, prioridad=prioridad, fecha_vencimiento=fecha_vencimiento, categoria_id=categoria_id,
-        cliente_fiscal_id=cliente, asignada_a=asignada_a,
+        cliente_fiscal_id=cliente, asignada_a=asignada_a, estimacion_min=estimacion_min,
     )
     conn = get_connection()
     try:
@@ -10204,6 +10330,12 @@ def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
                    AND papelera_en IS NULL ORDER BY fecha_limite LIMIT 1""",
                 (proyecto["cliente_fiscal_id"],),
             ).fetchone()
+        estimado = conn.execute(
+            """SELECT COALESCE(SUM(CASE WHEN estado != 'completada' THEN estimacion_min END), 0) AS pendiente,
+                      COALESCE(SUM(CASE WHEN estado != 'completada' AND estimacion_min IS NULL THEN 1 END), 0) AS sin_estimar
+               FROM tareas_outlook WHERE categoria_id = ? AND papelera_en IS NULL""",
+            (categoria_id,),
+        ).fetchone()
         carga = [dict(f) for f in conn.execute(
             """SELECT COALESCE(t.asignada_a, t.usuario_id) AS usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, COUNT(*) AS abiertas
                FROM tareas_outlook t JOIN usuarios u ON u.id = COALESCE(t.asignada_a, t.usuario_id) LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id
@@ -10225,6 +10357,7 @@ def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
             "segundos_total": horas["total"], "segundos_semana": horas["semana"],
             "proximo_hito": dict(hito) if hito else None, "vencimiento_cliente": dict(vencimiento_cliente) if vencimiento_cliente else None,
             "carga": carga, "horas_por_persona": por_persona,
+            "estimado_pendiente_min": estimado["pendiente"], "sin_estimar": estimado["sin_estimar"],
         }
     finally:
         conn.close()

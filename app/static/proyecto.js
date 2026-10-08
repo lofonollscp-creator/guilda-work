@@ -39,6 +39,7 @@
       if (d.persona) trozos.push("@" + d.persona);
       if (d.seccion) trozos.push("#" + d.seccion);
       if (d.prioridad) trozos.push("!" + d.prioridad);
+      if (d.estimacion) trozos.push("~" + d.estimacion);
       previa.textContent = trozos.length ? trozos.join(" · ") : "";
       if (d.sin_resolver && d.sin_resolver.length) previa.textContent += (trozos.length ? " · " : "") + d.sin_resolver.join(" ") + " ?";
       previa.hidden = !previa.textContent;

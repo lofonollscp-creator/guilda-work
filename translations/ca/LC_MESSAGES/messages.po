@@ -6734,3 +6734,74 @@ msgstr "Aquest compte entra amb OAuth2, sense contrasenya."
 msgid "Reconectar"
 msgstr "Reconnecta"
 
+msgid "Estimación"
+msgstr "Estimació"
+
+msgid "ej. 1h30, 45 min, 2"
+msgstr "p. ex. 1h30, 45 min, 2"
+
+msgid ""
+"Tiempo que calculas que llevará. Un número solo son horas (hasta 24) o "
+"minutos."
+msgstr ""
+"Temps que calcules que portarà. Un número sol són hores (fins a 24) o "
+"minuts."
+
+msgid "Registrado"
+msgstr "Registrat"
+
+msgid "Registrado / estimado"
+msgstr "Registrat / estimat"
+
+msgid "Estimado pendiente"
+msgstr "Estimat pendent"
+
+msgid ""
+"Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta "
+"~2h #sección»."
+msgstr ""
+"Ho pots escriure tot junt: «divendres 10h demanar extractes @lluis !alta "
+"~2h #secció»."
+
+#, python-format
+msgid "%(n)s sin estimar"
+msgid_plural "%(n)s sin estimar"
+msgstr[0] "%(n)s sense estimar"
+msgstr[1] "%(n)s sense estimar"
+
+msgid "No tienes permiso para reasignar esta tarea a esa persona."
+msgstr "No tens permís per reassignar aquesta tasca a aquesta persona."
+
+msgid "Carga del equipo"
+msgstr "Càrrega de l'equip"
+
+msgid ""
+"Plan de la semana por persona: horas estimadas de las tareas que vencen "
+"cada día frente a la jornada. Arrastra una tarea a otra persona para "
+"reasignarla o a otro día para cambiar su vencimiento."
+msgstr ""
+"Pla de la setmana per persona: hores estimades de les tasques que venen "
+"cada dia davant de la jornada. Arrossega una tasca a una altra persona "
+"per reassignar-la o a un altre dia per canviar-ne el venciment."
+
+#, python-format
+msgid "y %(n)s más"
+msgstr "i %(n)s més"
+
+msgid "Aquí verás la carga de tu equipo cuando haya más personas en tu despacho."
+msgstr ""
+"Aquí veuràs la càrrega del teu equip quan hi hagi més persones al teu "
+"despatx."
+
+msgid ""
+"Solo cuenta lo que tú puedes ver: tus tareas y las compartidas contigo o "
+"de proyectos compartidos. La capacidad sale de la jornada semanal del "
+"fichaje (o 8 h al día)."
+msgstr ""
+"Només compta el que tu pots veure: les teves tasques i les compartides "
+"amb tu o de projectes compartits. La capacitat surt de la jornada "
+"setmanal del fitxatge (o 8 h al dia)."
+
+msgid "Carga"
+msgstr "Càrrega"
+

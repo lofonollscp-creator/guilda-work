@@ -195,6 +195,7 @@ def crear_tarea(proyecto_id: int):
     db.crear_tarea_en_proyecto(
         g.usuario_id, proyecto_id, entendido.asunto[:300], seccion_id=_entero(request.form.get("seccion_id")) or entendido.etiqueta_id,
         prioridad=prioridad, fecha_vencimiento=fecha, asignada_a=_entero(request.form.get("asignada_a")) or entendido.persona_id,
+        estimacion_min=quickadd.duracion_a_minutos(request.form.get("estimacion")) or entendido.estimacion_min,
     )
     return _volver(proyecto_id)
 
@@ -221,6 +222,7 @@ def interpretar(proyecto_id: int):
         "asunto": e.asunto, "vencimiento": e.vencimiento,
         "fecha_texto": format_date(e.fecha, "EEE d MMM") if e.fecha else None, "hora": e.hora, "prioridad": e.prioridad,
         "persona": nombres.get(e.persona_id), "seccion": secciones.get(e.etiqueta_id), "sin_resolver": e.sin_resolver,
+        "estimacion": quickadd.formatear_minutos(e.estimacion_min) or None,
     })
 
 

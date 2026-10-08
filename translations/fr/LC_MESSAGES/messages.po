@@ -6804,3 +6804,75 @@ msgstr "Ce compte se connecte avec OAuth2, sans mot de passe."
 msgid "Reconectar"
 msgstr "Reconnecter"
 
+msgid "Estimación"
+msgstr "Estimation"
+
+msgid "ej. 1h30, 45 min, 2"
+msgstr "ex. 1h30, 45 min, 2"
+
+msgid ""
+"Tiempo que calculas que llevará. Un número solo son horas (hasta 24) o "
+"minutos."
+msgstr ""
+"Temps que vous pensez y consacrer. Un nombre seul correspond à des heures"
+" (jusqu'à 24) ou à des minutes."
+
+msgid "Registrado"
+msgstr "Enregistré"
+
+msgid "Registrado / estimado"
+msgstr "Enregistré / estimé"
+
+msgid "Estimado pendiente"
+msgstr "Estimé restant"
+
+msgid ""
+"Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta "
+"~2h #sección»."
+msgstr ""
+"Vous pouvez tout écrire d'un coup : « vendredi 10h demander les relevés "
+"@luis !alta ~2h #section »."
+
+#, python-format
+msgid "%(n)s sin estimar"
+msgid_plural "%(n)s sin estimar"
+msgstr[0] "%(n)s sans estimation"
+msgstr[1] "%(n)s sans estimation"
+
+msgid "No tienes permiso para reasignar esta tarea a esa persona."
+msgstr "Vous n'avez pas l'autorisation de réassigner cette tâche à cette personne."
+
+msgid "Carga del equipo"
+msgstr "Charge de l'équipe"
+
+msgid ""
+"Plan de la semana por persona: horas estimadas de las tareas que vencen "
+"cada día frente a la jornada. Arrastra una tarea a otra persona para "
+"reasignarla o a otro día para cambiar su vencimiento."
+msgstr ""
+"Plan de la semaine par personne : heures estimées des tâches échues "
+"chaque jour face à la journée de travail. Faites glisser une tâche vers "
+"une autre personne pour la réassigner, ou vers un autre jour pour changer"
+" son échéance."
+
+#, python-format
+msgid "y %(n)s más"
+msgstr "et %(n)s de plus"
+
+msgid "Aquí verás la carga de tu equipo cuando haya más personas en tu despacho."
+msgstr ""
+"Vous verrez ici la charge de votre équipe lorsqu'il y aura plus de "
+"personnes dans votre cabinet."
+
+msgid ""
+"Solo cuenta lo que tú puedes ver: tus tareas y las compartidas contigo o "
+"de proyectos compartidos. La capacidad sale de la jornada semanal del "
+"fichaje (o 8 h al día)."
+msgstr ""
+"Seul ce que vous pouvez voir est compté : vos tâches et celles partagées "
+"avec vous ou issues de projets partagés. La capacité provient de la durée"
+" hebdomadaire du pointage (ou 8 h par jour)."
+
+msgid "Carga"
+msgstr "Charge"
+

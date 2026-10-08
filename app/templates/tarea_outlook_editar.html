@@ -43,6 +43,10 @@
     <label>% {{ _('completado') }}
       <input type="number" name="porcentaje_completado" min="0" max="100" step="10" value="{{ tarea.porcentaje_completado }}">
     </label>
+    <label>{{ _('Estimación') }}
+      <input type="text" name="estimacion" maxlength="12" value="{{ tarea.estimacion_min|minutos_corto }}" placeholder="{{ _('ej. 1h30, 45 min, 2') }}" title="{{ _('Tiempo que calculas que llevará. Un número solo son horas (hasta 24) o minutos.') }}">
+      {% if tarea.estimacion_min and cronometro and cronometro.equipo_segundos %}<small class="muted">{{ _('Registrado') }}: {{ cronometro.equipo_segundos|duracion_hm }}</small>{% endif %}
+    </label>
   </div>
 
   <div class="ia-form-row">

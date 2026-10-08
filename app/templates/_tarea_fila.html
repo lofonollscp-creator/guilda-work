@@ -77,6 +77,10 @@ data-eliminar-defecto data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a 
   </form>
   {% endif %}
   {% endif %}
+  {% if t.estimacion_min %}
+  {% set real_min = ((cr.equipo_segundos if cr else 0) // 60) %}
+  <span class="pill tarea-estimacion {{ 'texto-peligro' if real_min > t.estimacion_min }}" title="{{ _('Registrado / estimado') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg> {{ real_min|minutos_corto or '0' }} / {{ t.estimacion_min|minutos_corto }}</span>
+  {% endif %}
   {% if cr and cr.total_segundos %}
   <span class="log-duration" title="{{ _('Tiempo registrado') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg> {{ cr.total_segundos|duracion_hm }}</span>
   {% endif %}

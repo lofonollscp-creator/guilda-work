@@ -29,6 +29,7 @@
   <div class="proyecto-metrica"><span class="muted">{{ _('Abiertas') }}</span><strong>{{ resumen.abiertas }}</strong></div>
   <div class="proyecto-metrica"><span class="muted">{{ _('Vencidas') }}</span><strong class="{{ 'texto-peligro' if resumen.vencidas }}">{{ resumen.vencidas }}</strong></div>
   <div class="proyecto-metrica"><span class="muted">{{ _('Horas esta semana') }}</span><strong>{{ resumen.segundos_semana|duracion_hm if resumen.segundos_semana else '—' }}</strong></div>
+  {% if resumen.estimado_pendiente_min %}<div class="proyecto-metrica"><span class="muted">{{ _('Estimado pendiente') }}</span><strong>{{ resumen.estimado_pendiente_min|minutos_corto }}</strong>{% if resumen.sin_estimar %}<span class="muted">{{ ngettext('%(n)s sin estimar', '%(n)s sin estimar', resumen.sin_estimar, n=resumen.sin_estimar) }}</span>{% endif %}</div>{% endif %}
   <div class="proyecto-metrica"><span class="muted">{{ _('Próximo hito') }}</span>
     <strong>{% if resumen.proximo_hito %}{{ resumen.proximo_hito.fecha_vencimiento[:10] }}{% elif resumen.vencimiento_cliente %}{{ resumen.vencimiento_cliente.modelo }} · {{ resumen.vencimiento_cliente.fecha_limite[:10] }}{% else %}—{% endif %}</strong>
   </div>

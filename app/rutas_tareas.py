@@ -4,9 +4,10 @@ haciendo crecer app/main.py — es, en la práctica, una sección independiente
 dentro de la app (sin relación con los proyectos ni con las tareas con duración).
 """
 import calendar as calendario_std
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
+from flask_babel import format_date
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
@@ -49,6 +50,18 @@ def duracion_hm(segundos: int | None) -> str:
     if horas:
         return f"{horas} h {minutos:02d} min"
     return f"{minutos} min" if minutos else "<1 min"
+
+
+@tareas_bp.app_template_filter("fecha_corta")
+def fecha_corta(d) -> str:
+    """«lun 12» en el idioma de la persona."""
+    return format_date(d, "EEE d")
+
+
+@tareas_bp.app_template_filter("minutos_corto")
+def minutos_corto(minutos: int | None) -> str:
+    """Estimación en formato corto («1h 30», «2h», «45 min»); vacío si no hay."""
+    return quickadd.formatear_minutos(minutos)
 
 
 @tareas_bp.app_template_filter("color_categoria")
@@ -380,6 +393,7 @@ def crear():
             categoria_id=int(categoria_id) if categoria_id else None,
             cliente_fiscal_id=_int_o_none(request.form.get("cliente_fiscal_id")),
             asignada_a=asignada_a,
+            estimacion_min=quickadd.duracion_a_minutos(request.form.get("estimacion")) or entendido.estimacion_min,
         )
         _notificar_asignacion(g.usuario_id, tarea_id, asignada_a)
         if request.form.get("con_cronometro"):
@@ -435,6 +449,7 @@ def editar(tarea_id: int):
             "categoria_outlook": request.form.get("categoria_outlook", "").strip() or None,
             "categoria_id": int(categoria_id) if categoria_id else None,
             "cliente_fiscal_id": _int_o_none(request.form.get("cliente_fiscal_id")),
+            "estimacion_min": quickadd.duracion_a_minutos(request.form.get("estimacion")),
         }
         if not es_dueno:
             campos.pop("categoria_id")
@@ -454,6 +469,46 @@ def editar(tarea_id: int):
     return render_template(
         "tarea_outlook_editar.html", **_contexto_edicion(tarea, (request.args.get("error") or "")[:200] or None)
     )
+
+
+def _lunes_de(texto: str | None) -> date:
+    try:
+        d = datetime.strptime((texto or "")[:10], "%Y-%m-%d").date()
+    except ValueError:
+        d = date.today()
+    return d - timedelta(days=d.weekday())
+
+
+@tareas_bp.route("/carga")
+@login_required
+def carga():
+    """Plan de la semana por persona: horas estimadas por día frente a la capacidad. Arrastrar una tarea a
+    otra persona la reasigna y a otro día cambia su vencimiento."""
+    lunes = _lunes_de(request.args.get("semana"))
+    datos = db.carga_semanal(g.usuario_id, lunes)
+    return render_template(
+        "tareas_carga.html", subnav_activa="carga", personas=datos["personas"], dias=datos["dias"], lunes=lunes,
+        anterior=(lunes - timedelta(days=7)).isoformat(), siguiente=(lunes + timedelta(days=7)).isoformat(),
+        esta_semana=(date.today() - timedelta(days=date.today().weekday())).isoformat(), hoy=date.today().isoformat(),
+        titulo_semana=_titulo_rango("semana", lunes, lunes, lunes + timedelta(days=6)),
+    )
+
+
+@tareas_bp.route("/carga/mover", methods=["POST"])
+@login_required
+def carga_mover():
+    """Reasigna y/o cambia el día de una tarea desde el plan de carga (JSON). Mismos permisos que en la ficha de la tarea."""
+    tarea_id = _int_o_none(request.form.get("tarea_id"))
+    if tarea_id is None or db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id) is None:
+        return jsonify({"ok": False, "mensaje": _("No se ha podido mover la tarea.")}), 404
+    if "persona_id" in request.form:
+        if not db.reasignar_tarea_outlook(g.usuario_id, tarea_id, _int_o_none(request.form.get("persona_id"))):
+            return jsonify({"ok": False, "mensaje": _("No tienes permiso para reasignar esta tarea a esa persona.")}), 403
+    if "fecha" in request.form:
+        fecha = (request.form.get("fecha") or "").strip() or None
+        if not db.cambiar_fecha_tarea_proyecto(g.usuario_id, tarea_id, fecha):
+            return jsonify({"ok": False, "mensaje": _("No se ha podido cambiar la fecha.")}), 403
+    return jsonify({"ok": True})
 
 
 LIMITE_SECCION = 30    # tareas que enseña cada sección de "Mi día" antes de «ver más»

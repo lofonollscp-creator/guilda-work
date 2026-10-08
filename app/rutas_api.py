@@ -458,7 +458,7 @@ def crear_tarea_outlook():
         g.usuario_id, asunto=asunto, cuerpo=datos.get("cuerpo"),
         prioridad=datos.get("prioridad", "normal"),
         fecha_inicio=datos.get("fecha_inicio"), fecha_vencimiento=datos.get("fecha_vencimiento"),
-        categoria_outlook=datos.get("categoria_outlook"),
+        categoria_outlook=datos.get("categoria_outlook"), estimacion_min=datos.get("estimacion_min"),
     )
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)), 201)
 
@@ -473,7 +473,7 @@ def editar_tarea_outlook(tarea_id: int):
         campo: datos[campo]
         for campo in (
             "asunto", "cuerpo", "estado", "prioridad", "porcentaje_completado",
-            "fecha_inicio", "fecha_vencimiento", "categoria_outlook",
+            "fecha_inicio", "fecha_vencimiento", "categoria_outlook", "estimacion_min",
         )
         if campo in datos
     }

@@ -38,7 +38,7 @@
   <input type="date" name="fecha_vencimiento" aria-label="{{ _('Vencimiento') }}">
   <select name="asignada_a" aria-label="{{ _('Asignar a') }}"><option value="">{{ _('Sin asignar') }}</option>{% for m in asignables %}<option value="{{ m.usuario_id }}">{{ m.nombre }}</option>{% endfor %}</select>
   <button type="submit" class="btn btn-primary">{{ _('Añadir') }}</button>
-  <p class="muted proyecto-alta-ayuda" id="alta-ayuda">{{ _('Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta #sección».') }}</p>
+  <p class="muted proyecto-alta-ayuda" id="alta-ayuda">{{ _('Puedes escribirlo todo junto: «viernes 10h pedir extractos @luis !alta ~2h #sección».') }}</p>
   <p class="proyecto-previa" id="alta-previa" aria-live="polite" hidden></p>
 </form>
 {% endif %}
