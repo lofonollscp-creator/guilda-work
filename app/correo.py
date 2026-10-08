@@ -53,7 +53,7 @@ import time
 from datetime import datetime, timedelta
 from email.header import decode_header
 from email.message import EmailMessage
-from email.utils import getaddresses, parsedate_to_datetime
+from email.utils import make_msgid, getaddresses, parsedate_to_datetime
 
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
@@ -1377,14 +1377,17 @@ def vincular_correos_a_clientes(usuario_id: int) -> int:
 VARIABLES_PLANTILLA = (
     ("cliente", "Nombre del cliente fiscal"), ("nif", "NIF del cliente"), ("modelo", "Modelo del próximo vencimiento"),
     ("periodo", "Periodo del próximo vencimiento"), ("fecha_limite", "Fecha límite del próximo vencimiento"),
+    ("documento", "Documentación que se ha pedido para ese vencimiento"), ("dias", "Días que faltan para el vencimiento"),
+    ("enlace_portal", "Enlace al portal del cliente"),
     ("mi_nombre", "Tu nombre"), ("despacho", "Nombre de tu despacho"), ("fecha", "Fecha de hoy"),
 )
 _PATRON_VARIABLE = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
 
 
-def contexto_plantilla(usuario_id: int, cliente_fiscal_id: int | None = None) -> dict[str, str]:
+def contexto_plantilla(usuario_id: int, cliente_fiscal_id: int | None = None, modelo: str | None = None) -> dict[str, str]:
     """Valores de las variables para este usuario y, si se indica, ese cliente
-    fiscal (solo si es de su despacho) con su próximo vencimiento pendiente."""
+    fiscal (solo si es de su despacho) con su próximo vencimiento pendiente. Con `modelo` (una plantilla
+    pensada para el 303, por ejemplo) se usa el próximo vencimiento pendiente DE ESE MODELO."""
     tenant = db.tenant_de_usuario(usuario_id)
     usuario = db.obtener_usuario(usuario_id)
     valores = {
@@ -1398,9 +1401,20 @@ def contexto_plantilla(usuario_id: int, cliente_fiscal_id: int | None = None) ->
             valores["cliente"] = cliente["nombre"] or ""
             valores["nif"] = cliente["nif"] or ""
             proximos = db.listar_vencimientos_fiscales(tenant["id"], estado="pendiente", cliente_fiscal_id=cliente_fiscal_id)
+            if modelo:
+                proximos = [p for p in proximos if (p["modelo"] or "").strip().lower() == modelo.strip().lower()]
             if proximos:
                 v = min(proximos, key=lambda f: f["fecha_limite"])
                 valores["modelo"], valores["periodo"] = v["modelo"] or "", v["periodo"] or ""
+                valores["documento"] = (v["documento_solicitado"] or "").strip()
+                try:
+                    restantes = (datetime.strptime(v["fecha_limite"][:10], "%Y-%m-%d").date() - datetime.now().date()).days
+                    valores["dias"] = str(restantes) if restantes >= 0 else str(-restantes)
+                except ValueError:
+                    pass
+                base = os.environ.get("GUILDA_URL_PUBLICA", "").strip().rstrip("/")
+                if base:
+                    valores["enlace_portal"] = f"{base}/portal/entrar"
                 try:
                     valores["fecha_limite"] = datetime.strptime(v["fecha_limite"][:10], "%Y-%m-%d").strftime("%d/%m/%Y")
                 except ValueError:
@@ -1604,12 +1618,12 @@ def archivar_correo_en_expediente(
 
 # --- Plantillas de respuesta guardadas -------------------------------------
 
-def crear_plantilla(usuario_id: int, nombre: str, asunto: str | None, cuerpo: str) -> int:
+def crear_plantilla(usuario_id: int, nombre: str, asunto: str | None, cuerpo: str, modelo: str | None = None) -> int:
     if not nombre.strip():
         raise ErrorCorreo("La plantilla necesita un nombre.")
     if not cuerpo.strip():
         raise ErrorCorreo("La plantilla necesita un cuerpo.")
-    return db.crear_plantilla_correo(usuario_id, nombre, asunto, cuerpo)
+    return db.crear_plantilla_correo(usuario_id, nombre, asunto, cuerpo, modelo)
 
 
 def listar_plantillas(usuario_id: int):
@@ -1738,7 +1752,7 @@ def validar_envio(usuario_id: int, cuenta_id: int, destinatarios: str, asunto: s
 def encolar_envio(
     usuario_id: int, cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
     cc: str = "", bcc: str = "", en_respuesta_a: str | None = None, adjuntos: list[dict] | None = None,
-    *, enviar_en: str, programado: bool = False,
+    *, enviar_en: str, programado: bool = False, seguimiento_dias: int | None = None,
 ) -> int:
     """Valida y deja el correo en la cola (se envía cuando llegue `enviar_en`,
     ISO local). Devuelve el id del envío."""
@@ -1748,7 +1762,7 @@ def encolar_envio(
         raise ErrorCorreo("Los adjuntos superan el tamaño máximo de 25 MB.")
     return db.encolar_envio_correo(
         usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
-        adjuntos, enviar_en, programado,
+        adjuntos, enviar_en, programado, seguimiento_dias,
     )
 
 
@@ -1778,6 +1792,7 @@ def procesar_envios_pendientes(ahora: datetime | None = None) -> int:
                 envio["usuario_id"], envio["cuenta_id"], envio["destinatarios"], envio["asunto"],
                 envio["cuerpo_html"], cc=envio["cc"] or "", bcc=envio["bcc"] or "",
                 en_respuesta_a=envio["en_respuesta_a"], adjuntos=db.adjuntos_envio_correo(envio["id"]),
+                seguimiento_dias=envio["seguimiento_dias"],
             )
         except Exception as e:  # noqa: BLE001 -- un envío fallido no debe parar la cola
             logger.exception("Envío de correo %s fallido", envio["id"])
@@ -1798,13 +1813,50 @@ def procesar_envios_pendientes(ahora: datetime | None = None) -> int:
     return enviados
 
 
+def _direcciones_propias(cuenta) -> set[str]:
+    propia = direccion_email(cuenta["usuario"])
+    return {propia.lower()} if propia else set()
+
+
+def procesar_seguimientos(ahora: datetime | None = None) -> dict:
+    """Revisa los correos de los que se espera respuesta: si ha llegado (en el mismo hilo y de otra persona) se
+    cierran; si ha pasado el plazo sin ella, se avisa una sola vez. Devuelve {'respondidos', 'avisados'}."""
+    ahora = ahora or datetime.now()
+    resultado = {"respondidos": 0, "avisados": 0}
+    cuentas: dict[int, object] = {}
+    for seg in db.seguimientos_en_espera():
+        cuenta = cuentas.get(seg["cuenta_id"]) or cuentas.setdefault(seg["cuenta_id"], db.obtener_cuenta_correo(seg["usuario_id"], seg["cuenta_id"]))
+        if cuenta is None:
+            db.cancelar_seguimiento_correo(seg["usuario_id"], seg["id"])
+            continue
+        respuesta = db.respuesta_a_mensaje(seg["cuenta_id"], seg["message_id"], seg["creado_en"], _direcciones_propias(cuenta))
+        if respuesta is not None:
+            if db.cerrar_seguimiento_correo(seg["id"], "respondido"):
+                resultado["respondidos"] += 1
+            continue
+        if seg["avisar_en"] <= ahora.isoformat(timespec="seconds") and db.cerrar_seguimiento_correo(seg["id"], "sin_respuesta"):
+            local = db.mensaje_local_por_message_id(seg["usuario_id"], seg["message_id"])
+            url = f"/correo/?cuenta_id={seg['cuenta_id']}&mensaje_id={local['id']}" if local else f"/correo/?cuenta_id={seg['cuenta_id']}"
+            try:
+                notificaciones.crear_y_enviar(
+                    seg["usuario_id"], "correo_sin_respuesta", "Sin respuesta a tu correo",
+                    f"«{seg['asunto'] or '(sin asunto)'}» a {seg['destinatarios'] or '—'} no ha tenido respuesta.", url,
+                    datos={"tipo": "correo_sin_respuesta"},
+                )
+            except Exception:  # noqa: BLE001
+                logger.exception("No se pudo avisar del seguimiento %s", seg["id"])
+            resultado["avisados"] += 1
+    return resultado
+
+
 def construir_y_enviar(
     usuario_id: int,
     cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
     cc: str = "", bcc: str = "", en_respuesta_a: str | None = None,
-    adjuntos: list[dict] | None = None,
-) -> None:
-    """Envía un correo desde `cuenta_id`. `destinatarios`/`cc`/`bcc` son
+    adjuntos: list[dict] | None = None, seguimiento_dias: int | None = None,
+) -> str:
+    """Envía un correo desde `cuenta_id` y devuelve su Message-ID. Con `seguimiento_dias`, avisa si en esos
+    días no llega respuesta (ver `procesar_seguimientos`). `destinatarios`/`cc`/`bcc` son
     cadenas con uno o varios correos separados por comas. `cuerpo_html` es
     el HTML escrito en el editor enriquecido — se manda como
     multipart/alternative (texto plano generado automáticamente + HTML),
@@ -1822,6 +1874,10 @@ def construir_y_enviar(
 
     mensaje = EmailMessage()
     mensaje["From"] = cuenta["usuario"]
+    # Message-ID propio (los servidores respetan el que ya viene): así se puede reconocer la respuesta.
+    dominio = direccion_email(cuenta["usuario"]).rpartition("@")[2] if direccion_email(cuenta["usuario"]) else None
+    mensaje_id = make_msgid(domain=dominio or None)
+    mensaje["Message-ID"] = mensaje_id
     mensaje["To"] = destinatarios.strip()
     if cc.strip():
         mensaje["Cc"] = cc.strip()
@@ -1867,3 +1923,6 @@ def construir_y_enviar(
         )
     except Exception:  # noqa: BLE001 -- un webhook fallido no debe afectar a un correo ya enviado
         logger.exception("No se pudo emitir el evento correo.enviado")
+    if seguimiento_dias:
+        db.crear_seguimiento_correo(usuario_id, cuenta_id, mensaje_id, asunto.strip(), destinatarios.strip(), seguimiento_dias)
+    return mensaje_id

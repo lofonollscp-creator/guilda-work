@@ -297,6 +297,26 @@
     </div>
 
     {% if aviso %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
+    {% if mensaje_seleccionado.message_id %}
+    <div class="correo-seguimiento-barra">
+      {% if seguimiento and seguimiento.estado == 'esperando' %}
+      <form action="{{ url_for('correo.cancelar_seguimiento', seguimiento_id=seguimiento.id) }}" method="post">
+        <span class="pill">{{ _('Esperando respuesta hasta el %(fecha)s', fecha=seguimiento.avisar_en[:10]) }}</span>
+        <button type="submit" class="btn btn-ghost">{{ _('Cancelar el seguimiento') }}</button>
+      </form>
+      {% elif seguimiento and seguimiento.estado == 'respondido' %}<span class="pill">{{ _('Respondido') }}</span>
+      {% elif seguimiento and seguimiento.estado == 'sin_respuesta' %}<span class="pill texto-peligro">{{ _('Sin respuesta') }}</span>
+      {% endif %}
+      {% if not seguimiento or seguimiento.estado != 'esperando' %}
+      <form action="{{ url_for('correo.esperar_respuesta', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-seguimiento-form">
+        <label>{{ _('Avisarme si no responden en') }}
+          <select name="dias">{% for n in (2, 3, 5, 7, 14) %}<option value="{{ n }}">{{ ngettext('%(n)s día', '%(n)s días', n, n=n) }}</option>{% endfor %}</select>
+        </label>
+        <button type="submit" class="btn btn-ghost">{{ _('Esperar respuesta') }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or _('(sin asunto)') }}</h2>
     {% if equipo_correo and (companeros or equipo_correo.asignado_a or equipo_correo.compartidos or notas_internas) %}
     <details class="correo-equipo-panel" {{ 'open' if equipo_correo.asignado_a or notas_internas }}>

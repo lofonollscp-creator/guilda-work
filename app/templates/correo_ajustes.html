@@ -95,7 +95,7 @@
   <ul class="log-list">
     {% for p in plantillas %}
     <li class="log-item">
-      <span class="log-text">{{ p.nombre }}</span>
+      <span class="log-text">{{ p.nombre }}{% if p.modelo %} <span class="pill">{{ _('Modelo %(m)s', m=p.modelo) }}</span>{% endif %}</span>
       <form action="{{ url_for('correo.eliminar_plantilla', plantilla_id=p.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar la plantilla «%(nombre)s»?', nombre=p.nombre) }}');">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
@@ -108,6 +108,7 @@
     <div class="ia-form-row">
       <input type="text" name="nombre" placeholder="{{ _('Nombre (ej. Recordatorio de documentación)') }}" required>
       <input type="text" name="asunto" placeholder="{{ _('Asunto (opcional)') }}">
+      <input type="text" name="modelo" maxlength="20" size="8" placeholder="{{ _('Modelo (ej. 303)') }}" title="{{ _('Si es para un modelo fiscal, las variables usan el próximo vencimiento de ese modelo y se sugiere al responder a ese cliente') }}">
     </div>
     <textarea name="cuerpo" rows="4" placeholder="{{ _('Texto de la plantilla...') }}" required></textarea>
     <button type="submit" class="btn btn-primary">+ {{ _('Añadir plantilla') }}</button>
@@ -196,6 +197,20 @@
       <button type="submit" class="btn btn-primary">+ {{ _('Añadir regla') }}</button>
     </div>
   </form>
+</section>
+
+<section class="correo-ajustes-seccion" id="seguimientos">
+  <h2>{{ _('Correos esperando respuesta') }}</h2>
+  {% if seguimientos %}
+  <ul class="log-list">
+    {% for sg in seguimientos %}
+    <li class="log-item">
+      <span class="log-text"><strong>{{ sg.asunto or _('(sin asunto)') }}</strong> <span class="muted">· {{ sg.destinatarios }} · {{ _('aviso el %(fecha)s', fecha=sg.avisar_en[:10]) }}</span></span>
+      <form action="{{ url_for('correo.cancelar_seguimiento', seguimiento_id=sg.id) }}" method="post"><button type="submit" class="btn btn-ghost">{{ _('Cancelar') }}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('No esperas respuesta a ningún correo. Al enviar uno puedes pedir que te avisemos si nadie contesta.') }}</p>{% endif %}
 </section>
 
 <section class="correo-ajustes-seccion">

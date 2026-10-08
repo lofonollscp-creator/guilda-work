@@ -7067,3 +7067,205 @@ msgstr "Classer les %s pièces jointes dans le dossier de ce client"
 msgid "Dejar este borrador de respuesta para revisarlo"
 msgstr "Laisser ce brouillon de réponse pour relecture"
 
+msgid "No has marcado ninguna tarea."
+msgstr "Vous n'avez sélectionné aucune tâche."
+
+msgid "Para guardar una vista pon un nombre y aplica antes algún filtro."
+msgstr ""
+"Pour enregistrer une vue, donnez-lui un nom et appliquez d'abord un "
+"filtre."
+
+msgid "No se ha podido activar el seguimiento."
+msgstr "Le suivi n'a pas pu être activé."
+
+#, python-format
+msgid "Te avisaré si no responden en %(n)s días."
+msgstr "Je vous préviendrai s'ils ne répondent pas sous %(n)s jours."
+
+msgid "Acciones sobre las tareas marcadas"
+msgstr "Actions sur les tâches sélectionnées"
+
+msgid "Marcar todas"
+msgstr "Tout sélectionner"
+
+msgid "Acción"
+msgstr "Action"
+
+msgid "Completar"
+msgstr "Terminer"
+
+msgid "Cambiar el estado…"
+msgstr "Changer le statut…"
+
+msgid "Cambiar la prioridad…"
+msgstr "Changer la priorité…"
+
+msgid "Cambiar el vencimiento…"
+msgstr "Changer l'échéance…"
+
+msgid "Asignar a…"
+msgstr "Assigner à…"
+
+msgid "Mover a un proyecto…"
+msgstr "Déplacer vers un projet…"
+
+msgid "Mover a una sección…"
+msgstr "Déplacer vers une section…"
+
+msgid "Vencimiento (vacío para quitarlo)"
+msgstr "Échéance (vide pour la retirer)"
+
+msgid "Vacío = quitar el vencimiento"
+msgstr "Vide = retirer l'échéance"
+
+msgid "Aplicar a las marcadas"
+msgstr "Appliquer à la sélection"
+
+msgid "1 tarea marcada"
+msgstr "1 tâche sélectionnée"
+
+#, python-format
+msgid "%s tareas marcadas"
+msgstr "%s tâches sélectionnées"
+
+msgid "Vistas guardadas"
+msgstr "Vues enregistrées"
+
+#, python-format
+msgid "Compartida por %(quien)s"
+msgstr "Partagée par %(quien)s"
+
+msgid "compartida"
+msgstr "partagée"
+
+msgid "Eliminar la vista"
+msgstr "Supprimer la vue"
+
+#, python-format
+msgid "Eliminar la vista %(n)s"
+msgstr "Supprimer la vue %(n)s"
+
+msgid "Guardar esta vista"
+msgstr "Enregistrer cette vue"
+
+msgid "Nombre (ej. Mis vencidas de IVA)"
+msgstr "Nom (ex. Mes échues de TVA)"
+
+msgid "Nombre de la vista"
+msgstr "Nom de la vue"
+
+msgid "Compartir con el despacho"
+msgstr "Partager avec le cabinet"
+
+msgid "Nueva regla por vencimiento fiscal"
+msgstr "Nouvelle règle par échéance fiscale"
+
+msgid ""
+"Crea una tarea por cada vencimiento pendiente de un modelo (para cada "
+"cliente), con la fecha límite como referencia. Se aplica en el momento a "
+"los que ya existen y cada día a los nuevos."
+msgstr ""
+"Crée une tâche pour chaque échéance en attente d'un modèle (pour chaque "
+"client), avec la date limite comme référence. S'applique immédiatement "
+"aux existantes et chaque jour aux nouvelles."
+
+msgid "Modelo (ej. 303)"
+msgstr "Modèle (ex. 303)"
+
+#, python-brace-format
+msgid "Preparar el {modelo} de {cliente} ({periodo})"
+msgstr "Préparer le {modelo} de {cliente} ({periodo})"
+
+msgid "Crear la tarea"
+msgstr "Créer la tâche"
+
+msgid "días antes"
+msgstr "jours avant"
+
+msgid "Que venza"
+msgstr "Échéance"
+
+msgid "días antes de la fecha límite"
+msgstr "jours avant la date limite"
+
+msgid "Estimación (1h30)"
+msgstr "Estimation (1h30)"
+
+msgid "Asignar al responsable del vencimiento"
+msgstr "Assigner au responsable de l'échéance"
+
+msgid "Reglas por vencimiento fiscal"
+msgstr "Règles par échéance fiscale"
+
+msgid "Cuándo"
+msgstr "Quand"
+
+msgid "Tareas creadas"
+msgstr "Tâches créées"
+
+#, python-format
+msgid "crea %(a)s d antes · vence %(b)s d antes"
+msgstr "crée %(a)s j avant · échéance %(b)s j avant"
+
+msgid "¿Eliminar esta regla? Las tareas ya creadas se quedan."
+msgstr "Supprimer cette règle ? Les tâches déjà créées restent."
+
+#, python-format
+msgid "Seleccionar la tarea «%(t)s»"
+msgstr "Sélectionner la tâche « %(t)s »"
+
+msgid "Avisarme si no responden en"
+msgstr "Me prévenir s'ils ne répondent pas sous"
+
+#, python-format
+msgid "Esperando respuesta hasta el %(fecha)s"
+msgstr "En attente de réponse jusqu'au %(fecha)s"
+
+msgid "Cancelar el seguimiento"
+msgstr "Annuler le suivi"
+
+msgid "Respondido"
+msgstr "Répondu"
+
+msgid "Sin respuesta"
+msgstr "Sans réponse"
+
+msgid "Esperar respuesta"
+msgstr "Attendre une réponse"
+
+msgid ""
+"Si es para un modelo fiscal, las variables usan el próximo vencimiento de"
+" ese modelo y se sugiere al responder a ese cliente"
+msgstr ""
+"S'il concerne un modèle fiscal, les variables utilisent la prochaine "
+"échéance de ce modèle et il est suggéré en répondant à ce client"
+
+msgid "Correos esperando respuesta"
+msgstr "Courriels en attente de réponse"
+
+#, python-format
+msgid "aviso el %(fecha)s"
+msgstr "alerte le %(fecha)s"
+
+msgid ""
+"No esperas respuesta a ningún correo. Al enviar uno puedes pedir que te "
+"avisemos si nadie contesta."
+msgstr ""
+"Vous n'attendez de réponse à aucun courriel. En envoyant un message, vous"
+" pouvez demander à être prévenu si personne ne répond."
+
+#, python-format
+msgid "%(n)s tarea actualizada."
+msgid_plural "%(n)s tareas actualizadas."
+msgstr[0] "%(n)s tâche mise à jour."
+msgstr[1] "%(n)s tâches mises à jour."
+
+#, python-format
+msgid "%(n)s no se ha podido cambiar (permisos o dependencias)."
+msgid_plural "%(n)s no se han podido cambiar (permisos o dependencias)."
+msgstr[0] "%(n)s n'a pas pu être modifiée (droits ou dépendances)."
+msgstr[1] "%(n)s n'ont pas pu être modifiées (droits ou dépendances)."
+
+msgid "Seguimiento de respuestas de correo"
+msgstr "Suivi des réponses aux courriels"
+

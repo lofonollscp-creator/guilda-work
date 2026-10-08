@@ -20,11 +20,12 @@ from app import db, salud  # noqa: E402
 def main() -> None:
     try:
         creadas = db.generar_tareas_recurrentes()
+        por_vencimiento = db.generar_tareas_por_vencimiento()
     except Exception as e:
         salud.registrar_error("tareas_recurrentes", 24 * 3600, f"{type(e).__name__}: {e}")
         raise
-    salud.registrar_ok("tareas_recurrentes", 24 * 3600, f"{creadas} creada(s)")
-    print(f"Tareas recurrentes generadas: {creadas}")
+    salud.registrar_ok("tareas_recurrentes", 24 * 3600, f"{creadas} creada(s), {por_vencimiento} por vencimiento")
+    print(f"Tareas recurrentes generadas: {creadas}; por vencimiento fiscal: {por_vencimiento}")
 
 
 if __name__ == "__main__":

@@ -5,9 +5,10 @@ dentro de la app (sin relación con los proyectos ni con las tareas con duració
 """
 import calendar as calendario_std
 from datetime import date, datetime, timedelta
+from urllib.parse import quote
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
-from flask_babel import format_date
+from flask_babel import format_date, ngettext
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
@@ -140,12 +141,20 @@ def listar():
     hay_pagina_siguiente = len(tareas) > TAREAS_POR_PAGINA
     tareas = tareas[:TAREAS_POR_PAGINA]
 
+    filtros_actuales = db.filtros_vista_validos({
+        "vista": vista, "estado": estado, "prioridad": prioridad, "categoria": categoria, "q": q, "completadas": "1" if incluir_completadas else "",
+    })
+    vistas = db.listar_vistas_tareas(g.usuario_id)
     return render_template(
         "tareas_lista.html",
         **_contexto_filas(tareas),
+        vistas=vistas, filtros_actuales=filtros_actuales,
+        vista_activa=next((v["id"] for v in vistas if v["filtros"] == filtros_actuales), None),
         vista=vista,
         plantilla_creadas=request.args.get("plantilla_creadas", type=int),
         error=(request.args.get("error") or "")[:200] or None,
+        aviso=(request.args.get("aviso") or "")[:200] or None,
+        lote_activo=True, volver_a=request.full_path.rstrip("?"), url_lote=url_for("tareas.lote"),
         tareas=tareas,
         estados=ESTADOS,
         prioridades=PRIORIDADES,
@@ -477,6 +486,50 @@ def _lunes_de(texto: str | None) -> date:
     except ValueError:
         d = date.today()
     return d - timedelta(days=d.weekday())
+
+
+def aviso_de_lote(resultado: dict) -> str:
+    if not resultado["ok"] and not resultado["fallos"]:
+        return _("No has marcado ninguna tarea.")
+    texto = ngettext("%(n)s tarea actualizada.", "%(n)s tareas actualizadas.", resultado["ok"], n=resultado["ok"])
+    if resultado["fallos"]:
+        texto += " " + ngettext("%(n)s no se ha podido cambiar (permisos o dependencias).", "%(n)s no se han podido cambiar (permisos o dependencias).", resultado["fallos"], n=resultado["fallos"])
+    return texto
+
+
+@tareas_bp.route("/lote", methods=["POST"])
+@login_required
+def lote():
+    """Una acción sobre varias tareas marcadas de la lista (mismos permisos que una a una)."""
+    accion = request.form.get("accion", "")
+    try:
+        resultado = db.accion_en_lote(g.usuario_id, request.form.getlist("ids"), accion, request.form.get(f"valor_{accion}"))
+    except ValueError:
+        resultado = {"ok": 0, "fallos": 0}
+    volver = request.form.get("volver_a") or ""
+    if not volver.startswith("/") or volver.startswith("//"):
+        volver = url_for("tareas.listar")
+    separador = "&" if "?" in volver else "?"
+    return redirect(f"{volver}{separador}aviso={quote(aviso_de_lote(resultado))}")
+
+
+@tareas_bp.route("/vistas", methods=["POST"])
+@login_required
+def guardar_vista():
+    """Guarda los filtros que se están usando como una vista con nombre (opcionalmente compartida con el despacho)."""
+    filtros = db.filtros_vista_validos(request.form)
+    vista_id = db.crear_vista_tareas(g.usuario_id, request.form.get("nombre", ""), filtros, request.form.get("compartida") == "on")
+    if vista_id is None:
+        return redirect(url_for("tareas.listar", error=_("Para guardar una vista pon un nombre y aplica antes algún filtro."), **filtros))
+    return redirect(url_for("tareas.listar", **filtros))
+
+
+@tareas_bp.route("/vistas/<int:vista_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_vista(vista_id: int):
+    if not db.eliminar_vista_tareas(g.usuario_id, vista_id):
+        abort(404)
+    return redirect(url_for("tareas.listar"))
 
 
 @tareas_bp.route("/carga")
@@ -923,12 +976,45 @@ def recurrentes():
     return render_template(
         "tareas_recurrentes.html",
         reglas=db.listar_tareas_recurrentes(g.usuario_id),
+        reglas_vencimiento=db.listar_reglas_por_vencimiento(g.usuario_id),
+        error=(request.args.get("error") or "")[:200] or None,
         menus=db.listar_proyectos_usables(g.usuario_id),
         dias_semana=DIAS_SEMANA,
         periodicidades=PERIODICIDADES,
         meses=NOMBRES_MES_SELECT,
         etiquetas_periodicidad=dict(PERIODICIDADES),
     )
+
+
+@tareas_bp.route("/recurrentes/vencimiento", methods=["POST"])
+@login_required
+def crear_regla_vencimiento():
+    """Regla «una tarea por cada vencimiento del modelo X»; se aplica en el momento a los vencimientos que ya existen."""
+    try:
+        regla_id = db.crear_regla_por_vencimiento(
+            g.usuario_id, request.form.get("modelo", ""), request.form.get("asunto", ""),
+            crear_dias_antes=request.form.get("crear_dias_antes", 14, type=int), vence_dias_antes=request.form.get("vence_dias_antes", 2, type=int),
+            categoria_id=_int_o_none(request.form.get("categoria_id")), asignar_responsable=request.form.get("asignar_responsable") == "on",
+            estimacion_min=quickadd.duracion_a_minutos(request.form.get("estimacion")), prioridad=request.form.get("prioridad", "normal"),
+        )
+    except ValueError as e:
+        return redirect(url_for("tareas.recurrentes", error=str(e)))
+    db.generar_tareas_por_vencimiento(regla_id=regla_id)
+    return redirect(url_for("tareas.recurrentes"))
+
+
+@tareas_bp.route("/recurrentes/vencimiento/<int:regla_id>/alternar", methods=["POST"])
+@login_required
+def alternar_regla_vencimiento(regla_id: int):
+    db.alternar_regla_por_vencimiento(g.usuario_id, regla_id)
+    return redirect(url_for("tareas.recurrentes"))
+
+
+@tareas_bp.route("/recurrentes/vencimiento/<int:regla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_regla_vencimiento(regla_id: int):
+    db.eliminar_regla_por_vencimiento(g.usuario_id, regla_id)
+    return redirect(url_for("tareas.recurrentes"))
 
 
 @tareas_bp.route("/recurrentes", methods=["POST"])

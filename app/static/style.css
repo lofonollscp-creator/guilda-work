@@ -4854,3 +4854,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .carga-tarea.prioridad-alta { border-left: 3px solid #d64545; }
 .carga-tarea.is-arrastrando { opacity: 0.45; }
 .carga-semana { white-space: nowrap; }
+
+/* Vistas guardadas de tareas */
+.tareas-vistas { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
+.tarea-vista { display: inline-flex; gap: 6px; align-items: center; }
+.tarea-vista.activa { outline: 2px solid var(--accent, #4a90d9); }
+.tarea-vista a { color: inherit; text-decoration: none; font-weight: 500; }
+.tarea-vista-borrar { display: inline; margin: 0; }
+.tareas-vista-nueva .inline-form { margin-top: 6px; }
+
+/* Acciones en lote sobre tareas */
+.lote-barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; margin: 8px 0; border: 1px solid var(--border, #e2e5ea); border-radius: 8px; background: var(--bg-elevated, transparent); }
+.lote-barra.lote-oculta [data-valor-para], .lote-barra.lote-oculta select#lote-accion, .lote-barra.lote-oculta button { display: none; }
+.lote-casilla { margin-right: 6px; }

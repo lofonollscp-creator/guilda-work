@@ -6984,3 +6984,203 @@ msgstr "File the %s attachments in this client's file"
 msgid "Dejar este borrador de respuesta para revisarlo"
 msgstr "Leave this reply draft for review"
 
+msgid "No has marcado ninguna tarea."
+msgstr "You haven't selected any task."
+
+msgid "Para guardar una vista pon un nombre y aplica antes algún filtro."
+msgstr "To save a view, give it a name and apply a filter first."
+
+msgid "No se ha podido activar el seguimiento."
+msgstr "Follow-up could not be turned on."
+
+#, python-format
+msgid "Te avisaré si no responden en %(n)s días."
+msgstr "I'll let you know if they don't reply within %(n)s days."
+
+msgid "Acciones sobre las tareas marcadas"
+msgstr "Actions on the selected tasks"
+
+msgid "Marcar todas"
+msgstr "Select all"
+
+msgid "Acción"
+msgstr "Action"
+
+msgid "Completar"
+msgstr "Complete"
+
+msgid "Cambiar el estado…"
+msgstr "Change status…"
+
+msgid "Cambiar la prioridad…"
+msgstr "Change priority…"
+
+msgid "Cambiar el vencimiento…"
+msgstr "Change due date…"
+
+msgid "Asignar a…"
+msgstr "Assign to…"
+
+msgid "Mover a un proyecto…"
+msgstr "Move to a project…"
+
+msgid "Mover a una sección…"
+msgstr "Move to a section…"
+
+msgid "Vencimiento (vacío para quitarlo)"
+msgstr "Due date (empty to remove it)"
+
+msgid "Vacío = quitar el vencimiento"
+msgstr "Empty = remove the due date"
+
+msgid "Aplicar a las marcadas"
+msgstr "Apply to selected"
+
+msgid "1 tarea marcada"
+msgstr "1 task selected"
+
+#, python-format
+msgid "%s tareas marcadas"
+msgstr "%s tasks selected"
+
+msgid "Vistas guardadas"
+msgstr "Saved views"
+
+#, python-format
+msgid "Compartida por %(quien)s"
+msgstr "Shared by %(quien)s"
+
+msgid "compartida"
+msgstr "shared"
+
+msgid "Eliminar la vista"
+msgstr "Delete the view"
+
+#, python-format
+msgid "Eliminar la vista %(n)s"
+msgstr "Delete the view %(n)s"
+
+msgid "Guardar esta vista"
+msgstr "Save this view"
+
+msgid "Nombre (ej. Mis vencidas de IVA)"
+msgstr "Name (e.g. My overdue VAT tasks)"
+
+msgid "Nombre de la vista"
+msgstr "View name"
+
+msgid "Compartir con el despacho"
+msgstr "Share with the office"
+
+msgid "Nueva regla por vencimiento fiscal"
+msgstr "New rule per tax deadline"
+
+msgid ""
+"Crea una tarea por cada vencimiento pendiente de un modelo (para cada "
+"cliente), con la fecha límite como referencia. Se aplica en el momento a "
+"los que ya existen y cada día a los nuevos."
+msgstr ""
+"Creates a task for each pending deadline of a form (for every client), "
+"using the due date as reference. It applies at once to existing ones and "
+"daily to new ones."
+
+msgid "Modelo (ej. 303)"
+msgstr "Form (e.g. 303)"
+
+#, python-brace-format
+msgid "Preparar el {modelo} de {cliente} ({periodo})"
+msgstr "Prepare {modelo} for {cliente} ({periodo})"
+
+msgid "Crear la tarea"
+msgstr "Create the task"
+
+msgid "días antes"
+msgstr "days before"
+
+msgid "Que venza"
+msgstr "Due"
+
+msgid "días antes de la fecha límite"
+msgstr "days before the deadline"
+
+msgid "Estimación (1h30)"
+msgstr "Estimate (1h30)"
+
+msgid "Asignar al responsable del vencimiento"
+msgstr "Assign to the deadline's owner"
+
+msgid "Reglas por vencimiento fiscal"
+msgstr "Tax deadline rules"
+
+msgid "Cuándo"
+msgstr "When"
+
+msgid "Tareas creadas"
+msgstr "Tasks created"
+
+#, python-format
+msgid "crea %(a)s d antes · vence %(b)s d antes"
+msgstr "creates %(a)s d before · due %(b)s d before"
+
+msgid "¿Eliminar esta regla? Las tareas ya creadas se quedan."
+msgstr "Delete this rule? Tasks already created stay."
+
+#, python-format
+msgid "Seleccionar la tarea «%(t)s»"
+msgstr "Select the task “%(t)s”"
+
+msgid "Avisarme si no responden en"
+msgstr "Alert me if they don't reply within"
+
+#, python-format
+msgid "Esperando respuesta hasta el %(fecha)s"
+msgstr "Waiting for a reply until %(fecha)s"
+
+msgid "Cancelar el seguimiento"
+msgstr "Cancel follow-up"
+
+msgid "Respondido"
+msgstr "Replied"
+
+msgid "Sin respuesta"
+msgstr "No reply"
+
+msgid "Esperar respuesta"
+msgstr "Wait for reply"
+
+msgid ""
+"Si es para un modelo fiscal, las variables usan el próximo vencimiento de"
+" ese modelo y se sugiere al responder a ese cliente"
+msgstr ""
+"If it is for a tax form, the variables use that form's next deadline and "
+"it is suggested when replying to that client"
+
+msgid "Correos esperando respuesta"
+msgstr "Emails awaiting a reply"
+
+#, python-format
+msgid "aviso el %(fecha)s"
+msgstr "alert on %(fecha)s"
+
+msgid ""
+"No esperas respuesta a ningún correo. Al enviar uno puedes pedir que te "
+"avisemos si nadie contesta."
+msgstr ""
+"You are not waiting for a reply to any email. When sending one you can "
+"ask to be alerted if nobody answers."
+
+#, python-format
+msgid "%(n)s tarea actualizada."
+msgid_plural "%(n)s tareas actualizadas."
+msgstr[0] "%(n)s task updated."
+msgstr[1] "%(n)s tasks updated."
+
+#, python-format
+msgid "%(n)s no se ha podido cambiar (permisos o dependencias)."
+msgid_plural "%(n)s no se han podido cambiar (permisos o dependencias)."
+msgstr[0] "%(n)s could not be changed (permissions or dependencies)."
+msgstr[1] "%(n)s could not be changed (permissions or dependencies)."
+
+msgid "Seguimiento de respuestas de correo"
+msgstr "Email reply follow-up"
+

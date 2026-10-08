@@ -17,6 +17,31 @@
 {% endif %}
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
+{% if vistas or filtros_actuales %}
+<nav class="tareas-vistas" aria-label="{{ _('Vistas guardadas') }}">
+  {% for v in vistas %}
+  <span class="pill tarea-vista {{ 'activa' if v.id == vista_activa }}">
+    <a href="{{ url_for('tareas.listar', **v.filtros) }}" {{ 'aria-current=page' if v.id == vista_activa }}>{{ v.nombre }}</a>
+    {% if v.compartida and not v.mia %}<span class="muted" title="{{ _('Compartida por %(quien)s', quien=v.autor) }}">· {{ v.autor }}</span>{% elif v.compartida %}<span class="muted">· {{ _('compartida') }}</span>{% endif %}
+    {% if v.mia %}
+    <form action="{{ url_for('tareas.eliminar_vista', vista_id=v.id) }}" method="post" class="tarea-vista-borrar"><button type="submit" class="chip-del" title="{{ _('Eliminar la vista') }}" aria-label="{{ _('Eliminar la vista %(n)s', n=v.nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></form>
+    {% endif %}
+  </span>
+  {% endfor %}
+  {% if filtros_actuales and not vista_activa %}
+  <details class="tareas-vista-nueva">
+    <summary class="btn btn-ghost">{{ _('Guardar esta vista') }}</summary>
+    <form action="{{ url_for('tareas.guardar_vista') }}" method="post" class="inline-form">
+      {% for k, val in filtros_actuales.items() %}<input type="hidden" name="{{ k }}" value="{{ val }}">{% endfor %}
+      <input type="text" name="nombre" maxlength="60" required placeholder="{{ _('Nombre (ej. Mis vencidas de IVA)') }}" aria-label="{{ _('Nombre de la vista') }}">
+      {% if g.tenant_id %}<label class="checkbox-label"><input type="checkbox" name="compartida"> {{ _('Compartir con el despacho') }}</label>{% endif %}
+      <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    </form>
+  </details>
+  {% endif %}
+</nav>
+{% endif %}
+
 <form class="filters" method="get">
   {% if companeros %}
   <label>{{ _('Mostrar') }}
@@ -108,6 +133,8 @@
 {% if not tareas %}
 <p class="empty-lane">{{ _('No hay tareas para este filtro.') }}</p>
 {% else %}
+{% if aviso %}<p class="muted" role="status">{{ aviso }}</p>{% endif %}
+{% include "_tareas_lote.html" %}
 <ul class="log-list" {{ defecto_eliminar() }}>
   {% for t in tareas %}
   {{ fila(t, estados, cronometros, checklists, menus) }}

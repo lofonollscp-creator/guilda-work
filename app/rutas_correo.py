@@ -106,6 +106,14 @@ def _cliente_del_mensaje_respondido(mensaje_id) -> int | None:
     return mensaje["cliente_fiscal_id"] if mensaje is not None else None
 
 
+def _modelo_proximo(cliente_id) -> str | None:
+    """Modelo del próximo vencimiento pendiente del cliente (para sugerir la plantilla de ese modelo)."""
+    if not cliente_id or g.tenant_id is None:
+        return None
+    proximos = db.listar_vencimientos_fiscales(g.tenant_id, estado="pendiente", cliente_fiscal_id=cliente_id)
+    return (min(proximos, key=lambda f: f["fecha_limite"])["modelo"] or None) if proximos else None
+
+
 def _render_redactar(
     *, cuenta_id=None, destinatarios="", cc="", bcc="", asunto="", cuerpo_html="",
     en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"), borrador_id=None,
@@ -126,6 +134,7 @@ def _render_redactar(
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
         cliente_plantilla_id=_cliente_del_mensaje_respondido(en_respuesta_a),
+        modelo_sugerido=_modelo_proximo(_cliente_del_mensaje_respondido(en_respuesta_a)),
         borrador_id=borrador_id,
         adjuntos_borrador=db.listar_adjuntos_borrador(g.usuario_id, borrador_id) if borrador_id else [],
         deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
@@ -429,6 +438,7 @@ def bandeja():
     contexto["companeros"] = db.listar_companeros_tenant(g.usuario_id) if mensaje_seleccionado is not None else []
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
     contexto["categorias_documento"] = db.CATEGORIAS_DOCUMENTO
+    contexto["seguimiento"] = db.seguimiento_de_mensaje(g.usuario_id, mensaje_seleccionado["message_id"]) if mensaje_seleccionado else None
     # Para guardar un adjunto en un vencimiento del cliente enlazado al mensaje.
     contexto["vencimientos_cliente"] = (
         db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=mensaje_seleccionado["cliente_fiscal_id"])
@@ -852,6 +862,7 @@ def enviar():
         ids_mantener = [i for i in request.form.getlist("mantener_adjuntos") if i.isdigit()]
         adjuntos = db.adjuntos_borrador_para_enviar(g.usuario_id, borrador_id, [int(i) for i in ids_mantener]) + adjuntos
     programado = request.form.get("programar") == "1"
+    seguimiento_dias = db.seguimiento_dias_valido(request.form.get("seguimiento_dias"))
     deshacer = db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"]
     try:
         enviar_en = None
@@ -869,6 +880,7 @@ def enviar():
             envio_id = correo.encolar_envio(
                 g.usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
                 en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, enviar_en=enviar_en, programado=programado,
+                seguimiento_dias=seguimiento_dias,
             )
             if borrador_id is not None:
                 db.eliminar_borrador_correo(g.usuario_id, borrador_id)
@@ -876,7 +888,7 @@ def enviar():
         correo.construir_y_enviar(
             g.usuario_id,
             cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
-            en_respuesta_a=en_respuesta_a, adjuntos=adjuntos,
+            en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, seguimiento_dias=seguimiento_dias,
         )
     except correo.ErrorCorreo as e:
         return _render_redactar(
@@ -1118,6 +1130,7 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         variables_plantilla=correo.VARIABLES_PLANTILLA,
+        seguimientos=db.listar_seguimientos_correo(g.usuario_id),
         error=error,
     )
 
@@ -1172,7 +1185,7 @@ def plantilla_json(plantilla_id: int):
     cliente_id = request.args.get("cliente_fiscal_id", type=int)
     if cliente_id is None:
         cliente_id = _cliente_del_mensaje_respondido(request.args.get("en_respuesta_a"))
-    valores = correo.contexto_plantilla(g.usuario_id, cliente_id)
+    valores = correo.contexto_plantilla(g.usuario_id, cliente_id, plantilla["modelo"])
     asunto, faltan_asunto = correo.rellenar_plantilla(plantilla["asunto"], valores)
     cuerpo, faltan_cuerpo = correo.rellenar_plantilla(plantilla["cuerpo"], valores, html=True)
     return jsonify({"asunto": asunto, "cuerpo": cuerpo, "sin_resolver": sorted(set(faltan_asunto + faltan_cuerpo))})
@@ -1184,7 +1197,7 @@ def crear_plantilla():
     try:
         correo.crear_plantilla(
             g.usuario_id, request.form.get("nombre", ""), request.form.get("asunto"),
-            request.form.get("cuerpo", ""),
+            request.form.get("cuerpo", ""), request.form.get("modelo"),
         )
     except correo.ErrorCorreo as e:
         return _render_ajustes(error=str(e))
@@ -1234,6 +1247,25 @@ def crear_regla_categoria():
 def eliminar_regla_categoria(regla_id: int):
     correo.eliminar_regla_categoria(g.usuario_id, regla_id)
     return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/<int:mensaje_id>/seguimiento", methods=["POST"])
+@login_required
+def esperar_respuesta(mensaje_id: int):
+    """«Avísame si no responde» sobre un correo ya enviado (el de la carpeta de enviados)."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    dias = db.seguimiento_dias_valido(request.form.get("dias"))
+    if not mensaje["message_id"] or dias is None:
+        return _volver_a_mensaje(mensaje, _("No se ha podido activar el seguimiento."))
+    db.crear_seguimiento_correo(g.usuario_id, mensaje["cuenta_id"], mensaje["message_id"], mensaje["asunto"] or "", mensaje["destinatarios"] or "", dias)
+    return _volver_a_mensaje(mensaje, _("Te avisaré si no responden en %(n)s días.", n=dias))
+
+
+@correo_bp.route("/seguimientos/<int:seguimiento_id>/cancelar", methods=["POST"])
+@login_required
+def cancelar_seguimiento(seguimiento_id: int):
+    db.cancelar_seguimiento_correo(g.usuario_id, seguimiento_id)
+    return redirect(request.referrer or url_for("correo.ajustes"))
 
 
 @correo_bp.route("/<int:mensaje_id>/expediente", methods=["POST"])

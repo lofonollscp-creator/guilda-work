@@ -3,6 +3,7 @@
 {% macro fila_tarea(t) %}
   {% set edita = organiza or t.usuario_id == g.usuario_id %}
   <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}" data-tarea="{{ t.id }}" {% if organiza %}draggable="true" tabindex="0" title="{{ _('Arrastra para reordenar (o Alt + ↑ / ↓)') }}"{% endif %}>
+    {% if organiza %}<input type="checkbox" class="lote-casilla" name="ids" value="{{ t.id }}" form="lote-form" aria-label="{{ _('Seleccionar la tarea «%(t)s»', t=t.asunto) }}">{% endif %}
     <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
       <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' or not edita }}>
         {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
@@ -43,6 +44,12 @@
 </form>
 {% endif %}
 
+{% if aviso %}<p class="muted" role="status">{{ aviso }}</p>{% endif %}
+{% if organiza %}
+{% set url_lote = url_for('proyectos.lote', proyecto_id=p.id) %}{% set volver_a = url_for('proyectos.lista', proyecto_id=p.id) %}{% set secciones_lote = secciones %}{% set menus = none %}{% set companeros = asignables %}
+{% set estados = estados_tarea %}{% set prioridades = prioridades_tarea %}
+{% include "_tareas_lote.html" %}
+{% endif %}
 <div data-dnd="lista" data-url-orden="{{ url_for('proyectos.reordenar_tarea', proyecto_id=p.id, tarea_id=0) }}"
      data-t-movida="{{ _('Tarea movida') }}" data-t-deshacer="{{ _('Deshacer') }}" data-t-error="{{ _('No se ha podido mover la tarea.') }}">
 {% for s in secciones %}

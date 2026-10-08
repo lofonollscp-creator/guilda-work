@@ -12,6 +12,7 @@ data-eliminar-defecto data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a 
 {% set puede_editar = es_mia or mi_rol == 'colabora' %}
 {% set solo_ve = mi_rol == 'observa' %}
 <li class="log-item tarea-outlook-item {{ 'is-completada' if t.estado == 'completada' }}">
+  {% if lote_activo is defined and lote_activo %}<input type="checkbox" class="lote-casilla" name="ids" value="{{ t.id }}" form="lote-form" aria-label="{{ _('Seleccionar la tarea «%(t)s»', t=t.asunto) }}">{% endif %}
   <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post">
     <button type="submit" class="tarea-check" title="{{ _('Marcar como completada') }}" {{ 'disabled' if t.estado == 'completada' or solo_ve }}>
       {% if t.estado == 'completada' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}

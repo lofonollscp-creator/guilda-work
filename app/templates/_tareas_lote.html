@@ -1,0 +1,33 @@
+{# Barra de acciones sobre las tareas marcadas. Las casillas de cada fila (name="ids", form="lote-form") están en las filas.
+   Variables: url_lote, volver_a, y opcionales: menus (proyectos), companeros (personas), secciones_lote (secciones del proyecto). #}
+<form id="lote-form" class="lote-barra" action="{{ url_lote }}" method="post" aria-label="{{ _('Acciones sobre las tareas marcadas') }}">
+  <input type="hidden" name="volver_a" value="{{ volver_a }}">
+  <label class="checkbox-label"><input type="checkbox" id="lote-todas"> <span id="lote-contador" aria-live="polite">{{ _('Marcar todas') }}</span></label>
+  <select name="accion" id="lote-accion" aria-label="{{ _('Acción') }}">
+    <option value="completar">{{ _('Completar') }}</option>
+    <option value="estado">{{ _('Cambiar el estado…') }}</option>
+    <option value="prioridad">{{ _('Cambiar la prioridad…') }}</option>
+    <option value="fecha">{{ _('Cambiar el vencimiento…') }}</option>
+    {% if companeros %}<option value="asignar">{{ _('Asignar a…') }}</option>{% endif %}
+    {% if menus %}<option value="proyecto">{{ _('Mover a un proyecto…') }}</option>{% endif %}
+    {% if secciones_lote %}<option value="seccion">{{ _('Mover a una sección…') }}</option>{% endif %}
+  </select>
+  <select name="valor_estado" data-valor-para="estado" aria-label="{{ _('Estado') }}">
+    {% for valor, etiqueta in estados %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
+  </select>
+  <select name="valor_prioridad" data-valor-para="prioridad" aria-label="{{ _('Prioridad') }}">
+    {% for valor, etiqueta in prioridades %}<option value="{{ valor }}" {{ 'selected' if valor == 'normal' }}>{{ etiqueta }}</option>{% endfor %}
+  </select>
+  <input type="date" name="valor_fecha" data-valor-para="fecha" aria-label="{{ _('Vencimiento (vacío para quitarlo)') }}" title="{{ _('Vacío = quitar el vencimiento') }}">
+  {% if companeros %}
+  <select name="valor_asignar" data-valor-para="asignar" aria-label="{{ _('Asignar a') }}"><option value="">{{ _('Sin asignar') }}</option>{% for u in companeros %}<option value="{{ u.id or u.usuario_id }}">{{ u.nombre }}</option>{% endfor %}</select>
+  {% endif %}
+  {% if menus %}
+  <select name="valor_proyecto" data-valor-para="proyecto" aria-label="{{ _('Proyecto') }}"><option value="">{{ _('Sin proyecto') }}</option>{% for m in menus %}{% if m.propio is not defined or m.propio %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endif %}{% endfor %}</select>
+  {% endif %}
+  {% if secciones_lote %}
+  <select name="valor_seccion" data-valor-para="seccion" aria-label="{{ _('Sección') }}"><option value="">{{ _('Sin sección') }}</option>{% for s in secciones_lote %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}</select>
+  {% endif %}
+  <button type="submit" class="btn btn-primary">{{ _('Aplicar a las marcadas') }}</button>
+</form>
+<script src="{{ url_for('static', filename='lote.js') }}" defer data-t-marcadas-uno="{{ _('1 tarea marcada') }}" data-t-marcadas="{{ _('%s tareas marcadas') }}" data-t-todas="{{ _('Marcar todas') }}"></script>

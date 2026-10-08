@@ -1900,6 +1900,24 @@ def _idle_correo_servidor():
         time.sleep(60)
 
 
+SEGUIMIENTOS_CORREO_INTERVALO_MINUTOS = 15
+
+
+def _seguimientos_correo_servidor():
+    """Cada 15 minutos revisa los correos de los que se espera respuesta: los que ya han contestado se cierran y
+    de los que han pasado de plazo sin respuesta se avisa una vez (ver correo.procesar_seguimientos)."""
+    intervalo = SEGUIMIENTOS_CORREO_INTERVALO_MINUTOS * 60
+    time.sleep(120)
+    while True:
+        try:
+            r = correo.procesar_seguimientos()
+            salud.registrar_ok("correo_seguimientos", intervalo, f"{r['respondidos']} respondido(s), {r['avisados']} aviso(s)")
+        except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
+            logging.getLogger("guilda").exception("Fallo en el seguimiento de respuestas de correo")
+            salud.registrar_error("correo_seguimientos", intervalo, f"{type(e).__name__}: {e}")
+        time.sleep(intervalo)
+
+
 ENVIOS_CORREO_INTERVALO_SEGUNDOS = 10
 
 

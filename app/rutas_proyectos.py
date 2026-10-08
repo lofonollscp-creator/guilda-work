@@ -10,7 +10,7 @@ from flask_babel import lazy_gettext as _l
 
 from . import db, proyecto_plantillas, quickadd
 from .auth import login_required
-from .rutas_tareas import ESTADOS, _mover_ancla, _rango_para_vista, _titulo_rango
+from .rutas_tareas import aviso_de_lote, ESTADOS, PRIORIDADES, _mover_ancla, _rango_para_vista, _titulo_rango
 
 proyectos_bp = Blueprint("proyectos", __name__, url_prefix="/proyecto")
 
@@ -81,7 +81,8 @@ def lista(proyecto_id: int):
         por_seccion[s["id"]] = []
     for t in tareas:
         por_seccion.setdefault(t["seccion_id"] if t["seccion_id"] in por_seccion else None, []).append(t)
-    contexto.update({"por_seccion": por_seccion, "hoy": datetime.now().strftime("%Y-%m-%d"), "error": (request.args.get("error") or "")[:200] or None})
+    contexto.update({"por_seccion": por_seccion, "hoy": datetime.now().strftime("%Y-%m-%d"), "error": (request.args.get("error") or "")[:200] or None,
+                     "aviso": (request.args.get("aviso") or "")[:200] or None, "estados_tarea": ESTADOS, "prioridades_tarea": PRIORIDADES})
     return render_template("proyecto_lista.html", **contexto)
 
 
@@ -241,6 +242,23 @@ def mover_tarea(proyecto_id: int, tarea_id: int):
 # --- Tablero y calendario del proyecto, y los cambios que hacen arrastrar y soltar ---
 
 LIMITE_COLUMNA = 25
+
+
+@proyectos_bp.route("/<int:proyecto_id>/lote", methods=["POST"])
+@login_required
+def lote(proyecto_id: int):
+    """Una acción sobre varias tareas marcadas del proyecto (solo las de este proyecto; mismos permisos que una a una)."""
+    proyecto = _proyecto_o_404(proyecto_id)
+    if not _organiza(proyecto):
+        abort(403)
+    del_proyecto = {t["id"] for t in db.tareas_de_proyecto(g.usuario_id, proyecto_id)}
+    ids = [i for i in request.form.getlist("ids") if i.isdigit() and int(i) in del_proyecto]
+    accion = request.form.get("accion", "")
+    try:
+        resultado = db.accion_en_lote(g.usuario_id, ids, accion, request.form.get(f"valor_{accion}"))
+    except ValueError:
+        resultado = {"ok": 0, "fallos": 0}
+    return _volver(proyecto_id, aviso=aviso_de_lote(resultado))
 
 
 @proyectos_bp.route("/<int:proyecto_id>/tablero")

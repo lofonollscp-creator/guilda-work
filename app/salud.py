@@ -34,6 +34,7 @@ WEBHOOKS_ROJO = 10
 ETIQUETAS_LATIDOS = {
     "correo_sync": lambda: _("Sincronización de correo"),
     "correo_envios": lambda: _("Cola de envío de correo"),
+    "correo_seguimientos": lambda: _("Seguimiento de respuestas de correo"),
     "recordatorios_vencimientos": lambda: _("Recordatorios de vencimientos (equipo)"),
     "recordatorios_portal": lambda: _("Recordatorios del portal (clientes)"),
     "avisos_fichaje": lambda: _("Avisos de fichaje"),

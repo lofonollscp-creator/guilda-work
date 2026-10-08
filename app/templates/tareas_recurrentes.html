@@ -52,6 +52,48 @@
   </form>
 </section>
 
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+<section class="quick-actions" id="por-vencimiento">
+  <form class="quick-card" action="{{ url_for('tareas.crear_regla_vencimiento') }}" method="post">
+    <label>{{ _('Nueva regla por vencimiento fiscal') }}</label>
+    <p class="muted">{{ _('Crea una tarea por cada vencimiento pendiente de un modelo (para cada cliente), con la fecha límite como referencia. Se aplica en el momento a los que ya existen y cada día a los nuevos.') }}</p>
+    <div class="quick-row">
+      <input type="text" name="modelo" maxlength="20" size="8" placeholder="{{ _('Modelo (ej. 303)') }}" required aria-label="{{ _('Modelo') }}">
+      <input type="text" name="asunto" placeholder="{{ _('Preparar el {modelo} de {cliente} ({periodo})') }}" required aria-label="{{ _('Asunto de la tarea') }}">
+    </div>
+    <div class="quick-row">
+      <label class="muted">{{ _('Crear la tarea') }} <input type="number" name="crear_dias_antes" value="14" min="0" max="120" style="width: 5em"> {{ _('días antes') }}</label>
+      <label class="muted">{{ _('Que venza') }} <input type="number" name="vence_dias_antes" value="2" min="0" max="120" style="width: 5em"> {{ _('días antes de la fecha límite') }}</label>
+      <input type="text" name="estimacion" maxlength="12" size="7" placeholder="{{ _('Estimación (1h30)') }}" aria-label="{{ _('Estimación') }}">
+      <select name="prioridad" aria-label="{{ _('Prioridad') }}"><option value="normal">{{ _('Normal') }}</option><option value="alta">{{ _('Alta') }}</option><option value="baja">{{ _('Baja') }}</option></select>
+      {% if menus %}
+      <select name="categoria_id" aria-label="{{ _('Proyecto') }}"><option value="">{{ _('Sin proyecto') }}</option>{% for menu in menus %}<option value="{{ menu.id }}">{{ menu.nombre }}</option>{% endfor %}</select>
+      {% endif %}
+      <label class="checkbox-label"><input type="checkbox" name="asignar_responsable" checked> {{ _('Asignar al responsable del vencimiento') }}</label>
+    </div>
+    <div class="quick-row"><button type="submit" class="btn btn-primary">{{ _('Crear regla') }}</button></div>
+  </form>
+</section>
+{% if reglas_vencimiento %}
+<h2>{{ _('Reglas por vencimiento fiscal') }}</h2>
+<table class="historial-table">
+  <thead><tr><th>{{ _('Modelo') }}</th><th>{{ _('Asunto') }}</th><th>{{ _('Cuándo') }}</th><th>{{ _('Tareas creadas') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+  <tbody>
+    {% for r in reglas_vencimiento %}
+    <tr>
+      <td><span class="pill">{{ r.modelo }}</span></td><td>{{ r.asunto }}</td>
+      <td>{{ _('crea %(a)s d antes · vence %(b)s d antes', a=r.crear_dias_antes, b=r.vence_dias_antes) }}</td><td>{{ r.generadas }}</td>
+      <td>{{ _('Activa') if r.activa else _('Pausada') }}</td>
+      <td>
+        <form action="{{ url_for('tareas.alternar_regla_vencimiento', regla_id=r.id) }}" method="post" style="display:inline"><button type="submit" class="btn btn-ghost">{{ _('Pausar') if r.activa else _('Reanudar') }}</button></form>
+        <form action="{{ url_for('tareas.eliminar_regla_vencimiento', regla_id=r.id) }}" method="post" style="display:inline" onsubmit="return confirm('{{ _('¿Eliminar esta regla? Las tareas ya creadas se quedan.') }}');"><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
 {% if reglas %}
 <table class="historial-table">
   <thead>
