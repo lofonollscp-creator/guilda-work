@@ -1,0 +1,7 @@
+[Unit]
+Description=Sincroniza el certificado de mail.guildawork.com (Caddy) con Stalwart
+After=docker.service caddy.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/sincronizar-certificado-stalwart.sh

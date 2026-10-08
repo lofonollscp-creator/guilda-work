@@ -322,6 +322,21 @@ integración de Guilda Work (en producción pasó el 2026-08-10 y nadie lo notó
 `x:AllowedIp/set` por JMAP). Si ya está bloqueada: quitarla de IP bloqueadas **y reiniciar el contenedor** (`docker restart guilda-work-stalwart`),
 porque la lista de bloqueo se carga en memoria.
 
+### Stalwart: certificado válido en IMAP/SMTP
+
+Por defecto Stalwart presenta un certificado **autofirmado** en los puertos de correo (993, 465, 25) y los clientes (Outlook, el móvil
+o el propio Correo de Guilda Work) lo rechazan. El 443 va por Caddy, que sí tiene el de Let's Encrypt. Solución instalada:
+
+1. `deploy/sincronizar-certificado-stalwart.sh` (copiado a `/usr/local/sbin/`) copia el certificado de `mail.guildawork.com` de Caddy a
+   `/etc/guilda-work/stalwart-certs/` (Stalwart corre como uid 2000 y los ficheros de Caddy son privados), y reinicia Stalwart solo si ha cambiado.
+2. `deploy/stalwart-cert.timer` (copiado a `/etc/systemd/system/`, `systemctl enable --now stalwart-cert.timer`) lo ejecuta a diario a las 04:30:
+   Caddy renueva cada ~60 días y así Stalwart lo recoge sin intervención.
+3. `docker-compose.yml` monta esa carpeta en `/certs` (solo lectura) y en Stalwart hay un objeto Certificate con `File` →
+   `/certs/mail.guildawork.com.crt|key`, marcado como certificado predeterminado (`x:SystemSettings.defaultCertificateId`).
+
+Puertos con TLS real: 993 (IMAP), 465 (SMTP de envío, TLS implícito), 995 (POP3), 25 (SMTP entre servidores, STARTTLS). **No existen los puertos
+587, 143 ni 110** (Stalwart no tiene esos escuchadores aunque el compose los publique): al configurar un cliente, SMTP = 465 con TLS.
+
 ### 8.1 Instalar Docker
 
 ```bash

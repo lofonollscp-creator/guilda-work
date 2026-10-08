@@ -1277,6 +1277,9 @@ services:
       # persistir de verdad -- un `docker compose down` (no solo restart)
       # los habría perdido. Detectado y migrado en vivo (2026-08-10).
       - stalwart-data:/var/lib/stalwart
+      # Certificado válido de mail.guildawork.com (el de Caddy/Let's Encrypt, copiado por
+      # deploy/sincronizar-certificado-stalwart.sh con un temporizador diario): IMAP/SMTP lo presentan en lugar del autofirmado.
+      - /etc/guilda-work/stalwart-certs:/certs:ro
 
   # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   # ntfy (notificaciones push autoalojadas, Apache-2.0/GPLv2 dual) —
