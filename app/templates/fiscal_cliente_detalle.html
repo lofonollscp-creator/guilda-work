@@ -81,6 +81,20 @@
   </form>
 </section>
 
+{% if accesos is not none %}
+<section style="max-width: 640px; margin-top: 2rem;" id="accesos">
+  <h2>{{ _('Quién ha accedido') }}</h2>
+  <p class="muted">{{ _('Solo lo ven los supervisores del despacho. Se conserva dos años.') }} <a href="{{ url_for('fiscal.accesos_cliente_csv', cliente_id=cliente.id) }}">{{ _('Descargar el registro completo (CSV)') }}</a></p>
+  {% if accesos %}
+  <ul class="log-list">
+    {% for a in accesos %}
+    <li class="log-item"><span class="log-text"><strong>{{ a.usuario }}</strong> {{ acciones_acceso.get(a.accion, a.accion) }}{% if a.detalle %} <span class="muted">· {{ a.detalle }}</span>{% endif %}</span><span class="log-duration">{{ a.creado_en[:16].replace('T', ' ') }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay accesos registrados.') }}</p>{% endif %}
+</section>
+{% endif %}
+
 {% if documentos_totales %}
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Documentos subidos por el cliente') }}</h2>

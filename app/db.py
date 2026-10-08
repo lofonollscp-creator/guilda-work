@@ -468,6 +468,18 @@ CREATE TABLE IF NOT EXISTS cliente_documentos (
 );
 CREATE INDEX IF NOT EXISTS idx_cliente_documentos_cliente ON cliente_documentos(cliente_fiscal_id, creado_en);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cliente_documentos_unico ON cliente_documentos(cliente_fiscal_id, hash_sha256);
+-- Quién ha mirado o tocado qué de un cliente (ficha, documentos, correos archivados): rastro para el despacho y el RGPD.
+CREATE TABLE IF NOT EXISTS cliente_accesos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL,
+    usuario_id INTEGER,
+    accion TEXT NOT NULL,
+    detalle TEXT,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cliente_accesos_cliente ON cliente_accesos(cliente_fiscal_id, id);
+CREATE INDEX IF NOT EXISTS idx_cliente_accesos_fecha ON cliente_accesos(creado_en);
 -- Reglas que crean una tarea por cada vencimiento fiscal pendiente de un modelo (p. ej. «Preparar el 303 de {cliente}»
 -- 14 días antes de su fecha límite, con vencimiento 2 días antes). Cada vencimiento genera como mucho una tarea por regla.
 CREATE TABLE IF NOT EXISTS tareas_por_vencimiento (
@@ -7743,8 +7755,11 @@ def listar_vencimientos_fiscales(
     estado: str | None = None,
     cliente_fiscal_id: int | None = None,
     pais: str | None = None,
+    limite: int | None = None,
+    offset: int = 0,
 ) -> list[sqlite3.Row]:
-    """`desde`/`hasta` filtran por fecha_limite (YYYY-MM-DD, inclusive/
+    """`limite`/`offset` paginan (sin `limite` devuelve todos, como siempre).
+    `desde`/`hasta` filtran por fecha_limite (YYYY-MM-DD, inclusive/
     exclusive respectivamente, mismo criterio que listar_tareas_outlook).
     `pais` filtra por el país de tributación del CLIENTE (columna `c.pais`,
     no hay columna propia en vencimientos_fiscales -- ver
@@ -7764,11 +7779,15 @@ def listar_vencimientos_fiscales(
         if pais:
             cond.append("c.pais = ?"); params.append(pais)
         where = " AND ".join(cond)
+        paginacion = ""
+        if limite is not None:
+            paginacion = " LIMIT ? OFFSET ?"
+            params += [int(limite), max(int(offset), 0)]
         return conn.execute(
             f"""SELECT v.*, c.nombre AS cliente_nombre
                 FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
                 WHERE {where}
-                ORDER BY v.fecha_limite""",
+                ORDER BY v.fecha_limite, v.id{paginacion}""",
             params,
         ).fetchall()
     finally:
@@ -9169,6 +9188,67 @@ def archivar_documento_cliente(
         )
         conn.commit()
         return "ok", cur.lastrowid
+    finally:
+        conn.close()
+
+
+# --- Registro de accesos a un cliente -------------------------------------------------------------
+
+ACCIONES_ACCESO_CLIENTE = {
+    "ficha_vista": "Ha abierto la ficha", "cliente_editado": "Ha editado los datos", "cliente_eliminado": "Ha enviado el cliente a la papelera",
+    "documento_subido": "Ha subido un documento al expediente", "documento_descargado": "Ha descargado un documento del expediente",
+    "documento_eliminado": "Ha eliminado un documento del expediente", "correo_archivado": "Ha archivado un correo en el expediente",
+    "vencimiento_documento_descargado": "Ha descargado un documento de un vencimiento",
+}
+RETENCION_ACCESOS_DIAS = 730
+VENTANA_FICHA_VISTA_MINUTOS = 30
+
+
+def registrar_acceso_cliente(tenant_id: int, cliente_fiscal_id: int, usuario_id: int | None, accion: str, detalle: str = "") -> bool:
+    """Anota un acceso. Nunca lanza (es un rastro, no puede romper lo que se está haciendo) y no repite «ficha_vista»
+    de la misma persona sobre el mismo cliente dentro de la ventana. Devuelve si ha escrito."""
+    if accion not in ACCIONES_ACCESO_CLIENTE or tenant_id is None:
+        return False
+    try:
+        conn = get_connection()
+        try:
+            if accion == "ficha_vista":
+                desde = (datetime.now() - timedelta(minutes=VENTANA_FICHA_VISTA_MINUTOS)).isoformat(timespec="seconds")
+                if conn.execute(
+                    "SELECT 1 FROM cliente_accesos WHERE cliente_fiscal_id = ? AND usuario_id IS ? AND accion = 'ficha_vista' AND creado_en >= ? LIMIT 1",
+                    (cliente_fiscal_id, usuario_id, desde),
+                ).fetchone():
+                    return False
+            conn.execute(
+                "INSERT INTO cliente_accesos (tenant_id, cliente_fiscal_id, usuario_id, accion, detalle, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+                (tenant_id, cliente_fiscal_id, usuario_id, accion, (detalle or "")[:200] or None, now_iso()),
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def listar_accesos_cliente(tenant_id: int, cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            """SELECT a.id, a.accion, a.detalle, a.creado_en, a.usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email, '—') AS usuario
+               FROM cliente_accesos a LEFT JOIN usuarios u ON u.id = a.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = a.usuario_id
+               WHERE a.tenant_id = ? AND a.cliente_fiscal_id = ? ORDER BY a.id DESC LIMIT ?""",
+            (tenant_id, cliente_fiscal_id, max(1, min(limite, 5000))))]
+    finally:
+        conn.close()
+
+
+def purgar_accesos_antiguos(dias: int = RETENCION_ACCESOS_DIAS) -> int:
+    conn = get_connection()
+    try:
+        cur = conn.execute("DELETE FROM cliente_accesos WHERE creado_en < ?", ((datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds"),))
+        conn.commit()
+        return cur.rowcount
     finally:
         conn.close()
 

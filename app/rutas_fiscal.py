@@ -108,6 +108,7 @@ def ficha_cliente(cliente_id: int):
     cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if cliente is None:
         abort(404)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "ficha_vista")
     # Facturas de FacturaScripts (bloque 3, best-effort): solo si el
     # cliente está vinculado -- un fallo de la API no debe romper la
     # ficha del cliente, así que se traga en silencio como el resto de
@@ -174,6 +175,8 @@ def ficha_cliente(cliente_id: int):
         cliente=cliente,
         expediente=db.listar_documentos_cliente(g.tenant_id, cliente_id),
         categorias_documento=db.CATEGORIAS_DOCUMENTO, soy_supervisor=db.es_supervisor_tenant(g.usuario_id),
+        accesos=db.listar_accesos_cliente(g.tenant_id, cliente_id, 50) if db.es_supervisor_tenant(g.usuario_id) else None,
+        acciones_acceso={k: str(v) for k, v in ETIQUETAS_ACCESO.items()},
         modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
         modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
         vencimientos=vencimientos,
@@ -196,10 +199,12 @@ def subir_documentos_cliente(cliente_id: int):
         abort(404)
     for archivo in request.files.getlist("archivo")[:10]:
         if archivo and archivo.filename:
-            db.archivar_documento_cliente(
+            resultado, _id = db.archivar_documento_cliente(
                 g.usuario_id, cliente_id, archivo.filename, archivo.mimetype, archivo.read(db.MAX_DOCUMENTO_CLIENTE_BYTES + 1),
                 categoria=request.form.get("categoria"),
             )
+            if resultado == "ok":
+                db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_subido", archivo.filename)
     return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
 
 
@@ -213,6 +218,7 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
     documento = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
     if documento is None:
         abort(404)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_descargado", documento["nombre_archivo"])
     tipo = documento["tipo_mime"].lower().split(";")[0]
     respuesta = Response(bytes(documento["contenido"]), mimetype="application/octet-stream" if tipo in _TIPOS_PELIGROSOS else tipo)
     respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
@@ -223,8 +229,10 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>/eliminar", methods=["POST"])
 @login_required
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):
+    previo = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
     if not db.eliminar_documento_cliente(g.usuario_id, cliente_id, documento_id):
         abort(404)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", previo["nombre_archivo"] if previo else "")
     return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
 
 
@@ -264,6 +272,30 @@ def recordatorios():
         vista_previa=_vista_previa_recordatorio(config), smtp_configurado=notificaciones_email.configurado(),
         max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES,
     )
+
+
+ETIQUETAS_ACCESO = {
+    "ficha_vista": _l("Ha abierto la ficha"), "cliente_editado": _l("Ha editado los datos"), "cliente_eliminado": _l("Ha enviado el cliente a la papelera"),
+    "documento_subido": _l("Ha subido un documento al expediente"), "documento_descargado": _l("Ha descargado un documento del expediente"),
+    "documento_eliminado": _l("Ha eliminado un documento del expediente"), "correo_archivado": _l("Ha archivado un correo en el expediente"),
+    "vencimiento_documento_descargado": _l("Ha descargado un documento de un vencimiento"),
+}
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/accesos.csv")
+@login_required
+def accesos_cliente_csv(cliente_id: int):
+    """Registro completo de accesos a un cliente, para supervisores (auditoría y RGPD)."""
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None or not db.es_supervisor_tenant(g.usuario_id):
+        abort(404)
+    salida = io.StringIO()
+    escritor = csv.writer(salida)
+    escritor.writerow(["fecha", "usuario", "accion", "detalle"])
+    for a in reversed(db.listar_accesos_cliente(g.tenant_id, cliente_id, 5000)):
+        escritor.writerow([a["creado_en"], a["usuario"], str(ETIQUETAS_ACCESO.get(a["accion"], a["accion"])), a["detalle"] or ""])
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "ficha_vista", "exportó el registro de accesos")
+    return Response("\ufeff" + salida.getvalue(), mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f"attachment; filename=accesos_cliente_{cliente_id}.csv", "X-Content-Type-Options": "nosniff"})
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/resumen.json")
@@ -355,6 +387,7 @@ def editar_cliente(cliente_id: int):
                 recordatorios_portal=1 if request.form.get("recordatorios_portal") else 0,
                 idioma=request.form.get("idioma") if request.form.get("idioma") in ("es", "ca", "en", "fr") else "es",
             )
+            db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_editado")
         return redirect(url_for("fiscal.clientes"))
     return render_template(
         "fiscal_cliente_editar.html",
@@ -370,6 +403,7 @@ def eliminar_cliente(cliente_id: int):
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
         abort(404)
     db.eliminar_cliente_fiscal(g.tenant_id, cliente_id)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_eliminado")
     return redirect(url_for("fiscal.clientes"))
 
 
@@ -487,6 +521,9 @@ def export_json():
     return Response(json.dumps(datos, ensure_ascii=False, indent=2), mimetype="application/json")
 
 
+VENCIMIENTOS_POR_PAGINA = 100
+
+
 @fiscal_bp.route("/vencimientos")
 @login_required
 def vencimientos():
@@ -498,11 +535,18 @@ def vencimientos():
     # se ve el listado completo como siempre.
     desde = request.args.get("desde") or None
     hasta = request.args.get("hasta") or None
+    # Paginado: con miles de vencimientos la página entera pesaba segundos (lo midió scripts/prueba_carga.py).
+    # Se pide una fila de más para saber si hay página siguiente sin un COUNT aparte.
+    pagina = max(request.args.get("pagina", 1, type=int) or 1, 1)
+    filas = db.listar_vencimientos_fiscales(
+        g.tenant_id, estado=estado, cliente_fiscal_id=cliente_fiscal_id, desde=desde, hasta=hasta, pais=pais,
+        limite=VENCIMIENTOS_POR_PAGINA + 1, offset=(pagina - 1) * VENCIMIENTOS_POR_PAGINA,
+    )
     return render_template(
         "fiscal_vencimientos.html",
-        vencimientos=db.listar_vencimientos_fiscales(
-            g.tenant_id, estado=estado, cliente_fiscal_id=cliente_fiscal_id, desde=desde, hasta=hasta, pais=pais,
-        ),
+        vencimientos=filas[:VENCIMIENTOS_POR_PAGINA],
+        pagina=pagina, hay_pagina_anterior=pagina > 1, hay_pagina_siguiente=len(filas) > VENCIMIENTOS_POR_PAGINA,
+        filtro_desde=desde, filtro_hasta=hasta,
         clientes=db.listar_clientes_fiscales(g.tenant_id),
         estados=ESTADOS_VENCIMIENTO,
         filtro_estado=estado,
@@ -826,6 +870,8 @@ def descargar_documento_vencimiento(vencimiento_id: int, documento_id: int):
         contenido = db.contenido_documento_vencimiento(documento)
     except nextcloud.ErrorNextcloud:
         abort(503)
+    venc = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    db.registrar_acceso_cliente(g.tenant_id, venc["cliente_fiscal_id"], g.usuario_id, "vencimiento_documento_descargado", documento["nombre_archivo"])
     respuesta = Response(contenido, mimetype=documento["tipo_mime"])
     respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
     return respuesta

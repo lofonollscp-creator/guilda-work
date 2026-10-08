@@ -104,6 +104,8 @@ Variables opcionales:
 | `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |
 | `GUILDA_CORREO_IDLE` | `1` | Correo casi instantáneo con IMAP IDLE: una conexión en espera por cuenta IMAP que sincroniza al aviso del servidor. `0` lo desactiva (queda el auto-sync periódico). |
 | `GUILDA_CORREO_IDLE_MAX` | `100` | Máximo de cuentas con IDLE a la vez (una conexión y un hilo por cuenta). |
+| `GUILDA_CERT_HOSTS` | (el de `GUILDA_URL_PUBLICA`) | Dominios cuyo certificado HTTPS vigila el panel de salud, separados por comas. Ámbar a 21 días de caducar y rojo a 7. |
+| `GUILDA_CADUCIDADES` | (vacío) | Cosas que caducan y nadie más vigila: `Secreto de Microsoft=2028-10-01;Dominio guildawork.com=2027-03-15`. Ámbar a 45 días y rojo a 14; el vigilante avisa por correo de lo que esté en rojo. |
 | `GUILDA_URL_PUBLICA` | _(vacío)_ | URL pública de la app (p. ej. `https://work.tudominio.com`), sin barra final. La usan los correos que se mandan sin petición web de por medio —recordatorios de vencimientos a clientes— para enlazar al portal. Sin ella el correo sale sin enlace. |
 | `GUILDA_FICHAJE_AVISO_HORAS` | `10` | Horas con la jornada de fichaje abierta tras las cuales se avisa (una vez por jornada) de que quizá se olvidó la salida. `0` lo desactiva. Se comprueba cada 15 minutos. |
 
@@ -284,6 +286,14 @@ publicar puertos, así que un puerto publicado en `0.0.0.0` **salta por
 encima de `ufw`** — con `127.0.0.1:` explícito, la única puerta de
 entrada real desde internet es Caddy (que sí corre en el host y alcanza
 `localhost`).
+
+### Herramientas de mantenimiento (solo lectura)
+
+- `scripts/probar.sh --carga` — prueba de carga: N usuarios a la vez (lecturas y escrituras) sobre una base sintética y temporal.
+  `--usuarios 40 --segundos 40 --vencimientos 20000 --pausa 3` (pausa media entre clics) o `--pausa 0` para ver dónde se satura.
+- `scripts/probar.sh --perfil` — tiempo, consultas y peso de cada pantalla con un año de datos.
+- `scripts/auditar_contenedores.py` — memoria, contenedores parados, volúmenes huérfanos, imágenes sin uso y tráfico/errores 5xx por dominio
+  (según Caddy). No borra nada: propone los comandos de limpieza.
 
 ### Versiones de las imágenes (fijadas por digest)
 

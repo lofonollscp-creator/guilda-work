@@ -99,6 +99,21 @@
   <p class="fiscal-detalle-vacio empty-lane">{{ _('Pulsa un vencimiento para ver la ficha rápida del cliente.') }}</p>
 </aside>
 </div>
+{% if hay_pagina_anterior or hay_pagina_siguiente %}
+<nav class="paginacion" aria-label="{{ _('Paginación de vencimientos') }}">
+  {% if hay_pagina_anterior %}
+  <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais, desde=filtro_desde, hasta=filtro_hasta, pagina=pagina - 1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</a>
+  {% else %}
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</span>
+  {% endif %}
+  <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
+  {% if hay_pagina_siguiente %}
+  <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais, desde=filtro_desde, hasta=filtro_hasta, pagina=pagina + 1) }}">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></a>
+  {% else %}
+  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></span>
+  {% endif %}
+</nav>
+{% endif %}
 {% endif %}
 
 <script>

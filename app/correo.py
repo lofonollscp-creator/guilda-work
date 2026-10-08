@@ -1613,6 +1613,8 @@ def archivar_correo_en_expediente(
         fecha = (mensaje["fecha"] or "")[:10]
         asunto = re.sub(r"[^\w .-]+", "", mensaje["asunto"] or "sin asunto").strip()[:80] or "sin asunto"
         guardar(f"Correo {fecha} - {asunto}.txt".replace("  ", " "), "text/plain", _correo_como_texto(mensaje))
+    if resumen["archivados"] and not automatico:
+        db.registrar_acceso_cliente(tenant["id"], cliente_fiscal_id, usuario_id, "correo_archivado", f"{resumen['archivados']} documento(s) de «{(mensaje['asunto'] or '')[:80]}»")
     return resumen
 
 

@@ -7184,3 +7184,64 @@ msgstr[1] "%(n)s could not be changed (permissions or dependencies)."
 msgid "Seguimiento de respuestas de correo"
 msgstr "Email reply follow-up"
 
+#, python-format
+msgid "Certificado HTTPS de %(host)s"
+msgstr "HTTPS certificate of %(host)s"
+
+#, python-format
+msgid "No se ha podido verificar: %(error)s"
+msgstr "Could not be verified: %(error)s"
+
+#, python-format
+msgid "Caduca el %(fecha)s (en %(n)s días)."
+msgstr "Expires on %(fecha)s (in %(n)s days)."
+
+#, python-format
+msgid "Caducó el %(fecha)s (hace %(n)s días)."
+msgstr "Expired on %(fecha)s (%(n)s days ago)."
+
+msgid "Certificados HTTPS"
+msgstr "HTTPS certificates"
+
+msgid "Caducidades configuradas"
+msgstr "Configured expiry dates"
+
+msgid "Ha abierto la ficha"
+msgstr "Opened the record"
+
+msgid "Ha editado los datos"
+msgstr "Edited the details"
+
+msgid "Ha enviado el cliente a la papelera"
+msgstr "Sent the client to the bin"
+
+msgid "Ha subido un documento al expediente"
+msgstr "Uploaded a document to the client file"
+
+msgid "Ha descargado un documento del expediente"
+msgstr "Downloaded a document from the client file"
+
+msgid "Ha eliminado un documento del expediente"
+msgstr "Deleted a document from the client file"
+
+msgid "Ha archivado un correo en el expediente"
+msgstr "Filed an email in the client file"
+
+msgid "Ha descargado un documento de un vencimiento"
+msgstr "Downloaded a document from a deadline"
+
+msgid "Quién ha accedido"
+msgstr "Who has accessed"
+
+msgid "Solo lo ven los supervisores del despacho. Se conserva dos años."
+msgstr "Only the office supervisors see this. It is kept for two years."
+
+msgid "Descargar el registro completo (CSV)"
+msgstr "Download the full log (CSV)"
+
+msgid "Todavía no hay accesos registrados."
+msgstr "No accesses have been recorded yet."
+
+msgid "Paginación de vencimientos"
+msgstr "Deadlines pagination"
+

@@ -7193,3 +7193,64 @@ msgstr[1] "%(n)s no s'han pogut canviar (permisos o dependències)."
 msgid "Seguimiento de respuestas de correo"
 msgstr "Seguiment de respostes de correu"
 
+#, python-format
+msgid "Certificado HTTPS de %(host)s"
+msgstr "Certificat HTTPS de %(host)s"
+
+#, python-format
+msgid "No se ha podido verificar: %(error)s"
+msgstr "No s'ha pogut verificar: %(error)s"
+
+#, python-format
+msgid "Caduca el %(fecha)s (en %(n)s días)."
+msgstr "Caduca el %(fecha)s (d'aquí a %(n)s dies)."
+
+#, python-format
+msgid "Caducó el %(fecha)s (hace %(n)s días)."
+msgstr "Va caducar el %(fecha)s (fa %(n)s dies)."
+
+msgid "Certificados HTTPS"
+msgstr "Certificats HTTPS"
+
+msgid "Caducidades configuradas"
+msgstr "Caducitats configurades"
+
+msgid "Ha abierto la ficha"
+msgstr "Ha obert la fitxa"
+
+msgid "Ha editado los datos"
+msgstr "Ha editat les dades"
+
+msgid "Ha enviado el cliente a la papelera"
+msgstr "Ha enviat el client a la paperera"
+
+msgid "Ha subido un documento al expediente"
+msgstr "Ha pujat un document a l'expedient"
+
+msgid "Ha descargado un documento del expediente"
+msgstr "Ha baixat un document de l'expedient"
+
+msgid "Ha eliminado un documento del expediente"
+msgstr "Ha eliminat un document de l'expedient"
+
+msgid "Ha archivado un correo en el expediente"
+msgstr "Ha arxivat un correu a l'expedient"
+
+msgid "Ha descargado un documento de un vencimiento"
+msgstr "Ha baixat un document d'un venciment"
+
+msgid "Quién ha accedido"
+msgstr "Qui hi ha accedit"
+
+msgid "Solo lo ven los supervisores del despacho. Se conserva dos años."
+msgstr "Només ho veuen els supervisors del despatx. Es conserva dos anys."
+
+msgid "Descargar el registro completo (CSV)"
+msgstr "Descarrega el registre complet (CSV)"
+
+msgid "Todavía no hay accesos registrados."
+msgstr "Encara no hi ha accessos registrats."
+
+msgid "Paginación de vencimientos"
+msgstr "Paginació de venciments"
+

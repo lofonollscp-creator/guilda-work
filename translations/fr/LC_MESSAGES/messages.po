@@ -7269,3 +7269,64 @@ msgstr[1] "%(n)s n'ont pas pu être modifiées (droits ou dépendances)."
 msgid "Seguimiento de respuestas de correo"
 msgstr "Suivi des réponses aux courriels"
 
+#, python-format
+msgid "Certificado HTTPS de %(host)s"
+msgstr "Certificat HTTPS de %(host)s"
+
+#, python-format
+msgid "No se ha podido verificar: %(error)s"
+msgstr "Vérification impossible : %(error)s"
+
+#, python-format
+msgid "Caduca el %(fecha)s (en %(n)s días)."
+msgstr "Expire le %(fecha)s (dans %(n)s jours)."
+
+#, python-format
+msgid "Caducó el %(fecha)s (hace %(n)s días)."
+msgstr "A expiré le %(fecha)s (il y a %(n)s jours)."
+
+msgid "Certificados HTTPS"
+msgstr "Certificats HTTPS"
+
+msgid "Caducidades configuradas"
+msgstr "Échéances configurées"
+
+msgid "Ha abierto la ficha"
+msgstr "A ouvert la fiche"
+
+msgid "Ha editado los datos"
+msgstr "A modifié les données"
+
+msgid "Ha enviado el cliente a la papelera"
+msgstr "A mis le client à la corbeille"
+
+msgid "Ha subido un documento al expediente"
+msgstr "A téléversé un document dans le dossier"
+
+msgid "Ha descargado un documento del expediente"
+msgstr "A téléchargé un document du dossier"
+
+msgid "Ha eliminado un documento del expediente"
+msgstr "A supprimé un document du dossier"
+
+msgid "Ha archivado un correo en el expediente"
+msgstr "A classé un courriel dans le dossier"
+
+msgid "Ha descargado un documento de un vencimiento"
+msgstr "A téléchargé un document d'une échéance"
+
+msgid "Quién ha accedido"
+msgstr "Qui a accédé"
+
+msgid "Solo lo ven los supervisores del despacho. Se conserva dos años."
+msgstr "Seuls les superviseurs du cabinet le voient. Conservé deux ans."
+
+msgid "Descargar el registro completo (CSV)"
+msgstr "Télécharger le journal complet (CSV)"
+
+msgid "Todavía no hay accesos registrados."
+msgstr "Aucun accès n'a encore été enregistré."
+
+msgid "Paginación de vencimientos"
+msgstr "Pagination des échéances"
+

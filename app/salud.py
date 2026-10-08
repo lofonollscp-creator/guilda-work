@@ -11,7 +11,7 @@ import logging
 import os
 import shutil
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from flask_babel import gettext as _gettext
 
@@ -171,6 +171,85 @@ def _estado_envios(ahora: datetime) -> list[dict]:
     ]
 
 
+CERT_AMBAR_DIAS = 21
+CERT_ROJO_DIAS = 7
+CADUCIDAD_AMBAR_DIAS = 45
+CADUCIDAD_ROJO_DIAS = 14
+_CACHE_CERTIFICADOS: dict[str, tuple[float, dict]] = {}
+CERT_CACHE_SEGUNDOS = 6 * 3600
+
+
+def _hosts_certificados() -> list[str]:
+    """Dominios cuyo certificado se vigila: GUILDA_CERT_HOSTS (separados por comas) o, si no está, el de GUILDA_URL_PUBLICA."""
+    explicitos = [h.strip() for h in os.environ.get("GUILDA_CERT_HOSTS", "").split(",") if h.strip()]
+    if explicitos:
+        return explicitos
+    base = os.environ.get("GUILDA_URL_PUBLICA", "").strip()
+    host = base.split("://", 1)[-1].split("/", 1)[0].split(":", 1)[0]
+    return [host] if host else []
+
+
+def _caducidad_certificado(host: str) -> datetime:
+    """Fecha de caducidad del certificado que sirve `host`:443, verificándolo (cadena, nombre y vigencia).
+    Lanza ssl.SSLError / OSError si no se puede verificar."""
+    import socket
+    import ssl
+
+    contexto = ssl.create_default_context()
+    with socket.create_connection((host, 443), timeout=8) as bruto, contexto.wrap_socket(bruto, server_hostname=host) as seguro:
+        cert = seguro.getpeercert()
+    return datetime.fromtimestamp(ssl.cert_time_to_seconds(cert["notAfter"]))
+
+
+def _estado_certificados(ahora: datetime) -> list[dict]:
+    items = []
+    for host in _hosts_certificados():
+        titulo = _("Certificado HTTPS de %(host)s", host=host)
+        try:
+            en_cache = _CACHE_CERTIFICADOS.get(host)
+            if en_cache and time.monotonic() - en_cache[0] < CERT_CACHE_SEGUNDOS:
+                resultado = en_cache[1]
+            else:
+                try:
+                    resultado = {"caduca": _caducidad_certificado(host)}
+                except Exception as e:  # noqa: BLE001 -- certificado inválido/caducado o sin conexión
+                    resultado = {"error": f"{type(e).__name__}: {e}"[:200]}
+                _CACHE_CERTIFICADOS[host] = (time.monotonic(), resultado)
+            if "error" in resultado:
+                items.append(_item("Servidor", f"cert:{host}", titulo, ROJO, _("No se ha podido verificar: %(error)s", error=resultado["error"])))
+                continue
+            dias = (resultado["caduca"] - ahora).days
+            estado = VERDE if dias > CERT_AMBAR_DIAS else (AMBAR if dias > CERT_ROJO_DIAS else ROJO)
+            items.append(_item("Servidor", f"cert:{host}", titulo, estado, _("Caduca el %(fecha)s (en %(n)s días).", fecha=resultado["caduca"].strftime("%Y-%m-%d"), n=dias)))
+        except Exception:  # noqa: BLE001
+            logger.exception("Comprobación del certificado de %s", host)
+            items.append(_item("Servidor", f"cert:{host}", titulo, GRIS, _("No se pudo comprobar.")))
+    return items
+
+
+def _caducidades_configuradas() -> list[tuple[str, date]]:
+    """GUILDA_CADUCIDADES="Secreto de Microsoft=2028-10-01;Certificado del cliente X=2027-03-15": cosas que caducan y que
+    nadie más vigila (secretos de aplicaciones OAuth, dominios, certificados de firma...). Lo mal escrito se ignora."""
+    resultado = []
+    for trozo in os.environ.get("GUILDA_CADUCIDADES", "").split(";"):
+        nombre, _sep, fecha = trozo.rpartition("=")
+        try:
+            resultado.append((nombre.strip(), datetime.strptime(fecha.strip(), "%Y-%m-%d").date()))
+        except ValueError:
+            continue
+    return [(n, f) for n, f in resultado if n]
+
+
+def _estado_caducidades(ahora: datetime) -> list[dict]:
+    items = []
+    for nombre, fecha in _caducidades_configuradas():
+        dias = (fecha - ahora.date()).days
+        estado = VERDE if dias > CADUCIDAD_AMBAR_DIAS else (AMBAR if dias > CADUCIDAD_ROJO_DIAS else ROJO)
+        detalle = _("Caduca el %(fecha)s (en %(n)s días).", fecha=fecha.isoformat(), n=dias) if dias >= 0 else _("Caducó el %(fecha)s (hace %(n)s días).", fecha=fecha.isoformat(), n=-dias)
+        items.append(_item("Servidor", f"caduca:{nombre}", nombre, estado, detalle))
+    return items
+
+
 def panel(ahora: datetime | None = None) -> list[dict]:
     """Todos los elementos del panel, cada comprobación aislada: si una falla,
     sale en gris y el resto sigue."""
@@ -188,6 +267,8 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Copias de seguridad", "backup", _("Última copia de seguridad"), lambda: _estado_backup(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
+    _seguro("Servidor", "certificados", _("Certificados HTTPS"), lambda: _estado_certificados(ahora))
+    _seguro("Servidor", "caducidades", _("Caducidades configuradas"), lambda: _estado_caducidades(ahora))
     _seguro("Correo", "correo", _("Cuentas de correo"), lambda: _estado_correo(ahora))
     _seguro("Correo", "envios", _("Envíos de correo"), lambda: _estado_envios(ahora))
     _seguro("Integraciones", "webhooks", _("Entregas de webhooks"), lambda: _estado_webhooks(ahora))

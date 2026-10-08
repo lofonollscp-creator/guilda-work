@@ -21,6 +21,7 @@ def main() -> None:
     try:
         creadas = db.generar_tareas_recurrentes()
         por_vencimiento = db.generar_tareas_por_vencimiento()
+        db.purgar_accesos_antiguos()          # mantenimiento diario: el registro de accesos a clientes se guarda dos años
     except Exception as e:
         salud.registrar_error("tareas_recurrentes", 24 * 3600, f"{type(e).__name__}: {e}")
         raise
