@@ -312,6 +312,16 @@ Para **subir de versión a propósito** (un `docker compose pull` no sirve: baja
 
 `scripts/fijar_imagenes.py` sin opciones solo muestra qué cambiaría.
 
+### Stalwart: permitir la IP de la pasarela de Docker (importante)
+
+Todo lo que llega a Stalwart por Caddy o desde el host entra desde la IP de la pasarela de la red de Docker (`172.18.0.1`
+en esta instalación; compruébala con `docker network inspect guilda-work_default`). Si un escáner de internet dispara la
+protección de Stalwart «portScanning», **Stalwart bloquea esa IP para siempre** y deja de responder al panel, a la API JMAP y a la
+integración de Guilda Work (en producción pasó el 2026-08-10 y nadie lo notó hasta el 2026-10-08: respuestas 502 en
+`correo-stalwart.<dominio>`). Evítalo dando de alta esa IP en las IP permitidas (WebUI de Stalwart → IP permitidas, o
+`x:AllowedIp/set` por JMAP). Si ya está bloqueada: quitarla de IP bloqueadas **y reiniciar el contenedor** (`docker restart guilda-work-stalwart`),
+porque la lista de bloqueo se carga en memoria.
+
 ### 8.1 Instalar Docker
 
 ```bash
