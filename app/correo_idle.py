@@ -102,7 +102,7 @@ class GestorIdle:
                 self.parar.wait(min(900, 30 * 2 ** min(fallos, 5)))
                 continue
             try:
-                if "IDLE" not in {c.upper() for c in getattr(conn, "capabilities", ())}:
+                if "IDLE" not in correo._capacidades(conn):
                     return          # sin IDLE en este servidor: basta el auto-sync periódico
                 conn.select("INBOX", readonly=True)
                 fallos = 0

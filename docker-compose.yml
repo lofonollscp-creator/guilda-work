@@ -69,7 +69,7 @@ services:
   # pago (AWS/Backblaze). El bucket en sí (guilda-backups) se crea aparte,
   # a mano o con `mc`, no en este compose — ver deploy/ para el paso a paso.
   minio:
-    image: minio/minio:latest
+    image: minio/minio:latest@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     container_name: guilda-work-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -95,7 +95,7 @@ services:
   # misma máquina que Docker, así que ahí también aplica host.docker.internal
   # (o localhost si se prefiere red "host").
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:latest@sha256:f9a15cc65378e4e5b6c3b1445c83985131938db8d8b5b1ab891d7d50196b2162
     container_name: guilda-work-n8n
     restart: unless-stopped
     extra_hosts:
@@ -130,7 +130,7 @@ services:
   # como origen de verdad, sin tocar cli.py/mcp_server.py (usuario local,
   # nunca pasa por aquí) ni el modo escritorio (GuildaWork.exe).
   postgres-kratos:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-kratos
     restart: unless-stopped
     environment:
@@ -141,7 +141,7 @@ services:
       - postgres-kratos-data:/var/lib/postgresql/data
 
   kratos-migrate:
-    image: oryd/kratos:latest
+    image: oryd/kratos:latest@sha256:2a13bb8d362c7a7ae33bd7c0f5168aee46921f15c916a06346db91c06dc76643
     container_name: guilda-work-kratos-migrate
     depends_on:
       - postgres-kratos
@@ -153,7 +153,7 @@ services:
     restart: on-failure
 
   kratos:
-    image: oryd/kratos:latest
+    image: oryd/kratos:latest@sha256:2a13bb8d362c7a7ae33bd7c0f5168aee46921f15c916a06346db91c06dc76643
     container_name: guilda-work-kratos
     restart: unless-stopped
     depends_on:
@@ -210,7 +210,7 @@ services:
   # resuelve app/rutas_hydra.py (prefijo /hydra) apoyándose en la sesión
   # de Kratos que ya exista (Fase 7a) — ver deploy/hydra/hydra.yml.
   postgres-hydra:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-hydra
     restart: unless-stopped
     environment:
@@ -221,7 +221,7 @@ services:
       - postgres-hydra-data:/var/lib/postgresql/data
 
   hydra-migrate:
-    image: oryd/hydra:latest
+    image: oryd/hydra:latest@sha256:ff67c7fb5f95074fa53374d41151713554960504b340cd3f95b09e65deaea2a9
     container_name: guilda-work-hydra-migrate
     depends_on:
       - postgres-hydra
@@ -233,7 +233,7 @@ services:
     restart: on-failure
 
   hydra:
-    image: oryd/hydra:latest
+    image: oryd/hydra:latest@sha256:ff67c7fb5f95074fa53374d41151713554960504b340cd3f95b09e65deaea2a9
     container_name: guilda-work-hydra
     restart: unless-stopped
     depends_on:
@@ -289,7 +289,7 @@ services:
   # adjuntos van al MinIO ya desplegado (bucket outline-uploads, se crea
   # aparte con `mc mb`, igual que guilda-backups — ver HOSTING.md).
   postgres-outline:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-outline
     restart: unless-stopped
     environment:
@@ -300,14 +300,14 @@ services:
       - postgres-outline-data:/var/lib/postgresql/data
 
   redis-outline:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: guilda-work-redis-outline
     restart: unless-stopped
     volumes:
       - redis-outline-data:/data
 
   outline:
-    image: outlinewiki/outline:latest
+    image: outlinewiki/outline:latest@sha256:32d76719c378931dd65d93945930ca380d8376a0337d98a991fcc12b266f33cf
     container_name: guilda-work-outline
     restart: unless-stopped
     depends_on:
@@ -384,7 +384,7 @@ services:
   # equipo de Guilda Work, no para interoperar con otros servidores
   # Matrix. Login solo vía Ory Hydra, igual que Outline.
   postgres-synapse:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-synapse
     restart: unless-stopped
     environment:
@@ -407,7 +407,7 @@ services:
   # explícito antes. Termina y no vuelve a hacer nada en arranques
   # posteriores (el archivo ya existe en el volumen persistente).
   synapse-migrate-config:
-    image: matrixdotorg/synapse:latest
+    image: matrixdotorg/synapse:latest@sha256:39f47bcea65c544ef3a6d58848ee98e2ea98387e9991df30474d25b54477a0af
     container_name: guilda-work-synapse-migrate-config
     depends_on:
       - postgres-synapse
@@ -428,7 +428,7 @@ services:
     restart: "no"
 
   synapse:
-    image: matrixdotorg/synapse:latest
+    image: matrixdotorg/synapse:latest@sha256:39f47bcea65c544ef3a6d58848ee98e2ea98387e9991df30474d25b54477a0af
     container_name: guilda-work-synapse
     restart: unless-stopped
     depends_on:
@@ -441,7 +441,7 @@ services:
     command: ["run", "-c", "/data/homeserver.yaml", "-c", "/etc/synapse-overrides/guilda-overrides.yaml"]
 
   element-web:
-    image: vectorim/element-web:latest
+    image: vectorim/element-web:latest@sha256:9f9b546280e67e492d56f6e775c449e74356bffb98daaf211abc755276713fad
     container_name: guilda-work-element-web
     restart: unless-stopped
     ports:
@@ -460,7 +460,7 @@ services:
   # Postgres propio, nunca compartido con postgres-synapse (documentado
   # así oficialmente por MAS).
   postgres-mas:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-mas
     restart: unless-stopped
     environment:
@@ -471,7 +471,7 @@ services:
       - postgres-mas-data:/var/lib/postgresql/data
 
   mas:
-    image: ghcr.io/element-hq/matrix-authentication-service:latest
+    image: ghcr.io/element-hq/matrix-authentication-service:latest@sha256:8cb319ec41706adc1ed8b5b63e1de2f067073cc33a304686226f658f5e83c8b3
     container_name: guilda-work-mas
     restart: unless-stopped
     depends_on:
@@ -492,7 +492,7 @@ services:
   # login aparte en el dashboard (app/herramientas.py), como
   # Metabase/n8n.
   postgres-openproject:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-openproject
     restart: unless-stopped
     environment:
@@ -596,7 +596,7 @@ services:
       - postgres-chatwoot-data:/var/lib/postgresql/data
 
   redis-chatwoot:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: guilda-work-redis-chatwoot
     restart: unless-stopped
     # A diferencia de redis-outline, Chatwoot SÍ exige contraseña en su
@@ -689,7 +689,7 @@ services:
   # caso que OpenProject/Chatwoot/Metabase/n8n — login aparte, con la
   # cuenta que se crea en su propio primer arranque.
   vaultwarden:
-    image: vaultwarden/server:latest
+    image: vaultwarden/server:latest@sha256:ebdfe70701c60ac0c28c697e787cea767d7972940b786037b29fe0d507f821e8
     container_name: guilda-work-vaultwarden
     restart: unless-stopped
     environment:
@@ -729,7 +729,7 @@ services:
   # de Docker (misma red que el resto de este archivo, ver HOSTING.md
   # 8.17 para ejemplos concretos).
   uptime-kuma:
-    image: louislam/uptime-kuma:2
+    image: louislam/uptime-kuma:2@sha256:a8610b3b4c38077922ba51b036691e06887d7cefd91fe620fd3d6d23d03dc240
     container_name: guilda-work-uptime-kuma
     restart: unless-stopped
     volumes:
@@ -750,7 +750,7 @@ services:
   # obligatoria por variable, no hay asistente interactivo como en
   # Vaultwarden/Uptime Kuma).
   postgres-espocrm:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-espocrm
     restart: unless-stopped
     environment:
@@ -796,7 +796,7 @@ services:
   # resto del stack): Nextcloud rechaza peticiones a un host no listado
   # con un error explícito, no basta con levantar el contenedor.
   postgres-nextcloud:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-nextcloud
     restart: unless-stopped
     environment:
@@ -807,7 +807,7 @@ services:
       - postgres-nextcloud-data:/var/lib/postgresql/data
 
   nextcloud:
-    image: nextcloud:latest
+    image: nextcloud:latest@sha256:eea6e621ded409a0f878db118cd8aec619b555172d30f50d04f9bc2e5e852b4c
     container_name: guilda-work-nextcloud
     restart: unless-stopped
     depends_on:
@@ -847,7 +847,7 @@ services:
   # firmar criptográficamente cada PDF completado — sin él, el
   # contenedor ni arranca.
   postgres-documenso:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-documenso
     restart: unless-stopped
     environment:
@@ -858,7 +858,7 @@ services:
       - postgres-documenso-data:/var/lib/postgresql/data
 
   documenso:
-    image: documenso/documenso:latest
+    image: documenso/documenso:latest@sha256:945bd2c04306bd5d78def0c4ceafdffb6b0a106cd6a2543db5acda9a6424b2d9
     container_name: guilda-work-documenso
     restart: unless-stopped
     depends_on:
@@ -913,14 +913,14 @@ services:
   # fuera del MVP a propósito — no hacen falta para PDFs/imágenes/
   # escaneos, que es el grueso de lo que recibe una gestoría.
   paperless-broker:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: guilda-work-paperless-broker
     restart: unless-stopped
     volumes:
       - paperless-broker-data:/data
 
   postgres-paperless:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-paperless
     restart: unless-stopped
     environment:
@@ -998,7 +998,7 @@ services:
   # (misma lección que `PAPERLESS_SECRET_KEY`: verificar en vivo antes
   # de asumir que hay una por defecto segura).
   redis-baserow:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: guilda-work-redis-baserow
     restart: unless-stopped
     # Obligatorio — verificado en vivo que sin esto los workers de
@@ -1011,7 +1011,7 @@ services:
       - redis-baserow-data:/data
 
   postgres-baserow:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-baserow
     restart: unless-stopped
     environment:
@@ -1069,7 +1069,7 @@ services:
   # datos dentro de este mismo Postgres (aislados con
   # `REVOKE CONNECT ... FROM PUBLIC`, no solo por convención).
   postgres-facturascripts:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-facturascripts
     restart: unless-stopped
     environment:
@@ -1103,7 +1103,7 @@ services:
   # los 3 minutos). Compilar tarda bastante (es un monorepo Next.js/
   # Turborepo) — verificar en vivo al desplegar, ver HOSTING.md 8.25.
   redis-calcom:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: guilda-work-redis-calcom
     restart: unless-stopped
     command: ["redis-server", "--requirepass", "${CALCOM_REDIS_PASSWORD:-CambiaEstaClaveCalcomRedis2026}"]
@@ -1111,7 +1111,7 @@ services:
       - redis-calcom-data:/data
 
   postgres-calcom:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-calcom
     restart: unless-stopped
     environment:
@@ -1244,7 +1244,7 @@ services:
   # paso — no es un fallo de esta configuración, es cómo funciona
   # Stalwart la primera vez.
   stalwart:
-    image: stalwartlabs/stalwart:latest
+    image: stalwartlabs/stalwart:latest@sha256:66ae90f2753ec1dabd70f69cad7da9f0598d2628a04193ce2b08c7263d47aced
     container_name: guilda-work-stalwart
     restart: unless-stopped
     # Alias de red interno con el mismo hostname público — así los
@@ -1437,7 +1437,7 @@ services:
   # arriba, pero LiveKit no tiene una var de "IP a anunciar": usa
   # rtc.use_external_ip y necesita ver la interfaz pública directamente).
   livekit:
-    image: livekit/livekit-server:latest
+    image: livekit/livekit-server:latest@sha256:3497163e15c48fef6e7830c78716f9e9d5edc28abf7aa90b61c86e93bbc306b1
     container_name: guilda-work-livekit
     restart: unless-stopped
     network_mode: host
@@ -1453,7 +1453,7 @@ services:
   # LIVEKIT_FULL_ACCESS_HOMESERVERS es el server_name de Synapse, no el
   # hostname del propio LiveKit.
   livekit-jwt:
-    image: ghcr.io/element-hq/lk-jwt-service:latest
+    image: ghcr.io/element-hq/lk-jwt-service:latest@sha256:29918567e6b7cd920e2853b4cd6848ce01b79947c3d19a9f1ed5b74f0a2a88bf
     container_name: guilda-work-livekit-jwt
     restart: unless-stopped
     depends_on:
@@ -1496,7 +1496,7 @@ services:
   # ser la opción más consistente con el resto del stack (Documenso/
   # Baserow/Cal.diy/Listmonk también MIT/Apache-2.0).
   meilisearch:
-    image: getmeili/meilisearch:latest
+    image: getmeili/meilisearch:latest@sha256:d36e713e8f89483af1ab0d72011bbd503f5ab100b68ccbfad51c39e3f0a0567d
     container_name: guilda-work-meilisearch
     restart: unless-stopped
     environment:
@@ -1522,7 +1522,7 @@ services:
   # despliegue `app/umami.py:bootstrap_admin()` la cambia por
   # UMAMI_ADMIN_PASSWORD una sola vez (ver HOSTING.md).
   postgres-umami:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-umami
     restart: unless-stopped
     environment:
@@ -1570,14 +1570,14 @@ services:
   # datasource de Loki automáticamente al arrancar (confirmado vía
   # GET /api/datasources, sin ningún paso manual en la UI).
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:latest@sha256:efd47c67f9bac88ca29bcf8cb997d9ab29d1848bd0aff579282295542a745952
     container_name: guilda-work-loki
     restart: unless-stopped
     volumes:
       - loki-data:/loki
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:latest@sha256:6cfa64ec432b24a912d640e2edb940eeae2666f61861a66c121d763dd7241381
     container_name: guilda-work-promtail
     restart: unless-stopped
     depends_on:
@@ -1594,7 +1594,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:latest@sha256:ab5cb380e3ff3172d6c8bd2e7cfd31cce977d2881b260e1f5bc089bf0b759b43
     container_name: guilda-work-grafana
     restart: unless-stopped
     depends_on:
@@ -1617,7 +1617,7 @@ services:
   # subdominio público: es una herramienta de administración, no algo
   # que un tenant necesite ver.
   postgres-glitchtip:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     container_name: guilda-work-postgres-glitchtip
     restart: unless-stopped
     environment:
@@ -1628,7 +1628,7 @@ services:
       - postgres-glitchtip-data:/var/lib/postgresql/data
 
   redis-glitchtip:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: guilda-work-redis-glitchtip
     restart: unless-stopped
     volumes:
@@ -1638,7 +1638,7 @@ services:
   # "no", a diferencia del resto) -- mismo patrón que un `init` de
   # Kubernetes, evita que web/worker se disputen quién migra primero.
   glitchtip-migrate:
-    image: glitchtip/glitchtip:latest
+    image: glitchtip/glitchtip:latest@sha256:a3d8eb1b36c1e1603d55ab32711ea3dd8115874742a781a57391a62a16e0dff6
     container_name: guilda-work-glitchtip-migrate
     restart: "no"
     depends_on:
@@ -1662,7 +1662,7 @@ services:
       ENABLE_OPEN_USER_REGISTRATION: "false"
 
   glitchtip-web:
-    image: glitchtip/glitchtip:latest
+    image: glitchtip/glitchtip:latest@sha256:a3d8eb1b36c1e1603d55ab32711ea3dd8115874742a781a57391a62a16e0dff6
     container_name: guilda-work-glitchtip-web
     restart: unless-stopped
     depends_on:
@@ -1673,7 +1673,7 @@ services:
     environment: *glitchtip-env
 
   glitchtip-worker:
-    image: glitchtip/glitchtip:latest
+    image: glitchtip/glitchtip:latest@sha256:a3d8eb1b36c1e1603d55ab32711ea3dd8115874742a781a57391a62a16e0dff6
     container_name: guilda-work-glitchtip-worker
     restart: unless-stopped
     depends_on:
@@ -1775,7 +1775,7 @@ services:
   # hacerle de proxy, así que la propia VPN es la puerta de entrada de
   # red — mismo criterio ya aceptado para el puerto 22/SSH.
   openvpn:
-    image: kylemanna/openvpn:latest
+    image: kylemanna/openvpn:latest@sha256:643531abb010a088f1e23a1c99d44f0bd417a3dbb483f809caf4396b5c9829a0
     container_name: guilda-work-openvpn
     restart: unless-stopped
     cap_add:

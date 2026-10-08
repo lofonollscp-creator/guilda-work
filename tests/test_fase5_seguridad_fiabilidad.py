@@ -228,6 +228,7 @@ def test_imagenes_sin_fijar(tmp_path):
     (tmp_path / "docker-compose.yml").write_text(
         "services:\n  a:\n    image: nextcloud:latest\n  b:\n    image: postgres:16-alpine\n  c:\n    image: ghcr.io/x/y:unstable\n"
         "  d:\n    image: foo/bar\n  e:\n    image: openproject/openproject:${TAG:-15}\n"
+        "  f:\n    image: nextcloud:latest@sha256:" + "a" * 64 + "\n"
     )
     (tmp_path / "docker-compose.test.yml").write_text("services:\n  t:\n    image: oryd/kratos:latest\n")
     nombres = {i["imagen"] for i in dependencias.imagenes_sin_fijar(tmp_path)}

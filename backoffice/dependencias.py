@@ -49,8 +49,8 @@ def imagenes_sin_fijar(raiz: Path | None = None) -> list[dict]:
             if not m:
                 continue
             imagen = m.group(1)
-            if "${" in imagen:
-                continue  # parametrizada por variable de entorno
+            if "${" in imagen or "@sha256:" in imagen:
+                continue  # parametrizada por variable de entorno, o fijada por digest
             nombre, _, etiqueta = imagen.rpartition(":") if ":" in imagen.split("/")[-1] else (imagen, "", "")
             if etiqueta in ("", "latest", "unstable") or etiqueta.endswith("-latest"):
                 encontradas.append({"imagen": imagen, "fichero": fichero.name, "etiqueta": etiqueta or "(sin etiqueta)"})

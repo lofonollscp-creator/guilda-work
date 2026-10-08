@@ -285,6 +285,23 @@ encima de `ufw`** — con `127.0.0.1:` explícito, la única puerta de
 entrada real desde internet es Caddy (que sí corre en el host y alcanza
 `localhost`).
 
+### Versiones de las imágenes (fijadas por digest)
+
+Las imágenes de `docker-compose.yml` que están en marcha van fijadas como `repo:etiqueta@sha256:…`: la etiqueta
+se conserva para leer la versión, pero Docker usa el digest, así que ni un `docker compose pull` ni un reinicio
+pueden traer otra versión sin que alguien lo decida. (Los tenants nuevos de FacturaScripts usan
+`FACTURASCRIPTS_IMAGEN`, con el mismo criterio.) El panel de dependencias del backoffice solo avisa de las
+que sigan con `latest` sin digest.
+
+Para **subir de versión a propósito** (un `docker compose pull` no sirve: bajaría el digest fijado, es decir, lo mismo):
+
+1. Haz un backup y, si puedes, prueba antes la versión nueva con una copia de los datos.
+2. En `docker-compose.yml`, quita el `@sha256:…` de esa imagen (y, si quieres, cambia la etiqueta a la versión concreta).
+3. `docker compose pull <servicio> && docker compose up -d <servicio>` y comprueba que responde.
+4. `scripts/fijar_imagenes.py --aplicar` vuelve a fijar lo que quedó en marcha. Para volver atrás: `git revert` del cambio en el compose y `up -d`.
+
+`scripts/fijar_imagenes.py` sin opciones solo muestra qué cambiaría.
+
 ### 8.1 Instalar Docker
 
 ```bash

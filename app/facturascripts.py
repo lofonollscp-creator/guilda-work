@@ -79,6 +79,12 @@ FACTURASCRIPTS_POSTGRES_HOST = "postgres-facturascripts"
 FACTURASCRIPTS_POSTGRES_CONTENEDOR = "guilda-work-postgres-facturascripts"
 FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD = os.environ.get("FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD")
 FACTURASCRIPTS_RED_DOCKER = os.environ.get("FACTURASCRIPTS_RED_DOCKER", "eleganza_default")
+# Imagen fijada por digest: los tenants nuevos arrancan con la misma versión que ya se ha probado. Para subir de
+# versión a propósito, cambia el digest aquí (o en FACTURASCRIPTS_IMAGEN) tras probar la nueva.
+FACTURASCRIPTS_IMAGEN = os.environ.get(
+    "FACTURASCRIPTS_IMAGEN",
+    "facturascripts/facturascripts:latest@sha256:6341adc86551231d8e71ef75494869e35e3549bcc230bf42bafe48a84feafff5",
+)
 # Hasta ahora _docker_run() no montaba nada: MyFiles/Plugins/Dinamic vivían
 # solo en la capa escribible del contenedor (efímera, y contando contra el
 # disco raíz de 75G). El VPS tiene un segundo disco casi vacío montado en
@@ -167,7 +173,7 @@ def _docker_run(tenant_id: int, db_user: str, db_pass: str, db_name: str) -> Non
             "-v", f"{rutas['MyFiles']}:/var/www/html/MyFiles",
             "-v", f"{rutas['Plugins']}:/var/www/html/Plugins",
             "-v", f"{rutas['Dinamic']}:/var/www/html/Dinamic",
-            "facturascripts/facturascripts:latest",
+            FACTURASCRIPTS_IMAGEN,
         ],
         capture_output=True, text=True, timeout=30,
     )

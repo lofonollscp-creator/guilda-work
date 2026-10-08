@@ -110,3 +110,24 @@ def test_si_el_servidor_rechaza_enable_se_sincroniza_como_siempre(monkeypatch, u
     s.anadir("INBOX", "Dos")
     assert _sync(usuario_id, cuenta) == {"nuevos": 2}
     assert db.estado_carpeta_correo(cuenta, "INBOX")["modseq"] is None
+
+
+def test_las_capacidades_se_vuelven_a_pedir_tras_el_login(monkeypatch, usuario_id):
+    """Dovecot anuncia CONDSTORE solo después de autenticarse; imaplib conserva la lista anterior."""
+    s = ServidorIMAP(condstore=True)
+    s.anadir("INBOX", "Uno")
+    original = s.conexion
+
+    def conexion_con_lista_vieja(*a, **k):
+        c = original()
+        c.capabilities = ("IMAP4REV1", "IDLE")                       # lo que se vio antes del login
+        c.capability = lambda: ("OK", [b"IMAP4rev1 IDLE UIDPLUS ENABLE CONDSTORE"])
+        return c
+
+    monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda host, port, timeout=None: conexion_con_lista_vieja())
+    monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda host, port, timeout=None: conexion_con_lista_vieja())
+    cuenta = correo.guardar_cuenta(usuario_id, nombre="T", protocolo="imap", host="h", puerto=993, usuario="yo@e.com", contrasena="x")
+    _sync(usuario_id, cuenta)
+    assert db.estado_carpeta_correo(cuenta, "INBOX")["modseq"] == str(s.carpetas["INBOX"].modseq)
+    assert correo._capacidades(conexion_con_lista_vieja()) >= {"CONDSTORE", "IDLE"}
+    assert correo._capacidades(object()) == set()                    # sin nada que consultar

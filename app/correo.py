@@ -641,6 +641,19 @@ def _pasada_completa_vencida(ultima: str | None, ahora: datetime) -> bool:
 _RE_MODSEQ_SELECT = re.compile(rb"HIGHESTMODSEQ\s+(\d+)", re.IGNORECASE)
 
 
+def _capacidades(conn) -> set[str]:
+    """Capacidades del servidor DESPUÉS de autenticarse. `imaplib` conserva las de antes del login, y muchos
+    servidores (Dovecot) anuncian CONDSTORE, IDLE, etc. solo tras él, así que se vuelven a pedir."""
+    try:
+        estado, datos = conn.capability()
+        if estado == "OK" and datos and datos[0]:
+            texto = datos[0].decode("utf-8", "replace") if isinstance(datos[0], (bytes, bytearray)) else str(datos[0])
+            return set(texto.upper().split())
+    except Exception:  # noqa: BLE001 -- dobles o servidores raros: las que ya tenía imaplib
+        pass
+    return {str(c).upper() for c in getattr(conn, "capabilities", ())}
+
+
 def _activar_condstore(conn) -> bool:
     """CONDSTORE (RFC 7162): el servidor numera cada cambio (MODSEQ), lo que permite preguntar solo por lo
     que ha cambiado desde la última pasada. Se activa una vez por conexión; sin soporte, False."""
@@ -649,7 +662,7 @@ def _activar_condstore(conn) -> bool:
         return previo
     activo = False
     try:
-        capacidades = {str(c).upper() for c in getattr(conn, "capabilities", ())}
+        capacidades = _capacidades(conn)
         if "CONDSTORE" in capacidades and "ENABLE" in capacidades:
             estado, _ = conn.enable("CONDSTORE")
             activo = estado == "OK"
