@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono, salud_insignia, variacion %}
+{% block titulo %}Salud de clientes{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Salud de clientes</h1><p class="muted">Cada cliente de peor a mejor salud, cómo ha cambiado en la última semana, si su uso sube o baja y qué conviene hacer con él.</p></header>
+
+<nav class="filtros" aria-label="Filtrar por nivel">
+  <a class="boton boton-secundario {{ 'activo' if not r.filtro }}" href="{{ url_for('rutas.salud_clientes') }}">Todos ({{ r.cuenta.values()|sum }})</a>
+  <a class="boton boton-secundario {{ 'activo' if r.filtro == 'riesgo' }}" href="{{ url_for('rutas.salud_clientes', nivel='riesgo') }}">En riesgo ({{ r.cuenta.riesgo }})</a>
+  <a class="boton boton-secundario {{ 'activo' if r.filtro == 'atencion' }}" href="{{ url_for('rutas.salud_clientes', nivel='atencion') }}">Atención ({{ r.cuenta.atencion }})</a>
+  <a class="boton boton-secundario {{ 'activo' if r.filtro == 'sano' }}" href="{{ url_for('rutas.salud_clientes', nivel='sano') }}">Sanos ({{ r.cuenta.sano }})</a>
+  <a class="boton boton-secundario {{ 'activo' if r.filtro == 'nuevo' }}" href="{{ url_for('rutas.salud_clientes', nivel='nuevo') }}">Nuevos ({{ r.cuenta.nuevo }})</a>
+</nav>
+
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Cliente</th><th>Salud</th><th>Vs. hace 7 d</th><th>Uso (2 semanas)</th><th>Último contacto</th><th>Siguiente paso</th></tr></thead>
+    <tbody>
+      {% for f in r.filas %}
+      <tr>
+        <td><a href="{{ url_for('rutas.tenant', tenant_id=f.id, seccion='actividad') }}"><strong>{{ f.nombre }}</strong></a>
+          {% if f.silenciado_hasta %}<br><span class="insignia insignia-aviso">EN SEGUIMIENTO hasta {{ f.silenciado_hasta[:10] }}</span>{% endif %}</td>
+        <td>{{ salud_insignia(f) }}</td>
+        <td>{{ variacion(f.variacion) }}</td>
+        <td>{{ f.tendencia.actual }} {% if f.tendencia.variacion is not none %}<span class="muted">({{ variacion(f.tendencia.variacion, ' %') }})</span>{% endif %}</td>
+        <td>{{ f.ultimo_contacto|hace if f.ultimo_contacto else '—' }}</td>
+        <td>{{ f.siguiente or '' }}{% if not f.siguiente and f.motivos %}<span class="muted">{{ f.motivos|join(' · ') }}</span>{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="vacio">No hay clientes en este nivel.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

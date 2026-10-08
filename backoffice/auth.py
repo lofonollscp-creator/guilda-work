@@ -102,6 +102,23 @@ CREATE TABLE IF NOT EXISTS snapshots_tenants (
     suscripcion_estado TEXT,
     PRIMARY KEY (fecha, tenant_id)
 );
+-- Puntuación de salud de cada tenant, una vez al día: para ver si sube o baja.
+CREATE TABLE IF NOT EXISTS salud_historial (
+    fecha TEXT NOT NULL,
+    tenant_id INTEGER NOT NULL,
+    puntos INTEGER,
+    nivel TEXT NOT NULL,
+    PRIMARY KEY (fecha, tenant_id)
+);
+-- Seguimiento comercial/soporte de un tenant: cuándo se le contactó por última vez y, si se está en ello,
+-- hasta cuándo se silencia en el resumen semanal.
+CREATE TABLE IF NOT EXISTS seguimiento_tenant (
+    tenant_id INTEGER PRIMARY KEY,
+    ultimo_contacto TEXT,
+    posponer_hasta TEXT,
+    admin_usuario TEXT,
+    actualizado_en TEXT
+);
 CREATE TABLE IF NOT EXISTS auditorias_dependencias (
     id INTEGER PRIMARY KEY,
     fecha TEXT NOT NULL,

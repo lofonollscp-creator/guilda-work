@@ -10,7 +10,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 from app import db as plataforma
 from app import herramientas
 
-from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas
+from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas, seguimiento
 
 bp = Blueprint("rutas", __name__)
 
@@ -256,7 +256,15 @@ def tenant(tenant_id: int):
         }
     if seccion == "actividad":
         act = metricas.actividad_tenant(tenant_id, detalle["modulos"])
-        extra = {"act": act, "salud": cartera.puntuacion_tenant(tenant_id, act), "notas_internas": metricas.notas_tenant(tenant_id)}
+        salud = cartera.puntuacion_tenant(tenant_id, act)
+        serie = seguimiento.historial(tenant_id)
+        tendencia = seguimiento.tendencia_uso(tenant_id)
+        seg = seguimiento.obtener(tenant_id)
+        extra = {
+            "act": act, "salud": salud, "notas_internas": metricas.notas_tenant(tenant_id), "tendencia": tendencia,
+            "variacion_puntos": seguimiento.variacion_puntos(salud["puntos"], serie), "serie_salud": serie,
+            "siguiente": seguimiento.accion_sugerida(salud, act, tendencia), "seg": seg, "en_seguimiento": seguimiento.silenciado(seg),
+        }
     return render_template(
         "tenant.html", d=detalle, t=detalle["tenant"], seccion=seccion, n_fichajes=plataforma.contar_fichajes_tenant(tenant_id) if seccion == "avanzado" else 0, zonas=plataforma.ZONAS_HORARIAS, zona_defecto=plataforma.ZONA_HORARIA_DEFECTO, secciones=SECCIONES_TENANT,
         usuarios=usuarios, planes=datos.planes(), **extra,

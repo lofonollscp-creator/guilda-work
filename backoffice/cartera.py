@@ -207,9 +207,13 @@ def historial_ingresos(meses: int = 12) -> dict:
 def construir_resumen(ahora: datetime | None = None) -> dict:
     """Lo que merece atención esta semana, listo para mostrar o enviar."""
     ahora = ahora or datetime.now()
+    from . import seguimiento
+
     c = cartera()
-    riesgo = [f for f in c["filas"] if f["nivel"] == "riesgo"]
-    atencion = [f for f in c["filas"] if f["nivel"] == "atencion"]
+    en_seguimiento = seguimiento.silenciados(ahora)
+    riesgo = [f for f in c["filas"] if f["nivel"] == "riesgo" and f["id"] not in en_seguimiento]
+    atencion = [f for f in c["filas"] if f["nivel"] == "atencion" and f["id"] not in en_seguimiento]
+    silenciados = [{**f, "hasta": en_seguimiento[f["id"]]} for f in c["filas"] if f["id"] in en_seguimiento and f["nivel"] in ("riesgo", "atencion")]
     conn = plataforma.get_connection()
     try:
         errores_correo = conn.execute(
@@ -237,7 +241,7 @@ def construir_resumen(ahora: datetime | None = None) -> dict:
     hist = historial_ingresos()
     return {
         "generado": ahora.isoformat(timespec="seconds"), "cartera": c["cuenta"], "riesgo": riesgo, "atencion": atencion,
-        "pagos_fallidos": pagos_fallidos, "cobros_pendientes": cobros, "errores_correo": errores_correo,
+        "en_seguimiento": silenciados, "pagos_fallidos": pagos_fallidos, "cobros_pendientes": cobros, "errores_correo": errores_correo,
         "webhooks_fallidos_7d": webhooks, "mes": hist["resumen_mes"],
         "dependencias": dependencias.ultima(),
     }
@@ -258,6 +262,10 @@ def texto_resumen(r: dict) -> str:
         lineas.append("TENANTS EN RIESGO")
         for f in r["riesgo"]:
             lineas.append(f"- {f['nombre']} ({f['puntos'] if f['puntos'] is not None else '—'}/100): " + "; ".join(f["motivos"]))
+        lineas.append("")
+    if r.get("en_seguimiento"):
+        lineas.append("En seguimiento (no se insiste hasta la fecha): " + ", ".join(
+            f"{f['nombre']} ({f['hasta'][:10]})" for f in r["en_seguimiento"]))
         lineas.append("")
     if r["atencion"]:
         lineas.append("Piden atención: " + ", ".join(f"{f['nombre']} ({f['puntos']})" for f in r["atencion"]))
@@ -396,6 +404,12 @@ def vigilar_app(ahora: datetime | None = None, sonda=None, enviar=None) -> list[
 INTERVALO_SEGUNDOS = 600
 
 
+def _historial_salud(ahora: datetime) -> bool:
+    from . import seguimiento    # import perezoso: seguimiento.py usa este módulo
+
+    return seguimiento.tomar_historial(ahora.date())
+
+
 def paso_periodico(ahora: datetime | None = None, enviar=None) -> dict:
     """Una pasada: snapshot del día, estado de cobros y resumen semanal. Cada parte
     es independiente: un fallo no impide las demás, y el resultado queda como latido."""
@@ -405,6 +419,7 @@ def paso_periodico(ahora: datetime | None = None, enviar=None) -> dict:
     resultado, errores = {}, []
     for nombre, fn in (
         ("snapshot", lambda: tomar_snapshot(ahora.date())),
+        ("salud", lambda: _historial_salud(ahora)),
         ("cobros", refrescar_cobros_pendientes),
         ("resumen", lambda: resumen_semanal_si_toca(ahora, enviar=enviar)),
         ("vigilancia", lambda: vigilar_app(ahora)),

@@ -174,3 +174,10 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .resumen-texto { white-space: pre-wrap; background: var(--superficie-2); border: 1px solid var(--borde); border-radius: 10px; padding: 14px; margin: 0; font: inherit; }
 .casilla { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; font-weight: 400; }
 .admin-chip { color: inherit; text-decoration: none; } .admin-chip:hover { text-decoration: none; background: var(--superficie-2); border-radius: 10px; }
+
+/* Salud de clientes: filtros, evolución y formularios de seguimiento */
+.filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+.filtros .boton.activo { outline: 2px solid currentColor; outline-offset: 1px; }
+.linea-salud { color: var(--acento, currentColor); vertical-align: middle; }
+.formulario-linea { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.formulario-linea input[type="text"] { flex: 1 1 260px; }

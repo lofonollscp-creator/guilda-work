@@ -6,12 +6,12 @@ from __future__ import annotations
 
 import json
 
-from flask import Response, abort, flash, redirect, render_template, request, url_for
+from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
 from app import eventos, herramientas, salud, uptime_kuma
 
-from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico
+from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
 
 
@@ -119,6 +119,40 @@ def comprobar_dependencias():
     if resultado["error"]:
         flash(resultado["error"], "error")
     return redirect(url_for("rutas.dependencias_vista"))
+
+
+@bp.route("/salud-clientes")
+@auth.login_required
+def salud_clientes():
+    """Todos los clientes de peor a mejor salud, con cómo cambian y qué hacer con cada uno."""
+    return render_template("salud_clientes.html", r=seguimiento.ranking(request.args.get("nivel")))
+
+
+@bp.route("/tenants/<int:tenant_id>/seguimiento/contacto", methods=["POST"])
+@auth.login_required
+def registrar_contacto_tenant(tenant_id: int):
+    if plataforma.obtener_tenant(tenant_id) is None:
+        abort(404)
+    try:
+        dias = int(request.form.get("posponer_dias") or 0)
+        seguimiento.registrar_contacto(tenant_id, request.form.get("texto", ""), g.admin["usuario"], dias)
+    except ValueError as e:
+        flash(str(e) if "invalid literal" not in str(e) else "Los días de seguimiento no son un número.", "error")
+    else:
+        auth.auditar("tenant.contacto", f"tenant {tenant_id}" + (f" · seguimiento {dias} d" if dias else ""))
+        flash("Contacto registrado.", "ok")
+    return redirect(url_for("rutas.tenant", tenant_id=tenant_id, seccion="actividad"))
+
+
+@bp.route("/tenants/<int:tenant_id>/seguimiento/reanudar", methods=["POST"])
+@auth.login_required
+def reanudar_seguimiento_tenant(tenant_id: int):
+    if plataforma.obtener_tenant(tenant_id) is None:
+        abort(404)
+    seguimiento.reanudar(tenant_id, g.admin["usuario"])
+    auth.auditar("tenant.seguimiento_fin", f"tenant {tenant_id}")
+    flash("El tenant vuelve a aparecer en el resumen semanal.", "ok")
+    return redirect(url_for("rutas.tenant", tenant_id=tenant_id, seccion="actividad"))
 
 
 @bp.route("/alertas")

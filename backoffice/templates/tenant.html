@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icono, insignia_rol, salud_insignia %}
+{% from "_macros.html" import icono, insignia_rol, salud_insignia, variacion, linea_salud %}
 {% block titulo %}{{ t.nombre }}{% endblock %}
 {% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'integraciones': ('Integraciones', 'zap'), 'actividad': ('Actividad', 'activity'), 'avanzado': ('Avanzado', 'shield-check')} %}
 {% block contenido %}
@@ -219,6 +219,28 @@
       </ul>
       {% endif %}
       {% if salud.motivos %}<p class="muted">{{ salud.motivos|join(' · ') }}</p>{% endif %}
+      <dl class="cuadricula">
+        <div><dt>Frente a hace 7 días</dt><dd>{{ variacion(variacion_puntos, ' pts') }}</dd></div>
+        <div><dt>Uso (últimas 2 semanas)</dt><dd>{{ tendencia.actual }} {% if tendencia.variacion is not none %}<span class="muted">({{ variacion(tendencia.variacion, ' %') }} vs. las 2 anteriores)</span>{% endif %}</dd></div>
+        <div><dt>Último contacto</dt><dd>{{ seg.ultimo_contacto|hace if seg.ultimo_contacto else 'Nunca' }}</dd></div>
+        <div><dt>Evolución (90 d)</dt><dd>{{ linea_salud(serie_salud) }}{% if serie_salud|length < 2 %}<span class="muted">se va rellenando cada día</span>{% endif %}</dd></div>
+      </dl>
+      {% if siguiente %}<p><strong>Siguiente paso:</strong> {{ siguiente }}</p>{% endif %}
+      {% if en_seguimiento %}
+      <form method="post" action="{{ url_for('rutas.reanudar_seguimiento_tenant', tenant_id=t.id) }}" class="formulario-linea">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <span class="insignia insignia-aviso">EN SEGUIMIENTO hasta {{ seg.posponer_hasta[:10] }}</span>
+        <button type="submit" class="boton boton-secundario">Volver a avisar</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('rutas.registrar_contacto_tenant', tenant_id=t.id) }}" class="formulario-linea">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="text" name="texto" maxlength="500" placeholder="He hablado con… / acordamos…" required aria-label="Qué se habló">
+        <select name="posponer_dias" aria-label="Silenciar en el resumen semanal">
+          <option value="0">No silenciar</option><option value="7">Silenciar 7 días</option><option value="14">Silenciar 14 días</option><option value="30">Silenciar 30 días</option>
+        </select>
+        <button type="submit" class="boton">Registrar contacto</button>
+      </form>
     </div>
     <div class="rejilla rejilla-2">
       <div class="tarjeta"><h3 class="sin-margen">{{ icono('list-checks') }} Tareas</h3>

@@ -17,3 +17,9 @@
 </div>
 {% endmacro %}
 {% macro salud_insignia(s) %}{% if s.puntos is none %}<span class="insignia">{{ s.etiqueta|upper }}</span>{% else %}<span class="insignia {{ 'insignia-ok' if s.nivel == 'sano' else ('insignia-aviso' if s.nivel == 'atencion' else 'insignia-riesgo') }}" title="{{ s.motivos|join('; ') }}">{{ s.puntos }} · {{ s.etiqueta|upper }}</span>{% endif %}{% endmacro %}
+
+{% macro variacion(v, sufijo='') %}{% if v is none %}<span class="muted">—</span>{% elif v > 0 %}<span class="ok">▲ {{ v }}{{ sufijo }}</span>{% elif v < 0 %}<span class="texto-riesgo">▼ {{ -v }}{{ sufijo }}</span>{% else %}<span class="muted">= 0{{ sufijo }}</span>{% endif %}{% endmacro %}
+{% macro linea_salud(serie) %}{% set pts = serie|selectattr('puntos', 'ne', none)|list %}{% if pts|length >= 2 %}
+<svg class="linea-salud" viewBox="0 0 120 32" role="img" aria-label="Evolución de la puntuación de salud" width="120" height="32">
+  <polyline fill="none" stroke="currentColor" stroke-width="2" points="{% for f in pts %}{{ (loop.index0 * 120 / (pts|length - 1))|round(1) }},{{ (30 - f.puntos * 28 / 100)|round(1) }} {% endfor %}"/>
+</svg>{% endif %}{% endmacro %}
