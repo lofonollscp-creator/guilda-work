@@ -1573,8 +1573,11 @@ services:
     image: grafana/loki:latest@sha256:efd47c67f9bac88ca29bcf8cb997d9ab29d1848bd0aff579282295542a745952
     container_name: guilda-work-loki
     restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki-data:/loki
+      # Configuración con retención de 30 días (ver deploy/loki-config.yml).
+      - ./deploy/loki-config.yml:/etc/loki/local-config.yaml:ro
 
   promtail:
     image: grafana/promtail:latest@sha256:6cfa64ec432b24a912d640e2edb940eeae2666f61861a66c121d763dd7241381
