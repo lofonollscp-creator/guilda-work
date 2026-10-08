@@ -638,8 +638,49 @@ def _pasada_completa_vencida(ultima: str | None, ahora: datetime) -> bool:
         return True
 
 
-def _estados_servidor(conn, rango: str) -> dict[int, set[str]]:
-    estado, datos = conn.uid("fetch", rango, "(FLAGS)")
+_RE_MODSEQ_SELECT = re.compile(rb"HIGHESTMODSEQ\s+(\d+)", re.IGNORECASE)
+
+
+def _activar_condstore(conn) -> bool:
+    """CONDSTORE (RFC 7162): el servidor numera cada cambio (MODSEQ), lo que permite preguntar solo por lo
+    que ha cambiado desde la última pasada. Se activa una vez por conexión; sin soporte, False."""
+    previo = getattr(conn, "_condstore_activo", None)
+    if previo is not None:
+        return previo
+    activo = False
+    try:
+        capacidades = {str(c).upper() for c in getattr(conn, "capabilities", ())}
+        if "CONDSTORE" in capacidades and "ENABLE" in capacidades:
+            estado, _ = conn.enable("CONDSTORE")
+            activo = estado == "OK"
+    except Exception:  # noqa: BLE001 -- servidor raro: se sincroniza como siempre
+        activo = False
+    try:
+        conn._condstore_activo = activo
+    except AttributeError:
+        pass
+    return activo
+
+
+def _highestmodseq(conn) -> int | None:
+    """HIGHESTMODSEQ que el servidor dio al seleccionar la carpeta (None si no lo da: NOMODSEQ, sin soporte...)."""
+    try:
+        _, datos = conn.response("OK")
+        for d in datos or []:
+            m = _RE_MODSEQ_SELECT.search(d if isinstance(d, (bytes, bytearray)) else str(d).encode())
+            if m:
+                return int(m.group(1))
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def _estados_servidor(conn, rango: str, cambios_desde: int | None = None) -> dict[int, set[str]]:
+    """{uid: banderas}. Con `cambios_desde` (CONDSTORE) solo los mensajes modificados después de ese MODSEQ."""
+    if cambios_desde is not None:
+        estado, datos = conn.uid("fetch", rango, "(FLAGS)", f"(CHANGEDSINCE {int(cambios_desde)})")
+    else:
+        estado, datos = conn.uid("fetch", rango, "(FLAGS)")
     if estado != "OK":
         return {}
     return {r["uid"]: r["flags"] for r in _parsear_fetch(datos)}
@@ -684,9 +725,11 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> dict
     carpeta. La descarga está acotada (`DESCARGAS_POR_CICLO`, lo más reciente primero): un
     buzón de decenas de miles de correos se baja en varias pasadas sin bloquear la sincronización."""
     resumen = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0}
+    condstore = _activar_condstore(conn)
     estado, datos_select = conn.select(f'"{carpeta}"')
     if estado != "OK":
         return resumen
+    modseq_servidor = _highestmodseq(conn) if condstore else None
     cid = cuenta["id"]
     try:
         existentes = int(datos_select[0]) if datos_select and datos_select[0] else None
@@ -755,11 +798,22 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> dict
                 resumen["no_leidos"] += 1
 
     # Estado (leído/destacado) tal como está en el servidor, salvo lo que aquí está pendiente de enviar.
-    rango = "1:*" if completa else (f"{minimo_estado}:*" if minimo_estado is not None else None)
+    # Con CONDSTORE y un MODSEQ guardado de la pasada anterior no hace falta releer las banderas de la
+    # ventana: si no ha cambiado nada se omite, y si ha cambiado se piden solo los mensajes modificados
+    # (también los antiguos, que antes solo se veían en la pasada completa de cada hora).
+    modseq_guardado = int(fila["modseq"]) if fila is not None and fila["modseq"] else None
+    cambios_desde = None
+    if modseq_servidor is not None and modseq_guardado is not None and not completa and modseq_servidor >= modseq_guardado:
+        if modseq_servidor == modseq_guardado:
+            rango = None
+        else:
+            rango, cambios_desde = "1:*", modseq_guardado
+    else:
+        rango = "1:*" if completa else (f"{minimo_estado}:*" if minimo_estado is not None else None)
     if rango:
         pendientes = db.operaciones_por_mensaje_correo(cid, carpeta)   # incluye lo que acaban de encolar las reglas al descargar
-        servidor_flags = _estados_servidor(conn, rango)
-        locales = db.estados_mensajes_correo(cid, carpeta, None if completa else minimo_estado)
+        servidor_flags = _estados_servidor(conn, rango, cambios_desde)
+        locales = db.estados_mensajes_correo(cid, carpeta, None if (completa or cambios_desde is not None) else minimo_estado)
         cambios = []
         for uid, (leido, destacado) in locales.items():
             flags = servidor_flags.get(int(uid))
@@ -773,7 +827,7 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> dict
         db.aplicar_estados_servidor_correo(cid, carpeta, cambios)
         resumen["estados"] = len(cambios)
 
-    actualizar = {"uidvalidity": validez}
+    actualizar = {"uidvalidity": validez, "modseq": str(modseq_servidor) if modseq_servidor is not None else None}
     maximo = max([*vistos_servidor, ultimo or 0], default=0)
     if maximo:
         actualizar["ultimo_uid_sincronizado"] = str(maximo)

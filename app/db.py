@@ -1889,6 +1889,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_carpetas", "uidvalidity", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "descarga_pendiente", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "correo_carpetas", "modseq", "TEXT")      # HIGHESTMODSEQ (CONDSTORE) de la última pasada
         _asegurar_fts_correo(conn)
         for columna, definicion in (
             # Con prefijo `proy_`: `estado`, `cliente_fiscal_id`… ya existen en las tablas que se unen con categorias y
@@ -9158,7 +9159,7 @@ def estado_carpeta_correo(cuenta_id: int, carpeta: str) -> sqlite3.Row | None:
 
 def guardar_estado_carpeta_correo(cuenta_id: int, carpeta: str, **campos) -> None:
     """Actualiza uidvalidity, ultimo_uid_sincronizado, ultima_pasada_completa y descarga_pendiente."""
-    permitidos = ("uidvalidity", "ultimo_uid_sincronizado", "ultima_pasada_completa", "descarga_pendiente")
+    permitidos = ("uidvalidity", "ultimo_uid_sincronizado", "ultima_pasada_completa", "descarga_pendiente", "modseq")
     columnas = [c for c in campos if c in permitidos]
     if not columnas:
         return
@@ -9182,7 +9183,7 @@ def vaciar_carpeta_correo(cuenta_id: int, carpeta: str) -> None:
         conn.execute("DELETE FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ?", (cuenta_id, carpeta))
         conn.execute("DELETE FROM correo_operaciones WHERE cuenta_id = ? AND carpeta = ?", (cuenta_id, carpeta))
         conn.execute(
-            "UPDATE correo_carpetas SET ultimo_uid_sincronizado = NULL, ultima_pasada_completa = NULL, descarga_pendiente = 0 "
+            "UPDATE correo_carpetas SET ultimo_uid_sincronizado = NULL, ultima_pasada_completa = NULL, descarga_pendiente = 0, modseq = NULL "
             "WHERE cuenta_id = ? AND nombre = ?", (cuenta_id, carpeta),
         )
         conn.commit()

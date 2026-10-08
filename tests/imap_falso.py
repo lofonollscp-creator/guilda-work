@@ -22,15 +22,17 @@ class Carpeta:
         self.nombre, self.atributos = nombre, atributos
         self.uidvalidity = 1000
         self.siguiente = 1
+        self.modseq = 1                       # HIGHESTMODSEQ de la carpeta (CONDSTORE)
         self.mensajes: dict[int, dict] = {}
 
 
 class ServidorIMAP:
-    def __init__(self, carpetas=("INBOX",), papelera: str | None = None, uidplus: bool = True, cola_fetch: str = "estandar"):
+    def __init__(self, carpetas=("INBOX",), papelera: str | None = None, uidplus: bool = True, cola_fetch: str = "estandar", condstore: bool = False):
         self.carpetas = {n: Carpeta(n) for n in carpetas}
         if papelera:
             self.carpetas[papelera] = Carpeta(papelera, "\\HasNoChildren \\Trash")
         self.uidplus = uidplus
+        self.condstore = condstore            # anuncia CONDSTORE/ENABLE, da HIGHESTMODSEQ y entiende CHANGEDSINCE
         self.cola_fetch = cola_fetch          # "estandar": FLAGS en la cabecera; "tras_literal": FLAGS después del literal
         self.registro: list[tuple] = []       # (comando, args) de todo lo que llega
         self.fallar: dict[str, str] = {}      # comando -> "NO" | "abort": hace fallar ese comando
@@ -41,11 +43,18 @@ class ServidorIMAP:
         c = self.carpetas[carpeta]
         uid = c.siguiente
         c.siguiente += 1
-        c.mensajes[uid] = {"crudo": crudo(asunto, **kw), "flags": {f.lower() for f in flags}}
+        c.modseq += 1
+        c.mensajes[uid] = {"crudo": crudo(asunto, **kw), "flags": {f.lower() for f in flags}, "modseq": c.modseq}
         return uid
 
     def poner_flags(self, carpeta: str, uid: int, *flags: str) -> None:
         self.carpetas[carpeta].mensajes[uid]["flags"] = {f.lower() for f in flags}
+        self._tocar(carpeta, uid)
+
+    def _tocar(self, carpeta: str, uid: int) -> None:
+        c = self.carpetas[carpeta]
+        c.modseq += 1
+        c.mensajes[uid]["modseq"] = c.modseq
 
     def borrar(self, carpeta: str, uid: int) -> None:
         del self.carpetas[carpeta].mensajes[uid]
@@ -55,6 +64,10 @@ class ServidorIMAP:
 
     def uids(self, carpeta: str) -> list[int]:
         return sorted(self.carpetas[carpeta].mensajes)
+
+    def carpetas_por_objeto_tocar(self, carpeta, uid: int) -> None:
+        carpeta.modseq += 1
+        carpeta.mensajes[uid]["modseq"] = carpeta.modseq
 
     def comandos(self, nombre: str) -> list[tuple]:
         return [a for c, a in self.registro if c == nombre]
@@ -69,6 +82,10 @@ class ConexionIMAP:
         self.s = servidor
         self.actual: Carpeta | None = None
         self.capabilities = ("IMAP4REV1", "UIDPLUS") if servidor.uidplus else ("IMAP4REV1",)
+        if servidor.condstore:
+            self.capabilities += ("ENABLE", "CONDSTORE")
+        self._condstore_pedido = False
+        self._ok: list = [None]
 
     def _entrada(self, comando: str, *args):
         self.s.registro.append((comando, args))
@@ -82,6 +99,13 @@ class ConexionIMAP:
     def login(self, usuario, contrasena):
         return "OK", [b"Logged in"]
 
+    def enable(self, capacidad):
+        self._entrada("enable", capacidad)
+        if capacidad.upper() == "CONDSTORE" and self.s.condstore:
+            self._condstore_pedido = True
+            return "OK", [b"CONDSTORE"]
+        return "NO", [b"no soportado"]
+
     def list(self):
         return "OK", [f'({c.atributos}) "/" "{c.nombre}"'.encode() for c in self.s.carpetas.values()]
 
@@ -91,9 +115,13 @@ class ConexionIMAP:
         if nombre not in self.s.carpetas:
             return "NO", [b"no existe"]
         self.actual = self.s.carpetas[nombre]
+        # Como Dovecot: HIGHESTMODSEQ en el SELECT solo si el cliente activó CONDSTORE antes.
+        self._ok = [f"[HIGHESTMODSEQ {self.actual.modseq}] Ok".encode()] if self._condstore_pedido else [None]
         return "OK", [str(len(self.actual.mensajes)).encode()]
 
     def response(self, codigo):
+        if codigo == "OK":
+            return codigo, self._ok
         if codigo == "UIDVALIDITY" and self.actual:
             return codigo, [str(self.actual.uidvalidity).encode()]
         return codigo, [None]
@@ -127,6 +155,11 @@ class ConexionIMAP:
             return "OK", [" ".join(str(u) for u in uids).encode()]
         if comando == "fetch":
             pedidos = self._expandir(args[0])
+            if len(args) > 2 and str(args[2]).upper().startswith("(CHANGEDSINCE"):
+                if not self._condstore_pedido:
+                    return "BAD", [b"CONDSTORE no activado"]
+                desde = int(str(args[2]).strip("()").split()[1])
+                pedidos = [u for u in pedidos if self.actual.mensajes[u].get("modseq", 0) > desde]
             con_cuerpo = "BODY" in args[1] or "RFC822" in args[1]
             respuesta: list = []
             for n, uid in enumerate(pedidos, 1):
@@ -138,6 +171,8 @@ class ConexionIMAP:
                 elif con_cuerpo:
                     respuesta.append((f"{n} (UID {uid} FLAGS ({banderas}) BODY[] {{{len(m['crudo'])}}}".encode(), m["crudo"]))
                     respuesta.append(b")")
+                elif self._condstore_pedido:
+                    respuesta.append(f"{n} (UID {uid} MODSEQ ({m.get('modseq', 0)}) FLAGS ({banderas}))".encode())
                 else:
                     respuesta.append(f"{n} (UID {uid} FLAGS ({banderas}))".encode())
                 if "BODY.PEEK" not in args[1] and con_cuerpo:
@@ -151,6 +186,7 @@ class ConexionIMAP:
                     f.update(banderas)
                 elif modo.startswith("-FLAGS"):
                     f.difference_update(banderas)
+                self.s.carpetas_por_objeto_tocar(self.actual, uid)
             return "OK", [b"STORE completed"]
         if comando == "copy":
             uid, destino = int(args[0]), args[1].strip('"')
@@ -158,7 +194,8 @@ class ConexionIMAP:
                 return "NO", [b"[TRYCREATE]"]
             origen = self.actual.mensajes[uid]
             c = self.s.carpetas[destino]
-            c.mensajes[c.siguiente] = {"crudo": origen["crudo"], "flags": set(origen["flags"])}
+            c.modseq += 1
+            c.mensajes[c.siguiente] = {"crudo": origen["crudo"], "flags": set(origen["flags"]), "modseq": c.modseq}
             c.siguiente += 1
             return "OK", [b"COPY completed"]
         if comando == "expunge":
