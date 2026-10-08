@@ -25,6 +25,8 @@ PANTALLAS = [
     "/correo/?cuenta_id={cuenta}", "/correo/?cuenta_id={cuenta}&q=factura", "/correo/?cuenta_id={cuenta}&q=inexistentezzz",
     "/correo/?cuenta_id={cuenta}&q=lorem+ipsum", "/correo/?cuenta_id={cuenta}&mensaje_id=5",
     "/historial", "/estadisticas", "/fiscal/vencimientos", "/menu/{proyecto}",
+    "/proyecto/{proyecto}", "/proyecto/{proyecto}/lista", "/proyecto/{proyecto}/tablero", "/proyecto/{proyecto}/calendario",
+    "/proyecto/{proyecto}/notas", "/proyecto/{proyecto}/actividad", "/correo/cuentas",
 ]
 
 
