@@ -172,6 +172,8 @@ def ficha_cliente(cliente_id: int):
     return render_template(
         "fiscal_cliente_detalle.html",
         cliente=cliente,
+        expediente=db.listar_documentos_cliente(g.tenant_id, cliente_id),
+        categorias_documento=db.CATEGORIAS_DOCUMENTO, soy_supervisor=db.es_supervisor_tenant(g.usuario_id),
         modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
         modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
         vencimientos=vencimientos,
@@ -184,6 +186,46 @@ def ficha_cliente(cliente_id: int):
         mensajes_totales=mensajes_totales,
         correos_relacionados=correos_relacionados,
     )
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/documentos", methods=["POST"])
+@login_required
+def subir_documentos_cliente(cliente_id: int):
+    """Sube uno o varios archivos al expediente del cliente (hasta 10 a la vez)."""
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404)
+    for archivo in request.files.getlist("archivo")[:10]:
+        if archivo and archivo.filename:
+            db.archivar_documento_cliente(
+                g.usuario_id, cliente_id, archivo.filename, archivo.mimetype, archivo.read(db.MAX_DOCUMENTO_CLIENTE_BYTES + 1),
+                categoria=request.form.get("categoria"),
+            )
+    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
+
+
+# Tipos que un navegador interpretaría como página si se abrieran: se sirven siempre como descarga genérica.
+_TIPOS_PELIGROSOS = ("text/html", "application/xhtml+xml", "image/svg+xml", "text/xml", "application/xml", "text/javascript")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>")
+@login_required
+def descargar_documento_cliente(cliente_id: int, documento_id: int):
+    documento = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
+    if documento is None:
+        abort(404)
+    tipo = documento["tipo_mime"].lower().split(";")[0]
+    respuesta = Response(bytes(documento["contenido"]), mimetype="application/octet-stream" if tipo in _TIPOS_PELIGROSOS else tipo)
+    respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
+    respuesta.headers.set("X-Content-Type-Options", "nosniff")
+    return respuesta
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_documento_cliente(cliente_id: int, documento_id: int):
+    if not db.eliminar_documento_cliente(g.usuario_id, cliente_id, documento_id):
+        abort(404)
+    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/resumen.json")

@@ -6876,3 +6876,53 @@ msgstr ""
 msgid "Carga"
 msgstr "Charge"
 
+msgid "Expediente"
+msgstr "Dossier"
+
+msgid ""
+"Documentos que el despacho guarda de este cliente: súbelos aquí o "
+"archívalos desde un correo."
+msgstr ""
+"Documents que le cabinet conserve pour ce client : téléversez-les ici ou "
+"classez-les depuis un courriel."
+
+msgid "del correo"
+msgstr "du courriel"
+
+msgid "¿Eliminar este documento del expediente?"
+msgstr "Supprimer ce document du dossier ?"
+
+msgid "Todavía no hay documentos en el expediente."
+msgstr "Il n'y a pas encore de documents dans le dossier."
+
+msgid "Archivos"
+msgstr "Fichiers"
+
+msgid "Categoría (opcional)"
+msgstr "Catégorie (facultatif)"
+
+msgid "Archivar en el expediente de un cliente"
+msgstr "Classer dans le dossier d'un client"
+
+msgid "Elige el cliente…"
+msgstr "Choisissez le client…"
+
+msgid "Guardar también el correo (texto)"
+msgstr "Enregistrer aussi le courriel (texte)"
+
+msgid "Archivar"
+msgstr "Classer"
+
+msgid "archivar adjuntos en el expediente"
+msgstr "classer les pièces jointes dans le dossier"
+
+msgid ""
+"Requiere elegir el cliente. Los logotipos e imágenes pequeñas no se "
+"archivan."
+msgstr ""
+"Nécessite de choisir le client. Les logos et petites images ne sont pas "
+"classés."
+
+msgid "Archivar adjuntos en el expediente"
+msgstr "Classer les pièces jointes dans le dossier"
+

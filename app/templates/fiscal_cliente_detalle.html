@@ -51,6 +51,36 @@
 </ul>
 {% endif %}
 
+<section style="max-width: 640px; margin-top: 2rem;" id="expediente">
+  <h2>{{ _('Expediente') }}</h2>
+  <p class="muted">{{ _('Documentos que el despacho guarda de este cliente: súbelos aquí o archívalos desde un correo.') }}</p>
+  {% if expediente %}
+  <ul class="log-list">
+    {% for d in expediente %}
+    <li class="log-item">
+      {% if d.categoria %}<span class="pill">{{ d.categoria }}</span>{% endif %}
+      <span class="log-text">
+        <a href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=cliente.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
+        <span class="muted">· {{ d.creado_en[:10] }} · {{ d.subido_por_nombre }}{% if d.origen == 'correo' %} · {{ _('del correo') }}{% if d.asunto_origen %} «{{ d.asunto_origen }}»{% endif %}{% endif %}</span>
+      </span>
+      <span class="log-duration">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+      {% if d.subido_por == g.usuario_id or soy_supervisor %}
+      <form action="{{ url_for('fiscal.eliminar_documento_cliente', cliente_id=cliente.id, documento_id=d.id) }}" method="post" onsubmit="return confirm('{{ _('¿Eliminar este documento del expediente?') }}');">
+        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay documentos en el expediente.') }}</p>{% endif %}
+  <form action="{{ url_for('fiscal.subir_documentos_cliente', cliente_id=cliente.id) }}" method="post" enctype="multipart/form-data" class="inline-form">
+    <input type="file" name="archivo" multiple required aria-label="{{ _('Archivos') }}">
+    <input type="text" name="categoria" list="categorias-documento" maxlength="60" placeholder="{{ _('Categoría (opcional)') }}" aria-label="{{ _('Categoría') }}">
+    <datalist id="categorias-documento">{% for c in categorias_documento %}<option value="{{ c }}">{% endfor %}</datalist>
+    <button type="submit" class="btn btn-primary">{{ _('Subir') }}</button>
+  </form>
+</section>
+
 {% if documentos_totales %}
 <section style="max-width: 640px; margin-top: 2rem;">
   <h2>{{ _('Documentos subidos por el cliente') }}</h2>

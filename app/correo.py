@@ -1328,6 +1328,8 @@ def _aplicar_categoria_automatica(
                 tenant = db.tenant_de_usuario(usuario_id)
                 if tenant is not None:
                     db.asignar_cliente_fiscal_correo(tenant["id"], mensaje_id, regla["cliente_fiscal_id"])
+                if regla["archivar_adjuntos"]:
+                    archivar_correo_en_expediente(usuario_id, mensaje_id, regla["cliente_fiscal_id"], automatico=True)
     except Exception:  # noqa: BLE001
         logger.exception("Regla de correo fallida (mensaje %s)", mensaje_id)
     try:
@@ -1536,6 +1538,68 @@ def asignar_categoria(usuario_id: int, mensaje_id: int, categoria_id: int | None
 
 def asignar_cliente_fiscal(tenant_id: int, mensaje_id: int, cliente_fiscal_id: int | None) -> None:
     db.asignar_cliente_fiscal_correo(tenant_id, mensaje_id, cliente_fiscal_id)
+
+
+# --- Del correo al expediente del cliente -------------------------------------------
+
+LOGO_MAXIMO_BYTES = 30 * 1024      # una imagen pequeña de firma o logotipo no es un documento del cliente
+
+
+def _correo_como_texto(mensaje) -> bytes:
+    """El correo en texto plano (cabeceras y cuerpo), para guardarlo en el expediente. No se guarda el HTML
+    del remitente tal cual: al abrirlo luego podría cargar contenido remoto."""
+    cuerpo = mensaje["cuerpo_texto"] or html_a_texto_plano(mensaje["cuerpo_html"] or "") or ""
+    cabeceras = [
+        f"De: {mensaje['remitente'] or ''}", f"Para: {mensaje['destinatarios'] or ''}",
+        *([f"Cc: {mensaje['cc']}"] if mensaje["cc"] else []),
+        f"Fecha: {(mensaje['fecha'] or '')[:19].replace('T', ' ')}", f"Asunto: {mensaje['asunto'] or ''}",
+    ]
+    return ("\n".join(cabeceras) + "\n\n" + cuerpo).encode("utf-8")
+
+
+def archivar_correo_en_expediente(
+    usuario_id: int, mensaje_id: int, cliente_fiscal_id: int, adjunto_ids: list[int] | None = None,
+    guardar_correo: bool = False, categoria: str | None = None, automatico: bool = False,
+) -> dict:
+    """Guarda en el expediente del cliente los adjuntos elegidos (todos si `adjunto_ids` es None) y,
+    si se pide, el propio correo como texto; deja el correo vinculado al cliente. `automatico` (reglas):
+    se omiten las imágenes pequeñas (logos, firmas). Devuelve {'archivados', 'duplicados', 'omitidos'}
+    o lanza ErrorCorreo si el mensaje o el cliente no son válidos."""
+    resumen = {"archivados": 0, "duplicados": 0, "omitidos": 0}
+    if not db.mensaje_correo_pertenece_a_usuario(usuario_id, mensaje_id):
+        raise ErrorCorreo("Ese correo no existe.")
+    tenant = db.tenant_de_usuario(usuario_id)
+    if tenant is None or db.obtener_cliente_fiscal(tenant["id"], cliente_fiscal_id) is None:
+        raise ErrorCorreo("Ese cliente no existe.")
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
+    db.asignar_cliente_fiscal_correo(tenant["id"], mensaje_id, cliente_fiscal_id)
+
+    def guardar(nombre, tipo, contenido):
+        resultado, _id = db.archivar_documento_cliente(
+            usuario_id, cliente_fiscal_id, nombre, tipo, contenido, categoria=categoria, origen="correo",
+            mensaje_correo_id=mensaje_id, asunto_origen=mensaje["asunto"],
+        )
+        if resultado == "ok":
+            resumen["archivados"] += 1
+        elif resultado == "duplicado":
+            resumen["duplicados"] += 1
+        else:
+            resumen["omitidos"] += 1
+
+    for fila in db.listar_adjuntos_correo(mensaje_id):
+        if adjunto_ids is not None and fila["id"] not in adjunto_ids:
+            continue
+        if automatico and fila["tipo_mime"].startswith("image/") and fila["tamano_bytes"] < LOGO_MAXIMO_BYTES:
+            resumen["omitidos"] += 1
+            continue
+        adjunto = db.obtener_adjunto_correo(fila["id"])
+        if adjunto is not None:
+            guardar(adjunto["nombre_archivo"], adjunto["tipo_mime"], bytes(adjunto["contenido"]))
+    if guardar_correo:
+        fecha = (mensaje["fecha"] or "")[:10]
+        asunto = re.sub(r"[^\w .-]+", "", mensaje["asunto"] or "sin asunto").strip()[:80] or "sin asunto"
+        guardar(f"Correo {fecha} - {asunto}.txt".replace("  ", " "), "text/plain", _correo_como_texto(mensaje))
+    return resumen
 
 
 # --- Plantillas de respuesta guardadas -------------------------------------

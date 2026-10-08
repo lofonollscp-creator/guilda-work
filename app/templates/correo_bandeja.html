@@ -357,6 +357,26 @@
       <p class="correo-ia-privacidad">{{ _('El contenido de este correo se envía al proveedor de IA que tienes configurado.') }}</p>
       <div class="correo-ia-resultado"></div>
     </section>
+    {% if clientes_fiscales %}
+    <details class="correo-expediente">
+      <summary>{{ _('Archivar en el expediente de un cliente') }}</summary>
+      <form action="{{ url_for('correo.archivar_en_expediente', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-form-seccion">
+        <div class="ia-form-row">
+          <select name="cliente_fiscal_id" required aria-label="{{ _('Cliente') }}">
+            <option value="">{{ _('Elige el cliente…') }}</option>
+            {% for cf in clientes_fiscales %}<option value="{{ cf.id }}" {% if mensaje_seleccionado.cliente_fiscal_id == cf.id %}selected{% endif %}>{{ cf.nombre }}</option>{% endfor %}
+          </select>
+          <input type="text" name="categoria" list="categorias-documento-correo" maxlength="60" placeholder="{{ _('Categoría (opcional)') }}">
+          <datalist id="categorias-documento-correo">{% for c in categorias_documento %}<option value="{{ c }}">{% endfor %}</datalist>
+        </div>
+        {% for a in adjuntos_mensaje %}
+        <label class="correo-toolbar-check"><input type="checkbox" name="adjunto" value="{{ a.id }}" checked> {{ a.nombre_archivo }} <span class="muted">({{ a.tamano_bytes|tamano_legible }})</span></label>
+        {% endfor %}
+        <label class="correo-toolbar-check"><input type="checkbox" name="guardar_correo" {% if not adjuntos_mensaje %}checked{% endif %}> {{ _('Guardar también el correo (texto)') }}</label>
+        <button type="submit" class="btn btn-ghost">{{ _('Archivar') }}</button>
+      </form>
+    </details>
+    {% endif %}
     {% if adjuntos_mensaje %}
     <div class="correo-adjuntos">
       {% for a in adjuntos_mensaje %}

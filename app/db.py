@@ -448,6 +448,26 @@ CREATE TABLE IF NOT EXISTS proyecto_plantillas (
     creada_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_proyecto_plantillas_tenant ON proyecto_plantillas(tenant_id);
+-- Expediente del cliente: los documentos que el despacho guarda de un cliente (subidos a mano o archivados
+-- desde un correo). Distintos de vencimientos_fiscales_documentos, que son los que sube el cliente por el portal.
+CREATE TABLE IF NOT EXISTS cliente_documentos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id) ON DELETE CASCADE,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    categoria TEXT,
+    origen TEXT NOT NULL DEFAULT 'subida' CHECK (origen IN ('subida', 'correo')),
+    mensaje_correo_id INTEGER,
+    asunto_origen TEXT,
+    subido_por INTEGER REFERENCES usuarios(id),
+    hash_sha256 TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cliente_documentos_cliente ON cliente_documentos(cliente_fiscal_id, creado_en);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cliente_documentos_unico ON cliente_documentos(cliente_fiscal_id, hash_sha256);
 CREATE INDEX IF NOT EXISTS idx_tareas_participantes_usuario ON tareas_participantes(usuario_id);
 
 -- Correo de equipo: no se comparten cuentas ni contraseñas, solo mensajes
@@ -1515,6 +1535,7 @@ def init_db() -> None:
         # tareas_outlook.tarea_recurrente_id más abajo).
         _asegurar_columna(conn, "correo_mensajes", "cliente_fiscal_id", "INTEGER REFERENCES clientes_fiscales(id)")
         _asegurar_columna(conn, "correo_cuentas", "auth_tipo", "TEXT NOT NULL DEFAULT 'password'")
+        _asegurar_columna(conn, "correo_reglas", "archivar_adjuntos", "INTEGER NOT NULL DEFAULT 0")
         # Tiquets: prioridad y responsable asignado (app/rutas_tiquets.py) --
         # sin CHECK a nivel de esquema para "prioridad" (ALTER TABLE ADD
         # COLUMN con CHECK es más frágil de migrar en SQLite que
@@ -8614,7 +8635,7 @@ def eliminar_regla_categoria_correo(usuario_id: int, regla_id: int) -> None:
 def crear_regla_correo(
     usuario_id: int, remitente_patron: str | None = None, asunto_patron: str | None = None,
     categoria_id: int | None = None, marcar_leido: bool = False, destacar: bool = False,
-    cliente_fiscal_id: int | None = None,
+    cliente_fiscal_id: int | None = None, archivar_adjuntos: bool = False,
 ) -> int:
     """Regla avanzada. Necesita al menos una condición (remitente o asunto) y
     al menos una acción; categoría y cliente se validan contra el usuario."""
@@ -8629,17 +8650,133 @@ def crear_regla_correo(
         ).fetchone() is None:
             raise ValueError("La categoría elegida no existe.")
         cliente_fiscal_id = _cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        if archivar_adjuntos and cliente_fiscal_id is None:
+            raise ValueError("Para archivar los adjuntos en el expediente, elige el cliente.")
         if categoria_id is None and not marcar_leido and not destacar and cliente_fiscal_id is None:
             raise ValueError("Elige al menos una acción para la regla.")
         cur = conn.execute(
             """INSERT INTO correo_reglas
-               (usuario_id, remitente_patron, asunto_patron, categoria_id, marcar_leido, destacar, cliente_fiscal_id, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               (usuario_id, remitente_patron, asunto_patron, categoria_id, marcar_leido, destacar, cliente_fiscal_id,
+                archivar_adjuntos, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (usuario_id, remitente_patron, asunto_patron, categoria_id, 1 if marcar_leido else 0,
-             1 if destacar else 0, cliente_fiscal_id, now_iso()),
+             1 if destacar else 0, cliente_fiscal_id, 1 if archivar_adjuntos else 0, now_iso()),
         )
         conn.commit()
         return cur.lastrowid
+    finally:
+        conn.close()
+
+
+# --- Expediente del cliente (documentos) ----------------------------------------------------
+
+MAX_DOCUMENTO_CLIENTE_BYTES = 15 * 1024 * 1024
+MAX_DOCUMENTOS_POR_CLIENTE = 1000
+CATEGORIAS_DOCUMENTO = ("Extractos", "Facturas emitidas", "Facturas recibidas", "Modelos presentados", "Contratos", "Otros")
+
+
+def _nombre_de_archivo_seguro(nombre: str | None) -> str:
+    nombre = (nombre or "").replace("\\", "/").rsplit("/", 1)[-1]
+    nombre = "".join(c for c in nombre if c.isprintable() and c not in '<>:"|?*').strip(" .")
+    return nombre[:200] or "documento"
+
+
+def archivar_documento_cliente(
+    usuario_id: int, cliente_fiscal_id: int, nombre: str, tipo_mime: str | None, contenido: bytes,
+    categoria: str | None = None, origen: str = "subida", mensaje_correo_id: int | None = None, asunto_origen: str | None = None,
+) -> tuple[str, int | None]:
+    """Guarda un documento en el expediente de un cliente del despacho del usuario.
+    Devuelve (resultado, id): 'ok', 'duplicado' (ya estaba el mismo archivo; id del existente),
+    'grande', 'vacio', 'limite' o 'cliente' (no es un cliente de su despacho)."""
+    if origen not in ("subida", "correo"):
+        origen = "subida"
+    if not contenido:
+        return "vacio", None
+    if len(contenido) > MAX_DOCUMENTO_CLIENTE_BYTES:
+        return "grande", None
+    huella = hashlib.sha256(contenido).hexdigest()
+    conn = get_connection()
+    try:
+        u = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        if u is None or u["tenant_id"] is None or conn.execute(
+            "SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (cliente_fiscal_id, u["tenant_id"])
+        ).fetchone() is None:
+            return "cliente", None
+        repetido = conn.execute(
+            "SELECT id FROM cliente_documentos WHERE cliente_fiscal_id = ? AND hash_sha256 = ?", (cliente_fiscal_id, huella)
+        ).fetchone()
+        if repetido:
+            return "duplicado", repetido["id"]
+        if conn.execute("SELECT COUNT(*) FROM cliente_documentos WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,)).fetchone()[0] >= MAX_DOCUMENTOS_POR_CLIENTE:
+            return "limite", None
+        mensaje_correo_id = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
+        cur = conn.execute(
+            """INSERT INTO cliente_documentos
+               (tenant_id, cliente_fiscal_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, categoria, origen,
+                mensaje_correo_id, asunto_origen, subido_por, hash_sha256, creado_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (u["tenant_id"], cliente_fiscal_id, _nombre_de_archivo_seguro(nombre), (tipo_mime or "application/octet-stream")[:100],
+             len(contenido), contenido, (categoria or "").strip()[:60] or None, origen, mensaje_correo_id,
+             (asunto_origen or "").strip()[:200] or None, usuario_id, huella, now_iso()),
+        )
+        conn.commit()
+        return "ok", cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_documentos_cliente(tenant_id: int, cliente_fiscal_id: int, limite: int = 300) -> list[dict]:
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT d.id, d.nombre_archivo, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.asunto_origen, d.subido_por,
+                      d.creado_en, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre
+               FROM cliente_documentos d LEFT JOIN usuarios u ON u.id = d.subido_por LEFT JOIN usuario_perfil pf ON pf.usuario_id = d.subido_por
+               WHERE d.tenant_id = ? AND d.cliente_fiscal_id = ? ORDER BY d.creado_en DESC, d.id DESC LIMIT ?""",
+            (tenant_id, cliente_fiscal_id, max(1, min(limite, 1000))),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def obtener_documento_cliente(tenant_id: int, cliente_fiscal_id: int, documento_id: int) -> sqlite3.Row | None:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT * FROM cliente_documentos WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?",
+            (documento_id, tenant_id, cliente_fiscal_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def eliminar_documento_cliente(usuario_id: int, cliente_fiscal_id: int, documento_id: int) -> bool:
+    """Lo borra quien lo subió o un supervisor del despacho."""
+    conn = get_connection()
+    try:
+        u = conn.execute("SELECT tenant_id, supervisor_tenant FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        if u is None or u["tenant_id"] is None:
+            return False
+        d = conn.execute(
+            "SELECT subido_por FROM cliente_documentos WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?",
+            (documento_id, u["tenant_id"], cliente_fiscal_id),
+        ).fetchone()
+        if d is None or not (d["subido_por"] == usuario_id or u["supervisor_tenant"]):
+            return False
+        conn.execute("DELETE FROM cliente_documentos WHERE id = ?", (documento_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def contar_documentos_cliente(tenant_id: int, cliente_fiscal_id: int) -> int:
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM cliente_documentos WHERE tenant_id = ? AND cliente_fiscal_id = ?", (tenant_id, cliente_fiscal_id)
+        ).fetchone()[0]
     finally:
         conn.close()
 

@@ -164,6 +164,7 @@
         {% if r.marcar_leido %} · {{ _('marcar como leído') }}{% endif %}
         {% if r.destacar %} · {{ _('destacar') }}{% endif %}
         {% if r.cliente_fiscal_nombre %} · {{ r.cliente_fiscal_nombre }}{% endif %}
+        {% if r.archivar_adjuntos %} · {{ _('archivar adjuntos en el expediente') }}{% endif %}
       </span>
       <form action="{{ url_for('correo.eliminar_regla_avanzada', regla_id=r.id) }}" method="post"
             onsubmit="return confirm('{{ _('¿Eliminar esta regla?') }}');">
@@ -191,6 +192,7 @@
       {% endif %}
       <label class="correo-toolbar-check"><input type="checkbox" name="marcar_leido"> {{ _('Marcar como leído') }}</label>
       <label class="correo-toolbar-check"><input type="checkbox" name="destacar"> {{ _('Destacar') }}</label>
+      {% if clientes_fiscales %}<label class="correo-toolbar-check" title="{{ _('Requiere elegir el cliente. Los logotipos e imágenes pequeñas no se archivan.') }}"><input type="checkbox" name="archivar_adjuntos"> {{ _('Archivar adjuntos en el expediente') }}</label>{% endif %}
       <button type="submit" class="btn btn-primary">+ {{ _('Añadir regla') }}</button>
     </div>
   </form>

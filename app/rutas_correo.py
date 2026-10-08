@@ -428,6 +428,7 @@ def bandeja():
     contexto["notas_internas"] = db.listar_notas_internas_correo(g.usuario_id, mensaje_id) if mensaje_seleccionado is not None else []
     contexto["companeros"] = db.listar_companeros_tenant(g.usuario_id) if mensaje_seleccionado is not None else []
     contexto["adjuntos_mensaje"] = db.listar_adjuntos_correo(mensaje_id) if mensaje_seleccionado else []
+    contexto["categorias_documento"] = db.CATEGORIAS_DOCUMENTO
     # Para guardar un adjunto en un vencimiento del cliente enlazado al mensaje.
     contexto["vencimientos_cliente"] = (
         db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=mensaje_seleccionado["cliente_fiscal_id"])
@@ -1177,6 +1178,26 @@ def eliminar_regla_categoria(regla_id: int):
     return redirect(url_for("correo.ajustes"))
 
 
+@correo_bp.route("/<int:mensaje_id>/expediente", methods=["POST"])
+@login_required
+def archivar_en_expediente(mensaje_id: int):
+    """Guarda adjuntos (y, si se pide, el correo en texto) en el expediente de un cliente y vuelve a su ficha."""
+    _mensaje_de_usuario_o_404(mensaje_id)
+    cliente_id = request.form.get("cliente_fiscal_id", type=int)
+    if cliente_id is None:
+        abort(400)
+    try:
+        correo.archivar_correo_en_expediente(
+            g.usuario_id, mensaje_id, cliente_id,
+            adjunto_ids=[int(i) for i in request.form.getlist("adjunto") if i.isdigit()],
+            guardar_correo=request.form.get("guardar_correo") == "on",
+            categoria=request.form.get("categoria"),
+        )
+    except correo.ErrorCorreo:
+        abort(404)
+    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
+
+
 @correo_bp.route("/ajustes/reglas-avanzadas", methods=["POST"])
 @login_required
 def crear_regla_avanzada():
@@ -1187,6 +1208,7 @@ def crear_regla_avanzada():
             marcar_leido=request.form.get("marcar_leido") == "on",
             destacar=request.form.get("destacar") == "on",
             cliente_fiscal_id=request.form.get("cliente_fiscal_id", type=int),
+            archivar_adjuntos=request.form.get("archivar_adjuntos") == "on",
         )
     except ValueError as e:
         return _render_ajustes(error=str(e))

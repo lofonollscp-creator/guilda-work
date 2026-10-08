@@ -6805,3 +6805,51 @@ msgstr ""
 msgid "Carga"
 msgstr "Càrrega"
 
+msgid "Expediente"
+msgstr "Expedient"
+
+msgid ""
+"Documentos que el despacho guarda de este cliente: súbelos aquí o "
+"archívalos desde un correo."
+msgstr ""
+"Documents que el despatx guarda d'aquest client: puja'ls aquí o arxiva'ls"
+" des d'un correu."
+
+msgid "del correo"
+msgstr "del correu"
+
+msgid "¿Eliminar este documento del expediente?"
+msgstr "Vols eliminar aquest document de l'expedient?"
+
+msgid "Todavía no hay documentos en el expediente."
+msgstr "Encara no hi ha documents a l'expedient."
+
+msgid "Archivos"
+msgstr "Fitxers"
+
+msgid "Categoría (opcional)"
+msgstr "Categoria (opcional)"
+
+msgid "Archivar en el expediente de un cliente"
+msgstr "Arxiva a l'expedient d'un client"
+
+msgid "Elige el cliente…"
+msgstr "Tria el client…"
+
+msgid "Guardar también el correo (texto)"
+msgstr "Desa també el correu (text)"
+
+msgid "Archivar"
+msgstr "Arxiva"
+
+msgid "archivar adjuntos en el expediente"
+msgstr "arxiva els adjunts a l'expedient"
+
+msgid ""
+"Requiere elegir el cliente. Los logotipos e imágenes pequeñas no se "
+"archivan."
+msgstr "Cal triar el client. Els logotips i les imatges petites no s'arxiven."
+
+msgid "Archivar adjuntos en el expediente"
+msgstr "Arxiva els adjunts a l'expedient"
+

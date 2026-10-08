@@ -6797,3 +6797,51 @@ msgstr ""
 msgid "Carga"
 msgstr "Workload"
 
+msgid "Expediente"
+msgstr "Client file"
+
+msgid ""
+"Documentos que el despacho guarda de este cliente: súbelos aquí o "
+"archívalos desde un correo."
+msgstr ""
+"Documents the office keeps for this client: upload them here or file them"
+" from an email."
+
+msgid "del correo"
+msgstr "from the email"
+
+msgid "¿Eliminar este documento del expediente?"
+msgstr "Delete this document from the client file?"
+
+msgid "Todavía no hay documentos en el expediente."
+msgstr "There are no documents in the client file yet."
+
+msgid "Archivos"
+msgstr "Files"
+
+msgid "Categoría (opcional)"
+msgstr "Category (optional)"
+
+msgid "Archivar en el expediente de un cliente"
+msgstr "File in a client's file"
+
+msgid "Elige el cliente…"
+msgstr "Choose the client…"
+
+msgid "Guardar también el correo (texto)"
+msgstr "Also save the email (text)"
+
+msgid "Archivar"
+msgstr "File"
+
+msgid "archivar adjuntos en el expediente"
+msgstr "file attachments in the client file"
+
+msgid ""
+"Requiere elegir el cliente. Los logotipos e imágenes pequeñas no se "
+"archivan."
+msgstr "Requires choosing the client. Logos and small images are not filed."
+
+msgid "Archivar adjuntos en el expediente"
+msgstr "File attachments in the client file"
+
