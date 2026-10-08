@@ -31,9 +31,66 @@
     return f;
   }
 
+  function campo(tipo, nombre, valor, extra) {
+    var i = document.createElement("input");
+    i.type = tipo; i.name = nombre; if (valor !== undefined && valor !== null) i.value = valor;
+    if (extra) Object.keys(extra).forEach(function (k) { i[k] = extra[k]; });
+    return i;
+  }
+  function casilla(nombre, texto, marcada) {
+    var l = document.createElement("label"); l.className = "correo-ia-tarea";
+    var i = campo("checkbox", nombre, "on", { checked: marcada });
+    l.appendChild(i); l.appendChild(document.createTextNode(" " + texto));
+    return l;
+  }
+
+  // El plan completo («Sugerir acciones»): todo editable y marcado a mano; nada se aplica sin pulsar el botón.
+  function pintarAcciones(cont, datos) {
+    var campos = [];
+    var hay = false;
+    if (datos.cliente && (!datos.cliente_actual || datos.cliente_actual.id !== datos.cliente.id)) {
+      hay = true;
+      campos.push(campo("hidden", "cliente_id", datos.cliente.id));
+      campos.push(casilla("vincular", d.tAccCliente.replace("%s", datos.cliente.nombre), true));
+    } else if (datos.cliente_actual) {
+      campos.push(campo("hidden", "cliente_id", datos.cliente_actual.id));
+    }
+    if (datos.tareas && datos.tareas.length) {
+      hay = true;
+      var t = document.createElement("strong"); t.textContent = d.tAccTareas; campos.push(t);
+      datos.tareas.forEach(function (tarea, n) {
+        var fila = document.createElement("div"); fila.className = "correo-ia-accion-tarea";
+        fila.appendChild(casilla("tarea-" + n + "-on", "", true));
+        fila.appendChild(campo("text", "tarea-" + n + "-asunto", tarea.asunto, { maxLength: 120, required: true }));
+        var fecha = campo("date", "tarea-" + n + "-fecha", tarea.fecha || ""); fecha.title = d.tAccFecha; fila.appendChild(fecha);
+        var prio = document.createElement("select"); prio.name = "tarea-" + n + "-prioridad";
+        [["alta", d.tAccAlta], ["normal", d.tAccNormal], ["baja", d.tAccBaja]].forEach(function (p) {
+          var o = document.createElement("option"); o.value = p[0]; o.textContent = p[1]; o.selected = p[0] === tarea.prioridad; prio.appendChild(o);
+        });
+        fila.appendChild(prio);
+        var est = campo("text", "tarea-" + n + "-estimacion", tarea.estimacion || "", { maxLength: 12, size: 6, placeholder: "1h30" }); est.title = d.tAccEstimacion; fila.appendChild(est);
+        campos.push(fila);
+      });
+    }
+    var cliente = datos.cliente_actual || datos.cliente;
+    if (datos.adjuntos && cliente) {
+      hay = true;
+      campos.push(casilla("archivar", d.tAccArchivar.replace("%s", datos.adjuntos), false));
+    }
+    if (datos.respuesta) {
+      hay = true;
+      campos.push(casilla("respuesta-on", d.tAccRespuesta, false));
+      var area = document.createElement("textarea"); area.name = "respuesta"; area.rows = 6; area.value = datos.respuesta; campos.push(area);
+    }
+    if (!hay) { cont.appendChild(parrafo(d.tAccSin)); return; }
+    cont.appendChild(formulario(d.urlAplicar, campos, d.tAccAplicar));
+  }
+
   function pintar(accion, datos) {
     var cont = document.createElement("div");
-    if (accion === "tareas") {
+    if (accion === "acciones") {
+      pintarAcciones(cont, datos);
+    } else if (accion === "tareas") {
       if (!datos.tareas || !datos.tareas.length) {
         cont.appendChild(parrafo(d.tSinTareas));
       } else {

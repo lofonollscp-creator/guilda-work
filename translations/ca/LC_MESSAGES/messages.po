@@ -6959,3 +6959,37 @@ msgstr "Recordatori: el {modelo} venç {cuando}"
 msgid "Vista previa (con datos de ejemplo)"
 msgstr "Vista prèvia (amb dades d'exemple)"
 
+#, python-brace-format
+msgid "{n} documentos archivados en el expediente."
+msgstr "{n} documents arxivats a l'expedient."
+
+msgid "No se ha aplicado ninguna acción."
+msgstr "No s'ha aplicat cap acció."
+
+msgid ""
+"Sugerir acciones con IA: tareas, cliente y respuesta (envía también los "
+"nombres de tus clientes al proveedor de IA)"
+msgstr ""
+"Suggereix accions amb IA: tasques, client i resposta (envia també els "
+"noms dels teus clients al proveïdor d'IA)"
+
+msgid "Sugerir acciones"
+msgstr "Suggereix accions"
+
+msgid "No se han encontrado acciones para este correo."
+msgstr "No s'han trobat accions per a aquest correu."
+
+msgid "Aplicar las marcadas"
+msgstr "Aplica les marcades"
+
+#, python-format
+msgid "Vincular este correo con %s"
+msgstr "Vincula aquest correu amb %s"
+
+#, python-format
+msgid "Archivar los %s adjuntos en el expediente de este cliente"
+msgstr "Arxiva els %s adjunts a l'expedient d'aquest client"
+
+msgid "Dejar este borrador de respuesta para revisarlo"
+msgstr "Deixa aquest esborrany de resposta per revisar-lo"
+

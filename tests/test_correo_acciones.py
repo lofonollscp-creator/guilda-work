@@ -231,3 +231,127 @@ def test_pagina_de_lectura_muestra_acciones_y_aviso_de_privacidad(cliente):
     html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}&aviso=Hecho").get_data(as_text=True)
     for trozo in ("Crear tarea", "Guardar nota", "Resumir", "Extraer tareas", "proveedor de IA", "correo_ia.js", "Hecho"):
         assert trozo in html
+
+
+# --- «Sugerir acciones»: plan completo propuesto por la IA ------------------------------------------
+
+import json as _json  # noqa: E402
+from datetime import date as _date, timedelta as _timedelta  # noqa: E402
+
+from app import correo_ia  # noqa: E402
+
+
+def _plan(**extra):
+    manana = (_date.today() + _timedelta(days=1)).isoformat()
+    base = {
+        "tareas": [
+            {"asunto": "Enviar el modelo 303", "fecha": manana, "prioridad": "alta", "estimacion": "1h30"},
+            {"asunto": "Llamar al cliente", "fecha": "2001-01-01", "prioridad": "urgentísima", "estimacion": "mucho"},
+            {"asunto": "  enviar el modelo 303 ", "fecha": None},          # repetida
+            {"asunto": "", "fecha": None}, "no soy un objeto", {"asunto": "x" * 500, "fecha": "no-fecha"},
+        ],
+        "cliente_id": None, "respuesta": "Hola, recibido. Un saludo.",
+    }
+    base.update(extra)
+    return base
+
+
+def test_parsear_acciones_valida_todo_lo_que_viene_del_modelo():
+    hoy = _date(2026, 10, 7)
+    r = correo_ia.parsear_acciones("```json\n" + _json.dumps(_plan(cliente_id=7, tareas=_plan()["tareas"]), ensure_ascii=False).replace("2026", "2026") + "\n```", {7: "Sol y Mar SL"}, hoy)
+    assert r["cliente"] == {"id": 7, "nombre": "Sol y Mar SL"} and r["respuesta"] == "Hola, recibido. Un saludo."
+    asuntos = [t["asunto"] for t in r["tareas"]]
+    assert asuntos[:2] == ["Enviar el modelo 303", "Llamar al cliente"] and len(asuntos) == 3 and len(asuntos[2]) == correo_ia.MAX_LONGITUD_TAREA
+    primera, segunda, larga = r["tareas"]
+    assert (primera["prioridad"], primera["estimacion"]) == ("alta", "1h 30") and primera["fecha"] is not None
+    assert (segunda["fecha"], segunda["prioridad"], segunda["estimacion"]) == (None, "normal", "")          # fecha pasada, prioridad e estimación inválidas
+    assert larga["fecha"] is None
+    # cliente que no está en la lista, texto no JSON, estructuras raras
+    assert correo_ia.parsear_acciones('{"cliente_id": 99}', {7: "A"}, hoy)["cliente"] is None
+    assert correo_ia.parsear_acciones('{"cliente_id": "7"}', {7: "A"}, hoy)["cliente"] == {"id": 7, "nombre": "A"}
+    for basura in ("", "no hay json", "[1, 2]", '{"tareas": "x", "respuesta": 5}', "{roto"):
+        assert correo_ia.parsear_acciones(basura, {}, hoy) == {"tareas": [], "cliente": None, "respuesta": None}
+    muchas = _json.dumps({"tareas": [{"asunto": f"T{i}"} for i in range(30)]})
+    assert len(correo_ia.parsear_acciones(muchas, {}, hoy)["tareas"]) == correo_ia.MAX_TAREAS_PROPUESTAS
+
+
+def _escenario(cliente, email, con_cliente_vinculado=False):
+    from tests.test_correo_expediente import _preparar
+    uid, tenant, cli, mid = _preparar(cliente, email, [("extracto.pdf", "application/pdf", b"%PDF-1.4 x")])
+    if con_cliente_vinculado:
+        db.asignar_cliente_fiscal_correo(tenant, mid, cli)
+    return uid, tenant, cli, mid
+
+
+def test_la_ia_propone_el_plan_con_el_cliente_y_sin_inventar_datos(cliente, monkeypatch):
+    uid, tenant, cli, mid = _escenario(cliente, "acc-1@x.com")
+    visto = {}
+
+    def falso(usuario_id, sistema, contenido):
+        visto["sistema"] = sistema
+        return _json.dumps(_plan(cliente_id=cli))
+    monkeypatch.setattr(ia_asistente, "completar_texto", falso)
+    r = cliente.post(f"/correo/{mid}/ia/acciones").get_json()
+    assert r["ok"] and r["cliente"] == {"id": cli, "nombre": "Sol y Mar SL"} and r["cliente_actual"] is None and r["adjuntos"] == 1
+    assert [t["asunto"] for t in r["tareas"]][0] == "Enviar el modelo 303" and r["respuesta"]
+    assert f"{cli}: Sol y Mar SL" in visto["sistema"] and _date.today().isoformat() in visto["sistema"] and "datos" in visto["sistema"]
+    # el cliente que la IA inventa fuera de la lista se descarta
+    monkeypatch.setattr(ia_asistente, "completar_texto", lambda *a: _json.dumps({"cliente_id": 12345, "tareas": []}))
+    assert cliente.post(f"/correo/{mid}/ia/acciones").get_json()["cliente"] is None
+    # sin clave de IA: error legible, no una traza
+    def sin_clave(*a):
+        raise ia_asistente.ErrorIA("No hay clave de IA configurada.")
+    monkeypatch.setattr(ia_asistente, "completar_texto", sin_clave)
+    r = cliente.post(f"/correo/{mid}/ia/acciones")
+    assert r.status_code == 502 and r.get_json()["error"] == "No hay clave de IA configurada."
+
+
+def test_aplicar_el_plan_marcado_crea_tareas_vincula_archiva_y_deja_el_borrador(cliente):
+    uid, tenant, cli, mid = _escenario(cliente, "acc-2@x.com")
+    manana = (_date.today() + _timedelta(days=1)).isoformat()
+    r = cliente.post(f"/correo/{mid}/ia-aplicar", data={
+        "cliente_id": cli, "vincular": "on", "archivar": "on",
+        "tarea-0-on": "on", "tarea-0-asunto": "  Enviar   el 303 ", "tarea-0-fecha": manana, "tarea-0-prioridad": "alta", "tarea-0-estimacion": "1h30",
+        "tarea-1-asunto": "No marcada", "tarea-2-on": "on", "tarea-2-asunto": "Con datos malos", "tarea-2-fecha": "ayer", "tarea-2-prioridad": "x", "tarea-2-estimacion": "?",
+        "tarea-9-on": "on", "tarea-9-asunto": "Fuera de rango",
+        "respuesta-on": "on", "respuesta": "Gracias, lo revisamos.",
+    })
+    assert r.status_code == 302 and "/correo/redactar" in r.headers["Location"]                       # termina en el borrador
+    assert db.obtener_mensaje_correo(mid)["cliente_fiscal_id"] == cli
+    tareas = {t["asunto"]: t for t in db.listar_tareas_outlook(uid)}
+    assert set(tareas) == {"Enviar el 303", "Con datos malos"}
+    a, b = tareas["Enviar el 303"], tareas["Con datos malos"]
+    assert (a["prioridad"], a["estimacion_min"], a["fecha_vencimiento"], a["cliente_fiscal_id"], a["mensaje_correo_id"]) == ("alta", 90, manana, cli, mid)
+    assert (b["prioridad"], b["estimacion_min"], b["fecha_vencimiento"]) == ("normal", None, None)
+    assert [d["nombre_archivo"] for d in db.listar_documentos_cliente(tenant, cli)] == ["extracto.pdf"]
+    borradores = db.listar_borradores_correo(uid)
+    assert len(borradores) == 1 and borradores[0]["asunto"].startswith("Re:") and "Gracias, lo revisamos." in borradores[0]["cuerpo_html"]
+
+
+def test_aplicar_sin_marcar_nada_no_hace_nada_y_no_se_fia_del_cliente(cliente):
+    uid, tenant, cli, mid = _escenario(cliente, "acc-3@x.com")
+    r = cliente.post(f"/correo/{mid}/ia-aplicar", data={"cliente_id": cli})
+    assert r.status_code == 302 and "aviso=" in r.headers["Location"]
+    assert db.listar_tareas_outlook(uid) == [] and db.obtener_mensaje_correo(mid)["cliente_fiscal_id"] is None
+    otro_tenant = db.crear_tenant("Despacho ajeno acciones")
+    ajeno = db.crear_cliente_fiscal(otro_tenant, "De otro despacho")
+    cliente.post(f"/correo/{mid}/ia-aplicar", data={"cliente_id": ajeno, "vincular": "on", "archivar": "on", "tarea-0-on": "on", "tarea-0-asunto": "x"})
+    assert db.obtener_mensaje_correo(mid)["cliente_fiscal_id"] is None                               # un cliente de otro despacho se ignora
+    assert db.listar_tareas_outlook(uid)[0]["cliente_fiscal_id"] is None
+    assert cliente.post("/correo/99999/ia-aplicar", data={}).status_code == 404
+    assert db.listar_borradores_correo(uid) == []
+
+
+def test_archivar_usa_el_cliente_ya_vinculado(cliente):
+    uid, tenant, cli, mid = _escenario(cliente, "acc-4@x.com", con_cliente_vinculado=True)
+    cliente.post(f"/correo/{mid}/ia-aplicar", data={"archivar": "on"})
+    assert [d["nombre_archivo"] for d in db.listar_documentos_cliente(tenant, cli)] == ["extracto.pdf"]
+
+
+def test_el_boton_y_el_panel_estan_en_la_lectura(cliente):
+    uid, tenant, cli, mid = _escenario(cliente, "acc-5@x.com")
+    cuenta = db.listar_cuentas_correo(uid)[0]["id"]
+    html = cliente.get("/correo/", query_string={"cuenta_id": cuenta, "mensaje_id": mid}).get_data(as_text=True)
+    assert 'data-ia-accion="acciones"' in html and f"/correo/{mid}/ia-aplicar" in html and "Sugerir acciones" in html
+    js = cliente.get("/static/correo_ia.js").get_data(as_text=True)
+    assert "pintarAcciones" in js and "textContent" in js and "innerHTML" not in js                    # nada de HTML sin escapar

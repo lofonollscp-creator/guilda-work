@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, correo_oauth, db, ia_asistente, notificaciones, peticion
+from . import correo, correo_ia, correo_oauth, db, ia_asistente, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -997,10 +997,32 @@ def ia_sobre_correo(mensaje_id: int, accion: str):
     mensaje = _mensaje_de_usuario_o_404(mensaje_id)
     if accion not in correo_ia.ACCIONES:
         abort(404)
+    clientes = {}
+    if accion == "acciones" and g.tenant_id is not None:
+        clientes = {c["id"]: c["nombre"] for c in db.listar_clientes_fiscales(g.tenant_id)}
     try:
-        return jsonify({"ok": True, **correo_ia.ejecutar(g.usuario_id, accion, mensaje, str(get_locale() or "es")[:2])})
+        resultado = correo_ia.ejecutar(g.usuario_id, accion, mensaje, str(get_locale() or "es")[:2], clientes=clientes)
     except ia_asistente.ErrorIA as e:
         return jsonify({"ok": False, "error": str(e)}), 502
+    if accion == "acciones":
+        actual = mensaje["cliente_fiscal_id"]
+        resultado["cliente_actual"] = {"id": actual, "nombre": clientes.get(actual) or (db.obtener_cliente_fiscal(g.tenant_id, actual)["nombre"] if actual and g.tenant_id else "")} if actual else None
+        resultado["adjuntos"] = len(db.listar_adjuntos_correo(mensaje["id"]))
+    return jsonify({"ok": True, **resultado})
+
+
+def _borrador_de_respuesta(mensaje, texto: str) -> int:
+    """Deja `texto` como borrador de respuesta al mensaje (texto arriba, luego firma y cita)."""
+    asunto = mensaje["asunto"] or ""
+    if not asunto.lower().startswith("re:"):
+        asunto = f"Re: {asunto}"
+    cuerpo_html = correo.texto_a_html(texto) + correo.preparar_cuerpo_inicial(
+        g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=_cita_de(mensaje),
+    )
+    return db.guardar_borrador_correo(
+        g.usuario_id, None, cuenta_id=mensaje["cuenta_id"], destinatarios=mensaje["remitente"] or "",
+        cc="", bcc="", asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"],
+    )
 
 
 @correo_bp.route("/<int:mensaje_id>/ia-borrador", methods=["POST"])
@@ -1012,17 +1034,53 @@ def ia_borrador_respuesta(mensaje_id: int):
     texto = (request.form.get("texto") or "").strip()
     if not texto:
         abort(400)
-    asunto = mensaje["asunto"] or ""
-    if not asunto.lower().startswith("re:"):
-        asunto = f"Re: {asunto}"
-    cuerpo_html = correo.texto_a_html(texto) + correo.preparar_cuerpo_inicial(
-        g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=_cita_de(mensaje),
-    )
-    borrador_id = db.guardar_borrador_correo(
-        g.usuario_id, None, cuenta_id=mensaje["cuenta_id"], destinatarios=mensaje["remitente"] or "",
-        cc="", bcc="", asunto=asunto, cuerpo_html=cuerpo_html, en_respuesta_a=mensaje["message_id"],
-    )
-    return redirect(url_for("correo.redactar", borrador_id=borrador_id))
+    return redirect(url_for("correo.redactar", borrador_id=_borrador_de_respuesta(mensaje, texto)))
+
+
+@correo_bp.route("/<int:mensaje_id>/ia-aplicar", methods=["POST"])
+@login_required
+def ia_aplicar_acciones(mensaje_id: int):
+    """Aplica las acciones que la persona ha dejado marcadas (y editado) del plan propuesto por la IA: vincular
+    el cliente, crear tareas, archivar los adjuntos en su expediente y/o dejar la respuesta como borrador.
+    Nada de lo que viene de la IA se da por bueno: se vuelve a validar todo aquí."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    resumen = []
+    cliente_id = None
+    candidato = request.form.get("cliente_id", type=int)
+    if candidato is not None and g.tenant_id is not None and db.obtener_cliente_fiscal(g.tenant_id, candidato) is not None:
+        cliente_id = candidato
+    if cliente_id is not None and request.form.get("vincular") == "on":
+        correo.asignar_cliente_fiscal(g.tenant_id, mensaje_id, cliente_id)
+        resumen.append(_("Cliente vinculado."))
+    # El cliente para las tareas y el archivo: el que se acaba de vincular o, si no, el que ya tenía el correo.
+    efectivo = cliente_id if (cliente_id is not None and request.form.get("vincular") == "on") else mensaje["cliente_fiscal_id"]
+    creadas = 0
+    for i in range(correo_ia.MAX_TAREAS_PROPUESTAS):
+        asunto = " ".join((request.form.get(f"tarea-{i}-asunto") or "").split())[:correo_ia.MAX_LONGITUD_TAREA]
+        if not asunto or request.form.get(f"tarea-{i}-on") != "on":
+            continue
+        try:
+            fecha = datetime.strptime((request.form.get(f"tarea-{i}-fecha") or "")[:10], "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            fecha = None
+        prioridad = request.form.get(f"tarea-{i}-prioridad")
+        db.crear_tarea_outlook(
+            g.usuario_id, asunto, prioridad=prioridad if prioridad in ("alta", "normal", "baja") else "normal", fecha_vencimiento=fecha,
+            cliente_fiscal_id=efectivo, mensaje_correo_id=mensaje_id, estimacion_min=quickadd.duracion_a_minutos(request.form.get(f"tarea-{i}-estimacion")),
+        )
+        creadas += 1
+    if creadas:
+        resumen.append(_("{n} tareas creadas.").format(n=creadas))
+    if request.form.get("archivar") == "on" and efectivo is not None:
+        try:
+            r = correo.archivar_correo_en_expediente(g.usuario_id, mensaje_id, efectivo)
+            resumen.append(_("{n} documentos archivados en el expediente.").format(n=r["archivados"] + r["duplicados"]))
+        except correo.ErrorCorreo:
+            pass
+    texto = (request.form.get("respuesta") or "").strip()[:correo_ia.MAX_RESPUESTA]
+    if texto and request.form.get("respuesta-on") == "on":
+        return redirect(url_for("correo.redactar", borrador_id=_borrador_de_respuesta(mensaje, texto)))
+    return _volver_a_mensaje(mensaje, " ".join(resumen) or _("No se ha aplicado ninguna acción."))
 
 
 @correo_bp.route("/<int:mensaje_id>/tareas-ia", methods=["POST"])

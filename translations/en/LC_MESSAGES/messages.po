@@ -6950,3 +6950,37 @@ msgstr "Reminder: {modelo} is due {cuando}"
 msgid "Vista previa (con datos de ejemplo)"
 msgstr "Preview (with sample data)"
 
+#, python-brace-format
+msgid "{n} documentos archivados en el expediente."
+msgstr "{n} documents filed in the client file."
+
+msgid "No se ha aplicado ninguna acción."
+msgstr "No action was applied."
+
+msgid ""
+"Sugerir acciones con IA: tareas, cliente y respuesta (envía también los "
+"nombres de tus clientes al proveedor de IA)"
+msgstr ""
+"Suggest actions with AI: tasks, client and reply (also sends your "
+"clients' names to the AI provider)"
+
+msgid "Sugerir acciones"
+msgstr "Suggest actions"
+
+msgid "No se han encontrado acciones para este correo."
+msgstr "No actions were found for this email."
+
+msgid "Aplicar las marcadas"
+msgstr "Apply the selected"
+
+#, python-format
+msgid "Vincular este correo con %s"
+msgstr "Link this email to %s"
+
+#, python-format
+msgid "Archivar los %s adjuntos en el expediente de este cliente"
+msgstr "File the %s attachments in this client's file"
+
+msgid "Dejar este borrador de respuesta para revisarlo"
+msgstr "Leave this reply draft for review"
+

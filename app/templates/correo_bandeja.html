@@ -282,6 +282,7 @@
         <button type="button" class="correo-ribbon-btn" data-ia-accion="resumir" title="{{ _('Resumir con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Resumir') }}</span></button>
         <button type="button" class="correo-ribbon-btn" data-ia-accion="responder" title="{{ _('Proponer una respuesta con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Proponer respuesta') }}</span></button>
         <button type="button" class="correo-ribbon-btn" data-ia-accion="tareas" title="{{ _('Extraer tareas con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Extraer tareas') }}</span></button>
+        <button type="button" class="correo-ribbon-btn" data-ia-accion="acciones" title="{{ _('Sugerir acciones con IA: tareas, cliente y respuesta (envía también los nombres de tus clientes al proveedor de IA)') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Sugerir acciones') }}</span></button>
       </div>
 
       {% if not remitente_confiable %}
@@ -351,6 +352,12 @@
              data-url-base="{{ url_for('correo.ia_sobre_correo', mensaje_id=mensaje_seleccionado.id, accion='ACCION') }}"
              data-url-borrador="{{ url_for('correo.ia_borrador_respuesta', mensaje_id=mensaje_seleccionado.id) }}"
              data-url-tareas="{{ url_for('correo.crear_tareas_marcadas', mensaje_id=mensaje_seleccionado.id) }}"
+             data-url-aplicar="{{ url_for('correo.ia_aplicar_acciones', mensaje_id=mensaje_seleccionado.id) }}"
+             data-t-acc-sin="{{ _('No se han encontrado acciones para este correo.') }}" data-t-acc-aplicar="{{ _('Aplicar las marcadas') }}"
+             data-t-acc-tareas="{{ _('Tareas') }}" data-t-acc-fecha="{{ _('Fecha') }}" data-t-acc-estimacion="{{ _('Estimación') }}"
+             data-t-acc-alta="{{ _('Alta') }}" data-t-acc-normal="{{ _('Normal') }}" data-t-acc-baja="{{ _('Baja') }}"
+             data-t-acc-cliente="{{ _('Vincular este correo con %s') }}" data-t-acc-archivar="{{ _('Archivar los %s adjuntos en el expediente de este cliente') }}"
+             data-t-acc-respuesta="{{ _('Dejar este borrador de respuesta para revisarlo') }}"
              data-t-cargando="{{ _('Pensando…') }}" data-t-error="{{ _('No se ha podido completar la acción.') }}"
              data-t-usar="{{ _('Usar como borrador') }}" data-t-crear="{{ _('Crear las marcadas') }}"
              data-t-sin-tareas="{{ _('No se han encontrado tareas en este correo.') }}" data-t-cerrar="{{ _('Cerrar') }}">

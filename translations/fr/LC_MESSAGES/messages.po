@@ -7033,3 +7033,37 @@ msgstr "Rappel : le {modelo} est à échéance {cuando}"
 msgid "Vista previa (con datos de ejemplo)"
 msgstr "Aperçu (avec des données d'exemple)"
 
+#, python-brace-format
+msgid "{n} documentos archivados en el expediente."
+msgstr "{n} documents classés dans le dossier."
+
+msgid "No se ha aplicado ninguna acción."
+msgstr "Aucune action n'a été appliquée."
+
+msgid ""
+"Sugerir acciones con IA: tareas, cliente y respuesta (envía también los "
+"nombres de tus clientes al proveedor de IA)"
+msgstr ""
+"Suggérer des actions avec l'IA : tâches, client et réponse (envoie aussi "
+"les noms de vos clients au fournisseur d'IA)"
+
+msgid "Sugerir acciones"
+msgstr "Suggérer des actions"
+
+msgid "No se han encontrado acciones para este correo."
+msgstr "Aucune action trouvée pour ce courriel."
+
+msgid "Aplicar las marcadas"
+msgstr "Appliquer la sélection"
+
+#, python-format
+msgid "Vincular este correo con %s"
+msgstr "Associer ce courriel à %s"
+
+#, python-format
+msgid "Archivar los %s adjuntos en el expediente de este cliente"
+msgstr "Classer les %s pièces jointes dans le dossier de ce client"
+
+msgid "Dejar este borrador de respuesta para revisarlo"
+msgstr "Laisser ce brouillon de réponse pour relecture"
+
