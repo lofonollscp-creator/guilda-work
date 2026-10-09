@@ -7260,3 +7260,24 @@ msgstr "Comunicats"
 
 msgid "Cerrar aviso"
 msgstr "Tanca l'avís"
+
+msgid "En mantenimiento"
+msgstr "En manteniment"
+
+msgid "Plataforma en mantenimiento"
+msgstr "Plataforma en manteniment"
+
+msgid "Previsto hasta: %(hasta)s"
+msgstr "Previst fins a: %(hasta)s"
+
+msgid "Estás en modo «ver como»: solo lectura. No se puede modificar nada."
+msgstr "Estàs en mode «veure com»: només lectura. No es pot modificar res."
+
+msgid "Modo «ver como»"
+msgstr "Mode «veure com»"
+
+msgid "Estás viendo la plataforma como %(email)s, en solo lectura. Soporte: %(admin)s."
+msgstr "Estàs veient la plataforma com %(email)s, en només lectura. Suport: %(admin)s."
+
+msgid "Estamos realizando tareas de mantenimiento. Volveremos en unos minutos."
+msgstr "Estem fent tasques de manteniment. Tornarem d'aquí a uns minuts."

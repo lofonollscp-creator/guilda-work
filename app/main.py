@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, comunicados, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, busqueda, captcha, comunicados, correo, mantenimiento, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_proyectos import proyectos_bp
@@ -224,6 +224,7 @@ KRATOS_SESSION_COOKIE = "ory_kratos_session"
 def _resolver_usuario_actual():
     # Modo escritorio (GuildaWork.exe): un único usuario local de confianza,
     # sin pantalla de login real — no pasa por Kratos en absoluto (Fase 7a).
+    g.ver_como = None
     if MODO_ESCRITORIO:
         if "usuario_id" not in session:
             session["usuario_id"] = db.usuario_local_id()
@@ -243,6 +244,18 @@ def _resolver_usuario_actual():
     g.tenant_id = None
     g.gestor_fichajes = False
     g.supervisor_tenant = False
+    # «Ver como» (soporte, solo lectura): la sesión de suplantación sustituye a la de Kratos.
+    g.ver_como = None
+    ver = session.get("ver_como")
+    if ver:
+        suplantado = db.obtener_usuario(ver["usuario_id"]) if ver_como.sesion_valida(ver) else None
+        if suplantado is None or suplantado["rol"] == "admin":
+            session.pop("ver_como", None)
+        else:
+            g.usuario_id, g.es_admin, g.tenant_id = suplantado["id"], False, suplantado["tenant_id"]
+            g.gestor_fichajes, g.supervisor_tenant = bool(suplantado["gestor_fichajes"]), bool(suplantado["supervisor_tenant"])
+            g.ver_como = ver
+            return
     if KRATOS_SESSION_COOKIE not in request.cookies:
         return
     sesion_kratos = kratos.whoami(request.cookies)
@@ -277,6 +290,61 @@ def _resolver_usuario_actual():
         g.supervisor_tenant = bool(usuario["supervisor_tenant"])
         if request.endpoint != "static":
             db.registrar_acceso(usuario["id"])
+
+
+_RUTAS_ABIERTAS_EN_MANTENIMIENTO = ("/static/", "/.ory/", "/webhooks/", "/soporte/ver-como", "/login", "/logout", "/idioma/")
+
+
+@app.before_request
+def _ver_como_solo_lectura():
+    if g.get("ver_como") and request.method not in ("GET", "HEAD", "OPTIONS") and request.endpoint != "salir_ver_como":
+        mensaje = _("Estás en modo «ver como»: solo lectura. No se puede modificar nada.")
+        return (jsonify(error=mensaje), 403) if request.path.startswith("/api/") else (mensaje, 403)
+
+
+@app.before_request
+def _modo_mantenimiento():
+    """Cierre de la plataforma (o de un despacho) decidido en el backoffice. Los administradores globales y el
+    «ver como» pasan; también el login, el proxy de Kratos y los webhooks entrantes."""
+    if MODO_ESCRITORIO or g.get("es_admin") or g.get("ver_como") or request.path.startswith(_RUTAS_ABIERTAS_EN_MANTENIMIENTO):
+        return
+    try:
+        cierre = mantenimiento.vigente_para(g.get("tenant_id"))
+    except Exception:
+        return  # una avería aquí nunca debe tumbar la plataforma
+    if not cierre:
+        return
+    texto = cierre["mensaje"] or _("Estamos realizando tareas de mantenimiento. Volveremos en unos minutos.")
+    if request.path.startswith("/api/"):
+        resp = jsonify(error=texto, mantenimiento=True)
+        resp.status_code = 503
+    else:
+        resp = make_response(render_template("mantenimiento.html", mensaje=texto, hasta=cierre["hasta"]), 503)
+    resp.headers["Retry-After"] = "300"
+    return resp
+
+
+@app.route("/soporte/ver-como/<token>")
+def entrar_ver_como(token: str):
+    datos = ver_como.canjear(token)
+    if datos is None:
+        abort(404)
+    session["ver_como"] = datos
+    db.registrar_auditoria(None, "ver_como.inicio", f"{datos['admin']} entra como usuario {datos['usuario_id']} ({datos['email']})")
+    return redirect(url_for("inicio"))
+
+
+@app.route("/soporte/ver-como/salir", methods=["POST"])
+def salir_ver_como():
+    ver = session.pop("ver_como", None)
+    if ver:
+        db.registrar_auditoria(None, "ver_como.fin", f"{ver.get('admin')} sale de usuario {ver.get('usuario_id')}")
+    return redirect(os.environ.get("GUILDA_BACKOFFICE_URL", "https://backoffice.guildawork.com"))
+
+
+@app.context_processor
+def inyectar_ver_como():
+    return {"ver_como_activo": g.get("ver_como")}
 
 
 _URL_ESTATICA: dict[str, tuple[float, str]] = {}

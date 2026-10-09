@@ -7251,3 +7251,24 @@ msgstr "Announcements"
 
 msgid "Cerrar aviso"
 msgstr "Dismiss notice"
+
+msgid "En mantenimiento"
+msgstr "Under maintenance"
+
+msgid "Plataforma en mantenimiento"
+msgstr "Platform under maintenance"
+
+msgid "Previsto hasta: %(hasta)s"
+msgstr "Expected until: %(hasta)s"
+
+msgid "Estás en modo «ver como»: solo lectura. No se puede modificar nada."
+msgstr "You are in «view as» mode: read-only. Nothing can be modified."
+
+msgid "Modo «ver como»"
+msgstr "«View as» mode"
+
+msgid "Estás viendo la plataforma como %(email)s, en solo lectura. Soporte: %(admin)s."
+msgstr "You are viewing the platform as %(email)s, read-only. Support: %(admin)s."
+
+msgid "Estamos realizando tareas de mantenimiento. Volveremos en unos minutos."
+msgstr "We are carrying out maintenance. We will be back in a few minutes."

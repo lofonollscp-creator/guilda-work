@@ -302,6 +302,12 @@
         </div>
       </header>
       <main class="content" id="contenido-principal">
+      {% if ver_como_activo %}
+      <div class="comunicado comunicado-critico" role="alert" style="margin-bottom:16px">
+        <div class="comunicado-texto"><strong>{{ _('Modo «ver como»') }}</strong> <span>{{ _('Estás viendo la plataforma como %(email)s, en solo lectura. Soporte: %(admin)s.', email=ver_como_activo.email, admin=ver_como_activo.admin) }}</span></div>
+        <form method="post" action="{{ url_for('salir_ver_como') }}"><button type="submit" class="btn btn-secondary">{{ _('Salir') }}</button></form>
+      </div>
+      {% endif %}
       {% if comunicados_activos %}
       <div class="comunicados" role="region" aria-label="{{ _('Comunicados') }}">
         {% for c in comunicados_activos %}

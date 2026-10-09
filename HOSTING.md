@@ -2676,3 +2676,10 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Comunicados** (`/comunicados` en el backoffice): avisos que la app muestra como banner (informativo, aviso o crítico; para todos los despachos o uno; con fechas de inicio/fin). Los críticos no se pueden cerrar. Tablas `comunicados` y `comunicados_cerrados` en `registro.db` (se crean solas). La app y el backoffice son procesos distintos: un comunicado nuevo tarda hasta ~20 s en aparecer (caché de existencia en `app/comunicados.py`).
 - **Buscador global**: `Ctrl+K` (o `/`) en el backoffice abre una paleta con páginas, tenants y usuarios (`/buscar?q=`).
 - Para que se vea en producción hay que reiniciar guilda-work (banner, rutas) y el backoffice.
+
+## Modo mantenimiento y «ver como»
+
+- **Mantenimiento** (`/mantenimiento` en el backoffice): cierra toda la plataforma o un despacho con un mensaje y fecha de fin opcional. Los usuarios ven una página 503 y la API responde 503 JSON con `Retry-After`. Pasan los administradores globales, el login, el proxy de Kratos (`/.ory/`), los webhooks entrantes (`/webhooks/`) y las sesiones de «ver como». Tabla `mantenimiento`; la app lo consulta con caché de 10 s.
+- **Ver como** (ficha de usuario del backoffice): pide un motivo (obligatorio, queda auditado), emite un enlace de un solo uso (2 min, solo se guarda su hash en `ver_como_tokens`) y abre la app como ese usuario en **solo lectura** durante 30 min (toda petición que no sea GET devuelve 403). Nunca se puede suplantar a un administrador. Inicio y fin quedan en `auditoria_backoffice` (app) y la emisión en la Actividad del backoffice.
+- Variables: `GUILDA_APP_URL` (backoffice; por defecto https://app.guildawork.com) y `GUILDA_BACKOFFICE_URL` (app; adónde vuelve «Salir»; por defecto https://backoffice.guildawork.com). La sesión de la app necesita `GUILDA_SECRET_KEY` fija para sobrevivir a reinicios.
+- Limitación: algunas pantallas marcan cosas como leídas al abrirlas (GET); «ver como» no lo evita del todo.

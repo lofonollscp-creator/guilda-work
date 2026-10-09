@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block titulo %}Mantenimiento{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Modo mantenimiento</h1><p class="muted">Cierra la plataforma, o un solo despacho, con un mensaje. Los usuarios ven una página de aviso (la API responde 503). Los administradores globales siguen entrando.</p></header>
+
+<section class="tarjeta"><h2>Cerrar ahora</h2>
+  <form method="post" action="{{ url_for('rutas.activar_mantenimiento') }}" class="formulario">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="fila-campos">
+      <label>Ámbito<select name="tenant_id"><option value="">TODA la plataforma</option>{% for t in tenants %}<option value="{{ t.id }}">Solo {{ t.nombre }}</option>{% endfor %}</select></label>
+      <label>Hasta (opcional)<input type="datetime-local" name="hasta"></label>
+    </div>
+    <label>Mensaje para los usuarios<textarea name="mensaje" rows="2" maxlength="400" placeholder="Estamos actualizando la plataforma. Volvemos a las 03:00."></textarea></label>
+    <label class="casilla"><input type="checkbox" name="confirmar" value="1"> Confirmo que quiero cerrar el acceso a los usuarios</label>
+    <div><button type="submit" class="boton boton-peligro">Activar mantenimiento</button></div>
+  </form></section>
+
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Ámbito</th><th>Mensaje</th><th>Hasta</th><th>Creado</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      {% for c in cierres %}
+      <tr>
+        <td><strong>{{ c.tenant_nombre or 'Toda la plataforma' }}</strong></td>
+        <td>{{ c.mensaje or '—' }}</td>
+        <td>{{ c.hasta|fecha if c.hasta else 'Sin fin' }}</td>
+        <td>{{ c.creado_en|fecha }}{% if c.creado_por %} · {{ c.creado_por }}{% endif %}</td>
+        <td><span class="insignia {{ 'insignia-riesgo' if c.vigente else '' }}">{{ 'CERRADO' if c.vigente else 'FINALIZADO' }}</span></td>
+        <td class="acciones">{% if c.vigente %}<form method="post" action="{{ url_for('rutas.finalizar_mantenimiento', cierre_id=c.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-primario">Reabrir</button></form>{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="vacio">Nunca se ha activado el modo mantenimiento.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

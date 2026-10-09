@@ -7336,3 +7336,24 @@ msgstr "Annonces"
 
 msgid "Cerrar aviso"
 msgstr "Fermer l'avis"
+
+msgid "En mantenimiento"
+msgstr "En maintenance"
+
+msgid "Plataforma en mantenimiento"
+msgstr "Plateforme en maintenance"
+
+msgid "Previsto hasta: %(hasta)s"
+msgstr "Prévu jusqu'à : %(hasta)s"
+
+msgid "Estás en modo «ver como»: solo lectura. No se puede modificar nada."
+msgstr "Vous êtes en mode « voir comme » : lecture seule. Rien ne peut être modifié."
+
+msgid "Modo «ver como»"
+msgstr "Mode « voir comme »"
+
+msgid "Estás viendo la plataforma como %(email)s, en solo lectura. Soporte: %(admin)s."
+msgstr "Vous voyez la plateforme comme %(email)s, en lecture seule. Support : %(admin)s."
+
+msgid "Estamos realizando tareas de mantenimiento. Volveremos en unos minutos."
+msgstr "Nous effectuons une maintenance. Nous serons de retour dans quelques minutes."

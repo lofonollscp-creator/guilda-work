@@ -38,6 +38,17 @@
   </section>
 
   <aside class="ficha-lado">
+    {% if u.rol != 'admin' %}
+    <section class="tarjeta">
+      <h2>Ver como este usuario</h2>
+      <p class="muted">Abre la plataforma tal como la ve esta persona, en <strong>solo lectura</strong>, durante 30 minutos. Queda registrado quién entra y por qué.</p>
+      <form method="post" action="{{ url_for('rutas.ver_como_usuario', usuario_id=u.id) }}" class="formulario" target="_blank">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <label>Motivo<input type="text" name="motivo" minlength="5" maxlength="300" required placeholder="Ticket 123: no le sale el calendario"></label>
+        <button type="submit" class="boton">Abrir en una pestaña nueva</button>
+      </form>
+    </section>
+    {% endif %}
     <section class="tarjeta">
       <h2>Resumen</h2>
       <p>{{ insignia_rol(u) }}</p>

@@ -1013,6 +1013,28 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Modo mantenimiento (backoffice): tenant_id NULL = toda la plataforma. Los administradores globales pasan.
+CREATE TABLE IF NOT EXISTS mantenimiento (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+    mensaje TEXT NOT NULL DEFAULT '',
+    hasta TEXT,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL,
+    creado_por TEXT
+);
+
+-- "Ver como" (soporte): enlaces de un solo uso que emite el backoffice. Solo se guarda el hash.
+CREATE TABLE IF NOT EXISTS ver_como_tokens (
+    token_hash TEXT PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    admin TEXT NOT NULL,
+    motivo TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    expira_en TEXT NOT NULL,
+    usado_en TEXT
+);
+
 -- Comunicados del backoffice a la plataforma (banner en la app). tenant_id NULL = todos los despachos.
 CREATE TABLE IF NOT EXISTS comunicados (
     id INTEGER PRIMARY KEY,

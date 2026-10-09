@@ -5,11 +5,12 @@ catálogo de herramientas, ingresos) y operaciones avanzadas sobre un tenant
 from __future__ import annotations
 
 import json
+import os
 
 from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
-from app import comunicados, eventos, herramientas, salud, uptime_kuma
+from app import comunicados, eventos, mantenimiento, ver_como, herramientas, salud, uptime_kuma
 
 from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
@@ -396,7 +397,7 @@ PAGINAS = (
     ("Dashboard", "rutas.dashboard"), ("Tenants", "rutas.tenants"), ("Usuarios", "rutas.usuarios"), ("Mapa de acceso", "rutas.mapa"),
     ("Herramientas", "rutas.catalogo"), ("Customer Journey", "rutas.journey"), ("Salud de clientes", "rutas.salud_clientes"),
     ("Alertas", "rutas.alertas"), ("Leads", "rutas.leads"), ("Solicitudes del portal", "rutas.solicitudes"), ("Planes y extras", "rutas.planes"),
-    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Salud del sistema", "rutas.salud_vista"),
+    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
     ("Estado del sistema", "rutas.estado"), ("Diagnóstico", "rutas.diagnostico_vista"), ("Dependencias", "rutas.dependencias_vista"),
     ("Copias de seguridad", "rutas.copias"), ("Webhooks", "rutas.webhooks"), ("Actividad", "rutas.actividad"), ("Mi cuenta", "rutas.cuenta"),
 )
@@ -418,3 +419,56 @@ def buscar_global():
     else:
         resultados = [{"tipo": "Página", "titulo": t, "url": url_for(e)} for t, e in PAGINAS[:8]]
     return Response(json.dumps({"resultados": resultados}), mimetype="application/json")
+
+
+# --- Modo mantenimiento ----------------------------------------------------------------
+
+@bp.route("/mantenimiento")
+@auth.login_required
+def mantenimiento_vista():
+    tenants_todos, _ = datos.listar_tenants(por_pagina=100)
+    return render_template("mantenimiento.html", cierres=mantenimiento.listar(), tenants=tenants_todos)
+
+
+@bp.route("/mantenimiento", methods=["POST"])
+@auth.login_required
+def activar_mantenimiento():
+    tenant_txt = request.form.get("tenant_id", "")
+    if request.form.get("confirmar") != "1":
+        flash("Marca la casilla de confirmación para cerrar.", "error")
+        return redirect(url_for("rutas.mantenimiento_vista"))
+    try:
+        nuevo = mantenimiento.activar(
+            int(tenant_txt) if tenant_txt.isdigit() else None, request.form.get("mensaje", ""), request.form.get("hasta"), g.admin["usuario"],
+        )
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("mantenimiento.activar", f"cierre {nuevo}: {'despacho ' + tenant_txt if tenant_txt.isdigit() else 'TODA LA PLATAFORMA'}")
+        flash("Mantenimiento activado. Los administradores globales siguen pudiendo entrar.", "ok")
+    return redirect(url_for("rutas.mantenimiento_vista"))
+
+
+@bp.route("/mantenimiento/<int:cierre_id>/finalizar", methods=["POST"])
+@auth.login_required
+def finalizar_mantenimiento(cierre_id: int):
+    if not mantenimiento.finalizar(cierre_id):
+        abort(404)
+    auth.auditar("mantenimiento.finalizar", f"cierre {cierre_id}")
+    flash("Mantenimiento finalizado: la plataforma vuelve a estar abierta.", "ok")
+    return redirect(url_for("rutas.mantenimiento_vista"))
+
+
+# --- «Ver como» un usuario (soporte, solo lectura) -----------------------------------------
+
+@bp.route("/usuarios/<int:usuario_id>/ver-como", methods=["POST"])
+@auth.login_required
+def ver_como_usuario(usuario_id: int):
+    try:
+        token = ver_como.crear_enlace(usuario_id, g.admin["usuario"], request.form.get("motivo", ""))
+    except ValueError as e:
+        flash(str(e), "error")
+        return redirect(url_for("rutas.usuario", usuario_id=usuario_id))
+    auth.auditar("ver_como.emitir", f"usuario {usuario_id}: {request.form.get('motivo', '').strip()[:200]}")
+    base = os.environ.get("GUILDA_APP_URL", "https://app.guildawork.com").rstrip("/")
+    return redirect(f"{base}/soporte/ver-como/{token}")
