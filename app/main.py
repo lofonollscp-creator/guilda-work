@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, comunicados, correo, mantenimiento, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, busqueda, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_proyectos import proyectos_bp
@@ -788,6 +788,21 @@ def inicio():
             "tiene_correo": bool(db.listar_cuentas_correo(g.usuario_id)),
             "ha_usado_ia": bool(db.listar_mensajes_ia(g.usuario_id)),
         }
+        if g.tenant_id is not None:
+            # Puesta en marcha del despacho (gestoría): pasos guiados con enlace directo a cada pantalla.
+            titulos = {
+                "clientes": _("Crea tu primer cliente fiscal"),
+                "vencimientos": _("Genera los vencimientos fiscales"),
+                "correo": _("Conecta una cuenta de correo del despacho"),
+                "recordatorios": _("Revisa los recordatorios automáticos a tus clientes"),
+                "portal": _("Da acceso al portal a un cliente"),
+                "presentado": _("Marca un vencimiento como presentado"),
+            }
+            despacho = onboarding_despacho.resumen(g.tenant_id)
+            for paso in despacho["pasos"]:
+                paso["titulo"] = titulos[paso["clave"]]
+                paso["url"] = url_for(paso["endpoint"])
+            onboarding["despacho"] = despacho
 
     # Tarjeta de vencimientos fiscales próximos (calendario fiscal, solo
     # con tenant asignado -- igual que el resto de esa sección) -- mismo

@@ -7,6 +7,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from app import db as plataforma
+from app import onboarding_despacho
 from . import auth
 
 DIAS_INACTIVO = 30
@@ -200,7 +201,7 @@ def journey() -> dict:
         logros = {"creado": True, "usuarios": bool(ids), "plan": bool(t["plan_id"]), "uso": bool(ultima), "recurrente": reciente, "pago": pago}
         alcanzadas = sum(1 for k, _ in ETAPAS if logros[k])
         siguiente = next((n for k, n in ETAPAS if not logros[k]), None)
-        filas.append({**t, "logros": logros, "alcanzadas": alcanzadas, "siguiente": siguiente, "ultima": ultima})
+        filas.append({**t, "logros": logros, "alcanzadas": alcanzadas, "siguiente": siguiente, "ultima": ultima, "puesta": onboarding_despacho.resumen(t["id"])})
     totales = [{"clave": k, "nombre": n, "n": sum(1 for f in filas if f["logros"][k])} for k, n in ETAPAS]
     return {"filas": filas, "totales": totales, "n": len(filas)}
 

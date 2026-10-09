@@ -7357,3 +7357,27 @@ msgstr "Vous voyez la plateforme comme %(email)s, en lecture seule. Support : %(
 
 msgid "Estamos realizando tareas de mantenimiento. Volveremos en unos minutos."
 msgstr "Nous effectuons une maintenance. Nous serons de retour dans quelques minutes."
+
+msgid "Crea tu primer cliente fiscal"
+msgstr "Créez votre premier client fiscal"
+
+msgid "Genera los vencimientos fiscales"
+msgstr "Générez les échéances fiscales"
+
+msgid "Conecta una cuenta de correo del despacho"
+msgstr "Connectez un compte e-mail du cabinet"
+
+msgid "Revisa los recordatorios automáticos a tus clientes"
+msgstr "Vérifiez les rappels automatiques envoyés à vos clients"
+
+msgid "Da acceso al portal a un cliente"
+msgstr "Donnez à un client l'accès au portail"
+
+msgid "Marca un vencimiento como presentado"
+msgstr "Marquez une échéance comme déposée"
+
+msgid "Puesta en marcha de tu despacho"
+msgstr "Mise en route de votre cabinet"
+
+msgid "Ir"
+msgstr "Aller"

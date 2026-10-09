@@ -7281,3 +7281,27 @@ msgstr "Estàs veient la plataforma com %(email)s, en només lectura. Suport: %(
 
 msgid "Estamos realizando tareas de mantenimiento. Volveremos en unos minutos."
 msgstr "Estem fent tasques de manteniment. Tornarem d'aquí a uns minuts."
+
+msgid "Crea tu primer cliente fiscal"
+msgstr "Crea el teu primer client fiscal"
+
+msgid "Genera los vencimientos fiscales"
+msgstr "Genera els venciments fiscals"
+
+msgid "Conecta una cuenta de correo del despacho"
+msgstr "Connecta un compte de correu del despatx"
+
+msgid "Revisa los recordatorios automáticos a tus clientes"
+msgstr "Revisa els recordatoris automàtics als teus clients"
+
+msgid "Da acceso al portal a un cliente"
+msgstr "Dona accés al portal a un client"
+
+msgid "Marca un vencimiento como presentado"
+msgstr "Marca un venciment com a presentat"
+
+msgid "Puesta en marcha de tu despacho"
+msgstr "Posada en marxa del teu despatx"
+
+msgid "Ir"
+msgstr "Vés-hi"

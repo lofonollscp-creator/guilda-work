@@ -7272,3 +7272,27 @@ msgstr "You are viewing the platform as %(email)s, read-only. Support: %(admin)s
 
 msgid "Estamos realizando tareas de mantenimiento. Volveremos en unos minutos."
 msgstr "We are carrying out maintenance. We will be back in a few minutes."
+
+msgid "Crea tu primer cliente fiscal"
+msgstr "Create your first tax client"
+
+msgid "Genera los vencimientos fiscales"
+msgstr "Generate the tax deadlines"
+
+msgid "Conecta una cuenta de correo del despacho"
+msgstr "Connect a firm email account"
+
+msgid "Revisa los recordatorios automáticos a tus clientes"
+msgstr "Review the automatic reminders to your clients"
+
+msgid "Da acceso al portal a un cliente"
+msgstr "Give a client access to the portal"
+
+msgid "Marca un vencimiento como presentado"
+msgstr "Mark a deadline as filed"
+
+msgid "Puesta en marcha de tu despacho"
+msgstr "Setting up your firm"
+
+msgid "Ir"
+msgstr "Go"

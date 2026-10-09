@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
 from app import db as plataforma
-from app import herramientas
+from app import comunicados, herramientas, onboarding_despacho
 
 from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas, seguimiento
 
@@ -246,6 +246,8 @@ def tenant(tenant_id: int):
         seccion = "resumen"
     usuarios, _ = datos.listar_usuarios(tenant=str(tenant_id), por_pagina=100) if seccion == "usuarios" else ([], None)
     extra = {}
+    if seccion == "resumen":
+        extra = {"puesta": onboarding_despacho.resumen(tenant_id)}
     if seccion == "suscripcion":
         facturas, error_facturas = facturacion.facturas(tenant_id) if facturacion.configurado() else ([], None)
         extra = {
@@ -674,3 +676,23 @@ def revocar_dispositivo(usuario_id: int, token_id: int):
 @auth.login_required
 def actividad():
     return render_template("actividad.html", registros=auth.listar_auditoria(300), antiguo=plataforma.listar_auditoria_backoffice(limite=100))
+
+
+@bp.route("/tenants/<int:tenant_id>/puesta-en-marcha/avisar", methods=["POST"])
+@auth.login_required
+def avisar_puesta_en_marcha(tenant_id: int):
+    """Publica un comunicado para este despacho con los pasos de puesta en marcha que le faltan."""
+    _tenant_o_404(tenant_id)
+    resumen = onboarding_despacho.resumen(tenant_id)
+    if resumen["completo"]:
+        flash("Este despacho ya ha completado la puesta en marcha.", "error")
+        return _volver_a_tenant(tenant_id)
+    titulo = "¿Te ayudamos con la puesta en marcha?"
+    if any(c["tenant_id"] == tenant_id and c["titulo"] == titulo and c["estado"] == "activo" for c in comunicados.listar()):
+        flash("Ya hay un aviso de puesta en marcha activo para este despacho.", "error")
+        return _volver_a_tenant(tenant_id)
+    faltan = [p["etiqueta"].lower() for p in resumen["pasos"] if not p["hecho"]]
+    comunicados.crear(titulo, "Te faltan: " + "; ".join(faltan) + ". Escríbenos si necesitas ayuda.", "info", tenant_id)
+    auth.auditar("onboarding.avisar", f"tenant {tenant_id}: faltan {len(faltan)} paso(s)")
+    flash("Aviso publicado: el despacho lo verá como banner en la plataforma.", "ok")
+    return _volver_a_tenant(tenant_id)

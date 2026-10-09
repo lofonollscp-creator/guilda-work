@@ -4878,3 +4878,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .comunicado form { margin: 0; }
 .comunicado-cerrar { background: none; border: 0; cursor: pointer; font-size: 1.3rem; line-height: 1; padding: 0 4px; color: inherit; opacity: .7; }
 .comunicado-cerrar:hover, .comunicado-cerrar:focus-visible { opacity: 1; }
+
+/* Puesta en marcha del despacho (tarjeta de primeros pasos) */
+.onboarding-subtitulo { margin: 18px 0 8px; font-size: .95rem; }
+.onboarding-progreso { height: 6px; border-radius: 6px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
+.onboarding-progreso span { display: block; height: 100%; background: var(--primary); }

@@ -2683,3 +2683,9 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Ver como** (ficha de usuario del backoffice): pide un motivo (obligatorio, queda auditado), emite un enlace de un solo uso (2 min, solo se guarda su hash en `ver_como_tokens`) y abre la app como ese usuario en **solo lectura** durante 30 min (toda petición que no sea GET devuelve 403). Nunca se puede suplantar a un administrador. Inicio y fin quedan en `auditoria_backoffice` (app) y la emisión en la Actividad del backoffice.
 - Variables: `GUILDA_APP_URL` (backoffice; por defecto https://app.guildawork.com) y `GUILDA_BACKOFFICE_URL` (app; adónde vuelve «Salir»; por defecto https://backoffice.guildawork.com). La sesión de la app necesita `GUILDA_SECRET_KEY` fija para sobrevivir a reinicios.
 - Limitación: algunas pantallas marcan cosas como leídas al abrirlas (GET); «ver como» no lo evita del todo.
+
+## Puesta en marcha guiada del despacho
+
+- `app/onboarding_despacho.py`: 6 pasos que se calculan en caliente de los datos (primer cliente fiscal, vencimientos generados, correo conectado, recordatorios revisados, acceso al portal dado a un cliente, primer vencimiento presentado). No hay tabla de seguimiento: no puede desincronizarse.
+- En la app: tarjeta «Primeros pasos» del inicio (con barra de progreso y enlace a cada pantalla) mientras el usuario no la oculte.
+- En el backoffice: bloque «Puesta en marcha» en el resumen de cada tenant, columna en Customer Journey y botón «Avisar al despacho de lo que le falta», que publica un comunicado (banner) solo para ese despacho. No duplica avisos activos.

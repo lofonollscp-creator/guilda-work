@@ -24,6 +24,18 @@
 
   <section class="tarjeta ficha-centro">
     {% if seccion == 'resumen' %}
+    <h2>Puesta en marcha</h2>
+    <div class="barra-progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ puesta.pct }}"><span style="width: {{ puesta.pct }}%"></span></div>
+    <p class="muted">{{ puesta.hechos }} de {{ puesta.total }} pasos completados.</p>
+    <ul class="lista-datos">
+      {% for p in puesta.pasos %}<li><span>{{ p.etiqueta }}</span><span class="{{ 'ok' if p.hecho else 'muted' }}">{{ '✓ Hecho' if p.hecho else 'Pendiente' }}</span></li>{% endfor %}
+    </ul>
+    {% if not puesta.completo %}
+    <form method="post" action="{{ url_for('rutas.avisar_puesta_en_marcha', tenant_id=t.id) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="boton">Avisar al despacho de lo que le falta</button>
+    </form>
+    {% endif %}
     <h2>Información del tenant</h2>
     <dl class="datos-fila">
       <div><dt>ID</dt><dd class="mono">{{ t.id }}</dd></div>

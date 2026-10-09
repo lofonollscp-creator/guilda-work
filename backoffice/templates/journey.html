@@ -11,13 +11,14 @@
 </div>
 <div class="tabla-caja">
   <table class="tabla">
-    <thead><tr><th>Tenant</th>{% for k, n in etapas %}<th>{{ n }}</th>{% endfor %}<th>Siguiente paso</th><th>Última actividad</th></tr></thead>
+    <thead><tr><th>Tenant</th>{% for k, n in etapas %}<th>{{ n }}</th>{% endfor %}<th>Puesta en marcha</th><th>Siguiente paso</th><th>Última actividad</th></tr></thead>
     <tbody>
       {% for f in j.filas %}
       <tr><td><a href="{{ url_for('rutas.tenant', tenant_id=f.id) }}"><strong>{{ f.nombre }}</strong></a>{% if not f.activo %} <span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</td>
         {% for k, n in etapas %}<td>{% if f.logros[k] %}<span class="ok">✓</span>{% else %}<span class="muted">—</span>{% endif %}</td>{% endfor %}
+        <td>{{ f.puesta.hechos }}/{{ f.puesta.total }} <small class="muted">{{ f.puesta.siguiente or 'Completa' }}</small></td>
         <td>{{ f.siguiente or 'Completo' }}</td><td>{{ f.ultima|hace }}</td></tr>
-      {% else %}<tr><td colspan="9" class="vacio">Todavía no hay tenants.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="10" class="vacio">Todavía no hay tenants.</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>
