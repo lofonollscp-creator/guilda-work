@@ -2689,3 +2689,10 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - `app/onboarding_despacho.py`: 6 pasos que se calculan en caliente de los datos (primer cliente fiscal, vencimientos generados, correo conectado, recordatorios revisados, acceso al portal dado a un cliente, primer vencimiento presentado). No hay tabla de seguimiento: no puede desincronizarse.
 - En la app: tarjeta «Primeros pasos» del inicio (con barra de progreso y enlace a cada pantalla) mientras el usuario no la oculte.
 - En el backoffice: bloque «Puesta en marcha» en el resumen de cada tenant, columna en Customer Journey y botón «Avisar al despacho de lo que le falta», que publica un comunicado (banner) solo para ese despacho. No duplica avisos activos.
+
+## Tope de consumo de IA por despacho
+
+- Cada consulta al modelo (turno del chat o acción de IA del correo) cuenta 1 en `ia_consumo` (despacho y mes). El tope está en `tenants.ia_limite_mensual`: vacío = **ilimitado** (por defecto, nada cambia para los despachos existentes), 0 = IA desactivada, N = tope mensual. Se renueva el día 1.
+- Al agotarlo, el chat y las acciones del correo devuelven un aviso claro y no llaman al modelo. Las confirmaciones de acciones ya iniciadas no cuentan. Usuarios sin despacho: sin tope.
+- Backoffice: bloque «Consumo de IA» en el resumen del tenant (límite, ilimitado, histórico) y página `/consumo-ia` con el gasto de todos. En la app, Ajustes del Asistente IA muestra el uso y avisa al llegar al 80 %.
+- El consumo es de **consultas**, no de coste: cada usuario usa su propia clave de OpenRouter.

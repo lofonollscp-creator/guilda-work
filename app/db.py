@@ -1013,6 +1013,14 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Consumo mensual de IA por despacho (consultas al modelo). El tope vive en tenants.ia_limite_mensual (NULL = ilimitado).
+CREATE TABLE IF NOT EXISTS ia_consumo (
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    mes TEXT NOT NULL,
+    usadas INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (tenant_id, mes)
+);
+
 -- Modo mantenimiento (backoffice): tenant_id NULL = toda la plataforma. Los administradores globales pasan.
 CREATE TABLE IF NOT EXISTS mantenimiento (
     id INTEGER PRIMARY KEY,
@@ -1701,6 +1709,7 @@ def init_db() -> None:
         # la del trabajador en cualquier registro horario que se presente
         # a una inspección -- aparece en la cabecera de los export CSV/PDF.
         _asegurar_columna(conn, "tenants", "cif", "TEXT")
+        _asegurar_columna(conn, "tenants", "ia_limite_mensual", "INTEGER")
         _asegurar_columna(conn, "tenants", "direccion_fiscal", "TEXT")
         _asegurar_columna(conn, "tenants", "zona_horaria", "TEXT")
 

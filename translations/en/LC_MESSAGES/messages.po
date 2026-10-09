@@ -7296,3 +7296,20 @@ msgstr "Setting up your firm"
 
 msgid "Ir"
 msgstr "Go"
+
+msgid "Uso de IA de tu despacho este mes"
+msgstr "AI usage of your firm this month"
+
+msgid "%(n)s consulta este mes · sin límite"
+msgid_plural "%(n)s consultas este mes · sin límite"
+msgstr[0] "%(n)s query this month · no limit"
+msgstr[1] "%(n)s queries this month · no limit"
+
+msgid "%(usadas)s de %(limite)s consultas usadas"
+msgstr "%(usadas)s of %(limite)s queries used"
+
+msgid "Has agotado el límite de este mes. Se renueva el día 1, o contacta con soporte para ampliarlo."
+msgstr "You have used up this month's limit. It renews on the 1st, or contact support to raise it."
+
+msgid "Te quedan pocas consultas este mes."
+msgstr "You have few queries left this month."

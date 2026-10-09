@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
 from app import db as plataforma
-from app import comunicados, herramientas, onboarding_despacho
+from app import comunicados, herramientas, ia_consumo, onboarding_despacho
 
 from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas, seguimiento
 
@@ -247,7 +247,7 @@ def tenant(tenant_id: int):
     usuarios, _ = datos.listar_usuarios(tenant=str(tenant_id), por_pagina=100) if seccion == "usuarios" else ([], None)
     extra = {}
     if seccion == "resumen":
-        extra = {"puesta": onboarding_despacho.resumen(tenant_id)}
+        extra = {"puesta": onboarding_despacho.resumen(tenant_id), "ia": ia_consumo.estado(tenant_id), "ia_historial": ia_consumo.historial(tenant_id)}
     if seccion == "suscripcion":
         facturas, error_facturas = facturacion.facturas(tenant_id) if facturacion.configurado() else ([], None)
         extra = {
@@ -695,4 +695,27 @@ def avisar_puesta_en_marcha(tenant_id: int):
     comunicados.crear(titulo, "Te faltan: " + "; ".join(faltan) + ". Escríbenos si necesitas ayuda.", "info", tenant_id)
     auth.auditar("onboarding.avisar", f"tenant {tenant_id}: faltan {len(faltan)} paso(s)")
     flash("Aviso publicado: el despacho lo verá como banner en la plataforma.", "ok")
+    return _volver_a_tenant(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/ia-limite", methods=["POST"])
+@auth.login_required
+def guardar_limite_ia(tenant_id: int):
+    """Tope mensual de consultas de IA del despacho: «ilimitado», 0 (IA desactivada) o un número."""
+    _tenant_o_404(tenant_id)
+    if request.form.get("ilimitado") == "1":
+        limite = None
+    else:
+        texto = request.form.get("limite", "").strip()
+        if not texto.isdigit():
+            flash("Indica un número de consultas al mes (0 desactiva la IA) o marca «ilimitado».", "error")
+            return _volver_a_tenant(tenant_id)
+        limite = int(texto)
+    try:
+        ia_consumo.fijar_limite(tenant_id, limite)
+    except ValueError as e:
+        flash(str(e), "error")
+        return _volver_a_tenant(tenant_id)
+    auth.auditar("ia.limite", f"tenant {tenant_id}: {'ilimitado' if limite is None else limite}")
+    flash("Límite de IA guardado: " + ("ilimitado." if limite is None else f"{limite} consultas al mes."), "ok")
     return _volver_a_tenant(tenant_id)

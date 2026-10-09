@@ -47,6 +47,16 @@
       <label>Nombre *<input type="text" name="nombre" value="{{ t.nombre }}" maxlength="120" required></label>
       <div><button type="submit" class="boton boton-primario">Guardar nombre</button></div>
     </form>
+    <h3>Consumo de IA</h3>
+    <p>{{ ia.usadas }} consulta(s) en {{ ia.mes }} · {% if ia.ilimitado %}<strong>ilimitado</strong>{% elif ia.limite == 0 %}<strong>IA desactivada</strong>{% else %}tope <strong>{{ ia.limite }}</strong> ({{ ia.pct }} %){% endif %}</p>
+    {% if not ia.ilimitado and ia.limite %}<div class="barra-progreso"><span style="width: {{ ia.pct }}%"></span></div>{% endif %}
+    <form method="post" action="{{ url_for('rutas.guardar_limite_ia', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Consultas al mes<input type="number" name="limite" min="0" max="1000000" value="{{ ia.limite if ia.limite is not none else '' }}" placeholder="p. ej. 500 (0 = sin IA)"></label>
+      <label class="casilla"><input type="checkbox" name="ilimitado" value="1" {{ 'checked' if ia.ilimitado }}> Ilimitado</label>
+      <button type="submit" class="boton boton-primario">Guardar límite</button>
+    </form>
+    {% if ia_historial %}<p class="muted">Histórico: {% for h in ia_historial %}{{ h.mes }}: {{ h.usadas }}{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
     <h3>Datos fiscales y zona horaria</h3>
     <form method="post" action="{{ url_for('rutas.guardar_datos_tenant', tenant_id=t.id) }}" class="formulario">
       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">

@@ -24,7 +24,7 @@ from collections.abc import Iterator
 
 import keyring
 
-from . import db, ia_fuentes, ia_herramientas as herramientas
+from . import db, ia_consumo, ia_fuentes, ia_herramientas as herramientas
 
 SERVICIO_KEYRING_IA = "guilda-work-ia"
 CLAVE_API_OPENROUTER = "openrouter-api-key"
@@ -439,6 +439,14 @@ def _pendiente_dict(tool_call: dict) -> dict:
     }
 
 
+def _reservar_uso(usuario_id: int) -> None:
+    """Cuenta una consulta al modelo en el consumo mensual del despacho; ErrorIA si ha agotado su tope."""
+    try:
+        ia_consumo.reservar(usuario_id)
+    except ia_consumo.LimiteIA as e:
+        raise ErrorIA(str(e)) from e
+
+
 def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
     """Llamada puntual al modelo del usuario, sin herramientas ni historial
     (la usan las acciones de IA del correo). Lanza ErrorIA si no hay modelo
@@ -449,6 +457,7 @@ def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
         raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
     if not claves:
         raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    _reservar_uso(usuario_id)
     respuesta = _post_json_con_fallback(
         OPENROUTER_URL,
         {"model": modelo, "messages": [
@@ -544,6 +553,7 @@ def procesar_turno(usuario_id: int, texto_usuario: str) -> dict:
         raise ErrorIA(
             "Hay una acción esperando confirmación. Acéptala o recházala antes de seguir la conversación."
         )
+    _reservar_uso(usuario_id)
     db.agregar_mensaje_ia(usuario_id, "user", contenido=texto_usuario.strip())
     return _continuar_conversacion(usuario_id)
 
@@ -689,6 +699,7 @@ def procesar_turno_stream(usuario_id: int, texto_usuario: str) -> Iterator[dict]
             raise ErrorIA(
                 "Hay una acción esperando confirmación. Acéptala o recházala antes de seguir la conversación."
             )
+        _reservar_uso(usuario_id)
         db.agregar_mensaje_ia(usuario_id, "user", contenido=texto_usuario.strip())
         yield from _continuar_conversacion_stream(usuario_id)
         yield {"tipo": "fin"}

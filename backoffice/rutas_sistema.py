@@ -10,7 +10,7 @@ import os
 from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
-from app import comunicados, eventos, mantenimiento, ver_como, herramientas, salud, uptime_kuma
+from app import comunicados, eventos, ia_consumo, mantenimiento, ver_como, herramientas, salud, uptime_kuma
 
 from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
@@ -397,7 +397,7 @@ PAGINAS = (
     ("Dashboard", "rutas.dashboard"), ("Tenants", "rutas.tenants"), ("Usuarios", "rutas.usuarios"), ("Mapa de acceso", "rutas.mapa"),
     ("Herramientas", "rutas.catalogo"), ("Customer Journey", "rutas.journey"), ("Salud de clientes", "rutas.salud_clientes"),
     ("Alertas", "rutas.alertas"), ("Leads", "rutas.leads"), ("Solicitudes del portal", "rutas.solicitudes"), ("Planes y extras", "rutas.planes"),
-    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
+    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
     ("Estado del sistema", "rutas.estado"), ("Diagnóstico", "rutas.diagnostico_vista"), ("Dependencias", "rutas.dependencias_vista"),
     ("Copias de seguridad", "rutas.copias"), ("Webhooks", "rutas.webhooks"), ("Actividad", "rutas.actividad"), ("Mi cuenta", "rutas.cuenta"),
 )
@@ -472,3 +472,12 @@ def ver_como_usuario(usuario_id: int):
     auth.auditar("ver_como.emitir", f"usuario {usuario_id}: {request.form.get('motivo', '').strip()[:200]}")
     base = os.environ.get("GUILDA_APP_URL", "https://app.guildawork.com").rstrip("/")
     return redirect(f"{base}/soporte/ver-como/{token}")
+
+
+# --- Consumo de IA --------------------------------------------------------------------
+
+@bp.route("/consumo-ia")
+@auth.login_required
+def consumo_ia():
+    filas = ia_consumo.resumen_global()
+    return render_template("consumo_ia.html", filas=filas, mes=ia_consumo.estado(0)["mes"], total=sum(f["usadas"] for f in filas))

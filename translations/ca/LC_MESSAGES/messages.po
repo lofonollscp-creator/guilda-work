@@ -7305,3 +7305,20 @@ msgstr "Posada en marxa del teu despatx"
 
 msgid "Ir"
 msgstr "Vés-hi"
+
+msgid "Uso de IA de tu despacho este mes"
+msgstr "Ús d'IA del teu despatx aquest mes"
+
+msgid "%(n)s consulta este mes · sin límite"
+msgid_plural "%(n)s consultas este mes · sin límite"
+msgstr[0] "%(n)s consulta aquest mes · sense límit"
+msgstr[1] "%(n)s consultes aquest mes · sense límit"
+
+msgid "%(usadas)s de %(limite)s consultas usadas"
+msgstr "%(usadas)s de %(limite)s consultes utilitzades"
+
+msgid "Has agotado el límite de este mes. Se renueva el día 1, o contacta con soporte para ampliarlo."
+msgstr "Has esgotat el límit d'aquest mes. Es renova l'1, o contacta amb suport per ampliar-lo."
+
+msgid "Te quedan pocas consultas este mes."
+msgstr "Et queden poques consultes aquest mes."

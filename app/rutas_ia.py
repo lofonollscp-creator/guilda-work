@@ -6,7 +6,7 @@ from flask import (
     Blueprint, Response, abort, g, jsonify, redirect, render_template, request, stream_with_context, url_for,
 )
 
-from . import db, ia_asistente as asistente, ia_atajos
+from . import db, ia_asistente as asistente, ia_atajos, ia_consumo
 from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
@@ -220,6 +220,7 @@ def ajustes():
         modelos_sugeridos=asistente.listar_modelos_gratuitos(),
         num_claves_configuradas=len(asistente.obtener_api_keys(g.usuario_id)),
         atajos_propios=db.listar_atajos_ia(g.usuario_id),
+        consumo=ia_consumo.estado(g.tenant_id) if g.tenant_id else None,
         error=request.args.get("error"),
     )
 

@@ -7,6 +7,20 @@
     <a class="btn btn-ghost" href="{{ url_for('ia.asistente_vista') }}">&larr; {{ _('Volver al chat') }}</a>
   </div>
 
+  {% if consumo %}
+  <section class="correo-ajustes-seccion">
+    <h2>{{ _('Uso de IA de tu despacho este mes') }}</h2>
+    {% if consumo.ilimitado %}
+    <p>{{ ngettext('%(n)s consulta este mes · sin límite', '%(n)s consultas este mes · sin límite', consumo.usadas, n=consumo.usadas) }}</p>
+    {% else %}
+    <p>{{ _('%(usadas)s de %(limite)s consultas usadas', usadas=consumo.usadas, limite=consumo.limite) }}</p>
+    <div class="onboarding-progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ consumo.pct or 0 }}"><span style="width: {{ consumo.pct or 0 }}%"></span></div>
+    {% if consumo.agotado %}<p class="ia-aviso">{{ _('Has agotado el límite de este mes. Se renueva el día 1, o contacta con soporte para ampliarlo.') }}</p>
+    {% elif consumo.cerca %}<p class="ia-aviso">{{ _('Te quedan pocas consultas este mes.') }}</p>{% endif %}
+    {% endif %}
+  </section>
+  {% endif %}
+
   <section class="correo-ajustes-seccion">
     <h2>{{ _('Modelo (OpenRouter)') }}</h2>
     <form method="post" action="{{ url_for('ia.guardar_ajustes') }}" class="correo-form-seccion">

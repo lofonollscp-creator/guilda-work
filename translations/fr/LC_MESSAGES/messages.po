@@ -7381,3 +7381,20 @@ msgstr "Mise en route de votre cabinet"
 
 msgid "Ir"
 msgstr "Aller"
+
+msgid "Uso de IA de tu despacho este mes"
+msgstr "Utilisation de l'IA de votre cabinet ce mois-ci"
+
+msgid "%(n)s consulta este mes · sin límite"
+msgid_plural "%(n)s consultas este mes · sin límite"
+msgstr[0] "%(n)s requête ce mois-ci · sans limite"
+msgstr[1] "%(n)s requêtes ce mois-ci · sans limite"
+
+msgid "%(usadas)s de %(limite)s consultas usadas"
+msgstr "%(usadas)s sur %(limite)s requêtes utilisées"
+
+msgid "Has agotado el límite de este mes. Se renueva el día 1, o contacta con soporte para ampliarlo."
+msgstr "Vous avez épuisé la limite de ce mois. Elle se renouvelle le 1er, ou contactez le support pour l'augmenter."
+
+msgid "Te quedan pocas consultas este mes."
+msgstr "Il vous reste peu de requêtes ce mois-ci."
