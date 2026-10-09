@@ -9,7 +9,7 @@ import json
 from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
-from app import eventos, herramientas, salud, uptime_kuma
+from app import comunicados, eventos, herramientas, salud, uptime_kuma
 
 from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
@@ -342,3 +342,79 @@ def borrar_tenant(tenant_id: int):
     plataforma.borrar_tenant(tenant_id, incluir_fichajes=incluir_fichajes)
     auth.auditar("tenant.borrar", f"tenant {tenant_id}: {t['nombre']}" + (f" (con {n_fichajes} fichajes)" if n_fichajes else ""))
     return render_template("tenant_borrado.html", nombre=t["nombre"], pasos=pasos)
+
+
+# --- Comunicados a la plataforma ---------------------------------------------------
+
+@bp.route("/comunicados")
+@auth.login_required
+def comunicados_vista():
+    tenants_todos, _ = datos.listar_tenants(por_pagina=100)
+    return render_template("comunicados.html", comunicados=comunicados.listar(), tenants=tenants_todos, niveles=comunicados.NIVELES)
+
+
+@bp.route("/comunicados", methods=["POST"])
+@auth.login_required
+def crear_comunicado():
+    tenant_txt = request.form.get("tenant_id", "")
+    try:
+        nuevo = comunicados.crear(
+            request.form.get("titulo", ""), request.form.get("texto", ""), request.form.get("nivel", "info"),
+            int(tenant_txt) if tenant_txt.isdigit() else None, request.form.get("desde"), request.form.get("hasta"),
+        )
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("comunicado.crear", f"comunicado {nuevo}: {request.form.get('titulo', '').strip()[:80]} ({request.form.get('nivel')}, despacho {tenant_txt or 'todos'})")
+        flash("Comunicado publicado. Los usuarios lo verán en su próxima página.", "ok")
+    return redirect(url_for("rutas.comunicados_vista"))
+
+
+@bp.route("/comunicados/<int:comunicado_id>/activo", methods=["POST"])
+@auth.login_required
+def alternar_comunicado(comunicado_id: int):
+    activar = request.form.get("activo") == "1"
+    if not comunicados.cambiar_activo(comunicado_id, activar):
+        abort(404)
+    auth.auditar("comunicado.activar" if activar else "comunicado.pausar", f"comunicado {comunicado_id}")
+    return redirect(url_for("rutas.comunicados_vista"))
+
+
+@bp.route("/comunicados/<int:comunicado_id>/borrar", methods=["POST"])
+@auth.login_required
+def borrar_comunicado(comunicado_id: int):
+    if not comunicados.eliminar(comunicado_id):
+        abort(404)
+    auth.auditar("comunicado.borrar", f"comunicado {comunicado_id}")
+    flash("Comunicado borrado.", "ok")
+    return redirect(url_for("rutas.comunicados_vista"))
+
+
+# --- Buscador global (Ctrl+K) -------------------------------------------------------
+
+PAGINAS = (
+    ("Dashboard", "rutas.dashboard"), ("Tenants", "rutas.tenants"), ("Usuarios", "rutas.usuarios"), ("Mapa de acceso", "rutas.mapa"),
+    ("Herramientas", "rutas.catalogo"), ("Customer Journey", "rutas.journey"), ("Salud de clientes", "rutas.salud_clientes"),
+    ("Alertas", "rutas.alertas"), ("Leads", "rutas.leads"), ("Solicitudes del portal", "rutas.solicitudes"), ("Planes y extras", "rutas.planes"),
+    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Salud del sistema", "rutas.salud_vista"),
+    ("Estado del sistema", "rutas.estado"), ("Diagnóstico", "rutas.diagnostico_vista"), ("Dependencias", "rutas.dependencias_vista"),
+    ("Copias de seguridad", "rutas.copias"), ("Webhooks", "rutas.webhooks"), ("Actividad", "rutas.actividad"), ("Mi cuenta", "rutas.cuenta"),
+)
+
+
+@bp.route("/buscar")
+@auth.login_required
+def buscar_global():
+    """JSON para la paleta de comandos: páginas, tenants y usuarios que coinciden (máx. 6 de cada)."""
+    q = request.args.get("q", "").strip()[:80]
+    resultados = []
+    if q:
+        bajo = q.lower()
+        resultados += [{"tipo": "Página", "titulo": t, "url": url_for(e)} for t, e in PAGINAS if bajo in t.lower()][:6]
+        tenants_, _ = datos.listar_tenants(q, por_pagina=10)
+        resultados += [{"tipo": "Tenant", "titulo": t["nombre"], "detalle": t["plan"] or "Sin plan", "url": url_for("rutas.tenant", tenant_id=t["id"])} for t in tenants_[:6]]
+        usuarios_, _ = datos.listar_usuarios(q, por_pagina=10)
+        resultados += [{"tipo": "Usuario", "titulo": u["nombre"], "detalle": u["email"], "url": url_for("rutas.usuario", usuario_id=u["id"])} for u in usuarios_[:6]]
+    else:
+        resultados = [{"tipo": "Página", "titulo": t, "url": url_for(e)} for t, e in PAGINAS[:8]]
+    return Response(json.dumps({"resultados": resultados}), mimetype="application/json")

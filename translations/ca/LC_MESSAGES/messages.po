@@ -7254,3 +7254,9 @@ msgstr "Encara no hi ha accessos registrats."
 msgid "Paginación de vencimientos"
 msgstr "Paginació de venciments"
 
+
+msgid "Comunicados"
+msgstr "Comunicats"
+
+msgid "Cerrar aviso"
+msgstr "Tanca l'avís"

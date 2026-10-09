@@ -181,3 +181,16 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .linea-salud { color: var(--acento, currentColor); vertical-align: middle; }
 .formulario-linea { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
 .formulario-linea input[type="text"] { flex: 1 1 260px; }
+
+/* ---- Paleta de búsqueda (Ctrl+K) y formulario de comunicados ---- */
+.boton-buscar { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: var(--apagado); }
+.boton-buscar kbd { font: inherit; font-size: .72rem; padding: 1px 6px; border: 1px solid var(--borde); border-radius: 6px; }
+@media (max-width: 640px) { .boton-buscar span, .boton-buscar kbd { display: none; } }
+.paleta { width: min(560px, 94vw); margin-top: 12vh; padding: 12px; }
+.paleta input { width: 100%; padding: 12px 14px; font-size: 1rem; box-sizing: border-box; }
+.paleta ul { list-style: none; margin: 8px 0 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+.paleta li { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
+.paleta li.activa, .paleta li:hover { background: var(--superficie-2); }
+.paleta-tipo { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--apagado); min-width: 56px; }
+.paleta-ayuda { margin: 8px 4px 0; font-size: .78rem; }
+.fila-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }

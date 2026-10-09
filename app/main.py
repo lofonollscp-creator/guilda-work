@@ -33,7 +33,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, busqueda, captcha, comunicados, correo, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from .rutas_proyectos import proyectos_bp
@@ -346,6 +346,26 @@ def inyectar_correo_badge():
         return {}
     por_cuenta = peticion.memo("no_leidos", lambda: db.contar_no_leidos_por_cuenta_y_carpeta(g.usuario_id))
     return {"correo_no_leidos_sidebar": sum(sum(c.values()) for c in por_cuenta.values())}
+
+
+@app.context_processor
+def inyectar_comunicados():
+    """Banner de comunicados publicados desde el backoffice; nunca debe romper una página."""
+    if not g.usuario_id:
+        return {}
+    try:
+        return {"comunicados_activos": peticion.memo("comunicados", lambda: comunicados.activos_para(g.usuario_id, g.tenant_id))}
+    except Exception:
+        return {}
+
+
+@app.route("/comunicados/<int:comunicado_id>/cerrar", methods=["POST"])
+@login_required
+def cerrar_comunicado(comunicado_id: int):
+    comunicados.cerrar(g.usuario_id, comunicado_id)
+    destino = request.referrer or ""
+    mismo_sitio = urllib.parse.urlparse(destino).netloc in ("", request.host)
+    return redirect(destino if destino and mismo_sitio else url_for("inicio"))
 
 
 @app.context_processor

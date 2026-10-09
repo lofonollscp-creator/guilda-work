@@ -7330,3 +7330,9 @@ msgstr "Aucun accès n'a encore été enregistré."
 msgid "Paginación de vencimientos"
 msgstr "Pagination des échéances"
 
+
+msgid "Comunicados"
+msgstr "Annonces"
+
+msgid "Cerrar aviso"
+msgstr "Fermer l'avis"

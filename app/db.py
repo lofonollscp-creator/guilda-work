@@ -1013,6 +1013,24 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Comunicados del backoffice a la plataforma (banner en la app). tenant_id NULL = todos los despachos.
+CREATE TABLE IF NOT EXISTS comunicados (
+    id INTEGER PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    texto TEXT NOT NULL DEFAULT '',
+    nivel TEXT NOT NULL DEFAULT 'info' CHECK (nivel IN ('info', 'aviso', 'critico')),
+    tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+    desde TEXT,
+    hasta TEXT,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado_en TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS comunicados_cerrados (
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    comunicado_id INTEGER NOT NULL REFERENCES comunicados(id) ON DELETE CASCADE,
+    PRIMARY KEY (usuario_id, comunicado_id)
+);
+
 -- Latidos de las tareas periódicas del servidor (panel de salud del backoffice).
 CREATE TABLE IF NOT EXISTS latidos (
     nombre TEXT PRIMARY KEY,

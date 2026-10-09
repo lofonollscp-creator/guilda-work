@@ -302,6 +302,18 @@
         </div>
       </header>
       <main class="content" id="contenido-principal">
+      {% if comunicados_activos %}
+      <div class="comunicados" role="region" aria-label="{{ _('Comunicados') }}">
+        {% for c in comunicados_activos %}
+        <div class="comunicado comunicado-{{ c.nivel }}" role="{{ 'alert' if c.nivel == 'critico' else 'status' }}">
+          <div class="comunicado-texto"><strong>{{ c.titulo }}</strong>{% if c.texto %} <span>{{ c.texto }}</span>{% endif %}</div>
+          {% if c.nivel != 'critico' %}
+          <form method="post" action="{{ url_for('cerrar_comunicado', comunicado_id=c.id) }}"><button type="submit" class="comunicado-cerrar" aria-label="{{ _('Cerrar aviso') }}" title="{{ _('Cerrar aviso') }}">×</button></form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
         {% block content %}{% endblock %}
       </main>
     </div>

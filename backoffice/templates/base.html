@@ -29,6 +29,7 @@
       {{ enlace(url_for('rutas.salud_clientes'), 'Salud de clientes', 'target', endpoint == 'rutas.salud_clientes') }}
       {{ enlace(url_for('rutas.alertas'), 'Alertas', 'bell', endpoint in ('rutas.alertas', 'rutas.enviar_alertas')) }}
       <p class="nav-grupo">Comercial</p>
+      {{ enlace(url_for('rutas.comunicados_vista'), 'Comunicados', 'bell', endpoint == 'rutas.comunicados_vista') }}
       {{ enlace(url_for('rutas.leads'), 'Leads', 'mail', endpoint == 'rutas.leads') }}
       {{ enlace(url_for('rutas.solicitudes'), 'Solicitudes del portal', 'message-circle', endpoint == 'rutas.solicitudes') }}
       <p class="nav-grupo">Facturación</p>
@@ -60,6 +61,7 @@
     {% if admin %}
     <header class="barra">
       <button type="button" class="boton-icono" data-accion="lateral" aria-label="Mostrar u ocultar el menú" aria-controls="lateral">{{ icono('panel-left') }}</button>
+      <button type="button" class="boton boton-buscar" data-accion="paleta" aria-label="Buscar en el backoffice (Ctrl+K)">{{ icono('search') }} <span>Buscar…</span> <kbd>Ctrl K</kbd></button>
       {% block barra %}{% endblock %}
     </header>
     {% endif %}
@@ -75,6 +77,13 @@
     </main>
   </div>
 </div>
+{% if admin %}
+<dialog id="paleta" class="dialogo paleta" aria-label="Buscar en el backoffice" data-url="{{ url_for('rutas.buscar_global') }}">
+  <input type="search" id="paleta-q" placeholder="Busca un tenant, un usuario o una página…" autocomplete="off" aria-label="Buscar" role="combobox" aria-expanded="true" aria-controls="paleta-lista">
+  <ul id="paleta-lista" role="listbox"></ul>
+  <p class="muted paleta-ayuda">↑ ↓ para moverte · Intro para abrir · Esc para cerrar</p>
+</dialog>
+{% endif %}
 <script src="{{ url_for('static', filename='backoffice.js') }}"></script>
 </body>
 </html>

@@ -53,4 +53,48 @@
 
   // Los avisos desaparecen solos.
   document.querySelectorAll(".aviso-ok").forEach(function (a) { setTimeout(function () { a.classList.add("oculto"); }, 5000); });
+
+  // Paleta de búsqueda global (Ctrl+K / "/" fuera de un campo): páginas, tenants y usuarios.
+  var paleta = document.getElementById("paleta");
+  if (paleta) {
+    var campo = document.getElementById("paleta-q"), lista = document.getElementById("paleta-lista");
+    var items = [], activo = 0, temporizador = null, ultima = 0;
+
+    function pintar() {
+      lista.textContent = "";
+      items.forEach(function (it, i) {
+        var li = document.createElement("li");
+        li.setAttribute("role", "option");
+        li.className = i === activo ? "activa" : "";
+        var tipo = document.createElement("span"); tipo.className = "paleta-tipo"; tipo.textContent = it.tipo;
+        var titulo = document.createElement("strong"); titulo.textContent = it.titulo;
+        li.appendChild(tipo); li.appendChild(titulo);
+        if (it.detalle) { var d = document.createElement("span"); d.className = "muted"; d.textContent = it.detalle; li.appendChild(d); }
+        li.addEventListener("mousedown", function (e) { e.preventDefault(); window.location.href = it.url; });
+        lista.appendChild(li);
+      });
+      if (!items.length) { var vacio = document.createElement("li"); vacio.className = "muted"; vacio.textContent = "Sin resultados"; lista.appendChild(vacio); }
+    }
+    function buscar() {
+      var q = campo.value, marca = ++ultima;
+      fetch(paleta.dataset.url + "?q=" + encodeURIComponent(q), { credentials: "same-origin", headers: { Accept: "application/json" } })
+        .then(function (r) { return r.ok ? r.json() : { resultados: [] }; })
+        .then(function (r) { if (marca !== ultima) return; items = r.resultados || []; activo = 0; pintar(); })
+        .catch(function () { /* sin red: se deja la lista como estaba */ });
+    }
+    function abrirPaleta() { if (!paleta.open) paleta.showModal(); campo.value = ""; buscar(); campo.focus(); }
+
+    campo.addEventListener("input", function () { clearTimeout(temporizador); temporizador = setTimeout(buscar, 150); });
+    campo.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); activo = Math.min(activo + 1, items.length - 1); pintar(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); activo = Math.max(activo - 1, 0); pintar(); }
+      else if (e.key === "Enter" && items[activo]) { e.preventDefault(); window.location.href = items[activo].url; }
+    });
+    document.addEventListener("keydown", function (e) {
+      var escribiendo = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "")) || e.target.isContentEditable;
+      if ((e.key === "k" || e.key === "K") && (e.ctrlKey || e.metaKey)) { e.preventDefault(); abrirPaleta(); }
+      else if (e.key === "/" && !escribiendo && !e.ctrlKey && !e.metaKey) { e.preventDefault(); abrirPaleta(); }
+    });
+    document.addEventListener("click", function (e) { if (e.target.closest('[data-accion="paleta"]')) abrirPaleta(); });
+  }
 })();

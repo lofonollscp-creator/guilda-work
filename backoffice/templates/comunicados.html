@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Comunicados{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Comunicados</h1><p class="muted">Avisos que la plataforma muestra en un banner a los usuarios: mantenimientos, novedades o incidencias.</p></header>
+
+<section class="tarjeta"><h2>Nuevo comunicado</h2>
+  <form method="post" action="{{ url_for('rutas.crear_comunicado') }}" class="formulario">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label>Título<input type="text" name="titulo" maxlength="120" required placeholder="Mantenimiento programado esta noche"></label>
+    <label>Detalle (opcional)<textarea name="texto" rows="2" maxlength="600" placeholder="Entre las 02:00 y las 03:00 la plataforma puede ir más lenta."></textarea></label>
+    <div class="fila-campos">
+      <label>Nivel<select name="nivel"><option value="info">Informativo</option><option value="aviso">Aviso</option><option value="critico">Crítico (no se puede cerrar)</option></select></label>
+      <label>Destinatarios<select name="tenant_id"><option value="">Todos los despachos</option>{% for t in tenants %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select></label>
+      <label>Desde (opcional)<input type="datetime-local" name="desde"></label>
+      <label>Hasta (opcional)<input type="datetime-local" name="hasta"></label>
+    </div>
+    <div><button type="submit" class="boton boton-primario">Publicar</button></div>
+  </form></section>
+
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Comunicado</th><th>Nivel</th><th>Destino</th><th>Vigencia</th><th>Estado</th><th>Cerrado por</th><th></th></tr></thead>
+    <tbody>
+      {% for c in comunicados %}
+      <tr>
+        <td><strong>{{ c.titulo }}</strong>{% if c.texto %}<br><span class="muted">{{ c.texto }}</span>{% endif %}</td>
+        <td><span class="insignia {{ 'insignia-riesgo' if c.nivel == 'critico' else ('insignia-aviso' if c.nivel == 'aviso' else '') }}">{{ c.nivel|upper }}</span></td>
+        <td>{{ c.tenant_nombre or 'Todos' }}</td>
+        <td>{{ c.desde|fecha if c.desde else 'Ya' }} → {{ c.hasta|fecha if c.hasta else 'Sin fin' }}</td>
+        <td><span class="insignia {{ 'insignia-ok' if c.estado == 'activo' else '' }}">{{ c.estado|upper }}</span></td>
+        <td>{{ c.cerrados }}</td>
+        <td class="acciones">
+          <form method="post" action="{{ url_for('rutas.alternar_comunicado', comunicado_id=c.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="activo" value="{{ 0 if c.activo else 1 }}"><button type="submit" class="boton">{{ 'Pausar' if c.activo else 'Reactivar' }}</button></form>
+          <form method="post" action="{{ url_for('rutas.borrar_comunicado', comunicado_id=c.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-peligro" data-confirmar="¿Borrar este comunicado?">Borrar</button></form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="vacio">Todavía no has publicado ningún comunicado.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

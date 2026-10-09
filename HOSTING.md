@@ -2670,3 +2670,9 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
   casilla expresa; la comprobación se hace antes de retirar nada de las herramientas conectadas.
 - El último acceso de cada usuario (`usuarios.ultimo_acceso`) lo anota la app como mucho
   una vez cada 10 minutos; el backoffice lo muestra si la columna ya existe.
+
+## Comunicados y buscador del backoffice
+
+- **Comunicados** (`/comunicados` en el backoffice): avisos que la app muestra como banner (informativo, aviso o crítico; para todos los despachos o uno; con fechas de inicio/fin). Los críticos no se pueden cerrar. Tablas `comunicados` y `comunicados_cerrados` en `registro.db` (se crean solas). La app y el backoffice son procesos distintos: un comunicado nuevo tarda hasta ~20 s en aparecer (caché de existencia en `app/comunicados.py`).
+- **Buscador global**: `Ctrl+K` (o `/`) en el backoffice abre una paleta con páginas, tenants y usuarios (`/buscar?q=`).
+- Para que se vea en producción hay que reiniciar guilda-work (banner, rutas) y el backoffice.

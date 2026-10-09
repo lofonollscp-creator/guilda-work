@@ -4867,3 +4867,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .lote-barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; margin: 8px 0; border: 1px solid var(--border, #e2e5ea); border-radius: 8px; background: var(--bg-elevated, transparent); }
 .lote-barra.lote-oculta [data-valor-para], .lote-barra.lote-oculta select#lote-accion, .lote-barra.lote-oculta button { display: none; }
 .lote-casilla { margin-right: 6px; }
+
+/* Comunicados del backoffice (banner superior) */
+.comunicados { display: grid; gap: 8px; margin: 0 0 16px; }
+.comunicado { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border, #d0d7de); border-left-width: 4px; background: var(--surface, #fff); }
+.comunicado-info { border-left-color: var(--primary); }
+.comunicado-aviso { border-left-color: var(--warning, #b8860b); }
+.comunicado-critico { border-left-color: var(--danger, #e0555a); }
+.comunicado-texto { min-width: 0; overflow-wrap: anywhere; }
+.comunicado form { margin: 0; }
+.comunicado-cerrar { background: none; border: 0; cursor: pointer; font-size: 1.3rem; line-height: 1; padding: 0 4px; color: inherit; opacity: .7; }
+.comunicado-cerrar:hover, .comunicado-cerrar:focus-visible { opacity: 1; }

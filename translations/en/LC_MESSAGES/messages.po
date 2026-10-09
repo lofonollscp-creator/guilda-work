@@ -7245,3 +7245,9 @@ msgstr "No accesses have been recorded yet."
 msgid "Paginación de vencimientos"
 msgstr "Deadlines pagination"
 
+
+msgid "Comunicados"
+msgstr "Announcements"
+
+msgid "Cerrar aviso"
+msgstr "Dismiss notice"
