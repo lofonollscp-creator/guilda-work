@@ -13,6 +13,7 @@
   <strong>{{ _('Token creado: «%(nombre)s»', nombre=token_nuevo.nombre) }}</strong>
   <p class="muted">{{ _('Cópialo ahora: no se volverá a mostrar.') }}</p>
   <code style="word-break: break-all; user-select: all;">{{ token_nuevo.token }}</code>
+  <p class="muted">{% if token_nuevo.areas %}{{ _('Limitado a: %(areas)s', areas=token_nuevo.areas|join(', ')) }}{% else %}{{ _('Sin límite de áreas') }}{% endif %} · {% if token_nuevo.caduca_en %}{{ _('Caduca el %(fecha)s', fecha=token_nuevo.caduca_en[:10]) }}{% else %}{{ _('No caduca (solo por inactividad)') }}{% endif %}</p>
 </div>
 {% endif %}
 
@@ -25,8 +26,20 @@
       <option value="completo">{{ _('Acceso completo') }}</option>
       <option value="solo_lectura">{{ _('Solo lectura') }}</option>
     </select>
+    <select name="caduca_dias" aria-label="{{ _('Caducidad') }}">
+      <option value="">{{ _('Sin caducidad') }}</option>
+      <option value="30">{{ _('Caduca en 30 días') }}</option>
+      <option value="90">{{ _('Caduca en 90 días') }}</option>
+      <option value="365">{{ _('Caduca en 1 año') }}</option>
+    </select>
     <button type="submit" class="btn btn-primary">{{ _('Crear token') }}</button>
   </div>
+  {% if areas_api %}
+  <fieldset class="muted" style="border: 0; padding: 0; margin-top: 8px;">
+    <legend>{{ _('Limitar a estas áreas (si no marcas ninguna, accede a todas)') }}</legend>
+    {% for clave, info in areas_api.items() %}<label style="margin-right: 12px;"><input type="checkbox" name="areas" value="{{ clave }}"> {{ info[0] }}</label>{% endfor %}
+  </fieldset>
+  {% endif %}
 </form>
 
 {% if not dispositivos %}
@@ -36,8 +49,8 @@
   {% for d in dispositivos %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ (d.nombre_dispositivo or 'Dispositivo')|avatar_color }};">{{ (d.nombre_dispositivo or 'Dispositivo')|iniciales }}</span>
-    <span class="log-text">{{ d.nombre_dispositivo or _('Dispositivo sin nombre') }}{% if d.permisos == 'solo_lectura' %} <span class="correo-hilo-contador">{{ _('Solo lectura') }}</span>{% endif %}
-      <span class="muted">({{ _('conectado') }} {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · {{ _('último uso') }} {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %})</span>
+    <span class="log-text">{{ d.nombre_dispositivo or _('Dispositivo sin nombre') }}{% if d.permisos == 'solo_lectura' %} <span class="correo-hilo-contador">{{ _('Solo lectura') }}</span>{% endif %}{% if d.areas %} <span class="correo-hilo-contador">{{ d.areas|fromjson|join(', ') }}</span>{% endif %}
+      <span class="muted">({{ _('conectado') }} {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · {{ _('último uso') }} {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %}{% if d.llamadas_30d %} · {{ ngettext('%(n)s llamada en 30 días', '%(n)s llamadas en 30 días', d.llamadas_30d, n=d.llamadas_30d) }}{% endif %}{% if d.caduca_en %} · {{ _('caduca el %(fecha)s', fecha=d.caduca_en[:10]) }}{% endif %})</span>
     </span>
     <form action="{{ url_for('revocar_dispositivo', token_id=d.id) }}" method="post"
           onsubmit="return confirm('{{ _('¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en la app.', nombre=(d.nombre_dispositivo or _('este dispositivo'))) }}');">

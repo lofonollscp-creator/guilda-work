@@ -260,15 +260,28 @@ PAGINAS = [
                 "Los endpoints de <code>/auth/registro</code> y <code>/auth/login</code> están limitados a "
                 "<b>10 peticiones por minuto</b> por IP (protección de fuerza bruta) — si automatizas la creación "
                 "de cuentas, ten en cuenta ese límite."},
-            {"type": "h2", "id": "tokens-solo-lectura", "text": "Tokens de solo lectura"},
+            {"type": "h2", "id": "tokens-solo-lectura", "text": "Tokens de solo lectura, por áreas y con caducidad"},
             {"type": "p", "html":
                 "Para una integración que solo debe consultar (un panel, un informe), crea un token con "
                 "<code>permisos: \"solo_lectura\"</code>: puede hacer <code>GET</code> pero cualquier otro método "
                 "responde <b>403</b> <code>Este token es de solo lectura.</code>. Se crea desde "
                 "<b>Mis dispositivos</b> en la web o con <code>POST /tokens</code> "
                 "(<code>{\"nombre\": \"...\", \"permisos\": \"completo|solo_lectura\"}</code>); el token en claro "
-                "solo se devuelve en ese momento. <code>GET /tokens</code> los lista y "
+                "solo se devuelve en ese momento. <code>GET /tokens</code> los lista (con <code>areas</code>, "
+                "<code>caduca_en</code>, <code>ultimo_uso_en</code>, <code>ultima_ip</code> y <code>llamadas_30d</code>), "
+                "<code>GET /tokens/{id}/uso</code> da las llamadas y errores por día y "
                 "<code>DELETE /tokens/{id}</code> revoca uno."},
+            {"type": "p", "html":
+                "<b>Principio de mínimo privilegio.</b> Al crear un token puedes limitarlo a <b>áreas</b> con "
+                "<code>areas</code> (<code>notas</code>, <code>tareas</code>, <code>correo</code>, <code>fiscal</code>, "
+                "<code>fichaje</code>, <code>tiquets</code>, <code>ia</code>, <code>avisos</code>): fuera de ellas responde "
+                "<b>403</b> con <code>codigo: \"token_area_no_permitida\"</code>. Un token con áreas no puede usar las rutas "
+                "transversales (<code>/historial</code>, <code>/dashboard</code>, <code>/export</code>, <code>/papelera</code>, "
+                "<code>/buscar</code>, <code>/sync</code>, que mezclan datos de varias áreas) ni gestionar tokens (no puede "
+                "crear uno más amplio). Siempre puede leer <code>/auth/me</code>, el perfil y <code>/openapi.json</code>. "
+                "Con <code>caduca_dias</code> (1-3650) o <code>caduca_en</code> el token caduca solo "
+                "(<b>401</b>, <code>token_caducado</code>); sin caducidad se desconecta tras 90 días sin uso. "
+                "Combina con <code>permisos: \"solo_lectura\"</code>: p. ej. un panel que solo lee el calendario fiscal."},
             {"type": "h2", "id": "paginacion", "text": "Paginación opcional"},
             {"type": "p", "html":
                 "Los listados de historial, tareas, tiques, clientes y vencimientos fiscales y mensajes de correo "
@@ -351,7 +364,7 @@ PAGINAS = [
                 "errores que genera Flask antes de llegar a la vista (404 de ruta inexistente, 405 de método no "
                 "permitido): <code>{\"ok\": false, \"error\": \"mensaje legible\", \"codigo\": \"no_encontrado\"}</code>, nunca una "
                 "página HTML. <b>Programa contra <code>codigo</code></b> (estable), no contra el texto, que puede cambiar o "
-                "traducirse. Códigos: <code>peticion_invalida</code>, <code>token_invalido</code>, <code>token_solo_lectura</code>, "
+                "traducirse. Códigos: <code>peticion_invalida</code>, <code>token_invalido</code>, <code>token_solo_lectura</code>, <code>token_caducado</code>, <code>token_area_no_permitida</code>, "
                 "<code>prohibido</code>, <code>no_encontrado</code>, <code>metodo_no_permitido</code>, <code>conflicto</code>, "
                 "<code>idempotencia_conflicto</code>, <code>idempotencia_en_curso</code>, <code>limite_excedido</code> y "
                 "<code>error_interno</code>. Algunos errores de validación añaden <code>campo</code>."},

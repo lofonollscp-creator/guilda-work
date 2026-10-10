@@ -11,6 +11,7 @@ verdad (`/login`, `/registro`) solo hace falta cuando la app se sirve fuera
 de este modo (por ejemplo, ya alojada en internet para la futura app
 móvil — ver `serve.py`), donde `MODO_ESCRITORIO` es False.
 """
+import json
 import logging
 import os
 import secrets
@@ -166,6 +167,7 @@ def _seleccionar_idioma():
 
 babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
 app.add_template_filter(nota_a_html, "nota_html")
+app.add_template_filter(lambda valor: json.loads(valor) if valor else [], "fromjson")
 app.add_template_filter(lambda d: format_date(d, "EEEEE").upper(), "dia_inicial")
 
 
@@ -1535,22 +1537,35 @@ def mis_dispositivos():
     revoca aquí las suyas propias (p.ej. si pierde el móvil); un admin
     revoca además las de sus compañeros de tenant desde el backoffice (ver
     backoffice.dispositivos_tenant más abajo)."""
-    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), token_nuevo=None)
+    from . import api_areas
+
+    return render_template("mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), token_nuevo=None, areas_api=api_areas.AREAS)
 
 
 @app.route("/mis-dispositivos/token", methods=["POST"])
 @login_required
 def crear_token_desde_web():
-    """Token de API para una integración (permisos completos o solo lectura).
+    """Token de API para una integración (permisos, áreas y caducidad a elegir).
     Se muestra una única vez en la propia respuesta: no viaja por URL ni se guarda en claro."""
+    from . import api_areas
+
     permisos = request.form.get("permisos") or "completo"
     if permisos not in db.PERMISOS_TOKEN_API:
         abort(400)
     nombre = (request.form.get("nombre") or "").strip()[:80] or _("Token de API")
-    token = db.crear_token_api(g.usuario_id, nombre, permisos)
+    caduca_en = None
+    dias = request.form.get("caduca_dias", type=int)
+    if dias:
+        if not 1 <= dias <= 3650:
+            abort(400)
+        caduca_en = (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds")
+    try:
+        token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=request.form.getlist("areas"), caduca_en=caduca_en)
+    except ValueError:
+        abort(400)
     return render_template(
-        "mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id),
-        token_nuevo={"token": token, "nombre": nombre, "permisos": permisos},
+        "mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), areas_api=api_areas.AREAS,
+        token_nuevo={"token": token, "nombre": nombre, "permisos": permisos, "areas": api_areas.validar_areas(request.form.getlist("areas")), "caduca_en": caduca_en},
     )
 
 

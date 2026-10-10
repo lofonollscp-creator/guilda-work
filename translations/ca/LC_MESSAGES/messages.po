@@ -7322,3 +7322,41 @@ msgstr "Has esgotat el límit d'aquest mes. Es renova l'1, o contacta amb suport
 
 msgid "Te quedan pocas consultas este mes."
 msgstr "Et queden poques consultes aquest mes."
+
+msgid "Limitado a: %(areas)s"
+msgstr "Limitat a: %(areas)s"
+
+msgid "Sin límite de áreas"
+msgstr "Sense límit d'àrees"
+
+msgid "Caduca el %(fecha)s"
+msgstr "Caduca el %(fecha)s"
+
+msgid "No caduca (solo por inactividad)"
+msgstr "No caduca (només per inactivitat)"
+
+msgid "Sin caducidad"
+msgstr "Sense caducitat"
+
+msgid "Caducidad"
+msgstr "Caducitat"
+
+msgid "Caduca en 30 días"
+msgstr "Caduca en 30 dies"
+
+msgid "Caduca en 90 días"
+msgstr "Caduca en 90 dies"
+
+msgid "Caduca en 1 año"
+msgstr "Caduca en 1 any"
+
+msgid "Limitar a estas áreas (si no marcas ninguna, accede a todas)"
+msgstr "Limita a aquestes àrees (si no en marques cap, accedeix a totes)"
+
+msgid "caduca el %(fecha)s"
+msgstr "caduca el %(fecha)s"
+
+msgid "%(n)s llamada en 30 días"
+msgid_plural "%(n)s llamadas en 30 días"
+msgstr[0] "%(n)s trucada en 30 dies"
+msgstr[1] "%(n)s trucades en 30 dies"

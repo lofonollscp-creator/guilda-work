@@ -1030,6 +1030,15 @@ CREATE TABLE IF NOT EXISTS webhooks_cola (
 );
 CREATE INDEX IF NOT EXISTS idx_webhooks_cola_estado ON webhooks_cola(estado, proximo_intento);
 
+-- Uso diario de cada token de API (llamadas y errores): para saber qué integración hace qué y detectar abusos.
+CREATE TABLE IF NOT EXISTS tokens_api_uso (
+    token_id INTEGER NOT NULL REFERENCES tokens_api(id) ON DELETE CASCADE,
+    dia TEXT NOT NULL,
+    llamadas INTEGER NOT NULL DEFAULT 0,
+    errores INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (token_id, dia)
+);
+
 -- Claves de idempotencia de la API (cabecera Idempotency-Key en POST): una repetición devuelve la misma respuesta.
 CREATE TABLE IF NOT EXISTS api_idempotencia (
     usuario_id INTEGER NOT NULL,
@@ -1679,6 +1688,9 @@ def init_db() -> None:
         # Conversaciones: cabeceras de enlace y clave de hilo (ver
         # calcular_hilo_clave). ANTES de executescript(INDICES).
         _asegurar_columna(conn, "tokens_api", "permisos", "TEXT NOT NULL DEFAULT 'completo'")
+        _asegurar_columna(conn, "tokens_api", "areas", "TEXT")
+        _asegurar_columna(conn, "tokens_api", "caduca_en", "TEXT")
+        _asegurar_columna(conn, "tokens_api", "ultima_ip", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "in_reply_to", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "referencias", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "hilo_clave", "TEXT")
@@ -3301,18 +3313,34 @@ def _hash_token(token: str) -> str:
 PERMISOS_TOKEN_API = ("completo", "solo_lectura")
 
 
-def crear_token_api(usuario_id: int, nombre_dispositivo: str | None = None, permisos: str = "completo") -> str:
-    """`permisos`: "completo" (como siempre) o "solo_lectura" (solo GET: lo
-    aplica auth.token_required)."""
+def crear_token_api(
+    usuario_id: int, nombre_dispositivo: str | None = None, permisos: str = "completo",
+    areas=None, caduca_en: str | None = None,
+) -> str:
+    """`permisos`: "completo" (como siempre) o "solo_lectura" (solo GET: lo aplica auth.token_required).
+    `areas`: lista de áreas de app/api_areas.py a las que se limita el token (vacío = todas).
+    `caduca_en`: fecha/hora ISO a partir de la cual deja de valer (vacío = no caduca, solo por inactividad)."""
+    from . import api_areas
+
     if permisos not in PERMISOS_TOKEN_API:
         raise ValueError("Permisos de token no válidos.")
+    areas = api_areas.validar_areas(areas)
+    if caduca_en:
+        try:
+            caduca_en = datetime.fromisoformat(str(caduca_en)).isoformat(timespec="seconds")
+        except ValueError:
+            raise ValueError("La fecha de caducidad no es válida.")
+        if caduca_en <= now_iso():
+            raise ValueError("La fecha de caducidad ya ha pasado.")
+    else:
+        caduca_en = None
     token = secrets.token_urlsafe(32)
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en, permisos) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso(), permisos),
+            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en, permisos, areas, caduca_en) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso(), permisos, json.dumps(areas) if areas else None, caduca_en),
         )
         conn.commit()
         return token
@@ -3358,6 +3386,96 @@ def autenticar_token(token: str) -> tuple[int, str] | None:
         conn.close()
 
 
+def autenticar_token_completo(token: str, ip: str | None = None) -> dict | None:
+    """Como `autenticar_token`, pero con todo lo que hace falta para aplicar las restricciones del token:
+    {'usuario_id', 'permisos', 'areas' (lista), 'token_id'}; {'caducado': True} si pasó su fecha de caducidad; o None."""
+    conn = get_connection()
+    try:
+        fila = conn.execute(
+            "SELECT id, usuario_id, creado_en, ultimo_uso_en, permisos, areas, caduca_en FROM tokens_api WHERE token_hash = ?",
+            (_hash_token(token),),
+        ).fetchone()
+        if fila is None:
+            return None
+        ahora = now_iso()
+        if fila["caduca_en"] and fila["caduca_en"] <= ahora:
+            return {"caducado": True}
+        ultima_actividad = fila["ultimo_uso_en"] or fila["creado_en"]
+        if ultima_actividad < (datetime.now() - timedelta(days=TOKEN_API_DIAS_INACTIVIDAD)).isoformat(timespec="seconds"):
+            conn.execute("DELETE FROM tokens_api WHERE id = ?", (fila["id"],))
+            conn.commit()
+            return None
+        conn.execute("UPDATE tokens_api SET ultimo_uso_en = ?, ultima_ip = COALESCE(?, ultima_ip) WHERE id = ?", (ahora, ip, fila["id"]))
+        conn.commit()
+        return {"usuario_id": fila["usuario_id"], "permisos": fila["permisos"], "areas": json.loads(fila["areas"]) if fila["areas"] else [], "token_id": fila["id"]}
+    finally:
+        conn.close()
+
+
+def registrar_uso_token(token_id: int, status: int) -> None:
+    """Suma una llamada (y un error si status >= 400) al contador del día de ese token."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO tokens_api_uso (token_id, dia, llamadas, errores) VALUES (?, ?, 1, ?) "
+            "ON CONFLICT(token_id, dia) DO UPDATE SET llamadas = llamadas + 1, errores = errores + excluded.errores",
+            (token_id, date.today().isoformat(), 1 if status >= 400 else 0),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def uso_de_token(token_id: int, dias: int = 30) -> list[dict]:
+    desde = (date.today() - timedelta(days=dias - 1)).isoformat()
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            "SELECT dia, llamadas, errores FROM tokens_api_uso WHERE token_id = ? AND dia >= ? ORDER BY dia", (token_id, desde))]
+    finally:
+        conn.close()
+
+
+def listar_todos_los_tokens_api(tenant_id: int | None = None, dias: int = 30) -> list[dict]:
+    """Todos los tokens (opcionalmente de un despacho) con su uso reciente, para el backoffice. Nunca el token."""
+    desde = (date.today() - timedelta(days=dias - 1)).isoformat()
+    filtro, params = ("WHERE u.tenant_id = ?", [tenant_id]) if tenant_id is not None else ("", [])
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            f"""SELECT k.id, k.usuario_id, u.email, t.nombre AS tenant, k.nombre_dispositivo, k.permisos, k.areas, k.caduca_en,
+                       k.creado_en, k.ultimo_uso_en, k.ultima_ip,
+                       COALESCE((SELECT SUM(llamadas) FROM tokens_api_uso x WHERE x.token_id = k.id AND x.dia >= ?), 0) AS llamadas,
+                       COALESCE((SELECT SUM(errores) FROM tokens_api_uso x WHERE x.token_id = k.id AND x.dia >= ?), 0) AS errores
+                FROM tokens_api k JOIN usuarios u ON u.id = k.usuario_id LEFT JOIN tenants t ON t.id = u.tenant_id
+                {filtro} ORDER BY COALESCE(k.ultimo_uso_en, k.creado_en) DESC""",
+            [desde, desde, *params],
+        ).fetchall()
+    finally:
+        conn.close()
+    return [{**dict(f), "areas": json.loads(f["areas"]) if f["areas"] else []} for f in filas]
+
+
+def revocar_token_api_cualquiera(token_id: int) -> bool:
+    """Revoca por id sin comprobar dueño (solo para el backoffice)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute("DELETE FROM tokens_api WHERE id = ?", (token_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def id_de_token(token: str) -> int | None:
+    conn = get_connection()
+    try:
+        f = conn.execute("SELECT id FROM tokens_api WHERE token_hash = ?", (_hash_token(token),)).fetchone()
+        return f["id"] if f else None
+    finally:
+        conn.close()
+
+
 def revocar_token_api(token: str) -> None:
     conn = get_connection()
     try:
@@ -3376,8 +3494,9 @@ def listar_tokens_api(usuario_id: int):
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos FROM tokens_api "
-            "WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
+            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos, areas, caduca_en, ultima_ip, "
+            "COALESCE((SELECT SUM(llamadas) FROM tokens_api_uso x WHERE x.token_id = tokens_api.id AND x.dia >= date('now', 'localtime', '-29 day')), 0) AS llamadas_30d "
+            "FROM tokens_api WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
             (usuario_id,),
         ).fetchall()
     finally:

@@ -17,7 +17,7 @@ errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 import base64
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
@@ -55,6 +55,11 @@ def _cabeceras_api(respuesta):
     """Versión de la API, cuota restante, y ETag/304 en lecturas JSON (ahorra descargas repetidas a la app móvil y a
     integraciones externas que sondean)."""
     respuesta.headers["X-API-Version"] = API_VERSION
+    if g.get("token_id"):
+        try:
+            db.registrar_uso_token(g.token_id, respuesta.status_code)
+        except Exception:  # noqa: BLE001 -- el contador nunca debe romper una respuesta
+            pass
     limite = g.get("api_limite")
     if limite:
         respuesta.headers["X-RateLimit-Limit"], respuesta.headers["X-RateLimit-Remaining"], respuesta.headers["X-RateLimit-Reset"] = (str(x) for x in limite)
@@ -187,22 +192,46 @@ def logout():
 @token_required
 def listar_tokens():
     """Tokens de acceso del usuario (nunca el token ni su hash)."""
-    return _ok(_dicts(db.listar_tokens_api(g.usuario_id)))
+    return _ok([{**dict(t), "areas": json.loads(t["areas"]) if t["areas"] else []} for t in db.listar_tokens_api(g.usuario_id)])
 
 
 @api_bp.route("/tokens", methods=["POST"])
 @token_required
 def crear_token():
-    """Crea otro token (p. ej. de solo lectura para una integración). El token
-    en claro solo se devuelve aquí, una vez. Un token de solo lectura no puede
-    llamar a esto (lo corta token_required)."""
+    """Crea otro token (p. ej. para una integración). Cuerpo: `nombre`; `permisos` (`completo` | `solo_lectura`);
+    `areas` (lista: notas, tareas, correo, fiscal, fichaje, tiquets, ia, avisos; vacío = todas); y la caducidad con
+    `caduca_dias` (1-3650) o `caduca_en` (fecha ISO). El token en claro solo se devuelve aquí, una vez. Un token de
+    solo lectura o limitado a áreas no puede llamar a esto."""
     datos = _body()
     permisos = datos.get("permisos") or "completo"
     if permisos not in db.PERMISOS_TOKEN_API:
-        return _err("permisos debe ser 'completo' o 'solo_lectura'.")
+        return _err("permisos debe ser 'completo' o 'solo_lectura'.", 400, "permisos_invalidos", "permisos")
     nombre = (datos.get("nombre") or "").strip()[:80] or None
-    token = db.crear_token_api(g.usuario_id, nombre, permisos)
-    return _ok({"token": token, "permisos": permisos, "nombre": nombre}, 201)
+    caduca_en = datos.get("caduca_en")
+    if datos.get("caduca_dias") not in (None, ""):
+        dias = datos.get("caduca_dias")
+        if not isinstance(dias, int) or isinstance(dias, bool) or not 1 <= dias <= 3650:
+            return _err("caduca_dias debe ser un entero entre 1 y 3650.", 400, "caducidad_invalida", "caduca_dias")
+        caduca_en = (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds")
+    try:
+        token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=datos.get("areas"), caduca_en=caduca_en)
+    except ValueError as e:
+        campo = "areas" if "Áreas" in str(e) else "caduca_en"
+        return _err(str(e), 400, "areas_invalidas" if campo == "areas" else "caducidad_invalida", campo)
+    token_id = db.id_de_token(token)
+    fila = next(t for t in db.listar_tokens_api(g.usuario_id) if t["id"] == token_id)
+    return _ok({"token": token, "id": token_id, "permisos": permisos, "nombre": nombre,
+                "areas": json.loads(fila["areas"]) if fila["areas"] else [], "caduca_en": fila["caduca_en"]}, 201)
+
+
+@api_bp.route("/tokens/<int:token_id>/uso", methods=["GET"])
+@token_required
+def uso_de_token(token_id: int):
+    """Llamadas y errores por día de uno de tus tokens (`dias`, 1-90, por defecto 30)."""
+    if not any(t["id"] == token_id for t in db.listar_tokens_api(g.usuario_id)):
+        abort(404, "Token no encontrado.")
+    dias = max(1, min(request.args.get("dias", default=30, type=int) or 30, 90))
+    return _ok(db.uso_de_token(token_id, dias))
 
 
 @api_bp.route("/tokens/<int:token_id>", methods=["DELETE"])
@@ -471,7 +500,8 @@ def eliminar_definitivamente_de_papelera(tipo: str, item_id: int):
 @api_bp.route("/tareas-outlook", methods=["GET"])
 @token_required
 def listar_tareas_outlook():
-    """`ambito` (opcional): `propias` (por defecto, como siempre), `asignadas`
+    """Filtros: `estado`, `prioridad`, `categoria`, `q`, `desde`/`hasta` (fecha de vencimiento, YYYY-MM-DD).
+    `ambito` (opcional): `propias` (por defecto, como siempre), `asignadas`
     (las que me han asignado), `compartidas` (compartidas conmigo) o `todas`.
     Cada fila lleva `rol`: dueno, asignada o compartida."""
     ambito = request.args.get("ambito") or "propias"
@@ -483,6 +513,7 @@ def listar_tareas_outlook():
         prioridad=request.args.get("prioridad") or None,
         categoria_outlook=request.args.get("categoria") or None,
         texto=request.args.get("q") or None,
+        desde=request.args.get("desde") or None, hasta=request.args.get("hasta") or None,
         incluir_asignadas=ambito == "todas",
         solo_asignadas=ambito == "asignadas",
         solo_compartidas=ambito == "compartidas",

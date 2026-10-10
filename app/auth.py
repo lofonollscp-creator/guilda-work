@@ -24,7 +24,7 @@ from flask import Response, abort, g, jsonify, make_response, redirect, request,
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from . import db
+from . import api_areas, db
 
 # Los contadores viven en memoria del proceso: se reinician con cada reinicio
 # y no se comparten entre procesos. Con un solo proceso de waitress (el caso
@@ -89,16 +89,24 @@ def token_required(vista):
     def decorada(*args, **kwargs):
         cabecera = request.headers.get("Authorization", "")
         token = cabecera[7:] if cabecera.startswith("Bearer ") else None
-        autenticado = db.autenticar_token(token) if token else None
+        autenticado = db.autenticar_token_completo(token, request.remote_addr) if token else None
         if autenticado is None:
             return _error_api("Token inválido o ausente.", 401, "token_invalido")
-        usuario_id, permisos = autenticado
+        if autenticado.get("caducado"):
+            return _error_api("Este token ha caducado. Crea otro desde Mis dispositivos.", 401, "token_caducado")
+        usuario_id, permisos = autenticado["usuario_id"], autenticado["permisos"]
+        g.token_id, g.areas_token = autenticado["token_id"], autenticado["areas"]
         # Un token de solo lectura únicamente puede consultar (GET): cualquier
         # otro método se rechaza aquí, antes de llegar a la vista. La única
         # excepción es cerrar su propia sesión (revocarse a sí mismo).
         if permisos == "solo_lectura" and request.method not in ("GET", "HEAD", "OPTIONS") \
                 and request.endpoint != "api.logout":
             return _error_api("Este token es de solo lectura.", 403, "token_solo_lectura")
+        # Un token limitado a ciertas áreas solo llega a ellas (y nunca a las rutas transversales ni a gestionar tokens).
+        if autenticado["areas"] and not api_areas.permite(autenticado["areas"], request.path):
+            return _error_api(
+                f"Este token solo tiene acceso a: {', '.join(autenticado['areas'])}.", 403, "token_area_no_permitida", areas=autenticado["areas"],
+            )
         g.usuario_id = usuario_id
         g.permisos_token = permisos
         # Mismo cálculo que _resolver_usuario_actual() en main.py -- hasta

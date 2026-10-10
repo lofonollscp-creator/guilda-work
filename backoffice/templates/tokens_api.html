@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Tokens de API{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Tokens de API</h1><p class="muted">Móviles e integraciones con acceso a la API. Nunca se muestra el token, solo su alcance y su uso de los últimos 30 días. Revocar corta el acceso al instante.</p></header>
+<form class="herramientas" method="get">
+  <select name="tenant" data-autoenviar aria-label="Filtrar por despacho"><option value="">Todos los despachos</option>{% for t in tenants %}<option value="{{ t.id }}" {{ 'selected' if tenant_f == t.id }}>{{ t.nombre }}</option>{% endfor %}</select>
+</form>
+<div class="tabla-caja">
+  <table class="tabla">
+    <thead><tr><th>Token</th><th>Usuario</th><th>Alcance</th><th>Caduca</th><th>Último uso</th><th>30 días</th><th></th></tr></thead>
+    <tbody>
+      {% for k in tokens %}
+      <tr>
+        <td><strong>{{ k.nombre_dispositivo or 'Sin nombre' }}</strong><br><small class="muted">creado {{ k.creado_en|fecha }}</small></td>
+        <td><a href="{{ url_for('rutas.usuario', usuario_id=k.usuario_id) }}">{{ k.email }}</a><br><small class="muted">{{ k.tenant or 'Sin despacho' }}</small></td>
+        <td>{{ 'Solo lectura' if k.permisos == 'solo_lectura' else 'Completo' }}<br><small class="muted">{{ k.areas|join(', ') if k.areas else 'Todas las áreas' }}</small></td>
+        <td>{{ k.caduca_en|fecha if k.caduca_en else '—' }}</td>
+        <td>{{ k.ultimo_uso_en|hace if k.ultimo_uso_en else 'Nunca' }}{% if k.ultima_ip %}<br><small class="muted mono">{{ k.ultima_ip }}</small>{% endif %}</td>
+        <td>{{ k.llamadas }} llamadas{% if k.errores %} · <span class="{{ 'texto-riesgo' if k.errores * 5 > k.llamadas else 'muted' }}">{{ k.errores }} errores</span>{% endif %}</td>
+        <td class="acciones"><form method="post" action="{{ url_for('rutas.revocar_token_api_global', token_id=k.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-peligro" data-confirmar="¿Revocar este token? La integración o el móvil dejará de funcionar.">Revocar</button></form></td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="vacio">No hay tokens de API.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

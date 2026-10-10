@@ -2712,3 +2712,10 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Sincronización incremental** `GET /api/v1/sync`: triggers de SQLite (`trg_cambios_*`) llenan `api_cambios` en cualquier alta/edición/papelera/borrado de notas, tareas, tareas de lista y proyectos, venga de donde venga. Retención 30 días (`api_cambios_purgado` marca hasta dónde se purgó → `reiniciar: true`). Las migraciones son idempotentes y se ensayaron sobre una copia de `registro.db`.
 - **Webhooks**: cola persistente `webhooks_cola` (sobrevive a reinicios), 4 hilos de entrega, 6 intentos (0 s, 30 s, 5 min, 30 min, 2 h, 12 h), entregas atascadas se recuperan a los 5 min, `X-Guilda-Delivery` para deduplicar, cuerpo con `id` y `fecha`. Eventos nuevos: `cliente.creado`, `correo.sin_respuesta`. Backoffice: «Enviar prueba» (ping) y «Reintentar» envíos fallidos. El hilo arranca en `serve.py` (y al emitir el primer evento en otros procesos); con varios procesos no hay duplicados (reclamo atómico por fila).
 - Cambio de comportamiento: antes un 500 en la API devolvía HTTP 200 con un JSON de error; ahora devuelve 500.
+
+## Tokens de API: áreas, caducidad y registro de uso
+
+- `tokens_api` gana `areas` (JSON; vacío = todas), `caduca_en` y `ultima_ip`; tabla `tokens_api_uso` (llamadas y errores por token y día). Clasificación de rutas en `app/api_areas.py`: un token con áreas no usa las rutas transversales (`historial`, `dashboard`, `export`, `papelera`, `buscar`, `sync`) ni `/tokens`, de modo que no puede crear otro más amplio. Ruta nueva sin clasificar = transversal (cerrado por defecto).
+- Errores nuevos: `token_caducado` (401), `token_area_no_permitida` (403, con `areas`). Los tokens existentes no cambian (sin áreas ni caducidad).
+- La web (Mis dispositivos) crea tokens con permisos, áreas y caducidad, y muestra último uso y llamadas de 30 días. Backoffice: `/tokens-api` lista todos los tokens (alcance, uso, errores, IP) y permite revocar cualquiera.
+- `GET /tareas-outlook` admite `desde`/`hasta`.

@@ -417,7 +417,7 @@ PAGINAS = (
     ("Dashboard", "rutas.dashboard"), ("Tenants", "rutas.tenants"), ("Usuarios", "rutas.usuarios"), ("Mapa de acceso", "rutas.mapa"),
     ("Herramientas", "rutas.catalogo"), ("Customer Journey", "rutas.journey"), ("Salud de clientes", "rutas.salud_clientes"),
     ("Alertas", "rutas.alertas"), ("Leads", "rutas.leads"), ("Solicitudes del portal", "rutas.solicitudes"), ("Planes y extras", "rutas.planes"),
-    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
+    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Tokens de API", "rutas.tokens_api"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
     ("Estado del sistema", "rutas.estado"), ("Diagnóstico", "rutas.diagnostico_vista"), ("Dependencias", "rutas.dependencias_vista"),
     ("Copias de seguridad", "rutas.copias"), ("Webhooks", "rutas.webhooks"), ("Actividad", "rutas.actividad"), ("Mi cuenta", "rutas.cuenta"),
 )
@@ -501,3 +501,25 @@ def ver_como_usuario(usuario_id: int):
 def consumo_ia():
     filas = ia_consumo.resumen_global()
     return render_template("consumo_ia.html", filas=filas, mes=ia_consumo.estado(0)["mes"], total=sum(f["usadas"] for f in filas))
+
+
+# --- Tokens de API ---------------------------------------------------------------------------------------------
+
+@bp.route("/tokens-api")
+@auth.login_required
+def tokens_api():
+    """Todos los tokens de API (integraciones y móviles): quién, con qué alcance, cuánto se usan y desde dónde."""
+    tenant_id = request.args.get("tenant", type=int)
+    filas = plataforma.listar_todos_los_tokens_api(tenant_id)
+    tenants_todos, _ = datos.listar_tenants(por_pagina=100)
+    return render_template("tokens_api.html", tokens=filas, tenants=tenants_todos, tenant_f=tenant_id)
+
+
+@bp.route("/tokens-api/<int:token_id>/revocar", methods=["POST"])
+@auth.login_required
+def revocar_token_api_global(token_id: int):
+    if not plataforma.revocar_token_api_cualquiera(token_id):
+        abort(404)
+    auth.auditar("token_api.revocar", f"token {token_id}")
+    flash("Token revocado: dejará de funcionar al instante.", "ok")
+    return redirect(url_for("rutas.tokens_api"))

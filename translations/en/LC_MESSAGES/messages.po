@@ -7313,3 +7313,41 @@ msgstr "You have used up this month's limit. It renews on the 1st, or contact su
 
 msgid "Te quedan pocas consultas este mes."
 msgstr "You have few queries left this month."
+
+msgid "Limitado a: %(areas)s"
+msgstr "Limited to: %(areas)s"
+
+msgid "Sin límite de áreas"
+msgstr "No area limit"
+
+msgid "Caduca el %(fecha)s"
+msgstr "Expires on %(fecha)s"
+
+msgid "No caduca (solo por inactividad)"
+msgstr "Does not expire (only after inactivity)"
+
+msgid "Sin caducidad"
+msgstr "No expiry"
+
+msgid "Caducidad"
+msgstr "Expiry"
+
+msgid "Caduca en 30 días"
+msgstr "Expires in 30 days"
+
+msgid "Caduca en 90 días"
+msgstr "Expires in 90 days"
+
+msgid "Caduca en 1 año"
+msgstr "Expires in 1 year"
+
+msgid "Limitar a estas áreas (si no marcas ninguna, accede a todas)"
+msgstr "Limit to these areas (if none is ticked, it can access all)"
+
+msgid "caduca el %(fecha)s"
+msgstr "expires on %(fecha)s"
+
+msgid "%(n)s llamada en 30 días"
+msgid_plural "%(n)s llamadas en 30 días"
+msgstr[0] "%(n)s call in 30 days"
+msgstr[1] "%(n)s calls in 30 days"

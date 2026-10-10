@@ -7398,3 +7398,41 @@ msgstr "Vous avez épuisé la limite de ce mois. Elle se renouvelle le 1er, ou c
 
 msgid "Te quedan pocas consultas este mes."
 msgstr "Il vous reste peu de requêtes ce mois-ci."
+
+msgid "Limitado a: %(areas)s"
+msgstr "Limité à : %(areas)s"
+
+msgid "Sin límite de áreas"
+msgstr "Aucune limite de domaines"
+
+msgid "Caduca el %(fecha)s"
+msgstr "Expire le %(fecha)s"
+
+msgid "No caduca (solo por inactividad)"
+msgstr "N'expire pas (seulement après inactivité)"
+
+msgid "Sin caducidad"
+msgstr "Sans expiration"
+
+msgid "Caducidad"
+msgstr "Expiration"
+
+msgid "Caduca en 30 días"
+msgstr "Expire dans 30 jours"
+
+msgid "Caduca en 90 días"
+msgstr "Expire dans 90 jours"
+
+msgid "Caduca en 1 año"
+msgstr "Expire dans 1 an"
+
+msgid "Limitar a estas áreas (si no marcas ninguna, accede a todas)"
+msgstr "Limiter à ces domaines (si aucun n'est coché, accès à tous)"
+
+msgid "caduca el %(fecha)s"
+msgstr "expire le %(fecha)s"
+
+msgid "%(n)s llamada en 30 días"
+msgid_plural "%(n)s llamadas en 30 días"
+msgstr[0] "%(n)s appel en 30 jours"
+msgstr[1] "%(n)s appels en 30 jours"
