@@ -8364,6 +8364,45 @@ def listar_vencimientos_fiscales(
         conn.close()
 
 
+def contar_vencimientos_fiscales(
+    tenant_id: int, desde: str | None = None, hasta: str | None = None, estado: str | None = None,
+    cliente_fiscal_id: int | None = None, pais: str | None = None,
+) -> int:
+    """Total con los mismos filtros que listar_vencimientos_fiscales (para paginar en SQL con X-Total-Count)."""
+    cond = ["v.tenant_id = ?", "v.papelera_en IS NULL"]
+    params: list = [tenant_id]
+    if desde:
+        cond.append("v.fecha_limite >= ?"); params.append(desde)
+    if hasta:
+        cond.append("v.fecha_limite < ?"); params.append(_fecha_exclusiva(hasta))
+    if estado:
+        cond.append("v.estado = ?"); params.append(estado)
+    if cliente_fiscal_id:
+        cond.append("v.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
+    if pais:
+        cond.append("c.pais = ?"); params.append(pais)
+    conn = get_connection()
+    try:
+        return conn.execute(
+            f"SELECT COUNT(*) FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id WHERE {' AND '.join(cond)}", params
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def vencimiento_fiscal_existente(tenant_id: int, cliente_fiscal_id: int, modelo: str, periodo: str) -> int | None:
+    """Id del vencimiento (no borrado) de ese cliente, modelo y periodo, si ya existe: evita duplicados al generar."""
+    conn = get_connection()
+    try:
+        f = conn.execute(
+            "SELECT id FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = ? AND periodo = ? AND papelera_en IS NULL",
+            (tenant_id, cliente_fiscal_id, modelo.strip(), periodo.strip()),
+        ).fetchone()
+        return f["id"] if f else None
+    finally:
+        conn.close()
+
+
 def tenant_id_de_vencimiento_fiscal(vencimiento_id: int) -> int | None:
     """Resuelve el tenant de un vencimiento por su solo id -- usado por
     el webhook de Stripe (app/rutas_stripe_webhook.py), que no tiene

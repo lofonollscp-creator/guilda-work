@@ -20,10 +20,10 @@ import json
 import sqlite3
 from datetime import datetime, timedelta
 
-from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
+from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context, url_for
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
+from . import correo, db, eventos, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -162,6 +162,30 @@ def _guardar_referencia(tabla: str, dueno_id: int, fila_id: int, datos: dict) ->
     hay, ref = _referencia(datos)
     if hay:
         db.fijar_referencia_externa(tabla, dueno_id, fila_id, ref)
+
+
+def _campos_cliente_fiscal(datos: dict):
+    """Campos de contacto y configuración que la web también permite editar: `email`, `pais` (código ISO, p. ej. ES), `idioma`
+    (es|ca|en|fr) y `recordatorios_portal`. Devuelve (campos, error); `error` es un `_err` ya construido."""
+    campos = {}
+    if "email" in datos:
+        email = (datos["email"] or "").strip() or None
+        if email and ("@" not in email or len(email) > 200 or " " in email):
+            return None, _err("email no es válido.", 400, "email_invalido", "email")
+        campos["email"] = email
+    if "pais" in datos:
+        pais = str(datos["pais"] or "ES").strip().upper()
+        if len(pais) != 2 or not pais.isalpha():
+            return None, _err("pais debe ser un código de 2 letras (p. ej. ES).", 400, "pais_invalido", "pais")
+        campos["pais"] = pais
+    if "idioma" in datos:
+        if datos["idioma"] not in ("es", "ca", "en", "fr"):
+            return None, _err("idioma debe ser es, ca, en o fr.", 400, "idioma_invalido", "idioma")
+        campos["idioma"] = datos["idioma"]
+    if "recordatorios_portal" in datos:
+        campos["recordatorios_portal"] = 1 if datos["recordatorios_portal"] else 0
+    return campos, None
+
 
 
 
@@ -774,10 +798,15 @@ def crear_cliente_fiscal():
     error = _error_referencia("clientes_fiscales", g.tenant_id, datos)
     if error:
         return error
+    extra, error = _campos_cliente_fiscal(datos)
+    if error:
+        return error
     cliente_id = db.crear_cliente_fiscal(
         g.tenant_id, nombre, nif=datos.get("nif"), notas=datos.get("notas"),
-        modelos_fiscales=datos.get("modelos_fiscales") or None,
+        modelos_fiscales=datos.get("modelos_fiscales") or None, email=extra.pop("email", None),
     )
+    if extra:
+        db.editar_cliente_fiscal(g.tenant_id, cliente_id, **extra)
     # EspoCRM opcional, mismo idioma best-effort que app/rutas_fiscal.py.
     try:
         cuenta_id = espocrm.buscar_cuenta_por_nombre(nombre)
@@ -803,6 +832,7 @@ def obtener_cliente_fiscal(cliente_id: int):
         abort(404, "Cliente fiscal no encontrado.")
     datos = dict(cliente)
     datos["modelos_fiscales"] = db.modelos_fiscales_de_cliente(cliente)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "ficha_vista", "vía API")
     return _ok(datos)
 
 
@@ -826,10 +856,15 @@ def editar_cliente_fiscal(cliente_id: int):
         campos["modelos_fiscales"] = db.serializar_modelos_fiscales(datos["modelos_fiscales"])
     if "generacion_automatica" in datos:
         campos["generacion_automatica"] = 1 if datos["generacion_automatica"] else 0
+    extra, error = _campos_cliente_fiscal(datos)
+    if error:
+        return error
+    campos.update(extra)
     error = _error_referencia("clientes_fiscales", g.tenant_id, datos, excepto_id=cliente_id)
     if error:
         return error
     db.editar_cliente_fiscal(g.tenant_id, cliente_id, **campos)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_editado", "vía API")
     _guardar_referencia("clientes_fiscales", g.tenant_id, cliente_id, datos)
     return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)))
 
@@ -843,41 +878,56 @@ def eliminar_cliente_fiscal(cliente_id: int):
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
         abort(404, "Cliente fiscal no encontrado.")
     db.eliminar_cliente_fiscal(g.tenant_id, cliente_id)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_eliminado", "vía API")
     return _ok()
 
 
 @api_bp.route("/fiscal/clientes/<int:cliente_id>/generar-vencimientos", methods=["POST"])
 @token_required
 def generar_vencimientos_fiscales(cliente_id: int):
+    """Cuerpo: `modelos` (por defecto los del cliente), `anio` (por defecto el actual). Usa el país de tributación del cliente y
+    no duplica: lo que ya existe se devuelve en `omitidos`. Respuesta: `{"creados": n, "ids": [...], "omitidos": n}`."""
     error = _exigir_tenant_api()
     if error:
         return error
-    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
         abort(404, "Cliente fiscal no encontrado.")
     datos = _body()
-    modelos = datos.get("modelos") or []
+    modelos = datos.get("modelos") or db.modelos_fiscales_de_cliente(cliente)
     anio = datos.get("anio") or datetime.now().year
     if not modelos:
         return _err("Indica al menos un modelo.")
+    if not isinstance(anio, int) or not 2000 <= anio <= 2100:
+        return _err("anio debe ser un año válido.", 400, "peticion_invalida", "anio")
     from .vencimientos_fiscales import generar_vencimientos_propuestos
-    creados = []
-    for p in generar_vencimientos_propuestos(modelos, anio):
-        vid = db.crear_vencimiento_fiscal(g.tenant_id, cliente_id, p["modelo"], p["periodo"], p["fecha_limite"])
-        creados.append(vid)
-    return _ok({"creados": len(creados)}, 201)
+    creados, omitidos = [], 0
+    for p in generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]):
+        if db.vencimiento_fiscal_existente(g.tenant_id, cliente_id, p["modelo"], p["periodo"]) is not None:
+            omitidos += 1
+            continue
+        creados.append(db.crear_vencimiento_fiscal(g.tenant_id, cliente_id, p["modelo"], p["periodo"], p["fecha_limite"]))
+    return _ok({"creados": len(creados), "ids": creados, "omitidos": omitidos}, 201)
 
 
 @api_bp.route("/fiscal/vencimientos", methods=["GET"])
 @token_required
 def listar_vencimientos_fiscales():
+    """Filtros: `estado`, `cliente_id`, `desde`/`hasta` (fecha límite, YYYY-MM-DD), `pais`. Paginación en SQL con `limit`/`offset`
+    (sin `limit`, todos) y total en `X-Total-Count`."""
     error = _exigir_tenant_api()
     if error:
         return error
-    return _ok_paginado(db.listar_vencimientos_fiscales(
-        g.tenant_id,
-        estado=request.args.get("estado") or None,
-        cliente_fiscal_id=request.args.get("cliente_id", type=int),
-    ))
+    filtros = dict(
+        estado=request.args.get("estado") or None, cliente_fiscal_id=request.args.get("cliente_id", type=int),
+        desde=request.args.get("desde") or None, hasta=request.args.get("hasta") or None, pais=request.args.get("pais") or None,
+    )
+    limit = request.args.get("limit", type=int)
+    offset = max(0, request.args.get("offset", default=0, type=int) or 0)
+    filas = db.listar_vencimientos_fiscales(g.tenant_id, limite=None if limit is None else max(1, min(limit, 1000)), offset=offset, **filtros)
+    respuesta, status = _ok(_dicts(filas))
+    respuesta.headers["X-Total-Count"] = str(db.contar_vencimientos_fiscales(g.tenant_id, **filtros))
+    return respuesta, status
 
 
 @api_bp.route("/fiscal/vencimientos/<int:vencimiento_id>", methods=["PUT"])
@@ -892,18 +942,44 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
     datos = _body()
     campos = {k: datos[k] for k in db.CAMPOS_VENCIMIENTO_FISCAL if k in datos}
     db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, **campos)
+    nuevo = (campos.get("documento_solicitado") or "").strip()
+    if nuevo and nuevo != vencimiento["documento_solicitado"]:
+        # Como en la web: la petición NUEVA de un documento avisa al cliente por correo (best-effort).
+        cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
+        if cliente is not None and cliente["email"]:
+            from . import notificaciones_email as _ne
+            try:
+                _ne.enviar_solicitud_documento(cliente["email"], nuevo, url_for("portal_cliente.entrar", _external=True))
+            except _ne.ErrorNotificacionesEmail:
+                pass
     return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))
 
 
 @api_bp.route("/fiscal/vencimientos/<int:vencimiento_id>/presentado", methods=["POST"])
 @token_required
 def marcar_presentado_vencimiento_fiscal(vencimiento_id: int):
+    """Marca el vencimiento como presentado, igual que en la web: genera la constancia en PDF (visible para el cliente en su portal),
+    guarda el justificante oficial si se adjunta (multipart, campo `justificante`: imagen o PDF, hasta 8 MB) y emite el evento
+    `vencimiento.presentado`."""
     error = _exigir_tenant_api()
     if error:
         return error
-    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+    vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if vencimiento is None:
         abort(404, "Vencimiento no encontrado.")
+    from .rutas_fiscal import _generar_constancia, _guardar_justificante
     db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    justificante = request.files.get("justificante")
+    if justificante is not None and justificante.filename and not _guardar_justificante(vencimiento_id, justificante):
+        return _err("Justificante no válido: solo imágenes o PDF, hasta 8 MB (el vencimiento ya queda presentado).", 400, "justificante_invalido", "justificante")
+    try:
+        _generar_constancia(vencimiento)
+    except Exception:  # noqa: BLE001 -- un fallo al generar la constancia nunca deshace el «presentado»
+        pass
+    try:
+        eventos.emitir("vencimiento.presentado", g.tenant_id, {"vencimiento_id": vencimiento_id, "modelo": vencimiento["modelo"], "periodo": vencimiento["periodo"]})
+    except Exception:  # noqa: BLE001
+        pass
     return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))
 
 

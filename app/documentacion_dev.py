@@ -510,6 +510,36 @@ PAGINAS = [
                 ["GET/POST", "/tareas-reglas-vencimiento", "«Una tarea por cada vencimiento del modelo X» (<code>modelo</code>, <code>asunto</code> con {cliente}/{modelo}/{periodo}, <code>crear_dias_antes</code>, <code>vence_dias_antes</code>)."],
                 ["POST/DELETE", "/tareas-reglas-vencimiento/{id}[/alternar]", "Activa/pausa · borra."],
             ]},
+            {"type": "h2", "id": "fiscal-completo", "text": "Calendario fiscal: flujo completo"},
+            {"type": "p", "html":
+                "Mismas reglas que la web: todo se limita al despacho del usuario, el expediente del cliente registra quién lo toca "
+                "(las acciones por API quedan marcadas «vía API» en el registro de accesos) y los avisos por correo al cliente salen igual. "
+                "Área de token: <code>fiscal</code>. Un cliente admite <code>email</code>, <code>pais</code> (ISO, p. ej. ES), <code>idioma</code> "
+                "(es|ca|en|fr), <code>recordatorios_portal</code> y <code>referencia_externa</code>."},
+            {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["GET", "/fiscal/modelos?pais=", "Modelos fiscales disponibles por país."],
+                ["GET", "/fiscal/clientes/{id}/resumen", "Modelos, pendientes y próximos vencimientos."],
+                ["GET", "/fiscal/clientes/{id}/accesos", "Registro de accesos al expediente (solo supervisores; RGPD)."],
+                ["GET/POST", "/fiscal/clientes/{id}/documentos", "Expediente: lista (metadatos) / sube hasta 10 archivos de 15 MB (multipart <code>archivo</code>, <code>categoria</code>) → resultado por archivo."],
+                ["GET/DELETE", "/fiscal/clientes/{id}/documentos/{doc}", "Descarga (siempre como adjunto, nunca como página) / borra."],
+                ["POST", "/fiscal/vencimientos", "Alta manual: <code>cliente_id</code>, <code>modelo</code>, <code>periodo</code>, <code>fecha_limite</code>; 409 <code>vencimiento_duplicado</code>."],
+                ["GET", "/fiscal/vencimientos", "Filtros <code>estado</code>, <code>cliente_id</code>, <code>desde</code>, <code>hasta</code>, <code>pais</code>; paginación en SQL y <code>X-Total-Count</code>."],
+                ["GET", "/fiscal/vencimientos/{id}", "Detalle con documentos, mensajes y si tiene constancia o justificante."],
+                ["GET", "/fiscal/vencimientos/propuestas?cliente_id=&anio=", "Vista previa de lo que se generaría (con <code>ya_existe</code>)."],
+                ["POST", "/fiscal/clientes/{id}/generar-vencimientos", "<code>{modelos?, anio?}</code> sin duplicar; usa el país del cliente → <code>{creados, ids, omitidos}</code>."],
+                ["POST", "/fiscal/vencimientos/generar-masivo", "<code>{anio}</code>: todos los clientes con modelos definidos, sin duplicar."],
+                ["POST", "/fiscal/vencimientos/{id}/presentado", "Como en la web: constancia en PDF, justificante opcional (multipart <code>justificante</code>) y evento <code>vencimiento.presentado</code>."],
+                ["POST", "/fiscal/vencimientos/{id}/justificante", "Sube el justificante oficial (imagen o PDF, 8 MB)."],
+                ["POST", "/fiscal/vencimientos/{id}/constancia", "Regenera la constancia en PDF."],
+                ["GET", "/fiscal/vencimientos/{id}/documentos[/{doc}]", "Lo que sube el cliente desde el portal, la constancia y el justificante; descarga."],
+                ["GET/POST", "/fiscal/vencimientos/{id}/mensajes", "Conversación con el cliente; al responder se le avisa por correo."],
+                ["GET/PUT", "/fiscal/recordatorios", "Días de aviso al cliente antes/después, aviso al equipo y texto propio con marcas."],
+                ["GET", "/fiscal/papelera", "Clientes y vencimientos borrados."],
+                ["POST", "/fiscal/papelera/{cliente_fiscal|vencimiento_fiscal}/{id}/restaurar", "Recupera un elemento."],
+            ]},
+            {"type": "p", "html":
+                "Lo que no está en la API a propósito: enviar a firma electrónica y cobrar por Stripe (acciones con efecto sobre terceros o dinero "
+                "que se hacen desde la ficha del vencimiento, con revisión humana)."},
             {"type": "h2", "id": "webhooks-api", "text": "Webhooks por API"},
             {"type": "p", "html":
                 "Para que una integración se dé de alta sola. Solo un <b>supervisor del despacho</b> o un administrador "

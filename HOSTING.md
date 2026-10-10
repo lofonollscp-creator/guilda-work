@@ -2736,3 +2736,10 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - `app/rutas_api_tareas.py`: estado (con dependencias), cronómetro, comentarios con menciones, dependencias, recordatorios, compartir, lote (máx. 200), tablero, plan de carga y mover, vistas guardadas, plantillas, recurrentes y reglas por vencimiento, papelera. Usa las mismas funciones de `db.py` y las mismas notificaciones que la web (`rutas_tareas._notificar_*`), así que API, web y MCP no pueden divergir.
 - Correcciones de paridad: `POST /tareas-outlook/{id}/completar` ahora respeta las dependencias (409 `tarea_bloqueada`) y avisa a quien queda desbloqueado; asignar por API (y en lote) notifica al compañero.
 - MCP/chat: `cambiar_estado_tarea`, `listar_comentarios_tarea`, `comentar_tarea`, `iniciar_cronometro_tarea` (área `tareas`, grupo `tareas_avanzadas`).
+
+## API fiscal completa
+
+- `app/rutas_api_fiscal.py`: expediente del cliente (documentos), alta/detalle/propuestas/generación masiva de vencimientos, documentos y mensajes por vencimiento, constancia y justificante, recordatorios del portal, accesos (RGPD), resumen y papelera.
+- **Paridad con la web** (antes la API se saltaba cosas): `presentado` ahora genera la constancia, acepta el justificante y emite `vencimiento.presentado` (antes no emitía el evento, así que los webhooks nunca se enteraban); generar vencimientos usa el país del cliente y ya no duplica; pedir un documento avisa al cliente por correo; leer, editar o borrar un cliente por API queda en el registro de accesos («vía API»); el cliente admite `email`, `pais`, `idioma` y `recordatorios_portal` (sin `email` el portal y los recordatorios no funcionaban para clientes creados por API).
+- Los listados de vencimientos paginan en SQL (`X-Total-Count`) y admiten `desde`, `hasta` y `pais`.
+- Deliberadamente fuera: enviar a firma (Documenso) y cobrar (Stripe).
