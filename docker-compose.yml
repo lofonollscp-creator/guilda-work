@@ -280,7 +280,11 @@ services:
       - "127.0.0.1:4445:4445"   # API admin (login/consent, gestión de clientes) — nunca pública
     volumes:
       - ./deploy/hydra:/etc/config/hydra:ro
-    command: serve --config /etc/config/hydra/hydra.yml all --dev
+    # Sin `--dev` (2026-10-10): esa bandera «desactiva comprobaciones críticas de seguridad» y no es para producción. Se ensayó
+    # antes en un Hydra desechable (BD en memoria) con el flujo completo —login, consentimiento, PKCE, tokens, introspección y
+    # refresh— y funciona igual detrás de Caddy en HTTP plano (solo avisa «HTTPS is disabled»). `--sqa-opt-out`: sin `--dev`
+    # Hydra enviaría telemetría anónima a Ory; se desactiva a propósito.
+    command: serve --config /etc/config/hydra/hydra.yml all --sqa-opt-out
 
   # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Outline: wiki/base de conocimiento para guías de empleados (Fase 7b).
