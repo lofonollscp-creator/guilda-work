@@ -357,7 +357,7 @@ PAGINAS = [
             ]},
             {"type": "h2", "id": "meta", "text": "Meta"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
-                ["GET", "/api/v1/openapi.json", "Documento OpenAPI 3.0 completo, generado por introspección en cada petición. Sin token."],
+                ["GET", "/api/v1/openapi.json", "Documento OpenAPI 3.0 completo (cuerpos, parámetros, respuestas, códigos de error y ejemplos de cada operación), generado a partir del código. Sin token."],
             ]},
             {"type": "h2", "id": "errores", "text": "Manejo de errores"},
             {"type": "p", "html":
@@ -369,6 +369,22 @@ PAGINAS = [
                 "<code>prohibido</code>, <code>no_encontrado</code>, <code>metodo_no_permitido</code>, <code>conflicto</code>, "
                 "<code>idempotencia_conflicto</code>, <code>idempotencia_en_curso</code>, <code>limite_excedido</code> y "
                 "<code>error_interno</code>. Algunos errores de validación añaden <code>campo</code>."},
+            {"type": "h2", "id": "contrato-openapi", "text": "El contrato OpenAPI"},
+            {"type": "p", "html":
+                "<code>/api/v1/openapi.json</code> describe <b>las 236 operaciones</b>: cuerpo de la petición (JSON o multipart, con sus campos "
+                "obligatorios), parámetros de consulta, cabeceras, cada código de respuesta con su esquema, los errores con su "
+                "<code>codigo</code>, el área de token que exige cada ruta (<code>x-area</code>) y ejemplos de las operaciones principales. "
+                "Se genera <b>del propio código</b> de la API (las columnas de las tablas dan los esquemas de las entidades), así que no puede "
+                "quedar desactualizado. Impórtalo en Postman o Insomnia, o genera un cliente con "
+                "<code>openapi-generator</code> / <code>openapi-python-client</code> / <code>openapi-typescript</code>."},
+            {"type": "p", "html":
+                "<b>Garantías de compatibilidad.</b> Una batería de pruebas comprueba en cada cambio que el documento es válido, que lo que devuelve "
+                "la API cumple su esquema y que <b>no desaparece nada ya publicado</b>: ni una ruta, ni un campo del cuerpo, ni un parámetro, "
+                "ni un código de éxito, ni se vuelve obligatorio un campo que antes no lo era. Lo que se añade es siempre opcional."},
+            {"type": "callout", "kind": "info", "html":
+                "<b>Particularidad conocida:</b> <code>modelos_fiscales</code> de un cliente fiscal llega como <b>texto JSON</b> "
+                "(<code>\"[\\\"303\\\"]\"</code>) en los listados y las escrituras, y como <b>lista</b> solo en "
+                "<code>GET /fiscal/clientes/{id}</code>. Al enviarlo, siempre es una lista. El contrato lo documenta así tal cual."},
             {"type": "h2", "id": "uso-externo", "text": "Uso desde integraciones externas"},
             {"type": "table", "headers": ["Mecanismo", "Cómo funciona"], "rows": [
                 ["Versión", "Cada respuesta lleva <code>X-API-Version</code> (<code>1.x</code>). El número menor sube con cada ampliación compatible; el mayor solo si algo se rompe. Los campos nuevos siempre son opcionales."],

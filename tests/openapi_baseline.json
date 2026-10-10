@@ -1,0 +1,3101 @@
+{
+ "accesos_cliente": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/accesos"
+ },
+ "accion_en_lote": {
+  "campos": [
+   "accion",
+   "ids",
+   "valor"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "accion",
+   "ids",
+   "valor"
+  ],
+  "ruta": "/api/v1/tareas-outlook/lote"
+ },
+ "accion_en_lote_correo": {
+  "campos": [
+   "carpeta",
+   "destacado",
+   "ids",
+   "leido"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/lote/{accion}"
+ },
+ "activar_conversacion_ia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/conversaciones/{conversacion_id}/activar"
+ },
+ "actividad_de_tarea": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/actividad"
+ },
+ "agregar_item_checklist": {
+  "campos": [
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "texto"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/checklist"
+ },
+ "alternar_favorito_categoria": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/categorias/{categoria_id}/favorito"
+ },
+ "alternar_item_checklist": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/checklist/{item_id}/alternar"
+ },
+ "alternar_recurrente": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-recurrentes/{regla_id}/alternar"
+ },
+ "alternar_regla_vencimiento": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-reglas-vencimiento/{regla_id}/alternar"
+ },
+ "anadir_dependencia": {
+  "campos": [
+   "depende_de_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "depende_de_id"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/dependencias"
+ },
+ "anadir_recordatorio": {
+  "campos": [
+   "atajo",
+   "avisar_en",
+   "canales"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "atajo"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/recordatorios"
+ },
+ "aplicar_plantilla_tareas": {
+  "campos": [
+   "asignada_a",
+   "cliente_fiscal_id",
+   "encadenar",
+   "fecha_inicio",
+   "nuevo_proyecto",
+   "proyecto_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "asignada_a"
+  ],
+  "ruta": "/api/v1/tareas-plantillas/{plantilla_id}/aplicar"
+ },
+ "asignar_categoria_correo": {
+  "campos": [
+   "categoria_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/categoria"
+ },
+ "asignar_tarea_outlook": {
+  "campos": [
+   "companero_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/asignar"
+ },
+ "avatar_api": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/avatar/{usuario_id}"
+ },
+ "borrar_webhook": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/{webhook_id}"
+ },
+ "buscar": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "q"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/buscar"
+ },
+ "buscar_destinatarios_recientes": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "q"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/destinatarios-recientes"
+ },
+ "cambiar_estado_tarea": {
+  "campos": [
+   "estado"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "estado"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/estado"
+ },
+ "cambiar_estado_tiquet": {
+  "campos": [
+   "estado"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tiquets/{tiquet_id}/estado"
+ },
+ "cancelar_envio": {
+  "campos": [
+   "como_borrador"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/envios/{envio_id}/cancelar"
+ },
+ "cancelar_programado": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/programados/{envio_id}"
+ },
+ "cancelar_seguimiento": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/seguimientos/{seguimiento_id}"
+ },
+ "carga_semanal": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "semana"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/carga"
+ },
+ "catalogo_eventos": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/catalogo-eventos"
+ },
+ "cerrar_comunicado": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/comunicados/{comunicado_id}/cerrar"
+ },
+ "cliente_fiscal_por_referencia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/por-referencia/{referencia}"
+ },
+ "comentar_tarea": {
+  "campos": [
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "texto"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/comentarios"
+ },
+ "compartir_tarea": {
+  "campos": [
+   "rol",
+   "usuario_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "usuario_id"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/compartir"
+ },
+ "completar_tarea_outlook": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/completar"
+ },
+ "config_recordatorios": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/recordatorios"
+ },
+ "confirmar_ia": {
+  "campos": [
+   "aceptar"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/confirmar"
+ },
+ "confirmar_ia_stream": {
+  "campos": [
+   "aceptar"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/confirmar/stream"
+ },
+ "consumo_ia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/consumo"
+ },
+ "conversacion_correo": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/conversacion"
+ },
+ "crear_atajo_ia": {
+  "campos": [
+   "etiqueta",
+   "prompt",
+   "texto",
+   "titulo"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "etiqueta",
+   "texto"
+  ],
+  "ruta": "/api/v1/ia/atajos"
+ },
+ "crear_categoria": {
+  "campos": [
+   "color",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "nombre"
+  ],
+  "ruta": "/api/v1/categorias"
+ },
+ "crear_categoria_correo": {
+  "campos": [
+   "color",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/categorias"
+ },
+ "crear_cliente_fiscal": {
+  "campos": [
+   "email",
+   "idioma",
+   "modelos_fiscales",
+   "nif",
+   "nombre",
+   "notas",
+   "pais",
+   "recordatorios_portal",
+   "referencia_externa"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "nombre"
+  ],
+  "ruta": "/api/v1/fiscal/clientes"
+ },
+ "crear_conversacion_ia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/conversaciones"
+ },
+ "crear_cuenta_correo": {
+  "campos": [
+   "contrasena",
+   "host",
+   "nombre",
+   "protocolo",
+   "puerto",
+   "smtp_host",
+   "smtp_puerto",
+   "smtp_tls",
+   "usa_tls",
+   "usuario"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/cuentas"
+ },
+ "crear_nota": {
+  "campos": [
+   "categoria_id",
+   "cliente_uuid",
+   "creada_en",
+   "referencia_externa",
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "texto"
+  ],
+  "ruta": "/api/v1/notas"
+ },
+ "crear_plantilla": {
+  "campos": [
+   "asunto",
+   "cuerpo",
+   "modelo",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "cuerpo",
+   "nombre"
+  ],
+  "ruta": "/api/v1/correo/plantillas"
+ },
+ "crear_plantilla_tareas": {
+  "campos": [
+   "compartida",
+   "descripcion",
+   "items",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "items",
+   "nombre"
+  ],
+  "ruta": "/api/v1/tareas-plantillas"
+ },
+ "crear_proyecto": {
+  "campos": [
+   "color",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "nombre"
+  ],
+  "ruta": "/api/v1/proyectos"
+ },
+ "crear_recurrente": {
+  "campos": [
+   "asunto",
+   "dia",
+   "mes",
+   "periodicidad",
+   "proyecto_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "asunto",
+   "periodicidad"
+  ],
+  "ruta": "/api/v1/tareas-recurrentes"
+ },
+ "crear_regla_categoria": {
+  "campos": [
+   "categoria_id",
+   "remitente_patron"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/reglas-categoria"
+ },
+ "crear_regla_vencimiento": {
+  "campos": [
+   "asignar_responsable",
+   "asunto",
+   "crear_dias_antes",
+   "estimacion",
+   "modelo",
+   "prioridad",
+   "proyecto_id",
+   "vence_dias_antes"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "asunto",
+   "modelo"
+  ],
+  "ruta": "/api/v1/tareas-reglas-vencimiento"
+ },
+ "crear_remitente_confiable": {
+  "campos": [
+   "direccion"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/remitentes-confiables"
+ },
+ "crear_tarea": {
+  "campos": [
+   "categoria_id",
+   "nombre",
+   "tipo"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "categoria_id",
+   "nombre"
+  ],
+  "ruta": "/api/v1/tareas"
+ },
+ "crear_tarea_outlook": {
+  "campos": [
+   "asunto",
+   "categoria_outlook",
+   "cuerpo",
+   "estimacion_min",
+   "fecha_inicio",
+   "fecha_vencimiento",
+   "prioridad",
+   "referencia_externa"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "asunto"
+  ],
+  "ruta": "/api/v1/tareas-outlook"
+ },
+ "crear_tiquet": {
+  "campos": [
+   "descripcion",
+   "tipo",
+   "titulo"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "titulo"
+  ],
+  "ruta": "/api/v1/tiquets"
+ },
+ "crear_token": {
+  "campos": [
+   "areas",
+   "caduca_dias",
+   "caduca_en",
+   "nombre",
+   "permisos"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tokens"
+ },
+ "crear_vencimiento": {
+  "campos": [
+   "cliente_id",
+   "fecha_limite",
+   "modelo",
+   "notas",
+   "periodo",
+   "usuario_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "cliente_id",
+   "fecha_limite",
+   "modelo",
+   "periodo"
+  ],
+  "ruta": "/api/v1/fiscal/vencimientos"
+ },
+ "crear_webhook": {
+  "campos": [
+   "eventos",
+   "url"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "eventos",
+   "url"
+  ],
+  "ruta": "/api/v1/webhooks"
+ },
+ "dashboard": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/dashboard"
+ },
+ "dejar_de_compartir": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/compartir/{usuario_id}"
+ },
+ "descargar_adjunto_correo": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/adjuntos/{adjunto_id}"
+ },
+ "descargar_adjunto_nota": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "ver"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/adjuntos/{adjunto_id}"
+ },
+ "descargar_documento_cliente": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/documentos/{documento_id}"
+ },
+ "descargar_documento_vencimiento": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/documentos/{documento_id}"
+ },
+ "destacar_mensaje_correo": {
+  "campos": [
+   "destacado",
+   "fecha_aviso"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/destacar"
+ },
+ "editar_cliente_fiscal": {
+  "campos": [
+   "email",
+   "generacion_automatica",
+   "idioma",
+   "modelos_fiscales",
+   "nif",
+   "nombre",
+   "notas",
+   "pais",
+   "recordatorios_portal",
+   "referencia_externa"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [
+   "generacion_automatica",
+   "modelos_fiscales",
+   "nif",
+   "nombre",
+   "notas"
+  ],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}"
+ },
+ "editar_nota": {
+  "campos": [
+   "referencia_externa",
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [
+   "texto"
+  ],
+  "ruta": "/api/v1/notas/{nota_id}"
+ },
+ "editar_perfil": {
+  "campos": [
+   "nombre_mostrado",
+   "notificar_push_tiquets",
+   "notificar_push_vencimientos",
+   "notificar_resumen_semanal"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/perfil"
+ },
+ "editar_plantilla": {
+  "campos": [
+   "asunto",
+   "cuerpo",
+   "modelo",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [
+   "cuerpo",
+   "nombre"
+  ],
+  "ruta": "/api/v1/correo/plantillas/{plantilla_id}"
+ },
+ "editar_plantilla_tareas": {
+  "campos": [
+   "compartida",
+   "descripcion",
+   "items",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [
+   "items"
+  ],
+  "ruta": "/api/v1/tareas-plantillas/{plantilla_id}"
+ },
+ "editar_tarea": {
+  "campos": [
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas/{tarea_id}"
+ },
+ "editar_tarea_outlook": {
+  "campos": [
+   "asunto",
+   "categoria_outlook",
+   "cuerpo",
+   "estado",
+   "estimacion_min",
+   "fecha_inicio",
+   "fecha_vencimiento",
+   "porcentaje_completado",
+   "prioridad",
+   "referencia_externa"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}"
+ },
+ "editar_tiquet": {
+  "campos": [
+   "descripcion",
+   "tipo",
+   "titulo"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/tiquets/{tiquet_id}"
+ },
+ "editar_vencimiento_fiscal": {
+  "campos": [
+   "documenso_documento_id",
+   "documento_solicitado",
+   "estado",
+   "fecha_limite",
+   "modelo",
+   "notas",
+   "periodo",
+   "usuario_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}"
+ },
+ "editar_webhook": {
+  "campos": [
+   "activo",
+   "eventos",
+   "url"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [
+   "activo",
+   "eventos",
+   "url"
+  ],
+  "ruta": "/api/v1/webhooks/{webhook_id}"
+ },
+ "eliminar_adjunto_nota": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/adjuntos/{adjunto_id}"
+ },
+ "eliminar_atajo_ia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/atajos/{atajo_id}"
+ },
+ "eliminar_avatar_api": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/perfil/avatar"
+ },
+ "eliminar_categoria": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/categorias/{categoria_id}"
+ },
+ "eliminar_categoria_correo": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/categorias/{categoria_id}"
+ },
+ "eliminar_cliente_fiscal": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}"
+ },
+ "eliminar_comentario": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/comentarios/{comentario_id}"
+ },
+ "eliminar_conversacion_ia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/conversaciones/{conversacion_id}"
+ },
+ "eliminar_cuenta_correo": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/cuentas/{cuenta_id}"
+ },
+ "eliminar_definitivamente_de_papelera": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/papelera/{tipo}/{item_id}/eliminar-definitivamente"
+ },
+ "eliminar_dispositivo_push": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/dispositivos-push"
+ },
+ "eliminar_documento_cliente": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/documentos/{documento_id}"
+ },
+ "eliminar_item_checklist": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/checklist/{item_id}"
+ },
+ "eliminar_mensaje_correo": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}"
+ },
+ "eliminar_nota": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/{nota_id}"
+ },
+ "eliminar_notificacion": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/notificaciones/{notificacion_id}"
+ },
+ "eliminar_plantilla": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/plantillas/{plantilla_id}"
+ },
+ "eliminar_plantilla_tareas": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-plantillas/{plantilla_id}"
+ },
+ "eliminar_proyecto": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/proyectos/{proyecto_id}"
+ },
+ "eliminar_recordatorio": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/recordatorios/{recordatorio_id}"
+ },
+ "eliminar_recurrente": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-recurrentes/{regla_id}"
+ },
+ "eliminar_regla_categoria": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/reglas-categoria/{regla_id}"
+ },
+ "eliminar_regla_vencimiento": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-reglas-vencimiento/{regla_id}"
+ },
+ "eliminar_remitente_confiable": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/remitentes-confiables/{remitente_id}"
+ },
+ "eliminar_tarea": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas/{tarea_id}"
+ },
+ "eliminar_tarea_outlook": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}"
+ },
+ "eliminar_tiquet": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tiquets/{tiquet_id}"
+ },
+ "eliminar_vencimiento_fiscal": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}"
+ },
+ "eliminar_vista": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/vistas/{vista_id}"
+ },
+ "entregas_webhook": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/{webhook_id}/entregas"
+ },
+ "enviar_correo": {
+  "campos": [
+   "adjuntos",
+   "asunto",
+   "bcc",
+   "cc",
+   "cuenta_id",
+   "cuerpo_html",
+   "destinatarios",
+   "en_respuesta_a",
+   "programar_para",
+   "seguimiento_dias"
+  ],
+  "consulta": [],
+  "exito": [
+   "200",
+   "202"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "asunto",
+   "cuenta_id",
+   "cuerpo_html",
+   "destinatarios"
+  ],
+  "ruta": "/api/v1/correo/enviar"
+ },
+ "enviar_mensaje_ia": {
+  "campos": [
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "texto"
+  ],
+  "ruta": "/api/v1/ia/mensaje"
+ },
+ "enviar_mensaje_ia_stream": {
+  "campos": [
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/mensaje/stream"
+ },
+ "estado_envio": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/envios/{envio_id}"
+ },
+ "estado_fichaje": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/estado"
+ },
+ "exportar": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "categoria_id",
+   "desde",
+   "formato",
+   "hasta"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/export"
+ },
+ "fichaje_admin_corregir": {
+  "campos": [
+   "corrige_a",
+   "marca_tiempo",
+   "nota",
+   "tipo"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "marca_tiempo",
+   "tipo"
+  ],
+  "ruta": "/api/v1/fichaje/admin/usuarios/{usuario_id}/corregir"
+ },
+ "fichaje_admin_csv": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/admin/exportar.csv"
+ },
+ "fichaje_admin_detalle": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "desde",
+   "hasta"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/admin/usuarios/{usuario_id}"
+ },
+ "fichaje_admin_integridad": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/admin/verificar-integridad"
+ },
+ "fichaje_admin_json": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/admin/exportar.json"
+ },
+ "fichaje_admin_pdf": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/admin/exportar.pdf"
+ },
+ "fichaje_admin_resumen": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "desde",
+   "hasta"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/admin/resumen"
+ },
+ "fijar_nota": {
+  "campos": [
+   "fijada"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/{nota_id}/fijar"
+ },
+ "finalizar_tarea": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas/{tarea_id}/finalizar"
+ },
+ "generar_vencimientos_fiscales": {
+  "campos": [
+   "anio",
+   "modelos"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/generar-vencimientos"
+ },
+ "generar_vencimientos_masivo": {
+  "campos": [
+   "anio"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/generar-masivo"
+ },
+ "guardar_ajustes_correo": {
+  "campos": [
+   "densidad",
+   "limite_mensajes",
+   "marcar_leido_automatico"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/ajustes"
+ },
+ "guardar_ajustes_ia": {
+  "campos": [
+   "api_key",
+   "borrar_api_key",
+   "modelo",
+   "modo_autonomo",
+   "solo_lectura"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "solo_lectura"
+  ],
+  "ruta": "/api/v1/ia/ajustes"
+ },
+ "guardar_config_recordatorios": {
+  "campos": [
+   "asunto",
+   "avisar_equipo",
+   "cuerpo",
+   "dias_antes",
+   "dias_despues"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/recordatorios"
+ },
+ "guardar_firma_correo": {
+  "campos": [
+   "cuenta_id",
+   "firma_en_nuevos",
+   "firma_en_respuestas",
+   "firma_html"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/firma"
+ },
+ "guardar_mis_datos_fichaje": {
+  "campos": [
+   "categoria_profesional",
+   "convenio_colectivo",
+   "dni_nie",
+   "fecha_alta",
+   "jornada_semanal_horas",
+   "nombre_completo",
+   "numero_afiliacion_ss",
+   "tipo_contrato"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/mis-datos"
+ },
+ "guardar_vista": {
+  "campos": [
+   "compartida",
+   "filtros",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "filtros",
+   "nombre"
+  ],
+  "ruta": "/api/v1/tareas-outlook/vistas"
+ },
+ "historial": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "categoria_id",
+   "desde",
+   "hasta",
+   "limit",
+   "offset",
+   "q"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/historial"
+ },
+ "historial_fichaje": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "desde",
+   "hasta"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/historial"
+ },
+ "iniciar_cronometro_tarea": {
+  "campos": [
+   "proyecto_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/cronometro/iniciar"
+ },
+ "listar_adjuntos_nota": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/{nota_id}/adjuntos"
+ },
+ "listar_atajos_ia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/atajos"
+ },
+ "listar_carpetas_correo": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "cuenta_id"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/carpetas"
+ },
+ "listar_categorias": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/categorias"
+ },
+ "listar_categorias_correo": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/categorias"
+ },
+ "listar_checklist": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/checklist"
+ },
+ "listar_clientes_fiscales": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset",
+   "q",
+   "referencia_externa"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes"
+ },
+ "listar_comentarios": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/comentarios"
+ },
+ "listar_companeros": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/companeros"
+ },
+ "listar_comunicados": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/comunicados"
+ },
+ "listar_conversaciones_ia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/conversaciones"
+ },
+ "listar_cuentas_correo": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/cuentas"
+ },
+ "listar_dependencias": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/dependencias"
+ },
+ "listar_documentos_cliente": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/documentos"
+ },
+ "listar_documentos_vencimiento": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/documentos"
+ },
+ "listar_herramientas": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/herramientas"
+ },
+ "listar_mensajes_correo": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "carpeta",
+   "cuenta_id",
+   "limit",
+   "no_leidos",
+   "offset",
+   "pospuestos",
+   "q"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes"
+ },
+ "listar_mensajes_ia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/mensajes"
+ },
+ "listar_mensajes_vencimiento": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/mensajes"
+ },
+ "listar_modelos_ia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/modelos"
+ },
+ "listar_notas": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset",
+   "proyecto_id",
+   "q",
+   "referencia_externa"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas"
+ },
+ "listar_notificaciones": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/notificaciones"
+ },
+ "listar_participantes": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/compartir"
+ },
+ "listar_plantillas": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/plantillas"
+ },
+ "listar_plantillas_tareas": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-plantillas"
+ },
+ "listar_programados": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/programados"
+ },
+ "listar_proyectos": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/proyectos"
+ },
+ "listar_recordatorios": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/recordatorios"
+ },
+ "listar_recurrentes": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-recurrentes"
+ },
+ "listar_reglas_categoria": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/reglas-categoria"
+ },
+ "listar_reglas_vencimiento": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-reglas-vencimiento"
+ },
+ "listar_remitentes_confiables": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/remitentes-confiables"
+ },
+ "listar_seguimientos": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset",
+   "todos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/seguimientos"
+ },
+ "listar_tareas_cronometro": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "desde",
+   "hasta",
+   "limit",
+   "offset",
+   "proyecto_id"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas"
+ },
+ "listar_tareas_outlook": {
+  "campos": [],
+  "consulta": [
+   "ambito",
+   "campos",
+   "categoria",
+   "desde",
+   "estado",
+   "hasta",
+   "limit",
+   "offset",
+   "prioridad",
+   "q",
+   "referencia_externa"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook"
+ },
+ "listar_tiquets": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "estado",
+   "limit",
+   "offset",
+   "tipo"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tiquets"
+ },
+ "listar_tokens": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tokens"
+ },
+ "listar_vencimientos_fiscales": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "cliente_id",
+   "desde",
+   "estado",
+   "hasta",
+   "limit",
+   "offset",
+   "pais"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos"
+ },
+ "listar_vistas": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/vistas"
+ },
+ "listar_webhooks": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks"
+ },
+ "login": {
+  "campos": [
+   "contrasena",
+   "email",
+   "nombre_dispositivo"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "contrasena",
+   "email"
+  ],
+  "ruta": "/api/v1/auth/login"
+ },
+ "logout": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/auth/logout"
+ },
+ "marcar_fichaje": {
+  "campos": [
+   "cliente_uuid",
+   "latitud",
+   "longitud",
+   "marca_tiempo",
+   "tipo"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "tipo"
+  ],
+  "ruta": "/api/v1/fichaje/marcar"
+ },
+ "marcar_leido_correo": {
+  "campos": [
+   "leido"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/leido"
+ },
+ "marcar_notificaciones_leidas": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/notificaciones/leidas"
+ },
+ "marcar_presentado_vencimiento_fiscal": {
+  "campos": [
+   "justificante"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/presentado"
+ },
+ "me": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/auth/me"
+ },
+ "mi_dia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/mi-dia"
+ },
+ "modelos_fiscales_disponibles": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "pais"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/modelos"
+ },
+ "mover_mensaje_correo": {
+  "campos": [
+   "carpeta_destino"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/mover"
+ },
+ "mover_tarea": {
+  "campos": [
+   "fecha",
+   "persona_id"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "fecha",
+   "persona_id"
+  ],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/mover"
+ },
+ "nota_desde_correo": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/nota"
+ },
+ "nota_por_referencia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/por-referencia/{referencia}"
+ },
+ "obtener_ajustes_correo": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/ajustes"
+ },
+ "obtener_ajustes_ia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/ajustes"
+ },
+ "obtener_chat_config": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/chat/config"
+ },
+ "obtener_cliente_fiscal": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}"
+ },
+ "obtener_mensaje_correo": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}"
+ },
+ "obtener_mis_datos_fichaje": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/mis-datos"
+ },
+ "obtener_nota": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/{nota_id}"
+ },
+ "obtener_perfil": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/perfil"
+ },
+ "obtener_plantilla": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "cliente_fiscal_id"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/plantillas/{plantilla_id}"
+ },
+ "obtener_tarea_outlook": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}"
+ },
+ "obtener_vencimiento": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}"
+ },
+ "obtener_webhook": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/{webhook_id}"
+ },
+ "ocultar_onboarding": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/onboarding/ocultar"
+ },
+ "openapi_json": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/openapi.json"
+ },
+ "papelera": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/papelera"
+ },
+ "papelera_fiscal": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "limit",
+   "offset"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/papelera"
+ },
+ "pausar_tarea": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas/{tarea_id}/pausar"
+ },
+ "posponer_mensaje_correo": {
+  "campos": [
+   "hasta"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/posponer"
+ },
+ "posponer_recordatorio": {
+  "campos": [
+   "opcion"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/recordatorios/{recordatorio_id}/posponer"
+ },
+ "probar_webhook": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "202"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/{webhook_id}/probar"
+ },
+ "propuestas_vencimientos": {
+  "campos": [],
+  "consulta": [
+   "anio",
+   "campos",
+   "cliente_id",
+   "modelos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/propuestas"
+ },
+ "quitar_dependencia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/dependencias/{depende_de_id}"
+ },
+ "reanudar_tarea": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas/{tarea_id}/reanudar"
+ },
+ "regenerar_constancia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/constancia"
+ },
+ "registrar_dispositivo_push": {
+  "campos": [
+   "fcm_token",
+   "plataforma"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/dispositivos-push"
+ },
+ "registro": {
+  "campos": [
+   "contrasena",
+   "email",
+   "nombre_dispositivo"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "contrasena",
+   "email"
+  ],
+  "ruta": "/api/v1/auth/registro"
+ },
+ "reintentar_entrega": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/entregas/{cola_id}/reintentar"
+ },
+ "renombrar_conversacion_ia": {
+  "campos": [
+   "titulo"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/conversaciones/{conversacion_id}/renombrar"
+ },
+ "renombrar_proyecto": {
+  "campos": [
+   "color",
+   "nombre"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [
+   "nombre"
+  ],
+  "ruta": "/api/v1/proyectos/{proyecto_id}"
+ },
+ "reordenar_categorias": {
+  "campos": [
+   "orden"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/categorias/reordenar"
+ },
+ "responder_mensaje_vencimiento": {
+  "campos": [
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [
+   "texto"
+  ],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/mensajes"
+ },
+ "restaurar_de_papelera": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/papelera/{tipo}/{item_id}/restaurar"
+ },
+ "restaurar_papelera_fiscal": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/papelera/{tipo}/{item_id}/restaurar"
+ },
+ "restaurar_tarea_outlook": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/restaurar"
+ },
+ "resumen_cliente": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/resumen"
+ },
+ "resumen_semana_fichaje": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/fichaje/resumen-semana"
+ },
+ "revocar_token": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "delete",
+  "obligatorios": [],
+  "ruta": "/api/v1/tokens/{token_id}"
+ },
+ "rotar_secreto_webhook": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/webhooks/{webhook_id}/rotar-secreto"
+ },
+ "sincronizar": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "cursor",
+   "limit"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/sync"
+ },
+ "sincronizar_cuenta_correo": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/cuentas/{cuenta_id}/sincronizar"
+ },
+ "subir_adjuntos_nota": {
+  "campos": [
+   "adjunto"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/{nota_id}/adjuntos"
+ },
+ "subir_avatar_api": {
+  "campos": [
+   "avatar"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/perfil/avatar"
+ },
+ "subir_documentos_cliente": {
+  "campos": [
+   "archivo",
+   "categoria"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/{cliente_id}/documentos"
+ },
+ "subir_justificante": {
+  "campos": [
+   "justificante"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/vencimientos/{vencimiento_id}/justificante"
+ },
+ "tablero": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/tablero"
+ },
+ "tarea_desde_correo": {
+  "campos": [
+   "fecha_vencimiento"
+  ],
+  "consulta": [],
+  "exito": [
+   "201"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/mensajes/{mensaje_id}/tarea"
+ },
+ "tarea_por_referencia": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/por-referencia/{referencia}"
+ },
+ "tiempo_de_tarea": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/{tarea_id}/tiempo"
+ },
+ "upsert_cliente_fiscal": {
+  "campos": [
+   "email",
+   "generacion_automatica",
+   "idioma",
+   "modelos_fiscales",
+   "nif",
+   "nombre",
+   "notas",
+   "pais",
+   "recordatorios_portal",
+   "referencia_externa"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/fiscal/clientes/por-referencia/{referencia}"
+ },
+ "upsert_nota": {
+  "campos": [
+   "categoria_id",
+   "cliente_uuid",
+   "creada_en",
+   "referencia_externa",
+   "texto"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/notas/por-referencia/{referencia}"
+ },
+ "upsert_tarea_outlook": {
+  "campos": [
+   "asunto",
+   "categoria_outlook",
+   "cuerpo",
+   "estado",
+   "estimacion_min",
+   "fecha_inicio",
+   "fecha_vencimiento",
+   "porcentaje_completado",
+   "prioridad",
+   "referencia_externa"
+  ],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "put",
+  "obligatorios": [],
+  "ruta": "/api/v1/tareas-outlook/por-referencia/{referencia}"
+ },
+ "uso_de_token": {
+  "campos": [],
+  "consulta": [
+   "campos",
+   "dias"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/tokens/{token_id}/uso"
+ },
+ "vaciar_ia": {
+  "campos": [],
+  "consulta": [],
+  "exito": [
+   "200"
+  ],
+  "metodo": "post",
+  "obligatorios": [],
+  "ruta": "/api/v1/ia/vaciar"
+ },
+ "variables_plantilla": {
+  "campos": [],
+  "consulta": [
+   "campos"
+  ],
+  "exito": [
+   "200"
+  ],
+  "metodo": "get",
+  "obligatorios": [],
+  "ruta": "/api/v1/correo/plantillas/variables"
+ }
+}
