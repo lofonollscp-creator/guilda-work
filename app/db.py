@@ -24,6 +24,7 @@ import json
 import time
 import os
 import re
+import random
 import secrets
 import sqlite3
 import sys
@@ -1013,6 +1014,34 @@ CREATE TABLE IF NOT EXISTS fichajes (
     creado_en TEXT NOT NULL
 );
 
+-- Cola persistente de entregas de webhooks (ver app/eventos.py). Estados: pendiente, entregando, entregado, fallido.
+CREATE TABLE IF NOT EXISTS webhooks_cola (
+    id INTEGER PRIMARY KEY,
+    webhook_id INTEGER NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
+    evento TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    intentos INTEGER NOT NULL DEFAULT 0,
+    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'entregando', 'entregado', 'fallido')),
+    proximo_intento TEXT NOT NULL,
+    reclamado_en TEXT,
+    ultimo_error TEXT,
+    creado_en TEXT NOT NULL,
+    cerrado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_webhooks_cola_estado ON webhooks_cola(estado, proximo_intento);
+
+-- Claves de idempotencia de la API (cabecera Idempotency-Key en POST): una repetición devuelve la misma respuesta.
+CREATE TABLE IF NOT EXISTS api_idempotencia (
+    usuario_id INTEGER NOT NULL,
+    clave TEXT NOT NULL,
+    huella TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'en_curso' CHECK (estado IN ('en_curso', 'listo')),
+    status INTEGER,
+    cuerpo TEXT,
+    creado_en TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, clave)
+);
+
 -- Consumo mensual de IA por despacho (consultas al modelo). El tope vive en tenants.ia_limite_mensual (NULL = ilimitado).
 CREATE TABLE IF NOT EXISTS ia_consumo (
     tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -1908,6 +1937,7 @@ def init_db() -> None:
         _asegurar_columna(conn, "ia_mensajes", "fuentes_json", "TEXT")
 
         conn.executescript(INDICES)
+        _crear_triggers_cambios(conn)
         _asegurar_orden_categorias(conn)
 
         usuario_id_local = _resolver_usuario_local(conn)
@@ -3538,6 +3568,159 @@ def eliminar_todas_notificaciones(usuario_id: int) -> None:
 
 # --- Log de auditoría del backoffice (app/rutas_backoffice.py) -------------
 
+
+# ---- Registro de cambios para la sincronización incremental de la API (/api/v1/sync) ----------------------------
+# Triggers de SQLite: cualquier alta, edición, papelera o borrado de notas, tareas, tareas de lista y proyectos deja
+# una fila en `api_cambios`, pase por el código que pase (restaurar de la papelera, recálculos...). El cursor es el id
+# de esa tabla: monótono y sin depender de relojes. Se conservan 30 días.
+
+_ENTIDADES_CAMBIOS = (("notas", "notas"), ("tareas_outlook", "tareas_outlook"), ("categorias", "proyectos"), ("tareas", "tareas"))
+CAMBIOS_RETENCION_DIAS = 30
+
+
+def _crear_triggers_cambios(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS api_cambios (
+               id INTEGER PRIMARY KEY AUTOINCREMENT, entidad TEXT NOT NULL, entidad_id INTEGER NOT NULL,
+               accion TEXT NOT NULL, usuario_id INTEGER NOT NULL, usuario2_id INTEGER,
+               creado_en TEXT NOT NULL DEFAULT (datetime('now', 'localtime')))"""
+    )
+    conn.execute("CREATE TABLE IF NOT EXISTS api_cambios_purgado (id INTEGER PRIMARY KEY CHECK (id = 1), max_id INTEGER NOT NULL)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_api_cambios_u1 ON api_cambios(usuario_id, id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_api_cambios_u2 ON api_cambios(usuario2_id, id)")
+    for tabla, entidad in _ENTIDADES_CAMBIOS:
+        asignable = tabla == "tareas_outlook"
+        u2_new = "NEW.asignada_a" if asignable else "NULL"
+        u2_old = "OLD.asignada_a" if asignable else "NULL"
+        conn.execute(f"DROP TRIGGER IF EXISTS trg_cambios_{tabla}_ai")
+        conn.execute(f"DROP TRIGGER IF EXISTS trg_cambios_{tabla}_au")
+        conn.execute(f"DROP TRIGGER IF EXISTS trg_cambios_{tabla}_ad")
+        conn.execute(
+            f"""CREATE TRIGGER trg_cambios_{tabla}_ai AFTER INSERT ON {tabla} BEGIN
+                    INSERT INTO api_cambios (entidad, entidad_id, accion, usuario_id, usuario2_id)
+                    VALUES ('{entidad}', NEW.id, CASE WHEN NEW.papelera_en IS NOT NULL THEN 'delete' ELSE 'upsert' END, NEW.usuario_id, {u2_new});
+                END"""
+        )
+        extra = ""
+        if asignable:
+            # quien dejó de tener la tarea asignada ya no la ve: se le avisa como borrado
+            extra = """INSERT INTO api_cambios (entidad, entidad_id, accion, usuario_id)
+                       SELECT 'tareas_outlook', NEW.id, 'delete', OLD.asignada_a WHERE OLD.asignada_a IS NOT NULL AND OLD.asignada_a IS NOT NEW.asignada_a;"""
+        conn.execute(
+            f"""CREATE TRIGGER trg_cambios_{tabla}_au AFTER UPDATE ON {tabla} BEGIN
+                    INSERT INTO api_cambios (entidad, entidad_id, accion, usuario_id, usuario2_id)
+                    VALUES ('{entidad}', NEW.id, CASE WHEN NEW.papelera_en IS NOT NULL THEN 'delete' ELSE 'upsert' END, NEW.usuario_id, {u2_new});
+                    {extra}
+                END"""
+        )
+        conn.execute(
+            f"""CREATE TRIGGER trg_cambios_{tabla}_ad AFTER DELETE ON {tabla} BEGIN
+                    INSERT INTO api_cambios (entidad, entidad_id, accion, usuario_id, usuario2_id)
+                    VALUES ('{entidad}', OLD.id, 'delete', OLD.usuario_id, {u2_old});
+                END"""
+        )
+    _purgar_cambios(conn)
+
+
+def _purgar_cambios(conn: sqlite3.Connection) -> None:
+    limite = (datetime.now() - timedelta(days=CAMBIOS_RETENCION_DIAS)).strftime("%Y-%m-%d %H:%M:%S")
+    maximo = conn.execute("SELECT MAX(id) FROM api_cambios WHERE creado_en < ?", (limite,)).fetchone()[0]
+    if maximo:
+        conn.execute("DELETE FROM api_cambios WHERE id <= ?", (maximo,))
+        conn.execute("INSERT INTO api_cambios_purgado (id, max_id) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET max_id = MAX(max_id, excluded.max_id)", (maximo,))
+
+
+def cursor_cambios_actual() -> int:
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COALESCE(MAX(id), 0) FROM api_cambios").fetchone()[0] or _cursor_minimo_cero(conn)
+    finally:
+        conn.close()
+
+
+def _cursor_minimo_cero(conn: sqlite3.Connection) -> int:
+    """Sin filas en la tabla (nunca hubo cambios o se purgaron todos): el cursor es el último purgado, o 0."""
+    f = conn.execute("SELECT max_id FROM api_cambios_purgado WHERE id = 1").fetchone()
+    return f["max_id"] if f else 0
+
+
+def cambios_desde(usuario_id: int, cursor: int, limite: int = 500) -> dict:
+    """Cambios visibles para `usuario_id` con id > cursor, sin repetir: de cada (entidad, id) solo el último estado.
+    Devuelve {'cursor', 'hay_mas', 'reiniciar', 'cambios': [(entidad, id, accion)]}. `reiniciar` = el cursor es más
+    antiguo que lo conservado: hay que volver a descargar todo."""
+    conn = get_connection()
+    try:
+        if random.random() < 0.01:
+            _purgar_cambios(conn)
+            conn.commit()
+        f = conn.execute("SELECT max_id FROM api_cambios_purgado WHERE id = 1").fetchone()
+        if f and cursor < f["max_id"]:
+            return {"cursor": cursor_cambios_actual(), "hay_mas": False, "reiniciar": True, "cambios": []}
+        filas = conn.execute(
+            """SELECT id, entidad, entidad_id, accion FROM api_cambios
+               WHERE id > ? AND (usuario_id = ? OR usuario2_id = ?) ORDER BY id LIMIT ?""",
+            (cursor, usuario_id, usuario_id, limite + 1),
+        ).fetchall()
+    finally:
+        conn.close()
+    hay_mas = len(filas) > limite
+    filas = filas[:limite]
+    ultimo: dict[tuple[str, int], str] = {}
+    for fila in filas:
+        ultimo[(fila["entidad"], fila["entidad_id"])] = fila["accion"]
+    nuevo_cursor = filas[-1]["id"] if filas else max(cursor, cursor_cambios_actual() if not hay_mas else cursor)
+    return {"cursor": nuevo_cursor, "hay_mas": hay_mas, "reiniciar": False, "cambios": [(e, i, a) for (e, i), a in ultimo.items()]}
+
+
+
+# ---- Idempotencia de la API ------------------------------------------------------------------------------------
+
+IDEMPOTENCIA_HORAS = 24
+
+
+def idempotencia_reservar(usuario_id: int, clave: str, huella: str) -> tuple:
+    """('nuevo',) si es la primera vez (queda reservada); ('repetida', status, cuerpo) si ya se respondió;
+    ('conflicto',) si la misma clave se usó con otra petición; ('en_curso',) si aún se está procesando."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM api_idempotencia WHERE creado_en < ?", ((datetime.now() - timedelta(hours=IDEMPOTENCIA_HORAS)).isoformat(timespec="seconds"),))
+        try:
+            conn.execute("INSERT INTO api_idempotencia (usuario_id, clave, huella, creado_en) VALUES (?, ?, ?, ?)", (usuario_id, clave, huella, now_iso()))
+            conn.commit()
+            return ("nuevo",)
+        except sqlite3.IntegrityError:
+            conn.rollback()
+        f = conn.execute("SELECT huella, estado, status, cuerpo FROM api_idempotencia WHERE usuario_id = ? AND clave = ?", (usuario_id, clave)).fetchone()
+        if f is None:
+            return ("en_curso",)
+        if f["huella"] != huella:
+            return ("conflicto",)
+        if f["estado"] != "listo":
+            return ("en_curso",)
+        return ("repetida", f["status"], f["cuerpo"])
+    finally:
+        conn.close()
+
+
+def idempotencia_guardar(usuario_id: int, clave: str, status: int, cuerpo: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE api_idempotencia SET estado = 'listo', status = ?, cuerpo = ? WHERE usuario_id = ? AND clave = ?", (status, cuerpo, usuario_id, clave))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def idempotencia_liberar(usuario_id: int, clave: str) -> None:
+    """La petición falló (5xx o excepción): se puede reintentar con la misma clave."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM api_idempotencia WHERE usuario_id = ? AND clave = ?", (usuario_id, clave))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def registrar_auditoria(usuario_id: int | None, accion: str, detalle: str | None = None) -> None:
     """Nunca debe romper la acción que audita -- quien llama (rutas_backoffice.py)
     la envuelve en su propio try/except best-effort, mismo criterio que el
@@ -3777,6 +3960,7 @@ def borrar_webhook(webhook_id: int) -> None:
     conn = get_connection()
     try:
         conn.execute("DELETE FROM webhooks_entregas WHERE webhook_id = ?", (webhook_id,))
+        conn.execute("DELETE FROM webhooks_cola WHERE webhook_id = ?", (webhook_id,))
         conn.execute("DELETE FROM webhooks WHERE id = ?", (webhook_id,))
         conn.commit()
     finally:
@@ -3790,6 +3974,119 @@ def webhooks_para_evento(evento: str, tenant_id: int | None) -> list[sqlite3.Row
     pensada para volúmenes altos de webhooks por tenant."""
     candidatos = listar_webhooks(tenant_id)
     return [w for w in candidatos if w["activo"] and evento in json.loads(w["eventos"])]
+
+
+# ---- Cola persistente de webhooks ------------------------------------------------------------------------------
+
+def cola_webhook_encolar(webhook_id: int, evento: str, payload: dict) -> int:
+    ahora = now_iso()
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "INSERT INTO webhooks_cola (webhook_id, evento, payload_json, estado, proximo_intento, creado_en) VALUES (?, ?, ?, 'pendiente', ?, ?)",
+            (webhook_id, evento, json.dumps(payload, ensure_ascii=False, default=str), ahora, ahora),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def cola_webhook_reclamar(ahora: str, limite: int) -> list[dict]:
+    """Marca como `entregando` (de forma atómica por fila: dos procesos no se pisan) lo que toca entregar y lo devuelve."""
+    conn = get_connection()
+    try:
+        candidatas = conn.execute(
+            "SELECT * FROM webhooks_cola WHERE estado = 'pendiente' AND proximo_intento <= ? ORDER BY proximo_intento, id LIMIT ?", (ahora, limite)
+        ).fetchall()
+        reclamadas = []
+        for f in candidatas:
+            cur = conn.execute("UPDATE webhooks_cola SET estado = 'entregando', reclamado_en = ? WHERE id = ? AND estado = 'pendiente'", (ahora, f["id"]))
+            if cur.rowcount == 1:
+                reclamadas.append(dict(f))
+        conn.commit()
+        return reclamadas
+    finally:
+        conn.close()
+
+
+def cola_webhook_cerrar(cola_id: int, estado: str, error: str | None, intentos: int | None = None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE webhooks_cola SET estado = ?, ultimo_error = ?, cerrado_en = ?, intentos = COALESCE(?, intentos) WHERE id = ?",
+            (estado, error, now_iso(), intentos, cola_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def cola_webhook_reprogramar(cola_id: int, intentos: int, proximo_intento: str, error: str | None) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE webhooks_cola SET estado = 'pendiente', intentos = ?, proximo_intento = ?, ultimo_error = ?, reclamado_en = NULL WHERE id = ?",
+            (intentos, proximo_intento, error, cola_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def cola_webhook_recuperar_atascados(antes_de: str) -> int:
+    """Lo que se quedó `entregando` (caída del proceso a mitad) vuelve a pendiente."""
+    conn = get_connection()
+    try:
+        cur = conn.execute("UPDATE webhooks_cola SET estado = 'pendiente', reclamado_en = NULL WHERE estado = 'entregando' AND reclamado_en < ?", (antes_de,))
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
+def cola_webhook_purgar(entregados_antes_de: str, fallidos_antes_de: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM webhooks_cola WHERE estado = 'entregado' AND cerrado_en < ?", (entregados_antes_de,))
+        conn.execute("DELETE FROM webhooks_cola WHERE estado = 'fallido' AND cerrado_en < ?", (fallidos_antes_de,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def cola_webhook_resumen() -> dict:
+    """Recuento por estado (para el backoffice y el panel de salud)."""
+    conn = get_connection()
+    try:
+        filas = conn.execute("SELECT estado, COUNT(*) AS n FROM webhooks_cola GROUP BY estado").fetchall()
+    finally:
+        conn.close()
+    return {f["estado"]: f["n"] for f in filas}
+
+
+def cola_webhook_de(webhook_id: int, limite: int = 20) -> list[dict]:
+    conn = get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            "SELECT id, evento, estado, intentos, proximo_intento, ultimo_error, creado_en FROM webhooks_cola WHERE webhook_id = ? ORDER BY id DESC LIMIT ?",
+            (webhook_id, limite))]
+    finally:
+        conn.close()
+
+
+def cola_webhook_reintentar(cola_id: int) -> bool:
+    """Devuelve un envío fallido a pendiente (intento inmediato, contador a cero)."""
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE webhooks_cola SET estado = 'pendiente', intentos = 0, proximo_intento = ?, cerrado_en = NULL, reclamado_en = NULL WHERE id = ? AND estado = 'fallido'",
+            (now_iso(), cola_id),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
 
 
 def registrar_entrega_webhook(
@@ -4752,7 +5049,7 @@ def listar_notas_fijadas(usuario_id: int, categoria_id: int | None = None) -> li
 
 def listar_notas(
     usuario_id: int, categoria_id: int | None = None, texto: str | None = None, limite: int = 300,
-    incluir_compartidas: bool = False, solo_compartidas: bool = False,
+    incluir_compartidas: bool = False, solo_compartidas: bool = False, offset: int = 0,
 ) -> list[sqlite3.Row]:
     """Notas del usuario para la pantalla Notas: las fijadas primero y luego
     las más recientes; filtro opcional por proyecto y por texto/título."""
@@ -4776,9 +5073,24 @@ def listar_notas(
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
                 JOIN usuarios u ON u.id = n.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = n.usuario_id
                 WHERE {' AND '.join(cond)}
-                ORDER BY n.fijada DESC, n.creada_en DESC LIMIT ?""",
-            params + [limite],
+                ORDER BY n.fijada DESC, n.creada_en DESC LIMIT ? OFFSET ?""",
+            params + [limite, offset],
         ).fetchall()
+    finally:
+        conn.close()
+
+
+def contar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | None = None) -> int:
+    """Total de notas propias con esos filtros (para paginar en SQL sin traerlas todas)."""
+    cond, params = ["usuario_id = ?", "papelera_en IS NULL"], [usuario_id]
+    if categoria_id is not None:
+        cond.append("categoria_id = ?"); params.append(categoria_id)
+    if texto:
+        patron = "%" + texto.replace("%", r"\%").replace("_", r"\_") + "%"
+        cond.append("(texto LIKE ? ESCAPE '\\' OR titulo LIKE ? ESCAPE '\\')"); params += [patron, patron]
+    conn = get_connection()
+    try:
+        return conn.execute(f"SELECT COUNT(*) FROM notas WHERE {' AND '.join(cond)}", params).fetchone()[0]
     finally:
         conn.close()
 
@@ -7624,6 +7936,8 @@ def crear_cliente_fiscal(
     finally:
         conn.close()
     _reindexar_cliente_fiscal(tenant_id, cliente_id)
+    from . import eventos
+    eventos.emitir("cliente.creado", tenant_id, {"cliente_id": cliente_id, "nombre": nombre.strip(), "nif": (nif or "").strip() or None})
     return cliente_id
 
 

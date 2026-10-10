@@ -209,10 +209,14 @@ def _registrar_excepcion_no_controlada(error):
     # son errores de programación -- se dejan pasar tal cual para que Flask
     # las convierta en su respuesta normal, sin registrarlas como fallo.
     if isinstance(error, HTTPException):
+        if request.path.startswith("/api/") and error.code:
+            # 404/405 de enrutado (antes de entrar en el blueprint): también JSON uniforme, nunca HTML, para la API.
+            from .rutas_api import _codigo_de
+            return jsonify(ok=False, error=error.description, codigo=_codigo_de(error.code)), error.code
         return error
     logger.exception("Excepción no controlada en %s %s", request.method, request.path)
     sentry_sdk.capture_exception(error)
-    return jsonify(error=_("Ha ocurrido un error interno. Se ha registrado para revisión.")) if request.path.startswith("/api/") else (
+    return (jsonify(ok=False, error=_("Ha ocurrido un error interno. Se ha registrado para revisión."), codigo="error_interno"), 500) if request.path.startswith("/api/") else (
         _("Ha ocurrido un error interno. Se ha registrado para revisión."),
         500,
     )

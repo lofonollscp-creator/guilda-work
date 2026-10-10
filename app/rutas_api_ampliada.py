@@ -22,9 +22,16 @@ def _tarea_visible_o_404(tarea_id: int):
 @api_bp.route("/notas", methods=["GET"])
 @token_required
 def listar_notas():
-    """Notas propias, fijadas primero. Filtros: `proyecto_id`, `q`; paginación `limit`/`offset`."""
-    filas = db.listar_notas(g.usuario_id, categoria_id=request.args.get("proyecto_id", type=int), texto=request.args.get("q") or None, limite=1000)
-    return _ok_paginado(filas)
+    """Notas propias, fijadas primero. Filtros: `proyecto_id`, `q`. Paginación `limit`/`offset` hecha en la base de datos
+    (sin `limit` devuelve hasta 1000); total en `X-Total-Count`. `campos=id,titulo` limita los campos devueltos."""
+    proyecto, q = request.args.get("proyecto_id", type=int), request.args.get("q") or None
+    limit = request.args.get("limit", type=int)
+    offset = max(0, request.args.get("offset", default=0, type=int) or 0)
+    limite = 1000 if limit is None else max(1, min(limit, 1000))
+    filas = db.listar_notas(g.usuario_id, categoria_id=proyecto, texto=q, limite=limite, offset=offset)
+    respuesta, status = _ok(_dicts(filas))
+    respuesta.headers["X-Total-Count"] = str(db.contar_notas(g.usuario_id, proyecto, q))
+    return respuesta, status
 
 
 @api_bp.route("/notas/<int:nota_id>", methods=["GET"])
@@ -279,3 +286,42 @@ def cerrar_comunicado(comunicado_id: int):
     if not comunicados.cerrar(g.usuario_id, comunicado_id):
         return _err("Este comunicado no se puede cerrar.", 403)
     return _ok()
+
+
+# --- Sincronización incremental ------------------------------------------------------------------------------
+
+def _fila_visible(entidad: str, entidad_id: int):
+    if entidad == "notas":
+        return db.obtener_nota(g.usuario_id, entidad_id)
+    if entidad == "tareas_outlook":
+        return db.obtener_tarea_outlook_visible(g.usuario_id, entidad_id)
+    if entidad == "proyectos":
+        return db.obtener_categoria(g.usuario_id, entidad_id)
+    return db.obtener_tarea(g.usuario_id, entidad_id)
+
+
+@api_bp.route("/sync", methods=["GET"])
+@token_required
+def sincronizar():
+    """Cambios desde un cursor, para no volver a descargarlo todo.
+
+    1. `GET /sync` (sin cursor) devuelve el cursor actual: pídelo ANTES de la descarga completa inicial por los listados.
+    2. Más tarde, `GET /sync?cursor=N` devuelve `cambios` (filas nuevas o modificadas, por entidad) y `eliminados`
+       (ids que ya no existen o están en la papelera), más el `cursor` nuevo. Si `hay_mas` es true, vuelve a llamar con él.
+    3. `reiniciar: true` = el cursor es demasiado antiguo (se conservan 30 días): descarga todo de nuevo.
+    Entidades: `notas`, `tareas_outlook`, `proyectos`, `tareas`. Solo lo propio (y las tareas que te han asignado)."""
+    cursor = request.args.get("cursor", type=int)
+    if cursor is None:
+        return _ok({"cursor": db.cursor_cambios_actual(), "hay_mas": False, "reiniciar": False, "cambios": {}, "eliminados": {}})
+    if cursor < 0:
+        return _err("cursor no válido.", 400, "cursor_invalido", "cursor")
+    resultado = db.cambios_desde(g.usuario_id, cursor, limite=max(1, min(request.args.get("limit", default=500, type=int) or 500, 1000)))
+    cambios: dict[str, list] = {}
+    eliminados: dict[str, list] = {}
+    for entidad, entidad_id, accion in resultado["cambios"]:
+        fila = _fila_visible(entidad, entidad_id) if accion == "upsert" else None
+        if fila is not None:
+            cambios.setdefault(entidad, []).append(dict(fila))
+        else:
+            eliminados.setdefault(entidad, []).append(entidad_id)
+    return _ok({"cursor": resultado["cursor"], "hay_mas": resultado["hay_mas"], "reiniciar": resultado["reiniciar"], "cambios": cambios, "eliminados": eliminados})

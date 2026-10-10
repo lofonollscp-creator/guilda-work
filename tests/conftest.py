@@ -224,6 +224,8 @@ def cliente(base_de_datos_temporal):
     # agotarían la cuota entre sí y fallarían con 429 por algo ajeno a lo que
     # están probando.
     limiter.reset()
+    from app import auth as _auth_api
+    _auth_api.reiniciar_limite_api()
     with flask_app.test_client() as client:
         yield client
 
@@ -272,3 +274,12 @@ def keyring_en_memoria(monkeypatch):
     monkeypatch.setattr(keyring, "get_password", fake_get)
     monkeypatch.setattr(keyring, "delete_password", fake_delete)
     yield
+
+
+@pytest.fixture(autouse=True)
+def webhooks_sin_hilo_de_fondo(monkeypatch):
+    """El hilo de entrega de webhooks no debe arrancar en los tests: viviría más que cada base temporal y haría
+    peticiones reales. Los tests de webhooks llaman a `eventos.procesar_pendientes()` a mano."""
+    from app import eventos
+
+    monkeypatch.setattr(eventos, "iniciar_worker", lambda: None)

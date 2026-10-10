@@ -1848,6 +1848,10 @@ def procesar_seguimientos(ahora: datetime | None = None) -> dict:
             except Exception:  # noqa: BLE001
                 logger.exception("No se pudo avisar del seguimiento %s", seg["id"])
             resultado["avisados"] += 1
+            tenant = db.tenant_de_usuario(seg["usuario_id"])
+            eventos.emitir("correo.sin_respuesta", tenant["id"] if tenant else None, {
+                "seguimiento_id": seg["id"], "asunto": seg["asunto"], "destinatarios": seg["destinatarios"], "cuenta_id": seg["cuenta_id"],
+            })
     return resultado
 
 

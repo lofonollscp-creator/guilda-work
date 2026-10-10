@@ -246,9 +246,29 @@ def webhooks():
     for tid, filas in por_tenant.items():
         grupos.append({
             "nombre": nombres.get(tid, f"Tenant {tid}"),
-            "webhooks": [dict(w, eventos=json.loads(w["eventos"]), entregas=[dict(e) for e in entregas.get(w["id"], [])]) for w in filas],
+            "webhooks": [dict(w, eventos=json.loads(w["eventos"]), entregas=[dict(e) for e in entregas.get(w["id"], [])], cola=[c for c in plataforma.cola_webhook_de(w["id"], 8) if c["estado"] != "entregado"]) for w in filas],
         })
-    return render_template("webhooks.html", grupos=grupos, tenants=tenants, eventos=eventos.EVENTOS, creado=None)
+    return render_template("webhooks.html", grupos=grupos, tenants=tenants, eventos=eventos.EVENTOS, creado=None, resumen_cola=plataforma.cola_webhook_resumen())
+
+
+@bp.route("/webhooks/<int:webhook_id>/probar", methods=["POST"])
+@auth.login_required
+def probar_webhook(webhook_id: int):
+    if not eventos.enviar_prueba(webhook_id):
+        abort(404)
+    auth.auditar("webhook.probar", f"webhook {webhook_id}")
+    flash("Evento de prueba (ping) encolado: aparecerá en las entregas en unos segundos.", "ok")
+    return redirect(url_for("rutas.webhooks"))
+
+
+@bp.route("/webhooks/cola/<int:cola_id>/reintentar", methods=["POST"])
+@auth.login_required
+def reintentar_entrega_webhook(cola_id: int):
+    if not plataforma.cola_webhook_reintentar(cola_id):
+        abort(404)
+    auth.auditar("webhook.reintentar", f"envío {cola_id}")
+    flash("Envío devuelto a la cola: se reintentará ahora.", "ok")
+    return redirect(url_for("rutas.webhooks"))
 
 
 @bp.route("/webhooks", methods=["POST"])

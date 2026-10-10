@@ -349,7 +349,22 @@ PAGINAS = [
             {"type": "p", "html":
                 "El sobre de error es siempre el mismo, en cualquier endpoint de esta API — incluidos los "
                 "errores que genera Flask antes de llegar a la vista (404 de ruta inexistente, 405 de método no "
-                "permitido): <code>{\"ok\": false, \"error\": \"mensaje legible\"}</code>, nunca una página HTML."},
+                "permitido): <code>{\"ok\": false, \"error\": \"mensaje legible\", \"codigo\": \"no_encontrado\"}</code>, nunca una "
+                "página HTML. <b>Programa contra <code>codigo</code></b> (estable), no contra el texto, que puede cambiar o "
+                "traducirse. Códigos: <code>peticion_invalida</code>, <code>token_invalido</code>, <code>token_solo_lectura</code>, "
+                "<code>prohibido</code>, <code>no_encontrado</code>, <code>metodo_no_permitido</code>, <code>conflicto</code>, "
+                "<code>idempotencia_conflicto</code>, <code>idempotencia_en_curso</code>, <code>limite_excedido</code> y "
+                "<code>error_interno</code>. Algunos errores de validación añaden <code>campo</code>."},
+            {"type": "h2", "id": "uso-externo", "text": "Uso desde integraciones externas"},
+            {"type": "table", "headers": ["Mecanismo", "Cómo funciona"], "rows": [
+                ["Versión", "Cada respuesta lleva <code>X-API-Version</code> (<code>1.x</code>). El número menor sube con cada ampliación compatible; el mayor solo si algo se rompe. Los campos nuevos siempre son opcionales."],
+                ["Límite", "Por usuario (todos sus tokens suman): 600 peticiones/minuto por defecto. Cada respuesta lleva <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code> y <code>X-RateLimit-Reset</code> (segundos). Al pasarte: <code>429</code> con <code>Retry-After</code>."],
+                ["Idempotencia", "En cualquier <code>POST</code> añade <code>Idempotency-Key: &lt;cadena única&gt;</code>: si reintentas la misma petición (corte de red) devuelve la respuesta original con <code>Idempotent-Replay: true</code> en vez de crear un duplicado. La misma clave con otro cuerpo da <code>422</code>. Vale 24 h; los errores 5xx no se guardan."],
+                ["Caché", "Las lecturas <code>GET</code> llevan <code>ETag</code>; reenvíalo en <code>If-None-Match</code> y recibirás <code>304</code> sin cuerpo si no ha cambiado."],
+                ["Campos", "<code>?campos=id,asunto</code> devuelve solo esos campos, en objetos y listas."],
+                ["Paginación", "<code>limit</code>/<code>offset</code> y total en <code>X-Total-Count</code>."],
+                ["Sincronización", "<code>GET /sync</code> da un cursor; después <code>GET /sync?cursor=N</code> devuelve solo lo que cambió (<code>cambios</code> y <code>eliminados</code> de notas, tareas, tareas de lista y proyectos). Ver «Proyectos, checklist, asignación y más»."],
+            ]},
             {"type": "table", "headers": ["HTTP", "Significado en esta API"], "rows": [
                 ["400", "Datos de entrada inválidos: campo obligatorio ausente, formato incorrecto, valor fuera de rango."],
                 ["401", "Token ausente, revocado o incorrecto (ver <a href=\"/docs/autenticacion\">Autenticación</a>)."],
@@ -422,6 +437,7 @@ PAGINAS = [
             {"type": "p", "html":
                 "Misma autenticación, mismo formato y mismos permisos (un token de solo lectura solo puede hacer <code>GET</code>)."},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["GET", "/sync", "Sin cursor: cursor actual (pídelo antes de la descarga inicial). Con <code>?cursor=N</code>: <code>cambios</code> y <code>eliminados</code> desde entonces, <code>cursor</code> nuevo y <code>hay_mas</code> (<code>limit</code> hasta 1000). <code>reiniciar: true</code> = cursor de más de 30 días, descarga todo de nuevo."],
                 ["GET/POST", "/proyectos", "Lista / crea proyectos (<code>nombre</code>, <code>color</code>). Equivale a <code>/categorias</code>."],
                 ["PUT/DELETE", "/proyectos/{id}", "Renombra / manda a la papelera."],
                 ["GET", "/notas/{id}", "Una nota."],
@@ -703,7 +719,7 @@ PAGINAS = [
         "titulo": "Webhooks",
         "descripcion": "Recibe notificaciones en tiempo real de eventos en tu cuenta, firmadas con HMAC.",
         "bloques": [
-            {"type": "badges", "items": ["HMAC-SHA256", "3 reintentos", "4 eventos"]},
+            {"type": "badges", "items": ["HMAC-SHA256", "cola persistente", "6 intentos"]},
             {"type": "p", "html":
                 "Los webhooks te avisan en el momento en que pasa algo relevante — una tarea que se finaliza, "
                 "una cita que se reserva — en vez de tener que consultar la API periódicamente para ver si algo "
@@ -727,7 +743,9 @@ PAGINAS = [
             {"type": "h2", "id": "payload", "text": "Formato del payload"},
             {"type": "code", "lang": "json", "code":
                 '{\n'
+                '  "id": "evt_1234",\n'
                 '  "evento": "tarea.finalizada",\n'
+                '  "fecha": "2026-10-10T09:30:00",\n'
                 '  "datos": {\n'
                 '    "tarea_id": 42,\n'
                 '    "nombre": "Reunión de seguimiento",\n'
@@ -738,6 +756,7 @@ PAGINAS = [
             {"type": "table", "headers": ["Cabecera", "Contenido"], "rows": [
                 ["<code>X-Guilda-Event</code>", "Nombre del evento, p. ej. <code>tarea.finalizada</code>."],
                 ["<code>X-Guilda-Signature</code>", "<code>sha256=&lt;hex&gt;</code> — HMAC-SHA256 del cuerpo, ver abajo."],
+                ["<code>X-Guilda-Delivery</code>", "Id de la entrega, igual en todos los reintentos del mismo evento: úsalo para descartar duplicados."],
             ]},
             {"type": "h2", "id": "verificar-firma", "text": "Verificar la firma"},
             {"type": "p", "html":
@@ -755,10 +774,12 @@ PAGINAS = [
                 "    return hmac.compare_digest(cabecera_recibida, esperada)"},
             {"type": "h2", "id": "reintentos", "text": "Reintentos"},
             {"type": "p", "html":
-                "Si tu endpoint no responde con un código <b>2xx</b>, la entrega se reintenta hasta "
-                "<b>3 veces</b> con espera (inmediato, +30s, +5min) antes de darla por fallida. Cada intento "
-                "queda registrado — el log de entregas (con el código HTTP o el error de cada uno) es visible "
-                "desde el Backoffice, para depurar un webhook que no está respondiendo."},
+                "Si tu endpoint no responde con un código <b>2xx</b> (o no contesta en 10 s), la entrega se reintenta hasta "
+                "<b>6 veces</b> con espera creciente (inmediato, 30 s, 5 min, 30 min, 2 h, 12 h) antes de darla por fallida. "
+                "Los envíos pendientes se guardan en una cola persistente: <b>un reinicio del servidor no los pierde</b>. "
+                "La garantía es «al menos una vez», así que tu receptor debe tolerar duplicados "
+                "(usa <code>X-Guilda-Delivery</code>). Cada intento queda registrado en el log de entregas del Backoffice, "
+                "donde también puedes enviar un evento de prueba (<code>ping</code>) y reintentar a mano los fallidos."},
             {"type": "h2", "id": "eventos", "text": "Catálogo de eventos"},
             {"type": "table", "headers": ["Evento", "Se dispara cuando..."], "rows": [
                 ["<code>tarea.finalizada</code>", "Se finaliza una tarea con duración (ver <a href=\"/docs/modelos-de-datos\">Modelos de datos</a>)."],
@@ -771,6 +792,9 @@ PAGINAS = [
                 ["<code>correo.enviado</code>", "Sale un correo por SMTP (payload: cuenta, destinatarios y asunto; nunca el cuerpo)."],
                 ["<code>nota.editada</code>", "Se edita una nota existente."],
                 ["<code>vencimiento.presentado</code>", "Se marca como presentado un vencimiento del calendario fiscal."],
+                ["<code>cliente.creado</code>", "Se da de alta un cliente fiscal (payload: <code>cliente_id</code>, <code>nombre</code>, <code>nif</code>)."],
+                ["<code>correo.sin_respuesta</code>", "Un correo con «avísame si no responde» llega a su plazo sin respuesta."],
+                ["<code>ping</code>", "Solo al pulsar «Enviar prueba» en el Backoffice."],
             ]},
             {"type": "callout", "kind": "info", "html":
                 "Solo estos eventos de negocio concretos emiten un webhook — no hay un evento por cada "

@@ -37,7 +37,7 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 
 from waitress import serve
 
-from app import db
+from app import db, eventos
 from app.main import (
     _avisos_fichaje_servidor, _envios_correo_servidor, _idle_correo_servidor, _seguimientos_correo_servidor, _recordatorios_tareas_servidor, _recordatorio_vencimientos_fiscales, _recordatorios_portal_servidor,
     _resumen_ia_semanal,
@@ -60,6 +60,8 @@ if __name__ == "__main__":
     threading.Thread(target=_sincronizacion_correo_servidor, daemon=True).start()
     # Correo casi instantáneo con IMAP IDLE (GUILDA_CORREO_IDLE=0 lo desactiva).
     threading.Thread(target=_idle_correo_servidor, daemon=True).start()
+    # Cola de webhooks persistente: entrega y reintenta (también arranca sola al emitir el primer evento).
+    eventos.iniciar_worker()
     # «Avísame si no responde»: cierra los seguimientos contestados y avisa de los que vencen sin respuesta.
     threading.Thread(target=_seguimientos_correo_servidor, daemon=True).start()
     # Cola de envío de correo: "deshacer envío" y envíos programados.

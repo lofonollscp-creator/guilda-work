@@ -13,10 +13,14 @@ enlazada — vive aquí (no en main.py) por el mismo motivo que los
 decoradores de arriba: rutas_api.py necesita decorar vistas con
 `@limiter.limit(...)` sin crear un import circular con main.py, que es
 quien luego llama a `limiter.init_app(app)`."""
+import hashlib
 import os
+import threading
+import time
+from collections import deque
 from functools import wraps
 
-from flask import abort, g, jsonify, redirect, request, url_for
+from flask import Response, abort, g, jsonify, make_response, redirect, request, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -28,6 +32,35 @@ from . import db
 # (p. ej. redis://127.0.0.1:6379) sin tocar código. Ver HOSTING.md.
 LIMITER_STORAGE_URI = os.environ.get("GUILDA_LIMITER_URI", "memory://")
 limiter = Limiter(key_func=get_remote_address, storage_uri=LIMITER_STORAGE_URI)
+
+
+# Límite de la API por usuario (cualquier token suyo cuenta junto): ventana deslizante de 60 s en memoria.
+API_LIMITE_POR_MINUTO = int(os.environ.get("GUILDA_API_LIMITE_POR_MINUTO", "600"))
+_ventanas: dict[int, deque] = {}
+_lock_ventanas = threading.Lock()
+
+
+def reiniciar_limite_api() -> None:
+    with _lock_ventanas:
+        _ventanas.clear()
+
+
+def _consumir_cupo(usuario_id: int) -> tuple[bool, int, int]:
+    """(permitido, restantes, segundos hasta liberar un hueco)."""
+    ahora = time.monotonic()
+    with _lock_ventanas:
+        ventana = _ventanas.setdefault(usuario_id, deque())
+        while ventana and ahora - ventana[0] >= 60:
+            ventana.popleft()
+        if len(ventana) >= API_LIMITE_POR_MINUTO:
+            return False, 0, max(1, int(60 - (ahora - ventana[0])) + 1)
+        ventana.append(ahora)
+        return True, API_LIMITE_POR_MINUTO - len(ventana), max(1, int(60 - (ahora - ventana[0])))
+
+
+def _error_api(mensaje: str, status: int, codigo: str, **extra):
+    cuerpo = {"ok": False, "error": mensaje, "codigo": codigo, **extra}
+    return jsonify(cuerpo), status
 
 
 def login_required(vista):
@@ -58,14 +91,14 @@ def token_required(vista):
         token = cabecera[7:] if cabecera.startswith("Bearer ") else None
         autenticado = db.autenticar_token(token) if token else None
         if autenticado is None:
-            return jsonify({"ok": False, "error": "Token inválido o ausente."}), 401
+            return _error_api("Token inválido o ausente.", 401, "token_invalido")
         usuario_id, permisos = autenticado
         # Un token de solo lectura únicamente puede consultar (GET): cualquier
         # otro método se rechaza aquí, antes de llegar a la vista. La única
         # excepción es cerrar su propia sesión (revocarse a sí mismo).
         if permisos == "solo_lectura" and request.method not in ("GET", "HEAD", "OPTIONS") \
                 and request.endpoint != "api.logout":
-            return jsonify({"ok": False, "error": "Este token es de solo lectura."}), 403
+            return _error_api("Este token es de solo lectura.", 403, "token_solo_lectura")
         g.usuario_id = usuario_id
         g.permisos_token = permisos
         # Mismo cálculo que _resolver_usuario_actual() en main.py -- hasta
@@ -79,5 +112,37 @@ def token_required(vista):
         g.es_admin = db.es_admin(usuario_id)
         g.gestor_fichajes = db.es_gestor_fichajes(usuario_id)
         g.supervisor_tenant = db.es_supervisor_tenant(usuario_id)
+
+        permitido, restantes, reinicio = _consumir_cupo(usuario_id)
+        g.api_limite = (API_LIMITE_POR_MINUTO, restantes, reinicio)
+        if not permitido:
+            respuesta, status = _error_api(f"Has superado el límite de {API_LIMITE_POR_MINUTO} peticiones por minuto.", 429, "limite_excedido")
+            respuesta.headers["Retry-After"] = str(reinicio)
+            return respuesta, status
+
+        # Idempotencia: con `Idempotency-Key` en un POST, repetir la misma petición devuelve la misma respuesta sin
+        # volver a ejecutarla (reintentos de red seguros). Misma clave con otra petición = 422.
+        clave = (request.headers.get("Idempotency-Key") or "").strip()[:128] if request.method == "POST" else ""
+        if clave and not request.path.endswith("/stream"):
+            huella = hashlib.sha256((request.path + "\n").encode() + request.get_data()).hexdigest()
+            estado = db.idempotencia_reservar(usuario_id, clave, huella)
+            if estado[0] == "conflicto":
+                return _error_api("Esa Idempotency-Key ya se usó con una petición distinta.", 422, "idempotencia_conflicto")
+            if estado[0] == "en_curso":
+                return _error_api("Hay otra petición con esa Idempotency-Key en curso.", 409, "idempotencia_en_curso")
+            if estado[0] == "repetida":
+                respuesta = Response(estado[2], status=estado[1], mimetype="application/json")
+                respuesta.headers["Idempotent-Replay"] = "true"
+                return respuesta
+            try:
+                respuesta = make_response(vista(*args, **kwargs))
+            except Exception:
+                db.idempotencia_liberar(usuario_id, clave)
+                raise
+            if respuesta.status_code >= 500 or respuesta.is_streamed:
+                db.idempotencia_liberar(usuario_id, clave)
+            else:
+                db.idempotencia_guardar(usuario_id, clave, respuesta.status_code, respuesta.get_data(as_text=True))
+            return respuesta
         return vista(*args, **kwargs)
     return decorada

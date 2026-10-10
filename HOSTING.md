@@ -2703,3 +2703,12 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Chat de IA**: ya no manda las 95 herramientas en cada turno (~40 KB). Manda el núcleo (13, ~6 KB) y añade grupos (correo, fiscal, fichaje, tiquets, facturación, CRM, archivos, firmas, tareas_avanzadas) según las palabras del usuario, lo ya usado en la conversación o lo que el modelo pida con `activar_herramientas`. Ahorro típico: 60-85 % de fichas de herramientas por turno. Definido en `app/herramientas_grupos.py`.
 - **MCP externo**: por defecto expone todo, como siempre. Perfiles opcionales por entorno: `GUILDA_MCP_GRUPOS=fiscal,correo` (el núcleo siempre entra) y `GUILDA_MCP_SOLO_LECTURA=1`. Se aplican en `mcp_tools.registrar_tools`.
 - Herramientas nuevas: `resumen_del_dia`, `detalle_tarea`, `completar_tareas` (lote), `listar_notificaciones`.
+
+## API robusta para uso externo, sincronización y webhooks persistentes
+
+- **Contrato** (compatible hacia atrás): errores `{"ok": false, "error", "codigo", ["campo"]}` (también 404/405 de enrutado y 500, siempre JSON); cabecera `X-API-Version` (1.3); `ETag`/`If-None-Match` → 304 en lecturas; `?campos=`; paginación de `/notas` hecha en SQL.
+- **Límite por usuario**: `GUILDA_API_LIMITE_POR_MINUTO` (600 por defecto), ventana de 60 s en memoria del proceso, con `X-RateLimit-*` y `429 + Retry-After`.
+- **Idempotencia**: `Idempotency-Key` en POST, 24 h (tabla `api_idempotencia`); los 5xx no se guardan.
+- **Sincronización incremental** `GET /api/v1/sync`: triggers de SQLite (`trg_cambios_*`) llenan `api_cambios` en cualquier alta/edición/papelera/borrado de notas, tareas, tareas de lista y proyectos, venga de donde venga. Retención 30 días (`api_cambios_purgado` marca hasta dónde se purgó → `reiniciar: true`). Las migraciones son idempotentes y se ensayaron sobre una copia de `registro.db`.
+- **Webhooks**: cola persistente `webhooks_cola` (sobrevive a reinicios), 4 hilos de entrega, 6 intentos (0 s, 30 s, 5 min, 30 min, 2 h, 12 h), entregas atascadas se recuperan a los 5 min, `X-Guilda-Delivery` para deduplicar, cuerpo con `id` y `fecha`. Eventos nuevos: `cliente.creado`, `correo.sin_respuesta`. Backoffice: «Enviar prueba» (ping) y «Reintentar» envíos fallidos. El hilo arranca en `serve.py` (y al emitir el primer evento en otros procesos); con varios procesos no hay duplicados (reclamo atómico por fila).
+- Cambio de comportamiento: antes un 500 en la API devolvía HTTP 200 con un JSON de error; ahora devuelve 500.

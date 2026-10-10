@@ -15,6 +15,7 @@ Formato de respuesta uniforme: `{"ok": true, "data": ...}` en éxito,
 errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 """
 import base64
+import hashlib
 import json
 from datetime import datetime
 
@@ -27,10 +28,44 @@ from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
+# Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
+API_VERSION = "1.3"
+
+
+_CODIGOS_HTTP = {
+    400: "peticion_invalida", 401: "no_autenticado", 403: "prohibido", 404: "no_encontrado", 405: "metodo_no_permitido",
+    409: "conflicto", 413: "demasiado_grande", 415: "tipo_no_soportado", 422: "entidad_no_procesable", 429: "limite_excedido",
+}
+
+
+def _codigo_de(status: int) -> str:
+    return _CODIGOS_HTTP.get(status) or ("error_interno" if status >= 500 else "peticion_invalida")
+
 
 @api_bp.errorhandler(HTTPException)
 def _error_json(e: HTTPException):
-    return jsonify({"ok": False, "error": e.description}), e.code
+    respuesta = jsonify({"ok": False, "error": e.description, "codigo": _codigo_de(e.code or 500)})
+    if e.code == 429 and getattr(e, "retry_after", None):
+        respuesta.headers["Retry-After"] = str(int(e.retry_after))
+    return respuesta, e.code
+
+
+@api_bp.after_request
+def _cabeceras_api(respuesta):
+    """Versión de la API, cuota restante, y ETag/304 en lecturas JSON (ahorra descargas repetidas a la app móvil y a
+    integraciones externas que sondean)."""
+    respuesta.headers["X-API-Version"] = API_VERSION
+    limite = g.get("api_limite")
+    if limite:
+        respuesta.headers["X-RateLimit-Limit"], respuesta.headers["X-RateLimit-Remaining"], respuesta.headers["X-RateLimit-Reset"] = (str(x) for x in limite)
+    if request.method == "GET" and respuesta.status_code == 200 and respuesta.mimetype == "application/json" and not respuesta.is_streamed:
+        etag = '"' + hashlib.sha1(respuesta.get_data()).hexdigest()[:20] + '"'
+        respuesta.headers["ETag"] = etag
+        respuesta.headers["Cache-Control"] = "private, no-cache"
+        if etag in [x.strip() for x in request.headers.get("If-None-Match", "").split(",")]:
+            respuesta.set_data(b"")
+            respuesta.status_code = 304
+    return respuesta
 
 
 def _dict(fila) -> dict | None:
@@ -41,10 +76,20 @@ def _dicts(filas) -> list[dict]:
     return [dict(f) for f in filas]
 
 
+def _proyectar(dato, campos: set[str]):
+    if isinstance(dato, dict):
+        return {k: v for k, v in dato.items() if k in campos}
+    if isinstance(dato, list):
+        return [_proyectar(x, campos) if isinstance(x, dict) else x for x in dato]
+    return dato
+
+
 def _ok(data=None, status: int = 200):
     cuerpo = {"ok": True}
     if data is not None:
-        cuerpo["data"] = data
+        # `campos=id,asunto` devuelve solo esos campos (menos bytes en móvil); aplica a objetos y a listas de objetos.
+        campos = {c.strip() for c in (request.args.get("campos") or "").split(",") if c.strip()}
+        cuerpo["data"] = _proyectar(data, campos) if campos else data
     return jsonify(cuerpo), status
 
 
@@ -65,8 +110,13 @@ def _ok_paginado(filas):
     return respuesta, status
 
 
-def _err(mensaje: str, status: int = 400):
-    return jsonify({"ok": False, "error": mensaje}), status
+def _err(mensaje: str, status: int = 400, codigo: str | None = None, campo: str | None = None):
+    """Error uniforme: `{"ok": false, "error": "texto para personas", "codigo": "clave_estable", "campo": "opcional"}`.
+    `codigo` es lo que debe leer un programa (el texto puede cambiar o traducirse)."""
+    cuerpo = {"ok": False, "error": mensaje, "codigo": codigo or _codigo_de(status)}
+    if campo:
+        cuerpo["campo"] = campo
+    return jsonify(cuerpo), status
 
 
 def _body() -> dict:

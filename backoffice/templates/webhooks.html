@@ -2,7 +2,8 @@
 {% from "_macros.html" import icono %}
 {% block titulo %}Webhooks{% endblock %}
 {% block contenido %}
-<header class="cabecera"><h1>Webhooks</h1><p class="muted">Avisos a una URL externa cuando ocurre algo relevante (firmados con HMAC).</p></header>
+<header class="cabecera"><h1>Webhooks</h1><p class="muted">Avisos a una URL externa cuando ocurre algo relevante (firmados con HMAC). Cola persistente: se reintenta hasta 6 veces (30 s, 5 min, 30 min, 2 h, 12 h).
+  {% if resumen_cola %}Cola: {% for estado, n in resumen_cola.items() %}{{ n }} {{ estado }}{{ ', ' if not loop.last }}{% endfor %}.{% endif %}</p></header>
 {% if creado %}
 <section class="tarjeta destacada" role="status"><h2>Webhook creado</h2>
   <p>URL: <code>{{ creado.url }}</code></p>
@@ -14,8 +15,11 @@
   {% for w in g.webhooks %}
   <div class="webhook">
     <div class="webhook-cab"><code>{{ w.url }}</code>
+      <form method="post" action="{{ url_for('rutas.probar_webhook', webhook_id=w.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Enviar prueba</button></form>
       <form method="post" action="{{ url_for('rutas.borrar_webhook', webhook_id=w.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton boton-peligro" data-confirmar="¿Borrar este webhook y su historial de entregas?">Borrar</button></form></div>
     <p>{% for e in w.eventos %}<span class="insignia">{{ e }}</span>{% endfor %}</p>
+    {% if w.cola %}<ul class="lista-datos">{% for c in w.cola %}<li><span>{{ c.evento }} · {{ c.estado }} · {{ c.intentos }} intento(s){% if c.estado == 'pendiente' %} · próximo {{ c.proximo_intento|fecha }}{% endif %}{% if c.ultimo_error %} · <span class="muted">{{ c.ultimo_error }}</span>{% endif %}</span>
+      {% if c.estado == 'fallido' %}<form method="post" action="{{ url_for('rutas.reintentar_entrega_webhook', cola_id=c.id) }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Reintentar</button></form>{% endif %}</li>{% endfor %}</ul>{% endif %}
     {% if w.entregas %}<ul class="lista-datos">{% for e in w.entregas %}<li><span>{{ e.evento }} · intento {{ e.intento_num }}</span><span class="{{ 'ok' if e.estado_http and 200 <= e.estado_http < 300 else 'ko' }}">{{ e.estado_http or 'sin respuesta' }}{% if e.error %} · {{ e.error }}{% endif %} <span class="muted">{{ e.entregado_en|fecha }}</span></span></li>{% endfor %}</ul>
     {% else %}<p class="muted">Sin entregas todavía.</p>{% endif %}
   </div>
