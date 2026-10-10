@@ -2696,3 +2696,10 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Al agotarlo, el chat y las acciones del correo devuelven un aviso claro y no llaman al modelo. Las confirmaciones de acciones ya iniciadas no cuentan. Usuarios sin despacho: sin tope.
 - Backoffice: bloque «Consumo de IA» en el resumen del tenant (límite, ilimitado, histórico) y página `/consumo-ia` con el gasto de todos. En la app, Ajustes del Asistente IA muestra el uso y avisa al llegar al 80 %.
 - El consumo es de **consultas**, no de coste: cada usuario usa su propia clave de OpenRouter.
+
+## API ampliada y herramientas de IA/MCP por grupos
+
+- **API** (`app/rutas_api_ampliada.py`, mismo blueprint `/api/v1`): listados `GET /notas` y `GET /tareas`; proyectos; detalle de tarea con checklist; asignación y compañeros; `/mi-dia`; conversaciones de correo y paso de correo a tarea/nota; envíos programados, seguimientos y plantillas; notificaciones; `/buscar`; `/ia/consumo`; `/comunicados`. Todo aditivo (la app móvil actual no cambia), con OpenAPI y docs de desarrolladores al día.
+- **Chat de IA**: ya no manda las 95 herramientas en cada turno (~40 KB). Manda el núcleo (13, ~6 KB) y añade grupos (correo, fiscal, fichaje, tiquets, facturación, CRM, archivos, firmas, tareas_avanzadas) según las palabras del usuario, lo ya usado en la conversación o lo que el modelo pida con `activar_herramientas`. Ahorro típico: 60-85 % de fichas de herramientas por turno. Definido en `app/herramientas_grupos.py`.
+- **MCP externo**: por defecto expone todo, como siempre. Perfiles opcionales por entorno: `GUILDA_MCP_GRUPOS=fiscal,correo` (el núcleo siempre entra) y `GUILDA_MCP_SOLO_LECTURA=1`. Se aplican en `mcp_tools.registrar_tools`.
+- Herramientas nuevas: `resumen_del_dia`, `detalle_tarea`, `completar_tareas` (lote), `listar_notificaciones`.

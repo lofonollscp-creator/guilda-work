@@ -138,10 +138,10 @@ def test_referencia_api_no_tiene_placeholders_de_ruta_ambiguos(cliente):
     assert "{mensaje_id}/adjuntos/{adjunto_id}" in html
 
 
-def test_referencia_api_documenta_que_notas_y_tareas_no_tienen_get_de_listado(cliente):
+def test_referencia_api_documenta_los_listados_de_notas_y_tareas(cliente):
     resp = cliente.get("/docs/referencia-api")
     html = resp.get_data(as_text=True)
-    assert "no tienen un endpoint" in html
+    assert "GET /notas" in html and "X-Total-Count" in html and "/mi-dia" in html
 
 
 # --- Webhooks (/docs/webhooks) ----------------------------------------------

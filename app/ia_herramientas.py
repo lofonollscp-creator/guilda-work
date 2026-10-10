@@ -14,6 +14,7 @@ sobre app/db.py, app/correo.py y app/export.py) — al no llevar decorador
 normal de Python (verificado: `type(mcp_tools.listar_notas) is function`).
 """
 import mcp_tools
+from app import herramientas_grupos
 from app.correo import ErrorCorreo
 
 
@@ -685,6 +686,27 @@ HERRAMIENTAS: list[dict] = [
 ]
 
 # Herramientas que solo leen datos: libres siempre, nunca piden confirmación.
+HERRAMIENTAS.append(_tool(
+    "resumen_del_dia",
+    "Resumen de hoy en una sola llamada: mi día (vencidas, hoy, en curso, asignadas), vencimientos fiscales de 7 días, correos y notificaciones sin leer. Úsala para «¿qué tengo hoy?».",
+    {}, [],
+))
+HERRAMIENTAS.append(_tool(
+    "detalle_tarea", "Una tarea con su checklist y vínculos, en una sola llamada.",
+    {"tarea_id": _param("integer", "Id de la tarea.")}, ["tarea_id"],
+))
+HERRAMIENTAS.append(_tool(
+    "completar_tareas", "Completa varias tareas de una vez (máx. 50).",
+    {"tarea_ids": {"type": "array", "items": {"type": "integer"}, "description": "Ids de las tareas."}}, ["tarea_ids"],
+))
+HERRAMIENTAS.append(_tool(
+    "activar_herramientas",
+    "Activa grupos de herramientas que no están disponibles ahora. Úsala cuando necesites algo que no ves en tu lista "
+    "(p. ej. correo, fiscal, fichaje, facturación, CRM, archivos, firmas, tareas_avanzadas). Tras llamarla verás las herramientas del grupo.",
+    {"grupos": {"type": "array", "items": {"type": "string"}, "description": "Nombres de los grupos: " + ", ".join(herramientas_grupos.DESCRIPCIONES)}},
+    ["grupos"],
+))
+
 LECTURA: set[str] = {
     "listar_notas", "listar_tareas", "consultar_calendario", "listar_cuentas_correo",
     "sincronizar_correo", "listar_carpetas_correo", "listar_bandeja_entrada", "leer_correo",
@@ -700,7 +722,7 @@ LECTURA: set[str] = {
     "listar_tablas_hojas", "listar_filas_hoja",
     "generar_documento_al_chat",
     "listar_reglas_correo", "listar_conversacion_correo", "listar_proyectos", "listar_tareas_hoy",
-    "listar_companeros", "listar_checklist_tarea",
+    "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -718,7 +740,7 @@ ESCRITURA: set[str] = {
     "mover_correo", "destacar_correo", "posponer_correo", "crear_regla_correo", "eliminar_regla_correo",
     "crear_tarea_desde_correo", "guardar_nota_desde_correo", "crear_proyecto", "renombrar_proyecto",
     "eliminar_proyecto", "eliminar_nota", "eliminar_tarea", "fijar_nota", "asignar_tarea",
-    "agregar_item_checklist", "alternar_item_checklist",
+    "agregar_item_checklist", "alternar_item_checklist", "completar_tareas",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son
@@ -747,6 +769,8 @@ def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
     `_usuario_id_actual` que sus funciones internas consultan."""
     if nombre not in _NOMBRES_VALIDOS:
         raise ErrorHerramientaIA(f"Herramienta desconocida: '{nombre}'.")
+    if nombre == "activar_herramientas":
+        return herramientas_grupos.texto_activacion(list(argumentos.get("grupos") or []))
     funcion = getattr(mcp_tools, nombre, None)
     if funcion is None:
         raise ErrorHerramientaIA(f"Herramienta '{nombre}' no está implementada en mcp_tools.")
@@ -765,3 +789,15 @@ def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
         raise ErrorHerramientaIA(f"Argumentos inválidos para '{nombre}': {e}") from e
     finally:
         mcp_tools._usuario_id_actual.reset(token)
+
+
+def herramientas_para(mensajes: list[dict] | None = None, solo_lectura: bool = False) -> list[dict]:
+    """Catálogo que se manda al modelo en esta llamada. Sin `mensajes`: todo (compatibilidad). Con ellos: núcleo +
+    grupos que la conversación necesita (ver herramientas_grupos). En solo lectura, además, solo las de lectura."""
+    ofrecidas = HERRAMIENTAS
+    if mensajes is not None:
+        grupos = herramientas_grupos.grupos_de_conversacion(mensajes)
+        ofrecidas = [t for t in HERRAMIENTAS if herramientas_grupos.grupo_de(t["function"]["name"]) in grupos]
+    if solo_lectura:
+        ofrecidas = [t for t in ofrecidas if t["function"]["name"] in LECTURA]
+    return ofrecidas

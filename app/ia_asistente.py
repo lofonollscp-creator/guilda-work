@@ -348,11 +348,9 @@ _ERROR_SOLO_LECTURA = json.dumps(
 )
 
 
-def _herramientas_para(solo_lectura: bool) -> list[dict]:
-    """En modo solo lectura al modelo solo se le ofrecen las herramientas de lectura."""
-    if not solo_lectura:
-        return herramientas.HERRAMIENTAS
-    return [t for t in herramientas.HERRAMIENTAS if t["function"]["name"] in herramientas.LECTURA]
+def _herramientas_para(solo_lectura: bool, mensajes: list[dict] | None = None) -> list[dict]:
+    """Catálogo para esta llamada: núcleo + grupos que la conversación necesita; en solo lectura, solo lectura."""
+    return herramientas.herramientas_para(mensajes, solo_lectura)
 
 
 def _fuentes_del_turno(usuario_id: int) -> str | None:
@@ -496,9 +494,10 @@ def _continuar_conversacion(usuario_id: int) -> dict:
                 "pendiente": _pendiente_dict(tool_call),
             }
 
+        mensajes_api = _mensajes_para_openrouter(usuario_id)
         respuesta = _post_json_con_fallback(
             OPENROUTER_URL,
-            {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": _herramientas_para(solo_lectura)},
+            {"model": modelo, "messages": mensajes_api, "tools": _herramientas_para(solo_lectura, mensajes_api)},
             claves,
         )
         try:
@@ -617,7 +616,8 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
             return
 
         ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
-        payload = {"model": modelo, "messages": _mensajes_para_openrouter(usuario_id), "tools": _herramientas_para(solo_lectura)}
+        mensajes_api = _mensajes_para_openrouter(usuario_id)
+        payload = {"model": modelo, "messages": mensajes_api, "tools": _herramientas_para(solo_lectura, mensajes_api)}
         contenido_acumulado = ""
         # Los tool_calls llegan troceados por índice a lo largo de varios
         # chunks (id/nombre/argumentos incompletos hasta que termina el

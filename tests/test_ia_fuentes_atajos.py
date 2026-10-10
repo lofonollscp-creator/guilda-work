@@ -106,12 +106,14 @@ def test_solo_lectura_ofrece_unicamente_herramientas_de_lectura(monkeypatch, usu
     enviados = _encolar(monkeypatch, _texto("ok"))
     a.procesar_turno(usuario_id, "hola")
     nombres = {t["function"]["name"] for t in enviados[0]["tools"]}
-    assert nombres == h.LECTURA
-    # y sin el modo, se ofrece el catálogo completo
+    # catálogo dinámico: sin pistas en el mensaje solo se ofrece el núcleo, y de él únicamente lo de lectura
+    assert nombres and nombres <= h.LECTURA and "listar_notas" in nombres and "crear_nota" not in nombres
+    # y sin el modo, se ofrece también lo que escribe (del núcleo)
     db.guardar_preferencias_ia(usuario_id, "modelo-de-prueba", True, solo_lectura=False)
     enviados = _encolar(monkeypatch, _texto("ok"))
     a.procesar_turno(usuario_id, "otra vez")
-    assert len(enviados[0]["tools"]) == len(h.HERRAMIENTAS)
+    ofrecidas = {t["function"]["name"] for t in enviados[0]["tools"]}
+    assert "crear_nota" in ofrecidas and "listar_notas" in ofrecidas and len(ofrecidas) < len(h.HERRAMIENTAS)
 
 
 def test_solo_lectura_rechaza_una_escritura_aunque_el_modelo_la_pida(monkeypatch, usuario_id):

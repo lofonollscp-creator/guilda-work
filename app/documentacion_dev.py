@@ -68,6 +68,7 @@ _PROPIAS_GUILDA_WORK = {
     "listar_proyectos", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto", "eliminar_nota",
     "eliminar_tarea", "fijar_nota", "listar_tareas_hoy", "listar_companeros", "asignar_tarea",
     "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
+    "resumen_del_dia", "detalle_tarea", "completar_tareas", "listar_notificaciones",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
@@ -363,12 +364,12 @@ PAGINAS = [
                 "peticiones propio a nivel de aplicación. Si expones tu instancia a un volumen alto de peticiones "
                 "automatizadas, añade tu propio límite en Caddy o en el proxy inverso que tengas delante."},
             {"type": "callout", "kind": "info", "html":
-                "<b>Notas y tareas con duración no tienen un endpoint <code>GET</code> de listado propio</b> — se "
-                "leen siempre a través de <code>GET /historial</code> (filtrable por fecha/proyecto/texto) o de "
-                "<code>GET /dashboard</code> (resumen del día). Es la misma vía que usa la propia app web: el "
-                "registro cronológico combinado es el modelo mental central de Guilda Work, no una lista por "
-                "tipo de objeto. Las tareas estilo Outlook (<a href=\"#tareas-outlook\">más abajo</a>) sí tienen "
-                "su propio <code>GET /tareas-outlook</code>, porque no viven en ese registro cronológico."},
+                "<b>Listados.</b> <code>GET /notas</code> (fijadas primero; <code>proyecto_id</code>, <code>q</code>) y "
+                "<code>GET /tareas</code> (tareas con duración; <code>desde</code>, <code>hasta</code>, <code>proyecto_id</code>) "
+                "tienen listado propio. <code>GET /historial</code> sigue siendo el registro cronológico combinado y "
+                "<code>GET /dashboard</code> el resumen del día. Todos los listados admiten <code>limit</code>/<code>offset</code> "
+                "y devuelven el total en la cabecera <code>X-Total-Count</code>. Más abajo, "
+                "<a href=\"#ampliada\">«Proyectos, checklist, asignación y más»</a>."},
             {"type": "h2", "id": "auth", "text": "Auth"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
                 ["POST", "/auth/registro", "Crea una cuenta nueva y devuelve un token."],
@@ -416,6 +417,33 @@ PAGINAS = [
                 ["PUT", "/tareas-outlook/{id}", "Edita cualquier subconjunto de campos (solo actualiza los presentes en el body)."],
                 ["DELETE", "/tareas-outlook/{id}", "Elimina."],
                 ["POST", "/tareas-outlook/{id}/completar", "Marca como completada."],
+            ]},
+            {"type": "h2", "id": "ampliada", "text": "Proyectos, checklist, asignación y más"},
+            {"type": "p", "html":
+                "Misma autenticación, mismo formato y mismos permisos (un token de solo lectura solo puede hacer <code>GET</code>)."},
+            {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["GET/POST", "/proyectos", "Lista / crea proyectos (<code>nombre</code>, <code>color</code>). Equivale a <code>/categorias</code>."],
+                ["PUT/DELETE", "/proyectos/{id}", "Renombra / manda a la papelera."],
+                ["GET", "/notas/{id}", "Una nota."],
+                ["POST", "/notas/{id}/fijar", "<code>{\"fijada\": true|false}</code>."],
+                ["GET", "/tareas-outlook/{id}", "Detalle de una tarea (propia o asignada) con su <code>checklist</code>."],
+                ["GET/POST", "/tareas-outlook/{id}/checklist", "Lista / añade una subtarea (<code>texto</code>, máx. 50)."],
+                ["POST", "/checklist/{item_id}/alternar", "Marca o desmarca una subtarea (recalcula el porcentaje)."],
+                ["POST", "/tareas-outlook/{id}/asignar", "<code>{\"companero_id\": n}</code> (solo del mismo despacho); sin él, desasigna."],
+                ["GET", "/companeros", "Compañeros del despacho a quienes asignar."],
+                ["GET", "/mi-dia", "Vencidas, de hoy, en curso y asignadas."],
+                ["GET", "/correo/mensajes/{id}/conversacion", "Mensajes del mismo hilo."],
+                ["POST", "/correo/mensajes/{id}/tarea", "Crea una tarea vinculada al correo (<code>fecha_vencimiento</code> opcional)."],
+                ["POST", "/correo/mensajes/{id}/nota", "Guarda el correo como nota."],
+                ["GET/DELETE", "/correo/programados[/{id}]", "Envíos programados pendientes / cancela uno."],
+                ["GET/DELETE", "/correo/seguimientos[/{id}]", "«Avísame si no responde» (<code>todos=1</code> incluye cerrados) / cancela."],
+                ["GET", "/correo/plantillas", "Plantillas de correo."],
+                ["GET", "/notificaciones", "Últimas (<code>limit</code>, máx. 100) y <code>no_leidas</code>."],
+                ["POST/DELETE", "/notificaciones/leidas, /notificaciones/{id}", "Marca todas como leídas / elimina una."],
+                ["GET", "/buscar?q=", "Búsqueda en notas, tareas y correo (<code>limit</code> 1-20)."],
+                ["GET", "/ia/consumo", "Consultas de IA del mes del despacho y su tope (<code>ilimitado</code> si no hay)."],
+                ["GET", "/comunicados", "Avisos de Guilda vigentes para el usuario."],
+                ["POST", "/comunicados/{id}/cerrar", "Cierra un aviso (los críticos no se pueden cerrar: 403)."],
             ]},
             {"type": "h2", "id": "dashboard-historico", "text": "Dashboard, histórico y exportación"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [

@@ -1939,6 +1939,55 @@ def alternar_item_checklist(item_id: int) -> dict:
     return {"alternada": True}
 
 
+def resumen_del_dia() -> dict:
+    """Todo lo que importa hoy en UNA llamada: «mi día» (vencidas, hoy, en curso, asignadas), vencimientos fiscales de los
+    próximos 7 días, correos sin leer y notificaciones sin leer. Úsala para «¿qué tengo hoy?» en vez de varias consultas."""
+    from datetime import date, timedelta
+
+    uid = _uid()
+    tenant = db.tenant_de_usuario(uid)
+    vencimientos = []
+    if tenant is not None:
+        hasta = (date.today() + timedelta(days=7)).isoformat()
+        vencimientos = _filas(db.listar_vencimientos_fiscales(tenant["id"], estado="pendiente", hasta=hasta))
+    por_cuenta = db.contar_no_leidos_por_cuenta_y_carpeta(uid)
+    return {
+        "mi_dia": {seccion: _filas(filas) for seccion, filas in db.tareas_para_hoy(uid).items()},
+        "vencimientos_7_dias": vencimientos,
+        "correos_sin_leer": sum(sum(c.values()) for c in por_cuenta.values()),
+        "notificaciones_sin_leer": db.contar_notificaciones_no_leidas(uid),
+    }
+
+
+def detalle_tarea(tarea_id: int) -> dict:
+    """Una tarea de la lista con su checklist y su cliente fiscal/correo de origen, en una sola llamada."""
+    tarea = db.obtener_tarea_outlook_visible(_uid(), tarea_id)
+    if tarea is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o está en la papelera).")
+    return {**_fila(tarea), "checklist": _filas(db.listar_checklist(tarea_id))}
+
+
+def completar_tareas(tarea_ids: list[int]) -> dict:
+    """Completa varias tareas de una vez (máx. 50). Devuelve cuáles se completaron y cuáles no existen."""
+    uid = _uid()
+    hechas, fallidas = [], []
+    for tarea_id in list(dict.fromkeys(tarea_ids))[:50]:
+        if db.obtener_tarea_outlook(uid, tarea_id) is None:
+            fallidas.append(tarea_id)
+            continue
+        db.completar_tarea_outlook(uid, tarea_id)
+        hechas.append(tarea_id)
+    return {"completadas": hechas, "no_encontradas": fallidas}
+
+
+def listar_notificaciones(limite: int = 20) -> dict:
+    """Notificaciones recientes del usuario y cuántas hay sin leer."""
+    return {
+        "sin_leer": db.contar_notificaciones_no_leidas(_uid()),
+        "notificaciones": _filas(db.listar_notificaciones(_uid(), max(1, min(limite, 100)))),
+    }
+
+
 # Todas las tools de este módulo, en el mismo orden que se documentan en
 # README.md — una única lista, para que ambos servidores (local y remoto)
 # registren exactamente el mismo conjunto sin poder desincronizarse.
@@ -2014,6 +2063,7 @@ TOOLS = [
     # Correo (acciones), proyectos, papelera y tareas ampliadas
     mover_correo, destacar_correo, posponer_correo, listar_reglas_correo, crear_regla_correo,
     eliminar_regla_correo, listar_conversacion_correo, crear_tarea_desde_correo, guardar_nota_desde_correo,
+    resumen_del_dia, detalle_tarea, completar_tareas, listar_notificaciones,
     listar_proyectos, crear_proyecto, renombrar_proyecto, eliminar_proyecto, eliminar_nota, eliminar_tarea,
     fijar_nota, listar_tareas_hoy, listar_companeros, asignar_tarea, listar_checklist_tarea,
     agregar_item_checklist, alternar_item_checklist,
@@ -2029,9 +2079,38 @@ TOOLS = [
 ]
 
 
-def registrar_tools(mcp: FastMCP) -> None:
-    """Registra todas las tools de TOOLS sobre una instancia de FastMCP —
-    usado por mcp_server.py (stdio) y mcp_server_remoto.py (streamable-http)
-    para exponer exactamente el mismo conjunto sin duplicar código."""
+def tools_filtradas(grupos: set[str] | None = None, solo_lectura: bool = False) -> list:
+    """Herramientas a exponer. `grupos` (None = todos) limita por grupo (ver app/herramientas_grupos.py: nucleo,
+    tareas_avanzadas, correo, fiscal, fichaje, tiquets, facturacion, crm, archivos, firmas, integraciones, backoffice, otros);
+    `solo_lectura` deja únicamente las que consultan. El núcleo siempre se incluye si se filtra por grupos."""
+    from app import herramientas_grupos as hg
+    from app.ia_herramientas import LECTURA
+
+    elegidas = []
     for tool in TOOLS:
+        nombre = tool.__name__
+        if grupos is not None and hg.grupo_de(nombre) not in grupos | {"nucleo"}:
+            continue
+        if solo_lectura and not hg.es_lectura(nombre, LECTURA):
+            continue
+        elegidas.append(tool)
+    return elegidas
+
+
+def _perfil_desde_entorno() -> tuple[set[str] | None, bool]:
+    """`GUILDA_MCP_GRUPOS` (lista separada por comas; vacío = todos) y `GUILDA_MCP_SOLO_LECTURA=1`."""
+    import os
+
+    crudo = os.environ.get("GUILDA_MCP_GRUPOS", "").strip()
+    grupos = {g.strip() for g in crudo.split(",") if g.strip()} or None
+    return grupos, os.environ.get("GUILDA_MCP_SOLO_LECTURA") == "1"
+
+
+def registrar_tools(mcp: FastMCP, grupos: set[str] | None = None, solo_lectura: bool | None = None) -> None:
+    """Registra las tools de TOOLS sobre una instancia de FastMCP — usado por mcp_server.py (stdio) y
+    mcp_server_remoto.py (streamable-http) para exponer exactamente el mismo conjunto sin duplicar código.
+    Sin argumentos se lee el perfil del entorno (por defecto: todas, como siempre)."""
+    if grupos is None and solo_lectura is None:
+        grupos, solo_lectura = _perfil_desde_entorno()
+    for tool in tools_filtradas(grupos, bool(solo_lectura)):
         mcp.add_tool(tool)
