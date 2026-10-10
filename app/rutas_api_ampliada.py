@@ -154,6 +154,8 @@ def asignar_tarea_outlook(tarea_id: int):
     """Cuerpo: `{"companero_id": 5}`; sin él (o `null`) la desasigna. Solo compañeros del mismo despacho."""
     if not db.asignar_tarea_outlook(g.usuario_id, tarea_id, _body().get("companero_id")):
         return _err("No se puede asignar: la tarea no es tuya o el compañero no es de tu despacho.", 403)
+    from .rutas_tareas import _notificar_asignacion
+    _notificar_asignacion(g.usuario_id, tarea_id, _body().get("companero_id"))
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
 
 

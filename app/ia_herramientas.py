@@ -700,6 +700,21 @@ HERRAMIENTAS.append(_tool(
     {"tarea_ids": {"type": "array", "items": {"type": "integer"}, "description": "Ids de las tareas."}}, ["tarea_ids"],
 ))
 HERRAMIENTAS.append(_tool(
+    "cambiar_estado_tarea", "Cambia el estado de una tarea de la lista (no_iniciada, en_progreso, completada, esperando, aplazada). Respeta las dependencias.",
+    {"tarea_id": _param("integer", "Id de la tarea."), "estado": _param("string", "no_iniciada | en_progreso | completada | esperando | aplazada.")}, ["tarea_id", "estado"],
+))
+HERRAMIENTAS.append(_tool(
+    "listar_comentarios_tarea", "Comentarios de una tarea.", {"tarea_id": _param("integer", "Id de la tarea.")}, ["tarea_id"],
+))
+HERRAMIENTAS.append(_tool(
+    "comentar_tarea", "Añade un comentario a una tarea (@mención a compañeros del despacho los avisa).",
+    {"tarea_id": _param("integer", "Id de la tarea."), "texto": _param("string", "Texto del comentario.")}, ["tarea_id", "texto"],
+))
+HERRAMIENTAS.append(_tool(
+    "iniciar_cronometro_tarea", "Empieza a contar tiempo sobre una tarea de la lista.",
+    {"tarea_id": _param("integer", "Id de la tarea."), "proyecto": _param("string", "Proyecto (nombre o id), solo si la tarea no tiene.")}, ["tarea_id"],
+))
+HERRAMIENTAS.append(_tool(
     "activar_herramientas",
     "Activa grupos de herramientas que no están disponibles ahora. Úsala cuando necesites algo que no ves en tu lista "
     "(p. ej. correo, fiscal, fichaje, facturación, CRM, archivos, firmas, tareas_avanzadas). Tras llamarla verás las herramientas del grupo.",
@@ -722,7 +737,7 @@ LECTURA: set[str] = {
     "listar_tablas_hojas", "listar_filas_hoja",
     "generar_documento_al_chat",
     "listar_reglas_correo", "listar_conversacion_correo", "listar_proyectos", "listar_tareas_hoy",
-    "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea",
+    "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea", "listar_comentarios_tarea",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -741,6 +756,7 @@ ESCRITURA: set[str] = {
     "crear_tarea_desde_correo", "guardar_nota_desde_correo", "crear_proyecto", "renombrar_proyecto",
     "eliminar_proyecto", "eliminar_nota", "eliminar_tarea", "fijar_nota", "asignar_tarea",
     "agregar_item_checklist", "alternar_item_checklist", "completar_tareas",
+    "cambiar_estado_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son

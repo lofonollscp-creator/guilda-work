@@ -637,9 +637,14 @@ def eliminar_tarea_outlook(tarea_id: int):
 @api_bp.route("/tareas-outlook/<int:tarea_id>/completar", methods=["POST"])
 @token_required
 def completar_tarea_outlook(tarea_id: int):
-    if db.obtener_tarea_outlook(g.usuario_id, tarea_id) is None:
+    previa = db.obtener_tarea_outlook(g.usuario_id, tarea_id)
+    if previa is None:
         abort(404, "Tarea no encontrada.")
+    if db.tarea_bloqueada(tarea_id):
+        return _err("Esta tarea espera a otras que todavía no están completadas.", 409, "tarea_bloqueada")
     db.completar_tarea_outlook(g.usuario_id, tarea_id)
+    from .rutas_tareas import _avisar_desbloqueos
+    _avisar_desbloqueos(g.usuario_id, tarea_id, previa["estado"] == "completada")
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
 
 

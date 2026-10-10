@@ -1991,6 +1991,48 @@ def alternar_item_checklist(item_id: int) -> dict:
     return {"alternada": True}
 
 
+def cambiar_estado_tarea(tarea_id: int, estado: str) -> dict:
+    """Cambia el estado de una tarea de la lista: no_iniciada, en_progreso, completada, esperando o aplazada. Respeta las
+    dependencias: una tarea que espera a otras no puede pasar a en_progreso ni a completada."""
+    uid = _uid()
+    if estado not in ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada"):
+        raise ValueError("estado debe ser no_iniciada, en_progreso, completada, esperando o aplazada.")
+    if db.obtener_tarea_outlook_visible(uid, tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
+    if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
+        raise ValueError("Esta tarea espera a otras que todavía no están completadas.")
+    if not db.cambiar_estado_tarea_outlook(uid, tarea_id, estado):
+        raise ValueError("No tienes permiso para cambiar el estado de esta tarea.")
+    return _fila(db.obtener_tarea_outlook_visible(uid, tarea_id))
+
+
+def listar_comentarios_tarea(tarea_id: int) -> list[dict]:
+    """Comentarios de una tarea (de la más antigua a la más reciente)."""
+    if db.obtener_tarea_outlook_visible(_uid(), tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
+    return _filas(db.listar_comentarios_tarea(_uid(), tarea_id))
+
+
+def comentar_tarea(tarea_id: int, texto: str) -> dict:
+    """Añade un comentario a una tarea que ves (puedes @mencionar a compañeros del despacho; se les avisa)."""
+    uid = _uid()
+    if db.obtener_tarea_outlook_visible(uid, tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
+    resultado = db.comentar_tarea_outlook(uid, tarea_id, texto)
+    if resultado is None:
+        raise ValueError("El comentario no puede estar vacío.")
+    return {"id": resultado["id"], "comentarios": _filas(db.listar_comentarios_tarea(uid, tarea_id))[-3:]}
+
+
+def iniciar_cronometro_tarea(tarea_id: int, proyecto: str | int | None = None) -> dict:
+    """Empieza a contar tiempo sobre una tarea de la lista. Si la tarea no tiene proyecto, indica `proyecto` (nombre o id)."""
+    uid = _uid()
+    if db.obtener_tarea_outlook_visible(uid, tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
+    categoria = _resolver_categoria_id(proyecto) if proyecto is not None else None
+    return {"tarea_cronometro_id": db.iniciar_cronometro_tarea_outlook(uid, tarea_id, categoria)}
+
+
 def resumen_del_dia() -> dict:
     """Todo lo que importa hoy en UNA llamada: «mi día» (vencidas, hoy, en curso, asignadas), vencimientos fiscales de los
     próximos 7 días, correos sin leer y notificaciones sin leer. Úsala para «¿qué tengo hoy?» en vez de varias consultas."""
@@ -2116,6 +2158,7 @@ TOOLS = [
     mover_correo, destacar_correo, posponer_correo, listar_reglas_correo, crear_regla_correo,
     eliminar_regla_correo, listar_conversacion_correo, crear_tarea_desde_correo, guardar_nota_desde_correo,
     resumen_del_dia, detalle_tarea, completar_tareas, listar_notificaciones,
+    cambiar_estado_tarea, listar_comentarios_tarea, comentar_tarea, iniciar_cronometro_tarea,
     listar_proyectos, crear_proyecto, renombrar_proyecto, eliminar_proyecto, eliminar_nota, eliminar_tarea,
     fijar_nota, listar_tareas_hoy, listar_companeros, asignar_tarea, listar_checklist_tarea,
     agregar_item_checklist, alternar_item_checklist,

@@ -9,7 +9,7 @@ from __future__ import annotations
 AREAS: dict[str, tuple[str, tuple[str, ...]]] = {
     # área: (descripción para personas, primer segmento de ruta bajo /api/v1)
     "notas": ("Notas", ("notas",)),
-    "tareas": ("Tareas, proyectos y «mi día»", ("tareas", "tareas-outlook", "checklist", "mi-dia", "companeros", "categorias", "proyectos")),
+    "tareas": ("Tareas, proyectos y «mi día»", ("tareas", "tareas-outlook", "tareas-recurrentes", "tareas-reglas-vencimiento", "tareas-plantillas", "checklist", "mi-dia", "companeros", "categorias", "proyectos")),
     "correo": ("Correo", ("correo",)),
     "fiscal": ("Calendario fiscal y clientes", ("fiscal",)),
     "fichaje": ("Fichaje", ("fichaje",)),

@@ -14,7 +14,8 @@ GRUPOS: dict[str, tuple[str, ...]] = {
         "completar_tarea", "consultar_calendario", "listar_tareas_hoy", "listar_proyectos", "activar_herramientas", "resumen_del_dia",
     ),
     "tareas_avanzadas": (
-        "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
+        "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones",
+        "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
         "asignar_tarea", "listar_companeros", "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
         "crear_tarea_recurrente", "listar_tareas_recurrentes", "listar_papelera", "restaurar_de_papelera",
         "exportar_historial", "importar_historial", "exportar_tareas", "importar_tareas",
@@ -146,6 +147,7 @@ _HERRAMIENTAS_DE_AREA: dict[str, tuple[str, ...]] = {
         "consultar_calendario", "listar_tareas_hoy", "listar_proyectos", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
         "asignar_tarea", "listar_companeros", "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
         "crear_tarea_recurrente", "listar_tareas_recurrentes",
+        "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
     ),
     "correo": tuple(n for n in GRUPOS["correo"] if n not in ("crear_tarea_desde_correo", "guardar_nota_desde_correo")),
     "fiscal": GRUPOS["fiscal"],

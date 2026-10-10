@@ -69,6 +69,7 @@ _PROPIAS_GUILDA_WORK = {
     "eliminar_tarea", "fijar_nota", "listar_tareas_hoy", "listar_companeros", "asignar_tarea",
     "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
     "resumen_del_dia", "detalle_tarea", "completar_tareas", "listar_notificaciones",
+    "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
 }
 
 TOTAL_TOOLS = len(_mt.TOOLS)
@@ -475,6 +476,39 @@ PAGINAS = [
                 ["GET", "/ia/consumo", "Consultas de IA del mes del despacho y su tope (<code>ilimitado</code> si no hay)."],
                 ["GET", "/comunicados", "Avisos de Guilda vigentes para el usuario."],
                 ["POST", "/comunicados/{id}/cerrar", "Cierra un aviso (los críticos no se pueden cerrar: 403)."],
+            ]},
+            {"type": "h2", "id": "tareas-completas", "text": "Tareas: flujo completo"},
+            {"type": "p", "html":
+                "Todo lo que se hace con una tarea de lista en la web, también por API. Los permisos son los de siempre "
+                "(dueño, colaborador, observador, asignado) y las mismas notificaciones: asignar, compartir, mencionar y "
+                "desbloquear avisan a las personas afectadas. Área de token: <code>tareas</code>."},
+            {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["POST", "/tareas-outlook/{id}/estado", "<code>{\"estado\": \"no_iniciada|en_progreso|completada|esperando|aplazada\"}</code>. <b>409</b> <code>tarea_bloqueada</code> si espera a otras (también en <code>/completar</code>)."],
+                ["GET/POST", "/tareas-outlook/{id}/dependencias", "Qué la bloquea / <code>{\"depende_de_id\": n}</code> (409 si crearía un ciclo)."],
+                ["DELETE", "/tareas-outlook/{id}/dependencias/{depende_de_id}", "Quita la dependencia."],
+                ["GET/POST", "/tareas-outlook/{id}/comentarios", "Lista / comenta (<code>texto</code>, con @menciones). Lo puede hacer quien ve la tarea."],
+                ["DELETE", "/tareas-outlook/{id}/comentarios/{comentario_id}", "Borra un comentario (el suyo, o el dueño)."],
+                ["GET", "/tareas-outlook/{id}/actividad", "Historial de cambios."],
+                ["GET/POST", "/tareas-outlook/{id}/recordatorios", "Lista / crea (<code>avisar_en</code> o <code>atajo</code>, <code>canales</code>)."],
+                ["DELETE/POST", "/tareas-outlook/recordatorios/{rid}[/posponer]", "Borra / pospone (<code>opcion</code>)."],
+                ["GET/POST", "/tareas-outlook/{id}/compartir", "Participantes / comparte (<code>usuario_id</code>, <code>rol</code>: <code>colabora</code> | <code>observa</code>; solo el dueño)."],
+                ["DELETE", "/tareas-outlook/{id}/compartir/{usuario_id}", "Quita a un participante (o se sale uno mismo)."],
+                ["POST", "/tareas-outlook/{id}/cronometro/iniciar", "Empieza a contar tiempo (<code>proyecto_id</code> si la tarea no tiene). Luego se pausa y finaliza con <code>/tareas/{id}/...</code>."],
+                ["GET", "/tareas-outlook/{id}/tiempo", "Tiempo registrado (tuyo y del equipo)."],
+                ["POST", "/tareas-outlook/{id}/mover", "<code>{\"persona_id\", \"fecha\"}</code>: reasigna y/o cambia el día."],
+                ["POST", "/tareas-outlook/{id}/restaurar", "Saca de la papelera."],
+                ["DELETE", "/checklist/{item_id}", "Borra una subtarea."],
+                ["POST", "/tareas-outlook/lote", "<code>{\"ids\": [...], \"accion\": \"completar|estado|prioridad|fecha|asignar|proyecto|seccion\", \"valor\": \"..\"}</code> (máx. 200) → <code>{ok, fallos}</code>."],
+                ["GET", "/tareas-outlook/tablero", "Tareas agrupadas por estado."],
+                ["GET", "/tareas-outlook/carga?semana=", "Plan de la semana por persona (horas estimadas frente a capacidad)."],
+                ["GET/POST/DELETE", "/tareas-outlook/vistas[/{id}]", "Vistas guardadas: <code>{nombre, filtros, compartida}</code>."],
+                ["GET/POST", "/tareas-plantillas", "Plantillas de tareas (<code>nombre</code>, <code>items</code>, <code>compartida</code>)."],
+                ["PUT/DELETE", "/tareas-plantillas/{id}", "Edita / borra."],
+                ["POST", "/tareas-plantillas/{id}/aplicar", "Crea las tareas (<code>fecha_inicio</code>, <code>proyecto_id</code> o <code>nuevo_proyecto</code>, <code>cliente_fiscal_id</code>, <code>asignada_a</code>, <code>encadenar</code>)."],
+                ["GET/POST", "/tareas-recurrentes", "Tareas que se repiten (<code>asunto</code>, <code>periodicidad</code>, <code>dia</code>, <code>mes</code>)."],
+                ["POST/DELETE", "/tareas-recurrentes/{id}[/alternar]", "Activa/pausa · borra."],
+                ["GET/POST", "/tareas-reglas-vencimiento", "«Una tarea por cada vencimiento del modelo X» (<code>modelo</code>, <code>asunto</code> con {cliente}/{modelo}/{periodo}, <code>crear_dias_antes</code>, <code>vence_dias_antes</code>)."],
+                ["POST/DELETE", "/tareas-reglas-vencimiento/{id}[/alternar]", "Activa/pausa · borra."],
             ]},
             {"type": "h2", "id": "webhooks-api", "text": "Webhooks por API"},
             {"type": "p", "html":

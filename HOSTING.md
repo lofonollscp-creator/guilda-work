@@ -2730,3 +2730,9 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **`X-Request-Id`** en toda respuesta (y `request_id` en errores de la API); se acepta el del cliente si es sano. Va a Sentry como etiqueta y a los registros de errores.
 - **`referencia_externa`** (notas, tareas de lista, clientes fiscales) con índices únicos por dueño y upsert `.../por-referencia/{ref}`.
 - Un valor que la base rechaza (estado inexistente...) ahora responde 400 `valor_invalido` en la API (antes 500).
+
+## API de tareas completa
+
+- `app/rutas_api_tareas.py`: estado (con dependencias), cronómetro, comentarios con menciones, dependencias, recordatorios, compartir, lote (máx. 200), tablero, plan de carga y mover, vistas guardadas, plantillas, recurrentes y reglas por vencimiento, papelera. Usa las mismas funciones de `db.py` y las mismas notificaciones que la web (`rutas_tareas._notificar_*`), así que API, web y MCP no pueden divergir.
+- Correcciones de paridad: `POST /tareas-outlook/{id}/completar` ahora respeta las dependencias (409 `tarea_bloqueada`) y avisa a quien queda desbloqueado; asignar por API (y en lote) notifica al compañero.
+- MCP/chat: `cambiar_estado_tarea`, `listar_comentarios_tarea`, `comentar_tarea`, `iniciar_cronometro_tarea` (área `tareas`, grupo `tareas_avanzadas`).
