@@ -1,0 +1,30 @@
+import { GuildaWork, ErrorGuilda, verificarFirmaWebhook } from "./guilda-work.js";
+import { createHmac } from "node:crypto";
+const peticiones = [];
+let n = 0;
+const falso = async (url, init) => {
+  peticiones.push({ url, init });
+  n++;
+  if (n === 1) throw new Error("red caída");
+  if (n === 2) return new Response('{"ok":false,"error":"x","codigo":"limite_excedido"}', { status: 429, headers: { "Retry-After": "2" } });
+  if (url.endsWith("/notas/999")) return new Response('{"ok":false,"error":"Nota no encontrada.","codigo":"no_encontrado","request_id":"abc"}', { status: 404 });
+  if (url.includes("/notas?")) return new Response('{"ok":true,"data":[{"id":1}]}', { status: 200, headers: { "X-Total-Count": "7", "X-Request-Id": "r1" } });
+  return new Response('{"ok":true,"data":{"id":5,"texto":"hola"}}', { status: 201, headers: { "X-Request-Id": "r2" } });
+};
+const esperas = [];
+const g = new GuildaWork({ token: "T", baseUrl: "http://test/", fetch: falso, esperar: async (ms) => { esperas.push(ms); } });
+const nota = await g.crearNota({ texto: "hola", referencia_externa: "X" });
+if (nota.id !== 5) throw new Error("crearNota");
+const claves = new Set(peticiones.map((p) => p.init.headers["Idempotency-Key"]));
+if (claves.size !== 1 || peticiones.length !== 3) throw new Error("reintentos/idempotencia " + peticiones.length + " " + claves.size);
+if (esperas[1] !== 2000) throw new Error("Retry-After " + esperas);
+if (JSON.parse(peticiones[2].init.body).referencia_externa !== "X" || peticiones[2].init.headers.Authorization !== "Bearer T") throw new Error("cuerpo/auth");
+const lista = await g.listarNotas({ limit: 1, offset: 2, q: "iva" });
+if (lista.length !== 1 || g.ultima.total !== 7 || g.ultima.requestId !== "r1" || !peticiones.at(-1).url.includes("limit=1") || !peticiones.at(-1).url.includes("q=iva")) throw new Error("listar " + peticiones.at(-1).url);
+try { await g.obtenerNota(999); throw new Error("debía fallar"); } catch (e) { if (!(e instanceof ErrorGuilda) || e.codigo !== "no_encontrado" || e.requestId !== "abc" || e.status !== 404) throw e; }
+const cuerpo = '{"evento":"nota.creada"}'; const t = Math.floor(Date.now() / 1000);
+const firma = createHmac("sha256", "sec").update(`${t}.${cuerpo}`).digest("hex");
+if (!(await verificarFirmaWebhook(cuerpo, { "X-Guilda-Signature-V2": `t=${t},v1=${firma}` }, "sec"))) throw new Error("firma válida rechazada");
+if (await verificarFirmaWebhook(cuerpo + " ", { "X-Guilda-Signature-V2": `t=${t},v1=${firma}` }, "sec")) throw new Error("firma alterada aceptada");
+if (await verificarFirmaWebhook(cuerpo, { "X-Guilda-Signature-V2": `t=${t - 4000},v1=${createHmac("sha256", "sec").update(`${t - 4000}.${cuerpo}`).digest("hex")}` }, "sec")) throw new Error("firma vieja aceptada");
+console.log("TS_RUNTIME_OK");

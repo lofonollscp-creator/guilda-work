@@ -838,6 +838,69 @@ PAGINAS = [
         ],
     },
     {
+        "slug": "sdk",
+        "grupo": "INTEGRACIÓN",
+        "titulo": "SDK y Postman",
+        "descripcion": "Cliente de Python, cliente de TypeScript y colección de Postman, generados del contrato de la API de tu instancia.",
+        "bloques": [
+            {"type": "badges", "items": ["Python", "TypeScript", "Postman", "Sin dependencias"]},
+            {"type": "p", "html":
+                "Se generan <b>en el momento de descargarlos</b> a partir del <a href=\"/api/v1/openapi.json\">contrato OpenAPI</a> de esta instancia y "
+                "ya apuntan a ella: cuando la API se amplía, vuelve a descargarlos. Los tres traen reintentos con retroceso, respeto de "
+                "<code>Retry-After</code>, <code>Idempotency-Key</code> automática en los <code>POST</code> (un reintento no duplica), errores con "
+                "<code>codigo</code> y <code>request_id</code> y la verificación de la firma de los webhooks."},
+            {"type": "table", "headers": ["Descarga", "Para qué"], "rows": [
+                ["<a href=\"/docs/sdk/guilda_work.py\" download><code>guilda_work.py</code></a>", "Un solo fichero, solo biblioteca estándar (Python 3.9+). Un método por operación."],
+                ["<a href=\"/docs/sdk/guilda-work.ts\" download><code>guilda-work.ts</code></a>", "Un solo fichero con <code>fetch</code> (Node 18+, navegadores, Deno, Bun) y los tipos de todas las entidades."],
+                ["<a href=\"/docs/sdk/guilda-work.postman_collection.json\" download><code>guilda-work.postman_collection.json</code></a>", "Colección de Postman (también vale en Insomnia, Bruno o Hoppscotch): una carpeta por tema, ejemplos y variables."],
+            ]},
+            {"type": "h2", "id": "python", "text": "Python"},
+            {"type": "code", "lang": "python", "code":
+                "from guilda_work import Cliente, ErrorGuilda, verificar_firma_webhook\n\n"
+                "g = Cliente(token=\"TU_TOKEN\")                      # o Cliente().login(email=..., contrasena=...)\n\n"
+                "nota = g.crear_nota(texto=\"Llamar al cliente\", referencia_externa=\"CRM-881\")\n"
+                "g.upsert_nota(\"CRM-881\", texto=\"Llamar al cliente (hecho)\")        # crea o actualiza por tu propia referencia\n\n"
+                "for tarea in g.paginar(g.listar_tareas_outlook, estado=\"en_progreso\"):  # recorre todas las páginas\n"
+                "    print(tarea[\"asunto\"])\n\n"
+                "try:\n"
+                "    g.cambiar_estado_tarea(57, estado=\"completada\")\n"
+                "except ErrorGuilda as e:\n"
+                "    if e.codigo == \"tarea_bloqueada\":        # programa contra el código, no contra el texto\n"
+                "        print(\"espera a otras tareas\", e.request_id)\n\n"
+                "g.subir_adjuntos_nota(nota[\"id\"], adjunto=[(\"extracto.pdf\", open(\"extracto.pdf\", \"rb\").read(), \"application/pdf\")])"},
+            {"type": "h2", "id": "sincronizar", "text": "Sincronizar sin volver a descargarlo todo"},
+            {"type": "code", "lang": "python", "code":
+                "cursor = g.sincronizar()[\"cursor\"]          # antes de la descarga completa inicial; guárdalo\n"
+                "# ... más tarde:\n"
+                "for lote in g.sincronizar_desde(cursor):\n"
+                "    aplicar(lote[\"cambios\"], lote[\"eliminados\"])\n"
+                "    cursor = lote[\"cursor\"]                  # guarda el último; si lote[\"reiniciar\"], descarga todo otra vez"},
+            {"type": "h2", "id": "typescript", "text": "TypeScript"},
+            {"type": "code", "lang": "typescript", "code":
+                "import { GuildaWork, ErrorGuilda, verificarFirmaWebhook } from \"./guilda-work\";\n\n"
+                "const g = new GuildaWork({ token: process.env.GUILDA_TOKEN });\n"
+                "const nota = await g.crearNota({ texto: \"Llamar al cliente\", referencia_externa: \"CRM-881\" });\n\n"
+                "// Los argumentos de camino van primero, luego el cuerpo y luego la consulta\n"
+                "await g.cambiarEstadoTarea(57, { estado: \"en_progreso\" });\n"
+                "for await (const t of g.paginar((limit, offset) => g.listarTareasOutlook({ limit, offset }))) console.log(t.asunto);\n\n"
+                "try { await g.obtenerNota(99999); } catch (e) { if (e instanceof ErrorGuilda && e.codigo === \"no_encontrado\") { /* ... */ } }"},
+            {"type": "h2", "id": "webhooks-verificar", "text": "Verificar webhooks"},
+            {"type": "p", "html":
+                "Usa siempre el <b>cuerpo crudo</b> recibido y rechaza lo que tarde más de 5 minutos (<code>X-Guilda-Signature-V2</code> lleva marca de tiempo)."},
+            {"type": "code", "lang": "python", "code":
+                "if not verificar_firma_webhook(request.get_data(), request.headers, secreto):\n"
+                "    return \"firma no válida\", 400"},
+            {"type": "h2", "id": "postman", "text": "Postman"},
+            {"type": "p", "html":
+                "Importa el fichero (<b>Import → File</b>), abre la colección y rellena la variable <code>token</code> (o ejecuta <b>auth → login</b>, que la guarda solo). "
+                "<code>base_url</code> ya apunta a esta instancia. Cada <code>POST</code> añade su <code>Idempotency-Key</code> y todas las peticiones un "
+                "<code>X-Request-Id</code>; los parámetros opcionales vienen desactivados para activarlos con la casilla."},
+            {"type": "callout", "kind": "info", "html":
+                "<b>Versionado.</b> Los clientes llevan la versión de la API con la que se generaron (<code>VERSION_API</code>). Un cambio compatible solo añade métodos y campos "
+                "opcionales; si alguna vez algo se rompe, la versión mayor sube y se avisa. Mientras tanto, un cliente antiguo sigue funcionando."},
+        ],
+    },
+    {
         "slug": "webhooks",
         "grupo": "INTEGRACIÓN",
         "titulo": "Webhooks",

@@ -9,11 +9,33 @@ https://docs.documenso.com/docs/developers, la referencia visual de
 esta sección). El contenido en sí vive en `app/documentacion_dev.py`,
 no aquí — esta ruta solo resuelve el slug y renderiza.
 """
-from flask import Blueprint, abort, render_template
+import json
 
-from . import documentacion_dev
+from flask import Blueprint, Response, abort, render_template, request
+
+from . import documentacion_dev, openapi, sdk_generador
 
 docs_bp = Blueprint("docs", __name__, url_prefix="/docs")
+
+
+_DESCARGAS = {
+    "guilda_work.py": ("text/x-python; charset=utf-8", lambda spec, base: sdk_generador.generar_python(spec, base)),
+    "guilda-work.ts": ("application/typescript; charset=utf-8", lambda spec, base: sdk_generador.generar_typescript(spec, base)),
+    "guilda-work.postman_collection.json": ("application/json", lambda spec, base: json.dumps(sdk_generador.generar_postman(spec, base), indent=2, ensure_ascii=False)),
+}
+
+
+@docs_bp.route("/sdk/<nombre>")
+def descargar_sdk(nombre: str):
+    """Cliente de Python, cliente de TypeScript o colección de Postman, generados AL MOMENTO del contrato OpenAPI de esta instancia
+    (y ya apuntando a ella): nunca están desactualizados."""
+    if nombre not in _DESCARGAS:
+        abort(404)
+    tipo, generar = _DESCARGAS[nombre]
+    contenido = generar(openapi.generar_spec(), request.url_root.rstrip("/"))
+    respuesta = Response(contenido, mimetype=tipo.split(";")[0], headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff", "Cache-Control": "no-cache"})
+    respuesta.charset = "utf-8"
+    return respuesta
 
 
 @docs_bp.route("/")
