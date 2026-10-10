@@ -2743,3 +2743,9 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Paridad con la web** (antes la API se saltaba cosas): `presentado` ahora genera la constancia, acepta el justificante y emite `vencimiento.presentado` (antes no emitía el evento, así que los webhooks nunca se enteraban); generar vencimientos usa el país del cliente y ya no duplica; pedir un documento avisa al cliente por correo; leer, editar o borrar un cliente por API queda en el registro de accesos («vía API»); el cliente admite `email`, `pais`, `idioma` y `recordatorios_portal` (sin `email` el portal y los recordatorios no funcionaban para clientes creados por API).
 - Los listados de vencimientos paginan en SQL (`X-Total-Count`) y admiten `desde`, `hasta` y `pais`.
 - Deliberadamente fuera: enviar a firma (Documenso) y cobrar (Stripe).
+
+## API: adjuntos de notas, envío de correo, plantillas y administración del fichaje
+
+- `app/rutas_api_extras.py`: adjuntos de notas (mismos límites que la web: 5 MB, 5 por nota, tipos permitidos), estado y cancelación de envíos, plantillas de correo (CRUD + render) y administración del fichaje (resumen, detalle, corrección auditable, exportaciones CSV/PDF/JSON y verificación de integridad). Permisos del fichaje idénticos a la web: gestor de fichajes (su despacho) o administrador global (con `tenant_id`); un trabajador de otro despacho se responde 404.
+- `POST /correo/enviar`: acepta multipart, `programar_para` (202 + `envio_id`) y `seguimiento_dias`; base64 inválido da 400 (antes 500). **El tope de 25 MB de adjuntos ahora vale también para el envío directo** (`construir_y_enviar`); antes solo se comprobaba al encolar.
+- `DELETE /correo/programados/{id}` ahora también borra los adjuntos retenidos en la cola.

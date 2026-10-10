@@ -1636,6 +1636,14 @@ def obtener_plantilla(usuario_id: int, plantilla_id: int):
     return db.obtener_plantilla_correo(usuario_id, plantilla_id)
 
 
+def editar_plantilla(usuario_id: int, plantilla_id: int, nombre: str, asunto: str | None, cuerpo: str, modelo: str | None = None) -> bool:
+    if not nombre.strip():
+        raise ErrorCorreo("La plantilla necesita un nombre.")
+    if not cuerpo.strip():
+        raise ErrorCorreo("La plantilla necesita un cuerpo.")
+    return db.editar_plantilla_correo(usuario_id, plantilla_id, nombre, asunto, cuerpo, modelo)
+
+
 def eliminar_plantilla(usuario_id: int, plantilla_id: int) -> None:
     db.eliminar_plantilla_correo(usuario_id, plantilla_id)
 
@@ -1877,6 +1885,8 @@ def construir_y_enviar(
     (`to_addrs`), construida aquí explícitamente en vez de dejar que
     `smtplib` derive los destinatarios de las cabeceras."""
     cuenta = validar_envio(usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html)
+    if sum(len(a["bytes"]) for a in (adjuntos or [])) > db.MAX_BYTES_ADJUNTOS_ENVIO:
+        raise ErrorCorreo("Los adjuntos superan el tamaño máximo de 25 MB.")
 
     mensaje = EmailMessage()
     mensaje["From"] = cuenta["usuario"]

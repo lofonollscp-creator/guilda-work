@@ -1271,28 +1271,63 @@ def accion_en_lote_correo(accion: str):
     return _ok({"procesados": len(ids) - len(errores), "errores": errores})
 
 
+MAX_ADJUNTOS_ENVIO = 20
+
+
 @api_bp.route("/correo/enviar", methods=["POST"])
 @token_required
 def enviar_correo():
-    datos = _body()
-    adjuntos = [
-        {
-            "nombre": a.get("nombre", "adjunto"),
-            "tipo": a.get("tipo") or "application/octet-stream",
-            "bytes": base64.b64decode(a["contenido_base64"]),
-        }
-        for a in datos.get("adjuntos", []) if a.get("contenido_base64")
-    ]
+    """Envía un correo (o lo programa). Dos formas de mandarlo:
+
+    - **JSON**: `adjuntos`: `[{"nombre", "tipo", "contenido_base64"}]`.
+    - **multipart/form-data**: campos de texto y ficheros en `adjuntos` (varios). Recomendado para archivos grandes.
+
+    Campos: `cuenta_id`, `destinatarios`, `asunto`, `cuerpo_html`, `cc`, `bcc`, `en_respuesta_a` (Message-ID), `seguimiento_dias`
+    («avísame si no responde», 1-30) y `programar_para` (`YYYY-MM-DDTHH:MM`, hora del servidor: queda en cola y se envía entonces,
+    respuesta 202 con `envio_id`). Máx. 20 adjuntos y 25 MB en total. Respuesta: `{"enviado": true, "message_id": "..."}`."""
+    if request.mimetype == "multipart/form-data":
+        datos = request.form.to_dict()
+        adjuntos = [{"nombre": f.filename, "tipo": f.mimetype or "application/octet-stream", "bytes": f.read()} for f in request.files.getlist("adjuntos") if f and f.filename]
+    else:
+        datos = _body()
+        adjuntos = []
+        for a in datos.get("adjuntos") or []:
+            if not isinstance(a, dict) or not a.get("contenido_base64"):
+                continue
+            try:
+                contenido = base64.b64decode(a["contenido_base64"], validate=True)
+            except (ValueError, TypeError):
+                return _err(f"El adjunto «{a.get('nombre', 'adjunto')}» no es base64 válido.", 400, "adjunto_invalido", "adjuntos")
+            adjuntos.append({"nombre": a.get("nombre") or "adjunto", "tipo": a.get("tipo") or "application/octet-stream", "bytes": contenido})
+    if len(adjuntos) > MAX_ADJUNTOS_ENVIO:
+        return _err(f"Máximo {MAX_ADJUNTOS_ENVIO} adjuntos por correo.", 400, "demasiados_adjuntos", "adjuntos")
     try:
-        correo.construir_y_enviar(
-            g.usuario_id,
-            datos.get("cuenta_id"), datos.get("destinatarios", ""), datos.get("asunto", ""),
-            datos.get("cuerpo_html", ""), cc=datos.get("cc", ""), bcc=datos.get("bcc", ""),
-            en_respuesta_a=datos.get("en_respuesta_a"), adjuntos=adjuntos or None,
+        cuenta_id = int(datos.get("cuenta_id")) if str(datos.get("cuenta_id") or "").lstrip("-").isdigit() else None
+        seguimiento = db.seguimiento_dias_valido(datos.get("seguimiento_dias")) if datos.get("seguimiento_dias") not in (None, "") else None
+        argumentos = dict(
+            cc=datos.get("cc", "") or "", bcc=datos.get("bcc", "") or "", en_respuesta_a=datos.get("en_respuesta_a") or None,
+            adjuntos=adjuntos or None, seguimiento_dias=seguimiento,
+        )
+        programar = (datos.get("programar_para") or "").strip()
+        if programar:
+            try:
+                momento = datetime.fromisoformat(programar)
+            except ValueError:
+                return _err("programar_para debe ser YYYY-MM-DDTHH:MM.", 400, "peticion_invalida", "programar_para")
+            if momento <= datetime.now() + timedelta(minutes=1) or momento > datetime.now() + timedelta(days=366):
+                return _err("programar_para tiene que ser futuro (y dentro de un año).", 400, "peticion_invalida", "programar_para")
+            enviar_en = momento.isoformat(timespec="seconds")
+            envio_id = correo.encolar_envio(
+                g.usuario_id, cuenta_id, datos.get("destinatarios", ""), datos.get("asunto", ""), datos.get("cuerpo_html", ""),
+                enviar_en=enviar_en, programado=True, **argumentos,
+            )
+            return _ok({"programado": True, "envio_id": envio_id, "enviar_en": enviar_en}, 202)
+        message_id = correo.construir_y_enviar(
+            g.usuario_id, cuenta_id, datos.get("destinatarios", ""), datos.get("asunto", ""), datos.get("cuerpo_html", ""), **argumentos,
         )
     except correo.ErrorCorreo as e:
         return _err(str(e))
-    return _ok()
+    return _ok({"enviado": True, "message_id": message_id})
 
 
 @api_bp.route("/correo/categorias", methods=["GET"])

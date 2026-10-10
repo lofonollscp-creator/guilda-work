@@ -540,6 +540,21 @@ PAGINAS = [
             {"type": "p", "html":
                 "Lo que no está en la API a propósito: enviar a firma electrónica y cobrar por Stripe (acciones con efecto sobre terceros o dinero "
                 "que se hacen desde la ficha del vencimiento, con revisión humana)."},
+            {"type": "h2", "id": "extras-api", "text": "Adjuntos de notas, envíos, plantillas y administración del fichaje"},
+            {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["GET/POST", "/notas/{id}/adjuntos", "Lista (metadatos) / sube (multipart, varios <code>adjunto</code>): imágenes, PDF, texto o CSV; 5 MB cada uno, 5 por nota. Resultado por archivo."],
+                ["GET/DELETE", "/notas/adjuntos/{adjunto_id}", "Descarga (<code>?ver=1</code> en línea si es imagen) / borra."],
+                ["GET", "/correo/envios/{id}", "Estado de un envío (<code>pendiente</code>, <code>enviado</code>, <code>cancelado</code>, <code>error</code>)."],
+                ["POST", "/correo/envios/{id}/cancelar", "Cancela un envío programado; <code>{\"como_borrador\": true}</code> lo conserva como borrador (409 si ya salió). <code>DELETE /correo/programados/{id}</code> lo descarta."],
+                ["GET", "/correo/plantillas/variables", "Variables <code>{{...}}</code> disponibles."],
+                ["GET/PUT/DELETE", "/correo/plantillas/{id}", "Ver (con <code>?cliente_fiscal_id=</code> devuelve además <code>renderizada</code> y <code>sin_resolver</code>) / editar cualquier subconjunto / borrar."],
+                ["POST", "/correo/plantillas", "Crea: <code>nombre</code>, <code>asunto</code>, <code>cuerpo</code> (HTML con variables), <code>modelo</code>."],
+                ["GET", "/fichaje/admin/resumen", "Horas por trabajador del despacho (<code>desde</code>, <code>hasta</code>) y de la semana. Gestores de fichajes; un administrador global añade <code>tenant_id</code>."],
+                ["GET", "/fichaje/admin/usuarios/{id}", "Datos y fichajes de un trabajador (el más reciente primero)."],
+                ["POST", "/fichaje/admin/usuarios/{id}/corregir", "Corrección auditable: <code>tipo</code>, <code>marca_tiempo</code> (hora REAL), <code>corrige_a</code>, <code>nota</code>. Inserta un fichaje nuevo (origen <code>correccion_admin</code>); no sobrescribe."],
+                ["GET", "/fichaje/admin/exportar.csv|pdf|json", "Registro horario (<code>desde</code>, <code>hasta</code>, <code>usuario_id</code>). El JSON lleva el hash de cada fila."],
+                ["GET", "/fichaje/admin/verificar-integridad", "Comprueba la cadena de hashes del registro horario."],
+            ]},
             {"type": "h2", "id": "webhooks-api", "text": "Webhooks por API"},
             {"type": "p", "html":
                 "Para que una integración se dé de alta sola. Solo un <b>supervisor del despacho</b> o un administrador "
@@ -588,7 +603,7 @@ PAGINAS = [
                 ["POST", "/correo/mensajes/{id}/categoria", "Asigna una categoría propia de Guilda Work."],
                 ["POST", "/correo/mensajes/{id}/mover", "Mueve a otra carpeta IMAP."],
                 ["POST", "/correo/mensajes/lote/{accion}", "Acción en lote sobre varios <code>ids</code> a la vez — <code>accion</code>: <code>leido</code>|<code>destacar</code>|<code>mover</code>|<code>eliminar</code>."],
-                ["POST", "/correo/enviar", "Envía un correo (adjuntos en base64, <code>cc</code>/<code>bcc</code> soportados)."],
+                ["POST", "/correo/enviar", "Envía un correo. JSON (adjuntos en base64) o <b>multipart</b> (ficheros en <code>adjuntos</code>, mejor para archivos grandes). <code>cc</code>/<code>bcc</code>, <code>en_respuesta_a</code>, <code>seguimiento_dias</code> («avísame si no responde») y <code>programar_para</code> (<code>YYYY-MM-DDTHH:MM</code>: queda en cola, <b>202</b> con <code>envio_id</code>). Máx. 20 adjuntos y 25 MB; base64 inválido: 400 <code>adjunto_invalido</code>."],
                 ["GET / POST", "/correo/categorias", "Categorías propias de Guilda Work (no se sincronizan con el servidor de correo)."],
                 ["DELETE", "/correo/categorias/{id}", "Elimina una categoría propia."],
                 ["GET / POST", "/correo/remitentes-confiables", "Remitentes cuyas imágenes/enlaces se cargan sin aviso previo."],

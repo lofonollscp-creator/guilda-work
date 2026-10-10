@@ -9364,6 +9364,19 @@ def crear_plantilla_correo(usuario_id: int, nombre: str, asunto: str | None, cue
         conn.close()
 
 
+def editar_plantilla_correo(usuario_id: int, plantilla_id: int, nombre: str, asunto: str | None, cuerpo: str, modelo: str | None = None) -> bool:
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE correo_plantillas SET nombre = ?, asunto = ?, cuerpo = ?, modelo = ? WHERE id = ? AND usuario_id = ?",
+            (nombre.strip(), (asunto or "").strip() or None, cuerpo, (modelo or "").strip()[:20] or None, plantilla_id, usuario_id),
+        )
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
 def listar_plantillas_correo(usuario_id: int) -> list[sqlite3.Row]:
     conn = get_connection()
     try:

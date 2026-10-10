@@ -212,8 +212,10 @@ def listar_programados():
 @api_bp.route("/correo/programados/<int:envio_id>", methods=["DELETE"])
 @token_required
 def cancelar_programado(envio_id: int):
-    if not db.cancelar_envio_correo(g.usuario_id, envio_id):
+    """Cancela y descarta un envío programado (con sus adjuntos). Para conservarlo como borrador: `POST /correo/envios/{id}/cancelar`."""
+    if db.obtener_envio_correo(g.usuario_id, envio_id) is None or not db.cancelar_envio_correo(g.usuario_id, envio_id):
         abort(404, "Envío no encontrado o ya enviado.")
+    db.cerrar_envio_correo(envio_id, "cancelado", borrar_adjuntos=True)
     return _ok()
 
 
