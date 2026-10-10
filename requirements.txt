@@ -32,3 +32,7 @@ Flask-Babel>=4.0
 # Alertas de errores no controlados -- GlitchTip autoalojado (protocolo
 # compatible con Sentry, usa el mismo cliente), ver docker-compose.yml.
 sentry-sdk[flask]>=2.0
+# Mínimos por avisos de seguridad (2026-10): urllib3 (proxy HTTPS), Werkzeug (safe_join), PyJWT (JWKS).
+urllib3>=2.8.0
+Werkzeug>=3.1.9
+PyJWT>=2.14.0
