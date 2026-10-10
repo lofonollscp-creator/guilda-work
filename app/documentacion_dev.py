@@ -1101,6 +1101,17 @@ PAGINAS = [
                 "<code>inspect.signature()</code> + primera línea del docstring de cada función) — nunca se "
                 "desincroniza de lo que de verdad expone el servidor MCP. Usa <kbd>Ctrl</kbd>+<kbd>K</kbd> para "
                 "buscar una tool por nombre."},
+            {"type": "h2", "id": "uso-y-limites", "text": "Credenciales, límites y auditoría"},
+            {"type": "p", "html":
+                "El servidor MCP remoto acepta un <b>token OAuth</b> (ChatGPT, Claude...) o un <b>token personal de API</b> "
+                "(<code>Authorization: Bearer ...</code>), que hereda sus <code>areas</code> y su solo lectura: una herramienta fuera de ese "
+                "alcance responde con un error claro y nunca se ejecuta. Cada herramienta lleva anotaciones MCP (solo lectura, destructiva, "
+                "idempotente, mundo abierto) para que el cliente sepa qué pedir confirmar."},
+            {"type": "table", "headers": ["Control", "Cómo funciona"], "rows": [
+                ["Límite por persona", "<b>120 llamadas por minuto</b> y <b>40 de escritura por minuto</b> (<code>GUILDA_MCP_LIMITE_POR_MINUTO</code>, <code>GUILDA_MCP_LIMITE_ESCRITURAS_POR_MINUTO</code>). Al pasarte la herramienta devuelve un error con los segundos de espera; la llamada rechazada no se ejecuta ni gasta cupo."],
+                ["Uso por token", "Las llamadas por MCP suman al uso del token personal (<code>GET /tokens/{id}/uso</code>)."],
+                ["Auditoría", "Cada llamada queda registrada 90 días: quién, con qué cliente, qué herramienta, resultado (<code>ok</code>, <code>error</code>, <code>denegado</code>, <code>limite</code>), duración y la <b>forma</b> de los argumentos (números y ids tal cual; de un texto, solo su longitud). Nunca se guarda el contenido de correos, notas o documentos."],
+            ]},
             {"type": "h2", "id": "propias", "text": "Propias de Guilda Work"},
             {"type": "table", "headers": ["Tool", "Descripción"], "rows": _filas_tools_por_nombre(_PROPIAS_GUILDA_WORK)},
             {"type": "h2", "id": "stack-compartido", "text": "Stack compartido (sin tenant)"},

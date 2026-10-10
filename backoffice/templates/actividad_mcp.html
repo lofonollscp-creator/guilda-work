@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Actividad MCP{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Actividad MCP</h1><p class="muted">Lo que hacen las IA y las integraciones a través del MCP. Cada llamada queda registrada 90 días; de los argumentos solo se guarda su forma (tipos y tamaños), nunca el contenido de correos o notas.</p></header>
+
+<form class="herramientas" method="get">
+  <select name="dias" data-autoenviar aria-label="Periodo">{% for n in (7, 30, 90) %}<option value="{{ n }}" {{ 'selected' if dias == n }}>Últimos {{ n }} días</option>{% endfor %}</select>
+  <select name="tenant" data-autoenviar aria-label="Despacho"><option value="">Todos los despachos</option>{% for t in tenants %}<option value="{{ t.id }}" {{ 'selected' if tenant_f == t.id }}>{{ t.nombre }}</option>{% endfor %}</select>
+  <select name="resultado" data-autoenviar aria-label="Resultado"><option value="">Cualquier resultado</option>{% for r in ('ok', 'error', 'denegado', 'limite') %}<option value="{{ r }}" {{ 'selected' if resultado_f == r }}>{{ r }}</option>{% endfor %}</select>
+  <input type="search" name="herramienta" value="{{ herramienta_f }}" placeholder="Herramienta exacta…" aria-label="Herramienta">
+  <label class="casilla"><input type="checkbox" name="escrituras" value="1" {{ 'checked' if solo_escrituras }} data-autoenviar> Solo escrituras</label>
+  {% if usuario_f %}<input type="hidden" name="usuario" value="{{ usuario_f }}"><a class="boton" href="{{ url_for('rutas.actividad_mcp', dias=dias) }}">Quitar filtro de persona</a>{% endif %}
+  <button type="submit" class="boton">Filtrar</button>
+</form>
+
+<div class="rejilla rejilla-6">
+  <div class="tarjeta kpi"><header><span>Llamadas</span></header><strong>{{ resumen.llamadas }}</strong><small>en {{ dias }} días</small></div>
+  <div class="tarjeta kpi"><header><span>Errores</span></header><strong class="{{ 'texto-riesgo' if resumen.errores * 10 > resumen.llamadas and resumen.llamadas else '' }}">{{ resumen.errores }}</strong><small>{{ (resumen.errores * 100 // resumen.llamadas) if resumen.llamadas else 0 }} %</small></div>
+  <div class="tarjeta kpi"><header><span>Personas</span></header><strong>{{ resumen.usuarios }}</strong><small>usan el MCP</small></div>
+</div>
+
+<div class="ficha ficha-dos">
+  <section class="tarjeta ficha-centro"><h2>Por herramienta</h2>
+    <div class="tabla-caja"><table class="tabla"><thead><tr><th>Herramienta</th><th>Llamadas</th><th>Errores</th></tr></thead><tbody>
+      {% for h in resumen.por_herramienta %}<tr><td><a href="{{ url_for('rutas.actividad_mcp', dias=dias, tenant=tenant_f, herramienta=h.herramienta) }}"><code>{{ h.herramienta }}</code></a></td><td>{{ h.llamadas }}</td><td>{{ h.errores or '—' }}</td></tr>
+      {% else %}<tr><td colspan="3" class="vacio">Sin actividad en el periodo.</td></tr>{% endfor %}
+    </tbody></table></div></section>
+  <aside class="ficha-lado"><section class="tarjeta"><h2>Por persona</h2>
+    <div class="tabla-caja"><table class="tabla"><thead><tr><th>Persona</th><th>Llamadas</th></tr></thead><tbody>
+      {% for u in resumen.por_usuario %}<tr><td><a href="{{ url_for('rutas.actividad_mcp', dias=dias, usuario=u.usuario_id) }}">{{ u.email }}</a><br><small class="muted">{{ u.tenant or 'Sin despacho' }}</small></td><td>{{ u.llamadas }}{% if u.errores %} <small class="texto-riesgo">({{ u.errores }} err.)</small>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="2" class="vacio">—</td></tr>{% endfor %}
+    </tbody></table></div></section></aside>
+</div>
+
+<section class="tarjeta"><h2>Registro de llamadas</h2>
+  <div class="tabla-caja"><table class="tabla"><thead><tr><th>Cuándo</th><th>Persona</th><th>Cliente</th><th>Herramienta</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody>
+    {% for r in registros %}
+    <tr><td>{{ r.creado_en|fecha }}</td>
+      <td>{% if r.usuario_id %}<a href="{{ url_for('rutas.usuario', usuario_id=r.usuario_id) }}">{{ r.email }}</a>{% else %}—{% endif %}<br><small class="muted">{{ r.tenant or '' }}</small></td>
+      <td>{{ r.cliente }}{% if r.token_id %} <small class="muted">token {{ r.token_id }}</small>{% endif %}</td>
+      <td><code>{{ r.herramienta }}</code> {% if not r.lectura %}<span class="insignia insignia-aviso">ESCRIBE</span>{% endif %}{% if r.argumentos %}<br><small class="muted mono">{{ r.argumentos }}</small>{% endif %}</td>
+      <td><span class="insignia {{ 'insignia-ok' if r.resultado == 'ok' else 'insignia-riesgo' }}">{{ r.resultado|upper }}</span>{% if r.duracion_ms is not none %}<br><small class="muted">{{ r.duracion_ms }} ms</small>{% endif %}</td>
+      <td>{{ r.detalle or '' }}</td></tr>
+    {% else %}<tr><td colspan="6" class="vacio">No hay llamadas con esos filtros.</td></tr>{% endfor %}
+  </tbody></table></div></section>
+{% endblock %}

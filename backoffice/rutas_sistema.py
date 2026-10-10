@@ -417,7 +417,7 @@ PAGINAS = (
     ("Dashboard", "rutas.dashboard"), ("Tenants", "rutas.tenants"), ("Usuarios", "rutas.usuarios"), ("Mapa de acceso", "rutas.mapa"),
     ("Herramientas", "rutas.catalogo"), ("Customer Journey", "rutas.journey"), ("Salud de clientes", "rutas.salud_clientes"),
     ("Alertas", "rutas.alertas"), ("Leads", "rutas.leads"), ("Solicitudes del portal", "rutas.solicitudes"), ("Planes y extras", "rutas.planes"),
-    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Tokens de API", "rutas.tokens_api"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
+    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Tokens de API", "rutas.tokens_api"), ("Actividad MCP", "rutas.actividad_mcp"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
     ("Estado del sistema", "rutas.estado"), ("Diagnóstico", "rutas.diagnostico_vista"), ("Dependencias", "rutas.dependencias_vista"),
     ("Copias de seguridad", "rutas.copias"), ("Webhooks", "rutas.webhooks"), ("Actividad", "rutas.actividad"), ("Mi cuenta", "rutas.cuenta"),
 )
@@ -523,3 +523,26 @@ def revocar_token_api_global(token_id: int):
     auth.auditar("token_api.revocar", f"token {token_id}")
     flash("Token revocado: dejará de funcionar al instante.", "ok")
     return redirect(url_for("rutas.tokens_api"))
+
+
+# --- Actividad del MCP -----------------------------------------------------------------------------------------------------
+
+@bp.route("/actividad-mcp")
+@auth.login_required
+def actividad_mcp():
+    """Qué hacen las IA y las integraciones por el MCP: uso por herramienta y persona, y el registro de llamadas
+    (filtrable por despacho, persona, herramienta y resultado). De los argumentos solo se guarda su forma, no los textos."""
+    dias = request.args.get("dias", 30, type=int)
+    dias = dias if dias in (7, 30, 90) else 30
+    tenant_id = request.args.get("tenant", type=int)
+    usuario_id = request.args.get("usuario", type=int)
+    herramienta = (request.args.get("herramienta") or "").strip() or None
+    resultado = request.args.get("resultado") if request.args.get("resultado") in ("ok", "error", "denegado", "limite") else None
+    tenants_todos, _ = datos.listar_tenants(por_pagina=100)
+    return render_template(
+        "actividad_mcp.html", resumen=plataforma.mcp_resumen(dias, tenant_id), tenants=tenants_todos, dias=dias, tenant_f=tenant_id,
+        usuario_f=usuario_id, herramienta_f=herramienta or "", resultado_f=resultado or "", solo_escrituras=request.args.get("escrituras") == "1",
+        registros=plataforma.mcp_auditoria_listar(
+            150, usuario_id=usuario_id, tenant_id=tenant_id, herramienta=herramienta, resultado=resultado, solo_escrituras=request.args.get("escrituras") == "1",
+        ),
+    )

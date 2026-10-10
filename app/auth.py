@@ -58,6 +58,24 @@ def _consumir_cupo(usuario_id: int) -> tuple[bool, int, int]:
         return True, API_LIMITE_POR_MINUTO - len(ventana), max(1, int(60 - (ahora - ventana[0])))
 
 
+def consumir_cupos_nombrados(cupos: list[tuple[str, int]]) -> tuple[bool, int]:
+    """Comprueba varias ventanas de 60 s a la vez (p. ej. el total y las escrituras de una persona) y solo si TODAS tienen hueco
+    cuenta la llamada en todas: una petición rechazada no gasta cupo. (permitido, segundos hasta poder reintentar)."""
+    ahora = time.monotonic()
+    with _lock_ventanas:
+        ventanas = []
+        for clave, limite in cupos:
+            ventana = _ventanas.setdefault(clave, deque())
+            while ventana and ahora - ventana[0] >= 60:
+                ventana.popleft()
+            if len(ventana) >= limite:
+                return False, max(1, int(60 - (ahora - ventana[0])) + 1)
+            ventanas.append(ventana)
+        for ventana in ventanas:
+            ventana.append(ahora)
+        return True, 0
+
+
 def _error_api(mensaje: str, status: int, codigo: str, **extra):
     from . import peticion
 

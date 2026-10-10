@@ -1039,6 +1039,33 @@ CREATE TABLE IF NOT EXISTS tokens_api_uso (
     PRIMARY KEY (token_id, dia)
 );
 
+-- Uso y auditoría del servidor MCP: qué herramienta usó quién, con qué cliente y con qué resultado. De los argumentos solo se
+-- guardan su forma (tipos y tamaños) y los ids numéricos, nunca textos libres (correos, notas...), por privacidad.
+CREATE TABLE IF NOT EXISTS mcp_uso (
+    dia TEXT NOT NULL,
+    usuario_id INTEGER NOT NULL,
+    herramienta TEXT NOT NULL,
+    llamadas INTEGER NOT NULL DEFAULT 0,
+    errores INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (dia, usuario_id, herramienta)
+);
+CREATE TABLE IF NOT EXISTS mcp_auditoria (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    creado_en TEXT NOT NULL,
+    usuario_id INTEGER,
+    tenant_id INTEGER,
+    cliente TEXT NOT NULL,
+    token_id INTEGER,
+    herramienta TEXT NOT NULL,
+    lectura INTEGER NOT NULL DEFAULT 0,
+    resultado TEXT NOT NULL CHECK (resultado IN ('ok', 'error', 'denegado', 'limite')),
+    detalle TEXT,
+    argumentos TEXT,
+    duracion_ms INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_fecha ON mcp_auditoria(creado_en);
+CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_usuario ON mcp_auditoria(usuario_id, creado_en);
+
 -- Claves de idempotencia de la API (cabecera Idempotency-Key en POST): una repetición devuelve la misma respuesta.
 CREATE TABLE IF NOT EXISTS api_idempotencia (
     usuario_id INTEGER NOT NULL,
@@ -3889,6 +3916,83 @@ def fijar_referencia_externa(tabla: str, dueno_id: int, fila_id: int, referencia
             raise ValueError("duplicada")
     finally:
         conn.close()
+
+
+
+# ---- Uso y auditoría del MCP --------------------------------------------------------------------------------------------
+
+MCP_AUDITORIA_RETENCION_DIAS = 90
+
+
+def mcp_registrar_llamada(
+    usuario_id: int | None, cliente: str, token_id: int | None, herramienta: str, lectura: bool, resultado: str,
+    detalle: str | None = None, argumentos: dict | None = None, duracion_ms: int | None = None,
+) -> None:
+    """Una fila de auditoría y el contador diario. Nunca debe romper la llamada que audita (el que la llama lo captura)."""
+    tenant = tenant_de_usuario(usuario_id) if usuario_id else None
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO mcp_auditoria (creado_en, usuario_id, tenant_id, cliente, token_id, herramienta, lectura, resultado, detalle, argumentos, duracion_ms) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (now_iso(), usuario_id, tenant["id"] if tenant else None, cliente[:80], token_id, herramienta, 1 if lectura else 0, resultado,
+             (detalle or "")[:300] or None, json.dumps(argumentos, ensure_ascii=False) if argumentos else None, duracion_ms),
+        )
+        if usuario_id:
+            conn.execute(
+                "INSERT INTO mcp_uso (dia, usuario_id, herramienta, llamadas, errores) VALUES (?, ?, ?, 1, ?) "
+                "ON CONFLICT(dia, usuario_id, herramienta) DO UPDATE SET llamadas = llamadas + 1, errores = errores + excluded.errores",
+                (date.today().isoformat(), usuario_id, herramienta, 0 if resultado == "ok" else 1),
+            )
+        if random.random() < 0.01:
+            limite = (datetime.now() - timedelta(days=MCP_AUDITORIA_RETENCION_DIAS)).isoformat(timespec="seconds")
+            conn.execute("DELETE FROM mcp_auditoria WHERE creado_en < ?", (limite,))
+            conn.execute("DELETE FROM mcp_uso WHERE dia < ?", (limite[:10],))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def mcp_resumen(dias: int = 30, tenant_id: int | None = None) -> dict:
+    """Totales, uso por herramienta y por persona de los últimos `dias` días, y los últimos fallos."""
+    desde = (date.today() - timedelta(days=dias - 1)).isoformat()
+    filtro, params = ("AND u.tenant_id = ?", [tenant_id]) if tenant_id is not None else ("", [])
+    conn = get_connection()
+    try:
+        base = f"FROM mcp_uso m JOIN usuarios u ON u.id = m.usuario_id WHERE m.dia >= ? {filtro}"
+        totales = conn.execute(f"SELECT COALESCE(SUM(m.llamadas), 0) AS llamadas, COALESCE(SUM(m.errores), 0) AS errores, COUNT(DISTINCT m.usuario_id) AS usuarios {base}", [desde, *params]).fetchone()
+        por_herramienta = [dict(f) for f in conn.execute(
+            f"SELECT m.herramienta, SUM(m.llamadas) AS llamadas, SUM(m.errores) AS errores {base} GROUP BY m.herramienta ORDER BY llamadas DESC LIMIT 25", [desde, *params])]
+        por_usuario = [dict(f) for f in conn.execute(
+            f"SELECT u.id AS usuario_id, u.email, t.nombre AS tenant, SUM(m.llamadas) AS llamadas, SUM(m.errores) AS errores "
+            f"FROM mcp_uso m JOIN usuarios u ON u.id = m.usuario_id LEFT JOIN tenants t ON t.id = u.tenant_id WHERE m.dia >= ? {filtro} "
+            f"GROUP BY u.id ORDER BY llamadas DESC LIMIT 25", [desde, *params])]
+        por_dia = [dict(f) for f in conn.execute(f"SELECT m.dia, SUM(m.llamadas) AS llamadas, SUM(m.errores) AS errores {base} GROUP BY m.dia ORDER BY m.dia", [desde, *params])]
+    finally:
+        conn.close()
+    return {"desde": desde, "llamadas": totales["llamadas"], "errores": totales["errores"], "usuarios": totales["usuarios"],
+            "por_herramienta": por_herramienta, "por_usuario": por_usuario, "por_dia": por_dia}
+
+
+def mcp_auditoria_listar(
+    limite: int = 100, usuario_id: int | None = None, tenant_id: int | None = None, herramienta: str | None = None,
+    resultado: str | None = None, solo_escrituras: bool = False,
+) -> list[dict]:
+    cond, params = ["1 = 1"], []
+    for columna, valor in (("a.usuario_id", usuario_id), ("a.tenant_id", tenant_id), ("a.herramienta", herramienta or None), ("a.resultado", resultado or None)):
+        if valor is not None:
+            cond.append(f"{columna} = ?"); params.append(valor)
+    if solo_escrituras:
+        cond.append("a.lectura = 0")
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            f"""SELECT a.*, u.email, t.nombre AS tenant FROM mcp_auditoria a LEFT JOIN usuarios u ON u.id = a.usuario_id LEFT JOIN tenants t ON t.id = a.tenant_id
+                WHERE {' AND '.join(cond)} ORDER BY a.id DESC LIMIT ?""", [*params, max(1, min(limite, 1000))],
+        ).fetchall()
+    finally:
+        conn.close()
+    return [dict(f) for f in filas]
 
 
 def registrar_auditoria(usuario_id: int | None, accion: str, detalle: str | None = None) -> None:

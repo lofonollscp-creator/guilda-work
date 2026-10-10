@@ -2222,27 +2222,108 @@ def _anotaciones(nombre: str):
     )
 
 
-def _con_guardian(tool):
-    """Envuelve una herramienta para que respete el alcance del token personal con el que se llama (áreas y solo
-    lectura). Con un token OAuth, o sin token (stdio local), no hace nada: se comporta como siempre."""
-    import functools
+def _resumen_argumentos(tool, args: tuple, kwargs: dict) -> dict:
+    """La FORMA de los argumentos para la auditoría: números y booleanos tal cual (ids, flags), textos solo con su longitud y
+    listas con su tamaño. Nunca el contenido de un texto libre (cuerpos de correo, notas...): es privacidad de los despachos."""
     import inspect
 
-    @functools.wraps(tool)
-    def guardada(*args, **kwargs):
-        token = get_access_token()
-        if token is not None and token.client_id == "token-personal":
-            from app import herramientas_grupos as hg, mcp_acceso
-            from app.ia_herramientas import LECTURA
+    try:
+        ligados = inspect.signature(tool).bind_partial(*args, **kwargs).arguments
+    except TypeError:
+        return {}
+    resumen = {}
+    for nombre, valor in ligados.items():
+        if isinstance(valor, bool) or isinstance(valor, (int, float)) or valor is None:
+            resumen[nombre] = valor
+        elif isinstance(valor, str):
+            resumen[nombre] = f"texto({len(valor)})"
+        elif isinstance(valor, (list, tuple, set, dict)):
+            resumen[nombre] = f"{type(valor).__name__}({len(valor)})"
+        else:
+            resumen[nombre] = type(valor).__name__
+    return resumen
 
+
+def limites_mcp() -> tuple[int, int]:
+    """(llamadas por minuto, escrituras por minuto) por persona en el MCP remoto. Configurable por entorno."""
+    import os
+
+    def entero(nombre, defecto):
+        try:
+            return max(1, int(os.environ.get(nombre, defecto)))
+        except ValueError:
+            return defecto
+
+    return entero("GUILDA_MCP_LIMITE_POR_MINUTO", 120), entero("GUILDA_MCP_LIMITE_ESCRITURAS_POR_MINUTO", 40)
+
+
+def _con_guardian(tool):
+    """Envuelve una herramienta del MCP para que cada llamada quede **medida, limitada y auditada**:
+
+    - respeta el alcance del token personal (áreas y solo lectura);
+    - aplica un límite por persona (llamadas y, más bajo, escrituras por minuto) a las conexiones remotas;
+    - anota cada llamada (quién, con qué cliente, qué herramienta, resultado, duración y la forma de los argumentos) en
+      `mcp_auditoria` y en el uso diario, y suma al uso del token personal en `tokens_api_uso`.
+
+    Sin token (stdio local, la propia máquina del usuario) no se limita, pero sí se anota. El registro nunca rompe la llamada."""
+    import functools
+    import inspect
+    import time
+
+    @functools.wraps(tool)
+    def instrumentada(*args, **kwargs):
+        from app import auth, herramientas_grupos as hg, mcp_acceso
+        from app.ia_herramientas import LECTURA
+
+        token = get_access_token()
+        remoto = token is not None
+        cliente = token.client_id if remoto else "local"
+        personal = remoto and cliente == "token-personal"
+        token_id = mcp_acceso.token_de_scopes(token.scopes) if personal else None
+        lectura = hg.es_lectura(tool.__name__, LECTURA)
+        try:
+            usuario_id = _uid()
+        except Exception:  # noqa: BLE001
+            usuario_id = None
+        inicio = time.monotonic()
+
+        def anotar(resultado: str, detalle: str | None = None) -> None:
+            try:
+                db.mcp_registrar_llamada(
+                    usuario_id, cliente, token_id, tool.__name__, lectura, resultado, detalle,
+                    _resumen_argumentos(tool, args, kwargs), int((time.monotonic() - inicio) * 1000),
+                )
+                if token_id:
+                    db.registrar_uso_token(token_id, {"ok": 200, "denegado": 403, "limite": 429}.get(resultado, 500))
+            except Exception:  # noqa: BLE001 -- auditar nunca debe romper la herramienta
+                pass
+
+        if personal:
             areas, solo_lectura = mcp_acceso.alcance_de_scopes(token.scopes)
             permitido, motivo = hg.herramienta_permitida(tool.__name__, areas, solo_lectura, LECTURA)
             if not permitido:
+                anotar("denegado", motivo)
                 raise ValueError(motivo)
-        return tool(*args, **kwargs)
+        if remoto and usuario_id is not None:
+            por_minuto, escrituras = limites_mcp()
+            cupos = [(f"mcp:{usuario_id}", por_minuto)] + ([] if lectura else [(f"mcp-escritura:{usuario_id}", escrituras)])
+            ok, espera = auth.consumir_cupos_nombrados(cupos)
+            if not ok:
+                anotar("limite", f"más de {por_minuto if lectura else escrituras} por minuto")
+                raise ValueError(
+                    f"Has superado el límite de llamadas al MCP ({por_minuto} por minuto, {escrituras} de escritura). "
+                    f"Espera unos {espera} segundos antes de seguir."
+                )
+        try:
+            resultado = tool(*args, **kwargs)
+        except Exception as e:  # noqa: BLE001
+            anotar("error", f"{type(e).__name__}: {e}")
+            raise
+        anotar("ok")
+        return resultado
 
-    guardada.__signature__ = inspect.signature(tool)
-    return guardada
+    instrumentada.__signature__ = inspect.signature(tool)
+    return instrumentada
 
 
 def registrar_tools(mcp: FastMCP, grupos: set[str] | None = None, solo_lectura: bool | None = None) -> None:

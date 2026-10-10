@@ -2758,3 +2758,11 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **`prueba-dcr` NO es una prueba**: es el conector de Claude.ai (`redirect_uri` `https://claude.ai/api/mcp/auth_callback`), registrado solo por Registro Dinámico el 2026-08-06. No borrar. Claude.ai y ChatGPT dependen del Registro Dinámico, así que sigue activo (`oidc.dynamic_client_registration.enabled`).
 - Riesgo conocido y aceptado: el Registro Dinámico de Hydra acepta cualquier `redirect_uri` (incluso `http://` no local) sin autenticación. Lo que protege es la pantalla de consentimiento de Guilda (`/hydra/consent`, que muestra a dónde vuelve la aplicación) y que el MCP solo acepta clientes que han pasado por ella. `scripts/auditar_hydra.py` lista los clientes para revisarlos.
 - Copia de los clientes previos al cambio: `/root/hydra-clientes-antes-2026-10-10.json`. Reversión: restaurar `--dev` en el `command` y `up -d --no-deps hydra` (la base de datos no se toca).
+
+## MCP: medido, limitado y auditado
+
+- Cada herramienta pasa por `mcp_tools._con_guardian`: aplica el alcance del token personal, el **límite por persona** de las conexiones remotas (120 llamadas/min y 40 escrituras/min; `GUILDA_MCP_LIMITE_POR_MINUTO` y `GUILDA_MCP_LIMITE_ESCRITURAS_POR_MINUTO`; la llamada rechazada no gasta cupo) y **anota** la llamada. El stdio local (tu propia máquina) no se limita pero sí se anota.
+- Tablas `mcp_auditoria` (90 días: persona, despacho, cliente, token, herramienta, lectura/escritura, resultado, duración y la FORMA de los argumentos) y `mcp_uso` (contador diario por persona y herramienta). **Privacidad**: de un texto solo se guarda su longitud; nunca contenidos de correos, notas ni documentos.
+- Las llamadas por token personal suman a `tokens_api_uso` (se ven en `/tokens-api`). El `AccessToken` lleva `token:<id>` en sus scopes.
+- Backoffice: **Actividad MCP** (`/actividad-mcp`): totales, errores, uso por herramienta y por persona, y el registro filtrable por despacho, persona, herramienta, resultado y «solo escrituras».
+- No cubre las herramientas que el chat de IA integrado ejecuta directamente (esas ya quedan en el historial de la conversación).

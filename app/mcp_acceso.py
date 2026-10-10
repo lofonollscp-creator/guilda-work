@@ -47,7 +47,7 @@ def cliente_hydra_permitido(client_id: str) -> bool:
 
 def scopes_de_token_personal(datos: dict) -> list[str]:
     """Scopes equivalentes a un token personal (ver `db.autenticar_token_completo`)."""
-    scopes = [f"usuario:{datos['usuario_id']}"]
+    scopes = [f"usuario:{datos['usuario_id']}", f"token:{datos['token_id']}"]
     scopes += [f"area:{a}" for a in datos["areas"]]
     if datos["permisos"] == "solo_lectura":
         scopes.append("solo_lectura")
@@ -58,6 +58,13 @@ def usuario_de_scopes(scopes: list[str]) -> int | None:
     for s in scopes:
         if s.startswith("usuario:") and s[8:].isdigit():
             return int(s[8:])
+    return None
+
+
+def token_de_scopes(scopes: list[str]) -> int | None:
+    for s in scopes:
+        if s.startswith("token:") and s[6:].isdigit():
+            return int(s[6:])
     return None
 
 

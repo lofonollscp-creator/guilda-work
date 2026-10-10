@@ -101,7 +101,7 @@ def test_verificador_acepta_personal_y_filtra_clientes_oauth(monkeypatch):
     tok = db.crear_token_api(u, "integración", "solo_lectura", areas=["fiscal"])
     v = remoto.VerificadorHydra()
     r = asyncio.run(v.verify_token(tok))
-    assert r.client_id == "token-personal" and set(r.scopes) == {f"usuario:{u}", "area:fiscal", "solo_lectura"}
+    assert r.client_id == "token-personal" and set(r.scopes) == {f"usuario:{u}", f"token:{db.id_de_token(tok)}", "area:fiscal", "solo_lectura"}
     assert asyncio.run(v.verify_token("inventado")) is None
     monkeypatch.setattr(hydra, "verificar_token", lambda t: {"active": True, "client_id": "outline", "scope": "openid", "sub": "k-v", "exp": 9999999999})
     monkeypatch.setattr(hydra, "obtener_cliente", lambda cid: {"client_name": "outline", "skip_consent": True})
