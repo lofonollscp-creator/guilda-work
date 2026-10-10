@@ -16,7 +16,9 @@ def _usuario(cliente, email):
 def test_errores_llevan_codigo_estable_ademas_del_texto(cliente):
     h, _ = _usuario(cliente, "e@ejemplo.com")
     r = cliente.get("/api/v1/notas")
-    assert r.status_code == 401 and r.get_json() == {"ok": False, "error": "Token inválido o ausente.", "codigo": "token_invalido"}
+    cuerpo = r.get_json()
+    assert r.status_code == 401 and {k: cuerpo[k] for k in ("ok", "error", "codigo")} == {"ok": False, "error": "Token inválido o ausente.", "codigo": "token_invalido"}
+    assert cuerpo["request_id"] == r.headers["X-Request-Id"]
     r = cliente.get("/api/v1/notas/9999", headers=h)
     assert r.status_code == 404 and r.get_json()["codigo"] == "no_encontrado" and r.get_json()["ok"] is False and r.get_json()["error"]
     assert cliente.post("/api/v1/proyectos", json={"nombre": ""}, headers=h).get_json()["codigo"] == "peticion_invalida"

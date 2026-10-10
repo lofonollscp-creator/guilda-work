@@ -214,14 +214,28 @@ def _registrar_excepcion_no_controlada(error):
         if request.path.startswith("/api/") and error.code:
             # 404/405 de enrutado (antes de entrar en el blueprint): también JSON uniforme, nunca HTML, para la API.
             from .rutas_api import _codigo_de
-            return jsonify(ok=False, error=error.description, codigo=_codigo_de(error.code)), error.code
+            return jsonify(ok=False, error=error.description, codigo=_codigo_de(error.code), request_id=peticion.id_actual()), error.code
         return error
-    logger.exception("Excepción no controlada en %s %s", request.method, request.path)
+    logger.exception("Excepción no controlada en %s %s [req %s]", request.method, request.path, peticion.id_actual())
     sentry_sdk.capture_exception(error)
-    return (jsonify(ok=False, error=_("Ha ocurrido un error interno. Se ha registrado para revisión."), codigo="error_interno"), 500) if request.path.startswith("/api/") else (
+    return (jsonify(ok=False, error=_("Ha ocurrido un error interno. Se ha registrado para revisión."), codigo="error_interno", request_id=peticion.id_actual()), 500) if request.path.startswith("/api/") else (
         _("Ha ocurrido un error interno. Se ha registrado para revisión."),
         500,
     )
+
+
+@app.before_request
+def _id_de_peticion():
+    rid = peticion.asignar_id()
+    sentry_sdk.set_tag("request_id", rid)
+
+
+@app.after_request
+def _cabecera_id_de_peticion(respuesta):
+    rid = peticion.id_actual()
+    if rid:
+        respuesta.headers["X-Request-Id"] = rid
+    return respuesta
 
 
 KRATOS_SESSION_COOKIE = "ory_kratos_session"

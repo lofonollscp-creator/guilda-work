@@ -2,9 +2,12 @@
 listados de notas y tareas, checklist, asignación, «mi día», conversaciones y acciones de correo, notificaciones,
 búsqueda, consumo de IA y comunicados). Capa fina sobre las mismas funciones de `db.py`; registra sus rutas en el
 mismo blueprint `api_bp`, así que comparten autenticación por token, formato de respuesta y OpenAPI. Todo aditivo."""
+import json
+
 from flask import abort, g, request
 
-from . import busqueda, comunicados, correo, db, ia_consumo
+from . import busqueda, comunicados, correo, db, eventos, ia_consumo
+from . import rutas_api as _api
 from .rutas_api import _body, _dict, _dicts, _err, _ok, _ok_paginado, api_bp
 from .auth import token_required
 from .rutas_correo import _mensaje_de_usuario_o_404
@@ -24,6 +27,10 @@ def _tarea_visible_o_404(tarea_id: int):
 def listar_notas():
     """Notas propias, fijadas primero. Filtros: `proyecto_id`, `q`. Paginación `limit`/`offset` hecha en la base de datos
     (sin `limit` devuelve hasta 1000); total en `X-Total-Count`. `campos=id,titulo` limita los campos devueltos."""
+    ref = request.args.get("referencia_externa")
+    if ref:
+        encontrado = db.id_por_referencia_externa("notas", g.usuario_id, ref)
+        return _ok_paginado([db.obtener_nota(g.usuario_id, encontrado)] if encontrado else [])
     proyecto, q = request.args.get("proyecto_id", type=int), request.args.get("q") or None
     limit = request.args.get("limit", type=int)
     offset = max(0, request.args.get("offset", default=0, type=int) or 0)
@@ -325,3 +332,217 @@ def sincronizar():
         else:
             eliminados.setdefault(entidad, []).append(entidad_id)
     return _ok({"cursor": resultado["cursor"], "hay_mas": resultado["hay_mas"], "reiniciar": resultado["reiniciar"], "cambios": cambios, "eliminados": eliminados})
+
+
+# --- Webhooks del despacho -----------------------------------------------------------------------------------------
+
+MAX_WEBHOOKS_POR_DESPACHO = 20
+
+
+def _exigir_gestion_webhooks():
+    """Un webhook saca datos del despacho hacia fuera: solo lo gestiona quien supervisa el despacho o administra."""
+    if getattr(g, "tenant_id", None) is None:
+        abort(403, "Los webhooks pertenecen a un despacho y tu usuario no tiene ninguno.")
+    if not (g.get("supervisor_tenant") or g.get("es_admin")):
+        abort(403, "Solo un supervisor del despacho o un administrador puede gestionar webhooks.")
+
+
+def _webhook_del_despacho_o_404(webhook_id: int, *, modificar: bool = False) -> dict:
+    _exigir_gestion_webhooks()
+    w = db.obtener_webhook(webhook_id)
+    if w is None or w["tenant_id"] != g.tenant_id:
+        abort(404, "Webhook no encontrado.")
+    if modificar and w["origen"] == "backoffice":
+        abort(403, "Este webhook lo gestiona Guilda Work (backoffice): pide el cambio a soporte.")
+    return dict(w)
+
+
+def _publico(w: dict) -> dict:
+    return {**{k: v for k, v in w.items() if k != "secreto"}, "eventos": json.loads(w["eventos"]) if isinstance(w["eventos"], str) else w["eventos"]}
+
+
+def _validar_cuerpo_webhook(datos: dict, *, parcial: bool):
+    """(url, eventos) validados o un `_err` ya construido."""
+    url, lista = datos.get("url"), datos.get("eventos")
+    if not parcial or "url" in datos:
+        ok, motivo = eventos.validar_url_publica(str(url or ""))
+        if not ok:
+            return _err(motivo, 400, "url_invalida", "url")
+    if not parcial or "eventos" in datos:
+        if not isinstance(lista, list) or not lista or any(e not in eventos.EVENTOS for e in lista):
+            return _err(f"eventos debe ser una lista no vacía de entre: {', '.join(eventos.EVENTOS)}.", 400, "eventos_invalidos", "eventos")
+    return None
+
+
+@api_bp.route("/webhooks", methods=["GET"])
+@token_required
+def listar_webhooks():
+    _exigir_gestion_webhooks()
+    return _ok_paginado(_publico(dict(w)) for w in db.listar_webhooks(g.tenant_id))
+
+
+@api_bp.route("/webhooks/catalogo-eventos", methods=["GET"])
+@token_required
+def catalogo_eventos():
+    """Eventos a los que se puede suscribir un webhook."""
+    return _ok(eventos.EVENTOS)
+
+
+@api_bp.route("/webhooks", methods=["POST"])
+@token_required
+def crear_webhook():
+    """Cuerpo: `{"url": "https://...", "eventos": ["tarea.completada", ...]}`. La URL debe ser https y pública. El
+    `secreto` con el que se firman las entregas solo se devuelve aquí (y al rotarlo): guárdalo."""
+    _exigir_gestion_webhooks()
+    datos = _body()
+    error = _validar_cuerpo_webhook(datos, parcial=False)
+    if error:
+        return error
+    if len(db.listar_webhooks(g.tenant_id)) >= MAX_WEBHOOKS_POR_DESPACHO:
+        return _err(f"Tu despacho ya tiene {MAX_WEBHOOKS_POR_DESPACHO} webhooks (el máximo).", 409, "limite_de_webhooks")
+    w = db.crear_webhook(g.usuario_id, g.tenant_id, datos["url"], list(dict.fromkeys(datos["eventos"])), origen="api")
+    return _ok({**_publico(w), "secreto": w["secreto"]}, 201)
+
+
+@api_bp.route("/webhooks/<int:webhook_id>", methods=["GET"])
+@token_required
+def obtener_webhook(webhook_id: int):
+    return _ok(_publico(_webhook_del_despacho_o_404(webhook_id)))
+
+
+@api_bp.route("/webhooks/<int:webhook_id>", methods=["PUT"])
+@token_required
+def editar_webhook(webhook_id: int):
+    """Cambia `url`, `eventos` y/o `activo` (cualquier subconjunto)."""
+    _webhook_del_despacho_o_404(webhook_id, modificar=True)
+    datos = _body()
+    error = _validar_cuerpo_webhook(datos, parcial=True)
+    if error:
+        return error
+    db.actualizar_webhook(
+        webhook_id, url=datos.get("url") if "url" in datos else None,
+        eventos=list(dict.fromkeys(datos["eventos"])) if "eventos" in datos else None,
+        activo=bool(datos["activo"]) if "activo" in datos else None,
+    )
+    return _ok(_publico(dict(db.obtener_webhook(webhook_id))))
+
+
+@api_bp.route("/webhooks/<int:webhook_id>", methods=["DELETE"])
+@token_required
+def borrar_webhook(webhook_id: int):
+    _webhook_del_despacho_o_404(webhook_id, modificar=True)
+    db.borrar_webhook(webhook_id)
+    return _ok()
+
+
+@api_bp.route("/webhooks/<int:webhook_id>/rotar-secreto", methods=["POST"])
+@token_required
+def rotar_secreto_webhook(webhook_id: int):
+    """Secreto nuevo; el anterior deja de valer al instante. Se devuelve solo esta vez."""
+    _webhook_del_despacho_o_404(webhook_id, modificar=True)
+    return _ok({"secreto": db.rotar_secreto_webhook(webhook_id)})
+
+
+@api_bp.route("/webhooks/<int:webhook_id>/probar", methods=["POST"])
+@token_required
+def probar_webhook(webhook_id: int):
+    """Encola un evento `ping` firmado como cualquier otro; mira el resultado en `/entregas`."""
+    _webhook_del_despacho_o_404(webhook_id, modificar=True)
+    eventos.enviar_prueba(webhook_id)
+    return _ok({"encolado": True}, 202)
+
+
+@api_bp.route("/webhooks/<int:webhook_id>/entregas", methods=["GET"])
+@token_required
+def entregas_webhook(webhook_id: int):
+    """Últimos intentos de entrega y lo que sigue en cola (pendiente/fallido) de este webhook."""
+    _webhook_del_despacho_o_404(webhook_id)
+    return _ok({"intentos": _dicts(db.entregas_de_webhook(webhook_id, 30)), "cola": db.cola_webhook_de(webhook_id, 30)})
+
+
+@api_bp.route("/webhooks/entregas/<int:cola_id>/reintentar", methods=["POST"])
+@token_required
+def reintentar_entrega(cola_id: int):
+    fila = db.cola_webhook_obtener(cola_id)
+    if fila is None:
+        abort(404, "Entrega no encontrada.")
+    _webhook_del_despacho_o_404(fila["webhook_id"], modificar=True)
+    if not db.cola_webhook_reintentar(cola_id):
+        return _err("Solo se pueden reintentar entregas fallidas.", 409, "entrega_no_fallida")
+    return _ok()
+
+
+# --- Upsert por referencia externa (sincronizar con un ERP/CRM sin guardar nuestros ids) ----------------------------------
+
+def _upsert(tabla: str, dueno_id: int, referencia: str, vista_crear, vista_editar):
+    """Si existe un registro con esa `referencia_externa` lo edita; si no, lo crea. Reutiliza los mismos controladores
+    que POST y PUT (mismas validaciones y permisos): solo cambia que la referencia viene en la ruta."""
+    try:
+        ref = db.validar_referencia_externa(referencia)
+    except ValueError as e:
+        return _err(str(e), 400, "referencia_invalida", "referencia_externa")
+    if not ref:
+        return _err("La referencia no puede estar vacía.", 400, "referencia_invalida", "referencia_externa")
+    g.referencia_forzada = ref
+    existente = db.id_por_referencia_externa(tabla, dueno_id, ref)
+    resultado = vista_editar.__wrapped__(existente) if existente else vista_crear.__wrapped__()
+    respuesta, status = resultado
+    if existente and status == 200:
+        respuesta.headers["X-Guilda-Upsert"] = "actualizado"
+    elif status == 201:
+        respuesta.headers["X-Guilda-Upsert"] = "creado"
+    return respuesta, status
+
+
+@api_bp.route("/notas/por-referencia/<path:referencia>", methods=["GET"])
+@token_required
+def nota_por_referencia(referencia: str):
+    nota_id = db.id_por_referencia_externa("notas", g.usuario_id, referencia)
+    if nota_id is None:
+        abort(404, "No hay ninguna nota con esa referencia.")
+    return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)))
+
+
+@api_bp.route("/notas/por-referencia/<path:referencia>", methods=["PUT"])
+@token_required
+def upsert_nota(referencia: str):
+    """Crea o actualiza la nota con esa `referencia_externa` (cuerpo como POST/PUT /notas). 201 si la crea, 200 si la actualiza."""
+    return _upsert("notas", g.usuario_id, referencia, _api.crear_nota, _api.editar_nota)
+
+
+@api_bp.route("/tareas-outlook/por-referencia/<path:referencia>", methods=["GET"])
+@token_required
+def tarea_por_referencia(referencia: str):
+    tarea_id = db.id_por_referencia_externa("tareas_outlook", g.usuario_id, referencia)
+    if tarea_id is None:
+        abort(404, "No hay ninguna tarea con esa referencia.")
+    return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
+
+
+@api_bp.route("/tareas-outlook/por-referencia/<path:referencia>", methods=["PUT"])
+@token_required
+def upsert_tarea_outlook(referencia: str):
+    """Crea o actualiza la tarea con esa `referencia_externa` (cuerpo como POST/PUT /tareas-outlook)."""
+    return _upsert("tareas_outlook", g.usuario_id, referencia, _api.crear_tarea_outlook, _api.editar_tarea_outlook)
+
+
+@api_bp.route("/fiscal/clientes/por-referencia/<path:referencia>", methods=["GET"])
+@token_required
+def cliente_fiscal_por_referencia(referencia: str):
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    cliente_id = db.id_por_referencia_externa("clientes_fiscales", g.tenant_id, referencia)
+    if cliente_id is None:
+        abort(404, "No hay ningún cliente fiscal con esa referencia.")
+    return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)))
+
+
+@api_bp.route("/fiscal/clientes/por-referencia/<path:referencia>", methods=["PUT"])
+@token_required
+def upsert_cliente_fiscal(referencia: str):
+    """Crea o actualiza el cliente fiscal con esa `referencia_externa` (cuerpo como POST/PUT /fiscal/clientes)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    return _upsert("clientes_fiscales", g.tenant_id, referencia, _api.crear_cliente_fiscal, _api.editar_cliente_fiscal)

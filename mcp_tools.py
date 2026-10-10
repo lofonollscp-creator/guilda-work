@@ -125,11 +125,33 @@ def _uid() -> int:
     if _usuario_id_actual.get():
         return _usuario_id_actual.get()
     token = get_access_token()
+    if token is not None:
+        from app import mcp_acceso
+
+        personal = mcp_acceso.usuario_de_scopes(token.scopes)       # token personal de API
+        if personal is not None:
+            return personal
     if token is not None and token.subject:
         usuario = db.usuario_por_kratos_id(token.subject)
         if usuario is not None:
             return usuario["id"]
     return db.usuario_local_id()
+
+
+def _tenant_autorizado_por_nombre(nombre: str | None):
+    """Fila del tenant llamado `nombre` SOLO si quien llama puede operar sobre él: es administrador global, es el usuario
+    local de escritorio (stdio, su propia máquina) o pertenece a ese despacho. En cualquier otro caso responde igual que
+    si no existiera (no se puede averiguar qué despachos hay). Sin esto, cualquier usuario de la gestoría A podía operar
+    la facturación, los documentos, el correo o los webhooks de la gestoría B solo con escribir su nombre."""
+    fila = db.obtener_tenant_por_nombre(nombre) if nombre else None
+    if fila is None:
+        return None
+    uid = _uid()
+    usuario = db.obtener_usuario(uid)
+    if db.es_admin(uid) or (usuario is not None and usuario["es_local"]):
+        return fila
+    propio = db.tenant_de_usuario(uid)
+    return fila if propio is not None and propio["id"] == fila["id"] else None
 
 
 def _fila(fila: sqlite3.Row | None) -> dict | None:
@@ -687,7 +709,7 @@ def monitorizacion_listar_estado() -> list[dict]:
 # llamada. `tenant` es el nombre tal cual aparece en el backoffice.
 
 def _datos_facturascripts(tenant: str) -> tuple[str, str]:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["facturascripts_api_key"]:
@@ -734,7 +756,7 @@ def facturas_crear_factura(tenant: str, cliente_codigo: str, lineas: list[dict])
 # HOSTING.md) — no hay API para eso, verificado en vivo (app/documenso.py).
 
 def _api_key_documenso(tenant: str) -> str:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["documenso_api_key"]:
@@ -823,7 +845,7 @@ def enviar_documento_firmado_al_chat(documento_id: str) -> dict:
 # servicio/Grupo se use, no de una instancia física distinta.
 
 def _datos_paperless(tenant: str) -> tuple[str, int, int]:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["paperless_api_key"]:
@@ -862,7 +884,7 @@ def documentos_descargar(tenant: str, documento_id: str) -> str:
 # resolver qué token usar, mismo motivo que facturas_*/firmas_*/documentos_*.
 
 def _api_key_baserow(tenant: str) -> str:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["baserow_api_key"]:
@@ -921,7 +943,7 @@ def listar_filas_hoja(tabla_id: int, texto: str | None = None, limite: int = 20)
 # cuál usar, mismo motivo que facturas_*/firmas_*/documentos_*/hojas_*.
 
 def _api_key_calcom(tenant: str) -> str:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["calcom_api_key"]:
@@ -958,7 +980,7 @@ def citas_crear_reserva(tenant: str, tipo_evento_id: int, inicio: str, nombre_as
         except jitsi.ErrorJitsi:
             pass
         try:
-            fila_tenant = db.obtener_tenant_por_nombre(tenant)
+            fila_tenant = _tenant_autorizado_por_nombre(tenant)
             eventos.emitir(
                 "cita.reservada", fila_tenant["id"] if fila_tenant else None,
                 {"reserva_uid": resultado["uid"], "inicio": inicio, "nombre_asistente": nombre_asistente, "email_asistente": email_asistente},
@@ -984,17 +1006,34 @@ def citas_cancelar_reserva(tenant: str, reserva_uid: str, motivo: str = "") -> d
 def _tenant_id_por_nombre(tenant: str | None) -> int | None:
     if tenant is None:
         return None
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     return fila["id"]
+
+
+def _gestiona_webhooks(tenant_id: int | None) -> bool:
+    """Admin global y usuario local: todo. Supervisor de un despacho: solo los de su despacho."""
+    uid = _uid()
+    usuario = db.obtener_usuario(uid)
+    if db.es_admin(uid) or (usuario is not None and usuario["es_local"]):
+        return True
+    propio = db.tenant_de_usuario(uid)
+    return tenant_id is not None and propio is not None and propio["id"] == tenant_id and db.es_supervisor_tenant(uid)
+
+
+def _exigir_webhooks(tenant_id: int | None) -> None:
+    if not _gestiona_webhooks(tenant_id):
+        raise ValueError("Solo un supervisor de ese despacho o un administrador puede gestionar sus webhooks.")
 
 
 def webhooks_listar(tenant: str | None = None) -> list[dict]:
     """Lista los webhooks configurados (de un tenant, o de ámbito local
     si no se indica `tenant`) — sin el `secreto` (ver
     webhooks_crear para eso, solo se enseña una vez al crearlo)."""
-    filas = db.listar_webhooks(_tenant_id_por_nombre(tenant))
+    tenant_id = _tenant_id_por_nombre(tenant)
+    _exigir_webhooks(tenant_id)
+    filas = db.listar_webhooks(tenant_id)
     return [{k: v for k, v in dict(f).items() if k != "secreto"} for f in filas]
 
 
@@ -1004,15 +1043,28 @@ def webhooks_crear(url: str, eventos_suscritos: list[str], tenant: str | None = 
     cita.reservada, correo.mensaje_nuevo). El `secreto` devuelto (para
     verificar la firma HMAC de cada entrega, ver HOSTING.md) solo se
     enseña esta vez, igual que el resto de credenciales generadas de
-    este proyecto."""
+    este proyecto. Para quien no es administrador la URL debe ser https y pública."""
     invalidos = [e for e in eventos_suscritos if e not in eventos.EVENTOS]
     if invalidos:
         raise ValueError(f"Eventos no reconocidos: {invalidos}. Válidos: {eventos.EVENTOS}")
-    return dict(db.crear_webhook(_uid(), _tenant_id_por_nombre(tenant), url, eventos_suscritos))
+    tenant_id = _tenant_id_por_nombre(tenant)
+    _exigir_webhooks(tenant_id)
+    uid = _uid()
+    usuario = db.obtener_usuario(uid)
+    de_confianza = db.es_admin(uid) or (usuario is not None and usuario["es_local"])
+    if not de_confianza:
+        ok, motivo = eventos.validar_url_publica(url)
+        if not ok:
+            raise ValueError(motivo)
+    return dict(db.crear_webhook(uid, tenant_id, url, eventos_suscritos, origen="backoffice" if de_confianza else "mcp"))
 
 
 def webhooks_borrar(webhook_id: int) -> None:
     """Borra un webhook (y su historial de entregas) por id."""
+    w = db.obtener_webhook(webhook_id)
+    if w is None:
+        raise ValueError(f"No existe el webhook {webhook_id}.")
+    _exigir_webhooks(w["tenant_id"])
     db.borrar_webhook(webhook_id)
 
 
@@ -1024,7 +1076,7 @@ def webhooks_borrar(webhook_id: int) -> None:
 # documentos_*/hojas_*/citas_*.
 
 def _datos_listmonk(tenant: str) -> tuple[str, int]:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["listmonk_api_key"]:
@@ -1073,7 +1125,7 @@ def newsletter_enviar_campana(tenant: str, campana_id: int) -> dict:
 # servicio usar, mismo motivo que newsletter_*/citas_*.
 
 def _api_key_stalwart(tenant: str) -> str:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["stalwart_api_key"]:
@@ -1108,7 +1160,7 @@ def correo_stalwart_enviar_mensaje(tenant: str, para: str, asunto: str, cuerpo: 
 # citas_*/correo_stalwart_*.
 
 def _datos_ntfy(tenant: str) -> tuple[str, str]:
-    fila = db.obtener_tenant_por_nombre(tenant)
+    fila = _tenant_autorizado_por_nombre(tenant)
     if fila is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     if not fila["ntfy_token"]:
@@ -1135,7 +1187,7 @@ def videollamadas_crear_sala(tenant: str, nombre_mostrado: str, moderador: bool 
     """Crea una sala de videollamada nueva para un tenant (Jitsi Meet) y
     devuelve su URL. No hace falta que la sala exista de antemano — se
     crea sola al entrar la primera persona con un enlace válido."""
-    if db.obtener_tenant_por_nombre(tenant) is None:
+    if _tenant_autorizado_por_nombre(tenant) is None:
         raise ValueError(f"No existe ningún tenant llamado '{tenant}'.")
     sala = jitsi.nombre_sala(tenant, uuid.uuid4().hex[:12])
     token = jitsi.generar_jwt_sala(tenant, nombre_mostrado, sala, moderador=moderador)
@@ -2106,11 +2158,56 @@ def _perfil_desde_entorno() -> tuple[set[str] | None, bool]:
     return grupos, os.environ.get("GUILDA_MCP_SOLO_LECTURA") == "1"
 
 
+def _anotaciones(nombre: str):
+    """Anotaciones estándar de MCP: los clientes las usan para decidir qué piden confirmar. `readOnlyHint` = solo
+    consulta; `destructiveHint` = borra o es irreversible/hacia terceros; `openWorldHint` = habla con el exterior."""
+    import re
+
+    from mcp.types import ToolAnnotations
+
+    from app import herramientas_grupos as hg
+    from app.ia_herramientas import LECTURA, SIEMPRE_CONFIRMAR
+
+    lectura = hg.es_lectura(nombre, LECTURA)
+    borra = bool(re.search(r"(^|_)(eliminar|borrar|cancelar)(_|$)", nombre))
+    externo = nombre in SIEMPRE_CONFIRMAR or hg.grupo_de(nombre) in ("integraciones", "firmas", "crm", "facturacion", "archivos") or nombre.startswith(("newsletter_", "correo_stalwart_"))
+    return ToolAnnotations(
+        readOnlyHint=lectura,
+        destructiveHint=False if lectura else (borra or nombre in SIEMPRE_CONFIRMAR),
+        idempotentHint=lectura or nombre.startswith(("editar_", "fijar_", "marcar_", "completar_", "alternar_")),
+        openWorldHint=bool(externo),
+    )
+
+
+def _con_guardian(tool):
+    """Envuelve una herramienta para que respete el alcance del token personal con el que se llama (áreas y solo
+    lectura). Con un token OAuth, o sin token (stdio local), no hace nada: se comporta como siempre."""
+    import functools
+    import inspect
+
+    @functools.wraps(tool)
+    def guardada(*args, **kwargs):
+        token = get_access_token()
+        if token is not None and token.client_id == "token-personal":
+            from app import herramientas_grupos as hg, mcp_acceso
+            from app.ia_herramientas import LECTURA
+
+            areas, solo_lectura = mcp_acceso.alcance_de_scopes(token.scopes)
+            permitido, motivo = hg.herramienta_permitida(tool.__name__, areas, solo_lectura, LECTURA)
+            if not permitido:
+                raise ValueError(motivo)
+        return tool(*args, **kwargs)
+
+    guardada.__signature__ = inspect.signature(tool)
+    return guardada
+
+
 def registrar_tools(mcp: FastMCP, grupos: set[str] | None = None, solo_lectura: bool | None = None) -> None:
     """Registra las tools de TOOLS sobre una instancia de FastMCP — usado por mcp_server.py (stdio) y
     mcp_server_remoto.py (streamable-http) para exponer exactamente el mismo conjunto sin duplicar código.
-    Sin argumentos se lee el perfil del entorno (por defecto: todas, como siempre)."""
+    Sin argumentos se lee el perfil del entorno (por defecto: todas, como siempre). Cada tool lleva sus anotaciones
+    MCP (solo lectura, destructiva, idempotente, mundo abierto) y un guardián del alcance del token personal."""
     if grupos is None and solo_lectura is None:
         grupos, solo_lectura = _perfil_desde_entorno()
     for tool in tools_filtradas(grupos, bool(solo_lectura)):
-        mcp.add_tool(tool)
+        mcp.add_tool(_con_guardian(tool), annotations=_anotaciones(tool.__name__))

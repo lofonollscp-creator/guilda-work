@@ -1688,6 +1688,14 @@ def init_db() -> None:
         # Conversaciones: cabeceras de enlace y clave de hilo (ver
         # calcular_hilo_clave). ANTES de executescript(INDICES).
         _asegurar_columna(conn, "tokens_api", "permisos", "TEXT NOT NULL DEFAULT 'completo'")
+        _asegurar_columna(conn, "webhooks", "origen", "TEXT NOT NULL DEFAULT 'backoffice'")
+        # Referencia del sistema externo (ERP, CRM...) para sincronizar sin duplicar: única por dueño cuando existe.
+        _asegurar_columna(conn, "clientes_fiscales", "referencia_externa", "TEXT")
+        _asegurar_columna(conn, "tareas_outlook", "referencia_externa", "TEXT")
+        _asegurar_columna(conn, "notas", "referencia_externa", "TEXT")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_fiscales_ref ON clientes_fiscales(tenant_id, referencia_externa) WHERE referencia_externa IS NOT NULL")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tareas_outlook_ref ON tareas_outlook(usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_ref ON notas(usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL")
         _asegurar_columna(conn, "tokens_api", "areas", "TEXT")
         _asegurar_columna(conn, "tokens_api", "caduca_en", "TEXT")
         _asegurar_columna(conn, "tokens_api", "ultima_ip", "TEXT")
@@ -3840,6 +3848,49 @@ def idempotencia_liberar(usuario_id: int, clave: str) -> None:
         conn.close()
 
 
+
+# ---- Referencias externas (sincronizar con otros sistemas sin duplicar) ---------------------------------------------
+
+_DUENO_REFERENCIA = {"clientes_fiscales": "tenant_id", "tareas_outlook": "usuario_id", "notas": "usuario_id"}
+
+
+def validar_referencia_externa(valor) -> str | None:
+    """Texto limpio de 1 a 120 caracteres sin saltos de línea, o None si viene vacío. ValueError si no vale."""
+    if valor is None or (isinstance(valor, str) and not valor.strip()):
+        return None
+    if not isinstance(valor, (str, int)) or isinstance(valor, bool):
+        raise ValueError("referencia_externa debe ser un texto.")
+    texto = str(valor).strip()
+    if len(texto) > 120 or any(ord(c) < 32 for c in texto):
+        raise ValueError("referencia_externa admite hasta 120 caracteres y sin saltos de línea.")
+    return texto
+
+
+def id_por_referencia_externa(tabla: str, dueno_id: int, referencia: str) -> int | None:
+    columna = _DUENO_REFERENCIA[tabla]
+    conn = get_connection()
+    try:
+        f = conn.execute(f"SELECT id FROM {tabla} WHERE {columna} = ? AND referencia_externa = ? AND papelera_en IS NULL", (dueno_id, referencia)).fetchone()
+        return f["id"] if f else None
+    finally:
+        conn.close()
+
+
+def fijar_referencia_externa(tabla: str, dueno_id: int, fila_id: int, referencia: str | None) -> None:
+    """Asigna (o quita con None) la referencia externa. ValueError('duplicada') si otra fila del mismo dueño ya la tiene."""
+    columna = _DUENO_REFERENCIA[tabla]
+    conn = get_connection()
+    try:
+        try:
+            conn.execute(f"UPDATE {tabla} SET referencia_externa = ? WHERE id = ? AND {columna} = ?", (referencia, fila_id, dueno_id))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            raise ValueError("duplicada")
+    finally:
+        conn.close()
+
+
 def registrar_auditoria(usuario_id: int | None, accion: str, detalle: str | None = None) -> None:
     """Nunca debe romper la acción que audita -- quien llama (rutas_backoffice.py)
     la envuelve en su propio try/except best-effort, mismo criterio que el
@@ -4020,20 +4071,57 @@ def exportar_datos_tenant(tenant_id: int) -> dict:
 _MAX_ENTREGAS_POR_WEBHOOK = 50
 
 
-def crear_webhook(usuario_id: int, tenant_id: int | None, url: str, eventos: list[str]) -> dict:
+def crear_webhook(usuario_id: int, tenant_id: int | None, url: str, eventos: list[str], origen: str = "backoffice") -> dict:
     """`eventos` es una lista de nombres (ver app/eventos.py:EVENTOS) —
     se guarda como JSON, no una tabla aparte: no hace falta consultarlos
-    por separado, siempre se leen todos juntos para un webhook dado."""
+    por separado, siempre se leen todos juntos para un webhook dado.
+    `origen`: `backoffice` (de confianza, puede apuntar a servicios internos) | `api` | `mcp` (URL pública obligatoria:
+    ver eventos.validar_url_publica)."""
     secreto = secrets.token_urlsafe(32)
     conn = get_connection()
     try:
         cursor = conn.execute(
-            "INSERT INTO webhooks (tenant_id, usuario_id, url, eventos, secreto, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (tenant_id, usuario_id, url, json.dumps(eventos), secreto, now_iso()),
+            "INSERT INTO webhooks (tenant_id, usuario_id, url, eventos, secreto, creado_en, origen) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (tenant_id, usuario_id, url, json.dumps(eventos), secreto, now_iso(), origen),
         )
         conn.commit()
         return dict(obtener_webhook(cursor.lastrowid))
+    finally:
+        conn.close()
+
+
+def actualizar_webhook(webhook_id: int, url: str | None = None, eventos: list[str] | None = None, activo: bool | None = None) -> None:
+    conn = get_connection()
+    try:
+        if url is not None:
+            conn.execute("UPDATE webhooks SET url = ? WHERE id = ?", (url, webhook_id))
+        if eventos is not None:
+            conn.execute("UPDATE webhooks SET eventos = ? WHERE id = ?", (json.dumps(eventos), webhook_id))
+        if activo is not None:
+            conn.execute("UPDATE webhooks SET activo = ? WHERE id = ?", (1 if activo else 0, webhook_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def rotar_secreto_webhook(webhook_id: int) -> str:
+    """Genera un secreto nuevo (el anterior deja de valer al instante) y lo devuelve: solo se enseña esta vez."""
+    secreto = secrets.token_urlsafe(32)
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE webhooks SET secreto = ? WHERE id = ?", (secreto, webhook_id))
+        conn.commit()
+        return secreto
+    finally:
+        conn.close()
+
+
+def cola_webhook_obtener(cola_id: int) -> dict | None:
+    conn = get_connection()
+    try:
+        f = conn.execute("SELECT * FROM webhooks_cola WHERE id = ?", (cola_id,)).fetchone()
+        return dict(f) if f else None
     finally:
         conn.close()
 

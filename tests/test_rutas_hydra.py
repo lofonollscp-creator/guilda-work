@@ -20,7 +20,7 @@ def test_consent_provisiona_usuario_si_hydra_se_salta_el_login(cliente, monkeypa
 
     monkeypatch.setattr(
         rutas_hydra.hydra, "obtener_consent_request",
-        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"]},
+        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"], "client": {"skip_consent": True}},
     )
     monkeypatch.setattr(
         rutas_hydra.kratos, "obtener_identidad",
@@ -53,7 +53,7 @@ def test_consent_usa_la_fila_existente_si_ya_habia_una(cliente, monkeypatch):
 
     monkeypatch.setattr(
         rutas_hydra.hydra, "obtener_consent_request",
-        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"]},
+        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"], "client": {"skip_consent": True}},
     )
 
     def obtener_identidad_no_deberia_llamarse(subject):
@@ -89,7 +89,7 @@ def test_consent_manda_el_nombre_del_tenant_como_groups(cliente, monkeypatch):
 
     monkeypatch.setattr(
         rutas_hydra.hydra, "obtener_consent_request",
-        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"]},
+        lambda challenge: {"subject": identity_id, "requested_scope": ["openid", "email"], "client": {"skip_consent": True}},
     )
 
     capturado = {}

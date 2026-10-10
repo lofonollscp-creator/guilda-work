@@ -78,6 +78,24 @@ def obtener_consent_request(challenge: str) -> dict:
     return cuerpo
 
 
+def obtener_cliente(client_id: str) -> dict | None:
+    """Datos de un cliente OAuth2 (nombre, skip_consent, redirect_uris, metadata...) o None si no existe."""
+    estado, cuerpo = _peticion(f"{HYDRA_ADMIN_URL}/admin/clients/{urllib.parse.quote(client_id, safe='')}")
+    return cuerpo if estado == 200 else None
+
+
+def rechazar_consent_request(challenge: str, motivo: str = "El usuario ha denegado el acceso.") -> str:
+    """El usuario dice que no: Hydra devuelve la URL a la que redirigir con `error=access_denied`."""
+    estado, cuerpo = _peticion(
+        f"{HYDRA_ADMIN_URL}/admin/oauth2/auth/requests/consent/reject?consent_challenge={challenge}",
+        metodo="PUT",
+        cuerpo={"error": "access_denied", "error_description": motivo},
+    )
+    if estado != 200:
+        raise ErrorHydra("Hydra ha rechazado la denegación del consentimiento.")
+    return cuerpo["redirect_to"]
+
+
 def aceptar_consent_request(
     challenge: str, *, scopes: list, email: str, tenant_nombre: str | None = None
 ) -> str:

@@ -7436,3 +7436,27 @@ msgid "%(n)s llamada en 30 días"
 msgid_plural "%(n)s llamadas en 30 días"
 msgstr[0] "%(n)s appel en 30 jours"
 msgstr[1] "%(n)s appels en 30 jours"
+
+msgid "«%(app)s» quiere acceder a tu cuenta"
+msgstr "« %(app)s » souhaite accéder à votre compte"
+
+msgid "Has iniciado sesión como %(email)s."
+msgstr "Vous êtes connecté en tant que %(email)s."
+
+msgid "La aplicación te devolverá a: %(hosts)s."
+msgstr "L'application vous redirigera vers : %(hosts)s."
+
+msgid "Si la autorizas podrá usar Guilda Work en tu nombre: leer y modificar tus notas, tareas, correo y datos de tus clientes, según lo que tu cuenta pueda hacer. Autoriza solo aplicaciones que reconozcas."
+msgstr "Si vous l'autorisez, elle pourra utiliser Guilda Work en votre nom : lire et modifier vos notes, tâches, e-mails et les données de vos clients, dans la limite de ce que votre compte peut faire. N'autorisez que des applications que vous reconnaissez."
+
+msgid "Permisos técnicos que pide:"
+msgstr "Autorisations techniques demandées :"
+
+msgid "Denegar"
+msgstr "Refuser"
+
+msgid "Permitir"
+msgstr "Autoriser"
+
+msgid "Autorizar aplicación"
+msgstr "Autoriser l'application"

@@ -2719,3 +2719,14 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Errores nuevos: `token_caducado` (401), `token_area_no_permitida` (403, con `areas`). Los tokens existentes no cambian (sin áreas ni caducidad).
 - La web (Mis dispositivos) crea tokens con permisos, áreas y caducidad, y muestra último uso y llamadas de 30 días. Backoffice: `/tokens-api` lista todos los tokens (alcance, uso, errores, IP) y permite revocar cualquiera.
 - `GET /tareas-outlook` admite `desde`/`hasta`.
+
+## Fase 0 de OAuth2 y primer paquete de mejoras de API/MCP
+
+- **Consentimiento OAuth**: los clientes con `skip_consent` (propios) siguen sin pantalla; cualquier otro (p. ej. los del Registro Dinámico, como ChatGPT) muestra «Permitir/Denegar» en `/hydra/consent`, con auditoría (`oauth.consentimiento`). El challenge solo lo puede resolver la persona a la que pertenece.
+- **MCP remoto**: ya no acepta cualquier token de Hydra. Valen los clientes que pasaron por consentimiento, los marcados `metadata.mcp = true` y los de `MCP_REMOTO_CLIENTES` (por defecto `claude-desktop`); un token de Outline/Element/Drive/MAS/Documentos se rechaza. También acepta **tokens personales de API** con sus áreas y su solo lectura (`app/mcp_acceso.py`). Cada herramienta lleva anotaciones MCP (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+- **Aislamiento de despachos en el MCP**: las herramientas con parámetro `tenant` (facturas, documentos, hojas, firmas, citas, newsletter, correo_stalwart, ntfy, webhooks...) solo operan sobre tu propio despacho (admins y usuario local, sobre cualquiera). Antes bastaba con escribir el nombre de otra gestoría. Los webhooks por MCP exigen supervisor del despacho y URL pública.
+- **Hydra**: sigue arrancando con `--dev` y con el Registro Dinámico activo (`deploy/hydra/hydra.yml`); es decisión de operación, ver `scripts/auditar_hydra.py` (solo lectura) para revisar los clientes.
+- **Webhooks**: firma con marca de tiempo `X-Guilda-Signature-V2` (`t=...,v1=...`) además de la antigua; webhooks creados por API/MCP: solo https hacia direcciones públicas, comprobado también en cada entrega, sin seguir redirecciones (columna `webhooks.origen`). API `/webhooks` para supervisores.
+- **`X-Request-Id`** en toda respuesta (y `request_id` en errores de la API); se acepta el del cliente si es sano. Va a Sentry como etiqueta y a los registros de errores.
+- **`referencia_externa`** (notas, tareas de lista, clientes fiscales) con índices únicos por dueño y upsert `.../por-referencia/{ref}`.
+- Un valor que la base rechaza (estado inexistente...) ahora responde 400 `valor_invalido` en la API (antes 500).

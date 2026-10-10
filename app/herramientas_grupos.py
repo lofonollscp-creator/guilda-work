@@ -134,3 +134,38 @@ def texto_activacion(grupos_pedidos: list[str]) -> str:
     if not validos:
         return "Grupos disponibles: " + "; ".join(f"{g} ({d})" for g, d in DESCRIPCIONES.items()) + "."
     return "Activadas. Ya puedes usar: " + "; ".join(f"{g}: {', '.join(GRUPOS[g])}" for g in validos) + "."
+
+
+# --- Áreas de la API (app/api_areas.py) aplicadas a las herramientas, para los tokens personales con áreas -------------
+# Una herramienta que no está aquí es «transversal»: mezcla datos de varias áreas o toca integraciones, y solo la puede
+# usar una credencial sin restricción de áreas (cerrado por defecto: una herramienta nueva sin clasificar no se filtra).
+_HERRAMIENTAS_DE_AREA: dict[str, tuple[str, ...]] = {
+    "notas": ("listar_notas", "crear_nota", "editar_nota", "eliminar_nota", "fijar_nota"),
+    "tareas": (
+        "listar_tareas", "crear_tarea", "editar_tarea", "completar_tarea", "completar_tareas", "detalle_tarea", "eliminar_tarea",
+        "consultar_calendario", "listar_tareas_hoy", "listar_proyectos", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
+        "asignar_tarea", "listar_companeros", "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
+        "crear_tarea_recurrente", "listar_tareas_recurrentes",
+    ),
+    "correo": tuple(n for n in GRUPOS["correo"] if n not in ("crear_tarea_desde_correo", "guardar_nota_desde_correo")),
+    "fiscal": GRUPOS["fiscal"],
+    "fichaje": GRUPOS["fichaje"],
+    "tiquets": GRUPOS["tiquets"],
+    "avisos": ("listar_notificaciones",),
+    "webhooks": ("webhooks_listar", "webhooks_crear", "webhooks_borrar"),
+}
+_AREA_DE_HERRAMIENTA = {nombre: area for area, nombres in _HERRAMIENTAS_DE_AREA.items() for nombre in nombres}
+
+
+def area_de_herramienta(nombre: str) -> str:
+    """Área de la API a la que pertenece una herramienta, o `transversal`."""
+    return _AREA_DE_HERRAMIENTA.get(nombre, "transversal")
+
+
+def herramienta_permitida(nombre: str, areas: list[str], solo_lectura: bool, lectura_conocida=frozenset()) -> tuple[bool, str]:
+    """(permitido, motivo) para una credencial con `areas` (vacío = todas) y/o solo lectura."""
+    if solo_lectura and not es_lectura(nombre, lectura_conocida):
+        return False, "Esta credencial es de solo lectura."
+    if areas and area_de_herramienta(nombre) not in areas:
+        return False, f"Esta credencial solo tiene acceso a: {', '.join(areas)}."
+    return True, ""

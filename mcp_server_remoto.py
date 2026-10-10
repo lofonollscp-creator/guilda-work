@@ -42,7 +42,7 @@ from mcp.server.auth.provider import AccessToken, TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
 
-from app import db, hydra
+from app import db, hydra, mcp_acceso
 from mcp_tools import registrar_tools
 
 MCP_REMOTO_ORIGIN = os.environ.get("MCP_REMOTO_ORIGIN", "http://127.0.0.1:8017")
@@ -51,13 +51,20 @@ MCP_REMOTO_PUERTO = int(os.environ.get("MCP_REMOTO_PUERTO", "8017"))
 
 
 class VerificadorHydra(TokenVerifier):
-    """Valida los tokens Bearer que llegan a este servidor llamando a la
-    introspección de la Admin API de Hydra (RFC7662) — ver
-    app/hydra.py: verificar_token."""
+    """Valida los tokens Bearer que llegan a este servidor: primero como token personal de API (local, con áreas y
+    solo lectura) y si no, como token OAuth2 de Hydra por introspección (RFC7662, ver app/hydra.py: verificar_token),
+    aceptando únicamente clientes pensados para el MCP (ver app/mcp_acceso.py)."""
 
     async def verify_token(self, token: str) -> AccessToken | None:
+        personal = db.autenticar_token_completo(token)
+        if personal is not None:
+            if personal.get("caducado"):
+                return None
+            return AccessToken(token=token, client_id="token-personal", scopes=mcp_acceso.scopes_de_token_personal(personal), expires_at=None)
         introspeccion = hydra.verificar_token(token)
         if introspeccion is None:
+            return None
+        if not mcp_acceso.cliente_hydra_permitido(introspeccion.get("client_id", "")):
             return None
         scope = introspeccion.get("scope", "")
         return AccessToken(

@@ -17,12 +17,13 @@ errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 import base64
 import hashlib
 import json
+import sqlite3
 from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
+from . import correo, db, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -44,10 +45,19 @@ def _codigo_de(status: int) -> str:
 
 @api_bp.errorhandler(HTTPException)
 def _error_json(e: HTTPException):
-    respuesta = jsonify({"ok": False, "error": e.description, "codigo": _codigo_de(e.code or 500)})
+    respuesta = jsonify({"ok": False, "error": e.description, "codigo": _codigo_de(e.code or 500), "request_id": peticion.id_actual()})
     if e.code == 429 and getattr(e, "retry_after", None):
         respuesta.headers["Retry-After"] = str(int(e.retry_after))
     return respuesta, e.code
+
+
+@api_bp.errorhandler(sqlite3.IntegrityError)
+def _integridad(e: sqlite3.IntegrityError):
+    """Un valor que la base de datos rechaza (estado o prioridad inexistentes, duplicados...) es un error del cliente,
+    no un fallo del servidor."""
+    if "UNIQUE" in str(e):
+        return _err("Ya existe un registro con esos datos.", 409, "conflicto")
+    return _err("Alguno de los valores enviados no es válido (revisa campos como estado o prioridad).", 400, "valor_invalido")
 
 
 @api_bp.after_request
@@ -118,10 +128,41 @@ def _ok_paginado(filas):
 def _err(mensaje: str, status: int = 400, codigo: str | None = None, campo: str | None = None):
     """Error uniforme: `{"ok": false, "error": "texto para personas", "codigo": "clave_estable", "campo": "opcional"}`.
     `codigo` es lo que debe leer un programa (el texto puede cambiar o traducirse)."""
-    cuerpo = {"ok": False, "error": mensaje, "codigo": codigo or _codigo_de(status)}
+    cuerpo = {"ok": False, "error": mensaje, "codigo": codigo or _codigo_de(status), "request_id": peticion.id_actual()}
     if campo:
         cuerpo["campo"] = campo
     return jsonify(cuerpo), status
+
+
+def _referencia(datos: dict):
+    """(hay_referencia, valor). La puede mandar el cliente en el cuerpo (`referencia_externa`) o venir forzada por las rutas
+    `.../por-referencia/{ref}`. ValueError si no es válida."""
+    forzada = g.get("referencia_forzada")
+    if forzada is not None:
+        return True, db.validar_referencia_externa(forzada)
+    if "referencia_externa" in datos:
+        return True, db.validar_referencia_externa(datos["referencia_externa"])
+    return False, None
+
+
+def _error_referencia(tabla: str, dueno_id: int, datos: dict, excepto_id: int | None = None):
+    """None si la referencia (si la hay) es válida y está libre; si no, el `_err` que hay que devolver."""
+    try:
+        hay, ref = _referencia(datos)
+    except ValueError as e:
+        return _err(str(e), 400, "referencia_invalida", "referencia_externa")
+    if hay and ref:
+        otro = db.id_por_referencia_externa(tabla, dueno_id, ref)
+        if otro is not None and otro != excepto_id:
+            return _err(f"Ya existe un registro con referencia_externa «{ref}» (id {otro}).", 409, "referencia_duplicada", "referencia_externa")
+    return None
+
+
+def _guardar_referencia(tabla: str, dueno_id: int, fila_id: int, datos: dict) -> None:
+    hay, ref = _referencia(datos)
+    if hay:
+        db.fijar_referencia_externa(tabla, dueno_id, fila_id, ref)
+
 
 
 def _body() -> dict:
@@ -318,6 +359,9 @@ def crear_nota():
     texto = (datos.get("texto") or "").strip()
     if not texto:
         return _err("El texto no puede estar vacío.")
+    error = _error_referencia("notas", g.usuario_id, datos)
+    if error:
+        return error
     try:
         nota_id = db.crear_nota(
             g.usuario_id, texto, categoria_id=datos.get("categoria_id"),
@@ -325,6 +369,7 @@ def crear_nota():
         )
     except ValueError as e:
         return _err(str(e))
+    _guardar_referencia("notas", g.usuario_id, nota_id, datos)
     return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)), 201)
 
 
@@ -333,10 +378,15 @@ def crear_nota():
 def editar_nota(nota_id: int):
     if db.obtener_nota(g.usuario_id, nota_id) is None:
         abort(404, "Nota no encontrada.")
-    texto = (_body().get("texto") or "").strip()
+    datos = _body()
+    texto = (datos.get("texto") or "").strip()
     if not texto:
         return _err("El texto no puede estar vacío.")
+    error = _error_referencia("notas", g.usuario_id, datos, excepto_id=nota_id)
+    if error:
+        return error
     db.editar_nota(g.usuario_id, nota_id, texto)
+    _guardar_referencia("notas", g.usuario_id, nota_id, datos)
     return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)))
 
 
@@ -504,6 +554,10 @@ def listar_tareas_outlook():
     `ambito` (opcional): `propias` (por defecto, como siempre), `asignadas`
     (las que me han asignado), `compartidas` (compartidas conmigo) o `todas`.
     Cada fila lleva `rol`: dueno, asignada o compartida."""
+    ref = request.args.get("referencia_externa")
+    if ref:
+        encontrado = db.id_por_referencia_externa("tareas_outlook", g.usuario_id, ref)
+        return _ok_paginado([db.obtener_tarea_outlook(g.usuario_id, encontrado)] if encontrado else [])
     ambito = request.args.get("ambito") or "propias"
     if ambito not in ("propias", "asignadas", "compartidas", "todas"):
         return _err("ambito debe ser propias, asignadas, compartidas o todas.")
@@ -535,12 +589,16 @@ def crear_tarea_outlook():
     asunto = (datos.get("asunto") or "").strip()
     if not asunto:
         return _err("El asunto no puede estar vacío.")
+    error = _error_referencia("tareas_outlook", g.usuario_id, datos)
+    if error:
+        return error
     tarea_id = db.crear_tarea_outlook(
         g.usuario_id, asunto=asunto, cuerpo=datos.get("cuerpo"),
         prioridad=datos.get("prioridad", "normal"),
         fecha_inicio=datos.get("fecha_inicio"), fecha_vencimiento=datos.get("fecha_vencimiento"),
         categoria_outlook=datos.get("categoria_outlook"), estimacion_min=datos.get("estimacion_min"),
     )
+    _guardar_referencia("tareas_outlook", g.usuario_id, tarea_id, datos)
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)), 201)
 
 
@@ -558,8 +616,12 @@ def editar_tarea_outlook(tarea_id: int):
         )
         if campo in datos
     }
+    error = _error_referencia("tareas_outlook", g.usuario_id, datos, excepto_id=tarea_id)
+    if error:
+        return error
     if campos:
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+    _guardar_referencia("tareas_outlook", g.usuario_id, tarea_id, datos)
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
 
 
@@ -687,6 +749,10 @@ def listar_clientes_fiscales():
     error = _exigir_tenant_api()
     if error:
         return error
+    ref = request.args.get("referencia_externa")
+    if ref:
+        encontrado = db.id_por_referencia_externa("clientes_fiscales", g.tenant_id, ref)
+        return _ok_paginado([db.obtener_cliente_fiscal(g.tenant_id, encontrado)] if encontrado else [])
     return _ok_paginado(db.listar_clientes_fiscales(g.tenant_id, q=request.args.get("q") or None))
 
 
@@ -700,6 +766,9 @@ def crear_cliente_fiscal():
     nombre = (datos.get("nombre") or "").strip()
     if not nombre:
         return _err("El nombre es obligatorio.")
+    error = _error_referencia("clientes_fiscales", g.tenant_id, datos)
+    if error:
+        return error
     cliente_id = db.crear_cliente_fiscal(
         g.tenant_id, nombre, nif=datos.get("nif"), notas=datos.get("notas"),
         modelos_fiscales=datos.get("modelos_fiscales") or None,
@@ -714,6 +783,7 @@ def crear_cliente_fiscal():
             db.editar_cliente_fiscal(g.tenant_id, cliente_id, espocrm_cuenta_id=cuenta_id)
     except espocrm.ErrorEspoCRM:
         pass
+    _guardar_referencia("clientes_fiscales", g.tenant_id, cliente_id, datos)
     return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)), 201)
 
 
@@ -751,7 +821,11 @@ def editar_cliente_fiscal(cliente_id: int):
         campos["modelos_fiscales"] = db.serializar_modelos_fiscales(datos["modelos_fiscales"])
     if "generacion_automatica" in datos:
         campos["generacion_automatica"] = 1 if datos["generacion_automatica"] else 0
+    error = _error_referencia("clientes_fiscales", g.tenant_id, datos, excepto_id=cliente_id)
+    if error:
+        return error
     db.editar_cliente_fiscal(g.tenant_id, cliente_id, **campos)
+    _guardar_referencia("clientes_fiscales", g.tenant_id, cliente_id, datos)
     return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)))
 
 

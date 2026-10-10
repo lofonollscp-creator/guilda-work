@@ -16,6 +16,7 @@ AREAS: dict[str, tuple[str, tuple[str, ...]]] = {
     "tiquets": ("Tiquets", ("tiquets",)),
     "ia": ("Asistente de IA", ("ia", "chat")),
     "avisos": ("Notificaciones y comunicados", ("notificaciones", "comunicados")),
+    "webhooks": ("Webhooks del despacho", ("webhooks",)),
 }
 
 # Siempre permitido (no expone datos de negocio): documentación, identidad propia y cierre de sesión.

@@ -59,7 +59,9 @@ def _consumir_cupo(usuario_id: int) -> tuple[bool, int, int]:
 
 
 def _error_api(mensaje: str, status: int, codigo: str, **extra):
-    cuerpo = {"ok": False, "error": mensaje, "codigo": codigo, **extra}
+    from . import peticion
+
+    cuerpo = {"ok": False, "error": mensaje, "codigo": codigo, "request_id": peticion.id_actual(), **extra}
     return jsonify(cuerpo), status
 
 

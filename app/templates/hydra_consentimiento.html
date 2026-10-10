@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="{{ idioma_actual }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Guilda Work — {{ _('Autorizar aplicación') }}</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: "Segoe UI", -apple-system, Roboto, sans-serif; background: #16181d; color: #e5e7eb; }
+    .card { max-width: 460px; width: calc(100% - 32px); padding: 28px; background: #1e2128; border: 1px solid #343944; border-radius: 14px; }
+    h1 { font-size: 1.25em; margin: 0 0 8px; }
+    p, li { color: #b4bac5; line-height: 1.5; }
+    .aviso { border-left: 4px solid #e0555a; padding: 8px 12px; background: #2a2024; border-radius: 6px; color: #f0c8ca; }
+    ul { padding-left: 20px; }
+    .botones { display: flex; gap: 10px; margin-top: 20px; }
+    button { flex: 1; padding: 11px; border-radius: 9px; border: 1px solid #4a505c; background: transparent; color: inherit; font-size: 1em; cursor: pointer; }
+    button.primario { background: #a6e600; border-color: #a6e600; color: #0a0a0a; font-weight: 600; }
+    code { color: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>{{ _('«%(app)s» quiere acceder a tu cuenta', app=app_nombre) }}</h1>
+    <p>{{ _('Has iniciado sesión como %(email)s.', email=usuario.email) }}
+      {% if redirect_hosts %}{{ _('La aplicación te devolverá a: %(hosts)s.', hosts=redirect_hosts|join(', ')) }}{% endif %}</p>
+    <p class="aviso">{{ _('Si la autorizas podrá usar Guilda Work en tu nombre: leer y modificar tus notas, tareas, correo y datos de tus clientes, según lo que tu cuenta pueda hacer. Autoriza solo aplicaciones que reconozcas.') }}</p>
+    {% if scopes %}<p>{{ _('Permisos técnicos que pide:') }}</p><ul>{% for s in scopes %}<li><code>{{ s }}</code></li>{% endfor %}</ul>{% endif %}
+    <form method="post" action="{{ url_for('hydra_bridge.hydra_consent') }}">
+      <input type="hidden" name="consent_challenge" value="{{ challenge }}">
+      <div class="botones">
+        <button type="submit" name="decision" value="denegar">{{ _('Denegar') }}</button>
+        <button type="submit" name="decision" value="permitir" class="primario">{{ _('Permitir') }}</button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

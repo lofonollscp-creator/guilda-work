@@ -364,7 +364,7 @@ PAGINAS = [
                 "errores que genera Flask antes de llegar a la vista (404 de ruta inexistente, 405 de método no "
                 "permitido): <code>{\"ok\": false, \"error\": \"mensaje legible\", \"codigo\": \"no_encontrado\"}</code>, nunca una "
                 "página HTML. <b>Programa contra <code>codigo</code></b> (estable), no contra el texto, que puede cambiar o "
-                "traducirse. Códigos: <code>peticion_invalida</code>, <code>token_invalido</code>, <code>token_solo_lectura</code>, <code>token_caducado</code>, <code>token_area_no_permitida</code>, "
+                "traducirse. Códigos: <code>peticion_invalida</code>, <code>token_invalido</code>, <code>token_solo_lectura</code>, <code>token_caducado</code>, <code>token_area_no_permitida</code>, <code>referencia_duplicada</code>, <code>referencia_invalida</code>, <code>valor_invalido</code>, <code>url_invalida</code>, "
                 "<code>prohibido</code>, <code>no_encontrado</code>, <code>metodo_no_permitido</code>, <code>conflicto</code>, "
                 "<code>idempotencia_conflicto</code>, <code>idempotencia_en_curso</code>, <code>limite_excedido</code> y "
                 "<code>error_interno</code>. Algunos errores de validación añaden <code>campo</code>."},
@@ -375,6 +375,8 @@ PAGINAS = [
                 ["Idempotencia", "En cualquier <code>POST</code> añade <code>Idempotency-Key: &lt;cadena única&gt;</code>: si reintentas la misma petición (corte de red) devuelve la respuesta original con <code>Idempotent-Replay: true</code> en vez de crear un duplicado. La misma clave con otro cuerpo da <code>422</code>. Vale 24 h; los errores 5xx no se guardan."],
                 ["Caché", "Las lecturas <code>GET</code> llevan <code>ETag</code>; reenvíalo en <code>If-None-Match</code> y recibirás <code>304</code> sin cuerpo si no ha cambiado."],
                 ["Campos", "<code>?campos=id,asunto</code> devuelve solo esos campos, en objetos y listas."],
+                ["Trazabilidad", "Cada respuesta lleva <code>X-Request-Id</code> (y los errores, <code>request_id</code>). Puedes enviar el tuyo en esa cabecera (8-64 caracteres: letras, números, <code>._-</code>) para correlacionar; al pedir soporte, indica ese id."],
+                ["Referencias externas", "Notas, tareas de lista y clientes fiscales admiten <code>referencia_externa</code> (hasta 120 caracteres, única por usuario o despacho). Filtra con <code>?referencia_externa=</code>; <code>GET/PUT /notas|tareas-outlook|fiscal/clientes/por-referencia/{ref}</code> hace <b>upsert</b>: crea (201) o actualiza (200, cabecera <code>X-Guilda-Upsert</code>) sin que guardes nuestros ids. Duplicada: 409 <code>referencia_duplicada</code>."],
                 ["Paginación", "<code>limit</code>/<code>offset</code> y total en <code>X-Total-Count</code>."],
                 ["Sincronización", "<code>GET /sync</code> da un cursor; después <code>GET /sync?cursor=N</code> devuelve solo lo que cambió (<code>cambios</code> y <code>eliminados</code> de notas, tareas, tareas de lista y proyectos). Ver «Proyectos, checklist, asignación y más»."],
             ]},
@@ -473,6 +475,20 @@ PAGINAS = [
                 ["GET", "/ia/consumo", "Consultas de IA del mes del despacho y su tope (<code>ilimitado</code> si no hay)."],
                 ["GET", "/comunicados", "Avisos de Guilda vigentes para el usuario."],
                 ["POST", "/comunicados/{id}/cerrar", "Cierra un aviso (los críticos no se pueden cerrar: 403)."],
+            ]},
+            {"type": "h2", "id": "webhooks-api", "text": "Webhooks por API"},
+            {"type": "p", "html":
+                "Para que una integración se dé de alta sola. Solo un <b>supervisor del despacho</b> o un administrador "
+                "(los webhooks sacan datos del despacho). La URL debe ser <b>https y pública</b> (se rechazan direcciones "
+                "internas y no se siguen redirecciones). Área de token: <code>webhooks</code>."},
+            {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
+                ["GET/POST", "/webhooks", "Lista / crea (<code>url</code>, <code>eventos</code>). El <code>secreto</code> solo se devuelve al crear."],
+                ["GET", "/webhooks/catalogo-eventos", "Eventos disponibles."],
+                ["GET/PUT/DELETE", "/webhooks/{id}", "Ver / cambiar (<code>url</code>, <code>eventos</code>, <code>activo</code>) / borrar. Los creados desde el Backoffice son de solo lectura aquí."],
+                ["POST", "/webhooks/{id}/rotar-secreto", "Secreto nuevo (el anterior deja de valer al instante)."],
+                ["POST", "/webhooks/{id}/probar", "Encola un evento <code>ping</code> (202)."],
+                ["GET", "/webhooks/{id}/entregas", "Intentos recientes y estado de la cola."],
+                ["POST", "/webhooks/entregas/{cola_id}/reintentar", "Reintenta una entrega fallida."],
             ]},
             {"type": "h2", "id": "dashboard-historico", "text": "Dashboard, histórico y exportación"},
             {"type": "table", "headers": ["Método", "Ruta", "Descripción"], "rows": [
@@ -769,6 +785,8 @@ PAGINAS = [
             {"type": "table", "headers": ["Cabecera", "Contenido"], "rows": [
                 ["<code>X-Guilda-Event</code>", "Nombre del evento, p. ej. <code>tarea.finalizada</code>."],
                 ["<code>X-Guilda-Signature</code>", "<code>sha256=&lt;hex&gt;</code> — HMAC-SHA256 del cuerpo, ver abajo."],
+                ["<code>X-Guilda-Signature-V2</code>", "<code>t=&lt;unix&gt;,v1=&lt;hex&gt;</code> — HMAC-SHA256 de <code>\"&lt;unix&gt;.\" + cuerpo</code>. <b>Recomendada</b>: comprueba que <code>t</code> no tenga más de 5 minutos para descartar entregas repetidas."],
+                ["<code>X-Guilda-Timestamp</code>", "El mismo <code>&lt;unix&gt;</code> de la firma V2."],
                 ["<code>X-Guilda-Delivery</code>", "Id de la entrega, igual en todos los reintentos del mismo evento: úsalo para descartar duplicados."],
             ]},
             {"type": "h2", "id": "verificar-firma", "text": "Verificar la firma"},

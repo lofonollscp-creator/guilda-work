@@ -29,10 +29,13 @@ descartar duplicados, porque la entrega es «al menos una vez».
 """
 import hashlib
 import hmac
+import ipaddress
 import json
+import socket
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -66,6 +69,43 @@ def _firmar(cuerpo: bytes, secreto: str) -> str:
     return "sha256=" + hmac.new(secreto.encode("utf-8"), cuerpo, hashlib.sha256).hexdigest()
 
 
+def firmar_v2(cuerpo: bytes, secreto: str, marca: int) -> str:
+    """Firma con marca de tiempo (estilo Stripe): `t=<unix>,v1=<hmac(secreto, "<unix>." + cuerpo)>`. El receptor debe
+    rechazar marcas de más de ~5 minutos: así una entrega capturada no se puede volver a enviar más tarde."""
+    firma = hmac.new(secreto.encode("utf-8"), f"{marca}.".encode() + cuerpo, hashlib.sha256).hexdigest()
+    return f"t={marca},v1={firma}"
+
+
+def _resolver(host: str, puerto: int) -> set[str]:
+    return {info[4][0] for info in socket.getaddrinfo(host, puerto, proto=socket.IPPROTO_TCP)}
+
+
+def validar_url_publica(url: str) -> tuple[bool, str]:
+    """Para webhooks creados por API/MCP (no por el backoffice): solo https hacia direcciones públicas. Evita que una
+    cuenta use Guilda Work para sondear la red interna (SSRF): 127.0.0.1, la red de Docker, metadatos de la nube..."""
+    try:
+        partes = urllib.parse.urlsplit(url)
+    except ValueError:
+        return False, "La URL no es válida."
+    if partes.scheme != "https" or not partes.hostname or len(url) > 500:
+        return False, "La URL debe ser https:// y tener un host (máx. 500 caracteres)."
+    if partes.username or partes.password:
+        return False, "La URL no puede llevar usuario ni contraseña."
+    try:
+        direcciones = _resolver(partes.hostname, partes.port or 443)
+    except (socket.gaierror, UnicodeError):
+        return False, "No se puede resolver el host de la URL."
+    for direccion in direcciones:
+        if not ipaddress.ip_address(direccion.split("%")[0]).is_global:
+            return False, "La URL apunta a una dirección no pública, no permitida."
+    return True, ""
+
+
+class _SinRedirecciones(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
 def _iso(dt: datetime) -> str:
     return dt.isoformat(timespec="seconds")
 
@@ -77,15 +117,26 @@ def _cuerpo(cola_id: int, evento: str, payload: dict, creado_en: str) -> bytes:
 def _entregar(webhook: dict, cola_id: int, evento: str, payload: dict, creado_en: str, intento: int) -> tuple[bool, int | None, str | None]:
     """Un único intento de entrega. Registra el intento y devuelve (ok, estado_http, error)."""
     cuerpo = _cuerpo(cola_id, evento, payload, creado_en)
+    marca = int(time.time())
     cabeceras = {
         "Content-Type": "application/json",
         "X-Guilda-Signature": _firmar(cuerpo, webhook["secreto"]),
+        "X-Guilda-Signature-V2": firmar_v2(cuerpo, webhook["secreto"], marca),
+        "X-Guilda-Timestamp": str(marca),
         "X-Guilda-Event": evento,
         "X-Guilda-Delivery": str(cola_id),
     }
+    externo = webhook.get("origen", "backoffice") != "backoffice"
+    if externo:
+        # También en cada entrega (no solo al crearlo): el DNS puede haber cambiado a una dirección interna.
+        ok_url, motivo = validar_url_publica(webhook["url"])
+        if not ok_url:
+            db.registrar_entrega_webhook(webhook["id"], evento, None, intento, error=f"URL bloqueada: {motivo}")
+            return False, None, f"URL bloqueada: {motivo}"
     req = urllib.request.Request(webhook["url"], data=cuerpo, method="POST", headers=cabeceras)
+    abrir = urllib.request.build_opener(_SinRedirecciones).open if externo else urllib.request.urlopen
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS) as resp:
+        with abrir(req, timeout=TIMEOUT_SEGUNDOS) as resp:
             estado, error = resp.status, None
     except urllib.error.HTTPError as e:
         estado, error = e.code, str(e)
