@@ -346,15 +346,19 @@ def listar_bandeja_entrada(
     ))
 
 
-def leer_correo(mensaje_id: int) -> dict:
+def leer_correo(mensaje_id: int, incluir_html: bool = False) -> dict:
     """Devuelve un mensaje completo (asunto, remitente, destinatarios, Cc,
-    cuerpo en texto y HTML, categoría). Cco nunca aparece aquí ni en ningún
+    cuerpo en texto, categoría). Cco nunca aparece aquí ni en ningún
     mensaje recibido — por diseño del correo electrónico, nadie salvo el
-    remitente original sabe quién iba en copia oculta."""
+    remitente original sabe quién iba en copia oculta. El HTML solo se
+    incluye con `incluir_html=True` (repite el texto y gasta mucho contexto);
+    los cuerpos larguísimos se recortan avisando de cuánto había."""
     if not db.mensaje_correo_pertenece_a_usuario(_uid(), mensaje_id):
         raise ValueError(f"No existe el mensaje {mensaje_id}.")
-    mensaje = correo.obtener_mensaje(mensaje_id)
-    return _fila(mensaje)
+    mensaje = _fila(correo.obtener_mensaje(mensaje_id))
+    if not incluir_html and mensaje:
+        mensaje.pop("cuerpo_html", None)
+    return mensaje
 
 
 def marcar_leido_correo(mensaje_id: int, leido: bool = True) -> dict:
@@ -2033,6 +2037,32 @@ def iniciar_cronometro_tarea(tarea_id: int, proyecto: str | int | None = None) -
     return {"tarea_cronometro_id": db.iniciar_cronometro_tarea_outlook(uid, tarea_id, categoria)}
 
 
+def consumo_ia() -> dict:
+    """Consultas de IA que ha usado tu despacho este mes y su tope (o `ilimitado`)."""
+    from app import ia_consumo
+
+    tenant = db.tenant_de_usuario(_uid())
+    return ia_consumo.estado(tenant["id"]) if tenant is not None else {"ilimitado": True, "usadas": 0, "limite": None}
+
+
+def listar_comunicados() -> list[dict]:
+    """Avisos vigentes de Guilda para ti (mantenimientos, novedades, incidencias)."""
+    from app import comunicados
+
+    tenant = db.tenant_de_usuario(_uid())
+    return comunicados.activos_para(_uid(), tenant["id"] if tenant else None)
+
+
+def webhooks_entregas(webhook_id: int, limite: int = 20) -> dict:
+    """Últimos intentos de entrega de un webhook y lo que sigue en cola (pendiente o fallido). Solo supervisores del despacho."""
+    w = db.obtener_webhook(webhook_id)
+    if w is None:
+        raise ValueError(f"No existe el webhook {webhook_id}.")
+    _exigir_webhooks(w["tenant_id"])
+    limite = max(1, min(limite, 100))
+    return {"intentos": _filas(db.entregas_de_webhook(webhook_id, limite)), "cola": db.cola_webhook_de(webhook_id, limite)}
+
+
 def resumen_del_dia() -> dict:
     """Todo lo que importa hoy en UNA llamada: «mi día» (vencidas, hoy, en curso, asignadas), vencimientos fiscales de los
     próximos 7 días, correos sin leer y notificaciones sin leer. Úsala para «¿qué tengo hoy?» en vez de varias consultas."""
@@ -2133,7 +2163,7 @@ TOOLS = [
     # Citas
     citas_listar_tipos_evento, citas_listar_reservas, citas_crear_reserva, citas_cancelar_reserva,
     # Webhooks
-    webhooks_listar, webhooks_crear, webhooks_borrar,
+    webhooks_listar, webhooks_crear, webhooks_borrar, webhooks_entregas,
     # Newsletter
     newsletter_listar_suscriptores, newsletter_crear_suscriptor,
     newsletter_listar_campanas, newsletter_crear_campana, newsletter_enviar_campana,
@@ -2159,6 +2189,7 @@ TOOLS = [
     eliminar_regla_correo, listar_conversacion_correo, crear_tarea_desde_correo, guardar_nota_desde_correo,
     resumen_del_dia, detalle_tarea, completar_tareas, listar_notificaciones,
     cambiar_estado_tarea, listar_comentarios_tarea, comentar_tarea, iniciar_cronometro_tarea,
+    consumo_ia, listar_comunicados,
     listar_proyectos, crear_proyecto, renombrar_proyecto, eliminar_proyecto, eliminar_nota, eliminar_tarea,
     fijar_nota, listar_tareas_hoy, listar_companeros, asignar_tarea, listar_checklist_tarea,
     agregar_item_checklist, alternar_item_checklist,
@@ -2270,6 +2301,11 @@ def _con_guardian(tool):
     import inspect
     import time
 
+    from app import mcp_utilidad as mu
+
+    firma_original = inspect.signature(tool)
+    firma_publica = mu.firma_con_tenant_opcional(firma_original)      # `tenant` obligatorio -> opcional (por defecto, tu despacho)
+
     @functools.wraps(tool)
     def instrumentada(*args, **kwargs):
         from app import auth, herramientas_grupos as hg, mcp_acceso
@@ -2315,15 +2351,38 @@ def _con_guardian(tool):
                     f"Espera unos {espera} segundos antes de seguir."
                 )
         try:
-            resultado = tool(*args, **kwargs)
+            if firma_publica is not None and not kwargs.get("tenant"):
+                propio = db.tenant_de_usuario(usuario_id) if usuario_id else None
+                if propio is None:
+                    raise ValueError("Indica el nombre del despacho (`tenant`): tu usuario no tiene ninguno asignado.")
+                kwargs["tenant"] = propio["nombre"]
+            resultado = mu.recortar_resultado(tool(*args, **kwargs))
         except Exception as e:  # noqa: BLE001
             anotar("error", f"{type(e).__name__}: {e}")
             raise
         anotar("ok")
         return resultado
 
-    instrumentada.__signature__ = inspect.signature(tool)
+    instrumentada.__signature__ = firma_publica or firma_original
+    if firma_publica is not None:
+        instrumentada.__doc__ = (tool.__doc__ or "").rstrip() + mu.NOTA_TENANT
     return instrumentada
+
+
+def _registrar_prompts_y_recursos(mcp: FastMCP, expuestas: dict) -> None:
+    """Prompts (tareas habituales listas para usar) y recursos (datos que el cliente puede adjuntar sin llamar a una herramienta).
+    Un recurso lee con la herramienta que lo produce, así que pasa por el mismo control de alcance, límites y auditoría; solo se registra
+    si esa herramienta está expuesta en el perfil actual."""
+    from mcp.server.fastmcp.prompts import Prompt
+    from mcp.server.fastmcp.resources import FunctionResource
+
+    from app import mcp_utilidad as mu
+
+    for nombre, fn in mu.PROMPTS:
+        mcp.add_prompt(Prompt.from_function(fn, name=nombre, description=(fn.__doc__ or "").strip()))
+    for uri, nombre, descripcion, herramienta in mu.RECURSOS:
+        if herramienta in expuestas:
+            mcp.add_resource(FunctionResource(uri=uri, name=nombre, description=descripcion, mime_type="application/json", fn=_con_guardian(expuestas[herramienta])))
 
 
 def registrar_tools(mcp: FastMCP, grupos: set[str] | None = None, solo_lectura: bool | None = None) -> None:
@@ -2333,5 +2392,7 @@ def registrar_tools(mcp: FastMCP, grupos: set[str] | None = None, solo_lectura: 
     MCP (solo lectura, destructiva, idempotente, mundo abierto) y un guardián del alcance del token personal."""
     if grupos is None and solo_lectura is None:
         grupos, solo_lectura = _perfil_desde_entorno()
-    for tool in tools_filtradas(grupos, bool(solo_lectura)):
+    expuestas = tools_filtradas(grupos, bool(solo_lectura))
+    for tool in expuestas:
         mcp.add_tool(_con_guardian(tool), annotations=_anotaciones(tool.__name__))
+    _registrar_prompts_y_recursos(mcp, {t.__name__: t for t in expuestas})

@@ -2703,6 +2703,7 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Chat de IA**: ya no manda las 95 herramientas en cada turno (~40 KB). Manda el núcleo (13, ~6 KB) y añade grupos (correo, fiscal, fichaje, tiquets, facturación, CRM, archivos, firmas, tareas_avanzadas) según las palabras del usuario, lo ya usado en la conversación o lo que el modelo pida con `activar_herramientas`. Ahorro típico: 60-85 % de fichas de herramientas por turno. Definido en `app/herramientas_grupos.py`.
 - **MCP externo**: por defecto expone todo, como siempre. Perfiles opcionales por entorno: `GUILDA_MCP_GRUPOS=fiscal,correo` (el núcleo siempre entra) y `GUILDA_MCP_SOLO_LECTURA=1`. Se aplican en `mcp_tools.registrar_tools`.
 - Herramientas nuevas: `resumen_del_dia`, `detalle_tarea`, `completar_tareas` (lote), `listar_notificaciones`.
+- **MCP más útil** (`app/mcp_utilidad.py`): las respuestas se recortan con aviso (`GUILDA_MCP_MAX_TEXTO`, 12000 caracteres por texto; `GUILDA_MCP_MAX_CHARS`, 60000 por listado, que se corta con un marcador `_truncado`); `leer_correo` no repite el HTML salvo `incluir_html=true`; `tenant` es opcional (por defecto, tu propio despacho); 5 prompts (`resumen_del_dia_prompt`, `ficha_cliente`, `preparar_vencimiento`, `revisar_correo`, `cierre_de_trimestre`) y 5 recursos `guilda://…` que pasan por el mismo guardián (áreas, límites, auditoría). Herramientas nuevas: `consumo_ia`, `listar_comunicados`, `webhooks_entregas`. Requiere reiniciar `guilda-work-mcp`.
 
 ## API robusta para uso externo, sincronización y webhooks persistentes
 

@@ -14,7 +14,7 @@ GRUPOS: dict[str, tuple[str, ...]] = {
         "completar_tarea", "consultar_calendario", "listar_tareas_hoy", "listar_proyectos", "activar_herramientas", "resumen_del_dia",
     ),
     "tareas_avanzadas": (
-        "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones",
+        "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones", "consumo_ia", "listar_comunicados",
         "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
         "asignar_tarea", "listar_companeros", "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
         "crear_tarea_recurrente", "listar_tareas_recurrentes", "listar_papelera", "restaurar_de_papelera",
@@ -153,8 +153,8 @@ _HERRAMIENTAS_DE_AREA: dict[str, tuple[str, ...]] = {
     "fiscal": GRUPOS["fiscal"],
     "fichaje": GRUPOS["fichaje"],
     "tiquets": GRUPOS["tiquets"],
-    "avisos": ("listar_notificaciones",),
-    "webhooks": ("webhooks_listar", "webhooks_crear", "webhooks_borrar"),
+    "avisos": ("listar_notificaciones", "consumo_ia", "listar_comunicados"),
+    "webhooks": ("webhooks_listar", "webhooks_crear", "webhooks_borrar", "webhooks_entregas"),
 }
 _AREA_DE_HERRAMIENTA = {nombre: area for area, nombres in _HERRAMIENTAS_DE_AREA.items() for nombre in nombres}
 
