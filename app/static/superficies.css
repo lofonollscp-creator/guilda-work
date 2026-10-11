@@ -680,3 +680,53 @@ input.interruptor-caja:checked { background-image: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ajuste-tarjeta, input.interruptor-caja, input.interruptor-caja::after { transition: none; } .ajuste-tarjeta:hover { transform: none; } }
 :root[data-densidad="compacta"] .interruptor-fila { padding-block: 8px; }
+
+/* ---- Asistente de IA (panel flotante y página): legible, sin transparencias raras y con todo a la vista -------------------------------- */
+.ia-panel-flotante {
+  width: min(420px, calc(100vw - 24px)); height: min(700px, calc(100dvh - 32px)); max-height: none;
+  right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--panel-solido) 97%, transparent); border-radius: 22px;
+  -webkit-backdrop-filter: blur(24px) saturate(1.3); backdrop-filter: blur(24px) saturate(1.3);
+}
+#ia-panel-contenido { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.ia-panel-flotante .ia-chat { display: flex; flex-direction: column; flex: 1 1 auto; height: auto; min-height: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.ia-panel-flotante .ia-chat-mensajes { flex: 1 1 auto; min-height: 0; max-height: none; }
+.ia-panel-flotante-cabecera { background: transparent; border-bottom: 1px solid var(--linea); padding: 14px 16px; font-size: 1.02em; }
+.ia-panel-flotante-cabecera button { width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.ia-panel-flotante-cabecera button:hover { background: var(--panel-2-hover); color: var(--text); }
+.ia-chat-aviso { background: var(--panel-2); border-bottom-color: var(--linea); display: flex; gap: 6px; align-items: flex-start; }
+.ia-chat-mensajes { gap: 10px; padding: 16px; scroll-behavior: smooth; }
+.ia-msg { max-width: min(88%, 720px); line-height: 1.5; padding: 10px 14px; border-radius: 16px; }
+.ia-msg-user { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 100%, #fff 12%), var(--primary)); border-bottom-right-radius: 5px; font-weight: 500; }
+.ia-msg-assistant { background: var(--panel-2); border: 1px solid var(--glass-border); border-bottom-left-radius: 5px; }
+.ia-msg-assistant > :first-child { margin-top: 0; } .ia-msg-assistant > :last-child { margin-bottom: 0; }
+/* Líneas de «usó herramienta»: pequeñas, a la izquierda, junto al asistente (antes flotaban centradas y cada llamada ocupaba una línea) */
+.ia-msg-tool {
+  align-self: flex-start; max-width: 100%; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid var(--linea); font-style: normal; font-size: 0.76em; color: var(--text-muted); margin: -2px 0 0 4px;
+}
+.ia-msg-tool[hidden] { display: none; }
+.ia-msg-tool svg { width: 13px; height: 13px; flex: 0 0 13px; }
+.ia-tool-n { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+/* Confirmación antes de actuar: campo y valor, no JSON */
+.ia-chat-pendiente { margin: 0 12px 10px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--primary) 9%, var(--panel-2)); border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--glass-border)); }
+.ia-chat-pendiente-titulo { margin: 0 0 8px; font-weight: 600; }
+.ia-chat-pendiente-titulo strong { color: var(--primary-text); text-transform: capitalize; }
+dl.ia-chat-pendiente-args { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--linea); display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: 0.88em; max-height: 120px; overflow: auto; }
+dl.ia-chat-pendiente-args dt { color: var(--text-muted); text-transform: capitalize; }
+dl.ia-chat-pendiente-args dd { margin: 0; overflow-wrap: anywhere; }
+.ia-chat-pendiente-botones { display: flex; gap: 8px; }
+.ia-chat-confirmar { padding: 9px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--panel-2); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.ia-chat-confirmar[data-aceptar="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-accent); flex: 1; }
+/* Atajos: una fila desplazable con desvanecido en el borde (antes se cortaban a media palabra) */
+.ia-atajos { flex: 0 0 auto; padding: 8px 12px 10px; gap: 6px; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); scrollbar-width: none; }
+.ia-atajos::-webkit-scrollbar { display: none; }
+.ia-atajo { display: inline-flex; align-items: center; min-height: 32px; line-height: 1.2; padding: 6px 12px; white-space: nowrap; font-size: 0.8rem; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--glass-border); color: var(--text); font-weight: 600; }
+.ia-atajo:hover, .ia-atajo:focus-visible { background: var(--panel-2-hover); border-color: color-mix(in srgb, var(--primary) 50%, var(--glass-border)); outline: none; }
+.ia-chat-form { background: transparent; border-top: 1px solid var(--linea); padding: 10px 12px; align-items: flex-end; gap: 8px; }
+.ia-chat-form textarea { flex: 1; min-width: 0; resize: none; max-height: 140px; border-radius: 14px; padding: 10px 12px; }
+.ia-chat-form button[type="submit"] { border-radius: 12px; padding: 10px 16px; font-weight: 700; text-transform: none; letter-spacing: 0; }
+.ia-chat-pie { padding: 4px 12px 12px; display: flex; justify-content: space-between; gap: 8px; }
+.ia-chat-vaciar, .ia-chat-live { border-radius: 999px; border: 1px solid var(--glass-border); background: var(--panel-2); padding: 6px 12px; font: inherit; font-size: 0.82em; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+.ia-chat-vaciar:hover, .ia-chat-live:hover { color: var(--text); background: var(--panel-2-hover); }
+@media (max-width: 640px) { .ia-panel-flotante { inset: 8px; width: auto; height: auto; bottom: 8px; right: 8px; border-radius: 20px; } }

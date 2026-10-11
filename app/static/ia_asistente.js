@@ -115,17 +115,68 @@
     return html;
   }
 
+  // «listar_clientes_fiscales» -> «listar clientes fiscales»
+  function nombreLegible(herramienta) {
+    return String(herramienta || "").replace(/_/g, " ");
+  }
+
+  // Valor de un argumento para mostrarlo a una persona (no JSON): listas con comas, objetos con sus valores, sí/no.
+  function valorLegible(v) {
+    if (v === null || v === undefined || v === "") return "—";
+    if (typeof v === "boolean") return v ? "sí" : "no";
+    if (Array.isArray(v)) return v.map(valorLegible).join(", ");
+    if (typeof v === "object") return Object.keys(v).map(function (k) { return nombreLegible(k) + ": " + valorLegible(v[k]); }).join("; ");
+    var t = String(v);
+    return t.length > 300 ? t.slice(0, 300) + "…" : t;
+  }
+
+  // Sustituye el JSON en bruto de «¿Ejecuto…?» por una lista de «campo: valor». Nunca innerHTML con datos del modelo: solo textContent.
+  function pintarArgumentos(pendienteEl, argumentos) {
+    var antiguo = pendienteEl.querySelector(".ia-chat-pendiente-args");
+    if (!antiguo) return;
+    if (typeof argumentos === "string") {
+      try { argumentos = JSON.parse(argumentos.replace(/'/g, '"').replace(/\bNone\b/g, "null").replace(/\bTrue\b/g, "true").replace(/\bFalse\b/g, "false")); } catch (e) { /* se deja como texto */ }
+    }
+    var lista = document.createElement("dl");
+    lista.className = "ia-chat-pendiente-args";
+    if (argumentos && typeof argumentos === "object" && !Array.isArray(argumentos) && Object.keys(argumentos).length) {
+      Object.keys(argumentos).forEach(function (k) {
+        var dt = document.createElement("dt"); dt.textContent = nombreLegible(k);
+        var dd = document.createElement("dd"); dd.textContent = valorLegible(argumentos[k]);
+        lista.appendChild(dt); lista.appendChild(dd);
+      });
+    } else {
+      var dd0 = document.createElement("dd"); dd0.textContent = typeof argumentos === "string" ? argumentos : "—"; lista.appendChild(dd0);
+    }
+    antiguo.replaceWith(lista);
+  }
+
+  // Varias llamadas seguidas a la misma herramienta se muestran como una sola línea con «×N».
+  function agruparHerramientas(contenedor) {
+    var previo = null, n = 0;
+    contenedor.querySelectorAll(".ia-msg-tool").forEach(function (el) {
+      var misma = previo && !el.querySelector(".ia-adjunto") && el.dataset.herramienta && previo.dataset.herramienta === el.dataset.herramienta && el.dataset.agrupado !== "1";
+      if (misma) {
+        n += 1;
+        el.hidden = true; el.dataset.agrupado = "1";
+        var marca = previo.querySelector(".ia-tool-n");
+        if (!marca) { marca = document.createElement("span"); marca.className = "ia-tool-n"; previo.appendChild(marca); }
+        marca.textContent = " ×" + (n + 1);
+      } else if (el.dataset.agrupado !== "1") { previo = el; n = 0; }
+    });
+  }
+
   function textoMensajeTool(herramienta, contenidoJson) {
     var icono = iconoSvg("wrench");
-    var texto = escaparHtml(herramienta);
+    var texto = escaparHtml(nombreLegible(herramienta));
     try {
       var datos = JSON.parse(contenidoJson || "{}");
       if (datos && datos.error) {
         icono = iconoSvg("triangle-alert");
-        texto = escaparHtml(herramienta) + ": " + escaparHtml(datos.error);
+        texto = escaparHtml(nombreLegible(herramienta)) + ": " + escaparHtml(datos.error);
       } else if (datos && datos.rechazado) {
         icono = iconoSvg("x");
-        texto = escaparHtml(herramienta) + " (rechazada)";
+        texto = escaparHtml(nombreLegible(herramienta)) + " (rechazada)";
       } else if (datos && datos.adjunto_id) {
         return chipAdjuntoTool(datos);
       }
@@ -183,6 +234,13 @@
     mensajesEl.querySelectorAll(".ia-msg-tool").forEach(function (el) {
       el.innerHTML = textoMensajeTool(el.dataset.herramienta, el.dataset.contenido);
     });
+    agruparHerramientas(mensajesEl);
+    if (!pendienteEl.hidden) {
+      var argsServidor = pendienteEl.querySelector(".ia-chat-pendiente-args");
+      var nombreServidor = pendienteEl.querySelector("strong");
+      if (nombreServidor) nombreServidor.textContent = nombreLegible(nombreServidor.textContent);
+      if (argsServidor) pintarArgumentos(pendienteEl, argsServidor.textContent);
+    }
     mensajesEl.querySelectorAll(".ia-msg-assistant").forEach(function (el) {
       el.innerHTML = renderizarMarkdown(el.textContent);
     });
@@ -222,8 +280,8 @@
         '<button type="button" class="ia-chat-confirmar" data-aceptar="true">Sí, hazlo</button>' +
         '<button type="button" class="ia-chat-confirmar" data-aceptar="false">No</button>' +
         "</div>";
-      pendienteEl.querySelector("strong").textContent = pendiente.herramienta;
-      pendienteEl.querySelector(".ia-chat-pendiente-args").textContent = JSON.stringify(pendiente.argumentos, null, 2);
+      pendienteEl.querySelector("strong").textContent = nombreLegible(pendiente.herramienta);
+      pintarArgumentos(pendienteEl, pendiente.argumentos);
       pendienteEl.hidden = false;
       adjuntarBotonesPendiente();
     }
@@ -442,8 +500,10 @@
           } else if (mensaje.rol === "tool") {
             var div = document.createElement("div");
             div.className = "ia-msg ia-msg-tool";
+            div.dataset.herramienta = mensaje.nombre_herramienta || "";
             div.innerHTML = textoMensajeTool(mensaje.nombre_herramienta, mensaje.contenido);
             mensajesEl.appendChild(div);
+            agruparHerramientas(mensajesEl);
           }
           mensajesEl.scrollTop = mensajesEl.scrollHeight;
         },
@@ -452,7 +512,7 @@
           pintarPendiente(pendiente);
           if (liveActivo) {
             flushTts();
-            hablar("¿Ejecuto " + pendiente.herramienta + "?");
+            hablar("¿Ejecuto " + nombreLegible(pendiente.herramienta) + "?");
           }
         },
         onError: function (mensaje) {
@@ -633,7 +693,16 @@
   if (togglePanel && panel) {
     togglePanel.addEventListener("click", function () {
       panel.hidden = !panel.hidden;
-      if (!panel.hidden) cargarPanel();
+      var ajustes = document.getElementById("perfil-panel");     // el panel de ajustes desde el que se abrió se cierra
+      if (ajustes) ajustes.hidden = true;
+      if (!panel.hidden) {
+        cargarPanel();
+        var campo = panel.querySelector("textarea");
+        if (campo) campo.focus();
+      }
+    });
+    document.addEventListener("keydown", function (e) {            // Esc cierra el asistente
+      if (e.key === "Escape" && !panel.hidden && !document.querySelector(".selbus-panel")) panel.hidden = true;
     });
   }
   if (cerrarPanel && panel) {

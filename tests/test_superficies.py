@@ -276,3 +276,28 @@ def test_tablero_kanban_columnas_en_una_fila_con_arrastrar_y_soltar():
     assert "requestSubmit" in js and "dragover" in js and "drop" in js and "innerHTML" not in js
     assert re.search(r"\.tareas-tablero \{[^}]*grid-auto-flow: column", CAPA) and "scroll-snap-type" in CAPA
     assert ".tareas-columna.es-destino" in CAPA
+
+
+# ---- Asistente de IA (panel y chat) ---------------------------------------------------------------------------------------------
+CHAT_JS = (RAIZ / "app" / "static" / "ia_asistente.js").read_text(encoding="utf-8")
+
+
+def test_chat_agrupa_llamadas_repetidas_y_muestra_argumentos_legibles():
+    assert "function agruparHerramientas" in CHAT_JS and "ia-tool-n" in CHAT_JS
+    assert "function nombreLegible" in CHAT_JS and "function pintarArgumentos" in CHAT_JS
+    assert 'JSON.stringify(pendiente.argumentos' not in CHAT_JS, "la confirmación ya no enseña JSON en bruto"
+    # los argumentos y nombres del modelo se pintan siempre como texto, nunca como HTML
+    cuerpo = CHAT_JS[CHAT_JS.index("function pintarArgumentos"):CHAT_JS.index("function agruparHerramientas")]
+    assert "innerHTML" not in cuerpo and "textContent" in cuerpo
+
+
+def test_panel_flotante_del_asistente_cabe_en_pantalla_y_no_deja_ver_la_pagina():
+    assert re.search(r"\.ia-panel-flotante \{[^}]*height: min\(700px, calc\(100dvh - 32px\)\)", CAPA)
+    assert "#ia-panel-contenido { flex: 1 1 auto; min-height: 0;" in CAPA
+    assert re.search(r"\.ia-panel-flotante \{[^}]*color-mix\(in srgb, var\(--panel-solido\) 97%", CAPA)
+    assert "document.getElementById(\"perfil-panel\")" in CHAT_JS, "abrir el asistente cierra el panel de ajustes"
+
+
+def test_hay_herramienta_para_decidir_si_forzar_la_csp():
+    sh = (RAIZ / "scripts" / "comprobar_csp_para_forzar.sh").read_text(encoding="utf-8")
+    assert "GUILDA_CSP=forzar" in sh and "LISTO" in sh and "NO LISTO" in sh
