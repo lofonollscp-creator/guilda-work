@@ -58,14 +58,14 @@ DESCRIPCIONES: dict[str, str] = {
 
 # Palabras clave (en minúsculas, por prefijo de palabra) que activan un grupo en el chat.
 PALABRAS: dict[str, tuple[str, ...]] = {
-    "tareas_avanzadas": ("checklist", "subtarea", "asigna", "compañer", "proyecto", "recurrente", "papelera", "estadístic", "estadistic", "exporta", "importa", "fija", "elimina", "borra"),
+    "tareas_avanzadas": ("checklist", "subtarea", "asigna", "compañer", "proyecto", "recurrente", "papelera", "estadístic", "estadistic", "exporta", "importa", "fija", "elimina", "borra", "cronómetro", "cronometro", "cronometra", "comenta", "comentario", "mención", "dependencia", "estimaci"),
     "correo": ("correo", "mail", "email", "bandeja", "borrador", "remitente", "adjunto", "responde", "respuesta", "mueve", "destaca", "pospon", "conversaci", "regla"),
     "fiscal": ("fiscal", "vencimiento", "modelo", "iva", "irpf", "impuesto", "presentar", "presentad", "declaraci", "gestor", "cliente"),
     "fichaje": ("fich", "jornada", "entrada", "salida", "horas trabaj"),
     "tiquets": ("tiquet", "ticket", "incidencia"),
     "facturacion": ("factura", "cobr"),
     "crm": ("crm", "lead", "contacto", "oportunidad"),
-    "archivos": ("drive", "archivo", "fichero", "documento", "hoja de c", "excel", "pdf", "sube", "descarga"),
+    "archivos": ("drive", "archivo", "fichero", "documento", "hoja de c", "hojas de c", "hoja", "tabla", "excel", "pdf", "sube", "descarga"),
     "firmas": ("firma", "firmar", "documenso"),
 }
 

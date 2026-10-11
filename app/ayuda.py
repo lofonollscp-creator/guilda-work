@@ -46,6 +46,7 @@ MAPA = {
     "importar": "datos-y-administracion/importar",
     "procesar_importacion": "datos-y-administracion/importar",
     "mis_dispositivos": "mi-cuenta/dispositivos-y-tokens",
+    "ajustes": "mi-cuenta/centro-de-ajustes",
     "ajustes_perfil": "mi-cuenta/perfil-y-avatar",
     "ajustes_cuenta": "mi-cuenta/verificacion-en-dos-pasos",
 }

@@ -2926,6 +2926,10 @@ Todas las pantallas internas (las que extienden `base.html`) cargan `app/static/
 - **Pruebas:** `scripts/comprobar_selector_buscable.sh` (jsdom en un contenedor Node desechable, 27 comprobaciones) y `tests/test_superficies.py`. El flujo táctil y el teclado real se comprobaron con Chromium; **no con un móvil físico** (en iOS/Android el toque se intercepta con `touchend` para evitar el selector nativo).
 - **Fuera de alcance de momento:** backoffice y portal (hojas aparte) mantienen sus selects nativos.
 
+### Evaluación de la oferta de herramientas del asistente / MCP (2026-10-12)
+
+`tests/datos/evaluacion_herramientas.py` reúne ~60 peticiones realistas (una persona en un despacho) con la herramienta que tiene que estar disponible YA en el primer turno; `tests/test_evaluacion_herramientas.py` comprueba que `ia_herramientas.herramientas_para()` la incluye y que la oferta media sigue siendo una fracción del catálogo (≤ 55 %). No usa modelo real: mide lo que depende de nosotros (las palabras clave de `herramientas_grupos.PALABRAS`). Para ampliarlo, añade una línea `(petición, herramienta)`; si falla, añade la palabra clave que falta al grupo. Lo que NO mide es si un modelo concreto elige bien entre las herramientas ofrecidas (eso exige una clave de API).
+
 ## Foto de montaña en el inicio de sesión
 - La foto ocupa **toda la pantalla** de `/login` (`.auth-dividido`, `app/static/fotos/montana-login.webp` y `.jpg`, 1920 px de ancho) con un velo liso (sin degradado direccional). Es **CC0 (dominio público)**: «Landscape-mountains-nature-lake» de www.Pixel.la Free Stock Photos, de Wikimedia Commons; datos en `app/static/fotos/CREDITOS.md`. Va de fondo por CSS (no es un `<img>`).
 - Encima, dos **paneles de cristal** (tinte + `backdrop-filter: blur`): el del texto (`.auth-hero-panel`, siempre oscuro, con la marca, el titular, el párrafo y las ventajas) y la tarjeta del formulario (`.auth-dividido .auth-card`: oscura por defecto y **clara en el tema claro**; dentro de ella se reajustan el gris de apoyo y el color de los enlaces para mantener el contraste). Sin soporte de `backdrop-filter` los tintes suben a casi opacos (0,93-0,97).
