@@ -20,7 +20,7 @@
     <form class="auth-card" method="post" action="{{ accion }}">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>{{ _('Crear cuenta') }}</h1>
-      {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+      {% for m in mensajes %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
 
       {% for nodo in nodos %}
         {% set attrs = nodo.attributes %}
@@ -31,13 +31,13 @@
             <label for="registro-email">{{ _('Email') }}</label>
             <input type="email" id="registro-email" name="{{ attrs.name }}" value="{{ attrs.value or '' }}" required autofocus>
           </div>
-          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+          {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
         {% elif attrs.name == 'password' %}
           <div class="correo-form-campo">
             <label for="registro-password">{{ _('Contraseña (mínimo 8 caracteres)') }}</label>
             <input type="password" id="registro-password" name="{{ attrs.name }}" minlength="8" required>
           </div>
-          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+          {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
         {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
           <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
         {% endif %}

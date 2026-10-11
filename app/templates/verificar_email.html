@@ -21,20 +21,20 @@
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>{{ _('Verificar tu email') }}</h1>
       <p class="auth-alterna">{{ _('Te hemos mandado un código de 6 dígitos por email.') }}</p>
-      {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+      {% for m in mensajes %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
 
       {% for nodo in nodos %}
         {% set attrs = nodo.attributes %}
-        {% if attrs.name == 'csrf_token' %}
+        {% if attrs.name == 'csrf_token' or attrs.type == 'hidden' %}
           <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
         {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
-          <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn btn-primary auth-submit">
-            {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else _('Continuar') }}
+          <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn {{ 'btn-ghost' if attrs.name == 'email' else 'btn-primary' }} auth-submit">
+            {{ nodo.meta.label|msg_kratos if nodo.meta and nodo.meta.label else _('Continuar') }}
           </button>
-          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+          {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
         {% elif attrs.node_type == 'input' %}
           <div class="correo-form-campo">
-            <label for="verificar-{{ attrs.name }}">{{ nodo.meta.label.text if nodo.meta and nodo.meta.label else attrs.name }}</label>
+            <label for="verificar-{{ attrs.name }}">{{ nodo.meta.label|msg_kratos if nodo.meta and nodo.meta.label else attrs.name }}</label>
             <input
               type="{{ attrs.type }}"
               id="verificar-{{ attrs.name }}"
@@ -46,7 +46,7 @@
               autofocus
             >
           </div>
-          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+          {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
         {% endif %}
       {% endfor %}
 

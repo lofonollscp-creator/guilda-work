@@ -7746,3 +7746,30 @@ msgstr "Tasks (CSV)"
 
 msgid "Tareas en tu calendario (ICS)"
 msgstr "Tasks in your calendar (ICS)"
+
+msgid "Si ese email tiene una cuenta, te hemos mandado un código de recuperación. Revisa tu bandeja de entrada (y el correo no deseado)."
+msgstr "If that email has an account, we've sent you a recovery code. Check your inbox (and your spam folder)."
+
+msgid "Te hemos mandado un código de verificación. Revisa tu bandeja de entrada (y el correo no deseado)."
+msgstr "We've sent you a verification code. Check your inbox (and your spam folder)."
+
+msgid "El código de recuperación no es válido o ya se ha usado. Pide uno nuevo."
+msgstr "The recovery code is invalid or has already been used. Request a new one."
+
+msgid "El código de verificación no es válido o ya se ha usado. Pide uno nuevo."
+msgstr "The verification code is invalid or has already been used. Request a new one."
+
+msgid "Ha pasado demasiado tiempo. Empieza de nuevo la recuperación de la contraseña."
+msgstr "Too much time has passed. Start the password recovery again."
+
+msgid "Ha pasado demasiado tiempo. Vuelve a pedir la verificación."
+msgstr "Too much time has passed. Request the verification again."
+
+msgid "Cuenta recuperada. Elige ahora una contraseña nueva."
+msgstr "Account recovered. Now choose a new password."
+
+msgid "El email o la contraseña no son correctos."
+msgstr "The email or password is incorrect."
+
+msgid "Reenviar el código"
+msgstr "Resend the code"

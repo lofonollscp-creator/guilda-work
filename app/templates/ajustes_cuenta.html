@@ -8,7 +8,7 @@
   </div>
 </header>
 
-{% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+{% for m in mensajes %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
 
 {# El flujo "settings" de Kratos mezcla en la misma respuesta varios
    sub-formularios independientes (cambiar contraseña, cambiar email/
@@ -49,14 +49,14 @@
         {% endif %}
       {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
         <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn btn-primary">
-          {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else _('Guardar') }}
+          {{ nodo.meta.label|msg_kratos if nodo.meta and nodo.meta.label else _('Guardar') }}
         </button>
-        {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+        {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
       {% elif attrs.node_type == 'input' and attrs.type == 'hidden' %}
         <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
       {% elif attrs.node_type == 'input' %}
         <label>
-          {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else attrs.name }}
+          {{ nodo.meta.label|msg_kratos if nodo.meta and nodo.meta.label else attrs.name }}
           <input
             type="{{ attrs.type }}"
             name="{{ attrs.name }}"
@@ -65,7 +65,7 @@
             {% if attrs.disabled %}disabled{% endif %}
           >
         </label>
-        {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+        {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
       {% endif %}
     {% endfor %}
   </form>

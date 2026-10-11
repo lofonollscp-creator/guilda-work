@@ -40,7 +40,7 @@
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>{{ _('Verificación en dos pasos') }}</h1>
       <p class="muted">{{ _('Introduce el código de 6 dígitos de tu app de autenticación.') }}</p>
-      {% for m in mensajes %}<div class="ia-error" role="alert">{{ m.text }}</div>{% endfor %}
+      {% for m in mensajes %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}" role="alert">{{ m|msg_kratos }}</div>{% endfor %}
       {% set csrf = nodos|selectattr('attributes.name', 'equalto', 'csrf_token')|first %}
       {% if nodos|selectattr('group', 'equalto', 'totp')|list %}
       <form method="post" action="{{ accion }}">
@@ -50,7 +50,7 @@
           <label for="login-totp">{{ _('Código de verificación') }}</label>
           <input type="text" id="login-totp" name="totp_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" required autofocus>
         </div>
-        {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'totp_code') %}{% for m in nodo.messages %}<div class="ia-error" role="alert">{{ m.text }}</div>{% endfor %}{% endfor %}
+        {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'totp_code') %}{% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}" role="alert">{{ m|msg_kratos }}</div>{% endfor %}{% endfor %}
         <button type="submit" class="btn btn-primary auth-submit">{{ _('Verificar') }}</button>
       </form>
       {% endif %}
@@ -64,7 +64,7 @@
             <label for="login-recuperacion">{{ _('Código de recuperación') }}</label>
             <input type="text" id="login-recuperacion" name="lookup_secret" autocomplete="off" required>
           </div>
-          {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'lookup_secret') %}{% for m in nodo.messages %}<div class="ia-error" role="alert">{{ m.text }}</div>{% endfor %}{% endfor %}
+          {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'lookup_secret') %}{% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}" role="alert">{{ m|msg_kratos }}</div>{% endfor %}{% endfor %}
           <button type="submit" class="btn btn-secondary auth-submit">{{ _('Entrar con el código') }}</button>
         </form>
       </details>
@@ -75,7 +75,7 @@
     <form class="auth-card" method="post" action="{{ accion }}">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>Guilda Work</h1>
-      {% for m in mensajes %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+      {% for m in mensajes %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
       {% if captcha_fallido %}
       <div class="ia-error">{{ _('No se ha podido comprobar el captcha. Resuélvelo de nuevo antes de entrar.') }}</div>
       {% endif %}
@@ -89,13 +89,13 @@
             <label for="login-email">{{ _('Email') }}</label>
             <input type="email" id="login-email" name="{{ attrs.name }}" value="{{ attrs.value or '' }}" required autofocus>
           </div>
-          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+          {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
         {% elif attrs.name == 'password' %}
           <div class="correo-form-campo">
             <label for="login-password">{{ _('Contraseña') }}</label>
             <input type="password" id="login-password" name="{{ attrs.name }}" required>
           </div>
-          {% for m in nodo.messages %}<div class="ia-error">{{ m.text }}</div>{% endfor %}
+          {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
         {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
           <input type="hidden" name="{{ attrs.name }}" value="{{ attrs.value }}">
         {% endif %}

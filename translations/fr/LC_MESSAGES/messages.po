@@ -7831,3 +7831,30 @@ msgstr "Tâches (CSV)"
 
 msgid "Tareas en tu calendario (ICS)"
 msgstr "Tâches dans votre calendrier (ICS)"
+
+msgid "Si ese email tiene una cuenta, te hemos mandado un código de recuperación. Revisa tu bandeja de entrada (y el correo no deseado)."
+msgstr "Si cet email a un compte, nous vous avons envoyé un code de récupération. Vérifiez votre boîte de réception (et vos courriers indésirables)."
+
+msgid "Te hemos mandado un código de verificación. Revisa tu bandeja de entrada (y el correo no deseado)."
+msgstr "Nous vous avons envoyé un code de vérification. Vérifiez votre boîte de réception (et vos courriers indésirables)."
+
+msgid "El código de recuperación no es válido o ya se ha usado. Pide uno nuevo."
+msgstr "Le code de récupération n'est pas valide ou a déjà été utilisé. Demandez-en un nouveau."
+
+msgid "El código de verificación no es válido o ya se ha usado. Pide uno nuevo."
+msgstr "Le code de vérification n'est pas valide ou a déjà été utilisé. Demandez-en un nouveau."
+
+msgid "Ha pasado demasiado tiempo. Empieza de nuevo la recuperación de la contraseña."
+msgstr "Trop de temps s'est écoulé. Recommencez la récupération du mot de passe."
+
+msgid "Ha pasado demasiado tiempo. Vuelve a pedir la verificación."
+msgstr "Trop de temps s'est écoulé. Redemandez la vérification."
+
+msgid "Cuenta recuperada. Elige ahora una contraseña nueva."
+msgstr "Compte récupéré. Choisissez maintenant un nouveau mot de passe."
+
+msgid "El email o la contraseña no son correctos."
+msgstr "L'email ou le mot de passe est incorrect."
+
+msgid "Reenviar el código"
+msgstr "Renvoyer le code"

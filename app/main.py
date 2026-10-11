@@ -188,6 +188,37 @@ app.add_template_filter(_fecha_hora, "fecha_y_hora")
 app.add_template_filter(lambda valor: _fecha_hora(valor, solo_fecha=True), "fecha_dia")
 
 
+def _msg_kratos(mensaje) -> str:
+    """Texto de un mensaje o etiqueta de Kratos (que llegan en inglés) en el idioma de la persona. Se reconocen por el principio del texto
+    inglés (no por el id numérico: las variables, como los minutos que lleva caducado un flujo, no cambian el principio); si no se
+    reconoce, se muestra tal cual lo manda Kratos."""
+    texto = (mensaje.get("text") if isinstance(mensaje, dict) else str(mensaje or "")) or ""
+    conocidos = (
+        ("An email containing a recovery code has been sent", _("Si ese email tiene una cuenta, te hemos mandado un código de recuperación. Revisa tu bandeja de entrada (y el correo no deseado).")),
+        ("An email containing a verification code has been sent", _("Te hemos mandado un código de verificación. Revisa tu bandeja de entrada (y el correo no deseado).")),
+        ("The recovery code is invalid or has already been used", _("El código de recuperación no es válido o ya se ha usado. Pide uno nuevo.")),
+        ("The verification code is invalid or has already been used", _("El código de verificación no es válido o ya se ha usado. Pide uno nuevo.")),
+        ("The recovery flow expired", _("Ha pasado demasiado tiempo. Empieza de nuevo la recuperación de la contraseña.")),
+        ("The verification flow expired", _("Ha pasado demasiado tiempo. Vuelve a pedir la verificación.")),
+        ("You successfully recovered your account", _("Cuenta recuperada. Elige ahora una contraseña nueva.")),
+        ("Your changes have been saved", _("Cambios guardados.")),
+        ("The provided credentials are invalid", _("El email o la contraseña no son correctos.")),
+        ("Recovery code", _("Código de recuperación")),
+        ("Verification code", _("Código de verificación")),
+        ("Resend code", _("Reenviar el código")),
+        ("Continue", _("Continuar")),
+        ("Submit", _("Enviar")),
+        ("Password", _("Contraseña")),
+    )
+    for ingles, traducido in conocidos:
+        if texto == ingles or (len(ingles) > 20 and texto.startswith(ingles)):
+            return traducido
+    return texto
+
+
+app.add_template_filter(_msg_kratos, "msg_kratos")
+
+
 def _comentario_html(texto, mencionados=()):
     """Escapa el comentario, resalta las @menciones y respeta los saltos de línea."""
     import re
@@ -1855,6 +1886,15 @@ def ajustes_cuenta():
     if datos is None:
         return g._redireccion_flujo
     return render_template("ajustes_cuenta.html", **datos)
+
+
+@app.route("/ajustes-cuenta")
+@login_required
+def ajustes_cuenta_alias():
+    """Kratos redirige aquí (SELFSERVICE_FLOWS_SETTINGS_UI_URL y RECOVERY_AFTER_DEFAULT_BROWSER_RETURN_URL, ver docker-compose.yml) al
+    terminar de recuperar la contraseña con el código: sin esta ruta la persona caía en un 404 justo cuando iba a elegir su contraseña
+    nueva. Es la misma pantalla que /ajustes/cuenta (los enlaces de la app usan esa)."""
+    return ajustes_cuenta()
 
 
 @app.route("/estadisticas")

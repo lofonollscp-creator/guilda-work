@@ -4905,3 +4905,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .onboarding-progreso span { display: block; height: 100%; background: var(--primary); }
 
 a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* Mensajes informativos de los flujos de acceso (Kratos): «te hemos mandado un código…» no es un error y no debe verse en rojo. */
+.auth-info { margin: 8px 0; padding: 10px 14px; border-radius: 12px; font-size: 0.9em; line-height: 1.45; color: var(--text); background: color-mix(in srgb, var(--primary) 12%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 34%, transparent); }

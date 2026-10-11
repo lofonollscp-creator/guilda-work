@@ -129,3 +129,64 @@ def test_ningun_script_en_linea_sale_con_el_nonce_vacio(cliente):
         nonce_cabecera = re.search(r"nonce-([A-Za-z0-9_-]+)", r.headers.get("Content-Security-Policy", "") + r.headers.get("Content-Security-Policy-Report-Only", ""))
         for n in re.findall(r"<script nonce=\"([^\"]+)\"", html):
             assert nonce_cabecera and n == nonce_cabecera.group(1), ruta
+
+
+# ---- Recuperar contraseña (flujo de Kratos) --------------------------------------------------------------------------------------
+def _flujo_codigo_enviado():
+    """Lo que devuelve Kratos tras pedir la recuperación con un email: paso «introduce el código»."""
+    return {"ui": {
+        "action": "http://127.0.0.1:4433/self-service/recovery?flow=abc",
+        "messages": [{"id": 1060003, "type": "info", "text": "An email containing a recovery code has been sent to the email address you provided. If you have not received an email, check the spelling of the address and make sure to use the address you registered with."}],
+        "nodes": [
+            {"type": "input", "group": "default", "attributes": {"name": "csrf_token", "type": "hidden", "value": "tok", "node_type": "input"}, "messages": [], "meta": {}},
+            {"type": "input", "group": "code", "attributes": {"name": "code", "type": "text", "node_type": "input", "required": True}, "messages": [], "meta": {"label": {"id": 1070010, "text": "Recovery code", "type": "info"}}},
+            {"type": "input", "group": "code", "attributes": {"name": "method", "type": "hidden", "value": "code", "node_type": "input"}, "messages": [], "meta": {}},
+            {"type": "input", "group": "code", "attributes": {"name": "method", "type": "submit", "value": "code", "node_type": "input"}, "messages": [], "meta": {"label": {"id": 1070009, "text": "Continue", "type": "info"}}},
+            {"type": "input", "group": "code", "attributes": {"name": "email", "type": "submit", "value": "x@y.z", "node_type": "input"}, "messages": [], "meta": {"label": {"id": 1070008, "text": "Resend code", "type": "info"}}},
+        ]}}
+
+
+def test_la_pagina_de_recuperar_contrasena_sale_en_castellano_y_sin_campos_sueltos(cliente, monkeypatch):
+    from app import kratos
+    monkeypatch.setattr(kratos, "obtener_flujo", lambda tipo, flow_id, cookies: _flujo_codigo_enviado())
+    html = cliente.get("/recuperar-contrasena?flow=abc").get_data(as_text=True)
+    assert "Código de recuperación" in html and "Continuar" in html and "Reenviar el código" in html
+    assert "Recovery code" not in html and ">Continue<" not in html and "Resend code" not in html
+    assert "te hemos mandado un código de recuperación" in html
+    assert '<div class="auth-info">' in html and 'class="ia-error"' not in html, "el aviso informativo no puede verse como un error"
+    assert '<input type="hidden" name="method" value="code">' in html and 'for="recuperar-method"' not in html, "el campo oculto «method» ya no sale como etiqueta"
+    assert "btn-ghost auth-submit" in html, "«Reenviar» es secundario"
+
+
+def test_los_errores_de_recuperacion_siguen_siendo_errores_y_se_traducen(cliente, monkeypatch):
+    from app import kratos
+    flujo = _flujo_codigo_enviado()
+    flujo["ui"]["messages"] = [{"id": 4060006, "type": "error", "text": "The recovery code is invalid or has already been used. Please try again."}]
+    monkeypatch.setattr(kratos, "obtener_flujo", lambda tipo, flow_id, cookies: flujo)
+    html = cliente.get("/recuperar-contrasena?flow=abc").get_data(as_text=True)
+    assert 'class="ia-error" role="alert"' in html and "El código de recuperación no es válido o ya se ha usado" in html
+
+
+def test_al_terminar_la_recuperacion_kratos_aterriza_en_una_ruta_que_existe(cliente):
+    """Kratos redirige a /ajustes-cuenta (SELFSERVICE_FLOWS_SETTINGS_UI_URL) con el flujo de cambiar la contraseña; esa ruta daba 404."""
+    r = cliente.get("/ajustes-cuenta?flow=abc")
+    assert r.status_code != 404 and r.status_code in (301, 302), r.status_code     # sin sesión: al login, no un 404
+    assert "/login" in r.headers["Location"]
+    _uid(cliente, "aj-rec@x.com")
+    from app import kratos
+    assert cliente.get("/ajustes/cuenta").status_code in (200, 302)
+
+
+def test_los_mensajes_de_kratos_se_traducen_a_cada_idioma(cliente):
+    from app.main import _msg_kratos
+    from flask_babel import force_locale
+    from app.main import app
+    with app.test_request_context("/"):
+        with force_locale("es"):
+            assert _msg_kratos({"text": "Continue"}) == "Continuar" and _msg_kratos("Resend code") == "Reenviar el código"
+            assert _msg_kratos({"text": "Algo que no conocemos"}) == "Algo que no conocemos"
+            assert _msg_kratos({"text": "The recovery flow expired 2.00 minutes ago, please try again."}).startswith("Ha pasado demasiado tiempo")
+        with force_locale("en"):
+            assert _msg_kratos({"text": "Continue"}) == "Continue"
+        with force_locale("fr"):
+            assert _msg_kratos({"text": "Recovery code"}) == "Code de récupération"

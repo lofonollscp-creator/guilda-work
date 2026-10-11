@@ -66,7 +66,8 @@ def test_login_con_contrasena_incorrecta_muestra_error(cliente):
         follow_redirects=True,
     )
     assert resp.status_code == 200
-    assert "incorrect" in resp.get_data(as_text=True).lower() or "credentials" in resp.get_data(as_text=True).lower()
+    texto = resp.get_data(as_text=True).lower()
+    assert "no son correctos" in texto or "incorrect" in texto or "credentials" in texto      # el mensaje de Kratos, ahora en el idioma de la persona
 
     # No ha entrado: la home sigue pidiendo login.
     resp = cliente.get("/", follow_redirects=True)

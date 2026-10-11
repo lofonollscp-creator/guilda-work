@@ -7755,3 +7755,30 @@ msgstr "Tasques (CSV)"
 
 msgid "Tareas en tu calendario (ICS)"
 msgstr "Tasques al teu calendari (ICS)"
+
+msgid "Si ese email tiene una cuenta, te hemos mandado un código de recuperación. Revisa tu bandeja de entrada (y el correo no deseado)."
+msgstr "Si aquest email té un compte, t'hem enviat un codi de recuperació. Revisa la safata d'entrada (i el correu no desitjat)."
+
+msgid "Te hemos mandado un código de verificación. Revisa tu bandeja de entrada (y el correo no deseado)."
+msgstr "T'hem enviat un codi de verificació. Revisa la safata d'entrada (i el correu no desitjat)."
+
+msgid "El código de recuperación no es válido o ya se ha usado. Pide uno nuevo."
+msgstr "El codi de recuperació no és vàlid o ja s'ha fet servir. Demana'n un de nou."
+
+msgid "El código de verificación no es válido o ya se ha usado. Pide uno nuevo."
+msgstr "El codi de verificació no és vàlid o ja s'ha fet servir. Demana'n un de nou."
+
+msgid "Ha pasado demasiado tiempo. Empieza de nuevo la recuperación de la contraseña."
+msgstr "Ha passat massa temps. Torna a començar la recuperació de la contrasenya."
+
+msgid "Ha pasado demasiado tiempo. Vuelve a pedir la verificación."
+msgstr "Ha passat massa temps. Torna a demanar la verificació."
+
+msgid "Cuenta recuperada. Elige ahora una contraseña nueva."
+msgstr "Compte recuperat. Tria ara una contrasenya nova."
+
+msgid "El email o la contraseña no son correctos."
+msgstr "L'email o la contrasenya no són correctes."
+
+msgid "Reenviar el código"
+msgstr "Reenvia el codi"
