@@ -7504,3 +7504,245 @@ msgstr "Showing %%s of %%s: keep typing to narrow down"
 #: app/templates/tareas_tablero.html
 msgid "Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla."
 msgstr "Your tasks by status. Drag a card to another column or use its selector to move it."
+
+msgid "Notificación de prueba"
+msgstr "Test notification"
+
+msgid "Si ves esto, las notificaciones funcionan."
+msgstr "If you can see this, notifications work."
+
+msgid "Nombre, foto, cargo y teléfono."
+msgstr "Name, photo, job title and phone."
+
+msgid "Qué avisos recibes, «no molestar» y prueba de envío."
+msgstr "Which alerts you get, “do not disturb” and a test send."
+
+msgid "%(n)s desactivados"
+msgstr "%(n)s turned off"
+
+msgid "Todas activas"
+msgstr "All on"
+
+msgid "Contraseña, email y verificación en dos pasos"
+msgstr "Password, email and two-step verification"
+
+msgid "Cambia tus credenciales y protege la cuenta con un segundo factor."
+msgstr "Change your credentials and protect the account with a second factor."
+
+msgid "Móviles con sesión iniciada: revísalos y cierra los que no uses."
+msgstr "Phones with an open session: review them and close the ones you don't use."
+
+msgid "%(n)s dispositivo"
+msgid_plural "%(n)s dispositivos"
+msgstr[0] "%(n)s device"
+msgstr[1] "%(n)s devices"
+
+msgid "Firma, categorías, reglas, plantillas y envío."
+msgstr "Signature, categories, rules, templates and sending."
+
+msgid "Conecta, sincroniza o desconecta tus buzones."
+msgstr "Connect, sync or disconnect your mailboxes."
+
+msgid "%(n)s cuenta"
+msgid_plural "%(n)s cuentas"
+msgstr[0] "%(n)s account"
+msgstr[1] "%(n)s accounts"
+
+msgid "Listas de tareas que se repiten en cada cliente o proyecto."
+msgstr "Task lists that repeat for every client or project."
+
+msgid "Tareas que se crean solas cada semana, mes o año."
+msgstr "Tasks that create themselves every week, month or year."
+
+msgid "Fichaje: mis datos"
+msgstr "Time clock: my details"
+
+msgid "Nombre completo y DNI/NIE para el registro horario."
+msgstr "Full name and ID number for the working-hours record."
+
+msgid "Avisos automáticos de vencimientos a tus clientes."
+msgstr "Automatic due-date reminders to your clients."
+
+msgid "Asistente de IA"
+msgstr "AI assistant"
+
+msgid "Modelo, claves, atajos y modo solo lectura."
+msgstr "Model, keys, shortcuts and read-only mode."
+
+msgid "Modelos disponibles"
+msgstr "Available models"
+
+msgid "Qué modelos puedes usar y su coste."
+msgstr "Which models you can use and what they cost."
+
+msgid "Exportar"
+msgstr "Export"
+
+msgid "Histórico, tareas y notas en JSON, CSV o Markdown."
+msgstr "History, tasks and notes as JSON, CSV or Markdown."
+
+msgid "Trae tus datos desde otra copia o aplicación."
+msgstr "Bring in your data from another copy or app."
+
+msgid "Recupera lo que borraste por error."
+msgstr "Recover what you deleted by mistake."
+
+msgid "Herramientas conectadas"
+msgstr "Connected tools"
+
+msgid "Catálogo de aplicaciones integradas en tu gestoría."
+msgstr "Catalogue of apps integrated into your firm."
+
+msgid "Tu cuenta"
+msgstr "Your account"
+
+msgid "Tus datos"
+msgstr "Your data"
+
+msgid "Tema"
+msgstr "Theme"
+
+msgid "Claro"
+msgstr "Light"
+
+msgid "Oscuro"
+msgstr "Dark"
+
+msgid "Densidad"
+msgstr "Density"
+
+msgid "Todo lo que se puede configurar en Guilda Work, en un solo sitio."
+msgstr "Everything you can configure in Guilda Work, in one place."
+
+msgid "Buscar un ajuste…"
+msgstr "Search settings…"
+
+msgid "Buscar un ajuste"
+msgstr "Search settings"
+
+msgid "Ningún ajuste coincide con tu búsqueda."
+msgstr "No setting matches your search."
+
+msgid "¿Dudas?"
+msgstr "Questions?"
+
+msgid "Abre el centro de ayuda"
+msgstr "Open the help centre"
+
+msgid "Cómo apareces, qué avisos recibes y cómo quieres que se vea Guilda Work."
+msgstr "How you appear, which alerts you get and how you want Guilda Work to look."
+
+msgid "Todos los ajustes"
+msgstr "All settings"
+
+msgid "Cambios guardados."
+msgstr "Changes saved."
+
+msgid "Notificación de prueba enviada: debería aparecer en la campana."
+msgstr "Test notification sent: it should appear in the bell."
+
+msgid "Secciones del perfil"
+msgstr "Profile sections"
+
+msgid "Perfil"
+msgstr "Profile"
+
+msgid "Seguridad"
+msgstr "Security"
+
+msgid "Administrador"
+msgstr "Administrator"
+
+msgid "Desde %(f)s"
+msgstr "Since %(f)s"
+
+msgid "JPEG, PNG o WEBP de hasta 5 MB. Se recorta en cuadrado."
+msgstr "JPEG, PNG or WEBP up to 5 MB. Cropped to a square."
+
+msgid "Se usa en vez de tu email donde aparezcas como autor (tiquets, histórico…). Vacío = se muestra el email."
+msgstr "Used instead of your email wherever you appear as author (tickets, history…). Empty = your email is shown."
+
+msgid "Cargo"
+msgstr "Job title"
+
+msgid "Gestor fiscal, administración…"
+msgstr "Tax advisor, administration…"
+
+msgid "Para cambiarlo, ve a «Seguridad»."
+msgstr "To change it, go to “Security”."
+
+msgid "Cuenta local: no tiene email que cambiar."
+msgstr "Local account: there is no email to change."
+
+msgid "Siempre se guardan en la campana de la aplicación; aquí eliges cuáles te llegan además al móvil."
+msgstr "They always go to the bell in the app; here you choose which also reach your phone."
+
+msgid "Aviso antes de que venza un modelo de tus clientes."
+msgstr "A heads-up before one of your clients' tax forms is due."
+
+msgid "Cuando alguien cambia el estado de un tiquet tuyo."
+msgstr "When someone changes the status of one of your tickets."
+
+msgid "Correo nuevo"
+msgstr "New mail"
+
+msgid "Un aviso al llegar mensajes a tus cuentas de correo."
+msgstr "An alert when messages arrive in your mail accounts."
+
+msgid "Mensajes de clientes en el portal"
+msgstr "Client messages in the portal"
+
+msgid "Cuando un cliente te escribe o sube un documento."
+msgstr "When a client writes to you or uploads a document."
+
+msgid "Cada semana, lo importante que pasó y lo que viene."
+msgstr "Each week, what mattered and what's coming."
+
+msgid "No molestar"
+msgstr "Do not disturb"
+
+msgid "Sin avisos en el móvil dentro de esta franja (siguen en la campana). Hora del despacho."
+msgstr "No phone alerts during this window (they stay in the bell). Office time."
+
+msgid "Ahora mismo: no molestar activo"
+msgstr "Right now: do not disturb is on"
+
+msgid "Enviarme una notificación de prueba"
+msgstr "Send me a test notification"
+
+msgid "%(n)s móvil vinculado."
+msgid_plural "%(n)s móviles vinculados."
+msgstr[0] "%(n)s phone linked."
+msgstr[1] "%(n)s phones linked."
+
+msgid "Los cambios de perfil y notificaciones se aplican al guardar."
+msgstr "Profile and notification changes apply when you save."
+
+msgid "El tema y la densidad se recuerdan en este navegador; el idioma, en tu cuenta."
+msgstr "Theme and density are remembered in this browser; language, in your account."
+
+msgid "Cambia tus credenciales y activa el segundo factor (app de autenticación o códigos de respaldo)."
+msgstr "Change your credentials and turn on the second factor (authenticator app or backup codes)."
+
+msgid "%(n)s dispositivo con sesión iniciada: revísalo o ciérralo."
+msgid_plural "%(n)s dispositivos con sesión iniciada: revísalos o ciérralos."
+msgstr[0] "%(n)s device signed in: review or close it."
+msgstr[1] "%(n)s devices signed in: review or close them."
+
+msgid "Datos para el registro horario"
+msgstr "Details for the working-hours record"
+
+msgid "Nombre completo y DNI/NIE con los que se firma tu fichaje."
+msgstr "Full name and ID number your clock-in is signed with."
+
+msgid "Son tuyos: descárgalos cuando quieras."
+msgstr "They are yours: download them whenever you like."
+
+msgid "Histórico y notas"
+msgstr "History and notes"
+
+msgid "Tareas (CSV)"
+msgstr "Tasks (CSV)"
+
+msgid "Tareas en tu calendario (ICS)"
+msgstr "Tasks in your calendar (ICS)"

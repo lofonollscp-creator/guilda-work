@@ -2130,6 +2130,12 @@ def init_db() -> None:
         # db.notificacion_tipo_activa()).
         _asegurar_columna(conn, "usuario_perfil", "notificar_push_correo", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "usuario_perfil", "notificar_push_portal_mensajes", "INTEGER NOT NULL DEFAULT 1")
+        # Perfil ampliado: cargo y teléfono (visibles en la ficha y firma de equipo) y «no molestar» (franja horaria sin push; la
+        # notificación sigue en la app). Horas «HH:MM» en la zona horaria del despacho; si desde > hasta cruza la medianoche.
+        _asegurar_columna(conn, "usuario_perfil", "cargo", "TEXT")
+        _asegurar_columna(conn, "usuario_perfil", "telefono", "TEXT")
+        _asegurar_columna(conn, "usuario_perfil", "silencio_desde", "TEXT")
+        _asegurar_columna(conn, "usuario_perfil", "silencio_hasta", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "uidvalidity", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")
@@ -12361,6 +12367,10 @@ def guardar_perfil_usuario(
     notificar_resumen_semanal: bool | None = None,
     notificar_push_correo: bool | None = None,
     notificar_push_portal_mensajes: bool | None = None,
+    cargo: str | None = None,
+    telefono: str | None = None,
+    silencio_desde: str | None = None,
+    silencio_hasta: str | None = None,
 ) -> None:
     """Solo actualiza los campos que se pasan explícitos (no-None) -- así
     la ruta puede llamar con únicamente el nombre, o únicamente las
@@ -12387,6 +12397,17 @@ def guardar_perfil_usuario(
         if notificar_push_portal_mensajes is not None:
             asignaciones.append("notificar_push_portal_mensajes = ?")
             valores.append(int(notificar_push_portal_mensajes))
+        for columna, valor, largo in (("cargo", cargo, 80), ("telefono", telefono, 30)):
+            if valor is not None:
+                asignaciones.append(f"{columna} = ?")
+                valores.append(valor.strip()[:largo] or None)
+        if silencio_desde is not None or silencio_hasta is not None:
+            # Las dos horas van juntas y válidas, o ninguna (una franja a medias no significa nada)
+            desde, hasta = _hora_valida(silencio_desde), _hora_valida(silencio_hasta)
+            if not (desde and hasta and desde != hasta):
+                desde = hasta = None
+            asignaciones += ["silencio_desde = ?", "silencio_hasta = ?"]
+            valores += [desde, hasta]
         if asignaciones:
             conn.execute(
                 f"UPDATE usuario_perfil SET {', '.join(asignaciones)} WHERE usuario_id = ?",
@@ -12408,6 +12429,34 @@ _COLUMNAS_PREFERENCIA_NOTIFICACION = {
     "correo_nuevo": "notificar_push_correo",
     "portal_mensaje_nuevo": "notificar_push_portal_mensajes",
 }
+
+
+def _hora_valida(texto: str | None) -> str | None:
+    """«08:30» -> «08:30»; cualquier otra cosa -> None."""
+    import re as _re
+
+    m = _re.fullmatch(r"([01]\d|2[0-3]):([0-5]\d)", (texto or "").strip())
+    return f"{m.group(1)}:{m.group(2)}" if m else None
+
+
+def en_horas_de_silencio(usuario_id: int, ahora=None) -> bool:
+    """¿Está la persona en su franja de «no molestar» (hora local del despacho)? Con desde > hasta la franja cruza la medianoche
+    (22:00-08:00). Solo silencia el push al móvil: la notificación sigue apareciendo en la aplicación."""
+    from datetime import datetime as _dt
+    from zoneinfo import ZoneInfo as _Zona
+
+    perfil = obtener_perfil_usuario(usuario_id)
+    desde, hasta = _hora_valida(perfil["silencio_desde"]), _hora_valida(perfil["silencio_hasta"])
+    if not (desde and hasta) or desde == hasta:
+        return False
+    if ahora is None:
+        tenant = tenant_de_usuario(usuario_id)
+        try:
+            ahora = _dt.now(_Zona(zona_horaria_tenant(tenant["id"] if tenant else None)))
+        except Exception:
+            ahora = _dt.now()
+    actual = ahora.strftime("%H:%M")
+    return (desde <= actual < hasta) if desde < hasta else (actual >= desde or actual < hasta)
 
 
 def notificacion_tipo_activa(usuario_id: int, tipo: str) -> bool:

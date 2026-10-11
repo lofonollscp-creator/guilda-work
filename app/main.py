@@ -29,6 +29,7 @@ import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask_babel import Babel, format_date, format_datetime, get_locale
 from flask_babel import gettext as _
+from flask_babel import ngettext
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -1665,35 +1666,112 @@ def revocar_dispositivo(token_id):
 @app.route("/ajustes/perfil", methods=["GET", "POST"])
 @login_required
 def ajustes_perfil():
-    """Espacio de ajustes de usuario (Fase G1): nombre a mostrar, avatar y
-    notificaciones -- a diferencia del dropdown "ajustes" de base.html
-    (tema/idioma/densidad, ajustes de la APLICACIÓN), esto es el perfil
-    del usuario en sí. Contraseña/email viven aparte en /ajustes/cuenta
-    (flujo Kratos, no aplica a usuarios locales de escritorio)."""
+    """Mi perfil: cómo apareces (nombre, foto, cargo, teléfono), qué avisos recibes y cuándo («no molestar»), apariencia, seguridad de la
+    cuenta y tus datos. A diferencia del panel de ajustes de la barra (tema/idioma/densidad, ajustes de la APLICACIÓN), esto es la
+    persona. Contraseña/email viven aparte en /ajustes/cuenta (flujo Kratos, no aplica a usuarios locales de escritorio)."""
     if request.method == "POST":
         db.guardar_perfil_usuario(
             g.usuario_id,
             nombre_mostrado=request.form.get("nombre_mostrado", ""),
+            cargo=request.form.get("cargo", ""),
+            telefono=request.form.get("telefono", ""),
+            silencio_desde=request.form.get("silencio_desde", "") if "silencio_activo" in request.form else "",
+            silencio_hasta=request.form.get("silencio_hasta", "") if "silencio_activo" in request.form else "",
             notificar_push_vencimientos="notificar_push_vencimientos" in request.form,
             notificar_push_tiquets="notificar_push_tiquets" in request.form,
             notificar_resumen_semanal="notificar_resumen_semanal" in request.form,
             notificar_push_correo="notificar_push_correo" in request.form,
             notificar_push_portal_mensajes="notificar_push_portal_mensajes" in request.form,
         )
-        return redirect(url_for("ajustes_perfil"))
+        return redirect(url_for("ajustes_perfil", aviso="guardado"))
     usuario = db.obtener_usuario(g.usuario_id)
+    tenant = db.tenant_de_usuario(g.usuario_id)
     return render_template(
         "ajustes_perfil.html",
         perfil=db.obtener_perfil_usuario(g.usuario_id),
         usuario=usuario,
+        despacho=tenant["nombre"] if tenant else None,
+        dispositivos=len(db.listar_tokens_api(g.usuario_id)),
+        en_silencio=db.en_horas_de_silencio(g.usuario_id),
         # Un usuario local (modo escritorio) nunca pasa por Kratos -- no
         # tiene contraseña/email que cambiar desde aquí (app/db.py:
         # es_local, ver _resolver_usuario_local).
         puede_cambiar_credenciales=not usuario["es_local"],
-        # Sin flash() en este proyecto (ningún otro sitio lo usa) -- mismo
-        # patrón que ya sigue /login con captcha_error: un parámetro de
-        # query que la propia vista GET traduce a texto.
+        # Sin flash() en este proyecto (ningún otro sitio lo usa) -- un parámetro de query que la propia vista GET traduce a texto.
         error_avatar=request.args.get("error_avatar"),
+        aviso=request.args.get("aviso"),
+    )
+
+
+@app.route("/ajustes/perfil/prueba-notificacion", methods=["POST"])
+@login_required
+def prueba_notificacion():
+    """Manda una notificación de prueba a la propia persona (en la app y, si tiene el móvil vinculado, push; la prueba ignora «no molestar»)."""
+    notificaciones.crear_y_enviar(
+        g.usuario_id, "prueba", _("Notificación de prueba"), _("Si ves esto, las notificaciones funcionan."),
+        url_for("ajustes_perfil"), ignorar_silencio=True,
+    )
+    return redirect(url_for("ajustes_perfil", aviso="prueba") + "#notificaciones")
+
+
+def _secciones_ajustes() -> list[dict]:
+    """Todo lo configurable de la aplicación, por grupos, con el estado actual de cada cosa (para que esta pantalla sea un cuadro de mandos
+    y no solo una lista de enlaces). Solo aparece lo que la persona puede usar."""
+    uid = g.usuario_id
+    usuario = db.obtener_usuario(uid)
+    perfil = db.obtener_perfil_usuario(uid)
+    n_cuentas = len(db.listar_cuentas_correo(uid))
+    n_dispositivos = len(db.listar_tokens_api(uid))
+    avisos_off = sum(1 for c in ("notificar_push_vencimientos", "notificar_push_tiquets", "notificar_push_correo", "notificar_push_portal_mensajes") if not perfil[c])
+
+    def u(endpoint, **kw):
+        return url_for(endpoint, **kw)
+
+    cuenta = [
+        {"id": "perfil", "icono": "user", "titulo": _("Mi perfil"), "texto": _("Nombre, foto, cargo y teléfono."), "url": u("ajustes_perfil"), "estado": (perfil["nombre_mostrado"] or usuario["email"])},
+        {"id": "notificaciones", "icono": "bell", "titulo": _("Notificaciones"), "texto": _("Qué avisos recibes, «no molestar» y prueba de envío."), "url": u("ajustes_perfil") + "#notificaciones",
+         "estado": _("%(n)s desactivados", n=avisos_off) if avisos_off else _("Todas activas")},
+    ]
+    if not usuario["es_local"]:
+        cuenta.append({"id": "seguridad", "icono": "lock", "titulo": _("Contraseña, email y verificación en dos pasos"), "texto": _("Cambia tus credenciales y protege la cuenta con un segundo factor."), "url": u("ajustes_cuenta"), "estado": None})
+    cuenta.append({"id": "dispositivos", "icono": "smartphone", "titulo": _("Mis dispositivos"), "texto": _("Móviles con sesión iniciada: revísalos y cierra los que no uses."), "url": u("mis_dispositivos"),
+                   "estado": ngettext("%(n)s dispositivo", "%(n)s dispositivos", n_dispositivos, n=n_dispositivos)})
+    trabajo = [
+        {"id": "correo", "icono": "mail", "titulo": _("Correo"), "texto": _("Firma, categorías, reglas, plantillas y envío."), "url": u("correo.ajustes"), "estado": None},
+        {"id": "cuentas", "icono": "send", "titulo": _("Cuentas de correo"), "texto": _("Conecta, sincroniza o desconecta tus buzones."), "url": u("correo.cuentas"),
+         "estado": ngettext("%(n)s cuenta", "%(n)s cuentas", n_cuentas, n=n_cuentas)},
+        {"id": "plantillas", "icono": "layout-list", "titulo": _("Plantillas de tareas"), "texto": _("Listas de tareas que se repiten en cada cliente o proyecto."), "url": u("tareas.plantillas"), "estado": None},
+        {"id": "recurrentes", "icono": "refresh-cw", "titulo": _("Tareas recurrentes"), "texto": _("Tareas que se crean solas cada semana, mes o año."), "url": u("tareas.recurrentes"), "estado": None},
+        {"id": "fichaje", "icono": "clock", "titulo": _("Fichaje: mis datos"), "texto": _("Nombre completo y DNI/NIE para el registro horario."), "url": u("fichaje.mis_datos"), "estado": None},
+    ]
+    if g.tenant_id is not None:
+        trabajo.append({"id": "recordatorios", "icono": "bell", "titulo": _("Recordatorios a clientes"), "texto": _("Avisos automáticos de vencimientos a tus clientes."), "url": u("fiscal.recordatorios"), "estado": None})
+    asistente = [
+        {"id": "ia", "icono": "bot", "titulo": _("Asistente de IA"), "texto": _("Modelo, claves, atajos y modo solo lectura."), "url": u("ia.ajustes"), "estado": None},
+        {"id": "modelos", "icono": "sparkles", "titulo": _("Modelos disponibles"), "texto": _("Qué modelos puedes usar y su coste."), "url": u("ia.modelos"), "estado": None},
+    ]
+    datos = [
+        {"id": "exportar", "icono": "download", "titulo": _("Exportar"), "texto": _("Histórico, tareas y notas en JSON, CSV o Markdown."), "url": u("exportar"), "estado": None},
+        {"id": "importar", "icono": "upload", "titulo": _("Importar"), "texto": _("Trae tus datos desde otra copia o aplicación."), "url": u("importar"), "estado": None},
+        {"id": "papelera", "icono": "trash-2", "titulo": _("Papelera"), "texto": _("Recupera lo que borraste por error."), "url": u("papelera"), "estado": None},
+        {"id": "herramientas", "icono": "wrench", "titulo": _("Herramientas conectadas"), "texto": _("Catálogo de aplicaciones integradas en tu gestoría."), "url": u("herramientas"), "estado": None},
+    ]
+    return [
+        {"titulo": _("Tu cuenta"), "items": cuenta},
+        {"titulo": _("Trabajo diario"), "items": trabajo},
+        {"titulo": _("Asistente de IA"), "items": asistente},
+        {"titulo": _("Tus datos"), "items": datos},
+    ]
+
+
+@app.route("/ajustes")
+@app.route("/ajustes/")
+@login_required
+def ajustes():
+    """Centro de ajustes: un solo sitio desde el que llegar a todo lo configurable, con buscador y el estado de cada cosa."""
+    usuario = db.obtener_usuario(g.usuario_id)
+    return render_template(
+        "ajustes.html", secciones=_secciones_ajustes(), usuario=usuario, perfil=db.obtener_perfil_usuario(g.usuario_id),
     )
 
 

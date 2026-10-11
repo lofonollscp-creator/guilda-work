@@ -77,3 +77,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--acento); }
 @media (max-width: 560px) { h1 { font-size: 1.45rem; } .tarjeta { padding-inline: 16px; border-radius: 18px; } }
 .contenido > .tarjeta, .contenido > .tabla-caja, .contenido > .rejilla + .tarjeta { margin-bottom: 16px; }
 .tarjeta + .rejilla, .rejilla + .rejilla { margin-top: 16px; }
+
+/* ---- Desplegables nativos: siguen el tema del backoffice (antes el panel salía blanco con letras claras en oscuro) ------------------------ */
+:root, :root[data-tema="oscuro"] { color-scheme: dark; }
+:root[data-tema="claro"] { color-scheme: light; }
+select option, select optgroup { background-color: var(--superficie); color: var(--texto); }
+select option:checked { background-color: color-mix(in srgb, var(--acento) 30%, var(--superficie)); }
+select option:disabled { color: var(--apagado); }
+input[type="date"], input[type="datetime-local"], input[type="time"] { color-scheme: inherit; }

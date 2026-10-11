@@ -7513,3 +7513,245 @@ msgstr "Mostrant %%s de %%s: continua escrivint per afinar"
 #: app/templates/tareas_tablero.html
 msgid "Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla."
 msgstr "Les teves tasques per estat. Arrossega una targeta a una altra columna o fes servir el seu selector per moure-la."
+
+msgid "Notificación de prueba"
+msgstr "Notificació de prova"
+
+msgid "Si ves esto, las notificaciones funcionan."
+msgstr "Si veus això, les notificacions funcionen."
+
+msgid "Nombre, foto, cargo y teléfono."
+msgstr "Nom, foto, càrrec i telèfon."
+
+msgid "Qué avisos recibes, «no molestar» y prueba de envío."
+msgstr "Quins avisos reps, «no molestar» i prova d'enviament."
+
+msgid "%(n)s desactivados"
+msgstr "%(n)s desactivats"
+
+msgid "Todas activas"
+msgstr "Totes actives"
+
+msgid "Contraseña, email y verificación en dos pasos"
+msgstr "Contrasenya, email i verificació en dos passos"
+
+msgid "Cambia tus credenciales y protege la cuenta con un segundo factor."
+msgstr "Canvia les teves credencials i protegeix el compte amb un segon factor."
+
+msgid "Móviles con sesión iniciada: revísalos y cierra los que no uses."
+msgstr "Mòbils amb sessió iniciada: revisa'ls i tanca els que no facis servir."
+
+msgid "%(n)s dispositivo"
+msgid_plural "%(n)s dispositivos"
+msgstr[0] "%(n)s dispositiu"
+msgstr[1] "%(n)s dispositius"
+
+msgid "Firma, categorías, reglas, plantillas y envío."
+msgstr "Signatura, categories, regles, plantilles i enviament."
+
+msgid "Conecta, sincroniza o desconecta tus buzones."
+msgstr "Connecta, sincronitza o desconnecta les teves bústies."
+
+msgid "%(n)s cuenta"
+msgid_plural "%(n)s cuentas"
+msgstr[0] "%(n)s compte"
+msgstr[1] "%(n)s comptes"
+
+msgid "Listas de tareas que se repiten en cada cliente o proyecto."
+msgstr "Llistes de tasques que es repeteixen a cada client o projecte."
+
+msgid "Tareas que se crean solas cada semana, mes o año."
+msgstr "Tasques que es creen soles cada setmana, mes o any."
+
+msgid "Fichaje: mis datos"
+msgstr "Fitxatge: les meves dades"
+
+msgid "Nombre completo y DNI/NIE para el registro horario."
+msgstr "Nom complet i DNI/NIE per al registre horari."
+
+msgid "Avisos automáticos de vencimientos a tus clientes."
+msgstr "Avisos automàtics de venciments als teus clients."
+
+msgid "Asistente de IA"
+msgstr "Assistent d'IA"
+
+msgid "Modelo, claves, atajos y modo solo lectura."
+msgstr "Model, claus, dreceres i mode de només lectura."
+
+msgid "Modelos disponibles"
+msgstr "Models disponibles"
+
+msgid "Qué modelos puedes usar y su coste."
+msgstr "Quins models pots fer servir i el seu cost."
+
+msgid "Exportar"
+msgstr "Exportar"
+
+msgid "Histórico, tareas y notas en JSON, CSV o Markdown."
+msgstr "Històric, tasques i notes en JSON, CSV o Markdown."
+
+msgid "Trae tus datos desde otra copia o aplicación."
+msgstr "Porta les teves dades des d'una altra còpia o aplicació."
+
+msgid "Recupera lo que borraste por error."
+msgstr "Recupera el que has esborrat per error."
+
+msgid "Herramientas conectadas"
+msgstr "Eines connectades"
+
+msgid "Catálogo de aplicaciones integradas en tu gestoría."
+msgstr "Catàleg d'aplicacions integrades a la teva gestoria."
+
+msgid "Tu cuenta"
+msgstr "El teu compte"
+
+msgid "Tus datos"
+msgstr "Les teves dades"
+
+msgid "Tema"
+msgstr "Tema"
+
+msgid "Claro"
+msgstr "Clar"
+
+msgid "Oscuro"
+msgstr "Fosc"
+
+msgid "Densidad"
+msgstr "Densitat"
+
+msgid "Todo lo que se puede configurar en Guilda Work, en un solo sitio."
+msgstr "Tot el que es pot configurar a Guilda Work, en un sol lloc."
+
+msgid "Buscar un ajuste…"
+msgstr "Cerca un ajust…"
+
+msgid "Buscar un ajuste"
+msgstr "Cerca un ajust"
+
+msgid "Ningún ajuste coincide con tu búsqueda."
+msgstr "Cap ajust coincideix amb la teva cerca."
+
+msgid "¿Dudas?"
+msgstr "Dubtes?"
+
+msgid "Abre el centro de ayuda"
+msgstr "Obre el centre d'ajuda"
+
+msgid "Cómo apareces, qué avisos recibes y cómo quieres que se vea Guilda Work."
+msgstr "Com apareixes, quins avisos reps i com vols que es vegi Guilda Work."
+
+msgid "Todos los ajustes"
+msgstr "Tots els ajustos"
+
+msgid "Cambios guardados."
+msgstr "Canvis desats."
+
+msgid "Notificación de prueba enviada: debería aparecer en la campana."
+msgstr "Notificació de prova enviada: hauria d'aparèixer a la campana."
+
+msgid "Secciones del perfil"
+msgstr "Seccions del perfil"
+
+msgid "Perfil"
+msgstr "Perfil"
+
+msgid "Seguridad"
+msgstr "Seguretat"
+
+msgid "Administrador"
+msgstr "Administrador"
+
+msgid "Desde %(f)s"
+msgstr "Des del %(f)s"
+
+msgid "JPEG, PNG o WEBP de hasta 5 MB. Se recorta en cuadrado."
+msgstr "JPEG, PNG o WEBP de fins a 5 MB. Es retalla en quadrat."
+
+msgid "Se usa en vez de tu email donde aparezcas como autor (tiquets, histórico…). Vacío = se muestra el email."
+msgstr "S'utilitza en lloc del teu email allà on apareguis com a autor (tiquets, històric…). Buit = es mostra l'email."
+
+msgid "Cargo"
+msgstr "Càrrec"
+
+msgid "Gestor fiscal, administración…"
+msgstr "Gestor fiscal, administració…"
+
+msgid "Para cambiarlo, ve a «Seguridad»."
+msgstr "Per canviar-lo, ves a «Seguretat»."
+
+msgid "Cuenta local: no tiene email que cambiar."
+msgstr "Compte local: no té cap email per canviar."
+
+msgid "Siempre se guardan en la campana de la aplicación; aquí eliges cuáles te llegan además al móvil."
+msgstr "Sempre es desen a la campana de l'aplicació; aquí tries quines et arriben també al mòbil."
+
+msgid "Aviso antes de que venza un modelo de tus clientes."
+msgstr "Avís abans que venci un model dels teus clients."
+
+msgid "Cuando alguien cambia el estado de un tiquet tuyo."
+msgstr "Quan algú canvia l'estat d'un tiquet teu."
+
+msgid "Correo nuevo"
+msgstr "Correu nou"
+
+msgid "Un aviso al llegar mensajes a tus cuentas de correo."
+msgstr "Un avís en arribar missatges als teus comptes de correu."
+
+msgid "Mensajes de clientes en el portal"
+msgstr "Missatges de clients al portal"
+
+msgid "Cuando un cliente te escribe o sube un documento."
+msgstr "Quan un client t'escriu o puja un document."
+
+msgid "Cada semana, lo importante que pasó y lo que viene."
+msgstr "Cada setmana, el més important que ha passat i el que ve."
+
+msgid "No molestar"
+msgstr "No molestar"
+
+msgid "Sin avisos en el móvil dentro de esta franja (siguen en la campana). Hora del despacho."
+msgstr "Sense avisos al mòbil dins d'aquesta franja (continuen a la campana). Hora del despatx."
+
+msgid "Ahora mismo: no molestar activo"
+msgstr "Ara mateix: no molestar actiu"
+
+msgid "Enviarme una notificación de prueba"
+msgstr "Enviar-me una notificació de prova"
+
+msgid "%(n)s móvil vinculado."
+msgid_plural "%(n)s móviles vinculados."
+msgstr[0] "%(n)s mòbil vinculat."
+msgstr[1] "%(n)s mòbils vinculats."
+
+msgid "Los cambios de perfil y notificaciones se aplican al guardar."
+msgstr "Els canvis de perfil i notificacions s'apliquen en desar."
+
+msgid "El tema y la densidad se recuerdan en este navegador; el idioma, en tu cuenta."
+msgstr "El tema i la densitat es recorden en aquest navegador; l'idioma, al teu compte."
+
+msgid "Cambia tus credenciales y activa el segundo factor (app de autenticación o códigos de respaldo)."
+msgstr "Canvia les teves credencials i activa el segon factor (app d'autenticació o codis de còpia)."
+
+msgid "%(n)s dispositivo con sesión iniciada: revísalo o ciérralo."
+msgid_plural "%(n)s dispositivos con sesión iniciada: revísalos o ciérralos."
+msgstr[0] "%(n)s dispositiu amb sessió iniciada: revisa'l o tanca'l."
+msgstr[1] "%(n)s dispositius amb sessió iniciada: revisa'ls o tanca'ls."
+
+msgid "Datos para el registro horario"
+msgstr "Dades per al registre horari"
+
+msgid "Nombre completo y DNI/NIE con los que se firma tu fichaje."
+msgstr "Nom complet i DNI/NIE amb què se signa el teu fitxatge."
+
+msgid "Son tuyos: descárgalos cuando quieras."
+msgstr "Són teus: descarrega'ls quan vulguis."
+
+msgid "Histórico y notas"
+msgstr "Històric i notes"
+
+msgid "Tareas (CSV)"
+msgstr "Tasques (CSV)"
+
+msgid "Tareas en tu calendario (ICS)"
+msgstr "Tasques al teu calendari (ICS)"

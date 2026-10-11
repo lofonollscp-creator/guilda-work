@@ -13,6 +13,7 @@ from . import db, push
 
 def crear_y_enviar(
     usuario_id: int, tipo: str, titulo: str, cuerpo: str, url: str | None = None, datos: dict | None = None,
+    ignorar_silencio: bool = False,
 ) -> None:
     """Registra la notificación (visible en la propia app) y manda el
     push FCM (visible en el móvil) -- el registro en BD nunca falla en
@@ -23,4 +24,7 @@ def crear_y_enviar(
         db.crear_notificacion(usuario_id, tipo, titulo, cuerpo, url)
     except Exception:
         pass
-    push.enviar_a_usuario(usuario_id, titulo, cuerpo, datos)
+    if ignorar_silencio:
+        push.enviar_a_usuario(usuario_id, titulo, cuerpo, datos, ignorar_silencio=True)
+    else:
+        push.enviar_a_usuario(usuario_id, titulo, cuerpo, datos)

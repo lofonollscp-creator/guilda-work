@@ -1,79 +1,171 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Mi perfil') }} — Guilda Work{% endblock %}
 {% block content %}
-<header class="page-header">
+{% set nombre = perfil.nombre_mostrado or usuario.email %}
+<header class="page-header ajustes-cabecera">
   <div>
     <h1>{{ _('Mi perfil') }}</h1>
-    <p class="subtitle">{{ _('Cómo apareces en Guilda Work y qué avisos quieres recibir.') }}</p>
+    <p class="subtitle">{{ _('Cómo apareces, qué avisos recibes y cómo quieres que se vea Guilda Work.') }}</p>
   </div>
+  <a class="btn btn-ghost" href="{{ url_for('ajustes') }}">{{ _('Todos los ajustes') }}</a>
 </header>
 
-<form class="edit-form perfil-form" method="post" action="{{ url_for('ajustes_perfil') }}">
-  <div class="perfil-form-col">
-    <fieldset>
-      <legend>{{ _('Foto de perfil') }}</legend>
-      <div class="perfil-avatar-fila">
-        {% if perfil.avatar_contenido %}
-        <img class="perfil-avatar-imagen" src="{{ url_for('avatar_usuario', usuario_id=usuario.id) }}" alt="" width="64" height="64">
-        {% else %}
-        <span class="avatar-circulo perfil-avatar-iniciales" style="--avatar-color: {{ (perfil.nombre_mostrado or usuario.email)|avatar_color }};">{{ (perfil.nombre_mostrado or usuario.email)|iniciales }}</span>
-        {% endif %}
-        <span class="file-input">
-          <label class="file-input-boton btn btn-ghost">
-            <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
-            {{ _('Elegir imagen') }}
-            <input type="file" name="avatar" form="perfil-form-avatar" accept="image/jpeg,image/png,image/webp">
-          </label>
-          <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+{% if aviso == 'guardado' %}<p class="perfil-aviso" role="status">{{ _('Cambios guardados.') }}</p>{% endif %}
+{% if aviso == 'prueba' %}<p class="perfil-aviso" role="status">{{ _('Notificación de prueba enviada: debería aparecer en la campana.') }}</p>{% endif %}
+
+<div class="perfil-layout">
+  <nav class="perfil-nav" aria-label="{{ _('Secciones del perfil') }}">
+    <a href="#perfil">{{ _('Perfil') }}</a>
+    <a href="#notificaciones">{{ _('Notificaciones') }}</a>
+    <a href="#apariencia">{{ _('Apariencia') }}</a>
+    <a href="#seguridad">{{ _('Seguridad') }}</a>
+    <a href="#datos">{{ _('Mis datos') }}</a>
+  </nav>
+
+  <div class="perfil-contenido">
+    <section class="perfil-resumen">
+      {% if perfil.avatar_contenido %}
+      <img class="perfil-avatar-imagen perfil-avatar-grande" src="{{ url_for('avatar_usuario', usuario_id=usuario.id) }}" alt="" width="72" height="72">
+      {% else %}
+      <span class="avatar-circulo perfil-avatar-iniciales perfil-avatar-grande" style="--avatar-color: {{ nombre|avatar_color }};">{{ nombre|iniciales }}</span>
+      {% endif %}
+      <div class="perfil-resumen-texto">
+        <strong>{{ nombre }}</strong>
+        {% if perfil.nombre_mostrado %}<span>{{ usuario.email }}</span>{% endif %}
+        <span class="perfil-chips">
+          {% if perfil.cargo %}<span class="pill">{{ perfil.cargo }}</span>{% endif %}
+          {% if despacho %}<span class="pill">{{ despacho }}</span>{% endif %}
+          {% if usuario.rol == 'admin' %}<span class="pill">{{ _('Administrador') }}</span>{% endif %}
+          <span class="pill" title="{{ _('Fecha de alta') }}">{{ _('Desde %(f)s', f=usuario.creado_en|fecha_dia) }}</span>
         </span>
-        <button type="submit" form="perfil-form-avatar" class="btn btn-primary">{{ _('Subir') }}</button>
-        {% if perfil.avatar_contenido %}
-        <button type="submit" form="perfil-form-avatar" formaction="{{ url_for('eliminar_avatar') }}" class="btn btn-ghost">{{ _('Quitar') }}</button>
-        {% endif %}
       </div>
-      {% if error_avatar == 'formato' %}<p class="ia-error">{{ _('Formato no soportado -- usa JPEG, PNG o WEBP.') }}</p>{% endif %}
-      {% if error_avatar == 'tamano' %}<p class="ia-error">{{ _('La imagen pesa demasiado (máximo 5 MB).') }}</p>{% endif %}
-      {% if error_avatar == 'procesar' %}<p class="ia-error">{{ _('No se ha podido procesar esa imagen -- prueba con otra.') }}</p>{% endif %}
-    </fieldset>
+    </section>
 
-    {% if puede_cambiar_credenciales %}
-    <fieldset>
-      <legend>{{ _('Cuenta') }}</legend>
-      <a class="btn btn-ghost perfil-cuenta-link" href="{{ url_for('ajustes_cuenta') }}">
-        <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg>
-        {{ _('Cambiar contraseña o email') }}
-      </a>
-    </fieldset>
-    {% endif %}
+    <form id="perfil-form" method="post" action="{{ url_for('ajustes_perfil') }}">
+      <section class="perfil-seccion" id="perfil" aria-labelledby="perfil-t">
+        <h2 id="perfil-t">{{ _('Perfil') }}</h2>
+        <div class="perfil-rejilla">
+          <div class="perfil-foto">
+            <span class="perfil-etiqueta">{{ _('Foto de perfil') }}</span>
+            <div class="perfil-avatar-fila">
+              <span class="file-input">
+                <label class="file-input-boton btn btn-ghost">
+                  <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-camera"></use></svg>
+                  {{ _('Elegir imagen') }}
+                  <input type="file" name="avatar" form="perfil-form-avatar" accept="image/jpeg,image/png,image/webp">
+                </label>
+                <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
+              </span>
+              <button type="submit" form="perfil-form-avatar" class="btn btn-primary">{{ _('Subir') }}</button>
+              {% if perfil.avatar_contenido %}
+              <button type="submit" form="perfil-form-avatar" formaction="{{ url_for('eliminar_avatar') }}" class="btn btn-ghost">{{ _('Quitar') }}</button>
+              {% endif %}
+            </div>
+            <p class="perfil-ayuda">{{ _('JPEG, PNG o WEBP de hasta 5 MB. Se recorta en cuadrado.') }}</p>
+            {% if error_avatar == 'formato' %}<p class="ia-error">{{ _('Formato no soportado -- usa JPEG, PNG o WEBP.') }}</p>{% endif %}
+            {% if error_avatar == 'tamano' %}<p class="ia-error">{{ _('La imagen pesa demasiado (máximo 5 MB).') }}</p>{% endif %}
+            {% if error_avatar == 'procesar' %}<p class="ia-error">{{ _('No se ha podido procesar esa imagen -- prueba con otra.') }}</p>{% endif %}
+          </div>
+          <div class="perfil-campos">
+            <label>{{ _('Nombre a mostrar') }}
+              <input type="text" name="nombre_mostrado" value="{{ perfil.nombre_mostrado or '' }}" placeholder="{{ usuario.email }}" maxlength="80" autocomplete="name">
+            </label>
+            <p class="perfil-ayuda">{{ _('Se usa en vez de tu email donde aparezcas como autor (tiquets, histórico…). Vacío = se muestra el email.') }}</p>
+            <div class="perfil-fila-2">
+              <label>{{ _('Cargo') }}
+                <input type="text" name="cargo" value="{{ perfil.cargo or '' }}" placeholder="{{ _('Gestor fiscal, administración…') }}" maxlength="80" autocomplete="organization-title">
+              </label>
+              <label>{{ _('Teléfono') }}
+                <input type="tel" name="telefono" value="{{ perfil.telefono or '' }}" placeholder="+34 600 000 000" maxlength="30" autocomplete="tel">
+              </label>
+            </div>
+            <label>{{ _('Email') }}
+              <input type="email" value="{{ usuario.email }}" readonly aria-describedby="perfil-email-ayuda">
+            </label>
+            <p class="perfil-ayuda" id="perfil-email-ayuda">{% if puede_cambiar_credenciales %}{{ _('Para cambiarlo, ve a «Seguridad».') }}{% else %}{{ _('Cuenta local: no tiene email que cambiar.') }}{% endif %}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="perfil-seccion" id="notificaciones" aria-labelledby="notif-t">
+        <h2 id="notif-t">{{ _('Notificaciones') }}</h2>
+        <p class="perfil-ayuda">{{ _('Siempre se guardan en la campana de la aplicación; aquí eliges cuáles te llegan además al móvil.') }}</p>
+        <ul class="perfil-interruptores">
+          {% for campo, titulo, texto in [
+            ('notificar_push_vencimientos', _('Vencimientos fiscales próximos'), _('Aviso antes de que venza un modelo de tus clientes.')),
+            ('notificar_push_tiquets', _('Cambios de estado en mis tiquets'), _('Cuando alguien cambia el estado de un tiquet tuyo.')),
+            ('notificar_push_correo', _('Correo nuevo'), _('Un aviso al llegar mensajes a tus cuentas de correo.')),
+            ('notificar_push_portal_mensajes', _('Mensajes de clientes en el portal'), _('Cuando un cliente te escribe o sube un documento.')),
+            ('notificar_resumen_semanal', _('Resumen semanal del asistente de IA'), _('Cada semana, lo importante que pasó y lo que viene.')),
+          ] %}
+          <li>
+            <label class="interruptor-fila">
+              <span class="interruptor-texto"><strong>{{ titulo }}</strong><span>{{ texto }}</span></span>
+              <input type="checkbox" class="interruptor-caja" role="switch" name="{{ campo }}" {% if perfil[campo] %}checked{% endif %}>
+            </label>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <div class="silencio">
+          <label class="interruptor-fila">
+            <span class="interruptor-texto"><strong>{{ _('No molestar') }}</strong><span>{{ _('Sin avisos en el móvil dentro de esta franja (siguen en la campana). Hora del despacho.') }}</span></span>
+            <input type="checkbox" class="interruptor-caja" role="switch" name="silencio_activo" id="silencio-activo" {% if perfil.silencio_desde and perfil.silencio_hasta %}checked{% endif %}>
+          </label>
+          <div class="silencio-horas" id="silencio-horas">
+            <label>{{ _('Desde') }} <input type="time" name="silencio_desde" value="{{ perfil.silencio_desde or '22:00' }}"></label>
+            <label>{{ _('Hasta') }} <input type="time" name="silencio_hasta" value="{{ perfil.silencio_hasta or '08:00' }}"></label>
+            {% if en_silencio %}<span class="pill" role="status">{{ _('Ahora mismo: no molestar activo') }}</span>{% endif %}
+          </div>
+        </div>
+        <p class="perfil-prueba">
+          <button type="submit" class="btn btn-ghost" formaction="{{ url_for('prueba_notificacion') }}" formnovalidate>
+            <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
+            {{ _('Enviarme una notificación de prueba') }}
+          </button>
+          <span class="perfil-ayuda">{{ ngettext('%(n)s móvil vinculado.', '%(n)s móviles vinculados.', dispositivos, n=dispositivos) }}</span>
+        </p>
+      </section>
+
+      <div class="perfil-guardar">
+        <span class="perfil-ayuda">{{ _('Los cambios de perfil y notificaciones se aplican al guardar.') }}</span>
+        <button type="submit" class="btn btn-primary">{{ _('Guardar cambios') }}</button>
+      </div>
+    </form>
+
+    <section class="perfil-seccion" id="apariencia" aria-labelledby="apar-t">
+      <h2 id="apar-t">{{ _('Apariencia') }}</h2>
+      <p class="perfil-ayuda">{{ _('El tema y la densidad se recuerdan en este navegador; el idioma, en tu cuenta.') }}</p>
+      {% include "_ajustes_apariencia.html" %}
+    </section>
+
+    <section class="perfil-seccion" id="seguridad" aria-labelledby="seg-t">
+      <h2 id="seg-t">{{ _('Seguridad') }}</h2>
+      <ul class="perfil-lista-enlaces">
+        {% if puede_cambiar_credenciales %}
+        <li><a href="{{ url_for('ajustes_cuenta') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg>
+          <span><strong>{{ _('Contraseña, email y verificación en dos pasos') }}</strong><span>{{ _('Cambia tus credenciales y activa el segundo factor (app de autenticación o códigos de respaldo).') }}</span></span></a></li>
+        {% endif %}
+        <li><a href="{{ url_for('mis_dispositivos') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
+          <span><strong>{{ _('Mis dispositivos') }}</strong><span>{{ ngettext('%(n)s dispositivo con sesión iniciada: revísalo o ciérralo.', '%(n)s dispositivos con sesión iniciada: revísalos o ciérralos.', dispositivos, n=dispositivos) }}</span></span></a></li>
+        <li><a href="{{ url_for('fichaje.mis_datos') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
+          <span><strong>{{ _('Datos para el registro horario') }}</strong><span>{{ _('Nombre completo y DNI/NIE con los que se firma tu fichaje.') }}</span></span></a></li>
+      </ul>
+    </section>
+
+    <section class="perfil-seccion" id="datos" aria-labelledby="datos-t">
+      <h2 id="datos-t">{{ _('Mis datos') }}</h2>
+      <p class="perfil-ayuda">{{ _('Son tuyos: descárgalos cuando quieras.') }}</p>
+      <div class="perfil-botones">
+        <a class="btn btn-ghost" href="{{ url_for('exportar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg>{{ _('Histórico y notas') }}</a>
+        <a class="btn btn-ghost" href="{{ url_for('tareas.exportar_csv') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg>{{ _('Tareas (CSV)') }}</a>
+        <a class="btn btn-ghost" href="{{ url_for('tareas.exportar_ics') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>{{ _('Tareas en tu calendario (ICS)') }}</a>
+        <a class="btn btn-ghost" href="{{ url_for('papelera') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg>{{ _('Papelera') }}</a>
+      </div>
+    </section>
   </div>
-
-  <div class="perfil-form-col">
-    <label>{{ _('Nombre a mostrar') }}
-      <input type="text" name="nombre_mostrado" value="{{ perfil.nombre_mostrado or '' }}" placeholder="{{ usuario.email }}">
-    </label>
-    <p class="subtitle">{{ _('Se usa en vez de tu email donde aparezcas como autor (tiquets, histórico...). Déjalo vacío para seguir mostrando el email.') }}</p>
-
-    <fieldset>
-      <legend>{{ _('Notificaciones') }}</legend>
-      <label class="checkbox-label">
-        <input type="checkbox" name="notificar_push_vencimientos" {% if perfil.notificar_push_vencimientos %}checked{% endif %}>
-        {{ _('Vencimientos fiscales próximos') }}
-      </label>
-      <label class="checkbox-label">
-        <input type="checkbox" name="notificar_push_tiquets" {% if perfil.notificar_push_tiquets %}checked{% endif %}>
-        {{ _('Cambios de estado en mis tiquets') }}
-      </label>
-      <label class="checkbox-label">
-        <input type="checkbox" name="notificar_resumen_semanal" {% if perfil.notificar_resumen_semanal %}checked{% endif %}>
-        {{ _('Resumen semanal del asistente de IA') }}
-      </label>
-    </fieldset>
-
-    <div class="edit-form-actions">
-      <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
-    </div>
-  </div>
-</form>
+</div>
 
 <form id="perfil-form-avatar" action="{{ url_for('subir_avatar') }}" method="post" enctype="multipart/form-data"></form>
+<script src="{{ url_for('static', filename='ajustes.js') }}"></script>
 {% endblock %}

@@ -1,0 +1,28 @@
+{# Controles de apariencia (tema, densidad, idioma). Tema y densidad viven en el navegador (igual que el panel de la barra); el idioma se guarda en tu cuenta. #}
+<div class="apariencia">
+  <div class="apariencia-fila">
+    <span class="apariencia-etiqueta" id="ap-tema">{{ _('Tema') }}</span>
+    <div class="segmentado" role="radiogroup" aria-labelledby="ap-tema" data-ajuste-tema>
+      <button type="button" role="radio" aria-checked="false" data-valor="system"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-monitor"></use></svg>{{ _('Sistema') }}</button>
+      <button type="button" role="radio" aria-checked="false" data-valor="light"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sun"></use></svg>{{ _('Claro') }}</button>
+      <button type="button" role="radio" aria-checked="false" data-valor="dark"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-moon"></use></svg>{{ _('Oscuro') }}</button>
+    </div>
+  </div>
+  <div class="apariencia-fila">
+    <span class="apariencia-etiqueta" id="ap-densidad">{{ _('Densidad') }}</span>
+    <div class="segmentado" role="radiogroup" aria-labelledby="ap-densidad" data-ajuste-densidad>
+      <button type="button" role="radio" aria-checked="false" data-valor="normal">{{ _('Normal') }}</button>
+      <button type="button" role="radio" aria-checked="false" data-valor="compacta">{{ _('Compacta') }}</button>
+    </div>
+  </div>
+  <div class="apariencia-fila">
+    <span class="apariencia-etiqueta" id="ap-idioma">{{ _('Idioma') }}</span>
+    <div class="segmentado" role="group" aria-labelledby="ap-idioma">
+      {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}
+      <form action="{{ url_for('cambiar_idioma', codigo=codigo) }}" method="post" class="segmentado-form">
+        <button type="submit" {% if idioma_actual == codigo %}aria-current="true" class="is-activo"{% endif %} lang="{{ codigo }}">{{ nombre }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+</div>

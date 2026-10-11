@@ -7589,3 +7589,245 @@ msgstr "Affichage de %%s sur %%s : continuez à saisir pour affiner"
 #: app/templates/tareas_tablero.html
 msgid "Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla."
 msgstr "Vos tâches par statut. Faites glisser une carte vers une autre colonne ou utilisez son sélecteur pour la déplacer."
+
+msgid "Notificación de prueba"
+msgstr "Notification de test"
+
+msgid "Si ves esto, las notificaciones funcionan."
+msgstr "Si vous voyez ceci, les notifications fonctionnent."
+
+msgid "Nombre, foto, cargo y teléfono."
+msgstr "Nom, photo, poste et téléphone."
+
+msgid "Qué avisos recibes, «no molestar» y prueba de envío."
+msgstr "Quelles alertes vous recevez, « ne pas déranger » et un envoi de test."
+
+msgid "%(n)s desactivados"
+msgstr "%(n)s désactivées"
+
+msgid "Todas activas"
+msgstr "Toutes actives"
+
+msgid "Contraseña, email y verificación en dos pasos"
+msgstr "Mot de passe, email et vérification en deux étapes"
+
+msgid "Cambia tus credenciales y protege la cuenta con un segundo factor."
+msgstr "Modifiez vos identifiants et protégez le compte avec un second facteur."
+
+msgid "Móviles con sesión iniciada: revísalos y cierra los que no uses."
+msgstr "Mobiles connectés : vérifiez-les et fermez ceux que vous n'utilisez pas."
+
+msgid "%(n)s dispositivo"
+msgid_plural "%(n)s dispositivos"
+msgstr[0] "%(n)s appareil"
+msgstr[1] "%(n)s appareils"
+
+msgid "Firma, categorías, reglas, plantillas y envío."
+msgstr "Signature, catégories, règles, modèles et envoi."
+
+msgid "Conecta, sincroniza o desconecta tus buzones."
+msgstr "Connectez, synchronisez ou déconnectez vos boîtes mail."
+
+msgid "%(n)s cuenta"
+msgid_plural "%(n)s cuentas"
+msgstr[0] "%(n)s compte"
+msgstr[1] "%(n)s comptes"
+
+msgid "Listas de tareas que se repiten en cada cliente o proyecto."
+msgstr "Listes de tâches qui se répètent pour chaque client ou projet."
+
+msgid "Tareas que se crean solas cada semana, mes o año."
+msgstr "Tâches qui se créent toutes seules chaque semaine, mois ou année."
+
+msgid "Fichaje: mis datos"
+msgstr "Pointage : mes données"
+
+msgid "Nombre completo y DNI/NIE para el registro horario."
+msgstr "Nom complet et pièce d'identité pour le registre horaire."
+
+msgid "Avisos automáticos de vencimientos a tus clientes."
+msgstr "Rappels automatiques d'échéances à vos clients."
+
+msgid "Asistente de IA"
+msgstr "Assistant IA"
+
+msgid "Modelo, claves, atajos y modo solo lectura."
+msgstr "Modèle, clés, raccourcis et mode lecture seule."
+
+msgid "Modelos disponibles"
+msgstr "Modèles disponibles"
+
+msgid "Qué modelos puedes usar y su coste."
+msgstr "Quels modèles vous pouvez utiliser et leur coût."
+
+msgid "Exportar"
+msgstr "Exporter"
+
+msgid "Histórico, tareas y notas en JSON, CSV o Markdown."
+msgstr "Historique, tâches et notes en JSON, CSV ou Markdown."
+
+msgid "Trae tus datos desde otra copia o aplicación."
+msgstr "Importez vos données depuis une autre copie ou application."
+
+msgid "Recupera lo que borraste por error."
+msgstr "Récupérez ce que vous avez supprimé par erreur."
+
+msgid "Herramientas conectadas"
+msgstr "Outils connectés"
+
+msgid "Catálogo de aplicaciones integradas en tu gestoría."
+msgstr "Catalogue des applications intégrées à votre cabinet."
+
+msgid "Tu cuenta"
+msgstr "Votre compte"
+
+msgid "Tus datos"
+msgstr "Vos données"
+
+msgid "Tema"
+msgstr "Thème"
+
+msgid "Claro"
+msgstr "Clair"
+
+msgid "Oscuro"
+msgstr "Sombre"
+
+msgid "Densidad"
+msgstr "Densité"
+
+msgid "Todo lo que se puede configurar en Guilda Work, en un solo sitio."
+msgstr "Tout ce qui se configure dans Guilda Work, au même endroit."
+
+msgid "Buscar un ajuste…"
+msgstr "Rechercher un réglage…"
+
+msgid "Buscar un ajuste"
+msgstr "Rechercher un réglage"
+
+msgid "Ningún ajuste coincide con tu búsqueda."
+msgstr "Aucun réglage ne correspond à votre recherche."
+
+msgid "¿Dudas?"
+msgstr "Des questions ?"
+
+msgid "Abre el centro de ayuda"
+msgstr "Ouvrez le centre d'aide"
+
+msgid "Cómo apareces, qué avisos recibes y cómo quieres que se vea Guilda Work."
+msgstr "Comment vous apparaissez, quelles alertes vous recevez et l'apparence de Guilda Work."
+
+msgid "Todos los ajustes"
+msgstr "Tous les réglages"
+
+msgid "Cambios guardados."
+msgstr "Modifications enregistrées."
+
+msgid "Notificación de prueba enviada: debería aparecer en la campana."
+msgstr "Notification de test envoyée : elle devrait apparaître dans la cloche."
+
+msgid "Secciones del perfil"
+msgstr "Sections du profil"
+
+msgid "Perfil"
+msgstr "Profil"
+
+msgid "Seguridad"
+msgstr "Sécurité"
+
+msgid "Administrador"
+msgstr "Administrateur"
+
+msgid "Desde %(f)s"
+msgstr "Depuis le %(f)s"
+
+msgid "JPEG, PNG o WEBP de hasta 5 MB. Se recorta en cuadrado."
+msgstr "JPEG, PNG ou WEBP jusqu'à 5 Mo. Recadrée en carré."
+
+msgid "Se usa en vez de tu email donde aparezcas como autor (tiquets, histórico…). Vacío = se muestra el email."
+msgstr "Utilisé à la place de votre email partout où vous apparaissez comme auteur (tickets, historique…). Vide = l'email s'affiche."
+
+msgid "Cargo"
+msgstr "Poste"
+
+msgid "Gestor fiscal, administración…"
+msgstr "Conseiller fiscal, administration…"
+
+msgid "Para cambiarlo, ve a «Seguridad»."
+msgstr "Pour le modifier, allez dans « Sécurité »."
+
+msgid "Cuenta local: no tiene email que cambiar."
+msgstr "Compte local : aucun email à modifier."
+
+msgid "Siempre se guardan en la campana de la aplicación; aquí eliges cuáles te llegan además al móvil."
+msgstr "Elles sont toujours enregistrées dans la cloche de l'application ; ici vous choisissez celles qui arrivent aussi sur votre mobile."
+
+msgid "Aviso antes de que venza un modelo de tus clientes."
+msgstr "Alerte avant l'échéance d'un modèle de vos clients."
+
+msgid "Cuando alguien cambia el estado de un tiquet tuyo."
+msgstr "Lorsque quelqu'un change le statut d'un de vos tickets."
+
+msgid "Correo nuevo"
+msgstr "Nouveau courrier"
+
+msgid "Un aviso al llegar mensajes a tus cuentas de correo."
+msgstr "Une alerte à l'arrivée de messages dans vos comptes mail."
+
+msgid "Mensajes de clientes en el portal"
+msgstr "Messages de clients dans le portail"
+
+msgid "Cuando un cliente te escribe o sube un documento."
+msgstr "Lorsqu'un client vous écrit ou dépose un document."
+
+msgid "Cada semana, lo importante que pasó y lo que viene."
+msgstr "Chaque semaine, l'essentiel de ce qui s'est passé et de ce qui vient."
+
+msgid "No molestar"
+msgstr "Ne pas déranger"
+
+msgid "Sin avisos en el móvil dentro de esta franja (siguen en la campana). Hora del despacho."
+msgstr "Pas d'alertes sur le mobile dans cette plage (elles restent dans la cloche). Heure du cabinet."
+
+msgid "Ahora mismo: no molestar activo"
+msgstr "En ce moment : ne pas déranger actif"
+
+msgid "Enviarme una notificación de prueba"
+msgstr "M'envoyer une notification de test"
+
+msgid "%(n)s móvil vinculado."
+msgid_plural "%(n)s móviles vinculados."
+msgstr[0] "%(n)s mobile associé."
+msgstr[1] "%(n)s mobiles associés."
+
+msgid "Los cambios de perfil y notificaciones se aplican al guardar."
+msgstr "Les modifications du profil et des notifications s'appliquent à l'enregistrement."
+
+msgid "El tema y la densidad se recuerdan en este navegador; el idioma, en tu cuenta."
+msgstr "Le thème et la densité sont mémorisés dans ce navigateur ; la langue, dans votre compte."
+
+msgid "Cambia tus credenciales y activa el segundo factor (app de autenticación o códigos de respaldo)."
+msgstr "Modifiez vos identifiants et activez le second facteur (application d'authentification ou codes de secours)."
+
+msgid "%(n)s dispositivo con sesión iniciada: revísalo o ciérralo."
+msgid_plural "%(n)s dispositivos con sesión iniciada: revísalos o ciérralos."
+msgstr[0] "%(n)s appareil connecté : vérifiez-le ou fermez-le."
+msgstr[1] "%(n)s appareils connectés : vérifiez-les ou fermez-les."
+
+msgid "Datos para el registro horario"
+msgstr "Données pour le registre horaire"
+
+msgid "Nombre completo y DNI/NIE con los que se firma tu fichaje."
+msgstr "Nom complet et pièce d'identité avec lesquels votre pointage est signé."
+
+msgid "Son tuyos: descárgalos cuando quieras."
+msgstr "Elles sont à vous : téléchargez-les quand vous voulez."
+
+msgid "Histórico y notas"
+msgstr "Historique et notes"
+
+msgid "Tareas (CSV)"
+msgstr "Tâches (CSV)"
+
+msgid "Tareas en tu calendario (ICS)"
+msgstr "Tâches dans votre calendrier (ICS)"

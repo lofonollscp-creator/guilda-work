@@ -202,6 +202,10 @@
 
           <div class="ajustes-panel-separador" role="separator"></div>
           <span class="ajustes-panel-grupo-etiqueta">{{ _('Cuenta') }}</span>
+          <a href="{{ url_for('ajustes') }}" class="ajustes-panel-btn">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg>
+            {{ _('Todos los ajustes') }}
+          </a>
           <a href="{{ url_for('ajustes_perfil') }}" class="ajustes-panel-btn">
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg>
             {{ _('Mi perfil') }}

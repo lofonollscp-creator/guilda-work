@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Ajustes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header ajustes-cabecera">
+  <div>
+    <h1>{{ _('Ajustes') }}</h1>
+    <p class="subtitle">{{ _('Todo lo que se puede configurar en Guilda Work, en un solo sitio.') }}</p>
+  </div>
+  <div class="ajustes-buscar">
+    <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+    <input type="search" id="ajustes-filtro" placeholder="{{ _('Buscar un ajuste…') }}" aria-label="{{ _('Buscar un ajuste') }}" autocomplete="off" autofocus>
+  </div>
+</header>
+
+{# Apariencia al alcance: los tres controles que más se tocan, sin entrar en ninguna pantalla #}
+<section class="ajustes-rapidos" aria-labelledby="ajustes-rapidos-t" data-ajuste-seccion>
+  <h2 id="ajustes-rapidos-t">{{ _('Apariencia') }}</h2>
+  {% include "_ajustes_apariencia.html" %}
+</section>
+
+{% for grupo in secciones %}
+<section class="ajustes-grupo" aria-labelledby="ajustes-g-{{ loop.index }}" data-ajuste-seccion>
+  <h2 id="ajustes-g-{{ loop.index }}">{{ grupo.titulo }}</h2>
+  <div class="ajustes-rejilla">
+    {% for it in grupo['items'] %}
+    <a class="ajuste-tarjeta" href="{{ it.url }}" data-ajuste data-texto="{{ (it.titulo ~ ' ' ~ it.texto ~ ' ' ~ (it.estado or ''))|lower }}">
+      <span class="ajuste-icono"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ it.icono }}"></use></svg></span>
+      <span class="ajuste-cuerpo">
+        <strong>{{ it.titulo }}</strong>
+        <span>{{ it.texto }}</span>
+      </span>
+      {% if it.estado %}<span class="ajuste-estado">{{ it.estado }}</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+<p class="ajustes-vacio" id="ajustes-vacio" hidden>{{ _('Ningún ajuste coincide con tu búsqueda.') }}</p>
+
+<p class="ajustes-pie">
+  <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
+  {{ _('¿Dudas?') }} <a href="{{ ayuda_url }}" target="_blank" rel="noopener">{{ _('Abre el centro de ayuda') }}</a>
+  · <a href="{{ url_for('docs.pagina') }}">{{ _('Documentación para desarrolladores') }}</a>
+</p>
+<script src="{{ url_for('static', filename='ajustes.js') }}"></script>
+{% endblock %}

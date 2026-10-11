@@ -81,7 +81,7 @@ def _enviar_a_token(fcm_token: str, titulo: str, cuerpo: str, datos: dict | None
         return True
 
 
-def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None) -> None:
+def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None, ignorar_silencio: bool = False) -> None:
     """Punto de entrada usado desde los puntos de emisión de eventos (ver
     p.ej. `app/correo.py:_emitir_evento_correo_nuevo`) -- manda el push a
     todos los dispositivos del usuario, limpiando los que FCM rechace como
@@ -91,6 +91,8 @@ def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | No
         return
     try:
         from . import db  # import perezoso: evita el ciclo db <-> push
+        if not ignorar_silencio and db.en_horas_de_silencio(usuario_id):
+            return                                    # «no molestar»: la notificación queda en la app, sin vibrar el móvil
         tokens = db.tokens_push_de_usuario(usuario_id)
         if not tokens:
             return
