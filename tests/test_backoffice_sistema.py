@@ -263,7 +263,7 @@ def test_el_aviso_de_prueba_se_envia_al_destino_de_alertas_y_queda_auditado(bo, 
     from app import notificaciones_email as ne
     enviados = []
     monkeypatch.setattr(ne, "ALERTAS_ADMIN_EMAIL", "jorge@guilda.cat")
-    monkeypatch.setattr(ne, "_enviar", lambda destino, asunto, cuerpo: enviados.append((destino, asunto)))
+    monkeypatch.setattr(ne, "_enviar", lambda destino, asunto, cuerpo, html=None: enviados.append((destino, asunto)))
     post(bo, "/salud/aviso-prueba")
     pagina = bo.get("/salud").get_data(as_text=True)
     assert enviados == [("jorge@guilda.cat", "[Guilda Work] aviso de prueba")]

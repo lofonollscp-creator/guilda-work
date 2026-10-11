@@ -263,7 +263,7 @@ def test_enviar_alerta_interna_manda_al_destino_configurado(monkeypatch):
     monkeypatch.setattr(notificaciones_email, "ALERTAS_ADMIN_EMAIL", "admin@guilda.cat")
     llamadas = []
     monkeypatch.setattr(
-        notificaciones_email, "_enviar", lambda destinatario, asunto, cuerpo: llamadas.append((destinatario, asunto, cuerpo))
+        notificaciones_email, "_enviar", lambda destinatario, asunto, cuerpo, html=None: llamadas.append((destinatario, asunto, cuerpo))
     )
 
     notificaciones_email.enviar_alerta_interna("asunto de prueba", "cuerpo de prueba")

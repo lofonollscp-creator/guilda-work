@@ -138,6 +138,8 @@ identity:
 # (IONOS incluido) rechazan o marcan como spam un From que no sea el de
 # la propia cuenta que se autentica, para evitar suplantación.
 courier:
+  # Plantillas de los correos de código de recuperación/verificación con el diseño de Guilda Work (se regeneran con scripts/generar_plantillas_kratos.py)
+  template_override_path: /etc/config/kratos/courier-templates
   smtp:
     connection_uri: smtp://noreply:noreply@localhost:587/?skip_ssl_verify=true
     from_address: contacto@jorgevelasco.es

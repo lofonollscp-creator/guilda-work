@@ -17,7 +17,7 @@ def _dia(n):
 def smtp(monkeypatch):
     enviados = []
     monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
-    monkeypatch.setattr(notificaciones_email, "_enviar", lambda d, a, c: enviados.append((d, a, c)))
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda d, a, c, html=None: enviados.append((d, a, c)))
     monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://work.ejemplo.com")
     return enviados
 

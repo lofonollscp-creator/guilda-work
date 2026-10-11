@@ -467,7 +467,7 @@ def test_procesar_recordatorios_envia_por_cada_canal_y_solo_una_vez(monkeypatch)
     enviados = []
     monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda *a, **k: enviados.append(("app", a[0], a[2])))
     monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
-    monkeypatch.setattr(notificaciones_email, "_enviar", lambda dest, asunto, cuerpo: enviados.append(("correo", dest)))
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda dest, asunto, cuerpo, html=None: enviados.append(("correo", dest)))
     monkeypatch.setattr(ntfy, "enviar", lambda topic, token, titulo, msg, **k: enviados.append(("ntfy", topic)))
 
     assert recordatorios_tareas.procesar_recordatorios(datetime(2026, 10, 19, 8, 0)) == 0

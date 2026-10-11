@@ -7773,3 +7773,69 @@ msgstr "The email or password is incorrect."
 
 msgid "Reenviar el código"
 msgstr "Resend the code"
+
+msgid "Tu acceso al portal de cliente"
+msgstr "Your client portal access"
+
+msgid "Pulsa el botón para entrar a tu portal de cliente. El enlace es de un solo uso y caduca en 15 minutos."
+msgstr "Press the button to enter your client portal. The link is single-use and expires in 15 minutes."
+
+msgid "Entrar al portal"
+msgstr "Enter the portal"
+
+msgid "Si no has solicitado este enlace, puedes ignorar este correo: nadie podrá entrar sin él."
+msgstr "If you didn't request this link, you can ignore this email: nobody can get in without it."
+
+msgid "Tu enlace de acceso (caduca en 15 minutos)"
+msgstr "Your access link (expires in 15 minutes)"
+
+msgid "Tu enlace de acceso a Guilda Work"
+msgstr "Your Guilda Work access link"
+
+msgid "Tu gestoría te pide un documento"
+msgstr "Your firm is asking for a document"
+
+msgid "Para seguir con tu expediente necesitamos que subas este documento:"
+msgstr "To continue with your file we need you to upload this document:"
+
+msgid "Subir el documento"
+msgstr "Upload the document"
+
+msgid "Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."
+msgstr "Sign in to the client portal with your email: we'll send you an access link."
+
+msgid "Tienes un pago pendiente"
+msgstr "You have a payment due"
+
+msgid "Tu gestoría te ha generado un enlace de pago para:"
+msgstr "Your firm has generated a payment link for:"
+
+msgid "Pagar ahora"
+msgstr "Pay now"
+
+msgid "El pago se hace en la página segura de Stripe: Guilda Work nunca ve los datos de tu tarjeta."
+msgstr "Payment is made on Stripe's secure page: Guilda Work never sees your card details."
+
+msgid "Abrir mi portal de cliente"
+msgstr "Open my client portal"
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente."
+msgstr "You can upload documents and write to us from your client portal."
+
+msgid "Aviso interno de Guilda Work"
+msgstr "Guilda Work internal alert"
+
+msgid "Tienes una respuesta nueva"
+msgstr "You have a new reply"
+
+msgid "Tu gestoría te ha respondido en el portal de cliente:"
+msgstr "Your firm has replied in the client portal:"
+
+msgid "Ver la conversación"
+msgstr "View the conversation"
+
+msgid "Entra al portal con tu email: te mandaremos un enlace de acceso."
+msgstr "Sign in to the portal with your email: we'll send you an access link."
+
+msgid "Tienes una respuesta nueva en Guilda Work"
+msgstr "You have a new reply in Guilda Work"

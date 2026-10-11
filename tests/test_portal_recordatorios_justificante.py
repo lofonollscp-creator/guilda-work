@@ -24,7 +24,7 @@ def _dias(n):
 def smtp(monkeypatch):
     enviados = []
     monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
-    monkeypatch.setattr(notificaciones_email, "_enviar", lambda dest, asunto, cuerpo: enviados.append((dest, asunto, cuerpo)))
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda dest, asunto, cuerpo, html=None: enviados.append((dest, asunto, cuerpo)))
     monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://work.ejemplo.com/")
     return enviados
 
@@ -71,7 +71,7 @@ def test_sin_smtp_no_envia_ni_marca_y_el_fallo_de_uno_no_frena_a_los_demas(monke
     enviados = []
     monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
 
-    def _enviar(dest, asunto, cuerpo):
+    def _enviar(dest, asunto, cuerpo, html=None):
         if dest == "roto@ejemplo.com":
             raise notificaciones_email.ErrorNotificacionesEmail("buzón lleno")
         enviados.append(dest)
@@ -82,7 +82,7 @@ def test_sin_smtp_no_envia_ni_marca_y_el_fallo_de_uno_no_frena_a_los_demas(monke
     assert portal_recordatorios.procesar_recordatorios(HOY) == 1 and enviados == ["s@ejemplo.com"]
     # el roto no quedó marcado: se reintenta en la siguiente pasada del día
     enviados.clear()
-    monkeypatch.setattr(notificaciones_email, "_enviar", lambda d, a, c: enviados.append(d))
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda d, a, c, html=None: enviados.append(d))
     assert portal_recordatorios.procesar_recordatorios(HOY) == 1 and enviados == ["roto@ejemplo.com"]
 
 

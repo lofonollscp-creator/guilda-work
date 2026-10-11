@@ -7782,3 +7782,69 @@ msgstr "L'email o la contrasenya no són correctes."
 
 msgid "Reenviar el código"
 msgstr "Reenvia el codi"
+
+msgid "Tu acceso al portal de cliente"
+msgstr "El teu accés al portal de client"
+
+msgid "Pulsa el botón para entrar a tu portal de cliente. El enlace es de un solo uso y caduca en 15 minutos."
+msgstr "Prem el botó per entrar al teu portal de client. L'enllaç és d'un sol ús i caduca en 15 minuts."
+
+msgid "Entrar al portal"
+msgstr "Entrar al portal"
+
+msgid "Si no has solicitado este enlace, puedes ignorar este correo: nadie podrá entrar sin él."
+msgstr "Si no has sol·licitat aquest enllaç, pots ignorar aquest correu: ningú podrà entrar sense ell."
+
+msgid "Tu enlace de acceso (caduca en 15 minutos)"
+msgstr "El teu enllaç d'accés (caduca en 15 minuts)"
+
+msgid "Tu enlace de acceso a Guilda Work"
+msgstr "El teu enllaç d'accés a Guilda Work"
+
+msgid "Tu gestoría te pide un documento"
+msgstr "La teva gestoria et demana un document"
+
+msgid "Para seguir con tu expediente necesitamos que subas este documento:"
+msgstr "Per continuar amb el teu expedient necessitem que pugis aquest document:"
+
+msgid "Subir el documento"
+msgstr "Pujar el document"
+
+msgid "Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."
+msgstr "Entra al portal de client amb el teu email: t'enviarem un enllaç d'accés."
+
+msgid "Tienes un pago pendiente"
+msgstr "Tens un pagament pendent"
+
+msgid "Tu gestoría te ha generado un enlace de pago para:"
+msgstr "La teva gestoria t'ha generat un enllaç de pagament per a:"
+
+msgid "Pagar ahora"
+msgstr "Pagar ara"
+
+msgid "El pago se hace en la página segura de Stripe: Guilda Work nunca ve los datos de tu tarjeta."
+msgstr "El pagament es fa a la pàgina segura de Stripe: Guilda Work mai veu les dades de la teva targeta."
+
+msgid "Abrir mi portal de cliente"
+msgstr "Obrir el meu portal de client"
+
+msgid "Puedes subir documentación y escribirnos desde tu portal de cliente."
+msgstr "Pots pujar documentació i escriure'ns des del teu portal de client."
+
+msgid "Aviso interno de Guilda Work"
+msgstr "Avís intern de Guilda Work"
+
+msgid "Tienes una respuesta nueva"
+msgstr "Tens una resposta nova"
+
+msgid "Tu gestoría te ha respondido en el portal de cliente:"
+msgstr "La teva gestoria t'ha respost al portal de client:"
+
+msgid "Ver la conversación"
+msgstr "Veure la conversa"
+
+msgid "Entra al portal con tu email: te mandaremos un enlace de acceso."
+msgstr "Entra al portal amb el teu email: t'enviarem un enllaç d'accés."
+
+msgid "Tienes una respuesta nueva en Guilda Work"
+msgstr "Tens una resposta nova a Guilda Work"
