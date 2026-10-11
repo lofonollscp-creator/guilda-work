@@ -18,7 +18,7 @@
     <li class="log-item {{ 'nota-fijada' if n.fijada }}">
       <div class="log-text">
         <p style="white-space: pre-wrap; margin: 0;">{{ n.texto }}</p>
-        <span class="muted">{{ n.autor }} · {{ n.creada_en[:16].replace('T', ' ') }}{% if n.fijada %} · {{ _('Fijada') }}{% endif %}</span>
+        <span class="muted">{{ n.autor }} · {{ n.creada_en|fecha_y_hora }}{% if n.fijada %} · {{ _('Fijada') }}{% endif %}</span>
       </div>
       {% if n.puede_fijar %}
       <form action="{{ url_for('proyectos.fijar_nota', proyecto_id=p.id, nota_id=n.id) }}" method="post">

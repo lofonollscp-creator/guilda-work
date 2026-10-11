@@ -4,7 +4,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Editar tiquet #%(id)s', id=tiquet.id) }}</h1>
-    <p class="subtitle">{{ _('Creado el %(fecha)s', fecha=tiquet.creado_en[:16].replace('T', ' ')) }}</p>
+    <p class="subtitle">{{ _('Creado el %(fecha)s', fecha=tiquet.creado_en|fecha_y_hora) }}</p>
   </div>
 </header>
 

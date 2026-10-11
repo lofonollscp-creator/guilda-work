@@ -8,7 +8,7 @@
     <li class="comentario {{ 'es-mio' if c.mio }}">
       <div class="comentario-cabecera">
         <strong>{{ c.autor }}</strong>
-        <span class="muted mono">{{ c.creado_en[:16].replace('T', ' ') }}</span>
+        <span class="muted mono">{{ c.creado_en|fecha_y_hora }}</span>
         {% if c.puede_borrar %}
         <form action="{{ url_for('tareas.eliminar_comentario', tarea_id=tarea.id, comentario_id=c.id) }}" method="post" class="comentario-borrar">
           <button type="submit" class="chip-del" title="{{ _('Borrar comentario') }}" aria-label="{{ _('Borrar comentario') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
@@ -68,7 +68,7 @@
   <ul class="actividad-lista">
     {% for a in actividad %}
     <li>
-      <span class="muted mono">{{ a.creado_en[:16].replace('T', ' ') }}</span>
+      <span class="muted mono">{{ a.creado_en|fecha_y_hora }}</span>
       <strong>{{ a.autor }}</strong>
       {% if a.tipo == 'creada' %}{{ _('creó la tarea') }}
       {% elif a.tipo == 'editada' %}{{ _('editó') }} {{ a.detalle }}

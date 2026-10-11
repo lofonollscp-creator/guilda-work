@@ -60,6 +60,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 
 **Otros**
 - [Fuera de alcance de esta guía](#fuera-de-alcance-de-esta-guía)
+- [Aspecto de la app: superficies de cristal](#aspecto-de-la-app-superficies-de-cristal)
 
 <!-- /INDICE -->
 
@@ -2885,6 +2886,19 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Salida si se pierde todo**: backoffice → usuario → «Quitar la verificación en dos pasos» (Admin API de Kratos: borra las credenciales `totp` y `lookup_secret`; queda auditado).
 - **Pendiente**: la app móvil (Flutter) todavía no tiene campo para el código: quien active la verificación no podrá volver a iniciar sesión en el móvil hasta que se actualice (las sesiones ya abiertas siguen). La pantalla de ajustes lo avisa.
 - **Pruebas**: `tests/test_dos_pasos.py` (Kratos real: API con app y con códigos de recuperación de un solo uso, web con aal2, puente de Hydra, ajustes con QR y salida desde el backoffice).
+
+## Aspecto de la app: superficies de cristal
+
+Todas las pantallas internas (las que extienden `base.html`) cargan `app/static/superficies.css` DESPUÉS de `style.css`. Es el mismo lenguaje que el inicio de sesión: fondo con luz ambiente suave (dos degradados radiales fijos, lima y azul), paneles translúcidos con desenfoque y filo de luz de 1 px en vez de cajas con borde sólido, una escala de radios (12/16/22 px), Manrope en todo (sin el monoespaciado en mayúsculas de «terminal») y controles redondeados con foco suave.
+
+- **Cómo está hecho:** `style.css` ya pasaba casi todas las superficies por `--glass-bg/--glass-border/--glass-blur`; la capa redefine esos tokens (y `--border`, ahora un filo translúcido) y sustituye las cajas planas por la misma receta. No cambia HTML ni estructura: si la hoja no carga, la app sigue con el estilo anterior.
+- **Qué NO la carga:** inicio de sesión (tiene su propio diseño con foto), registro, recuperar contraseña, verificar correo, portal de cliente (paleta de papel cálido propia) y el backoffice (hoja propia, `backoffice/static/backoffice.css`).
+- **Para tocar el aspecto:** los tokens están arriba del fichero (`--glass-bg`, `--panel-2`, `--panel-2-hover`, `--linea`, `--ambiente`; uno por tema). Las listas de selectores de «panel de cristal» y de «etiqueta suave» están en el bloque «Paneles de cristal». Una pantalla nueva con `.dash-panel`/`.log-item`/`.btn` ya sale bien sin CSS propio.
+- **Casillas y botones de opción** son propios (`appearance: none`); ojo con reglas que les pongan `width: auto` (por eso llevan `min-width`).
+- **Sin soporte de `backdrop-filter`** los fondos pasan a casi opacos; los menús flotantes (`.busqueda-modal`, `.new-menu`, `.top-bar-menu`, `.toast`) son siempre casi opacos.
+- **Contraste:** `tests/test_superficies.py` calcula cada color de texto sobre el peor caso (luz ambiente más intensa bajo el panel, y fila resaltada encima) en claro y oscuro (AA 4,5:1). Por eso `--text-muted` está redefinido en la capa (`#566070` claro, `#9ba2ac` oscuro).
+- **Fechas legibles:** filtros Jinja `fecha_y_hora` («11 oct 2026, 20:43») y `fecha_dia` («11 oct 2026») en el idioma de la persona; sustituyen a `[:16].replace('T', ' ')` en las plantillas. Si el dato no es una fecha ISO se muestra tal cual.
+- **Ver cómo queda sin tocar producción:** copia aislada del repo + datos sintéticos + sesión simulada de Kratos en 127.0.0.1 y capturas con un Chromium de Playwright instalado fuera del repo (`/tmp`); nada de esto vive en el repositorio.
 
 ## Foto de montaña en el inicio de sesión
 - La foto ocupa **toda la pantalla** de `/login` (`.auth-dividido`, `app/static/fotos/montana-login.webp` y `.jpg`, 1920 px de ancho) con un velo liso (sin degradado direccional). Es **CC0 (dominio público)**: «Landscape-mountains-nature-lake» de www.Pixel.la Free Stock Photos, de Wikimedia Commons; datos en `app/static/fotos/CREDITOS.md`. Va de fondo por CSS (no es un `<img>`).

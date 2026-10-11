@@ -44,7 +44,7 @@
           <span class="nota-item-meta">
             {% if n.usuario_id != g.usuario_id %}<span class="pill tarea-compartida">{{ _('De %(quien)s', quien=n.dueno_nombre) }}</span>{% elif n_participantes.get(n.id) %}<span class="pill tarea-compartida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ n_participantes[n.id] }}</span>{% endif %}
             {% if n.categoria_nombre %}<span class="nota-item-proyecto"><span class="dot" style="background: {{ n.categoria_color or '#7c8ba1' }};"></span>{{ n.categoria_nombre }}</span>{% endif %}
-            <span class="mono">{{ n.creada_en[:10] }}</span>
+            <span class="mono">{{ n.creada_en|fecha_dia }}</span>
             {% if adjuntos_por_nota.get(n.id) %}<span class="mono">{{ ngettext('%(n)s adjunto', '%(n)s adjuntos', adjuntos_por_nota[n.id], n=adjuntos_por_nota[n.id]) }}</span>{% endif %}
           </span>
         </a>
@@ -86,7 +86,7 @@
         {% if detalle.rol != 'dueno' %}<span class="pill tarea-compartida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('De %(quien)s', quien=nota.dueno_nombre) }} · {{ _('colabora') if detalle.rol == 'colabora' else _('solo lectura') }}</span>{% endif %}
         {% if nota.fijada %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bookmark"></use></svg> {{ _('Fijada') }}</span>{% endif %}
         {% if nota.categoria_nombre %}<span class="pill">{{ nota.categoria_nombre }}</span>{% endif %}
-        <span class="mono">{{ nota.creada_en }}</span>
+        <span class="mono">{{ nota.creada_en|fecha_y_hora }}</span>
       </p>
       <div class="notas-doc-cuerpo nota-cuerpo">{{ nota.texto|nota_html }}</div>
     </article>

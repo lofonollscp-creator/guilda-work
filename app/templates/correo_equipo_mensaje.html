@@ -5,7 +5,7 @@
   <div>
     <h1>{{ m.asunto or _('(sin asunto)') }}</h1>
     <p class="subtitle">
-      {{ m.remitente }} · {{ (m.fecha or '')[:16].replace('T', ' ') }}
+      {{ m.remitente }} · {{ (m.fecha)|fecha_y_hora }}
       {% if m.rol != 'dueno' %} · {{ _('De %(quien)s', quien=m.dueno_nombre) }}{% endif %}
     </p>
   </div>
@@ -43,7 +43,7 @@
     {% for n in notas %}
     <li class="comentario {{ 'es-mio' if n.mia }}">
       <div class="comentario-cabecera">
-        <strong>{{ n.autor }}</strong><span class="muted mono">{{ n.creado_en[:16].replace('T', ' ') }}</span>
+        <strong>{{ n.autor }}</strong><span class="muted mono">{{ n.creado_en|fecha_y_hora }}</span>
         {% if n.puede_borrar %}
         <form action="{{ url_for('correo.equipo_nota_eliminar', mensaje_id=m.id, nota_id=n.id) }}" method="post" class="comentario-borrar">
           <button type="submit" class="chip-del" title="{{ _('Borrar') }}" aria-label="{{ _('Borrar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
@@ -79,7 +79,7 @@
       {% elif h.accion == 'estado' %}{{ _('ha cambiado el estado a %(estado)s', estado=h.detalle) }}
       {% elif h.accion == 'nota' %}{{ _('ha escrito una nota interna') }}
       {% elif h.accion == 'nota_borrada' %}{{ _('ha borrado una nota interna') }}{% endif %}
-      <span class="muted">· {{ (h.creado_en or '')[:16].replace('T', ' ') }}</span></span></li>
+      <span class="muted">· {{ (h.creado_en)|fecha_y_hora }}</span></span></li>
     {% endfor %}
   </ul>
   {% else %}<p class="muted">{{ _('Todavía no hay actividad.') }}</p>{% endif %}

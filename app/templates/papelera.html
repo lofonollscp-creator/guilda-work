@@ -20,7 +20,7 @@
 <ul class="log-list">
   {% for item in items %}
   <li class="log-item">
-    <span class="log-time">{{ item.papelera_en[:16].replace('T', ' ') }}</span>
+    <span class="log-time">{{ item.papelera_en|fecha_y_hora }}</span>
     <span class="log-badge log-badge-{% if item.origen in ('menu', 'nota') %}nota{% elif item.origen == 'tarea_outlook' %}duracion{% elif item.tipo == 'instantanea' %}instantanea{% else %}duracion{% endif %}">
       {% if item.origen == 'menu' %}{{ _('Proyecto') }}
       {% elif item.origen == 'nota' %}{{ _('Nota') }}

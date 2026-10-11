@@ -20,7 +20,7 @@
 <ul class="log-list">
   {% for item in items %}
   <li class="log-item">
-    <span class="log-time">{{ item.papelera_en[:16].replace('T', ' ') }}</span>
+    <span class="log-time">{{ item.papelera_en|fecha_y_hora }}</span>
     <span class="log-badge log-badge-{{ 'nota' if item.origen == 'cliente_fiscal' else 'duracion' }}">
       {{ _('Cliente') if item.origen == 'cliente_fiscal' else _('Vencimiento') }}
     </span>

@@ -6,7 +6,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Editar tarea') }}</h1>
-    <p class="subtitle">{{ _('Creada el %(fecha)s', fecha=tarea.creada_en[:16].replace('T', ' ')) }}</p>
+    <p class="subtitle">{{ _('Creada el %(fecha)s', fecha=tarea.creada_en|fecha_y_hora) }}</p>
   </div>
 </header>
 
@@ -94,7 +94,7 @@
   {% endif %}
 
   {% if tarea.fecha_completada %}
-  <p class="muted">{{ _('Completada el %(fecha)s.', fecha=tarea.fecha_completada[:16].replace('T', ' ')) }}</p>
+  <p class="muted">{{ _('Completada el %(fecha)s.', fecha=tarea.fecha_completada|fecha_y_hora) }}</p>
   {% endif %}
 
   <div class="edit-form-actions">

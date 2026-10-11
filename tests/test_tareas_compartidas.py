@@ -501,7 +501,7 @@ def test_rutas_recordatorios(cliente):
     r = cliente.post(f"/tareas/{tarea}/recordatorios", data={"avisar_en": ""})
     assert "error=" in r.headers["Location"]
     html = cliente.get(f"/tareas/{tarea}").get_data(as_text=True)
-    assert "2026-12-19 10:00" in html and "Recordatorios" in html
+    assert "19 dic 2026, 10:00" in html and "Recordatorios" in html
     rid = db.listar_recordatorios_tarea(uid, tarea)[0]["id"]
     assert cliente.post(f"/tareas/recordatorios/{rid}/posponer", data={"opcion": "1h"}).status_code == 302
     assert cliente.get(f"/tareas/{tarea}/editar").status_code == 200

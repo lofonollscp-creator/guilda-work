@@ -15,7 +15,7 @@
 <ul class="log-list">
   {% for e in envios %}
   <li class="log-item">
-    <span class="log-time">{{ e.enviar_en[:16].replace('T', ' ') }}</span>
+    <span class="log-time">{{ e.enviar_en|fecha_y_hora }}</span>
     <span class="log-text">{{ e.asunto }} — {{ _('Para') }}: {{ e.destinatarios }}</span>
     <form action="{{ url_for('correo.deshacer_envio', envio_id=e.id) }}" method="post"
           data-confirmar-envio="{{ _('¿Cancelar este envío? Volverá a tus borradores.') }}">

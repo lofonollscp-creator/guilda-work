@@ -46,7 +46,7 @@
   <tbody>
     {% for f in filas %}
     <tr>
-      <td class="mono">{{ f.timestamp }}</td>
+      <td class="mono">{{ f.timestamp|fecha_y_hora }}</td>
       <td><span class="dot" style="background: {{ f.categoria_color or '#7c8ba1' }};"></span>{{ f.categoria_nombre or '—' }}</td>
       <td>
         <span class="log-badge log-badge-{{ 'nota' if f.origen == 'nota' else (f.tipo or 'duracion') }}">

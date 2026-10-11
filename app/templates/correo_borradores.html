@@ -15,7 +15,7 @@
 <ul class="log-list">
   {% for b in borradores %}
   <li class="log-item">
-    <span class="log-time">{{ b.actualizado_en[:16].replace('T', ' ') }}</span>
+    <span class="log-time">{{ b.actualizado_en|fecha_y_hora }}</span>
     <span class="log-text">
       <a href="{{ url_for('correo.redactar', borrador_id=b.id) }}">{{ b.asunto or _('(Sin asunto)') }}</a>
       {% if b.destinatarios %} — {{ _('Para') }}: {{ b.destinatarios }}{% endif %}

@@ -177,7 +177,7 @@
           <div class="correo-lectura-meta">
             {% if mensaje_seleccionado.destinatarios %}{{ _('Para:') }} {{ mensaje_seleccionado.destinatarios }} · {% endif %}
             {% if mensaje_seleccionado.cc %}Cc: {{ mensaje_seleccionado.cc }} · {% endif %}
-            {{ mensaje_seleccionado.fecha[:16].replace('T', ' ') if mensaje_seleccionado.fecha else '' }}
+            {{ mensaje_seleccionado.fecha|fecha_y_hora if mensaje_seleccionado.fecha else '' }}
           </div>
         </div>
       </div>

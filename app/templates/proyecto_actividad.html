@@ -8,7 +8,7 @@
   <ul class="actividad-lista">
     {% for a in entradas %}
     <li>
-      <span class="muted mono">{{ a.cuando[:16].replace('T', ' ') }}</span>
+      <span class="muted mono">{{ a.cuando|fecha_y_hora }}</span>
       <strong>{{ a.quien }}</strong>
       {% if a.tipo == 'nota' %}{{ _('añadió una nota') }}: «{{ a.detalle[:120] }}{{ '…' if a.detalle|length > 120 }}»
       {% else %}

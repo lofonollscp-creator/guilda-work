@@ -27,7 +27,7 @@ from pathlib import Path
 import sentry_sdk
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
-from flask_babel import Babel, format_date, get_locale
+from flask_babel import Babel, format_date, format_datetime, get_locale
 from flask_babel import gettext as _
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
@@ -169,6 +169,22 @@ babel = Babel(app, default_locale="es", locale_selector=_seleccionar_idioma)
 app.add_template_filter(nota_a_html, "nota_html")
 app.add_template_filter(lambda valor: json.loads(valor) if valor else [], "fromjson")
 app.add_template_filter(lambda d: format_date(d, "EEEEE").upper(), "dia_inicial")
+
+
+def _fecha_hora(valor, solo_fecha=False):
+    """«11 oct 2026, 20:43» (o «11 oct 2026») en el idioma del usuario, a partir de una fecha ISO («2026-10-11T20:43:13»).
+    Si no es una fecha válida devuelve el texto tal cual: nunca rompe una pantalla por un dato raro."""
+    if not valor:
+        return ""
+    try:
+        momento = datetime.fromisoformat(str(valor).strip().replace(" ", "T", 1))
+    except ValueError:
+        return str(valor)
+    return format_date(momento.date(), "d MMM y") if solo_fecha or len(str(valor).strip()) <= 10 else format_datetime(momento, "d MMM y, HH:mm")
+
+
+app.add_template_filter(_fecha_hora, "fecha_y_hora")
+app.add_template_filter(lambda valor: _fecha_hora(valor, solo_fecha=True), "fecha_dia")
 
 
 def _comentario_html(texto, mencionados=()):

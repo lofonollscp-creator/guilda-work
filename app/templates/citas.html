@@ -22,7 +22,7 @@
     {% if r.attendees %}
     <span class="pill">{{ r.attendees[0].name or r.attendees[0].email }}</span>
     {% endif %}
-    <span class="log-duration">{{ r.start[:16].replace('T', ' ') if r.start else '' }}</span>
+    <span class="log-duration">{{ r.start|fecha_y_hora if r.start else '' }}</span>
   </li>
   {% endfor %}
 </ul>

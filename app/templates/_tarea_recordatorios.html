@@ -7,7 +7,7 @@
     {% for r in recordatorios %}
     <li>
       <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
-      <span class="tarea-participante-nombre">{{ r.avisar_en[:16].replace('T', ' ') }}
+      <span class="tarea-participante-nombre">{{ r.avisar_en|fecha_y_hora }}
         <small class="muted">· {{ r.canales.split(',')|map('replace', 'app', _('app y móvil'))|map('replace', 'correo', _('correo'))|join(', ') }}</small></span>
       <span class="pill">{{ _('Enviado') if r.enviado_en else _('Pendiente') }}</span>
       <form action="{{ url_for('tareas.posponer_recordatorio', recordatorio_id=r.id) }}" method="post" class="recordatorio-posponer">
