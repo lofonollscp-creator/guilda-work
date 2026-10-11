@@ -7384,3 +7384,9 @@ msgstr "Permetre"
 
 msgid "Autorizar aplicación"
 msgstr "Autoritzar aplicació"
+
+msgid "Todas las áreas"
+msgstr "Totes les àrees"
+
+msgid "Área"
+msgstr "Àrea"

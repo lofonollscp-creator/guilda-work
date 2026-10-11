@@ -193,3 +193,19 @@ def test_pagina_intermedia_incluye_nav_anterior_y_siguiente(cliente):
     resp = cliente.get("/docs/webhooks")
     html = resp.get_data(as_text=True)
     assert "docs-footer-nav-adyacente" in html
+
+
+def test_explorador_enlaza_con_descargas_reales_y_resuelve_todos_los_ref(cliente):
+    """El explorador resuelve $ref y apunta a descargas que existen: si cambia el contrato, esto avisa."""
+    import re
+    js = open("app/static/api_explorer.js", encoding="utf-8").read()
+    for ruta in re.findall(r'href="(/docs/sdk/[^"]+)"', js):
+        assert cliente.get(ruta).status_code == 200, ruta
+    assert "function resolver" in js and 'content["application/json"].schema' not in js     # multipart ya no revienta
+    spec = cliente.get("/api/v1/openapi.json").get_json()
+    texto = __import__("json").dumps(spec)
+    for ref in set(re.findall(r'"\$ref": "#/([^"]+)"', texto)):
+        destino = spec
+        for parte in ref.split("/"):
+            destino = destino[parte]
+    assert b"api-explorer-area" in cliente.get("/docs/explorador-api").data

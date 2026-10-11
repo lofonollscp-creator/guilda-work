@@ -23,6 +23,7 @@
     <aside class="api-explorer-lista">
       <div class="api-explorer-buscar">
         <input type="text" id="api-explorer-filtro" placeholder="{{ _('Filtrar endpoints...') }}" autocomplete="off">
+        <select id="api-explorer-area" aria-label="{{ _('Área') }}"><option value="">{{ _('Todas las áreas') }}</option></select>
       </div>
       <div id="api-explorer-grupos" class="api-explorer-grupos">
         <p class="api-explorer-cargando">{{ _('Cargando') }} <code>/api/v1/openapi.json</code>…</p>

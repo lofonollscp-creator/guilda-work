@@ -7375,3 +7375,9 @@ msgstr "Allow"
 
 msgid "Autorizar aplicación"
 msgstr "Authorize application"
+
+msgid "Todas las áreas"
+msgstr "All areas"
+
+msgid "Área"
+msgstr "Area"
