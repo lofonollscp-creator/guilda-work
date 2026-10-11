@@ -10,6 +10,9 @@ MAPA = {
     "inicio": "primeros-pasos/bienvenida",
     "ver_menu": "primeros-pasos/crear-tu-primer-menu",
     "proyectos.": "primeros-pasos/crear-tu-primer-menu",
+    "proyectos.notas": "trabajo-diario/notas",
+    "lista_notas": "trabajo-diario/notas",
+    "editar_nota": "trabajo-diario/notas",
     "tareas.": "trabajo-diario/tareas",
     "tareas.hoy": "trabajo-diario/mi-dia",
     "tareas.editar": "trabajo-diario/tareas-subtareas-recordatorios-y-tiempo",
@@ -63,7 +66,11 @@ def ruta_de(endpoint: str | None) -> str | None:
     return mejor[1] if mejor else None
 
 
-def url_de(endpoint: str | None) -> tuple[str, bool]:
-    """(url, es_especifica): el artículo de esa pantalla, o la portada de la ayuda."""
+IDIOMAS = ("ca", "en", "fr")  # el español está en la raíz del sitio de ayuda
+
+
+def url_de(endpoint: str | None, idioma: str | None = None) -> tuple[str, bool]:
+    """(url, es_especifica): el artículo de esa pantalla en el idioma de la persona, o la portada de la ayuda."""
+    raiz = f"{base()}/{idioma}" if idioma in IDIOMAS else base()
     ruta = ruta_de(endpoint)
-    return (f"{base()}/{ruta}/", True) if ruta else (base() + "/", False)
+    return (f"{raiz}/{ruta}/", True) if ruta else (raiz + "/", False)

@@ -6,6 +6,57 @@ tanto, la vía gratuita para tener la API accesible desde internet es
 tu propio PC). Contratar y pagar el VPS es algo que tienes que hacer tú
 — esta guía empieza justo después de tener el servidor creado.
 
+
+<!-- INDICE -->
+## Mapa por temas
+
+Esta guía está en orden cronológico; aquí está ordenada por temas.
+
+**Poner el servidor en marcha**
+- [Elegir proveedor](#elegir-proveedor)
+- [1. Acceso y hardening básico](#1-acceso-y-hardening-básico)
+- [2. Instalar dependencias y traer el código](#2-instalar-dependencias-y-traer-el-código)
+- [3. Variables de entorno de producción](#3-variables-de-entorno-de-producción)
+- [4. Hostname sin dominio propio (sslip.io)](#4-hostname-sin-dominio-propio-sslipio)
+- [5. Caddy: proxy inverso con HTTPS automático](#5-caddy-proxy-inverso-con-https-automático)
+- [6. systemd: que `serve.py` arranque solo y se reinicie si muere](#6-systemd-que-servepy-arranque-solo-y-se-reinicie-si-muere)
+- [7. Verificar](#7-verificar)
+- [Dimensionar el servidor para el stack completo](#dimensionar-el-servidor-para-el-stack-completo)
+- [Migrar de sslip.io a un dominio propio](#migrar-de-sslipio-a-un-dominio-propio)
+
+**Resto del stack y copias de seguridad**
+- [8. Desplegar el resto del stack (Metabase/MinIO/n8n/Kratos/Hydra/Outline/Element+Synapse)](#8-desplegar-el-resto-del-stack-metabaseminion8nkratoshydraoutlineelementsynapse)
+- [9. Backups (recomendado)](#9-backups-recomendado)
+
+**Producto y operación (backoffice)**
+- [Backoffice independiente (backoffice.guildawork.com)](#backoffice-independiente-backofficeguildaworkcom)
+- [Comunicados y buscador del backoffice](#comunicados-y-buscador-del-backoffice)
+- [Modo mantenimiento y «ver como»](#modo-mantenimiento-y-ver-como)
+- [Puesta en marcha guiada del despacho](#puesta-en-marcha-guiada-del-despacho)
+- [Tope de consumo de IA por despacho](#tope-de-consumo-de-ia-por-despacho)
+
+**API, MCP y seguridad de acceso**
+- [10. MCP remoto (ChatGPT)](#10-mcp-remoto-chatgpt)
+- [API ampliada y herramientas de IA/MCP por grupos](#api-ampliada-y-herramientas-de-iamcp-por-grupos)
+- [API robusta para uso externo, sincronización y webhooks persistentes](#api-robusta-para-uso-externo-sincronización-y-webhooks-persistentes)
+- [Tokens de API: áreas, caducidad y registro de uso](#tokens-de-api-áreas-caducidad-y-registro-de-uso)
+- [Fase 0 de OAuth2 y primer paquete de mejoras de API/MCP](#fase-0-de-oauth2-y-primer-paquete-de-mejoras-de-apimcp)
+- [API de tareas completa](#api-de-tareas-completa)
+- [API fiscal completa](#api-fiscal-completa)
+- [API: adjuntos de notas, envío de correo, plantillas y administración del fichaje](#api-adjuntos-de-notas-envío-de-correo-plantillas-y-administración-del-fichaje)
+- [Hydra sin `--dev` (2026-10-10)](#hydra-sin---dev-2026-10-10)
+- [MCP: medido, limitado y auditado](#mcp-medido-limitado-y-auditado)
+- [OpenAPI completo y contrato de la API](#openapi-completo-y-contrato-de-la-api)
+- [SDK de Python y TypeScript y colección de Postman](#sdk-de-python-y-typescript-y-colección-de-postman)
+
+**Documentación y ayuda**
+- [Ayuda contextual (enlaces al centro de ayuda)](#ayuda-contextual-enlaces-al-centro-de-ayuda)
+
+**Otros**
+- [Fuera de alcance de esta guía](#fuera-de-alcance-de-esta-guía)
+
+<!-- /INDICE -->
+
 ## Elegir proveedor
 
 | Proveedor | Precio aprox./mes | Notas |
@@ -2784,6 +2835,8 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Tests (`tests/test_sdk.py`): el cliente de Python se ejecuta de punta a punta contra la API real (registro, notas, upsert, paginación, multipart, binarios, sincronización, errores, reintentos con 429 y red caída, ETag, firma de webhooks); TypeScript y Postman se validan estructuralmente (y TS con `tsc` si está instalado).
 
 ## Ayuda contextual (enlaces al centro de ayuda)
-- `app/ayuda.py` asocia cada pantalla (por prefijo de endpoint; gana el más largo) con su artículo de `help.guildawork.com` y lo inyecta como `ayuda_url`: un botón con el libro junto al «?» de atajos y el enlace «Ayuda sobre esta pantalla» del panel de ajustes. Sin artículo propio, enlaza a la portada de la ayuda. La base se cambia con `GUILDA_AYUDA_URL`.
+- `app/ayuda.py` asocia cada pantalla (por prefijo de endpoint; gana el más largo) con su artículo de `help.guildawork.com` y lo inyecta como `ayuda_url`: un botón con el libro junto al «?» de atajos y el enlace «Ayuda sobre esta pantalla» del panel de ajustes. Sin artículo propio, enlaza a la portada de la ayuda. El enlace va en el idioma de la persona (`/ca/`, `/en/`, `/fr/`; el español está en la raíz): el centro de ayuda está traducido y se genera con `guilda-help/generar.py` (ver su README). La base se cambia con `GUILDA_AYUDA_URL`.
 - Los artículos viven en el repo `guilda-help` (`contenido/<categoria>/<slug>.md`, ver su README para compilar y publicar). El test `tests/test_ayuda_contextual.py` comprueba que todo el mapa apunta a artículos que existen (se salta si el repo no está en la máquina; ruta en `GUILDA_AYUDA_CONTENIDO`). Al renombrar un artículo hay que actualizar `MAPA`.
-- Las notas no tienen todavía artículo propio: su pantalla enlaza a la portada.
+- Las notas tienen su artículo (`trabajo-diario/notas`).
+
+- `GUILDA_FIREBASE_CREDENTIALS_PATH`: ruta al JSON de cuenta de servicio de Firebase (Firebase Console → Project Settings → Service accounts → Generate new private key) para el push a la app móvil. Sin ella, `app/push.py` no envía nada y las notificaciones dentro de la app siguen funcionando.

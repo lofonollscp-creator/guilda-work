@@ -18,9 +18,17 @@ def test_el_prefijo_mas_largo_gana_y_lo_desconocido_va_a_la_portada():
     assert ayuda.ruta_de("fiscal.recordatorios") == "trabajo-diario/recordatorios-a-clientes"
     assert ayuda.ruta_de("ia.ajustes") == "asistente-ia/ajustes-y-limites"
     assert ayuda.ruta_de("ia.asistente_vista") == "asistente-ia/usar-el-asistente"
-    assert ayuda.ruta_de("lista_notas") is None and ayuda.ruta_de(None) is None
-    assert ayuda.url_de("lista_notas") == ("https://help.guildawork.com/", False)
+    assert ayuda.ruta_de("lista_notas") == "trabajo-diario/notas" and ayuda.ruta_de("proyectos.notas") == "trabajo-diario/notas" and ayuda.ruta_de(None) is None
+    assert ayuda.url_de("endpoint_que_no_existe") == ("https://help.guildawork.com/", False)
     assert ayuda.url_de("tareas.hoy") == ("https://help.guildawork.com/trabajo-diario/mi-dia/", True)
+
+
+def test_la_ayuda_va_en_el_idioma_de_la_persona():
+    assert ayuda.url_de("tareas.hoy", "ca") == ("https://help.guildawork.com/ca/trabajo-diario/mi-dia/", True)
+    assert ayuda.url_de("tareas.hoy", "en")[0] == "https://help.guildawork.com/en/trabajo-diario/mi-dia/"
+    assert ayuda.url_de("tareas.hoy", "es")[0] == "https://help.guildawork.com/trabajo-diario/mi-dia/"
+    assert ayuda.url_de("no_existe", "fr") == ("https://help.guildawork.com/fr/", False)
+    assert ayuda.url_de("tareas.hoy", "de")[0] == "https://help.guildawork.com/trabajo-diario/mi-dia/"
 
 
 def test_la_url_base_se_configura_por_entorno(monkeypatch):
@@ -42,5 +50,4 @@ def test_las_pantallas_muestran_su_ayuda(cliente):
     assert r.status_code == 200
     assert b"https://help.guildawork.com/trabajo-diario/mi-dia/" in r.data
     assert "Ayuda sobre esta pantalla".encode() in r.data
-    r = cliente.get("/notas")
-    assert b'href="https://help.guildawork.com/"' in r.data
+    assert b"https://help.guildawork.com/trabajo-diario/notas/" in cliente.get("/notas").data

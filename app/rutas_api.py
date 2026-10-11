@@ -310,6 +310,7 @@ def revocar_token(token_id: int):
 @api_bp.route("/auth/me", methods=["GET"])
 @token_required
 def me():
+    """Datos de la persona autenticada: perfil, despacho y preferencias."""
     usuario = db.obtener_usuario(g.usuario_id)
     # tenant_id (Fase F5, calendario fiscal en móvil): ya lo calcula
     # token_required en g.tenant_id -- expuesto aquí para que el cliente

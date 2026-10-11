@@ -1125,6 +1125,14 @@ PAGINAS = [
             {"type": "cards", "items": [
                 ("Catálogo completo de tools (MCP)", f"Las {TOTAL_TOOLS} tools una por una: nombre, parámetros con tipos y descripción.", "catalogo-tools-mcp"),
             ]},
+            {"type": "h2", "id": "mcp-util", "text": "Respuestas acotadas, despacho por defecto, prompts y recursos"},
+            {"type": "table", "headers": ["Qué", "Cómo funciona"], "rows": [
+                ["Respuestas acotadas", "Un texto de más de <b>12 000 caracteres</b> se corta diciendo cuántos había en total, y un listado que pasa de <b>60 000</b> se corta con un último elemento <code>{\"_truncado\": true, \"total\": ..., \"mostrados\": ...}</code> para que el modelo pida un filtro o una página más pequeña (<code>GUILDA_MCP_MAX_TEXTO</code>, <code>GUILDA_MCP_MAX_CHARS</code>). <code>leer_correo</code> no devuelve el HTML salvo con <code>incluir_html=true</code>."],
+                ["<code>tenant</code> opcional", "En las herramientas con <code>tenant</code> explícito el parámetro es opcional: si no lo indicas se usa <b>tu propio despacho</b>. Quien no tiene despacho (p. ej. un administrador global) debe nombrarlo; uno ajeno sigue vetado."],
+                ["Prompts", "Cinco indicaciones listas para el cliente: <code>resumen_del_dia_prompt</code>, <code>ficha_cliente</code>, <code>preparar_vencimiento</code>, <code>revisar_correo</code> y <code>cierre_de_trimestre</code>. Solo nombran herramientas que existen (lo comprueba un test)."],
+                ["Recursos", "Lecturas de solo lectura que el cliente puede adjuntar al contexto: <code>guilda://resumen-del-dia</code>, <code>guilda://proyectos</code>, <code>guilda://tareas/hoy</code>, <code>guilda://fiscal/clientes</code> y <code>guilda://consumo-ia</code>. Pasan por el mismo guardián que las herramientas (áreas, solo lectura, límites y auditoría) y solo existen si su herramienta está expuesta en el perfil."],
+                ["Perfiles", "<code>GUILDA_MCP_GRUPOS=fiscal,correo</code> limita los grupos expuestos (el núcleo siempre entra) y <code>GUILDA_MCP_SOLO_LECTURA=1</code> deja solo las de lectura."],
+            ]},
             {"type": "h2", "id": "busqueda-semantica", "text": "Búsqueda semántica (RAG)"},
             {"type": "p", "html":
                 "<code>buscar_semantico(consulta, tenant=None)</code> no busca coincidencias de texto exacto — "
@@ -1281,6 +1289,20 @@ PAGINAS = [
                 ["<code>MCP_REMOTO_ORIGIN</code>", "URL pública de <code>mcp_server_remoto.py</code> — el identificador que ChatGPT compara contra el token recibido (RFC8707)."],
                 ["<code>HYDRA_PUBLIC_ORIGIN</code>", "URL pública de Ory Hydra — el <code>issuer_url</code> que ChatGPT descubre y usa para el registro dinámico de cliente y el login real."],
                 ["<code>MCP_REMOTO_PUERTO</code>", "Puerto donde escucha el proceso (por defecto 8017) — Caddy le hace de proxy inverso, nunca se publica directo a internet."],
+            ]},
+            {"type": "table", "headers": ["Variable", "Para qué"], "rows": [
+                ["<code>MCP_REMOTO_CLIENTES</code>", "Nombres de clientes OAuth que pueden usar el MCP además de los que pasan por la pantalla de consentimiento (por defecto <code>claude-desktop</code>)."],
+                ["<code>GUILDA_MCP_GRUPOS</code>, <code>GUILDA_MCP_SOLO_LECTURA</code>", "Perfil del servidor MCP: grupos de herramientas expuestos y modo solo lectura."],
+                ["<code>GUILDA_MCP_LIMITE_POR_MINUTO</code>, <code>GUILDA_MCP_LIMITE_ESCRITURAS_POR_MINUTO</code>", "Límites por persona (120 y 40 por defecto)."],
+                ["<code>GUILDA_MCP_MAX_TEXTO</code>, <code>GUILDA_MCP_MAX_CHARS</code>", "Tamaño máximo de un texto (12 000) y de un listado (60 000) en las respuestas del MCP."],
+            ]},
+            {"type": "h2", "id": "api-y-ayuda", "text": "API y ayuda"},
+            {"type": "table", "headers": ["Variable", "Para qué"], "rows": [
+                ["<code>GUILDA_API_LIMITE_POR_MINUTO</code>", "Peticiones por minuto y persona en <code>/api/v1</code> (600 por defecto)."],
+                ["<code>GUILDA_LIMITER_URI</code>", "Almacén de los límites de uso (en memoria por defecto; con varios procesos, Redis)."],
+                ["<code>GUILDA_FICHAJE_AVISO_HORAS</code>", "Horas de jornada abierta tras las que se avisa de una salida olvidada."],
+                ["<code>GUILDA_FIREBASE_CREDENTIALS_PATH</code>", "Ruta al JSON de cuenta de servicio de Firebase para las notificaciones push a la app móvil. Sin ella, el push queda desactivado (las notificaciones dentro de la app siguen funcionando)."],
+                ["<code>GUILDA_AYUDA_URL</code>", "Dirección del centro de ayuda a la que enlaza cada pantalla (por defecto <code>https://help.guildawork.com</code>)."],
             ]},
             {"type": "h2", "id": "herramientas", "text": "Herramientas conectadas (MCP y backoffice)"},
             {"type": "p", "html":

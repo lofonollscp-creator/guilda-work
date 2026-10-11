@@ -27,7 +27,7 @@ from pathlib import Path
 import sentry_sdk
 import webview
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
-from flask_babel import Babel, format_date
+from flask_babel import Babel, format_date, get_locale
 from flask_babel import gettext as _
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
@@ -365,7 +365,7 @@ def salir_ver_como():
 
 @app.context_processor
 def inyectar_ayuda_contextual():
-    url, especifica = ayuda.url_de(request.endpoint)
+    url, especifica = ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])
     return {"ayuda_url": url, "ayuda_especifica": especifica}
 
 

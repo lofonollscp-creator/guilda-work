@@ -521,7 +521,7 @@ def crm_listar_leads(texto: str | None = None, limite: int = 20) -> list[dict]:
 
 
 def crm_crear_lead(nombre: str, email: str = "", telefono: str = "", empresa: str = "") -> dict | None:
-    """Crea un Lead en el CRM."""
+    """Crea un Lead (contacto comercial por convertir) en el CRM, con nombre y, si los hay, email, teléfono y empresa."""
     return espocrm.crear_lead(nombre, email=email, telefono=telefono, empresa=empresa)
 
 
