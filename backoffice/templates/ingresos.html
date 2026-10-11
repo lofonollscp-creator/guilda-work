@@ -14,7 +14,7 @@
   {% set maximo = (hist.meses|map(attribute='mrr')|max) or 1 %}
   <div class="barras">
     {% for m in hist.meses %}
-    <div class="barra-col" title="{{ m.mes }}: {{ m.mrr|eur }} · {{ m.pagan }} suscripciones"><span class="barra-valor">{{ m.mrr|eur }}</span><span class="barra" style="height: {{ (m.mrr * 100 // maximo) }}%"></span><span class="barra-mes">{{ m.mes }}</span></div>
+    <div class="barra-col" title="{{ m.mes }}: {{ m.mrr|eur }} · {{ m.pagan }} suscripciones"><span class="barra-valor">{{ m.mrr|eur }}</span><span class="barra-grafico" style="height: {{ (m.mrr * 100 // maximo) }}%"></span><span class="barra-mes">{{ m.mes }}</span></div>
     {% endfor %}
   </div>
   {% if hist.resumen_mes %}

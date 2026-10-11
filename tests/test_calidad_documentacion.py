@@ -78,3 +78,14 @@ def test_el_mapa_por_temas_de_hosting_esta_al_dia():
     modulo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(modulo)
     assert modulo.main(comprobar=True) == 0
+
+
+def test_el_css_del_backoffice_no_redefine_una_clase_para_otro_componente():
+    """Dos componentes distintos con la misma clase se pisan (así se descuadró la barra superior: `.barra` era también
+    la columna del gráfico). Un selector simple solo puede definirse una vez salvo los pocos casos revisados."""
+    import collections
+    css = (RAIZ / "backoffice" / "static" / "backoffice.css").read_text(encoding="utf-8")
+    cuenta = collections.Counter(re.findall(r"(?m)^(\.[a-z0-9_-]+)\s*\{", css))
+    repetidos = {k for k, v in cuenta.items() if v > 1}
+    revisados = {".admin-chip", ".en-linea", ".casilla"}   # se complementan (mismo componente); no cambiar el significado
+    assert repetidos <= revisados, repetidos - revisados
