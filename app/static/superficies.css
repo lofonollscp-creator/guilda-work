@@ -527,3 +527,51 @@ select option:disabled { color: var(--text-muted); }
    ajustes, densidad, notificaciones, «+ Nuevo») deben quedar SIEMPRE por encima del contenido, no tapados por una tarjeta de cristal. ---- */
 .icon-rail { z-index: 60; }
 .top-bar { position: relative; z-index: 50; }
+
+/* ---- Tablero de tareas (kanban): columnas de igual altura en una sola fila, con desplazamiento propio y arrastrar-y-soltar -------------- */
+.tareas-tablero {
+  --col-min: 250px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(var(--col-min), 1fr); gap: 14px; align-items: stretch;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 2px 2px 14px; margin-inline: -2px;
+  min-height: 62vh;
+}
+.tareas-columna {
+  --estado: var(--text-muted);
+  position: relative; display: flex; flex-direction: column; gap: 10px; padding: 0; min-width: 0; scroll-snap-align: start; overflow: hidden;
+  max-height: calc(100vh - 260px); min-height: 280px;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+}
+.tareas-columna::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--estado); opacity: 0.9; }
+.tareas-columna.estado-no_iniciada { --estado: #8a9099; }
+.tareas-columna.estado-en_progreso { --estado: #4c8dff; }
+.tareas-columna.estado-completada { --estado: #3fb67c; }
+.tareas-columna.estado-esperando_otros, .tareas-columna.estado-esperando { --estado: #eab308; }
+.tareas-columna.estado-aplazada { --estado: #a78bfa; }
+.tareas-columna-titulo { padding: 14px 14px 4px; font-size: 0.95em; letter-spacing: 0; text-transform: none; flex: 0 0 auto; gap: 8px; justify-content: flex-start; }
+.tareas-columna-punto { width: 9px; height: 9px; border-radius: 50%; background: var(--estado); box-shadow: 0 0 0 3px color-mix(in srgb, var(--estado) 22%, transparent); flex: 0 0 auto; }
+.tareas-columna-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tareas-columna-titulo .pill { margin-left: auto; font-variant-numeric: tabular-nums; }
+.tareas-columna-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 9px; padding: 8px 10px 12px; scrollbar-gutter: stable; }
+.tareas-columna-vacia {
+  margin: 4px 0 0; padding: 22px 12px; text-align: center; border: 1.5px dashed var(--glass-border); border-radius: 14px; color: var(--text-muted); font-size: 0.88em;
+}
+.tareas-columna-mas { margin: 0; text-align: center; }
+.tareas-tarjeta { cursor: default; box-shadow: var(--panel-resalte), 0 1px 2px rgba(0, 0, 0, 0.12); gap: 7px; padding: 12px 12px 10px; }
+.tareas-tarjeta[draggable="true"] { cursor: grab; }
+.tareas-tarjeta[draggable="true"]:active { cursor: grabbing; }
+.tareas-tarjeta-titulo { font-size: 0.95em; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tareas-tarjeta-titulo:hover { color: var(--primary-text); }
+.tareas-tarjeta-meta { gap: 5px; }
+.tareas-tarjeta-fecha { margin-left: auto; font-size: 0.78em; }
+.tareas-tarjeta-mover { margin-top: 2px; }
+.tareas-tarjeta-mover select { font-size: 0.82em; padding: 6px 8px; border-radius: 10px; color: var(--text-muted); }
+.tareas-tarjeta-mover select:hover, .tareas-tarjeta-mover select:focus-visible { color: var(--text); }
+.tareas-tarjeta.es-arrastrada { opacity: 0.45; transform: scale(0.98); }
+.esta-arrastrando .tareas-columna { border-style: dashed; }
+.tareas-columna.es-destino { border-color: var(--estado); border-style: solid; background: color-mix(in srgb, var(--estado) 9%, var(--glass-bg)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--estado) 26%, transparent); }
+@media (max-width: 900px) {
+  .tareas-tablero { --col-min: min(82vw, 300px); scroll-snap-type: x mandatory; min-height: 56vh; }
+  .tareas-columna { max-height: calc(100vh - 220px); }
+}
+@media (min-width: 1500px) { .tareas-tablero { --col-min: 270px; } }
+@media (prefers-reduced-motion: reduce) { .tareas-columna, .tareas-tarjeta.es-arrastrada { transition: none; transform: none; } }

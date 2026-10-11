@@ -7509,3 +7509,7 @@ msgstr "Sense resultats"
 #, python-format
 msgid "Mostrando %%s de %%s: sigue escribiendo para afinar"
 msgstr "Mostrant %%s de %%s: continua escrivint per afinar"
+
+#: app/templates/tareas_tablero.html
+msgid "Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla."
+msgstr "Les teves tasques per estat. Arrossega una targeta a una altra columna o fes servir el seu selector per moure-la."

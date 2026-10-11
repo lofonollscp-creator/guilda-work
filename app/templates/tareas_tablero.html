@@ -4,7 +4,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Tareas') }}</h1>
-    <p class="subtitle">{{ _('Tus tareas por estado. Usa el selector de cada tarjeta para moverla de columna.') }}</p>
+    <p class="subtitle">{{ _('Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla.') }}</p>
   </div>
 </header>
 
@@ -13,13 +13,14 @@
 
 <div class="tareas-tablero">
   {% for valor, etiqueta in estados %}
-  <section class="tareas-columna" aria-labelledby="col-{{ valor }}">
-    <h2 id="col-{{ valor }}" class="tareas-columna-titulo">{{ etiqueta }} <span class="pill">{{ totales[valor] }}</span></h2>
+  <section class="tareas-columna estado-{{ valor }}" aria-labelledby="col-{{ valor }}" data-estado="{{ valor }}">
+    <h2 id="col-{{ valor }}" class="tareas-columna-titulo"><span class="tareas-columna-punto" aria-hidden="true"></span><span class="tareas-columna-nombre">{{ etiqueta }}</span> <span class="pill">{{ totales[valor] }}</span></h2>
+    <div class="tareas-columna-cuerpo">
     {% for t in columnas[valor] %}
     {% set cr = cronometros.get(t.id) %}
     {% set parts = participantes.get(t.id, []) %}
     {% set mi_rol = (parts|selectattr('usuario_id', 'equalto', g.usuario_id)|map(attribute='rol')|first) if parts else none %}
-    <article class="tareas-tarjeta">
+    <article class="tareas-tarjeta" data-tarea="{{ t.id }}"{% if mi_rol != 'observa' %} draggable="true"{% endif %}>
       <a class="tareas-tarjeta-titulo" href="{{ url_for('tareas.editar', tarea_id=t.id) if (t.usuario_id == g.usuario_id or mi_rol == 'colabora') else url_for('tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a>
       {% if cr and cr.activo %}
       <div class="tareas-tarjeta-reloj">
@@ -40,17 +41,17 @@
       <div class="tareas-tarjeta-meta">
         {% if t.prioridad == 'alta' %}<span class="pill prioridad-alta">{{ _('Alta') }}</span>{% elif t.prioridad == 'baja' %}<span class="pill">{{ _('Baja') }}</span>{% endif %}
         {% if t.categoria_nombre %}<span class="pill">{{ t.categoria_nombre }}</span>{% endif %}
-        {% if t.fecha_vencimiento %}<span class="log-duration">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
+        {% if t.fecha_vencimiento %}<span class="log-duration tareas-tarjeta-fecha" title="{{ _('Vencimiento') }}">{{ t.fecha_vencimiento|fecha_dia }}</span>{% endif %}
         {% if t.asignada_a %}<span class="pill"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-user"></use></svg> {{ (t.creador_nombre if t.asignada_a == g.usuario_id else t.asignada_nombre) }}</span>{% endif %}
         {% if parts or mi_rol %}<span class="pill" title="{{ parts|map(attribute='nombre')|join(', ') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ parts|length + 1 }}</span>{% endif %}
       </div>
       {% if mi_rol != 'observa' %}
       <form class="tareas-tarjeta-mover" action="{{ url_for('tareas.cambiar_estado', tarea_id=t.id) }}" method="post">
         <label class="sr-only" for="mover-{{ t.id }}">{{ _('Mover a') }}</label>
-        <select id="mover-{{ t.id }}" name="estado">
+        <select id="mover-{{ t.id }}" name="estado" data-autoenviar>
           {% for v, e in estados %}<option value="{{ v }}" {{ 'selected' if v == t.estado }}>{{ e }}</option>{% endfor %}
         </select>
-        <button type="submit" class="btn btn-ghost">{{ _('Mover') }}</button>
+        <noscript><button type="submit" class="btn btn-ghost">{{ _('Mover') }}</button></noscript>
       </form>
       {% endif %}
     </article>
@@ -60,8 +61,10 @@
     {% if totales[valor] > columnas[valor]|length %}
     <p class="muted tareas-columna-mas"><a href="{{ url_for('tareas.tablero', mas=valor) }}#col-{{ valor }}">{{ ngettext('Mostrar la %(n)s restante', 'Mostrar las %(n)s restantes', totales[valor] - columnas[valor]|length, n=totales[valor] - columnas[valor]|length) }}</a></p>
     {% endif %}
+    </div>
   </section>
   {% endfor %}
 </div>
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
+<script src="{{ url_for('static', filename='tablero.js') }}"></script>
 {% endblock %}

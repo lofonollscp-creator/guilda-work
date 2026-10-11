@@ -266,3 +266,13 @@ def test_la_densidad_compacta_afecta_a_toda_la_aplicacion():
     compacta = CAPA[CAPA.index('data-densidad="compacta"] { --space-4'):]
     for selector in (".log-item", ".btn", ".dash-panel", ".tabla td", ".historial-table td", ".dash-stat"):
         assert selector in compacta, selector
+
+
+def test_tablero_kanban_columnas_en_una_fila_con_arrastrar_y_soltar():
+    plantilla = (RAIZ / "app" / "templates" / "tareas_tablero.html").read_text(encoding="utf-8")
+    js = (RAIZ / "app" / "static" / "tablero.js").read_text(encoding="utf-8")
+    assert "tablero.js" in plantilla and 'draggable="true"' in plantilla and 'data-estado="{{ valor }}"' in plantilla
+    assert 'data-autoenviar' in plantilla and "<noscript>" in plantilla, "el selector envía al cambiar; sin JS sigue el botón «Mover»"
+    assert "requestSubmit" in js and "dragover" in js and "drop" in js and "innerHTML" not in js
+    assert re.search(r"\.tareas-tablero \{[^}]*grid-auto-flow: column", CAPA) and "scroll-snap-type" in CAPA
+    assert ".tareas-columna.es-destino" in CAPA

@@ -7585,3 +7585,7 @@ msgstr "Aucun résultat"
 #, python-format
 msgid "Mostrando %%s de %%s: sigue escribiendo para afinar"
 msgstr "Affichage de %%s sur %%s : continuez à saisir pour affiner"
+
+#: app/templates/tareas_tablero.html
+msgid "Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla."
+msgstr "Vos tâches par statut. Faites glisser une carte vers une autre colonne ou utilisez son sélecteur pour la déplacer."

@@ -7500,3 +7500,7 @@ msgstr "No results"
 #, python-format
 msgid "Mostrando %%s de %%s: sigue escribiendo para afinar"
 msgstr "Showing %%s of %%s: keep typing to narrow down"
+
+#: app/templates/tareas_tablero.html
+msgid "Tus tareas por estado. Arrastra una tarjeta a otra columna o usa su selector para moverla."
+msgstr "Your tasks by status. Drag a card to another column or use its selector to move it."
