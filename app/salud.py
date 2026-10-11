@@ -152,6 +152,24 @@ def _estado_copia_externa(ahora: datetime) -> dict:
     return _item("Copias de seguridad", "restic", titulo, item_estado, detalle)
 
 
+RESTAURACION_VERDE_DIAS = 40
+
+
+def _estado_prueba_restauracion(ahora: datetime) -> dict:
+    """Prueba mensual de restauración (scripts/verificar_restauracion_restic.sh): una copia que no se puede restaurar no vale."""
+    titulo = _("Prueba de restauración de la copia")
+    ruta = db.BACKUPS_DIR / "restic_estado_restauracion.json"
+    if not ruta.exists():
+        return _item("Copias de seguridad", "restauracion", titulo, GRIS, _("Todavía no se ha hecho ninguna prueba de restauración."))
+    estado = json.loads(ruta.read_text(encoding="utf-8"))
+    fallos = sorted(k for k, v in (estado.get("comprobaciones") or {}).items() if v != "ok")
+    if not estado.get("ok"):
+        return _item("Copias de seguridad", "restauracion", titulo, ROJO, _("La última prueba falló en: %(fallos)s.", fallos=", ".join(fallos) or "?"))
+    edad = (ahora - datetime.fromisoformat(estado["ultimo_ok"]).replace(tzinfo=None)).total_seconds()
+    item_estado = VERDE if edad <= RESTAURACION_VERDE_DIAS * 86400 else AMBAR
+    return _item("Copias de seguridad", "restauracion", titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
+
+
 def _estado_disco() -> dict:
     uso = shutil.disk_usage(db.DB_PATH.parent if db.DB_PATH.parent.exists() else "/")
     libre = uso.free / uso.total * 100
@@ -310,6 +328,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
 
     _seguro("Copias de seguridad", "backup", _("Última copia de seguridad"), lambda: _estado_backup(ahora))
     _seguro("Copias de seguridad", "restic", _("Copia de seguridad en otro disco (Restic)"), lambda: _estado_copia_externa(ahora))
+    _seguro("Copias de seguridad", "restauracion", _("Prueba de restauración de la copia"), lambda: _estado_prueba_restauracion(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))

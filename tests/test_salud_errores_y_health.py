@@ -120,3 +120,22 @@ def test_la_copia_externa_pasa_de_verde_a_ambar_y_rojo_con_la_edad(tmp_path, mon
     assert con_fallo["estado"] == salud.AMBAR and "postgres:kratos" in con_fallo["detalle"]
     nunca = _estado_restic(tmp_path, monkeypatch, {"ultimo_ok": None, "errores": ["host"], "objetivos": 3})
     assert nunca["estado"] == salud.ROJO
+
+
+# --- prueba de restauración ---------------------------------------------------------------------------------------------------
+
+def _estado_restauracion(tmp_path, monkeypatch, contenido=None):
+    import json
+    monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path)
+    if contenido is not None:
+        (tmp_path / "restic_estado_restauracion.json").write_text(json.dumps(contenido), encoding="utf-8")
+    return {i["clave"]: i for i in salud.panel(AHORA)}["restauracion"]
+
+
+def test_la_prueba_de_restauracion_sale_gris_sin_ejecutar_y_verde_ambar_o_roja_segun_resultado(tmp_path, monkeypatch):
+    assert _estado_restauracion(tmp_path, monkeypatch)["estado"] == salud.GRIS
+    ok = lambda dias: {"ok": True, "ultimo_ok": (AHORA - timedelta(days=dias)).isoformat(), "comprobaciones": {"kratos": "ok"}}
+    assert _estado_restauracion(tmp_path, monkeypatch, ok(10))["estado"] == salud.VERDE
+    assert _estado_restauracion(tmp_path, monkeypatch, ok(50))["estado"] == salud.AMBAR
+    mal = _estado_restauracion(tmp_path, monkeypatch, {"ok": False, "ultimo_ok": None, "comprobaciones": {"kratos": "error: x", "registro_db": "ok"}})
+    assert mal["estado"] == salud.ROJO and "kratos" in mal["detalle"] and "registro_db" not in mal["detalle"]

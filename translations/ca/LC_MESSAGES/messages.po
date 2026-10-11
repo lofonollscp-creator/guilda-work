@@ -7432,3 +7432,18 @@ msgstr "Última còpia completa fa %(hace)s (%(n)s objectius)."
 
 msgid "Con fallos en la última pasada: %(errores)s."
 msgstr "Amb errors a l'última passada: %(errores)s."
+
+msgid "Color"
+msgstr "Color"
+
+msgid "Prueba de restauración de la copia"
+msgstr "Prova de restauració de la còpia"
+
+msgid "Todavía no se ha hecho ninguna prueba de restauración."
+msgstr "Encara no s'ha fet cap prova de restauració."
+
+msgid "La última prueba falló en: %(fallos)s."
+msgstr "L'última prova ha fallat a: %(fallos)s."
+
+msgid "Última prueba correcta hace %(hace)s."
+msgstr "Última prova correcta fa %(hace)s."

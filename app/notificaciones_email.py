@@ -174,6 +174,57 @@ def rellenar_plantilla(texto: str, valores: dict) -> str:
     return re.sub(r"\{(\w+)\}", lambda m: str(valores[m.group(1)]) if m.group(1) in valores else m.group(0), texto or "")
 
 
+def _enmascarar(email: str | None) -> str | None:
+    """`ana@guilda.cat` -> `a**@guilda.cat`: para mostrar a quién llegan los avisos sin exponer la dirección entera."""
+    if not email or "@" not in email:
+        return None
+    local, dominio = email.split("@", 1)
+    return f"{local[:1]}{'*' * max(len(local) - 1, 1)}@{dominio}"
+
+
+def estado_configuracion() -> dict:
+    """Qué hay configurado para los avisos por correo (nunca contraseñas ni la dirección completa)."""
+    variables = {
+        "PORTAL_SMTP_HOST": PORTAL_SMTP_HOST, "PORTAL_SMTP_USUARIO": PORTAL_SMTP_USUARIO,
+        "PORTAL_SMTP_CONTRASENA": PORTAL_SMTP_CONTRASENA, "PORTAL_SMTP_REMITENTE": PORTAL_SMTP_REMITENTE,
+        "ALERTAS_ADMIN_EMAIL": ALERTAS_ADMIN_EMAIL,
+    }
+    faltan = [nombre for nombre, valor in variables.items() if not valor]
+    return {
+        "listo": not faltan,
+        "faltan": faltan,
+        "servidor": f"{PORTAL_SMTP_HOST}:{PORTAL_SMTP_PUERTO}" if PORTAL_SMTP_HOST else None,
+        "destino": _enmascarar(ALERTAS_ADMIN_EMAIL),
+    }
+
+
+def comprobar_conexion() -> str:
+    """Se conecta al servidor de correo y se autentica, SIN enviar nada. Devuelve un texto para el usuario; si falla, lanza
+    ErrorNotificacionesEmail con la causa (sin credenciales)."""
+    if not configurado():
+        raise ErrorNotificacionesEmail("Faltan variables PORTAL_SMTP_*: no hay nada que comprobar.")
+    try:
+        with smtplib.SMTP(PORTAL_SMTP_HOST, PORTAL_SMTP_PUERTO, timeout=TIMEOUT_SEGUNDOS) as smtp:
+            smtp.starttls()
+            smtp.login(PORTAL_SMTP_USUARIO, PORTAL_SMTP_CONTRASENA)
+            smtp.noop()
+    except smtplib.SMTPAuthenticationError as e:
+        raise ErrorNotificacionesEmail(f"El servidor rechazó el usuario o la contraseña (código {e.smtp_code}).") from e
+    except (smtplib.SMTPException, OSError) as e:
+        raise ErrorNotificacionesEmail(f"No se pudo conectar con {PORTAL_SMTP_HOST}:{PORTAL_SMTP_PUERTO}: {type(e).__name__}") from e
+    return f"Conexión y autenticación correctas con {PORTAL_SMTP_HOST}:{PORTAL_SMTP_PUERTO} (no se ha enviado ningún correo)."
+
+
+def enviar_aviso_de_prueba() -> str:
+    """Manda un aviso real al destino de las alertas para comprobar que llega. Devuelve el destino enmascarado."""
+    enviar_alerta_interna(
+        "[Guilda Work] aviso de prueba",
+        "Este es un aviso de prueba de Guilda Work.\n\nSi lo estás leyendo, las alertas (copias de seguridad, errores del servidor, "
+        "salud del sistema) te llegarán a esta dirección.\n",
+    )
+    return _enmascarar(ALERTAS_ADMIN_EMAIL) or "el destino configurado"
+
+
 def enviar_alerta_interna(asunto: str, cuerpo: str) -> None:
     """Aviso operativo interno (para el equipo de Guilda, no para un
     cliente) -- usado hoy solo por scripts/vigilar_facturascripts.py para

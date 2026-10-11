@@ -1,0 +1,16 @@
+# Prueba mensual de restauración de la copia de Restic (scripts/verificar_restauracion_restic.sh). Se instala junto a
+# restic-verificacion.timer en /etc/systemd/system/ y se activa el TIMER. Como root: lee /etc/restic.env y usa Docker.
+[Unit]
+Description=Guilda Work - prueba de restauración de la copia de Restic
+After=docker.service
+Requires=docker.service
+RequiresMountsFor=/mnt/HC_Volume_106540289
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/guilda/guilda-work
+EnvironmentFile=/etc/restic.env
+ExecStart=/home/guilda/guilda-work/scripts/verificar_restauracion_restic.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=1h

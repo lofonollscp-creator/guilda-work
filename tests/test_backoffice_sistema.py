@@ -211,3 +211,63 @@ def test_las_paginas_nuevas_requieren_sesion(tmp_path, monkeypatch):
         assert anonimo.get(ruta).status_code == 302, ruta
     for ruta in ("/copias", "/webhooks", "/tenants/1/borrar", "/tenants/1/exportar", "/leads/1/atendido"):
         assert anonimo.post(ruta, data={}).status_code == 400, ruta
+
+
+# --- Avisos por correo: comprobar antes de necesitarlos ------------------------------------------------------------------------------
+
+def test_la_pagina_salud_dice_si_los_avisos_estan_configurados_sin_enseñar_secretos(bo, monkeypatch):
+    from app import notificaciones_email as ne
+    monkeypatch.setattr(ne, "PORTAL_SMTP_HOST", "smtp.ejemplo.com")
+    monkeypatch.setattr(ne, "PORTAL_SMTP_USUARIO", "u@ejemplo.com")
+    monkeypatch.setattr(ne, "PORTAL_SMTP_CONTRASENA", "SECRETO-NO-SE-MUESTRA")
+    monkeypatch.setattr(ne, "PORTAL_SMTP_REMITENTE", "no-reply@ejemplo.com")
+    monkeypatch.setattr(ne, "ALERTAS_ADMIN_EMAIL", "jorge@guilda.cat")
+    html = bo.get("/salud").get_data(as_text=True)
+    assert "smtp.ejemplo.com:587" in html and "j****@guilda.cat" in html
+    assert "SECRETO-NO-SE-MUESTRA" not in html and "jorge@guilda.cat" not in html
+    monkeypatch.setattr(ne, "ALERTAS_ADMIN_EMAIL", None)
+    monkeypatch.setattr(ne, "PORTAL_SMTP_HOST", None)
+    sin = bo.get("/salud").get_data(as_text=True)
+    assert "SIN CONFIGURAR" in sin and "ALERTAS_ADMIN_EMAIL" in sin and "PORTAL_SMTP_HOST" in sin
+
+
+def test_comprobar_conexion_no_envia_nada_y_explica_el_fallo(bo, monkeypatch):
+    from app import notificaciones_email as ne
+    import smtplib
+    for nombre, valor in (("PORTAL_SMTP_HOST", "smtp.ejemplo.com"), ("PORTAL_SMTP_USUARIO", "u"), ("PORTAL_SMTP_CONTRASENA", "p"), ("PORTAL_SMTP_REMITENTE", "r@x.com")):
+        monkeypatch.setattr(ne, nombre, valor)
+    acciones = []
+
+    class SMTPFalso:
+        def __init__(self, *a, **k): acciones.append("conectar")
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self): acciones.append("tls")
+        def login(self, u, p): acciones.append("login")
+        def noop(self): acciones.append("noop")
+        def send_message(self, m): acciones.append("ENVIO")
+
+    monkeypatch.setattr(ne.smtplib, "SMTP", SMTPFalso)
+    post(bo, "/salud/probar-correo")
+    assert "Conexión y autenticación correctas" in bo.get("/salud").get_data(as_text=True) and "ENVIO" not in acciones and acciones == ["conectar", "tls", "login", "noop"]
+
+    class SMTPRechaza(SMTPFalso):
+        def login(self, u, p): raise smtplib.SMTPAuthenticationError(535, b"mal")
+    monkeypatch.setattr(ne.smtplib, "SMTP", SMTPRechaza)
+    post(bo, "/salud/probar-correo")
+    texto = bo.get("/salud").get_data(as_text=True)
+    assert "rechazó el usuario o la contraseña" in texto and "535" in texto and "mal" not in texto.replace("rechazó", "")
+
+
+def test_el_aviso_de_prueba_se_envia_al_destino_de_alertas_y_queda_auditado(bo, monkeypatch):
+    from app import notificaciones_email as ne
+    enviados = []
+    monkeypatch.setattr(ne, "ALERTAS_ADMIN_EMAIL", "jorge@guilda.cat")
+    monkeypatch.setattr(ne, "_enviar", lambda destino, asunto, cuerpo: enviados.append((destino, asunto)))
+    post(bo, "/salud/aviso-prueba")
+    pagina = bo.get("/salud").get_data(as_text=True)
+    assert enviados == [("jorge@guilda.cat", "[Guilda Work] aviso de prueba")]
+    assert "Aviso de prueba enviado a j****@guilda.cat" in pagina and any(a["accion"] == "salud.aviso_prueba" for a in auth.listar_auditoria())
+    monkeypatch.setattr(ne, "ALERTAS_ADMIN_EMAIL", None)
+    post(bo, "/salud/aviso-prueba")
+    assert "ALERTAS_ADMIN_EMAIL no está configurada" in bo.get("/salud").get_data(as_text=True)

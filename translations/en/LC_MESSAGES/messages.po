@@ -7423,3 +7423,18 @@ msgstr "Last complete backup %(hace)s ago (%(n)s targets)."
 
 msgid "Con fallos en la última pasada: %(errores)s."
 msgstr "With failures in the last run: %(errores)s."
+
+msgid "Color"
+msgstr "Colour"
+
+msgid "Prueba de restauración de la copia"
+msgstr "Backup restore test"
+
+msgid "Todavía no se ha hecho ninguna prueba de restauración."
+msgstr "No restore test has been done yet."
+
+msgid "La última prueba falló en: %(fallos)s."
+msgstr "The last test failed at: %(fallos)s."
+
+msgid "Última prueba correcta hace %(hace)s."
+msgstr "Last successful test %(hace)s ago."

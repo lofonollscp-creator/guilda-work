@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icono %}
-{% block titulo %}Salud del sistema{% endblock %}
+{% block titulo %}Salud del sistema<section class="tarjeta"><h2>Avisos por correo</h2>
+  <p class="muted">Las alertas (copias de seguridad, errores del servidor, salud) salen por el correo de la plataforma. Comprueba que funciona antes de necesitarlo.</p>
+  {% if correo.listo %}
+  <p>Servidor <code>{{ correo.servidor }}</code> · los avisos llegan a <code>{{ correo.destino }}</code>.</p>
+  {% else %}
+  <p><span class="insignia insignia-riesgo">SIN CONFIGURAR</span> Faltan: {% for f in correo.faltan %}<code>{{ f }}</code>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+  {% endif %}
+  <div class="cabecera-fila">
+    <form method="post" action="{{ url_for('rutas.probar_correo_salud') }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="boton">Comprobar conexión (no envía nada)</button></form>
+    <form method="post" action="{{ url_for('rutas.aviso_de_prueba') }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="boton boton-primario">Enviar aviso de prueba</button></form>
+  </div>
+</section>
+{% endblock %}
 {% block contenido %}
 <header class="cabecera"><h1>Salud del sistema</h1><p class="muted">Copias de seguridad, correo, tareas periódicas, integraciones y servidor de un vistazo.</p></header>
 <p><span class="insignia {{ {'verde': 'insignia-ok', 'rojo': 'insignia-riesgo'}.get(general, '') }}">{{ {'verde': 'TODO EN ORDEN', 'ambar': 'ATENCIÓN', 'rojo': 'HAY ALGO EN ROJO', 'gris': 'SIN DATOS'}[general] }}</span></p>

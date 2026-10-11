@@ -7508,3 +7508,18 @@ msgstr "Dernière sauvegarde complète il y a %(hace)s (%(n)s cibles)."
 
 msgid "Con fallos en la última pasada: %(errores)s."
 msgstr "Avec des échecs lors du dernier passage : %(errores)s."
+
+msgid "Color"
+msgstr "Couleur"
+
+msgid "Prueba de restauración de la copia"
+msgstr "Test de restauration de la sauvegarde"
+
+msgid "Todavía no se ha hecho ninguna prueba de restauración."
+msgstr "Aucun test de restauration n'a encore été effectué."
+
+msgid "La última prueba falló en: %(fallos)s."
+msgstr "Le dernier test a échoué sur : %(fallos)s."
+
+msgid "Última prueba correcta hace %(hace)s."
+msgstr "Dernier test réussi il y a %(hace)s."

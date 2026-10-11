@@ -190,7 +190,35 @@ def salud_vista():
     grupos: dict[str, list] = {}
     for i in items:
         grupos.setdefault(i["grupo"], []).append(i)
-    return render_template("salud.html", grupos=grupos, general=salud.peor_estado(items))
+    from app import notificaciones_email
+    return render_template("salud.html", grupos=grupos, general=salud.peor_estado(items), correo=notificaciones_email.estado_configuracion())
+
+
+@bp.route("/salud/probar-correo", methods=["POST"])
+@auth.login_required
+def probar_correo_salud():
+    """Comprueba la conexión SMTP de los avisos sin enviar nada."""
+    from app import notificaciones_email as ne
+    try:
+        flash(ne.comprobar_conexion(), "ok")
+    except ne.ErrorNotificacionesEmail as e:
+        flash(str(e), "error")
+    return redirect(url_for("rutas.salud_vista"))
+
+
+@bp.route("/salud/aviso-prueba", methods=["POST"])
+@auth.login_required
+def aviso_de_prueba():
+    """Envía un aviso real al destino de las alertas (para ver que llega de verdad)."""
+    from app import notificaciones_email as ne
+    try:
+        destino = ne.enviar_aviso_de_prueba()
+    except ne.ErrorNotificacionesEmail as e:
+        flash(f"No se pudo enviar: {e}", "error")
+    else:
+        auth.auditar("salud.aviso_prueba", "aviso de prueba enviado")
+        flash(f"Aviso de prueba enviado a {destino}. Comprueba que ha llegado (y que no ha ido a spam).", "ok")
+    return redirect(url_for("rutas.salud_vista"))
 
 
 @bp.route("/diagnostico")
