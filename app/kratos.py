@@ -94,6 +94,23 @@ def reescribir_action_para_navegador(url: str) -> str:
     return url
 
 
+def _id_de_error(cuerpo) -> str | None:
+    error = cuerpo.get("error") if isinstance(cuerpo, dict) else None
+    return error.get("id") if isinstance(error, dict) else None
+
+
+class Requiere2FA(ErrorKratos):
+    """El email y la contraseña son correctos pero la cuenta tiene la verificación en dos pasos activada y falta el código."""
+
+
+def requiere_aal2(cookies: dict) -> bool:
+    """¿La cookie de sesión es válida pero la cuenta exige un segundo factor que aún no se ha dado? (Kratos: 403 session_aal2_required.)"""
+    if not cookies:
+        return False
+    estado, cuerpo, _ = _peticion(f"{KRATOS_PUBLIC_URL}/sessions/whoami", cabeceras=_cabecera_cookie(cookies))
+    return estado == 403 and _id_de_error(cuerpo) == "session_aal2_required"
+
+
 def whoami(cookies: dict) -> dict | None:
     """Devuelve la sesión activa (con la identidad) o None si no hay
     ninguna cookie de sesión válida."""
@@ -118,7 +135,7 @@ def obtener_identidad(identity_id: str) -> dict | None:
     return cuerpo
 
 
-def iniciar_flujo(tipo: str, cookies: dict) -> tuple[str, list[str]]:
+def iniciar_flujo(tipo: str, cookies: dict, aal: str | None = None) -> tuple[str, list[str]]:
     """Inicia un flujo self-service de navegador (login o registro) y
     devuelve (url_de_redireccion_para_el_navegador, cabeceras_set_cookie).
 
@@ -133,8 +150,9 @@ def iniciar_flujo(tipo: str, cookies: dict) -> tuple[str, list[str]]:
     contrastarlo (bug real, encontrado al ser esta función la primera
     que llama a `iniciar_flujo` -- hasta ahora nadie la usaba)."""
     opener = opener_sin_redireccion()
+    consulta = f"?aal={aal}" if aal else ""      # aal="aal2": segundo factor de una sesión que ya pasó la contraseña
     req = urllib.request.Request(
-        f"{KRATOS_PUBLIC_URL}/self-service/{tipo}/browser",
+        f"{KRATOS_PUBLIC_URL}/self-service/{tipo}/browser{consulta}",
         headers={"Accept": "text/html", **_cabecera_cookie(cookies)},
     )
     try:
@@ -173,13 +191,17 @@ def logout_url(cookies: dict) -> str | None:
     return reescribir_action_para_navegador(cuerpo.get("logout_url", ""))
 
 
-def verificar_credenciales_admin(email: str, contrasena: str) -> str | None:
+def verificar_credenciales_admin(email: str, contrasena: str, codigo_2fa: str | None = None) -> str | None:
     """Verifica un email+contraseña usando el flujo "API-style" de Kratos
     (pensado para clientes que no son navegador — server-to-server, sin
     CSRF/cookies). Devuelve el `identity_id` si son correctas, None si no.
     Usado por `POST /api/v1/auth/login` — el móvil sigue recibiendo el
     token opaco propio de siempre, esto solo cambia qué valida la
-    contraseña por debajo."""
+    contraseña por debajo.
+
+    Verificación en dos pasos: si la cuenta la tiene activada, con la contraseña sola Kratos da una sesión AAL1 que NO basta.
+    Sin `codigo_2fa` se lanza `Requiere2FA`; con él (código de la app de autenticación de 6 dígitos o uno de recuperación) se completa
+    el segundo paso y, si es correcto, se devuelve el `identity_id`; si no, None."""
     estado, flujo, _ = _peticion(f"{KRATOS_PUBLIC_URL}/self-service/login/api")
     if estado != 200:
         return None
@@ -191,7 +213,43 @@ def verificar_credenciales_admin(email: str, contrasena: str) -> str | None:
     )
     if estado != 200:
         return None
-    return resultado.get("session", {}).get("identity", {}).get("id")
+    # Con un segundo factor pendiente Kratos no incluye la identidad en la sesión AAL1: se recupera con whoami o tras el segundo paso.
+    identity_id = ((resultado.get("session") or {}).get("identity") or {}).get("id")
+    token = resultado.get("session_token")
+    if not token:
+        return identity_id
+    cabecera = {"X-Session-Token": token}
+    estado, cuerpo, _ = _peticion(f"{KRATOS_PUBLIC_URL}/sessions/whoami", cabeceras=cabecera)
+    if estado == 200:
+        return identity_id or (cuerpo.get("identity") or {}).get("id")
+    if not (estado == 403 and _id_de_error(cuerpo) == "session_aal2_required"):
+        return None
+    codigo = (codigo_2fa or "").replace(" ", "").strip()
+    if not codigo:
+        raise Requiere2FA("Esta cuenta tiene la verificación en dos pasos: falta el código.")
+    estado, flujo2, _ = _peticion(f"{KRATOS_PUBLIC_URL}/self-service/login/api?aal=aal2", cabeceras=cabecera)
+    if estado != 200:
+        return None
+    metodo = {"method": "totp", "totp_code": codigo} if codigo.isdigit() and len(codigo) == 6 else {"method": "lookup_secret", "lookup_secret": codigo}
+    estado, resultado2, _ = _peticion(
+        f"{KRATOS_PUBLIC_URL}/self-service/login?flow={flujo2.get('id')}", metodo="POST", cabeceras=cabecera, cuerpo=metodo
+    )
+    if estado != 200:
+        return None
+    return ((resultado2.get("session") or {}).get("identity") or {}).get("id")
+
+
+def quitar_segundo_factor(identity_id: str) -> list[str]:
+    """Quita la app de autenticación y los códigos de recuperación de una identidad (Admin API). Es la salida cuando alguien pierde el
+    móvil Y los códigos. Devuelve los métodos que quitó (los que no tenía no cuentan: 404 se ignora)."""
+    quitados = []
+    for metodo in ("totp", "lookup_secret"):
+        estado, _, _ = _peticion(f"{KRATOS_ADMIN_URL}/admin/identities/{identity_id}/credentials/{metodo}", metodo="DELETE")
+        if estado == 204:
+            quitados.append(metodo)
+        elif estado not in (404,):
+            raise ErrorKratos(f"Kratos no pudo quitar «{metodo}» (HTTP {estado}).")
+    return quitados
 
 
 def crear_identidad(email: str, contrasena: str) -> str:

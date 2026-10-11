@@ -109,7 +109,7 @@ def test_sin_novedades_vence_el_tiempo_y_termina_el_idle(servidor):
     t0 = time.monotonic()
     t, r = _en_hilo(conn, 1)
     t.join(5)
-    assert r["valor"] == "timeout" and time.monotonic() - t0 < 4 and servidor.hecho.is_set()
+    assert r["valor"] == "timeout" and time.monotonic() - t0 < 4 and servidor.hecho.wait(2)
 
 
 def test_expunge_y_flags_tambien_cuentan_y_otros_avisos_no(servidor):

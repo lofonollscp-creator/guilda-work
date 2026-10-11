@@ -52,6 +52,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Estado del servicio, errores 5xx, límites por tipo y restricciones de token](#estado-del-servicio-errores-5xx-límites-por-tipo-y-restricciones-de-token)
 - [Revisión de seguridad (2026-10-11) y limpieza de disco](#revisión-de-seguridad-2026-10-11-y-limpieza-de-disco)
 - [Política de contenido (CSP) estricta para scripts](#política-de-contenido-csp-estricta-para-scripts)
+- [Verificación en dos pasos (TOTP) para los usuarios de la app](#verificación-en-dos-pasos-totp-para-los-usuarios-de-la-app)
 
 **Documentación y ayuda**
 - [Ayuda contextual (enlaces al centro de ayuda)](#ayuda-contextual-enlaces-al-centro-de-ayuda)
@@ -2875,3 +2876,11 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Política de scripts: `script-src 'self' 'nonce-...'`, `worker-src 'self' blob:` (la prueba de trabajo del captcha crea un Worker desde un Blob). Los estilos en línea (`style=`) siguen permitidos: es riesgo bajo y quitarlos es otro proyecto.
 - **Para pasar a `forzar`**: despliega en `reportar`, usa la app unos días (todas las pantallas que uses de verdad) y mira `journalctl -u guilda-work | grep "CSP:"`. Si no hay avisos, pon `GUILDA_CSP=forzar` en `/etc/guilda-work.env` y reinicia. Si algo se rompe, `GUILDA_CSP=reportar` lo deshace sin tocar código.
 - Pruebas: `tests/test_cabeceras_seguridad.py` (recorre todas las pantallas buscando manejadores en línea o scripts sin nonce) y `scripts/comprobar_csp_compat.sh` (jsdom en un contenedor Node desechable: confirma el comportamiento de cada `data-*`).
+
+## Verificación en dos pasos (TOTP) para los usuarios de la app
+- **Opcional por persona**: se activa en Ajustes → Contraseña y email (app de autenticación con QR + 12 códigos de recuperación de un solo uso). Kratos: métodos `totp` y `lookup_secret` y `session.whoami.required_aal: highest_available` en `deploy/kratos/kratos.yml` (el cambio de configuración exige recrear/reiniciar el contenedor de Kratos). Quien no la activa entra como siempre.
+- **Web**: con la contraseña sola la sesión es AAL1 y Kratos responde 403 `session_aal2_required`; `kratos.requiere_aal2()` lo detecta y `/login` abre el flujo del segundo factor (`?aal=aal2`) con formulario de código y de recuperación. El puente de Hydra (`/hydra/login`) hace lo mismo para ChatGPT/Claude (sin eso entraba en un bucle).
+- **API**: `POST /api/v1/auth/login` responde `401 requiere_2fa` si falta `codigo_2fa`; con un código correcto (6 dígitos o de recuperación) entrega el token. Sin esta comprobación la contraseña sola habría dado acceso (Kratos concede una sesión AAL1). Los tokens de API ya emitidos no cambian.
+- **Salida si se pierde todo**: backoffice → usuario → «Quitar la verificación en dos pasos» (Admin API de Kratos: borra las credenciales `totp` y `lookup_secret`; queda auditado).
+- **Pendiente**: la app móvil (Flutter) todavía no tiene campo para el código: quien active la verificación no podrá volver a iniciar sesión en el móvil hasta que se actualice (las sesiones ya abiertas siguen). La pantalla de ajustes lo avisa.
+- **Pruebas**: `tests/test_dos_pasos.py` (Kratos real: API con app y con códigos de recuperación de un solo uso, web con aal2, puente de Hydra, ajustes con QR y salida desde el backoffice).

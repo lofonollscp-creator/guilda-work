@@ -103,6 +103,19 @@ selfservice:
     code:
       enabled: true
       passwordless_enabled: false
+    # Verificación en dos pasos OPCIONAL (cada persona la activa en Ajustes → Contraseña y email): app de autenticación (TOTP, RFC 6238)
+    # y 12 códigos de recuperación de un solo uso por si se pierde el móvil. Con `session.whoami.required_aal: highest_available`, quien la
+    # activa tiene que dar el segundo factor al iniciar sesión; quien no, entra como siempre.
+    totp:
+      enabled: true
+      config:
+        issuer: Guilda Work
+    lookup_secret:
+      enabled: true
+
+session:
+  whoami:
+    required_aal: highest_available
 
 identity:
   default_schema_id: default

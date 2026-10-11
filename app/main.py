@@ -673,7 +673,9 @@ def _flujo_o_redirigir(tipo: str):
         # URL con ?flow=<id> mantiene TODO el flujo en el origen desde el
         # que se entró, sea cual sea.
         try:
-            ubicacion, cabeceras_set_cookie = kratos.iniciar_flujo(tipo, request.cookies)
+            # Cuenta con verificación en dos pasos que ya dio la contraseña: el flujo que toca es el del segundo factor (aal2).
+            aal = "aal2" if tipo == "login" and kratos.requiere_aal2(request.cookies) else None
+            ubicacion, cabeceras_set_cookie = kratos.iniciar_flujo(tipo, request.cookies, aal=aal)
         except kratos.ErrorKratos:
             g._redireccion_flujo = redirect(request.path)
             return None

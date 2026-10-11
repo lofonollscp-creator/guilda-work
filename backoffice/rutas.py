@@ -660,6 +660,27 @@ def alternar_permiso(usuario_id: int, permiso: str):
     return redirect(_destino_seguro(request.form.get("volver")) if request.form.get("volver") else url_for("rutas.usuario", usuario_id=usuario_id))
 
 
+@bp.route("/usuarios/<int:usuario_id>/quitar-2fa", methods=["POST"])
+@auth.login_required
+def quitar_2fa(usuario_id: int):
+    """Para quien ha perdido el móvil Y los códigos de recuperación: borra su verificación en dos pasos (vuelve a entrar solo con la
+    contraseña y puede activarla de nuevo). Queda en la actividad del backoffice."""
+    from app import kratos
+    u = _usuario_o_404(usuario_id)
+    identidad = u["kratos_identity_id"] if "kratos_identity_id" in u.keys() else None
+    if not identidad:
+        flash("Este usuario no tiene identidad en Kratos (cuenta local).", "error")
+    else:
+        try:
+            quitados = kratos.quitar_segundo_factor(identidad)
+        except kratos.ErrorKratos as e:
+            flash(f"No se pudo quitar: {e}", "error")
+        else:
+            auth.auditar("usuario.quitar_2fa", f"{u['email']}: {', '.join(quitados) or 'no tenía verificación en dos pasos'}")
+            flash("Verificación en dos pasos quitada." if quitados else "Este usuario no tenía la verificación en dos pasos activada.", "ok")
+    return redirect(url_for("rutas.usuario", usuario_id=usuario_id))
+
+
 @bp.route("/usuarios/<int:usuario_id>/dispositivos/<int:token_id>/revocar", methods=["POST"])
 @auth.login_required
 def revocar_dispositivo(usuario_id: int, token_id: int):

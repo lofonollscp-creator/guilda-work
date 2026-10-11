@@ -7438,3 +7438,48 @@ msgstr "The last test failed at: %(fallos)s."
 
 msgid "Última prueba correcta hace %(hace)s."
 msgstr "Last successful test %(hace)s ago."
+
+msgid "Verificación en dos pasos"
+msgstr "Two-step verification"
+
+msgid "Introduce el código de 6 dígitos de tu app de autenticación."
+msgstr "Enter the 6-digit code from your authenticator app."
+
+msgid "Código de verificación"
+msgstr "Verification code"
+
+msgid "Verificar"
+msgstr "Verify"
+
+msgid "¿No tienes el móvil? Usa un código de recuperación"
+msgstr "No phone at hand? Use a recovery code"
+
+msgid "Código de recuperación"
+msgstr "Recovery code"
+
+msgid "Entrar con el código"
+msgstr "Sign in with the code"
+
+msgid "Entrar con otra cuenta"
+msgstr "Sign in with another account"
+
+msgid "Códigos de recuperación"
+msgstr "Recovery codes"
+
+msgid "Pide un código de tu app de autenticación (Google Authenticator, Aegis, 1Password...) al iniciar sesión, además de la contraseña."
+msgstr "Asks for a code from your authenticator app (Google Authenticator, Aegis, 1Password...) when you sign in, in addition to your password."
+
+msgid "Códigos de un solo uso para entrar si pierdes el móvil. Guárdalos en un lugar seguro: solo se muestran una vez."
+msgstr "One-time codes to sign in if you lose your phone. Keep them somewhere safe: they are shown only once."
+
+msgid "Código QR para añadir esta cuenta a tu app de autenticación"
+msgstr "QR code to add this account to your authenticator app"
+
+msgid "(ya usado)"
+msgstr "(already used)"
+
+msgid "¿No puedes escanear el QR? Escribe esta clave en tu app:"
+msgstr "Can't scan the QR code? Type this key into your app:"
+
+msgid "La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita."
+msgstr "The mobile app does not ask for this code yet: phones that are already signed in keep working, but signing in again on the mobile app will need a version that supports it."

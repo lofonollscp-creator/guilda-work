@@ -26,14 +26,28 @@
     <h2 style="font-size: 1rem;">
       {% if grupo == 'password' %}{{ _('Contraseña') }}
       {% elif grupo == 'profile' %}{{ _('Email') }}
+      {% elif grupo == 'totp' %}{{ _('Verificación en dos pasos') }}
+      {% elif grupo == 'lookup_secret' %}{{ _('Códigos de recuperación') }}
       {% else %}{{ grupo }}{% endif %}
     </h2>
     {% for nodo in nodos_ocultos %}
       <input type="hidden" name="{{ nodo.attributes.name }}" value="{{ nodo.attributes.value }}">
     {% endfor %}
+    {% if grupo == 'totp' %}<p class="muted">{{ _('Pide un código de tu app de autenticación (Google Authenticator, Aegis, 1Password...) al iniciar sesión, además de la contraseña.') }}</p><p class="muted">{{ _('La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita.') }}</p>{% endif %}
+    {% if grupo == 'lookup_secret' %}<p class="muted">{{ _('Códigos de un solo uso para entrar si pierdes el móvil. Guárdalos en un lugar seguro: solo se muestran una vez.') }}</p>{% endif %}
     {% for nodo in nodos_grupo %}
       {% set attrs = nodo.attributes %}
-      {% if attrs.node_type == 'input' and attrs.type == 'submit' %}
+      {% if attrs.node_type == 'img' %}
+        <p><img src="{{ attrs.src }}" alt="{{ _('Código QR para añadir esta cuenta a tu app de autenticación') }}" width="{{ attrs.width or 200 }}" height="{{ attrs.height or 200 }}"></p>
+      {% elif attrs.node_type == 'text' %}
+        {% if attrs.text.context and attrs.text.context.secrets %}
+          <ul class="muted" style="columns: 2; max-width: 360px;">{% for c in attrs.text.context.secrets %}<li><code>{{ c.text if c.text else _('(ya usado)') }}</code></li>{% endfor %}</ul>
+        {% elif attrs.id == 'totp_secret_key' %}
+          <p class="muted">{{ _('¿No puedes escanear el QR? Escribe esta clave en tu app:') }} <code>{{ attrs.text.text }}</code></p>
+        {% else %}
+          <p class="muted">{{ attrs.text.text }}</p>
+        {% endif %}
+      {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
         <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn btn-primary">
           {{ nodo.meta.label.text if nodo.meta and nodo.meta.label else _('Guardar') }}
         </button>

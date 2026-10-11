@@ -265,8 +265,14 @@ def login():
     datos = _body()
     email = (datos.get("email") or "").strip()
     contrasena = datos.get("contrasena") or ""
-    identity_id = kratos.verificar_credenciales_admin(email, contrasena)
+    codigo_2fa = str(datos.get("codigo_2fa") or "").strip()
+    try:
+        identity_id = kratos.verificar_credenciales_admin(email, contrasena, codigo_2fa or None)
+    except kratos.Requiere2FA:
+        return _err("Esta cuenta tiene la verificación en dos pasos: vuelve a llamar con `codigo_2fa` (el de tu app de autenticación o uno de recuperación).", 401, "requiere_2fa", "codigo_2fa")
     if identity_id is None:
+        if codigo_2fa:
+            return _err("Email, contraseña o código incorrectos.", 401, "credenciales_o_codigo_incorrectos")
         return _err("Email o contraseña incorrectos.", 401)
     usuario = db.usuario_por_kratos_id(identity_id)
     if usuario is None:

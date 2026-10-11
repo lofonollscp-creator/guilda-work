@@ -7523,3 +7523,48 @@ msgstr "Le dernier test a échoué sur : %(fallos)s."
 
 msgid "Última prueba correcta hace %(hace)s."
 msgstr "Dernier test réussi il y a %(hace)s."
+
+msgid "Verificación en dos pasos"
+msgstr "Vérification en deux étapes"
+
+msgid "Introduce el código de 6 dígitos de tu app de autenticación."
+msgstr "Saisissez le code à 6 chiffres de votre application d'authentification."
+
+msgid "Código de verificación"
+msgstr "Code de vérification"
+
+msgid "Verificar"
+msgstr "Vérifier"
+
+msgid "¿No tienes el móvil? Usa un código de recuperación"
+msgstr "Vous n'avez pas votre téléphone ? Utilisez un code de récupération"
+
+msgid "Código de recuperación"
+msgstr "Code de récupération"
+
+msgid "Entrar con el código"
+msgstr "Se connecter avec le code"
+
+msgid "Entrar con otra cuenta"
+msgstr "Se connecter avec un autre compte"
+
+msgid "Códigos de recuperación"
+msgstr "Codes de récupération"
+
+msgid "Pide un código de tu app de autenticación (Google Authenticator, Aegis, 1Password...) al iniciar sesión, además de la contraseña."
+msgstr "Demande un code de votre application d'authentification (Google Authenticator, Aegis, 1Password...) à la connexion, en plus du mot de passe."
+
+msgid "Códigos de un solo uso para entrar si pierdes el móvil. Guárdalos en un lugar seguro: solo se muestran una vez."
+msgstr "Codes à usage unique pour vous connecter si vous perdez votre téléphone. Conservez-les en lieu sûr : ils ne sont affichés qu'une fois."
+
+msgid "Código QR para añadir esta cuenta a tu app de autenticación"
+msgstr "Code QR pour ajouter ce compte à votre application d'authentification"
+
+msgid "(ya usado)"
+msgstr "(déjà utilisé)"
+
+msgid "¿No puedes escanear el QR? Escribe esta clave en tu app:"
+msgstr "Impossible de scanner le QR ? Saisissez cette clé dans votre application :"
+
+msgid "La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita."
+msgstr "L'application mobile ne demande pas encore ce code : les téléphones déjà connectés continuent de fonctionner, mais pour se reconnecter sur l'application mobile il faudra une version qui le prend en charge."

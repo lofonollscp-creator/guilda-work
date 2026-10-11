@@ -73,7 +73,7 @@ ESQUEMAS: dict[str, dict] = {
             "codigo": {"type": "string", "description": "Clave estable para programas.", "enum": [
                 "peticion_invalida", "token_invalido", "token_caducado", "token_solo_lectura", "token_area_no_permitida", "no_autenticado", "prohibido", "sin_permiso",
                 "no_encontrado", "metodo_no_permitido", "conflicto", "referencia_duplicada", "referencia_invalida", "vencimiento_duplicado", "idempotencia_conflicto",
-                "idempotencia_en_curso", "tarea_bloqueada", "limite_excedido", "valor_invalido", "adjunto_invalido", "error_interno"]},
+                "idempotencia_en_curso", "tarea_bloqueada", "limite_excedido", "requiere_2fa", "credenciales_o_codigo_incorrectos", "ip_no_permitida", "servicio_no_disponible", "valor_invalido", "adjunto_invalido", "error_interno"]},
             "campo": {"type": "string", "description": "Campo que causó el error, si aplica."},
             "request_id": {"type": "string", "description": "Identificador de la petición (igual que la cabecera `X-Request-Id`); dilo al pedir soporte."},
         },
@@ -254,6 +254,7 @@ DESCRIPCIONES: dict[str, str] = {
     "nombre_dispositivo": "Nombre para reconocer este dispositivo o integración.", "categoria_id": "Id del proyecto.", "proyecto_id": "Id del proyecto.", "cliente_id": "Id del cliente fiscal.",
     "cuenta_id": "Id de la cuenta de correo.", "referencia_externa": "Tu propio identificador (hasta 120 caracteres, único por usuario o despacho): sirve para sincronizar con otro sistema sin duplicar.",
     "areas": "Áreas a las que se limita el token: notas, tareas, correo, fiscal, fichaje, tiquets, ia, avisos, webhooks. Vacío = todas.", "permisos": "`solo_lectura` solo puede hacer GET.",
+    "codigo_2fa": "Código de la app de autenticación (6 dígitos) o uno de recuperación, solo si la cuenta tiene la verificación en dos pasos. Sin él, el login responde `401 requiere_2fa`.",
     "origenes_cors": "Orígenes web exactos (`https://panel.ejemplo.com`) que pueden usar este token desde un navegador. Sin comodines; vacío = ninguno.",
     "ips_permitidas": "IP o redes CIDR desde las que se puede usar el token (`203.0.113.7`, `10.0.0.0/24`). Vacío = cualquiera. Un token con IPs no sirve por MCP.",
     "caduca_dias": "El token caduca a los N días.", "caduca_en": "Fecha y hora de caducidad (ISO).", "q": "Texto a buscar.", "limit": "Máximo de filas (hasta 1000).", "offset": "Filas a saltar.",

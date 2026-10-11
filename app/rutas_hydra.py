@@ -22,6 +22,14 @@ from . import db, hydra, kratos
 hydra_bp = Blueprint("hydra_bridge", __name__, url_prefix="/hydra")
 
 
+def _url_login_kratos() -> str:
+    """Login de Kratos al que mandar a quien aún no tiene sesión válida aquí. Si ya dio la contraseña pero la cuenta tiene la
+    verificación en dos pasos, se pide directamente el segundo factor (`aal=aal2`): sin eso Kratos lo daría por "ya autenticado",
+    volvería a esta misma ruta y se entraría en un bucle."""
+    aal = "&aal=aal2" if kratos.requiere_aal2(request.cookies) else ""
+    return f"/.ory/self-service/login/browser?return_to={quote(request.url, safe='')}{aal}"
+
+
 @hydra_bp.route("/login")
 def hydra_login():
     challenge = request.args.get("login_challenge")
@@ -37,7 +45,7 @@ def hydra_login():
         subject = usuario["kratos_identity_id"] or str(usuario["id"])
         return redirect(hydra.aceptar_login_request(challenge, subject))
 
-    return redirect(f"/.ory/self-service/login/browser?return_to={quote(request.url, safe='')}")
+    return redirect(_url_login_kratos())
 
 
 def _cliente_de_confianza(consent_request: dict) -> bool:
@@ -91,7 +99,7 @@ def hydra_consent():
 
     # Aplicación de terceros: hace falta que sea la propia persona, con sesión, quien decida.
     if not g.usuario_id:
-        return redirect(f"/.ory/self-service/login/browser?return_to={quote(request.url, safe='')}")
+        return redirect(_url_login_kratos())
     if usuario is None or usuario["id"] != g.usuario_id:
         abort(403)
 

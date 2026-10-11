@@ -64,6 +64,13 @@
 </div>
 
 <section class="tarjeta">
+  <h2>Verificación en dos pasos</h2>
+  <p class="muted">Si esta persona ha perdido el móvil y los códigos de recuperación, puedes quitarle la verificación: volverá a entrar solo con la contraseña y podrá activarla de nuevo. Comprueba antes que es ella (por teléfono o por otra vía de confianza).</p>
+  <form method="post" action="{{ url_for('rutas.quitar_2fa', usuario_id=u.id) }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton boton-peligro" data-confirmar="¿Quitar la verificación en dos pasos a {{ u.email }}?">Quitar la verificación en dos pasos</button></form>
+</section>
+
+<section class="tarjeta">
   <h2>Dispositivos y tokens de API</h2>
   {% if dispositivos %}
   <div class="tabla-caja"><table class="tabla">

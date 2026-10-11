@@ -7447,3 +7447,48 @@ msgstr "L'última prova ha fallat a: %(fallos)s."
 
 msgid "Última prueba correcta hace %(hace)s."
 msgstr "Última prova correcta fa %(hace)s."
+
+msgid "Verificación en dos pasos"
+msgstr "Verificació en dos passos"
+
+msgid "Introduce el código de 6 dígitos de tu app de autenticación."
+msgstr "Introdueix el codi de 6 dígits de la teva app d'autenticació."
+
+msgid "Código de verificación"
+msgstr "Codi de verificació"
+
+msgid "Verificar"
+msgstr "Verifica"
+
+msgid "¿No tienes el móvil? Usa un código de recuperación"
+msgstr "No tens el mòbil? Fes servir un codi de recuperació"
+
+msgid "Código de recuperación"
+msgstr "Codi de recuperació"
+
+msgid "Entrar con el código"
+msgstr "Entra amb el codi"
+
+msgid "Entrar con otra cuenta"
+msgstr "Entra amb un altre compte"
+
+msgid "Códigos de recuperación"
+msgstr "Codis de recuperació"
+
+msgid "Pide un código de tu app de autenticación (Google Authenticator, Aegis, 1Password...) al iniciar sesión, además de la contraseña."
+msgstr "Demana un codi de la teva app d'autenticació (Google Authenticator, Aegis, 1Password...) en iniciar sessió, a més de la contrasenya."
+
+msgid "Códigos de un solo uso para entrar si pierdes el móvil. Guárdalos en un lugar seguro: solo se muestran una vez."
+msgstr "Codis d'un sol ús per entrar si perds el mòbil. Desa'ls en un lloc segur: només es mostren una vegada."
+
+msgid "Código QR para añadir esta cuenta a tu app de autenticación"
+msgstr "Codi QR per afegir aquest compte a la teva app d'autenticació"
+
+msgid "(ya usado)"
+msgstr "(ja usat)"
+
+msgid "¿No puedes escanear el QR? Escribe esta clave en tu app:"
+msgstr "No pots escanejar el QR? Escriu aquesta clau a la teva app:"
+
+msgid "La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita."
+msgstr "L'app mòbil encara no demana aquest codi: els mòbils que ja tenen sessió continuen funcionant, però per tornar a iniciar sessió a l'app mòbil caldrà una versió que ho admeti."

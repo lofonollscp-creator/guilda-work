@@ -32,6 +32,44 @@
       </ul>
     </section>
     <div class="auth-panel">
+    {% set segundo_factor = nodos|selectattr('group', 'in', ['totp', 'lookup_secret'])|list %}
+    {% if segundo_factor %}
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Verificación en dos pasos') }}</h1>
+      <p class="muted">{{ _('Introduce el código de 6 dígitos de tu app de autenticación.') }}</p>
+      {% for m in mensajes %}<div class="ia-error" role="alert">{{ m.text }}</div>{% endfor %}
+      {% set csrf = nodos|selectattr('attributes.name', 'equalto', 'csrf_token')|first %}
+      {% if nodos|selectattr('group', 'equalto', 'totp')|list %}
+      <form method="post" action="{{ accion }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf.attributes.value if csrf }}">
+        <input type="hidden" name="method" value="totp">
+        <div class="correo-form-campo">
+          <label for="login-totp">{{ _('Código de verificación') }}</label>
+          <input type="text" id="login-totp" name="totp_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" required autofocus>
+        </div>
+        {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'totp_code') %}{% for m in nodo.messages %}<div class="ia-error" role="alert">{{ m.text }}</div>{% endfor %}{% endfor %}
+        <button type="submit" class="btn btn-primary auth-submit">{{ _('Verificar') }}</button>
+      </form>
+      {% endif %}
+      {% if nodos|selectattr('group', 'equalto', 'lookup_secret')|list %}
+      <details class="auth-alterna">
+        <summary>{{ _('¿No tienes el móvil? Usa un código de recuperación') }}</summary>
+        <form method="post" action="{{ accion }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf.attributes.value if csrf }}">
+          <input type="hidden" name="method" value="lookup_secret">
+          <div class="correo-form-campo">
+            <label for="login-recuperacion">{{ _('Código de recuperación') }}</label>
+            <input type="text" id="login-recuperacion" name="lookup_secret" autocomplete="off" required>
+          </div>
+          {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'lookup_secret') %}{% for m in nodo.messages %}<div class="ia-error" role="alert">{{ m.text }}</div>{% endfor %}{% endfor %}
+          <button type="submit" class="btn btn-secondary auth-submit">{{ _('Entrar con el código') }}</button>
+        </form>
+      </details>
+      {% endif %}
+      <form class="auth-alterna" action="{{ url_for('logout') }}" method="post"><button type="submit" class="btn btn-ghost">{{ _('Entrar con otra cuenta') }}</button></form>
+    </div>
+    {% else %}
     <form class="auth-card" method="post" action="{{ accion }}">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>Guilda Work</h1>
@@ -74,6 +112,7 @@
       <p class="auth-alterna">{{ _('¿No tienes cuenta?') }} <a href="{{ url_for('registro') }}">{{ _('Regístrate') }}</a></p>
       <p class="auth-alterna">{{ _('¿Quieres integrar tu software?') }} <a href="{{ url_for('docs.pagina') }}">{{ _('Documentación para desarrolladores') }}</a></p>
     </form>
+    {% endif %}
     </div>
   </div>
 </body>
