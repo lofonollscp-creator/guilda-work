@@ -74,9 +74,34 @@
     });
   }
 
+  // Móvil (<= 640 px): el menú lateral es un panel que se abre con el botón de la barra superior. Estado en <html data-menu-movil>.
+  const movil = window.matchMedia("(max-width: 640px)");
+  const botonMenuMovil = document.getElementById("menu-movil-abrir");
+  const fondoMenuMovil = document.getElementById("rail-fondo");
+  const panelMenuMovil = document.getElementById("rail-principal");
+  const menuMovilAbierto = () => document.documentElement.dataset.menuMovil === "1";
+  const fijarMenuMovil = (abierto) => {
+    if (abierto) document.documentElement.dataset.menuMovil = "1";
+    else delete document.documentElement.dataset.menuMovil;
+    if (botonMenuMovil) botonMenuMovil.setAttribute("aria-expanded", abierto ? "true" : "false");
+    if (fondoMenuMovil) fondoMenuMovil.hidden = !abierto;
+    if (abierto && panelMenuMovil) {
+      const primero = panelMenuMovil.querySelector("a, button");
+      if (primero) primero.focus();
+    } else if (!abierto && botonMenuMovil && movil.matches) {
+      botonMenuMovil.focus();
+    }
+  };
+  if (botonMenuMovil) botonMenuMovil.addEventListener("click", () => fijarMenuMovil(!menuMovilAbierto()));
+  if (fondoMenuMovil) fondoMenuMovil.addEventListener("click", () => fijarMenuMovil(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && menuMovilAbierto()) fijarMenuMovil(false); });
+  movil.addEventListener("change", () => { if (!movil.matches && menuMovilAbierto()) fijarMenuMovil(false); });
+  if (panelMenuMovil) panelMenuMovil.addEventListener("click", (e) => { if (movil.matches && e.target.closest("a[href]")) fijarMenuMovil(false); });
+
   const railToggle = document.getElementById("rail-toggle");
   if (railToggle) {
     railToggle.addEventListener("click", () => {
+      if (movil.matches) { fijarMenuMovil(false); return; }   // en móvil este botón cierra el panel
       const expandido = document.documentElement.dataset.railExpandido === "1";
       if (expandido) {
         delete document.documentElement.dataset.railExpandido;

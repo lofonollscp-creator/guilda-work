@@ -14,7 +14,7 @@ from tests.conftest import iniciar_sesion_de_prueba
 RAIZ = Path(__file__).resolve().parent.parent
 
 # "menú" sigue siendo la palabra correcta para el menú lateral de la app.
-MENU_LATERAL_PERMITIDO = {"Expandir/contraer menú", "Expandir o contraer el menú"}
+MENU_LATERAL_PERMITIDO = {"Expandir/contraer menú", "Expandir o contraer el menú", "Abrir el menú"}
 
 TEXTOS_POR_IDIOMA = {
     "es": ("Nuevo proyecto", "Crear proyecto", "Sin proyecto"),

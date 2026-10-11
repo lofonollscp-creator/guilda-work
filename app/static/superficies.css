@@ -346,3 +346,95 @@ td.mono, .historial-table td.mono, .log-time { white-space: nowrap; font-variant
   /* Menos desenfoque en móvil: mismo aspecto, bastante menos coste de pintado. */
   :root { --glass-blur: 12px; }
 }
+
+/* ---- Menú lateral en móvil: panel deslizante (antes: una columna de 64 px que dejaba ~270 px útiles en un móvil de 360) -------------- */
+.top-bar-menu-movil { display: none; }
+.rail-fondo { display: none; }
+@media (max-width: 640px) {
+  .app-shell { display: block; }
+  .top-bar-menu-movil {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    width: 40px; height: 40px; padding: 0; border-radius: 12px; cursor: pointer; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--glass-border);
+  }
+  .top-bar-menu-movil:hover { background: var(--panel-2-hover); }
+  .top-bar-menu-movil .icon-rail-icono { width: 20px; height: 20px; }
+  .top-bar { padding: 0 10px; gap: 8px; }
+
+  .icon-rail.icon-rail {
+    position: fixed; z-index: 80; top: 8px; bottom: 8px; left: 8px; align-self: auto;
+    width: min(300px, calc(100vw - 48px)); max-height: none; overflow-y: auto; overscroll-behavior: contain;
+    align-items: stretch; padding: 12px 8px;
+    transform: translateX(calc(-100% - 16px)); visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+  :root[data-menu-movil="1"] .icon-rail.icon-rail { transform: none; visibility: visible; transition: transform 0.22s ease, visibility 0s; }
+  .rail-fondo:not([hidden]) {
+    display: block; position: fixed; inset: 0; z-index: 70;
+    background: rgba(5, 7, 10, 0.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  }
+  :root[data-menu-movil="1"] body { overflow: hidden; }
+
+  /* El panel se ve siempre «expandido» (con etiquetas), aunque en escritorio se haya dejado contraído. */
+  .icon-rail.icon-rail .icon-rail-link { width: 100%; justify-content: flex-start; padding: 0 12px; }
+  .icon-rail.icon-rail .icon-rail-link.active::before { left: 2px; }
+  .icon-rail.icon-rail .icon-rail-separador { width: auto; align-self: stretch; margin: 10px 4px 0; }
+  .icon-rail.icon-rail .icon-rail-grupo-etiqueta { display: block; }
+  .icon-rail.icon-rail .icon-rail-etiqueta { display: inline; }
+  .icon-rail.icon-rail .icon-rail-badge { position: static; margin-left: auto; }
+  .icon-rail.icon-rail .icon-rail-perfil-card { width: 100%; height: auto; padding: 6px 8px; }
+  .icon-rail.icon-rail .icon-rail-perfil-texto { display: flex; }
+  .icon-rail.icon-rail .icon-rail-chevron { display: inline-flex; }
+  .icon-rail.icon-rail .icon-rail-grupo-plegable.is-abierto .icon-rail-submenu { display: flex; }
+  .icon-rail.icon-rail .icon-rail-grupo-plegable { align-items: stretch; }
+  .icon-rail.icon-rail .icon-rail-cabecera { flex-direction: row; align-items: center; gap: 4px; }
+  .icon-rail.icon-rail .icon-rail-cabecera .icon-rail-brand { flex: 1; min-width: 0; font-weight: 700; }
+  .icon-rail.icon-rail .icon-rail-cabecera .notificaciones-menu .icon-rail-link { width: 44px; padding: 0; justify-content: center; }
+  .icon-rail.icon-rail .icon-rail-cabecera .notificaciones-menu .icon-rail-etiqueta { display: none; }
+  .icon-rail.icon-rail .icon-rail-cabecera .icon-rail-badge { position: absolute; margin-left: 0; }
+  .icon-rail.icon-rail .icon-rail-atajo { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-rail.icon-rail { transition: none; }
+}
+
+/* ---- Que nada ensanche la página (auditoría de desbordes a 360 px) ------------------------------------------------------------------ */
+.content { min-width: 0; }
+.content > *, .perfil-form > *, .perfil-form-col > *, .ia-pagina > * { min-width: 0; }
+.content input, .content select, .content textarea { max-width: 100%; }
+.perfil-form-col, .ia-pagina { min-width: 0; max-width: 100%; }
+@media (max-width: 640px) {
+  .perfil-form { grid-template-columns: minmax(0, 1fr); }
+  .ia-pagina { padding: 16px 0; width: 100%; }
+  .ia-pagina-cabecera { flex-wrap: wrap; gap: 8px; }
+  /* Alta rápida del panel de inicio y formularios en fila: parten línea en vez de salirse. */
+  /* style.css las apila en columna Y deja `flex: … 100%` en los campos: en columna ese 100% pasaba a ser ALTURA. Aquí van en fila: el
+     selector de proyecto en su propia línea y debajo el texto con el botón. */
+  .dash-accion .quick-row, .quick-card .quick-row { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .dash-accion .quick-row > *, .quick-card .quick-row > * { min-width: 0; max-width: 100%; }
+  .dash-accion .quick-row select { flex: 1 1 100%; }
+  .dash-accion .quick-row input[type="text"] { flex: 1 1 0; min-width: 0; }
+  .dash-accion .quick-row .btn { flex: 0 0 auto; }
+  .quick-row label, .quick-row select { max-width: 100%; }
+  /* «+ Nuevo»: el menú se ancla a la pantalla (hacia la izquierda se salía 9 px). */
+  .top-bar-nuevo { position: static; }
+  .top-bar-nuevo .top-bar-menu { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; max-width: none; z-index: 90; }
+}
+@media (max-width: 640px) {
+  .dash-acciones { grid-template-columns: minmax(0, 1fr); }
+  .dash-accion, .quick-card { min-width: 0; }
+  .atajos-ayuda-boton { display: none; }                       /* los atajos de teclado no sirven en el móvil */
+  .correo-form-campo-estrecho { max-width: 100%; width: 100%; }
+  .ia-chat-form { flex-wrap: wrap; }
+  .btn { max-width: 100%; }
+}
+@media (max-width: 640px) {
+  .correo-form-fila-doble { flex-wrap: wrap; }
+  .correo-form-fila-doble > .correo-form-campo { flex: 1 1 100%; min-width: 0; }
+  .correo-form-seccion { display: block; }
+}
+@media (max-width: 640px) {
+  .dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .dash-stat { padding: 12px; gap: 10px; }
+  .dash-stats .dash-stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}

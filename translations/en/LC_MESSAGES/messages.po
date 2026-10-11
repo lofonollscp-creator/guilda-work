@@ -7483,3 +7483,7 @@ msgstr "Can't scan the QR code? Type this key into your app:"
 
 msgid "La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita."
 msgstr "The mobile app does not ask for this code yet: phones that are already signed in keep working, but signing in again on the mobile app will need a version that supports it."
+
+#: app/templates/base.html
+msgid "Abrir el menú"
+msgstr "Open the menu"

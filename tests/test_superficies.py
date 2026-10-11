@@ -146,3 +146,21 @@ def test_filtro_solo_fecha(base_de_datos_temporal):
     from app.main import app
     with app.test_request_context("/"):
         assert app.jinja_env.filters["fecha_dia"]("2026-10-11T20:43:13") == "11 oct 2026"
+
+
+def test_menu_lateral_en_movil_es_un_panel_con_boton_accesible():
+    """A <= 640 px el rail pasa a ser un panel deslizante (antes una columna fija de 64 px que dejaba ~270 px de contenido a 360)."""
+    base = (RAIZ / "app" / "templates" / "base.html").read_text(encoding="utf-8")
+    js = (RAIZ / "app" / "static" / "sidebar.js").read_text(encoding="utf-8")
+    assert 'id="menu-movil-abrir"' in base and 'aria-controls="rail-principal"' in base and 'aria-expanded="false"' in base
+    assert 'id="rail-principal"' in base and 'id="rail-fondo"' in base
+    assert "menuMovil" in js and "Escape" in js and "aria-expanded" in js
+    # cerrado, el panel no puede recibir foco por teclado ni leerse: visibility:hidden
+    assert re.search(r"\.icon-rail\.icon-rail \{[^}]*visibility: hidden", CAPA)
+    assert re.search(r'data-menu-movil="1"\] \.icon-rail\.icon-rail \{[^}]*visibility: visible', CAPA)
+    assert "prefers-reduced-motion" in CAPA
+
+
+def test_en_movil_las_filas_apiladas_no_usan_flex_basis_como_altura():
+    movil = CAPA[CAPA.index("max-width: 640px"):]
+    assert "flex-direction: row" in movil and ".dash-accion .quick-row select { flex: 1 1 100%; }" in movil

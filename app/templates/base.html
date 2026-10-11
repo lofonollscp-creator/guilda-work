@@ -38,7 +38,7 @@
 <body data-url-iconos="{{ url_for('static', filename='iconos.svg') }}">
   <a class="skip-link" href="#contenido-principal">{{ _('Saltar al contenido') }}</a>
   <div class="app-shell">
-    <aside class="icon-rail">
+    <aside class="icon-rail" id="rail-principal">
       <button type="button" id="rail-toggle" class="icon-rail-link icon-rail-toggle" title="{{ _('Expandir/contraer menú') }}" aria-label="{{ _('Expandir o contraer el menú') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg>
       </button>
@@ -246,9 +246,14 @@
         </div>
       </div>
     </aside>
+    <div class="rail-fondo" id="rail-fondo" hidden></div>
 
     <div class="app-main">
       <header class="top-bar">
+        {# Solo en móvil: el menú lateral pasa a ser un panel que se abre con este botón (ver superficies.css y sidebar.js). #}
+        <button type="button" id="menu-movil-abrir" class="top-bar-menu-movil" aria-label="{{ _('Abrir el menú') }}" aria-controls="rail-principal" aria-expanded="false">
+          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg>
+        </button>
         {# Disparador del buscador global (lo abre el campo "Buscar" de la barra lateral y Ctrl+K); ya no se muestra aquí. #}
         <button type="button" id="busqueda-abrir" class="busqueda-boton-abrir" hidden aria-hidden="true" tabindex="-1"
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}"

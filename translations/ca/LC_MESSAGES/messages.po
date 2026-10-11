@@ -7492,3 +7492,7 @@ msgstr "No pots escanejar el QR? Escriu aquesta clau a la teva app:"
 
 msgid "La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita."
 msgstr "L'app mòbil encara no demana aquest codi: els mòbils que ja tenen sessió continuen funcionant, però per tornar a iniciar sessió a l'app mòbil caldrà una versió que ho admeti."
+
+#: app/templates/base.html
+msgid "Abrir el menú"
+msgstr "Obrir el menú"

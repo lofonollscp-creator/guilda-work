@@ -7568,3 +7568,7 @@ msgstr "Impossible de scanner le QR ? Saisissez cette clé dans votre applicatio
 
 msgid "La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita."
 msgstr "L'application mobile ne demande pas encore ce code : les téléphones déjà connectés continuent de fonctionner, mais pour se reconnecter sur l'application mobile il faudra une version qui le prend en charge."
+
+#: app/templates/base.html
+msgid "Abrir el menú"
+msgstr "Ouvrir le menu"
