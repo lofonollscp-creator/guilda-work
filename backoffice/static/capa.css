@@ -85,3 +85,27 @@ select option, select optgroup { background-color: var(--superficie); color: var
 select option:checked { background-color: color-mix(in srgb, var(--acento) 30%, var(--superficie)); }
 select option:disabled { color: var(--apagado); }
 input[type="date"], input[type="datetime-local"], input[type="time"] { color-scheme: inherit; }
+
+/* ---- Acceso: la misma foto de montaña y tarjeta de cristal que el inicio de sesión de la app (tests/test_superficies.py mide el contraste) ---- */
+body.pagina-login {
+  background-color: #0a0a0c;
+  background-image: linear-gradient(rgba(5, 5, 6, 0.2), rgba(5, 5, 6, 0.2)), url("fotos/montana-login.jpg");
+  background-image: linear-gradient(rgba(5, 5, 6, 0.2), rgba(5, 5, 6, 0.2)), image-set(url("fotos/montana-login.webp") type("image/webp"), url("fotos/montana-login.jpg") type("image/jpeg"));
+  background-size: cover; background-position: 40% 50%; background-attachment: scroll;
+}
+.pagina-login .login-caja {
+  width: min(420px, 100%); border-radius: 28px; padding: 36px 32px;
+  background: rgba(10, 16, 18, 0.78); -webkit-backdrop-filter: blur(18px) saturate(1.15); backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 28px 70px -28px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --texto: #e8f2f3; --apagado: #aab9bc; --acento: #4fd0db;
+  color: var(--texto);
+}
+:root[data-tema="claro"] .pagina-login .login-caja { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 28px 70px -30px rgba(10, 20, 40, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8); --texto: #10282c; --apagado: #4d666a; --acento: #0e5a63; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pagina-login .login-caja { background: rgba(10, 16, 18, 0.96); }
+  :root[data-tema="claro"] .pagina-login .login-caja { background: rgba(255, 255, 255, 0.97); }
+}
+.pagina-login .login-caja h1 { margin-top: 12px; }
+.pagina-login .login-caja .muted { color: var(--apagado); }
+.pagina-login .login-caja a { color: var(--acento); }
+@media (max-width: 560px) { .pagina-login .login-caja { padding: 28px 22px; border-radius: 24px; } }

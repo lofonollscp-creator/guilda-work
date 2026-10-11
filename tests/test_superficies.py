@@ -301,3 +301,75 @@ def test_panel_flotante_del_asistente_cabe_en_pantalla_y_no_deja_ver_la_pagina()
 def test_hay_herramienta_para_decidir_si_forzar_la_csp():
     sh = (RAIZ / "scripts" / "comprobar_csp_para_forzar.sh").read_text(encoding="utf-8")
     assert "GUILDA_CSP=forzar" in sh and "LISTO" in sh and "NO LISTO" in sh
+
+
+# ---- Páginas de acceso con la foto del inicio de sesión (recuperar contraseña, registro, verificar, portal, backoffice) ---------------------
+from PIL import Image  # noqa: E402
+
+from tests.test_foto_login import PANTALLAS, _cristal, _extremos, _fondo  # noqa: E402
+
+BO_LOGIN = BACKOFFICE
+POS_ACCESO = (0.40, 0.50)
+
+
+def _rgba_de(css: str, selector: str):
+    cuerpo = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", css).group(1)
+    r, g, b, a = re.search(r"background:\s*rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)", cuerpo).groups()
+    return int(r), int(g), int(b), float(a)
+
+
+def _colores(css: str, selector: str, nombres: dict) -> dict:
+    cuerpo = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", css).group(1)
+    return {k: re.search(rf"--{v}:\s*(#[0-9a-fA-F]{{6}})", cuerpo).group(1) for k, v in nombres.items()}
+
+
+@pytest.mark.parametrize("ancho,alto", PANTALLAS)
+def test_acceso_app_tarjeta_centrada_sobre_la_foto_mantiene_el_contraste(ancho, alto):
+    oscura = _rgba_de(PAGINAS, ".auth-card")
+    clara = _rgba_de(PAGINAS, ':root[data-theme="light"] .auth-card')
+    c_osc = _colores(PAGINAS, ".auth-card", {"texto": "text", "apoyo": "text-muted", "enlace": "primary-text"})
+    c_cla = _colores(PAGINAS, ':root[data-theme="light"] .auth-card', {"texto": "text", "apoyo": "text-muted", "enlace": "primary-text"})
+    c_osc["error"], c_cla["error"] = "#ff8a8e", "#b3262b"
+    base = _fondo(ancho, alto, POS_ACCESO, 0.2)
+    w, h = min(420, ancho - 32), min(560, alto - 32)
+    caja = ((ancho - w) // 2, (alto - h) // 2, (ancho + w) // 2, (alto + h) // 2)
+    claro_osc, _ = _extremos(_cristal(base, oscura, 18), caja)
+    _, oscuro_cla = _extremos(_cristal(base, clara, 18), caja)
+    fallos = [f"oscura/{k} {v}: {contraste(v, claro_osc):.2f}" for k, v in c_osc.items() if contraste(v, claro_osc) < 4.5]
+    fallos += [f"clara/{k} {v}: {contraste(v, oscuro_cla):.2f}" for k, v in c_cla.items() if contraste(v, oscuro_cla) < 4.5]
+    assert not fallos, fallos
+
+
+@pytest.mark.parametrize("ancho,alto", PANTALLAS)
+def test_acceso_backoffice_tarjeta_centrada_sobre_la_foto_mantiene_el_contraste(ancho, alto):
+    oscura = _rgba_de(BO_LOGIN, ".pagina-login .login-caja")
+    clara = _rgba_de(BO_LOGIN, ':root[data-tema="claro"] .pagina-login .login-caja')
+    c_osc = _colores(BO_LOGIN, ".pagina-login .login-caja", {"texto": "texto", "apoyo": "apagado", "enlace": "acento"})
+    c_cla = _colores(BO_LOGIN, ':root[data-tema="claro"] .pagina-login .login-caja', {"texto": "texto", "apoyo": "apagado", "enlace": "acento"})
+    base = _fondo(ancho, alto, POS_ACCESO, 0.2)
+    w, h = min(420, ancho - 32), min(440, alto - 32)
+    caja = ((ancho - w) // 2, (alto - h) // 2, (ancho + w) // 2, (alto + h) // 2)
+    claro_osc, _ = _extremos(_cristal(base, oscura, 18), caja)
+    _, oscuro_cla = _extremos(_cristal(base, clara, 18), caja)
+    fallos = [f"oscura/{k} {v}: {contraste(v, claro_osc):.2f}" for k, v in c_osc.items() if contraste(v, claro_osc) < 4.5]
+    fallos += [f"clara/{k} {v}: {contraste(v, oscuro_cla):.2f}" for k, v in c_cla.items() if contraste(v, oscuro_cla) < 4.5]
+    assert not fallos, fallos
+
+
+def test_las_paginas_de_acceso_usan_la_misma_foto_y_el_mismo_cristal_que_el_login():
+    login = (RAIZ / "app" / "static" / "style.css").read_text(encoding="utf-8")
+    for valor in ("rgba(10, 12, 16, 0.78)", "rgba(255, 255, 255, 0.86)", "blur(18px) saturate(1.15)", "rgba(5, 5, 6, 0.2)", "montana-login.webp"):
+        assert valor in PAGINAS and valor in login, valor
+    assert re.search(r"\.auth-shell \{[^}]*image-set\(url\(\"fotos/montana-login\.webp\"\)", PAGINAS)
+    for fichero in ("montana-login.jpg", "montana-login.webp"):
+        assert (RAIZ / "backoffice" / "static" / "fotos" / fichero).read_bytes() == (RAIZ / "app" / "static" / "fotos" / fichero).read_bytes()
+    assert re.search(r"body\.pagina-login \{[^}]*image-set\(url\(\"fotos/montana-login\.webp\"\)", BO_LOGIN)
+
+
+def test_sin_desenfoque_las_tarjetas_de_acceso_pasan_a_casi_opacas():
+    for css, sel_o, sel_c in ((PAGINAS, ".auth-card", ':root[data-theme="light"] .auth-card'),
+                              (BO_LOGIN, ".pagina-login .login-caja", ':root[data-tema="claro"] .pagina-login .login-caja')):
+        bloque = css[css.index("@supports not ((backdrop-filter: blur(1px))", css.index(sel_o)):]
+        for sel in (sel_o, sel_c):
+            m = re.search(re.escape(sel) + r"\s*\{\s*background:\s*rgba\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)", bloque)
+            assert m and float(m.group(1)) >= 0.95, sel

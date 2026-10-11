@@ -62,31 +62,60 @@ body:has(.auth-shell) { background-image: var(--cr-ambiente); background-attachm
 .portal-cliente-shell input:focus-visible, .portal-cliente-shell textarea:focus-visible { outline: none; border-color: var(--portal-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-accent) 26%, transparent); }
 .portal-cliente-shell .empty-lane { color: var(--cr-muted); padding: 40px 0; }
 
-/* ---- Acceso (portal, registro, recuperar, verificar) ---- */
-.auth-shell { padding: 24px 16px; }
-.auth-card {
-  max-width: 420px; padding: 36px 32px; border-radius: 26px; background: var(--cr-bg); border: 1px solid var(--cr-borde);
-  box-shadow: var(--cr-resalte), 0 30px 70px -30px rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2);
+/* ---- Acceso (portal, registro, recuperar, verificar): la MISMA foto de montaña y tarjeta de cristal que el inicio de sesión ----
+   Valores copiados de `.auth-dividido` / `.auth-dividido .auth-card` de style.css (velo liso, desenfoque, tinte y colores de apoyo medidos allí
+   para contraste AA); tests/test_foto_login.py comprueba que siguen iguales y mide el contraste con la tarjeta CENTRADA. */
+body:has(.auth-shell) { background-color: #0a0a0c; background-image: none; }
+.auth-shell {
+  min-height: 100vh; min-height: 100dvh; padding: 24px 16px; display: flex; align-items: center; justify-content: center;
+  background-color: #0a0a0c;
+  background-image: linear-gradient(rgba(5, 5, 6, 0.2), rgba(5, 5, 6, 0.2)), url("fotos/montana-login.jpg");
+  background-image: linear-gradient(rgba(5, 5, 6, 0.2), rgba(5, 5, 6, 0.2)), image-set(url("fotos/montana-login.webp") type("image/webp"), url("fotos/montana-login.jpg") type("image/jpeg"));
+  background-size: cover; background-position: 40% 50%;
 }
-.auth-card h1 { font-size: 1.45em; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
-.auth-card label { font-weight: 600; font-size: 0.88em; }
+.auth-shell::before { display: none; }
+.auth-card {
+  max-width: 420px; padding: 36px 32px; border-radius: 28px;
+  background: rgba(10, 12, 16, 0.78); -webkit-backdrop-filter: blur(18px) saturate(1.15); backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 28px 70px -28px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --text: #e8eae9; --text-muted: #aab0b8; --primary-text: #ccff33;
+  --cr-2: rgba(255, 255, 255, 0.07); --cr-borde: rgba(255, 255, 255, 0.14); --cr-muted: #aab0b8;
+}
+:root[data-theme="light"] .auth-card { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 28px 70px -30px rgba(10, 20, 40, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8); --text: #1a1d23; --text-muted: #4b5563; --primary-text: #3d6200; --cr-2: rgba(15, 23, 42, 0.05); --cr-borde: rgba(15, 23, 42, 0.14); --cr-muted: #4b5563; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .auth-card { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 28px 70px -30px rgba(10, 20, 40, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8); --text: #1a1d23; --text-muted: #4b5563; --primary-text: #3d6200; --cr-2: rgba(15, 23, 42, 0.05); --cr-borde: rgba(15, 23, 42, 0.14); --cr-muted: #4b5563; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .auth-card { background: rgba(10, 12, 16, 0.96); }
+  :root[data-theme="light"] .auth-card { background: rgba(255, 255, 255, 0.97); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .auth-card { background: rgba(255, 255, 255, 0.97); } }
+}
+.auth-card { color: var(--text); }
+.auth-card h1 { font-size: 1.45em; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; color: var(--text); }
+.auth-card label { font-weight: 600; font-size: 0.88em; color: var(--text-muted); }
 .auth-card input:not([type="checkbox"]):not([type="radio"]) {
-  width: 100%; font-family: inherit; background: var(--cr-2); border: 1px solid var(--cr-borde); border-radius: 12px; padding: 12px 14px; font-size: 1em;
+  width: 100%; font-family: inherit; background: var(--cr-2); border: 1px solid var(--cr-borde); border-radius: 12px; padding: 12px 14px; font-size: 1em; color: var(--text);
 }
 .auth-card input:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 28%, transparent); }
-.auth-card .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 100%, #fff 14%), var(--primary)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 22px -10px color-mix(in srgb, var(--primary) 75%, transparent); padding: 12px 16px; }
-.auth-alterna { color: var(--cr-muted); }
-.auth-alterna a { font-weight: 700; }
+.auth-card .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 100%, #fff 14%), var(--primary)); color: var(--on-accent); border-color: transparent; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 22px -10px color-mix(in srgb, var(--primary) 75%, transparent); padding: 12px 16px; }
+.auth-card .btn-ghost { background: var(--cr-2); border-color: var(--cr-borde); color: var(--text); }
+.auth-alterna { color: var(--text-muted); }
+.auth-alterna a, .auth-card a { color: var(--primary-text); font-weight: 700; }
+.auth-card .ia-error { color: #ff8a8e; }
+:root[data-theme="light"] .auth-card .ia-error { color: #b3262b; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .auth-card .ia-error { color: #b3262b; } }
+/* El logotipo es blanco: en la tarjeta clara va sobre una pastilla oscura */
+:root[data-theme="light"] .auth-card .auth-logo { background: #0a0a0c; border-radius: 14px; padding: 9px; box-sizing: content-box; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .auth-card .auth-logo { background: #0a0a0c; border-radius: 14px; padding: 9px; box-sizing: content-box; } }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root { --cr-bg: rgba(255, 255, 255, 0.97); }
   :root[data-theme="dark"] { --cr-bg: rgba(34, 30, 20, 0.97); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cr-bg: rgba(34, 30, 20, 0.97); } }
 }
+@media (max-width: 820px) { .auth-shell { background-position: 40% 50%; } }
 @media (max-width: 640px) {
   .portal-cliente-shell { padding: 24px 14px 40px; }
   .portal-cliente-shell .page-header { align-items: flex-start; }
   .portal-resumen { padding: 16px; border-radius: 20px; }
-  .auth-card { padding: 28px 22px; border-radius: 22px; }
+  .auth-card { padding: 28px 22px; border-radius: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { .portal-carpeta { transition: none; } .portal-carpeta:hover { transform: none; } }
