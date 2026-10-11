@@ -68,6 +68,11 @@ CASOS: list[tuple[str, str]] = [
     ("sube este archivo al Drive", "drive_subir_archivo"),
     ("muéstrame las hojas de cálculo disponibles", "listar_tablas_hojas"),
     ("qué contiene el documento adjunto del chat", "leer_adjunto_chat"),
+    # soporte de la plataforma y ajustes de la propia cuenta
+    ("cómo conecto mi correo", "ayuda_buscar"),
+    ("dónde está la configuración del perfil", "abrir_pantalla"),
+    ("pon mi idioma en catalán", "cambiar_mis_ajustes"),
+    ("qué ajustes de notificaciones tengo", "ver_mis_ajustes"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

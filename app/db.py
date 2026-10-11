@@ -1086,6 +1086,14 @@ CREATE TABLE IF NOT EXISTS ia_consumo (
     PRIMARY KEY (tenant_id, mes)
 );
 
+-- Consultas de soporte del asistente que no cuentan en el límite de IA: cupo diario por persona (app/ia_soporte.py).
+CREATE TABLE IF NOT EXISTS ia_soporte_uso (
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    dia TEXT NOT NULL,
+    usadas INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (usuario_id, dia)
+);
+
 -- Modo mantenimiento (backoffice): tenant_id NULL = toda la plataforma. Los administradores globales pasan.
 CREATE TABLE IF NOT EXISTS mantenimiento (
     id INTEGER PRIMARY KEY,

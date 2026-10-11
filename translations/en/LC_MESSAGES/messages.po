@@ -7851,3 +7851,15 @@ msgstr "Download report as PDF"
 
 msgid "Descargar PDF"
 msgstr "Download PDF"
+
+msgid "¿Cómo funciona esta pantalla?"
+msgstr "How does this screen work?"
+
+msgid "¿Cómo funciona esta pantalla y qué puedo hacer aquí?"
+msgstr "How does this screen work and what can I do here?"
+
+msgid "Ayúdame a configurar mi cuenta"
+msgstr "Help me set up my account"
+
+msgid "Ayúdame a configurar mi cuenta: idioma, perfil y avisos."
+msgstr "Help me set up my account: language, profile and alerts."

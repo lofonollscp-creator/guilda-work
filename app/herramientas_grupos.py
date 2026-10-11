@@ -12,7 +12,9 @@ GRUPOS: dict[str, tuple[str, ...]] = {
     "nucleo": (
         "buscar_semantico", "listar_notas", "crear_nota", "editar_nota", "listar_tareas", "crear_tarea", "editar_tarea",
         "completar_tarea", "consultar_calendario", "listar_tareas_hoy", "listar_proyectos", "activar_herramientas", "resumen_del_dia",
+        "ayuda_buscar", "abrir_pantalla",
     ),
+    "soporte": ("ver_mis_ajustes", "cambiar_mis_ajustes"),
     "tareas_avanzadas": (
         "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones", "consumo_ia", "listar_comunicados",
         "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
@@ -54,6 +56,7 @@ DESCRIPCIONES: dict[str, str] = {
     "crm": "leads, contactos y cuentas del CRM",
     "archivos": "Drive, hojas de cálculo y documentos generados",
     "firmas": "documentos para firma electrónica",
+    "soporte": "ver y cambiar los ajustes de mi cuenta (idioma, perfil, avisos, no molestar)",
 }
 
 # Palabras clave (en minúsculas, por prefijo de palabra) que activan un grupo en el chat.
@@ -67,6 +70,7 @@ PALABRAS: dict[str, tuple[str, ...]] = {
     "crm": ("crm", "lead", "contacto", "oportunidad"),
     "archivos": ("drive", "archivo", "fichero", "documento", "hoja de c", "hojas de c", "hoja", "tabla", "excel", "pdf", "sube", "descarga"),
     "firmas": ("firma", "firmar", "documenso"),
+    "soporte": ("ajuste", "configur", "idioma", "perfil", "notificaci", "molestar", "cargo", "teléfono", "telefono", "aviso", "resumen semanal"),
 }
 
 _PREFIJOS_MCP_INTEGRACIONES = (

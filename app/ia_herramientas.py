@@ -14,7 +14,7 @@ sobre app/db.py, app/correo.py y app/export.py) — al no llevar decorador
 normal de Python (verificado: `type(mcp_tools.listar_notas) is function`).
 """
 import mcp_tools
-from app import herramientas_grupos
+from app import herramientas_grupos, ia_soporte
 from app.correo import ErrorCorreo
 
 
@@ -722,6 +722,37 @@ HERRAMIENTAS.append(_tool(
     ["grupos"],
 ))
 
+HERRAMIENTAS.append(_tool(
+    "ayuda_buscar",
+    "Busca en el centro de ayuda de Guilda Work. ÚSALA SIEMPRE antes de contestar una duda sobre cómo funciona la plataforma o cómo configurarla. "
+    "Devuelve artículos con título, enlace y fragmento: responde con eso y termina con el enlace del artículo.",
+    {"consulta": _param("string", "Qué quiere saber la persona, con sus palabras clave (p. ej. «conectar correo», «activar verificación en dos pasos»).")}, ["consulta"],
+))
+HERRAMIENTAS.append(_tool(
+    "abrir_pantalla",
+    "Devuelve el enlace a una pantalla de la aplicación para que la persona llegue a donde tiene que hacer algo (no ejecuta nada). "
+    "Destinos: " + ", ".join(ia_soporte.DESTINOS) + ".",
+    {"destino": _param("string", "Uno de los destinos indicados.")}, ["destino"],
+))
+HERRAMIENTAS.append(_tool(
+    "ver_mis_ajustes", "Muestra los ajustes de la cuenta de quien pregunta: idioma, perfil, avisos y «no molestar».", {}, [],
+))
+HERRAMIENTAS.append(_tool(
+    "cambiar_mis_ajustes",
+    "Cambia ajustes de LA PROPIA cuenta de quien pregunta: idioma (es, ca, en, fr), nombre mostrado, cargo, teléfono, avisos "
+    "(vencimientos, tiquets, correo, mensajes del portal, resumen semanal) y «no molestar». No cambia seguridad, contraseña, "
+    "tema ni nada de otras personas o de administración. Pasa solo lo que haya que cambiar.",
+    {
+        "idioma": _param("string", "es, ca, en o fr."), "nombre_mostrado": _param("string", "Nombre que se muestra."),
+        "cargo": _param("string", "Cargo."), "telefono": _param("string", "Teléfono."),
+        "avisos_vencimientos": _param("boolean", "Avisos de vencimientos."), "avisos_tiquets": _param("boolean", "Avisos de tiquets."),
+        "avisos_correo": _param("boolean", "Avisos de correo nuevo."), "avisos_mensajes_portal": _param("boolean", "Avisos de mensajes del portal."),
+        "resumen_semanal": _param("boolean", "Resumen semanal."),
+        "no_molestar_desde": _param("string", "Hora de inicio HH:MM."), "no_molestar_hasta": _param("string", "Hora de fin HH:MM."),
+        "quitar_no_molestar": _param("boolean", "true para desactivar «no molestar»."),
+    }, [],
+))
+
 LECTURA: set[str] = {
     "listar_notas", "listar_tareas", "consultar_calendario", "listar_cuentas_correo",
     "sincronizar_correo", "listar_carpetas_correo", "listar_bandeja_entrada", "leer_correo",
@@ -737,6 +768,7 @@ LECTURA: set[str] = {
     "listar_tablas_hojas", "listar_filas_hoja",
     "generar_documento_al_chat",
     "listar_reglas_correo", "listar_conversacion_correo", "listar_proyectos", "listar_tareas_hoy",
+    "ayuda_buscar", "abrir_pantalla", "ver_mis_ajustes",
     "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea", "listar_comentarios_tarea",
 }
 
@@ -757,6 +789,7 @@ ESCRITURA: set[str] = {
     "eliminar_proyecto", "eliminar_nota", "eliminar_tarea", "fijar_nota", "asignar_tarea",
     "agregar_item_checklist", "alternar_item_checklist", "completar_tareas",
     "cambiar_estado_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
+    "cambiar_mis_ajustes",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son
@@ -785,6 +818,8 @@ def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
     `_usuario_id_actual` que sus funciones internas consultan."""
     if nombre not in _NOMBRES_VALIDOS:
         raise ErrorHerramientaIA(f"Herramienta desconocida: '{nombre}'.")
+    if nombre in ia_soporte.NOMBRES_EJECUTABLES:
+        return ia_soporte.ejecutar(usuario_id, nombre, argumentos)
     if nombre == "activar_herramientas":
         return herramientas_grupos.texto_activacion(list(argumentos.get("grupos") or []))
     funcion = getattr(mcp_tools, nombre, None)
@@ -811,7 +846,9 @@ def herramientas_para(mensajes: list[dict] | None = None, solo_lectura: bool = F
     """Catálogo que se manda al modelo en esta llamada. Sin `mensajes`: todo (compatibilidad). Con ellos: núcleo +
     grupos que la conversación necesita (ver herramientas_grupos). En solo lectura, además, solo las de lectura."""
     ofrecidas = HERRAMIENTAS
-    if mensajes is not None:
+    if mensajes is not None and ia_soporte.es_consulta_soporte(ia_soporte.texto_ultimo_usuario(mensajes)):
+        ofrecidas = [t for t in HERRAMIENTAS if t["function"]["name"] in ia_soporte.HERRAMIENTAS_SOPORTE]
+    elif mensajes is not None:
         grupos = herramientas_grupos.grupos_de_conversacion(mensajes)
         ofrecidas = [t for t in HERRAMIENTAS if herramientas_grupos.grupo_de(t["function"]["name"]) in grupos]
     if solo_lectura:

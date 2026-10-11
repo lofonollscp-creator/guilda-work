@@ -11,6 +11,8 @@ DE_SERIE = [
     (_l("Tareas atrasadas"), _l("Lista mis tareas atrasadas ordenadas por prioridad.")),
     (_l("Notas de hoy"), _l("Resume las notas que he escrito hoy.")),
     (_l("Clientes con vencimientos"), _l("¿Qué clientes tienen vencimientos fiscales pendientes esta semana?")),
+    (_l("¿Cómo funciona esta pantalla?"), _l("¿Cómo funciona esta pantalla y qué puedo hacer aquí?")),
+    (_l("Ayúdame a configurar mi cuenta"), _l("Ayúdame a configurar mi cuenta: idioma, perfil y avisos.")),
 ]
 
 

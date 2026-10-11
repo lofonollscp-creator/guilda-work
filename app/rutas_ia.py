@@ -6,7 +6,7 @@ from flask import (
     Blueprint, Response, abort, g, jsonify, redirect, render_template, request, stream_with_context, url_for,
 )
 
-from . import db, ia_asistente as asistente, ia_atajos, ia_consumo
+from . import db, ia_asistente as asistente, ia_atajos, ia_consumo, ia_soporte
 from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
@@ -42,10 +42,18 @@ def panel_flotante():
     )
 
 
+def _recordar_pantalla() -> None:
+    """La pantalla desde la que se escribe (cabecera Referer del navegador), para que el soporte sepa de qué «aquí» habla."""
+    from flask import current_app
+
+    ia_soporte.recordar_pantalla(g.usuario_id, ia_soporte.endpoint_de_url(request.referrer, current_app._get_current_object()))
+
+
 @ia_bp.route("/mensaje", methods=["POST"])
 @login_required
 def enviar_mensaje():
     datos = request.get_json(silent=True) or {}
+    _recordar_pantalla()
     try:
         resultado = asistente.procesar_turno(g.usuario_id, datos.get("texto", ""))
         return jsonify({"ok": True, **resultado})
@@ -125,6 +133,7 @@ def confirmar():
 @login_required
 def enviar_mensaje_stream():
     datos = request.get_json(silent=True) or {}
+    _recordar_pantalla()
     texto = datos.get("texto", "")
     usuario_id = g.usuario_id
 

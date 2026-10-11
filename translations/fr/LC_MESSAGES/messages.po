@@ -7936,3 +7936,15 @@ msgstr "Télécharger le rapport en PDF"
 
 msgid "Descargar PDF"
 msgstr "Télécharger le PDF"
+
+msgid "¿Cómo funciona esta pantalla?"
+msgstr "Comment fonctionne cet écran ?"
+
+msgid "¿Cómo funciona esta pantalla y qué puedo hacer aquí?"
+msgstr "Comment fonctionne cet écran et que puis-je y faire ?"
+
+msgid "Ayúdame a configurar mi cuenta"
+msgstr "Aidez-moi à configurer mon compte"
+
+msgid "Ayúdame a configurar mi cuenta: idioma, perfil y avisos."
+msgstr "Aidez-moi à configurer mon compte : langue, profil et alertes."

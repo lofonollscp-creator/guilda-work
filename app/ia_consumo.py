@@ -43,6 +43,16 @@ def reservar(usuario_id: int, ahora: datetime | None = None) -> None:
         conn.close()
 
 
+def ia_activa(usuario_id: int) -> bool:
+    """False si el despacho de la persona tiene la IA desactivada (límite 0): ni siquiera el soporte gratuito se ofrece."""
+    conn = db.get_connection()
+    try:
+        fila = conn.execute("SELECT t.ia_limite_mensual FROM usuarios u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+    return fila is None or fila["ia_limite_mensual"] != 0
+
+
 def estado(tenant_id: int, ahora: datetime | None = None) -> dict:
     mes = _mes(ahora)
     conn = db.get_connection()

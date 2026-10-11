@@ -160,14 +160,14 @@ def test_preferencia_solo_lectura_desde_ajustes_web_y_api_sin_tocarla(cliente):
 
 def test_atajos_de_serie_mas_propios_con_limite_y_aislamiento(cliente):
     uid = iniciar_sesion_de_prueba(cliente, "b5-atajos@ejemplo.com", "contrasena123")
-    assert len(ia_atajos.atajos_para(uid)) == 6 and not any(x["propio"] for x in ia_atajos.atajos_para(uid))
+    assert len(ia_atajos.atajos_para(uid)) == 8 and not any(x["propio"] for x in ia_atajos.atajos_para(uid))
     with pytest.raises(ValueError):
         db.crear_atajo_ia(uid, "", "algo")
     for i in range(db.IA_MAX_ATAJOS):
         db.crear_atajo_ia(uid, f"A{i}", f"Prompt {i}")
     with pytest.raises(ValueError):
         db.crear_atajo_ia(uid, "Extra", "x")
-    assert len(ia_atajos.atajos_para(uid)) == 6 + db.IA_MAX_ATAJOS
+    assert len(ia_atajos.atajos_para(uid)) == 8 + db.IA_MAX_ATAJOS
     ajeno = db.crear_usuario_vinculado_a_kratos("b5-atajos-otro@ejemplo.com", "kratos-b5-otro")
     propio = db.listar_atajos_ia(uid)[0]["id"]
     assert db.eliminar_atajo_ia(ajeno, propio) is False
@@ -189,7 +189,7 @@ def test_atajos_en_pagina_ajustes_y_api(cliente):
 def test_api_de_atajos_y_fuentes_en_mensajes(cliente):
     r = cliente.post("/api/v1/auth/registro", json={"email": "b5-api@ejemplo.com", "contrasena": "contrasena123"})
     cab = {"Authorization": f"Bearer {r.get_json()['data']['token']}"}
-    assert len(cliente.get("/api/v1/ia/atajos", headers=cab).get_json()["data"]) == 6
+    assert len(cliente.get("/api/v1/ia/atajos", headers=cab).get_json()["data"]) == 8
     nuevo = cliente.post("/api/v1/ia/atajos", json={"titulo": "X", "prompt": "Y"}, headers=cab)
     assert nuevo.status_code == 201
     assert cliente.post("/api/v1/ia/atajos", json={"titulo": "", "prompt": "Y"}, headers=cab).status_code == 400

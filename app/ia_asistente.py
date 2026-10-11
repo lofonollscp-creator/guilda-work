@@ -24,7 +24,7 @@ from collections.abc import Iterator
 
 import keyring
 
-from . import db, ia_consumo, ia_fuentes, ia_herramientas as herramientas
+from . import ayuda, db, ia_consumo, ia_fuentes, ia_soporte, ia_herramientas as herramientas
 
 SERVICIO_KEYRING_IA = "guilda-work-ia"
 CLAVE_API_OPENROUTER = "openrouter-api-key"
@@ -72,7 +72,34 @@ TOOL_RESULTADO_MAX_CARACTERES_ANTIGUO = 2000
 _DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
 
-def _prompt_sistema(usuario_id: int, idioma: str, ahora: datetime | None = None) -> str:
+_PROMPT_SOPORTE = (
+    "\n\nSOPORTE DE LA PLATAFORMA. También eres el soporte de Guilda Work: ayudas con dudas sobre cómo se usa y a configurar la cuenta. "
+    "1) Ante una duda de uso, llama SIEMPRE a ayuda_buscar antes de responder, contesta solo con lo que diga la ayuda y cierra con el enlace "
+    "del artículo («Más información: …»). Nunca inventes pantallas, botones ni funciones. "
+    "2) Para llevar a alguien a un sitio usa abrir_pantalla y da el enlace; explica los pasos de uno en uno. "
+    "3) Configuración: solo de la cuenta de quien pregunta, con ver_mis_ajustes y cambiar_mis_ajustes (idioma, perfil, avisos, «no molestar»; "
+    "antes de cambiar, di qué vas a cambiar). El tema (claro/oscuro) y la densidad se eligen en Ajustes: dale el enlace. "
+    "Contraseña, email, verificación en dos pasos, dispositivos y todo lo de administración NO los cambias tú: explica y enlaza. "
+    "4) Si la ayuda no cubre la duda, o te cuentan un fallo o una idea de mejora, no improvises: propón registrarlo como tiquet. "
+    "Redacta tú el borrador (tipo «error» o «sugerencia»; título corto; descripción con la pantalla, los pasos hechos, lo esperado y lo que ocurrió, "
+    "sin datos personales ni de clientes), pregunta si lo registras y, solo si dice que sí, llama a crear_tiquet. "
+    "Las consultas de soporte no consumen el límite de IA del despacho."
+)
+
+
+def _contexto_soporte(usuario_id: int, soporte: bool) -> str:
+    texto = ""
+    if soporte:
+        texto += (" En este turno solo atiendes soporte de la plataforma: no tienes acceso a sus datos de trabajo; si los pide, dile que "
+                  "lo pregunte como consulta de datos (esa sí cuenta en el límite de IA).")
+    endpoint = ia_soporte.pantalla_de(usuario_id)
+    if endpoint:
+        ruta = ayuda.ruta_de(endpoint)
+        texto += f" La persona está ahora en la pantalla «{endpoint}»" + (f" (artículo de ayuda: {ruta})" if ruta else "") + "; si pregunta «aquí» o «esto», se refiere a ella."
+    return texto
+
+
+def _prompt_sistema(usuario_id: int, idioma: str, ahora: datetime | None = None, soporte: bool = False) -> str:
     """Prompt de sistema con el contexto que el modelo no puede adivinar: qué
     es Guilda Work, qué día y hora es (sin esto no sabe resolver "mañana" o
     "el viernes") y para quién trabaja. Por privacidad solo se envía el nombre
@@ -102,7 +129,8 @@ def _prompt_sistema(usuario_id: int, idioma: str, ahora: datetime | None = None)
         "Cuando una respuesta se apoye en datos de herramientas (correos, notas, tareas, clientes), di brevemente "
         "de dónde sale cada dato. "
         "No inventes datos: si una herramienta falla o no devuelve nada, dilo. Las acciones que modifican "
-        "datos pueden pedir confirmación a la persona usuaria; si la rechaza, no insistas."
+        "datos pueden pedir confirmación a la persona usuaria; si la rechaza, no insistas. "
+        + _PROMPT_SOPORTE + _contexto_soporte(usuario_id, soporte)
     )
 
 
@@ -368,8 +396,10 @@ def _fuentes_del_turno(usuario_id: int) -> str | None:
 
 def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
     idioma = db.idioma_usuario(usuario_id) or "es"
-    mensajes = [{"role": "system", "content": _prompt_sistema(usuario_id, idioma)}]
-    for fila in _ventana_historial(db.listar_mensajes_ia(usuario_id)):
+    filas = _ventana_historial(db.listar_mensajes_ia(usuario_id))
+    ultimo = next((f["contenido"] for f in reversed(filas) if f["rol"] == "user"), "")
+    mensajes = [{"role": "system", "content": _prompt_sistema(usuario_id, idioma, soporte=ia_soporte.es_consulta_soporte(ultimo))}]
+    for fila in filas:
         if fila["rol"] == "assistant":
             mensaje = {"role": "assistant", "content": fila["contenido"]}
             if fila["tool_calls_json"]:
@@ -443,6 +473,14 @@ def _reservar_uso(usuario_id: int) -> None:
         ia_consumo.reservar(usuario_id)
     except ia_consumo.LimiteIA as e:
         raise ErrorIA(str(e)) from e
+
+
+def _reservar_turno(usuario_id: int, texto: str) -> None:
+    """Cuenta el turno en el límite de IA, salvo que sea de soporte de la plataforma (y la IA del despacho no esté desactivada
+    ni se haya agotado el cupo diario gratuito): el soporte nunca consume ni queda bloqueado por el límite del despacho."""
+    if ia_soporte.es_consulta_soporte(texto) and ia_consumo.ia_activa(usuario_id) and ia_soporte.consumir_gratis(usuario_id):
+        return
+    _reservar_uso(usuario_id)
 
 
 def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
@@ -552,7 +590,7 @@ def procesar_turno(usuario_id: int, texto_usuario: str) -> dict:
         raise ErrorIA(
             "Hay una acción esperando confirmación. Acéptala o recházala antes de seguir la conversación."
         )
-    _reservar_uso(usuario_id)
+    _reservar_turno(usuario_id, texto_usuario)
     db.agregar_mensaje_ia(usuario_id, "user", contenido=texto_usuario.strip())
     return _continuar_conversacion(usuario_id)
 
@@ -699,7 +737,7 @@ def procesar_turno_stream(usuario_id: int, texto_usuario: str) -> Iterator[dict]
             raise ErrorIA(
                 "Hay una acción esperando confirmación. Acéptala o recházala antes de seguir la conversación."
             )
-        _reservar_uso(usuario_id)
+        _reservar_turno(usuario_id, texto_usuario)
         db.agregar_mensaje_ia(usuario_id, "user", contenido=texto_usuario.strip())
         yield from _continuar_conversacion_stream(usuario_id)
         yield {"tipo": "fin"}

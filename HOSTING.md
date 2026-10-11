@@ -61,6 +61,8 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 **Otros**
 - [Fuera de alcance de esta guía](#fuera-de-alcance-de-esta-guía)
 - [Aspecto de la app: superficies de cristal](#aspecto-de-la-app-superficies-de-cristal)
+- [Exportar a PDF (informes y fichajes)](#exportar-a-pdf-informes-y-fichajes)
+- [El asistente de IA como soporte de la plataforma](#el-asistente-de-ia-como-soporte-de-la-plataforma)
 
 <!-- /INDICE -->
 
@@ -2967,3 +2969,15 @@ Todos los correos que manda la app (`app/notificaciones_email.py`: enlace de acc
 - **Informes**: **Histórico** → botón PDF (`/export?formato=pdf`, `export.a_pdf`, mismos filtros que el CSV); bajo el **informe de IA** → «Descargar informe en PDF» (`POST /informe-ia/pdf`; el servidor no guarda el informe, llega en el formulario y se limita a 60 000 caracteres); **carga del equipo** del panel de inicio → «Exportar PDF» (`/tareas/carga.pdf`).
 - Todo con reportlab (ya en `requirements.txt`, sin binarios de sistema). Los textos de usuario se escapan antes de pintarlos como párrafo (`generador_documentos.texto_a_pdf`, `tabla_a_pdf`, `fichaje_export.a_pdf`), para que un `<` en una nota no rompa el PDF. Tests en `tests/test_exportar_pdf.py`.
 - Requiere reiniciar solo `guilda-work`.
+
+## El asistente de IA como soporte de la plataforma
+- **Qué hace** (`app/ia_soporte.py`): responde dudas de uso buscando en el centro de ayuda (`ayuda_buscar`: título, enlace en el idioma de la persona y un fragmento), lleva a la pantalla correcta (`abrir_pantalla`, lista cerrada `DESTINOS`, solo devuelve el enlace), lee y cambia **solo los ajustes de la propia cuenta** (`ver_mis_ajustes`, `cambiar_mis_ajustes`: idioma, nombre/cargo/teléfono, avisos, «no molestar»; con confirmación como cualquier escritura y bloqueado en modo solo lectura) y, si la ayuda no cubre algo o la persona cuenta un fallo o una idea, redacta el borrador de un **tiquet** (error o sugerencia, sin datos personales ni de clientes) y lo registra con `crear_tiquet` solo tras confirmar. No toca contraseña, email, 2FA, dispositivos, tema (vive en el navegador) ni administración: explica y enlaza.
+- **Mismo chat**: no hay modo aparte. Un turno es «de soporte» si el último mensaje lo parece (`es_consulta_soporte`: «cómo…», «dónde…», «no funciona», «ayúdame a configurar…», «quiero sugerir…», en es/ca/en/fr, salvo que empiece como una orden de datos: «lista…», «crea…»). En ese turno solo se ofrecen las herramientas de soporte (`HERRAMIENTAS_SOPORTE`) y el modelo no tiene acceso a los datos de trabajo.
+- **No cuenta en el límite de IA**: `ia_asistente._reservar_turno` no suma el turno de soporte al consumo del despacho ni lo bloquea cuando el límite está agotado. Excepciones: IA desactivada para el despacho (límite 0) → tampoco hay soporte; y un **cupo diario gratuito de 60 consultas por persona** (`TOPE_DIARIO_GRATIS`, tabla `ia_soporte_uso`, se limpia a 7 días) para que «cómo…» no sirva de chat gratuito: pasado el cupo la consulta cuenta como normal (nunca se rechaza).
+- **Pantalla actual**: el navegador manda el `Referer` del chat; `rutas_ia._recordar_pantalla` guarda en memoria el endpoint (se pierde al reiniciar, no importa) y el prompt dice en qué pantalla está y su artículo, para entender «aquí» o «esto». El chat de página completa (`/ia`) no cuenta.
+- **Origen de la ayuda**: lee `/home/guilda/guilda-help/salida/<idioma>/indice.json` (el que genera `generar.py`; se recarga solo al republicar la ayuda). Cambiar la carpeta con `GUILDA_AYUDA_INDICE_DIR`. Sin índice, el asistente dice que la ayuda no lo cubre y ofrece el tiquet. Búsqueda por palabras (raíces de 6 letras, título ×4); si se queda corta, el siguiente paso son los embeddings que ya tiene la app.
+- **Preguntas sin respuesta**: no se registra nada en silencio; solo llega un tiquet cuando la persona acepta el borrador. Se ven en Tiquets como cualquier otro.
+- **Atajos de serie nuevos**: «¿Cómo funciona esta pantalla?» y «Ayúdame a configurar mi cuenta» (traducidos).
+- **Ayuda**: nueva sección «El asistente también es tu soporte» en `usar-el-asistente` (es/ca/en/fr, en `guilda-help`; comprobada con `generar.py` + `comprobar.py` en una copia). **Falta publicarla** (`generar.py` en `guilda-help`): hasta entonces el asistente no conoce esa sección.
+- Tests en `tests/test_ia_soporte.py` (detección en 4 idiomas, búsqueda, destinos, ajustes propios y rechazos, herramientas ofrecidas, límite/cupo, prompt, tiquet con confirmación, de punta a punta con un modelo simulado).
+- Requiere reiniciar solo `guilda-work` (crea una tabla nueva sola al arrancar).
