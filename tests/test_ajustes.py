@@ -190,3 +190,12 @@ def test_los_mensajes_de_kratos_se_traducen_a_cada_idioma(cliente):
             assert _msg_kratos({"text": "Continue"}) == "Continue"
         with force_locale("fr"):
             assert _msg_kratos({"text": "Recovery code"}) == "Code de récupération"
+
+
+def test_hay_herramienta_para_reparar_cuentas_sin_direccion_de_recuperacion():
+    from pathlib import Path
+    import re
+
+    codigo = (Path(__file__).resolve().parent.parent / "scripts" / "reparar_direcciones_kratos.py").read_text(encoding="utf-8")
+    assert "--aplicar" in codigo and "recovery_addresses" in codigo and "/admin/identities/" in codigo
+    assert not re.search(r'"credentials"', codigo), "la reparación no debe enviar credenciales (borraría o cambiaría la contraseña)"
