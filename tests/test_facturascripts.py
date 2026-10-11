@@ -301,3 +301,18 @@ def test_crear_factura_error_lanza_excepcion(monkeypatch):
     monkeypatch.setattr(fs, "_peticion", lambda *a, **k: (500, {"message": "fallo"}))
     with pytest.raises(fs.ErrorFacturaScripts):
         fs.crear_factura("http://127.0.0.1:8107/", "clave", "5", [])
+
+
+def test_la_suite_no_puede_tocar_el_contenedor_ni_los_datos_de_produccion():
+    """Regresión de la causa raíz de las «caídas» de FacturaScripts: los tests de borrar tenant paraban/borraban el contenedor real del
+    tenant 1 y su carpeta de datos (ver conftest.sin_tocar_contenedores_ni_datos_de_produccion)."""
+    import subprocess
+
+    import pytest
+
+    assert fs._nombre_contenedor(1).startswith("guilda-test-")
+    assert "HC_Volume" not in fs._directorio_datos_tenant(1)
+    with pytest.raises(RuntimeError, match="PRODUCCIÓN"):
+        subprocess.run(["docker", "stop", "guilda-work-facturascripts-tenant-1"], capture_output=True)
+    with pytest.raises(RuntimeError, match="PRODUCCIÓN"):
+        subprocess.run(["docker", "rm", "-v", "guilda-work-postgres-facturascripts"], capture_output=True)

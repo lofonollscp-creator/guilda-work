@@ -286,6 +286,34 @@ def webhooks_sin_hilo_de_fondo(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def sin_tocar_contenedores_ni_datos_de_produccion(monkeypatch, tmp_path):
+    """CAUSA RAÍZ de las «caídas» de FacturaScripts que el vigilante reparaba cada pocos minutos: con una base temporal el primer tenant
+    es siempre el 1, y los tests de «borrar tenant» llamaban al `facturascripts.desaprovisionar_tenant(1)` REAL, que hace `docker stop` +
+    `docker rm` del contenedor de producción `guilda-work-facturascripts-tenant-1` y `rmtree` de sus datos (MyFiles/Plugins/Dinamic) en el
+    segundo disco. Cada ejecución de la suite tumbaba el FacturaScripts del despacho.
+
+    Dos capas: (1) los nombres de contenedor y la carpeta de datos de FacturaScripts apuntan a nombres/rutas de prueba; (2) red de seguridad
+    general: cualquier `docker stop/rm/kill/restart` sobre un contenedor `guilda-work-*` (los de producción) aborta el test con un error claro."""
+    import subprocess
+
+    from app import facturascripts
+
+    monkeypatch.setattr(facturascripts, "_nombre_contenedor", lambda tenant_id: f"guilda-test-facturascripts-tenant-{tenant_id}")
+    monkeypatch.setattr(facturascripts, "FACTURASCRIPTS_DATOS_HOST", str(tmp_path / "facturascripts-tenants"))
+
+    ejecutar_real = subprocess.run
+
+    def ejecutar_con_guarda(argumentos, *args, **kwargs):
+        if isinstance(argumentos, (list, tuple)) and argumentos[:1] == ["docker"] and len(argumentos) > 1:
+            verbo = next((a for a in argumentos[1:] if not a.startswith("-")), "")
+            if verbo in {"stop", "rm", "kill", "restart", "rmi", "down"} and any(str(a).startswith("guilda-work-") for a in argumentos):
+                raise RuntimeError(f"Un test intentó tocar un contenedor de PRODUCCIÓN: {' '.join(map(str, argumentos))}")
+        return ejecutar_real(argumentos, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", ejecutar_con_guarda)
+
+
+@pytest.fixture(autouse=True)
 def correo_sin_hilos_de_empuje(monkeypatch):
     """`correo._encolar_y_lanzar` lanza un hilo que espera 1,5 s y procesa las operaciones de la cuenta N. Con bases temporales los ids se
     repiten (cuenta 1 en cada test), así que el hilo de un test anterior podía aplicar las operaciones del siguiente y descuadrar su

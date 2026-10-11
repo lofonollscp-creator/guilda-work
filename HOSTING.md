@@ -1150,6 +1150,8 @@ aquí, solo se recuerda.
 
 ### 8.21 FacturaScripts (facturación/contabilidad) — una instancia por tenant
 
+> **Causa raíz de las «caídas» de FacturaScripts (resuelta 2026-10-11):** no era Docker ni la memoria: eran los TESTS. Con una base temporal el primer tenant es el 1, y los tests de «borrar tenant» ejecutaban el `facturascripts.desaprovisionar_tenant(1)` real (`docker stop` + `docker rm` del contenedor de producción y `rmtree` de `…/facturascripts-tenants/tenant-1`). Cada `scripts/probar.sh` tumbaba el FacturaScripts y vaciaba sus datos en el segundo disco; el vigilante lo reconstruía a los 5 minutos y avisaba por correo (de ahí las decenas de avisos y los «kill → stop → destroy» de `docker-events.log`). Arreglo: `tests/conftest.py::sin_tocar_contenedores_ni_datos_de_produccion` (nombres `guilda-test-…`, carpeta de datos temporal y guarda que aborta cualquier `docker stop/rm/kill/restart` sobre `guilda-work-*`). Si alguna vez vuelve a haber una caída sin pruebas en marcha, esto ya no es la explicación.
+
 A diferencia de EspoCRM/Nextcloud, aquí **no hay aislamiento lógico
 posible dentro de una instancia compartida** — investigado y confirmado
 que el plugin oficial "MultiEmpresa" no restringe qué usuario ve qué
