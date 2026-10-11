@@ -121,7 +121,7 @@ Generaliza `vencimientos_fiscales`: fecha límite, origen, aviso escalonado (ya 
 
 ---
 
-## 5. Módulo Abogados (Día 4, MVP)
+## 5. Módulo Gabinete de abogados (Día 4, MVP)
 
 > Alcance de dominio **a validar con una persona del sector** antes de darlo por bueno (§10). Lo marcado con (*) depende de normativa que hay que confirmar.
 
@@ -146,7 +146,7 @@ Secreto profesional → cifrado de documentos del expediente y **registro de acc
 
 ---
 
-## 6. Módulo Inmobiliarias (Día 5, MVP)
+## 6. Módulo Inmobiliaria (Día 5, MVP)
 
 > Igual que arriba: dominio a validar con una agencia real. (*) = normativa a confirmar (p. ej. fianzas de alquiler, certificado energético, obligaciones por comunidad autónoma).
 
@@ -204,7 +204,7 @@ Panel de **estado** (qué hemos hecho, qué falta de tu parte), **firma desde el
 Alta guiada de despacho **con elección de módulos**, facturación de planes/extras visible, métricas por módulo, y «ver como» ya existente con registro. **M**
 
 ### 7.8 Móvil
-Campo de 2FA, tareas compartidas, resumen semanal de fichaje, ausencias, y notificaciones del módulo activo. Pendiente de tu OK para `flutter pub get`. **L**
+Campo de 2FA, tareas compartidas, resumen semanal de fichaje, ausencias, y notificaciones del módulo activo. `flutter pub get` autorizado. **L**
 
 ### 7.9 Informes y exportaciones
 Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y estilo común; hoy cada exportación pinta su PDF a su manera. Cabecera/pie, paginación y fuentes con soporte completo de catalán/francés. **M**
@@ -219,7 +219,7 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 | **Cifrado de documentos sensibles** (por despacho, clave separada) | Los BLOB de `cliente_documentos` y de expedientes, cifrados en reposo | L |
 | **Retención y borrado RGPD** | Política por tipo de dato, exportación del interesado, borrado con constancia | M |
 | **Permisos por expediente** | Visibilidad restringida (asuntos confidenciales) | M |
-| **Tope y rotación de secretos** | Rotar la contraseña de la base de Documenso (pendiente de tu OK), revisar caducidad de tokens API | S |
+| **Tope y rotación de secretos** | Rotar la contraseña de la base de Documenso (lo haces tú), revisar caducidad de tokens API | S |
 | **Rendimiento** | Índices y paginación en listas grandes (200+ clientes ya es el caso real), medir con datos sintéticos de 5.000 clientes | M |
 | **Partir los monolitos** | `db.py` (13.396 líneas) y `mcp_tools.py` (2.398) en paquetes por dominio, **sin cambiar comportamiento** (los tests son la red de seguridad) | L |
 | **Accesibilidad** | Pasada con lector de pantalla y teclado por las pantallas migradas; contraste AA medido por test | M |
@@ -227,6 +227,14 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 | **Copias** | Prueba de **restauración** de Restic cada semana, con aviso si falla | S |
 
 ---
+
+### 8.1 Cifrado de documentos con clave por despacho (diseño)
+- **Cifrado de sobre**: cada documento se cifra con una clave de datos aleatoria (AES-256-GCM); esa clave se guarda cifrada con la **clave del despacho**. Cambiar o rotar la clave del despacho solo reencripta las claves de datos, no los documentos.
+- **Clave del despacho**: se genera al activar el cifrado y se protege con una **frase de paso** que fija quien administra el despacho; en el servidor solo existe descifrada en memoria durante la sesión de quien la haya desbloqueado, nunca en disco ni en copias.
+- **Recuperación** (decidido): clave de recuperación mostrada **una vez** al activar, para imprimir y guardar, y que hay que confirmar haber guardado; sin ella ni la frase, los documentos son **irrecuperables** (es el precio de que ni la plataforma pueda leerlos).
+- **Qué se cifra**: contenido de `cliente_documentos`, adjuntos de expedientes y documentos del portal. Metadatos (nombre, fecha, categoría) quedan en claro para poder buscar y listar; el contenido de correo no se cifra en esta fase.
+- **Efectos colaterales a resolver**: la búsqueda semántica y la IA no pueden leer documentos cifrados salvo con la sesión desbloqueada; las copias Restic llevan los documentos ya cifrados (más seguras); el portal descifra al servir al cliente con enlace válido.
+- **Pruebas**: ida y vuelta, clave equivocada, rotación, documento manipulado (GCM lo detecta), restauración desde copia.
 
 ## 9. Calendario de la semana
 
@@ -244,17 +252,22 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 
 ---
 
-## 10. Decisiones que necesito de ti
+## 10. Decisiones
 
-1. **Validación de dominio**: ¿puedes conseguir 30 minutos con **una letrada** y **una persona de agencia inmobiliaria** esta semana? Sin ellas, los plazos procesales, las fianzas y los contratos son suposiciones mías. Mientras tanto, los módulos se construyen con los datos de configuración (festivos, plantillas) **editables**, no fijos en código.
-2. **Marca y nombre**: ¿los módulos se llaman «Guilda Legal» y «Guilda Inmuebles», o «módulo Abogados / Inmobiliarias» dentro de Guilda Work? Afecta a menú, ayuda y precios.
-3. **Precios**: ¿cada módulo es un **extra** de pago o va incluido en un plan nuevo? El backoffice ya soporta ambos.
-4. **Cifrado de documentos**: ¿aceptas la complejidad de una clave por despacho (si se pierde, no se recupera) o prefieres cifrado de plataforma (más simple, menos garantía frente a nosotros)? Para abogados recomiendo lo primero.
-5. **Orden de los módulos**: el plan pone Abogados antes que Inmobiliaria por la similitud con la gestoría (plazos, expedientes, minutas). Si tienes un cliente real de inmobiliaria esperando, se invierte.
-6. **Móvil**: ¿autorizas `flutter pub get` esta semana (descarga de dependencias)?
-7. **Producción**: rotación de la contraseña de Documenso, y el monitor `/health` de Uptime Kuma (tuyos).
+### 10.1 Tomadas (12 de octubre)
+| Tema | Decisión | Consecuencia en el plan |
+|---|---|---|
+| Validación de dominio | Hecha por el responsable del producto | Los festivos, plazos y plantillas de cada vertical se cargan como **datos editables** a partir de lo validado (ver 10.2) |
+| Cifrado de documentos | **Clave por despacho** | Cifrado «de sobre»: cada documento con su clave de datos, protegida por la clave del despacho; se descifra solo con sesión del despacho. Ver diseño en §8.1 |
+| Nombre de los módulos | **Gestoría**, **Gabinete de abogados** e **Inmobiliaria** (los tres independientes y combinables) | Ids internos `gestoria`, `abogados`, `inmobiliaria`; menú, ayuda y backoffice usan estos nombres |
+| Precio y empaquetado | **Cada módulo es un extra de pago**; el núcleo común va incluido | Cada módulo = una fila de `extras_guilda` con su `stripe_price_id`; sin plan nuevo. El backoffice ya los asigna y cobra |
+| Recuperación de la clave | **Frase de paso + clave de recuperación impresa**, mostrada una sola vez | Sin ellas los documentos son irrecuperables: el aviso al activarlo debe ser explícito y exigir confirmar que se ha guardado |
+| Orden de construcción | **Abogados antes que Inmobiliaria** | Como en el calendario (Día 4 y Día 5) |
+| Móvil | `flutter pub get` autorizado | Entra en el Día 6 (campo 2FA, tareas compartidas, resumen semanal, ausencias) |
 
----
+### 10.2 Abiertas
+1. **Material de dominio validado**: dónde está y en qué formato (plazos y festivos del partido judicial, plantillas de encargo/arras/alquiler, reglas de comisión, fianzas), para cargarlo como datos editables. Hasta que llegue, se usan valores de ejemplo marcados como «sin validar».
+2. **Producción (tuyo)**: rotar la contraseña de Documenso y crear el monitor `/health` en Uptime Kuma.
 
 ## 11. Fuera de esta semana (para no perderlo)
 
