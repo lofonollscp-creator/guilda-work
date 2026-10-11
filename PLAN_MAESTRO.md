@@ -216,7 +216,7 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 | Tema | Acción | Tamaño |
 |---|---|---|
 | **Registro de accesos** a expedientes, clientes y documentos (quién abrió qué) | Tabla de auditoría consultable por el responsable del despacho; imprescindible para abogados | M |
-| **Cifrado de documentos sensibles** (por despacho, clave separada) | Los BLOB de `cliente_documentos` y de expedientes, cifrados en reposo | L |
+| **Cifrado por despacho** (documentos y correos) | Ver §8.1–8.3: capa de almacenamiento el Día 3, documentos el Día 7, correo y concesiones MCP/API/Hydra en la semana 2 | XL |
 | **Retención y borrado RGPD** | Política por tipo de dato, exportación del interesado, borrado con constancia | M |
 | **Permisos por expediente** | Visibilidad restringida (asuntos confidenciales) | M |
 | **Tope y rotación de secretos** | Rotar la contraseña de la base de Documenso (lo haces tú), revisar caducidad de tokens API | S |
@@ -228,13 +228,51 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 
 ---
 
-### 8.1 Cifrado de documentos con clave por despacho (diseño)
-- **Cifrado de sobre**: cada documento se cifra con una clave de datos aleatoria (AES-256-GCM); esa clave se guarda cifrada con la **clave del despacho**. Cambiar o rotar la clave del despacho solo reencripta las claves de datos, no los documentos.
-- **Clave del despacho**: se genera al activar el cifrado y se protege con una **frase de paso** que fija quien administra el despacho; en el servidor solo existe descifrada en memoria durante la sesión de quien la haya desbloqueado, nunca en disco ni en copias.
-- **Recuperación** (decidido): clave de recuperación mostrada **una vez** al activar, para imprimir y guardar, y que hay que confirmar haber guardado; sin ella ni la frase, los documentos son **irrecuperables** (es el precio de que ni la plataforma pueda leerlos).
-- **Qué se cifra**: contenido de `cliente_documentos`, adjuntos de expedientes y documentos del portal. Metadatos (nombre, fecha, categoría) quedan en claro para poder buscar y listar; el contenido de correo no se cifra en esta fase.
-- **Efectos colaterales a resolver**: la búsqueda semántica y la IA no pueden leer documentos cifrados salvo con la sesión desbloqueada; las copias Restic llevan los documentos ya cifrados (más seguras); el portal descifra al servir al cliente con enlace válido.
-- **Pruebas**: ida y vuelta, clave equivocada, rotación, documento manipulado (GCM lo detecta), restauración desde copia.
+### 8.1 Cifrado por despacho: documentos **y correos**, con acceso de IA, MCP y API (diseño)
+
+**Requisito (12 oct)**: todo el contenido de un despacho —documentos de clientes, expedientes, portal **y correos**— se cifra con la clave de **ese despacho**; y aun así la IA, los MCP y las API del propio despacho pueden leerlo todo. Hydra hace de «paso previo» para dar ese acceso.
+
+**El problema que hay que resolver.** Si la clave solo vive en la sesión de una persona, nada puede leer sin ella: ni el correo que llega de madrugada, ni un MCP externo, ni un resumen programado. Hay que separar **escribir** (que no necesita desbloqueo) de **leer** (que sí).
+
+**Diseño: cifrado de sobre con clave pública del despacho**
+- Cada despacho tiene un **par de claves**. La **pública** se guarda en claro y la usa el servidor para cifrar **sin desbloqueo** (cada documento y cada correo recibido se cifran en el momento de entrar, con su clave de datos AES-256-GCM, que a su vez se cifra con la pública).
+- La **privada** solo existe cifrada: protegida por la **frase de paso** (derivada con Argon2id) y por la **clave de recuperación** impresa. Para leer hay que desbloquearla.
+- **Desbloqueo = presencia**: la privada descifrada vive solo en memoria, ligada a una sesión o a una concesión (abajo), con caducidad, y nunca en disco, en logs ni en copias.
+
+**Quién puede leer y cómo (§8.2)**: sesión de una persona del despacho (con frase de paso), asistente de IA interno (hereda la sesión), **concesiones** para MCP/API/OAuth (clave envuelta con el secreto del token) y tareas programadas (solo si el despacho las autoriza).
+
+**Qué se cifra y qué no**
+| Dato | Tratamiento |
+|---|---|
+| Contenido de documentos (clientes, expedientes, portal) | Cifrado |
+| Cuerpo y adjuntos de correo | Cifrado |
+| Asunto, remitente, destinatarios y fecha del correo | **Decisión abierta (§10.2)**: en claro (búsqueda y listados sin desbloqueo) o cifrados (máxima reserva, búsqueda solo con sesión) |
+| Nombre de archivo, categoría, fechas de documento | En claro por defecto (listar y filtrar); opción de cifrar el nombre en modo estricto |
+| Reglas y categorías automáticas del correo | Se aplican **al entrar**, con el mensaje todavía en claro en el servidor, antes de cifrar |
+| Índices de búsqueda y *embeddings* | **No** se guardan en claro: se construyen y consultan **en memoria** al desbloquear (o se guardan cifrados). Un vector en claro filtra información |
+
+**Consecuencias que hay que asumir**
+- Con el despacho **bloqueado** (nadie con sesión y sin concesión activa) la IA, el MCP y las búsquedas **no ven** lo cifrado: es la garantía, no un fallo. Hay que mostrar el estado («Documentos protegidos: desbloquea para que el asistente los lea») en lugar de devolver vacío.
+- Cifrar al entrar implica que el servidor **sí ve el contenido** un instante (inevitable: el correo llega en claro por IMAP). La garantía es de **reposo y de copias**, no de «el servidor nunca lo ve». Debe decirse así en la política de privacidad.
+- La búsqueda semántica sobre miles de documentos en memoria cabe bien (decenas de miles de vectores); si algún despacho lo supera, se pasa a índice cifrado por bloques.
+- Perder frase y clave de recuperación = datos irrecuperables (aviso explícito y confirmación de que se han guardado).
+- Rotación de la clave del despacho: se re-envuelve la privada; solo si se sospecha compromiso se re-cifran las claves de datos (tarea larga en segundo plano).
+
+### 8.2 Acceso de IA, MCP y API a lo cifrado (concesiones y Hydra)
+1. **Asistente de IA interno**: lee con la sesión desbloqueada de quien pregunta, igual que hoy lee tareas o correo. Las herramientas devuelven un aviso claro si el despacho está bloqueado.
+2. **Concesión** (`concesiones_clave`): al autorizar un acceso, una persona con el despacho desbloqueado **envuelve la clave privada con una clave derivada del secreto de ese acceso**. El servidor guarda solo la envoltura; cuando llega una petición con ese secreto, desenvuelve en memoria, lee y olvida. Revocar el acceso = borrar la envoltura (efecto inmediato).
+3. **Hydra como paso previo (OAuth de MCP/ChatGPT/Claude)**: la pantalla de consentimiento que ya existe (`hydra_consentimiento.html`) gana un permiso nuevo, `guilda:documentos`. Al aceptarlo, pide la frase de paso (o usa la sesión ya desbloqueada) y crea la concesión ligada al token. Cada cliente OAuth ve **solo** lo que su alcance y su usuario permiten.
+4. **Tokens de API personales** (`tokens_api`): al crear uno con el alcance de documentos, mismo paso; el token lleva la concesión.
+5. **Tareas programadas** (resumen semanal, informe mensual, recordatorios con documentos): solo si el despacho activa una **concesión de servicio** con caducidad y alcance; por defecto no existe y esas tareas omiten lo cifrado.
+6. **Auditoría**: cada lectura de contenido cifrado por IA/MCP/API queda en el registro de accesos (quién, qué, con qué token, cuándo). Tabla ya prevista en §8.
+7. **Límites**: alcance por **módulo y por expediente** (un MCP puede leer «Inmobiliaria» y no «Abogados»), solo lectura por defecto, y topes por token (peticiones/día, tamaño).
+
+### 8.3 Qué entra cuándo (la parte que no cabe en un día)
+- **Día 3 (obligatorio)**: toda escritura de documentos pasa por **una sola capa de almacenamiento** (`almacen_documentos`), ya preparada para cifrar. Así no habrá migración de formato después, aunque el cifrado se active más tarde.
+- **Día 7**: primitivas (par de claves, sobre, frase y recuperación, desbloqueo en memoria) + cifrado de **documentos** de clientes y expedientes + lectura de la IA interna con sesión + registro de accesos.
+- **Semana 2**: **correo cifrado** (ingreso, listados, búsqueda en memoria), **concesiones para MCP/API/Hydra**, tareas programadas con concesión de servicio, migración de lo ya guardado y panel de estado.
+- Motivo: cada pieza se puede probar de extremo a extremo; el correo y las concesiones tocan IMAP, búsqueda, OAuth y MCP a la vez y merecen su propia semana en vez de hacerse deprisa.
+- **Pruebas** de todo el bloque: ida y vuelta, clave equivocada, documento manipulado (GCM lo detecta), rotación, restauración desde copia Restic, acceso con concesión revocada, y un test que **recorre cada ruta de lectura** (web, API, MCP, IA, exportaciones, PDF, portal) y comprueba que ninguna devuelve contenido cifrado sin clave.
 
 ## 9. Calendario de la semana
 
@@ -242,11 +280,11 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 |---|---|---|
 | **1 · mar 13** | Sistema de diseño: componentes base (confirmación, toasts, botón, switch/casilla, estados, formulario) + test candado con excepciones actuales | `_ds/` + `ds.css/js` + `test_sistema_diseno.py` |
 | **2 · mié 14** | Selector y fecha propios; migrar correo, fiscal y ajustes; preferencia de tema/densidad en la cuenta | 0 `confirm()` y 0 botones sin clase en las pantallas migradas |
-| **3 · jue 15** | **Núcleo**: contactos, expedientes, plazos (cálculo puro), tiempo facturable, registro de módulos y menú dinámico | Tests del núcleo; la gestoría sigue en verde |
+| **3 · jue 15** | **Núcleo**: contactos, expedientes, plazos (cálculo puro), tiempo facturable, registro de módulos y menú dinámico, **capa única de almacenamiento de documentos** (lista para cifrar) | Tests del núcleo; la gestoría sigue en verde |
 | **4 · vie 16** | **Módulo Abogados MVP** (expediente judicial, plazos procesales, minutas, provisión, conflicto de intereses, portal) | Flujo extremo a extremo con datos de prueba |
 | **5 · sáb 17** | **Módulo Inmobiliaria MVP** (inmuebles, pipeline, demandas con cruce, visitas, contratos, comisiones, portal propietario) | Flujo extremo a extremo con datos de prueba |
 | **6 · dom 18** | Mejoras de gestoría (§7.1 prioritarias), informes unificados (§7.9), asistente con contexto de cliente/expediente | Vencimientos por perfil + informe mensual |
-| **7 · lun 19** | Cierre: seguridad/RGPD (registro de accesos, retención), rendimiento con datos grandes, accesibilidad, ayuda y traducciones ca/en/fr, `HOSTING.md`, despliegue guiado y retro | Suite completa verde + guía de despliegue |
+| **7 · lun 19** | Cierre: **cifrado de documentos** (primitivas, sesión desbloqueada, IA interna), seguridad/RGPD (registro de accesos, retención), rendimiento con datos grandes, accesibilidad, ayuda y traducciones ca/en/fr, `HOSTING.md`, despliegue guiado y retro | Suite completa verde + guía de despliegue |
 
 **Si el tiempo aprieta** (en este orden se recorta): primero §7.4–7.8 que no sean críticos, luego la mitad «después del MVP» de cada módulo, nunca el sistema de diseño ni el núcleo: sin ellos los módulos nacen torcidos.
 
@@ -261,13 +299,15 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 | Cifrado de documentos | **Clave por despacho** | Cifrado «de sobre»: cada documento con su clave de datos, protegida por la clave del despacho; se descifra solo con sesión del despacho. Ver diseño en §8.1 |
 | Nombre de los módulos | **Gestoría**, **Gabinete de abogados** e **Inmobiliaria** (los tres independientes y combinables) | Ids internos `gestoria`, `abogados`, `inmobiliaria`; menú, ayuda y backoffice usan estos nombres |
 | Precio y empaquetado | **Cada módulo es un extra de pago**; el núcleo común va incluido | Cada módulo = una fila de `extras_guilda` con su `stripe_price_id`; sin plan nuevo. El backoffice ya los asigna y cobra |
+| Alcance del cifrado y acceso de máquinas | **Documentos y correos** con la clave del despacho; **IA, MCP y API del despacho pueden leer todo** mediante concesiones, con Hydra como paso previo | Diseño de §8.1–8.2; el correo cifrado y las concesiones pasan a la semana 2 (§8.3) |
 | Recuperación de la clave | **Frase de paso + clave de recuperación impresa**, mostrada una sola vez | Sin ellas los documentos son irrecuperables: el aviso al activarlo debe ser explícito y exigir confirmar que se ha guardado |
 | Orden de construcción | **Abogados antes que Inmobiliaria** | Como en el calendario (Día 4 y Día 5) |
 | Móvil | `flutter pub get` autorizado | Entra en el Día 6 (campo 2FA, tareas compartidas, resumen semanal, ausencias) |
 
 ### 10.2 Abiertas
-1. **Material de dominio validado**: dónde está y en qué formato (plazos y festivos del partido judicial, plantillas de encargo/arras/alquiler, reglas de comisión, fianzas), para cargarlo como datos editables. Hasta que llegue, se usan valores de ejemplo marcados como «sin validar».
-2. **Producción (tuyo)**: rotar la contraseña de Documenso y crear el monitor `/health` en Uptime Kuma.
+1. **Cabeceras del correo** (asunto, remitente, destinatarios, fecha): en claro o cifradas (§8.1). Propuesta por defecto: **en claro**, con modo estricto opcional por despacho.
+2. **Material de dominio**: **se deja «sin validar»** (decidido): plazos, festivos, plantillas y reglas de comisión se cargan como datos de ejemplo editables, marcados visiblemente como «sin validar» en la interfaz y en la ayuda, hasta que se sustituyan.
+3. **Producción (tuyo, más adelante)**: rotar la contraseña de Documenso y crear el monitor `/health` en Uptime Kuma.
 
 ## 11. Fuera de esta semana (para no perderlo)
 
