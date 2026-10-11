@@ -9,7 +9,7 @@ Documento vivo: es la base de trabajo de la semana, no un contrato. Cada bloque 
 1. **Guilda Work ya es una plataforma de gestoría muy completa** (tareas, correo, fiscal, fichaje, portal de cliente, asistente de IA, MCP/API, backoffice, 2.331 tests). Lo que le falta no es amplitud sino **tres cosas**: una base de diseño uniforme, un núcleo de «cliente y expediente» que no esté atado a lo fiscal, y una forma limpia de **activar módulos** por despacho.
 2. **El hallazgo clave para las expansiones**: hoy «cliente» significa `clientes_fiscales` (solo `nombre`, `nif`, `notas`) y «vencimiento» significa `vencimientos_fiscales` (modelo + periodo). Abogados e inmobiliarias no encajan ahí. Antes de crear módulos hay que **extraer un núcleo genérico** (clientes, expedientes, plazos, tiempo, documentos, portal) y colgar cada vertical de él. La gestoría pasa a ser un módulo más, sin romper nada.
 3. **La infraestructura comercial ya existe**: `planes_guilda`, `extras_guilda`, `tenants_extras_activos` y `tenants_herramientas_ocultas`. Un módulo = un extra activable por despacho. No hay que inventar un sistema de licencias.
-4. **Realismo**: una semana da para el diseño uniforme, el núcleo genérico y un **MVP utilizable de cada vertical**, no para dos productos completos. El plan de abajo está pensado así; lo que no cabe está en el §9.
+4. **Realismo**: una semana da para el diseño uniforme, el núcleo genérico y un **MVP utilizable de cada vertical**, no para dos productos completos. El plan de abajo está pensado así; lo que no cabe está en los apartados «después del MVP» y en el §11.
 
 ---
 
@@ -123,7 +123,7 @@ Generaliza `vencimientos_fiscales`: fecha límite, origen, aviso escalonado (ya 
 
 ## 5. Módulo Gabinete de abogados (Día 4, MVP)
 
-> Alcance de dominio **a validar con una persona del sector** antes de darlo por bueno (§10). Lo marcado con (*) depende de normativa que hay que confirmar.
+> Dominio **sin validar** (decisión del 12 oct): plazos, festivos y plantillas se cargan como datos de ejemplo editables, marcados «sin validar» en la interfaz y la ayuda. Lo marcado con (*) depende de normativa que hay que confirmar antes de usarlo en producción.
 
 ### 5.1 MVP
 | Funcionalidad | Detalle | Tamaño |
@@ -142,13 +142,13 @@ Generaliza `vencimientos_fiscales`: fecha límite, origen, aviso escalonado (ya 
 LexNET/Cl@ve (integración, no obligatoria al principio), turno de oficio y justicia gratuita, tarifas por tipo de asunto, estadísticas de rentabilidad por expediente, biblioteca de modelos de escritos, control de caducidad de poderes.
 
 ### 5.3 Riesgos específicos
-Secreto profesional → cifrado de documentos del expediente y **registro de accesos** (ver §8); error de plazo con consecuencias legales → doble confirmación, pruebas de cálculo con casos reales aportados por una letrada y aviso visible de que «la herramienta ayuda, no sustituye la comprobación».
+Secreto profesional → cifrado de documentos del expediente y **registro de accesos** (ver §8); error de plazo con consecuencias legales → doble confirmación, marca «sin validar» mientras no se contraste con una letrada y aviso visible de que «la herramienta ayuda, no sustituye la comprobación».
 
 ---
 
 ## 6. Módulo Inmobiliaria (Día 5, MVP)
 
-> Igual que arriba: dominio a validar con una agencia real. (*) = normativa a confirmar (p. ej. fianzas de alquiler, certificado energético, obligaciones por comunidad autónoma).
+> Igual que arriba: dominio **sin validar**. (*) = normativa a confirmar (p. ej. fianzas de alquiler, certificado energético, obligaciones por comunidad autónoma).
 
 ### 6.1 MVP
 | Funcionalidad | Detalle | Tamaño |
@@ -225,8 +225,6 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 | **Accesibilidad** | Pasada con lector de pantalla y teclado por las pantallas migradas; contraste AA medido por test | M |
 | **Observabilidad** | Monitor `/health` en Uptime Kuma (tuyo), alertas de errores de módulo | S |
 | **Copias** | Prueba de **restauración** de Restic cada semana, con aviso si falla | S |
-
----
 
 ### 8.1 Cifrado por despacho: documentos **y correos**, con acceso de IA, MCP y API (diseño)
 
@@ -312,8 +310,8 @@ Regla de diseño: **los niveles cambian qué hay en claro en reposo, no qué se 
 ### 10.1 Tomadas (12 de octubre)
 | Tema | Decisión | Consecuencia en el plan |
 |---|---|---|
-| Validación de dominio | Hecha por el responsable del producto | Los festivos, plazos y plantillas de cada vertical se cargan como **datos editables** a partir de lo validado (ver 10.2) |
-| Cifrado de documentos | **Clave por despacho** | Cifrado «de sobre»: cada documento con su clave de datos, protegida por la clave del despacho; se descifra solo con sesión del despacho. Ver diseño en §8.1 |
+| Validación de dominio | **Se deja «sin validar»** por ahora | Festivos, plazos y plantillas de cada vertical son **datos de ejemplo editables**, con la marca «sin validar» visible hasta que se sustituyan (ver 10.2) |
+| Cifrado | **Clave por despacho** | Cifrado «de sobre» con par de claves del despacho; ver §8.1 |
 | Nombre de los módulos | **Gestoría**, **Gabinete de abogados** e **Inmobiliaria** (los tres independientes y combinables) | Ids internos `gestoria`, `abogados`, `inmobiliaria`; menú, ayuda y backoffice usan estos nombres |
 | Precio y empaquetado | **Cada módulo es un extra de pago**; el núcleo común va incluido | Cada módulo = una fila de `extras_guilda` con su `stripe_price_id`; sin plan nuevo. El backoffice ya los asigna y cobra |
 | Alcance del cifrado y acceso de máquinas | **Documentos y correos** con la clave del despacho; **IA, MCP y API del despacho pueden leer todo** mediante concesiones, con Hydra como paso previo | Diseño de §8.1–8.2; el correo cifrado y las concesiones pasan a la semana 2 (§8.3) |
