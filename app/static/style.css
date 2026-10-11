@@ -4544,18 +4544,18 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    mensaje y queda la tarjeta de siempre. */
 .auth-dividido { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: stretch; justify-content: initial; }
 .auth-dividido::before { display: none; }
-.auth-hero { background: var(--sidebar-bg); color: #e8eae9; border-right: 1px solid #1d1f23; padding: 56px 64px; display: flex; flex-direction: column; gap: 32px; }
-/* Foto de montaña (CC0, ver static/fotos/CREDITOS.md) en una tarjeta propia, SIN nada encima: el texto va siempre sobre el fondo liso, así que
-   el contraste no depende de la foto. Ocupa el hueco que queda entre el texto y la lista y se encoge (o desaparece) en pantallas bajas. */
-.auth-hero-foto { margin: 0; flex: 1 1 0; min-height: 120px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px -18px rgba(0, 0, 0, 0.8); background: #0d1117; }
-.auth-hero-foto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 55% 45%; }
-@media (max-height: 680px) { .auth-hero-foto { display: none; } .auth-hero { justify-content: space-between; } }
+/* La foto de montaña (CC0, ver static/fotos/CREDITOS.md) ocupa TODO el panel, con un velo liso (sin degradado direccional) y anclada a la izquierda
+   para que lo más claro del paisaje (el pico iluminado) quede a la derecha. El texto va en un panel de cristal oscuro con desenfoque, así que su
+   contraste no depende de qué haya detrás (AA, lo mide tests/test_foto_login.py sobre la foto real). */
+.auth-hero { position: relative; background-color: var(--sidebar-bg); background-image: linear-gradient(rgba(5, 5, 6, 0.22), rgba(5, 5, 6, 0.22)), url("fotos/montana-login.jpg"); background-image: linear-gradient(rgba(5, 5, 6, 0.22), rgba(5, 5, 6, 0.22)), image-set(url("fotos/montana-login.webp") type("image/webp"), url("fotos/montana-login.jpg") type("image/jpeg")); background-size: cover; background-position: 32% 50%; color: #e8eae9; border-right: 1px solid #1d1f23; padding: 56px 64px; display: flex; align-items: center; }
+.auth-hero-panel { width: min(100%, 580px); box-sizing: border-box; padding: 40px 44px; display: flex; flex-direction: column; gap: 32px; border-radius: 28px; background: rgba(7, 9, 13, 0.66); -webkit-backdrop-filter: blur(16px) saturate(1.15); backdrop-filter: blur(16px) saturate(1.15); border: 1px solid rgba(255, 255, 255, 0.11); box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .auth-hero-panel { background: rgba(7, 9, 13, 0.93); } }
 /* En móvil el panel grande se oculta: la misma foto, en una banda sobre el formulario. */
 .auth-foto-movil { display: none; }
 .auth-hero-marca { display: flex; align-items: center; gap: 12px; font: 700 15px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .auth-hero-titulo { margin: 0; font-size: 2.6em; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; max-width: 14ch; }
-.auth-hero-texto { margin: 18px 0 0; color: #a3a9b1; font-size: 1.1em; max-width: 42ch; }
-.auth-hero-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; color: #c9cdd4; }
+.auth-hero-texto { margin: 18px 0 0; color: #c9cdd4; font-size: 1.1em; max-width: 42ch; }
+.auth-hero-lista { list-style: none; margin: 0; padding: 22px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.10); display: flex; flex-direction: column; gap: 12px; color: #dfe2e6; }
 .auth-hero-lista li { display: flex; align-items: center; gap: 12px; }
 .auth-hero-lista svg { width: 18px; height: 18px; flex-shrink: 0; color: #ccff33; }
 .auth-panel { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
