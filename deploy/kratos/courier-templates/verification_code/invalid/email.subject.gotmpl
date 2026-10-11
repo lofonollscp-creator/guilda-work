@@ -1,1 +1,1 @@
-Intento de verificar una dirección que no está en Guilda Work
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}Algú ha intentat verificar aquest correu a Guilda Work{{- else if eq $l "en" -}}Someone tried to verify this email in Guilda Work{{- else if eq $l "fr" -}}Quelqu'un a tenté de vérifier cet email dans Guilda Work{{- else -}}Alguien intentó verificar este correo en Guilda Work{{- end -}}

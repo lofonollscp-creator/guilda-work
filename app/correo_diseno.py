@@ -38,7 +38,7 @@ def _parrafo_html(texto: str, color: str = TEXTO_SUAVE, tam: int = 16, margen: i
 def construir(
     titulo: str, parrafos: list[str] | tuple[str, ...] = (), *, boton: tuple[str, str] | None = None, codigo: str | None = None,
     cita: str | None = None, preformateado: str | None = None, aviso: str | None = None, pie: str | None = None,
-    preencabezado: str = "", html_crudo: bool = False, plano: str | None = None,
+    preencabezado: str = "", html_crudo: bool = False, plano: str | None = None, idioma: str = "es",
 ) -> tuple[str, str]:
     """Plano + HTML de un correo. `html_crudo=True` deja pasar `titulo`, `codigo` y `parrafos` SIN escapar (solo para las plantillas de Kratos,
     donde llevan marcas `{{ .RecoveryCode }}` que Kratos sustituye; nunca con texto de usuarios)."""
@@ -98,7 +98,7 @@ def construir(
     cuerpo = "\n".join(bloques)
     pre = escape(preencabezado or titulo) if not html_crudo else (preencabezado or titulo)
     html = f"""<!doctype html>
-<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="{idioma}" xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

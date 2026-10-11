@@ -28,6 +28,7 @@ por encima del captcha de forma automatizada.
 El contador es en memoria (se pierde al reiniciar el servicio, igual que
 la cola de eventos de app/eventos.py) — no hace falta persistirlo, es una
 protección de "ahora mismo", no un historial."""
+import json
 import os
 import time
 import urllib.error
@@ -36,6 +37,7 @@ import urllib.request
 from collections import defaultdict
 
 from flask import Blueprint, Response, redirect, request
+from flask_babel import get_locale
 
 from . import captcha
 from . import kratos as kratos_modulo
@@ -45,6 +47,11 @@ kratos_proxy_bp = Blueprint("kratos_proxy", __name__, url_prefix="/.ory")
 # Cabeceras que no tiene sentido reenviar tal cual (largo/encoding los
 # recalcula Flask al construir su propia Response; host es el de Kratos,
 # no el nuestro).
+# Pedir una recuperación o una verificación manda un correo con un código desde Kratos, que no sabe en qué idioma está la persona: se le dice al
+# enviar el formulario (`transient_payload`, que llega a las plantillas como `.TransientPayload`, ver scripts/generar_plantillas_kratos.py).
+_RUTAS_CON_IDIOMA = {"self-service/recovery", "self-service/verification"}
+_IDIOMAS_CORREO = {"es", "ca", "en", "fr"}
+
 _CABECERAS_A_IGNORAR = {"content-length", "transfer-encoding", "connection", "host"}
 
 # --- Captcha de respaldo en el login (ver docstring del módulo) -----------
@@ -136,6 +143,11 @@ def proxy(subruta: str):
         campos = request.form.to_dict()
         campos.pop("altcha", None)
         cuerpo = urllib.parse.urlencode(campos).encode("utf-8")
+    elif request.method == "POST" and subruta.rstrip("/") in _RUTAS_CON_IDIOMA and request.mimetype == "application/x-www-form-urlencoded" and "transient_payload" not in request.form:
+        idioma = str(get_locale() or "es")[:2]
+        campos = request.form.to_dict(flat=False)
+        campos["transient_payload"] = [json.dumps({"lang": idioma if idioma in _IDIOMAS_CORREO else "es"})]
+        cuerpo = urllib.parse.urlencode(campos, doseq=True).encode("utf-8")
     else:
         cuerpo = cuerpo_original
 

@@ -1,4 +1,34 @@
-No encontramos tu cuenta
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}No trobem el teu compte
+
+Algú ha demanat recuperar una contrasenya amb aquesta adreça de correu, però no hi ha cap compte de Guilda Work amb ella.
+
+Si has estat tu, prova amb l'email amb què et vas registrar (pot ser un altre). Si necessites ajuda, escriu-nos.
+
+Si no has estat tu, ignora aquest correu.
+
+--
+Guilda Work · el programari de gestió de la teva gestoria
+{{- else if eq $l "en" -}}We couldn't find your account
+
+Someone asked to recover a password with this email address, but there is no Guilda Work account with it.
+
+If it was you, try the email you signed up with (it may be a different one). If you need help, write to us.
+
+If this wasn't you, just ignore this email.
+
+--
+Guilda Work · management software for your firm
+{{- else if eq $l "fr" -}}Nous ne trouvons pas votre compte
+
+Quelqu'un a demandé à récupérer un mot de passe avec cette adresse email, mais aucun compte Guilda Work n'y est associé.
+
+Si c'était vous, essayez avec l'email utilisé à l'inscription (ce peut être un autre). Si vous avez besoin d'aide, écrivez-nous.
+
+Si ce n'est pas vous, ignorez ce message.
+
+--
+Guilda Work · le logiciel de gestion de votre cabinet
+{{- else -}}No encontramos tu cuenta
 
 Alguien ha pedido recuperar una contraseña con esta dirección de correo, pero no hay ninguna cuenta de Guilda Work con ella.
 
@@ -9,3 +39,4 @@ Si no has estat tu, ignora aquest correu. · If this wasn't you, just ignore thi
 
 --
 Guilda Work · el software de gestión de tu gestoría
+{{- end -}}

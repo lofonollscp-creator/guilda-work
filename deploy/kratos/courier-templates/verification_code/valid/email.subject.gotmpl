@@ -1,1 +1,1 @@
-Tu código para verificar el correo de Guilda Work: {{ .VerificationCode }}
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}Verifica el teu correu de Guilda Work{{- else if eq $l "en" -}}Verify your Guilda Work email{{- else if eq $l "fr" -}}Vérifiez votre email Guilda Work{{- else -}}Verifica tu correo de Guilda Work{{- end -}}

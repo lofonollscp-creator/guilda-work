@@ -1,4 +1,34 @@
-Recupera tu contraseña
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}Recupera la teva contrasenya
+
+Has demanat recuperar l'accés al teu compte de Guilda Work. Introdueix aquest codi a la pantalla de recuperació; caduca en 15 minuts:
+
+    {{ .RecoveryCode }}
+
+Si no has estat tu, ignora aquest correu: no passarà res.
+
+--
+Guilda Work · el programari de gestió de la teva gestoria
+{{- else if eq $l "en" -}}Recover your password
+
+You asked to recover access to your Guilda Work account. Enter this code on the recovery screen; it expires in 15 minutes:
+
+    {{ .RecoveryCode }}
+
+If this wasn't you, just ignore this email: nothing will happen.
+
+--
+Guilda Work · management software for your firm
+{{- else if eq $l "fr" -}}Récupérez votre mot de passe
+
+Vous avez demandé à récupérer l'accès à votre compte Guilda Work. Saisissez ce code sur l'écran de récupération ; il expire dans 15 minutes :
+
+    {{ .RecoveryCode }}
+
+Si ce n'est pas vous, ignorez ce message : il ne se passera rien.
+
+--
+Guilda Work · le logiciel de gestion de votre cabinet
+{{- else -}}Recupera tu contraseña
 
 Has pedido recuperar el acceso a tu cuenta de Guilda Work. Introduce este código en la pantalla de recuperación; caduca en 15 minutos:
 
@@ -9,3 +39,4 @@ Si no has estat tu, ignora aquest correu. · If this wasn't you, just ignore thi
 
 --
 Guilda Work · el software de gestión de tu gestoría
+{{- end -}}

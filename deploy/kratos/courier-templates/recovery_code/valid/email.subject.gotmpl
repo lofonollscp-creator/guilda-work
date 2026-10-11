@@ -1,1 +1,1 @@
-Tu código para recuperar la contraseña de Guilda Work: {{ .RecoveryCode }}
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}Recupera la teva contrasenya de Guilda Work{{- else if eq $l "en" -}}Recover your Guilda Work password{{- else if eq $l "fr" -}}Récupérez votre mot de passe Guilda Work{{- else -}}Recupera tu contraseña de Guilda Work{{- end -}}

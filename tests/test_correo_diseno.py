@@ -117,7 +117,8 @@ def test_las_plantillas_de_kratos_estan_al_dia_con_el_generador(tmp_path):
 
 
 def test_las_plantillas_de_kratos_solo_usan_las_variables_que_kratos_da():
-    permitidas = {"{{ .RecoveryCode }}", "{{ .VerificationCode }}"}
+    permitidas = {"{{ .RecoveryCode }}", "{{ .VerificationCode }}", '{{- $l := printf "%v" (index .TransientPayload "lang") -}}', "{{- else -}}", "{{- end -}}",
+                  '{{- if eq $l "ca" -}}', '{{- else if eq $l "en" -}}', '{{- else if eq $l "fr" -}}'}
     base = RAIZ / "deploy" / "kratos" / "courier-templates"
     ficheros = list(base.rglob("*.gotmpl"))
     assert len(ficheros) == 12
@@ -125,6 +126,71 @@ def test_las_plantillas_de_kratos_solo_usan_las_variables_que_kratos_da():
         usadas = set(re.findall(r"\{\{.*?\}\}", f.read_text(encoding="utf-8")))
         assert usadas <= permitidas, (f, usadas - permitidas)
     for carpeta, variable in (("recovery_code/valid", "{{ .RecoveryCode }}"), ("verification_code/valid", "{{ .VerificationCode }}")):
-        for nombre in ("email.subject.gotmpl", "email.body.gotmpl", "email.body.plaintext.gotmpl"):
+        for nombre in ("email.body.gotmpl", "email.body.plaintext.gotmpl"):          # el asunto NO lleva el código
             assert variable in (base / carpeta / nombre).read_text(encoding="utf-8")
     assert "template_override_path: /etc/config/kratos/courier-templates" in (RAIZ / "deploy" / "kratos" / "kratos.yml").read_text(encoding="utf-8")
+
+
+# ---- Idioma y asunto de los correos de Kratos -----------------------------------------------------------------------------------------------
+class _RespuestaFalsa:
+    status = 200
+    headers = {"Content-Type": "application/json"}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return b"{}"
+
+
+def _capturar(monkeypatch):
+    from app import kratos as k
+
+    vistos = []
+
+    class Opener:
+        def open(self, peticion, timeout=None):
+            vistos.append(peticion.data.decode() if peticion.data else "")
+            return _RespuestaFalsa()
+
+    monkeypatch.setattr(k, "opener_sin_redireccion", lambda: Opener())
+    return vistos
+
+
+@pytest.mark.parametrize("cabecera,esperado", [("ca-ES,ca;q=0.9", "ca"), ("fr-FR", "fr"), ("en-GB,en;q=0.8", "en"), ("es-ES", "es"), ("de-DE", "es"), ("", "es")])
+def test_el_proxy_de_kratos_dice_en_que_idioma_esta_la_pantalla(cliente, monkeypatch, cabecera, esperado):
+    """La recuperación y la verificación mandan un correo desde Kratos: el idioma de la pantalla viaja como transient_payload (por defecto, castellano)."""
+    import json
+    import urllib.parse
+
+    vistos = _capturar(monkeypatch)
+    for ruta in ("recovery", "verification"):
+        vistos.clear()
+        r = cliente.post(f"/.ory/self-service/{ruta}?flow=abc", data={"method": "code", "email": "a@b.test", "csrf_token": "t"}, headers={"Accept-Language": cabecera})
+        assert r.status_code == 200 and len(vistos) == 1
+        campos = urllib.parse.parse_qs(vistos[0])
+        assert campos["email"] == ["a@b.test"] and campos["method"] == ["code"] and campos["csrf_token"] == ["t"], "el resto del formulario llega intacto"
+        assert json.loads(campos["transient_payload"][0]) == {"lang": esperado}
+
+
+def test_el_proxy_no_toca_los_otros_formularios_ni_pisa_un_idioma_ya_indicado(cliente, monkeypatch):
+    vistos = _capturar(monkeypatch)
+    cliente.post("/.ory/self-service/settings?flow=abc", data={"method": "password", "password": "x"})
+    cliente.post("/.ory/self-service/recovery?flow=abc", data={"method": "code", "email": "a@b.test", "transient_payload": '{"lang":"fr"}'}, headers={"Accept-Language": "ca"})
+    assert "transient_payload" not in vistos[0]
+    assert "fr" in vistos[1] and "ca" not in vistos[1]
+
+
+def test_los_asuntos_de_kratos_no_llevan_el_codigo_y_hay_cuatro_idiomas():
+    base = RAIZ / "deploy" / "kratos" / "courier-templates"
+    for carpeta in ("recovery_code/valid", "verification_code/valid", "recovery_code/invalid", "verification_code/invalid"):
+        asunto = (base / carpeta / "email.subject.gotmpl").read_text(encoding="utf-8")
+        assert "Code }}" not in asunto and "{{ ." not in asunto, f"{carpeta}: el asunto no debe llevar el código"
+        for idioma in ("ca", "en", "fr"):
+            assert f'eq $l "{idioma}"' in asunto, (carpeta, idioma)
+        cuerpo = (base / carpeta / "email.body.gotmpl").read_text(encoding="utf-8")
+        for idioma in ("es", "ca", "en", "fr"):
+            assert f'<html lang="{idioma}"' in cuerpo, (carpeta, idioma)

@@ -1,4 +1,121 @@
-<!doctype html>
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}<!doctype html>
+<html lang="ca" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="supported-color-schemes" content="dark light">
+<title>Verifica el teu correu</title>
+<style>
+  @media (max-width: 620px) { .tarjeta { padding: 28px 22px !important; border-radius: 20px !important; } .exterior { padding: 16px 10px !important; } h1 { font-size: 22px !important; } }
+  a { color: #ccff33; }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#16243a;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">Verifica el teu correu&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#16243a" background="https://app.guildawork.com/static/fotos/email-fondo.jpg"
+       style="background:#16243a url('https://app.guildawork.com/static/fotos/email-fondo.jpg') center center / cover no-repeat;">
+  <tr><td class="exterior" align="center" style="padding:40px 16px;">
+    <table role="presentation" class="tarjeta" width="560" cellpadding="0" cellspacing="0" border="0"
+           style="width:100%;max-width:560px;background:#101216;border:1px solid #2a2d33;border-radius:28px;padding:40px 44px;font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;color:#e8eae9;">
+      <tr><td align="center" style="padding:0 0 20px;">
+        <img src="https://app.guildawork.com/static/email-logo.png" width="56" height="56" alt="Guilda Work" style="display:block;border:0;outline:none;width:56px;height:56px;">
+      </td></tr>
+      <tr><td style="font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;">
+        <h1 style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.02em;color:#e8eae9;text-align:center;">Verifica el teu correu</h1>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#c4c9d1;">Introdueix aquest codi per confirmar que aquesta adreça de correu és teva; caduca en 15 minuts:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 24px;"><tr><td align="center" style="background:#0a0a0c;border:1px solid #5b6b1f;border-radius:16px;padding:16px 28px;font-family:'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace;font-size:34px;line-height:1.1;font-weight:700;letter-spacing:10px;color:#ccff33;">{{ .VerificationCode }}</td></tr></table>
+<p style="margin:8px 0 0;padding-top:18px;border-top:1px solid #2a2d33;font-size:13px;line-height:1.55;color:#9aa1ab;">Si no has estat tu, ignora aquest correu: no passarà res.</p>
+      </td></tr>
+    </table>
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
+      <tr><td align="center" style="padding:18px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+        <td style="background:#0c0e12;border:1px solid #2a2d33;border-radius:999px;padding:8px 18px;font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#9aa1ab;">Guilda Work · el programari de gestió de la teva gestoria</td>
+      </tr></table></td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
+{{- else if eq $l "en" -}}<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="supported-color-schemes" content="dark light">
+<title>Verify your email</title>
+<style>
+  @media (max-width: 620px) { .tarjeta { padding: 28px 22px !important; border-radius: 20px !important; } .exterior { padding: 16px 10px !important; } h1 { font-size: 22px !important; } }
+  a { color: #ccff33; }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#16243a;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">Verify your email&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#16243a" background="https://app.guildawork.com/static/fotos/email-fondo.jpg"
+       style="background:#16243a url('https://app.guildawork.com/static/fotos/email-fondo.jpg') center center / cover no-repeat;">
+  <tr><td class="exterior" align="center" style="padding:40px 16px;">
+    <table role="presentation" class="tarjeta" width="560" cellpadding="0" cellspacing="0" border="0"
+           style="width:100%;max-width:560px;background:#101216;border:1px solid #2a2d33;border-radius:28px;padding:40px 44px;font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;color:#e8eae9;">
+      <tr><td align="center" style="padding:0 0 20px;">
+        <img src="https://app.guildawork.com/static/email-logo.png" width="56" height="56" alt="Guilda Work" style="display:block;border:0;outline:none;width:56px;height:56px;">
+      </td></tr>
+      <tr><td style="font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;">
+        <h1 style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.02em;color:#e8eae9;text-align:center;">Verify your email</h1>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#c4c9d1;">Enter this code to confirm that this email address is yours; it expires in 15 minutes:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 24px;"><tr><td align="center" style="background:#0a0a0c;border:1px solid #5b6b1f;border-radius:16px;padding:16px 28px;font-family:'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace;font-size:34px;line-height:1.1;font-weight:700;letter-spacing:10px;color:#ccff33;">{{ .VerificationCode }}</td></tr></table>
+<p style="margin:8px 0 0;padding-top:18px;border-top:1px solid #2a2d33;font-size:13px;line-height:1.55;color:#9aa1ab;">If this wasn't you, just ignore this email: nothing will happen.</p>
+      </td></tr>
+    </table>
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
+      <tr><td align="center" style="padding:18px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+        <td style="background:#0c0e12;border:1px solid #2a2d33;border-radius:999px;padding:8px 18px;font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#9aa1ab;">Guilda Work · management software for your firm</td>
+      </tr></table></td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
+{{- else if eq $l "fr" -}}<!doctype html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="supported-color-schemes" content="dark light">
+<title>Vérifiez votre email</title>
+<style>
+  @media (max-width: 620px) { .tarjeta { padding: 28px 22px !important; border-radius: 20px !important; } .exterior { padding: 16px 10px !important; } h1 { font-size: 22px !important; } }
+  a { color: #ccff33; }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#16243a;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">Vérifiez votre email&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#16243a" background="https://app.guildawork.com/static/fotos/email-fondo.jpg"
+       style="background:#16243a url('https://app.guildawork.com/static/fotos/email-fondo.jpg') center center / cover no-repeat;">
+  <tr><td class="exterior" align="center" style="padding:40px 16px;">
+    <table role="presentation" class="tarjeta" width="560" cellpadding="0" cellspacing="0" border="0"
+           style="width:100%;max-width:560px;background:#101216;border:1px solid #2a2d33;border-radius:28px;padding:40px 44px;font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;color:#e8eae9;">
+      <tr><td align="center" style="padding:0 0 20px;">
+        <img src="https://app.guildawork.com/static/email-logo.png" width="56" height="56" alt="Guilda Work" style="display:block;border:0;outline:none;width:56px;height:56px;">
+      </td></tr>
+      <tr><td style="font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;">
+        <h1 style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.02em;color:#e8eae9;text-align:center;">Vérifiez votre email</h1>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#c4c9d1;">Saisissez ce code pour confirmer que cette adresse email est bien la vôtre ; il expire dans 15 minutes :</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 24px;"><tr><td align="center" style="background:#0a0a0c;border:1px solid #5b6b1f;border-radius:16px;padding:16px 28px;font-family:'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace;font-size:34px;line-height:1.1;font-weight:700;letter-spacing:10px;color:#ccff33;">{{ .VerificationCode }}</td></tr></table>
+<p style="margin:8px 0 0;padding-top:18px;border-top:1px solid #2a2d33;font-size:13px;line-height:1.55;color:#9aa1ab;">Si ce n'est pas vous, ignorez ce message : il ne se passera rien.</p>
+      </td></tr>
+    </table>
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
+      <tr><td align="center" style="padding:18px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+        <td style="background:#0c0e12;border:1px solid #2a2d33;border-radius:999px;padding:8px 18px;font-family:'Manrope','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#9aa1ab;">Guilda Work · le logiciel de gestion de votre cabinet</td>
+      </tr></table></td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
+{{- else -}}<!doctype html>
 <html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta charset="utf-8">
@@ -37,3 +154,4 @@
 </table>
 </body>
 </html>
+{{- end -}}

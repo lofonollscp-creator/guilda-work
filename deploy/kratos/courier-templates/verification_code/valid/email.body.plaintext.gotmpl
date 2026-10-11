@@ -1,4 +1,34 @@
-Verifica tu correo
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}Verifica el teu correu
+
+Introdueix aquest codi per confirmar que aquesta adreça de correu és teva; caduca en 15 minuts:
+
+    {{ .VerificationCode }}
+
+Si no has estat tu, ignora aquest correu: no passarà res.
+
+--
+Guilda Work · el programari de gestió de la teva gestoria
+{{- else if eq $l "en" -}}Verify your email
+
+Enter this code to confirm that this email address is yours; it expires in 15 minutes:
+
+    {{ .VerificationCode }}
+
+If this wasn't you, just ignore this email: nothing will happen.
+
+--
+Guilda Work · management software for your firm
+{{- else if eq $l "fr" -}}Vérifiez votre email
+
+Saisissez ce code pour confirmer que cette adresse email est bien la vôtre ; il expire dans 15 minutes :
+
+    {{ .VerificationCode }}
+
+Si ce n'est pas vous, ignorez ce message : il ne se passera rien.
+
+--
+Guilda Work · le logiciel de gestion de votre cabinet
+{{- else -}}Verifica tu correo
 
 Introduce este código para confirmar que esta dirección de correo es tuya; caduca en 15 minutos:
 
@@ -9,3 +39,4 @@ Si no has estat tu, ignora aquest correu. · If this wasn't you, just ignore thi
 
 --
 Guilda Work · el software de gestión de tu gestoría
+{{- end -}}

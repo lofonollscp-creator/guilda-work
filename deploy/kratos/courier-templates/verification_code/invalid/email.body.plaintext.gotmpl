@@ -1,4 +1,28 @@
-No encontramos tu cuenta
+{{- $l := printf "%v" (index .TransientPayload "lang") -}}{{- if eq $l "ca" -}}No trobem el teu compte
+
+Algú ha demanat verificar aquesta adreça de correu, però no hi ha cap compte de Guilda Work amb ella.
+
+Si no has estat tu, ignora aquest correu.
+
+--
+Guilda Work · el programari de gestió de la teva gestoria
+{{- else if eq $l "en" -}}We couldn't find your account
+
+Someone asked to verify this email address, but there is no Guilda Work account with it.
+
+If this wasn't you, just ignore this email.
+
+--
+Guilda Work · management software for your firm
+{{- else if eq $l "fr" -}}Nous ne trouvons pas votre compte
+
+Quelqu'un a demandé à vérifier cette adresse email, mais aucun compte Guilda Work n'y est associé.
+
+Si ce n'est pas vous, ignorez ce message.
+
+--
+Guilda Work · le logiciel de gestion de votre cabinet
+{{- else -}}No encontramos tu cuenta
 
 Alguien ha pedido verificar esta dirección de correo, pero no hay ninguna cuenta de Guilda Work con ella.
 
@@ -7,3 +31,4 @@ Si no has estat tu, ignora aquest correu. · If this wasn't you, just ignore thi
 
 --
 Guilda Work · el software de gestión de tu gestoría
+{{- end -}}
