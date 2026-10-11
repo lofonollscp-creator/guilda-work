@@ -102,8 +102,11 @@
   <ul class="dash-mi-dia">
     {% for t in mi_dia %}
     <li>
-      <span class="dash-mi-dia-pto"></span>
-      <a class="dash-mi-dia-txt" href="{{ url_for('tareas.editar', tarea_id=t.id) if t.mia else url_for('tareas.hoy') }}">{{ t.asunto }}<small>{{ t.vencimiento if t.vencimiento else _('Sin fecha') }}</small></a>
+      <form action="{{ url_for('tareas.completar', tarea_id=t.id) }}" method="post" class="dash-mi-dia-form">
+        <input type="hidden" name="volver_a" value="{{ url_for('inicio') }}">
+        <button type="submit" class="tarea-check dash-mi-dia-pto" title="{{ _('Marcar como completada') }}" aria-label="{{ _('Marcar como completada') }}: {{ t.asunto }}"></button>
+      </form>
+      <a class="dash-mi-dia-txt" href="{{ url_for('tareas.editar', tarea_id=t.id) if t.mia else url_for('tareas.hoy') }}">{{ t.asunto }}<small>{{ t.vencimiento|fecha_y_hora if t.vencimiento else _('Sin fecha') }}</small></a>
       {% if t.vencida %}<span class="pill prioridad-alta">{{ _('Vencida') }}</span>{% elif t.prioridad == 'alta' %}<span class="pill prioridad-alta">{{ _('Alta') }}</span>{% else %}<span class="pill">{{ _('Normal') if t.prioridad == 'normal' else _('Baja') }}</span>{% endif %}
     </li>
     {% endfor %}

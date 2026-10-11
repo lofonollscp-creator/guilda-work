@@ -250,3 +250,19 @@ def test_selector_buscable_el_panel_es_accesible_y_tiene_hoja_en_movil():
 
 def test_selector_buscable_tiene_su_prueba_de_comportamiento():
     assert (RAIZ / "scripts" / "selector_buscable_prueba.mjs").exists() and (RAIZ / "scripts" / "comprobar_selector_buscable.sh").exists()
+
+
+def test_los_desplegables_del_menu_quedan_por_encima_del_contenido_de_cristal():
+    """Con backdrop-filter cada panel crea su contexto de apilado: sin z-index propio, una tarjeta tapaba el panel de ajustes (densidad, tema)."""
+    assert re.search(r"\.icon-rail \{ z-index: \d+; \}", CAPA) and re.search(r"\.top-bar \{ position: relative; z-index: \d+; \}", CAPA)
+
+
+def test_los_desplegables_nativos_siguen_el_tema():
+    assert re.search(r'\[data-theme="dark"\] \{ color-scheme: dark; \}', CAPA) and re.search(r"select option, select optgroup \{ background-color: var\(--panel-solido\)", CAPA)
+    assert "color-scheme: dark light" not in CAPA
+
+
+def test_la_densidad_compacta_afecta_a_toda_la_aplicacion():
+    compacta = CAPA[CAPA.index('data-densidad="compacta"] { --space-4'):]
+    for selector in (".log-item", ".btn", ".dash-panel", ".tabla td", ".historial-table td", ".dash-stat"):
+        assert selector in compacta, selector

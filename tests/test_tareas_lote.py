@@ -129,3 +129,20 @@ def test_proyecto_lote_solo_toca_sus_tareas(cliente):
     with _otro_cliente("lt-12@x.com") as (ajeno, id_ajeno):
         db.asignar_tenant(id_ajeno, db.crear_tenant("Ajeno lote"))
         assert ajeno.post(f"/proyecto/{p}/lote", data={"ids": [a], "accion": "completar"}).status_code == 404
+
+
+def test_mi_dia_del_inicio_tiene_circulo_que_completa_la_tarea(cliente):
+    """El círculo de «Mi día» del inicio era un adorno (un <span>); ahora completa la tarea y vuelve al inicio (solo a rutas propias)."""
+    uid = iniciar_sesion_de_prueba(cliente, "lt-10@x.com", "contrasena123")
+    db.asignar_tenant(uid, db.crear_tenant("Despacho mi día"))
+    ayer = (date.today() - timedelta(days=1)).isoformat() + "T10:00"
+    t = db.crear_tarea_outlook(uid, "Pasar el trimestre", fecha_vencimiento=ayer)
+    html = cliente.get("/").get_data(as_text=True)
+    assert f'action="/tareas/{t}/completar"' in html and 'class="tarea-check dash-mi-dia-pto"' in html
+    assert "T10:00" not in html.split('class="dash-mi-dia"')[1].split("</ul>")[0], "la fecha no debe verse en ISO crudo"
+    r = cliente.post(f"/tareas/{t}/completar", data={"volver_a": "/"})
+    assert r.status_code == 302 and r.headers["Location"].endswith("/")
+    assert db.obtener_tarea_outlook(uid, t)["estado"] == "completada"
+    t2 = db.crear_tarea_outlook(uid, "Otra")
+    r = cliente.post(f"/tareas/{t2}/completar", data={"volver_a": "//evil.example/x"})
+    assert "evil.example" not in r.headers["Location"]

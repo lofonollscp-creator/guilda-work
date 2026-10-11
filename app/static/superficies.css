@@ -221,10 +221,7 @@ textarea, select {
   border-radius: 11px;
   padding: 9px 12px;
   box-shadow: var(--campo-sombra, none);
-  color-scheme: dark light;
 }
-:root[data-theme="light"] input, :root[data-theme="light"] select, :root[data-theme="light"] textarea { color-scheme: light; }
-:root[data-theme="dark"] input, :root[data-theme="dark"] select, :root[data-theme="dark"] textarea { color-scheme: dark; }
 input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 0.8; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):hover,
 textarea:hover, select:hover { border-color: color-mix(in srgb, var(--text-muted) 35%, var(--glass-border)); }
@@ -491,3 +488,42 @@ td.mono, .historial-table td.mono, .log-time { white-space: nowrap; font-variant
 .selbus-hoja .selbus-opcion { padding-block: 13px; }
 @keyframes selbus-sube { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .selbus-panel, .selbus-panel.selbus-hoja { animation: none; } }
+
+/* ---- Desplegables nativos: el panel de opciones sigue el tema (antes salía blanco con letras claras ilegibles en oscuro) ---------- */
+:root { color-scheme: light dark; }
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+select option, select optgroup { background-color: var(--panel-solido); color: var(--text); }
+select option:checked { background-color: color-mix(in srgb, var(--primary) 30%, var(--panel-solido)); }
+select option:disabled { color: var(--text-muted); }
+
+/* ---- «Mi día» del inicio: el círculo completa la tarea ---------------------------------------------------------------------------------- */
+.dash-mi-dia-form { margin: 0; display: inline-flex; }
+.tarea-check.dash-mi-dia-pto { width: 22px; height: 22px; border: 1.5px solid var(--text-muted); background: transparent; padding: 0; }
+.tarea-check.dash-mi-dia-pto:hover { border-color: var(--primary-text); background: color-mix(in srgb, var(--primary) 22%, transparent); }
+.tarea-check.dash-mi-dia-pto:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); }
+
+/* ---- Densidad «Compacta» (botón del panel de ajustes): antes solo afectaba a la lista de tareas; ahora a toda la aplicación -------- */
+:root[data-densidad="compacta"] { --space-4: 12px; --space-5: 18px; --space-6: 24px; }
+:root[data-densidad="compacta"] body { font-size: 14px; }
+:root[data-densidad="compacta"] .content { padding-block: 16px; }
+:root[data-densidad="compacta"] .page-header { margin-bottom: 16px; }
+:root[data-densidad="compacta"] .page-header h1 { font-size: 1.5em; }
+:root[data-densidad="compacta"] .dash-panel, :root[data-densidad="compacta"] .quick-card, :root[data-densidad="compacta"] .filters,
+:root[data-densidad="compacta"] .tarjeta, :root[data-densidad="compacta"] .menu-card, :root[data-densidad="compacta"] .edit-form { padding: 12px 14px; }
+:root[data-densidad="compacta"] .dash-mi-dia li, :root[data-densidad="compacta"] .dash-venc li { padding-block: 6px; }
+:root[data-densidad="compacta"] .log-item { padding: 6px 12px; margin-bottom: 3px; gap: 8px; }
+:root[data-densidad="compacta"] .btn { padding: 6px 12px; }
+:root[data-densidad="compacta"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+:root[data-densidad="compacta"] textarea, :root[data-densidad="compacta"] select { padding: 6px 10px; }
+:root[data-densidad="compacta"] .historial-table th, :root[data-densidad="compacta"] .historial-table td, :root[data-densidad="compacta"] .tabla th, :root[data-densidad="compacta"] .tabla td { padding-block: 6px; }
+:root[data-densidad="compacta"] .categorias-rejilla, :root[data-densidad="compacta"] .dash-stats, :root[data-densidad="compacta"] .dash-acciones { gap: 10px; }
+:root[data-densidad="compacta"] .dash-stat { padding: 8px 12px; }
+:root[data-densidad="compacta"] .articulos-lista { gap: 4px; }
+:root[data-densidad="compacta"] .tareas-tarjeta { padding: 8px 10px; gap: 5px; }
+:root[data-densidad="compacta"] .selbus-opcion { padding-block: 5px; }
+
+/* ---- Capas: con desenfoque cada panel crea su propio contexto de apilado; el menú lateral y la barra superior (con sus desplegables:
+   ajustes, densidad, notificaciones, «+ Nuevo») deben quedar SIEMPRE por encima del contenido, no tapados por una tarjeta de cristal. ---- */
+.icon-rail { z-index: 60; }
+.top-bar { position: relative; z-index: 50; }

@@ -812,6 +812,9 @@ def completar(tarea_id: int):
         return _volver_con_error(MENSAJE_BLOQUEADA)
     db.completar_tarea_outlook(g.usuario_id, tarea_id)
     _avisar_desbloqueos(g.usuario_id, tarea_id, previa is not None and previa["estado"] == "completada")
+    volver = request.form.get("volver_a") or ""
+    if volver.startswith("/") and not volver.startswith("//"):      # solo rutas de esta aplicación
+        return redirect(volver)
     return redirect(request.referrer or url_for("tareas.listar"))
 
 
