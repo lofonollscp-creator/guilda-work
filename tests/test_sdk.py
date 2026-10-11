@@ -38,7 +38,8 @@ def test_el_cliente_de_python_tiene_un_metodo_por_operacion_y_compila(spec):
     modulo = _modulo_python(spec)
     ids = {op["id"] for op in sdk_generador.operaciones(spec)}
     metodos = {n for n in vars(modulo["Cliente"]) if not n.startswith("_")}
-    assert ids <= metodos and len(ids) == 236
+    en_el_spec = sum(1 for ops in spec["paths"].values() for m, op in ops.items() if m in {"get", "post", "put", "patch", "delete"})
+    assert ids <= metodos and len(ids) == en_el_spec >= 237       # un método por operación, sin fijar la cifra (crece con la API)
     assert {"paginar", "sincronizar_desde"} <= metodos and "verificar_firma_webhook" in modulo and "ErrorGuilda" in modulo
     import inspect
     firma = inspect.signature(modulo["Cliente"].crear_nota)

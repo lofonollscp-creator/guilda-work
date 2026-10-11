@@ -390,7 +390,7 @@ PAGINAS = [
                 "<code>error_interno</code>. Algunos errores de validación añaden <code>campo</code>."},
             {"type": "h2", "id": "contrato-openapi", "text": "El contrato OpenAPI"},
             {"type": "p", "html":
-                "<code>/api/v1/openapi.json</code> describe <b>las 236 operaciones</b>: cuerpo de la petición (JSON o multipart, con sus campos "
+                "<code>/api/v1/openapi.json</code> describe <b>todas las operaciones</b>: cuerpo de la petición (JSON o multipart, con sus campos "
                 "obligatorios), parámetros de consulta, cabeceras, cada código de respuesta con su esquema, los errores con su "
                 "<code>codigo</code>, el área de token que exige cada ruta (<code>x-area</code>) y ejemplos de las operaciones principales. "
                 "Se genera <b>del propio código</b> de la API (las columnas de las tablas dan los esquemas de las entidades), así que no puede "
