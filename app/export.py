@@ -115,3 +115,17 @@ def generar_resumen_automatico_si_hace_falta(dias_atras: int = 1, mantener_dias:
             continue
         if fecha_archivo < limite:
             f.unlink(missing_ok=True)
+
+
+def a_pdf(usuario_id: int, desde=None, hasta=None, categoria_id=None) -> bytes:
+    """Informe del histórico en PDF: una fila por registro, con el mismo filtro que el CSV."""
+    from . import generador_documentos
+
+    data = construir_export(usuario_id, desde, hasta, categoria_id)
+    columnas = ["Origen", "Texto / tarea", "Categoría", "Estado", "Inicio", "Fin", "Duración"]
+    filas = []
+    for r in data["registros"]:
+        seg = r.get("duracion_segundos")
+        dur = f"{int(seg) // 3600} h {int(seg) % 3600 // 60:02d} min" if seg else ""
+        filas.append([r.get("origen"), (r.get("texto_o_nombre") or "")[:300], r.get("categoria"), r.get("estado"), r.get("timestamp_inicio"), r.get("timestamp_fin"), dur])
+    return generador_documentos.tabla_a_pdf("Informe de Guilda Work", columnas, filas, notas=f"Periodo: {desde or 'inicio'} a {hasta or 'hoy'}")

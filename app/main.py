@@ -35,7 +35,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
@@ -1465,6 +1465,10 @@ def exportar():
         contenido = export.a_csv(g.usuario_id, desde, hasta, categoria_id)
         mimetype = "text/csv"
         nombre_archivo = "guilda_work_export.csv"
+    elif formato == "pdf":
+        contenido = export.a_pdf(g.usuario_id, desde, hasta, categoria_id)
+        mimetype = "application/pdf"
+        nombre_archivo = "guilda_work_informe.pdf"
     elif formato == "md":
         contenido = export.a_markdown(g.usuario_id, desde, hasta, categoria_id)
         mimetype = "text/markdown"
@@ -1479,6 +1483,17 @@ def exportar():
         mimetype=mimetype,
         headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"},
     )
+
+
+@app.route("/informe-ia/pdf", methods=["POST"])
+@login_required
+def informe_ia_pdf():
+    """PDF del informe de IA que se acaba de generar en pantalla (el servidor no lo guarda: llega en el formulario)."""
+    texto = (request.form.get("texto") or "").strip()
+    if not texto:
+        abort(400)
+    contenido = generador_documentos.texto_a_pdf(_("Informe de Guilda Work"), texto, notas=_("Informe redactado con IA; revísalo antes de usarlo."))
+    return Response(contenido, mimetype="application/pdf", headers={"Content-Disposition": "attachment; filename=guilda_work_informe_ia.pdf"})
 
 
 @app.route("/importar", methods=["GET"])

@@ -7924,3 +7924,15 @@ msgstr "Connectez-vous au portail avec votre email : nous vous enverrons un lien
 
 msgid "Tienes una respuesta nueva en Guilda Work"
 msgstr "Vous avez une nouvelle réponse dans Guilda Work"
+
+msgid "Informe de Guilda Work"
+msgstr "Rapport Guilda Work"
+
+msgid "Informe redactado con IA; revísalo antes de usarlo."
+msgstr "Rapport rédigé avec l'IA ; relisez-le avant de l'utiliser."
+
+msgid "Descargar informe en PDF"
+msgstr "Télécharger le rapport en PDF"
+
+msgid "Descargar PDF"
+msgstr "Télécharger le PDF"

@@ -25,6 +25,7 @@
   <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label>
   <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
   {% if desde or hasta %}<a class="btn btn-ghost" href="{{ url_for('fichaje.historial') }}">{{ _('Limpiar') }}</a>{% endif %}
+  <a class="btn btn-ghost" href="{{ url_for('fichaje.historial_pdf', desde=desde or none, hasta=hasta or none) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Descargar PDF') }}</a>
 </form>
 
 {% if not fichajes %}

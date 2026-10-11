@@ -7,6 +7,8 @@ import io
 import json
 from datetime import datetime, timedelta
 
+from xml.sax.saxutils import escape as _esc
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
@@ -244,10 +246,10 @@ def a_pdf(tenant_id: int | None, desde: str | None = None, hasta: str | None = N
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title="Registro de fichaje")
     estilos = getSampleStyleSheet()
     elementos = [
-        Paragraph(f"Registro de fichaje — {empresa}", estilos["Title"]),
+        Paragraph(_esc(f"Registro de fichaje — {empresa}"), estilos["Title"]),
     ]
     if identificacion:
-        elementos.append(Paragraph(identificacion, estilos["Normal"]))
+        elementos.append(Paragraph(_esc(identificacion), estilos["Normal"]))
     elementos.append(Paragraph(periodo, estilos["Normal"]))
     elementos.append(Spacer(1, 0.6 * cm))
 

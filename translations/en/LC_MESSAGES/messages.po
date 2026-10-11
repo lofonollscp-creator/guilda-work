@@ -7839,3 +7839,15 @@ msgstr "Sign in to the portal with your email: we'll send you an access link."
 
 msgid "Tienes una respuesta nueva en Guilda Work"
 msgstr "You have a new reply in Guilda Work"
+
+msgid "Informe de Guilda Work"
+msgstr "Guilda Work report"
+
+msgid "Informe redactado con IA; revísalo antes de usarlo."
+msgstr "Report written with AI; review it before using it."
+
+msgid "Descargar informe en PDF"
+msgstr "Download report as PDF"
+
+msgid "Descargar PDF"
+msgstr "Download PDF"

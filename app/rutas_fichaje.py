@@ -133,6 +133,14 @@ def historial():
     )
 
 
+@fichaje_bp.route("/historial.pdf")
+@login_required
+def historial_pdf():
+    """Mi registro horario (solo el propio, mismo filtro de fechas) en PDF."""
+    contenido = fichaje_export.a_pdf(g.tenant_id, request.args.get("desde") or None, request.args.get("hasta") or None, g.usuario_id)
+    return Response(contenido, mimetype="application/pdf", headers={"Content-Disposition": "attachment; filename=mis_fichajes.pdf"})
+
+
 @fichaje_bp.route("/mis-datos", methods=["GET", "POST"])
 @login_required
 def mis_datos():

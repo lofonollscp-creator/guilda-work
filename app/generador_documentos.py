@@ -7,6 +7,7 @@ de aquí. Mismo criterio "puro Python, sin binario de sistema externo" que
 app/fichaje_export.py:a_pdf (reportlab) -- ver requirements.txt."""
 import csv
 import io
+from xml.sax.saxutils import escape as _esc
 
 from docx import Document
 from openpyxl import Workbook
@@ -105,9 +106,9 @@ def tabla_a_pdf(titulo: str, columnas: list[str], filas: list[list], notas: str 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=orientacion(A4), title=titulo)
     estilos = getSampleStyleSheet()
-    elementos = [Paragraph(titulo, estilos["Title"])]
+    elementos = [Paragraph(_esc(titulo), estilos["Title"])]
     if notas:
-        elementos.append(Paragraph(notas, estilos["Normal"]))
+        elementos.append(Paragraph(_esc(notas), estilos["Normal"]))
     elementos.append(Paragraph(f"Generado: {db.now_iso()}", estilos["Normal"]))
     elementos.append(Spacer(1, 0.6 * cm))
 
@@ -121,5 +122,21 @@ def tabla_a_pdf(titulo: str, columnas: list[str], filas: list[list], notas: str 
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f8fa")]),
     ]))
     elementos.append(tabla)
+    doc.build(elementos)
+    return buf.getvalue()
+
+
+def texto_a_pdf(titulo: str, texto: str, notas: str | None = None) -> bytes:
+    """PDF de un texto libre (p. ej. un informe redactado por la IA): un párrafo por línea, con todo escapado."""
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, title=titulo)
+    estilos = getSampleStyleSheet()
+    elementos = [Paragraph(_esc(titulo), estilos["Title"])]
+    if notas:
+        elementos.append(Paragraph(_esc(notas), estilos["Normal"]))
+    elementos.append(Paragraph(f"Generado: {db.now_iso()}", estilos["Normal"]))
+    elementos.append(Spacer(1, 0.6 * cm))
+    for linea in texto[:60000].splitlines():
+        elementos.append(Paragraph(_esc(linea), estilos["Normal"]) if linea.strip() else Spacer(1, 0.3 * cm))
     doc.build(elementos)
     return buf.getvalue()

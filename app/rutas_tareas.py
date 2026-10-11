@@ -882,6 +882,17 @@ def exportar_carga_equipo():
     )
 
 
+@tareas_bp.route("/carga.pdf")
+@login_required
+def exportar_carga_equipo_pdf():
+    """Misma tabla que carga.csv, en PDF."""
+    from . import generador_documentos
+
+    filas = [[p["nombre"], p["abiertas"], p["atrasadas"] or 0, p["hoy"] or 0, p["en_progreso"] or 0] for p in db.carga_equipo(g.usuario_id)]
+    contenido = generador_documentos.tabla_a_pdf(_("Carga del equipo"), [_("Persona"), _("Abiertas"), _("Atrasadas"), _("Vencen hoy"), _("En progreso")], filas)
+    return Response(contenido, mimetype="application/pdf", headers={"Content-Disposition": f"attachment; filename=guilda_work_carga_equipo_{date.today():%Y-%m-%d}.pdf"})
+
+
 @tareas_bp.route("/exportar.csv")
 @login_required
 def exportar_csv():

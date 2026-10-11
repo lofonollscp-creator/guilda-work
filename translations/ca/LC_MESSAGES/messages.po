@@ -7848,3 +7848,15 @@ msgstr "Entra al portal amb el teu email: t'enviarem un enllaç d'accés."
 
 msgid "Tienes una respuesta nueva en Guilda Work"
 msgstr "Tens una resposta nova a Guilda Work"
+
+msgid "Informe de Guilda Work"
+msgstr "Informe de Guilda Work"
+
+msgid "Informe redactado con IA; revísalo antes de usarlo."
+msgstr "Informe redactat amb IA; revisa'l abans d'usar-lo."
+
+msgid "Descargar informe en PDF"
+msgstr "Descarrega l'informe en PDF"
+
+msgid "Descargar PDF"
+msgstr "Descarrega en PDF"

@@ -25,6 +25,7 @@
   {% if q or desde or hasta or categoria_id %}<a class="btn btn-ghost" href="{{ url_for('historial') }}">{{ _('Limpiar') }}</a>{% endif %}
   <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='json') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> JSON</a>
   <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='csv') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> CSV</a>
+  <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='pdf') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> PDF</a>
   <a class="btn btn-ghost" href="{{ url_for('exportar', desde=desde, hasta=hasta, categoria_id=categoria_id, formato='md') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> Markdown</a>
   <a class="btn btn-ghost" href="{{ url_for('importar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg> {{ _('Importar') }}</a>
 </form>
@@ -145,6 +146,10 @@
   {% endif %}
   {% if informe_texto %}
   <div class="ia-result">{{ informe_texto }}</div>
+  <form method="post" action="{{ url_for('informe_ia_pdf') }}">
+    <textarea name="texto" hidden>{{ informe_texto }}</textarea>
+    <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Descargar informe en PDF') }}</button>
+  </form>
   {% endif %}
 </section>
 
