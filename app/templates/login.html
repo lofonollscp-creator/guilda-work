@@ -25,6 +25,7 @@
         <p class="auth-hero-titulo">{{ _('Todo lo que usa tu gestoría, en un mismo sitio.') }}</p>
         <p class="auth-hero-texto">{{ _('Correo, tareas, calendario fiscal y firma electrónica, conectados entre sí y alojados en tu propio servidor.') }}</p>
       </div>
+      <figure class="auth-hero-foto" aria-hidden="true"><picture><source srcset="{{ url_for('static', filename='fotos/montana-login.webp') }}" type="image/webp"><img src="{{ url_for('static', filename='fotos/montana-login.jpg') }}" alt="" width="1600" height="1067" decoding="async"></picture></figure>
       <ul class="auth-hero-lista">
         <li><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{{ _('Vencimientos fiscales con aviso antes de que lleguen') }}</li>
         <li><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{{ _('Registro de jornada verificable') }}</li>
@@ -32,6 +33,7 @@
       </ul>
     </section>
     <div class="auth-panel">
+    <figure class="auth-foto-movil" aria-hidden="true"><picture><source srcset="{{ url_for('static', filename='fotos/montana-login.webp') }}" type="image/webp"><img src="{{ url_for('static', filename='fotos/montana-login.jpg') }}" alt="" width="1600" height="1067" decoding="async"></picture></figure>
     {% set segundo_factor = nodos|selectattr('group', 'in', ['totp', 'lookup_secret'])|list %}
     {% if segundo_factor %}
     <div class="auth-card">
