@@ -19,3 +19,17 @@ function actualizarTimers() {
 }
 actualizarTimers();
 setInterval(actualizarTimers, 1000);
+
+// Selector de proyecto del cronómetro: las opciones se vuelcan desde una única <template> la primera vez que se toca
+// (en cada fila serían ~40 opciones repetidas por tarea sin proyecto).
+(function () {
+  var plantilla = document.getElementById("opciones-proyectos-cronometro");
+  if (!plantilla) return;
+  function rellenar(e) {
+    var sel = e.target && e.target.closest ? e.target.closest("select[data-proyectos-perezoso]") : null;
+    if (!sel || sel.dataset.rellenado) return;
+    sel.dataset.rellenado = "1";
+    sel.appendChild(plantilla.content.cloneNode(true));
+  }
+  ["pointerdown", "focusin", "keydown"].forEach(function (tipo) { document.addEventListener(tipo, rellenar, true); });
+})();

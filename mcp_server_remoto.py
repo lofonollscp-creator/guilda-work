@@ -58,8 +58,8 @@ class VerificadorHydra(TokenVerifier):
     async def verify_token(self, token: str) -> AccessToken | None:
         personal = db.autenticar_token_completo(token)
         if personal is not None:
-            if personal.get("caducado"):
-                return None
+            if personal.get("caducado") or personal.get("ip_no_permitida"):
+                return None      # un token con IPs permitidas no sirve por MCP: aquí no se conoce la IP del cliente
             return AccessToken(token=token, client_id="token-personal", scopes=mcp_acceso.scopes_de_token_personal(personal), expires_at=None)
         introspeccion = hydra.verificar_token(token)
         if introspeccion is None:

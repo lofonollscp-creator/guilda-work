@@ -167,6 +167,24 @@ def _filas_tools_por_prefijo(prefijo: str) -> list[list[str]]:
 
 # --- Páginas -----------------------------------------------------------------
 
+def _bloques_cambios() -> list[dict]:
+    """Bloques de la página «Registro de cambios», generados de `api_versiones.HISTORIAL` (con `código` entre acentos graves)."""
+    from . import api_versiones
+
+    def _html(texto: str) -> str:
+        return re.sub(r"`([^`]+)`", r"<code>\1</code>", texto.replace("&", "&amp;").replace("<", "&lt;"))
+
+    bloques: list[dict] = [{"type": "p", "html":
+        "La cabecera <code>X-API-Version</code> lleva <code>mayor.menor</code>: el <b>menor</b> sube con cada ampliación compatible (campos y rutas "
+        "nuevos, siempre opcionales) y el <b>mayor</b> solo si algo se rompe. Programa contra <code>codigo</code> en los errores, no contra su texto. "
+        f"Versión actual: <b>{api_versiones.HISTORIAL[0][0]}</b>."}]
+    for version, fecha, cambios in api_versiones.HISTORIAL:
+        titulo = f"{version} — {fecha}" if version else f"Antes de la cabecera de versión — {fecha}"
+        bloques.append({"type": "h2", "id": "v" + (version or fecha).replace(".", "-"), "text": titulo})
+        bloques.append({"type": "table", "headers": ["Tipo", "Cambio"], "rows": [[tipo, _html(texto)] for tipo, texto in cambios]})
+    return bloques
+
+
 PAGINAS = [
     {
         "slug": "",
@@ -389,7 +407,10 @@ PAGINAS = [
             {"type": "h2", "id": "uso-externo", "text": "Uso desde integraciones externas"},
             {"type": "table", "headers": ["Mecanismo", "Cómo funciona"], "rows": [
                 ["Versión", "Cada respuesta lleva <code>X-API-Version</code> (<code>1.x</code>). El número menor sube con cada ampliación compatible; el mayor solo si algo se rompe. Los campos nuevos siempre son opcionales."],
-                ["Límite", "Por usuario (todos sus tokens suman): 600 peticiones/minuto por defecto. Cada respuesta lleva <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code> y <code>X-RateLimit-Reset</code> (segundos). Al pasarte: <code>429</code> con <code>Retry-After</code>."],
+                ["Límite", "Por usuario (todos sus tokens suman): <b>600 peticiones/minuto</b>, de ellas <b>200 escrituras</b> (POST/PUT/PATCH/DELETE) y <b>20 operaciones pesadas</b> (llamadas a la IA, exportaciones, importaciones, sincronizar un buzón, enviar correo). Cada respuesta lleva <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code> y <code>X-RateLimit-Reset</code> (segundos) del cupo más ajustado, y <code>X-RateLimit-Scope</code> (<code>total</code>, <code>escritura</code> o <code>pesada</code>). Al pasarte: <code>429</code> con <code>Retry-After</code> y el cupo en <code>cupo</code>. Una petición rechazada no gasta cupo."],
+                ["IP permitidas", "Al crear un token puedes indicar <code>ips_permitidas</code> (IP o redes CIDR, hasta 20). Desde otra dirección responde <code>403</code> con <code>codigo: ip_no_permitida</code>. Un token con IPs <b>no sirve por MCP</b> (allí no se conoce la dirección del cliente)."],
+                ["CORS (navegador)", "Por defecto la API no permite llamadas desde páginas web. Con <code>origenes_cors</code> (orígenes exactos como <code>https://panel.ejemplo.com</code>, hasta 10, sin comodines) el token puede usarse desde esas páginas: la respuesta devuelve <code>Access-Control-Allow-Origin</code> con ese origen. El preflight (<code>OPTIONS</code>) solo se concede a orígenes que algún token vivo admite. Evita poner un token en el código de una web pública: úsalo desde un servidor siempre que puedas."],
+                ["Estado del servicio", "<code>GET /api/v1/health</code> (sin token) devuelve <code>200</code> con <code>{\"estado\": \"ok\"}</code> si el servicio atiende y la base de datos responde, y <code>503</code> si no. Pensado para Uptime Kuma o un balanceador."],
                 ["Idempotencia", "En cualquier <code>POST</code> añade <code>Idempotency-Key: &lt;cadena única&gt;</code>: si reintentas la misma petición (corte de red) devuelve la respuesta original con <code>Idempotent-Replay: true</code> en vez de crear un duplicado. La misma clave con otro cuerpo da <code>422</code>. Vale 24 h; los errores 5xx no se guardan."],
                 ["Caché", "Las lecturas <code>GET</code> llevan <code>ETag</code>; reenvíalo en <code>If-None-Match</code> y recibirás <code>304</code> sin cuerpo si no ha cambiado."],
                 ["Campos", "<code>?campos=id,asunto</code> devuelve solo esos campos, en objetos y listas."],
@@ -902,6 +923,13 @@ PAGINAS = [
         ],
     },
     {
+        "slug": "cambios",
+        "grupo": "INTEGRACIÓN",
+        "titulo": "Registro de cambios",
+        "descripcion": "Qué ha cambiado en la API en cada versión (cabecera X-API-Version).",
+        "bloques": _bloques_cambios(),
+    },
+    {
         "slug": "webhooks",
         "grupo": "INTEGRACIÓN",
         "titulo": "Webhooks",
@@ -1299,6 +1327,7 @@ PAGINAS = [
             {"type": "h2", "id": "api-y-ayuda", "text": "API y ayuda"},
             {"type": "table", "headers": ["Variable", "Para qué"], "rows": [
                 ["<code>GUILDA_API_LIMITE_POR_MINUTO</code>", "Peticiones por minuto y persona en <code>/api/v1</code> (600 por defecto)."],
+                ["<code>GUILDA_API_LIMITE_ESCRITURAS_POR_MINUTO</code>, <code>GUILDA_API_LIMITE_PESADAS_POR_MINUTO</code>", "Cupos propios de las escrituras (200) y de las operaciones pesadas (20) por minuto y persona."],
                 ["<code>GUILDA_LIMITER_URI</code>", "Almacén de los límites de uso (en memoria por defecto; con varios procesos, Redis)."],
                 ["<code>GUILDA_FICHAJE_AVISO_HORAS</code>", "Horas de jornada abierta tras las que se avisa de una salida olvidada."],
                 ["<code>GUILDA_FIREBASE_CREDENTIALS_PATH</code>", "Ruta al JSON de cuenta de servicio de Firebase para las notificaciones push a la app móvil. Sin ella, el push queda desactivado (las notificaciones dentro de la app siguen funcionando)."],

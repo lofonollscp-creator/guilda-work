@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_tarea_fila.html" import fila, defecto_eliminar with context %}
+{% from "_tarea_fila.html" import fila, defecto_eliminar, opciones_proyectos with context %}
 {% block title %}{{ _('Tareas') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -135,6 +135,7 @@
 {% else %}
 {% if aviso %}<p class="muted" role="status">{{ aviso }}</p>{% endif %}
 {% include "_tareas_lote.html" %}
+{{ opciones_proyectos() }}
 <ul class="log-list" {{ defecto_eliminar() }}>
   {% for t in tareas %}
   {{ fila(t, estados, cronometros, checklists, menus) }}

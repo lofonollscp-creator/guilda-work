@@ -14,7 +14,7 @@ TEMAS = [
     ("Poner el servidor en marcha", ["Elegir proveedor", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "Dimensionar", "Migrar de sslip.io"]),
     ("Resto del stack y copias de seguridad", ["8.", "9."]),
     ("Producto y operación (backoffice)", ["Backoffice independiente", "Comunicados", "Modo mantenimiento", "Puesta en marcha guiada", "Tope de consumo"]),
-    ("API, MCP y seguridad de acceso", ["10.", "API ", "API:", "Tokens de API", "Fase 0 de OAuth2", "Hydra sin", "MCP:", "OpenAPI", "SDK "]),
+    ("API, MCP y seguridad de acceso", ["10.", "API ", "API:", "Estado del servicio", "Tokens de API", "Fase 0 de OAuth2", "Hydra sin", "MCP:", "OpenAPI", "SDK "]),
     ("Documentación y ayuda", ["Ayuda contextual"]),
     ("Otros", ["Fuera de alcance"]),
 ]

@@ -28,6 +28,9 @@ DISCO_ROJO_PORCENTAJE = 5
 DISCO_AMBAR_PORCENTAJE = 15
 WEBHOOKS_AMBAR = 1
 WEBHOOKS_ROJO = 10
+ERRORES_VENTANA_MIN = 15
+ERRORES_AMBAR = 3
+ERRORES_ROJO = 10
 
 # Nombre del latido -> etiqueta. El intervalo esperado lo da cada tarea al registrarse.
 # Los textos van como funciones para traducirlos en el momento de mostrarlos.
@@ -133,6 +136,17 @@ def _estado_bd() -> dict:
     if wal.exists():
         tamano += wal.stat().st_size
     return _item("Servidor", "bd", _("Tamaño de la base de datos"), VERDE, _("%(mb)s MB.", mb=f"{tamano / 1024 / 1024:.1f}"))
+
+
+def _estado_errores(ahora: datetime) -> dict:
+    """Ráfaga de respuestas 5xx del servidor en los últimos minutos (ámbar desde 3, rojo desde 10)."""
+    r = db.resumen_errores_servidor((ahora - timedelta(minutes=ERRORES_VENTANA_MIN)).isoformat(timespec="seconds"))
+    n = r["total"]
+    estado = VERDE if n < ERRORES_AMBAR else (AMBAR if n < ERRORES_ROJO else ROJO)
+    detalle = _("%(n)s error(es) 5xx en los últimos %(min)s min.", n=n, min=ERRORES_VENTANA_MIN)
+    if r["ruta"] and n:
+        detalle += " " + _("Más repetido: %(ruta)s (%(veces)s).", ruta=r["ruta"], veces=r["repeticiones"])
+    return _item("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), estado, detalle)
 
 
 def _estado_correo(ahora: datetime) -> list[dict]:
@@ -267,6 +281,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Copias de seguridad", "backup", _("Última copia de seguridad"), lambda: _estado_backup(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
+    _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))
     _seguro("Servidor", "certificados", _("Certificados HTTPS"), lambda: _estado_certificados(ahora))
     _seguro("Servidor", "caducidades", _("Caducidades configuradas"), lambda: _estado_caducidades(ahora))
     _seguro("Correo", "correo", _("Cuentas de correo"), lambda: _estado_correo(ahora))

@@ -14,23 +14,26 @@ Formato de respuesta uniforme: `{"ok": true, "data": ...}` en éxito,
 `abort()`, 405, etc.) se convierte también a ese mismo formato mediante el
 errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 """
+import logging
 import base64
 import hashlib
 import json
 import sqlite3
 from datetime import datetime, timedelta
 
-from flask import Blueprint, Response, abort, g, jsonify, request, stream_with_context, url_for
+from flask import Blueprint, Response, abort, g, jsonify, make_response, request, stream_with_context, url_for
 from werkzeug.exceptions import HTTPException
 
 from . import correo, db, eventos, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
+logger = logging.getLogger("guilda")
+
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.3"
+API_VERSION = "1.4"
 
 
 _CODIGOS_HTTP = {
@@ -60,11 +63,42 @@ def _integridad(e: sqlite3.IntegrityError):
     return _err("Alguno de los valores enviados no es válido (revisa campos como estado o prioridad).", 400, "valor_invalido")
 
 
+_CORS_METODOS = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+_CORS_ENVIAR = "Authorization, Content-Type, Idempotency-Key, X-Request-Id, If-None-Match"
+_CORS_LEER = "X-Request-Id, X-API-Version, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Total-Count, ETag, Retry-After, Idempotent-Replay"
+
+
+def _poner_cors(respuesta, origen: str):
+    respuesta.headers["Access-Control-Allow-Origin"] = origen      # nunca `*`: es el origen exacto que el token admite
+    respuesta.headers["Vary"] = "Origin"
+    respuesta.headers["Access-Control-Expose-Headers"] = _CORS_LEER
+    return respuesta
+
+
+@api_bp.before_request
+def _preflight_cors():
+    """Responde al preflight de un navegador (`OPTIONS` con `Origin`). No lleva token, así que solo se concede si ALGÚN token
+    vivo admite ese origen; la decisión de verdad la toma cada petición con el token que usa (ver `_cabeceras_api`)."""
+    if request.method != "OPTIONS" or not request.headers.get("Access-Control-Request-Method"):
+        return None
+    respuesta = make_response("", 204)
+    origen = request.headers.get("Origin", "")
+    if origen and db.origen_cors_conocido(origen):
+        _poner_cors(respuesta, origen)
+        respuesta.headers["Access-Control-Allow-Methods"] = _CORS_METODOS
+        respuesta.headers["Access-Control-Allow-Headers"] = _CORS_ENVIAR
+        respuesta.headers["Access-Control-Max-Age"] = "600"
+    return respuesta
+
+
 @api_bp.after_request
 def _cabeceras_api(respuesta):
     """Versión de la API, cuota restante, y ETag/304 en lecturas JSON (ahorra descargas repetidas a la app móvil y a
     integraciones externas que sondean)."""
     respuesta.headers["X-API-Version"] = API_VERSION
+    origen = request.headers.get("Origin")
+    if origen and origen in (g.get("origenes_cors_token") or []):
+        _poner_cors(respuesta, origen)
     if g.get("token_id"):
         try:
             db.registrar_uso_token(g.token_id, respuesta.status_code)
@@ -73,6 +107,7 @@ def _cabeceras_api(respuesta):
     limite = g.get("api_limite")
     if limite:
         respuesta.headers["X-RateLimit-Limit"], respuesta.headers["X-RateLimit-Remaining"], respuesta.headers["X-RateLimit-Reset"] = (str(x) for x in limite)
+        respuesta.headers["X-RateLimit-Scope"] = g.get("api_cupo", "total")
     if request.method == "GET" and respuesta.status_code == 200 and respuesta.mimetype == "application/json" and not respuesta.is_streamed:
         etag = '"' + hashlib.sha1(respuesta.get_data()).hexdigest()[:20] + '"'
         respuesta.headers["ETag"] = etag
@@ -257,7 +292,9 @@ def logout():
 @token_required
 def listar_tokens():
     """Tokens de acceso del usuario (nunca el token ni su hash)."""
-    return _ok([{**dict(t), "areas": json.loads(t["areas"]) if t["areas"] else []} for t in db.listar_tokens_api(g.usuario_id)])
+    return _ok([{**dict(t), "areas": json.loads(t["areas"]) if t["areas"] else [],
+                 "origenes_cors": json.loads(t["origenes_cors"]) if t["origenes_cors"] else [],
+                 "ips_permitidas": json.loads(t["ips_permitidas"]) if t["ips_permitidas"] else []} for t in db.listar_tokens_api(g.usuario_id)])
 
 
 @api_bp.route("/tokens", methods=["POST"])
@@ -265,8 +302,10 @@ def listar_tokens():
 def crear_token():
     """Crea otro token (p. ej. para una integración). Cuerpo: `nombre`; `permisos` (`completo` | `solo_lectura`);
     `areas` (lista: notas, tareas, correo, fiscal, fichaje, tiquets, ia, avisos; vacío = todas); y la caducidad con
-    `caduca_dias` (1-3650) o `caduca_en` (fecha ISO). El token en claro solo se devuelve aquí, una vez. Un token de
-    solo lectura o limitado a áreas no puede llamar a esto."""
+    `caduca_dias` (1-3650) o `caduca_en` (fecha ISO). Restricciones de red opcionales: `origenes_cors` (orígenes web
+    exactos que pueden usar el token desde un navegador, p. ej. `https://panel.ejemplo.com`) e `ips_permitidas` (IP o
+    redes CIDR desde las que puede usarse; un token con IPs no sirve por MCP). El token en claro solo se devuelve aquí,
+    una vez. Un token de solo lectura o limitado a áreas no puede llamar a esto."""
     datos = _body()
     permisos = datos.get("permisos") or "completo"
     if permisos not in db.PERMISOS_TOKEN_API:
@@ -279,14 +318,22 @@ def crear_token():
             return _err("caduca_dias debe ser un entero entre 1 y 3650.", 400, "caducidad_invalida", "caduca_dias")
         caduca_en = (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds")
     try:
-        token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=datos.get("areas"), caduca_en=caduca_en)
+        token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=datos.get("areas"), caduca_en=caduca_en,
+                                   origenes_cors=datos.get("origenes_cors"), ips_permitidas=datos.get("ips_permitidas"))
     except ValueError as e:
-        campo = "areas" if "Áreas" in str(e) else "caduca_en"
-        return _err(str(e), 400, "areas_invalidas" if campo == "areas" else "caducidad_invalida", campo)
+        mensaje = str(e)
+        if "CORS" in mensaje:
+            return _err(mensaje, 400, "origenes_invalidos", "origenes_cors")
+        if "IP" in mensaje:
+            return _err(mensaje, 400, "ips_invalidas", "ips_permitidas")
+        campo = "areas" if "Áreas" in mensaje else "caduca_en"
+        return _err(mensaje, 400, "areas_invalidas" if campo == "areas" else "caducidad_invalida", campo)
     token_id = db.id_de_token(token)
     fila = next(t for t in db.listar_tokens_api(g.usuario_id) if t["id"] == token_id)
     return _ok({"token": token, "id": token_id, "permisos": permisos, "nombre": nombre,
-                "areas": json.loads(fila["areas"]) if fila["areas"] else [], "caduca_en": fila["caduca_en"]}, 201)
+                "areas": json.loads(fila["areas"]) if fila["areas"] else [], "caduca_en": fila["caduca_en"],
+                "origenes_cors": json.loads(fila["origenes_cors"]) if fila["origenes_cors"] else [],
+                "ips_permitidas": json.loads(fila["ips_permitidas"]) if fila["ips_permitidas"] else []}, 201)
 
 
 @api_bp.route("/tokens/<int:token_id>/uso", methods=["GET"])
@@ -1796,6 +1843,24 @@ def avatar_api(usuario_id: int):
     if not perfil["avatar_contenido"]:
         abort(404, "Este usuario no tiene avatar.")
     return Response(perfil["avatar_contenido"], mimetype=perfil["avatar_tipo_mime"])
+
+
+# --- Estado del servicio --------------------------------------------------
+
+@api_bp.route("/health", methods=["GET"])
+def estado_servicio():
+    """Comprobación de vida para monitores externos (Uptime Kuma, balanceadores). Sin token y sin datos de nadie: 200 si el servicio
+    atiende y la base de datos responde; 503 si no. Pensado para sondearse cada minuto."""
+    try:
+        conn = db.get_connection()
+        try:
+            conn.execute("SELECT 1").fetchone()
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001 -- cualquier fallo de la base de datos es "no disponible"
+        logger.exception("health: la base de datos no responde")
+        return _err("La base de datos no responde.", 503, "servicio_no_disponible")
+    return _ok({"estado": "ok", "version_api": API_VERSION, "base_de_datos": "ok"})
 
 
 # --- Documentación --------------------------------------------------------

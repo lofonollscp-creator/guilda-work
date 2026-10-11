@@ -283,7 +283,8 @@ y **caducar**. Cada operación indica su área en `x-area`; las rutas transversa
 Éxito: `{"ok": true, "data": ...}`. Error: `{"ok": false, "error": "texto", "codigo": "clave_estable", "request_id": "..."}`. **Programa contra `codigo`**, no contra el texto.
 
 ## Límites, reintentos y caché
-- **600 peticiones por minuto y usuario** (`X-RateLimit-Remaining`); al pasarte, `429` con `Retry-After`.
+- **600 peticiones por minuto y usuario**, de ellas **200 escrituras** (POST/PUT/PATCH/DELETE) y **20 operaciones pesadas** (IA, exportaciones, importaciones, sincronizar un buzón, enviar correo). `X-RateLimit-Remaining` y `X-RateLimit-Scope` indican el cupo más ajustado; al pasarte, `429` con `Retry-After` y el cupo en `cupo`.
+- **Restricciones por token**: IP permitidas (`ips_permitidas`) y orígenes web para navegador (`origenes_cors`); `GET /health` sirve para monitorizar.
 - **Idempotencia**: en cualquier `POST` envía `Idempotency-Key` para reintentar sin duplicar.
 - **Caché**: los `GET` llevan `ETag`; reenvíalo en `If-None-Match` y recibirás `304`.
 - **Paginación**: `limit` y `offset`; el total llega en `X-Total-Count`. `?campos=id,nombre` devuelve solo esos campos.

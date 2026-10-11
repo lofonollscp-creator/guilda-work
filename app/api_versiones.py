@@ -1,0 +1,36 @@
+"""Historial de versiones del contrato de `/api/v1` (cabecera `X-API-Version`, `mayor.menor`). El menor sube con cada ampliación
+compatible (campos nuevos siempre opcionales); el mayor solo si algo se rompe. Alimenta la página «Registro de cambios» de /docs.
+
+Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo exige. La primera entrada es la más reciente."""
+
+# (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
+HISTORIAL = [
+    ("1.4", "2026-10-11", [
+        ("Nuevo", "`GET /health`: comprobación de vida pública (sin token) para monitores externos; 200 si responde la base de datos, 503 si no."),
+        ("Nuevo", "Restricciones de red por token: `ips_permitidas` (IP o redes CIDR; `403 ip_no_permitida` desde otra dirección) y `origenes_cors` "
+                  "(orígenes web exactos que pueden usar el token desde un navegador). Un token con IPs no sirve por MCP."),
+        ("Nuevo", "Límites por tipo de petición: además de 600/min en total, 200 escrituras y 20 operaciones pesadas (IA, exportaciones, importaciones, "
+                  "sincronizar un buzón, enviar correo) por minuto. Cabecera `X-RateLimit-Scope` y campo `cupo` en el 429."),
+        ("Mejora", "OpenAPI completo (cuerpos, parámetros, respuestas, errores y ejemplos) con clientes de Python y TypeScript y colección de Postman "
+                   "generados de él, y explorador interactivo con «Probar»."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
+    ("1.3", "2026-10-10", [
+        ("Nuevo", "Errores con `codigo` estable y `request_id` (cabecera `X-Request-Id`)."),
+        ("Nuevo", "Límite de 600 peticiones por minuto y persona, `Idempotency-Key` en POST, `ETag`/`304` en lecturas y `?campos=` para devolver solo algunos campos."),
+        ("Nuevo", "`GET /sync` incremental con cursor, `X-Total-Count` y `limit`/`offset` uniformes."),
+        ("Nuevo", "Tokens con permisos (completo o solo lectura), áreas (`notas`, `tareas`, `correo`, `fiscal`, `fichaje`, `tiquets`, `ia`, `avisos`, "
+                  "`webhooks`), caducidad y registro de uso (`GET /tokens/{id}/uso`)."),
+        ("Nuevo", "`referencia_externa` en notas, tareas y clientes fiscales, con alta o actualización por `PUT .../por-referencia/{ref}`."),
+        ("Nuevo", "Webhooks con cola persistente, reintentos (6) y firma `X-Guilda-Signature-V2` con marca de tiempo; eventos `cliente.creado` y `correo.sin_respuesta`."),
+        ("Nuevo", "Paridad con la web y el MCP: tareas completas (estado con dependencias, comentarios, recordatorios, compartir, lotes, plantillas, recurrentes), "
+                  "calendario fiscal completo, adjuntos de notas, envío de correo con adjuntos y programado, y administración del fichaje."),
+    ]),
+    (None, "2026-10-06", [
+        ("Nuevo", "Tokens de solo lectura, paginación y webhooks salientes por despacho; 22 herramientas más en el MCP."),
+    ]),
+    (None, "2026-08-19", [("Nuevo", "Eventos de negocio reales para webhooks y automatizaciones.")]),
+    (None, "2026-08-15", [("Nuevo", "API del calendario fiscal para la app móvil.")]),
+    (None, "2026-08-04", [("Nuevo", "Documento OpenAPI (`/api/v1/openapi.json`), explorador de la API y búsqueda semántica.")]),
+    (None, "2026-07-16", [("Nuevo", "Primera API REST con tokens por dispositivo para la app móvil.")]),
+]

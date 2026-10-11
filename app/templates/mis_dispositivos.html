@@ -40,6 +40,14 @@
     {% for clave, info in areas_api.items() %}<label style="margin-right: 12px;"><input type="checkbox" name="areas" value="{{ clave }}"> {{ info[0] }}</label>{% endfor %}
   </fieldset>
   {% endif %}
+  <details class="muted" style="margin-top: 8px;">
+    <summary>{{ _('Restricciones de red (opcional)') }}</summary>
+    <label style="display:block; margin-top: 8px;">{{ _('Direcciones IP permitidas (una por línea o separadas por comas; si lo dejas vacío, desde cualquiera)') }}
+      <textarea name="ips_permitidas" rows="2" placeholder="203.0.113.7, 10.0.0.0/24" style="width: 100%;"></textarea></label>
+    <label style="display:block; margin-top: 8px;">{{ _('Orígenes web permitidos para llamar desde un navegador (CORS), p. ej. https://panel.ejemplo.com') }}
+      <textarea name="origenes_cors" rows="2" placeholder="https://panel.ejemplo.com" style="width: 100%;"></textarea></label>
+    <p>{{ _('Un token con IPs permitidas no se puede usar por MCP.') }}</p>
+  </details>
 </form>
 
 {% if not dispositivos %}
@@ -49,7 +57,7 @@
   {% for d in dispositivos %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ (d.nombre_dispositivo or 'Dispositivo')|avatar_color }};">{{ (d.nombre_dispositivo or 'Dispositivo')|iniciales }}</span>
-    <span class="log-text">{{ d.nombre_dispositivo or _('Dispositivo sin nombre') }}{% if d.permisos == 'solo_lectura' %} <span class="correo-hilo-contador">{{ _('Solo lectura') }}</span>{% endif %}{% if d.areas %} <span class="correo-hilo-contador">{{ d.areas|fromjson|join(', ') }}</span>{% endif %}
+    <span class="log-text">{{ d.nombre_dispositivo or _('Dispositivo sin nombre') }}{% if d.permisos == 'solo_lectura' %} <span class="correo-hilo-contador">{{ _('Solo lectura') }}</span>{% endif %}{% if d.ips_permitidas %} <span class="correo-hilo-contador" title="{{ d.ips_permitidas|fromjson|join(', ') }}">{{ _('IP restringida') }}</span>{% endif %}{% if d.origenes_cors %} <span class="correo-hilo-contador" title="{{ d.origenes_cors|fromjson|join(', ') }}">CORS</span>{% endif %}{% if d.areas %} <span class="correo-hilo-contador">{{ d.areas|fromjson|join(', ') }}</span>{% endif %}
       <span class="muted">({{ _('conectado') }} {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · {{ _('último uso') }} {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %}{% if d.llamadas_30d %} · {{ ngettext('%(n)s llamada en 30 días', '%(n)s llamadas en 30 días', d.llamadas_30d, n=d.llamadas_30d) }}{% endif %}{% if d.caduca_en %} · {{ _('caduca el %(fecha)s', fecha=d.caduca_en[:10]) }}{% endif %})</span>
     </span>
     <form action="{{ url_for('revocar_dispositivo', token_id=d.id) }}" method="post"

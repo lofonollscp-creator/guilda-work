@@ -89,3 +89,15 @@ def test_el_css_del_backoffice_no_redefine_una_clase_para_otro_componente():
     repetidos = {k for k, v in cuenta.items() if v > 1}
     revisados = {".admin-chip", ".en-linea", ".casilla"}   # se complementan (mismo componente); no cambiar el significado
     assert repetidos <= revisados, repetidos - revisados
+
+
+def test_el_registro_de_cambios_empieza_en_la_version_actual(cliente):
+    from app import api_versiones
+    from app.rutas_api import API_VERSION
+    assert api_versiones.HISTORIAL[0][0] == API_VERSION, "sube API_VERSION → añade su entrada en app/api_versiones.py"
+    versiones = [v for v, _f, _c in api_versiones.HISTORIAL if v]
+    assert versiones == sorted(versiones, key=lambda v: tuple(int(x) for x in v.split(".")), reverse=True)
+    fechas = [f for _v, f, _c in api_versiones.HISTORIAL]
+    assert fechas == sorted(fechas, reverse=True)
+    html = cliente.get("/docs/cambios").get_data(as_text=True)
+    assert API_VERSION in html and "ips_permitidas" in html and "Registro de cambios" in html

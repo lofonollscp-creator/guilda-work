@@ -235,6 +235,12 @@ def _cabecera_id_de_peticion(respuesta):
     rid = peticion.id_actual()
     if rid:
         respuesta.headers["X-Request-Id"] = rid
+    if respuesta.status_code >= 500:
+        try:  # el registro de errores nunca debe empeorar la respuesta que ya es un error
+            plantilla = request.url_rule.rule if request.url_rule else request.path.split("?")[0]
+            db.registrar_error_servidor(request.method, plantilla, respuesta.status_code, rid)
+        except Exception:  # noqa: BLE001
+            logger.warning("No se pudo anotar el error 5xx en errores_servidor", exc_info=True)
     return respuesta
 
 
@@ -1580,9 +1586,10 @@ def crear_token_desde_web():
             abort(400)
         caduca_en = (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds")
     try:
-        token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=request.form.getlist("areas"), caduca_en=caduca_en)
-    except ValueError:
-        abort(400)
+        token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=request.form.getlist("areas"), caduca_en=caduca_en,
+                                   origenes_cors=request.form.get("origenes_cors"), ips_permitidas=request.form.get("ips_permitidas"))
+    except ValueError as error:
+        abort(400, str(error))
     return render_template(
         "mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), areas_api=api_areas.AREAS,
         token_nuevo={"token": token, "nombre": nombre, "permisos": permisos, "areas": api_areas.validar_areas(request.form.getlist("areas")), "caduca_en": caduca_en},

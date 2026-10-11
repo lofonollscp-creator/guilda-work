@@ -1,6 +1,10 @@
 {# Fila de una tarea de la lista, compartida por Lista y Mi día. Los textos del borrado con «deshacer»
    (iguales en todas las filas) van una vez en el <ul> contenedor: ver macro `defecto_eliminar` más abajo. Se importa con
    contexto (necesita g.usuario_id). Variables: t, estados, cronometros, checklists. #}
+{% macro opciones_proyectos() -%}
+{% if menus %}<template id="opciones-proyectos-cronometro">{% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}</template>{% endif %}
+{%- endmacro %}
+
 {% macro defecto_eliminar() -%}
 data-eliminar-defecto data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a la papelera.') }}" data-mensaje-ok="{{ _('Tarea eliminada.') }}" data-mensaje-error="{{ _('No se pudo eliminar. Inténtalo de nuevo.') }}" data-quitar-selector="li"
 {%- endmacro %}
@@ -69,9 +73,9 @@ data-eliminar-defecto data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a 
   {% else %}
   <form class="tarea-cronometro-form" action="{{ url_for('tareas.iniciar_cronometro', tarea_id=t.id) }}" method="post">
     {% if not t.categoria_id and menus %}
-    <select name="categoria_id" required title="{{ _('Proyecto en el que registrar el tiempo') }}" aria-label="{{ _('Proyecto en el que registrar el tiempo') }}">
+    {# Las opciones no se repiten en cada fila: van una vez en <template id="opciones-proyectos-cronometro"> y timer.js las vuelca al tocar el selector. #}
+    <select name="categoria_id" required data-proyectos-perezoso title="{{ _('Proyecto en el que registrar el tiempo') }}" aria-label="{{ _('Proyecto en el que registrar el tiempo') }}">
       <option value="">{{ _('Proyecto...') }}</option>
-      {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
     </select>
     {% endif %}
     <button type="submit" class="btn btn-ghost" title="{{ _('Iniciar el cronómetro') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Cronómetro') }}</button>

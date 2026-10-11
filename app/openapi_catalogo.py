@@ -172,7 +172,7 @@ BINARIAS: dict[str, str] = {
     "fichaje_admin_csv": "text/csv", "fichaje_admin_pdf": "application/pdf", "fichaje_admin_json": "application/json",
 }
 STREAMS = {"enviar_mensaje_ia_stream", "confirmar_ia_stream"}
-PUBLICAS = {"login", "registro", "openapi_json"}
+PUBLICAS = {"login", "registro", "openapi_json", "estado_servicio"}
 BINARIAS["exportar"] = "application/octet-stream"
 JSON_SIN_SOBRE = {"openapi_json"}           # devuelven el documento tal cual, sin `{"ok": ..., "data": ...}`
 RESPUESTAS.update({
@@ -180,6 +180,8 @@ RESPUESTAS.update({
     "listar_herramientas": ("Herramienta", True), "buscar_destinatarios_recientes": ("DestinatarioReciente", True), "listar_carpetas_correo": ("Carpeta", True),
     "actividad_de_tarea": ("ActividadTarea", True),
 })
+ESQUEMAS["EstadoServicio"] = {"type": "object", "properties": {"estado": {"type": "string", "enum": ["ok"], "description": "`ok` si el servicio atiende peticiones."}, "version_api": {"type": "string", "description": "Versión del contrato (`X-API-Version`)."}, "base_de_datos": {"type": "string", "enum": ["ok"], "description": "La base de datos responde."}}}
+RESPUESTAS["estado_servicio"] = ("EstadoServicio", False)
 ESQUEMAS.update({
     "ConfigRecordatorios": {"type": "object", "properties": {"dias_antes": {"type": "array", "items": {"type": "integer"}}, "dias_despues": {"type": "array", "items": {"type": "integer"}},
                             "avisar_equipo": {"type": "boolean"}, "asunto": {"type": "string"}, "cuerpo": {"type": "string"}}},
@@ -232,6 +234,7 @@ _TIPOS = {
     "adjuntos": {"type": "array", "items": {"type": "object", "properties": {"nombre": {"type": "string"}, "tipo": {"type": "string"}, "contenido_base64": {"type": "string", "format": "byte"}}}},
     "porcentaje_completado": {"type": "integer", "minimum": 0, "maximum": 100}, "estimacion_min": {"type": "integer", "minimum": 1}, "anio": {"type": "integer"},
     "limit": {"type": "integer", "minimum": 1}, "offset": {"type": "integer", "minimum": 0}, "caduca_dias": {"type": "integer", "minimum": 1, "maximum": 3650},
+    "origenes_cors": {"type": "array", "items": {"type": "string"}, "maxItems": 10}, "ips_permitidas": {"type": "array", "items": {"type": "string"}, "maxItems": 20},
     "seguimiento_dias": {"type": "integer", "minimum": 1, "maximum": 30}, "crear_dias_antes": {"type": "integer"}, "vence_dias_antes": {"type": "integer"},
     "permisos": {"type": "string", "enum": ["completo", "solo_lectura"]}, "nivel": {"type": "string", "enum": ["info", "aviso", "critico"]},
     "prioridad": {"type": "string", "enum": ["baja", "normal", "alta"]}, "idioma": {"type": "string", "enum": ["es", "ca", "en", "fr"]},
@@ -251,6 +254,8 @@ DESCRIPCIONES: dict[str, str] = {
     "nombre_dispositivo": "Nombre para reconocer este dispositivo o integración.", "categoria_id": "Id del proyecto.", "proyecto_id": "Id del proyecto.", "cliente_id": "Id del cliente fiscal.",
     "cuenta_id": "Id de la cuenta de correo.", "referencia_externa": "Tu propio identificador (hasta 120 caracteres, único por usuario o despacho): sirve para sincronizar con otro sistema sin duplicar.",
     "areas": "Áreas a las que se limita el token: notas, tareas, correo, fiscal, fichaje, tiquets, ia, avisos, webhooks. Vacío = todas.", "permisos": "`solo_lectura` solo puede hacer GET.",
+    "origenes_cors": "Orígenes web exactos (`https://panel.ejemplo.com`) que pueden usar este token desde un navegador. Sin comodines; vacío = ninguno.",
+    "ips_permitidas": "IP o redes CIDR desde las que se puede usar el token (`203.0.113.7`, `10.0.0.0/24`). Vacío = cualquiera. Un token con IPs no sirve por MCP.",
     "caduca_dias": "El token caduca a los N días.", "caduca_en": "Fecha y hora de caducidad (ISO).", "q": "Texto a buscar.", "limit": "Máximo de filas (hasta 1000).", "offset": "Filas a saltar.",
     "campos": "Lista de campos separados por comas: devuelve solo esos.", "desde": "Desde esta fecha (inclusive).", "hasta": "Hasta esta fecha (exclusive).", "estado": "Estado.",
     "ids": "Ids sobre los que actuar (máximo 200).", "accion": "Acción a aplicar.", "valor": "Valor de la acción (según la acción).", "modelo": "Modelo fiscal (p. ej. 303).",

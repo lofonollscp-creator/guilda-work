@@ -7469,3 +7469,27 @@ msgstr "Zone"
 
 msgid "Ayuda sobre esta pantalla"
 msgstr "Aide sur cet écran"
+
+msgid "Errores del servidor (5xx)"
+msgstr "Erreurs du serveur (5xx)"
+
+msgid "%(n)s error(es) 5xx en los últimos %(min)s min."
+msgstr "%(n)s erreur(s) 5xx au cours des %(min)s dernières min."
+
+msgid "Más repetido: %(ruta)s (%(veces)s)."
+msgstr "Le plus fréquent : %(ruta)s (%(veces)s)."
+
+msgid "Restricciones de red (opcional)"
+msgstr "Restrictions réseau (facultatif)"
+
+msgid "Direcciones IP permitidas (una por línea o separadas por comas; si lo dejas vacío, desde cualquiera)"
+msgstr "Adresses IP autorisées (une par ligne ou séparées par des virgules ; si vide, depuis n'importe laquelle)"
+
+msgid "Orígenes web permitidos para llamar desde un navegador (CORS), p. ej. https://panel.ejemplo.com"
+msgstr "Origines web autorisées à appeler depuis un navigateur (CORS), p. ex. https://panel.exemple.com"
+
+msgid "Un token con IPs permitidas no se puede usar por MCP."
+msgstr "Un jeton avec des IP autorisées ne peut pas être utilisé via MCP."
+
+msgid "IP restringida"
+msgstr "IP restreinte"

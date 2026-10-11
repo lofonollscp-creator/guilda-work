@@ -20,7 +20,7 @@ AREAS: dict[str, tuple[str, tuple[str, ...]]] = {
 }
 
 # Siempre permitido (no expone datos de negocio): documentación, identidad propia y cierre de sesión.
-_LIBRES = ("openapi.json", "auth", "perfil", "avatar", "herramientas", "dispositivos-push", "onboarding")
+_LIBRES = ("openapi.json", "health", "auth", "perfil", "avatar", "herramientas", "dispositivos-push", "onboarding")
 
 _AREA_DE_SEGMENTO = {segmento: area for area, (_d, segmentos) in AREAS.items() for segmento in segmentos}
 

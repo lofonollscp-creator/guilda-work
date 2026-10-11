@@ -7384,3 +7384,27 @@ msgstr "Area"
 
 msgid "Ayuda sobre esta pantalla"
 msgstr "Help for this screen"
+
+msgid "Errores del servidor (5xx)"
+msgstr "Server errors (5xx)"
+
+msgid "%(n)s error(es) 5xx en los últimos %(min)s min."
+msgstr "%(n)s 5xx error(s) in the last %(min)s min."
+
+msgid "Más repetido: %(ruta)s (%(veces)s)."
+msgstr "Most frequent: %(ruta)s (%(veces)s)."
+
+msgid "Restricciones de red (opcional)"
+msgstr "Network restrictions (optional)"
+
+msgid "Direcciones IP permitidas (una por línea o separadas por comas; si lo dejas vacío, desde cualquiera)"
+msgstr "Allowed IP addresses (one per line or comma-separated; if left empty, from any)"
+
+msgid "Orígenes web permitidos para llamar desde un navegador (CORS), p. ej. https://panel.ejemplo.com"
+msgstr "Web origins allowed to call from a browser (CORS), e.g. https://panel.example.com"
+
+msgid "Un token con IPs permitidas no se puede usar por MCP."
+msgstr "A token with allowed IPs cannot be used over MCP."
+
+msgid "IP restringida"
+msgstr "IP restricted"

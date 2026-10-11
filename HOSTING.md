@@ -48,6 +48,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [MCP: medido, limitado y auditado](#mcp-medido-limitado-y-auditado)
 - [OpenAPI completo y contrato de la API](#openapi-completo-y-contrato-de-la-api)
 - [SDK de Python y TypeScript y colección de Postman](#sdk-de-python-y-typescript-y-colección-de-postman)
+- [Estado del servicio, errores 5xx, límites por tipo y restricciones de token](#estado-del-servicio-errores-5xx-límites-por-tipo-y-restricciones-de-token)
 
 **Documentación y ayuda**
 - [Ayuda contextual (enlaces al centro de ayuda)](#ayuda-contextual-enlaces-al-centro-de-ayuda)
@@ -2840,3 +2841,9 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - Las notas tienen su artículo (`trabajo-diario/notas`).
 
 - `GUILDA_FIREBASE_CREDENTIALS_PATH`: ruta al JSON de cuenta de servicio de Firebase (Firebase Console → Project Settings → Service accounts → Generate new private key) para el push a la app móvil. Sin ella, `app/push.py` no envía nada y las notificaciones dentro de la app siguen funcionando.
+
+## Estado del servicio, errores 5xx, límites por tipo y restricciones de token
+- `GET /api/v1/health` (público): `200` si responde la app y la base de datos, `503` si no. Para Uptime Kuma (monitor HTTP cada minuto, esperado `200`) o un balanceador.
+- Tabla `errores_servidor` (5xx con la plantilla de la ruta, sin identificadores ni consulta; 7 días). El panel Salud del backoffice añade «Errores del servidor (5xx)»: ámbar desde 3 en 15 min, rojo desde 10; el vigilante diario envía correo en rojo (una vez al día por motivo). Requiere reiniciar `guilda-work` (migra la tabla).
+- Límites de la API por persona: 600/min en total, 200 de escritura y 20 «pesadas» (`GUILDA_API_LIMITE_POR_MINUTO`, `GUILDA_API_LIMITE_ESCRITURAS_POR_MINUTO`, `GUILDA_API_LIMITE_PESADAS_POR_MINUTO`). Las cabeceras informan del cupo más ajustado y `X-RateLimit-Scope` dice cuál es.
+- Tokens: `ips_permitidas` y `origenes_cors` (columnas `tokens_api.ips_permitidas/origenes_cors`, migran al reiniciar). La IP real sale de `ProxyFix(x_for=1)` (Caddy). Un token con IPs se rechaza en el MCP.

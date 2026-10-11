@@ -1135,6 +1135,18 @@ CREATE TABLE IF NOT EXISTS latidos (
     intervalo_segundos INTEGER NOT NULL DEFAULT 0
 );
 
+-- Respuestas 5xx del servidor (panel de salud y alerta por ráfaga de errores). Solo se guarda la plantilla de la ruta, nunca
+-- la URL con identificadores ni la consulta. Se purga a los 7 días.
+CREATE TABLE IF NOT EXISTS errores_servidor (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    creado_en TEXT NOT NULL,
+    metodo TEXT NOT NULL,
+    ruta TEXT NOT NULL,
+    estado INTEGER NOT NULL,
+    request_id TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_errores_servidor_fecha ON errores_servidor (creado_en);
+
 -- Avisos del vigilante de salud ya enviados (uno por motivo y día).
 CREATE TABLE IF NOT EXISTS salud_alertas (
     motivo TEXT NOT NULL,
@@ -1726,6 +1738,8 @@ def init_db() -> None:
         _asegurar_columna(conn, "tokens_api", "areas", "TEXT")
         _asegurar_columna(conn, "tokens_api", "caduca_en", "TEXT")
         _asegurar_columna(conn, "tokens_api", "ultima_ip", "TEXT")
+        _asegurar_columna(conn, "tokens_api", "origenes_cors", "TEXT")
+        _asegurar_columna(conn, "tokens_api", "ips_permitidas", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "in_reply_to", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "referencias", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "hilo_clave", "TEXT")
@@ -3350,16 +3364,20 @@ PERMISOS_TOKEN_API = ("completo", "solo_lectura")
 
 def crear_token_api(
     usuario_id: int, nombre_dispositivo: str | None = None, permisos: str = "completo",
-    areas=None, caduca_en: str | None = None,
+    areas=None, caduca_en: str | None = None, origenes_cors=None, ips_permitidas=None,
 ) -> str:
     """`permisos`: "completo" (como siempre) o "solo_lectura" (solo GET: lo aplica auth.token_required).
     `areas`: lista de áreas de app/api_areas.py a las que se limita el token (vacío = todas).
-    `caduca_en`: fecha/hora ISO a partir de la cual deja de valer (vacío = no caduca, solo por inactividad)."""
-    from . import api_areas
+    `caduca_en`: fecha/hora ISO a partir de la cual deja de valer (vacío = no caduca, solo por inactividad).
+    `origenes_cors`: orígenes web que pueden llamar a la API con este token desde un navegador (vacío = ninguno).
+    `ips_permitidas`: IP o redes CIDR desde las que se puede usar (vacío = cualquiera); un token con IPs no sirve por MCP."""
+    from . import api_areas, token_restricciones
 
     if permisos not in PERMISOS_TOKEN_API:
         raise ValueError("Permisos de token no válidos.")
     areas = api_areas.validar_areas(areas)
+    origenes_cors = token_restricciones.validar_origenes(origenes_cors)
+    ips_permitidas = token_restricciones.validar_ips(ips_permitidas)
     if caduca_en:
         try:
             caduca_en = datetime.fromisoformat(str(caduca_en)).isoformat(timespec="seconds")
@@ -3373,9 +3391,10 @@ def crear_token_api(
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en, permisos, areas, caduca_en) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso(), permisos, json.dumps(areas) if areas else None, caduca_en),
+            "INSERT INTO tokens_api (usuario_id, token_hash, nombre_dispositivo, creado_en, permisos, areas, caduca_en, origenes_cors, ips_permitidas) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (usuario_id, _hash_token(token), nombre_dispositivo, now_iso(), permisos, json.dumps(areas) if areas else None, caduca_en,
+             json.dumps(origenes_cors) if origenes_cors else None, json.dumps(ips_permitidas) if ips_permitidas else None),
         )
         conn.commit()
         return token
@@ -3427,7 +3446,7 @@ def autenticar_token_completo(token: str, ip: str | None = None) -> dict | None:
     conn = get_connection()
     try:
         fila = conn.execute(
-            "SELECT id, usuario_id, creado_en, ultimo_uso_en, permisos, areas, caduca_en FROM tokens_api WHERE token_hash = ?",
+            "SELECT id, usuario_id, creado_en, ultimo_uso_en, permisos, areas, caduca_en, origenes_cors, ips_permitidas FROM tokens_api WHERE token_hash = ?",
             (_hash_token(token),),
         ).fetchone()
         if fila is None:
@@ -3440,11 +3459,39 @@ def autenticar_token_completo(token: str, ip: str | None = None) -> dict | None:
             conn.execute("DELETE FROM tokens_api WHERE id = ?", (fila["id"],))
             conn.commit()
             return None
+        ips = json.loads(fila["ips_permitidas"]) if fila["ips_permitidas"] else []
+        from . import token_restricciones
+        if not token_restricciones.ip_permitida(ip, ips):
+            return {"ip_no_permitida": True}      # no cuenta como uso ni actualiza la última IP: no es una llamada legítima
         conn.execute("UPDATE tokens_api SET ultimo_uso_en = ?, ultima_ip = COALESCE(?, ultima_ip) WHERE id = ?", (ahora, ip, fila["id"]))
         conn.commit()
-        return {"usuario_id": fila["usuario_id"], "permisos": fila["permisos"], "areas": json.loads(fila["areas"]) if fila["areas"] else [], "token_id": fila["id"]}
+        return {"usuario_id": fila["usuario_id"], "permisos": fila["permisos"], "areas": json.loads(fila["areas"]) if fila["areas"] else [], "token_id": fila["id"],
+                "origenes_cors": json.loads(fila["origenes_cors"]) if fila["origenes_cors"] else []}
     finally:
         conn.close()
+
+
+_CACHE_ORIGENES: dict[str, tuple[float, bool]] = {}
+
+
+def origen_cors_conocido(origen: str) -> bool:
+    """¿Algún token vivo admite este origen? Solo sirve para contestar el preflight (que no lleva token); la decisión
+    real la toma cada petición con SU token. Con caché de 30 s."""
+    import time as _t
+
+    guardado = _CACHE_ORIGENES.get(origen)
+    if guardado and _t.monotonic() - guardado[0] < 30:
+        return guardado[1]
+    conn = get_connection()
+    try:
+        filas = conn.execute("SELECT origenes_cors FROM tokens_api WHERE origenes_cors IS NOT NULL AND (caduca_en IS NULL OR caduca_en > ?)", (now_iso(),)).fetchall()
+    finally:
+        conn.close()
+    conocido = any(origen in json.loads(f["origenes_cors"]) for f in filas)
+    _CACHE_ORIGENES[origen] = (_t.monotonic(), conocido)
+    if len(_CACHE_ORIGENES) > 200:
+        _CACHE_ORIGENES.clear()
+    return conocido
 
 
 def registrar_uso_token(token_id: int, status: int) -> None:
@@ -3529,7 +3576,7 @@ def listar_tokens_api(usuario_id: int):
     conn = get_connection()
     try:
         return conn.execute(
-            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos, areas, caduca_en, ultima_ip, "
+            "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos, areas, caduca_en, ultima_ip, origenes_cors, ips_permitidas, "
             "COALESCE((SELECT SUM(llamadas) FROM tokens_api_uso x WHERE x.token_id = tokens_api.id AND x.dia >= date('now', 'localtime', '-29 day')), 0) AS llamadas_30d "
             "FROM tokens_api WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
             (usuario_id,),
@@ -10536,6 +10583,37 @@ def registrar_latido(nombre: str, ok: bool, intervalo_segundos: int, detalle: st
                 (now_iso(), (detalle or None) and detalle[:300], intervalo_segundos, nombre),
             )
         conn.commit()
+    finally:
+        conn.close()
+
+
+ERRORES_SERVIDOR_RETENCION_DIAS = 7
+
+
+def registrar_error_servidor(metodo: str, ruta: str, estado: int, request_id: str | None = None) -> None:
+    """Anota una respuesta 5xx. `ruta` debe ser la plantilla (`/api/v1/tareas/<int:id>`), no la URL real."""
+    ahora = datetime.now()
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO errores_servidor (creado_en, metodo, ruta, estado, request_id) VALUES (?, ?, ?, ?, ?)",
+            (ahora.isoformat(timespec="seconds"), metodo[:10], ruta[:160], int(estado), (request_id or "")[:64] or None),
+        )
+        conn.execute("DELETE FROM errores_servidor WHERE creado_en < ?", ((ahora - timedelta(days=ERRORES_SERVIDOR_RETENCION_DIAS)).isoformat(timespec="seconds"),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def resumen_errores_servidor(desde: str) -> dict:
+    """Errores 5xx desde una fecha ISO: total y la ruta que más se repite."""
+    conn = get_connection()
+    try:
+        total = conn.execute("SELECT COUNT(*) FROM errores_servidor WHERE creado_en >= ?", (desde,)).fetchone()[0]
+        top = conn.execute(
+            "SELECT metodo, ruta, COUNT(*) AS n FROM errores_servidor WHERE creado_en >= ? GROUP BY metodo, ruta ORDER BY n DESC LIMIT 1", (desde,)
+        ).fetchone()
+        return {"total": total, "ruta": f"{top['metodo']} {top['ruta']}" if top else None, "repeticiones": top["n"] if top else 0}
     finally:
         conn.close()
 

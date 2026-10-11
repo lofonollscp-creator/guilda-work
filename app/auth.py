@@ -15,6 +15,7 @@ decoradores de arriba: rutas_api.py necesita decorar vistas con
 quien luego llama a `limiter.init_app(app)`."""
 import hashlib
 import os
+import re
 import threading
 import time
 from collections import deque
@@ -45,17 +46,43 @@ def reiniciar_limite_api() -> None:
         _ventanas.clear()
 
 
-def _consumir_cupo(usuario_id: int) -> tuple[bool, int, int]:
-    """(permitido, restantes, segundos hasta liberar un hueco)."""
+API_LIMITE_ESCRITURAS_POR_MINUTO = int(os.environ.get("GUILDA_API_LIMITE_ESCRITURAS_POR_MINUTO", "200"))
+API_LIMITE_PESADAS_POR_MINUTO = int(os.environ.get("GUILDA_API_LIMITE_PESADAS_POR_MINUTO", "20"))
+
+# Rutas caras (llamadas al modelo de IA, exportaciones, importaciones, sincronizar un buzón, enviar correo): cupo propio y bajo.
+_PESADA = re.compile(r"/ia/(?:mensaje|confirmar)(?:/stream)?$|/exportar|/importar|/informe|/sincronizar$|/correo/enviar$")
+
+
+def tipo_de_peticion(metodo: str, ruta: str) -> str:
+    """`pesada` (rutas caras), `escritura` (el resto de POST/PUT/PATCH/DELETE) o `lectura`."""
+    if _PESADA.search(ruta):
+        return "pesada"
+    return "escritura" if metodo in ("POST", "PUT", "PATCH", "DELETE") else "lectura"
+
+
+def _consumir_cupo_api(usuario_id: int, tipo: str) -> tuple[bool, int, int, int, str]:
+    """Cuenta la petición en el total de la persona y en el cupo de su tipo. Si alguno está agotado no gasta ninguno.
+    Devuelve (permitido, límite aplicable, restantes, segundos hasta liberar un hueco, tipo del cupo que manda)."""
     ahora = time.monotonic()
+    cupos = [("total", usuario_id, API_LIMITE_POR_MINUTO)]
+    if tipo == "pesada":
+        cupos.append(("pesada", f"api:pesada:{usuario_id}", API_LIMITE_PESADAS_POR_MINUTO))
+    elif tipo == "escritura":
+        cupos.append(("escritura", f"api:escritura:{usuario_id}", API_LIMITE_ESCRITURAS_POR_MINUTO))
     with _lock_ventanas:
-        ventana = _ventanas.setdefault(usuario_id, deque())
-        while ventana and ahora - ventana[0] >= 60:
-            ventana.popleft()
-        if len(ventana) >= API_LIMITE_POR_MINUTO:
-            return False, 0, max(1, int(60 - (ahora - ventana[0])) + 1)
-        ventana.append(ahora)
-        return True, API_LIMITE_POR_MINUTO - len(ventana), max(1, int(60 - (ahora - ventana[0])))
+        ventanas = []
+        for nombre, clave, limite in cupos:
+            ventana = _ventanas.setdefault(clave, deque())
+            while ventana and ahora - ventana[0] >= 60:
+                ventana.popleft()
+            if len(ventana) >= limite:
+                return False, limite, 0, max(1, int(60 - (ahora - ventana[0])) + 1), nombre
+            ventanas.append((nombre, ventana, limite))
+        for _n, ventana, _l in ventanas:
+            ventana.append(ahora)
+        # El que más cerca está de agotarse es el que se informa en las cabeceras.
+        nombre, ventana, limite = min(ventanas, key=lambda v: v[2] - len(v[1]))
+        return True, limite, limite - len(ventana), max(1, int(60 - (ahora - ventana[0]))), nombre
 
 
 def consumir_cupos_nombrados(cupos: list[tuple[str, int]]) -> tuple[bool, int]:
@@ -114,8 +141,11 @@ def token_required(vista):
             return _error_api("Token inválido o ausente.", 401, "token_invalido")
         if autenticado.get("caducado"):
             return _error_api("Este token ha caducado. Crea otro desde Mis dispositivos.", 401, "token_caducado")
+        if autenticado.get("ip_no_permitida"):
+            return _error_api("Este token no se puede usar desde esta dirección IP.", 403, "ip_no_permitida")
         usuario_id, permisos = autenticado["usuario_id"], autenticado["permisos"]
         g.token_id, g.areas_token = autenticado["token_id"], autenticado["areas"]
+        g.origenes_cors_token = autenticado.get("origenes_cors", [])
         # Un token de solo lectura únicamente puede consultar (GET): cualquier
         # otro método se rechaza aquí, antes de llegar a la vista. La única
         # excepción es cerrar su propia sesión (revocarse a sí mismo).
@@ -141,10 +171,13 @@ def token_required(vista):
         g.gestor_fichajes = db.es_gestor_fichajes(usuario_id)
         g.supervisor_tenant = db.es_supervisor_tenant(usuario_id)
 
-        permitido, restantes, reinicio = _consumir_cupo(usuario_id)
-        g.api_limite = (API_LIMITE_POR_MINUTO, restantes, reinicio)
+        tipo = tipo_de_peticion(request.method, request.path)
+        permitido, limite, restantes, reinicio, cupo = _consumir_cupo_api(usuario_id, tipo)
+        g.api_limite = (limite, restantes, reinicio)
+        g.api_cupo = cupo
         if not permitido:
-            respuesta, status = _error_api(f"Has superado el límite de {API_LIMITE_POR_MINUTO} peticiones por minuto.", 429, "limite_excedido")
+            cual = {"total": "peticiones", "escritura": "escrituras", "pesada": "operaciones pesadas (IA, exportaciones, sincronizaciones, envíos)"}[cupo]
+            respuesta, status = _error_api(f"Has superado el límite de {limite} {cual} por minuto.", 429, "limite_excedido", cupo=cupo)
             respuesta.headers["Retry-After"] = str(reinicio)
             return respuesta, status
 
