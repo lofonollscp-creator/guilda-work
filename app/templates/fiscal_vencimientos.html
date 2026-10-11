@@ -116,7 +116,7 @@
 {% endif %}
 {% endif %}
 
-<script nonce="{{ csp_nonce }}">
+<script nonce="{{ g.csp_nonce }}">
   // Master-detail: clic en el nombre del cliente pide el resumen por
   // AJAX (app/rutas_fiscal.py:resumen_cliente_json -- sin llamadas a
   // APIs externas, solo BD, para que abrir el panel sea instantáneo) y

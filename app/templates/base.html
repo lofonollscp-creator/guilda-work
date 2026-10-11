@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/ManropeVariable.woff2') }}" crossorigin>
-  <script nonce="{{ csp_nonce }}">
+  <script nonce="{{ g.csp_nonce }}">
     // Aplica el tema guardado ANTES de que se pinte la página, para que no
     // haya un parpadeo del tema equivocado. "system" no fija el atributo:
     // deja que decida @media (prefers-color-scheme) en el CSS.
@@ -387,7 +387,7 @@
   </div>
   {% endif %}
 
-  <script nonce="{{ csp_nonce }}">
+  <script nonce="{{ g.csp_nonce }}">
     // Textos traducidos que necesitan los .js sueltos de app/static/ (no
     // pasan por Jinja, así que no pueden llamar a {{ _('...') }} ellos
     // mismos) -- ver app/static/toasts.js, correo_seleccion.js,
@@ -418,7 +418,7 @@
   <script src="{{ url_for('static', filename='busqueda.js') }}"></script>
   <script src="{{ url_for('static', filename='notificaciones.js') }}"></script>
   {% if chatwoot_website_token %}
-  <script nonce="{{ csp_nonce }}">
+  <script nonce="{{ g.csp_nonce }}">
     // Widget de soporte (Chatwoot, Fase 7g/7c.3) — identifica al usuario
     // ya logueado y le añade el atributo personalizado "tenant" (si
     // tiene uno asignado, ver `python cli.py asignar-tenant`) para que

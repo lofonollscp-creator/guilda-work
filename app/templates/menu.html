@@ -210,7 +210,7 @@
 
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
 <script src="{{ url_for('static', filename='menu_icono.js') }}"></script>
-<script nonce="{{ csp_nonce }}">
+<script nonce="{{ g.csp_nonce }}">
   document.querySelectorAll(".empty-state-guiado [data-enfocar]").forEach(function (boton) {
     boton.addEventListener("click", function () {
       var campo = document.getElementById(boton.dataset.enfocar);

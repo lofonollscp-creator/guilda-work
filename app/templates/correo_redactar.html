@@ -137,7 +137,7 @@
 <script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_destinatarios.js') }}"></script>
 {% if plantillas %}
-<script nonce="{{ csp_nonce }}">
+<script nonce="{{ g.csp_nonce }}">
 (function () {
   const select = document.getElementById("correo-plantillas-select");
   const editor = document.getElementById("correo-editor-cuerpo");
@@ -168,7 +168,7 @@
 })();
 </script>
 {% endif %}
-<script nonce="{{ csp_nonce }}">
+<script nonce="{{ g.csp_nonce }}">
 (function () {
   const boton = document.getElementById("correo-guardar-borrador");
   const form = boton ? boton.closest("form") : null;

@@ -108,3 +108,24 @@ def test_perfil_mis_datos_enlaza_las_exportaciones_que_existen(cliente):
 @pytest.mark.parametrize("valor,esperado", [("08:30", "08:30"), ("8:30", None), ("24:00", None), ("12:60", None), ("", None), (None, None), (" 07:05 ", "07:05")])
 def test_hora_valida(valor, esperado):
     assert db._hora_valida(valor) == esperado
+
+
+def test_ningun_script_en_linea_sale_con_el_nonce_vacio(cliente):
+    """Regresión de la CSP forzada: `{% from "x.html" import macro %}` importa SIN el contexto de la petición, así que `{{ csp_nonce }}` salía vacío
+    dentro de las macros (los comentarios de tareas) y el navegador bloqueaba su script. Las plantillas usan `g.csp_nonce`, que siempre existe."""
+    import re
+    from pathlib import Path
+
+    for fichero in (Path(__file__).resolve().parent.parent / "app" / "templates").glob("*.html"):
+        assert 'nonce="{{ csp_nonce }}"' not in fichero.read_text(encoding="utf-8"), f"{fichero.name}: usa g.csp_nonce"
+    uid = _uid(cliente, "aj-nonce@x.com")
+    tarea = db.crear_tarea_outlook(uid, "Con comentarios")
+    for ruta in ("/", "/tareas/", f"/tareas/{tarea}/editar", f"/tareas/{tarea}", "/ajustes", "/ajustes/perfil", "/tareas/tablero"):
+        r = cliente.get(ruta)
+        if r.status_code != 200:
+            continue
+        html = r.get_data(as_text=True)
+        assert 'nonce=""' not in html, ruta
+        nonce_cabecera = re.search(r"nonce-([A-Za-z0-9_-]+)", r.headers.get("Content-Security-Policy", "") + r.headers.get("Content-Security-Policy-Report-Only", ""))
+        for n in re.findall(r"<script nonce=\"([^\"]+)\"", html):
+            assert nonce_cabecera and n == nonce_cabecera.group(1), ruta

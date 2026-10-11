@@ -169,7 +169,7 @@
 </div>
 
 <script src="{{ url_for('static', filename='calendario_tareas.js') }}"></script>
-<script nonce="{{ csp_nonce }}">
+<script nonce="{{ g.csp_nonce }}">
 // Capas del calendario unificado: se recuerdan en este navegador.
 (function () {
   var cajas = document.querySelectorAll(".cal-capas input[data-capa]");
