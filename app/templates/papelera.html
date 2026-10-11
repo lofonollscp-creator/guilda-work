@@ -12,7 +12,7 @@
 <p class="empty-lane">{{ _('La papelera está vacía.') }}</p>
 {% else %}
 <form method="post" action="{{ url_for('vaciar_papelera') }}"
-      onsubmit="return confirm('{{ _('¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma permanente. Esta acción no se puede deshacer.') }}');"
+      data-confirmar-envio="{{ _('¿Vaciar la papelera del todo? Se eliminará TODO lo que hay aquí de forma permanente. Esta acción no se puede deshacer.') }}"
       class="papelera-vaciar">
   <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Vaciar papelera ahora') }}</button>
 </form>
@@ -38,7 +38,7 @@
       <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_menu_definitivamente', menu_id=item.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer.') }}');">
+          data-confirmar-envio="{{ _('¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer.') }}">
       <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% elif item.origen == 'nota' %}
@@ -46,7 +46,7 @@
       <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_nota_definitivamente', nota_id=item.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar esta nota para siempre? No se puede deshacer.') }}');">
+          data-confirmar-envio="{{ _('¿Eliminar esta nota para siempre? No se puede deshacer.') }}">
       <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% elif item.origen == 'tarea_outlook' %}
@@ -54,7 +54,7 @@
       <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('tareas.eliminar_definitivamente', tarea_id=item.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}');">
+          data-confirmar-envio="{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}">
       <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% else %}
@@ -62,7 +62,7 @@
       <button type="submit" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-rotate-ccw"></use></svg> {{ _('Restaurar') }}</button>
     </form>
     <form action="{{ url_for('eliminar_tarea_definitivamente', tarea_id=item.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}');">
+          data-confirmar-envio="{{ _('¿Eliminar esto para siempre? No se puede deshacer.') }}">
       <button type="submit" class="chip-del" title="{{ _('Eliminar para siempre') }}" aria-label="{{ _('Eliminar para siempre') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
     {% endif %}

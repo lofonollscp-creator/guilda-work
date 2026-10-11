@@ -18,7 +18,7 @@
     <span class="log-time">{{ e.enviar_en[:16].replace('T', ' ') }}</span>
     <span class="log-text">{{ e.asunto }} — {{ _('Para') }}: {{ e.destinatarios }}</span>
     <form action="{{ url_for('correo.deshacer_envio', envio_id=e.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Cancelar este envío? Volverá a tus borradores.') }}');">
+          data-confirmar-envio="{{ _('¿Cancelar este envío? Volverá a tus borradores.') }}">
       <button type="submit" class="btn btn-ghost">{{ _('Cancelar envío') }}</button>
     </form>
   </li>

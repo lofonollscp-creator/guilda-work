@@ -65,7 +65,7 @@
       </span>
       <span class="log-duration">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
       {% if d.subido_por == g.usuario_id or soy_supervisor %}
-      <form action="{{ url_for('fiscal.eliminar_documento_cliente', cliente_id=cliente.id, documento_id=d.id) }}" method="post" onsubmit="return confirm('{{ _('¿Eliminar este documento del expediente?') }}');">
+      <form action="{{ url_for('fiscal.eliminar_documento_cliente', cliente_id=cliente.id, documento_id=d.id) }}" method="post" data-confirmar-envio="{{ _('¿Eliminar este documento del expediente?') }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
       {% endif %}

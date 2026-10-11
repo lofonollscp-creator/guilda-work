@@ -22,7 +22,7 @@
     </span>
     <a class="btn btn-ghost" href="{{ url_for('correo.redactar', borrador_id=b.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg> {{ _('Continuar') }}</a>
     <form action="{{ url_for('correo.eliminar_borrador', borrador_id=b.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar este borrador? No se puede deshacer.') }}');">
+          data-confirmar-envio="{{ _('¿Eliminar este borrador? No se puede deshacer.') }}">
       <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
   </li>

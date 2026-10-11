@@ -73,7 +73,7 @@
   {% endfor %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   // Filtro cliente-side por nombre y por categoría -- el catálogo es
   // pequeño (una decena de herramientas por tenant), no hace falta
   // pedirlo al servidor. Oculta la sección entera de una categoría si

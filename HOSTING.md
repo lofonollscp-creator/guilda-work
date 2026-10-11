@@ -51,6 +51,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [SDK de Python y TypeScript y colección de Postman](#sdk-de-python-y-typescript-y-colección-de-postman)
 - [Estado del servicio, errores 5xx, límites por tipo y restricciones de token](#estado-del-servicio-errores-5xx-límites-por-tipo-y-restricciones-de-token)
 - [Revisión de seguridad (2026-10-11) y limpieza de disco](#revisión-de-seguridad-2026-10-11-y-limpieza-de-disco)
+- [Política de contenido (CSP) estricta para scripts](#política-de-contenido-csp-estricta-para-scripts)
 
 **Documentación y ayuda**
 - [Ayuda contextual (enlaces al centro de ayuda)](#ayuda-contextual-enlaces-al-centro-de-ayuda)
@@ -2867,3 +2868,10 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Menor**: `DOCUMENSO_DB_PASSWORD` usa el valor por defecto del compose (la base de datos solo es alcanzable desde la red interna de Docker); conviene rotarla. Las de Baserow, Cal.com, Chatwoot, EspoCRM, Listmonk y Umami también están por defecto pero esos servicios no están desplegados.
 - **Disco**: se borraron 3,2 GB de restos de tests en `/var/tmp` (`gwt`, `gwc`) y 38 volúmenes anónimos huérfanos de FacturaScripts (1,1 GB; los datos reales están en bind mounts). `docker rm` de los contenedores de FacturaScripts pasa a `docker rm -v` para no dejar uno por cada recreación. Quedan sin tocar los volúmenes con nombre de servicios parados (Baserow, OpenProject, Paperless, ~0,5 GB).
 - **Tests**: `docker-compose.test.yml` usa bcrypt con coste mínimo y sin «Have I Been Pwned» (solo tests): cada inicio de sesión pasa de ~1,5 s a ~0,5 s. `scripts/probar.sh -n 3` los reparte en 3 procesos (necesita `pytest-xdist` en `.herramientas-test`, fuera del venv de producción).
+
+## Política de contenido (CSP) estricta para scripts
+- La app ya no tiene manejadores `on...=` ni `javascript:` en el HTML: `static/csp_compat.js` los sustituye con atributos `data-*` (`data-confirmar-envio`, `data-confirmar-clic`, `data-autoenviar`, `data-mostrar`, `data-accion`, `data-requerido-si-vacio`, `data-autoaltura`) y cada `<script>` en línea lleva `nonce="{{ csp_nonce }}"`, distinto en cada petición. Efecto secundario bueno: las confirmaciones ya no se rompen en catalán o francés con apóstrofos (antes iban dentro de una cadena JavaScript).
+- Modo con `GUILDA_CSP` (`app/seguridad_csp.py`): **`reportar`** (por defecto) manda `Content-Security-Policy-Report-Only` y el navegador avisa a `POST /csp-report` (una línea `CSP: ...` en el registro de `guilda-work`, limitado a 30/min por IP) de lo que bloquearía, sin romper nada; **`forzar`** manda `Content-Security-Policy` y bloquea; **`no`** quita la parte de scripts. Siempre se hace cumplir `frame-ancestors 'self'; object-src 'none'; base-uri 'self'`.
+- Política de scripts: `script-src 'self' 'nonce-...'`, `worker-src 'self' blob:` (la prueba de trabajo del captcha crea un Worker desde un Blob). Los estilos en línea (`style=`) siguen permitidos: es riesgo bajo y quitarlos es otro proyecto.
+- **Para pasar a `forzar`**: despliega en `reportar`, usa la app unos días (todas las pantallas que uses de verdad) y mira `journalctl -u guilda-work | grep "CSP:"`. Si no hay avisos, pon `GUILDA_CSP=forzar` en `/etc/guilda-work.env` y reinicia. Si algo se rompe, `GUILDA_CSP=reportar` lo deshace sin tocar código.
+- Pruebas: `tests/test_cabeceras_seguridad.py` (recorre todas las pantallas buscando manejadores en línea o scripts sin nonce) y `scripts/comprobar_csp_compat.sh` (jsdom en un contenedor Node desechable: confirma el comportamiento de cada `data-*`).

@@ -80,7 +80,7 @@
       <li class="log-item">
         <span class="log-text"><strong>{{ a.titulo }}</strong> — {{ a.prompt }}</span>
         <form action="{{ url_for('ia.eliminar_atajo', atajo_id=a.id) }}" method="post"
-              onsubmit="return confirm('{{ _('¿Eliminar este atajo?') }}');">
+              data-confirmar-envio="{{ _('¿Eliminar este atajo?') }}">
           <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
         </form>
       </li>

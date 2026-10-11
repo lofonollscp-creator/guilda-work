@@ -23,7 +23,7 @@
         </div>
       </form>
       <form action="{{ url_for('eliminar_menu', menu_id=menu.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}');">
+            data-confirmar-envio="{{ _('¿Eliminar el proyecto «%(nombre)s»? Se moverá a la papelera junto con todo lo registrado dentro (notas, eventos y tareas) — podrás recuperarlo desde ahí.', nombre=menu.nombre) }}">
         <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar proyecto') }}</button>
       </form>
     </div>
@@ -210,7 +210,7 @@
 
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
 <script src="{{ url_for('static', filename='menu_icono.js') }}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
   document.querySelectorAll(".empty-state-guiado [data-enfocar]").forEach(function (boton) {
     boton.addEventListener("click", function () {
       var campo = document.getElementById(boton.dataset.enfocar);

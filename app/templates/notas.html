@@ -15,7 +15,7 @@
       <label class="sr-only" for="notas-q">{{ _('Buscar nota') }}</label>
       <input type="search" id="notas-q" name="q" value="{{ q }}" placeholder="{{ _('Buscar nota') }}">
       <label class="sr-only" for="notas-proyecto">{{ _('Proyecto') }}</label>
-      <select id="notas-proyecto" name="categoria_id" onchange="this.form.requestSubmit()">
+      <select id="notas-proyecto" name="categoria_id" data-autoenviar>
         <option value="">{{ _('Todos los proyectos') }}</option>
         {% for m in menus %}<option value="{{ m.id }}" {{ 'selected' if categoria_id == m.id }}>{{ m.nombre }}</option>{% endfor %}
       </select>

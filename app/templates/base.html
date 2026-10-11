@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/ManropeVariable.woff2') }}" crossorigin>
-  <script>
+  <script nonce="{{ csp_nonce }}">
     // Aplica el tema guardado ANTES de que se pinte la página, para que no
     // haya un parpadeo del tema equivocado. "system" no fija el atributo:
     // deja que decida @media (prefers-color-scheme) en el CSS.
@@ -228,7 +228,7 @@
           </a>
           {% if modo_escritorio %}
           <form class="ajustes-panel-shutdown" action="{{ url_for('apagar') }}" method="post"
-                onsubmit="return confirm('{{ _('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.') }}');">
+                data-confirmar-envio="{{ _('¿Cerrar Guilda Work? Lo ya anotado está guardado; se cerrará el programa por completo.') }}">
             <button type="submit" class="ajustes-panel-btn">
               <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-log-out"></use></svg>
               {{ _('Cerrar programa') }}
@@ -377,7 +377,7 @@
   </div>
   {% endif %}
 
-  <script>
+  <script nonce="{{ csp_nonce }}">
     // Textos traducidos que necesitan los .js sueltos de app/static/ (no
     // pasan por Jinja, así que no pueden llamar a {{ _('...') }} ellos
     // mismos) -- ver app/static/toasts.js, correo_seleccion.js,
@@ -400,13 +400,14 @@
   <script src="{{ url_for('static', filename='barra.js') }}"></script>
   <script src="{{ url_for('static', filename='toasts.js') }}"></script>
   <script src="{{ url_for('static', filename='file_input.js') }}"></script>
+  <script src="{{ url_for('static', filename='csp_compat.js') }}"></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
   <script src="{{ url_for('static', filename='busqueda.js') }}"></script>
   <script src="{{ url_for('static', filename='notificaciones.js') }}"></script>
   {% if chatwoot_website_token %}
-  <script>
+  <script nonce="{{ csp_nonce }}">
     // Widget de soporte (Chatwoot, Fase 7g/7c.3) — identifica al usuario
     // ya logueado y le añade el atributo personalizado "tenant" (si
     // tiene uno asignado, ver `python cli.py asignar-tenant`) para que

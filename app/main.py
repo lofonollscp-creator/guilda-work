@@ -34,7 +34,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, ayuda, busqueda, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
@@ -244,6 +244,26 @@ def _cabecera_id_de_peticion(respuesta):
     return respuesta
 
 
+@app.before_request
+def _nonce_de_csp():
+    g.csp_nonce = seguridad_csp.nuevo_nonce()
+
+
+@app.context_processor
+def inyectar_nonce_de_csp():
+    return {"csp_nonce": g.get("csp_nonce", "")}
+
+
+@app.route("/csp-report", methods=["POST"])
+@limiter.limit("30 per minute")
+def informe_de_csp():
+    """Recoge los avisos del navegador sobre lo que la CSP bloquearía/bloquea. Sin autenticación (el navegador no manda cookies de
+    sesión aquí de forma fiable), limitado por IP y solo escribe una línea corta en el registro."""
+    cuerpo = request.get_json(silent=True, force=True) if request.content_length and request.content_length < 8192 else None
+    logger.warning("CSP: %s", seguridad_csp.resumir_informe(cuerpo if isinstance(cuerpo, dict) else None))
+    return "", 204
+
+
 @app.after_request
 def _cabeceras_de_seguridad(respuesta):
     """Cabeceras que impiden que otra web meta esta en un iframe (clickjacking) o que el navegador adivine tipos. Sin una CSP
@@ -253,6 +273,12 @@ def _cabeceras_de_seguridad(respuesta):
     cabeceras.setdefault("X-Content-Type-Options", "nosniff")
     cabeceras.setdefault("X-Frame-Options", "SAMEORIGIN")
     cabeceras.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    nonce = g.get("csp_nonce")
+    forma = seguridad_csp.modo()
+    if nonce and forma != "no":
+        cabecera = "Content-Security-Policy" if forma == "forzar" else "Content-Security-Policy-Report-Only"
+        cabeceras.setdefault(cabecera, seguridad_csp.politica(nonce, con_informe=forma == "reportar"))
+    # Lo que se hace cumplir SIEMPRE, también en modo informe (no puede romper nada): sin marcos ajenos, sin plugins, sin <base> ajeno.
     cabeceras.setdefault("Content-Security-Policy", "frame-ancestors 'self'; object-src 'none'; base-uri 'self'")
     if request.headers.get("X-Forwarded-Proto") == "https":
         cabeceras.setdefault("Strict-Transport-Security", "max-age=31536000")

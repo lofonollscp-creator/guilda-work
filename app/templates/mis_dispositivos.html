@@ -61,7 +61,7 @@
       <span class="muted">({{ _('conectado') }} {{ d.creado_en[:16].replace('T', ' ') }}{% if d.ultimo_uso_en %} · {{ _('último uso') }} {{ d.ultimo_uso_en[:16].replace('T', ' ') }}{% endif %}{% if d.llamadas_30d %} · {{ ngettext('%(n)s llamada en 30 días', '%(n)s llamadas en 30 días', d.llamadas_30d, n=d.llamadas_30d) }}{% endif %}{% if d.caduca_en %} · {{ _('caduca el %(fecha)s', fecha=d.caduca_en[:10]) }}{% endif %})</span>
     </span>
     <form action="{{ url_for('revocar_dispositivo', token_id=d.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en la app.', nombre=(d.nombre_dispositivo or _('este dispositivo'))) }}');">
+          data-confirmar-envio="{{ _('¿Revocar el acceso de «%(nombre)s»? Tendrá que iniciar sesión de nuevo en la app.', nombre=(d.nombre_dispositivo or _('este dispositivo'))) }}">
       <button type="submit" class="chip-del" title="{{ _('Revocar acceso') }}" aria-label="{{ _('Revocar acceso') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
   </li>

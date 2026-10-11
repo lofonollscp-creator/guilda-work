@@ -129,7 +129,7 @@
       {% if not m.es_dueno %}
       <form action="{{ url_for('proyectos.compartir', proyecto_id=p.id) }}" method="post" class="proyecto-miembro-form">
         <input type="hidden" name="usuario_id" value="{{ m.usuario_id }}">
-        <select name="rol" aria-label="{{ _('Permiso') }}" onchange="this.form.submit()">
+        <select name="rol" aria-label="{{ _('Permiso') }}" data-autoenviar="submit">
           <option value="colabora" {{ 'selected' if m.rol == 'colabora' }}>{{ _('Colabora') }}</option>
           <option value="observa" {{ 'selected' if m.rol == 'observa' }}>{{ _('Solo lectura') }}</option>
         </select>

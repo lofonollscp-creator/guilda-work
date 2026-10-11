@@ -41,7 +41,7 @@
       <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required data-destinatarios-autocomplete autocomplete="off" aria-label="{{ _('Para') }}">
       <div class="correo-autocomplete-lista"></div>
       {% if not cc and not bcc %}
-      <a class="correo-compose-cc-toggle" href="javascript:void(0)" onclick="document.getElementById('correo-compose-cc-cco').hidden = false; this.hidden = true;">Cc/Cco</a>
+      <a class="correo-compose-cc-toggle" href="#correo-compose-cc-cco" data-mostrar="correo-compose-cc-cco">Cc/Cco</a>
       {% endif %}
     </div>
     <div class="correo-compose-cc-cco" id="correo-compose-cc-cco" {% if not cc and not bcc %}hidden{% endif %}>
@@ -137,7 +137,7 @@
 <script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_destinatarios.js') }}"></script>
 {% if plantillas %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   const select = document.getElementById("correo-plantillas-select");
   const editor = document.getElementById("correo-editor-cuerpo");
@@ -168,7 +168,7 @@
 })();
 </script>
 {% endif %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   const boton = document.getElementById("correo-guardar-borrador");
   const form = boton ? boton.closest("form") : null;

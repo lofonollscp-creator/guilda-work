@@ -75,7 +75,7 @@
 {% endif %}
 
 <form class="edit-form-delete" method="post" action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=vencimiento.id) }}"
-      onsubmit="return confirm('{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}');">
+      data-confirmar-envio="{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}">
   <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar vencimiento') }}</button>
 </form>
 

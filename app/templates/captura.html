@@ -67,7 +67,7 @@
     <p class="hint" id="hint">{{ _('Enter para guardar · Esc para cancelar') }}</p>
     <p class="error" id="error" hidden>{{ _('No se pudo guardar. Comprueba tu conexión e inténtalo de nuevo.') }}</p>
   </div>
-  <script>
+  <script nonce="{{ csp_nonce }}">
     function cerrarVentana() {
       if (window.pywebview && window.pywebview.api) {
         window.pywebview.api.cerrar_captura();

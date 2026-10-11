@@ -11,7 +11,7 @@
         <small class="muted">· {{ r.canales.split(',')|map('replace', 'app', _('app y móvil'))|map('replace', 'correo', _('correo'))|join(', ') }}</small></span>
       <span class="pill">{{ _('Enviado') if r.enviado_en else _('Pendiente') }}</span>
       <form action="{{ url_for('tareas.posponer_recordatorio', recordatorio_id=r.id) }}" method="post" class="recordatorio-posponer">
-        <select name="opcion" aria-label="{{ _('Posponer') }}" onchange="this.form.requestSubmit()">
+        <select name="opcion" aria-label="{{ _('Posponer') }}" data-autoenviar>
           <option value="">{{ _('Posponer…') }}</option>
           <option value="1h">{{ _('1 hora') }}</option>
           <option value="manana">{{ _('Mañana a las 9:00') }}</option>
@@ -29,7 +29,7 @@
   {% endif %}
   {% if tarea.estado != 'completada' %}
   <form class="quick-row" action="{{ url_for('tareas.anadir_recordatorio', tarea_id=tarea.id) }}" method="post">
-    <select name="atajo" aria-label="{{ _('Atajo') }}" onchange="this.form.avisar_en.required = !this.value">
+    <select name="atajo" aria-label="{{ _('Atajo') }}" data-requerido-si-vacio="avisar_en">
       <option value="">{{ _('A una hora concreta…') }}</option>
       {% if tarea.fecha_vencimiento %}
       <option value="1d_antes">{{ _('1 día antes del vencimiento') }}</option>

@@ -1331,6 +1331,7 @@ PAGINAS = [
                 ["<code>GUILDA_LIMITER_URI</code>", "Almacén de los límites de uso (en memoria por defecto; con varios procesos, Redis)."],
                 ["<code>GUILDA_FICHAJE_AVISO_HORAS</code>", "Horas de jornada abierta tras las que se avisa de una salida olvidada."],
                 ["<code>GUILDA_FIREBASE_CREDENTIALS_PATH</code>", "Ruta al JSON de cuenta de servicio de Firebase para las notificaciones push a la app móvil. Sin ella, el push queda desactivado (las notificaciones dentro de la app siguen funcionando)."],
+                ["<code>GUILDA_CSP</code>", "Política de contenido de la app web: <code>reportar</code> (por defecto: el navegador avisa a <code>/csp-report</code> de lo que bloquearía, sin bloquear), <code>forzar</code> (bloquea los scripts que no sean del sitio ni lleven el nonce de la petición) o <code>no</code>."],
                 ["<code>GUILDA_AYUDA_URL</code>", "Dirección del centro de ayuda a la que enlaza cada pantalla (por defecto <code>https://help.guildawork.com</code>)."],
             ]},
             {"type": "h2", "id": "herramientas", "text": "Herramientas conectadas (MCP y backoffice)"},

@@ -73,10 +73,10 @@
       <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar correo...') }}" aria-label="{{ _('Buscar correo') }}" title="{{ _('Operadores: de:ana  para:luis  asunto:factura  adjunto:  es:noleido  es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nombre  categoria:Nombre') }}">
       {% if busqueda_sin_resolver %}<p class="muted texto-peligro" role="status">{{ _('No se ha encontrado una única coincidencia para: %(cosas)s', cosas=busqueda_sin_resolver|join(', ')) }}</p>{% endif %}
       <label class="correo-toolbar-check">
-        <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} onchange="this.form.requestSubmit()"> {{ _('No leídos') }}
+        <input type="checkbox" name="no_leidos" value="1" {% if solo_no_leidos %}checked{% endif %} data-autoenviar> {{ _('No leídos') }}
       </label>
       <label class="correo-toolbar-check">
-        <input type="checkbox" name="pospuestos" value="1" {% if incluir_pospuestos %}checked{% endif %} onchange="this.form.requestSubmit()"> {{ _('Pospuestos') }}
+        <input type="checkbox" name="pospuestos" value="1" {% if incluir_pospuestos %}checked{% endif %} data-autoenviar> {{ _('Pospuestos') }}
       </label>
       <details class="correo-filtros" {% if filtros %}open{% endif %}>
         <summary>{{ _('Filtros') }}{% if filtros %} ({{ filtros|length }}){% endif %}</summary>
@@ -186,7 +186,7 @@
     <div class="correo-ribbon">
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.eliminar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"
-              onsubmit="return confirm('{{ _('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).') }}');">
+              data-confirmar-envio="{{ _('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).') }}">
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Eliminar') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Eliminar') }}</span></button>
         </form>
       </div>
@@ -200,7 +200,7 @@
       {% if carpetas|length > 1 %}
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.mover_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-          <select name="carpeta_destino" class="correo-ribbon-select" onchange="this.form.requestSubmit()" aria-label="{{ _('Mover el mensaje a') }}">
+          <select name="carpeta_destino" class="correo-ribbon-select" data-autoenviar aria-label="{{ _('Mover el mensaje a') }}">
             <option value="">{{ _('Mover a…') }}</option>
             {% for f in carpetas %}
             {% if f.nombre != mensaje_seleccionado.carpeta %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endif %}
@@ -222,7 +222,7 @@
         <form action="{{ url_for('correo.destacar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-ribbon-fecha-aviso">
           <input type="hidden" name="destacado" value="on">
           <input type="date" name="fecha_aviso" value="{{ mensaje_seleccionado.fecha_aviso[:10] if mensaje_seleccionado.fecha_aviso else '' }}"
-                 title="{{ _('Fecha de aviso') }}" onchange="this.form.requestSubmit()">
+                 title="{{ _('Fecha de aviso') }}" data-autoenviar>
         </form>
         {% endif %}
       </div>
@@ -266,7 +266,7 @@
       </div>
 
       <div class="correo-ribbon-grupo">
-        <button type="button" class="correo-ribbon-btn" onclick="window.print()" title="{{ _('Imprimir') }}">
+        <button type="button" class="correo-ribbon-btn" data-accion="imprimir" title="{{ _('Imprimir') }}">
           <span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-printer"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Imprimir') }}</span>
         </button>
       </div>
@@ -412,7 +412,7 @@
       {% set previsualizable = remitente_confiable and (a.tipo_mime.startswith('image/') or a.tipo_mime == 'application/pdf') %}
       <div class="correo-adjunto {{ 'tiene-vista-previa' if previsualizable }}">
         <a class="correo-adjunto-chip" href="{{ url_adjunto }}" target="_blank" title="{{ a.nombre_archivo }}"
-           {% if not remitente_confiable %}onclick="return confirm('{{ _('Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?') }}');"{% endif %}>
+           {% if not remitente_confiable %}data-confirmar-clic="{{ _('Este adjunto viene de un remitente que no está en tu lista de confianza. ¿Abrir igualmente?') }}"{% endif %}>
           <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
         </a>
         {% if previsualizable %}
@@ -454,7 +454,7 @@
     <div class="correo-lectura-cuerpo">
       {% if cuerpo_html_mostrado %}
       <iframe class="correo-cuerpo-html" srcdoc="{{ cuerpo_html_mostrado|e }}" sandbox=""
-              onload="try { this.style.height = (this.contentWindow.document.body.scrollHeight + 24) + 'px'; } catch (e) {}"></iframe>
+              data-autoaltura></iframe>
       {% elif mensaje_seleccionado.cuerpo_texto %}
       <div class="correo-cuerpo-texto">{{ mensaje_seleccionado.cuerpo_texto }}</div>
       {% else %}

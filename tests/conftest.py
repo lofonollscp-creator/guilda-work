@@ -283,3 +283,13 @@ def webhooks_sin_hilo_de_fondo(monkeypatch):
     from app import eventos
 
     monkeypatch.setattr(eventos, "iniciar_worker", lambda: None)
+
+
+@pytest.fixture(autouse=True)
+def correo_sin_hilos_de_empuje(monkeypatch):
+    """`correo._encolar_y_lanzar` lanza un hilo que espera 1,5 s y procesa las operaciones de la cuenta N. Con bases temporales los ids se
+    repiten (cuenta 1 en cada test), así que el hilo de un test anterior podía aplicar las operaciones del siguiente y descuadrar su
+    recuento (apareció al acelerar la suite con -n). Los tests que lo necesitan llaman a `procesar_operaciones_cuenta` a mano."""
+    from app import correo
+
+    monkeypatch.setattr(correo, "_SIN_SEGUNDO_PLANO", True)

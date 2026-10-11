@@ -62,7 +62,7 @@
   {% for a in adjuntos %}
   <form action="{{ url_for('tiquets.eliminar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" method="post"
         style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"
-        onsubmit="return confirm('{{ _('¿Quitar %(nombre)s?', nombre=a.nombre_archivo) }}');">
+        data-confirmar-envio="{{ _('¿Quitar %(nombre)s?', nombre=a.nombre_archivo) }}">
     <span style="flex: 1;"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }}</span>
     <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
   </form>
@@ -71,7 +71,7 @@
 {% endif %}
 
 <form class="edit-form-delete" method="post" action="{{ url_for('tiquets.eliminar', tiquet_id=tiquet.id) }}"
-      onsubmit="return confirm('{{ _('¿Eliminar este tiquet? No se puede deshacer.') }}');">
+      data-confirmar-envio="{{ _('¿Eliminar este tiquet? No se puede deshacer.') }}">
   <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar tiquet') }}</button>
 </form>
 {% endblock %}

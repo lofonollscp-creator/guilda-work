@@ -58,7 +58,7 @@
       <span class="correo-categoria-punto" style="background: {{ cat.color }};"></span>
       <span class="log-text">{{ cat.nombre }}</span>
       <form action="{{ url_for('correo.eliminar_categoria', categoria_id=cat.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se quedan sin categoría.', nombre=cat.nombre) }}');">
+            data-confirmar-envio="{{ _('¿Eliminar la categoría «%(nombre)s»? Los mensajes que la tuvieran se quedan sin categoría.', nombre=cat.nombre) }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
@@ -97,7 +97,7 @@
     <li class="log-item">
       <span class="log-text">{{ p.nombre }}{% if p.modelo %} <span class="pill">{{ _('Modelo %(m)s', m=p.modelo) }}</span>{% endif %}</span>
       <form action="{{ url_for('correo.eliminar_plantilla', plantilla_id=p.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Eliminar la plantilla «%(nombre)s»?', nombre=p.nombre) }}');">
+            data-confirmar-envio="{{ _('¿Eliminar la plantilla «%(nombre)s»?', nombre=p.nombre) }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
@@ -125,7 +125,7 @@
       <span class="correo-categoria-punto" style="background: {{ regla.categoria_color }};"></span>
       <span class="log-text">{{ regla.remitente_patron }} &rarr; {{ regla.categoria_nombre }}</span>
       <form action="{{ url_for('correo.eliminar_regla_categoria', regla_id=regla.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Eliminar esta regla?') }}');">
+            data-confirmar-envio="{{ _('¿Eliminar esta regla?') }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
@@ -168,7 +168,7 @@
         {% if r.archivar_adjuntos %} · {{ _('archivar adjuntos en el expediente') }}{% endif %}
       </span>
       <form action="{{ url_for('correo.eliminar_regla_avanzada', regla_id=r.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Eliminar esta regla?') }}');">
+            data-confirmar-envio="{{ _('¿Eliminar esta regla?') }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
@@ -222,7 +222,7 @@
     <li class="log-item">
       <span class="log-text">{{ r.direccion }}</span>
       <form action="{{ url_for('correo.eliminar_remitente_confiable', remitente_id=r.id) }}" method="post"
-            onsubmit="return confirm('{{ _('¿Quitar «%(direccion)s» de la lista de confianza?', direccion=r.direccion) }}');">
+            data-confirmar-envio="{{ _('¿Quitar «%(direccion)s» de la lista de confianza?', direccion=r.direccion) }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
       </form>
     </li>
@@ -244,7 +244,7 @@
   {% else %}
   <form method="get" action="{{ url_for('correo.ajustes') }}" class="correo-form-campo" style="max-width: 320px;">
     <label>{{ _('Cuenta') }}</label>
-    <select name="cuenta_firma_id" onchange="this.form.requestSubmit()" aria-label="{{ _('Cuenta') }}">
+    <select name="cuenta_firma_id" data-autoenviar aria-label="{{ _('Cuenta') }}">
       {% for c in cuentas %}
       <option value="{{ c.id }}" {% if c.id == cuenta_firma_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
       {% endfor %}

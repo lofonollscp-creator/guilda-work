@@ -55,7 +55,7 @@
     {% if p.usuario_id == g.usuario_id %}
     <div class="plantilla-acciones">
       <a class="btn btn-ghost" href="{{ url_for('tareas.plantillas', editar=p.id) }}#formulario">{{ _('Editar') }}</a>
-      <form action="{{ url_for('tareas.eliminar_plantilla', plantilla_id=p.id) }}" method="post" onsubmit="return confirm('{{ _('¿Eliminar esta plantilla? Las tareas ya creadas no se tocan.') }}');">
+      <form action="{{ url_for('tareas.eliminar_plantilla', plantilla_id=p.id) }}" method="post" data-confirmar-envio="{{ _('¿Eliminar esta plantilla? Las tareas ya creadas no se tocan.') }}">
         <button type="submit" class="btn btn-ghost">{{ _('Eliminar') }}</button>
       </form>
     </div>

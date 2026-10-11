@@ -86,7 +86,7 @@
       <td>{{ _('Activa') if r.activa else _('Pausada') }}</td>
       <td>
         <form action="{{ url_for('tareas.alternar_regla_vencimiento', regla_id=r.id) }}" method="post" style="display:inline"><button type="submit" class="btn btn-ghost">{{ _('Pausar') if r.activa else _('Reanudar') }}</button></form>
-        <form action="{{ url_for('tareas.eliminar_regla_vencimiento', regla_id=r.id) }}" method="post" style="display:inline" onsubmit="return confirm('{{ _('¿Eliminar esta regla? Las tareas ya creadas se quedan.') }}');"><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></form>
+        <form action="{{ url_for('tareas.eliminar_regla_vencimiento', regla_id=r.id) }}" method="post" style="display:inline" data-confirmar-envio="{{ _('¿Eliminar esta regla? Las tareas ya creadas se quedan.') }}"><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></form>
       </td>
     </tr>
     {% endfor %}

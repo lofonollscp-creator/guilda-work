@@ -16,7 +16,7 @@
     {% if t.estado != 'completada' and t.fecha_vencimiento %}<span class="log-duration {{ 'texto-peligro' if t.fecha_vencimiento[:10] < hoy }}">{{ t.fecha_vencimiento[:10] }}</span>{% endif %}
     {% if organiza and secciones %}
     <form action="{{ url_for('proyectos.mover_tarea', proyecto_id=p.id, tarea_id=t.id) }}" method="post" class="proyecto-mover">
-      <select name="seccion_id" aria-label="{{ _('Mover a la sección') }}" onchange="this.form.submit()">
+      <select name="seccion_id" aria-label="{{ _('Mover a la sección') }}" data-autoenviar="submit">
         <option value="">{{ _('Sin sección') }}</option>
         {% for s in secciones %}<option value="{{ s.id }}" {{ 'selected' if s.id == t.seccion_id }}>{{ s.nombre }}</option>{% endfor %}
       </select>
@@ -66,7 +66,7 @@
       <div class="inline-form">
         <form action="{{ url_for('proyectos.mover_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post"><input type="hidden" name="direccion" value="arriba"><button type="submit" class="btn btn-ghost" {{ 'disabled' if loop.first }}>&uarr; {{ _('Subir') }}</button></form>
         <form action="{{ url_for('proyectos.mover_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post"><input type="hidden" name="direccion" value="abajo"><button type="submit" class="btn btn-ghost" {{ 'disabled' if loop.last }}>&darr; {{ _('Bajar') }}</button></form>
-        <form action="{{ url_for('proyectos.eliminar_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post" onsubmit="return confirm('{{ _('¿Eliminar la sección? Sus tareas no se borran.') }}');"><button type="submit" class="btn btn-stop">{{ _('Eliminar sección') }}</button></form>
+        <form action="{{ url_for('proyectos.eliminar_seccion', proyecto_id=p.id, seccion_id=s.id) }}" method="post" data-confirmar-envio="{{ _('¿Eliminar la sección? Sus tareas no se borran.') }}"><button type="submit" class="btn btn-stop">{{ _('Eliminar sección') }}</button></form>
       </div>
     </details>
     {% endif %}

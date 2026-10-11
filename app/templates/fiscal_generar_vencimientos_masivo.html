@@ -33,7 +33,7 @@
   {% endfor %}
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary"
-            onclick="return confirm('{{ _('¿Generar todos estos vencimientos? Se guardan tal cual se ven arriba, sin poder editar cada fecha antes.') }}');">
+            data-confirmar-clic="{{ _('¿Generar todos estos vencimientos? Se guardan tal cual se ven arriba, sin poder editar cada fecha antes.') }}">
       {{ _('Guardar todos los vencimientos') }}
     </button>
     <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>

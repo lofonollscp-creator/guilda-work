@@ -57,7 +57,7 @@
     <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=c.id) }}">{{ _('Generar vencimientos') }}</a>
     <a class="log-edit" href="{{ url_for('fiscal.editar_cliente', cliente_id=c.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
     <form action="{{ url_for('fiscal.eliminar_cliente', cliente_id=c.id) }}" method="post"
-          onsubmit="return confirm('{{ _('¿Eliminar este cliente fiscal? Se moverá a la papelera.') }}');">
+          data-confirmar-envio="{{ _('¿Eliminar este cliente fiscal? Se moverá a la papelera.') }}">
       <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
     </form>
   </li>
@@ -70,7 +70,7 @@
 </aside>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   // Master-detail: mismo patrón y endpoint que /fiscal/vencimientos
   // (app/rutas_fiscal.py:resumen_cliente_json) -- antes esta lista no
   // tenía ninguna vista alternativa, solo el enlace directo a la ficha
