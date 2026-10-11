@@ -241,15 +241,23 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 
 **Quién puede leer y cómo (§8.2)**: sesión de una persona del despacho (con frase de paso), asistente de IA interno (hereda la sesión), **concesiones** para MCP/API/OAuth (clave envuelta con el secreto del token) y tareas programadas (solo si el despacho las autoriza).
 
-**Qué se cifra y qué no**
-| Dato | Tratamiento |
-|---|---|
-| Contenido de documentos (clientes, expedientes, portal) | Cifrado |
-| Cuerpo y adjuntos de correo | Cifrado |
-| Asunto, remitente, destinatarios y fecha del correo | **Decisión abierta (§10.2)**: en claro (búsqueda y listados sin desbloqueo) o cifrados (máxima reserva, búsqueda solo con sesión) |
-| Nombre de archivo, categoría, fechas de documento | En claro por defecto (listar y filtrar); opción de cifrar el nombre en modo estricto |
-| Reglas y categorías automáticas del correo | Se aplican **al entrar**, con el mensaje todavía en claro en el servidor, antes de cifrar |
-| Índices de búsqueda y *embeddings* | **No** se guardan en claro: se construyen y consultan **en memoria** al desbloquear (o se guardan cifrados). Un vector en claro filtra información |
+**Tres niveles de reserva por despacho** (se elige al activar el cifrado y se puede cambiar después; el cambio re-cifra los metadatos en segundo plano y es reversible)
+
+| Dato | **Laxo** | **Medio** | **Estricto** |
+|---|---|---|---|
+| Contenido de documentos y adjuntos | Cifrado | Cifrado | Cifrado |
+| Cuerpo del correo | Cifrado | Cifrado | Cifrado |
+| Asunto del correo | En claro | **Cifrado** | Cifrado |
+| Remitente, destinatarios | En claro | En claro | **Cifrados** |
+| Fecha, carpeta, estado leído, tamaño | En claro | En claro | En claro (orden y retención; sin ellos no se puede listar ni purgar) |
+| Nombre de archivo y título de documentos/notas | En claro | **Cifrado** | Cifrado |
+| Categoría y cliente/expediente asociados | En claro | En claro | **Cifrados** (solo identificadores internos opacos en claro) |
+| Listados y búsqueda por cabecera | Sin desbloqueo | Remitente y fecha sin desbloqueo; asunto con desbloqueo | Todo con desbloqueo |
+| Índices y *embeddings* | En memoria al desbloquear (no en claro) | Igual | Igual |
+| Sugerencia de uso | Gestoría (volumen alto, poca sensibilidad por mensaje) | Inmobiliaria y despachos mixtos | Gabinete de abogados (secreto profesional) |
+
+- Las **reglas y categorías automáticas** del correo se aplican al entrar, con el mensaje aún en claro en el servidor, y su resultado se guarda con el nivel que toque; por eso funcionan igual en los tres niveles.
+- Las **notificaciones** («correo nuevo de…», vencimientos) se generan también al entrar, antes de cifrar.
 
 **Consecuencias que hay que asumir**
 - Con el despacho **bloqueado** (nadie con sesión y sin concesión activa) la IA, el MCP y las búsquedas **no ven** lo cifrado: es la garantía, no un fallo. Hay que mostrar el estado («Documentos protegidos: desbloquea para que el asistente los lea») en lugar de devolver vacío.
@@ -267,12 +275,21 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 6. **Auditoría**: cada lectura de contenido cifrado por IA/MCP/API queda en el registro de accesos (quién, qué, con qué token, cuándo). Tabla ya prevista en §8.
 7. **Límites**: alcance por **módulo y por expediente** (un MCP puede leer «Inmobiliaria» y no «Abogados»), solo lectura por defecto, y topes por token (peticiones/día, tamaño).
 
+### 8.2.1 Garantía: ningún nivel quita funciones a la IA, el MCP ni la API
+Regla de diseño: **los niveles cambian qué hay en claro en reposo, no qué se puede hacer**. Para que sea verdad y no una intención:
+1. **Una sola capa de lectura** (`almacen_seguro`): web, API, MCP, IA, exportaciones y portal piden los datos por ahí y reciben el mismo resultado en los tres niveles; nadie consulta las tablas «a pelo» para contenido protegido.
+2. **El acceso que necesita la clave la trae consigo**: la sesión de una persona, la concesión de un token (§8.2) o la concesión de servicio de una tarea programada. Con cualquiera de ellas, el nivel Estricto se comporta como el Laxo: la diferencia es solo dónde se descifra.
+3. **Búsqueda y filtros en el nivel Estricto**: un índice por despacho **en memoria**, que se construye al primer acceso con clave y se conserva con caducidad mientras haya sesión o concesión viva; las consultas posteriores son inmediatas. Objetivo a medir: < 2 s tras el calentamiento con 50.000 correos y 20.000 documentos (si no se cumple, índice cifrado por bloques).
+4. **Lo que ocurre al entrar** (reglas, categorías, notificaciones, resumen o clasificación por IA si el despacho la tiene activada) se hace con el contenido en claro **antes de cifrar**, así que no depende del nivel ni del desbloqueo.
+5. **Test de paridad** (`tests/test_paridad_niveles.py`): el mismo guion —listar, buscar por texto y por asunto, abrir, resumir con IA, herramientas MCP, endpoints de la API, exportar a PDF, portal— se ejecuta con los tres niveles y con sesión, concesión de token y concesión de servicio, y exige **resultados idénticos**. Un nivel que rompa una función no pasa la suite.
+6. **Sin acceso con clave** (nadie con sesión ni concesión viva) ningún nivel descifra: se muestra el estado de «protegido» en la interfaz, en la respuesta de la API (código y mensaje claros, no vacío) y en el asistente, con instrucciones para desbloquear.
+
 ### 8.3 Qué entra cuándo (la parte que no cabe en un día)
 - **Día 3 (obligatorio)**: toda escritura de documentos pasa por **una sola capa de almacenamiento** (`almacen_documentos`), ya preparada para cifrar. Así no habrá migración de formato después, aunque el cifrado se active más tarde.
 - **Día 7**: primitivas (par de claves, sobre, frase y recuperación, desbloqueo en memoria) + cifrado de **documentos** de clientes y expedientes + lectura de la IA interna con sesión + registro de accesos.
 - **Semana 2**: **correo cifrado** (ingreso, listados, búsqueda en memoria), **concesiones para MCP/API/Hydra**, tareas programadas con concesión de servicio, migración de lo ya guardado y panel de estado.
 - Motivo: cada pieza se puede probar de extremo a extremo; el correo y las concesiones tocan IMAP, búsqueda, OAuth y MCP a la vez y merecen su propia semana en vez de hacerse deprisa.
-- **Pruebas** de todo el bloque: ida y vuelta, clave equivocada, documento manipulado (GCM lo detecta), rotación, restauración desde copia Restic, acceso con concesión revocada, y un test que **recorre cada ruta de lectura** (web, API, MCP, IA, exportaciones, PDF, portal) y comprueba que ninguna devuelve contenido cifrado sin clave.
+- **Pruebas** de todo el bloque (incluido `test_paridad_niveles`, §8.2.1): ida y vuelta, clave equivocada, documento manipulado (GCM lo detecta), rotación, restauración desde copia Restic, acceso con concesión revocada, y un test que **recorre cada ruta de lectura** (web, API, MCP, IA, exportaciones, PDF, portal) y comprueba que ninguna devuelve contenido cifrado sin clave.
 
 ## 9. Calendario de la semana
 
@@ -300,14 +317,15 @@ Una sola **capa de informes** (PDF/CSV/XLSX) con cabecera de despacho, logo y es
 | Nombre de los módulos | **Gestoría**, **Gabinete de abogados** e **Inmobiliaria** (los tres independientes y combinables) | Ids internos `gestoria`, `abogados`, `inmobiliaria`; menú, ayuda y backoffice usan estos nombres |
 | Precio y empaquetado | **Cada módulo es un extra de pago**; el núcleo común va incluido | Cada módulo = una fila de `extras_guilda` con su `stripe_price_id`; sin plan nuevo. El backoffice ya los asigna y cobra |
 | Alcance del cifrado y acceso de máquinas | **Documentos y correos** con la clave del despacho; **IA, MCP y API del despacho pueden leer todo** mediante concesiones, con Hydra como paso previo | Diseño de §8.1–8.2; el correo cifrado y las concesiones pasan a la semana 2 (§8.3) |
+| Niveles de reserva | **Tres: Laxo, Medio y Estricto**, por despacho y cambiables; **ninguno puede quitar funciones a IA, MCP ni API** | Tabla de §8.1 y garantía con test de paridad en §8.2.1 |
 | Recuperación de la clave | **Frase de paso + clave de recuperación impresa**, mostrada una sola vez | Sin ellas los documentos son irrecuperables: el aviso al activarlo debe ser explícito y exigir confirmar que se ha guardado |
 | Orden de construcción | **Abogados antes que Inmobiliaria** | Como en el calendario (Día 4 y Día 5) |
 | Móvil | `flutter pub get` autorizado | Entra en el Día 6 (campo 2FA, tareas compartidas, resumen semanal, ausencias) |
 
 ### 10.2 Abiertas
-1. **Cabeceras del correo** (asunto, remitente, destinatarios, fecha): en claro o cifradas (§8.1). Propuesta por defecto: **en claro**, con modo estricto opcional por despacho.
-2. **Material de dominio**: **se deja «sin validar»** (decidido): plazos, festivos, plantillas y reglas de comisión se cargan como datos de ejemplo editables, marcados visiblemente como «sin validar» en la interfaz y en la ayuda, hasta que se sustituyan.
-3. **Producción (tuyo, más adelante)**: rotar la contraseña de Documenso y crear el monitor `/health` en Uptime Kuma.
+1. **Material de dominio**: **se deja «sin validar»** (decidido): plazos, festivos, plantillas y reglas de comisión se cargan como datos de ejemplo editables, marcados visiblemente como «sin validar» en la interfaz y en la ayuda, hasta que se sustituyan.
+2. **Producción (tuyo, más adelante)**: rotar la contraseña de Documenso y crear el monitor `/health` en Uptime Kuma.
+3. **Nivel por defecto de cada módulo** (propuesta, ajustable en cualquier momento): Gestoría → Laxo, Inmobiliaria → Medio, Gabinete de abogados → Estricto.
 
 ## 11. Fuera de esta semana (para no perderlo)
 
