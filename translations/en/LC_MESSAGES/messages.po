@@ -7487,3 +7487,16 @@ msgstr "The mobile app does not ask for this code yet: phones that are already s
 #: app/templates/base.html
 msgid "Abrir el menú"
 msgstr "Open the menu"
+
+#: app/templates/base.html
+msgid "Buscar…"
+msgstr "Search…"
+
+#: app/templates/base.html
+msgid "Sin resultados"
+msgstr "No results"
+
+#: app/templates/base.html
+#, python-format
+msgid "Mostrando %%s de %%s: sigue escribiendo para afinar"
+msgstr "Showing %%s of %%s: keep typing to narrow down"

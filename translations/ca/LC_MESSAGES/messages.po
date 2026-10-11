@@ -7496,3 +7496,16 @@ msgstr "L'app mòbil encara no demana aquest codi: els mòbils que ja tenen sess
 #: app/templates/base.html
 msgid "Abrir el menú"
 msgstr "Obrir el menú"
+
+#: app/templates/base.html
+msgid "Buscar…"
+msgstr "Cercar…"
+
+#: app/templates/base.html
+msgid "Sin resultados"
+msgstr "Sense resultats"
+
+#: app/templates/base.html
+#, python-format
+msgid "Mostrando %%s de %%s: sigue escribiendo para afinar"
+msgstr "Mostrant %%s de %%s: continua escrivint per afinar"

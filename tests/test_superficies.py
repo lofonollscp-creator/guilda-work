@@ -220,3 +220,33 @@ def test_texto_del_backoffice_legible_sobre_cristal(tema, texto, apagado):
 def test_dash_stat_y_chat_flotante_no_desbordan_a_320():
     assert "min(360px, calc(100vw - 24px))" in CAPA
     assert re.search(r"\.dash-stat-valor \{[^}]*white-space: normal", CAPA)
+
+
+# ---- Selector con buscador ---------------------------------------------------------------------------------------------------
+SELECTOR_JS = (RAIZ / "app" / "static" / "selector_buscable.js").read_text(encoding="utf-8")
+
+
+def test_selector_buscable_se_carga_en_las_pantallas_internas_sin_manejadores_en_linea():
+    base = (RAIZ / "app" / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "selector_buscable.js" in base and base.index("csp_compat.js") < base.index("selector_buscable.js")
+    assert "innerHTML" not in SELECTOR_JS, "el texto de las opciones no puede interpretarse como HTML"
+    assert "eval(" not in SELECTOR_JS and "document.write" not in SELECTOR_JS
+
+
+def test_selector_buscable_textos_traducidos_en_ca_en_fr():
+    for clave in ("Buscar…", "Sin resultados", "Mostrando %%s de %%s: sigue escribiendo para afinar"):
+        for idioma in ("ca", "en", "fr"):
+            po = (RAIZ / "translations" / idioma / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
+            m = re.search(r'msgid "' + re.escape(clave) + r'"\nmsgstr "([^"]+)"', po)
+            assert m and m.group(1), f"{idioma}: falta traducir «{clave}»"
+
+
+def test_selector_buscable_el_panel_es_accesible_y_tiene_hoja_en_movil():
+    for cosa in ('"combobox"', '"listbox"', '"option"', "aria-activedescendant", "aria-expanded", "aria-selected"):
+        assert cosa in SELECTOR_JS, cosa
+    assert ".selbus-panel.selbus-hoja" in CAPA and "prefers-reduced-motion" in CAPA
+    assert re.search(r"MIN_OPCIONES = \d+", SELECTOR_JS) and "MAX_VISIBLES" in SELECTOR_JS
+
+
+def test_selector_buscable_tiene_su_prueba_de_comportamiento():
+    assert (RAIZ / "scripts" / "selector_buscable_prueba.mjs").exists() and (RAIZ / "scripts" / "comprobar_selector_buscable.sh").exists()

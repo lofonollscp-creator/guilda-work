@@ -2916,6 +2916,16 @@ Todas las pantallas internas (las que extienden `base.html`) cargan `app/static/
 - **`/ia/panel` es un fragmento HTML** (se inyecta en la página, sin CSS propio): abrirlo suelto en el navegador se ve roto y desborda; no es un fallo.
 - Revisado con rastreo de enlaces a 320/360/820/1280 px en claro y oscuro (sin desbordes) y el menú móvil en ca/en/fr.
 
+### Selector con buscador (2026-10-12)
+
+`app/static/selector_buscable.js` (cargado en `base.html`, solo pantallas internas) convierte los `<select>` con **6 o más opciones** (proyectos, clientes fiscales, personas…) en un panel con campo de búsqueda: se escribe «vid» y quedan las opciones que contienen «vid», sin distinguir mayúsculas ni acentos y con varias palabras (todas deben aparecer). Teclado completo (↑↓ Enter Esc Tab; escribir sobre el selector lo abre con esa letra), cabeceras de `<optgroup>`, resaltado de lo escrito, y hoja inferior a todo el ancho en móvil. Con más de 300 coincidencias pinta las 300 primeras y avisa.
+
+- **Mejora progresiva:** el `<select>` sigue siendo el control real (formulario, `required`, `value`, evento `change`, `data-autoenviar`, lectores de pantalla); solo se intercepta la apertura. Sin JavaScript o con pocas opciones se ve la lista nativa.
+- **Control por atributos:** `data-buscable` fuerza la mejora, `data-sin-buscador` (en el select o en un contenedor) la evita; `multiple` y `size > 1` nunca se mejoran. También mejora selects añadidos después o a los que llegan opciones más tarde (MutationObserver).
+- **Textos** (`Buscar…`, `Sin resultados`, `Mostrando %s de %s…`) viajan en atributos `data-t-*` de `<html>`; ojo: dentro de `_()` el `%` va escrito `%%` (flask-babel formatea siempre).
+- **Pruebas:** `scripts/comprobar_selector_buscable.sh` (jsdom en un contenedor Node desechable, 27 comprobaciones) y `tests/test_superficies.py`. El flujo táctil y el teclado real se comprobaron con Chromium; **no con un móvil físico** (en iOS/Android el toque se intercepta con `touchend` para evitar el selector nativo).
+- **Fuera de alcance de momento:** backoffice y portal (hojas aparte) mantienen sus selects nativos.
+
 ## Foto de montaña en el inicio de sesión
 - La foto ocupa **toda la pantalla** de `/login` (`.auth-dividido`, `app/static/fotos/montana-login.webp` y `.jpg`, 1920 px de ancho) con un velo liso (sin degradado direccional). Es **CC0 (dominio público)**: «Landscape-mountains-nature-lake» de www.Pixel.la Free Stock Photos, de Wikimedia Commons; datos en `app/static/fotos/CREDITOS.md`. Va de fondo por CSS (no es un `<img>`).
 - Encima, dos **paneles de cristal** (tinte + `backdrop-filter: blur`): el del texto (`.auth-hero-panel`, siempre oscuro, con la marca, el titular, el párrafo y las ventajas) y la tarjeta del formulario (`.auth-dividido .auth-card`: oscura por defecto y **clara en el tema claro**; dentro de ella se reajustan el gris de apoyo y el color de los enlaces para mantener el contraste). Sin soporte de `backdrop-filter` los tintes suben a casi opacos (0,93-0,97).

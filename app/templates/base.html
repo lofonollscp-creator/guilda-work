@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ idioma_actual }}">
+<html lang="{{ idioma_actual }}" data-t-buscar-en="{{ _('Buscar…') }}" data-t-sin-resultados="{{ _('Sin resultados') }}" data-t-mostrando="{{ _('Mostrando %%s de %%s: sigue escribiendo para afinar') }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -407,6 +407,7 @@
   <script src="{{ url_for('static', filename='toasts.js') }}"></script>
   <script src="{{ url_for('static', filename='file_input.js') }}"></script>
   <script src="{{ url_for('static', filename='csp_compat.js') }}"></script>
+  <script src="{{ url_for('static', filename='selector_buscable.js') }}"></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
