@@ -53,6 +53,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Revisión de seguridad (2026-10-11) y limpieza de disco](#revisión-de-seguridad-2026-10-11-y-limpieza-de-disco)
 - [Política de contenido (CSP) estricta para scripts](#política-de-contenido-csp-estricta-para-scripts)
 - [Verificación en dos pasos (TOTP) para los usuarios de la app](#verificación-en-dos-pasos-totp-para-los-usuarios-de-la-app)
+- [Foto de montaña en el inicio de sesión](#foto-de-montaña-en-el-inicio-de-sesión)
 
 **Documentación y ayuda**
 - [Ayuda contextual (enlaces al centro de ayuda)](#ayuda-contextual-enlaces-al-centro-de-ayuda)
@@ -2884,3 +2885,8 @@ la plataforma (`registro.db`) para administrar tenants y usuarios.
 - **Salida si se pierde todo**: backoffice → usuario → «Quitar la verificación en dos pasos» (Admin API de Kratos: borra las credenciales `totp` y `lookup_secret`; queda auditado).
 - **Pendiente**: la app móvil (Flutter) todavía no tiene campo para el código: quien active la verificación no podrá volver a iniciar sesión en el móvil hasta que se actualice (las sesiones ya abiertas siguen). La pantalla de ajustes lo avisa.
 - **Pruebas**: `tests/test_dos_pasos.py` (Kratos real: API con app y con códigos de recuperación de un solo uso, web con aal2, puente de Hydra, ajustes con QR y salida desde el backoffice).
+
+## Foto de montaña en el inicio de sesión
+- La mitad izquierda de `/login` lleva de fondo una foto de montaña (`app/static/fotos/montana-login.webp` y `.jpg`, 95 y 158 KB) con un degradado oscuro encima. Es **CC0 (dominio público)**: «Landscape-mountains-nature-lake» de www.Pixel.la Free Stock Photos, tomada de Wikimedia Commons; los datos están en `app/static/fotos/CREDITOS.md`. Es contenido estático: se sirve sin reiniciar nada.
+- **Legibilidad**: `tests/test_foto_login.py` recrea lo que dibuja el navegador (foto con `cover` + degradado leído del propio CSS) y exige contraste AA (4,5:1) del texto contra el píxel MÁS claro de la columna de letras, en tres tamaños de pantalla (hoy el peor caso es 5,4:1). Si se cambia la foto o el degradado y baja de ahí, el test falla. En pantallas de menos de 820 px el panel con la foto se oculta (solo se ve el formulario).
+- Para cambiar la foto: sustituye los dos ficheros (mismo nombre), actualiza `CREDITOS.md` con su licencia y origen (solo fotos CC0 o con licencia que permita el uso sin atribución) y pasa el test.

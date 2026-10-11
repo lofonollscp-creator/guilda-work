@@ -4541,11 +4541,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    mensaje y queda la tarjeta de siempre. */
 .auth-dividido { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: stretch; justify-content: initial; }
 .auth-dividido::before { display: none; }
-.auth-hero { background: var(--sidebar-bg); color: #e8eae9; border-right: 1px solid #1d1f23; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
+/* Foto de montaña (CC0, ver static/fotos/CREDITOS.md) detrás del texto. El degradado oscuro de la izquierda garantiza el contraste del texto
+   (AA, 4,5:1; lo comprueba tests/test_foto_login.py sobre la foto real): la foto se luce a la derecha y abajo, donde no hay letras. */
+.auth-hero { background-color: var(--sidebar-bg); background-image: linear-gradient(90deg, rgba(5, 5, 6, 0.92) 0%, rgba(5, 5, 6, 0.86) 60%, rgba(5, 5, 6, 0.30) 100%), url("fotos/montana-login.jpg"); background-image: linear-gradient(90deg, rgba(5, 5, 6, 0.92) 0%, rgba(5, 5, 6, 0.86) 60%, rgba(5, 5, 6, 0.30) 100%), image-set(url("fotos/montana-login.webp") type("image/webp"), url("fotos/montana-login.jpg") type("image/jpeg")); background-size: cover; background-position: 62% 40%; color: #e8eae9; border-right: 1px solid #1d1f23; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
 .auth-hero-marca { display: flex; align-items: center; gap: 12px; font: 700 15px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .auth-hero-titulo { margin: 0; font-size: 2.6em; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; max-width: 14ch; }
-.auth-hero-texto { margin: 18px 0 0; color: #a3a9b1; font-size: 1.1em; max-width: 42ch; }
-.auth-hero-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; color: #c9cdd4; }
+.auth-hero-texto { margin: 18px 0 0; color: #c9cdd4; font-size: 1.1em; max-width: 42ch; }
+.auth-hero-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; color: #dfe2e6; }
 .auth-hero-lista li { display: flex; align-items: center; gap: 12px; }
 .auth-hero-lista svg { width: 18px; height: 18px; flex-shrink: 0; color: #ccff33; }
 .auth-panel { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
