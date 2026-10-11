@@ -4542,16 +4542,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
    Solo login: mensaje de valor a la izquierda (siempre oscuro, como el
    rail) y el formulario a la derecha. Por debajo de 820px se oculta el
    mensaje y queda la tarjeta de siempre. */
-.auth-dividido { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: stretch; justify-content: initial; }
+/* Inicio de sesión: la foto de montaña (CC0, ver static/fotos/CREDITOS.md) ocupa TODA la pantalla, con un velo liso (sin degradado direccional). Encima, dos
+   paneles de cristal con desenfoque: el del texto (siempre oscuro) y la tarjeta del formulario (oscura o clara según el tema). Su contraste se mide sobre la
+   foto real en tests/test_foto_login.py: no depende de qué haya detrás. */
+.auth-dividido { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: stretch; justify-content: initial; min-height: 100vh; min-height: 100dvh; background-color: #0a0a0c; background-image: linear-gradient(rgba(5, 5, 6, 0.2), rgba(5, 5, 6, 0.2)), url("fotos/montana-login.jpg"); background-image: linear-gradient(rgba(5, 5, 6, 0.2), rgba(5, 5, 6, 0.2)), image-set(url("fotos/montana-login.webp") type("image/webp"), url("fotos/montana-login.jpg") type("image/jpeg")); background-size: cover; background-position: 32% 50%; }
 .auth-dividido::before { display: none; }
-/* La foto de montaña (CC0, ver static/fotos/CREDITOS.md) ocupa TODO el panel, con un velo liso (sin degradado direccional) y anclada a la izquierda
-   para que lo más claro del paisaje (el pico iluminado) quede a la derecha. El texto va en un panel de cristal oscuro con desenfoque, así que su
-   contraste no depende de qué haya detrás (AA, lo mide tests/test_foto_login.py sobre la foto real). */
-.auth-hero { position: relative; background-color: var(--sidebar-bg); background-image: linear-gradient(rgba(5, 5, 6, 0.22), rgba(5, 5, 6, 0.22)), url("fotos/montana-login.jpg"); background-image: linear-gradient(rgba(5, 5, 6, 0.22), rgba(5, 5, 6, 0.22)), image-set(url("fotos/montana-login.webp") type("image/webp"), url("fotos/montana-login.jpg") type("image/jpeg")); background-size: cover; background-position: 32% 50%; color: #e8eae9; border-right: 1px solid #1d1f23; padding: 56px 64px; display: flex; align-items: center; }
+.auth-hero { position: relative; color: #e8eae9; padding: 56px 64px; display: flex; align-items: center; }
 .auth-hero-panel { width: min(100%, 580px); box-sizing: border-box; padding: 40px 44px; display: flex; flex-direction: column; gap: 32px; border-radius: 28px; background: rgba(7, 9, 13, 0.66); -webkit-backdrop-filter: blur(16px) saturate(1.15); backdrop-filter: blur(16px) saturate(1.15); border: 1px solid rgba(255, 255, 255, 0.11); box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .auth-hero-panel { background: rgba(7, 9, 13, 0.93); } }
-/* En móvil el panel grande se oculta: la misma foto, en una banda sobre el formulario. */
-.auth-foto-movil { display: none; }
 .auth-hero-marca { display: flex; align-items: center; gap: 12px; font: 700 15px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .auth-hero-titulo { margin: 0; font-size: 2.6em; line-height: 1.1; font-weight: 700; letter-spacing: -0.025em; max-width: 14ch; }
 .auth-hero-texto { margin: 18px 0 0; color: #c9cdd4; font-size: 1.1em; max-width: 42ch; }
@@ -4559,12 +4557,22 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .auth-hero-lista li { display: flex; align-items: center; gap: 12px; }
 .auth-hero-lista svg { width: 18px; height: 18px; flex-shrink: 0; color: #ccff33; }
 .auth-panel { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+/* Tarjeta del formulario: cristal oscuro por defecto y claro en el tema claro. Dentro de ella se reajustan dos colores (gris de apoyo y enlaces) para que
+   mantengan el contraste AA sobre el cristal, que deja pasar algo de la foto. */
+.auth-dividido .auth-card { background: rgba(10, 12, 16, 0.78); -webkit-backdrop-filter: blur(18px) saturate(1.15); backdrop-filter: blur(18px) saturate(1.15); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 28px 70px -28px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06); --text-muted: #aab0b8; --primary-text: #ccff33; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .auth-dividido .auth-card { background: rgba(10, 12, 16, 0.96); } }
+:root[data-theme="light"] .auth-dividido .auth-card { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 28px 70px -30px rgba(10, 20, 40, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8); --text: #1a1d23; --text-muted: #4b5563; --primary-text: #3d6200; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .auth-dividido .auth-card { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 28px 70px -30px rgba(10, 20, 40, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8); --text: #1a1d23; --text-muted: #4b5563; --primary-text: #3d6200; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-theme="light"] .auth-dividido .auth-card { background: rgba(255, 255, 255, 0.97); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .auth-dividido .auth-card { background: rgba(255, 255, 255, 0.97); } }
+}
+
 @media (max-width: 820px) {
   .auth-dividido { display: flex; }
   .auth-hero { display: none; }
-  .auth-panel { flex: 1; flex-direction: column; gap: 20px; padding: 20px 16px 32px; }
-  .auth-foto-movil { display: block; margin: 0; width: min(100%, 440px); height: clamp(110px, 22vh, 190px); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 0 1px var(--border); }
-  .auth-foto-movil img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 55% 45%; }
+  .auth-panel { flex: 1; padding: 24px 16px; }
+  .auth-dividido { background-position: 40% 50%; }
 }
 
 /* ---- Pantalla Notas: lista + editor (canvas Interfaces Guilda Work) ---- */

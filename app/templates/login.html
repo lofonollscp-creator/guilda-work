@@ -34,7 +34,6 @@
       </div>
     </section>
     <div class="auth-panel">
-    <figure class="auth-foto-movil" aria-hidden="true"><picture><source srcset="{{ url_for('static', filename='fotos/montana-login.webp') }}" type="image/webp"><img src="{{ url_for('static', filename='fotos/montana-login.jpg') }}" alt="" width="1600" height="1067" decoding="async"></picture></figure>
     {% set segundo_factor = nodos|selectattr('group', 'in', ['totp', 'lookup_secret'])|list %}
     {% if segundo_factor %}
     <div class="auth-card">
