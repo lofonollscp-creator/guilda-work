@@ -6,13 +6,14 @@
   <title>{{ _('Documentos') }} — Guilda Work</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
 </head>
 <body>
   <div class="portal-cliente-shell">
     <header class="page-header">
       <div>
         <h1>{{ vencimiento.modelo }} — {{ vencimiento.periodo }}</h1>
-        <p class="subtitle">{{ _('Vence %(fecha)s', fecha=vencimiento.fecha_limite[:10]) }}</p>
+        <p class="subtitle">{{ _('Vence %(fecha)s', fecha=vencimiento.fecha_limite|fecha_dia) }}</p>
       </div>
     </header>
 

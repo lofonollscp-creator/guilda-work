@@ -438,3 +438,22 @@ td.mono, .historial-table td.mono, .log-time { white-space: nowrap; font-variant
   .dash-stat { padding: 12px; gap: 10px; }
   .dash-stats .dash-stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
+
+/* ---- 320 px: los dos últimos desbordes (chat flotante de IA y «nueva sección» del proyecto) ---------------------------------------------- */
+.ia-chat { max-width: 100%; }
+.ia-chat-form > textarea, .ia-chat-form > input { min-width: 0; }
+.ia-chat-pie { flex-wrap: wrap; }
+.proyecto-nueva-seccion { flex-wrap: wrap; }
+.proyecto-nueva-seccion input { min-width: 0; }
+@media (max-width: 380px) {
+  .ia-chat-form { padding-inline: 10px; gap: 6px; }
+  .proyecto-nueva-seccion input { flex: 1 1 100%; max-width: none; }
+}
+.ia-panel-flotante { width: min(360px, calc(100vw - 24px)); right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+.ia-chat-live, .ia-chat-mic { max-width: 100%; min-width: 0; }
+.ia-chat-live { white-space: normal; }
+@media (max-width: 640px) {
+  .dash-stat > span:last-child { min-width: 0; }
+  .dash-stat-valor { font-size: 18px; overflow-wrap: anywhere; white-space: normal; }
+  .dash-stat-icono { flex: 0 0 auto; }
+}

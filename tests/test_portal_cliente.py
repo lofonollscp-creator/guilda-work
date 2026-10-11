@@ -609,7 +609,7 @@ def test_dashboard_resumen_cuenta_presentados_y_proximo_pendiente(cliente):
     html = resp.get_data(as_text=True)
     assert resp.status_code == 200
     assert "1 de 2 presentados" in html
-    assert "El próximo vence el 2026-07-20" in html
+    assert "El próximo vence el 20 jul 2026" in html
 
 
 def test_dashboard_resumen_todo_presentado_no_muestra_proximo(cliente):

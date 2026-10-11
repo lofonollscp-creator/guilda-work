@@ -6,6 +6,7 @@
   <title>{{ _('Mis vencimientos') }} — Guilda Work</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
 </head>
 <body>
   <div class="portal-cliente-shell">
@@ -29,7 +30,7 @@
       <div class="portal-resumen-texto">
         <strong>{{ _('%(n)s de %(total)s presentados este año', n=presentados, total=vencimientos|length) }}</strong>
         {% if proximo_pendiente %}
-        <span>{{ _('El próximo vence el %(fecha)s', fecha=proximo_pendiente.fecha_limite[:10]) }}</span>
+        <span>{{ _('El próximo vence el %(fecha)s', fecha=proximo_pendiente.fecha_limite|fecha_dia) }}</span>
         {% else %}
         <span>{{ _('Todo presentado, sin nada pendiente.') }}</span>
         {% endif %}
@@ -60,8 +61,8 @@
       <a class="portal-carpeta-info" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">
         <strong>{{ v.modelo }} — {{ v.periodo }}</strong>
         <span>
-          {% if v.estado == 'presentado' %}{{ _('Presentado el %(fecha)s', fecha=v.fecha_limite[:10]) }}
-          {% else %}{{ _('Vence el %(fecha)s', fecha=v.fecha_limite[:10]) }}{% endif %}
+          {% if v.estado == 'presentado' %}{{ _('Presentado el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}
+          {% else %}{{ _('Vence el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}{% endif %}
         </span>
       </a>
       <span class="portal-estado {{ 'ok' if v.estado == 'presentado' else 'warn' }}">

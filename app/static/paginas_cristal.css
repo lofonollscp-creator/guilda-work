@@ -1,0 +1,92 @@
+/* Páginas independientes (portal de cliente, registro, recuperar contraseña, verificar correo): mismo lenguaje que la app, el login y la web
+   pública (Manrope, luz ambiente, cristal con filo de luz, esquinas generosas), pero conservando la identidad propia del portal: papel cálido
+   y acento oliva (ver --portal-* en style.css). Se carga DESPUÉS de style.css; si no carga, las páginas siguen con el estilo anterior. */
+:root {
+  --cr-bg: rgba(255, 255, 255, 0.78); --cr-borde: rgba(60, 50, 20, 0.11); --cr-2: rgba(60, 50, 20, 0.05); --cr-2-hover: rgba(60, 50, 20, 0.09);
+  --cr-resalte: inset 0 1px 0 rgba(255, 255, 255, 0.95); --cr-sombra: 0 16px 44px -20px rgba(60, 45, 10, 0.28);
+  --cr-ambiente: radial-gradient(900px 560px at 90% -8%, rgba(166, 230, 0, 0.14), transparent 62%), radial-gradient(800px 600px at -8% 100%, rgba(232, 168, 56, 0.14), transparent 60%);
+  --cr-muted: #625d4a; --portal-muted: #625d4a;     /* el gris de apoyo del portal (#7a7768) no llegaba a AA sobre blanco */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cr-bg: rgba(34, 30, 20, 0.66); --cr-borde: rgba(255, 244, 214, 0.10); --cr-2: rgba(255, 244, 214, 0.06); --cr-2-hover: rgba(255, 244, 214, 0.10);
+    --cr-resalte: inset 0 1px 0 rgba(255, 244, 214, 0.06); --cr-sombra: 0 18px 50px -20px rgba(0, 0, 0, 0.75);
+    --cr-ambiente: radial-gradient(900px 560px at 90% -8%, rgba(199, 232, 92, 0.09), transparent 62%), radial-gradient(800px 600px at -8% 100%, rgba(232, 168, 56, 0.10), transparent 60%);
+    --cr-muted: #b3ad96; --portal-muted: #b3ad96;
+  }
+}
+:root[data-theme="dark"] {
+  --cr-bg: rgba(34, 30, 20, 0.66); --cr-borde: rgba(255, 244, 214, 0.10); --cr-2: rgba(255, 244, 214, 0.06); --cr-2-hover: rgba(255, 244, 214, 0.10);
+  --cr-resalte: inset 0 1px 0 rgba(255, 244, 214, 0.06); --cr-sombra: 0 18px 50px -20px rgba(0, 0, 0, 0.75);
+  --cr-ambiente: radial-gradient(900px 560px at 90% -8%, rgba(199, 232, 92, 0.09), transparent 62%), radial-gradient(800px 600px at -8% 100%, rgba(232, 168, 56, 0.10), transparent 60%);
+  --cr-muted: #b3ad96; --portal-muted: #b3ad96;
+}
+body { -webkit-font-smoothing: antialiased; }
+/* Toda la página (no solo la columna central) en papel cálido con luz ambiente: antes se veía una franja beige entre dos bandas grises. */
+body:has(.portal-cliente-shell) { background-color: var(--portal-paper); background-image: var(--cr-ambiente); background-attachment: fixed; background-repeat: no-repeat; }
+body:has(.auth-shell) { background-image: var(--cr-ambiente); background-attachment: fixed; background-repeat: no-repeat; }
+
+/* ---- Portal ---- */
+.portal-cliente-shell { max-width: 860px; background: transparent; padding: 40px 20px 56px; }
+.portal-cliente-shell .page-header { align-items: center; margin-bottom: 28px; }
+.portal-cliente-shell .page-header h1 {
+  font-family: inherit; text-transform: none; letter-spacing: -0.03em; font-weight: 800; font-size: clamp(1.5em, 3.4vw, 2.1em); line-height: 1.15; margin: 0 0 4px; color: var(--portal-ink);
+}
+.portal-cliente-shell .btn, .auth-card .btn { font-family: inherit; text-transform: none; letter-spacing: 0; font-weight: 700; border-radius: 12px; }
+.portal-cliente-shell .btn-ghost { background: var(--cr-bg); border-color: var(--cr-borde); color: var(--portal-ink); box-shadow: var(--cr-resalte); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.portal-cliente-shell .btn-ghost:hover { background: var(--cr-2-hover); border-color: var(--portal-accent); }
+
+.portal-resumen, .portal-peticion, .portal-subir, .portal-doc, .portal-msg, .portal-carpeta {
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); box-shadow: var(--cr-resalte), var(--cr-sombra);
+}
+.portal-resumen { background: var(--cr-bg); border: 1px solid var(--cr-borde); border-radius: 24px; padding: 20px 24px; }
+.portal-resumen-texto strong { font-size: 1.1em; font-weight: 800; letter-spacing: -0.01em; }
+.portal-peticion { border-radius: 20px; border-color: color-mix(in srgb, var(--portal-warn-ink) 25%, transparent); }
+.portal-anio-titulo { font-family: inherit; text-transform: none; letter-spacing: -0.01em; font-size: 1.05em; font-weight: 800; color: var(--portal-ink); margin: 28px 0 10px; }
+.portal-anio-titulo::after { content: ""; display: block; height: 1px; margin-top: 8px; background: linear-gradient(90deg, var(--cr-borde), transparent); }
+.portal-carpeta { background: var(--cr-bg); border: 1px solid var(--cr-borde); border-radius: 18px; transition: transform 0.14s ease, border-color 0.14s ease; }
+.portal-carpeta:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--portal-accent) 40%, var(--cr-borde)); }
+.portal-carpeta-tab { border-radius: 12px; font-family: inherit; font-weight: 800; }
+.portal-carpeta-info strong { font-weight: 700; }
+.portal-estado { font-family: inherit; font-weight: 700; border-radius: 999px; }
+.portal-carpeta-iconos a { border-radius: 10px; }
+.portal-carpeta-iconos a:hover { background: var(--cr-2-hover); }
+.portal-subir { background: var(--cr-bg); border: 1.5px dashed color-mix(in srgb, var(--portal-accent) 38%, var(--cr-borde)); border-radius: 22px; }
+.portal-subir .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--portal-accent) 100%, #fff 14%), var(--portal-accent)); border-color: transparent; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.portal-doc, .portal-msg { background: var(--cr-bg); border: 1px solid var(--cr-borde); border-radius: 16px; }
+.portal-msg.cliente { background: color-mix(in srgb, var(--portal-accent) 12%, var(--cr-bg)); }
+.portal-volver { font-weight: 700; }
+.portal-cliente-shell input:not([type="file"]):not([type="checkbox"]), .portal-cliente-shell textarea, .portal-cliente-shell select {
+  font-family: inherit; background: var(--cr-2); border: 1px solid var(--cr-borde); border-radius: 12px; padding: 11px 13px; color: var(--portal-ink);
+}
+.portal-cliente-shell input:focus-visible, .portal-cliente-shell textarea:focus-visible { outline: none; border-color: var(--portal-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--portal-accent) 26%, transparent); }
+.portal-cliente-shell .empty-lane { color: var(--cr-muted); padding: 40px 0; }
+
+/* ---- Acceso (portal, registro, recuperar, verificar) ---- */
+.auth-shell { padding: 24px 16px; }
+.auth-card {
+  max-width: 420px; padding: 36px 32px; border-radius: 26px; background: var(--cr-bg); border: 1px solid var(--cr-borde);
+  box-shadow: var(--cr-resalte), 0 30px 70px -30px rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2);
+}
+.auth-card h1 { font-size: 1.45em; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+.auth-card label { font-weight: 600; font-size: 0.88em; }
+.auth-card input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%; font-family: inherit; background: var(--cr-2); border: 1px solid var(--cr-borde); border-radius: 12px; padding: 12px 14px; font-size: 1em;
+}
+.auth-card input:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 28%, transparent); }
+.auth-card .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 100%, #fff 14%), var(--primary)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 22px -10px color-mix(in srgb, var(--primary) 75%, transparent); padding: 12px 16px; }
+.auth-alterna { color: var(--cr-muted); }
+.auth-alterna a { font-weight: 700; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --cr-bg: rgba(255, 255, 255, 0.97); }
+  :root[data-theme="dark"] { --cr-bg: rgba(34, 30, 20, 0.97); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cr-bg: rgba(34, 30, 20, 0.97); } }
+}
+@media (max-width: 640px) {
+  .portal-cliente-shell { padding: 24px 14px 40px; }
+  .portal-cliente-shell .page-header { align-items: flex-start; }
+  .portal-resumen { padding: 16px; border-radius: 20px; }
+  .auth-card { padding: 28px 22px; border-radius: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .portal-carpeta { transition: none; } .portal-carpeta:hover { transform: none; } }

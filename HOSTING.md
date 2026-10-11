@@ -2909,6 +2909,13 @@ Todas las pantallas internas (las que extienden `base.html`) cargan `app/static/
 - **Landing (`/var/www/landing`, repo propio):** `capa.css` se carga tras `estilo.css`/`blog.css` en las 29 páginas; Manrope en `/fonts/`. Cabecera sin solapes (hamburguesa hasta 1180 px; en móvil marca + Entrar + menú en una línea), cookies compactas en cristal, tarjetas y formulario de cristal.
 - **Centro de ayuda (`/home/guilda/guilda-help`):** capa al final de `estaticos/style.css` (cabecera flotante, tarjetas con icono en baldosa, artículo en panel de cristal, tablas y bloques de código). Se despliega como siempre: `generar.py` + copiar `salida/` a `/var/www/help`.
 
+### Portal de cliente, páginas de acceso y backoffice (2026-10-11)
+
+- **`app/static/paginas_cristal.css`** (tras `style.css`) en el portal de cliente (5 páginas) y en registro, recuperar contraseña y verificar correo: papel cálido con luz ambiente, filas y paneles de cristal, Manrope, tarjeta de acceso redondeada. Mantiene la identidad del portal (tokens `--portal-*`); NO carga `superficies.css`. Redefine `--portal-muted` (`#625d4a` / `#b3ad96`) porque el anterior no llegaba a AA sobre blanco. Fechas del portal con el filtro `fecha_dia`.
+- **`backoffice/static/capa.css`** (tras `backoffice.css`, también en `login.html` y `login_2fa.html`; fuente en `backoffice/static/ManropeVariable.woff2`): cristal turquesa, navegación en pastilla, controles y tablas más suaves. El backoffice sigue siendo un proceso y una hoja aparte; solo comparte el lenguaje visual.
+- **`/ia/panel` es un fragmento HTML** (se inyecta en la página, sin CSS propio): abrirlo suelto en el navegador se ve roto y desborda; no es un fallo.
+- Revisado con rastreo de enlaces a 320/360/820/1280 px en claro y oscuro (sin desbordes) y el menú móvil en ca/en/fr.
+
 ## Foto de montaña en el inicio de sesión
 - La foto ocupa **toda la pantalla** de `/login` (`.auth-dividido`, `app/static/fotos/montana-login.webp` y `.jpg`, 1920 px de ancho) con un velo liso (sin degradado direccional). Es **CC0 (dominio público)**: «Landscape-mountains-nature-lake» de www.Pixel.la Free Stock Photos, de Wikimedia Commons; datos en `app/static/fotos/CREDITOS.md`. Va de fondo por CSS (no es un `<img>`).
 - Encima, dos **paneles de cristal** (tinte + `backdrop-filter: blur`): el del texto (`.auth-hero-panel`, siempre oscuro, con la marca, el titular, el párrafo y las ventajas) y la tarjeta del formulario (`.auth-dividido .auth-card`: oscura por defecto y **clara en el tema claro**; dentro de ella se reajustan el gris de apoyo y el color de los enlaces para mantener el contraste). Sin soporte de `backdrop-filter` los tintes suben a casi opacos (0,93-0,97).

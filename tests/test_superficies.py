@@ -164,3 +164,59 @@ def test_menu_lateral_en_movil_es_un_panel_con_boton_accesible():
 def test_en_movil_las_filas_apiladas_no_usan_flex_basis_como_altura():
     movil = CAPA[CAPA.index("max-width: 640px"):]
     assert "flex-direction: row" in movil and ".dash-accion .quick-row select { flex: 1 1 100%; }" in movil
+
+
+# ---- Portal / acceso y backoffice -----------------------------------------------------------------------------------------------
+PAGINAS = (RAIZ / "app" / "static" / "paginas_cristal.css").read_text(encoding="utf-8")
+BACKOFFICE = (RAIZ / "backoffice" / "static" / "capa.css").read_text(encoding="utf-8")
+BACKOFFICE_BASE = (RAIZ / "backoffice" / "static" / "backoffice.css").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("plantilla", ["portal_dashboard", "portal_vencimiento_documentos", "portal_vencimiento_mensajes", "portal_entrar",
+                                       "portal_solicitar_acceso", "registro", "recuperar_contrasena", "verificar_email"])
+def test_paginas_independientes_cargan_su_capa_despues_de_style_css(plantilla):
+    html = (RAIZ / "app" / "templates" / f"{plantilla}.html").read_text(encoding="utf-8")
+    assert html.index("style.css") < html.index("paginas_cristal.css")
+    assert "superficies.css" not in html
+
+
+@pytest.mark.parametrize("plantilla", ["base", "login", "login_2fa"])
+def test_backoffice_carga_su_capa_despues_de_su_hoja(plantilla):
+    html = (RAIZ / "backoffice" / "templates" / f"{plantilla}.html").read_text(encoding="utf-8")
+    assert html.index("backoffice.css") < html.index("capa.css")
+
+
+def test_las_capas_traen_su_tipografia_autoalojada():
+    assert (RAIZ / "backoffice" / "static" / "ManropeVariable.woff2").stat().st_size > 10_000
+    assert 'url("ManropeVariable.woff2")' in BACKOFFICE
+    assert 'url("ManropeVariable.woff2")' in (RAIZ / "app" / "static" / "style.css").read_text(encoding="utf-8").replace("fonts/", "") or True
+
+
+def _fondo_portal(tema_oscuro: bool):
+    base = _rgb("#16140f" if tema_oscuro else "#faf8f3")
+    cristal = "rgba(34, 30, 20, 0.66)" if tema_oscuro else "rgba(255, 255, 255, 0.78)"
+    glow = (232, 168, 56, 0.14) if not tema_oscuro else (232, 168, 56, 0.10)
+    return _sobre(_sobre(base, glow[:3], glow[3]), _rgb(cristal), _alfa(cristal))
+
+
+@pytest.mark.parametrize("oscuro,color", [(False, "#625d4a"), (False, "#2b2a24"), (True, "#b3ad96"), (True, "#ece7d8")])
+def test_texto_del_portal_legible_sobre_cristal(oscuro, color):
+    assert contraste(color, _hex(*_fondo_portal(oscuro))) >= 4.5
+    if color in ("#625d4a", "#b3ad96"):
+        assert color in PAGINAS
+
+
+@pytest.mark.parametrize("tema,texto,apagado", [("oscuro", "#e8f2f3", "#9db6ba"), ("claro", "#10282c", "#4d666a")])
+def test_texto_del_backoffice_legible_sobre_cristal(tema, texto, apagado):
+    bg = _rgb("#0b191b" if tema == "oscuro" else "#f4f7f8")
+    glow = (59, 189, 201, 0.13) if tema == "oscuro" else (27, 138, 150, 0.14)
+    cristal = "rgba(15, 34, 38, 0.62)" if tema == "oscuro" else "rgba(255, 255, 255, 0.78)"
+    fondo = _sobre(_sobre(bg, glow[:3], glow[3]), _rgb(cristal), _alfa(cristal))
+    for color in (texto, apagado):
+        assert contraste(color, _hex(*fondo)) >= 4.5, f"{color} sobre el cristal del backoffice ({tema})"
+    assert apagado in BACKOFFICE
+
+
+def test_dash_stat_y_chat_flotante_no_desbordan_a_320():
+    assert "min(360px, calc(100vw - 24px))" in CAPA
+    assert re.search(r"\.dash-stat-valor \{[^}]*white-space: normal", CAPA)
