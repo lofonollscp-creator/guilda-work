@@ -264,8 +264,13 @@ def test_auditoria_semanal_una_vez_por_semana_y_desactivable(bo, monkeypatch):
     llamadas = []
     falso = lambda ruta, cuerpo: llamadas.append(1) or {"results": [{}] * len(cuerpo["queries"])}  # noqa: E731
     lunes = datetime(2026, 10, 5, 10, 0)
+    reloj = [lunes]
+    # El resultado guarda su fecha con el reloj de `auth`: hay que fijarlo al mismo «ahora» simulado (si no, el test solo pasaba la semana en que se escribió)
+    monkeypatch.setattr(dependencias.auth, "_ahora", lambda: reloj[0].isoformat(timespec="seconds"))
     assert dependencias.auditar_si_toca(lunes, post=falso, get=falso) is True
+    reloj[0] = lunes + timedelta(days=2)
     assert dependencias.auditar_si_toca(lunes + timedelta(days=2), post=falso, get=falso) is False  # misma semana
+    reloj[0] = lunes + timedelta(days=7)
     assert dependencias.auditar_si_toca(lunes + timedelta(days=7), post=falso, get=falso) is True
     monkeypatch.setenv("BACKOFFICE_AUDITORIA_DEPENDENCIAS", "0")
     assert dependencias.auditar_si_toca(lunes + timedelta(days=30), post=falso, get=falso) is False
