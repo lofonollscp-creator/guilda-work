@@ -50,7 +50,7 @@
 services:
   # Nivel: diferible — actívalo cuando un tenant real lo pida, ver HOSTING.md.
   metabase:
-    image: metabase/metabase:latest
+    image: metabase/metabase:latest@sha256:08b1ebc81765c42f936acd4a83db4178e403805f9c473650e974a2b70cf38d37
     container_name: guilda-work-metabase
     restart: unless-stopped
     ports:
@@ -201,7 +201,10 @@ services:
     # no lanza el worker de envío junto al proceso principal a menos que
     # se pida explícitamente. Verificado en vivo (2026-08-10): un mensaje
     # real se quedó "queued" sin ningún intento hasta añadir este flag.
-    command: serve --config /etc/config/kratos/kratos.yml --dev --watch-courier
+    # Sin `--dev` en producción (revisión de seguridad 2026-10-11): esa bandera «desactiva comprobaciones críticas de seguridad» y deja las
+    # cookies (CSRF, sesión) sin el atributo Secure. Ensayado en un contenedor aparte: arranca igual y las cookies pasan a llevar Secure.
+    # Solo para desarrollo en http://127.0.0.1 (cookies Secure no viajan por http): KRATOS_EXTRA_FLAGS=--dev en tu .env local.
+    command: serve --config /etc/config/kratos/kratos.yml ${KRATOS_EXTRA_FLAGS:---sqa-opt-out} --watch-courier
 
   # Nivel: mínimo (CPX22) — columna vertebral, ver HOSTING.md.
   # Ory Hydra: proveedor OAuth2/OIDC (Fase 7b) — necesario porque Outline
@@ -507,7 +510,7 @@ services:
       - postgres-openproject-data:/var/lib/postgresql/data
 
   memcached-openproject:
-    image: memcached:alpine
+    image: memcached:alpine@sha256:9e4de012dc607573052061c0bcb38abc775e1dd59b24e7ac38d1892842094aaf
     container_name: guilda-work-memcached-openproject
     restart: unless-stopped
 
@@ -589,7 +592,7 @@ services:
     # proyecto — Chatwoot necesita la extensión pgvector para sus
     # funciones de IA (respuestas asistidas), confirmado en su
     # docker-compose.production.yaml oficial.
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
     container_name: guilda-work-postgres-chatwoot
     restart: unless-stopped
     environment:
@@ -615,7 +618,7 @@ services:
   # uso; aquí se automatiza como init container para seguir el mismo
   # patrón que el resto de este proyecto.
   chatwoot-prepare:
-    image: chatwoot/chatwoot:latest
+    image: chatwoot/chatwoot:latest@sha256:a4b7eea7353a9b585d0f29f2c57c7549710db961b119f7f1561b2fe964f48f65
     container_name: guilda-work-chatwoot-prepare
     restart: on-failure
     depends_on:
@@ -641,7 +644,7 @@ services:
     command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
 
   chatwoot-web:
-    image: chatwoot/chatwoot:latest
+    image: chatwoot/chatwoot:latest@sha256:a4b7eea7353a9b585d0f29f2c57c7549710db961b119f7f1561b2fe964f48f65
     container_name: guilda-work-chatwoot-web
     restart: unless-stopped
     depends_on:
@@ -653,7 +656,7 @@ services:
       - "127.0.0.1:8011:3000"
 
   chatwoot-sidekiq:
-    image: chatwoot/chatwoot:latest
+    image: chatwoot/chatwoot:latest@sha256:a4b7eea7353a9b585d0f29f2c57c7549710db961b119f7f1561b2fe964f48f65
     container_name: guilda-work-chatwoot-sidekiq
     restart: unless-stopped
     depends_on:
@@ -672,7 +675,7 @@ services:
   # mientras serve.py escribe en él a la vez. Acceso previsto vía túnel SSH
   # (`ssh -L 8012:127.0.0.1:8012 ...`), nunca expuesto tal cual.
   sqlite-web:
-    image: ghcr.io/coleifer/sqlite-web:latest
+    image: ghcr.io/coleifer/sqlite-web:latest@sha256:ec3c5811216fa5f7313e9f7269e1a1ca9c1f24f5f5ac3668c1f398c97afa362b
     container_name: guilda-work-sqlite-web
     restart: unless-stopped
     environment:
@@ -765,7 +768,7 @@ services:
       - postgres-espocrm-data:/var/lib/postgresql/data
 
   espocrm:
-    image: espocrm/espocrm:latest
+    image: espocrm/espocrm:latest@sha256:fd86fafa91fde0b3c4498d224ab4dc00eba94547f3d22fb4895aab478385d600
     container_name: guilda-work-espocrm
     restart: unless-stopped
     depends_on:
@@ -935,7 +938,7 @@ services:
       - postgres-paperless-data:/var/lib/postgresql/data
 
   paperless:
-    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:6b94799bc769a063b3340cc5847402e626d4d91d29a295a8e747f8e9bead4207
     container_name: guilda-work-paperless
     restart: unless-stopped
     depends_on:
@@ -1026,7 +1029,7 @@ services:
       - postgres-baserow-data:/var/lib/postgresql/data
 
   baserow:
-    image: baserow/baserow:latest
+    image: baserow/baserow:latest@sha256:f35444dbbbd390c48dae30eaed0b9668b04ff4b71c97d08f9cb2dd436ba22150
     container_name: guilda-work-baserow
     restart: unless-stopped
     depends_on:
@@ -1190,7 +1193,7 @@ services:
   # arranque instala el esquema y crea el superadmin la primera vez, sin
   # ningún script propio (a diferencia de Cal.diy).
   postgres-listmonk:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     container_name: guilda-work-postgres-listmonk
     restart: unless-stopped
     environment:
@@ -1201,7 +1204,7 @@ services:
       - postgres-listmonk-data:/var/lib/postgresql/data
 
   listmonk:
-    image: listmonk/listmonk:latest
+    image: listmonk/listmonk:latest@sha256:f535d59e14991337a9f2d570273685378ae86b0d7698c3e00da444e3bc205286
     container_name: guilda-work-listmonk
     restart: unless-stopped
     depends_on:
@@ -1300,7 +1303,7 @@ services:
   # app/ntfy.py pueda crear usuarios de tenant por API) es un paso manual
   # único, ver HOSTING.md.
   ntfy:
-    image: binwiederhier/ntfy:latest
+    image: binwiederhier/ntfy:latest@sha256:4c599cf0818965782f93f652bd843e92714992e84d6b88ad17713dc0951cda1f
     container_name: guilda-work-ntfy
     restart: unless-stopped
     command: serve
@@ -1341,7 +1344,7 @@ services:
   # Caddy en 443" (mismo criterio ya aceptado para SSH/OpenVPN/correo de
   # Stalwart): el tráfico de medios (RTP/SRTP) no es HTTP.
   jitsi-prosody:
-    image: ghcr.io/jitsi/prosody:unstable
+    image: ghcr.io/jitsi/prosody:unstable@sha256:7c5e2a2958dbe2b760da0e7e71b612ce15b21426160bf0020fe2995d640d6f07
     container_name: guilda-work-jitsi-prosody
     restart: unless-stopped
     environment:
@@ -1364,7 +1367,7 @@ services:
       - jitsi-prosody-storage:/var/lib/prosody
 
   jitsi-jicofo:
-    image: ghcr.io/jitsi/jicofo:unstable
+    image: ghcr.io/jitsi/jicofo:unstable@sha256:205f2d6a86c9523705772df6d34272bb52b29ca50b87db601bb2ac70168bfa19
     container_name: guilda-work-jitsi-jicofo
     restart: unless-stopped
     depends_on:
@@ -1381,7 +1384,7 @@ services:
       - jitsi-jicofo-config:/config
 
   jitsi-jvb:
-    image: ghcr.io/jitsi/jvb:unstable
+    image: ghcr.io/jitsi/jvb:unstable@sha256:3f89b450b9fc1f4bc06de3501a43f00e17d7a72be81b1ae624dc416904a7cb09
     container_name: guilda-work-jitsi-jvb
     restart: unless-stopped
     depends_on:
@@ -1399,7 +1402,7 @@ services:
       - jitsi-jvb-config:/config
 
   jitsi-web:
-    image: ghcr.io/jitsi/web:unstable
+    image: ghcr.io/jitsi/web:unstable@sha256:47b72d51817b9e158d302b2a41b6cd9b072d144b72e10c625e85d8341ead2b0d
     container_name: guilda-work-jitsi-web
     restart: unless-stopped
     depends_on:
@@ -1540,7 +1543,7 @@ services:
       - postgres-umami-data:/var/lib/postgresql/data
 
   umami:
-    image: docker.umami.is/umami-software/umami:postgresql-latest
+    image: docker.umami.is/umami-software/umami:postgresql-latest@sha256:85909afc45bdcda1917394594a087421fdbb05610fded0fa9f6fb861abb2f367
     container_name: guilda-work-umami
     restart: unless-stopped
     depends_on:
@@ -1720,7 +1723,7 @@ services:
   # archivo en el repo — Compose la materializa como
   # /run/secrets/portainer_admin_password dentro del contenedor.
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:latest@sha256:03f94a406496dc84d37b552795fc424ccad8d0d7200353b6a82915f6e8f73ab0
     container_name: guilda-work-portainer
     restart: unless-stopped
     command: ["--admin-password-file", "/run/secrets/portainer_admin_password"]
@@ -1755,7 +1758,7 @@ services:
   # con el arranque ya verificado en vivo, sin probar deliberadamente
   # a quitarlo (es la recomendación oficial, no una suposición propia).
   collabora:
-    image: collabora/code:latest
+    image: collabora/code:latest@sha256:bb8f3c9c5c9016045f25fccb5f0649be94469ebc7c7cc379f3576e470cccf33d
     container_name: guilda-work-collabora
     restart: unless-stopped
     cap_add:
@@ -1805,7 +1808,7 @@ services:
   # explícito con `--profile https-local`, así el día a día de
   # desarrollo (que no necesita HTTPS) no cambia en nada.
   caddy-local:
-    image: caddy:latest
+    image: caddy:latest@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
     container_name: guilda-work-caddy-local
     restart: unless-stopped
     profiles: ["https-local"]
@@ -1848,7 +1851,7 @@ services:
   # más adelante — hoy mismo, verificar solo desde esta máquina es
   # suficiente antes de mover el servidor a otro equipo.
   caddy-lan:
-    image: caddy:latest
+    image: caddy:latest@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
     container_name: guilda-work-caddy-lan
     restart: unless-stopped
     profiles: ["lan"]

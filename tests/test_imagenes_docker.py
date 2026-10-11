@@ -5,30 +5,11 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 
-# Servicios definidos en docker-compose.yml pero NO desplegados en este servidor (no hay imagen local ni contenedor).
-# Antes de desplegar uno hay que fijarlo: `docker pull`, `docker image inspect --format '{{index .RepoDigests 0}}'` y
-# poner ese digest en el compose; después se quita de esta lista. Una imagen nueva sin digest que NO esté aquí falla el test.
+# Imágenes sin digest a propósito. Todas las demás van fijadas (`imagen:tag@sha256:...`); para fijar una nueva sin descargarla:
+#   docker buildx imagetools inspect imagen:tag --format '{{json .Manifest}}'   (campo «digest»)
+# Una imagen nueva sin digest que NO esté aquí falla el test.
 NO_DESPLEGADAS = {
-    "baserow/baserow:latest",
-    "binwiederhier/ntfy:latest",
-    "caddy:latest",
-    "chatwoot/chatwoot:latest",
-    "collabora/code:latest",
-    "docker.umami.is/umami-software/umami:postgresql-latest",
-    "espocrm/espocrm:latest",
-    "ghcr.io/coleifer/sqlite-web:latest",
-    "ghcr.io/jitsi/jicofo:unstable",
-    "ghcr.io/jitsi/jvb:unstable",
-    "ghcr.io/jitsi/prosody:unstable",
-    "ghcr.io/jitsi/web:unstable",
-    "ghcr.io/paperless-ngx/paperless-ngx:latest",
-    "listmonk/listmonk:latest",
-    "memcached:alpine",
-    "metabase/metabase:latest",
-    "openproject/openproject:${OPENPROJECT_TAG:-15-slim}",
-    "pgvector/pgvector:pg16",
-    "portainer/portainer-ce:latest",
-    "postgres:17-alpine",
+    "openproject/openproject:${OPENPROJECT_TAG:-15-slim}",      # el tag es una variable de entorno: se fija al desplegar con OPENPROJECT_TAG=<tag>@sha256:...
 }
 
 

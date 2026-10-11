@@ -380,7 +380,7 @@ def reparar_tenant(tenant_id: int) -> dict:
     # Por si el contenedor quedó en un estado intermedio (parado pero no
     # borrado) en vez de desaparecido del todo -- no falla si ya no existe.
     subprocess.run(["docker", "stop", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
-    subprocess.run(["docker", "rm", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
+    subprocess.run(["docker", "rm", "-v", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
 
     _docker_run(tenant_id, rol, db_pass, bd)
 
@@ -410,7 +410,7 @@ def desaprovisionar_tenant(tenant_id: int) -> None:
     base de datos. No falla si alguna pieza ya no existe (idempotente ante
     reintentos)."""
     subprocess.run(["docker", "stop", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
-    subprocess.run(["docker", "rm", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
+    subprocess.run(["docker", "rm", "-v", _nombre_contenedor(tenant_id)], capture_output=True, timeout=30)
     shutil.rmtree(_directorio_datos_tenant(tenant_id), ignore_errors=True)
     if not FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD:
         return

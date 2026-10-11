@@ -7493,3 +7493,18 @@ msgstr "Un jeton avec des IP autorisées ne peut pas être utilisé via MCP."
 
 msgid "IP restringida"
 msgstr "IP restreinte"
+
+msgid "Copia de seguridad en otro disco (Restic)"
+msgstr "Sauvegarde sur un autre disque (Restic)"
+
+msgid "Todavía no se ha ejecutado ninguna copia con Restic."
+msgstr "Aucune sauvegarde Restic n'a encore été exécutée."
+
+msgid "Ninguna copia se ha completado: %(errores)s."
+msgstr "Aucune sauvegarde n'a abouti : %(errores)s."
+
+msgid "Última copia completa hace %(hace)s (%(n)s objetivos)."
+msgstr "Dernière sauvegarde complète il y a %(hace)s (%(n)s cibles)."
+
+msgid "Con fallos en la última pasada: %(errores)s."
+msgstr "Avec des échecs lors du dernier passage : %(errores)s."

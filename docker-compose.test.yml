@@ -37,11 +37,16 @@ services:
       - kratos-migrate-test
     environment:
       DSN: postgres://kratos:test@postgres-kratos-test:5432/kratos?sslmode=disable
+      # SOLO para tests (nunca en producción): hash barato y sin consultar «Have I Been Pwned». Cada alta/inicio de sesión de los tests pasa
+      # por Kratos real y con argon2 por defecto costaba ~1 s; así baja a decenas de ms.
+      HASHERS_ALGORITHM: bcrypt
+      HASHERS_BCRYPT_COST: "4"
+      SELFSERVICE_METHODS_PASSWORD_CONFIG_HAVEIBEENPWNED_ENABLED: "false"
       SERVE_PUBLIC_BASE_URL: http://127.0.0.1:${KRATOS_TEST_PUBLIC_PORT:-14433}/
       SERVE_ADMIN_BASE_URL: http://127.0.0.1:${KRATOS_TEST_ADMIN_PORT:-14434}/
     ports:
-      - "${KRATOS_TEST_PUBLIC_PORT:-14433}:4433"
-      - "${KRATOS_TEST_ADMIN_PORT:-14434}:4434"
+      - "127.0.0.1:${KRATOS_TEST_PUBLIC_PORT:-14433}:4433"
+      - "127.0.0.1:${KRATOS_TEST_ADMIN_PORT:-14434}:4434"
     volumes:
       - ./deploy/kratos:/etc/config/kratos:ro
     command: serve --config /etc/config/kratos/kratos.yml --dev

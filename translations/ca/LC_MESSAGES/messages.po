@@ -7417,3 +7417,18 @@ msgstr "Un token amb IP permeses no es pot fer servir per MCP."
 
 msgid "IP restringida"
 msgstr "IP restringida"
+
+msgid "Copia de seguridad en otro disco (Restic)"
+msgstr "Còpia de seguretat en un altre disc (Restic)"
+
+msgid "Todavía no se ha ejecutado ninguna copia con Restic."
+msgstr "Encara no s'ha executat cap còpia amb Restic."
+
+msgid "Ninguna copia se ha completado: %(errores)s."
+msgstr "Cap còpia s'ha completat: %(errores)s."
+
+msgid "Última copia completa hace %(hace)s (%(n)s objetivos)."
+msgstr "Última còpia completa fa %(hace)s (%(n)s objectius)."
+
+msgid "Con fallos en la última pasada: %(errores)s."
+msgstr "Amb errors a l'última passada: %(errores)s."

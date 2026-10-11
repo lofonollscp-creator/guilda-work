@@ -244,6 +244,21 @@ def _cabecera_id_de_peticion(respuesta):
     return respuesta
 
 
+@app.after_request
+def _cabeceras_de_seguridad(respuesta):
+    """Cabeceras que impiden que otra web meta esta en un iframe (clickjacking) o que el navegador adivine tipos. Sin una CSP
+    estricta de scripts a propósito: la app usa scripts en línea y exigiría nonces. HSTS solo detrás de HTTPS (Caddy manda
+    X-Forwarded-Proto) y sin includeSubDomains, para no afectar a los demás subdominios."""
+    cabeceras = respuesta.headers
+    cabeceras.setdefault("X-Content-Type-Options", "nosniff")
+    cabeceras.setdefault("X-Frame-Options", "SAMEORIGIN")
+    cabeceras.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    cabeceras.setdefault("Content-Security-Policy", "frame-ancestors 'self'; object-src 'none'; base-uri 'self'")
+    if request.headers.get("X-Forwarded-Proto") == "https":
+        cabeceras.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return respuesta
+
+
 KRATOS_SESSION_COOKIE = "ory_kratos_session"
 
 

@@ -7,6 +7,7 @@ Estados: verde (todo bien), ámbar (atención), rojo (hay que actuar) y gris
 muestra en gris con "no se pudo comprobar"."""
 from __future__ import annotations
 
+import json
 import logging
 import os
 import shutil
@@ -120,6 +121,35 @@ def _estado_backup(ahora: datetime) -> dict:
     estado = VERDE if edad <= BACKUP_VERDE_HORAS * 3600 else (AMBAR if edad <= BACKUP_AMBAR_DIAS * 86400 else ROJO)
     return _item("Copias de seguridad", "backup", _("Última copia de seguridad"), estado,
                  _("%(nombre)s — hace %(hace)s (%(mb)s MB).", nombre=copias[0]["nombre"], hace=_legible(edad), mb=copias[0]["tamano_bytes"] // 1024 // 1024))
+
+
+RESTIC_VERDE_HORAS = 36
+RESTIC_ROJO_DIAS = 3
+
+
+def _estado_copia_externa(ahora: datetime) -> dict:
+    """Copia de Restic en otro disco (scripts/backup_restic.sh deja su estado en data/backups/restic_estado.json). Sin fichero =
+    gris («no configurada»): en un entorno de desarrollo no tiene por qué existir."""
+    titulo = _("Copia de seguridad en otro disco (Restic)")
+    ruta = db.BACKUPS_DIR / "restic_estado.json"
+    if not ruta.exists():
+        return _item("Copias de seguridad", "restic", titulo, GRIS, _("Todavía no se ha ejecutado ninguna copia con Restic."))
+    estado = json.loads(ruta.read_text(encoding="utf-8"))
+    ultimo_ok = estado.get("ultimo_ok")
+    errores = estado.get("errores") or []
+    if not ultimo_ok:
+        return _item("Copias de seguridad", "restic", titulo, ROJO, _("Ninguna copia se ha completado: %(errores)s.", errores=", ".join(errores) or "—"))
+    edad = (ahora - datetime.fromisoformat(ultimo_ok).replace(tzinfo=None)).total_seconds()
+    if edad > RESTIC_ROJO_DIAS * 86400:
+        item_estado = ROJO
+    elif edad > RESTIC_VERDE_HORAS * 3600 or errores:
+        item_estado = AMBAR
+    else:
+        item_estado = VERDE
+    detalle = _("Última copia completa hace %(hace)s (%(n)s objetivos).", hace=_legible(edad), n=estado.get("objetivos", "?"))
+    if errores:
+        detalle += " " + _("Con fallos en la última pasada: %(errores)s.", errores=", ".join(errores))
+    return _item("Copias de seguridad", "restic", titulo, item_estado, detalle)
 
 
 def _estado_disco() -> dict:
@@ -279,6 +309,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
             items.append(_item(grupo, clave, titulo, GRIS, _("No se pudo comprobar.")))
 
     _seguro("Copias de seguridad", "backup", _("Última copia de seguridad"), lambda: _estado_backup(ahora))
+    _seguro("Copias de seguridad", "restic", _("Copia de seguridad en otro disco (Restic)"), lambda: _estado_copia_externa(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))

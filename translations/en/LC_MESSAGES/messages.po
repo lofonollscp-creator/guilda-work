@@ -7408,3 +7408,18 @@ msgstr "A token with allowed IPs cannot be used over MCP."
 
 msgid "IP restringida"
 msgstr "IP restricted"
+
+msgid "Copia de seguridad en otro disco (Restic)"
+msgstr "Backup on another disk (Restic)"
+
+msgid "Todavía no se ha ejecutado ninguna copia con Restic."
+msgstr "No Restic backup has run yet."
+
+msgid "Ninguna copia se ha completado: %(errores)s."
+msgstr "No backup has completed: %(errores)s."
+
+msgid "Última copia completa hace %(hace)s (%(n)s objetivos)."
+msgstr "Last complete backup %(hace)s ago (%(n)s targets)."
+
+msgid "Con fallos en la última pasada: %(errores)s."
+msgstr "With failures in the last run: %(errores)s."

@@ -94,3 +94,29 @@ def test_el_vigilante_avisa_una_sola_vez_al_dia_de_una_rafaga(monkeypatch):
     assert "errores_servidor" in salud.vigilar(AHORA)
     assert salud.vigilar(AHORA) == []
     assert len(enviados) == 1 and "Errores del servidor" in enviados[0][1]
+
+
+# --- copia externa (Restic) ---------------------------------------------------------------------------------------------------
+
+def _estado_restic(tmp_path, monkeypatch, contenido=None):
+    import json
+    monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path)
+    if contenido is not None:
+        (tmp_path / "restic_estado.json").write_text(json.dumps(contenido), encoding="utf-8")
+    return {i["clave"]: i for i in salud.panel(AHORA)}["restic"]
+
+
+def test_sin_fichero_de_estado_la_copia_externa_sale_gris(tmp_path, monkeypatch):
+    assert _estado_restic(tmp_path, monkeypatch)["estado"] == salud.GRIS
+
+
+def test_la_copia_externa_pasa_de_verde_a_ambar_y_rojo_con_la_edad(tmp_path, monkeypatch):
+    def ok(horas, errores=()):
+        return {"ultimo_ok": (AHORA - timedelta(hours=horas)).isoformat(), "objetivos": 26, "errores": list(errores)}
+    assert _estado_restic(tmp_path, monkeypatch, ok(5))["estado"] == salud.VERDE
+    assert _estado_restic(tmp_path, monkeypatch, ok(40))["estado"] == salud.AMBAR
+    assert _estado_restic(tmp_path, monkeypatch, ok(24 * 4))["estado"] == salud.ROJO
+    con_fallo = _estado_restic(tmp_path, monkeypatch, ok(5, ["postgres:kratos"]))
+    assert con_fallo["estado"] == salud.AMBAR and "postgres:kratos" in con_fallo["detalle"]
+    nunca = _estado_restic(tmp_path, monkeypatch, {"ultimo_ok": None, "errores": ["host"], "objetivos": 3})
+    assert nunca["estado"] == salud.ROJO

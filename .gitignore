@@ -27,3 +27,4 @@ deploy/documenso/cert.p12
 deploy/documenso/*.pem
 docker-compose.override.yml
 CREDENCIALES_LOCAL.md
+.herramientas-test/

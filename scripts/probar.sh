@@ -6,7 +6,7 @@
 #   scripts/probar.sh --rapida             sin Kratos ni Docker: solo los tests que no inician sesión real
 #   scripts/probar.sh --perfil             mide tiempos/consultas de las pantallas con datos sintéticos (no ejecuta tests)
 #   scripts/probar.sh --carga              N usuarios a la vez (lecturas y escrituras) sobre datos sintéticos; ver scripts/prueba_carga.py
-#   scripts/probar.sh -n 2                 con 2 procesos en paralelo (cada uno arranca su Kratos)
+#   scripts/probar.sh -n 3                 con 3 procesos en paralelo (cada uno arranca su Kratos; con 4 CPU, 3 es lo razonable)
 #   scripts/probar.sh tests/test_x.py -k y cualquier otro argumento de pytest
 #
 # Variables: GUILDA_TMP (dónde crear la copia, por defecto /tmp), GUILDA_MIN_LIBRE_MB
@@ -63,7 +63,15 @@ if [ "$PERFIL" = 1 ]; then
 fi
 
 OPCIONES=(-q -p no:cacheprovider "--basetemp=$DESTINO/_bt")
-[ -n "$WORKERS" ] && OPCIONES+=(-n "$WORKERS")
+if [ -n "$WORKERS" ]; then
+  # pytest-xdist vive aparte (.herramientas-test, fuera del venv de producción): `.venv/bin/pip install --target .herramientas-test pytest-xdist`
+  if [ ! -d "$REPO/.herramientas-test/xdist" ]; then
+    echo "Falta pytest-xdist: .venv/bin/pip install --target .herramientas-test pytest-xdist  (y borra de esa carpeta lo que no sea xdist/execnet)." >&2
+    exit 2
+  fi
+  export PYTHONPATH="$REPO/.herramientas-test${PYTHONPATH:+:$PYTHONPATH}"
+  OPCIONES+=(-n "$WORKERS")
+fi
 [ "$RAPIDA" = 1 ] && export GUILDA_SIN_KRATOS=1
 
 nice -n 10 .venv/bin/python -m pytest "${OPCIONES[@]}" "${ARGS[@]}"
