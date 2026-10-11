@@ -7390,3 +7390,6 @@ msgstr "Totes les àrees"
 
 msgid "Área"
 msgstr "Àrea"
+
+msgid "Ayuda sobre esta pantalla"
+msgstr "Ajuda sobre aquesta pantalla"

@@ -34,7 +34,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, busqueda, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, ayuda, busqueda, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
@@ -361,6 +361,12 @@ def salir_ver_como():
     if ver:
         db.registrar_auditoria(None, "ver_como.fin", f"{ver.get('admin')} sale de usuario {ver.get('usuario_id')}")
     return redirect(os.environ.get("GUILDA_BACKOFFICE_URL", "https://backoffice.guildawork.com"))
+
+
+@app.context_processor
+def inyectar_ayuda_contextual():
+    url, especifica = ayuda.url_de(request.endpoint)
+    return {"ayuda_url": url, "ayuda_especifica": especifica}
 
 
 @app.context_processor

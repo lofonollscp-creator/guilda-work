@@ -7381,3 +7381,6 @@ msgstr "All areas"
 
 msgid "Área"
 msgstr "Area"
+
+msgid "Ayuda sobre esta pantalla"
+msgstr "Help for this screen"

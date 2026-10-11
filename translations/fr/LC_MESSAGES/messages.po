@@ -7466,3 +7466,6 @@ msgstr "Toutes les zones"
 
 msgid "Área"
 msgstr "Zone"
+
+msgid "Ayuda sobre esta pantalla"
+msgstr "Aide sur cet écran"

@@ -4883,3 +4883,5 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .onboarding-subtitulo { margin: 18px 0 8px; font-size: .95rem; }
 .onboarding-progreso { height: 6px; border-radius: 6px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
 .onboarding-progreso span { display: block; height: 100%; background: var(--primary); }
+
+a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }

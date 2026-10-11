@@ -218,9 +218,9 @@
 
           <div class="ajustes-panel-separador" role="separator"></div>
           <span class="ajustes-panel-grupo-etiqueta">{{ _('Ayuda y salida') }}</span>
-          <a href="https://help.guildawork.com" target="_blank" rel="noopener" class="ajustes-panel-btn">
+          <a href="{{ ayuda_url }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
-            {{ _('Centro de ayuda') }}
+            {% if ayuda_especifica %}{{ _('Ayuda sobre esta pantalla') }}{% else %}{{ _('Centro de ayuda') }}{% endif %}
           </a>
           <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
@@ -299,6 +299,7 @@
           </a>
           {% endif %}
           <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
+          {% if ayuda_especifica %}<a href="{{ ayuda_url }}" target="_blank" rel="noopener" class="atajos-ayuda-boton" title="{{ _('Ayuda sobre esta pantalla') }}" aria-label="{{ _('Ayuda sobre esta pantalla') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg></a>{% endif %}
         </div>
       </header>
       <main class="content" id="contenido-principal">
