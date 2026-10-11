@@ -17,13 +17,13 @@
 </nav>
 
 <form class="filters" method="get" action="{{ url_for('tiquets.kanban') }}">
-  <select name="prioridad" onchange="this.form.requestSubmit()">
+  <select name="prioridad" onchange="this.form.requestSubmit()" aria-label="{{ _('Prioridad') }}">
     <option value="">{{ _('Todas las prioridades') }}</option>
     {% for valor, etiqueta in prioridades %}
     <option value="{{ valor }}" {% if prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
     {% endfor %}
   </select>
-  <select name="asignado" onchange="this.form.requestSubmit()">
+  <select name="asignado" onchange="this.form.requestSubmit()" aria-label="{{ _('Asignado a') }}">
     <option value="">{{ _('Cualquier asignado') }}</option>
     {% for u in usuarios %}
     <option value="{{ u.id }}" {% if usuario_asignado_id == u.id %}selected{% endif %}>{{ u.email }}</option>

@@ -32,11 +32,11 @@
     </div>
     <div class="correo-form-campo">
       <label>{{ _('Mensajes a mostrar por carpeta') }}</label>
-      <input type="number" name="limite_mensajes" value="{{ preferencias.limite_mensajes }}" min="10" max="500">
+      <input type="number" name="limite_mensajes" value="{{ preferencias.limite_mensajes }}" min="10" max="500" aria-label="{{ _('Mensajes a mostrar por carpeta') }}">
     </div>
     <div class="correo-form-campo">
       <label>{{ _('Deshacer envío') }}</label>
-      <select name="deshacer_segundos">
+      <select name="deshacer_segundos" aria-label="{{ _('Deshacer envío') }}">
         <option value="0" {% if preferencias.deshacer_segundos == 0 %}selected{% endif %}>{{ _('Enviar al momento') }}</option>
         <option value="10" {% if preferencias.deshacer_segundos == 10 %}selected{% endif %}>{{ _('10 segundos para deshacer') }}</option>
         <option value="30" {% if preferencias.deshacer_segundos == 30 %}selected{% endif %}>{{ _('30 segundos para deshacer') }}</option>
@@ -68,7 +68,7 @@
   <form method="post" action="{{ url_for('correo.crear_categoria') }}" class="correo-form-seccion">
     <div class="ia-form-row">
       <input type="text" name="nombre" placeholder="{{ _('Nombre (ej. Importante)') }}" required>
-      <input type="color" name="color" value="#4a6cf7">
+      <input type="color" name="color" value="#4a6cf7" aria-label="{{ _('Color') }}">
       <button type="submit" class="btn btn-primary">+ {{ _('Añadir categoría') }}</button>
     </div>
   </form>
@@ -136,7 +136,7 @@
   <form method="post" action="{{ url_for('correo.crear_regla_categoria') }}" class="correo-form-seccion">
     <div class="ia-form-row">
       <input type="text" name="remitente_patron" placeholder="email@ejemplo.com o @dominio.com" required>
-      <select name="categoria_id" required>
+      <select name="categoria_id" required aria-label="{{ _('Categoría') }}">
         {% for cat in categorias %}
         <option value="{{ cat.id }}">{{ cat.nombre }}</option>
         {% endfor %}
@@ -181,7 +181,7 @@
       <input type="text" name="asunto_patron" placeholder="{{ _('El asunto contiene…') }}">
     </div>
     <div class="ia-form-row">
-      <select name="categoria_id">
+      <select name="categoria_id" aria-label="{{ _('Categoría') }}">
         <option value="">{{ _('Sin categoría') }}</option>
         {% for cat in categorias %}<option value="{{ cat.id }}">{{ cat.nombre }}</option>{% endfor %}
       </select>
@@ -244,7 +244,7 @@
   {% else %}
   <form method="get" action="{{ url_for('correo.ajustes') }}" class="correo-form-campo" style="max-width: 320px;">
     <label>{{ _('Cuenta') }}</label>
-    <select name="cuenta_firma_id" onchange="this.form.requestSubmit()">
+    <select name="cuenta_firma_id" onchange="this.form.requestSubmit()" aria-label="{{ _('Cuenta') }}">
       {% for c in cuentas %}
       <option value="{{ c.id }}" {% if c.id == cuenta_firma_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
       {% endfor %}

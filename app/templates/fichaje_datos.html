@@ -22,35 +22,35 @@
 <form method="post" class="edit-form">
   <div class="correo-form-campo">
     <label>{{ _('Nombre completo') }} *</label>
-    <input type="text" name="nombre_completo" value="{{ datos.nombre_completo or '' }}" required>
+    <input type="text" name="nombre_completo" aria-label="{{ _('Nombre completo') }}" value="{{ datos.nombre_completo or '' }}" required>
   </div>
   <div class="correo-form-campo">
     <label>DNI/NIE *</label>
-    <input type="text" name="dni_nie" value="{{ datos.dni_nie or '' }}" required>
+    <input type="text" name="dni_nie" aria-label="DNI/NIE" value="{{ datos.dni_nie or '' }}" required>
   </div>
   <div class="correo-form-campo">
     <label>{{ _('Número de afiliación a la Seguridad Social') }}</label>
-    <input type="text" name="numero_afiliacion_ss" value="{{ datos.numero_afiliacion_ss or '' }}">
+    <input type="text" name="numero_afiliacion_ss" value="{{ datos.numero_afiliacion_ss or '' }}" aria-label="{{ _('Número de afiliación a la Seguridad Social') }}">
   </div>
   <div class="correo-form-campo">
     <label>{{ _('Categoría profesional') }}</label>
-    <input type="text" name="categoria_profesional" value="{{ datos.categoria_profesional or '' }}">
+    <input type="text" name="categoria_profesional" value="{{ datos.categoria_profesional or '' }}" aria-label="{{ _('Categoría profesional') }}">
   </div>
   <div class="correo-form-campo">
     <label>{{ _('Tipo de contrato') }}</label>
-    <input type="text" name="tipo_contrato" value="{{ datos.tipo_contrato or '' }}" placeholder="{{ _('Indefinido, temporal, prácticas...') }}">
+    <input type="text" name="tipo_contrato" value="{{ datos.tipo_contrato or '' }}" placeholder="{{ _('Indefinido, temporal, prácticas...') }}" aria-label="{{ _('Tipo de contrato') }}">
   </div>
   <div class="correo-form-campo">
     <label>{{ _('Fecha de alta') }}</label>
-    <input type="date" name="fecha_alta" value="{{ datos.fecha_alta or '' }}">
+    <input type="date" name="fecha_alta" value="{{ datos.fecha_alta or '' }}" aria-label="{{ _('Fecha de alta') }}">
   </div>
   <div class="correo-form-campo">
     <label>{{ _('Jornada semanal contratada (horas)') }}</label>
-    <input type="number" step="0.5" min="0" name="jornada_semanal_horas" value="{{ datos.jornada_semanal_horas or '' }}">
+    <input type="number" step="0.5" min="0" name="jornada_semanal_horas" value="{{ datos.jornada_semanal_horas or '' }}" aria-label="{{ _('Jornada semanal contratada (horas)') }}">
   </div>
   <div class="correo-form-campo">
     <label>{{ _('Convenio colectivo') }}</label>
-    <input type="text" name="convenio_colectivo" value="{{ datos.convenio_colectivo or '' }}">
+    <input type="text" name="convenio_colectivo" value="{{ datos.convenio_colectivo or '' }}" aria-label="{{ _('Convenio colectivo') }}">
   </div>
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>

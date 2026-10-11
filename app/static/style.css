@@ -3360,7 +3360,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   color: var(--text);
   font-family: inherit;
 }
-.ia-chat-form textarea:focus { outline: none; }
+.ia-chat-form textarea:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .ia-chat-form button {
   padding: 0 16px;
   border-radius: var(--radius-sm);

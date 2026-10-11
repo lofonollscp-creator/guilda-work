@@ -30,7 +30,7 @@
 
     <div class="correo-compose-campo">
       <label>{{ _('De') }}</label>
-      <select name="cuenta_id" required>
+      <select name="cuenta_id" required aria-label="{{ _('De') }}">
         {% for c in cuentas %}
         <option value="{{ c.id }}" {% if c.id == cuenta_id %}selected{% endif %}>{{ c.nombre }} ({{ c.usuario }})</option>
         {% endfor %}
@@ -38,7 +38,7 @@
     </div>
     <div class="correo-compose-campo correo-autocomplete-wrap">
       <label>{{ _('Para') }}</label>
-      <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required data-destinatarios-autocomplete autocomplete="off">
+      <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required data-destinatarios-autocomplete autocomplete="off" aria-label="{{ _('Para') }}">
       <div class="correo-autocomplete-lista"></div>
       {% if not cc and not bcc %}
       <a class="correo-compose-cc-toggle" href="javascript:void(0)" onclick="document.getElementById('correo-compose-cc-cco').hidden = false; this.hidden = true;">Cc/Cco</a>
@@ -58,7 +58,7 @@
     </div>
     <div class="correo-compose-campo">
       <label>{{ _('Asunto') }}</label>
-      <input type="text" name="asunto" value="{{ asunto }}" required autofocus>
+      <input type="text" name="asunto" value="{{ asunto }}" required autofocus aria-label="{{ _('Asunto') }}">
     </div>
 
     <div class="correo-editor-toolbar">

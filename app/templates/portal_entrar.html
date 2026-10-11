@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="auth-shell">
+  <main class="auth-shell">
     <div class="auth-card">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>{{ _('Portal de cliente') }}</h1>
@@ -38,6 +38,6 @@
       <p class="auth-alterna">{{ _('¿Todavía no tienes acceso?') }} <a href="{{ url_for('portal_cliente.solicitar_acceso') }}">{{ _('Solicítalo aquí') }}</a></p>
       {% endif %}
     </div>
-  </div>
+  </main>
 </body>
 </html>

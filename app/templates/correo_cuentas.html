@@ -69,16 +69,16 @@
           <form action="{{ url_for('correo.editar_cuenta', cuenta_id=c.id) }}" method="post" class="correo-form-seccion">
             <div class="correo-form-campo">
               <label>{{ _('Nombre') }}</label>
-              <input type="text" name="nombre" value="{{ c.nombre }}" required>
+              <input type="text" name="nombre" value="{{ c.nombre }}" required aria-label="{{ _('Nombre') }}">
             </div>
             <div class="correo-form-campo">
               <label>{{ _('Usuario / correo') }}</label>
-              <input type="text" name="usuario" value="{{ c.usuario }}" required>
+              <input type="text" name="usuario" value="{{ c.usuario }}" required aria-label="{{ _('Usuario / correo') }}">
             </div>
             {% if c.auth_tipo == 'password' %}
             <div class="correo-form-campo">
               <label>{{ _('Contraseña') }}</label>
-              <input type="password" name="contrasena" placeholder="{{ _('Déjalo en blanco para mantener la actual') }}">
+              <input type="password" name="contrasena" placeholder="{{ _('Déjalo en blanco para mantener la actual') }}" aria-label="{{ _('Contraseña') }}">
             </div>
             {% elif c.auth_tipo in proveedores_oauth|map(attribute='clave') %}
             <p class="muted">{{ _('Esta cuenta entra con OAuth2, sin contraseña.') }} <a href="{{ url_for('correo.oauth_iniciar', proveedor=c.auth_tipo, correo=c.usuario, nombre=c.nombre) }}">{{ _('Reconectar') }}</a></p>
@@ -89,7 +89,7 @@
             <h3 class="correo-form-subtitulo">{{ _('Servidor entrante') }}</h3>
             <div class="correo-form-campo">
               <label>{{ _('Protocolo') }}</label>
-              <select name="protocolo">
+              <select name="protocolo" aria-label="{{ _('Protocolo') }}">
                 <option value="imap" {{ 'selected' if c.protocolo == 'imap' }}>IMAP</option>
                 <option value="pop3" {{ 'selected' if c.protocolo == 'pop3' }}>POP3</option>
               </select>
@@ -97,11 +97,11 @@
             <div class="correo-form-fila-doble">
               <div class="correo-form-campo">
                 <label>{{ _('Servidor') }}</label>
-                <input type="text" name="host" value="{{ c.host }}" required>
+                <input type="text" name="host" value="{{ c.host }}" required aria-label="{{ _('Servidor') }}">
               </div>
               <div class="correo-form-campo correo-form-campo-estrecho">
                 <label>{{ _('Puerto') }}</label>
-                <input type="number" name="puerto" value="{{ c.puerto }}">
+                <input type="number" name="puerto" value="{{ c.puerto }}" aria-label="{{ _('Puerto') }}">
               </div>
             </div>
             <label class="correo-form-checkbox">
@@ -112,11 +112,11 @@
             <div class="correo-form-fila-doble">
               <div class="correo-form-campo">
                 <label>{{ _('Servidor SMTP') }}</label>
-                <input type="text" name="smtp_host" value="{{ c.smtp_host or '' }}">
+                <input type="text" name="smtp_host" value="{{ c.smtp_host or '' }}" aria-label="{{ _('Servidor SMTP') }}">
               </div>
               <div class="correo-form-campo correo-form-campo-estrecho">
                 <label>{{ _('Puerto') }}</label>
-                <input type="number" name="smtp_puerto" value="{{ c.smtp_puerto or '' }}">
+                <input type="number" name="smtp_puerto" value="{{ c.smtp_puerto or '' }}" aria-label="{{ _('Puerto') }}">
               </div>
             </div>
             <label class="correo-form-checkbox">
@@ -146,21 +146,21 @@
   <form action="{{ url_for('correo.crear_cuenta') }}" method="post" class="correo-form-seccion" style="max-width: 480px;">
     <div class="correo-form-campo">
       <label>{{ _('Nombre') }}</label>
-      <input type="text" name="nombre" placeholder="{{ _('ej. Trabajo') }}" required>
+      <input type="text" name="nombre" placeholder="{{ _('ej. Trabajo') }}" required aria-label="{{ _('Nombre') }}">
     </div>
     <div class="correo-form-campo">
       <label>{{ _('Usuario / correo') }}</label>
-      <input type="text" name="usuario" placeholder="tucorreo@ejemplo.com" required>
+      <input type="text" name="usuario" placeholder="tucorreo@ejemplo.com" required aria-label="{{ _('Usuario / correo') }}">
     </div>
     <div class="correo-form-campo">
       <label>{{ _('Contraseña') }}</label>
-      <input type="password" name="contrasena" placeholder="{{ _('Contraseña (o contraseña de aplicación)') }}" required>
+      <input type="password" name="contrasena" placeholder="{{ _('Contraseña (o contraseña de aplicación)') }}" required aria-label="{{ _('Contraseña') }}">
     </div>
 
     <h3 class="correo-form-subtitulo">{{ _('Servidor entrante') }}</h3>
     <div class="correo-form-campo">
       <label>{{ _('Protocolo') }}</label>
-      <select name="protocolo">
+      <select name="protocolo" aria-label="{{ _('Protocolo') }}">
         <option value="imap" selected>IMAP</option>
         <option value="pop3">POP3</option>
       </select>
@@ -168,11 +168,11 @@
     <div class="correo-form-fila-doble">
       <div class="correo-form-campo">
         <label>{{ _('Servidor') }}</label>
-        <input type="text" name="host" placeholder="imap.gmail.com" required>
+        <input type="text" name="host" placeholder="imap.gmail.com" required aria-label="{{ _('Servidor') }}">
       </div>
       <div class="correo-form-campo correo-form-campo-estrecho">
         <label>{{ _('Puerto') }}</label>
-        <input type="number" name="puerto" value="993">
+        <input type="number" name="puerto" value="993" aria-label="{{ _('Puerto') }}">
       </div>
     </div>
     <label class="correo-form-checkbox">
@@ -184,11 +184,11 @@
     <div class="correo-form-fila-doble">
       <div class="correo-form-campo">
         <label>{{ _('Servidor SMTP') }}</label>
-        <input type="text" name="smtp_host" placeholder="smtp.gmail.com">
+        <input type="text" name="smtp_host" placeholder="smtp.gmail.com" aria-label="{{ _('Servidor SMTP') }}">
       </div>
       <div class="correo-form-campo correo-form-campo-estrecho">
         <label>{{ _('Puerto') }}</label>
-        <input type="number" name="smtp_puerto" placeholder="587">
+        <input type="number" name="smtp_puerto" placeholder="587" aria-label="{{ _('Puerto') }}">
       </div>
     </div>
     <label class="correo-form-checkbox">

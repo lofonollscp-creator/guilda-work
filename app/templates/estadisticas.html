@@ -26,7 +26,7 @@
 {% endif %}
 
 <section class="stats-section">
-  <h3>{{ _('Por proyecto') }}</h3>
+  <h3 aria-level="2">{{ _('Por proyecto') }}</h3>
   {% if not por_categoria %}
   <p class="empty-lane">{{ _('Todavía no hay proyectos creados.') }}</p>
   {% else %}
@@ -72,7 +72,7 @@
 </section>
 
 <section class="stats-section">
-  <h3>{{ _('Por día') }}</h3>
+  <h3 aria-level="2">{{ _('Por día') }}</h3>
   {% if not por_dia %}
   <p class="empty-lane">{{ _('Todavía no hay tareas con duración finalizadas en este rango.') }}</p>
   {% else %}
@@ -116,7 +116,7 @@
 
 {% if equipo %}
 <section class="stats-section">
-  <h3>{{ _('Equipo') }}</h3>
+  <h3 aria-level="2">{{ _('Equipo') }}</h3>
   {% if tiempo_medio_resolucion is not none %}
   <p class="muted">{{ _('Tiempo medio hasta presentar un vencimiento fiscal: %(dias)s días.', dias=tiempo_medio_resolucion|round(1)) }}</p>
   {% endif %}

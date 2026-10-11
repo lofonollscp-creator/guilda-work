@@ -26,7 +26,7 @@
     <form method="post" action="{{ url_for('ia.guardar_ajustes') }}" class="correo-form-seccion">
       <div class="correo-form-campo">
         <label>{{ _('Modelo sugerido') }}</label>
-        <select name="modelo">
+        <select name="modelo" aria-label="{{ _('Modelo sugerido') }}">
           <option value="">— {{ _('elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo') }} —</option>
           {% for m in modelos_sugeridos %}
           <option value="{{ m.id }}" {% if preferencias.modelo == m.id %}selected{% endif %}>{{ m.nombre }}</option>
@@ -44,7 +44,7 @@
 
       <div class="correo-form-campo">
         <label>{{ _('Claves de API de OpenRouter (una por línea, en orden de preferencia)') }}</label>
-        <textarea name="api_keys" rows="3" placeholder="{{ ngettext('Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas', 'Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas', num_claves_configuradas) if num_claves_configuradas else _('sk-or-...\nsk-or-... (clave de reserva, opcional)') }}"></textarea>
+        <textarea name="api_keys" rows="3" placeholder="{{ ngettext('Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas', 'Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas', num_claves_configuradas) if num_claves_configuradas else _('sk-or-...\nsk-or-... (clave de reserva, opcional)') }}" aria-label="{{ _('Claves de API de OpenRouter (una por línea, en orden de preferencia)') }}"></textarea>
         <p class="ia-aviso">{{ _('Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente.') }}</p>
       </div>
       {% if num_claves_configuradas %}

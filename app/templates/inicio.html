@@ -14,7 +14,7 @@
 {% if onboarding %}
 <section class="onboarding-card">
   <div class="onboarding-card-header">
-    <h3>{{ _('Primeros pasos') }}</h3>
+    <h3 aria-level="2">{{ _('Primeros pasos') }}</h3>
     <form action="{{ url_for('ocultar_onboarding') }}" method="post">
       <button type="submit" class="btn btn-ghost" title="{{ _('Ocultar esta tarjeta') }}">{{ _('Ocultar') }}</button>
     </form>
@@ -37,7 +37,7 @@
     </li>
   </ul>
   {% if onboarding.despacho and not onboarding.despacho.completo %}
-  <h4 class="onboarding-subtitulo">{{ _('Puesta en marcha de tu despacho') }} · {{ onboarding.despacho.hechos }}/{{ onboarding.despacho.total }}</h4>
+  <h4 class="onboarding-subtitulo" aria-level="3">{{ _('Puesta en marcha de tu despacho') }} · {{ onboarding.despacho.hechos }}/{{ onboarding.despacho.total }}</h4>
   <div class="onboarding-progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ onboarding.despacho.pct }}"><span style="width: {{ onboarding.despacho.pct }}%"></span></div>
   <ul class="onboarding-lista">
     {% for p in onboarding.despacho.pasos %}
@@ -115,7 +115,7 @@
     <label for="dash-nota-texto" title="{{ _('Atajo: Ctrl+Alt+N') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Nota rápida') }}</label>
     <div class="quick-row">
       {% if menus %}
-      <select name="categoria_id">
+      <select name="categoria_id" aria-label="{{ _('Proyecto') }}">
         <option value="">{{ _('Sin proyecto') }}</option>
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
@@ -130,7 +130,7 @@
     <input type="hidden" name="tipo" value="duracion">
     <label for="dash-tarea-nombre" title="{{ _('Atajo: Ctrl+Alt+T') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-play"></use></svg> {{ _('Nueva tarea') }}</label>
     <div class="quick-row">
-      <select name="categoria_id" required>
+      <select name="categoria_id" required aria-label="{{ _('Proyecto') }}">
         {% for m in menus %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
       </select>
       <input type="text" id="dash-tarea-nombre" name="nombre" placeholder="{{ _('Nombre de la tarea') }}" required>

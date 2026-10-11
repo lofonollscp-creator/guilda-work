@@ -90,7 +90,7 @@
 </div>
 
 <aside class="historial-resumen">
-  <h3>{{ _('Resumen del periodo') }}</h3>
+  <h3 aria-level="2">{{ _('Resumen del periodo') }}</h3>
   <div class="historial-resumen-kpi">
     <span>{{ _('Entradas') }}</span>
     <strong>{{ resumen.total_entradas }}</strong>
@@ -115,7 +115,7 @@
 </div>
 
 <section class="ia-section">
-  <h3>{{ _('Generar informe con IA') }}</h3>
+  <h3 aria-level="2">{{ _('Generar informe con IA') }}</h3>
   <p class="muted">{{ _('Envía los datos filtrados de arriba a un modelo corriendo en tu máquina (Ollama o LM Studio, nada sale a internet) o a OpenRouter en la nube (usa las claves configuradas en Ajustes del asistente IA).') }}</p>
   <form class="ia-form" method="post" action="{{ url_for('informe_ia') }}">
     <input type="hidden" name="desde" value="{{ desde }}">
@@ -149,11 +149,11 @@
 </section>
 
 <section class="ia-section">
-  <h3>{{ _('Preguntar a mis datos') }}</h3>
+  <h3 aria-level="2">{{ _('Preguntar a mis datos') }}</h3>
   <p class="muted">{{ _('Chatea con un modelo local sobre los datos filtrados arriba (mismo rango de fechas/proyecto). Puedes hacer preguntas de seguimiento — no se envía nada a internet.') }}</p>
 
   <div class="chat-config">
-    <select id="chat-proveedor">
+    <select id="chat-proveedor" aria-label="{{ _('Proveedor') }}">
       <option value="ollama" {% if proveedor_ia == 'ollama' %}selected{% endif %}>Ollama (localhost:11434)</option>
       <option value="lmstudio" {% if proveedor_ia == 'lmstudio' %}selected{% endif %}>LM Studio (localhost:1234)</option>
       <option value="openrouter" {% if proveedor_ia == 'openrouter' %}selected{% endif %}>{{ _('OpenRouter (nube)') }}</option>

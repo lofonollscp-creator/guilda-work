@@ -16,7 +16,7 @@
   <script async defer src="{{ url_for('static', filename='altcha.min.js') }}" type="module"></script>
 </head>
 <body>
-  <div class="auth-shell">
+  <main class="auth-shell">
     <div class="auth-card">
       <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
       <h1>{{ _('Solicitar acceso') }}</h1>
@@ -54,6 +54,6 @@
       {% endif %}
       <p class="auth-alterna"><a href="{{ url_for('portal_cliente.entrar') }}">{{ _('¿Ya tienes acceso? Pide tu enlace') }}</a></p>
     </div>
-  </div>
+  </main>
 </body>
 </html>

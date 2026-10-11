@@ -43,7 +43,7 @@
   </style>
 </head>
 <body>
-  <div class="card">
+  <main class="card">
     <img class="mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
     <h1>{{ _('Tu cuenta está casi lista') }}</h1>
     <p>{{ _('Te has registrado correctamente, pero tu cuenta todavía no está asociada a ninguna organización.') }}</p>
@@ -51,6 +51,6 @@
     <form action="{{ url_for('logout') }}" method="post">
       <button type="submit">{{ _('Cerrar sesión') }}</button>
     </form>
-  </div>
+  </main>
 </body>
 </html>

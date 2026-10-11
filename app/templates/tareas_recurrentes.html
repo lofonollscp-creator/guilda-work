@@ -37,7 +37,7 @@
         </select>
       </label>
       {% if menus %}
-      <select name="categoria_id">
+      <select name="categoria_id" aria-label="{{ _('Proyecto') }}">
         <option value="">{{ _('Sin proyecto') }}</option>
         {% for menu in menus %}
         <option value="{{ menu.id }}">{{ menu.nombre }}</option>

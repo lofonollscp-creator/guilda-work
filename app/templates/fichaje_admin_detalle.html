@@ -47,7 +47,7 @@
   <form method="post" action="{{ url_for('fichaje.admin_corregir', usuario_id=trabajador.id) }}" class="quick-row">
     <input type="hidden" name="desde" value="{{ desde }}">
     <input type="hidden" name="hasta" value="{{ hasta }}">
-    <select name="tipo" required>
+    <select name="tipo" required aria-label="{{ _('Tipo') }}">
       {% for valor, etiqueta in tipos_fichaje.items() %}
       <option value="{{ valor }}">{{ etiqueta }}</option>
       {% endfor %}

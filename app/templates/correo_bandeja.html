@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Correo') }} — Guilda Work{% endblock %}
 {% block content %}
+<h1 class="sr-only">{{ _('Correo') }}</h1>
 <div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
   {% if envio_banner %}
   <div class="correo-envio-banner" role="status" id="correo-envio-banner" data-segundos="{{ envio_banner.segundos }}"
