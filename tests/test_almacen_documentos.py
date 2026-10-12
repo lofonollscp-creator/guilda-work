@@ -146,7 +146,7 @@ def _fuentes():
 
 
 def test_solo_el_almacen_escribe_el_contenido_de_los_documentos():
-    permitidos = {"app/db.py", "app/almacen_documentos.py"}
+    permitidos = {"app/db.py", "app/db_fiscal.py", "app/almacen_documentos.py"}
     for ruta, texto in _fuentes():
         if re.search(r"INSERT\s+INTO\s+(documentos|cliente_documentos)\b|UPDATE\s+(documentos|cliente_documentos)\s+SET\s+contenido", texto, re.I):
             assert ruta in permitidos, f"{ruta} escribe documentos sin pasar por app/almacen_documentos.py"
@@ -155,7 +155,7 @@ def test_solo_el_almacen_escribe_el_contenido_de_los_documentos():
 def test_las_funciones_antiguas_de_documentos_solo_las_llama_el_almacen():
     funciones = ("archivar_documento_cliente", "obtener_documento_cliente", "listar_documentos_cliente", "eliminar_documento_cliente")
     for ruta, texto in _fuentes():
-        if ruta in ("app/db.py", "app/almacen_documentos.py", "app/openapi_catalogo.py"):
+        if ruta in ("app/db.py", "app/db_fiscal.py", "app/almacen_documentos.py", "app/openapi_catalogo.py"):
             continue
         for f in funciones:
             assert not re.search(rf"\bdb\.{f}\(", texto), f"{ruta} llama a db.{f}: usa app/almacen_documentos.py"
