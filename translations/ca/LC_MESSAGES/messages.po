@@ -7872,3 +7872,21 @@ msgstr "Ajuda'm a configurar el meu compte"
 
 msgid "Ayúdame a configurar mi cuenta: idioma, perfil y avisos."
 msgstr "Ajuda'm a configurar el meu compte: idioma, perfil i avisos."
+
+msgid "Aceptar"
+msgstr "Accepta"
+
+msgid "Confirma la acción"
+msgstr "Confirma l'acció"
+
+msgid "¿Eliminar %(n)s mensaje(s) de la caché local? No se puede deshacer."
+msgstr "Vols eliminar %(n)s missatge(s) de la memòria cau local? No es pot desfer."
+
+msgid "URL del enlace:"
+msgstr "URL de l'enllaç:"
+
+msgid "Solo se admiten enlaces http(s) o mailto."
+msgstr "Només s'admeten enllaços http(s) o mailto."
+
+msgid "Sin validar"
+msgstr "Sense validar"

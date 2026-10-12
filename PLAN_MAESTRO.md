@@ -43,8 +43,8 @@ Cifras de la auditoría de interfaz (hoy):
 |---|---|---|
 | `<select>` nativos | 114 | correo_bandeja (11), tarea_outlook_editar (9), tareas_lista (8), tareas_recurrentes (7), proyecto_resumen (7) |
 | `style="…"` en línea | 130 | mis_dispositivos (14), fiscal_cliente_detalle (8), inicio, estadisticas, correo_bandeja (7 c/u) |
-| `<button>` sin clase | 32 | correo_redactar (8), correo_bandeja (7), correo_ajustes (6), _ajustes_apariencia (5) |
-| checkbox/radio sin estilo propio | 19 | correo_ajustes (5), correo_cuentas (4), ia_ajustes (3), fiscal_cliente_editar (3) |
+| `<button>` sin clase | 32 (*varios están dentro de barras o controles segmentados que los estilan por contenedor; se migran a `boton()` o se documentan*) | correo_redactar (8), correo_bandeja (7), correo_ajustes (6), _ajustes_apariencia (5) |
+| checkbox/radio sin clase | 19 | correo_ajustes (5), correo_cuentas (4), ia_ajustes (3), fiscal_cliente_editar (3). *Corrección del Día 1: ya tienen estilo propio global (`superficies.css`); lo que faltaba era el interruptor, ya creado* |
 | `confirm()`/`alert()`/`prompt()` del navegador | 9 | correo_redactar, correo_editor.js, correo_seleccion.js, ia_asistente.js, csp_compat.js, toasts.js |
 | `<input type="date">` nativos | 32 | correo_bandeja, historial, fichajes |
 
@@ -62,7 +62,7 @@ Cifras de la auditoría de interfaz (hoy):
 | **Toasts** unificados (ya hay `toasts.js`: extender a éxito/error/deshacer) | `alert()` y mensajes sueltos | S |
 | **Selector** (ya existe buscador ≥ 6 opciones): estilarlo siempre, también con pocas opciones, con teclado y móvil | 114 `<select>` | L |
 | **Selector de fecha y de rango** (calendario propio, atajos «hoy / esta semana / este trimestre») | 32 `<input type="date">` | L |
-| **Interruptor (switch), casilla y radio** con el estilo del sistema | 19 sin estilo | S |
+| **Interruptor (switch)** (casilla y radio ya tienen estilo global) | uso de casillas para sí/no | S |
 | **Botón** (primario / secundario / peligro / icono / cargando) como macro `boton()` | 32 sin clase | S |
 | **Tabla de datos** (cabecera fija, orden, densidad, selección múltiple, acciones por fila, estado vacío, paginación) | tablas ad hoc | L |
 | **Estados**: vacío con ilustración y acción, cargando (esqueletos), error con reintento | textos sueltos | M |

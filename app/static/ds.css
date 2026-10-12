@@ -1,0 +1,124 @@
+/* Sistema de diseño de Guilda Work: componentes que sustituyen a los controles «de fábrica» del navegador.
+   Se carga después de superficies.css y usa sus mismos tokens (--glass-*, --panel-*, --primary, --radius-*), así que sigue el tema y la
+   densidad sin reglas propias. Cada componente tiene su macro en app/templates/_ds/componentes.html y, si necesita JavaScript, su parte
+   en app/static/ds.js. tests/test_sistema_diseno.py vigila que no vuelvan los controles nativos. */
+
+/* ---- Diálogo (sustituye a confirm()/prompt()/alert()) -------------------------------------------------------------------- */
+.ds-dialogo {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  color: var(--text);
+  background: var(--panel-solido);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), var(--panel-resalte);
+  overflow: auto;
+}
+.ds-dialogo::backdrop { background: rgba(8, 10, 14, 0.52); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.ds-dialogo[open] { animation: ds-dialogo-entra 0.16s ease-out; }
+@keyframes ds-dialogo-entra { from { opacity: 0; transform: translateY(6px) scale(0.985); } to { opacity: 1; transform: none; } }
+.ds-dialogo form { margin: 0; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 12px; }
+.ds-dialogo-cabecera { display: flex; align-items: center; gap: 12px; }
+.ds-dialogo-icono {
+  flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px;
+  color: var(--primary-text, var(--primary)); background: color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.ds-dialogo-peligro .ds-dialogo-icono { color: var(--danger-text); background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.ds-dialogo-icono svg { width: 18px; height: 18px; }
+.ds-dialogo h2 { margin: 0; font-size: 1.05em; font-weight: 700; letter-spacing: -0.01em; text-transform: none; }
+.ds-dialogo p { margin: 0; color: var(--text-muted); font-size: 0.93em; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.ds-dialogo input[type="text"], .ds-dialogo input[type="url"] { width: 100%; }
+.ds-dialogo-botones { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+@media (max-width: 480px) {
+  .ds-dialogo-botones { flex-direction: column-reverse; }
+  .ds-dialogo-botones .btn { width: 100%; justify-content: center; }
+}
+
+/* ---- Botones: variantes que faltaban ------------------------------------------------------------------------------------- */
+.btn-peligro {
+  background: color-mix(in srgb, var(--danger) 14%, var(--panel-2));
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--glass-border));
+  color: var(--danger-text);
+  font-weight: 700;
+}
+.btn-peligro:hover { background: color-mix(in srgb, var(--danger) 24%, var(--panel-2)); border-color: var(--danger); }
+.btn-sm { padding: 6px 11px; font-size: 0.82em; border-radius: 9px; }
+.btn-icono { padding: 8px; aspect-ratio: 1; display: inline-grid; place-items: center; }
+.btn[aria-busy="true"] { position: relative; color: transparent !important; pointer-events: none; }
+.btn[aria-busy="true"]::after {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 15px; height: 15px; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--text) 30%, transparent); border-top-color: var(--text);
+  animation: ds-gira 0.7s linear infinite;
+}
+@keyframes ds-gira { to { transform: rotate(360deg); } }
+
+/* ---- Interruptor (switch) ------------------------------------------------------------------------------------------------ */
+.ds-interruptor { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.ds-interruptor input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.ds-interruptor-pista {
+  position: relative; flex: 0 0 auto; width: 40px; height: 24px; border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 35%, transparent); border: 1px solid var(--glass-border);
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.ds-interruptor-pista::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); transition: transform 0.16s ease;
+}
+.ds-interruptor input:checked + .ds-interruptor-pista { background: var(--primary); border-color: var(--primary-dark); }
+.ds-interruptor input:checked + .ds-interruptor-pista::after { transform: translateX(16px); }
+.ds-interruptor input:focus-visible + .ds-interruptor-pista { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 32%, transparent); }
+.ds-interruptor input:disabled + .ds-interruptor-pista { opacity: 0.45; }
+.ds-interruptor-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ds-interruptor-etiqueta { font-weight: 600; font-size: 0.93em; }
+.ds-interruptor-ayuda { color: var(--text-muted); font-size: 0.82em; line-height: 1.4; }
+@media (prefers-reduced-motion: reduce) { .ds-interruptor-pista, .ds-interruptor-pista::after, .ds-dialogo[open] { transition: none; animation: none; } }
+
+/* ---- Campo de formulario (etiqueta, ayuda, error en línea) -------------------------------------------------------------- */
+.ds-campo { display: flex; flex-direction: column; gap: 6px; margin: 0 0 14px; min-width: 0; }
+.ds-campo > label, .ds-campo-etiqueta { font-weight: 600; font-size: 0.88em; }
+.ds-campo-requerido::after { content: " *"; color: var(--danger-text); }
+.ds-campo-ayuda { color: var(--text-muted); font-size: 0.8em; line-height: 1.4; }
+.ds-campo-error { color: var(--danger-text); font-size: 0.82em; font-weight: 600; }
+.ds-campo-con-error input, .ds-campo-con-error select, .ds-campo-con-error textarea { border-color: var(--danger); }
+.ds-seccion { border-top: 1px solid var(--linea); padding-top: 16px; margin-top: 8px; }
+.ds-seccion > h3 { margin: 0 0 4px; font-size: 1em; }
+.ds-seccion > .ds-seccion-texto { margin: 0 0 14px; color: var(--text-muted); font-size: 0.88em; }
+
+/* ---- Estados: vacío, cargando y error ------------------------------------------------------------------------------------ */
+.ds-vacio {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 36px 20px; border: 1px dashed var(--glass-border); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--glass-bg) 55%, transparent);
+}
+.ds-vacio-icono { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; color: var(--text-muted); background: var(--panel-2); }
+.ds-vacio-icono svg { width: 22px; height: 22px; }
+.ds-vacio h3 { margin: 4px 0 0; font-size: 1em; }
+.ds-vacio p { margin: 0; max-width: 46ch; color: var(--text-muted); font-size: 0.9em; line-height: 1.5; }
+.ds-vacio .btn { margin-top: 6px; }
+.ds-vacio-error .ds-vacio-icono { color: var(--danger-text); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+.ds-esqueleto { display: flex; flex-direction: column; gap: 10px; }
+.ds-esqueleto > span {
+  display: block; height: 14px; border-radius: 7px;
+  background: linear-gradient(90deg, var(--panel-2) 25%, var(--panel-2-hover) 50%, var(--panel-2) 75%); background-size: 200% 100%;
+  animation: ds-brillo 1.3s ease-in-out infinite;
+}
+.ds-esqueleto > span:nth-child(3n) { width: 62%; }
+.ds-esqueleto > span:nth-child(3n + 1) { width: 88%; }
+@keyframes ds-brillo { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .ds-esqueleto > span, .btn[aria-busy="true"]::after { animation: none; } }
+
+/* ---- Chips y avatares ---------------------------------------------------------------------------------------------------- */
+.ds-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.78em; font-weight: 600;
+  color: var(--text); background: var(--panel-2); border: 1px solid var(--glass-border); white-space: nowrap;
+}
+.ds-chip-exito { color: var(--success-text, var(--text)); background: color-mix(in srgb, var(--success, #4caf50) 14%, transparent); }
+.ds-chip-aviso { background: color-mix(in srgb, #f0a020 16%, transparent); }
+.ds-chip-peligro { color: var(--danger-text); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.ds-sinvalidar { /* marca visible para datos de ejemplo que aún no ha contrastado una persona del sector */
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 0.74em; font-weight: 700;
+  color: var(--text); background: color-mix(in srgb, #f0a020 20%, transparent); border: 1px dashed color-mix(in srgb, #f0a020 60%, transparent);
+}

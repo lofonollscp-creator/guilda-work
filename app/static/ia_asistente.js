@@ -657,13 +657,19 @@
     });
     document.getElementById("ia-conv-renombrar").addEventListener("click", function () {
       var opcion = convSelect.options[convSelect.selectedIndex];
-      var titulo = prompt(convCaja.dataset.promptRenombrar, opcion.dataset.titulo || "");
-      if (titulo === null || !titulo.trim()) return;
-      accionConversacion("/ia/conversaciones/" + convSelect.value + "/renombrar", { titulo: titulo });
+      var idConv = convSelect.value;
+      var preguntarTitulo = window.GuildaDS ? window.GuildaDS.pedirTexto(convCaja.dataset.promptRenombrar, opcion.dataset.titulo || "") : Promise.resolve(prompt(convCaja.dataset.promptRenombrar, opcion.dataset.titulo || ""));
+      preguntarTitulo.then(function (titulo) {
+        if (titulo === null || !titulo.trim()) return;
+        accionConversacion("/ia/conversaciones/" + idConv + "/renombrar", { titulo: titulo });
+      });
     });
     document.getElementById("ia-conv-eliminar").addEventListener("click", function () {
-      if (!confirm(convCaja.dataset.confirmarEliminar)) return;
-      accionConversacion("/ia/conversaciones/" + convSelect.value + "/eliminar");
+      var idConv = convSelect.value;
+      var preguntarBorrar = window.GuildaDS ? window.GuildaDS.confirmar(convCaja.dataset.confirmarEliminar, { peligro: true }) : Promise.resolve(confirm(convCaja.dataset.confirmarEliminar));
+      preguntarBorrar.then(function (si) {
+        if (si) accionConversacion("/ia/conversaciones/" + idConv + "/eliminar");
+      });
     });
   }
 

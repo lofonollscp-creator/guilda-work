@@ -58,9 +58,12 @@ def test_historial_diario_idempotente_y_variacion(bo):
 
 def test_la_pasada_periodica_guarda_el_historial(bo):
     _tenant("Periódica", "per@ejemplo.com")
-    r = cartera.paso_periodico(datetime.now())
+    ahora = datetime.now()
+    while ahora.weekday() == 0:        # el lunes a partir de las 9 toca el resumen semanal, que necesita ALERTAS_ADMIN_EMAIL: no es lo que se prueba aquí
+        ahora -= timedelta(days=1)
+    r = cartera.paso_periodico(ahora)
     assert r["errores"] == [] and r["salud"] is True
-    assert cartera.paso_periodico(datetime.now())["salud"] is False
+    assert cartera.paso_periodico(ahora)["salud"] is False
 
 
 def test_siguiente_paso_segun_lo_que_mas_pesa():

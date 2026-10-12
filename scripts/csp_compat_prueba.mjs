@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const html = `<!doctype html><body>
 <form id="f1" data-confirmar-envio="¿Seguro?"><button>enviar</button></form>
+<form id="f5" data-confirmar-envio="¿Enviar?" data-confirmar-excepto="programar"><button name="programar" id="prog">programar</button><button name="enviar" id="env">enviar</button></form>
 <button id="b1" data-confirmar-clic="¿Borrar?">borrar</button>
 <form id="f2"><select id="s2" data-autoenviar><option>a</option></select></form>
 <form id="f3"><select id="s3" data-autoenviar="submit"><option>a</option></select></form>
@@ -23,19 +24,27 @@ w.eval(readFileSync(new URL("../app/static/csp_compat.js", import.meta.url), "ut
 let fallos = 0;
 const ok = (cond, msg) => { if (!cond) { fallos++; console.error("FALLO:", msg); } else console.log("ok:", msg); };
 const doc = w.document;
+const esperar = () => new Promise((r) => setTimeout(r, 0));   // la confirmación es asíncrona (diálogo del sistema de diseño)
 const enviado = (id) => { let n = 0; const f = doc.getElementById(id); f.addEventListener("submit", (e) => { e.preventDefault(); n++; }); return () => n; };
 
 // 1. confirmar el envío: cancelar no deja pasar el submit a otros listeners; aceptar sí
 const n1 = enviado("f1");
-respuestas = [false]; doc.querySelector("#f1 button").click();
+doc.getElementById("f1").requestSubmit = function (sub) { this.dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true })); };
+respuestas = [false]; doc.getElementById("f1").dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true })); await esperar();
 ok(confirmaciones.at(-1) === "¿Seguro?" && n1() === 0, "cancelar la confirmación impide el envío");
-respuestas = [true]; doc.querySelector("#f1 button").click();
+respuestas = [true]; doc.getElementById("f1").dispatchEvent(new w.Event("submit", { bubbles: true, cancelable: true })); await esperar();
 ok(n1() === 1, "aceptar la confirmación deja enviar");
+
+// 1b. data-confirmar-excepto: el botón «programar» no pregunta
+const f5 = doc.getElementById("f5"); let n5 = 0, preguntas5 = confirmaciones.length;
+f5.addEventListener("submit", (e) => { e.preventDefault(); n5++; });
+const ev = new w.Event("submit", { bubbles: true, cancelable: true }); ev.submitter = doc.getElementById("prog"); f5.dispatchEvent(ev); await esperar();
+ok(n5 === 1 && confirmaciones.length === preguntas5, "el botón exceptuado envía sin preguntar");
 
 // 2. confirmar un clic
 let seguido = 0; doc.getElementById("b1").addEventListener("click", () => seguido++);
-respuestas = [false]; doc.getElementById("b1").click(); ok(seguido === 0, "clic cancelado no sigue");
-respuestas = [true]; doc.getElementById("b1").click(); ok(seguido === 1, "clic confirmado sigue");
+respuestas = [false]; doc.getElementById("b1").click(); await esperar(); ok(seguido === 0, "clic cancelado no sigue");
+respuestas = [true]; doc.getElementById("b1").click(); await esperar(); ok(seguido === 1, "clic confirmado sigue");
 
 // 3. autoenviar con requestSubmit (jsdom: lo simulamos) y con submit
 let rs = 0, sb = 0;

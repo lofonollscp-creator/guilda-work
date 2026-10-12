@@ -24,7 +24,7 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('correo.enviar') }}" enctype="multipart/form-data"
-        {% if deshacer_segundos == 0 %}onsubmit="if (event.submitter && event.submitter.name === 'programar') return true; return confirm('{{ _('¿Enviar este correo? No se puede deshacer.') }}');"{% endif %}>
+        {% if deshacer_segundos == 0 %}data-confirmar-envio="{{ _('¿Enviar este correo? No se puede deshacer.') }}" data-confirmar-excepto="programar"{% endif %}>
     <input type="hidden" name="en_respuesta_a" value="{{ en_respuesta_a }}">
     <input type="hidden" name="borrador_id" id="correo-borrador-id" value="{{ borrador_id or '' }}">
 
@@ -161,7 +161,7 @@
           asuntoInput.value = plantilla.asunto;
         }
         if (plantilla.sin_resolver && plantilla.sin_resolver.length) {
-          alert("{{ _('Faltan datos para estas variables (elige un cliente o rellénalas a mano):') }} " + plantilla.sin_resolver.join(", "));
+          window.mostrarToast({{ _('Faltan datos para estas variables (elige un cliente o rellénalas a mano):')|tojson }} + " " + plantilla.sin_resolver.join(", "), "error");
         }
       });
   });

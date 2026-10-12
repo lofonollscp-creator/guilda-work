@@ -7863,3 +7863,21 @@ msgstr "Help me set up my account"
 
 msgid "Ayúdame a configurar mi cuenta: idioma, perfil y avisos."
 msgstr "Help me set up my account: language, profile and alerts."
+
+msgid "Aceptar"
+msgstr "OK"
+
+msgid "Confirma la acción"
+msgstr "Confirm the action"
+
+msgid "¿Eliminar %(n)s mensaje(s) de la caché local? No se puede deshacer."
+msgstr "Delete %(n)s message(s) from the local cache? This cannot be undone."
+
+msgid "URL del enlace:"
+msgstr "Link URL:"
+
+msgid "Solo se admiten enlaces http(s) o mailto."
+msgstr "Only http(s) or mailto links are allowed."
+
+msgid "Sin validar"
+msgstr "Not validated"

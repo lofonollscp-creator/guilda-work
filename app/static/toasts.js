@@ -172,7 +172,7 @@
         var defecto = (form.closest("[data-eliminar-defecto]") || { dataset: {} }).dataset;
         var dato = function (clave) { return form.dataset[clave] || defecto[clave] || ""; };
         var confirmar = dato("confirmar");
-        if (confirmar && !window.confirm(confirmar)) return;
+        if (confirmar && !(await (window.GuildaDS ? window.GuildaDS.confirmar(confirmar, { peligro: true }) : Promise.resolve(window.confirm(confirmar))))) return;
 
         var mensajeOk = dato("mensajeOk");
         var mensajeError = dato("mensajeError") || mensajeOk;

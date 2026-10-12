@@ -1,0 +1,74 @@
+{#- Macros del sistema de diseño (estilos en app/static/ds.css, comportamiento en app/static/ds.js).
+    Uso:  {% from "_ds/componentes.html" import boton, interruptor, estado_vacio, campo, esqueleto, chip %}
+    Se importan sin contexto de petición: no usar aquí `request` ni `g` (el nonce de CSP, si hiciera falta, es `g.csp_nonce` desde la plantilla que llama). -#}
+
+{% macro icono(nombre, clase="icono-inline") -%}
+<svg class="{{ clase }}" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ nombre }}"></use></svg>
+{%- endmacro %}
+
+{#- Botón o enlace con aspecto de botón. variante: primario | secundario | fantasma | peligro. `confirmar` pide confirmación antes de seguir (diálogo de ds.js). -#}
+{% macro boton(texto, variante="secundario", href=None, tipo="button", icono_nombre=None, confirmar=None, pequeno=False, nombre=None, valor=None, titulo=None, id=None) -%}
+{%- set clases = "btn" ~ {"primario": " btn-primary", "fantasma": " btn-ghost", "peligro": " btn-peligro"}.get(variante, "") ~ (" btn-sm" if pequeno else "") -%}
+{%- if href -%}
+<a class="{{ clases }}" href="{{ href }}"{% if id %} id="{{ id }}"{% endif %}{% if titulo %} title="{{ titulo }}"{% endif %}{% if confirmar %} data-confirmar-clic="{{ confirmar }}"{% endif %}>{% if icono_nombre %}{{ icono(icono_nombre) }} {% endif %}{{ texto }}</a>
+{%- else -%}
+<button class="{{ clases }}" type="{{ tipo }}"{% if id %} id="{{ id }}"{% endif %}{% if nombre %} name="{{ nombre }}"{% endif %}{% if valor is not none %} value="{{ valor }}"{% endif %}{% if titulo %} title="{{ titulo }}"{% endif %}{% if confirmar %} data-confirmar-clic="{{ confirmar }}"{% endif %}>{% if icono_nombre %}{{ icono(icono_nombre) }} {% endif %}{{ texto }}</button>
+{%- endif -%}
+{%- endmacro %}
+
+{#- Interruptor (sí/no). Envía `valor` cuando está activado, como una casilla. -#}
+{% macro interruptor(nombre, etiqueta, marcado=False, ayuda=None, valor="1", id=None, deshabilitado=False, autoenviar=False) -%}
+{%- set ident = id or ("sw-" ~ nombre) -%}
+<label class="ds-interruptor" for="{{ ident }}">
+  <input type="checkbox" role="switch" id="{{ ident }}" name="{{ nombre }}" value="{{ valor }}"{% if marcado %} checked{% endif %}{% if deshabilitado %} disabled{% endif %}{% if autoenviar %} data-autoenviar{% endif %}{% if ayuda %} aria-describedby="{{ ident }}-ayuda"{% endif %}>
+  <span class="ds-interruptor-pista" aria-hidden="true"></span>
+  <span class="ds-interruptor-texto">
+    <span class="ds-interruptor-etiqueta">{{ etiqueta }}</span>
+    {% if ayuda %}<span class="ds-interruptor-ayuda" id="{{ ident }}-ayuda">{{ ayuda }}</span>{% endif %}
+  </span>
+</label>
+{%- endmacro %}
+
+{#- Estado vacío con icono, texto y una acción opcional. error=True lo pinta como fallo recuperable. -#}
+{% macro estado_vacio(titulo, texto=None, icono_nombre="folder", accion_texto=None, accion_href=None, error=False) -%}
+<div class="ds-vacio{% if error %} ds-vacio-error{% endif %}"{% if error %} role="alert"{% endif %}>
+  <span class="ds-vacio-icono">{{ icono("triangle-alert" if error else icono_nombre, "") }}</span>
+  <h3>{{ titulo }}</h3>
+  {% if texto %}<p>{{ texto }}</p>{% endif %}
+  {% if accion_texto and accion_href %}<a class="btn btn-primary" href="{{ accion_href }}">{{ accion_texto }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{#- Campo de formulario: etiqueta + control (el bloque que llama) + ayuda + error en línea. -#}
+{% macro campo(etiqueta, para=None, ayuda=None, error=None, requerido=False) -%}
+<div class="ds-campo{% if error %} ds-campo-con-error{% endif %}">
+  <label{% if para %} for="{{ para }}"{% endif %}{% if requerido %} class="ds-campo-requerido"{% endif %}>{{ etiqueta }}</label>
+  {{ caller() }}
+  {% if ayuda %}<span class="ds-campo-ayuda">{{ ayuda }}</span>{% endif %}
+  {% if error %}<span class="ds-campo-error" role="alert">{{ error }}</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{#- Sección de un formulario largo. -#}
+{% macro seccion(titulo, texto=None) -%}
+<section class="ds-seccion">
+  <h3>{{ titulo }}</h3>
+  {% if texto %}<p class="ds-seccion-texto">{{ texto }}</p>{% endif %}
+  {{ caller() }}
+</section>
+{%- endmacro %}
+
+{#- Esqueleto de carga (n líneas). -#}
+{% macro esqueleto(lineas=3) -%}
+<div class="ds-esqueleto" aria-hidden="true">{% for _ in range(lineas) %}<span></span>{% endfor %}</div>
+{%- endmacro %}
+
+{#- Chip. variante: neutro | exito | aviso | peligro. -#}
+{% macro chip(texto, variante="neutro") -%}
+<span class="ds-chip{% if variante != 'neutro' %} ds-chip-{{ variante }}{% endif %}">{{ texto }}</span>
+{%- endmacro %}
+
+{#- Marca para datos de ejemplo que aún no ha contrastado una persona del sector (módulos Abogados e Inmobiliaria). -#}
+{% macro sin_validar(texto=None) -%}
+<span class="ds-sinvalidar" title="{{ texto or '' }}">{{ icono("info") }} {{ texto or _('Sin validar') }}</span>
+{%- endmacro %}

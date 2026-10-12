@@ -17,18 +17,27 @@
     let inputArchivo = null;
 
     barra.querySelectorAll("[data-cmd]").forEach((boton) => {
-      boton.addEventListener("click", () => {
+      boton.addEventListener("click", async () => {
         editor.focus();
         const cmd = boton.dataset.cmd;
         if (cmd === "createLink") {
-          const url = (window.prompt("URL del enlace:") || "").trim();
+          // El diálogo se lleva el foco y la selección: se guarda el rango para insertar el enlace donde estaba el texto elegido.
+          const seleccion = window.getSelection();
+          const rango = seleccion && seleccion.rangeCount ? seleccion.getRangeAt(0).cloneRange() : null;
+          const i18n = window.GUILDA_I18N || {};
+          const pregunta = i18n.correoEnlaceUrl || "URL del enlace:";
+          const respuesta = window.GuildaDS ? await window.GuildaDS.pedirTexto(pregunta, "", { tipo: "url", marcador: "https://" }) : window.prompt(pregunta);
+          const url = (respuesta || "").trim();
+          editor.focus();
+          if (rango && seleccion) { seleccion.removeAllRanges(); seleccion.addRange(rango); }
           // Sin esto, un esquema como "javascript:" se insertaba tal cual
           // en el href del borrador -- solo http(s)/mailto son enlaces de
           // verdad, el resto se descarta en vez de ejecutarse al clicar.
           if (url && /^(https?:|mailto:)/i.test(url)) {
             document.execCommand(cmd, false, url);
           } else if (url) {
-            window.alert("Solo se admiten enlaces http(s) o mailto.");
+            const aviso = i18n.correoEnlaceInvalido || "Solo se admiten enlaces http(s) o mailto.";
+            if (typeof window.mostrarToast === "function") window.mostrarToast(aviso, "error"); else if (window.GuildaDS) window.GuildaDS.avisar(aviso);
           }
         } else if (cmd === "insertImageFile") {
           if (!inputArchivo) {

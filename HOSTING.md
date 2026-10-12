@@ -63,6 +63,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Aspecto de la app: superficies de cristal](#aspecto-de-la-app-superficies-de-cristal)
 - [Exportar a PDF (informes y fichajes)](#exportar-a-pdf-informes-y-fichajes)
 - [El asistente de IA como soporte de la plataforma](#el-asistente-de-ia-como-soporte-de-la-plataforma)
+- [Sistema de diseño (componentes y candado)](#sistema-de-diseño-componentes-y-candado)
 
 <!-- /INDICE -->
 
@@ -2981,3 +2982,14 @@ Todos los correos que manda la app (`app/notificaciones_email.py`: enlace de acc
 - **Ayuda**: nueva sección «El asistente también es tu soporte» en `usar-el-asistente` (es/ca/en/fr, en `guilda-help`; comprobada con `generar.py` + `comprobar.py` en una copia). **Falta publicarla** (`generar.py` en `guilda-help`): hasta entonces el asistente no conoce esa sección.
 - Tests en `tests/test_ia_soporte.py` (detección en 4 idiomas, búsqueda, destinos, ajustes propios y rechazos, herramientas ofrecidas, límite/cupo, prompt, tiquet con confirmación, de punta a punta con un modelo simulado).
 - Requiere reiniciar solo `guilda-work` (crea una tabla nueva sola al arrancar).
+
+## Sistema de diseño (componentes y candado)
+- **Componentes** (Día 1 de `PLAN_MAESTRO.md`): estilos en `app/static/ds.css`, comportamiento en `app/static/ds.js` y macros en `app/templates/_ds/componentes.html` (`boton`, `interruptor`, `estado_vacio`, `campo`, `seccion`, `esqueleto`, `chip`, `sin_validar`, `icono`). Usan los mismos tokens que `superficies.css`, así que siguen el tema y la densidad solos.
+- **Diálogos propios** (`window.GuildaDS.confirmar / pedirTexto / avisar`): sustituyen a `confirm()`, `prompt()` y `alert()` con un `<dialog>` accesible (foco atrapado, Esc, foco inicial en «Cancelar» si la acción es destructiva, texto siempre como texto). Sin `<dialog>` en el navegador caen a los nativos. `csp_compat.js` los usa para `data-confirmar-envio` y `data-confirmar-clic` (nuevo: `data-confirmar-excepto="nombre"` no pregunta si envía ese botón, `data-confirmar-peligro` usa el estilo destructivo).
+- **Corrección importante**: el envío de «Redactar correo» llevaba un `onsubmit` en línea que la CSP forzada bloquea, así que el aviso «¿Enviar este correo? No se puede deshacer.» no salía. Ahora usa `data-confirmar-envio`.
+- **Candado** (`tests/test_sistema_diseno.py`): cuenta por fichero los `<select>` nativos, `<button>` sin clase, `style="…"`, fechas nativas y diálogos del navegador, y falla si una pantalla **empeora**. La línea base está en `tests/datos/sistema_diseno_base.json` y, cuando una pantalla mejora, el test exige bajarla con `python3 scripts/sistema_diseno_base.py` (así la lista de excepciones se vacía de verdad). Los manejadores `on…=` en línea y las etiquetas obsoletas no tienen excepciones.
+- Estado de la línea base al terminar el Día 1: 0 diálogos nativos, 114 `<select>`, 32 `<button>` sin clase, 130 `style=""`, 32 fechas nativas (se reducen el Día 2).
+- Las casillas y botones de opción **ya** tenían estilo global en `superficies.css`; lo que faltaba era el interruptor (`interruptor()`).
+- `scripts/csp_compat_prueba.mjs` (jsdom, vía `scripts/comprobar_csp_compat.sh`) cubre ahora la confirmación asíncrona y `data-confirmar-excepto`. Requiere Docker y descarga `jsdom`.
+- Tests que caducaban solos y se arreglaron de paso: las marcas de fichaje fijas de `test_api_extras.py` (solo se aceptan de los últimos 7 días) y el resumen semanal de los lunes en `test_backoffice_salud_clientes.py`.
+- Requiere reiniciar solo `guilda-work`.

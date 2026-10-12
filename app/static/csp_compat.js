@@ -2,7 +2,8 @@
 // 'unsafe-inline' para scripts) bloquea. Ahora el HTML lleva atributos `data-*` y este fichero los atiende con un único listener
 // delegado por tipo de evento (también para lo que se añade después al DOM).
 //
-//   <form data-confirmar-envio="¿Seguro?">          pide confirmación antes de enviar el formulario
+//   <form data-confirmar-envio="¿Seguro?">          pide confirmación antes de enviar el formulario (data-confirmar-excepto="nombre": no pregunta si envía ese botón;
+//                                                    data-confirmar-peligro: diálogo de acción destructiva)
 //   <button data-confirmar-clic="¿Seguro?">          pide confirmación antes de seguir el clic
 //   <select data-autoenviar> / data-autoenviar="submit"   envía el formulario al cambiar (requestSubmit respeta validación y listeners)
 //   <a data-accion="imprimir"> / "cerrar-creacion-rapida"
@@ -12,15 +13,39 @@
 (function () {
   function cancelar(e) { e.preventDefault(); e.stopImmediatePropagation(); }
 
+  // Confirmación con el diálogo del sistema de diseño (ds.js); sin él, el confirm() nativo. Como el diálogo es asíncrono, se frena el evento
+  // y, si la persona acepta, se repite saltándose la pregunta.
+  function preguntar(msg, peligro) {
+    if (window.GuildaDS) return window.GuildaDS.confirmar(msg, { peligro: peligro });
+    return Promise.resolve(window.confirm(msg));
+  }
+
   document.addEventListener("submit", function (e) {
     var form = e.target;
     var msg = form && form.dataset ? form.dataset.confirmarEnvio : null;
-    if (msg && !window.confirm(msg)) cancelar(e);
+    if (!msg || form.__dsConfirmado) return;
+    // data-confirmar-excepto="programar": no preguntar si el botón que envía se llama así.
+    if (form.dataset.confirmarExcepto && e.submitter && e.submitter.name === form.dataset.confirmarExcepto) return;
+    cancelar(e);
+    var remitente = e.submitter || null;
+    preguntar(msg, form.dataset.confirmarPeligro !== undefined).then(function (si) {
+      if (!si) return;
+      form.__dsConfirmado = true;
+      try { if (form.requestSubmit) form.requestSubmit(remitente || undefined); else form.submit(); } finally { form.__dsConfirmado = false; }
+    });
   }, true);
 
   document.addEventListener("click", function (e) {
     var conf = e.target.closest ? e.target.closest("[data-confirmar-clic]") : null;
-    if (conf && !window.confirm(conf.dataset.confirmarClic)) { cancelar(e); return; }
+    if (conf && !conf.__dsConfirmado) {
+      cancelar(e);
+      preguntar(conf.dataset.confirmarClic, conf.dataset.confirmarPeligro !== undefined || /\bbtn-peligro\b/.test(conf.className)).then(function (si) {
+        if (!si) return;
+        conf.__dsConfirmado = true;
+        try { conf.click(); } finally { conf.__dsConfirmado = false; }
+      });
+      return;
+    }
     var accion = e.target.closest ? e.target.closest("[data-accion]") : null;
     if (accion) {
       if (accion.dataset.accion === "imprimir") window.print();

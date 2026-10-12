@@ -157,6 +157,10 @@ def test_plantillas_crud_variables_y_renderizado(cliente):
 
 # --- Fichaje: administración -----------------------------------------------------------------------------------------------------
 
+# Hace dos días: las marcas de fichaje solo se aceptan de los últimos 7 días, así que una fecha fija caduca sola.
+_DIA = (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d")
+
+
 def _fichar(uid, tenant, tipo, marca):
     return db.fichar(uid, tenant, tipo, marca_tiempo=marca)
 
@@ -166,10 +170,10 @@ def test_fichaje_admin_resumen_detalle_y_permisos(cliente):
     gestor, g_id = _usuario(cliente, "g@ejemplo.com", t1, gestor=True)
     normal, n_id = _usuario(cliente, "w@ejemplo.com", t1)
     ajeno, a_id = _usuario(cliente, "x@ejemplo.com", t2)
-    _fichar(n_id, t1, "entrada", "2026-10-05T08:00:00"); _fichar(n_id, t1, "salida", "2026-10-05T16:00:00")
-    _fichar(a_id, t2, "entrada", "2026-10-05T09:00:00")
+    _fichar(n_id, t1, "entrada", _DIA + "T08:00:00"); _fichar(n_id, t1, "salida", _DIA + "T16:00:00")
+    _fichar(a_id, t2, "entrada", _DIA + "T09:00:00")
     assert cliente.get("/api/v1/fichaje/admin/resumen", headers=normal).status_code == 403                                  # un trabajador no administra
-    res = cliente.get("/api/v1/fichaje/admin/resumen?desde=2026-10-01&hasta=2026-10-31", headers=gestor).get_json()["data"]
+    res = cliente.get(f"/api/v1/fichaje/admin/resumen?desde={_DIA}&hasta={_DIA}", headers=gestor).get_json()["data"]
     assert res["tenant_id"] == t1 and {f["usuario_id"] for f in res["trabajadores"]} >= {n_id}
     assert a_id not in {f["usuario_id"] for f in res["trabajadores"]}                                                          # solo su despacho
     assert cliente.get(f"/api/v1/fichaje/admin/resumen?tenant_id={t2}", headers=gestor).get_json()["data"]["tenant_id"] == t1  # el tenant_id de un gestor se ignora
@@ -183,16 +187,16 @@ def test_fichaje_admin_corrige_sin_sobrescribir_y_audita(cliente):
     t = db.crear_tenant("Despacho FC")
     gestor, g_id = _usuario(cliente, "gc@ejemplo.com", t, gestor=True)
     _, n_id = _usuario(cliente, "wc@ejemplo.com", t)
-    entrada = _fichar(n_id, t, "entrada", "2026-10-05T08:00:00")
-    for malo, codigo in (({"tipo": "vacaciones", "marca_tiempo": "2026-10-05T16:00"}, "tipo_invalido"), ({"tipo": "salida", "marca_tiempo": "ayer"}, "marca_invalida"), ({"tipo": "entrada", "marca_tiempo": "2026-10-05T17:00"}, "fichaje_invalido")):
+    entrada = _fichar(n_id, t, "entrada", _DIA + "T08:00:00")
+    for malo, codigo in (({"tipo": "vacaciones", "marca_tiempo": _DIA + "T16:00"}, "tipo_invalido"), ({"tipo": "salida", "marca_tiempo": "ayer"}, "marca_invalida"), ({"tipo": "entrada", "marca_tiempo": _DIA + "T17:00"}, "fichaje_invalido")):
         r = cliente.post(f"/api/v1/fichaje/admin/usuarios/{n_id}/corregir", json=malo, headers=gestor)
         assert r.status_code == 400 and r.get_json()["codigo"] == codigo, malo                                                   # entrada tras entrada: transición no válida
-    r = cliente.post(f"/api/v1/fichaje/admin/usuarios/{n_id}/corregir", json={"tipo": "salida", "marca_tiempo": "2026-10-05T16:30", "nota": "Olvidó fichar la salida"}, headers=gestor)
+    r = cliente.post(f"/api/v1/fichaje/admin/usuarios/{n_id}/corregir", json={"tipo": "salida", "marca_tiempo": _DIA + "T16:30", "nota": "Olvidó fichar la salida"}, headers=gestor)
     assert r.status_code == 201
     fichajes = cliente.get(f"/api/v1/fichaje/admin/usuarios/{n_id}", headers=gestor).get_json()["data"]["fichajes"]
-    assert [f["tipo"] for f in fichajes] == ["salida", "entrada"] and fichajes[1]["id"] == entrada and fichajes[1]["marca_tiempo"] == "2026-10-05T08:00:00"
+    assert [f["tipo"] for f in fichajes] == ["salida", "entrada"] and fichajes[1]["id"] == entrada and fichajes[1]["marca_tiempo"] == _DIA + "T08:00:00"
     c = fichajes[0]
-    assert (c["origen"], c["creado_por"], c["nota"]) == ("correccion_admin", g_id, "Olvidó fichar la salida") and c["marca_tiempo"] == "2026-10-05T16:30:00"
+    assert (c["origen"], c["creado_por"], c["nota"]) == ("correccion_admin", g_id, "Olvidó fichar la salida") and c["marca_tiempo"] == _DIA + "T16:30:00"
     ro = _auth(cliente.post("/api/v1/tokens", json={"permisos": "solo_lectura"}, headers=gestor).get_json()["data"]["token"])
     assert cliente.post(f"/api/v1/fichaje/admin/usuarios/{n_id}/corregir", json={"tipo": "salida", "marca_tiempo": "2026-10-06T10:00"}, headers=ro).get_json()["codigo"] == "token_solo_lectura"
     assert cliente.get("/api/v1/fichaje/admin/verificar-integridad", headers=gestor).get_json()["data"]
@@ -205,7 +209,7 @@ def test_fichaje_admin_exportaciones_y_admin_global(cliente):
     _, n1 = _usuario(cliente, "n1@ejemplo.com", t1)
     _, n2 = _usuario(cliente, "n2@ejemplo.com", t2)
     for uid, t in ((n1, t1), (n2, t2)):
-        _fichar(uid, t, "entrada", "2026-10-05T08:00:00"); _fichar(uid, t, "salida", "2026-10-05T14:00:00")
+        _fichar(uid, t, "entrada", _DIA + "T08:00:00"); _fichar(uid, t, "salida", _DIA + "T14:00:00")
     for formato, mime in (("csv", "text/csv"), ("json", "application/json"), ("pdf", "application/pdf")):
         r = cliente.get(f"/api/v1/fichaje/admin/exportar.{formato}?desde=2026-10-01&hasta=2026-10-31", headers=gestor)
         assert r.status_code == 200 and r.mimetype == mime and f"fichajes.{formato}" in r.headers["Content-Disposition"], formato

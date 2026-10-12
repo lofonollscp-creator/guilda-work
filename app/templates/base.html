@@ -34,6 +34,7 @@
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='superficies.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='ds.css') }}">
 </head>
 <body data-url-iconos="{{ url_for('static', filename='iconos.svg') }}">
   <a class="skip-link" href="#contenido-principal">{{ _('Saltar al contenido') }}</a>
@@ -394,6 +395,13 @@
     // correo_destinatarios.js.
     window.GUILDA_I18N = {
       cerrar: {{ _('Cerrar')|tojson }},
+      dsAceptar: {{ _('Aceptar')|tojson }},
+      dsCancelar: {{ _('Cancelar')|tojson }},
+      dsAtencion: {{ _('Atención')|tojson }},
+      dsConfirmarPeligro: {{ _('Confirma la acción')|tojson }},
+      correoEliminarConfirmar: {{ _('¿Eliminar %(n)s mensaje(s) de la caché local? No se puede deshacer.', n='__N__')|tojson }},
+      correoEnlaceUrl: {{ _('URL del enlace:')|tojson }},
+      correoEnlaceInvalido: {{ _('Solo se admiten enlaces http(s) o mailto.')|tojson }},
       deshacer: {{ _('Deshacer')|tojson }},
       deshacerError: {{ _('No se pudo deshacer la acción.')|tojson }},
       correoMarcarLeidoOk: {{ _('Mensajes actualizados.')|tojson }},
@@ -408,6 +416,7 @@
     };
   </script>
   <script src="{{ url_for('static', filename='barra.js') }}"></script>
+  <script src="{{ url_for('static', filename='ds.js') }}"></script>
   <script src="{{ url_for('static', filename='toasts.js') }}"></script>
   <script src="{{ url_for('static', filename='file_input.js') }}"></script>
   <script src="{{ url_for('static', filename='csp_compat.js') }}"></script>

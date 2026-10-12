@@ -64,7 +64,8 @@
       let mensajeOk;
 
       if (accion === "eliminar") {
-        if (!confirm("¿Eliminar " + ids.length + " mensaje(s) de la caché local? No se puede deshacer.")) return;
+        const pregunta = (i18n.correoEliminarConfirmar || "¿Eliminar __N__ mensaje(s) de la caché local? No se puede deshacer.").replace("__N__", ids.length);
+        if (!(await (window.GuildaDS ? window.GuildaDS.confirmar(pregunta, { peligro: true }) : Promise.resolve(window.confirm(pregunta))))) return;
         url = "/correo/mensajes/eliminar";
         mensajeOk = i18n.correoEliminarOk;
       } else if (accion === "marcar-leido") {
