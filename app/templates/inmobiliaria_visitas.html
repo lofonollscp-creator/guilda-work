@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error, selector_equipo %}
+{% block title %}{{ _('Visitas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Visitas') }}</h1><p class="subtitle">{{ _('Agenda de visitas por día, con la dirección y el mapa para preparar la ruta.') }}</p></div></header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get"><label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label><label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label>
+  <label>{{ _('Agente') }}{{ selector_equipo('agente_id', equipo, agente_id, _('Todos')) }}</label><button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button></form>
+{% if not dias %}{{ estado_vacio(_('Sin visitas en este periodo'), _('Programa visitas desde la ficha de un inmueble o desde una demanda.'), 'calendar-clock') }}
+{% else %}
+{% for dia, lista in dias.items() %}
+<section class="dash-panel ds-mb-16">
+  <h2>{{ dia }} <span class="muted">{{ ngettext('%(n)s visita', '%(n)s visitas', lista|length, n=lista|length) }}</span></h2>
+  <ul class="log-list">{% for v in lista %}
+    <li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora[11:] }}</strong> {{ v.direccion }}{% if v.municipio %}, {{ v.municipio }}{% endif %}<br><span class="muted">{{ v.visitante_nombre }}{% if v.visitante_telefono %} · {{ v.visitante_telefono }}{% endif %} · {{ v.agente_nombre }}</span></span>
+      {{ chip(estados[v.estado], 'exito' if v.estado == 'realizada' else ('peligro' if v.estado in ('cancelada', 'ausente') else 'neutro')) }}
+      <a class="btn btn-ghost btn-sm" href="{{ mapa(v.direccion, v.municipio) }}" target="_blank" rel="noopener noreferrer">{{ _('Mapa') }}</a></li>{% endfor %}</ul>
+</section>
+{% endfor %}
+{% endif %}
+{% endblock %}

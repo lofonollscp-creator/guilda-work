@@ -9048,3 +9048,755 @@ msgstr "days"
 
 msgid "Crear enlace"
 msgstr "Create link"
+
+msgid "Primer contacto"
+msgstr "First contact"
+
+msgid "Valoración"
+msgstr "Valuation"
+
+msgid "Mandato firmado"
+msgstr "Mandate signed"
+
+msgid "Publicado"
+msgstr "Listed"
+
+msgid "En visitas"
+msgstr "Viewings"
+
+msgid "Con oferta"
+msgstr "With offer"
+
+msgid "Reservado / arras"
+msgstr "Reserved / deposit"
+
+msgid "Cerrada"
+msgstr "Closed"
+
+msgid "Perdida"
+msgstr "Lost"
+
+msgid "Venta"
+msgstr "Sale"
+
+msgid "Alquiler"
+msgstr "Rental"
+
+msgid "Piso"
+msgstr "Flat"
+
+msgid "Casa o chalet"
+msgstr "House or villa"
+
+msgid "Ático"
+msgstr "Penthouse"
+
+msgid "Local comercial"
+msgstr "Commercial premises"
+
+msgid "Oficina"
+msgstr "Office"
+
+msgid "Garaje"
+msgstr "Garage"
+
+msgid "Trastero"
+msgstr "Storage room"
+
+msgid "Terreno"
+msgstr "Land"
+
+msgid "Edificio"
+msgstr "Building"
+
+msgid "Otro"
+msgstr "Other"
+
+msgid "Ascensor"
+msgstr "Lift"
+
+msgid "Terraza"
+msgstr "Terrace"
+
+msgid "Piscina"
+msgstr "Swimming pool"
+
+msgid "Aire acondicionado"
+msgstr "Air conditioning"
+
+msgid "Amueblado"
+msgstr "Furnished"
+
+msgid "Admite mascotas"
+msgstr "Pets allowed"
+
+msgid "Exterior"
+msgstr "Exterior"
+
+msgid "Reformado"
+msgstr "Renovated"
+
+msgid "Satisfecha"
+msgstr "Fulfilled"
+
+msgid "Descartada"
+msgstr "Dismissed"
+
+msgid "Realizada"
+msgstr "Done"
+
+msgid "Cancelada"
+msgstr "Cancelled"
+
+msgid "No se presentó"
+msgstr "No-show"
+
+msgid "Alto"
+msgstr "High"
+
+msgid "Medio"
+msgstr "Medium"
+
+msgid "Bajo"
+msgstr "Low"
+
+msgid "Ninguno"
+msgstr "None"
+
+msgid "Contraoferta"
+msgstr "Counter-offer"
+
+msgid "Aceptada"
+msgstr "Accepted"
+
+msgid "Rechazada"
+msgstr "Rejected"
+
+msgid "Retirada"
+msgstr "Withdrawn"
+
+msgid "Mandato de venta"
+msgstr "Sales mandate"
+
+msgid "Contrato de arras"
+msgstr "Deposit contract"
+
+msgid "Contrato de alquiler"
+msgstr "Rental contract"
+
+msgid "Documento de reserva"
+msgstr "Reservation document"
+
+msgid "Facturada"
+msgstr "Invoiced"
+
+msgid "Cobrada"
+msgstr "Collected"
+
+msgid "Estamos empezando a preparar la venta o el alquiler de su inmueble."
+msgstr "We are starting to prepare the sale or rental of your property."
+
+msgid "Estamos valorando su inmueble para proponerle un precio."
+msgstr "We are valuing your property to suggest a price."
+
+msgid "Tenemos su encargo firmado y preparamos la comercialización."
+msgstr "We have your signed mandate and are preparing to market the property."
+
+msgid "Su inmueble está anunciado."
+msgstr "Your property is advertised."
+
+msgid "Su inmueble se está enseñando a interesados."
+msgstr "Your property is being shown to interested people."
+
+msgid "Hemos recibido ofertas y estamos negociando."
+msgstr "We have received offers and are negotiating."
+
+msgid "Su inmueble está reservado."
+msgstr "Your property is reserved."
+
+msgid "La operación se ha cerrado."
+msgstr "The transaction has closed."
+
+msgid "La operación se ha dado por terminada."
+msgstr "The transaction has been ended."
+
+msgid "Elige el propietario."
+msgstr "Choose the owner."
+
+msgid "Elige al menos una foto."
+msgstr "Choose at least one photo."
+
+msgid "El reparto no es válido."
+msgstr "The split is not valid."
+
+msgid "Elige el cliente."
+msgstr "Choose the client."
+
+msgid "Captación"
+msgstr "Listings"
+
+msgid "Inmuebles"
+msgstr "Properties"
+
+msgid "Demandas"
+msgstr "Buyer requests"
+
+msgid "Visitas"
+msgstr "Viewings"
+
+msgid "Ajustes de la inmobiliaria"
+msgstr "Agency settings"
+
+msgid "Comisiones y plantillas de contrato de ejemplo, sin validar: ajústalas a tu agencia y a la normativa vigente."
+msgstr "Sample commissions and contract templates, not validated: adjust them to your agency and the rules in force."
+
+msgid "IVA de los honorarios (porcentaje)"
+msgstr "VAT on fees (percentage)"
+
+msgid "Comisión de venta (porcentaje del precio)"
+msgstr "Sales commission (percentage of the price)"
+
+msgid "Por ejemplo 3 o 3,5."
+msgstr "For example 3 or 3.5."
+
+msgid "Comisión de alquiler (mensualidades de renta)"
+msgstr "Rental commission (months of rent)"
+
+msgid "Por ejemplo 1 o 0,5."
+msgstr "For example 1 or 0.5."
+
+msgid "Honorarios mínimos (€)"
+msgstr "Minimum fees (€)"
+
+msgid "Si el porcentaje sale por debajo, se cobra este mínimo. 0 = sin mínimo."
+msgstr "If the percentage comes out lower, this minimum is charged. 0 = no minimum."
+
+msgid "Variables de las plantillas: {fecha} {agencia} {propietario} {nif_propietario} {parte} {nif_parte} {inmueble} {direccion} {ref_catastral} {precio} {arras} {renta} {fianza} {duracion} {comision}. Vacío = modelo de ejemplo."
+msgstr "Template variables: {fecha} {agencia} {propietario} {nif_propietario} {parte} {nif_parte} {inmueble} {direccion} {ref_catastral} {precio} {arras} {renta} {fianza} {duracion} {comision}. Empty = sample template."
+
+msgid "Compra"
+msgstr "Purchase"
+
+msgid "Ver cliente"
+msgstr "View client"
+
+msgid "Lo que busca"
+msgstr "What they are looking for"
+
+msgid "Cualquier tipo"
+msgstr "Any type"
+
+msgid "hab."
+msgstr "bed."
+
+msgid "baños"
+msgstr "baths"
+
+msgid "Imprescindible"
+msgstr "Must-have"
+
+msgid "Inmuebles que encajan"
+msgstr "Matching properties"
+
+msgid "Solo inmuebles en comercialización de la misma operación. Los puntos suman tipo, zona, precio, superficie, habitaciones y baños; cada imprescindible que falta resta."
+msgstr "Only properties on the market for the same transaction. Points add up type, area, price, size, bedrooms and bathrooms; each missing must-have deducts."
+
+msgid "Proponer visita"
+msgstr "Suggest a viewing"
+
+msgid "Nada encaja todavía"
+msgstr "Nothing matches yet"
+
+msgid "Cuando entre un inmueble en comercialización que cumpla lo que busca, aparecerá aquí."
+msgstr "When a property on the market meets what they want, it will appear here."
+
+msgid "Visitas de esta demanda"
+msgstr "Viewings for this request"
+
+msgid "Nueva demanda"
+msgstr "New request"
+
+msgid "Qué busca"
+msgstr "What they want"
+
+msgid "Comprar"
+msgstr "Buy"
+
+msgid "Alquilar"
+msgstr "Rent"
+
+msgid "Tipos de inmueble"
+msgstr "Property types"
+
+msgid "Zonas o municipios"
+msgstr "Areas or towns"
+
+msgid "Separados por comas. Vacío = cualquiera."
+msgstr "Separated by commas. Empty = any."
+
+msgid "Presupuesto mínimo (€)"
+msgstr "Minimum budget (€)"
+
+msgid "Presupuesto máximo (€)"
+msgstr "Maximum budget (€)"
+
+msgid "Superficie mínima (m²)"
+msgstr "Minimum size (m²)"
+
+msgid "Habitaciones mínimas"
+msgstr "Minimum bedrooms"
+
+msgid "Baños mínimos"
+msgstr "Minimum bathrooms"
+
+msgid "Agente responsable"
+msgstr "Responsible agent"
+
+msgid "Crear demanda"
+msgstr "Create request"
+
+msgid "Lo que buscan tus compradores e inquilinos, cruzado con tus inmuebles."
+msgstr "What your buyers and tenants are looking for, matched against your properties."
+
+msgid "Operación"
+msgstr "Transaction"
+
+msgid "Sin demandas"
+msgstr "No requests"
+
+msgid "Anota qué busca un cliente (zona, presupuesto, habitaciones…) y verás qué inmuebles encajan."
+msgstr "Note what a client is looking for (area, budget, bedrooms…) and you will see which properties match."
+
+msgid "Busca"
+msgstr "Looking for"
+
+msgid "Presupuesto"
+msgstr "Budget"
+
+msgid "Enlace para el propietario"
+msgstr "Owner link"
+
+msgid "Este es el enlace de solo lectura del propietario. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este)."
+msgstr "This is the owner's read-only link. Copy it now: for security it is not shown again (if you lose it, create another and revoke this one)."
+
+msgid "Verá en qué fase va su inmueble, el precio, las visitas y ofertas (sin los datos de los interesados), el historial de precios, el informe del mes y los documentos que hayas compartido. No verá comisiones, notas internas ni otras demandas."
+msgstr "They will see which stage their property is at, the price, viewings and offers (without the interested parties' details), the price history, the monthly report and the documents you shared. They will not see commissions, internal notes or other requests."
+
+msgid "Volver al inmueble"
+msgstr "Back to the property"
+
+msgid "Nuevo inmueble"
+msgstr "New property"
+
+msgid "Se abrirá su operación en «Primer contacto» y podrás llevar el resto desde su ficha."
+msgstr "Its transaction will open at “First contact” and you can handle the rest from its page."
+
+msgid "Primero necesitas el propietario como cliente."
+msgstr "You first need the owner as a client."
+
+msgid "Propietario"
+msgstr "Owner"
+
+msgid "Municipio"
+msgstr "Town"
+
+msgid "Código postal"
+msgstr "Postcode"
+
+msgid "Tipo de inmueble"
+msgstr "Property type"
+
+msgid "Precio (€)"
+msgstr "Price (€)"
+
+msgid "En alquiler, la renta mensual."
+msgstr "For rentals, the monthly rent."
+
+msgid "Superficie (m²)"
+msgstr "Size (m²)"
+
+msgid "Habitaciones"
+msgstr "Bedrooms"
+
+msgid "Baños"
+msgstr "Bathrooms"
+
+msgid "Planta"
+msgstr "Floor"
+
+msgid "Certificado energético"
+msgstr "Energy certificate"
+
+msgid "Referencia catastral"
+msgstr "Cadastral reference"
+
+msgid "Características"
+msgstr "Features"
+
+msgid "Otros propietarios"
+msgstr "Other owners"
+
+msgid "Si hay copropietarios, anótalos aquí (nombre y porcentaje)."
+msgstr "If there are co-owners, note them here (name and share)."
+
+msgid "Crear inmueble"
+msgstr "Create property"
+
+msgid "Todas tus operaciones de venta y alquiler."
+msgstr "All your sale and rental transactions."
+
+msgid "Dirección, referencia o propietario…"
+msgstr "Address, reference or owner…"
+
+msgid "Fase"
+msgstr "Stage"
+
+msgid "Precio máximo (€)"
+msgstr "Maximum price (€)"
+
+msgid "Solo activos"
+msgstr "Active only"
+
+msgid "Sin inmuebles"
+msgstr "No properties"
+
+msgid "No hay ninguno con estos filtros."
+msgstr "There are none with these filters."
+
+msgid "Inmueble"
+msgstr "Property"
+
+msgid "Precio"
+msgstr "Price"
+
+msgid "%(n)s visita"
+msgid_plural "%(n)s visitas"
+msgstr[0] "%(n)s viewing"
+msgstr[1] "%(n)s viewings"
+
+msgid "%(n)s oferta"
+msgid_plural "%(n)s ofertas"
+msgstr[0] "%(n)s offer"
+msgstr[1] "%(n)s offers"
+
+msgid "Tu cartera de un vistazo: fases, visitas, ofertas y lo que se ha quedado sin movimiento."
+msgstr "Your portfolio at a glance: stages, viewings, offers and what has gone quiet."
+
+msgid "Inmuebles activos"
+msgstr "Active properties"
+
+msgid "En comercialización"
+msgstr "On the market"
+
+msgid "Visitas hoy"
+msgstr "Viewings today"
+
+msgid "Ofertas abiertas"
+msgstr "Open offers"
+
+msgid "Demandas activas"
+msgstr "Active requests"
+
+msgid "Visitas de hoy"
+msgstr "Today's viewings"
+
+msgid "Mapa"
+msgstr "Map"
+
+msgid "Sin visitas hoy."
+msgstr "No viewings today."
+
+msgid "Ver la semana"
+msgstr "View the week"
+
+msgid "Ofertas por responder"
+msgstr "Offers to answer"
+
+msgid "Ninguna oferta pendiente."
+msgstr "No pending offers."
+
+msgid "Sin movimiento en 14 días"
+msgstr "No activity in 14 days"
+
+msgid "Anunciados sin visitas ni ofertas recientes: quizá toque revisar precio, fotos o anuncio."
+msgstr "Advertised with no recent viewings or offers: it may be time to review price, photos or listing."
+
+msgid "Todo lo anunciado tiene movimiento reciente."
+msgstr "Everything advertised has recent activity."
+
+msgid "Cartera por fase"
+msgstr "Portfolio by stage"
+
+msgid "Abrir el tablero de captación"
+msgstr "Open the listings board"
+
+msgid "Exportar para portales (CSV)"
+msgstr "Export for portals (CSV)"
+
+msgid "Todavía no hay inmuebles"
+msgstr "No properties yet"
+
+msgid "Da de alta el primer inmueble: se abre su operación y empieza el embudo de captación."
+msgstr "Add the first property: its transaction opens and the listing funnel begins."
+
+msgid "Del primer contacto al cierre: cada inmueble avanza por las fases de su operación."
+msgstr "From first contact to closing: each property moves through the stages of its transaction."
+
+msgid "Mover a la fase"
+msgstr "Move to stage"
+
+msgid "Agenda de visitas por día, con la dirección y el mapa para preparar la ruta."
+msgstr "Viewing schedule by day, with the address and map to plan the route."
+
+msgid "Agente"
+msgstr "Agent"
+
+msgid "Sin visitas en este periodo"
+msgstr "No viewings in this period"
+
+msgid "Programa visitas desde la ficha de un inmueble o desde una demanda."
+msgstr "Schedule viewings from a property's page or from a request."
+
+msgid "Cómo va"
+msgstr "How it is going"
+
+msgid "Precio actual"
+msgstr "Current price"
+
+msgid "al mes"
+msgstr "per month"
+
+msgid "%(n)s visita realizada"
+msgid_plural "%(n)s visitas realizadas"
+msgstr[0] "%(n)s viewing held"
+msgstr[1] "%(n)s viewings held"
+
+msgid "%(n)s este mes"
+msgid_plural "%(n)s este mes"
+msgstr[0] "%(n)s this month"
+msgstr[1] "%(n)s this month"
+
+msgid "valoración media"
+msgstr "average rating"
+
+msgid "Próximas"
+msgstr "Upcoming"
+
+msgid "Ofertas recibidas"
+msgstr "Offers received"
+
+msgid "Historial de precios"
+msgstr "Price history"
+
+msgid "Informe y documentos"
+msgstr "Report and documents"
+
+msgid "Descargar el informe del mes (PDF)"
+msgstr "Download this month's report (PDF)"
+
+msgid "Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu agencia."
+msgstr "This page is read-only and private: do not share the link. If you have questions, contact your agency."
+
+msgid "En captación"
+msgstr "Being listed"
+
+msgid "En venta"
+msgstr "For sale"
+
+msgid "En alquiler"
+msgstr "For rent"
+
+msgid "Reservado"
+msgstr "Reserved"
+
+msgid "Vendido"
+msgstr "Sold"
+
+msgid "Alquilado"
+msgstr "Rented"
+
+msgid "Retirado"
+msgstr "Withdrawn"
+
+msgid "Comisiones y contratos de ejemplo"
+msgstr "Sample commissions and contracts"
+
+msgid "Lo que ve el propietario:"
+msgstr "What the owner sees:"
+
+msgid "Datos del inmueble"
+msgstr "Property details"
+
+msgid "Descripción del anuncio"
+msgstr "Listing description"
+
+msgid "Nuevo precio (€)"
+msgstr "New price (€)"
+
+msgid "Motivo"
+msgstr "Reason"
+
+msgid "Cambiar"
+msgstr "Change"
+
+msgid "Fotos"
+msgstr "Photos"
+
+msgid "¿Eliminar esta foto?"
+msgstr "Delete this photo?"
+
+msgid "Sin fotos todavía."
+msgstr "No photos yet."
+
+msgid "Subir fotos"
+msgstr "Upload photos"
+
+msgid "Se reducen de tamaño y se les quitan los datos ocultos de la cámara (como la ubicación)."
+msgstr "They are resized and the camera's hidden data (such as location) is removed."
+
+msgid "Interés"
+msgstr "Interest"
+
+msgid "Comentario"
+msgstr "Comment"
+
+msgid "Hecha"
+msgstr "Done"
+
+msgid "¿Eliminar esta visita?"
+msgstr "Delete this viewing?"
+
+msgid "Sin visitas."
+msgstr "No viewings."
+
+msgid "Demanda"
+msgstr "Request"
+
+msgid "Visitante sin demanda"
+msgstr "Visitor without a request"
+
+msgid "Nombre (si no hay demanda)"
+msgstr "Name (if no request)"
+
+msgid "Nombre del visitante"
+msgstr "Visitor's name"
+
+msgid "Programar visita"
+msgstr "Schedule viewing"
+
+msgid "Ofertas"
+msgstr "Offers"
+
+msgid "Sin ofertas."
+msgstr "No offers."
+
+msgid "Oferente sin demanda"
+msgstr "Bidder without a request"
+
+msgid "Nombre del oferente"
+msgstr "Bidder's name"
+
+msgid "Registrar oferta"
+msgstr "Log offer"
+
+msgid "Demandas que encajan"
+msgstr "Matching requests"
+
+msgid "le falta"
+msgstr "is missing"
+
+msgid "Ninguna demanda activa encaja (o el inmueble aún no está en comercialización)."
+msgstr "No active request matches (or the property is not yet on the market)."
+
+msgid "Contratos"
+msgstr "Contracts"
+
+msgid "Generado"
+msgstr "Generated"
+
+msgid "En firma"
+msgstr "Out for signature"
+
+msgid "Firmado"
+msgstr "Signed"
+
+msgid "Marcar firmado"
+msgstr "Mark as signed"
+
+msgid "Sin contratos generados."
+msgstr "No contracts generated."
+
+msgid "Nombre de la otra parte"
+msgstr "Name of the other party"
+
+msgid "NIF de la otra parte"
+msgstr "Tax ID of the other party"
+
+msgid "Arras / reserva (€)"
+msgstr "Deposit / reservation (€)"
+
+msgid "Arras o reserva (€)"
+msgstr "Deposit or reservation (€)"
+
+msgid "Renta (€)"
+msgstr "Rent (€)"
+
+msgid "Fianza (€)"
+msgstr "Security deposit (€)"
+
+msgid "Duración o plazo"
+msgstr "Duration or term"
+
+msgid "Honorarios pactados"
+msgstr "Agreed fees"
+
+msgid "Generar contrato (PDF)"
+msgstr "Generate contract (PDF)"
+
+msgid "Comisión"
+msgstr "Commission"
+
+msgid "Sugerida"
+msgstr "Suggested"
+
+msgid "se aplica el mínimo"
+msgstr "the minimum applies"
+
+msgid "Base: precio de cierre o renta mensual (€)"
+msgstr "Base: closing price or monthly rent (€)"
+
+msgid "Puntos básicos (300 equivale a un 3 por ciento)"
+msgstr "Basis points (300 equals 3 percent)"
+
+msgid "Mínimo (€)"
+msgstr "Minimum (€)"
+
+msgid "Comisión en puntos básicos: 300 equivale a un 3 por ciento; en alquiler, 10000 es una mensualidad."
+msgstr "Commission in basis points: 300 equals 3 percent; for rentals, 10000 is one month."
+
+msgid "Reparto entre quienes intervienen (debe sumar 100; deja en blanco a quien no participe):"
+msgstr "Split between those involved (must add up to 100; leave blank for anyone not taking part):"
+
+msgid "Reparto (porcentaje)"
+msgstr "Split (percentage)"
+
+msgid "Calcular y guardar"
+msgstr "Calculate and save"
+
+msgid "Una página de solo lectura con la fase, el precio, las visitas y ofertas (sin datos de los interesados), el informe del mes y los documentos que compartas."
+msgstr "A read-only page with the stage, price, viewings and offers (without the interested parties' details), the monthly report and the documents you share."
+
+msgid "Compartir con el propietario"
+msgstr "Share with the owner"
+
+msgid "¿Revocar este enlace? El propietario dejará de poder verlo."
+msgstr "Revoke this link? The owner will no longer be able to see it."
+
+msgid "Informe para el propietario"
+msgstr "Owner report"
+
+msgid "Descargar informe (PDF)"
+msgstr "Download report (PDF)"
+
+msgid "Vacío = el mes en curso. No incluye los nombres de los interesados."
+msgstr "Empty = the current month. It does not include the names of interested parties."

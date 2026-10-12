@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Inmobiliaria') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Inmobiliaria') }}</h1><p class="subtitle">{{ _('Tu cartera de un vistazo: fases, visitas, ofertas y lo que se ha quedado sin movimiento.') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('inmobiliaria.inmueble_nuevo') }}">+ {{ _('Nuevo inmueble') }}</a>
+</header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+
+<div class="dash-stats">
+  <div class="dash-stat"><span class="dash-stat-valor">{{ r.n_activos }}</span><span>{{ _('Inmuebles activos') }}</span></div>
+  <div class="dash-stat"><span class="dash-stat-valor">{{ r.por_estado.get('publicado', 0) + r.por_estado.get('visitas', 0) + r.por_estado.get('oferta', 0) }}</span><span>{{ _('En comercialización') }}</span></div>
+  <div class="dash-stat"><span class="dash-stat-valor">{{ r.visitas_hoy|length }}</span><span>{{ _('Visitas hoy') }}</span></div>
+  <div class="dash-stat"><span class="dash-stat-valor">{{ r.ofertas|length }}</span><span>{{ _('Ofertas abiertas') }}</span></div>
+  <div class="dash-stat"><span class="dash-stat-valor">{{ r.demandas }}</span><span>{{ _('Demandas activas') }}</span></div>
+</div>
+
+<div class="dash-grid ds-mt-16">
+<section class="dash-panel">
+  <h2>{{ _('Visitas de hoy') }}</h2>
+  {% if r.visitas_hoy %}
+  <ul class="log-list">{% for v in r.visitas_hoy %}<li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora[11:] }}</strong> {{ v.direccion }}<br><span class="muted">{{ v.visitante_nombre }} · {{ v.agente_nombre }}</span></span><a class="btn btn-ghost btn-sm" href="{{ mapa(v.direccion, v.municipio) }}" target="_blank" rel="noopener noreferrer">{{ _('Mapa') }}</a></li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Sin visitas hoy.') }} <a href="{{ url_for('inmobiliaria.visitas') }}">{{ _('Ver la semana') }}</a></p>{% endif %}
+</section>
+<section class="dash-panel">
+  <h2>{{ _('Ofertas por responder') }}</h2>
+  {% if r.ofertas %}
+  <ul class="log-list">{% for o in r.ofertas %}<li class="log-item"><span class="log-text"><strong>{{ o.importe_centimos|importe }}</strong> · {{ o.oferente_nombre }}<br><span class="muted">{{ o.direccion }}</span></span>{{ chip(_('Pendiente') if o.estado == 'pendiente' else _('Contraoferta'), 'aviso') }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Ninguna oferta pendiente.') }}</p>{% endif %}
+</section>
+</div>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Sin movimiento en 14 días') }}</h2>
+  {% if r.sin_movimiento %}
+  <p class="muted">{{ _('Anunciados sin visitas ni ofertas recientes: quizá toque revisar precio, fotos o anuncio.') }}</p>
+  <ul class="log-list">{% for i in r.sin_movimiento %}<li class="log-item"><span class="log-text"><a href="{{ url_for('expedientes.ficha', expediente_id=i.expediente_id) }}">{{ i.direccion }}</a> <span class="muted">{{ i.propietario_nombre }}</span></span>{{ chip(i.precio_centimos|importe) }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Todo lo anunciado tiene movimiento reciente.') }}</p>{% endif %}
+</section>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Cartera por fase') }}</h2>
+  {% if r.n_activos %}
+  <div class="ds-fila ds-flex-wrap">{% for e in estados if r.por_estado.get(e.id) %}<a class="ds-chip" href="{{ url_for('inmobiliaria.inmuebles', estado=e.id) }}">{{ e.nombre }} · {{ r.por_estado[e.id] }}</a>{% endfor %}</div>
+  <p class="ds-mt-12"><a class="btn btn-ghost" href="{{ url_for('inmobiliaria.tablero') }}">{{ _('Abrir el tablero de captación') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('inmobiliaria.feed_csv') }}">{{ _('Exportar para portales (CSV)') }}</a></p>
+  {% else %}{{ estado_vacio(_('Todavía no hay inmuebles'), _('Da de alta el primer inmueble: se abre su operación y empieza el embudo de captación.'), 'building-2', _('Nuevo inmueble'), url_for('inmobiliaria.inmueble_nuevo')) }}{% endif %}
+</section>
+{% endblock %}

@@ -176,6 +176,10 @@ def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd):
     db._ULTIMO_ACCESO_ANOTADO.clear()  # memoria del proceso: no puede arrastrarse de un test a otro
     db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
     yield
+    # Cada test deja de ocupar disco al terminar: con ~2.500 tests y un esquema de cientos de tablas, las copias de la base acumuladas llenaban el /tmp del VPS (un tmpfs de 3,8 GB).
+    for sufijo in ("", "-wal", "-shm", "-journal"):
+        (tmp_path / f"test.db{sufijo}").unlink(missing_ok=True)
+    shutil.rmtree(tmp_path / "backups", ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

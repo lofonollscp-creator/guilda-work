@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Demandas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Demandas') }}</h1><p class="subtitle">{{ _('Lo que buscan tus compradores e inquilinos, cruzado con tus inmuebles.') }}</p></div><a class="btn btn-primary" href="{{ url_for('inmobiliaria.demanda_nueva') }}">+ {{ _('Nueva demanda') }}</a></header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Estado') }}<select name="estado"><option value="">{{ _('Todos') }}</option>{% for id, n in estados.items() %}<option value="{{ id }}" {{ 'selected' if estado == id }}>{{ n }}</option>{% endfor %}</select></label>
+  <label>{{ _('Operación') }}<select name="operacion"><option value="">{{ _('Todas') }}</option><option value="venta" {{ 'selected' if operacion == 'venta' }}>{{ _('Compra') }}</option><option value="alquiler" {{ 'selected' if operacion == 'alquiler' }}>{{ _('Alquiler') }}</option></select></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+{% if not demandas %}{{ estado_vacio(_('Sin demandas'), _('Anota qué busca un cliente (zona, presupuesto, habitaciones…) y verás qué inmuebles encajan.'), 'target', _('Nueva demanda'), url_for('inmobiliaria.demanda_nueva')) }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Busca') }}</th><th>{{ _('Presupuesto') }}</th><th>{{ _('Estado') }}</th></tr></thead>
+  <tbody>{% for d in demandas %}
+  <tr><td><a href="{{ url_for('inmobiliaria.demanda', demanda_id=d.id) }}"><strong>{{ d.cliente_nombre }}</strong></a></td>
+    <td>{{ chip(_('Compra') if d.operacion == 'venta' else _('Alquiler')) }} {% for t in d.tipos %}{{ chip(tipos[t]) }} {% endfor %}{% if d.municipios %}<span class="muted">{{ d.municipios|join(', ') }}</span>{% endif %}</td>
+    <td>{% if d.presupuesto_max_centimos %}{{ _('hasta') }} {{ d.presupuesto_max_centimos|importe }}{% else %}—{% endif %}</td>
+    <td>{{ chip(estados[d.estado], 'exito' if d.estado == 'satisfecha' else 'neutro') }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+{% endblock %}

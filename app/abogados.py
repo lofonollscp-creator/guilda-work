@@ -6,15 +6,13 @@ sus asuntos son expedientes de dos tipos propios, y los plazos, las horas y los 
 encargo): son valores editables por despacho y la interfaz lo dice. Una herramienta ayuda, no sustituye la comprobación de cada plazo con la norma vigente."""
 from __future__ import annotations
 
-import hashlib
 import json
-import secrets
 from dataclasses import replace
 from datetime import date, datetime, timedelta
 
 from flask_babel import lazy_gettext as _l
 
-from . import almacen_documentos, calendario_plazos as cp, db, generador_documentos, nucleo, verticales
+from . import almacen_documentos, calendario_plazos as cp, db, enlaces_publicos, firma_documentos, generador_documentos, nucleo, verticales
 from .verticales import Estado, TipoExpediente
 
 ID = "abogados"
@@ -153,25 +151,17 @@ CREATE TABLE IF NOT EXISTS abogados_minuta_lineas (
 );
 CREATE INDEX IF NOT EXISTS idx_abogados_minuta_lineas ON abogados_minuta_lineas(minuta_id);
 
-CREATE TABLE IF NOT EXISTS abogados_enlaces (
-    id INTEGER PRIMARY KEY,
-    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
-    expediente_id INTEGER NOT NULL REFERENCES expedientes(id) ON DELETE CASCADE,
-    token_hash TEXT NOT NULL UNIQUE,
-    expira_en TEXT NOT NULL,
-    revocado_en TEXT,
-    creado_por INTEGER REFERENCES usuarios(id),
-    creado_en TEXT NOT NULL
-);
 """
 
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    enlaces_publicos.esquema(conn, ID)
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
-    for tabla in ("abogados_enlaces", "abogados_vistas", "abogados_fondos"):
+    enlaces_publicos.borrar_datos_de_tenant(conn, ID, tenant_id)
+    for tabla in ("abogados_vistas", "abogados_fondos"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM abogados_minuta_lineas WHERE minuta_id IN (SELECT id FROM abogados_minutas WHERE tenant_id = ?)", (tenant_id,))
     conn.execute("DELETE FROM abogados_minutas WHERE tenant_id = ?", (tenant_id,))
@@ -249,9 +239,8 @@ def fijar_datos(tenant_id: int, usuario_id: int, expediente_id: int, supervisor:
                 raise ValueError("Jurisdicción no válida.")
             datos[c] = v[:3000 if c == "resumen_cliente" else 200] or None
     if "cuantia" in campos:
-        texto = (campos["cuantia"] or "").replace(".", "").replace(",", ".").strip()
         try:
-            datos["cuantia_centimos"] = int(round(float(texto) * 100)) if texto else None
+            datos["cuantia_centimos"] = nucleo.importe_a_centimos(campos["cuantia"]) if (campos["cuantia"] or "").strip() else None
         except ValueError:
             raise ValueError("La cuantía no es un importe válido.") from None
         if datos["cuantia_centimos"] is not None and datos["cuantia_centimos"] < 0:
@@ -481,15 +470,7 @@ def registrar_notificacion(tenant_id: int, usuario_id: int, expediente_id: int, 
 
 # --- Provisión de fondos ---------------------------------------------------------------------------------------------------------------------------
 def _importe(valor) -> int:
-    if isinstance(valor, (int,)) and not isinstance(valor, bool):
-        return valor
-    texto = str(valor or "").replace("€", "").replace(" ", "")
-    if "," in texto:
-        texto = texto.replace(".", "").replace(",", ".")
-    try:
-        return int(round(float(texto) * 100))
-    except ValueError:
-        raise ValueError("El importe no es válido.") from None
+    return nucleo.importe_a_centimos(valor)
 
 
 def registrar_movimiento(tenant_id: int, usuario_id: int, expediente_id: int, tipo: str, importe, concepto: str, fecha: str | None = None, supervisor: bool = False) -> int:
@@ -807,29 +788,7 @@ def generar_hoja_de_encargo(tenant_id: int, usuario_id: int, expediente_id: int,
 
 def enviar_a_firma(tenant_id: int, usuario_id: int, documento_id: int, email: str, nombre: str, supervisor: bool = False) -> str:
     """Manda un documento del asunto a firmar con Documenso (acción externa: la persona la confirma en pantalla). Devuelve el id en Documenso."""
-    from . import documenso
-
-    d = almacen_documentos.leer(tenant_id, usuario_id, documento_id)
-    if d is None or d["expediente_id"] is None:
-        raise ValueError("Documento no encontrado.")
-    _expediente_abogados(tenant_id, usuario_id, d["expediente_id"], supervisor)
-    email = (email or "").strip()
-    if "@" not in email or len(email) > 200:
-        raise ValueError("Indica el email de quien firma.")
-    clave = (db.obtener_tenant(tenant_id) or {})["documenso_api_key"] if db.obtener_tenant(tenant_id) else None
-    try:
-        doc = documenso.crear_documento(clave or "", d["nombre_archivo"], d["contenido"], [{"email": email, "nombre": (nombre or "").strip()[:100]}])
-        ident = str(doc.get("id") or doc.get("envelopeId") or "")
-        documenso.enviar_a_firma(clave or "", ident)
-    except documenso.ErrorDocumenso as e:
-        raise ValueError(str(e)) from e
-    conn = db.get_connection()
-    try:
-        nucleo._evento(conn, d["expediente_id"], "firma", f"Enviado a firma: {d['nombre_archivo']} → {email}.", usuario_id)
-        conn.commit()
-    finally:
-        conn.close()
-    return ident
+    return firma_documentos.enviar(tenant_id, usuario_id, documento_id, email, nombre, lambda expediente_id: _expediente_abogados(tenant_id, usuario_id, expediente_id, supervisor))
 
 
 # --- Enlace de solo lectura para el cliente ------------------------------------------------------------------------------------------------------
@@ -841,57 +800,24 @@ ESTADO_EN_LLANO = {
 }
 
 
-def _hash(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
 def crear_enlace(tenant_id: int, usuario_id: int, expediente_id: int, dias: int = 30, supervisor: bool = False) -> str:
     """Enlace secreto de solo lectura para que el cliente vea el estado de su asunto. Devuelve el token en claro (solo se muestra ahora: en la base queda su huella)."""
     _expediente_abogados(tenant_id, usuario_id, expediente_id, supervisor)
-    dias = max(1, min(int(dias), 180))
-    token = secrets.token_urlsafe(32)
-    conn = db.get_connection()
-    try:
-        conn.execute("INSERT INTO abogados_enlaces (tenant_id, expediente_id, token_hash, expira_en, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
-                     (tenant_id, expediente_id, _hash(token), (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds"), usuario_id, db.now_iso()))
-        nucleo._evento(conn, expediente_id, "enlace", f"Enlace para el cliente creado (caduca en {dias} días).", usuario_id)
-        conn.commit()
-    finally:
-        conn.close()
-    return token
+    return enlaces_publicos.crear(ID, tenant_id, usuario_id, expediente_id, dias)
 
 
 def listar_enlaces(tenant_id: int, expediente_id: int) -> list:
-    conn = db.get_connection()
-    try:
-        return conn.execute("SELECT id, expira_en, revocado_en, creado_en FROM abogados_enlaces WHERE tenant_id = ? AND expediente_id = ? ORDER BY id DESC", (tenant_id, expediente_id)).fetchall()
-    finally:
-        conn.close()
+    return enlaces_publicos.listar(ID, tenant_id, expediente_id)
 
 
 def revocar_enlace(tenant_id: int, usuario_id: int, expediente_id: int, enlace_id: int, supervisor: bool = False) -> None:
     _expediente_abogados(tenant_id, usuario_id, expediente_id, supervisor)
-    conn = db.get_connection()
-    try:
-        conn.execute("UPDATE abogados_enlaces SET revocado_en = ? WHERE id = ? AND tenant_id = ? AND expediente_id = ? AND revocado_en IS NULL", (db.now_iso(), enlace_id, tenant_id, expediente_id))
-        conn.commit()
-    finally:
-        conn.close()
+    enlaces_publicos.revocar(ID, tenant_id, expediente_id, enlace_id)
 
 
 def resolver_enlace(token: str) -> dict | None:
     """El asunto al que da acceso un token válido (existe, no está revocado ni caducado, y el despacho tiene el módulo activo), o None."""
-    if not token or len(token) > 100:
-        return None
-    conn = db.get_connection()
-    try:
-        e = conn.execute("SELECT * FROM abogados_enlaces WHERE token_hash = ?", (_hash(token),)).fetchone()
-        if e is None or e["revocado_en"] or e["expira_en"] < db.now_iso() or not verticales.esta_activo(e["tenant_id"], ID):
-            return None
-        x = conn.execute("SELECT x.*, c.nombre AS cliente_nombre FROM expedientes x JOIN clientes c ON c.id = x.cliente_id WHERE x.id = ? AND x.papelera_en IS NULL", (e["expediente_id"],)).fetchone()
-        return {"enlace": dict(e), "expediente": dict(x)} if x else None
-    finally:
-        conn.close()
+    return enlaces_publicos.resolver(ID, token)
 
 
 def datos_publicos(token: str) -> dict | None:
@@ -915,6 +841,11 @@ def datos_publicos(token: str) -> dict | None:
 
 def compartir_documento(tenant_id: int, usuario_id: int, expediente_id: int, documento_id: int, compartido: bool, supervisor: bool = False) -> None:
     _expediente_abogados(tenant_id, usuario_id, expediente_id, supervisor)
+    compartir_documento_de_expediente(tenant_id, usuario_id, expediente_id, documento_id, compartido)
+
+
+def compartir_documento_de_expediente(tenant_id: int, usuario_id: int, expediente_id: int, documento_id: int, compartido: bool) -> None:
+    """Marca un documento de un expediente como visible (o no) en el enlace de solo lectura. Lo usan Abogados e Inmobiliaria; quien llama ya ha comprobado el permiso."""
     conn = db.get_connection()
     try:
         cur = conn.execute("UPDATE documentos SET compartido_cliente = ? WHERE id = ? AND tenant_id = ? AND expediente_id = ? AND papelera_en IS NULL", (1 if compartido else 0, documento_id, tenant_id, expediente_id))

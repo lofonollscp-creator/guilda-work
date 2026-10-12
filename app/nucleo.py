@@ -190,6 +190,27 @@ def _conn_con_busqueda():
     return conn
 
 
+_MILES = re.compile(r"^\d{1,3}(\.\d{3})+$")
+
+
+def importe_a_centimos(valor) -> int:
+    """Un importe escrito a la española («250.000», «1.234,56», «150,5», «12.5») → céntimos. El punto se lee como separador de miles si va seguido de grupos de tres cifras
+    («250.000» son doscientos cincuenta mil) y como decimal en cualquier otro caso («12.5»); la coma siempre es decimal. Un entero ya son céntimos."""
+    if isinstance(valor, int) and not isinstance(valor, bool):
+        return valor
+    texto = str(valor if valor is not None else "").replace("€", "").replace("\xa0", "").replace(" ", "")
+    if not texto:
+        raise ValueError("El importe no es válido.")
+    if "," in texto:
+        texto = texto.replace(".", "").replace(",", ".")
+    elif _MILES.match(texto):
+        texto = texto.replace(".", "")
+    try:
+        return int(round(float(texto) * 100))
+    except ValueError:
+        raise ValueError("El importe no es válido.") from None
+
+
 def _limpio(v, largo: int = 200) -> str | None:
     return ((v or "").strip()[:largo]) or None
 

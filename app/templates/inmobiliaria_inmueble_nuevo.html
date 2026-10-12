@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Nuevo inmueble') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Nuevo inmueble') }}</h1><p class="subtitle">{{ _('Se abrirá su operación en «Primer contacto» y podrás llevar el resto desde su ficha.') }}</p></div></header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+{% if not propietarios %}<p class="empty-lane">{{ _('Primero necesitas el propietario como cliente.') }} <a href="{{ url_for('clientes.nuevo') }}">{{ _('Crear cliente') }}</a></p>
+{% else %}
+<form class="edit-form ds-max-720" method="post">
+  {% call campo(_('Propietario'), 'n-prop', requerido=True) %}<select id="n-prop" name="propietario_id" required data-buscable><option value="">{{ _('Elige un cliente…') }}</option>{% for c in propietarios %}<option value="{{ c.id }}" {{ 'selected' if datos.propietario_id == c.id|string }}>{{ c.nombre }}{% if c.nif %} · {{ c.nif }}{% endif %}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Operación'), 'n-op', requerido=True) %}<select id="n-op" name="operacion" required><option value="venta" {{ 'selected' if datos.operacion != 'alquiler' }}>{{ _('Venta') }}</option><option value="alquiler" {{ 'selected' if datos.operacion == 'alquiler' }}>{{ _('Alquiler') }}</option></select>{% endcall %}
+  {% call campo(_('Dirección'), 'n-dir', requerido=True) %}<input type="text" id="n-dir" name="direccion" value="{{ datos.direccion }}" required maxlength="300" autofocus>{% endcall %}
+  {% call campo(_('Municipio'), 'n-mun') %}<input type="text" id="n-mun" name="municipio" value="{{ datos.municipio }}" maxlength="100">{% endcall %}
+  {% call campo(_('Código postal'), 'n-cp') %}<input type="text" id="n-cp" name="codigo_postal" value="{{ datos.codigo_postal }}" maxlength="10">{% endcall %}
+  {% call campo(_('Tipo de inmueble'), 'n-tipo') %}<select id="n-tipo" name="tipo">{% for id, n in tipos %}<option value="{{ id }}" {{ 'selected' if datos.tipo == id }}>{{ n }}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Precio (€)'), 'n-precio', ayuda=_('En alquiler, la renta mensual.')) %}<input type="text" inputmode="decimal" id="n-precio" name="precio" value="{{ datos.precio }}">{% endcall %}
+  {% call campo(_('Superficie (m²)'), 'n-sup') %}<input type="number" id="n-sup" name="superficie_m2" value="{{ datos.superficie_m2 }}" min="0">{% endcall %}
+  {% call campo(_('Habitaciones'), 'n-hab') %}<input type="number" id="n-hab" name="habitaciones" value="{{ datos.habitaciones }}" min="0">{% endcall %}
+  {% call campo(_('Baños'), 'n-ban') %}<input type="number" id="n-ban" name="banos" value="{{ datos.banos }}" min="0">{% endcall %}
+  {% call campo(_('Planta'), 'n-planta') %}<input type="text" id="n-planta" name="planta" value="{{ datos.planta }}" maxlength="20">{% endcall %}
+  {% call campo(_('Certificado energético'), 'n-cert') %}<select id="n-cert" name="certificado_energetico"><option value="">{{ _('Sin indicar') }}</option>{% for c in certificados %}<option value="{{ c }}" {{ 'selected' if datos.certificado_energetico == c }}>{{ c|replace('_', ' ') }}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Referencia catastral'), 'n-cat') %}<input type="text" id="n-cat" name="ref_catastral" value="{{ datos.ref_catastral }}" maxlength="30">{% endcall %}
+  <fieldset><legend>{{ _('Características') }}</legend>{% for id, n in caracteristicas %}<label class="checkbox-label"><input type="checkbox" name="caracteristicas" value="{{ id }}" {{ 'checked' if id in marcadas }}> {{ n }}</label>{% endfor %}</fieldset>
+  {% call campo(_('Descripción'), 'n-desc') %}<textarea id="n-desc" name="descripcion" rows="4">{{ datos.descripcion }}</textarea>{% endcall %}
+  {% call campo(_('Otros propietarios'), 'n-copr', ayuda=_('Si hay copropietarios, anótalos aquí (nombre y porcentaje).')) %}<input type="text" id="n-copr" name="copropietarios" value="{{ datos.copropietarios }}" maxlength="500">{% endcall %}
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear inmueble') }}</button><a class="btn btn-ghost" href="{{ url_for('inmobiliaria.inmuebles') }}">{{ _('Cancelar') }}</a></div>
+</form>
+{% endif %}
+{% endblock %}

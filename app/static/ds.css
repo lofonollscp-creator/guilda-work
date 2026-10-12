@@ -200,3 +200,19 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 .ds-plegable[open] > summary::after { transform: rotate(180deg); }
 .ds-plegable > summary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 8px; }
 .paginacion { justify-content: center; }
+
+/* ---- Tablero por columnas (captación de la inmobiliaria) --------------------------------------------------------------------------------- */
+.ds-tablero { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+.ds-tablero-col { background: color-mix(in srgb, var(--glass-bg) 55%, transparent); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 10px; min-height: 120px; }
+.ds-tablero-col > h2 { display: flex; justify-content: space-between; align-items: center; margin: 0 0 8px; font-size: 0.86em; text-transform: none; letter-spacing: 0; }
+.ds-tarjeta { background: var(--panel-solido); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }
+.ds-tarjeta a { font-weight: 700; }
+.ds-tarjeta select { width: 100%; }
+.ds-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
+.ds-galeria figure { margin: 0; position: relative; }
+.ds-galeria img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; border: 1px solid var(--glass-border); display: block; }
+.ds-galeria form { position: absolute; top: 4px; right: 4px; }
+.ds-puntos { display: inline-grid; place-items: center; min-width: 44px; padding: 3px 8px; border-radius: 999px; font-weight: 800; font-size: 0.85em; background: color-mix(in srgb, var(--primary) 22%, transparent); }
+.ds-puntos-alto { background: color-mix(in srgb, var(--primary) 45%, transparent); }
+.ds-puntos-bajo { background: var(--panel-2); color: var(--text-muted); }
+.ds-flex-wrap { flex-wrap: wrap; }

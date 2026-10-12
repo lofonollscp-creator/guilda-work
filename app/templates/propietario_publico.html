@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ d.direccion }} — {{ d.agencia }}</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='ds.css') }}">
+</head>
+<body>
+  <main class="portal-cliente-shell">
+    <header class="page-header"><div><p class="muted">{{ d.agencia }}</p><h1>{{ d.direccion }}</h1><p class="subtitle">{{ d.propietario }}{% if d.municipio %} · {{ d.municipio }}{% endif %}{% if d.referencia %} · {{ d.referencia }}{% endif %}</p></div></header>
+    <section class="dash-panel">
+      <h2>{{ _('Cómo va') }}</h2>
+      <p>{{ llano[d.estado_id] if d.estado_id in llano else '' }}</p>
+      {% if d.precio_centimos %}<p>{{ _('Precio actual') }}: <strong>{{ d.precio_centimos|importe }}</strong>{% if d.operacion == 'alquiler' %} {{ _('al mes') }}{% endif %}</p>{% endif %}
+      <p class="muted">{{ _('Última actualización') }}: {{ d.actualizado[:10] }}</p>
+    </section>
+    <section class="dash-panel ds-mt-16">
+      <h2>{{ _('Visitas') }}</h2>
+      <p>{{ ngettext('%(n)s visita realizada', '%(n)s visitas realizadas', d.visitas_total, n=d.visitas_total) }}{% if d.visitas_mes %} · {{ ngettext('%(n)s este mes', '%(n)s este mes', d.visitas_mes, n=d.visitas_mes) }}{% endif %}{% if d.valoracion_media %} · {{ _('valoración media') }} {{ d.valoracion_media }}/5{% endif %}</p>
+      {% if d.proximas %}<p class="muted">{{ _('Próximas') }}: {% for p in d.proximas %}<span class="mono">{{ p.replace('T', ' ') }}</span>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+      {% if d.comentarios %}<ul class="log-list">{% for c in d.comentarios %}<li class="log-item"><span class="log-text">{{ c.comentario }} <span class="muted">{{ c.fecha }}{% if c.valoracion %} · {{ c.valoracion }}/5{% endif %}</span></span></li>{% endfor %}</ul>{% endif %}
+    </section>
+    {% if d.ofertas %}
+    <section class="dash-panel ds-mt-16"><h2>{{ _('Ofertas recibidas') }}</h2>
+      <ul class="log-list">{% for o in d.ofertas %}<li class="log-item"><span class="log-text"><span class="mono">{{ o.fecha }}</span> <strong>{{ o.importe_centimos|importe }}</strong></span><span class="pill">{{ estados_oferta[o.estado] }}</span></li>{% endfor %}</ul></section>
+    {% endif %}
+    {% if d.precios|length > 1 %}
+    <section class="dash-panel ds-mt-16"><h2>{{ _('Historial de precios') }}</h2>
+      <ul class="log-list">{% for p in d.precios %}<li class="log-item"><span class="log-text"><span class="mono">{{ p.fecha }}</span> {{ p.precio_centimos|importe }}</span></li>{% endfor %}</ul></section>
+    {% endif %}
+    <section class="dash-panel ds-mt-16">
+      <h2>{{ _('Informe y documentos') }}</h2>
+      <p><a class="btn btn-primary" href="{{ url_for('propietario_publico.informe_pdf', token=token) }}">{{ _('Descargar el informe del mes (PDF)') }}</a></p>
+      {% if d.documentos %}<ul class="log-list">{% for doc in d.documentos %}<li class="log-item"><span class="log-text"><a href="{{ url_for('propietario_publico.documento', token=token, documento_id=doc.id) }}">{{ doc.nombre_archivo }}</a> <span class="muted">{{ doc.creado_en[:10] }}</span></span></li>{% endfor %}</ul>{% endif %}
+    </section>
+    <p class="muted ds-mt-16">{{ _('Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu agencia.') }}</p>
+  </main>
+</body>
+</html>

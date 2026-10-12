@@ -234,8 +234,11 @@ def _comentario_html(texto, mencionados=()):
 
 app.add_template_filter(_comentario_html, "comentario_html")
 from .rutas_abogados import abogados_bp, asunto_bp  # noqa: E402
+from .rutas_inmobiliaria import inmobiliaria_bp, propietario_bp  # noqa: E402
 from .rutas_nucleo import clientes_bp, expedientes_bp, plazos_bp, tiempo_bp  # noqa: E402
 app.register_blueprint(abogados_bp)
+app.register_blueprint(inmobiliaria_bp)
+app.register_blueprint(propietario_bp)
 app.register_blueprint(asunto_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(expedientes_bp)

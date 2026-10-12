@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ d.cliente_nombre }} — {{ _('Demandas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ d.cliente_nombre }} {{ chip(_('Compra') if d.operacion == 'venta' else _('Alquiler')) }}</h1>
+    <p class="subtitle"><a href="{{ url_for('clientes.ficha', cliente_id=d.cliente_id) }}">{{ _('Ver cliente') }}</a>{% if d.cliente_telefono %} · {{ d.cliente_telefono }}{% endif %}{% if d.cliente_email %} · {{ d.cliente_email }}{% endif %}</p></div>
+  <form method="post" action="{{ url_for('inmobiliaria.demanda_estado', demanda_id=d.id) }}"><select name="estado" data-autoenviar aria-label="{{ _('Estado') }}">{% for id, n in estados %}<option value="{{ id }}" {{ 'selected' if d.estado == id }}>{{ n }}</option>{% endfor %}</select></form>
+</header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <h2>{{ _('Lo que busca') }}</h2>
+  <p>{% for t in d.tipos %}{{ chip(tipos[t]) }} {% else %}<span class="muted">{{ _('Cualquier tipo') }}</span>{% endfor %}
+    {% if d.municipios %} · {{ d.municipios|join(', ') }}{% endif %}
+    {% if d.presupuesto_min_centimos or d.presupuesto_max_centimos %} · {{ (d.presupuesto_min_centimos|importe) if d.presupuesto_min_centimos else '' }}{{ ' – ' if d.presupuesto_min_centimos and d.presupuesto_max_centimos else '' }}{{ (_('hasta') ~ ' ' ~ (d.presupuesto_max_centimos|importe)) if d.presupuesto_max_centimos else '' }}{% endif %}
+    {% if d.superficie_min %} · ≥ {{ d.superficie_min }} m²{% endif %}{% if d.habitaciones_min %} · ≥ {{ d.habitaciones_min }} {{ _('hab.') }}{% endif %}{% if d.banos_min %} · ≥ {{ d.banos_min }} {{ _('baños') }}{% endif %}</p>
+  {% if d.requisitos %}<p>{{ _('Imprescindible') }}: {% for r in d.requisitos %}{{ chip(caracteristicas[r]) }} {% endfor %}</p>{% endif %}
+  {% if d.notas %}<p class="muted">{{ d.notas }}</p>{% endif %}
+</section>
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Inmuebles que encajan') }}</h2>
+  <p class="muted">{{ _('Solo inmuebles en comercialización de la misma operación. Los puntos suman tipo, zona, precio, superficie, habitaciones y baños; cada imprescindible que falta resta.') }}</p>
+  {% if cruces %}
+  {% for c in cruces %}
+  <article class="ds-tarjeta">
+    <div class="ds-fila"><span class="ds-puntos {{ 'ds-puntos-alto' if c.puntos >= 80 else ('ds-puntos-bajo' if c.puntos < 60 else '') }}">{{ c.puntos }}</span>
+      <a href="{{ url_for('expedientes.ficha', expediente_id=c.inmueble.expediente_id) }}">{{ c.inmueble.direccion }}</a> <span class="muted">{{ c.inmueble.municipio or '' }}</span> <strong>{{ c.inmueble.precio_centimos|importe if c.inmueble.precio_centimos else '' }}</strong></div>
+    <ul class="log-list">{% for r in c.razones if r.maximo or not r.ok %}<li class="log-item"><span class="log-text">{{ '✓' if r.ok else '✗' }} {{ r.detalle }}</span><span class="muted">{{ r.puntos }}/{{ r.maximo }}</span></li>{% endfor %}</ul>
+    <form method="post" action="{{ url_for('inmobiliaria.demanda_visita', demanda_id=d.id) }}" class="ds-fila"><input type="hidden" name="inmueble_id" value="{{ c.inmueble.id }}"><input type="datetime-local" name="fecha_hora" required aria-label="{{ _('Fecha y hora') }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Proponer visita') }}</button></form>
+  </article>
+  {% endfor %}
+  {% else %}{{ estado_vacio(_('Nada encaja todavía'), _('Cuando entre un inmueble en comercialización que cumpla lo que busca, aparecerá aquí.'), 'search') }}{% endif %}
+</section>
+{% if visitas %}
+<section class="dash-panel ds-mt-16"><h2>{{ _('Visitas de esta demanda') }}</h2>
+  <ul class="log-list">{% for v in visitas %}<li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora.replace('T', ' ') }}</strong> {{ v.direccion }}</span>{{ chip(v.estado) }}</li>{% endfor %}</ul></section>
+{% endif %}
+{% endblock %}

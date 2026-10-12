@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Captación') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Captación') }}</h1><p class="subtitle">{{ _('Del primer contacto al cierre: cada inmueble avanza por las fases de su operación.') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('inmobiliaria.inmueble_nuevo') }}">+ {{ _('Nuevo inmueble') }}</a></header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get"><label>{{ _('Operación') }}<select name="operacion" data-autoenviar><option value="">{{ _('Todas') }}</option><option value="venta" {{ 'selected' if operacion == 'venta' }}>{{ _('Venta') }}</option><option value="alquiler" {{ 'selected' if operacion == 'alquiler' }}>{{ _('Alquiler') }}</option></select></label></form>
+<div class="ds-tablero">
+  {% for e in estados %}
+  <section class="ds-tablero-col" aria-label="{{ e.nombre }}">
+    <h2>{{ e.nombre }} <span class="muted">{{ columnas[e.id]|length }}</span></h2>
+    {% for i in columnas[e.id] %}
+    <article class="ds-tarjeta">
+      <a href="{{ url_for('expedientes.ficha', expediente_id=i.expediente_id) }}">{{ i.direccion }}</a>
+      <span class="muted">{{ i.propietario_nombre }}{% if i.municipio %} · {{ i.municipio }}{% endif %}</span>
+      <span>{{ chip(_('Alquiler') if i.operacion == 'alquiler' else _('Venta')) }} {% if i.precio_centimos %}<strong>{{ i.precio_centimos|importe }}</strong>{% endif %}</span>
+      {% if i.visitas_realizadas or i.ofertas_abiertas %}<span class="muted">{{ ngettext('%(n)s visita', '%(n)s visitas', i.visitas_realizadas, n=i.visitas_realizadas) }}{% if i.ofertas_abiertas %} · {{ ngettext('%(n)s oferta', '%(n)s ofertas', i.ofertas_abiertas, n=i.ofertas_abiertas) }}{% endif %}</span>{% endif %}
+      <form method="post" action="{{ url_for('inmobiliaria.fase', inmueble_id=i.id) }}"><input type="hidden" name="operacion" value="{{ operacion }}">
+        <select name="estado" data-autoenviar aria-label="{{ _('Mover a la fase') }}">{% for e2 in estados %}<option value="{{ e2.id }}" {{ 'selected' if e2.id == e.id }}>{{ e2.nombre }}</option>{% endfor %}</select></form>
+    </article>
+    {% else %}<p class="muted">—</p>{% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

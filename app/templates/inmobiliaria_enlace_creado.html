@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Enlace para el propietario') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Enlace para el propietario') }}</h1><p class="subtitle">{{ i.direccion }}</p></div></header>
+{% include "_inmobiliaria_subnav.html" %}
+<section class="dash-panel ds-max-720">
+  <p>{{ _('Este es el enlace de solo lectura del propietario. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este).') }}</p>
+  <p class="ds-copiable mono" id="enlace-propietario">{{ url }}</p>
+  <p class="muted">{{ _('Verá en qué fase va su inmueble, el precio, las visitas y ofertas (sin los datos de los interesados), el historial de precios, el informe del mes y los documentos que hayas compartido. No verá comisiones, notas internas ni otras demandas.') }}</p>
+  <a class="btn btn-primary" href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}">{{ _('Volver al inmueble') }}</a>
+</section>
+{% endblock %}

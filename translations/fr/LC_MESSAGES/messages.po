@@ -9133,3 +9133,755 @@ msgstr "jours"
 
 msgid "Crear enlace"
 msgstr "Créer le lien"
+
+msgid "Primer contacto"
+msgstr "Premier contact"
+
+msgid "Valoración"
+msgstr "Estimation"
+
+msgid "Mandato firmado"
+msgstr "Mandat signé"
+
+msgid "Publicado"
+msgstr "Publié"
+
+msgid "En visitas"
+msgstr "En visites"
+
+msgid "Con oferta"
+msgstr "Avec offre"
+
+msgid "Reservado / arras"
+msgstr "Réservé / arrhes"
+
+msgid "Cerrada"
+msgstr "Clôturée"
+
+msgid "Perdida"
+msgstr "Perdue"
+
+msgid "Venta"
+msgstr "Vente"
+
+msgid "Alquiler"
+msgstr "Location"
+
+msgid "Piso"
+msgstr "Appartement"
+
+msgid "Casa o chalet"
+msgstr "Maison ou villa"
+
+msgid "Ático"
+msgstr "Penthouse"
+
+msgid "Local comercial"
+msgstr "Local commercial"
+
+msgid "Oficina"
+msgstr "Bureau"
+
+msgid "Garaje"
+msgstr "Garage"
+
+msgid "Trastero"
+msgstr "Débarras"
+
+msgid "Terreno"
+msgstr "Terrain"
+
+msgid "Edificio"
+msgstr "Immeuble"
+
+msgid "Otro"
+msgstr "Autre"
+
+msgid "Ascensor"
+msgstr "Ascenseur"
+
+msgid "Terraza"
+msgstr "Terrasse"
+
+msgid "Piscina"
+msgstr "Piscine"
+
+msgid "Aire acondicionado"
+msgstr "Climatisation"
+
+msgid "Amueblado"
+msgstr "Meublé"
+
+msgid "Admite mascotas"
+msgstr "Animaux acceptés"
+
+msgid "Exterior"
+msgstr "Extérieur"
+
+msgid "Reformado"
+msgstr "Rénové"
+
+msgid "Satisfecha"
+msgstr "Satisfaite"
+
+msgid "Descartada"
+msgstr "Écartée"
+
+msgid "Realizada"
+msgstr "Effectuée"
+
+msgid "Cancelada"
+msgstr "Annulée"
+
+msgid "No se presentó"
+msgstr "Absent"
+
+msgid "Alto"
+msgstr "Élevé"
+
+msgid "Medio"
+msgstr "Moyen"
+
+msgid "Bajo"
+msgstr "Faible"
+
+msgid "Ninguno"
+msgstr "Aucun"
+
+msgid "Contraoferta"
+msgstr "Contre-offre"
+
+msgid "Aceptada"
+msgstr "Acceptée"
+
+msgid "Rechazada"
+msgstr "Refusée"
+
+msgid "Retirada"
+msgstr "Retirée"
+
+msgid "Mandato de venta"
+msgstr "Mandat de vente"
+
+msgid "Contrato de arras"
+msgstr "Contrat d'arrhes"
+
+msgid "Contrato de alquiler"
+msgstr "Contrat de location"
+
+msgid "Documento de reserva"
+msgstr "Document de réservation"
+
+msgid "Facturada"
+msgstr "Facturée"
+
+msgid "Cobrada"
+msgstr "Encaissée"
+
+msgid "Estamos empezando a preparar la venta o el alquiler de su inmueble."
+msgstr "Nous commençons à préparer la vente ou la location de votre bien."
+
+msgid "Estamos valorando su inmueble para proponerle un precio."
+msgstr "Nous estimons votre bien pour vous proposer un prix."
+
+msgid "Tenemos su encargo firmado y preparamos la comercialización."
+msgstr "Nous avons votre mandat signé et préparons la commercialisation."
+
+msgid "Su inmueble está anunciado."
+msgstr "Votre bien est annoncé."
+
+msgid "Su inmueble se está enseñando a interesados."
+msgstr "Votre bien est présenté aux personnes intéressées."
+
+msgid "Hemos recibido ofertas y estamos negociando."
+msgstr "Nous avons reçu des offres et négocions."
+
+msgid "Su inmueble está reservado."
+msgstr "Votre bien est réservé."
+
+msgid "La operación se ha cerrado."
+msgstr "L'opération est conclue."
+
+msgid "La operación se ha dado por terminada."
+msgstr "L'opération a été arrêtée."
+
+msgid "Elige el propietario."
+msgstr "Choisissez le propriétaire."
+
+msgid "Elige al menos una foto."
+msgstr "Choisissez au moins une photo."
+
+msgid "El reparto no es válido."
+msgstr "La répartition n'est pas valide."
+
+msgid "Elige el cliente."
+msgstr "Choisissez le client."
+
+msgid "Captación"
+msgstr "Mandats"
+
+msgid "Inmuebles"
+msgstr "Biens"
+
+msgid "Demandas"
+msgstr "Demandes"
+
+msgid "Visitas"
+msgstr "Visites"
+
+msgid "Ajustes de la inmobiliaria"
+msgstr "Réglages de l'agence"
+
+msgid "Comisiones y plantillas de contrato de ejemplo, sin validar: ajústalas a tu agencia y a la normativa vigente."
+msgstr "Commissions et modèles de contrat d'exemple, non validés : adaptez-les à votre agence et à la réglementation en vigueur."
+
+msgid "IVA de los honorarios (porcentaje)"
+msgstr "TVA sur les honoraires (pourcentage)"
+
+msgid "Comisión de venta (porcentaje del precio)"
+msgstr "Commission de vente (pourcentage du prix)"
+
+msgid "Por ejemplo 3 o 3,5."
+msgstr "Par exemple 3 ou 3,5."
+
+msgid "Comisión de alquiler (mensualidades de renta)"
+msgstr "Commission de location (mois de loyer)"
+
+msgid "Por ejemplo 1 o 0,5."
+msgstr "Par exemple 1 ou 0,5."
+
+msgid "Honorarios mínimos (€)"
+msgstr "Honoraires minimaux (€)"
+
+msgid "Si el porcentaje sale por debajo, se cobra este mínimo. 0 = sin mínimo."
+msgstr "Si le pourcentage est inférieur, ce minimum est facturé. 0 = pas de minimum."
+
+msgid "Variables de las plantillas: {fecha} {agencia} {propietario} {nif_propietario} {parte} {nif_parte} {inmueble} {direccion} {ref_catastral} {precio} {arras} {renta} {fianza} {duracion} {comision}. Vacío = modelo de ejemplo."
+msgstr "Variables des modèles : {fecha} {agencia} {propietario} {nif_propietario} {parte} {nif_parte} {inmueble} {direccion} {ref_catastral} {precio} {arras} {renta} {fianza} {duracion} {comision}. Vide = modèle d'exemple."
+
+msgid "Compra"
+msgstr "Achat"
+
+msgid "Ver cliente"
+msgstr "Voir le client"
+
+msgid "Lo que busca"
+msgstr "Ce qu'il recherche"
+
+msgid "Cualquier tipo"
+msgstr "Tout type"
+
+msgid "hab."
+msgstr "ch."
+
+msgid "baños"
+msgstr "salles de bain"
+
+msgid "Imprescindible"
+msgstr "Indispensable"
+
+msgid "Inmuebles que encajan"
+msgstr "Biens correspondants"
+
+msgid "Solo inmuebles en comercialización de la misma operación. Los puntos suman tipo, zona, precio, superficie, habitaciones y baños; cada imprescindible que falta resta."
+msgstr "Uniquement les biens commercialisés pour la même opération. Les points additionnent type, zone, prix, surface, chambres et salles de bain ; chaque indispensable manquant retire des points."
+
+msgid "Proponer visita"
+msgstr "Proposer une visite"
+
+msgid "Nada encaja todavía"
+msgstr "Rien ne correspond pour l'instant"
+
+msgid "Cuando entre un inmueble en comercialización que cumpla lo que busca, aparecerá aquí."
+msgstr "Quand un bien commercialisé correspondra à sa recherche, il apparaîtra ici."
+
+msgid "Visitas de esta demanda"
+msgstr "Visites de cette demande"
+
+msgid "Nueva demanda"
+msgstr "Nouvelle demande"
+
+msgid "Qué busca"
+msgstr "Ce qu'il cherche"
+
+msgid "Comprar"
+msgstr "Acheter"
+
+msgid "Alquilar"
+msgstr "Louer"
+
+msgid "Tipos de inmueble"
+msgstr "Types de bien"
+
+msgid "Zonas o municipios"
+msgstr "Zones ou communes"
+
+msgid "Separados por comas. Vacío = cualquiera."
+msgstr "Séparés par des virgules. Vide = n'importe lequel."
+
+msgid "Presupuesto mínimo (€)"
+msgstr "Budget minimum (€)"
+
+msgid "Presupuesto máximo (€)"
+msgstr "Budget maximum (€)"
+
+msgid "Superficie mínima (m²)"
+msgstr "Surface minimale (m²)"
+
+msgid "Habitaciones mínimas"
+msgstr "Chambres minimum"
+
+msgid "Baños mínimos"
+msgstr "Salles de bain minimum"
+
+msgid "Agente responsable"
+msgstr "Agent responsable"
+
+msgid "Crear demanda"
+msgstr "Créer la demande"
+
+msgid "Lo que buscan tus compradores e inquilinos, cruzado con tus inmuebles."
+msgstr "Ce que recherchent vos acheteurs et locataires, croisé avec vos biens."
+
+msgid "Operación"
+msgstr "Opération"
+
+msgid "Sin demandas"
+msgstr "Aucune demande"
+
+msgid "Anota qué busca un cliente (zona, presupuesto, habitaciones…) y verás qué inmuebles encajan."
+msgstr "Notez ce que cherche un client (zone, budget, chambres…) et vous verrez quels biens correspondent."
+
+msgid "Busca"
+msgstr "Recherche"
+
+msgid "Presupuesto"
+msgstr "Budget"
+
+msgid "Enlace para el propietario"
+msgstr "Lien pour le propriétaire"
+
+msgid "Este es el enlace de solo lectura del propietario. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este)."
+msgstr "Voici le lien en lecture seule du propriétaire. Copiez-le maintenant : par sécurité il ne sera plus affiché (si vous le perdez, créez-en un autre et révoquez celui-ci)."
+
+msgid "Verá en qué fase va su inmueble, el precio, las visitas y ofertas (sin los datos de los interesados), el historial de precios, el informe del mes y los documentos que hayas compartido. No verá comisiones, notas internas ni otras demandas."
+msgstr "Il verra à quelle phase en est son bien, le prix, les visites et offres (sans les données des personnes intéressées), l'historique des prix, le rapport du mois et les documents partagés. Il ne verra ni commissions, ni notes internes, ni autres demandes."
+
+msgid "Volver al inmueble"
+msgstr "Retour au bien"
+
+msgid "Nuevo inmueble"
+msgstr "Nouveau bien"
+
+msgid "Se abrirá su operación en «Primer contacto» y podrás llevar el resto desde su ficha."
+msgstr "Son opération s'ouvrira à « Premier contact » et vous gérerez le reste depuis sa fiche."
+
+msgid "Primero necesitas el propietario como cliente."
+msgstr "Il vous faut d'abord le propriétaire comme client."
+
+msgid "Propietario"
+msgstr "Propriétaire"
+
+msgid "Municipio"
+msgstr "Commune"
+
+msgid "Código postal"
+msgstr "Code postal"
+
+msgid "Tipo de inmueble"
+msgstr "Type de bien"
+
+msgid "Precio (€)"
+msgstr "Prix (€)"
+
+msgid "En alquiler, la renta mensual."
+msgstr "En location, le loyer mensuel."
+
+msgid "Superficie (m²)"
+msgstr "Surface (m²)"
+
+msgid "Habitaciones"
+msgstr "Chambres"
+
+msgid "Baños"
+msgstr "Salles de bain"
+
+msgid "Planta"
+msgstr "Étage"
+
+msgid "Certificado energético"
+msgstr "Certificat énergétique"
+
+msgid "Referencia catastral"
+msgstr "Référence cadastrale"
+
+msgid "Características"
+msgstr "Caractéristiques"
+
+msgid "Otros propietarios"
+msgstr "Autres propriétaires"
+
+msgid "Si hay copropietarios, anótalos aquí (nombre y porcentaje)."
+msgstr "S'il y a des copropriétaires, notez-les ici (nom et quote-part)."
+
+msgid "Crear inmueble"
+msgstr "Créer le bien"
+
+msgid "Todas tus operaciones de venta y alquiler."
+msgstr "Toutes vos opérations de vente et de location."
+
+msgid "Dirección, referencia o propietario…"
+msgstr "Adresse, référence ou propriétaire…"
+
+msgid "Fase"
+msgstr "Phase"
+
+msgid "Precio máximo (€)"
+msgstr "Prix maximum (€)"
+
+msgid "Solo activos"
+msgstr "Actifs uniquement"
+
+msgid "Sin inmuebles"
+msgstr "Aucun bien"
+
+msgid "No hay ninguno con estos filtros."
+msgstr "Aucun avec ces filtres."
+
+msgid "Inmueble"
+msgstr "Bien"
+
+msgid "Precio"
+msgstr "Prix"
+
+msgid "%(n)s visita"
+msgid_plural "%(n)s visitas"
+msgstr[0] "%(n)s visite"
+msgstr[1] "%(n)s visites"
+
+msgid "%(n)s oferta"
+msgid_plural "%(n)s ofertas"
+msgstr[0] "%(n)s offre"
+msgstr[1] "%(n)s offres"
+
+msgid "Tu cartera de un vistazo: fases, visitas, ofertas y lo que se ha quedado sin movimiento."
+msgstr "Votre portefeuille d'un coup d'œil : phases, visites, offres et ce qui est resté sans mouvement."
+
+msgid "Inmuebles activos"
+msgstr "Biens actifs"
+
+msgid "En comercialización"
+msgstr "En commercialisation"
+
+msgid "Visitas hoy"
+msgstr "Visites aujourd'hui"
+
+msgid "Ofertas abiertas"
+msgstr "Offres ouvertes"
+
+msgid "Demandas activas"
+msgstr "Demandes actives"
+
+msgid "Visitas de hoy"
+msgstr "Visites du jour"
+
+msgid "Mapa"
+msgstr "Carte"
+
+msgid "Sin visitas hoy."
+msgstr "Aucune visite aujourd'hui."
+
+msgid "Ver la semana"
+msgstr "Voir la semaine"
+
+msgid "Ofertas por responder"
+msgstr "Offres à traiter"
+
+msgid "Ninguna oferta pendiente."
+msgstr "Aucune offre en attente."
+
+msgid "Sin movimiento en 14 días"
+msgstr "Sans mouvement depuis 14 jours"
+
+msgid "Anunciados sin visitas ni ofertas recientes: quizá toque revisar precio, fotos o anuncio."
+msgstr "Annoncés sans visites ni offres récentes : il faut peut-être revoir le prix, les photos ou l'annonce."
+
+msgid "Todo lo anunciado tiene movimiento reciente."
+msgstr "Tout ce qui est annoncé a eu du mouvement récemment."
+
+msgid "Cartera por fase"
+msgstr "Portefeuille par phase"
+
+msgid "Abrir el tablero de captación"
+msgstr "Ouvrir le tableau des mandats"
+
+msgid "Exportar para portales (CSV)"
+msgstr "Exporter pour les portails (CSV)"
+
+msgid "Todavía no hay inmuebles"
+msgstr "Aucun bien pour l'instant"
+
+msgid "Da de alta el primer inmueble: se abre su operación y empieza el embudo de captación."
+msgstr "Ajoutez le premier bien : son opération s'ouvre et l'entonnoir de captation commence."
+
+msgid "Del primer contacto al cierre: cada inmueble avanza por las fases de su operación."
+msgstr "Du premier contact à la clôture : chaque bien avance dans les phases de son opération."
+
+msgid "Mover a la fase"
+msgstr "Déplacer vers la phase"
+
+msgid "Agenda de visitas por día, con la dirección y el mapa para preparar la ruta."
+msgstr "Agenda des visites par jour, avec l'adresse et la carte pour préparer l'itinéraire."
+
+msgid "Agente"
+msgstr "Agent"
+
+msgid "Sin visitas en este periodo"
+msgstr "Aucune visite sur cette période"
+
+msgid "Programa visitas desde la ficha de un inmueble o desde una demanda."
+msgstr "Programmez des visites depuis la fiche d'un bien ou d'une demande."
+
+msgid "Cómo va"
+msgstr "Où en est-on"
+
+msgid "Precio actual"
+msgstr "Prix actuel"
+
+msgid "al mes"
+msgstr "par mois"
+
+msgid "%(n)s visita realizada"
+msgid_plural "%(n)s visitas realizadas"
+msgstr[0] "%(n)s visite effectuée"
+msgstr[1] "%(n)s visites effectuées"
+
+msgid "%(n)s este mes"
+msgid_plural "%(n)s este mes"
+msgstr[0] "%(n)s ce mois-ci"
+msgstr[1] "%(n)s ce mois-ci"
+
+msgid "valoración media"
+msgstr "note moyenne"
+
+msgid "Próximas"
+msgstr "À venir"
+
+msgid "Ofertas recibidas"
+msgstr "Offres reçues"
+
+msgid "Historial de precios"
+msgstr "Historique des prix"
+
+msgid "Informe y documentos"
+msgstr "Rapport et documents"
+
+msgid "Descargar el informe del mes (PDF)"
+msgstr "Télécharger le rapport du mois (PDF)"
+
+msgid "Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu agencia."
+msgstr "Cette page est en lecture seule et privée : ne partagez pas le lien. En cas de doute, contactez votre agence."
+
+msgid "En captación"
+msgstr "En captation"
+
+msgid "En venta"
+msgstr "En vente"
+
+msgid "En alquiler"
+msgstr "En location"
+
+msgid "Reservado"
+msgstr "Réservé"
+
+msgid "Vendido"
+msgstr "Vendu"
+
+msgid "Alquilado"
+msgstr "Loué"
+
+msgid "Retirado"
+msgstr "Retiré"
+
+msgid "Comisiones y contratos de ejemplo"
+msgstr "Commissions et contrats d'exemple"
+
+msgid "Lo que ve el propietario:"
+msgstr "Ce que voit le propriétaire :"
+
+msgid "Datos del inmueble"
+msgstr "Données du bien"
+
+msgid "Descripción del anuncio"
+msgstr "Description de l'annonce"
+
+msgid "Nuevo precio (€)"
+msgstr "Nouveau prix (€)"
+
+msgid "Motivo"
+msgstr "Motif"
+
+msgid "Cambiar"
+msgstr "Modifier"
+
+msgid "Fotos"
+msgstr "Photos"
+
+msgid "¿Eliminar esta foto?"
+msgstr "Supprimer cette photo ?"
+
+msgid "Sin fotos todavía."
+msgstr "Aucune photo pour l'instant."
+
+msgid "Subir fotos"
+msgstr "Téléverser des photos"
+
+msgid "Se reducen de tamaño y se les quitan los datos ocultos de la cámara (como la ubicación)."
+msgstr "Elles sont réduites et les données cachées de l'appareil (comme la position) sont supprimées."
+
+msgid "Interés"
+msgstr "Intérêt"
+
+msgid "Comentario"
+msgstr "Commentaire"
+
+msgid "Hecha"
+msgstr "Faite"
+
+msgid "¿Eliminar esta visita?"
+msgstr "Supprimer cette visite ?"
+
+msgid "Sin visitas."
+msgstr "Aucune visite."
+
+msgid "Demanda"
+msgstr "Demande"
+
+msgid "Visitante sin demanda"
+msgstr "Visiteur sans demande"
+
+msgid "Nombre (si no hay demanda)"
+msgstr "Nom (s'il n'y a pas de demande)"
+
+msgid "Nombre del visitante"
+msgstr "Nom du visiteur"
+
+msgid "Programar visita"
+msgstr "Programmer une visite"
+
+msgid "Ofertas"
+msgstr "Offres"
+
+msgid "Sin ofertas."
+msgstr "Aucune offre."
+
+msgid "Oferente sin demanda"
+msgstr "Offrant sans demande"
+
+msgid "Nombre del oferente"
+msgstr "Nom de l'offrant"
+
+msgid "Registrar oferta"
+msgstr "Enregistrer l'offre"
+
+msgid "Demandas que encajan"
+msgstr "Demandes correspondantes"
+
+msgid "le falta"
+msgstr "manque"
+
+msgid "Ninguna demanda activa encaja (o el inmueble aún no está en comercialización)."
+msgstr "Aucune demande active ne correspond (ou le bien n'est pas encore commercialisé)."
+
+msgid "Contratos"
+msgstr "Contrats"
+
+msgid "Generado"
+msgstr "Généré"
+
+msgid "En firma"
+msgstr "En signature"
+
+msgid "Firmado"
+msgstr "Signé"
+
+msgid "Marcar firmado"
+msgstr "Marquer comme signé"
+
+msgid "Sin contratos generados."
+msgstr "Aucun contrat généré."
+
+msgid "Nombre de la otra parte"
+msgstr "Nom de l'autre partie"
+
+msgid "NIF de la otra parte"
+msgstr "NIF de l'autre partie"
+
+msgid "Arras / reserva (€)"
+msgstr "Arrhes / réservation (€)"
+
+msgid "Arras o reserva (€)"
+msgstr "Arrhes ou réservation (€)"
+
+msgid "Renta (€)"
+msgstr "Loyer (€)"
+
+msgid "Fianza (€)"
+msgstr "Dépôt de garantie (€)"
+
+msgid "Duración o plazo"
+msgstr "Durée ou délai"
+
+msgid "Honorarios pactados"
+msgstr "Honoraires convenus"
+
+msgid "Generar contrato (PDF)"
+msgstr "Générer le contrat (PDF)"
+
+msgid "Comisión"
+msgstr "Commission"
+
+msgid "Sugerida"
+msgstr "Suggérée"
+
+msgid "se aplica el mínimo"
+msgstr "le minimum s'applique"
+
+msgid "Base: precio de cierre o renta mensual (€)"
+msgstr "Base : prix de clôture ou loyer mensuel (€)"
+
+msgid "Puntos básicos (300 equivale a un 3 por ciento)"
+msgstr "Points de base (300 équivaut à 3 pour cent)"
+
+msgid "Mínimo (€)"
+msgstr "Minimum (€)"
+
+msgid "Comisión en puntos básicos: 300 equivale a un 3 por ciento; en alquiler, 10000 es una mensualidad."
+msgstr "Commission en points de base : 300 équivaut à 3 pour cent ; en location, 10000 correspond à un mois."
+
+msgid "Reparto entre quienes intervienen (debe sumar 100; deja en blanco a quien no participe):"
+msgstr "Répartition entre les intervenants (doit totaliser 100 ; laissez vide pour qui ne participe pas) :"
+
+msgid "Reparto (porcentaje)"
+msgstr "Répartition (pourcentage)"
+
+msgid "Calcular y guardar"
+msgstr "Calculer et enregistrer"
+
+msgid "Una página de solo lectura con la fase, el precio, las visitas y ofertas (sin datos de los interesados), el informe del mes y los documentos que compartas."
+msgstr "Une page en lecture seule avec la phase, le prix, les visites et offres (sans données des personnes intéressées), le rapport du mois et les documents partagés."
+
+msgid "Compartir con el propietario"
+msgstr "Partager avec le propriétaire"
+
+msgid "¿Revocar este enlace? El propietario dejará de poder verlo."
+msgstr "Révoquer ce lien ? Le propriétaire ne pourra plus le voir."
+
+msgid "Informe para el propietario"
+msgstr "Rapport pour le propriétaire"
+
+msgid "Descargar informe (PDF)"
+msgstr "Télécharger le rapport (PDF)"
+
+msgid "Vacío = el mes en curso. No incluye los nombres de los interesados."
+msgstr "Vide = le mois en cours. Ne comprend pas le nom des personnes intéressées."

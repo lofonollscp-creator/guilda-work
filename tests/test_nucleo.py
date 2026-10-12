@@ -301,8 +301,8 @@ def test_verticales_por_defecto_extras_y_ajuste_manual(usuario_id):
     with pytest.raises(ValueError):
         verticales.fijar_activo(t, "astrologia", True)
     estado = {e["id"]: e for e in verticales.estado_para_backoffice(t)}
-    assert list(estado) == ["gestoria", "abogados"] and estado["gestoria"]["motivo"] == "defecto" and estado["abogados"]["motivo"] is None and not estado["abogados"]["activo"], \
-        "solo se ofrecen los módulos que ya tienen pantallas (Inmobiliaria llega el Día 5)"
+    assert list(estado) == ["gestoria", "abogados", "inmobiliaria"] and estado["gestoria"]["motivo"] == "defecto" and estado["abogados"]["motivo"] is None and not estado["abogados"]["activo"], \
+        "se ofrecen los tres módulos y solo el de serie está activo"
 
 
 def test_los_verticales_se_guardan_en_memoria_poco_tiempo(usuario_id, monkeypatch):
@@ -334,7 +334,7 @@ def test_el_backoffice_activa_y_desactiva_modulos_de_negocio_y_vincula_extras(tm
     entrar(bo)
     t = db.crear_tenant("Despacho BO")
     html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
-    assert "Módulos de negocio" in html and "Gestoría" in html and "Incluido por defecto" in html and "/verticales/inmobiliaria" not in html and "/verticales/abogados" in html
+    assert "Módulos de negocio" in html and "Gestoría" in html and "Incluido por defecto" in html and "/verticales/inmobiliaria" in html and "/verticales/abogados" in html
     post(bo, f"/tenants/{t}/verticales/gestoria")
     assert verticales.activos_de(t, usar_cache=False) == set() and "Ajuste manual" in bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
     post(bo, f"/tenants/{t}/verticales/gestoria", accion="auto")
@@ -348,3 +348,15 @@ def test_el_backoffice_activa_y_desactiva_modulos_de_negocio_y_vincula_extras(tm
     assert db.obtener_extra_guilda(extra["id"])["vertical_id"] is None
     post(bo, "/extras", nombre="Malo", descripcion="", precio="1", vertical_id="astrologia")
     assert not any(e["nombre"] == "Malo" for e in db.listar_extras_guilda())
+
+
+@pytest.mark.parametrize("texto,centimos", [("250.000", 25000000), ("1.000", 100000), ("1.234,56", 123456), ("150,5", 15050), ("12.5", 1250), ("0.50", 50), ("900", 90000), ("3.000,00 €", 300000),
+                                             ("1.234.567,89", 123456789), ("0", 0), (" 12 ", 1200), (5000, 5000)])
+def test_importes_a_la_espanola(texto, centimos):
+    assert nucleo.importe_a_centimos(texto) == centimos
+
+
+@pytest.mark.parametrize("texto", ["", "  ", "mucho", "1,2,3", "€", None])
+def test_importes_no_validos(texto):
+    with pytest.raises(ValueError, match="importe"):
+        nucleo.importe_a_centimos(texto)

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Inmuebles') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Inmuebles') }}</h1><p class="subtitle">{{ _('Todas tus operaciones de venta y alquiler.') }}</p></div><a class="btn btn-primary" href="{{ url_for('inmobiliaria.inmueble_nuevo') }}">+ {{ _('Nuevo inmueble') }}</a></header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ f.q or '' }}" placeholder="{{ _('Dirección, referencia o propietario…') }}"></label>
+  <label>{{ _('Operación') }}<select name="operacion"><option value="">{{ _('Todas') }}</option><option value="venta" {{ 'selected' if f.operacion == 'venta' }}>{{ _('Venta') }}</option><option value="alquiler" {{ 'selected' if f.operacion == 'alquiler' }}>{{ _('Alquiler') }}</option></select></label>
+  <label>{{ _('Fase') }}<select name="estado"><option value="">{{ _('Todas') }}</option>{% for e in estados %}<option value="{{ e.id }}" {{ 'selected' if f.estado == e.id }}>{{ e.nombre }}</option>{% endfor %}</select></label>
+  <label>{{ _('Municipio') }} <input type="text" name="municipio" value="{{ f.municipio or '' }}"></label>
+  <label>{{ _('Precio máximo (€)') }} <input type="text" inputmode="decimal" name="precio_max" value="{{ f.precio_max or '' }}"></label>
+  <label class="checkbox-label"><input type="checkbox" name="activos" value="1" {{ 'checked' if f.solo_activos }}> {{ _('Solo activos') }}</label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+{% if not inmuebles %}{{ estado_vacio(_('Sin inmuebles'), _('No hay ninguno con estos filtros.'), 'building-2', _('Nuevo inmueble'), url_for('inmobiliaria.inmueble_nuevo')) }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Inmueble') }}</th><th>{{ _('Propietario') }}</th><th>{{ _('Fase') }}</th><th>{{ _('Precio') }}</th><th>{{ _('Actividad') }}</th></tr></thead>
+  <tbody>
+  {% for i in inmuebles %}
+  <tr>
+    <td><a href="{{ url_for('expedientes.ficha', expediente_id=i.expediente_id) }}"><strong>{{ i.direccion }}</strong></a><br><span class="muted">{{ i.referencia }}{% if i.municipio %} · {{ i.municipio }}{% endif %}{% if i.superficie_m2 %} · {{ i.superficie_m2 }} m²{% endif %}{% if i.habitaciones %} · {{ i.habitaciones }} {{ _('hab.') }}{% endif %}</span></td>
+    <td><a href="{{ url_for('clientes.ficha', cliente_id=i.propietario_id) }}">{{ i.propietario_nombre }}</a></td>
+    <td>{% for e in estados if e.id == i.estado %}{{ chip(e.nombre, 'exito' if e.id == 'cerrada' else ('peligro' if e.id == 'perdida' else 'neutro')) }}{% endfor %} {{ chip(_('Alquiler') if i.operacion == 'alquiler' else _('Venta')) }}</td>
+    <td>{{ i.precio_centimos|importe if i.precio_centimos else '—' }}</td>
+    <td>{{ ngettext('%(n)s visita', '%(n)s visitas', i.visitas_realizadas, n=i.visitas_realizadas) }}{% if i.ofertas_abiertas %} · {{ ngettext('%(n)s oferta', '%(n)s ofertas', i.ofertas_abiertas, n=i.ofertas_abiertas) }}{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

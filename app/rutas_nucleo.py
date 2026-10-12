@@ -489,8 +489,8 @@ def eliminar(parte_id: int):
 def tarifa():
     t = _tenant()
     try:
-        euros = (request.form.get("tarifa") or "").replace(",", ".").strip()
-        nucleo.fijar_tarifa_usuario(t, g.usuario_id, int(round(float(euros) * 100)) if euros else None)
+        euros = (request.form.get("tarifa") or "").strip()
+        nucleo.fijar_tarifa_usuario(t, g.usuario_id, nucleo.importe_a_centimos(euros) if euros else None)
     except ValueError:
         return _volver("tiempo.lista", _("La tarifa no es válida."))
     return _volver("tiempo.lista")

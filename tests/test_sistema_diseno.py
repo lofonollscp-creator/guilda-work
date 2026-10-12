@@ -145,3 +145,14 @@ def test_los_textos_del_selector_de_fecha_estan_traducidos():
         po = (RAIZ / "translations" / idioma / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
         for clave in re.findall(r"ds(?:Hoy|Borrar|Fecha|Hora|Minutos|Periodo|MesAnterior|MesSiguiente|EstaSemana|EsteMes|MesPasado|EsteTrimestre|EsteAnio):\s*\{\{ _\('([^']+)'\)", base):
             assert re.search(r'msgid "' + re.escape(clave) + r'"\nmsgstr "[^"]+"', po), (idioma, clave)
+
+
+def test_ningun_texto_traducible_lleva_un_porcentaje_suelto():
+    """flask-babel formatea con % los textos de _(): un «50 %» suelto rompe la página con un error 500 (ValueError). Hay que escribir %% o evitar el símbolo."""
+    malos = []
+    for p in sorted((RAIZ / "app" / "templates").rglob("*.html")):
+        for m in re.finditer(r"\b_\('((?:[^'\\]|\\.)*)'\)|\b_\(\"((?:[^\"\\]|\\.)*)\"\)", p.read_text(encoding="utf-8")):
+            texto = m.group(1) or m.group(2) or ""
+            if re.search(r"%(?!\(\w+\)[sd]|%|s\b|d\b)", texto) and not re.search(r"%\(\w+\)", texto):
+                malos.append(f"{p.relative_to(RAIZ)}: {texto[:70]}")
+    assert not malos, "Textos con «%» suelto:\n  " + "\n  ".join(malos)

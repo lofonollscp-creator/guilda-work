@@ -1,0 +1,9 @@
+{# Navegación del módulo Inmobiliaria. `seccion`: panel | tablero | inmuebles | demandas | visitas | ajustes #}
+<nav class="tareas-subnav">
+  <a class="{{ 'active' if seccion == 'panel' }}" href="{{ url_for('inmobiliaria.panel') }}">{{ _('Panel') }}</a>
+  <a class="{{ 'active' if seccion == 'tablero' }}" href="{{ url_for('inmobiliaria.tablero') }}">{{ _('Captación') }}</a>
+  <a class="{{ 'active' if seccion == 'inmuebles' }}" href="{{ url_for('inmobiliaria.inmuebles') }}">{{ _('Inmuebles') }}</a>
+  <a class="{{ 'active' if seccion == 'demandas' }}" href="{{ url_for('inmobiliaria.demandas') }}">{{ _('Demandas') }}</a>
+  <a class="{{ 'active' if seccion == 'visitas' }}" href="{{ url_for('inmobiliaria.visitas') }}">{{ _('Visitas') }}</a>
+  <a class="{{ 'active' if seccion == 'ajustes' }}" href="{{ url_for('inmobiliaria.ajustes') }}">{{ _('Ajustes') }}</a>
+</nav>

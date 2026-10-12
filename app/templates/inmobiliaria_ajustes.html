@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, sin_validar, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Ajustes de la inmobiliaria') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Ajustes de la inmobiliaria') }}</h1><p class="subtitle">{{ _('Comisiones y plantillas de contrato de ejemplo, sin validar: ajústalas a tu agencia y a la normativa vigente.') }} {{ sin_validar() }}</p></div></header>
+{% include "_inmobiliaria_subnav.html" %}
+{{ aviso_error(error) }}
+{% if guardado %}<p role="status">{{ chip(_('Ajustes guardados'), 'exito') }}</p>{% endif %}
+<form class="edit-form ds-max-720" method="post">
+  {% call campo(_('IVA de los honorarios (porcentaje)'), 'a-iva') %}<input type="number" id="a-iva" name="iva_pct" value="{{ a.iva_pct }}" min="0" max="30" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Comisión de venta (porcentaje del precio)'), 'a-cv', ayuda=_('Por ejemplo 3 o 3,5.')) %}<input type="text" inputmode="decimal" id="a-cv" name="comision_venta_pct" value="{{ '%g'|format(a.comision_venta_bp / 100) }}" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Comisión de alquiler (mensualidades de renta)'), 'a-ca', ayuda=_('Por ejemplo 1 o 0,5.')) %}<input type="text" inputmode="decimal" id="a-ca" name="comision_alquiler_meses" value="{{ '%g'|format(a.comision_alquiler_meses_x100 / 100) }}" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Honorarios mínimos (€)'), 'a-min', ayuda=_('Si el porcentaje sale por debajo, se cobra este mínimo. 0 = sin mínimo.')) %}<input type="text" inputmode="decimal" id="a-min" name="minimo" value="{{ '%.2f'|format(a.minimo_centimos / 100) }}" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  <p class="muted">{{ _('Variables de las plantillas: {fecha} {agencia} {propietario} {nif_propietario} {parte} {nif_parte} {inmueble} {direccion} {ref_catastral} {precio} {arras} {renta} {fianza} {duracion} {comision}. Vacío = modelo de ejemplo.') }}</p>
+  {% for tipo, nombre in tipos_contrato %}
+  {% call campo(nombre ~ (' ✓' if a.plantillas_propias[tipo] else ''), 'a-pl-' ~ tipo) %}<textarea id="a-pl-{{ tipo }}" name="plantilla_{{ tipo }}" rows="8" {{ 'disabled' if not puede_editar }}>{{ a.plantillas[tipo] if a.plantillas_propias[tipo] else '' }}</textarea>{% endcall %}
+  {% endfor %}
+  {% if puede_editar %}<button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>{% else %}<p class="muted">{{ _('Solo los responsables del despacho pueden cambiarlos.') }}</p>{% endif %}
+</form>
+{% endblock %}

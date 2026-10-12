@@ -1,0 +1,141 @@
+{# Panel del módulo Inmobiliaria en la ficha de una operación (venta o alquiler). Lo incluye expediente_ficha.html con `panel` (ver inmobiliaria.contexto_panel). #}
+{% from "_ds/componentes.html" import chip, sin_validar %}
+{% from "_nucleo_macros.html" import tamano %}
+{% if panel.inmueble %}
+{% set i = panel.inmueble %}
+{% set base = url_for('inmobiliaria.panel') ~ 'inmuebles/' ~ i.id %}
+<section class="dash-panel ds-mt-16" id="panel-inmobiliaria">
+  <h2>{{ _('Inmueble') }} {{ chip({'captacion': _('En captación'), 'en_venta': _('En venta'), 'en_alquiler': _('En alquiler'), 'reservado': _('Reservado'), 'vendido': _('Vendido'), 'alquilado': _('Alquilado'), 'retirado': _('Retirado')}[panel.estado_comercial]) }} {{ sin_validar(_('Comisiones y contratos de ejemplo')) }}</h2>
+  <p class="muted">{{ i.referencia }} · {{ i.direccion }}{% if i.municipio %}, {{ i.municipio }}{% endif %} · <a href="{{ panel.mapa }}" target="_blank" rel="noopener noreferrer">{{ _('Mapa') }}</a> · {{ _('Lo que ve el propietario:') }} {{ panel.estado_llano }}</p>
+
+  <div class="dash-grid">
+  <div>
+    <h3>{{ _('Datos del inmueble') }}</h3>
+    <form method="post" action="{{ base }}/datos" class="edit-form">
+      <input type="text" name="direccion" value="{{ i.direccion }}" required aria-label="{{ _('Dirección') }}">
+      <input type="text" name="municipio" value="{{ i.municipio or '' }}" placeholder="{{ _('Municipio') }}" aria-label="{{ _('Municipio') }}">
+      <input type="text" name="codigo_postal" value="{{ i.codigo_postal or '' }}" placeholder="{{ _('Código postal') }}" aria-label="{{ _('Código postal') }}">
+      <select name="tipo" aria-label="{{ _('Tipo de inmueble') }}">{% for id, n in panel.tipos_inmueble %}<option value="{{ id }}" {{ 'selected' if i.tipo == id }}>{{ n }}</option>{% endfor %}</select>
+      <div class="ds-fila"><input type="number" name="superficie_m2" value="{{ i.superficie_m2 or '' }}" placeholder="m²" class="ds-ancho-5em" aria-label="{{ _('Superficie (m²)') }}"><input type="number" name="habitaciones" value="{{ i.habitaciones if i.habitaciones is not none else '' }}" placeholder="{{ _('hab.') }}" class="ds-ancho-5em" aria-label="{{ _('Habitaciones') }}"><input type="number" name="banos" value="{{ i.banos if i.banos is not none else '' }}" placeholder="{{ _('baños') }}" class="ds-ancho-5em" aria-label="{{ _('Baños') }}"></div>
+      <input type="text" name="planta" value="{{ i.planta or '' }}" placeholder="{{ _('Planta') }}" aria-label="{{ _('Planta') }}">
+      <select name="certificado_energetico" aria-label="{{ _('Certificado energético') }}"><option value="">{{ _('Certificado energético') }}</option>{% for c in panel.certificados %}<option value="{{ c }}" {{ 'selected' if i.certificado_energetico == c }}>{{ c|replace('_', ' ') }}</option>{% endfor %}</select>
+      <input type="text" name="ref_catastral" value="{{ i.ref_catastral or '' }}" placeholder="{{ _('Referencia catastral') }}" aria-label="{{ _('Referencia catastral') }}">
+      <fieldset><legend>{{ _('Características') }}</legend>{% for id, n in panel.caracteristicas %}<label class="checkbox-label"><input type="checkbox" name="caracteristicas" value="{{ id }}" {{ 'checked' if id in i.caracteristicas }}> {{ n }}</label>{% endfor %}</fieldset>
+      <textarea name="descripcion" rows="3" placeholder="{{ _('Descripción del anuncio') }}" aria-label="{{ _('Descripción') }}">{{ i.descripcion or '' }}</textarea>
+      <input type="text" name="copropietarios" value="{{ i.copropietarios or '' }}" placeholder="{{ _('Otros propietarios') }}" aria-label="{{ _('Otros propietarios') }}">
+      <button type="submit" class="btn btn-primary">{{ _('Guardar datos') }}</button>
+    </form>
+  </div>
+
+  <div>
+    <h3>{{ _('Precio') }}: {{ i.precio_centimos|importe if i.precio_centimos else '—' }}{% if panel.operacion == 'alquiler' %} {{ _('al mes') }}{% endif %}</h3>
+    {% if panel.precios %}<ul class="log-list">{% for p in panel.precios %}<li class="log-item"><span class="log-text"><span class="mono">{{ p.fecha }}</span> {{ p.precio_centimos|importe }} {% if p.motivo %}<span class="muted">{{ p.motivo }}</span>{% endif %}</span></li>{% endfor %}</ul>{% endif %}
+    <form method="post" action="{{ base }}/precio" class="ds-fila ds-mt-8"><input type="text" name="precio" inputmode="decimal" placeholder="{{ _('Nuevo precio (€)') }}" required aria-label="{{ _('Nuevo precio (€)') }}"><input type="text" name="motivo" placeholder="{{ _('Motivo') }}" maxlength="200" aria-label="{{ _('Motivo') }}"><button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button></form>
+
+    <h3 class="ds-mt-16">{{ _('Fotos') }}</h3>
+    {% if panel.fotos %}<div class="ds-galeria">{% for f in panel.fotos %}<figure><img src="{{ base }}/fotos/{{ f.id }}" alt="{{ f.nombre_archivo }}" loading="lazy">
+      <form method="post" action="{{ base }}/fotos/{{ f.id }}/eliminar" data-confirmar-envio="{{ _('¿Eliminar esta foto?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button></form></figure>{% endfor %}</div>
+    {% else %}<p class="muted">{{ _('Sin fotos todavía.') }}</p>{% endif %}
+    <form method="post" action="{{ base }}/fotos" enctype="multipart/form-data" class="ds-fila"><input type="file" name="foto" accept="image/*" multiple required aria-label="{{ _('Fotos') }}"><button type="submit" class="btn btn-ghost">{{ _('Subir fotos') }}</button></form>
+    <p class="muted">{{ _('Se reducen de tamaño y se les quitan los datos ocultos de la cámara (como la ubicación).') }}</p>
+  </div>
+  </div>
+
+  <div class="dash-grid ds-mt-16">
+  <div>
+    <h3>{{ _('Visitas') }}</h3>
+    {% if panel.visitas %}
+    <ul class="log-list">{% for v in panel.visitas %}
+      <li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora.replace('T', ' ') }}</strong> {{ v.visitante_nombre }} <span class="muted">{{ v.agente_nombre }}</span>
+        {% if v.valoracion %}{{ chip(v.valoracion ~ '/5', 'exito') }}{% endif %} {% if v.comentario %}<br><span class="muted">{{ v.comentario }}</span>{% endif %}</span>
+        {% if v.estado == 'prevista' %}
+        <form method="post" action="{{ base }}/visitas/{{ v.id }}/resultado" class="ds-fila ds-flex-wrap"><input type="hidden" name="estado" value="realizada">
+          <select name="valoracion" aria-label="{{ _('Valoración') }}"><option value="">{{ _('Valoración') }}</option>{% for n in (5, 4, 3, 2, 1) %}<option value="{{ n }}">{{ n }}/5</option>{% endfor %}</select>
+          <select name="interes" aria-label="{{ _('Interés') }}"><option value="">{{ _('Interés') }}</option>{% for id, n in panel.interes %}<option value="{{ id }}">{{ n }}</option>{% endfor %}</select>
+          <input type="text" name="comentario" placeholder="{{ _('Comentario') }}" maxlength="1500" aria-label="{{ _('Comentario') }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Hecha') }}</button></form>
+        {% else %}{{ chip(dict(panel.estados_visita)[v.estado], 'exito' if v.estado == 'realizada' else 'peligro') }}{% endif %}
+        <form method="post" action="{{ base }}/visitas/{{ v.id }}/eliminar" data-confirmar-envio="{{ _('¿Eliminar esta visita?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button></form></li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Sin visitas.') }}</p>{% endif %}
+    <form method="post" action="{{ base }}/visitas" class="edit-form ds-mt-12">
+      <input type="datetime-local" name="fecha_hora" required aria-label="{{ _('Fecha y hora') }}">
+      <select name="demanda_id" data-buscable aria-label="{{ _('Demanda') }}"><option value="">{{ _('Visitante sin demanda') }}</option>{% for d in panel.demandas_activas %}<option value="{{ d.id }}">{{ d.cliente_nombre }}</option>{% endfor %}</select>
+      <input type="text" name="visitante" placeholder="{{ _('Nombre (si no hay demanda)') }}" maxlength="200" aria-label="{{ _('Nombre del visitante') }}">
+      <select name="agente_id" aria-label="{{ _('Agente') }}">{% for p in panel.equipo %}<option value="{{ p.id }}" {{ 'selected' if p.id == g.usuario_id }}>{{ p.nombre }}</option>{% endfor %}</select>
+      <button type="submit" class="btn btn-ghost">+ {{ _('Programar visita') }}</button>
+    </form>
+  </div>
+  <div>
+    <h3>{{ _('Ofertas') }}</h3>
+    {% if panel.ofertas %}
+    <ul class="log-list">{% for o in panel.ofertas %}<li class="log-item"><span class="log-text"><strong>{{ o.importe_centimos|importe }}</strong> {{ o.oferente_nombre }} <span class="muted">{{ o.fecha }}</span></span>
+      <form method="post" action="{{ base }}/ofertas/{{ o.id }}/estado"><select name="estado" data-autoenviar aria-label="{{ _('Estado') }}">{% for id, n in panel.estados_oferta %}<option value="{{ id }}" {{ 'selected' if o.estado == id }}>{{ n }}</option>{% endfor %}</select></form></li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Sin ofertas.') }}</p>{% endif %}
+    <form method="post" action="{{ base }}/ofertas" class="edit-form ds-mt-12">
+      <input type="text" name="importe" inputmode="decimal" placeholder="{{ _('Importe (€)') }}" required aria-label="{{ _('Importe (€)') }}">
+      <select name="demanda_id" data-buscable aria-label="{{ _('Demanda') }}"><option value="">{{ _('Oferente sin demanda') }}</option>{% for d in panel.demandas_activas %}<option value="{{ d.id }}">{{ d.cliente_nombre }}</option>{% endfor %}</select>
+      <input type="text" name="oferente" placeholder="{{ _('Nombre (si no hay demanda)') }}" maxlength="200" aria-label="{{ _('Nombre del oferente') }}">
+      <button type="submit" class="btn btn-ghost">+ {{ _('Registrar oferta') }}</button>
+    </form>
+
+    <h3 class="ds-mt-16">{{ _('Demandas que encajan') }}</h3>
+    {% if panel.cruces %}
+    <ul class="log-list">{% for c in panel.cruces %}<li class="log-item"><span class="log-text"><span class="ds-puntos {{ 'ds-puntos-alto' if c.puntos >= 80 else '' }}">{{ c.puntos }}</span> <a href="{{ url_for('inmobiliaria.demanda', demanda_id=c.demanda.id) }}">{{ c.demanda.cliente_nombre }}</a>{% if c.faltan %} <span class="muted">{{ _('le falta') }}: {% for f in c.faltan %}{{ dict(panel.caracteristicas)[f] }}{{ ', ' if not loop.last }}{% endfor %}</span>{% endif %}</span></li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Ninguna demanda activa encaja (o el inmueble aún no está en comercialización).') }}</p>{% endif %}
+  </div>
+  </div>
+
+  <div class="dash-grid ds-mt-16">
+  <div>
+    <h3>{{ _('Contratos') }}</h3>
+    {% if panel.contratos %}
+    <ul class="log-list">{% for c in panel.contratos %}<li class="log-item"><span class="log-text"><a href="{{ base }}/contratos/{{ c.id }}/documento">{{ dict(panel.tipos_contrato)[c.tipo] }} v{{ c.version }}</a> <span class="muted">{{ c.parte_nombre }} · {{ c.creado_en[:10] }}</span> {{ chip({'generado': _('Generado'), 'enviado_firma': _('En firma'), 'firmado': _('Firmado')}[c.estado], 'exito' if c.estado == 'firmado' else ('aviso' if c.estado == 'enviado_firma' else 'neutro')) }}</span>
+      {% if c.estado != 'firmado' %}<form method="post" action="{{ base }}/contratos/{{ c.id }}/firmado"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar firmado') }}</button></form>{% endif %}
+      {% if c.estado == 'generado' %}<form method="post" action="{{ base }}/contratos/{{ c.id }}/firma" class="ds-fila ds-flex-wrap" data-confirmar-envio="{{ _('Se enviará el documento a Documenso para que lo firme esta persona. ¿Continuar?') }}"><input type="email" name="email" placeholder="{{ _('Email de quien firma') }}" required aria-label="{{ _('Email de quien firma') }}"><input type="text" name="nombre" placeholder="{{ _('Nombre') }}" aria-label="{{ _('Nombre de quien firma') }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Enviar a firma') }}</button></form>{% endif %}</li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Sin contratos generados.') }}</p>{% endif %}
+    <form method="post" action="{{ base }}/contratos" class="edit-form ds-mt-12">
+      <select name="tipo" aria-label="{{ _('Tipo de contrato') }}">{% for id, n in panel.tipos_contrato %}<option value="{{ id }}">{{ n }}</option>{% endfor %}</select>
+      <input type="text" name="parte_nombre" placeholder="{{ _('Nombre de la otra parte') }}" required maxlength="200" aria-label="{{ _('Nombre de la otra parte') }}">
+      <input type="text" name="parte_nif" placeholder="{{ _('NIF de la otra parte') }}" aria-label="{{ _('NIF de la otra parte') }}">
+      <div class="ds-fila ds-flex-wrap"><input type="text" name="precio" inputmode="decimal" placeholder="{{ _('Precio (€)') }}" aria-label="{{ _('Precio (€)') }}"><input type="text" name="arras" inputmode="decimal" placeholder="{{ _('Arras / reserva (€)') }}" aria-label="{{ _('Arras o reserva (€)') }}"><input type="text" name="renta" inputmode="decimal" placeholder="{{ _('Renta (€)') }}" aria-label="{{ _('Renta (€)') }}"><input type="text" name="fianza" inputmode="decimal" placeholder="{{ _('Fianza (€)') }}" aria-label="{{ _('Fianza (€)') }}"></div>
+      <input type="text" name="duracion" placeholder="{{ _('Duración o plazo') }}" aria-label="{{ _('Duración o plazo') }}">
+      <input type="text" name="comision" placeholder="{{ _('Honorarios pactados') }}" aria-label="{{ _('Honorarios pactados') }}">
+      <button type="submit" class="btn btn-ghost">{{ _('Generar contrato (PDF)') }}</button>
+    </form>
+  </div>
+  <div>
+    <h3>{{ _('Comisión') }}</h3>
+    {% set com = panel.comision %}
+    {% set prop = panel.propuesta_comision %}
+    {% if com %}
+    <p>{{ chip(com.total_centimos|importe, 'exito' if com.estado == 'cobrada' else 'aviso') }} <span class="muted">{{ _('Honorarios') }} {{ com.honorarios_centimos|importe }} + {{ _('IVA') }} {{ com.iva_centimos|importe }}</span></p>
+    <ul class="log-list">{% for r in com.reparto %}<li class="log-item"><span class="log-text">{% for p in panel.equipo if p.id == r.agente_id %}{{ p.nombre }}{% endfor %} · {{ r.pct }} %</span><strong>{{ r.centimos|importe }}</strong></li>{% endfor %}</ul>
+    <form method="post" action="{{ base }}/comision/estado" class="ds-fila"><select name="estado" data-autoenviar aria-label="{{ _('Estado') }}">{% for id, n in panel.estados_comision %}<option value="{{ id }}" {{ 'selected' if com.estado == id }}>{{ n }}</option>{% endfor %}</select></form>
+    {% else %}<p class="muted">{{ _('Sugerida') }}: {{ prop.total|importe }} ({{ prop.honorarios|importe }} + {{ _('IVA') }}){% if prop.aplicado_minimo %} · {{ _('se aplica el mínimo') }}{% endif %}</p>{% endif %}
+    <form method="post" action="{{ base }}/comision" class="edit-form ds-mt-12">
+      <input type="text" name="base" inputmode="decimal" value="{{ '%.2f'|format((com.base_centimos if com else prop.base_centimos) / 100) }}" aria-label="{{ _('Base: precio de cierre o renta mensual (€)') }}">
+      <div class="ds-fila"><input type="number" name="pct_bp" value="{{ com.pct_bp if com else prop.pct_bp }}" min="0" class="ds-ancho-5em" aria-label="{{ _('Puntos básicos (300 equivale a un 3 por ciento)') }}"><input type="text" name="minimo" inputmode="decimal" value="{{ '%.2f'|format((com.minimo_centimos if com else prop.minimo_centimos) / 100) }}" class="ds-ancho-5em" aria-label="{{ _('Mínimo (€)') }}"><input type="number" name="iva_pct" value="{{ com.iva_pct if com else prop.iva_pct }}" min="0" max="30" class="ds-ancho-5em" aria-label="{{ _('IVA') }}"></div>
+      <p class="muted">{{ _('Comisión en puntos básicos: 300 equivale a un 3 por ciento; en alquiler, 10000 es una mensualidad.') }}</p>
+      <p class="muted">{{ _('Reparto entre quienes intervienen (debe sumar 100; deja en blanco a quien no participe):') }}</p>
+      {% for p in panel.equipo[:6] %}<div class="ds-fila"><input type="hidden" name="agente_id" value="{{ p.id }}"><span class="ds-flex-1">{{ p.nombre }}</span><input type="number" name="agente_pct" value="{{ 100 if p.id == g.usuario_id else '' }}" min="0" max="100" class="ds-ancho-5em" aria-label="{{ _('Reparto (porcentaje)') }} {{ p.nombre }}"> %</div>{% endfor %}
+      <button type="submit" class="btn btn-ghost">{{ _('Calcular y guardar') }}</button>
+    </form>
+  </div>
+  </div>
+
+  <div class="dash-grid ds-mt-16">
+  <div>
+    <h3>{{ _('Enlace para el propietario') }}</h3>
+    <p class="muted">{{ _('Una página de solo lectura con la fase, el precio, las visitas y ofertas (sin datos de los interesados), el informe del mes y los documentos que compartas.') }}</p>
+    {% for d in documentos if d.categoria != 'Foto' %}<form method="post" action="{{ base }}/documentos/{{ d.id }}/compartir" class="ds-fila"><span class="log-text">{{ d.nombre_archivo }}</span>{% if not d.compartido_cliente %}<input type="hidden" name="compartido" value="1">{% endif %}<button type="submit" class="btn btn-ghost btn-sm">{{ _('Dejar de compartir') if d.compartido_cliente else _('Compartir con el propietario') }}</button></form>{% endfor %}
+    {% for e in panel.enlaces %}<p class="muted">{{ _('Enlace creado') }} {{ e.creado_en[:10] }} · {{ _('caduca') }} {{ e.expira_en[:10] }} {% if e.revocado_en %}{{ chip(_('Revocado'), 'peligro') }}{% else %}
+      <form method="post" action="{{ base }}/enlaces/{{ e.id }}/revocar" class="ds-en-linea" data-confirmar-envio="{{ _('¿Revocar este enlace? El propietario dejará de poder verlo.') }}" data-confirmar-peligro><button type="submit" class="btn btn-peligro btn-sm">{{ _('Revocar') }}</button></form>{% endif %}</p>{% endfor %}
+    <form method="post" action="{{ base }}/enlaces" class="ds-fila ds-mt-12"><label>{{ _('Caduca en') }} <input type="number" name="dias" value="30" min="1" max="180" class="ds-ancho-5em"> {{ _('días') }}</label><button type="submit" class="btn btn-primary">{{ _('Crear enlace') }}</button></form>
+  </div>
+  <div>
+    <h3>{{ _('Informe para el propietario') }}</h3>
+    <form method="get" action="{{ base }}/informe.pdf" class="ds-fila ds-flex-wrap"><input type="date" name="desde" aria-label="{{ _('Desde') }}"><input type="date" name="hasta" aria-label="{{ _('Hasta') }}"><button type="submit" class="btn btn-ghost">{{ _('Descargar informe (PDF)') }}</button></form>
+    <p class="muted">{{ _('Vacío = el mes en curso. No incluye los nombres de los interesados.') }}</p>
+  </div>
+  </div>
+</section>
+{% endif %}
