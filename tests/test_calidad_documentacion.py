@@ -22,7 +22,7 @@ _INTERNAS = {
 
 def _variables_usadas() -> set[str]:
     usadas = set()
-    for fuente in list((RAIZ / "app").glob("*.py")) + [RAIZ / "mcp_tools.py", RAIZ / "mcp_server_remoto.py", RAIZ / "serve.py", RAIZ / "run.py"]:
+    for fuente in list((RAIZ / "app").glob("*.py")) + [RAIZ / "mcp_tools" / "__init__.py", *(RAIZ / "mcp_tools").glob("herramientas_*.py"), RAIZ / "mcp_server_remoto.py", RAIZ / "serve.py", RAIZ / "run.py"]:
         for a, b in _PATRON_VAR.findall(fuente.read_text(encoding="utf-8", errors="ignore")):
             usadas.add(a or b)
     return usadas

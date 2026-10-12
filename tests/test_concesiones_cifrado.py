@@ -401,7 +401,7 @@ def test_nadie_lee_el_contenido_de_los_documentos_sin_pasar_por_el_almacen():
     from pathlib import Path
     raiz = Path(__file__).resolve().parent.parent
     permitidos = {"app/db.py", "app/db_fiscal.py", "app/almacen_documentos.py"}
-    fuentes = [*(raiz / "app").glob("*.py"), raiz / "mcp_tools.py", raiz / "mcp_server.py", raiz / "mcp_server_remoto.py", *(raiz / "scripts").glob("*.py")]
+    fuentes = [*(raiz / "app").glob("*.py"), raiz / "mcp_tools" / "__init__.py", *(raiz / "mcp_tools").glob("herramientas_*.py"), raiz / "mcp_server.py", raiz / "mcp_server_remoto.py", *(raiz / "scripts").glob("*.py")]
     for ruta in fuentes:
         rel = ruta.relative_to(raiz).as_posix()
         if rel in permitidos or not ruta.exists():

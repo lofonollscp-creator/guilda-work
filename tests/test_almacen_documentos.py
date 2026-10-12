@@ -142,7 +142,8 @@ def test_borrar_el_despacho_borra_sus_documentos(usuario_id):
 def _fuentes():
     for p in sorted((RAIZ / "app").rglob("*.py")):
         yield p.relative_to(RAIZ).as_posix(), p.read_text(encoding="utf-8")
-    yield "mcp_tools.py", (RAIZ / "mcp_tools.py").read_text(encoding="utf-8")
+    for p in sorted((RAIZ / "mcp_tools").glob("*.py")):
+        yield p.relative_to(RAIZ).as_posix(), p.read_text(encoding="utf-8")
 
 
 def test_solo_el_almacen_escribe_el_contenido_de_los_documentos():
