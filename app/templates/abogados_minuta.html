@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, campo, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Minuta') }} {{ m.numero or '' }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'minutas' %}
+{% set borrador = m.estado == 'borrador' %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Minuta') }} {{ m.numero or _('(borrador)') }} {{ chip({'borrador': _('Borrador'), 'emitida': _('Emitida'), 'pagada': _('Pagada'), 'anulada': _('Anulada')}[m.estado], 'exito' if m.estado == 'pagada' else ('peligro' if m.estado == 'anulada' else ('aviso' if m.estado == 'emitida' else 'neutro'))) }}</h1>
+    <p class="subtitle"><a href="{{ url_for('clientes.ficha', cliente_id=m.cliente_id) }}">{{ m.cliente_nombre }}</a>{% if m.cliente_nif %} · {{ m.cliente_nif }}{% endif %}{% if m.expediente_id %} · <a href="{{ url_for('expedientes.ficha', expediente_id=m.expediente_id) }}">{{ m.expediente_titulo }}</a>{% endif %} · {{ m.fecha }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('abogados.minuta_pdf', minuta_id=m.id) }}">PDF</a>
+</header>
+{% include "_abogados_subnav.html" %}
+{{ aviso_error(error) }}
+<p>{{ sin_validar(_('IVA y retención de ejemplo: compruébalos')) }}</p>
+
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Concepto') }}</th><th>{{ _('Tiempo') }}</th><th>{{ _('Importe') }}</th>{% if borrador %}<th></th>{% endif %}</tr></thead>
+  <tbody>
+    {% for l in lineas %}
+    <tr><td>{{ l.concepto }} {% if l.tipo == 'suplido' %}{{ chip(_('Suplido')) }}{% endif %}</td><td>{{ l.segundos|horas_hm if l.segundos else '—' }}</td><td>{{ l.importe_centimos|importe }}</td>
+      {% if borrador %}<td><form method="post" action="{{ url_for('abogados.minuta_quitar_linea', minuta_id=m.id, linea_id=l.id) }}"><button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}">×</button></form></td>{% endif %}</tr>
+    {% endfor %}
+    <tr><td colspan="2"><strong>{{ _('Honorarios') }}</strong></td><td>{{ m.base_centimos|importe }}</td>{% if borrador %}<td></td>{% endif %}</tr>
+    <tr><td colspan="2">{{ _('IVA') }} ({{ m.iva_pct }} %)</td><td>{{ m.iva_centimos|importe }}</td>{% if borrador %}<td></td>{% endif %}</tr>
+    {% if m.irpf_pct %}<tr><td colspan="2">{{ _('Retención de IRPF') }} ({{ m.irpf_pct }} %)</td><td>−{{ m.irpf_centimos|importe }}</td>{% if borrador %}<td></td>{% endif %}</tr>{% endif %}
+    {% if m.suplidos_centimos %}<tr><td colspan="2">{{ _('Suplidos') }}</td><td>{{ m.suplidos_centimos|importe }}</td>{% if borrador %}<td></td>{% endif %}</tr>{% endif %}
+    <tr><td colspan="2"><strong>{{ _('Total') }}</strong></td><td><strong>{{ m.total_centimos|importe }}</strong></td>{% if borrador %}<td></td>{% endif %}</tr>
+  </tbody>
+</table></div>
+{% if m.notas %}<p class="muted ds-mt-12">{{ m.notas }}</p>{% endif %}
+
+{% if borrador %}
+<div class="dash-grid ds-mt-16">
+<section class="dash-panel">
+  <h2>{{ _('Añadir una línea') }}</h2>
+  <form method="post" action="{{ url_for('abogados.minuta_linea', minuta_id=m.id) }}" class="edit-form">
+    <input type="text" name="concepto" placeholder="{{ _('Concepto') }}" required maxlength="300">
+    <input type="text" name="importe" inputmode="decimal" placeholder="{{ _('Importe (€)') }}" required>
+    <select name="tipo" aria-label="{{ _('Tipo') }}"><option value="honorarios">{{ _('Honorarios') }}</option><option value="suplido">{{ _('Suplido') }}</option></select>
+    <button type="submit" class="btn btn-ghost">+ {{ _('Añadir') }}</button>
+  </form>
+</section>
+<section class="dash-panel">
+  <h2>{{ _('Impuestos y notas') }}</h2>
+  <form method="post" action="{{ url_for('abogados.minuta_impuestos', minuta_id=m.id) }}" class="edit-form">
+    {% call campo(_('IVA (porcentaje)'), 'm-iva') %}<input type="number" id="m-iva" name="iva_pct" value="{{ m.iva_pct }}" min="0" max="30">{% endcall %}
+    {% call campo(_('Retención de IRPF (porcentaje)'), 'm-irpf') %}<input type="number" id="m-irpf" name="irpf_pct" value="{{ m.irpf_pct }}" min="0" max="30">{% endcall %}
+    {% call campo(_('Notas'), 'm-notas') %}<textarea id="m-notas" name="notas" rows="3">{{ m.notas or '' }}</textarea>{% endcall %}
+    <button type="submit" class="btn btn-ghost">{{ _('Recalcular') }}</button>
+  </form>
+</section>
+</div>
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Emitir') }}</h2>
+  <p class="muted">{{ _('Al emitirla recibe su número correlativo y las horas y suplidos incluidos quedan marcados como facturados. No se podrá modificar.') }}</p>
+  <form method="post" action="{{ url_for('abogados.minuta_emitir', minuta_id=m.id) }}" class="ds-fila" data-confirmar-envio="{{ _('¿Emitir esta minuta? Ya no se podrá modificar.') }}">
+    {% if m.expediente_id %}<label class="checkbox-label"><input type="checkbox" name="cargar_a_provision" value="1"> {{ _('Cargar el total a la provisión de fondos del asunto') }}</label>{% endif %}
+    <button type="submit" class="btn btn-primary">{{ _('Emitir minuta') }}</button>
+  </form>
+  <form method="post" action="{{ url_for('abogados.minuta_eliminar', minuta_id=m.id) }}" class="ds-mt-12" data-confirmar-envio="{{ _('¿Descartar este borrador?') }}" data-confirmar-peligro><button type="submit" class="btn btn-peligro btn-sm">{{ _('Descartar borrador') }}</button></form>
+</section>
+{% elif m.estado in ('emitida', 'pagada') %}
+<section class="dash-panel ds-mt-16">
+  <div class="ds-fila">
+    {% if m.estado == 'emitida' %}<form method="post" action="{{ url_for('abogados.minuta_estado', minuta_id=m.id) }}"><input type="hidden" name="estado" value="pagada"><button type="submit" class="btn btn-primary">{{ _('Marcar como pagada') }}</button></form>{% endif %}
+    <form method="post" action="{{ url_for('abogados.minuta_estado', minuta_id=m.id) }}" data-confirmar-envio="{{ _('¿Anular esta minuta? Las horas y suplidos volverán a quedar pendientes de facturar.') }}" data-confirmar-peligro><input type="hidden" name="estado" value="anulada"><button type="submit" class="btn btn-peligro">{{ _('Anular minuta') }}</button></form>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Enlace para el cliente') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'panel' %}
+<header class="page-header"><div><h1>{{ _('Enlace para el cliente') }}</h1><p class="subtitle">{{ x.titulo }}</p></div></header>
+{% include "_abogados_subnav.html" %}
+<section class="dash-panel ds-max-720">
+  <p>{{ _('Este es el enlace de solo lectura del cliente. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este).') }}</p>
+  <p class="ds-copiable mono" id="enlace-cliente">{{ url }}</p>
+  <p class="muted">{{ _('Quien lo tenga verá el estado del asunto, el resumen que hayas escrito, las próximas vistas y los documentos que hayas compartido. No verá horas, notas internas, plazos ni a las partes contrarias.') }}</p>
+  <a class="btn btn-primary" href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}">{{ _('Volver al asunto') }}</a>
+</section>
+{% endblock %}

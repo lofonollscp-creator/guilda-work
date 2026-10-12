@@ -1,0 +1,9 @@
+{# Navegación del módulo Gabinete de abogados. `seccion`: panel | vistas | minutas | conflictos | ajustes #}
+<nav class="tareas-subnav">
+  <a class="{{ 'active' if seccion == 'panel' }}" href="{{ url_for('abogados.panel') }}">{{ _('Panel') }}</a>
+  <a class="{{ 'active' if seccion == 'vistas' }}" href="{{ url_for('abogados.vistas') }}">{{ _('Agenda de vistas') }}</a>
+  <a class="{{ 'active' if seccion == 'minutas' }}" href="{{ url_for('abogados.minutas') }}">{{ _('Minutas') }}</a>
+  <a class="{{ 'active' if seccion == 'conflictos' }}" href="{{ url_for('abogados.conflictos') }}">{{ _('Conflictos de intereses') }}</a>
+  <a class="{{ 'active' if seccion == 'ajustes' }}" href="{{ url_for('abogados.ajustes') }}">{{ _('Ajustes') }}</a>
+  <a href="{{ url_for('expedientes.lista') }}">{{ _('Todos los expedientes') }}</a>
+</nav>

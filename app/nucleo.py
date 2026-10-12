@@ -159,6 +159,10 @@ def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
     from . import almacen_documentos
     conn.executescript(almacen_documentos.ESQUEMA)
+    db._asegurar_columna(conn, "documentos", "compartido_cliente", "INTEGER NOT NULL DEFAULT 0")    # el despacho lo enseña al cliente (enlace de solo lectura)
+    for v in verticales.VERTICALES.values():
+        if v.esquema:
+            v.esquema(conn)
     db._asegurar_columna(conn, "clientes_fiscales", "cliente_id", "INTEGER REFERENCES clientes(id)")
     db._asegurar_columna(conn, "extras_guilda", "vertical_id", "TEXT")           # qué módulo de negocio activa este extra (app/verticales.py)
     db._asegurar_columna(conn, "usuarios", "tarifa_hora_centimos", "INTEGER")    # tarifa por defecto de sus partes de horas
@@ -1097,6 +1101,9 @@ def eliminar_parte(tenant_id: int, usuario_id: int, parte_id: int, supervisor: b
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     """Borra todo lo del núcleo de un despacho (lo llama `db.borrar_tenant`, dentro de su transacción)."""
+    for v in verticales.VERTICALES.values():
+        if v.borrar_datos:
+            v.borrar_datos(conn, tenant_id)
     from . import almacen_documentos
     almacen_documentos.borrar_datos_de_tenant(conn, tenant_id)
     for tabla in ("partes_tiempo", "plazos", "festivos"):

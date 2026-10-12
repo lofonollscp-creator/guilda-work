@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% block title %}{{ _('Agenda de vistas') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'vistas' %}
+<header class="page-header"><div><h1>{{ _('Agenda de vistas') }}</h1><p class="subtitle">{{ _('Señalamientos de todos tus asuntos.') }}</p></div><a class="btn btn-ghost" href="{{ url_for('abogados.vistas_ics') }}">{{ _('Descargar calendario (.ics)') }}</a></header>
+{% include "_abogados_subnav.html" %}
+<form class="filters" method="get"><label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label><label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label><button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button></form>
+{% if not vistas %}{{ estado_vacio(_('Sin vistas en este periodo'), _('Señala una vista desde la ficha de un asunto.'), 'calendar-clock') }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Cuándo') }}</th><th>{{ _('Qué') }}</th><th>{{ _('Dónde') }}</th><th>{{ _('Asunto') }}</th><th>{{ _('Estado') }}</th></tr></thead>
+  <tbody>{% for v in vistas %}<tr><td class="mono">{{ v.fecha_hora.replace('T', ' ') }}</td><td>{{ tipos[v.tipo] }}</td><td>{{ v.lugar or '—' }}</td><td><a href="{{ url_for('expedientes.ficha', expediente_id=v.expediente_id) }}">{{ v.expediente_titulo }}</a><br><span class="muted">{{ v.cliente_nombre }}</span></td>
+    <td>{{ chip({'prevista': _('Prevista'), 'celebrada': _('Celebrada'), 'suspendida': _('Suspendida')}[v.estado], 'exito' if v.estado == 'celebrada' else ('peligro' if v.estado == 'suspendida' else 'neutro')) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+{% endblock %}

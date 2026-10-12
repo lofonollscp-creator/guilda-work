@@ -157,6 +157,21 @@ def leer(tenant_id: int, usuario_id: int, documento_id: int) -> dict | None:
     return d
 
 
+def leer_sin_usuario(tenant_id: int, documento_id: int) -> dict | None:
+    """Lectura SIN comprobar permisos de persona: solo para quien ya ha comprobado el derecho de acceso por otra vía (el enlace de solo lectura de un cliente).
+    No usar en ninguna ruta que dependa de la sesión de una persona."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM documentos WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (documento_id, tenant_id)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        return None
+    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
+    d["contenido"] = _abrir(tenant_id, f)
+    return d
+
+
 def listar(tenant_id: int, usuario_id: int, *, cliente_id: int | None = None, expediente_id: int | None = None, limite: int = 300) -> list[dict]:
     """Metadatos (sin contenido) de los documentos de un cliente o de un expediente que la persona puede ver."""
     donde, p = ["d.tenant_id = ?", "d.papelera_en IS NULL"], [tenant_id]
@@ -167,7 +182,7 @@ def listar(tenant_id: int, usuario_id: int, *, cliente_id: int | None = None, ex
     conn = db.get_connection()
     try:
         filas = conn.execute(
-            "SELECT d.id, d.cliente_id, d.expediente_id, d.nombre_archivo, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.cifrado, d.subido_por, d.creado_en, "
+            "SELECT d.id, d.cliente_id, d.expediente_id, d.nombre_archivo, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.cifrado, d.compartido_cliente, d.subido_por, d.creado_en, "
             "COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre FROM documentos d LEFT JOIN usuarios u ON u.id = d.subido_por "
             f"LEFT JOIN usuario_perfil pf ON pf.usuario_id = d.subido_por WHERE {' AND '.join(donde)} ORDER BY d.creado_en DESC, d.id DESC LIMIT ?", [*p, max(1, min(limite, 1000))]).fetchall()
         return [dict(f) for f in filas if _visible(conn, usuario_id, f)]

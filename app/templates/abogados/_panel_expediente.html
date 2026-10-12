@@ -1,0 +1,118 @@
+{# Panel del módulo Gabinete de abogados en la ficha de un asunto. Lo incluye expediente_ficha.html con `panel` (ver abogados.contexto_panel) y las variables de la ficha (x, documentos, equipo…). #}
+{% from "_ds/componentes.html" import chip, campo, sin_validar %}
+{% from "_nucleo_macros.html" import tamano %}
+{% set ab = namespace(base=url_for('abogados.panel') ~ 'expedientes/' ~ x.id) %}
+<section class="dash-panel ds-mt-16" id="panel-abogados">
+  <h2>{{ _('Gabinete de abogados') }} {{ sin_validar(_('Plazos y valores de ejemplo')) }}</h2>
+  <p class="muted">{{ _('Lo que ve el cliente de este asunto:') }} {{ panel.estado_llano }}</p>
+
+  <div class="dash-grid">
+  <div>
+    <h3>{{ _('Datos del asunto') }}</h3>
+    <form method="post" action="{{ ab.base }}/datos" class="edit-form">
+      {% if panel.es_judicial %}
+      <input type="text" name="numero_procedimiento" value="{{ panel.datos.get('numero_procedimiento') or '' }}" placeholder="{{ _('Nº de procedimiento (123/2026)') }}" aria-label="{{ _('Nº de procedimiento') }}">
+      <input type="text" name="juzgado" value="{{ panel.datos.get('juzgado') or '' }}" placeholder="{{ _('Juzgado o tribunal') }}" aria-label="{{ _('Juzgado o tribunal') }}">
+      <select name="jurisdiccion" aria-label="{{ _('Jurisdicción') }}"><option value="">{{ _('Jurisdicción') }}</option>{% for id, n in panel.jurisdicciones %}<option value="{{ id }}" {{ 'selected' if panel.datos.get('jurisdiccion') == id }}>{{ n }}</option>{% endfor %}</select>
+      <input type="text" name="tipo_procedimiento" value="{{ panel.datos.get('tipo_procedimiento') or '' }}" placeholder="{{ _('Tipo de procedimiento') }}" aria-label="{{ _('Tipo de procedimiento') }}">
+      <input type="text" name="procurador" value="{{ panel.datos.get('procurador') or '' }}" placeholder="{{ _('Procurador') }}" aria-label="{{ _('Procurador') }}">
+      <input type="text" name="cuantia" inputmode="decimal" value="{{ '%.2f'|format(panel.datos.get('cuantia_centimos') / 100) if panel.datos.get('cuantia_centimos') is not none else '' }}" placeholder="{{ _('Cuantía (€)') }}" aria-label="{{ _('Cuantía (€)') }}">
+      <input type="text" name="fase" value="{{ panel.datos.get('fase') or '' }}" placeholder="{{ _('Fase actual') }}" aria-label="{{ _('Fase actual') }}">
+      {% else %}
+      <input type="text" name="materia" value="{{ panel.datos.get('materia') or '' }}" placeholder="{{ _('Materia') }}" aria-label="{{ _('Materia') }}">
+      {% endif %}
+      <textarea name="resumen_cliente" rows="3" placeholder="{{ _('Resumen para el cliente (lo verá con su enlace)') }}" aria-label="{{ _('Resumen para el cliente') }}">{{ panel.datos.get('resumen_cliente') or '' }}</textarea>
+      <button type="submit" class="btn btn-primary">{{ _('Guardar datos') }}</button>
+    </form>
+  </div>
+
+  <div>
+    <h3>{{ _('Partes') }}</h3>
+    {% if panel.partes %}
+    <ul class="log-list">{% for p in panel.partes %}
+      <li class="log-item"><span class="log-text"><strong>{{ p.nombre }}</strong> {{ chip(dict(panel.roles)[p.rol]) }}{% if p.nif %} <span class="muted">{{ p.nif }}</span>{% endif %}</span>
+        <form method="post" action="{{ ab.base }}/partes/{{ p.id }}/eliminar" data-confirmar-envio="{{ _('¿Quitar esta parte?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}">×</button></form></li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Sin partes todavía.') }}</p>{% endif %}
+    <form method="post" action="{{ ab.base }}/partes" class="edit-form ds-mt-12">
+      <select name="rol" aria-label="{{ _('Rol') }}">{% for id, n in panel.roles %}<option value="{{ id }}" {{ 'selected' if id == 'contraparte' }}>{{ n }}</option>{% endfor %}</select>
+      <input type="text" name="nombre" placeholder="{{ _('Nombre o razón social') }}" required maxlength="200" aria-label="{{ _('Nombre o razón social') }}">
+      <input type="text" name="nif" placeholder="{{ _('NIF / CIF (opcional)') }}" aria-label="{{ _('NIF / CIF') }}">
+      <button type="submit" class="btn btn-ghost">+ {{ _('Añadir parte') }}</button>
+      <p class="muted">{{ _('Al añadir una parte se comprueban los conflictos de intereses.') }}</p>
+    </form>
+  </div>
+  </div>
+
+  <div class="dash-grid ds-mt-16">
+  <div>
+    <h3>{{ _('Notificaciones y plazos') }}</h3>
+    <p class="muted">{{ _('Registra una resolución notificada y se calcula su plazo procesal, se crea el plazo (fatal, pendiente de segunda revisión) y una tarea.') }}</p>
+    <a class="btn btn-primary" href="{{ ab.base }}/notificacion">{{ _('Registrar notificación') }}</a>
+  </div>
+  <div>
+    <h3>{{ _('Vistas y señalamientos') }}</h3>
+    {% if panel.vistas %}
+    <ul class="log-list">{% for v in panel.vistas %}
+      <li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora.replace('T', ' ') }}</strong> {{ dict(panel.tipos_vista)[v.tipo] }}{% if v.lugar %} · {{ v.lugar }}{% endif %} {{ chip({'prevista': _('Prevista'), 'celebrada': _('Celebrada'), 'suspendida': _('Suspendida')}[v.estado], 'exito' if v.estado == 'celebrada' else ('peligro' if v.estado == 'suspendida' else 'neutro')) }}</span>
+        <form method="post" action="{{ ab.base }}/vistas/{{ v.id }}/estado" class="ds-fila"><select name="estado" data-autoenviar aria-label="{{ _('Estado') }}"><option value="prevista" {{ 'selected' if v.estado == 'prevista' }}>{{ _('Prevista') }}</option><option value="celebrada" {{ 'selected' if v.estado == 'celebrada' }}>{{ _('Celebrada') }}</option><option value="suspendida" {{ 'selected' if v.estado == 'suspendida' }}>{{ _('Suspendida') }}</option></select></form>
+        <form method="post" action="{{ ab.base }}/vistas/{{ v.id }}/eliminar" data-confirmar-envio="{{ _('¿Eliminar este señalamiento?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button></form></li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Sin vistas señaladas.') }}</p>{% endif %}
+    <form method="post" action="{{ ab.base }}/vistas" class="edit-form ds-mt-12">
+      <input type="datetime-local" name="fecha_hora" required aria-label="{{ _('Fecha y hora') }}">
+      <select name="tipo" aria-label="{{ _('Tipo') }}">{% for id, n in panel.tipos_vista %}<option value="{{ id }}">{{ n }}</option>{% endfor %}</select>
+      <input type="text" name="lugar" placeholder="{{ _('Lugar o sala') }}" maxlength="200" aria-label="{{ _('Lugar o sala') }}">
+      <button type="submit" class="btn btn-ghost">+ {{ _('Señalar') }}</button>
+    </form>
+  </div>
+  </div>
+
+  <div class="dash-grid ds-mt-16">
+  <div>
+    <h3>{{ _('Provisión de fondos') }}</h3>
+    <p>{{ chip(_('Saldo') ~ ': ' ~ panel.fondos.saldo|importe, 'peligro' if panel.fondos.saldo < panel.ajustes.provision_minima_centimos or panel.fondos.saldo < 0 else 'exito') }}
+      <span class="muted">{{ _('Provisiones') }} {{ panel.fondos.provisiones|importe }} · {{ _('Suplidos') }} {{ panel.fondos.suplidos|importe }} · {{ _('Honorarios cargados') }} {{ panel.fondos.honorarios|importe }}</span></p>
+    {% if panel.movimientos %}
+    <ul class="log-list">{% for m in panel.movimientos[:8] %}<li class="log-item"><span class="log-text"><span class="mono">{{ m.fecha }}</span> {{ m.concepto }} <span class="muted">{{ dict(panel.movimientos_tipos)[m.tipo] }}</span></span><span class="pill">{{ ('+' if m.tipo == 'provision' else '−') ~ (m.importe_centimos|importe) }}</span></li>{% endfor %}</ul>
+    {% endif %}
+    <form method="post" action="{{ ab.base }}/fondos" class="edit-form ds-mt-12">
+      <select name="tipo" aria-label="{{ _('Tipo') }}">{% for id, n in panel.movimientos_tipos %}<option value="{{ id }}">{{ n }}</option>{% endfor %}</select>
+      <input type="text" name="importe" inputmode="decimal" placeholder="{{ _('Importe (€)') }}" required aria-label="{{ _('Importe (€)') }}">
+      <input type="text" name="concepto" placeholder="{{ _('Concepto') }}" required maxlength="200" aria-label="{{ _('Concepto') }}">
+      <input type="date" name="fecha" value="{{ hoy }}" aria-label="{{ _('Fecha') }}">
+      <button type="submit" class="btn btn-ghost">+ {{ _('Registrar movimiento') }}</button>
+    </form>
+  </div>
+  <div>
+    <h3>{{ _('Minutas') }}</h3>
+    {% if panel.minutas %}<ul class="log-list">{% for m in panel.minutas %}<li class="log-item"><span class="log-text"><a href="{{ url_for('abogados.minuta', minuta_id=m.id) }}">{{ m.numero or _('Borrador') }}</a> <span class="muted">{{ m.fecha }}</span></span>{{ chip(m.total_centimos|importe) }}</li>{% endfor %}</ul>
+    {% else %}<p class="muted">{{ _('Sin minutas de este asunto.') }}</p>{% endif %}
+    <form method="post" action="{{ ab.base }}/minutas"><button type="submit" class="btn btn-primary">{{ _('Preparar minuta con las horas pendientes') }}</button></form>
+  </div>
+  </div>
+
+  <div class="dash-grid ds-mt-16">
+  <div>
+    <h3>{{ _('Hoja de encargo y firma') }}</h3>
+    <form method="post" action="{{ ab.base }}/hoja-de-encargo"><button type="submit" class="btn btn-ghost">{{ _('Generar hoja de encargo (PDF)') }}</button></form>
+    {% for d in documentos if d.categoria == 'Hoja de encargo' %}
+    <form method="post" action="{{ ab.base }}/firma/{{ d.id }}" class="edit-form ds-mt-12" data-confirmar-envio="{{ _('Se enviará el documento a Documenso para que lo firme esta persona. ¿Continuar?') }}">
+      <p class="muted">{{ d.nombre_archivo }}</p>
+      <input type="text" name="nombre" placeholder="{{ _('Nombre de quien firma') }}" aria-label="{{ _('Nombre de quien firma') }}">
+      <input type="email" name="email" placeholder="{{ _('Email de quien firma') }}" required aria-label="{{ _('Email de quien firma') }}">
+      <button type="submit" class="btn btn-ghost">{{ _('Enviar a firma') }}</button>
+    </form>
+    {% endfor %}
+  </div>
+  <div>
+    <h3>{{ _('Enlace para el cliente') }}</h3>
+    <p class="muted">{{ _('Una página de solo lectura con el estado del asunto, las próximas vistas y los documentos que compartas.') }}</p>
+    {% if documentos %}
+    <ul class="log-list">{% for d in documentos %}<li class="log-item"><span class="log-text">{{ d.nombre_archivo }}</span>
+      <form method="post" action="{{ ab.base }}/documentos/{{ d.id }}/compartir" class="ds-fila">{% if not d.compartido_cliente %}<input type="hidden" name="compartido" value="1">{% endif %}<button type="submit" class="btn btn-ghost btn-sm">{{ _('Dejar de compartir') if d.compartido_cliente else _('Compartir con el cliente') }}</button></form></li>{% endfor %}</ul>
+    {% endif %}
+    {% for e in panel.enlaces %}<p class="muted">{{ _('Enlace creado') }} {{ e.creado_en[:10] }} · {{ _('caduca') }} {{ e.expira_en[:10] }} {% if e.revocado_en %}{{ chip(_('Revocado'), 'peligro') }}{% else %}
+      <form method="post" action="{{ ab.base }}/enlaces/{{ e.id }}/revocar" class="ds-en-linea" data-confirmar-envio="{{ _('¿Revocar este enlace? El cliente dejará de poder verlo.') }}" data-confirmar-peligro><button type="submit" class="btn btn-peligro btn-sm">{{ _('Revocar') }}</button></form>{% endif %}</p>{% endfor %}
+    <form method="post" action="{{ ab.base }}/enlaces" class="ds-fila ds-mt-12"><label>{{ _('Caduca en') }} <input type="number" name="dias" value="30" min="1" max="180" class="ds-ancho-5em"> {{ _('días') }}</label><button type="submit" class="btn btn-primary">{{ _('Crear enlace') }}</button></form>
+  </div>
+  </div>
+</section>

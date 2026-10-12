@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, sin_validar, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Ajustes del gabinete') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'ajustes' %}
+<header class="page-header"><div><h1>{{ _('Ajustes del gabinete') }}</h1><p class="subtitle">{{ _('Valores de ejemplo, sin validar: ajústalos a tu despacho y a la normativa vigente.') }} {{ sin_validar() }}</p></div></header>
+{% include "_abogados_subnav.html" %}
+{{ aviso_error(error) }}
+{% if guardado %}<p role="status">{{ chip(_('Ajustes guardados'), 'exito') }}</p>{% endif %}
+<form class="edit-form ds-max-720" method="post">
+  {% call campo(_('Serie de las minutas'), 'a-serie', ayuda=_('Letras o números; la numeración es correlativa por serie y año (M-2026-001).')) %}<input type="text" id="a-serie" name="serie" value="{{ a.serie }}" maxlength="8" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('IVA por defecto (porcentaje)'), 'a-iva') %}<input type="number" id="a-iva" name="iva_pct" value="{{ a.iva_pct }}" min="0" max="30" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Retención de IRPF por defecto (porcentaje)'), 'a-irpf', ayuda=_('Solo se aplica a clientes que sean empresa; se puede cambiar en cada minuta.')) %}<input type="number" id="a-irpf" name="irpf_pct" value="{{ a.irpf_pct }}" min="0" max="30" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Bloque de facturación (minutos)'), 'a-bloque', ayuda=_('Las horas se redondean hacia arriba a este bloque al preparar una minuta. 0 = tiempo exacto.')) %}<input type="number" id="a-bloque" name="bloque_minutos" value="{{ a.bloque_minutos }}" min="0" max="60" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Provisión mínima por asunto (€)'), 'a-prov', ayuda=_('Si el saldo de un asunto baja de aquí, se avisa en el panel. 0 = no avisar.')) %}<input type="text" inputmode="decimal" id="a-prov" name="provision_minima" value="{{ '%.2f'|format(a.provision_minima_centimos / 100) }}" {{ 'disabled' if not puede_editar }}>{% endcall %}
+  {% call campo(_('Texto de la hoja de encargo'), 'a-enc', ayuda=_('Variables: {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Vacío = modelo de ejemplo.')) %}<textarea id="a-enc" name="plantilla_encargo" rows="14" {{ 'disabled' if not puede_editar }}>{{ a.plantilla_encargo or '' }}</textarea>{% endcall %}
+  {% if puede_editar %}<button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>{% else %}<p class="muted">{{ _('Solo los responsables del despacho pueden cambiarlos.') }}</p>{% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Registrar notificación') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'panel' %}
+<header class="page-header"><div><h1>{{ _('Registrar una notificación') }}</h1><p class="subtitle"><a href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}">{{ x.titulo }}</a> · {{ x.cliente_nombre }}</p></div></header>
+{% include "_abogados_subnav.html" %}
+{{ aviso_error(error) }}
+<p>{{ sin_validar(_('Calendario procesal de ejemplo: comprueba cada plazo con la norma vigente')) }}</p>
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('abogados.notificacion', expediente_id=x.id) }}">
+  {% call campo(_('Resolución notificada'), 'n-res') %}<select id="n-res" name="resolucion">{% for id, nombre in resoluciones %}<option value="{{ id }}" {{ 'selected' if f.get('resolucion') == id }}>{{ nombre }}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Fecha de la notificación'), 'n-fecha', requerido=True, ayuda=_('El día de la notificación no cuenta.')) %}<input type="date" id="n-fecha" name="fecha_notificacion" value="{{ f.get('fecha_notificacion') or hoy }}" required>{% endcall %}
+  {% call campo(_('Plazo'), 'n-plazo', requerido=True) %}
+    <div class="ds-fila"><input type="number" id="n-plazo" name="plazo" value="{{ f.get('plazo') or '' }}" min="1" max="366" required class="ds-ancho-5em"><select name="unidad" aria-label="{{ _('Unidad') }}"><option value="habiles" {{ 'selected' if f.get('unidad', 'habiles') == 'habiles' }}>{{ _('días hábiles') }}</option><option value="naturales" {{ 'selected' if f.get('unidad') == 'naturales' }}>{{ _('días naturales') }}</option><option value="meses" {{ 'selected' if f.get('unidad') == 'meses' }}>{{ _('meses') }}</option></select></div>
+  {% endcall %}
+  <p class="muted">{{ _('Atajos orientativos (sin validar):') }}
+    {% for id, nombre, dias in tipicos %}<a class="ds-chip" href="{{ url_for('abogados.notificacion', expediente_id=x.id, resolucion=f.get('resolucion'), fecha_notificacion=f.get('fecha_notificacion') or hoy, plazo=dias, unidad='habiles', titulo=nombre) }}">{{ nombre }} · {{ dias }}</a>{% endfor %}</p>
+  {% call campo(_('Título del plazo'), 'n-titulo', ayuda=_('Si lo dejas vacío se genera uno con la resolución y la fecha.')) %}<input type="text" id="n-titulo" name="titulo" value="{{ f.get('titulo') or '' }}" maxlength="200">{% endcall %}
+
+  {% if calculo %}
+  <div class="dash-panel" role="status">
+    <h2>{{ _('Vence el') }} <span class="mono">{{ calculo.fecha_limite }}</span></h2>
+    <p class="muted">{{ _('Contando desde el %(d)s con el calendario procesal del despacho.', d=calculo.fecha_notificacion) }}
+      {% if calculo.dias_inhabiles_entre %}{{ ngettext('Se salta %(n)s día inhábil entre semana.', 'Se saltan %(n)s días inhábiles entre semana.', calculo.dias_inhabiles_entre|length, n=calculo.dias_inhabiles_entre|length) }}{% endif %}</p>
+    <label class="checkbox-label"><input type="checkbox" name="critico" value="1" checked> {{ _('Plazo fatal (sin margen)') }}</label>
+    <label class="checkbox-label"><input type="checkbox" name="crear_tarea" value="1" checked> {{ _('Crear una tarea para el responsable') }}</label>
+    <button type="submit" class="btn btn-primary ds-mt-12">{{ _('Confirmar y crear el plazo') }}</button>
+  </div>
+  {% endif %}
+  <div class="ds-fila"><button type="submit" class="btn {{ 'btn-ghost' if calculo else 'btn-primary' }}" formmethod="get">{{ _('Calcular') }}</button><a class="btn btn-ghost" href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}">{{ _('Cancelar') }}</a></div>
+</form>
+{% endblock %}

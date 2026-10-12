@@ -8385,3 +8385,675 @@ msgstr "Vols eliminar aquest part d'hores?"
 
 msgid "Marcar los seleccionados como facturados"
 msgstr "Marca els seleccionats com a facturats"
+
+msgid "Procedimiento judicial"
+msgstr "Procediment judicial"
+
+msgid "En preparación"
+msgstr "En preparació"
+
+msgid "En trámite"
+msgstr "En tràmit"
+
+msgid "Pendiente de vista"
+msgstr "Pendent de vista"
+
+msgid "Pendiente de sentencia"
+msgstr "Pendent de sentència"
+
+msgid "En recurso"
+msgstr "En recurs"
+
+msgid "En ejecución"
+msgstr "En execució"
+
+msgid "Asunto extrajudicial"
+msgstr "Assumpte extrajudicial"
+
+msgid "En negociación"
+msgstr "En negociació"
+
+msgid "Pendiente del cliente"
+msgstr "Pendent del client"
+
+msgid "Civil"
+msgstr "Civil"
+
+msgid "Penal"
+msgstr "Penal"
+
+msgid "Contencioso-administrativo"
+msgstr "Contenciós-administratiu"
+
+msgid "Social"
+msgstr "Social"
+
+msgid "Mercantil"
+msgstr "Mercantil"
+
+msgid "Familia"
+msgstr "Família"
+
+msgid "Otra"
+msgstr "Altra"
+
+msgid "Contraparte"
+msgstr "Contrapart"
+
+msgid "Letrado contrario"
+msgstr "Lletrat contrari"
+
+msgid "Procurador contrario"
+msgstr "Procurador contrari"
+
+msgid "Tercero"
+msgstr "Tercer"
+
+msgid "Perito"
+msgstr "Perit"
+
+msgid "Testigo"
+msgstr "Testimoni"
+
+msgid "Juicio"
+msgstr "Judici"
+
+msgid "Comparecencia"
+msgstr "Compareixença"
+
+msgid "Declaración"
+msgstr "Declaració"
+
+msgid "Mediación"
+msgstr "Mediació"
+
+msgid "Providencia"
+msgstr "Provisió"
+
+msgid "Auto"
+msgstr "Interlocutòria"
+
+msgid "Decreto"
+msgstr "Decret"
+
+msgid "Sentencia"
+msgstr "Sentència"
+
+msgid "Diligencia de ordenación"
+msgstr "Diligència d'ordenació"
+
+msgid "Requerimiento"
+msgstr "Requeriment"
+
+msgid "Contestación a la demanda (juicio ordinario)"
+msgstr "Contestació a la demanda (judici ordinari)"
+
+msgid "Recurso de apelación"
+msgstr "Recurs d'apel·lació"
+
+msgid "Recurso de reposición"
+msgstr "Recurs de reposició"
+
+msgid "Provisión de fondos"
+msgstr "Provisió de fons"
+
+msgid "Suplido (gasto pagado por cuenta del cliente)"
+msgstr "Suplert (despesa pagada per compte del client)"
+
+msgid "Cargo de honorarios"
+msgstr "Càrrec d'honoraris"
+
+msgid "Devolución al cliente"
+msgstr "Devolució al client"
+
+msgid "Estamos preparando su caso."
+msgstr "Estem preparant el seu cas."
+
+msgid "Su asunto está en tramitación."
+msgstr "El seu assumpte està en tramitació."
+
+msgid "Estamos pendientes de la celebración de una vista."
+msgstr "Estem pendents de la celebració d'una vista."
+
+msgid "Ya se ha celebrado lo necesario y esperamos la resolución del juzgado."
+msgstr "Ja s'ha celebrat el necessari i esperem la resolució del jutjat."
+
+msgid "El asunto está en fase de recurso."
+msgstr "L'assumpte és en fase de recurs."
+
+msgid "Estamos ejecutando lo resuelto."
+msgstr "Estem executant el que s'ha resolt."
+
+msgid "El asunto está finalizado y archivado."
+msgstr "L'assumpte està finalitzat i arxivat."
+
+msgid "Su asunto está abierto."
+msgstr "El seu assumpte és obert."
+
+msgid "Estamos negociando con la otra parte."
+msgstr "Estem negociant amb l'altra part."
+
+msgid "Estamos a la espera de información o documentación por su parte."
+msgstr "Estem esperant informació o documentació per part seva."
+
+msgid "El asunto está cerrado."
+msgstr "L'assumpte està tancat."
+
+msgid "Gabinete"
+msgstr "Gabinet"
+
+msgid "Panel"
+msgstr "Tauler"
+
+msgid "Agenda de vistas"
+msgstr "Agenda de vistes"
+
+msgid "Minutas"
+msgstr "Minutes"
+
+msgid "Conflictos de intereses"
+msgstr "Conflictes d'interessos"
+
+msgid "Todos los expedientes"
+msgstr "Tots els expedients"
+
+msgid "Ajustes del gabinete"
+msgstr "Ajustos del gabinet"
+
+msgid "Valores de ejemplo, sin validar: ajústalos a tu despacho y a la normativa vigente."
+msgstr "Valors d'exemple, sense validar: ajusta'ls al teu despatx i a la normativa vigent."
+
+msgid "Ajustes guardados"
+msgstr "Ajustos desats"
+
+msgid "Serie de las minutas"
+msgstr "Sèrie de les minutes"
+
+msgid "Letras o números; la numeración es correlativa por serie y año (M-2026-001)."
+msgstr "Lletres o números; la numeració és correlativa per sèrie i any (M-2026-001)."
+
+msgid "IVA por defecto (porcentaje)"
+msgstr "IVA per defecte (percentatge)"
+
+msgid "Retención de IRPF por defecto (porcentaje)"
+msgstr "Retenció d'IRPF per defecte (percentatge)"
+
+msgid "Solo se aplica a clientes que sean empresa; se puede cambiar en cada minuta."
+msgstr "Només s'aplica a clients que siguin empresa; es pot canviar a cada minuta."
+
+msgid "Bloque de facturación (minutos)"
+msgstr "Bloc de facturació (minuts)"
+
+msgid "Las horas se redondean hacia arriba a este bloque al preparar una minuta. 0 = tiempo exacto."
+msgstr "Les hores s'arrodoneixen cap amunt a aquest bloc en preparar una minuta. 0 = temps exacte."
+
+msgid "Provisión mínima por asunto (€)"
+msgstr "Provisió mínima per assumpte (€)"
+
+msgid "Si el saldo de un asunto baja de aquí, se avisa en el panel. 0 = no avisar."
+msgstr "Si el saldo d'un assumpte baixa d'aquí, s'avisa al tauler. 0 = no avisar."
+
+msgid "Texto de la hoja de encargo"
+msgstr "Text del full d'encàrrec"
+
+msgid "Variables: {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Vacío = modelo de ejemplo."
+msgstr "Variables: {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Buit = model d'exemple."
+
+msgid "Solo los responsables del despacho pueden cambiarlos."
+msgstr "Només els responsables del despatx els poden canviar."
+
+msgid "Antes de aceptar un cliente o de señalar a una contraparte, comprueba si ya aparece en otros asuntos del despacho."
+msgstr "Abans d'acceptar un client o de designar una contrapart, comprova si ja apareix en altres assumptes del despatx."
+
+msgid "Persona o empresa"
+msgstr "Persona o empresa"
+
+msgid "Va a ser"
+msgstr "Serà"
+
+msgid "Nuestro cliente"
+msgstr "El nostre client"
+
+msgid "Comprobar"
+msgstr "Comprova"
+
+msgid "Escribe un nombre o un NIF para buscar."
+msgstr "Escriu un nom o un NIF per cercar."
+
+msgid "Sin coincidencias"
+msgstr "Sense coincidències"
+
+msgid "No aparece como cliente, contraparte, letrado ni procurador en los asuntos del despacho. Comprueba también con otras fuentes si lo necesitas."
+msgstr "No apareix com a client, contrapart, lletrat ni procurador als assumptes del despatx. Comprova-ho també amb altres fonts si cal."
+
+msgid "%(n)s posible conflicto"
+msgid_plural "%(n)s posibles conflictos"
+msgstr[0] "%(n)s possible conflicte"
+msgstr[1] "%(n)s possibles conflictes"
+
+msgid "Ya es cliente del despacho:"
+msgstr "Ja és client del despatx:"
+
+msgid "Aparece en un asunto confidencial al que no tienes acceso. Consulta con su responsable."
+msgstr "Apareix en un assumpte confidencial al qual no tens accés. Consulta amb el seu responsable."
+
+msgid "Ha sido %(rol)s en el asunto"
+msgstr "Ha estat %(rol)s a l'assumpte"
+
+msgid "Es parte cliente en el asunto"
+msgstr "És part client a l'assumpte"
+
+msgid "Enlace para el cliente"
+msgstr "Enllaç per al client"
+
+msgid "Este es el enlace de solo lectura del cliente. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este)."
+msgstr "Aquest és l'enllaç de només lectura del client. Copia'l ara: per seguretat no es torna a mostrar (si el perds, crea'n un altre i revoca aquest)."
+
+msgid "Quien lo tenga verá el estado del asunto, el resumen que hayas escrito, las próximas vistas y los documentos que hayas compartido. No verá horas, notas internas, plazos ni a las partes contrarias."
+msgstr "Qui el tingui veurà l'estat de l'assumpte, el resum que hagis escrit, les properes vistes i els documents que hagis compartit. No veurà hores, notes internes, terminis ni les parts contràries."
+
+msgid "Volver al asunto"
+msgstr "Torna a l'assumpte"
+
+msgid "Minuta"
+msgstr "Minuta"
+
+msgid "(borrador)"
+msgstr "(esborrany)"
+
+msgid "Emitida"
+msgstr "Emesa"
+
+msgid "Pagada"
+msgstr "Pagada"
+
+msgid "Anulada"
+msgstr "Anul·lada"
+
+msgid "IVA y retención de ejemplo: compruébalos"
+msgstr "IVA i retenció d'exemple: comprova'ls"
+
+msgid "Suplido"
+msgstr "Suplert"
+
+msgid "Honorarios"
+msgstr "Honoraris"
+
+msgid "IVA"
+msgstr "IVA"
+
+msgid "Retención de IRPF"
+msgstr "Retenció d'IRPF"
+
+msgid "Suplidos"
+msgstr "Suplerts"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Añadir una línea"
+msgstr "Afegeix una línia"
+
+msgid "Impuestos y notas"
+msgstr "Impostos i notes"
+
+msgid "IVA (porcentaje)"
+msgstr "IVA (percentatge)"
+
+msgid "Retención de IRPF (porcentaje)"
+msgstr "Retenció d'IRPF (percentatge)"
+
+msgid "Emitir"
+msgstr "Emet"
+
+msgid "Al emitirla recibe su número correlativo y las horas y suplidos incluidos quedan marcados como facturados. No se podrá modificar."
+msgstr "En emetre-la rep el seu número correlatiu i les hores i suplerts inclosos queden marcats com a facturats. No es podrà modificar."
+
+msgid "¿Emitir esta minuta? Ya no se podrá modificar."
+msgstr "Vols emetre aquesta minuta? Ja no es podrà modificar."
+
+msgid "Cargar el total a la provisión de fondos del asunto"
+msgstr "Carrega el total a la provisió de fons de l'assumpte"
+
+msgid "Emitir minuta"
+msgstr "Emet la minuta"
+
+msgid "¿Descartar este borrador?"
+msgstr "Vols descartar aquest esborrany?"
+
+msgid "Descartar borrador"
+msgstr "Descarta l'esborrany"
+
+msgid "Marcar como pagada"
+msgstr "Marca com a pagada"
+
+msgid "¿Anular esta minuta? Las horas y suplidos volverán a quedar pendientes de facturar."
+msgstr "Vols anul·lar aquesta minuta? Les hores i suplerts tornaran a quedar pendents de facturar."
+
+msgid "Anular minuta"
+msgstr "Anul·la la minuta"
+
+msgid "Honorarios y suplidos que se facturan a tus clientes. Se preparan desde cada asunto con sus horas pendientes."
+msgstr "Honoraris i suplerts que es facturen als teus clients. Es preparen des de cada assumpte amb les seves hores pendents."
+
+msgid "Emitidas"
+msgstr "Emeses"
+
+msgid "Pagadas"
+msgstr "Pagades"
+
+msgid "Anuladas"
+msgstr "Anul·lades"
+
+msgid "Sin minutas"
+msgstr "Sense minutes"
+
+msgid "Abre un asunto con horas facturables y pulsa «Preparar minuta»."
+msgstr "Obre un assumpte amb hores facturables i prem «Prepara minuta»."
+
+msgid "Número"
+msgstr "Número"
+
+msgid "Registrar notificación"
+msgstr "Registra notificació"
+
+msgid "Registrar una notificación"
+msgstr "Registra una notificació"
+
+msgid "Calendario procesal de ejemplo: comprueba cada plazo con la norma vigente"
+msgstr "Calendari processal d'exemple: comprova cada termini amb la norma vigent"
+
+msgid "Resolución notificada"
+msgstr "Resolució notificada"
+
+msgid "Fecha de la notificación"
+msgstr "Data de la notificació"
+
+msgid "El día de la notificación no cuenta."
+msgstr "El dia de la notificació no compta."
+
+msgid "Unidad"
+msgstr "Unitat"
+
+msgid "días hábiles"
+msgstr "dies hàbils"
+
+msgid "días naturales"
+msgstr "dies naturals"
+
+msgid "meses"
+msgstr "mesos"
+
+msgid "Atajos orientativos (sin validar):"
+msgstr "Dreceres orientatives (sense validar):"
+
+msgid "Título del plazo"
+msgstr "Títol del termini"
+
+msgid "Si lo dejas vacío se genera uno con la resolución y la fecha."
+msgstr "Si el deixes buit se'n genera un amb la resolució i la data."
+
+msgid "Vence el"
+msgstr "Venç el"
+
+msgid "Contando desde el %(d)s con el calendario procesal del despacho."
+msgstr "Comptant des del %(d)s amb el calendari processal del despatx."
+
+msgid "Se salta %(n)s día inhábil entre semana."
+msgid_plural "Se saltan %(n)s días inhábiles entre semana."
+msgstr[0] "S'omet %(n)s dia inhàbil entre setmana."
+msgstr[1] "S'ometen %(n)s dies inhàbils entre setmana."
+
+msgid "Crear una tarea para el responsable"
+msgstr "Crea una tasca per al responsable"
+
+msgid "Confirmar y crear el plazo"
+msgstr "Confirma i crea el termini"
+
+msgid "Calcular"
+msgstr "Calcula"
+
+msgid "Lo que hay que vigilar hoy: plazos, vistas, provisión de fondos y minutas."
+msgstr "El que cal vigilar avui: terminis, vistes, provisió de fons i minutes."
+
+msgid "Plazos y festivos de ejemplo: contrástalos"
+msgstr "Terminis i festius d'exemple: contrasta'ls"
+
+msgid "Nuevo asunto"
+msgstr "Nou assumpte"
+
+msgid "Plazos de las próximas tres semanas"
+msgstr "Terminis de les properes tres setmanes"
+
+msgid "Sin plazos próximos"
+msgstr "Sense terminis propers"
+
+msgid "Cuando registres una notificación en un asunto, su plazo aparecerá aquí."
+msgstr "Quan registris una notificació en un assumpte, el seu termini apareixerà aquí."
+
+msgid "Próximas vistas"
+msgstr "Properes vistes"
+
+msgid "Ver la agenda"
+msgstr "Veure l'agenda"
+
+msgid "Sin vistas señaladas."
+msgstr "Sense vistes assenyalades."
+
+msgid "Provisión de fondos baja"
+msgstr "Provisió de fons baixa"
+
+msgid "Ningún asunto por debajo de la provisión mínima."
+msgstr "Cap assumpte per sota de la provisió mínima."
+
+msgid "Configurar"
+msgstr "Configura"
+
+msgid "pendiente de cobro"
+msgstr "pendent de cobrament"
+
+msgid "Sin minutas pendientes."
+msgstr "Sense minutes pendents."
+
+msgid "%(n)s asunto abierto"
+msgid_plural "%(n)s asuntos abiertos"
+msgstr[0] "%(n)s assumpte obert"
+msgstr[1] "%(n)s assumptes oberts"
+
+msgid "Todavía no hay asuntos"
+msgstr "Encara no hi ha assumptes"
+
+msgid "Abre un procedimiento judicial o un asunto extrajudicial desde «Nuevo asunto»."
+msgstr "Obre un procediment judicial o un assumpte extrajudicial des de «Nou assumpte»."
+
+msgid "Señalamientos de todos tus asuntos."
+msgstr "Assenyalaments de tots els teus assumptes."
+
+msgid "Descargar calendario (.ics)"
+msgstr "Descarrega el calendari (.ics)"
+
+msgid "Sin vistas en este periodo"
+msgstr "Sense vistes en aquest període"
+
+msgid "Señala una vista desde la ficha de un asunto."
+msgstr "Assenyala una vista des de la fitxa d'un assumpte."
+
+msgid "Qué"
+msgstr "Què"
+
+msgid "Dónde"
+msgstr "On"
+
+msgid "Prevista"
+msgstr "Prevista"
+
+msgid "Celebrada"
+msgstr "Celebrada"
+
+msgid "Suspendida"
+msgstr "Suspesa"
+
+msgid "Cómo va su asunto"
+msgstr "Com va el seu assumpte"
+
+msgid "Última actualización"
+msgstr "Última actualització"
+
+msgid "Próximas citas"
+msgstr "Properes cites"
+
+msgid "Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu despacho."
+msgstr "Aquesta pàgina és de només lectura i és privada: no comparteixis l'enllaç. Si tens dubtes, contacta amb el teu despatx."
+
+msgid "Enlace no válido"
+msgstr "Enllaç no vàlid"
+
+msgid "Este enlace ya no es válido"
+msgstr "Aquest enllaç ja no és vàlid"
+
+msgid "Ha caducado o se ha desactivado. Pide a tu despacho que te envíe uno nuevo."
+msgstr "Ha caducat o s'ha desactivat. Demana al teu despatx que t'en enviï un de nou."
+
+msgid "Plazos y valores de ejemplo"
+msgstr "Terminis i valors d'exemple"
+
+msgid "Lo que ve el cliente de este asunto:"
+msgstr "El que veu el client d'aquest assumpte:"
+
+msgid "Datos del asunto"
+msgstr "Dades de l'assumpte"
+
+msgid "Nº de procedimiento (123/2026)"
+msgstr "Núm. de procediment (123/2026)"
+
+msgid "Nº de procedimiento"
+msgstr "Núm. de procediment"
+
+msgid "Juzgado o tribunal"
+msgstr "Jutjat o tribunal"
+
+msgid "Jurisdicción"
+msgstr "Jurisdicció"
+
+msgid "Tipo de procedimiento"
+msgstr "Tipus de procediment"
+
+msgid "Procurador"
+msgstr "Procurador"
+
+msgid "Cuantía (€)"
+msgstr "Quantia (€)"
+
+msgid "Fase actual"
+msgstr "Fase actual"
+
+msgid "Materia"
+msgstr "Matèria"
+
+msgid "Resumen para el cliente (lo verá con su enlace)"
+msgstr "Resum per al client (el veurà amb el seu enllaç)"
+
+msgid "Resumen para el cliente"
+msgstr "Resum per al client"
+
+msgid "Guardar datos"
+msgstr "Desa les dades"
+
+msgid "¿Quitar esta parte?"
+msgstr "Vols treure aquesta part?"
+
+msgid "Sin partes todavía."
+msgstr "Encara no hi ha parts."
+
+msgid "NIF / CIF (opcional)"
+msgstr "NIF / CIF (opcional)"
+
+msgid "Añadir parte"
+msgstr "Afegeix part"
+
+msgid "Al añadir una parte se comprueban los conflictos de intereses."
+msgstr "En afegir una part es comproven els conflictes d'interessos."
+
+msgid "Notificaciones y plazos"
+msgstr "Notificacions i terminis"
+
+msgid "Registra una resolución notificada y se calcula su plazo procesal, se crea el plazo (fatal, pendiente de segunda revisión) y una tarea."
+msgstr "Registra una resolució notificada i es calcula el seu termini processal, es crea el termini (fatal, pendent de segona revisió) i una tasca."
+
+msgid "Vistas y señalamientos"
+msgstr "Vistes i assenyalaments"
+
+msgid "¿Eliminar este señalamiento?"
+msgstr "Vols eliminar aquest assenyalament?"
+
+msgid "Lugar o sala"
+msgstr "Lloc o sala"
+
+msgid "Señalar"
+msgstr "Assenyala"
+
+msgid "Saldo"
+msgstr "Saldo"
+
+msgid "Provisiones"
+msgstr "Provisions"
+
+msgid "Honorarios cargados"
+msgstr "Honoraris carregats"
+
+msgid "Registrar movimiento"
+msgstr "Registra moviment"
+
+msgid "Sin minutas de este asunto."
+msgstr "Sense minutes d'aquest assumpte."
+
+msgid "Preparar minuta con las horas pendientes"
+msgstr "Prepara minuta amb les hores pendents"
+
+msgid "Hoja de encargo y firma"
+msgstr "Full d'encàrrec i signatura"
+
+msgid "Generar hoja de encargo (PDF)"
+msgstr "Genera el full d'encàrrec (PDF)"
+
+msgid "Se enviará el documento a Documenso para que lo firme esta persona. ¿Continuar?"
+msgstr "S'enviarà el document a Documenso perquè el signi aquesta persona. Vols continuar?"
+
+msgid "Nombre de quien firma"
+msgstr "Nom de qui signa"
+
+msgid "Email de quien firma"
+msgstr "Correu de qui signa"
+
+msgid "Una página de solo lectura con el estado del asunto, las próximas vistas y los documentos que compartas."
+msgstr "Una pàgina de només lectura amb l'estat de l'assumpte, les properes vistes i els documents que comparteixis."
+
+msgid "Dejar de compartir"
+msgstr "Deixa de compartir"
+
+msgid "Compartir con el cliente"
+msgstr "Comparteix amb el client"
+
+msgid "Enlace creado"
+msgstr "Enllaç creat"
+
+msgid "caduca"
+msgstr "caduca"
+
+msgid "Revocado"
+msgstr "Revocat"
+
+msgid "¿Revocar este enlace? El cliente dejará de poder verlo."
+msgstr "Vols revocar aquest enllaç? El client deixarà de poder veure'l."
+
+msgid "Revocar"
+msgstr "Revoca"
+
+msgid "Caduca en"
+msgstr "Caduca en"
+
+msgid "días"
+msgstr "dies"
+
+msgid "Crear enlace"
+msgstr "Crea l'enllaç"

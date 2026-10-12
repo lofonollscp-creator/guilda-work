@@ -8376,3 +8376,675 @@ msgstr "Delete this time entry?"
 
 msgid "Marcar los seleccionados como facturados"
 msgstr "Mark selected as invoiced"
+
+msgid "Procedimiento judicial"
+msgstr "Court proceeding"
+
+msgid "En preparación"
+msgstr "In preparation"
+
+msgid "En trámite"
+msgstr "In progress"
+
+msgid "Pendiente de vista"
+msgstr "Awaiting hearing"
+
+msgid "Pendiente de sentencia"
+msgstr "Awaiting judgment"
+
+msgid "En recurso"
+msgstr "On appeal"
+
+msgid "En ejecución"
+msgstr "In enforcement"
+
+msgid "Asunto extrajudicial"
+msgstr "Out-of-court matter"
+
+msgid "En negociación"
+msgstr "In negotiation"
+
+msgid "Pendiente del cliente"
+msgstr "Awaiting the client"
+
+msgid "Civil"
+msgstr "Civil"
+
+msgid "Penal"
+msgstr "Criminal"
+
+msgid "Contencioso-administrativo"
+msgstr "Administrative"
+
+msgid "Social"
+msgstr "Employment"
+
+msgid "Mercantil"
+msgstr "Commercial"
+
+msgid "Familia"
+msgstr "Family"
+
+msgid "Otra"
+msgstr "Other"
+
+msgid "Contraparte"
+msgstr "Opposing party"
+
+msgid "Letrado contrario"
+msgstr "Opposing counsel"
+
+msgid "Procurador contrario"
+msgstr "Opposing procurator"
+
+msgid "Tercero"
+msgstr "Third party"
+
+msgid "Perito"
+msgstr "Expert"
+
+msgid "Testigo"
+msgstr "Witness"
+
+msgid "Juicio"
+msgstr "Trial"
+
+msgid "Comparecencia"
+msgstr "Appearance"
+
+msgid "Declaración"
+msgstr "Testimony"
+
+msgid "Mediación"
+msgstr "Mediation"
+
+msgid "Providencia"
+msgstr "Order (providencia)"
+
+msgid "Auto"
+msgstr "Ruling (auto)"
+
+msgid "Decreto"
+msgstr "Decree"
+
+msgid "Sentencia"
+msgstr "Judgment"
+
+msgid "Diligencia de ordenación"
+msgstr "Procedural directive"
+
+msgid "Requerimiento"
+msgstr "Formal request"
+
+msgid "Contestación a la demanda (juicio ordinario)"
+msgstr "Answer to the claim (ordinary trial)"
+
+msgid "Recurso de apelación"
+msgstr "Appeal"
+
+msgid "Recurso de reposición"
+msgstr "Motion for reconsideration"
+
+msgid "Provisión de fondos"
+msgstr "Retainer"
+
+msgid "Suplido (gasto pagado por cuenta del cliente)"
+msgstr "Disbursement (expense paid on the client's behalf)"
+
+msgid "Cargo de honorarios"
+msgstr "Fee charge"
+
+msgid "Devolución al cliente"
+msgstr "Refund to client"
+
+msgid "Estamos preparando su caso."
+msgstr "We are preparing your case."
+
+msgid "Su asunto está en tramitación."
+msgstr "Your matter is in progress."
+
+msgid "Estamos pendientes de la celebración de una vista."
+msgstr "We are waiting for a hearing to take place."
+
+msgid "Ya se ha celebrado lo necesario y esperamos la resolución del juzgado."
+msgstr "Everything needed has taken place and we are awaiting the court's decision."
+
+msgid "El asunto está en fase de recurso."
+msgstr "The matter is at the appeal stage."
+
+msgid "Estamos ejecutando lo resuelto."
+msgstr "We are enforcing the decision."
+
+msgid "El asunto está finalizado y archivado."
+msgstr "The matter is finished and archived."
+
+msgid "Su asunto está abierto."
+msgstr "Your matter is open."
+
+msgid "Estamos negociando con la otra parte."
+msgstr "We are negotiating with the other party."
+
+msgid "Estamos a la espera de información o documentación por su parte."
+msgstr "We are waiting for information or documents from you."
+
+msgid "El asunto está cerrado."
+msgstr "The matter is closed."
+
+msgid "Gabinete"
+msgstr "Firm"
+
+msgid "Panel"
+msgstr "Dashboard"
+
+msgid "Agenda de vistas"
+msgstr "Hearing calendar"
+
+msgid "Minutas"
+msgstr "Fee notes"
+
+msgid "Conflictos de intereses"
+msgstr "Conflicts of interest"
+
+msgid "Todos los expedientes"
+msgstr "All case files"
+
+msgid "Ajustes del gabinete"
+msgstr "Firm settings"
+
+msgid "Valores de ejemplo, sin validar: ajústalos a tu despacho y a la normativa vigente."
+msgstr "Sample values, not validated: adjust them to your firm and the rules in force."
+
+msgid "Ajustes guardados"
+msgstr "Settings saved"
+
+msgid "Serie de las minutas"
+msgstr "Fee-note series"
+
+msgid "Letras o números; la numeración es correlativa por serie y año (M-2026-001)."
+msgstr "Letters or numbers; numbering is sequential per series and year (M-2026-001)."
+
+msgid "IVA por defecto (porcentaje)"
+msgstr "Default VAT (percentage)"
+
+msgid "Retención de IRPF por defecto (porcentaje)"
+msgstr "Default income-tax withholding (percentage)"
+
+msgid "Solo se aplica a clientes que sean empresa; se puede cambiar en cada minuta."
+msgstr "Only applied to clients that are companies; it can be changed on each fee note."
+
+msgid "Bloque de facturación (minutos)"
+msgstr "Billing block (minutes)"
+
+msgid "Las horas se redondean hacia arriba a este bloque al preparar una minuta. 0 = tiempo exacto."
+msgstr "Hours are rounded up to this block when preparing a fee note. 0 = exact time."
+
+msgid "Provisión mínima por asunto (€)"
+msgstr "Minimum retainer per matter (€)"
+
+msgid "Si el saldo de un asunto baja de aquí, se avisa en el panel. 0 = no avisar."
+msgstr "If a matter's balance falls below this, the dashboard warns you. 0 = no warning."
+
+msgid "Texto de la hoja de encargo"
+msgstr "Engagement letter text"
+
+msgid "Variables: {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Vacío = modelo de ejemplo."
+msgstr "Variables: {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Empty = sample template."
+
+msgid "Solo los responsables del despacho pueden cambiarlos."
+msgstr "Only the firm's managers can change them."
+
+msgid "Antes de aceptar un cliente o de señalar a una contraparte, comprueba si ya aparece en otros asuntos del despacho."
+msgstr "Before accepting a client or naming an opposing party, check whether they already appear in other matters at the firm."
+
+msgid "Persona o empresa"
+msgstr "Person or company"
+
+msgid "Va a ser"
+msgstr "Will be"
+
+msgid "Nuestro cliente"
+msgstr "Our client"
+
+msgid "Comprobar"
+msgstr "Check"
+
+msgid "Escribe un nombre o un NIF para buscar."
+msgstr "Type a name or tax ID to search."
+
+msgid "Sin coincidencias"
+msgstr "No matches"
+
+msgid "No aparece como cliente, contraparte, letrado ni procurador en los asuntos del despacho. Comprueba también con otras fuentes si lo necesitas."
+msgstr "It does not appear as a client, opposing party, counsel or procurator in the firm's matters. Check other sources too if you need to."
+
+msgid "%(n)s posible conflicto"
+msgid_plural "%(n)s posibles conflictos"
+msgstr[0] "%(n)s possible conflict"
+msgstr[1] "%(n)s possible conflicts"
+
+msgid "Ya es cliente del despacho:"
+msgstr "Already a client of the firm:"
+
+msgid "Aparece en un asunto confidencial al que no tienes acceso. Consulta con su responsable."
+msgstr "It appears in a confidential matter you cannot access. Ask the person in charge."
+
+msgid "Ha sido %(rol)s en el asunto"
+msgstr "Was %(rol)s in the matter"
+
+msgid "Es parte cliente en el asunto"
+msgstr "Is a client party in the matter"
+
+msgid "Enlace para el cliente"
+msgstr "Client link"
+
+msgid "Este es el enlace de solo lectura del cliente. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este)."
+msgstr "This is the client's read-only link. Copy it now: for security it is not shown again (if you lose it, create another and revoke this one)."
+
+msgid "Quien lo tenga verá el estado del asunto, el resumen que hayas escrito, las próximas vistas y los documentos que hayas compartido. No verá horas, notas internas, plazos ni a las partes contrarias."
+msgstr "Anyone with it will see the matter's status, the summary you wrote, upcoming hearings and the documents you shared. They will not see hours, internal notes, deadlines or the opposing parties."
+
+msgid "Volver al asunto"
+msgstr "Back to the matter"
+
+msgid "Minuta"
+msgstr "Fee note"
+
+msgid "(borrador)"
+msgstr "(draft)"
+
+msgid "Emitida"
+msgstr "Issued"
+
+msgid "Pagada"
+msgstr "Paid"
+
+msgid "Anulada"
+msgstr "Cancelled"
+
+msgid "IVA y retención de ejemplo: compruébalos"
+msgstr "Sample VAT and withholding: check them"
+
+msgid "Suplido"
+msgstr "Disbursement"
+
+msgid "Honorarios"
+msgstr "Fees"
+
+msgid "IVA"
+msgstr "VAT"
+
+msgid "Retención de IRPF"
+msgstr "Income-tax withholding"
+
+msgid "Suplidos"
+msgstr "Disbursements"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Añadir una línea"
+msgstr "Add a line"
+
+msgid "Impuestos y notas"
+msgstr "Taxes and notes"
+
+msgid "IVA (porcentaje)"
+msgstr "VAT (percentage)"
+
+msgid "Retención de IRPF (porcentaje)"
+msgstr "Income-tax withholding (percentage)"
+
+msgid "Emitir"
+msgstr "Issue"
+
+msgid "Al emitirla recibe su número correlativo y las horas y suplidos incluidos quedan marcados como facturados. No se podrá modificar."
+msgstr "When issued it gets its sequential number and the hours and disbursements included are marked as invoiced. It can no longer be edited."
+
+msgid "¿Emitir esta minuta? Ya no se podrá modificar."
+msgstr "Issue this fee note? It can no longer be edited."
+
+msgid "Cargar el total a la provisión de fondos del asunto"
+msgstr "Charge the total to the matter's retainer"
+
+msgid "Emitir minuta"
+msgstr "Issue fee note"
+
+msgid "¿Descartar este borrador?"
+msgstr "Discard this draft?"
+
+msgid "Descartar borrador"
+msgstr "Discard draft"
+
+msgid "Marcar como pagada"
+msgstr "Mark as paid"
+
+msgid "¿Anular esta minuta? Las horas y suplidos volverán a quedar pendientes de facturar."
+msgstr "Cancel this fee note? The hours and disbursements will go back to pending invoicing."
+
+msgid "Anular minuta"
+msgstr "Cancel fee note"
+
+msgid "Honorarios y suplidos que se facturan a tus clientes. Se preparan desde cada asunto con sus horas pendientes."
+msgstr "Fees and disbursements billed to your clients. They are prepared from each matter with its pending hours."
+
+msgid "Emitidas"
+msgstr "Issued"
+
+msgid "Pagadas"
+msgstr "Paid"
+
+msgid "Anuladas"
+msgstr "Cancelled"
+
+msgid "Sin minutas"
+msgstr "No fee notes"
+
+msgid "Abre un asunto con horas facturables y pulsa «Preparar minuta»."
+msgstr "Open a matter with billable hours and press “Prepare fee note”."
+
+msgid "Número"
+msgstr "Number"
+
+msgid "Registrar notificación"
+msgstr "Log notification"
+
+msgid "Registrar una notificación"
+msgstr "Log a notification"
+
+msgid "Calendario procesal de ejemplo: comprueba cada plazo con la norma vigente"
+msgstr "Sample procedural calendar: check each deadline against the rules in force"
+
+msgid "Resolución notificada"
+msgstr "Notified ruling"
+
+msgid "Fecha de la notificación"
+msgstr "Notification date"
+
+msgid "El día de la notificación no cuenta."
+msgstr "The day of notification does not count."
+
+msgid "Unidad"
+msgstr "Unit"
+
+msgid "días hábiles"
+msgstr "working days"
+
+msgid "días naturales"
+msgstr "calendar days"
+
+msgid "meses"
+msgstr "months"
+
+msgid "Atajos orientativos (sin validar):"
+msgstr "Indicative shortcuts (not validated):"
+
+msgid "Título del plazo"
+msgstr "Deadline title"
+
+msgid "Si lo dejas vacío se genera uno con la resolución y la fecha."
+msgstr "If left empty, one is generated from the ruling and date."
+
+msgid "Vence el"
+msgstr "Due on"
+
+msgid "Contando desde el %(d)s con el calendario procesal del despacho."
+msgstr "Counting from %(d)s with the firm's procedural calendar."
+
+msgid "Se salta %(n)s día inhábil entre semana."
+msgid_plural "Se saltan %(n)s días inhábiles entre semana."
+msgstr[0] "%(n)s non-working weekday is skipped."
+msgstr[1] "%(n)s non-working weekdays are skipped."
+
+msgid "Crear una tarea para el responsable"
+msgstr "Create a task for the person in charge"
+
+msgid "Confirmar y crear el plazo"
+msgstr "Confirm and create the deadline"
+
+msgid "Calcular"
+msgstr "Calculate"
+
+msgid "Lo que hay que vigilar hoy: plazos, vistas, provisión de fondos y minutas."
+msgstr "What to watch today: deadlines, hearings, retainers and fee notes."
+
+msgid "Plazos y festivos de ejemplo: contrástalos"
+msgstr "Sample deadlines and holidays: check them"
+
+msgid "Nuevo asunto"
+msgstr "New matter"
+
+msgid "Plazos de las próximas tres semanas"
+msgstr "Deadlines in the next three weeks"
+
+msgid "Sin plazos próximos"
+msgstr "No upcoming deadlines"
+
+msgid "Cuando registres una notificación en un asunto, su plazo aparecerá aquí."
+msgstr "When you log a notification on a matter, its deadline will appear here."
+
+msgid "Próximas vistas"
+msgstr "Upcoming hearings"
+
+msgid "Ver la agenda"
+msgstr "View the calendar"
+
+msgid "Sin vistas señaladas."
+msgstr "No hearings scheduled."
+
+msgid "Provisión de fondos baja"
+msgstr "Low retainer"
+
+msgid "Ningún asunto por debajo de la provisión mínima."
+msgstr "No matter below the minimum retainer."
+
+msgid "Configurar"
+msgstr "Configure"
+
+msgid "pendiente de cobro"
+msgstr "awaiting payment"
+
+msgid "Sin minutas pendientes."
+msgstr "No pending fee notes."
+
+msgid "%(n)s asunto abierto"
+msgid_plural "%(n)s asuntos abiertos"
+msgstr[0] "%(n)s open matter"
+msgstr[1] "%(n)s open matters"
+
+msgid "Todavía no hay asuntos"
+msgstr "No matters yet"
+
+msgid "Abre un procedimiento judicial o un asunto extrajudicial desde «Nuevo asunto»."
+msgstr "Open a court proceeding or an out-of-court matter from “New matter”."
+
+msgid "Señalamientos de todos tus asuntos."
+msgstr "Scheduled hearings across all your matters."
+
+msgid "Descargar calendario (.ics)"
+msgstr "Download calendar (.ics)"
+
+msgid "Sin vistas en este periodo"
+msgstr "No hearings in this period"
+
+msgid "Señala una vista desde la ficha de un asunto."
+msgstr "Schedule a hearing from a matter's page."
+
+msgid "Qué"
+msgstr "What"
+
+msgid "Dónde"
+msgstr "Where"
+
+msgid "Prevista"
+msgstr "Scheduled"
+
+msgid "Celebrada"
+msgstr "Held"
+
+msgid "Suspendida"
+msgstr "Suspended"
+
+msgid "Cómo va su asunto"
+msgstr "How your matter is going"
+
+msgid "Última actualización"
+msgstr "Last updated"
+
+msgid "Próximas citas"
+msgstr "Upcoming appointments"
+
+msgid "Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu despacho."
+msgstr "This page is read-only and private: do not share the link. If you have questions, contact your firm."
+
+msgid "Enlace no válido"
+msgstr "Invalid link"
+
+msgid "Este enlace ya no es válido"
+msgstr "This link is no longer valid"
+
+msgid "Ha caducado o se ha desactivado. Pide a tu despacho que te envíe uno nuevo."
+msgstr "It has expired or been disabled. Ask your firm to send you a new one."
+
+msgid "Plazos y valores de ejemplo"
+msgstr "Sample deadlines and values"
+
+msgid "Lo que ve el cliente de este asunto:"
+msgstr "What the client sees of this matter:"
+
+msgid "Datos del asunto"
+msgstr "Matter details"
+
+msgid "Nº de procedimiento (123/2026)"
+msgstr "Case no. (123/2026)"
+
+msgid "Nº de procedimiento"
+msgstr "Case no."
+
+msgid "Juzgado o tribunal"
+msgstr "Court"
+
+msgid "Jurisdicción"
+msgstr "Jurisdiction"
+
+msgid "Tipo de procedimiento"
+msgstr "Type of proceeding"
+
+msgid "Procurador"
+msgstr "Procurator"
+
+msgid "Cuantía (€)"
+msgstr "Amount in dispute (€)"
+
+msgid "Fase actual"
+msgstr "Current stage"
+
+msgid "Materia"
+msgstr "Subject matter"
+
+msgid "Resumen para el cliente (lo verá con su enlace)"
+msgstr "Summary for the client (they will see it with their link)"
+
+msgid "Resumen para el cliente"
+msgstr "Summary for the client"
+
+msgid "Guardar datos"
+msgstr "Save details"
+
+msgid "¿Quitar esta parte?"
+msgstr "Remove this party?"
+
+msgid "Sin partes todavía."
+msgstr "No parties yet."
+
+msgid "NIF / CIF (opcional)"
+msgstr "Tax ID (optional)"
+
+msgid "Añadir parte"
+msgstr "Add party"
+
+msgid "Al añadir una parte se comprueban los conflictos de intereses."
+msgstr "Adding a party checks for conflicts of interest."
+
+msgid "Notificaciones y plazos"
+msgstr "Notifications and deadlines"
+
+msgid "Registra una resolución notificada y se calcula su plazo procesal, se crea el plazo (fatal, pendiente de segunda revisión) y una tarea."
+msgstr "Log a notified ruling and its procedural deadline is calculated, the deadline is created (fatal, pending second review) and a task."
+
+msgid "Vistas y señalamientos"
+msgstr "Hearings and scheduling"
+
+msgid "¿Eliminar este señalamiento?"
+msgstr "Delete this scheduled hearing?"
+
+msgid "Lugar o sala"
+msgstr "Place or room"
+
+msgid "Señalar"
+msgstr "Schedule"
+
+msgid "Saldo"
+msgstr "Balance"
+
+msgid "Provisiones"
+msgstr "Retainers"
+
+msgid "Honorarios cargados"
+msgstr "Fees charged"
+
+msgid "Registrar movimiento"
+msgstr "Log movement"
+
+msgid "Sin minutas de este asunto."
+msgstr "No fee notes for this matter."
+
+msgid "Preparar minuta con las horas pendientes"
+msgstr "Prepare fee note with pending hours"
+
+msgid "Hoja de encargo y firma"
+msgstr "Engagement letter and signature"
+
+msgid "Generar hoja de encargo (PDF)"
+msgstr "Generate engagement letter (PDF)"
+
+msgid "Se enviará el documento a Documenso para que lo firme esta persona. ¿Continuar?"
+msgstr "The document will be sent to Documenso for this person to sign. Continue?"
+
+msgid "Nombre de quien firma"
+msgstr "Signer's name"
+
+msgid "Email de quien firma"
+msgstr "Signer's email"
+
+msgid "Una página de solo lectura con el estado del asunto, las próximas vistas y los documentos que compartas."
+msgstr "A read-only page with the matter's status, upcoming hearings and the documents you share."
+
+msgid "Dejar de compartir"
+msgstr "Stop sharing"
+
+msgid "Compartir con el cliente"
+msgstr "Share with client"
+
+msgid "Enlace creado"
+msgstr "Link created"
+
+msgid "caduca"
+msgstr "expires"
+
+msgid "Revocado"
+msgstr "Revoked"
+
+msgid "¿Revocar este enlace? El cliente dejará de poder verlo."
+msgstr "Revoke this link? The client will no longer be able to see it."
+
+msgid "Revocar"
+msgstr "Revoke"
+
+msgid "Caduca en"
+msgstr "Expires in"
+
+msgid "días"
+msgstr "days"
+
+msgid "Crear enlace"
+msgstr "Create link"

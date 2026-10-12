@@ -257,6 +257,7 @@ def ficha(expediente_id: int):
         plazos=nucleo.listar_plazos(t, g.usuario_id, _supervisor(), expediente_id=expediente_id), partes=nucleo.listar_partes(t, g.usuario_id, _supervisor(), ver_todo=_supervisor(), expediente_id=expediente_id, limite=30),
         documentos=almacen_documentos.listar(t, g.usuario_id, expediente_id=expediente_id), equipo=nucleo.equipo(t), error=_error(), subnav="expedientes", hoy=date.today().isoformat(),
         horas=nucleo.resumen_horas(t, g.usuario_id, _supervisor(), ver_todo=_supervisor(), agrupar="expediente", expediente_id=expediente_id),
+        paneles=verticales.paneles_para(t, g.usuario_id, _supervisor(), x),
     )
 
 

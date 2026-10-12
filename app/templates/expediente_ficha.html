@@ -70,6 +70,8 @@
   {{ subir_documento(url_for('expedientes.subir_documento', expediente_id=x.id)) }}
 </section>
 
+{% for p in paneles %}{% set panel = p.ctx %}{% include p.plantilla %}{% endfor %}
+
 <div class="dash-grid ds-mt-16">
 <section class="dash-panel">
   <h2>{{ _('Línea de tiempo') }}</h2>

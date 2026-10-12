@@ -8461,3 +8461,675 @@ msgstr "Supprimer cette saisie d'heures ?"
 
 msgid "Marcar los seleccionados como facturados"
 msgstr "Marquer la sélection comme facturée"
+
+msgid "Procedimiento judicial"
+msgstr "Procédure judiciaire"
+
+msgid "En preparación"
+msgstr "En préparation"
+
+msgid "En trámite"
+msgstr "En cours"
+
+msgid "Pendiente de vista"
+msgstr "En attente d'audience"
+
+msgid "Pendiente de sentencia"
+msgstr "En attente de jugement"
+
+msgid "En recurso"
+msgstr "En appel"
+
+msgid "En ejecución"
+msgstr "En exécution"
+
+msgid "Asunto extrajudicial"
+msgstr "Affaire extrajudiciaire"
+
+msgid "En negociación"
+msgstr "En négociation"
+
+msgid "Pendiente del cliente"
+msgstr "En attente du client"
+
+msgid "Civil"
+msgstr "Civil"
+
+msgid "Penal"
+msgstr "Pénal"
+
+msgid "Contencioso-administrativo"
+msgstr "Contentieux administratif"
+
+msgid "Social"
+msgstr "Social"
+
+msgid "Mercantil"
+msgstr "Commercial"
+
+msgid "Familia"
+msgstr "Famille"
+
+msgid "Otra"
+msgstr "Autre"
+
+msgid "Contraparte"
+msgstr "Partie adverse"
+
+msgid "Letrado contrario"
+msgstr "Avocat adverse"
+
+msgid "Procurador contrario"
+msgstr "Avoué adverse"
+
+msgid "Tercero"
+msgstr "Tiers"
+
+msgid "Perito"
+msgstr "Expert"
+
+msgid "Testigo"
+msgstr "Témoin"
+
+msgid "Juicio"
+msgstr "Procès"
+
+msgid "Comparecencia"
+msgstr "Comparution"
+
+msgid "Declaración"
+msgstr "Déposition"
+
+msgid "Mediación"
+msgstr "Médiation"
+
+msgid "Providencia"
+msgstr "Ordonnance (providencia)"
+
+msgid "Auto"
+msgstr "Décision (auto)"
+
+msgid "Decreto"
+msgstr "Décret"
+
+msgid "Sentencia"
+msgstr "Jugement"
+
+msgid "Diligencia de ordenación"
+msgstr "Mesure d'organisation"
+
+msgid "Requerimiento"
+msgstr "Mise en demeure"
+
+msgid "Contestación a la demanda (juicio ordinario)"
+msgstr "Réponse à la demande (procès ordinaire)"
+
+msgid "Recurso de apelación"
+msgstr "Recours en appel"
+
+msgid "Recurso de reposición"
+msgstr "Recours en réexamen"
+
+msgid "Provisión de fondos"
+msgstr "Provision"
+
+msgid "Suplido (gasto pagado por cuenta del cliente)"
+msgstr "Débours (frais payés pour le compte du client)"
+
+msgid "Cargo de honorarios"
+msgstr "Imputation d'honoraires"
+
+msgid "Devolución al cliente"
+msgstr "Remboursement au client"
+
+msgid "Estamos preparando su caso."
+msgstr "Nous préparons votre dossier."
+
+msgid "Su asunto está en tramitación."
+msgstr "Votre affaire est en cours de traitement."
+
+msgid "Estamos pendientes de la celebración de una vista."
+msgstr "Nous attendons la tenue d'une audience."
+
+msgid "Ya se ha celebrado lo necesario y esperamos la resolución del juzgado."
+msgstr "Tout le nécessaire a eu lieu et nous attendons la décision du tribunal."
+
+msgid "El asunto está en fase de recurso."
+msgstr "L'affaire est en phase d'appel."
+
+msgid "Estamos ejecutando lo resuelto."
+msgstr "Nous exécutons la décision."
+
+msgid "El asunto está finalizado y archivado."
+msgstr "L'affaire est terminée et archivée."
+
+msgid "Su asunto está abierto."
+msgstr "Votre affaire est ouverte."
+
+msgid "Estamos negociando con la otra parte."
+msgstr "Nous négocions avec l'autre partie."
+
+msgid "Estamos a la espera de información o documentación por su parte."
+msgstr "Nous attendons des informations ou des documents de votre part."
+
+msgid "El asunto está cerrado."
+msgstr "L'affaire est clôturée."
+
+msgid "Gabinete"
+msgstr "Cabinet"
+
+msgid "Panel"
+msgstr "Tableau de bord"
+
+msgid "Agenda de vistas"
+msgstr "Agenda des audiences"
+
+msgid "Minutas"
+msgstr "Notes d'honoraires"
+
+msgid "Conflictos de intereses"
+msgstr "Conflits d'intérêts"
+
+msgid "Todos los expedientes"
+msgstr "Tous les dossiers"
+
+msgid "Ajustes del gabinete"
+msgstr "Réglages du cabinet"
+
+msgid "Valores de ejemplo, sin validar: ajústalos a tu despacho y a la normativa vigente."
+msgstr "Valeurs d'exemple, non validées : adaptez-les à votre cabinet et à la réglementation en vigueur."
+
+msgid "Ajustes guardados"
+msgstr "Réglages enregistrés"
+
+msgid "Serie de las minutas"
+msgstr "Série des notes d'honoraires"
+
+msgid "Letras o números; la numeración es correlativa por serie y año (M-2026-001)."
+msgstr "Lettres ou chiffres ; la numérotation est séquentielle par série et par année (M-2026-001)."
+
+msgid "IVA por defecto (porcentaje)"
+msgstr "TVA par défaut (pourcentage)"
+
+msgid "Retención de IRPF por defecto (porcentaje)"
+msgstr "Retenue d'IRPF par défaut (pourcentage)"
+
+msgid "Solo se aplica a clientes que sean empresa; se puede cambiar en cada minuta."
+msgstr "S'applique uniquement aux clients qui sont des entreprises ; modifiable pour chaque note."
+
+msgid "Bloque de facturación (minutos)"
+msgstr "Tranche de facturation (minutes)"
+
+msgid "Las horas se redondean hacia arriba a este bloque al preparar una minuta. 0 = tiempo exacto."
+msgstr "Les heures sont arrondies au-dessus de cette tranche lors de la préparation d'une note. 0 = durée exacte."
+
+msgid "Provisión mínima por asunto (€)"
+msgstr "Provision minimale par affaire (€)"
+
+msgid "Si el saldo de un asunto baja de aquí, se avisa en el panel. 0 = no avisar."
+msgstr "Si le solde d'une affaire passe en dessous, le tableau de bord vous avertit. 0 = pas d'alerte."
+
+msgid "Texto de la hoja de encargo"
+msgstr "Texte de la lettre de mission"
+
+msgid "Variables: {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Vacío = modelo de ejemplo."
+msgstr "Variables : {fecha} {despacho} {cliente} {nif} {asunto} {tarifa}. Vide = modèle d'exemple."
+
+msgid "Solo los responsables del despacho pueden cambiarlos."
+msgstr "Seuls les responsables du cabinet peuvent les modifier."
+
+msgid "Antes de aceptar un cliente o de señalar a una contraparte, comprueba si ya aparece en otros asuntos del despacho."
+msgstr "Avant d'accepter un client ou de désigner une partie adverse, vérifiez s'il apparaît déjà dans d'autres affaires du cabinet."
+
+msgid "Persona o empresa"
+msgstr "Personne ou entreprise"
+
+msgid "Va a ser"
+msgstr "Sera"
+
+msgid "Nuestro cliente"
+msgstr "Notre client"
+
+msgid "Comprobar"
+msgstr "Vérifier"
+
+msgid "Escribe un nombre o un NIF para buscar."
+msgstr "Saisissez un nom ou un NIF pour chercher."
+
+msgid "Sin coincidencias"
+msgstr "Aucune correspondance"
+
+msgid "No aparece como cliente, contraparte, letrado ni procurador en los asuntos del despacho. Comprueba también con otras fuentes si lo necesitas."
+msgstr "Il n'apparaît ni comme client, ni comme partie adverse, avocat ou avoué dans les affaires du cabinet. Vérifiez aussi d'autres sources si nécessaire."
+
+msgid "%(n)s posible conflicto"
+msgid_plural "%(n)s posibles conflictos"
+msgstr[0] "%(n)s conflit possible"
+msgstr[1] "%(n)s conflits possibles"
+
+msgid "Ya es cliente del despacho:"
+msgstr "Déjà client du cabinet :"
+
+msgid "Aparece en un asunto confidencial al que no tienes acceso. Consulta con su responsable."
+msgstr "Apparaît dans une affaire confidentielle à laquelle vous n'avez pas accès. Consultez son responsable."
+
+msgid "Ha sido %(rol)s en el asunto"
+msgstr "A été %(rol)s dans l'affaire"
+
+msgid "Es parte cliente en el asunto"
+msgstr "Est partie cliente dans l'affaire"
+
+msgid "Enlace para el cliente"
+msgstr "Lien pour le client"
+
+msgid "Este es el enlace de solo lectura del cliente. Cópialo ahora: por seguridad no se vuelve a mostrar (si lo pierdes, crea otro y revoca este)."
+msgstr "Voici le lien en lecture seule du client. Copiez-le maintenant : par sécurité il ne sera plus affiché (si vous le perdez, créez-en un autre et révoquez celui-ci)."
+
+msgid "Quien lo tenga verá el estado del asunto, el resumen que hayas escrito, las próximas vistas y los documentos que hayas compartido. No verá horas, notas internas, plazos ni a las partes contrarias."
+msgstr "Quiconque le possède verra l'état de l'affaire, le résumé que vous avez rédigé, les prochaines audiences et les documents partagés. Il ne verra ni heures, ni notes internes, ni délais, ni les parties adverses."
+
+msgid "Volver al asunto"
+msgstr "Retour à l'affaire"
+
+msgid "Minuta"
+msgstr "Note d'honoraires"
+
+msgid "(borrador)"
+msgstr "(brouillon)"
+
+msgid "Emitida"
+msgstr "Émise"
+
+msgid "Pagada"
+msgstr "Payée"
+
+msgid "Anulada"
+msgstr "Annulée"
+
+msgid "IVA y retención de ejemplo: compruébalos"
+msgstr "TVA et retenue d'exemple : vérifiez-les"
+
+msgid "Suplido"
+msgstr "Débours"
+
+msgid "Honorarios"
+msgstr "Honoraires"
+
+msgid "IVA"
+msgstr "TVA"
+
+msgid "Retención de IRPF"
+msgstr "Retenue d'IRPF"
+
+msgid "Suplidos"
+msgstr "Débours"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Añadir una línea"
+msgstr "Ajouter une ligne"
+
+msgid "Impuestos y notas"
+msgstr "Taxes et notes"
+
+msgid "IVA (porcentaje)"
+msgstr "TVA (pourcentage)"
+
+msgid "Retención de IRPF (porcentaje)"
+msgstr "Retenue d'IRPF (pourcentage)"
+
+msgid "Emitir"
+msgstr "Émettre"
+
+msgid "Al emitirla recibe su número correlativo y las horas y suplidos incluidos quedan marcados como facturados. No se podrá modificar."
+msgstr "Une fois émise, elle reçoit son numéro séquentiel et les heures et débours inclus sont marqués comme facturés. Elle ne pourra plus être modifiée."
+
+msgid "¿Emitir esta minuta? Ya no se podrá modificar."
+msgstr "Émettre cette note d'honoraires ? Elle ne pourra plus être modifiée."
+
+msgid "Cargar el total a la provisión de fondos del asunto"
+msgstr "Imputer le total à la provision de l'affaire"
+
+msgid "Emitir minuta"
+msgstr "Émettre la note"
+
+msgid "¿Descartar este borrador?"
+msgstr "Abandonner ce brouillon ?"
+
+msgid "Descartar borrador"
+msgstr "Abandonner le brouillon"
+
+msgid "Marcar como pagada"
+msgstr "Marquer comme payée"
+
+msgid "¿Anular esta minuta? Las horas y suplidos volverán a quedar pendientes de facturar."
+msgstr "Annuler cette note ? Les heures et débours redeviendront à facturer."
+
+msgid "Anular minuta"
+msgstr "Annuler la note"
+
+msgid "Honorarios y suplidos que se facturan a tus clientes. Se preparan desde cada asunto con sus horas pendientes."
+msgstr "Honoraires et débours facturés à vos clients. Ils se préparent depuis chaque affaire avec ses heures en attente."
+
+msgid "Emitidas"
+msgstr "Émises"
+
+msgid "Pagadas"
+msgstr "Payées"
+
+msgid "Anuladas"
+msgstr "Annulées"
+
+msgid "Sin minutas"
+msgstr "Aucune note d'honoraires"
+
+msgid "Abre un asunto con horas facturables y pulsa «Preparar minuta»."
+msgstr "Ouvrez une affaire avec des heures facturables et appuyez sur « Préparer la note »."
+
+msgid "Número"
+msgstr "Numéro"
+
+msgid "Registrar notificación"
+msgstr "Enregistrer la notification"
+
+msgid "Registrar una notificación"
+msgstr "Enregistrer une notification"
+
+msgid "Calendario procesal de ejemplo: comprueba cada plazo con la norma vigente"
+msgstr "Calendrier de procédure d'exemple : vérifiez chaque délai avec la règle en vigueur"
+
+msgid "Resolución notificada"
+msgstr "Décision notifiée"
+
+msgid "Fecha de la notificación"
+msgstr "Date de la notification"
+
+msgid "El día de la notificación no cuenta."
+msgstr "Le jour de la notification ne compte pas."
+
+msgid "Unidad"
+msgstr "Unité"
+
+msgid "días hábiles"
+msgstr "jours ouvrés"
+
+msgid "días naturales"
+msgstr "jours calendaires"
+
+msgid "meses"
+msgstr "mois"
+
+msgid "Atajos orientativos (sin validar):"
+msgstr "Raccourcis indicatifs (non validés) :"
+
+msgid "Título del plazo"
+msgstr "Titre du délai"
+
+msgid "Si lo dejas vacío se genera uno con la resolución y la fecha."
+msgstr "Laissé vide, un titre est généré avec la décision et la date."
+
+msgid "Vence el"
+msgstr "Échéance le"
+
+msgid "Contando desde el %(d)s con el calendario procesal del despacho."
+msgstr "En comptant à partir du %(d)s avec le calendrier de procédure du cabinet."
+
+msgid "Se salta %(n)s día inhábil entre semana."
+msgid_plural "Se saltan %(n)s días inhábiles entre semana."
+msgstr[0] "%(n)s jour non ouvré en semaine est ignoré."
+msgstr[1] "%(n)s jours non ouvrés en semaine sont ignorés."
+
+msgid "Crear una tarea para el responsable"
+msgstr "Créer une tâche pour le responsable"
+
+msgid "Confirmar y crear el plazo"
+msgstr "Confirmer et créer le délai"
+
+msgid "Calcular"
+msgstr "Calculer"
+
+msgid "Lo que hay que vigilar hoy: plazos, vistas, provisión de fondos y minutas."
+msgstr "À surveiller aujourd'hui : délais, audiences, provisions et notes d'honoraires."
+
+msgid "Plazos y festivos de ejemplo: contrástalos"
+msgstr "Délais et jours fériés d'exemple : vérifiez-les"
+
+msgid "Nuevo asunto"
+msgstr "Nouvelle affaire"
+
+msgid "Plazos de las próximas tres semanas"
+msgstr "Délais des trois prochaines semaines"
+
+msgid "Sin plazos próximos"
+msgstr "Aucun délai proche"
+
+msgid "Cuando registres una notificación en un asunto, su plazo aparecerá aquí."
+msgstr "Quand vous enregistrerez une notification dans une affaire, son délai apparaîtra ici."
+
+msgid "Próximas vistas"
+msgstr "Prochaines audiences"
+
+msgid "Ver la agenda"
+msgstr "Voir l'agenda"
+
+msgid "Sin vistas señaladas."
+msgstr "Aucune audience fixée."
+
+msgid "Provisión de fondos baja"
+msgstr "Provision faible"
+
+msgid "Ningún asunto por debajo de la provisión mínima."
+msgstr "Aucune affaire sous la provision minimale."
+
+msgid "Configurar"
+msgstr "Configurer"
+
+msgid "pendiente de cobro"
+msgstr "en attente de paiement"
+
+msgid "Sin minutas pendientes."
+msgstr "Aucune note en attente."
+
+msgid "%(n)s asunto abierto"
+msgid_plural "%(n)s asuntos abiertos"
+msgstr[0] "%(n)s affaire ouverte"
+msgstr[1] "%(n)s affaires ouvertes"
+
+msgid "Todavía no hay asuntos"
+msgstr "Aucune affaire pour l'instant"
+
+msgid "Abre un procedimiento judicial o un asunto extrajudicial desde «Nuevo asunto»."
+msgstr "Ouvrez une procédure judiciaire ou une affaire extrajudiciaire depuis « Nouvelle affaire »."
+
+msgid "Señalamientos de todos tus asuntos."
+msgstr "Audiences fixées pour toutes vos affaires."
+
+msgid "Descargar calendario (.ics)"
+msgstr "Télécharger le calendrier (.ics)"
+
+msgid "Sin vistas en este periodo"
+msgstr "Aucune audience sur cette période"
+
+msgid "Señala una vista desde la ficha de un asunto."
+msgstr "Fixez une audience depuis la fiche d'une affaire."
+
+msgid "Qué"
+msgstr "Quoi"
+
+msgid "Dónde"
+msgstr "Où"
+
+msgid "Prevista"
+msgstr "Prévue"
+
+msgid "Celebrada"
+msgstr "Tenue"
+
+msgid "Suspendida"
+msgstr "Suspendue"
+
+msgid "Cómo va su asunto"
+msgstr "Où en est votre affaire"
+
+msgid "Última actualización"
+msgstr "Dernière mise à jour"
+
+msgid "Próximas citas"
+msgstr "Prochains rendez-vous"
+
+msgid "Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu despacho."
+msgstr "Cette page est en lecture seule et privée : ne partagez pas le lien. En cas de doute, contactez votre cabinet."
+
+msgid "Enlace no válido"
+msgstr "Lien non valide"
+
+msgid "Este enlace ya no es válido"
+msgstr "Ce lien n'est plus valide"
+
+msgid "Ha caducado o se ha desactivado. Pide a tu despacho que te envíe uno nuevo."
+msgstr "Il a expiré ou a été désactivé. Demandez à votre cabinet de vous en envoyer un nouveau."
+
+msgid "Plazos y valores de ejemplo"
+msgstr "Délais et valeurs d'exemple"
+
+msgid "Lo que ve el cliente de este asunto:"
+msgstr "Ce que le client voit de cette affaire :"
+
+msgid "Datos del asunto"
+msgstr "Données de l'affaire"
+
+msgid "Nº de procedimiento (123/2026)"
+msgstr "N° de procédure (123/2026)"
+
+msgid "Nº de procedimiento"
+msgstr "N° de procédure"
+
+msgid "Juzgado o tribunal"
+msgstr "Tribunal"
+
+msgid "Jurisdicción"
+msgstr "Juridiction"
+
+msgid "Tipo de procedimiento"
+msgstr "Type de procédure"
+
+msgid "Procurador"
+msgstr "Avoué"
+
+msgid "Cuantía (€)"
+msgstr "Montant du litige (€)"
+
+msgid "Fase actual"
+msgstr "Phase actuelle"
+
+msgid "Materia"
+msgstr "Matière"
+
+msgid "Resumen para el cliente (lo verá con su enlace)"
+msgstr "Résumé pour le client (visible avec son lien)"
+
+msgid "Resumen para el cliente"
+msgstr "Résumé pour le client"
+
+msgid "Guardar datos"
+msgstr "Enregistrer les données"
+
+msgid "¿Quitar esta parte?"
+msgstr "Retirer cette partie ?"
+
+msgid "Sin partes todavía."
+msgstr "Aucune partie pour l'instant."
+
+msgid "NIF / CIF (opcional)"
+msgstr "NIF / CIF (facultatif)"
+
+msgid "Añadir parte"
+msgstr "Ajouter une partie"
+
+msgid "Al añadir una parte se comprueban los conflictos de intereses."
+msgstr "L'ajout d'une partie vérifie les conflits d'intérêts."
+
+msgid "Notificaciones y plazos"
+msgstr "Notifications et délais"
+
+msgid "Registra una resolución notificada y se calcula su plazo procesal, se crea el plazo (fatal, pendiente de segunda revisión) y una tarea."
+msgstr "Enregistrez une décision notifiée : son délai de procédure est calculé, le délai est créé (fatal, en attente de seconde révision) ainsi qu'une tâche."
+
+msgid "Vistas y señalamientos"
+msgstr "Audiences et fixations"
+
+msgid "¿Eliminar este señalamiento?"
+msgstr "Supprimer cette fixation ?"
+
+msgid "Lugar o sala"
+msgstr "Lieu ou salle"
+
+msgid "Señalar"
+msgstr "Fixer"
+
+msgid "Saldo"
+msgstr "Solde"
+
+msgid "Provisiones"
+msgstr "Provisions"
+
+msgid "Honorarios cargados"
+msgstr "Honoraires imputés"
+
+msgid "Registrar movimiento"
+msgstr "Enregistrer un mouvement"
+
+msgid "Sin minutas de este asunto."
+msgstr "Aucune note pour cette affaire."
+
+msgid "Preparar minuta con las horas pendientes"
+msgstr "Préparer la note avec les heures en attente"
+
+msgid "Hoja de encargo y firma"
+msgstr "Lettre de mission et signature"
+
+msgid "Generar hoja de encargo (PDF)"
+msgstr "Générer la lettre de mission (PDF)"
+
+msgid "Se enviará el documento a Documenso para que lo firme esta persona. ¿Continuar?"
+msgstr "Le document sera envoyé à Documenso pour signature par cette personne. Continuer ?"
+
+msgid "Nombre de quien firma"
+msgstr "Nom du signataire"
+
+msgid "Email de quien firma"
+msgstr "E-mail du signataire"
+
+msgid "Una página de solo lectura con el estado del asunto, las próximas vistas y los documentos que compartas."
+msgstr "Une page en lecture seule avec l'état de l'affaire, les prochaines audiences et les documents que vous partagez."
+
+msgid "Dejar de compartir"
+msgstr "Ne plus partager"
+
+msgid "Compartir con el cliente"
+msgstr "Partager avec le client"
+
+msgid "Enlace creado"
+msgstr "Lien créé"
+
+msgid "caduca"
+msgstr "expire"
+
+msgid "Revocado"
+msgstr "Révoqué"
+
+msgid "¿Revocar este enlace? El cliente dejará de poder verlo."
+msgstr "Révoquer ce lien ? Le client ne pourra plus le voir."
+
+msgid "Revocar"
+msgstr "Révoquer"
+
+msgid "Caduca en"
+msgstr "Expire dans"
+
+msgid "días"
+msgstr "jours"
+
+msgid "Crear enlace"
+msgstr "Créer le lien"

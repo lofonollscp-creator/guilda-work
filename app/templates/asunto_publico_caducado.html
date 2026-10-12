@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ _('Enlace no válido') }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="portal-cliente-shell">
+    <section class="dash-panel">
+      <h1>{{ _('Este enlace ya no es válido') }}</h1>
+      <p>{{ _('Ha caducado o se ha desactivado. Pide a tu despacho que te envíe uno nuevo.') }}</p>
+    </section>
+  </main>
+</body>
+</html>

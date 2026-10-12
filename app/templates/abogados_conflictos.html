@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, chip, estado_vacio %}
+{% block title %}{{ _('Conflictos de intereses') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'conflictos' %}
+<header class="page-header"><div><h1>{{ _('Conflictos de intereses') }}</h1><p class="subtitle">{{ _('Antes de aceptar un cliente o de señalar a una contraparte, comprueba si ya aparece en otros asuntos del despacho.') }}</p></div></header>
+{% include "_abogados_subnav.html" %}
+<form class="filters" method="get">
+  <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ nombre }}" placeholder="{{ _('Persona o empresa') }}" required></label>
+  <label>{{ _('NIF / CIF') }} <input type="text" name="nif" value="{{ nif }}"></label>
+  <label>{{ _('Va a ser') }}<select name="como"><option value="cliente" {{ 'selected' if como == 'cliente' }}>{{ _('Nuestro cliente') }}</option><option value="contraparte" {{ 'selected' if como == 'contraparte' }}>{{ _('Contraparte') }}</option></select></label>
+  <button type="submit" class="btn btn-primary">{{ _('Comprobar') }}</button>
+</form>
+{% if hallazgos is none %}
+<p class="muted">{{ _('Escribe un nombre o un NIF para buscar.') }}</p>
+{% elif not hallazgos %}
+{{ estado_vacio(_('Sin coincidencias'), _('No aparece como cliente, contraparte, letrado ni procurador en los asuntos del despacho. Comprueba también con otras fuentes si lo necesitas.'), 'circle-check-big') }}
+{% else %}
+<div class="ia-error" role="alert"><strong>{{ ngettext('%(n)s posible conflicto', '%(n)s posibles conflictos', hallazgos|length, n=hallazgos|length) }}</strong></div>
+<ul class="log-list ds-mt-12">
+  {% for h in hallazgos %}
+  <li class="log-item">
+    <span class="log-text">
+      {% if h.motivo == 'es_cliente' %}{{ _('Ya es cliente del despacho:') }} <a href="{{ url_for('clientes.ficha', cliente_id=h.cliente_id) }}">{{ h.cliente }}</a>
+      {% elif h.oculto %}{{ _('Aparece en un asunto confidencial al que no tienes acceso. Consulta con su responsable.') }}
+      {% elif h.motivo == 'fue_contraparte' %}{{ _('Ha sido %(rol)s en el asunto', rol=roles[h.rol]|lower) }} <a href="{{ url_for('expedientes.ficha', expediente_id=h.expediente_id) }}">{{ h.titulo }}</a> ({{ h.cliente }})
+      {% else %}{{ _('Es parte cliente en el asunto') }} <a href="{{ url_for('expedientes.ficha', expediente_id=h.expediente_id) }}">{{ h.titulo }}</a> ({{ h.cliente }}){% endif %}
+    </span>
+    {{ chip(_('Revisar'), 'peligro') }}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -12,8 +12,9 @@ y un cambio hecho desde el backoffice —otro proceso— se nota como mucho a lo
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, replace
 from functools import wraps
+from typing import Callable
 
 from flask import abort, g
 from flask_babel import lazy_gettext as _l
@@ -63,6 +64,11 @@ class Vertical:
     disponible: bool = True               # false = reservado: aún no tiene pantallas, el backoffice no lo ofrece
     entradas_menu: tuple[EntradaMenu, ...] = ()
     tipos_expediente: tuple[TipoExpediente, ...] = ()
+    esquema: Callable | None = None                   # crea sus tablas: esquema(conn), se llama desde nucleo.crear_esquema
+    borrar_datos: Callable | None = None              # borra lo suyo al borrar un despacho: borrar_datos(conn, tenant_id)
+    panel_expediente: str | None = None               # plantilla que la ficha de expediente incluye para sus tipos
+    tipos_con_panel: tuple[str, ...] = ()
+    contexto_expediente: Callable | None = None       # contexto(tenant_id, usuario_id, supervisor, expediente) -> dict para ese panel
 
 
 ESTADOS_GENERALES = (Estado("abierto", _l("Abierto")), Estado("en_curso", _l("En curso")), Estado("en_espera", _l("En espera")), Estado("cerrado", _l("Cerrado"), True))
@@ -74,6 +80,27 @@ VERTICALES: dict[str, Vertical] = {v.id: v for v in (
     Vertical("abogados", _l("Gabinete de abogados"), _l("Expedientes judiciales y extrajudiciales, plazos procesales, minutas y provisión de fondos."), "briefcase", disponible=False),
     Vertical("inmobiliaria", _l("Inmobiliaria"), _l("Inmuebles, captación, demandas, visitas, contratos y comisiones."), "building-2", disponible=False),
 )}
+
+
+def registrar(vertical: Vertical) -> None:
+    """Un módulo de negocio se da de alta (o completa su reserva) desde su propio fichero; así el núcleo no sabe nada de los módulos concretos."""
+    VERTICALES[vertical.id] = vertical
+
+
+def original(texto) -> str:
+    """El texto en castellano tal como está escrito en el código (para lo que se guarda en la base y lo leen personas con distinto idioma, como la línea de tiempo)."""
+    args = getattr(texto, "_args", None)
+    return args[0] if args else str(texto)
+
+
+def paneles_para(tenant_id: int, usuario_id: int, supervisor: bool, expediente) -> list[dict]:
+    """Paneles extra que un módulo activo pone en la ficha de sus tipos de expediente: [{plantilla, ctx}]."""
+    activos = activos_de(tenant_id)
+    res = []
+    for v in VERTICALES.values():
+        if v.id in activos and v.panel_expediente and expediente["tipo"] in v.tipos_con_panel:
+            res.append({"plantilla": v.panel_expediente, "ctx": v.contexto_expediente(tenant_id, usuario_id, supervisor, expediente) if v.contexto_expediente else {}})
+    return res
 
 
 def tipos_expediente(tenant_id: int | None = None, activos: frozenset[str] | None = None) -> dict[str, TipoExpediente]:
@@ -241,3 +268,7 @@ def requiere_vertical(vertical_id: str):
 def entradas_de_menu(tenant_id: int | None) -> list[EntradaMenu]:
     activos = activos_de(tenant_id)
     return [e for v in VERTICALES.values() if v.id in activos for e in v.entradas_menu]
+
+
+# Los módulos de negocio se registran al importarse (cada uno completa su entrada de VERTICALES). Va al final: necesitan todo lo de arriba.
+from . import abogados  # noqa: E402,F401

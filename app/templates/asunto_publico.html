@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ d.titulo }} — {{ d.despacho }}</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='ds.css') }}">
+</head>
+<body>
+  <main class="portal-cliente-shell">
+    <header class="page-header">
+      <div><p class="muted">{{ d.despacho }}</p><h1>{{ d.titulo }}</h1><p class="subtitle">{{ d.cliente }}{% if d.referencia %} · {{ d.referencia }}{% endif %}</p></div>
+    </header>
+    <section class="dash-panel">
+      <h2>{{ _('Cómo va su asunto') }}</h2>
+      <p>{{ llano[d.estado_id] if d.estado_id in llano else '' }}</p>
+      {% if d.resumen %}<p>{{ d.resumen }}</p>{% endif %}
+      <p class="muted">{{ _('Última actualización') }}: {{ d.actualizado[:10] }}</p>
+    </section>
+    {% if d.vistas %}
+    <section class="dash-panel ds-mt-16">
+      <h2>{{ _('Próximas citas') }}</h2>
+      <ul class="log-list">{% for v in d.vistas %}<li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora.replace('T', ' ') }}</strong>{% if v.lugar %} · {{ v.lugar }}{% endif %}</span></li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+    {% if d.documentos %}
+    <section class="dash-panel ds-mt-16">
+      <h2>{{ _('Documentos') }}</h2>
+      <ul class="log-list">{% for doc in d.documentos %}<li class="log-item"><span class="log-text"><a href="{{ url_for('asunto_publico.documento', token=token, documento_id=doc.id) }}">{{ doc.nombre_archivo }}</a> <span class="muted">{{ doc.creado_en[:10] }}</span></span></li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+    <p class="muted ds-mt-16">{{ _('Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu despacho.') }}</p>
+  </main>
+</body>
+</html>

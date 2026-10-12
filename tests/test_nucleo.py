@@ -301,7 +301,8 @@ def test_verticales_por_defecto_extras_y_ajuste_manual(usuario_id):
     with pytest.raises(ValueError):
         verticales.fijar_activo(t, "astrologia", True)
     estado = {e["id"]: e for e in verticales.estado_para_backoffice(t)}
-    assert list(estado) == ["gestoria"] and estado["gestoria"]["motivo"] == "defecto", "los verticales aún sin pantallas no se ofrecen"
+    assert list(estado) == ["gestoria", "abogados"] and estado["gestoria"]["motivo"] == "defecto" and estado["abogados"]["motivo"] is None and not estado["abogados"]["activo"], \
+        "solo se ofrecen los módulos que ya tienen pantallas (Inmobiliaria llega el Día 5)"
 
 
 def test_los_verticales_se_guardan_en_memoria_poco_tiempo(usuario_id, monkeypatch):
@@ -333,7 +334,7 @@ def test_el_backoffice_activa_y_desactiva_modulos_de_negocio_y_vincula_extras(tm
     entrar(bo)
     t = db.crear_tenant("Despacho BO")
     html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
-    assert "Módulos de negocio" in html and "Gestoría" in html and "Incluido por defecto" in html and "/verticales/inmobiliaria" not in html and "/verticales/abogados" not in html
+    assert "Módulos de negocio" in html and "Gestoría" in html and "Incluido por defecto" in html and "/verticales/inmobiliaria" not in html and "/verticales/abogados" in html
     post(bo, f"/tenants/{t}/verticales/gestoria")
     assert verticales.activos_de(t, usar_cache=False) == set() and "Ajuste manual" in bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
     post(bo, f"/tenants/{t}/verticales/gestoria", accion="auto")

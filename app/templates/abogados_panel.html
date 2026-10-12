@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error, chip_plazo %}
+{% block title %}{{ _('Gabinete de abogados') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set seccion = 'panel' %}
+<header class="page-header">
+  <div><h1>{{ _('Gabinete de abogados') }}</h1><p class="subtitle">{{ _('Lo que hay que vigilar hoy: plazos, vistas, provisión de fondos y minutas.') }} {{ sin_validar(_('Plazos y festivos de ejemplo: contrástalos')) }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('expedientes.nuevo') }}">+ {{ _('Nuevo asunto') }}</a>
+</header>
+{% include "_abogados_subnav.html" %}
+{{ aviso_error(error) }}
+
+<div class="dash-grid">
+<section class="dash-panel">
+  <h2>{{ _('Plazos de las próximas tres semanas') }}</h2>
+  {% if plazos %}
+  <ul class="log-list">
+    {% for p in plazos %}
+    <li class="log-item">
+      <span class="log-text"><strong>{{ p.titulo }}</strong> <span class="muted">{{ p.fecha_limite }}{% if p.dias_habiles_restantes is not none %} · {{ ngettext('%(n)s día hábil', '%(n)s días hábiles', p.dias_habiles_restantes, n=p.dias_habiles_restantes) }}{% endif %}</span><br>
+        <a href="{{ url_for('expedientes.ficha', expediente_id=p.expediente_id) }}">{{ p.expediente_titulo }}</a> · {{ p.cliente_nombre }}
+        {% if p.critico %}{{ chip(_('Fatal'), 'peligro') }}{% endif %}{% if not p.revisado %}{{ chip(_('Sin revisar'), 'aviso') }}{% endif %}</span>
+      {{ chip_plazo(p.estado_calculado, p.dias_restantes) }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}{{ estado_vacio(_('Sin plazos próximos'), _('Cuando registres una notificación en un asunto, su plazo aparecerá aquí.'), 'calendar-clock') }}{% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Próximas vistas') }}</h2>
+  {% if vistas %}
+  <ul class="log-list">
+    {% for v in vistas %}<li class="log-item"><span class="log-text"><strong class="mono">{{ v.fecha_hora.replace('T', ' ') }}</strong> {{ v.lugar or '' }}<br><a href="{{ url_for('expedientes.ficha', expediente_id=v.expediente_id) }}">{{ v.expediente_titulo }}</a> · {{ v.cliente_nombre }}</span></li>{% endfor %}
+  </ul>
+  <a class="btn btn-ghost ds-mt-12" href="{{ url_for('abogados.vistas') }}">{{ _('Ver la agenda') }}</a>
+  {% else %}<p class="muted">{{ _('Sin vistas señaladas.') }}</p>{% endif %}
+</section>
+</div>
+
+<div class="dash-grid ds-mt-16">
+<section class="dash-panel">
+  <h2>{{ _('Provisión de fondos baja') }}</h2>
+  {% if provision_baja %}
+  <ul class="log-list">{% for b in provision_baja %}<li class="log-item"><span class="log-text"><a href="{{ url_for('expedientes.ficha', expediente_id=b.expediente_id) }}">{{ b.titulo }}</a> · {{ b.cliente_nombre }}</span>{{ chip(b.saldo|importe, 'peligro') }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Ningún asunto por debajo de la provisión mínima.') }} <a href="{{ url_for('abogados.ajustes') }}">{{ _('Configurar') }}</a></p>{% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Minutas') }}</h2>
+  {% if minutas_borrador or minutas_emitidas %}
+  <ul class="log-list">
+    {% for m in minutas_borrador %}<li class="log-item"><span class="log-text"><a href="{{ url_for('abogados.minuta', minuta_id=m.id) }}">{{ _('Borrador') }} · {{ m.cliente_nombre }}</a></span>{{ chip(m.total_centimos|importe) }}</li>{% endfor %}
+    {% for m in minutas_emitidas %}<li class="log-item"><span class="log-text"><a href="{{ url_for('abogados.minuta', minuta_id=m.id) }}">{{ m.numero }} · {{ m.cliente_nombre }}</a> <span class="muted">{{ _('pendiente de cobro') }}</span></span>{{ chip(m.total_centimos|importe, 'aviso') }}</li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Sin minutas pendientes.') }}</p>{% endif %}
+</section>
+</div>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ ngettext('%(n)s asunto abierto', '%(n)s asuntos abiertos', n_asuntos, n=n_asuntos) }}</h2>
+  {% if asuntos %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Asunto') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Próximo plazo') }}</th></tr></thead>
+    <tbody>{% for x in asuntos %}<tr><td><a href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}"><strong>{{ x.titulo }}</strong></a> {{ x.referencia or '' }}</td><td>{{ x.cliente_nombre }}</td><td>{{ x.estado|replace('_', ' ') }}</td><td class="mono">{{ x.proximo_plazo or '—' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}{{ estado_vacio(_('Todavía no hay asuntos'), _('Abre un procedimiento judicial o un asunto extrajudicial desde «Nuevo asunto».'), 'briefcase', _('Nuevo asunto'), url_for('expedientes.nuevo')) }}{% endif %}
+</section>
+{% endblock %}
