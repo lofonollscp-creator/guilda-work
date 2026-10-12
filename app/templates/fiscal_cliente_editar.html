@@ -33,6 +33,33 @@
   {% endif %}
 
   <fieldset>
+    <legend>{{ _('Perfil fiscal') }}</legend>
+    <label for="perfil_tipo">{{ _('Tipo de cliente') }}</label>
+    <select id="perfil_tipo" name="perfil_tipo">
+      {% for t, nombre in (('autonomo', _('Autónomo')), ('sociedad', _('Sociedad')), ('particular', _('Particular'))) %}
+      <option value="{{ t }}" {% if perfil.tipo == t %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+    {% for a, nombre in (('iva', _('Presenta IVA')), ('estimacion_directa', _('Autónomo en estimación directa')), ('retenciones', _('Practica retenciones (trabajadores o profesionales)')), ('alquiler_local', _('Paga el alquiler de un local'))) %}
+    <label class="checkbox-label">
+      <input type="checkbox" name="perfil_atributos" value="{{ a }}" {% if a in perfil.atributos %}checked{% endif %}>
+      {{ nombre }}
+    </label>
+    {% endfor %}
+    {% if modelos_sugeridos %}
+    <p class="subtitle">{{ _('Según el perfil guardado, le corresponderían:') }}</p>
+    <ul>
+      {% for m in modelos_sugeridos %}<li><strong>{{ m.modelo }}</strong> — {{ m.motivo }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    <label class="checkbox-label">
+      <input type="checkbox" name="aplicar_perfil">
+      {{ _('Al guardar, sustituir los modelos de abajo por los que sugiere este perfil') }}
+    </label>
+    <p class="subtitle">{{ _('Es una propuesta sin validar: revísala antes de fiarte. Los vencimientos que caen en fin de semana o festivo se pasan solos al siguiente día hábil.') }}</p>
+  </fieldset>
+
+  <fieldset>
     <legend>{{ _('Modelos que presenta este cliente') }}</legend>
     {% for id_modelo, info in modelos_disponibles.items() %}
     <label class="checkbox-label">

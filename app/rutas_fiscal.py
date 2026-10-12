@@ -18,12 +18,12 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import almacen_documentos, calcom, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, stripe_pagos, verticales
+from . import almacen_documentos, calcom, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from .vencimientos_fiscales import MODELOS_POR_PAIS, generar_vencimientos_propuestos
+from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
 
 fiscal_bp = Blueprint("fiscal", __name__, url_prefix="/fiscal")
@@ -73,9 +73,16 @@ PAISES_CON_CALENDARIO = list(MODELOS_POR_PAIS.keys())
 def clientes():
     q = request.args.get("q") or None
     pais = request.args.get("pais") or None
+    lista = db.listar_clientes_fiscales(g.tenant_id, q=q, pais=pais)
+    venc = db.vencimientos_por_cliente(g.tenant_id)
+    hoy = date.today()
+    semaforos = {c["id"]: perfil_fiscal.semaforo(venc.get(c["id"], []), hoy) for c in lista}
+    estado = request.args.get("estado") or None
+    if estado in perfil_fiscal.SEMAFOROS:
+        lista = [c for c in lista if semaforos[c["id"]]["estado"] == estado]
     return render_template(
         "fiscal_clientes.html",
-        clientes=db.listar_clientes_fiscales(g.tenant_id, q=q, pais=pais),
+        clientes=lista, semaforos=semaforos, filtro_estado=estado,
         filtro_q=q, filtro_pais=pais,
         paises_en_uso=db.paises_clientes_fiscales(g.tenant_id),
     )
@@ -289,6 +296,26 @@ ETIQUETAS_ACCESO = {
 }
 
 
+@fiscal_bp.route("/clientes/<int:cliente_id>/informe-mensual.pdf")
+@login_required
+def informe_mensual_pdf(cliente_id: int):
+    """Informe mensual del cliente en PDF (`?mes=AAAA-MM`, por defecto el mes en curso)."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    hoy = date.today()
+    try:
+        anio, mes = (int(x) for x in (request.args.get("mes") or f"{hoy.year}-{hoy.month:02d}").split("-"))
+        date(anio, mes, 1)
+    except ValueError:
+        abort(400)
+    vencimientos = [dict(v) for v in db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id)]
+    datos = informe_cliente.datos_informe(vencimientos, anio, mes, hoy)
+    pdf = informe_cliente.a_pdf(cliente["nombre"], cliente["nif"], informes.nombre_despacho(g.tenant_id), datos)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "informe_mensual")
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="informe-{anio}-{mes:02d}.pdf"'})
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/accesos.csv")
 @login_required
 def accesos_cliente_csv(cliente_id: int):
@@ -380,10 +407,15 @@ def editar_cliente(cliente_id: int):
         nombre = request.form.get("nombre", "").strip()
         if nombre:
             pais = (request.form.get("pais") or "ES").strip().upper()
+            perfil = perfil_fiscal.perfil_limpio(request.form.get("perfil_tipo"), request.form.getlist("perfil_atributos"))
+            modelos_elegidos = request.form.getlist("modelos_fiscales")
+            if request.form.get("aplicar_perfil"):
+                modelos_elegidos = [m["modelo"] for m in perfil_fiscal.modelos_para_perfil(perfil)]
             db.editar_cliente_fiscal(
                 g.tenant_id, cliente_id,
                 nombre=nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
-                modelos_fiscales=db.serializar_modelos_fiscales(request.form.getlist("modelos_fiscales") or None),
+                modelos_fiscales=db.serializar_modelos_fiscales(modelos_elegidos or None),
+                perfil_fiscal=json.dumps(perfil),
                 # Un país sin calendario configurado no tiene modelos que marcar,
                 # así que tampoco tiene sentido la generación automática --
                 # se desactiva sola en vez de dejar un checkbox activo que
@@ -401,6 +433,8 @@ def editar_cliente(cliente_id: int):
         cliente=cliente, modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
         modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
         paises_con_calendario=PAISES_CON_CALENDARIO,
+        perfil=db.perfil_fiscal_de_cliente(cliente), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
+        modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
     )
 
 
@@ -428,7 +462,7 @@ def generar_vencimientos(cliente_id: int):
         # (modelo_i/periodo_i/fecha_limite_i) -- el usuario pudo haber
         # editado la fecha o quitado alguna fila entera antes de confirmar,
         # así que se guarda tal cual venga del formulario, no lo que
-        # generar_vencimientos_propuestos calculó originalmente.
+        # la función de propuestas calculó originalmente.
         indices = sorted({
             clave.rsplit("_", 1)[1] for clave in request.form if clave.startswith("modelo_")
         }, key=int)
@@ -445,9 +479,10 @@ def generar_vencimientos(cliente_id: int):
     # arrancaba con TODOS los modelos marcados, así que había que
     # desmarcar a mano los que no aplican cada vez que se generaba.
     modelos_cliente = db.modelos_fiscales_de_cliente(cliente)
-    modelos_pedidos = request.args.getlist("modelo") or modelos_cliente or list(modelos_disponibles.keys())
+    sugeridos = [m["modelo"] for m in perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente))]
+    modelos_pedidos = request.args.getlist("modelo") or modelos_cliente or sugeridos or list(modelos_disponibles.keys())
     anio = request.args.get("anio", type=int) or date.today().year
-    propuestas = generar_vencimientos_propuestos(modelos_pedidos, anio, pais=cliente["pais"])
+    propuestas = nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos_pedidos, anio, cliente["pais"])
     return render_template(
         "fiscal_generar_vencimientos.html",
         cliente=cliente, propuestas=propuestas, anio=anio,
@@ -458,7 +493,7 @@ def generar_vencimientos(cliente_id: int):
 @fiscal_bp.route("/generar-vencimientos-masivo", methods=["GET", "POST"])
 @login_required
 def generar_vencimientos_masivo():
-    """Aplica generar_vencimientos_propuestos() a TODOS los clientes del
+    """Aplica el cálculo de propuestas a TODOS los clientes del
     tenant que tengan modelos_fiscales definido, de una sola vez -- antes
     había que entrar cliente a cliente en "Generar vencimientos". No
     reescribe la función pura, solo la llama una vez por cliente."""
@@ -472,14 +507,14 @@ def generar_vencimientos_masivo():
         anio = request.form.get("anio", type=int) or date.today().year
         creados = 0
         for cliente, modelos in clientes_con_modelos:
-            for p in generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]):
+            for p in nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos, anio, cliente["pais"]):
                 db.crear_vencimiento_fiscal(g.tenant_id, cliente["id"], p["modelo"], p["periodo"], p["fecha_limite"])
                 creados += 1
         return redirect(url_for("fiscal.vencimientos"))
 
     anio = request.args.get("anio", type=int) or date.today().year
     previa = [
-        {"cliente": cliente, "propuestas": generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"])}
+        {"cliente": cliente, "propuestas": nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos, anio, cliente["pais"])}
         for cliente, modelos in clientes_con_modelos
     ]
     return render_template("fiscal_generar_vencimientos_masivo.html", previa=previa, anio=anio)

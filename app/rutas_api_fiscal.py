@@ -6,10 +6,10 @@ from datetime import date
 
 from flask import Response, abort, g, request
 
-from . import almacen_documentos, db, nextcloud, notificaciones_email
+from . import almacen_documentos, db, nextcloud, notificaciones_email, nucleo
 from .auth import token_required
 from .rutas_api import _body, _dict, _dicts, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
-from .vencimientos_fiscales import MODELOS_POR_PAIS, generar_vencimientos_propuestos, modelos_disponibles as modelos_disponibles_para_pais
+from .vencimientos_fiscales import MODELOS_POR_PAIS, modelos_disponibles as modelos_disponibles_para_pais
 
 # Tipos que un navegador interpretaría como página: se sirven siempre como descarga genérica (igual que la web).
 _TIPOS_PELIGROSOS = ("text/html", "application/xhtml+xml", "image/svg+xml", "text/xml", "application/xml", "text/javascript")
@@ -148,7 +148,7 @@ def propuestas_vencimientos():
     cliente = _cliente_o_404(request.args.get("cliente_id", type=int) or 0)
     modelos = [m for m in (request.args.get("modelos") or "").split(",") if m] or db.modelos_fiscales_de_cliente(cliente)
     anio = request.args.get("anio", type=int) or date.today().year
-    propuestas = generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"])
+    propuestas = nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos, anio, cliente["pais"])
     return _ok([{**p, "ya_existe": db.vencimiento_fiscal_existente(g.tenant_id, cliente["id"], p["modelo"], p["periodo"]) is not None} for p in propuestas])
 
 
@@ -163,7 +163,7 @@ def generar_vencimientos_masivo():
     creados = omitidos = 0
     for cliente in db.listar_clientes_fiscales(g.tenant_id):
         modelos = db.modelos_fiscales_de_cliente(cliente)
-        for p in (generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]) if modelos else []):
+        for p in (nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos, anio, cliente["pais"]) if modelos else []):
             if db.vencimiento_fiscal_existente(g.tenant_id, cliente["id"], p["modelo"], p["periodo"]) is not None:
                 omitidos += 1
                 continue

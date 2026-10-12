@@ -182,5 +182,15 @@
   "perfilNotificacionesVencimientos": "Échéances fiscales à venir",
   "perfilNotificacionesTiquets": "Changements de statut sur mes tickets",
   "perfilNotificacionesResumenSemanal": "Résumé hebdomadaire de l'assistant IA",
-  "perfilCredencialesAviso": "Pour changer votre mot de passe ou email, connectez-vous depuis le web."
+  "perfilCredencialesAviso": "Pour changer votre mot de passe ou email, connectez-vous depuis le web.",
+  "login2faLabel": "Code de vérification",
+  "login2faAyuda": "Ce compte a la vérification en deux étapes. Saisissez le code de votre application d'authentification ou un code de récupération.",
+  "fichajeSemanaTitulo": "Cette semaine",
+  "fichajeSemanaDeContratadas": "{horas} sur {contratadas}",
+  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "fichajeSemanaSinJornada": "Aucune durée hebdomadaire indiquée dans Mes données",
+  "fichajeSemanaExcedida": "Vous dépassez de {horas} votre durée de travail",
+  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "fichajeSemanaRestan": "Il vous reste {horas}",
+  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
 }

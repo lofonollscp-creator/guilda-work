@@ -5,17 +5,10 @@ db.fichajes_tenant_crudos()."""
 import csv
 import io
 import json
+import re
 from datetime import datetime, timedelta
 
-from xml.sax.saxutils import escape as _esc
-
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
-from . import db
+from . import db, informes
 
 
 def _fila_vacia(uid: int, fecha_dia: str, f: dict) -> dict:
@@ -241,37 +234,12 @@ def a_pdf(tenant_id: int | None, desde: str | None = None, hasta: str | None = N
     tenant = db.obtener_tenant(tenant_id) if tenant_id else None
     empresa, identificacion, periodo = _cabecera(tenant, desde, hasta)
     filas = filas_diarias(tenant_id, desde, hasta, usuario_id)
+    columnas = ["Fecha", "Trabajador", "DNI/NIE", "Entrada", "Salida", "Horas trab.", "Horas pausa"]
+    datos = [[
+        f["fecha"], f["nombre_completo"] or f["email"], f["dni_nie"] or "",
+        f["primera_entrada"].strftime("%H:%M") if f["primera_entrada"] else "", f["ultima_salida"].strftime("%H:%M") if f["ultima_salida"] else "",
+        f"{round(f['segundos_trabajados'] / 3600, 2)}h", f"{round(f['segundos_pausa'] / 3600, 2)}h",
+    ] for f in filas]
+    subtitulo = " · ".join(x for x in (identificacion, re.sub(r"<[^>]+>", "", periodo or "")) if x)
+    return informes.construir_pdf(f"Registro de fichaje — {empresa}", [("tabla", columnas, datos)], despacho=empresa, subtitulo=subtitulo, apaisado=True)
 
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title="Registro de fichaje")
-    estilos = getSampleStyleSheet()
-    elementos = [
-        Paragraph(_esc(f"Registro de fichaje — {empresa}"), estilos["Title"]),
-    ]
-    if identificacion:
-        elementos.append(Paragraph(_esc(identificacion), estilos["Normal"]))
-    elementos.append(Paragraph(periodo, estilos["Normal"]))
-    elementos.append(Spacer(1, 0.6 * cm))
-
-    datos_tabla = [["Fecha", "Trabajador", "DNI/NIE", "Entrada", "Salida", "Horas trab.", "Horas pausa"]]
-    for f in filas:
-        datos_tabla.append([
-            f["fecha"],
-            f["nombre_completo"] or f["email"],
-            f["dni_nie"] or "",
-            f["primera_entrada"].strftime("%H:%M") if f["primera_entrada"] else "",
-            f["ultima_salida"].strftime("%H:%M") if f["ultima_salida"] else "",
-            f"{round(f['segundos_trabajados'] / 3600, 2)}h",
-            f"{round(f['segundos_pausa'] / 3600, 2)}h",
-        ])
-    tabla = Table(datos_tabla, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1d23")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d8dbe1")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f8fa")]),
-    ]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    return buf.getvalue()

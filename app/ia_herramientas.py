@@ -469,6 +469,44 @@ HERRAMIENTAS: list[dict] = [
         {"cliente_id": _param("integer", "Id del cliente fiscal.")},
         ["cliente_id"],
     ),
+    # Núcleo del despacho (clientes, expedientes y plazos): solo lectura, igual para gestoría, abogados e inmobiliaria.
+    _tool(
+        "listar_clientes_despacho",
+        "Lista o busca clientes del despacho (la ficha común: sirve en gestoría, gabinete de abogados e inmobiliaria).",
+        {"q": _param("string", "Nombre, NIF, correo, teléfono o contacto, opcional."), "limite": _param("integer", "Máximo de filas (por defecto 25).")},
+        [],
+    ),
+    _tool(
+        "resumen_cliente_despacho",
+        "Resumen de un cliente del despacho: ficha, contactos, expedientes y plazos abiertos. Úsalo para «resume este cliente» o «cómo va X».",
+        {"cliente_id": _param("integer", "Id del cliente.")},
+        ["cliente_id"],
+    ),
+    _tool(
+        "listar_expedientes_despacho",
+        "Lista expedientes (asuntos en un gabinete de abogados, operaciones en una inmobiliaria) visibles para la persona, con filtros.",
+        {
+            "cliente_id": _param("integer", "Solo los de este cliente, opcional."), "estado": _param("string", "Estado del expediente, opcional."),
+            "tipo": _param("string", "Tipo de expediente, opcional."), "q": _param("string", "Texto del título, referencia o cliente, opcional."),
+            "limite": _param("integer", "Máximo de filas (por defecto 25)."),
+        },
+        [],
+    ),
+    _tool(
+        "resumen_expediente_despacho",
+        "Resumen de un expediente: datos, equipo, plazos abiertos y últimas anotaciones. Úsalo para «resume este asunto/operación».",
+        {"expediente_id": _param("integer", "Id del expediente.")},
+        ["expediente_id"],
+    ),
+    _tool(
+        "listar_plazos_despacho",
+        "Plazos del despacho (procesales, de contratos, de gestión), los más urgentes primero.",
+        {
+            "estado": _param("string", "abiertos (por defecto), vencido, hoy, proximo o cumplido."), "dias": _param("integer", "Solo los que vencen en estos días (30 por defecto; 0 = sin límite)."),
+            "cliente_id": _param("integer", "Solo de este cliente, opcional."), "expediente_id": _param("integer", "Solo de este expediente, opcional."),
+        },
+        [],
+    ),
     _tool(
         "listar_plantillas_correo",
         "Lista las plantillas de respuesta de correo guardadas del usuario actual (nombre, asunto y cuerpo).",
@@ -762,6 +800,7 @@ LECTURA: set[str] = {
     "buscar_semantico", "listar_papelera", "estadisticas_por_categoria", "estadisticas_por_dia",
     "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
     "resumen_cliente_fiscal", "listar_plantillas_correo", "listar_tareas_recurrentes",
+    "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
     "listar_facturas_cliente",
     "crm_listar_leads", "crm_listar_contactos", "crm_listar_cuentas",
     "drive_listar_archivos", "drive_buscar_archivos", "enviar_archivo_drive_al_chat",

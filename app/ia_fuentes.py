@@ -56,6 +56,10 @@ def _de_fila(nombre_herramienta: str, f: dict) -> tuple[str, str, str] | None:
         return "tarea", _limpio(f.get("asunto")) or f"#{id_}", f"/tareas/{id_}/editar"
     if nombre_herramienta in ("listar_clientes_fiscales", "resumen_cliente_fiscal") and isinstance(id_, int):
         return "cliente", _limpio(f.get("nombre")) or f"#{id_}", f"/fiscal/clientes/{id_}"
+    if nombre_herramienta in ("listar_clientes_despacho", "resumen_cliente_despacho") and isinstance(id_, int):
+        return "cliente", _limpio(f.get("nombre")) or f"#{id_}", f"/clientes/{id_}"
+    if nombre_herramienta == "listar_expedientes_despacho" and isinstance(id_, int):
+        return "expediente", _limpio(f.get("titulo")) or f"#{id_}", f"/expedientes/{id_}"
     if nombre_herramienta == "listar_vencimientos_fiscales" and isinstance(f.get("cliente_fiscal_id"), int):
         titulo = _limpio(" · ".join(str(x) for x in (f.get("modelo"), f.get("cliente_nombre")) if x)) or "Vencimiento"
         return "vencimiento", titulo, f"/fiscal/clientes/{f['cliente_fiscal_id']}"

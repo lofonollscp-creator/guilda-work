@@ -100,6 +100,9 @@ class TareaOutlook {
   final String? fechaVencimiento;
   final String? categoriaOutlook;
 
+  /// Solo viene si se pidió un ámbito distinto de `propias`: `dueno`, `asignada` o `compartida`.
+  final String? rol;
+
   TareaOutlook({
     required this.id,
     required this.asunto,
@@ -110,6 +113,7 @@ class TareaOutlook {
     this.fechaInicio,
     this.fechaVencimiento,
     this.categoriaOutlook,
+    this.rol,
   });
 
   factory TareaOutlook.fromJson(Map<String, dynamic> json) => TareaOutlook(
@@ -122,7 +126,62 @@ class TareaOutlook {
     fechaInicio: json['fecha_inicio'] as String?,
     fechaVencimiento: json['fecha_vencimiento'] as String?,
     categoriaOutlook: json['categoria_outlook'] as String?,
+    rol: json['rol'] as String?,
   );
+}
+
+/// Un día de la semana en el resumen de fichaje (`hoy` marca el día en curso).
+class DiaSemanaFichaje {
+  final String fecha;
+  final double segundos;
+  final bool hoy;
+
+  DiaSemanaFichaje({required this.fecha, required this.segundos, required this.hoy});
+
+  factory DiaSemanaFichaje.fromJson(Map<String, dynamic> json) => DiaSemanaFichaje(
+    fecha: json['fecha'] as String,
+    segundos: (json['segundos'] as num? ?? 0).toDouble(),
+    hoy: json['hoy'] as bool? ?? false,
+  );
+}
+
+/// Horas de la semana en curso frente a la jornada contratada (si la hay).
+class ResumenSemanaFichaje {
+  final double segundos;
+  final double? contratados;
+  final double? diferencia;
+  final int? porcentaje;
+  final bool enCurso;
+  final List<DiaSemanaFichaje> dias;
+
+  ResumenSemanaFichaje({
+    required this.segundos,
+    this.contratados,
+    this.diferencia,
+    this.porcentaje,
+    required this.enCurso,
+    required this.dias,
+  });
+
+  factory ResumenSemanaFichaje.fromJson(Map<String, dynamic> json) => ResumenSemanaFichaje(
+    segundos: (json['segundos'] as num? ?? 0).toDouble(),
+    contratados: (json['contratados'] as num?)?.toDouble(),
+    diferencia: (json['diferencia'] as num?)?.toDouble(),
+    porcentaje: (json['porcentaje'] as num?)?.toInt(),
+    enCurso: json['en_curso'] as bool? ?? false,
+    dias: (json['dias'] as List? ?? [])
+        .map((d) => DiaSemanaFichaje.fromJson(d as Map<String, dynamic>))
+        .toList(),
+  );
+
+  /// Si se pasa de la jornada contratada.
+  bool get excedida => diferencia != null && diferencia! > 0;
+}
+
+/// «7 h 05 min» a partir de segundos (redondeando a minutos).
+String formatoHoras(double segundos) {
+  final minutos = (segundos / 60).round();
+  return '${minutos ~/ 60} h ${(minutos % 60).toString().padLeft(2, '0')} min';
 }
 
 const estadosTareaOutlook = [

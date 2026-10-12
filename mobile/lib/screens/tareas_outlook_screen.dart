@@ -23,6 +23,9 @@ class _TareasOutlookScreenState extends State<TareasOutlookScreen> {
   final _buscarController = TextEditingController();
   String _prioridadNueva = 'normal';
   bool _verCompletadas = false;
+
+  /// propias | asignadas | compartidas | todas (el mismo `ambito` que la API).
+  String _ambito = 'propias';
   String? _error;
 
   @override
@@ -34,6 +37,7 @@ class _TareasOutlookScreenState extends State<TareasOutlookScreen> {
   Future<List<TareaOutlook>> _cargar() {
     return widget.api.listarTareasOutlook(
       q: _buscarController.text.trim().isEmpty ? null : _buscarController.text.trim(),
+      ambito: _ambito == 'propias' ? null : _ambito,
     ).then((tareas) => _verCompletadas ? tareas : tareas.where((t) => t.estado != 'completada').toList());
   }
 
@@ -116,6 +120,24 @@ class _TareasOutlookScreenState extends State<TareasOutlookScreen> {
                   Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ],
                 const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(value: 'propias', label: Text('Mías')),
+                      ButtonSegment(value: 'asignadas', label: Text('Asignadas')),
+                      ButtonSegment(value: 'compartidas', label: Text('Compartidas')),
+                      ButtonSegment(value: 'todas', label: Text('Todas')),
+                    ],
+                    selected: {_ambito},
+                    onSelectionChanged: (v) {
+                      setState(() => _ambito = v.first);
+                      _recargar();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _buscarController,
                   decoration: const InputDecoration(
@@ -195,6 +217,8 @@ class _TareasOutlookScreenState extends State<TareasOutlookScreen> {
           runSpacing: 4,
           children: [
             _pastillaPrioridad(t.prioridad),
+            if (t.rol == 'asignada') const StatusBadge(texto: 'Asignada a mí', tono: BadgeTono.aviso),
+            if (t.rol == 'compartida') const StatusBadge(texto: 'Compartida conmigo', tono: BadgeTono.neutro),
             if (t.categoriaOutlook != null) Text(t.categoriaOutlook!),
             if (t.fechaVencimiento != null) Text('Vence ${t.fechaVencimiento!.substring(0, 10)}'),
           ],

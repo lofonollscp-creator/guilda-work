@@ -73,6 +73,13 @@ CASOS: list[tuple[str, str]] = [
     ("dónde está la configuración del perfil", "abrir_pantalla"),
     ("pon mi idioma en catalán", "cambiar_mis_ajustes"),
     ("qué ajustes de notificaciones tengo", "ver_mis_ajustes"),
+    # núcleo del despacho (clientes, expedientes, plazos) en gestoría, abogados e inmobiliaria
+    ("resume este cliente", "resumen_cliente_despacho"),
+    ("busca la ficha de Carmen Soler", "listar_clientes_despacho"),
+    ("qué asuntos abiertos tenemos con el cliente Vidal", "listar_expedientes_despacho"),
+    ("cómo va el expediente de la reclamación de cantidad", "resumen_expediente_despacho"),
+    ("qué plazos procesales vencen esta semana", "listar_plazos_despacho"),
+    ("qué operaciones de inmueble tenemos en visitas", "listar_expedientes_despacho"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

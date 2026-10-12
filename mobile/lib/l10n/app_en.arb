@@ -182,5 +182,15 @@
   "perfilNotificacionesVencimientos": "Upcoming tax deadlines",
   "perfilNotificacionesTiquets": "Status changes on my tickets",
   "perfilNotificacionesResumenSemanal": "Weekly AI assistant summary",
-  "perfilCredencialesAviso": "To change your password or email, sign in from the web."
+  "perfilCredencialesAviso": "To change your password or email, sign in from the web.",
+  "login2faLabel": "Verification code",
+  "login2faAyuda": "This account has two-step verification. Enter the code from your authenticator app or a recovery code.",
+  "fichajeSemanaTitulo": "This week",
+  "fichajeSemanaDeContratadas": "{horas} of {contratadas}",
+  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "fichajeSemanaSinJornada": "No weekly hours set in My details",
+  "fichajeSemanaExcedida": "You are {horas} over your hours",
+  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "fichajeSemanaRestan": "{horas} left",
+  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
 }

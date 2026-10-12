@@ -9800,3 +9800,84 @@ msgstr "Download report (PDF)"
 
 msgid "Vacío = el mes en curso. No incluye los nombres de los interesados."
 msgstr "Empty = the current month. It does not include the names of interested parties."
+
+msgid "Repercute o soporta IVA: declaración trimestral"
+msgstr "Charges or bears VAT: quarterly return"
+
+msgid "Si presenta el 303, resumen anual de IVA"
+msgstr "If it files the 303, annual VAT summary"
+
+msgid "Autónomo en estimación directa: pago fraccionado de IRPF"
+msgstr "Self-employed under direct estimation: income tax instalment"
+
+msgid "Practica retenciones a trabajadores o profesionales"
+msgstr "Withholds tax from employees or professionals"
+
+msgid "Paga un alquiler de local con retención"
+msgstr "Pays premises rent with withholding"
+
+msgid "Sociedad: Impuesto sobre Sociedades anual"
+msgstr "Company: annual corporate income tax"
+
+msgid "Informe mensual (PDF)"
+msgstr "Monthly report (PDF)"
+
+msgid "Perfil fiscal"
+msgstr "Tax profile"
+
+msgid "Tipo de cliente"
+msgstr "Client type"
+
+msgid "Autónomo"
+msgstr "Self-employed"
+
+msgid "Sociedad"
+msgstr "Company"
+
+msgid "Particular"
+msgstr "Individual"
+
+msgid "Presenta IVA"
+msgstr "Files VAT"
+
+msgid "Autónomo en estimación directa"
+msgstr "Self-employed under direct estimation"
+
+msgid "Practica retenciones (trabajadores o profesionales)"
+msgstr "Withholds tax (employees or professionals)"
+
+msgid "Paga el alquiler de un local"
+msgstr "Pays rent for premises"
+
+msgid "Según el perfil guardado, le corresponderían:"
+msgstr "According to the saved profile, these would apply:"
+
+msgid "Al guardar, sustituir los modelos de abajo por los que sugiere este perfil"
+msgstr "On saving, replace the forms below with those this profile suggests"
+
+msgid "Es una propuesta sin validar: revísala antes de fiarte. Los vencimientos que caen en fin de semana o festivo se pasan solos al siguiente día hábil."
+msgstr "This is an unvalidated suggestion: review it before relying on it. Deadlines falling on a weekend or holiday move automatically to the next working day."
+
+msgid "Atrasados"
+msgstr "Overdue"
+
+msgid "Vencen pronto"
+msgstr "Due soon"
+
+msgid "Al día"
+msgstr "Up to date"
+
+msgid "Sin vencimientos"
+msgstr "No deadlines"
+
+msgid "Atrasado"
+msgstr "Overdue"
+
+msgid "Vence pronto"
+msgstr "Due soon"
+
+msgid "Cae en día inhábil (fin de semana o festivo): se ha pasado al siguiente día hábil."
+msgstr "Falls on a non-working day (weekend or holiday): moved to the next working day."
+
+msgid "desplazada desde"
+msgstr "moved from"

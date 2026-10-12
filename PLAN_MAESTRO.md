@@ -291,7 +291,7 @@ Regla de diseño: **los niveles cambian qué hay en claro en reposo, no qué se 
 
 ## 9. Calendario de la semana
 
-**Estado a 12 de octubre (días 1 a 5 hechos y commiteados):** sistema de diseño y candado (Día 1-2), núcleo común y módulos de negocio (Día 3), Gabinete de abogados (Día 4), Inmobiliaria (Día 5). Quedan el Día 6 (mejoras de gestoría, informes unificados, asistente con contexto, móvil) y el Día 7 (cifrado de documentos, RGPD, rendimiento, accesibilidad, cierre). Los detalles de cada día están en `HOSTING.md`.
+**Estado a 12 de octubre (días 1 a 5 hechos y commiteados; Día 6 hecho salvo lo anotado en HOSTING.md):** sistema de diseño y candado (Día 1-2), núcleo común y módulos de negocio (Día 3), Gabinete de abogados (Día 4), Inmobiliaria (Día 5). Queda el Día 7 (cifrado de documentos, RGPD, rendimiento, accesibilidad, cierre). Los detalles de cada día están en `HOSTING.md`.
 
 | Día | Foco | Entregable verificable |
 |---|---|---|

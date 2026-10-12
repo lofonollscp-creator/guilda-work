@@ -15,7 +15,14 @@ class ApiException implements Exception {
   /// acción offline en vez de mostrar el error tal cual (un error de
   /// negocio, ej. secuencia de fichaje inválida, sigue mostrándose normal).
   final bool esDeConexion;
-  ApiException(this.mensaje, {this.esDeConexion = false});
+
+  /// Clave estable que manda la API en `codigo` (p. ej. `requiere_2fa`): es lo
+  /// que debe leer el programa; `mensaje` es solo para mostrar a la persona.
+  final String? codigo;
+  ApiException(this.mensaje, {this.esDeConexion = false, this.codigo});
+
+  /// La cuenta tiene verificación en dos pasos y falta el código.
+  bool get requiere2fa => codigo == 'requiere_2fa';
 
   @override
   String toString() => mensaje;
@@ -98,7 +105,7 @@ class ApiClient {
   Object _errorLegible(DioException e) {
     final datos = e.response?.data;
     if (datos is Map && datos['error'] != null) {
-      return ApiException(datos['error'].toString());
+      return ApiException(datos['error'].toString(), codigo: datos['codigo']?.toString());
     }
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.connectionError) {
@@ -110,14 +117,22 @@ class ApiClient {
     return ApiException('Error de red: ${e.message}', esDeConexion: true);
   }
 
+  /// `codigo2fa`: el de la app de autenticación (o uno de recuperación) si la
+  /// cuenta tiene verificación en dos pasos; sin él la API contesta con el
+  /// código `requiere_2fa` (ver [ApiException.requiere2fa]).
   Future<(String token, Usuario usuario)> login(
     String email,
-    String contrasena,
-  ) async {
+    String contrasena, {
+    String? codigo2fa,
+  }) async {
     try {
       final resp = await _dio.post(
         '/auth/login',
-        data: {'email': email, 'contrasena': contrasena},
+        data: {
+          'email': email,
+          'contrasena': contrasena,
+          if (codigo2fa != null && codigo2fa.isNotEmpty) 'codigo_2fa': codigo2fa,
+        },
       );
       final datos = resp.data['data'] as Map<String, dynamic>;
       return (
@@ -306,16 +321,19 @@ class ApiClient {
 
   // --- Tareas Outlook (Fase 4d) ----------------------------------------------
 
+  /// `ambito`: `propias` (por defecto), `asignadas`, `compartidas` o `todas`.
   Future<List<TareaOutlook>> listarTareasOutlook({
     String? estado,
     String? prioridad,
     String? categoria,
     String? q,
+    String? ambito,
   }) async {
     try {
       final resp = await _dio.get(
         '/tareas-outlook',
         queryParameters: {
+          'ambito': ?ambito,
           'estado': ?estado,
           'prioridad': ?prioridad,
           'categoria': ?categoria,
@@ -703,6 +721,16 @@ class ApiClient {
       final resp = await _dio.get('/fichaje/estado');
       final datos = resp.data['data'] as Map<String, dynamic>;
       return (datos['estado'] as String, datos['datos_completos'] as bool);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// Horas de la semana en curso frente a la jornada contratada y su reparto por días.
+  Future<ResumenSemanaFichaje> obtenerResumenSemanaFichaje() async {
+    try {
+      final resp = await _dio.get('/fichaje/resumen-semana');
+      return ResumenSemanaFichaje.fromJson(resp.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _errorLegible(e);
     }

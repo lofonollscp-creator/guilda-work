@@ -30,6 +30,7 @@ class FichajeScreen extends StatefulWidget {
 class _FichajeScreenState extends State<FichajeScreen> {
   late Future<(String, bool)> _estado;
   Future<List<FichajeEvento>>? _hoy;
+  Future<ResumenSemanaFichaje>? _semana;
   String? _error;
   bool _marcando = false;
   int _pendientes = 0;
@@ -57,7 +58,10 @@ class _FichajeScreenState extends State<FichajeScreen> {
     final estado = await widget.api.obtenerEstadoFichaje();
     if (estado.$2) {
       final hoy = DateTime.now().toIso8601String().substring(0, 10);
-      setState(() => _hoy = widget.api.listarMisFichajes(desde: hoy, hasta: hoy));
+      setState(() {
+        _hoy = widget.api.listarMisFichajes(desde: hoy, hasta: hoy);
+        _semana = widget.api.obtenerResumenSemanaFichaje();
+      });
     }
     return estado;
   }
@@ -220,7 +224,9 @@ class _FichajeScreenState extends State<FichajeScreen> {
                     _botonFichar(t.fichajeSalidaBoton, _colorPeligro(context), estado != 'fuera', () => _marcar('salida')),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                if (_semana != null) _tarjetaSemana(t),
+                const SizedBox(height: 24),
                 Text(t.fichajeHoyTitulo, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (_hoy != null)
@@ -258,6 +264,70 @@ class _FichajeScreenState extends State<FichajeScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// Resumen de la semana en curso: horas frente a la jornada contratada y barras por día. Es un extra: si falla, no se muestra.
+  Widget _tarjetaSemana(AppLocalizations t) {
+    return FutureBuilder<ResumenSemanaFichaje>(
+      future: _semana,
+      builder: (context, snap) {
+        final r = snap.data;
+        if (r == null) return const SizedBox.shrink();
+        final tema = Theme.of(context);
+        final mayor = r.dias.fold<double>(8 * 3600, (m, d) => d.segundos > m ? d.segundos : m);
+        final contratados = r.contratados;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.fichajeSemanaTitulo, style: tema.textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(
+                  contratados == null ? formatoHoras(r.segundos) : t.fichajeSemanaDeContratadas(formatoHoras(r.segundos), formatoHoras(contratados)),
+                  style: AppTheme.cifra(fontSize: 20),
+                ),
+                if (r.porcentaje != null) ...[
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(value: r.porcentaje! / 100, minHeight: 8, borderRadius: BorderRadius.circular(4)),
+                  const SizedBox(height: 6),
+                  Text(
+                    r.excedida ? t.fichajeSemanaExcedida(formatoHoras(r.diferencia!)) : t.fichajeSemanaRestan(formatoHoras(-r.diferencia!)),
+                    style: tema.textTheme.bodySmall,
+                  ),
+                ] else ...[
+                  const SizedBox(height: 6),
+                  Text(t.fichajeSemanaSinJornada, style: tema.textTheme.bodySmall),
+                ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 56,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      for (final d in r.dias)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 3),
+                            child: Container(
+                              height: 4 + 52 * (d.segundos / mayor).clamp(0.0, 1.0),
+                              decoration: BoxDecoration(
+                                color: d.hoy ? tema.colorScheme.primary : tema.colorScheme.primary.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -814,6 +814,14 @@ def calendario_del_despacho(tenant_id: int, tipo: str = "general", anios: tuple[
     return cp.calendario_procesal(anios, propios) if tipo == "procesal" else cp.calendario_general(anios, propios)
 
 
+def propuestas_vencimientos_ajustadas(tenant_id: int, modelos: list[str], anio: int, pais: str = "ES") -> list[dict]:
+    """Propuestas del calendario fiscal con la fecha desplazada al siguiente día hábil (fines de semana, festivos nacionales y los del despacho).
+    Las desplazadas llevan `fecha_original`. Es el único sitio que calcula propuestas para guardar: pantallas, API y generación automática."""
+    from . import perfil_fiscal
+    from .vencimientos_fiscales import generar_vencimientos_propuestos
+    return perfil_fiscal.ajustar_a_calendario(generar_vencimientos_propuestos(modelos, anio, pais=pais), calendario_del_despacho(tenant_id, anios=(anio, anio + 1)))
+
+
 # --- Plazos --------------------------------------------------------------------------------------------------------------------------------------------
 def _parse_avisos(avisos) -> str:
     if isinstance(avisos, str):

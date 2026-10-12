@@ -182,5 +182,15 @@
   "perfilNotificacionesVencimientos": "Venciments fiscals propers",
   "perfilNotificacionesTiquets": "Canvis d'estat als meus tiquets",
   "perfilNotificacionesResumenSemanal": "Resum setmanal de l'assistent d'IA",
-  "perfilCredencialesAviso": "Per canviar la contrasenya o l'email, entra des de la web."
+  "perfilCredencialesAviso": "Per canviar la contrasenya o l'email, entra des de la web.",
+  "login2faLabel": "Codi de verificació",
+  "login2faAyuda": "Aquest compte té la verificació en dos passos. Escriu el codi de la teva app d'autenticació o un de recuperació.",
+  "fichajeSemanaTitulo": "Aquesta setmana",
+  "fichajeSemanaDeContratadas": "{horas} de {contratadas}",
+  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "fichajeSemanaSinJornada": "Sense jornada setmanal indicada a Les meves dades",
+  "fichajeSemanaExcedida": "Et passes {horas} de la teva jornada",
+  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "fichajeSemanaRestan": "Et queden {horas}",
+  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
 }

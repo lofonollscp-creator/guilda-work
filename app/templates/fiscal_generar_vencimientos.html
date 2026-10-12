@@ -34,7 +34,7 @@
     <li class="log-item">
       <input type="hidden" name="modelo_{{ loop.index0 }}" value="{{ p.modelo }}">
       <input type="hidden" name="periodo_{{ loop.index0 }}" value="{{ p.periodo }}">
-      <span class="log-text">{{ p.modelo }} — {{ p.periodo }}</span>
+      <span class="log-text">{{ p.modelo }} — {{ p.periodo }}{% if p.fecha_original %} <span class="pill" title="{{ _('Cae en día inhábil (fin de semana o festivo): se ha pasado al siguiente día hábil.') }}">{{ _('desplazada desde') }} {{ p.fecha_original }}</span>{% endif %}</span>
       <label>{{ _('Fecha límite') }}
         <input type="date" name="fecha_limite_{{ loop.index0 }}" value="{{ p.fecha_limite }}">
       </label>

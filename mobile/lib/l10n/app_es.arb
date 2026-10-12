@@ -189,5 +189,15 @@
   "perfilNotificacionesVencimientos": "Vencimientos fiscales próximos",
   "perfilNotificacionesTiquets": "Cambios de estado en mis tiquets",
   "perfilNotificacionesResumenSemanal": "Resumen semanal del asistente de IA",
-  "perfilCredencialesAviso": "Para cambiar tu contraseña o email, entra desde la web."
+  "perfilCredencialesAviso": "Para cambiar tu contraseña o email, entra desde la web.",
+  "login2faLabel": "Código de verificación",
+  "login2faAyuda": "Esta cuenta tiene la verificación en dos pasos. Escribe el código de tu app de autenticación o uno de recuperación.",
+  "fichajeSemanaTitulo": "Esta semana",
+  "fichajeSemanaDeContratadas": "{horas} de {contratadas}",
+  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "fichajeSemanaSinJornada": "Sin jornada semanal indicada en Mis datos",
+  "fichajeSemanaExcedida": "Te pasas {horas} de tu jornada",
+  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "fichajeSemanaRestan": "Te quedan {horas}",
+  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
 }

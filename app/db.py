@@ -1957,6 +1957,8 @@ def init_db() -> None:
         # implícitamente España-only). Código ISO 3166-1 alfa-2 en
         # mayúsculas (validado/normalizado en la ruta, no aquí).
         _asegurar_columna(conn, "clientes_fiscales", "pais", "TEXT NOT NULL DEFAULT 'ES'")
+        # Perfil fiscal (app/perfil_fiscal.py): JSON {"tipo", "atributos"} de donde se deducen los modelos propuestos.
+        _asegurar_columna(conn, "clientes_fiscales", "perfil_fiscal", "TEXT")
         # Firma electrónica desde un vencimiento (app/documenso.py) --
         # id del envelope de Documenso una vez enviado a firma, para
         # poder consultar su estado/descargarlo sin volver a crearlo.
@@ -8259,7 +8261,7 @@ def listar_categorias_outlook(usuario_id: int) -> list[str]:
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma",
+    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma", "perfil_fiscal",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -8293,6 +8295,33 @@ def modelos_fiscales_de_cliente(cliente: sqlite3.Row) -> list[str]:
         return json.loads(valor)
     except (TypeError, ValueError):
         return []
+
+
+def perfil_fiscal_de_cliente(cliente: sqlite3.Row) -> dict:
+    """Perfil fiscal guardado (`{"tipo", "atributos"}`); sin perfil o con JSON ilegible, uno vacío de particular."""
+    from . import perfil_fiscal
+    valor = cliente["perfil_fiscal"] if "perfil_fiscal" in cliente.keys() else None
+    try:
+        datos = json.loads(valor) if valor else {}
+    except (TypeError, ValueError):
+        datos = {}
+    return perfil_fiscal.perfil_limpio(datos.get("tipo"), datos.get("atributos") or ())
+
+
+def vencimientos_por_cliente(tenant_id: int) -> dict[int, list[dict]]:
+    """`{cliente_fiscal_id: [{estado, fecha_limite}]}` de todos los vencimientos vivos del despacho, en una sola consulta (para el semáforo)."""
+    conn = get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT cliente_fiscal_id, estado, fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND papelera_en IS NULL",
+            (tenant_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    res: dict[int, list[dict]] = {}
+    for f in filas:
+        res.setdefault(f["cliente_fiscal_id"], []).append({"estado": f["estado"], "fecha_limite": f["fecha_limite"]})
+    return res
 
 
 def crear_cliente_fiscal(
@@ -8783,7 +8812,7 @@ def generar_vencimientos_automaticos() -> int:
     # propósito (ver su docstring, "nunca un cron que auto-genera") y no
     # importa db.py -- este orquestador vive aquí, no allí, precisamente
     # para no romper esa separación.
-    from .vencimientos_fiscales import generar_vencimientos_propuestos
+    from . import nucleo
 
     anio_actual = datetime.now().year
     creados = 0
@@ -8801,7 +8830,7 @@ def generar_vencimientos_automaticos() -> int:
         if not modelos:
             continue
         for anio in (anio_actual - 1, anio_actual):
-            for propuesta in generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]):
+            for propuesta in nucleo.propuestas_vencimientos_ajustadas(cliente["tenant_id"], modelos, anio, cliente["pais"]):
                 if _existe_vencimiento_fiscal(
                     cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"]
                 ):
@@ -9998,7 +10027,7 @@ ACCIONES_ACCESO_CLIENTE = {
     "ficha_vista": "Ha abierto la ficha", "cliente_editado": "Ha editado los datos", "cliente_eliminado": "Ha enviado el cliente a la papelera",
     "documento_subido": "Ha subido un documento al expediente", "documento_descargado": "Ha descargado un documento del expediente",
     "documento_eliminado": "Ha eliminado un documento del expediente", "correo_archivado": "Ha archivado un correo en el expediente",
-    "vencimiento_documento_descargado": "Ha descargado un documento de un vencimiento",
+    "vencimiento_documento_descargado": "Ha descargado un documento de un vencimiento", "informe_mensual": "Ha generado el informe mensual",
 }
 RETENCION_ACCESOS_DIAS = 730
 VENTANA_FICHA_VISTA_MINUTOS = 30

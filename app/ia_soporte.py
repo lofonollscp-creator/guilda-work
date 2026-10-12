@@ -97,20 +97,51 @@ def consumir_gratis(usuario_id: int, hoy: date | None = None) -> bool:
 
 # --- Pantalla en la que está la persona (la manda el navegador en la cabecera Referer) --------------------------------------------------------
 _PANTALLA: dict[int, str] = {}
+# Ficha concreta que la persona tiene abierta: (clase, id). Solo una pista para el asistente; las herramientas comprueban el acceso igualmente.
+_FICHA: dict[int, tuple[str, int]] = {}
+_FICHAS = {"clientes.ficha": ("cliente", "cliente_id"), "expedientes.ficha": ("expediente", "expediente_id"), "fiscal.ficha_cliente": ("cliente_fiscal", "cliente_id")}
 
 
-def recordar_pantalla(usuario_id: int, endpoint: str | None) -> None:
-    """Endpoint de la pantalla desde la que se escribe (None si es el propio chat de página completa)."""
+def recordar_pantalla(usuario_id: int, endpoint: str | None, argumentos: dict | None = None) -> None:
+    """Endpoint de la pantalla desde la que se escribe (None si es el propio chat de página completa) y, si es la ficha de un cliente o un
+    expediente, cuál."""
     if endpoint and not endpoint.startswith(("ia.", "static")):
         _PANTALLA[usuario_id] = endpoint
     else:
         _PANTALLA.pop(usuario_id, None)
+    ficha = _FICHAS.get(endpoint or "")
+    valor = (argumentos or {}).get(ficha[1]) if ficha else None
+    if ficha and isinstance(valor, int):
+        _FICHA[usuario_id] = (ficha[0], valor)
+    else:
+        _FICHA.pop(usuario_id, None)
     if len(_PANTALLA) > 5000:
         _PANTALLA.clear()
+    if len(_FICHA) > 5000:
+        _FICHA.clear()
+
+
+def ficha_de(usuario_id: int) -> tuple[str, int] | None:
+    return _FICHA.get(usuario_id)
 
 
 def pantalla_de(usuario_id: int) -> str | None:
     return _PANTALLA.get(usuario_id)
+
+
+def pantalla_de_url(referer: str | None, app) -> tuple[str | None, dict]:
+    """(endpoint, argumentos de la URL) de una dirección de la propia app; (None, {}) si no es de aquí o no casa."""
+    from urllib.parse import urlparse
+
+    if not referer:
+        return None, {}
+    try:
+        with app.test_request_context(urlparse(referer).path):
+            from flask import request
+
+            return request.endpoint, dict(request.view_args or {})
+    except Exception:  # noqa: BLE001 -- saber en qué pantalla está es un extra: nunca debe romper el chat
+        return None, {}
 
 
 def endpoint_de_url(referer: str | None, app) -> str | None:

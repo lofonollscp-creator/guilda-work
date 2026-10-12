@@ -92,6 +92,12 @@ def _contexto_soporte(usuario_id: int, soporte: bool) -> str:
     if soporte:
         texto += (" En este turno solo atiendes soporte de la plataforma: no tienes acceso a sus datos de trabajo; si los pide, dile que "
                   "lo pregunte como consulta de datos (esa sí cuenta en el límite de IA).")
+    ficha = None if soporte else ia_soporte.ficha_de(usuario_id)
+    if ficha:
+        clase, id_ = ficha
+        herramienta = {"cliente": "resumen_cliente_despacho", "expediente": "resumen_expediente_despacho", "cliente_fiscal": "resumen_cliente_fiscal"}[clase]
+        texto += (f" La persona tiene abierta la ficha del {clase.replace('_', ' ')} con id {id_}: si dice «este cliente», «este asunto», «esta operación» o similar, "
+                  f"se refiere a ella; usa {herramienta} con ese id sin pedirle que lo busque.")
     endpoint = ia_soporte.pantalla_de(usuario_id)
     if endpoint:
         ruta = ayuda.ruta_de(endpoint)

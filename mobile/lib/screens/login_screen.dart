@@ -38,8 +38,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _contrasena = TextEditingController();
+  final _codigo2fa = TextEditingController();
   String? _error;
   bool _cargando = false;
+
+  /// La API ha contestado que la cuenta tiene verificación en dos pasos: se pide el código y se reenvía.
+  bool _pide2fa = false;
 
   Future<void> _iniciarSesion() async {
     setState(() {
@@ -50,6 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final (token, usuario) = await widget.api.login(
         _email.text.trim(),
         _contrasena.text,
+        codigo2fa: _pide2fa ? _codigo2fa.text.trim() : null,
       );
       await widget.sesion.guardarToken(token);
       if (!mounted) return;
@@ -67,6 +72,16 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         (route) => false,
       );
+    } on ApiException catch (e) {
+      // Primera vez: solo falta el código. Si ya se envió uno, el error es de verdad (código incorrecto) y se muestra.
+      setState(() {
+        if (e.requiere2fa) {
+          _pide2fa = true;
+          _error = null;
+        } else {
+          _error = e.toString();
+        }
+      });
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -120,6 +135,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     onSubmitted: (_) => _iniciarSesion(),
                   ),
+                  if (_pide2fa) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _codigo2fa,
+                      decoration: InputDecoration(labelText: t.login2faLabel, helperText: t.login2faAyuda, helperMaxLines: 3),
+                      keyboardType: TextInputType.number,
+                      autofocus: true,
+                      autocorrect: false,
+                      onSubmitted: (_) => _iniciarSesion(),
+                    ),
+                  ],
                   if (_error != null) ...[
                     const SizedBox(height: 12),
                     Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),

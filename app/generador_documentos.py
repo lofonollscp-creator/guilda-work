@@ -7,19 +7,13 @@ de aquí. Mismo criterio "puro Python, sin binario de sistema externo" que
 app/fichaje_export.py:a_pdf (reportlab) -- ver requirements.txt."""
 import csv
 import io
-from xml.sax.saxutils import escape as _esc
 
 from docx import Document
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape, portrait
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from . import db
+from . import db, informes
 
 # Tope de filas por documento -- evita que una tabla descontrolada genere
 # un archivo enorme o cuelgue el proceso generándolo. Si el LLM pide más,
@@ -99,44 +93,12 @@ def tabla_a_docx(titulo: str, columnas: list[str], filas: list[list], notas: str
     return buf.getvalue()
 
 
-def tabla_a_pdf(titulo: str, columnas: list[str], filas: list[list], notas: str | None = None) -> bytes:
+def tabla_a_pdf(titulo: str, columnas: list[str], filas: list[list], notas: str | None = None, despacho: str | None = None) -> bytes:
+    """PDF de una tabla con la capa común de informes (app/informes.py): cabecera, pie con paginación, fuente con soporte de catalán y francés."""
     filas, notas = _truncar(filas, notas)
-    orientacion = landscape if len(columnas) > 6 else portrait
-
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=orientacion(A4), title=titulo)
-    estilos = getSampleStyleSheet()
-    elementos = [Paragraph(_esc(titulo), estilos["Title"])]
-    if notas:
-        elementos.append(Paragraph(_esc(notas), estilos["Normal"]))
-    elementos.append(Paragraph(f"Generado: {db.now_iso()}", estilos["Normal"]))
-    elementos.append(Spacer(1, 0.6 * cm))
-
-    datos_tabla = [columnas] + [[("" if v is None else str(v)) for v in fila] for fila in filas]
-    tabla = Table(datos_tabla, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1d23")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d8dbe1")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f8fa")]),
-    ]))
-    elementos.append(tabla)
-    doc.build(elementos)
-    return buf.getvalue()
+    return informes.construir_pdf(titulo, [("tabla", columnas, filas)], despacho=despacho, subtitulo=notas, apaisado=len(columnas) > 6)
 
 
-def texto_a_pdf(titulo: str, texto: str, notas: str | None = None) -> bytes:
+def texto_a_pdf(titulo: str, texto: str, notas: str | None = None, despacho: str | None = None) -> bytes:
     """PDF de un texto libre (p. ej. un informe redactado por la IA): un párrafo por línea, con todo escapado."""
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title=titulo)
-    estilos = getSampleStyleSheet()
-    elementos = [Paragraph(_esc(titulo), estilos["Title"])]
-    if notas:
-        elementos.append(Paragraph(_esc(notas), estilos["Normal"]))
-    elementos.append(Paragraph(f"Generado: {db.now_iso()}", estilos["Normal"]))
-    elementos.append(Spacer(1, 0.6 * cm))
-    for linea in texto[:60000].splitlines():
-        elementos.append(Paragraph(_esc(linea), estilos["Normal"]) if linea.strip() else Spacer(1, 0.3 * cm))
-    doc.build(elementos)
-    return buf.getvalue()
+    return informes.construir_pdf(titulo, [("parrafo", texto)], despacho=despacho, subtitulo=notas)

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
 {% block title %}{{ _('Clientes fiscales') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -39,6 +40,14 @@
     </select>
   </label>
   {% endif %}
+  <label>{{ _('Estado') }}
+    <select name="estado">
+      <option value="">{{ _('Todos') }}</option>
+      {% for e, nombre in (('atrasado', _('Atrasados')), ('proximo', _('Vencen pronto')), ('al_dia', _('Al día')), ('sin_obligaciones', _('Sin vencimientos'))) %}
+      <option value="{{ e }}" {% if filtro_estado == e %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </label>
   <button type="submit" class="btn btn-primary">{{ _('Buscar') }}</button>
   <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos_masivo') }}">{{ _('Generar vencimientos (todos los clientes)') }}</a>
 </form>
@@ -52,6 +61,10 @@
   {% for c in clientes %}
   <li class="log-item">
     <span class="log-text"><button type="button" class="fiscal-cliente-btn" data-cliente-id="{{ c.id }}">{{ c.nombre }}</button></span>
+    {% set sem = semaforos[c.id] %}
+    {% if sem.estado == 'atrasado' %}{{ chip(_('Atrasado') ~ ' · ' ~ sem.atrasados, 'peligro') }}
+    {% elif sem.estado == 'proximo' %}{{ chip(_('Vence pronto') ~ ' · ' ~ sem.proximos, 'aviso') }}
+    {% elif sem.estado == 'al_dia' %}{{ chip(_('Al día'), 'exito') }}{% endif %}
     {% if c.nif %}<span class="pill">{{ c.nif }}</span>{% endif %}
     {% if c.pais and c.pais != 'ES' %}<span class="pill" title="{{ _('País de tributación') }}">{{ c.pais }}</span>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=c.id) }}">{{ _('Generar vencimientos') }}</a>

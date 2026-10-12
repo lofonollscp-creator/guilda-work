@@ -954,9 +954,9 @@ def generar_vencimientos_fiscales(cliente_id: int):
         return _err("Indica al menos un modelo.")
     if not isinstance(anio, int) or not 2000 <= anio <= 2100:
         return _err("anio debe ser un año válido.", 400, "peticion_invalida", "anio")
-    from .vencimientos_fiscales import generar_vencimientos_propuestos
+    from . import nucleo
     creados, omitidos = [], 0
-    for p in generar_vencimientos_propuestos(modelos, anio, pais=cliente["pais"]):
+    for p in nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos, anio, cliente["pais"]):
         if db.vencimiento_fiscal_existente(g.tenant_id, cliente_id, p["modelo"], p["periodo"]) is not None:
             omitidos += 1
             continue

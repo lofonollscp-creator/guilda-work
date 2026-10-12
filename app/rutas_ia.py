@@ -46,7 +46,8 @@ def _recordar_pantalla() -> None:
     """La pantalla desde la que se escribe (cabecera Referer del navegador), para que el soporte sepa de qué «aquí» habla."""
     from flask import current_app
 
-    ia_soporte.recordar_pantalla(g.usuario_id, ia_soporte.endpoint_de_url(request.referrer, current_app._get_current_object()))
+    endpoint, argumentos = ia_soporte.pantalla_de_url(request.referrer, current_app._get_current_object())
+    ia_soporte.recordar_pantalla(g.usuario_id, endpoint, argumentos)
 
 
 @ia_bp.route("/mensaje", methods=["POST"])

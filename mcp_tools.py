@@ -1483,6 +1483,81 @@ def resumen_cliente_fiscal(cliente_id: int) -> dict:
     }
 
 
+# --- Núcleo del despacho: clientes, expedientes y plazos (solo lectura) --------------------------------------------------------------------------
+# Sirven igual a la gestoría, al gabinete de abogados y a la inmobiliaria: un inmueble o un asunto es un expediente. Respetan las mismas reglas que
+# las pantallas (despacho propio, expedientes confidenciales solo para quien participa o supervisa); la IA y el MCP nunca ven más que la persona.
+def _supervisor_actual() -> bool:
+    return bool(db.es_admin(_uid()) or db.es_supervisor_tenant(_uid()))
+
+
+def _campos(fila, claves: tuple[str, ...]) -> dict:
+    d = dict(fila)
+    return {k: d.get(k) for k in claves}
+
+
+_CLIENTE_CAMPOS = ("id", "nombre", "tipo", "nif", "email", "telefono", "estado", "responsable_nombre", "notas")
+_EXPEDIENTE_CAMPOS = ("id", "titulo", "tipo", "estado", "referencia", "cliente_id", "cliente_nombre", "responsable_nombre", "proximo_plazo", "confidencial", "actualizado_en")
+_PLAZO_CAMPOS = ("id", "titulo", "fecha_limite", "estado_calculado", "dias_restantes", "critico", "cliente_nombre", "expediente_id", "expediente_titulo", "responsable_nombre")
+
+
+def listar_clientes_despacho(q: str | None = None, limite: int = 25) -> list[dict]:
+    """Clientes del despacho (ficha común a gestoría, abogados e inmobiliaria). `q` busca por nombre, NIF, correo, teléfono o contacto."""
+    from app import nucleo
+    filas, _total = nucleo.listar_clientes(_tenant_id_actual(), q=q, limite=max(1, min(int(limite or 25), 100)))
+    return [_campos(f, _CLIENTE_CAMPOS) for f in filas]
+
+
+def resumen_cliente_despacho(cliente_id: int) -> dict:
+    """Todo de un cliente de un vistazo: su ficha, contactos, expedientes visibles para ti, plazos abiertos y horas del último mes."""
+    from app import nucleo
+    t, u, sup = _tenant_id_actual(), _uid(), _supervisor_actual()
+    cliente = nucleo.obtener_cliente(t, cliente_id)
+    if cliente is None:
+        raise ValueError(f"No existe el cliente #{cliente_id} en tu despacho.")
+    exps, total = nucleo.listar_expedientes(t, u, sup, cliente_id=cliente_id, limite=20)
+    plazos = nucleo.listar_plazos(t, u, sup, cliente_id=cliente_id, estado="abiertos", limite=20)
+    return {
+        "cliente": _campos(cliente, _CLIENTE_CAMPOS), "etiquetas": nucleo.etiquetas_de(cliente_id),
+        "contactos": [_campos(c, ("nombre", "cargo", "email", "telefono", "rol", "principal")) for c in nucleo.listar_contactos(t, cliente_id)],
+        "expedientes": [_campos(x, _EXPEDIENTE_CAMPOS) for x in exps], "total_expedientes": total,
+        "plazos_abiertos": [_campos(z, _PLAZO_CAMPOS) for z in plazos],
+    }
+
+
+def listar_expedientes_despacho(cliente_id: int | None = None, estado: str | None = None, tipo: str | None = None, q: str | None = None, limite: int = 25) -> list[dict]:
+    """Expedientes del despacho visibles para ti (en abogados, asuntos; en inmobiliaria, operaciones). Filtra por cliente, estado, tipo o texto."""
+    from app import nucleo
+    filas, _total = nucleo.listar_expedientes(_tenant_id_actual(), _uid(), _supervisor_actual(), cliente_id=cliente_id, estado=estado, tipo=tipo, q=q,
+                                              limite=max(1, min(int(limite or 25), 100)))
+    return [_campos(f, _EXPEDIENTE_CAMPOS) for f in filas]
+
+
+def resumen_expediente_despacho(expediente_id: int) -> dict:
+    """Un expediente de un vistazo: datos, equipo, plazos abiertos y las últimas anotaciones de su línea de tiempo."""
+    from app import nucleo
+    t, u, sup = _tenant_id_actual(), _uid(), _supervisor_actual()
+    exp = nucleo.obtener_expediente(t, expediente_id, u, sup)
+    if exp is None:
+        raise ValueError(f"No existe el expediente #{expediente_id} en tu despacho, o no tienes acceso.")
+    return {
+        "expediente": _campos(exp, _EXPEDIENTE_CAMPOS),
+        "equipo": [_campos(m, ("id", "nombre")) for m in nucleo.miembros_de(expediente_id)],
+        "plazos_abiertos": [_campos(z, _PLAZO_CAMPOS) for z in nucleo.listar_plazos(t, u, sup, expediente_id=expediente_id, estado="abiertos", limite=20)],
+        "ultimas_anotaciones": [_campos(e, ("tipo", "texto", "autor", "creado_en")) for e in nucleo.linea_de_tiempo(t, u, expediente_id, sup, limite=10)],
+    }
+
+
+def listar_plazos_despacho(estado: str = "abiertos", dias: int = 30, cliente_id: int | None = None, expediente_id: int | None = None) -> list[dict]:
+    """Plazos del despacho (vencimientos procesales, de contrato, de gestión...) más urgentes primero. `estado`: abiertos, vencido, hoy, proximo, cumplido.
+    `dias` limita a los que vencen dentro de ese número de días (0 = sin límite)."""
+    from datetime import date, timedelta
+    from app import nucleo
+    hasta = (date.today() + timedelta(days=int(dias))).isoformat() if dias else None
+    filas = nucleo.listar_plazos(_tenant_id_actual(), _uid(), _supervisor_actual(), estado=estado or "abiertos", cliente_id=cliente_id, expediente_id=expediente_id,
+                                 hasta=hasta, limite=50)
+    return [_campos(z, _PLAZO_CAMPOS) for z in filas]
+
+
 def listar_plantillas_correo() -> list[dict]:
     """Plantillas de respuesta guardadas del usuario actual (ver Correo >
     Ajustes en la web) -- para poder reutilizar un texto ya escrito antes
@@ -2182,6 +2257,8 @@ TOOLS = [
     marcar_presentado_vencimiento_fiscal, editar_vencimiento_fiscal, resumen_cliente_fiscal,
     listar_plantillas_correo, crear_tarea_recurrente, listar_tareas_recurrentes,
     listar_facturas_cliente, crear_factura_cliente,
+    # Núcleo del despacho (solo lectura)
+    listar_clientes_despacho, resumen_cliente_despacho, listar_expedientes_despacho, resumen_expediente_despacho, listar_plazos_despacho,
     # Fichaje
     fichar, listar_mis_fichajes,
     # Correo (acciones), proyectos, papelera y tareas ampliadas
