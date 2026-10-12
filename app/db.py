@@ -2164,6 +2164,8 @@ def init_db() -> None:
         _asegurar_columna(conn, "tareas_outlook", "estimacion_min", "INTEGER")        # tiempo estimado, en minutos
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tareas_outlook_proyecto ON tareas_outlook(categoria_id, seccion_id)")
         _crear_vista_participantes_todos(conn)
+        from . import nucleo
+        nucleo.crear_esquema(conn)            # clientes, expedientes, plazos, horas y verticales (app/nucleo.py)
 
         conn.commit()
     finally:
@@ -2944,6 +2946,8 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
             conn.execute(f"UPDATE {tabla} SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id IN ({clientes})", (tenant_id,))
         conn.execute(f"DELETE FROM clientes_fiscales_accesos WHERE cliente_fiscal_id IN ({clientes})", (tenant_id,))
         conn.execute("DELETE FROM clientes_fiscales WHERE tenant_id = ?", (tenant_id,))
+        from . import nucleo
+        nucleo.borrar_datos_de_tenant(conn, tenant_id)
         conn.execute("DELETE FROM webhooks_entregas WHERE webhook_id IN (SELECT id FROM webhooks WHERE tenant_id = ?)", (tenant_id,))
         conn.execute("DELETE FROM webhooks WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM fichaje_avisos WHERE entrada_id IN (SELECT id FROM fichajes WHERE tenant_id = ?)", (tenant_id,))
@@ -8310,7 +8314,8 @@ def crear_cliente_fiscal(
     finally:
         conn.close()
     _reindexar_cliente_fiscal(tenant_id, cliente_id)
-    from . import eventos
+    from . import eventos, nucleo
+    nucleo.vincular_cliente_fiscal(tenant_id, cliente_id)
     eventos.emitir("cliente.creado", tenant_id, {"cliente_id": cliente_id, "nombre": nombre.strip(), "nif": (nif or "").strip() or None})
     return cliente_id
 
@@ -8402,6 +8407,8 @@ def editar_cliente_fiscal(tenant_id: int, cliente_id: int, **campos) -> None:
     finally:
         conn.close()
     _reindexar_cliente_fiscal(tenant_id, cliente_id)
+    from . import nucleo
+    nucleo.sincronizar_desde_fiscal(tenant_id, cliente_id)
 
 
 def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -8419,6 +8426,8 @@ def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
     finally:
         conn.close()
     _quitar_cliente_fiscal_del_indice(cliente_id)
+    from . import nucleo
+    nucleo.sincronizar_desde_fiscal(tenant_id, cliente_id)
 
 
 def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -8432,6 +8441,8 @@ def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
     finally:
         conn.close()
     _reindexar_cliente_fiscal(tenant_id, cliente_id)
+    from . import nucleo
+    nucleo.sincronizar_desde_fiscal(tenant_id, cliente_id)
 
 
 def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> None:
