@@ -569,6 +569,7 @@ def activar(tenant_id: int, usuario_id: int, nivel: str | None = None) -> dict:
         conn.close()
     olvidar_configuracion()
     sellados = sellar_todo(tenant_id)
+    cd.sellar_historial_ia(tenant_id)
     return {"sellados": sellados, "retirados_del_buscador": retirar_de_indices_externos(tenant_id)}
 
 

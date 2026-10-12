@@ -401,3 +401,41 @@ def test_paridad_los_tres_niveles_dan_el_mismo_resultado(usuario_id, monkeypatch
     for nivel in ("medio", "estricto"):
         for clave in base:
             assert resultados[nivel][clave] == base[clave], f"{nivel} difiere de laxo en «{clave}»: {resultados[nivel][clave]!r} != {base[clave]!r}"
+
+
+# --- el historial del asistente no deja en claro lo que la IA lee de lo cifrado ---------------------------------------------------------------------------
+def test_el_historial_del_chat_guarda_sellado_lo_que_la_ia_lee_del_correo(usuario_id):
+    d, antes, _, _ = _con_cifrado("laxo", bloquear=False)
+    leido = '{"asunto": "%s", "cuerpo_texto": "%s"}' % (ASUNTO, CUERPO)
+    db.agregar_mensaje_ia(d.u, "user", contenido="¿Qué dice el correo de Marta?")
+    db.agregar_mensaje_ia(d.u, "tool", contenido=leido, tool_call_id="1", nombre_herramienta="leer_correo")
+    db.agregar_mensaje_ia(d.u, "tool", contenido='{"tareas": 3}', tool_call_id="2", nombre_herramienta="listar_tareas")
+    conn = db.get_connection()
+    crudo = {r["nombre_herramienta"]: r["contenido"] for r in conn.execute("SELECT nombre_herramienta, contenido FROM ia_mensajes WHERE rol = 'tool'")}
+    conn.close()
+    assert crudo["leer_correo"].startswith("enc1:") and "ZK9" not in crudo["leer_correo"], "lo leído del correo va sellado"
+    assert crudo["listar_tareas"] == '{"tareas": 3}', "el resto de resultados se queda como siempre"
+    assert [m["contenido"] for m in db.listar_mensajes_ia(d.u) if m["rol"] == "tool"][0] == leido, "con clave, el asistente recuerda lo leído"
+    cd.bloquear(d.t)
+    visto = [m["contenido"] for m in db.listar_mensajes_ia(d.u) if m["rol"] == "tool"]
+    assert "ZK9" not in visto[0] and "protegido" in visto[0].lower() and visto[1] == '{"tareas": 3}'
+
+
+def test_al_activar_se_sella_el_historial_que_ya_habia(usuario_id):
+    d = Despacho()
+    db.agregar_mensaje_ia(d.u, "tool", contenido="cuerpo ZK9 plenilunio", tool_call_id="1", nombre_herramienta="leer_correo")
+    cd.activar(d.t, d.u, FRASE)
+    conn = db.get_connection()
+    assert conn.execute("SELECT contenido FROM ia_mensajes").fetchone()[0].startswith("enc1:")
+    conn.close()
+    assert db.listar_mensajes_ia(d.u)[0]["contenido"] == "cuerpo ZK9 plenilunio"
+    cd.rotar_clave(d.t, d.u, FRASE)
+    assert db.listar_mensajes_ia(d.u)[0]["contenido"] == "cuerpo ZK9 plenilunio", "la rotación de la clave también re-cifra el historial"
+
+
+def test_sin_cifrado_el_historial_no_cambia(usuario_id):
+    d = Despacho()
+    db.agregar_mensaje_ia(d.u, "tool", contenido="texto", tool_call_id="1", nombre_herramienta="leer_correo")
+    conn = db.get_connection()
+    assert conn.execute("SELECT contenido FROM ia_mensajes").fetchone()[0] == "texto"
+    conn.close()

@@ -298,6 +298,7 @@ def activar(tenant_id: int, usuario_id: int, frase: str, nivel: str = "medio") -
         conn.close()
     _desbloquear_en_memoria(tenant_id, usuario_id, privada)
     cifrar_existentes(tenant_id)
+    sellar_historial_ia(tenant_id)
     return recuperacion
 
 
@@ -370,6 +371,7 @@ def rotar_clave(tenant_id: int, usuario_id: int, frase: str) -> str:
     def guardar_todo(conn):
         from . import correo_cifrado
         correo_cifrado.resellar(conn, tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c))
+        resellar_historial_ia(conn, tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c))
         guardar_clave(conn)
 
     almacen_documentos.resellar(tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c), guardar_todo)
@@ -377,6 +379,77 @@ def rotar_clave(tenant_id: int, usuario_id: int, frase: str) -> str:
     correo_cifrado.olvidar_configuracion(); correo_cifrado.olvidar(tenant_id)
     _desbloquear_en_memoria(tenant_id, usuario_id, nueva_privada)
     return recuperacion
+
+
+# --- Historial del asistente de IA: lo que la IA lee de lo cifrado no puede quedar en claro en el chat -----------------------------------------------------------------
+HERRAMIENTAS_CON_CONTENIDO_CIFRADO = frozenset({"leer_correo", "listar_bandeja_entrada", "listar_conversacion_correo", "leer_documento_despacho", "buscar_semantico"})
+PREFIJO_IA = "enc1:"
+PROTEGIDO_IA = "[Resultado protegido: desbloquea los documentos del despacho para que el asistente pueda recordarlo.]"
+
+
+def _tenant_de_usuario(usuario_id: int) -> int | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        return f["tenant_id"] if f else None
+    finally:
+        conn.close()
+
+
+def sellar_resultado_ia(usuario_id: int, nombre_herramienta: str | None, contenido: str | None) -> str | None:
+    """El resultado de una herramienta que devuelve contenido cifrado (correo, documentos) se guarda sellado en el historial del chat si el despacho de la persona tiene
+    activado el cifrado; el resto, tal cual."""
+    if not contenido or nombre_herramienta not in HERRAMIENTAS_CON_CONTENIDO_CIFRADO or contenido.startswith(PREFIJO_IA):
+        return contenido
+    tenant = _tenant_de_usuario(usuario_id)
+    c = _config(tenant) if tenant is not None else None
+    if c is None:
+        return contenido
+    ct, sobre = sellar_con_publica(_de_b64(c["publica"]), contenido.encode("utf-8"))
+    return PREFIJO_IA + json.dumps({"s": sobre, "c": _b64(ct)})
+
+
+def abrir_resultado_ia(usuario_id: int, contenido: str | None) -> str | None:
+    """Lo contrario: con clave disponible devuelve el resultado; sin ella, un texto que lo explica (nunca el contenido sellado ni vacío)."""
+    if not contenido or not contenido.startswith(PREFIJO_IA):
+        return contenido
+    tenant = _tenant_de_usuario(usuario_id)
+    privada = privada_disponible(tenant) if tenant is not None else None
+    if privada is None:
+        return PROTEGIDO_IA
+    try:
+        d = json.loads(contenido[len(PREFIJO_IA):])
+        return abrir_con_privada(privada, _de_b64(d["c"]), d["s"]).decode("utf-8")
+    except (ContenidoAlterado, ValueError, KeyError):
+        return PROTEGIDO_IA
+
+
+def sellar_historial_ia(tenant_id: int) -> int:
+    """Sella lo que el historial del chat ya tuviera en claro de esas herramientas (al activar el cifrado). No necesita la clave privada."""
+    if _config(tenant_id) is None:
+        return 0
+    conn = db.get_connection()
+    try:
+        conn.execute("PRAGMA secure_delete = ON")
+        marcas = ",".join("?" * len(HERRAMIENTAS_CON_CONTENIDO_CIFRADO))
+        filas = conn.execute(f"SELECT m.id, m.usuario_id, m.contenido FROM ia_mensajes m JOIN usuarios u ON u.id = m.usuario_id WHERE u.tenant_id = ? AND m.rol = 'tool' "
+                             f"AND m.nombre_herramienta IN ({marcas}) AND m.contenido IS NOT NULL AND m.contenido NOT LIKE ?", [tenant_id, *HERRAMIENTAS_CON_CONTENIDO_CIFRADO, PREFIJO_IA + "%"]).fetchall()
+        for f in filas:
+            conn.execute("UPDATE ia_mensajes SET contenido = ? WHERE id = ?", (sellar_resultado_ia(f["usuario_id"], "leer_correo", f["contenido"]), f["id"]))
+        conn.commit()
+        return len(filas)
+    finally:
+        conn.close()
+
+
+def resellar_historial_ia(conn, tenant_id: int, abrir_antiguo, sellar_nuevo) -> int:
+    n = 0
+    for f in conn.execute("SELECT m.id, m.contenido FROM ia_mensajes m JOIN usuarios u ON u.id = m.usuario_id WHERE u.tenant_id = ? AND m.contenido LIKE ?", (tenant_id, PREFIJO_IA + "%")).fetchall():
+        d = json.loads(f["contenido"][len(PREFIJO_IA):])
+        nuevo, sobre = sellar_nuevo(abrir_antiguo(_de_b64(d["c"]), d["s"]))
+        conn.execute("UPDATE ia_mensajes SET contenido = ? WHERE id = ?", (PREFIJO_IA + json.dumps({"s": sobre, "c": _b64(nuevo)}), f["id"]))
+        n += 1
+    return n
 
 
 def registrar_acceso(tenant_id: int, usuario_id: int | None, documento_id: int, via: str, tabla: str = "documentos") -> None:

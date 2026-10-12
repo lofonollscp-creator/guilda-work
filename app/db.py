@@ -12920,12 +12920,16 @@ def listar_mensajes_ia(usuario_id: int, conversacion_id: int | None = None) -> l
             return []
     conn = get_connection()
     try:
-        return conn.execute(
+        filas = conn.execute(
             "SELECT * FROM ia_mensajes WHERE usuario_id = ? AND conversacion_id = ? ORDER BY id",
             (usuario_id, conversacion_id),
         ).fetchall()
     finally:
         conn.close()
+    if not any((f["contenido"] or "").startswith("enc1:") for f in filas):
+        return filas
+    from . import cifrado_despacho
+    return [{**dict(f), "contenido": cifrado_despacho.abrir_resultado_ia(usuario_id, f["contenido"])} for f in filas]
 
 
 def agregar_mensaje_ia(
@@ -12938,7 +12942,10 @@ def agregar_mensaje_ia(
     fuentes_json: str | None = None,
 ) -> int:
     """Añade el mensaje a la conversación activa (abriéndola si no hay). El
-    primer mensaje de la persona usuaria da título a la conversación."""
+    primer mensaje de la persona usuaria da título a la conversación. El resultado de una herramienta que devuelve correo o documentos cifrados se guarda sellado."""
+    from . import cifrado_despacho
+    if rol == "tool":
+        contenido = cifrado_despacho.sellar_resultado_ia(usuario_id, nombre_herramienta, contenido)
     conn = get_connection()
     try:
         activa = conn.execute(
