@@ -10121,3 +10121,84 @@ msgstr "Revocar aquest accés?"
 
 msgid "Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos."
 msgstr "Cap integració té accés. Es concedeix en crear un token a «Els meus dispositius» o en autoritzar una aplicació que demani accés a documents."
+
+msgid "Correo cifrado activado: %(n)s mensajes protegidos."
+msgstr "Correu xifrat activat: %(n)s missatges protegits."
+
+msgid "Nivel cambiado: %(n)s mensajes actualizados."
+msgstr "Nivell canviat: %(n)s missatges actualitzats."
+
+msgid "Correo cifrado desactivado: %(n)s mensajes descifrados."
+msgstr "Correu xifrat desactivat: %(n)s missatges desxifrats."
+
+msgid "Mensaje protegido"
+msgstr "Missatge protegit"
+
+msgid "Protegido: desbloquea para leerlo"
+msgstr "Protegit: desbloqueja per llegir-lo"
+
+msgid "Este mensaje está protegido con la clave del despacho. Un responsable tiene que desbloquear los documentos (Seguridad del despacho) para poder leerlo."
+msgstr "Aquest missatge està protegit amb la clau del despatx. Un responsable ha de desbloquejar els documents (Seguretat del despatx) per poder-lo llegir."
+
+msgid "Correo cifrado"
+msgstr "Correu xifrat"
+
+msgid "Activado"
+msgstr "Activat"
+
+msgid "Desactivado"
+msgstr "Desactivat"
+
+msgid "Opcional. Cifra con la clave del despacho el correo de todas las cuentas de sus miembros: lo que llega se protege al entrar (aunque el despacho esté bloqueado) y lo que ya había se protege al activarlo. El nivel decide qué más queda oculto; ninguno quita funciones a la búsqueda, la IA, el MCP ni la API."
+msgstr "Opcional. Xifra amb la clau del despatx el correu de tots els comptes dels seus membres: el que arriba es protegeix en entrar (encara que el despatx estigui bloquejat) i el que ja hi havia es protegeix en activar-ho. El nivell decideix què més queda ocult; cap treu funcions a la cerca, la IA, el MCP ni l'API."
+
+msgid "Dato"
+msgstr "Dada"
+
+msgid "Cuerpo y adjuntos"
+msgstr "Cos i adjunts"
+
+msgid "Asunto y nombre de los adjuntos"
+msgstr "Assumpte i nom dels adjunts"
+
+msgid "En claro"
+msgstr "En clar"
+
+msgid "Remitente, destinatarios, categoría y cliente"
+msgstr "Remitent, destinataris, categoria i client"
+
+msgid "Fecha, carpeta y leído"
+msgstr "Data, carpeta i llegit"
+
+msgid "Sugerencia: Laxo para gestorías, Medio para inmobiliarias y despachos mixtos, Estricto para gabinetes de abogados."
+msgstr "Suggeriment: Laxe per a gestories, Mitjà per a immobiliàries i despatxos mixtos, Estricte per a gabinets d'advocats."
+
+msgid "%(s)s de %(t)s mensajes protegidos."
+msgstr "%(s)s de %(t)s missatges protegits."
+
+msgid "%(n)s pendientes"
+msgstr "%(n)s pendents"
+
+msgid "Subirlo no necesita desbloqueo; bajarlo sí (hay que descifrar lo que pasa a estar en claro)."
+msgstr "Pujar-lo no necessita desbloqueig; baixar-lo sí (cal desxifrar el que passa a estar en clar)."
+
+msgid "Cambiar nivel"
+msgstr "Canviar nivell"
+
+msgid "¿Desactivar el correo cifrado? Todo el correo volverá a guardarse en claro."
+msgstr "Desactivar el correu xifrat? Tot el correu tornarà a desar-se en clar."
+
+msgid "Desactivar el correo cifrado"
+msgstr "Desactivar el correu xifrat"
+
+msgid "Activar el correo cifrado"
+msgstr "Activar el correu xifrat"
+
+msgid "Con el correo cifrado, la búsqueda por palabras se hace en memoria (con el despacho desbloqueado o con un acceso concedido) y el buscador global deja de incluir el correo."
+msgstr "Amb el correu xifrat, la cerca per paraules es fa en memòria (amb el despatx desbloquejat o amb un accés concedit) i el cercador global deixa d'incloure el correu."
+
+msgid "Correo protegido con la clave del despacho."
+msgstr "Correu protegit amb la clau del despatx."
+
+msgid "Pide a un responsable del despacho que lo desbloquee."
+msgstr "Demana a un responsable del despatx que el desbloquegi."

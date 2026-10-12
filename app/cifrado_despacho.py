@@ -52,7 +52,9 @@ CREATE TABLE IF NOT EXISTS cifrado_despacho (
     privada_recuperacion TEXT NOT NULL,
     activado_por INTEGER REFERENCES usuarios(id),
     creado_en TEXT NOT NULL,
-    frase_cambiada_en TEXT
+    frase_cambiada_en TEXT,
+    correo_activo INTEGER NOT NULL DEFAULT 0,
+    correo_activado_en TEXT
 );
 CREATE TABLE IF NOT EXISTS accesos_contenido (
     id INTEGER PRIMARY KEY,
@@ -216,15 +218,31 @@ def _privada_desbloqueada(tenant_id: int) -> bytes | None:
         return d["privada"]
 
 
+_AL_BLOQUEAR: list = []      # funciones `f(tenant_id | None)` que olvidan lo descifrado (p. ej. la caché del correo); `None` = todos
+
+
+def al_bloquear(funcion) -> None:
+    _AL_BLOQUEAR.append(funcion)
+
+
 def bloquear(tenant_id: int) -> None:
     with _cerrojo:
         _DESBLOQUEOS.pop(tenant_id, None)
+    for f in _AL_BLOQUEAR:
+        f(tenant_id)
 
 
 def bloquear_todo() -> None:
     with _cerrojo:
         _DESBLOQUEOS.clear()
         _FALLOS.clear()
+    for f in _AL_BLOQUEAR:
+        f(None)
+
+
+def privada_disponible(tenant_id: int) -> bytes | None:
+    """La clave privada del despacho si ahora mismo se puede usar: despacho desbloqueado, o la petición en curso trae una concesión válida. Si no, None."""
+    return _privada_desbloqueada(tenant_id) or _privada_por_concesion(tenant_id)
 
 
 # --- Configuración por despacho ---------------------------------------------------------------------------------------------------------------------
@@ -349,7 +367,14 @@ def rotar_clave(tenant_id: int, usuario_id: int, frase: str) -> str:
                      (_b64(nueva_publica), frase_protegida, recuperacion_protegida, db.now_iso(), tenant_id))
         conn.execute("DELETE FROM concesiones_clave WHERE tenant_id = ?", (tenant_id,))
 
-    almacen_documentos.resellar(tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c), guardar_clave)
+    def guardar_todo(conn):
+        from . import correo_cifrado
+        correo_cifrado.resellar(conn, tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c))
+        guardar_clave(conn)
+
+    almacen_documentos.resellar(tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c), guardar_todo)
+    from . import correo_cifrado
+    correo_cifrado.olvidar_configuracion(); correo_cifrado.olvidar(tenant_id)
     _desbloquear_en_memoria(tenant_id, usuario_id, nueva_privada)
     return recuperacion
 

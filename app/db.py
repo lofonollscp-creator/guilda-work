@@ -1754,6 +1754,11 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_mensajes", "destacado", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_mensajes", "fecha_aviso", "TEXT")
         _asegurar_columna(conn, "correo_mensajes", "pospuesto_hasta", "TEXT")
+        # Correo cifrado (app/correo_cifrado.py): 0 en claro, 1 sellado, 2 entrando (por sellar). Van aquí, antes del índice de texto, porque sus disparadores las leen.
+        _asegurar_columna(conn, "correo_mensajes", "cifrado", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "correo_mensajes", "cifrado_nivel", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "sobre", "TEXT")
+        _asegurar_columna(conn, "correo_mensajes", "datos", "BLOB")
         # Vínculo manual con un cliente fiscal (app/rutas_correo.py,
         # app/rutas_fiscal.py:ficha_cliente) -- nullable y opt-in, el
         # empleado lo rellena a mano desde la vista de un mensaje, sin
@@ -4172,13 +4177,14 @@ def exportar_datos_tenant(tenant_id: int) -> dict:
                     usuarios_ids,
                 ).fetchall()
             ]
+            from . import correo_cifrado
             correos = [
-                dict(c) for c in conn.execute(
+                dict(c) for c in correo_cifrado.completar(conn.execute(
                     f"""SELECT m.id, m.asunto, m.remitente, m.destinatarios, m.fecha, cu.usuario_id
                         FROM correo_mensajes m JOIN correo_cuentas cu ON cu.id = m.cuenta_id
                         WHERE cu.usuario_id IN ({marcadores})""",
                     usuarios_ids,
-                ).fetchall()
+                ).fetchall())
             ]
 
         tareas_lista, comentarios_tareas, notas_internas_correo, asignaciones_correo = [], [], [], []
@@ -7369,7 +7375,8 @@ def obtener_correo_equipo(usuario_id: int, mensaje_id: int) -> dict | None:
         conn.close()
     if f is None:
         return None
-    d = dict(f)
+    from . import correo_cifrado
+    d = dict(correo_cifrado.completar_uno(f))
     d["rol"] = rol
     d.update({k: v for k, v in estado_correo_equipo(mensaje_id).items()})
     return d
@@ -7400,7 +7407,8 @@ def listar_correo_equipo(usuario_id: int, vista: str = "asignados") -> list[dict
         filas = conn.execute(
             f"{base} {donde} ORDER BY (COALESCE(e.estado, 'abierto') = 'resuelto'), m.fecha DESC LIMIT 200", params
         ).fetchall()
-        return [dict(f) for f in filas]
+        from . import correo_cifrado
+        return [dict(f) for f in correo_cifrado.completar(filas)]
     finally:
         conn.close()
 
@@ -9751,8 +9759,10 @@ def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int
             ).fetchone()
             if fila is None:
                 categoria_id = None
-        conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
-        conn.commit()
+        from . import correo_cifrado
+        if not correo_cifrado.reescribir_asociacion(mensaje_id, categoria_id=categoria_id):      # en Estricto vive dentro del bloque cifrado
+            conn.execute("UPDATE correo_mensajes SET categoria_id = ? WHERE id = ?", (categoria_id, mensaje_id))
+            conn.commit()
     finally:
         conn.close()
 
@@ -9778,14 +9788,19 @@ def cliente_fiscal_id_por_email(tenant_id: int, email: str | None) -> int | None
 def mensajes_correo_sin_cliente(usuario_id: int, limite: int = 5000) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
-        return conn.execute(
-            """SELECT m.id, m.remitente FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
-               WHERE c.usuario_id = ? AND m.cliente_fiscal_id IS NULL AND m.remitente IS NOT NULL
+        filas = conn.execute(
+            """SELECT m.id, m.remitente, m.cifrado FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
+               WHERE c.usuario_id = ? AND m.cliente_fiscal_id IS NULL AND (m.remitente IS NOT NULL OR m.cifrado = 1)
                ORDER BY m.id DESC LIMIT ?""",
             (usuario_id, limite),
         ).fetchall()
     finally:
         conn.close()
+    from . import correo_cifrado
+    if not correo_cifrado.hay_alguno():
+        return filas
+    # Sellados: el remitente (y el cliente, en Estricto) solo están disponibles con clave; sin ella no se puede vincular y se omiten.
+    return [f for f in correo_cifrado.completar(filas) if not f.get("protegido") and f.get("cliente_fiscal_id") is None and f.get("remitente")]
 
 
 def asignar_cliente_fiscal_correo(tenant_id: int, mensaje_id: int, cliente_fiscal_id: int | None) -> None:
@@ -9801,10 +9816,12 @@ def asignar_cliente_fiscal_correo(tenant_id: int, mensaje_id: int, cliente_fisca
             ).fetchone()
             if fila is None:
                 cliente_fiscal_id = None
-        conn.execute(
-            "UPDATE correo_mensajes SET cliente_fiscal_id = ? WHERE id = ?", (cliente_fiscal_id, mensaje_id)
-        )
-        conn.commit()
+        from . import correo_cifrado
+        if not correo_cifrado.reescribir_asociacion(mensaje_id, cliente_fiscal_id=cliente_fiscal_id):
+            conn.execute(
+                "UPDATE correo_mensajes SET cliente_fiscal_id = ? WHERE id = ?", (cliente_fiscal_id, mensaje_id)
+            )
+            conn.commit()
     finally:
         conn.close()
 
@@ -9814,14 +9831,21 @@ def listar_correos_de_cliente_fiscal(cliente_fiscal_id: int) -> list[sqlite3.Row
     asignar_cliente_fiscal_correo), para la sección "Correos
     relacionados" de su ficha (app/rutas_fiscal.py:ficha_cliente) --
     mismo criterio de agregación que listar_documentos_vencimiento."""
+    from . import correo_cifrado
     conn = get_connection()
     try:
-        return conn.execute(
+        filas = conn.execute(
             "SELECT * FROM correo_mensajes WHERE cliente_fiscal_id = ? ORDER BY fecha DESC",
             (cliente_fiscal_id,),
         ).fetchall()
+        tenant = conn.execute("SELECT tenant_id FROM clientes_fiscales WHERE id = ?", (cliente_fiscal_id,)).fetchone() if correo_cifrado.hay_alguno() else None
     finally:
         conn.close()
+    filas = correo_cifrado.completar(filas)
+    if tenant is not None:     # en Estricto el cliente vive dentro del bloque cifrado: se busca entre los descifrados
+        filas = filas + [m for m in correo_cifrado.candidatos_estricto(tenant_id=tenant["tenant_id"]) if m.get("cliente_fiscal_id") == cliente_fiscal_id]
+        filas.sort(key=lambda m: (m.get("fecha") or ""), reverse=True)
+    return filas
 
 
 # --- Remitentes de confianza (imágenes/adjuntos no se bloquean) --------------
@@ -10406,8 +10430,12 @@ def respuesta_a_mensaje(cuenta_id: int, message_id: str, desde: str, direcciones
         ).fetchall()
     finally:
         conn.close()
+    from . import correo_cifrado
+    filas = correo_cifrado.completar(filas)
     import email.utils as _eu
     for f in filas:
+        if ("protegido" in f.keys() and f["protegido"]) and not f["remitente"]:
+            continue        # sellado y sin clave: no se puede saber quién lo envía
         if _eu.parseaddr(f["remitente"] or "")[1].strip().lower() not in direcciones_propias:
             return {"id": f["id"], "asunto": f["asunto"]}
     return None
@@ -10416,13 +10444,15 @@ def respuesta_a_mensaje(cuenta_id: int, message_id: str, desde: str, direcciones
 def mensaje_local_por_message_id(usuario_id: int, message_id: str) -> sqlite3.Row | None:
     conn = get_connection()
     try:
-        return conn.execute(
+        fila = conn.execute(
             """SELECT m.* FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id
                WHERE c.usuario_id = ? AND m.message_id = ? ORDER BY m.id DESC LIMIT 1""",
             (usuario_id, message_id),
         ).fetchone()
     finally:
         conn.close()
+    from . import correo_cifrado
+    return correo_cifrado.completar_uno(fila)
 
 
 def obtener_envio_correo(usuario_id: int, envio_id: int) -> sqlite3.Row | None:
@@ -10839,12 +10869,18 @@ def _asegurar_fts_correo(conn: sqlite3.Connection) -> bool:
         conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('rebuild')")
     nuevas = ", ".join(f"new.{c.strip()}" for c in _FTS_CORREO_COLUMNAS.split(","))
     viejas = ", ".join(f"old.{c.strip()}" for c in _FTS_CORREO_COLUMNAS.split(","))
-    conn.execute(f"CREATE TRIGGER IF NOT EXISTS correo_fts_ai AFTER INSERT ON correo_mensajes BEGIN "
+    # `cifrado = 2` es «entrando, por sellar» (app/correo_cifrado.py): el mensaje aún está en claro y NO debe llegar al índice, que guardaría su contenido (en minúsculas)
+    # para siempre. Se indexa al sellarse, cuando ya solo lleva en claro lo que el nivel permite. Los disparadores se recrean siempre: es barato y deja el esquema al día.
+    for t in ("correo_fts_ai", "correo_fts_ad", "correo_fts_au", "correo_fts_sellado"):
+        conn.execute(f"DROP TRIGGER IF EXISTS {t}")
+    conn.execute(f"CREATE TRIGGER correo_fts_ai AFTER INSERT ON correo_mensajes WHEN new.cifrado != 2 BEGIN "
                  f"INSERT INTO correo_fts(rowid, {_FTS_CORREO_COLUMNAS}) VALUES (new.id, {nuevas}); END")
-    conn.execute(f"CREATE TRIGGER IF NOT EXISTS correo_fts_ad AFTER DELETE ON correo_mensajes BEGIN "
+    conn.execute(f"CREATE TRIGGER correo_fts_ad AFTER DELETE ON correo_mensajes WHEN old.cifrado != 2 BEGIN "
                  f"INSERT INTO correo_fts(correo_fts, rowid, {_FTS_CORREO_COLUMNAS}) VALUES ('delete', old.id, {viejas}); END")
-    conn.execute(f"CREATE TRIGGER IF NOT EXISTS correo_fts_au AFTER UPDATE OF {_FTS_CORREO_COLUMNAS} ON correo_mensajes BEGIN "
+    conn.execute(f"CREATE TRIGGER correo_fts_au AFTER UPDATE OF {_FTS_CORREO_COLUMNAS} ON correo_mensajes WHEN old.cifrado != 2 BEGIN "
                  f"INSERT INTO correo_fts(correo_fts, rowid, {_FTS_CORREO_COLUMNAS}) VALUES ('delete', old.id, {viejas}); "
+                 f"INSERT INTO correo_fts(rowid, {_FTS_CORREO_COLUMNAS}) VALUES (new.id, {nuevas}); END")
+    conn.execute(f"CREATE TRIGGER correo_fts_sellado AFTER UPDATE OF cifrado ON correo_mensajes WHEN old.cifrado = 2 AND new.cifrado != 2 BEGIN "
                  f"INSERT INTO correo_fts(rowid, {_FTS_CORREO_COLUMNAS}) VALUES (new.id, {nuevas}); END")
     return True
 
@@ -11225,7 +11261,8 @@ def calcular_hilo_clave(
         ).fetchone()
         if fila:
             return fila["hilo_clave"]
-    return _clave_hilo_por_asunto(asunto, remitente, destinatarios, direccion_propia)
+    from . import correo_cifrado
+    return correo_cifrado.hilo_para_cuenta(cuenta_id, _clave_hilo_por_asunto(asunto, remitente, destinatarios, direccion_propia))
 
 
 def _rellenar_hilos_correo(conn: sqlite3.Connection) -> None:
@@ -11264,13 +11301,14 @@ def contar_hilos_correo(cuenta_id: int, claves: list[str]) -> dict[str, int]:
 def mensajes_del_hilo_correo(cuenta_id: int, hilo_clave: str | None) -> list[sqlite3.Row]:
     if not hilo_clave:
         return []
+    from . import correo_cifrado
     conn = get_connection()
     try:
-        return conn.execute(
+        return correo_cifrado.completar(conn.execute(
             """SELECT id, carpeta, asunto, remitente, fecha, leido FROM correo_mensajes
                WHERE cuenta_id = ? AND hilo_clave = ? ORDER BY fecha ASC, id ASC LIMIT 100""",
             (cuenta_id, hilo_clave),
-        ).fetchall()
+        ).fetchall())
     finally:
         conn.close()
 
@@ -11293,16 +11331,17 @@ def guardar_mensaje_correo(
             conn, cuenta_id, asunto, remitente, destinatarios, in_reply_to, referencias,
             _direccion_simple(cuenta["usuario"]) if cuenta else "",
         )
+        from . import correo_cifrado
         conn.execute(
             """INSERT OR IGNORE INTO correo_mensajes
                (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
                 cc, fecha, cuerpo_texto, cuerpo_html, message_id, in_reply_to, referencias,
-                hilo_clave, descargado_en, leido, destacado)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                hilo_clave, descargado_en, leido, destacado, cifrado)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
              cc, fecha, cuerpo_texto, cuerpo_html, message_id,
              (in_reply_to or None) and in_reply_to[:1000], (referencias or None) and referencias[:4000],
-             hilo, now_iso(), int(leido), int(destacado)),
+             hilo, now_iso(), int(leido), int(destacado), 2 if correo_cifrado.config_de_cuenta(cuenta_id) else 0),
         )
         conn.commit()
         fila = conn.execute(
@@ -11330,6 +11369,17 @@ def listar_mensajes_correo(
     `texto` busca en asunto, remitente, destinatarios y CUERPO del mensaje.
     Filtros: con adjuntos, categoría, rango de fechas (YYYY-MM-DD, `hasta`
     inclusive), destacados y cliente fiscal vinculado."""
+    from . import correo_cifrado
+    en_memoria = correo_cifrado.usa_memoria(cuenta_id, texto, remitente, destinatarios, asunto, categoria_id, cliente_fiscal_id)
+    if en_memoria:
+        # Con correo cifrado el texto y las cabeceras no se pueden consultar en SQL (el índice de texto completo guardaría el contenido en claro): se descifran los
+        # candidatos (con los demás filtros) y se filtra aquí. Sin clave solo se encuentra lo que el nivel deja en claro.
+        filtro_mem = (texto, remitente, destinatarios, asunto)
+        asociaciones_mem = None
+        if correo_cifrado.config_de_cuenta(cuenta_id)["nivel"] == "estricto":      # en Estricto categoría y cliente viven dentro del bloque cifrado
+            asociaciones_mem, categoria_id, cliente_fiscal_id = (categoria_id, cliente_fiscal_id), None, None
+        texto = remitente = destinatarios = asunto = None
+        limite_final, limite = limite, correo_cifrado.LIMITE_MEMORIA
     conn = get_connection()
     try:
         cond = ["cuenta_id = ?", "carpeta = ?"]
@@ -11369,27 +11419,43 @@ def listar_mensajes_correo(
             params.append(now_iso())
         where = " AND ".join(cond)
         params.append(limite)
-        return conn.execute(
+        filas = conn.execute(
             # "ORDER BY fecha DESC" basta: SQLite ya trata NULL como el valor
             # más pequeño, así que en DESC los mensajes sin fecha quedan al
             # final solos — no hace falta "(fecha IS NULL), fecha DESC" (esa
             # expresión extra impedía usar idx_correo_mensajes_cuenta_carpeta_fecha
             # para el propio ORDER BY, forzando un TEMP B-TREE en cada carga
             # de la bandeja).
-            f"""SELECT * FROM correo_mensajes WHERE {where}
+            f"""SELECT {correo_cifrado.columnas_sin_bloque() if en_memoria else '*'} FROM correo_mensajes WHERE {where}
                 ORDER BY fecha DESC LIMIT ?""",
             params,
         ).fetchall()
+        if en_memoria:
+            ligeras = correo_cifrado.completar(filas, con_pajar=True)
+            cat, cli = asociaciones_mem or (None, None)
+            elegidas = [m["id"] for m in ligeras if correo_cifrado.coincide(m, *filtro_mem) and (cat is None or m.get("categoria_id") == cat) and (cli is None or m.get("cliente_fiscal_id") == cli)][:limite_final]
+            por_id = {f["id"]: f for f in filas}
+            return correo_cifrado.completar([por_id[i] for i in elegidas])       # solo las que se devuelven se descifran por completo (cuerpo y HTML)
+        return correo_cifrado.completar(filas)
     finally:
         conn.close()
 
 
 def obtener_mensaje_correo(mensaje_id: int) -> sqlite3.Row | None:
+    """El mensaje con su contenido real. Si está sellado y hay clave se descifra (queda anotado en el registro de accesos); si no, sale con `protegido = True`."""
+    from . import correo_cifrado
     conn = get_connection()
     try:
-        return conn.execute("SELECT * FROM correo_mensajes WHERE id = ?", (mensaje_id,)).fetchone()
+        fila = conn.execute("SELECT * FROM correo_mensajes WHERE id = ?", (mensaje_id,)).fetchone()
     finally:
         conn.close()
+    if fila is None:
+        return None
+    d = correo_cifrado.completar_uno(fila)
+    if fila["cifrado"] == 1 and not d["protegido"]:
+        from . import cifrado_despacho
+        cifrado_despacho.registrar_acceso(correo_cifrado.tenant_de_cuenta(fila["cuenta_id"]), None, mensaje_id, cifrado_despacho.canal_actual() or "persona", "correo")
+    return d
 
 
 def mensaje_correo_pertenece_a_usuario(usuario_id: int, mensaje_id: int) -> bool:
@@ -11427,21 +11493,25 @@ def guardar_adjuntos_correo(mensaje_id: int, adjuntos: list[dict]) -> None:
 def listar_adjuntos_correo(mensaje_id: int) -> list[sqlite3.Row]:
     conn = get_connection()
     try:
-        return conn.execute(
-            "SELECT id, mensaje_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en "
+        filas = conn.execute(
+            "SELECT id, mensaje_id, nombre_archivo, tipo_mime, tamano_bytes, creado_en, cifrado, nombre_cifrado "
             "FROM correo_adjuntos WHERE mensaje_id = ? ORDER BY id",
             (mensaje_id,),
         ).fetchall()
     finally:
         conn.close()
+    from . import correo_cifrado
+    return [correo_cifrado.abrir_adjunto(f, con_contenido=False) for f in filas] if correo_cifrado.hay_alguno() else filas
 
 
 def obtener_adjunto_correo(adjunto_id: int) -> sqlite3.Row | None:
     conn = get_connection()
     try:
-        return conn.execute("SELECT * FROM correo_adjuntos WHERE id = ?", (adjunto_id,)).fetchone()
+        fila = conn.execute("SELECT * FROM correo_adjuntos WHERE id = ?", (adjunto_id,)).fetchone()
     finally:
         conn.close()
+    from . import correo_cifrado
+    return correo_cifrado.abrir_adjunto(fila) if fila is not None else None      # sellado y sin clave: lanza DespachoBloqueado
 
 
 def adjunto_correo_pertenece_a_usuario(usuario_id: int, adjunto_id: int) -> bool:
@@ -12245,17 +12315,23 @@ def eliminar_plantilla_proyecto(usuario_id: int, plantilla_id: int) -> bool:
 
 def correos_de_cliente_para(usuario_id: int, cliente_fiscal_id: int, limite: int = 5) -> list[dict]:
     """Los últimos correos de SUS cuentas vinculados al cliente (el correo es privado: cada quien ve solo los suyos)."""
+    from . import correo_cifrado
+    limite = max(1, min(limite, 20))
     conn = get_connection()
     try:
         filas = conn.execute(
             """SELECT m.id, m.asunto, m.remitente, m.fecha, m.leido FROM correo_mensajes m
                JOIN correo_cuentas c ON c.id = m.cuenta_id
                WHERE c.usuario_id = ? AND m.cliente_fiscal_id = ? ORDER BY m.fecha DESC, m.id DESC LIMIT ?""",
-            (usuario_id, cliente_fiscal_id, max(1, min(limite, 20))),
+            (usuario_id, cliente_fiscal_id, limite),
         ).fetchall()
-        return [dict(f) for f in filas]
     finally:
         conn.close()
+    res = [dict(f) for f in correo_cifrado.completar(filas)]
+    if correo_cifrado.hay_alguno():
+        res += [{k: m.get(k) for k in ("id", "asunto", "remitente", "fecha", "leido", "protegido")} for m in correo_cifrado.candidatos_estricto(usuario_id=usuario_id) if m.get("cliente_fiscal_id") == cliente_fiscal_id]
+        res.sort(key=lambda m: ((m.get("fecha") or ""), m["id"]), reverse=True)
+    return res[:limite]
 
 
 # --- Papelera ----------------------------------------------------------------

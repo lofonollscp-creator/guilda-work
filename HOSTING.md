@@ -71,6 +71,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Día 7 del plan maestro: cifrado de documentos, privacidad, rendimiento y cierre](#día-7-del-plan-maestro-cifrado-de-documentos-privacidad-rendimiento-y-cierre)
 - [Semana 2 del plan maestro: accesos de máquinas a lo cifrado, expediente fiscal y rotación de la clave](#semana-2-del-plan-maestro-accesos-de-máquinas-a-lo-cifrado-expediente-fiscal-y-rotación-de-la-clave)
 - [Revisión en el navegador de lo hecho desde el Día 3](#revisión-en-el-navegador-de-lo-hecho-desde-el-día-3)
+- [Correo cifrado con niveles (semana 2 del plan maestro)](#correo-cifrado-con-niveles-semana-2-del-plan-maestro)
 
 <!-- /INDICE -->
 
@@ -3094,3 +3095,26 @@ Se revisaron en un Chromium sin pantalla (instancia temporal y aislada: base de 
 
 ### Prueba de interacción en navegador (`scripts/comprobar_interaccion.sh`)
 Recorrido con clics reales (Playwright + Chromium sin pantalla) sobre una **instancia temporal**: copia del repositorio, base de datos desechable con datos de demostración (`scripts/servidor_demo.py`), Kratos simulado y sin tocar datos ni servicios reales; cada ejecución arranca una nueva y la borra al terminar. Necesita Playwright (`PW_PYTHON`, por defecto `/tmp/pw-venv/bin/python`, y `PLAYWRIGHT_BROWSERS_PATH`, por defecto `/tmp/pw-browsers`); no instala nada. Comprueba, además de que no haya errores de JavaScript ni de CSP: selector con buscador (ratón y teclado), calendario propio, alta y cierre de un plazo, registro de horas, tablero de captación, diálogo de confirmación (cancelar y aceptar), notificación con cálculo de plazo procesal, enlace público del cliente y portal del propietario sin sesión (con el PDF), perfil fiscal, informe mensual, exportación RGPD, el ciclo completo del cifrado (activar, clave de recuperación, bloquear, 423, frase incorrecta, desbloquear) y el menú móvil. No sustituye a una revisión visual ni a probar con Kratos, Documenso o correo reales.
+
+## Correo cifrado con niveles (semana 2 del plan maestro)
+- **Opcional, por despacho** (`app/correo_cifrado.py`; *Seguridad del despacho → Correo cifrado*, solo responsables): hace falta tener ya activado el cifrado de documentos (misma clave del despacho). Se activa, se cambia de nivel y se desactiva desde esa pantalla; sin activarlo el correo funciona exactamente como siempre (hay un test que lo vigila).
+- **Sellado al entrar sin desbloqueo**: el mensaje entra en estado «por sellar» (`cifrado = 2`), pasa por todo lo de siempre en claro (reglas, categorías, vínculo con el cliente fiscal, archivado de adjuntos) y como último paso se sella con la clave **pública** del despacho; por eso también se cifra el correo que llega de madrugada con el despacho bloqueado. Mientras está «por sellar» el índice de texto completo lo ignora (se comprobó que, si no, conservaba el cuerpo en minúsculas para siempre); al sellarse se indexa solo lo que el nivel deja en claro. Al terminar cada sincronización se vacía el WAL de SQLite.
+- **Los tres niveles** (se guardan en `cifrado_despacho.nivel`, se eligen al activar y se cambian cuando se quiera; ninguno quita funciones):
+
+  | dato | Laxo | Medio | Estricto |
+  |---|---|---|---|
+  | cuerpo, HTML y contenido de adjuntos | cifrado | cifrado | cifrado |
+  | asunto y nombre de adjuntos | en claro | cifrado | cifrado |
+  | remitente, destinatarios, copia | en claro | en claro | cifrado |
+  | categoría y cliente fiscal vinculados | en claro | en claro | cifrado |
+  | fecha, carpeta, leído, destacado, tamaños | en claro | en claro | en claro |
+
+  El bloque cifrado lleva siempre una copia de todo, así que **subir de nivel solo vacía columnas (sin clave)** y **bajarlo necesita el despacho desbloqueado**. En Medio y Estricto la clave de conversación es un HMAC con la clave del servidor (`GUILDA_SECRET_KEY`), no con la del despacho, para que el hilo siga funcionando sin desbloqueo.
+- **Leer**: sesión desbloqueada o concesión (token de API, MCP, aplicación OAuth: las mismas concesiones que los documentos). Sin clave, los campos protegidos salen vacíos con `protegido = true`: la bandeja dice «Protegido: desbloquea para leerlo» con enlace para los responsables, la API y el MCP devuelven `protegido` y un `aviso`, y descargar un adjunto da 423. Las lecturas quedan en el registro de accesos.
+- **Buscar**: con correo cifrado la búsqueda por palabras, remitente, asunto, categoría y cliente se hace **en memoria** sobre los mensajes descifrados (caché ligera por despacho, solo mientras haya clave; se olvida al bloquear). Medido con 20.000 mensajes sellados: primera búsqueda ≈ 6 s (descifra), siguientes ≈ 0,4 s, ≈ 230 MB; el tope es de 100.000 mensajes por consulta. Es una búsqueda por palabras, no idéntica al índice de texto completo (sin prefijos).
+- **IA y MCP**: `buscar_semantico` completa con una búsqueda por palabras en memoria porque el correo de estos despachos **ya no se manda a Meilisearch ni a los embeddings** (se retira lo que ya hubiera al activar). `leer_correo`, `listar_bandeja_entrada` y `listar_conversacion_correo` devuelven el aviso si está protegido.
+- **Adjuntos**: contenido sellado en los tres niveles; el nombre, en Medio y Estricto. Rotar la clave del despacho re-cifra también el correo (en la misma transacción).
+- **Test de paridad** (`tests/test_correo_cifrado.py`): el mismo guion —listar, abrir, buscar por cuerpo, asunto, remitente, categoría y cliente, conversaciones, adjuntos, ficha del cliente, herramientas de la IA— con los tres niveles y con sesión desbloqueada o concesión de token, y exige resultados idénticos. Otro test busca en el fichero de la base de datos (y su WAL) el contenido, el asunto, el remitente y los términos en minúsculas.
+- **Límites**: el mensaje existe en claro un instante al entrar; lo que se copia fuera del correo (un asunto guardado en un expediente, `cliente_documentos.asunto_origen`), los borradores y los envíos programados no se cifran aquí; el `Message-ID` y las cabeceras de hilo quedan en claro; el buscador global del navegador deja de incluir el correo de estos despachos; cambiar categoría o cliente de un correo en Estricto exige el despacho desbloqueado; las copias de seguridad anteriores a activarlo conservan el correo en claro.
+- **Sigue sin hacerse**: la concesión de servicio para tareas programadas (por defecto no existe: las que leen correo ven «protegido»), cifrar nombre y título de documentos y notas según el nivel, y partir `db.py` y `mcp_tools.py`.
+- Requiere reiniciar `guilda-work` y `guilda-backoffice` (columnas `correo_mensajes.cifrado/cifrado_nivel/sobre/datos`, `correo_adjuntos.cifrado/sobre/nombre_cifrado`, `cifrado_despacho.correo_activo` y disparadores del índice de texto, que se recrean solos).

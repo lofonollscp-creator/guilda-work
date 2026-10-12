@@ -164,6 +164,16 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "cliente_documentos", "cifrado", "INTEGER NOT NULL DEFAULT 0")     # expediente documental fiscal: mismo cifrado que `documentos`
     db._asegurar_columna(conn, "cliente_documentos", "sobre", "TEXT")
     db._asegurar_columna(conn, "accesos_contenido", "tabla", "TEXT NOT NULL DEFAULT 'documentos'")
+    # Correo cifrado (app/correo_cifrado.py): bloque cifrado por mensaje, su sobre y el nivel con el que se selló; adjuntos sellados; bandera por despacho.
+    db._asegurar_columna(conn, "cifrado_despacho", "correo_activo", "INTEGER NOT NULL DEFAULT 0")
+    db._asegurar_columna(conn, "cifrado_despacho", "correo_activado_en", "TEXT")
+    db._asegurar_columna(conn, "correo_mensajes", "cifrado", "INTEGER NOT NULL DEFAULT 0")
+    db._asegurar_columna(conn, "correo_mensajes", "cifrado_nivel", "TEXT")
+    db._asegurar_columna(conn, "correo_mensajes", "sobre", "TEXT")
+    db._asegurar_columna(conn, "correo_mensajes", "datos", "BLOB")
+    db._asegurar_columna(conn, "correo_adjuntos", "cifrado", "INTEGER NOT NULL DEFAULT 0")
+    db._asegurar_columna(conn, "correo_adjuntos", "sobre", "TEXT")
+    db._asegurar_columna(conn, "correo_adjuntos", "nombre_cifrado", "TEXT")
     db._asegurar_columna(conn, "documentos", "compartido_cliente", "INTEGER NOT NULL DEFAULT 0")    # el despacho lo enseña al cliente (enlace de solo lectura)
     for v in verticales.VERTICALES.values():
         if v.esquema:

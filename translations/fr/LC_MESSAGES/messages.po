@@ -10197,3 +10197,84 @@ msgstr "Révoquer cet accès ?"
 
 msgid "Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos."
 msgstr "Aucune intégration n'a accès. Il est accordé en créant un jeton dans « Mes appareils » ou en autorisant une application qui demande l'accès aux documents."
+
+msgid "Correo cifrado activado: %(n)s mensajes protegidos."
+msgstr "Courrier chiffré activé : %(n)s messages protégés."
+
+msgid "Nivel cambiado: %(n)s mensajes actualizados."
+msgstr "Niveau modifié : %(n)s messages mis à jour."
+
+msgid "Correo cifrado desactivado: %(n)s mensajes descifrados."
+msgstr "Courrier chiffré désactivé : %(n)s messages déchiffrés."
+
+msgid "Mensaje protegido"
+msgstr "Message protégé"
+
+msgid "Protegido: desbloquea para leerlo"
+msgstr "Protégé : déverrouillez pour le lire"
+
+msgid "Este mensaje está protegido con la clave del despacho. Un responsable tiene que desbloquear los documentos (Seguridad del despacho) para poder leerlo."
+msgstr "Ce message est protégé par la clé du cabinet. Un responsable doit déverrouiller les documents (Sécurité du cabinet) pour le lire."
+
+msgid "Correo cifrado"
+msgstr "Courrier chiffré"
+
+msgid "Activado"
+msgstr "Activé"
+
+msgid "Desactivado"
+msgstr "Désactivé"
+
+msgid "Opcional. Cifra con la clave del despacho el correo de todas las cuentas de sus miembros: lo que llega se protege al entrar (aunque el despacho esté bloqueado) y lo que ya había se protege al activarlo. El nivel decide qué más queda oculto; ninguno quita funciones a la búsqueda, la IA, el MCP ni la API."
+msgstr "Facultatif. Chiffre avec la clé du cabinet le courrier de tous les comptes de ses membres : le courrier entrant est protégé à son arrivée (même si le cabinet est verrouillé) et l'existant à l'activation. Le niveau décide ce qui est masqué en plus ; aucun ne retire de fonctions à la recherche, l'IA, le MCP ou l'API."
+
+msgid "Dato"
+msgstr "Donnée"
+
+msgid "Cuerpo y adjuntos"
+msgstr "Corps et pièces jointes"
+
+msgid "Asunto y nombre de los adjuntos"
+msgstr "Objet et noms des pièces jointes"
+
+msgid "En claro"
+msgstr "En clair"
+
+msgid "Remitente, destinatarios, categoría y cliente"
+msgstr "Expéditeur, destinataires, catégorie et client"
+
+msgid "Fecha, carpeta y leído"
+msgstr "Date, dossier et état de lecture"
+
+msgid "Sugerencia: Laxo para gestorías, Medio para inmobiliarias y despachos mixtos, Estricto para gabinetes de abogados."
+msgstr "Suggestion : Souple pour les gestorías, Moyen pour les agences immobilières et cabinets mixtes, Strict pour les cabinets d'avocats."
+
+msgid "%(s)s de %(t)s mensajes protegidos."
+msgstr "%(s)s messages protégés sur %(t)s."
+
+msgid "%(n)s pendientes"
+msgstr "%(n)s en attente"
+
+msgid "Subirlo no necesita desbloqueo; bajarlo sí (hay que descifrar lo que pasa a estar en claro)."
+msgstr "L'augmenter ne demande pas de déverrouillage ; le baisser oui (il faut déchiffrer ce qui passe en clair)."
+
+msgid "Cambiar nivel"
+msgstr "Changer le niveau"
+
+msgid "¿Desactivar el correo cifrado? Todo el correo volverá a guardarse en claro."
+msgstr "Désactiver le courrier chiffré ? Tout le courrier sera de nouveau stocké en clair."
+
+msgid "Desactivar el correo cifrado"
+msgstr "Désactiver le courrier chiffré"
+
+msgid "Activar el correo cifrado"
+msgstr "Activer le courrier chiffré"
+
+msgid "Con el correo cifrado, la búsqueda por palabras se hace en memoria (con el despacho desbloqueado o con un acceso concedido) y el buscador global deja de incluir el correo."
+msgstr "Avec le courrier chiffré, la recherche par mots se fait en mémoire (cabinet déverrouillé ou accès accordé) et la recherche globale n'inclut plus le courrier."
+
+msgid "Correo protegido con la clave del despacho."
+msgstr "Courrier protégé par la clé du cabinet."
+
+msgid "Pide a un responsable del despacho que lo desbloquee."
+msgstr "Demandez à un responsable du cabinet de le déverrouiller."

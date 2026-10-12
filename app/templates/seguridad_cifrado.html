@@ -78,6 +78,38 @@
     <button type="submit" class="btn btn-ghost">{{ _('Restablecer la frase') }}</button>
   </form>
 </section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-cor">
+  <h2 id="t-cor">{{ _('Correo cifrado') }} {{ chip(_('Activado') if correo.activo else _('Desactivado'), 'exito' if correo.activo else 'neutro') }}</h2>
+  <p class="muted">{{ _('Opcional. Cifra con la clave del despacho el correo de todas las cuentas de sus miembros: lo que llega se protege al entrar (aunque el despacho esté bloqueado) y lo que ya había se protege al activarlo. El nivel decide qué más queda oculto; ninguno quita funciones a la búsqueda, la IA, el MCP ni la API.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Dato') }}</th><th>{{ _('Laxo') }}</th><th>{{ _('Medio') }}</th><th>{{ _('Estricto') }}</th></tr></thead>
+    <tbody>
+      <tr><td>{{ _('Cuerpo y adjuntos') }}</td><td>{{ _('Cifrado') }}</td><td>{{ _('Cifrado') }}</td><td>{{ _('Cifrado') }}</td></tr>
+      <tr><td>{{ _('Asunto y nombre de los adjuntos') }}</td><td>{{ _('En claro') }}</td><td>{{ _('Cifrado') }}</td><td>{{ _('Cifrado') }}</td></tr>
+      <tr><td>{{ _('Remitente, destinatarios, categoría y cliente') }}</td><td>{{ _('En claro') }}</td><td>{{ _('En claro') }}</td><td>{{ _('Cifrado') }}</td></tr>
+      <tr><td>{{ _('Fecha, carpeta y leído') }}</td><td>{{ _('En claro') }}</td><td>{{ _('En claro') }}</td><td>{{ _('En claro') }}</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">{{ _('Sugerencia: Laxo para gestorías, Medio para inmobiliarias y despachos mixtos, Estricto para gabinetes de abogados.') }}</p>
+  {% if correo.activo %}
+  <p>{{ _('%(s)s de %(t)s mensajes protegidos.', s=correo.sellados, t=correo.total) }}{% if correo.pendientes %} {{ chip(_('%(n)s pendientes', n=correo.pendientes), 'aviso') }}{% endif %}</p>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.nivel_correo') }}">
+    {% call campo(_('Nivel de reserva'), 'nivel-correo', ayuda=_('Subirlo no necesita desbloqueo; bajarlo sí (hay que descifrar lo que pasa a estar en claro).')) %}
+    <select id="nivel-correo" name="nivel">{% for n, nombre in (('laxo', _('Laxo')), ('medio', _('Medio')), ('estricto', _('Estricto'))) %}<option value="{{ n }}" {{ 'selected' if n == e.nivel }}>{{ nombre }}</option>{% endfor %}</select>{% endcall %}
+    <button type="submit" class="btn btn-ghost">{{ _('Cambiar nivel') }}</button>
+  </form>
+  <form method="post" action="{{ url_for('seguridad.desactivar_correo') }}" class="ds-mt-12" data-confirmar-envio="{{ _('¿Desactivar el correo cifrado? Todo el correo volverá a guardarse en claro.') }}" data-confirmar-peligro>
+    <button type="submit" class="btn btn-peligro btn-sm">{{ _('Desactivar el correo cifrado') }}</button>
+  </form>
+  {% else %}
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.activar_correo') }}">
+    {% call campo(_('Nivel de reserva'), 'nivel-correo') %}
+    <select id="nivel-correo" name="nivel">{% for n, nombre in (('laxo', _('Laxo')), ('medio', _('Medio')), ('estricto', _('Estricto'))) %}<option value="{{ n }}" {{ 'selected' if n == e.nivel }}>{{ nombre }}</option>{% endfor %}</select>{% endcall %}
+    <button type="submit" class="btn btn-primary">{{ _('Activar el correo cifrado') }}</button>
+  </form>
+  {% endif %}
+  <p class="muted">{{ _('Con el correo cifrado, la búsqueda por palabras se hace en memoria (con el despacho desbloqueado o con un acceso concedido) y el buscador global deja de incluir el correo.') }}</p>
+</section>
 <section class="ds-max-720 ds-mt-32" aria-labelledby="t-con">
   <h2 id="t-con">{{ _('Accesos de integraciones a los documentos') }}</h2>
   <p class="muted">{{ _('Tokens de API y aplicaciones conectadas (MCP, ChatGPT, Claude...) que pueden leer los documentos cifrados aunque el despacho esté bloqueado. Revocar un acceso surte efecto al instante.') }}</p>
@@ -93,7 +125,7 @@
   <h2 id="t-acc">{{ _('Quién ha abierto documentos cifrados') }}</h2>
   {% if accesos %}
   <ul class="log-list">
-    {% for a in accesos %}<li class="log-item"><span class="log-text">{{ a.nombre_archivo or ('#' ~ a.documento_id) }}</span> <span class="muted">{{ a.persona or _('Enlace de solo lectura') }} · {{ a.via }} · {{ a.creado_en[:16]|replace('T', ' ') }}</span></li>{% endfor %}
+    {% for a in accesos %}<li class="log-item"><span class="log-text">{{ a.nombre_archivo or ((_('Correo') ~ ' #' ~ a.documento_id) if a.tabla == 'correo' else ('#' ~ a.documento_id)) }}</span> <span class="muted">{{ a.persona or _('Enlace de solo lectura') }} · {{ a.via }} · {{ a.creado_en[:16]|replace('T', ' ') }}</span></li>{% endfor %}
   </ul>
   {% else %}<p class="muted">{{ _('Todavía no se ha abierto ningún documento cifrado.') }}</p>{% endif %}
 </section>

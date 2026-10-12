@@ -20,7 +20,7 @@
 <ul class="log-list">
   {% for m in mensajes %}
   <li class="log-item {{ 'is-completada' if m.estado == 'resuelto' }}">
-    <span class="log-text"><a href="{{ url_for('correo.equipo_mensaje', mensaje_id=m.id) }}">{{ m.asunto or _('(sin asunto)') }}</a>
+    <span class="log-text"><a href="{{ url_for('correo.equipo_mensaje', mensaje_id=m.id) }}">{{ m.asunto or (_('Mensaje protegido') if m.protegido else _('(sin asunto)')) }}</a>
       <small class="muted">{{ m.remitente }}</small></span>
     {% if vista != 'enviados' %}<span class="pill">{{ _('De %(quien)s', quien=m.dueno_nombre) }}</span>{% elif m.asignado_nombre %}<span class="pill">{{ _('Para %(quien)s', quien=m.asignado_nombre) }}</span>{% endif %}
     {% if m.n_notas %}<span class="pill">{{ ngettext('%(n)s nota', '%(n)s notas', m.n_notas, n=m.n_notas) }}</span>{% endif %}

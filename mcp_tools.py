@@ -189,7 +189,13 @@ def buscar_semantico(texto: str, limite: int = 5) -> list[dict]:
     historial, que siguen siendo la vía de siempre para búsqueda
     exacta). Útil para preguntas del tipo '¿qué dijo el cliente X sobre
     el IVA?' donde las palabras exactas pueden no coincidir."""
-    return busqueda.buscar_hibrido(_uid(), texto, limite=limite)
+    resultados = busqueda.buscar_hibrido(_uid(), texto, limite=limite)
+    from app import correo_cifrado
+    tenant = db.tenant_de_usuario(_uid())
+    if tenant is not None and correo_cifrado.configuracion(tenant["id"]) is not None:
+        # El correo cifrado no se manda al buscador externo: se completa con una búsqueda por palabras en memoria (la IA no pierde el acceso al correo; solo cambia cómo se busca).
+        resultados = (resultados + correo_cifrado.buscar_para_usuario(_uid(), texto, limite=limite))[:max(limite, len(resultados))]
+    return resultados
 
 
 def listar_notas(desde: str | None = None, hasta: str | None = None, texto: str | None = None) -> list[dict]:
@@ -330,6 +336,17 @@ def listar_carpetas_correo(cuenta_id: int) -> list[dict]:
     return correo.listar_carpetas(_uid(), cuenta_id)
 
 
+_AVISO_CORREO_PROTEGIDO = ("Este mensaje está protegido con la clave del despacho y ahora no hay clave disponible: un responsable tiene que desbloquear los documentos "
+                           "(Seguridad del despacho), o la conexión necesita un acceso concedido a lo cifrado. No es que esté vacío.")
+
+
+def _con_aviso_protegido(filas: list[dict]) -> list[dict]:
+    for f in filas:
+        if f.get("protegido"):
+            f["aviso"] = _AVISO_CORREO_PROTEGIDO
+    return filas
+
+
 def listar_bandeja_entrada(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
     texto: str | None = None, limite: int = 20, con_adjuntos: bool = False,
@@ -340,10 +357,10 @@ def listar_bandeja_entrada(
     para ver qué carpetas existen). `texto` busca en asunto, remitente,
     destinatarios y cuerpo. Filtros opcionales: `con_adjuntos`, `solo_destacados`
     y fechas `desde`/`hasta` (YYYY-MM-DD, `hasta` inclusive)."""
-    return _filas(correo.listar_mensajes(
+    return _con_aviso_protegido(_filas(correo.listar_mensajes(
         cuenta_id, carpeta=carpeta, solo_no_leidos=solo_no_leidos, texto=texto, limite=limite,
         con_adjuntos=con_adjuntos, desde=desde or None, hasta=hasta or None, solo_destacados=solo_destacados,
-    ))
+    )))
 
 
 def leer_correo(mensaje_id: int, incluir_html: bool = False) -> dict:
@@ -358,6 +375,8 @@ def leer_correo(mensaje_id: int, incluir_html: bool = False) -> dict:
     mensaje = _fila(correo.obtener_mensaje(mensaje_id))
     if not incluir_html and mensaje:
         mensaje.pop("cuerpo_html", None)
+    if mensaje:
+        _con_aviso_protegido([mensaje])
     return mensaje
 
 
@@ -1973,7 +1992,7 @@ def eliminar_regla_correo(regla_id: int) -> dict:
 def listar_conversacion_correo(mensaje_id: int) -> list[dict]:
     """Los mensajes de la misma conversación (hilo) que `mensaje_id`, del más antiguo al más reciente."""
     mensaje = _mensaje_propio(mensaje_id)
-    return _filas(db.mensajes_del_hilo_correo(mensaje["cuenta_id"], mensaje["hilo_clave"])) or [
+    return _con_aviso_protegido(_filas(db.mensajes_del_hilo_correo(mensaje["cuenta_id"], mensaje["hilo_clave"]))) or [
         {"id": mensaje["id"], "asunto": mensaje["asunto"], "remitente": mensaje["remitente"], "fecha": mensaje["fecha"]}
     ]
 

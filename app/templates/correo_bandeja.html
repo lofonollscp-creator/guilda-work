@@ -134,6 +134,9 @@
     {% if not mensajes %}
     <p class="correo-lista-vacio">{{ _('No hay mensajes. Pulsa "Sincronizar" para buscar los nuevos.') }}</p>
     {% else %}
+    {% if mensajes|selectattr('protegido')|list %}
+    <p class="correo-sync-aviso" role="status"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Correo protegido con la clave del despacho.') }} {% if g.get('supervisor_tenant') or g.get('es_admin') %}<a href="{{ url_for('seguridad.cifrado') }}">{{ _('Desbloquear') }}</a>{% else %}{{ _('Pide a un responsable del despacho que lo desbloquee.') }}{% endif %}</p>
+    {% endif %}
     <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }}" id="correo-lista-mensajes">
       {% for m in mensajes %}
       {% set cat = categorias_por_id.get(m.categoria_id) %}
@@ -145,10 +148,10 @@
           <span class="avatar-circulo" style="--avatar-color: {{ m.remitente|avatar_color }};">{{ m.remitente|iniciales }}</span>
           <div class="correo-fila-texto">
             <div class="correo-fila-top">
-              <span class="correo-fila-remitente">{{ m.remitente or _('(desconocido)') }}</span>
+              <span class="correo-fila-remitente">{% if m.protegido and not m.remitente %}{{ _('Mensaje protegido') }}{% else %}{{ m.remitente or _('(desconocido)') }}{% endif %}</span>
               <span class="correo-fila-fecha">{% if m.destacado %}<svg class="icono-inline ds-relleno-actual" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg>{% endif %} {{ m.fecha|fecha_relativa }}</span>
             </div>
-            <div class="correo-fila-asunto">{{ m.asunto or _('(sin asunto)') }}{% if m.hilo_clave and hilo_total.get(m.hilo_clave, 1) > 1 %} <span class="correo-hilo-contador" title="{{ _('Mensajes en esta conversación') }}">{{ hilo_total[m.hilo_clave] }}</span>{% endif %}</div>
+            <div class="correo-fila-asunto">{% if m.protegido and not m.asunto %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Protegido: desbloquea para leerlo') }}{% else %}{{ m.asunto or _('(sin asunto)') }}{% endif %}{% if m.hilo_clave and hilo_total.get(m.hilo_clave, 1) > 1 %} <span class="correo-hilo-contador" title="{{ _('Mensajes en esta conversación') }}">{{ hilo_total[m.hilo_clave] }}</span>{% endif %}</div>
             <div class="correo-fila-preview">{{ m|vista_previa }}</div>
           </div>
         </a>
@@ -318,7 +321,10 @@
       {% endif %}
     </div>
     {% endif %}
-    <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or _('(sin asunto)') }}</h2>
+    {% if mensaje_seleccionado.protegido %}
+    <p class="correo-sync-aviso" role="status"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Este mensaje está protegido con la clave del despacho. Un responsable tiene que desbloquear los documentos (Seguridad del despacho) para poder leerlo.') }}</p>
+    {% endif %}
+    <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or (_('Mensaje protegido') if mensaje_seleccionado.protegido else _('(sin asunto)')) }}</h2>
     {% if equipo_correo and (companeros or equipo_correo.asignado_a or equipo_correo.compartidos or notas_internas) %}
     <details class="correo-equipo-panel" {{ 'open' if equipo_correo.asignado_a or notas_internas }}>
       <summary><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg>

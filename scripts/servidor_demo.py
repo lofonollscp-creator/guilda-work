@@ -41,6 +41,15 @@ except Exception as e: print("inmob", e)
 # clientes fiscales
 for n in ("Taller Pérez", "Bar La Plaza"):
     f = db.crear_cliente_fiscal(t, n, nif="B123", email="f@ej.com"); db.crear_vencimiento_fiscal(t, f, "303", "2026-T3", d(-5 if n[0] == "T" else 4))
+# correo de demostración: una cuenta con dos mensajes (uno con adjunto), entrados por el mismo camino que la sincronización real
+from email.message import EmailMessage
+from app import correo
+cuenta_correo = db.crear_cuenta_correo(yo, "Trabajo", "imap", "h", 993, "yo@despacho.com")
+for n, (asunto, de, cuerpo, adj) in enumerate([("Reclamación del IVA trimestral", "Marta Puig <marta@cliente.example>", "Adjunto la documentación pedida, plenilunio.", True), ("Cita para la firma", "Notaría Roca <info@notaria.example>", "Le esperamos el jueves.", False)], 1):
+    m = EmailMessage(); m["Subject"], m["From"], m["To"], m["Message-ID"], m["Date"] = asunto, de, "yo@despacho.com", f"<m{n}@demo.example>", "Mon, 12 Oct 2026 10:00:00 +0200"
+    m.set_content(cuerpo)
+    if adj: m.add_attachment(b"%PDF-demo", maintype="application", subtype="pdf", filename="nomina.pdf")
+    correo._guardar_mensaje_imap(db.obtener_cuenta_correo(yo, cuenta_correo), "INBOX", str(n), bytes(m), set())
 kratos.whoami = lambda c: {"active": True, "identity": {"id": "k-demo", "traits": {"email": "demo@ejemplo.com"}}}
 from app.main import app
 _wsgi = app.wsgi_app

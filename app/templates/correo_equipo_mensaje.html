@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ m.asunto or _('(sin asunto)') }} — Guilda Work{% endblock %}
+{% block title %}{{ m.asunto or (_('Mensaje protegido') if m.protegido else _('(sin asunto)')) }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>{{ m.asunto or _('(sin asunto)') }}</h1>
+    <h1>{{ m.asunto or (_('Mensaje protegido') if m.protegido else _('(sin asunto)')) }}</h1>
     <p class="subtitle">
       {{ m.remitente }} · {{ (m.fecha)|fecha_y_hora }}
       {% if m.rol != 'dueno' %} · {{ _('De %(quien)s', quien=m.dueno_nombre) }}{% endif %}

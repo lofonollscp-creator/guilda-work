@@ -150,6 +150,33 @@ def cifrado(pg):
     assert "Quién ha abierto" in pg.inner_text("body")
 
 
+@paso("correo cifrado: activar (nivel Estricto), bloquear → protegido, desbloquear → legible y buscable, bajar de nivel")
+def correo_cifrado(pg):
+    frase = "una frase de paso larga y segura"
+    pg.goto(BASE + "/seguridad/cifrado")          # (el paso anterior dejó activado y desbloqueado el cifrado de documentos: el correo usa la misma clave)
+    assert "Desactivado" in pg.inner_text("#t-cor"), "el correo cifrado debe empezar desactivado (es opcional)"
+    pg.select_option("form[action$='/correo/activar'] select[name=nivel]", "estricto")
+    pg.click("button:has-text('Activar el correo cifrado')"); pg.wait_for_load_state()
+    assert "2 mensajes protegidos" in pg.inner_text("body"), "debería haber sellado los 2 mensajes de demostración"
+    pg.goto(BASE + "/correo/")
+    cuerpo = pg.inner_text("body")
+    assert "Reclamación del IVA trimestral" in cuerpo and "Marta Puig" in cuerpo, "desbloqueado, la bandeja se lee con normalidad"
+    pg.fill("input[name=q]", "plenilunio"); pg.keyboard.press("Enter"); pg.wait_for_load_state()
+    assert "Reclamación del IVA" in pg.inner_text("body") and "Cita para la firma" not in pg.inner_text("body"), "la búsqueda por cuerpo debe funcionar con el correo cifrado"
+    pg.goto(BASE + "/seguridad/cifrado"); pg.click("button:has-text('Bloquear ahora')"); pg.wait_for_load_state()
+    pg.goto(BASE + "/correo/")
+    cuerpo = pg.inner_text("body")
+    assert "Protegido" in cuerpo and "Reclamación del IVA" not in cuerpo and "Marta Puig" not in cuerpo, "bloqueado y en Estricto la bandeja no debe enseñar nada del contenido"
+    pg.screenshot(path=str(SAL / "correo-bloqueado.png"))
+    pg.goto(BASE + "/seguridad/cifrado"); pg.fill("form[action$='/desbloquear'] input[name=frase]", frase); pg.click("button:has-text('Desbloquear')"); pg.wait_for_load_state()
+    pg.goto(BASE + "/correo/")
+    assert "Reclamación del IVA trimestral" in pg.inner_text("body")
+    pg.goto(BASE + "/seguridad/cifrado")
+    pg.select_option("form[action$='/correo/nivel'] select[name=nivel]", "laxo")
+    pg.click("button:has-text('Cambiar nivel')"); pg.wait_for_load_state()
+    assert "mensajes actualizados" in pg.inner_text("body")
+
+
 @paso("abogados: añadir una parte y calcular (con festivos) y confirmar una notificación")
 def abogados(pg):
     pg.goto(BASE + "/expedientes/3")
@@ -255,6 +282,7 @@ with sync_playwright() as p:
     enlace_publico(pg, anonimo)
     propietario(pg, anonimo)
     cifrado(pg)
+    correo_cifrado(pg)
     movil(pg, nav.new_context(viewport={"width": 390, "height": 800}, locale="es-ES"))
     nav.close()
 for estado, nombre in resultados:

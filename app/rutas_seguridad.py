@@ -6,6 +6,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _
 
 from . import cifrado_despacho as cd
+from . import correo_cifrado
 from . import rgpd
 from .auth import limiter, login_required
 
@@ -24,7 +25,7 @@ def _exigir_responsable() -> int:
 @login_required
 def cifrado():
     t = _exigir_responsable()
-    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=cd.accesos_recientes(t, 50) if cd.esta_activo(t) else [], concesiones=cd.listar_concesiones(t), niveles=cd.NIVELES,
+    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=cd.accesos_recientes(t, 50) if cd.esta_activo(t) else [], concesiones=cd.listar_concesiones(t), correo=correo_cifrado.estado(t), niveles=cd.NIVELES,
                            frase_minima=cd.FRASE_MINIMA, error=(request.args.get("error") or "")[:300] or None, aviso=request.args.get("aviso"), clave=None)
 
 
@@ -54,7 +55,7 @@ def activar():
     except ValueError as e:
         return _volver(error=str(e))
     # La clave de recuperación solo se enseña en esta respuesta: no se guarda en claro en ningún sitio ni viaja en una dirección.
-    resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
+    resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
     return resp, 200, {"Cache-Control": "no-store"}
 
 
@@ -83,6 +84,45 @@ def revocar_concesion(concesion_id: int):
     return _volver(aviso=_("Acceso revocado."))
 
 
+@seguridad_bp.route("/cifrado/correo/activar", methods=["POST"])
+@login_required
+@limiter.limit("10/hour")
+def activar_correo():
+    """Activa el correo cifrado (opcional): sella el correo que ya hay y todo el que llegue. No necesita desbloqueo."""
+    t = _exigir_responsable()
+    try:
+        r = correo_cifrado.activar(t, g.usuario_id, request.form.get("nivel") or None)
+    except ValueError as e:
+        return _volver(error=str(e))
+    return _volver(aviso=_("Correo cifrado activado: %(n)s mensajes protegidos.", n=r["sellados"]))
+
+
+@seguridad_bp.route("/cifrado/correo/nivel", methods=["POST"])
+@login_required
+@limiter.limit("20/hour")
+def nivel_correo():
+    """Cambia el nivel de reserva (Laxo, Medio, Estricto). Subirlo no necesita desbloqueo; bajarlo sí."""
+    t = _exigir_responsable()
+    try:
+        n = correo_cifrado.cambiar_nivel(t, g.usuario_id, request.form.get("nivel") or "")
+    except (ValueError, cd.DespachoBloqueado) as e:
+        return _volver(error=str(e))
+    return _volver(aviso=_("Nivel cambiado: %(n)s mensajes actualizados.", n=n))
+
+
+@seguridad_bp.route("/cifrado/correo/desactivar", methods=["POST"])
+@login_required
+@limiter.limit("5/hour")
+def desactivar_correo():
+    """Desactiva el correo cifrado y deja todo en claro. Exige el despacho desbloqueado."""
+    t = _exigir_responsable()
+    try:
+        n = correo_cifrado.desactivar(t, g.usuario_id)
+    except (ValueError, cd.DespachoBloqueado) as e:
+        return _volver(error=str(e))
+    return _volver(aviso=_("Correo cifrado desactivado: %(n)s mensajes descifrados.", n=n))
+
+
 @seguridad_bp.route("/cifrado/rotar", methods=["POST"])
 @login_required
 @limiter.limit("5/hour")
@@ -95,7 +135,7 @@ def rotar():
         clave = cd.rotar_clave(t, g.usuario_id, request.form.get("frase") or "")
     except (ValueError, cd.ClaveIncorrecta, cd.DemasiadosIntentos, cd.ContenidoAlterado) as e:
         return _volver(error=str(e))
-    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave), 200, {"Cache-Control": "no-store"}
+    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave), 200, {"Cache-Control": "no-store"}
 
 
 @seguridad_bp.route("/cifrado/frase", methods=["POST"])

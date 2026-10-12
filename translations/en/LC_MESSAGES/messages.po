@@ -10112,3 +10112,84 @@ msgstr "Revoke this access?"
 
 msgid "Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos."
 msgstr "No integration has access. It is granted when creating a token in “My devices” or when authorizing an application that asks for document access."
+
+msgid "Correo cifrado activado: %(n)s mensajes protegidos."
+msgstr "Encrypted email enabled: %(n)s messages protected."
+
+msgid "Nivel cambiado: %(n)s mensajes actualizados."
+msgstr "Level changed: %(n)s messages updated."
+
+msgid "Correo cifrado desactivado: %(n)s mensajes descifrados."
+msgstr "Encrypted email disabled: %(n)s messages decrypted."
+
+msgid "Mensaje protegido"
+msgstr "Protected message"
+
+msgid "Protegido: desbloquea para leerlo"
+msgstr "Protected: unlock to read it"
+
+msgid "Este mensaje está protegido con la clave del despacho. Un responsable tiene que desbloquear los documentos (Seguridad del despacho) para poder leerlo."
+msgstr "This message is protected with the firm's key. Someone in charge must unlock the documents (Firm security) to read it."
+
+msgid "Correo cifrado"
+msgstr "Encrypted email"
+
+msgid "Activado"
+msgstr "Enabled"
+
+msgid "Desactivado"
+msgstr "Disabled"
+
+msgid "Opcional. Cifra con la clave del despacho el correo de todas las cuentas de sus miembros: lo que llega se protege al entrar (aunque el despacho esté bloqueado) y lo que ya había se protege al activarlo. El nivel decide qué más queda oculto; ninguno quita funciones a la búsqueda, la IA, el MCP ni la API."
+msgstr "Optional. Encrypts with the firm's key the email of all its members' accounts: incoming mail is protected on arrival (even if the firm is locked) and existing mail when you enable it. The level decides what else is hidden; none removes functions from search, the AI, MCP or the API."
+
+msgid "Dato"
+msgstr "Item"
+
+msgid "Cuerpo y adjuntos"
+msgstr "Body and attachments"
+
+msgid "Asunto y nombre de los adjuntos"
+msgstr "Subject and attachment names"
+
+msgid "En claro"
+msgstr "In the clear"
+
+msgid "Remitente, destinatarios, categoría y cliente"
+msgstr "Sender, recipients, category and client"
+
+msgid "Fecha, carpeta y leído"
+msgstr "Date, folder and read status"
+
+msgid "Sugerencia: Laxo para gestorías, Medio para inmobiliarias y despachos mixtos, Estricto para gabinetes de abogados."
+msgstr "Suggestion: Relaxed for accountancy firms, Medium for estate agencies and mixed firms, Strict for law firms."
+
+msgid "%(s)s de %(t)s mensajes protegidos."
+msgstr "%(s)s of %(t)s messages protected."
+
+msgid "%(n)s pendientes"
+msgstr "%(n)s pending"
+
+msgid "Subirlo no necesita desbloqueo; bajarlo sí (hay que descifrar lo que pasa a estar en claro)."
+msgstr "Raising it needs no unlock; lowering it does (what becomes readable must be decrypted)."
+
+msgid "Cambiar nivel"
+msgstr "Change level"
+
+msgid "¿Desactivar el correo cifrado? Todo el correo volverá a guardarse en claro."
+msgstr "Disable encrypted email? All mail will be stored in the clear again."
+
+msgid "Desactivar el correo cifrado"
+msgstr "Disable encrypted email"
+
+msgid "Activar el correo cifrado"
+msgstr "Enable encrypted email"
+
+msgid "Con el correo cifrado, la búsqueda por palabras se hace en memoria (con el despacho desbloqueado o con un acceso concedido) y el buscador global deja de incluir el correo."
+msgstr "With encrypted email, word search runs in memory (with the firm unlocked or with a granted access) and the global search no longer includes email."
+
+msgid "Correo protegido con la clave del despacho."
+msgstr "Mail protected with the firm's key."
+
+msgid "Pide a un responsable del despacho que lo desbloquee."
+msgstr "Ask someone in charge of the firm to unlock it."

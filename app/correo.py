@@ -58,7 +58,7 @@ from email.utils import make_msgid, getaddresses, parsedate_to_datetime
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
-from . import almacen_documentos, busqueda, correo_oauth, db, eventos, notificaciones
+from . import almacen_documentos, busqueda, correo_cifrado, correo_oauth, db, eventos, notificaciones
 from .texto_html import html_a_texto_indexable
 
 SERVICIO_KEYRING = "guilda-work-correo"
@@ -706,6 +706,15 @@ def _texto_para_indexar(texto: str | None, html: str | None) -> str | None:
     return html_a_texto_indexable(html) or None
 
 
+def _sellar_si_procede(mensaje_id: int) -> None:
+    """Último paso de «al entrar»: si el despacho tiene el correo cifrado, el mensaje (ya con sus reglas, categoría y vínculos aplicados en claro) se sella con la clave
+    pública del despacho. No necesita desbloqueo. Un fallo aquí no puede perder el mensaje: se queda en claro y `sellar_todo` lo recoge después."""
+    try:
+        correo_cifrado.sellar_mensaje(mensaje_id)
+    except Exception:  # noqa: BLE001
+        logger.exception("No se pudo sellar el mensaje %s", mensaje_id)
+
+
 def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: set[str]) -> tuple[int | None, bool]:
     mensaje = email.message_from_bytes(crudo)
     texto, html, adjuntos = _cuerpos(mensaje)
@@ -726,6 +735,7 @@ def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: s
         _aplicar_categoria_automatica(
             cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
         )
+        _sellar_si_procede(mensaje_id)
     return mensaje_id, leido
 
 
@@ -1060,6 +1070,7 @@ def _sincronizar_pop3(cuenta) -> int:
                 _aplicar_categoria_automatica(
                 cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
             )
+                _sellar_si_procede(mensaje_id)
             nuevos_count += 1
         return nuevos_count
     finally:
@@ -1109,7 +1120,9 @@ def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
         db.marcar_sincronizada_cuenta_correo(cuenta_id)
         _fallos_consecutivos.pop(cuenta_id, None)
         _ciclos_omitidos.pop(cuenta_id, None)
+        correo_cifrado.sellar_pendientes_de_cuenta(cuenta_id)
         if nuevos:
+            correo_cifrado.vaciar_wal()
             _reindexar_mensajes_recientes(usuario_id, cuenta_id)
         if sin_leer:
             # Solo avisa de lo que de verdad es nuevo para el usuario: el historial que ya
@@ -1198,6 +1211,8 @@ def _reindexar_mensajes_recientes(usuario_id: int, cuenta_id: int, limite: int =
     tras una sincronización con mensajes nuevos, no en cada sincronización
     vacía. Falla en silencio si el buscador no está configurado/caído:
     es una mejora de UX, no debe romper la sincronización de correo en sí."""
+    if correo_cifrado.config_de_cuenta(cuenta_id) is not None:
+        return          # el correo de un despacho con correo cifrado no se manda a ningún índice externo (guardaría el contenido en claro)
     try:
         for mensaje in db.listar_mensajes_correo(cuenta_id, limite=limite):
             busqueda.indexar_mensaje(dict(mensaje), usuario_id=usuario_id)
