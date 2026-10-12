@@ -8,7 +8,7 @@
   </div>
 </header>
 
-<form class="edit-form" method="post" action="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=vencimiento.id) }}" style="max-width: 640px;">
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=vencimiento.id) }}">
   <div class="ia-form-row">
     <label>{{ _('Modelo') }}
       <input type="text" name="modelo" value="{{ vencimiento.modelo }}" required>
@@ -56,7 +56,7 @@
 </form>
 
 {% if puede_facturar and vencimiento.estado != 'presentado' %}
-<form class="edit-form" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" style="max-width: 640px;">
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data">
   <label>{{ _('Marcar como presentado y facturar (opcional)') }}</label>
   <p class="subtitle">{{ _('Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura.') }}</p>
   <div class="ia-form-row">
@@ -79,7 +79,7 @@
   <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar vencimiento') }}</button>
 </form>
 
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Documentos del cliente') }}</h2>
   <p class="subtitle">{{ _('Lo que sube el cliente desde el portal y, de tu parte, el justificante oficial y la constancia de presentación: el cliente los ve y los descarga en su portal.') }}</p>
   <form method="post" action="{{ url_for('fiscal.subir_justificante', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data" class="ia-form-row">
@@ -112,7 +112,7 @@
   {% endif %}
 </section>
 
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Mensajes con el cliente') }}</h2>
   {% if not mensajes_cliente %}
   <p class="empty-lane">{{ _('Todavía no hay mensajes en esta conversación.') }}</p>
@@ -136,7 +136,7 @@
 </section>
 
 {% if puede_cobrar_stripe %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Cobrar por Stripe') }}</h2>
   <p class="subtitle">{{ _('Genera un enlace de pago y se lo envía al cliente por email. El importe se lee ahora mismo, nunca se guarda en caché.') }}</p>
   <form method="post" action="{{ url_for('fiscal.cobrar_stripe_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
@@ -149,7 +149,7 @@
 {% endif %}
 
 {% if puede_enviar_a_firma %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Firma electrónica') }}</h2>
   {% if vencimiento.documenso_documento_id %}
   <p class="subtitle">{{ _('Ya se ha enviado un documento a firmar al cliente para este vencimiento.') }}</p>

@@ -12,7 +12,7 @@
   <a class="btn btn-ghost" href="{{ url_for('correo.equipo') }}">&larr; {{ _('Correo de equipo') }}</a>
 </header>
 
-<section style="max-width: 760px;">
+<section class="ds-max-760">
   <p>
     {% if m.asignado_nombre %}<span class="pill">{{ _('Asignado a %(quien)s', quien=m.asignado_nombre) }}</span>{% endif %}
     <span class="pill {{ 'estado-dentro' if m.estado == 'resuelto' }}">{{ _('Resuelto') if m.estado == 'resuelto' else _('Abierto') }}</span>
@@ -35,7 +35,7 @@
   <pre class="correo-equipo-cuerpo">{{ m.cuerpo_texto or _('(Este correo no tiene versión en texto; ábrelo en la bandeja de quien lo recibió.)') }}</pre>
 </section>
 
-<section class="tarea-comentarios" id="notas" style="max-width: 760px;">
+<section class="tarea-comentarios ds-max-760" id="notas">
   <h2 class="tarea-bloque-titulo">{{ _('Notas internas') }}</h2>
   <p class="muted">{{ _('Solo las ve el equipo con acceso a este correo; nunca se envían al remitente.') }}</p>
   {% if notas %}
@@ -63,7 +63,7 @@
   </form>
 </section>
 {% if m.rol == 'dueno' %}
-<section style="max-width: 760px;" id="historial">
+<section class="ds-max-760" id="historial">
   <h2>{{ _('Quién ha hecho qué') }}</h2>
   <p class="muted">{{ _('Solo lo ves tú, como dueño del correo. Un correo se puede compartir con un máximo de %(n)s personas.', n=max_compartidos) }}</p>
   {% if historial %}

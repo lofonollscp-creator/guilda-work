@@ -29,7 +29,7 @@
     <form method="post" action="{{ url_for('hydra_bridge.hydra_consent') }}">
       <input type="hidden" name="consent_challenge" value="{{ challenge }}">
       <div class="botones">
-        <button type="submit" name="decision" value="denegar">{{ _('Denegar') }}</button>
+        <button class="btn btn-ghost" type="submit" name="decision" value="denegar">{{ _('Denegar') }}</button>
         <button type="submit" name="decision" value="permitir" class="primario">{{ _('Permitir') }}</button>
       </div>
     </form>

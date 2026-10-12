@@ -24,10 +24,12 @@
 
   document.querySelectorAll("[data-ajuste-tema]").forEach((g) => segmentado(g, leer(CLAVE_TEMA, "system"), (v) => {
     guardar(CLAVE_TEMA, v);
+    if (window.GuildaApariencia) window.GuildaApariencia.guardar({ tema: v });
     if (v === "system") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
   }));
   document.querySelectorAll("[data-ajuste-densidad]").forEach((g) => segmentado(g, leer(CLAVE_DENSIDAD, "normal"), (v) => {
     guardar(CLAVE_DENSIDAD, v);
+    if (window.GuildaApariencia) window.GuildaApariencia.guardar({ densidad: v });
     if (v === "normal") delete document.documentElement.dataset.densidad; else document.documentElement.dataset.densidad = v;
   }));
 

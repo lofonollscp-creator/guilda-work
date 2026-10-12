@@ -25,7 +25,13 @@ const panel = () => doc.querySelector(".selbus-panel");
 const visibles = () => [...doc.querySelectorAll(".selbus-opcion")].map((e) => e.textContent);
 
 ok(doc.getElementById("grande").classList.contains("selbus-origen"), "un select con 41 opciones se mejora");
-ok(!doc.getElementById("pequeno").classList.contains("selbus-origen"), "uno con 3 opciones se queda nativo");
+ok(doc.getElementById("pequeno").classList.contains("selbus-origen"), "uno con 3 opciones también usa la lista propia (sistema de diseño)");
+{ const p = doc.getElementById("pequeno"); p.dispatchEvent(new w.MouseEvent("mousedown", { bubbles: true, cancelable: true, button: 0 }));
+  ok(!!doc.querySelector(".selbus-panel.selbus-sin-buscador") && doc.querySelectorAll(".selbus-opcion").length === 3, "con pocas opciones el panel no muestra campo de búsqueda");
+  doc.querySelector(".selbus-opcion:nth-child(2)").click();
+  ok(p.value === "1" && !doc.querySelector(".selbus-panel"), "elegir en la lista pequeña cambia el valor y cierra"); }
+{ const gr = doc.getElementById("grande"); gr.dispatchEvent(new w.MouseEvent("mousedown", { bubbles: true, cancelable: true, button: 0 }));
+  ok(!doc.querySelector(".selbus-panel.selbus-sin-buscador"), "con muchas opciones el buscador sí se ve"); gr.dispatchEvent(new w.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })); }
 ok(!doc.getElementById("multiple").classList.contains("selbus-origen"), "los multiple se quedan nativos");
 ok(!doc.getElementById("sin").classList.contains("selbus-origen"), "data-sin-buscador se respeta");
 ok(doc.getElementById("forzado").classList.contains("selbus-origen"), "data-buscable fuerza la mejora");

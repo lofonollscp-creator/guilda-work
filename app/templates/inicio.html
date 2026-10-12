@@ -156,7 +156,7 @@
   {% macro tarjeta_menu(m, es_primero, es_ultimo, mostrar_reorder) %}
   <div class="menu-card" style="--accent: {{ m.color or '#7c8ba1' }};">
     <form class="menu-card-favorito" action="{{ url_for('alternar_favorito_menu', menu_id=m.id) }}" method="post">
-      <button type="submit" title="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}" aria-label="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}">
+      <button class="favorito-boton" type="submit" title="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}" aria-label="{{ _('Quitar de favoritos') if m.favorito else _('Fijar en favoritos') }}">
         <svg class="icono-inline" aria-hidden="true" style="{{ 'fill: currentColor;' if m.favorito }}"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-star"></use></svg>
       </button>
     </form>
@@ -193,7 +193,7 @@
 
   <div id="dash-menus">
   {% if favoritos %}
-  <h3 class="menu-grid-titulo"><svg class="icono-inline" aria-hidden="true" style="fill: currentColor;"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-star"></use></svg> {{ _('Favoritos') }}</h3>
+  <h3 class="menu-grid-titulo"><svg class="icono-inline ds-relleno-actual" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-star"></use></svg> {{ _('Favoritos') }}</h3>
   <div class="menu-grid">
     {% for m in favoritos %}{{ tarjeta_menu(m, loop.first, loop.last, favoritos|length > 1) }}{% endfor %}
   </div>

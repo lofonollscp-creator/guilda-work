@@ -36,7 +36,7 @@
     <img class="mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
     <h1>{{ _('Plataforma en mantenimiento') }}</h1>
     <p>{{ mensaje }}</p>
-    {% if hasta %}<p style="margin-top:10px">{{ _('Previsto hasta: %(hasta)s', hasta=hasta.replace('T', ' ')) }}</p>{% endif %}
+    {% if hasta %}<p class="ds-mt-10">{{ _('Previsto hasta: %(hasta)s', hasta=hasta.replace('T', ' ')) }}</p>{% endif %}
   </div>
 </body>
 </html>

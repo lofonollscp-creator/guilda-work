@@ -36,6 +36,7 @@
       const actual = localStorage.getItem(CLAVE_TEMA) || "system";
       const siguiente = ORDEN_TEMAS[(ORDEN_TEMAS.indexOf(actual) + 1) % ORDEN_TEMAS.length];
       localStorage.setItem(CLAVE_TEMA, siguiente);
+      if (window.GuildaApariencia) window.GuildaApariencia.guardar({ tema: siguiente });
       if (siguiente === "system") {
         delete document.documentElement.dataset.theme;
       } else {
@@ -65,6 +66,7 @@
       const actual = localStorage.getItem(CLAVE_DENSIDAD) || "normal";
       const siguiente = ORDEN_DENSIDADES[(ORDEN_DENSIDADES.indexOf(actual) + 1) % ORDEN_DENSIDADES.length];
       localStorage.setItem(CLAVE_DENSIDAD, siguiente);
+      if (window.GuildaApariencia) window.GuildaApariencia.guardar({ densidad: siguiente });
       if (siguiente === "normal") {
         delete document.documentElement.dataset.densidad;
       } else {

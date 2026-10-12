@@ -51,7 +51,7 @@
 </ul>
 {% endif %}
 
-<section style="max-width: 640px; margin-top: 2rem;" id="expediente">
+<section class="ds-max-640 ds-mt-32" id="expediente">
   <h2>{{ _('Expediente') }}</h2>
   <p class="muted">{{ _('Documentos que el despacho guarda de este cliente: súbelos aquí o archívalos desde un correo.') }}</p>
   {% if expediente %}
@@ -82,7 +82,7 @@
 </section>
 
 {% if accesos is not none %}
-<section style="max-width: 640px; margin-top: 2rem;" id="accesos">
+<section class="ds-max-640 ds-mt-32" id="accesos">
   <h2>{{ _('Quién ha accedido') }}</h2>
   <p class="muted">{{ _('Solo lo ven los supervisores del despacho. Se conserva dos años.') }} <a href="{{ url_for('fiscal.accesos_cliente_csv', cliente_id=cliente.id) }}">{{ _('Descargar el registro completo (CSV)') }}</a></p>
   {% if accesos %}
@@ -96,7 +96,7 @@
 {% endif %}
 
 {% if documentos_totales %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Documentos subidos por el cliente') }}</h2>
   <ul class="log-list">
     {% for d in documentos_totales %}
@@ -113,7 +113,7 @@
 {% endif %}
 
 {% if mensajes_totales %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Últimos mensajes') }}</h2>
   <ul class="log-list">
     {% for m in mensajes_totales[:10] %}
@@ -130,7 +130,7 @@
 {% endif %}
 
 {% if contactos_espocrm %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Contactos') }}</h2>
   <ul class="log-list">
     {% for c in contactos_espocrm %}
@@ -144,7 +144,7 @@
 {% endif %}
 
 {% if proxima_cita %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Próxima cita') }}</h2>
   <p>
     {{ proxima_cita.title or _('(sin título)') }}
@@ -155,7 +155,7 @@
 {% endif %}
 
 {% if correos_relacionados %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Correos relacionados') }}</h2>
   <ul class="log-list">
     {% for c in correos_relacionados %}
@@ -171,7 +171,7 @@
 {% endif %}
 
 {% if cliente.facturascripts_cliente_codigo %}
-<section style="max-width: 640px; margin-top: 2rem;">
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Facturación') }}</h2>
   {% if not facturas %}
   <p class="empty-lane">{{ _('Todavía no hay facturas para este cliente.') }}</p>

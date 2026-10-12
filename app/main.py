@@ -404,6 +404,7 @@ def _resolver_usuario_actual():
         g.tenant_id = usuario["tenant_id"]
         g.gestor_fichajes = bool(usuario["gestor_fichajes"])
         g.supervisor_tenant = bool(usuario["supervisor_tenant"])
+        g.apariencia = {"tema": usuario["tema"], "densidad": usuario["densidad"]}      # ya está en la fila leída: sin consulta extra
         if request.endpoint != "static":
             db.registrar_acceso(usuario["id"])
 
@@ -1823,6 +1824,25 @@ def ajustes():
 
 _AVATAR_TIPOS_PERMITIDOS = {"image/jpeg": "JPEG", "image/png": "PNG", "image/webp": "WEBP"}
 _AVATAR_TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB, generoso para una foto de móvil sin comprimir
+
+
+@app.route("/ajustes/apariencia", methods=["POST"])
+@login_required
+def guardar_apariencia():
+    """Tema y densidad en la cuenta: los llaman sidebar.js y ajustes.js al cambiarlos (el navegador sigue guardándolos para pintar sin parpadeo)."""
+    datos = request.get_json(silent=True) or {}
+    tema, densidad = datos.get("tema"), datos.get("densidad")
+    if tema not in (None, *db.TEMAS_VALIDOS) or densidad not in (None, *db.DENSIDADES_VALIDAS) or (tema is None and densidad is None):
+        return jsonify({"ok": False}), 400
+    db.guardar_apariencia_usuario(g.usuario_id, tema, densidad)
+    return jsonify({"ok": True})
+
+
+@app.context_processor
+def inyectar_apariencia_cuenta():
+    """Tema y densidad guardados en la cuenta (si los hay): base.html los aplica antes de pintar, así te siguen entre dispositivos."""
+    ap = g.get("apariencia")
+    return {"apariencia_cuenta": ap if ap and (ap["tema"] or ap["densidad"]) else None}
 
 
 @app.route("/ajustes/perfil/avatar", methods=["POST"])

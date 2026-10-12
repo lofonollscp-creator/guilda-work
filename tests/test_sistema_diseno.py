@@ -117,3 +117,31 @@ def test_el_css_cubre_todas_las_clases_de_las_macros():
     usadas = {c for lista in clases for c in lista.split() if c.startswith(("ds-", "btn-peligro", "btn-sm"))}
     faltan = sorted(c for c in usadas if "." + c not in css)
     assert not faltan, faltan
+
+
+# --- selector propio y selector de fecha ------------------------------------------------------------------------------------------------
+def test_todos_los_desplegables_y_fechas_pasan_por_los_componentes_propios():
+    sel = (RAIZ / "app" / "static" / "selector_buscable.js").read_text(encoding="utf-8")
+    assert "MIN_OPCIONES = 1" in sel and "MIN_BUSCADOR = 6" in sel and "selbus-sin-buscador" in sel
+    fecha = (RAIZ / "app" / "static" / "ds_fecha.js").read_text(encoding="utf-8")
+    for tipo in ('"date"', '"datetime-local"', '"time"'):
+        assert tipo in fecha
+    base = (RAIZ / "app" / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "filename='ds_fecha.js'" in base and "filename='selector_buscable.js'" in base
+
+
+def test_el_selector_de_fecha_es_accesible_y_tiene_hoja_en_movil():
+    js = (RAIZ / "app" / "static" / "ds_fecha.js").read_text(encoding="utf-8")
+    for cosa in ('role", "dialog"', 'role", "grid"', "gridcell", "aria-label", "aria-selected", "aria-current", "ArrowRight", "PageDown", "Escape", "F4"):
+        assert cosa in js, cosa
+    css = (RAIZ / "app" / "static" / "ds.css").read_text(encoding="utf-8")
+    assert ".ds-cal.ds-cal-hoja" in css and "prefers-reduced-motion" in css
+    assert (RAIZ / "scripts" / "ds_fecha_prueba.mjs").exists() and (RAIZ / "scripts" / "comprobar_ds_fecha.sh").exists()
+
+
+def test_los_textos_del_selector_de_fecha_estan_traducidos():
+    base = (RAIZ / "app" / "templates" / "base.html").read_text(encoding="utf-8")
+    for idioma in ("ca", "en", "fr"):
+        po = (RAIZ / "translations" / idioma / "LC_MESSAGES" / "messages.po").read_text(encoding="utf-8")
+        for clave in re.findall(r"ds(?:Hoy|Borrar|Fecha|Hora|Minutos|Periodo|MesAnterior|MesSiguiente|EstaSemana|EsteMes|MesPasado|EsteTrimestre|EsteAnio):\s*\{\{ _\('([^']+)'\)", base):
+            assert re.search(r'msgid "' + re.escape(clave) + r'"\nmsgstr "[^"]+"', po), (idioma, clave)

@@ -112,10 +112,10 @@
 
     <div class="correo-lista-bulkbar" id="correo-bulkbar" hidden>
       <span id="correo-bulkbar-cuenta">0 {{ _('seleccionados') }}</span>
-      <button type="button" data-accion="marcar-leido" data-valor="true">{{ _('Leído') }}</button>
-      <button type="button" data-accion="marcar-leido" data-valor="false">{{ _('No leído') }}</button>
-      <button type="button" data-accion="destacar" data-valor="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacar') }}</button>
-      <button type="button" data-accion="destacar" data-valor="false">{{ _('Quitar destacado') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="marcar-leido" data-valor="true">{{ _('Leído') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="marcar-leido" data-valor="false">{{ _('No leído') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="destacar" data-valor="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacar') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="destacar" data-valor="false">{{ _('Quitar destacado') }}</button>
       {% if carpetas|length > 1 %}
       <select id="correo-bulkbar-carpeta" aria-label="{{ _('Mover los mensajes seleccionados a') }}">
         <option value="">{{ _('Mover a…') }}</option>
@@ -123,10 +123,10 @@
         {% if f.nombre != carpeta %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endif %}
         {% endfor %}
       </select>
-      <button type="button" data-accion="mover">{{ _('Mover') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="mover">{{ _('Mover') }}</button>
       {% endif %}
       <button type="button" data-accion="eliminar" class="correo-bulkbar-eliminar"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar') }}</button>
-      <button type="button" id="correo-bulkbar-cancelar">{{ _('Cancelar') }}</button>
+      <button class="correo-bulkbar-boton" type="button" id="correo-bulkbar-cancelar">{{ _('Cancelar') }}</button>
     </div>
 
     {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
@@ -146,7 +146,7 @@
           <div class="correo-fila-texto">
             <div class="correo-fila-top">
               <span class="correo-fila-remitente">{{ m.remitente or _('(desconocido)') }}</span>
-              <span class="correo-fila-fecha">{% if m.destacado %}<svg class="icono-inline" aria-hidden="true" style="fill: currentColor;"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg>{% endif %} {{ m.fecha|fecha_relativa }}</span>
+              <span class="correo-fila-fecha">{% if m.destacado %}<svg class="icono-inline ds-relleno-actual" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg>{% endif %} {{ m.fecha|fecha_relativa }}</span>
             </div>
             <div class="correo-fila-asunto">{{ m.asunto or _('(sin asunto)') }}{% if m.hilo_clave and hilo_total.get(m.hilo_clave, 1) > 1 %} <span class="correo-hilo-contador" title="{{ _('Mensajes en esta conversación') }}">{{ hilo_total[m.hilo_clave] }}</span>{% endif %}</div>
             <div class="correo-fila-preview">{{ m|vista_previa }}</div>
@@ -447,7 +447,7 @@
       <span><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.') }}</span>
       <a href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, mensaje_id=mensaje_seleccionado.id, mostrar_imagenes=1) }}">{{ _('Mostrar solo esta vez') }}</a>
       <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
-        <button type="submit">{{ _('Confiar en este remitente') }}</button>
+        <button class="btn btn-sm" type="submit">{{ _('Confiar en este remitente') }}</button>
       </form>
     </div>
     {% endif %}

@@ -12,7 +12,7 @@
   <label>{{ _('Año fiscal') }}
     <input type="number" name="anio" value="{{ anio }}" min="2000" max="2100">
   </label>
-  <fieldset style="display: contents;">
+  <fieldset class="ds-contenido">
     {% for id_modelo, info in modelos_disponibles.items() %}
     <label class="checkbox-label">
       <input type="checkbox" name="modelo" value="{{ id_modelo }}" {% if id_modelo in modelos_pedidos %}checked{% endif %}>

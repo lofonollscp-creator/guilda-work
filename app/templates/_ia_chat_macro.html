@@ -35,7 +35,7 @@
       <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><input type="file" id="{{ contenedor_id }}-adjunto" accept=".txt,.csv,.md,text/plain,text/csv" hidden>
     </label>
     <textarea placeholder="{{ _('Escribe un mensaje...') }}" rows="2" required></textarea>
-    <button type="submit">{{ _('Enviar') }}</button>
+    <button class="ia-chat-enviar" type="submit">{{ _('Enviar') }}</button>
   </form>
   <div class="ia-chat-pie">
     <button type="button" class="ia-chat-vaciar" id="{{ contenedor_id }}-vaciar">{{ _('Nueva conversación') }}</button>

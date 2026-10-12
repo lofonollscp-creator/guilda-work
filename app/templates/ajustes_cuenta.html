@@ -22,8 +22,8 @@
 {% set nodos_ocultos = nodos|selectattr('attributes.node_type', 'equalto', 'input')|selectattr('attributes.type', 'equalto', 'hidden')|list %}
 {% set grupos = nodos|rejectattr('group', 'in', ['default', 'link'])|groupby('group') %}
 {% for grupo, nodos_grupo in grupos %}
-  <form class="edit-form" method="post" action="{{ accion }}" style="max-width: 480px;">
-    <h2 style="font-size: 1rem;">
+  <form class="edit-form ds-max-480" method="post" action="{{ accion }}">
+    <h2 class="ds-texto-1rem">
       {% if grupo == 'password' %}{{ _('Contraseña') }}
       {% elif grupo == 'profile' %}{{ _('Email') }}
       {% elif grupo == 'totp' %}{{ _('Verificación en dos pasos') }}
@@ -41,7 +41,7 @@
         <p><img src="{{ attrs.src }}" alt="{{ _('Código QR para añadir esta cuenta a tu app de autenticación') }}" width="{{ attrs.width or 200 }}" height="{{ attrs.height or 200 }}"></p>
       {% elif attrs.node_type == 'text' %}
         {% if attrs.text.context and attrs.text.context.secrets %}
-          <ul class="muted" style="columns: 2; max-width: 360px;">{% for c in attrs.text.context.secrets %}<li><code>{{ c.text if c.text else _('(ya usado)') }}</code></li>{% endfor %}</ul>
+          <ul class="muted ds-dos-columnas ds-max-360">{% for c in attrs.text.context.secrets %}<li><code>{{ c.text if c.text else _('(ya usado)') }}</code></li>{% endfor %}</ul>
         {% elif attrs.id == 'totp_secret_key' %}
           <p class="muted">{{ _('¿No puedes escanear el QR? Escribe esta clave en tu app:') }} <code>{{ attrs.text.text }}</code></p>
         {% else %}

@@ -740,8 +740,8 @@ HERRAMIENTAS.append(_tool(
 HERRAMIENTAS.append(_tool(
     "cambiar_mis_ajustes",
     "Cambia ajustes de LA PROPIA cuenta de quien pregunta: idioma (es, ca, en, fr), nombre mostrado, cargo, teléfono, avisos "
-    "(vencimientos, tiquets, correo, mensajes del portal, resumen semanal) y «no molestar». No cambia seguridad, contraseña, "
-    "tema ni nada de otras personas o de administración. Pasa solo lo que haya que cambiar.",
+    "(vencimientos, tiquets, correo, mensajes del portal, resumen semanal), «no molestar», tema (claro/oscuro) y densidad. No cambia seguridad, contraseña "
+    "ni nada de otras personas o de administración. Pasa solo lo que haya que cambiar.",
     {
         "idioma": _param("string", "es, ca, en o fr."), "nombre_mostrado": _param("string", "Nombre que se muestra."),
         "cargo": _param("string", "Cargo."), "telefono": _param("string", "Teléfono."),
@@ -750,6 +750,7 @@ HERRAMIENTAS.append(_tool(
         "resumen_semanal": _param("boolean", "Resumen semanal."),
         "no_molestar_desde": _param("string", "Hora de inicio HH:MM."), "no_molestar_hasta": _param("string", "Hora de fin HH:MM."),
         "quitar_no_molestar": _param("boolean", "true para desactivar «no molestar»."),
+        "tema": _param("string", "system, light o dark."), "densidad": _param("string", "normal o compacta."),
     }, [],
 ))
 

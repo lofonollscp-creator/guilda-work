@@ -7,7 +7,7 @@
   </div>
 </header>
 
-<form class="edit-form" method="post" action="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}" style="max-width: 640px;">
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}">
   <label>{{ _('Nombre o razón social') }}
     <input type="text" name="nombre" value="{{ cliente.nombre }}" required autofocus>
   </label>

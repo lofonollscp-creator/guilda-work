@@ -62,16 +62,16 @@
     </div>
 
     <div class="correo-editor-toolbar">
-      <button type="button" data-cmd="bold" title="{{ _('Negrita') }}"><b>N</b></button>
-      <button type="button" data-cmd="italic" title="{{ _('Cursiva') }}"><i>K</i></button>
-      <button type="button" data-cmd="underline" title="{{ _('Subrayado') }}"><u>S</u></button>
+      <button class="correo-editor-boton" type="button" data-cmd="bold" title="{{ _('Negrita') }}"><b>N</b></button>
+      <button class="correo-editor-boton" type="button" data-cmd="italic" title="{{ _('Cursiva') }}"><i>K</i></button>
+      <button class="correo-editor-boton" type="button" data-cmd="underline" title="{{ _('Subrayado') }}"><u>S</u></button>
       <span class="correo-editor-separador"></span>
-      <button type="button" data-cmd="insertUnorderedList" title="{{ _('Lista con viñetas') }}">&#8226; {{ _('Lista') }}</button>
-      <button type="button" data-cmd="insertOrderedList" title="{{ _('Lista numerada') }}">1. {{ _('Lista') }}</button>
+      <button class="correo-editor-boton" type="button" data-cmd="insertUnorderedList" title="{{ _('Lista con viñetas') }}">&#8226; {{ _('Lista') }}</button>
+      <button class="correo-editor-boton" type="button" data-cmd="insertOrderedList" title="{{ _('Lista numerada') }}">1. {{ _('Lista') }}</button>
       <span class="correo-editor-separador"></span>
-      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
-      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
-      <button type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
+      <button class="correo-editor-boton" type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
+      <button class="correo-editor-boton" type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
+      <button class="correo-editor-boton" type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
       {% if plantillas %}
       <span class="correo-editor-separador"></span>
       <select id="correo-plantillas-select" aria-label="{{ _('Insertar plantilla') }}">

@@ -15,9 +15,9 @@
 {% endif %}
 
 {% if not es_dueno %}
-<p class="muted" style="max-width: 640px;"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('Tarea compartida contigo por %(quien)s: puedes editarla y completarla.', quien=dueno_nombre or '') }}</p>
+<p class="muted ds-max-640"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('Tarea compartida contigo por %(quien)s: puedes editarla y completarla.', quien=dueno_nombre or '') }}</p>
 {% endif %}
-<form class="edit-form" method="post" action="{{ url_for('tareas.editar', tarea_id=tarea.id) }}" style="max-width: 640px;">
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('tareas.editar', tarea_id=tarea.id) }}">
   <label>{{ _('Asunto') }}
     <input type="text" name="asunto" value="{{ tarea.asunto }}" required autofocus>
   </label>
@@ -103,7 +103,7 @@
   </div>
 </form>
 
-<section class="tarea-dependencias-bloque" id="dependencias" style="max-width: 640px;">
+<section class="tarea-dependencias-bloque ds-max-640" id="dependencias">
   <h2 class="tarea-bloque-titulo">{{ _('Espera a') }}</h2>
   {% if dependencias %}
   <ul class="tarea-participantes">
@@ -134,7 +134,7 @@
   {% endif %}
 </section>
 
-<section class="tarea-compartir-bloque" id="compartir" style="max-width: 640px;">
+<section class="tarea-compartir-bloque ds-max-640" id="compartir">
   <h2 class="tarea-bloque-titulo">{{ _('Compartida con') }}</h2>
   {% if participantes %}
   <ul class="tarea-participantes">
@@ -171,7 +171,7 @@
   {% endif %}
 </section>
 
-<section class="tarea-checklist-bloque" id="checklist" style="max-width: 640px;">
+<section class="tarea-checklist-bloque ds-max-640" id="checklist">
   <h2 class="tarea-bloque-titulo">{{ _('Subtareas') }}</h2>
   {% if checklist %}
   <ul class="tarea-checklist-lista">
@@ -197,7 +197,7 @@
   </form>
 </section>
 
-<section class="tarea-tiempo-bloque" style="max-width: 640px;">
+<section class="tarea-tiempo-bloque ds-max-640">
   <h2 class="tarea-bloque-titulo">{{ _('Tiempo dedicado') }}</h2>
   {% if cronometro and cronometro.total_segundos %}
   <p>{{ _('Registrado hasta ahora:') }} <strong>{{ cronometro.total_segundos|duracion_hm }}</strong></p>

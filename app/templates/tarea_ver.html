@@ -16,7 +16,7 @@
 </header>
 
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
-<section style="max-width: 640px;">
+<section class="ds-max-640">
   {% if tarea.cuerpo %}<p>{{ tarea.cuerpo }}</p>{% else %}<p class="muted">{{ _('Sin descripción.') }}</p>{% endif %}
   <p>
     <span class="pill prioridad-{{ tarea.prioridad }}">{{ tarea.prioridad }}</span>

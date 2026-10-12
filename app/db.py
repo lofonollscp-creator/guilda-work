@@ -2053,6 +2053,8 @@ def init_db() -> None:
         # app/main.py) y cae al idioma del navegador en vez de forzar
         # castellano a alguien que nunca lo pidió.
         _asegurar_columna(conn, "usuarios", "idioma", "TEXT")
+        _asegurar_columna(conn, "usuarios", "tema", "TEXT")                # system | light | dark (NULL = no elegido: manda el navegador)
+        _asegurar_columna(conn, "usuarios", "densidad", "TEXT")            # normal | compacta
         _asegurar_columna(conn, "usuarios", "ultimo_acceso", "TEXT")
 
         # Ampliación "fichaje 100% compliant" (Fase G3): blindaje técnico
@@ -12424,6 +12426,37 @@ def guardar_perfil_usuario(
         conn.commit()
     finally:
         conn.close()
+
+
+TEMAS_VALIDOS = ("system", "light", "dark")
+DENSIDADES_VALIDAS = ("normal", "compacta")
+
+
+def guardar_apariencia_usuario(usuario_id: int, tema: str | None = None, densidad: str | None = None) -> None:
+    """Tema y densidad en la cuenta (se aplican en cualquier dispositivo). Valores no válidos se ignoran. Viven en `usuarios` (como el idioma)
+    porque esa fila ya se lee en cada petición: así aplicarlos no cuesta una consulta más por página."""
+    asignaciones, valores = [], []
+    if tema in TEMAS_VALIDOS:
+        asignaciones.append("tema = ?"); valores.append(tema)
+    if densidad in DENSIDADES_VALIDAS:
+        asignaciones.append("densidad = ?"); valores.append(densidad)
+    if not asignaciones:
+        return
+    conn = get_connection()
+    try:
+        conn.execute(f"UPDATE usuarios SET {', '.join(asignaciones)} WHERE id = ?", [*valores, usuario_id])
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def apariencia_usuario(usuario_id: int) -> dict:
+    conn = get_connection()
+    try:
+        f = conn.execute("SELECT tema, densidad FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+    return {"tema": f["tema"] if f else None, "densidad": f["densidad"] if f else None}
 
 
 # Qué columna de usuario_perfil gobierna cada tipo de notificación real

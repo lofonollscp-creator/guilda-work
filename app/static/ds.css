@@ -122,3 +122,73 @@
   display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 0.74em; font-weight: 700;
   color: var(--text); background: color-mix(in srgb, #f0a020 20%, transparent); border: 1px dashed color-mix(in srgb, #f0a020 60%, transparent);
 }
+
+
+/* ---- Selector con pocas opciones: lista propia sin campo de búsqueda visible ------------------------------------------------------- */
+.selbus-panel.selbus-sin-buscador input.selbus-buscar:not(#_):not(#__) {
+  position: absolute; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none; overflow: hidden;
+}
+.selbus-sin-buscador .selbus-lista { padding-top: 6px; }
+
+/* ---- Selector de fecha (ds_fecha.js) ------------------------------------------------------------------------------------------------ */
+input[type="date"], input[type="datetime-local"], input[type="time"] { cursor: pointer; }
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+.ds-cal {
+  position: fixed; z-index: 1200; width: 296px; max-width: calc(100vw - 16px); padding: 12px;
+  color: var(--text); background: var(--panel-solido); border: 1px solid var(--glass-border); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg), var(--panel-resalte); animation: ds-dialogo-entra 0.12s ease-out;
+}
+.ds-cal-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.ds-cal-titulo { flex: 1; text-align: center; font-weight: 700; font-size: 0.95em; text-transform: capitalize; }
+.ds-cal-nav { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--panel-2); color: var(--text); font-size: 1.2em; line-height: 1; cursor: pointer; }
+.ds-cal-nav:hover { background: var(--panel-2-hover); border-color: color-mix(in srgb, var(--primary) 45%, var(--glass-border)); }
+.ds-cal-rejilla { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.ds-cal-sem { text-align: center; padding: 4px 0; font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.ds-cal-dia {
+  aspect-ratio: 1; min-height: 34px; display: grid; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 10px;
+  background: transparent; color: var(--text); font: inherit; font-size: 0.88em; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.ds-cal-dia:hover:not(:disabled) { background: var(--panel-2-hover); }
+.ds-cal-dia.fuera { color: var(--text-muted); opacity: 0.55; }
+.ds-cal-dia.hoy { border-color: color-mix(in srgb, var(--primary) 70%, transparent); font-weight: 700; }
+.ds-cal-dia.elegido { background: var(--primary); border-color: var(--primary-dark); color: var(--on-accent); font-weight: 800; opacity: 1; }
+.ds-cal-dia:focus-visible, .ds-cal-nav:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); }
+.ds-cal-dia:disabled { opacity: 0.25; cursor: default; }
+.ds-cal-hora { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; font-weight: 700; }
+.ds-cal input.ds-cal-num:not(#_):not(#__) { width: 64px; text-align: center; font-variant-numeric: tabular-nums; }
+.ds-cal-pie { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--linea); }
+.ds-cal-periodos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--linea); }
+.ds-cal-periodo { cursor: pointer; font-family: inherit; }
+.ds-cal-periodo:hover { border-color: color-mix(in srgb, var(--primary) 55%, var(--glass-border)); background: var(--panel-2-hover); }
+.ds-cal-fondo { position: fixed; inset: 0; z-index: 1190; background: rgba(5, 7, 10, 0.5); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.ds-cal.ds-cal-hoja { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); top: auto; width: auto; max-width: none; padding: 16px 14px; border-radius: var(--radius-lg); }
+.ds-cal-hoja .ds-cal-dia { min-height: 42px; }
+@media (prefers-reduced-motion: reduce) { .ds-cal { animation: none; } }
+
+/* ---- Utilidades: lo que antes eran style="…" estáticos en las plantillas ---------------------------------------------------------------- */
+.ds-max-320 { max-width: 320px !important; } .ds-max-360 { max-width: 360px !important; } .ds-max-480 { max-width: 480px !important; } .ds-max-640 { max-width: 640px !important; }
+.ds-max-720 { max-width: 720px !important; } .ds-max-760 { max-width: 760px !important; }
+.ds-mt-3 { margin-top: var(--space-3) !important; } .ds-mt-8 { margin-top: 8px !important; } .ds-mt-10 { margin-top: 10px !important; } .ds-mt-12 { margin-top: 12px !important; }
+.ds-mt-16 { margin-top: 16px !important; } .ds-mt-24 { margin-top: 24px !important; } .ds-mt-32 { margin-top: 2rem !important; }
+.ds-mb-3 { margin-bottom: var(--space-3) !important; } .ds-mb-6 { margin-bottom: 6px !important; } .ds-mb-12 { margin-bottom: 12px !important; } .ds-mb-16 { margin-bottom: 16px !important; }
+.ds-mr-12 { margin-right: 12px !important; } .ds-gap-8 { gap: 8px !important; }
+.ds-ancho-total { width: 100% !important; } .ds-ancho-5em { width: 5em !important; }
+.ds-flex-1 { flex: 1 !important; } .ds-flex-2 { flex: 2 !important; } .ds-flex-3 { flex: 3 !important; }
+.ds-en-linea { display: inline !important; } .ds-bloque { display: block !important; } .ds-contenido { display: contents !important; }
+.ds-fila { display: flex !important; align-items: center !important; gap: 8px !important; }
+.ds-relleno-actual { fill: currentColor !important; }
+.ds-texto-1rem { font-size: 1rem !important; }
+.ds-copiable { word-break: break-all !important; user-select: all !important; }
+.ds-pre-ajustado { white-space: pre-wrap !important; margin: 0 !important; } .ds-pre-texto { white-space: pre-wrap !important; font-family: inherit !important; }
+.ds-dos-columnas { columns: 2 !important; }
+.ds-enlace-azul { color: #a3b8ff !important; }
+.ds-estado-ok, .ds-estado-error { font-weight: 600 !important; display: flex !important; align-items: center !important; gap: 6px !important; }
+.ds-estado-ok { color: var(--success-text) !important; } .ds-estado-error { color: var(--danger-text) !important; }
+.ds-sin-borde { border: 0 !important; padding: 0 !important; }
+.ds-cita-ok { border-left: 3px solid var(--success) !important; padding-left: 12px !important; } .ds-cita-error { border-left: 3px solid var(--danger) !important; padding-left: 12px !important; }
+.ds-neutro { border-color: var(--border) !important; color: inherit !important; }
+.ds-acento-azul { --tool-accent: #2f6fce !important; }
+
+/* Marcas de botones que estilan sus contenedores (barra del editor de correo, barra de acciones masivas, control segmentado, cerrar): llevan
+   clase propia para que el candado de diseño sepa que son intencionados; el aspecto lo siguen dando las reglas del contenedor. */
+.ds-cerrar { cursor: pointer; }

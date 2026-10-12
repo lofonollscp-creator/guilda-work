@@ -41,7 +41,7 @@
 <div class="ia-error">{{ _('Este tenant no tiene CIF/dirección fiscal rellenados en el backoffice — no aparecerán en los informes exportados.') }}</div>
 {% endif %}
 
-<div class="quick-row" style="margin-bottom: 16px;">
+<div class="quick-row ds-mb-16">
   <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_exportar_csv', tenant_id=tenant_id, desde=desde or none, hasta=hasta or none) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar CSV') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_exportar_pdf', tenant_id=tenant_id, desde=desde or none, hasta=hasta or none) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar PDF') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('fichaje.admin_exportar_json', tenant_id=tenant_id, desde=desde or none, hasta=hasta or none) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-download"></use></svg> {{ _('Exportar JSON (detalle + hash)') }}</a>

@@ -11,7 +11,7 @@
 <a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">&larr; {{ _('Volver al correo') }}</a>
 
 {% if error %}
-<div class="ia-error" style="margin-top: 16px;">{{ error }}</div>
+<div class="ia-error ds-mt-16">{{ error }}</div>
 {% endif %}
 
 <section class="correo-ajustes-seccion">
@@ -242,7 +242,7 @@
   {% if not cuentas %}
   <p class="empty-lane">{{ _('Añade una cuenta primero para poder configurar su firma.') }}</p>
   {% else %}
-  <form method="get" action="{{ url_for('correo.ajustes') }}" class="correo-form-campo" style="max-width: 320px;">
+  <form method="get" action="{{ url_for('correo.ajustes') }}" class="correo-form-campo ds-max-320">
     <label>{{ _('Cuenta') }}</label>
     <select name="cuenta_firma_id" data-autoenviar aria-label="{{ _('Cuenta') }}">
       {% for c in cuentas %}
@@ -254,18 +254,18 @@
   <form method="post" action="{{ url_for('correo.guardar_firma') }}" class="correo-form-seccion">
     <input type="hidden" name="cuenta_id" value="{{ cuenta_firma_id }}">
     <div class="correo-editor-toolbar">
-      <button type="button" data-cmd="bold" title="{{ _('Negrita') }}"><b>N</b></button>
-      <button type="button" data-cmd="italic" title="{{ _('Cursiva') }}"><i>K</i></button>
-      <button type="button" data-cmd="underline" title="{{ _('Subrayado') }}"><u>S</u></button>
+      <button class="correo-editor-boton" type="button" data-cmd="bold" title="{{ _('Negrita') }}"><b>N</b></button>
+      <button class="correo-editor-boton" type="button" data-cmd="italic" title="{{ _('Cursiva') }}"><i>K</i></button>
+      <button class="correo-editor-boton" type="button" data-cmd="underline" title="{{ _('Subrayado') }}"><u>S</u></button>
       <span class="correo-editor-separador"></span>
-      <button type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
-      <button type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
-      <button type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
+      <button class="correo-editor-boton" type="button" data-cmd="createLink" title="{{ _('Insertar enlace') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-link"></use></svg> {{ _('Enlace') }}</button>
+      <button class="correo-editor-boton" type="button" data-cmd="insertImageFile" title="{{ _('Insertar imagen') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-image"></use></svg> {{ _('Imagen') }}</button>
+      <button class="correo-editor-boton" type="button" data-cmd="removeFormat" title="{{ _('Quitar formato') }}">Tx</button>
     </div>
     <div id="firma-editor-cuerpo" class="correo-editor" data-campo-oculto="firma-campo-oculto" contenteditable="true">{{ cuenta_firma.firma_html|safe if cuenta_firma and cuenta_firma.firma_html else '' }}</div>
     <input type="hidden" name="firma_html" id="firma-campo-oculto">
 
-    <div class="correo-form-campo" style="margin-top: 12px;">
+    <div class="correo-form-campo ds-mt-12">
       <label class="correo-form-checkbox">
         <input type="checkbox" name="firma_en_nuevos" {% if not cuenta_firma or cuenta_firma.firma_en_nuevos %}checked{% endif %}>
         {{ _('Insertar en correos nuevos') }}

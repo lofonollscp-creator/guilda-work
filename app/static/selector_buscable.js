@@ -7,13 +7,15 @@
 // lanza `change`, así que todo lo que escuchaba ese evento (data-autoenviar, cargas perezosas…) sigue funcionando. Sin JavaScript, o con
 // pocas opciones, se ve el desplegable de siempre.
 //
-//   <select>                       se mejora solo si tiene MIN_OPCIONES o más opciones
-//   <select data-buscable>         se mejora siempre
+//   <select>                       se mejora siempre (sistema de diseño: ningún desplegable nativo); el campo de búsqueda solo aparece con
+//                                  MIN_BUSCADOR o más opciones, por debajo es una lista propia sin buscador
+//   <select data-buscable>         con buscador aunque tenga pocas opciones
 //   <select data-sin-buscador>     nunca (también se saltan los `multiple` y los de `size` > 1)
 (function () {
   "use strict";
 
-  const MIN_OPCIONES = 6;       // por debajo (prioridad, estado…), la lista nativa es más cómoda
+  const MIN_OPCIONES = 1;       // todos los desplegables usan la lista propia (misma apariencia en cualquier navegador y tema)
+  const MIN_BUSCADOR = 6;       // por debajo (prioridad, estado…) la lista se ve sin campo de búsqueda
   const MAX_VISIBLES = 300;     // con miles de opciones no se pintan todas: se afina escribiendo
   const MOVIL = window.matchMedia("(max-width: 640px)");
 
@@ -78,6 +80,7 @@
       panel.classList.add("selbus-hoja");
     }
     document.body.append(panel);
+    if (!("buscable" in sel.dataset) && sel.options.length < MIN_BUSCADOR) panel.classList.add("selbus-sin-buscador");   // el campo existe (teclado, lectores) pero no se ve
 
     abierto = { select: sel, panel, entrada, lista, pie, fondo, activo: -1, items: leerOpciones(sel), visibles: [] };
     sel.setAttribute("aria-expanded", "true");

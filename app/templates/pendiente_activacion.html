@@ -47,9 +47,9 @@
     <img class="mark" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
     <h1>{{ _('Tu cuenta está casi lista') }}</h1>
     <p>{{ _('Te has registrado correctamente, pero tu cuenta todavía no está asociada a ninguna organización.') }}</p>
-    <p>{{ _('El equipo de Guilda Work la activará en breve — si has llegado hasta aquí sin haber hablado antes con nosotros, escríbenos a') }} <a href="mailto:gestio@guilda.cat" style="color:#a3b8ff;">gestio@guilda.cat</a>.</p>
+    <p>{{ _('El equipo de Guilda Work la activará en breve — si has llegado hasta aquí sin haber hablado antes con nosotros, escríbenos a') }} <a class="ds-enlace-azul" href="mailto:gestio@guilda.cat">gestio@guilda.cat</a>.</p>
     <form action="{{ url_for('logout') }}" method="post">
-      <button type="submit">{{ _('Cerrar sesión') }}</button>
+      <button class="btn btn-ghost" type="submit">{{ _('Cerrar sesión') }}</button>
     </form>
   </main>
 </body>

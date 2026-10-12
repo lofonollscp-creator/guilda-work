@@ -40,8 +40,8 @@
         <option value="{{ valor }}">{{ etiqueta }}</option>
         {% endfor %}
       </select>
-      <input type="text" name="titulo" placeholder="{{ _('Título...') }}" required autofocus style="flex: 2;">
-      <input type="text" name="descripcion" placeholder="{{ _('Descripción (opcional)...') }}" style="flex: 3;">
+      <input class="ds-flex-2" type="text" name="titulo" placeholder="{{ _('Título...') }}" required autofocus>
+      <input class="ds-flex-3" type="text" name="descripcion" placeholder="{{ _('Descripción (opcional)...') }}">
       <span class="file-input">
         <label class="file-input-boton btn btn-ghost">
           <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>

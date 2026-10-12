@@ -35,4 +35,4 @@ def test_pantalla_pagina_y_conserva_los_filtros(cliente):
     assert cliente.get("/fiscal/vencimientos?pagina=basura").status_code == 200
     assert cliente.get("/fiscal/vencimientos?pagina=99").status_code == 200                   # fuera de rango: página vacía, no un error
     corto = cliente.get(f"/fiscal/vencimientos?cliente_id={cid}&desde=2026-12-01&hasta=2026-12-03").get_data(as_text=True)
-    assert corto.count('class="log-item vencimiento-fiscal-item') == 3 and "Anterior" not in corto
+    assert corto.count('class="log-item vencimiento-fiscal-item') == 3 and "Anterior</a>" not in corto and "icono-arrow-left" not in corto

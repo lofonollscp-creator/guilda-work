@@ -7881,3 +7881,18 @@ msgstr "Only http(s) or mailto links are allowed."
 
 msgid "Sin validar"
 msgstr "Not validated"
+
+msgid "Minutos"
+msgstr "Minutes"
+
+msgid "Este mes"
+msgstr "This month"
+
+msgid "Mes pasado"
+msgstr "Last month"
+
+msgid "Este trimestre"
+msgstr "This quarter"
+
+msgid "Este año"
+msgstr "This year"

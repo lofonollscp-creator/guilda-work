@@ -10,10 +10,13 @@ BASE = RAIZ / "tests" / "datos" / "sistema_diseno_base.json"
 # regla -> (descripción, expresión, dónde se busca: "html" plantillas, "js" ficheros .js propios)
 REGLAS = {
     "dialogo_nativo": ("confirm()/alert()/prompt() del navegador: usar GuildaDS (ds.js)", re.compile(r"(?<![\w.])(?:window\.)?(?:confirm|alert|prompt)\("), ("html", "js")),
-    "select_nativo": ("<select> sin componente del sistema", re.compile(r"<select\b"), ("html",)),
+    # Todos los <select> usan la lista propia de selector_buscable.js; solo quedan nativos los que lo piden (multiple, size, data-sin-buscador).
+    "select_nativo": ("<select> que se queda con la lista nativa (multiple, size o data-sin-buscador)", re.compile(r"<select\b[^>]*\b(?:multiple|size=|data-sin-buscador)"), ("html",)),
     "boton_sin_clase": ("<button> sin clase (usar boton() de _ds o una clase .btn)", re.compile(r"<button\b(?:(?!class=)[^>])*>"), ("html",)),
-    "estilo_en_linea": ('style="…" en línea: usar una clase', re.compile(r'\sstyle="'), ("html",)),
-    "fecha_nativa": ("<input type=date|datetime-local|time> sin selector de fecha del sistema", re.compile(r'<input\b[^>]*type="(?:date|datetime-local|time)"'), ("html",)),
+    # Solo los estáticos: los que llevan {{ … }} pintan un dato (ancho de una barra, color de una categoría) y no tienen equivalente en una clase.
+    "estilo_en_linea": ('style="…" estático en línea: usar una clase (utilidades ds-* en ds.css)', re.compile(r'\sstyle="[^"{]*"'), ("html",)),
+    # ds_fecha.js sustituye el calendario nativo de todos los campos de fecha; solo quedan nativos los que llevan data-nativo.
+    "fecha_nativa": ("<input type=date|datetime-local|time data-nativo> con el calendario nativo", re.compile(r'<input\b(?=[^>]*type="(?:date|datetime-local|time)")[^>]*\bdata-nativo'), ("html",)),
 }
 # Siempre cero (sin línea base): rompen la política de contenido (CSP) o el diseño por completo.
 PROHIBIDAS = {

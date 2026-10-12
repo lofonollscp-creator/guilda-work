@@ -12,7 +12,7 @@
 <div class="ia-error">{{ error }}</div>
 {% endif %}
 
-<form class="edit-form" method="post" action="{{ url_for('tiquets.editar', tiquet_id=tiquet.id) }}" enctype="multipart/form-data" style="max-width: 640px;">
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('tiquets.editar', tiquet_id=tiquet.id) }}" enctype="multipart/form-data">
   <label>{{ _('Tipo') }}
     <select name="tipo">
       {% for valor, etiqueta in tipos %}
@@ -31,7 +31,7 @@
   <label>{{ _('Adjuntos ya subidos') }}
     <div class="correo-adjuntos">
       {% for a in adjuntos %}
-      <span class="correo-adjunto-chip" style="gap: 8px;">
+      <span class="correo-adjunto-chip ds-gap-8">
         <a href="{{ url_for('tiquets.descargar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" target="_blank" rel="noopener">
           <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }} <span class="correo-adjunto-tamano">({{ a.tamano_bytes|tamano_legible }})</span>
         </a>
@@ -57,13 +57,13 @@
 </form>
 
 {% if adjuntos %}
-<div class="edit-form" style="max-width: 640px;">
+<div class="edit-form ds-max-640">
   <h3>{{ _('Quitar un adjunto') }}</h3>
   {% for a in adjuntos %}
-  <form action="{{ url_for('tiquets.eliminar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" method="post"
-        style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"
+  <form class="ds-fila ds-mb-6" action="{{ url_for('tiquets.eliminar_adjunto', tiquet_id=tiquet.id, adjunto_id=a.id) }}" method="post"
+       
         data-confirmar-envio="{{ _('¿Quitar %(nombre)s?', nombre=a.nombre_archivo) }}">
-    <span style="flex: 1;"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }}</span>
+    <span class="ds-flex-1"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ a.nombre_archivo }}</span>
     <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
   </form>
   {% endfor %}

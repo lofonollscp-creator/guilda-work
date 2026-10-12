@@ -11,7 +11,7 @@
 <a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">&larr; {{ _('Volver al correo') }}</a>
 
 {% if error %}
-<div class="ia-error" style="margin-top: 16px;">{{ error }}</div>
+<div class="ia-error ds-mt-16">{{ error }}</div>
 {% endif %}
 
 {% if proveedores_oauth %}
@@ -52,7 +52,7 @@
 {% if not cuentas %}
 <p class="empty-lane">{{ _('Aún no has añadido ninguna cuenta de correo.') }}</p>
 {% else %}
-<ul class="log-list" style="margin-top: 16px;">
+<ul class="log-list ds-mt-16">
   {% for c in cuentas %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ c.nombre|avatar_color }};">{{ c.nombre|iniciales }}</span>
@@ -143,7 +143,7 @@
 
 <section class="correo-ajustes-seccion">
   <h2>{{ _('Añadir cuenta') }}</h2>
-  <form action="{{ url_for('correo.crear_cuenta') }}" method="post" class="correo-form-seccion" style="max-width: 480px;">
+  <form action="{{ url_for('correo.crear_cuenta') }}" method="post" class="correo-form-seccion ds-max-480">
     <div class="correo-form-campo">
       <label>{{ _('Nombre') }}</label>
       <input type="text" name="nombre" placeholder="{{ _('ej. Trabajo') }}" required aria-label="{{ _('Nombre') }}">

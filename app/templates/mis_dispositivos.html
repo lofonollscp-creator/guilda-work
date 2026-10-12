@@ -9,16 +9,16 @@
 </header>
 
 {% if token_nuevo %}
-<div class="ia-error" style="border-color: var(--border); color: inherit;" role="status">
+<div class="ia-error ds-neutro" role="status">
   <strong>{{ _('Token creado: «%(nombre)s»', nombre=token_nuevo.nombre) }}</strong>
   <p class="muted">{{ _('Cópialo ahora: no se volverá a mostrar.') }}</p>
-  <code style="word-break: break-all; user-select: all;">{{ token_nuevo.token }}</code>
+  <code class="ds-copiable">{{ token_nuevo.token }}</code>
   <p class="muted">{% if token_nuevo.areas %}{{ _('Limitado a: %(areas)s', areas=token_nuevo.areas|join(', ')) }}{% else %}{{ _('Sin límite de áreas') }}{% endif %} · {% if token_nuevo.caduca_en %}{{ _('Caduca el %(fecha)s', fecha=token_nuevo.caduca_en[:10]) }}{% else %}{{ _('No caduca (solo por inactividad)') }}{% endif %}</p>
 </div>
 {% endif %}
 
-<form method="post" action="{{ url_for('crear_token_desde_web') }}" class="correo-form-seccion" style="margin-top: 16px;">
-  <h2 style="font-size: 1rem;">{{ _('Crear un token de API') }}</h2>
+<form method="post" action="{{ url_for('crear_token_desde_web') }}" class="correo-form-seccion ds-mt-16">
+  <h2 class="ds-texto-1rem">{{ _('Crear un token de API') }}</h2>
   <p class="muted">{{ _('Para integraciones y scripts (cabecera Authorization: Bearer). Un token de solo lectura únicamente puede consultar datos.') }}</p>
   <div class="ia-form-row">
     <input type="text" name="nombre" maxlength="80" placeholder="{{ _('Nombre (ej. Panel de Grafana)') }}">
@@ -35,17 +35,17 @@
     <button type="submit" class="btn btn-primary">{{ _('Crear token') }}</button>
   </div>
   {% if areas_api %}
-  <fieldset class="muted" style="border: 0; padding: 0; margin-top: 8px;">
+  <fieldset class="muted ds-sin-borde ds-mt-8">
     <legend>{{ _('Limitar a estas áreas (si no marcas ninguna, accede a todas)') }}</legend>
-    {% for clave, info in areas_api.items() %}<label style="margin-right: 12px;"><input type="checkbox" name="areas" value="{{ clave }}"> {{ info[0] }}</label>{% endfor %}
+    {% for clave, info in areas_api.items() %}<label class="ds-mr-12"><input type="checkbox" name="areas" value="{{ clave }}"> {{ info[0] }}</label>{% endfor %}
   </fieldset>
   {% endif %}
-  <details class="muted" style="margin-top: 8px;">
+  <details class="muted ds-mt-8">
     <summary>{{ _('Restricciones de red (opcional)') }}</summary>
-    <label style="display:block; margin-top: 8px;">{{ _('Direcciones IP permitidas (una por línea o separadas por comas; si lo dejas vacío, desde cualquiera)') }}
-      <textarea name="ips_permitidas" rows="2" placeholder="203.0.113.7, 10.0.0.0/24" style="width: 100%;"></textarea></label>
-    <label style="display:block; margin-top: 8px;">{{ _('Orígenes web permitidos para llamar desde un navegador (CORS), p. ej. https://panel.ejemplo.com') }}
-      <textarea name="origenes_cors" rows="2" placeholder="https://panel.ejemplo.com" style="width: 100%;"></textarea></label>
+    <label class="ds-bloque ds-mt-8">{{ _('Direcciones IP permitidas (una por línea o separadas por comas; si lo dejas vacío, desde cualquiera)') }}
+      <textarea class="ds-ancho-total" name="ips_permitidas" rows="2" placeholder="203.0.113.7, 10.0.0.0/24"></textarea></label>
+    <label class="ds-bloque ds-mt-8">{{ _('Orígenes web permitidos para llamar desde un navegador (CORS), p. ej. https://panel.ejemplo.com') }}
+      <textarea class="ds-ancho-total" name="origenes_cors" rows="2" placeholder="https://panel.ejemplo.com"></textarea></label>
     <p>{{ _('Un token con IPs permitidas no se puede usar por MCP.') }}</p>
   </details>
 </form>
@@ -53,7 +53,7 @@
 {% if not dispositivos %}
 <p class="empty-lane">{{ _('No tienes ningún dispositivo móvil con sesión activa.') }}</p>
 {% else %}
-<ul class="log-list" style="margin-top: 16px;">
+<ul class="log-list ds-mt-16">
   {% for d in dispositivos %}
   <li class="log-item">
     <span class="avatar-circulo" style="--avatar-color: {{ (d.nombre_dispositivo or 'Dispositivo')|avatar_color }};">{{ (d.nombre_dispositivo or 'Dispositivo')|iniciales }}</span>
@@ -69,5 +69,5 @@
 </ul>
 {% endif %}
 
-<p class="muted" style="margin-top: 24px;">{{ _('Un dispositivo que lleva más de 90 días sin usarse se desconecta automáticamente, aunque no lo revoques a mano.') }}</p>
+<p class="muted ds-mt-24">{{ _('Un dispositivo que lleva más de 90 días sin usarse se desconecta automáticamente, aunque no lo revoques a mano.') }}</p>
 {% endblock %}

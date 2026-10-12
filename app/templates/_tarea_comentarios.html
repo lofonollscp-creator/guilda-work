@@ -1,6 +1,6 @@
 {# Hilo de comentarios de una tarea, con menciones @. Variables: tarea, comentarios, personas_mencionables. #}
 {% macro hilo(tarea, comentarios, personas_mencionables) %}
-<section class="tarea-comentarios" id="comentarios" style="max-width: 640px;">
+<section class="tarea-comentarios ds-max-640" id="comentarios">
   <h2 class="tarea-bloque-titulo">{{ _('Comentarios') }}{% if comentarios %} <span class="pill">{{ comentarios|length }}</span>{% endif %}</h2>
   {% if comentarios %}
   <ul class="comentarios-lista">
@@ -53,7 +53,7 @@
 {# Tiempo del equipo e historial de actividad de la tarea. #}
 {% macro equipo_y_actividad(tiempo_equipo, actividad) %}
 {% if tiempo_equipo and tiempo_equipo.personas %}
-<section class="tarea-tiempo-equipo" style="max-width: 640px;">
+<section class="tarea-tiempo-equipo ds-max-640">
   <h2 class="tarea-bloque-titulo">{{ _('Tiempo del equipo') }} <span class="pill">{{ tiempo_equipo.total|duracion_hm }}</span></h2>
   <ul class="tarea-participantes">
     {% for p in tiempo_equipo.personas %}
@@ -63,7 +63,7 @@
 </section>
 {% endif %}
 {% if actividad %}
-<section class="tarea-actividad" id="actividad" style="max-width: 640px;">
+<section class="tarea-actividad ds-max-640" id="actividad">
   <h2 class="tarea-bloque-titulo">{{ _('Actividad') }}</h2>
   <ul class="actividad-lista">
     {% for a in actividad %}

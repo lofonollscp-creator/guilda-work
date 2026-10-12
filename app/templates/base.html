@@ -18,6 +18,14 @@
     // haya un parpadeo del tema equivocado. "system" no fija el atributo:
     // deja que decida @media (prefers-color-scheme) en el CSS.
     (function () {
+      {% if apariencia_cuenta %}
+      // Lo guardado en la cuenta manda sobre lo de este navegador (así te sigue entre dispositivos).
+      try {
+        var cuenta = {{ apariencia_cuenta|tojson }};
+        if (cuenta.tema) localStorage.setItem("guilda-work-tema", cuenta.tema);
+        if (cuenta.densidad) localStorage.setItem("guilda-work-densidad", cuenta.densidad);
+      } catch (e) { /* navegación privada */ }
+      {% endif %}
       var tema = localStorage.getItem("guilda-work-tema") || "system";
       if (tema !== "system") {
         document.documentElement.dataset.theme = tema;
@@ -315,7 +323,7 @@
       </header>
       <main class="content" id="contenido-principal">
       {% if ver_como_activo %}
-      <div class="comunicado comunicado-critico" role="alert" style="margin-bottom:16px">
+      <div class="comunicado comunicado-critico ds-mb-16" role="alert">
         <div class="comunicado-texto"><strong>{{ _('Modo «ver como»') }}</strong> <span>{{ _('Estás viendo la plataforma como %(email)s, en solo lectura. Soporte: %(admin)s.', email=ver_como_activo.email, admin=ver_como_activo.admin) }}</span></div>
         <form method="post" action="{{ url_for('salir_ver_como') }}"><button type="submit" class="btn btn-secondary">{{ _('Salir') }}</button></form>
       </div>
@@ -358,7 +366,7 @@
     <div class="busqueda-modal atajos-ayuda-modal" role="dialog" aria-modal="true" aria-label="{{ _('Atajos de teclado') }}">
       <div class="atajos-ayuda-cabecera">
         <h2>{{ _('Atajos de teclado') }}</h2>
-        <button type="button" id="atajos-ayuda-cerrar" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}">&times;</button>
+        <button class="ds-cerrar" type="button" id="atajos-ayuda-cerrar" title="{{ _('Cerrar') }}" aria-label="{{ _('Cerrar') }}">&times;</button>
       </div>
       <ul class="atajos-ayuda-lista">
         <li><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd> <span>{{ _('Nueva nota') }}</span></li>
@@ -382,7 +390,7 @@
   <div class="ia-panel-flotante" id="ia-panel-flotante" hidden data-url="{{ url_for('ia.panel_flotante') }}" data-cargando="{{ _('Cargando…') }}" data-error="{{ _('No se pudo cargar el asistente. Inténtalo de nuevo.') }}">
     <div class="ia-panel-flotante-cabecera">
       <span>{{ _('Asistente IA') }}</span>
-      <button type="button" id="ia-panel-cerrar" title="{{ _('Cerrar') }}">&times;</button>
+      <button class="ds-cerrar" type="button" id="ia-panel-cerrar" title="{{ _('Cerrar') }}">&times;</button>
     </div>
     <div id="ia-panel-contenido"></div>
   </div>
@@ -398,6 +406,19 @@
       dsAceptar: {{ _('Aceptar')|tojson }},
       dsCancelar: {{ _('Cancelar')|tojson }},
       dsAtencion: {{ _('Atención')|tojson }},
+      dsHoy: {{ _('Hoy')|tojson }},
+      dsBorrar: {{ _('Borrar')|tojson }},
+      dsFecha: {{ _('Fecha')|tojson }},
+      dsHora: {{ _('Hora')|tojson }},
+      dsMinutos: {{ _('Minutos')|tojson }},
+      dsPeriodo: {{ _('Periodo')|tojson }},
+      dsMesAnterior: {{ _('Mes anterior')|tojson }},
+      dsMesSiguiente: {{ _('Mes siguiente')|tojson }},
+      dsEstaSemana: {{ _('Esta semana')|tojson }},
+      dsEsteMes: {{ _('Este mes')|tojson }},
+      dsMesPasado: {{ _('Mes pasado')|tojson }},
+      dsEsteTrimestre: {{ _('Este trimestre')|tojson }},
+      dsEsteAnio: {{ _('Este año')|tojson }},
       dsConfirmarPeligro: {{ _('Confirma la acción')|tojson }},
       correoEliminarConfirmar: {{ _('¿Eliminar %(n)s mensaje(s) de la caché local? No se puede deshacer.', n='__N__')|tojson }},
       correoEnlaceUrl: {{ _('URL del enlace:')|tojson }},
@@ -415,8 +436,10 @@
       archivos: {{ _('archivos')|tojson }}
     };
   </script>
+  <script src="{{ url_for('static', filename='apariencia.js') }}"></script>
   <script src="{{ url_for('static', filename='barra.js') }}"></script>
   <script src="{{ url_for('static', filename='ds.js') }}"></script>
+  <script src="{{ url_for('static', filename='ds_fecha.js') }}"></script>
   <script src="{{ url_for('static', filename='toasts.js') }}"></script>
   <script src="{{ url_for('static', filename='file_input.js') }}"></script>
   <script src="{{ url_for('static', filename='csp_compat.js') }}"></script>

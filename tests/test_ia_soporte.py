@@ -112,7 +112,7 @@ def test_ajustes_invalidos_no_cambian_nada(usuario_id, kw):
 def test_el_asistente_no_puede_tocar_seguridad_ni_otros_usuarios():
     herramienta = next(t for t in ih.HERRAMIENTAS if t["function"]["name"] == "cambiar_mis_ajustes")
     params = set(herramienta["function"]["parameters"]["properties"])
-    assert not params & {"usuario_id", "password", "contrasena", "email", "totp", "tema", "modo_autonomo", "solo_lectura"}
+    assert not params & {"usuario_id", "password", "contrasena", "email", "totp", "modo_autonomo", "solo_lectura"}
     assert "cambiar_mis_ajustes" in ih.ESCRITURA and ih.necesita_confirmacion("cambiar_mis_ajustes", modo_autonomo=False)
     for lectura in ("ayuda_buscar", "abrir_pantalla", "ver_mis_ajustes"):
         assert lectura in ih.LECTURA

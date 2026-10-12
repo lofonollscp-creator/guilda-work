@@ -261,7 +261,8 @@ def ver_mis_ajustes(usuario_id: int) -> dict:
         "avisos_correo": bool(perfil["notificar_push_correo"]), "avisos_mensajes_portal": bool(perfil["notificar_push_portal_mensajes"]),
         "resumen_semanal": bool(perfil["notificar_resumen_semanal"]),
         "no_molestar_desde": perfil["silencio_desde"], "no_molestar_hasta": perfil["silencio_hasta"],
-        "no_se_cambia_desde_el_chat": "tema y densidad (se eligen en Ajustes, en este navegador), contraseña, email, verificación en dos pasos y dispositivos: usa abrir_pantalla.",
+        "tema": db.apariencia_usuario(usuario_id)["tema"] or "system (según el navegador)", "densidad": db.apariencia_usuario(usuario_id)["densidad"] or "normal",
+        "no_se_cambia_desde_el_chat": "contraseña, email, verificación en dos pasos, dispositivos y administración: usa abrir_pantalla.",
     }
 
 
@@ -270,6 +271,7 @@ def cambiar_mis_ajustes(
     avisos_vencimientos: bool | None = None, avisos_tiquets: bool | None = None, avisos_correo: bool | None = None,
     avisos_mensajes_portal: bool | None = None, resumen_semanal: bool | None = None,
     no_molestar_desde: str | None = None, no_molestar_hasta: str | None = None, quitar_no_molestar: bool = False,
+    tema: str | None = None, densidad: str | None = None,
 ) -> dict:
     """Cambia SOLO ajustes de la cuenta de quien pregunta (nunca de otra persona, ni seguridad ni administración)."""
     hecho = []
@@ -278,6 +280,11 @@ def cambiar_mis_ajustes(
             return {"error": f"Idioma no válido: usa uno de {', '.join(IDIOMAS)}."}
         db.cambiar_idioma_usuario(usuario_id, idioma)
         hecho.append("idioma")
+    if tema is not None or densidad is not None:
+        if (tema is not None and tema not in db.TEMAS_VALIDOS) or (densidad is not None and densidad not in db.DENSIDADES_VALIDAS):
+            return {"error": "Tema: system, light o dark. Densidad: normal o compacta."}
+        db.guardar_apariencia_usuario(usuario_id, tema, densidad)
+        hecho.append("apariencia (se verá al recargar la página)")
     avisos = {
         "notificar_push_vencimientos": avisos_vencimientos, "notificar_push_tiquets": avisos_tiquets, "notificar_push_correo": avisos_correo,
         "notificar_push_portal_mensajes": avisos_mensajes_portal, "notificar_resumen_semanal": resumen_semanal,

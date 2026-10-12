@@ -7890,3 +7890,18 @@ msgstr "Només s'admeten enllaços http(s) o mailto."
 
 msgid "Sin validar"
 msgstr "Sense validar"
+
+msgid "Minutos"
+msgstr "Minuts"
+
+msgid "Este mes"
+msgstr "Aquest mes"
+
+msgid "Mes pasado"
+msgstr "Mes passat"
+
+msgid "Este trimestre"
+msgstr "Aquest trimestre"
+
+msgid "Este año"
+msgstr "Enguany"

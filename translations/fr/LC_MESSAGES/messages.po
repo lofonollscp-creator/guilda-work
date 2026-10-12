@@ -7966,3 +7966,18 @@ msgstr "Seuls les liens http(s) ou mailto sont acceptés."
 
 msgid "Sin validar"
 msgstr "Non validé"
+
+msgid "Minutos"
+msgstr "Minutes"
+
+msgid "Este mes"
+msgstr "Ce mois-ci"
+
+msgid "Mes pasado"
+msgstr "Mois dernier"
+
+msgid "Este trimestre"
+msgstr "Ce trimestre"
+
+msgid "Este año"
+msgstr "Cette année"
