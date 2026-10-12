@@ -18,6 +18,7 @@ Hoy cifra el contenido de `documentos`. El nivel (laxo, medio, estricto) se guar
 from __future__ import annotations
 
 import base64
+import contextlib
 import contextvars
 import hashlib
 import json
@@ -78,6 +79,14 @@ CREATE TABLE IF NOT EXISTS concesiones_clave (
     caduca_en TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_concesiones_tenant ON concesiones_clave(tenant_id);
+CREATE TABLE IF NOT EXISTS concesion_servicio (
+    tenant_id INTEGER PRIMARY KEY REFERENCES tenants(id),
+    envoltura TEXT NOT NULL,
+    alcances TEXT NOT NULL,
+    creada_por INTEGER REFERENCES usuarios(id),
+    creada_en TEXT NOT NULL,
+    caduca_en TEXT NOT NULL
+);
 """
 
 
@@ -241,8 +250,9 @@ def bloquear_todo() -> None:
 
 
 def privada_disponible(tenant_id: int) -> bytes | None:
-    """La clave privada del despacho si ahora mismo se puede usar: despacho desbloqueado, o la petición en curso trae una concesión válida. Si no, None."""
-    return _privada_desbloqueada(tenant_id) or _privada_por_concesion(tenant_id)
+    """La clave privada del despacho si ahora mismo se puede usar: despacho desbloqueado, la petición en curso trae una concesión válida o una tarea programada corre con
+    la concesión de servicio del despacho. Si no, None."""
+    return _privada_desbloqueada(tenant_id) or _privada_por_concesion(tenant_id) or _privada_por_servicio(tenant_id)
 
 
 # --- Configuración por despacho ---------------------------------------------------------------------------------------------------------------------
@@ -367,6 +377,7 @@ def rotar_clave(tenant_id: int, usuario_id: int, frase: str) -> str:
         conn.execute("UPDATE cifrado_despacho SET publica = ?, privada_frase = ?, privada_recuperacion = ?, frase_cambiada_en = ? WHERE tenant_id = ?",
                      (_b64(nueva_publica), frase_protegida, recuperacion_protegida, db.now_iso(), tenant_id))
         conn.execute("DELETE FROM concesiones_clave WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM concesion_servicio WHERE tenant_id = ?", (tenant_id,))
 
     def guardar_todo(conn):
         from . import correo_cifrado
@@ -379,6 +390,68 @@ def rotar_clave(tenant_id: int, usuario_id: int, frase: str) -> str:
     correo_cifrado.olvidar_configuracion(); correo_cifrado.olvidar(tenant_id)
     _desbloquear_en_memoria(tenant_id, usuario_id, nueva_privada)
     return recuperacion
+
+
+# --- Nombres de archivo de los documentos según el nivel de reserva --------------------------------------------------------------------------------------------------
+NOMBRE_PROTEGIDO = "Documento protegido"
+
+
+def nivel_de(tenant_id: int | None) -> str | None:
+    """El nivel de reserva del despacho (laxo, medio o estricto) o None si no tiene el cifrado activado."""
+    c = _config(tenant_id) if tenant_id is not None else None
+    return c["nivel"] if c else None
+
+
+def nombre_cifrado_en(nivel: str | None) -> bool:
+    return nivel in ("medio", "estricto")
+
+
+def sellar_nombre(tenant_id: int, nombre: str) -> tuple[str, str | None]:
+    """(nombre que queda en la columna, nombre sellado). En Medio y Estricto la columna queda vacía y el nombre va sellado con la clave pública (no hace falta desbloqueo)."""
+    c = _config(tenant_id)
+    if c is None or not nombre_cifrado_en(c["nivel"]):
+        return nombre, None
+    ct, sobre = sellar_con_publica(_de_b64(c["publica"]), nombre.encode("utf-8"))
+    return "", json.dumps({"s": sobre, "c": _b64(ct)})
+
+
+def abrir_nombre(tenant_id: int, nombre_cifrado: str | None, privada: bytes | None = None) -> str | None:
+    """El nombre real si hay clave; None si no la hay (o no se puede abrir)."""
+    privada = privada or privada_disponible(tenant_id)
+    if privada is None:
+        return None
+    try:
+        n = json.loads(nombre_cifrado)
+        return abrir_con_privada(privada, _de_b64(n["c"]), n["s"]).decode("utf-8")
+    except (ContenidoAlterado, ValueError, KeyError, TypeError):
+        return None
+
+
+def cambiar_nivel(tenant_id: int, usuario_id: int, nivel: str) -> dict:
+    """Cambia el nivel de reserva del despacho para todo lo que lo usa: nombres de los documentos y, si está activado, el correo. Subirlo no necesita clave; bajarlo sí
+    (hay que descifrar lo que pasa a estar en claro). Devuelve cuántos documentos y mensajes se han tocado."""
+    from . import almacen_documentos, correo_cifrado
+    if nivel not in NIVELES:
+        raise ValueError("Nivel de reserva no válido.")
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT nivel, correo_activo FROM cifrado_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        raise ValueError("El cifrado de este despacho no está activado.")
+    if nivel == f["nivel"]:
+        return {"documentos": 0, "correos": 0}
+    if NIVELES.index(nivel) < NIVELES.index(f["nivel"]) and privada_disponible(tenant_id) is None:
+        raise DespachoBloqueado("Para bajar el nivel de reserva hay que desbloquear antes los documentos con la frase de paso (hay que descifrar lo que pasa a estar en claro).")
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE cifrado_despacho SET nivel = ? WHERE tenant_id = ?", (nivel, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+    correo_cifrado.olvidar_configuracion()
+    return {"documentos": almacen_documentos.reaplicar_nombres(tenant_id), "correos": correo_cifrado._reaplicar_nivel(tenant_id) if f["correo_activo"] else 0}
 
 
 # --- Historial del asistente de IA: lo que la IA lee de lo cifrado no puede quedar en claro en el chat -----------------------------------------------------------------
@@ -469,11 +542,18 @@ def accesos_recientes(tenant_id: int, limite: int = 100) -> list[dict]:
     conn = db.get_connection()
     try:
         filas = conn.execute(
-            "SELECT a.*, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS persona, COALESCE(d.nombre_archivo, f.nombre_archivo) AS nombre_archivo FROM accesos_contenido a "
+            "SELECT a.*, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS persona, COALESCE(NULLIF(d.nombre_archivo, ''), NULLIF(f.nombre_archivo, ''), '') AS nombre_archivo, COALESCE(d.nombre_cifrado, f.nombre_cifrado) AS nombre_cifrado FROM accesos_contenido a "
             "LEFT JOIN usuarios u ON u.id = a.usuario_id LEFT JOIN usuario_perfil p ON p.usuario_id = a.usuario_id "
             "LEFT JOIN documentos d ON a.tabla = 'documentos' AND d.id = a.documento_id LEFT JOIN cliente_documentos f ON a.tabla = 'cliente_documentos' AND f.id = a.documento_id WHERE a.tenant_id = ? ORDER BY a.id DESC LIMIT ?",
             (tenant_id, max(1, min(limite, 500)))).fetchall()
-        return [dict(f) for f in filas]
+        privada = privada_disponible(tenant_id) if any(f["nombre_cifrado"] for f in filas) else None
+        res = []
+        for f in filas:
+            d = dict(f)
+            if d.pop("nombre_cifrado") and not d["nombre_archivo"]:
+                d["nombre_archivo"] = abrir_nombre(tenant_id, f["nombre_cifrado"], privada) or ""      # sin clave, sin nombre (se muestra el número)
+            res.append(d)
+        return res
     finally:
         conn.close()
 
@@ -481,6 +561,7 @@ def accesos_recientes(tenant_id: int, limite: int = 100) -> list[dict]:
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM cifrado_despacho WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM concesiones_clave WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("DELETE FROM concesion_servicio WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM accesos_contenido WHERE tenant_id = ?", (tenant_id,))
 
 
@@ -502,7 +583,7 @@ def restablecer_concesion(testigo=None) -> None:
 
 def canal_actual() -> str | None:
     c = _CONCESION.get()
-    return c[0] if c else None
+    return c[0] if c else ("servicio" if _SERVICIO.get() else None)
 
 
 def _referencia(secreto: str) -> str:
@@ -553,6 +634,94 @@ def _privada_por_concesion(tenant_id: int) -> bytes | None:
         return AESGCM(_clave_de_concesion(secreto)).decrypt(_de_b64(d["n"]), _de_b64(d["ct"]), b"guilda-concesion")
     except (InvalidTag, ValueError, KeyError):
         return None
+
+
+# --- Concesión de servicio: tareas programadas ----------------------------------------------------------------------------------------------------------------
+# Una tarea programada (el seguimiento de respuestas de correo, hoy) corre sin persona delante, así que no hay frase ni token. Por defecto NO existe nada y esas tareas ven «protegido».
+# Un responsable puede autorizarlas, con alcance (qué tareas), caducidad (máximo 90 días) y revocación inmediata. La clave del despacho se envuelve con una clave derivada del secreto
+# del servidor (`GUILDA_SECRET_KEY`, fuera de la base de datos): una copia de seguridad o un volcado de la base NO bastan para abrirla, pero quien controle el servidor sí podría.
+ALCANCES_SERVICIO = ("seguimientos",)
+MAX_DIAS_SERVICIO = 90
+_SERVICIO: contextvars.ContextVar[tuple[int, bytes] | None] = contextvars.ContextVar("_servicio_clave", default=None)
+
+
+def _clave_servidor(tenant_id: int) -> bytes:
+    base = (os.environ.get("GUILDA_SECRET_KEY") or "clave-de-desarrollo-no-usar-en-produccion").encode()
+    return HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b"guilda-servicio-v1:" + str(tenant_id).encode()).derive(base)
+
+
+def activar_servicio(tenant_id: int, usuario_id: int, alcances: list[str], dias: int) -> None:
+    """Autoriza a las tareas programadas indicadas a leer lo cifrado del despacho durante `dias` días. Exige el despacho desbloqueado ahora mismo."""
+    alcances = [a for a in dict.fromkeys(alcances) if a in ALCANCES_SERVICIO]
+    if not alcances:
+        raise ValueError("Elige al menos una tarea.")
+    if not 1 <= int(dias) <= MAX_DIAS_SERVICIO:
+        raise ValueError(f"La duración debe estar entre 1 y {MAX_DIAS_SERVICIO} días.")
+    if not esta_activo(tenant_id):
+        raise ValueError("El cifrado de este despacho no está activado.")
+    privada = _privada_desbloqueada(tenant_id)
+    if privada is None:
+        raise DespachoBloqueado("Para autorizar a las tareas programadas hay que desbloquear antes los documentos con la frase de paso.")
+    from datetime import datetime, timedelta
+    nonce = os.urandom(12)
+    envoltura = json.dumps({"v": 1, "n": _b64(nonce), "ct": _b64(AESGCM(_clave_servidor(tenant_id)).encrypt(nonce, privada, b"guilda-servicio"))})
+    caduca = (datetime.now() + timedelta(days=int(dias))).isoformat(timespec="seconds")
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT OR REPLACE INTO concesion_servicio (tenant_id, envoltura, alcances, creada_por, creada_en, caduca_en) VALUES (?, ?, ?, ?, ?, ?)",
+                     (tenant_id, envoltura, json.dumps(alcances), usuario_id, db.now_iso(), caduca))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def estado_servicio(tenant_id: int) -> dict | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT alcances, creada_en, caduca_en FROM concesion_servicio WHERE tenant_id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        return None
+    return {"alcances": json.loads(f["alcances"]), "creada_en": f["creada_en"], "caduca_en": f["caduca_en"], "vigente": f["caduca_en"] > db.now_iso()}
+
+
+def revocar_servicio(tenant_id: int) -> bool:
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("DELETE FROM concesion_servicio WHERE tenant_id = ?", (tenant_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+@contextlib.contextmanager
+def como_servicio(tenant_id: int | None, alcance: str):
+    """Dentro del bloque, esta tarea programada puede usar la clave del despacho si el despacho se lo ha autorizado (alcance incluido y sin caducar). Cede `True` si lo está."""
+    privada = None
+    if tenant_id is not None and alcance in ALCANCES_SERVICIO:
+        conn = db.get_connection()
+        try:
+            f = conn.execute("SELECT envoltura, alcances, caduca_en FROM concesion_servicio WHERE tenant_id = ?", (tenant_id,)).fetchone()
+        finally:
+            conn.close()
+        if f is not None and f["caduca_en"] > db.now_iso() and alcance in json.loads(f["alcances"]):
+            try:
+                d = json.loads(f["envoltura"])
+                privada = AESGCM(_clave_servidor(tenant_id)).decrypt(_de_b64(d["n"]), _de_b64(d["ct"]), b"guilda-servicio")
+            except (InvalidTag, ValueError, KeyError):
+                privada = None            # el secreto del servidor cambió: la concesión ya no abre nada (hay que volver a darla)
+    testigo = _SERVICIO.set((tenant_id, privada) if privada is not None else None)
+    try:
+        yield privada is not None
+    finally:
+        _SERVICIO.reset(testigo)
+
+
+def _privada_por_servicio(tenant_id: int) -> bytes | None:
+    c = _SERVICIO.get()
+    return c[1] if c and c[0] == tenant_id else None
 
 
 def listar_concesiones(tenant_id: int) -> list[dict]:

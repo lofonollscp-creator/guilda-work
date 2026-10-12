@@ -439,3 +439,111 @@ def test_sin_cifrado_el_historial_no_cambia(usuario_id):
     conn = db.get_connection()
     assert conn.execute("SELECT contenido FROM ia_mensajes").fetchone()[0] == "texto"
     conn.close()
+
+
+# --- concesión de servicio para tareas programadas ------------------------------------------------------------------------------------------------------------
+def _respuesta_pendiente(d):
+    """Un mensaje enviado del que se espera respuesta (la respuesta llega después de cifrar el correo)."""
+    d.entra(carpeta="INBOX", msgid="<propio@x.com>", asunto="Consulta")
+    return d.entra(asunto="Re: Consulta", de="Cliente <otra-persona@cliente.example>", msgid="<resp@x.com>", en_respuesta_a="<propio@x.com>", adjunto=False, cuerpo="sí")
+
+
+def test_sin_concesion_de_servicio_una_tarea_programada_no_ve_lo_cifrado(usuario_id):
+    d, antes, _, _ = _con_cifrado("estricto")
+    resp = _respuesta_pendiente(d)
+    assert cd.estado_servicio(d.t) is None
+    with cd.como_servicio(d.t, "seguimientos") as autorizada:
+        assert autorizada is False
+        assert db.obtener_mensaje_correo(resp)["protegido"] is True
+        assert db.respuesta_a_mensaje(d.cuenta_id, "<propio@x.com>", "2000-01-01", {"yo@despacho.com"}) is None, "sin saber quién escribe no se puede decir que sea una respuesta"
+
+
+def test_con_concesion_de_servicio_la_tarea_ve_lo_cifrado_solo_dentro_de_su_bloque(usuario_id):
+    d, antes, _, _ = _con_cifrado("estricto", bloquear=False)
+    resp = _respuesta_pendiente(d)
+    cd.activar_servicio(d.t, d.u, ["seguimientos"], 30)
+    cd.bloquear(d.t)
+    assert db.obtener_mensaje_correo(resp)["protegido"] is True
+    with cd.como_servicio(d.t, "seguimientos") as autorizada:
+        assert autorizada is True
+        r = db.respuesta_a_mensaje(d.cuenta_id, "<propio@x.com>", "2000-01-01", {"yo@despacho.com"})
+        assert r and r["id"] == resp
+        assert cd.canal_actual() == "servicio"
+    assert db.obtener_mensaje_correo(resp)["protegido"] is True, "fuera del bloque vuelve a estar protegido"
+    with cd.como_servicio(d.t, "otra-tarea") as autorizada:
+        assert autorizada is False
+
+
+def test_la_concesion_de_servicio_caduca_se_revoca_y_cae_con_la_rotacion(usuario_id):
+    d, antes, _, _ = _con_cifrado("laxo", bloquear=False)
+    with pytest.raises(ValueError):
+        cd.activar_servicio(d.t, d.u, ["seguimientos"], 365)
+    with pytest.raises(ValueError):
+        cd.activar_servicio(d.t, d.u, ["nada"], 10)
+    cd.activar_servicio(d.t, d.u, ["seguimientos"], 10)
+    conn = db.get_connection()
+    conn.execute("UPDATE concesion_servicio SET caduca_en = '2020-01-01T00:00:00'"); conn.commit(); conn.close()
+    cd.bloquear(d.t)
+    with cd.como_servicio(d.t, "seguimientos") as ok:
+        assert ok is False and cd.estado_servicio(d.t)["vigente"] is False
+    cd.desbloquear(d.t, d.u, FRASE)
+    cd.activar_servicio(d.t, d.u, ["seguimientos"], 10)
+    assert cd.revocar_servicio(d.t) and cd.estado_servicio(d.t) is None
+    cd.activar_servicio(d.t, d.u, ["seguimientos"], 10)
+    cd.rotar_clave(d.t, d.u, FRASE)
+    assert cd.estado_servicio(d.t) is None, "la concesión envolvía la clave antigua: tras rotar hay que volver a darla"
+
+
+def test_activar_la_concesion_de_servicio_exige_el_despacho_desbloqueado(usuario_id):
+    d, antes, _, _ = _con_cifrado("laxo")
+    with pytest.raises(cd.DespachoBloqueado):
+        cd.activar_servicio(d.t, d.u, ["seguimientos"], 10)
+
+
+def test_si_cambia_el_secreto_del_servidor_la_concesion_de_servicio_no_abre_nada(usuario_id, monkeypatch):
+    d, antes, _, _ = _con_cifrado("laxo", bloquear=False)
+    cd.activar_servicio(d.t, d.u, ["seguimientos"], 10)
+    cd.bloquear(d.t)
+    monkeypatch.setenv("GUILDA_SECRET_KEY", "otro-secreto-distinto-" + "y" * 30)
+    with cd.como_servicio(d.t, "seguimientos") as ok:
+        assert ok is False
+
+
+def test_pantalla_de_tareas_programadas_solo_para_responsables(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "srv-web@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho Servicio Web"); db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    cd.activar(t, uid, FRASE)
+    assert "No autorizadas" in cliente.get("/seguridad/cifrado").get_data(as_text=True)
+    r = cliente.post("/seguridad/cifrado/servicio", data={"alcances": ["seguimientos"], "dias": "30"}, follow_redirects=True)
+    assert "Tareas programadas autorizadas" in r.get_data(as_text=True) and cd.estado_servicio(t)["vigente"]
+    r = cliente.post("/seguridad/cifrado/servicio/revocar", follow_redirects=True)
+    assert "revocada" in r.get_data(as_text=True) and cd.estado_servicio(t) is None
+
+
+def test_activar_el_correo_con_un_nivel_distinto_al_de_los_documentos_funciona(usuario_id):
+    d = Despacho()
+    antes = d.entra(msgid="<antes@x.com>")
+    cd.activar(d.t, d.u, FRASE, "medio")                  # los documentos se activaron en Medio...
+    r = cc.activar(d.t, d.u, "estricto")                  # ...y el correo se activa subiendo a Estricto
+    despues = d.entra(msgid="<despues@x.com>")
+    assert r["sellados"] == 1 and cd.estado(d.t)["nivel"] == "estricto"
+    for mid in (antes, despues):
+        f = _columnas(mid)
+        assert f["cifrado"] == 1 and f["cifrado_nivel"] == "estricto" and f["asunto"] == "" and f["remitente"] == ""
+    assert sorted(m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="zk9")) == sorted([antes, despues])
+
+
+def test_la_bandeja_web_busca_en_memoria_con_el_correo_cifrado(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "bandeja-cif@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho Bandeja"); db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    cuenta_id = db.crear_cuenta_correo(uid, "Trabajo", "imap", "h", 993, "yo@despacho.com")
+    cuenta = db.obtener_cuenta_correo(uid, cuenta_id)
+    m1, _ = correo._guardar_mensaje_imap(cuenta, "INBOX", "1", crudo(adjunto=False), set())
+    m2, _ = correo._guardar_mensaje_imap(cuenta, "INBOX", "2", crudo(asunto="Cita para la firma", de="Notaría <n@notaria.example>", cuerpo="el jueves", adjunto=False, msgid="<2@x>"), set())
+    cd.activar(t, uid, FRASE, "medio"); cc.activar(t, uid, "estricto")
+    html = cliente.get(f"/correo/?cuenta_id={cuenta_id}&q=ZK9").get_data(as_text=True)
+    assert ASUNTO in html and "Cita para la firma" not in html, "con el correo cifrado la búsqueda web devuelve solo lo que coincide"
+    todo = cliente.get(f"/correo/?cuenta_id={cuenta_id}").get_data(as_text=True)
+    assert ASUNTO in todo and "Cita para la firma" in todo

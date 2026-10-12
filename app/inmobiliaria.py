@@ -1099,7 +1099,7 @@ def datos_propietario(token: str) -> dict | None:
         proximas = conn.execute("SELECT fecha_hora FROM inmobiliaria_visitas WHERE inmueble_id = ? AND estado = 'prevista' AND fecha_hora >= ? ORDER BY fecha_hora LIMIT 5", (i["id"], datetime.now().isoformat(timespec="minutes"))).fetchall()
         ofertas = conn.execute("SELECT fecha, importe_centimos, estado FROM inmobiliaria_ofertas WHERE inmueble_id = ? ORDER BY fecha DESC", (i["id"],)).fetchall()
         precios = conn.execute("SELECT fecha, precio_centimos FROM inmobiliaria_precios WHERE inmueble_id = ? ORDER BY fecha DESC, id DESC", (i["id"],)).fetchall()
-        docs = conn.execute("SELECT id, nombre_archivo, creado_en FROM documentos WHERE expediente_id = ? AND tenant_id = ? AND compartido_cliente = 1 AND papelera_en IS NULL ORDER BY creado_en DESC", (x["id"], tenant_id)).fetchall()
+        docs = almacen_documentos.compartidos_de_expediente(tenant_id, x["id"])
     finally:
         conn.close()
     vals = [v["valoracion"] for v in realizadas if v["valoracion"]]

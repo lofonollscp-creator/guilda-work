@@ -307,7 +307,7 @@ def test_el_expediente_fiscal_tambien_se_cifra_y_se_abre(usuario_id):
     cd.bloquear(t)
     with pytest.raises(cd.DespachoBloqueado):
         alm.leer_de_cliente_fiscal(t, f, despues, u)
-    assert db.listar_documentos_cliente(t, f)[0]["nombre_archivo"] in ("antes.txt", "despues.txt")     # listar no necesita la clave
+    assert {d["nombre_archivo"] for d in alm.listar_de_cliente_fiscal(t, f)} == {"Documento protegido"}      # listar no necesita la clave; el nombre (nivel Medio) sí
     assert alm.eliminar_de_cliente_fiscal(u, f, antes)                                                   # ni borrar
 
 

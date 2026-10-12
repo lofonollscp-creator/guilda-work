@@ -163,6 +163,8 @@ def crear_esquema(conn) -> None:
     conn.executescript(almacen_documentos.ESQUEMA)
     db._asegurar_columna(conn, "cliente_documentos", "cifrado", "INTEGER NOT NULL DEFAULT 0")     # expediente documental fiscal: mismo cifrado que `documentos`
     db._asegurar_columna(conn, "cliente_documentos", "sobre", "TEXT")
+    db._asegurar_columna(conn, "cliente_documentos", "nombre_cifrado", "TEXT")     # nombre de archivo sellado (Medio y Estricto)
+    db._asegurar_columna(conn, "documentos", "nombre_cifrado", "TEXT")
     db._asegurar_columna(conn, "accesos_contenido", "tabla", "TEXT NOT NULL DEFAULT 'documentos'")
     # Correo cifrado (app/correo_cifrado.py): bloque cifrado por mensaje, su sobre y el nivel con el que se selló; adjuntos sellados; bandera por despacho.
     db._asegurar_columna(conn, "cifrado_despacho", "correo_activo", "INTEGER NOT NULL DEFAULT 0")

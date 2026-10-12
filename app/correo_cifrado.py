@@ -563,37 +563,22 @@ def activar(tenant_id: int, usuario_id: int, nivel: str | None = None) -> dict:
             raise ValueError("El correo cifrado ya está activado.")
         if nivel is not None and nivel not in NIVELES:
             raise ValueError("Nivel de reserva no válido.")
-        conn.execute("UPDATE cifrado_despacho SET correo_activo = 1, correo_activado_en = ?, nivel = COALESCE(?, nivel) WHERE tenant_id = ?", (db.now_iso(), nivel, tenant_id))
+        conn.execute("UPDATE cifrado_despacho SET correo_activo = 1, correo_activado_en = ? WHERE tenant_id = ?", (db.now_iso(), tenant_id))
         conn.commit()
+        anterior = f["nivel"]
     finally:
         conn.close()
     olvidar_configuracion()
+    if nivel is not None and nivel != anterior:
+        cd.cambiar_nivel(tenant_id, usuario_id, nivel)
     sellados = sellar_todo(tenant_id)
     cd.sellar_historial_ia(tenant_id)
     return {"sellados": sellados, "retirados_del_buscador": retirar_de_indices_externos(tenant_id)}
 
 
 def cambiar_nivel(tenant_id: int, usuario_id: int, nivel: str) -> int:
-    """Cambia el nivel de reserva. Subirlo solo vacía columnas del correo ya sellado (sin clave); bajarlo necesita el despacho desbloqueado. Devuelve cuántos mensajes se han tocado."""
-    if nivel not in NIVELES:
-        raise ValueError("Nivel de reserva no válido.")
-    conn = db.get_connection()
-    try:
-        f = conn.execute("SELECT nivel, correo_activo FROM cifrado_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
-        if f is None:
-            raise ValueError("El cifrado de este despacho no está activado.")
-        anterior = f["nivel"]
-        if nivel == anterior:
-            return 0
-        if f["correo_activo"] and NIVELES.index(nivel) < NIVELES.index(anterior) and cd.privada_disponible(tenant_id) is None:
-            raise cd.DespachoBloqueado("Para bajar el nivel de reserva hay que desbloquear antes los documentos con la frase de paso (hay que descifrar lo que pasa a estar en claro).")
-        conn.execute("UPDATE cifrado_despacho SET nivel = ? WHERE tenant_id = ?", (nivel, tenant_id))
-        conn.commit()
-        activo = bool(f["correo_activo"])
-    finally:
-        conn.close()
-    olvidar_configuracion()
-    return _reaplicar_nivel(tenant_id) if activo else 0
+    """Cambia el nivel de reserva del despacho (ver `cifrado_despacho.cambiar_nivel`). Devuelve cuántos mensajes de correo se han tocado."""
+    return cd.cambiar_nivel(tenant_id, usuario_id, nivel)["correos"]
 
 
 def _reaplicar_nivel(tenant_id: int) -> int:

@@ -58,7 +58,7 @@ from email.utils import make_msgid, getaddresses, parsedate_to_datetime
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
-from . import almacen_documentos, busqueda, correo_cifrado, correo_oauth, db, eventos, notificaciones
+from . import almacen_documentos, busqueda, cifrado_despacho, correo_cifrado, correo_oauth, db, eventos, notificaciones
 from .texto_html import html_a_texto_indexable
 
 SERVICIO_KEYRING = "guilda-work-correo"
@@ -1854,7 +1854,9 @@ def procesar_seguimientos(ahora: datetime | None = None) -> dict:
         if cuenta is None:
             db.cancelar_seguimiento_correo(seg["usuario_id"], seg["id"])
             continue
-        respuesta = db.respuesta_a_mensaje(seg["cuenta_id"], seg["message_id"], seg["creado_en"], _direcciones_propias(cuenta))
+        # Con el correo en Estricto el remitente va cifrado: sin persona delante solo se puede saber quién responde si el despacho autorizó a esta tarea (concesión de servicio).
+        with cifrado_despacho.como_servicio(correo_cifrado.tenant_de_cuenta(seg["cuenta_id"]), "seguimientos"):
+            respuesta = db.respuesta_a_mensaje(seg["cuenta_id"], seg["message_id"], seg["creado_en"], _direcciones_propias(cuenta))
         if respuesta is not None:
             if db.cerrar_seguimiento_correo(seg["id"], "respondido"):
                 resultado["respondidos"] += 1

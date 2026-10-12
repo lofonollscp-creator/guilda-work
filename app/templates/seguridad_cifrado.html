@@ -40,6 +40,11 @@
   <h2 id="t-est">{{ _('Estado') }}</h2>
   <p>{{ chip(_('Desbloqueado') if e.desbloqueado else _('Bloqueado'), 'exito' if e.desbloqueado else 'aviso') }} {{ chip(_('Nivel: %(n)s', n=e.nivel), 'neutro') }}</p>
   {% if e.documentos_sin_cifrar %}<p class="muted">{{ _('Hay %(n)s documentos sin cifrar (de antes de activarlo).', n=e.documentos_sin_cifrar) }}</p>{% endif %}
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.nivel') }}">
+    {% call campo(_('Nivel de reserva'), 'nivel-doc', ayuda=_('Laxo: los nombres de los archivos y el asunto del correo se ven. Medio: van cifrados. Estricto: también remitente, destinatarios, categoría y cliente del correo. Subirlo no necesita desbloqueo; bajarlo sí.')) %}
+    <select id="nivel-doc" name="nivel">{% for n, nombre in (('laxo', _('Laxo')), ('medio', _('Medio')), ('estricto', _('Estricto'))) %}<option value="{{ n }}" {{ 'selected' if n == e.nivel }}>{{ nombre }}</option>{% endfor %}</select>{% endcall %}
+    <button type="submit" class="btn btn-ghost">{{ _('Cambiar nivel') }}</button>
+  </form>
   {% if not e.desbloqueado %}
   <p class="muted">{{ _('Bloqueado: nadie puede abrir los documentos, tampoco el asistente de IA ni las integraciones, hasta que se desbloquee. Los documentos nuevos se siguen cifrando.') }}</p>
   <form class="edit-form" method="post" action="{{ url_for('seguridad.desbloquear') }}">
@@ -93,11 +98,7 @@
   <p class="muted">{{ _('Sugerencia: Laxo para gestorías, Medio para inmobiliarias y despachos mixtos, Estricto para gabinetes de abogados.') }}</p>
   {% if correo.activo %}
   <p>{{ _('%(s)s de %(t)s mensajes protegidos.', s=correo.sellados, t=correo.total) }}{% if correo.pendientes %} {{ chip(_('%(n)s pendientes', n=correo.pendientes), 'aviso') }}{% endif %}</p>
-  <form class="edit-form" method="post" action="{{ url_for('seguridad.nivel_correo') }}">
-    {% call campo(_('Nivel de reserva'), 'nivel-correo', ayuda=_('Subirlo no necesita desbloqueo; bajarlo sí (hay que descifrar lo que pasa a estar en claro).')) %}
-    <select id="nivel-correo" name="nivel">{% for n, nombre in (('laxo', _('Laxo')), ('medio', _('Medio')), ('estricto', _('Estricto'))) %}<option value="{{ n }}" {{ 'selected' if n == e.nivel }}>{{ nombre }}</option>{% endfor %}</select>{% endcall %}
-    <button type="submit" class="btn btn-ghost">{{ _('Cambiar nivel') }}</button>
-  </form>
+  <p class="muted">{{ _('El nivel de reserva se cambia arriba, en Estado: vale para el correo y para los nombres de los documentos.') }}</p>
   <form method="post" action="{{ url_for('seguridad.desactivar_correo') }}" class="ds-mt-12" data-confirmar-envio="{{ _('¿Desactivar el correo cifrado? Todo el correo volverá a guardarse en claro.') }}" data-confirmar-peligro>
     <button type="submit" class="btn btn-peligro btn-sm">{{ _('Desactivar el correo cifrado') }}</button>
   </form>
@@ -120,6 +121,22 @@
       <form method="post" action="{{ url_for('seguridad.revocar_concesion', concesion_id=c.id) }}" data-confirmar-envio="{{ _('¿Revocar este acceso?') }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Revocar') }}</button></form></li>{% endfor %}
   </ul>
   {% else %}<p class="muted">{{ _('Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos.') }}</p>{% endif %}
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-srv">
+  <h2 id="t-srv">{{ _('Tareas programadas') }} {{ chip(_('Autorizadas') if servicio and servicio.vigente else _('No autorizadas'), 'aviso' if servicio and servicio.vigente else 'neutro') }}</h2>
+  <p class="muted">{{ _('Algunas tareas se ejecutan solas, sin nadie delante (por ejemplo, el seguimiento de respuestas de correo en el nivel Estricto, que necesita saber quién escribe). Por defecto no pueden leer lo cifrado y ven «protegido». Si las autorizas, durante el tiempo elegido pueden usar la clave del despacho aunque esté bloqueado. La clave se guarda envuelta con un secreto del servidor que no está en la base de datos: una copia de seguridad sola no la abre, pero quien controle el servidor sí podría.') }}</p>
+  {% if servicio %}
+  <p>{{ _('Autorizadas hasta el %(f)s: %(a)s.', f=servicio.caduca_en[:10], a=servicio.alcances|join(', ')) }}{% if not servicio.vigente %} {{ chip(_('Caducada'), 'peligro') }}{% endif %}</p>
+  <form method="post" action="{{ url_for('seguridad.revocar_servicio') }}"><button type="submit" class="btn btn-ghost">{{ _('Revocar la autorización') }}</button></form>
+  {% else %}
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.activar_servicio') }}">
+    <fieldset><legend>{{ _('Qué tareas') }}</legend>
+      {% for a in alcances_servicio %}<label class="checkbox-label"><input type="checkbox" name="alcances" value="{{ a }}" checked> {{ _('Seguimiento de respuestas de correo') if a == 'seguimientos' else a }}</label>{% endfor %}
+    </fieldset>
+    {% call campo(_('Durante (días)'), 'srv-dias', ayuda=_('Como máximo %(n)s.', n=max_dias_servicio)) %}<input type="number" id="srv-dias" name="dias" value="30" min="1" max="{{ max_dias_servicio }}" required>{% endcall %}
+    <button type="submit" class="btn btn-ghost">{{ _('Autorizar') }}</button>
+  </form>
+  {% endif %}
 </section>
 <section class="ds-max-720 ds-mt-32" aria-labelledby="t-acc">
   <h2 id="t-acc">{{ _('Quién ha abierto documentos cifrados') }}</h2>

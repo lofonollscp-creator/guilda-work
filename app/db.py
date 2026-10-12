@@ -10032,12 +10032,17 @@ def archivar_documento_cliente(
         mensaje_correo_id = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
         from . import almacen_documentos
         guardado, cifrado, sobre = almacen_documentos._sellar(u["tenant_id"], contenido)      # cifrado con la clave del despacho si lo tiene activado
+        from . import cifrado_despacho
+        nombre_seguro = _nombre_de_archivo_seguro(nombre)
+        nombre_col, nombre_sellado = cifrado_despacho.sellar_nombre(u["tenant_id"], nombre_seguro) if cifrado else (nombre_seguro, None)
+        if cifrado and cifrado_despacho.nombre_cifrado_en(cifrado_despacho.nivel_de(u["tenant_id"])):
+            asunto_origen = None          # el asunto del correo de origen es un dato que el nivel no deja en claro
         cur = conn.execute(
             """INSERT INTO cliente_documentos
-               (tenant_id, cliente_fiscal_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, categoria, origen,
+               (tenant_id, cliente_fiscal_id, nombre_archivo, nombre_cifrado, tipo_mime, tamano_bytes, contenido, categoria, origen,
                 mensaje_correo_id, asunto_origen, subido_por, hash_sha256, creado_en, cifrado, sobre)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (u["tenant_id"], cliente_fiscal_id, _nombre_de_archivo_seguro(nombre), (tipo_mime or "application/octet-stream")[:100],
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (u["tenant_id"], cliente_fiscal_id, nombre_col, nombre_sellado, (tipo_mime or "application/octet-stream")[:100],
              len(contenido), guardado, (categoria or "").strip()[:60] or None, origen, mensaje_correo_id,
              (asunto_origen or "").strip()[:200] or None, usuario_id, huella, now_iso(), cifrado, sobre),
         )
@@ -10064,6 +10069,10 @@ def registrar_acceso_cliente(tenant_id: int, cliente_fiscal_id: int, usuario_id:
     de la misma persona sobre el mismo cliente dentro de la ventana. Devuelve si ha escrito."""
     if accion not in ACCIONES_ACCESO_CLIENTE or tenant_id is None:
         return False
+    if detalle and "documento" in accion:
+        from . import cifrado_despacho
+        if cifrado_despacho.nombre_cifrado_en(cifrado_despacho.nivel_de(tenant_id)):
+            detalle = ""          # el nombre del archivo va sellado: no se copia al registro de accesos
     try:
         conn = get_connection()
         try:
@@ -10112,7 +10121,7 @@ def listar_documentos_cliente(tenant_id: int, cliente_fiscal_id: int, limite: in
     conn = get_connection()
     try:
         filas = conn.execute(
-            """SELECT d.id, d.nombre_archivo, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.asunto_origen, d.subido_por,
+            """SELECT d.id, d.nombre_archivo, d.nombre_cifrado, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.asunto_origen, d.subido_por,
                       d.creado_en, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre
                FROM cliente_documentos d LEFT JOIN usuarios u ON u.id = d.subido_por LEFT JOIN usuario_perfil pf ON pf.usuario_id = d.subido_por
                WHERE d.tenant_id = ? AND d.cliente_fiscal_id = ? ORDER BY d.creado_en DESC, d.id DESC LIMIT ?""",

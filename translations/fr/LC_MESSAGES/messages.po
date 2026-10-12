@@ -10278,3 +10278,51 @@ msgstr "Courrier protégé par la clé du cabinet."
 
 msgid "Pide a un responsable del despacho que lo desbloquee."
 msgstr "Demandez à un responsable du cabinet de le déverrouiller."
+
+msgid "Nivel cambiado: %(d)s documentos y %(n)s mensajes actualizados."
+msgstr "Niveau modifié : %(d)s documents et %(n)s messages mis à jour."
+
+msgid "Tareas programadas autorizadas."
+msgstr "Tâches planifiées autorisées."
+
+msgid "Autorización de las tareas programadas revocada."
+msgstr "Autorisation des tâches planifiées révoquée."
+
+msgid "Laxo: los nombres de los archivos y el asunto del correo se ven. Medio: van cifrados. Estricto: también remitente, destinatarios, categoría y cliente del correo. Subirlo no necesita desbloqueo; bajarlo sí."
+msgstr "Souple : les noms de fichiers et l'objet des courriels sont visibles. Moyen : ils sont chiffrés. Strict : aussi expéditeur, destinataires, catégorie et client des courriels. L'augmenter ne demande pas de déverrouillage ; le baisser oui."
+
+msgid "El nivel de reserva se cambia arriba, en Estado: vale para el correo y para los nombres de los documentos."
+msgstr "Le niveau de confidentialité se change plus haut, dans État : il vaut pour le courrier et les noms des documents."
+
+msgid "Tareas programadas"
+msgstr "Tâches planifiées"
+
+msgid "Autorizadas"
+msgstr "Autorisées"
+
+msgid "No autorizadas"
+msgstr "Non autorisées"
+
+msgid "Algunas tareas se ejecutan solas, sin nadie delante (por ejemplo, el seguimiento de respuestas de correo en el nivel Estricto, que necesita saber quién escribe). Por defecto no pueden leer lo cifrado y ven «protegido». Si las autorizas, durante el tiempo elegido pueden usar la clave del despacho aunque esté bloqueado. La clave se guarda envuelta con un secreto del servidor que no está en la base de datos: una copia de seguridad sola no la abre, pero quien controle el servidor sí podría."
+msgstr "Certaines tâches s'exécutent seules, sans personne devant (par exemple, le suivi des réponses de courriel au niveau Strict, qui doit savoir qui écrit). Par défaut elles ne peuvent pas lire le chiffré et voient « protégé ». Si vous les autorisez, pendant la durée choisie elles peuvent utiliser la clé du cabinet même verrouillée. La clé est stockée enveloppée avec un secret du serveur qui n'est pas dans la base de données : une sauvegarde seule ne l'ouvre pas, mais qui contrôle le serveur le pourrait."
+
+msgid "Autorizadas hasta el %(f)s: %(a)s."
+msgstr "Autorisées jusqu'au %(f)s : %(a)s."
+
+msgid "Caducada"
+msgstr "Expirée"
+
+msgid "Revocar la autorización"
+msgstr "Révoquer l'autorisation"
+
+msgid "Qué tareas"
+msgstr "Quelles tâches"
+
+msgid "Durante (días)"
+msgstr "Pendant (jours)"
+
+msgid "Como máximo %(n)s."
+msgstr "Au maximum %(n)s."
+
+msgid "Autorizar"
+msgstr "Autoriser"

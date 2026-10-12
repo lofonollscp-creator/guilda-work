@@ -25,7 +25,7 @@ def _exigir_responsable() -> int:
 @login_required
 def cifrado():
     t = _exigir_responsable()
-    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=cd.accesos_recientes(t, 50) if cd.esta_activo(t) else [], concesiones=cd.listar_concesiones(t), correo=correo_cifrado.estado(t), niveles=cd.NIVELES,
+    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=cd.accesos_recientes(t, 50) if cd.esta_activo(t) else [], concesiones=cd.listar_concesiones(t), servicio=cd.estado_servicio(t), alcances_servicio=cd.ALCANCES_SERVICIO, max_dias_servicio=cd.MAX_DIAS_SERVICIO, correo=correo_cifrado.estado(t), niveles=cd.NIVELES,
                            frase_minima=cd.FRASE_MINIMA, error=(request.args.get("error") or "")[:300] or None, aviso=request.args.get("aviso"), clave=None)
 
 
@@ -55,7 +55,7 @@ def activar():
     except ValueError as e:
         return _volver(error=str(e))
     # La clave de recuperación solo se enseña en esta respuesta: no se guarda en claro en ningún sitio ni viaja en una dirección.
-    resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
+    resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], servicio=None, alcances_servicio=cd.ALCANCES_SERVICIO, max_dias_servicio=cd.MAX_DIAS_SERVICIO, correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
     return resp, 200, {"Cache-Control": "no-store"}
 
 
@@ -97,17 +97,17 @@ def activar_correo():
     return _volver(aviso=_("Correo cifrado activado: %(n)s mensajes protegidos.", n=r["sellados"]))
 
 
-@seguridad_bp.route("/cifrado/correo/nivel", methods=["POST"])
+@seguridad_bp.route("/cifrado/nivel", methods=["POST"])
 @login_required
 @limiter.limit("20/hour")
-def nivel_correo():
-    """Cambia el nivel de reserva (Laxo, Medio, Estricto). Subirlo no necesita desbloqueo; bajarlo sí."""
+def nivel():
+    """Cambia el nivel de reserva del despacho (Laxo, Medio, Estricto) para los nombres de los documentos y, si está activado, el correo. Subirlo no necesita desbloqueo; bajarlo sí."""
     t = _exigir_responsable()
     try:
-        n = correo_cifrado.cambiar_nivel(t, g.usuario_id, request.form.get("nivel") or "")
+        r = cd.cambiar_nivel(t, g.usuario_id, request.form.get("nivel") or "")
     except (ValueError, cd.DespachoBloqueado) as e:
         return _volver(error=str(e))
-    return _volver(aviso=_("Nivel cambiado: %(n)s mensajes actualizados.", n=n))
+    return _volver(aviso=_("Nivel cambiado: %(d)s documentos y %(n)s mensajes actualizados.", d=r["documentos"], n=r["correos"]))
 
 
 @seguridad_bp.route("/cifrado/correo/desactivar", methods=["POST"])
@@ -123,6 +123,27 @@ def desactivar_correo():
     return _volver(aviso=_("Correo cifrado desactivado: %(n)s mensajes descifrados.", n=n))
 
 
+@seguridad_bp.route("/cifrado/servicio", methods=["POST"])
+@login_required
+@limiter.limit("10/hour")
+def activar_servicio():
+    """Autoriza a las tareas programadas elegidas a leer lo cifrado (por defecto no existe). Exige el despacho desbloqueado."""
+    t = _exigir_responsable()
+    try:
+        cd.activar_servicio(t, g.usuario_id, request.form.getlist("alcances"), request.form.get("dias", type=int) or 0)
+    except (ValueError, cd.DespachoBloqueado) as e:
+        return _volver(error=str(e))
+    return _volver(aviso=_("Tareas programadas autorizadas."))
+
+
+@seguridad_bp.route("/cifrado/servicio/revocar", methods=["POST"])
+@login_required
+def revocar_servicio():
+    t = _exigir_responsable()
+    cd.revocar_servicio(t)
+    return _volver(aviso=_("Autorización de las tareas programadas revocada."))
+
+
 @seguridad_bp.route("/cifrado/rotar", methods=["POST"])
 @login_required
 @limiter.limit("5/hour")
@@ -135,7 +156,7 @@ def rotar():
         clave = cd.rotar_clave(t, g.usuario_id, request.form.get("frase") or "")
     except (ValueError, cd.ClaveIncorrecta, cd.DemasiadosIntentos, cd.ContenidoAlterado) as e:
         return _volver(error=str(e))
-    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave), 200, {"Cache-Control": "no-store"}
+    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], servicio=None, alcances_servicio=cd.ALCANCES_SERVICIO, max_dias_servicio=cd.MAX_DIAS_SERVICIO, correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave), 200, {"Cache-Control": "no-store"}
 
 
 @seguridad_bp.route("/cifrado/frase", methods=["POST"])

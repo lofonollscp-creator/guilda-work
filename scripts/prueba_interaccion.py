@@ -161,7 +161,9 @@ def correo_cifrado(pg):
     pg.goto(BASE + "/correo/")
     cuerpo = pg.inner_text("body")
     assert "Reclamación del IVA trimestral" in cuerpo and "Marta Puig" in cuerpo, "desbloqueado, la bandeja se lee con normalidad"
-    pg.fill("input[name=q]", "plenilunio"); pg.keyboard.press("Enter"); pg.wait_for_load_state()
+    pg.fill("input[name=q]", "plenilunio")
+    with pg.expect_navigation():
+        pg.keyboard.press("Enter")
     assert "Reclamación del IVA" in pg.inner_text("body") and "Cita para la firma" not in pg.inner_text("body"), "la búsqueda por cuerpo debe funcionar con el correo cifrado"
     pg.goto(BASE + "/seguridad/cifrado"); pg.click("button:has-text('Bloquear ahora')"); pg.wait_for_load_state()
     pg.goto(BASE + "/correo/")
@@ -172,7 +174,7 @@ def correo_cifrado(pg):
     pg.goto(BASE + "/correo/")
     assert "Reclamación del IVA trimestral" in pg.inner_text("body")
     pg.goto(BASE + "/seguridad/cifrado")
-    pg.select_option("form[action$='/correo/nivel'] select[name=nivel]", "laxo")
+    pg.select_option("form[action$='/cifrado/nivel'] select[name=nivel]", "laxo")
     pg.click("button:has-text('Cambiar nivel')"); pg.wait_for_load_state()
     assert "mensajes actualizados" in pg.inner_text("body")
 

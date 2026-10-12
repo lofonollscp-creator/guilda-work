@@ -10202,3 +10202,51 @@ msgstr "Correu protegit amb la clau del despatx."
 
 msgid "Pide a un responsable del despacho que lo desbloquee."
 msgstr "Demana a un responsable del despatx que el desbloquegi."
+
+msgid "Nivel cambiado: %(d)s documentos y %(n)s mensajes actualizados."
+msgstr "Nivell canviat: %(d)s documents i %(n)s missatges actualitzats."
+
+msgid "Tareas programadas autorizadas."
+msgstr "Tasques programades autoritzades."
+
+msgid "Autorización de las tareas programadas revocada."
+msgstr "Autorització de les tasques programades revocada."
+
+msgid "Laxo: los nombres de los archivos y el asunto del correo se ven. Medio: van cifrados. Estricto: también remitente, destinatarios, categoría y cliente del correo. Subirlo no necesita desbloqueo; bajarlo sí."
+msgstr "Laxe: es veuen els noms dels fitxers i l'assumpte del correu. Mitjà: van xifrats. Estricte: també remitent, destinataris, categoria i client del correu. Pujar-lo no necessita desbloqueig; baixar-lo sí."
+
+msgid "El nivel de reserva se cambia arriba, en Estado: vale para el correo y para los nombres de los documentos."
+msgstr "El nivell de reserva es canvia a dalt, a Estat: val per al correu i per als noms dels documents."
+
+msgid "Tareas programadas"
+msgstr "Tasques programades"
+
+msgid "Autorizadas"
+msgstr "Autoritzades"
+
+msgid "No autorizadas"
+msgstr "No autoritzades"
+
+msgid "Algunas tareas se ejecutan solas, sin nadie delante (por ejemplo, el seguimiento de respuestas de correo en el nivel Estricto, que necesita saber quién escribe). Por defecto no pueden leer lo cifrado y ven «protegido». Si las autorizas, durante el tiempo elegido pueden usar la clave del despacho aunque esté bloqueado. La clave se guarda envuelta con un secreto del servidor que no está en la base de datos: una copia de seguridad sola no la abre, pero quien controle el servidor sí podría."
+msgstr "Algunes tasques s'executen soles, sense ningú davant (per exemple, el seguiment de respostes de correu al nivell Estricte, que necessita saber qui escriu). Per defecte no poden llegir el xifrat i veuen «protegit». Si les autoritzes, durant el temps triat poden usar la clau del despatx encara que estigui bloquejat. La clau es desa embolcallada amb un secret del servidor que no és a la base de dades: una còpia de seguretat sola no l'obre, però qui controli el servidor sí que podria."
+
+msgid "Autorizadas hasta el %(f)s: %(a)s."
+msgstr "Autoritzades fins al %(f)s: %(a)s."
+
+msgid "Caducada"
+msgstr "Caducada"
+
+msgid "Revocar la autorización"
+msgstr "Revocar l'autorització"
+
+msgid "Qué tareas"
+msgstr "Quines tasques"
+
+msgid "Durante (días)"
+msgstr "Durant (dies)"
+
+msgid "Como máximo %(n)s."
+msgstr "Com a màxim %(n)s."
+
+msgid "Autorizar"
+msgstr "Autoritzar"

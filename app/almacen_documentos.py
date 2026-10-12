@@ -10,7 +10,9 @@ El cifrado es un `Cifrador` que se registra con `fijar_cifrador()`. Sin él (hoy
 el del contenido sin cifrar, para detectar duplicados y comprobar la integridad al leer."""
 from __future__ import annotations
 
+import base64
 import hashlib
+import json
 from typing import Protocol
 
 from . import db, nucleo
@@ -113,6 +115,39 @@ def sellar_pendientes(tenant_id: int) -> int:
         conn.commit()
         if hechos:
             conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+    finally:
+        conn.close()
+    if hechos:
+        reaplicar_nombres(tenant_id)       # los que acaban de sellarse: su nombre también, si el nivel lo pide
+    return hechos
+
+
+def reaplicar_nombres(tenant_id: int) -> int:
+    """Pone los nombres de archivo como pide el nivel actual: sellados (columna vacía) en Medio y Estricto, en claro en Laxo. Sellar no necesita clave privada; devolverlos a claro sí."""
+    nivel = _cifrado.nivel_de(tenant_id)
+    if nivel is None:
+        return 0
+    sellar_ahora = _cifrado.nombre_cifrado_en(nivel)
+    privada = None if sellar_ahora else _cifrado.privada_disponible(tenant_id)
+    conn = db.get_connection()
+    try:
+        conn.execute("PRAGMA secure_delete = ON")
+        hechos = 0
+        for tabla in TABLAS_CON_CONTENIDO:
+            for f in conn.execute(f"SELECT id, nombre_archivo, nombre_cifrado FROM {tabla} WHERE tenant_id = ? AND cifrado = 1", (tenant_id,)).fetchall():
+                if sellar_ahora and not f["nombre_cifrado"]:
+                    col, sellado = _cifrado.sellar_nombre(tenant_id, f["nombre_archivo"])
+                    conn.execute(f"UPDATE {tabla} SET nombre_archivo = ?, nombre_cifrado = ? WHERE id = ?", (col, sellado, f["id"]))
+                    hechos += 1
+                elif not sellar_ahora and f["nombre_cifrado"]:
+                    nombre = _cifrado.abrir_nombre(tenant_id, f["nombre_cifrado"], privada)
+                    if nombre is None:
+                        raise _cifrado.DespachoBloqueado("Hay que desbloquear los documentos para devolver sus nombres a claro.")
+                    conn.execute(f"UPDATE {tabla} SET nombre_archivo = ?, nombre_cifrado = NULL WHERE id = ?", (nombre, f["id"]))
+                    hechos += 1
+        conn.commit()
+        if hechos:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
         return hechos
     finally:
         conn.close()
@@ -127,9 +162,14 @@ def resellar(tenant_id: int, abrir_antiguo, sellar_nuevo, en_la_misma_transaccio
         conn.execute("PRAGMA secure_delete = ON")
         hechos = 0
         for tabla in TABLAS_CON_CONTENIDO:
-            for f in conn.execute(f"SELECT id, contenido, sobre FROM {tabla} WHERE tenant_id = ? AND cifrado = 1", (tenant_id,)).fetchall():
+            for f in conn.execute(f"SELECT id, contenido, sobre, nombre_cifrado FROM {tabla} WHERE tenant_id = ? AND cifrado = 1", (tenant_id,)).fetchall():
                 nuevo, sobre = sellar_nuevo(abrir_antiguo(bytes(f["contenido"]), f["sobre"]))
-                conn.execute(f"UPDATE {tabla} SET contenido = ?, sobre = ? WHERE id = ?", (nuevo, sobre, f["id"]))
+                nombre = f["nombre_cifrado"]
+                if nombre:
+                    n = json.loads(nombre)
+                    nn, ns = sellar_nuevo(abrir_antiguo(base64.b64decode(n["c"]), n["s"]))
+                    nombre = json.dumps({"s": ns, "c": base64.b64encode(nn).decode()})
+                conn.execute(f"UPDATE {tabla} SET contenido = ?, sobre = ?, nombre_cifrado = ? WHERE id = ?", (nuevo, sobre, nombre, f["id"]))
                 hechos += 1
         if en_la_misma_transaccion is not None:
             en_la_misma_transaccion(conn)
@@ -142,6 +182,19 @@ def resellar(tenant_id: int, abrir_antiguo, sellar_nuevo, en_la_misma_transaccio
         raise
     finally:
         conn.close()
+
+
+def _nombre_de(tenant_id: int, fila, privada=None) -> str:
+    """El nombre real de un documento: el de la columna o, si va sellado (Medio y Estricto), el descifrado; sin clave, un texto que lo explica."""
+    n = fila["nombre_archivo"]
+    if fila["nombre_cifrado"] if "nombre_cifrado" in fila.keys() else None:
+        return _cifrado.abrir_nombre(tenant_id, fila["nombre_cifrado"], privada) or _cifrado.NOMBRE_PROTEGIDO
+    return n
+
+
+def _texto_evento(tenant_id: int, accion: str, nombre: str) -> str:
+    """Texto de la línea de tiempo del expediente: con el nombre cifrado (Medio y Estricto) no se copia a un texto que queda en claro."""
+    return accion if _cifrado.nombre_cifrado_en(_cifrado.nivel_de(tenant_id)) else f"{accion}: {nombre}"
 
 
 def _usuario(conn, usuario_id: int):
@@ -181,14 +234,16 @@ def guardar(usuario_id: int, nombre: str, tipo_mime: str | None, contenido: byte
         if conn.execute("SELECT COUNT(*) FROM documentos WHERE tenant_id = ? AND cliente_id IS ? AND expediente_id IS ? AND papelera_en IS NULL", (tenant_id, cliente_id, expediente_id)).fetchone()[0] >= db.MAX_DOCUMENTOS_POR_CLIENTE:
             return "limite", None
         guardado, cifrado, sobre = _sellar(tenant_id, contenido)
+        nombre_seguro = db._nombre_de_archivo_seguro(nombre)
+        nombre_col, nombre_sellado = _cifrado.sellar_nombre(tenant_id, nombre_seguro) if cifrado else (nombre_seguro, None)
         cur = conn.execute(
-            "INSERT INTO documentos (tenant_id, cliente_id, expediente_id, nombre_archivo, tipo_mime, tamano_bytes, categoria, contenido, hash_sha256, cifrado, sobre, origen, mensaje_correo_id, subido_por, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (tenant_id, cliente_id, expediente_id, db._nombre_de_archivo_seguro(nombre), (tipo_mime or "application/octet-stream")[:100], len(contenido), (categoria or "").strip()[:60] or None,
+            "INSERT INTO documentos (tenant_id, cliente_id, expediente_id, nombre_archivo, nombre_cifrado, tipo_mime, tamano_bytes, categoria, contenido, hash_sha256, cifrado, sobre, origen, mensaje_correo_id, subido_por, creado_en) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (tenant_id, cliente_id, expediente_id, nombre_col, nombre_sellado, (tipo_mime or "application/octet-stream")[:100], len(contenido), (categoria or "").strip()[:60] or None,
              guardado, huella, cifrado, sobre, origen, mensaje_correo_id, usuario_id, db.now_iso()),
         )
         if expediente_id is not None:
-            nucleo._evento(conn, expediente_id, "documento", f"Documento añadido: {db._nombre_de_archivo_seguro(nombre)}", usuario_id)
+            nucleo._evento(conn, expediente_id, "documento", _texto_evento(tenant_id, "Documento añadido", nombre_seguro), usuario_id)
         conn.commit()
         return "ok", cur.lastrowid
     finally:
@@ -212,8 +267,9 @@ def leer(tenant_id: int, usuario_id: int, documento_id: int, via: str = "persona
             return None
     finally:
         conn.close()
-    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
+    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre", "nombre_cifrado")}
     d["contenido"] = _abrir(tenant_id, f, usuario_id, via)
+    d["nombre_archivo"] = _nombre_de(tenant_id, f)
     return d
 
 
@@ -227,8 +283,9 @@ def leer_sin_usuario(tenant_id: int, documento_id: int) -> dict | None:
         conn.close()
     if f is None:
         return None
-    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
+    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre", "nombre_cifrado")}
     d["contenido"] = _abrir(tenant_id, f, None, "enlace")
+    d["nombre_archivo"] = _nombre_de(tenant_id, f)
     return d
 
 
@@ -242,12 +299,33 @@ def listar(tenant_id: int, usuario_id: int, *, cliente_id: int | None = None, ex
     conn = db.get_connection()
     try:
         filas = conn.execute(
-            "SELECT d.id, d.cliente_id, d.expediente_id, d.nombre_archivo, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.cifrado, d.compartido_cliente, d.subido_por, d.creado_en, "
+            "SELECT d.id, d.cliente_id, d.expediente_id, d.nombre_archivo, d.nombre_cifrado, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.cifrado, d.compartido_cliente, d.subido_por, d.creado_en, "
             "COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre FROM documentos d LEFT JOIN usuarios u ON u.id = d.subido_por "
             f"LEFT JOIN usuario_perfil pf ON pf.usuario_id = d.subido_por WHERE {' AND '.join(donde)} ORDER BY d.creado_en DESC, d.id DESC LIMIT ?", [*p, max(1, min(limite, 1000))]).fetchall()
-        return [dict(f) for f in filas if _visible(conn, usuario_id, f)]
+        privada = _cifrado.privada_disponible(tenant_id) if any(f["nombre_cifrado"] for f in filas) else None
+        res = []
+        for f in filas:
+            if not _visible(conn, usuario_id, f):
+                continue
+            d = dict(f)
+            d["nombre_archivo"] = _nombre_de(tenant_id, f, privada)
+            d.pop("nombre_cifrado", None)
+            res.append(d)
+        return res
     finally:
         conn.close()
+
+
+def compartidos_de_expediente(tenant_id: int, expediente_id: int) -> list[dict]:
+    """Los documentos que el despacho enseña al cliente en su enlace de solo lectura (sin comprobar personas: el derecho lo da el enlace). Con el nombre sellado y sin clave, «Documento protegido»."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT id, nombre_archivo, nombre_cifrado, tamano_bytes, creado_en FROM documentos WHERE expediente_id = ? AND tenant_id = ? AND compartido_cliente = 1 AND papelera_en IS NULL ORDER BY creado_en DESC",
+                             (expediente_id, tenant_id)).fetchall()
+    finally:
+        conn.close()
+    privada = _cifrado.privada_disponible(tenant_id) if any(f["nombre_cifrado"] for f in filas) else None
+    return [{"id": f["id"], "nombre_archivo": _nombre_de(tenant_id, f, privada), "tamano_bytes": f["tamano_bytes"], "creado_en": f["creado_en"]} for f in filas]
 
 
 def eliminar(tenant_id: int, usuario_id: int, documento_id: int) -> bool:
@@ -260,7 +338,7 @@ def eliminar(tenant_id: int, usuario_id: int, documento_id: int) -> bool:
             return False
         conn.execute("UPDATE documentos SET papelera_en = ? WHERE id = ?", (db._marca_papelera(), documento_id))
         if f["expediente_id"] is not None:
-            nucleo._evento(conn, f["expediente_id"], "documento", f"Documento eliminado: {f['nombre_archivo']}", usuario_id)
+            nucleo._evento(conn, f["expediente_id"], "documento", _texto_evento(tenant_id, "Documento eliminado", f["nombre_archivo"]), usuario_id)
         conn.commit()
         return True
     finally:
@@ -273,7 +351,15 @@ def guardar_de_cliente_fiscal(usuario_id: int, cliente_fiscal_id: int, nombre: s
 
 
 def listar_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, limite: int = 300) -> list[dict]:
-    return db.listar_documentos_cliente(tenant_id, cliente_fiscal_id, limite)
+    filas = db.listar_documentos_cliente(tenant_id, cliente_fiscal_id, limite)
+    privada = _cifrado.privada_disponible(tenant_id) if any(f.get("nombre_cifrado") for f in filas) else None
+    res = []
+    for f in filas:
+        d = dict(f)
+        d["nombre_archivo"] = _nombre_de(tenant_id, d, privada)
+        d.pop("nombre_cifrado", None)
+        res.append(d)
+    return res
 
 
 def leer_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, documento_id: int, usuario_id: int | None = None):
@@ -281,15 +367,20 @@ def leer_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, documento_id:
     f = db.obtener_documento_cliente(tenant_id, cliente_fiscal_id, documento_id)
     if f is None:
         return None
-    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
+    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre", "nombre_cifrado")}
     d["contenido"] = _abrir(tenant_id, f, usuario_id, "persona", "cliente_documentos")
+    d["nombre_archivo"] = _nombre_de(tenant_id, f)
     return d
 
 
 def datos_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, documento_id: int) -> dict | None:
     """Los datos del documento del expediente fiscal SIN su contenido (no se abre ni hace falta la clave): para nombrarlo, por ejemplo, al borrarlo."""
     f = db.obtener_documento_cliente(tenant_id, cliente_fiscal_id, documento_id)
-    return None if f is None else {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
+    if f is None:
+        return None
+    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre", "nombre_cifrado")}
+    d["nombre_archivo"] = _nombre_de(tenant_id, f)
+    return d
 
 
 def eliminar_de_cliente_fiscal(usuario_id: int, cliente_fiscal_id: int, documento_id: int) -> bool:

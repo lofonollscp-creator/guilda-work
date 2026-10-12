@@ -831,7 +831,7 @@ def datos_publicos(token: str) -> dict | None:
     conn = db.get_connection()
     try:
         vistas = conn.execute("SELECT fecha_hora, tipo, lugar FROM abogados_vistas WHERE expediente_id = ? AND estado = 'prevista' AND fecha_hora >= ? ORDER BY fecha_hora LIMIT 5", (x["id"], datetime.now().isoformat(timespec="minutes"))).fetchall()
-        docs = conn.execute("SELECT id, nombre_archivo, tamano_bytes, creado_en FROM documentos WHERE expediente_id = ? AND tenant_id = ? AND compartido_cliente = 1 AND papelera_en IS NULL ORDER BY creado_en DESC", (x["id"], tenant_id)).fetchall()
+        docs = almacen_documentos.compartidos_de_expediente(tenant_id, x["id"])
     finally:
         conn.close()
     despacho = (db.obtener_tenant(tenant_id) or {"nombre": ""})["nombre"]

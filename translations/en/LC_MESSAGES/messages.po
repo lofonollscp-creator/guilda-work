@@ -10193,3 +10193,51 @@ msgstr "Mail protected with the firm's key."
 
 msgid "Pide a un responsable del despacho que lo desbloquee."
 msgstr "Ask someone in charge of the firm to unlock it."
+
+msgid "Nivel cambiado: %(d)s documentos y %(n)s mensajes actualizados."
+msgstr "Level changed: %(d)s documents and %(n)s messages updated."
+
+msgid "Tareas programadas autorizadas."
+msgstr "Scheduled tasks authorized."
+
+msgid "Autorización de las tareas programadas revocada."
+msgstr "Scheduled tasks authorization revoked."
+
+msgid "Laxo: los nombres de los archivos y el asunto del correo se ven. Medio: van cifrados. Estricto: también remitente, destinatarios, categoría y cliente del correo. Subirlo no necesita desbloqueo; bajarlo sí."
+msgstr "Relaxed: file names and email subjects are visible. Medium: they are encrypted. Strict: also email sender, recipients, category and client. Raising it needs no unlock; lowering it does."
+
+msgid "El nivel de reserva se cambia arriba, en Estado: vale para el correo y para los nombres de los documentos."
+msgstr "The confidentiality level is changed above, under Status: it applies to email and to document names."
+
+msgid "Tareas programadas"
+msgstr "Scheduled tasks"
+
+msgid "Autorizadas"
+msgstr "Authorized"
+
+msgid "No autorizadas"
+msgstr "Not authorized"
+
+msgid "Algunas tareas se ejecutan solas, sin nadie delante (por ejemplo, el seguimiento de respuestas de correo en el nivel Estricto, que necesita saber quién escribe). Por defecto no pueden leer lo cifrado y ven «protegido». Si las autorizas, durante el tiempo elegido pueden usar la clave del despacho aunque esté bloqueado. La clave se guarda envuelta con un secreto del servidor que no está en la base de datos: una copia de seguridad sola no la abre, pero quien controle el servidor sí podría."
+msgstr "Some tasks run on their own, with nobody present (for example, email reply follow-up at the Strict level, which needs to know who writes). By default they cannot read encrypted data and see “protected”. If you authorize them, for the chosen time they can use the firm's key even when it is locked. The key is stored wrapped with a server secret that is not in the database: a backup alone cannot open it, but whoever controls the server could."
+
+msgid "Autorizadas hasta el %(f)s: %(a)s."
+msgstr "Authorized until %(f)s: %(a)s."
+
+msgid "Caducada"
+msgstr "Expired"
+
+msgid "Revocar la autorización"
+msgstr "Revoke the authorization"
+
+msgid "Qué tareas"
+msgstr "Which tasks"
+
+msgid "Durante (días)"
+msgstr "For (days)"
+
+msgid "Como máximo %(n)s."
+msgstr "At most %(n)s."
+
+msgid "Autorizar"
+msgstr "Authorize"
