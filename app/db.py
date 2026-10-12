@@ -10006,14 +10006,16 @@ def archivar_documento_cliente(
         if conn.execute("SELECT COUNT(*) FROM cliente_documentos WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,)).fetchone()[0] >= MAX_DOCUMENTOS_POR_CLIENTE:
             return "limite", None
         mensaje_correo_id = _mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
+        from . import almacen_documentos
+        guardado, cifrado, sobre = almacen_documentos._sellar(u["tenant_id"], contenido)      # cifrado con la clave del despacho si lo tiene activado
         cur = conn.execute(
             """INSERT INTO cliente_documentos
                (tenant_id, cliente_fiscal_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, categoria, origen,
-                mensaje_correo_id, asunto_origen, subido_por, hash_sha256, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                mensaje_correo_id, asunto_origen, subido_por, hash_sha256, creado_en, cifrado, sobre)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (u["tenant_id"], cliente_fiscal_id, _nombre_de_archivo_seguro(nombre), (tipo_mime or "application/octet-stream")[:100],
-             len(contenido), contenido, (categoria or "").strip()[:60] or None, origen, mensaje_correo_id,
-             (asunto_origen or "").strip()[:200] or None, usuario_id, huella, now_iso()),
+             len(contenido), guardado, (categoria or "").strip()[:60] or None, origen, mensaje_correo_id,
+             (asunto_origen or "").strip()[:200] or None, usuario_id, huella, now_iso(), cifrado, sobre),
         )
         conn.commit()
         return "ok", cur.lastrowid

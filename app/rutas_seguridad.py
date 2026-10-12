@@ -24,7 +24,7 @@ def _exigir_responsable() -> int:
 @login_required
 def cifrado():
     t = _exigir_responsable()
-    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=cd.accesos_recientes(t, 50) if cd.esta_activo(t) else [], niveles=cd.NIVELES,
+    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=cd.accesos_recientes(t, 50) if cd.esta_activo(t) else [], concesiones=cd.listar_concesiones(t), niveles=cd.NIVELES,
                            frase_minima=cd.FRASE_MINIMA, error=(request.args.get("error") or "")[:300] or None, aviso=request.args.get("aviso"), clave=None)
 
 
@@ -54,7 +54,7 @@ def activar():
     except ValueError as e:
         return _volver(error=str(e))
     # La clave de recuperación solo se enseña en esta respuesta: no se guarda en claro en ningún sitio ni viaja en una dirección.
-    resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
+    resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
     return resp, 200, {"Cache-Control": "no-store"}
 
 
@@ -72,6 +72,30 @@ def bloquear():
     t = _exigir_responsable()
     cd.bloquear(t)
     return _volver(aviso=_("Documentos bloqueados."))
+
+
+@seguridad_bp.route("/cifrado/concesiones/<int:concesion_id>/revocar", methods=["POST"])
+@login_required
+def revocar_concesion(concesion_id: int):
+    t = _exigir_responsable()
+    if not cd.revocar_concesion(t, concesion_id):
+        abort(404)
+    return _volver(aviso=_("Acceso revocado."))
+
+
+@seguridad_bp.route("/cifrado/rotar", methods=["POST"])
+@login_required
+@limiter.limit("5/hour")
+def rotar():
+    """Cambia la clave del despacho (re-cifra todo). La clave de recuperación nueva solo se enseña en esta respuesta."""
+    t = _exigir_responsable()
+    if not request.form.get("entendido"):
+        return _volver(error=_("Confirma que has entendido que se re-cifran todos los documentos y se revocan los accesos de las integraciones."))
+    try:
+        clave = cd.rotar_clave(t, g.usuario_id, request.form.get("frase") or "")
+    except (ValueError, cd.ClaveIncorrecta, cd.DemasiadosIntentos, cd.ContenidoAlterado) as e:
+        return _volver(error=str(e))
+    return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave), 200, {"Cache-Control": "no-store"}
 
 
 @seguridad_bp.route("/cifrado/frase", methods=["POST"])
@@ -124,6 +148,12 @@ def exportar_cliente(cliente_id: int):
     import json
     return Response(json.dumps(datos, ensure_ascii=False, indent=2, default=str), mimetype="application/json",
                     headers={"Content-Disposition": f'attachment; filename="cliente-{cliente_id}.json"', "Cache-Control": "no-store"})
+
+
+@seguridad_bp.teardown_app_request
+def _olvidar_concesion(_exc=None):
+    """Los hilos del servidor se reutilizan: la concesión de una petición no puede pasar a la siguiente."""
+    cd.restablecer_concesion()
 
 
 @seguridad_bp.app_errorhandler(cd.DespachoBloqueado)

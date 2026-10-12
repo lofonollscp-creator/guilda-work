@@ -1558,17 +1558,26 @@ def listar_plazos_despacho(estado: str = "abiertos", dias: int = 30, cliente_id:
     return [_campos(z, _PLAZO_CAMPOS) for z in filas]
 
 
+def _exigir_alcance_documentos() -> None:
+    """Una conexión OAuth de terceros (ChatGPT, Claude...) solo toca los documentos si la persona se lo concedió al autorizarla (alcance `guilda:documentos`).
+    Los tokens personales se limitan por áreas; la IA interna y el MCP local de escritorio no pasan por aquí."""
+    token = get_access_token()
+    if token is not None and token.client_id != "token-personal" and "guilda:documentos" not in (token.scopes or []):
+        raise ValueError("Esta conexión no tiene permiso para los documentos del despacho: hay que autorizarla de nuevo concediendo el acceso a documentos.")
+
+
 def listar_documentos_despacho(cliente_id: int | None = None, expediente_id: int | None = None) -> dict:
     """Documentos de un cliente o de un expediente del despacho (solo nombres y datos, no el contenido). Si el despacho tiene el cifrado activado y está
     bloqueado, lo dice en `aviso`: el contenido no se podrá leer hasta que un responsable lo desbloquee."""
     from app import almacen_documentos, cifrado_despacho
+    _exigir_alcance_documentos()
     if cliente_id is None and expediente_id is None:
         raise ValueError("Indica cliente_id o expediente_id.")
     t = _tenant_id_actual()
     docs = almacen_documentos.listar(t, _uid(), cliente_id=cliente_id, expediente_id=expediente_id, limite=100)
     e = cifrado_despacho.estado(t)
     res = {"documentos": [_campos(d, ("id", "nombre_archivo", "tipo_mime", "tamano_bytes", "categoria", "origen", "creado_en", "cifrado")) for d in docs]}
-    if e["activo"] and not e["desbloqueado"]:
+    if e["activo"] and not e["desbloqueado"] and not cifrado_despacho.tiene_concesion(t):
         res["aviso"] = "Los documentos están protegidos y el despacho está bloqueado: un responsable debe desbloquearlos (Seguridad > Cifrado de documentos) para poder leer su contenido."
     return res
 
@@ -1577,6 +1586,7 @@ def leer_documento_despacho(documento_id: int) -> dict:
     """Texto de un documento del despacho (solo archivos de texto, CSV, JSON o similares; hasta 20.000 caracteres). Si está cifrado y el despacho está
     bloqueado, no se puede leer y se explica por qué. La lectura queda en el registro de accesos."""
     from app import almacen_documentos, cifrado_despacho
+    _exigir_alcance_documentos()
     try:
         d = almacen_documentos.leer(_tenant_id_actual(), _uid(), documento_id, via="asistente")
     except cifrado_despacho.DespachoBloqueado as e:
@@ -2460,6 +2470,11 @@ def _con_guardian(tool):
                     f"Has superado el límite de llamadas al MCP ({por_minuto} por minuto, {escrituras} de escritura). "
                     f"Espera unos {espera} segundos antes de seguir."
                 )
+        from app import cifrado_despacho
+        secreto = None
+        if remoto:       # el secreto con el que se abre su concesión: el propio token personal, o el que Guilda metió en el token OAuth al consentir
+            secreto = token.token if personal else next((x[3:] for x in (token.scopes or []) if x.startswith("cs:")), None)
+        testigo = cifrado_despacho.fijar_concesion("mcp", secreto)
         try:
             if firma_publica is not None and not kwargs.get("tenant"):
                 propio = db.tenant_de_usuario(usuario_id) if usuario_id else None
@@ -2470,6 +2485,8 @@ def _con_guardian(tool):
         except Exception as e:  # noqa: BLE001
             anotar("error", f"{type(e).__name__}: {e}")
             raise
+        finally:
+            cifrado_despacho.restablecer_concesion(testigo)
         anotar("ok")
         return resultado
 

@@ -10058,3 +10058,57 @@ msgstr "More than %(d)s days"
 
 msgid "Todavía no hay nada anotado."
 msgstr "Nothing logged yet."
+
+msgid "Solo un responsable del despacho puede dar a un token acceso a los documentos cifrados."
+msgstr "Only someone in charge of the firm can give a token access to the encrypted documents."
+
+msgid "Acceso revocado."
+msgstr "Access revoked."
+
+msgid "Confirma que has entendido que se re-cifran todos los documentos y se revocan los accesos de las integraciones."
+msgstr "Confirm that you understand that all documents are re-encrypted and integration access is revoked."
+
+msgid "Esta aplicación pide acceso a los documentos de tu despacho, que están cifrados. Si lo permites, podrá leerlos (los que tú puedas ver) incluso con los documentos bloqueados, hasta que revoques el acceso en Seguridad del despacho."
+msgstr "This application asks for access to your firm's documents, which are encrypted. If you allow it, it will be able to read them (those you can see) even when documents are locked, until you revoke access in Firm security."
+
+msgid "Esta aplicación pide acceso a los documentos cifrados del despacho. Solo un responsable puede concederlo: si la autorizas, funcionará sin ese acceso."
+msgstr "This application asks for access to the firm's encrypted documents. Only someone in charge can grant it: if you authorize it, it will work without that access."
+
+msgid "Frase de paso del despacho (para dar acceso a los documentos)"
+msgstr "Firm passphrase (to give access to the documents)"
+
+msgid "Dar acceso a los documentos cifrados del despacho (necesita los documentos desbloqueados ahora; sirve aunque luego se bloqueen)"
+msgstr "Give access to the firm's encrypted documents (documents must be unlocked now; it keeps working if they are locked later)"
+
+msgid "Cambiar la clave del despacho"
+msgstr "Change the firm's key"
+
+msgid "Solo si sospechas que la clave se ha visto comprometida: se genera una clave nueva, se re-cifran todos los documentos, se estrena clave de recuperación y se revocan los accesos de las integraciones (hay que volver a darlos). Puede tardar si hay muchos documentos."
+msgstr "Only if you suspect the key has been compromised: a new key is generated, all documents are re-encrypted, a new recovery key is issued and integration access is revoked (it must be granted again). It may take a while with many documents."
+
+msgid "¿Cambiar la clave del despacho y re-cifrar todos los documentos?"
+msgstr "Change the firm's key and re-encrypt all documents?"
+
+msgid "Entiendo que se re-cifran todos los documentos y se revocan los accesos de las integraciones."
+msgstr "I understand that all documents are re-encrypted and integration access is revoked."
+
+msgid "Cambiar la clave"
+msgstr "Change the key"
+
+msgid "Accesos de integraciones a los documentos"
+msgstr "Integration access to documents"
+
+msgid "Tokens de API y aplicaciones conectadas (MCP, ChatGPT, Claude...) que pueden leer los documentos cifrados aunque el despacho esté bloqueado. Revocar un acceso surte efecto al instante."
+msgstr "API tokens and connected applications (MCP, ChatGPT, Claude...) that can read the encrypted documents even when the firm is locked. Revoking access takes effect immediately."
+
+msgid "Aplicación conectada"
+msgstr "Connected application"
+
+msgid "Token ya revocado"
+msgstr "Token already revoked"
+
+msgid "¿Revocar este acceso?"
+msgstr "Revoke this access?"
+
+msgid "Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos."
+msgstr "No integration has access. It is granted when creating a token in “My devices” or when authorizing an application that asks for document access."

@@ -159,6 +159,9 @@ def token_required(vista):
             )
         g.usuario_id = usuario_id
         g.permisos_token = permisos
+        # El propio token es el secreto con el que se abre su concesión de acceso a lo cifrado (si el despacho se la dio). Se limpia al terminar la petición.
+        from . import cifrado_despacho
+        cifrado_despacho.fijar_concesion("api", token)
         # Mismo cálculo que _resolver_usuario_actual() en main.py -- hasta
         # ahora ninguna ruta por token leía g.es_admin/g.gestor_fichajes/
         # g.supervisor_tenant (quedaban sin fijar, ausentes de g por

@@ -10067,3 +10067,57 @@ msgstr "Més de %(d)s dies"
 
 msgid "Todavía no hay nada anotado."
 msgstr "Encara no hi ha res anotat."
+
+msgid "Solo un responsable del despacho puede dar a un token acceso a los documentos cifrados."
+msgstr "Només un responsable del despatx pot donar a un token accés als documents xifrats."
+
+msgid "Acceso revocado."
+msgstr "Accés revocat."
+
+msgid "Confirma que has entendido que se re-cifran todos los documentos y se revocan los accesos de las integraciones."
+msgstr "Confirma que has entès que es tornen a xifrar tots els documents i es revoquen els accessos de les integracions."
+
+msgid "Esta aplicación pide acceso a los documentos de tu despacho, que están cifrados. Si lo permites, podrá leerlos (los que tú puedas ver) incluso con los documentos bloqueados, hasta que revoques el acceso en Seguridad del despacho."
+msgstr "Aquesta aplicació demana accés als documents del teu despatx, que estan xifrats. Si ho permets, podrà llegir-los (els que tu puguis veure) fins i tot amb els documents bloquejats, fins que revoquis l'accés a Seguretat del despatx."
+
+msgid "Esta aplicación pide acceso a los documentos cifrados del despacho. Solo un responsable puede concederlo: si la autorizas, funcionará sin ese acceso."
+msgstr "Aquesta aplicació demana accés als documents xifrats del despatx. Només un responsable pot concedir-lo: si l'autoritzes, funcionarà sense aquest accés."
+
+msgid "Frase de paso del despacho (para dar acceso a los documentos)"
+msgstr "Frase de pas del despatx (per donar accés als documents)"
+
+msgid "Dar acceso a los documentos cifrados del despacho (necesita los documentos desbloqueados ahora; sirve aunque luego se bloqueen)"
+msgstr "Donar accés als documents xifrats del despatx (cal tenir els documents desbloquejats ara; serveix encara que després es bloquegin)"
+
+msgid "Cambiar la clave del despacho"
+msgstr "Canviar la clau del despatx"
+
+msgid "Solo si sospechas que la clave se ha visto comprometida: se genera una clave nueva, se re-cifran todos los documentos, se estrena clave de recuperación y se revocan los accesos de las integraciones (hay que volver a darlos). Puede tardar si hay muchos documentos."
+msgstr "Només si sospites que la clau s'ha vist compromesa: es genera una clau nova, es tornen a xifrar tots els documents, s'estrena clau de recuperació i es revoquen els accessos de les integracions (cal tornar-los a donar). Pot trigar si hi ha molts documents."
+
+msgid "¿Cambiar la clave del despacho y re-cifrar todos los documentos?"
+msgstr "Canviar la clau del despatx i tornar a xifrar tots els documents?"
+
+msgid "Entiendo que se re-cifran todos los documentos y se revocan los accesos de las integraciones."
+msgstr "Entenc que es tornen a xifrar tots els documents i es revoquen els accessos de les integracions."
+
+msgid "Cambiar la clave"
+msgstr "Canviar la clau"
+
+msgid "Accesos de integraciones a los documentos"
+msgstr "Accessos d'integracions als documents"
+
+msgid "Tokens de API y aplicaciones conectadas (MCP, ChatGPT, Claude...) que pueden leer los documentos cifrados aunque el despacho esté bloqueado. Revocar un acceso surte efecto al instante."
+msgstr "Tokens d'API i aplicacions connectades (MCP, ChatGPT, Claude...) que poden llegir els documents xifrats encara que el despatx estigui bloquejat. Revocar un accés té efecte a l'instant."
+
+msgid "Aplicación conectada"
+msgstr "Aplicació connectada"
+
+msgid "Token ya revocado"
+msgstr "Token ja revocat"
+
+msgid "¿Revocar este acceso?"
+msgstr "Revocar aquest accés?"
+
+msgid "Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos."
+msgstr "Cap integració té accés. Es concedeix en crear un token a «Els meus dispositius» o en autoritzar una aplicació que demani accés a documents."

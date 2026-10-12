@@ -26,7 +26,14 @@
       {% if redirect_hosts %}{{ _('La aplicación te devolverá a: %(hosts)s.', hosts=redirect_hosts|join(', ')) }}{% endif %}</p>
     <p class="aviso">{{ _('Si la autorizas podrá usar Guilda Work en tu nombre: leer y modificar tus notas, tareas, correo y datos de tus clientes, según lo que tu cuenta pueda hacer. Autoriza solo aplicaciones que reconozcas.') }}</p>
     {% if scopes %}<p>{{ _('Permisos técnicos que pide:') }}</p><ul>{% for s in scopes %}<li><code>{{ s }}</code></li>{% endfor %}</ul>{% endif %}
+    {% if pide_documentos %}
+    <p class="aviso">{{ _('Esta aplicación pide acceso a los documentos de tu despacho, que están cifrados. Si lo permites, podrá leerlos (los que tú puedas ver) incluso con los documentos bloqueados, hasta que revoques el acceso en Seguridad del despacho.') if puede_dar_documentos else _('Esta aplicación pide acceso a los documentos cifrados del despacho. Solo un responsable puede concederlo: si la autorizas, funcionará sin ese acceso.') }}</p>
+    {% endif %}
+    {% if error %}<p class="aviso" role="alert">{{ error }}</p>{% endif %}
     <form method="post" action="{{ url_for('hydra_bridge.hydra_consent') }}">
+      {% if necesita_frase %}
+      <p><label for="frase">{{ _('Frase de paso del despacho (para dar acceso a los documentos)') }}</label><br><input type="password" id="frase" name="frase" autocomplete="current-password"></p>
+      {% endif %}
       <input type="hidden" name="consent_challenge" value="{{ challenge }}">
       <div class="botones">
         <button class="btn btn-ghost" type="submit" name="decision" value="denegar">{{ _('Denegar') }}</button>

@@ -13,11 +13,12 @@ Kratos (Fase 7a, `app/main.py`), el puente es simple:
   —por ejemplo los que se dan de alta solos por Registro Dinámico, como ChatGPT—
   muestra una pantalla en la que la persona permite o deniega.
 """
+import secrets
 from urllib.parse import quote, urlparse
 
 from flask import Blueprint, abort, g, redirect, render_template, request
 
-from . import db, hydra, kratos
+from . import cifrado_despacho, db, hydra, kratos
 
 hydra_bp = Blueprint("hydra_bridge", __name__, url_prefix="/hydra")
 
@@ -74,13 +75,42 @@ def _usuario_del_consent(consent_request: dict):
     return usuario
 
 
-def _aceptar(challenge: str, consent_request: dict, usuario) -> str:
+ALCANCE_DOCUMENTOS = "guilda:documentos"
+
+
+def _pide_documentos_cifrados(consent_request: dict, usuario) -> bool:
+    """¿Pide la aplicación el acceso a documentos de un despacho que los tiene cifrados? (en uno sin cifrado no hace falta ninguna concesión)"""
     tenant = db.tenant_de_usuario(usuario["id"]) if usuario else None
+    return bool(tenant and ALCANCE_DOCUMENTOS in consent_request.get("requested_scope", []) and cifrado_despacho.esta_activo(tenant["id"]))
+
+
+def _puede_dar_documentos(usuario) -> bool:
+    return bool(usuario) and (db.es_supervisor_tenant(usuario["id"]) or db.es_admin(usuario["id"]))
+
+
+def _aceptar(challenge: str, consent_request: dict, usuario) -> str:
+    """Acepta el consentimiento. Si la aplicación pide `guilda:documentos` y el despacho tiene el cifrado activado, solo un responsable puede concederlo, y solo con
+    el despacho desbloqueado: se crea una concesión (la clave del despacho envuelta con un secreto que viaja dentro del token de la aplicación). Si no se puede,
+    se acepta el resto de permisos SIN el de documentos (la aplicación sigue funcionando; solo no ve lo cifrado)."""
+    tenant = db.tenant_de_usuario(usuario["id"]) if usuario else None
+    scopes = list(consent_request.get("requested_scope", []))
+    ext = None
+    if _pide_documentos_cifrados(consent_request, usuario):
+        cliente = consent_request.get("client") or {}
+        try:
+            if not _puede_dar_documentos(usuario):
+                raise cifrado_despacho.DespachoBloqueado("solo un responsable puede conceder el acceso a documentos")
+            secreto = secrets.token_urlsafe(32)
+            cifrado_despacho.crear_concesion(tenant["id"], usuario["id"], secreto, "oauth", cliente.get("client_name") or cliente.get("client_id") or "Aplicación")
+            ext = {"guilda_cs": secreto}
+        except cifrado_despacho.DespachoBloqueado:
+            scopes = [x for x in scopes if x != ALCANCE_DOCUMENTOS]
     return hydra.aceptar_consent_request(
         challenge,
-        scopes=consent_request.get("requested_scope", []),
+        scopes=scopes,
         email=usuario["email"] if usuario else "",
         tenant_nombre=tenant["nombre"] if tenant else None,
+        **({"ext_access_token": ext} if ext else {}),
     )
 
 
@@ -103,8 +133,22 @@ def hydra_consent():
     if usuario is None or usuario["id"] != g.usuario_id:
         abort(403)
 
+    pide_docs = _pide_documentos_cifrados(consent_request, usuario)
+    tenant = db.tenant_de_usuario(usuario["id"]) if pide_docs else None
+    tenant_id = tenant["id"] if tenant else None
+    necesita_frase = bool(pide_docs and _puede_dar_documentos(usuario) and not cifrado_despacho.estado(tenant_id)["desbloqueado"])
     if request.method == "POST":
         if request.form.get("decision") == "permitir":
+            if necesita_frase and request.form.get("frase"):
+                try:
+                    cifrado_despacho.desbloquear(tenant_id, usuario["id"], request.form.get("frase"))
+                except (cifrado_despacho.ClaveIncorrecta, cifrado_despacho.DemasiadosIntentos, ValueError) as e:
+                    cliente = consent_request.get("client") or {}
+                    return render_template(
+                        "hydra_consentimiento.html", challenge=challenge, usuario=usuario, app_nombre=cliente.get("client_name") or cliente.get("client_id") or "Aplicación sin nombre",
+                        app_web=cliente.get("client_uri"), scopes=consent_request.get("requested_scope", []), redirect_hosts=sorted({urlparse(u).netloc for u in cliente.get("redirect_uris", [])}),
+                        pide_documentos=True, puede_dar_documentos=True, necesita_frase=True, error=str(e),
+                    ), 400
             db.registrar_auditoria(g.usuario_id, "oauth.consentimiento", f"cliente {consent_request.get('client', {}).get('client_id')}: {' '.join(consent_request.get('requested_scope', []))}")
             return redirect(_aceptar(challenge, consent_request, usuario))
         return redirect(hydra.rechazar_consent_request(challenge))
@@ -115,6 +159,7 @@ def hydra_consent():
         app_nombre=cliente.get("client_name") or cliente.get("client_id") or "Aplicación sin nombre",
         app_web=cliente.get("client_uri"), scopes=consent_request.get("requested_scope", []),
         redirect_hosts=sorted({urlparse(u).netloc for u in cliente.get("redirect_uris", [])}),
+        pide_documentos=pide_docs, puede_dar_documentos=bool(pide_docs and _puede_dar_documentos(usuario)), necesita_frase=necesita_frase, error=None,
     )
 
 

@@ -14,7 +14,9 @@ TABLAS: dict[str, tuple[str, tuple[str, ...], dict]] = {
     "Vencimiento": ("vencimientos_fiscales", (), {"cliente_nombre": {"type": "string"}}),
     "DocumentoVencimiento": ("vencimientos_fiscales_documentos", ("contenido", "nextcloud_ruta", "nextcloud_path"), {}),
     "MensajeVencimiento": ("vencimientos_fiscales_mensajes", (), {}),
-    "DocumentoCliente": ("cliente_documentos", ("contenido", "huella"), {}),
+    "DocumentoCliente": ("cliente_documentos", ("contenido", "huella", "sobre"), {}),
+    "DocumentoDespacho": ("documentos", ("contenido", "sobre", "hash_sha256", "papelera_en", "tenant_id", "subido_por", "mensaje_correo_id", "compartido_cliente"),
+                          {"contenido_disponible": {"type": "boolean", "description": "`false` si está cifrado y este token no tiene la clave disponible (la descarga daría 423 `despacho_bloqueado`)."}}),
     "Webhook": ("webhooks", ("secreto",), {"eventos": {"type": "array", "items": {"type": "string"}}}),
     "Notificacion": ("notificaciones", (), {}),
     "Fichaje": ("fichajes", (), {}),
@@ -146,7 +148,7 @@ RESPUESTAS: dict[str, tuple[str, bool]] = {
     "crear_cliente_fiscal": ("ClienteFiscal", False), "obtener_cliente_fiscal": ("ClienteFiscalDetalle", False), "editar_vencimiento_fiscal": ("Vencimiento", False),
     "listar_tiquets": ("Tiquet", True), "crear_tiquet": ("Tiquet", False), "editar_tiquet": ("Tiquet", False), "cambiar_estado_tiquet": ("Tiquet", False),
     "listar_documentos_vencimiento": ("DocumentoVencimiento", True), "listar_mensajes_vencimiento": ("MensajeVencimiento", True),
-    "listar_documentos_cliente": ("DocumentoCliente", True), "papelera_fiscal": ("Papelera", True), "listar_clientes_fiscales": ("ClienteFiscal", True),
+    "listar_documentos_cliente": ("DocumentoCliente", True), "listar_documentos": ("DocumentoDespacho", True), "papelera_fiscal": ("Papelera", True), "listar_clientes_fiscales": ("ClienteFiscal", True),
     "listar_vencimientos_fiscales": ("Vencimiento", True), "listar_cuentas_correo": ("CuentaCorreo", True), "listar_mensajes_correo": ("MensajeCorreo", True),
     "conversacion_correo": ("MensajeCorreo", True), "listar_tareas_outlook": ("TareaOutlook", True), "listar_notas": ("Nota", True), "listar_categorias": ("Proyecto", True),
     "obtener_nota": ("Nota", False), "obtener_tarea_outlook": ("TareaOutlook", False), "crear_tarea_outlook": ("TareaOutlook", False),
@@ -167,7 +169,7 @@ ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "str
 
 # Operaciones que devuelven un fichero (no el sobre JSON): operación -> tipo MIME.
 BINARIAS: dict[str, str] = {
-    "avatar_api": "image/*", "descargar_adjunto_correo": "application/octet-stream", "descargar_documento_cliente": "application/octet-stream",
+    "avatar_api": "image/*", "descargar_adjunto_correo": "application/octet-stream", "descargar_documento_cliente": "application/octet-stream", "descargar_documento": "application/octet-stream",
     "descargar_documento_vencimiento": "application/octet-stream", "descargar_adjunto_nota": "application/octet-stream",
     "fichaje_admin_csv": "text/csv", "fichaje_admin_pdf": "application/pdf", "fichaje_admin_json": "application/json",
 }

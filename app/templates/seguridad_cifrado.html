@@ -60,6 +60,15 @@
     <button type="submit" class="btn btn-ghost">{{ _('Cambiar frase') }}</button>
   </form>
 </section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-rot">
+  <h2 id="t-rot">{{ _('Cambiar la clave del despacho') }}</h2>
+  <p class="muted">{{ _('Solo si sospechas que la clave se ha visto comprometida: se genera una clave nueva, se re-cifran todos los documentos, se estrena clave de recuperación y se revocan los accesos de las integraciones (hay que volver a darlos). Puede tardar si hay muchos documentos.') }}</p>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.rotar') }}" data-confirmar-envio="{{ _('¿Cambiar la clave del despacho y re-cifrar todos los documentos?') }}">
+    {% call campo(_('Frase de paso'), 'rf') %}<input type="password" id="rf" name="frase" required autocomplete="current-password">{% endcall %}
+    <label class="checkbox-label"><input type="checkbox" name="entendido" required> {{ _('Entiendo que se re-cifran todos los documentos y se revocan los accesos de las integraciones.') }}</label>
+    <button type="submit" class="btn btn-ghost">{{ _('Cambiar la clave') }}</button>
+  </form>
+</section>
 <section class="ds-max-720 ds-mt-32" aria-labelledby="t-rec">
   <h2 id="t-rec">{{ _('He olvidado la frase') }}</h2>
   <form class="edit-form" method="post" action="{{ url_for('seguridad.recuperar') }}">
@@ -68,6 +77,17 @@
     {% call campo(_('Repite la frase nueva'), 'rn2') %}<input type="password" id="rn2" name="frase_nueva2" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
     <button type="submit" class="btn btn-ghost">{{ _('Restablecer la frase') }}</button>
   </form>
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-con">
+  <h2 id="t-con">{{ _('Accesos de integraciones a los documentos') }}</h2>
+  <p class="muted">{{ _('Tokens de API y aplicaciones conectadas (MCP, ChatGPT, Claude...) que pueden leer los documentos cifrados aunque el despacho esté bloqueado. Revocar un acceso surte efecto al instante.') }}</p>
+  {% if concesiones %}
+  <ul class="log-list">
+    {% for c in concesiones %}<li class="log-item"><span class="log-text">{{ c.etiqueta }} {{ chip(_('Token de API') if c.tipo == 'token' else _('Aplicación conectada'), 'neutro') }}{% if c.huerfana %} {{ chip(_('Token ya revocado'), 'aviso') }}{% endif %}</span>
+      <span class="muted">{{ c.creada_por_nombre or '—' }} · {{ c.creada_en[:10] }}</span>
+      <form method="post" action="{{ url_for('seguridad.revocar_concesion', concesion_id=c.id) }}" data-confirmar-envio="{{ _('¿Revocar este acceso?') }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Revocar') }}</button></form></li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos.') }}</p>{% endif %}
 </section>
 <section class="ds-max-720 ds-mt-32" aria-labelledby="t-acc">
   <h2 id="t-acc">{{ _('Quién ha abierto documentos cifrados') }}</h2>

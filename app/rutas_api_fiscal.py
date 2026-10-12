@@ -112,7 +112,7 @@ def subir_documentos_cliente(cliente_id: int):
 @token_required
 @_con_despacho
 def descargar_documento_cliente(cliente_id: int, documento_id: int):
-    documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
+    documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id, g.usuario_id)
     if documento is None:
         abort(404, "Documento no encontrado.")
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_descargado", f"{documento['nombre_archivo']} (vía API)")
@@ -123,7 +123,7 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
 @token_required
 @_con_despacho
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):
-    previo = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
+    previo = almacen_documentos.datos_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)      # solo el nombre: no se abre el contenido (cifrado)
     if not almacen_documentos.eliminar_de_cliente_fiscal(g.usuario_id, cliente_id, documento_id):
         abort(404, "Documento no encontrado.")
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", f"{previo['nombre_archivo'] if previo else ''} (vía API)")

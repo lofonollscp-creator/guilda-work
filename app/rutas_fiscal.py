@@ -229,7 +229,7 @@ _TIPOS_PELIGROSOS = ("text/html", "application/xhtml+xml", "image/svg+xml", "tex
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>")
 @login_required
 def descargar_documento_cliente(cliente_id: int, documento_id: int):
-    documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
+    documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id, g.usuario_id)
     if documento is None:
         abort(404)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_descargado", documento["nombre_archivo"])
@@ -243,7 +243,7 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>/eliminar", methods=["POST"])
 @login_required
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):
-    previo = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
+    previo = almacen_documentos.datos_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)      # solo el nombre: no se abre el contenido (cifrado)
     if not almacen_documentos.eliminar_de_cliente_fiscal(g.usuario_id, cliente_id, documento_id):
         abort(404)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", previo["nombre_archivo"] if previo else "")

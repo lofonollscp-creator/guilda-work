@@ -40,6 +40,9 @@
     {% for clave, info in areas_api.items() %}<label class="ds-mr-12"><input type="checkbox" name="areas" value="{{ clave }}"> {{ info[0] }}</label>{% endfor %}
   </fieldset>
   {% endif %}
+  {% if g.get('tenant_id') and (g.get('supervisor_tenant') or g.get('es_admin')) %}
+  <label class="checkbox-label ds-mt-8"><input type="checkbox" name="documentos_cifrados"> {{ _('Dar acceso a los documentos cifrados del despacho (necesita los documentos desbloqueados ahora; sirve aunque luego se bloqueen)') }}</label>
+  {% endif %}
   <details class="muted ds-mt-8">
     <summary>{{ _('Restricciones de red (opcional)') }}</summary>
     <label class="ds-bloque ds-mt-8">{{ _('Direcciones IP permitidas (una por línea o separadas por comas; si lo dejas vacío, desde cualquiera)') }}

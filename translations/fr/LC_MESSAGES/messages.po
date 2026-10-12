@@ -10143,3 +10143,57 @@ msgstr "Plus de %(d)s jours"
 
 msgid "Todavía no hay nada anotado."
 msgstr "Rien de consigné pour l'instant."
+
+msgid "Solo un responsable del despacho puede dar a un token acceso a los documentos cifrados."
+msgstr "Seul un responsable du cabinet peut donner à un jeton l'accès aux documents chiffrés."
+
+msgid "Acceso revocado."
+msgstr "Accès révoqué."
+
+msgid "Confirma que has entendido que se re-cifran todos los documentos y se revocan los accesos de las integraciones."
+msgstr "Confirmez que vous comprenez que tous les documents sont rechiffrés et que les accès des intégrations sont révoqués."
+
+msgid "Esta aplicación pide acceso a los documentos de tu despacho, que están cifrados. Si lo permites, podrá leerlos (los que tú puedas ver) incluso con los documentos bloqueados, hasta que revoques el acceso en Seguridad del despacho."
+msgstr "Cette application demande l'accès aux documents de votre cabinet, qui sont chiffrés. Si vous l'autorisez, elle pourra les lire (ceux que vous pouvez voir) même verrouillés, jusqu'à ce que vous révoquiez l'accès dans Sécurité du cabinet."
+
+msgid "Esta aplicación pide acceso a los documentos cifrados del despacho. Solo un responsable puede concederlo: si la autorizas, funcionará sin ese acceso."
+msgstr "Cette application demande l'accès aux documents chiffrés du cabinet. Seul un responsable peut l'accorder : si vous l'autorisez, elle fonctionnera sans cet accès."
+
+msgid "Frase de paso del despacho (para dar acceso a los documentos)"
+msgstr "Phrase secrète du cabinet (pour donner accès aux documents)"
+
+msgid "Dar acceso a los documentos cifrados del despacho (necesita los documentos desbloqueados ahora; sirve aunque luego se bloqueen)"
+msgstr "Donner accès aux documents chiffrés du cabinet (les documents doivent être déverrouillés maintenant ; cela fonctionne même s'ils sont verrouillés ensuite)"
+
+msgid "Cambiar la clave del despacho"
+msgstr "Changer la clé du cabinet"
+
+msgid "Solo si sospechas que la clave se ha visto comprometida: se genera una clave nueva, se re-cifran todos los documentos, se estrena clave de recuperación y se revocan los accesos de las integraciones (hay que volver a darlos). Puede tardar si hay muchos documentos."
+msgstr "Seulement si vous soupçonnez que la clé a été compromise : une nouvelle clé est générée, tous les documents sont rechiffrés, une nouvelle clé de récupération est émise et les accès des intégrations sont révoqués (à redonner). Cela peut prendre du temps s'il y a beaucoup de documents."
+
+msgid "¿Cambiar la clave del despacho y re-cifrar todos los documentos?"
+msgstr "Changer la clé du cabinet et rechiffrer tous les documents ?"
+
+msgid "Entiendo que se re-cifran todos los documentos y se revocan los accesos de las integraciones."
+msgstr "Je comprends que tous les documents sont rechiffrés et que les accès des intégrations sont révoqués."
+
+msgid "Cambiar la clave"
+msgstr "Changer la clé"
+
+msgid "Accesos de integraciones a los documentos"
+msgstr "Accès des intégrations aux documents"
+
+msgid "Tokens de API y aplicaciones conectadas (MCP, ChatGPT, Claude...) que pueden leer los documentos cifrados aunque el despacho esté bloqueado. Revocar un acceso surte efecto al instante."
+msgstr "Jetons d'API et applications connectées (MCP, ChatGPT, Claude...) qui peuvent lire les documents chiffrés même si le cabinet est verrouillé. La révocation d'un accès est immédiate."
+
+msgid "Aplicación conectada"
+msgstr "Application connectée"
+
+msgid "Token ya revocado"
+msgstr "Jeton déjà révoqué"
+
+msgid "¿Revocar este acceso?"
+msgstr "Révoquer cet accès ?"
+
+msgid "Ninguna integración tiene acceso. Se concede al crear un token en «Mis dispositivos» o al autorizar una aplicación que pida acceso a documentos."
+msgstr "Aucune intégration n'a accès. Il est accordé en créant un jeton dans « Mes appareils » ou en autorisant une application qui demande l'accès aux documents."

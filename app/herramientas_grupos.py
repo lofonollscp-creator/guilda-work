@@ -160,6 +160,7 @@ _HERRAMIENTAS_DE_AREA: dict[str, tuple[str, ...]] = {
     "correo": tuple(n for n in GRUPOS["correo"] if n not in ("crear_tarea_desde_correo", "guardar_nota_desde_correo")),
     "fiscal": GRUPOS["fiscal"],
     "fichaje": GRUPOS["fichaje"],
+    "documentos": ("listar_documentos_despacho", "leer_documento_despacho"),
     "tiquets": GRUPOS["tiquets"],
     "avisos": ("listar_notificaciones", "consumo_ia", "listar_comunicados"),
     "webhooks": ("webhooks_listar", "webhooks_crear", "webhooks_borrar", "webhooks_entregas"),

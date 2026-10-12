@@ -18,6 +18,8 @@ Hoy cifra el contenido de `documentos`. El nivel (laxo, medio, estricto) se guar
 from __future__ import annotations
 
 import base64
+import contextvars
+import hashlib
 import json
 import os
 import secrets
@@ -58,9 +60,22 @@ CREATE TABLE IF NOT EXISTS accesos_contenido (
     usuario_id INTEGER,
     documento_id INTEGER NOT NULL,
     via TEXT NOT NULL,
-    creado_en TEXT NOT NULL
+    creado_en TEXT NOT NULL,
+    tabla TEXT NOT NULL DEFAULT 'documentos'
 );
 CREATE INDEX IF NOT EXISTS idx_accesos_contenido_tenant ON accesos_contenido(tenant_id, id DESC);
+CREATE TABLE IF NOT EXISTS concesiones_clave (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    tipo TEXT NOT NULL CHECK (tipo IN ('token', 'oauth')),
+    referencia TEXT NOT NULL UNIQUE,
+    etiqueta TEXT NOT NULL,
+    envoltura TEXT NOT NULL,
+    creada_por INTEGER REFERENCES usuarios(id),
+    creada_en TEXT NOT NULL,
+    caduca_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_concesiones_tenant ON concesiones_clave(tenant_id);
 """
 
 
@@ -235,7 +250,7 @@ def estado(tenant_id: int) -> dict:
         quien = d["usuario_id"] if vivo else None
     conn = db.get_connection()
     try:
-        sin = conn.execute("SELECT COUNT(*) FROM documentos WHERE tenant_id = ? AND cifrado = 0", (tenant_id,)).fetchone()[0]
+        sin = sum(conn.execute(f"SELECT COUNT(*) FROM {tabla} WHERE tenant_id = ? AND cifrado = 0", (tenant_id,)).fetchone()[0] for tabla in ("documentos", "cliente_documentos"))
     finally:
         conn.close()
     return {"activo": True, "desbloqueado": vivo, "nivel": c["nivel"], "desbloqueado_por": quien, "activado_en": c["creado_en"], "documentos_sin_cifrar": sin}
@@ -318,12 +333,33 @@ def _guardar_frase(tenant_id: int, privada: bytes, frase: str) -> None:
         conn.close()
 
 
-def registrar_acceso(tenant_id: int, usuario_id: int | None, documento_id: int, via: str) -> None:
+def rotar_clave(tenant_id: int, usuario_id: int, frase: str) -> str:
+    """Cambia el par de claves del despacho: genera uno nuevo, **re-cifra todo el contenido** y estrena clave de recuperación (la anterior deja de valer). Para cuando se sospeche
+    que la clave se ha visto comprometida; cambiar solo la frase no hace falta re-cifrar nada. Exige la frase actual. Las concesiones se **revocan todas** (envolvían la
+    clave antigua): hay que volver a darlas. Todo en una transacción. Devuelve la nueva clave de recuperación, que solo se muestra esta vez."""
+    from . import almacen_documentos
+    desbloquear(tenant_id, usuario_id, frase)
+    vieja = _privada_desbloqueada(tenant_id)
+    nueva_privada, nueva_publica = generar_par()
+    recuperacion = nueva_clave_de_recuperacion()
+    frase_protegida, recuperacion_protegida = proteger_con_frase(nueva_privada, frase), proteger_con_recuperacion(nueva_privada, recuperacion)
+
+    def guardar_clave(conn):
+        conn.execute("UPDATE cifrado_despacho SET publica = ?, privada_frase = ?, privada_recuperacion = ?, frase_cambiada_en = ? WHERE tenant_id = ?",
+                     (_b64(nueva_publica), frase_protegida, recuperacion_protegida, db.now_iso(), tenant_id))
+        conn.execute("DELETE FROM concesiones_clave WHERE tenant_id = ?", (tenant_id,))
+
+    almacen_documentos.resellar(tenant_id, lambda c, sobre: abrir_con_privada(vieja, c, sobre), lambda c: sellar_con_publica(nueva_publica, c), guardar_clave)
+    _desbloquear_en_memoria(tenant_id, usuario_id, nueva_privada)
+    return recuperacion
+
+
+def registrar_acceso(tenant_id: int, usuario_id: int | None, documento_id: int, via: str, tabla: str = "documentos") -> None:
     """Quién abrió qué documento cifrado, y por qué vía (persona, enlace, asistente...). Nunca debe romper la lectura."""
     try:
         conn = db.get_connection()
         try:
-            conn.execute("INSERT INTO accesos_contenido (tenant_id, usuario_id, documento_id, via, creado_en) VALUES (?, ?, ?, ?, ?)", (tenant_id, usuario_id, documento_id, via[:30], db.now_iso()))
+            conn.execute("INSERT INTO accesos_contenido (tenant_id, usuario_id, documento_id, via, creado_en, tabla) VALUES (?, ?, ?, ?, ?, ?)", (tenant_id, usuario_id, documento_id, via[:30], db.now_iso(), tabla))
             conn.commit()
         finally:
             conn.close()
@@ -335,8 +371,9 @@ def accesos_recientes(tenant_id: int, limite: int = 100) -> list[dict]:
     conn = db.get_connection()
     try:
         filas = conn.execute(
-            "SELECT a.*, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS persona, d.nombre_archivo FROM accesos_contenido a LEFT JOIN usuarios u ON u.id = a.usuario_id "
-            "LEFT JOIN usuario_perfil p ON p.usuario_id = a.usuario_id LEFT JOIN documentos d ON d.id = a.documento_id WHERE a.tenant_id = ? ORDER BY a.id DESC LIMIT ?",
+            "SELECT a.*, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS persona, COALESCE(d.nombre_archivo, f.nombre_archivo) AS nombre_archivo FROM accesos_contenido a "
+            "LEFT JOIN usuarios u ON u.id = a.usuario_id LEFT JOIN usuario_perfil p ON p.usuario_id = a.usuario_id "
+            "LEFT JOIN documentos d ON a.tabla = 'documentos' AND d.id = a.documento_id LEFT JOIN cliente_documentos f ON a.tabla = 'cliente_documentos' AND f.id = a.documento_id WHERE a.tenant_id = ? ORDER BY a.id DESC LIMIT ?",
             (tenant_id, max(1, min(limite, 500)))).fetchall()
         return [dict(f) for f in filas]
     finally:
@@ -345,7 +382,108 @@ def accesos_recientes(tenant_id: int, limite: int = 100) -> list[dict]:
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM cifrado_despacho WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("DELETE FROM concesiones_clave WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM accesos_contenido WHERE tenant_id = ?", (tenant_id,))
+
+
+# --- Concesiones: acceso de API, MCP y OAuth a lo cifrado -------------------------------------------------------------------------------------------
+# Una concesión es la clave privada del despacho **envuelta con un secreto que solo tiene quien accede** (el propio token de API, o un secreto que
+# viaja dentro del token OAuth). El servidor guarda la envoltura, no el secreto: sin el token no se puede abrir, y revocar = borrar la fila. Se crea
+# en un momento en que el despacho está desbloqueado (alguien con la frase) y a partir de ahí sirve **aunque esté bloqueado**.
+_CONCESION: contextvars.ContextVar[tuple[str, str] | None] = contextvars.ContextVar("_concesion_clave", default=None)
+
+
+def fijar_concesion(canal: str, secreto: str | None):
+    """Anota, para la petición en curso, con qué secreto puede intentar abrir una concesión (y por qué canal: api, mcp). Devuelve el testigo para `restablecer`."""
+    return _CONCESION.set((canal, secreto) if secreto else None)
+
+
+def restablecer_concesion(testigo=None) -> None:
+    _CONCESION.set(None) if testigo is None else _CONCESION.reset(testigo)
+
+
+def canal_actual() -> str | None:
+    c = _CONCESION.get()
+    return c[0] if c else None
+
+
+def _referencia(secreto: str) -> str:
+    return hashlib.sha256(secreto.encode("utf-8")).hexdigest()
+
+
+def _clave_de_concesion(secreto: str) -> bytes:
+    return HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b"guilda-concesion-v1").derive(secreto.encode("utf-8"))
+
+
+def crear_concesion(tenant_id: int, usuario_id: int, secreto: str, tipo: str, etiqueta: str, caduca_en: str | None = None) -> int:
+    """Autoriza a quien tenga `secreto` a leer lo cifrado de este despacho. Exige el despacho desbloqueado ahora mismo."""
+    if tipo not in ("token", "oauth"):
+        raise ValueError("Tipo de concesión no válido.")
+    if not esta_activo(tenant_id):
+        raise ValueError("El cifrado de este despacho no está activado.")
+    privada = _privada_desbloqueada(tenant_id)
+    if privada is None:
+        raise DespachoBloqueado("Para dar acceso a lo cifrado hay que desbloquear antes los documentos con la frase de paso.")
+    nonce = os.urandom(12)
+    envoltura = json.dumps({"v": 1, "n": _b64(nonce), "ct": _b64(AESGCM(_clave_de_concesion(secreto)).encrypt(nonce, privada, b"guilda-concesion"))})
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("INSERT INTO concesiones_clave (tenant_id, tipo, referencia, etiqueta, envoltura, creada_por, creada_en, caduca_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                           (tenant_id, tipo, _referencia(secreto), (etiqueta or "")[:80] or tipo, envoltura, usuario_id, db.now_iso(), caduca_en))
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def _privada_por_concesion(tenant_id: int) -> bytes | None:
+    c = _CONCESION.get()
+    if c is None:
+        return None
+    secreto = c[1]
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM concesiones_clave WHERE tenant_id = ? AND referencia = ?", (tenant_id, _referencia(secreto))).fetchone()
+        if f is None or (f["caduca_en"] and f["caduca_en"] <= db.now_iso()):
+            return None
+        if f["tipo"] == "token" and conn.execute("SELECT 1 FROM tokens_api WHERE token_hash = ?", (_referencia(secreto),)).fetchone() is None:
+            return None            # el token se revocó o caducó por inactividad: la concesión ya no vale
+    finally:
+        conn.close()
+    try:
+        d = json.loads(f["envoltura"])
+        return AESGCM(_clave_de_concesion(secreto)).decrypt(_de_b64(d["n"]), _de_b64(d["ct"]), b"guilda-concesion")
+    except (InvalidTag, ValueError, KeyError):
+        return None
+
+
+def listar_concesiones(tenant_id: int) -> list[dict]:
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(
+            "SELECT c.id, c.tipo, c.etiqueta, c.creada_en, c.caduca_en, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS creada_por_nombre, "
+            "(c.tipo = 'token' AND NOT EXISTS (SELECT 1 FROM tokens_api t WHERE t.token_hash = c.referencia)) AS huerfana "
+            "FROM concesiones_clave c LEFT JOIN usuarios u ON u.id = c.creada_por LEFT JOIN usuario_perfil p ON p.usuario_id = c.creada_por "
+            "WHERE c.tenant_id = ? ORDER BY c.id DESC", (tenant_id,)).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def revocar_concesion(tenant_id: int, concesion_id: int) -> bool:
+    """Efecto inmediato: sin envoltura no hay forma de abrir nada con ese secreto."""
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("DELETE FROM concesiones_clave WHERE id = ? AND tenant_id = ?", (concesion_id, tenant_id))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def tiene_concesion(tenant_id: int) -> bool:
+    """¿La petición en curso trae una concesión válida para este despacho?"""
+    return _privada_por_concesion(tenant_id) is not None
 
 
 # --- El `Cifrador` que usa app/almacen_documentos.py ------------------------------------------------------------------------------------------------
@@ -359,7 +497,7 @@ class CifradorDespacho:
         return sellar_con_publica(_de_b64(c["publica"]), contenido)
 
     def abrir(self, tenant_id: int, contenido: bytes, sobre: str) -> bytes:
-        privada = _privada_desbloqueada(tenant_id)
+        privada = _privada_desbloqueada(tenant_id) or _privada_por_concesion(tenant_id)      # la concesión sirve aunque el despacho esté bloqueado
         if privada is None:
             raise DespachoBloqueado("Los documentos de este despacho están protegidos con su clave: hay que desbloquearlos con la frase de paso.")
         return abrir_con_privada(privada, contenido, sobre)

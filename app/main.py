@@ -38,7 +38,7 @@ from .notas_formato import nota_a_html
 from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
-from . import rutas_api_ampliada, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
+from . import rutas_api_ampliada, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
 from .rutas_proyectos import proyectos_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
@@ -1717,6 +1717,16 @@ def crear_token_desde_web():
                                    origenes_cors=request.form.get("origenes_cors"), ips_permitidas=request.form.get("ips_permitidas"))
     except ValueError as error:
         abort(400, str(error))
+    if request.form.get("documentos_cifrados"):
+        # Acceso a los documentos cifrados con este token, también con el despacho bloqueado: solo un responsable, y con el despacho desbloqueado ahora.
+        from . import cifrado_despacho
+        try:
+            if not (g.get("supervisor_tenant") or g.get("es_admin")) or g.get("tenant_id") is None:
+                raise ValueError(_("Solo un responsable del despacho puede dar a un token acceso a los documentos cifrados."))
+            cifrado_despacho.crear_concesion(g.tenant_id, g.usuario_id, token, "token", nombre, caduca_en)
+        except (ValueError, cifrado_despacho.DespachoBloqueado) as error:
+            db.revocar_token_api(token)         # sin concesión no se deja un token a medias
+            abort(400, str(error))
     return render_template(
         "mis_dispositivos.html", dispositivos=db.listar_tokens_api(g.usuario_id), areas_api=api_areas.AREAS,
         token_nuevo={"token": token, "nombre": nombre, "permisos": permisos, "areas": api_areas.validar_areas(request.form.getlist("areas")), "caduca_en": caduca_en},

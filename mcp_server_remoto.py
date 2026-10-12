@@ -67,10 +67,14 @@ class VerificadorHydra(TokenVerifier):
         if not mcp_acceso.cliente_hydra_permitido(introspeccion.get("client_id", "")):
             return None
         scope = introspeccion.get("scope", "")
+        scopes = scope.split() if scope else []
+        secreto = (introspeccion.get("ext") or {}).get("guilda_cs")      # secreto de la concesión a lo cifrado, si la persona la dio al autorizar
+        if isinstance(secreto, str) and secreto:
+            scopes.append(f"cs:{secreto}")
         return AccessToken(
             token=token,
             client_id=introspeccion.get("client_id", ""),
-            scopes=scope.split() if scope else [],
+            scopes=scopes,
             expires_at=introspeccion.get("exp"),
             subject=introspeccion.get("sub"),
         )

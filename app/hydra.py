@@ -97,7 +97,7 @@ def rechazar_consent_request(challenge: str, motivo: str = "El usuario ha denega
 
 
 def aceptar_consent_request(
-    challenge: str, *, scopes: list, email: str, tenant_nombre: str | None = None
+    challenge: str, *, scopes: list, email: str, tenant_nombre: str | None = None, ext_access_token: dict | None = None
 ) -> str:
     """Acepta el consentimiento sin mostrar pantalla intermedia — los únicos
     clientes OAuth2 de este Hydra son los que registra Guilda Work
@@ -121,7 +121,7 @@ def aceptar_consent_request(
             "grant_access_token_audience": [],
             "remember": True,
             "remember_for": 3600 * 24 * 30,
-            "session": {"id_token": id_token},
+            "session": {"id_token": id_token, **({"access_token": ext_access_token} if ext_access_token else {})},
         },
     )
     if estado != 200:

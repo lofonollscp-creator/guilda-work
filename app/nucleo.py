@@ -161,6 +161,9 @@ def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
     from . import almacen_documentos
     conn.executescript(almacen_documentos.ESQUEMA)
+    db._asegurar_columna(conn, "cliente_documentos", "cifrado", "INTEGER NOT NULL DEFAULT 0")     # expediente documental fiscal: mismo cifrado que `documentos`
+    db._asegurar_columna(conn, "cliente_documentos", "sobre", "TEXT")
+    db._asegurar_columna(conn, "accesos_contenido", "tabla", "TEXT NOT NULL DEFAULT 'documentos'")
     db._asegurar_columna(conn, "documentos", "compartido_cliente", "INTEGER NOT NULL DEFAULT 0")    # el despacho lo enseña al cliente (enlace de solo lectura)
     for v in verticales.VERTICALES.values():
         if v.esquema:

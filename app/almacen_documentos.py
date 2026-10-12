@@ -82,35 +82,64 @@ def _sellar(tenant_id: int, contenido: bytes) -> tuple[bytes, int, str | None]:
     return (cifrado, 1, sobre) if sobre else (contenido, 0, None)
 
 
-def _abrir(tenant_id: int, fila, usuario_id: int | None = None, via: str = "persona") -> bytes:
+def _abrir(tenant_id: int, fila, usuario_id: int | None = None, via: str = "persona", tabla: str = "documentos") -> bytes:
     if not fila["cifrado"]:
         return bytes(fila["contenido"])
     contenido = _activo().abrir(tenant_id, bytes(fila["contenido"]), fila["sobre"] or "")
-    from .cifrado_despacho import registrar_acceso
-    registrar_acceso(tenant_id, usuario_id, fila["id"], via)
+    from .cifrado_despacho import canal_actual, registrar_acceso
+    registrar_acceso(tenant_id, usuario_id, fila["id"], canal_actual() or via, tabla)
     if hashlib.sha256(contenido).hexdigest() != fila["hash_sha256"]:
         raise RuntimeError("El documento no coincide con su huella: se ha alterado.")
     return contenido
 
 
+TABLAS_CON_CONTENIDO = ("documentos", "cliente_documentos")
+
+
 def sellar_pendientes(tenant_id: int) -> int:
-    """Sella con el cifrador activo los documentos que se guardaron sin cifrar (al activar el cifrado del despacho). Devuelve cuántos."""
+    """Sella con el cifrador activo lo que se guardó sin cifrar (al activar el cifrado del despacho), en las dos tablas de documentos. Devuelve cuántos."""
     cifrador = _activo()
     conn = db.get_connection()
     try:
         # Sin esto SQLite deja el contenido en claro en las páginas liberadas por el UPDATE: se pide que las sobrescriba y se vacía el WAL.
         conn.execute("PRAGMA secure_delete = ON")
-        filas = conn.execute("SELECT id, contenido FROM documentos WHERE tenant_id = ? AND cifrado = 0", (tenant_id,)).fetchall()
         hechos = 0
-        for f in filas:
-            sellado, sobre = cifrador.sellar(tenant_id, bytes(f["contenido"]))
-            if sobre:
-                conn.execute("UPDATE documentos SET contenido = ?, cifrado = 1, sobre = ? WHERE id = ?", (sellado, sobre, f["id"]))
-                hechos += 1
+        for tabla in TABLAS_CON_CONTENIDO:
+            for f in conn.execute(f"SELECT id, contenido FROM {tabla} WHERE tenant_id = ? AND cifrado = 0", (tenant_id,)).fetchall():
+                sellado, sobre = cifrador.sellar(tenant_id, bytes(f["contenido"]))
+                if sobre:
+                    conn.execute(f"UPDATE {tabla} SET contenido = ?, cifrado = 1, sobre = ? WHERE id = ?", (sellado, sobre, f["id"]))
+                    hechos += 1
         conn.commit()
         if hechos:
             conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
         return hechos
+    finally:
+        conn.close()
+
+
+def resellar(tenant_id: int, abrir_antiguo, sellar_nuevo, en_la_misma_transaccion=None) -> int:
+    """Re-cifra TODO el contenido cifrado del despacho: cada fila se abre con `abrir_antiguo(contenido, sobre)` y se vuelve a sellar con `sellar_nuevo(contenido)`.
+    Todo en una transacción: o se cambian todas o ninguna. `en_la_misma_transaccion(conn)` se ejecuta antes de confirmar (la rotación guarda ahí la clave nueva, para que
+    nunca queden documentos con una clave y la configuración con otra). Lo usa la rotación de la clave del despacho."""
+    conn = db.get_connection()
+    try:
+        conn.execute("PRAGMA secure_delete = ON")
+        hechos = 0
+        for tabla in TABLAS_CON_CONTENIDO:
+            for f in conn.execute(f"SELECT id, contenido, sobre FROM {tabla} WHERE tenant_id = ? AND cifrado = 1", (tenant_id,)).fetchall():
+                nuevo, sobre = sellar_nuevo(abrir_antiguo(bytes(f["contenido"]), f["sobre"]))
+                conn.execute(f"UPDATE {tabla} SET contenido = ?, sobre = ? WHERE id = ?", (nuevo, sobre, f["id"]))
+                hechos += 1
+        if en_la_misma_transaccion is not None:
+            en_la_misma_transaccion(conn)
+        conn.commit()
+        if hechos:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+        return hechos
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -247,8 +276,20 @@ def listar_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, limite: int
     return db.listar_documentos_cliente(tenant_id, cliente_fiscal_id, limite)
 
 
-def leer_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, documento_id: int):
-    return db.obtener_documento_cliente(tenant_id, cliente_fiscal_id, documento_id)
+def leer_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, documento_id: int, usuario_id: int | None = None):
+    """El documento del expediente fiscal con su contenido ya descifrado (un diccionario), o None. Lanza `DespachoBloqueado` si está cifrado y no hay clave."""
+    f = db.obtener_documento_cliente(tenant_id, cliente_fiscal_id, documento_id)
+    if f is None:
+        return None
+    d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
+    d["contenido"] = _abrir(tenant_id, f, usuario_id, "persona", "cliente_documentos")
+    return d
+
+
+def datos_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, documento_id: int) -> dict | None:
+    """Los datos del documento del expediente fiscal SIN su contenido (no se abre ni hace falta la clave): para nombrarlo, por ejemplo, al borrarlo."""
+    f = db.obtener_documento_cliente(tenant_id, cliente_fiscal_id, documento_id)
+    return None if f is None else {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
 
 
 def eliminar_de_cliente_fiscal(usuario_id: int, cliente_fiscal_id: int, documento_id: int) -> bool:
