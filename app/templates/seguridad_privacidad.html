@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Privacidad y retención') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Privacidad y retención') }}</h1>
+<p class="subtitle">{{ _('Derechos de las personas y limpieza de lo que ya no hace falta. Cada acción queda anotada.') }}</p></div></header>
+<nav class="tareas-subnav">
+  <a class="" href="{{ url_for('seguridad.cifrado') }}">{{ _('Cifrado de documentos') }}</a>
+  <a class="active" href="{{ url_for('seguridad.privacidad') }}">{{ _('Privacidad y retención') }}</a>
+</nav>
+{{ aviso_error(error) }}
+{% if aviso %}<p role="status">{{ chip(aviso, 'exito') }}</p>{% endif %}
+<section class="ds-max-720" aria-labelledby="t-exp">
+  <h2 id="t-exp">{{ _('Exportar los datos de un cliente') }}</h2>
+  <p class="muted">{{ _('En la ficha de cada cliente hay un enlace «Exportar datos (JSON)» con todo lo que el despacho guarda de esa persona: ficha, contactos, expedientes, plazos, horas y la lista de documentos.') }}</p>
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-vac">
+  <h2 id="t-vac">{{ _('Vaciar la papelera') }}</h2>
+  <p class="muted">{{ _('Borra para siempre los documentos, plazos y horas que llevan en la papelera el tiempo elegido. No se puede deshacer. Los clientes y expedientes no se borran desde aquí.') }}</p>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.vaciar_papelera') }}" data-confirmar-envio="{{ _('¿Borrar para siempre lo que hay en la papelera? No se puede deshacer.') }}" data-confirmar-peligro>
+    {% call campo(_('Llevan en la papelera'), 'dias') %}
+    <select id="dias" name="dias">
+      {% for d in dias %}<option value="{{ d }}">{{ _('Todo lo que haya') if d == 0 else _('Más de %(d)s días', d=d) }}</option>{% endfor %}
+    </select>{% endcall %}
+    <button type="submit" class="btn btn-peligro">{{ _('Vaciar la papelera') }}</button>
+  </form>
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-reg">
+  <h2 id="t-reg">{{ _('Registro') }}</h2>
+  {% if registro %}
+  <ul class="log-list">
+    {% for r in registro %}<li class="log-item"><span class="log-text">{{ r.detalle }}</span> <span class="muted">{{ r.persona or '—' }} · {{ r.creado_en[:16]|replace('T', ' ') }}</span></li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay nada anotado.') }}</p>{% endif %}
+</section>
+{% endblock %}

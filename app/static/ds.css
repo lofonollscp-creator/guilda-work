@@ -216,3 +216,6 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 .ds-puntos-alto { background: color-mix(in srgb, var(--primary) 45%, transparent); }
 .ds-puntos-bajo { background: var(--panel-2); color: var(--text-muted); }
 .ds-flex-wrap { flex-wrap: wrap; }
+
+/* Clave de recuperación del cifrado: grande, monoespaciada y separable al imprimir */
+.ds-clave-recuperacion { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; font-size: 1.4rem !important; letter-spacing: .08em !important; word-break: break-all !important; }

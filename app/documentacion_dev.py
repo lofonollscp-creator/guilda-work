@@ -63,6 +63,7 @@ _PROPIAS_GUILDA_WORK = {
     "marcar_presentado_vencimiento_fiscal", "editar_vencimiento_fiscal", "resumen_cliente_fiscal",
     "listar_plantillas_correo", "crear_tarea_recurrente", "listar_tareas_recurrentes",
     "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
+    "listar_documentos_despacho", "leer_documento_despacho",
     "listar_facturas_cliente", "crear_factura_cliente",
     "mover_correo", "destacar_correo", "posponer_correo", "listar_reglas_correo", "crear_regla_correo",
     "eliminar_regla_correo", "listar_conversacion_correo", "crear_tarea_desde_correo", "guardar_nota_desde_correo",

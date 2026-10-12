@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS plazos (
     papelera_en TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_plazos_tenant ON plazos(tenant_id, papelera_en, estado, fecha_limite);
+CREATE INDEX IF NOT EXISTS idx_plazos_expediente ON plazos(expediente_id, estado, papelera_en, fecha_limite);
 
 CREATE TABLE IF NOT EXISTS festivos (
     id INTEGER PRIMARY KEY,
@@ -151,6 +152,7 @@ CREATE TABLE IF NOT EXISTS partes_tiempo (
 );
 CREATE INDEX IF NOT EXISTS idx_partes_tenant ON partes_tiempo(tenant_id, papelera_en, fecha);
 CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes_tiempo(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_partes_expediente ON partes_tiempo(expediente_id);
 """
 
 
@@ -902,7 +904,9 @@ def listar_plazos(tenant_id: int, usuario_id: int, supervisor: bool = False, *, 
     res = []
     for f in filas:
         tipo_cal = verticales.tipo_de(f["expediente_tipo"]).calendario if f["expediente_tipo"] else "general"
-        cal = calendarios.setdefault(tipo_cal, calendario_del_despacho(tenant_id, tipo_cal))
+        if tipo_cal not in calendarios:        # (no `setdefault`: evaluaría el calendario entero, con su consulta de festivos, en cada fila)
+            calendarios[tipo_cal] = calendario_del_despacho(tenant_id, tipo_cal)
+        cal = calendarios[tipo_cal]
         d = _plazo_dict(f, hoy, cal)
         if estado == "abiertos" and d["estado_calculado"] == "cumplido":
             continue

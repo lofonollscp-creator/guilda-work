@@ -201,6 +201,16 @@ def _reiniciar_contador_captcha():
     rutas_kratos_proxy._fallos_por_ip.clear()
 
 
+@pytest.fixture(autouse=True)
+def _despachos_bloqueados():
+    """Los desbloqueos del cifrado viven en memoria del proceso: ningún test puede heredar el de otro (los ids de despacho se repiten entre tests)."""
+    from app import cifrado_despacho
+
+    cifrado_despacho.bloquear_todo()
+    yield
+    cifrado_despacho.bloquear_todo()
+
+
 @pytest.fixture
 def usuario_id() -> int:
     """El 'usuario local' (mismo que resuelve la app de escritorio y el MCP),

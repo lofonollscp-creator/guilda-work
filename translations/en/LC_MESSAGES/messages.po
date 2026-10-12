@@ -9881,3 +9881,180 @@ msgstr "Falls on a non-working day (weekend or holiday): moved to the next worki
 
 msgid "desplazada desde"
 msgstr "moved from"
+
+msgid "Las dos frases no coinciden."
+msgstr "The two passphrases do not match."
+
+msgid "Confirma que entiendes que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Confirm that you understand that, without the passphrase and the recovery key, the documents cannot be recovered."
+
+msgid "Documentos desbloqueados."
+msgstr "Documents unlocked."
+
+msgid "Documentos bloqueados."
+msgstr "Documents locked."
+
+msgid "Las dos frases nuevas no coinciden."
+msgstr "The two new passphrases do not match."
+
+msgid "Frase cambiada."
+msgstr "Passphrase changed."
+
+msgid "Frase restablecida y documentos desbloqueados."
+msgstr "Passphrase reset and documents unlocked."
+
+msgid "Papelera vaciada: %(d)s documentos, %(p)s plazos y %(h)s partes de horas."
+msgstr "Bin emptied: %(d)s documents, %(p)s deadlines and %(h)s time entries."
+
+msgid "Seguridad del despacho"
+msgstr "Firm security"
+
+msgid "Exportar datos (JSON)"
+msgstr "Export data (JSON)"
+
+msgid "Documentos protegidos"
+msgstr "Protected documents"
+
+msgid "Para abrir este documento, un responsable del despacho tiene que desbloquear los documentos con la frase de paso."
+msgstr "To open this document, someone in charge of the firm must unlock the documents with the passphrase."
+
+msgid "Ir a seguridad"
+msgstr "Go to security"
+
+msgid "Cifrado de documentos"
+msgstr "Document encryption"
+
+msgid "Los documentos se guardan cifrados con la clave de tu despacho: protege los datos guardados y las copias de seguridad."
+msgstr "Documents are stored encrypted with your firm's key: it protects stored data and backups."
+
+msgid "Privacidad y retención"
+msgstr "Privacy and retention"
+
+msgid "Guarda tu clave de recuperación"
+msgstr "Keep your recovery key"
+
+msgid "Imprímela y guárdala en un lugar seguro, separada de la frase. Es la única forma de recuperar los documentos si olvidas la frase. No se volverá a mostrar."
+msgstr "Print it and keep it somewhere safe, apart from the passphrase. It is the only way to recover the documents if you forget the passphrase. It will not be shown again."
+
+msgid "Cifrado activado. Los documentos que ya había se han cifrado y los nuevos se cifran al entrar."
+msgstr "Encryption enabled. Existing documents have been encrypted and new ones are encrypted on arrival."
+
+msgid "Activar el cifrado"
+msgstr "Enable encryption"
+
+msgid "Qué protege y qué no: el contenido guardado queda cifrado; el servidor sí lo ve un instante al entrar y mientras el despacho está desbloqueado. Si pierdes la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "What it protects and what it does not: stored content is encrypted; the server does see it for an instant on arrival and while the firm is unlocked. If you lose the passphrase and the recovery key, the documents cannot be recovered."
+
+msgid "Frase de paso"
+msgstr "Passphrase"
+
+msgid "Al menos %(n)s caracteres. Varias palabras son más fáciles de recordar y más seguras."
+msgstr "At least %(n)s characters. Several words are easier to remember and safer."
+
+msgid "Repite la frase"
+msgstr "Repeat the passphrase"
+
+msgid "Nivel de reserva"
+msgstr "Confidentiality level"
+
+msgid "Hoy solo se cifra el contenido de los documentos; el nivel se guarda para cuando se cifren también los correos y los nombres."
+msgstr "Today only the content of documents is encrypted; the level is stored for when emails and names are encrypted too."
+
+msgid "Laxo"
+msgstr "Relaxed"
+
+msgid "Estricto"
+msgstr "Strict"
+
+msgid "Entiendo que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "I understand that, without the passphrase and the recovery key, the documents cannot be recovered."
+
+msgid "Activar y cifrar"
+msgstr "Enable and encrypt"
+
+msgid "Desbloqueado"
+msgstr "Unlocked"
+
+msgid "Bloqueado"
+msgstr "Locked"
+
+msgid "Nivel: %(n)s"
+msgstr "Level: %(n)s"
+
+msgid "Hay %(n)s documentos sin cifrar (de antes de activarlo)."
+msgstr "There are %(n)s unencrypted documents (from before enabling it)."
+
+msgid "Bloqueado: nadie puede abrir los documentos, tampoco el asistente de IA ni las integraciones, hasta que se desbloquee. Los documentos nuevos se siguen cifrando."
+msgstr "Locked: nobody can open the documents, including the AI assistant and integrations, until it is unlocked. New documents are still encrypted."
+
+msgid "Desbloquear"
+msgstr "Unlock"
+
+msgid "Bloquear ahora"
+msgstr "Lock now"
+
+msgid "Se bloquea solo tras cuatro horas sin uso y al reiniciar el servicio."
+msgstr "It locks by itself after four hours without use and when the service restarts."
+
+msgid "Cambiar la frase de paso"
+msgstr "Change the passphrase"
+
+msgid "Frase actual"
+msgstr "Current passphrase"
+
+msgid "Frase nueva"
+msgstr "New passphrase"
+
+msgid "Repite la frase nueva"
+msgstr "Repeat the new passphrase"
+
+msgid "Cambiar frase"
+msgstr "Change passphrase"
+
+msgid "He olvidado la frase"
+msgstr "I forgot the passphrase"
+
+msgid "Clave de recuperación"
+msgstr "Recovery key"
+
+msgid "Restablecer la frase"
+msgstr "Reset the passphrase"
+
+msgid "Quién ha abierto documentos cifrados"
+msgstr "Who has opened encrypted documents"
+
+msgid "Enlace de solo lectura"
+msgstr "Read-only link"
+
+msgid "Todavía no se ha abierto ningún documento cifrado."
+msgstr "No encrypted document has been opened yet."
+
+msgid "Derechos de las personas y limpieza de lo que ya no hace falta. Cada acción queda anotada."
+msgstr "People's rights and clean-up of what is no longer needed. Every action is logged."
+
+msgid "Exportar los datos de un cliente"
+msgstr "Export a client's data"
+
+msgid "En la ficha de cada cliente hay un enlace «Exportar datos (JSON)» con todo lo que el despacho guarda de esa persona: ficha, contactos, expedientes, plazos, horas y la lista de documentos."
+msgstr "Each client's record has an “Export data (JSON)” link with everything the firm holds about that person: record, contacts, files, deadlines, hours and the list of documents."
+
+msgid "Vaciar la papelera"
+msgstr "Empty the bin"
+
+msgid "Borra para siempre los documentos, plazos y horas que llevan en la papelera el tiempo elegido. No se puede deshacer. Los clientes y expedientes no se borran desde aquí."
+msgstr "Permanently deletes the documents, deadlines and hours that have been in the bin for the chosen time. This cannot be undone. Clients and files are not deleted from here."
+
+msgid "¿Borrar para siempre lo que hay en la papelera? No se puede deshacer."
+msgstr "Permanently delete what is in the bin? This cannot be undone."
+
+msgid "Llevan en la papelera"
+msgstr "Have been in the bin"
+
+msgid "Todo lo que haya"
+msgstr "Everything in it"
+
+msgid "Más de %(d)s días"
+msgstr "More than %(d)s days"
+
+msgid "Todavía no hay nada anotado."
+msgstr "Nothing logged yet."

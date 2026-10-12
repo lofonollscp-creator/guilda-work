@@ -9966,3 +9966,180 @@ msgstr "Tombe un jour non ouvré (week-end ou férié) : reporté au jour ouvré
 
 msgid "desplazada desde"
 msgstr "reportée depuis"
+
+msgid "Las dos frases no coinciden."
+msgstr "Les deux phrases ne correspondent pas."
+
+msgid "Confirma que entiendes que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Confirmez que vous comprenez que, sans la phrase et la clé de récupération, les documents ne peuvent pas être récupérés."
+
+msgid "Documentos desbloqueados."
+msgstr "Documents déverrouillés."
+
+msgid "Documentos bloqueados."
+msgstr "Documents verrouillés."
+
+msgid "Las dos frases nuevas no coinciden."
+msgstr "Les deux nouvelles phrases ne correspondent pas."
+
+msgid "Frase cambiada."
+msgstr "Phrase modifiée."
+
+msgid "Frase restablecida y documentos desbloqueados."
+msgstr "Phrase réinitialisée et documents déverrouillés."
+
+msgid "Papelera vaciada: %(d)s documentos, %(p)s plazos y %(h)s partes de horas."
+msgstr "Corbeille vidée : %(d)s documents, %(p)s délais et %(h)s relevés d'heures."
+
+msgid "Seguridad del despacho"
+msgstr "Sécurité du cabinet"
+
+msgid "Exportar datos (JSON)"
+msgstr "Exporter les données (JSON)"
+
+msgid "Documentos protegidos"
+msgstr "Documents protégés"
+
+msgid "Para abrir este documento, un responsable del despacho tiene que desbloquear los documentos con la frase de paso."
+msgstr "Pour ouvrir ce document, un responsable du cabinet doit déverrouiller les documents avec la phrase secrète."
+
+msgid "Ir a seguridad"
+msgstr "Aller à la sécurité"
+
+msgid "Cifrado de documentos"
+msgstr "Chiffrement des documents"
+
+msgid "Los documentos se guardan cifrados con la clave de tu despacho: protege los datos guardados y las copias de seguridad."
+msgstr "Les documents sont stockés chiffrés avec la clé de votre cabinet : cela protège les données enregistrées et les sauvegardes."
+
+msgid "Privacidad y retención"
+msgstr "Confidentialité et conservation"
+
+msgid "Guarda tu clave de recuperación"
+msgstr "Conservez votre clé de récupération"
+
+msgid "Imprímela y guárdala en un lugar seguro, separada de la frase. Es la única forma de recuperar los documentos si olvidas la frase. No se volverá a mostrar."
+msgstr "Imprimez-la et conservez-la en lieu sûr, séparée de la phrase. C'est le seul moyen de récupérer les documents si vous oubliez la phrase. Elle ne sera plus affichée."
+
+msgid "Cifrado activado. Los documentos que ya había se han cifrado y los nuevos se cifran al entrar."
+msgstr "Chiffrement activé. Les documents existants ont été chiffrés et les nouveaux le sont à leur arrivée."
+
+msgid "Activar el cifrado"
+msgstr "Activer le chiffrement"
+
+msgid "Qué protege y qué no: el contenido guardado queda cifrado; el servidor sí lo ve un instante al entrar y mientras el despacho está desbloqueado. Si pierdes la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Ce que cela protège et ce que non : le contenu enregistré est chiffré ; le serveur le voit un instant à l'arrivée et tant que le cabinet est déverrouillé. Si vous perdez la phrase et la clé de récupération, les documents sont irrécupérables."
+
+msgid "Frase de paso"
+msgstr "Phrase secrète"
+
+msgid "Al menos %(n)s caracteres. Varias palabras son más fáciles de recordar y más seguras."
+msgstr "Au moins %(n)s caractères. Plusieurs mots sont plus faciles à retenir et plus sûrs."
+
+msgid "Repite la frase"
+msgstr "Répétez la phrase"
+
+msgid "Nivel de reserva"
+msgstr "Niveau de confidentialité"
+
+msgid "Hoy solo se cifra el contenido de los documentos; el nivel se guarda para cuando se cifren también los correos y los nombres."
+msgstr "Pour l'instant seul le contenu des documents est chiffré ; le niveau est conservé pour quand les courriels et les noms le seront aussi."
+
+msgid "Laxo"
+msgstr "Souple"
+
+msgid "Estricto"
+msgstr "Strict"
+
+msgid "Entiendo que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Je comprends que, sans la phrase et la clé de récupération, les documents sont irrécupérables."
+
+msgid "Activar y cifrar"
+msgstr "Activer et chiffrer"
+
+msgid "Desbloqueado"
+msgstr "Déverrouillé"
+
+msgid "Bloqueado"
+msgstr "Verrouillé"
+
+msgid "Nivel: %(n)s"
+msgstr "Niveau : %(n)s"
+
+msgid "Hay %(n)s documentos sin cifrar (de antes de activarlo)."
+msgstr "Il y a %(n)s documents non chiffrés (d'avant l'activation)."
+
+msgid "Bloqueado: nadie puede abrir los documentos, tampoco el asistente de IA ni las integraciones, hasta que se desbloquee. Los documentos nuevos se siguen cifrando."
+msgstr "Verrouillé : personne ne peut ouvrir les documents, pas même l'assistant IA ni les intégrations, tant qu'il n'est pas déverrouillé. Les nouveaux documents continuent d'être chiffrés."
+
+msgid "Desbloquear"
+msgstr "Déverrouiller"
+
+msgid "Bloquear ahora"
+msgstr "Verrouiller maintenant"
+
+msgid "Se bloquea solo tras cuatro horas sin uso y al reiniciar el servicio."
+msgstr "Il se verrouille tout seul après quatre heures d'inactivité et au redémarrage du service."
+
+msgid "Cambiar la frase de paso"
+msgstr "Changer la phrase secrète"
+
+msgid "Frase actual"
+msgstr "Phrase actuelle"
+
+msgid "Frase nueva"
+msgstr "Nouvelle phrase"
+
+msgid "Repite la frase nueva"
+msgstr "Répétez la nouvelle phrase"
+
+msgid "Cambiar frase"
+msgstr "Changer la phrase"
+
+msgid "He olvidado la frase"
+msgstr "J'ai oublié la phrase"
+
+msgid "Clave de recuperación"
+msgstr "Clé de récupération"
+
+msgid "Restablecer la frase"
+msgstr "Réinitialiser la phrase"
+
+msgid "Quién ha abierto documentos cifrados"
+msgstr "Qui a ouvert des documents chiffrés"
+
+msgid "Enlace de solo lectura"
+msgstr "Lien en lecture seule"
+
+msgid "Todavía no se ha abierto ningún documento cifrado."
+msgstr "Aucun document chiffré n'a encore été ouvert."
+
+msgid "Derechos de las personas y limpieza de lo que ya no hace falta. Cada acción queda anotada."
+msgstr "Droits des personnes et nettoyage de ce qui n'est plus nécessaire. Chaque action est consignée."
+
+msgid "Exportar los datos de un cliente"
+msgstr "Exporter les données d'un client"
+
+msgid "En la ficha de cada cliente hay un enlace «Exportar datos (JSON)» con todo lo que el despacho guarda de esa persona: ficha, contactos, expedientes, plazos, horas y la lista de documentos."
+msgstr "Dans la fiche de chaque client, un lien « Exporter les données (JSON) » donne tout ce que le cabinet conserve sur cette personne : fiche, contacts, dossiers, délais, heures et liste des documents."
+
+msgid "Vaciar la papelera"
+msgstr "Vider la corbeille"
+
+msgid "Borra para siempre los documentos, plazos y horas que llevan en la papelera el tiempo elegido. No se puede deshacer. Los clientes y expedientes no se borran desde aquí."
+msgstr "Supprime définitivement les documents, délais et heures restés dans la corbeille pendant la durée choisie. Irréversible. Les clients et dossiers ne sont pas supprimés d'ici."
+
+msgid "¿Borrar para siempre lo que hay en la papelera? No se puede deshacer."
+msgstr "Supprimer définitivement le contenu de la corbeille ? Irréversible."
+
+msgid "Llevan en la papelera"
+msgstr "Sont dans la corbeille depuis"
+
+msgid "Todo lo que haya"
+msgstr "Tout ce qu'elle contient"
+
+msgid "Más de %(d)s días"
+msgstr "Plus de %(d)s jours"
+
+msgid "Todavía no hay nada anotado."
+msgstr "Rien de consigné pour l'instant."

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Cifrado de documentos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Cifrado de documentos') }}</h1>
+<p class="subtitle">{{ _('Los documentos se guardan cifrados con la clave de tu despacho: protege los datos guardados y las copias de seguridad.') }}</p></div></header>
+<nav class="tareas-subnav">
+  <a class="active" href="{{ url_for('seguridad.cifrado') }}">{{ _('Cifrado de documentos') }}</a>
+  <a class="" href="{{ url_for('seguridad.privacidad') }}">{{ _('Privacidad y retención') }}</a>
+</nav>
+{{ aviso_error(error) }}
+{% if aviso %}<p role="status">{{ chip(aviso, 'exito') }}</p>{% endif %}
+
+{% if clave %}
+<section class="ds-max-720" aria-labelledby="t-clave">
+  <h2 id="t-clave">{{ _('Guarda tu clave de recuperación') }}</h2>
+  <p>{{ _('Imprímela y guárdala en un lugar seguro, separada de la frase. Es la única forma de recuperar los documentos si olvidas la frase. No se volverá a mostrar.') }}</p>
+  <p class="ds-clave-recuperacion"><strong>{{ clave }}</strong></p>
+  <p><button type="button" class="btn btn-ghost" data-accion="imprimir">{{ _('Imprimir') }}</button></p>
+  <p class="muted">{{ _('Cifrado activado. Los documentos que ya había se han cifrado y los nuevos se cifran al entrar.') }}</p>
+</section>
+{% elif not e.activo %}
+<section class="ds-max-720" aria-labelledby="t-act">
+  <h2 id="t-act">{{ _('Activar el cifrado') }}</h2>
+  <p class="muted">{{ _('Qué protege y qué no: el contenido guardado queda cifrado; el servidor sí lo ve un instante al entrar y mientras el despacho está desbloqueado. Si pierdes la frase y la clave de recuperación, los documentos no se pueden recuperar.') }}</p>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.activar') }}">
+    {% call campo(_('Frase de paso'), 'f1', ayuda=_('Al menos %(n)s caracteres. Varias palabras son más fáciles de recordar y más seguras.', n=frase_minima)) %}<input type="password" id="f1" name="frase" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
+    {% call campo(_('Repite la frase'), 'f2') %}<input type="password" id="f2" name="frase2" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
+    {% call campo(_('Nivel de reserva'), 'nivel', ayuda=_('Hoy solo se cifra el contenido de los documentos; el nivel se guarda para cuando se cifren también los correos y los nombres.')) %}
+    <select id="nivel" name="nivel">
+      {% for n, nombre in (('laxo', _('Laxo')), ('medio', _('Medio')), ('estricto', _('Estricto'))) %}<option value="{{ n }}" {{ 'selected' if n == 'medio' }}>{{ nombre }}</option>{% endfor %}
+    </select>{% endcall %}
+    <label class="checkbox-label"><input type="checkbox" name="entendido" required> {{ _('Entiendo que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar.') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Activar y cifrar') }}</button>
+  </form>
+</section>
+{% else %}
+<section class="ds-max-720" aria-labelledby="t-est">
+  <h2 id="t-est">{{ _('Estado') }}</h2>
+  <p>{{ chip(_('Desbloqueado') if e.desbloqueado else _('Bloqueado'), 'exito' if e.desbloqueado else 'aviso') }} {{ chip(_('Nivel: %(n)s', n=e.nivel), 'neutro') }}</p>
+  {% if e.documentos_sin_cifrar %}<p class="muted">{{ _('Hay %(n)s documentos sin cifrar (de antes de activarlo).', n=e.documentos_sin_cifrar) }}</p>{% endif %}
+  {% if not e.desbloqueado %}
+  <p class="muted">{{ _('Bloqueado: nadie puede abrir los documentos, tampoco el asistente de IA ni las integraciones, hasta que se desbloquee. Los documentos nuevos se siguen cifrando.') }}</p>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.desbloquear') }}">
+    {% call campo(_('Frase de paso'), 'fd') %}<input type="password" id="fd" name="frase" required autocomplete="current-password">{% endcall %}
+    <button type="submit" class="btn btn-primary">{{ _('Desbloquear') }}</button>
+  </form>
+  {% else %}
+  <form method="post" action="{{ url_for('seguridad.bloquear') }}"><button type="submit" class="btn btn-ghost">{{ _('Bloquear ahora') }}</button></form>
+  <p class="muted">{{ _('Se bloquea solo tras cuatro horas sin uso y al reiniciar el servicio.') }}</p>
+  {% endif %}
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-fr">
+  <h2 id="t-fr">{{ _('Cambiar la frase de paso') }}</h2>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.cambiar_frase') }}">
+    {% call campo(_('Frase actual'), 'fa') %}<input type="password" id="fa" name="frase_actual" required autocomplete="current-password">{% endcall %}
+    {% call campo(_('Frase nueva'), 'fn') %}<input type="password" id="fn" name="frase_nueva" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
+    {% call campo(_('Repite la frase nueva'), 'fn2') %}<input type="password" id="fn2" name="frase_nueva2" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
+    <button type="submit" class="btn btn-ghost">{{ _('Cambiar frase') }}</button>
+  </form>
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-rec">
+  <h2 id="t-rec">{{ _('He olvidado la frase') }}</h2>
+  <form class="edit-form" method="post" action="{{ url_for('seguridad.recuperar') }}">
+    {% call campo(_('Clave de recuperación'), 'rc') %}<input type="text" id="rc" name="clave" required autocomplete="off" spellcheck="false">{% endcall %}
+    {% call campo(_('Frase nueva'), 'rn') %}<input type="password" id="rn" name="frase_nueva" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
+    {% call campo(_('Repite la frase nueva'), 'rn2') %}<input type="password" id="rn2" name="frase_nueva2" minlength="{{ frase_minima }}" required autocomplete="new-password">{% endcall %}
+    <button type="submit" class="btn btn-ghost">{{ _('Restablecer la frase') }}</button>
+  </form>
+</section>
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-acc">
+  <h2 id="t-acc">{{ _('Quién ha abierto documentos cifrados') }}</h2>
+  {% if accesos %}
+  <ul class="log-list">
+    {% for a in accesos %}<li class="log-item"><span class="log-text">{{ a.nombre_archivo or ('#' ~ a.documento_id) }}</span> <span class="muted">{{ a.persona or _('Enlace de solo lectura') }} · {{ a.via }} · {{ a.creado_en[:16]|replace('T', ' ') }}</span></li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no se ha abierto ningún documento cifrado.') }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -508,6 +508,18 @@ HERRAMIENTAS: list[dict] = [
         [],
     ),
     _tool(
+        "listar_documentos_despacho",
+        "Lista los documentos de un cliente o de un expediente del despacho (nombres y datos, no el contenido). Avisa si el despacho tiene los documentos protegidos y bloqueados.",
+        {"cliente_id": _param("integer", "Id del cliente, opcional."), "expediente_id": _param("integer", "Id del expediente, opcional.")},
+        [],
+    ),
+    _tool(
+        "leer_documento_despacho",
+        "Lee el texto de un documento de texto, CSV o JSON del despacho. Si está cifrado y el despacho está bloqueado, no se puede leer y se explica por qué.",
+        {"documento_id": _param("integer", "Id del documento.")},
+        ["documento_id"],
+    ),
+    _tool(
         "listar_plantillas_correo",
         "Lista las plantillas de respuesta de correo guardadas del usuario actual (nombre, asunto y cuerpo).",
         {},
@@ -801,6 +813,7 @@ LECTURA: set[str] = {
     "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
     "resumen_cliente_fiscal", "listar_plantillas_correo", "listar_tareas_recurrentes",
     "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
+    "listar_documentos_despacho", "leer_documento_despacho",
     "listar_facturas_cliente",
     "crm_listar_leads", "crm_listar_contactos", "crm_listar_cuentas",
     "drive_listar_archivos", "drive_buscar_archivos", "enviar_archivo_drive_al_chat",

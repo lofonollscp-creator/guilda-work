@@ -17,7 +17,10 @@ from . import db, nucleo
 
 ORIGENES = ("subida", "correo", "portal", "generado")
 
-ESQUEMA = """
+from . import cifrado_despacho as _cifrado
+from . import rgpd as _rgpd
+
+ESQUEMA = _cifrado.ESQUEMA + _rgpd.ESQUEMA + """
 CREATE TABLE IF NOT EXISTS documentos (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL REFERENCES tenants(id),
@@ -66,22 +69,50 @@ def fijar_cifrador(cifrador: Cifrador | None) -> None:
     _cifrador = cifrador
 
 
+def _activo() -> Cifrador:
+    """El cifrador registrado con `fijar_cifrador` o, por defecto, el de la clave del despacho (que no cifra si el despacho no lo ha activado)."""
+    if _cifrador is not None:
+        return _cifrador
+    from .cifrado_despacho import CifradorDespacho
+    return CifradorDespacho()
+
+
 def _sellar(tenant_id: int, contenido: bytes) -> tuple[bytes, int, str | None]:
-    if _cifrador is None:
-        return contenido, 0, None
-    cifrado, sobre = _cifrador.sellar(tenant_id, contenido)
-    return cifrado, 1, sobre
+    cifrado, sobre = _activo().sellar(tenant_id, contenido)
+    return (cifrado, 1, sobre) if sobre else (contenido, 0, None)
 
 
-def _abrir(tenant_id: int, fila) -> bytes:
+def _abrir(tenant_id: int, fila, usuario_id: int | None = None, via: str = "persona") -> bytes:
     if not fila["cifrado"]:
         return bytes(fila["contenido"])
-    if _cifrador is None:
-        raise RuntimeError("El documento está cifrado y no hay clave disponible.")
-    contenido = _cifrador.abrir(tenant_id, bytes(fila["contenido"]), fila["sobre"] or "")
+    contenido = _activo().abrir(tenant_id, bytes(fila["contenido"]), fila["sobre"] or "")
+    from .cifrado_despacho import registrar_acceso
+    registrar_acceso(tenant_id, usuario_id, fila["id"], via)
     if hashlib.sha256(contenido).hexdigest() != fila["hash_sha256"]:
         raise RuntimeError("El documento no coincide con su huella: se ha alterado.")
     return contenido
+
+
+def sellar_pendientes(tenant_id: int) -> int:
+    """Sella con el cifrador activo los documentos que se guardaron sin cifrar (al activar el cifrado del despacho). Devuelve cuántos."""
+    cifrador = _activo()
+    conn = db.get_connection()
+    try:
+        # Sin esto SQLite deja el contenido en claro en las páginas liberadas por el UPDATE: se pide que las sobrescriba y se vacía el WAL.
+        conn.execute("PRAGMA secure_delete = ON")
+        filas = conn.execute("SELECT id, contenido FROM documentos WHERE tenant_id = ? AND cifrado = 0", (tenant_id,)).fetchall()
+        hechos = 0
+        for f in filas:
+            sellado, sobre = cifrador.sellar(tenant_id, bytes(f["contenido"]))
+            if sobre:
+                conn.execute("UPDATE documentos SET contenido = ?, cifrado = 1, sobre = ? WHERE id = ?", (sellado, sobre, f["id"]))
+                hechos += 1
+        conn.commit()
+        if hechos:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+        return hechos
+    finally:
+        conn.close()
 
 
 def _usuario(conn, usuario_id: int):
@@ -143,7 +174,7 @@ def _visible(conn, usuario_id: int, fila) -> bool:
     return exp is not None and u is not None and nucleo.puede_ver_expediente(exp, usuario_id, bool(u["supervisor_tenant"]))
 
 
-def leer(tenant_id: int, usuario_id: int, documento_id: int) -> dict | None:
+def leer(tenant_id: int, usuario_id: int, documento_id: int, via: str = "persona") -> dict | None:
     """El documento con su contenido ya descifrado, o None si no existe, no es del despacho o no puede verlo."""
     conn = db.get_connection()
     try:
@@ -153,7 +184,7 @@ def leer(tenant_id: int, usuario_id: int, documento_id: int) -> dict | None:
     finally:
         conn.close()
     d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
-    d["contenido"] = _abrir(tenant_id, f)
+    d["contenido"] = _abrir(tenant_id, f, usuario_id, via)
     return d
 
 
@@ -168,7 +199,7 @@ def leer_sin_usuario(tenant_id: int, documento_id: int) -> dict | None:
     if f is None:
         return None
     d = {k: f[k] for k in f.keys() if k not in ("contenido", "sobre")}
-    d["contenido"] = _abrir(tenant_id, f)
+    d["contenido"] = _abrir(tenant_id, f, None, "enlace")
     return d
 
 
@@ -226,3 +257,6 @@ def eliminar_de_cliente_fiscal(usuario_id: int, cliente_fiscal_id: int, document
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM documentos WHERE tenant_id = ?", (tenant_id,))
+    from . import cifrado_despacho
+    cifrado_despacho.borrar_datos_de_tenant(conn, tenant_id)
+    _rgpd.borrar_datos_de_tenant(conn, tenant_id)

@@ -24,7 +24,10 @@ PANTALLAS = [
     "/", "/tareas/", "/tareas/?vista=asignadas", "/tareas/hoy", "/tareas/tablero", "/tareas/calendario", "/notas",
     "/correo/?cuenta_id={cuenta}", "/correo/?cuenta_id={cuenta}&q=factura", "/correo/?cuenta_id={cuenta}&q=inexistentezzz",
     "/correo/?cuenta_id={cuenta}&q=lorem+ipsum", "/correo/?cuenta_id={cuenta}&mensaje_id=5",
-    "/historial", "/estadisticas", "/fiscal/vencimientos", "/menu/{proyecto}",
+    "/historial", "/estadisticas", "/fiscal/vencimientos", "/fiscal/clientes", "/menu/{proyecto}",
+    # núcleo con un despacho grande (5.000 clientes, 3.000 expedientes, 4.000 plazos, 6.000 partes de horas)
+    "/clientes/", "/clientes/?q=garcia", "/clientes/?pagina=40", "/clientes/{ncliente}", "/expedientes/", "/expedientes/?q=asunto+12", "/expedientes/{nexp}",
+    "/plazos/", "/tiempo/", "/seguridad/privacidad",
     "/proyecto/{proyecto}", "/proyecto/{proyecto}/lista", "/proyecto/{proyecto}/tablero", "/proyecto/{proyecto}/calendario",
     "/proyecto/{proyecto}/notas", "/proyecto/{proyecto}/actividad", "/correo/cuentas",
 ]
@@ -70,7 +73,27 @@ def sembrar(db, tmp: Path, n_correos: int):
                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""", filas)
     conn.commit()
     conn.close()
+    _sembrar_nucleo(db, t, us)
     return cuentas[0], cats[0]
+
+
+NUCLEO = {}
+
+
+def _sembrar_nucleo(db, t, us):
+    """Despacho grande del núcleo común: ver la lista de pantallas. Se hace por la API del núcleo (con sus comprobaciones), no con SQL a mano."""
+    from app import nucleo
+    random.seed(11)
+    apellidos = ["Garcia", "Soler", "Vidal", "Puig", "Ferrer", "Roca", "Casas", "Mas", "Font", "Serra"]
+    ids = [nucleo.crear_cliente(t, f"{random.choice(apellidos)} {random.choice(apellidos)} {i}", nif=f"{10000000 + i}A", email=f"cli{i}@ej.com") for i in range(5000)]
+    exps = [nucleo.crear_expediente(t, us[0], random.choice(ids), f"Asunto {i}", referencia=f"EXP-{i}") for i in range(3000)]
+    hoy = time.time()
+    fecha = lambda n: time.strftime("%Y-%m-%d", time.localtime(hoy + n * 86400))  # noqa: E731
+    for i in range(4000):
+        nucleo.crear_plazo(t, us[0], f"Plazo {i}", fecha(random.randint(-30, 120)), expediente_id=random.choice(exps), supervisor=True)
+    for i in range(6000):
+        nucleo.registrar_parte(t, us[random.randint(0, 4)], f"Trabajo {i}", minutos=random.choice([15, 30, 60, 90]), fecha=fecha(-random.randint(0, 200)), expediente_id=random.choice(exps))
+    NUCLEO.update(ncliente=ids[len(ids) // 2], nexp=exps[len(exps) // 2])
 
 
 def main() -> int:
@@ -120,7 +143,7 @@ def main() -> int:
         if args.cprofile:
             import cProfile
             import pstats
-            ruta = args.cprofile.format(cuenta=cuenta, proyecto=proyecto)
+            ruta = args.cprofile.format(cuenta=cuenta, proyecto=proyecto, **NUCLEO)
             cli.get(ruta)
             perfil = cProfile.Profile()
             perfil.enable()
@@ -130,7 +153,7 @@ def main() -> int:
             return 0
 
         print(f"{'pantalla':50s} {'ms':>5s} {'SQL ms':>7s} {'consultas':>9s} {'escrituras':>10s} {'KB':>5s}")
-        for ruta in [p.format(cuenta=cuenta, proyecto=proyecto) for p in PANTALLAS]:
+        for ruta in [p.format(cuenta=cuenta, proyecto=proyecto, **NUCLEO) for p in PANTALLAS]:
             medidas = []
             for _ in range(args.repeticiones + 1):  # la primera calienta cachés
                 tiempos.clear()

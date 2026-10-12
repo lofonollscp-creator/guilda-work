@@ -1558,6 +1558,38 @@ def listar_plazos_despacho(estado: str = "abiertos", dias: int = 30, cliente_id:
     return [_campos(z, _PLAZO_CAMPOS) for z in filas]
 
 
+def listar_documentos_despacho(cliente_id: int | None = None, expediente_id: int | None = None) -> dict:
+    """Documentos de un cliente o de un expediente del despacho (solo nombres y datos, no el contenido). Si el despacho tiene el cifrado activado y está
+    bloqueado, lo dice en `aviso`: el contenido no se podrá leer hasta que un responsable lo desbloquee."""
+    from app import almacen_documentos, cifrado_despacho
+    if cliente_id is None and expediente_id is None:
+        raise ValueError("Indica cliente_id o expediente_id.")
+    t = _tenant_id_actual()
+    docs = almacen_documentos.listar(t, _uid(), cliente_id=cliente_id, expediente_id=expediente_id, limite=100)
+    e = cifrado_despacho.estado(t)
+    res = {"documentos": [_campos(d, ("id", "nombre_archivo", "tipo_mime", "tamano_bytes", "categoria", "origen", "creado_en", "cifrado")) for d in docs]}
+    if e["activo"] and not e["desbloqueado"]:
+        res["aviso"] = "Los documentos están protegidos y el despacho está bloqueado: un responsable debe desbloquearlos (Seguridad > Cifrado de documentos) para poder leer su contenido."
+    return res
+
+
+def leer_documento_despacho(documento_id: int) -> dict:
+    """Texto de un documento del despacho (solo archivos de texto, CSV, JSON o similares; hasta 20.000 caracteres). Si está cifrado y el despacho está
+    bloqueado, no se puede leer y se explica por qué. La lectura queda en el registro de accesos."""
+    from app import almacen_documentos, cifrado_despacho
+    try:
+        d = almacen_documentos.leer(_tenant_id_actual(), _uid(), documento_id, via="asistente")
+    except cifrado_despacho.DespachoBloqueado as e:
+        raise ValueError(str(e)) from e
+    if d is None:
+        raise ValueError(f"No existe el documento #{documento_id} en tu despacho, o no tienes acceso.")
+    mime = (d["tipo_mime"] or "").lower()
+    if not (mime.startswith("text/") or mime in ("application/json", "application/xml", "application/csv")):
+        raise ValueError(f"«{d['nombre_archivo']}» es un archivo de tipo {mime or 'desconocido'}: solo se puede leer como texto el contenido de archivos de texto.")
+    texto = d["contenido"].decode("utf-8", errors="replace")
+    return {"id": d["id"], "nombre": d["nombre_archivo"], "texto": texto[:20000], "truncado": len(texto) > 20000}
+
+
 def listar_plantillas_correo() -> list[dict]:
     """Plantillas de respuesta guardadas del usuario actual (ver Correo >
     Ajustes en la web) -- para poder reutilizar un texto ya escrito antes
@@ -2259,6 +2291,7 @@ TOOLS = [
     listar_facturas_cliente, crear_factura_cliente,
     # Núcleo del despacho (solo lectura)
     listar_clientes_despacho, resumen_cliente_despacho, listar_expedientes_despacho, resumen_expediente_despacho, listar_plazos_despacho,
+    listar_documentos_despacho, leer_documento_despacho,
     # Fichaje
     fichar, listar_mis_fichajes,
     # Correo (acciones), proyectos, papelera y tareas ampliadas

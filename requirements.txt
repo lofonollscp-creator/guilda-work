@@ -36,3 +36,5 @@ sentry-sdk[flask]>=2.0
 urllib3>=2.8.0
 Werkzeug>=3.1.9
 PyJWT>=2.14.0
+cryptography>=42
+argon2-cffi>=23

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% block title %}{{ _('Documentos protegidos') }} — Guilda Work{% endblock %}
+{% block content %}
+{{ estado_vacio(_('Documentos protegidos'), _('Para abrir este documento, un responsable del despacho tiene que desbloquear los documentos con la frase de paso.'), icono_nombre='lock', accion_texto=_('Ir a seguridad'), accion_href=url_for('seguridad.cifrado')) }}
+{% endblock %}

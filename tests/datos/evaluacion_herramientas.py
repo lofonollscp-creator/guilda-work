@@ -80,6 +80,8 @@ CASOS: list[tuple[str, str]] = [
     ("cómo va el expediente de la reclamación de cantidad", "resumen_expediente_despacho"),
     ("qué plazos procesales vencen esta semana", "listar_plazos_despacho"),
     ("qué operaciones de inmueble tenemos en visitas", "listar_expedientes_despacho"),
+    ("qué documentos hay en el expediente de Soler", "listar_documentos_despacho"),
+    ("lee el documento de la hoja de encargo del asunto", "leer_documento_despacho"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

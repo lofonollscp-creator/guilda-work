@@ -246,6 +246,12 @@
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-smartphone"></use></svg>
             {{ _('Mis dispositivos') }}
           </a>
+          {% if g.get('tenant_id') and (g.get('supervisor_tenant') or g.get('es_admin')) %}
+          <a href="{{ url_for('seguridad.cifrado') }}" class="ajustes-panel-btn">
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg>
+            {{ _('Seguridad del despacho') }}
+          </a>
+          {% endif %}
           {% if not (request.endpoint and request.endpoint.startswith('ia.')) %}
           <button type="button" id="ia-panel-toggle" class="ajustes-panel-btn" title="{{ _('Abrir Asistente IA') }}">
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>

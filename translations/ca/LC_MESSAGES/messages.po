@@ -9890,3 +9890,180 @@ msgstr "Cau en dia inhàbil (cap de setmana o festiu): s'ha passat al següent d
 
 msgid "desplazada desde"
 msgstr "desplaçada des de"
+
+msgid "Las dos frases no coinciden."
+msgstr "Les dues frases no coincideixen."
+
+msgid "Confirma que entiendes que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Confirma que entens que, sense la frase i la clau de recuperació, els documents no es poden recuperar."
+
+msgid "Documentos desbloqueados."
+msgstr "Documents desbloquejats."
+
+msgid "Documentos bloqueados."
+msgstr "Documents bloquejats."
+
+msgid "Las dos frases nuevas no coinciden."
+msgstr "Les dues frases noves no coincideixen."
+
+msgid "Frase cambiada."
+msgstr "Frase canviada."
+
+msgid "Frase restablecida y documentos desbloqueados."
+msgstr "Frase restablerta i documents desbloquejats."
+
+msgid "Papelera vaciada: %(d)s documentos, %(p)s plazos y %(h)s partes de horas."
+msgstr "Paperera buidada: %(d)s documents, %(p)s terminis i %(h)s parts d'hores."
+
+msgid "Seguridad del despacho"
+msgstr "Seguretat del despatx"
+
+msgid "Exportar datos (JSON)"
+msgstr "Exportar dades (JSON)"
+
+msgid "Documentos protegidos"
+msgstr "Documents protegits"
+
+msgid "Para abrir este documento, un responsable del despacho tiene que desbloquear los documentos con la frase de paso."
+msgstr "Per obrir aquest document, un responsable del despatx ha de desbloquejar els documents amb la frase de pas."
+
+msgid "Ir a seguridad"
+msgstr "Anar a seguretat"
+
+msgid "Cifrado de documentos"
+msgstr "Xifratge de documents"
+
+msgid "Los documentos se guardan cifrados con la clave de tu despacho: protege los datos guardados y las copias de seguridad."
+msgstr "Els documents es guarden xifrats amb la clau del teu despatx: protegeix les dades desades i les còpies de seguretat."
+
+msgid "Privacidad y retención"
+msgstr "Privacitat i retenció"
+
+msgid "Guarda tu clave de recuperación"
+msgstr "Desa la teva clau de recuperació"
+
+msgid "Imprímela y guárdala en un lugar seguro, separada de la frase. Es la única forma de recuperar los documentos si olvidas la frase. No se volverá a mostrar."
+msgstr "Imprimeix-la i desa-la en un lloc segur, separada de la frase. És l'única manera de recuperar els documents si oblides la frase. No es tornarà a mostrar."
+
+msgid "Cifrado activado. Los documentos que ya había se han cifrado y los nuevos se cifran al entrar."
+msgstr "Xifratge activat. Els documents que ja hi havia s'han xifrat i els nous es xifren en entrar."
+
+msgid "Activar el cifrado"
+msgstr "Activar el xifratge"
+
+msgid "Qué protege y qué no: el contenido guardado queda cifrado; el servidor sí lo ve un instante al entrar y mientras el despacho está desbloqueado. Si pierdes la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Què protegeix i què no: el contingut desat queda xifrat; el servidor sí que el veu un instant en entrar i mentre el despatx està desbloquejat. Si perds la frase i la clau de recuperació, els documents no es poden recuperar."
+
+msgid "Frase de paso"
+msgstr "Frase de pas"
+
+msgid "Al menos %(n)s caracteres. Varias palabras son más fáciles de recordar y más seguras."
+msgstr "Almenys %(n)s caràcters. Diverses paraules són més fàcils de recordar i més segures."
+
+msgid "Repite la frase"
+msgstr "Repeteix la frase"
+
+msgid "Nivel de reserva"
+msgstr "Nivell de reserva"
+
+msgid "Hoy solo se cifra el contenido de los documentos; el nivel se guarda para cuando se cifren también los correos y los nombres."
+msgstr "Avui només es xifra el contingut dels documents; el nivell es desa per quan es xifrin també els correus i els noms."
+
+msgid "Laxo"
+msgstr "Laxe"
+
+msgid "Estricto"
+msgstr "Estricte"
+
+msgid "Entiendo que, sin la frase y la clave de recuperación, los documentos no se pueden recuperar."
+msgstr "Entenc que, sense la frase i la clau de recuperació, els documents no es poden recuperar."
+
+msgid "Activar y cifrar"
+msgstr "Activar i xifrar"
+
+msgid "Desbloqueado"
+msgstr "Desbloquejat"
+
+msgid "Bloqueado"
+msgstr "Bloquejat"
+
+msgid "Nivel: %(n)s"
+msgstr "Nivell: %(n)s"
+
+msgid "Hay %(n)s documentos sin cifrar (de antes de activarlo)."
+msgstr "Hi ha %(n)s documents sense xifrar (d'abans d'activar-ho)."
+
+msgid "Bloqueado: nadie puede abrir los documentos, tampoco el asistente de IA ni las integraciones, hasta que se desbloquee. Los documentos nuevos se siguen cifrando."
+msgstr "Bloquejat: ningú pot obrir els documents, tampoc l'assistent d'IA ni les integracions, fins que es desbloquegi. Els documents nous continuen xifrant-se."
+
+msgid "Desbloquear"
+msgstr "Desbloquejar"
+
+msgid "Bloquear ahora"
+msgstr "Bloqueja ara"
+
+msgid "Se bloquea solo tras cuatro horas sin uso y al reiniciar el servicio."
+msgstr "Es bloqueja sol després de quatre hores sense ús i en reiniciar el servei."
+
+msgid "Cambiar la frase de paso"
+msgstr "Canviar la frase de pas"
+
+msgid "Frase actual"
+msgstr "Frase actual"
+
+msgid "Frase nueva"
+msgstr "Frase nova"
+
+msgid "Repite la frase nueva"
+msgstr "Repeteix la frase nova"
+
+msgid "Cambiar frase"
+msgstr "Canviar frase"
+
+msgid "He olvidado la frase"
+msgstr "He oblidat la frase"
+
+msgid "Clave de recuperación"
+msgstr "Clau de recuperació"
+
+msgid "Restablecer la frase"
+msgstr "Restablir la frase"
+
+msgid "Quién ha abierto documentos cifrados"
+msgstr "Qui ha obert documents xifrats"
+
+msgid "Enlace de solo lectura"
+msgstr "Enllaç de només lectura"
+
+msgid "Todavía no se ha abierto ningún documento cifrado."
+msgstr "Encara no s'ha obert cap document xifrat."
+
+msgid "Derechos de las personas y limpieza de lo que ya no hace falta. Cada acción queda anotada."
+msgstr "Drets de les persones i neteja del que ja no cal. Cada acció queda anotada."
+
+msgid "Exportar los datos de un cliente"
+msgstr "Exportar les dades d'un client"
+
+msgid "En la ficha de cada cliente hay un enlace «Exportar datos (JSON)» con todo lo que el despacho guarda de esa persona: ficha, contactos, expedientes, plazos, horas y la lista de documentos."
+msgstr "A la fitxa de cada client hi ha un enllaç «Exportar dades (JSON)» amb tot el que el despatx guarda d'aquesta persona: fitxa, contactes, expedients, terminis, hores i la llista de documents."
+
+msgid "Vaciar la papelera"
+msgstr "Buidar la paperera"
+
+msgid "Borra para siempre los documentos, plazos y horas que llevan en la papelera el tiempo elegido. No se puede deshacer. Los clientes y expedientes no se borran desde aquí."
+msgstr "Esborra per sempre els documents, terminis i hores que porten a la paperera el temps triat. No es pot desfer. Els clients i expedients no s'esborren des d'aquí."
+
+msgid "¿Borrar para siempre lo que hay en la papelera? No se puede deshacer."
+msgstr "Esborrar per sempre el que hi ha a la paperera? No es pot desfer."
+
+msgid "Llevan en la papelera"
+msgstr "Porten a la paperera"
+
+msgid "Todo lo que haya"
+msgstr "Tot el que hi hagi"
+
+msgid "Más de %(d)s días"
+msgstr "Més de %(d)s dies"
+
+msgid "Todavía no hay nada anotado."
+msgstr "Encara no hi ha res anotat."
