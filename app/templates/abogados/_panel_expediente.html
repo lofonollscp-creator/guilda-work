@@ -11,17 +11,17 @@
     <h3>{{ _('Datos del asunto') }}</h3>
     <form method="post" action="{{ ab.base }}/datos" class="edit-form">
       {% if panel.es_judicial %}
-      <input type="text" name="numero_procedimiento" value="{{ panel.datos.get('numero_procedimiento') or '' }}" placeholder="{{ _('Nº de procedimiento (123/2026)') }}" aria-label="{{ _('Nº de procedimiento') }}">
-      <input type="text" name="juzgado" value="{{ panel.datos.get('juzgado') or '' }}" placeholder="{{ _('Juzgado o tribunal') }}" aria-label="{{ _('Juzgado o tribunal') }}">
-      <select name="jurisdiccion" aria-label="{{ _('Jurisdicción') }}"><option value="">{{ _('Jurisdicción') }}</option>{% for id, n in panel.jurisdicciones %}<option value="{{ id }}" {{ 'selected' if panel.datos.get('jurisdiccion') == id }}>{{ n }}</option>{% endfor %}</select>
-      <input type="text" name="tipo_procedimiento" value="{{ panel.datos.get('tipo_procedimiento') or '' }}" placeholder="{{ _('Tipo de procedimiento') }}" aria-label="{{ _('Tipo de procedimiento') }}">
-      <input type="text" name="procurador" value="{{ panel.datos.get('procurador') or '' }}" placeholder="{{ _('Procurador') }}" aria-label="{{ _('Procurador') }}">
-      <input type="text" name="cuantia" inputmode="decimal" value="{{ '%.2f'|format(panel.datos.get('cuantia_centimos') / 100) if panel.datos.get('cuantia_centimos') is not none else '' }}" placeholder="{{ _('Cuantía (€)') }}" aria-label="{{ _('Cuantía (€)') }}">
-      <input type="text" name="fase" value="{{ panel.datos.get('fase') or '' }}" placeholder="{{ _('Fase actual') }}" aria-label="{{ _('Fase actual') }}">
+      <label>{{ _('Nº de procedimiento') }}<input type="text" name="numero_procedimiento" value="{{ panel.datos.get('numero_procedimiento') or '' }}"></label>
+      <label>{{ _('Juzgado o tribunal') }}<input type="text" name="juzgado" value="{{ panel.datos.get('juzgado') or '' }}"></label>
+      <label>{{ _('Jurisdicción') }}<select name="jurisdiccion"><option value="">{{ _('Jurisdicción') }}</option>{% for id, n in panel.jurisdicciones %}<option value="{{ id }}" {{ 'selected' if panel.datos.get('jurisdiccion') == id }}>{{ n }}</option>{% endfor %}</select></label>
+      <label>{{ _('Tipo de procedimiento') }}<input type="text" name="tipo_procedimiento" value="{{ panel.datos.get('tipo_procedimiento') or '' }}"></label>
+      <label>{{ _('Procurador') }}<input type="text" name="procurador" value="{{ panel.datos.get('procurador') or '' }}"></label>
+      <label>{{ _('Cuantía (€)') }}<input type="text" name="cuantia" inputmode="decimal" value="{{ '%.2f'|format(panel.datos.get('cuantia_centimos') / 100) if panel.datos.get('cuantia_centimos') is not none else '' }}"></label>
+      <label>{{ _('Fase actual') }}<input type="text" name="fase" value="{{ panel.datos.get('fase') or '' }}"></label>
       {% else %}
-      <input type="text" name="materia" value="{{ panel.datos.get('materia') or '' }}" placeholder="{{ _('Materia') }}" aria-label="{{ _('Materia') }}">
+      <label>{{ _('Materia') }}<input type="text" name="materia" value="{{ panel.datos.get('materia') or '' }}"></label>
       {% endif %}
-      <textarea name="resumen_cliente" rows="3" placeholder="{{ _('Resumen para el cliente (lo verá con su enlace)') }}" aria-label="{{ _('Resumen para el cliente') }}">{{ panel.datos.get('resumen_cliente') or '' }}</textarea>
+      <label>{{ _('Resumen para el cliente') }}<textarea name="resumen_cliente" rows="3">{{ panel.datos.get('resumen_cliente') or '' }}</textarea></label>
       <button type="submit" class="btn btn-primary">{{ _('Guardar datos') }}</button>
     </form>
   </div>

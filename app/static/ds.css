@@ -219,3 +219,29 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 
 /* Clave de recuperación del cifrado: grande, monoespaciada y separable al imprimir */
 .ds-clave-recuperacion { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; font-size: 1.4rem !important; letter-spacing: .08em !important; word-break: break-all !important; }
+
+/* --- Pulido tras revisar las pantallas del núcleo y los módulos en el navegador (Día 3 en adelante) ------------------------------------------------ */
+/* Una casilla dentro de un filtro quedaba encima de su texto: `.filters label` (columna) ganaba a `.checkbox-label` (fila). */
+.filters .checkbox-label, .filters fieldset .checkbox-label { flex-direction: row !important; align-items: center !important; gap: 8px !important; font-size: 0.9em !important; width: auto !important; }
+/* Los botones de acción de una cabecera no pueden quedar pegados al subtítulo. */
+.page-header > .btn, .page-header > .ds-fila, .page-header > .quick-row, .page-header > form { margin-top: 12px !important; }
+.page-header > div + .ds-fila, .page-header > div + .btn { margin-top: 12px !important; }
+/* Las tablas que se desbordan en móvil enseñan que hay más a los lados (sombras que aparecen solo si hay desplazamiento). */
+.table-wrap {
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left center / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, transparent) right center / 24px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.18), transparent) left center / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.18), transparent) right center / 10px 100% no-repeat scroll,
+    var(--surface) !important;
+}
+/* Selector de archivos: el nativo (botón gris del sistema) desentonaba con el resto de controles. */
+input[type="file"] { font: inherit; color: var(--text-muted); max-width: 100%; }
+input[type="file"]::file-selector-button {
+  font: inherit; font-weight: 600; margin-right: 12px; padding: 7px 14px; cursor: pointer; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+}
+input[type="file"]::file-selector-button:hover { border-color: var(--accent, var(--text)); }
+/* Subapartados dentro de un panel de módulo (Partes, Notificaciones, Provisión...): jerarquía y aire entre ellos. */
+.dash-panel > h3, .dash-panel > section > h3, .dash-panel h3 { margin: 22px 0 8px !important; font-size: 1.02em !important; }
+.dash-panel > h3:first-of-type { margin-top: 12px !important; }

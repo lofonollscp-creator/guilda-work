@@ -45,11 +45,11 @@
     <td>{{ chip_plazo(p.estado_calculado, p.dias_restantes) }}</td>
     <td>{% if p.cliente_nombre %}<a href="{{ url_for('clientes.ficha', cliente_id=p.cliente_id) }}">{{ p.cliente_nombre }}</a>{% endif %}{% if p.expediente_titulo %}<br><a href="{{ url_for('expedientes.ficha', expediente_id=p.expediente_id) }}">{{ p.expediente_titulo }}</a>{% endif %}</td>
     <td>{{ p.responsable_nombre or '—' }}</td>
-    <td class="ds-fila">
+    <td><div class="ds-fila">
       <form method="post" action="{{ url_for('plazos.cumplido', plazo_id=p.id) }}">{% if p.estado == 'cumplido' %}<input type="hidden" name="reabrir" value="1">{% endif %}<button type="submit" class="btn btn-ghost btn-sm">{{ _('Reabrir') if p.estado == 'cumplido' else _('Cumplido') }}</button></form>
       {% if p.estado != 'cumplido' and not p.revisado and p.creado_por != g.usuario_id %}<form method="post" action="{{ url_for('plazos.revisar', plazo_id=p.id) }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Revisar') }}</button></form>{% endif %}
       <form method="post" action="{{ url_for('plazos.eliminar', plazo_id=p.id) }}" data-confirmar-envio="{{ _('¿Eliminar este plazo?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button></form>
-    </td>
+    </div></td>
   </tr>
   {% endfor %}
   </tbody>

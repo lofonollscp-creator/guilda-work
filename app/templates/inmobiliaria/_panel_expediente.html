@@ -12,17 +12,21 @@
   <div>
     <h3>{{ _('Datos del inmueble') }}</h3>
     <form method="post" action="{{ base }}/datos" class="edit-form">
-      <input type="text" name="direccion" value="{{ i.direccion }}" required aria-label="{{ _('Dirección') }}">
-      <input type="text" name="municipio" value="{{ i.municipio or '' }}" placeholder="{{ _('Municipio') }}" aria-label="{{ _('Municipio') }}">
-      <input type="text" name="codigo_postal" value="{{ i.codigo_postal or '' }}" placeholder="{{ _('Código postal') }}" aria-label="{{ _('Código postal') }}">
-      <select name="tipo" aria-label="{{ _('Tipo de inmueble') }}">{% for id, n in panel.tipos_inmueble %}<option value="{{ id }}" {{ 'selected' if i.tipo == id }}>{{ n }}</option>{% endfor %}</select>
-      <div class="ds-fila"><input type="number" name="superficie_m2" value="{{ i.superficie_m2 or '' }}" placeholder="m²" class="ds-ancho-5em" aria-label="{{ _('Superficie (m²)') }}"><input type="number" name="habitaciones" value="{{ i.habitaciones if i.habitaciones is not none else '' }}" placeholder="{{ _('hab.') }}" class="ds-ancho-5em" aria-label="{{ _('Habitaciones') }}"><input type="number" name="banos" value="{{ i.banos if i.banos is not none else '' }}" placeholder="{{ _('baños') }}" class="ds-ancho-5em" aria-label="{{ _('Baños') }}"></div>
-      <input type="text" name="planta" value="{{ i.planta or '' }}" placeholder="{{ _('Planta') }}" aria-label="{{ _('Planta') }}">
-      <select name="certificado_energetico" aria-label="{{ _('Certificado energético') }}"><option value="">{{ _('Certificado energético') }}</option>{% for c in panel.certificados %}<option value="{{ c }}" {{ 'selected' if i.certificado_energetico == c }}>{{ c|replace('_', ' ') }}</option>{% endfor %}</select>
-      <input type="text" name="ref_catastral" value="{{ i.ref_catastral or '' }}" placeholder="{{ _('Referencia catastral') }}" aria-label="{{ _('Referencia catastral') }}">
+      <label>{{ _('Dirección') }}<input type="text" name="direccion" value="{{ i.direccion }}" required></label>
+      <label>{{ _('Municipio') }}<input type="text" name="municipio" value="{{ i.municipio or '' }}"></label>
+      <label>{{ _('Código postal') }}<input type="text" name="codigo_postal" value="{{ i.codigo_postal or '' }}"></label>
+      <label>{{ _('Tipo de inmueble') }}<select name="tipo">{% for id, n in panel.tipos_inmueble %}<option value="{{ id }}" {{ 'selected' if i.tipo == id }}>{{ n }}</option>{% endfor %}</select></label>
+      <div class="ds-fila">
+        <label>{{ _('Superficie (m²)') }}<input type="number" name="superficie_m2" value="{{ i.superficie_m2 or '' }}" class="ds-ancho-5em"></label>
+        <label>{{ _('Habitaciones') }}<input type="number" name="habitaciones" value="{{ i.habitaciones if i.habitaciones is not none else '' }}" class="ds-ancho-5em"></label>
+        <label>{{ _('Baños') }}<input type="number" name="banos" value="{{ i.banos if i.banos is not none else '' }}" class="ds-ancho-5em"></label>
+      </div>
+      <label>{{ _('Planta') }}<input type="text" name="planta" value="{{ i.planta or '' }}"></label>
+      <label>{{ _('Certificado energético') }}<select name="certificado_energetico"><option value="">{{ _('Certificado energético') }}</option>{% for c in panel.certificados %}<option value="{{ c }}" {{ 'selected' if i.certificado_energetico == c }}>{{ c|replace('_', ' ') }}</option>{% endfor %}</select></label>
+      <label>{{ _('Referencia catastral') }}<input type="text" name="ref_catastral" value="{{ i.ref_catastral or '' }}"></label>
       <fieldset><legend>{{ _('Características') }}</legend>{% for id, n in panel.caracteristicas %}<label class="checkbox-label"><input type="checkbox" name="caracteristicas" value="{{ id }}" {{ 'checked' if id in i.caracteristicas }}> {{ n }}</label>{% endfor %}</fieldset>
-      <textarea name="descripcion" rows="3" placeholder="{{ _('Descripción del anuncio') }}" aria-label="{{ _('Descripción') }}">{{ i.descripcion or '' }}</textarea>
-      <input type="text" name="copropietarios" value="{{ i.copropietarios or '' }}" placeholder="{{ _('Otros propietarios') }}" aria-label="{{ _('Otros propietarios') }}">
+      <label>{{ _('Descripción') }}<textarea name="descripcion" rows="3">{{ i.descripcion or '' }}</textarea></label>
+      <label>{{ _('Otros propietarios') }}<input type="text" name="copropietarios" value="{{ i.copropietarios or '' }}"></label>
       <button type="submit" class="btn btn-primary">{{ _('Guardar datos') }}</button>
     </form>
   </div>

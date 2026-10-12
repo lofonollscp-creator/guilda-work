@@ -16,6 +16,9 @@
 {% include "_nucleo_subnav.html" %}
 {{ aviso_error(error) }}
 
+{# El panel del módulo (inmueble, asunto judicial...) es lo principal de este tipo de expediente: va primero, antes de los plazos, horas y documentos genéricos. #}
+{% for p in paneles %}{% set panel = p.ctx %}{% include p.plantilla %}{% endfor %}
+
 <div class="dash-grid">
 <section class="dash-panel">
   <h2>{{ _('Plazos') }}</h2>
@@ -70,7 +73,6 @@
   {{ subir_documento(url_for('expedientes.subir_documento', expediente_id=x.id)) }}
 </section>
 
-{% for p in paneles %}{% set panel = p.ctx %}{% include p.plantilla %}{% endfor %}
 
 <div class="dash-grid ds-mt-16">
 <section class="dash-panel">
