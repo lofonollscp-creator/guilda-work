@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, sin_validar, campo %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Festivos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Festivos del despacho') }}</h1><p class="subtitle">{{ _('Días que no cuentan como hábiles al calcular un plazo, además de los nacionales de ejemplo.') }} {{ sin_validar(_('Sin validar')) }}</p></div></header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get"><label>{{ _('Año') }} <input type="number" name="anio" value="{{ anio }}" min="2000" max="2100"></label><button type="submit" class="btn btn-primary">{{ _('Ver') }}</button></form>
+<div class="dash-grid">
+<section class="dash-panel">
+  <h2>{{ _('Del despacho') }}</h2>
+  {% if festivos %}<ul class="log-list">{% for f in festivos %}<li class="log-item"><span class="log-text"><span class="mono">{{ f.fecha }}</span> {{ f.nombre }}</span>
+    {% if puede_editar %}<form method="post"><input type="hidden" name="eliminar" value="{{ f.id }}"><button type="submit" class="chip-del" aria-label="{{ _('Quitar') }}">×</button></form>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Sin festivos propios este año (autonómicos, locales, del partido judicial…).') }}</p>{% endif %}
+  {% if puede_editar %}
+  <form method="post" class="edit-form ds-mt-12"><input type="date" name="fecha" required aria-label="{{ _('Fecha') }}"><input type="text" name="nombre" placeholder="{{ _('Nombre del festivo') }}" required maxlength="100"><button type="submit" class="btn btn-ghost">+ {{ _('Añadir festivo') }}</button></form>
+  {% else %}<p class="muted">{{ _('Solo los responsables del despacho pueden editarlos.') }}</p>{% endif %}
+</section>
+<section class="dash-panel">
+  <h2>{{ _('Nacionales (de ejemplo)') }}</h2>
+  <ul class="log-list">{% for fecha, nombre in nacionales %}<li class="log-item"><span class="log-text"><span class="mono">{{ fecha.isoformat() }}</span> {{ nombre }}</span></li>{% endfor %}</ul>
+  <p class="muted">{{ _('Faltan los festivos de tu comunidad autónoma y de tu municipio: añádelos a mano.') }}</p>
+</section>
+</div>
+{% endblock %}

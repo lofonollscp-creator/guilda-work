@@ -58,7 +58,7 @@ from email.utils import make_msgid, getaddresses, parsedate_to_datetime
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
-from . import busqueda, correo_oauth, db, eventos, notificaciones
+from . import almacen_documentos, busqueda, correo_oauth, db, eventos, notificaciones
 from .texto_html import html_a_texto_indexable
 
 SERVICIO_KEYRING = "guilda-work-correo"
@@ -1589,7 +1589,7 @@ def archivar_correo_en_expediente(
     db.asignar_cliente_fiscal_correo(tenant["id"], mensaje_id, cliente_fiscal_id)
 
     def guardar(nombre, tipo, contenido):
-        resultado, _id = db.archivar_documento_cliente(
+        resultado, _id = almacen_documentos.guardar_de_cliente_fiscal(
             usuario_id, cliente_fiscal_id, nombre, tipo, contenido, categoria=categoria, origen="correo",
             mensaje_correo_id=mensaje_id, asunto_origen=mensaje["asunto"],
         )

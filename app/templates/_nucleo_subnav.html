@@ -1,0 +1,7 @@
+{# Navegación del núcleo. `subnav`: clientes | expedientes | plazos | tiempo #}
+<nav class="tareas-subnav">
+  <a class="{{ 'active' if subnav == 'clientes' }}" href="{{ url_for('clientes.lista') }}">{{ _('Clientes') }}</a>
+  <a class="{{ 'active' if subnav == 'expedientes' }}" href="{{ url_for('expedientes.lista') }}">{{ _('Expedientes') }}</a>
+  <a class="{{ 'active' if subnav == 'plazos' }}" href="{{ url_for('plazos.lista') }}">{{ _('Plazos') }}</a>
+  <a class="{{ 'active' if subnav == 'tiempo' }}" href="{{ url_for('tiempo.lista') }}">{{ _('Horas') }}</a>
+</nav>

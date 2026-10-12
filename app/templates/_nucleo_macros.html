@@ -1,0 +1,33 @@
+{# Piezas comunes de las pantallas del núcleo. Se importan con `{% from "_nucleo_macros.html" import … %}`. #}
+{% from "_ds/componentes.html" import chip %}
+
+{% macro chip_plazo(estado, dias=None) -%}
+{%- if estado == 'cumplido' -%}{{ chip(_('Cumplido'), 'exito') }}
+{%- elif estado == 'vencido' -%}{{ chip(_('Vencido'), 'peligro') }}
+{%- elif estado == 'hoy' -%}{{ chip(_('Vence hoy'), 'peligro') }}
+{%- elif estado == 'proximo' -%}{{ chip(_('Próximo') ~ (' · ' ~ dias ~ ' d' if dias is not none else ''), 'aviso') }}
+{%- else -%}{{ chip(_('En plazo')) }}{%- endif -%}
+{%- endmacro %}
+
+{% macro selector_equipo(nombre, equipo, elegido=None, vacio=None, id=None, etiqueta=None) -%}
+<select name="{{ nombre }}"{% if id %} id="{{ id }}"{% endif %}{% if etiqueta %} aria-label="{{ etiqueta }}"{% endif %}>
+  {% if vacio %}<option value="">{{ vacio }}</option>{% endif %}
+  {% for p in equipo %}<option value="{{ p.id }}" {{ 'selected' if elegido == p.id }}>{{ p.nombre }}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{% macro aviso_error(error) -%}
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{%- endmacro %}
+
+{% macro subir_documento(accion, categorias=True) -%}
+<form method="post" action="{{ accion }}" enctype="multipart/form-data" class="ds-fila ds-mt-12">
+  <input type="file" name="archivo" multiple required>
+  <input type="text" name="categoria" placeholder="{{ _('Categoría (opcional)') }}" maxlength="60">
+  <button type="submit" class="btn btn-ghost">{{ _('Subir') }}</button>
+</form>
+{%- endmacro %}
+
+{% macro tamano(bytes) -%}
+{%- if bytes < 1024 -%}{{ bytes }} B{%- elif bytes < 1048576 -%}{{ (bytes / 1024)|round(1) }} KB{%- else -%}{{ (bytes / 1048576)|round(1) }} MB{%- endif -%}
+{%- endmacro %}

@@ -7896,3 +7896,483 @@ msgstr "This quarter"
 
 msgid "Este año"
 msgstr "This year"
+
+msgid "Elige el cliente con el que quedarte."
+msgstr "Choose the client you want to keep."
+
+msgid "Elige un archivo."
+msgstr "Choose a file."
+
+msgid "Archivo vacío."
+msgstr "Empty file."
+
+msgid "Archivo demasiado grande."
+msgstr "File too large."
+
+msgid "Demasiados documentos."
+msgstr "Too many documents."
+
+msgid "Cliente no encontrado."
+msgstr "Client not found."
+
+msgid "Expediente no encontrado."
+msgstr "Case file not found."
+
+msgid "No se pudo guardar."
+msgstr "Could not be saved."
+
+msgid "El tiempo no es válido."
+msgstr "The time is not valid."
+
+msgid "La tarifa no es válida."
+msgstr "The rate is not valid."
+
+msgid "Facturable"
+msgstr "Billable"
+
+msgid "Sí"
+msgstr "Yes"
+
+msgid "Hoja de horas"
+msgstr "Timesheet"
+
+msgid "inicio"
+msgstr "start"
+
+msgid "En espera"
+msgstr "On hold"
+
+msgid "Gestoría"
+msgstr "Tax & accounting practice"
+
+msgid "Calendario fiscal, clientes fiscales, vencimientos, recordatorios y portal de cliente."
+msgstr "Tax calendar, tax clients, deadlines, reminders and client portal."
+
+msgid "Gabinete de abogados"
+msgstr "Law firm"
+
+msgid "Expedientes judiciales y extrajudiciales, plazos procesales, minutas y provisión de fondos."
+msgstr "Court and out-of-court cases, procedural deadlines, fee notes and retainers."
+
+msgid "Inmobiliaria"
+msgstr "Real estate agency"
+
+msgid "Inmuebles, captación, demandas, visitas, contratos y comisiones."
+msgstr "Properties, listings, buyer requests, viewings, contracts and commissions."
+
+msgid "Cumplido"
+msgstr "Done"
+
+msgid "Vence hoy"
+msgstr "Due today"
+
+msgid "Próximo"
+msgstr "Upcoming"
+
+msgid "En plazo"
+msgstr "On time"
+
+msgid "Expedientes"
+msgstr "Case files"
+
+msgid "Plazos"
+msgstr "Deadlines"
+
+msgid "Expandir Clientes"
+msgstr "Expand Clients"
+
+msgid "En la papelera"
+msgstr "In the trash"
+
+msgid "Nuevo expediente"
+msgstr "New case file"
+
+msgid "Ficha fiscal"
+msgstr "Tax record"
+
+msgid "NIF / CIF"
+msgstr "Tax ID"
+
+msgid "Dirección"
+msgstr "Address"
+
+msgid "Idioma de comunicación"
+msgstr "Communication language"
+
+msgid "Sin indicar"
+msgstr "Not specified"
+
+msgid "Cómo llegó"
+msgstr "How they found us"
+
+msgid "Etiquetas"
+msgstr "Tags"
+
+msgid "Separadas por comas."
+msgstr "Separated by commas."
+
+msgid "¿Mandar este cliente a la papelera?"
+msgstr "Send this client to the trash?"
+
+msgid "Mandar a la papelera"
+msgstr "Send to trash"
+
+msgid "Principal"
+msgstr "Primary"
+
+msgid "¿Quitar este contacto?"
+msgstr "Remove this contact?"
+
+msgid "Sin personas de contacto todavía."
+msgstr "No contact people yet."
+
+msgid "Rol (administrador, contable…)"
+msgstr "Role (director, accountant…)"
+
+msgid "Contacto principal"
+msgstr "Primary contact"
+
+msgid "Añadir contacto"
+msgstr "Add contact"
+
+msgid "Próximo plazo"
+msgstr "Next deadline"
+
+msgid "Sin expedientes"
+msgstr "No case files"
+
+msgid "Abre uno para llevar el trabajo de este cliente con sus plazos, horas y documentos."
+msgstr "Open one to manage this client's work with its deadlines, hours and documents."
+
+msgid "Plazos abiertos"
+msgstr "Open deadlines"
+
+msgid "Cifrado"
+msgstr "Encrypted"
+
+msgid "¿Eliminar este documento?"
+msgstr "Delete this document?"
+
+msgid "Sin documentos."
+msgstr "No documents."
+
+msgid "Los documentos de gestoría (modelos, justificantes) están en la ficha fiscal."
+msgstr "Tax-practice documents (returns, receipts) are in the tax record."
+
+msgid "Últimas horas"
+msgstr "Latest hours"
+
+msgid "Fusionar con otro cliente"
+msgstr "Merge with another client"
+
+msgid "Si este cliente está repetido, pasa sus expedientes, plazos, horas y contactos al que elijas. Este se queda en la papelera."
+msgstr "If this client is a duplicate, its case files, deadlines, hours and contacts move to the one you choose. This one goes to the trash."
+
+msgid "¿Fusionar este cliente con el elegido?"
+msgstr "Merge this client with the chosen one?"
+
+msgid "Elige el cliente que se queda…"
+msgstr "Choose the client to keep…"
+
+msgid "Fusionar"
+msgstr "Merge"
+
+msgid "Nuevo cliente"
+msgstr "New client"
+
+msgid "Ya hay clientes parecidos:"
+msgstr "There are already similar clients:"
+
+msgid "Si es otro cliente distinto, marca «Crear igualmente» y vuelve a guardar."
+msgstr "If it is a different client, tick “Create anyway” and save again."
+
+msgid "Si es un CIF, el cliente se marca como empresa."
+msgstr "If it is a company tax ID, the client is marked as a company."
+
+msgid "Detectar por el NIF"
+msgstr "Detect from tax ID"
+
+msgid "Idioma con el que prefiere que le escribas"
+msgstr "Language they prefer you write in"
+
+msgid "Responsable en el despacho"
+msgstr "Person in charge at the firm"
+
+msgid "Recomendación, web, otro cliente…"
+msgstr "Referral, website, another client…"
+
+msgid "Separadas por comas: vip, renta, autónomo."
+msgstr "Separated by commas: vip, tax return, freelancer."
+
+msgid "Crear igualmente"
+msgstr "Create anyway"
+
+msgid "Crear cliente"
+msgstr "Create client"
+
+msgid "Todas las personas y empresas para las que trabajas, con sus contactos, expedientes y documentos."
+msgstr "All the people and companies you work for, with their contacts, case files and documents."
+
+msgid "Nombre, NIF, email, teléfono o contacto…"
+msgstr "Name, tax ID, email, phone or contact…"
+
+msgid "Etiqueta"
+msgstr "Tag"
+
+msgid "Ningún cliente coincide"
+msgstr "No client matches"
+
+msgid "Prueba con otra búsqueda o quita algún filtro."
+msgstr "Try another search or remove a filter."
+
+msgid "Todavía no hay clientes"
+msgstr "No clients yet"
+
+msgid "Crea el primero para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Create the first one to start opening case files, logging hours and storing their documents."
+
+msgid "%(n)s cliente"
+msgid_plural "%(n)s clientes"
+msgstr[0] "%(n)s client"
+msgstr[1] "%(n)s clients"
+
+msgid "Contacto"
+msgstr "Contact"
+
+msgid "Expedientes abiertos"
+msgstr "Open case files"
+
+msgid "Confidencial"
+msgstr "Confidential"
+
+msgid "%(n)s día hábil"
+msgid_plural "%(n)s días hábiles"
+msgstr[0] "%(n)s working day"
+msgstr[1] "%(n)s working days"
+
+msgid "Fatal"
+msgstr "Fatal"
+
+msgid "Revisado"
+msgstr "Reviewed"
+
+msgid "Marcar revisado"
+msgstr "Mark as reviewed"
+
+msgid "Sin plazos."
+msgstr "No deadlines."
+
+msgid "Qué hay que hacer"
+msgstr "What needs doing"
+
+msgid "Plazo fatal (sin margen)"
+msgstr "Fatal deadline (no leeway)"
+
+msgid "Añadir plazo"
+msgstr "Add deadline"
+
+msgid "Sin horas registradas."
+msgstr "No hours logged."
+
+msgid "En qué has empleado el tiempo"
+msgstr "What you spent the time on"
+
+msgid "h"
+msgstr "h"
+
+msgid "min"
+msgstr "min"
+
+msgid "Registrar tiempo"
+msgstr "Log time"
+
+msgid "Línea de tiempo"
+msgstr "Timeline"
+
+msgid "Añadir una nota…"
+msgstr "Add a note…"
+
+msgid "Datos del expediente"
+msgstr "Case file details"
+
+msgid "Referencia"
+msgstr "Reference"
+
+msgid "Cambiar responsable"
+msgstr "Change person in charge"
+
+msgid "Quién más lo ve"
+msgstr "Who else can see it"
+
+msgid "Solo su responsable y quien lo creó."
+msgstr "Only the person in charge and its creator."
+
+msgid "¿Mandar este expediente a la papelera?"
+msgstr "Send this case file to the trash?"
+
+msgid "Primero necesitas un cliente."
+msgstr "You need a client first."
+
+msgid "Elige un cliente…"
+msgstr "Choose a client…"
+
+msgid "Número de expediente, procedimiento o código interno."
+msgstr "Case number, proceeding or internal code."
+
+msgid "Confidencial: solo lo ven su responsable, quien lo cree y las personas que añadas"
+msgstr "Confidential: only its person in charge, its creator and the people you add can see it"
+
+msgid "Abrir expediente"
+msgstr "Open case file"
+
+msgid "El trabajo de cada cliente, con sus plazos, horas y documentos."
+msgstr "Each client's work, with its deadlines, hours and documents."
+
+msgid "Título, referencia o cliente…"
+msgstr "Title, reference or client…"
+
+msgid "Solo abiertos"
+msgstr "Open only"
+
+msgid "Abre el primero desde un cliente o con el botón «Nuevo expediente»."
+msgstr "Open the first one from a client or with the “New case file” button."
+
+msgid "%(n)s expediente"
+msgid_plural "%(n)s expedientes"
+msgstr[0] "%(n)s case file"
+msgstr[1] "%(n)s case files"
+
+msgid "Festivos"
+msgstr "Holidays"
+
+msgid "Festivos del despacho"
+msgstr "Firm holidays"
+
+msgid "Días que no cuentan como hábiles al calcular un plazo, además de los nacionales de ejemplo."
+msgstr "Days that do not count as working days when calculating a deadline, besides the sample national ones."
+
+msgid "Año"
+msgstr "Year"
+
+msgid "Ver"
+msgstr "View"
+
+msgid "Del despacho"
+msgstr "The firm's"
+
+msgid "Sin festivos propios este año (autonómicos, locales, del partido judicial…)."
+msgstr "No firm-specific holidays this year (regional, local, court district…)."
+
+msgid "Nombre del festivo"
+msgstr "Holiday name"
+
+msgid "Añadir festivo"
+msgstr "Add holiday"
+
+msgid "Solo los responsables del despacho pueden editarlos."
+msgstr "Only the firm's managers can edit them."
+
+msgid "Nacionales (de ejemplo)"
+msgstr "National (sample)"
+
+msgid "Faltan los festivos de tu comunidad autónoma y de tu municipio: añádelos a mano."
+msgstr "Your region's and municipality's holidays are missing: add them by hand."
+
+msgid "Lo que vence, ordenado por urgencia. Los días hábiles descuentan fines de semana y festivos."
+msgstr "What is due, ordered by urgency. Working days exclude weekends and holidays."
+
+msgid "Festivos de ejemplo: contrástalos"
+msgstr "Sample holidays: check them"
+
+msgid "Todos los abiertos"
+msgstr "All open"
+
+msgid "Vencidos"
+msgstr "Overdue"
+
+msgid "Próximos"
+msgstr "Upcoming"
+
+msgid "Cumplidos"
+msgstr "Done"
+
+msgid "Solo los míos"
+msgstr "Only mine"
+
+msgid "Nuevo plazo"
+msgstr "New deadline"
+
+msgid "Sin expediente"
+msgstr "No case file"
+
+msgid "Crear plazo"
+msgstr "Create deadline"
+
+msgid "Sin plazos aquí"
+msgstr "No deadlines here"
+
+msgid "Cuando añadas plazos a un expediente o a un cliente aparecerán en esta lista."
+msgstr "When you add deadlines to a case file or a client they will appear in this list."
+
+msgid "Plazo"
+msgstr "Deadline"
+
+msgid "Vence"
+msgstr "Due"
+
+msgid "Cliente / expediente"
+msgstr "Client / case file"
+
+msgid "Revisar"
+msgstr "Review"
+
+msgid "¿Eliminar este plazo?"
+msgstr "Delete this deadline?"
+
+msgid "Registra en qué empleas el tiempo, por cliente y expediente, y obtén la hoja de horas para facturar."
+msgstr "Log what you spend your time on, by client and case file, and get the timesheet for invoicing."
+
+msgid "Mi tarifa por hora (€)"
+msgstr "My hourly rate (€)"
+
+msgid "Guardar tarifa"
+msgstr "Save rate"
+
+msgid "Se aplica a las horas nuevas."
+msgstr "It applies to new hours."
+
+msgid "Resumir por"
+msgstr "Summarise by"
+
+msgid "Todo el equipo"
+msgstr "Whole team"
+
+msgid "Sin horas en este periodo"
+msgstr "No hours in this period"
+
+msgid "Registra tu primer tiempo con el formulario de arriba."
+msgstr "Log your first time with the form above."
+
+msgid "Facturables"
+msgstr "Billable"
+
+msgid "Partes"
+msgstr "Entries"
+
+msgid "Tiempo"
+msgstr "Time"
+
+msgid "Marcar como facturado"
+msgstr "Mark as invoiced"
+
+msgid "No facturable"
+msgstr "Non-billable"
+
+msgid "Facturado"
+msgstr "Invoiced"
+
+msgid "¿Eliminar este parte de horas?"
+msgstr "Delete this time entry?"
+
+msgid "Marcar los seleccionados como facturados"
+msgstr "Mark selected as invoiced"

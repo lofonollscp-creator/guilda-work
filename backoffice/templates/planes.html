@@ -55,6 +55,7 @@
               <input type="text" name="nombre" value="{{ e.nombre }}" maxlength="80" required aria-label="Nombre">
               <input type="text" name="descripcion" value="{{ e.descripcion or '' }}" maxlength="200" aria-label="Descripción">
               <input type="text" name="precio" value="{{ '%.2f'|format(e.precio_centimos / 100) if e.precio_centimos is not none else '' }}" inputmode="decimal" size="8" aria-label="Precio">
+              <select name="vertical_id" aria-label="Módulo de negocio que activa"><option value="">Sin módulo</option>{% for v in verticales %}<option value="{{ v.id }}" {{ 'selected' if e.vertical_id == v.id }}>{{ v.nombre }}</option>{% endfor %}</select>
               <span>{% if e.stripe_price_id %}<span class="insignia insignia-ok">SINCRONIZADO</span>{% else %}<span class="insignia">SIN SINCRONIZAR</span>{% endif %}</span>
               <span class="acciones"><button type="submit" class="boton">Guardar</button>
                 <button type="submit" class="boton" formaction="{{ url_for('rutas.sincronizar_extra', extra_id=e.id) }}" {% if not stripe_configurado %}disabled{% endif %}>Sincronizar</button></span>
@@ -70,6 +71,7 @@
     <input type="text" name="nombre" placeholder="Nombre del extra" maxlength="80" required>
     <input type="text" name="descripcion" placeholder="Descripción" maxlength="200">
     <input type="text" name="precio" placeholder="Precio (€)" inputmode="decimal" size="8">
+    <select name="vertical_id" aria-label="Módulo de negocio que activa"><option value="">Sin módulo</option>{% for v in verticales %}<option value="{{ v.id }}">{{ v.nombre }}</option>{% endfor %}</select>
     <button type="submit" class="boton boton-primario">Crear extra</button>
   </form>
 </section>

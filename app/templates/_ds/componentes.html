@@ -33,7 +33,7 @@
 {% macro estado_vacio(titulo, texto=None, icono_nombre="folder", accion_texto=None, accion_href=None, error=False) -%}
 <div class="ds-vacio{% if error %} ds-vacio-error{% endif %}"{% if error %} role="alert"{% endif %}>
   <span class="ds-vacio-icono">{{ icono("triangle-alert" if error else icono_nombre, "") }}</span>
-  <h3>{{ titulo }}</h3>
+  <h2 class="ds-vacio-titulo">{{ titulo }}</h2>
   {% if texto %}<p>{{ texto }}</p>{% endif %}
   {% if accion_texto and accion_href %}<a class="btn btn-primary" href="{{ accion_href }}">{{ accion_texto }}</a>{% endif %}
 </div>

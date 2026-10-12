@@ -7981,3 +7981,483 @@ msgstr "Ce trimestre"
 
 msgid "Este año"
 msgstr "Cette année"
+
+msgid "Elige el cliente con el que quedarte."
+msgstr "Choisissez le client à conserver."
+
+msgid "Elige un archivo."
+msgstr "Choisissez un fichier."
+
+msgid "Archivo vacío."
+msgstr "Fichier vide."
+
+msgid "Archivo demasiado grande."
+msgstr "Fichier trop volumineux."
+
+msgid "Demasiados documentos."
+msgstr "Trop de documents."
+
+msgid "Cliente no encontrado."
+msgstr "Client introuvable."
+
+msgid "Expediente no encontrado."
+msgstr "Dossier introuvable."
+
+msgid "No se pudo guardar."
+msgstr "Enregistrement impossible."
+
+msgid "El tiempo no es válido."
+msgstr "La durée n'est pas valide."
+
+msgid "La tarifa no es válida."
+msgstr "Le tarif n'est pas valide."
+
+msgid "Facturable"
+msgstr "Facturable"
+
+msgid "Sí"
+msgstr "Oui"
+
+msgid "Hoja de horas"
+msgstr "Feuille d'heures"
+
+msgid "inicio"
+msgstr "début"
+
+msgid "En espera"
+msgstr "En attente"
+
+msgid "Gestoría"
+msgstr "Cabinet de gestion"
+
+msgid "Calendario fiscal, clientes fiscales, vencimientos, recordatorios y portal de cliente."
+msgstr "Calendrier fiscal, clients fiscaux, échéances, rappels et portail client."
+
+msgid "Gabinete de abogados"
+msgstr "Cabinet d'avocats"
+
+msgid "Expedientes judiciales y extrajudiciales, plazos procesales, minutas y provisión de fondos."
+msgstr "Dossiers judiciaires et extrajudiciaires, délais de procédure, notes d'honoraires et provisions."
+
+msgid "Inmobiliaria"
+msgstr "Agence immobilière"
+
+msgid "Inmuebles, captación, demandas, visitas, contratos y comisiones."
+msgstr "Biens, mandats, demandes, visites, contrats et commissions."
+
+msgid "Cumplido"
+msgstr "Accompli"
+
+msgid "Vence hoy"
+msgstr "Échéance aujourd'hui"
+
+msgid "Próximo"
+msgstr "Proche"
+
+msgid "En plazo"
+msgstr "Dans les délais"
+
+msgid "Expedientes"
+msgstr "Dossiers"
+
+msgid "Plazos"
+msgstr "Délais"
+
+msgid "Expandir Clientes"
+msgstr "Développer Clients"
+
+msgid "En la papelera"
+msgstr "Dans la corbeille"
+
+msgid "Nuevo expediente"
+msgstr "Nouveau dossier"
+
+msgid "Ficha fiscal"
+msgstr "Fiche fiscale"
+
+msgid "NIF / CIF"
+msgstr "NIF / CIF"
+
+msgid "Dirección"
+msgstr "Adresse"
+
+msgid "Idioma de comunicación"
+msgstr "Langue de communication"
+
+msgid "Sin indicar"
+msgstr "Non précisé"
+
+msgid "Cómo llegó"
+msgstr "Comment il nous a trouvés"
+
+msgid "Etiquetas"
+msgstr "Étiquettes"
+
+msgid "Separadas por comas."
+msgstr "Séparées par des virgules."
+
+msgid "¿Mandar este cliente a la papelera?"
+msgstr "Mettre ce client à la corbeille ?"
+
+msgid "Mandar a la papelera"
+msgstr "Mettre à la corbeille"
+
+msgid "Principal"
+msgstr "Principal"
+
+msgid "¿Quitar este contacto?"
+msgstr "Retirer ce contact ?"
+
+msgid "Sin personas de contacto todavía."
+msgstr "Aucune personne de contact pour l'instant."
+
+msgid "Rol (administrador, contable…)"
+msgstr "Rôle (administrateur, comptable…)"
+
+msgid "Contacto principal"
+msgstr "Contact principal"
+
+msgid "Añadir contacto"
+msgstr "Ajouter un contact"
+
+msgid "Próximo plazo"
+msgstr "Prochain délai"
+
+msgid "Sin expedientes"
+msgstr "Aucun dossier"
+
+msgid "Abre uno para llevar el trabajo de este cliente con sus plazos, horas y documentos."
+msgstr "Ouvrez-en un pour suivre le travail de ce client avec ses délais, heures et documents."
+
+msgid "Plazos abiertos"
+msgstr "Délais ouverts"
+
+msgid "Cifrado"
+msgstr "Chiffré"
+
+msgid "¿Eliminar este documento?"
+msgstr "Supprimer ce document ?"
+
+msgid "Sin documentos."
+msgstr "Aucun document."
+
+msgid "Los documentos de gestoría (modelos, justificantes) están en la ficha fiscal."
+msgstr "Les documents de gestion (modèles, justificatifs) se trouvent dans la fiche fiscale."
+
+msgid "Últimas horas"
+msgstr "Dernières heures"
+
+msgid "Fusionar con otro cliente"
+msgstr "Fusionner avec un autre client"
+
+msgid "Si este cliente está repetido, pasa sus expedientes, plazos, horas y contactos al que elijas. Este se queda en la papelera."
+msgstr "Si ce client est en double, ses dossiers, délais, heures et contacts passent à celui que vous choisissez. Celui-ci va à la corbeille."
+
+msgid "¿Fusionar este cliente con el elegido?"
+msgstr "Fusionner ce client avec celui choisi ?"
+
+msgid "Elige el cliente que se queda…"
+msgstr "Choisissez le client à conserver…"
+
+msgid "Fusionar"
+msgstr "Fusionner"
+
+msgid "Nuevo cliente"
+msgstr "Nouveau client"
+
+msgid "Ya hay clientes parecidos:"
+msgstr "Il existe déjà des clients similaires :"
+
+msgid "Si es otro cliente distinto, marca «Crear igualmente» y vuelve a guardar."
+msgstr "S'il s'agit d'un autre client, cochez « Créer quand même » et enregistrez à nouveau."
+
+msgid "Si es un CIF, el cliente se marca como empresa."
+msgstr "S'il s'agit d'un CIF, le client est marqué comme entreprise."
+
+msgid "Detectar por el NIF"
+msgstr "Détecter d'après le NIF"
+
+msgid "Idioma con el que prefiere que le escribas"
+msgstr "Langue dans laquelle il préfère être contacté"
+
+msgid "Responsable en el despacho"
+msgstr "Responsable au cabinet"
+
+msgid "Recomendación, web, otro cliente…"
+msgstr "Recommandation, site web, autre client…"
+
+msgid "Separadas por comas: vip, renta, autónomo."
+msgstr "Séparées par des virgules : vip, impôts, indépendant."
+
+msgid "Crear igualmente"
+msgstr "Créer quand même"
+
+msgid "Crear cliente"
+msgstr "Créer le client"
+
+msgid "Todas las personas y empresas para las que trabajas, con sus contactos, expedientes y documentos."
+msgstr "Toutes les personnes et entreprises pour lesquelles vous travaillez, avec leurs contacts, dossiers et documents."
+
+msgid "Nombre, NIF, email, teléfono o contacto…"
+msgstr "Nom, NIF, e-mail, téléphone ou contact…"
+
+msgid "Etiqueta"
+msgstr "Étiquette"
+
+msgid "Ningún cliente coincide"
+msgstr "Aucun client ne correspond"
+
+msgid "Prueba con otra búsqueda o quita algún filtro."
+msgstr "Essayez une autre recherche ou retirez un filtre."
+
+msgid "Todavía no hay clientes"
+msgstr "Aucun client pour l'instant"
+
+msgid "Crea el primero para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Créez le premier pour ouvrir des dossiers, enregistrer des heures et conserver ses documents."
+
+msgid "%(n)s cliente"
+msgid_plural "%(n)s clientes"
+msgstr[0] "%(n)s client"
+msgstr[1] "%(n)s clients"
+
+msgid "Contacto"
+msgstr "Contact"
+
+msgid "Expedientes abiertos"
+msgstr "Dossiers ouverts"
+
+msgid "Confidencial"
+msgstr "Confidentiel"
+
+msgid "%(n)s día hábil"
+msgid_plural "%(n)s días hábiles"
+msgstr[0] "%(n)s jour ouvré"
+msgstr[1] "%(n)s jours ouvrés"
+
+msgid "Fatal"
+msgstr "Fatal"
+
+msgid "Revisado"
+msgstr "Révisé"
+
+msgid "Marcar revisado"
+msgstr "Marquer comme révisé"
+
+msgid "Sin plazos."
+msgstr "Aucun délai."
+
+msgid "Qué hay que hacer"
+msgstr "Ce qu'il faut faire"
+
+msgid "Plazo fatal (sin margen)"
+msgstr "Délai fatal (sans marge)"
+
+msgid "Añadir plazo"
+msgstr "Ajouter un délai"
+
+msgid "Sin horas registradas."
+msgstr "Aucune heure enregistrée."
+
+msgid "En qué has empleado el tiempo"
+msgstr "À quoi vous avez consacré ce temps"
+
+msgid "h"
+msgstr "h"
+
+msgid "min"
+msgstr "min"
+
+msgid "Registrar tiempo"
+msgstr "Enregistrer du temps"
+
+msgid "Línea de tiempo"
+msgstr "Chronologie"
+
+msgid "Añadir una nota…"
+msgstr "Ajouter une note…"
+
+msgid "Datos del expediente"
+msgstr "Données du dossier"
+
+msgid "Referencia"
+msgstr "Référence"
+
+msgid "Cambiar responsable"
+msgstr "Changer de responsable"
+
+msgid "Quién más lo ve"
+msgstr "Qui d'autre peut le voir"
+
+msgid "Solo su responsable y quien lo creó."
+msgstr "Uniquement son responsable et son créateur."
+
+msgid "¿Mandar este expediente a la papelera?"
+msgstr "Mettre ce dossier à la corbeille ?"
+
+msgid "Primero necesitas un cliente."
+msgstr "Il vous faut d'abord un client."
+
+msgid "Elige un cliente…"
+msgstr "Choisissez un client…"
+
+msgid "Número de expediente, procedimiento o código interno."
+msgstr "Numéro de dossier, de procédure ou code interne."
+
+msgid "Confidencial: solo lo ven su responsable, quien lo cree y las personas que añadas"
+msgstr "Confidentiel : seuls son responsable, son créateur et les personnes que vous ajoutez peuvent le voir"
+
+msgid "Abrir expediente"
+msgstr "Ouvrir le dossier"
+
+msgid "El trabajo de cada cliente, con sus plazos, horas y documentos."
+msgstr "Le travail de chaque client, avec ses délais, heures et documents."
+
+msgid "Título, referencia o cliente…"
+msgstr "Titre, référence ou client…"
+
+msgid "Solo abiertos"
+msgstr "Ouverts uniquement"
+
+msgid "Abre el primero desde un cliente o con el botón «Nuevo expediente»."
+msgstr "Ouvrez le premier depuis un client ou avec le bouton « Nouveau dossier »."
+
+msgid "%(n)s expediente"
+msgid_plural "%(n)s expedientes"
+msgstr[0] "%(n)s dossier"
+msgstr[1] "%(n)s dossiers"
+
+msgid "Festivos"
+msgstr "Jours fériés"
+
+msgid "Festivos del despacho"
+msgstr "Jours fériés du cabinet"
+
+msgid "Días que no cuentan como hábiles al calcular un plazo, además de los nacionales de ejemplo."
+msgstr "Jours qui ne comptent pas comme ouvrés pour le calcul d'un délai, en plus des jours nationaux d'exemple."
+
+msgid "Año"
+msgstr "Année"
+
+msgid "Ver"
+msgstr "Voir"
+
+msgid "Del despacho"
+msgstr "Du cabinet"
+
+msgid "Sin festivos propios este año (autonómicos, locales, del partido judicial…)."
+msgstr "Aucun jour férié propre cette année (régional, local, du ressort judiciaire…)."
+
+msgid "Nombre del festivo"
+msgstr "Nom du jour férié"
+
+msgid "Añadir festivo"
+msgstr "Ajouter un jour férié"
+
+msgid "Solo los responsables del despacho pueden editarlos."
+msgstr "Seuls les responsables du cabinet peuvent les modifier."
+
+msgid "Nacionales (de ejemplo)"
+msgstr "Nationaux (exemple)"
+
+msgid "Faltan los festivos de tu comunidad autónoma y de tu municipio: añádelos a mano."
+msgstr "Les jours fériés de votre région et de votre commune manquent : ajoutez-les à la main."
+
+msgid "Lo que vence, ordenado por urgencia. Los días hábiles descuentan fines de semana y festivos."
+msgstr "Ce qui arrive à échéance, par urgence. Les jours ouvrés excluent week-ends et jours fériés."
+
+msgid "Festivos de ejemplo: contrástalos"
+msgstr "Jours fériés d'exemple : vérifiez-les"
+
+msgid "Todos los abiertos"
+msgstr "Tous les ouverts"
+
+msgid "Vencidos"
+msgstr "En retard"
+
+msgid "Próximos"
+msgstr "Proches"
+
+msgid "Cumplidos"
+msgstr "Accomplis"
+
+msgid "Solo los míos"
+msgstr "Uniquement les miens"
+
+msgid "Nuevo plazo"
+msgstr "Nouveau délai"
+
+msgid "Sin expediente"
+msgstr "Sans dossier"
+
+msgid "Crear plazo"
+msgstr "Créer le délai"
+
+msgid "Sin plazos aquí"
+msgstr "Aucun délai ici"
+
+msgid "Cuando añadas plazos a un expediente o a un cliente aparecerán en esta lista."
+msgstr "Quand vous ajouterez des délais à un dossier ou à un client, ils apparaîtront dans cette liste."
+
+msgid "Plazo"
+msgstr "Délai"
+
+msgid "Vence"
+msgstr "Échéance"
+
+msgid "Cliente / expediente"
+msgstr "Client / dossier"
+
+msgid "Revisar"
+msgstr "Réviser"
+
+msgid "¿Eliminar este plazo?"
+msgstr "Supprimer ce délai ?"
+
+msgid "Registra en qué empleas el tiempo, por cliente y expediente, y obtén la hoja de horas para facturar."
+msgstr "Enregistrez à quoi vous consacrez votre temps, par client et dossier, et obtenez la feuille d'heures pour facturer."
+
+msgid "Mi tarifa por hora (€)"
+msgstr "Mon tarif horaire (€)"
+
+msgid "Guardar tarifa"
+msgstr "Enregistrer le tarif"
+
+msgid "Se aplica a las horas nuevas."
+msgstr "S'applique aux nouvelles heures."
+
+msgid "Resumir por"
+msgstr "Résumer par"
+
+msgid "Todo el equipo"
+msgstr "Toute l'équipe"
+
+msgid "Sin horas en este periodo"
+msgstr "Aucune heure sur cette période"
+
+msgid "Registra tu primer tiempo con el formulario de arriba."
+msgstr "Enregistrez votre premier temps avec le formulaire ci-dessus."
+
+msgid "Facturables"
+msgstr "Facturables"
+
+msgid "Partes"
+msgstr "Relevés"
+
+msgid "Tiempo"
+msgstr "Durée"
+
+msgid "Marcar como facturado"
+msgstr "Marquer comme facturé"
+
+msgid "No facturable"
+msgstr "Non facturable"
+
+msgid "Facturado"
+msgstr "Facturé"
+
+msgid "¿Eliminar este parte de horas?"
+msgstr "Supprimer cette saisie d'heures ?"
+
+msgid "Marcar los seleccionados como facturados"
+msgstr "Marquer la sélection comme facturée"

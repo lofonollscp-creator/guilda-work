@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip, campo, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error, chip_plazo, selector_equipo %}
+{% block title %}{{ _('Plazos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Plazos') }}</h1><p class="subtitle">{{ _('Lo que vence, ordenado por urgencia. Los días hábiles descuentan fines de semana y festivos.') }} {{ sin_validar(_('Festivos de ejemplo: contrástalos')) }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('plazos.festivos') }}">{{ _('Festivos') }}</a>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Mostrar') }}
+    <select name="estado">
+      {% for id, nombre in (('abiertos', _('Todos los abiertos')), ('vencido', _('Vencidos')), ('hoy', _('Vencen hoy')), ('proximo', _('Próximos')), ('en_plazo', _('En plazo')), ('cumplido', _('Cumplidos'))) %}<option value="{{ id }}" {{ 'selected' if estado == id }}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="checkbox-label"><input type="checkbox" name="mios" value="1" {{ 'checked' if solo_mios }}> {{ _('Solo los míos') }}</label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+<details class="dash-panel ds-plegable ds-mb-16" {{ 'open' if not plazos }}>
+  <summary><strong>+ {{ _('Nuevo plazo') }}</strong></summary>
+  <form method="post" action="{{ url_for('plazos.crear') }}" class="edit-form ds-mt-12">
+    <input type="text" name="titulo" placeholder="{{ _('Qué hay que hacer') }}" required maxlength="200">
+    <input type="date" name="fecha_limite" required value="{{ hoy }}" aria-label="{{ _('Fecha límite') }}">
+    <select name="expediente_id" data-buscable aria-label="{{ _('Expediente') }}"><option value="">{{ _('Sin expediente') }}</option>{% for x in expedientes %}<option value="{{ x.id }}">{{ x.titulo }} — {{ x.cliente_nombre }}</option>{% endfor %}</select>
+    <select name="cliente_id" data-buscable aria-label="{{ _('Cliente') }}"><option value="">{{ _('Sin cliente') }}</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
+    {{ selector_equipo('responsable_id', equipo, g.usuario_id, etiqueta=_('Responsable')) }}
+    <label class="checkbox-label"><input type="checkbox" name="critico" value="1"> {{ _('Plazo fatal (sin margen)') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Crear plazo') }}</button>
+  </form>
+</details>
+
+{% if not plazos %}
+{{ estado_vacio(_('Sin plazos aquí'), _('Cuando añadas plazos a un expediente o a un cliente aparecerán en esta lista.'), 'calendar-clock') }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Plazo') }}</th><th>{{ _('Vence') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Cliente / expediente') }}</th><th>{{ _('Responsable') }}</th><th></th></tr></thead>
+  <tbody>
+  {% for p in plazos %}
+  <tr>
+    <td><strong>{{ p.titulo }}</strong>{% if p.critico %} {{ chip(_('Fatal'), 'peligro') }}{% endif %}{% if p.estado != 'cumplido' %}{% if p.revisado %} {{ chip(_('Revisado'), 'exito') }}{% else %} {{ chip(_('Sin revisar'), 'aviso') }}{% endif %}{% endif %}</td>
+    <td class="mono">{{ p.fecha_limite }}{% if p.dias_habiles_restantes is not none and p.estado != 'cumplido' %}<br><span class="muted">{{ ngettext('%(n)s día hábil', '%(n)s días hábiles', p.dias_habiles_restantes, n=p.dias_habiles_restantes) }}</span>{% endif %}</td>
+    <td>{{ chip_plazo(p.estado_calculado, p.dias_restantes) }}</td>
+    <td>{% if p.cliente_nombre %}<a href="{{ url_for('clientes.ficha', cliente_id=p.cliente_id) }}">{{ p.cliente_nombre }}</a>{% endif %}{% if p.expediente_titulo %}<br><a href="{{ url_for('expedientes.ficha', expediente_id=p.expediente_id) }}">{{ p.expediente_titulo }}</a>{% endif %}</td>
+    <td>{{ p.responsable_nombre or '—' }}</td>
+    <td class="ds-fila">
+      <form method="post" action="{{ url_for('plazos.cumplido', plazo_id=p.id) }}">{% if p.estado == 'cumplido' %}<input type="hidden" name="reabrir" value="1">{% endif %}<button type="submit" class="btn btn-ghost btn-sm">{{ _('Reabrir') if p.estado == 'cumplido' else _('Cumplido') }}</button></form>
+      {% if p.estado != 'cumplido' and not p.revisado and p.creado_por != g.usuario_id %}<form method="post" action="{{ url_for('plazos.revisar', plazo_id=p.id) }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Revisar') }}</button></form>{% endif %}
+      <form method="post" action="{{ url_for('plazos.eliminar', plazo_id=p.id) }}" data-confirmar-envio="{{ _('¿Eliminar este plazo?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button></form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

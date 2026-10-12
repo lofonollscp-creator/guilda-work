@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, seccion %}
+{% from "_nucleo_macros.html" import aviso_error, selector_equipo %}
+{% block title %}{{ _('Nuevo cliente') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Nuevo cliente') }}</h1></div></header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+
+{% if parecidos %}
+<div class="ia-error" role="alert">
+  <strong>{{ _('Ya hay clientes parecidos:') }}</strong>
+  <ul>{% for p in parecidos %}<li><a href="{{ url_for('clientes.ficha', cliente_id=p.id) }}">{{ p.nombre }}</a>{% if p.nif %} · {{ p.nif }}{% endif %}</li>{% endfor %}</ul>
+  <p>{{ _('Si es otro cliente distinto, marca «Crear igualmente» y vuelve a guardar.') }}</p>
+</div>
+{% endif %}
+
+<form class="edit-form ds-max-640" method="post">
+  {% call campo(_('Nombre o razón social'), 'c-nombre', requerido=True) %}<input type="text" id="c-nombre" name="nombre" value="{{ datos.nombre }}" required autofocus maxlength="200">{% endcall %}
+  {% call campo(_('NIF / CIF'), 'c-nif', ayuda=_('Si es un CIF, el cliente se marca como empresa.')) %}<input type="text" id="c-nif" name="nif" value="{{ datos.nif }}" maxlength="30">{% endcall %}
+  {% call campo(_('Tipo'), 'c-tipo') %}
+    <select id="c-tipo" name="tipo"><option value="">{{ _('Detectar por el NIF') }}</option><option value="persona" {{ 'selected' if datos.tipo == 'persona' }}>{{ _('Persona') }}</option><option value="empresa" {{ 'selected' if datos.tipo == 'empresa' }}>{{ _('Empresa') }}</option></select>
+  {% endcall %}
+  {% call campo(_('Email'), 'c-email') %}<input type="email" id="c-email" name="email" value="{{ datos.email }}">{% endcall %}
+  {% call campo(_('Teléfono'), 'c-tel') %}<input type="tel" id="c-tel" name="telefono" value="{{ datos.telefono }}">{% endcall %}
+  {% call campo(_('Idioma con el que prefiere que le escribas'), 'c-idioma') %}
+    <select id="c-idioma" name="idioma"><option value="">{{ _('Sin indicar') }}</option>{% for cod, nombre in (('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')) %}<option value="{{ cod }}" {{ 'selected' if datos.idioma == cod }}>{{ nombre }}</option>{% endfor %}</select>
+  {% endcall %}
+  {% call campo(_('Responsable en el despacho'), 'c-resp') %}{{ selector_equipo('responsable_id', equipo, datos.responsable_id|int if datos.responsable_id else None, _('Sin asignar'), id='c-resp') }}{% endcall %}
+  {% call campo(_('Cómo llegó'), 'c-origen', ayuda=_('Recomendación, web, otro cliente…')) %}<input type="text" id="c-origen" name="origen" value="{{ datos.origen }}" maxlength="100">{% endcall %}
+  {% call campo(_('Etiquetas'), 'c-etq', ayuda=_('Separadas por comas: vip, renta, autónomo.')) %}<input type="text" id="c-etq" name="etiquetas" value="{{ datos.etiquetas }}">{% endcall %}
+  {% call campo(_('Notas'), 'c-notas') %}<textarea id="c-notas" name="notas" rows="4">{{ datos.notas }}</textarea>{% endcall %}
+  {% if parecidos %}<label class="checkbox-label"><input type="checkbox" name="crear_igualmente" value="1"> {{ _('Crear igualmente') }}</label>{% endif %}
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear cliente') }}</button><a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Cancelar') }}</a></div>
+</form>
+{% endblock %}

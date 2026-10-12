@@ -6,7 +6,7 @@ ValueError con un mensaje legible."""
 from __future__ import annotations
 
 from app import db as plataforma
-from app import stripe_pagos
+from app import stripe_pagos, verticales
 
 from . import auth
 
@@ -71,14 +71,19 @@ def sincronizar_plan(plan_id: int) -> str:
     return plan["nombre"]
 
 
-def crear_extra(nombre: str, descripcion: str, precio: str) -> int:
+def crear_extra(nombre: str, descripcion: str, precio: str, vertical_id: str = "") -> int:
     nombre = nombre.strip()
     if not nombre:
         raise ValueError("El nombre del extra es obligatorio.")
-    return plataforma.crear_extra_guilda(nombre, descripcion.strip() or None, euros(precio))
+    centimos = euros(precio)
+    if vertical_id.strip() and vertical_id.strip() not in verticales.VERTICALES:       # se comprueba antes de crear nada
+        raise ValueError("Módulo de negocio desconocido.")
+    extra_id = plataforma.crear_extra_guilda(nombre, descripcion.strip() or None, centimos)
+    verticales.fijar_vertical_de_extra(extra_id, vertical_id)
+    return extra_id
 
 
-def editar_extra(extra_id: int, nombre: str, descripcion: str, precio: str) -> bool:
+def editar_extra(extra_id: int, nombre: str, descripcion: str, precio: str, vertical_id: str | None = None) -> bool:
     extra = plataforma.obtener_extra_guilda(extra_id)
     if extra is None:
         raise ValueError("El extra no existe.")
@@ -86,6 +91,8 @@ def editar_extra(extra_id: int, nombre: str, descripcion: str, precio: str) -> b
         raise ValueError("El nombre del extra es obligatorio.")
     centimos = euros(precio)
     plataforma.editar_extra_guilda(extra_id, nombre.strip(), descripcion.strip() or None, centimos)
+    if vertical_id is not None:
+        verticales.fijar_vertical_de_extra(extra_id, vertical_id)
     if extra["stripe_price_id"] and centimos != extra["precio_centimos"]:
         plataforma.limpiar_stripe_price_id_extra(extra_id)
         return True

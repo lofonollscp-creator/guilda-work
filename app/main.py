@@ -35,7 +35,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
@@ -233,6 +233,11 @@ def _comentario_html(texto, mencionados=()):
 
 
 app.add_template_filter(_comentario_html, "comentario_html")
+from .rutas_nucleo import clientes_bp, expedientes_bp, plazos_bp, tiempo_bp  # noqa: E402
+app.register_blueprint(clientes_bp)
+app.register_blueprint(expedientes_bp)
+app.register_blueprint(plazos_bp)
+app.register_blueprint(tiempo_bp)
 app.register_blueprint(tareas_bp)
 app.register_blueprint(proyectos_bp)
 app.register_blueprint(tiquets_bp)
@@ -463,6 +468,13 @@ def salir_ver_como():
 def inyectar_ayuda_contextual():
     url, especifica = ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])
     return {"ayuda_url": url, "ayuda_especifica": especifica}
+
+
+@app.context_processor
+def inyectar_verticales():
+    """Módulos de negocio activos del despacho (Gestoría, Gabinete de abogados, Inmobiliaria): base.html monta el menú con ellos."""
+    activos = verticales.activos_de(g.get("tenant_id"))
+    return {"verticales_activos": activos, "entradas_verticales": verticales.entradas_de_menu(g.get("tenant_id"))}
 
 
 @app.context_processor

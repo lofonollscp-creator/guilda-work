@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, stripe_pagos
+from . import almacen_documentos, calcom, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, stripe_pagos, verticales
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
@@ -27,6 +27,13 @@ from .vencimientos_fiscales import MODELOS_POR_PAIS, generar_vencimientos_propue
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
 
 fiscal_bp = Blueprint("fiscal", __name__, url_prefix="/fiscal")
+
+
+@fiscal_bp.before_request
+def _solo_con_el_modulo_de_gestoria():
+    """Las pantallas fiscales son del módulo Gestoría: si el despacho no lo tiene activo, no existen (404). Sin despacho no se comprueba (ya lo exigen las rutas)."""
+    if g.get("tenant_id") is not None and not verticales.esta_activo(g.tenant_id, "gestoria"):
+        abort(404)
 
 ESTADOS_VENCIMIENTO = [
     ("pendiente", _l("Pendiente")),
@@ -173,7 +180,7 @@ def ficha_cliente(cliente_id: int):
     return render_template(
         "fiscal_cliente_detalle.html",
         cliente=cliente,
-        expediente=db.listar_documentos_cliente(g.tenant_id, cliente_id),
+        expediente=almacen_documentos.listar_de_cliente_fiscal(g.tenant_id, cliente_id),
         categorias_documento=db.CATEGORIAS_DOCUMENTO, soy_supervisor=db.es_supervisor_tenant(g.usuario_id),
         accesos=db.listar_accesos_cliente(g.tenant_id, cliente_id, 50) if db.es_supervisor_tenant(g.usuario_id) else None,
         acciones_acceso={k: str(v) for k, v in ETIQUETAS_ACCESO.items()},
@@ -199,7 +206,7 @@ def subir_documentos_cliente(cliente_id: int):
         abort(404)
     for archivo in request.files.getlist("archivo")[:10]:
         if archivo and archivo.filename:
-            resultado, _id = db.archivar_documento_cliente(
+            resultado, _id = almacen_documentos.guardar_de_cliente_fiscal(
                 g.usuario_id, cliente_id, archivo.filename, archivo.mimetype, archivo.read(db.MAX_DOCUMENTO_CLIENTE_BYTES + 1),
                 categoria=request.form.get("categoria"),
             )
@@ -215,7 +222,7 @@ _TIPOS_PELIGROSOS = ("text/html", "application/xhtml+xml", "image/svg+xml", "tex
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>")
 @login_required
 def descargar_documento_cliente(cliente_id: int, documento_id: int):
-    documento = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
+    documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
     if documento is None:
         abort(404)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_descargado", documento["nombre_archivo"])
@@ -229,8 +236,8 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>/eliminar", methods=["POST"])
 @login_required
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):
-    previo = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
-    if not db.eliminar_documento_cliente(g.usuario_id, cliente_id, documento_id):
+    previo = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
+    if not almacen_documentos.eliminar_de_cliente_fiscal(g.usuario_id, cliente_id, documento_id):
         abort(404)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", previo["nombre_archivo"] if previo else "")
     return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")

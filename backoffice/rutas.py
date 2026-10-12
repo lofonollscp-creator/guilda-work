@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
 from app import db as plataforma
-from app import comunicados, herramientas, ia_consumo, onboarding_despacho
+from app import comunicados, herramientas, ia_consumo, onboarding_despacho, verticales
 
 from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas, seguimiento
 
@@ -248,6 +248,8 @@ def tenant(tenant_id: int):
     extra = {}
     if seccion == "resumen":
         extra = {"puesta": onboarding_despacho.resumen(tenant_id), "ia": ia_consumo.estado(tenant_id), "ia_historial": ia_consumo.historial(tenant_id)}
+    if seccion == "modulos":
+        extra = {"verticales": verticales.estado_para_backoffice(tenant_id)}
     if seccion == "suscripcion":
         facturas, error_facturas = facturacion.facturas(tenant_id) if facturacion.configurado() else ([], None)
         extra = {
@@ -375,6 +377,26 @@ def alternar_modulo(tenant_id: int, modulo_id: str):
         abort(400, str(e))
     auth.auditar("tenant.modulo", f"tenant {tenant_id}: {modulo_id} {'activado' if activo else 'oculto'}")
     return _volver_a_tenant(tenant_id, request.form.get("seccion") if request.form.get("seccion") in SECCIONES_TENANT else "modulos")
+
+
+@bp.route("/tenants/<int:tenant_id>/verticales/<vertical_id>", methods=["POST"])
+@auth.login_required
+def alternar_vertical(tenant_id: int, vertical_id: str):
+    """Activa o desactiva a mano un módulo de negocio (Gestoría, Gabinete de abogados, Inmobiliaria) para un despacho; «auto» vuelve a lo que le toque por defecto o por sus extras."""
+    _tenant_o_404(tenant_id)
+    accion = request.form.get("accion", "alternar")
+    try:
+        if accion == "auto":
+            verticales.quitar_ajuste_manual(tenant_id, vertical_id)
+            texto = "ajuste manual quitado"
+        else:
+            activo = not next((e["activo"] for e in verticales.estado_para_backoffice(tenant_id) if e["id"] == vertical_id), False)
+            verticales.fijar_activo(tenant_id, vertical_id, activo)
+            texto = "activado" if activo else "desactivado"
+    except ValueError as e:
+        abort(400, str(e))
+    auth.auditar("tenant.vertical", f"tenant {tenant_id}: {vertical_id} {texto}")
+    return _volver_a_tenant(tenant_id, "modulos")
 
 
 @bp.route("/tenants/<int:tenant_id>/geolocalizacion", methods=["POST"])
@@ -519,7 +541,7 @@ def actualizar_cobro(tenant_id: int, cobro_id: int):
 def planes():
     return render_template(
         "planes.html", planes=plataforma.listar_planes_guilda(), extras=plataforma.listar_extras_guilda(),
-        stripe_configurado=facturacion.configurado(),
+        stripe_configurado=facturacion.configurado(), verticales=verticales.opciones_para_backoffice(),
     )
 
 
@@ -562,14 +584,14 @@ def sincronizar_plan(plan_id: int):
 @auth.login_required
 def crear_extra():
     return _accion_catalogo("extra.crear", facturacion.crear_extra, request.form.get("nombre", ""), request.form.get("descripcion", ""),
-                            request.form.get("precio", ""), mensaje_ok="Extra creado.")
+                            request.form.get("precio", ""), request.form.get("vertical_id", ""), mensaje_ok="Extra creado.")
 
 
 @bp.route("/extras/<int:extra_id>/editar", methods=["POST"])
 @auth.login_required
 def editar_extra(extra_id: int):
     return _accion_catalogo("extra.editar", facturacion.editar_extra, extra_id, request.form.get("nombre", ""), request.form.get("descripcion", ""),
-                            request.form.get("precio", ""), mensaje_ok="Extra actualizado.")
+                            request.form.get("precio", ""), request.form.get("vertical_id", ""), mensaje_ok="Extra actualizado.")
 
 
 @bp.route("/extras/<int:extra_id>/sincronizar", methods=["POST"])

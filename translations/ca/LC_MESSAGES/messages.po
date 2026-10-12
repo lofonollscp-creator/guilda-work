@@ -7905,3 +7905,483 @@ msgstr "Aquest trimestre"
 
 msgid "Este año"
 msgstr "Enguany"
+
+msgid "Elige el cliente con el que quedarte."
+msgstr "Tria el client amb qui et vols quedar."
+
+msgid "Elige un archivo."
+msgstr "Tria un fitxer."
+
+msgid "Archivo vacío."
+msgstr "Fitxer buit."
+
+msgid "Archivo demasiado grande."
+msgstr "Fitxer massa gran."
+
+msgid "Demasiados documentos."
+msgstr "Massa documents."
+
+msgid "Cliente no encontrado."
+msgstr "Client no trobat."
+
+msgid "Expediente no encontrado."
+msgstr "Expedient no trobat."
+
+msgid "No se pudo guardar."
+msgstr "No s'ha pogut desar."
+
+msgid "El tiempo no es válido."
+msgstr "El temps no és vàlid."
+
+msgid "La tarifa no es válida."
+msgstr "La tarifa no és vàlida."
+
+msgid "Facturable"
+msgstr "Facturable"
+
+msgid "Sí"
+msgstr "Sí"
+
+msgid "Hoja de horas"
+msgstr "Full d'hores"
+
+msgid "inicio"
+msgstr "inici"
+
+msgid "En espera"
+msgstr "En espera"
+
+msgid "Gestoría"
+msgstr "Gestoria"
+
+msgid "Calendario fiscal, clientes fiscales, vencimientos, recordatorios y portal de cliente."
+msgstr "Calendari fiscal, clients fiscals, venciments, recordatoris i portal de client."
+
+msgid "Gabinete de abogados"
+msgstr "Gabinet d'advocats"
+
+msgid "Expedientes judiciales y extrajudiciales, plazos procesales, minutas y provisión de fondos."
+msgstr "Expedients judicials i extrajudicials, terminis processals, minutes i provisió de fons."
+
+msgid "Inmobiliaria"
+msgstr "Immobiliària"
+
+msgid "Inmuebles, captación, demandas, visitas, contratos y comisiones."
+msgstr "Immobles, captació, demandes, visites, contractes i comissions."
+
+msgid "Cumplido"
+msgstr "Complert"
+
+msgid "Vence hoy"
+msgstr "Venç avui"
+
+msgid "Próximo"
+msgstr "Proper"
+
+msgid "En plazo"
+msgstr "Dins de termini"
+
+msgid "Expedientes"
+msgstr "Expedients"
+
+msgid "Plazos"
+msgstr "Terminis"
+
+msgid "Expandir Clientes"
+msgstr "Desplega Clients"
+
+msgid "En la papelera"
+msgstr "A la paperera"
+
+msgid "Nuevo expediente"
+msgstr "Nou expedient"
+
+msgid "Ficha fiscal"
+msgstr "Fitxa fiscal"
+
+msgid "NIF / CIF"
+msgstr "NIF / CIF"
+
+msgid "Dirección"
+msgstr "Adreça"
+
+msgid "Idioma de comunicación"
+msgstr "Idioma de comunicació"
+
+msgid "Sin indicar"
+msgstr "Sense indicar"
+
+msgid "Cómo llegó"
+msgstr "Com va arribar"
+
+msgid "Etiquetas"
+msgstr "Etiquetes"
+
+msgid "Separadas por comas."
+msgstr "Separades per comes."
+
+msgid "¿Mandar este cliente a la papelera?"
+msgstr "Vols enviar aquest client a la paperera?"
+
+msgid "Mandar a la papelera"
+msgstr "Envia a la paperera"
+
+msgid "Principal"
+msgstr "Principal"
+
+msgid "¿Quitar este contacto?"
+msgstr "Vols treure aquest contacte?"
+
+msgid "Sin personas de contacto todavía."
+msgstr "Encara no hi ha persones de contacte."
+
+msgid "Rol (administrador, contable…)"
+msgstr "Rol (administrador, comptable…)"
+
+msgid "Contacto principal"
+msgstr "Contacte principal"
+
+msgid "Añadir contacto"
+msgstr "Afegeix contacte"
+
+msgid "Próximo plazo"
+msgstr "Proper termini"
+
+msgid "Sin expedientes"
+msgstr "Sense expedients"
+
+msgid "Abre uno para llevar el trabajo de este cliente con sus plazos, horas y documentos."
+msgstr "Obre'n un per portar la feina d'aquest client amb els seus terminis, hores i documents."
+
+msgid "Plazos abiertos"
+msgstr "Terminis oberts"
+
+msgid "Cifrado"
+msgstr "Xifrat"
+
+msgid "¿Eliminar este documento?"
+msgstr "Vols eliminar aquest document?"
+
+msgid "Sin documentos."
+msgstr "Sense documents."
+
+msgid "Los documentos de gestoría (modelos, justificantes) están en la ficha fiscal."
+msgstr "Els documents de gestoria (models, justificants) són a la fitxa fiscal."
+
+msgid "Últimas horas"
+msgstr "Últimes hores"
+
+msgid "Fusionar con otro cliente"
+msgstr "Fusiona amb un altre client"
+
+msgid "Si este cliente está repetido, pasa sus expedientes, plazos, horas y contactos al que elijas. Este se queda en la papelera."
+msgstr "Si aquest client està repetit, passa els seus expedients, terminis, hores i contactes al que triïs. Aquest es queda a la paperera."
+
+msgid "¿Fusionar este cliente con el elegido?"
+msgstr "Vols fusionar aquest client amb l'escollit?"
+
+msgid "Elige el cliente que se queda…"
+msgstr "Tria el client que es queda…"
+
+msgid "Fusionar"
+msgstr "Fusiona"
+
+msgid "Nuevo cliente"
+msgstr "Nou client"
+
+msgid "Ya hay clientes parecidos:"
+msgstr "Ja hi ha clients semblants:"
+
+msgid "Si es otro cliente distinto, marca «Crear igualmente» y vuelve a guardar."
+msgstr "Si és un altre client diferent, marca «Crea igualment» i torna a desar."
+
+msgid "Si es un CIF, el cliente se marca como empresa."
+msgstr "Si és un CIF, el client es marca com a empresa."
+
+msgid "Detectar por el NIF"
+msgstr "Detecta pel NIF"
+
+msgid "Idioma con el que prefiere que le escribas"
+msgstr "Idioma amb què prefereix que li escriguis"
+
+msgid "Responsable en el despacho"
+msgstr "Responsable al despatx"
+
+msgid "Recomendación, web, otro cliente…"
+msgstr "Recomanació, web, un altre client…"
+
+msgid "Separadas por comas: vip, renta, autónomo."
+msgstr "Separades per comes: vip, renda, autònom."
+
+msgid "Crear igualmente"
+msgstr "Crea igualment"
+
+msgid "Crear cliente"
+msgstr "Crea el client"
+
+msgid "Todas las personas y empresas para las que trabajas, con sus contactos, expedientes y documentos."
+msgstr "Totes les persones i empreses per a les quals treballes, amb els seus contactes, expedients i documents."
+
+msgid "Nombre, NIF, email, teléfono o contacto…"
+msgstr "Nom, NIF, correu, telèfon o contacte…"
+
+msgid "Etiqueta"
+msgstr "Etiqueta"
+
+msgid "Ningún cliente coincide"
+msgstr "Cap client coincideix"
+
+msgid "Prueba con otra búsqueda o quita algún filtro."
+msgstr "Prova una altra cerca o treu algun filtre."
+
+msgid "Todavía no hay clientes"
+msgstr "Encara no hi ha clients"
+
+msgid "Crea el primero para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Crea el primer per començar a obrir expedients, registrar hores i desar-ne els documents."
+
+msgid "%(n)s cliente"
+msgid_plural "%(n)s clientes"
+msgstr[0] "%(n)s client"
+msgstr[1] "%(n)s clients"
+
+msgid "Contacto"
+msgstr "Contacte"
+
+msgid "Expedientes abiertos"
+msgstr "Expedients oberts"
+
+msgid "Confidencial"
+msgstr "Confidencial"
+
+msgid "%(n)s día hábil"
+msgid_plural "%(n)s días hábiles"
+msgstr[0] "%(n)s dia hàbil"
+msgstr[1] "%(n)s dies hàbils"
+
+msgid "Fatal"
+msgstr "Fatal"
+
+msgid "Revisado"
+msgstr "Revisat"
+
+msgid "Marcar revisado"
+msgstr "Marca com a revisat"
+
+msgid "Sin plazos."
+msgstr "Sense terminis."
+
+msgid "Qué hay que hacer"
+msgstr "Què cal fer"
+
+msgid "Plazo fatal (sin margen)"
+msgstr "Termini fatal (sense marge)"
+
+msgid "Añadir plazo"
+msgstr "Afegeix termini"
+
+msgid "Sin horas registradas."
+msgstr "Sense hores registrades."
+
+msgid "En qué has empleado el tiempo"
+msgstr "En què has dedicat el temps"
+
+msgid "h"
+msgstr "h"
+
+msgid "min"
+msgstr "min"
+
+msgid "Registrar tiempo"
+msgstr "Registra temps"
+
+msgid "Línea de tiempo"
+msgstr "Línia de temps"
+
+msgid "Añadir una nota…"
+msgstr "Afegeix una nota…"
+
+msgid "Datos del expediente"
+msgstr "Dades de l'expedient"
+
+msgid "Referencia"
+msgstr "Referència"
+
+msgid "Cambiar responsable"
+msgstr "Canvia el responsable"
+
+msgid "Quién más lo ve"
+msgstr "Qui més ho veu"
+
+msgid "Solo su responsable y quien lo creó."
+msgstr "Només el seu responsable i qui el va crear."
+
+msgid "¿Mandar este expediente a la papelera?"
+msgstr "Vols enviar aquest expedient a la paperera?"
+
+msgid "Primero necesitas un cliente."
+msgstr "Primer necessites un client."
+
+msgid "Elige un cliente…"
+msgstr "Tria un client…"
+
+msgid "Número de expediente, procedimiento o código interno."
+msgstr "Número d'expedient, procediment o codi intern."
+
+msgid "Confidencial: solo lo ven su responsable, quien lo cree y las personas que añadas"
+msgstr "Confidencial: només el veuen el seu responsable, qui el crea i les persones que afegeixis"
+
+msgid "Abrir expediente"
+msgstr "Obre l'expedient"
+
+msgid "El trabajo de cada cliente, con sus plazos, horas y documentos."
+msgstr "La feina de cada client, amb els seus terminis, hores i documents."
+
+msgid "Título, referencia o cliente…"
+msgstr "Títol, referència o client…"
+
+msgid "Solo abiertos"
+msgstr "Només oberts"
+
+msgid "Abre el primero desde un cliente o con el botón «Nuevo expediente»."
+msgstr "Obre el primer des d'un client o amb el botó «Nou expedient»."
+
+msgid "%(n)s expediente"
+msgid_plural "%(n)s expedientes"
+msgstr[0] "%(n)s expedient"
+msgstr[1] "%(n)s expedients"
+
+msgid "Festivos"
+msgstr "Festius"
+
+msgid "Festivos del despacho"
+msgstr "Festius del despatx"
+
+msgid "Días que no cuentan como hábiles al calcular un plazo, además de los nacionales de ejemplo."
+msgstr "Dies que no compten com a hàbils en calcular un termini, a més dels nacionals d'exemple."
+
+msgid "Año"
+msgstr "Any"
+
+msgid "Ver"
+msgstr "Veure"
+
+msgid "Del despacho"
+msgstr "Del despatx"
+
+msgid "Sin festivos propios este año (autonómicos, locales, del partido judicial…)."
+msgstr "Sense festius propis aquest any (autonòmics, locals, del partit judicial…)."
+
+msgid "Nombre del festivo"
+msgstr "Nom del festiu"
+
+msgid "Añadir festivo"
+msgstr "Afegeix festiu"
+
+msgid "Solo los responsables del despacho pueden editarlos."
+msgstr "Només els responsables del despatx els poden editar."
+
+msgid "Nacionales (de ejemplo)"
+msgstr "Nacionals (d'exemple)"
+
+msgid "Faltan los festivos de tu comunidad autónoma y de tu municipio: añádelos a mano."
+msgstr "Falten els festius de la teva comunitat autònoma i del teu municipi: afegeix-los a mà."
+
+msgid "Lo que vence, ordenado por urgencia. Los días hábiles descuentan fines de semana y festivos."
+msgstr "El que venç, ordenat per urgència. Els dies hàbils descompten caps de setmana i festius."
+
+msgid "Festivos de ejemplo: contrástalos"
+msgstr "Festius d'exemple: contrasta'ls"
+
+msgid "Todos los abiertos"
+msgstr "Tots els oberts"
+
+msgid "Vencidos"
+msgstr "Vençuts"
+
+msgid "Próximos"
+msgstr "Propers"
+
+msgid "Cumplidos"
+msgstr "Complerts"
+
+msgid "Solo los míos"
+msgstr "Només els meus"
+
+msgid "Nuevo plazo"
+msgstr "Nou termini"
+
+msgid "Sin expediente"
+msgstr "Sense expedient"
+
+msgid "Crear plazo"
+msgstr "Crea el termini"
+
+msgid "Sin plazos aquí"
+msgstr "Cap termini aquí"
+
+msgid "Cuando añadas plazos a un expediente o a un cliente aparecerán en esta lista."
+msgstr "Quan afegeixis terminis a un expedient o a un client apareixeran en aquesta llista."
+
+msgid "Plazo"
+msgstr "Termini"
+
+msgid "Vence"
+msgstr "Venç"
+
+msgid "Cliente / expediente"
+msgstr "Client / expedient"
+
+msgid "Revisar"
+msgstr "Revisar"
+
+msgid "¿Eliminar este plazo?"
+msgstr "Vols eliminar aquest termini?"
+
+msgid "Registra en qué empleas el tiempo, por cliente y expediente, y obtén la hoja de horas para facturar."
+msgstr "Registra en què dediques el temps, per client i expedient, i obtén el full d'hores per facturar."
+
+msgid "Mi tarifa por hora (€)"
+msgstr "La meva tarifa per hora (€)"
+
+msgid "Guardar tarifa"
+msgstr "Desa la tarifa"
+
+msgid "Se aplica a las horas nuevas."
+msgstr "S'aplica a les hores noves."
+
+msgid "Resumir por"
+msgstr "Resumeix per"
+
+msgid "Todo el equipo"
+msgstr "Tot l'equip"
+
+msgid "Sin horas en este periodo"
+msgstr "Sense hores en aquest període"
+
+msgid "Registra tu primer tiempo con el formulario de arriba."
+msgstr "Registra el teu primer temps amb el formulari de dalt."
+
+msgid "Facturables"
+msgstr "Facturables"
+
+msgid "Partes"
+msgstr "Parts"
+
+msgid "Tiempo"
+msgstr "Temps"
+
+msgid "Marcar como facturado"
+msgstr "Marca com a facturat"
+
+msgid "No facturable"
+msgstr "No facturable"
+
+msgid "Facturado"
+msgstr "Facturat"
+
+msgid "¿Eliminar este parte de horas?"
+msgstr "Vols eliminar aquest part d'hores?"
+
+msgid "Marcar los seleccionados como facturados"
+msgstr "Marca els seleccionats com a facturats"

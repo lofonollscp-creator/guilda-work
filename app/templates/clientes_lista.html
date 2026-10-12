@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Clientes') }}</h1>
+    <p class="subtitle">{{ _('Todas las personas y empresas para las que trabajas, con sus contactos, expedientes y documentos.') }}</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('clientes.nuevo') }}">+ {{ _('Nuevo cliente') }}</a>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+
+<form class="filters" method="get">
+  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Nombre, NIF, email, teléfono o contacto…') }}"></label>
+  <label>{{ _('Tipo') }}
+    <select name="tipo"><option value="">{{ _('Todos') }}</option><option value="persona" {{ 'selected' if tipo == 'persona' }}>{{ _('Persona') }}</option><option value="empresa" {{ 'selected' if tipo == 'empresa' }}>{{ _('Empresa') }}</option></select>
+  </label>
+  {% if etiquetas %}
+  <label>{{ _('Etiqueta') }}
+    <select name="etiqueta"><option value="">{{ _('Todas') }}</option>{% for e in etiquetas %}<option value="{{ e.etiqueta }}" {{ 'selected' if etiqueta == e.etiqueta }}>{{ e.etiqueta }} ({{ e.n }})</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+  {% if q or tipo or etiqueta %}<a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Limpiar') }}</a>{% endif %}
+</form>
+
+{% if not clientes %}
+  {% if q or tipo or etiqueta %}
+  {{ estado_vacio(_('Ningún cliente coincide'), _('Prueba con otra búsqueda o quita algún filtro.'), 'search') }}
+  {% else %}
+  {{ estado_vacio(_('Todavía no hay clientes'), _('Crea el primero para empezar a abrir expedientes, registrar horas y guardar sus documentos.'), 'users', _('Nuevo cliente'), url_for('clientes.nuevo')) }}
+  {% endif %}
+{% else %}
+<p class="muted">{{ ngettext('%(n)s cliente', '%(n)s clientes', total, n=total) }}</p>
+<div class="table-wrap">
+<table class="historial-table">
+  <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Contacto') }}</th><th>{{ _('Etiquetas') }}</th><th>{{ _('Expedientes abiertos') }}</th></tr></thead>
+  <tbody>
+    {% for c in clientes %}
+    <tr>
+      <td><a href="{{ url_for('clientes.ficha', cliente_id=c.id) }}"><strong>{{ c.nombre }}</strong></a> {{ chip(_('Empresa') if c.tipo == 'empresa' else _('Persona')) }}</td>
+      <td class="mono">{{ c.nif or '—' }}</td>
+      <td>{{ c.email or c.telefono or '—' }}</td>
+      <td>{% for e in (c.etiquetas or '').split(',') if e %}<a href="{{ url_for('clientes.lista', etiqueta=e) }}">{{ chip(e) }}</a> {% endfor %}</td>
+      <td>{{ c.expedientes_abiertos or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if paginas > 1 %}
+<div class="paginacion ds-fila ds-mt-16">
+  {% if pagina > 1 %}<a class="btn btn-ghost" href="{{ url_for('clientes.lista', q=q or None, tipo=tipo or None, etiqueta=etiqueta or None, pagina=pagina - 1) }}">‹ {{ _('Anterior') }}</a>{% endif %}
+  <span class="muted">{{ pagina }} / {{ paginas }}</span>
+  {% if pagina < paginas %}<a class="btn btn-ghost" href="{{ url_for('clientes.lista', q=q or None, tipo=tipo or None, etiqueta=etiqueta or None, pagina=pagina + 1) }}">{{ _('Siguiente') }} ›</a>{% endif %}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

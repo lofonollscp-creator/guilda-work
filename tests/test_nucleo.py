@@ -318,3 +318,32 @@ def test_tipos_de_expediente_segun_los_verticales_activos(usuario_id):
     assert list(verticales.tipos_expediente(t)) == ["general"]
     assert verticales.tipo_de("tipo_retirado") is verticales.TIPO_GENERAL
     assert [e.id for e in verticales.TIPO_GENERAL.estados] == ["abierto", "en_curso", "en_espera", "cerrado"] and verticales.TIPO_GENERAL.inicial == "abierto"
+
+
+# --- backoffice: módulos de negocio -------------------------------------------------------------------------------------------------------------
+def test_el_backoffice_activa_y_desactiva_modulos_de_negocio_y_vincula_extras(tmp_path, monkeypatch):
+    from backoffice import auth
+    from backoffice.main import create_app
+    from tests.test_backoffice_app import CLAVE, entrar, post
+
+    monkeypatch.setattr(auth, "DB_PATH", tmp_path / "backoffice.db")
+    monkeypatch.setattr(auth, "SECRET_PATH", tmp_path / "bo_secret.key")
+    auth.crear_admin("jorge", CLAVE, "Jorge")
+    bo = create_app(testing=True).test_client()
+    entrar(bo)
+    t = db.crear_tenant("Despacho BO")
+    html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
+    assert "Módulos de negocio" in html and "Gestoría" in html and "Incluido por defecto" in html and "/verticales/inmobiliaria" not in html and "/verticales/abogados" not in html
+    post(bo, f"/tenants/{t}/verticales/gestoria")
+    assert verticales.activos_de(t, usar_cache=False) == set() and "Ajuste manual" in bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
+    post(bo, f"/tenants/{t}/verticales/gestoria", accion="auto")
+    assert verticales.activos_de(t, usar_cache=False) == {"gestoria"}
+    assert post(bo, f"/tenants/{t}/verticales/astrologia").status_code == 400
+    # un extra de pago vinculado a un módulo
+    post(bo, "/extras", nombre="Pack abogados", descripcion="x", precio="49", vertical_id="abogados")
+    extra = next(e for e in db.listar_extras_guilda() if e["nombre"] == "Pack abogados")
+    assert extra["vertical_id"] == "abogados"
+    post(bo, f"/extras/{extra['id']}/editar", nombre="Pack abogados", descripcion="x", precio="49", vertical_id="")
+    assert db.obtener_extra_guilda(extra["id"])["vertical_id"] is None
+    post(bo, "/extras", nombre="Malo", descripcion="", precio="1", vertical_id="astrologia")
+    assert not any(e["nombre"] == "Malo" for e in db.listar_extras_guilda())

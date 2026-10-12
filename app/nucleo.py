@@ -157,6 +157,8 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes_tiempo(cliente_id);
 def crear_esquema(conn) -> None:
     """Tablas del núcleo y sus enlaces con lo que ya existía. Se llama al final de `db.init_db()`; es idempotente."""
     conn.executescript(ESQUEMA)
+    from . import almacen_documentos
+    conn.executescript(almacen_documentos.ESQUEMA)
     db._asegurar_columna(conn, "clientes_fiscales", "cliente_id", "INTEGER REFERENCES clientes(id)")
     db._asegurar_columna(conn, "extras_guilda", "vertical_id", "TEXT")           # qué módulo de negocio activa este extra (app/verticales.py)
     db._asegurar_columna(conn, "usuarios", "tarifa_hora_centimos", "INTEGER")    # tarifa por defecto de sus partes de horas
@@ -206,6 +208,16 @@ def _de_tenant(conn, tabla: str, fila_id, tenant_id: int, mensaje: str):
 def _usuario_de_tenant(conn, usuario_id, tenant_id: int, campo: str = "La persona") -> None:
     if usuario_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone() is None:
         raise ValueError(f"{campo} no pertenece a este despacho.")
+
+
+def equipo(tenant_id: int) -> list:
+    """Personas del despacho (id, nombre) para los selectores de responsable."""
+    conn = db.get_connection()
+    try:
+        return conn.execute("SELECT u.id, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre FROM usuarios u LEFT JOIN usuario_perfil p ON p.usuario_id = u.id "
+                            "WHERE u.tenant_id = ? ORDER BY lower(nombre)", (tenant_id,)).fetchall()
+    finally:
+        conn.close()
 
 
 # --- Clientes ---------------------------------------------------------------------------------------------------------------------------------
@@ -947,6 +959,15 @@ def fijar_tarifa_usuario(tenant_id: int, usuario_id: int, tarifa_hora_centimos: 
         conn.close()
 
 
+def tarifa_de(usuario_id: int) -> int | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT tarifa_hora_centimos FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        return f["tarifa_hora_centimos"] if f else None
+    finally:
+        conn.close()
+
+
 def registrar_parte(tenant_id: int, usuario_id: int, descripcion: str, *, minutos: float | None = None, segundos: int | None = None, fecha: str | None = None,
                     cliente_id: int | None = None, expediente_id: int | None = None, tarea_id: int | None = None, facturable: bool = True,
                     tarifa_hora_centimos: int | None = None, supervisor: bool = False) -> int:
@@ -989,8 +1010,8 @@ def _filtro_partes(tenant_id: int, usuario_id: int, ver_todo: bool, supervisor: 
     p: list = [tenant_id, *p_vis]
     if not ver_todo:
         donde.append("t.usuario_id = ?"); p.append(usuario_id)
-    elif f.get("usuario_id"):
-        donde.append("t.usuario_id = ?"); p.append(f["usuario_id"])
+    elif f.get("persona_id"):
+        donde.append("t.usuario_id = ?"); p.append(f["persona_id"])
     for col in ("cliente_id", "expediente_id"):
         if f.get(col):
             donde.append(f"t.{col} = ?"); p.append(f[col])
@@ -1076,6 +1097,8 @@ def eliminar_parte(tenant_id: int, usuario_id: int, parte_id: int, supervisor: b
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     """Borra todo lo del núcleo de un despacho (lo llama `db.borrar_tenant`, dentro de su transacción)."""
+    from . import almacen_documentos
+    almacen_documentos.borrar_datos_de_tenant(conn, tenant_id)
     for tabla in ("partes_tiempo", "plazos", "festivos"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM expediente_eventos WHERE expediente_id IN (SELECT id FROM expedientes WHERE tenant_id = ?)", (tenant_id,))

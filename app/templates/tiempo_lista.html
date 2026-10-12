@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip, boton %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Horas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Horas') }}</h1><p class="subtitle">{{ _('Registra en qué empleas el tiempo, por cliente y expediente, y obtén la hoja de horas para facturar.') }}</p></div>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('tiempo.hoja_pdf', desde=desde or None, hasta=hasta or None, equipo=1 if ver_todo else None, cliente_id=filtros.cliente_id) }}">PDF</a>
+    <a class="btn btn-ghost" href="{{ url_for('tiempo.hoja_csv', desde=desde or None, hasta=hasta or None, equipo=1 if ver_todo else None, cliente_id=filtros.cliente_id) }}">CSV</a>
+  </div>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+
+<section class="dash-panel ds-mb-16">
+  <h2>{{ _('Registrar tiempo') }}</h2>
+  <form method="post" action="{{ url_for('tiempo.registrar') }}" class="edit-form">
+    <input type="text" name="descripcion" placeholder="{{ _('En qué has empleado el tiempo') }}" required maxlength="500">
+    <div class="ds-fila"><input type="number" name="horas" min="0" max="24" step="1" placeholder="{{ _('h') }}" class="ds-ancho-5em" aria-label="{{ _('Horas') }}"><input type="number" name="minutos" min="0" max="59" step="1" placeholder="{{ _('min') }}" class="ds-ancho-5em" aria-label="{{ _('Minutos') }}"><input type="date" name="fecha" value="{{ hoy }}" aria-label="{{ _('Fecha') }}"></div>
+    <select name="cliente_id" data-buscable aria-label="{{ _('Cliente') }}"><option value="">{{ _('Sin cliente') }}</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
+    <select name="expediente_id" data-buscable aria-label="{{ _('Expediente') }}"><option value="">{{ _('Sin expediente') }}</option>{% for x in expedientes %}<option value="{{ x.id }}">{{ x.titulo }} — {{ x.cliente_nombre }}</option>{% endfor %}</select>
+    <label class="checkbox-label"><input type="checkbox" name="facturable" value="1" checked> {{ _('Facturable') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Registrar') }}</button>
+  </form>
+  <form method="post" action="{{ url_for('tiempo.tarifa') }}" class="ds-fila ds-mt-12">
+    <label>{{ _('Mi tarifa por hora (€)') }} <input type="text" inputmode="decimal" name="tarifa" value="{{ '%.2f'|format(tarifa / 100) if tarifa else '' }}" class="ds-ancho-5em"></label>
+    <button type="submit" class="btn btn-ghost btn-sm">{{ _('Guardar tarifa') }}</button>
+    <span class="muted">{{ _('Se aplica a las horas nuevas.') }}</span>
+  </form>
+</section>
+
+<form class="filters" method="get">
+  <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ desde }}"></label>
+  <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hasta }}"></label>
+  <label>{{ _('Cliente') }}<select name="cliente_id" data-buscable><option value="">{{ _('Todos') }}</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+  <label>{{ _('Resumir por') }}<select name="agrupar">{% for id, n in (('cliente', _('Cliente')), ('expediente', _('Expediente')), ('usuario', _('Persona'))) %}<option value="{{ id }}" {{ 'selected' if agrupar == id }}>{{ n }}</option>{% endfor %}</select></label>
+  {% if es_supervisor %}<label class="checkbox-label"><input type="checkbox" name="equipo" value="1" {{ 'checked' if ver_todo }}> {{ _('Todo el equipo') }}</label>{% endif %}
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+{% if not partes %}
+{{ estado_vacio(_('Sin horas en este periodo'), _('Registra tu primer tiempo con el formulario de arriba.'), 'clock') }}
+{% else %}
+<div class="dash-grid">
+<section class="dash-panel">
+  <h2>{{ _('Resumen') }} — {{ total_segundos|horas_hm }}{% if total_importe %} · {{ total_importe|importe }}{% endif %}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Persona') if agrupar == 'usuario' else (_('Expediente') if agrupar == 'expediente' else _('Cliente')) }}</th><th>{{ _('Horas') }}</th><th>{{ _('Facturables') }}</th><th>{{ _('Importe') }}</th></tr></thead>
+    <tbody>{% for r in resumen %}<tr><td>{{ r.nombre }}</td><td>{{ r.segundos|horas_hm }}</td><td>{{ r.segundos_facturables|horas_hm }}</td><td>{{ r.importe_centimos|importe if r.importe_centimos else '—' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+</div>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Partes') }}</h2>
+  <form method="post" action="{{ url_for('tiempo.facturar') }}">
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr>{% if es_supervisor and ver_todo %}<th></th>{% endif %}<th>{{ _('Fecha') }}</th><th>{{ _('Persona') }}</th><th>{{ _('Descripción') }}</th><th>{{ _('Cliente / expediente') }}</th><th>{{ _('Tiempo') }}</th><th>{{ _('Importe') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for p in partes %}
+    <tr>
+      {% if es_supervisor and ver_todo %}<td>{% if p.facturable and not p.facturado_en %}<input type="checkbox" name="parte_id" value="{{ p.id }}" aria-label="{{ _('Marcar como facturado') }}">{% endif %}</td>{% endif %}
+      <td class="mono">{{ p.fecha }}</td><td>{{ p.usuario_nombre }}</td><td>{{ p.descripcion }}</td>
+      <td>{% if p.cliente_nombre %}<a href="{{ url_for('clientes.ficha', cliente_id=p.cliente_id) }}">{{ p.cliente_nombre }}</a>{% endif %}{% if p.expediente_titulo %}<br><a href="{{ url_for('expedientes.ficha', expediente_id=p.expediente_id) }}">{{ p.expediente_titulo }}</a>{% endif %}</td>
+      <td>{{ p.segundos|horas_hm }}{% if not p.facturable %} {{ chip(_('No facturable')) }}{% endif %}</td>
+      <td>{{ p.importe_centimos|importe if p.importe_centimos else '—' }}{% if p.facturado_en %} {{ chip(_('Facturado'), 'exito') }}{% endif %}</td>
+      <td>{% if not p.facturado_en %}<button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}" formaction="{{ url_for('tiempo.eliminar', parte_id=p.id) }}" formnovalidate data-confirmar-clic="{{ _('¿Eliminar este parte de horas?') }}" data-confirmar-peligro>×</button>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if es_supervisor and ver_todo %}<button type="submit" class="btn btn-ghost ds-mt-12">{{ _('Marcar los seleccionados como facturados') }}</button>{% endif %}
+  </form>
+</section>
+{% endif %}
+{% endblock %}

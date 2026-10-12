@@ -176,6 +176,34 @@ def quitar_ajuste_manual(tenant_id: int, vertical_id: str) -> None:
     invalidar(tenant_id)
 
 
+def fijar_vertical_de_extra(extra_id: int, vertical_id: str | None) -> None:
+    """Qué módulo de negocio activa un extra de pago (None = ninguno: es un extra de otra cosa). Quien tenga ese extra activo tiene el módulo."""
+    vertical_id = (vertical_id or "").strip() or None
+    if vertical_id is not None and vertical_id not in VERTICALES:
+        raise ValueError("Módulo de negocio desconocido.")
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE extras_guilda SET vertical_id = ? WHERE id = ?", (vertical_id, extra_id))
+        conn.commit()
+    finally:
+        conn.close()
+    invalidar()
+
+
+def _es(texto) -> str:
+    """El texto en el idioma de la petición; el backoffice no tiene traducciones, así que allí sale el original en castellano."""
+    try:
+        return str(texto)
+    except (KeyError, RuntimeError):
+        args = getattr(texto, "_args", None)
+        return args[0] if args else ""
+
+
+def opciones_para_backoffice() -> list[dict]:
+    """Los módulos de negocio disponibles como texto plano (el backoffice no tiene traducciones)."""
+    return [{"id": v.id, "nombre": _es(v.nombre), "descripcion": _es(v.descripcion)} for v in VERTICALES.values() if v.disponible]
+
+
 def estado_para_backoffice(tenant_id: int) -> list[dict]:
     """Por vertical disponible: si está activo y por qué (defecto, extra o ajuste manual)."""
     activos = activos_de(tenant_id, usar_cache=False)
@@ -193,7 +221,7 @@ def estado_para_backoffice(tenant_id: int) -> list[dict]:
             continue
         m = manual.get(v.id)
         motivo = "manual" if m else ("extra" if v.id in por_extra else ("defecto" if v.por_defecto else None))
-        res.append({"id": v.id, "nombre": str(v.nombre), "descripcion": str(v.descripcion), "activo": v.id in activos, "motivo": motivo, "hasta": m["activo_hasta"] if m else None})
+        res.append({"id": v.id, "nombre": _es(v.nombre), "descripcion": _es(v.descripcion), "activo": v.id in activos, "motivo": motivo, "hasta": m["activo_hasta"] if m else None})
     return res
 
 

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error, selector_equipo %}
+{% block title %}{{ _('Expedientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Expedientes') }}</h1><p class="subtitle">{{ _('El trabajo de cada cliente, con sus plazos, horas y documentos.') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('expedientes.nuevo') }}">+ {{ _('Nuevo expediente') }}</a>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ f.q or '' }}" placeholder="{{ _('Título, referencia o cliente…') }}"></label>
+  <label>{{ _('Responsable') }}{{ selector_equipo('responsable_id', equipo, f.responsable_id, _('Todos')) }}</label>
+  <label class="checkbox-label"><input type="checkbox" name="abiertos" value="1" {{ 'checked' if f.solo_abiertos }}> {{ _('Solo abiertos') }}</label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+  {% if f.q or f.responsable_id or f.solo_abiertos or f.cliente_id %}<a class="btn btn-ghost" href="{{ url_for('expedientes.lista') }}">{{ _('Limpiar') }}</a>{% endif %}
+</form>
+{% if not expedientes %}
+  {{ estado_vacio(_('Sin expedientes'), _('Abre el primero desde un cliente o con el botón «Nuevo expediente».'), 'folder', _('Nuevo expediente'), url_for('expedientes.nuevo')) }}
+{% else %}
+<p class="muted">{{ ngettext('%(n)s expediente', '%(n)s expedientes', total, n=total) }}</p>
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Expediente') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Próximo plazo') }}</th></tr></thead>
+  <tbody>
+  {% for x in expedientes %}
+  <tr>
+    <td><a href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}"><strong>{{ x.titulo }}</strong></a>{% if x.referencia %} <span class="muted">{{ x.referencia }}</span>{% endif %}{% if x.confidencial %} {{ chip(_('Confidencial'), 'aviso') }}{% endif %}</td>
+    <td><a href="{{ url_for('clientes.ficha', cliente_id=x.cliente_id) }}">{{ x.cliente_nombre }}</a></td>
+    <td>{% set e = tipo_de(x.tipo).estado(x.estado) %}{{ chip(e.nombre if e else x.estado, 'exito' if e and e.cerrado else 'neutro') }}</td>
+    <td class="mono">{{ x.proximo_plazo or '—' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% if paginas > 1 %}
+<div class="paginacion ds-fila ds-mt-16">
+  {% if pagina > 1 %}<a class="btn btn-ghost" href="{{ url_for('expedientes.lista', q=f.q, abiertos=1 if f.solo_abiertos else None, responsable_id=f.responsable_id, pagina=pagina - 1) }}">‹ {{ _('Anterior') }}</a>{% endif %}
+  <span class="muted">{{ pagina }} / {{ paginas }}</span>
+  {% if pagina < paginas %}<a class="btn btn-ghost" href="{{ url_for('expedientes.lista', q=f.q, abiertos=1 if f.solo_abiertos else None, responsable_id=f.responsable_id, pagina=pagina + 1) }}">{{ _('Siguiente') }} ›</a>{% endif %}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

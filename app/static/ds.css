@@ -94,7 +94,7 @@
 }
 .ds-vacio-icono { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; color: var(--text-muted); background: var(--panel-2); }
 .ds-vacio-icono svg { width: 22px; height: 22px; }
-.ds-vacio h3 { margin: 4px 0 0; font-size: 1em; }
+.ds-vacio .ds-vacio-titulo { margin: 4px 0 0; font-size: 1em; text-transform: none; letter-spacing: 0; }
 .ds-vacio p { margin: 0; max-width: 46ch; color: var(--text-muted); font-size: 0.9em; line-height: 1.5; }
 .ds-vacio .btn { margin-top: 6px; }
 .ds-vacio-error .ds-vacio-icono { color: var(--danger-text); background: color-mix(in srgb, var(--danger) 14%, transparent); }
@@ -192,3 +192,11 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 /* Marcas de botones que estilan sus contenedores (barra del editor de correo, barra de acciones masivas, control segmentado, cerrar): llevan
    clase propia para que el candado de diseño sepa que son intencionados; el aspecto lo siguen dando las reglas del contenedor. */
 .ds-cerrar { cursor: pointer; }
+
+/* ---- <details> plegable con el aspecto del sistema ---------------------------------------------------------------------------------------- */
+.ds-plegable > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ds-plegable > summary::-webkit-details-marker { display: none; }
+.ds-plegable > summary::after { content: "▾"; color: var(--text-muted); transition: transform 0.15s ease; }
+.ds-plegable[open] > summary::after { transform: rotate(180deg); }
+.ds-plegable > summary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 8px; }
+.paginacion { justify-content: center; }

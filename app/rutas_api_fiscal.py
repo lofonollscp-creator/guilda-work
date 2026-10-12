@@ -6,7 +6,7 @@ from datetime import date
 
 from flask import Response, abort, g, request
 
-from . import db, nextcloud, notificaciones_email
+from . import almacen_documentos, db, nextcloud, notificaciones_email
 from .auth import token_required
 from .rutas_api import _body, _dict, _dicts, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
 from .vencimientos_fiscales import MODELOS_POR_PAIS, generar_vencimientos_propuestos, modelos_disponibles as modelos_disponibles_para_pais
@@ -83,7 +83,7 @@ def accesos_cliente(cliente_id: int):
 def listar_documentos_cliente(cliente_id: int):
     """Expediente del cliente (metadatos, sin contenido)."""
     _cliente_o_404(cliente_id)
-    return _ok_paginado(db.listar_documentos_cliente(g.tenant_id, cliente_id))
+    return _ok_paginado(almacen_documentos.listar_de_cliente_fiscal(g.tenant_id, cliente_id))
 
 
 @api_bp.route("/fiscal/clientes/<int:cliente_id>/documentos", methods=["POST"])
@@ -99,7 +99,7 @@ def subir_documentos_cliente(cliente_id: int):
         return _err("Adjunta al menos un archivo en el campo «archivo» (multipart).", 400, "sin_archivos", "archivo")
     resultados = []
     for archivo in archivos:
-        resultado, documento_id = db.archivar_documento_cliente(
+        resultado, documento_id = almacen_documentos.guardar_de_cliente_fiscal(
             g.usuario_id, cliente_id, archivo.filename, archivo.mimetype, archivo.read(db.MAX_DOCUMENTO_CLIENTE_BYTES + 1), categoria=request.form.get("categoria"),
         )
         if resultado == "ok":
@@ -112,7 +112,7 @@ def subir_documentos_cliente(cliente_id: int):
 @token_required
 @_con_despacho
 def descargar_documento_cliente(cliente_id: int, documento_id: int):
-    documento = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
+    documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
     if documento is None:
         abort(404, "Documento no encontrado.")
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_descargado", f"{documento['nombre_archivo']} (vía API)")
@@ -123,8 +123,8 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
 @token_required
 @_con_despacho
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):
-    previo = db.obtener_documento_cliente(g.tenant_id, cliente_id, documento_id)
-    if not db.eliminar_documento_cliente(g.usuario_id, cliente_id, documento_id):
+    previo = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)
+    if not almacen_documentos.eliminar_de_cliente_fiscal(g.usuario_id, cliente_id, documento_id):
         abort(404, "Documento no encontrado.")
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", f"{previo['nombre_archivo'] if previo else ''} (vía API)")
     return _ok()
