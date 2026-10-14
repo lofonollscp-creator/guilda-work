@@ -2,7 +2,8 @@
 {% block title %}{{ _('Correo') }} — Guilda Work{% endblock %}
 {% block content %}
 <h1 class="sr-only">{{ _('Correo') }}</h1>
-<div class="correo-shell {{ 'es-pantalla-completa' if completa }}">
+<div class="correo-shell {{ 'es-pantalla-completa' if completa }}" data-letra="{{ vista.letra }}" data-disposicion="{{ vista.disposicion }}"
+     {% if vista.ancho_lista %}style="--correo-ancho-lista: {{ vista.ancho_lista }}px;"{% endif %} data-url-ancho="{{ url_for('correo.guardar_ancho_lista') }}">
   {% if envio_banner %}
   <div class="correo-envio-banner" role="status" id="correo-envio-banner" data-segundos="{{ envio_banner.segundos }}"
        data-t-enviado="{{ _('Enviado.') }}">
@@ -137,7 +138,7 @@
     {% if mensajes|selectattr('protegido')|list %}
     <p class="correo-sync-aviso" role="status"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Correo protegido con la clave del despacho.') }} {% if g.get('supervisor_tenant') or g.get('es_admin') %}<a href="{{ url_for('seguridad.cifrado') }}">{{ _('Desbloquear') }}</a>{% else %}{{ _('Pide a un responsable del despacho que lo desbloquee.') }}{% endif %}</p>
     {% endif %}
-    <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }}" id="correo-lista-mensajes">
+    <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }} {{ 'sin-vista-previa' if not vista.vista_previa }}" id="correo-lista-mensajes">
       {% for m in mensajes %}
       {% set cat = categorias_por_id.get(m.categoria_id) %}
       <li class="correo-fila-wrap {{ 'is-no-leido' if not m.leido }} {{ 'is-seleccionada' if mensaje_seleccionado and (mensaje_seleccionado.id == m.id or (m.hilo_clave and mensaje_seleccionado.hilo_clave == m.hilo_clave)) }}"
@@ -164,6 +165,7 @@
     {% endif %}
   </section>
 
+  <div class="correo-divisor" id="correo-divisor" role="separator" aria-orientation="vertical" tabindex="0" title="{{ _('Arrastra para cambiar el ancho de la lista') }}"></div>
   <section class="correo-lectura-pane">
     {% if mensaje_seleccionado %}
     {% set cat_actual = categorias_por_id.get(mensaje_seleccionado.categoria_id) %}
@@ -479,4 +481,5 @@
 <script src="{{ url_for('static', filename='correo_ia.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_envio.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_atajos.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_ancho.js') }}"></script>
 {% endblock %}

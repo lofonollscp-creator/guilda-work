@@ -1296,8 +1296,11 @@ def obtener_preferencias_correo(usuario_id: int) -> sqlite3.Row:
 
 def guardar_preferencias_correo(
     usuario_id: int, densidad: str, marcar_leido_automatico: bool, limite_mensajes: int,
-    deshacer_segundos: int | None = None,
+    deshacer_segundos: int | None = None, tam_letra: str | None = None, disposicion: str | None = None,
+    ancho_lista: int | None = None, vista_previa: bool | None = None,
 ) -> None:
+    """Guarda las preferencias del correo. Los campos de vista (`tam_letra`, `disposicion`, `ancho_lista`, `vista_previa`) solo se tocan si llegan y valen (app/correo_vista.py)."""
+    from . import correo_vista
     conn = _db.get_connection()
     try:
         conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
@@ -1311,6 +1314,9 @@ def guardar_preferencias_correo(
                SET densidad = ?, marcar_leido_automatico = ?, limite_mensajes = ? WHERE usuario_id = ?""",
             (densidad, int(marcar_leido_automatico), limite_mensajes, usuario_id),
         )
+        vista = correo_vista.limpiar(tam_letra=tam_letra, disposicion=disposicion, ancho_lista=ancho_lista, vista_previa=vista_previa)
+        if vista:
+            conn.execute(f"UPDATE correo_preferencias SET {', '.join(f'{c} = ?' for c in vista)} WHERE usuario_id = ?", (*vista.values(), usuario_id))
         conn.commit()
     finally:
         conn.close()

@@ -12122,3 +12122,39 @@ msgstr "Envoyée"
 
 msgid "Firmada"
 msgstr "Signée"
+
+msgid "Tamaño de letra"
+msgstr "Taille du texte"
+
+msgid "Grande"
+msgstr "Grand"
+
+msgid "Muy grande"
+msgstr "Très grand"
+
+msgid "Disposición de los paneles"
+msgstr "Disposition des volets"
+
+msgid "Tres paneles"
+msgstr "Trois volets"
+
+msgid "Lista arriba, lectura debajo"
+msgstr "Liste en haut, lecture en bas"
+
+msgid "Solo lista (leer a pantalla completa)"
+msgstr "Liste seule (lecture en plein écran)"
+
+msgid "Ancho de la lista (px, 0 = automático)"
+msgstr "Largeur de la liste (px, 0 = automatique)"
+
+msgid "Ancho de la lista"
+msgstr "Largeur de la liste"
+
+msgid "También puedes arrastrar el divisor entre la lista y el mensaje."
+msgstr "Vous pouvez aussi faire glisser le séparateur entre la liste et le message."
+
+msgid "Mostrar el extracto del mensaje en la lista"
+msgstr "Afficher l'extrait du message dans la liste"
+
+msgid "Arrastra para cambiar el ancho de la lista"
+msgstr "Faites glisser pour changer la largeur de la liste"

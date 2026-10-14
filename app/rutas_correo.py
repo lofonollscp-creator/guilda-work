@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, correo_oauth, db, ficha_cliente, ia_asistente, notificaciones, peticion, quickadd
+from . import correo, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -370,6 +370,7 @@ def _contexto_bandeja(cuenta_id, carpeta, q, solo_no_leidos, error, incluir_posp
         "clientes_fiscales": clientes_fiscales,
         "num_borradores": db.contar_borradores_correo(g.usuario_id),
         "densidad": preferencias["densidad"],
+        "vista": correo_vista.para_plantilla(preferencias),
         "q": q or "",
         "busqueda_sin_resolver": consulta.sin_resolver,
         "solo_no_leidos": solo_no_leidos,
@@ -417,6 +418,8 @@ def bandeja():
                 "id": envio["id"], "programado": bool(envio["programado"]),
                 "enviar_en": envio["enviar_en"].replace("T", " ")[:16], "segundos": max(0, int(restante)),
             }
+    if contexto["vista"]["disposicion"] == "lista" and request.args.get("mensaje_id", type=int) is not None:
+        completa = True                      # «solo lista»: abrir un mensaje lo lee a pantalla completa
     contexto["completa"] = completa
 
     mensaje_seleccionado = None
@@ -463,7 +466,7 @@ def bandeja():
                 mensaje_seleccionado["cuerpo_html"]
             )
     contexto["remitente_confiable"] = remitente_confiable
-    contexto["cuerpo_html_mostrado"] = cuerpo_html_mostrado
+    contexto["cuerpo_html_mostrado"] = correo_vista.con_escala(cuerpo_html_mostrado, contexto["vista"]["escala"])
     contexto["imagenes_bloqueadas"] = imagenes_bloqueadas
     return render_template("correo_bandeja.html", **contexto)
 
@@ -1155,8 +1158,19 @@ def guardar_preferencias():
         marcar_leido_automatico=request.form.get("marcar_leido_automatico") == "on",
         limite_mensajes=max(10, min(limite, 500)),
         deshacer_segundos=request.form.get("deshacer_segundos", type=int),
+        tam_letra=request.form.get("tam_letra"), disposicion=request.form.get("disposicion"),
+        ancho_lista=request.form.get("ancho_lista", type=int), vista_previa=(request.form.get("vista_previa") == "on") if "tam_letra" in request.form else None,
     )
     return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/ancho-lista", methods=["POST"])
+@login_required
+def guardar_ancho_lista():
+    """Guarda el ancho de la lista al arrastrar el divisor (lo llama static/correo_ancho.js)."""
+    p = db.obtener_preferencias_correo(g.usuario_id)
+    db.guardar_preferencias_correo(g.usuario_id, p["densidad"], bool(p["marcar_leido_automatico"]), p["limite_mensajes"], ancho_lista=request.form.get("ancho", type=int))
+    return ("", 204)
 
 
 @correo_bp.route("/ajustes/categorias", methods=["POST"])

@@ -25,6 +25,30 @@
       </div>
     </div>
     <div class="correo-form-campo">
+      <label>{{ _('Tamaño de letra') }}</label>
+      <div class="correo-form-radios">
+        <label><input type="radio" name="tam_letra" value="normal" {% if preferencias.tam_letra == 'normal' %}checked{% endif %}> {{ _('Normal') }}</label>
+        <label><input type="radio" name="tam_letra" value="grande" {% if preferencias.tam_letra == 'grande' %}checked{% endif %}> {{ _('Grande') }}</label>
+        <label><input type="radio" name="tam_letra" value="muy_grande" {% if preferencias.tam_letra == 'muy_grande' %}checked{% endif %}> {{ _('Muy grande') }}</label>
+      </div>
+    </div>
+    <div class="correo-form-campo">
+      <label>{{ _('Disposición de los paneles') }}</label>
+      <div class="correo-form-radios">
+        <label><input type="radio" name="disposicion" value="tres" {% if preferencias.disposicion == 'tres' %}checked{% endif %}> {{ _('Tres paneles') }}</label>
+        <label><input type="radio" name="disposicion" value="inferior" {% if preferencias.disposicion == 'inferior' %}checked{% endif %}> {{ _('Lista arriba, lectura debajo') }}</label>
+        <label><input type="radio" name="disposicion" value="lista" {% if preferencias.disposicion == 'lista' %}checked{% endif %}> {{ _('Solo lista (leer a pantalla completa)') }}</label>
+      </div>
+    </div>
+    <div class="correo-form-campo">
+      <label>{{ _('Ancho de la lista (px, 0 = automático)') }}</label>
+      <input type="number" name="ancho_lista" value="{{ preferencias.ancho_lista }}" min="0" max="720" aria-label="{{ _('Ancho de la lista') }}">
+      <p class="muted">{{ _('También puedes arrastrar el divisor entre la lista y el mensaje.') }}</p>
+    </div>
+    <div class="correo-form-campo">
+      <label class="correo-form-checkbox"><input type="checkbox" name="vista_previa" {% if preferencias.vista_previa %}checked{% endif %}> {{ _('Mostrar el extracto del mensaje en la lista') }}</label>
+    </div>
+    <div class="correo-form-campo">
       <label class="correo-form-checkbox">
         <input type="checkbox" name="marcar_leido_automatico" {% if preferencias.marcar_leido_automatico %}checked{% endif %}>
         {{ _('Marcar como leído automáticamente al abrir un mensaje') }}

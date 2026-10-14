@@ -12046,3 +12046,39 @@ msgstr "Enviada"
 
 msgid "Firmada"
 msgstr "Signada"
+
+msgid "Tamaño de letra"
+msgstr "Mida de la lletra"
+
+msgid "Grande"
+msgstr "Gran"
+
+msgid "Muy grande"
+msgstr "Molt gran"
+
+msgid "Disposición de los paneles"
+msgstr "Disposició dels panells"
+
+msgid "Tres paneles"
+msgstr "Tres panells"
+
+msgid "Lista arriba, lectura debajo"
+msgstr "Llista a dalt, lectura a sota"
+
+msgid "Solo lista (leer a pantalla completa)"
+msgstr "Només llista (llegir a pantalla completa)"
+
+msgid "Ancho de la lista (px, 0 = automático)"
+msgstr "Amplada de la llista (px, 0 = automàtic)"
+
+msgid "Ancho de la lista"
+msgstr "Amplada de la llista"
+
+msgid "También puedes arrastrar el divisor entre la lista y el mensaje."
+msgstr "També pots arrossegar el divisor entre la llista i el missatge."
+
+msgid "Mostrar el extracto del mensaje en la lista"
+msgstr "Mostra l'extracte del missatge a la llista"
+
+msgid "Arrastra para cambiar el ancho de la lista"
+msgstr "Arrossega per canviar l'amplada de la llista"

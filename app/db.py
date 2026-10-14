@@ -2027,6 +2027,9 @@ def init_db() -> None:
         _migrar_conversaciones_ia(conn)
         _migrar_preferencias_singleton(conn, usuario_id_local)
         _asegurar_columna(conn, "correo_preferencias", "deshacer_segundos", "INTEGER NOT NULL DEFAULT 10")
+        for col, tipo in (("tam_letra", "TEXT NOT NULL DEFAULT 'normal'"), ("disposicion", "TEXT NOT NULL DEFAULT 'tres'"), ("ancho_lista", "INTEGER NOT NULL DEFAULT 0"),
+                          ("vista_previa", "INTEGER NOT NULL DEFAULT 1")):      # vistas personalizables del correo (app/correo_vista.py)
+            _asegurar_columna(conn, "correo_preferencias", col, tipo)
         _rellenar_hilos_correo(conn)
 
         # IA local (Ollama/LM Studio): columnas añadidas después de la

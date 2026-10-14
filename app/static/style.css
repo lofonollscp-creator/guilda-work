@@ -5013,3 +5013,29 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .panel-indicadores li strong { font-size: 1.4rem; }
 .panel-indicadores .subtitle { flex-basis: 100%; }
 .form-en-linea { display: inline-flex; gap: 6px; align-items: center; margin: 2px 4px 2px 0; }
+.cert-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.ds-estado-aviso { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--warning, #f5a524); margin: 0 0 16px; }
+
+/* --- Correo: vistas personalizables (tamaño de letra, disposición, ancho de lista; app/correo_vista.py) --- */
+.correo-shell[data-letra="grande"] { font-size: 1.15em; }
+.correo-shell[data-letra="muy_grande"] { font-size: 1.3em; }
+@media (min-width: 641px) { .correo-shell:not(.es-pantalla-completa) { grid-template-columns: 220px var(--correo-ancho-lista, clamp(320px, 28vw, 440px)) minmax(280px, 1fr); } }
+.correo-divisor { display: none; }
+@media (min-width: 901px) {
+  .correo-divisor { display: block; position: relative; grid-column: 2; grid-row: 2; width: 8px; margin-left: auto; margin-right: -4px; cursor: col-resize; z-index: 2; }
+  .correo-divisor:hover, .correo-divisor:focus-visible { background: var(--primary); opacity: 0.35; outline: none; }
+}
+.correo-cuerpo-html { min-height: 60vh; }
+.correo-lista-mensajes.sin-vista-previa .correo-fila-preview { display: none; }
+@media (min-width: 641px) {
+/* Lista arriba, lectura debajo */
+.correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) { grid-template-columns: 220px 1fr; grid-template-rows: auto minmax(180px, 38%) 1fr; }
+.correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) .correo-rail { grid-row: 2 / span 2; }
+.correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) .correo-lista-pane { grid-column: 2; grid-row: 2; border-right: none; border-bottom: 1px solid var(--border); }
+.correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) .correo-lectura-pane { grid-column: 2; grid-row: 3; }
+.correo-shell[data-disposicion="inferior"] .correo-divisor { display: none; }
+/* Solo lista: sin panel de lectura hasta abrir un mensaje (entonces es pantalla completa) */
+.correo-shell[data-disposicion="lista"]:not(.es-pantalla-completa) { grid-template-columns: 220px 1fr; }
+.correo-shell[data-disposicion="lista"]:not(.es-pantalla-completa) .correo-lectura-pane, .correo-shell[data-disposicion="lista"] .correo-divisor { display: none; }
+}
+.correo-shell.es-pantalla-completa .correo-divisor { display: none; }

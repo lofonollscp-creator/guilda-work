@@ -12037,3 +12037,39 @@ msgstr "Sent"
 
 msgid "Firmada"
 msgstr "Signed"
+
+msgid "Tamaño de letra"
+msgstr "Text size"
+
+msgid "Grande"
+msgstr "Large"
+
+msgid "Muy grande"
+msgstr "Extra large"
+
+msgid "Disposición de los paneles"
+msgstr "Panel layout"
+
+msgid "Tres paneles"
+msgstr "Three panes"
+
+msgid "Lista arriba, lectura debajo"
+msgstr "List on top, reading below"
+
+msgid "Solo lista (leer a pantalla completa)"
+msgstr "List only (read full screen)"
+
+msgid "Ancho de la lista (px, 0 = automático)"
+msgstr "List width (px, 0 = automatic)"
+
+msgid "Ancho de la lista"
+msgstr "List width"
+
+msgid "También puedes arrastrar el divisor entre la lista y el mensaje."
+msgstr "You can also drag the divider between the list and the message."
+
+msgid "Mostrar el extracto del mensaje en la lista"
+msgstr "Show the message excerpt in the list"
+
+msgid "Arrastra para cambiar el ancho de la lista"
+msgstr "Drag to change the list width"
