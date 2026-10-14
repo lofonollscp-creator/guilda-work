@@ -51,13 +51,37 @@
       {% if c.id == cuenta_id %}
       <div class="correo-carpeta-lista">
         {% for f in carpetas %}
-        <a class="correo-carpeta-item {{ 'active' if f.nombre == carpeta }}"
+        <a class="correo-carpeta-item {{ 'active' if f.nombre == carpeta }}" data-carpeta="{{ f.nombre }}"
            href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=f.nombre) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-folder"></use></svg> {{ f.nombre_visible }}
           {% if no_leidos_carpetas.get(f.nombre) %}
           <span class="correo-badge">{{ no_leidos_carpetas[f.nombre] }}</span>
           {% endif %}
         </a>
         {% endfor %}
+        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, destacados=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacados de esta carpeta') }}</a>
+        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, no_leidos=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg> {{ _('No leídos de esta carpeta') }}</a>
+        {% if carpetas|length > 1 or c.protocolo != 'pop3' %}
+        <details class="correo-carpetas-gestion">
+          <summary>{{ _('Gestionar carpetas') }}</summary>
+          <form action="{{ url_for('correo.crear_carpeta') }}" method="post">
+            <input type="hidden" name="cuenta_id" value="{{ c.id }}">
+            <input type="text" name="nombre" maxlength="100" placeholder="{{ _('Nueva carpeta') }}" aria-label="{{ _('Nombre de la nueva carpeta') }}" required>
+            <select name="dentro_de" aria-label="{{ _('Dentro de') }}"><option value="">{{ _('En la raíz') }}</option>{% for f in carpetas %}<option value="{{ f.nombre }}">{{ f.nombre_visible }}</option>{% endfor %}</select>
+            <button type="submit" class="btn btn-ghost">{{ _('Crear') }}</button>
+          </form>
+          {% if carpeta != 'INBOX' %}
+          <form action="{{ url_for('correo.renombrar_carpeta') }}" method="post">
+            <input type="hidden" name="cuenta_id" value="{{ c.id }}"><input type="hidden" name="carpeta" value="{{ carpeta }}">
+            <input type="text" name="nombre" maxlength="100" placeholder="{{ _('Nuevo nombre de la carpeta abierta') }}" aria-label="{{ _('Nuevo nombre de la carpeta abierta') }}" required>
+            <button type="submit" class="btn btn-ghost">{{ _('Renombrar') }}</button>
+          </form>
+          <form action="{{ url_for('correo.eliminar_carpeta') }}" method="post" data-confirmar-envio="{{ _('¿Eliminar esta carpeta y los mensajes que contiene? Esto la borra también en el servidor.') }}">
+            <input type="hidden" name="cuenta_id" value="{{ c.id }}"><input type="hidden" name="carpeta" value="{{ carpeta }}">
+            <button type="submit" class="btn btn-ghost texto-peligro">{{ _('Eliminar la carpeta abierta') }}</button>
+          </form>
+          {% endif %}
+        </details>
+        {% endif %}
       </div>
       {% endif %}
       {% endfor %}
@@ -67,6 +91,7 @@
   </aside>
 
   <section class="correo-lista-pane">
+    {% if aviso and not mensaje_seleccionado %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
     {% if cuentas %}
     <form class="correo-lista-toolbar" method="get">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
@@ -195,6 +220,17 @@
           <button type="submit" class="correo-ribbon-btn" title="{{ _('Eliminar') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Eliminar') }}</span></button>
         </form>
       </div>
+
+      {% if carpetas|length > 1 %}
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.archivar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Archivar (e)') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-folder"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Archivar') }}</span></button>
+        </form>
+        <form action="{{ url_for('correo.marcar_spam', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Mandar a spam o, si ya está en spam, devolver a la bandeja de entrada') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield-check"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('No es spam') if es_spam else _('Spam') }}</span></button>
+        </form>
+      </div>
+      {% endif %}
 
       <div class="correo-ribbon-grupo">
         <a class="correo-ribbon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-reply"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Responder') }}</span></a>
@@ -469,6 +505,15 @@
       <p class="muted">{{ _('Este mensaje no tiene cuerpo legible.') }}</p>
       {% endif %}
     </div>
+    {% if cuenta_activa and cuenta_activa.smtp_host %}
+    <form class="correo-respuesta-rapida" action="{{ url_for('correo.respuesta_rapida', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+      <textarea name="cuerpo" rows="3" placeholder="{{ _('Responder rápido…') }}" aria-label="{{ _('Respuesta rápida') }}" required></textarea>
+      <div class="correo-respuesta-rapida-acciones">
+        <label class="correo-toolbar-check"><input type="checkbox" name="a_todos" value="1"> {{ _('A todos') }}</label>
+        <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+      </div>
+    </form>
+    {% endif %}
     {% else %}
     <div class="correo-lectura-vacio">
       <svg class="correo-lectura-vacio-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
@@ -482,4 +527,5 @@
 <script src="{{ url_for('static', filename='correo_envio.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_atajos.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_ancho.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_arrastrar.js') }}"></script>
 {% endblock %}

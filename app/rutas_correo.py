@@ -465,6 +465,7 @@ def bandeja():
             cuerpo_html_mostrado, imagenes_bloqueadas = correo.html_con_imagenes_bloqueadas(
                 mensaje_seleccionado["cuerpo_html"]
             )
+    contexto["es_spam"] = bool(mensaje_seleccionado is not None and correo.carpeta_especial(g.usuario_id, cuenta_id, "spam") == mensaje_seleccionado["carpeta"])
     contexto["remitente_confiable"] = remitente_confiable
     contexto["cuerpo_html_mostrado"] = correo_vista.con_escala(cuerpo_html_mostrado, contexto["vista"]["escala"])
     contexto["imagenes_bloqueadas"] = imagenes_bloqueadas
@@ -736,6 +737,104 @@ def mover_mensaje(mensaje_id: int):
         contexto["mensaje_seleccionado"] = correo.obtener_mensaje(mensaje_id)
         return render_template("correo_bandeja.html", **contexto)
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta_origen))
+
+
+def _volver_a_la_bandeja(mensaje, aviso: str | None = None):
+    return redirect(url_for("correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], aviso=aviso))
+
+
+@correo_bp.route("/<int:mensaje_id>/archivar", methods=["POST"])
+@login_required
+def archivar_mensaje(mensaje_id: int):
+    """Mueve el mensaje a la carpeta de archivo de su cuenta (en el servidor)."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    try:
+        correo.mover_a_carpeta_especial(g.usuario_id, mensaje_id, "archivo")
+    except correo.ErrorCorreo as e:
+        return _volver_a_la_bandeja(mensaje, str(e))
+    return _volver_a_la_bandeja(mensaje, _("Mensaje archivado."))
+
+
+@correo_bp.route("/<int:mensaje_id>/spam", methods=["POST"])
+@login_required
+def marcar_spam(mensaje_id: int):
+    """Manda el mensaje a la carpeta de spam; si ya está en ella, lo devuelve a la bandeja de entrada («No es spam»)."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    try:
+        if correo.carpeta_especial(g.usuario_id, mensaje["cuenta_id"], "spam") == mensaje["carpeta"]:
+            correo.mover_mensaje(g.usuario_id, mensaje_id, "INBOX")
+            return _volver_a_la_bandeja(mensaje, _("Mensaje devuelto a la bandeja de entrada."))
+        correo.mover_a_carpeta_especial(g.usuario_id, mensaje_id, "spam")
+    except correo.ErrorCorreo as e:
+        return _volver_a_la_bandeja(mensaje, str(e))
+    return _volver_a_la_bandeja(mensaje, _("Mensaje movido a spam."))
+
+
+@correo_bp.route("/carpetas/crear", methods=["POST"])
+@login_required
+def crear_carpeta():
+    cuenta_id = request.form.get("cuenta_id", type=int)
+    if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
+        abort(404)
+    try:
+        completo = correo.crear_carpeta(g.usuario_id, cuenta_id, request.form.get("nombre", ""), request.form.get("dentro_de") or None)
+    except correo.ErrorCorreo as e:
+        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, aviso=str(e)))
+    return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=completo, aviso=_("Carpeta creada.")))
+
+
+@correo_bp.route("/carpetas/renombrar", methods=["POST"])
+@login_required
+def renombrar_carpeta():
+    cuenta_id = request.form.get("cuenta_id", type=int)
+    carpeta = request.form.get("carpeta", "")
+    if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
+        abort(404)
+    try:
+        nuevo = correo.renombrar_carpeta(g.usuario_id, cuenta_id, carpeta, request.form.get("nombre", ""))
+    except correo.ErrorCorreo as e:
+        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta, aviso=str(e)))
+    return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=nuevo, aviso=_("Carpeta renombrada.")))
+
+
+@correo_bp.route("/carpetas/eliminar", methods=["POST"])
+@login_required
+def eliminar_carpeta():
+    cuenta_id = request.form.get("cuenta_id", type=int)
+    carpeta = request.form.get("carpeta", "")
+    if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
+        abort(404)
+    try:
+        correo.eliminar_carpeta(g.usuario_id, cuenta_id, carpeta)
+    except correo.ErrorCorreo as e:
+        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta, aviso=str(e)))
+    return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, aviso=_("Carpeta eliminada.")))
+
+
+@correo_bp.route("/<int:mensaje_id>/respuesta-rapida", methods=["POST"])
+@login_required
+def respuesta_rapida(mensaje_id: int):
+    """Responde desde el propio panel de lectura: el texto escrito, la firma y el mensaje citado. Respeta el «deshacer envío» de las preferencias."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    texto = (request.form.get("cuerpo") or "").strip()
+    if not texto:
+        return _volver_a_la_bandeja(mensaje, _("Escribe la respuesta antes de enviarla."))
+    cuenta = db.obtener_cuenta_correo(g.usuario_id, mensaje["cuenta_id"])
+    destinatarios = correo.destinatarios_responder_a_todos(mensaje, cuenta["usuario"] if cuenta else None) if request.form.get("a_todos") == "1" else (mensaje["remitente"] or "")
+    asunto = mensaje["asunto"] or ""
+    if not asunto.lower().startswith("re:"):
+        asunto = f"Re: {asunto}"
+    cuerpo_html = correo.texto_a_html(texto) + correo.preparar_cuerpo_inicial(g.usuario_id, mensaje["cuenta_id"], es_respuesta=True, contenido_tras_firma=_cita_de(mensaje))
+    deshacer = db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"]
+    try:
+        if deshacer > 0:
+            envio_id = correo.encolar_envio(g.usuario_id, mensaje["cuenta_id"], destinatarios, asunto, cuerpo_html, en_respuesta_a=mensaje["message_id"],
+                                            enviar_en=(datetime.now() + timedelta(seconds=deshacer)).isoformat(timespec="seconds"))
+            return redirect(url_for("correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], envio_id=envio_id))
+        correo.construir_y_enviar(g.usuario_id, mensaje["cuenta_id"], destinatarios, asunto, cuerpo_html, en_respuesta_a=mensaje["message_id"])
+    except correo.ErrorCorreo as e:
+        return _volver_a_la_bandeja(mensaje, str(e))
+    return _volver_a_la_bandeja(mensaje, _("Respuesta enviada."))
 
 
 @correo_bp.route("/<int:mensaje_id>/destacar", methods=["POST"])

@@ -1545,6 +1545,111 @@ def mover_mensaje(usuario_id: int, mensaje_id: int, carpeta_destino: str) -> Non
     db.eliminar_mensaje_correo(mensaje_id)
 
 
+# --- Carpetas: archivo, spam y gestión de carpetas propias ----------------------
+
+_PALABRAS_CARPETA = {
+    "archivo": ("archive", "archivo", "archiv", "all mail", "todos"),
+    "spam": ("junk", "spam", "no deseado", "correo no deseado", "indesirable", "indésirable"),
+}
+
+
+def buscar_carpeta_especial(nombres: list[str], tipo: str) -> str | None:
+    """La carpeta de `tipo` (`archivo` o `spam`) entre los `nombres` que da el servidor, o None. Se compara el último tramo del nombre sin distinguir mayúsculas."""
+    palabras = _PALABRAS_CARPETA[tipo]
+    for n in nombres:
+        ultimo = re.split(r"[\\/.]", n)[-1].strip().lower()
+        if ultimo in palabras:
+            return n
+    return None
+
+
+def carpeta_especial(usuario_id: int, cuenta_id: int, tipo: str) -> str | None:
+    return buscar_carpeta_especial([c["nombre"] for c in listar_carpetas(usuario_id, cuenta_id)], tipo)
+
+
+def mover_a_carpeta_especial(usuario_id: int, mensaje_id: int, tipo: str) -> str:
+    """Archiva el mensaje o lo manda a spam (mueve en el servidor). Devuelve la carpeta de destino. `ErrorCorreo` si la cuenta no tiene esa carpeta."""
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
+    if mensaje is None:
+        raise ErrorCorreo("Ese mensaje no existe.")
+    destino = carpeta_especial(usuario_id, mensaje["cuenta_id"], tipo)
+    if destino is None:
+        raise ErrorCorreo("Esta cuenta no tiene carpeta de archivo." if tipo == "archivo" else "Esta cuenta no tiene carpeta de spam.")
+    if destino == mensaje["carpeta"]:
+        raise ErrorCorreo("El mensaje ya está en esa carpeta.")
+    mover_mensaje(usuario_id, mensaje_id, destino)
+    return destino
+
+
+def _nombre_carpeta_valido(nombre: str) -> str:
+    crudo = nombre or ""
+    nombre = " ".join(crudo.split())
+    if not nombre or len(nombre) > 100 or any(c in crudo for c in '"\\%*/\r\n\x00'):
+        raise ErrorCorreo("El nombre de la carpeta no es válido (sin comillas, barras, % ni *).")
+    return nombre
+
+
+def _cuenta_imap(usuario_id: int, cuenta_id: int):
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    if cuenta is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+    if cuenta["protocolo"] == "pop3":
+        raise ErrorCorreo("Las cuentas POP3 no tienen carpetas.")
+    return cuenta
+
+
+def _operar_imap(cuenta, *orden) -> None:
+    conn = _conectar_imap_cuenta(cuenta)
+    try:
+        estado, datos = getattr(conn, orden[0])(*orden[1:])
+        if estado != "OK":
+            raise ErrorCorreo("El servidor no ha aceptado el cambio de carpeta.")
+    finally:
+        try:
+            conn.logout()
+        except Exception:
+            pass
+
+
+def crear_carpeta(usuario_id: int, cuenta_id: int, nombre: str, dentro_de: str | None = None) -> str:
+    """Crea una carpeta en el servidor (y en la caché). `dentro_de` la cuelga de otra existente. Devuelve el nombre completo."""
+    cuenta = _cuenta_imap(usuario_id, cuenta_id)
+    nombre = _nombre_carpeta_valido(nombre)
+    completo = f"{dentro_de}/{nombre}" if dentro_de else nombre
+    if completo in {c["nombre"] for c in listar_carpetas(usuario_id, cuenta_id)}:
+        raise ErrorCorreo("Ya existe una carpeta con ese nombre.")
+    _operar_imap(cuenta, "create", f'"{completo}"')
+    db.guardar_carpetas_correo(cuenta_id, [(completo, nombre)])
+    return completo
+
+
+def renombrar_carpeta(usuario_id: int, cuenta_id: int, carpeta: str, nuevo_nombre: str) -> str:
+    cuenta = _cuenta_imap(usuario_id, cuenta_id)
+    if carpeta.upper() == "INBOX" or _nombre_visible_carpeta(carpeta) != re.split(r"[\\/.]", carpeta)[-1].strip():
+        raise ErrorCorreo("Las carpetas del sistema (Bandeja de entrada, Enviados, Papelera…) no se pueden renombrar.")
+    if carpeta not in {c["nombre"] for c in listar_carpetas(usuario_id, cuenta_id)}:
+        raise ErrorCorreo("Esa carpeta no existe.")
+    nuevo_nombre = _nombre_carpeta_valido(nuevo_nombre)
+    padre = carpeta.rsplit("/", 1)[0] + "/" if "/" in carpeta else ""
+    destino = padre + nuevo_nombre
+    if destino in {c["nombre"] for c in listar_carpetas(usuario_id, cuenta_id)}:
+        raise ErrorCorreo("Ya existe una carpeta con ese nombre.")
+    _operar_imap(cuenta, "rename", f'"{carpeta}"', f'"{destino}"')
+    db.renombrar_carpeta_correo(cuenta_id, carpeta, destino, nuevo_nombre)
+    return destino
+
+
+def eliminar_carpeta(usuario_id: int, cuenta_id: int, carpeta: str) -> None:
+    """Borra una carpeta propia del servidor y de la caché. Las del sistema no se tocan."""
+    cuenta = _cuenta_imap(usuario_id, cuenta_id)
+    if carpeta.upper() == "INBOX" or _nombre_visible_carpeta(carpeta) != re.split(r"[\\/.]", carpeta)[-1].strip():
+        raise ErrorCorreo("Las carpetas del sistema (Bandeja de entrada, Enviados, Papelera…) no se pueden borrar.")
+    if carpeta not in {c["nombre"] for c in listar_carpetas(usuario_id, cuenta_id)}:
+        raise ErrorCorreo("Esa carpeta no existe.")
+    _operar_imap(cuenta, "delete", f'"{carpeta}"')
+    db.eliminar_carpeta_correo(cuenta_id, carpeta)
+
+
 # --- Categorías (propias de Guilda Work, no se sincronizan) -------------------
 
 def crear_categoria(usuario_id: int, nombre: str, color: str) -> int:

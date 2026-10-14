@@ -12082,3 +12082,78 @@ msgstr "Mostra l'extracte del missatge a la llista"
 
 msgid "Arrastra para cambiar el ancho de la lista"
 msgstr "Arrossega per canviar l'amplada de la llista"
+
+msgid "Mensaje archivado."
+msgstr "Missatge arxivat."
+
+msgid "Mensaje devuelto a la bandeja de entrada."
+msgstr "Missatge retornat a la safata d'entrada."
+
+msgid "Mensaje movido a spam."
+msgstr "Missatge mogut a correu brossa."
+
+msgid "Carpeta creada."
+msgstr "Carpeta creada."
+
+msgid "Carpeta renombrada."
+msgstr "Carpeta reanomenada."
+
+msgid "Carpeta eliminada."
+msgstr "Carpeta eliminada."
+
+msgid "Escribe la respuesta antes de enviarla."
+msgstr "Escriu la resposta abans d'enviar-la."
+
+msgid "Respuesta enviada."
+msgstr "Resposta enviada."
+
+msgid "Archivar (e)"
+msgstr "Arxiva (e)"
+
+msgid "Mandar a spam o, si ya está en spam, devolver a la bandeja de entrada"
+msgstr "Envia a correu brossa o, si ja hi és, torna'l a la safata d'entrada"
+
+msgid "No es spam"
+msgstr "No és brossa"
+
+msgid "Spam"
+msgstr "Brossa"
+
+msgid "Destacados de esta carpeta"
+msgstr "Destacats d'aquesta carpeta"
+
+msgid "No leídos de esta carpeta"
+msgstr "No llegits d'aquesta carpeta"
+
+msgid "Gestionar carpetas"
+msgstr "Gestiona les carpetes"
+
+msgid "Nueva carpeta"
+msgstr "Nova carpeta"
+
+msgid "Nombre de la nueva carpeta"
+msgstr "Nom de la nova carpeta"
+
+msgid "Dentro de"
+msgstr "Dins de"
+
+msgid "En la raíz"
+msgstr "A l'arrel"
+
+msgid "Nuevo nombre de la carpeta abierta"
+msgstr "Nou nom de la carpeta oberta"
+
+msgid "¿Eliminar esta carpeta y los mensajes que contiene? Esto la borra también en el servidor."
+msgstr "Vols eliminar aquesta carpeta i els missatges que conté? Això també l'esborra al servidor."
+
+msgid "Eliminar la carpeta abierta"
+msgstr "Elimina la carpeta oberta"
+
+msgid "Responder rápido…"
+msgstr "Resposta ràpida…"
+
+msgid "Respuesta rápida"
+msgstr "Resposta ràpida"
+
+msgid "A todos"
+msgstr "A tothom"

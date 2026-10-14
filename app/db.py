@@ -3068,6 +3068,8 @@ from .db_correo import (  # noqa: E402,F401
     guardar_firma_correo,
     guardar_carpetas_correo,
     listar_carpetas_correo,
+    renombrar_carpeta_correo,
+    eliminar_carpeta_correo,
     crear_categoria_correo,
     listar_categorias_correo,
     eliminar_categoria_correo,

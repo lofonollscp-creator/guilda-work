@@ -2299,3 +2299,30 @@ def contar_no_leidos_total_correo(usuario_id: int) -> int:
         ).fetchone()["n"]
     finally:
         conn.close()
+
+
+def renombrar_carpeta_correo(cuenta_id: int, antiguo: str, nuevo: str, nombre_visible: str) -> None:
+    """Renombra en la caché local la carpeta y las de debajo (`antiguo/...` o `antiguo.…`), con sus mensajes, tras renombrarla en el servidor."""
+    conn = _db.get_connection()
+    try:
+        for fila in conn.execute("SELECT id, nombre FROM correo_carpetas WHERE cuenta_id = ?", (cuenta_id,)).fetchall():
+            n = fila["nombre"]
+            if n != antiguo and not (n.startswith(antiguo) and n[len(antiguo)] in "/."):
+                continue
+            destino = nuevo + n[len(antiguo):]
+            conn.execute("UPDATE correo_carpetas SET nombre = ?, nombre_visible = ? WHERE id = ?", (destino, nombre_visible if n == antiguo else destino.split("/")[-1], fila["id"]))
+            conn.execute("UPDATE correo_mensajes SET carpeta = ? WHERE cuenta_id = ? AND carpeta = ?", (destino, cuenta_id, n))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_carpeta_correo(cuenta_id: int, nombre: str) -> None:
+    """Quita de la caché local la carpeta y sus mensajes, tras borrarla en el servidor."""
+    conn = _db.get_connection()
+    try:
+        conn.execute("DELETE FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ?", (cuenta_id, nombre))
+        conn.execute("DELETE FROM correo_carpetas WHERE cuenta_id = ? AND nombre = ?", (cuenta_id, nombre))
+        conn.commit()
+    finally:
+        conn.close()

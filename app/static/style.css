@@ -5039,3 +5039,14 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-shell[data-disposicion="lista"]:not(.es-pantalla-completa) .correo-lectura-pane, .correo-shell[data-disposicion="lista"] .correo-divisor { display: none; }
 }
 .correo-shell.es-pantalla-completa .correo-divisor { display: none; }
+
+/* --- Correo C2: arrastrar a carpetas, gestión de carpetas y respuesta rápida --- */
+.correo-fila-wrap.is-arrastrando { opacity: 0.5; }
+.correo-carpeta-item.es-destino { outline: 2px dashed var(--primary); outline-offset: -2px; background: var(--surface); }
+.correo-carpetas-gestion { margin: 6px 4px; font-size: 0.82em; }
+.correo-carpetas-gestion summary { cursor: pointer; color: var(--text-muted); }
+.correo-carpetas-gestion form { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.correo-carpetas-gestion input[type="text"], .correo-carpetas-gestion select { flex: 1 1 100%; min-width: 0; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; }
+.correo-respuesta-rapida { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.correo-respuesta-rapida textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical; font: inherit; }
+.correo-respuesta-rapida-acciones { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

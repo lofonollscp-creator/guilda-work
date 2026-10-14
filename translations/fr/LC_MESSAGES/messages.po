@@ -12158,3 +12158,78 @@ msgstr "Afficher l'extrait du message dans la liste"
 
 msgid "Arrastra para cambiar el ancho de la lista"
 msgstr "Faites glisser pour changer la largeur de la liste"
+
+msgid "Mensaje archivado."
+msgstr "Message archivé."
+
+msgid "Mensaje devuelto a la bandeja de entrada."
+msgstr "Message remis dans la boîte de réception."
+
+msgid "Mensaje movido a spam."
+msgstr "Message déplacé vers les indésirables."
+
+msgid "Carpeta creada."
+msgstr "Dossier créé."
+
+msgid "Carpeta renombrada."
+msgstr "Dossier renommé."
+
+msgid "Carpeta eliminada."
+msgstr "Dossier supprimé."
+
+msgid "Escribe la respuesta antes de enviarla."
+msgstr "Écrivez votre réponse avant de l'envoyer."
+
+msgid "Respuesta enviada."
+msgstr "Réponse envoyée."
+
+msgid "Archivar (e)"
+msgstr "Archiver (e)"
+
+msgid "Mandar a spam o, si ya está en spam, devolver a la bandeja de entrada"
+msgstr "Envoyer dans les indésirables ou, s'il y est déjà, le remettre dans la boîte de réception"
+
+msgid "No es spam"
+msgstr "Pas un indésirable"
+
+msgid "Spam"
+msgstr "Indésirable"
+
+msgid "Destacados de esta carpeta"
+msgstr "Marqués dans ce dossier"
+
+msgid "No leídos de esta carpeta"
+msgstr "Non lus dans ce dossier"
+
+msgid "Gestionar carpetas"
+msgstr "Gérer les dossiers"
+
+msgid "Nueva carpeta"
+msgstr "Nouveau dossier"
+
+msgid "Nombre de la nueva carpeta"
+msgstr "Nom du nouveau dossier"
+
+msgid "Dentro de"
+msgstr "Dans"
+
+msgid "En la raíz"
+msgstr "À la racine"
+
+msgid "Nuevo nombre de la carpeta abierta"
+msgstr "Nouveau nom du dossier ouvert"
+
+msgid "¿Eliminar esta carpeta y los mensajes que contiene? Esto la borra también en el servidor."
+msgstr "Supprimer ce dossier et les messages qu'il contient ? Il sera aussi supprimé sur le serveur."
+
+msgid "Eliminar la carpeta abierta"
+msgstr "Supprimer le dossier ouvert"
+
+msgid "Responder rápido…"
+msgstr "Réponse rapide…"
+
+msgid "Respuesta rápida"
+msgstr "Réponse rapide"
+
+msgid "A todos"
+msgstr "À tous"

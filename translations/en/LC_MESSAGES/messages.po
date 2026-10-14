@@ -12073,3 +12073,78 @@ msgstr "Show the message excerpt in the list"
 
 msgid "Arrastra para cambiar el ancho de la lista"
 msgstr "Drag to change the list width"
+
+msgid "Mensaje archivado."
+msgstr "Message archived."
+
+msgid "Mensaje devuelto a la bandeja de entrada."
+msgstr "Message returned to the inbox."
+
+msgid "Mensaje movido a spam."
+msgstr "Message moved to spam."
+
+msgid "Carpeta creada."
+msgstr "Folder created."
+
+msgid "Carpeta renombrada."
+msgstr "Folder renamed."
+
+msgid "Carpeta eliminada."
+msgstr "Folder deleted."
+
+msgid "Escribe la respuesta antes de enviarla."
+msgstr "Write your reply before sending it."
+
+msgid "Respuesta enviada."
+msgstr "Reply sent."
+
+msgid "Archivar (e)"
+msgstr "Archive (e)"
+
+msgid "Mandar a spam o, si ya está en spam, devolver a la bandeja de entrada"
+msgstr "Send to spam or, if it is already in spam, return it to the inbox"
+
+msgid "No es spam"
+msgstr "Not spam"
+
+msgid "Spam"
+msgstr "Spam"
+
+msgid "Destacados de esta carpeta"
+msgstr "Flagged in this folder"
+
+msgid "No leídos de esta carpeta"
+msgstr "Unread in this folder"
+
+msgid "Gestionar carpetas"
+msgstr "Manage folders"
+
+msgid "Nueva carpeta"
+msgstr "New folder"
+
+msgid "Nombre de la nueva carpeta"
+msgstr "Name of the new folder"
+
+msgid "Dentro de"
+msgstr "Inside"
+
+msgid "En la raíz"
+msgstr "At the top level"
+
+msgid "Nuevo nombre de la carpeta abierta"
+msgstr "New name for the open folder"
+
+msgid "¿Eliminar esta carpeta y los mensajes que contiene? Esto la borra también en el servidor."
+msgstr "Delete this folder and the messages in it? This also deletes it on the server."
+
+msgid "Eliminar la carpeta abierta"
+msgstr "Delete the open folder"
+
+msgid "Responder rápido…"
+msgstr "Quick reply…"
+
+msgid "Respuesta rápida"
+msgstr "Quick reply"
+
+msgid "A todos"
+msgstr "Reply all"
