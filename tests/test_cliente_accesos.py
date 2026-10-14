@@ -56,7 +56,7 @@ def test_purga_de_lo_antiguo():
 
 def test_las_acciones_de_la_plataforma_quedan_registradas(cliente):
     uid, tenant, cli = _preparar(cliente, "ca-1@x.com")
-    cliente.get(f"/fiscal/clientes/{cli}")
+    cliente.get(f"/fiscal/clientes/{cli}", follow_redirects=True)
     cliente.post(f"/fiscal/clientes/{cli}/documentos", data={"archivo": [(io.BytesIO(b"contenido"), "contrato.pdf")], "categoria": "Contratos"}, content_type="multipart/form-data")
     doc = db.listar_documentos_cliente(tenant, cli)[0]["id"]
     cliente.get(f"/fiscal/clientes/{cli}/documentos/{doc}")
@@ -83,14 +83,14 @@ def test_las_acciones_de_la_plataforma_quedan_registradas(cliente):
 
 def test_solo_los_supervisores_ven_el_registro(cliente):
     uid, tenant, cli = _preparar(cliente, "ca-2@x.com")
-    html = cliente.get(f"/fiscal/clientes/{cli}").get_data(as_text=True)
+    html = cliente.get(f"/fiscal/clientes/{cli}", follow_redirects=True).get_data(as_text=True)
     assert "Quién ha accedido" not in html and cliente.get(f"/fiscal/clientes/{cli}/accesos.csv").status_code == 404
     conn = db.get_connection()
     conn.execute("UPDATE usuarios SET supervisor_tenant = 1 WHERE id = ?", (uid,))
     conn.commit()
     conn.close()
     cliente.get(f"/fiscal/clientes/{cli}/documentos/99999")                                      # un 404 no anota nada
-    html = cliente.get(f"/fiscal/clientes/{cli}").get_data(as_text=True)
+    html = cliente.get(f"/fiscal/clientes/{cli}", follow_redirects=True).get_data(as_text=True)
     assert "Quién ha accedido" in html and "Ha abierto la ficha" in html and "ca-2@x.com" in html
     r = cliente.get(f"/fiscal/clientes/{cli}/accesos.csv")
     assert r.status_code == 200 and r.mimetype == "text/csv" and r.headers["Content-Disposition"].startswith("attachment")

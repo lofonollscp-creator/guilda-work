@@ -103,8 +103,8 @@ def test_flujo_web_archivar_ver_descargar_y_borrar(cliente):
     html = cliente.get("/correo/", query_string={"cuenta_id": db.listar_cuentas_correo(uid)[0]["id"], "mensaje_id": mid}).get_data(as_text=True)
     assert "Archivar en el expediente de un cliente" in html and "extracto.pdf" in html
     r = cliente.post(f"/correo/{mid}/expediente", data={"cliente_fiscal_id": cli, "adjunto": [adj, "x"], "guardar_correo": "on", "categoria": "Extractos"})
-    assert r.status_code == 302 and r.headers["Location"].endswith(f"/fiscal/clientes/{cli}#expediente")
-    ficha = cliente.get(f"/fiscal/clientes/{cli}").get_data(as_text=True)
+    assert r.status_code == 302 and "/clientes/" in r.headers["Location"] and "pestana=documentos" in r.headers["Location"] and r.headers["Location"].endswith("#expediente")
+    ficha = cliente.get(f"/fiscal/clientes/{cli}?pestana=documentos", follow_redirects=True).get_data(as_text=True)
     assert "Expediente" in ficha and "extracto.pdf" in ficha and "Extractos" in ficha and "del correo" in ficha
     doc = [d for d in db.listar_documentos_cliente(tenant, cli) if d["nombre_archivo"] == "extracto.pdf"][0]
     d = cliente.get(f"/fiscal/clientes/{cli}/documentos/{doc['id']}")

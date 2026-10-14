@@ -1,0 +1,101 @@
+{% from "_ds/componentes.html" import chip %}
+<p class="subtitle">
+  {% if fiscal.nif %}{{ fiscal.nif }}{% endif %}
+  {% if modelos_cliente %} · {{ modelos_cliente|join(', ') }}{% endif %}
+  {% if fiscal.generacion_automatica %} · {{ _('Generación automática activa') }}{% endif %}
+  {% if fiscal.pais and fiscal.pais != 'ES' %} · {{ fiscal.pais }}{% endif %}
+</p>
+  <div class="quick-row">
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.editar_cliente', cliente_id=fiscal.id) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg> {{ _('Editar') }}</a>
+    <a class="btn btn-primary" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=fiscal.id) }}">{{ _('Generar vencimientos') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.informe_mensual_pdf', cliente_id=fiscal.id) }}" target="_blank" rel="noopener">{{ _('Informe mensual (PDF)') }}</a>
+    {% if fiscal.espocrm_cuenta_id %}
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.ver_en_espocrm', cliente_id=fiscal.id) }}" target="_blank" rel="noopener">{{ _('Ver en EspoCRM') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-external-link"></use></svg></a>
+    {% endif %}
+    {% if not fiscal.facturascripts_cliente_codigo %}
+    <form method="post" action="{{ url_for('fiscal.vincular_facturascripts', cliente_id=fiscal.id) }}">
+      <button type="submit" class="btn btn-ghost">{{ _('Vincular con FacturaScripts') }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+{% if fiscal.notas %}
+<p class="subtitle">{{ fiscal.notas }}</p>
+{% endif %}
+
+{% if not vencimientos %}
+<p class="empty-lane">{{ _('Este cliente todavía no tiene vencimientos.') }}</p>
+{% else %}
+<ul class="log-list">
+  {% for v in vencimientos %}
+  <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
+    <span class="log-text"><a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a></span>
+    <span class="pill">{{ v.periodo }}</span>
+    <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
+    {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
+    {% set proximo = v.estado == 'pendiente' and not vencido and v.fecha_limite[:10] <= limite_proximo %}
+    <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else ('instantanea' if proximo else 'nota')) }}">
+      {{ _('Vencido') if vencido else v.estado }}
+    </span>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if contactos_espocrm %}
+<section class="ds-max-640 ds-mt-32">
+  <h2>{{ _('Contactos') }}</h2>
+  <ul class="log-list">
+    {% for c in contactos_espocrm %}
+    <li class="log-item">
+      <span class="log-text">{{ c.name or c.lastName }}</span>
+      <span class="log-duration">{{ c.emailAddress or '' }}{% if c.phoneNumber %} · {{ c.phoneNumber }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if proxima_cita %}
+<section class="ds-max-640 ds-mt-32">
+  <h2>{{ _('Próxima cita') }}</h2>
+  <p>
+    {{ proxima_cita.title or _('(sin título)') }}
+    <span class="muted">— {{ proxima_cita.start|fecha_y_hora if proxima_cita.start else '' }}</span>
+  </p>
+  <a class="btn btn-ghost" href="{{ url_for('citas.agenda') }}">{{ _('Ver agenda completa') }}</a>
+</section>
+{% endif %}
+
+{% if fiscal.facturascripts_cliente_codigo %}
+<section class="ds-max-640 ds-mt-32">
+  <h2>{{ _('Facturación') }}</h2>
+  {% if not facturas %}
+  <p class="empty-lane">{{ _('Todavía no hay facturas para este cliente.') }}</p>
+  {% else %}
+  <ul class="log-list">
+    {% for f in facturas %}
+    <li class="log-item">
+      <span class="log-text">{{ f.codigo or f.numero or ('#' ~ f.idfactura) }}</span>
+      <span class="pill">{{ f.fecha }}</span>
+      <span class="log-duration">{{ f.total }} €</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if accesos is not none %}
+<section class="ds-max-640 ds-mt-32" id="accesos">
+  <h2>{{ _('Quién ha accedido') }}</h2>
+  <p class="muted">{{ _('Solo lo ven los supervisores del despacho. Se conserva dos años.') }} <a href="{{ url_for('fiscal.accesos_cliente_csv', cliente_id=fiscal.id) }}">{{ _('Descargar el registro completo (CSV)') }}</a></p>
+  {% if accesos %}
+  <ul class="log-list">
+    {% for a in accesos %}
+    <li class="log-item"><span class="log-text"><strong>{{ a.usuario }}</strong> {{ acciones_acceso.get(a.accion, a.accion) }}{% if a.detalle %} <span class="muted">· {{ a.detalle }}</span>{% endif %}</span><span class="log-duration">{{ a.creado_en|fecha_y_hora }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay accesos registrados.') }}</p>{% endif %}
+</section>
+{% endif %}

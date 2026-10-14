@@ -11883,3 +11883,21 @@ msgstr "Me"
 
 msgid "La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento."
 msgstr "The task is due on the deadline date. Unlike the ones a rule creates, it is not completed automatically when the deadline is filed."
+
+msgid "Todavía no hay mensajes del portal ni correos vinculados a este cliente."
+msgstr "There are no portal messages or linked emails for this client yet."
+
+msgid "Tareas de este cliente"
+msgstr "Tasks for this client"
+
+msgid "abiertas"
+msgstr "open"
+
+msgid "Este cliente todavía no tiene tareas."
+msgstr "This client has no tasks yet."
+
+msgid "Abrir Tareas"
+msgstr "Open Tasks"
+
+msgid "Secciones de la ficha"
+msgstr "Record sections"

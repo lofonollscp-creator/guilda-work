@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 {% from "_ds/componentes.html" import boton, chip, estado_vacio, campo %}
-{% from "_nucleo_macros.html" import aviso_error, chip_plazo, selector_equipo, subir_documento, tamano %}
+{% from "_nucleo_macros.html" import aviso_error, chip_plazo, selector_equipo %}
 {% block title %}{{ c.nombre }} — {{ _('Clientes') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>{{ c.nombre }} {{ chip(_('Empresa') if c.tipo == 'empresa' else _('Persona')) }}{% if c.papelera_en %} {{ chip(_('En la papelera'), 'peligro') }}{% endif %}</h1>
+    <h1>{{ c.nombre }} {{ chip(_('Empresa') if c.tipo == 'empresa' else _('Persona')) }}{% if c.papelera_en %} {{ chip(_('En la papelera'), 'peligro') }}{% endif %}
+      {% if semaforo %}{% if semaforo.estado == 'atrasado' %}{{ chip(_('Atrasado') ~ ' · ' ~ semaforo.atrasados, 'peligro') }}{% elif semaforo.estado == 'proximo' %}{{ chip(_('Vence pronto') ~ ' · ' ~ semaforo.proximos, 'aviso') }}{% elif semaforo.estado == 'al_dia' %}{{ chip(_('Al día'), 'exito') }}{% endif %}{% endif %}</h1>
     <p class="subtitle">{% if c.nif %}{{ c.nif }}{% endif %}{% if c.email %} · {{ c.email }}{% endif %}{% if c.telefono %} · {{ c.telefono }}{% endif %}</p>
   </div>
   <div class="ds-fila">
     {{ boton(_('Nuevo expediente'), 'primario', href=url_for('expedientes.nuevo', cliente_id=c.id)) }}
     {% if g.get('supervisor_tenant') or g.get('es_admin') %}{{ boton(_('Exportar datos (JSON)'), 'fantasma', href=url_for('seguridad.exportar_cliente', cliente_id=c.id)) }}{% endif %}
-    {% if c.cliente_fiscal_id %}{{ boton(_('Ficha fiscal'), 'fantasma', href=url_for('fiscal.ficha_cliente', cliente_id=c.cliente_fiscal_id)) }}
-    {% elif gestion_fiscal_disponible and not c.papelera_en %}
+    {% if not fiscal and gestion_fiscal_disponible and not c.papelera_en %}
     <form class="ds-fila" method="post" action="{{ url_for('clientes.activar_gestion_fiscal', cliente_id=c.id) }}">
       <select name="plantilla_id" aria-label="{{ _('Plantilla de cliente') }}"><option value="">{{ _('Sin plantilla') }}</option>{% for p in plantillas %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
       {{ boton(_('Activar gestión fiscal'), 'fantasma', tipo='submit') }}
@@ -21,8 +21,14 @@
   </div>
 </header>
 {% include "_nucleo_subnav.html" %}
+<nav class="tareas-subnav" aria-label="{{ _('Secciones de la ficha') }}">
+  {% for p, nombre in (('resumen', _('Resumen')), ('fiscal', _('Fiscal')), ('tareas', _('Tareas')), ('documentos', _('Documentos')), ('mensajes', _('Mensajes'))) if p in pestanas %}
+  <a class="{{ 'active' if p == pestana }}" href="{{ url_for('clientes.ficha', cliente_id=c.id, pestana=p) }}">{{ nombre }}</a>
+  {% endfor %}
+</nav>
 {{ aviso_error(error) }}
 
+{% if pestana == 'resumen' %}
 <div class="dash-grid">
 <section class="dash-panel">
   <h2>{{ _('Datos') }}</h2>
@@ -91,26 +97,6 @@
   <ul class="log-list">{% for p in plazos %}<li class="log-item"><span class="log-text">{{ p.titulo }} <span class="muted">{{ p.fecha_limite }}</span></span>{{ chip_plazo(p.estado_calculado, p.dias_restantes) }}</li>{% endfor %}</ul>
 </section>
 {% endif %}
-
-<section class="dash-panel ds-mt-16">
-  <h2>{{ _('Documentos') }}</h2>
-  {% if documentos %}
-  <ul class="log-list">
-    {% for d in documentos %}
-    <li class="log-item">
-      <span class="log-text"><a href="{{ url_for('clientes.descargar_documento', cliente_id=c.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a>
-        <span class="muted">{{ tamano(d.tamano_bytes) }} · {{ d.creado_en[:10] }} · {{ d.subido_por_nombre }}</span>{% if d.categoria %} {{ chip(d.categoria) }}{% endif %}{% if d.cifrado %} {{ chip(_('Cifrado'), 'exito') }}{% endif %}</span>
-      <form method="post" action="{{ url_for('clientes.eliminar_documento', cliente_id=c.id, documento_id=d.id) }}" data-confirmar-envio="{{ _('¿Eliminar este documento?') }}" data-confirmar-peligro>
-        <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button>
-      </form>
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}<p class="muted">{{ _('Sin documentos.') }}</p>{% endif %}
-  {{ subir_documento(url_for('clientes.subir_documento', cliente_id=c.id)) }}
-  {% if c.cliente_fiscal_id %}<p class="muted ds-mt-8">{{ _('Los documentos de gestoría (modelos, justificantes) están en la ficha fiscal.') }}</p>{% endif %}
-</section>
-
 {% if partes %}
 <section class="dash-panel ds-mt-16">
   <h2>{{ _('Últimas horas') }}</h2>
@@ -130,5 +116,10 @@
     <button type="submit" class="btn btn-ghost">{{ _('Fusionar') }}</button>
   </form>
 </section>
+{% endif %}
+{% elif pestana == 'fiscal' %}{% include "_ficha_fiscal.html" %}
+{% elif pestana == 'tareas' %}{% include "_ficha_tareas.html" %}
+{% elif pestana == 'documentos' %}{% include "_ficha_documentos.html" %}
+{% elif pestana == 'mensajes' %}{% include "_ficha_mensajes.html" %}
 {% endif %}
 {% endblock %}

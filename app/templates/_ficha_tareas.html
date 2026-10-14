@@ -1,0 +1,17 @@
+{% from "_ds/componentes.html" import chip, estado_vacio %}
+<section class="dash-panel">
+  <h2>{{ _('Tareas de este cliente') }} <span class="muted">({{ tareas_abiertas }} {{ _('abiertas') }})</span></h2>
+  {% if tareas %}
+  <ul class="log-list">
+    {% for t in tareas %}
+    <li class="log-item {{ 'is-completada' if t.estado == 'completada' }}">
+      <span class="log-text">{{ t.asunto }}</span>
+      {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>{% endif %}
+      {% if t.vencimiento_id %}<a class="pill" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=t.vencimiento_id) }}">{{ _('Vencimiento') }}</a>{% endif %}
+      <span class="pill">{{ _('Completada') if t.estado == 'completada' else _('Abierta') }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Este cliente todavía no tiene tareas.') }}</p>{% endif %}
+  <p class="ds-mt-12"><a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Abrir Tareas') }}</a></p>
+</section>

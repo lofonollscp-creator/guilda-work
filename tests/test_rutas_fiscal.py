@@ -375,7 +375,7 @@ def test_ficha_cliente_muestra_sus_vencimientos_y_aisla_por_tenant(cliente):
     cliente_a_id = db.crear_cliente_fiscal(tenant_a, "Cliente Ficha A")
     db.crear_vencimiento_fiscal(tenant_a, cliente_a_id, "303", "2026-T1", "2026-04-20")
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_a_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_a_id}", follow_redirects=True)
     assert resp.status_code == 200
     assert "303" in resp.get_data(as_text=True)
 
@@ -480,7 +480,7 @@ def test_crear_cliente_con_espocrm_disponible_guarda_cuenta_y_enlaza(cliente, mo
     cliente_id = db.listar_clientes_fiscales(tenant_id)[0]["id"]
     assert db.obtener_cliente_fiscal(tenant_id, cliente_id)["espocrm_cuenta_id"] == "espo123"
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert "Ver en EspoCRM" in resp.get_data(as_text=True)
 
     resp = cliente.get(f"/fiscal/clientes/{cliente_id}/espocrm", follow_redirects=False)
@@ -743,11 +743,13 @@ def test_ficha_cliente_agrega_documentos_y_mensajes_de_todos_sus_vencimientos(cl
     db.crear_mensaje_vencimiento(v1, "cliente", "Mensaje sobre el 303")
     db.crear_mensaje_vencimiento(v2, "empleado", "Respuesta sobre el 130", usuario_id=usuario_id)
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    # La ficha única reparte lo del cliente en pestañas: lo que sube él, en Documentos; sus mensajes, en Mensajes.
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}?pestana=documentos", follow_redirects=True)
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "factura1.pdf" in html
     assert "factura2.pdf" in html
+    html = cliente.get(f"/fiscal/clientes/{cliente_id}?pestana=mensajes", follow_redirects=True).get_data(as_text=True)
     assert "Mensaje sobre el 303" in html
     assert "Respuesta sobre el 130" in html
 
@@ -759,11 +761,10 @@ def test_ficha_cliente_sin_documentos_ni_mensajes_no_muestra_esas_secciones(clie
     cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Salud Vacio")
     db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}?pestana=documentos", follow_redirects=True)
     assert resp.status_code == 200
-    html = resp.get_data(as_text=True)
-    assert "Documentos subidos por el cliente" not in html
-    assert "Últimos mensajes" not in html
+    assert "Documentos subidos por el cliente" not in resp.get_data(as_text=True)
+    assert "Últimos mensajes" not in cliente.get(f"/fiscal/clientes/{cliente_id}?pestana=mensajes", follow_redirects=True).get_data(as_text=True)
 
 
 # --- Eventos de negocio (app/eventos.py) ----------------------------------
@@ -921,7 +922,7 @@ def test_ficha_cliente_muestra_correos_vinculados(cliente):
     )
     correo.asignar_cliente_fiscal(tenant_id, mensaje_id, cliente_id)
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}?pestana=mensajes", follow_redirects=True)
     assert resp.status_code == 200
     assert "Duda sobre el IVA" in resp.get_data(as_text=True)
 
@@ -932,7 +933,7 @@ def test_ficha_cliente_sin_correos_vinculados_no_muestra_la_seccion(cliente):
     db.asignar_tenant(usuario_id, tenant_id)
     cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Correo")
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}?pestana=mensajes", follow_redirects=True)
     assert resp.status_code == 200
     assert "Correos relacionados" not in resp.get_data(as_text=True)
 
@@ -1019,7 +1020,7 @@ def test_ficha_cliente_muestra_contactos_de_espocrm(cliente, monkeypatch):
         lambda cuenta_id, limite=20: [{"name": "Juana Pérez", "emailAddress": "juana@ejemplo.com", "phoneNumber": "600111222"}],
     )
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Juana Pérez" in html
@@ -1032,7 +1033,7 @@ def test_ficha_cliente_sin_cuenta_espocrm_no_muestra_la_seccion(cliente):
     db.asignar_tenant(usuario_id, tenant_id)
     cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Sin Cuenta")
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert resp.status_code == 200
     assert "Contactos</h2>" not in resp.get_data(as_text=True)
 
@@ -1050,7 +1051,7 @@ def test_ficha_cliente_espocrm_caido_no_rompe_la_ficha(cliente, monkeypatch):
         raise espocrm.ErrorEspoCRM("caído")
     monkeypatch.setattr(espocrm, "listar_contactos_de_cuenta", _falla)
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert resp.status_code == 200
 
 

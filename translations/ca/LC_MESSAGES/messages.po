@@ -11892,3 +11892,21 @@ msgstr "Jo"
 
 msgid "La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento."
 msgstr "La tasca venç el dia límit. A diferència de les que crea una regla, no es completa sola en presentar el venciment."
+
+msgid "Todavía no hay mensajes del portal ni correos vinculados a este cliente."
+msgstr "Encara no hi ha missatges del portal ni correus vinculats a aquest client."
+
+msgid "Tareas de este cliente"
+msgstr "Tasques d'aquest client"
+
+msgid "abiertas"
+msgstr "obertes"
+
+msgid "Este cliente todavía no tiene tareas."
+msgstr "Aquest client encara no té tasques."
+
+msgid "Abrir Tareas"
+msgstr "Obrir Tasques"
+
+msgid "Secciones de la ficha"
+msgstr "Seccions de la fitxa"

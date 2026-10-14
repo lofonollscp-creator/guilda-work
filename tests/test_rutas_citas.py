@@ -87,7 +87,7 @@ def test_ficha_cliente_muestra_proxima_cita_si_coincide_el_email(cliente, monkey
         ],
     )
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Próxima cita" in html
@@ -108,7 +108,7 @@ def test_ficha_cliente_sin_email_no_consulta_calcom(cliente, monkeypatch):
         lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debería llamar")),
     )
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert resp.status_code == 200
     assert "Próxima cita" not in resp.get_data(as_text=True)
 
@@ -126,5 +126,5 @@ def test_ficha_cliente_calcom_caido_no_rompe_la_ficha(cliente, monkeypatch):
         raise rutas_fiscal.calcom.ErrorCalcom("caído")
     monkeypatch.setattr(rutas_fiscal.calcom, "listar_reservas", _falla)
 
-    resp = cliente.get(f"/fiscal/clientes/{cliente_id}")
+    resp = cliente.get(f"/fiscal/clientes/{cliente_id}", follow_redirects=True)
     assert resp.status_code == 200

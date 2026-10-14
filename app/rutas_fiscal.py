@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import alta_cliente, almacen_documentos, calcom, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
+from . import alta_cliente, almacen_documentos, calcom, ficha_cliente as ficha_cliente_unica, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
@@ -119,90 +119,13 @@ def crear_cliente():
 @fiscal_bp.route("/clientes/<int:cliente_id>")
 @login_required
 def ficha_cliente(cliente_id: int):
+    """La ficha del cliente es una sola, con pestañas (app/ficha_cliente.py, `/clientes/<id>`): este enlace, que sigue en muchas pantallas, lleva a su pestaña Fiscal
+    (o a la que se pida con `?pestana=`)."""
     cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if cliente is None:
         abort(404)
-    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "ficha_vista")
-    # Facturas de FacturaScripts (bloque 3, best-effort): solo si el
-    # cliente está vinculado -- un fallo de la API no debe romper la
-    # ficha del cliente, así que se traga en silencio como el resto de
-    # integraciones opcionales de esta pantalla (EspoCRM).
-    facturas = []
-    if cliente["facturascripts_cliente_codigo"]:
-        tenant = db.obtener_tenant(g.tenant_id)
-        try:
-            facturas = facturascripts.listar_facturas(
-                tenant["facturascripts_url"], tenant["facturascripts_api_key"],
-                cliente_codigo=cliente["facturascripts_cliente_codigo"], limite=10,
-            )
-        except facturascripts.ErrorFacturaScripts:
-            facturas = []
-    # Contactos de EspoCRM (tercera ronda de mejoras): solo si el cliente
-    # ya está vinculado a una Cuenta -- best-effort, mismo criterio que
-    # facturas/documentos/mensajes/correos de esta misma ficha.
-    contactos_espocrm = []
-    if cliente["espocrm_cuenta_id"]:
-        try:
-            contactos_espocrm = espocrm.listar_contactos_de_cuenta(cliente["espocrm_cuenta_id"])
-        except espocrm.ErrorEspoCRM:
-            contactos_espocrm = []
-    # Próxima cita en Cal.diy (tercera ronda de mejoras): sin ninguna
-    # columna nueva -- Cal.diy no tiene concepto de "cliente" propio, así
-    # que se correlaciona por email (el mismo email de la ficha del
-    # cliente, si tiene uno puesto) contra el asistente de cada reserva
-    # próxima del tenant. Best-effort, mismo criterio que el resto de
-    # integraciones opcionales de esta pantalla.
-    proxima_cita = None
-    if cliente["email"]:
-        tenant_calcom = db.obtener_tenant(g.tenant_id)
-        api_key = tenant_calcom["calcom_api_key"] if tenant_calcom else None
-        if api_key:
-            try:
-                reservas = calcom.listar_reservas(api_key, desde=date.today().isoformat())
-                for r in reservas:
-                    if any(a.get("email", "").lower() == cliente["email"].lower() for a in r.get("attendees", [])):
-                        proxima_cita = r
-                        break
-            except calcom.ErrorCalcom:
-                proxima_cita = None
-    # Panel de "salud del cliente" (bloque 4): documentos y mensajes del
-    # portal de cliente NO tienen una función de BD propia por
-    # cliente_fiscal_id (listar_documentos_vencimiento/
-    # listar_mensajes_vencimiento están firmadas por vencimiento_id) --
-    # se agregan aquí iterando los vencimientos ya cargados, sin tocar
-    # el esquema ni añadir funciones nuevas de BD.
-    vencimientos = db.listar_vencimientos_fiscales(g.tenant_id, cliente_fiscal_id=cliente_id)
-    documentos_totales = []
-    mensajes_totales = []
-    for v in vencimientos:
-        for d in db.listar_documentos_vencimiento(v["id"]):
-            documentos_totales.append({**dict(d), "vencimiento": v})
-        for m in db.listar_mensajes_vencimiento(v["id"]):
-            mensajes_totales.append({**dict(m), "vencimiento": v})
-    mensajes_totales.sort(key=lambda m: m["creado_en"], reverse=True)
-    # Correos vinculados manualmente desde Correo (bloque de esta ronda,
-    # ver app/rutas_correo.py:asignar_cliente_fiscal) -- no es
-    # automático, un empleado tiene que haberlo enlazado a mano.
-    correos_relacionados = db.listar_correos_de_cliente_fiscal(cliente_id)
-    return render_template(
-        "fiscal_cliente_detalle.html",
-        cliente=cliente,
-        expediente=almacen_documentos.listar_de_cliente_fiscal(g.tenant_id, cliente_id),
-        categorias_documento=db.CATEGORIAS_DOCUMENTO, soy_supervisor=db.es_supervisor_tenant(g.usuario_id),
-        accesos=db.listar_accesos_cliente(g.tenant_id, cliente_id, 50) if db.es_supervisor_tenant(g.usuario_id) else None,
-        acciones_acceso={k: str(v) for k, v in ETIQUETAS_ACCESO.items()},
-        modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
-        modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
-        vencimientos=vencimientos,
-        hoy=date.today().isoformat(),
-        limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
-        facturas=facturas,
-        contactos_espocrm=contactos_espocrm,
-        proxima_cita=proxima_cita,
-        documentos_totales=documentos_totales,
-        mensajes_totales=mensajes_totales,
-        correos_relacionados=correos_relacionados,
-    )
+    destino = cliente["cliente_id"] or nucleo.vincular_cliente_fiscal(g.tenant_id, cliente_id)
+    return redirect(url_for("clientes.ficha", cliente_id=destino, pestana=request.args.get("pestana") or "fiscal"))
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos", methods=["POST"])
@@ -219,7 +142,7 @@ def subir_documentos_cliente(cliente_id: int):
             )
             if resultado == "ok":
                 db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_subido", archivo.filename)
-    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
+    return redirect(ficha_cliente_unica.url_documentos(g.tenant_id, cliente_id))
 
 
 # Tipos que un navegador interpretaría como página si se abrieran: se sirven siempre como descarga genérica.
@@ -247,7 +170,7 @@ def eliminar_documento_cliente(cliente_id: int, documento_id: int):
     if not almacen_documentos.eliminar_de_cliente_fiscal(g.usuario_id, cliente_id, documento_id):
         abort(404)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", previo["nombre_archivo"] if previo else "")
-    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
+    return redirect(ficha_cliente_unica.url_documentos(g.tenant_id, cliente_id))
 
 
 def _vista_previa_recordatorio(config: dict) -> dict | None:

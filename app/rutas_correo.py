@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, correo_oauth, db, ia_asistente, notificaciones, peticion, quickadd
+from . import correo, correo_ia, correo_oauth, db, ficha_cliente, ia_asistente, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -1285,7 +1285,7 @@ def archivar_en_expediente(mensaje_id: int):
         )
     except correo.ErrorCorreo:
         abort(404)
-    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id) + "#expediente")
+    return redirect(ficha_cliente.url_documentos(g.tenant_id, cliente_id))
 
 
 @correo_bp.route("/ajustes/reglas-avanzadas", methods=["POST"])

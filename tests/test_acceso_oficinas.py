@@ -192,7 +192,7 @@ def test_la_web_filtra_y_el_auditor_no_escribe(cliente, d):
     acceso.dar_membresia(d.t, d.sup, uid, "gestor", "oficina", d.girona)
     pagina = cliente.get("/fiscal/clientes").get_data(as_text=True)
     assert "Cliente A (Girona)" in pagina and "Cliente B (Barcelona)" not in pagina
-    assert cliente.get(f"/fiscal/clientes/{d.b}").status_code == 404 and cliente.get(f"/fiscal/clientes/{d.a}").status_code == 200
+    assert cliente.get(f"/fiscal/clientes/{d.b}").status_code == 404 and cliente.get(f"/fiscal/clientes/{d.a}", follow_redirects=True).status_code == 200      # (la ficha es una sola: /clientes/<id>)
     assert cliente.get(f"/fiscal/clientes/{d.b}/editar").status_code == 404
     assert cliente.post(f"/fiscal/clientes/{d.b}/eliminar").status_code == 404 or db.obtener_cliente_fiscal(d.t, d.b) is not None
     assert "Cliente B (Barcelona)" not in cliente.get("/fiscal/vencimientos").get_data(as_text=True)

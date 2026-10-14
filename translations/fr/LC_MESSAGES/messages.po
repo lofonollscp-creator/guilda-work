@@ -11968,3 +11968,21 @@ msgstr "Moi"
 
 msgid "La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento."
 msgstr "La tâche est due à la date limite. Contrairement à celles créées par une règle, elle n'est pas terminée automatiquement au dépôt de l'échéance."
+
+msgid "Todavía no hay mensajes del portal ni correos vinculados a este cliente."
+msgstr "Aucun message du portail ni e-mail associé à ce client pour l'instant."
+
+msgid "Tareas de este cliente"
+msgstr "Tâches de ce client"
+
+msgid "abiertas"
+msgstr "ouvertes"
+
+msgid "Este cliente todavía no tiene tareas."
+msgstr "Ce client n'a pas encore de tâches."
+
+msgid "Abrir Tareas"
+msgstr "Ouvrir Tâches"
+
+msgid "Secciones de la ficha"
+msgstr "Sections de la fiche"

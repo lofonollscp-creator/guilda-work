@@ -141,7 +141,7 @@ def test_la_ficha_ofrece_activar_la_gestion_fiscal_y_deja_de_hacerlo_una_vez_act
     r = cliente.post(f"/clientes/{cid}/gestion-fiscal", data={"perfil_tipo": "sociedad", "perfil_atributos": ["iva"]})
     assert r.status_code == 302
     html = cliente.get(f"/clientes/{cid}").get_data(as_text=True)
-    assert "Activar gestión fiscal" not in html and "Ficha fiscal" in html
+    assert "Activar gestión fiscal" not in html and "pestana=fiscal" in html, "con gestión fiscal la ficha ofrece la pestaña Fiscal en lugar del botón"
     assert nucleo.obtener_cliente(t, cid)["cliente_fiscal_id"] is not None
 
 

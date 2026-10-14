@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import alta_cliente, almacen_documentos, calendario_plazos, db, generador_documentos, nucleo, perfil_fiscal, plantillas_cliente, verticales
+from . import alta_cliente, almacen_documentos, calendario_plazos, db, ficha_cliente, generador_documentos, nucleo, perfil_fiscal, plantillas_cliente, verticales
 from .auth import login_required
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/clientes")
@@ -174,20 +174,38 @@ def eliminar_plantilla(plantilla_id: str):
 @clientes_bp.route("/<int:cliente_id>")
 @login_required
 def ficha(cliente_id: int):
+    """La ficha única del cliente, con pestañas (app/ficha_cliente.py): solo se calcula lo que enseña la pestaña abierta."""
     t = _tenant()
     c = nucleo.obtener_cliente(t, cliente_id)
     if c is None:
         abort(404)
-    exps, _n = nucleo.listar_expedientes(t, g.usuario_id, _supervisor(), cliente_id=cliente_id, limite=50)
-    return render_template(
-        "cliente_ficha.html", c=c, contactos=nucleo.listar_contactos(t, cliente_id), etiquetas=nucleo.etiquetas_de(cliente_id), expedientes=exps,
-        plazos=nucleo.listar_plazos(t, g.usuario_id, _supervisor(), cliente_id=cliente_id, estado="abiertos", limite=20),
-        partes=nucleo.listar_partes(t, g.usuario_id, _supervisor(), ver_todo=_supervisor(), cliente_id=cliente_id, limite=10),
-        documentos=almacen_documentos.listar(t, g.usuario_id, cliente_id=cliente_id), equipo=nucleo.equipo(t), error=_error(), subnav="clientes",
-        tipos=verticales.tipos_expediente(t), hoy=date.today().isoformat(), gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t),
-        plantillas=plantillas_cliente.listar(t),
-        otros=[o for o in nucleo.listar_clientes(t, limite=500)[0] if o["id"] != cliente_id],
-    )
+    fid = c["cliente_fiscal_id"]
+    pestana = ficha_cliente.pestana_valida(request.args.get("pestana"), fid)
+    fiscal = db.obtener_cliente_fiscal(t, fid) if fid else None
+    if fid and fiscal is None:                       # la ficha fiscal existe pero esta persona no la ve (otra oficina): se trata como un cliente sin gestión fiscal
+        fid, pestana = None, ficha_cliente.pestana_valida(request.args.get("pestana"), None)
+    vencimientos = db.listar_vencimientos_fiscales(t, cliente_fiscal_id=fid) if fid else []
+    ctx = {"c": c, "pestana": pestana, "pestanas": ficha_cliente.pestanas_disponibles(fid), "fiscal": fiscal, "equipo": nucleo.equipo(t), "error": _error(), "subnav": "clientes",
+           "gestion_fiscal_disponible": alta_cliente.gestion_fiscal_disponible(t), "plantillas": plantillas_cliente.listar(t),
+           "semaforo": ficha_cliente.semaforo(vencimientos) if fid else None, "hoy": date.today().isoformat()}
+    if pestana == "resumen":
+        exps, _n = nucleo.listar_expedientes(t, g.usuario_id, _supervisor(), cliente_id=cliente_id, limite=50)
+        ctx.update(
+            contactos=nucleo.listar_contactos(t, cliente_id), etiquetas=nucleo.etiquetas_de(cliente_id), expedientes=exps, tipos=verticales.tipos_expediente(t),
+            plazos=nucleo.listar_plazos(t, g.usuario_id, _supervisor(), cliente_id=cliente_id, estado="abiertos", limite=20),
+            partes=nucleo.listar_partes(t, g.usuario_id, _supervisor(), ver_todo=_supervisor(), cliente_id=cliente_id, limite=10),
+            otros=[o for o in nucleo.listar_clientes(t, limite=500)[0] if o["id"] != cliente_id],
+        )
+    elif pestana == "fiscal":
+        db.registrar_acceso_cliente(t, fid, g.usuario_id, "ficha_vista")
+        ctx.update(ficha_cliente.contexto_fiscal(t, g.usuario_id, fiscal, vencimientos))
+    elif pestana == "documentos":
+        ctx.update(ficha_cliente.contexto_documentos(t, g.usuario_id, c, fiscal, vencimientos))
+    elif pestana == "mensajes":
+        ctx.update(ficha_cliente.contexto_mensajes(fiscal, vencimientos))
+    elif pestana == "tareas":
+        ctx.update(ficha_cliente.contexto_tareas(g.usuario_id, fiscal))
+    return render_template("cliente_ficha.html", **ctx)
 
 
 @clientes_bp.route("/<int:cliente_id>/editar", methods=["POST"])

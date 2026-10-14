@@ -137,7 +137,7 @@ def test_pdf_informe_mensual_via_ruta(cliente):
     assert resp.status_code == 200 and resp.mimetype == "application/pdf" and resp.data.startswith(b"%PDF")
     assert cliente.get(f"/fiscal/clientes/{cid}/informe-mensual.pdf?mes=2026-13").status_code == 400
     assert cliente.get("/fiscal/clientes/99999/informe-mensual.pdf").status_code == 404
-    assert "Informe mensual (PDF)" in cliente.get(f"/fiscal/clientes/{cid}").get_data(as_text=True)
+    assert "Informe mensual (PDF)" in cliente.get(f"/fiscal/clientes/{cid}", follow_redirects=True).get_data(as_text=True)
 
 
 def test_informe_mensual_de_otro_despacho_da_404(cliente):

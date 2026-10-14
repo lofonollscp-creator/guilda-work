@@ -1,0 +1,35 @@
+{% if not mensajes_totales and not correos_relacionados %}
+<p class="empty-lane">{{ _('Todavía no hay mensajes del portal ni correos vinculados a este cliente.') }}</p>
+{% endif %}
+{% if mensajes_totales %}
+<section class="ds-max-640 ds-mt-32">
+  <h2>{{ _('Últimos mensajes') }}</h2>
+  <ul class="log-list">
+    {% for m in mensajes_totales[:10] %}
+    <li class="log-item">
+      <span class="pill">{{ m.vencimiento.modelo }} {{ m.vencimiento.periodo }}</span>
+      <span class="log-text">
+        <a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=m.vencimiento.id) }}">{{ _('Cliente') if m.autor == 'cliente' else _('Equipo') }}: {{ m.texto }}</a>
+      </span>
+      <span class="log-duration">{{ m.creado_en|fecha_y_hora }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if correos_relacionados %}
+<section class="ds-max-640 ds-mt-32">
+  <h2>{{ _('Correos relacionados') }}</h2>
+  <ul class="log-list">
+    {% for c in correos_relacionados %}
+    <li class="log-item">
+      <span class="log-text">
+        <a href="{{ url_for('correo.bandeja', cuenta_id=c.cuenta_id, carpeta=c.carpeta, mensaje_id=c.id) }}">{{ c.asunto or _('(sin asunto)') }}</a>
+      </span>
+      <span class="log-duration">{{ c.remitente }} · {{ c.fecha|fecha_y_hora if c.fecha else '' }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
