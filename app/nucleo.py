@@ -1191,3 +1191,25 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM cliente_etiquetas WHERE cliente_id IN (SELECT id FROM clientes WHERE tenant_id = ?)", (tenant_id,))
     conn.execute("DELETE FROM clientes WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM tenants_verticales WHERE tenant_id = ?", (tenant_id,))
+
+
+def direcciones_de_clientes(tenant_id: int, q: str, limite: int = 8) -> list[dict]:
+    """Direcciones de correo de los clientes y de sus personas de contacto que coinciden con `q`, para el autocompletado de Correo. Solo los clientes que la persona puede ver (oficinas)."""
+    q = (q or "").strip().lower()
+    if len(q) < 2:
+        return []
+    patron = f"%{q}%"
+    extra, pe = acceso.restriccion_nucleo(tenant_id, "c.id")
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(
+            f"""SELECT c.email AS direccion, c.nombre AS nombre_mostrado FROM clientes c
+                WHERE c.tenant_id = ? AND c.papelera_en IS NULL AND c.email IS NOT NULL AND c.email != '' AND (LOWER(c.email) LIKE ? OR LOWER(c.nombre) LIKE ?){extra}
+                UNION
+                SELECT k.email, k.nombre || ' (' || c.nombre || ')' FROM cliente_contactos k JOIN clientes c ON c.id = k.cliente_id
+                WHERE c.tenant_id = ? AND c.papelera_en IS NULL AND k.email IS NOT NULL AND k.email != '' AND (LOWER(k.email) LIKE ? OR LOWER(k.nombre) LIKE ?){extra}
+                ORDER BY 2 LIMIT ?""",
+            (tenant_id, patron, patron, *pe, tenant_id, patron, patron, *pe, limite)).fetchall()
+    finally:
+        conn.close()
+    return [dict(f) for f in filas]

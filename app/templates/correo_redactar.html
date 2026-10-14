@@ -36,6 +36,34 @@
         {% endfor %}
       </select>
     </div>
+    {% if identidades %}
+    <div class="correo-compose-campo" id="correo-identidad-campo">
+      <label>{{ _('Remitente') }}</label>
+      <select name="identidad_id" aria-label="{{ _('Remitente') }}">
+        <option value="">{{ _('La propia cuenta') }}</option>
+        {% for i in identidades %}<option value="{{ i.id }}" data-cuenta="{{ i.cuenta_id }}">{{ i.nombre }} &lt;{{ i.direccion }}&gt;</option>{% endfor %}
+      </select>
+    </div>
+    <script nonce="{{ g.csp_nonce }}">
+    (function () {
+      const cuenta = document.querySelector('select[name="cuenta_id"]');
+      const identidad = document.querySelector('select[name="identidad_id"]');
+      const campo = document.getElementById("correo-identidad-campo");
+      if (!cuenta || !identidad) return;
+      function filtrar() {
+        let hay = false;
+        Array.from(identidad.options).forEach(function (o) {
+          if (!o.dataset.cuenta) return;
+          const ok = o.dataset.cuenta === cuenta.value;
+          o.hidden = !ok; o.disabled = !ok; hay = hay || ok;
+          if (!ok && o.selected) identidad.value = "";
+        });
+        campo.hidden = !hay;
+      }
+      cuenta.addEventListener("change", filtrar); filtrar();
+    })();
+    </script>
+    {% endif %}
     <div class="correo-compose-campo correo-autocomplete-wrap">
       <label>{{ _('Para') }}</label>
       <input type="text" name="destinatarios" value="{{ destinatarios }}" placeholder="correo@ejemplo.com, otro@ejemplo.com" required data-destinatarios-autocomplete autocomplete="off" aria-label="{{ _('Para') }}">
@@ -111,6 +139,8 @@
         </label>
         <span class="file-input-nombre">{{ _('Ningún archivo elegido') }}</span>
       </span>
+      <p class="muted">{{ _('También puedes arrastrar archivos aquí o pegarlos en el mensaje.') }}</p>
+      <ul id="correo-adjuntos-lista" class="correo-adjuntos-lista" hidden></ul>
     </div>
 
     <div class="correo-compose-acciones">
@@ -128,14 +158,16 @@
           {% for n in (2, 3, 5, 7, 14) %}<option value="{{ n }}">{{ ngettext('%(n)s día', '%(n)s días', n, n=n) }}</option>{% endfor %}
         </select>
       </label>
-      <button type="button" id="correo-guardar-borrador" class="btn btn-ghost"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Guardar borrador') }}</button>
+      <button type="button" id="correo-guardar-borrador" class="btn btn-ghost" data-url="{{ url_for('correo.guardar_borrador') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg> {{ _('Guardar borrador') }}</button>
       <a class="btn btn-ghost" href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id) }}">{{ _('Descartar') }}</a>
+      <span id="correo-autoguardado-estado" class="muted" role="status"></span>
     </div>
   </form>
 </div>
 {% endif %}
 <script src="{{ url_for('static', filename='correo_editor.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_destinatarios.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_redactar_extra.js') }}"></script>
 {% if plantillas %}
 <script nonce="{{ g.csp_nonce }}">
 (function () {

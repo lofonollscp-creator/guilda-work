@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, notificaciones, peticion, quickadd
+from . import correo, correo_autorespuesta, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -138,6 +138,7 @@ def _render_redactar(
         borrador_id=borrador_id,
         adjuntos_borrador=db.listar_adjuntos_borrador(g.usuario_id, borrador_id) if borrador_id else [],
         deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
+        identidades=db.listar_identidades_correo(g.usuario_id),
     )
 
 
@@ -965,6 +966,9 @@ def enviar():
         adjuntos = db.adjuntos_borrador_para_enviar(g.usuario_id, borrador_id, [int(i) for i in ids_mantener]) + adjuntos
     programado = request.form.get("programar") == "1"
     seguimiento_dias = db.seguimiento_dias_valido(request.form.get("seguimiento_dias"))
+    identidad_id = request.form.get("identidad_id", type=int)
+    if identidad_id is not None and db.obtener_identidad_correo(g.usuario_id, identidad_id, cuenta_id) is None:
+        identidad_id = None                      # una identidad que no es de esa cuenta no vale: se envía como la cuenta
     deshacer = db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"]
     try:
         enviar_en = None
@@ -982,7 +986,7 @@ def enviar():
             envio_id = correo.encolar_envio(
                 g.usuario_id, cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
                 en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, enviar_en=enviar_en, programado=programado,
-                seguimiento_dias=seguimiento_dias,
+                seguimiento_dias=seguimiento_dias, identidad_id=identidad_id,
             )
             if borrador_id is not None:
                 db.eliminar_borrador_correo(g.usuario_id, borrador_id)
@@ -990,7 +994,7 @@ def enviar():
         correo.construir_y_enviar(
             g.usuario_id,
             cuenta_id, destinatarios, asunto, cuerpo_html, cc=cc, bcc=bcc,
-            en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, seguimiento_dias=seguimiento_dias,
+            en_respuesta_a=en_respuesta_a, adjuntos=adjuntos, seguimiento_dias=seguimiento_dias, identidad_id=identidad_id,
         )
     except correo.ErrorCorreo as e:
         return _render_redactar(
@@ -1233,6 +1237,8 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         variables_plantilla=correo.VARIABLES_PLANTILLA,
         seguimientos=db.listar_seguimientos_correo(g.usuario_id),
+        identidades=db.listar_identidades_correo(g.usuario_id),
+        autorespuestas={c["id"]: correo_autorespuesta.obtener(c["id"]) for c in cuentas},
         error=error,
     )
 
@@ -1429,8 +1435,45 @@ def eliminar_regla_avanzada(regla_id: int):
 @login_required
 def destinatarios_recientes():
     q = request.args.get("q", "")
-    filas = db.buscar_destinatarios_recientes(g.usuario_id, q)
-    return jsonify([dict(f) for f in filas])
+    resultado = [dict(f) for f in db.buscar_destinatarios_recientes(g.usuario_id, q)]
+    if g.tenant_id is not None:          # además, las direcciones de los clientes y de sus contactos que la persona puede ver
+        vistos = {r["direccion"].lower() for r in resultado}
+        resultado += [d for d in nucleo.direcciones_de_clientes(g.tenant_id, q) if d["direccion"].lower() not in vistos]
+    return jsonify(resultado[:10])
+
+
+@correo_bp.route("/ajustes/autorespuesta", methods=["POST"])
+@login_required
+def guardar_autorespuesta():
+    cuenta_id = request.form.get("cuenta_id", type=int)
+    if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
+        abort(404)
+    try:
+        correo_autorespuesta.guardar(g.usuario_id, cuenta_id, activa=request.form.get("activa") == "on", desde=request.form.get("desde"), hasta=request.form.get("hasta"),
+                                     asunto=request.form.get("asunto", ""), cuerpo=request.form.get("cuerpo", ""))
+    except ValueError as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/identidades", methods=["POST"])
+@login_required
+def crear_identidad():
+    cuenta_id = request.form.get("cuenta_id", type=int)
+    if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
+        abort(404)
+    try:
+        correo.crear_identidad(g.usuario_id, cuenta_id, request.form.get("nombre", ""), request.form.get("direccion", ""))
+    except correo.ErrorCorreo as e:
+        return _render_ajustes(error=str(e))
+    return redirect(url_for("correo.ajustes"))
+
+
+@correo_bp.route("/ajustes/identidades/<int:identidad_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_identidad(identidad_id: int):
+    db.eliminar_identidad_correo(g.usuario_id, identidad_id)
+    return redirect(url_for("correo.ajustes"))
 
 
 @correo_bp.route("/ajustes/firma", methods=["POST"])

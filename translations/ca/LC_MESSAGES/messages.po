@@ -12157,3 +12157,45 @@ msgstr "Resposta ràpida"
 
 msgid "A todos"
 msgstr "A tothom"
+
+msgid "También puedes arrastrar archivos aquí o pegarlos en el mensaje."
+msgstr "També pots arrossegar fitxers aquí o enganxar-los al missatge."
+
+msgid "Borrador guardado"
+msgstr "Esborrany desat"
+
+msgid "No se pudo guardar el borrador"
+msgstr "No s'ha pogut desar l'esborrany"
+
+msgid "Los adjuntos superan los 25 MB."
+msgstr "Els adjunts superen els 25 MB."
+
+msgid "La propia cuenta"
+msgstr "El propi compte"
+
+msgid "Identidades de envío"
+msgstr "Identitats d'enviament"
+
+msgid "Direcciones y nombres desde los que puedes escribir con una cuenta (por ejemplo, un alias del despacho). Tu servidor de correo tiene que admitir ese remitente."
+msgstr "Adreces i noms des dels quals pots escriure amb un compte (per exemple, un àlies del despatx). El teu servidor de correu ha d'admetre aquest remitent."
+
+msgid "¿Eliminar esta identidad?"
+msgstr "Vols eliminar aquesta identitat?"
+
+msgid "Nombre visible"
+msgstr "Nom visible"
+
+msgid "Añadir identidad"
+msgstr "Afegeix identitat"
+
+msgid "Respuesta automática (fuera de la oficina)"
+msgstr "Resposta automàtica (fora de l'oficina)"
+
+msgid "Mientras esté activa, quien te escriba recibe este mensaje una sola vez. No se contesta a correos automáticos, listas de correo ni direcciones del tipo noreply."
+msgstr "Mentre estigui activa, qui t'escrigui rep aquest missatge una sola vegada. No es respon a correus automàtics, llistes de correu ni adreces del tipus noreply."
+
+msgid "Activar la respuesta automática"
+msgstr "Activa la resposta automàtica"
+
+msgid "Desde (opcional)"
+msgstr "Des de (opcional)"

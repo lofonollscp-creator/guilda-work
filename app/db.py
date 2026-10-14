@@ -1770,6 +1770,15 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_cuentas", "auth_tipo", "TEXT NOT NULL DEFAULT 'password'")
         _asegurar_columna(conn, "correo_reglas", "archivar_adjuntos", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_envios", "seguimiento_dias", "INTEGER")
+        _asegurar_columna(conn, "correo_envios", "identidad_id", "INTEGER")
+        conn.execute("""CREATE TABLE IF NOT EXISTS correo_identidades (
+            id INTEGER PRIMARY KEY,
+            cuenta_id INTEGER NOT NULL REFERENCES correo_cuentas(id) ON DELETE CASCADE,
+            nombre TEXT NOT NULL,
+            direccion TEXT NOT NULL,
+            creada_en TEXT NOT NULL,
+            UNIQUE (cuenta_id, direccion)
+        )""")
         _asegurar_columna(conn, "correo_plantillas", "modelo", "TEXT")      # modelo fiscal al que se refiere (p. ej. 303)
         # Tiquets: prioridad y responsable asignado (app/rutas_tiquets.py) --
         # sin CHECK a nivel de esquema para "prioridad" (ALTER TABLE ADD
@@ -2198,6 +2207,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import correo_autorespuesta
+        correo_autorespuesta.crear_esquema(conn)   # respuesta automática por cuenta de correo (app/correo_autorespuesta.py)
         from . import reglas_laborales
         reglas_laborales.crear_esquema(conn)  # reglas laborales aprobadas por el propietario, vacías al instalar (app/reglas_laborales.py)
         from . import laboral
@@ -3071,6 +3082,10 @@ from .db_correo import (  # noqa: E402,F401
     renombrar_carpeta_correo,
     eliminar_carpeta_correo,
     crear_categoria_correo,
+    crear_identidad_correo,
+    listar_identidades_correo,
+    obtener_identidad_correo,
+    eliminar_identidad_correo,
     listar_categorias_correo,
     eliminar_categoria_correo,
     crear_plantilla_correo,

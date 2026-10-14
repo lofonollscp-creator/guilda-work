@@ -47,13 +47,14 @@ import os
 import poplib
 import re
 import smtplib
+import sqlite3
 import socket
 import threading
 import time
 from datetime import datetime, timedelta
 from email.header import decode_header
 from email.message import EmailMessage
-from email.utils import make_msgid, getaddresses, parsedate_to_datetime
+from email.utils import formataddr, make_msgid, getaddresses, parsedate_to_datetime
 
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
@@ -736,6 +737,12 @@ def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: s
             cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
         )
         _sellar_si_procede(mensaje_id)
+        if carpeta == "INBOX" and not leido:
+            try:
+                from . import correo_autorespuesta
+                correo_autorespuesta.responder_si_procede(cuenta, mensaje)
+            except Exception:  # noqa: BLE001 -- la respuesta automática nunca debe impedir guardar el correo
+                logger.exception("Respuesta automática fallida en la cuenta %s", cuenta["id"])
     return mensaje_id, leido
 
 
@@ -1650,6 +1657,21 @@ def eliminar_carpeta(usuario_id: int, cuenta_id: int, carpeta: str) -> None:
     db.eliminar_carpeta_correo(cuenta_id, carpeta)
 
 
+def crear_identidad(usuario_id: int, cuenta_id: int, nombre: str, direccion: str) -> int:
+    """Añade una identidad de envío (alias) a una cuenta que ya puede enviar. El servidor SMTP tiene que admitir ese remitente."""
+    cuenta = db.obtener_cuenta_correo(usuario_id, cuenta_id)
+    if cuenta is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+    nombre = " ".join((nombre or "").split())[:100]
+    direccion = (direccion_email(direccion) or "").lower()
+    if not nombre or not direccion or not re.fullmatch(r"[^@\s<>\",;]+@[^@\s<>\",;]+\.[^@\s<>\",;]+", direccion):
+        raise ErrorCorreo("Indica un nombre y una dirección de correo válida.")
+    try:
+        return db.crear_identidad_correo(usuario_id, cuenta_id, nombre, direccion)
+    except sqlite3.IntegrityError:
+        raise ErrorCorreo("Esa dirección ya está añadida a la cuenta.") from None
+
+
 # --- Categorías (propias de Guilda Work, no se sincronizan) -------------------
 
 def crear_categoria(usuario_id: int, nombre: str, color: str) -> int:
@@ -1885,7 +1907,7 @@ def validar_envio(usuario_id: int, cuenta_id: int, destinatarios: str, asunto: s
 def encolar_envio(
     usuario_id: int, cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
     cc: str = "", bcc: str = "", en_respuesta_a: str | None = None, adjuntos: list[dict] | None = None,
-    *, enviar_en: str, programado: bool = False, seguimiento_dias: int | None = None,
+    *, enviar_en: str, programado: bool = False, seguimiento_dias: int | None = None, identidad_id: int | None = None,
 ) -> int:
     """Valida y deja el correo en la cola (se envía cuando llegue `enviar_en`,
     ISO local). Devuelve el id del envío."""
@@ -1895,7 +1917,7 @@ def encolar_envio(
         raise ErrorCorreo("Los adjuntos superan el tamaño máximo de 25 MB.")
     return db.encolar_envio_correo(
         usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
-        adjuntos, enviar_en, programado, seguimiento_dias,
+        adjuntos, enviar_en, programado, seguimiento_dias, identidad_id,
     )
 
 
@@ -1925,7 +1947,7 @@ def procesar_envios_pendientes(ahora: datetime | None = None) -> int:
                 envio["usuario_id"], envio["cuenta_id"], envio["destinatarios"], envio["asunto"],
                 envio["cuerpo_html"], cc=envio["cc"] or "", bcc=envio["bcc"] or "",
                 en_respuesta_a=envio["en_respuesta_a"], adjuntos=db.adjuntos_envio_correo(envio["id"]),
-                seguimiento_dias=envio["seguimiento_dias"],
+                seguimiento_dias=envio["seguimiento_dias"], identidad_id=envio["identidad_id"],
             )
         except Exception as e:  # noqa: BLE001 -- un envío fallido no debe parar la cola
             logger.exception("Envío de correo %s fallido", envio["id"])
@@ -1992,9 +2014,10 @@ def construir_y_enviar(
     usuario_id: int,
     cuenta_id: int, destinatarios: str, asunto: str, cuerpo_html: str,
     cc: str = "", bcc: str = "", en_respuesta_a: str | None = None,
-    adjuntos: list[dict] | None = None, seguimiento_dias: int | None = None,
+    adjuntos: list[dict] | None = None, seguimiento_dias: int | None = None, identidad_id: int | None = None,
+    cabeceras_extra: dict[str, str] | None = None,
 ) -> str:
-    """Envía un correo desde `cuenta_id` y devuelve su Message-ID. Con `seguimiento_dias`, avisa si en esos
+    """Envía un correo desde `cuenta_id` y devuelve su Message-ID. Con `identidad_id` el remitente que ve el destinatario es esa identidad (alias y nombre visible); la conexión SMTP y el sobre siguen siendo los de la cuenta. Con `seguimiento_dias`, avisa si en esos
     días no llega respuesta (ver `procesar_seguimientos`). `destinatarios`/`cc`/`bcc` son
     cadenas con uno o varios correos separados por comas. `cuerpo_html` es
     el HTML escrito en el editor enriquecido — se manda como
@@ -2014,7 +2037,10 @@ def construir_y_enviar(
         raise ErrorCorreo("Los adjuntos superan el tamaño máximo de 25 MB.")
 
     mensaje = EmailMessage()
-    mensaje["From"] = cuenta["usuario"]
+    identidad = db.obtener_identidad_correo(usuario_id, identidad_id, cuenta_id) if identidad_id else None
+    if identidad_id and identidad is None:
+        raise ErrorCorreo("Esa identidad de envío no existe.")
+    mensaje["From"] = formataddr((identidad["nombre"], identidad["direccion"])) if identidad else cuenta["usuario"]
     # Message-ID propio (los servidores respetan el que ya viene): así se puede reconocer la respuesta.
     dominio = direccion_email(cuenta["usuario"]).rpartition("@")[2] if direccion_email(cuenta["usuario"]) else None
     mensaje_id = make_msgid(domain=dominio or None)
@@ -2023,6 +2049,8 @@ def construir_y_enviar(
     if cc.strip():
         mensaje["Cc"] = cc.strip()
     mensaje["Subject"] = asunto.strip()
+    for nombre_cabecera, valor in (cabeceras_extra or {}).items():
+        mensaje[nombre_cabecera] = valor
     if en_respuesta_a:
         mensaje["In-Reply-To"] = en_respuesta_a
         mensaje["References"] = en_respuesta_a
@@ -2044,7 +2072,10 @@ def construir_y_enviar(
         cuenta["usuario"], contrasena,
     )
     try:
-        conn.send_message(mensaje, to_addrs=todos_los_destinatarios)
+        if identidad is not None and direccion_email(cuenta["usuario"]):      # con alias, el sobre sigue siendo el de la cuenta
+            conn.send_message(mensaje, from_addr=direccion_email(cuenta["usuario"]), to_addrs=todos_los_destinatarios)
+        else:
+            conn.send_message(mensaje, to_addrs=todos_los_destinatarios)
     except smtplib.SMTPException as e:
         raise ErrorCorreo(f"No se ha podido enviar el correo: {e}") from e
     finally:

@@ -15,6 +15,51 @@
 {% endif %}
 
 <section class="correo-ajustes-seccion">
+  <h2>{{ _('Identidades de envío') }}</h2>
+  <p class="muted">{{ _('Direcciones y nombres desde los que puedes escribir con una cuenta (por ejemplo, un alias del despacho). Tu servidor de correo tiene que admitir ese remitente.') }}</p>
+  {% if identidades %}
+  <ul class="correo-lista-ajustes">
+    {% for i in identidades %}
+    <li>{{ i.nombre }} &lt;{{ i.direccion }}&gt;
+      <form method="post" action="{{ url_for('correo.eliminar_identidad', identidad_id=i.id) }}" class="form-en-linea" data-confirmar-envio="{{ _('¿Eliminar esta identidad?') }}">
+        <button type="submit" class="btn btn-ghost texto-peligro">{{ _('Eliminar') }}</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if cuentas %}
+  <form method="post" action="{{ url_for('correo.crear_identidad') }}" class="correo-form-seccion">
+    <div class="correo-form-campo"><label>{{ _('Cuenta') }}</label>
+      <select name="cuenta_id" aria-label="{{ _('Cuenta') }}">{% for c in cuentas %}<option value="{{ c.id }}">{{ c.nombre }} ({{ c.usuario }})</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label>{{ _('Nombre visible') }}</label><input type="text" name="nombre" maxlength="100" required></div>
+    <div class="correo-form-campo"><label>{{ _('Dirección') }}</label><input type="email" name="direccion" required></div>
+    <button type="submit" class="btn btn-primary">{{ _('Añadir identidad') }}</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="correo-ajustes-seccion">
+  <h2>{{ _('Respuesta automática (fuera de la oficina)') }}</h2>
+  <p class="muted">{{ _('Mientras esté activa, quien te escriba recibe este mensaje una sola vez. No se contesta a correos automáticos, listas de correo ni direcciones del tipo noreply.') }}</p>
+  {% for c in cuentas %}
+  {% set a = autorespuestas[c.id] %}
+  <details {% if a.activa %}open{% endif %}>
+    <summary>{{ c.nombre }} ({{ c.usuario }}){% if a.activa %} · <strong>{{ _('Activa') }}</strong>{% endif %}</summary>
+    <form method="post" action="{{ url_for('correo.guardar_autorespuesta') }}" class="correo-form-seccion">
+      <input type="hidden" name="cuenta_id" value="{{ c.id }}">
+      <div class="correo-form-campo"><label class="correo-form-checkbox"><input type="checkbox" name="activa" {% if a.activa %}checked{% endif %}> {{ _('Activar la respuesta automática') }}</label></div>
+      <div class="correo-form-campo"><label>{{ _('Desde (opcional)') }}</label><input type="date" name="desde" value="{{ a.desde or '' }}"></div>
+      <div class="correo-form-campo"><label>{{ _('Hasta (opcional)') }}</label><input type="date" name="hasta" value="{{ a.hasta or '' }}"></div>
+      <div class="correo-form-campo"><label>{{ _('Asunto') }}</label><input type="text" name="asunto" maxlength="200" value="{{ a.asunto }}"></div>
+      <div class="correo-form-campo"><label>{{ _('Mensaje') }}</label><textarea name="cuerpo" rows="4" maxlength="5000">{{ a.cuerpo }}</textarea></div>
+      <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    </form>
+  </details>
+  {% endfor %}
+</section>
+
+<section class="correo-ajustes-seccion">
   <h2>{{ _('Preferencias generales') }}</h2>
   <form method="post" action="{{ url_for('correo.guardar_preferencias') }}" class="correo-form-seccion">
     <div class="correo-form-campo">

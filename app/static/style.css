@@ -5050,3 +5050,5 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-respuesta-rapida { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
 .correo-respuesta-rapida textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical; font: inherit; }
 .correo-respuesta-rapida-acciones { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.correo-adjuntos-lista { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.88em; }
+.correo-compose.es-destino-archivos { outline: 2px dashed var(--primary); outline-offset: 4px; }

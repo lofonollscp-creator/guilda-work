@@ -983,17 +983,17 @@ def buscar_destinatarios_recientes(usuario_id: int, q: str | None = None, limite
 def encolar_envio_correo(
     usuario_id: int, cuenta_id: int, destinatarios: str, cc: str, bcc: str, asunto: str,
     cuerpo_html: str, en_respuesta_a: str | None, adjuntos: list[dict], enviar_en: str,
-    programado: bool = False, seguimiento_dias: int | None = None,
+    programado: bool = False, seguimiento_dias: int | None = None, identidad_id: int | None = None,
 ) -> int:
     conn = _db.get_connection()
     try:
         cur = conn.execute(
             """INSERT INTO correo_envios
                (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
-                enviar_en, programado, seguimiento_dias, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                enviar_en, programado, seguimiento_dias, creado_en, identidad_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (usuario_id, cuenta_id, destinatarios, cc, bcc, asunto, cuerpo_html, en_respuesta_a,
-             enviar_en, int(programado), _db.seguimiento_dias_valido(seguimiento_dias), _db.now_iso()),
+             enviar_en, int(programado), _db.seguimiento_dias_valido(seguimiento_dias), _db.now_iso(), identidad_id),
         )
         envio_id = cur.lastrowid
         for a in adjuntos:
@@ -2323,6 +2323,46 @@ def eliminar_carpeta_correo(cuenta_id: int, nombre: str) -> None:
     try:
         conn.execute("DELETE FROM correo_mensajes WHERE cuenta_id = ? AND carpeta = ?", (cuenta_id, nombre))
         conn.execute("DELETE FROM correo_carpetas WHERE cuenta_id = ? AND nombre = ?", (cuenta_id, nombre))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Identidades de envío (alias con su nombre visible, sobre una cuenta que ya envía) ---
+
+def crear_identidad_correo(usuario_id: int, cuenta_id: int, nombre: str, direccion: str) -> int:
+    conn = _db.get_connection()
+    try:
+        if conn.execute("SELECT 1 FROM correo_cuentas WHERE id = ? AND usuario_id = ?", (cuenta_id, usuario_id)).fetchone() is None:
+            raise ValueError("Esa cuenta no existe.")
+        cur = conn.execute("INSERT INTO correo_identidades (cuenta_id, nombre, direccion, creada_en) VALUES (?, ?, ?, ?)", (cuenta_id, nombre, direccion, _db.now_iso()))
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def listar_identidades_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = _db.get_connection()
+    try:
+        return conn.execute("SELECT i.* FROM correo_identidades i JOIN correo_cuentas c ON c.id = i.cuenta_id WHERE c.usuario_id = ? ORDER BY i.cuenta_id, i.nombre", (usuario_id,)).fetchall()
+    finally:
+        conn.close()
+
+
+def obtener_identidad_correo(usuario_id: int, identidad_id: int, cuenta_id: int | None = None):
+    conn = _db.get_connection()
+    try:
+        f = conn.execute("SELECT i.* FROM correo_identidades i JOIN correo_cuentas c ON c.id = i.cuenta_id WHERE i.id = ? AND c.usuario_id = ?", (identidad_id, usuario_id)).fetchone()
+        return f if f is not None and (cuenta_id is None or f["cuenta_id"] == cuenta_id) else None
+    finally:
+        conn.close()
+
+
+def eliminar_identidad_correo(usuario_id: int, identidad_id: int) -> None:
+    conn = _db.get_connection()
+    try:
+        conn.execute("DELETE FROM correo_identidades WHERE id = ? AND cuenta_id IN (SELECT id FROM correo_cuentas WHERE usuario_id = ?)", (identidad_id, usuario_id))
         conn.commit()
     finally:
         conn.close()

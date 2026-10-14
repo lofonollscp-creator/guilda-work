@@ -12233,3 +12233,45 @@ msgstr "Réponse rapide"
 
 msgid "A todos"
 msgstr "À tous"
+
+msgid "También puedes arrastrar archivos aquí o pegarlos en el mensaje."
+msgstr "Vous pouvez aussi faire glisser des fichiers ici ou les coller dans le message."
+
+msgid "Borrador guardado"
+msgstr "Brouillon enregistré"
+
+msgid "No se pudo guardar el borrador"
+msgstr "Le brouillon n'a pas pu être enregistré"
+
+msgid "Los adjuntos superan los 25 MB."
+msgstr "Les pièces jointes dépassent 25 Mo."
+
+msgid "La propia cuenta"
+msgstr "Le compte lui-même"
+
+msgid "Identidades de envío"
+msgstr "Identités d'envoi"
+
+msgid "Direcciones y nombres desde los que puedes escribir con una cuenta (por ejemplo, un alias del despacho). Tu servidor de correo tiene que admitir ese remitente."
+msgstr "Adresses et noms depuis lesquels vous pouvez écrire avec un compte (par exemple, un alias du cabinet). Votre serveur de messagerie doit accepter cet expéditeur."
+
+msgid "¿Eliminar esta identidad?"
+msgstr "Supprimer cette identité ?"
+
+msgid "Nombre visible"
+msgstr "Nom affiché"
+
+msgid "Añadir identidad"
+msgstr "Ajouter l'identité"
+
+msgid "Respuesta automática (fuera de la oficina)"
+msgstr "Réponse automatique (absent du bureau)"
+
+msgid "Mientras esté activa, quien te escriba recibe este mensaje una sola vez. No se contesta a correos automáticos, listas de correo ni direcciones del tipo noreply."
+msgstr "Tant qu'elle est active, toute personne qui vous écrit reçoit ce message une seule fois. Les courriels automatiques, les listes de diffusion et les adresses de type noreply ne reçoivent pas de réponse."
+
+msgid "Activar la respuesta automática"
+msgstr "Activer la réponse automatique"
+
+msgid "Desde (opcional)"
+msgstr "Du (facultatif)"

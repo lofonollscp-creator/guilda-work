@@ -12148,3 +12148,45 @@ msgstr "Quick reply"
 
 msgid "A todos"
 msgstr "Reply all"
+
+msgid "También puedes arrastrar archivos aquí o pegarlos en el mensaje."
+msgstr "You can also drag files here or paste them into the message."
+
+msgid "Borrador guardado"
+msgstr "Draft saved"
+
+msgid "No se pudo guardar el borrador"
+msgstr "The draft could not be saved"
+
+msgid "Los adjuntos superan los 25 MB."
+msgstr "The attachments exceed 25 MB."
+
+msgid "La propia cuenta"
+msgstr "The account itself"
+
+msgid "Identidades de envío"
+msgstr "Sending identities"
+
+msgid "Direcciones y nombres desde los que puedes escribir con una cuenta (por ejemplo, un alias del despacho). Tu servidor de correo tiene que admitir ese remitente."
+msgstr "Addresses and names you can write from with an account (for example, a firm alias). Your mail server must accept that sender."
+
+msgid "¿Eliminar esta identidad?"
+msgstr "Delete this identity?"
+
+msgid "Nombre visible"
+msgstr "Display name"
+
+msgid "Añadir identidad"
+msgstr "Add identity"
+
+msgid "Respuesta automática (fuera de la oficina)"
+msgstr "Automatic reply (out of office)"
+
+msgid "Mientras esté activa, quien te escriba recibe este mensaje una sola vez. No se contesta a correos automáticos, listas de correo ni direcciones del tipo noreply."
+msgstr "While it is on, anyone who writes to you gets this message once. Automatic emails, mailing lists and noreply-type addresses are not answered."
+
+msgid "Activar la respuesta automática"
+msgstr "Turn on the automatic reply"
+
+msgid "Desde (opcional)"
+msgstr "From (optional)"
