@@ -38,7 +38,7 @@ from .notas_formato import nota_a_html
 from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
-from . import rutas_api_ampliada, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
+from . import rutas_api_ampliada, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas  # noqa: F401 -- registran más rutas en api_bp
 from .rutas_proyectos import proyectos_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
@@ -49,6 +49,8 @@ from .rutas_correo import correo_bp
 from .rutas_docs import docs_bp
 from .rutas_fichaje import fichaje_bp
 from .rutas_fiscal import fiscal_bp
+from .rutas_certificados import certificados_bp
+from .rutas_control_fiscal import control_fiscal_bp
 from .rutas_hydra import hydra_bp
 from .rutas_ia import ia_bp
 from .rutas_kratos_proxy import ip_requiere_captcha, kratos_proxy_bp
@@ -251,6 +253,8 @@ app.register_blueprint(proyectos_bp)
 app.register_blueprint(tiquets_bp)
 app.register_blueprint(fichaje_bp)
 app.register_blueprint(fiscal_bp)
+app.register_blueprint(certificados_bp)
+app.register_blueprint(control_fiscal_bp)
 app.register_blueprint(citas_bp)
 app.register_blueprint(videollamadas_bp)
 app.register_blueprint(correo_bp)
@@ -373,6 +377,7 @@ def _resolver_usuario_actual():
     g.tenant_id = None
     g.gestor_fichajes = False
     g.supervisor_tenant = False
+    g.custodio_certificados = False
     # «Ver como» (soporte, solo lectura): la sesión de suplantación sustituye a la de Kratos.
     g.ver_como = None
     ver = session.get("ver_como")
@@ -411,12 +416,14 @@ def _resolver_usuario_actual():
             g.tenant_id = usuario["tenant_id"]
             g.gestor_fichajes = bool(usuario["gestor_fichajes"])
             g.supervisor_tenant = bool(usuario["supervisor_tenant"])
+            g.custodio_certificados = bool(usuario["custodio_certificados"])
     else:
         g.usuario_id = usuario["id"]
         g.es_admin = usuario["rol"] == "admin"
         g.tenant_id = usuario["tenant_id"]
         g.gestor_fichajes = bool(usuario["gestor_fichajes"])
         g.supervisor_tenant = bool(usuario["supervisor_tenant"])
+        g.custodio_certificados = bool(usuario["custodio_certificados"])
         g.apariencia = {"tema": usuario["tema"], "densidad": usuario["densidad"]}      # ya está en la fila leída: sin consulta extra
         if request.endpoint != "static":
             db.registrar_acceso(usuario["id"])
@@ -1759,6 +1766,9 @@ def ajustes_perfil():
             notificar_resumen_semanal="notificar_resumen_semanal" in request.form,
             notificar_push_correo="notificar_push_correo" in request.form,
             notificar_push_portal_mensajes="notificar_push_portal_mensajes" in request.form,
+            resumen_diario="resumen_diario" in request.form,
+            resumen_diario_email="resumen_diario_email" in request.form,
+            resumen_diario_hora=int(request.form["resumen_diario_hora"]) if request.form.get("resumen_diario_hora", "").strip().isdigit() else None,
         )
         return redirect(url_for("ajustes_perfil", aviso="guardado"))
     usuario = db.obtener_usuario(g.usuario_id)

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Oficinas y permisos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Oficinas y permisos') }}</h1>
+    <p class="subtitle">{{ _('Reparte los clientes fiscales entre las oficinas del despacho y decide quién ve y hace qué.') }}</p>
+  </div>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Cómo funciona') }}</h2>
+  <ul>
+    <li>{{ _('Mientras no haya oficinas, todo el equipo ve todos los clientes, como siempre.') }}</li>
+    <li>{{ _('Con oficinas, cada persona ve los clientes de sus oficinas, los que se le compartan y, si tiene un rol de todo el despacho (revisor fiscal, auditor), todos. La dirección lo ve todo.') }}</li>
+    <li>{{ _('Los clientes que aún no tienen oficina los ve todo el equipo hasta que los asignes.') }}</li>
+    <li>{{ _('El auditor solo puede leer. Aprobar y declarar «no aplica» o «anulada» es de la dirección o del revisor fiscal.') }}</li>
+  </ul>
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Oficinas') }} ({{ oficinas|length }})</h2>
+  {% if oficinas %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Oficina') }}</th><th>{{ _('Clientes') }}</th><th>{{ _('Personas') }}</th><th></th></tr></thead>
+    <tbody>{% for o in oficinas %}<tr><td>{{ o.nombre }}</td><td>{{ o.clientes }}</td><td>{{ o.personas }}</td>
+      <td>{% if es_directivo %}<form method="post" action="{{ url_for('control_fiscal.archivar_oficina', oficina_id=o.id) }}"><button type="submit" class="btn btn-ghost btn-sm" data-confirmar-clic="{{ _('¿Archivar esta oficina? Se retiran sus roles. Antes hay que reasignar sus clientes.') }}">{{ _('Archivar') }}</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% if es_directivo %}
+  <form method="post" action="{{ url_for('control_fiscal.crear_oficina') }}" class="filters">
+    <label>{{ _('Nueva oficina') }} <input type="text" name="nombre" maxlength="80" required></label>
+    <button type="submit" class="btn btn-primary">{{ _('Crear') }}</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Oficina de cada cliente') }}</h2>
+  {% if not clientes %}<p class="empty-lane">{{ _('No hay clientes.') }}</p>{% else %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Oficina principal') }}</th></tr></thead>
+    <tbody>
+    {% for c in clientes %}
+    <tr><td>{{ c.nombre }}</td><td>
+      <form method="post" action="{{ url_for('control_fiscal.asignar_cliente') }}" class="ausencias-decision">
+        <input type="hidden" name="cliente_id" value="{{ c.id }}">
+        <select name="oficina_id" aria-label="{{ _('Oficina de %(c)s', c=c.nombre) }}"><option value="">{{ _('Sin oficina (la ve todo el equipo)') }}</option>{% for o in oficinas %}<option value="{{ o.id }}" {{ 'selected' if c.oficina_id == o.id }}>{{ o.nombre }}</option>{% endfor %}</select>
+        <button type="submit" class="btn btn-ghost btn-sm">{{ _('Guardar') }}</button>
+      </form></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Roles') }}</h2>
+  {% if membresias %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Rol') }}</th><th>{{ _('Alcance') }}</th><th>{{ _('Hasta') }}</th><th></th></tr></thead>
+    <tbody>{% for m in membresias %}
+    <tr><td>{{ m.persona }}</td><td>{{ roles[m.rol] }}</td><td>{{ alcances[m.alcance_tipo] }}{% if m.oficina %}: {{ m.oficina }}{% elif m.cliente %}: {{ m.cliente }}{% endif %}</td><td>{{ m.vigente_hasta or '—' }}</td>
+      <td><form method="post" action="{{ url_for('control_fiscal.revocar_membresia', membresia_id=m.id) }}"><button type="submit" class="btn btn-ghost btn-sm" data-confirmar-clic="{{ _('¿Retirar este rol?') }}">{{ _('Retirar') }}</button></form></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty-lane">{{ _('Todavía no hay roles asignados. La dirección (supervisores) ve y hace todo.') }}</p>{% endif %}
+  <form method="post" action="{{ url_for('control_fiscal.dar_membresia') }}" class="edit-form ausencias-form">
+    <h3>{{ _('Dar un rol') }}</h3>
+    <div class="correo-form-campo"><label for="m-pers">{{ _('Persona') }}</label><select id="m-pers" name="usuario_id" required>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="m-rol">{{ _('Rol') }}</label><select id="m-rol" name="rol">{% for k, v in roles.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="m-alc">{{ _('Alcance') }}</label><select id="m-alc" name="alcance">{% for k, v in alcances.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="m-of">{{ _('Oficina (si el alcance es una oficina)') }}</label><select id="m-of" name="oficina_id"><option value="">—</option>{% for o in oficinas %}<option value="{{ o.id }}">{{ o.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="m-cl">{{ _('Cliente (si el alcance es un cliente)') }}</label><select id="m-cl" name="cliente_id"><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="m-hasta">{{ _('Hasta (opcional)') }}</label><input type="date" id="m-hasta" name="hasta"></div>
+    <p class="subtitle">{{ _('El coordinador es de una oficina; el revisor fiscal, de todo el despacho.') }}</p>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Dar el rol') }}</button></div>
+  </form>
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Clientes compartidos') }}</h2>
+  {% if concesiones %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Compartido con') }}</th><th>{{ _('Nivel') }}</th><th>{{ _('Hasta') }}</th><th></th></tr></thead>
+    <tbody>{% for k in concesiones %}<tr><td>{{ k.cliente }}</td><td>{{ k.oficina or k.persona }}</td><td>{{ _('Lectura') if k.nivel == 'lectura' else _('Gestión') }}</td><td>{{ k.vigente_hasta or '—' }}</td>
+      <td><form method="post" action="{{ url_for('control_fiscal.revocar_concesion', concesion_id=k.id) }}"><button type="submit" class="btn btn-ghost btn-sm" data-confirmar-clic="{{ _('¿Dejar de compartir este cliente?') }}">{{ _('Retirar') }}</button></form></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  <form method="post" action="{{ url_for('control_fiscal.conceder') }}" class="edit-form ausencias-form">
+    <h3>{{ _('Compartir un cliente') }}</h3>
+    <div class="correo-form-campo"><label for="k-cl">{{ _('Cliente') }}</label><select id="k-cl" name="cliente_id" required>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="k-of">{{ _('Con la oficina…') }}</label><select id="k-of" name="oficina_id"><option value="">—</option>{% for o in oficinas %}<option value="{{ o.id }}">{{ o.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="k-us">{{ _('…o con la persona') }}</label><select id="k-us" name="usuario_id"><option value="">—</option>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="k-niv">{{ _('Nivel') }}</label><select id="k-niv" name="nivel"><option value="gestion">{{ _('Gestión') }}</option><option value="lectura">{{ _('Lectura') }}</option></select></div>
+    <div class="correo-form-campo"><label for="k-hasta">{{ _('Hasta (opcional)') }}</label><input type="date" id="k-hasta" name="hasta"></div>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Compartir') }}</button></div>
+  </form>
+</section>
+{% endblock %}

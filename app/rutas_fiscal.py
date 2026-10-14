@@ -18,11 +18,12 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import almacen_documentos, calcom, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
+from . import alta_cliente, almacen_documentos, calcom, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
+from . import acceso, fiscal_identidad, obligaciones
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
 
@@ -34,6 +35,18 @@ def _solo_con_el_modulo_de_gestoria():
     """Las pantallas fiscales son del módulo Gestoría: si el despacho no lo tiene activo, no existen (404). Sin despacho no se comprueba (ya lo exigen las rutas)."""
     if g.get("tenant_id") is not None and not verticales.esta_activo(g.tenant_id, "gestoria"):
         abort(404)
+
+@fiscal_bp.before_request
+def _el_auditor_solo_lee():
+    """Quien solo tiene el rol de auditor puede ver el calendario fiscal pero no cambiar nada (lo exige el servidor, no solo la pantalla)."""
+    if request.method not in ("GET", "HEAD", "OPTIONS") and g.get("usuario_id") is not None and g.get("tenant_id") is not None and acceso.es_solo_auditor(g.tenant_id, g.usuario_id):
+        abort(403)
+
+
+FASES_TEXTO = {
+    "pendiente": _l("Pendiente"), "en_preparacion": _l("En preparación"), "en_revision": _l("En revisión"), "aprobada": _l("Aprobada"), "presentada": _l("Presentada"),
+    "cerrada": _l("Cerrada"), "no_aplica": _l("No aplica"), "anulada": _l("Anulada"),
+}
 
 ESTADOS_VENCIMIENTO = [
     ("pendiente", _l("Pendiente")),
@@ -81,7 +94,7 @@ def clientes():
     if estado in perfil_fiscal.SEMAFOROS:
         lista = [c for c in lista if semaforos[c["id"]]["estado"] == estado]
     return render_template(
-        "fiscal_clientes.html",
+        "fiscal_clientes.html", error=request.args.get("error"),
         clientes=lista, semaforos=semaforos, filtro_estado=estado,
         filtro_q=q, filtro_pais=pais,
         paises_en_uso=db.paises_clientes_fiscales(g.tenant_id),
@@ -93,26 +106,13 @@ def clientes():
 def crear_cliente():
     nombre = request.form.get("nombre", "").strip()
     if nombre:
-        cliente_id = db.crear_cliente_fiscal(
-            g.tenant_id, nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
-            modelos_fiscales=request.form.getlist("modelos_fiscales") or None,
-            email=request.form.get("email"),
-        )
-        # EspoCRM: opcional y best-effort, mismo idioma que el resto de
-        # integraciones tenant (ver rutas_backoffice.py:crear_tenant) --
-        # sin ESPOCRM_API_KEY configurada, buscar_cuenta_por_nombre/
-        # crear_cuenta no hacen nada y este try/except ni se entera. El
-        # calendario fiscal debe funcionar igual de bien sin EspoCRM (ver
-        # comentario de cabecera de la tabla clientes_fiscales en db.py).
         try:
-            cuenta_id = espocrm.buscar_cuenta_por_nombre(nombre)
-            if cuenta_id is None:
-                cuenta = espocrm.crear_cuenta(nombre)
-                cuenta_id = cuenta["id"] if cuenta else None
-            if cuenta_id:
-                db.editar_cliente_fiscal(g.tenant_id, cliente_id, espocrm_cuenta_id=cuenta_id)
-        except espocrm.ErrorEspoCRM:
-            pass
+            alta_cliente.crear_cliente_completo(
+                g.tenant_id, nombre, gestion_fiscal=True, nif=request.form.get("nif"), notas=request.form.get("notas"), email=request.form.get("email"),
+                modelos=request.form.getlist("modelos_fiscales") or None,
+            )
+        except ValueError as e:  # incluye ClienteDuplicado: se explica con quién choca el NIF
+            return redirect(url_for("fiscal.clientes", error=str(e)))
     return redirect(url_for("fiscal.clientes"))
 
 
@@ -411,25 +411,28 @@ def editar_cliente(cliente_id: int):
             modelos_elegidos = request.form.getlist("modelos_fiscales")
             if request.form.get("aplicar_perfil"):
                 modelos_elegidos = [m["modelo"] for m in perfil_fiscal.modelos_para_perfil(perfil)]
-            db.editar_cliente_fiscal(
-                g.tenant_id, cliente_id,
-                nombre=nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
-                modelos_fiscales=db.serializar_modelos_fiscales(modelos_elegidos or None),
-                perfil_fiscal=json.dumps(perfil),
-                # Un país sin calendario configurado no tiene modelos que marcar,
-                # así que tampoco tiene sentido la generación automática --
-                # se desactiva sola en vez de dejar un checkbox activo que
-                # nunca generaría nada (ver PAISES_CON_CALENDARIO arriba).
-                generacion_automatica=1 if (request.form.get("generacion_automatica") and pais in PAISES_CON_CALENDARIO) else 0,
-                email=(request.form.get("email") or "").strip() or None,
-                pais=pais,
-                recordatorios_portal=1 if request.form.get("recordatorios_portal") else 0,
-                idioma=request.form.get("idioma") if request.form.get("idioma") in ("es", "ca", "en", "fr") else "es",
-            )
+            try:
+                db.editar_cliente_fiscal(
+                    g.tenant_id, cliente_id,
+                    nombre=nombre, nif=request.form.get("nif"), notas=request.form.get("notas"),
+                    modelos_fiscales=db.serializar_modelos_fiscales(modelos_elegidos or None),
+                    perfil_fiscal=json.dumps(perfil),
+                    # Un país sin calendario configurado no tiene modelos que marcar,
+                    # así que tampoco tiene sentido la generación automática --
+                    # se desactiva sola en vez de dejar un checkbox activo que
+                    # nunca generaría nada (ver PAISES_CON_CALENDARIO arriba).
+                    generacion_automatica=1 if (request.form.get("generacion_automatica") and pais in PAISES_CON_CALENDARIO) else 0,
+                    email=(request.form.get("email") or "").strip() or None,
+                    pais=pais,
+                    recordatorios_portal=1 if request.form.get("recordatorios_portal") else 0,
+                    idioma=request.form.get("idioma") if request.form.get("idioma") in ("es", "ca", "en", "fr") else "es",
+                )
+            except fiscal_identidad.ClienteDuplicado as e:
+                return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, error=str(e)))
             db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_editado")
         return redirect(url_for("fiscal.clientes"))
     return render_template(
-        "fiscal_cliente_editar.html",
+        "fiscal_cliente_editar.html", error=request.args.get("error"),
         cliente=cliente, modelos_cliente=db.modelos_fiscales_de_cliente(cliente),
         modelos_disponibles=modelos_disponibles_para_pais(cliente["pais"]),
         paises_con_calendario=PAISES_CON_CALENDARIO,
@@ -663,7 +666,10 @@ def _guardar_justificante(vencimiento_id: int, archivo) -> bool:
     contenido = archivo.read(db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO + 1)
     if archivo.mimetype not in db.MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO or len(contenido) > db.TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO:
         return False
-    db.subir_documento_vencimiento(vencimiento_id, archivo.filename, archivo.mimetype, contenido, origen="justificante")
+    try:
+        db.subir_documento_vencimiento(vencimiento_id, archivo.filename, archivo.mimetype, contenido, origen="justificante")
+    except ValueError:                      # clave privada o contenedor .p12/.pfx: no se guarda
+        return False
     return True
 
 
@@ -712,7 +718,11 @@ def marcar_presentado(vencimiento_id: int):
     vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     if vencimiento is None:
         abort(404)
-    db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    try:
+        obligaciones.exigir_para_marcar_presentado(g.tenant_id, g.usuario_id, vencimiento, con_justificante=bool(request.files.get("justificante") and request.files["justificante"].filename))
+    except ValueError as e:
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+    db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id, g.usuario_id)
     # Justificante oficial (opcional, si el formulario lo trae) y constancia
     # de presentación en PDF: ambos visibles para el cliente en su portal. Un
     # fallo al generar la constancia nunca debe deshacer el "presentado".
@@ -761,6 +771,13 @@ def editar_vencimiento(vencimiento_id: int):
     if vencimiento is None:
         abort(404)
     if request.method == "POST":
+        enviada = request.form.get("version", type=int)
+        if enviada is not None and enviada != vencimiento["version"]:
+            return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error="Otra persona ha cambiado esta obligación mientras la editabas: revisa los datos y vuelve a guardar."))
+        try:
+            obligaciones.exigir_para_cambiar_estado(g.tenant_id, g.usuario_id, vencimiento, request.form.get("estado"))
+        except ValueError as e:
+            return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
         usuario_id = request.form.get("usuario_id", type=int)
         documento_solicitado = (request.form.get("documento_solicitado") or "").strip() or None
         db.editar_vencimiento_fiscal(
@@ -792,7 +809,8 @@ def editar_vencimiento(vencimiento_id: int):
     tenant = db.obtener_tenant(g.tenant_id)
     cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
     return render_template(
-        "fiscal_vencimiento_editar.html",
+        "fiscal_vencimiento_editar.html", error=request.args.get("error"), aviso=request.args.get("aviso"),
+        flujo=obligaciones.resumen(g.tenant_id, g.usuario_id, vencimiento), fases_texto=FASES_TEXTO,
         vencimiento=vencimiento, estados=ESTADOS_VENCIMIENTO, usuarios=usuarios_tenant,
         # Documentos subidos por el CLIENTE desde el portal (app/rutas_portal_cliente.py)
         # -- así el equipo los ve sin tener que entrar al portal.
@@ -809,6 +827,33 @@ def editar_vencimiento(vencimiento_id: int):
         # mandarle el enlace de Checkout.
         puede_cobrar_stripe=bool(tenant and tenant["stripe_account_id"] and cliente and cliente["email"]),
     )
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/transicion", methods=["POST"])
+@login_required
+def transicion_vencimiento(vencimiento_id: int):
+    """Mueve la obligación de fase desde su ficha (los mismos controles que la API: flujo del despacho, rol, motivo y evidencia de presentación)."""
+    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+        abort(404)
+    f = request.form
+    try:
+        obligaciones.transicionar(g.tenant_id, g.usuario_id, vencimiento_id, f.get("destino", ""), motivo=f.get("motivo"), version=f.get("version", type=int),
+                                  presentacion={"presentado_en": f.get("presentado_en"), "organismo": f.get("organismo"), "referencia": f.get("referencia")} if f.get("destino") == "presentada" else None)
+    except ValueError as e:                      # incluye ConflictoDeVersion
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, aviso="fase"))
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/bloqueo", methods=["POST"])
+@login_required
+def bloqueo_vencimiento(vencimiento_id: int):
+    if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
+        abort(404)
+    try:
+        obligaciones.bloquear(g.tenant_id, g.usuario_id, vencimiento_id, request.form.get("motivo"), bloqueada=request.form.get("accion") != "quitar")
+    except ValueError as e:
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, aviso="bloqueo"))
 
 
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/enviar-a-firma", methods=["POST"])

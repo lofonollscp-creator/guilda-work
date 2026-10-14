@@ -324,3 +324,20 @@ def crear_usuario(email: str, tenant_id: int | None) -> tuple[int, str]:
     if tenant_id is not None:
         plataforma.asignar_tenant(usuario_id, tenant_id)
     return usuario_id, temporal
+
+
+def personal_tenant(tenant_id: int) -> dict:
+    """Ausencias, turnos y bolsa de horas de un despacho de un vistazo (solo lectura, salvo los días por defecto): para dar soporte sin entrar como nadie."""
+    from datetime import date, timedelta
+    from app import ausencias, bolsa_horas, turnos
+    hoy = date.today()
+    return {
+        "dias_vacaciones": ausencias.dias_anuales(tenant_id),
+        "pendientes": [dict(a) for a in ausencias.listar(tenant_id, estado="pendiente", limite=50)],
+        "fuera_hoy": [dict(a) for a in ausencias.quien_falta(tenant_id, hoy)],
+        "saldos": ausencias.saldos_del_equipo(tenant_id, hoy.year),
+        "bolsa": bolsa_horas.resumen_equipo(tenant_id),
+        "texto_horas": bolsa_horas.texto_horas,
+        "tipos_turno": turnos.listar_tipos(tenant_id),
+        "turnos_proximos": sum(1 for p in turnos.cuadrante(tenant_id, hoy.isoformat(), (hoy + timedelta(days=13)).isoformat())["personas"] for d in p["dias"].values() if "turno_id" in d),
+    }

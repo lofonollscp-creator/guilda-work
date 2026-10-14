@@ -220,3 +220,103 @@ def crear_factura_cliente(cliente_id: int, concepto: str, importe: float) -> dic
         tenant["facturascripts_url"], tenant["facturascripts_api_key"],
         cliente["facturascripts_cliente_codigo"], [{"descripcion": concepto, "cantidad": 1, "precio": importe}],
     )
+
+
+# --- Certificados digitales (solo lectura; solo custodios y supervisores del despacho) -------------------------------------------------------
+_CERT_CAMPOS = ("id", "nombre_comun", "sujeto", "emisor", "numero_serie", "not_before", "not_after", "temporal", "dias_restantes", "estado_operativo", "renovacion", "vinculos_activos",
+                "nif_sugerido", "nif_confirmado", "custodio_nombre", "pendiente_de_comprobar")
+
+
+def _exigir_certificados() -> int:
+    from app import certificados
+    t = _mt._tenant_id_actual()
+    if not certificados.puede_gestionar(_mt._uid(), t):
+        raise ValueError("Solo los custodios de certificados y los supervisores del despacho pueden consultar los certificados.")
+    return t
+
+
+def listar_certificados(q: str | None = None, temporal: str | None = None) -> list[dict]:
+    """Certificados digitales del despacho, los más próximos a caducar primero. `temporal`: vigente, caducado o todavia_no_vigente. Cadena y revocación aparecen como «no comprobada»
+    si nadie las ha comprobado: una fecha vigente no acredita que el certificado sea utilizable."""
+    from app import certificados
+    t = _mt._exigir_certificados()
+    return [{**_mt._campos(c, _mt._CERT_CAMPOS), "cadena": c["cadena"]["resultado"], "revocacion": c["revocacion"]["resultado"], "clave": c["clave"]["resultado"]}
+            for c in certificados.listar(t, q=q or None, temporal=temporal or None)[:50]]
+
+
+def riesgos_de_certificados(dias: int = 90) -> list[dict]:
+    """Obligaciones fiscales pendientes cuyo certificado caduca antes del vencimiento, está suspendido o no está registrado (cobertura desconocida)."""
+    from app import certificados
+    return certificados.riesgos(_mt._exigir_certificados(), horizonte_dias=max(1, min(int(dias or 90), 365)))[:100]
+
+
+def registrar_certificado(tipo: str, caduca: str | None = None, cliente_id: int | None = None, titular: str | None = None, emitido: str | None = None, avisar_cliente: bool | None = None) -> dict:
+    """Apunta un certificado digital SIN archivo (de quién es, tipo y caducidad). `tipo`: fnmt_persona_fisica, fnmt_representante, fnmt_representante_sin_personalidad, dnie, accv, izenpe, camerfirma,
+    firmaprofesional u otro. `caduca` AAAA-MM-DD (o `emitido`, para proponer la habitual del tipo). `cliente_id` es el cliente fiscal; sin él, indica `titular`. Solo custodios y supervisores."""
+    from app import certificados
+    t = _mt._exigir_certificados()
+    r = certificados.alta_rapida(t, _mt._uid(), tipo=tipo, caduca=caduca, emitido=emitido, cliente_fiscal_id=cliente_id, titular=titular, avisar_cliente=avisar_cliente)
+    c = certificados.obtener(t, r["id"])
+    return {"id": r["id"], "nuevo": r["nuevo"], **{k: c[k] for k in ("cliente_nombre", "nombre_comun", "tipo_certificado", "caduca_el", "dias_restantes")}}
+
+
+def renovar_certificado(certificado_id: int, nueva_caducidad: str, funciona: bool = False) -> dict:
+    """«Ya está renovado»: apunta la nueva caducidad. El certificado nuevo hereda cliente, tipo, custodio y servicios; el anterior pasa a «sustituido». Si daba servicio a algún cliente hay que confirmar
+    con `funciona` que el nuevo funciona. Solo custodios y supervisores."""
+    from app import certificados
+    t = _mt._exigir_certificados()
+    r = certificados.renovado(t, _mt._uid(), int(certificado_id), nueva_caducidad, funciona=bool(funciona))
+    return {"id": r["id"], "anterior_id": r["anterior_id"], "caduca_el": certificados.obtener(t, r["id"])["caduca_el"]}
+
+
+def _exigir_gestoria() -> int:
+    from app import verticales
+    t = _mt._tenant_id_actual()
+    if not verticales.esta_activo(t, "gestoria"):
+        raise ValueError("El control fiscal solo está disponible para gestorías.")
+    return t
+
+
+def panel_fiscal() -> dict:
+    """Qué mirar hoy en el despacho, en el ámbito de quien pregunta: obligaciones vencidas sin presentar, las que vencen en 7 días, bloqueadas, para revisar, traspasos sin aceptar, riesgos de
+    certificados (solo custodios y supervisores), reparto de carga por responsable y oficina e indicadores con su muestra. Cada elemento trae su causa. Un indicador sin datos es `null`, no 100 %."""
+    from app import panel_fiscal as _panel
+    t = _mt._exigir_gestoria()
+    p = _panel.construir(t, _mt._uid())
+    return {k: p[k] for k in ("generado_en", "ambito", "totales", "hoy_lista", "bloqueadas", "traspasos", "riesgos_certificados", "carga_por_responsable", "carga_por_oficina", "indicadores")}
+
+
+def listar_traspasos(estado: str | None = None) -> list[dict]:
+    """Traspasos de clientes entre personas u oficinas. `estado`: pendiente, aceptado, rechazado o cancelado."""
+    from app import traspasos
+    t = _mt._exigir_gestoria()
+    if estado and estado not in traspasos.ESTADOS:
+        raise ValueError("Estado no válido: pendiente, aceptado, rechazado o cancelado.")
+    campos = ("id", "cliente", "cliente_fiscal_id", "de_nombre", "a_nombre", "a_oficina", "estado", "nota", "motivo", "proximo_vencimiento", "creado_en", "version")
+    return [{k: x[k] for k in campos} for x in traspasos.listar(t, _mt._uid(), estado=estado or None)]
+
+
+def proponer_traspaso(cliente_id: int, a_usuario_id: int, a_oficina_id: int | None = None, nota: str | None = None) -> dict:
+    """Propone pasar un cliente fiscal a otra persona del despacho (y, si se indica, a otra oficina). Hasta que lo acepte, el cliente sigue siendo de quien lo lleva ahora."""
+    from app import traspasos
+    t = _mt._exigir_gestoria()
+    nuevo = traspasos.proponer(t, _mt._uid(), int(cliente_id), int(a_usuario_id), a_oficina_id=int(a_oficina_id) if a_oficina_id else None, nota=nota)
+    x = traspasos.obtener(t, nuevo)
+    return {"id": nuevo, "cliente": x["cliente"], "a_nombre": x["a_nombre"], "estado": x["estado"]}
+
+
+def resolver_traspaso(traspaso_id: int, accion: str, motivo: str | None = None) -> dict:
+    """Resuelve un traspaso: `aceptar` (quien lo recibe o la dirección), `rechazar` (con `motivo`) o `cancelar` (quien lo propuso o la dirección)."""
+    from app import traspasos
+    t = _mt._exigir_gestoria()
+    uid = _mt._uid()
+    if accion == "aceptar":
+        traspasos.aceptar(t, uid, int(traspaso_id))
+    elif accion == "rechazar":
+        traspasos.rechazar(t, uid, int(traspaso_id), motivo or "")
+    elif accion == "cancelar":
+        traspasos.cancelar(t, uid, int(traspaso_id))
+    else:
+        raise ValueError("Acción no válida: aceptar, rechazar o cancelar.")
+    x = traspasos.obtener(t, int(traspaso_id))
+    return {"id": x["id"], "cliente": x["cliente"], "estado": x["estado"]}

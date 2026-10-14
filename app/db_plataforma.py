@@ -716,6 +716,11 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
                     f"El tenant tiene {n} fichajes, que la ley obliga a conservar cuatro años. "
                     "Expórtalos y confirma que quieres borrarlos también."
                 )
+        from . import auditoria, certificados, traspasos
+        auditoria.purgar_tenant(conn, tenant_id)                   # el despacho se elimina entero: su rastro también (solo aquí se puede borrar)
+        traspasos.borrar_datos_de_tenant(conn, tenant_id)
+        certificados.borrar_datos_de_tenant(conn, tenant_id)      # antes que los clientes fiscales: sus vínculos los referencian
+        conn.execute("DELETE FROM concesiones_cliente WHERE tenant_id = ?", (tenant_id,))
         venc = "SELECT id FROM vencimientos_fiscales WHERE tenant_id = ?"
         clientes = "SELECT id FROM clientes_fiscales WHERE tenant_id = ?"
         conn.execute(f"DELETE FROM vencimientos_fiscales_pagos WHERE vencimiento_id IN ({venc})", (tenant_id,))
@@ -2355,6 +2360,9 @@ def guardar_perfil_usuario(
     telefono: str | None = None,
     silencio_desde: str | None = None,
     silencio_hasta: str | None = None,
+    resumen_diario: bool | None = None,
+    resumen_diario_hora: int | None = None,
+    resumen_diario_email: bool | None = None,
 ) -> None:
     """Solo actualiza los campos que se pasan explícitos (no-None) -- así
     la ruta puede llamar con únicamente el nombre, o únicamente las
@@ -2375,6 +2383,13 @@ def guardar_perfil_usuario(
         if notificar_resumen_semanal is not None:
             asignaciones.append("notificar_resumen_semanal = ?")
             valores.append(int(notificar_resumen_semanal))
+        for columna, valor in (("resumen_diario", resumen_diario), ("resumen_diario_email", resumen_diario_email)):
+            if valor is not None:
+                asignaciones.append(f"{columna} = ?")
+                valores.append(int(valor))
+        if resumen_diario_hora is not None:
+            asignaciones.append("resumen_diario_hora = ?")
+            valores.append(max(5, min(int(resumen_diario_hora), 20)))
         if notificar_push_correo is not None:
             asignaciones.append("notificar_push_correo = ?")
             valores.append(int(notificar_push_correo))
@@ -2536,6 +2551,25 @@ def usuarios_con_resumen_semanal_activo() -> list[int]:
                 "SELECT usuario_id FROM usuario_perfil WHERE notificar_resumen_semanal = 1"
             ).fetchall()
         ]
+    finally:
+        conn.close()
+
+
+def perfiles_con_resumen_diario() -> list:
+    """Quién tiene activado el resumen diario de pendientes (hilo de app/resumen_pendientes.py)."""
+    conn = _db.get_connection()
+    try:
+        return conn.execute(
+            "SELECT usuario_id, resumen_diario_hora, resumen_diario_email, resumen_diario_ultimo FROM usuario_perfil WHERE resumen_diario = 1").fetchall()
+    finally:
+        conn.close()
+
+
+def marcar_resumen_diario_entregado(usuario_id: int, dia: str) -> None:
+    conn = _db.get_connection()
+    try:
+        conn.execute("UPDATE usuario_perfil SET resumen_diario_ultimo = ? WHERE usuario_id = ?", (dia, usuario_id))
+        conn.commit()
     finally:
         conn.close()
 

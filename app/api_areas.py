@@ -14,6 +14,7 @@ AREAS: dict[str, tuple[str, tuple[str, ...]]] = {
     "fiscal": ("Calendario fiscal y clientes", ("fiscal",)),
     "fichaje": ("Fichaje", ("fichaje",)),
     "documentos": ("Documentos del despacho (clientes y expedientes)", ("documentos",)),
+    "certificados": ("Certificados digitales (inventario y renovaciones)", ("certificados",)),
     "tiquets": ("Tiquets", ("tiquets",)),
     "ia": ("Asistente de IA", ("ia", "chat")),
     "avisos": ("Notificaciones y comunicados", ("notificaciones", "comunicados")),

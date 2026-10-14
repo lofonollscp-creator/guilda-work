@@ -10326,3 +10326,1566 @@ msgstr "Au maximum %(n)s."
 
 msgid "Autorizar"
 msgstr "Autoriser"
+
+msgid "Resumen diario de mis pendientes"
+msgstr "Résumé quotidien de mes tâches en attente"
+
+msgid "Cada día laborable, a la hora que elijas: tareas atrasadas y de hoy, visitas, plazos, vencimientos y correos sin contestar. Si no hay nada pendiente, no se envía."
+msgstr "Chaque jour ouvré, à l'heure de votre choix : tâches en retard et du jour, visites, délais, échéances et e-mails sans réponse. S'il n'y a rien en attente, rien n'est envoyé."
+
+msgid "A partir de las"
+msgstr "À partir de"
+
+msgid "Enviármelo también por email"
+msgstr "Me l'envoyer aussi par e-mail"
+
+msgid "Acciones"
+msgstr "Actions"
+
+msgid "Ajustar sus días"
+msgstr "Ajuster ses jours"
+
+msgid "Aprobada"
+msgstr "Approuvée"
+
+msgid "Aprobados"
+msgstr "Approuvés"
+
+msgid "Aprobar"
+msgstr "Approuver"
+
+msgid "Aprueba o rechaza solicitudes, registra ausencias y ajusta los días de vacaciones."
+msgstr "Approuvez ou refusez les demandes, enregistrez des absences et ajustez les jours de congé."
+
+msgid "Asuntos propios"
+msgstr "Jours personnels"
+
+msgid "Ausencia cancelada."
+msgstr "Absence annulée."
+
+msgid "Ausencias"
+msgstr "Absences"
+
+msgid "Ausencias del equipo"
+msgstr "Absences de l'équipe"
+
+msgid "Ausencias y vacaciones"
+msgstr "Absences et congés"
+
+msgid "Baja médica"
+msgstr "Arrêt maladie"
+
+msgid "Comentario (opcional)"
+msgstr "Commentaire (facultatif)"
+
+msgid "Corresponden"
+msgstr "Droit"
+
+msgid "Decisión"
+msgstr "Décision"
+
+msgid "Disponibles"
+msgstr "Disponibles"
+
+msgid "Días"
+msgstr "Jours"
+
+msgid "Días anuales por defecto"
+msgstr "Jours annuels par défaut"
+
+msgid "Días de %(p)s"
+msgstr "Jours de %(p)s"
+
+msgid "Fechas"
+msgstr "Dates"
+
+msgid "Hasta (si es un solo día, déjalo vacío)"
+msgstr "Jusqu'au (laissez vide pour un seul jour)"
+
+msgid "Hecho."
+msgstr "C'est fait."
+
+msgid "Hoy fuera"
+msgstr "Absents aujourd'hui"
+
+msgid "Hoy no falta nadie."
+msgstr "Personne n'est absent aujourd'hui."
+
+msgid "Mis ausencias de %(anio)s"
+msgstr "Mes absences en %(anio)s"
+
+msgid "Motivo (opcional)"
+msgstr "Motif (facultatif)"
+
+msgid "No hay ausencias aprobadas por delante."
+msgstr "Aucune absence approuvée à venir."
+
+msgid "No hay solicitudes pendientes."
+msgstr "Aucune demande en attente."
+
+msgid "Pedir una ausencia"
+msgstr "Demander une absence"
+
+msgid "Pendientes"
+msgstr "En attente"
+
+msgid "Pendientes de aprobar"
+msgstr "En attente d'approbation"
+
+msgid "Permiso retribuido"
+msgstr "Congé payé exceptionnel"
+
+msgid "Pide días libres y consulta cuántos te quedan. Solo cuentan los días laborables."
+msgstr "Demandez des jours de congé et consultez ceux qu'il vous reste. Seuls les jours ouvrés comptent."
+
+msgid "Próximas ausencias aprobadas"
+msgstr "Prochaines absences approuvées"
+
+msgid "Queda aprobada directamente y se le avisa."
+msgstr "Elle est approuvée directement et la personne est prévenue."
+
+msgid "Rechazar"
+msgstr "Refuser"
+
+msgid "Registrar una ausencia de otra persona"
+msgstr "Enregistrer l'absence d'une autre personne"
+
+msgid "Saldo de vacaciones"
+msgstr "Solde de congés"
+
+msgid "Saldo de vacaciones de %(anio)s"
+msgstr "Solde de congés %(anio)s"
+
+msgid "Solicitud enviada. Te avisaremos cuando se resuelva."
+msgstr "Demande envoyée. Nous vous préviendrons dès qu'elle sera traitée."
+
+msgid "Solo medio día"
+msgstr "Demi-journée seulement"
+
+msgid "Solo medio día (para un único día)"
+msgstr "Demi-journée seulement (pour un seul jour)"
+
+msgid "Todavía no has pedido ninguna ausencia este año."
+msgstr "Vous n'avez encore demandé aucune absence cette année."
+
+msgid "Vacaciones"
+msgstr "Congés"
+
+msgid "aprobados"
+msgstr "approuvés"
+
+msgid "días disponibles en %(anio)s"
+msgstr "jours disponibles en %(anio)s"
+
+msgid "hasta el %(f)s"
+msgstr "jusqu'au %(f)s"
+
+msgid "medio día"
+msgstr "demi-journée"
+
+msgid "pendientes de aprobar"
+msgstr "en attente d'approbation"
+
+msgid "por defecto"
+msgstr "par défaut"
+
+msgid "te corresponden"
+msgstr "auxquels vous avez droit"
+
+msgid "¿Cancelar esta ausencia?"
+msgstr "Annuler cette absence ?"
+
+msgid "%(n)s de ausencia"
+msgstr "%(n)s d'absence"
+
+msgid "Acaba"
+msgstr "Fin"
+
+msgid "Ajustar la bolsa de una persona"
+msgstr "Ajuster la banque d'heures d'une personne"
+
+msgid "Ajustes de este periodo"
+msgstr "Ajustements de cette période"
+
+msgid "Al lunes"
+msgstr "Au lundi"
+
+msgid "Aún no hay turnos definidos: crea el primero abajo («Tipos de turno»)."
+msgstr "Aucun poste n'est encore défini : créez le premier ci-dessous (« Types de poste »)."
+
+msgid "Bolsa de horas"
+msgstr "Banque d'heures"
+
+msgid "Bolsa del equipo"
+msgstr "Banque d'heures de l'équipe"
+
+msgid "Copiar una semana a otra"
+msgstr "Copier une semaine vers une autre"
+
+msgid "Crear turno"
+msgstr "Créer le poste"
+
+msgid "Cuadrante de turnos"
+msgstr "Planning des postes"
+
+msgid "Del %(d)s al %(h)s · %(n)s días laborables"
+msgstr "Du %(d)s au %(h)s · %(n)s jours ouvrés"
+
+msgid "Desde el lunes"
+msgstr "Depuis le lundi"
+
+msgid "Empieza"
+msgstr "Début"
+
+msgid "Guardar ajuste"
+msgstr "Enregistrer l'ajustement"
+
+msgid "Horas trabajadas frente a las que tocaba trabajar según tu jornada. Las ausencias aprobadas no se esperan."
+msgstr "Heures travaillées par rapport à celles que vous deviez travailler selon votre contrat. Les absences approuvées ne sont pas attendues."
+
+msgid "Los días en que alguien está ausente se saltan."
+msgstr "Les jours où quelqu'un est absent sont ignorés."
+
+msgid "Mis próximos turnos"
+msgstr "Mes prochains postes"
+
+msgid "No tienes jornada semanal contratada indicada, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas."
+msgstr "Vous n'avez pas indiqué votre durée hebdomadaire contractuelle : la banque ne peut pas être calculée. Seules les heures travaillées sont affichées."
+
+msgid "No tienes turnos asignados en las próximas dos semanas."
+msgstr "Vous n'avez aucun poste assigné dans les deux prochaines semaines."
+
+msgid "Quién trabaja qué cada día. Cada persona recibe un aviso cuando le cambian el turno."
+msgstr "Qui travaille quoi chaque jour. Chaque personne reçoit un avis quand son poste change."
+
+msgid "Restar horas"
+msgstr "Retirer des heures"
+
+msgid "Semana anterior"
+msgstr "Semaine précédente"
+
+msgid "Semana del %(f)s"
+msgstr "Semaine du %(f)s"
+
+msgid "Semana siguiente"
+msgstr "Semaine suivante"
+
+msgid "Sin jornada contratada"
+msgstr "Sans durée contractuelle"
+
+msgid "Sumar horas"
+msgstr "Ajouter des heures"
+
+msgid "Sustituir lo ya asignado"
+msgstr "Remplacer ce qui est déjà assigné"
+
+msgid "Tipos de turno"
+msgstr "Types de poste"
+
+msgid "Tocaba"
+msgstr "Dû"
+
+msgid "Trabajadas"
+msgstr "Travaillées"
+
+msgid "Turnos"
+msgstr "Postes"
+
+msgid "ajustes"
+msgstr "ajustements"
+
+msgid "saldo de la bolsa"
+msgstr "solde de la banque"
+
+msgid "tocaba trabajar"
+msgstr "à travailler"
+
+msgid "trabajadas"
+msgstr "travaillées"
+
+msgid "¿Archivar este turno? Se quitará de los días futuros."
+msgstr "Archiver ce poste ? Il sera retiré des jours à venir."
+
+msgid "Abrir la renovación"
+msgstr "Ouvrir le renouvellement"
+
+msgid "Acceso a un buzón de notificaciones"
+msgstr "Accès à une boîte de notifications"
+
+msgid "Algoritmo"
+msgstr "Algorithme"
+
+msgid "Anotar una comprobación"
+msgstr "Noter une vérification"
+
+msgid "Archivo"
+msgstr "Fichier"
+
+msgid "Autorización"
+msgstr "Autorisation"
+
+msgid "Autorización o representación que lo permite"
+msgstr "Autorisation ou représentation qui le permet"
+
+msgid "Autorizado"
+msgstr "Autorisé"
+
+msgid "Avanzar"
+msgstr "Avancer"
+
+msgid "Cadena"
+msgstr "Chaîne"
+
+msgid "Cadena de confianza"
+msgstr "Chaîne de confiance"
+
+msgid "Cadena y revocación"
+msgstr "Chaîne et révocation"
+
+msgid "Caduca"
+msgstr "Expire"
+
+msgid "Caduca antes del vencimiento"
+msgstr "Expire avant l'échéance"
+
+msgid "Caducado"
+msgstr "Expiré"
+
+msgid "Certificado"
+msgstr "Certificat"
+
+msgid "Certificado importado."
+msgstr "Certificat importé."
+
+msgid "Certificado nuevo (solo la parte pública)"
+msgstr "Nouveau certificat (partie publique seulement)"
+
+msgid "Certificados"
+msgstr "Certificats"
+
+msgid "Certificados digitales"
+msgstr "Certificats numériques"
+
+msgid "Clave"
+msgstr "Clé"
+
+msgid "Clave en un medio autorizado"
+msgstr "Clé sur un support autorisé"
+
+msgid "Cliente representado"
+msgstr "Client représenté"
+
+msgid "Cobertura desconocida"
+msgstr "Couverture inconnue"
+
+msgid "Confirmo que no hay servicios que implantar"
+msgstr "Je confirme qu'il n'y a aucun service à déployer"
+
+msgid "Correcta"
+msgstr "Réussie"
+
+msgid "Custodio"
+msgstr "Dépositaire"
+
+msgid "Custodios de certificados"
+msgstr "Dépositaires de certificats"
+
+msgid "Cómo se comprobó (sin contraseñas)"
+msgstr "Comment cela a été vérifié (sans mots de passe)"
+
+msgid "Dar de alta"
+msgstr "Enregistrer"
+
+msgid "Dar de alta sin el archivo"
+msgstr "Enregistrer sans le fichier"
+
+msgid "Datos del certificado"
+msgstr "Données du certificat"
+
+msgid "Declarada en un medio autorizado"
+msgstr "Déclarée sur un support autorisé"
+
+msgid "Dimensión"
+msgstr "Dimension"
+
+msgid "Dónde está custodiado (sin contraseñas)"
+msgstr "Où il est conservé (sans mots de passe)"
+
+msgid "Dónde se usa"
+msgstr "Où il est utilisé"
+
+msgid "El archivo contiene varios certificados finales y no se puede adivinar cuál es. Elige el correcto; no se asume que sea el primero."
+msgstr "Le fichier contient plusieurs certificats finaux et on ne peut pas deviner lequel est le bon. Choisissez le bon ; on ne suppose pas que ce soit le premier."
+
+msgid "Elegir certificado"
+msgstr "Choisir le certificat"
+
+msgid "Emisor"
+msgstr "Émetteur"
+
+msgid "En gestión"
+msgstr "En cours de traitement"
+
+msgid "En uso"
+msgstr "En service"
+
+msgid "Ese archivo contiene una clave privada o es un contenedor .p12/.pfx: no se guarda."
+msgstr "Ce fichier contient une clé privée ou est un conteneur .p12/.pfx : il n'est pas enregistré."
+
+msgid "Ese certificado ya estaba en el inventario: no se ha duplicado."
+msgstr "Ce certificat figurait déjà dans l'inventaire : il n'a pas été dupliqué."
+
+msgid "Estado temporal"
+msgstr "État de validité"
+
+msgid "Este certificado ya no se renueva."
+msgstr "Ce certificat n'est plus renouvelé."
+
+msgid "Este es"
+msgstr "C'est celui-ci"
+
+msgid "Evidencia de la que salen los datos"
+msgstr "Preuve d'où viennent les données"
+
+msgid "Fallida"
+msgstr "Échouée"
+
+msgid "General"
+msgstr "Général"
+
+msgid "General (no es de un cliente)"
+msgstr "Général (pas pour un client)"
+
+msgid "Hacer custodio"
+msgstr "Nommer dépositaire"
+
+msgid "Historial"
+msgstr "Historique"
+
+msgid "Huella SHA-256"
+msgstr "Empreinte SHA-256"
+
+msgid "Implantado"
+msgstr "Déployé"
+
+msgid "Importar el nuevo"
+msgstr "Importer le nouveau"
+
+msgid "Importar un certificado"
+msgstr "Importer un certificat"
+
+msgid "Indeterminada"
+msgstr "Indéterminée"
+
+msgid "Inventariado"
+msgstr "Inventorié"
+
+msgid "Inventario de los certificados del despacho: cuándo caducan, a qué clientes y servicios dan acceso y en qué punto está su renovación. No se guardan claves privadas."
+msgstr "Inventaire des certificats du cabinet : quand ils expirent, à quels clients et services ils donnent accès et où en est leur renouvellement. Les clés privées ne sont pas conservées."
+
+msgid "Inválida"
+msgstr "Invalide"
+
+msgid "Lo que confirma el custodio"
+msgstr "Ce que confirme le dépositaire"
+
+msgid "Los custodios gestionan el inventario y sus renovaciones. Los supervisores del despacho también pueden hacerlo."
+msgstr "Les dépositaires gèrent l'inventaire et ses renouvellements. Les superviseurs du cabinet peuvent aussi le faire."
+
+msgid "NIF sugerido por el certificado"
+msgstr "NIF suggéré par le certificat"
+
+msgid "NIF/CIF/NIE del titular (confirmado)"
+msgstr "NIF/CIF/NIE du titulaire (confirmé)"
+
+msgid "No comprobada"
+msgstr "Non vérifiée"
+
+msgid "No disponible"
+msgstr "Non disponible"
+
+msgid "No hay certificados que mostrar. Importa el primero abajo."
+msgstr "Aucun certificat à afficher. Importez le premier ci-dessous."
+
+msgid "No hay ninguna renovación en curso. Se abre sola 60 días antes de que caduque, o puedes abrirla ahora."
+msgstr "Aucun renouvellement en cours. Il s'ouvre tout seul 60 jours avant l'expiration, ou vous pouvez l'ouvrir maintenant."
+
+msgid "No revocado (en la última comprobación)"
+msgstr "Non révoqué (à la dernière vérification)"
+
+msgid "Nombres alternativos"
+msgstr "Noms alternatifs"
+
+msgid "Nota (opcional)"
+msgstr "Note (facultative)"
+
+msgid "Notas (sin contraseñas)"
+msgstr "Notes (sans mots de passe)"
+
+msgid "Nunca"
+msgstr "Jamais"
+
+msgid "Número de serie"
+msgstr "Numéro de série"
+
+msgid "Obligaciones pendientes en los próximos 90 días cuya cobertura con certificado no está asegurada. «Cobertura desconocida» significa que aún no has registrado qué certificado se usa para ese cliente: no que esté bien."
+msgstr "Obligations en attente dans les 90 prochains jours dont la couverture par certificat n'est pas assurée. « Couverture inconnue » signifie que vous n'avez pas encore indiqué quel certificat est utilisé pour ce client : pas que tout va bien."
+
+msgid "Obligación"
+msgstr "Obligation"
+
+msgid "Obligatorio al suspender o archivar"
+msgstr "Obligatoire pour suspendre ou archiver"
+
+msgid "Obtenido"
+msgstr "Obtenu"
+
+msgid "Para registrar un certificado del que solo tienes los datos. Queda «pendiente de comprobar» hasta que se importe el archivo público."
+msgstr "Pour enregistrer un certificat dont vous n'avez que les données. Il reste « à vérifier » jusqu'à l'import du fichier public."
+
+msgid "Pasar a"
+msgstr "Passer à"
+
+msgid "Pasar la renovación a"
+msgstr "Passer le renouvellement à"
+
+msgid "Pendiente de comprobar"
+msgstr "À vérifier"
+
+msgid "Pendiente del titular"
+msgstr "En attente du titulaire"
+
+msgid "Persona física"
+msgstr "Personne physique"
+
+msgid "Persona jurídica"
+msgstr "Personne morale"
+
+msgid "Políticas"
+msgstr "Politiques"
+
+msgid "Por qué"
+msgstr "Pourquoi"
+
+msgid "Presentación de impuestos"
+msgstr "Dépôt des déclarations fiscales"
+
+msgid "Prueba en cada servicio"
+msgstr "Test sur chaque service"
+
+msgid "Quitar como custodio"
+msgstr "Retirer comme dépositaire"
+
+msgid "Qué se ha comprobado"
+msgstr "Ce qui a été vérifié"
+
+msgid "Recibir un archivo no equivale a «renovado»: la renovación termina cuando cada servicio se ha probado con el certificado nuevo. Cerrar la renovación sustituye el certificado y traslada los servicios al nuevo; el anterior se conserva con su historial."
+msgstr "Recevoir un fichier ne signifie pas « renouvelé » : le renouvellement se termine quand chaque service a été testé avec le nouveau certificat. Clore le renouvellement remplace le certificat et transfère les services au nouveau ; l'ancien est conservé avec son historique."
+
+msgid "Registrar un uso"
+msgstr "Enregistrer un usage"
+
+msgid "Renovaciones anteriores"
+msgstr "Renouvellements précédents"
+
+msgid "Renovación"
+msgstr "Renouvellement"
+
+msgid "Representante"
+msgstr "Représentant"
+
+msgid "Resto del archivo"
+msgstr "Reste du fichier"
+
+msgid "Resultado"
+msgstr "Résultat"
+
+msgid "Retirar"
+msgstr "Retirer"
+
+msgid "Revocación"
+msgstr "Révocation"
+
+msgid "Riesgo"
+msgstr "Risque"
+
+msgid "Riesgos por certificados"
+msgstr "Risques liés aux certificats"
+
+msgid "Servicios"
+msgstr "Services"
+
+msgid "Sin alternativa autorizada"
+msgstr "Sans alternative autorisée"
+
+msgid "Sin declarar"
+msgstr "Non déclarée"
+
+msgid "Sin fechas"
+msgstr "Sans dates"
+
+msgid "Sin iniciar"
+msgstr "Non démarré"
+
+msgid "Sin movimientos."
+msgstr "Aucun mouvement."
+
+msgid "Sin probar"
+msgstr "Non testé"
+
+msgid "Sin registrar"
+msgstr "Non enregistré"
+
+msgid "Situación"
+msgstr "Situation"
+
+msgid "Situación del certificado"
+msgstr "Situation du certificat"
+
+msgid "Sube solo la parte pública (.cer, .crt o .pem). Si el archivo contiene una clave privada o es un contenedor .p12/.pfx se rechaza sin guardarlo: exporta la parte pública con tu herramienta local."
+msgstr "Envoyez uniquement la partie publique (.cer, .crt ou .pem). Si le fichier contient une clé privée ou est un conteneur .p12/.pfx, il est rejeté sans être enregistré : exportez la partie publique avec votre outil local."
+
+msgid "Sujeto"
+msgstr "Sujet"
+
+msgid "Suspender un certificado por sospecha de compromiso no lo revoca: la revocación la tramita el emisor."
+msgstr "Suspendre un certificat en cas de suspicion de compromission ne le révoque pas : la révocation est faite par l'émetteur."
+
+msgid "Sustituido"
+msgstr "Remplacé"
+
+msgid "Sustituido por"
+msgstr "Remplacé par"
+
+msgid "Sustituye a"
+msgstr "Remplace"
+
+msgid "Tarjeta en la caja fuerte de Girona"
+msgstr "Carte dans le coffre de Gérone"
+
+msgid "Tipo de titular"
+msgstr "Type de titulaire"
+
+msgid "Titular"
+msgstr "Titulaire"
+
+msgid "Titular (sujeto)"
+msgstr "Titulaire (sujet)"
+
+msgid "Titular que debe actuar"
+msgstr "Titulaire qui doit agir"
+
+msgid "Titular sugerido"
+msgstr "Titulaire suggéré"
+
+msgid "Titular, emisor, NIF o serie"
+msgstr "Titulaire, émetteur, NIF ou série"
+
+msgid "Todavía no hay servicios registrados: la cobertura de este certificado es desconocida."
+msgstr "Aucun service n'est encore enregistré : la couverture de ce certificat est inconnue."
+
+msgid "Todavía no vigente"
+msgstr "Pas encore valide"
+
+msgid "Una fecha correcta no acredita la cadena de confianza, la revocación, la posesión de la clave ni la autorización: eso se muestra aparte y, si no se ha comprobado, así se dice."
+msgstr "Une date correcte n'établit ni la chaîne de confiance, ni la révocation, ni la possession de la clé, ni l'autorisation : cela s'affiche à part et, si ce n'est pas vérifié, c'est indiqué."
+
+msgid "Usos de clave"
+msgstr "Usages de la clé"
+
+msgid "Validado"
+msgstr "Validé"
+
+msgid "Validez"
+msgstr "Validité"
+
+msgid "Ver certificado"
+msgstr "Voir le certificat"
+
+msgid "Ver el certificado nuevo"
+msgstr "Voir le nouveau certificat"
+
+msgid "Vigente"
+msgstr "Valide"
+
+msgid "Vigente hasta (opcional)"
+msgstr "Valide jusqu'au (facultatif)"
+
+msgid "Válida"
+msgstr "Valide"
+
+msgid "Válido desde"
+msgstr "Valide à partir du"
+
+msgid "Válido hasta"
+msgstr "Valide jusqu'au"
+
+msgid "Yo / sin asignar"
+msgstr "Moi / non attribué"
+
+msgid "días hasta que caduca (informativo)"
+msgstr "jours avant l'expiration (indicatif)"
+
+msgid "en %(n)s días"
+msgstr "dans %(n)s jours"
+
+msgid "revisa que el titular, el NIF y el emisor son los esperados antes de validarlo."
+msgstr "vérifiez que le titulaire, le NIF et l'émetteur sont ceux attendus avant de le valider."
+
+msgid "sugerencia: la confirma el custodio"
+msgstr "suggestion : le dépositaire la confirme"
+
+msgid "válido desde"
+msgstr "valide à partir du"
+
+msgid "válido hasta"
+msgstr "valide jusqu'au"
+
+msgid "¿Cuál es el certificado del cliente?"
+msgstr "Quel est le certificat du client ?"
+
+msgid "Última prueba"
+msgstr "Dernier test"
+
+msgid "Alcance"
+msgstr "Portée"
+
+msgid "Auditor (solo lectura)"
+msgstr "Auditeur (lecture seule)"
+
+msgid "Bloqueada"
+msgstr "Bloquée"
+
+msgid "Bloquear"
+msgstr "Bloquer"
+
+msgid "Cada cambio de fase queda en la auditoría con quién lo hizo y por qué. Una presentación registrada a mano se muestra como «declarada por el gestor», no como confirmada por el organismo."
+msgstr "Chaque changement de phase est consigné dans l'audit avec son auteur et son motif. Un dépôt enregistré à la main s'affiche comme « déclaré par le gestionnaire », pas comme confirmé par l'organisme."
+
+msgid "Cambiar de fase"
+msgstr "Changer de phase"
+
+msgid "Cliente (si el alcance es un cliente)"
+msgstr "Client (si la portée est un client)"
+
+msgid "Clientes compartidos"
+msgstr "Clients partagés"
+
+msgid "Compartido con"
+msgstr "Partagé avec"
+
+msgid "Compartir un cliente"
+msgstr "Partager un client"
+
+msgid "Con la oficina…"
+msgstr "Avec le bureau…"
+
+msgid "Con oficinas, cada persona ve los clientes de sus oficinas, los que se le compartan y, si tiene un rol de todo el despacho (revisor fiscal, auditor), todos. La dirección lo ve todo."
+msgstr "Avec des bureaux, chaque personne voit les clients de ses bureaux, ceux qu'on partage avec elle et, avec un rôle pour tout le cabinet (réviseur fiscal, auditeur), tous. La direction voit tout."
+
+msgid "Con tu rol no puedes cambiar la fase de esta obligación."
+msgstr "Avec votre rôle, vous ne pouvez pas changer la phase de cette obligation."
+
+msgid "Coordinador de oficina"
+msgstr "Coordinateur de bureau"
+
+msgid "Cualquiera"
+msgstr "N'importe qui"
+
+msgid "Cuándo se presentó"
+msgstr "Quand il a été déposé"
+
+msgid "Cómo funciona"
+msgstr "Comment ça marche"
+
+msgid "Cómo trabaja el despacho cada obligación: de pendiente a presentada y cerrada. Solo la dirección lo cambia."
+msgstr "Comment le cabinet traite chaque obligation : de en attente à déposée et clôturée. Seule la direction peut le modifier."
+
+msgid "Dar el rol"
+msgstr "Donner le rôle"
+
+msgid "Dar un rol"
+msgstr "Donner un rôle"
+
+msgid "El auditor solo puede leer. Aprobar y declarar «no aplica» o «anulada» es de la dirección o del revisor fiscal."
+msgstr "L'auditeur peut seulement lire. Approuver et déclarer « sans objet » ou « annulée » revient à la direction ou au réviseur fiscal."
+
+msgid "El bloqueo no detiene el plazo legal."
+msgstr "Le blocage n'arrête pas le délai légal."
+
+msgid "El coordinador es de una oficina; el revisor fiscal, de todo el despacho."
+msgstr "Le coordinateur est celui d'un bureau ; le réviseur fiscal, de tout le cabinet."
+
+msgid "En riesgo"
+msgstr "À risque"
+
+msgid "Esperando"
+msgstr "En attente de"
+
+msgid "Esta obligación ya está terminada."
+msgstr "Cette obligation est déjà terminée."
+
+msgid "Este despacho trabaja con flujo estricto: hay que revisar y aprobar antes de presentar."
+msgstr "Ce cabinet travaille avec un flux strict : il faut réviser et approuver avant de déposer."
+
+msgid "Evidencias de presentación"
+msgstr "Preuves de dépôt"
+
+msgid "Exigir el justificante oficial"
+msgstr "Exiger le justificatif officiel"
+
+msgid "Flujo de trabajo"
+msgstr "Flux de travail"
+
+msgid "Flujo de trabajo fiscal"
+msgstr "Flux de travail fiscal"
+
+msgid "Flujo estricto"
+msgstr "Flux strict"
+
+msgid "Flujo flexible: se puede presentar desde cualquier fase de trabajo."
+msgstr "Flux souple : on peut déposer depuis n'importe quelle phase de travail."
+
+msgid "Gestión"
+msgstr "Gestion"
+
+msgid "Gestor"
+msgstr "Gestionnaire"
+
+msgid "Hay que pasar por revisión y aprobación (dirección o revisor fiscal) antes de presentar. Sin esto, se puede presentar desde cualquier fase de trabajo."
+msgstr "Il faut passer par la révision et l'approbation (direction ou réviseur fiscal) avant de déposer. Sans cela, on peut déposer depuis n'importe quelle phase de travail."
+
+msgid "Lectura"
+msgstr "Lecture"
+
+msgid "Los clientes que aún no tienen oficina los ve todo el equipo hasta que los asignes."
+msgstr "Les clients qui n'ont pas encore de bureau sont visibles par toute l'équipe jusqu'à ce que vous les affectiez."
+
+msgid "Los extractos del banco"
+msgstr "Les relevés bancaires"
+
+msgid "Marcar como bloqueada, esperando…"
+msgstr "Marquer comme bloquée, en attente de…"
+
+msgid "Mientras no haya oficinas, todo el equipo ve todos los clientes, como siempre."
+msgstr "Tant qu'il n'y a pas de bureaux, toute l'équipe voit tous les clients, comme toujours."
+
+msgid "Motivo o justificación (obligatorio al devolver a preparación, o al marcar «no aplica» o «anulada»)"
+msgstr "Motif ou justification (obligatoire pour renvoyer en préparation, ou pour marquer « sans objet » ou « annulée »)"
+
+msgid "Nivel"
+msgstr "Niveau"
+
+msgid "No aplica"
+msgstr "Sans objet"
+
+msgid "No hay clientes."
+msgstr "Aucun client."
+
+msgid "No hay eventos con esos filtros."
+msgstr "Aucun événement avec ces filtres."
+
+msgid "Nueva oficina"
+msgstr "Nouveau bureau"
+
+msgid "Obligaciones"
+msgstr "Obligations"
+
+msgid "Oficina (si el alcance es una oficina)"
+msgstr "Bureau (si la portée est un bureau)"
+
+msgid "Oficina de %(c)s"
+msgstr "Bureau de %(c)s"
+
+msgid "Oficina de cada cliente"
+msgstr "Bureau de chaque client"
+
+msgid "Oficina principal"
+msgstr "Bureau principal"
+
+msgid "Oficinas"
+msgstr "Bureaux"
+
+msgid "Oficinas y permisos"
+msgstr "Bureaux et autorisations"
+
+msgid "Organismo"
+msgstr "Organisme"
+
+msgid "Personas"
+msgstr "Personnes"
+
+msgid "Presentada"
+msgstr "Déposée"
+
+msgid "Presentada tarde"
+msgstr "Déposée en retard"
+
+msgid "Quitar el bloqueo"
+msgstr "Retirer le blocage"
+
+msgid "Quién"
+msgstr "Qui"
+
+msgid "Referencia o CSV"
+msgstr "Référence ou CSV"
+
+msgid "Registro de cambios del control fiscal: obligaciones, certificados, oficinas y permisos. Solo se añade: nada se modifica ni se borra desde la aplicación."
+msgstr "Journal des changements du contrôle fiscal : obligations, certificats, bureaux et autorisations. Ajout seulement : rien n'est modifié ni supprimé depuis l'application."
+
+msgid "Reparte los clientes fiscales entre las oficinas del despacho y decide quién ve y hace qué."
+msgstr "Répartissez les clients fiscaux entre les bureaux du cabinet et décidez qui voit et fait quoi."
+
+msgid "Revisor fiscal"
+msgstr "Réviseur fiscal"
+
+msgid "Roles de personas"
+msgstr "Rôles des personnes"
+
+msgid "Si la presentas: evidencia declarada por ti"
+msgstr "Si vous la déposez : preuve déclarée par vous"
+
+msgid "Sin el justificante subido no se puede presentar ni cerrar una obligación."
+msgstr "Sans le justificatif téléversé, on ne peut ni déposer ni clôturer une obligation."
+
+msgid "Sin oficina (la ve todo el equipo)"
+msgstr "Sans bureau (toute l'équipe le voit)"
+
+msgid "Sobre"
+msgstr "Sur"
+
+msgid "Todavía no hay roles asignados. La dirección (supervisores) ve y hace todo."
+msgstr "Aucun rôle attribué pour l'instant. La direction (superviseurs) voit et fait tout."
+
+msgid "Todo"
+msgstr "Tout"
+
+msgid "Todo el despacho"
+msgstr "Tout le cabinet"
+
+msgid "Un cliente"
+msgstr "Un client"
+
+msgid "Una oficina"
+msgstr "Un bureau"
+
+msgid "Ver más antiguos"
+msgstr "Voir plus anciens"
+
+msgid "el gestor"
+msgstr "le gestionnaire"
+
+msgid "presentación declarada por %(quien)s"
+msgstr "dépôt déclaré par %(quien)s"
+
+msgid "¿Archivar esta oficina? Se retiran sus roles. Antes hay que reasignar sus clientes."
+msgstr "Archiver ce bureau ? Ses rôles sont retirés. Il faut d'abord réaffecter ses clients."
+
+msgid "¿Dejar de compartir este cliente?"
+msgstr "Ne plus partager ce client ?"
+
+msgid "¿Retirar este rol?"
+msgstr "Retirer ce rôle ?"
+
+msgid "…o con la persona"
+msgstr "…ou avec la personne"
+
+msgid "%(n)s certificados son de clientes sin correo en su ficha: no se les podrá avisar hasta que lo añadas."
+msgstr "%(n)s certificats appartiennent à des clients sans e-mail dans leur fiche : on ne pourra pas les prévenir tant que vous n'en ajoutez pas."
+
+msgid "%(n)s días después de caducar"
+msgstr "%(n)s jours après l'expiration"
+
+msgid "(para quien quiera ir más allá de la fecha)"
+msgstr "(pour ceux qui veulent aller au-delà de la date)"
+
+msgid "ACCV (Comunitat Valenciana)"
+msgstr "ACCV (Communauté valencienne)"
+
+msgid "Archivo público del certificado nuevo (opcional)"
+msgstr "Fichier public du nouveau certificat (facultatif)"
+
+msgid "Atención: %(n)s obligaciones sin cobertura asegurada"
+msgstr "Attention : %(n)s obligations sans couverture assurée"
+
+msgid "Avanzado: completar los datos con el archivo público"
+msgstr "Avancé : compléter les données avec le fichier public"
+
+msgid "Avisar a los clientes por correo"
+msgstr "Prévenir les clients par e-mail"
+
+msgid "Avisar al cliente ahora"
+msgstr "Prévenir le client maintenant"
+
+msgid "Avisar al cliente de su caducidad"
+msgstr "Prévenir le client de son expiration"
+
+msgid "Aviso enviado al cliente."
+msgstr "Avis envoyé au client."
+
+msgid "Avisos a clientes"
+msgstr "Avis aux clients"
+
+msgid "Avisos activados"
+msgstr "Avis activés"
+
+msgid "Avisos al cliente"
+msgstr "Avis au client"
+
+msgid "Avisos del despacho"
+msgstr "Avis du cabinet"
+
+msgid "Avisos desactivados"
+msgstr "Avis désactivés"
+
+msgid "Avisos enviados"
+msgstr "Avis envoyés"
+
+msgid "Añadir certificado"
+msgstr "Ajouter un certificat"
+
+msgid "Añadir el primero"
+msgstr "Ajouter le premier"
+
+msgid "Añadir un certificado"
+msgstr "Ajouter un certificat"
+
+msgid "Caduca el %(f)s"
+msgstr "Expire le %(f)s"
+
+msgid "Caduca en %(n)s días"
+msgstr "Expire dans %(n)s jours"
+
+msgid "Caduca hoy"
+msgstr "Expire aujourd'hui"
+
+msgid "Caduca mañana"
+msgstr "Expire demain"
+
+msgid "Caducado hace %(n)s días"
+msgstr "Expiré il y a %(n)s jours"
+
+msgid "Caducados"
+msgstr "Expirés"
+
+msgid "Caducan en 30 días"
+msgstr "Expirent sous 30 jours"
+
+msgid "Caducan en 90 días"
+msgstr "Expirent sous 90 jours"
+
+msgid "Caducó el %(f)s"
+msgstr "A expiré le %(f)s"
+
+msgid "Camerfirma"
+msgstr "Camerfirma"
+
+msgid "Certificado guardado."
+msgstr "Certificat enregistré."
+
+msgid "Cliente y certificado"
+msgstr "Client et certificat"
+
+msgid "Cliente, titular, NIF…"
+msgstr "Client, titulaire, NIF…"
+
+msgid "Comprobaciones técnicas y situación"
+msgstr "Vérifications techniques et situation"
+
+msgid "Conviene empezar ya la renovación para no quedarse sin certificado."
+msgstr "Mieux vaut commencer dès maintenant le renouvellement pour ne pas se retrouver sans certificat."
+
+msgid "Conviene renovarlo cuanto antes para no quedarte sin él."
+msgstr "Mieux vaut le renouveler au plus vite pour ne pas en manquer."
+
+msgid "Correo del cliente"
+msgstr "E-mail du client"
+
+msgid "Cuando el certificado de un cliente se acerca a su caducidad (o ya ha caducado), le mandamos un correo. Solo a clientes con correo en su ficha y con certificado apuntado a su nombre. Apagado por defecto."
+msgstr "Quand le certificat d'un client approche de son expiration (ou a expiré), nous lui envoyons un e-mail. Uniquement aux clients ayant un e-mail dans leur fiche et un certificat enregistré à leur nom. Désactivé par défaut."
+
+msgid "Cuándo avisar"
+msgstr "Quand prévenir"
+
+msgid "Cómo informa tu despacho a sus clientes de que su certificado digital está a punto de caducar: por correo, y si quieres también en su portal."
+msgstr "Comment votre cabinet informe ses clients que leur certificat numérique va expirer : par e-mail, et si vous le souhaitez dans leur portail."
+
+msgid "Cómo se renueva (instrucciones para tus clientes)"
+msgstr "Comment renouveler (instructions pour vos clients)"
+
+msgid "DNI electrónico"
+msgstr "DNI électronique"
+
+msgid "Datos introducidos a mano"
+msgstr "Données saisies à la main"
+
+msgid "Días antes de la caducidad"
+msgstr "Jours avant l'expiration"
+
+msgid "Días después de caducar"
+msgstr "Jours après l'expiration"
+
+msgid "Dónde está (sin contraseñas)"
+msgstr "Où il se trouve (sans mots de passe)"
+
+msgid "Editar datos"
+msgstr "Modifier les données"
+
+msgid "El cliente pidió ayuda para renovarlo el %(f)s."
+msgstr "Le client a demandé de l'aide pour le renouveler le %(f)s."
+
+msgid "El cliente ve cuándo caduca su certificado y puede pedirte ayuda para renovarlo con un botón."
+msgstr "Le client voit quand son certificat expire et peut vous demander de l'aide pour le renouveler d'un clic."
+
+msgid "El correo saliente no está configurado en el servidor: no se enviará ningún aviso a clientes (el resto del control de certificados funciona igual)."
+msgstr "Le courrier sortant n'est pas configuré sur le serveur : aucun avis ne sera envoyé aux clients (le reste du suivi des certificats fonctionne normalement)."
+
+msgid "Empieza por el primero: elige el cliente, el tipo de certificado y cuándo caduca. Son diez segundos."
+msgstr "Commencez par le premier : choisissez le client, le type de certificat et sa date d'expiration. Dix secondes suffisent."
+
+msgid "En este certificado"
+msgstr "Sur ce certificat"
+
+msgid "Enseñar su certificado en su portal"
+msgstr "Afficher son certificat dans son portail"
+
+msgid "Enviarme este aviso de prueba"
+msgstr "M'envoyer cet avis de test"
+
+msgid "Ese certificado ya estaba apuntado: no se ha duplicado."
+msgstr "Ce certificat était déjà enregistré : il n'a pas été dupliqué."
+
+msgid "Este certificado no está asociado a un cliente. Asócialo abajo, en «Datos», para poder avisarle de su caducidad y enseñárselo en su portal."
+msgstr "Ce certificat n'est associé à aucun client. Associez-le ci-dessous, dans « Données », pour pouvoir le prévenir de son expiration et l'afficher dans son portail."
+
+msgid "Excluido"
+msgstr "Exclu"
+
+msgid "FNMT · Persona física"
+msgstr "FNMT · Personne physique"
+
+msgid "FNMT · Representante de entidad sin personalidad jurídica"
+msgstr "FNMT · Représentant d'entité sans personnalité juridique"
+
+msgid "FNMT · Representante de persona jurídica"
+msgstr "FNMT · Représentant de personne morale"
+
+msgid "Fecha de caducidad"
+msgstr "Date d'expiration"
+
+msgid "Fecha de emisión"
+msgstr "Date d'émission"
+
+msgid "Fecha de emisión (opcional)"
+msgstr "Date d'émission (facultatif)"
+
+msgid "Firmaprofesional"
+msgstr "Firmaprofesional"
+
+msgid "Guardar certificado"
+msgstr "Enregistrer le certificat"
+
+msgid "He comprobado que el nuevo funciona en los %(n)s servicios donde se usa"
+msgstr "J'ai vérifié que le nouveau fonctionne dans les %(n)s services où il est utilisé"
+
+msgid "Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo."
+msgstr "Nous avons prévenu votre cabinet que vous avez besoin d'aide avec votre certificat. Il vous contactera."
+
+msgid "Izenpe (País Vasco)"
+msgstr "Izenpe (Pays basque)"
+
+msgid "Los datos los ha introducido el despacho; no se ha leído ningún archivo."
+msgstr "Les données ont été saisies par le cabinet ; aucun fichier n'a été lu."
+
+msgid "Marcar como renovado"
+msgstr "Marquer comme renouvelé"
+
+msgid "Mientras no lo renueves, no podemos presentar impuestos ni acceder a tus notificaciones en tu nombre."
+msgstr "Tant que vous ne le renouvelez pas, nous ne pouvons ni déposer vos impôts ni accéder à vos notifications en votre nom."
+
+msgid "Mientras no lo renueves, tu gestoría no puede presentar impuestos ni acceder a tus notificaciones en tu nombre."
+msgstr "Tant que vous ne le renouvelez pas, votre cabinet ne peut ni déposer vos impôts ni accéder à vos notifications en votre nom."
+
+msgid "Mientras no se renueve, no se pueden presentar impuestos ni acceder a notificaciones con él."
+msgstr "Tant qu'il n'est pas renouvelé, on ne peut ni déposer d'impôts ni accéder aux notifications avec lui."
+
+msgid "Más datos (opcional)"
+msgstr "Plus de données (facultatif)"
+
+msgid "NIF/CIF/NIE"
+msgstr "NIF/CIF/NIE"
+
+msgid "Necesito ayuda para renovarlo"
+msgstr "J'ai besoin d'aide pour le renouveler"
+
+msgid "No es de un cliente"
+msgstr "Ce n'est pas celui d'un client"
+
+msgid "No hay certificados con esos filtros."
+msgstr "Aucun certificat ne correspond à ces filtres."
+
+msgid "No se avisa si el cliente ya ha pedido ayuda, si no tiene correo, si el certificado se ha excluido, o si el certificado nuevo ya está apuntado."
+msgstr "Aucun avis n'est envoyé si le client a déjà demandé de l'aide, n'a pas d'e-mail, si le certificat a été exclu ou si le nouveau est déjà enregistré."
+
+msgid "No tiene: añádelo en su ficha para poder avisarle"
+msgstr "Aucun : ajoutez-le dans sa fiche pour pouvoir le prévenir"
+
+msgid "Nombre del titular"
+msgstr "Nom du titulaire"
+
+msgid "Nueva fecha de caducidad"
+msgstr "Nouvelle date d'expiration"
+
+msgid "Número de serie (opcional)"
+msgstr "Numéro de série (facultatif)"
+
+msgid "Otro certificado"
+msgstr "Autre certificat"
+
+msgid "Otro titular (escribe el nombre abajo)"
+msgstr "Autre titulaire (saisissez le nom ci-dessous)"
+
+msgid "Pasos de la renovación"
+msgstr "Étapes du renouvellement"
+
+msgid "Por defecto, el del cliente"
+msgstr "Par défaut, celui du client"
+
+msgid "Por ejemplo: pide cita en la oficina de la FNMT y llévanos el justificante. Si prefieres, lo gestionamos nosotros: avísanos."
+msgstr "Par exemple : prenez rendez-vous au bureau de la FNMT et apportez-nous le justificatif. Si vous préférez, nous nous en occupons : prévenez-nous."
+
+msgid "Prueba enviada a tu correo."
+msgstr "Test envoyé à votre e-mail."
+
+msgid "Quién lo gestiona"
+msgstr "Qui le gère"
+
+msgid "Quién tiene qué certificado, cuándo caduca y quién lo renueva. No hace falta subir ningún archivo: basta con apuntar de quién es y cuándo caduca."
+msgstr "Qui possède quel certificat, quand il expire et qui le renouvelle. Inutile d'envoyer un fichier : il suffit de noter à qui il est et quand il expire."
+
+msgid "Qué les decimos"
+msgstr "Ce que nous leur disons"
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los avisos de caducidad de tu certificado digital. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr "Vous recevez cet avis parce que votre cabinet a activé les avis d'expiration de votre certificat numérique. Si vous préférez ne plus les recevoir, dites-le-lui et il les désactivera."
+
+msgid "Renovación paso a paso (con pruebas por servicio)"
+msgstr "Renouvellement pas à pas (avec tests par service)"
+
+msgid "Renovado"
+msgstr "Renouvelé"
+
+msgid "Renovado: este es el certificado nuevo. El anterior queda como sustituido, con su historial."
+msgstr "Renouvelé : voici le nouveau certificat. L'ancien est marqué comme remplacé, avec son historique."
+
+msgid "Según el ajuste del despacho"
+msgstr "Selon le réglage du cabinet"
+
+msgid "Separados por comas. Antes: de 0 (el mismo día) a 365, hasta %(a)s avisos. Después: de 1 a 90, hasta %(d)s. Cada aviso se manda una sola vez por certificado y fecha de caducidad; si apuntas un certificado ya dentro de un plazo, solo se manda el que toca, no todos de golpe."
+msgstr "Séparés par des virgules. Avant : de 0 (le jour même) à 365, jusqu'à %(a)s avis. Après : de 1 à 90, jusqu'à %(d)s. Chaque avis n'est envoyé qu'une fois par certificat et date d'expiration ; si vous enregistrez un certificat déjà dans un délai, seul l'avis en cours part, pas tous d'un coup."
+
+msgid "Si caduca, no podremos presentar impuestos ni acceder a tus notificaciones en tu nombre hasta que lo renueves."
+msgstr "S'il expire, nous ne pourrons ni déposer vos impôts ni accéder à vos notifications en votre nom tant que vous ne l'aurez pas renouvelé."
+
+msgid "Si indicas la emisión, proponemos la caducidad habitual del tipo (FNMT: 4 años una persona física, 2 un representante). Es orientativa: corrígela si no coincide."
+msgstr "Si vous indiquez l'émission, nous proposons l'expiration habituelle du type (FNMT : 4 ans pour une personne physique, 2 pour un représentant). C'est indicatif : corrigez-la si besoin."
+
+msgid "Si necesitas ayuda para renovarlo, respóndenos a este correo."
+msgstr "Si vous avez besoin d'aide pour le renouveler, répondez à cet e-mail."
+
+msgid "Si necesitas ayuda para renovarlo, respóndenos o pídela desde tu portal de cliente."
+msgstr "Si vous avez besoin d'aide pour le renouveler, répondez-nous ou demandez-la depuis votre portail client."
+
+msgid "Siempre"
+msgstr "Toujours"
+
+msgid "Sin archivos: solo de quién es, de qué tipo y cuándo caduca. Si lo apuntas a un cliente, sus datos se rellenan solos y podrás avisarle antes de que caduque."
+msgstr "Sans fichier : seulement à qui il est, de quel type et quand il expire. Si vous le rattachez à un client, ses données se remplissent seules et vous pourrez le prévenir avant l'expiration."
+
+msgid "Sin correo"
+msgstr "Sans e-mail"
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar estos ajustes; tú los puedes consultar."
+msgstr "Seule la direction du cabinet (superviseurs) peut modifier ces réglages ; vous pouvez les consulter."
+
+msgid "Solo si te resulta cómodo: sube la parte pública (.cer, .crt o .pem) y se leen el titular, el emisor, las fechas y la huella. Si el archivo contiene una clave privada o es un contenedor .p12/.pfx se rechaza sin guardarlo."
+msgstr "Seulement si c'est pratique : envoyez la partie publique (.cer, .crt ou .pem) et le titulaire, l'émetteur, les dates et l'empreinte sont lus. Si le fichier contient une clé privée ou est un conteneur .p12/.pfx, il est rejeté sans être enregistré."
+
+msgid "Sustituido por un certificado nuevo"
+msgstr "Remplacé par un nouveau certificat"
+
+msgid "Tipo de certificado"
+msgstr "Type de certificat"
+
+msgid "Todavía no has apuntado ningún certificado"
+msgstr "Vous n'avez encore enregistré aucun certificat"
+
+msgid "Todo en orden: te avisaremos antes de que caduque."
+msgstr "Tout est en ordre : nous vous préviendrons avant son expiration."
+
+msgid "Todo en orden: tu gestoría te avisará antes de que caduque."
+msgstr "Tout est en ordre : votre cabinet vous préviendra avant son expiration."
+
+msgid "Tu certificado digital"
+msgstr "Votre certificat numérique"
+
+msgid "Tu certificado digital (%(tipo)s) caduca %(cuando)s, el %(fecha)s."
+msgstr "Votre certificat numérique (%(tipo)s) expire %(cuando)s, le %(fecha)s."
+
+msgid "Tu certificado digital (%(tipo)s) caducó %(cuando)s, el %(fecha)s."
+msgstr "Votre certificat numérique (%(tipo)s) a expiré %(cuando)s, le %(fecha)s."
+
+msgid "Tu certificado digital caduca %(cuando)s"
+msgstr "Votre certificat numérique expire %(cuando)s"
+
+msgid "Tu certificado digital caduca {cuando}"
+msgstr "Votre certificat numérique expire {cuando}"
+
+msgid "Tu certificado digital caducó %(cuando)s"
+msgstr "Votre certificat numérique a expiré %(cuando)s"
+
+msgid "Vigentes"
+msgstr "En vigueur"
+
+msgid "Ya está renovado"
+msgstr "Déjà renouvelé"
+
+msgid "Ya hemos avisado a tu gestoría"
+msgstr "Nous avons déjà prévenu votre cabinet"
+
+msgid "a %(n)s días de caducar"
+msgstr "à %(n)s jours de l'expiration"
+
+msgid "activados (%(d)s días antes)"
+msgstr "activés (%(d)s jours avant)"
+
+msgid "desactivados"
+msgstr "désactivés"
+
+msgid "en los próximos 90 días"
+msgstr "dans les 90 prochains jours"
+
+msgid "enviado"
+msgstr "envoyé"
+
+msgid "falló: se reintentará"
+msgstr "échec : nouvelle tentative"
+
+msgid "nunca se avisa ni se enseña al cliente"
+msgstr "le client n'est jamais prévenu ni ne le voit"
+
+msgid "omitido (llegó dentro de un aviso posterior)"
+msgstr "ignoré (arrivé dans un avis ultérieur)"
+
+msgid "según el ajuste del despacho"
+msgstr "selon le réglage du cabinet"
+
+msgid "siempre se informa al cliente"
+msgstr "le client est toujours informé"
+
+msgid "«Cobertura desconocida» significa que aún no has apuntado qué certificado se usa para ese cliente: no que esté bien."
+msgstr "« Couverture inconnue » signifie que vous n'avez pas encore indiqué quel certificat sert pour ce client : pas que tout va bien."
+
+msgid "¿Mandar ahora el aviso de caducidad al cliente?"
+msgstr "Envoyer maintenant l'avis d'expiration au client ?"
+
+msgid "¿Ya lo han renovado? Apunta la nueva fecha de caducidad y listo: el certificado actual pasa a «sustituido» y el nuevo hereda cliente, tipo, custodio y servicios."
+msgstr "Déjà renouvelé ? Indiquez la nouvelle date d'expiration et c'est fait : le certificat actuel devient « remplacé » et le nouveau hérite du client, du type, du dépositaire et des services."
+
+msgid "A"
+msgstr "À"
+
+msgid "Abrir certificado"
+msgstr "Ouvrir le certificat"
+
+msgid "Aceptado"
+msgstr "Accepté"
+
+msgid "Asignar responsable"
+msgstr "Assigner un responsable"
+
+msgid "Asignar responsable sin traspaso"
+msgstr "Assigner un responsable sans transfert"
+
+msgid "Bloqueadas"
+msgstr "Bloquées"
+
+msgid "Bloqueadas: esperan algo, pero el plazo legal sigue corriendo"
+msgstr "Bloquées : en attente de quelque chose, mais le délai légal continue de courir"
+
+msgid "Calculado el %(f)s a partir del calendario fiscal del despacho. «Sin datos» no significa que todo esté bien. Este panel mide el trabajo del despacho; no garantiza la ausencia de sanciones."
+msgstr "Calculé le %(f)s à partir du calendrier fiscal du cabinet. « Sans données » ne veut pas dire que tout va bien. Ce tableau mesure le travail du cabinet ; il ne garantit pas l'absence de sanctions."
+
+msgid "Cancelado"
+msgstr "Annulé"
+
+msgid "En trabajo"
+msgstr "En cours"
+
+msgid "Espera revisión."
+msgstr "En attente de révision."
+
+msgid "Esperan tu revisión"
+msgstr "En attente de votre révision"
+
+msgid "Esperando respuesta."
+msgstr "En attente de réponse."
+
+msgid "Hasta que se acepten, el cliente sigue siendo de quien lo lleva ahora."
+msgstr "Tant qu'ils ne sont pas acceptés, le client reste à celui qui le gère actuellement."
+
+msgid "Hay un plazo en menos de %(n)s días y nadie lo ha aceptado."
+msgstr "Il y a une échéance dans moins de %(n)s jours et personne ne l'a accepté."
+
+msgid "Indicadores"
+msgstr "Indicateurs"
+
+msgid "Muestra: %(n)s obligaciones. Excluidas: %(e)s (no aplica o anuladas)."
+msgstr "Échantillon : %(n)s obligations. Exclues : %(e)s (sans objet ou annulées)."
+
+msgid "Nada urgente. Aun así, mira los indicadores de abajo: que no haya avisos no significa que no haya nada que revisar."
+msgstr "Rien d'urgent. Consultez quand même les indicateurs ci-dessous : l'absence d'alertes ne signifie pas qu'il n'y a rien à vérifier."
+
+msgid "Ninguna obligación de los próximos 90 días depende de un certificado sin asegurar."
+msgstr "Aucune obligation des 90 prochains jours ne dépend d'un certificat non sécurisé."
+
+msgid "Obligaciones sin certificado asegurado"
+msgstr "Obligations sans certificat sécurisé"
+
+msgid "Panel fiscal"
+msgstr "Tableau de bord fiscal"
+
+msgid "Para dar de alta o corregir quién lleva un cliente. Si ya lo lleva alguien y quieres que lo acepte, propón un traspaso."
+msgstr "Pour définir ou corriger qui gère un client. Si quelqu'un le gère déjà et que vous voulez qu'il l'accepte, proposez un transfert."
+
+msgid "Para revisar"
+msgstr "À réviser"
+
+msgid "Pasa a"
+msgstr "Passe à"
+
+msgid "Pasar un cliente a otra persona u oficina con su aceptación. Hasta que se acepta, el cliente sigue siendo de quien lo lleva y no cambia nada."
+msgstr "Transférer un client à une autre personne ou un autre bureau avec son acceptation. Tant qu'il n'est pas accepté, le client reste à celui qui le gère et rien ne change."
+
+msgid "Pendiente de aceptar"
+msgstr "En attente d'acceptation"
+
+msgid "Por oficina"
+msgstr "Par bureau"
+
+msgid "Por responsable"
+msgstr "Par responsable"
+
+msgid "Proponer traspaso"
+msgstr "Proposer le transfert"
+
+msgid "Proponer un traspaso"
+msgstr "Proposer un transfert"
+
+msgid "Próximo vencimiento"
+msgstr "Prochaine échéance"
+
+msgid "Próximo vencimiento: %(f)s"
+msgstr "Prochaine échéance : %(f)s"
+
+msgid "Qué está a medias, qué espera el cliente, qué plazos hay…"
+msgstr "Ce qui est en cours, ce qu'attend le client, quelles échéances…"
+
+msgid "Qué mirar hoy, cómo está repartido el trabajo y cómo se cumple. Cada aviso dice por qué y a dónde ir."
+msgstr "Quoi regarder aujourd'hui, comment le travail est réparti et comment il avance. Chaque alerte dit pourquoi et où aller."
+
+msgid "Rechazado"
+msgstr "Refusé"
+
+msgid "Reparto del trabajo"
+msgstr "Répartition du travail"
+
+msgid "Resolver"
+msgstr "Résoudre"
+
+msgid "Sigue en la misma"
+msgstr "Reste dans le même"
+
+msgid "Sin oficina"
+msgstr "Sans bureau"
+
+msgid "Solo ves los clientes de tus oficinas y los que te han compartido."
+msgstr "Vous ne voyez que les clients de vos bureaux et ceux partagés avec vous."
+
+msgid "Te lo han propuesto: acéptalo o recházalo."
+msgstr "On vous l'a proposé : acceptez-le ou refusez-le."
+
+msgid "Todavía no hay traspasos."
+msgstr "Il n'y a pas encore de transferts."
+
+msgid "Trabajo pendiente y contexto (opcional)"
+msgstr "Travail en cours et contexte (facultatif)"
+
+msgid "Traspasos"
+msgstr "Transferts"
+
+msgid "Traspasos de clientes"
+msgstr "Transferts de clients"
+
+msgid "Traspasos sin aceptar"
+msgstr "Transferts non acceptés"
+
+msgid "Vence en %(n)s días."
+msgstr "Échéance dans %(n)s jours."
+
+msgid "Vence hoy."
+msgstr "Échéance aujourd'hui."
+
+msgid "Vencen en %(d)s días"
+msgstr "Échéance sous %(d)s jours"
+
+msgid "Vencen en los próximos %(d)s días"
+msgstr "Échéances dans les %(d)s prochains jours"
+
+msgid "Vencidas sin presentar"
+msgstr "En retard et non déposées"
+
+msgid "Venció ayer y sigue sin presentarse."
+msgstr "Échue hier et toujours non déposée."
+
+msgid "Venció hace %(n)s días y sigue sin presentarse."
+msgstr "Échue il y a %(n)s jours et toujours non déposée."
+
+msgid "Ver certificados"
+msgstr "Voir les certificats"
+
+msgid "Y a la oficina (opcional)"
+msgstr "Et au bureau (facultatif)"
+
+msgid "de %(n)s certificados tienen un custodio asignado"
+msgstr "sur %(n)s certificats ont un dépositaire assigné"
+
+msgid "de %(n)s clientes no tienen responsable asignado"
+msgstr "sur %(n)s clients n'ont pas de responsable assigné"
+
+msgid "de %(n)s presentadas no tienen evidencia registrada"
+msgstr "sur %(n)s déposées n'ont pas de preuve enregistrée"
+
+msgid "de las obligaciones vencidas en los últimos %(d)s días se presentaron en plazo"
+msgstr "des obligations échues ces %(d)s derniers jours ont été déposées dans les délais"
+
+msgid "obligaciones bloqueadas"
+msgstr "obligations bloquées"
+
+msgid "Gestión fiscal"
+msgstr "Gestion fiscale"
+
+msgid "Llevar la gestión fiscal de este cliente (calendario, vencimientos y portal)"
+msgstr "Assurer la gestion fiscale de ce client (calendrier, échéances et portail)"
+
+msgid "Hoy solo hay calendario fiscal de España; otros países se crean sin generación automática."
+msgstr "Pour l'instant, il n'existe qu'un calendrier fiscal pour l'Espagne ; les autres pays sont créés sans génération automatique."
+
+msgid "Con un perfil elegido se proponen los modelos que le corresponden; los puedes revisar después en su ficha fiscal."
+msgstr "Avec un type de client choisi, les modèles correspondants sont proposés ; vous pourrez les revoir ensuite sur sa fiche fiscale."
+
+msgid "Generar los vencimientos automáticamente cada periodo (necesita un tipo de cliente elegido)"
+msgstr "Générer les échéances automatiquement à chaque période (nécessite un type de client choisi)"
+
+msgid "Activar gestión fiscal"
+msgstr "Activer la gestion fiscale"

@@ -77,7 +77,11 @@ def crear_cliente_solicitud(solicitud_id: int):
     if solicitud is None or not tenant_id or plataforma.obtener_tenant(tenant_id) is None:
         flash("Elige un tenant para crear el cliente.", "error")
     else:
-        plataforma.crear_cliente_fiscal(tenant_id, solicitud["nombre"], nif=solicitud["nif"], email=solicitud["email"])
+        try:
+            plataforma.crear_cliente_fiscal(tenant_id, solicitud["nombre"], nif=solicitud["nif"], email=solicitud["email"])
+        except ValueError as e:                         # ClienteDuplicado: ya hay un cliente con ese NIF en el despacho
+            flash(str(e), "error")
+            return redirect(url_for("rutas.solicitudes"))
         plataforma.marcar_solicitud_atendida(solicitud_id)
         auth.auditar("solicitud.crear_cliente", f"solicitud {solicitud_id} -> tenant {tenant_id}")
         flash(f"Cliente «{solicitud['nombre']}» creado.", "ok")

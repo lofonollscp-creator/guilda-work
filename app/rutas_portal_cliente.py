@@ -141,12 +141,25 @@ def dashboard():
     # (vencimientos ya viene ordenado por fecha_limite ascendente).
     presentados = sum(1 for v in vencimientos if v["estado"] == "presentado")
     proximo_pendiente = next((v for v in vencimientos if v["estado"] != "presentado"), None)
+    from . import certificados
+    cfg_cert = certificados.config(cliente["tenant_id"])
     return render_template(
-        "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos,
+        "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos, certificados=certificados.visibles_para_cliente(cliente["id"]), tipos_certificado=certificados.TIPOS_CERTIFICADO,
+        instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"),
         solicitudes_pendientes=solicitudes_pendientes,
         por_anio=por_anio, anios_ordenados=anios_ordenados,
         presentados=presentados, proximo_pendiente=proximo_pendiente,
     )
+
+
+@portal_bp.route("/certificados/<int:certificado_id>/ayuda", methods=["POST"])
+@cliente_login_required
+def ayuda_certificado(certificado_id: int):
+    """El cliente pide ayuda a su gestoría para renovar SU certificado digital (solo de los que su gestoría le enseña)."""
+    from . import certificados
+    if not certificados.pedir_ayuda(g.cliente_fiscal_id, certificado_id):
+        abort(404)
+    return redirect(url_for("portal_cliente.dashboard", ayuda="1"))
 
 
 def _vencimiento_del_cliente_actual(vencimiento_id: int):
@@ -178,8 +191,11 @@ def documentos_vencimiento(vencimiento_id: int):
                 resultados.append({"nombre": f.filename, "ok": False,
                                    "mensaje": _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")})
             else:
-                db.subir_documento_vencimiento(vencimiento_id, f.filename, f.mimetype, contenido)
-                resultados.append({"nombre": f.filename, "ok": True, "mensaje": _("Subido.")})
+                try:
+                    db.subir_documento_vencimiento(vencimiento_id, f.filename, f.mimetype, contenido)
+                    resultados.append({"nombre": f.filename, "ok": True, "mensaje": _("Subido.")})
+                except ValueError:
+                    resultados.append({"nombre": f.filename, "ok": False, "mensaje": _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")})
         if archivos and not error and all(r["ok"] for r in resultados):
             return redirect(url_for("portal_cliente.documentos_vencimiento", vencimiento_id=vencimiento_id))
     return render_template(

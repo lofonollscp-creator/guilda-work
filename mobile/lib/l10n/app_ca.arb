@@ -1,20 +1,16 @@
 {
   "@@locale": "ca",
-
   "appTitle": "Guilda Work",
-
   "comunCancelar": "Cancel·la",
   "comunGuardar": "Desa",
   "comunIdioma": "Idioma",
   "comunEliminar": "Elimina",
   "comunErrorCargar": "Error en carregar: {error}",
-
   "loginServidorTooltip": "Servidor",
   "loginEmailLabel": "Correu",
   "loginContrasenaLabel": "Contrasenya",
   "loginEntrarBoton": "Entra",
   "loginRegistrateLink": "No tens compte? Registra't",
-
   "dashboardTareasTooltip": "Tasques",
   "dashboardCorreoTooltip": "Correu",
   "dashboardHerramientasTooltip": "Eines",
@@ -25,8 +21,8 @@
   "dashboardAjustesTooltip": "Ajustos",
   "dashboardCerrarSesionTooltip": "Tanca la sessió",
   "dashboardNuevoMenuTooltip": "Nou projecte",
-    "dashboardAccesosTitulo": "Accessos",
-"dashboardTusMenus": "Els teus projectes",
+  "dashboardAccesosTitulo": "Accessos",
+  "dashboardTusMenus": "Els teus projectes",
   "dashboardSinMenus": "Encara no tens cap projecte. Crea el primer amb el botó +.",
   "dashboardNuevoMenuDialogTitulo": "Nou projecte",
   "dashboardNuevoMenuDialogLabel": "Nom (p. ex. Lueira, Guilda...)",
@@ -45,7 +41,6 @@
   "dashboardNotaHint": "Què ha passat?",
   "dashboardAnotarBoton": "Anota-ho",
   "dashboardMenuEnCurso": "{n} en curs",
-
   "fichajeTitulo": "Fitxatge",
   "fichajeHistorialTooltip": "El meu historial",
   "fichajeMisDatosTooltip": "Les meves dades",
@@ -66,7 +61,6 @@
   "fichajeTipoPausaInicio": "Inici de pausa",
   "fichajeTipoPausaFin": "Fi de pausa",
   "fichajeTipoSalida": "Sortida",
-
   "fichajeDatosTitulo": "Les meves dades de fitxatge",
   "fichajeDatosNombreLabel": "Nom complet *",
   "fichajeDatosDniLabel": "DNI/NIE *",
@@ -77,14 +71,12 @@
   "fichajeDatosJornadaLabel": "Jornada setmanal contractada (hores)",
   "fichajeDatosConvenioLabel": "Conveni col·lectiu",
   "fichajeDatosObligatorios": "El nom complet i el DNI/NIE són obligatoris: la normativa exigeix poder identificar-te.",
-
   "fichajeHistorialTitulo": "El meu historial de fitxatge",
   "fichajeHistorialDesde": "Des de: {fecha}",
   "fichajeHistorialHasta": "Fins a: {fecha}",
   "fichajeHistorialCualquiera": "Qualsevol",
   "fichajeHistorialSinFichajes": "Sense fitxatges en aquest període.",
   "fichajeHistorialCorreccionAdmin": "Correcció d'un administrador",
-
   "tiquetsTitulo": "Tiquets",
   "tiquetsTituloHint": "Títol del tiquet...",
   "tiquetsCrearBoton": "+ Crea",
@@ -99,7 +91,6 @@
   "tiquetEstadoSinRevisar": "Sense revisar",
   "tiquetEstadoEnRevision": "En revisió",
   "tiquetEstadoFinalizado": "Finalitzat",
-
   "tiquetEditarTitulo": "Edita el tiquet #{id}",
   "tiquetTipoLabel": "Tipus",
   "tiquetTituloLabel": "Títol",
@@ -120,18 +111,15 @@
   "herramientasAunNoDisponible": "Encara no disponible",
   "herramientasConTuCuenta": "Amb el teu compte de Guilda Work",
   "herramientasIniciaSesionAparte": "Inicia sessió a part",
-
   "dashboardFiscalTooltip": "Calendari fiscal",
   "fiscalTitulo": "Calendari fiscal",
   "fiscalTabClientes": "Clients",
   "fiscalTabVencimientos": "Venciments",
   "fiscalTabCalendario": "Calendari",
   "fiscalTodos": "Tots",
-
   "fiscalClientesBuscarHint": "Cerca per nom o NIF...",
   "fiscalClientesNuevoBoton": "Nou",
   "fiscalClientesSinResultados": "Encara no hi ha clients fiscals donats d'alta.",
-
   "fiscalClienteNuevoTitulo": "Nou client fiscal",
   "fiscalClienteEditarTitulo": "Edita client fiscal",
   "fiscalClienteNombreLabel": "Nom o raó social",
@@ -145,32 +133,52 @@
   "fiscalGenerarVencimientosBoton": "Genera venciments de l'any en curs",
   "fiscalGenerarSinModelos": "Marca almenys un model abans de generar.",
   "fiscalGenerarResultado": "{creados, plural, =0{No s'ha creat cap venciment nou (ja existien).} one{S'ha creat 1 venciment.} other{S'han creat {creados} venciments.}}",
-  "@fiscalGenerarResultado": { "placeholders": { "creados": { "type": "int" } } },
+  "@fiscalGenerarResultado": {
+    "placeholders": {
+      "creados": {
+        "type": "int"
+      }
+    }
+  },
   "fiscalClienteEliminarBoton": "🗑 Elimina client",
   "fiscalClienteEliminarTitulo": "Vols eliminar aquest client fiscal?",
   "fiscalClienteEliminarContenido": "Anirà a la paperera -- no es pot desfer des de l'app.",
-
   "fiscalVencimientosSinResultados": "No hi ha venciments per a aquest filtre.",
   "fiscalMarcarPresentadoTooltip": "Marca com a presentat",
   "fiscalVenceEl": "Venç {fecha}",
-  "@fiscalVenceEl": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVenceEl": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoPeriodoLabel": "Període: {periodo}",
-  "@fiscalVencimientoPeriodoLabel": { "placeholders": { "periodo": { "type": "String" } } },
+  "@fiscalVencimientoPeriodoLabel": {
+    "placeholders": {
+      "periodo": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoFechaLimiteLabel": "Data límit: {fecha}",
-  "@fiscalVencimientoFechaLimiteLabel": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVencimientoFechaLimiteLabel": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoEstadoLabel": "Estat",
   "fiscalVencimientoNotasLabel": "Notes",
   "fiscalVencimientoEliminarBoton": "🗑 Elimina venciment",
   "fiscalVencimientoEliminarTitulo": "Vols eliminar aquest venciment?",
   "fiscalVencimientoEliminarContenido": "Anirà a la paperera -- no es pot desfer des de l'app.",
-
   "fiscalCalendarioTitulo": "Calendari fiscal",
   "fiscalCalendarioSinVencimientos": "Sense venciments aquest dia.",
-
   "vencimientoFiscalEstadoPendiente": "Pendent",
   "vencimientoFiscalEstadoPresentado": "Presentat",
   "vencimientoFiscalEstadoFueraPlazo": "Fora de termini",
-
   "ajustesPerfilSubtitulo": "Nom, avatar i notificacions",
   "perfilTitulo": "El meu perfil",
   "perfilAvatarGaleria": "Tria de la galeria",
@@ -187,10 +195,63 @@
   "login2faAyuda": "Aquest compte té la verificació en dos passos. Escriu el codi de la teva app d'autenticació o un de recuperació.",
   "fichajeSemanaTitulo": "Aquesta setmana",
   "fichajeSemanaDeContratadas": "{horas} de {contratadas}",
-  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "@fichajeSemanaDeContratadas": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      },
+      "contratadas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaSinJornada": "Sense jornada setmanal indicada a Les meves dades",
   "fichajeSemanaExcedida": "Et passes {horas} de la teva jornada",
-  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "@fichajeSemanaExcedida": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaRestan": "Et queden {horas}",
-  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
+  "@fichajeSemanaRestan": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasTitulo": "Absències i vacances",
+  "ausenciasTooltip": "Absències i vacances",
+  "ausenciasPedir": "Demanar absència",
+  "ausenciasDisponibles": "{n} dies disponibles el {anio}",
+  "ausenciasResumen": "{aprobadas} aprovats · {pendientes} pendents · {total} et corresponen",
+  "ausenciasSinAusencias": "Encara no has demanat cap absència aquest any.",
+  "ausenciasMias": "Les meves absències",
+  "ausenciasPendientesEquipo": "Pendents d'aprovar",
+  "ausenciasTipo": "Tipus",
+  "ausenciasDesde": "Des de: {fecha}",
+  "ausenciasHasta": "Fins a: {fecha}",
+  "ausenciasMedioDia": "Només mig dia",
+  "ausenciasMotivo": "Motiu (opcional)",
+  "ausenciasEnviar": "Enviar sol·licitud",
+  "ausenciasEnviada": "Sol·licitud enviada.",
+  "ausenciasCancelarPregunta": "Vols cancel·lar aquesta absència?",
+  "ausenciasCancelada": "Absència cancel·lada.",
+  "ausenciasAprobar": "Aprovar",
+  "ausenciasRechazar": "Rebutjar",
+  "ausenciasResuelta": "Fet.",
+  "ausenciasDias": "{n} dies",
+  "ausenciaTipoVacaciones": "Vacances",
+  "ausenciaTipoAsuntosPropios": "Assumptes propis",
+  "ausenciaTipoPermiso": "Permís retribuït",
+  "ausenciaTipoBaja": "Baixa mèdica",
+  "ausenciaTipoOtro": "Altre",
+  "ausenciaEstadoPendiente": "Pendent",
+  "ausenciaEstadoAprobada": "Aprovada",
+  "ausenciaEstadoRechazada": "Rebutjada",
+  "ausenciaEstadoCancelada": "Cancel·lada",
+  "ausenciasMantener": "Mantenir-la",
+  "ausenciasCancelarAccion": "Cancel·lar absència"
 }

@@ -19,11 +19,11 @@ def _cliente_fiscal(tenant_id, nombre="Cliente SL"):
     return cid
 
 
-def _vencimiento(tenant_id, cliente_id, estado="pendiente"):
+def _vencimiento(tenant_id, cliente_id, estado="pendiente", periodo="1T"):
     conn = db.get_connection()
     conn.execute(
-        "INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, '303', '1T', '2026-04-20', ?, ?)",
-        (tenant_id, cliente_id, estado, _ahora()),
+        "INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, '303', ?, '2026-04-20', ?, ?)",
+        (tenant_id, cliente_id, periodo, estado, _ahora()),
     )
     conn.commit()
     conn.close()
@@ -39,7 +39,7 @@ def test_pasos_se_calculan_de_los_datos_y_aislan_por_despacho():
     assert r["hechos"] == 1 and r["siguiente"] == "Generar los vencimientos fiscales"
     _vencimiento(t, c)
     assert onboarding_despacho.estado(t)["vencimientos"] and not onboarding_despacho.estado(t)["presentado"]
-    _vencimiento(t, c, "presentado")
+    _vencimiento(t, c, "presentado", periodo="2T")
     assert onboarding_despacho.estado(t)["presentado"] and not onboarding_despacho.estado(otro)["vencimientos"]
     assert not onboarding_despacho.estado(otro)["presentado"]
 

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% from "_certificados_macros.html" import chip_dias, estado_cliente %}
+{% block title %}{{ _('Certificados digitales') }} — Guilda Work{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='certificados.js') }}"></script>{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Certificados digitales') }}</h1>
+    <p class="subtitle">{{ _('Quién tiene qué certificado, cuándo caduca y quién lo renueva. No hace falta subir ningún archivo: basta con apuntar de quién es y cuándo caduca.') }}</p>
+  </div>
+  <div class="quick-row">
+    <a class="btn btn-primary" href="#nuevo">{{ _('Añadir certificado') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('certificados.avisos') }}">{{ _('Avisos a clientes') }}</a>
+  </div>
+</header>
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+
+<section class="cert-resumen" aria-label="{{ _('Resumen') }}">
+  {% for clave, etiqueta, n, tono in (('caducados', _('Caducados'), resumen.caducados, 'caducado'), ('mes', _('Caducan en 30 días'), resumen.mes, 'urgente'), ('tres_meses', _('Caducan en 90 días'), resumen.tres_meses, 'pronto'), ('vigentes', _('Vigentes'), resumen.vigentes, 'ok')) %}
+  <a class="cert-tarjeta-resumen cert-tono-{{ tono }} {{ 'activa' if plazo == clave }}" href="{{ url_for('certificados.lista', plazo=None if plazo == clave else clave) }}" aria-pressed="{{ 'true' if plazo == clave else 'false' }}">
+    <strong>{{ n }}</strong><span>{{ etiqueta }}</span>
+  </a>
+  {% endfor %}
+</section>
+
+{% if riesgos %}
+<details class="cert-riesgos" {{ 'open' if riesgos|length <= 3 }}>
+  <summary><strong>{{ _('Atención: %(n)s obligaciones sin cobertura asegurada', n=riesgos|length) }}</strong> <span class="subtitle">{{ _('en los próximos 90 días') }}</span></summary>
+  <p class="subtitle">{{ _('«Cobertura desconocida» significa que aún no has apuntado qué certificado se usa para ese cliente: no que esté bien.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Obligación') }}</th><th>{{ _('Vence') }}</th><th>{{ _('Riesgo') }}</th><th>{{ _('Por qué') }}</th></tr></thead>
+    <tbody>
+    {% for r in riesgos %}
+    <tr><td>{{ r.cliente }}</td><td>{{ r.modelo }} · {{ r.periodo }}</td><td>{{ r.fecha_limite }}</td><td><span class="pill cert-riesgo-{{ r.tipo }}">{{ t_riesgo[r.tipo] }}</span></td>
+      <td>{{ r.motivo }}{% if r.certificado_id %} <a href="{{ url_for('certificados.detalle', certificado_id=r.certificado_id) }}">{{ _('Ver certificado') }}</a>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</details>
+{% endif %}
+
+<form method="get" class="filters">
+  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Cliente, titular, NIF…') }}"></label>
+  <label>{{ _('Cliente') }}
+    <select name="cliente_id" data-autoenviar="submit"><option value="">{{ _('Todos') }}</option>{% for cl in clientes %}<option value="{{ cl.id }}" {{ 'selected' if cliente_id == cl.id }}>{{ cl.nombre }}</option>{% endfor %}</select>
+  </label>
+  <label>{{ _('Situación') }}
+    <select name="operativo" data-autoenviar="submit"><option value="">{{ _('En uso') }}</option>{% for k, v in t_operativo.items() %}<option value="{{ k }}" {{ 'selected' if operativo == k }}>{{ v }}</option>{% endfor %}</select>
+  </label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+  {% if q or cliente_id or operativo or plazo %}<a class="btn btn-ghost" href="{{ url_for('certificados.lista') }}">{{ _('Quitar filtros') }}</a>{% endif %}
+</form>
+
+{% if not certificados %}
+<div class="cert-vacio">
+  {% if resumen.total == 0 and not (q or cliente_id or operativo or plazo) %}
+  <h2>{{ _('Todavía no has apuntado ningún certificado') }}</h2>
+  <p>{{ _('Empieza por el primero: elige el cliente, el tipo de certificado y cuándo caduca. Son diez segundos.') }}</p>
+  <a class="btn btn-primary" href="#nuevo">{{ _('Añadir el primero') }}</a>
+  {% else %}<p class="empty-lane">{{ _('No hay certificados con esos filtros.') }}</p>{% endif %}
+</div>
+{% else %}
+<div class="table-wrap cert-tabla">
+<table class="historial-table">
+  <thead><tr><th>{{ _('Cliente y certificado') }}</th><th>{{ _('Caducidad') }}</th><th>{{ _('Avisos al cliente') }}</th><th>{{ _('Servicios') }}</th><th>{{ _('Renovación') }}</th><th>{{ _('Custodio') }}</th><th><span class="sr-only">{{ _('Acciones') }}</span></th></tr></thead>
+  <tbody>
+  {% for c in certificados %}
+  <tr class="cert-fila cert-fila-{{ c.temporal }}">
+    <td data-etiqueta="{{ _('Cliente y certificado') }}">
+      <a href="{{ url_for('certificados.detalle', certificado_id=c.id) }}"><strong>{{ c.cliente_nombre or c.nombre_comun or c.sujeto }}</strong></a>
+      <div class="subtitle">{{ t_tipos[c.tipo_certificado] if c.tipo_certificado else (c.emisor or '') }}{% if c.cliente_nombre and (c.nombre_comun or c.sujeto) != c.cliente_nombre %} · {{ c.nombre_comun or c.sujeto }}{% endif %}</div>
+      {% if c.estado_operativo != 'inventariado' and c.estado_operativo != 'autorizado' %}<span class="pill">{{ t_operativo[c.estado_operativo] }}</span>{% endif %}
+    </td>
+    <td data-etiqueta="{{ _('Caducidad') }}">{{ chip_dias(c) }}<div class="subtitle">{{ c.caduca_el or '—' }}</div></td>
+    <td data-etiqueta="{{ _('Avisos al cliente') }}">{{ estado_cliente(c, cfg) }}</td>
+    <td data-etiqueta="{{ _('Servicios') }}">{% if c.vinculos_activos %}{{ c.vinculos_activos }}{% else %}<span class="subtitle">{{ _('Sin registrar') }}</span>{% endif %}</td>
+    <td data-etiqueta="{{ _('Renovación') }}">{{ t_fases[c.renovacion] }}</td>
+    <td data-etiqueta="{{ _('Custodio') }}">{{ c.custodio_nombre or '—' }}</td>
+    <td class="cert-acciones"><a class="btn btn-ghost btn-sm" href="{{ url_for('certificados.detalle', certificado_id=c.id) }}#renovacion">{{ _('Renovado') }}</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<section class="ausencias-seccion cert-alta" id="nuevo">
+  <h2>{{ _('Añadir un certificado') }}</h2>
+  <p class="subtitle">{{ _('Sin archivos: solo de quién es, de qué tipo y cuándo caduca. Si lo apuntas a un cliente, sus datos se rellenan solos y podrás avisarle antes de que caduque.') }}</p>
+  <form method="post" action="{{ url_for('certificados.nuevo') }}" class="cert-form" id="cert-alta">
+    <div class="cert-form-fila">
+      <label for="al-cliente">{{ _('Cliente') }}
+        <select id="al-cliente" name="cliente_fiscal_id">
+          <option value="">{{ _('Otro titular (escribe el nombre abajo)') }}</option>
+          {% for cl in clientes %}<option value="{{ cl.id }}" data-nombre="{{ cl.nombre }}" data-nif="{{ cl.nif or '' }}" {{ 'selected' if cliente_id == cl.id }}>{{ cl.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <label for="al-tipo">{{ _('Tipo de certificado') }}
+        <select id="al-tipo" name="tipo">
+          {% for k, v in tipos_cert.items() %}<option value="{{ k }}" data-anios="{{ v.anios or '' }}">{{ t_tipos[k] }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="cert-form-fila">
+      <label for="al-emitido">{{ _('Fecha de emisión (opcional)') }}<input type="date" id="al-emitido" name="emitido"></label>
+      <label for="al-caduca">{{ _('Fecha de caducidad') }}<input type="date" id="al-caduca" name="caduca"></label>
+    </div>
+    <p class="subtitle" id="al-ayuda-caduca">{{ _('Si indicas la emisión, proponemos la caducidad habitual del tipo (FNMT: 4 años una persona física, 2 un representante). Es orientativa: corrígela si no coincide.') }}</p>
+    <details class="cert-mas">
+      <summary>{{ _('Más datos (opcional)') }}</summary>
+      <div class="cert-form-fila">
+        <label for="al-titular">{{ _('Nombre del titular') }}<input type="text" id="al-titular" name="titular" maxlength="200" placeholder="{{ _('Por defecto, el del cliente') }}"></label>
+        <label for="al-nif">{{ _('NIF/CIF/NIE') }}<input type="text" id="al-nif" name="nif" maxlength="14" placeholder="{{ _('Por defecto, el del cliente') }}"></label>
+      </div>
+      <div class="cert-form-fila">
+        <label for="al-serie">{{ _('Número de serie') }}<input type="text" id="al-serie" name="serie" maxlength="80"></label>
+        <label for="al-custodio">{{ _('Quién lo gestiona') }}<select id="al-custodio" name="custodio_id"><option value="">{{ _('Yo / sin asignar') }}</option>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></label>
+      </div>
+      <div class="cert-form-fila">
+        <label for="al-ubi">{{ _('Dónde está (sin contraseñas)') }}<input type="text" id="al-ubi" name="ubicacion" maxlength="200" placeholder="{{ _('Tarjeta en la caja fuerte de Girona') }}"></label>
+        <label for="al-av">{{ _('Avisar al cliente de su caducidad') }}<select id="al-av" name="avisar_cliente"><option value="">{{ _('Según el ajuste del despacho') }}</option><option value="1">{{ _('Siempre') }}</option><option value="0">{{ _('Nunca') }}</option></select></label>
+      </div>
+      <label for="al-notas">{{ _('Notas (sin contraseñas)') }}<input type="text" id="al-notas" name="notas" maxlength="500"></label>
+    </details>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Guardar certificado') }}</button></div>
+  </form>
+</section>
+
+<details class="ausencias-seccion cert-avanzado">
+  <summary><strong>{{ _('Avanzado: completar los datos con el archivo público') }}</strong></summary>
+  <p class="subtitle">{{ _('Solo si te resulta cómodo: sube la parte pública (.cer, .crt o .pem) y se leen el titular, el emisor, las fechas y la huella. Si el archivo contiene una clave privada o es un contenedor .p12/.pfx se rechaza sin guardarlo.') }}</p>
+  <form method="post" action="{{ url_for('certificados.importar') }}" enctype="multipart/form-data" class="cert-form">
+    <label for="imp-archivo">{{ _('Archivo') }}<input type="file" id="imp-archivo" name="archivo" accept=".cer,.crt,.pem,.der" required></label>
+    <div class="cert-form-fila">
+      <label for="imp-cus">{{ _('Quién lo gestiona') }}<select id="imp-cus" name="custodio_id"><option value="">{{ _('Yo / sin asignar') }}</option>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></label>
+      <label for="imp-ubi">{{ _('Dónde está (sin contraseñas)') }}<input type="text" id="imp-ubi" name="ubicacion" maxlength="200"></label>
+    </div>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-ghost">{{ _('Importar') }}</button></div>
+  </form>
+</details>
+
+{% if es_supervisor %}
+<details class="ausencias-seccion cert-avanzado">
+  <summary><strong>{{ _('Custodios de certificados') }}</strong></summary>
+  <p class="subtitle">{{ _('Los custodios gestionan el inventario y sus renovaciones. Los supervisores del despacho también pueden hacerlo.') }}</p>
+  <ul class="ausencias-hoy">
+    {% for e in equipo %}
+    <li>{{ e.nombre }}
+      <form method="post" action="{{ url_for('certificados.custodio') }}" class="ds-inline">
+        <input type="hidden" name="usuario_id" value="{{ e.id }}"><input type="hidden" name="valor" value="{{ 0 if e.custodio else 1 }}">
+        <button type="submit" class="btn btn-ghost btn-sm">{{ _('Quitar como custodio') if e.custodio else _('Hacer custodio') }}</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+{% endblock %}

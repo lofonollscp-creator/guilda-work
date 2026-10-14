@@ -777,6 +777,67 @@ class ApiClient {
     }
   }
 
+  Future<List<Ausencia>> listarMisAusencias({int? anio}) async {
+    try {
+      final resp = await _dio.get('/fichaje/ausencias', queryParameters: {'anio': ?anio});
+      return (resp.data['data'] as List).map((a) => Ausencia.fromJson(a as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<SaldoAusencias> saldoAusencias({int? anio}) async {
+    try {
+      final resp = await _dio.get('/fichaje/ausencias/saldo', queryParameters: {'anio': ?anio});
+      return SaldoAusencias.fromJson(resp.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> pedirAusencia({required String tipo, required String desde, String? hasta, bool medioDia = false, String? motivo}) async {
+    try {
+      await _dio.post('/fichaje/ausencias', data: {
+        'tipo': tipo,
+        'desde': desde,
+        'hasta': ?hasta,
+        'medio_dia': medioDia,
+        if (motivo != null && motivo.trim().isNotEmpty) 'motivo': motivo.trim(),
+      });
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> cancelarAusencia(int id) async {
+    try {
+      await _dio.post('/fichaje/ausencias/$id/cancelar');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  /// Solo quien gestiona el fichaje: solicitudes pendientes del equipo (el resto recibe un error).
+  Future<List<Ausencia>> ausenciasPendientesDelEquipo() async {
+    try {
+      final resp = await _dio.get('/fichaje/ausencias/equipo');
+      return (resp.data['data'] as List).map((a) => Ausencia.fromJson(a as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> resolverAusencia(int id, {required bool aprobar, String? comentario}) async {
+    try {
+      await _dio.post('/fichaje/ausencias/$id/resolver', data: {
+        'decision': aprobar ? 'aprobar' : 'rechazar',
+        if (comentario != null && comentario.trim().isNotEmpty) 'comentario': comentario.trim(),
+      });
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
   Future<FichajeDatos> obtenerFichajeDatos() async {
     try {
       final resp = await _dio.get('/fichaje/mis-datos');

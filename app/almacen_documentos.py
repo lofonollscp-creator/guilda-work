@@ -204,9 +204,13 @@ def _usuario(conn, usuario_id: int):
 def guardar(usuario_id: int, nombre: str, tipo_mime: str | None, contenido: bytes, *, cliente_id: int | None = None, expediente_id: int | None = None,
             categoria: str | None = None, origen: str = "subida", mensaje_correo_id: int | None = None) -> tuple[str, int | None]:
     """Guarda un documento de un cliente o de un expediente del despacho de quien lo sube. Devuelve (resultado, id): «ok», «duplicado» (id del existente),
-    «vacio», «grande», «limite», «cliente» o «expediente» (no existe o no es de su despacho o no puede verlo) o «destino» (no se ha dicho dónde)."""
+    «vacio», «grande», «limite», «cliente» o «expediente» (no existe o no es de su despacho o no puede verlo), «destino» (no se ha dicho dónde) o «clave_privada»
+    (el archivo es o contiene una clave privada o un contenedor .p12/.pfx: nunca se guardan)."""
     if cliente_id is None and expediente_id is None:
         return "destino", None
+    from . import certificados
+    if certificados.contiene_clave_privada(contenido):
+        return "clave_privada", None
     if not contenido:
         return "vacio", None
     if len(contenido) > db.MAX_DOCUMENTO_CLIENTE_BYTES:
@@ -347,6 +351,9 @@ def eliminar(tenant_id: int, usuario_id: int, documento_id: int) -> bool:
 
 # --- Expediente documental de la ficha fiscal (gestoría): misma puerta, tabla anterior --------------------------------------------------------
 def guardar_de_cliente_fiscal(usuario_id: int, cliente_fiscal_id: int, nombre: str, tipo_mime: str | None, contenido: bytes, **kw) -> tuple[str, int | None]:
+    from . import certificados
+    if certificados.contiene_clave_privada(contenido):
+        return "clave_privada", None
     return db.archivar_documento_cliente(usuario_id, cliente_fiscal_id, nombre, tipo_mime, contenido, **kw)
 
 

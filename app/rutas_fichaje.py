@@ -10,12 +10,12 @@ administra el fichaje de su propio tenant (`g.tenant_id`), y el superadmin
 global (`g.es_admin`) puede administrar el de cualquier tenant, eligiéndolo
 por querystring (`?tenant_id=`).
 """
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, fichaje_export
+from . import ausencias, bolsa_horas, db, fichaje_export, turnos
 from .auth import login_required
 
 fichaje_bp = Blueprint("fichaje", __name__, url_prefix="/fichaje")
@@ -325,3 +325,217 @@ def admin_verificar_integridad():
         resultado=db.verificar_integridad_fichajes(),
         tenant_id=tenant_id,
     )
+
+
+# --- Ausencias, vacaciones y permisos ----------------------------------------------------------------------------------------------------------------
+def _puede_gestionar_ausencias() -> bool:
+    return bool(g.tenant_id and ausencias.puede_gestionar(g.usuario_id, g.tenant_id))
+
+
+def _fecha_anio() -> int:
+    return request.args.get("anio", type=int) or datetime.now().year
+
+
+@fichaje_bp.context_processor
+def _inyectar_ausencias():
+    return {"tipos_ausencia": ausencias.TIPOS, "estados_ausencia": dict(ausencias.ESTADOS), "puede_gestionar_ausencias": _puede_gestionar_ausencias()}
+
+
+@fichaje_bp.route("/ausencias")
+@login_required
+def mis_ausencias():
+    if not g.tenant_id:
+        abort(403)
+    anio = _fecha_anio()
+    return render_template(
+        "ausencias.html", anio=anio, saldo=ausencias.saldo(g.tenant_id, g.usuario_id, anio), mis=ausencias.listar(g.tenant_id, usuario_id=g.usuario_id, anio=anio),
+        error=request.args.get("error"), aviso=request.args.get("aviso"), hoy=datetime.now().strftime("%Y-%m-%d"), consumen=sorted(ausencias.CONSUMEN_SALDO))
+
+
+@fichaje_bp.route("/ausencias/solicitar", methods=["POST"])
+@login_required
+def solicitar_ausencia():
+    if not g.tenant_id:
+        abort(403)
+    try:
+        ausencias.solicitar(g.tenant_id, g.usuario_id, request.form.get("tipo", ""), request.form.get("desde", ""), request.form.get("hasta") or None,
+                            motivo=request.form.get("motivo"), medio_dia="medio_dia" in request.form)
+    except ValueError as e:
+        return redirect(url_for("fichaje.mis_ausencias", error=str(e)))
+    return redirect(url_for("fichaje.mis_ausencias", aviso="solicitada"))
+
+
+@fichaje_bp.route("/ausencias/<int:ausencia_id>/cancelar", methods=["POST"])
+@login_required
+def cancelar_ausencia(ausencia_id: int):
+    if not g.tenant_id:
+        abort(403)
+    destino = "fichaje.ausencias_equipo" if request.form.get("desde_equipo") and _puede_gestionar_ausencias() else "fichaje.mis_ausencias"
+    try:
+        ausencias.cancelar(g.tenant_id, g.usuario_id, ausencia_id)
+    except ValueError as e:
+        return redirect(url_for(destino, error=str(e)))
+    return redirect(url_for(destino, aviso="cancelada"))
+
+
+@fichaje_bp.route("/ausencias/equipo")
+@login_required
+def ausencias_equipo():
+    if not _puede_gestionar_ausencias():
+        abort(403)
+    anio = _fecha_anio()
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    return render_template(
+        "ausencias_equipo.html", anio=anio, pendientes=ausencias.listar(g.tenant_id, estado="pendiente"), proximas=ausencias.listar(g.tenant_id, estado="aprobada", desde=hoy)[::-1],
+        saldos=ausencias.saldos_del_equipo(g.tenant_id, anio), dias_anuales=ausencias.dias_anuales(g.tenant_id), hoy=hoy, fuera_hoy=ausencias.quien_falta(g.tenant_id),
+        equipo=ausencias.nucleo.equipo(g.tenant_id), error=request.args.get("error"), aviso=request.args.get("aviso"))
+
+
+@fichaje_bp.route("/ausencias/<int:ausencia_id>/resolver", methods=["POST"])
+@login_required
+def resolver_ausencia(ausencia_id: int):
+    if not _puede_gestionar_ausencias():
+        abort(403)
+    try:
+        ausencias.resolver(g.tenant_id, g.usuario_id, ausencia_id, request.form.get("decision") == "aprobar", request.form.get("comentario"))
+    except ValueError as e:
+        return redirect(url_for("fichaje.ausencias_equipo", error=str(e)))
+    return redirect(url_for("fichaje.ausencias_equipo", aviso="resuelta"))
+
+
+@fichaje_bp.route("/ausencias/registrar", methods=["POST"])
+@login_required
+def registrar_ausencia_de_otra_persona():
+    if not _puede_gestionar_ausencias():
+        abort(403)
+    try:
+        ausencias.solicitar(g.tenant_id, request.form.get("usuario_id", type=int) or 0, request.form.get("tipo", ""), request.form.get("desde", ""), request.form.get("hasta") or None,
+                            motivo=request.form.get("motivo"), medio_dia="medio_dia" in request.form, por=g.usuario_id)
+    except ValueError as e:
+        return redirect(url_for("fichaje.ausencias_equipo", error=str(e)))
+    return redirect(url_for("fichaje.ausencias_equipo", aviso="registrada"))
+
+
+@fichaje_bp.route("/ausencias/ajustes", methods=["POST"])
+@login_required
+def ajustes_ausencias():
+    if not _puede_gestionar_ausencias():
+        abort(403)
+    try:
+        if request.form.get("usuario_id"):
+            dias = request.form.get("dias", "").strip()
+            ausencias.fijar_saldo(g.tenant_id, request.form.get("usuario_id", type=int) or 0, request.form.get("anio", type=int) or datetime.now().year, dias if dias else None)
+        else:
+            ausencias.fijar_dias_anuales(g.tenant_id, request.form.get("dias_vacaciones", ""))
+    except ValueError as e:
+        return redirect(url_for("fichaje.ausencias_equipo", error=str(e)))
+    return redirect(url_for("fichaje.ausencias_equipo", aviso="guardado"))
+
+
+# --- Cuadrante de turnos ----------------------------------------------------------------------------------------------------------------------------
+def _lunes_pedido() -> date:
+    try:
+        return turnos.lunes_de(date.fromisoformat((request.args.get("semana") or "")[:10]))
+    except ValueError:
+        return turnos.lunes_de(date.today())
+
+
+@fichaje_bp.route("/turnos")
+@login_required
+def cuadrante_turnos():
+    if not g.tenant_id:
+        abort(403)
+    lunes = _lunes_pedido()
+    c = turnos.cuadrante(g.tenant_id, lunes.isoformat(), (lunes + timedelta(days=6)).isoformat())
+    return render_template(
+        "turnos.html", lunes=lunes, anterior=(lunes - timedelta(days=7)).isoformat(), siguiente=(lunes + timedelta(days=7)).isoformat(), cuadrante=c,
+        tipos=turnos.listar_tipos(g.tenant_id), hoy=date.today().isoformat(), dias_cortos=turnos.DIAS_CORTOS,
+        mis=turnos.mis_turnos(g.tenant_id, g.usuario_id, date.today().isoformat(), (date.today() + timedelta(days=14)).isoformat()),
+        error=request.args.get("error"), aviso=request.args.get("aviso"))
+
+
+def _volver_a_turnos(lunes: str | None = None, **kw):
+    return redirect(url_for("fichaje.cuadrante_turnos", semana=lunes, **kw))
+
+
+@fichaje_bp.route("/turnos/semana", methods=["POST"])
+@login_required
+def guardar_semana_de_turnos():
+    if not g.tenant_id:
+        abort(403)
+    lunes = request.form.get("lunes", "")
+    por_dia = {k[2:]: (int(v) if v.strip().isdigit() else None) for k, v in request.form.items() if k.startswith("t_")}
+    try:
+        n = turnos.asignar_semana(g.tenant_id, g.usuario_id, request.form.get("usuario_id", type=int) or 0, lunes, por_dia)
+    except ValueError as e:
+        return _volver_a_turnos(lunes, error=str(e))
+    return _volver_a_turnos(lunes, aviso=f"guardado-{n}")
+
+
+@fichaje_bp.route("/turnos/copiar", methods=["POST"])
+@login_required
+def copiar_semana_de_turnos():
+    if not g.tenant_id:
+        abort(403)
+    destino = request.form.get("a_lunes", "")
+    try:
+        n = turnos.copiar_semana(g.tenant_id, g.usuario_id, request.form.get("desde_lunes", ""), destino, sobrescribir="sobrescribir" in request.form)
+    except ValueError as e:
+        return _volver_a_turnos(request.form.get("desde_lunes"), error=str(e))
+    return _volver_a_turnos(destino, aviso=f"copiado-{n}")
+
+
+@fichaje_bp.route("/turnos/tipos", methods=["POST"])
+@login_required
+def crear_tipo_de_turno():
+    if not g.tenant_id:
+        abort(403)
+    try:
+        turnos.crear_tipo(g.tenant_id, g.usuario_id, request.form.get("nombre", ""), request.form.get("inicio", ""), request.form.get("fin", ""), request.form.get("color"))
+    except ValueError as e:
+        return _volver_a_turnos(request.form.get("lunes"), error=str(e))
+    return _volver_a_turnos(request.form.get("lunes"), aviso="tipo-creado")
+
+
+@fichaje_bp.route("/turnos/tipos/<int:turno_id>/archivar", methods=["POST"])
+@login_required
+def archivar_tipo_de_turno(turno_id: int):
+    if not g.tenant_id:
+        abort(403)
+    try:
+        turnos.archivar_tipo(g.tenant_id, g.usuario_id, turno_id)
+    except ValueError as e:
+        return _volver_a_turnos(request.form.get("lunes"), error=str(e))
+    return _volver_a_turnos(request.form.get("lunes"), aviso="tipo-archivado")
+
+
+# --- Bolsa de horas --------------------------------------------------------------------------------------------------------------------------------
+@fichaje_bp.route("/bolsa")
+@login_required
+def mi_bolsa_de_horas():
+    if not g.tenant_id:
+        abort(403)
+    desde, hasta = request.args.get("desde") or None, request.args.get("hasta") or None
+    error = request.args.get("error")
+    try:
+        mia = bolsa_horas.calcular(g.tenant_id, g.usuario_id, desde, hasta)
+        equipo = bolsa_horas.resumen_equipo(g.tenant_id, desde, hasta) if _puede_gestionar_ausencias() else None
+    except ValueError as e:
+        mia, equipo, error = bolsa_horas.calcular(g.tenant_id, g.usuario_id), None, str(e)
+    return render_template("bolsa_horas.html", mia=mia, equipo=equipo, ajustes=bolsa_horas.listar_ajustes(g.tenant_id, g.usuario_id, mia["desde"], mia["hasta"]),
+                           personal=ausencias.nucleo.equipo(g.tenant_id) if equipo is not None else [], texto_horas=bolsa_horas.texto_horas, desde=mia["desde"], hasta=mia["hasta"],
+                           error=error, aviso=request.args.get("aviso"))
+
+
+@fichaje_bp.route("/bolsa/ajustes", methods=["POST"])
+@login_required
+def ajustar_bolsa_de_horas():
+    if not g.tenant_id:
+        abort(403)
+    try:
+        signo = -1 if request.form.get("sentido") == "restar" else 1
+        horas = float((request.form.get("horas") or "0").replace(",", "."))
+        bolsa_horas.anadir_ajuste(g.tenant_id, g.usuario_id, request.form.get("usuario_id", type=int) or 0, signo * round(horas * 60), request.form.get("motivo", ""), request.form.get("fecha") or None)
+    except ValueError as e:
+        return redirect(url_for("fichaje.mi_bolsa_de_horas", error=str(e)))
+    return redirect(url_for("fichaje.mi_bolsa_de_horas", aviso="ajustada"))

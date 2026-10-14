@@ -184,7 +184,13 @@ def generar_token_busqueda(usuario_id: int, tenant_id: int | None = None, minuto
     clave = _asegurar_clave_busqueda()
     filtro = f"usuario_id = {usuario_id}"
     if tenant_id is not None:
-        filtro = f"({filtro}) OR tenant_id = {tenant_id}"
+        # Con oficinas, quien no ve todos los clientes tampoco busca entre los clientes y vencimientos fiscales de todo el despacho (el índice no sabe de oficinas):
+        # se queda con lo suyo y lo común del despacho, nunca con una fuga.
+        from . import acceso
+        if acceso._alcance(tenant_id, usuario_id) is not None:
+            filtro = f'({filtro}) OR (tenant_id = {tenant_id} AND tipo != "cliente_fiscal" AND tipo != "vencimiento_fiscal")'
+        else:
+            filtro = f"({filtro}) OR tenant_id = {tenant_id}"
     payload = {
         "searchRules": {INDICE: {"filter": filtro}},
         "apiKeyUid": clave["uid"],

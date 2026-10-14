@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import interruptor %}
+{% block title %}{{ _('Ausencias del equipo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Ausencias del equipo') }}</h1>
+    <p class="subtitle">{{ _('Aprueba o rechaza solicitudes, registra ausencias y ajusta los días de vacaciones.') }}</p>
+  </div>
+</header>
+
+{% with activa = 'equipo' %}{% include "_ausencias_nav.html" %}{% endwith %}
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Hoy fuera') }}</h2>
+  {% if fuera_hoy %}
+  <ul class="ausencias-hoy">{% for a in fuera_hoy %}<li><strong>{{ a.persona }}</strong> · {{ dict(tipos_ausencia)[a.tipo] }} · {{ _('hasta el %(f)s', f=a.hasta) }}</li>{% endfor %}</ul>
+  {% else %}<p class="empty-lane">{{ _('Hoy no falta nadie.') }}</p>{% endif %}
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Pendientes de aprobar') }} ({{ pendientes|length }})</h2>
+  {% if not pendientes %}
+  <p class="empty-lane">{{ _('No hay solicitudes pendientes.') }}</p>
+  {% else %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Fechas') }}</th><th>{{ _('Días') }}</th><th>{{ _('Decisión') }}</th></tr></thead>
+    <tbody>
+    {% for a in pendientes %}
+    <tr>
+      <td>{{ a.persona }}</td>
+      <td>{{ dict(tipos_ausencia)[a.tipo] }}{% if a.motivo %}<div class="subtitle">{{ a.motivo }}</div>{% endif %}</td>
+      <td>{{ a.desde }}{% if a.hasta != a.desde %} → {{ a.hasta }}{% endif %}</td>
+      <td>{{ '%g' % a.dias }}</td>
+      <td>
+        <form method="post" action="{{ url_for('fichaje.resolver_ausencia', ausencia_id=a.id) }}" class="ausencias-decision">
+          <input type="text" name="comentario" maxlength="500" placeholder="{{ _('Comentario (opcional)') }}" aria-label="{{ _('Comentario (opcional)') }}">
+          <button type="submit" name="decision" value="aprobar" class="btn btn-primary btn-sm">{{ _('Aprobar') }}</button>
+          <button type="submit" name="decision" value="rechazar" class="btn btn-ghost btn-sm">{{ _('Rechazar') }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Próximas ausencias aprobadas') }}</h2>
+  {% if not proximas %}
+  <p class="empty-lane">{{ _('No hay ausencias aprobadas por delante.') }}</p>
+  {% else %}
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Fechas') }}</th><th>{{ _('Días') }}</th><th><span class="sr-only">{{ _('Acciones') }}</span></th></tr></thead>
+    <tbody>
+    {% for a in proximas %}
+    <tr>
+      <td>{{ a.persona }}</td><td>{{ dict(tipos_ausencia)[a.tipo] }}</td>
+      <td>{{ a.desde }}{% if a.hasta != a.desde %} → {{ a.hasta }}{% endif %}</td><td>{{ '%g' % a.dias }}</td>
+      <td><form method="post" action="{{ url_for('fichaje.cancelar_ausencia', ausencia_id=a.id) }}"><input type="hidden" name="desde_equipo" value="1">
+        <button type="submit" class="btn btn-ghost btn-sm" data-confirmar-clic="{{ _('¿Cancelar esta ausencia?') }}">{{ _('Cancelar') }}</button></form></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Saldo de vacaciones de %(anio)s', anio=anio) }}</h2>
+  <form method="post" action="{{ url_for('fichaje.ajustes_ausencias') }}" class="filters">
+    <label>{{ _('Días anuales por defecto') }} <input type="number" name="dias_vacaciones" min="0" max="366" step="0.5" value="{{ '%g' % dias_anuales }}"></label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+  <div class="table-wrap">
+  <table class="historial-table">
+    <thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Corresponden') }}</th><th>{{ _('Aprobados') }}</th><th>{{ _('Pendientes') }}</th><th>{{ _('Disponibles') }}</th><th>{{ _('Ajustar sus días') }}</th></tr></thead>
+    <tbody>
+    {% for s in saldos %}
+    <tr>
+      <td>{{ s.persona }}</td><td>{{ '%g' % s.total }}</td><td>{{ '%g' % s.aprobadas }}</td><td>{{ '%g' % s.pendientes }}</td><td>{{ '%g' % s.disponibles }}</td>
+      <td>
+        <form method="post" action="{{ url_for('fichaje.ajustes_ausencias') }}" class="ausencias-decision">
+          <input type="hidden" name="usuario_id" value="{{ s.usuario_id }}"><input type="hidden" name="anio" value="{{ anio }}">
+          <input type="number" name="dias" min="0" max="366" step="0.5" placeholder="{{ _('por defecto') }}" aria-label="{{ _('Días de %(p)s', p=s.persona) }}">
+          <button type="submit" class="btn btn-ghost btn-sm">{{ _('Fijar') }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="ausencias-seccion">
+  <form method="post" action="{{ url_for('fichaje.registrar_ausencia_de_otra_persona') }}" class="edit-form ausencias-form">
+    <h2>{{ _('Registrar una ausencia de otra persona') }}</h2>
+    <p class="subtitle">{{ _('Queda aprobada directamente y se le avisa.') }}</p>
+    <div class="correo-form-campo"><label for="reg-persona">{{ _('Persona') }}</label>
+      <select id="reg-persona" name="usuario_id" required>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="reg-tipo">{{ _('Tipo') }}</label>
+      <select id="reg-tipo" name="tipo" required>{% for clave, nombre in tipos_ausencia %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}</select></div>
+    <div class="correo-form-campo"><label for="reg-desde">{{ _('Desde') }}</label><input type="date" id="reg-desde" name="desde" required></div>
+    <div class="correo-form-campo"><label for="reg-hasta">{{ _('Hasta (si es un solo día, déjalo vacío)') }}</label><input type="date" id="reg-hasta" name="hasta"></div>
+    <div class="correo-form-campo">{{ interruptor('medio_dia', _('Solo medio día'), id='reg-medio') }}</div>
+    <div class="correo-form-campo"><label for="reg-motivo">{{ _('Motivo (opcional)') }}</label><input type="text" id="reg-motivo" name="motivo" maxlength="500"></div>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Registrar') }}</button></div>
+  </form>
+</section>
+{% endblock %}

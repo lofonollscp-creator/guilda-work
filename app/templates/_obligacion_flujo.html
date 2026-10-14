@@ -1,0 +1,59 @@
+{# Flujo de trabajo de la obligación: fase, indicadores, evidencias y los pasos que ESTA persona puede dar. Variables: flujo (obligaciones.resumen), vencimiento, fases_texto. #}
+<section class="flujo-obligacion" aria-labelledby="flujo-t">
+  <h2 id="flujo-t">{{ _('Flujo de trabajo') }}</h2>
+  <p>
+    <span class="pill flujo-fase flujo-{{ flujo.fase }}">{{ fases_texto[flujo.fase] }}</span>
+    {% if flujo.indicadores.vencida %}<span class="pill flujo-alerta">{{ _('Vencida') }}</span>{% endif %}
+    {% if flujo.indicadores.en_riesgo %}<span class="pill flujo-aviso">{{ _('En riesgo') }}</span>{% endif %}
+    {% if flujo.indicadores.bloqueada %}<span class="pill flujo-aviso">{{ _('Bloqueada') }}</span>{% endif %}
+    {% if flujo.indicadores.presentada_tarde %}<span class="pill flujo-alerta">{{ _('Presentada tarde') }}</span>{% endif %}
+    <span class="subtitle">{% if flujo.config.flujo_estricto %}{{ _('Este despacho trabaja con flujo estricto: hay que revisar y aprobar antes de presentar.') }}{% else %}{{ _('Flujo flexible: se puede presentar desde cualquier fase de trabajo.') }}{% endif %}</span>
+  </p>
+  {% if flujo.indicadores.bloqueada and flujo.bloqueo_motivo %}<p class="subtitle">{{ _('Esperando') }}: {{ flujo.bloqueo_motivo }}. {{ _('El bloqueo no detiene el plazo legal.') }}</p>{% endif %}
+  {% if flujo.motivo and flujo.fase in ('en_preparacion', 'no_aplica', 'anulada') %}<p class="subtitle">{{ _('Motivo') }}: {{ flujo.motivo }}</p>{% endif %}
+
+  {% if flujo.destinos %}
+  <form method="post" action="{{ url_for('fiscal.transicion_vencimiento', vencimiento_id=vencimiento.id) }}" class="edit-form flujo-form">
+    <input type="hidden" name="version" value="{{ flujo.version }}">
+    <div class="correo-form-campo">
+      <label for="fl-destino">{{ _('Pasar a') }}</label>
+      <select id="fl-destino" name="destino">{% for d in flujo.destinos %}<option value="{{ d }}">{{ fases_texto[d] }}</option>{% endfor %}</select>
+    </div>
+    <div class="correo-form-campo"><label for="fl-motivo">{{ _('Motivo o justificación (obligatorio al devolver a preparación, o al marcar «no aplica» o «anulada»)') }}</label><input type="text" id="fl-motivo" name="motivo" maxlength="500"></div>
+    {% if 'presentada' in flujo.destinos %}
+    <fieldset class="flujo-presentacion">
+      <legend>{{ _('Si la presentas: evidencia declarada por ti') }}</legend>
+      <div class="correo-form-campo"><label for="fl-cuando">{{ _('Cuándo se presentó') }}</label><input type="datetime-local" id="fl-cuando" name="presentado_en"></div>
+      <div class="correo-form-campo"><label for="fl-org">{{ _('Organismo') }}</label><input type="text" id="fl-org" name="organismo" maxlength="80" placeholder="AEAT"></div>
+      <div class="correo-form-campo"><label for="fl-ref">{{ _('Referencia o CSV') }}</label><input type="text" id="fl-ref" name="referencia" maxlength="120"></div>
+    </fieldset>
+    {% endif %}
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Cambiar de fase') }}</button></div>
+  </form>
+  {% elif flujo.fase in ('cerrada', 'no_aplica', 'anulada') %}
+  <p class="subtitle">{{ _('Esta obligación ya está terminada.') }}</p>
+  {% else %}
+  <p class="subtitle">{{ _('Con tu rol no puedes cambiar la fase de esta obligación.') }}</p>
+  {% endif %}
+
+  {% if flujo.fase in ('pendiente', 'en_preparacion', 'en_revision', 'aprobada') and flujo.destinos %}
+  <form method="post" action="{{ url_for('fiscal.bloqueo_vencimiento', vencimiento_id=vencimiento.id) }}" class="filters">
+    {% if flujo.indicadores.bloqueada %}
+    <input type="hidden" name="accion" value="quitar"><button type="submit" class="btn btn-ghost">{{ _('Quitar el bloqueo') }}</button>
+    {% else %}
+    <label>{{ _('Marcar como bloqueada, esperando…') }} <input type="text" name="motivo" maxlength="300" placeholder="{{ _('Los extractos del banco') }}" required></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Bloquear') }}</button>
+    {% endif %}
+  </form>
+  {% endif %}
+
+  {% if flujo.evidencias %}
+  <h3>{{ _('Evidencias de presentación') }}</h3>
+  <ul>
+    {% for e in flujo.evidencias %}
+    <li><strong>{{ e.presentado_en.replace('T', ' ') }}</strong>{% if e.organismo %} · {{ e.organismo }}{% endif %}{% if e.referencia %} · {{ e.referencia }}{% endif %}
+      · <span class="subtitle">{{ _('presentación declarada por %(quien)s', quien=e.actor or _('el gestor')) }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>

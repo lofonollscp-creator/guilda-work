@@ -22,7 +22,7 @@ def _con_despacho(vista):
 
     @wraps(vista)
     def envuelta(*a, **k):
-        error = _exigir_tenant_api()
+        error = _exigir_tenant_api()           # también impide escribir al auditor (solo lee)
         return error if error else vista(*a, **k)
     return envuelta
 

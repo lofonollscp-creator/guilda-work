@@ -309,7 +309,7 @@ def webhooks_entregas(webhook_id: int, limite: int = 20) -> dict:
 
 def resumen_del_dia() -> dict:
     """Todo lo que importa hoy en UNA llamada: «mi día» (vencidas, hoy, en curso, asignadas), vencimientos fiscales de los
-    próximos 7 días, correos sin leer y notificaciones sin leer. Úsala para «¿qué tengo hoy?» en vez de varias consultas."""
+    próximos 7 días, correos sin leer, notificaciones sin leer, visitas de hoy, plazos que apremian y correos sin contestar. Úsala para «¿qué tengo hoy?» en vez de varias consultas."""
     from datetime import date, timedelta
 
     uid = _mt._uid()
@@ -319,11 +319,14 @@ def resumen_del_dia() -> dict:
         hasta = (date.today() + timedelta(days=7)).isoformat()
         vencimientos = _mt._filas(_mt.db.listar_vencimientos_fiscales(tenant["id"], estado="pendiente", hasta=hasta))
     por_cuenta = _mt.db.contar_no_leidos_por_cuenta_y_carpeta(uid)
+    from app import resumen_pendientes
+    pendientes = resumen_pendientes.reunir(uid)
     return {
         "mi_dia": {seccion: _mt._filas(filas) for seccion, filas in _mt.db.tareas_para_hoy(uid).items()},
         "vencimientos_7_dias": vencimientos,
         "correos_sin_leer": sum(sum(c.values()) for c in por_cuenta.values()),
         "notificaciones_sin_leer": _mt.db.contar_notificaciones_no_leidas(uid),
+        **{k: pendientes[k] for k in ("visitas_hoy", "plazos", "correos_sin_contestar")},
     }
 
 

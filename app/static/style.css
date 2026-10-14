@@ -4908,3 +4908,108 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 
 /* Mensajes informativos de los flujos de acceso (Kratos): «te hemos mandado un código…» no es un error y no debe verse en rojo. */
 .auth-info { margin: 8px 0; padding: 10px 14px; border-radius: 12px; font-size: 0.9em; line-height: 1.45; color: var(--text); background: color-mix(in srgb, var(--primary) 12%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 34%, transparent); }
+
+/* Ausencias y vacaciones (app/templates/ausencias*.html) */
+.ausencias-saldo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 22px; }
+.ausencias-cifra { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 16px; }
+.ausencias-cifra strong { font-size: 1.9rem; line-height: 1.1; }
+.ausencias-cifra span { font-size: 0.85rem; opacity: 0.8; }
+.ausencias-form { max-width: 560px; margin: 0 0 28px; }
+.ausencias-decision { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ausencias-decision input[type="text"], .ausencias-decision input[type="number"] { min-width: 0; flex: 1 1 140px; }
+.ausencias-hoy { margin: 0 0 22px; padding-left: 18px; }
+
+/* Cuadrante de turnos */
+.turnos-tabla td { vertical-align: middle; }
+.turnos-tabla select { min-width: 8.5rem; }
+.turno-pastilla { display: inline-flex; flex-direction: column; padding: 4px 10px; border-radius: 10px; border-left: 4px solid var(--turno, #6c8cff); background: rgba(127, 127, 127, 0.14); line-height: 1.25; }
+.turno-pastilla small { opacity: 0.75; font-size: 0.75rem; }
+.ds-inline { display: inline-block; margin-left: 8px; }
+
+.ausencias-seccion { margin-top: 30px; }
+.turnos-tabla td, .turnos-tabla th { padding-left: 8px; padding-right: 8px; }
+.turnos-tabla select { min-width: 6.5rem; width: 100%; }
+.turnos-tabla td:first-child { white-space: nowrap; }
+
+/* Certificados digitales */
+.pill.cert-vigente { border-color: var(--success, #4caf50); }
+.pill.cert-caducado, .pill.cert-riesgo-caduca_antes, .pill.cert-riesgo-sin_alternativa { border-color: var(--danger, #e5484d); }
+.pill.cert-todavia_no_vigente, .pill.cert-riesgo-cobertura_desconocida { border-color: var(--warning, #f5a524); }
+.cert-datos { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0 0 22px; }
+.cert-datos dt { opacity: 0.75; }
+.cert-datos dd { margin: 0; overflow-wrap: anywhere; }
+
+.ausencias-seccion { margin-bottom: 14px; }
+
+/* Flujo de trabajo de las obligaciones fiscales */
+.flujo-obligacion { margin: 0 0 24px; padding: 16px 18px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 16px; }
+.flujo-obligacion h2 { margin-top: 0; }
+.flujo-obligacion .flujo-form { max-width: 640px; margin-top: 12px; }
+.pill.flujo-presentada, .pill.flujo-cerrada { border-color: var(--success, #4caf50); }
+.pill.flujo-alerta { border-color: var(--danger, #e5484d); }
+.pill.flujo-aviso { border-color: var(--warning, #f5a524); }
+.flujo-presentacion { border: 1px dashed var(--linea, rgba(255, 255, 255, 0.2)); border-radius: 12px; margin: 10px 0; padding: 8px 12px; }
+
+/* Certificados: panel, tarjetas y chips de caducidad */
+.cert-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 22px; }
+.cert-tarjeta-resumen { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-left-width: 4px; border-radius: 16px; text-decoration: none; color: inherit; }
+.cert-tarjeta-resumen strong { font-size: 1.9rem; line-height: 1.1; }
+.cert-tarjeta-resumen span { font-size: 0.85rem; opacity: 0.8; }
+.cert-tarjeta-resumen.activa { outline: 2px solid currentColor; outline-offset: 1px; }
+.cert-tono-caducado { border-left-color: var(--danger, #e5484d); }
+.cert-tono-urgente { border-left-color: #f5811f; }
+.cert-tono-pronto { border-left-color: var(--warning, #f5a524); }
+.cert-tono-ok { border-left-color: var(--success, #4caf50); }
+.cert-dias { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.cert-dias-caducado { background: rgba(229, 72, 77, 0.16); border-color: var(--danger, #e5484d); }
+.cert-dias-urgente { background: rgba(245, 129, 31, 0.16); border-color: #f5811f; }
+.cert-dias-pronto { background: rgba(245, 165, 36, 0.16); border-color: var(--warning, #f5a524); }
+.cert-dias-aviso { background: rgba(245, 220, 36, 0.12); border-color: rgba(245, 220, 36, 0.6); }
+.cert-dias-ok { background: rgba(76, 175, 80, 0.14); border-color: var(--success, #4caf50); }
+.cert-dias-nd { border-color: var(--linea, rgba(255, 255, 255, 0.2)); }
+.cert-aviso-ok { color: var(--success-text, #2e7d32); font-weight: 600; }
+.cert-aviso-falta { color: var(--danger-text, #c62828); font-weight: 600; }
+.cert-riesgos { margin: 0 0 22px; padding: 12px 16px; border: 1px solid var(--warning, #f5a524); border-radius: 14px; }
+.cert-vacio { padding: 28px 18px; text-align: center; border: 1px dashed var(--linea, rgba(255, 255, 255, 0.2)); border-radius: 16px; margin: 0 0 22px; }
+.cert-form { display: flex; flex-direction: column; gap: 12px; max-width: 760px; }
+.cert-form-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.cert-form label:not(.ds-interruptor) { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.cert-mas { border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 12px; padding: 8px 14px; }
+.cert-mas > summary { cursor: pointer; font-weight: 600; margin: 0 0 8px; }
+.cert-alta { padding: 16px 18px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 18px; }
+.cert-avanzado > summary { cursor: pointer; }
+.cert-acciones { white-space: nowrap; }
+@media (max-width: 720px) {
+  .cert-tabla thead { display: none; }
+  .cert-tabla tr { display: block; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 14px; margin: 0 0 10px; padding: 8px 12px; }
+  .cert-tabla td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 4px 0; }
+  .cert-tabla td[data-etiqueta]::before { content: attr(data-etiqueta); opacity: 0.7; font-size: 0.8rem; }
+}
+
+/* Ficha del certificado */
+.cert-estado { display: flex; gap: 16px; align-items: center; padding: 16px 18px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-left-width: 6px; border-radius: 16px; margin: 0 0 18px; }
+.cert-estado-caducado { border-left-color: var(--danger, #e5484d); }
+.cert-estado-vigente { border-left-color: var(--success, #4caf50); }
+.cert-estado-todavia_no_vigente, .cert-estado-desconocido { border-left-color: var(--warning, #f5a524); }
+.cert-bloque { margin: 0 0 22px; padding: 14px 18px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 16px; }
+.cert-bloque > h2 { margin-top: 0; }
+.cert-banda-ayuda { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--warning, #f5a524); background: rgba(245, 165, 36, 0.12); }
+.cert-pasos { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 14px; list-style: none; counter-reset: paso; }
+.cert-pasos li { counter-increment: paso; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.2)); font-size: 0.85rem; opacity: 0.7; }
+.cert-pasos li::before { content: counter(paso) ". "; }
+.cert-pasos li.hecho { opacity: 1; border-color: var(--success, #4caf50); }
+.cert-pasos li.actual { opacity: 1; font-weight: 700; border-color: currentColor; }
+.cert-check { flex-direction: row !important; align-items: center; gap: 8px; }
+.cert-lista-simple { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 4px; }
+
+/* Portal del cliente: su certificado digital */
+.portal-certificado { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; padding: 16px 18px; margin: 0 0 16px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.14)); border-left-width: 6px; border-radius: 18px; }
+.portal-certificado-vigente { border-left-color: var(--success, #4caf50); }
+.portal-certificado-pronto { border-left-color: var(--warning, #f5a524); }
+.portal-certificado-caducado { border-left-color: var(--danger, #e5484d); }
+.portal-certificado-fecha { font-weight: 700; margin-top: 2px; }
+.panel-indicadores { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; max-width: 760px; }
+.panel-indicadores li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 10px 14px; border: 1px solid var(--linea, rgba(255, 255, 255, 0.12)); border-radius: 12px; }
+.panel-indicadores li strong { font-size: 1.4rem; }
+.panel-indicadores .subtitle { flex-basis: 100%; }
+.form-en-linea { display: inline-flex; gap: 6px; align-items: center; margin: 2px 4px 2px 0; }

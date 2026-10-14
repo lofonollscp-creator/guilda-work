@@ -22,6 +22,29 @@
       </form>
     </header>
 
+    {% if ayuda_enviada %}<p class="portal-peticion" role="status"><strong>{{ _('Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo.') }}</strong></p>{% endif %}
+    {% for c in certificados %}
+    <section class="portal-certificado portal-certificado-{{ c.estado }}" aria-label="{{ _('Tu certificado digital') }}">
+      <div>
+        <strong>{{ _('Tu certificado digital') }}</strong>
+        <div>{{ tipos_certificado[c.tipo].nombre }}{% if c.titular %} · {{ c.titular }}{% endif %}</div>
+        <div class="portal-certificado-fecha">
+          {% if c.estado == 'caducado' %}{{ _('Caducó el %(f)s', f=c.caduca_el) }}{% else %}{{ _('Caduca el %(f)s', f=c.caduca_el) }}{% if c.dias is not none %} · {{ _('en %(n)s días', n=c.dias) if c.dias > 1 else (_('mañana') if c.dias == 1 else _('hoy')) }}{% endif %}{% endif %}
+        </div>
+        {% if c.estado == 'caducado' %}<p>{{ _('Mientras no lo renueves, tu gestoría no puede presentar impuestos ni acceder a tus notificaciones en tu nombre.') }}</p>
+        {% elif c.estado == 'pronto' %}<p>{{ _('Conviene renovarlo cuanto antes para no quedarte sin él.') }}</p>
+        {% else %}<p>{{ _('Todo en orden: tu gestoría te avisará antes de que caduque.') }}</p>{% endif %}
+        {% if instrucciones_certificado and c.estado != 'vigente' %}<p class="muted">{{ instrucciones_certificado }}</p>{% endif %}
+      </div>
+      {% if c.estado != 'vigente' %}
+      {% if c.ayuda_solicitada %}<span class="portal-estado ok">{{ _('Ya hemos avisado a tu gestoría') }}</span>
+      {% else %}
+      <form method="post" action="{{ url_for('portal_cliente.ayuda_certificado', certificado_id=c.id) }}"><button type="submit" class="btn btn-primary">{{ _('Necesito ayuda para renovarlo') }}</button></form>
+      {% endif %}
+      {% endif %}
+    </section>
+    {% endfor %}
+
     {% if vencimientos %}
     <section class="portal-resumen">
       <div class="portal-resumen-anillo" style="--pct: {{ (presentados / vencimientos|length * 360) | round | int }}deg">

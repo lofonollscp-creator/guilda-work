@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Panel fiscal') }} — Guilda Work{% endblock %}
+{% macro causa(x) -%}
+  {%- if x.causa == 'vencida' -%}{{ _('Venció hace %(n)s días y sigue sin presentarse.', n=x.dias) if x.dias != 1 else _('Venció ayer y sigue sin presentarse.') }}
+  {%- elif x.causa == 'bloqueada' -%}{{ _('Bloqueada') }}: {{ x.motivo }}
+  {%- elif x.causa == 'para_revisar' -%}{{ _('Espera revisión.') }}
+  {%- elif x.dias == 0 -%}{{ _('Vence hoy.') }}
+  {%- else -%}{{ _('Vence en %(n)s días.', n=x.dias) }}{%- endif -%}
+{%- endmacro %}
+{% macro fase(f) -%}
+  {{ {'pendiente': _('Pendiente'), 'en_preparacion': _('En preparación'), 'en_revision': _('En revisión'), 'aprobada': _('Aprobada')}.get(f, f) }}
+{%- endmacro %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Panel fiscal') }}</h1>
+    <p class="subtitle">{{ _('Qué mirar hoy, cómo está repartido el trabajo y cómo se cumple. Cada aviso dice por qué y a dónde ir.') }}
+      {% if p.ambito == 'parcial' %}<strong>{{ _('Solo ves los clientes de tus oficinas y los que te han compartido.') }}</strong>{% endif %}</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('control_fiscal.traspasos_pantalla') }}">{{ _('Traspasos') }}</a>
+</header>
+
+<section class="cert-resumen" aria-label="{{ _('Resumen') }}">
+  {% for n, etiqueta, tono, ancla in ((p.totales.vencidas, _('Vencidas sin presentar'), 'caducado', '#vencidas'), (p.totales.proximas, _('Vencen en %(d)s días', d=p.dias_proximos), 'urgente', '#proximas'),
+      (p.totales.bloqueadas, _('Bloqueadas'), 'pronto', '#bloqueadas'), (p.totales.para_revisar, _('Para revisar'), 'pronto', '#revision'), (p.totales.traspasos, _('Traspasos sin aceptar'), 'urgente', '#traspasos')) %}
+  <a class="cert-tarjeta-resumen cert-tono-{{ tono if n else 'ok' }}" href="{{ ancla }}"><strong>{{ n }}</strong><span>{{ etiqueta }}</span></a>
+  {% endfor %}
+  {% if p.certificados %}<a class="cert-tarjeta-resumen cert-tono-{{ 'caducado' if p.totales.riesgos_certificados else 'ok' }}" href="#certificados"><strong>{{ p.totales.riesgos_certificados }}</strong><span>{{ _('Obligaciones sin certificado asegurado') }}</span></a>{% endif %}
+</section>
+
+{% macro tabla(lista, titulo, id) %}
+{% if lista %}
+<section class="ausencias-seccion" id="{{ id }}">
+  <h2>{{ titulo }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Obligación') }}</th><th>{{ _('Fecha límite') }}</th><th>{{ _('Fase') }}</th><th>{{ _('Responsable') }}</th><th>{{ _('Por qué') }}</th><th></th></tr></thead>
+    <tbody>{% for x in lista %}
+      <tr><td>{{ x.cliente }}</td><td>{{ x.modelo }} · {{ x.periodo }}</td><td>{{ x.fecha_limite }}</td><td>{{ fase(x.fase) }}</td>
+          <td>{{ x.responsable or _('Sin responsable') }}</td><td>{{ causa(x) }}</td><td><a href="{{ x.url }}">{{ _('Abrir') }}</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+{% endmacro %}
+
+{% if not (p.totales.vencidas or p.totales.proximas or p.totales.bloqueadas or p.totales.para_revisar or p.totales.traspasos or p.totales.riesgos_certificados) %}
+<p class="ds-estado-ok" role="status">{{ _('Nada urgente. Aun así, mira los indicadores de abajo: que no haya avisos no significa que no haya nada que revisar.') }}</p>
+{% endif %}
+
+{{ tabla(p.hoy_lista.vencidas, _('Vencidas sin presentar'), 'vencidas') }}
+{{ tabla(p.hoy_lista.proximas, _('Vencen en los próximos %(d)s días', d=p.dias_proximos), 'proximas') }}
+{{ tabla(p.bloqueadas, _('Bloqueadas: esperan algo, pero el plazo legal sigue corriendo'), 'bloqueadas') }}
+{{ tabla(p.hoy_lista.para_revisar, _('Esperan tu revisión'), 'revision') }}
+
+{% if p.traspasos %}
+<section class="ausencias-seccion" id="traspasos">
+  <h2>{{ _('Traspasos sin aceptar') }}</h2>
+  <p class="subtitle">{{ _('Hasta que se acepten, el cliente sigue siendo de quien lo lleva ahora.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('De') }}</th><th>{{ _('A') }}</th><th>{{ _('Próximo vencimiento') }}</th><th>{{ _('Por qué') }}</th></tr></thead>
+    <tbody>{% for t in p.traspasos %}
+      <tr><td>{{ t.cliente }}</td><td>{{ t.de_nombre or _('Sin responsable') }}</td><td>{{ t.a_nombre }}</td><td>{{ t.proximo_vencimiento or '—' }}</td>
+          <td>{% if t.urgente %}{{ _('Hay un plazo en menos de %(n)s días y nadie lo ha aceptado.', n=7) }}{% elif t.para_mi %}{{ _('Te lo han propuesto: acéptalo o recházalo.') }}{% else %}{{ _('Esperando respuesta.') }}{% endif %} <a href="{{ url_for('control_fiscal.traspasos_pantalla') }}">{{ _('Resolver') }}</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+{% if p.certificados %}
+<section class="ausencias-seccion" id="certificados">
+  <h2>{{ _('Certificados') }}</h2>
+  {% if p.riesgos_certificados %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Obligación') }}</th><th>{{ _('Vence') }}</th><th>{{ _('Por qué') }}</th><th></th></tr></thead>
+    <tbody>{% for r in p.riesgos_certificados %}
+      <tr><td>{{ r.cliente }}</td><td>{{ r.modelo }} · {{ r.periodo }}</td><td>{{ r.fecha_limite }}</td><td>{{ r.motivo }}</td>
+          <td><a href="{{ url_for('certificados.detalle', certificado_id=r.certificado_id) if r.certificado_id else url_for('certificados.lista', cliente_id=r.cliente_fiscal_id) }}">{{ _('Ver certificados') if not r.certificado_id else _('Abrir certificado') }}</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <p class="subtitle">{{ _('«Cobertura desconocida» significa que aún no has apuntado qué certificado se usa para ese cliente: no que esté bien.') }}</p>
+  {% else %}<p class="subtitle">{{ _('Ninguna obligación de los próximos 90 días depende de un certificado sin asegurar.') }} <a href="{{ url_for('certificados.lista') }}">{{ _('Ver certificados') }}</a></p>{% endif %}
+</section>
+{% endif %}
+
+<section class="ausencias-seccion" id="carga">
+  <h2>{{ _('Reparto del trabajo') }}</h2>
+  {% for titulo, grupos in ((_('Por responsable'), p.carga_por_responsable), (_('Por oficina'), p.carga_por_oficina)) %}{% if grupos %}
+  <h3>{{ titulo }}</h3>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Quién') }}</th><th>{{ _('Clientes') }}</th><th>{{ _('En trabajo') }}</th><th>{{ _('Vencen pronto') }}</th><th>{{ _('Vencidas') }}</th><th>{{ _('Bloqueadas') }}</th></tr></thead>
+    <tbody>{% for g in grupos %}<tr><td>{{ g.nombre or (_('Sin responsable') if titulo == _('Por responsable') else _('Sin oficina')) }}</td><td>{{ g.clientes }}</td><td>{{ g.activas }}</td><td>{{ g.proximas }}</td><td>{{ g.vencidas }}</td><td>{{ g.bloqueadas }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}{% endfor %}
+</section>
+
+<section class="ausencias-seccion" id="indicadores">
+  <h2>{{ _('Indicadores') }}</h2>
+  {% set i = p.indicadores %}
+  <ul class="panel-indicadores">
+    <li><strong>{% if i.en_plazo.porcentaje is none %}{{ _('Sin datos') }}{% else %}{{ i.en_plazo.porcentaje }} %{% endif %}</strong>
+      {{ _('de las obligaciones vencidas en los últimos %(d)s días se presentaron en plazo', d=i.en_plazo.dias) }}
+      <span class="subtitle">{{ _('Muestra: %(n)s obligaciones. Excluidas: %(e)s (no aplica o anuladas).', n=i.en_plazo.n, e=i.en_plazo.excluidas) }}</span></li>
+    <li><strong>{{ i.clientes.sin_responsable }}</strong> {{ _('de %(n)s clientes no tienen responsable asignado', n=i.clientes.n) }}
+      {% if i.clientes.sin_responsable %}<span class="subtitle"><a href="{{ url_for('control_fiscal.traspasos_pantalla') }}">{{ _('Asignar responsable') }}</a></span>{% endif %}</li>
+    <li><strong>{{ i.bloqueadas }}</strong> {{ _('obligaciones bloqueadas') }}</li>
+    {% if i.sin_evidencia %}<li><strong>{{ i.sin_evidencia.sin }}</strong> {{ _('de %(n)s presentadas no tienen evidencia registrada', n=i.sin_evidencia.n) }}</li>{% endif %}
+    {% if i.certificados %}<li><strong>{{ i.certificados.con_custodio }}</strong> {{ _('de %(n)s certificados tienen un custodio asignado', n=i.certificados.n) }}</li>{% endif %}
+  </ul>
+  <p class="subtitle">{{ _('Calculado el %(f)s a partir del calendario fiscal del despacho. «Sin datos» no significa que todo esté bien. Este panel mide el trabajo del despacho; no garantiza la ausencia de sanciones.', f=p.generado_en.replace('T', ' ')) }}</p>
+</section>
+{% endblock %}

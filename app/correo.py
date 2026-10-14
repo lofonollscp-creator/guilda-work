@@ -1476,10 +1476,13 @@ def guardar_adjunto_en_vencimiento(usuario_id: int, mensaje_id: int, adjunto_id:
         raise ErrorCorreo("El adjunto supera el tamaño máximo (8 MB).")
     if visible_cliente and adjunto["tipo_mime"] not in db.MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO:
         raise ErrorCorreo("Solo se pueden enseñar al cliente imágenes o PDF.")
-    return db.subir_documento_vencimiento(
-        vencimiento_id, adjunto["nombre_archivo"], adjunto["tipo_mime"], contenido,
-        origen="correo_compartido" if visible_cliente else "correo",
-    )
+    try:
+        return db.subir_documento_vencimiento(
+            vencimiento_id, adjunto["nombre_archivo"], adjunto["tipo_mime"], contenido,
+            origen="correo_compartido" if visible_cliente else "correo",
+        )
+    except ValueError as e:
+        raise ErrorCorreo(str(e)) from None
 
 
 _PATRON_IMG_REMOTA = re.compile(r'(<img\b[^>]*\bsrc=["\'])(https?://[^"\']+)(["\'])', re.IGNORECASE)

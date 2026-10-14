@@ -6,6 +6,7 @@
     <h1>{{ _('Editar cliente fiscal') }}</h1>
   </div>
 </header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
 
 <form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.editar_cliente', cliente_id=cliente.id) }}">
   <label>{{ _('Nombre o razón social') }}

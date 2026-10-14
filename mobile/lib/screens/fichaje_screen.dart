@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../theme/brand_colors.dart';
 import '../widgets/status_badge.dart';
 import 'fichaje_datos_screen.dart';
+import 'ausencias_screen.dart';
 import 'fichaje_historial_screen.dart';
 
 /// Panel de fichaje del trabajador (equivalente móvil de
@@ -143,6 +144,13 @@ class _FichajeScreenState extends State<FichajeScreen> {
             tooltip: t.fichajeHistorialTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => FichajeHistorialScreen(api: widget.api)),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.beach_access_outlined),
+            tooltip: t.ausenciasTooltip,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => AusenciasScreen(api: widget.api)),
             ),
           ),
           IconButton(

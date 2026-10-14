@@ -30,6 +30,22 @@
   {% call campo(_('Cómo llegó'), 'c-origen', ayuda=_('Recomendación, web, otro cliente…')) %}<input type="text" id="c-origen" name="origen" value="{{ datos.origen }}" maxlength="100">{% endcall %}
   {% call campo(_('Etiquetas'), 'c-etq', ayuda=_('Separadas por comas: vip, renta, autónomo.')) %}<input type="text" id="c-etq" name="etiquetas" value="{{ datos.etiquetas }}">{% endcall %}
   {% call campo(_('Notas'), 'c-notas') %}<textarea id="c-notas" name="notas" rows="4">{{ datos.notas }}</textarea>{% endcall %}
+  {% if gestion_fiscal_disponible %}
+  <fieldset>
+    <legend>{{ _('Gestión fiscal') }}</legend>
+    <label class="checkbox-label"><input type="checkbox" name="gestion_fiscal" value="1" {{ 'checked' if datos.gestion_fiscal }}> {{ _('Llevar la gestión fiscal de este cliente (calendario, vencimientos y portal)') }}</label>
+    {% call campo(_('País de tributación'), 'c-pais', ayuda=_('Hoy solo hay calendario fiscal de España; otros países se crean sin generación automática.')) %}
+      <select id="c-pais" name="pais">{% for p in paises %}<option value="{{ p }}" {{ 'selected' if datos.pais == p }}>{{ _('España') if p == 'ES' else p }}</option>{% endfor %}<option value="OTRO" {{ 'selected' if datos.pais == 'OTRO' }}>{{ _('Otro país (próximamente)') }}</option></select>
+    {% endcall %}
+    {% call campo(_('Tipo de cliente'), 'c-perfil', ayuda=_('Con un perfil elegido se proponen los modelos que le corresponden; los puedes revisar después en su ficha fiscal.')) %}
+      <select id="c-perfil" name="perfil_tipo"><option value="">{{ _('Sin indicar') }}</option>{% for t, nombre in (('autonomo', _('Autónomo')), ('sociedad', _('Sociedad')), ('particular', _('Particular'))) %}<option value="{{ t }}" {{ 'selected' if datos.perfil_tipo == t }}>{{ nombre }}</option>{% endfor %}</select>
+    {% endcall %}
+    {% for a, nombre in (('iva', _('Presenta IVA')), ('estimacion_directa', _('Autónomo en estimación directa')), ('retenciones', _('Practica retenciones (trabajadores o profesionales)')), ('alquiler_local', _('Paga el alquiler de un local'))) %}
+    <label class="checkbox-label"><input type="checkbox" name="perfil_atributos" value="{{ a }}" {{ 'checked' if a in datos.perfil_atributos }}> {{ nombre }}</label>
+    {% endfor %}
+    <label class="checkbox-label"><input type="checkbox" name="generacion_automatica" value="1" {{ 'checked' if datos.generacion_automatica }}> {{ _('Generar los vencimientos automáticamente cada periodo (necesita un tipo de cliente elegido)') }}</label>
+  </fieldset>
+  {% endif %}
   {% if parecidos %}<label class="checkbox-label"><input type="checkbox" name="crear_igualmente" value="1"> {{ _('Crear igualmente') }}</label>{% endif %}
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear cliente') }}</button><a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Cancelar') }}</a></div>
 </form>

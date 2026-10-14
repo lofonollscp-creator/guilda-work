@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icono, insignia_rol, salud_insignia, variacion, linea_salud %}
 {% block titulo %}{{ t.nombre }}{% endblock %}
-{% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'integraciones': ('Integraciones', 'zap'), 'actividad': ('Actividad', 'activity'), 'avanzado': ('Avanzado', 'shield-check')} %}
+{% set etiquetas = {'resumen': ('Resumen', 'settings'), 'usuarios': ('Usuarios', 'users'), 'personal': ('Personal', 'calendar-days'), 'modulos': ('Módulos', 'puzzle'), 'suscripcion': ('Suscripción', 'credit-card'), 'integraciones': ('Integraciones', 'zap'), 'actividad': ('Actividad', 'activity'), 'avanzado': ('Avanzado', 'shield-check')} %}
 {% block contenido %}
 <header class="cabecera cabecera-fila">
   <div>
@@ -95,6 +95,32 @@
         </tbody>
       </table>
     </div>
+
+    {% elif seccion == 'personal' %}
+    <h2>Personal: ausencias, turnos y bolsa de horas</h2>
+    <p class="muted">Lo gestiona dentro de Guilda Work quien lleva el fichaje del despacho (gestor de fichajes o supervisor). Aquí solo se ve el estado y se fijan los días de vacaciones por defecto.</p>
+    <form method="post" action="{{ url_for('rutas.fijar_dias_de_vacaciones', tenant_id=t.id) }}" class="fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Días de vacaciones al año por defecto <input type="number" name="dias_vacaciones" min="0" max="366" step="0.5" value="{{ '%g' % personal.dias_vacaciones }}"></label>
+      <button type="submit" class="boton boton-primario">Guardar</button>
+    </form>
+    <h3>Hoy fuera ({{ personal.fuera_hoy|length }})</h3>
+    {% if personal.fuera_hoy %}<ul class="lista-datos">{% for a in personal.fuera_hoy %}<li><strong>{{ a.persona }}</strong><span>{{ a.tipo|replace('_', ' ') }} · hasta {{ a.hasta }}</span></li>{% endfor %}</ul>{% else %}<p class="muted">Nadie.</p>{% endif %}
+    <h3>Pendientes de aprobar ({{ personal.pendientes|length }})</h3>
+    {% if personal.pendientes %}<ul class="lista-datos">{% for a in personal.pendientes %}<li><strong>{{ a.persona }}</strong><span>{{ a.tipo|replace('_', ' ') }} · {{ a.desde }}{% if a.hasta != a.desde %} → {{ a.hasta }}{% endif %} · {{ '%g' % a.dias }} día(s)</span></li>{% endfor %}</ul>{% else %}<p class="muted">Ninguna.</p>{% endif %}
+    <h3>Saldo de vacaciones</h3>
+    <div class="tabla-caja"><table class="tabla">
+      <thead><tr><th>Persona</th><th>Corresponden</th><th>Aprobados</th><th>Pendientes</th><th>Disponibles</th></tr></thead>
+      <tbody>{% for s in personal.saldos %}<tr><td>{{ s.persona }}</td><td>{{ '%g' % s.total }}</td><td>{{ '%g' % s.aprobadas }}</td><td>{{ '%g' % s.pendientes }}</td><td>{{ '%g' % s.disponibles }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <h3>Bolsa de horas (desde el 1 de enero hasta ayer)</h3>
+    <div class="tabla-caja"><table class="tabla">
+      <thead><tr><th>Persona</th><th>Trabajadas</th><th>Tocaba</th><th>Ajustes</th><th>Saldo</th></tr></thead>
+      <tbody>{% for b in personal.bolsa %}<tr><td>{{ b.nombre }}</td><td>{{ personal.texto_horas(b.trabajado_seg) }}</td>
+        {% if b.sin_jornada %}<td colspan="3" class="muted">Sin jornada contratada</td>{% else %}<td>{{ personal.texto_horas(b.esperado_seg) }}</td><td>{{ personal.texto_horas(b.ajustes_seg, True) }}</td><td><strong>{{ personal.texto_horas(b.saldo_seg, True) }}</strong></td>{% endif %}</tr>{% endfor %}</tbody>
+    </table></div>
+    <h3>Turnos</h3>
+    <p class="muted">{{ personal.tipos_turno|length }} tipo(s) de turno definidos{% if personal.tipos_turno %} ({{ personal.tipos_turno|map(attribute='nombre')|join(', ') }}){% endif %} · {{ personal.turnos_proximos }} turnos asignados en los próximos 14 días.</p>
 
     {% elif seccion == 'modulos' %}
     <h2>Módulos de negocio</h2>

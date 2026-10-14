@@ -127,7 +127,7 @@ def test_resumen_del_dia_detalle_y_completar_en_lote():
         b = db.crear_tarea_outlook(u, "Otra", fecha_vencimiento="2020-01-02")
         db.agregar_item_checklist(u, a, "Paso")
         r = mt.resumen_del_dia()
-        assert set(r) == {"mi_dia", "vencimientos_7_dias", "correos_sin_leer", "notificaciones_sin_leer"}
+        assert set(r) == {"mi_dia", "vencimientos_7_dias", "correos_sin_leer", "notificaciones_sin_leer", "visitas_hoy", "plazos", "correos_sin_contestar"}
         assert any(x["id"] == a for filas in r["mi_dia"].values() for x in filas)
         assert mt.detalle_tarea(a)["checklist"][0]["texto"] == "Paso"
         with pytest.raises(ValueError):

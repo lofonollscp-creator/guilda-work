@@ -37,7 +37,7 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 
 from waitress import serve
 
-from app import db, eventos
+from app import certificados, db, eventos, resumen_pendientes, traspasos
 from app.main import (
     _avisos_fichaje_servidor, _envios_correo_servidor, _idle_correo_servidor, _seguimientos_correo_servidor, _recordatorios_tareas_servidor, _recordatorio_vencimientos_fiscales, _recordatorios_portal_servidor,
     _resumen_ia_semanal,
@@ -54,6 +54,12 @@ if __name__ == "__main__":
     # despliegue hospedado.
     threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
     threading.Thread(target=_resumen_ia_semanal, daemon=True).start()
+    # Resumen diario de pendientes de cada persona (opt-in en Ajustes › Perfil).
+    threading.Thread(target=resumen_pendientes.bucle, daemon=True).start()
+    # Avisos de caducidad de certificados digitales y apertura automática de renovaciones (app/certificados.py).
+    threading.Thread(target=certificados.bucle, daemon=True).start()
+    # Escalado de traspasos de clientes sin aceptar con un plazo cerca (app/traspasos.py).
+    threading.Thread(target=traspasos.bucle, daemon=True).start()
     # Auto-sync del correo de todas las cuentas (GUILDA_CORREO_SYNC_MINUTOS,
     # 5 por defecto, 0 lo desactiva). _sincronizacion_correo_periodica sigue
     # siendo solo de escritorio; esta es su versión multi-usuario.

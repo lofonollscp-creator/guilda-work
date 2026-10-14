@@ -117,7 +117,9 @@ def crear_cliente_fiscal(
     modelo que presenta (ej. ["303", "130"]) -- se usan como valor por
     defecto al generar sus vencimientos."""
     tenant_id = _mt._tenant_id_actual()
+    from app import alta_cliente
     cliente_id = _mt.db.crear_cliente_fiscal(tenant_id, nombre, nif=nif, notas=notas, modelos_fiscales=modelos_fiscales)
+    alta_cliente.vincular_espocrm(tenant_id, cliente_id, nombre)
     return _mt._fila(_mt.db.obtener_cliente_fiscal(tenant_id, cliente_id))
 
 
@@ -154,10 +156,13 @@ def generar_vencimientos_fiscales(cliente_id: int, modelos: list[str], anio: int
 
 def marcar_presentado_vencimiento_fiscal(vencimiento_id: int) -> dict:
     """Marca un vencimiento fiscal como presentado."""
+    from app import obligaciones
     tenant_id = _mt._tenant_id_actual()
-    if _mt.db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id) is None:
+    v = _mt.db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id)
+    if v is None:
         raise ValueError(f"No existe el vencimiento #{vencimiento_id} en tu gestoría.")
-    _mt.db.marcar_presentado_vencimiento_fiscal(tenant_id, vencimiento_id)
+    obligaciones.exigir_para_marcar_presentado(tenant_id, _mt._uid(), v)             # respeta el flujo del despacho (estricto, justificante obligatorio)
+    _mt.db.marcar_presentado_vencimiento_fiscal(tenant_id, vencimiento_id, _mt._uid())
     return _mt._fila(_mt.db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id))
 
 
@@ -167,9 +172,12 @@ def editar_vencimiento_fiscal(
 ) -> dict:
     """Edita los campos indicados (los que se omitan no cambian) de un
     vencimiento fiscal ya existente."""
+    from app import obligaciones
     tenant_id = _mt._tenant_id_actual()
-    if _mt.db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id) is None:
+    actual = _mt.db.obtener_vencimiento_fiscal(tenant_id, vencimiento_id)
+    if actual is None:
         raise ValueError(f"No existe el vencimiento #{vencimiento_id} en tu gestoría.")
+    obligaciones.exigir_para_cambiar_estado(tenant_id, _mt._uid(), actual, estado)
     campos = {
         k: v for k, v in {
             "modelo": modelo, "periodo": periodo, "fecha_limite": fecha_limite,

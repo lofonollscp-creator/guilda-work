@@ -50,6 +50,42 @@ for n, (asunto, de, cuerpo, adj) in enumerate([("Reclamación del IVA trimestral
     m.set_content(cuerpo)
     if adj: m.add_attachment(b"%PDF-demo", maintype="application", subtype="pdf", filename="nomina.pdf")
     correo._guardar_mensaje_imap(db.obtener_cuenta_correo(yo, cuenta_correo), "INBOX", str(n), bytes(m), set())
+# personal: jornada, turnos, una ausencia por aprobar y fichajes de ayer para la bolsa de horas
+from app import ausencias as _aus, turnos as _tur
+db.guardar_fichaje_datos(yo, nombre_completo="Persona Demo", dni_nie="1X", jornada_semanal_horas=40)
+db.guardar_fichaje_datos(ana, nombre_completo="Ana Demo", dni_nie="2X", jornada_semanal_horas=40)
+_t1 = _tur.crear_tipo(t, yo, "Mañana", "08:00", "15:00", "#3b82f6"); _tur.crear_tipo(t, yo, "Tarde", "15:00", "22:00", "#f59e0b")
+_lunes = _tur.lunes_de(hoy)
+for _i in range(5):
+    _tur.asignar(t, yo, ana, d((_lunes - hoy).days + _i), _t1)
+_dia = hoy + timedelta(days=21)
+while _dia.weekday() != 0: _dia += timedelta(days=1)
+_aus.solicitar(t, ana, "vacaciones", _dia.isoformat(), (_dia + timedelta(days=4)).isoformat(), motivo="Semana de descanso")
+_c = db.get_connection()
+for _tipo, _h in (("entrada", "09:00"), ("salida", "18:00")):
+    _c.execute("INSERT INTO fichajes (usuario_id, tenant_id, tipo, marca_tiempo, origen, creado_por, creado_en) VALUES (?, ?, ?, ?, 'web', ?, ?)", (yo, t, _tipo, f"{(hoy - timedelta(days=1)).isoformat()}T{_h}:00", yo, db.now_iso()))
+_c.commit(); _c.close()
+# certificados: uno que caduca pronto con un servicio registrado y otro sin cobertura
+from datetime import datetime, timezone
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
+from app import certificados as _cert
+def _hacer_cert(cn, nif, dias):
+    k = ec.generate_private_key(ec.SECP256R1()); n = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn), x509.NameAttribute(NameOID.SERIAL_NUMBER, nif)]); ahora = datetime.now(timezone.utc)
+    c = x509.CertificateBuilder().subject_name(n).issuer_name(n).public_key(k.public_key()).serial_number(x509.random_serial_number()).not_valid_before(ahora - timedelta(days=300)).not_valid_after(ahora + timedelta(days=dias)).sign(k, hashes.SHA256())
+    return c.public_bytes(serialization.Encoding.PEM)
+_c1 = _cert.importar(t, yo, _hacer_cert("MARTA PUIG", "IDCES-12345678Z", 25), ubicacion_externa="Tarjeta en la caja fuerte de Girona")["id"]
+_cert.cambiar_estado_operativo(t, yo, _c1, "autorizado")
+_cert.vincular(t, yo, _c1, cliente_fiscal_id=db.listar_clientes_fiscales(t)[0]["id"], servicio="presentacion", autorizacion="Apoderamiento firmado el 01/06/2026")
+_cert.importar(t, yo, _hacer_cert("CONSTRUCCIONES VIDAL SL", "IDCES-B12345674", 400))
+# fase E: responsables de cliente y un traspaso pendiente
+from app import traspasos as _tr
+_cl = db.listar_clientes_fiscales(t)
+_tr.asignar_responsable(t, yo, _cl[0]["id"], ana)
+_tr.asignar_responsable(t, yo, _cl[1]["id"], yo)
+_tr.proponer(t, yo, _cl[1]["id"], ana, nota="Falta el modelo 303 del T3 y pedir el justificante de la domiciliación")
 kratos.whoami = lambda c: {"active": True, "identity": {"id": "k-demo", "traits": {"email": "demo@ejemplo.com"}}}
 from app.main import app
 _wsgi = app.wsgi_app

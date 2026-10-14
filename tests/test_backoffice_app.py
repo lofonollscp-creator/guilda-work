@@ -332,3 +332,24 @@ def test_las_urls_antiguas_de_la_app_redirigen_al_backoffice_nuevo():
     assert c.get("/backoffice/").headers["Location"].rstrip("/").endswith("backoffice.guildawork.com")
     assert c.get("/backoffice/cosa-rara").status_code == 404
     assert c.post("/backoffice/tenants").status_code in (404, 405)  # nunca se reenvían POST
+
+
+# --- Personal: ausencias, turnos y bolsa de horas ---------------------------------------------------------------------------------------------
+
+def test_la_seccion_personal_muestra_el_estado_y_fija_los_dias_de_vacaciones(bo):
+    from datetime import date, timedelta
+    from app import ausencias, turnos
+    entrar(bo)
+    tid = db.crear_tenant("Despacho Personal BO")
+    u = db.crear_usuario_vinculado_a_kratos("persona-bo@ejemplo.com", "k-persona-bo"); db.asignar_tenant(u, tid)
+    g = db.crear_usuario_vinculado_a_kratos("gestor-bo@ejemplo.com", "k-gestor-bo"); db.asignar_tenant(g, tid); db.asignar_gestor_fichajes(g, True)
+    lunes = date.today() + timedelta(days=60)
+    while lunes.weekday() != 0:
+        lunes += timedelta(days=1)
+    ausencias.solicitar(tid, u, "vacaciones", lunes.isoformat())
+    turnos.crear_tipo(tid, g, "Mañana", "08:00", "15:00")
+    pagina = bo.get(f"/tenants/{tid}?seccion=personal").get_data(as_text=True)
+    assert "persona-bo@ejemplo.com" in pagina and "Pendientes de aprobar (1)" in pagina and "Mañana" in pagina and "22" in pagina
+    r = post(bo, f"/tenants/{tid}/ausencias/dias", dias_vacaciones="25")
+    assert r.status_code == 302 and ausencias.dias_anuales(tid) == 25
+    assert "Los días deben estar entre" in bo.get(post(bo, f"/tenants/{tid}/ausencias/dias", dias_vacaciones="999").headers["Location"]).get_data(as_text=True)

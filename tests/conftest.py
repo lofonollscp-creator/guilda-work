@@ -174,6 +174,8 @@ def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd):
     monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path / "backups")
     shutil.copyfile(_plantilla_bd, db.DB_PATH)
     db._ULTIMO_ACCESO_ANOTADO.clear()  # memoria del proceso: no puede arrastrarse de un test a otro
+    from app import acceso
+    acceso.invalidar()                 # ídem: la caché de «¿este despacho usa oficinas?» va por id de despacho, y cada test reinicia los ids
     db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
     yield
     # Cada test deja de ocupar disco al terminar: con ~2.500 tests y un esquema de cientos de tablas, las copias de la base acumuladas llenaban el /tmp del VPS (un tmpfs de 3,8 GB).

@@ -10241,3 +10241,1566 @@ msgstr "At most %(n)s."
 
 msgid "Autorizar"
 msgstr "Authorize"
+
+msgid "Resumen diario de mis pendientes"
+msgstr "Daily summary of my to-dos"
+
+msgid "Cada día laborable, a la hora que elijas: tareas atrasadas y de hoy, visitas, plazos, vencimientos y correos sin contestar. Si no hay nada pendiente, no se envía."
+msgstr "Every working day, at the time you choose: overdue and today's tasks, viewings, deadlines, due dates and unanswered emails. If nothing is pending, nothing is sent."
+
+msgid "A partir de las"
+msgstr "From"
+
+msgid "Enviármelo también por email"
+msgstr "Also send it to me by email"
+
+msgid "Acciones"
+msgstr "Actions"
+
+msgid "Ajustar sus días"
+msgstr "Adjust their days"
+
+msgid "Aprobada"
+msgstr "Approved"
+
+msgid "Aprobados"
+msgstr "Approved"
+
+msgid "Aprobar"
+msgstr "Approve"
+
+msgid "Aprueba o rechaza solicitudes, registra ausencias y ajusta los días de vacaciones."
+msgstr "Approve or reject requests, record absences and adjust holiday days."
+
+msgid "Asuntos propios"
+msgstr "Personal days"
+
+msgid "Ausencia cancelada."
+msgstr "Absence cancelled."
+
+msgid "Ausencias"
+msgstr "Absences"
+
+msgid "Ausencias del equipo"
+msgstr "Team absences"
+
+msgid "Ausencias y vacaciones"
+msgstr "Absences and holidays"
+
+msgid "Baja médica"
+msgstr "Sick leave"
+
+msgid "Comentario (opcional)"
+msgstr "Comment (optional)"
+
+msgid "Corresponden"
+msgstr "Entitled"
+
+msgid "Decisión"
+msgstr "Decision"
+
+msgid "Disponibles"
+msgstr "Available"
+
+msgid "Días"
+msgstr "Days"
+
+msgid "Días anuales por defecto"
+msgstr "Default annual days"
+
+msgid "Días de %(p)s"
+msgstr "Days for %(p)s"
+
+msgid "Fechas"
+msgstr "Dates"
+
+msgid "Hasta (si es un solo día, déjalo vacío)"
+msgstr "Until (leave empty for a single day)"
+
+msgid "Hecho."
+msgstr "Done."
+
+msgid "Hoy fuera"
+msgstr "Out today"
+
+msgid "Hoy no falta nadie."
+msgstr "Nobody is out today."
+
+msgid "Mis ausencias de %(anio)s"
+msgstr "My absences in %(anio)s"
+
+msgid "Motivo (opcional)"
+msgstr "Reason (optional)"
+
+msgid "No hay ausencias aprobadas por delante."
+msgstr "There are no approved absences ahead."
+
+msgid "No hay solicitudes pendientes."
+msgstr "There are no pending requests."
+
+msgid "Pedir una ausencia"
+msgstr "Request an absence"
+
+msgid "Pendientes"
+msgstr "Pending"
+
+msgid "Pendientes de aprobar"
+msgstr "Awaiting approval"
+
+msgid "Permiso retribuido"
+msgstr "Paid leave"
+
+msgid "Pide días libres y consulta cuántos te quedan. Solo cuentan los días laborables."
+msgstr "Request time off and see how many days you have left. Only working days count."
+
+msgid "Próximas ausencias aprobadas"
+msgstr "Upcoming approved absences"
+
+msgid "Queda aprobada directamente y se le avisa."
+msgstr "It is approved straight away and they are notified."
+
+msgid "Rechazar"
+msgstr "Reject"
+
+msgid "Registrar una ausencia de otra persona"
+msgstr "Record an absence for someone else"
+
+msgid "Saldo de vacaciones"
+msgstr "Holiday balance"
+
+msgid "Saldo de vacaciones de %(anio)s"
+msgstr "Holiday balance for %(anio)s"
+
+msgid "Solicitud enviada. Te avisaremos cuando se resuelva."
+msgstr "Request sent. We will let you know when it is resolved."
+
+msgid "Solo medio día"
+msgstr "Half day only"
+
+msgid "Solo medio día (para un único día)"
+msgstr "Half day only (for a single day)"
+
+msgid "Todavía no has pedido ninguna ausencia este año."
+msgstr "You have not requested any absence this year yet."
+
+msgid "Vacaciones"
+msgstr "Holiday"
+
+msgid "aprobados"
+msgstr "approved"
+
+msgid "días disponibles en %(anio)s"
+msgstr "days available in %(anio)s"
+
+msgid "hasta el %(f)s"
+msgstr "until %(f)s"
+
+msgid "medio día"
+msgstr "half day"
+
+msgid "pendientes de aprobar"
+msgstr "awaiting approval"
+
+msgid "por defecto"
+msgstr "default"
+
+msgid "te corresponden"
+msgstr "you are entitled to"
+
+msgid "¿Cancelar esta ausencia?"
+msgstr "Cancel this absence?"
+
+msgid "%(n)s de ausencia"
+msgstr "%(n)s of absence"
+
+msgid "Acaba"
+msgstr "Ends"
+
+msgid "Ajustar la bolsa de una persona"
+msgstr "Adjust a person's time bank"
+
+msgid "Ajustes de este periodo"
+msgstr "Adjustments in this period"
+
+msgid "Al lunes"
+msgstr "To Monday"
+
+msgid "Aún no hay turnos definidos: crea el primero abajo («Tipos de turno»)."
+msgstr "No shifts are defined yet: create the first one below ("Shift types")."
+
+msgid "Bolsa de horas"
+msgstr "Time bank"
+
+msgid "Bolsa del equipo"
+msgstr "Team time bank"
+
+msgid "Copiar una semana a otra"
+msgstr "Copy one week to another"
+
+msgid "Crear turno"
+msgstr "Create shift"
+
+msgid "Cuadrante de turnos"
+msgstr "Shift schedule"
+
+msgid "Del %(d)s al %(h)s · %(n)s días laborables"
+msgstr "From %(d)s to %(h)s · %(n)s working days"
+
+msgid "Desde el lunes"
+msgstr "From Monday"
+
+msgid "Empieza"
+msgstr "Starts"
+
+msgid "Guardar ajuste"
+msgstr "Save adjustment"
+
+msgid "Horas trabajadas frente a las que tocaba trabajar según tu jornada. Las ausencias aprobadas no se esperan."
+msgstr "Hours worked against the hours you were due to work under your contract. Approved absences are not expected."
+
+msgid "Los días en que alguien está ausente se saltan."
+msgstr "Days when someone is absent are skipped."
+
+msgid "Mis próximos turnos"
+msgstr "My upcoming shifts"
+
+msgid "No tienes jornada semanal contratada indicada, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas."
+msgstr "You have not entered your contracted weekly hours, so the bank cannot be calculated. Only hours worked are shown."
+
+msgid "No tienes turnos asignados en las próximas dos semanas."
+msgstr "You have no shifts assigned in the next two weeks."
+
+msgid "Quién trabaja qué cada día. Cada persona recibe un aviso cuando le cambian el turno."
+msgstr "Who works what each day. Each person gets a notice when their shift changes."
+
+msgid "Restar horas"
+msgstr "Subtract hours"
+
+msgid "Semana anterior"
+msgstr "Previous week"
+
+msgid "Semana del %(f)s"
+msgstr "Week of %(f)s"
+
+msgid "Semana siguiente"
+msgstr "Next week"
+
+msgid "Sin jornada contratada"
+msgstr "No contracted hours"
+
+msgid "Sumar horas"
+msgstr "Add hours"
+
+msgid "Sustituir lo ya asignado"
+msgstr "Replace what is already assigned"
+
+msgid "Tipos de turno"
+msgstr "Shift types"
+
+msgid "Tocaba"
+msgstr "Due"
+
+msgid "Trabajadas"
+msgstr "Worked"
+
+msgid "Turnos"
+msgstr "Shifts"
+
+msgid "ajustes"
+msgstr "adjustments"
+
+msgid "saldo de la bolsa"
+msgstr "time bank balance"
+
+msgid "tocaba trabajar"
+msgstr "due to work"
+
+msgid "trabajadas"
+msgstr "worked"
+
+msgid "¿Archivar este turno? Se quitará de los días futuros."
+msgstr "Archive this shift? It will be removed from future days."
+
+msgid "Abrir la renovación"
+msgstr "Open the renewal"
+
+msgid "Acceso a un buzón de notificaciones"
+msgstr "Access to a notifications mailbox"
+
+msgid "Algoritmo"
+msgstr "Algorithm"
+
+msgid "Anotar una comprobación"
+msgstr "Record a check"
+
+msgid "Archivo"
+msgstr "File"
+
+msgid "Autorización"
+msgstr "Authorisation"
+
+msgid "Autorización o representación que lo permite"
+msgstr "Authorisation or representation that allows it"
+
+msgid "Autorizado"
+msgstr "Authorised"
+
+msgid "Avanzar"
+msgstr "Advance"
+
+msgid "Cadena"
+msgstr "Chain"
+
+msgid "Cadena de confianza"
+msgstr "Chain of trust"
+
+msgid "Cadena y revocación"
+msgstr "Chain and revocation"
+
+msgid "Caduca"
+msgstr "Expires"
+
+msgid "Caduca antes del vencimiento"
+msgstr "Expires before the due date"
+
+msgid "Caducado"
+msgstr "Expired"
+
+msgid "Certificado"
+msgstr "Certificate"
+
+msgid "Certificado importado."
+msgstr "Certificate imported."
+
+msgid "Certificado nuevo (solo la parte pública)"
+msgstr "New certificate (public part only)"
+
+msgid "Certificados"
+msgstr "Certificates"
+
+msgid "Certificados digitales"
+msgstr "Digital certificates"
+
+msgid "Clave"
+msgstr "Key"
+
+msgid "Clave en un medio autorizado"
+msgstr "Key on an authorised medium"
+
+msgid "Cliente representado"
+msgstr "Represented client"
+
+msgid "Cobertura desconocida"
+msgstr "Coverage unknown"
+
+msgid "Confirmo que no hay servicios que implantar"
+msgstr "I confirm there are no services to roll out"
+
+msgid "Correcta"
+msgstr "Successful"
+
+msgid "Custodio"
+msgstr "Custodian"
+
+msgid "Custodios de certificados"
+msgstr "Certificate custodians"
+
+msgid "Cómo se comprobó (sin contraseñas)"
+msgstr "How it was checked (no passwords)"
+
+msgid "Dar de alta"
+msgstr "Register"
+
+msgid "Dar de alta sin el archivo"
+msgstr "Register without the file"
+
+msgid "Datos del certificado"
+msgstr "Certificate details"
+
+msgid "Declarada en un medio autorizado"
+msgstr "Declared on an authorised medium"
+
+msgid "Dimensión"
+msgstr "Dimension"
+
+msgid "Dónde está custodiado (sin contraseñas)"
+msgstr "Where it is held (no passwords)"
+
+msgid "Dónde se usa"
+msgstr "Where it is used"
+
+msgid "El archivo contiene varios certificados finales y no se puede adivinar cuál es. Elige el correcto; no se asume que sea el primero."
+msgstr "The file contains several end certificates and it cannot be guessed which one is right. Choose the correct one; it is not assumed to be the first."
+
+msgid "Elegir certificado"
+msgstr "Choose certificate"
+
+msgid "Emisor"
+msgstr "Issuer"
+
+msgid "En gestión"
+msgstr "In progress"
+
+msgid "En uso"
+msgstr "In use"
+
+msgid "Ese archivo contiene una clave privada o es un contenedor .p12/.pfx: no se guarda."
+msgstr "This file contains a private key or is a .p12/.pfx container: it is not saved."
+
+msgid "Ese certificado ya estaba en el inventario: no se ha duplicado."
+msgstr "That certificate was already in the inventory: it has not been duplicated."
+
+msgid "Estado temporal"
+msgstr "Validity status"
+
+msgid "Este certificado ya no se renueva."
+msgstr "This certificate is no longer renewed."
+
+msgid "Este es"
+msgstr "This one"
+
+msgid "Evidencia de la que salen los datos"
+msgstr "Evidence the data comes from"
+
+msgid "Fallida"
+msgstr "Failed"
+
+msgid "General"
+msgstr "General"
+
+msgid "General (no es de un cliente)"
+msgstr "General (not for a client)"
+
+msgid "Hacer custodio"
+msgstr "Make custodian"
+
+msgid "Historial"
+msgstr "History"
+
+msgid "Huella SHA-256"
+msgstr "SHA-256 fingerprint"
+
+msgid "Implantado"
+msgstr "Rolled out"
+
+msgid "Importar el nuevo"
+msgstr "Import the new one"
+
+msgid "Importar un certificado"
+msgstr "Import a certificate"
+
+msgid "Indeterminada"
+msgstr "Indeterminate"
+
+msgid "Inventariado"
+msgstr "Inventoried"
+
+msgid "Inventario de los certificados del despacho: cuándo caducan, a qué clientes y servicios dan acceso y en qué punto está su renovación. No se guardan claves privadas."
+msgstr "Inventory of the office's certificates: when they expire, which clients and services they give access to and where their renewal stands. Private keys are not stored."
+
+msgid "Inválida"
+msgstr "Invalid"
+
+msgid "Lo que confirma el custodio"
+msgstr "What the custodian confirms"
+
+msgid "Los custodios gestionan el inventario y sus renovaciones. Los supervisores del despacho también pueden hacerlo."
+msgstr "Custodians manage the inventory and its renewals. Office supervisors can do so too."
+
+msgid "NIF sugerido por el certificado"
+msgstr "Tax ID suggested by the certificate"
+
+msgid "NIF/CIF/NIE del titular (confirmado)"
+msgstr "Holder's tax ID (confirmed)"
+
+msgid "No comprobada"
+msgstr "Not checked"
+
+msgid "No disponible"
+msgstr "Not available"
+
+msgid "No hay certificados que mostrar. Importa el primero abajo."
+msgstr "There are no certificates to show. Import the first one below."
+
+msgid "No hay ninguna renovación en curso. Se abre sola 60 días antes de que caduque, o puedes abrirla ahora."
+msgstr "There is no renewal in progress. It opens by itself 60 days before expiry, or you can open it now."
+
+msgid "No revocado (en la última comprobación)"
+msgstr "Not revoked (at the last check)"
+
+msgid "Nombres alternativos"
+msgstr "Alternative names"
+
+msgid "Nota (opcional)"
+msgstr "Note (optional)"
+
+msgid "Notas (sin contraseñas)"
+msgstr "Notes (no passwords)"
+
+msgid "Nunca"
+msgstr "Never"
+
+msgid "Número de serie"
+msgstr "Serial number"
+
+msgid "Obligaciones pendientes en los próximos 90 días cuya cobertura con certificado no está asegurada. «Cobertura desconocida» significa que aún no has registrado qué certificado se usa para ese cliente: no que esté bien."
+msgstr "Pending obligations in the next 90 days whose certificate coverage is not assured. \"Coverage unknown\" means you have not yet recorded which certificate is used for that client: not that it is fine."
+
+msgid "Obligación"
+msgstr "Obligation"
+
+msgid "Obligatorio al suspender o archivar"
+msgstr "Required when suspending or archiving"
+
+msgid "Obtenido"
+msgstr "Obtained"
+
+msgid "Para registrar un certificado del que solo tienes los datos. Queda «pendiente de comprobar» hasta que se importe el archivo público."
+msgstr "To record a certificate you only have the details of. It stays \"pending check\" until the public file is imported."
+
+msgid "Pasar a"
+msgstr "Change to"
+
+msgid "Pasar la renovación a"
+msgstr "Move the renewal to"
+
+msgid "Pendiente de comprobar"
+msgstr "Pending check"
+
+msgid "Pendiente del titular"
+msgstr "Waiting for the holder"
+
+msgid "Persona física"
+msgstr "Individual"
+
+msgid "Persona jurídica"
+msgstr "Legal entity"
+
+msgid "Políticas"
+msgstr "Policies"
+
+msgid "Por qué"
+msgstr "Why"
+
+msgid "Presentación de impuestos"
+msgstr "Tax filing"
+
+msgid "Prueba en cada servicio"
+msgstr "Test in each service"
+
+msgid "Quitar como custodio"
+msgstr "Remove as custodian"
+
+msgid "Qué se ha comprobado"
+msgstr "What has been checked"
+
+msgid "Recibir un archivo no equivale a «renovado»: la renovación termina cuando cada servicio se ha probado con el certificado nuevo. Cerrar la renovación sustituye el certificado y traslada los servicios al nuevo; el anterior se conserva con su historial."
+msgstr "Receiving a file does not mean \"renewed\": the renewal ends when each service has been tested with the new certificate. Closing the renewal replaces the certificate and moves the services to the new one; the old one is kept with its history."
+
+msgid "Registrar un uso"
+msgstr "Record a use"
+
+msgid "Renovaciones anteriores"
+msgstr "Previous renewals"
+
+msgid "Renovación"
+msgstr "Renewal"
+
+msgid "Representante"
+msgstr "Representative"
+
+msgid "Resto del archivo"
+msgstr "Rest of the file"
+
+msgid "Resultado"
+msgstr "Result"
+
+msgid "Retirar"
+msgstr "Withdraw"
+
+msgid "Revocación"
+msgstr "Revocation"
+
+msgid "Riesgo"
+msgstr "Risk"
+
+msgid "Riesgos por certificados"
+msgstr "Certificate risks"
+
+msgid "Servicios"
+msgstr "Services"
+
+msgid "Sin alternativa autorizada"
+msgstr "No authorised alternative"
+
+msgid "Sin declarar"
+msgstr "Not declared"
+
+msgid "Sin fechas"
+msgstr "No dates"
+
+msgid "Sin iniciar"
+msgstr "Not started"
+
+msgid "Sin movimientos."
+msgstr "No activity."
+
+msgid "Sin probar"
+msgstr "Untested"
+
+msgid "Sin registrar"
+msgstr "Not recorded"
+
+msgid "Situación"
+msgstr "Status"
+
+msgid "Situación del certificado"
+msgstr "Certificate status"
+
+msgid "Sube solo la parte pública (.cer, .crt o .pem). Si el archivo contiene una clave privada o es un contenedor .p12/.pfx se rechaza sin guardarlo: exporta la parte pública con tu herramienta local."
+msgstr "Upload only the public part (.cer, .crt or .pem). If the file contains a private key or is a .p12/.pfx container it is rejected without being saved: export the public part with your local tool."
+
+msgid "Sujeto"
+msgstr "Subject"
+
+msgid "Suspender un certificado por sospecha de compromiso no lo revoca: la revocación la tramita el emisor."
+msgstr "Suspending a certificate over suspected compromise does not revoke it: revocation is handled by the issuer."
+
+msgid "Sustituido"
+msgstr "Replaced"
+
+msgid "Sustituido por"
+msgstr "Replaced by"
+
+msgid "Sustituye a"
+msgstr "Replaces"
+
+msgid "Tarjeta en la caja fuerte de Girona"
+msgstr "Card in the Girona safe"
+
+msgid "Tipo de titular"
+msgstr "Holder type"
+
+msgid "Titular"
+msgstr "Holder"
+
+msgid "Titular (sujeto)"
+msgstr "Holder (subject)"
+
+msgid "Titular que debe actuar"
+msgstr "Holder who must act"
+
+msgid "Titular sugerido"
+msgstr "Suggested holder"
+
+msgid "Titular, emisor, NIF o serie"
+msgstr "Holder, issuer, tax ID or serial"
+
+msgid "Todavía no hay servicios registrados: la cobertura de este certificado es desconocida."
+msgstr "No services are recorded yet: this certificate's coverage is unknown."
+
+msgid "Todavía no vigente"
+msgstr "Not yet valid"
+
+msgid "Una fecha correcta no acredita la cadena de confianza, la revocación, la posesión de la clave ni la autorización: eso se muestra aparte y, si no se ha comprobado, así se dice."
+msgstr "A correct date does not prove the chain of trust, revocation, possession of the key or authorisation: that is shown separately and, if not checked, it says so."
+
+msgid "Usos de clave"
+msgstr "Key usages"
+
+msgid "Validado"
+msgstr "Validated"
+
+msgid "Validez"
+msgstr "Validity"
+
+msgid "Ver certificado"
+msgstr "View certificate"
+
+msgid "Ver el certificado nuevo"
+msgstr "View the new certificate"
+
+msgid "Vigente"
+msgstr "Valid"
+
+msgid "Vigente hasta (opcional)"
+msgstr "Valid until (optional)"
+
+msgid "Válida"
+msgstr "Valid"
+
+msgid "Válido desde"
+msgstr "Valid from"
+
+msgid "Válido hasta"
+msgstr "Valid until"
+
+msgid "Yo / sin asignar"
+msgstr "Me / unassigned"
+
+msgid "días hasta que caduca (informativo)"
+msgstr "days until it expires (informative)"
+
+msgid "en %(n)s días"
+msgstr "in %(n)s days"
+
+msgid "revisa que el titular, el NIF y el emisor son los esperados antes de validarlo."
+msgstr "check that the holder, tax ID and issuer are the expected ones before validating it."
+
+msgid "sugerencia: la confirma el custodio"
+msgstr "suggestion: the custodian confirms it"
+
+msgid "válido desde"
+msgstr "valid from"
+
+msgid "válido hasta"
+msgstr "valid until"
+
+msgid "¿Cuál es el certificado del cliente?"
+msgstr "Which is the client's certificate?"
+
+msgid "Última prueba"
+msgstr "Latest test"
+
+msgid "Alcance"
+msgstr "Scope"
+
+msgid "Auditor (solo lectura)"
+msgstr "Auditor (read-only)"
+
+msgid "Bloqueada"
+msgstr "Blocked"
+
+msgid "Bloquear"
+msgstr "Block"
+
+msgid "Cada cambio de fase queda en la auditoría con quién lo hizo y por qué. Una presentación registrada a mano se muestra como «declarada por el gestor», no como confirmada por el organismo."
+msgstr "Every phase change is recorded in the audit log with who made it and why. A filing recorded by hand is shown as \"declared by the manager\", not as confirmed by the agency."
+
+msgid "Cambiar de fase"
+msgstr "Change phase"
+
+msgid "Cliente (si el alcance es un cliente)"
+msgstr "Client (if the scope is a client)"
+
+msgid "Clientes compartidos"
+msgstr "Shared clients"
+
+msgid "Compartido con"
+msgstr "Shared with"
+
+msgid "Compartir un cliente"
+msgstr "Share a client"
+
+msgid "Con la oficina…"
+msgstr "With the office…"
+
+msgid "Con oficinas, cada persona ve los clientes de sus oficinas, los que se le compartan y, si tiene un rol de todo el despacho (revisor fiscal, auditor), todos. La dirección lo ve todo."
+msgstr "With offices, each person sees their offices' clients, the ones shared with them and, with an office-wide role (tax reviewer, auditor), all of them. Management sees everything."
+
+msgid "Con tu rol no puedes cambiar la fase de esta obligación."
+msgstr "With your role you cannot change this obligation's phase."
+
+msgid "Coordinador de oficina"
+msgstr "Office coordinator"
+
+msgid "Cualquiera"
+msgstr "Anyone"
+
+msgid "Cuándo se presentó"
+msgstr "When it was filed"
+
+msgid "Cómo funciona"
+msgstr "How it works"
+
+msgid "Cómo trabaja el despacho cada obligación: de pendiente a presentada y cerrada. Solo la dirección lo cambia."
+msgstr "How the office works each obligation: from pending to filed and closed. Only management can change it."
+
+msgid "Dar el rol"
+msgstr "Give the role"
+
+msgid "Dar un rol"
+msgstr "Give a role"
+
+msgid "El auditor solo puede leer. Aprobar y declarar «no aplica» o «anulada» es de la dirección o del revisor fiscal."
+msgstr "The auditor can only read. Approving and declaring \"not applicable\" or \"cancelled\" is for management or the tax reviewer."
+
+msgid "El bloqueo no detiene el plazo legal."
+msgstr "The block does not stop the legal deadline."
+
+msgid "El coordinador es de una oficina; el revisor fiscal, de todo el despacho."
+msgstr "A coordinator belongs to one office; the tax reviewer, to the whole firm."
+
+msgid "En riesgo"
+msgstr "At risk"
+
+msgid "Esperando"
+msgstr "Waiting for"
+
+msgid "Esta obligación ya está terminada."
+msgstr "This obligation is already finished."
+
+msgid "Este despacho trabaja con flujo estricto: hay que revisar y aprobar antes de presentar."
+msgstr "This office works with a strict flow: review and approval are needed before filing."
+
+msgid "Evidencias de presentación"
+msgstr "Filing evidence"
+
+msgid "Exigir el justificante oficial"
+msgstr "Require the official receipt"
+
+msgid "Flujo de trabajo"
+msgstr "Workflow"
+
+msgid "Flujo de trabajo fiscal"
+msgstr "Tax workflow"
+
+msgid "Flujo estricto"
+msgstr "Strict flow"
+
+msgid "Flujo flexible: se puede presentar desde cualquier fase de trabajo."
+msgstr "Flexible flow: you can file from any working phase."
+
+msgid "Gestión"
+msgstr "Management"
+
+msgid "Gestor"
+msgstr "Manager"
+
+msgid "Hay que pasar por revisión y aprobación (dirección o revisor fiscal) antes de presentar. Sin esto, se puede presentar desde cualquier fase de trabajo."
+msgstr "Review and approval (management or tax reviewer) are required before filing. Without this, you can file from any working phase."
+
+msgid "Lectura"
+msgstr "Read"
+
+msgid "Los clientes que aún no tienen oficina los ve todo el equipo hasta que los asignes."
+msgstr "Clients that have no office yet are visible to the whole team until you assign them."
+
+msgid "Los extractos del banco"
+msgstr "The bank statements"
+
+msgid "Marcar como bloqueada, esperando…"
+msgstr "Mark as blocked, waiting for…"
+
+msgid "Mientras no haya oficinas, todo el equipo ve todos los clientes, como siempre."
+msgstr "While there are no offices, the whole team sees all clients, as always."
+
+msgid "Motivo o justificación (obligatorio al devolver a preparación, o al marcar «no aplica» o «anulada»)"
+msgstr "Reason or justification (required when sending back to preparation, or marking \"not applicable\" or \"cancelled\")"
+
+msgid "Nivel"
+msgstr "Level"
+
+msgid "No aplica"
+msgstr "Not applicable"
+
+msgid "No hay clientes."
+msgstr "There are no clients."
+
+msgid "No hay eventos con esos filtros."
+msgstr "There are no events with those filters."
+
+msgid "Nueva oficina"
+msgstr "New office"
+
+msgid "Obligaciones"
+msgstr "Obligations"
+
+msgid "Oficina (si el alcance es una oficina)"
+msgstr "Office (if the scope is an office)"
+
+msgid "Oficina de %(c)s"
+msgstr "Office of %(c)s"
+
+msgid "Oficina de cada cliente"
+msgstr "Each client's office"
+
+msgid "Oficina principal"
+msgstr "Main office"
+
+msgid "Oficinas"
+msgstr "Offices"
+
+msgid "Oficinas y permisos"
+msgstr "Offices and permissions"
+
+msgid "Organismo"
+msgstr "Agency"
+
+msgid "Personas"
+msgstr "People"
+
+msgid "Presentada"
+msgstr "Filed"
+
+msgid "Presentada tarde"
+msgstr "Filed late"
+
+msgid "Quitar el bloqueo"
+msgstr "Remove the block"
+
+msgid "Quién"
+msgstr "Who"
+
+msgid "Referencia o CSV"
+msgstr "Reference or CSV"
+
+msgid "Registro de cambios del control fiscal: obligaciones, certificados, oficinas y permisos. Solo se añade: nada se modifica ni se borra desde la aplicación."
+msgstr "Change log of tax control: obligations, certificates, offices and permissions. Append-only: nothing is modified or deleted from the application."
+
+msgid "Reparte los clientes fiscales entre las oficinas del despacho y decide quién ve y hace qué."
+msgstr "Distribute tax clients among the office's branches and decide who sees and does what."
+
+msgid "Revisor fiscal"
+msgstr "Tax reviewer"
+
+msgid "Roles de personas"
+msgstr "People's roles"
+
+msgid "Si la presentas: evidencia declarada por ti"
+msgstr "If you file it: evidence declared by you"
+
+msgid "Sin el justificante subido no se puede presentar ni cerrar una obligación."
+msgstr "Without the receipt uploaded, an obligation cannot be filed or closed."
+
+msgid "Sin oficina (la ve todo el equipo)"
+msgstr "No office (the whole team sees it)"
+
+msgid "Sobre"
+msgstr "About"
+
+msgid "Todavía no hay roles asignados. La dirección (supervisores) ve y hace todo."
+msgstr "No roles assigned yet. Management (supervisors) sees and does everything."
+
+msgid "Todo"
+msgstr "All"
+
+msgid "Todo el despacho"
+msgstr "The whole firm"
+
+msgid "Un cliente"
+msgstr "One client"
+
+msgid "Una oficina"
+msgstr "One office"
+
+msgid "Ver más antiguos"
+msgstr "See older"
+
+msgid "el gestor"
+msgstr "the manager"
+
+msgid "presentación declarada por %(quien)s"
+msgstr "filing declared by %(quien)s"
+
+msgid "¿Archivar esta oficina? Se retiran sus roles. Antes hay que reasignar sus clientes."
+msgstr "Archive this office? Its roles are withdrawn. Its clients must be reassigned first."
+
+msgid "¿Dejar de compartir este cliente?"
+msgstr "Stop sharing this client?"
+
+msgid "¿Retirar este rol?"
+msgstr "Remove this role?"
+
+msgid "…o con la persona"
+msgstr "…or with the person"
+
+msgid "%(n)s certificados son de clientes sin correo en su ficha: no se les podrá avisar hasta que lo añadas."
+msgstr "%(n)s certificates belong to clients with no email on file: they can't be notified until you add one."
+
+msgid "%(n)s días después de caducar"
+msgstr "%(n)s days after expiry"
+
+msgid "(para quien quiera ir más allá de la fecha)"
+msgstr "(for those who want to go beyond the date)"
+
+msgid "ACCV (Comunitat Valenciana)"
+msgstr "ACCV (Valencian Community)"
+
+msgid "Archivo público del certificado nuevo (opcional)"
+msgstr "Public file of the new certificate (optional)"
+
+msgid "Atención: %(n)s obligaciones sin cobertura asegurada"
+msgstr "Attention: %(n)s obligations without assured coverage"
+
+msgid "Avanzado: completar los datos con el archivo público"
+msgstr "Advanced: complete the data with the public file"
+
+msgid "Avisar a los clientes por correo"
+msgstr "Notify clients by email"
+
+msgid "Avisar al cliente ahora"
+msgstr "Notify the client now"
+
+msgid "Avisar al cliente de su caducidad"
+msgstr "Notify the client of its expiry"
+
+msgid "Aviso enviado al cliente."
+msgstr "Notice sent to the client."
+
+msgid "Avisos a clientes"
+msgstr "Client notices"
+
+msgid "Avisos activados"
+msgstr "Notices on"
+
+msgid "Avisos al cliente"
+msgstr "Client notices"
+
+msgid "Avisos del despacho"
+msgstr "Firm notices"
+
+msgid "Avisos desactivados"
+msgstr "Notices off"
+
+msgid "Avisos enviados"
+msgstr "Notices sent"
+
+msgid "Añadir certificado"
+msgstr "Add certificate"
+
+msgid "Añadir el primero"
+msgstr "Add the first one"
+
+msgid "Añadir un certificado"
+msgstr "Add a certificate"
+
+msgid "Caduca el %(f)s"
+msgstr "Expires on %(f)s"
+
+msgid "Caduca en %(n)s días"
+msgstr "Expires in %(n)s days"
+
+msgid "Caduca hoy"
+msgstr "Expires today"
+
+msgid "Caduca mañana"
+msgstr "Expires tomorrow"
+
+msgid "Caducado hace %(n)s días"
+msgstr "Expired %(n)s days ago"
+
+msgid "Caducados"
+msgstr "Expired"
+
+msgid "Caducan en 30 días"
+msgstr "Expire within 30 days"
+
+msgid "Caducan en 90 días"
+msgstr "Expire within 90 days"
+
+msgid "Caducó el %(f)s"
+msgstr "Expired on %(f)s"
+
+msgid "Camerfirma"
+msgstr "Camerfirma"
+
+msgid "Certificado guardado."
+msgstr "Certificate saved."
+
+msgid "Cliente y certificado"
+msgstr "Client and certificate"
+
+msgid "Cliente, titular, NIF…"
+msgstr "Client, holder, tax ID…"
+
+msgid "Comprobaciones técnicas y situación"
+msgstr "Technical checks and status"
+
+msgid "Conviene empezar ya la renovación para no quedarse sin certificado."
+msgstr "Start the renewal now so you don't end up without a certificate."
+
+msgid "Conviene renovarlo cuanto antes para no quedarte sin él."
+msgstr "Best to renew it as soon as possible so you don't lose it."
+
+msgid "Correo del cliente"
+msgstr "Client's email"
+
+msgid "Cuando el certificado de un cliente se acerca a su caducidad (o ya ha caducado), le mandamos un correo. Solo a clientes con correo en su ficha y con certificado apuntado a su nombre. Apagado por defecto."
+msgstr "When a client's certificate nears expiry (or has already expired), we email them. Only clients with an email on file and a certificate recorded under their name. Off by default."
+
+msgid "Cuándo avisar"
+msgstr "When to notify"
+
+msgid "Cómo informa tu despacho a sus clientes de que su certificado digital está a punto de caducar: por correo, y si quieres también en su portal."
+msgstr "How your firm tells clients their digital certificate is about to expire: by email, and optionally in their portal."
+
+msgid "Cómo se renueva (instrucciones para tus clientes)"
+msgstr "How to renew (instructions for your clients)"
+
+msgid "DNI electrónico"
+msgstr "Electronic ID card (DNIe)"
+
+msgid "Datos introducidos a mano"
+msgstr "Manually entered data"
+
+msgid "Días antes de la caducidad"
+msgstr "Days before expiry"
+
+msgid "Días después de caducar"
+msgstr "Days after expiry"
+
+msgid "Dónde está (sin contraseñas)"
+msgstr "Where it is (no passwords)"
+
+msgid "Editar datos"
+msgstr "Edit data"
+
+msgid "El cliente pidió ayuda para renovarlo el %(f)s."
+msgstr "The client asked for help renewing it on %(f)s."
+
+msgid "El cliente ve cuándo caduca su certificado y puede pedirte ayuda para renovarlo con un botón."
+msgstr "The client sees when their certificate expires and can ask you for help renewing it with a button."
+
+msgid "El correo saliente no está configurado en el servidor: no se enviará ningún aviso a clientes (el resto del control de certificados funciona igual)."
+msgstr "Outgoing email isn't configured on the server: no client notices will be sent (the rest of certificate control works as usual)."
+
+msgid "Empieza por el primero: elige el cliente, el tipo de certificado y cuándo caduca. Son diez segundos."
+msgstr "Start with the first one: pick the client, the certificate type and when it expires. It takes ten seconds."
+
+msgid "En este certificado"
+msgstr "On this certificate"
+
+msgid "Enseñar su certificado en su portal"
+msgstr "Show their certificate in their portal"
+
+msgid "Enviarme este aviso de prueba"
+msgstr "Send me this test notice"
+
+msgid "Ese certificado ya estaba apuntado: no se ha duplicado."
+msgstr "That certificate was already recorded: it wasn't duplicated."
+
+msgid "Este certificado no está asociado a un cliente. Asócialo abajo, en «Datos», para poder avisarle de su caducidad y enseñárselo en su portal."
+msgstr "This certificate isn't linked to a client. Link it below, under “Data”, to notify them of its expiry and show it in their portal."
+
+msgid "Excluido"
+msgstr "Excluded"
+
+msgid "FNMT · Persona física"
+msgstr "FNMT · Individual"
+
+msgid "FNMT · Representante de entidad sin personalidad jurídica"
+msgstr "FNMT · Representative of an entity without legal personality"
+
+msgid "FNMT · Representante de persona jurídica"
+msgstr "FNMT · Legal entity representative"
+
+msgid "Fecha de caducidad"
+msgstr "Expiry date"
+
+msgid "Fecha de emisión"
+msgstr "Issue date"
+
+msgid "Fecha de emisión (opcional)"
+msgstr "Issue date (optional)"
+
+msgid "Firmaprofesional"
+msgstr "Firmaprofesional"
+
+msgid "Guardar certificado"
+msgstr "Save certificate"
+
+msgid "He comprobado que el nuevo funciona en los %(n)s servicios donde se usa"
+msgstr "I've checked that the new one works in the %(n)s services where it's used"
+
+msgid "Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo."
+msgstr "We've told your firm you need help with your certificate. They'll get in touch."
+
+msgid "Izenpe (País Vasco)"
+msgstr "Izenpe (Basque Country)"
+
+msgid "Los datos los ha introducido el despacho; no se ha leído ningún archivo."
+msgstr "The firm entered the data; no file was read."
+
+msgid "Marcar como renovado"
+msgstr "Mark as renewed"
+
+msgid "Mientras no lo renueves, no podemos presentar impuestos ni acceder a tus notificaciones en tu nombre."
+msgstr "Until you renew it, we can't file taxes or access your notifications on your behalf."
+
+msgid "Mientras no lo renueves, tu gestoría no puede presentar impuestos ni acceder a tus notificaciones en tu nombre."
+msgstr "Until you renew it, your firm can't file taxes or access your notifications on your behalf."
+
+msgid "Mientras no se renueve, no se pueden presentar impuestos ni acceder a notificaciones con él."
+msgstr "Until it's renewed, no taxes can be filed nor notifications accessed with it."
+
+msgid "Más datos (opcional)"
+msgstr "More details (optional)"
+
+msgid "NIF/CIF/NIE"
+msgstr "Tax ID (NIF/CIF/NIE)"
+
+msgid "Necesito ayuda para renovarlo"
+msgstr "I need help renewing it"
+
+msgid "No es de un cliente"
+msgstr "Not a client's"
+
+msgid "No hay certificados con esos filtros."
+msgstr "No certificates match those filters."
+
+msgid "No se avisa si el cliente ya ha pedido ayuda, si no tiene correo, si el certificado se ha excluido, o si el certificado nuevo ya está apuntado."
+msgstr "No notice is sent if the client already asked for help, has no email, the certificate was excluded, or the new certificate is already recorded."
+
+msgid "No tiene: añádelo en su ficha para poder avisarle"
+msgstr "None: add it to their record to be able to notify them"
+
+msgid "Nombre del titular"
+msgstr "Holder's name"
+
+msgid "Nueva fecha de caducidad"
+msgstr "New expiry date"
+
+msgid "Número de serie (opcional)"
+msgstr "Serial number (optional)"
+
+msgid "Otro certificado"
+msgstr "Other certificate"
+
+msgid "Otro titular (escribe el nombre abajo)"
+msgstr "Other holder (type the name below)"
+
+msgid "Pasos de la renovación"
+msgstr "Renewal steps"
+
+msgid "Por defecto, el del cliente"
+msgstr "By default, the client's"
+
+msgid "Por ejemplo: pide cita en la oficina de la FNMT y llévanos el justificante. Si prefieres, lo gestionamos nosotros: avísanos."
+msgstr "For example: book an appointment at the FNMT office and bring us the receipt. If you prefer, we'll handle it: let us know."
+
+msgid "Prueba enviada a tu correo."
+msgstr "Test sent to your email."
+
+msgid "Quién lo gestiona"
+msgstr "Who manages it"
+
+msgid "Quién tiene qué certificado, cuándo caduca y quién lo renueva. No hace falta subir ningún archivo: basta con apuntar de quién es y cuándo caduca."
+msgstr "Who holds which certificate, when it expires and who renews it. No file upload needed: just note whose it is and when it expires."
+
+msgid "Qué les decimos"
+msgstr "What we tell them"
+
+msgid "Recibes este aviso porque tu gestoría tiene activados los avisos de caducidad de tu certificado digital. Si prefieres no recibirlos, díselo y los desactivará."
+msgstr "You're receiving this notice because your firm has expiry notices on for your digital certificate. If you'd rather not receive them, tell them and they'll turn them off."
+
+msgid "Renovación paso a paso (con pruebas por servicio)"
+msgstr "Step-by-step renewal (with per-service tests)"
+
+msgid "Renovado"
+msgstr "Renewed"
+
+msgid "Renovado: este es el certificado nuevo. El anterior queda como sustituido, con su historial."
+msgstr "Renewed: this is the new certificate. The previous one is marked as replaced, with its history."
+
+msgid "Según el ajuste del despacho"
+msgstr "According to the firm's setting"
+
+msgid "Separados por comas. Antes: de 0 (el mismo día) a 365, hasta %(a)s avisos. Después: de 1 a 90, hasta %(d)s. Cada aviso se manda una sola vez por certificado y fecha de caducidad; si apuntas un certificado ya dentro de un plazo, solo se manda el que toca, no todos de golpe."
+msgstr "Comma-separated. Before: from 0 (same day) to 365, up to %(a)s notices. After: from 1 to 90, up to %(d)s. Each notice is sent once per certificate and expiry date; if you record a certificate already inside a window, only the current one is sent, not all at once."
+
+msgid "Si caduca, no podremos presentar impuestos ni acceder a tus notificaciones en tu nombre hasta que lo renueves."
+msgstr "If it expires, we won't be able to file taxes or access your notifications on your behalf until you renew it."
+
+msgid "Si indicas la emisión, proponemos la caducidad habitual del tipo (FNMT: 4 años una persona física, 2 un representante). Es orientativa: corrígela si no coincide."
+msgstr "If you give the issue date, we suggest the type's usual expiry (FNMT: 4 years for an individual, 2 for a representative). It's a guide: correct it if it differs."
+
+msgid "Si necesitas ayuda para renovarlo, respóndenos a este correo."
+msgstr "If you need help renewing it, reply to this email."
+
+msgid "Si necesitas ayuda para renovarlo, respóndenos o pídela desde tu portal de cliente."
+msgstr "If you need help renewing it, reply to us or ask from your client portal."
+
+msgid "Siempre"
+msgstr "Always"
+
+msgid "Sin archivos: solo de quién es, de qué tipo y cuándo caduca. Si lo apuntas a un cliente, sus datos se rellenan solos y podrás avisarle antes de que caduque."
+msgstr "No files: just whose it is, what type and when it expires. If you link it to a client, their details fill in automatically and you can notify them before it expires."
+
+msgid "Sin correo"
+msgstr "No email"
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar estos ajustes; tú los puedes consultar."
+msgstr "Only the firm's management (supervisors) can change these settings; you can view them."
+
+msgid "Solo si te resulta cómodo: sube la parte pública (.cer, .crt o .pem) y se leen el titular, el emisor, las fechas y la huella. Si el archivo contiene una clave privada o es un contenedor .p12/.pfx se rechaza sin guardarlo."
+msgstr "Only if convenient: upload the public part (.cer, .crt or .pem) and the holder, issuer, dates and fingerprint are read. If the file contains a private key or is a .p12/.pfx container it is rejected without being saved."
+
+msgid "Sustituido por un certificado nuevo"
+msgstr "Replaced by a new certificate"
+
+msgid "Tipo de certificado"
+msgstr "Certificate type"
+
+msgid "Todavía no has apuntado ningún certificado"
+msgstr "You haven't recorded any certificate yet"
+
+msgid "Todo en orden: te avisaremos antes de que caduque."
+msgstr "All good: we'll let you know before it expires."
+
+msgid "Todo en orden: tu gestoría te avisará antes de que caduque."
+msgstr "All good: your firm will let you know before it expires."
+
+msgid "Tu certificado digital"
+msgstr "Your digital certificate"
+
+msgid "Tu certificado digital (%(tipo)s) caduca %(cuando)s, el %(fecha)s."
+msgstr "Your digital certificate (%(tipo)s) expires %(cuando)s, on %(fecha)s."
+
+msgid "Tu certificado digital (%(tipo)s) caducó %(cuando)s, el %(fecha)s."
+msgstr "Your digital certificate (%(tipo)s) expired %(cuando)s, on %(fecha)s."
+
+msgid "Tu certificado digital caduca %(cuando)s"
+msgstr "Your digital certificate expires %(cuando)s"
+
+msgid "Tu certificado digital caduca {cuando}"
+msgstr "Your digital certificate expires {cuando}"
+
+msgid "Tu certificado digital caducó %(cuando)s"
+msgstr "Your digital certificate expired %(cuando)s"
+
+msgid "Vigentes"
+msgstr "Valid"
+
+msgid "Ya está renovado"
+msgstr "Already renewed"
+
+msgid "Ya hemos avisado a tu gestoría"
+msgstr "We've already told your firm"
+
+msgid "a %(n)s días de caducar"
+msgstr "%(n)s days from expiring"
+
+msgid "activados (%(d)s días antes)"
+msgstr "on (%(d)s days before)"
+
+msgid "desactivados"
+msgstr "off"
+
+msgid "en los próximos 90 días"
+msgstr "in the next 90 days"
+
+msgid "enviado"
+msgstr "sent"
+
+msgid "falló: se reintentará"
+msgstr "failed: will be retried"
+
+msgid "nunca se avisa ni se enseña al cliente"
+msgstr "the client is never notified or shown it"
+
+msgid "omitido (llegó dentro de un aviso posterior)"
+msgstr "skipped (arrived within a later notice)"
+
+msgid "según el ajuste del despacho"
+msgstr "according to the firm's setting"
+
+msgid "siempre se informa al cliente"
+msgstr "the client is always informed"
+
+msgid "«Cobertura desconocida» significa que aún no has apuntado qué certificado se usa para ese cliente: no que esté bien."
+msgstr "“Unknown coverage” means you haven't yet recorded which certificate is used for that client: not that it's fine."
+
+msgid "¿Mandar ahora el aviso de caducidad al cliente?"
+msgstr "Send the expiry notice to the client now?"
+
+msgid "¿Ya lo han renovado? Apunta la nueva fecha de caducidad y listo: el certificado actual pasa a «sustituido» y el nuevo hereda cliente, tipo, custodio y servicios."
+msgstr "Already renewed? Enter the new expiry date and you're done: the current certificate becomes “replaced” and the new one inherits client, type, custodian and services."
+
+msgid "A"
+msgstr "To"
+
+msgid "Abrir certificado"
+msgstr "Open certificate"
+
+msgid "Aceptado"
+msgstr "Accepted"
+
+msgid "Asignar responsable"
+msgstr "Assign owner"
+
+msgid "Asignar responsable sin traspaso"
+msgstr "Assign an owner without a handover"
+
+msgid "Bloqueadas"
+msgstr "Blocked"
+
+msgid "Bloqueadas: esperan algo, pero el plazo legal sigue corriendo"
+msgstr "Blocked: waiting on something, but the legal deadline keeps running"
+
+msgid "Calculado el %(f)s a partir del calendario fiscal del despacho. «Sin datos» no significa que todo esté bien. Este panel mide el trabajo del despacho; no garantiza la ausencia de sanciones."
+msgstr "Calculated on %(f)s from the firm's tax calendar. “No data” does not mean everything is fine. This dashboard measures the firm's work; it does not guarantee the absence of penalties."
+
+msgid "Cancelado"
+msgstr "Cancelled"
+
+msgid "En trabajo"
+msgstr "In progress"
+
+msgid "Espera revisión."
+msgstr "Awaiting review."
+
+msgid "Esperan tu revisión"
+msgstr "Waiting for your review"
+
+msgid "Esperando respuesta."
+msgstr "Awaiting a reply."
+
+msgid "Hasta que se acepten, el cliente sigue siendo de quien lo lleva ahora."
+msgstr "Until accepted, the client stays with whoever handles it now."
+
+msgid "Hay un plazo en menos de %(n)s días y nadie lo ha aceptado."
+msgstr "There is a deadline in under %(n)s days and nobody has accepted it."
+
+msgid "Indicadores"
+msgstr "Indicators"
+
+msgid "Muestra: %(n)s obligaciones. Excluidas: %(e)s (no aplica o anuladas)."
+msgstr "Sample: %(n)s obligations. Excluded: %(e)s (not applicable or cancelled)."
+
+msgid "Nada urgente. Aun así, mira los indicadores de abajo: que no haya avisos no significa que no haya nada que revisar."
+msgstr "Nothing urgent. Still, check the indicators below: no alerts doesn't mean there is nothing to review."
+
+msgid "Ninguna obligación de los próximos 90 días depende de un certificado sin asegurar."
+msgstr "No obligation in the next 90 days depends on an unsecured certificate."
+
+msgid "Obligaciones sin certificado asegurado"
+msgstr "Obligations without a secured certificate"
+
+msgid "Panel fiscal"
+msgstr "Tax dashboard"
+
+msgid "Para dar de alta o corregir quién lleva un cliente. Si ya lo lleva alguien y quieres que lo acepte, propón un traspaso."
+msgstr "To set or correct who handles a client. If someone already handles it and you want them to accept it, propose a handover."
+
+msgid "Para revisar"
+msgstr "To review"
+
+msgid "Pasa a"
+msgstr "Goes to"
+
+msgid "Pasar un cliente a otra persona u oficina con su aceptación. Hasta que se acepta, el cliente sigue siendo de quien lo lleva y no cambia nada."
+msgstr "Hand a client over to another person or office, with their acceptance. Until accepted, the client stays with whoever handles it and nothing changes."
+
+msgid "Pendiente de aceptar"
+msgstr "Awaiting acceptance"
+
+msgid "Por oficina"
+msgstr "By office"
+
+msgid "Por responsable"
+msgstr "By owner"
+
+msgid "Proponer traspaso"
+msgstr "Propose handover"
+
+msgid "Proponer un traspaso"
+msgstr "Propose a handover"
+
+msgid "Próximo vencimiento"
+msgstr "Next deadline"
+
+msgid "Próximo vencimiento: %(f)s"
+msgstr "Next deadline: %(f)s"
+
+msgid "Qué está a medias, qué espera el cliente, qué plazos hay…"
+msgstr "What is half done, what the client expects, what deadlines there are…"
+
+msgid "Qué mirar hoy, cómo está repartido el trabajo y cómo se cumple. Cada aviso dice por qué y a dónde ir."
+msgstr "What to look at today, how work is spread and how it's going. Every alert says why and where to go."
+
+msgid "Rechazado"
+msgstr "Rejected"
+
+msgid "Reparto del trabajo"
+msgstr "Workload"
+
+msgid "Resolver"
+msgstr "Resolve"
+
+msgid "Sigue en la misma"
+msgstr "Stays in the same one"
+
+msgid "Sin oficina"
+msgstr "No office"
+
+msgid "Solo ves los clientes de tus oficinas y los que te han compartido."
+msgstr "You only see your offices' clients and those shared with you."
+
+msgid "Te lo han propuesto: acéptalo o recházalo."
+msgstr "It's been proposed to you: accept or reject it."
+
+msgid "Todavía no hay traspasos."
+msgstr "There are no handovers yet."
+
+msgid "Trabajo pendiente y contexto (opcional)"
+msgstr "Pending work and context (optional)"
+
+msgid "Traspasos"
+msgstr "Handovers"
+
+msgid "Traspasos de clientes"
+msgstr "Client handovers"
+
+msgid "Traspasos sin aceptar"
+msgstr "Unaccepted handovers"
+
+msgid "Vence en %(n)s días."
+msgstr "Due in %(n)s days."
+
+msgid "Vence hoy."
+msgstr "Due today."
+
+msgid "Vencen en %(d)s días"
+msgstr "Due in %(d)s days"
+
+msgid "Vencen en los próximos %(d)s días"
+msgstr "Due in the next %(d)s days"
+
+msgid "Vencidas sin presentar"
+msgstr "Overdue and unfiled"
+
+msgid "Venció ayer y sigue sin presentarse."
+msgstr "Was due yesterday and is still unfiled."
+
+msgid "Venció hace %(n)s días y sigue sin presentarse."
+msgstr "Was due %(n)s days ago and is still unfiled."
+
+msgid "Ver certificados"
+msgstr "View certificates"
+
+msgid "Y a la oficina (opcional)"
+msgstr "And to the office (optional)"
+
+msgid "de %(n)s certificados tienen un custodio asignado"
+msgstr "of %(n)s certificates have an assigned custodian"
+
+msgid "de %(n)s clientes no tienen responsable asignado"
+msgstr "of %(n)s clients have no assigned owner"
+
+msgid "de %(n)s presentadas no tienen evidencia registrada"
+msgstr "of %(n)s filed have no recorded evidence"
+
+msgid "de las obligaciones vencidas en los últimos %(d)s días se presentaron en plazo"
+msgstr "of obligations due in the last %(d)s days were filed on time"
+
+msgid "obligaciones bloqueadas"
+msgstr "blocked obligations"
+
+msgid "Gestión fiscal"
+msgstr "Tax management"
+
+msgid "Llevar la gestión fiscal de este cliente (calendario, vencimientos y portal)"
+msgstr "Handle this client's tax management (calendar, deadlines and portal)"
+
+msgid "Hoy solo hay calendario fiscal de España; otros países se crean sin generación automática."
+msgstr "There is only a Spanish tax calendar for now; other countries are created without automatic generation."
+
+msgid "Con un perfil elegido se proponen los modelos que le corresponden; los puedes revisar después en su ficha fiscal."
+msgstr "When a client type is chosen, the models that apply are suggested; you can review them later on the tax record."
+
+msgid "Generar los vencimientos automáticamente cada periodo (necesita un tipo de cliente elegido)"
+msgstr "Generate deadlines automatically each period (needs a client type to be chosen)"
+
+msgid "Activar gestión fiscal"
+msgstr "Enable tax management"

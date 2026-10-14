@@ -1,21 +1,23 @@
 {
   "@@locale": "es",
-
   "appTitle": "Guilda Work",
-
   "comunCancelar": "Cancelar",
   "comunGuardar": "Guardar",
   "comunIdioma": "Idioma",
   "comunEliminar": "Eliminar",
   "comunErrorCargar": "Error al cargar: {error}",
-  "@comunErrorCargar": { "placeholders": { "error": { "type": "String" } } },
-
+  "@comunErrorCargar": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "loginServidorTooltip": "Servidor",
   "loginEmailLabel": "Email",
   "loginContrasenaLabel": "Contraseña",
   "loginEntrarBoton": "Entrar",
   "loginRegistrateLink": "¿No tienes cuenta? Regístrate",
-
   "dashboardTareasTooltip": "Tareas",
   "dashboardCorreoTooltip": "Correo",
   "dashboardHerramientasTooltip": "Herramientas",
@@ -26,8 +28,8 @@
   "dashboardAjustesTooltip": "Ajustes",
   "dashboardCerrarSesionTooltip": "Cerrar sesión",
   "dashboardNuevoMenuTooltip": "Nuevo proyecto",
-    "dashboardAccesosTitulo": "Accesos",
-"dashboardTusMenus": "Tus proyectos",
+  "dashboardAccesosTitulo": "Accesos",
+  "dashboardTusMenus": "Tus proyectos",
   "dashboardSinMenus": "Todavía no tienes ningún proyecto. Crea el primero con el botón +.",
   "dashboardNuevoMenuDialogTitulo": "Nuevo proyecto",
   "dashboardNuevoMenuDialogLabel": "Nombre (ej. Lueira, Guilda...)",
@@ -46,15 +48,26 @@
   "dashboardNotaHint": "¿Qué ha pasado?",
   "dashboardAnotarBoton": "Anotar",
   "dashboardMenuEnCurso": "{n} en curso",
-  "@dashboardMenuEnCurso": { "placeholders": { "n": { "type": "int" } } },
-
+  "@dashboardMenuEnCurso": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "fichajeTitulo": "Fichaje",
   "fichajeHistorialTooltip": "Mi historial",
   "fichajeMisDatosTooltip": "Mis datos",
   "fichajeDatosIncompletos": "Antes de fichar, la normativa exige poder identificarte: rellena tu nombre completo y DNI/NIE.",
   "fichajeRellenarDatosBoton": "Rellenar mis datos",
   "fichajePendientesSinc": "{n, plural, one{1 cambio pendiente de sincronizar} other{{n} cambios pendientes de sincronizar}}",
-  "@fichajePendientesSinc": { "placeholders": { "n": { "type": "int" } } },
+  "@fichajePendientesSinc": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "fichajeEntradaBoton": "Entrada",
   "fichajeIniciarPausaBoton": "Iniciar pausa",
   "fichajeFinPausaBoton": "Fin de pausa",
@@ -69,7 +82,6 @@
   "fichajeTipoPausaInicio": "Inicio de pausa",
   "fichajeTipoPausaFin": "Fin de pausa",
   "fichajeTipoSalida": "Salida",
-
   "fichajeDatosTitulo": "Mis datos de fichaje",
   "fichajeDatosNombreLabel": "Nombre completo *",
   "fichajeDatosDniLabel": "DNI/NIE *",
@@ -80,23 +92,39 @@
   "fichajeDatosJornadaLabel": "Jornada semanal contratada (horas)",
   "fichajeDatosConvenioLabel": "Convenio colectivo",
   "fichajeDatosObligatorios": "Nombre completo y DNI/NIE son obligatorios: la normativa exige poder identificarte.",
-
   "fichajeHistorialTitulo": "Mi historial de fichaje",
   "fichajeHistorialDesde": "Desde: {fecha}",
-  "@fichajeHistorialDesde": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fichajeHistorialDesde": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeHistorialHasta": "Hasta: {fecha}",
-  "@fichajeHistorialHasta": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fichajeHistorialHasta": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeHistorialCualquiera": "Cualquiera",
   "fichajeHistorialSinFichajes": "Sin fichajes en este periodo.",
   "fichajeHistorialCorreccionAdmin": "Corrección de un administrador",
-
   "tiquetsTitulo": "Tiquets",
   "tiquetsTituloHint": "Título del tiquet...",
   "tiquetsCrearBoton": "+ Crear",
   "tiquetsTodos": "Todos",
   "tiquetsEliminarTitulo": "¿Eliminar este tiquet?",
   "tiquetsEliminarContenido": "\"{titulo}\" — no se puede deshacer.",
-  "@tiquetsEliminarContenido": { "placeholders": { "titulo": { "type": "String" } } },
+  "@tiquetsEliminarContenido": {
+    "placeholders": {
+      "titulo": {
+        "type": "String"
+      }
+    }
+  },
   "tiquetsSinResultados": "No hay tiquets para este filtro.",
   "tiquetsCambiarEstadoTooltip": "Cambiar estado",
   "tiquetsEliminarTooltip": "Eliminar",
@@ -105,9 +133,14 @@
   "tiquetEstadoSinRevisar": "Sin revisar",
   "tiquetEstadoEnRevision": "En revisión",
   "tiquetEstadoFinalizado": "Finalizado",
-
   "tiquetEditarTitulo": "Editar tiquet #{id}",
-  "@tiquetEditarTitulo": { "placeholders": { "id": { "type": "int" } } },
+  "@tiquetEditarTitulo": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "tiquetTipoLabel": "Tipo",
   "tiquetTituloLabel": "Título",
   "tiquetDescripcionLabel": "Descripción",
@@ -127,18 +160,15 @@
   "herramientasAunNoDisponible": "Aún no disponible",
   "herramientasConTuCuenta": "Con tu cuenta de Guilda Work",
   "herramientasIniciaSesionAparte": "Inicia sesión aparte",
-
   "dashboardFiscalTooltip": "Calendario fiscal",
   "fiscalTitulo": "Calendario fiscal",
   "fiscalTabClientes": "Clientes",
   "fiscalTabVencimientos": "Vencimientos",
   "fiscalTabCalendario": "Calendario",
   "fiscalTodos": "Todos",
-
   "fiscalClientesBuscarHint": "Buscar por nombre o NIF...",
   "fiscalClientesNuevoBoton": "Nuevo",
   "fiscalClientesSinResultados": "Todavía no hay clientes fiscales dados de alta.",
-
   "fiscalClienteNuevoTitulo": "Nuevo cliente fiscal",
   "fiscalClienteEditarTitulo": "Editar cliente fiscal",
   "fiscalClienteNombreLabel": "Nombre o razón social",
@@ -152,32 +182,52 @@
   "fiscalGenerarVencimientosBoton": "Generar vencimientos del año en curso",
   "fiscalGenerarSinModelos": "Marca al menos un modelo antes de generar.",
   "fiscalGenerarResultado": "{creados, plural, =0{No se ha creado ningún vencimiento nuevo (ya existían).} one{Se ha creado 1 vencimiento.} other{Se han creado {creados} vencimientos.}}",
-  "@fiscalGenerarResultado": { "placeholders": { "creados": { "type": "int" } } },
+  "@fiscalGenerarResultado": {
+    "placeholders": {
+      "creados": {
+        "type": "int"
+      }
+    }
+  },
   "fiscalClienteEliminarBoton": "🗑 Eliminar cliente",
   "fiscalClienteEliminarTitulo": "¿Eliminar este cliente fiscal?",
   "fiscalClienteEliminarContenido": "Se moverá a la papelera -- no se puede deshacer desde la app.",
-
   "fiscalVencimientosSinResultados": "No hay vencimientos para este filtro.",
   "fiscalMarcarPresentadoTooltip": "Marcar como presentado",
   "fiscalVenceEl": "Vence {fecha}",
-  "@fiscalVenceEl": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVenceEl": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoPeriodoLabel": "Periodo: {periodo}",
-  "@fiscalVencimientoPeriodoLabel": { "placeholders": { "periodo": { "type": "String" } } },
+  "@fiscalVencimientoPeriodoLabel": {
+    "placeholders": {
+      "periodo": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoFechaLimiteLabel": "Fecha límite: {fecha}",
-  "@fiscalVencimientoFechaLimiteLabel": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVencimientoFechaLimiteLabel": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoEstadoLabel": "Estado",
   "fiscalVencimientoNotasLabel": "Notas",
   "fiscalVencimientoEliminarBoton": "🗑 Eliminar vencimiento",
   "fiscalVencimientoEliminarTitulo": "¿Eliminar este vencimiento?",
   "fiscalVencimientoEliminarContenido": "Se moverá a la papelera -- no se puede deshacer desde la app.",
-
   "fiscalCalendarioTitulo": "Calendario fiscal",
   "fiscalCalendarioSinVencimientos": "Sin vencimientos este día.",
-
   "vencimientoFiscalEstadoPendiente": "Pendiente",
   "vencimientoFiscalEstadoPresentado": "Presentado",
   "vencimientoFiscalEstadoFueraPlazo": "Fuera de plazo",
-
   "ajustesPerfilSubtitulo": "Nombre, avatar y notificaciones",
   "perfilTitulo": "Mi perfil",
   "perfilAvatarGaleria": "Elegir de la galería",
@@ -194,10 +244,107 @@
   "login2faAyuda": "Esta cuenta tiene la verificación en dos pasos. Escribe el código de tu app de autenticación o uno de recuperación.",
   "fichajeSemanaTitulo": "Esta semana",
   "fichajeSemanaDeContratadas": "{horas} de {contratadas}",
-  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "@fichajeSemanaDeContratadas": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      },
+      "contratadas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaSinJornada": "Sin jornada semanal indicada en Mis datos",
   "fichajeSemanaExcedida": "Te pasas {horas} de tu jornada",
-  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "@fichajeSemanaExcedida": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaRestan": "Te quedan {horas}",
-  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
+  "@fichajeSemanaRestan": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasTitulo": "Ausencias y vacaciones",
+  "ausenciasTooltip": "Ausencias y vacaciones",
+  "ausenciasPedir": "Pedir ausencia",
+  "ausenciasDisponibles": "{n} días disponibles en {anio}",
+  "@ausenciasDisponibles": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "anio": {
+        "type": "int"
+      }
+    }
+  },
+  "ausenciasResumen": "{aprobadas} aprobados · {pendientes} pendientes · {total} te corresponden",
+  "@ausenciasResumen": {
+    "placeholders": {
+      "aprobadas": {
+        "type": "String"
+      },
+      "pendientes": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasSinAusencias": "Todavía no has pedido ninguna ausencia este año.",
+  "ausenciasMias": "Mis ausencias",
+  "ausenciasPendientesEquipo": "Pendientes de aprobar",
+  "ausenciasTipo": "Tipo",
+  "ausenciasDesde": "Desde: {fecha}",
+  "@ausenciasDesde": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasHasta": "Hasta: {fecha}",
+  "@ausenciasHasta": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasMedioDia": "Solo medio día",
+  "ausenciasMotivo": "Motivo (opcional)",
+  "ausenciasEnviar": "Enviar solicitud",
+  "ausenciasEnviada": "Solicitud enviada.",
+  "ausenciasCancelarPregunta": "¿Cancelar esta ausencia?",
+  "ausenciasCancelada": "Ausencia cancelada.",
+  "ausenciasAprobar": "Aprobar",
+  "ausenciasRechazar": "Rechazar",
+  "ausenciasResuelta": "Hecho.",
+  "ausenciasDias": "{n} días",
+  "@ausenciasDias": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciaTipoVacaciones": "Vacaciones",
+  "ausenciaTipoAsuntosPropios": "Asuntos propios",
+  "ausenciaTipoPermiso": "Permiso retribuido",
+  "ausenciaTipoBaja": "Baja médica",
+  "ausenciaTipoOtro": "Otro",
+  "ausenciaEstadoPendiente": "Pendiente",
+  "ausenciaEstadoAprobada": "Aprobada",
+  "ausenciaEstadoRechazada": "Rechazada",
+  "ausenciaEstadoCancelada": "Cancelada",
+  "ausenciasMantener": "Mantenerla",
+  "ausenciasCancelarAccion": "Cancelar ausencia"
 }

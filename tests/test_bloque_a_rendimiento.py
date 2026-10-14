@@ -137,7 +137,8 @@ def test_presupuesto_de_consultas_por_pantalla(cliente, monkeypatch):
         cliente.get(ruta)
     registro = _sentencias(monkeypatch)
     # "/" = 31: la tarjeta de primeros pasos calcula la puesta en marcha del despacho (1 consulta, solo mientras está visible).
-    tope = {"/": 31, "/tareas/": 24, "/tareas/hoy": 24, "/tareas/tablero": 24, "/notas": 24, f"/correo/?cuenta_id={cuenta}": 30, "/fiscal/vencimientos": 20}
+    # (+1 en "/" y en las pantallas fiscales con la caché fría: «¿este despacho usa oficinas?», que luego se recuerda 30 s; ver app/acceso.py.)
+    tope = {"/": 32, "/tareas/": 24, "/tareas/hoy": 24, "/tareas/tablero": 24, "/notas": 24, f"/correo/?cuenta_id={cuenta}": 30, "/fiscal/vencimientos": 20}
     for ruta, maximo in tope.items():
         registro.clear()
         cliente.get(ruta)

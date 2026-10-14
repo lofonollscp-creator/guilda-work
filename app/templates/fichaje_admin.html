@@ -14,6 +14,9 @@
   <a href="{{ url_for('fichaje.panel') }}">{{ _('Fichar') }}</a>
   <a href="{{ url_for('fichaje.historial') }}">{{ _('Mi historial') }}</a>
   <a href="{{ url_for('fichaje.mis_datos') }}">{{ _('Mis datos') }}</a>
+  <a href="{{ url_for('fichaje.mis_ausencias') }}">{{ _('Ausencias') }}</a>
+  <a href="{{ url_for('fichaje.cuadrante_turnos') }}">{{ _('Turnos') }}</a>
+  <a href="{{ url_for('fichaje.mi_bolsa_de_horas') }}">{{ _('Bolsa de horas') }}</a>
   {% if g.es_admin or g.gestor_fichajes %}
   <a class="active" href="{{ url_for('fichaje.admin_resumen') }}">{{ _('Administración') }}</a>
   {% endif %}

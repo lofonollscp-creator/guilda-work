@@ -8,6 +8,7 @@
     <p class="subtitle">{{ _('Clientes de la gestoría para los que se llevan vencimientos fiscales (IVA, IRPF, retenciones...).') }}</p>
   </div>
 </header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
 
 <nav class="tareas-subnav">
   <a class="active" href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>

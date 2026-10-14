@@ -4,6 +4,7 @@ import 'package:guilda_work_mobile/models/models.dart';
 import 'package:guilda_work_mobile/services/api_client.dart';
 
 void main() {
+  ausenciasTests();
   group('verificación en dos pasos', () {
     test('el código requiere_2fa de la API se reconoce', () {
       expect(ApiException('falta el código', codigo: 'requiere_2fa').requiere2fa, true);
@@ -58,6 +59,34 @@ void main() {
       expect(TareaOutlook.fromJson(base()).rol, null);
       expect(TareaOutlook.fromJson({...base(), 'rol': 'compartida'}).rol, 'compartida');
       expect(TareaOutlook.fromJson({...base(), 'rol': 'asignada'}).rol, 'asignada');
+    });
+  });
+}
+
+void ausenciasTests() {
+  group('ausencias y vacaciones', () {
+    test('lee una ausencia de la API', () {
+      final a = Ausencia.fromJson({'id': 3, 'tipo': 'vacaciones', 'desde': '2027-03-01', 'hasta': '2027-03-05', 'medio_dia': 0, 'dias': 5.0, 'motivo': null, 'estado': 'pendiente', 'comentario': null});
+      expect(a.dias, 5.0);
+      expect(a.medioDia, false);
+      expect(formatoDias(a.dias), '5');
+      expect(formatoDias(0.5), '0.5');
+    });
+
+    test('solo se cancela lo vivo y que no ha terminado', () {
+      final hoy = DateTime(2027, 3, 3);
+      Ausencia con(String estado, String hasta) => Ausencia.fromJson({'id': 1, 'tipo': 'permiso', 'desde': '2027-03-01', 'hasta': hasta, 'medio_dia': 0, 'dias': 1, 'estado': estado});
+      expect(con('pendiente', '2027-03-05').puedeCancelarse(hoy), true);
+      expect(con('aprobada', '2027-03-03').puedeCancelarse(hoy), true);
+      expect(con('aprobada', '2027-03-02').puedeCancelarse(hoy), false);
+      expect(con('rechazada', '2027-03-05').puedeCancelarse(hoy), false);
+      expect(con('cancelada', '2027-03-05').puedeCancelarse(hoy), false);
+    });
+
+    test('lee el saldo del año', () {
+      final s = SaldoAusencias.fromJson({'anio': 2027, 'total': 22, 'aprobadas': 5.0, 'pendientes': 0.5, 'disponibles': 16.5});
+      expect(s.anio, 2027);
+      expect(s.disponibles, 16.5);
     });
   });
 }

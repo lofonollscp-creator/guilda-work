@@ -7,8 +7,12 @@
     <p class="subtitle">{{ vencimiento.cliente_nombre }}</p>
   </div>
 </header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+{% include "_obligacion_flujo.html" %}
 
 <form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=vencimiento.id) }}">
+  <input type="hidden" name="version" value="{{ vencimiento.version }}">
   <div class="ia-form-row">
     <label>{{ _('Modelo') }}
       <input type="text" name="modelo" value="{{ vencimiento.modelo }}" required>

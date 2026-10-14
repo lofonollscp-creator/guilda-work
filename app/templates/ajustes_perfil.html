@@ -107,6 +107,20 @@
           {% endfor %}
         </ul>
 
+        <div class="silencio" id="resumen-diario">
+          <label class="interruptor-fila">
+            <span class="interruptor-texto"><strong>{{ _('Resumen diario de mis pendientes') }}</strong><span>{{ _('Cada día laborable, a la hora que elijas: tareas atrasadas y de hoy, visitas, plazos, vencimientos y correos sin contestar. Si no hay nada pendiente, no se envía.') }}</span></span>
+            <input type="checkbox" class="interruptor-caja" role="switch" name="resumen_diario" {% if perfil.resumen_diario %}checked{% endif %}>
+          </label>
+          <div class="silencio-horas">
+            <label>{{ _('A partir de las') }} <input type="number" name="resumen_diario_hora" min="5" max="20" value="{{ perfil.resumen_diario_hora if perfil.resumen_diario_hora is not none else 8 }}"> h</label>
+            <label class="interruptor-fila">
+              <span class="interruptor-texto"><span>{{ _('Enviármelo también por email') }}</span></span>
+              <input type="checkbox" class="interruptor-caja" role="switch" name="resumen_diario_email" {% if perfil.resumen_diario_email %}checked{% endif %}>
+            </label>
+          </div>
+        </div>
+
         <div class="silencio">
           <label class="interruptor-fila">
             <span class="interruptor-texto"><strong>{{ _('No molestar') }}</strong><span>{{ _('Sin avisos en el móvil dentro de esta franja (siguen en la campana). Hora del despacho.') }}</span></span>

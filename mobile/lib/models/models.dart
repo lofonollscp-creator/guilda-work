@@ -178,6 +178,76 @@ class ResumenSemanaFichaje {
   bool get excedida => diferencia != null && diferencia! > 0;
 }
 
+/// Una ausencia, vacación o permiso (GET /fichaje/ausencias).
+class Ausencia {
+  final int id;
+  final String tipo;
+  final String desde;
+  final String hasta;
+  final bool medioDia;
+  final double dias;
+  final String? motivo;
+  final String estado;
+  final String? comentario;
+  final String? persona;
+
+  Ausencia({
+    required this.id,
+    required this.tipo,
+    required this.desde,
+    required this.hasta,
+    required this.medioDia,
+    required this.dias,
+    this.motivo,
+    required this.estado,
+    this.comentario,
+    this.persona,
+  });
+
+  factory Ausencia.fromJson(Map<String, dynamic> json) => Ausencia(
+    id: json['id'] as int,
+    tipo: json['tipo'] as String,
+    desde: json['desde'] as String,
+    hasta: json['hasta'] as String,
+    medioDia: (json['medio_dia'] as num? ?? 0) != 0,
+    dias: (json['dias'] as num? ?? 0).toDouble(),
+    motivo: json['motivo'] as String?,
+    estado: json['estado'] as String,
+    comentario: json['comentario'] as String?,
+    persona: json['persona'] as String?,
+  );
+
+  /// Pendiente o aprobada y que no ha terminado todavía: se puede cancelar.
+  bool puedeCancelarse(DateTime hoy) {
+    if (estado != 'pendiente' && estado != 'aprobada') return false;
+    return hasta.compareTo(hoy.toIso8601String().substring(0, 10)) >= 0;
+  }
+}
+
+/// Días de vacaciones del año (GET /fichaje/ausencias/saldo).
+class SaldoAusencias {
+  final int anio;
+  final double total;
+  final double aprobadas;
+  final double pendientes;
+  final double disponibles;
+
+  SaldoAusencias({required this.anio, required this.total, required this.aprobadas, required this.pendientes, required this.disponibles});
+
+  factory SaldoAusencias.fromJson(Map<String, dynamic> json) => SaldoAusencias(
+    anio: (json['anio'] as num).toInt(),
+    total: (json['total'] as num).toDouble(),
+    aprobadas: (json['aprobadas'] as num).toDouble(),
+    pendientes: (json['pendientes'] as num).toDouble(),
+    disponibles: (json['disponibles'] as num).toDouble(),
+  );
+}
+
+const tiposAusencia = ['vacaciones', 'asuntos_propios', 'permiso', 'baja', 'otro'];
+
+/// Quita los ceros inútiles: 5.0 → «5», 0.5 → «0.5».
+String formatoDias(double dias) => dias == dias.roundToDouble() ? dias.toInt().toString() : dias.toString();
+
 /// «7 h 05 min» a partir de segundos (redondeando a minutos).
 String formatoHoras(double segundos) {
   final minutos = (segundos / 60).round();

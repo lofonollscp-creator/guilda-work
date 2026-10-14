@@ -188,6 +188,45 @@ def rellenar_plantilla(texto: str, valores: dict) -> str:
     return re.sub(r"\{(\w+)\}", lambda m: str(valores[m.group(1)]) if m.group(1) in valores else m.group(0), texto or "")
 
 
+def textos_aviso_certificado(cliente_nombre: str, tipo: str, caduca: str, dias: int, gestoria: str, instrucciones: str = "", *, tiene_enlace: bool = False) -> tuple[str, list[str]]:
+    """(asunto, párrafos) del aviso de caducidad del certificado del cliente, en el idioma activo. `dias` > 0: faltan; 0: caduca hoy; < 0: caducó hace -dias."""
+    cuando = texto_cuando(dias)
+    if dias >= 0:
+        asunto = _("Tu certificado digital caduca %(cuando)s", cuando=cuando)
+        linea = _("Tu certificado digital (%(tipo)s) caduca %(cuando)s, el %(fecha)s.", tipo=tipo, cuando=cuando, fecha=caduca)
+        consecuencia = _("Si caduca, no podremos presentar impuestos ni acceder a tus notificaciones en tu nombre hasta que lo renueves.")
+    else:
+        asunto = _("Tu certificado digital caducó %(cuando)s", cuando=cuando)
+        linea = _("Tu certificado digital (%(tipo)s) caducó %(cuando)s, el %(fecha)s.", tipo=tipo, cuando=cuando, fecha=caduca)
+        consecuencia = _("Mientras no lo renueves, no podemos presentar impuestos ni acceder a tus notificaciones en tu nombre.")
+    parrafos = [_("Hola, %(cliente)s:", cliente=cliente_nombre), linea, consecuencia]
+    if instrucciones:
+        parrafos.append(instrucciones)
+    parrafos.append(_("Si necesitas ayuda para renovarlo, respóndenos o pídela desde tu portal de cliente.") if tiene_enlace else _("Si necesitas ayuda para renovarlo, respóndenos a este correo."))
+    parrafos.append(_("Un saludo,") + f"\n{gestoria}")
+    return asunto, parrafos
+
+
+def enviar_aviso_certificado(email_destino: str, cliente_nombre: str, tipo: str, caduca: str, dias: int, url_portal: str | None, gestoria: str, instrucciones: str = "",
+                             plantilla: tuple[str, str] | None = None) -> None:
+    """Aviso al cliente de que su certificado digital caduca (o caducó). Sin datos técnicos del certificado: solo el tipo y la fecha. El llamante fija el idioma del cliente.
+    `plantilla` = (asunto, cuerpo) con el texto propio del despacho y {marcas} (ver `certificados.MARCAS_PLANTILLA`)."""
+    cuando = texto_cuando(dias)
+    if plantilla:
+        valores = {"cliente": cliente_nombre, "tipo": tipo, "caduca": caduca, "dias": str(abs(int(dias))), "cuando": cuando, "despacho": gestoria, "instrucciones": instrucciones or "", "enlace": url_portal or ""}
+        asunto, cuerpo = rellenar_plantilla(plantilla[0], valores), rellenar_plantilla(plantilla[1], valores)
+        parrafos = [p.strip() for p in re.split(r"\n\s*\n", cuerpo.strip()) if p.strip()]
+        plano, html = correo_diseno.construir(asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None, pie=gestoria, preencabezado=asunto, plano=cuerpo)
+        _enviar(email_destino, asunto, plano, html)
+        return
+    asunto, parrafos = textos_aviso_certificado(cliente_nombre, tipo, caduca, dias, gestoria, instrucciones, tiene_enlace=bool(url_portal))
+    plano, html = correo_diseno.construir(
+        asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None,
+        aviso=_("Recibes este aviso porque tu gestoría tiene activados los avisos de caducidad de tu certificado digital. Si prefieres no recibirlos, díselo y los desactivará."),
+        pie=gestoria, preencabezado=parrafos[1])
+    _enviar(email_destino, asunto, plano, html)
+
+
 def _enmascarar(email: str | None) -> str | None:
     """`ana@guilda.cat` -> `a**@guilda.cat`: para mostrar a quién llegan los avisos sin exponer la dirección entera."""
     if not email or "@" not in email:

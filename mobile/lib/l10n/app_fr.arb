@@ -1,20 +1,16 @@
 {
   "@@locale": "fr",
-
   "appTitle": "Guilda Work",
-
   "comunCancelar": "Annuler",
   "comunGuardar": "Enregistrer",
   "comunIdioma": "Langue",
   "comunEliminar": "Supprimer",
   "comunErrorCargar": "Erreur de chargement : {error}",
-
   "loginServidorTooltip": "Serveur",
   "loginEmailLabel": "E-mail",
   "loginContrasenaLabel": "Mot de passe",
   "loginEntrarBoton": "Se connecter",
   "loginRegistrateLink": "Pas de compte ? Inscrivez-vous",
-
   "dashboardTareasTooltip": "Tâches",
   "dashboardCorreoTooltip": "Courrier",
   "dashboardHerramientasTooltip": "Outils",
@@ -25,8 +21,8 @@
   "dashboardAjustesTooltip": "Paramètres",
   "dashboardCerrarSesionTooltip": "Déconnexion",
   "dashboardNuevoMenuTooltip": "Nouveau projet",
-    "dashboardAccesosTitulo": "Raccourcis",
-"dashboardTusMenus": "Vos projets",
+  "dashboardAccesosTitulo": "Raccourcis",
+  "dashboardTusMenus": "Vos projets",
   "dashboardSinMenus": "Vous n'avez encore aucun projet. Créez le premier avec le bouton +.",
   "dashboardNuevoMenuDialogTitulo": "Nouveau projet",
   "dashboardNuevoMenuDialogLabel": "Nom (ex. Lueira, Guilda...)",
@@ -45,7 +41,6 @@
   "dashboardNotaHint": "Que s'est-il passé ?",
   "dashboardAnotarBoton": "Noter",
   "dashboardMenuEnCurso": "{n} en cours",
-
   "fichajeTitulo": "Pointage",
   "fichajeHistorialTooltip": "Mon historique",
   "fichajeMisDatosTooltip": "Mes données",
@@ -66,7 +61,6 @@
   "fichajeTipoPausaInicio": "Début de pause",
   "fichajeTipoPausaFin": "Fin de pause",
   "fichajeTipoSalida": "Départ",
-
   "fichajeDatosTitulo": "Mes données de pointage",
   "fichajeDatosNombreLabel": "Nom complet *",
   "fichajeDatosDniLabel": "Numéro de pièce d'identité *",
@@ -77,14 +71,12 @@
   "fichajeDatosJornadaLabel": "Heures hebdomadaires contractuelles",
   "fichajeDatosConvenioLabel": "Convention collective",
   "fichajeDatosObligatorios": "Le nom complet et le numéro de pièce d'identité sont obligatoires : la réglementation exige de pouvoir vous identifier.",
-
   "fichajeHistorialTitulo": "Mon historique de pointage",
   "fichajeHistorialDesde": "Du : {fecha}",
   "fichajeHistorialHasta": "Au : {fecha}",
   "fichajeHistorialCualquiera": "N'importe",
   "fichajeHistorialSinFichajes": "Aucun pointage sur cette période.",
   "fichajeHistorialCorreccionAdmin": "Correction d'un administrateur",
-
   "tiquetsTitulo": "Tickets",
   "tiquetsTituloHint": "Titre du ticket...",
   "tiquetsCrearBoton": "+ Créer",
@@ -99,7 +91,6 @@
   "tiquetEstadoSinRevisar": "Non examiné",
   "tiquetEstadoEnRevision": "En cours d'examen",
   "tiquetEstadoFinalizado": "Terminé",
-
   "tiquetEditarTitulo": "Modifier le ticket n°{id}",
   "tiquetTipoLabel": "Type",
   "tiquetTituloLabel": "Titre",
@@ -120,18 +111,15 @@
   "herramientasAunNoDisponible": "Pas encore disponible",
   "herramientasConTuCuenta": "Avec votre compte Guilda Work",
   "herramientasIniciaSesionAparte": "Connexion séparée",
-
   "dashboardFiscalTooltip": "Calendrier fiscal",
   "fiscalTitulo": "Calendrier fiscal",
   "fiscalTabClientes": "Clients",
   "fiscalTabVencimientos": "Échéances",
   "fiscalTabCalendario": "Calendrier",
   "fiscalTodos": "Tous",
-
   "fiscalClientesBuscarHint": "Rechercher par nom ou numéro fiscal...",
   "fiscalClientesNuevoBoton": "Nouveau",
   "fiscalClientesSinResultados": "Aucun client fiscal ajouté pour le moment.",
-
   "fiscalClienteNuevoTitulo": "Nouveau client fiscal",
   "fiscalClienteEditarTitulo": "Modifier le client fiscal",
   "fiscalClienteNombreLabel": "Nom ou raison sociale",
@@ -145,32 +133,52 @@
   "fiscalGenerarVencimientosBoton": "Générer les échéances de l'année en cours",
   "fiscalGenerarSinModelos": "Cochez au moins un formulaire avant de générer.",
   "fiscalGenerarResultado": "{creados, plural, =0{Aucune nouvelle échéance créée (déjà existantes).} one{1 échéance créée.} other{{creados} échéances créées.}}",
-  "@fiscalGenerarResultado": { "placeholders": { "creados": { "type": "int" } } },
+  "@fiscalGenerarResultado": {
+    "placeholders": {
+      "creados": {
+        "type": "int"
+      }
+    }
+  },
   "fiscalClienteEliminarBoton": "🗑 Supprimer le client",
   "fiscalClienteEliminarTitulo": "Supprimer ce client fiscal ?",
   "fiscalClienteEliminarContenido": "Il sera déplacé dans la corbeille -- action irréversible depuis l'app.",
-
   "fiscalVencimientosSinResultados": "Aucune échéance pour ce filtre.",
   "fiscalMarcarPresentadoTooltip": "Marquer comme déposé",
   "fiscalVenceEl": "Échéance le {fecha}",
-  "@fiscalVenceEl": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVenceEl": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoPeriodoLabel": "Période : {periodo}",
-  "@fiscalVencimientoPeriodoLabel": { "placeholders": { "periodo": { "type": "String" } } },
+  "@fiscalVencimientoPeriodoLabel": {
+    "placeholders": {
+      "periodo": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoFechaLimiteLabel": "Date limite : {fecha}",
-  "@fiscalVencimientoFechaLimiteLabel": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVencimientoFechaLimiteLabel": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoEstadoLabel": "Statut",
   "fiscalVencimientoNotasLabel": "Notes",
   "fiscalVencimientoEliminarBoton": "🗑 Supprimer l'échéance",
   "fiscalVencimientoEliminarTitulo": "Supprimer cette échéance ?",
   "fiscalVencimientoEliminarContenido": "Elle sera déplacée dans la corbeille -- action irréversible depuis l'app.",
-
   "fiscalCalendarioTitulo": "Calendrier fiscal",
   "fiscalCalendarioSinVencimientos": "Aucune échéance ce jour-là.",
-
   "vencimientoFiscalEstadoPendiente": "En attente",
   "vencimientoFiscalEstadoPresentado": "Déposé",
   "vencimientoFiscalEstadoFueraPlazo": "En retard",
-
   "ajustesPerfilSubtitulo": "Nom, avatar et notifications",
   "perfilTitulo": "Mon profil",
   "perfilAvatarGaleria": "Choisir dans la galerie",
@@ -187,10 +195,63 @@
   "login2faAyuda": "Ce compte a la vérification en deux étapes. Saisissez le code de votre application d'authentification ou un code de récupération.",
   "fichajeSemanaTitulo": "Cette semaine",
   "fichajeSemanaDeContratadas": "{horas} sur {contratadas}",
-  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "@fichajeSemanaDeContratadas": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      },
+      "contratadas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaSinJornada": "Aucune durée hebdomadaire indiquée dans Mes données",
   "fichajeSemanaExcedida": "Vous dépassez de {horas} votre durée de travail",
-  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "@fichajeSemanaExcedida": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaRestan": "Il vous reste {horas}",
-  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
+  "@fichajeSemanaRestan": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasTitulo": "Absences et congés",
+  "ausenciasTooltip": "Absences et congés",
+  "ausenciasPedir": "Demander une absence",
+  "ausenciasDisponibles": "{n} jours disponibles en {anio}",
+  "ausenciasResumen": "{aprobadas} approuvés · {pendientes} en attente · {total} auxquels vous avez droit",
+  "ausenciasSinAusencias": "Vous n'avez encore demandé aucune absence cette année.",
+  "ausenciasMias": "Mes absences",
+  "ausenciasPendientesEquipo": "En attente d'approbation",
+  "ausenciasTipo": "Type",
+  "ausenciasDesde": "Du : {fecha}",
+  "ausenciasHasta": "Au : {fecha}",
+  "ausenciasMedioDia": "Demi-journée seulement",
+  "ausenciasMotivo": "Motif (facultatif)",
+  "ausenciasEnviar": "Envoyer la demande",
+  "ausenciasEnviada": "Demande envoyée.",
+  "ausenciasCancelarPregunta": "Annuler cette absence ?",
+  "ausenciasCancelada": "Absence annulée.",
+  "ausenciasAprobar": "Approuver",
+  "ausenciasRechazar": "Refuser",
+  "ausenciasResuelta": "C'est fait.",
+  "ausenciasDias": "{n} jours",
+  "ausenciaTipoVacaciones": "Congés",
+  "ausenciaTipoAsuntosPropios": "Jours personnels",
+  "ausenciaTipoPermiso": "Congé exceptionnel",
+  "ausenciaTipoBaja": "Arrêt maladie",
+  "ausenciaTipoOtro": "Autre",
+  "ausenciaEstadoPendiente": "En attente",
+  "ausenciaEstadoAprobada": "Approuvée",
+  "ausenciaEstadoRechazada": "Refusée",
+  "ausenciaEstadoCancelada": "Annulée",
+  "ausenciasMantener": "La garder",
+  "ausenciasCancelarAccion": "Annuler l'absence"
 }

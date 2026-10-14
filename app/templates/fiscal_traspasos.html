@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Traspasos de clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Traspasos de clientes') }}</h1>
+    <p class="subtitle">{{ _('Pasar un cliente a otra persona u oficina con su aceptación. Hasta que se acepta, el cliente sigue siendo de quien lo lleva y no cambia nada.') }}</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('control_fiscal.panel') }}">{{ _('Panel fiscal') }}</a>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+
+<section class="ausencias-seccion" id="nuevo">
+  <h2>{{ _('Proponer un traspaso') }}</h2>
+  <form method="post" action="{{ url_for('control_fiscal.traspaso_nuevo') }}" class="cert-form">
+    <div class="cert-form-fila">
+      <label for="tr-cliente">{{ _('Cliente') }}
+        <select id="tr-cliente" name="cliente_id" required>
+          <option value="">—</option>
+          {% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if cliente_id == c.id }}>{{ c.nombre }}{% if responsables.get(c.id) %} ({{ responsables[c.id] }}){% endif %}</option>{% endfor %}
+        </select>
+      </label>
+      <label for="tr-a">{{ _('Pasa a') }}
+        <select id="tr-a" name="a_usuario_id" required><option value="">—</option>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select>
+      </label>
+      {% if oficinas %}<label for="tr-of">{{ _('Y a la oficina (opcional)') }}
+        <select id="tr-of" name="a_oficina_id"><option value="">{{ _('Sigue en la misma') }}</option>{% for o in oficinas %}<option value="{{ o.id }}">{{ o.nombre }}</option>{% endfor %}</select>
+      </label>{% endif %}
+    </div>
+    <label for="tr-nota">{{ _('Trabajo pendiente y contexto (opcional)') }}<textarea id="tr-nota" name="nota" rows="3" maxlength="1000" placeholder="{{ _('Qué está a medias, qué espera el cliente, qué plazos hay…') }}"></textarea></label>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Proponer traspaso') }}</button></div>
+  </form>
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Traspasos') }}</h2>
+  {% if not traspasos %}<p class="subtitle">{{ _('Todavía no hay traspasos.') }}</p>{% else %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('De') }}</th><th>{{ _('A') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Detalle') }}</th><th></th></tr></thead>
+    <tbody>{% for t in traspasos %}
+      <tr>
+        <td>{{ t.cliente }}</td>
+        <td>{{ t.de_nombre or _('Sin responsable') }}{% if t.de_oficina %}<br><span class="subtitle">{{ t.de_oficina }}</span>{% endif %}</td>
+        <td>{{ t.a_nombre }}{% if t.a_oficina %}<br><span class="subtitle">{{ t.a_oficina }}</span>{% endif %}</td>
+        <td>{{ {'pendiente': _('Pendiente de aceptar'), 'aceptado': _('Aceptado'), 'rechazado': _('Rechazado'), 'cancelado': _('Cancelado')}[t.estado] }}</td>
+        <td>{% if t.nota %}{{ t.nota }}<br>{% endif %}{% if t.motivo %}<em>{{ t.motivo }}</em><br>{% endif %}
+            {% if t.estado == 'pendiente' and t.proximo_vencimiento %}<span class="subtitle">{{ _('Próximo vencimiento: %(f)s', f=t.proximo_vencimiento) }}</span>{% endif %}</td>
+        <td>{% if t.estado == 'pendiente' %}
+          {% if yo == t.a_usuario_id or es_directivo %}
+          <form method="post" action="{{ url_for('control_fiscal.traspaso_aceptar', traspaso_id=t.id) }}" class="form-en-linea"><input type="hidden" name="version" value="{{ t.version }}"><button class="btn btn-primary btn-sm">{{ _('Aceptar') }}</button></form>
+          <form method="post" action="{{ url_for('control_fiscal.traspaso_rechazar', traspaso_id=t.id) }}" class="form-en-linea"><input type="hidden" name="version" value="{{ t.version }}"><input type="text" name="motivo" required maxlength="500" placeholder="{{ _('Motivo') }}" aria-label="{{ _('Motivo') }}"><button class="btn btn-secondary btn-sm">{{ _('Rechazar') }}</button></form>
+          {% endif %}
+          {% if yo == t.creado_por or yo == t.de_usuario_id or es_directivo %}
+          <form method="post" action="{{ url_for('control_fiscal.traspaso_cancelar', traspaso_id=t.id) }}" class="form-en-linea"><input type="hidden" name="version" value="{{ t.version }}"><button class="btn btn-secondary btn-sm">{{ _('Cancelar') }}</button></form>
+          {% endif %}{% endif %}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>{% endif %}
+</section>
+
+{% if es_directivo %}
+<section class="ausencias-seccion">
+  <h2>{{ _('Asignar responsable sin traspaso') }}</h2>
+  <p class="subtitle">{{ _('Para dar de alta o corregir quién lleva un cliente. Si ya lo lleva alguien y quieres que lo acepte, propón un traspaso.') }}</p>
+  <form method="post" class="cert-form" id="asignar-responsable" data-accion="{{ url_for('control_fiscal.cliente_responsable', cliente_id=0) }}">
+    <div class="cert-form-fila">
+      <label for="rs-cliente">{{ _('Cliente') }}<select id="rs-cliente" name="cliente_id">{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></label>
+      <label for="rs-resp">{{ _('Responsable') }}<select id="rs-resp" name="responsable_id"><option value="">{{ _('Sin responsable') }}</option>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></label>
+    </div>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts_pagina %}
+<script src="{{ url_for('static', filename='traspasos.js') }}" defer></script>
+{% endblock %}

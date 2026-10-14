@@ -2153,6 +2153,11 @@ def init_db() -> None:
         _asegurar_columna(conn, "usuario_perfil", "telefono", "TEXT")
         _asegurar_columna(conn, "usuario_perfil", "silencio_desde", "TEXT")
         _asegurar_columna(conn, "usuario_perfil", "silencio_hasta", "TEXT")
+        # Resumen diario de pendientes (app/resumen_pendientes.py): opt-in, a su hora, solo entre semana.
+        _asegurar_columna(conn, "usuario_perfil", "resumen_diario", "INTEGER NOT NULL DEFAULT 0")
+        _asegurar_columna(conn, "usuario_perfil", "resumen_diario_hora", "INTEGER NOT NULL DEFAULT 8")
+        _asegurar_columna(conn, "usuario_perfil", "resumen_diario_email", "INTEGER NOT NULL DEFAULT 1")
+        _asegurar_columna(conn, "usuario_perfil", "resumen_diario_ultimo", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "uidvalidity", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")
@@ -2173,6 +2178,19 @@ def init_db() -> None:
         _crear_vista_participantes_todos(conn)
         from . import nucleo
         nucleo.crear_esquema(conn)            # clientes, expedientes, plazos, horas y verticales (app/nucleo.py)
+        from . import ausencias
+        ausencias.crear_esquema(conn)         # ausencias, vacaciones y permisos con saldo (app/ausencias.py)
+        from . import turnos, bolsa_horas
+        turnos.crear_esquema(conn)            # cuadrante de turnos (app/turnos.py)
+        bolsa_horas.crear_esquema(conn)       # ajustes manuales de la bolsa de horas (app/bolsa_horas.py)
+        from . import certificados
+        certificados.crear_esquema(conn)      # inventario de certificados digitales X.509 (app/certificados.py)
+        from . import auditoria
+        auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
+        from . import fiscal_base
+        fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import traspasos
+        traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
 
         conn.commit()
     finally:
@@ -2440,7 +2458,7 @@ CHECKLIST_MAX_CARACTERES = 200
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma", "perfil_fiscal",
+    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma", "perfil_fiscal", "oficina_id", "nif_duplicado_autorizado",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -2758,7 +2776,7 @@ from .db_plataforma import (  # noqa: E402,F401
     eliminar_avatar_usuario,
     crear_adjunto_ia,
     obtener_adjunto_ia,
-    usuarios_con_resumen_semanal_activo,
+    usuarios_con_resumen_semanal_activo, perfiles_con_resumen_diario, marcar_resumen_diario_entregado,
     nombre_mostrado_usuario,
 )
 from .db_tareas import (  # noqa: E402,F401
@@ -2960,6 +2978,7 @@ from .db_fiscal import (  # noqa: E402,F401
     _existe_vencimiento_fiscal,
     generar_vencimientos_automaticos,
     sanear_vencimientos_fuera_plazo,
+    _cliente_duplicado,
     obtener_cliente_fiscal_por_id,
     clientes_fiscales_por_email,
     ultimo_acceso_solicitado_en,

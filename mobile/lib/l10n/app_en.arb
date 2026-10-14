@@ -1,20 +1,16 @@
 {
   "@@locale": "en",
-
   "appTitle": "Guilda Work",
-
   "comunCancelar": "Cancel",
   "comunGuardar": "Save",
   "comunIdioma": "Language",
   "comunEliminar": "Delete",
   "comunErrorCargar": "Error loading: {error}",
-
   "loginServidorTooltip": "Server",
   "loginEmailLabel": "Email",
   "loginContrasenaLabel": "Password",
   "loginEntrarBoton": "Log in",
   "loginRegistrateLink": "Don't have an account? Sign up",
-
   "dashboardTareasTooltip": "Tasks",
   "dashboardCorreoTooltip": "Mail",
   "dashboardHerramientasTooltip": "Tools",
@@ -25,8 +21,8 @@
   "dashboardAjustesTooltip": "Settings",
   "dashboardCerrarSesionTooltip": "Log out",
   "dashboardNuevoMenuTooltip": "New project",
-    "dashboardAccesosTitulo": "Shortcuts",
-"dashboardTusMenus": "Your projects",
+  "dashboardAccesosTitulo": "Shortcuts",
+  "dashboardTusMenus": "Your projects",
   "dashboardSinMenus": "You don't have any project yet. Create the first one with the + button.",
   "dashboardNuevoMenuDialogTitulo": "New project",
   "dashboardNuevoMenuDialogLabel": "Name (e.g. Lueira, Guilda...)",
@@ -45,7 +41,6 @@
   "dashboardNotaHint": "What happened?",
   "dashboardAnotarBoton": "Add note",
   "dashboardMenuEnCurso": "{n} in progress",
-
   "fichajeTitulo": "Clock in/out",
   "fichajeHistorialTooltip": "My history",
   "fichajeMisDatosTooltip": "My details",
@@ -66,7 +61,6 @@
   "fichajeTipoPausaInicio": "Break start",
   "fichajeTipoPausaFin": "Break end",
   "fichajeTipoSalida": "Clock out",
-
   "fichajeDatosTitulo": "My clock-in details",
   "fichajeDatosNombreLabel": "Full name *",
   "fichajeDatosDniLabel": "ID number *",
@@ -77,14 +71,12 @@
   "fichajeDatosJornadaLabel": "Contracted weekly hours",
   "fichajeDatosConvenioLabel": "Collective agreement",
   "fichajeDatosObligatorios": "Full name and ID number are required: the law requires that you can be identified.",
-
   "fichajeHistorialTitulo": "My clock-in history",
   "fichajeHistorialDesde": "From: {fecha}",
   "fichajeHistorialHasta": "To: {fecha}",
   "fichajeHistorialCualquiera": "Any",
   "fichajeHistorialSinFichajes": "No clock-ins in this period.",
   "fichajeHistorialCorreccionAdmin": "Correction by an administrator",
-
   "tiquetsTitulo": "Tickets",
   "tiquetsTituloHint": "Ticket title...",
   "tiquetsCrearBoton": "+ Create",
@@ -99,7 +91,6 @@
   "tiquetEstadoSinRevisar": "Unreviewed",
   "tiquetEstadoEnRevision": "Under review",
   "tiquetEstadoFinalizado": "Done",
-
   "tiquetEditarTitulo": "Edit ticket #{id}",
   "tiquetTipoLabel": "Type",
   "tiquetTituloLabel": "Title",
@@ -120,18 +111,15 @@
   "herramientasAunNoDisponible": "Not available yet",
   "herramientasConTuCuenta": "With your Guilda Work account",
   "herramientasIniciaSesionAparte": "Sign in separately",
-
   "dashboardFiscalTooltip": "Tax calendar",
   "fiscalTitulo": "Tax calendar",
   "fiscalTabClientes": "Clients",
   "fiscalTabVencimientos": "Deadlines",
   "fiscalTabCalendario": "Calendar",
   "fiscalTodos": "All",
-
   "fiscalClientesBuscarHint": "Search by name or tax ID...",
   "fiscalClientesNuevoBoton": "New",
   "fiscalClientesSinResultados": "No tax clients added yet.",
-
   "fiscalClienteNuevoTitulo": "New tax client",
   "fiscalClienteEditarTitulo": "Edit tax client",
   "fiscalClienteNombreLabel": "Name or company name",
@@ -145,32 +133,52 @@
   "fiscalGenerarVencimientosBoton": "Generate current year deadlines",
   "fiscalGenerarSinModelos": "Check at least one form before generating.",
   "fiscalGenerarResultado": "{creados, plural, =0{No new deadline was created (already existed).} one{1 deadline was created.} other{{creados} deadlines were created.}}",
-  "@fiscalGenerarResultado": { "placeholders": { "creados": { "type": "int" } } },
+  "@fiscalGenerarResultado": {
+    "placeholders": {
+      "creados": {
+        "type": "int"
+      }
+    }
+  },
   "fiscalClienteEliminarBoton": "🗑 Delete client",
   "fiscalClienteEliminarTitulo": "Delete this tax client?",
   "fiscalClienteEliminarContenido": "It will move to the trash -- this can't be undone from the app.",
-
   "fiscalVencimientosSinResultados": "No deadlines for this filter.",
   "fiscalMarcarPresentadoTooltip": "Mark as filed",
   "fiscalVenceEl": "Due {fecha}",
-  "@fiscalVenceEl": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVenceEl": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoPeriodoLabel": "Period: {periodo}",
-  "@fiscalVencimientoPeriodoLabel": { "placeholders": { "periodo": { "type": "String" } } },
+  "@fiscalVencimientoPeriodoLabel": {
+    "placeholders": {
+      "periodo": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoFechaLimiteLabel": "Due date: {fecha}",
-  "@fiscalVencimientoFechaLimiteLabel": { "placeholders": { "fecha": { "type": "String" } } },
+  "@fiscalVencimientoFechaLimiteLabel": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
   "fiscalVencimientoEstadoLabel": "Status",
   "fiscalVencimientoNotasLabel": "Notes",
   "fiscalVencimientoEliminarBoton": "🗑 Delete deadline",
   "fiscalVencimientoEliminarTitulo": "Delete this deadline?",
   "fiscalVencimientoEliminarContenido": "It will move to the trash -- this can't be undone from the app.",
-
   "fiscalCalendarioTitulo": "Tax calendar",
   "fiscalCalendarioSinVencimientos": "No deadlines this day.",
-
   "vencimientoFiscalEstadoPendiente": "Pending",
   "vencimientoFiscalEstadoPresentado": "Filed",
   "vencimientoFiscalEstadoFueraPlazo": "Overdue",
-
   "ajustesPerfilSubtitulo": "Name, avatar and notifications",
   "perfilTitulo": "My profile",
   "perfilAvatarGaleria": "Choose from gallery",
@@ -187,10 +195,63 @@
   "login2faAyuda": "This account has two-step verification. Enter the code from your authenticator app or a recovery code.",
   "fichajeSemanaTitulo": "This week",
   "fichajeSemanaDeContratadas": "{horas} of {contratadas}",
-  "@fichajeSemanaDeContratadas": { "placeholders": { "horas": { "type": "String" }, "contratadas": { "type": "String" } } },
+  "@fichajeSemanaDeContratadas": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      },
+      "contratadas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaSinJornada": "No weekly hours set in My details",
   "fichajeSemanaExcedida": "You are {horas} over your hours",
-  "@fichajeSemanaExcedida": { "placeholders": { "horas": { "type": "String" } } },
+  "@fichajeSemanaExcedida": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
   "fichajeSemanaRestan": "{horas} left",
-  "@fichajeSemanaRestan": { "placeholders": { "horas": { "type": "String" } } }
+  "@fichajeSemanaRestan": {
+    "placeholders": {
+      "horas": {
+        "type": "String"
+      }
+    }
+  },
+  "ausenciasTitulo": "Absences and holidays",
+  "ausenciasTooltip": "Absences and holidays",
+  "ausenciasPedir": "Request absence",
+  "ausenciasDisponibles": "{n} days available in {anio}",
+  "ausenciasResumen": "{aprobadas} approved · {pendientes} pending · {total} you are entitled to",
+  "ausenciasSinAusencias": "You have not requested any absence this year yet.",
+  "ausenciasMias": "My absences",
+  "ausenciasPendientesEquipo": "Awaiting approval",
+  "ausenciasTipo": "Type",
+  "ausenciasDesde": "From: {fecha}",
+  "ausenciasHasta": "Until: {fecha}",
+  "ausenciasMedioDia": "Half day only",
+  "ausenciasMotivo": "Reason (optional)",
+  "ausenciasEnviar": "Send request",
+  "ausenciasEnviada": "Request sent.",
+  "ausenciasCancelarPregunta": "Cancel this absence?",
+  "ausenciasCancelada": "Absence cancelled.",
+  "ausenciasAprobar": "Approve",
+  "ausenciasRechazar": "Reject",
+  "ausenciasResuelta": "Done.",
+  "ausenciasDias": "{n} days",
+  "ausenciaTipoVacaciones": "Holiday",
+  "ausenciaTipoAsuntosPropios": "Personal days",
+  "ausenciaTipoPermiso": "Paid leave",
+  "ausenciaTipoBaja": "Sick leave",
+  "ausenciaTipoOtro": "Other",
+  "ausenciaEstadoPendiente": "Pending",
+  "ausenciaEstadoAprobada": "Approved",
+  "ausenciaEstadoRechazada": "Rejected",
+  "ausenciaEstadoCancelada": "Cancelled",
+  "ausenciasMantener": "Keep it",
+  "ausenciasCancelarAccion": "Cancel absence"
 }

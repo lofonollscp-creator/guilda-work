@@ -11,7 +11,10 @@
   <div class="ds-fila">
     {{ boton(_('Nuevo expediente'), 'primario', href=url_for('expedientes.nuevo', cliente_id=c.id)) }}
     {% if g.get('supervisor_tenant') or g.get('es_admin') %}{{ boton(_('Exportar datos (JSON)'), 'fantasma', href=url_for('seguridad.exportar_cliente', cliente_id=c.id)) }}{% endif %}
-    {% if c.cliente_fiscal_id %}{{ boton(_('Ficha fiscal'), 'fantasma', href=url_for('fiscal.ficha_cliente', cliente_id=c.cliente_fiscal_id)) }}{% endif %}
+    {% if c.cliente_fiscal_id %}{{ boton(_('Ficha fiscal'), 'fantasma', href=url_for('fiscal.ficha_cliente', cliente_id=c.cliente_fiscal_id)) }}
+    {% elif gestion_fiscal_disponible and not c.papelera_en %}
+    <form method="post" action="{{ url_for('clientes.activar_gestion_fiscal', cliente_id=c.id) }}">{{ boton(_('Activar gestión fiscal'), 'fantasma', tipo='submit') }}</form>
+    {% endif %}
   </div>
 </header>
 {% include "_nucleo_subnav.html" %}

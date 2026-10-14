@@ -37,7 +37,7 @@ def _parrafo_html(texto: str, color: str = TEXTO_SUAVE, tam: int = 16, margen: i
 
 def construir(
     titulo: str, parrafos: list[str] | tuple[str, ...] = (), *, boton: tuple[str, str] | None = None, codigo: str | None = None,
-    cita: str | None = None, preformateado: str | None = None, aviso: str | None = None, pie: str | None = None,
+    cita: str | None = None, preformateado: str | None = None, bloques_html: str | None = None, aviso: str | None = None, pie: str | None = None,
     preencabezado: str = "", html_crudo: bool = False, plano: str | None = None, idioma: str = "es",
 ) -> tuple[str, str]:
     """Plano + HTML de un correo. `html_crudo=True` deja pasar `titulo`, `codigo` y `parrafos` SIN escapar (solo para las plantillas de Kratos,
@@ -82,6 +82,8 @@ def construir(
             f'<pre style="margin:0 0 20px;padding:14px 16px;background:#0a0a0c;border:1px solid {BORDE};border-radius:12px;white-space:pre-wrap;word-break:break-word;'
             f'font-family:{FUENTE_CODIGO};font-size:13px;line-height:1.5;color:{TEXTO_SUAVE};">{escape(preformateado)}</pre>'
         )
+    if bloques_html:
+        bloques.append(bloques_html)        # HTML ya maquetado y escapado por quien llama (p. ej. el resumen diario)
     if boton:
         texto_boton, url = boton
         bloques.append(

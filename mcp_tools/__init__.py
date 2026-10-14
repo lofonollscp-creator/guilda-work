@@ -528,6 +528,7 @@ from .herramientas_despacho import (  # noqa: E402,F401
     _exigir_alcance_documentos,
     listar_documentos_despacho,
     leer_documento_despacho,
+    _CERT_CAMPOS, _exigir_certificados, _exigir_gestoria, listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso,
     listar_plantillas_correo,
     crear_tarea_recurrente,
     listar_tareas_recurrentes,
@@ -538,6 +539,18 @@ from .herramientas_despacho import (  # noqa: E402,F401
 from .herramientas_fichaje import (  # noqa: E402,F401
     fichar,
     listar_mis_fichajes,
+    _tenant_fichaje, _persona,
+    listar_mis_ausencias,
+    saldo_vacaciones,
+    pedir_ausencia,
+    cancelar_ausencia,
+    listar_ausencias_equipo,
+    resolver_ausencia,
+    ver_mis_turnos,
+    ver_cuadrante,
+    asignar_turno,
+    ver_bolsa_de_horas,
+    ajustar_bolsa_de_horas,
 )
 from .herramientas_backoffice import (  # noqa: E402,F401
     _exigir_admin,
@@ -660,8 +673,10 @@ TOOLS = [
     # Núcleo del despacho (solo lectura)
     listar_clientes_despacho, resumen_cliente_despacho, listar_expedientes_despacho, resumen_expediente_despacho, listar_plazos_despacho,
     listar_documentos_despacho, leer_documento_despacho,
+    listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso,
     # Fichaje
     fichar, listar_mis_fichajes,
+    listar_mis_ausencias, saldo_vacaciones, pedir_ausencia, cancelar_ausencia, listar_ausencias_equipo, resolver_ausencia, ver_mis_turnos, ver_cuadrante, asignar_turno, ver_bolsa_de_horas, ajustar_bolsa_de_horas,
     # Correo (acciones), proyectos, papelera y tareas ampliadas
     mover_correo, destacar_correo, posponer_correo, listar_reglas_correo, crear_regla_correo,
     eliminar_regla_correo, listar_conversacion_correo, crear_tarea_desde_correo, guardar_nota_desde_correo,

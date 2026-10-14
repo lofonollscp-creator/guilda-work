@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import interruptor %}
+{% block title %}{{ _('Ausencias y vacaciones') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Ausencias y vacaciones') }}</h1>
+    <p class="subtitle">{{ _('Pide días libres y consulta cuántos te quedan. Solo cuentan los días laborables.') }}</p>
+  </div>
+</header>
+
+{% with activa = 'mias' %}{% include "_ausencias_nav.html" %}{% endwith %}
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso == 'solicitada' %}<p class="ds-estado-ok" role="status">{{ _('Solicitud enviada. Te avisaremos cuando se resuelva.') }}</p>{% elif aviso == 'cancelada' %}<p class="ds-estado-ok" role="status">{{ _('Ausencia cancelada.') }}</p>{% endif %}
+
+<section class="ausencias-saldo" aria-label="{{ _('Saldo de vacaciones') }}">
+  <div class="ausencias-cifra"><strong>{{ '%g' % saldo.disponibles }}</strong><span>{{ _('días disponibles en %(anio)s', anio=anio) }}</span></div>
+  <div class="ausencias-cifra"><strong>{{ '%g' % saldo.aprobadas }}</strong><span>{{ _('aprobados') }}</span></div>
+  <div class="ausencias-cifra"><strong>{{ '%g' % saldo.pendientes }}</strong><span>{{ _('pendientes de aprobar') }}</span></div>
+  <div class="ausencias-cifra"><strong>{{ '%g' % saldo.total }}</strong><span>{{ _('te corresponden') }}</span></div>
+</section>
+
+<form method="post" action="{{ url_for('fichaje.solicitar_ausencia') }}" class="edit-form ausencias-form">
+  <h2>{{ _('Pedir una ausencia') }}</h2>
+  <div class="correo-form-campo">
+    <label for="aus-tipo">{{ _('Tipo') }}</label>
+    <select id="aus-tipo" name="tipo" required>
+      {% for clave, nombre in tipos_ausencia %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="correo-form-campo">
+    <label for="aus-desde">{{ _('Desde') }}</label>
+    <input type="date" id="aus-desde" name="desde" min="{{ hoy }}" required>
+  </div>
+  <div class="correo-form-campo">
+    <label for="aus-hasta">{{ _('Hasta (si es un solo día, déjalo vacío)') }}</label>
+    <input type="date" id="aus-hasta" name="hasta" min="{{ hoy }}">
+  </div>
+  <div class="correo-form-campo">
+    {{ interruptor('medio_dia', _('Solo medio día (para un único día)'), id='aus-medio') }}
+  </div>
+  <div class="correo-form-campo">
+    <label for="aus-motivo">{{ _('Motivo (opcional)') }}</label>
+    <input type="text" id="aus-motivo" name="motivo" maxlength="500">
+  </div>
+  <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Enviar solicitud') }}</button></div>
+</form>
+
+<h2>{{ _('Mis ausencias de %(anio)s', anio=anio) }}</h2>
+{% if not mis %}
+<p class="empty-lane">{{ _('Todavía no has pedido ninguna ausencia este año.') }}</p>
+{% else %}
+<div class="table-wrap">
+<table class="historial-table">
+  <thead><tr><th>{{ _('Tipo') }}</th><th>{{ _('Fechas') }}</th><th>{{ _('Días') }}</th><th>{{ _('Estado') }}</th><th><span class="sr-only">{{ _('Acciones') }}</span></th></tr></thead>
+  <tbody>
+  {% for a in mis %}
+  <tr>
+    <td>{{ dict(tipos_ausencia)[a.tipo] }}{% if a.motivo %}<div class="subtitle">{{ a.motivo }}</div>{% endif %}</td>
+    <td>{{ a.desde }}{% if a.hasta != a.desde %} → {{ a.hasta }}{% endif %}{% if a.medio_dia %} ({{ _('medio día') }}){% endif %}</td>
+    <td>{{ '%g' % a.dias }}</td>
+    <td><span class="pill">{{ estados_ausencia[a.estado] }}</span>{% if a.comentario %}<div class="subtitle">{{ a.comentario }}</div>{% endif %}</td>
+    <td>
+      {% if a.estado in ('pendiente', 'aprobada') and a.hasta >= hoy %}
+      <form method="post" action="{{ url_for('fichaje.cancelar_ausencia', ausencia_id=a.id) }}">
+        <button type="submit" class="btn btn-ghost btn-sm" data-confirmar-clic="{{ _('¿Cancelar esta ausencia?') }}">{{ _('Cancelar') }}</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

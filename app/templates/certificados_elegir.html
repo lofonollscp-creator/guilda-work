@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Elegir certificado') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('¿Cuál es el certificado del cliente?') }}</h1>
+    <p class="subtitle">{{ _('El archivo contiene varios certificados finales y no se puede adivinar cuál es. Elige el correcto; no se asume que sea el primero.') }}</p>
+  </div>
+</header>
+<div class="table-wrap">
+<table class="historial-table">
+  <thead><tr><th>{{ _('Titular') }}</th><th>{{ _('Emisor') }}</th><th>{{ _('Caduca') }}</th><th>{{ _('Huella SHA-256') }}</th><th></th></tr></thead>
+  <tbody>
+  {% for c in candidatos %}
+  <tr>
+    <td>{{ c.nombre_comun or c.sujeto }}</td><td>{{ c.emisor }}</td><td>{{ c.not_after[:10] }}</td><td><code>{{ c.huella[:16] }}…</code></td>
+    <td>
+      <form method="post" action="{{ url_for('certificados.importar') }}">
+        <input type="hidden" name="contenido_b64" value="{{ contenido_b64 }}"><input type="hidden" name="huella" value="{{ c.huella }}">
+        <input type="hidden" name="ubicacion" value="{{ ubicacion }}"><input type="hidden" name="notas" value="{{ notas }}">
+        <button type="submit" class="btn btn-primary btn-sm">{{ _('Este es') }}</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p><a class="btn btn-ghost" href="{{ url_for('certificados.lista') }}">{{ _('Cancelar') }}</a></p>
+{% endblock %}

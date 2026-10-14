@@ -4,7 +4,7 @@ búsqueda, consumo de IA y comunicados). Capa fina sobre las mismas funciones de
 mismo blueprint `api_bp`, así que comparten autenticación por token, formato de respuesta y OpenAPI. Todo aditivo."""
 import json
 
-from flask import abort, g, request
+from flask import abort, g, jsonify, request
 
 from . import busqueda, comunicados, correo, db, eventos, ia_consumo
 from . import rutas_api as _api
@@ -550,3 +550,422 @@ def upsert_cliente_fiscal(referencia: str):
     if error:
         return error
     return _upsert("clientes_fiscales", g.tenant_id, referencia, _api.crear_cliente_fiscal, _api.editar_cliente_fiscal)
+
+
+# --- Ausencias, vacaciones y permisos (área «fichaje») ----------------------------------------------------------------------------------------
+
+def _ausencia_propia_publica(a) -> dict:
+    return {k: v for k, v in dict(a).items() if k not in ("tenant_id", "creada_por", "resuelta_por")}
+
+
+@api_bp.route("/fichaje/ausencias", methods=["GET"])
+@token_required
+def listar_ausencias():
+    """Tus ausencias, las más recientes primero. Filtros: `anio` y `estado` (`pendiente`, `aprobada`, `rechazada`, `cancelada`)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import ausencias
+    return _ok_paginado(_ausencia_propia_publica(a) for a in ausencias.listar(g.tenant_id, usuario_id=g.usuario_id, anio=request.args.get("anio", type=int), estado=request.args.get("estado")))
+
+
+@api_bp.route("/fichaje/ausencias/saldo", methods=["GET"])
+@token_required
+def saldo_ausencias():
+    """Tus días de vacaciones del año (`anio`, por defecto el actual): los que te corresponden, los aprobados, los pendientes y los disponibles."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import ausencias
+    return _ok(ausencias.saldo(g.tenant_id, g.usuario_id, request.args.get("anio", type=int)))
+
+
+@api_bp.route("/fichaje/ausencias", methods=["POST"])
+@token_required
+def pedir_ausencia():
+    """Pide una ausencia. Cuerpo: `{"tipo": "vacaciones", "desde": "2026-08-03", "hasta": "2026-08-14", "motivo": "...", "medio_dia": false}`.
+    `tipo`: `vacaciones`, `asuntos_propios`, `permiso`, `baja` u `otro`. `hasta` es opcional (un solo día). Solo cuentan los días laborables;
+    solo las vacaciones gastan saldo. Quien gestiona el fichaje puede pasar además `usuario_id` para registrar la de otra persona (queda aprobada)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import ausencias
+    datos = _body()
+    para = datos.get("usuario_id") or g.usuario_id
+    try:
+        aid = ausencias.solicitar(g.tenant_id, int(para), datos.get("tipo", ""), datos.get("desde"), datos.get("hasta"), motivo=datos.get("motivo"),
+                                  medio_dia=bool(datos.get("medio_dia")), por=g.usuario_id)
+    except (ValueError, TypeError) as e:
+        return _err(str(e), 400, "ausencia_invalida")
+    return _ok(_ausencia_propia_publica(ausencias.obtener(g.tenant_id, aid)), 201)
+
+
+@api_bp.route("/fichaje/ausencias/<int:ausencia_id>/cancelar", methods=["POST"])
+@token_required
+def cancelar_ausencia_api(ausencia_id: int):
+    """Cancela una ausencia tuya (pendiente o aprobada que no haya terminado). Quien gestiona el fichaje puede cancelar cualquiera del despacho."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import ausencias
+    try:
+        ausencias.cancelar(g.tenant_id, g.usuario_id, ausencia_id)
+    except ValueError as e:
+        return _err(str(e), 404 if "No existe" in str(e) else 400, "ausencia_no_cancelable")
+    return _ok(_ausencia_propia_publica(ausencias.obtener(g.tenant_id, ausencia_id)))
+
+
+@api_bp.route("/fichaje/ausencias/equipo", methods=["GET"])
+@token_required
+def ausencias_del_equipo():
+    """Solo para quien gestiona el fichaje del despacho: las solicitudes pendientes de aprobar (o las de otro `estado`)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import ausencias
+    if not ausencias.puede_gestionar(g.usuario_id, g.tenant_id):
+        abort(403, "Solo quien gestiona el fichaje del despacho puede ver las ausencias del equipo.")
+    return _ok_paginado(_ausencia_propia_publica(a) | {"persona": a["persona"]} for a in ausencias.listar(g.tenant_id, estado=request.args.get("estado") or "pendiente"))
+
+
+@api_bp.route("/fichaje/ausencias/<int:ausencia_id>/resolver", methods=["POST"])
+@token_required
+def resolver_ausencia_api(ausencia_id: int):
+    """Solo para quien gestiona el fichaje: cuerpo `{"decision": "aprobar" | "rechazar", "comentario": "..."}`. Avisa a la persona."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import ausencias
+    if not ausencias.puede_gestionar(g.usuario_id, g.tenant_id):
+        abort(403, "Solo quien gestiona el fichaje del despacho puede aprobar o rechazar ausencias.")
+    datos = _body()
+    if datos.get("decision") not in ("aprobar", "rechazar"):
+        return _err("`decision` debe ser «aprobar» o «rechazar».", 400, "decision_invalida", "decision")
+    try:
+        ausencias.resolver(g.tenant_id, g.usuario_id, ausencia_id, datos["decision"] == "aprobar", datos.get("comentario"))
+    except ValueError as e:
+        return _err(str(e), 404 if "No existe" in str(e) else 409, "ausencia_no_resoluble")
+    return _ok(_ausencia_propia_publica(ausencias.obtener(g.tenant_id, ausencia_id)))
+
+
+# --- Cuadrante de turnos y bolsa de horas (área «fichaje») ----------------------------------------------------------------------------------
+
+def _exigir_gestion_fichaje() -> None:
+    from . import ausencias
+    if not ausencias.puede_gestionar(g.usuario_id, g.tenant_id):
+        abort(403, "Solo quien gestiona el fichaje del despacho puede hacer esto.")
+
+
+@api_bp.route("/fichaje/turnos", methods=["GET"])
+@token_required
+def mis_turnos_api():
+    """Tus turnos entre `desde` y `hasta` (AAAA-MM-DD; por defecto, las próximas dos semanas)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from datetime import date, timedelta
+    from . import turnos
+    hoy = date.today()
+    try:
+        return _ok_paginado(turnos.mis_turnos(g.tenant_id, g.usuario_id, request.args.get("desde") or hoy.isoformat(), request.args.get("hasta") or (hoy + timedelta(days=14)).isoformat()))
+    except ValueError as e:
+        return _err(str(e), 400, "rango_invalido")
+
+
+@api_bp.route("/fichaje/turnos/cuadrante", methods=["GET"])
+@token_required
+def cuadrante_api():
+    """El cuadrante de todo el despacho entre `desde` y `hasta` (como mucho 62 días; por defecto, la semana en curso)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from datetime import date, timedelta
+    from . import turnos
+    lunes = turnos.lunes_de(date.today())
+    try:
+        return _ok(turnos.cuadrante(g.tenant_id, request.args.get("desde") or lunes.isoformat(), request.args.get("hasta") or (lunes + timedelta(days=6)).isoformat()))
+    except ValueError as e:
+        return _err(str(e), 400, "rango_invalido")
+
+
+@api_bp.route("/fichaje/turnos/tipos", methods=["GET"])
+@token_required
+def tipos_de_turno_api():
+    """Los turnos que existen en el despacho (nombre, horario, color y horas)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import turnos
+    return _ok_paginado(turnos.listar_tipos(g.tenant_id))
+
+
+@api_bp.route("/fichaje/turnos/tipos", methods=["POST"])
+@token_required
+def crear_tipo_de_turno_api():
+    """Solo quien gestiona el fichaje. Cuerpo: `{"nombre": "Mañana", "inicio": "08:00", "fin": "15:00", "color": "#6c8cff"}`."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_gestion_fichaje()
+    from . import turnos
+    d = _body()
+    try:
+        tid = turnos.crear_tipo(g.tenant_id, g.usuario_id, d.get("nombre", ""), d.get("inicio", ""), d.get("fin", ""), d.get("color"))
+    except ValueError as e:
+        return _err(str(e), 400, "turno_invalido")
+    return _ok(next(t for t in turnos.listar_tipos(g.tenant_id) if t["id"] == tid), 201)
+
+
+@api_bp.route("/fichaje/turnos/asignar", methods=["POST"])
+@token_required
+def asignar_turno_api():
+    """Solo quien gestiona el fichaje. Cuerpo: `{"usuario_id": 7, "fecha": "2026-11-02", "turno_id": 3}`; con `turno_id: null` se quita el turno de ese día.
+    Falla si la persona tiene una ausencia aprobada ese día. Avisa a la persona."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_gestion_fichaje()
+    from . import turnos
+    d = _body()
+    try:
+        cambio = turnos.asignar(g.tenant_id, g.usuario_id, int(d.get("usuario_id") or 0), d.get("fecha"), d.get("turno_id"))
+    except (ValueError, TypeError) as e:
+        return _err(str(e), 400, "turno_invalido")
+    return _ok({"cambiado": cambio})
+
+
+@api_bp.route("/fichaje/bolsa-horas", methods=["GET"])
+@token_required
+def bolsa_de_horas_api():
+    """Tu bolsa de horas: lo trabajado frente a lo que tocaba según tu jornada (las ausencias aprobadas no se esperan), más los ajustes manuales. Periodo `desde`/`hasta`
+    (por defecto, del 1 de enero (o tu alta o tu primer fichaje) hasta ayer). Todas las cifras van en segundos; `saldo_seg` es `null` si no tienes jornada semanal indicada."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    from . import bolsa_horas
+    try:
+        return _ok(bolsa_horas.calcular(g.tenant_id, g.usuario_id, request.args.get("desde"), request.args.get("hasta")))
+    except ValueError as e:
+        return _err(str(e), 400, "rango_invalido")
+
+
+@api_bp.route("/fichaje/bolsa-horas/equipo", methods=["GET"])
+@token_required
+def bolsa_de_horas_equipo_api():
+    """Solo quien gestiona el fichaje: la bolsa de cada persona del despacho, de quien más debe a quien más tiene a favor."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_gestion_fichaje()
+    from . import bolsa_horas
+    try:
+        return _ok_paginado(bolsa_horas.resumen_equipo(g.tenant_id, request.args.get("desde"), request.args.get("hasta")))
+    except ValueError as e:
+        return _err(str(e), 400, "rango_invalido")
+
+
+@api_bp.route("/fichaje/bolsa-horas/ajustes", methods=["POST"])
+@token_required
+def ajustar_bolsa_api():
+    """Solo quien gestiona el fichaje. Cuerpo: `{"usuario_id": 7, "minutos": 90, "motivo": "Horas extra del cierre", "fecha": "2026-11-02"}` (minutos negativos restan). Avisa a la persona."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_gestion_fichaje()
+    from . import bolsa_horas
+    d = _body()
+    try:
+        aid = bolsa_horas.anadir_ajuste(g.tenant_id, g.usuario_id, int(d.get("usuario_id") or 0), d.get("minutos"), d.get("motivo", ""), d.get("fecha"))
+    except (ValueError, TypeError) as e:
+        return _err(str(e), 400, "ajuste_invalido")
+    return _ok({"id": aid}, 201)
+
+
+# --- Certificados digitales (área «certificados»; solo custodios y supervisores del despacho) --------------------------------------------------
+
+def _exigir_certificados() -> None:
+    from . import certificados
+    if not certificados.puede_gestionar(g.usuario_id, g.tenant_id):
+        abort(403, "Solo los custodios de certificados y los supervisores del despacho pueden usar esto.")
+
+
+def _certificado_publico(c: dict) -> dict:
+    return {k: v for k, v in c.items() if k not in ("tenant_id", "der", "cliente_email")}
+
+
+@api_bp.route("/certificados", methods=["GET"])
+@token_required
+def listar_certificados_api():
+    """Inventario de certificados del despacho (los más próximos a caducar primero). Filtros: `q` (titular, emisor, NIF o serie), `temporal` (`vigente`, `caducado`,
+    `todavia_no_vigente`) y `operativo` (`inventariado`, `autorizado`, `suspendido`, `sustituido`, `archivado`; sin él, los que están en uso).
+    Cada certificado trae sus dimensiones por separado (`temporal`, `cadena`, `revocacion`, `clave`, `estado_operativo`, `renovacion`): lo no comprobado figura como tal."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    return _ok_paginado(_certificado_publico(c) for c in certificados.listar(g.tenant_id, q=request.args.get("q") or None, temporal=request.args.get("temporal") or None, operativo=request.args.get("operativo") or None))
+
+
+@api_bp.route("/certificados/riesgos", methods=["GET"])
+@token_required
+def riesgos_certificados_api():
+    """Obligaciones pendientes (próximos `dias`, 90 por defecto) cuya cobertura con certificado no está asegurada: caduca antes del vencimiento, sin alternativa autorizada o
+    cobertura desconocida (no hay certificado registrado para ese cliente)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    return _ok_paginado(certificados.riesgos(g.tenant_id, horizonte_dias=max(1, min(request.args.get("dias", 90, type=int), 365))))
+
+
+@api_bp.route("/certificados/<int:certificado_id>", methods=["GET"])
+@token_required
+def obtener_certificado_api(certificado_id: int):
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    c = certificados.obtener(g.tenant_id, certificado_id)
+    if c is None:
+        abort(404, "Certificado no encontrado.")
+    return _ok(_certificado_publico(c))
+
+
+@api_bp.route("/certificados/importar", methods=["POST"])
+@token_required
+def importar_certificado_api():
+    """Importa un certificado **público** (PEM o DER) en `contenido_base64`. Nunca se aceptan claves privadas ni contenedores .p12/.pfx: se rechazan (400 `certificado_no_valido`)
+    sin guardar nada. Si el archivo trae varios certificados finales responde 409 `eleccion_requerida` con los `candidatos`; vuelve a enviarlo con la `huella` elegida.
+    Importar de nuevo el mismo certificado no lo duplica (`nuevo: false`)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    import base64
+    from . import certificados
+    d = _body()
+    try:
+        datos = base64.b64decode(d.get("contenido_base64") or "", validate=True)
+    except ValueError:
+        return _err("`contenido_base64` no es base64 válido.", 400, "certificado_no_valido", "contenido_base64")
+    try:
+        r = certificados.importar(g.tenant_id, g.usuario_id, datos, huella=d.get("huella") or None, ubicacion_externa=d.get("ubicacion"), notas=d.get("notas"), custodio_id=d.get("custodio_id"))
+    except certificados.EleccionRequerida as e:
+        respuesta, _estado = _err(str(e), 409, "eleccion_requerida")
+        return jsonify({**respuesta.get_json(), "candidatos": e.candidatos}), 409
+    except ValueError as e:
+        return _err(str(e), 400, "certificado_no_valido")
+    return _ok(r, 201 if r["nuevo"] else 200)
+
+
+@api_bp.route("/certificados/<int:certificado_id>/renovaciones", methods=["POST"])
+@token_required
+def abrir_renovacion_api(certificado_id: int):
+    """Abre la renovación del certificado (solo puede haber una en curso; 409 si ya la hay). Cuerpo opcional: `{"titular": "...", "notas": "..."}`."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    d = _body()
+    try:
+        rid = certificados.abrir_renovacion(g.tenant_id, g.usuario_id, certificado_id, titular=d.get("titular"), notas=d.get("notas"))
+    except ValueError as e:
+        return _err(str(e), 404 if "No existe" in str(e) else 409, "renovacion_no_abrible")
+    return _ok({"id": rid}, 201)
+
+
+@api_bp.route("/certificados", methods=["POST"])
+@token_required
+def apuntar_certificado_api():
+    """Apunta un certificado **sin archivo**: `{"cliente_fiscal_id": 12, "tipo": "fnmt_persona_fisica", "caduca": "2027-03-31"}`. `tipo`: `fnmt_persona_fisica`, `fnmt_representante`, `fnmt_representante_sin_personalidad`, `dnie`,
+    `accv`, `izenpe`, `camerfirma`, `firmaprofesional` u `otro`. Con `emitido` en vez de `caduca`, se propone la caducidad habitual del tipo (FNMT: 4 años persona física, 2 representante). Opcionales: `titular`
+    y `nif` (por defecto los del cliente), `serie`, `custodio_id`, `ubicacion` (sin contraseñas), `notas` y `avisar_cliente` (`true` siempre, `false` nunca, omitido = según el ajuste del despacho). Si ya estaba apuntado
+    responde 200 con `nuevo: false`."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    d = _body()
+    try:
+        r = certificados.alta_rapida(g.tenant_id, g.usuario_id, tipo=d.get("tipo", "otro"), caduca=d.get("caduca"), emitido=d.get("emitido"), cliente_fiscal_id=d.get("cliente_fiscal_id"), titular=d.get("titular"), nif=d.get("nif"),
+                                     serie=d.get("serie"), custodio_id=d.get("custodio_id"), ubicacion=d.get("ubicacion"), notas=d.get("notas"), avisar_cliente=d.get("avisar_cliente"))
+    except (ValueError, TypeError) as e:
+        return _err(str(e), 400, "certificado_no_valido")
+    return _ok(r, 201 if r["nuevo"] else 200)
+
+
+@api_bp.route("/certificados/<int:certificado_id>", methods=["PUT"])
+@token_required
+def editar_certificado_api(certificado_id: int):
+    """Corrige un certificado (los campos que no envíes no cambian): `cliente_fiscal_id`, `custodio_id`, `nif`, `ubicacion`, `notas` y `avisar_cliente` siempre; y, solo si se apuntó a mano, `titular`, `tipo`,
+    `caduca`, `emitido` y `serie`. Cambiar la caducidad reinicia los avisos de esa fecha."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    d = _body()
+    campos = {k: d[k] for k in ("titular", "tipo", "caduca", "emitido", "serie", "nif", "cliente_fiscal_id", "custodio_id", "ubicacion", "notas", "avisar_cliente") if k in d}
+    if certificados.obtener(g.tenant_id, certificado_id) is None:
+        abort(404, "Certificado no encontrado.")
+    try:
+        certificados.editar(g.tenant_id, g.usuario_id, certificado_id, **campos)
+    except ValueError as e:
+        return _err(str(e), 400, "certificado_no_valido")
+    return _ok(_certificado_publico(certificados.obtener(g.tenant_id, certificado_id)))
+
+
+@api_bp.route("/certificados/<int:certificado_id>/renovado", methods=["POST"])
+@token_required
+def renovado_certificado_api(certificado_id: int):
+    """«Ya está renovado»: `{"nueva_caducidad": "2031-03-31", "emitido": "2027-03-31", "serie": "...", "funciona": true}`. El certificado nuevo hereda cliente, tipo, custodio y servicios y el
+    anterior pasa a «sustituido» con su historial. Si el anterior daba servicio a algún cliente, `funciona: true` confirma que el nuevo funciona (si no, 400)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    d = _body()
+    try:
+        r = certificados.renovado(g.tenant_id, g.usuario_id, certificado_id, d.get("nueva_caducidad"), emitido=d.get("emitido"), serie=d.get("serie"), funciona=bool(d.get("funciona")))
+    except ValueError as e:
+        return _err(str(e), 404 if "No existe" in str(e) else 400, "renovacion_no_valida")
+    return _ok(r, 201)
+
+
+@api_bp.route("/certificados/avisos-cliente", methods=["GET"])
+@token_required
+def configuracion_avisos_cliente_api():
+    """Cómo informa el despacho a sus clientes de la caducidad de su certificado: `avisar_cliente`, `mostrar_en_portal`, `dias_antes`, `dias_despues`, `asunto`, `cuerpo` e `instrucciones`."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    return _ok(certificados.config(g.tenant_id))
+
+
+@api_bp.route("/certificados/avisos-cliente", methods=["PUT"])
+@token_required
+def guardar_avisos_cliente_api():
+    """Solo la dirección del despacho. Cuerpo: `{"avisar_cliente": true, "mostrar_en_portal": true, "dias_antes": [60, 30, 15, 7], "dias_despues": [3], "instrucciones": "...", "asunto": "...", "cuerpo": "..."}`
+    (lo que no envíes se mantiene). Marcas del texto propio: `{cliente}`, `{tipo}`, `{caduca}`, `{dias}`, `{cuando}`, `{despacho}`, `{instrucciones}` y `{enlace}`."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    actual = certificados.config(g.tenant_id)
+    d = _body()
+    try:
+        c = certificados.guardar_config(g.tenant_id, g.usuario_id, avisar_cliente=bool(d.get("avisar_cliente", actual["avisar_cliente"])), mostrar_en_portal=bool(d.get("mostrar_en_portal", actual["mostrar_en_portal"])),
+                                        dias_antes=d.get("dias_antes", actual["dias_antes"]), dias_despues=d.get("dias_despues", actual["dias_despues"]), asunto=d.get("asunto", actual["asunto"]),
+                                        cuerpo=d.get("cuerpo", actual["cuerpo"]), instrucciones=d.get("instrucciones", actual["instrucciones"]))
+    except ValueError as e:
+        return _err(str(e), 403 if "Solo la dirección" in str(e) else 400, "configuracion_no_valida")
+    return _ok(c)

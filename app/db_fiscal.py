@@ -54,11 +54,13 @@ def perfil_fiscal_de_cliente(cliente: sqlite3.Row) -> dict:
 
 def vencimientos_por_cliente(tenant_id: int) -> dict[int, list[dict]]:
     """`{cliente_fiscal_id: [{estado, fecha_limite}]}` de todos los vencimientos vivos del despacho, en una sola consulta (para el semáforo)."""
+    from . import acceso
+    extra, extra_p = acceso.restriccion(tenant_id, "cliente_fiscal_id")
     conn = _db.get_connection()
     try:
         filas = conn.execute(
-            "SELECT cliente_fiscal_id, estado, fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND papelera_en IS NULL",
-            (tenant_id,),
+            f"SELECT cliente_fiscal_id, estado, fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND papelera_en IS NULL{extra}",
+            (tenant_id, *extra_p),
         ).fetchall()
     finally:
         conn.close()
@@ -71,26 +73,45 @@ def vencimientos_por_cliente(tenant_id: int) -> dict[int, list[dict]]:
 def crear_cliente_fiscal(
     tenant_id: int, nombre: str, nif: str | None = None, notas: str | None = None,
     modelos_fiscales: list[str] | None = None, email: str | None = None,
+    cliente_id: int | None = None, pais: str = "ES",
 ) -> int:
+    """`cliente_id`: ficha del núcleo (`clientes`) ya existente a la que se enlaza esta ficha fiscal (alta única, ver app/alta_cliente.py);
+    sin él se crea la ficha del núcleo a partir de esta, como siempre. `pais` entra ya en el alta porque de él depende la clave de duplicados del NIF."""
+    from . import fiscal_identidad
+    pais = (pais or "ES").strip().upper()
     conn = _db.get_connection()
     try:
-        cur = conn.execute(
-            "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, notas, modelos_fiscales, email, creado_en) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                tenant_id, nombre.strip(), (nif or "").strip() or None, (notas or "").strip() or None,
-                _db.serializar_modelos_fiscales(modelos_fiscales), (email or "").strip() or None, _db.now_iso(),
-            ),
-        )
+        clave = fiscal_identidad.clave_unica(nif, pais)
+        try:
+            cur = conn.execute(
+                "INSERT INTO clientes_fiscales (tenant_id, nombre, nif, nif_normalizado, pais, notas, modelos_fiscales, email, creado_en) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    tenant_id, nombre.strip(), (nif or "").strip() or None, clave, pais, (notas or "").strip() or None,
+                    _db.serializar_modelos_fiscales(modelos_fiscales), (email or "").strip() or None, _db.now_iso(),
+                ),
+            )
+        except sqlite3.IntegrityError:
+            raise _db._cliente_duplicado(conn, tenant_id, pais, clave, nif) from None
+        if cliente_id is not None:
+            conn.execute("UPDATE clientes_fiscales SET cliente_id = ? WHERE id = ? AND tenant_id = ?", (cliente_id, cur.lastrowid, tenant_id))
         conn.commit()
-        cliente_id = cur.lastrowid
+        cliente_fiscal_id = cur.lastrowid
     finally:
         conn.close()
-    _db._reindexar_cliente_fiscal(tenant_id, cliente_id)
+    _db._reindexar_cliente_fiscal(tenant_id, cliente_fiscal_id)
     from . import eventos, nucleo
-    nucleo.vincular_cliente_fiscal(tenant_id, cliente_id)
-    eventos.emitir("cliente.creado", tenant_id, {"cliente_id": cliente_id, "nombre": nombre.strip(), "nif": (nif or "").strip() or None})
-    return cliente_id
+    nucleo.vincular_cliente_fiscal(tenant_id, cliente_fiscal_id)
+    eventos.emitir("cliente.creado", tenant_id, {"cliente_id": cliente_fiscal_id, "nombre": nombre.strip(), "nif": (nif or "").strip() or None})
+    return cliente_fiscal_id
+
+
+def _cliente_duplicado(conn, tenant_id: int, pais: str, clave: str | None, nif) -> Exception:
+    """El error que explica con QUIÉN choca un NIF repetido (o el IntegrityError original si no se encuentra, para no ocultar otro fallo)."""
+    from . import fiscal_identidad
+    f = conn.execute("SELECT id, nombre FROM clientes_fiscales WHERE tenant_id = ? AND pais = ? AND nif_normalizado = ? AND papelera_en IS NULL AND nif_duplicado_autorizado IS NULL ORDER BY id LIMIT 1",
+                     (tenant_id, pais, clave)).fetchone() if clave else None
+    return fiscal_identidad.ClienteDuplicado(clave or (nif or "").strip(), f["id"], f["nombre"]) if f else sqlite3.IntegrityError("UNIQUE constraint failed: clientes_fiscales")
 
 
 def _reindexar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
@@ -129,8 +150,10 @@ def listar_clientes_fiscales(tenant_id: int, q: str | None = None, pais: str | N
         if pais:
             cond.append("pais = ?")
             params.append(pais)
+        from . import acceso
+        extra, extra_p = acceso.restriccion(tenant_id, "id")
         return conn.execute(
-            f"SELECT * FROM clientes_fiscales WHERE {' AND '.join(cond)} ORDER BY nombre", params,
+            f"SELECT * FROM clientes_fiscales WHERE {' AND '.join(cond)}{extra} ORDER BY nombre", [*params, *extra_p],
         ).fetchall()
     finally:
         conn.close()
@@ -154,11 +177,13 @@ def paises_clientes_fiscales(tenant_id: int) -> list[str]:
 
 
 def obtener_cliente_fiscal(tenant_id: int, cliente_id: int) -> sqlite3.Row | None:
+    from . import acceso
+    extra, extra_p = acceso.restriccion(tenant_id, "id")
     conn = _db.get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL",
-            (cliente_id, tenant_id),
+            f"SELECT * FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL{extra}",
+            (cliente_id, tenant_id, *extra_p),
         ).fetchone()
     finally:
         conn.close()
@@ -168,14 +193,29 @@ def editar_cliente_fiscal(tenant_id: int, cliente_id: int, **campos) -> None:
     columnas = [c for c in campos if c in _db.CAMPOS_CLIENTE_FISCAL]
     if not columnas:
         return
+    from . import fiscal_identidad
     conn = _db.get_connection()
     try:
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
-        conn.execute(
-            f"UPDATE clientes_fiscales SET {asignaciones} WHERE id = ? AND tenant_id = ?",
-            [*valores, cliente_id, tenant_id],
-        )
+        clave, pais = None, None
+        if "nif" in campos or "pais" in campos:
+            actual = conn.execute("SELECT nif, pais FROM clientes_fiscales WHERE id = ? AND tenant_id = ?", (cliente_id, tenant_id)).fetchone()
+            if actual is None:
+                return
+            pais = (campos.get("pais") or actual["pais"] or "ES").upper()
+            nif_final = campos["nif"] if "nif" in campos else actual["nif"]
+            clave = fiscal_identidad.clave_unica(nif_final, pais)
+            asignaciones += ", nif_normalizado = ?"
+            valores.append(clave)
+        try:
+            conn.execute(
+                f"UPDATE clientes_fiscales SET {asignaciones}, version = version + 1 WHERE id = ? AND tenant_id = ?",
+                [*valores, cliente_id, tenant_id],
+            )
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            raise _db._cliente_duplicado(conn, tenant_id, pais or "ES", clave, campos.get("nif")) from None
         conn.commit()
     finally:
         conn.close()
@@ -206,10 +246,15 @@ def eliminar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
 def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
     conn = _db.get_connection()
     try:
-        conn.execute(
-            "UPDATE clientes_fiscales SET papelera_en = NULL WHERE id = ? AND tenant_id = ?",
-            (cliente_id, tenant_id),
-        )
+        try:
+            conn.execute(
+                "UPDATE clientes_fiscales SET papelera_en = NULL WHERE id = ? AND tenant_id = ?",
+                (cliente_id, tenant_id),
+            )
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            f = conn.execute("SELECT nif, pais, nif_normalizado FROM clientes_fiscales WHERE id = ?", (cliente_id,)).fetchone()
+            raise _db._cliente_duplicado(conn, tenant_id, f["pais"] if f else "ES", f["nif_normalizado"] if f else None, f["nif"] if f else None) from None
         conn.commit()
     finally:
         conn.close()
@@ -221,6 +266,11 @@ def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
 def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> None:
     conn = _db.get_connection()
     try:
+        # Los certificados conservan su historial sin el cliente; las concesiones de acceso se van con él.
+        conn.execute("UPDATE certificados SET cliente_titular_id = NULL WHERE cliente_titular_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
+        conn.execute("UPDATE certificados_vinculos SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
+        conn.execute("DELETE FROM concesiones_cliente WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
+        conn.execute("DELETE FROM traspasos WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.execute("DELETE FROM clientes_fiscales WHERE id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.commit()
     finally:
@@ -230,17 +280,19 @@ def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> 
 
 def crear_vencimiento_fiscal(
     tenant_id: int, cliente_fiscal_id: int, modelo: str, periodo: str, fecha_limite: str,
-    usuario_id: int | None = None, notas: str | None = None,
+    usuario_id: int | None = None, notas: str | None = None, rectifica_a: int | None = None,
 ) -> int:
+    """Alta de un vencimiento. Un mismo cliente, modelo y período solo puede tener uno (si no es una rectificación: `rectifica_a` lo vincula a su original);
+    repetirlo lanza `sqlite3.IntegrityError` (la API lo contesta como 409)."""
     conn = _db.get_connection()
     try:
         cur = conn.execute(
             """INSERT INTO vencimientos_fiscales
-               (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, notas, creado_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, notas, creado_en, rectifica_a)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 tenant_id, cliente_fiscal_id, usuario_id, modelo.strip(), periodo.strip(),
-                fecha_limite, (notas or "").strip() or None, _db.now_iso(),
+                fecha_limite, (notas or "").strip() or None, _db.now_iso(), rectifica_a,
             ),
         )
         conn.commit()
@@ -299,7 +351,10 @@ def listar_vencimientos_fiscales(
             cond.append("v.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
         if pais:
             cond.append("c.pais = ?"); params.append(pais)
-        where = " AND ".join(cond)
+        from . import acceso
+        extra, extra_p = acceso.restriccion(tenant_id, "v.cliente_fiscal_id")
+        where = " AND ".join(cond) + extra
+        params += extra_p
         paginacion = ""
         if limite is not None:
             paginacion = " LIMIT ? OFFSET ?"
@@ -332,10 +387,12 @@ def contar_vencimientos_fiscales(
         cond.append("v.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
     if pais:
         cond.append("c.pais = ?"); params.append(pais)
+    from . import acceso
+    extra, extra_p = acceso.restriccion(tenant_id, "v.cliente_fiscal_id")
     conn = _db.get_connection()
     try:
         return conn.execute(
-            f"SELECT COUNT(*) FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id WHERE {' AND '.join(cond)}", params
+            f"SELECT COUNT(*) FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id WHERE {' AND '.join(cond)}{extra}", [*params, *extra_p]
         ).fetchone()[0]
     finally:
         conn.close()
@@ -367,13 +424,15 @@ def tenant_id_de_vencimiento_fiscal(vencimiento_id: int) -> int | None:
 
 
 def obtener_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> sqlite3.Row | None:
+    from . import acceso
+    extra, extra_p = acceso.restriccion(tenant_id, "v.cliente_fiscal_id")
     conn = _db.get_connection()
     try:
         return conn.execute(
-            """SELECT v.*, c.nombre AS cliente_nombre
+            f"""SELECT v.*, c.nombre AS cliente_nombre
                FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
-               WHERE v.id = ? AND v.tenant_id = ? AND v.papelera_en IS NULL""",
-            (vencimiento_id, tenant_id),
+               WHERE v.id = ? AND v.tenant_id = ? AND v.papelera_en IS NULL{extra}""",
+            (vencimiento_id, tenant_id, *extra_p),
         ).fetchone()
     finally:
         conn.close()
@@ -387,8 +446,13 @@ def editar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, **campos) -> 
     try:
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
+        if "estado" in campos:
+            # El flujo de trabajo (`fase`) y el estado de siempre van a la par: presentar desde aquí también presenta el flujo; reabrir lo devuelve a «pendiente».
+            asignaciones += ", fase = CASE WHEN ? = 'presentado' THEN CASE WHEN fase IN ('presentada', 'cerrada') THEN fase ELSE 'presentada' END " \
+                            "WHEN fase IN ('presentada', 'cerrada') THEN 'pendiente' ELSE fase END"
+            valores.append(campos["estado"])
         conn.execute(
-            f"UPDATE vencimientos_fiscales SET {asignaciones}, actualizado_en = ? WHERE id = ? AND tenant_id = ?",
+            f"UPDATE vencimientos_fiscales SET {asignaciones}, actualizado_en = ?, version = version + 1 WHERE id = ? AND tenant_id = ?",
             [*valores, _db.now_iso(), vencimiento_id, tenant_id],
         )
         conn.commit()
@@ -397,14 +461,25 @@ def editar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, **campos) -> 
     _db._reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
 
 
-def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
+def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, usuario_id: int | None = None) -> None:
+    """Atajo de siempre: marca el vencimiento como presentado. Además deja la fase en «presentada», anota la presentación declarada por quien lo hizo (si se sabe quién)
+    y su evento de auditoría, todo en la misma transacción."""
     conn = _db.get_connection()
     try:
+        ahora = _db.now_iso()
+        previo = conn.execute("SELECT fase FROM vencimientos_fiscales WHERE id = ? AND tenant_id = ?", (vencimiento_id, tenant_id)).fetchone()
         conn.execute(
-            """UPDATE vencimientos_fiscales SET estado = 'presentado', actualizado_en = ?
+            """UPDATE vencimientos_fiscales SET estado = 'presentado', actualizado_en = ?, version = version + 1,
+                      fase = CASE WHEN fase IN ('presentada', 'cerrada') THEN fase ELSE 'presentada' END,
+                      presentada_tarde = CASE WHEN fase IN ('presentada', 'cerrada') THEN presentada_tarde WHEN substr(fecha_limite, 1, 10) < ? THEN 1 ELSE 0 END
                WHERE id = ? AND tenant_id = ?""",
-            (_db.now_iso(), vencimiento_id, tenant_id),
+            (ahora, ahora[:10], vencimiento_id, tenant_id),
         )
+        if previo is not None and previo["fase"] not in ("presentada", "cerrada"):
+            from . import auditoria
+            conn.execute("INSERT INTO obligaciones_evidencias (tenant_id, vencimiento_id, presentado_en, procedencia, declarada_por, creado_en) VALUES (?, ?, ?, 'declarada_por_gestor', ?, ?)",
+                         (tenant_id, vencimiento_id, ahora[:16], usuario_id, ahora))
+            auditoria.registrar(tenant_id, usuario_id, "obligacion.transicion", "obligacion", vencimiento_id, {"de": previo["fase"], "a": "presentada", "via": "marcar_presentado"}, conn=conn)
         conn.commit()
     finally:
         conn.close()
@@ -427,10 +502,16 @@ def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
 def restaurar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:
     conn = _db.get_connection()
     try:
+        # Sacar de la papelera algo «no aplica» o «anulado» lo reactiva: vuelve al principio del flujo y queda anotado.
+        previo = conn.execute("SELECT fase FROM vencimientos_fiscales WHERE id = ? AND tenant_id = ?", (vencimiento_id, tenant_id)).fetchone()
         conn.execute(
-            "UPDATE vencimientos_fiscales SET papelera_en = NULL WHERE id = ? AND tenant_id = ?",
+            "UPDATE vencimientos_fiscales SET papelera_en = NULL, version = version + 1, "
+            "fase = CASE WHEN fase IN ('no_aplica', 'anulada') THEN 'pendiente' ELSE fase END WHERE id = ? AND tenant_id = ?",
             (vencimiento_id, tenant_id),
         )
+        if previo is not None and previo["fase"] in ("no_aplica", "anulada"):
+            from . import auditoria
+            auditoria.registrar(tenant_id, None, "obligacion.reactivada", "obligacion", vencimiento_id, {"desde": previo["fase"]}, conn=conn)
         conn.commit()
     finally:
         conn.close()
@@ -491,15 +572,18 @@ def papelera_fiscal(tenant_id: int) -> list[dict]:
     recientes primero -- aparte de papelera() (que es por usuario_id) porque
     estas dos tablas son por tenant_id, otra granularidad (ver comentario
     de cabecera de la sección "Calendario fiscal" más arriba)."""
+    from . import acceso
+    ec, ec_p = acceso.restriccion(tenant_id, "c.id")
+    ev, ev_p = acceso.restriccion(tenant_id, "v.cliente_fiscal_id")
     conn = _db.get_connection()
     try:
         filas = conn.execute(
-            """
+            f"""
             SELECT * FROM (
                 SELECT 'cliente_fiscal' AS origen, c.id AS id, c.nombre AS texto,
                        NULL AS cliente_nombre, c.papelera_en AS papelera_en
                 FROM clientes_fiscales c
-                WHERE c.tenant_id = ? AND c.papelera_en IS NOT NULL
+                WHERE c.tenant_id = ? AND c.papelera_en IS NOT NULL{ec}
 
                 UNION ALL
 
@@ -507,11 +591,11 @@ def papelera_fiscal(tenant_id: int) -> list[dict]:
                        v.modelo || ' ' || v.periodo AS texto,
                        c.nombre AS cliente_nombre, v.papelera_en AS papelera_en
                 FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
-                WHERE v.tenant_id = ? AND v.papelera_en IS NOT NULL
+                WHERE v.tenant_id = ? AND v.papelera_en IS NOT NULL{ev}
             )
             ORDER BY papelera_en DESC
             """,
-            (tenant_id, tenant_id),
+            (tenant_id, *ec_p, tenant_id, *ev_p),
         ).fetchall()
         return [dict(f) for f in filas]
     finally:
@@ -770,7 +854,13 @@ def subir_documento_vencimiento(
     Nextcloud configurado y la subida sale bien, promueve el archivo
     ahí y vacía el BLOB -- best-effort, mismo criterio que el resto de
     integraciones opcionales: un fallo aquí deja el documento como BLOB,
-    nunca lo pierde ni rompe la subida."""
+    nunca lo pierde ni rompe la subida.
+
+    Lanza ValueError si el archivo es o contiene una clave privada o un contenedor .p12/.pfx: no se guardan nunca."""
+    from . import certificados
+    motivo = certificados.contiene_clave_privada(contenido)
+    if motivo:
+        raise ValueError(f"Ese archivo {motivo}: no se guarda.")
     conn = _db.get_connection()
     try:
         cur = conn.execute(
@@ -1202,14 +1292,16 @@ def purgar_accesos_antiguos(dias: int = _db.RETENCION_ACCESOS_DIAS) -> int:
 
 
 def listar_documentos_cliente(tenant_id: int, cliente_fiscal_id: int, limite: int = 300) -> list[dict]:
+    from . import acceso
+    extra, extra_p = acceso.restriccion(tenant_id, "d.cliente_fiscal_id")
     conn = _db.get_connection()
     try:
         filas = conn.execute(
-            """SELECT d.id, d.nombre_archivo, d.nombre_cifrado, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.asunto_origen, d.subido_por,
+            f"""SELECT d.id, d.nombre_archivo, d.nombre_cifrado, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.asunto_origen, d.subido_por,
                       d.creado_en, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre
                FROM cliente_documentos d LEFT JOIN usuarios u ON u.id = d.subido_por LEFT JOIN usuario_perfil pf ON pf.usuario_id = d.subido_por
-               WHERE d.tenant_id = ? AND d.cliente_fiscal_id = ? ORDER BY d.creado_en DESC, d.id DESC LIMIT ?""",
-            (tenant_id, cliente_fiscal_id, max(1, min(limite, 1000))),
+               WHERE d.tenant_id = ? AND d.cliente_fiscal_id = ?{extra} ORDER BY d.creado_en DESC, d.id DESC LIMIT ?""",
+            (tenant_id, cliente_fiscal_id, *extra_p, max(1, min(limite, 1000))),
         ).fetchall()
         return [dict(f) for f in filas]
     finally:
@@ -1217,11 +1309,13 @@ def listar_documentos_cliente(tenant_id: int, cliente_fiscal_id: int, limite: in
 
 
 def obtener_documento_cliente(tenant_id: int, cliente_fiscal_id: int, documento_id: int) -> sqlite3.Row | None:
+    from . import acceso
+    extra, extra_p = acceso.restriccion(tenant_id, "cliente_fiscal_id")
     conn = _db.get_connection()
     try:
         return conn.execute(
-            "SELECT * FROM cliente_documentos WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?",
-            (documento_id, tenant_id, cliente_fiscal_id),
+            f"SELECT * FROM cliente_documentos WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?{extra}",
+            (documento_id, tenant_id, cliente_fiscal_id, *extra_p),
         ).fetchone()
     finally:
         conn.close()

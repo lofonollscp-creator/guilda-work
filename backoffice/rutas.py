@@ -232,7 +232,7 @@ def crear_tenant():
     return render_template("tenant_creado.html", t=plataforma.obtener_tenant(tenant_id), pasos=pasos)
 
 
-SECCIONES_TENANT = ("resumen", "usuarios", "modulos", "suscripcion", "integraciones", "actividad", "avanzado")
+SECCIONES_TENANT = ("resumen", "usuarios", "personal", "modulos", "suscripcion", "integraciones", "actividad", "avanzado")
 
 
 @bp.route("/tenants/<int:tenant_id>")
@@ -248,6 +248,8 @@ def tenant(tenant_id: int):
     extra = {}
     if seccion == "resumen":
         extra = {"puesta": onboarding_despacho.resumen(tenant_id), "ia": ia_consumo.estado(tenant_id), "ia_historial": ia_consumo.historial(tenant_id)}
+    if seccion == "personal":
+        extra = {"personal": datos.personal_tenant(tenant_id)}
     if seccion == "modulos":
         extra = {"verticales": verticales.estado_para_backoffice(tenant_id)}
     if seccion == "suscripcion":
@@ -408,6 +410,22 @@ def alternar_geolocalizacion(tenant_id: int):
     auth.auditar("tenant.geolocalizacion", f"tenant {tenant_id}: {'on' if nuevo else 'off'}")
     flash("Geolocalización del fichaje " + ("activada." if nuevo else "desactivada."), "ok")
     return _volver_a_tenant(tenant_id)
+
+
+@bp.route("/tenants/<int:tenant_id>/ausencias/dias", methods=["POST"])
+@auth.login_required
+def fijar_dias_de_vacaciones(tenant_id: int):
+    """Días de vacaciones al año por defecto del despacho (cada persona puede tener los suyos: lo ajusta quien gestiona el fichaje)."""
+    from app import ausencias
+    _tenant_o_404(tenant_id)
+    try:
+        ausencias.fijar_dias_anuales(tenant_id, request.form.get("dias_vacaciones", ""))
+    except ValueError as e:
+        flash(str(e), "error")
+        return _volver_a_tenant(tenant_id, "personal")
+    auth.auditar("tenant.dias_vacaciones", f"tenant {tenant_id}: {request.form.get('dias_vacaciones')}")
+    flash("Días de vacaciones por defecto guardados.", "ok")
+    return _volver_a_tenant(tenant_id, "personal")
 
 
 # --- Facturación (Stripe) ----------------------------------------------------

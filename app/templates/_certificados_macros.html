@@ -1,0 +1,20 @@
+{# Piezas comunes de las pantallas de certificados. #}
+{% macro chip_dias(c) -%}
+{%- set d = c.dias_restantes -%}
+{%- if c.temporal == 'desconocido' or d is none -%}<span class="cert-dias cert-dias-nd">{{ _('Sin fecha') }}</span>
+{%- elif c.temporal == 'caducado' -%}<span class="cert-dias cert-dias-caducado">{% if d <= -2 %}{{ _('Caducado hace %(n)s días', n=-d) }}{% else %}{{ _('Caducado') }}{% endif %}</span>
+{%- elif c.temporal == 'todavia_no_vigente' -%}<span class="cert-dias cert-dias-nd">{{ _('Todavía no vigente') }}</span>
+{%- elif d == 0 -%}<span class="cert-dias cert-dias-urgente">{{ _('Caduca hoy') }}</span>
+{%- elif d == 1 -%}<span class="cert-dias cert-dias-urgente">{{ _('Caduca mañana') }}</span>
+{%- else -%}<span class="cert-dias cert-dias-{{ 'urgente' if d <= 7 else ('pronto' if d <= 30 else ('aviso' if d <= 90 else 'ok')) }}">{{ _('Caduca en %(n)s días', n=d) }}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro estado_cliente(c, cfg) -%}
+{%- if not c.cliente_titular_id -%}<span class="subtitle">{{ _('No es de un cliente') }}</span>
+{%- elif c.avisar_cliente == 0 -%}<span class="subtitle">{{ _('Excluido') }}</span>
+{%- elif not c.cliente_email -%}<span class="cert-aviso-falta">{{ _('Sin correo') }}</span>
+{%- elif cfg.avisar_cliente -%}<span class="cert-aviso-ok">{{ _('Avisos activados') }}</span>
+{%- else -%}<span class="subtitle">{{ _('Avisos desactivados') }}</span>
+{%- endif -%}
+{%- endmacro %}

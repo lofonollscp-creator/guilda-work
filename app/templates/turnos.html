@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import interruptor %}
+{% block title %}{{ _('Cuadrante de turnos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Cuadrante de turnos') }}</h1>
+    <p class="subtitle">{{ _('Quién trabaja qué cada día. Cada persona recibe un aviso cuando le cambian el turno.') }}</p>
+  </div>
+</header>
+
+{% with activa = 'turnos' %}{% include "_ausencias_nav.html" %}{% endwith %}
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+
+<div class="quick-row ds-mb-16">
+  <a class="btn btn-ghost" href="{{ url_for('fichaje.cuadrante_turnos', semana=anterior) }}">← {{ _('Semana anterior') }}</a>
+  <strong>{{ _('Semana del %(f)s', f=lunes.isoformat()) }}</strong>
+  <a class="btn btn-ghost" href="{{ url_for('fichaje.cuadrante_turnos', semana=siguiente) }}">{{ _('Semana siguiente') }} →</a>
+</div>
+
+{% if not tipos and puede_gestionar_ausencias %}
+<p class="empty-lane">{{ _('Aún no hay turnos definidos: crea el primero abajo («Tipos de turno»).') }}</p>
+{% endif %}
+
+<div class="table-wrap">
+<table class="historial-table turnos-tabla">
+  <thead>
+    <tr>
+      <th>{{ _('Persona') }}</th>
+      {% for d in cuadrante.dias %}<th{% if d == hoy %} aria-current="date"{% endif %}>{{ dias_cortos[loop.index0] }} {{ d[8:10] }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in cuadrante.personas %}
+  <tr>
+    <td>{{ p.nombre }}{% if puede_gestionar_ausencias %}<div><button type="submit" form="fila-{{ p.usuario_id }}" class="btn btn-primary btn-sm">{{ _('Guardar') }}</button></div>{% endif %}</td>
+    {% for d in cuadrante.dias %}
+    {% set c = p.dias.get(d) %}
+    <td>
+      {% if c and c.ausencia %}
+        <span class="pill">{{ dict(tipos_ausencia)[c.ausencia] }}</span>
+      {% elif puede_gestionar_ausencias %}
+        <select name="t_{{ d }}" form="fila-{{ p.usuario_id }}" aria-label="{{ p.nombre }} · {{ d }}" title="{% if c and c.turno_id %}{{ c.inicio }}–{{ c.fin }}{% endif %}">
+          <option value="">—</option>
+          {% for t in tipos %}<option value="{{ t.id }}" {{ 'selected' if c and c.turno_id == t.id }}>{{ t.nombre }}</option>{% endfor %}
+        </select>
+      {% elif c %}
+        <span class="turno-pastilla" style="--turno: {{ c.color }}">{{ c.nombre }}<small>{{ c.inicio }}–{{ c.fin }}</small></span>
+      {% else %}<span class="subtitle">—</span>{% endif %}
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if puede_gestionar_ausencias %}
+{% for p in cuadrante.personas %}
+<form method="post" action="{{ url_for('fichaje.guardar_semana_de_turnos') }}" id="fila-{{ p.usuario_id }}"><input type="hidden" name="usuario_id" value="{{ p.usuario_id }}"><input type="hidden" name="lunes" value="{{ lunes.isoformat() }}"></form>
+{% endfor %}
+{% endif %}
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Mis próximos turnos') }}</h2>
+  {% if not mis %}<p class="empty-lane">{{ _('No tienes turnos asignados en las próximas dos semanas.') }}</p>
+  {% else %}
+  <ul>{% for m in mis %}<li><strong>{{ m.fecha }}</strong> · {{ m.nombre }} ({{ m.inicio }}–{{ m.fin }})</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+{% if puede_gestionar_ausencias %}
+<section class="ausencias-seccion">
+  <h2>{{ _('Copiar una semana a otra') }}</h2>
+  <form method="post" action="{{ url_for('fichaje.copiar_semana_de_turnos') }}" class="filters">
+    <label>{{ _('Desde el lunes') }} <input type="date" name="desde_lunes" value="{{ lunes.isoformat() }}" required></label>
+    <label>{{ _('Al lunes') }} <input type="date" name="a_lunes" value="{{ siguiente }}" required></label>
+    {{ interruptor('sobrescribir', _('Sustituir lo ya asignado'), id='copiar-sobrescribir') }}
+    <button type="submit" class="btn btn-primary">{{ _('Copiar') }}</button>
+  </form>
+  <p class="subtitle">{{ _('Los días en que alguien está ausente se saltan.') }}</p>
+</section>
+
+<section class="ausencias-seccion">
+  <h2>{{ _('Tipos de turno') }}</h2>
+  {% if tipos %}
+  <ul class="ausencias-hoy">
+    {% for t in tipos %}
+    <li>
+      <span class="turno-pastilla" style="--turno: {{ t.color }}">{{ t.nombre }}<small>{{ t.inicio }}–{{ t.fin }} · {{ '%g' % t.horas }} h</small></span>
+      <form method="post" action="{{ url_for('fichaje.archivar_tipo_de_turno', turno_id=t.id) }}" class="ds-inline">
+        <input type="hidden" name="lunes" value="{{ lunes.isoformat() }}">
+        <button type="submit" class="btn btn-ghost btn-sm" data-confirmar-clic="{{ _('¿Archivar este turno? Se quitará de los días futuros.') }}">{{ _('Archivar') }}</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('fichaje.crear_tipo_de_turno') }}" class="edit-form ausencias-form">
+    <input type="hidden" name="lunes" value="{{ lunes.isoformat() }}">
+    <div class="correo-form-campo"><label for="tt-nombre">{{ _('Nombre') }}</label><input type="text" id="tt-nombre" name="nombre" maxlength="60" required></div>
+    <div class="correo-form-campo"><label for="tt-inicio">{{ _('Empieza') }}</label><input type="time" id="tt-inicio" name="inicio" value="08:00" required></div>
+    <div class="correo-form-campo"><label for="tt-fin">{{ _('Acaba') }}</label><input type="time" id="tt-fin" name="fin" value="15:00" required></div>
+    <div class="correo-form-campo"><label for="tt-color">{{ _('Color') }}</label><input type="color" id="tt-color" name="color" value="#6c8cff"></div>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Crear turno') }}</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import almacen_documentos, calendario_plazos, db, generador_documentos, nucleo, verticales
+from . import alta_cliente, almacen_documentos, calendario_plazos, db, generador_documentos, nucleo, perfil_fiscal, verticales
 from .auth import login_required
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/clientes")
@@ -71,22 +71,65 @@ def lista():
                            etiquetas=nucleo.etiquetas_del_despacho(t), equipo=nucleo.equipo(t), error=_error(), subnav="clientes")
 
 
+def _datos_alta(t: int) -> dict:
+    """Lo que escribe la persona en el formulario de alta, listo para pintarlo de nuevo si hay que repetirlo (duplicados, errores)."""
+    datos = {c: (request.form.get(c) or "").strip() for c in ("nombre", "nif", "email", "telefono", "tipo", "idioma", "origen", "notas", "etiquetas", "responsable_id", "pais", "perfil_tipo")}
+    datos["perfil_atributos"] = request.form.getlist("perfil_atributos")
+    if request.method == "POST":
+        datos["gestion_fiscal"] = bool(request.form.get("gestion_fiscal")) and alta_cliente.gestion_fiscal_disponible(t)
+        datos["generacion_automatica"] = bool(request.form.get("generacion_automatica"))
+    else:
+        datos["gestion_fiscal"] = alta_cliente.gestion_fiscal_disponible(t)
+        datos["generacion_automatica"] = False
+    datos["pais"] = datos["pais"] or "ES"
+    return datos
+
+
+def _render_alta(t: int, datos: dict, parecidos, error, codigo: int = 200):
+    return render_template(
+        "cliente_nuevo.html", datos=datos, parecidos=parecidos, equipo=nucleo.equipo(t), error=error, subnav="clientes",
+        gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
+        paises=alta_cliente.PAISES,
+    ), codigo
+
+
 @clientes_bp.route("/nuevo", methods=["GET", "POST"])
 @login_required
 def nuevo():
     t = _tenant()
-    datos = {c: (request.form.get(c) or "").strip() for c in ("nombre", "nif", "email", "telefono", "tipo", "idioma", "origen", "notas", "etiquetas", "responsable_id")}
+    datos = _datos_alta(t)
     if request.method == "POST":
         parecidos = nucleo.posibles_duplicados(t, datos["nombre"], datos["nif"], datos["email"])
         if parecidos and not request.form.get("crear_igualmente"):
-            return render_template("cliente_nuevo.html", datos=datos, parecidos=parecidos, equipo=nucleo.equipo(t), error=None, subnav="clientes")
+            return _render_alta(t, datos, parecidos, None)
         try:
-            cid = nucleo.crear_cliente(t, datos["nombre"], tipo=datos["tipo"] or None, nif=datos["nif"], email=datos["email"], telefono=datos["telefono"], idioma=datos["idioma"] or None,
-                                       origen=datos["origen"], notas=datos["notas"], responsable_id=_entero(datos["responsable_id"]), etiquetas=_lista(datos["etiquetas"]))
+            res = alta_cliente.crear_cliente_completo(
+                t, datos["nombre"], gestion_fiscal=datos["gestion_fiscal"], tipo=datos["tipo"] or None, nif=datos["nif"], email=datos["email"],
+                telefono=datos["telefono"], idioma=datos["idioma"] or None, origen=datos["origen"], notas=datos["notas"],
+                responsable_id=_entero(datos["responsable_id"]), etiquetas=_lista(datos["etiquetas"]), pais=datos["pais"],
+                perfil_tipo=datos["perfil_tipo"] or None, perfil_atributos=datos["perfil_atributos"], generacion_automatica=datos["generacion_automatica"],
+            )
         except ValueError as e:
-            return render_template("cliente_nuevo.html", datos=datos, parecidos=[], equipo=nucleo.equipo(t), error=str(e), subnav="clientes"), 400
-        return redirect(url_for("clientes.ficha", cliente_id=cid))
-    return render_template("cliente_nuevo.html", datos=datos, parecidos=[], equipo=nucleo.equipo(t), error=_error(), subnav="clientes")
+            return _render_alta(t, datos, [], str(e), 400)
+        return redirect(url_for("clientes.ficha", cliente_id=res["cliente_id"]))
+    return _render_alta(t, datos, [], _error())
+
+
+@clientes_bp.route("/<int:cliente_id>/gestion-fiscal", methods=["POST"])
+@login_required
+def activar_gestion_fiscal(cliente_id: int):
+    """Da de alta la gestión fiscal de un cliente que solo existía en el núcleo."""
+    t = _tenant()
+    if nucleo.obtener_cliente(t, cliente_id) is None or not alta_cliente.gestion_fiscal_disponible(t):
+        abort(404)
+    try:
+        alta_cliente.activar_gestion_fiscal(
+            t, cliente_id, pais=(request.form.get("pais") or "ES"), perfil_tipo=request.form.get("perfil_tipo") or None,
+            perfil_atributos=request.form.getlist("perfil_atributos"), generacion_automatica=bool(request.form.get("generacion_automatica")),
+        )
+    except ValueError as e:
+        return redirect(url_for("clientes.ficha", cliente_id=cliente_id, error=str(e)))
+    return redirect(url_for("clientes.ficha", cliente_id=cliente_id))
 
 
 @clientes_bp.route("/<int:cliente_id>")
@@ -102,7 +145,7 @@ def ficha(cliente_id: int):
         plazos=nucleo.listar_plazos(t, g.usuario_id, _supervisor(), cliente_id=cliente_id, estado="abiertos", limite=20),
         partes=nucleo.listar_partes(t, g.usuario_id, _supervisor(), ver_todo=_supervisor(), cliente_id=cliente_id, limite=10),
         documentos=almacen_documentos.listar(t, g.usuario_id, cliente_id=cliente_id), equipo=nucleo.equipo(t), error=_error(), subnav="clientes",
-        tipos=verticales.tipos_expediente(t), hoy=date.today().isoformat(),
+        tipos=verticales.tipos_expediente(t), hoy=date.today().isoformat(), gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t),
         otros=[o for o in nucleo.listar_clientes(t, limite=500)[0] if o["id"] != cliente_id],
     )
 
@@ -194,7 +237,8 @@ def _subir_documento(*, cliente_id: int | None = None, expediente_id: int | None
                                             categoria=request.form.get("categoria"))
         if r not in ("ok", "duplicado"):
             avisos.append({"vacio": _("Archivo vacío."), "grande": _("Archivo demasiado grande."), "limite": _("Demasiados documentos."), "cliente": _("Cliente no encontrado."),
-                           "expediente": _("Expediente no encontrado.")}.get(r, _("No se pudo guardar.")))
+                           "expediente": _("Expediente no encontrado."),
+                           "clave_privada": _("Ese archivo contiene una clave privada o es un contenedor .p12/.pfx: no se guarda.")}.get(r, _("No se pudo guardar.")))
     return _volver(volver[0], " ".join(dict.fromkeys(avisos)) or None, **volver[1])
 
 

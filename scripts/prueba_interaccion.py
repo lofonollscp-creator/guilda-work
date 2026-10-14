@@ -254,6 +254,129 @@ def fiscal(pg):
     assert "Taller" in pg.inner_text("body") and "Bar La Plaza" not in pg.inner_text("body")
 
 
+@paso("personal: pedir ausencia, aprobar, cambiar un turno y ver la bolsa de horas")
+def personal(pg):
+    pg.goto(BASE + "/fichaje/ausencias")
+    from datetime import date, timedelta
+    d = date.today() + timedelta(days=90)
+    while d.weekday() != 0: d += timedelta(days=1)
+    pg.fill("#aus-desde", d.isoformat()); pg.fill("#aus-motivo", "Prueba")
+    pg.click("form.ausencias-form button[type=submit]")
+    pg.wait_for_load_state()
+    assert "Solicitud enviada" in pg.inner_text("body"), "no confirma la solicitud"
+    pg.goto(BASE + "/fichaje/ausencias/equipo")
+    assert "Semana de descanso" in pg.inner_text("body"), "la solicitud de la demo no aparece pendiente"
+    pg.locator("button:has-text('Aprobar')").first.click()
+    pg.wait_for_load_state()
+    assert "Hecho" in pg.inner_text("body"), "no confirma la aprobación"
+    pg.goto(BASE + "/fichaje/turnos")
+    assert "Mañana" in pg.inner_text("body"), "el cuadrante no muestra los turnos"
+    ancho = pg.evaluate("document.querySelector('.turnos-tabla').getBoundingClientRect().width")
+    assert ancho > 600, f"tabla de turnos demasiado estrecha ({ancho}px)"
+    pg.screenshot(path=str(SAL / "turnos.png"), full_page=True)
+    pg.goto(BASE + "/fichaje/bolsa")
+    assert "saldo de la bolsa" in pg.inner_text("body") and "Bolsa del equipo" in pg.inner_text("body")
+    pg.screenshot(path=str(SAL / "bolsa.png"), full_page=True)
+    pg.goto(BASE + "/fichaje/ausencias/equipo")
+    pg.screenshot(path=str(SAL / "equipo.png"), full_page=True)
+
+
+@paso("certificados: rechaza un .pfx, importa uno público, abre la ficha y ve el riesgo")
+def certificados(pg):
+    import subprocess, tempfile, os
+    codigo = (
+        "import os\nfrom datetime import datetime, timedelta, timezone\n"
+        "from cryptography import x509\nfrom cryptography.hazmat.primitives import hashes, serialization\nfrom cryptography.hazmat.primitives.asymmetric import ec\n"
+        "from cryptography.hazmat.primitives.serialization import pkcs12\nfrom cryptography.x509.oid import NameOID\n"
+        "k = ec.generate_private_key(ec.SECP256R1()); n = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'JOAN VILA'), x509.NameAttribute(NameOID.SERIAL_NUMBER, 'IDCES-87654321X')]); a = datetime.now(timezone.utc)\n"
+        "c = x509.CertificateBuilder().subject_name(n).issuer_name(n).public_key(k.public_key()).serial_number(x509.random_serial_number()).not_valid_before(a - timedelta(days=5)).not_valid_after(a + timedelta(days=200)).sign(k, hashes.SHA256())\n"
+        "open(os.environ['D'] + '/publico.pem', 'wb').write(c.public_bytes(serialization.Encoding.PEM))\n"
+        "open(os.environ['D'] + '/privado.pfx', 'wb').write(pkcs12.serialize_key_and_certificates(b'x', k, c, None, serialization.BestAvailableEncryption(b'secreto')))\n")
+    d = tempfile.mkdtemp()
+    subprocess.run([".venv/bin/python", "-c", codigo], check=True, env={**os.environ, "D": d})
+    pg.goto(BASE + "/certificados/")
+    assert "MARTA PUIG" in pg.inner_text("body") and "Cobertura desconocida" in pg.inner_text("body"), "falta la lista o el riesgo"
+    pg.click("summary:has-text('Avanzado')")
+    pg.set_input_files("#imp-archivo", d + "/privado.pfx"); pg.click("form[action$='/certificados/importar'] button[type=submit]")
+    pg.wait_for_load_state()
+    assert "no guarda claves privadas" in pg.inner_text("body"), "no rechaza el .pfx"
+    pg.click("summary:has-text('Avanzado')")
+    pg.set_input_files("#imp-archivo", d + "/publico.pem"); pg.click("form[action$='/certificados/importar'] button[type=submit]")
+    pg.wait_for_load_state()
+    assert "JOAN VILA" in pg.inner_text("body") and "Certificado importado" in pg.inner_text("body"), "no abre la ficha del importado"
+    pg.screenshot(path=str(SAL / "certificado.png"), full_page=True)
+    pg.goto(BASE + "/certificados/")
+    pg.screenshot(path=str(SAL / "certificados.png"), full_page=True)
+    pg.click("a:has-text('MARTA PUIG')")
+    pg.wait_for_load_state()
+    assert "Apoderamiento" in pg.inner_text("body") and "Renovación" in pg.inner_text("body")
+    pg.screenshot(path=str(SAL / "certificado-con-servicio.png"), full_page=True)
+
+
+@paso("certificados sin archivo: alta rápida, propuesta de caducidad, ya renovado y avisos al cliente")
+def certificados_sin_archivo(pg):
+    from datetime import date, timedelta
+    pg.goto(BASE + "/certificados/")
+    pg.select_option("#al-cliente", index=1)
+    pg.select_option("#al-tipo", "fnmt_persona_fisica")
+    pg.fill("#al-emitido", (date.today() - timedelta(days=30)).isoformat())
+    propuesta = pg.input_value("#al-caduca")
+    assert propuesta, "no propone la caducidad del tipo"
+    pg.fill("#al-caduca", (date.today() + timedelta(days=20)).isoformat())
+    pg.click("#cert-alta button[type=submit]")
+    pg.wait_for_load_state()
+    assert "Certificado guardado" in pg.inner_text("body") or "Caduca en 20 días" in pg.inner_text("body"), "no apunta el certificado"
+    pg.screenshot(path=str(SAL / "certificado-sin-archivo.png"), full_page=True)
+    pg.goto(BASE + "/certificados/avisos")
+    pg.screenshot(path=str(SAL / "certificados-avisos.png"), full_page=True)
+    assert "Cuándo avisar" in pg.inner_text("body")
+
+
+@paso("panel fiscal y traspasos: ver qué mirar hoy, proponer, rechazar con motivo y repartir")
+def panel_y_traspasos(pg):
+    pg.goto(BASE + "/fiscal/panel")
+    cuerpo = pg.inner_text("body")
+    assert "Panel fiscal" in cuerpo and "Reparto del trabajo" in cuerpo and "Muestra:" in cuerpo, "falta el panel o sus indicadores"
+    pg.screenshot(path=str(SAL / "panel-fiscal.png"), full_page=True)
+    pg.goto(BASE + "/fiscal/traspasos")
+    assert "Pendiente de aceptar" in pg.inner_text("body"), "no lista el traspaso pendiente"
+    pg.fill("input[name=motivo]", "Estoy de baja esa semana")
+    pg.click("button:has-text('Rechazar')")
+    pg.wait_for_load_state()
+    assert "Rechazado" in pg.inner_text("body"), "no rechaza con motivo"
+    pg.screenshot(path=str(SAL / "traspasos.png"), full_page=True)
+
+
+@paso("control fiscal: flujo de una obligación, oficinas y auditoría")
+def control_fiscal(pg):
+    pg.goto(BASE + "/fiscal/vencimientos")
+    enlace = pg.locator("a[href*='/fiscal/vencimientos/'][href$='/editar']").first
+    ruta = enlace.get_attribute("href")
+    pg.goto(BASE + ruta)
+    assert "Flujo de trabajo" in pg.inner_text("body") and "Flujo flexible" in pg.inner_text("body"), "no sale el panel de flujo"
+    pg.select_option("#fl-destino", "en_preparacion")
+    pg.click(".flujo-form button[type=submit]")
+    pg.wait_for_load_state()
+    assert "En preparación" in pg.inner_text("body"), "no cambia a «en preparación»"
+    pg.select_option("#fl-destino", "presentada")
+    pg.fill("#fl-ref", "CSV-DEMO-1"); pg.fill("#fl-org", "AEAT")
+    pg.click(".flujo-form button[type=submit]")
+    pg.wait_for_load_state()
+    assert "presentación declarada por" in pg.inner_text("body").lower() and "CSV-DEMO-1" in pg.inner_text("body"), "falta la evidencia declarada"
+    pg.screenshot(path=str(SAL / "flujo-obligacion.png"), full_page=True)
+    pg.goto(BASE + "/fiscal/oficinas")
+    pg.fill("input[name=nombre]", "Girona"); pg.click("form[action$='/fiscal/oficinas'] button[type=submit]")
+    pg.wait_for_load_state()
+    assert "Girona" in pg.inner_text("body"), "no crea la oficina"
+    pg.screenshot(path=str(SAL / "oficinas.png"), full_page=True)
+    pg.goto(BASE + "/fiscal/auditoria")
+    cuerpo = pg.inner_text("body")
+    assert "oficina.crear" in cuerpo and "obligacion.transicion" in cuerpo, "la auditoría no recoge los cambios"
+    pg.screenshot(path=str(SAL / "auditoria.png"), full_page=True)
+    pg.goto(BASE + "/fiscal/flujo")
+    assert "Flujo estricto" in pg.inner_text("body")
+
+
 @paso("móvil: el menú lateral se abre y se cierra")
 def movil(pg_unused, ctx_movil):
     pg = ctx_movil.new_page()
@@ -285,6 +408,11 @@ with sync_playwright() as p:
     propietario(pg, anonimo)
     cifrado(pg)
     correo_cifrado(pg)
+    personal(pg)
+    certificados(pg)
+    certificados_sin_archivo(pg)
+    panel_y_traspasos(pg)
+    control_fiscal(pg)
     movil(pg, nav.new_context(viewport={"width": 390, "height": 800}, locale="es-ES"))
     nav.close()
 for estado, nombre in resultados:

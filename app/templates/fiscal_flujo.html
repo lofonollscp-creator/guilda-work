@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import interruptor %}
+{% block title %}{{ _('Flujo de trabajo fiscal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Flujo de trabajo fiscal') }}</h1>
+    <p class="subtitle">{{ _('Cómo trabaja el despacho cada obligación: de pendiente a presentada y cerrada. Solo la dirección lo cambia.') }}</p>
+  </div>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+<form method="post" class="edit-form ds-max-640">
+  {{ interruptor('flujo_estricto', _('Flujo estricto'), marcado=cfg.flujo_estricto, ayuda=_('Hay que pasar por revisión y aprobación (dirección o revisor fiscal) antes de presentar. Sin esto, se puede presentar desde cualquier fase de trabajo.'), id='cfg-estricto') }}
+  {{ interruptor('exigir_justificante', _('Exigir el justificante oficial'), marcado=cfg.exigir_justificante, ayuda=_('Sin el justificante subido no se puede presentar ni cerrar una obligación.'), id='cfg-justificante') }}
+  <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button></div>
+</form>
+<p class="subtitle">{{ _('Cada cambio de fase queda en la auditoría con quién lo hizo y por qué. Una presentación registrada a mano se muestra como «declarada por el gestor», no como confirmada por el organismo.') }}</p>
+{% endblock %}

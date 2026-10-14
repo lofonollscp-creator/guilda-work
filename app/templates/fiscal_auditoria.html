@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Auditoría') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Auditoría') }}</h1>
+    <p class="subtitle">{{ _('Registro de cambios del control fiscal: obligaciones, certificados, oficinas y permisos. Solo se añade: nada se modifica ni se borra desde la aplicación.') }}</p>
+  </div>
+</header>
+<form method="get" class="filters">
+  <label>{{ _('Sobre') }}
+    <select name="entidad" data-autoenviar="submit">
+      <option value="">{{ _('Todo') }}</option>
+      {% for k, v in (('obligacion', _('Obligaciones')), ('certificado', _('Certificados')), ('cliente_fiscal', _('Clientes')), ('oficina', _('Oficinas')), ('usuario', _('Roles de personas')), ('despacho', _('Configuración'))) %}<option value="{{ k }}" {{ 'selected' if filtros.get('entidad') == k }}>{{ v }}</option>{% endfor %}
+    </select></label>
+  <label>{{ _('Persona') }}
+    <select name="usuario_id" data-autoenviar="submit"><option value="">{{ _('Cualquiera') }}</option>{% for e in equipo %}<option value="{{ e.id }}" {{ 'selected' if filtros.get('usuario_id') == e.id|string }}>{{ e.nombre }}</option>{% endfor %}</select></label>
+  <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ filtros.get('desde', '') }}"></label>
+  <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ filtros.get('hasta', '') }}"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+{% if not eventos %}<p class="empty-lane">{{ _('No hay eventos con esos filtros.') }}</p>
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Cuándo') }}</th><th>{{ _('Quién') }}</th><th>{{ _('Qué') }}</th><th>{{ _('Sobre') }}</th><th>{{ _('Detalle') }}</th></tr></thead>
+  <tbody>
+  {% for e in eventos %}
+  <tr><td>{{ e.creado_en[:16].replace('T', ' ') }}</td><td>{{ e.actor or _('Sistema') }}</td><td><code>{{ e.accion }}</code></td><td>{{ e.entidad }} {{ e.entidad_id or '' }}</td>
+    <td class="subtitle">{% if e.detalle is mapping %}{% for k, v in e.detalle.items() if v is not none %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}{% else %}{{ e.detalle or '' }}{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% if siguiente %}<p><a class="btn btn-ghost" href="{{ url_for('control_fiscal.auditoria_pantalla', antes_de_id=siguiente, entidad=filtros.get('entidad'), usuario_id=filtros.get('usuario_id'), desde=filtros.get('desde'), hasta=filtros.get('hasta')) }}">{{ _('Ver más antiguos') }}</a></p>{% endif %}
+{% endif %}
+{% endblock %}

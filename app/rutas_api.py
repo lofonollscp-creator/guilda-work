@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, g, jsonify, make_response, request, stream_with_context, url_for
 from werkzeug.exceptions import HTTPException
 
-from . import correo, db, eventos, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
+from . import alta_cliente, correo, db, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -52,6 +52,12 @@ def _error_json(e: HTTPException):
     if e.code == 429 and getattr(e, "retry_after", None):
         respuesta.headers["Retry-After"] = str(int(e.retry_after))
     return respuesta, e.code
+
+
+@api_bp.errorhandler(fiscal_identidad.ClienteDuplicado)
+def _cliente_duplicado(e):
+    """Dos clientes de la misma asesoría con la misma identificación fiscal válida: conflicto de negocio, con el cliente existente en el texto."""
+    return _err(str(e), 409, "cliente_duplicado")
 
 
 @api_bp.errorhandler(sqlite3.IntegrityError)
@@ -820,9 +826,22 @@ def cambiar_estado_tiquet(tiquet_id: int):
 # fila (quien quiera ajustar una fecha después, edita el vencimiento ya
 # creado, igual que puede hacer desde la web).
 
+def _version_if_match() -> int | None:
+    """La versión que quien llama dice haber leído (cabecera `If-Match`, con o sin comillas); `None` si no la manda (compatible con quien no la usa)."""
+    crudo = (request.headers.get("If-Match") or "").strip()
+    if crudo.startswith("W/"):
+        crudo = crudo[2:]
+    crudo = crudo.strip('"')
+    return int(crudo) if crudo.isdigit() else None
+
+
 def _exigir_tenant_api():
     if g.tenant_id is None:
         return _err("Esta cuenta no tiene un tenant asignado -- pide a un admin que te asigne uno.", 403)
+    if request.method not in ("GET", "HEAD", "OPTIONS") and request.path.startswith("/api/v1/fiscal"):
+        from . import acceso
+        if acceso.es_solo_auditor(g.tenant_id, g.usuario_id):
+            return _err("Con el rol de auditor solo puedes leer.", 403, "solo_lectura")
     return None
 
 
@@ -857,20 +876,11 @@ def crear_cliente_fiscal():
         return error
     cliente_id = db.crear_cliente_fiscal(
         g.tenant_id, nombre, nif=datos.get("nif"), notas=datos.get("notas"),
-        modelos_fiscales=datos.get("modelos_fiscales") or None, email=extra.pop("email", None),
+        modelos_fiscales=datos.get("modelos_fiscales") or None, email=extra.pop("email", None), pais=extra.get("pais") or "ES",
     )
     if extra:
         db.editar_cliente_fiscal(g.tenant_id, cliente_id, **extra)
-    # EspoCRM opcional, mismo idioma best-effort que app/rutas_fiscal.py.
-    try:
-        cuenta_id = espocrm.buscar_cuenta_por_nombre(nombre)
-        if cuenta_id is None:
-            cuenta = espocrm.crear_cuenta(nombre)
-            cuenta_id = cuenta["id"] if cuenta else None
-        if cuenta_id:
-            db.editar_cliente_fiscal(g.tenant_id, cliente_id, espocrm_cuenta_id=cuenta_id)
-    except espocrm.ErrorEspoCRM:
-        pass
+    alta_cliente.vincular_espocrm(g.tenant_id, cliente_id, nombre)
     _guardar_referencia("clientes_fiscales", g.tenant_id, cliente_id, datos)
     return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)), 201)
 
@@ -896,8 +906,12 @@ def editar_cliente_fiscal(cliente_id: int):
     error = _exigir_tenant_api()
     if error:
         return error
-    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+    actual = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if actual is None:
         abort(404, "Cliente fiscal no encontrado.")
+    esperada = _version_if_match()
+    if esperada is not None and esperada != actual["version"]:
+        return _err("Otra persona ha cambiado este cliente: recárgalo y revisa los cambios.", 412, "version_obsoleta")
     datos = _body()
     campos = {}
     if "nombre" in datos:
@@ -994,7 +1008,16 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
     if vencimiento is None:
         abort(404, "Vencimiento no encontrado.")
     datos = _body()
+    esperada = _version_if_match()
+    if esperada is not None and esperada != vencimiento["version"]:
+        return _err("Otra persona ha cambiado este vencimiento: recárgalo y revisa los cambios.", 412, "version_obsoleta")
     campos = {k: datos[k] for k in db.CAMPOS_VENCIMIENTO_FISCAL if k in datos}
+    if "estado" in campos:
+        from . import obligaciones
+        try:
+            obligaciones.exigir_para_cambiar_estado(g.tenant_id, g.usuario_id, vencimiento, campos["estado"])
+        except ValueError as e:
+            return _err(str(e), 409, "flujo_fiscal")
     db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, **campos)
     nuevo = (campos.get("documento_solicitado") or "").strip()
     if nuevo and nuevo != vencimiento["documento_solicitado"]:
@@ -1022,7 +1045,12 @@ def marcar_presentado_vencimiento_fiscal(vencimiento_id: int):
     if vencimiento is None:
         abort(404, "Vencimiento no encontrado.")
     from .rutas_fiscal import _generar_constancia, _guardar_justificante
-    db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    from . import obligaciones
+    try:
+        obligaciones.exigir_para_marcar_presentado(g.tenant_id, g.usuario_id, vencimiento, con_justificante=bool(request.files.get("justificante") and request.files["justificante"].filename))
+    except ValueError as e:
+        return _err(str(e), 409, "flujo_fiscal")
+    db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id, g.usuario_id)
     justificante = request.files.get("justificante")
     if justificante is not None and justificante.filename and not _guardar_justificante(vencimiento_id, justificante):
         return _err("Justificante no válido: solo imágenes o PDF, hasta 8 MB (el vencimiento ya queda presentado).", 400, "justificante_invalido", "justificante")
