@@ -13,7 +13,10 @@
     {% if g.get('supervisor_tenant') or g.get('es_admin') %}{{ boton(_('Exportar datos (JSON)'), 'fantasma', href=url_for('seguridad.exportar_cliente', cliente_id=c.id)) }}{% endif %}
     {% if c.cliente_fiscal_id %}{{ boton(_('Ficha fiscal'), 'fantasma', href=url_for('fiscal.ficha_cliente', cliente_id=c.cliente_fiscal_id)) }}
     {% elif gestion_fiscal_disponible and not c.papelera_en %}
-    <form method="post" action="{{ url_for('clientes.activar_gestion_fiscal', cliente_id=c.id) }}">{{ boton(_('Activar gestión fiscal'), 'fantasma', tipo='submit') }}</form>
+    <form class="ds-fila" method="post" action="{{ url_for('clientes.activar_gestion_fiscal', cliente_id=c.id) }}">
+      <select name="plantilla_id" aria-label="{{ _('Plantilla de cliente') }}"><option value="">{{ _('Sin plantilla') }}</option>{% for p in plantillas %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
+      {{ boton(_('Activar gestión fiscal'), 'fantasma', tipo='submit') }}
+    </form>
     {% endif %}
   </div>
 </header>

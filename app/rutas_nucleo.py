@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import alta_cliente, almacen_documentos, calendario_plazos, db, generador_documentos, nucleo, perfil_fiscal, verticales
+from . import alta_cliente, almacen_documentos, calendario_plazos, db, generador_documentos, nucleo, perfil_fiscal, plantillas_cliente, verticales
 from .auth import login_required
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/clientes")
@@ -68,12 +68,13 @@ def lista():
     pagina = max(1, request.args.get("pagina", 1, type=int))
     filas, total = nucleo.listar_clientes(t, q, etiqueta, tipo, limite=POR_PAGINA, pagina=pagina)
     return render_template("clientes_lista.html", clientes=filas, total=total, pagina=pagina, paginas=max(1, -(-total // POR_PAGINA)), q=q or "", etiqueta=etiqueta or "", tipo=tipo or "",
-                           etiquetas=nucleo.etiquetas_del_despacho(t), equipo=nucleo.equipo(t), error=_error(), subnav="clientes")
+                           etiquetas=nucleo.etiquetas_del_despacho(t), equipo=nucleo.equipo(t), error=_error(), subnav="clientes",
+                           gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t))
 
 
 def _datos_alta(t: int) -> dict:
     """Lo que escribe la persona en el formulario de alta, listo para pintarlo de nuevo si hay que repetirlo (duplicados, errores)."""
-    datos = {c: (request.form.get(c) or "").strip() for c in ("nombre", "nif", "email", "telefono", "tipo", "idioma", "origen", "notas", "etiquetas", "responsable_id", "pais", "perfil_tipo")}
+    datos = {c: (request.form.get(c) or "").strip() for c in ("nombre", "nif", "email", "telefono", "tipo", "idioma", "origen", "notas", "etiquetas", "responsable_id", "pais", "perfil_tipo", "plantilla_id")}
     datos["perfil_atributos"] = request.form.getlist("perfil_atributos")
     if request.method == "POST":
         datos["gestion_fiscal"] = bool(request.form.get("gestion_fiscal")) and alta_cliente.gestion_fiscal_disponible(t)
@@ -89,7 +90,7 @@ def _render_alta(t: int, datos: dict, parecidos, error, codigo: int = 200):
     return render_template(
         "cliente_nuevo.html", datos=datos, parecidos=parecidos, equipo=nucleo.equipo(t), error=error, subnav="clientes",
         gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
-        paises=alta_cliente.PAISES,
+        paises=alta_cliente.PAISES, plantillas=plantillas_cliente.listar(t), puede_gestionar_plantillas=_supervisor(),
     ), codigo
 
 
@@ -108,6 +109,7 @@ def nuevo():
                 telefono=datos["telefono"], idioma=datos["idioma"] or None, origen=datos["origen"], notas=datos["notas"],
                 responsable_id=_entero(datos["responsable_id"]), etiquetas=_lista(datos["etiquetas"]), pais=datos["pais"],
                 perfil_tipo=datos["perfil_tipo"] or None, perfil_atributos=datos["perfil_atributos"], generacion_automatica=datos["generacion_automatica"],
+                plantilla_id=datos["plantilla_id"] or None, usuario_id=g.usuario_id,
             )
         except ValueError as e:
             return _render_alta(t, datos, [], str(e), 400)
@@ -126,10 +128,47 @@ def activar_gestion_fiscal(cliente_id: int):
         alta_cliente.activar_gestion_fiscal(
             t, cliente_id, pais=(request.form.get("pais") or "ES"), perfil_tipo=request.form.get("perfil_tipo") or None,
             perfil_atributos=request.form.getlist("perfil_atributos"), generacion_automatica=bool(request.form.get("generacion_automatica")),
+            plantilla_id=request.form.get("plantilla_id") or None, usuario_id=g.usuario_id,
         )
     except ValueError as e:
         return redirect(url_for("clientes.ficha", cliente_id=cliente_id, error=str(e)))
     return redirect(url_for("clientes.ficha", cliente_id=cliente_id))
+
+
+@clientes_bp.route("/plantillas", methods=["GET", "POST"])
+@login_required
+def plantillas():
+    """Plantillas de cliente del despacho (app/plantillas_cliente.py): verlas todos, crearlas y borrarlas la dirección."""
+    t = _tenant()
+    if not alta_cliente.gestion_fiscal_disponible(t):
+        abort(404)
+    if request.method == "POST":
+        if not _supervisor():
+            abort(403)
+        tp = request.form.get("plantilla_tareas_id", type=int)
+        try:
+            plantillas_cliente.crear(
+                t, g.usuario_id, request.form.get("nombre", ""), perfil_tipo=request.form.get("perfil_tipo") or None, perfil_atributos=request.form.getlist("perfil_atributos"),
+                generacion_automatica=bool(request.form.get("generacion_automatica")), plantilla_tareas_id=tp, etiquetas=request.form.get("etiquetas", ""),
+            )
+        except ValueError as e:
+            return redirect(url_for("clientes.plantillas", error=str(e)))
+        return redirect(url_for("clientes.plantillas"))
+    return render_template(
+        "clientes_plantillas.html", plantillas=plantillas_cliente.listar(t), plantillas_tareas=[p for p in db.listar_plantillas_tareas(g.usuario_id) if p["compartida"]],
+        perfil_atributos=perfil_fiscal.ATRIBUTOS, puede_gestionar=_supervisor(), error=_error(), subnav="clientes",
+    )
+
+
+@clientes_bp.route("/plantillas/<plantilla_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_plantilla(plantilla_id: str):
+    t = _tenant()
+    if not _supervisor():
+        abort(403)
+    if not plantillas_cliente.eliminar(t, plantilla_id):
+        abort(404)
+    return redirect(url_for("clientes.plantillas"))
 
 
 @clientes_bp.route("/<int:cliente_id>")
@@ -146,6 +185,7 @@ def ficha(cliente_id: int):
         partes=nucleo.listar_partes(t, g.usuario_id, _supervisor(), ver_todo=_supervisor(), cliente_id=cliente_id, limite=10),
         documentos=almacen_documentos.listar(t, g.usuario_id, cliente_id=cliente_id), equipo=nucleo.equipo(t), error=_error(), subnav="clientes",
         tipos=verticales.tipos_expediente(t), hoy=date.today().isoformat(), gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t),
+        plantillas=plantillas_cliente.listar(t),
         otros=[o for o in nucleo.listar_clientes(t, limite=500)[0] if o["id"] != cliente_id],
     )
 

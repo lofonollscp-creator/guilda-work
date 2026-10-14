@@ -640,9 +640,6 @@ def generar_vencimientos_automaticos() -> int:
     # propósito (ver su docstring, "nunca un cron que auto-genera") y no
     # importa db.py -- este orquestador vive aquí, no allí, precisamente
     # para no romper esa separación.
-    from . import nucleo
-
-    anio_actual = _db.datetime.now().year
     creados = 0
     conn = _db.get_connection()
     try:
@@ -654,20 +651,25 @@ def generar_vencimientos_automaticos() -> int:
         conn.close()
 
     for cliente in clientes:
-        modelos = _db.modelos_fiscales_de_cliente(cliente)
-        if not modelos:
-            continue
-        for anio in (anio_actual - 1, anio_actual):
-            for propuesta in nucleo.propuestas_vencimientos_ajustadas(cliente["tenant_id"], modelos, anio, cliente["pais"]):
-                if _db._existe_vencimiento_fiscal(
-                    cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"]
-                ):
-                    continue
-                _db.crear_vencimiento_fiscal(
-                    cliente["tenant_id"], cliente["id"],
-                    propuesta["modelo"], propuesta["periodo"], propuesta["fecha_limite"],
-                )
-                creados += 1
+        creados += _db.generar_vencimientos_de_cliente(cliente)
+    return creados
+
+
+def generar_vencimientos_de_cliente(cliente) -> int:
+    """Crea los vencimientos que le faltan a UN cliente fiscal (fila de `clientes_fiscales`) según sus modelos, para el año en curso y el anterior; idempotente.
+    Lo usa el cron diario y el alta con plantilla de cliente (app/plantillas_cliente.py). Devuelve cuántos ha creado."""
+    from . import nucleo
+    modelos = _db.modelos_fiscales_de_cliente(cliente)
+    if not modelos:
+        return 0
+    creados = 0
+    anio_actual = _db.datetime.now().year
+    for anio in (anio_actual - 1, anio_actual):
+        for propuesta in nucleo.propuestas_vencimientos_ajustadas(cliente["tenant_id"], modelos, anio, cliente["pais"]):
+            if _db._existe_vencimiento_fiscal(cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"]):
+                continue
+            _db.crear_vencimiento_fiscal(cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"], propuesta["fecha_limite"])
+            creados += 1
     return creados
 
 

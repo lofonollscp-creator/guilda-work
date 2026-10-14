@@ -11804,3 +11804,57 @@ msgstr "Generate deadlines automatically each period (needs a client type to be 
 
 msgid "Activar gestión fiscal"
 msgstr "Enable tax management"
+
+msgid "Plantilla de cliente"
+msgstr "Client template"
+
+msgid "Sin plantilla"
+msgstr "No template"
+
+msgid "Rellena el perfil fiscal, las etiquetas y las tareas iniciales. Lo que marques a mano debajo manda sobre la plantilla."
+msgstr "Fills in the tax profile, tags and initial tasks. Anything you set by hand below takes priority over the template."
+
+msgid "Gestionar plantillas de cliente"
+msgstr "Manage client templates"
+
+msgid "Plantillas de cliente"
+msgstr "Client templates"
+
+msgid "El punto de partida de un alta según el tipo de cliente: perfil fiscal (de él salen los modelos propuestos), etiquetas, generación automática de vencimientos y tareas iniciales."
+msgstr "The starting point for a new client by client type: tax profile (the proposed models come from it), tags, automatic generation of deadlines and initial tasks."
+
+msgid "De serie"
+msgstr "Built-in"
+
+msgid "Estimación directa"
+msgstr "Direct estimation"
+
+msgid "Retenciones"
+msgstr "Withholdings"
+
+msgid "Alquiler de local"
+msgstr "Premises rent"
+
+msgid "Vencimientos automáticos"
+msgstr "Automatic deadlines"
+
+msgid "Con tareas iniciales"
+msgstr "With initial tasks"
+
+msgid "¿Eliminar esta plantilla? Los clientes ya creados no cambian."
+msgstr "Delete this template? Clients already created are not affected."
+
+msgid "Las plantillas de serie son un punto de partida sin validar: el perfil es una sugerencia habitual, no una regla fiscal. Los modelos que salen del perfil se siguen mostrando como propuesta editable en la ficha fiscal del cliente."
+msgstr "Built-in templates are an unvalidated starting point: the profile is a common suggestion, not a tax rule. The models that come from the profile are still shown as an editable proposal on the client's tax record."
+
+msgid "Generar los vencimientos automáticamente al dar de alta al cliente"
+msgstr "Generate deadlines automatically when the client is created"
+
+msgid "Tareas iniciales"
+msgstr "Initial tasks"
+
+msgid "Una plantilla de tareas compartida con el despacho; se aplica a nombre de quien da de alta al cliente."
+msgstr "A task template shared with the firm; it is applied in the name of the person who creates the client."
+
+msgid "Crear plantilla"
+msgstr "Create template"

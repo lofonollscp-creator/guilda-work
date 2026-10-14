@@ -11813,3 +11813,57 @@ msgstr "Generar els venciments automàticament cada període (cal un tipus de cl
 
 msgid "Activar gestión fiscal"
 msgstr "Activar la gestió fiscal"
+
+msgid "Plantilla de cliente"
+msgstr "Plantilla de client"
+
+msgid "Sin plantilla"
+msgstr "Sense plantilla"
+
+msgid "Rellena el perfil fiscal, las etiquetas y las tareas iniciales. Lo que marques a mano debajo manda sobre la plantilla."
+msgstr "Omple el perfil fiscal, les etiquetes i les tasques inicials. El que marquis a mà a sota preval sobre la plantilla."
+
+msgid "Gestionar plantillas de cliente"
+msgstr "Gestionar plantilles de client"
+
+msgid "Plantillas de cliente"
+msgstr "Plantilles de client"
+
+msgid "El punto de partida de un alta según el tipo de cliente: perfil fiscal (de él salen los modelos propuestos), etiquetas, generación automática de vencimientos y tareas iniciales."
+msgstr "El punt de partida d'una alta segons el tipus de client: perfil fiscal (d'ell surten els models proposats), etiquetes, generació automàtica de venciments i tasques inicials."
+
+msgid "De serie"
+msgstr "De sèrie"
+
+msgid "Estimación directa"
+msgstr "Estimació directa"
+
+msgid "Retenciones"
+msgstr "Retencions"
+
+msgid "Alquiler de local"
+msgstr "Lloguer de local"
+
+msgid "Vencimientos automáticos"
+msgstr "Venciments automàtics"
+
+msgid "Con tareas iniciales"
+msgstr "Amb tasques inicials"
+
+msgid "¿Eliminar esta plantilla? Los clientes ya creados no cambian."
+msgstr "Voleu eliminar aquesta plantilla? Els clients ja creats no canvien."
+
+msgid "Las plantillas de serie son un punto de partida sin validar: el perfil es una sugerencia habitual, no una regla fiscal. Los modelos que salen del perfil se siguen mostrando como propuesta editable en la ficha fiscal del cliente."
+msgstr "Les plantilles de sèrie són un punt de partida sense validar: el perfil és un suggeriment habitual, no una regla fiscal. Els models que surten del perfil continuen mostrant-se com a proposta editable a la fitxa fiscal del client."
+
+msgid "Generar los vencimientos automáticamente al dar de alta al cliente"
+msgstr "Generar els venciments automàticament en donar d'alta el client"
+
+msgid "Tareas iniciales"
+msgstr "Tasques inicials"
+
+msgid "Una plantilla de tareas compartida con el despacho; se aplica a nombre de quien da de alta al cliente."
+msgstr "Una plantilla de tasques compartida amb el despatx; s'aplica en nom de qui dona d'alta el client."
+
+msgid "Crear plantilla"
+msgstr "Crear plantilla"

@@ -8,7 +8,10 @@
     <h1>{{ _('Clientes') }}</h1>
     <p class="subtitle">{{ _('Todas las personas y empresas para las que trabajas, con sus contactos, expedientes y documentos.') }}</p>
   </div>
-  <a class="btn btn-primary" href="{{ url_for('clientes.nuevo') }}">+ {{ _('Nuevo cliente') }}</a>
+  <div class="ds-fila">
+    {% if gestion_fiscal_disponible %}<a class="btn btn-ghost" href="{{ url_for('clientes.plantillas') }}">{{ _('Plantillas de cliente') }}</a>{% endif %}
+    <a class="btn btn-primary" href="{{ url_for('clientes.nuevo') }}">+ {{ _('Nuevo cliente') }}</a>
+  </div>
 </header>
 {% include "_nucleo_subnav.html" %}
 {{ aviso_error(error) }}

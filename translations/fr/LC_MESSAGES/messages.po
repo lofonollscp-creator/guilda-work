@@ -11889,3 +11889,57 @@ msgstr "Générer les échéances automatiquement à chaque période (nécessite
 
 msgid "Activar gestión fiscal"
 msgstr "Activer la gestion fiscale"
+
+msgid "Plantilla de cliente"
+msgstr "Modèle de client"
+
+msgid "Sin plantilla"
+msgstr "Sans modèle"
+
+msgid "Rellena el perfil fiscal, las etiquetas y las tareas iniciales. Lo que marques a mano debajo manda sobre la plantilla."
+msgstr "Remplit le profil fiscal, les étiquettes et les tâches initiales. Ce que vous indiquez à la main ci-dessous l'emporte sur le modèle."
+
+msgid "Gestionar plantillas de cliente"
+msgstr "Gérer les modèles de client"
+
+msgid "Plantillas de cliente"
+msgstr "Modèles de client"
+
+msgid "El punto de partida de un alta según el tipo de cliente: perfil fiscal (de él salen los modelos propuestos), etiquetas, generación automática de vencimientos y tareas iniciales."
+msgstr "Le point de départ d'une création de client selon son type : profil fiscal (d'où viennent les modèles proposés), étiquettes, génération automatique des échéances et tâches initiales."
+
+msgid "De serie"
+msgstr "De série"
+
+msgid "Estimación directa"
+msgstr "Estimation directe"
+
+msgid "Retenciones"
+msgstr "Retenues"
+
+msgid "Alquiler de local"
+msgstr "Loyer de local"
+
+msgid "Vencimientos automáticos"
+msgstr "Échéances automatiques"
+
+msgid "Con tareas iniciales"
+msgstr "Avec tâches initiales"
+
+msgid "¿Eliminar esta plantilla? Los clientes ya creados no cambian."
+msgstr "Supprimer ce modèle ? Les clients déjà créés ne changent pas."
+
+msgid "Las plantillas de serie son un punto de partida sin validar: el perfil es una sugerencia habitual, no una regla fiscal. Los modelos que salen del perfil se siguen mostrando como propuesta editable en la ficha fiscal del cliente."
+msgstr "Les modèles de série sont un point de départ non validé : le profil est une suggestion courante, pas une règle fiscale. Les modèles qui en découlent restent affichés comme une proposition modifiable sur la fiche fiscale du client."
+
+msgid "Generar los vencimientos automáticamente al dar de alta al cliente"
+msgstr "Générer les échéances automatiquement à la création du client"
+
+msgid "Tareas iniciales"
+msgstr "Tâches initiales"
+
+msgid "Una plantilla de tareas compartida con el despacho; se aplica a nombre de quien da de alta al cliente."
+msgstr "Un modèle de tâches partagé avec le cabinet ; il est appliqué au nom de la personne qui crée le client."
+
+msgid "Crear plantilla"
+msgstr "Créer le modèle"

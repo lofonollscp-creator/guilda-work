@@ -2189,6 +2189,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import plantillas_cliente
+        plantillas_cliente.crear_esquema(conn)  # plantillas de alta de cliente por tipo (app/plantillas_cliente.py)
         from . import traspasos
         traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
 
@@ -2977,6 +2979,7 @@ from .db_fiscal import (  # noqa: E402,F401
     papelera_fiscal,
     _existe_vencimiento_fiscal,
     generar_vencimientos_automaticos,
+    generar_vencimientos_de_cliente,
     sanear_vencimientos_fuera_plazo,
     _cliente_duplicado,
     obtener_cliente_fiscal_por_id,

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, boton, chip, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Plantillas de cliente') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Plantillas de cliente') }}</h1>
+    <p class="subtitle">{{ _('El punto de partida de un alta según el tipo de cliente: perfil fiscal (de él salen los modelos propuestos), etiquetas, generación automática de vencimientos y tareas iniciales.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Volver a clientes') }}</a>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+
+<section class="dash-panel">
+  <h2>{{ _('Plantillas') }}</h2>
+  <ul class="log-list">
+    {% for p in plantillas %}
+    <li class="log-item">
+      <span class="log-text"><strong>{{ p.nombre }}</strong>
+        {% if p.de_serie %}{{ chip(_('De serie')) }}{% endif %}
+        {% if p.perfil_tipo %}<span class="muted"> · {{ {'autonomo': _('Autónomo'), 'sociedad': _('Sociedad'), 'particular': _('Particular')}[p.perfil_tipo] }}</span>{% endif %}
+        {% for a in p.perfil_atributos %}{{ chip({'iva': _('IVA'), 'estimacion_directa': _('Estimación directa'), 'retenciones': _('Retenciones'), 'alquiler_local': _('Alquiler de local')}[a]) }}{% endfor %}
+        {% if p.generacion_automatica %}{{ chip(_('Vencimientos automáticos')) }}{% endif %}
+        {% if p.plantilla_tareas_id %}{{ chip(_('Con tareas iniciales')) }}{% endif %}
+        {% for e in p.etiquetas %}{{ chip(e) }}{% endfor %}
+      </span>
+      {% if puede_gestionar and not p.de_serie %}
+      <form method="post" action="{{ url_for('clientes.eliminar_plantilla', plantilla_id=p.id) }}">{{ boton(_('Eliminar'), 'peligro', tipo='submit', pequeno=True, confirmar=_('¿Eliminar esta plantilla? Los clientes ya creados no cambian.')) }}</form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted">{{ _('Las plantillas de serie son un punto de partida sin validar: el perfil es una sugerencia habitual, no una regla fiscal. Los modelos que salen del perfil se siguen mostrando como propuesta editable en la ficha fiscal del cliente.') }}</p>
+</section>
+
+{% if puede_gestionar %}
+<section class="dash-panel">
+  <h2>{{ _('Nueva plantilla') }}</h2>
+  <form class="edit-form ds-max-640" method="post">
+    {% call campo(_('Nombre'), 'p-nombre', requerido=True) %}<input type="text" id="p-nombre" name="nombre" required maxlength="80">{% endcall %}
+    {% call campo(_('Tipo de cliente'), 'p-tipo') %}
+      <select id="p-tipo" name="perfil_tipo"><option value="">{{ _('Sin indicar') }}</option><option value="autonomo">{{ _('Autónomo') }}</option><option value="sociedad">{{ _('Sociedad') }}</option><option value="particular">{{ _('Particular') }}</option></select>
+    {% endcall %}
+    {% for a, nombre in (('iva', _('Presenta IVA')), ('estimacion_directa', _('Autónomo en estimación directa')), ('retenciones', _('Practica retenciones (trabajadores o profesionales)')), ('alquiler_local', _('Paga el alquiler de un local'))) %}
+    <label class="checkbox-label"><input type="checkbox" name="perfil_atributos" value="{{ a }}"> {{ nombre }}</label>
+    {% endfor %}
+    <label class="checkbox-label"><input type="checkbox" name="generacion_automatica" value="1"> {{ _('Generar los vencimientos automáticamente al dar de alta al cliente') }}</label>
+    {% call campo(_('Etiquetas'), 'p-etq', ayuda=_('Separadas por comas: vip, renta, autónomo.')) %}<input type="text" id="p-etq" name="etiquetas">{% endcall %}
+    {% call campo(_('Tareas iniciales'), 'p-tareas', ayuda=_('Una plantilla de tareas compartida con el despacho; se aplica a nombre de quien da de alta al cliente.')) %}
+      <select id="p-tareas" name="plantilla_tareas_id"><option value="">{{ _('Sin tareas') }}</option>{% for t in plantillas_tareas %}<option value="{{ t.id }}">{{ t.nombre }} ({{ t.n_tareas }})</option>{% endfor %}</select>
+    {% endcall %}
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear plantilla') }}</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

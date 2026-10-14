@@ -34,6 +34,10 @@
   <fieldset>
     <legend>{{ _('Gestión fiscal') }}</legend>
     <label class="checkbox-label"><input type="checkbox" name="gestion_fiscal" value="1" {{ 'checked' if datos.gestion_fiscal }}> {{ _('Llevar la gestión fiscal de este cliente (calendario, vencimientos y portal)') }}</label>
+    {% call campo(_('Plantilla de cliente'), 'c-plantilla', ayuda=_('Rellena el perfil fiscal, las etiquetas y las tareas iniciales. Lo que marques a mano debajo manda sobre la plantilla.')) %}
+      <select id="c-plantilla" name="plantilla_id"><option value="">{{ _('Sin plantilla') }}</option>{% for p in plantillas %}<option value="{{ p.id }}" {{ 'selected' if datos.plantilla_id == p.id }}>{{ p.nombre }}</option>{% endfor %}</select>
+    {% endcall %}
+    {% if puede_gestionar_plantillas %}<p class="muted"><a href="{{ url_for('clientes.plantillas') }}">{{ _('Gestionar plantillas de cliente') }}</a></p>{% endif %}
     {% call campo(_('País de tributación'), 'c-pais', ayuda=_('Hoy solo hay calendario fiscal de España; otros países se crean sin generación automática.')) %}
       <select id="c-pais" name="pais">{% for p in paises %}<option value="{{ p }}" {{ 'selected' if datos.pais == p }}>{{ _('España') if p == 'ES' else p }}</option>{% endfor %}<option value="OTRO" {{ 'selected' if datos.pais == 'OTRO' }}>{{ _('Otro país (próximamente)') }}</option></select>
     {% endcall %}
