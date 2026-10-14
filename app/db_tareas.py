@@ -665,12 +665,14 @@ def crear_tarea_outlook(
     mensaje_correo_id: int | None = None,
     asignada_a: int | None = None,
     estimacion_min: int | None = None,
+    vencimiento_id: int | None = None,
 ) -> int:
     estimacion_min = _db.estimacion_valida(estimacion_min)
     conn = _db.get_connection()
     try:
         categoria_id = _db._categoria_id_propio(conn, usuario_id, categoria_id)
         cliente_fiscal_id = _db._cliente_fiscal_id_del_tenant(conn, usuario_id, cliente_fiscal_id)
+        vencimiento_id = _db._vencimiento_id_del_tenant(conn, usuario_id, vencimiento_id)
         mensaje_correo_id = _db._mensaje_correo_id_propio(conn, usuario_id, mensaje_correo_id)
         asignada_a = _db._companero_del_tenant(conn, usuario_id, asignada_a)
         cur = conn.execute(
@@ -678,13 +680,13 @@ def crear_tarea_outlook(
                (usuario_id, asunto, cuerpo, estado, porcentaje_completado, prioridad,
                 fecha_inicio, fecha_vencimiento, categoria_outlook, categoria_id,
                 outlook_entry_id, tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id,
-                asignada_a, estimacion_min, creada_en)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                asignada_a, estimacion_min, vencimiento_id, creada_en)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 usuario_id, asunto.strip(), (cuerpo or "").strip() or None, estado,
                 porcentaje_completado, prioridad, fecha_inicio, fecha_vencimiento,
                 (categoria_outlook or "").strip() or None, categoria_id, outlook_entry_id,
-                tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id, asignada_a, estimacion_min, _db.now_iso(),
+                tarea_recurrente_id, cliente_fiscal_id, mensaje_correo_id, asignada_a, estimacion_min, vencimiento_id, _db.now_iso(),
             ),
         )
         conn.commit()
@@ -707,6 +709,72 @@ def _cliente_fiscal_id_del_tenant(conn: sqlite3.Connection, usuario_id: int, cli
         (cliente_fiscal_id, usuario_id),
     ).fetchone()
     return fila["id"] if fila else None
+
+
+def _vencimiento_id_del_tenant(conn: sqlite3.Connection, usuario_id: int, vencimiento_id: int | None) -> int | None:
+    """Solo se enlaza un vencimiento fiscal del propio despacho (mismo criterio permisivo que el cliente fiscal: si no es válido, se ignora)."""
+    if vencimiento_id is None:
+        return None
+    fila = conn.execute(
+        """SELECT v.id FROM vencimientos_fiscales v JOIN usuarios u ON u.tenant_id = v.tenant_id
+           WHERE v.id = ? AND u.id = ? AND v.papelera_en IS NULL""",
+        (vencimiento_id, usuario_id),
+    ).fetchone()
+    return fila["id"] if fila else None
+
+
+_TAREA_DE_LA_PERSONA = ("(t.usuario_id = ? OR t.asignada_a = ? OR t.id IN (SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ? AND rol = 'colabora'))")
+
+
+def tareas_de_vencimiento(tenant_id: int, vencimiento_id: int, usuario_id: int) -> list[dict]:
+    """Las tareas ligadas a un vencimiento que la persona puede ver (suyas, asignadas a ella o en las que colabora): las generadas por una regla y las creadas desde su ficha.
+    Las tareas de otras personas no se listan (ver `resumen_tareas_de_vencimiento` para el recuento de todas)."""
+    conn = _db.get_connection()
+    try:
+        filas = conn.execute(
+            f"""SELECT t.id, t.asunto, t.estado, t.fecha_vencimiento, t.usuario_id, t.asignada_a,
+                       EXISTS (SELECT 1 FROM tareas_por_vencimiento_generadas g WHERE g.tarea_id = t.id) AS generada
+                FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
+                WHERE t.vencimiento_id = ? AND u.tenant_id = ? AND t.papelera_en IS NULL AND {_TAREA_DE_LA_PERSONA}
+                ORDER BY (t.estado = 'completada'), t.fecha_vencimiento, t.id""",
+            (vencimiento_id, tenant_id, usuario_id, usuario_id, usuario_id),
+        ).fetchall()
+        return [dict(f) for f in filas]
+    finally:
+        conn.close()
+
+
+def resumen_tareas_de_vencimiento(tenant_id: int, vencimiento_id: int) -> dict:
+    """`{total, abiertas}` de TODAS las tareas ligadas al vencimiento (sin enseñar cuáles), para avisar de que ya están todas hechas."""
+    conn = _db.get_connection()
+    try:
+        f = conn.execute(
+            """SELECT COUNT(*) AS total, COALESCE(SUM(t.estado != 'completada'), 0) AS abiertas FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
+               WHERE t.vencimiento_id = ? AND u.tenant_id = ? AND t.papelera_en IS NULL""", (vencimiento_id, tenant_id)).fetchone()
+        return {"total": f["total"], "abiertas": f["abiertas"]}
+    finally:
+        conn.close()
+
+
+def completar_tareas_de_vencimiento(tenant_id: int, vencimiento_id: int) -> int:
+    """Al presentar un vencimiento, completa las tareas que **una regla `tareas_por_vencimiento` generó** para él (las creadas a mano no se tocan). Cada una la completa su dueña,
+    con los mismos efectos que completarla a mano (cronómetros, eventos, desbloqueos). Idempotente. Devuelve cuántas quedan completadas."""
+    conn = _db.get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT t.id, t.usuario_id FROM tareas_por_vencimiento_generadas g JOIN tareas_outlook t ON t.id = g.tarea_id JOIN usuarios u ON u.id = t.usuario_id
+               WHERE g.vencimiento_id = ? AND u.tenant_id = ? AND t.estado != 'completada' AND t.papelera_en IS NULL""", (vencimiento_id, tenant_id)).fetchall()
+    finally:
+        conn.close()
+    for f in filas:
+        _db.completar_tarea_outlook(f["usuario_id"], f["id"])
+    if not filas:
+        return 0
+    conn = _db.get_connection()
+    try:
+        return conn.execute(f"SELECT COUNT(*) FROM tareas_outlook WHERE estado = 'completada' AND id IN ({','.join('?' * len(filas))})", [f["id"] for f in filas]).fetchone()[0]
+    finally:
+        conn.close()
 
 
 def _mensaje_correo_id_propio(conn: sqlite3.Connection, usuario_id: int, mensaje_id: int | None) -> int | None:
@@ -879,7 +947,7 @@ def generar_tareas_por_vencimiento(hoy: _db.date | None = None, regla_id: int | 
         destino = v["responsable_id"] if regla["asignar_responsable"] and v["responsable_id"] not in (None, regla["usuario_id"]) else None
         tarea_id = _db.crear_tarea_outlook(
             regla["usuario_id"], asunto, prioridad=regla["prioridad"], fecha_vencimiento=vence.isoformat(), categoria_id=regla["categoria_id"],
-            cliente_fiscal_id=v["cliente_fiscal_id"], asignada_a=destino, estimacion_min=regla["estimacion_min"],
+            cliente_fiscal_id=v["cliente_fiscal_id"], asignada_a=destino, estimacion_min=regla["estimacion_min"], vencimiento_id=v["id"],
         )
         conn = _db.get_connection()
         try:

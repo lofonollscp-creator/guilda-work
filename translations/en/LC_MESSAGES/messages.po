@@ -11858,3 +11858,28 @@ msgstr "A task template shared with the firm; it is applied in the name of the p
 
 msgid "Crear plantilla"
 msgstr "Create template"
+
+msgid "Tareas de este vencimiento"
+msgstr "Tasks for this deadline"
+
+msgid "Todas las tareas de este vencimiento están completadas. Si ya lo has presentado, márcalo como presentado."
+msgstr "All the tasks for this deadline are completed. If you have already filed it, mark it as filed."
+
+msgid "Por regla"
+msgstr "By rule"
+
+msgid "Abierta"
+msgstr "Open"
+
+msgid "Todavía no hay tareas ligadas a este vencimiento."
+msgstr "There are no tasks linked to this deadline yet."
+
+#, python-format
+msgid "Hay además %(n)s tarea(s) de otras personas."
+msgstr "There are also %(n)s task(s) belonging to other people."
+
+msgid "Yo"
+msgstr "Me"
+
+msgid "La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento."
+msgstr "The task is due on the deadline date. Unlike the ones a rule creates, it is not completed automatically when the deadline is filed."

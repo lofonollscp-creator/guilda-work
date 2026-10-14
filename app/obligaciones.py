@@ -193,6 +193,8 @@ def transicionar(tenant_id: int, usuario_id: int, vencimiento_id: int, destino: 
     finally:
         conn.close()
     db._reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
+    if estado == "presentado" and v["estado"] != "presentado":
+        db.cerrar_tareas_al_presentar(tenant_id, vencimiento_id)
     _avisar(tenant_id, usuario_id, v, actual, destino, motivo)
     return {"fase": destino, "estado": estado, "version": v["version"] + 1}
 

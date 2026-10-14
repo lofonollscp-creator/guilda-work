@@ -826,7 +826,24 @@ def editar_vencimiento(vencimiento_id: int):
         # ya conectó su propia cuenta y el cliente tiene email al que
         # mandarle el enlace de Checkout.
         puede_cobrar_stripe=bool(tenant and tenant["stripe_account_id"] and cliente and cliente["email"]),
+        tareas=db.tareas_de_vencimiento(g.tenant_id, vencimiento_id, g.usuario_id), resumen_tareas=db.resumen_tareas_de_vencimiento(g.tenant_id, vencimiento_id),
     )
+
+
+@fiscal_bp.route("/vencimientos/<int:vencimiento_id>/tarea", methods=["POST"])
+@login_required
+def crear_tarea_vencimiento(vencimiento_id: int):
+    """Crea una tarea ligada a este vencimiento y a su cliente, que vence el día límite (la persona puede escribir otro asunto y asignarla a alguien del despacho).
+    A diferencia de las que genera una regla, esta no se completa sola al presentar el vencimiento."""
+    v = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
+    if v is None:
+        abort(404)
+    asunto = (request.form.get("asunto") or "").strip() or f"{v['modelo']} {v['periodo']} · {v['cliente_nombre']}"
+    db.crear_tarea_outlook(
+        g.usuario_id, asunto[:200], fecha_vencimiento=v["fecha_limite"][:10], cliente_fiscal_id=v["cliente_fiscal_id"], vencimiento_id=vencimiento_id,
+        asignada_a=request.form.get("asignada_a", type=int) or None,
+    )
+    return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, aviso="tarea"))
 
 
 @fiscal_bp.route("/vencimientos/<int:vencimiento_id>/transicion", methods=["POST"])

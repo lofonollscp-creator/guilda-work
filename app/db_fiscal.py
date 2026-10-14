@@ -3,6 +3,7 @@
 Parte de la antigua `db.py`, dividida por dominios sin cambiar su comportamiento: todo lo que no está aquí (la conexión, las constantes y las funciones de otros
 dominios) se usa a través de `_db`, que sigue siendo el único espacio de nombres (`_db.nombre` funciona igual que antes y se puede parchear en los tests)."""
 import hashlib
+import logging
 import json
 import time
 import os
@@ -459,6 +460,18 @@ def editar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, **campos) -> 
     finally:
         conn.close()
     _db._reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
+    if campos.get("estado") == "presentado":
+        _db.cerrar_tareas_al_presentar(tenant_id, vencimiento_id)
+
+
+def cerrar_tareas_al_presentar(tenant_id: int, vencimiento_id: int) -> int:
+    """Al presentar un vencimiento se completan las tareas que una regla generó para él (ver db_tareas.completar_tareas_de_vencimiento). Nunca deshace la presentación: si falla
+    se deja un aviso en el log y las tareas se pueden completar a mano."""
+    try:
+        return _db.completar_tareas_de_vencimiento(tenant_id, vencimiento_id)
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).warning("Vencimiento %s presentado: no se han podido completar sus tareas", vencimiento_id, exc_info=True)
+        return 0
 
 
 def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, usuario_id: int | None = None) -> None:
@@ -484,6 +497,7 @@ def marcar_presentado_vencimiento_fiscal(tenant_id: int, vencimiento_id: int, us
     finally:
         conn.close()
     _db._reindexar_vencimiento_fiscal(tenant_id, vencimiento_id)
+    _db.cerrar_tareas_al_presentar(tenant_id, vencimiento_id)
 
 
 def eliminar_vencimiento_fiscal(tenant_id: int, vencimiento_id: int) -> None:

@@ -11943,3 +11943,28 @@ msgstr "Un modèle de tâches partagé avec le cabinet ; il est appliqué au nom
 
 msgid "Crear plantilla"
 msgstr "Créer le modèle"
+
+msgid "Tareas de este vencimiento"
+msgstr "Tâches de cette échéance"
+
+msgid "Todas las tareas de este vencimiento están completadas. Si ya lo has presentado, márcalo como presentado."
+msgstr "Toutes les tâches de cette échéance sont terminées. Si vous l'avez déjà déposée, marquez-la comme déposée."
+
+msgid "Por regla"
+msgstr "Par règle"
+
+msgid "Abierta"
+msgstr "Ouverte"
+
+msgid "Todavía no hay tareas ligadas a este vencimiento."
+msgstr "Aucune tâche n'est encore liée à cette échéance."
+
+#, python-format
+msgid "Hay además %(n)s tarea(s) de otras personas."
+msgstr "Il y a aussi %(n)s tâche(s) d'autres personnes."
+
+msgid "Yo"
+msgstr "Moi"
+
+msgid "La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento."
+msgstr "La tâche est due à la date limite. Contrairement à celles créées par une règle, elle n'est pas terminée automatiquement au dépôt de l'échéance."

@@ -11867,3 +11867,28 @@ msgstr "Una plantilla de tasques compartida amb el despatx; s'aplica en nom de q
 
 msgid "Crear plantilla"
 msgstr "Crear plantilla"
+
+msgid "Tareas de este vencimiento"
+msgstr "Tasques d'aquest venciment"
+
+msgid "Todas las tareas de este vencimiento están completadas. Si ya lo has presentado, márcalo como presentado."
+msgstr "Totes les tasques d'aquest venciment estan completades. Si ja l'has presentat, marca'l com a presentat."
+
+msgid "Por regla"
+msgstr "Per regla"
+
+msgid "Abierta"
+msgstr "Oberta"
+
+msgid "Todavía no hay tareas ligadas a este vencimiento."
+msgstr "Encara no hi ha tasques lligades a aquest venciment."
+
+#, python-format
+msgid "Hay además %(n)s tarea(s) de otras personas."
+msgstr "Hi ha també %(n)s tasca(ques) d'altres persones."
+
+msgid "Yo"
+msgstr "Jo"
+
+msgid "La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento."
+msgstr "La tasca venç el dia límit. A diferència de les que crea una regla, no es completa sola en presentar el venciment."

@@ -117,6 +117,37 @@
 </section>
 
 <section class="ds-max-640 ds-mt-32">
+  <h2>{{ _('Tareas de este vencimiento') }}</h2>
+  {% if vencimiento.estado == 'pendiente' and resumen_tareas.total and not resumen_tareas.abiertas %}
+  <p class="ds-estado-ok" role="status">{{ _('Todas las tareas de este vencimiento están completadas. Si ya lo has presentado, márcalo como presentado.') }}</p>
+  {% endif %}
+  {% if tareas %}
+  <ul class="log-list">
+    {% for t in tareas %}
+    <li class="log-item {{ 'is-completada' if t.estado == 'completada' }}">
+      <span class="log-text"><a href="{{ url_for('tareas.listar') }}">{{ t.asunto }}</a>{% if t.generada %} <span class="pill">{{ _('Por regla') }}</span>{% endif %}</span>
+      {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>{% endif %}
+      <span class="pill">{{ _('Completada') if t.estado == 'completada' else _('Abierta') }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('Todavía no hay tareas ligadas a este vencimiento.') }}</p>
+  {% endif %}
+  {% if resumen_tareas.total > tareas|length %}<p class="muted">{{ _('Hay además %(n)s tarea(s) de otras personas.', n=resumen_tareas.total - tareas|length) }}</p>{% endif %}
+  <form class="edit-form" method="post" action="{{ url_for('fiscal.crear_tarea_vencimiento', vencimiento_id=vencimiento.id) }}">
+    <label>{{ _('Nueva tarea') }}
+      <input type="text" name="asunto" maxlength="200" placeholder="{{ vencimiento.modelo }} {{ vencimiento.periodo }} · {{ vencimiento.cliente_nombre }}">
+    </label>
+    <label>{{ _('Asignar a') }}
+      <select name="asignada_a"><option value="">{{ _('Yo') }}</option>{% for u in usuarios if u and u.id != g.usuario_id %}<option value="{{ u.id }}">{{ u.email }}</option>{% endfor %}</select>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Crear tarea') }}</button>
+    <p class="muted">{{ _('La tarea vence el día límite. A diferencia de las que crea una regla, no se completa sola al presentar el vencimiento.') }}</p>
+  </form>
+</section>
+
+<section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Mensajes con el cliente') }}</h2>
   {% if not mensajes_cliente %}
   <p class="empty-lane">{{ _('Todavía no hay mensajes en esta conversación.') }}</p>

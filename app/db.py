@@ -1987,6 +1987,12 @@ def init_db() -> None:
         # registro de tiempo (tareas) con la tarea de la lista a la que se dedicó.
         _asegurar_columna(conn, "tareas_outlook", "asignada_a", "INTEGER")
         _asegurar_columna(conn, "tareas_outlook", "cliente_fiscal_id", "INTEGER")
+        # Vencimiento fiscal del que sale o al que sirve la tarea (las generadas por una regla `tareas_por_vencimiento` y las creadas desde su ficha): presentar el vencimiento
+        # cierra las generadas por regla y la ficha del vencimiento lista sus tareas. Las generadas antes de existir esta columna se enlazan desde `tareas_por_vencimiento_generadas`.
+        _asegurar_columna(conn, "tareas_outlook", "vencimiento_id", "INTEGER")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_tareas_outlook_vencimiento ON tareas_outlook(vencimiento_id) WHERE vencimiento_id IS NOT NULL")
+        conn.execute("UPDATE tareas_outlook SET vencimiento_id = (SELECT g.vencimiento_id FROM tareas_por_vencimiento_generadas g WHERE g.tarea_id = tareas_outlook.id) "
+                     "WHERE vencimiento_id IS NULL AND id IN (SELECT tarea_id FROM tareas_por_vencimiento_generadas WHERE tarea_id IS NOT NULL)")
         _asegurar_columna(conn, "tareas_outlook", "mensaje_correo_id", "INTEGER")
         _asegurar_columna(conn, "tareas", "tarea_outlook_id", "INTEGER")
         # Notas con título, fijadas y vinculadas a un cliente fiscal, a una tarea
@@ -2816,6 +2822,10 @@ from .db_tareas import (  # noqa: E402,F401
     registrar_actividad_tarea,
     crear_tarea_outlook,
     _cliente_fiscal_id_del_tenant,
+    _vencimiento_id_del_tenant,
+    tareas_de_vencimiento,
+    resumen_tareas_de_vencimiento,
+    completar_tareas_de_vencimiento,
     _mensaje_correo_id_propio,
     _companero_del_tenant,
     listar_companeros_tenant,
@@ -2980,6 +2990,7 @@ from .db_fiscal import (  # noqa: E402,F401
     _existe_vencimiento_fiscal,
     generar_vencimientos_automaticos,
     generar_vencimientos_de_cliente,
+    cerrar_tareas_al_presentar,
     sanear_vencimientos_fuera_plazo,
     _cliente_duplicado,
     obtener_cliente_fiscal_por_id,
