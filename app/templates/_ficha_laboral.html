@@ -17,6 +17,9 @@
           {% if w.nif_repetido %}{{ chip(_('NIF repetido'), 'aviso') }}{% endif %}
           {% if w.baja_antes_del_alta %}{{ chip(_('Baja anterior al alta'), 'aviso') }}{% endif %}
         </summary>
+        {% if w.plazos %}
+        <p class="ds-mt-12">{{ _('Plazos') }}: {% for v in w.plazos %}{{ chip(v.modelo ~ ' · ' ~ v.fecha_limite, 'ok' if v.estado == 'presentado' else ('peligro' if v.estado == 'fuera_plazo' else 'aviso')) }} {% endfor %}</p>
+        {% endif %}
         {% if puede_modificar %}
         <form class="edit-form ds-mt-12" method="post" action="{{ url_for('fiscal.editar_trabajador', cliente_id=fiscal.id, trabajador_id=w.id) }}">
           <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ w.nombre }}" required maxlength="200"></label>
@@ -47,6 +50,43 @@
   {% else %}<p class="muted">{{ _('Este cliente todavía no tiene trabajadores dados de alta.') }}</p>{% endif %}
 </section>
 
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Nóminas de') }} {{ nominas.periodo }}</h2>
+  <p class="muted">{{ _('Solo seguimiento: aquí no se calcula ni se guarda ningún importe. La nómina en PDF se sube en Documentos.') }}</p>
+  {% if nominas.filas %}
+  <ul class="log-list">
+    {% for f in nominas.filas %}
+    <li class="log-item">
+      <strong>{{ f.nombre }}</strong>
+      {% for clave, etiqueta in estados_nomina if clave == f.estado %}{{ chip(etiqueta, 'ok' if clave in ('enviada', 'firmada') else 'aviso') }}{% endfor %}
+      {% if puede_modificar %}
+      <form method="post" action="{{ url_for('fiscal.estado_nomina', cliente_id=fiscal.id, trabajador_id=f.trabajador_id) }}" class="ds-inline">
+        <input type="hidden" name="periodo" value="{{ nominas.periodo }}">
+        {% if f.anterior %}<button type="submit" name="estado" value="{{ f.anterior }}" class="btn">{{ _('Deshacer') }}</button>{% endif %}
+        {% if f.siguiente %}{% for clave, etiqueta in estados_nomina if clave == f.siguiente %}<button type="submit" name="estado" value="{{ clave }}" class="btn btn-primary">{{ _('Marcar como') }} {{ etiqueta|lower }}</button>{% endfor %}{% endif %}
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('No hay trabajadores de alta este mes.') }}</p>
+  {% endif %}
+  {% if nominas.sugerir_presentado %}
+  <p class="ds-mt-8">{{ chip(_('Todas las nóminas del mes están enviadas'), 'ok') }} <a href="{{ url_for('fiscal.vencimientos') }}">{{ _('Puedes marcar el vencimiento NOMINAS como presentado en Vencimientos.') }}</a></p>
+  {% endif %}
+  {% if es_directivo %}
+  <form method="post" action="{{ url_for('fiscal.config_nominas', cliente_id=fiscal.id) }}" class="edit-form ds-max-640 ds-mt-12">
+    <p class="muted">{{ _('Recordatorio mensual de generar las nóminas, para todos los clientes con trabajadores de este despacho. Solo la dirección puede cambiarlo.') }}</p>
+    <label>{{ _('Día del mes') }} <input type="number" name="dia" min="1" max="31" value="{{ nominas_config.dia or '' }}"></label>
+    <label><input type="checkbox" name="activo" value="1" {{ 'checked' if nominas_config.activo }}> {{ _('Activar el recordatorio') }}</label>
+    <button type="submit" class="btn">{{ _('Guardar recordatorio') }}</button>
+  </form>
+  {% elif nominas_config.activo %}
+  <p class="muted">{{ _('Recordatorio de nóminas: el día') }} {{ nominas_config.dia }} {{ _('de cada mes.') }}</p>
+  {% endif %}
+</section>
+
 {% if puede_modificar %}
 <section class="dash-panel ds-mt-16">
   <h2>{{ _('Dar de alta a un trabajador') }}</h2>
@@ -67,6 +107,13 @@
     <label>{{ _('Notas') }} <textarea name="notas" rows="2" maxlength="2000"></textarea></label>
     <button type="submit" class="btn btn-primary">{{ _('Dar de alta') }}</button>
   </form>
-  <p class="muted ds-mt-8">{{ _('Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario.') }}</p>
+  {% if reglas_laborales_aprobadas and trabajadores_activos %}
+  <form method="post" action="{{ url_for('fiscal.generar_vencimientos_laborales', cliente_id=fiscal.id) }}" class="ds-mt-8">
+    <p class="muted">{{ _('Las fechas del TC y del modelo 190 las fija la plataforma, y el recordatorio de nóminas, tu despacho. Añádelas al calendario de este cliente cuando quieras: no se crea nada sin pulsar.') }}</p>
+    <button type="submit" class="btn">{{ _('Añadir los vencimientos laborales') }}</button>
+  </form>
+  {% else %}
+  <p class="muted ds-mt-8">{{ _('Las fechas laborales (TC, modelo 190) aparecerán aquí en cuanto la plataforma las apruebe y haya trabajadores de alta.') }}</p>
+  {% endif %}
 </section>
 {% endif %}

@@ -672,14 +672,14 @@ def generar_vencimientos_automaticos() -> int:
 def generar_vencimientos_de_cliente(cliente) -> int:
     """Crea los vencimientos que le faltan a UN cliente fiscal (fila de `clientes_fiscales`) según sus modelos, para el año en curso y el anterior; idempotente.
     Lo usa el cron diario y el alta con plantilla de cliente (app/plantillas_cliente.py). Devuelve cuántos ha creado."""
-    from . import nucleo
+    from . import laboral, nucleo
     modelos = _db.modelos_fiscales_de_cliente(cliente)
-    if not modelos:
-        return 0
     creados = 0
     anio_actual = _db.datetime.now().year
     for anio in (anio_actual - 1, anio_actual):
-        for propuesta in nucleo.propuestas_vencimientos_ajustadas(cliente["tenant_id"], modelos, anio, cliente["pais"]):
+        propuestas = nucleo.propuestas_vencimientos_ajustadas(cliente["tenant_id"], modelos, anio, cliente["pais"]) if modelos else []
+        propuestas += laboral.propuestas_laborales(cliente["tenant_id"], cliente["id"], anio)      # TC y 190, solo con reglas aprobadas y trabajadores de alta
+        for propuesta in propuestas:
             if _db._existe_vencimiento_fiscal(cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"]):
                 continue
             _db.crear_vencimiento_fiscal(cliente["tenant_id"], cliente["id"], propuesta["modelo"], propuesta["periodo"], propuesta["fecha_limite"])

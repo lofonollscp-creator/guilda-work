@@ -11974,9 +11974,6 @@ msgstr "Aquest client encara no té treballadors donats d'alta."
 msgid "Dar de alta a un trabajador"
 msgstr "Donar d'alta un treballador"
 
-msgid "Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario."
-msgstr "Les obligacions laborals (TC, models 111 i 190, altes i baixes) encara no es calculen soles: les dates les valida el despatx abans d'entrar al calendari."
-
 msgid "Expandir Gestoría"
 msgstr "Expandir Gestoria"
 
@@ -11995,3 +11992,57 @@ msgstr "Baixa anterior a l'alta"
 
 msgid "Solo el nombre es obligatorio; el resto puedes rellenarlo cuando quieras."
 msgstr "Només el nom és obligatori; la resta ho pots omplir quan vulguis."
+
+msgid "Las fechas del TC y del modelo 190 las fija la plataforma, y el recordatorio de nóminas, tu despacho. Añádelas al calendario de este cliente cuando quieras: no se crea nada sin pulsar."
+msgstr "Les dates del TC i del model 190 les fixa la plataforma. Afegeix-les al calendari d'aquest client quan vulguis: no es crea res sense prémer."
+
+msgid "Añadir los vencimientos laborales"
+msgstr "Afegeix els venciments laborals"
+
+msgid "Las fechas laborales (TC, modelo 190) aparecerán aquí en cuanto la plataforma las apruebe y haya trabajadores de alta."
+msgstr "Les dates laborals (TC, model 190) apareixeran aquí quan la plataforma les aprovi i hi hagi treballadors d'alta."
+
+msgid "Nóminas de"
+msgstr "Nòmines de"
+
+msgid "Solo seguimiento: aquí no se calcula ni se guarda ningún importe. La nómina en PDF se sube en Documentos."
+msgstr "Només seguiment: aquí no es calcula ni es desa cap import. La nòmina en PDF es puja a Documents."
+
+msgid "Marcar como"
+msgstr "Marca com a"
+
+msgid "No hay trabajadores de alta este mes."
+msgstr "No hi ha treballadors d'alta aquest mes."
+
+msgid "Todas las nóminas del mes están enviadas"
+msgstr "Totes les nòmines del mes s'han enviat"
+
+msgid "Puedes marcar el vencimiento NOMINAS como presentado en Vencimientos."
+msgstr "Pots marcar el venciment NOMINAS com a presentat a Venciments."
+
+msgid "Recordatorio mensual de generar las nóminas, para todos los clientes con trabajadores de este despacho. Solo la dirección puede cambiarlo."
+msgstr "Recordatori mensual de generar les nòmines, per a tots els clients amb treballadors d'aquest despatx. Només la direcció el pot canviar."
+
+msgid "Día del mes"
+msgstr "Dia del mes"
+
+msgid "Activar el recordatorio"
+msgstr "Activa el recordatori"
+
+msgid "Guardar recordatorio"
+msgstr "Desa el recordatori"
+
+msgid "Recordatorio de nóminas: el día"
+msgstr "Recordatori de nòmines: el dia"
+
+msgid "de cada mes."
+msgstr "de cada mes."
+
+msgid "Generada"
+msgstr "Generada"
+
+msgid "Enviada"
+msgstr "Enviada"
+
+msgid "Firmada"
+msgstr "Signada"

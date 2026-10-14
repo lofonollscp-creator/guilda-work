@@ -11965,9 +11965,6 @@ msgstr "This client has no workers registered yet."
 msgid "Dar de alta a un trabajador"
 msgstr "Add a worker"
 
-msgid "Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario."
-msgstr "Employment obligations (TC, forms 111 and 190, registrations and terminations) are not calculated automatically yet: the firm validates their dates before they enter the calendar."
-
 msgid "Expandir Gestoría"
 msgstr "Expand Tax practice"
 
@@ -11986,3 +11983,57 @@ msgstr "End date before start date"
 
 msgid "Solo el nombre es obligatorio; el resto puedes rellenarlo cuando quieras."
 msgstr "Only the name is required; you can fill in the rest whenever you like."
+
+msgid "Las fechas del TC y del modelo 190 las fija la plataforma, y el recordatorio de nóminas, tu despacho. Añádelas al calendario de este cliente cuando quieras: no se crea nada sin pulsar."
+msgstr "The TC and form 190 dates are set by the platform. Add them to this client's calendar whenever you like: nothing is created unless you click."
+
+msgid "Añadir los vencimientos laborales"
+msgstr "Add the employment deadlines"
+
+msgid "Las fechas laborales (TC, modelo 190) aparecerán aquí en cuanto la plataforma las apruebe y haya trabajadores de alta."
+msgstr "Employment dates (TC, form 190) will appear here once the platform approves them and there are active employees."
+
+msgid "Nóminas de"
+msgstr "Payroll for"
+
+msgid "Solo seguimiento: aquí no se calcula ni se guarda ningún importe. La nómina en PDF se sube en Documentos."
+msgstr "Tracking only: nothing is calculated and no amount is stored here. Upload the payslip PDF in Documents."
+
+msgid "Marcar como"
+msgstr "Mark as"
+
+msgid "No hay trabajadores de alta este mes."
+msgstr "There are no active employees this month."
+
+msgid "Todas las nóminas del mes están enviadas"
+msgstr "All payslips for the month have been sent"
+
+msgid "Puedes marcar el vencimiento NOMINAS como presentado en Vencimientos."
+msgstr "You can mark the NOMINAS deadline as filed in Deadlines."
+
+msgid "Recordatorio mensual de generar las nóminas, para todos los clientes con trabajadores de este despacho. Solo la dirección puede cambiarlo."
+msgstr "Monthly reminder to generate payroll, for every client with employees in this firm. Only management can change it."
+
+msgid "Día del mes"
+msgstr "Day of the month"
+
+msgid "Activar el recordatorio"
+msgstr "Turn the reminder on"
+
+msgid "Guardar recordatorio"
+msgstr "Save reminder"
+
+msgid "Recordatorio de nóminas: el día"
+msgstr "Payroll reminder: day"
+
+msgid "de cada mes."
+msgstr "of every month."
+
+msgid "Generada"
+msgstr "Generated"
+
+msgid "Enviada"
+msgstr "Sent"
+
+msgid "Firmada"
+msgstr "Signed"

@@ -234,7 +234,9 @@ def test_las_bases_creadas_antes_ganan_convenio_y_categoria_y_pierden_la_unicida
     conn.row_factory = sqlite3.Row
     conn.execute("CREATE TABLE trabajadores_cliente (id INTEGER PRIMARY KEY, tenant_id INTEGER, cliente_fiscal_id INTEGER, nombre TEXT, nif_normalizado TEXT, papelera_en TEXT)")
     conn.execute("CREATE UNIQUE INDEX ux_trabajadores_cliente_nif ON trabajadores_cliente(cliente_fiscal_id, nif_normalizado)")
+    conn.execute("CREATE TABLE vencimientos_fiscales (id INTEGER PRIMARY KEY)")
     laboral.crear_esquema(conn)
+    assert "trabajador_id" in {f["name"] for f in conn.execute("PRAGMA table_info(vencimientos_fiscales)")}
     laboral.crear_esquema(conn)                                           # idempotente
     assert {"categoria", "convenio"} <= {f["name"] for f in conn.execute("PRAGMA table_info(trabajadores_cliente)")}
     assert not conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'ux_trabajadores_cliente_nif'").fetchone()

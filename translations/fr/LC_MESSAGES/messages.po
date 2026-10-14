@@ -12050,9 +12050,6 @@ msgstr "Ce client n'a pas encore de salariés enregistrés."
 msgid "Dar de alta a un trabajador"
 msgstr "Ajouter un salarié"
 
-msgid "Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario."
-msgstr "Les obligations sociales (TC, modèles 111 et 190, embauches et départs) ne sont pas encore calculées automatiquement : le cabinet valide leurs dates avant qu'elles n'entrent dans le calendrier."
-
 msgid "Expandir Gestoría"
 msgstr "Développer Cabinet de gestion"
 
@@ -12071,3 +12068,57 @@ msgstr "Départ antérieur à l'arrivée"
 
 msgid "Solo el nombre es obligatorio; el resto puedes rellenarlo cuando quieras."
 msgstr "Seul le nom est obligatoire ; le reste peut être renseigné quand vous voulez."
+
+msgid "Las fechas del TC y del modelo 190 las fija la plataforma, y el recordatorio de nóminas, tu despacho. Añádelas al calendario de este cliente cuando quieras: no se crea nada sin pulsar."
+msgstr "Les dates du TC et du modèle 190 sont fixées par la plateforme. Ajoutez-les au calendrier de ce client quand vous voulez : rien n'est créé sans clic."
+
+msgid "Añadir los vencimientos laborales"
+msgstr "Ajouter les échéances sociales"
+
+msgid "Las fechas laborales (TC, modelo 190) aparecerán aquí en cuanto la plataforma las apruebe y haya trabajadores de alta."
+msgstr "Les dates sociales (TC, modèle 190) apparaîtront ici dès que la plateforme les aura approuvées et qu'il y aura des salariés en poste."
+
+msgid "Nóminas de"
+msgstr "Paies de"
+
+msgid "Solo seguimiento: aquí no se calcula ni se guarda ningún importe. La nómina en PDF se sube en Documentos."
+msgstr "Suivi uniquement : rien n'est calculé ni aucun montant enregistré ici. Le PDF de la paie se dépose dans Documents."
+
+msgid "Marcar como"
+msgstr "Marquer comme"
+
+msgid "No hay trabajadores de alta este mes."
+msgstr "Aucun salarié en poste ce mois-ci."
+
+msgid "Todas las nóminas del mes están enviadas"
+msgstr "Toutes les paies du mois ont été envoyées"
+
+msgid "Puedes marcar el vencimiento NOMINAS como presentado en Vencimientos."
+msgstr "Vous pouvez marquer l'échéance NOMINAS comme déposée dans Échéances."
+
+msgid "Recordatorio mensual de generar las nóminas, para todos los clientes con trabajadores de este despacho. Solo la dirección puede cambiarlo."
+msgstr "Rappel mensuel pour générer les paies, pour tous les clients ayant des salariés dans ce cabinet. Seule la direction peut le modifier."
+
+msgid "Día del mes"
+msgstr "Jour du mois"
+
+msgid "Activar el recordatorio"
+msgstr "Activer le rappel"
+
+msgid "Guardar recordatorio"
+msgstr "Enregistrer le rappel"
+
+msgid "Recordatorio de nóminas: el día"
+msgstr "Rappel de paie : le"
+
+msgid "de cada mes."
+msgstr "de chaque mois."
+
+msgid "Generada"
+msgstr "Générée"
+
+msgid "Enviada"
+msgstr "Envoyée"
+
+msgid "Firmada"
+msgstr "Signée"

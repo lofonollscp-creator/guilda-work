@@ -108,9 +108,12 @@ def contexto_mensajes(cliente_fiscal, vencimientos) -> dict:
 
 def contexto_laboral(tenant_id: int, usuario_id: int, cliente_fiscal) -> dict:
     """Los trabajadores del cliente (ver app/laboral.py); quien solo es auditor los ve pero no los toca."""
-    from . import acceso, laboral
+    from . import acceso, laboral, reglas_laborales
     trabajadores = laboral.listar(tenant_id, cliente_fiscal["id"])
-    return {"trabajadores": trabajadores, "trabajadores_activos": sum(1 for t in trabajadores if not t["de_baja"]), "tipos_contrato": laboral.TIPOS_CONTRATO,
+    nominas = laboral.config(tenant_id)
+    return {"nominas_config": nominas, "nominas": laboral.seguimiento_nominas(tenant_id, cliente_fiscal["id"], laboral.periodo_actual()), "estados_nomina": laboral.ESTADOS_NOMINA,
+            "es_directivo": acceso.es_directivo(usuario_id),
+            "reglas_laborales_aprobadas": bool({"tc", "m190"} & reglas_laborales.vigentes().keys() or nominas["activo"]), "trabajadores": trabajadores, "trabajadores_activos": sum(1 for t in trabajadores if not t["de_baja"]), "tipos_contrato": laboral.TIPOS_CONTRATO,
             "puede_modificar": acceso.puede_modificar_cliente(tenant_id, usuario_id, cliente_fiscal["id"])}
 
 

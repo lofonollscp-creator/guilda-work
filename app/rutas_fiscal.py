@@ -179,6 +179,39 @@ def eliminar_trabajador(cliente_id: int, trabajador_id: int):
     return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
 
 
+@fiscal_bp.route("/clientes/<int:cliente_id>/laboral/nominas/<int:trabajador_id>", methods=["POST"])
+@login_required
+def estado_nomina(cliente_id: int, trabajador_id: int):
+    """Anota en qué punto está la nómina de un trabajador este mes (pendiente → generada → enviada → firmada). Solo seguimiento: no se calcula nada."""
+    _trabajador_del_cliente(cliente_id, trabajador_id)
+    try:
+        laboral.fijar_estado_nomina(g.tenant_id, g.usuario_id, trabajador_id, request.form.get("periodo", ""), request.form.get("estado", ""))
+    except ValueError as e:
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+    return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/laboral/nominas-config", methods=["POST"])
+@login_required
+def config_nominas(cliente_id: int):
+    """El día del mes del recordatorio de nóminas del despacho (solo dirección). Se ve desde la pestaña Laboral de cualquier cliente."""
+    _trabajador_del_cliente(cliente_id)
+    try:
+        laboral.guardar_config(g.tenant_id, g.usuario_id, dia=request.form.get("dia"), activo=request.form.get("activo") == "1")
+    except ValueError as e:
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+    return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/laboral/vencimientos", methods=["POST"])
+@login_required
+def generar_vencimientos_laborales(cliente_id: int):
+    """Añade al calendario del cliente los vencimientos laborales (TC, 190) de las reglas aprobadas; nada se crea solo si no se pulsa."""
+    _trabajador_del_cliente(cliente_id)
+    laboral.generar_laborales(g.tenant_id, cliente_id)
+    return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos", methods=["POST"])
 @login_required
 def subir_documentos_cliente(cliente_id: int):
