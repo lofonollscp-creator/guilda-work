@@ -1266,11 +1266,11 @@ def registrar_acceso_cliente(tenant_id: int, cliente_fiscal_id: int, usuario_id:
     try:
         conn = _db.get_connection()
         try:
-            if accion == "ficha_vista":
+            if accion in ("ficha_vista", "laboral_visto"):
                 desde = (_db.datetime.now() - _db.timedelta(minutes=_db.VENTANA_FICHA_VISTA_MINUTOS)).isoformat(timespec="seconds")
                 if conn.execute(
-                    "SELECT 1 FROM cliente_accesos WHERE cliente_fiscal_id = ? AND usuario_id IS ? AND accion = 'ficha_vista' AND creado_en >= ? LIMIT 1",
-                    (cliente_fiscal_id, usuario_id, desde),
+                    "SELECT 1 FROM cliente_accesos WHERE cliente_fiscal_id = ? AND usuario_id IS ? AND accion = ? AND creado_en >= ? LIMIT 1",
+                    (cliente_fiscal_id, usuario_id, accion, desde),
                 ).fetchone():
                     return False
             conn.execute(

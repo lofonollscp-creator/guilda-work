@@ -7943,7 +7943,7 @@ msgid "En espera"
 msgstr "On hold"
 
 msgid "Gestoría"
-msgstr "Tax & accounting practice"
+msgstr "Tax practice"
 
 msgid "Calendario fiscal, clientes fiscales, vencimientos, recordatorios y portal de cliente."
 msgstr "Tax calendar, tax clients, deadlines, reminders and client portal."
@@ -11901,3 +11901,79 @@ msgstr "Open Tasks"
 
 msgid "Secciones de la ficha"
 msgstr "Record sections"
+
+msgid "Indefinido"
+msgstr "Permanent"
+
+msgid "Temporal"
+msgstr "Temporary"
+
+msgid "Prácticas"
+msgstr "Internship"
+
+msgid "Formación"
+msgstr "Training"
+
+msgid "Ha abierto la pestaña Laboral"
+msgstr "Opened the Employment tab"
+
+msgid "Ha dado de alta a un trabajador"
+msgstr "Added a worker"
+
+msgid "Ha editado a un trabajador"
+msgstr "Edited a worker"
+
+msgid "Ha eliminado a un trabajador"
+msgstr "Deleted a worker"
+
+msgid "Trabajadores"
+msgstr "Workers"
+
+msgid "de alta"
+msgstr "active"
+
+msgid "Datos personales de las personas que trabajan para este cliente: solo los necesarios para llevar su gestión laboral, sin salarios. Abrir esta pestaña y cada cambio quedan anotados en el registro de accesos del cliente."
+msgstr "Personal data of the people who work for this client: only what is needed to manage their employment, no salaries. Opening this tab and every change are recorded in the client's access log."
+
+msgid "semana"
+msgstr "week"
+
+msgid "De baja"
+msgstr "Left"
+
+msgid "NIF / NIE"
+msgstr "Tax ID / NIE"
+
+msgid "Nº de afiliación a la Seguridad Social"
+msgstr "Social Security number"
+
+msgid "Puesto"
+msgstr "Job title"
+
+msgid "Jornada (horas a la semana)"
+msgstr "Working hours (per week)"
+
+msgid "Fecha de baja"
+msgstr "End date"
+
+msgid "¿Eliminar a este trabajador? Se manda a la papelera."
+msgstr "Delete this worker? They will be moved to the trash."
+
+msgid "Este cliente todavía no tiene trabajadores dados de alta."
+msgstr "This client has no workers registered yet."
+
+msgid "Dar de alta a un trabajador"
+msgstr "Add a worker"
+
+msgid "Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario."
+msgstr "Employment obligations (TC, forms 111 and 190, registrations and terminations) are not calculated automatically yet: the firm validates their dates before they enter the calendar."
+
+msgid "Expandir Gestoría"
+msgstr "Expand Tax practice"
+
+msgid "Laboral"
+msgstr "Employment"
+
+#, python-format
+msgid "También %(n)s trabajadores de clientes."
+msgstr "Also %(n)s client workers."

@@ -11986,3 +11986,79 @@ msgstr "Ouvrir Tâches"
 
 msgid "Secciones de la ficha"
 msgstr "Sections de la fiche"
+
+msgid "Indefinido"
+msgstr "Indéterminé"
+
+msgid "Temporal"
+msgstr "Temporaire"
+
+msgid "Prácticas"
+msgstr "Stage"
+
+msgid "Formación"
+msgstr "Formation"
+
+msgid "Ha abierto la pestaña Laboral"
+msgstr "A ouvert l'onglet Social"
+
+msgid "Ha dado de alta a un trabajador"
+msgstr "A ajouté un salarié"
+
+msgid "Ha editado a un trabajador"
+msgstr "A modifié un salarié"
+
+msgid "Ha eliminado a un trabajador"
+msgstr "A supprimé un salarié"
+
+msgid "Trabajadores"
+msgstr "Salariés"
+
+msgid "de alta"
+msgstr "en poste"
+
+msgid "Datos personales de las personas que trabajan para este cliente: solo los necesarios para llevar su gestión laboral, sin salarios. Abrir esta pestaña y cada cambio quedan anotados en el registro de accesos del cliente."
+msgstr "Données personnelles des personnes qui travaillent pour ce client : uniquement celles nécessaires à la gestion sociale, sans salaires. L'ouverture de cet onglet et chaque modification sont consignées dans le journal d'accès du client."
+
+msgid "semana"
+msgstr "semaine"
+
+msgid "De baja"
+msgstr "Parti"
+
+msgid "NIF / NIE"
+msgstr "NIF / NIE"
+
+msgid "Nº de afiliación a la Seguridad Social"
+msgstr "N° de sécurité sociale"
+
+msgid "Puesto"
+msgstr "Poste"
+
+msgid "Jornada (horas a la semana)"
+msgstr "Durée du travail (heures par semaine)"
+
+msgid "Fecha de baja"
+msgstr "Date de fin"
+
+msgid "¿Eliminar a este trabajador? Se manda a la papelera."
+msgstr "Supprimer ce salarié ? Il sera placé dans la corbeille."
+
+msgid "Este cliente todavía no tiene trabajadores dados de alta."
+msgstr "Ce client n'a pas encore de salariés enregistrés."
+
+msgid "Dar de alta a un trabajador"
+msgstr "Ajouter un salarié"
+
+msgid "Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario."
+msgstr "Les obligations sociales (TC, modèles 111 et 190, embauches et départs) ne sont pas encore calculées automatiquement : le cabinet valide leurs dates avant qu'elles n'entrent dans le calendrier."
+
+msgid "Expandir Gestoría"
+msgstr "Développer Cabinet de gestion"
+
+msgid "Laboral"
+msgstr "Social"
+
+#, python-format
+msgid "También %(n)s trabajadores de clientes."
+msgstr "Également %(n)s salariés de clients."

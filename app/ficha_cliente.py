@@ -15,7 +15,7 @@ from flask import url_for
 from . import almacen_documentos, calcom, db, espocrm, facturascripts, perfil_fiscal
 from .vencimientos_fiscales import modelos_disponibles
 
-PESTANAS = ("resumen", "fiscal", "tareas", "documentos", "mensajes")
+PESTANAS = ("resumen", "fiscal", "laboral", "tareas", "documentos", "mensajes")
 
 
 def pestanas_disponibles(cliente_fiscal_id: int | None) -> list[str]:
@@ -31,12 +31,17 @@ def semaforo(vencimientos) -> dict:
     return perfil_fiscal.semaforo([{"estado": v["estado"], "fecha_limite": v["fecha_limite"]} for v in vencimientos], date.today())
 
 
-def url_documentos(tenant_id: int, cliente_fiscal_id: int) -> str:
-    """Dónde cae quien acaba de subir o archivar un documento en el expediente del cliente (pestaña Documentos de la ficha única)."""
+def url_pestana(tenant_id: int, cliente_fiscal_id: int, pestana: str, ancla: str = "", **consulta) -> str:
+    """La pestaña de la ficha única de un cliente fiscal (para redirigir tras una acción hecha desde una ruta de Fiscal)."""
     f = db.obtener_cliente_fiscal(tenant_id, cliente_fiscal_id)
     if f is None or f["cliente_id"] is None:
-        return url_for("fiscal.ficha_cliente", cliente_id=cliente_fiscal_id, pestana="documentos") + "#expediente"
-    return url_for("clientes.ficha", cliente_id=f["cliente_id"], pestana="documentos") + "#expediente"
+        return url_for("fiscal.ficha_cliente", cliente_id=cliente_fiscal_id, pestana=pestana, **consulta) + ancla
+    return url_for("clientes.ficha", cliente_id=f["cliente_id"], pestana=pestana, **consulta) + ancla
+
+
+def url_documentos(tenant_id: int, cliente_fiscal_id: int) -> str:
+    """Dónde cae quien acaba de subir o archivar un documento en el expediente del cliente (pestaña Documentos de la ficha única)."""
+    return url_pestana(tenant_id, cliente_fiscal_id, "documentos", "#expediente")
 
 
 def contexto_fiscal(tenant_id: int, usuario_id: int, cliente, vencimientos) -> dict:
@@ -99,6 +104,14 @@ def contexto_mensajes(cliente_fiscal, vencimientos) -> dict:
             mensajes.append({**dict(m), "vencimiento": v})
     mensajes.sort(key=lambda m: m["creado_en"], reverse=True)
     return {"mensajes_totales": mensajes, "correos_relacionados": db.listar_correos_de_cliente_fiscal(cliente_fiscal["id"])}
+
+
+def contexto_laboral(tenant_id: int, usuario_id: int, cliente_fiscal) -> dict:
+    """Los trabajadores del cliente (ver app/laboral.py); quien solo es auditor los ve pero no los toca."""
+    from . import acceso, laboral
+    trabajadores = laboral.listar(tenant_id, cliente_fiscal["id"])
+    return {"trabajadores": trabajadores, "trabajadores_activos": sum(1 for t in trabajadores if not t["de_baja"]), "tipos_contrato": laboral.TIPOS_CONTRATO,
+            "puede_modificar": acceso.puede_modificar_cliente(tenant_id, usuario_id, cliente_fiscal["id"])}
 
 
 def contexto_tareas(usuario_id: int, cliente_fiscal) -> dict:

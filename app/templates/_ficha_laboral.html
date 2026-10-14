@@ -1,0 +1,64 @@
+{% from "_ds/componentes.html" import chip %}
+<section class="dash-panel">
+  <h2>{{ _('Trabajadores') }} <span class="muted">({{ trabajadores_activos }} {{ _('de alta') }})</span></h2>
+  <p class="muted">{{ _('Datos personales de las personas que trabajan para este cliente: solo los necesarios para llevar su gestión laboral, sin salarios. Abrir esta pestaña y cada cambio quedan anotados en el registro de accesos del cliente.') }}</p>
+  {% if trabajadores %}
+  <ul class="log-list">
+    {% for w in trabajadores %}
+    <li class="log-item {{ 'is-completada' if w.de_baja }}">
+      <details class="ds-ancho-total">
+        <summary>
+          <strong>{{ w.nombre }}</strong>
+          {% if w.puesto %}<span class="muted"> · {{ w.puesto }}</span>{% endif %}
+          {% if w.tipo_contrato %}{% for clave, etiqueta in tipos_contrato if clave == w.tipo_contrato %}{{ chip(etiqueta) }}{% endfor %}{% endif %}
+          {% if w.jornada_horas_semana %}<span class="pill">{{ '%g'|format(w.jornada_horas_semana) }} h/{{ _('semana') }}</span>{% endif %}
+          {% if w.de_baja %}{{ chip(_('De baja') ~ ' ' ~ w.fecha_baja, 'peligro') }}{% elif w.fecha_alta %}<span class="muted"> · {{ _('Alta') }} {{ w.fecha_alta }}</span>{% endif %}
+        </summary>
+        {% if puede_modificar %}
+        <form class="edit-form ds-mt-12" method="post" action="{{ url_for('fiscal.editar_trabajador', cliente_id=fiscal.id, trabajador_id=w.id) }}">
+          <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ w.nombre }}" required maxlength="200"></label>
+          <label>{{ _('NIF / NIE') }} <input type="text" name="nif" value="{{ w.nif or '' }}" maxlength="30"></label>
+          <label>{{ _('Nº de afiliación a la Seguridad Social') }} <input type="text" name="naf" value="{{ w.naf or '' }}" maxlength="30" inputmode="numeric"></label>
+          <label>{{ _('Puesto') }} <input type="text" name="puesto" value="{{ w.puesto or '' }}" maxlength="120"></label>
+          <label>{{ _('Tipo de contrato') }}
+            <select name="tipo_contrato"><option value="">{{ _('Sin indicar') }}</option>{% for clave, etiqueta in tipos_contrato %}<option value="{{ clave }}" {{ 'selected' if w.tipo_contrato == clave }}>{{ etiqueta }}</option>{% endfor %}</select>
+          </label>
+          <label>{{ _('Jornada (horas a la semana)') }} <input type="text" name="jornada_horas_semana" value="{{ '%g'|format(w.jornada_horas_semana) if w.jornada_horas_semana else '' }}" inputmode="decimal"></label>
+          <label>{{ _('Fecha de alta') }} <input type="date" name="fecha_alta" value="{{ w.fecha_alta or '' }}"></label>
+          <label>{{ _('Fecha de baja') }} <input type="date" name="fecha_baja" value="{{ w.fecha_baja or '' }}"></label>
+          <label>{{ _('Notas') }} <textarea name="notas" rows="2" maxlength="2000">{{ w.notas or '' }}</textarea></label>
+          <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+        </form>
+        <form method="post" action="{{ url_for('fiscal.eliminar_trabajador', cliente_id=fiscal.id, trabajador_id=w.id) }}" class="ds-mt-8" data-confirmar-envio="{{ _('¿Eliminar a este trabajador? Se manda a la papelera.') }}" data-confirmar-peligro>
+          <button type="submit" class="btn btn-peligro btn-sm">{{ _('Eliminar') }}</button>
+        </form>
+        {% else %}
+        <p class="muted ds-mt-8">{{ w.nif or '' }}{% if w.naf %} · {{ w.naf }}{% endif %}{% if w.notas %} · {{ w.notas }}{% endif %}</p>
+        {% endif %}
+      </details>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Este cliente todavía no tiene trabajadores dados de alta.') }}</p>{% endif %}
+</section>
+
+{% if puede_modificar %}
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Dar de alta a un trabajador') }}</h2>
+  <form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.crear_trabajador', cliente_id=fiscal.id) }}">
+    <label>{{ _('Nombre') }} <input type="text" name="nombre" required maxlength="200"></label>
+    <label>{{ _('NIF / NIE') }} <input type="text" name="nif" maxlength="30"></label>
+    <label>{{ _('Nº de afiliación a la Seguridad Social') }} <input type="text" name="naf" maxlength="30" inputmode="numeric"></label>
+    <label>{{ _('Puesto') }} <input type="text" name="puesto" maxlength="120"></label>
+    <label>{{ _('Tipo de contrato') }}
+      <select name="tipo_contrato"><option value="">{{ _('Sin indicar') }}</option>{% for clave, etiqueta in tipos_contrato %}<option value="{{ clave }}">{{ etiqueta }}</option>{% endfor %}</select>
+    </label>
+    <label>{{ _('Jornada (horas a la semana)') }} <input type="text" name="jornada_horas_semana" inputmode="decimal" placeholder="40"></label>
+    <label>{{ _('Fecha de alta') }} <input type="date" name="fecha_alta"></label>
+    <label>{{ _('Fecha de baja') }} <input type="date" name="fecha_baja"></label>
+    <label>{{ _('Notas') }} <textarea name="notas" rows="2" maxlength="2000"></textarea></label>
+    <button type="submit" class="btn btn-primary">{{ _('Dar de alta') }}</button>
+  </form>
+  <p class="muted ds-mt-8">{{ _('Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario.') }}</p>
+</section>
+{% endif %}

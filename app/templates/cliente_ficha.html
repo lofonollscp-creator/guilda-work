@@ -22,7 +22,7 @@
 </header>
 {% include "_nucleo_subnav.html" %}
 <nav class="tareas-subnav" aria-label="{{ _('Secciones de la ficha') }}">
-  {% for p, nombre in (('resumen', _('Resumen')), ('fiscal', _('Fiscal')), ('tareas', _('Tareas')), ('documentos', _('Documentos')), ('mensajes', _('Mensajes'))) if p in pestanas %}
+  {% for p, nombre in (('resumen', _('Resumen')), ('fiscal', _('Fiscal')), ('laboral', _('Laboral')), ('tareas', _('Tareas')), ('documentos', _('Documentos')), ('mensajes', _('Mensajes'))) if p in pestanas %}
   <a class="{{ 'active' if p == pestana }}" href="{{ url_for('clientes.ficha', cliente_id=c.id, pestana=p) }}">{{ nombre }}</a>
   {% endfor %}
 </nav>
@@ -118,6 +118,7 @@
 </section>
 {% endif %}
 {% elif pestana == 'fiscal' %}{% include "_ficha_fiscal.html" %}
+{% elif pestana == 'laboral' %}{% include "_ficha_laboral.html" %}
 {% elif pestana == 'tareas' %}{% include "_ficha_tareas.html" %}
 {% elif pestana == 'documentos' %}{% include "_ficha_documentos.html" %}
 {% elif pestana == 'mensajes' %}{% include "_ficha_mensajes.html" %}

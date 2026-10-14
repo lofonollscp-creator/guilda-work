@@ -199,6 +199,9 @@ def ficha(cliente_id: int):
     elif pestana == "fiscal":
         db.registrar_acceso_cliente(t, fid, g.usuario_id, "ficha_vista")
         ctx.update(ficha_cliente.contexto_fiscal(t, g.usuario_id, fiscal, vencimientos))
+    elif pestana == "laboral":
+        db.registrar_acceso_cliente(t, fid, g.usuario_id, "laboral_visto")
+        ctx.update(ficha_cliente.contexto_laboral(t, g.usuario_id, fiscal))
     elif pestana == "documentos":
         ctx.update(ficha_cliente.contexto_documentos(t, g.usuario_id, c, fiscal, vencimientos))
     elif pestana == "mensajes":

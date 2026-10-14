@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import alta_cliente, almacen_documentos, calcom, ficha_cliente as ficha_cliente_unica, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
+from . import alta_cliente, almacen_documentos, calcom, ficha_cliente as ficha_cliente_unica, laboral, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
 from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
@@ -128,6 +128,57 @@ def ficha_cliente(cliente_id: int):
     return redirect(url_for("clientes.ficha", cliente_id=destino, pestana=request.args.get("pestana") or "fiscal"))
 
 
+def _trabajador_del_cliente(cliente_id: int, trabajador_id: int | None = None):
+    """El cliente fiscal (404 si no existe o no se ve) y, si se pide, uno de sus trabajadores; 403 si la persona no puede modificar este cliente."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    if not acceso.puede_modificar_cliente(g.tenant_id, g.usuario_id, cliente_id):
+        abort(403)
+    t = laboral.obtener(g.tenant_id, trabajador_id) if trabajador_id is not None else None
+    if trabajador_id is not None and (t is None or t["cliente_fiscal_id"] != cliente_id):
+        abort(404)
+    return cliente, t
+
+
+def _datos_trabajador() -> dict:
+    return {c: request.form.get(c, "") for c in laboral.CAMPOS if c != "nombre"} | {"nombre": request.form.get("nombre", "")}
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/trabajadores", methods=["POST"])
+@login_required
+def crear_trabajador(cliente_id: int):
+    _trabajador_del_cliente(cliente_id)
+    try:
+        datos = _datos_trabajador()
+        trabajador_id = laboral.crear(g.tenant_id, g.usuario_id, cliente_id, datos.pop("nombre"), **datos)
+    except ValueError as e:
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "trabajador_creado", f"#{trabajador_id}")
+    return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/trabajadores/<int:trabajador_id>", methods=["POST"])
+@login_required
+def editar_trabajador(cliente_id: int, trabajador_id: int):
+    _trabajador_del_cliente(cliente_id, trabajador_id)
+    try:
+        laboral.editar(g.tenant_id, trabajador_id, **_datos_trabajador())
+    except ValueError as e:
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "trabajador_editado", f"#{trabajador_id}")
+    return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/trabajadores/<int:trabajador_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_trabajador(cliente_id: int, trabajador_id: int):
+    _trabajador_del_cliente(cliente_id, trabajador_id)
+    laboral.eliminar(g.tenant_id, trabajador_id)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "trabajador_eliminado", f"#{trabajador_id}")
+    return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos", methods=["POST"])
 @login_required
 def subir_documentos_cliente(cliente_id: int):
@@ -216,6 +267,8 @@ ETIQUETAS_ACCESO = {
     "documento_subido": _l("Ha subido un documento al expediente"), "documento_descargado": _l("Ha descargado un documento del expediente"),
     "documento_eliminado": _l("Ha eliminado un documento del expediente"), "correo_archivado": _l("Ha archivado un correo en el expediente"),
     "vencimiento_documento_descargado": _l("Ha descargado un documento de un vencimiento"),
+    "laboral_visto": _l("Ha abierto la pestaña Laboral"), "trabajador_creado": _l("Ha dado de alta a un trabajador"), "trabajador_editado": _l("Ha editado a un trabajador"),
+    "trabajador_eliminado": _l("Ha eliminado a un trabajador"),
 }
 
 

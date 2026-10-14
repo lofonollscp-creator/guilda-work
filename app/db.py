@@ -2195,6 +2195,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import laboral
+        laboral.crear_esquema(conn)           # trabajadores de los clientes: gestión laboral, primera rebanada (app/laboral.py)
         from . import plantillas_cliente
         plantillas_cliente.crear_esquema(conn)  # plantillas de alta de cliente por tipo (app/plantillas_cliente.py)
         from . import traspasos
@@ -2522,6 +2524,8 @@ ACCIONES_ACCESO_CLIENTE = {
     "documento_subido": "Ha subido un documento al expediente", "documento_descargado": "Ha descargado un documento del expediente",
     "documento_eliminado": "Ha eliminado un documento del expediente", "correo_archivado": "Ha archivado un correo en el expediente",
     "vencimiento_documento_descargado": "Ha descargado un documento de un vencimiento", "informe_mensual": "Ha generado el informe mensual",
+    "laboral_visto": "Ha abierto la pestaña Laboral", "trabajador_creado": "Ha dado de alta a un trabajador", "trabajador_editado": "Ha editado a un trabajador",
+    "trabajador_eliminado": "Ha eliminado a un trabajador",
 }
 RETENCION_ACCESOS_DIAS = 730
 VENTANA_FICHA_VISTA_MINUTOS = 30

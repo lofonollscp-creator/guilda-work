@@ -11910,3 +11910,79 @@ msgstr "Obrir Tasques"
 
 msgid "Secciones de la ficha"
 msgstr "Seccions de la fitxa"
+
+msgid "Indefinido"
+msgstr "Indefinit"
+
+msgid "Temporal"
+msgstr "Temporal"
+
+msgid "Prácticas"
+msgstr "Pràctiques"
+
+msgid "Formación"
+msgstr "Formació"
+
+msgid "Ha abierto la pestaña Laboral"
+msgstr "Ha obert la pestanya Laboral"
+
+msgid "Ha dado de alta a un trabajador"
+msgstr "Ha donat d'alta un treballador"
+
+msgid "Ha editado a un trabajador"
+msgstr "Ha editat un treballador"
+
+msgid "Ha eliminado a un trabajador"
+msgstr "Ha eliminat un treballador"
+
+msgid "Trabajadores"
+msgstr "Treballadors"
+
+msgid "de alta"
+msgstr "d'alta"
+
+msgid "Datos personales de las personas que trabajan para este cliente: solo los necesarios para llevar su gestión laboral, sin salarios. Abrir esta pestaña y cada cambio quedan anotados en el registro de accesos del cliente."
+msgstr "Dades personals de les persones que treballen per a aquest client: només les necessàries per dur la seva gestió laboral, sense salaris. Obrir aquesta pestanya i cada canvi queden anotats al registre d'accessos del client."
+
+msgid "semana"
+msgstr "setmana"
+
+msgid "De baja"
+msgstr "De baixa"
+
+msgid "NIF / NIE"
+msgstr "NIF / NIE"
+
+msgid "Nº de afiliación a la Seguridad Social"
+msgstr "Núm. d'afiliació a la Seguretat Social"
+
+msgid "Puesto"
+msgstr "Lloc"
+
+msgid "Jornada (horas a la semana)"
+msgstr "Jornada (hores a la setmana)"
+
+msgid "Fecha de baja"
+msgstr "Data de baixa"
+
+msgid "¿Eliminar a este trabajador? Se manda a la papelera."
+msgstr "Voleu eliminar aquest treballador? Es mou a la paperera."
+
+msgid "Este cliente todavía no tiene trabajadores dados de alta."
+msgstr "Aquest client encara no té treballadors donats d'alta."
+
+msgid "Dar de alta a un trabajador"
+msgstr "Donar d'alta un treballador"
+
+msgid "Las obligaciones laborales (TC, modelos 111 y 190, altas y bajas) todavía no se calculan solas: sus fechas las valida el despacho antes de entrar en el calendario."
+msgstr "Les obligacions laborals (TC, models 111 i 190, altes i baixes) encara no es calculen soles: les dates les valida el despatx abans d'entrar al calendari."
+
+msgid "Expandir Gestoría"
+msgstr "Expandir Gestoria"
+
+msgid "Laboral"
+msgstr "Laboral"
+
+#, python-format
+msgid "También %(n)s trabajadores de clientes."
+msgstr "També %(n)s treballadors de clients."

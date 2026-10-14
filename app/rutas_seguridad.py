@@ -195,7 +195,10 @@ def vaciar_papelera():
         r = rgpd.vaciar_papelera(t, g.usuario_id, request.form.get("dias", type=int) if request.form.get("dias") not in (None, "") else -1)
     except ValueError as e:
         return redirect(url_for("seguridad.privacidad", error=str(e)))
-    return redirect(url_for("seguridad.privacidad", aviso=_("Papelera vaciada: %(d)s documentos, %(p)s plazos y %(h)s partes de horas.", d=r["documentos"], p=r["plazos"], h=r["partes_tiempo"])))
+    aviso = _("Papelera vaciada: %(d)s documentos, %(p)s plazos y %(h)s partes de horas.", d=r["documentos"], p=r["plazos"], h=r["partes_tiempo"])
+    if r.get("trabajadores_cliente"):
+        aviso += " " + _("También %(n)s trabajadores de clientes.", n=r["trabajadores_cliente"])
+    return redirect(url_for("seguridad.privacidad", aviso=aviso))
 
 
 @seguridad_bp.route("/clientes/<int:cliente_id>/exportar.json")

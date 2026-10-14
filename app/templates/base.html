@@ -145,10 +145,10 @@
       {% endif %}
       {% if g.tenant_id and 'gestoria' in verticales_activos %}
       <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.') or request.endpoint.startswith('certificados.') or request.endpoint.startswith('control_fiscal.')) }}">
-        <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-link {{ 'active' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.') or request.endpoint.startswith('certificados.') or request.endpoint.startswith('control_fiscal.')) else '' }}" title="{{ _('Fiscal') }}">
+        <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-link {{ 'active' if request.endpoint and (request.endpoint.startswith('fiscal.') or request.endpoint.startswith('citas.') or request.endpoint.startswith('certificados.') or request.endpoint.startswith('control_fiscal.')) else '' }}" title="{{ _('Gestoría') }}">
           <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
-          <span class="icon-rail-etiqueta">{{ _('Fiscal') }}</span>
-          <button type="button" class="icon-rail-chevron" aria-label="{{ _('Expandir Fiscal') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
+          <span class="icon-rail-etiqueta">{{ _('Gestoría') }}</span>
+          <button type="button" class="icon-rail-chevron" aria-label="{{ _('Expandir Gestoría') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-down"></use></svg></button>
         </a>
         <div class="icon-rail-submenu">
           <a href="{{ url_for('control_fiscal.panel') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.panel' else '' }}">{{ _('Panel fiscal') }}</a>
