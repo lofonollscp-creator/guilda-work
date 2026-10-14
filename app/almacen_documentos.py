@@ -15,7 +15,7 @@ import hashlib
 import json
 from typing import Protocol
 
-from . import db, nucleo
+from . import acceso, db, nucleo
 
 ORIGENES = ("subida", "correo", "portal", "generado")
 
@@ -231,6 +231,8 @@ def guardar(usuario_id: int, nombre: str, tipo_mime: str | None, contenido: byte
             cliente_id = cliente_id or exp["cliente_id"]
         if cliente_id is not None and conn.execute("SELECT 1 FROM clientes WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (cliente_id, tenant_id)).fetchone() is None:
             return "cliente", None
+        if not acceso.puede_ver_cliente_nucleo(tenant_id, usuario_id, cliente_id):
+            return "cliente" if expediente_id is None else "expediente", None
         repetido = conn.execute(
             "SELECT id FROM documentos WHERE tenant_id = ? AND cliente_id IS ? AND expediente_id IS ? AND hash_sha256 = ? AND papelera_en IS NULL", (tenant_id, cliente_id, expediente_id, huella)).fetchone()
         if repetido:
@@ -255,11 +257,14 @@ def guardar(usuario_id: int, nombre: str, tipo_mime: str | None, contenido: byte
 
 
 def _visible(conn, usuario_id: int, fila) -> bool:
+    u = _usuario(conn, usuario_id)
+    if fila["cliente_id"] is not None and u is not None and not acceso.puede_ver_cliente_nucleo(u["tenant_id"], usuario_id, fila["cliente_id"]):
+        return False                       # el cliente es de una oficina a la que la persona no llega
     if fila["expediente_id"] is None:
         return True
-    u = _usuario(conn, usuario_id)
     exp = conn.execute("SELECT * FROM expedientes WHERE id = ?", (fila["expediente_id"],)).fetchone()
-    return exp is not None and u is not None and nucleo.puede_ver_expediente(exp, usuario_id, bool(u["supervisor_tenant"]))
+    return (exp is not None and u is not None and nucleo.puede_ver_expediente(exp, usuario_id, bool(u["supervisor_tenant"]))
+            and acceso.puede_ver_cliente_nucleo(u["tenant_id"], usuario_id, exp["cliente_id"]))
 
 
 def leer(tenant_id: int, usuario_id: int, documento_id: int, via: str = "persona") -> dict | None:

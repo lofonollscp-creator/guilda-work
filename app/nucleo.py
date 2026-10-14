@@ -12,7 +12,7 @@ import re
 import unicodedata
 from datetime import date, timedelta
 
-from . import calendario_plazos as cp
+from . import acceso, calendario_plazos as cp
 from . import db, verticales
 
 ESQUEMA = """
@@ -244,6 +244,10 @@ def _de_tenant(conn, tabla: str, fila_id, tenant_id: int, mensaje: str):
     f = conn.execute(f"SELECT * FROM {tabla} WHERE id = ? AND tenant_id = ?", (fila_id, tenant_id)).fetchone()
     if f is None:
         raise ValueError(mensaje)
+    if tabla in ("clientes", "expedientes"):
+        extra, pe = acceso.restriccion_nucleo(tenant_id, "c.id")
+        if extra and conn.execute(f"SELECT 1 FROM clientes c WHERE c.id = ? AND c.tenant_id = ?{extra}", (f["id"] if tabla == "clientes" else f["cliente_id"], tenant_id, *pe)).fetchone() is None:
+            raise ValueError(mensaje)
     return f
 
 
@@ -338,11 +342,12 @@ def crear_cliente(tenant_id: int, nombre: str, *, tipo: str | None = None, nif: 
 
 
 def obtener_cliente(tenant_id: int, cliente_id: int):
+    extra, pe = acceso.restriccion_nucleo(tenant_id, "c.id")
     conn = db.get_connection()
     try:
         return conn.execute(
             "SELECT c.*, cf.id AS cliente_fiscal_id, (SELECT nombre_mostrado FROM usuario_perfil WHERE usuario_id = c.responsable_id) AS responsable_nombre "
-            "FROM clientes c LEFT JOIN clientes_fiscales cf ON cf.cliente_id = c.id WHERE c.id = ? AND c.tenant_id = ?", (cliente_id, tenant_id)).fetchone()
+            f"FROM clientes c LEFT JOIN clientes_fiscales cf ON cf.cliente_id = c.id WHERE c.id = ? AND c.tenant_id = ?{extra}", (cliente_id, tenant_id, *pe)).fetchone()
     finally:
         conn.close()
 
@@ -423,6 +428,10 @@ def listar_clientes(tenant_id: int, q: str | None = None, etiqueta: str | None =
     if tipo in ("persona", "empresa"):
         donde.append("c.tipo = ?")
         p.append(tipo)
+    extra, pe = acceso.restriccion_nucleo(tenant_id, "c.id")
+    if extra:
+        donde.append(extra[len(" AND "):])
+        p += pe
     cond = " AND ".join(donde)
     limite = max(1, min(int(limite), 500))
     conn = _conn_con_busqueda()
@@ -464,11 +473,12 @@ def etiquetas_de(cliente_id: int) -> list[str]:
 
 
 def etiquetas_del_despacho(tenant_id: int) -> list[dict]:
+    extra, pe = acceso.restriccion_nucleo(tenant_id, "c.id")
     conn = db.get_connection()
     try:
         return [dict(f) for f in conn.execute(
-            "SELECT e.etiqueta, COUNT(*) AS n FROM cliente_etiquetas e JOIN clientes c ON c.id = e.cliente_id WHERE c.tenant_id = ? AND c.papelera_en IS NULL "
-            "GROUP BY e.etiqueta ORDER BY n DESC, e.etiqueta", (tenant_id,))]
+            f"SELECT e.etiqueta, COUNT(*) AS n FROM cliente_etiquetas e JOIN clientes c ON c.id = e.cliente_id WHERE c.tenant_id = ? AND c.papelera_en IS NULL{extra} "
+            "GROUP BY e.etiqueta ORDER BY n DESC, e.etiqueta", (tenant_id, *pe))]
     finally:
         conn.close()
 
@@ -493,11 +503,12 @@ def anadir_contacto(tenant_id: int, cliente_id: int, nombre: str, *, cargo=None,
 
 
 def listar_contactos(tenant_id: int, cliente_id: int) -> list:
+    extra, pe = acceso.restriccion_nucleo(tenant_id, "c.id")
     conn = db.get_connection()
     try:
         return conn.execute(
-            "SELECT k.* FROM cliente_contactos k JOIN clientes c ON c.id = k.cliente_id WHERE k.cliente_id = ? AND c.tenant_id = ? ORDER BY k.principal DESC, lower(k.nombre)",
-            (cliente_id, tenant_id)).fetchall()
+            f"SELECT k.* FROM cliente_contactos k JOIN clientes c ON c.id = k.cliente_id WHERE k.cliente_id = ? AND c.tenant_id = ?{extra} ORDER BY k.principal DESC, lower(k.nombre)",
+            (cliente_id, tenant_id, *pe)).fetchall()
     finally:
         conn.close()
 
@@ -529,9 +540,10 @@ def posibles_duplicados(tenant_id: int, nombre: str | None = None, nif: str | No
     extra = " AND c.id != ?" if excluir_id else ""
     if excluir_id:
         p.append(excluir_id)
+    vis, pv = acceso.restriccion_nucleo(tenant_id, "c.id")      # no se enseñan los clientes que la persona no ve (los duplicados de NIF fiscales los frena igualmente la base de datos)
     conn = db.get_connection()
     try:
-        return conn.execute(f"SELECT c.* FROM clientes c WHERE c.tenant_id = ? AND c.papelera_en IS NULL AND ({' OR '.join(condiciones)}){extra} ORDER BY lower(c.nombre) LIMIT 10", p).fetchall()
+        return conn.execute(f"SELECT c.* FROM clientes c WHERE c.tenant_id = ? AND c.papelera_en IS NULL AND ({' OR '.join(condiciones)}){extra}{vis} ORDER BY lower(c.nombre) LIMIT 10", [*p, *pv]).fetchall()
     finally:
         conn.close()
 
@@ -622,13 +634,16 @@ def obtener_expediente(tenant_id: int, expediente_id: int, usuario_id: int, supe
             "FROM expedientes x JOIN clientes c ON c.id = x.cliente_id WHERE x.id = ? AND x.tenant_id = ?", (expediente_id, tenant_id)).fetchone()
     finally:
         conn.close()
-    return exp if exp is not None and puede_ver_expediente(exp, usuario_id, supervisor) else None
+    return exp if exp is not None and puede_ver_expediente(exp, usuario_id, supervisor) and acceso.puede_ver_cliente_nucleo(tenant_id, usuario_id, exp["cliente_id"]) else None
 
 
 def listar_expedientes(tenant_id: int, usuario_id: int, supervisor: bool = False, *, cliente_id: int | None = None, estado: str | None = None, tipo: str | None = None,
                        solo_abiertos: bool = False, q: str | None = None, responsable_id: int | None = None, limite: int = 100, pagina: int = 1, papelera: bool = False) -> tuple[list, int]:
     cond_vis, p_vis = _visible_sql(usuario_id, supervisor)
     donde, p = ["x.tenant_id = ?", "x.papelera_en IS NOT NULL" if papelera else "x.papelera_en IS NULL", cond_vis], [tenant_id, *p_vis]
+    cond_cli, p_cli = acceso.condicion_nucleo(tenant_id, usuario_id, "x.cliente_id")
+    if cond_cli:
+        donde.append(cond_cli); p += p_cli
     if cliente_id:
         donde.append("x.cliente_id = ?"); p.append(cliente_id)
     if estado:
@@ -898,6 +913,12 @@ def listar_plazos(tenant_id: int, usuario_id: int, supervisor: bool = False, *, 
     hoy = hoy or date.today()
     cond_vis, p_vis = _visible_sql(usuario_id, supervisor, "x")
     donde, p = ["z.tenant_id = ?", "z.papelera_en IS NULL", f"(z.expediente_id IS NULL OR EXISTS (SELECT 1 FROM expedientes x WHERE x.id = z.expediente_id AND {cond_vis}))"], [tenant_id, *p_vis]
+    cond_cli, p_cli = acceso.condicion_nucleo(tenant_id, usuario_id, "z.cliente_id")
+    if cond_cli:
+        donde.append(f"(z.cliente_id IS NULL OR {cond_cli})"); p += p_cli
+    cond_exp, p_exp = acceso.condicion_nucleo(tenant_id, usuario_id, "x2.cliente_id")
+    if cond_exp:
+        donde.append(f"(z.expediente_id IS NULL OR EXISTS (SELECT 1 FROM expedientes x2 WHERE x2.id = z.expediente_id AND {cond_exp}))"); p += p_exp
     if expediente_id:
         donde.append("z.expediente_id = ?"); p.append(expediente_id)
     if cliente_id:
@@ -1060,6 +1081,12 @@ def _filtro_partes(tenant_id: int, usuario_id: int, ver_todo: bool, supervisor: 
     cond_vis, p_vis = _visible_sql(usuario_id, supervisor, "x")
     donde = ["t.tenant_id = ?", "t.papelera_en IS NULL", f"(t.expediente_id IS NULL OR EXISTS (SELECT 1 FROM expedientes x WHERE x.id = t.expediente_id AND {cond_vis}))"]
     p: list = [tenant_id, *p_vis]
+    cond_cli, p_cli = acceso.condicion_nucleo(tenant_id, usuario_id, "t.cliente_id")
+    if cond_cli:
+        donde.append(f"(t.cliente_id IS NULL OR {cond_cli})"); p += p_cli
+    cond_exp, p_exp = acceso.condicion_nucleo(tenant_id, usuario_id, "x2.cliente_id")
+    if cond_exp:
+        donde.append(f"(t.expediente_id IS NULL OR EXISTS (SELECT 1 FROM expedientes x2 WHERE x2.id = t.expediente_id AND {cond_exp}))"); p += p_exp
     if not ver_todo:
         donde.append("t.usuario_id = ?"); p.append(usuario_id)
     elif f.get("persona_id"):

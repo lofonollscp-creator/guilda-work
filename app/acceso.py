@@ -172,6 +172,46 @@ def clientes_visibles(tenant_id: int, usuario_id: int) -> set[int] | None:
         conn.close()
 
 
+# --- Visibilidad de los clientes del núcleo (`clientes`) -----------------------------------------------------------------------------------------
+# Un cliente del núcleo con ficha fiscal (`clientes_fiscales.cliente_id`) se ve igual que esa ficha: por su oficina, concesiones y membresías. Uno sin ficha fiscal no tiene
+# oficina a la que pertenezca, así que lo ve todo el equipo (igual que un cliente fiscal sin oficina asignada). Así la oficina de la ficha fiscal manda también en expedientes,
+# plazos, horas y documentos del cliente, sin una segunda asignación que mantener sincronizada.
+def condicion_nucleo(tenant_id: int, usuario_id: int, columna: str) -> tuple[str, list]:
+    """Fragmento SQL (sin `AND` inicial) que limita `columna` (un id de `clientes`) a lo que la persona puede ver, o ("", []) si lo ve todo. `columna` no debe ser NULL
+    en la fila (quien la tenga nullable la envuelve en `columna IS NULL OR ...`)."""
+    sql, params = _condicion(tenant_id, usuario_id, "cf.id")
+    if not sql:
+        return "", []
+    marca = (f"({columna} NOT IN (SELECT cliente_id FROM clientes_fiscales WHERE tenant_id = ? AND cliente_id IS NOT NULL) "
+             f"OR {columna} IN (SELECT cf.cliente_id FROM clientes_fiscales cf WHERE cf.cliente_id IS NOT NULL AND {sql}))")
+    return marca, [tenant_id, *params]
+
+
+def restriccion_nucleo(tenant_id: int, columna: str) -> tuple[str, list]:
+    """Como `restriccion` pero para columnas de `clientes` del núcleo: `(" AND <filtro>", params)` para el actor actual, o ("", []) si no hay actor o lo ve todo."""
+    uid = actor_actual()
+    if uid is None or not tiene_oficinas(tenant_id):
+        return "", []
+    u = db.obtener_usuario(uid)
+    if u is None or u["tenant_id"] != tenant_id:
+        return "", []
+    sql, params = condicion_nucleo(tenant_id, uid, columna)
+    return (f" AND {sql}", params) if sql else ("", [])
+
+
+def puede_ver_cliente_nucleo(tenant_id: int, usuario_id: int, cliente_id: int | None) -> bool:
+    if cliente_id is None:
+        return True
+    sql, params = condicion_nucleo(tenant_id, usuario_id, "c.id")
+    if not sql:
+        return True
+    conn = db.get_connection()
+    try:
+        return conn.execute(f"SELECT 1 FROM clientes c WHERE c.id = ? AND c.tenant_id = ? AND {sql}", [cliente_id, tenant_id, *params]).fetchone() is not None
+    finally:
+        conn.close()
+
+
 # --- Gestión (oficinas, asignación, concesiones, membresías) ------------------------------------------------------------------------------------
 def _exigir_directivo(tenant_id: int, usuario_id: int) -> None:
     u = db.obtener_usuario(usuario_id)
