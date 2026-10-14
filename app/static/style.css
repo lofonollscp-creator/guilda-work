@@ -5052,3 +5052,10 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-respuesta-rapida-acciones { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .correo-adjuntos-lista { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.88em; }
 .correo-compose.es-destino-archivos { outline: 2px dashed var(--primary); outline-offset: 4px; }
+
+/* --- Correo C4: contexto del mensaje y «Escribir» desde otras pantallas --- */
+.correo-contexto { margin: 8px 0 12px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 0.88em; }
+.correo-contexto summary { cursor: pointer; font-weight: 600; }
+.correo-contexto-fila { margin: 6px 0; }
+.correo-contexto-titulo { margin: 8px 0 2px; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.correo-contexto-lista { margin: 0; padding-left: 18px; }

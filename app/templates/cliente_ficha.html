@@ -11,6 +11,7 @@
   </div>
   <div class="ds-fila">
     {{ boton(_('Nuevo expediente'), 'primario', href=url_for('expedientes.nuevo', cliente_id=c.id)) }}
+    {% if c.email %}{{ boton(_('Escribir'), 'secundario', href=url_for('correo.redactar', para=c.email, cliente_fiscal_id=fiscal.id if fiscal else None)) }}{% endif %}
     {% if g.get('supervisor_tenant') or g.get('es_admin') %}{{ boton(_('Exportar datos (JSON)'), 'fantasma', href=url_for('seguridad.exportar_cliente', cliente_id=c.id)) }}{% endif %}
     {% if not fiscal and gestion_fiscal_disponible and not c.papelera_en %}
     <form class="ds-fila" method="post" action="{{ url_for('clientes.activar_gestion_fiscal', cliente_id=c.id) }}">
@@ -61,7 +62,7 @@
     {% for k in contactos %}
     <li class="log-item">
       <span class="log-text"><strong>{{ k.nombre }}</strong>{% if k.cargo %} · {{ k.cargo }}{% endif %}{% if k.rol %} {{ chip(k.rol) }}{% endif %}{% if k.principal %} {{ chip(_('Principal'), 'exito') }}{% endif %}
-        <br><span class="muted">{{ k.email or '' }}{% if k.email and k.telefono %} · {% endif %}{{ k.telefono or '' }}</span></span>
+        <br><span class="muted">{{ k.email or '' }}{% if k.email and k.telefono %} · {% endif %}{{ k.telefono or '' }}</span>{% if k.email %} <a href="{{ url_for('correo.redactar', para=k.email, cliente_fiscal_id=fiscal.id if fiscal else None) }}">{{ _('Escribir') }}</a>{% endif %}</span>
       <form method="post" action="{{ url_for('clientes.eliminar_contacto', cliente_id=c.id, contacto_id=k.id) }}" data-confirmar-envio="{{ _('¿Quitar este contacto?') }}" data-confirmar-peligro>
         <button type="submit" class="chip-del" title="{{ _('Quitar') }}" aria-label="{{ _('Quitar') }}">×</button>
       </form>

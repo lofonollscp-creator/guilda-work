@@ -363,6 +363,34 @@
     <p class="correo-sync-aviso" role="status"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Este mensaje está protegido con la clave del despacho. Un responsable tiene que desbloquear los documentos (Seguridad del despacho) para poder leerlo.') }}</p>
     {% endif %}
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or (_('Mensaje protegido') if mensaje_seleccionado.protegido else _('(sin asunto)')) }}</h2>
+    {% if contexto_correo and (contexto_correo.cliente or contexto_correo.candidatos or contexto_correo.documentos) %}
+    <details class="correo-contexto" open>
+      <summary>{{ _('Contexto') }}{% if contexto_correo.cliente %}: {{ contexto_correo.cliente.nombre }}{% endif %}</summary>
+      {% if contexto_correo.cliente %}
+      <p class="correo-contexto-fila">
+        {% if contexto_correo.cliente.nucleo_id %}<a href="{{ url_for('clientes.ficha', cliente_id=contexto_correo.cliente.nucleo_id) }}">{{ _('Abrir la ficha del cliente') }}</a>
+        · <a href="{{ url_for('clientes.ficha', cliente_id=contexto_correo.cliente.nucleo_id, pestana='fiscal') }}">{{ _('Fiscal') }}</a>
+        · <a href="{{ url_for('clientes.ficha', cliente_id=contexto_correo.cliente.nucleo_id, pestana='tareas') }}">{{ _('Tareas') }}</a>{% endif %}
+        {% if contexto_correo.cliente.email %}· <a href="{{ url_for('correo.redactar', cuenta_id=cuenta_id, para=contexto_correo.cliente.email, cliente_fiscal_id=contexto_correo.cliente.id) }}">{{ _('Escribir al cliente') }}</a>{% endif %}
+      </p>
+      {% if contexto_correo.vencimientos %}
+      <p class="correo-contexto-titulo">{{ _('Vencimientos abiertos') }}</p>
+      <ul class="correo-contexto-lista">{% for v in contexto_correo.vencimientos %}<li><a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }} {{ v.periodo }}</a> <span class="muted">· {{ v.fecha_limite[:10] }}</span></li>{% endfor %}</ul>
+      {% endif %}
+      {% if contexto_correo.tareas %}
+      <p class="correo-contexto-titulo">{{ _('Tareas abiertas del cliente') }}</p>
+      <ul class="correo-contexto-lista">{% for t in contexto_correo.tareas %}<li>{{ t.asunto }}{% if t.fecha_vencimiento %} <span class="muted">· {{ t.fecha_vencimiento[:10] }}</span>{% endif %}</li>{% endfor %}</ul>
+      {% endif %}
+      {% elif contexto_correo.candidatos %}
+      <p class="correo-contexto-titulo">{{ _('Este remitente podría ser:') }}</p>
+      <ul class="correo-contexto-lista">{% for k in contexto_correo.candidatos %}<li><a href="{{ url_for('clientes.ficha', cliente_id=k.id) }}">{{ k.nombre }}</a></li>{% endfor %}</ul>
+      {% endif %}
+      {% if contexto_correo.documentos %}
+      <p class="correo-contexto-titulo">{{ _('Archivado en expedientes') }}</p>
+      <ul class="correo-contexto-lista">{% for d in contexto_correo.documentos %}<li>{{ d.nombre_archivo }}</li>{% endfor %}</ul>
+      {% endif %}
+    </details>
+    {% endif %}
     {% if equipo_correo and (companeros or equipo_correo.asignado_a or equipo_correo.compartidos or notas_internas) %}
     <details class="correo-equipo-panel" {{ 'open' if equipo_correo.asignado_a or notas_internas }}>
       <summary><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg>

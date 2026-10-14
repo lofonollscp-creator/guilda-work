@@ -12275,3 +12275,30 @@ msgstr "Activer la réponse automatique"
 
 msgid "Desde (opcional)"
 msgstr "Du (facultatif)"
+
+msgid "Contexto"
+msgstr "Contexte"
+
+msgid "Abrir la ficha del cliente"
+msgstr "Ouvrir la fiche du client"
+
+msgid "Escribir al cliente"
+msgstr "Écrire au client"
+
+msgid "Vencimientos abiertos"
+msgstr "Échéances ouvertes"
+
+msgid "Tareas abiertas del cliente"
+msgstr "Tâches ouvertes du client"
+
+msgid "Este remitente podría ser:"
+msgstr "Cet expéditeur pourrait être :"
+
+msgid "Archivado en expedientes"
+msgstr "Classé dans les dossiers"
+
+msgid "Escribir"
+msgstr "Écrire"
+
+msgid "Escribir al cliente sobre este vencimiento"
+msgstr "Écrire au client à propos de cette échéance"

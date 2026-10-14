@@ -12199,3 +12199,30 @@ msgstr "Activa la resposta automàtica"
 
 msgid "Desde (opcional)"
 msgstr "Des de (opcional)"
+
+msgid "Contexto"
+msgstr "Context"
+
+msgid "Abrir la ficha del cliente"
+msgstr "Obre la fitxa del client"
+
+msgid "Escribir al cliente"
+msgstr "Escriu al client"
+
+msgid "Vencimientos abiertos"
+msgstr "Venciments oberts"
+
+msgid "Tareas abiertas del cliente"
+msgstr "Tasques obertes del client"
+
+msgid "Este remitente podría ser:"
+msgstr "Aquest remitent podria ser:"
+
+msgid "Archivado en expedientes"
+msgstr "Arxivat en expedients"
+
+msgid "Escribir"
+msgstr "Escriu"
+
+msgid "Escribir al cliente sobre este vencimiento"
+msgstr "Escriu al client sobre aquest venciment"

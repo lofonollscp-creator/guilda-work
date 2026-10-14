@@ -12190,3 +12190,30 @@ msgstr "Turn on the automatic reply"
 
 msgid "Desde (opcional)"
 msgstr "From (optional)"
+
+msgid "Contexto"
+msgstr "Context"
+
+msgid "Abrir la ficha del cliente"
+msgstr "Open the client file"
+
+msgid "Escribir al cliente"
+msgstr "Write to the client"
+
+msgid "Vencimientos abiertos"
+msgstr "Open deadlines"
+
+msgid "Tareas abiertas del cliente"
+msgstr "Client's open tasks"
+
+msgid "Este remitente podría ser:"
+msgstr "This sender could be:"
+
+msgid "Archivado en expedientes"
+msgstr "Filed in case files"
+
+msgid "Escribir"
+msgstr "Write"
+
+msgid "Escribir al cliente sobre este vencimiento"
+msgstr "Write to the client about this deadline"

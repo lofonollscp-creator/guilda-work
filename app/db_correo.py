@@ -720,7 +720,7 @@ def asignar_categoria_correo(usuario_id: int, mensaje_id: int, categoria_id: int
 
 
 def cliente_fiscal_id_por_email(tenant_id: int, email: str | None) -> int | None:
-    """El cliente fiscal cuyo email coincide con `email` (sin distinguir
+    """El cliente fiscal cuyo email, o el de una de sus personas de contacto, coincide con `email` (sin distinguir
     mayúsculas), solo si es único en el despacho: con dos clientes con el mismo
     correo no se adivina y no se vincula ninguno."""
     email = (email or "").strip().lower()
@@ -729,8 +729,10 @@ def cliente_fiscal_id_por_email(tenant_id: int, email: str | None) -> int | None
     conn = _db.get_connection()
     try:
         filas = conn.execute(
-            "SELECT id FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL AND LOWER(TRIM(email)) = ? LIMIT 2",
-            (tenant_id, email),
+            """SELECT DISTINCT cf.id FROM clientes_fiscales cf
+               LEFT JOIN cliente_contactos k ON k.cliente_id = cf.cliente_id
+               WHERE cf.tenant_id = ? AND cf.papelera_en IS NULL AND (LOWER(TRIM(cf.email)) = ? OR LOWER(TRIM(k.email)) = ?) LIMIT 2""",
+            (tenant_id, email, email),
         ).fetchall()
         return filas[0]["id"] if len(filas) == 1 else None
     finally:

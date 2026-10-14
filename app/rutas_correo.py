@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import correo, correo_autorespuesta, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
+from . import acceso, correo, correo_autorespuesta, correo_contexto, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -116,7 +116,7 @@ def _modelo_proximo(cliente_id) -> str | None:
 
 def _render_redactar(
     *, cuenta_id=None, destinatarios="", cc="", bcc="", asunto="", cuerpo_html="",
-    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"), borrador_id=None,
+    en_respuesta_a="", error=None, titulo=_l("Nuevo mensaje"), borrador_id=None, cliente_plantilla_id=None,
 ):
     cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
     return render_template(
@@ -133,8 +133,8 @@ def _render_redactar(
         titulo=titulo,
         plantillas=db.listar_plantillas_correo(g.usuario_id),
         clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id is not None else [],
-        cliente_plantilla_id=_cliente_del_mensaje_respondido(en_respuesta_a),
-        modelo_sugerido=_modelo_proximo(_cliente_del_mensaje_respondido(en_respuesta_a)),
+        cliente_plantilla_id=cliente_plantilla_id or _cliente_del_mensaje_respondido(en_respuesta_a),
+        modelo_sugerido=_modelo_proximo(cliente_plantilla_id or _cliente_del_mensaje_respondido(en_respuesta_a)),
         borrador_id=borrador_id,
         adjuntos_borrador=db.listar_adjuntos_borrador(g.usuario_id, borrador_id) if borrador_id else [],
         deshacer_segundos=db.obtener_preferencias_correo(g.usuario_id)["deshacer_segundos"],
@@ -466,6 +466,7 @@ def bandeja():
             cuerpo_html_mostrado, imagenes_bloqueadas = correo.html_con_imagenes_bloqueadas(
                 mensaje_seleccionado["cuerpo_html"]
             )
+    contexto["contexto_correo"] = correo_contexto.contexto_de_mensaje(g.usuario_id, g.tenant_id, mensaje_seleccionado, correo.direccion_email(mensaje_seleccionado["remitente"])) if mensaje_seleccionado is not None else None
     contexto["es_spam"] = bool(mensaje_seleccionado is not None and correo.carpeta_especial(g.usuario_id, cuenta_id, "spam") == mensaje_seleccionado["carpeta"])
     contexto["remitente_confiable"] = remitente_confiable
     contexto["cuerpo_html_mostrado"] = correo_vista.con_escala(cuerpo_html_mostrado, contexto["vista"]["escala"])
@@ -880,7 +881,12 @@ def redactar():
         cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
         cuenta_id = cuentas_con_smtp[0]["id"] if cuentas_con_smtp else None
     cuerpo_html = correo.preparar_cuerpo_inicial(g.usuario_id, cuenta_id, es_respuesta=False) if cuenta_id else ""
-    return _render_redactar(cuenta_id=cuenta_id, cuerpo_html=cuerpo_html)
+    # Desde otras pantallas («Escribir al cliente», desde un vencimiento…): destinatario y asunto de partida, y el cliente para rellenar las variables de las plantillas.
+    cliente_id = request.args.get("cliente_fiscal_id", type=int)
+    if cliente_id is not None and (g.tenant_id is None or not acceso.puede_ver_cliente(g.tenant_id, g.usuario_id, cliente_id)):
+        cliente_id = None
+    return _render_redactar(cuenta_id=cuenta_id, cuerpo_html=cuerpo_html, destinatarios=(request.args.get("para") or "")[:500], asunto=(request.args.get("asunto") or "")[:200],
+                            cliente_plantilla_id=cliente_id)
 
 
 def _cita_de(mensaje) -> str:

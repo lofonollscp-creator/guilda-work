@@ -735,6 +735,7 @@ def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: s
     if mensaje_id is not None:
         _aplicar_categoria_automatica(
             cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
+            destinatarios=_decodificar(mensaje.get("To")), propias=_direcciones_propias(cuenta),
         )
         _sellar_si_procede(mensaje_id)
         if carpeta == "INBOX" and not leido:
@@ -1329,6 +1330,7 @@ def destinatarios_responder_a_todos(mensaje, direccion_propia: str | None) -> st
 
 def _aplicar_categoria_automatica(
     usuario_id: int, mensaje_id: int, remitente_crudo: str | None, asunto: str | None = None,
+    destinatarios: str | None = None, propias: set[str] | None = None,
 ) -> None:
     """Aplica al mensaje recién insertado la regla simple de categoría por
     remitente (email exacto o "@dominio.com") y después las reglas avanzadas
@@ -1355,7 +1357,13 @@ def _aplicar_categoria_automatica(
     except Exception:  # noqa: BLE001
         logger.exception("Regla de correo fallida (mensaje %s)", mensaje_id)
     try:
-        _vincular_cliente_por_remitente(usuario_id, mensaje_id, direccion)
+        # Un correo que mandamos nosotros (carpeta de enviados) se enlaza por a quién va, no por quién lo envía.
+        candidatas = [direccion]
+        if propias and direccion and direccion.lower() in propias:
+            candidatas = [d for _n, d in getaddresses([destinatarios or ""]) if d.strip()]
+        for candidata in candidatas:
+            if _vincular_cliente_por_remitente(usuario_id, mensaje_id, candidata):
+                break
     except Exception:  # noqa: BLE001
         logger.exception("Vínculo automático con cliente fiscal fallido (mensaje %s)", mensaje_id)
 
