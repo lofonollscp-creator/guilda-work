@@ -11977,3 +11977,12 @@ msgstr "Employment"
 #, python-format
 msgid "También %(n)s trabajadores de clientes."
 msgstr "Also %(n)s client workers."
+
+msgid "NIF repetido"
+msgstr "Repeated tax ID"
+
+msgid "Baja anterior al alta"
+msgstr "End date before start date"
+
+msgid "Solo el nombre es obligatorio; el resto puedes rellenarlo cuando quieras."
+msgstr "Only the name is required; you can fill in the rest whenever you like."

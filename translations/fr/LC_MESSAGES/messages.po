@@ -12062,3 +12062,12 @@ msgstr "Social"
 #, python-format
 msgid "También %(n)s trabajadores de clientes."
 msgstr "Également %(n)s salariés de clients."
+
+msgid "NIF repetido"
+msgstr "NIF en double"
+
+msgid "Baja anterior al alta"
+msgstr "Départ antérieur à l'arrivée"
+
+msgid "Solo el nombre es obligatorio; el resto puedes rellenarlo cuando quieras."
+msgstr "Seul le nom est obligatoire ; le reste peut être renseigné quand vous voulez."

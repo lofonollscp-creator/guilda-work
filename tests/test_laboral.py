@@ -14,24 +14,22 @@ def _despacho(nombre="Despacho laboral"):
 
 def test_crear_y_listar_un_trabajador_con_sus_datos():
     t, u, c = _despacho()
-    w = laboral.crear(t, u, c, "Ana Ruiz", nif="12345678-z", naf="28 1234567 89", puesto="Dependienta", tipo_contrato="indefinido", jornada_horas_semana="37,5",
-                      fecha_alta="2025-03-01", notas="Turno de mañana")
+    w = laboral.crear(t, u, c, "Ana Ruiz", nif="12345678-z", naf="28 1234567 89", puesto="Dependienta", categoria="Oficial 1.ª", convenio="Convenio de comercio de Girona",
+                      tipo_contrato="indefinido", jornada_horas_semana="37,5", fecha_alta="2025-03-01", notas="Turno de mañana")
     (t1,) = laboral.listar(t, c)
-    assert t1["id"] == w and t1["nombre"] == "Ana Ruiz" and t1["nif_normalizado"] == "12345678Z" and t1["naf"] == "28123456789"
+    assert t1["id"] == w and t1["nombre"] == "Ana Ruiz" and t1["nif_normalizado"] == "12345678Z" and t1["naf"] == "28 1234567 89"
+    assert t1["categoria"] == "Oficial 1.ª" and t1["convenio"] == "Convenio de comercio de Girona"
     assert t1["jornada_horas_semana"] == 37.5 and t1["tipo_contrato"] == "indefinido" and t1["fecha_alta"] == "2025-03-01" and t1["de_baja"] is False
 
 
 @pytest.mark.parametrize("datos,fragmento", [
     ({"nombre": "  "}, "nombre"),
-    ({"nombre": "A", "naf": "abc"}, "afiliación"),
-    ({"nombre": "A", "naf": "123"}, "afiliación"),
     ({"nombre": "A", "jornada_horas_semana": "mucha"}, "horas a la semana"),
-    ({"nombre": "A", "jornada_horas_semana": "90"}, "entre 0 y 60"),
+    ({"nombre": "A", "jornada_horas_semana": "-5"}, "horas a la semana"),
     ({"nombre": "A", "tipo_contrato": "inventado"}, "contrato"),
     ({"nombre": "A", "fecha_alta": "ayer"}, "fecha no válida"),
-    ({"nombre": "A", "fecha_alta": "2025-05-01", "fecha_baja": "2025-04-30"}, "anterior al alta"),
 ])
-def test_los_datos_no_validos_se_rechazan_con_un_mensaje(datos, fragmento):
+def test_solo_se_rechaza_lo_que_no_se_puede_interpretar(datos, fragmento):
     t, u, c = _despacho()
     nombre = datos.pop("nombre")
     with pytest.raises(ValueError, match=fragmento):
@@ -39,15 +37,32 @@ def test_los_datos_no_validos_se_rechazan_con_un_mensaje(datos, fragmento):
     assert laboral.listar(t, c) == []
 
 
-def test_un_mismo_nif_no_se_repite_en_un_cliente_pero_si_en_otro_o_tras_borrar():
+def test_solo_el_nombre_es_obligatorio_y_el_resto_se_guarda_aunque_no_cuadre():
+    t, u, c = _despacho()
+    laboral.crear(t, u, c, "Solo nombre")
+    w = laboral.crear(t, u, c, "Datos raros", naf="ES-sin-digitos", jornada_horas_semana="70", tipo_contrato="", fecha_alta="2025-05-01", fecha_baja="2025-04-30", nif="¿?")
+    fila = laboral.obtener(t, w)
+    assert fila["naf"] == "ES-sin-digitos" and fila["jornada_horas_semana"] == 70 and fila["fecha_baja"] == "2025-04-30"
+    assert len(laboral.listar(t, c)) == 2
+
+
+def test_un_nif_repetido_no_impide_guardar_solo_se_senala():
     t, u, c = _despacho()
     otro = db.crear_cliente_fiscal(t, "Taller SL")
-    w = laboral.crear(t, u, c, "Ana", nif="12345678Z")
-    with pytest.raises(ValueError, match="mismo NIF|ese NIF"):
-        laboral.crear(t, u, c, "Ana otra vez", nif="12.345.678-z")
-    laboral.crear(t, u, otro, "Ana en otro cliente", nif="12345678Z")
+    w = laboral.crear(t, u, c, "Ana", nif="12345678Z", fecha_alta="2020-01-01", fecha_baja="2021-01-01")
+    nuevo = laboral.crear(t, u, c, "Ana (recontratada)", nif="12.345.678-z", fecha_alta="2024-01-01")        # el caso real: se vuelve a contratar a quien ya causó baja
+    solo_otro = laboral.crear(t, u, otro, "Ana en otro cliente", nif="12345678Z")
+    marcas = {x["id"]: x["nif_repetido"] for x in laboral.listar(t, c)}
+    assert marcas == {w: True, nuevo: True} and laboral.listar(t, otro)[0]["id"] == solo_otro and laboral.listar(t, otro)[0]["nif_repetido"] is False
     laboral.eliminar(t, w)
-    laboral.crear(t, u, c, "Ana de nuevo", nif="12345678Z")
+    assert [x["nif_repetido"] for x in laboral.listar(t, c)] == [False]
+
+
+def test_una_baja_anterior_al_alta_se_guarda_con_aviso():
+    t, u, c = _despacho()
+    laboral.crear(t, u, c, "Revés", fecha_alta="2025-05-01", fecha_baja="2025-04-30")
+    laboral.crear(t, u, c, "Bien", fecha_alta="2025-05-01", fecha_baja="2025-06-01")
+    assert {x["nombre"]: x["baja_antes_del_alta"] for x in laboral.listar(t, c)} == {"Revés": True, "Bien": False}
 
 
 def test_el_cliente_debe_ser_del_despacho():
@@ -161,8 +176,8 @@ def test_abrir_la_pestana_dos_veces_seguidas_se_anota_una_vez(cliente):
 
 def test_un_error_de_validacion_se_ve_en_la_ficha_y_no_crea_nada(cliente):
     uid, t, fid, cid = _con_cliente(cliente, "lab-err@ejemplo.com")
-    r = cliente.post(f"/fiscal/clientes/{fid}/trabajadores", data={"nombre": "Ana", "naf": "abc"}, follow_redirects=True)
-    assert "solo lleva dígitos" in r.get_data(as_text=True) and laboral.listar(t, fid) == []
+    r = cliente.post(f"/fiscal/clientes/{fid}/trabajadores", data={"nombre": "Ana", "fecha_alta": "ayer"}, follow_redirects=True)
+    assert "fecha no válida" in r.get_data(as_text=True) and laboral.listar(t, fid) == []
 
 
 def test_no_se_toca_un_trabajador_de_otro_cliente_ni_de_otro_despacho(cliente):
@@ -211,3 +226,35 @@ def test_vaciar_la_papelera_desde_privacidad_cuenta_a_los_trabajadores_borrados(
     laboral.eliminar(t, w)
     r = cliente.post("/seguridad/privacidad/vaciar-papelera", data={"dias": "0"}, follow_redirects=True)
     assert r.status_code == 200 and "También 1 trabajadores de clientes." in r.get_data(as_text=True)
+
+
+def test_las_bases_creadas_antes_ganan_convenio_y_categoria_y_pierden_la_unicidad_de_nif():
+    import sqlite3
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE trabajadores_cliente (id INTEGER PRIMARY KEY, tenant_id INTEGER, cliente_fiscal_id INTEGER, nombre TEXT, nif_normalizado TEXT, papelera_en TEXT)")
+    conn.execute("CREATE UNIQUE INDEX ux_trabajadores_cliente_nif ON trabajadores_cliente(cliente_fiscal_id, nif_normalizado)")
+    laboral.crear_esquema(conn)
+    laboral.crear_esquema(conn)                                           # idempotente
+    assert {"categoria", "convenio"} <= {f["name"] for f in conn.execute("PRAGMA table_info(trabajadores_cliente)")}
+    assert not conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'ux_trabajadores_cliente_nif'").fetchone()
+
+
+def test_la_exportacion_rgpd_incluye_convenio_y_categoria():
+    from app import rgpd
+    t, u, c = _despacho()
+    laboral.crear(t, u, c, "Ana", categoria="Oficial 1.ª", convenio="Comercio")
+    datos = rgpd.exportar_cliente(t, u, True, db.obtener_cliente_fiscal(t, c)["cliente_id"])
+    assert datos["trabajadores"][0]["categoria"] == "Oficial 1.ª" and datos["trabajadores"][0]["convenio"] == "Comercio"
+
+
+def test_la_pantalla_deja_rellenar_convenio_y_categoria_y_avisa_sin_bloquear(cliente):
+    uid, t, fid, cid = _con_cliente(cliente, "lab-opc@ejemplo.com")
+    for nombre in ("Ana Ruiz", "Ana Ruiz (otra vez)"):
+        r = cliente.post(f"/fiscal/clientes/{fid}/trabajadores", data={"nombre": nombre, "nif": "12345678Z", "naf": "sin dígitos", "categoria": "Oficial 1.ª", "convenio": "Comercio de Girona",
+                                                                      "fecha_alta": "2025-05-01", "fecha_baja": "2025-04-01"})
+        assert r.status_code == 302 and "error" not in r.headers["Location"]
+    html = cliente.get(f"/clientes/{cid}?pestana=laboral").get_data(as_text=True)
+    assert "Categoría profesional" in html and "Convenio colectivo" in html and "Comercio de Girona" in html and "Oficial 1.ª" in html
+    assert "NIF repetido" in html and "Baja anterior al alta" in html and "Solo el nombre es obligatorio" in html
+    assert len(laboral.listar(t, fid)) == 2

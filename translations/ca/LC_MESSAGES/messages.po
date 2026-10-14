@@ -11986,3 +11986,12 @@ msgstr "Laboral"
 #, python-format
 msgid "También %(n)s trabajadores de clientes."
 msgstr "També %(n)s treballadors de clients."
+
+msgid "NIF repetido"
+msgstr "NIF repetit"
+
+msgid "Baja anterior al alta"
+msgstr "Baixa anterior a l'alta"
+
+msgid "Solo el nombre es obligatorio; el resto puedes rellenarlo cuando quieras."
+msgstr "Només el nom és obligatori; la resta ho pots omplir quan vulguis."
