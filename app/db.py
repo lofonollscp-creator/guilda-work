@@ -2195,6 +2195,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import reglas_laborales
+        reglas_laborales.crear_esquema(conn)  # reglas laborales aprobadas por el propietario, vacías al instalar (app/reglas_laborales.py)
         from . import laboral
         laboral.crear_esquema(conn)           # trabajadores de los clientes: gestión laboral, primera rebanada (app/laboral.py)
         from . import plantillas_cliente

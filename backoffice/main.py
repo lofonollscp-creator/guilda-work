@@ -59,6 +59,7 @@ def create_app(testing: bool = False) -> Flask:
     from .rutas import bp
 
     from . import rutas_sistema  # noqa: F401 -- registra el resto de rutas en el mismo blueprint
+    from . import rutas_reglas  # noqa: F401 -- reglas laborales (cuándo vencen el TC, el 190 y los plazos por alta/baja/contrato)
 
     app.register_blueprint(bp)
 

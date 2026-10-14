@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Reglas laborales{% endblock %}
+{% macro resumen(r) -%}
+  {%- if r.tipo == 'mensual' -%}día {{ r.dia }} {{ 'del mes siguiente al periodo' if r.mes_siguiente else 'del mismo mes del periodo' }}
+  {%- elif r.tipo == 'anual' -%}{{ r.dia }}/{{ r.mes }} {{ 'del año siguiente al periodo' if r.anio_siguiente else 'del mismo año del periodo' }}
+  {%- else -%}{{ r.plazo }} {{ {'habiles': 'días hábiles', 'naturales': 'días naturales', 'meses': 'meses'}[r.unidad] }} {{ 'antes del hecho' if r.plazo < 0 else 'después del hecho' }}{%- endif -%}
+{%- endmacro %}
+{% block contenido %}
+<header class="cabecera"><h1>Reglas laborales</h1>
+  <p class="muted">Cuándo vencen las obligaciones laborales de los clientes de todos los despachos. <strong>No hay ninguna fecha cargada por defecto:</strong> una regla sin aprobar no genera nada. Al guardar se crea un borrador; solo se aplica cuando lo apruebas, y la versión anterior sigue vigente hasta entonces. Todo queda en la auditoría.</p></header>
+{% if error %}<p class="aviso-error" role="alert">{{ error }}</p>{% endif %}
+
+{% for r in reglas %}
+{% set base = r.borrador or r.vigente %}
+<section class="tarjeta" id="{{ r.clave }}"><h2>{{ r.nombre }}
+  {% if r.vigente %}<span class="insignia">Vigente · v{{ r.vigente.version }}</span>{% else %}<span class="insignia insignia-aviso">Sin aprobar: no se genera nada</span>{% endif %}
+  {% if r.borrador %}<span class="insignia insignia-aviso">Borrador v{{ r.borrador.version }} pendiente</span>{% endif %}</h2>
+  <p class="muted">Tipo: {{ {'mensual': 'se repite cada mes', 'anual': 'una vez al año', 'desde_hecho': 'plazo desde un hecho de un trabajador'}[r.tipo] }}.</p>
+  {% if r.vigente %}<p><strong>Aplicada hoy:</strong> {{ resumen(r.vigente) }} <span class="muted">· aprobada por {{ r.vigente.aprobada_por }} el {{ r.vigente.aprobada_en|fecha }}</span></p>{% endif %}
+  {% if r.borrador %}
+  <p><strong>Borrador:</strong> {{ resumen(r.borrador) }} <span class="muted">· guardado por {{ r.borrador.creada_por }}</span>
+    {% if r.borrador.nota %}<br><span class="muted">{{ r.borrador.nota }}</span>{% endif %}</p>
+  <form method="post" action="{{ url_for('rutas.reglas_laborales_aprobar', clave=r.clave, version=r.borrador.version) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton boton-primario">Aprobar el borrador v{{ r.borrador.version }}</button>
+  </form>
+  {% endif %}
+  <form method="post" action="{{ url_for('rutas.reglas_laborales_guardar', clave=r.clave) }}" class="formulario">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="fila-campos">
+      {% if r.tipo in ('mensual', 'anual') %}<label>Día<input type="number" name="dia" min="1" max="31" required value="{{ base.dia if base else '' }}"></label>{% endif %}
+      {% if r.tipo == 'anual' %}
+        <label>Mes<input type="number" name="mes" min="1" max="12" required value="{{ base.mes if base else '' }}"></label>
+        <label class="casilla"><input type="checkbox" name="anio_siguiente" value="1" {{ 'checked' if base and base.anio_siguiente }}> Vence en el año siguiente al periodo</label>
+      {% elif r.tipo == 'mensual' %}
+        <label class="casilla"><input type="checkbox" name="mes_siguiente" value="1" {{ 'checked' if base and base.mes_siguiente }}> Vence en el mes siguiente al periodo</label>
+      {% else %}
+        <label>Plazo (negativo = antes del hecho)<input type="number" name="plazo" min="-3650" max="3650" required value="{{ base.plazo if base else '' }}"></label>
+        <label>Unidad<select name="unidad" required>{% for u, etiqueta in (('habiles', 'Días hábiles'), ('naturales', 'Días naturales'), ('meses', 'Meses')) %}<option value="{{ u }}" {{ 'selected' if base and base.unidad == u }}>{{ etiqueta }}</option>{% endfor %}</select></label>
+      {% endif %}
+    </div>
+    <label>Nota (de dónde sale la regla, opcional)<input type="text" name="nota" maxlength="500" value="{{ r.borrador.nota if r.borrador and r.borrador.nota else '' }}"></label>
+    <div><button type="submit" class="boton">Guardar como borrador</button></div>
+  </form>
+  {% if r.historial %}<details><summary class="muted">Versiones anteriores ({{ r.historial|length }})</summary>
+    <ul>{% for h in r.historial %}<li>v{{ h.version }}: {{ resumen(h) }} <span class="muted">· {{ 'aprobada por ' ~ h.aprobada_por if h.aprobada else 'borrador descartado' }}</span></li>{% endfor %}</ul></details>{% endif %}
+</section>
+{% endfor %}
+{% endblock %}
