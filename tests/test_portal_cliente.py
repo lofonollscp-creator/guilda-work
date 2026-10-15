@@ -408,13 +408,13 @@ def test_responder_mensaje_notifica_por_email_si_cliente_tiene_email(cliente, mo
     llamadas = []
     monkeypatch.setattr(
         "app.rutas_fiscal.enviar_respuesta_portal",
-        lambda email, texto, url: llamadas.append((email, texto)),
+        lambda email, texto, url, **kw: llamadas.append((email, texto, kw["tenant_id"])),
     )
 
     resp = cliente.post(f"/fiscal/vencimientos/{v_id}/mensajes", data={"texto": "Ya está presentado"})
     assert resp.status_code == 302
     assert len(llamadas) == 1
-    assert llamadas[0] == ("respuesta-a@ejemplo.com", "Ya está presentado")
+    assert llamadas[0] == ("respuesta-a@ejemplo.com", "Ya está presentado", tenant_id)       # el correo sale con la marca de ese despacho
 
 
 def test_responder_mensaje_sin_email_del_cliente_no_notifica(cliente, monkeypatch):
@@ -466,7 +466,7 @@ def test_guardar_documento_solicitado_nuevo_notifica_por_email(cliente, monkeypa
     llamadas = []
     monkeypatch.setattr(
         "app.rutas_fiscal.enviar_solicitud_documento",
-        lambda email, descripcion, url: llamadas.append((email, descripcion)),
+        lambda email, descripcion, url, **kw: llamadas.append((email, descripcion, kw["tenant_id"])),
     )
 
     resp = cliente.post(
@@ -478,7 +478,7 @@ def test_guardar_documento_solicitado_nuevo_notifica_por_email(cliente, monkeypa
     )
     assert resp.status_code == 302
     assert len(llamadas) == 1
-    assert llamadas[0] == ("pide-doc@ejemplo.com", "Factura de compra del trimestre")
+    assert llamadas[0] == ("pide-doc@ejemplo.com", "Factura de compra del trimestre", tenant_id)
     assert db.obtener_vencimiento_fiscal(tenant_id, v_id)["documento_solicitado"] == "Factura de compra del trimestre"
 
 

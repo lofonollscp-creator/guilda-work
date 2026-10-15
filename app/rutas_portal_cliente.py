@@ -85,7 +85,7 @@ def entrar():
                 token = db.crear_acceso_cliente_fiscal(cliente["id"], request.remote_addr)
                 enlace = url_for("portal_cliente.entrar_con_token", token=token, _external=True)
                 try:
-                    enviar_enlace_portal(cliente["email"], enlace)
+                    enviar_enlace_portal(cliente["email"], enlace, tenant_id=cliente["tenant_id"])
                 except ErrorNotificacionesEmail:
                     pass
         # Mismo mensaje exista o no el email -- no confirmar si un email

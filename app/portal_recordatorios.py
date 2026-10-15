@@ -96,7 +96,7 @@ def procesar_recordatorios(hoy: datetime | None = None) -> int:
                     with _en_idioma(v["cliente_idioma"]):
                         notificaciones_email.enviar_recordatorio_vencimiento(
                             v["cliente_email"].strip(), v["cliente_nombre"], v["modelo"], v["periodo"], v["fecha_limite"],
-                            dias, url_portal(), v["tenant_nombre"], v["documento_solicitado"], plantilla=plantilla,
+                            dias, url_portal(), v["tenant_nombre"], v["documento_solicitado"], plantilla=plantilla, tenant_id=tenant["id"],
                         )
                 except Exception:  # noqa: BLE001 -- un cliente con el buzón roto no debe frenar al resto
                     logger.exception("No se pudo enviar el recordatorio del vencimiento %s", v["id"])

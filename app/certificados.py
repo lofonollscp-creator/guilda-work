@@ -1414,7 +1414,8 @@ def _enviar_a_cliente(c: dict, cfg: dict, gestoria: str) -> None:
         notificaciones_email.enviar_aviso_certificado(
             (c["cliente_email"] or "").strip(), c["cliente_nombre"] or "", str((TIPOS_CERTIFICADO.get(c["tipo_certificado"] or "otro") or TIPOS_CERTIFICADO["otro"])["nombre"]),
             c["caduca_el"] or "", c["dias_restantes"] or 0, portal_recordatorios.url_portal() if cfg["mostrar_en_portal"] else None, gestoria, cfg["instrucciones"],
-            plantilla=(cfg["asunto"], cfg["cuerpo"]) if cfg["asunto"] and cfg["cuerpo"] else None)
+            plantilla=(cfg["asunto"], cfg["cuerpo"]) if cfg["asunto"] and cfg["cuerpo"] else None,
+            tenant_id=cliente["tenant_id"] if cliente is not None else None)
 
 
 def _gestoria(tenant_id: int) -> str:

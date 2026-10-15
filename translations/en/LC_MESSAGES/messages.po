@@ -12373,3 +12373,6 @@ msgstr "Part of the address before the @"
 
 msgid "Crear y conectar"
 msgstr "Create and connect"
+
+msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Se ve en la aplicación y en los correos que tus clientes reciben de tu despacho (recordatorios, avisos, enlaces del portal)."
+msgstr "The name, logo and colour your team sees instead of Guilda Work's. It shows in the application and in the emails your clients receive from your firm (reminders, alerts, portal links)."

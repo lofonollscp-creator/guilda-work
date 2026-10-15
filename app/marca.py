@@ -146,3 +146,41 @@ def guardar(tenant_id: int, *, nombre: str | None = None, color: str | None = No
         conn.commit()
     finally:
         conn.close()
+
+
+# --- Marca en los correos que salen en nombre del despacho ---
+
+def _serializador():
+    from itsdangerous import URLSafeSerializer
+    try:
+        from flask import current_app
+        secreto = current_app.secret_key
+    except RuntimeError:               # fuera de una petición (tareas programadas): la misma clave que usa la aplicación
+        import os
+        secreto = os.environ.get("GUILDA_SECRET_KEY")
+    if not secreto:
+        raise RuntimeError("Sin clave secreta no se pueden firmar enlaces de logo.")
+    return URLSafeSerializer(secreto, salt="marca-logo")
+
+
+def url_logo_publico(tenant_id: int, version: str, base: str) -> str:
+    """Enlace público (sin sesión) al logo, para los clientes de correo. Va firmado (no se puede adivinar el de otro despacho) y lleva la versión, así que cambia al cambiar el logo."""
+    return f"{base.rstrip('/')}/marca/p/{_serializador().dumps([tenant_id, version])}.png"
+
+
+def tenant_de_token(token: str) -> int | None:
+    from itsdangerous import BadSignature
+    try:
+        datos = _serializador().loads(token)
+        return int(datos[0])
+    except (BadSignature, ValueError, TypeError, IndexError):
+        return None
+
+
+def para_correo(tenant_id: int | None) -> dict | None:
+    """Lo que necesita el diseño de los correos: `{"nombre", "color", "logo_url"}` (cada uno puede ser None), o None si el despacho no ha personalizado nada."""
+    m = obtener(tenant_id)
+    if m is None:
+        return None
+    from .correo_diseno import BASE
+    return {"nombre": m["nombre"], "color": m["color"], "logo_url": url_logo_publico(tenant_id, m["version"], BASE) if m["tiene_logo"] else None}

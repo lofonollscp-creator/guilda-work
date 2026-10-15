@@ -1026,7 +1026,7 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
         if cliente is not None and cliente["email"]:
             from . import notificaciones_email as _ne
             try:
-                _ne.enviar_solicitud_documento(cliente["email"], nuevo, url_for("portal_cliente.entrar", _external=True))
+                _ne.enviar_solicitud_documento(cliente["email"], nuevo, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
             except _ne.ErrorNotificacionesEmail:
                 pass
     return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))

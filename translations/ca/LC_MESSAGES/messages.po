@@ -12382,3 +12382,6 @@ msgstr "Part de l'adreça abans de l'arrova"
 
 msgid "Crear y conectar"
 msgstr "Crea i connecta"
+
+msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Se ve en la aplicación y en los correos que tus clientes reciben de tu despacho (recordatorios, avisos, enlaces del portal)."
+msgstr "El nom, el logotip i el color que veu el teu equip en lloc dels de Guilda Work. Es veu a l'aplicació i als correus que els teus clients reben del teu despatx (recordatoris, avisos, enllaços del portal)."

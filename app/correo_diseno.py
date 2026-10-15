@@ -30,6 +30,16 @@ FUENTE_CODIGO = "'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace"
 PIE_POR_DEFECTO = "Guilda Work · el software de gestión de tu gestoría"
 
 
+def _colores_de(marca: dict | None) -> tuple[str, str, str]:
+    """(acento, texto sobre el acento, acento usable como texto sobre la tarjeta oscura). Sin marca, los de Guilda Work."""
+    color = (marca or {}).get("color")
+    if not color:
+        return ACENTO, SOBRE_ACENTO, ACENTO
+    from . import marca as _marca
+    d = _marca.colores_derivados(color)
+    return d["primary"], d["on_accent"], d["texto_oscuro"]
+
+
 def _parrafo_html(texto: str, color: str = TEXTO_SUAVE, tam: int = 16, margen: int = 16) -> str:
     cuerpo = escape(texto).replace("\n", "<br>")
     return f'<p style="margin:0 0 {margen}px;font-size:{tam}px;line-height:1.6;color:{color};">{cuerpo}</p>'
@@ -38,11 +48,17 @@ def _parrafo_html(texto: str, color: str = TEXTO_SUAVE, tam: int = 16, margen: i
 def construir(
     titulo: str, parrafos: list[str] | tuple[str, ...] = (), *, boton: tuple[str, str] | None = None, codigo: str | None = None,
     cita: str | None = None, preformateado: str | None = None, bloques_html: str | None = None, aviso: str | None = None, pie: str | None = None,
-    preencabezado: str = "", html_crudo: bool = False, plano: str | None = None, idioma: str = "es",
+    preencabezado: str = "", html_crudo: bool = False, plano: str | None = None, idioma: str = "es", marca: dict | None = None,
 ) -> tuple[str, str]:
     """Plano + HTML de un correo. `html_crudo=True` deja pasar `titulo`, `codigo` y `parrafos` SIN escapar (solo para las plantillas de Kratos,
     donde llevan marcas `{{ .RecoveryCode }}` que Kratos sustituye; nunca con texto de usuarios)."""
     esc = (lambda t: t) if html_crudo else escape
+    # Marca del despacho (correos que salen en nombre de la gestoría): su color de acento (con el texto sobre él calculado para que se lea), su logo y su nombre.
+    ACENTO, SOBRE_ACENTO, ACENTO_TEXTO = _colores_de(marca)
+    nombre_marca = (marca or {}).get("nombre") or None
+    logo_src = (marca or {}).get("logo_url") or f"{BASE}/static/email-logo.png"
+    logo_alt = nombre_marca or "Guilda Work"
+    pie_defecto = nombre_marca or PIE_POR_DEFECTO
     # --- texto plano ---
     plano_fijo = plano
     plano = [titulo, ""]
@@ -58,7 +74,7 @@ def construir(
         plano += [f"{boton[0]}: {boton[1]}", ""]
     if aviso:
         plano += [aviso, ""]
-    plano += ["--", pie or PIE_POR_DEFECTO]
+    plano += ["--", pie or pie_defecto]
     texto_plano = plano_fijo if plano_fijo is not None else "\n".join(plano) + "\n"
 
     # --- HTML ---
@@ -69,7 +85,7 @@ def construir(
         bloques.append(
             f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 24px;"><tr>'
             f'<td align="center" style="background:#0a0a0c;border:1px solid #5b6b1f;border-radius:16px;padding:16px 28px;'
-            f'font-family:{FUENTE_CODIGO};font-size:34px;line-height:1.1;font-weight:700;letter-spacing:10px;color:{ACENTO};">{esc(codigo)}</td></tr></table>'
+            f'font-family:{FUENTE_CODIGO};font-size:34px;line-height:1.1;font-weight:700;letter-spacing:10px;color:{ACENTO_TEXTO};">{esc(codigo)}</td></tr></table>'
         )
     if cita:
         bloques.append(
@@ -109,7 +125,7 @@ def construir(
 <title>{esc(titulo)}</title>
 <style>
   @media (max-width: 620px) {{ .tarjeta {{ padding: 28px 22px !important; border-radius: 20px !important; }} .exterior {{ padding: 16px 10px !important; }} h1 {{ font-size: 22px !important; }} }}
-  a {{ color: {ACENTO}; }}
+  a {{ color: {ACENTO_TEXTO}; }}
 </style>
 </head>
 <body style="margin:0;padding:0;background:{FONDO_RESPALDO};">
@@ -120,7 +136,7 @@ def construir(
     <table role="presentation" class="tarjeta" width="560" cellpadding="0" cellspacing="0" border="0"
            style="width:100%;max-width:560px;background:{FONDO_TARJETA};border:1px solid {BORDE};border-radius:28px;padding:40px 44px;font-family:{FUENTE};color:{TEXTO};">
       <tr><td align="center" style="padding:0 0 20px;">
-        <img src="{BASE}/static/email-logo.png" width="56" height="56" alt="Guilda Work" style="display:block;border:0;outline:none;width:56px;height:56px;">
+        <img src="{escape(logo_src, quote=True)}" width="56" height="56" alt="{escape(logo_alt, quote=True)}" style="display:block;border:0;outline:none;width:56px;height:56px;">
       </td></tr>
       <tr><td style="font-family:{FUENTE};">
         <h1 style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.02em;color:{TEXTO};text-align:center;">{esc(titulo)}</h1>
@@ -129,7 +145,7 @@ def construir(
     </table>
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
       <tr><td align="center" style="padding:18px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-        <td style="background:#0c0e12;border:1px solid {BORDE};border-radius:999px;padding:8px 18px;font-family:{FUENTE};font-size:12px;line-height:1.5;color:{TEXTO_APAGADO};">{esc(pie or PIE_POR_DEFECTO)}</td>
+        <td style="background:#0c0e12;border:1px solid {BORDE};border-radius:999px;padding:8px 18px;font-family:{FUENTE};font-size:12px;line-height:1.5;color:{TEXTO_APAGADO};">{esc(pie or pie_defecto)}</td>
       </tr></table></td></tr>
     </table>
   </td></tr>

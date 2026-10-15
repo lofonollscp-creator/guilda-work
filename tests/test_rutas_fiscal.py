@@ -1087,13 +1087,13 @@ def test_cobrar_stripe_ok(cliente, monkeypatch):
     llamadas_email = []
     monkeypatch.setattr(
         rutas_fiscal, "enviar_enlace_pago",
-        lambda email, concepto, url_pago: llamadas_email.append((email, url_pago)),
+        lambda email, concepto, url_pago, **kw: llamadas_email.append((email, url_pago, kw["tenant_id"])),
     )
 
     resp = cliente.post(f"/fiscal/vencimientos/{v_id}/cobrar-stripe", data={"importe_eur": "80.00"})
     assert resp.status_code == 302
     assert llamadas_stripe == [("acct_123", 8000, {"vencimiento_id": v_id})]
-    assert llamadas_email == [("cliente-stripe-ok@ejemplo.com", "https://checkout.stripe.com/pay/cs_123")]
+    assert [e[:2] for e in llamadas_email] == [("cliente-stripe-ok@ejemplo.com", "https://checkout.stripe.com/pay/cs_123")] and llamadas_email[0][2] is not None
 
 
 def test_cobrar_stripe_importe_con_decimales_problematicos_no_pierde_centimos(cliente, monkeypatch):

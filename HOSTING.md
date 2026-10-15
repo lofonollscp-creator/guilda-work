@@ -183,6 +183,9 @@ Variables opcionales:
 | `GUILDA_CORREO_IDLE_MAX` | `100` | Máximo de cuentas con IDLE a la vez (una conexión y un hilo por cuenta). |
 | `GUILDA_CERT_HOSTS` | (el de `GUILDA_URL_PUBLICA`) | Dominios cuyo certificado HTTPS vigila el panel de salud, separados por comas. Ámbar a 21 días de caducar y rojo a 7. |
 | `GUILDA_CADUCIDADES` | (vacío) | Cosas que caducan y nadie más vigila: `Secreto de Microsoft=2028-10-01;Dominio guildawork.com=2027-03-15`. Ámbar a 45 días y rojo a 14; el vigilante avisa por correo de lo que esté en rojo. |
+| `GUILDA_CORREO_PROPIO_HOST` | `mail.guildawork.com` | Servidor IMAP/SMTP al que se conectan los buzones que el despacho crea en un paso (Cuentas de correo → «Crear un buzón del despacho»). |
+| `GUILDA_CORREO_PROPIO_IMAP` | `993` | Puerto IMAP (TLS) de esos buzones. |
+| `GUILDA_CORREO_PROPIO_SMTP` | `465` | Puerto SMTP (TLS implícito) de esos buzones. |
 | `GUILDA_URL_PUBLICA` | _(vacío)_ | URL pública de la app (p. ej. `https://work.tudominio.com`), sin barra final. La usan los correos que se mandan sin petición web de por medio —recordatorios de vencimientos a clientes— para enlazar al portal. Sin ella el correo sale sin enlace. |
 | `GUILDA_FICHAJE_AVISO_HORAS` | `10` | Horas con la jornada de fichaje abierta tras las cuales se avisa (una vez por jornada) de que quizá se olvidó la salida. `0` lo desactiva. Se comprueba cada 15 minutos. |
 

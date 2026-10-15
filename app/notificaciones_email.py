@@ -36,6 +36,27 @@ class ErrorNotificacionesEmail(Exception):
     pass
 
 
+def _marca(tenant_id: int | None) -> dict | None:
+    """La marca del despacho (nombre, color y logo público) para vestir el correo con ella; None si no la ha personalizado. Nunca rompe el envío."""
+    if tenant_id is None:
+        return None
+    try:
+        from . import marca
+        return marca.para_correo(tenant_id)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _construir(tenant_id: int | None, *args, **kwargs):
+    return correo_diseno.construir(*args, marca=_marca(tenant_id), **kwargs)
+
+
+def _asunto(asunto: str, tenant_id: int | None) -> str:
+    """El asunto con el nombre del despacho en lugar de «Guilda Work», si tiene marca propia."""
+    m = _marca(tenant_id)
+    return asunto.replace("Guilda Work", m["nombre"]) if m and m.get("nombre") else asunto
+
+
 def configurado() -> bool:
     return bool(PORTAL_SMTP_HOST and PORTAL_SMTP_USUARIO and PORTAL_SMTP_CONTRASENA and PORTAL_SMTP_REMITENTE)
 
@@ -61,23 +82,23 @@ def _enviar(destinatario: str, asunto: str, cuerpo: str, html: str | None = None
         raise ErrorNotificacionesEmail(f"No se ha podido enviar el correo: {e}") from e
 
 
-def enviar_enlace_portal(email_destino: str, url_enlace: str) -> None:
-    plano, html = correo_diseno.construir(
+def enviar_enlace_portal(email_destino: str, url_enlace: str, tenant_id: int | None = None) -> None:
+    plano, html = _construir(tenant_id, 
         _("Tu acceso al portal de cliente"),
         [_("Pulsa el botón para entrar a tu portal de cliente. El enlace es de un solo uso y caduca en 15 minutos.")],
         boton=(_("Entrar al portal"), url_enlace),
         aviso=_("Si no has solicitado este enlace, puedes ignorar este correo: nadie podrá entrar sin él."),
         preencabezado=_("Tu enlace de acceso (caduca en 15 minutos)"),
     )
-    _enviar(email_destino, _("Tu enlace de acceso a Guilda Work"), plano, html)
+    _enviar(email_destino, _asunto(_("Tu enlace de acceso a Guilda Work"), tenant_id), plano, html)
 
 
-def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal: str) -> None:
+def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal: str, tenant_id: int | None = None) -> None:
     """Aviso de que el equipo pide un documento concreto para un
     vencimiento (app/rutas_fiscal.py:editar_vencimiento) -- mismo
     criterio que enviar_respuesta_portal: enlaza a /portal/entrar sin
     más, el cliente pide su propio enlace mágico igual que siempre."""
-    plano, html = correo_diseno.construir(
+    plano, html = _construir(tenant_id, 
         _("Tu gestoría te pide un documento"),
         [_("Para seguir con tu expediente necesitamos que subas este documento:")],
         cita=descripcion,
@@ -85,10 +106,10 @@ def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal:
         aviso=_("Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."),
         preencabezado=descripcion,
     )
-    _enviar(email_destino, _("Tu gestoría te pide un documento"), plano, html)
+    _enviar(email_destino, _asunto(_("Tu gestoría te pide un documento"), tenant_id), plano, html)
 
 
-def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str) -> None:
+def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str, tenant_id: int | None = None) -> None:
     """Aviso de que hay un enlace de pago de Stripe Checkout disponible
     para un vencimiento (app/rutas_fiscal.py:cobrar_stripe_vencimiento).
     A diferencia de enviar_respuesta_portal/enviar_solicitud_documento,
@@ -96,7 +117,7 @@ def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str) -> None
     por Stripe -- nunca se maneja un dato de tarjeta en Guilda Work) en
     vez de enlazar a /portal/entrar, porque el pago no requiere ninguna
     sesión del portal."""
-    plano, html = correo_diseno.construir(
+    plano, html = _construir(tenant_id, 
         _("Tienes un pago pendiente"),
         [_("Tu gestoría te ha generado un enlace de pago para:")],
         cita=concepto,
@@ -104,7 +125,7 @@ def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str) -> None
         aviso=_("El pago se hace en la página segura de Stripe: Guilda Work nunca ve los datos de tu tarjeta."),
         preencabezado=concepto,
     )
-    _enviar(email_destino, _("Tienes un pago pendiente"), plano, html)
+    _enviar(email_destino, _asunto(_("Tienes un pago pendiente"), tenant_id), plano, html)
 
 
 def _(mensaje: str, **valores) -> str:
@@ -132,7 +153,7 @@ def texto_cuando(dias: int) -> str:
 def enviar_recordatorio_vencimiento(
     email_destino: str, cliente_nombre: str, modelo: str, periodo: str, fecha_limite: str, dias: int,
     url_portal: str | None, gestoria: str, documento_solicitado: str | None = None,
-    plantilla: tuple[str, str] | None = None,
+    plantilla: tuple[str, str] | None = None, tenant_id: int | None = None,
 ) -> None:
     """`dias` > 0: faltan; 0: vence hoy; < 0: venció hace -dias. El llamante fija el idioma del cliente (ver
     app/portal_recordatorios.py). `plantilla` = (asunto, cuerpo) con el texto propio del despacho, con
@@ -143,8 +164,8 @@ def enviar_recordatorio_vencimiento(
         asunto, cuerpo = rellenar_plantilla(plantilla[0], valores), rellenar_plantilla(plantilla[1], valores)
         # Texto propio del despacho: se respeta tal cual (párrafos separados por línea en blanco) dentro del diseño de Guilda Work
         parrafos = [p.strip() for p in re.split(r"\n\s*\n", cuerpo.strip()) if p.strip()]
-        plano, html = correo_diseno.construir(asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None, pie=gestoria, preencabezado=asunto, plano=cuerpo)
-        _enviar(email_destino, asunto, plano, html)
+        plano, html = _construir(tenant_id, asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None, pie=gestoria, preencabezado=asunto, plano=cuerpo)
+        _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
         return
     if dias >= 0:
         linea = _(
@@ -164,12 +185,12 @@ def enviar_recordatorio_vencimiento(
     if url_portal:
         parrafos.append(_("Puedes subir documentación y escribirnos desde tu portal de cliente."))
     parrafos.append(_("Un saludo,") + f"\n{gestoria}")
-    plano, html = correo_diseno.construir(
+    plano, html = _construir(tenant_id, 
         asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None,
         aviso=_("Recibes este aviso porque tu gestoría tiene activados los recordatorios del portal. Si prefieres no recibirlos, díselo y los desactivará."),
         pie=gestoria, preencabezado=linea,
     )
-    _enviar(email_destino, asunto, plano, html)
+    _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
 
 
 MARCAS_PLANTILLA = ("cliente", "modelo", "periodo", "fecha_limite", "dias", "cuando", "documento", "enlace", "despacho")
@@ -208,7 +229,7 @@ def textos_aviso_certificado(cliente_nombre: str, tipo: str, caduca: str, dias: 
 
 
 def enviar_aviso_certificado(email_destino: str, cliente_nombre: str, tipo: str, caduca: str, dias: int, url_portal: str | None, gestoria: str, instrucciones: str = "",
-                             plantilla: tuple[str, str] | None = None) -> None:
+                             plantilla: tuple[str, str] | None = None, tenant_id: int | None = None) -> None:
     """Aviso al cliente de que su certificado digital caduca (o caducó). Sin datos técnicos del certificado: solo el tipo y la fecha. El llamante fija el idioma del cliente.
     `plantilla` = (asunto, cuerpo) con el texto propio del despacho y {marcas} (ver `certificados.MARCAS_PLANTILLA`)."""
     cuando = texto_cuando(dias)
@@ -216,15 +237,15 @@ def enviar_aviso_certificado(email_destino: str, cliente_nombre: str, tipo: str,
         valores = {"cliente": cliente_nombre, "tipo": tipo, "caduca": caduca, "dias": str(abs(int(dias))), "cuando": cuando, "despacho": gestoria, "instrucciones": instrucciones or "", "enlace": url_portal or ""}
         asunto, cuerpo = rellenar_plantilla(plantilla[0], valores), rellenar_plantilla(plantilla[1], valores)
         parrafos = [p.strip() for p in re.split(r"\n\s*\n", cuerpo.strip()) if p.strip()]
-        plano, html = correo_diseno.construir(asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None, pie=gestoria, preencabezado=asunto, plano=cuerpo)
-        _enviar(email_destino, asunto, plano, html)
+        plano, html = _construir(tenant_id, asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None, pie=gestoria, preencabezado=asunto, plano=cuerpo)
+        _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
         return
     asunto, parrafos = textos_aviso_certificado(cliente_nombre, tipo, caduca, dias, gestoria, instrucciones, tiene_enlace=bool(url_portal))
-    plano, html = correo_diseno.construir(
+    plano, html = _construir(tenant_id, 
         asunto, parrafos, boton=(_("Abrir mi portal de cliente"), url_portal) if url_portal else None,
         aviso=_("Recibes este aviso porque tu gestoría tiene activados los avisos de caducidad de tu certificado digital. Si prefieres no recibirlos, díselo y los desactivará."),
         pie=gestoria, preencabezado=parrafos[1])
-    _enviar(email_destino, asunto, plano, html)
+    _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
 
 
 def _enmascarar(email: str | None) -> str | None:
@@ -293,13 +314,13 @@ def enviar_alerta_interna(asunto: str, cuerpo: str) -> None:
     _enviar(ALERTAS_ADMIN_EMAIL, asunto, plano, html)
 
 
-def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str) -> None:
+def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str, tenant_id: int | None = None) -> None:
     """Aviso de que el equipo ha respondido un mensaje en el portal --
     NO manda un enlace mágico directo a la conversación (evitaría
     ampliar clientes_fiscales_accesos con un destino de redirección,
     más estado que mantener) -- enlaza a /portal/entrar sin más, el
     cliente pide su propio enlace igual que siempre."""
-    plano, html = correo_diseno.construir(
+    plano, html = _construir(tenant_id, 
         _("Tienes una respuesta nueva"),
         [_("Tu gestoría te ha respondido en el portal de cliente:")],
         cita=texto,
@@ -307,4 +328,4 @@ def enviar_respuesta_portal(email_destino: str, texto: str, url_portal: str) -> 
         aviso=_("Entra al portal con tu email: te mandaremos un enlace de acceso."),
         preencabezado=texto[:120],
     )
-    _enviar(email_destino, _("Tienes una respuesta nueva en Guilda Work"), plano, html)
+    _enviar(email_destino, _asunto(_("Tienes una respuesta nueva en Guilda Work"), tenant_id), plano, html)

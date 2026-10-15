@@ -808,7 +808,7 @@ def editar_vencimiento(vencimiento_id: int):
             if cliente is not None and cliente["email"]:
                 try:
                     enviar_solicitud_documento(
-                        cliente["email"], documento_solicitado, url_for("portal_cliente.entrar", _external=True),
+                        cliente["email"], documento_solicitado, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id,
                     )
                 except ErrorNotificacionesEmail:
                     pass
@@ -943,7 +943,7 @@ def cobrar_stripe_vencimiento(vencimiento_id: int):
                 url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, _external=True),
                 metadata={"vencimiento_id": vencimiento_id},
             )
-            enviar_enlace_pago(cliente["email"], concepto, url_checkout)
+            enviar_enlace_pago(cliente["email"], concepto, url_checkout, tenant_id=g.tenant_id)
         except (stripe_pagos.ErrorStripe, ErrorNotificacionesEmail):
             pass
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
@@ -965,7 +965,7 @@ def responder_mensaje_vencimiento(vencimiento_id: int):
         cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
         if cliente is not None and cliente["email"]:
             try:
-                enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True))
+                enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
             except ErrorNotificacionesEmail:
                 pass
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))

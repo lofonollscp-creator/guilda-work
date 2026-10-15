@@ -121,7 +121,7 @@ def test_expediente_documental_y_registro_de_accesos(cliente):
 def test_mensajes_con_el_cliente_y_aviso_por_correo(cliente, monkeypatch):
     h, _, t = _despacho(cliente, "m@ejemplo.com")
     enviados = []
-    monkeypatch.setattr("app.notificaciones_email.enviar_respuesta_portal", lambda email, texto, url: enviados.append((email, texto)))
+    monkeypatch.setattr("app.notificaciones_email.enviar_respuesta_portal", lambda email, texto, url, **kw: enviados.append((email, texto)))
     cid = _cliente_fiscal(cliente, h, email="cliente@acme.com")
     vid = _venc(cliente, h, cid).get_json()["data"]["id"]
     db.crear_mensaje_vencimiento(vid, "cliente", "¿Qué falta?")
@@ -138,7 +138,7 @@ def test_mensajes_con_el_cliente_y_aviso_por_correo(cliente, monkeypatch):
 def test_pedir_un_documento_avisa_al_cliente_como_la_web(cliente, monkeypatch):
     h, _, _ = _despacho(cliente, "d@ejemplo.com")
     avisos = []
-    monkeypatch.setattr("app.notificaciones_email.enviar_solicitud_documento", lambda email, desc, url: avisos.append((email, desc)))
+    monkeypatch.setattr("app.notificaciones_email.enviar_solicitud_documento", lambda email, desc, url, **kw: avisos.append((email, desc)))
     cid = _cliente_fiscal(cliente, h, email="c@acme.com")
     vid = _venc(cliente, h, cid).get_json()["data"]["id"]
     cliente.put(f"/api/v1/fiscal/vencimientos/{vid}", json={"documento_solicitado": "extractos de junio"}, headers=h)

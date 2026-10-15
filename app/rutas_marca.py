@@ -33,6 +33,20 @@ def logo():
     return r
 
 
+@marca_bp.route("/p/<token>.png")
+def logo_publico(token: str):
+    """El logo del despacho para los clientes de correo (que no tienen sesión). El enlace va firmado: sin él no se ve nada."""
+    t = marca.tenant_de_token(token)
+    contenido = marca.logo(t) if t is not None else None
+    if contenido is None:
+        abort(404)
+    r = Response(contenido, mimetype="image/png")
+    r.headers["Cache-Control"] = "public, max-age=86400"
+    r.headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    r.headers["X-Content-Type-Options"] = "nosniff"
+    return r
+
+
 @marca_bp.route("/", methods=["GET", "POST"])
 @login_required
 def ajustes():

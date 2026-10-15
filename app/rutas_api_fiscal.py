@@ -290,7 +290,7 @@ def responder_mensaje_vencimiento(vencimiento_id: int):
     if cliente is not None and cliente["email"]:
         from flask import url_for
         try:
-            notificaciones_email.enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True))
+            notificaciones_email.enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
             avisado = True
         except notificaciones_email.ErrorNotificacionesEmail:
             pass

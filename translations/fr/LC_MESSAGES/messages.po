@@ -12458,3 +12458,6 @@ msgstr "Partie de l'adresse avant l'arobase"
 
 msgid "Crear y conectar"
 msgstr "Créer et connecter"
+
+msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Se ve en la aplicación y en los correos que tus clientes reciben de tu despacho (recordatorios, avisos, enlaces del portal)."
+msgstr "Le nom, le logo et la couleur que voit votre équipe à la place de ceux de Guilda Work. Ils apparaissent dans l'application et dans les courriels que vos clients reçoivent de votre cabinet (rappels, alertes, liens du portail)."
