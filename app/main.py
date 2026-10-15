@@ -258,6 +258,8 @@ app.register_blueprint(control_fiscal_bp)
 app.register_blueprint(citas_bp)
 app.register_blueprint(videollamadas_bp)
 app.register_blueprint(correo_bp)
+from .rutas_contactos import contactos_bp  # noqa: E402
+app.register_blueprint(contactos_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)

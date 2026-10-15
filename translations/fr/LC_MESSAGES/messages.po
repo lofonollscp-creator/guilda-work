@@ -12302,3 +12302,48 @@ msgstr "Écrire"
 
 msgid "Escribir al cliente sobre este vencimiento"
 msgstr "Écrire au client à propos de cette échéance"
+
+msgid "La libreta del despacho: personas que no son clientes o que son contacto de uno. Aparecen en el autocompletado de Correo junto a tus clientes."
+msgstr "Le carnet d'adresses du cabinet : personnes qui ne sont pas clientes ou qui sont le contact d'un client. Elles apparaissent dans l'autocomplétion du courrier avec vos clients."
+
+msgid "Grupos"
+msgstr "Groupes"
+
+msgid "¿Eliminar este grupo? Los contactos no se borran."
+msgstr "Supprimer ce groupe ? Les contacts ne sont pas supprimés."
+
+msgid "Nuevo grupo"
+msgstr "Nouveau groupe"
+
+msgid "Crear grupo"
+msgstr "Créer le groupe"
+
+msgid "Nombre, correo o empresa…"
+msgstr "Nom, courriel ou entreprise…"
+
+msgid "No hay contactos todavía."
+msgstr "Aucun contact pour l'instant."
+
+msgid "¿Eliminar este contacto?"
+msgstr "Supprimer ce contact ?"
+
+msgid "Editar contacto"
+msgstr "Modifier le contact"
+
+msgid "Nuevo contacto"
+msgstr "Nouveau contact"
+
+msgid "Cliente relacionado"
+msgstr "Client associé"
+
+msgid "No puedes añadir contactos."
+msgstr "Vous ne pouvez pas ajouter de contacts."
+
+msgid "Remitente guardado en Contactos."
+msgstr "Expéditeur enregistré dans Contacts."
+
+msgid "Guardar al remitente en Contactos"
+msgstr "Enregistrer l'expéditeur dans Contacts"
+
+msgid "A contactos"
+msgstr "Aux contacts"

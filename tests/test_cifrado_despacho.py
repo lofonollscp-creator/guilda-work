@@ -340,7 +340,7 @@ def test_vaciar_la_papelera_borra_lo_antiguo_con_constancia(usuario_id):
     conn.close()
     with pytest.raises(ValueError):
         rgpd.vaciar_papelera(t, u, 7)
-    assert rgpd.vaciar_papelera(t, u, 90) == {"documentos": 1, "plazos": 0, "partes_tiempo": 0, "trabajadores_cliente": 0}
+    assert rgpd.vaciar_papelera(t, u, 90) == {"documentos": 1, "plazos": 0, "partes_tiempo": 0, "trabajadores_cliente": 0, "contactos": 0}
     conn = db.get_connection()
     ids = {f[0] for f in conn.execute("SELECT id FROM documentos WHERE tenant_id = ?", (t,))}
     conn.close()

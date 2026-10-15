@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Contactos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Contactos') }}</h1>
+    <p class="subtitle">{{ _('La libreta del despacho: personas que no son clientes o que son contacto de uno. Aparecen en el autocompletado de Correo junto a tus clientes.') }}</p>
+  </div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('correo.bandeja') }}">{{ _('Volver al correo') }}</a></div>
+</header>
+{{ aviso_error(error) }}
+
+<div class="contactos-rejilla">
+  <aside class="contactos-grupos">
+    <h2>{{ _('Grupos') }}</h2>
+    <ul class="log-list">
+      <li class="log-item"><a href="{{ url_for('contactos.lista') }}" {% if not grupo_id %}aria-current="page"{% endif %}>{{ _('Todos') }}</a></li>
+      {% for gr in grupos %}
+      <li class="log-item">
+        <a href="{{ url_for('contactos.lista', grupo=gr.id) }}" {% if grupo_id == gr.id %}aria-current="page"{% endif %}>{{ gr.nombre }}</a> <span class="muted">({{ gr.n }})</span>
+        {% if puede_modificar %}
+        <form method="post" action="{{ url_for('contactos.eliminar_grupo', grupo_id=gr.id) }}" data-confirmar-envio="{{ _('¿Eliminar este grupo? Los contactos no se borran.') }}">
+          <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% if puede_modificar %}
+    <form method="post" action="{{ url_for('contactos.crear_grupo') }}" class="edit-form">
+      <label>{{ _('Nuevo grupo') }} <input type="text" name="nombre" maxlength="80" required></label>
+      <button type="submit" class="btn">{{ _('Crear grupo') }}</button>
+    </form>
+    {% endif %}
+  </aside>
+
+  <section>
+    <form class="filters" method="get">
+      <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Nombre, correo o empresa…') }}"></label>
+      {% if grupo_id %}<input type="hidden" name="grupo" value="{{ grupo_id }}">{% endif %}
+      <button type="submit" class="btn btn-primary">{{ _('Buscar') }}</button>
+    </form>
+
+    {% if not contactos %}
+    <p class="empty-lane">{{ _('No hay contactos todavía.') }}</p>
+    {% else %}
+    <ul class="log-list">
+      {% for c in contactos %}
+      <li class="log-item">
+        <span class="log-text"><strong>{{ c.nombre }}</strong>{% if c.empresa %} · {{ c.empresa }}{% endif %}
+          {% if c.cliente_nombre %} {{ chip(c.cliente_nombre) }}{% endif %}
+          <br><span class="muted">{{ c.email or '' }}{% if c.email and c.telefono %} · {% endif %}{{ c.telefono or '' }}</span></span>
+        {% if c.email %}<a class="btn btn-ghost" href="{{ url_for('correo.redactar', para=c.email) }}">{{ _('Escribir') }}</a>{% endif %}
+        {% if puede_modificar %}
+        <a class="btn btn-ghost" href="{{ url_for('contactos.lista', editar=c.id, q=q or None, grupo=grupo_id) }}">{{ _('Editar') }}</a>
+        <form method="post" action="{{ url_for('contactos.eliminar', contacto_id=c.id) }}" data-confirmar-envio="{{ _('¿Eliminar este contacto?') }}" data-confirmar-peligro>
+          <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}">×</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if puede_modificar %}
+    <section class="dash-panel ds-mt-16">
+      <h2>{{ _('Editar contacto') if editando else _('Nuevo contacto') }}</h2>
+      <form method="post" action="{{ url_for('contactos.editar', contacto_id=editando.id) if editando else url_for('contactos.crear') }}" class="edit-form ds-max-640">
+        <label>{{ _('Nombre') }} <input type="text" name="nombre" value="{{ editando.nombre if editando else '' }}" required maxlength="150"></label>
+        <label>{{ _('Correo') }} <input type="email" name="email" value="{{ (editando.email or '') if editando else '' }}"></label>
+        <label>{{ _('Teléfono') }} <input type="text" name="telefono" value="{{ (editando.telefono or '') if editando else '' }}" maxlength="40"></label>
+        <label>{{ _('Empresa') }} <input type="text" name="empresa" value="{{ (editando.empresa or '') if editando else '' }}" maxlength="150"></label>
+        <label>{{ _('Cliente relacionado') }}
+          <select name="cliente_id"><option value="">{{ _('Ninguno') }}</option>{% for cl in clientes %}<option value="{{ cl.id }}" {{ 'selected' if editando and editando.cliente_id == cl.id }}>{{ cl.nombre }}</option>{% endfor %}</select>
+        </label>
+        <label>{{ _('Notas') }} <textarea name="notas" rows="2" maxlength="2000">{{ (editando.notas or '') if editando else '' }}</textarea></label>
+        {% if editando and grupos %}
+        <fieldset><legend>{{ _('Grupos') }}</legend>
+          {% for gr in grupos %}<label class="correo-toolbar-check"><input type="checkbox" name="grupos" value="{{ gr.id }}" {{ 'checked' if gr.id in grupos_del_editado }}> {{ gr.nombre }}</label>{% endfor %}
+        </fieldset>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+        {% if editando %}<a class="btn btn-ghost" href="{{ url_for('contactos.lista') }}">{{ _('Cancelar') }}</a>{% endif %}
+      </form>
+    </section>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -2207,6 +2207,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import contactos
+        contactos.crear_esquema(conn)           # libreta de contactos compartida del despacho (app/contactos.py)
         from . import correo_autorespuesta
         correo_autorespuesta.crear_esquema(conn)   # respuesta automática por cuenta de correo (app/correo_autorespuesta.py)
         from . import reglas_laborales

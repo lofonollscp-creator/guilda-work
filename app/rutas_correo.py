@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, correo, correo_autorespuesta, correo_contexto, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
+from . import acceso, contactos, correo, correo_autorespuesta, correo_contexto, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -745,6 +745,20 @@ def _volver_a_la_bandeja(mensaje, aviso: str | None = None):
     return redirect(url_for("correo.bandeja", cuenta_id=mensaje["cuenta_id"], carpeta=mensaje["carpeta"], aviso=aviso))
 
 
+@correo_bp.route("/<int:mensaje_id>/guardar-contacto", methods=["POST"])
+@login_required
+def guardar_remitente_en_contactos(mensaje_id: int):
+    """Guarda en la libreta del despacho a quien envía el mensaje."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    if g.tenant_id is None or acceso.es_solo_auditor(g.tenant_id, g.usuario_id):
+        return _volver_a_la_bandeja(mensaje, _("No puedes añadir contactos."))
+    try:
+        contactos.guardar_desde_correo(g.tenant_id, g.usuario_id, mensaje["remitente"])
+    except ValueError as e:
+        return _volver_a_la_bandeja(mensaje, str(e))
+    return _volver_a_la_bandeja(mensaje, _("Remitente guardado en Contactos."))
+
+
 @correo_bp.route("/<int:mensaje_id>/archivar", methods=["POST"])
 @login_required
 def archivar_mensaje(mensaje_id: int):
@@ -1442,9 +1456,11 @@ def eliminar_regla_avanzada(regla_id: int):
 def destinatarios_recientes():
     q = request.args.get("q", "")
     resultado = [dict(f) for f in db.buscar_destinatarios_recientes(g.usuario_id, q)]
-    if g.tenant_id is not None:          # además, las direcciones de los clientes y de sus contactos que la persona puede ver
+    if g.tenant_id is not None:          # además, la libreta del despacho y las direcciones de los clientes y de sus contactos que la persona puede ver
         vistos = {r["direccion"].lower() for r in resultado}
-        resultado += [d for d in nucleo.direcciones_de_clientes(g.tenant_id, q) if d["direccion"].lower() not in vistos]
+        extra = contactos.sugerencias(g.tenant_id, g.usuario_id, q) + nucleo.direcciones_de_clientes(g.tenant_id, q)
+        resultado = [d for d in extra if d["direccion"].lower() not in vistos and ", " in d["direccion"]] + resultado   # los grupos primero
+        resultado += [d for d in extra if ", " not in d["direccion"] and d["direccion"].lower() not in vistos]
     return jsonify(resultado[:10])
 
 

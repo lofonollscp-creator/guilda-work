@@ -327,6 +327,14 @@
         <button type="button" class="correo-ribbon-btn" data-ia-accion="acciones" title="{{ _('Sugerir acciones con IA: tareas, cliente y respuesta (envía también los nombres de tus clientes al proveedor de IA)') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Sugerir acciones') }}</span></button>
       </div>
 
+      {% if g.tenant_id %}
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.guardar_remitente_en_contactos', mensaje_id=mensaje_seleccionado.id) }}" method="post">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Guardar al remitente en Contactos') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('A contactos') }}</span></button>
+        </form>
+      </div>
+      {% endif %}
+
       {% if not remitente_confiable %}
       <div class="correo-ribbon-grupo">
         <form action="{{ url_for('correo.confiar_en_remitente_del_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post">

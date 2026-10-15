@@ -50,6 +50,8 @@ def exportar_cliente(tenant_id: int, usuario_id: int, supervisor: bool, cliente_
     if c["cliente_fiscal_id"]:
         from . import laboral
         datos["trabajadores"] = [{k: v for k, v in t.items() if k not in ("tenant_id", "nif_normalizado", "papelera_en")} for t in laboral.listar(tenant_id, c["cliente_fiscal_id"])]
+    from . import contactos
+    datos["libreta_de_contactos"] = contactos.exportar_de_cliente(tenant_id, cliente_id)
     conn = db.get_connection()
     try:
         _anotar(conn, tenant_id, usuario_id, "exportacion", f"cliente #{cliente_id}")
@@ -69,7 +71,7 @@ def vaciar_papelera(tenant_id: int, usuario_id: int, dias: int) -> dict:
     try:
         conn.execute("PRAGMA secure_delete = ON")
         cuenta = {}
-        for tabla in ("documentos", "plazos", "partes_tiempo", "trabajadores_cliente"):
+        for tabla in ("documentos", "plazos", "partes_tiempo", "trabajadores_cliente", "contactos"):
             cur = conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ? AND papelera_en IS NOT NULL AND papelera_en < ?", (tenant_id, corte))
             cuenta[tabla] = cur.rowcount
         _anotar(conn, tenant_id, usuario_id, "vaciado", f"papelera de más de {dias} días: " + ", ".join(f"{k}={v}" for k, v in cuenta.items()))

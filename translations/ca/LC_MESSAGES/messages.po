@@ -12226,3 +12226,48 @@ msgstr "Escriu"
 
 msgid "Escribir al cliente sobre este vencimiento"
 msgstr "Escriu al client sobre aquest venciment"
+
+msgid "La libreta del despacho: personas que no son clientes o que son contacto de uno. Aparecen en el autocompletado de Correo junto a tus clientes."
+msgstr "La llibreta del despatx: persones que no són clients o que són contacte d'un. Apareixen a l'autocompletat del Correu juntament amb els teus clients."
+
+msgid "Grupos"
+msgstr "Grups"
+
+msgid "¿Eliminar este grupo? Los contactos no se borran."
+msgstr "Vols eliminar aquest grup? Els contactes no s'esborren."
+
+msgid "Nuevo grupo"
+msgstr "Nou grup"
+
+msgid "Crear grupo"
+msgstr "Crea el grup"
+
+msgid "Nombre, correo o empresa…"
+msgstr "Nom, correu o empresa…"
+
+msgid "No hay contactos todavía."
+msgstr "Encara no hi ha contactes."
+
+msgid "¿Eliminar este contacto?"
+msgstr "Vols eliminar aquest contacte?"
+
+msgid "Editar contacto"
+msgstr "Edita el contacte"
+
+msgid "Nuevo contacto"
+msgstr "Nou contacte"
+
+msgid "Cliente relacionado"
+msgstr "Client relacionat"
+
+msgid "No puedes añadir contactos."
+msgstr "No pots afegir contactes."
+
+msgid "Remitente guardado en Contactos."
+msgstr "Remitent desat a Contactes."
+
+msgid "Guardar al remitente en Contactos"
+msgstr "Desa el remitent a Contactes"
+
+msgid "A contactos"
+msgstr "A contactes"

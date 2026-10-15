@@ -12217,3 +12217,48 @@ msgstr "Write"
 
 msgid "Escribir al cliente sobre este vencimiento"
 msgstr "Write to the client about this deadline"
+
+msgid "La libreta del despacho: personas que no son clientes o que son contacto de uno. Aparecen en el autocompletado de Correo junto a tus clientes."
+msgstr "The firm's address book: people who are not clients or who are a client's contact. They appear in Mail's autocomplete alongside your clients."
+
+msgid "Grupos"
+msgstr "Groups"
+
+msgid "¿Eliminar este grupo? Los contactos no se borran."
+msgstr "Delete this group? The contacts are not deleted."
+
+msgid "Nuevo grupo"
+msgstr "New group"
+
+msgid "Crear grupo"
+msgstr "Create group"
+
+msgid "Nombre, correo o empresa…"
+msgstr "Name, email or company…"
+
+msgid "No hay contactos todavía."
+msgstr "There are no contacts yet."
+
+msgid "¿Eliminar este contacto?"
+msgstr "Delete this contact?"
+
+msgid "Editar contacto"
+msgstr "Edit contact"
+
+msgid "Nuevo contacto"
+msgstr "New contact"
+
+msgid "Cliente relacionado"
+msgstr "Related client"
+
+msgid "No puedes añadir contactos."
+msgstr "You cannot add contacts."
+
+msgid "Remitente guardado en Contactos."
+msgstr "Sender saved to Contacts."
+
+msgid "Guardar al remitente en Contactos"
+msgstr "Save the sender to Contacts"
+
+msgid "A contactos"
+msgstr "To contacts"

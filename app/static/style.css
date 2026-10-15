@@ -5068,3 +5068,9 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .correo-shell:not(.es-pantalla-completa) .correo-lectura-pane { grid-column: 3; grid-row: 2; }
   .correo-shell.es-pantalla-completa .correo-lectura-pane { grid-column: 1; grid-row: 2; }
 }
+
+/* --- Contactos (libreta del despacho) --- */
+.contactos-rejilla { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-4, 20px); align-items: start; }
+.contactos-grupos .log-item { display: flex; align-items: center; gap: 6px; }
+.contactos-grupos a[aria-current="page"] { font-weight: 700; }
+@media (max-width: 640px) { .contactos-rejilla { grid-template-columns: 1fr; } }
