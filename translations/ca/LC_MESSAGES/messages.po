@@ -12271,3 +12271,57 @@ msgstr "Desa el remitent a Contactes"
 
 msgid "A contactos"
 msgstr "A contactes"
+
+msgid "Salud del dominio de correo"
+msgstr "Salut del domini de correu"
+
+msgid "Comprueba que tu dominio puede enviar y recibir sin acabar en spam (MX, SPF, DKIM y DMARC). Solo consulta: no cambia ningún registro."
+msgstr "Comprova que el teu domini pot enviar i rebre sense acabar a la brossa (MX, SPF, DKIM i DMARC). Només consulta: no canvia cap registre."
+
+msgid "Dominio"
+msgstr "Domini"
+
+msgid "Selector DKIM (opcional)"
+msgstr "Selector DKIM (opcional)"
+
+msgid "Selector DKIM"
+msgstr "Selector DKIM"
+
+msgid "Mejorable"
+msgstr "Millorable"
+
+msgid "Falta o falla"
+msgstr "Falta o falla"
+
+msgid "No se ha podido consultar el DNS: %(e)s"
+msgstr "No s'ha pogut consultar el DNS: %(e)s"
+
+msgid "Marca del despacho"
+msgstr "Marca del despatx"
+
+msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Solo cambia la aplicación: no toca los correos ni el portal de tus clientes."
+msgstr "El nom, el logotip i el color que veu el teu equip en lloc dels de Guilda Work. Només canvia l'aplicació: no toca els correus ni el portal dels teus clients."
+
+msgid "Marca guardada."
+msgstr "Marca desada."
+
+msgid "Usar un color de acento propio"
+msgstr "Usa un color d'accent propi"
+
+msgid "Color de acento"
+msgstr "Color d'accent"
+
+msgid "Logo (PNG, JPEG o WebP, hasta 400 KB)"
+msgstr "Logotip (PNG, JPEG o WebP, fins a 400 KB)"
+
+msgid "Quitar el logo"
+msgstr "Treu el logotip"
+
+msgid "¿Volver al nombre, logo y color de Guilda Work?"
+msgstr "Vols tornar al nom, logotip i color de Guilda Work?"
+
+msgid "Restablecer"
+msgstr "Restableix"
+
+msgid "Nombre, logo y color propios para tu equipo."
+msgstr "Nom, logotip i color propis per al teu equip."

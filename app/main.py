@@ -260,6 +260,8 @@ app.register_blueprint(videollamadas_bp)
 app.register_blueprint(correo_bp)
 from .rutas_contactos import contactos_bp  # noqa: E402
 app.register_blueprint(contactos_bp)
+from .rutas_marca import marca_bp  # noqa: E402
+app.register_blueprint(marca_bp)
 app.register_blueprint(ia_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(kratos_proxy_bp)
@@ -492,6 +494,15 @@ def inyectar_verticales():
     """Módulos de negocio activos del despacho (Gestoría, Gabinete de abogados, Inmobiliaria): base.html monta el menú con ellos."""
     activos = verticales.activos_de(g.get("tenant_id"))
     return {"verticales_activos": activos, "entradas_verticales": verticales.entradas_de_menu(g.get("tenant_id"))}
+
+
+@app.context_processor
+def inyectar_marca():
+    """Marca del despacho (nombre, logo y color propios) para el menú lateral y la hoja de estilo; None si no la ha personalizado o no hay sesión."""
+    if g.get("usuario_id") is None:
+        return {"marca_despacho": None}
+    from . import marca
+    return {"marca_despacho": marca.obtener(g.get("tenant_id"))}
 
 
 @app.context_processor
@@ -1833,6 +1844,9 @@ def _secciones_ajustes() -> list[dict]:
         {"id": "recurrentes", "icono": "refresh-cw", "titulo": _("Tareas recurrentes"), "texto": _("Tareas que se crean solas cada semana, mes o año."), "url": u("tareas.recurrentes"), "estado": None},
         {"id": "fichaje", "icono": "clock", "titulo": _("Fichaje: mis datos"), "texto": _("Nombre completo y DNI/NIE para el registro horario."), "url": u("fichaje.mis_datos"), "estado": None},
     ]
+    from . import acceso
+    if g.tenant_id is not None and acceso.es_directivo(uid):
+        trabajo.append({"id": "marca", "icono": "sparkles", "titulo": _("Marca del despacho"), "texto": _("Nombre, logo y color propios para tu equipo."), "url": u("marca.ajustes"), "estado": None})
     if g.tenant_id is not None:
         trabajo.append({"id": "recordatorios", "icono": "bell", "titulo": _("Recordatorios a clientes"), "texto": _("Avisos automáticos de vencimientos a tus clientes."), "url": u("fiscal.recordatorios"), "estado": None})
     asistente = [

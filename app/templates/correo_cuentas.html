@@ -200,4 +200,26 @@
     </div>
   </form>
 </section>
+
+{% if dominios %}
+<section class="proyecto-bloque" id="salud-dominio">
+  <h2>{{ _('Salud del dominio de correo') }}</h2>
+  <p class="muted">{{ _('Comprueba que tu dominio puede enviar y recibir sin acabar en spam (MX, SPF, DKIM y DMARC). Solo consulta: no cambia ningún registro.') }}</p>
+  <form method="get" action="{{ url_for('correo.diagnostico_dominio') }}" class="ds-fila">
+    <select name="dominio" aria-label="{{ _('Dominio') }}">{% for d in dominios %}<option value="{{ d }}" {{ 'selected' if diagnostico and diagnostico.dominio == d }}>{{ d }}</option>{% endfor %}</select>
+    <input type="text" name="selector" placeholder="{{ _('Selector DKIM (opcional)') }}" aria-label="{{ _('Selector DKIM') }}" maxlength="62">
+    <button type="submit" class="btn btn-primary">{{ _('Comprobar') }}</button>
+  </form>
+  {% if diagnostico %}
+  <ul class="log-list ds-mt-16">
+    {% for c in diagnostico.comprobaciones %}
+    <li class="log-item">
+      <span class="pill dominio-{{ c.estado }}">{{ {'ok': _('Correcto'), 'aviso': _('Mejorable'), 'error': _('Falta o falla')}[c.estado] }}</span>
+      <span class="log-text"><strong>{{ c.titulo }}</strong><br>{{ c.detalle }}{% for r in c.registros %}<br><code>{{ r }}</code>{% endfor %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endif %}
 {% endblock %}

@@ -5074,3 +5074,46 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .contactos-grupos .log-item { display: flex; align-items: center; gap: 6px; }
 .contactos-grupos a[aria-current="page"] { font-weight: 700; }
 @media (max-width: 640px) { .contactos-rejilla { grid-template-columns: 1fr; } }
+
+/* --- Correo C6: salud del dominio --- */
+.pill.dominio-ok { background: var(--success-bg, #12351f); color: var(--success, #6ee7a0); }
+.pill.dominio-aviso { background: var(--warning-bg, #3a2d0c); color: var(--warning, #f5c04a); }
+.pill.dominio-error { background: var(--danger-bg, #3a1212); color: var(--danger, #ff8a8a); }
+.marca-vista-previa { border-radius: 12px; object-fit: contain; background: var(--surface); border: 1px solid var(--border); vertical-align: middle; margin-right: 12px; }
+.icon-rail-brand-mark.es-marca-propia { object-fit: contain; border-radius: 8px; }
+
+/* --- Correo C6: móvil. Una sola vista cada vez (lista o mensaje), con «Volver», y controles que se pueden tocar --- */
+.correo-lectura-volver { display: none; }
+.correo-shell.es-pantalla-completa .correo-lectura-volver { display: inline-flex; }
+@media (max-width: 640px) {
+  .correo-shell { grid-template-rows: auto 1fr; overflow-x: hidden; }
+  .correo-shell .correo-topbar { grid-column: 1; grid-row: 1; }
+  .correo-lectura-volver { display: inline-flex; min-height: 44px; align-items: center; }
+  /* sin mensaje abierto: carpetas en una tira horizontal y la lista debajo; el panel de lectura vacío no se enseña */
+  .correo-shell:not(.con-mensaje) .correo-lectura-pane { display: none; }
+  .correo-shell:not(.con-mensaje) .correo-rail { grid-row: 2; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; max-height: none; padding: 8px; gap: 6px; align-items: center; }
+  .correo-shell:not(.con-mensaje) .correo-rail .correo-carpeta-lista { display: flex; flex-direction: row; gap: 4px; }
+  .correo-shell:not(.con-mensaje) .correo-rail .correo-carpetas-gestion, .correo-shell:not(.con-mensaje) .correo-rail .correo-rail-ajustes { display: none; }
+  .correo-shell:not(.con-mensaje) { grid-template-rows: auto auto 1fr; }
+  .correo-shell:not(.con-mensaje) .correo-lista-pane { grid-row: 3; max-height: none; overflow-y: auto; }
+  /* con mensaje abierto: solo el mensaje */
+  .correo-shell.con-mensaje .correo-rail, .correo-shell.con-mensaje .correo-lista-pane, .correo-shell.con-mensaje .correo-divisor { display: none; }
+  .correo-shell.con-mensaje .correo-lectura-pane { grid-row: 2; padding: 12px; }
+  .correo-fila-wrap { padding: 12px; min-height: 56px; }
+  .correo-fila-check { width: 22px; height: 22px; }
+  .correo-ribbon { overflow-x: auto; flex-wrap: nowrap; }
+  .correo-ribbon-btn, .correo-ribbon select, .correo-ribbon-select { min-height: 44px; flex: 0 0 auto; }
+  .correo-lectura-header { flex-direction: column; gap: 8px; }
+  .correo-lectura-asunto { font-size: 1.15em; }
+  .correo-cuerpo-html { min-height: 50vh; }
+  .correo-respuesta-rapida textarea { font-size: 16px; }
+  .correo-compose { max-width: none; padding: 0 4px; }
+  .correo-compose-campo { flex-wrap: wrap; }
+  .correo-compose-campo > input, .correo-compose-campo > select { flex: 1 1 100%; min-height: 44px; font-size: 16px; }
+  .correo-editor { min-height: 40vh; font-size: 16px; }
+  .correo-editor-toolbar { overflow-x: auto; flex-wrap: nowrap; }
+  .correo-editor-boton { min-width: 44px; min-height: 44px; }
+  .correo-compose-acciones { flex-wrap: wrap; }
+  .correo-compose-acciones .btn { min-height: 44px; }
+  .contactos-rejilla { grid-template-columns: 1fr; }
+}

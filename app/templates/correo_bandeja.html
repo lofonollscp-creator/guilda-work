@@ -2,7 +2,7 @@
 {% block title %}{{ _('Correo') }} — Guilda Work{% endblock %}
 {% block content %}
 <h1 class="sr-only">{{ _('Correo') }}</h1>
-<div class="correo-shell {{ 'es-pantalla-completa' if completa }}" data-letra="{{ vista.letra }}" data-disposicion="{{ vista.disposicion }}"
+<div class="correo-shell {{ 'es-pantalla-completa' if completa }} {{ 'con-mensaje' if mensaje_seleccionado }}" data-letra="{{ vista.letra }}" data-disposicion="{{ vista.disposicion }}"
      {% if vista.ancho_lista %}style="--correo-ancho-lista: {{ vista.ancho_lista }}px;"{% endif %} data-url-ancho="{{ url_for('correo.guardar_ancho_lista') }}">
   {% if envio_banner %}
   <div class="correo-envio-banner" role="status" id="correo-envio-banner" data-segundos="{{ envio_banner.segundos }}"
@@ -195,11 +195,10 @@
     {% if mensaje_seleccionado %}
     {% set cat_actual = categorias_por_id.get(mensaje_seleccionado.categoria_id) %}
     <div class="correo-lectura-header">
-      {% if completa %}
       <a class="correo-lectura-volver"
          href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None, **filtros_url) }}"
          title="{{ _('Volver a la lista') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Volver') }}</a>
-      {% endif %}
+      
       <div class="correo-lectura-remitente">
         <span class="avatar-circulo avatar-grande" style="--avatar-color: {{ mensaje_seleccionado.remitente|avatar_color }};">{{ mensaje_seleccionado.remitente|iniciales }}</span>
         <div>

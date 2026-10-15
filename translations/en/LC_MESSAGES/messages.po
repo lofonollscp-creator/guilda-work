@@ -12262,3 +12262,57 @@ msgstr "Save the sender to Contacts"
 
 msgid "A contactos"
 msgstr "To contacts"
+
+msgid "Salud del dominio de correo"
+msgstr "Mail domain health"
+
+msgid "Comprueba que tu dominio puede enviar y recibir sin acabar en spam (MX, SPF, DKIM y DMARC). Solo consulta: no cambia ningún registro."
+msgstr "Check that your domain can send and receive without ending up in spam (MX, SPF, DKIM and DMARC). It only looks things up: it changes no records."
+
+msgid "Dominio"
+msgstr "Domain"
+
+msgid "Selector DKIM (opcional)"
+msgstr "DKIM selector (optional)"
+
+msgid "Selector DKIM"
+msgstr "DKIM selector"
+
+msgid "Mejorable"
+msgstr "Could be better"
+
+msgid "Falta o falla"
+msgstr "Missing or failing"
+
+msgid "No se ha podido consultar el DNS: %(e)s"
+msgstr "The DNS could not be queried: %(e)s"
+
+msgid "Marca del despacho"
+msgstr "Firm branding"
+
+msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Solo cambia la aplicación: no toca los correos ni el portal de tus clientes."
+msgstr "The name, logo and colour your team sees instead of Guilda Work's. It only changes the application: it does not touch emails or your clients' portal."
+
+msgid "Marca guardada."
+msgstr "Branding saved."
+
+msgid "Usar un color de acento propio"
+msgstr "Use my own accent colour"
+
+msgid "Color de acento"
+msgstr "Accent colour"
+
+msgid "Logo (PNG, JPEG o WebP, hasta 400 KB)"
+msgstr "Logo (PNG, JPEG or WebP, up to 400 KB)"
+
+msgid "Quitar el logo"
+msgstr "Remove the logo"
+
+msgid "¿Volver al nombre, logo y color de Guilda Work?"
+msgstr "Go back to Guilda Work's name, logo and colour?"
+
+msgid "Restablecer"
+msgstr "Reset"
+
+msgid "Nombre, logo y color propios para tu equipo."
+msgstr "Your own name, logo and colour for your team."

@@ -12,6 +12,7 @@
   <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  {% if marca_despacho and marca_despacho.color %}<link rel="stylesheet" href="{{ url_for('marca.estilo', v=marca_despacho.version) }}">{% endif %}
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/ManropeVariable.woff2') }}" crossorigin>
   <script nonce="{{ g.csp_nonce }}">
     // Aplica el tema guardado ANTES de que se pinte la página, para que no
@@ -53,9 +54,10 @@
       </button>
 
       <div class="icon-rail-cabecera">
-      <a href="{{ url_for('inicio') }}" class="icon-rail-link icon-rail-brand" title="Guilda Work">
-        <img class="icon-rail-brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="">
-        <span class="icon-rail-etiqueta">Guilda Work</span>
+      <a href="{{ url_for('inicio') }}" class="icon-rail-link icon-rail-brand" title="{{ marca_despacho.nombre if marca_despacho and marca_despacho.nombre else 'Guilda Work' }}">
+        {% if marca_despacho and marca_despacho.tiene_logo %}<img class="icon-rail-brand-mark es-marca-propia" src="{{ url_for('marca.logo', v=marca_despacho.version) }}" alt="">
+        {% else %}<img class="icon-rail-brand-mark" src="{{ url_for('static', filename='logo.png') }}" alt="">{% endif %}
+        <span class="icon-rail-etiqueta">{{ marca_despacho.nombre if marca_despacho and marca_despacho.nombre else 'Guilda Work' }}</span>
       </a>
 
       <div class="notificaciones-menu">

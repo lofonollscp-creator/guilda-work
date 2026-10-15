@@ -71,3 +71,13 @@ def test_el_cuerpo_html_lleva_la_escala_y_solo_lista_abre_a_pantalla_completa(cl
     html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
     assert "es-pantalla-completa" in html and "zoom:" not in html
     assert "es-pantalla-completa" not in cliente.get(f"/correo/?cuenta_id={cuenta}").get_data(as_text=True)
+
+
+def test_el_movil_distingue_lista_y_mensaje_y_siempre_hay_volver(cliente):
+    uid, cuenta = _usuario(cliente, "vista-mov@ejemplo.com")
+    m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html=None)
+    sin = cliente.get(f"/correo/?cuenta_id={cuenta}").get_data(as_text=True)
+    con = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
+    import re
+    abrir = lambda h: re.search(r'<div class="correo-shell[^"]*"', h).group(0)
+    assert "con-mensaje" not in abrir(sin) and "con-mensaje" in abrir(con) and 'class="correo-lectura-volver"' in con

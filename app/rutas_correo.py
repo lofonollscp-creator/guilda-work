@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, contactos, correo, correo_autorespuesta, correo_contexto, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
+from . import acceso, contactos, correo, correo_autorespuesta, correo_contexto, correo_dominio, dns_simple, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -144,11 +144,26 @@ def _render_redactar(
 
 @correo_bp.route("/cuentas")
 @login_required
-def cuentas():
+def cuentas(diagnostico=None, error=None):
     return render_template(
-        "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=None, proveedores_oauth=correo_oauth.proveedores_disponibles(),
-        operaciones_error=db.operaciones_correo_con_error(g.usuario_id),
+        "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=error, proveedores_oauth=correo_oauth.proveedores_disponibles(),
+        operaciones_error=db.operaciones_correo_con_error(g.usuario_id), dominios=correo_dominio.dominios_de_la_persona(g.usuario_id), diagnostico=diagnostico,
     )
+
+
+@correo_bp.route("/cuentas/dominio")
+@login_required
+def diagnostico_dominio():
+    """Comprueba MX, SPF, DKIM y DMARC de uno de los dominios de la persona. Solo consulta; no cambia nada."""
+    dominio = (request.args.get("dominio") or "").strip().lower()
+    if dominio not in correo_dominio.dominios_de_la_persona(g.usuario_id):
+        abort(404)                                       # solo se diagnostican los dominios propios
+    try:
+        return cuentas(diagnostico=correo_dominio.diagnosticar(dominio, request.args.get("selector")))
+    except ValueError as e:
+        return cuentas(error=str(e))
+    except dns_simple.ErrorDNS as e:
+        return cuentas(error=_("No se ha podido consultar el DNS: %(e)s", e=e))
 
 
 def _ids_de_operaciones():
