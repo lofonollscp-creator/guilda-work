@@ -146,3 +146,9 @@ def test_la_bandeja_muestra_archivar_gestion_y_respuesta_rapida(cliente):
     m = _msg(cuenta)
     html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
     assert "/archivar" in html and "Gestionar carpetas" in html and "correo-respuesta-rapida" in html and 'data-carpeta="Archive"' in html
+
+
+@pytest.mark.parametrize("nombre,visible", [("INBOX", "Bandeja de entrada"), ("INBOX.Sent", "Enviados"), ("INBOX.Hunter", "Hunter"), ("INBOX.Trash", "Papelera"),
+                                            ("Clientes/2026", "2026"), ("[Gmail]/Spam", "Spam"), ("Facturas 2.0", "Facturas 2.0")])
+def test_el_nombre_visible_quita_el_prefijo_inbox_de_los_servidores_con_punto(nombre, visible):
+    assert correo._nombre_visible_carpeta(nombre) == visible

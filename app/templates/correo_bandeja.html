@@ -58,8 +58,8 @@
           {% endif %}
         </a>
         {% endfor %}
-        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, destacados=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacados de esta carpeta') }}</a>
-        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, no_leidos=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg> {{ _('No leídos de esta carpeta') }}</a>
+        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, destacados=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacados') }}</a>
+        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, no_leidos=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg> {{ _('No leídos') }}</a>
         {% if carpetas|length > 1 or c.protocolo != 'pop3' %}
         <details class="correo-carpetas-gestion">
           <summary>{{ _('Gestionar carpetas') }}</summary>

@@ -5059,3 +5059,12 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-contexto-fila { margin: 6px 0; }
 .correo-contexto-titulo { margin: 8px 0 2px; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
 .correo-contexto-lista { margin: 0; padding-left: 18px; }
+
+/* Correo: colocación explícita de las columnas (el divisor es un hijo más de la rejilla y descolocaba la lista) */
+.correo-carpeta-item { text-decoration: none; }
+@media (min-width: 641px) {
+  .correo-shell:not(.es-pantalla-completa) .correo-rail { grid-column: 1; grid-row: 2; }
+  .correo-shell:not(.es-pantalla-completa) .correo-lista-pane { grid-column: 2; grid-row: 2; }
+  .correo-shell:not(.es-pantalla-completa) .correo-lectura-pane { grid-column: 3; grid-row: 2; }
+  .correo-shell.es-pantalla-completa .correo-lectura-pane { grid-column: 1; grid-row: 2; }
+}

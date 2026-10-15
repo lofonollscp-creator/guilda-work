@@ -551,6 +551,9 @@ def _parsear_carpetas_imap(lineas: list) -> list[str]:
 
 
 def _nombre_visible_carpeta(nombre: str) -> str:
+    """Nombre legible: el último tramo, y en servidores que cuelgan todo de «INBOX.» (separador punto) sin ese prefijo."""
+    if nombre.upper().startswith("INBOX.") and len(nombre) > 6:
+        nombre = nombre[6:]
     ultimo = re.split(r"[\\/]", nombre)[-1].strip()
     return ETIQUETAS_CARPETA.get(ultimo.lower(), ultimo)
 
