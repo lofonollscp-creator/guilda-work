@@ -12385,3 +12385,12 @@ msgstr "Crea i connecta"
 
 msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Se ve en la aplicación y en los correos que tus clientes reciben de tu despacho (recordatorios, avisos, enlaces del portal)."
 msgstr "El nom, el logotip i el color que veu el teu equip en lloc dels de Guilda Work. Es veu a l'aplicació i als correus que els teus clients reben del teu despatx (recordatoris, avisos, enllaços del portal)."
+
+msgid "Comprobar ahora la cadena y la revocación"
+msgstr "Comprova ara la cadena i la revocació"
+
+msgid "Consulta el emisor, OCSP y la lista de revocación que publica el propio certificado. Si algo no se puede comprobar, queda como «indeterminada», nunca como válida."
+msgstr "Consulta l'emissor, l'OCSP i la llista de revocació que publica el mateix certificat. Si alguna cosa no es pot comprovar, queda com a «indeterminada», mai com a vàlida."
+
+msgid "Comprobación hecha: mira el resultado en la tabla de estado."
+msgstr "Comprovació feta: mira el resultat a la taula d'estat."

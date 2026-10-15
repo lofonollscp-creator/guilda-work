@@ -255,6 +255,13 @@ def evaluacion(certificado_id: int):
     return _accion(certificado_id, ce.registrar_evaluacion, certificado_id, request.form.get("dimension", ""), request.form.get("resultado", ""), detalle=request.form.get("detalle"))
 
 
+@certificados_bp.route("/<int:certificado_id>/comprobar", methods=["POST"])
+@login_required
+def comprobar(certificado_id: int):
+    """Comprueba la cadena y la revocación del certificado consultando lo que él mismo publica (OCSP, CRL, emisor)."""
+    return _accion(certificado_id, ce.comprobar_ahora, certificado_id, aviso="comprobado")
+
+
 @certificados_bp.route("/<int:certificado_id>/vinculos", methods=["POST"])
 @login_required
 def vincular(certificado_id: int):

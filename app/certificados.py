@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from datetime import date, datetime, timedelta, timezone
 
@@ -25,6 +26,8 @@ from cryptography.hazmat.primitives.asymmetric import ec, ed448, ed25519, rsa
 from cryptography.x509.oid import ExtensionOID, NameOID
 
 from . import db, nucleo
+
+logger = logging.getLogger(__name__)
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS certificados (
@@ -619,6 +622,32 @@ def registrar_evaluacion(tenant_id: int, usuario_id: int, certificado_id: int, d
         conn.commit()
     finally:
         conn.close()
+
+
+def comprobar_ahora(tenant_id: int, usuario_id: int, certificado_id: int, *, verificar=None) -> dict:
+    """Comprueba la cadena de confianza y la revocación del certificado (app/certificados_verificacion.py) y anota los dos resultados como evaluaciones automáticas, con su fecha y detalle. Un
+    fallo de red o una CA desconocida se anotan como «indeterminada», nunca como «válida». `ValueError` si el certificado se dio de alta a mano y no hay archivo que comprobar."""
+    _exigir(usuario_id, tenant_id)
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT der FROM certificados WHERE id = ? AND tenant_id = ?", (certificado_id, tenant_id)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        raise ValueError("No existe ese certificado.")
+    if not f["der"]:
+        raise ValueError("Este certificado se dio de alta a mano: no hay archivo que comprobar. Impórtalo para poder hacerlo automáticamente.")
+    if verificar is None:
+        from . import certificados_verificacion
+        verificar = certificados_verificacion.verificar
+    try:
+        r = verificar(bytes(f["der"]))
+    except Exception:  # noqa: BLE001 -- un certificado raro o un fallo inesperado no debe romper la pantalla: queda como indeterminada
+        logger.exception("Fallo al comprobar el certificado %s", certificado_id)
+        r = {"cadena": ("indeterminada", "No se pudo completar la comprobación."), "revocacion": ("indeterminada", "No se pudo completar la comprobación.", "automatica")}
+    registrar_evaluacion(tenant_id, usuario_id, certificado_id, "cadena", r["cadena"][0], detalle=r["cadena"][1][:300], metodo="automatica")
+    registrar_evaluacion(tenant_id, usuario_id, certificado_id, "revocacion", r["revocacion"][0], detalle=r["revocacion"][1][:300], metodo=r["revocacion"][2])
+    return {"cadena": r["cadena"][0], "revocacion": r["revocacion"][0]}
 
 
 def actualizar_datos(tenant_id: int, usuario_id: int, certificado_id: int, *, custodio_id: int | None = ..., nif_confirmado: str | None = ..., tipo_titular: str | None = ...,

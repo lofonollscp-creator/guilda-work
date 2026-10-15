@@ -12461,3 +12461,12 @@ msgstr "Créer et connecter"
 
 msgid "El nombre, el logo y el color que ve tu equipo en lugar de los de Guilda Work. Se ve en la aplicación y en los correos que tus clientes reciben de tu despacho (recordatorios, avisos, enlaces del portal)."
 msgstr "Le nom, le logo et la couleur que voit votre équipe à la place de ceux de Guilda Work. Ils apparaissent dans l'application et dans les courriels que vos clients reçoivent de votre cabinet (rappels, alertes, liens du portail)."
+
+msgid "Comprobar ahora la cadena y la revocación"
+msgstr "Vérifier maintenant la chaîne et la révocation"
+
+msgid "Consulta el emisor, OCSP y la lista de revocación que publica el propio certificado. Si algo no se puede comprobar, queda como «indeterminada», nunca como válida."
+msgstr "Interroge l'émetteur, l'OCSP et la liste de révocation que publie le certificat lui-même. Si quelque chose ne peut pas être vérifié, il est enregistré comme « indéterminé », jamais comme valide."
+
+msgid "Comprobación hecha: mira el resultado en la tabla de estado."
+msgstr "Vérification faite : voyez le résultat dans le tableau d'état."

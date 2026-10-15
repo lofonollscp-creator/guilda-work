@@ -18,7 +18,7 @@
 
 {% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
 {% set mensajes = {'creado': _('Certificado guardado.'), 'ya-estaba': _('Ese certificado ya estaba apuntado: no se ha duplicado.'), 'importado': _('Certificado importado.'), 'renovado': _('Renovado: este es el certificado nuevo. El anterior queda como sustituido, con su historial.'),
-                   'aviso-enviado': _('Aviso enviado al cliente.')} %}
+                   'aviso-enviado': _('Aviso enviado al cliente.'), 'comprobado': _('Comprobación hecha: mira el resultado en la tabla de estado.')} %}
 {% if aviso %}<p class="ds-estado-ok" role="status">{{ mensajes.get(aviso, _('Hecho.')) }}</p>{% endif %}
 
 <section class="cert-estado cert-estado-{{ c.temporal }}" aria-live="polite">
@@ -41,6 +41,7 @@
 {% if c.estado_operativo not in ('sustituido', 'archivado') %}
 <section class="cert-bloque" id="renovacion">
   <h2>{{ _('Renovación') }}</h2>
+  <form method="post" action="{{ url_for('control_fiscal.expediente_de_certificado', certificado_id=c.id) }}" class="form-en-linea"><button type="submit" class="btn btn-secondary btn-sm">{{ _('Abrir o ver su expediente') }}</button></form>
   <form method="post" action="{{ url_for('certificados.renovado', certificado_id=c.id) }}" class="cert-form">
     <p>{{ _('¿Ya lo han renovado? Apunta la nueva fecha de caducidad y listo: el certificado actual pasa a «sustituido» y el nuevo hereda cliente, tipo, custodio y servicios.') }}</p>
     <div class="cert-form-fila">
@@ -223,6 +224,10 @@
       <tr><td>{{ _('Clave en un medio autorizado') }}</td><td>{{ t_clave[c.clave.resultado] }}</td><td>{{ c.clave.comprobado_en or _('Nunca') }}</td><td>{{ c.clave.detalle or '' }}</td></tr>
     </tbody>
   </table></div>
+  <form method="post" action="{{ url_for('certificados.comprobar', certificado_id=c.id) }}" class="ds-mt-8">
+    <button type="submit" class="btn btn-primary">{{ _('Comprobar ahora la cadena y la revocación') }}</button>
+    <span class="muted">{{ _('Consulta el emisor, OCSP y la lista de revocación que publica el propio certificado. Si algo no se puede comprobar, queda como «indeterminada», nunca como válida.') }}</span>
+  </form>
   <form method="post" action="{{ url_for('certificados.evaluacion', certificado_id=c.id) }}" class="filters">
     <label>{{ _('Anotar una comprobación') }}
       <select name="dimension"><option value="cadena">{{ _('Cadena de confianza') }}</option><option value="revocacion">{{ _('Revocación') }}</option><option value="clave">{{ _('Clave en un medio autorizado') }}</option></select></label>
