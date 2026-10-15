@@ -30,7 +30,7 @@
   {% for v in vencimientos %}
   <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}">
     <span class="log-text"><a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a></span>
-    <span class="pill">{{ v.periodo }}</span>
+    {% if v.trabajador_nombre %}<span class="pill">{{ v.trabajador_nombre }}</span>{% else %}<span class="pill">{{ v.periodo }}</span>{% endif %}
     <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
     {% if fiscal.email and v.estado != 'presentado' %}<a href="{{ url_for('correo.redactar', para=fiscal.email, cliente_fiscal_id=fiscal.id, asunto=v.modelo ~ ' ' ~ v.periodo ~ ' · ' ~ fiscal.nombre) }}" title="{{ _('Escribir al cliente sobre este vencimiento') }}">{{ _('Escribir') }}</a>{% endif %}
     {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}

@@ -253,3 +253,48 @@ def test_las_nominas_se_borran_con_el_trabajador():
     conn.execute("DELETE FROM trabajadores_cliente WHERE id = ?", (w,)); conn.commit()
     assert conn.execute("SELECT COUNT(*) FROM nominas_seguimiento").fetchone()[0] == 0
     conn.close()
+
+
+# --- Lo laboral interno no sale hacia el cliente ----------------------------------------------------------------------------------------------
+
+def _con_cliente_en_portal(email):
+    t = db.crear_tenant("Despacho portal laboral " + email)
+    c = db.crear_cliente_fiscal(t, "Cliente Portal SL", email=email)
+    return t, c
+
+
+def test_los_vencimientos_internos_no_van_al_portal_ni_a_los_recordatorios_del_cliente(cliente):
+    from tests.test_portal_cliente import _entrar_como_cliente
+    t, c = _con_cliente_en_portal("lab-portal@ejemplo.com")
+    f = _futuro(3)
+    visible = db.crear_vencimiento_fiscal(t, c, "TC", "2026-10", f)
+    internos = {m: db.crear_vencimiento_fiscal(t, c, m, p, f) for m, p in (("NOMINAS", "2026-10"), ("ALTA-SS", "T7-alta"), ("BAJA-SS", "T7-baja"), ("CONTRATO", "T7-contrato"))}
+    _entrar_como_cliente(cliente, c)
+    html = cliente.get("/portal/").get_data(as_text=True)
+    assert "TC" in html and not any(m in html for m in ("NOMINAS", "ALTA-SS", "BAJA-SS", "CONTRATO"))
+    for vid in internos.values():
+        assert cliente.get(f"/portal/vencimientos/{vid}/documentos").status_code == 404 and cliente.get(f"/portal/vencimientos/{vid}/mensajes").status_code == 404
+    assert cliente.get(f"/portal/vencimientos/{visible}/mensajes").status_code == 200
+    assert {v["modelo"] for v in db.listar_vencimientos_fiscales(t, cliente_fiscal_id=c, sin_internos=True)} == {"TC"}
+    assert len(db.listar_vencimientos_fiscales(t, cliente_fiscal_id=c)) == 5
+
+
+def test_los_recordatorios_por_correo_al_cliente_saltan_los_vencimientos_internos():
+    t, c = _con_cliente_en_portal("lab-recordatorio@ejemplo.com")
+    conn = db.get_connection(); conn.execute("UPDATE clientes_fiscales SET recordatorios_portal = 1 WHERE id = ?", (c,)); conn.commit(); conn.close()
+    f = _futuro(7)
+    db.crear_vencimiento_fiscal(t, c, "TC", "2026-10", f)
+    for m, p in (("NOMINAS", "2026-10"), ("ALTA-SS", "T7-alta"), ("BAJA-SS", "T7-baja"), ("CONTRATO", "T7-contrato")):
+        db.crear_vencimiento_fiscal(t, c, m, p, f)
+    assert [v["modelo"] for v in db.vencimientos_para_recordatorio_portal(f, 7, t)] == ["TC"]
+
+
+def test_el_vencimiento_de_un_trabajador_lleva_su_nombre_y_se_ve_en_la_ficha_fiscal(cliente):
+    uid, t, fid, cid = _con_cliente(cliente, "lab-nombre@ejemplo.com")
+    _regla_hecho("alta_ss", 5, "naturales")
+    w = laboral.crear(t, uid, fid, "Ana Ruiz", fecha_alta=_futuro(10))
+    (v,) = [x for x in db.listar_vencimientos_fiscales(t, cliente_fiscal_id=fid) if x["modelo"] == "ALTA-SS"]
+    assert v["trabajador_nombre"] == "Ana Ruiz" and "Ana" not in v["periodo"]
+    assert "Ana Ruiz" in cliente.get(f"/clientes/{cid}?pestana=fiscal").get_data(as_text=True)
+    laboral.eliminar(t, w)
+    assert [x for x in db.listar_vencimientos_fiscales(t, cliente_fiscal_id=fid) if x["modelo"] == "ALTA-SS"] == []

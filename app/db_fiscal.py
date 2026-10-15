@@ -332,7 +332,9 @@ def listar_vencimientos_fiscales(
     limite: int | None = None,
     offset: int = 0,
 ) -> list[sqlite3.Row]:
-    """`limite`/`offset` paginan (sin `limite` devuelve todos, como siempre).
+    sin_internos: bool = False,
+    """`sin_internos` deja fuera los vencimientos laborales de uso interno (nóminas, altas, bajas y contratos: `MODELOS_INTERNOS`); lo usa el portal del cliente.
+    `limite`/`offset` paginan (sin `limite` devuelve todos, como siempre).
     `desde`/`hasta` filtran por fecha_limite (YYYY-MM-DD, inclusive/
     exclusive respectivamente, mismo criterio que listar_tareas_outlook).
     `pais` filtra por el país de tributación del CLIENTE (columna `c.pais`,
@@ -353,6 +355,9 @@ def listar_vencimientos_fiscales(
         if pais:
             cond.append("c.pais = ?"); params.append(pais)
         from . import acceso
+        if sin_internos:
+            from .vencimientos_fiscales import MODELOS_INTERNOS
+            cond.append(f"v.modelo NOT IN ({', '.join('?' * len(MODELOS_INTERNOS))})"); params += sorted(MODELOS_INTERNOS)
         extra, extra_p = acceso.restriccion(tenant_id, "v.cliente_fiscal_id")
         where = " AND ".join(cond) + extra
         params += extra_p
@@ -361,7 +366,8 @@ def listar_vencimientos_fiscales(
             paginacion = " LIMIT ? OFFSET ?"
             params += [int(limite), max(int(offset), 0)]
         return conn.execute(
-            f"""SELECT v.*, c.nombre AS cliente_nombre
+            f"""SELECT v.*, c.nombre AS cliente_nombre,
+                       (SELECT t.nombre FROM trabajadores_cliente t WHERE t.id = v.trabajador_id AND t.papelera_en IS NULL) AS trabajador_nombre
                 FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id
                 WHERE {where}
                 ORDER BY v.fecha_limite, v.id{paginacion}""",
@@ -1076,6 +1082,7 @@ def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int, 
                WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
                  AND c.recordatorios_portal = 1 AND c.email IS NOT NULL AND trim(c.email) <> ''
                  AND v.fecha_limite >= ? AND v.fecha_limite < ? AND (? IS NULL OR v.tenant_id = ?)
+                 AND v.modelo NOT IN ('NOMINAS', 'ALTA-SS', 'BAJA-SS', 'CONTRATO')
                  AND NOT EXISTS (SELECT 1 FROM vencimientos_recordatorios r
                                  WHERE r.vencimiento_id = v.id AND r.dias_antes = ?)""",
             (fecha_objetivo, _db._fecha_exclusiva(fecha_objetivo), tenant_id, tenant_id, dias_antes),

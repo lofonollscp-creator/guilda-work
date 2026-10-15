@@ -116,7 +116,7 @@ def dashboard():
     if cliente is None:
         session.pop("cliente_fiscal_id", None)
         return redirect(url_for("portal_cliente.entrar"))
-    vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"])
+    vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"], sin_internos=True)
     # Peticiones de documento concreto (app/rutas_fiscal.py:editar_vencimiento)
     # todavía sin resolver -- "sin resolver" es "no hay ningún documento
     # subido para ese vencimiento todavía", no un campo aparte que haya que
@@ -162,12 +162,15 @@ def ayuda_certificado(certificado_id: int):
     return redirect(url_for("portal_cliente.dashboard", ayuda="1"))
 
 
+from .vencimientos_fiscales import MODELOS_INTERNOS  # noqa: E402
+
+
 def _vencimiento_del_cliente_actual(vencimiento_id: int):
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     if cliente is None:
         abort(404)
     vencimiento = db.obtener_vencimiento_fiscal(cliente["tenant_id"], vencimiento_id)
-    if vencimiento is None or vencimiento["cliente_fiscal_id"] != cliente["id"]:
+    if vencimiento is None or vencimiento["cliente_fiscal_id"] != cliente["id"] or vencimiento["modelo"] in MODELOS_INTERNOS:
         abort(404)
     return vencimiento
 

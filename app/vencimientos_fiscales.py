@@ -25,6 +25,10 @@ con un mensaje legible en vez de mostrar una lista vacía sin explicación."""
 # {mes, dia} del ÚLTIMO día de plazo de cada trimestre. Los modelos T4 caen
 # en enero del año SIGUIENTE al periodo declarado -- reflejado aquí mismo,
 # no en la función, para que la tabla sea la única fuente de verdad.
+# Vencimientos laborales de uso INTERNO de la gestoría (recordatorio de nóminas y plazos de alta, baja y contrato de cada trabajador): nunca se enseñan al cliente en su portal
+# ni le generan recordatorios por correo (llevan datos de sus trabajadores). El TC y el 190 sí se tratan como cualquier otro modelo.
+MODELOS_INTERNOS = frozenset({"NOMINAS", "ALTA-SS", "BAJA-SS", "CONTRATO"})
+
 MODELOS_POR_PAIS = {
     "ES": {
         "trimestrales": {
