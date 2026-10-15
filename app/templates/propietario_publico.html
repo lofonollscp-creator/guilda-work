@@ -38,6 +38,7 @@
       <p><a class="btn btn-primary" href="{{ url_for('propietario_publico.informe_pdf', token=token) }}">{{ _('Descargar el informe del mes (PDF)') }}</a></p>
       {% if d.documentos %}<ul class="log-list">{% for doc in d.documentos %}<li class="log-item"><span class="log-text"><a href="{{ url_for('propietario_publico.documento', token=token, documento_id=doc.id) }}">{{ doc.nombre_archivo }}</a> <span class="muted">{{ doc.creado_en[:10] }}</span></span></li>{% endfor %}</ul>{% endif %}
     </section>
+    {% set url_enviar = url_for('propietario_publico.mensaje_enviar', token=token) %}{% include "_mensajes_publicos.html" %}
     <p class="muted ds-mt-16">{{ _('Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu agencia.') }}</p>
   </main>
 </body>

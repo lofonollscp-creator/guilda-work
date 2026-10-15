@@ -800,10 +800,10 @@ ESTADO_EN_LLANO = {
 }
 
 
-def crear_enlace(tenant_id: int, usuario_id: int, expediente_id: int, dias: int = 30, supervisor: bool = False) -> str:
+def crear_enlace(tenant_id: int, usuario_id: int, expediente_id: int, dias: int = 30, supervisor: bool = False, permite_mensajes: bool = False) -> str:
     """Enlace secreto de solo lectura para que el cliente vea el estado de su asunto. Devuelve el token en claro (solo se muestra ahora: en la base queda su huella)."""
     _expediente_abogados(tenant_id, usuario_id, expediente_id, supervisor)
-    return enlaces_publicos.crear(ID, tenant_id, usuario_id, expediente_id, dias)
+    return enlaces_publicos.crear(ID, tenant_id, usuario_id, expediente_id, dias, permite_mensajes)
 
 
 def listar_enlaces(tenant_id: int, expediente_id: int) -> list:
@@ -835,8 +835,10 @@ def datos_publicos(token: str) -> dict | None:
     finally:
         conn.close()
     despacho = (db.obtener_tenant(tenant_id) or {"nombre": ""})["nombre"]
+    from . import mensajes_enlace
     return {"despacho": despacho, "titulo": x["titulo"], "cliente": x["cliente_nombre"], "estado_id": x["estado"], "resumen": datos.get("resumen_cliente"),
-            "referencia": x["referencia"], "vistas": [dict(v) for v in vistas], "documentos": [dict(d) for d in docs], "actualizado": x["actualizado_en"] or x["creado_en"]}
+            "referencia": x["referencia"], "vistas": [dict(v) for v in vistas], "documentos": [dict(d) for d in docs], "actualizado": x["actualizado_en"] or x["creado_en"],
+            **mensajes_enlace.para_pagina_publica(ID, r)}
 
 
 def compartir_documento(tenant_id: int, usuario_id: int, expediente_id: int, documento_id: int, compartido: bool, supervisor: bool = False) -> None:
@@ -872,11 +874,16 @@ def documento_publico(token: str, documento_id: int) -> dict | None:
 
 
 # --- Panel del asunto y registro del módulo ------------------------------------------------------------------------------------------------------
+def _mensajes(tenant_id: int, expediente_id: int) -> dict:
+    from . import mensajes_enlace
+    return mensajes_enlace.contexto_panel(ID, tenant_id, expediente_id)
+
+
 def contexto_panel(tenant_id: int, usuario_id: int, supervisor: bool, exp) -> dict:
     return {
         "datos": datos_de(exp), "partes": listar_partes(tenant_id, usuario_id, exp["id"], supervisor), "vistas": listar_vistas(tenant_id, usuario_id, supervisor, expediente_id=exp["id"]),
         "fondos": saldo(tenant_id, exp["id"]), "movimientos": listar_movimientos(tenant_id, usuario_id, exp["id"], supervisor), "minutas": listar_minutas(tenant_id, usuario_id, supervisor, expediente_id=exp["id"]),
-        "enlaces": listar_enlaces(tenant_id, exp["id"]), "ajustes": obtener_ajustes(tenant_id), "jurisdicciones": JURISDICCIONES, "roles": ROLES_PARTE, "tipos_vista": TIPOS_VISTA,
+        "enlaces": listar_enlaces(tenant_id, exp["id"]), "mensajes": _mensajes(tenant_id, exp["id"]), "ajustes": obtener_ajustes(tenant_id), "jurisdicciones": JURISDICCIONES, "roles": ROLES_PARTE, "tipos_vista": TIPOS_VISTA,
         "movimientos_tipos": MOVIMIENTOS, "plazos_tipicos": PLAZOS_TIPICOS, "es_judicial": exp["tipo"] == TIPO_JUDICIAL.id, "estado_llano": ESTADO_EN_LLANO.get(exp["estado"], ""),
     }
 

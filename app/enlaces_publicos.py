@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS {tabla} (
     token_hash TEXT NOT NULL UNIQUE,
     expira_en TEXT NOT NULL,
     revocado_en TEXT,
+    permite_mensajes INTEGER NOT NULL DEFAULT 0,
     creado_por INTEGER REFERENCES usuarios(id),
     creado_en TEXT NOT NULL
 );
@@ -27,22 +28,25 @@ CREATE TABLE IF NOT EXISTS {tabla} (
 
 def esquema(conn, vertical_id: str) -> None:
     conn.executescript(ESQUEMA.format(tabla=TABLAS[vertical_id]))
+    db._asegurar_columna(conn, TABLAS[vertical_id], "permite_mensajes", "INTEGER NOT NULL DEFAULT 0")      # bases creadas antes de existir los mensajes seguros
+    from . import mensajes_enlace
+    conn.executescript(mensajes_enlace.ESQUEMA)
 
 
 def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def crear(vertical_id: str, tenant_id: int, usuario_id: int, expediente_id: int, dias: int = 30) -> str:
+def crear(vertical_id: str, tenant_id: int, usuario_id: int, expediente_id: int, dias: int = 30, permite_mensajes: bool = False) -> str:
     """Devuelve el token en claro (solo se muestra ahora). El permiso sobre el expediente lo comprueba quien llama."""
     tabla = TABLAS[vertical_id]
     dias = max(1, min(int(dias), 180))
     token = secrets.token_urlsafe(32)
     conn = db.get_connection()
     try:
-        conn.execute(f"INSERT INTO {tabla} (tenant_id, expediente_id, token_hash, expira_en, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
-                     (tenant_id, expediente_id, _hash(token), (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds"), usuario_id, db.now_iso()))
-        nucleo._evento(conn, expediente_id, "enlace", f"Enlace de solo lectura creado (caduca en {dias} días).", usuario_id)
+        conn.execute(f"INSERT INTO {tabla} (tenant_id, expediente_id, token_hash, expira_en, creado_por, creado_en, permite_mensajes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                     (tenant_id, expediente_id, _hash(token), (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds"), usuario_id, db.now_iso(), int(bool(permite_mensajes))))
+        nucleo._evento(conn, expediente_id, "enlace", f"Enlace {'con mensajes' if permite_mensajes else 'de solo lectura'} creado (caduca en {dias} días).", usuario_id)
         conn.commit()
     finally:
         conn.close()
@@ -52,7 +56,7 @@ def crear(vertical_id: str, tenant_id: int, usuario_id: int, expediente_id: int,
 def listar(vertical_id: str, tenant_id: int, expediente_id: int) -> list:
     conn = db.get_connection()
     try:
-        return conn.execute(f"SELECT id, expira_en, revocado_en, creado_en FROM {TABLAS[vertical_id]} WHERE tenant_id = ? AND expediente_id = ? ORDER BY id DESC", (tenant_id, expediente_id)).fetchall()
+        return conn.execute(f"SELECT id, expira_en, revocado_en, creado_en, permite_mensajes FROM {TABLAS[vertical_id]} WHERE tenant_id = ? AND expediente_id = ? ORDER BY id DESC", (tenant_id, expediente_id)).fetchall()
     finally:
         conn.close()
 
@@ -82,4 +86,5 @@ def resolver(vertical_id: str, token: str) -> dict | None:
 
 
 def borrar_datos_de_tenant(conn, vertical_id: str, tenant_id: int) -> None:
+    conn.execute("DELETE FROM mensajes_enlace WHERE tenant_id = ? AND vertical_id = ?", (tenant_id, vertical_id))
     conn.execute(f"DELETE FROM {TABLAS[vertical_id]} WHERE tenant_id = ?", (tenant_id,))

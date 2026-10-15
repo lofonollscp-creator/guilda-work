@@ -99,6 +99,15 @@ CASOS: list[tuple[str, str]] = [
     ("qué operaciones de inmueble tenemos en visitas", "listar_expedientes_despacho"),
     ("qué documentos hay en el expediente de Soler", "listar_documentos_despacho"),
     ("lee el documento de la hoja de encargo del asunto", "leer_documento_despacho"),
+    # gabinete de abogados e inmobiliaria
+    ("cuánta provisión de fondos queda en el asunto de Vidal", "abogados_provision_asunto"),
+    ("quién es la contraparte y su procurador en este asunto", "abogados_partes_asunto"),
+    ("qué señalamientos y juicios tenemos el próximo mes", "abogados_agenda_vistas"),
+    ("comprueba si hay conflicto de intereses con Construcciones Mar", "abogados_comprobar_conflicto"),
+    ("qué inmuebles de venta tenemos en Sitges", "inmobiliaria_listar_inmuebles"),
+    ("qué inmuebles encajan con esta demanda de comprador", "inmobiliaria_cruces_de_demanda"),
+    ("qué visitas hay programadas esta semana", "inmobiliaria_agenda_visitas"),
+    ("cómo va la agencia, inmuebles sin movimiento", "inmobiliaria_resumen"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

@@ -297,11 +297,18 @@ def compartir(expediente_id: int, documento_id: int):
     return _ejecutar(expediente_id, lambda: abogados.compartir_documento(g.tenant_id, g.usuario_id, expediente_id, documento_id, bool(request.form.get("compartido")), _sup()))
 
 
+@abogados_bp.route("/expedientes/<int:expediente_id>/mensajes", methods=["POST"])
+@login_required
+def mensaje_responder(expediente_id: int):
+    from . import mensajes_enlace
+    return _ejecutar(expediente_id, lambda: mensajes_enlace.responder(abogados.ID, g.tenant_id, g.usuario_id, expediente_id, request.form.get("texto", ""), _sup()))
+
+
 @abogados_bp.route("/expedientes/<int:expediente_id>/enlaces", methods=["POST"])
 @login_required
 def enlace_nuevo(expediente_id: int):
     try:
-        token = abogados.crear_enlace(g.tenant_id, g.usuario_id, expediente_id, request.form.get("dias", 30, type=int), _sup())
+        token = abogados.crear_enlace(g.tenant_id, g.usuario_id, expediente_id, request.form.get("dias", 30, type=int), _sup(), permite_mensajes=bool(request.form.get("permite_mensajes")))
     except ValueError as e:
         return _volver(expediente_id, str(e))
     x = nucleo.obtener_expediente(g.tenant_id, expediente_id, g.usuario_id, _sup())
@@ -331,6 +338,20 @@ def ver(token: str):
     if datos is None:
         return _sin_rastro(Response(render_template("asunto_publico_caducado.html"), status=404))
     return _sin_rastro(Response(render_template("asunto_publico.html", d=datos, token=token, llano=abogados.ESTADO_EN_LLANO)))
+
+
+@asunto_bp.route("/<token>/mensajes", methods=["POST"])
+@limiter.limit("20/hour")
+def mensaje_enviar(token: str):
+    from . import mensajes_enlace
+    try:
+        mensajes_enlace.enviar_externo(abogados.ID, token, request.form.get("nombre"), request.form.get("texto", ""))
+    except ValueError as e:
+        datos = abogados.datos_publicos(token)
+        if datos is None:
+            return _sin_rastro(Response(render_template("asunto_publico_caducado.html"), status=404))
+        return _sin_rastro(Response(render_template("asunto_publico.html", d=datos, token=token, llano=abogados.ESTADO_EN_LLANO, error_mensaje=str(e)), status=400))
+    return _sin_rastro(redirect(url_for("asunto_publico.ver", token=token) + "#mensajes"))
 
 
 @asunto_bp.route("/<token>/documentos/<int:documento_id>")

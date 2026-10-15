@@ -112,7 +112,8 @@
     {% endif %}
     {% for e in panel.enlaces %}<p class="muted">{{ _('Enlace creado') }} {{ e.creado_en[:10] }} · {{ _('caduca') }} {{ e.expira_en[:10] }} {% if e.revocado_en %}{{ chip(_('Revocado'), 'peligro') }}{% else %}
       <form method="post" action="{{ ab.base }}/enlaces/{{ e.id }}/revocar" class="ds-en-linea" data-confirmar-envio="{{ _('¿Revocar este enlace? El cliente dejará de poder verlo.') }}" data-confirmar-peligro><button type="submit" class="btn btn-peligro btn-sm">{{ _('Revocar') }}</button></form>{% endif %}</p>{% endfor %}
-    <form method="post" action="{{ ab.base }}/enlaces" class="ds-fila ds-mt-12"><label>{{ _('Caduca en') }} <input type="number" name="dias" value="30" min="1" max="180" class="ds-ancho-5em"> {{ _('días') }}</label><button type="submit" class="btn btn-primary">{{ _('Crear enlace') }}</button></form>
+    <form method="post" action="{{ ab.base }}/enlaces" class="ds-fila ds-mt-12"><label>{{ _('Caduca en') }} <input type="number" name="dias" value="30" min="1" max="180" class="ds-ancho-5em"> {{ _('días') }}</label><label class="correo-toolbar-check"><input type="checkbox" name="permite_mensajes" value="1"> {{ _('Permitir mensajes') }}</label><button type="submit" class="btn btn-primary">{{ _('Crear enlace') }}</button></form>
+    {% set url_mensajes = ab.base ~ '/mensajes' %}{% include "_mensajes_enlace_panel.html" %}
   </div>
   </div>
 </section>

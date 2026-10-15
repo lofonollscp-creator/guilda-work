@@ -1,0 +1,13 @@
+{# Mensajes con la persona del enlace (panel del expediente en Abogados e Inmobiliaria). Necesita `panel.mensajes` y `url_mensajes`. #}
+<h3>{{ _('Mensajes con la persona del enlace') }}{% if panel.mensajes.sin_leer %} <span class="ds-chip ds-chip-aviso">{{ ngettext('%(n)s nuevo', '%(n)s nuevos', panel.mensajes.sin_leer, n=panel.mensajes.sin_leer) }}</span>{% endif %}</h3>
+{% if panel.mensajes.mensajes %}
+<ul class="log-list">
+  {% for m in panel.mensajes.mensajes %}<li class="log-item {{ 'is-completada' if m.autor == 'despacho' }}"><span class="log-text"><strong>{{ _('Equipo') if m.autor == 'despacho' else (m.nombre or _('Persona del enlace')) }}</strong> · <span class="muted">{{ m.creado_en[:16].replace('T', ' ') }}</span><br>{{ m.texto }}</span></li>{% endfor %}
+</ul>
+{% else %}<p class="muted">{{ _('Todavía no hay mensajes. Crea un enlace con «permitir mensajes» para que te puedan escribir.') }}</p>{% endif %}
+{% if panel.mensajes.activo %}
+<form method="post" action="{{ url_mensajes }}" class="edit-form ds-max-640 ds-mt-12">
+  <label>{{ _('Responder') }} <textarea name="texto" rows="3" maxlength="2000" required></textarea></label>
+  <button type="submit" class="btn btn-primary">{{ _('Enviar respuesta') }}</button>
+</form>
+{% endif %}

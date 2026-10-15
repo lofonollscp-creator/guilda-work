@@ -14,7 +14,7 @@ from datetime import date, datetime, timedelta
 
 from flask_babel import lazy_gettext as _l
 
-from . import almacen_documentos, db, enlaces_publicos, firma_documentos, generador_documentos, nucleo, verticales
+from . import almacen_documentos, db, enlaces_publicos, firma_documentos, generador_documentos, mensajes_enlace, nucleo, verticales
 from .verticales import Estado, TipoExpediente
 
 ID = "inmobiliaria"
@@ -1076,9 +1076,9 @@ def informe_a_pdf(tenant_id: int, inmueble_id: int, desde: str, hasta: str) -> b
     return generador_documentos.tabla_a_pdf("Informe para el propietario", ["Fecha", "Qué ha pasado", "Detalle"], filas or [["", "Sin movimientos en el periodo", ""]], notas=resumen_txt)
 
 
-def crear_enlace(tenant_id: int, usuario_id: int, inmueble_id: int, dias: int = 30, supervisor: bool = False) -> str:
+def crear_enlace(tenant_id: int, usuario_id: int, inmueble_id: int, dias: int = 30, supervisor: bool = False, permite_mensajes: bool = False) -> str:
     i, x = _inmueble_o_error(tenant_id, usuario_id, inmueble_id, supervisor)
-    return enlaces_publicos.crear(ID, tenant_id, usuario_id, x["id"], dias)
+    return enlaces_publicos.crear(ID, tenant_id, usuario_id, x["id"], dias, permite_mensajes)
 
 
 def datos_propietario(token: str) -> dict | None:
@@ -1109,7 +1109,7 @@ def datos_propietario(token: str) -> dict | None:
         "visitas_mes": sum(1 for v in realizadas if v["fecha_hora"][:10] >= mes_ini), "valoracion_media": round(sum(vals) / len(vals), 1) if vals else None,
         "comentarios": [{"fecha": v["fecha_hora"][:10], "valoracion": v["valoracion"], "comentario": v["comentario"]} for v in realizadas if v["comentario"]][:10],
         "proximas": [v["fecha_hora"] for v in proximas], "ofertas": [dict(o) for o in ofertas], "precios": [dict(p) for p in precios], "documentos": [dict(d) for d in docs],
-        "inmueble_id": i["id"], "tenant_id": tenant_id, "actualizado": x["actualizado_en"] or x["creado_en"],
+        "inmueble_id": i["id"], "tenant_id": tenant_id, "actualizado": x["actualizado_en"] or x["creado_en"], **mensajes_enlace.para_pagina_publica(ID, r),
     }
 
 
@@ -1168,7 +1168,7 @@ def contexto_panel(tenant_id: int, usuario_id: int, supervisor: bool, exp) -> di
         "visitas": listar_visitas(tenant_id, usuario_id, supervisor, inmueble_id=i["id"]), "ofertas": listar_ofertas(tenant_id, usuario_id, supervisor, inmueble_id=i["id"]),
         "cruces": cruces_para_inmueble(tenant_id, usuario_id, i["id"], supervisor)[:8], "contratos": listar_contratos(tenant_id, usuario_id, i["id"], supervisor),
         "comision": obtener_comision(tenant_id, i["id"]), "propuesta_comision": proponer_comision(tenant_id, usuario_id, i["id"], supervisor), "fotos": fotos(tenant_id, usuario_id, i["id"], supervisor),
-        "enlaces": enlaces_publicos.listar(ID, tenant_id, exp["id"]), "ajustes": obtener_ajustes(tenant_id), "tipos_inmueble": TIPOS_INMUEBLE, "caracteristicas": CARACTERISTICAS, "certificados": CERTIFICADOS,
+        "enlaces": enlaces_publicos.listar(ID, tenant_id, exp["id"]), "mensajes": mensajes_enlace.contexto_panel(ID, tenant_id, exp["id"]), "ajustes": obtener_ajustes(tenant_id), "tipos_inmueble": TIPOS_INMUEBLE, "caracteristicas": CARACTERISTICAS, "certificados": CERTIFICADOS,
         "estados_visita": ESTADOS_VISITA, "interes": INTERES, "estados_oferta": ESTADOS_OFERTA, "tipos_contrato": TIPOS_CONTRATO, "estados_comision": ESTADOS_COMISION,
         "estado_llano": ESTADO_EN_LLANO.get(exp["estado"], ""), "demandas_activas": listar_demandas(tenant_id, estado="activa", operacion=operacion_de(exp)), "equipo": nucleo.equipo(tenant_id),
         "mapa": mapa_url(i["direccion"], i["municipio"]),

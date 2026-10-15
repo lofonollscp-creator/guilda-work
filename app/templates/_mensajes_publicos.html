@@ -1,0 +1,20 @@
+{# Mensajes con el despacho en las páginas públicas (cliente de abogados, propietario). Necesita `d.permite_mensajes`, `d.mensajes`, `token` y `url_enviar`. #}
+{% if d.permite_mensajes %}
+<section class="dash-panel ds-mt-16" id="mensajes">
+  <h2>{{ _('Mensajes con el despacho') }}</h2>
+  {% if error_mensaje %}<p class="ia-error" role="alert">{{ error_mensaje }}</p>{% endif %}
+  {% if d.mensajes %}
+  <ul class="log-list">
+    {% for m in d.mensajes %}
+    <li class="log-item"><span class="log-text"><strong>{{ _('El despacho') if m.autor == 'despacho' else (m.nombre or _('Tú')) }}</strong> · <span class="muted">{{ m.creado_en[:16].replace('T', ' ') }}</span><br>{{ m.texto }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay mensajes.') }}</p>{% endif %}
+  <form method="post" action="{{ url_enviar }}" class="edit-form ds-max-640 ds-mt-12">
+    <label>{{ _('Tu nombre (opcional)') }} <input type="text" name="nombre" maxlength="80" autocomplete="name"></label>
+    <label>{{ _('Escribe tu mensaje') }} <textarea name="texto" rows="4" maxlength="2000" required></textarea></label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+    <p class="muted">{{ _('Solo texto. No envíes contraseñas ni datos bancarios: para eso, llama al despacho.') }}</p>
+  </form>
+</section>
+{% endif %}

@@ -12402,3 +12402,44 @@ msgid "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este pe
 msgid_plural "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo."
 msgstr[0] "«Tocava treballar» surt del quadrant de torns en %(n)s dia d'aquest període."
 msgstr[1] "«Tocava treballar» surt del quadrant de torns en %(n)s dies d'aquest període."
+
+msgid "Tú"
+msgstr "Tu"
+
+msgid "Enviar respuesta"
+msgstr "Envia la resposta"
+
+msgid "Permitir mensajes"
+msgstr "Permet missatges"
+
+msgid "Persona del enlace"
+msgstr "Persona de l'enllaç"
+
+msgid "Mensajes con la persona del enlace"
+msgstr "Missatges amb la persona de l'enllaç"
+
+msgid "Solo texto. No envíes contraseñas ni datos bancarios: para eso, llama al despacho."
+msgstr "Només text. No enviïs contrasenyes ni dades bancàries: per a això, truca al despatx."
+
+msgid "Escribe tu mensaje"
+msgstr "Escriu el teu missatge"
+
+msgid "Todavía no hay mensajes."
+msgstr "Encara no hi ha missatges."
+
+msgid "Mensajes con el despacho"
+msgstr "Missatges amb el despatx"
+
+msgid "Tu nombre (opcional)"
+msgstr "El teu nom (opcional)"
+
+msgid "Todavía no hay mensajes. Crea un enlace con «permitir mensajes» para que te puedan escribir."
+msgstr "Encara no hi ha missatges. Crea un enllaç amb «permet missatges» perquè et puguin escriure."
+
+msgid "El despacho"
+msgstr "El despatx"
+
+msgid "%(n)s nuevo"
+msgid_plural "%(n)s nuevos"
+msgstr[0] "%(n)s nou"
+msgstr[1] "%(n)s nous"

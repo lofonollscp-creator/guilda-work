@@ -33,6 +33,7 @@
       <ul class="log-list">{% for doc in d.documentos %}<li class="log-item"><span class="log-text"><a href="{{ url_for('asunto_publico.documento', token=token, documento_id=doc.id) }}">{{ doc.nombre_archivo }}</a> <span class="muted">{{ doc.creado_en[:10] }}</span></span></li>{% endfor %}</ul>
     </section>
     {% endif %}
+    {% set url_enviar = url_for('asunto_publico.mensaje_enviar', token=token) %}{% include "_mensajes_publicos.html" %}
     <p class="muted ds-mt-16">{{ _('Esta página es de solo lectura y es privada: no compartas el enlace. Si tienes dudas, contacta con tu despacho.') }}</p>
   </main>
 </body>

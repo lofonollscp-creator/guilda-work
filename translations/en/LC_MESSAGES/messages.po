@@ -12393,3 +12393,44 @@ msgid "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este pe
 msgid_plural "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo."
 msgstr[0] "“Expected hours” come from the shift roster on %(n)s day of this period."
 msgstr[1] "“Expected hours” come from the shift roster on %(n)s days of this period."
+
+msgid "Tú"
+msgstr "You"
+
+msgid "Enviar respuesta"
+msgstr "Send reply"
+
+msgid "Permitir mensajes"
+msgstr "Allow messages"
+
+msgid "Persona del enlace"
+msgstr "Link's person"
+
+msgid "Mensajes con la persona del enlace"
+msgstr "Messages with the link's person"
+
+msgid "Solo texto. No envíes contraseñas ni datos bancarios: para eso, llama al despacho."
+msgstr "Text only. Do not send passwords or bank details: call the firm for that."
+
+msgid "Escribe tu mensaje"
+msgstr "Write your message"
+
+msgid "Todavía no hay mensajes."
+msgstr "There are no messages yet."
+
+msgid "Mensajes con el despacho"
+msgstr "Messages with the firm"
+
+msgid "Tu nombre (opcional)"
+msgstr "Your name (optional)"
+
+msgid "Todavía no hay mensajes. Crea un enlace con «permitir mensajes» para que te puedan escribir."
+msgstr "There are no messages yet. Create a link with “allow messages” so they can write to you."
+
+msgid "El despacho"
+msgstr "The firm"
+
+msgid "%(n)s nuevo"
+msgid_plural "%(n)s nuevos"
+msgstr[0] "%(n)s new"
+msgstr[1] "%(n)s new"

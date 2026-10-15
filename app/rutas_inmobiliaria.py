@@ -272,12 +272,20 @@ def compartir(inmueble_id: int, documento_id: int):
     return _volver(inmueble_id)
 
 
+@inmobiliaria_bp.route("/inmuebles/<int:inmueble_id>/mensajes", methods=["POST"])
+@login_required
+def mensaje_responder(inmueble_id: int):
+    from . import mensajes_enlace
+    i, x = _inmueble_o_404(inmueble_id)
+    return _ejecutar(inmueble_id, lambda: mensajes_enlace.responder(inmobiliaria.ID, g.tenant_id, g.usuario_id, x["id"], request.form.get("texto", ""), _sup()))
+
+
 @inmobiliaria_bp.route("/inmuebles/<int:inmueble_id>/enlaces", methods=["POST"])
 @login_required
 def enlace_nuevo(inmueble_id: int):
     i, x = _inmueble_o_404(inmueble_id)
     try:
-        token = inmobiliaria.crear_enlace(g.tenant_id, g.usuario_id, inmueble_id, request.form.get("dias", 30, type=int), _sup())
+        token = inmobiliaria.crear_enlace(g.tenant_id, g.usuario_id, inmueble_id, request.form.get("dias", 30, type=int), _sup(), permite_mensajes=bool(request.form.get("permite_mensajes")))
     except ValueError as e:
         return _volver(inmueble_id, str(e))
     resp = Response(render_template("inmobiliaria_enlace_creado.html", i=i, x=x, url=url_for("propietario_publico.ver", token=token, _external=True), seccion="inmuebles"))
@@ -432,6 +440,20 @@ def ver(token: str):
     if d is None:
         return _sin_rastro(Response(render_template("asunto_publico_caducado.html"), status=404))
     return _sin_rastro(Response(render_template("propietario_publico.html", d=d, token=token, llano=inmobiliaria.ESTADO_EN_LLANO, estados_oferta=dict(inmobiliaria.ESTADOS_OFERTA))))
+
+
+@propietario_bp.route("/<token>/mensajes", methods=["POST"])
+@limiter.limit("20/hour")
+def mensaje_enviar(token: str):
+    from . import mensajes_enlace
+    try:
+        mensajes_enlace.enviar_externo(inmobiliaria.ID, token, request.form.get("nombre"), request.form.get("texto", ""))
+    except ValueError as e:
+        d = inmobiliaria.datos_propietario(token)
+        if d is None:
+            return _sin_rastro(Response(render_template("asunto_publico_caducado.html"), status=404))
+        return _sin_rastro(Response(render_template("propietario_publico.html", d=d, token=token, llano=inmobiliaria.ESTADO_EN_LLANO, estados_oferta=dict(inmobiliaria.ESTADOS_OFERTA), error_mensaje=str(e)), status=400))
+    return _sin_rastro(redirect(url_for("propietario_publico.ver", token=token) + "#mensajes"))
 
 
 @propietario_bp.route("/<token>/informe.pdf")

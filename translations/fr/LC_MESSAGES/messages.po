@@ -12478,3 +12478,44 @@ msgid "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este pe
 msgid_plural "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo."
 msgstr[0] "Les « heures attendues » viennent du planning d'équipes sur %(n)s jour de cette période."
 msgstr[1] "Les « heures attendues » viennent du planning d'équipes sur %(n)s jours de cette période."
+
+msgid "Tú"
+msgstr "Vous"
+
+msgid "Enviar respuesta"
+msgstr "Envoyer la réponse"
+
+msgid "Permitir mensajes"
+msgstr "Autoriser les messages"
+
+msgid "Persona del enlace"
+msgstr "Personne du lien"
+
+msgid "Mensajes con la persona del enlace"
+msgstr "Messages avec la personne du lien"
+
+msgid "Solo texto. No envíes contraseñas ni datos bancarios: para eso, llama al despacho."
+msgstr "Texte uniquement. N'envoyez ni mots de passe ni données bancaires : appelez le cabinet pour cela."
+
+msgid "Escribe tu mensaje"
+msgstr "Écrivez votre message"
+
+msgid "Todavía no hay mensajes."
+msgstr "Aucun message pour l'instant."
+
+msgid "Mensajes con el despacho"
+msgstr "Messages avec le cabinet"
+
+msgid "Tu nombre (opcional)"
+msgstr "Votre nom (facultatif)"
+
+msgid "Todavía no hay mensajes. Crea un enlace con «permitir mensajes» para que te puedan escribir."
+msgstr "Aucun message pour l'instant. Créez un lien avec « autoriser les messages » pour qu'on puisse vous écrire."
+
+msgid "El despacho"
+msgstr "Le cabinet"
+
+msgid "%(n)s nuevo"
+msgid_plural "%(n)s nuevos"
+msgstr[0] "%(n)s nouveau"
+msgstr[1] "%(n)s nouveaux"
