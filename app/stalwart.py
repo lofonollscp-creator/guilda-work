@@ -54,6 +54,7 @@ estándar.
 """
 import base64
 import json
+import logging
 import os
 import urllib.error
 import urllib.parse
@@ -63,6 +64,7 @@ STALWART_URL = os.environ.get("HERRAMIENTA_STALWART_URL", "http://127.0.0.1:8025
 STALWART_ADMIN_USER = os.environ.get("STALWART_ADMIN_USER")
 STALWART_ADMIN_PASSWORD = os.environ.get("STALWART_ADMIN_PASSWORD")
 TIMEOUT_SEGUNDOS = 20
+logger = logging.getLogger(__name__)
 
 _USING = [
     "urn:ietf:params:jmap:core", "urn:stalwart:jmap",
@@ -235,18 +237,42 @@ def aprovisionar_tenant(tenant_id: int, nombre_tenant: str, dominio_correo: str)
     }
 
 
+def _destruir(tipo: str, objeto_id: str, cabeceras: dict) -> dict:
+    """Borra un objeto de Stalwart y devuelve lo que NO se ha podido borrar (`{id: motivo}`; vacío si se borró). Stalwart contesta con un 200 aunque el borrado falle: hay que mirar `notDestroyed`."""
+    respuesta = _jmap([[f"x:{tipo}/set", {"accountId": "b", "destroy": [objeto_id]}, "0"]], cabeceras=cabeceras)
+    for nombre, cuerpo, ident in respuesta.get("methodResponses", []):
+        if ident == "0" and nombre != "error":
+            return cuerpo.get("notDestroyed") or {}
+    return {}
+
+
+def _destruir_con_firmas_dkim(tipo: str, objeto_id: str, cabeceras: dict) -> None:
+    """Como `_destruir`, pero un Domain trae sus firmas DKIM (Stalwart las crea al crearlo) y mientras existan no se deja borrar ni el dominio ni su Tenant («objectIsLinked»):
+    se borran las firmas que él mismo dice que están enlazadas y se reintenta una vez."""
+    pendiente = _destruir(tipo, objeto_id, cabeceras)
+    if not pendiente:
+        return
+    firmas = [o["id"] for motivo in pendiente.values() if isinstance(motivo, dict) and motivo.get("type") == "objectIsLinked"
+              for o in motivo.get("linkedObjects", []) if o.get("object") == "DkimSignature"]
+    if firmas:
+        _jmap([["x:DkimSignature/set", {"accountId": "b", "destroy": firmas}, "0"]], cabeceras=cabeceras)
+        pendiente = _destruir(tipo, objeto_id, cabeceras)
+    if pendiente:
+        raise ErrorStalwart(f"Stalwart no ha dejado borrar {tipo} {objeto_id}: {pendiente}")
+
+
 def desaprovisionar_tenant(stalwart_tenant_id: str | None, domain_id: str | None, account_id: str | None) -> None:
-    """Borra la Account, el Domain y el Tenant de un tenant. No falla si
-    alguna pieza ya no existe, ni si Stalwart no está configurado."""
+    """Borra la Account, el Domain (con sus firmas DKIM) y el Tenant de un tenant. No falla si alguna pieza ya no existe, ni si Stalwart no está configurado; sí avisa
+    (`ErrorStalwart`) si Stalwart se niega a borrar algo, en vez de dejar el dominio y el tenant huérfanos sin decirlo."""
     if not STALWART_ADMIN_USER or not STALWART_ADMIN_PASSWORD:
         return
     cabeceras = _cabecera_admin()
     if account_id:
-        _jmap([["x:Account/set", {"accountId": "b", "destroy": [account_id]}, "0"]], cabeceras=cabeceras)
+        _destruir("Account", account_id, cabeceras)
     if domain_id:
-        _jmap([["x:Domain/set", {"accountId": "b", "destroy": [domain_id]}, "0"]], cabeceras=cabeceras)
+        _destruir_con_firmas_dkim("Domain", domain_id, cabeceras)
     if stalwart_tenant_id:
-        _jmap([["x:Tenant/set", {"accountId": "b", "destroy": [stalwart_tenant_id]}, "0"]], cabeceras=cabeceras)
+        _destruir_con_firmas_dkim("Tenant", stalwart_tenant_id, cabeceras)
 
 
 # --- API de negocio (Fase MCP) — JMAP RFC-estándar, con el ApiKey del
@@ -363,6 +389,7 @@ def eliminar_buzon(account_id: str | None) -> None:
     if not account_id or not STALWART_ADMIN_USER or not STALWART_ADMIN_PASSWORD:
         return
     try:
-        _jmap([["x:Account/set", {"accountId": "b", "destroy": [account_id]}, "0"]], cabeceras=_cabecera_admin())
+        if _destruir("Account", account_id, _cabecera_admin()):
+            logger.warning("Stalwart no ha dejado borrar el buzón %s", account_id)
     except ErrorStalwart:
         pass

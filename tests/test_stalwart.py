@@ -268,3 +268,45 @@ def test_enviar_mensaje_propaga_error_si_no_se_crea(monkeypatch):
     )
     with pytest.raises(s.ErrorStalwart):
         s.enviar_mensaje("API_abc", "ana@ejemplo.com", "Hola", "Cuerpo")
+
+
+def test_desaprovisionar_borra_las_firmas_dkim_que_impiden_borrar_el_dominio_y_el_tenant(monkeypatch):
+    """Visto en vivo (2026-10-15): al crear un Domain, Stalwart crea 2 DkimSignature; mientras existan, Domain/set destroy devuelve 200 con notDestroyed (objectIsLinked)
+    y el dominio y el tenant se quedaban huérfanos sin que nada lo dijera."""
+    _mock_admin_ok(monkeypatch)
+    estado = {"firmas": ["f1", "f2"], "dominio": True, "tenant": True}
+    llamadas = []
+
+    def jmap(calls, *, cabeceras):
+        nombre, args, ident = calls[0]
+        llamadas.append(nombre)
+        if nombre == "x:DkimSignature/set":
+            estado["firmas"] = []
+            return {"methodResponses": [[nombre, {"destroyed": args["destroy"]}, ident]]}
+        clave = "dominio" if "Domain" in nombre else "tenant"
+        if nombre == "x:Account/set" or not estado[clave]:
+            return {"methodResponses": [[nombre, {"destroyed": args["destroy"]}, ident]]}
+        if estado["firmas"] or (clave == "tenant" and estado["dominio"]):
+            vinculados = [{"object": "DkimSignature", "id": f} for f in estado["firmas"]] + ([{"object": "Domain", "id": "c"}] if clave == "tenant" and estado["dominio"] else [])
+            return {"methodResponses": [[nombre, {"notDestroyed": {args["destroy"][0]: {"type": "objectIsLinked", "linkedObjects": vinculados}}}, ident]]}
+        estado[clave] = False
+        return {"methodResponses": [[nombre, {"destroyed": args["destroy"]}, ident]]}
+    monkeypatch.setattr(s, "_jmap", jmap)
+    s.desaprovisionar_tenant("b", "c", "d")
+    assert estado == {"firmas": [], "dominio": False, "tenant": False}
+    assert llamadas == ["x:Account/set", "x:Domain/set", "x:DkimSignature/set", "x:Domain/set", "x:Tenant/set"]
+
+
+def test_desaprovisionar_avisa_si_stalwart_se_niega_a_borrar(monkeypatch):
+    _mock_admin_ok(monkeypatch)
+    monkeypatch.setattr(s, "_jmap", lambda calls, *, cabeceras: {"methodResponses": [[calls[0][0], {"notDestroyed": {"c": {"type": "forbidden"}}}, "0"]]})
+    with pytest.raises(s.ErrorStalwart, match="no ha dejado borrar Domain"):
+        s.desaprovisionar_tenant(None, "c", None)
+
+
+def test_eliminar_buzon_mira_si_se_ha_borrado(monkeypatch, caplog):
+    _mock_admin_ok(monkeypatch)
+    monkeypatch.setattr(s, "_jmap", lambda calls, *, cabeceras: {"methodResponses": [[calls[0][0], {"notDestroyed": {"acc": {"type": "forbidden"}}}, "0"]]})
+    with caplog.at_level("WARNING"):
+        s.eliminar_buzon("acc")
+    assert "no ha dejado borrar el buzón" in caplog.text
