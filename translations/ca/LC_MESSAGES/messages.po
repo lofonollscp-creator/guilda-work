@@ -12331,3 +12331,33 @@ msgstr "Accions del missatge"
 
 msgid "Volver arriba"
 msgstr "Torna a dalt"
+
+msgid "Bloqueado: %(p)s. Sus mensajes irán a la papelera."
+msgstr "Bloquejat: %(p)s. Els seus missatges aniran a la paperera."
+
+msgid "Remitentes bloqueados"
+msgstr "Remitents bloquejats"
+
+msgid "Sus mensajes nuevos van directos a la papelera. Se bloquea desde un mensaje con «Bloquear»."
+msgstr "Els seus missatges nous van directes a la paperera. Es bloqueja des d'un missatge amb «Bloqueja»."
+
+msgid "No has bloqueado a nadie."
+msgstr "No has bloquejat ningú."
+
+msgid "¿Bloquear a este remitente? Este mensaje y los siguientes irán a la papelera."
+msgstr "Vols bloquejar aquest remitent? Aquest missatge i els següents aniran a la paperera."
+
+msgid "Bloquear al remitente: sus mensajes irán a la papelera"
+msgstr "Bloqueja el remitent: els seus missatges aniran a la paperera"
+
+msgid "¿Bloquear todo el dominio de este remitente? Este mensaje y los siguientes irán a la papelera."
+msgstr "Vols bloquejar tot el domini d'aquest remitent? Aquest missatge i els següents aniran a la paperera."
+
+msgid "Bloquear todo el dominio del remitente"
+msgstr "Bloqueja tot el domini del remitent"
+
+msgid "Los destacados de todas las carpetas"
+msgstr "Els destacats de totes les carpetes"
+
+msgid "Los no leídos de todas las carpetas"
+msgstr "Els no llegits de totes les carpetes"

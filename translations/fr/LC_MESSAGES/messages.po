@@ -12407,3 +12407,33 @@ msgstr "Actions du message"
 
 msgid "Volver arriba"
 msgstr "Retour en haut"
+
+msgid "Bloqueado: %(p)s. Sus mensajes irán a la papelera."
+msgstr "Bloqué : %(p)s. Ses messages iront dans la corbeille."
+
+msgid "Remitentes bloqueados"
+msgstr "Expéditeurs bloqués"
+
+msgid "Sus mensajes nuevos van directos a la papelera. Se bloquea desde un mensaje con «Bloquear»."
+msgstr "Leurs nouveaux messages vont directement à la corbeille. On bloque depuis un message avec « Bloquer »."
+
+msgid "No has bloqueado a nadie."
+msgstr "Vous n'avez bloqué personne."
+
+msgid "¿Bloquear a este remitente? Este mensaje y los siguientes irán a la papelera."
+msgstr "Bloquer cet expéditeur ? Ce message et les suivants iront dans la corbeille."
+
+msgid "Bloquear al remitente: sus mensajes irán a la papelera"
+msgstr "Bloquer l'expéditeur : ses messages iront dans la corbeille"
+
+msgid "¿Bloquear todo el dominio de este remitente? Este mensaje y los siguientes irán a la papelera."
+msgstr "Bloquer tout le domaine de cet expéditeur ? Ce message et les suivants iront dans la corbeille."
+
+msgid "Bloquear todo el dominio del remitente"
+msgstr "Bloquer tout le domaine de l'expéditeur"
+
+msgid "Los destacados de todas las carpetas"
+msgstr "Les messages marqués de tous les dossiers"
+
+msgid "Los no leídos de todas las carpetas"
+msgstr "Les messages non lus de tous les dossiers"

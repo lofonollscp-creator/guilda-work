@@ -1771,6 +1771,13 @@ def init_db() -> None:
         _asegurar_columna(conn, "correo_reglas", "archivar_adjuntos", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_envios", "seguimiento_dias", "INTEGER")
         _asegurar_columna(conn, "correo_envios", "identidad_id", "INTEGER")
+        conn.execute("""CREATE TABLE IF NOT EXISTS correo_bloqueados (
+            id INTEGER PRIMARY KEY,
+            usuario_id INTEGER NOT NULL,
+            patron TEXT NOT NULL,
+            creado_en TEXT NOT NULL,
+            UNIQUE (usuario_id, patron)
+        )""")
         conn.execute("""CREATE TABLE IF NOT EXISTS correo_identidades (
             id INTEGER PRIMARY KEY,
             cuenta_id INTEGER NOT NULL REFERENCES correo_cuentas(id) ON DELETE CASCADE,
@@ -3087,6 +3094,10 @@ from .db_correo import (  # noqa: E402,F401
     eliminar_carpeta_correo,
     crear_categoria_correo,
     crear_identidad_correo,
+    bloquear_remitente_correo,
+    listar_bloqueados_correo,
+    eliminar_bloqueado_correo,
+    remitente_bloqueado_correo,
     listar_identidades_correo,
     obtener_identidad_correo,
     eliminar_identidad_correo,

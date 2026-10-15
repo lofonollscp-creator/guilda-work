@@ -774,6 +774,25 @@ def guardar_remitente_en_contactos(mensaje_id: int):
     return _volver_a_la_bandeja(mensaje, _("Remitente guardado en Contactos."))
 
 
+@correo_bp.route("/<int:mensaje_id>/bloquear", methods=["POST"])
+@login_required
+def bloquear_remitente(mensaje_id: int):
+    """Bloquea al remitente (o a su dominio) y manda el mensaje a la papelera."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    try:
+        patron = correo.bloquear_remitente(g.usuario_id, mensaje_id, dominio=request.form.get("dominio") == "1")
+    except correo.ErrorCorreo as e:
+        return _volver_a_la_bandeja(mensaje, str(e))
+    return _volver_a_la_bandeja(mensaje, _("Bloqueado: %(p)s. Sus mensajes irán a la papelera.", p=patron))
+
+
+@correo_bp.route("/ajustes/bloqueados/<int:bloqueado_id>/eliminar", methods=["POST"])
+@login_required
+def desbloquear_remitente(bloqueado_id: int):
+    db.eliminar_bloqueado_correo(g.usuario_id, bloqueado_id)
+    return redirect(url_for("correo.ajustes"))
+
+
 @correo_bp.route("/<int:mensaje_id>/archivar", methods=["POST"])
 @login_required
 def archivar_mensaje(mensaje_id: int):
@@ -1273,6 +1292,7 @@ def _render_ajustes(*, error=None, cuenta_firma_id=None):
         variables_plantilla=correo.VARIABLES_PLANTILLA,
         seguimientos=db.listar_seguimientos_correo(g.usuario_id),
         identidades=db.listar_identidades_correo(g.usuario_id),
+        bloqueados=db.listar_bloqueados_correo(g.usuario_id),
         autorespuestas={c["id"]: correo_autorespuesta.obtener(c["id"]) for c in cuentas},
         error=error,
     )

@@ -2037,6 +2037,9 @@ def _like_literal(texto: str) -> str:
     return "%" + texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
+CARPETA_TODAS = "*"      # valor especial de `carpeta`: todas las del buzón salvo papelera, spam y borradores
+
+
 def listar_mensajes_correo(
     cuenta_id: int, carpeta: str = "INBOX", solo_no_leidos: bool = False,
     texto: str | None = None, limite: int = 50, incluir_pospuestos: bool = False,
@@ -2061,8 +2064,12 @@ def listar_mensajes_correo(
         limite_final, limite = limite, correo_cifrado.LIMITE_MEMORIA
     conn = _db.get_connection()
     try:
-        cond = ["cuenta_id = ?", "carpeta = ?"]
-        params: list = [cuenta_id, carpeta]
+        if carpeta == CARPETA_TODAS:        # vista global (destacados o no leídos de todas las carpetas): sin papelera, spam ni borradores
+            cond = ["cuenta_id = ?", "carpeta NOT IN (SELECT nombre FROM correo_carpetas WHERE cuenta_id = ? AND nombre_visible IN ('Papelera', 'Spam', 'Borradores'))"]
+            params: list = [cuenta_id, cuenta_id]
+        else:
+            cond = ["cuenta_id = ?", "carpeta = ?"]
+            params = [cuenta_id, carpeta]
         if solo_no_leidos:
             cond.append("leido = 0")
         if texto:
@@ -2366,5 +2373,47 @@ def eliminar_identidad_correo(usuario_id: int, identidad_id: int) -> None:
     try:
         conn.execute("DELETE FROM correo_identidades WHERE id = ? AND cuenta_id IN (SELECT id FROM correo_cuentas WHERE usuario_id = ?)", (identidad_id, usuario_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+# --- Remitentes bloqueados (sus mensajes nuevos van directos a la papelera) ---
+
+def bloquear_remitente_correo(usuario_id: int, patron: str) -> int:
+    """`patron` es una dirección (`ana@x.com`) o un dominio entero (`@x.com`). Devuelve el id (el existente si ya estaba)."""
+    patron = patron.strip().lower()
+    conn = _db.get_connection()
+    try:
+        conn.execute("INSERT INTO correo_bloqueados (usuario_id, patron, creado_en) VALUES (?, ?, ?) ON CONFLICT (usuario_id, patron) DO NOTHING", (usuario_id, patron, _db.now_iso()))
+        conn.commit()
+        return conn.execute("SELECT id FROM correo_bloqueados WHERE usuario_id = ? AND patron = ?", (usuario_id, patron)).fetchone()["id"]
+    finally:
+        conn.close()
+
+
+def listar_bloqueados_correo(usuario_id: int) -> list[sqlite3.Row]:
+    conn = _db.get_connection()
+    try:
+        return conn.execute("SELECT * FROM correo_bloqueados WHERE usuario_id = ? ORDER BY patron", (usuario_id,)).fetchall()
+    finally:
+        conn.close()
+
+
+def eliminar_bloqueado_correo(usuario_id: int, bloqueado_id: int) -> None:
+    conn = _db.get_connection()
+    try:
+        conn.execute("DELETE FROM correo_bloqueados WHERE id = ? AND usuario_id = ?", (bloqueado_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def remitente_bloqueado_correo(usuario_id: int, direccion: str | None) -> bool:
+    direccion = (direccion or "").strip().lower()
+    if not direccion or "@" not in direccion:
+        return False
+    conn = _db.get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM correo_bloqueados WHERE usuario_id = ? AND patron IN (?, ?) LIMIT 1", (usuario_id, direccion, "@" + direccion.rpartition("@")[2])).fetchone() is not None
     finally:
         conn.close()

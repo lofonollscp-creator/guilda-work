@@ -58,8 +58,8 @@
           {% endif %}
         </a>
         {% endfor %}
-        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, destacados=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacados') }}</a>
-        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta=carpeta, no_leidos=1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg> {{ _('No leídos') }}</a>
+        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta='*', destacados=1) }}" title="{{ _('Los destacados de todas las carpetas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacados') }}</a>
+        <a class="correo-carpeta-item" href="{{ url_for('correo.bandeja', cuenta_id=c.id, carpeta='*', no_leidos=1) }}" title="{{ _('Los no leídos de todas las carpetas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg> {{ _('No leídos') }}</a>
         {% if carpetas|length > 1 or c.protocolo != 'pop3' %}
         <details class="correo-carpetas-gestion">
           <summary>{{ _('Gestionar carpetas') }}</summary>
@@ -342,6 +342,18 @@
         <button type="button" class="correo-ribbon-btn" data-ia-accion="responder" title="{{ _('Proponer una respuesta con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Proponer respuesta') }}</span></button>
         <button type="button" class="correo-ribbon-btn" data-ia-accion="tareas" title="{{ _('Extraer tareas con IA') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Extraer tareas') }}</span></button>
         <button type="button" class="correo-ribbon-btn" data-ia-accion="acciones" title="{{ _('Sugerir acciones con IA: tareas, cliente y respuesta (envía también los nombres de tus clientes al proveedor de IA)') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Sugerir acciones') }}</span></button>
+      </div>
+
+      <div class="correo-ribbon-grupo">
+        <form action="{{ url_for('correo.bloquear_remitente', mensaje_id=mensaje_seleccionado.id) }}" method="post"
+              data-confirmar-envio="{{ _('¿Bloquear a este remitente? Este mensaje y los siguientes irán a la papelera.') }}">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Bloquear al remitente: sus mensajes irán a la papelera') }}"><span class="correo-ribbon-icono"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg></span><span class="correo-ribbon-etiqueta">{{ _('Bloquear') }}</span></button>
+        </form>
+        <form action="{{ url_for('correo.bloquear_remitente', mensaje_id=mensaje_seleccionado.id) }}" method="post"
+              data-confirmar-envio="{{ _('¿Bloquear todo el dominio de este remitente? Este mensaje y los siguientes irán a la papelera.') }}">
+          <input type="hidden" name="dominio" value="1">
+          <button type="submit" class="correo-ribbon-btn" title="{{ _('Bloquear todo el dominio del remitente') }}"><span class="correo-ribbon-etiqueta">{{ _('Dominio') }}</span></button>
+        </form>
       </div>
 
       {% if g.tenant_id %}

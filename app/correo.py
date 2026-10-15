@@ -735,6 +735,9 @@ def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: s
     )
     if adjuntos and mensaje_id is not None:
         db.guardar_adjuntos_correo(mensaje_id, adjuntos)
+    if mensaje_id is not None and carpeta == "INBOX" and db.remitente_bloqueado_correo(cuenta["usuario_id"], direccion_email(_decodificar(mensaje.get("From")))):
+        eliminar_mensaje(mensaje_id)           # remitente bloqueado: directo a la papelera (también en el servidor)
+        return None, True
     if mensaje_id is not None:
         _aplicar_categoria_automatica(
             cuenta["usuario_id"], mensaje_id, _decodificar(mensaje.get("From")), _decodificar(mensaje.get("Subject")),
@@ -1666,6 +1669,26 @@ def eliminar_carpeta(usuario_id: int, cuenta_id: int, carpeta: str) -> None:
         raise ErrorCorreo("Esa carpeta no existe.")
     _operar_imap(cuenta, "delete", f'"{carpeta}"')
     db.eliminar_carpeta_correo(cuenta_id, carpeta)
+
+
+def bloquear_remitente(usuario_id: int, mensaje_id: int, dominio: bool = False) -> str:
+    """Bloquea al remitente del mensaje (o a todo su dominio) y manda este mensaje a la papelera. Los siguientes llegarán directos a la papelera. Devuelve el patrón bloqueado.
+    No se bloquea una dirección propia."""
+    mensaje = db.obtener_mensaje_correo(mensaje_id)
+    if mensaje is None:
+        raise ErrorCorreo("Ese mensaje no existe.")
+    direccion = (direccion_email(mensaje["remitente"]) or "").lower()
+    if not direccion or "@" not in direccion:
+        raise ErrorCorreo("Este mensaje no tiene una dirección de remitente válida.")
+    cuenta = db.obtener_cuenta_correo(usuario_id, mensaje["cuenta_id"])
+    if cuenta is None:
+        raise ErrorCorreo("Esa cuenta no existe.")
+    if direccion in _direcciones_propias(cuenta):
+        raise ErrorCorreo("No puedes bloquear tu propia dirección.")
+    patron = "@" + direccion.rpartition("@")[2] if dominio else direccion
+    db.bloquear_remitente_correo(usuario_id, patron)
+    eliminar_mensaje(mensaje_id)
+    return patron
 
 
 def crear_identidad(usuario_id: int, cuenta_id: int, nombre: str, direccion: str) -> int:

@@ -12322,3 +12322,33 @@ msgstr "Message actions"
 
 msgid "Volver arriba"
 msgstr "Back to top"
+
+msgid "Bloqueado: %(p)s. Sus mensajes irán a la papelera."
+msgstr "Blocked: %(p)s. Their messages will go to the trash."
+
+msgid "Remitentes bloqueados"
+msgstr "Blocked senders"
+
+msgid "Sus mensajes nuevos van directos a la papelera. Se bloquea desde un mensaje con «Bloquear»."
+msgstr "Their new messages go straight to the trash. Block someone from a message with “Block”."
+
+msgid "No has bloqueado a nadie."
+msgstr "You have not blocked anyone."
+
+msgid "¿Bloquear a este remitente? Este mensaje y los siguientes irán a la papelera."
+msgstr "Block this sender? This message and the next ones will go to the trash."
+
+msgid "Bloquear al remitente: sus mensajes irán a la papelera"
+msgstr "Block the sender: their messages will go to the trash"
+
+msgid "¿Bloquear todo el dominio de este remitente? Este mensaje y los siguientes irán a la papelera."
+msgstr "Block this sender's whole domain? This message and the next ones will go to the trash."
+
+msgid "Bloquear todo el dominio del remitente"
+msgstr "Block the sender's whole domain"
+
+msgid "Los destacados de todas las carpetas"
+msgstr "Flagged messages from all folders"
+
+msgid "Los no leídos de todas las carpetas"
+msgstr "Unread messages from all folders"

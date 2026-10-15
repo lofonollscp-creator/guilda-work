@@ -40,6 +40,20 @@
 </section>
 
 <section class="correo-ajustes-seccion">
+  <h2>{{ _('Remitentes bloqueados') }}</h2>
+  <p class="muted">{{ _('Sus mensajes nuevos van directos a la papelera. Se bloquea desde un mensaje con «Bloquear».') }}</p>
+  {% if bloqueados %}
+  <ul class="correo-lista-ajustes">
+    {% for b in bloqueados %}
+    <li>{{ b.patron }}
+      <form method="post" action="{{ url_for('correo.desbloquear_remitente', bloqueado_id=b.id) }}" class="form-en-linea"><button type="submit" class="btn btn-ghost">{{ _('Desbloquear') }}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('No has bloqueado a nadie.') }}</p>{% endif %}
+</section>
+
+<section class="correo-ajustes-seccion">
   <h2>{{ _('Respuesta automática (fuera de la oficina)') }}</h2>
   <p class="muted">{{ _('Mientras esté activa, quien te escriba recibe este mensaje una sola vez. No se contesta a correos automáticos, listas de correo ni direcciones del tipo noreply.') }}</p>
   {% for c in cuentas %}

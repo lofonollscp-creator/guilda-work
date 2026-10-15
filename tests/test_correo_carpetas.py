@@ -152,3 +152,89 @@ def test_la_bandeja_muestra_archivar_gestion_y_respuesta_rapida(cliente):
                                             ("Clientes/2026", "2026"), ("[Gmail]/Spam", "Spam"), ("Facturas 2.0", "Facturas 2.0")])
 def test_el_nombre_visible_quita_el_prefijo_inbox_de_los_servidores_con_punto(nombre, visible):
     assert correo._nombre_visible_carpeta(nombre) == visible
+
+
+# --- Remitentes bloqueados -----------------------------------------------------------------------------------------------------------------------
+
+def _crudo(de="Spam <spam@malo.test>", asunto="Oferta"):
+    from email.message import EmailMessage
+    m = EmailMessage(); m["From"], m["To"], m["Subject"], m["Message-ID"] = de, "yo@ejemplo.com", asunto, "<s1@malo.test>"; m.set_content("compra"); return m.as_bytes()
+
+
+def test_bloquear_remitente_manda_el_mensaje_a_la_papelera_y_recuerda_la_direccion(cliente, monkeypatch):
+    uid, cuenta = _cuenta(cliente, "blo-1@ejemplo.com")
+    ops = []
+    monkeypatch.setattr(correo, "_encolar_y_lanzar", lambda m, op: ops.append((m["id"], op)))
+    m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Oferta", remitente="Spam <Spam@Malo.test>", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html=None)
+    assert correo.bloquear_remitente(uid, m) == "spam@malo.test"
+    assert ops == [(m, "eliminar")] and correo.obtener_mensaje(m) is None
+    assert [b["patron"] for b in db.listar_bloqueados_correo(uid)] == ["spam@malo.test"]
+
+
+def test_bloquear_el_dominio_y_los_mensajes_nuevos_van_a_la_papelera_sin_contar_como_no_leidos(cliente, monkeypatch):
+    uid, cuenta = _cuenta(cliente, "blo-2@ejemplo.com")
+    ops = []
+    monkeypatch.setattr(correo, "_encolar_y_lanzar", lambda m, op: ops.append((m["uid"], op)))
+    m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Oferta", remitente="a@malo.test", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html=None)
+    assert correo.bloquear_remitente(uid, m, dominio=True) == "@malo.test"
+    fila = db.obtener_cuenta_correo(uid, cuenta)
+    assert correo._guardar_mensaje_imap(fila, "INBOX", "20", _crudo(), set()) == (None, True)
+    assert ("20", "eliminar") in ops and db.listar_mensajes_correo(cuenta) == []
+    # otro remitente, otra carpeta y quien no está bloqueado siguen entrando
+    ok, _ = correo._guardar_mensaje_imap(fila, "INBOX", "21", _crudo(de="Ana <ana@bien.test>"), set())
+    otra, _ = correo._guardar_mensaje_imap(fila, "Archive", "22", _crudo(), set())
+    assert ok is not None and otra is not None
+
+
+def test_el_bloqueo_es_por_persona_no_de_toda_la_plataforma(cliente):
+    uid, cuenta = _cuenta(cliente, "blo-3@ejemplo.com")
+    db.bloquear_remitente_correo(uid, "x@malo.test")
+    assert db.remitente_bloqueado_correo(uid, "X@malo.test") and not db.remitente_bloqueado_correo(uid + 1, "x@malo.test") and not db.remitente_bloqueado_correo(uid, "y@malo.test")
+    assert not db.remitente_bloqueado_correo(uid, None) and not db.remitente_bloqueado_correo(uid, "sin-arroba")
+
+
+def test_no_se_puede_bloquear_la_propia_direccion_ni_un_mensaje_ajeno(cliente):
+    uid, cuenta = _cuenta(cliente, "blo-4@ejemplo.com")
+    propio = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Nota", remitente="yo@ejemplo.com", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html=None)
+    with pytest.raises(ErrorCorreo, match="propia"):
+        correo.bloquear_remitente(uid, propio)
+    with pytest.raises(ErrorCorreo, match="no existe"):
+        correo.bloquear_remitente(uid, 99999)
+    assert cliente.post("/correo/99999/bloquear").status_code == 404
+
+
+def test_bloquear_y_desbloquear_desde_la_web(cliente, monkeypatch):
+    uid, cuenta = _cuenta(cliente, "blo-5@ejemplo.com")
+    monkeypatch.setattr(correo, "_encolar_y_lanzar", lambda m, op: None)
+    m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Oferta", remitente="a@malo.test", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html=None)
+    assert "/bloquear" in cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
+    r = cliente.post(f"/correo/{m}/bloquear")
+    assert r.status_code == 302 and "aviso=" in r.headers["Location"]
+    html = cliente.get("/correo/ajustes").get_data(as_text=True)
+    assert "a@malo.test" in html and "Remitentes bloqueados" in html
+    (b,) = db.listar_bloqueados_correo(uid)
+    cliente.post(f"/correo/ajustes/bloqueados/{b['id']}/eliminar")
+    assert db.listar_bloqueados_correo(uid) == []
+
+
+# --- Vistas globales: destacados y no leídos de todas las carpetas --------------------------------------------------------------------------------
+
+def test_la_vista_global_junta_carpetas_y_deja_fuera_papelera_spam_y_borradores(cliente):
+    uid, cuenta = _cuenta(cliente, "glo-1@ejemplo.com", carpetas=("INBOX", "Archive", "Junk", "Trash", "Drafts", "Clientes"))
+    def msg(n, carpeta, leido=0, destacado=0):
+        m = _msg(cuenta, str(n), carpeta=carpeta)
+        conn = db.get_connection(); conn.execute("UPDATE correo_mensajes SET leido = ?, destacado = ? WHERE id = ?", (leido, destacado, m)); conn.commit(); conn.close(); return m
+    a, b, c, d = msg(1, "INBOX"), msg(2, "Clientes"), msg(3, "Junk"), msg(4, "Trash")
+    e = msg(5, "Archive", leido=1, destacado=1)
+    ids = lambda **kw: {x["id"] for x in db.listar_mensajes_correo(cuenta, carpeta="*", **kw)}
+    assert ids(solo_no_leidos=True) == {a, b} and ids(solo_destacados=True) == {e}
+    assert {x["id"] for x in db.listar_mensajes_correo(cuenta, carpeta="Junk", solo_no_leidos=True)} == {c}      # la carpeta concreta sigue igual
+
+
+def test_la_bandeja_ofrece_y_muestra_las_vistas_globales(cliente):
+    uid, cuenta = _cuenta(cliente, "glo-2@ejemplo.com")
+    m = _msg(cuenta, "1", carpeta="Clientes")
+    html = cliente.get(f"/correo/?cuenta_id={cuenta}").get_data(as_text=True)
+    assert "carpeta=%2A" in html or "carpeta=*" in html
+    r = cliente.get(f"/correo/?cuenta_id={cuenta}&carpeta=*&no_leidos=1").get_data(as_text=True)
+    assert "Hola" in r and f"mensaje_id={m}" in r
