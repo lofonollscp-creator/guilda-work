@@ -333,3 +333,36 @@ def enviar_mensaje(api_key: str, para: str, asunto: str, cuerpo: str) -> dict:
     if "envio" not in cuerpo_envio.get("created", {}):
         raise ErrorStalwart(f"No se ha podido enviar el mensaje a '{para}' con Stalwart: {cuerpo_envio.get('notCreated', {})}")
     return cuerpo_envio["created"]["envio"]
+
+
+# --- Buzones de personas (IMAP/SMTP) dentro del dominio del despacho ---
+
+def crear_buzon(stalwart_tenant_id: str, domain_id: str, local: str, descripcion: str) -> dict:
+    """Crea una cuenta de usuario `local@dominio` en el tenant de Stalwart y le genera una **contraseña de aplicación** (la genera el servidor, nadie la teclea): sirve para IMAP y SMTP.
+    Devuelve {"account_id", "secreto"}. Si algo falla a medias, deshace lo creado. El secreto solo existe en esta respuesta (Stalwart no lo vuelve a enseñar)."""
+    cabeceras = _cabecera_admin()
+    cuerpo = _una_respuesta(_jmap([["x:Account/set", {"accountId": "b", "create": {"u1": {
+        "@type": "User", "name": local, "description": descripcion, "domainId": domain_id,
+        "memberTenantId": stalwart_tenant_id, "roles": {"@type": "User"},
+    }}}, "0"]], cabeceras=cabeceras))
+    if "u1" not in cuerpo.get("created", {}):
+        raise ErrorStalwart(f"No se ha podido crear el buzón «{local}»: {cuerpo.get('notCreated', {}).get('u1', {})}")
+    account_id = cuerpo["created"]["u1"]["id"]
+    try:
+        cuerpo = _una_respuesta(_jmap([["x:AppPassword/set", {"accountId": account_id, "create": {"k1": {"description": "Guilda Work — IMAP y SMTP"}}}, "0"]], cabeceras=cabeceras))
+        if "k1" not in cuerpo.get("created", {}):
+            raise ErrorStalwart(f"No se ha podido crear la contraseña de aplicación del buzón: {cuerpo.get('notCreated', {}).get('k1', {})}")
+        return {"account_id": account_id, "secreto": cuerpo["created"]["k1"]["secret"]}
+    except Exception:
+        eliminar_buzon(account_id)
+        raise
+
+
+def eliminar_buzon(account_id: str | None) -> None:
+    """Borra un buzón (y con él su correo). No falla si ya no existe ni si Stalwart no está configurado."""
+    if not account_id or not STALWART_ADMIN_USER or not STALWART_ADMIN_PASSWORD:
+        return
+    try:
+        _jmap([["x:Account/set", {"accountId": "b", "destroy": [account_id]}, "0"]], cabeceras=_cabecera_admin())
+    except ErrorStalwart:
+        pass

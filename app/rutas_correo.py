@@ -14,7 +14,7 @@ from flask_babel import get_locale
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, contactos, correo, correo_autorespuesta, correo_contexto, correo_dominio, dns_simple, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
+from . import acceso, contactos, correo, correo_buzones, correo_autorespuesta, correo_contexto, correo_dominio, dns_simple, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -148,7 +148,22 @@ def cuentas(diagnostico=None, error=None):
     return render_template(
         "correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=error, proveedores_oauth=correo_oauth.proveedores_disponibles(),
         operaciones_error=db.operaciones_correo_con_error(g.usuario_id), dominios=correo_dominio.dominios_de_la_persona(g.usuario_id), diagnostico=diagnostico,
+        buzones=(correo_buzones.dominio_del_despacho(g.usuario_id) if acceso.es_directivo(g.usuario_id) else None), personas_buzon=correo_buzones.personas_del_despacho(g.usuario_id),
+        aviso=request.args.get("aviso"),
     )
+
+
+@correo_bp.route("/cuentas/buzon", methods=["POST"])
+@login_required
+def crear_buzon():
+    """Crea un buzón `nombre@dominio-del-despacho` en el servidor de correo propio y lo conecta a una persona (solo la dirección del despacho)."""
+    if not acceso.es_directivo(g.usuario_id):
+        abort(403)
+    try:
+        r = correo_buzones.alta_buzon(g.usuario_id, request.form.get("nombre", ""), request.form.get("persona_id", type=int))
+    except correo_buzones.ErrorBuzon as e:
+        return cuentas(error=str(e))
+    return redirect(url_for("correo.cuentas", aviso=_("Buzón %(e)s creado y conectado.", e=r["email"])))
 
 
 @correo_bp.route("/cuentas/dominio")

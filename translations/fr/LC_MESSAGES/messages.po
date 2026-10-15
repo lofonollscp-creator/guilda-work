@@ -12437,3 +12437,24 @@ msgstr "Les messages marqués de tous les dossiers"
 
 msgid "Los no leídos de todas las carpetas"
 msgstr "Les messages non lus de tous les dossiers"
+
+msgid "%(n)s (tú)"
+msgstr "%(n)s (vous)"
+
+msgid "Buzón %(e)s creado y conectado."
+msgstr "Boîte %(e)s créée et connectée."
+
+msgid "Crear un buzón del despacho"
+msgstr "Créer une boîte aux lettres du cabinet"
+
+msgid "Crea una dirección nueva en tu dominio (%(d)s) y la conecta a una persona del equipo, sin contraseñas que teclear."
+msgstr "Crée une nouvelle adresse sur votre domaine (%(d)s) et la connecte à un membre de l'équipe, sans mot de passe à saisir."
+
+msgid "nombre"
+msgstr "nom"
+
+msgid "Parte de la dirección antes de la arroba"
+msgstr "Partie de l'adresse avant l'arobase"
+
+msgid "Crear y conectar"
+msgstr "Créer et connecter"

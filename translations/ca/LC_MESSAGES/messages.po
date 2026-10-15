@@ -12361,3 +12361,24 @@ msgstr "Els destacats de totes les carpetes"
 
 msgid "Los no leídos de todas las carpetas"
 msgstr "Els no llegits de totes les carpetes"
+
+msgid "%(n)s (tú)"
+msgstr "%(n)s (tu)"
+
+msgid "Buzón %(e)s creado y conectado."
+msgstr "Bústia %(e)s creada i connectada."
+
+msgid "Crear un buzón del despacho"
+msgstr "Crea una bústia del despatx"
+
+msgid "Crea una dirección nueva en tu dominio (%(d)s) y la conecta a una persona del equipo, sin contraseñas que teclear."
+msgstr "Crea una adreça nova al teu domini (%(d)s) i la connecta a una persona de l'equip, sense contrasenyes per teclejar."
+
+msgid "nombre"
+msgstr "nom"
+
+msgid "Parte de la dirección antes de la arroba"
+msgstr "Part de l'adreça abans de l'arrova"
+
+msgid "Crear y conectar"
+msgstr "Crea i connecta"

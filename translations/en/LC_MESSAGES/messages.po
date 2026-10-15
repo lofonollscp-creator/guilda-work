@@ -12352,3 +12352,24 @@ msgstr "Flagged messages from all folders"
 
 msgid "Los no leídos de todas las carpetas"
 msgstr "Unread messages from all folders"
+
+msgid "%(n)s (tú)"
+msgstr "%(n)s (you)"
+
+msgid "Buzón %(e)s creado y conectado."
+msgstr "Mailbox %(e)s created and connected."
+
+msgid "Crear un buzón del despacho"
+msgstr "Create a firm mailbox"
+
+msgid "Crea una dirección nueva en tu dominio (%(d)s) y la conecta a una persona del equipo, sin contraseñas que teclear."
+msgstr "Creates a new address on your domain (%(d)s) and connects it to a team member, with no passwords to type."
+
+msgid "nombre"
+msgstr "name"
+
+msgid "Parte de la dirección antes de la arroba"
+msgstr "Part of the address before the @"
+
+msgid "Crear y conectar"
+msgstr "Create and connect"

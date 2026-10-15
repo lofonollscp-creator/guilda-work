@@ -201,6 +201,19 @@
   </form>
 </section>
 
+{% if aviso %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
+{% if buzones %}
+<section class="proyecto-bloque" id="crear-buzon">
+  <h2>{{ _('Crear un buzón del despacho') }}</h2>
+  <p class="muted">{{ _('Crea una dirección nueva en tu dominio (%(d)s) y la conecta a una persona del equipo, sin contraseñas que teclear.', d=buzones.dominio) }}</p>
+  <form method="post" action="{{ url_for('correo.crear_buzon') }}" class="ds-fila">
+    <label>{{ _('Dirección') }} <input type="text" name="nombre" required maxlength="64" pattern="[A-Za-z0-9._-]+" placeholder="{{ _('nombre') }}" aria-label="{{ _('Parte de la dirección antes de la arroba') }}"> @{{ buzones.dominio }}</label>
+    <label>{{ _('Para') }} <select name="persona_id">{% for p in personas_buzon %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select></label>
+    <button type="submit" class="btn btn-primary">{{ _('Crear y conectar') }}</button>
+  </form>
+</section>
+{% endif %}
+
 {% if dominios %}
 <section class="proyecto-bloque" id="salud-dominio">
   <h2>{{ _('Salud del dominio de correo') }}</h2>
