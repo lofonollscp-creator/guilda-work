@@ -5130,10 +5130,10 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .correo-lectura-pane { overflow-y: auto; overscroll-behavior: contain; }
   .correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) { grid-template-rows: auto minmax(180px, 38%) minmax(0, 1fr); }
 }
-.correo-lectura-fija { position: sticky; top: 0; z-index: 4; margin: -20px -28px 0; padding: 20px 28px 8px; background: var(--bg); border-bottom: 1px solid var(--border); }
+/* La cabecera y la barra de acciones se desplazan con el mensaje (antes quedaban pegadas arriba y tapaban el texto). */
+.correo-lectura-fija { position: static; margin: 0; padding: 0 0 8px; }
 .correo-lectura-fija .correo-ribbon { margin-top: 10px; }
 .correo-cuerpo-html { width: 100%; min-height: 200px; border: none; display: block; }
 @media (max-width: 640px) {
-  .correo-lectura-fija { top: 0; margin: -12px -12px 0; padding: 12px 12px 6px; }
   .correo-cuerpo-html { min-height: 40vh; }
 }

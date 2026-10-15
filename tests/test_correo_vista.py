@@ -83,7 +83,7 @@ def test_el_movil_distingue_lista_y_mensaje_y_siempre_hay_volver(cliente):
     assert "con-mensaje" not in abrir(sin) and "con-mensaje" in abrir(con) and 'class="correo-lectura-volver"' in con
 
 
-def test_el_mensaje_lleva_cabecera_fija_y_el_iframe_ajusta_su_altura_sin_scripts(cliente):
+def test_el_mensaje_agrupa_cabecera_y_acciones_y_el_iframe_ajusta_su_altura_sin_scripts(cliente):
     uid, cuenta = _usuario(cliente, "vista-fija@ejemplo.com")
     m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html="<p>Hola</p>")
     html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
