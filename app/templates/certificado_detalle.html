@@ -41,7 +41,6 @@
 {% if c.estado_operativo not in ('sustituido', 'archivado') %}
 <section class="cert-bloque" id="renovacion">
   <h2>{{ _('Renovación') }}</h2>
-  <form method="post" action="{{ url_for('control_fiscal.expediente_de_certificado', certificado_id=c.id) }}" class="form-en-linea"><button type="submit" class="btn btn-secondary btn-sm">{{ _('Abrir o ver su expediente') }}</button></form>
   <form method="post" action="{{ url_for('certificados.renovado', certificado_id=c.id) }}" class="cert-form">
     <p>{{ _('¿Ya lo han renovado? Apunta la nueva fecha de caducidad y listo: el certificado actual pasa a «sustituido» y el nuevo hereda cliente, tipo, custodio y servicios.') }}</p>
     <div class="cert-form-fila">

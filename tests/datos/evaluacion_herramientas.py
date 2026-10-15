@@ -108,6 +108,9 @@ CASOS: list[tuple[str, str]] = [
     ("qué inmuebles encajan con esta demanda de comprador", "inmobiliaria_cruces_de_demanda"),
     ("qué visitas hay programadas esta semana", "inmobiliaria_agenda_visitas"),
     ("cómo va la agencia, inmuebles sin movimiento", "inmobiliaria_resumen"),
+    ("qué mensajes ha escrito el cliente desde su enlace del asunto", "mensajes_de_enlace"),
+    ("responde al mensaje del propietario desde su enlace", "responder_mensaje_de_enlace"),
+    ("comprueba si el certificado digital está revocado", "comprobar_certificado"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

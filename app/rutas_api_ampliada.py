@@ -834,6 +834,25 @@ def obtener_certificado_api(certificado_id: int):
     return _ok(_certificado_publico(c))
 
 
+@api_bp.route("/certificados/<int:certificado_id>/comprobar", methods=["POST"])
+@token_required
+def comprobar_certificado_api(certificado_id: int):
+    """Comprueba ahora la cadena de confianza y la revocación (OCSP y CRL) del certificado y anota los resultados como evaluaciones automáticas. Hace consultas a las direcciones que declara el propio
+    certificado (descarga segura, sin llegar a redes internas). Ante un fallo de red o una CA desconocida el resultado es `indeterminada`, nunca `valida`. 400 si el certificado se apuntó a mano (sin archivo)."""
+    error = _api._exigir_tenant_api()
+    if error:
+        return error
+    _exigir_certificados()
+    from . import certificados
+    if certificados.obtener(g.tenant_id, certificado_id) is None:
+        abort(404, "Certificado no encontrado.")
+    try:
+        certificados.comprobar_ahora(g.tenant_id, g.usuario_id, certificado_id)
+    except ValueError as e:
+        return _err(str(e), 400, "certificado_no_valido")
+    return _ok(_certificado_publico(certificados.obtener(g.tenant_id, certificado_id)))
+
+
 @api_bp.route("/certificados/importar", methods=["POST"])
 @token_required
 def importar_certificado_api():

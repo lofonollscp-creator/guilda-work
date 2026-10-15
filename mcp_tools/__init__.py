@@ -528,7 +528,7 @@ from .herramientas_despacho import (  # noqa: E402,F401
     _exigir_alcance_documentos,
     listar_documentos_despacho,
     leer_documento_despacho,
-    _CERT_CAMPOS, _exigir_certificados, _exigir_gestoria, listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso,
+    _CERT_CAMPOS, _exigir_certificados, _exigir_gestoria, comprobar_certificado, listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso,
     listar_plantillas_correo,
     crear_tarea_recurrente,
     listar_tareas_recurrentes,
@@ -537,8 +537,8 @@ from .herramientas_despacho import (  # noqa: E402,F401
     crear_factura_cliente,
 )
 from .herramientas_verticales import (  # noqa: E402,F401
-    _exigir_modulo, _euros,
-    abogados_provision_asunto, abogados_partes_asunto, abogados_agenda_vistas, abogados_comprobar_conflicto, inmobiliaria_listar_inmuebles, inmobiliaria_cruces_de_demanda, inmobiliaria_agenda_visitas, inmobiliaria_resumen,
+    _ctx, _consultas,
+    abogados_provision_asunto, abogados_partes_asunto, abogados_agenda_vistas, abogados_comprobar_conflicto, inmobiliaria_listar_inmuebles, inmobiliaria_cruces_de_demanda, inmobiliaria_agenda_visitas, inmobiliaria_resumen, mensajes_de_enlace, responder_mensaje_de_enlace,
 )
 from .herramientas_fichaje import (  # noqa: E402,F401
     fichar,
@@ -677,9 +677,9 @@ TOOLS = [
     # Núcleo del despacho (solo lectura)
     listar_clientes_despacho, resumen_cliente_despacho, listar_expedientes_despacho, resumen_expediente_despacho, listar_plazos_despacho,
     listar_documentos_despacho, leer_documento_despacho,
-    listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso,
-    # Gabinete de abogados e Inmobiliaria (solo lectura)
-    abogados_provision_asunto, abogados_partes_asunto, abogados_agenda_vistas, abogados_comprobar_conflicto, inmobiliaria_listar_inmuebles, inmobiliaria_cruces_de_demanda, inmobiliaria_agenda_visitas, inmobiliaria_resumen,
+    listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, comprobar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso,
+    # Gabinete de abogados e Inmobiliaria
+    abogados_provision_asunto, abogados_partes_asunto, abogados_agenda_vistas, abogados_comprobar_conflicto, inmobiliaria_listar_inmuebles, inmobiliaria_cruces_de_demanda, inmobiliaria_agenda_visitas, inmobiliaria_resumen, mensajes_de_enlace, responder_mensaje_de_enlace,
     # Fichaje
     fichar, listar_mis_fichajes,
     listar_mis_ausencias, saldo_vacaciones, pedir_ausencia, cancelar_ausencia, listar_ausencias_equipo, resolver_ausencia, ver_mis_turnos, ver_cuadrante, asignar_turno, ver_bolsa_de_horas, ajustar_bolsa_de_horas,

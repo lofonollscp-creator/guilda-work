@@ -52,7 +52,7 @@ _PROPIAS_GUILDA_WORK = {
     "estadisticas_por_categoria", "estadisticas_por_dia",
     "webhooks_listar", "webhooks_crear", "webhooks_borrar",
     "listar_tiquets", "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet",
-    "abogados_provision_asunto", "abogados_partes_asunto", "abogados_agenda_vistas", "abogados_comprobar_conflicto", "inmobiliaria_listar_inmuebles", "inmobiliaria_cruces_de_demanda", "inmobiliaria_agenda_visitas", "inmobiliaria_resumen",
+    "abogados_provision_asunto", "abogados_partes_asunto", "abogados_agenda_vistas", "abogados_comprobar_conflicto", "inmobiliaria_listar_inmuebles", "inmobiliaria_cruces_de_demanda", "inmobiliaria_agenda_visitas", "inmobiliaria_resumen", "mensajes_de_enlace", "responder_mensaje_de_enlace", "comprobar_certificado",
     "fichar", "listar_mis_fichajes", "listar_mis_ausencias", "saldo_vacaciones", "pedir_ausencia", "cancelar_ausencia", "listar_ausencias_equipo", "resolver_ausencia", "ver_mis_turnos", "ver_cuadrante", "asignar_turno", "ver_bolsa_de_horas", "ajustar_bolsa_de_horas",
     "backoffice_listar_tenants", "backoffice_listar_usuarios", "backoffice_crear_tenant",
     "backoffice_renombrar_tenant", "backoffice_guardar_datos_tenant", "backoffice_alternar_herramienta_tenant",

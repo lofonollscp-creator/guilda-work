@@ -7,7 +7,7 @@ import mcp_tools
 from app import db, ia_herramientas as h
 
 
-def test_catalogo_tiene_las_mismas_137_herramientas_clasificadas():
+def test_catalogo_tiene_las_mismas_140_herramientas_clasificadas():
     # 52 de antes + 16 de la ampliación Drive/CRM/Firmas/Hojas: CRM (6),
     # Drive (4, incluye enviar_archivo_drive_al_chat), Firmas (4, incluye
     # enviar_documento_firmado_al_chat), Hojas solo lectura (2 --
@@ -19,7 +19,7 @@ def test_catalogo_tiene_las_mismas_137_herramientas_clasificadas():
     # + 4: activar_herramientas, resumen_del_dia, detalle_tarea, completar_tareas.
     # + 4 de soporte: ayuda_buscar, abrir_pantalla, ver_mis_ajustes, cambiar_mis_ajustes.
     # + 5 del núcleo del despacho (solo lectura): clientes, expedientes y plazos.
-    assert len(nombres) == 137
+    assert len(nombres) == 140
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)

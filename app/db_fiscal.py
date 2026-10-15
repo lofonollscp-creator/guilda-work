@@ -331,8 +331,8 @@ def listar_vencimientos_fiscales(
     pais: str | None = None,
     limite: int | None = None,
     offset: int = 0,
-) -> list[sqlite3.Row]:
     sin_internos: bool = False,
+) -> list[sqlite3.Row]:
     """`sin_internos` deja fuera los vencimientos laborales de uso interno (nóminas, altas, bajas y contratos: `MODELOS_INTERNOS`); lo usa el portal del cliente.
     `limite`/`offset` paginan (sin `limite` devuelve todos, como siempre).
     `desde`/`hasta` filtran por fecha_limite (YYYY-MM-DD, inclusive/
@@ -354,10 +354,10 @@ def listar_vencimientos_fiscales(
             cond.append("v.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
         if pais:
             cond.append("c.pais = ?"); params.append(pais)
-        from . import acceso
         if sin_internos:
             from .vencimientos_fiscales import MODELOS_INTERNOS
             cond.append(f"v.modelo NOT IN ({', '.join('?' * len(MODELOS_INTERNOS))})"); params += sorted(MODELOS_INTERNOS)
+        from . import acceso
         extra, extra_p = acceso.restriccion(tenant_id, "v.cliente_fiscal_id")
         where = " AND ".join(cond) + extra
         params += extra_p

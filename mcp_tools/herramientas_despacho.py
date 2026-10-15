@@ -269,6 +269,16 @@ def renovar_certificado(certificado_id: int, nueva_caducidad: str, funciona: boo
     return {"id": r["id"], "anterior_id": r["anterior_id"], "caduca_el": certificados.obtener(t, r["id"])["caduca_el"]}
 
 
+def comprobar_certificado(certificado_id: int) -> dict:
+    """Comprueba ahora la cadena de confianza y la revocación (OCSP y CRL) de un certificado con archivo, y lo anota como evaluación automática. Hace consultas a las direcciones que el propio
+    certificado declara. Ante un fallo de red o una CA desconocida el resultado es «indeterminada», nunca «válida». Solo custodios y supervisores."""
+    from app import certificados
+    t = _mt._exigir_certificados()
+    certificados.comprobar_ahora(t, _mt._uid(), int(certificado_id))
+    c = certificados.obtener(t, int(certificado_id))
+    return {"id": c["id"], "cadena": c["cadena"], "revocacion": c["revocacion"], "temporal": c.get("temporal")}
+
+
 def _exigir_gestoria() -> int:
     from app import verticales
     t = _mt._tenant_id_actual()

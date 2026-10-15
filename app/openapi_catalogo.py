@@ -435,3 +435,31 @@ TIPOS_FUNCION: dict[str, dict] = {
     "dependencias_de_tarea": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}, "asunto": {"type": "string"}, "estado": {"type": "string"}}}},
     "obtener_config_recordatorios": {"$ref": "#/components/schemas/ConfigRecordatorios"},
 }
+
+# --- Gabinete de abogados e Inmobiliaria (app/rutas_api_verticales.py) ---------------------------------------------------------------------------------
+_S, _I, _B = {"type": "string"}, {"type": "integer"}, {"type": "boolean"}
+_SN = {"type": "string", "nullable": True}
+ESQUEMAS.update({
+    "ProvisionAsunto": {"type": "object", "properties": {
+        "expediente": _S, "provisiones": _SN, "suplidos": _SN, "honorarios": _SN, "devoluciones": _SN, "saldo": {**_SN, "description": "Saldo con formato («1.234,56 €»); negativo = el despacho ha adelantado dinero."},
+        "saldo_centimos": _I, "provision_minima": _SN, "por_debajo_de_la_minima": _B,
+        "ultimos_movimientos": {"type": "array", "items": {"type": "object", "properties": {"fecha": _S, "tipo": _S, "importe": _SN, "concepto": _S}}}}},
+    "ParteAsunto": {"type": "object", "properties": {"id": _I, "rol": _S, "nombre": _S, "nif": _SN, "notas": _SN}},
+    "VistaAgenda": {"type": "object", "properties": {"id": _I, "expediente_id": _I, "fecha_hora": _S, "tipo": _S, "lugar": _SN, "notas": _SN, "asunto": _SN}},
+    "ResultadoConflicto": {"type": "object", "properties": {"hay_conflicto": _B, "hallazgos": {"type": "array", "items": {"type": "object"}}}},
+    "InmuebleResumen": {"type": "object", "properties": {"id": _I, "expediente_id": _I, "direccion": _S, "municipio": _SN, "referencia": _SN, "tipo": _SN, "estado": _S, "superficie_m2": {"type": "number", "nullable": True},
+                                                      "habitaciones": {"type": "integer", "nullable": True}, "propietario_nombre": _SN, "visitas_realizadas": _I, "precio": _SN}},
+    "CruceDemanda": {"type": "object", "properties": {"puntos": {"type": "integer", "description": "De 0 a 100."}, "motivos": {"type": "array", "items": _S}, "faltan": {"type": "array", "items": {}},
+                                                    "inmueble": {"type": "object", "properties": {"id": _I, "direccion": _S, "municipio": _SN, "tipo": _SN, "estado": _S, "precio": _SN}}}},
+    "VisitaAgenda": {"type": "object", "properties": {"id": _I, "inmueble_id": _I, "fecha_hora": _S, "direccion": _S, "municipio": _SN, "visitante_nombre": _SN, "agente_nombre": _SN}},
+    "ResumenAgencia": {"type": "object", "properties": {"inmuebles_activos": _I, "por_fase": {"type": "object", "additionalProperties": _I}, "demandas_activas": _I, "visitas_hoy": {"type": "array", "items": {"type": "object"}},
+                                                      "visitas_semana": _I, "ofertas_abiertas": {"type": "array", "items": {"type": "object"}}, "sin_movimiento_14_dias": {"type": "array", "items": {"type": "object"}}}},
+    "HiloMensajes": {"type": "object", "properties": {"expediente": _S, "admite_respuesta": {**_B, "description": "Hay un enlace vivo que admite mensajes."}, "sin_leer": _I,
+                                                    "mensajes": {"type": "array", "items": {"type": "object", "properties": {"id": _I, "autor": {"type": "string", "enum": ["externo", "despacho"]}, "nombre": _SN, "texto": _S, "creado_en": _S, "leido_en": _SN}}}}},
+})
+RESPUESTAS.update({
+    "provision_asunto_api": ("ProvisionAsunto", False), "partes_asunto_api": ("ParteAsunto", True), "agenda_vistas_api": ("VistaAgenda", True), "comprobar_conflicto_api": ("ResultadoConflicto", False),
+    "listar_inmuebles_api": ("InmuebleResumen", True), "cruces_demanda_api": ("CruceDemanda", True), "agenda_visitas_api": ("VisitaAgenda", True), "resumen_agencia_api": ("ResumenAgencia", False),
+    "mensajes_asunto_api": ("HiloMensajes", False), "mensajes_inmueble_api": ("HiloMensajes", False), "responder_asunto_api": ("Identificador", False), "responder_inmueble_api": ("Identificador", False),
+    "comprobar_certificado_api": ("Certificado", False),
+})

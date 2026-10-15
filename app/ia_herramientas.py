@@ -451,6 +451,24 @@ HERRAMIENTAS: list[dict] = [
         [],
     ),
     _tool(
+        "mensajes_de_enlace",
+        "Mensajes que el cliente del gabinete (vertical abogados) o el propietario de un inmueble (vertical inmobiliaria) han escrito desde su enlace público, con las respuestas del despacho y cuántos están sin leer.",
+        {"vertical": _param("string", "abogados o inmobiliaria."), "expediente_id": _param("integer", "Id del asunto o de la operación del inmueble.")},
+        ["vertical", "expediente_id"],
+    ),
+    _tool(
+        "responder_mensaje_de_enlace",
+        "Contesta al cliente o propietario en el hilo de su enlace público (hasta 2000 caracteres). Falla si no hay un enlace activo que admita mensajes.",
+        {"vertical": _param("string", "abogados o inmobiliaria."), "expediente_id": _param("integer", "Id del asunto o de la operación."), "texto": _param("string", "El mensaje.")},
+        ["vertical", "expediente_id", "texto"],
+    ),
+    _tool(
+        "comprobar_certificado",
+        "Comprueba ahora la cadena de confianza y la revocación (OCSP y CRL) de un certificado con archivo. Solo custodios y supervisores. Ante la duda el resultado es «indeterminada», nunca «válida».",
+        {"certificado_id": _param("integer", "Id del certificado.")},
+        ["certificado_id"],
+    ),
+    _tool(
         "ver_mis_turnos",
         "Tus turnos de trabajo entre dos fechas (por defecto, las próximas dos semanas).",
         {"desde": _param("string", "AAAA-MM-DD, opcional."), "hasta": _param("string", "AAAA-MM-DD, opcional.")},
@@ -985,7 +1003,7 @@ LECTURA: set[str] = {
     "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
     "listar_documentos_despacho", "leer_documento_despacho", "listar_certificados", "riesgos_de_certificados", "panel_fiscal", "listar_traspasos",
     "listar_facturas_cliente",
-    "abogados_provision_asunto", "abogados_partes_asunto", "abogados_agenda_vistas", "abogados_comprobar_conflicto", "inmobiliaria_listar_inmuebles", "inmobiliaria_cruces_de_demanda", "inmobiliaria_agenda_visitas", "inmobiliaria_resumen",
+    "abogados_provision_asunto", "abogados_partes_asunto", "abogados_agenda_vistas", "abogados_comprobar_conflicto", "inmobiliaria_listar_inmuebles", "inmobiliaria_cruces_de_demanda", "inmobiliaria_agenda_visitas", "inmobiliaria_resumen", "mensajes_de_enlace",
     "crm_listar_leads", "crm_listar_contactos", "crm_listar_cuentas",
     "drive_listar_archivos", "drive_buscar_archivos", "enviar_archivo_drive_al_chat",
     "listar_documentos_firma", "enviar_documento_firmado_al_chat",
@@ -1015,7 +1033,7 @@ ESCRITURA: set[str] = {
     "cambiar_estado_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
     "cambiar_mis_ajustes",
     "pedir_ausencia", "cancelar_ausencia", "resolver_ausencia", "asignar_turno", "ajustar_bolsa_de_horas",
-    "registrar_certificado", "renovar_certificado", "proponer_traspaso", "resolver_traspaso",
+    "registrar_certificado", "renovar_certificado", "comprobar_certificado", "proponer_traspaso", "resolver_traspaso",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son
@@ -1024,7 +1042,7 @@ ESCRITURA: set[str] = {
 # ya avisaban de esto en su description para el LLM, pero solo estaban en
 # ESCRITURA -- con modo autónomo activado, el propio modelo decidía si
 # confirmar o no, sin ninguna garantía en código).
-SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma"}
+SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace"}
 
 _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
 
