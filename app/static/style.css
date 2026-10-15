@@ -5137,3 +5137,18 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 @media (max-width: 640px) {
   .correo-cuerpo-html { min-height: 40vh; }
 }
+
+/* Barra compacta (static/correo_barra_compacta.js): ancla de altura cero pegada arriba, la barra cuelga de ella y solo se ve al haber desplazado el mensaje */
+.correo-barra-compacta-ancla { position: sticky; top: 0; height: 0; z-index: 6; overflow: visible; }
+.correo-barra-compacta { display: none; align-items: center; gap: 4px; margin: 0 -28px; padding: 6px 28px; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.15)); }
+.correo-barra-compacta-ancla[data-visible="1"] .correo-barra-compacta { display: flex; }
+.correo-barra-compacta .avatar-circulo { width: 28px; height: 28px; font-size: 0.7em; flex-shrink: 0; }
+.correo-barra-compacta-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9em; }
+.correo-barra-compacta form { display: inline-flex; margin: 0; }
+@media (max-width: 640px) { .correo-barra-compacta-ancla { display: none; } }   /* en móvil se desplaza la página, no el panel: no hay barra compacta */
+
+/* El relleno del panel de lectura pasa a un contenedor interior, para que la barra compacta pegada arriba quede a ras del borde del panel */
+.correo-lectura-pane { padding: 0; }
+.correo-lectura-interior { display: flex; flex-direction: column; flex: 1; padding: 20px 28px; }
+.correo-lectura-pane > .correo-lectura-vacio { margin: 20px 28px; }
+@media (max-width: 640px) { .correo-lectura-interior { padding: 12px; } .correo-shell.con-mensaje .correo-lectura-pane { padding: 0; } }

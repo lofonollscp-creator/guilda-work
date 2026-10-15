@@ -12401,3 +12401,9 @@ msgstr "Réinitialiser"
 
 msgid "Nombre, logo y color propios para tu equipo."
 msgstr "Nom, logo et couleur propres à votre équipe."
+
+msgid "Acciones del mensaje"
+msgstr "Actions du message"
+
+msgid "Volver arriba"
+msgstr "Retour en haut"

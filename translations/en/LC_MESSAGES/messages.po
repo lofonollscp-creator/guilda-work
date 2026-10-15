@@ -12316,3 +12316,9 @@ msgstr "Reset"
 
 msgid "Nombre, logo y color propios para tu equipo."
 msgstr "Your own name, logo and colour for your team."
+
+msgid "Acciones del mensaje"
+msgstr "Message actions"
+
+msgid "Volver arriba"
+msgstr "Back to top"

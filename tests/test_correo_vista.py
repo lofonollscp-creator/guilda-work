@@ -87,5 +87,17 @@ def test_el_mensaje_agrupa_cabecera_y_acciones_y_el_iframe_ajusta_su_altura_sin_
     uid, cuenta = _usuario(cliente, "vista-fija@ejemplo.com")
     m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html="<p>Hola</p>")
     html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
-    assert 'class="correo-lectura-fija"' in html and html.index("correo-lectura-fija") < html.index("correo-ribbon") < html.index("correo-lectura-asunto")
+    assert 'class="correo-lectura-fija"' in html and html.index('class="correo-lectura-fija"') < html.index('class="correo-ribbon"') < html.index('class="correo-lectura-asunto"')
     assert 'sandbox="allow-same-origin"' in html and "allow-scripts" not in html.split("<iframe", 1)[1].split(">", 1)[0] and "data-autoaltura" in html
+
+
+def test_el_mensaje_lleva_una_barra_compacta_con_las_acciones_principales(cliente):
+    uid, cuenta = _usuario(cliente, "vista-comp@ejemplo.com")
+    db.guardar_carpetas_correo(cuenta, [("INBOX", "Bandeja de entrada"), ("Archive", "Archivo")])
+    m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Consulta IVA", remitente="Ana <a@b.com>", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html=None)
+    html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
+    barra = html.split('id="correo-barra-compacta"', 1)[1].split('class="correo-lectura-fija"', 1)[0]
+    for ruta in (f"/correo/{m}/responder", f"/correo/{m}/responder-a-todos", f"/correo/{m}/reenviar", f"/correo/{m}/archivar", f"/correo/{m}/eliminar"):
+        assert ruta in barra, ruta
+    assert "Consulta IVA" in barra and "data-subir-al-inicio" in barra and "correo_barra_compacta.js" in html
+    assert 'class="correo-lectura-interior"' in html

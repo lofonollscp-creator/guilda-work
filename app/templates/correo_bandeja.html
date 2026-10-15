@@ -193,7 +193,24 @@
   <div class="correo-divisor" id="correo-divisor" role="separator" aria-orientation="vertical" tabindex="0" title="{{ _('Arrastra para cambiar el ancho de la lista') }}"></div>
   <section class="correo-lectura-pane">
     {% if mensaje_seleccionado %}
+    <div class="correo-lectura-interior">
     {% set cat_actual = categorias_por_id.get(mensaje_seleccionado.categoria_id) %}
+    {# Barra compacta: aparece pegada arriba solo cuando se ha desplazado el mensaje más allá de su cabecera (static/correo_barra_compacta.js). No ocupa sitio en el flujo. #}
+    <div class="correo-barra-compacta-ancla" id="correo-barra-compacta" data-visible="0">
+      <div class="correo-barra-compacta" role="toolbar" aria-label="{{ _('Acciones del mensaje') }}">
+        <span class="avatar-circulo" style="--avatar-color: {{ mensaje_seleccionado.remitente|avatar_color }};">{{ mensaje_seleccionado.remitente|iniciales }}</span>
+        <span class="correo-barra-compacta-texto"><strong>{{ mensaje_seleccionado.remitente or _('(desconocido)') }}</strong> <span class="muted">{{ mensaje_seleccionado.asunto or _('(sin asunto)') }}</span></span>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder', mensaje_id=mensaje_seleccionado.id) }}" title="{{ _('Responder') }}" aria-label="{{ _('Responder') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-reply"></use></svg></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.responder_a_todos', mensaje_id=mensaje_seleccionado.id) }}" title="{{ _('Responder a todos') }}" aria-label="{{ _('Responder a todos') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-reply-all"></use></svg></a>
+        <a class="correo-ribbon-btn" href="{{ url_for('correo.reenviar', mensaje_id=mensaje_seleccionado.id) }}" title="{{ _('Reenviar') }}" aria-label="{{ _('Reenviar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-forward"></use></svg></a>
+        {% if carpetas|length > 1 %}
+        <form action="{{ url_for('correo.archivar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"><button type="submit" class="correo-ribbon-btn" title="{{ _('Archivar (e)') }}" aria-label="{{ _('Archivar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-folder"></use></svg></button></form>
+        {% endif %}
+        <form action="{{ url_for('correo.eliminar_mensaje', mensaje_id=mensaje_seleccionado.id) }}" method="post"
+              data-confirmar-envio="{{ _('¿Eliminar este mensaje de la caché local? No se puede deshacer (si sigue en el servidor, una futura sincronización lo volverá a traer).') }}"><button type="submit" class="correo-ribbon-btn" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg></button></form>
+        <button type="button" class="correo-ribbon-btn" data-subir-al-inicio title="{{ _('Volver arriba') }}" aria-label="{{ _('Volver arriba') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-up"></use></svg></button>
+      </div>
+    </div>
     <div class="correo-lectura-fija">
     <div class="correo-lectura-header">
       <a class="correo-lectura-volver"
@@ -551,6 +568,7 @@
       </div>
     </form>
     {% endif %}
+    </div>
     {% else %}
     <div class="correo-lectura-vacio">
       <svg class="correo-lectura-vacio-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
@@ -565,4 +583,5 @@
 <script src="{{ url_for('static', filename='correo_atajos.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_ancho.js') }}"></script>
 <script src="{{ url_for('static', filename='correo_arrastrar.js') }}"></script>
+<script src="{{ url_for('static', filename='correo_barra_compacta.js') }}"></script>
 {% endblock %}

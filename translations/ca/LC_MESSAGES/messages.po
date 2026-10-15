@@ -12325,3 +12325,9 @@ msgstr "Restableix"
 
 msgid "Nombre, logo y color propios para tu equipo."
 msgstr "Nom, logotip i color propis per al teu equip."
+
+msgid "Acciones del mensaje"
+msgstr "Accions del missatge"
+
+msgid "Volver arriba"
+msgstr "Torna a dalt"
