@@ -81,3 +81,11 @@ def test_el_movil_distingue_lista_y_mensaje_y_siempre_hay_volver(cliente):
     import re
     abrir = lambda h: re.search(r'<div class="correo-shell[^"]*"', h).group(0)
     assert "con-mensaje" not in abrir(sin) and "con-mensaje" in abrir(con) and 'class="correo-lectura-volver"' in con
+
+
+def test_el_mensaje_lleva_cabecera_fija_y_el_iframe_ajusta_su_altura_sin_scripts(cliente):
+    uid, cuenta = _usuario(cliente, "vista-fija@ejemplo.com")
+    m = db.guardar_mensaje_correo(cuenta_id=cuenta, uid="1", asunto="Hola", remitente="a@b.com", destinatarios="yo@ejemplo.com", fecha=None, cuerpo_texto="x", cuerpo_html="<p>Hola</p>")
+    html = cliente.get(f"/correo/?cuenta_id={cuenta}&mensaje_id={m}").get_data(as_text=True)
+    assert 'class="correo-lectura-fija"' in html and html.index("correo-lectura-fija") < html.index("correo-ribbon") < html.index("correo-lectura-asunto")
+    assert 'sandbox="allow-same-origin"' in html and "allow-scripts" not in html.split("<iframe", 1)[1].split(">", 1)[0] and "data-autoaltura" in html

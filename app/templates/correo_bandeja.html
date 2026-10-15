@@ -194,6 +194,7 @@
   <section class="correo-lectura-pane">
     {% if mensaje_seleccionado %}
     {% set cat_actual = categorias_por_id.get(mensaje_seleccionado.categoria_id) %}
+    <div class="correo-lectura-fija">
     <div class="correo-lectura-header">
       <a class="correo-lectura-volver"
          href="{{ url_for('correo.bandeja', cuenta_id=cuenta_id, carpeta=carpeta, q=q or None, no_leidos=1 if solo_no_leidos else None, pospuestos=1 if incluir_pospuestos else None, **filtros_url) }}"
@@ -343,6 +344,7 @@
         </form>
       </div>
       {% endif %}
+    </div>
     </div>
 
     {% if aviso %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
@@ -532,7 +534,7 @@
     {% endif %}
     <div class="correo-lectura-cuerpo">
       {% if cuerpo_html_mostrado %}
-      <iframe class="correo-cuerpo-html" srcdoc="{{ cuerpo_html_mostrado|e }}" sandbox=""
+      <iframe class="correo-cuerpo-html" srcdoc="{{ cuerpo_html_mostrado|e }}" sandbox="allow-same-origin"
               data-autoaltura></iframe>
       {% elif mensaje_seleccionado.cuerpo_texto %}
       <div class="correo-cuerpo-texto">{{ mensaje_seleccionado.cuerpo_texto }}</div>

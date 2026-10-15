@@ -5117,3 +5117,23 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .correo-compose-acciones .btn { min-height: 44px; }
   .contactos-rejilla { grid-template-columns: 1fr; }
 }
+
+/* --- Correo: cada panel con su propio desplazamiento. La página no se mueve: la lista corre arriba/abajo y el mensaje queda con su cabecera y su barra de acciones fijas. --- */
+@media (min-width: 641px) {
+  .app-shell:has(.correo-shell) { height: 100vh; min-height: 0; overflow: hidden; }
+  .app-main:has(.correo-shell) { min-height: 0; overflow: hidden; }
+  .content:has(> .correo-shell) { min-height: 0; overflow: hidden; }
+  .correo-shell { min-height: 0; height: 100%; grid-template-rows: auto minmax(0, 1fr); overflow-x: auto; overflow-y: hidden; }
+  .correo-rail, .correo-lista-pane, .correo-lectura-pane { min-height: 0; }
+  .correo-lista-pane { overflow: hidden; }
+  .correo-lista-mensajes { min-height: 0; }
+  .correo-lectura-pane { overflow-y: auto; overscroll-behavior: contain; }
+  .correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) { grid-template-rows: auto minmax(180px, 38%) minmax(0, 1fr); }
+}
+.correo-lectura-fija { position: sticky; top: 0; z-index: 4; margin: -20px -28px 0; padding: 20px 28px 8px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.correo-lectura-fija .correo-ribbon { margin-top: 10px; }
+.correo-cuerpo-html { width: 100%; min-height: 200px; border: none; display: block; }
+@media (max-width: 640px) {
+  .correo-lectura-fija { top: 0; margin: -12px -12px 0; padding: 12px 12px 6px; }
+  .correo-cuerpo-html { min-height: 40vh; }
+}

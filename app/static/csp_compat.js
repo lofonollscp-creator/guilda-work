@@ -76,7 +76,10 @@
     try { iframe.style.height = (iframe.contentWindow.document.body.scrollHeight + 24) + "px"; } catch (err) { /* otro origen: se queda como está */ }
   }
   document.addEventListener("load", function (e) {
-    if (e.target && e.target.matches && e.target.matches("iframe[data-autoaltura]")) ajustar(e.target);
+    if (e.target && e.target.matches && e.target.matches("iframe[data-autoaltura]")) {
+      ajustar(e.target);
+      [400, 1500].forEach(function (ms) { setTimeout(function () { ajustar(e.target); }, ms); });      // las imágenes del correo llegan después y cambian el alto
+    }
   }, true);
   document.querySelectorAll("iframe[data-autoaltura]").forEach(function (f) { if (f.contentDocument && f.contentDocument.readyState === "complete") ajustar(f); });
 })();
