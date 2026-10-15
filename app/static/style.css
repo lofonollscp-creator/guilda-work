@@ -5093,6 +5093,11 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .correo-shell:not(.con-mensaje) .correo-lectura-pane { display: none; }
   .correo-shell:not(.con-mensaje) .correo-rail { grid-row: 2; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; max-height: none; padding: 8px; gap: 6px; align-items: center; }
   .correo-shell:not(.con-mensaje) .correo-rail .correo-carpeta-lista { display: flex; flex-direction: row; gap: 4px; }
+  .correo-shell:not(.con-mensaje) .correo-rail { padding: 6px 8px; align-self: start; }
+  .correo-shell:not(.con-mensaje) .correo-rail > *, .correo-shell:not(.con-mensaje) .correo-cuentas-lista > * { flex: 0 0 auto; white-space: nowrap; }
+  .correo-shell:not(.con-mensaje) .correo-cuentas-lista { display: flex; flex-direction: row; align-items: center; gap: 6px; }
+  .correo-shell:not(.con-mensaje) .correo-nuevo-btn { padding: 8px 12px; margin: 0; }
+  .correo-shell:not(.con-mensaje) .correo-cuenta-nombre { max-width: 9em; }
   .correo-shell:not(.con-mensaje) .correo-rail .correo-carpetas-gestion, .correo-shell:not(.con-mensaje) .correo-rail .correo-rail-ajustes { display: none; }
   .correo-shell:not(.con-mensaje) { grid-template-rows: auto auto 1fr; }
   .correo-shell:not(.con-mensaje) .correo-lista-pane { grid-row: 3; max-height: none; overflow-y: auto; }
@@ -5128,7 +5133,7 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .correo-lista-pane { overflow: hidden; }
   .correo-lista-mensajes { min-height: 0; }
   .correo-lectura-pane { overflow-y: auto; overscroll-behavior: contain; }
-  .correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) { grid-template-rows: auto minmax(180px, 38%) minmax(0, 1fr); }
+  .correo-shell[data-disposicion="inferior"]:not(.es-pantalla-completa) { grid-template-rows: auto minmax(320px, 50%) minmax(0, 1fr); }
 }
 /* La cabecera y la barra de acciones se desplazan con el mensaje (antes quedaban pegadas arriba y tapaban el texto). */
 .correo-lectura-fija { position: static; margin: 0; padding: 0 0 8px; }
@@ -5152,3 +5157,9 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-lectura-interior { display: flex; flex-direction: column; flex: 1; padding: 20px 28px; }
 .correo-lectura-pane > .correo-lectura-vacio { margin: 20px 28px; }
 @media (max-width: 640px) { .correo-lectura-interior { padding: 12px; } .correo-shell.con-mensaje .correo-lectura-pane { padding: 0; } }
+
+/* Redactar: la nota y la lista de adjuntos van en su propia línea (en la misma fila aplastaban el botón «Elegir archivos») */
+.correo-compose-adjuntos { flex-wrap: wrap; }
+.correo-compose-adjuntos .file-input { flex-shrink: 0; }
+.correo-compose-adjuntos > p, .correo-compose-adjuntos > ul { flex: 1 1 100%; margin: 4px 0 0; }
+.correo-compose-campo label.file-input-boton { width: auto; font-size: inherit; color: var(--text); }
