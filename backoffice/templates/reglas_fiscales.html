@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}Reglas fiscales{% endblock %}
+{% macro resumen(r) -%}
+  {%- if r.tipo == 'trimestral' -%}{% for t in ('1', '2', '3', '4') %}T{{ t }}: {{ r.fechas[t][1] }}/{{ r.fechas[t][0] }}{{ ' · ' if not loop.last }}{% endfor %}
+  {%- else -%}{{ r.fechas.dia }}/{{ r.fechas.mes }} {{ 'del año siguiente al periodo' if r.fechas.anio_siguiente else 'del mismo año del periodo' }}{%- endif -%}
+  {{ '' if r.activa else ' · RETIRADO del catálogo' }}
+{%- endmacro %}
+{% macro campos(tipo, base) -%}
+  {% if tipo == 'trimestral' %}
+    {% for t in (1, 2, 3, 4) %}
+    <label>T{{ t }} · mes<input type="number" name="m{{ t }}" min="1" max="12" required value="{{ base.fechas[t|string][0] if base else '' }}"></label>
+    <label>día<input type="number" name="d{{ t }}" min="1" max="31" required value="{{ base.fechas[t|string][1] if base else '' }}"></label>
+    {% endfor %}
+    <p class="muted">El plazo del T4 cae en el año siguiente al periodo, como siempre.</p>
+  {% else %}
+    <label>Mes<input type="number" name="mes" min="1" max="12" required value="{{ base.fechas.mes if base else '' }}"></label>
+    <label>Día<input type="number" name="dia" min="1" max="31" required value="{{ base.fechas.dia if base else '' }}"></label>
+    <label class="casilla"><input type="checkbox" name="anio_siguiente" value="1" {{ 'checked' if base and base.fechas.anio_siguiente }}> Vence en el año siguiente al periodo</label>
+  {% endif %}
+{%- endmacro %}
+{% block contenido %}
+<header class="cabecera"><h1>Reglas fiscales</h1>
+  <p class="muted">Qué modelos hay en cada país y cuándo vencen, para los clientes de todos los despachos. Al arrancar se cargaron los valores que ya usaba la aplicación como versión 1, así que <strong>nada cambia hasta que edites algo</strong>. Al guardar se crea una versión nueva <strong>sin aprobar</strong>; mientras no la apruebes sigue valiendo la vigente. Una regla nueva solo afecta a los vencimientos que se generen después: los ya generados conservan su fecha.</p></header>
+{% if error %}<p class="aviso-error" role="alert">{{ error }}</p>{% endif %}
+
+{% for r in reglas %}
+{% set base = r.borrador or r.vigente %}
+<section class="tarjeta" id="{{ r.pais }}-{{ r.modelo }}"><h2>{{ r.pais }} · {{ r.modelo }} — {{ base.nombre }}
+  {% if r.vigente %}<span class="insignia">Vigente · v{{ r.vigente.version }}</span>{% else %}<span class="insignia insignia-aviso">Sin aprobar</span>{% endif %}
+  {% if r.borrador %}<span class="insignia insignia-aviso">Borrador v{{ r.borrador.version }} pendiente</span>{% endif %}</h2>
+  <p class="muted">Tipo: {{ 'trimestral (cuatro plazos al año)' if r.tipo == 'trimestral' else 'anual (un plazo al año)' }}.</p>
+  {% if r.vigente %}<p><strong>Aplicada hoy:</strong> {{ resumen(r.vigente) }} <span class="muted">· aprobada por {{ r.vigente.aprobada_por }}{% if r.vigente.aprobada_en %} el {{ r.vigente.aprobada_en|fecha }}{% endif %}</span></p>{% endif %}
+  {% if r.borrador %}
+  <p><strong>Borrador:</strong> {{ resumen(r.borrador) }} <span class="muted">· guardado por {{ r.borrador.creada_por }}</span>{% if r.borrador.nota %}<br><span class="muted">{{ r.borrador.nota }}</span>{% endif %}</p>
+  <form method="post" action="{{ url_for('rutas.reglas_fiscales_aprobar', pais=r.pais, modelo=r.modelo, version=r.borrador.version) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="boton boton-primario">Aprobar el borrador v{{ r.borrador.version }}</button>
+  </form>
+  {% endif %}
+  <form method="post" action="{{ url_for('rutas.reglas_fiscales_guardar') }}" class="formulario">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="pais" value="{{ r.pais }}"><input type="hidden" name="modelo" value="{{ r.modelo }}"><input type="hidden" name="tipo" value="{{ r.tipo }}">
+    <label>Nombre<input type="text" name="nombre" required maxlength="120" value="{{ base.nombre }}"></label>
+    <div class="fila-campos">{{ campos(r.tipo, base) }}</div>
+    <label class="casilla"><input type="checkbox" name="activa" value="1" {{ 'checked' if base.activa }}> Modelo en uso (si lo desmarcas y apruebas, deja de ofrecerse; los vencimientos ya creados no se tocan)</label>
+    <label>Nota (de dónde sale la fecha, opcional)<input type="text" name="nota" maxlength="500" value="{{ r.borrador.nota if r.borrador and r.borrador.nota else '' }}"></label>
+    <div><button type="submit" class="boton">Guardar como borrador</button></div>
+  </form>
+  {% if r.historial %}<details><summary class="muted">Versiones anteriores ({{ r.historial|length }})</summary>
+    <ul>{% for h in r.historial %}<li>v{{ h.version }}: {{ resumen(h) }} <span class="muted">· {{ 'aprobada por ' ~ h.aprobada_por if h.aprobada else 'borrador descartado' }}</span></li>{% endfor %}</ul></details>{% endif %}
+</section>
+{% endfor %}
+
+<section class="tarjeta"><h2>Añadir un modelo</h2>
+  <form method="post" action="{{ url_for('rutas.reglas_fiscales_guardar') }}" class="formulario">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="fila-campos">
+      <label>País (2 letras)<input type="text" name="pais" required maxlength="3" value="ES"></label>
+      <label>Código del modelo<input type="text" name="modelo" required maxlength="12" placeholder="p. ej. 349"></label>
+      <label>Tipo<select name="tipo"><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></label>
+    </div>
+    <label>Nombre<input type="text" name="nombre" required maxlength="120"></label>
+    <p class="muted">Para un modelo <strong>trimestral</strong> rellena los cuatro plazos; para uno <strong>anual</strong>, mes y día (y marca si cae en el año siguiente). Los campos que no apliquen déjalos vacíos.</p>
+    <div class="fila-campos">
+      {% for t in (1, 2, 3, 4) %}<label>T{{ t }} mes<input type="number" name="m{{ t }}" min="1" max="12"></label><label>día<input type="number" name="d{{ t }}" min="1" max="31"></label>{% endfor %}
+    </div>
+    <div class="fila-campos">
+      <label>Anual · mes<input type="number" name="mes" min="1" max="12"></label><label>día<input type="number" name="dia" min="1" max="31"></label>
+      <label class="casilla"><input type="checkbox" name="anio_siguiente" value="1"> Año siguiente al periodo</label>
+    </div>
+    <input type="hidden" name="activa" value="1">
+    <label>Nota (opcional)<input type="text" name="nota" maxlength="500"></label>
+    <div><button type="submit" class="boton">Guardar como borrador</button></div>
+  </form>
+</section>
+{% endblock %}

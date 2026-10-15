@@ -36,3 +36,40 @@ def reglas_laborales_aprobar(clave: str, version: int):
         return redirect(url_for("rutas.reglas_laborales_vista", error=str(e)))
     flash("Regla aprobada: desde ahora los despachos la aplican.")
     return redirect(url_for("rutas.reglas_laborales_vista") + f"#{clave}")
+
+
+# --- Reglas fiscales (catálogo global de modelos y fechas) ----------------------------------------------------------------------------------------
+
+from app import reglas_fiscales  # noqa: E402
+
+
+@bp.route("/reglas-fiscales")
+@auth.login_required
+def reglas_fiscales_vista():
+    return render_template("reglas_fiscales.html", reglas=reglas_fiscales.estado_de_todos(), error=request.args.get("error"))
+
+
+@bp.route("/reglas-fiscales/guardar", methods=["POST"])
+@auth.login_required
+def reglas_fiscales_guardar():
+    datos = request.form.to_dict()
+    pais, modelo, tipo = datos.pop("pais", ""), datos.pop("modelo", ""), datos.pop("tipo", "")
+    activa = datos.pop("activa", "") == "1"
+    nota = datos.pop("nota", "")
+    try:
+        reglas_fiscales.guardar_borrador(pais, modelo, tipo, g.admin["usuario"], activa=activa, nota=nota, **{k: v for k, v in datos.items() if k != "_csrf"})
+    except ValueError as e:
+        return redirect(url_for("rutas.reglas_fiscales_vista", error=str(e)))
+    flash("Borrador guardado: todavía no está aprobado, así que no se aplica.")
+    return redirect(url_for("rutas.reglas_fiscales_vista") + f"#{pais.upper()}-{modelo.upper()}")
+
+
+@bp.route("/reglas-fiscales/<pais>/<modelo>/<int:version>/aprobar", methods=["POST"])
+@auth.login_required
+def reglas_fiscales_aprobar(pais: str, modelo: str, version: int):
+    try:
+        reglas_fiscales.aprobar(pais, modelo, version, g.admin["usuario"])
+    except ValueError as e:
+        return redirect(url_for("rutas.reglas_fiscales_vista", error=str(e)))
+    flash("Regla aprobada: los vencimientos que se generen a partir de ahora la usan. Los ya generados conservan su fecha.")
+    return redirect(url_for("rutas.reglas_fiscales_vista") + f"#{pais}-{modelo}")

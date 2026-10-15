@@ -2214,6 +2214,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import reglas_fiscales
+        reglas_fiscales.crear_esquema(conn)     # catálogo global de reglas fiscales, sembrado con los valores del código (app/reglas_fiscales.py)
         from . import marca
         marca.crear_esquema(conn)               # marca del despacho: nombre, logo y color (app/marca.py)
         from . import contactos

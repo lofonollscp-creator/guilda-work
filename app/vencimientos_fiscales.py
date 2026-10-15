@@ -59,10 +59,38 @@ MODELOS_POR_PAIS = {
 }
 
 
+_PROVEEDOR = None
+
+
+def registrar_proveedor(funcion) -> None:
+    """Pone la fuente del calendario: una función `pais -> dict | None` (app/reglas_fiscales.py lee el catálogo aprobado de la base de datos). Este módulo sigue sin importar la base de
+    datos; sin proveedor, o si devuelve None, se usan los valores de `MODELOS_POR_PAIS`."""
+    global _PROVEEDOR
+    _PROVEEDOR = funcion
+
+
+_PROVEEDOR_INTENTADO = False
+
+
+def _calendario(pais: str) -> dict | None:
+    global _PROVEEDOR_INTENTADO
+    if _PROVEEDOR is None and not _PROVEEDOR_INTENTADO:
+        _PROVEEDOR_INTENTADO = True
+        try:
+            from . import reglas_fiscales  # noqa: F401 -- al importarse se registra como proveedor (así también lo usan el MCP y los scripts, que no pasan por el arranque de la web)
+        except Exception:  # noqa: BLE001
+            pass
+    if _PROVEEDOR is not None:
+        datos = _PROVEEDOR(pais)
+        if datos is not None:
+            return datos
+    return MODELOS_POR_PAIS.get(pais)
+
+
 def modelos_disponibles(pais: str) -> dict:
     """`{modelo: {...}}` (trimestrales + anuales fusionados) para `pais`, o
     `{}` si no hay ningún calendario configurado para ese país todavía."""
-    datos = MODELOS_POR_PAIS.get(pais)
+    datos = _calendario(pais)
     if not datos:
         return {}
     return {**datos["trimestrales"], **datos["anuales"]}
@@ -75,7 +103,7 @@ def generar_vencimientos_propuestos(modelos: list[str], anio: int, pais: str = "
     filas (una por trimestre); cada anual genera 1. `modelos` con un valor
     no reconocido (o `pais` sin calendario configurado) se ignora
     silenciosamente (validar en la ruta antes de llamar, no aquí)."""
-    datos = MODELOS_POR_PAIS.get(pais)
+    datos = _calendario(pais)
     if not datos:
         return []
     trimestrales, anuales = datos["trimestrales"], datos["anuales"]
