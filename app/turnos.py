@@ -35,6 +35,12 @@ CREATE TABLE IF NOT EXISTS turnos_asignados (
     UNIQUE (usuario_id, fecha)
 );
 CREATE INDEX IF NOT EXISTS idx_turnos_asignados_fecha ON turnos_asignados(tenant_id, fecha);
+CREATE TABLE IF NOT EXISTS fichaje_avisos_turno (
+    usuario_id INTEGER NOT NULL,
+    entrada_id INTEGER NOT NULL,
+    avisado_en TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, entrada_id)
+);
 """
 
 DIAS_CORTOS = ("lun", "mar", "mié", "jue", "vie", "sáb", "dom")

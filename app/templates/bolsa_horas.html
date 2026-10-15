@@ -21,11 +21,12 @@
 
 {% if mia.sin_jornada %}
 <div class="fichaje-aviso">
-  <p>{{ _('No tienes jornada semanal contratada indicada, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas.') }}</p>
+  <p>{{ _('No tienes jornada semanal contratada indicada ni turnos en este periodo, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas.') }}</p>
   <a class="btn btn-primary" href="{{ url_for('fichaje.mis_datos') }}">{{ _('Rellenar mis datos') }}</a>
 </div>
 {% endif %}
 
+{% if mia.dias_con_turno %}<p class="subtitle">{{ ngettext('«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este periodo.', '«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo.', mia.dias_con_turno, n=mia.dias_con_turno) }}</p>{% endif %}
 <section class="ausencias-saldo" aria-label="{{ _('Resumen') }}">
   {% if not mia.sin_jornada %}
   <div class="ausencias-cifra"><strong>{{ texto_horas(mia.saldo_seg, True) }}</strong><span>{{ _('saldo de la bolsa') }}</span></div>

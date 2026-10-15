@@ -735,6 +735,7 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
         conn.execute("DELETE FROM webhooks WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM fichaje_avisos WHERE entrada_id IN (SELECT id FROM fichajes WHERE tenant_id = ?)", (tenant_id,))
         conn.execute("DELETE FROM fichajes WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM fichaje_avisos_turno WHERE entrada_id IN (SELECT id FROM fichajes WHERE tenant_id = ?)", (tenant_id,))
         conn.execute("DELETE FROM tenants_extras_activos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM facturacion_accesos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants_herramientas_ocultas WHERE tenant_id = ?", (tenant_id,))

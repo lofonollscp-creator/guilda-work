@@ -3,16 +3,18 @@
     saldo = horas trabajadas (fichaje) + ajustes manuales − horas que tocaba trabajar
 
 - **Qué tocaba**: la jornada semanal contratada (Fichaje › Mis datos) repartida en los días laborables (lunes a viernes sin festivos, como los plazos).
+  Las semanas en las que la persona tiene **turnos asignados en el cuadrante** (app/turnos.py) mandan los turnos: cada día se espera la duración de su turno y los días sin turno de esa semana,
+  nada (también vale para quien trabaja fines de semana o noches). Las semanas sin cuadrante siguen con la jornada semanal. Sin jornada contratada pero con turnos, también hay bolsa.
   Los días con una **ausencia aprobada** (vacaciones, permiso, baja…) no se esperan; medio día, la mitad.
 - **Qué trabajó**: la misma medida que el resumen semanal del fichaje (entrada → salida, tal como se registró; sin tocar el registro horario).
 - **Ajustes**: quien gestiona el fichaje puede sumar o restar minutos con un motivo («Compensado con tarde libre», «Horas extra del cierre»), y se avisa a la persona.
 - Cuenta días completos: por defecto desde el 1 de enero (o su fecha de alta o su primer fichaje, si son posteriores) **hasta ayer**; el día en curso aún no ha terminado.
-- Sin jornada contratada no hay bolsa: se muestran las horas trabajadas y se pide rellenarla."""
+- Sin jornada contratada ni turnos no hay bolsa: se muestran las horas trabajadas y se pide rellenar la jornada."""
 from __future__ import annotations
 
 from datetime import date, timedelta
 
-from . import db, fichaje_export, nucleo
+from . import db, fichaje_export, nucleo, turnos
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS bolsa_horas_ajustes (
@@ -66,6 +68,21 @@ def _fechas_cubiertas(conn, usuario_id: int, desde: date, hasta: date) -> dict[s
     return res
 
 
+def _turnos_en(conn, usuario_id: int, desde: date, hasta: date) -> dict[str, float]:
+    """Día → horas del turno asignado ese día, para las semanas (lunes a domingo) en las que la persona tiene algún turno dentro del periodo; los días de esas semanas sin turno valen 0."""
+    asignados = {f["fecha"]: turnos.horas_del_turno(f["inicio"], f["fin"]) for f in conn.execute(
+        "SELECT a.fecha, t.inicio, t.fin FROM turnos_asignados a JOIN turnos_tipos t ON t.id = a.turno_id WHERE a.usuario_id = ? AND a.fecha >= ? AND a.fecha <= ?",
+        (usuario_id, desde.isoformat(), hasta.isoformat()))}
+    semanas = {turnos.lunes_de(date.fromisoformat(f)) for f in asignados}
+    res: dict[str, float] = {}
+    for lunes in semanas:
+        for i in range(7):
+            dia = lunes + timedelta(days=i)
+            if desde <= dia <= hasta:
+                res[dia.isoformat()] = asignados.get(dia.isoformat(), 0.0)
+    return res
+
+
 def _primer_fichaje(usuario_id: int) -> date | None:
     """El día del primer fichaje de la persona: antes de empezar a fichar no hay bolsa que contar (si no, quien empieza en octubre arrancaría con diez meses «en contra»)."""
     conn = db.get_connection()
@@ -92,7 +109,7 @@ def calcular(tenant_id: int, usuario_id: int, desde=None, hasta=None, hoy: date 
     if (h - d).days > MAX_DIAS:
         raise ValueError("Pide como mucho dos años de una vez.")
     vacia = {"usuario_id": usuario_id, "desde": d.isoformat(), "hasta": h.isoformat(), "jornada_semanal_horas": jornada, "sin_jornada": not jornada, "dias_laborables": 0,
-             "dias_justificados": 0.0, "esperado_seg": 0.0, "trabajado_seg": 0.0, "ajustes_seg": 0.0, "saldo_seg": 0.0 if jornada else None, "por_mes": []}
+             "dias_justificados": 0.0, "esperado_seg": 0.0, "trabajado_seg": 0.0, "ajustes_seg": 0.0, "saldo_seg": 0.0 if jornada else None, "por_mes": [], "dias_con_turno": 0}
     if h < d:
         return vacia
     cal = nucleo.calendario_del_despacho(tenant_id, "general", tuple(range(d.year, h.year + 1)))
@@ -100,9 +117,11 @@ def calcular(tenant_id: int, usuario_id: int, desde=None, hasta=None, hoy: date 
     conn = db.get_connection()
     try:
         cubiertas = _fechas_cubiertas(conn, usuario_id, d, h)
+        por_turno = _turnos_en(conn, usuario_id, d, h)
         ajustes = conn.execute("SELECT fecha, minutos FROM bolsa_horas_ajustes WHERE usuario_id = ? AND fecha >= ? AND fecha <= ?", (usuario_id, d.isoformat(), h.isoformat())).fetchall()
     finally:
         conn.close()
+    con_esperado = bool(jornada) or any(v > 0 for v in por_turno.values())
     meses: dict[str, dict] = {}
 
     def mes(clave: str) -> dict:
@@ -110,13 +129,20 @@ def calcular(tenant_id: int, usuario_id: int, desde=None, hasta=None, hoy: date 
     laborables, justificados, esperado = 0, 0.0, 0.0
     dia = d
     while dia <= h:
-        if cal.es_habil(dia):
+        clave = dia.isoformat()
+        if clave in por_turno:                       # semana con cuadrante: manda el turno de ese día
+            base = por_turno[clave] * 3600
+            cuenta = base > 0
+        else:
+            base = por_dia_seg
+            cuenta = cal.es_habil(dia)
+        if cuenta:
             laborables += 1
-            fraccion = cubiertas.get(dia.isoformat(), 0.0)
+            fraccion = cubiertas.get(clave, 0.0)
             justificados += fraccion
-            e = por_dia_seg * (1 - fraccion)
+            e = base * (1 - fraccion)
             esperado += e
-            mes(dia.isoformat()[:7])["esperado_seg"] += e
+            mes(clave[:7])["esperado_seg"] += e
         dia += timedelta(days=1)
     trabajado = 0.0
     for f in fichaje_export.filas_diarias(tenant_id, d.isoformat(), h.isoformat(), usuario_id):
@@ -128,9 +154,9 @@ def calcular(tenant_id: int, usuario_id: int, desde=None, hasta=None, hoy: date 
         adj += a["minutos"] * 60
         mes(a["fecha"][:7])["ajustes_seg"] += a["minutos"] * 60
     for m in meses.values():
-        m["saldo_seg"] = (m["trabajado_seg"] + m["ajustes_seg"] - m["esperado_seg"]) if jornada else None
-    vacia.update(dias_laborables=laborables, dias_justificados=justificados, esperado_seg=esperado, trabajado_seg=trabajado, ajustes_seg=adj,
-                 saldo_seg=(trabajado + adj - esperado) if jornada else None, por_mes=[meses[k] for k in sorted(meses)])
+        m["saldo_seg"] = (m["trabajado_seg"] + m["ajustes_seg"] - m["esperado_seg"]) if con_esperado else None
+    vacia.update(dias_laborables=laborables, dias_justificados=justificados, esperado_seg=esperado, trabajado_seg=trabajado, ajustes_seg=adj, sin_jornada=not con_esperado,
+                 saldo_seg=(trabajado + adj - esperado) if con_esperado else None, por_mes=[meses[k] for k in sorted(meses)], dias_con_turno=sum(1 for v in por_turno.values() if v > 0))
     return vacia
 
 

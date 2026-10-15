@@ -210,6 +210,34 @@ def jornadas_abiertas_sin_aviso(entrada_antes_de: str) -> list[sqlite3.Row]:
         conn.close()
 
 
+def jornadas_abiertas_desde(entrada_desde: str) -> list[sqlite3.Row]:
+    """Jornadas abiertas (el último evento de la persona no es una salida) cuya última entrada es de `entrada_desde` (ISO) en adelante, con su despacho."""
+    conn = _db.get_connection()
+    try:
+        return conn.execute(
+            """SELECT e.id AS entrada_id, e.usuario_id, e.tenant_id, e.marca_tiempo
+               FROM fichajes e
+               WHERE e.tipo = 'entrada'
+                 AND e.id = (SELECT MAX(id) FROM fichajes WHERE usuario_id = e.usuario_id AND tipo = 'entrada')
+                 AND (SELECT tipo FROM fichajes WHERE usuario_id = e.usuario_id ORDER BY id DESC LIMIT 1) != 'salida'
+                 AND e.marca_tiempo >= ?""",
+            (entrada_desde,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def registrar_aviso_turno(usuario_id: int, entrada_id: int) -> bool:
+    """True si es la primera vez que se avisa, por el turno, de esta jornada."""
+    conn = _db.get_connection()
+    try:
+        cur = conn.execute("INSERT OR IGNORE INTO fichaje_avisos_turno (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?)", (usuario_id, entrada_id, _db.now_iso()))
+        conn.commit()
+        return cur.rowcount == 1
+    finally:
+        conn.close()
+
+
 def registrar_aviso_fichaje(usuario_id: int, entrada_id: int) -> bool:
     """True si es la primera vez que se avisa de esta jornada."""
     conn = _db.get_connection()

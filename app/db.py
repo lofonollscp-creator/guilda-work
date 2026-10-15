@@ -3298,6 +3298,8 @@ from .db_fichaje import (  # noqa: E402,F401
     jornadas_abiertas_sin_aviso,
     registrar_aviso_fichaje,
     entrada_abierta_fichaje,
+    jornadas_abiertas_desde,
+    registrar_aviso_turno,
     ultimo_fichaje,
     listar_fichajes,
     fichajes_tenant_crudos,

@@ -267,3 +267,58 @@ def test_borrar_un_despacho_con_ausencias_turnos_y_bolsa_no_se_bloquea(eq):
             assert conn.execute(f"SELECT COUNT(*) FROM {tabla}").fetchone()[0] == 0, tabla
     finally:
         conn.close()
+
+
+# --- La bolsa sale del cuadrante cuando lo hay -----------------------------------------------------------------------------------------------------
+def _turno_directo(eq, usuario, dia: date, tipo_id: int):
+    conn = db.get_connection()
+    conn.execute("INSERT INTO turnos_asignados (tenant_id, usuario_id, fecha, turno_id, asignado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?)", (eq.t, usuario, iso(dia), tipo_id, eq.g, db.now_iso()))
+    conn.commit(); conn.close()
+
+
+def test_en_las_semanas_con_cuadrante_manda_el_turno_y_en_las_demas_la_jornada(eq):
+    db.guardar_fichaje_datos(eq.ana, nombre_completo="Ana", dni_nie="1X", jornada_semanal_horas=40)
+    manana = tu.crear_tipo(eq.t, eq.g, "Mañana", "08:00", "14:00")            # 6 h
+    _turno_directo(eq, eq.ana, LUN, manana); _turno_directo(eq, eq.ana, MIE, manana)           # semana del 16 al 22: solo lunes y miércoles
+    _ficha(eq.ana, eq.t, LUN, "08:00", "14:00"); _ficha(eq.ana, eq.t, MAR, "08:00", "10:00")
+    b = bh.calcular(eq.t, eq.ana, "2026-03-16", "2026-03-18", hoy=HOY)
+    assert b["dias_con_turno"] == 2 and b["dias_laborables"] == 2 and b["esperado_seg"] == 12 * 3600         # el martes, sin turno esa semana, no se espera
+    assert b["trabajado_seg"] == 8 * 3600 and b["saldo_seg"] == -4 * 3600
+    anterior = bh.calcular(eq.t, eq.ana, "2026-03-09", "2026-03-10", hoy=HOY)                             # semana sin cuadrante: 8 h por día laborable
+    assert anterior["esperado_seg"] == 16 * 3600 and anterior["dias_con_turno"] == 0
+
+
+def test_un_turno_de_noche_espera_sus_horas_y_una_ausencia_aprobada_libera_el_turno_de_ese_dia(eq):
+    db.guardar_fichaje_datos(eq.ana, nombre_completo="Ana", dni_nie="1X", jornada_semanal_horas=40)
+    noche = tu.crear_tipo(eq.t, eq.g, "Noche", "22:00", "06:00")           # 8 h, cruza la medianoche
+    _turno_directo(eq, eq.ana, MAR, noche); _turno_directo(eq, eq.ana, MIE, noche)
+    a = au.solicitar(eq.t, eq.ana, "permiso", iso(MIE)); au.resolver(eq.t, eq.g, a, True)
+    assert [x["fecha"] for x in tu.mis_turnos(eq.t, eq.ana, iso(MAR), iso(MIE))] == [iso(MAR)]          # aprobar la ausencia liberó el turno del miércoles
+    b = bh.calcular(eq.t, eq.ana, "2026-03-16", "2026-03-18", hoy=HOY)
+    assert b["esperado_seg"] == 8 * 3600 and b["dias_con_turno"] == 1             # solo el martes (8 h); el miércoles, ausente, no se espera
+
+
+def test_un_turno_en_fin_de_semana_tambien_se_espera(eq):
+    db.guardar_fichaje_datos(eq.ana, nombre_completo="Ana", dni_nie="1X", jornada_semanal_horas=20)
+    tarde = tu.crear_tipo(eq.t, eq.g, "Tarde", "15:00", "21:00")
+    sabado = LUN + timedelta(days=5)
+    _turno_directo(eq, eq.ana, sabado, tarde)
+    b = bh.calcular(eq.t, eq.ana, iso(sabado), iso(sabado), hoy=sabado + timedelta(days=2))
+    assert b["esperado_seg"] == 6 * 3600 and b["dias_laborables"] == 1
+
+
+def test_sin_jornada_pero_con_turnos_si_hay_bolsa(eq):
+    manana = tu.crear_tipo(eq.t, eq.g, "Mañana", "08:00", "14:00")
+    _turno_directo(eq, eq.ana, LUN, manana)
+    _ficha(eq.ana, eq.t, LUN, "08:00", "15:00")
+    b = bh.calcular(eq.t, eq.ana, "2026-03-16", "2026-03-16", hoy=HOY)
+    assert b["sin_jornada"] is False and b["saldo_seg"] == 3600 and b["esperado_seg"] == 6 * 3600
+    sin_nada = bh.calcular(eq.t, eq.beto, "2026-03-16", "2026-03-16", hoy=HOY)
+    assert sin_nada["sin_jornada"] is True and sin_nada["saldo_seg"] is None
+
+
+def test_los_turnos_de_otra_persona_no_cuentan(eq):
+    db.guardar_fichaje_datos(eq.beto, nombre_completo="Beto", dni_nie="2X", jornada_semanal_horas=40)
+    manana = tu.crear_tipo(eq.t, eq.g, "Mañana", "08:00", "14:00")
+    _turno_directo(eq, eq.ana, LUN, manana)
+    assert bh.calcular(eq.t, eq.beto, "2026-03-16", "2026-03-16", hoy=HOY)["esperado_seg"] == 8 * 3600

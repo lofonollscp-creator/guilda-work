@@ -12385,3 +12385,11 @@ msgstr "It queries the issuer, OCSP and the revocation list that the certificate
 
 msgid "Comprobación hecha: mira el resultado en la tabla de estado."
 msgstr "Check done: see the result in the status table."
+
+msgid "No tienes jornada semanal contratada indicada ni turnos en este periodo, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas."
+msgstr "You have no weekly contract hours and no shifts in this period, so the hours bank cannot be calculated. Only the hours worked are shown."
+
+msgid "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este periodo."
+msgid_plural "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo."
+msgstr[0] "“Expected hours” come from the shift roster on %(n)s day of this period."
+msgstr[1] "“Expected hours” come from the shift roster on %(n)s days of this period."

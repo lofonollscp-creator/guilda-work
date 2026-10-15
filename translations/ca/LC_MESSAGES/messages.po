@@ -12394,3 +12394,11 @@ msgstr "Consulta l'emissor, l'OCSP i la llista de revocació que publica el mate
 
 msgid "Comprobación hecha: mira el resultado en la tabla de estado."
 msgstr "Comprovació feta: mira el resultat a la taula d'estat."
+
+msgid "No tienes jornada semanal contratada indicada ni turnos en este periodo, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas."
+msgstr "No tens jornada setmanal contractada indicada ni torns en aquest període, així que no es pot calcular la borsa. Només es mostren les hores treballades."
+
+msgid "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este periodo."
+msgid_plural "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo."
+msgstr[0] "«Tocava treballar» surt del quadrant de torns en %(n)s dia d'aquest període."
+msgstr[1] "«Tocava treballar» surt del quadrant de torns en %(n)s dies d'aquest període."

@@ -12470,3 +12470,11 @@ msgstr "Interroge l'émetteur, l'OCSP et la liste de révocation que publie le c
 
 msgid "Comprobación hecha: mira el resultado en la tabla de estado."
 msgstr "Vérification faite : voyez le résultat dans le tableau d'état."
+
+msgid "No tienes jornada semanal contratada indicada ni turnos en este periodo, así que no se puede calcular la bolsa. Se muestran solo las horas trabajadas."
+msgstr "Vous n'avez ni horaire hebdomadaire contractuel ni équipes sur cette période : la banque d'heures ne peut pas être calculée. Seules les heures travaillées sont affichées."
+
+msgid "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s día de este periodo."
+msgid_plural "«Tocaba trabajar» sale del cuadrante de turnos en %(n)s días de este periodo."
+msgstr[0] "Les « heures attendues » viennent du planning d'équipes sur %(n)s jour de cette période."
+msgstr[1] "Les « heures attendues » viennent du planning d'équipes sur %(n)s jours de cette période."

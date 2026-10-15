@@ -2401,6 +2401,7 @@ def _avisos_fichaje_servidor():
     while True:
         try:
             fichaje_avisos.procesar_avisos()
+            fichaje_avisos.procesar_avisos_turno()
             salud.registrar_ok("avisos_fichaje", AVISOS_FICHAJE_INTERVALO_MINUTOS * 60)
         except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en los avisos de fichaje")
