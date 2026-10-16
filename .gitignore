@@ -28,3 +28,9 @@ deploy/documenso/*.pem
 docker-compose.override.yml
 CREDENCIALES_LOCAL.md
 .herramientas-test/
+
+# Secretos y copias de datos: nunca al repositorio (la clave de sesión del backoffice y las copias de la base se subieron por error el 12/10)
+data/backoffice_secret.key
+data/*.key
+data/registro.db.bak*
+data/*.bak*
