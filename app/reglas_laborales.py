@@ -186,3 +186,36 @@ def aprobar(clave: str, version: int, admin: str) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+# --- Propuesta inicial (siempre como borrador) ------------------------------------------------------------------------------------------------------------
+# Valores habituales para que quien aprueba no parta de un formulario en blanco. NUNCA se aprueban solos: son un borrador con la regla escrita en la nota, y las fechas legales las valida el propietario
+# (los plazos cambian por orden ministerial y por convenio). Hasta que se aprueban, ningún despacho genera nada de ellas.
+PROPUESTAS: dict[str, dict] = {
+    "tc": {"dia": 31, "mes_siguiente": 1,
+           "nota": "Propuesta a verificar: las cuotas de un mes se ingresan hasta el último día natural del mes siguiente (liquidación ordinaria, Sistema RED). Día 31; los meses más cortos usan su último día."},
+    "m190": {"dia": 31, "mes": 1, "anio_siguiente": 1,
+             "nota": "Propuesta a verificar: resumen anual de retenciones e ingresos a cuenta, del 1 al 31 de enero del año siguiente al ejercicio."},
+    "alta_ss": {"plazo": -1, "unidad": "naturales",
+                "nota": "Propuesta a verificar: el alta se solicita antes del inicio de la prestación (con hasta 60 días naturales de antelación). Se avisa 1 día natural antes del inicio."},
+    "baja_ss": {"plazo": 3, "unidad": "naturales",
+                "nota": "Propuesta a verificar: la baja se comunica dentro de los 3 días naturales siguientes al cese."},
+    "contrato": {"plazo": 10, "unidad": "habiles",
+                 "nota": "Propuesta a verificar: el contrato se comunica a los Servicios Públicos de Empleo dentro de los 10 días hábiles siguientes a su concertación."},
+}
+
+
+def cargar_propuestas(admin: str) -> list[str]:
+    """Crea como BORRADOR la propuesta inicial de cada regla que aún no tiene ninguna versión (ni borrador ni aprobada). No toca lo que ya existe y nunca aprueba. Devuelve las claves cargadas."""
+    conn = db.get_connection()
+    try:
+        con_versiones = {f[0] for f in conn.execute("SELECT DISTINCT clave FROM reglas_laborales")}
+    finally:
+        conn.close()
+    cargadas = []
+    for clave, propuesta in PROPUESTAS.items():
+        if clave in con_versiones:
+            continue
+        guardar_borrador(clave, admin, **propuesta)
+        cargadas.append(clave)
+    return cargadas

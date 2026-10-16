@@ -13,7 +13,15 @@ from .rutas import bp
 @bp.route("/reglas-laborales")
 @auth.login_required
 def reglas_laborales_vista():
-    return render_template("reglas_laborales.html", reglas=reglas_laborales.estado_de_todas(), unidades=reglas_laborales.UNIDADES, error=request.args.get("error"))
+    return render_template("reglas_laborales.html", reglas=reglas_laborales.estado_de_todas(), unidades=reglas_laborales.UNIDADES, error=request.args.get("error"), hay_vacias=any(r["vigente"] is None and r["borrador"] is None for r in reglas_laborales.estado_de_todas()))
+
+
+@bp.route("/reglas-laborales/cargar-propuestas", methods=["POST"])
+@auth.login_required
+def reglas_laborales_cargar_propuestas():
+    cargadas = reglas_laborales.cargar_propuestas(g.admin["usuario"])
+    flash(f"Cargados {len(cargadas)} borradores con valores habituales: revísalos y apruébalos uno a uno." if cargadas else "No había nada que cargar: todas las reglas ya tienen alguna versión.")
+    return redirect(url_for("rutas.reglas_laborales_vista"))
 
 
 @bp.route("/reglas-laborales/<clave>", methods=["POST"])

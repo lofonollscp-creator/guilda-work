@@ -3,12 +3,18 @@
 {% macro resumen(r) -%}
   {%- if r.tipo == 'mensual' -%}día {{ r.dia }} {{ 'del mes siguiente al periodo' if r.mes_siguiente else 'del mismo mes del periodo' }}
   {%- elif r.tipo == 'anual' -%}{{ r.dia }}/{{ r.mes }} {{ 'del año siguiente al periodo' if r.anio_siguiente else 'del mismo año del periodo' }}
-  {%- else -%}{{ r.plazo }} {{ {'habiles': 'días hábiles', 'naturales': 'días naturales', 'meses': 'meses'}[r.unidad] }} {{ 'antes del hecho' if r.plazo < 0 else 'después del hecho' }}{%- endif -%}
+  {%- else -%}{% set n = r.plazo|abs %}{{ n }} {{ ({'habiles': ('día hábil', 'días hábiles'), 'naturales': ('día natural', 'días naturales'), 'meses': ('mes', 'meses')}[r.unidad])[0 if n == 1 else 1] }} {{ 'antes del hecho' if r.plazo < 0 else 'después del hecho' }}{%- endif -%}
 {%- endmacro %}
 {% block contenido %}
 <header class="cabecera"><h1>Reglas laborales</h1>
   <p class="muted">Cuándo vencen las obligaciones laborales de los clientes de todos los despachos. <strong>No hay ninguna fecha cargada por defecto:</strong> una regla sin aprobar no genera nada. Al guardar se crea un borrador; solo se aplica cuando lo apruebas, y la versión anterior sigue vigente hasta entonces. Todo queda en la auditoría.</p></header>
 {% if error %}<p class="aviso-error" role="alert">{{ error }}</p>{% endif %}
+{% if hay_vacias %}
+<section class="cabecera-fila" id="propuesta-inicial">
+  <p class="muted">¿Empiezas de cero? Puedes cargar valores habituales (TC hasta el último día del mes siguiente, 190 el 31 de enero, baja a 3 días naturales, contrato a 10 días hábiles…) <strong>solo como borrador</strong>: cada uno trae en la nota la regla en la que se basa, y no se aplica hasta que lo revises y lo apruebes tú. Las reglas que ya tengan alguna versión no se tocan.</p>
+  <form method="post" action="{{ url_for('rutas.reglas_laborales_cargar_propuestas') }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Cargar valores habituales como borrador</button></form>
+</section>
+{% endif %}
 
 {% for r in reglas %}
 {% set base = r.borrador or r.vigente %}

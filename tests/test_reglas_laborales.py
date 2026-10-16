@@ -132,3 +132,52 @@ def test_sin_token_csrf_no_se_puede_guardar(bo):
     entrar(bo)
     assert bo.post("/reglas-laborales/tc", data={"dia": "9"}).status_code in (400, 403)
     assert rl.estado_de_todas()[0]["borrador"] is None
+
+
+# --- Propuesta inicial como borrador -----------------------------------------------------------------------------------------------------------------
+
+def test_las_propuestas_son_validas_y_cubren_todas_las_reglas():
+    assert set(rl.PROPUESTAS) == set(rl.CLAVES)
+    for clave, p in rl.PROPUESTAS.items():
+        rl.validar(clave, p)
+        assert p["nota"].startswith("Propuesta a verificar")
+
+
+def test_cargar_las_propuestas_crea_borradores_y_no_aprueba_nada():
+    assert sorted(rl.cargar_propuestas("jorge")) == sorted(rl.CLAVES)
+    assert rl.vigentes() == {}, "ninguna regla queda aprobada: no se genera nada hasta que el propietario las apruebe"
+    for r in rl.estado_de_todas():
+        assert r["vigente"] is None and r["borrador"] is not None and r["borrador"]["version"] == 1 and r["borrador"]["nota"].startswith("Propuesta a verificar")
+    tc = next(r for r in rl.estado_de_todas() if r["clave"] == "tc")["borrador"]
+    assert (tc["dia"], tc["mes_siguiente"]) == (31, 1)
+
+
+def test_cargar_de_nuevo_no_pisa_nada():
+    rl.cargar_propuestas("jorge")
+    rl.guardar_borrador("tc", "jorge", dia=9, mes_siguiente=1, nota="mi valor")
+    rl.aprobar("m190", 1, "jorge")
+    assert rl.cargar_propuestas("jorge") == []
+    assert next(r for r in rl.estado_de_todas() if r["clave"] == "tc")["borrador"]["dia"] == 9
+    assert rl.vigente("m190")["version"] == 1
+
+
+def test_solo_se_cargan_las_que_no_tienen_ninguna_version():
+    rl.guardar_borrador("baja_ss", "jorge", plazo=5, unidad="habiles")
+    assert sorted(rl.cargar_propuestas("jorge")) == sorted(set(rl.CLAVES) - {"baja_ss"})
+    assert next(r for r in rl.estado_de_todas() if r["clave"] == "baja_ss")["borrador"]["plazo"] == 5
+
+
+def test_el_boton_de_la_pantalla_carga_borradores_sin_aprobar_y_luego_desaparece(bo):
+    entrar(bo)
+    assert "Cargar valores habituales como borrador" in bo.get("/reglas-laborales").get_data(as_text=True)
+    assert post(bo, "/reglas-laborales/cargar-propuestas").status_code == 302
+    html = bo.get("/reglas-laborales").get_data(as_text=True)
+    assert rl.vigentes() == {} and html.count("Borrador v1 pendiente") == 5 and "Cargar valores habituales como borrador" not in html
+    assert "día 31 del mes siguiente al periodo" in html and "31/1 del año siguiente al periodo" in html and "3 días naturales después del hecho" in html
+    assert "1 día natural antes del hecho" in html and "10 días hábiles después del hecho" in html
+
+
+def test_sin_token_csrf_no_se_cargan_las_propuestas(bo):
+    entrar(bo)
+    assert bo.post("/reglas-laborales/cargar-propuestas").status_code in (400, 403)
+    assert rl.vigentes() == {} and all(r["borrador"] is None for r in rl.estado_de_todas())
