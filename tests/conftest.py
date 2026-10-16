@@ -195,6 +195,7 @@ def _plantilla_bd(tmp_path_factory):
         db.init_db()
     finally:
         db.DB_PATH = original
+    db.cerrar_conexiones_compartidas()      # la plantilla se copia: ninguna conexión del pool puede quedar abierta sobre ella
     conexion = sqlite3.connect(ruta)
     conexion.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     conexion.execute("PRAGMA journal_mode = DELETE")
@@ -213,6 +214,7 @@ def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd):
     acceso.invalidar()                 # ídem: la caché de «¿este despacho usa oficinas?» va por id de despacho, y cada test reinicia los ids
     db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
     yield
+    db.cerrar_conexiones_compartidas()      # y no se acumulan conexiones a ficheros que ya no existirán
     # Cada test deja de ocupar disco al terminar: con ~2.500 tests y un esquema de cientos de tablas, las copias de la base acumuladas llenaban el /tmp del VPS (un tmpfs de 3,8 GB).
     for sufijo in ("", "-wal", "-shm", "-journal"):
         (tmp_path / f"test.db{sufijo}").unlink(missing_ok=True)

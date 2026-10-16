@@ -177,6 +177,7 @@ Variables opcionales:
 | Variable | Por defecto | Para qué |
 |---|---|---|
 | `GUILDA_THREADS` | `16` | Hilos de waitress (su valor propio es 4). |
+| `GUILDA_POOL_CONEXIONES` | `1` | Reutiliza las conexiones a `registro.db` dentro de cada hilo en vez de abrir una por consulta (abrirla cuesta ~3 ms por el esquema; con el pool, 16 peticiones simultáneas pasan de 12 a ~185 por segundo). `0` lo apaga y vuelve al comportamiento anterior. |
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
 | `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |

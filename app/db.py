@@ -28,6 +28,8 @@ import random
 import secrets
 import sqlite3
 import sys
+import threading
+import weakref
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -1381,9 +1383,63 @@ def _backfill_hash_fichajes(conn: sqlite3.Connection) -> None:
         hash_anterior = h
 
 
+# --- Conexiones reutilizadas ------------------------------------------------------------------------------------------------------------------------
+# Cada función de acceso abre «su» conexión y la cierra (`conn = get_connection() ... conn.close()`): más de novecientos sitios. Abrir una conexión nueva cuesta ~3 ms porque SQLite relee
+# el esquema (cientos de tablas e índices), y una página hace decenas: medido con una prueba de carga era el 80 % del tiempo (generar vencimientos 640 s → ~10 s; 16 peticiones a la vez
+# 12 → 185 por segundo). Por eso `close()` de estas conexiones NO cierra: la devuelve al pool del hilo que la abrió (tras deshacer cualquier transacción sin confirmar, igual que haría
+# cerrarla), y el siguiente `get_connection()` de ese hilo la reutiliza. Nunca se comparte entre hilos y nunca se entrega la misma a dos usos a la vez. `GUILDA_POOL_CONEXIONES=0` lo apaga.
+POOL_ACTIVO = os.environ.get("GUILDA_POOL_CONEXIONES", "1") != "0"
+MAX_LIBRES_POR_RUTA = 8
+_pool_hilo = threading.local()
+_pool_todas: "weakref.WeakSet[_ConexionCompartida]" = weakref.WeakSet()
+
+
+class _ConexionCompartida(sqlite3.Connection):
+    def close(self) -> None:
+        ruta = getattr(self, "_ruta", None)
+        if not POOL_ACTIVO or ruta is None or self._cerrada or self._hilo != threading.get_ident():
+            return self._cerrar_de_verdad()
+        try:
+            if self.in_transaction:
+                self.rollback()                          # lo mismo que habría pasado al cerrarla: lo no confirmado se descarta
+        except sqlite3.Error:
+            return self._cerrar_de_verdad()
+        libres = _pool_hilo.__dict__.setdefault("libres", {}).setdefault(ruta, [])
+        if self in libres:                               # doble `close()` de quien ya la devolvió: no se duplica
+            return
+        if len(libres) >= MAX_LIBRES_POR_RUTA:
+            return self._cerrar_de_verdad()
+        self._en_pool = True
+        libres.append(self)
+
+    def _cerrar_de_verdad(self) -> None:
+        if not self._cerrada:
+            self._cerrada = True
+            self._en_pool = False
+            sqlite3.Connection.close(self)
+
+
+def cerrar_conexiones_compartidas() -> None:
+    """Cierra de verdad todas las conexiones que esperan en el pool (de cualquier hilo). Las que están en uso no se tocan. Lo usan los tests antes de mover o borrar el fichero de la base de datos;
+    las conexiones cerradas que queden en la lista de un hilo se descartan solas al pedir la siguiente."""
+    for c in list(_pool_todas):
+        if c._en_pool:
+            c._cerrar_de_verdad()
+
+
 def get_connection() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    ruta = str(DB_PATH)
+    if POOL_ACTIVO:
+        libres = _pool_hilo.__dict__.setdefault("libres", {}).setdefault(ruta, [])
+        while libres:
+            conn = libres.pop()
+            if not conn._cerrada:
+                conn._en_pool = False
+                return conn
+    conn = sqlite3.connect(DB_PATH, factory=_ConexionCompartida, check_same_thread=False)
+    conn._ruta, conn._hilo, conn._cerrada, conn._en_pool = ruta, threading.get_ident(), False, False
+    _pool_todas.add(conn)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     # WAL permite que la app de escritorio (GuildaWork.exe) y un serve.py
