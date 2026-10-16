@@ -16,10 +16,13 @@ por test, sería demasiado lento), el fixture `_limpiar_identidades_kratos`
 borra todas las identidades después de cada test para que cada uno siga
 viendo un Kratos "vacío", igual que ya pasa con la base de datos SQLite.
 """
+import atexit
 import json
 import os
 import re
+import signal
 import socket
+import sys
 import subprocess
 import time
 import urllib.error
@@ -55,6 +58,37 @@ ENTORNO_COMPOSE_TEST = {
     "KRATOS_TEST_PUBLIC_PORT": str(KRATOS_TEST_PUBLIC_PORT),
     "KRATOS_TEST_ADMIN_PORT": str(KRATOS_TEST_ADMIN_PORT),
 }
+
+
+def _bajar_kratos_test() -> None:
+    """Apaga y borra (contenedores, red y volúmenes) el Kratos de ESTA ejecución. Es idempotente: se llama al terminar la sesión, desde `atexit` y si el arranque falla a medias."""
+    subprocess.run([*COMPOSE_TEST, "down", "-v", "--remove-orphans"], cwd=RAIZ_PROYECTO, check=False, timeout=90, env=ENTORNO_COMPOSE_TEST,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+_PROYECTO_DE_PRUEBA = re.compile(r"^guilda-test-(\d+)$")
+
+
+def _pid_vivo(pid: int) -> bool:
+    return Path(f"/proc/{pid}").exists()
+
+
+def limpiar_kratos_huerfanos(ejecutar=subprocess.run, pid_vivo=_pid_vivo) -> list[str]:
+    """Quita los Kratos de prueba que dejó una ejecución de pytest que murió sin limpiar (SIGKILL, corte del terminal, fallo al arrancar): proyectos `guilda-test-<pid>` cuyo pid ya no existe.
+    Nunca toca el de una ejecución en marcha (su pid sigue vivo) ni nada que no se llame exactamente así (los contenedores `guilda-work-*` de producción quedan fuera). Devuelve los proyectos limpiados."""
+    r = ejecutar(["docker", "ps", "-a", "--format", '{{.Label "com.docker.compose.project"}}'], capture_output=True, text=True, check=False, timeout=30)
+    limpiados = []
+    for proyecto in sorted({linea.strip() for linea in (r.stdout or "").splitlines()}):
+        m = _PROYECTO_DE_PRUEBA.match(proyecto)
+        if not m or pid_vivo(int(m.group(1))):
+            continue
+        etiqueta = f"label=com.docker.compose.project={proyecto}"
+        ids = ejecutar(["docker", "ps", "-aq", "--filter", etiqueta], capture_output=True, text=True, check=False, timeout=30).stdout.split()
+        if ids:
+            ejecutar(["docker", "rm", "-f", "-v", *ids], check=False, timeout=90, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        ejecutar(["docker", "network", "rm", f"{proyecto}_default"], check=False, timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        limpiados.append(proyecto)
+    return limpiados
 
 
 def _esperar_listo(url: str, timeout: float = 90) -> None:
@@ -104,25 +138,26 @@ def kratos_test():
     if SIN_KRATOS:
         yield
         return
-    subprocess.run(
-        [*COMPOSE_TEST, "up", "-d"],
-        cwd=RAIZ_PROYECTO, check=True, timeout=180, env=ENTORNO_COMPOSE_TEST,
-    )
-    _esperar_listo(KRATOS_TEST_PUBLIC_URL)
-    _esperar_listo(KRATOS_TEST_ADMIN_URL)
+    limpiar_kratos_huerfanos()          # restos de ejecuciones anteriores que murieron sin limpiar
+    atexit.register(_bajar_kratos_test)  # también si pytest termina por una excepción o una señal que lo hace salir
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))   # `kill` o el límite de tiempo de un terminal: sale por la vía normal y limpia
+    try:
+        subprocess.run(
+            [*COMPOSE_TEST, "up", "-d"],
+            cwd=RAIZ_PROYECTO, check=True, timeout=180, env=ENTORNO_COMPOSE_TEST,
+        )
+        _esperar_listo(KRATOS_TEST_PUBLIC_URL)
+        _esperar_listo(KRATOS_TEST_ADMIN_URL)
 
-    # Todo app/kratos.py pasa a hablar con la instancia de test durante
-    # toda la sesión — no hace falta deshacerlo al final, el proceso de
-    # pytest termina ahí mismo.
-    kratos.KRATOS_PUBLIC_URL = KRATOS_TEST_PUBLIC_URL
-    kratos.KRATOS_ADMIN_URL = KRATOS_TEST_ADMIN_URL
+        # Todo app/kratos.py pasa a hablar con la instancia de test durante
+        # toda la sesión — no hace falta deshacerlo al final, el proceso de
+        # pytest termina ahí mismo.
+        kratos.KRATOS_PUBLIC_URL = KRATOS_TEST_PUBLIC_URL
+        kratos.KRATOS_ADMIN_URL = KRATOS_TEST_ADMIN_URL
 
-    yield
-
-    subprocess.run(
-        [*COMPOSE_TEST, "down", "-v"],
-        cwd=RAIZ_PROYECTO, check=False, timeout=60, env=ENTORNO_COMPOSE_TEST,
-    )
+        yield
+    finally:
+        _bajar_kratos_test()            # si `up` o la espera fallan a medias, lo ya levantado se quita igual
 
 
 @pytest.fixture(autouse=True)
