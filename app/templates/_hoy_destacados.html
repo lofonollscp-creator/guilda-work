@@ -1,0 +1,6 @@
+<div class="dash-panel-cab"><h2 id="dash-hoy-t">{{ _('Necesita tu atención') }}</h2><a href="{{ url_for('hoy.bandeja') }}">{{ ngettext('Ver todo (%(n)s)', 'Ver todo (%(n)s)', total, n=total) }}</a></div>
+<ul class="hoy-lista">
+  {% for i in destacados %}
+  <li class="hoy-item hoy-{{ i.urgencia }}"><a href="{{ i.url }}"><strong>{{ i.titulo }}</strong></a> <span class="muted">{{ i.seccion }}{% if i.detalle %} · {{ i.detalle }}{% endif %}</span>{% if i.fecha %}<span class="muted hoy-fecha">{{ i.fecha[:10] }}</span>{% endif %}</li>
+  {% endfor %}
+</ul>

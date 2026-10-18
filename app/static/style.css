@@ -5163,3 +5163,14 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-compose-adjuntos .file-input { flex-shrink: 0; }
 .correo-compose-adjuntos > p, .correo-compose-adjuntos > ul { flex: 1 1 100%; margin: 4px 0 0; }
 .correo-compose-campo label.file-input-boton { width: auto; font-size: inherit; color: var(--text); }
+
+/* «Hoy»: bandeja única de lo que necesita a la persona */
+.hoy-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-4); align-items: start; }
+.hoy-rejilla .dash-panel { margin-bottom: 0; }
+.hoy-lista { list-style: none; margin: 0; padding: 0; }
+.hoy-item { padding: 10px 0; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.hoy-item:first-child { border-top: 0; }
+.hoy-item a { color: var(--text); text-decoration: none; }
+.hoy-item a:hover { text-decoration: underline; }
+.hoy-vencido { box-shadow: inset 3px 0 0 var(--danger, #e5484d); padding-left: 10px; }
+.hoy-fecha { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.85em; }

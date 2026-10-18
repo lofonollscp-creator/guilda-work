@@ -12681,3 +12681,68 @@ msgid_plural "%(n)s repetidos"
 msgstr[0] "%(n)s doublon"
 msgstr[1] "%(n)s doublons"
 
+msgid "Asignada a ti"
+msgstr "Assignée à vous"
+
+msgid "Correos sin contestar"
+msgstr "E-mails sans réponse"
+
+msgid "el propietario"
+msgstr "le propriétaire"
+
+msgid "el cliente"
+msgstr "le client"
+
+msgid "Mensajes de clientes"
+msgstr "Messages de clients"
+
+msgid "Vencido, de otra persona"
+msgstr "En retard, d'une autre personne"
+
+msgid "Clientes que te quieren pasar"
+msgstr "Clients qu'on veut vous transférer"
+
+msgid "Ausencias por aprobar"
+msgstr "Absences à approuver"
+
+msgid "Certificados que caducan"
+msgstr "Certificats qui expirent"
+
+msgid "Todo lo que necesita tu atención, de todos los módulos, en un solo sitio."
+msgstr "Tout ce qui demande votre attention, de tous les modules, au même endroit."
+
+msgid "Todo al día"
+msgstr "Tout est à jour"
+
+msgid "No tienes nada pendiente: ni tareas, ni plazos, ni vencimientos, ni mensajes de clientes por contestar."
+msgstr "Vous n'avez rien en attente : ni tâches, ni délais, ni échéances, ni messages de clients à traiter."
+
+msgid "Se enseñan los %(n)s más urgentes."
+msgstr "Les %(n)s plus urgents sont affichés."
+
+msgid "Necesita tu atención"
+msgstr "Demande votre attention"
+
+msgid "%(n)s mensaje sin leer de %(quien)s"
+msgid_plural "%(n)s mensajes sin leer de %(quien)s"
+msgstr[0] "%(n)s message non lu de %(quien)s"
+msgstr[1] "%(n)s messages non lus de %(quien)s"
+
+
+msgid "%(n)s cosa necesita tu atención"
+msgid_plural "%(n)s cosas necesitan tu atención"
+msgstr[0] "%(n)s chose demande votre attention"
+msgstr[1] "%(n)s choses demandent votre attention"
+
+
+msgid "%(n)s urgente"
+msgid_plural "%(n)s urgentes"
+msgstr[0] "%(n)s urgent"
+msgstr[1] "%(n)s urgents"
+
+
+msgid "Ver todo (%(n)s)"
+msgid_plural "Ver todo (%(n)s)"
+msgstr[0] "Tout voir (%(n)s)"
+msgstr[1] "Tout voir (%(n)s)"
+

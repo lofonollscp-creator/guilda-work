@@ -12596,3 +12596,68 @@ msgid_plural "%(n)s repetidos"
 msgstr[0] "%(n)s duplicate"
 msgstr[1] "%(n)s duplicates"
 
+msgid "Asignada a ti"
+msgstr "Assigned to you"
+
+msgid "Correos sin contestar"
+msgstr "Unanswered emails"
+
+msgid "el propietario"
+msgstr "the owner"
+
+msgid "el cliente"
+msgstr "the client"
+
+msgid "Mensajes de clientes"
+msgstr "Client messages"
+
+msgid "Vencido, de otra persona"
+msgstr "Overdue, someone else's"
+
+msgid "Clientes que te quieren pasar"
+msgstr "Clients being handed over to you"
+
+msgid "Ausencias por aprobar"
+msgstr "Absences to approve"
+
+msgid "Certificados que caducan"
+msgstr "Certificates about to expire"
+
+msgid "Todo lo que necesita tu atención, de todos los módulos, en un solo sitio."
+msgstr "Everything that needs your attention, from every module, in one place."
+
+msgid "Todo al día"
+msgstr "All caught up"
+
+msgid "No tienes nada pendiente: ni tareas, ni plazos, ni vencimientos, ni mensajes de clientes por contestar."
+msgstr "You have nothing pending: no tasks, deadlines, due dates or client messages to answer."
+
+msgid "Se enseñan los %(n)s más urgentes."
+msgstr "The %(n)s most urgent are shown."
+
+msgid "Necesita tu atención"
+msgstr "Needs your attention"
+
+msgid "%(n)s mensaje sin leer de %(quien)s"
+msgid_plural "%(n)s mensajes sin leer de %(quien)s"
+msgstr[0] "%(n)s unread message from %(quien)s"
+msgstr[1] "%(n)s unread messages from %(quien)s"
+
+
+msgid "%(n)s cosa necesita tu atención"
+msgid_plural "%(n)s cosas necesitan tu atención"
+msgstr[0] "%(n)s thing needs your attention"
+msgstr[1] "%(n)s things need your attention"
+
+
+msgid "%(n)s urgente"
+msgid_plural "%(n)s urgentes"
+msgstr[0] "%(n)s urgent"
+msgstr[1] "%(n)s urgent"
+
+
+msgid "Ver todo (%(n)s)"
+msgid_plural "Ver todo (%(n)s)"
+msgstr[0] "View all (%(n)s)"
+msgstr[1] "View all (%(n)s)"
+

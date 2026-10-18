@@ -167,3 +167,19 @@ def contexto_panel(vertical_id: str, tenant_id: int, expediente_id: int) -> dict
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM mensajes_enlace WHERE tenant_id = ?", (tenant_id,))
+
+
+def pendientes_del_equipo(tenant_id: int, usuario_id: int, supervisor: bool = False, limite: int = 50) -> list[dict]:
+    """Expedientes con mensajes de clientes o propietarios sin leer que la persona puede ver (el más reciente primero): `[{vertical, expediente_id, titulo, cliente, n, ultimo, nombre}]`."""
+    cond_vis, p_vis = nucleo._visible_sql(usuario_id, supervisor, "x")
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(
+            f"SELECT m.vertical_id, m.expediente_id, x.titulo, c.nombre AS cliente, COUNT(*) AS n, MAX(m.creado_en) AS ultimo, "
+            f"(SELECT m2.nombre FROM mensajes_enlace m2 WHERE m2.expediente_id = m.expediente_id AND m2.vertical_id = m.vertical_id AND m2.autor = 'externo' AND m2.leido_en IS NULL ORDER BY m2.id DESC LIMIT 1) AS nombre "
+            f"FROM mensajes_enlace m JOIN expedientes x ON x.id = m.expediente_id AND x.tenant_id = m.tenant_id LEFT JOIN clientes c ON c.id = x.cliente_id "
+            f"WHERE m.tenant_id = ? AND m.autor = 'externo' AND m.leido_en IS NULL AND x.papelera_en IS NULL AND {cond_vis} "
+            f"GROUP BY m.vertical_id, m.expediente_id ORDER BY ultimo DESC LIMIT ?", [tenant_id, *p_vis, limite]).fetchall()
+    finally:
+        conn.close()
+    return [{"vertical": f["vertical_id"], "expediente_id": f["expediente_id"], "titulo": f["titulo"], "cliente": f["cliente"], "n": f["n"], "ultimo": f["ultimo"], "nombre": f["nombre"]} for f in filas]

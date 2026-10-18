@@ -94,6 +94,10 @@
 
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Trabajo diario') }}</span>
+      <a href="{{ url_for('hoy.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'hoy.bandeja' else '' }}" title="{{ _('Hoy') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sun"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Hoy') }}</span>
+      </a>
       <a href="{{ url_for('tareas.listar') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tareas.') else '' }}" title="{{ _('Tareas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tareas') }}</span>

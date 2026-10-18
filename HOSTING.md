@@ -82,6 +82,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Control fiscal — fase A: cimientos (13 oct 2026)](#control-fiscal--fase-a-cimientos-13-oct-2026)
 - [Catálogo de reglas fiscales y laborales (backoffice)](#catálogo-de-reglas-fiscales-y-laborales-backoffice)
 - [Importar clientes desde Excel o CSV](#importar-clientes-desde-excel-o-csv)
+- [Hoy: la bandeja única de lo que necesita a cada persona](#hoy-la-bandeja-única-de-lo-que-necesita-a-cada-persona)
 
 <!-- /INDICE -->
 
@@ -3245,3 +3246,7 @@ Las fechas de los modelos fiscales (303, 130, 111, 115, 390, 200…) y las regla
 En Clientes, la dirección y la coordinación del despacho ven «Importar desde Excel o CSV» (`/clientes/importar/`, `app/importador_clientes.py` y `app/rutas_importar_clientes.py`). Se sube un `.xlsx` o un CSV (UTF-8 o Windows-1252; separador coma, punto y coma o tabulador) de hasta 5 MB y 5.000 filas, con los nombres de las columnas en la primera fila: se reconocen por su nombre (nombre o razón social, NIF/CIF, email, teléfono, dirección, tipo, idioma, etiquetas, notas, origen y país) y se pueden reasignar a mano. Antes de crear nada se enseña qué hará con cada fila: nuevo, repetido (mismo NIF, correo o nombre que un cliente ya existente o que otra fila del archivo; se omite) o con error (p. ej. sin nombre). Cada fila se valida por separado, los clientes se crean con la misma ruta que el alta manual (`alta_cliente.crear_cliente_completo`, con gestión fiscal opcional, tipo de cliente fiscal y etiqueta común para encontrarlos juntos) y el resultado queda en la auditoría (`clientes.importados`).
 
 El archivo leído se guarda en `data/importaciones/<id>.json` (modo 600, ligado al despacho y a la persona que lo subió) y caduca a las 2 horas; el paso de crear es de un solo uso, así que reenviar el formulario no duplica. Un `.xlsx` se rechaza si abierto ocuparía más de 60 MB. No hay variables de entorno nuevas.
+
+## Hoy: la bandeja única de lo que necesita a cada persona
+
+`/hoy/` (`app/bandeja_hoy.py`, `app/rutas_hoy.py`) junta en una pantalla lo que cada módulo ya calcula para la persona que entra: sus tareas vencidas y de hoy, los correos sin contestar, los plazos que vencen en la próxima semana, los vencimientos fiscales que lleva (los vencidos de cualquiera, si supervisa), los mensajes de clientes o propietarios sin leer (con las mismas reglas de visibilidad de los expedientes confidenciales), las visitas de hoy (inmobiliaria), los clientes que le quieren traspasar, las ausencias por aprobar y los certificados caducados o que caducan en 30 días (solo quien gestiona). Cada elemento se ordena por urgencia (vencido, hoy, esta semana) y lleva el enlace a donde se resuelve; las secciones vacías no aparecen. El inicio enseña los más urgentes que no son tareas (esas ya salen en «Mi día») en «Necesita tu atención», con enlace a la pantalla completa: el panel se pide después de cargar la página (`/hoy/destacados`, `static/hoy_inicio.js`) para no sumar consultas al inicio, y la barra lateral tiene su entrada «Hoy». Es de solo lectura y no guarda nada. Los avisos con acuse y escalado (`app/avisos.py`) todavía no forman parte de esta bandeja.

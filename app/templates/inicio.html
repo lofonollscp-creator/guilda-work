@@ -94,6 +94,9 @@
 
 <div class="dash-layout">
 <div class="dash-main">
+<section class="dash-panel" id="dash-hoy" data-url="{{ url_for('hoy.destacados') }}" aria-labelledby="dash-hoy-t" hidden></section>
+<script src="{{ url_for('static', filename='hoy_inicio.js') }}" defer></script>
+
 <section class="dash-panel" aria-labelledby="dash-mi-dia-t">
   <div class="dash-panel-cab"><h2 id="dash-mi-dia-t">{{ _('Mi día') }}</h2><a href="{{ url_for('tareas.hoy') }}">{{ _('Ver todas las tareas') }}</a></div>
   {% if not mi_dia %}

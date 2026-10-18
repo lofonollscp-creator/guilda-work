@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% block title %}{{ _('Hoy') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Hoy') }}</h1>
+    <p class="subtitle">{% if bandeja.total %}{{ ngettext('%(n)s cosa necesita tu atención', '%(n)s cosas necesitan tu atención', bandeja.total, n=bandeja.total) }}{% if bandeja.urgentes %} · {{ ngettext('%(n)s urgente', '%(n)s urgentes', bandeja.urgentes, n=bandeja.urgentes) }}{% endif %}{% else %}{{ _('Todo lo que necesita tu atención, de todos los módulos, en un solo sitio.') }}{% endif %}</p>
+  </div>
+</header>
+
+{% if not bandeja.secciones %}
+  {{ estado_vacio(_('Todo al día'), _('No tienes nada pendiente: ni tareas, ni plazos, ni vencimientos, ni mensajes de clientes por contestar.'), 'check') }}
+{% else %}
+<div class="hoy-rejilla">
+  {% for s in bandeja.secciones %}
+  <section class="dash-panel hoy-seccion" id="hoy-{{ s.clave }}" aria-labelledby="hoy-{{ s.clave }}-t">
+    <div class="dash-panel-cab"><h2 id="hoy-{{ s.clave }}-t">{{ s.titulo }} <span class="muted">({{ s.total }})</span></h2></div>
+    <ul class="hoy-lista">
+      {% for i in s.elementos %}
+      <li class="hoy-item hoy-{{ i.urgencia }}">
+        <a href="{{ i.url }}"><strong>{{ i.titulo }}</strong></a>
+        {% if i.urgencia == 'vencido' %}{{ chip(_('Vencido')) }}{% elif i.urgencia == 'hoy' %}{{ chip(_('Hoy')) }}{% elif i.urgencia == 'proximo' %}{{ chip(_('Esta semana')) }}{% endif %}
+        {% if i.detalle %}<span class="muted"> · {{ i.detalle }}</span>{% endif %}
+        {% if i.fecha %}<span class="muted hoy-fecha">{{ i.fecha[:10] }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% if s.total > s.elementos|length %}<p class="muted">{{ _('Se enseñan los %(n)s más urgentes.', n=s.elementos|length) }}</p>{% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
