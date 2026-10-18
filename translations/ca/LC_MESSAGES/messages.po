@@ -13021,3 +13021,69 @@ msgstr "Referència interna"
 
 msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes)."
 msgstr "Primer ús: importa el fitxer en una empresa de proves d'a3 i passa'l pel botó «Chequeo» abans d'usar-lo en una de real. El format segueix la descripció oficial de l'enllaç d'entrada d'a3 (registres de 512 bytes)."
+
+msgid "Recibida: el despacho la revisará"
+msgstr "Rebuda: el despatx la revisarà"
+
+msgid "Revisada por el despacho"
+msgstr "Revisada pel despatx"
+
+msgid "Contabilizada"
+msgstr "Comptabilitzada"
+
+msgid "No válida: el despacho te contactará"
+msgstr "No vàlida: el despatx et contactarà"
+
+msgid "Anotada por el cliente desde el portal"
+msgstr "Anotada pel client des del portal"
+
+msgid "Factura escaneada o fotografiada (PDF o imagen)"
+msgstr "Factura escanejada o fotografiada (PDF o imatge)"
+
+msgid "Ver la factura adjunta"
+msgstr "Veure la factura adjunta"
+
+msgid "Portal"
+msgstr "Portal"
+
+msgid "Mis facturas"
+msgstr "Les meves factures"
+
+msgid "Anota aquí tus facturas del trimestre y tu gestoría las contabilizará."
+msgstr "Anota aquí les factures del trimestre i la teva gestoria les comptabilitzarà."
+
+msgid "Factura anotada. Tu gestoría la revisará."
+msgstr "Factura anotada. La teva gestoria la revisarà."
+
+msgid "Anotar una factura"
+msgstr "Anotar una factura"
+
+msgid "¿Qué factura es?"
+msgstr "Quina factura és?"
+
+msgid "Me la han hecho a mí (una compra o un gasto)"
+msgstr "Me l'han feta a mi (una compra o una despesa)"
+
+msgid "La he hecho yo a un cliente (una venta)"
+msgstr "L'he feta jo a un client (una venda)"
+
+msgid "Nombre del proveedor o cliente"
+msgstr "Nom del proveïdor o client"
+
+msgid "Total de la factura (con IVA)"
+msgstr "Total de la factura (amb IVA)"
+
+msgid "Lleva retención (IRPF) o más de un tipo de IVA: mi gestoría la completará con la factura delante"
+msgstr "Porta retenció (IRPF) o més d'un tipus d'IVA: la meva gestoria la completarà amb la factura al davant"
+
+msgid "Foto o PDF de la factura (recomendado)"
+msgstr "Foto o PDF de la factura (recomanat)"
+
+msgid "Anotar factura"
+msgstr "Anotar factura"
+
+msgid "Facturas anotadas"
+msgstr "Factures anotades"
+
+msgid "Todavía no has anotado ninguna factura."
+msgstr "Encara no has anotat cap factura."

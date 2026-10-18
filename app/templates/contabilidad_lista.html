@@ -59,7 +59,7 @@
     <tr>
       <td class="mono">{{ f.fecha }}</td>
       <td>{{ f.cliente_nombre }}</td>
-      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}</td>
+      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}{% if f.origen == 'portal' %} <span class="pill">{{ _('Portal') }}</span>{% endif %}</td>
       <td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}"><strong>{{ f.numero }}</strong></a></td>
       <td>{{ f.tercero_nombre }}{% if f.tercero_nif %} <span class="muted mono">{{ f.tercero_nif }}</span>{% endif %}</td>
       <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>

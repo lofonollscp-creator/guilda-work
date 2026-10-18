@@ -362,6 +362,40 @@ def guardar_de_cliente_fiscal(usuario_id: int, cliente_fiscal_id: int, nombre: s
     return db.archivar_documento_cliente(usuario_id, cliente_fiscal_id, nombre, tipo_mime, contenido, **kw)
 
 
+def guardar_de_cliente_fiscal_sin_usuario(tenant_id: int, cliente_fiscal_id: int, nombre: str, tipo_mime: str | None, contenido: bytes, categoria: str | None = None) -> tuple[str, int | None]:
+    """Un documento que entrega el propio cliente desde su portal (no hay persona del despacho detrás): mismas comprobaciones, el mismo sellado con la clave del despacho y el mismo reparto en el
+    expediente fiscal que `guardar_de_cliente_fiscal`. Devuelve (resultado, id): «ok», «duplicado» (id del existente), «vacio», «grande», «limite», «cliente» o «clave_privada»."""
+    from . import certificados
+    if certificados.contiene_clave_privada(contenido):
+        return "clave_privada", None
+    if not contenido:
+        return "vacio", None
+    if len(contenido) > db.MAX_DOCUMENTO_CLIENTE_BYTES:
+        return "grande", None
+    huella = hashlib.sha256(contenido).hexdigest()
+    conn = db.get_connection()
+    try:
+        if conn.execute("SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (cliente_fiscal_id, tenant_id)).fetchone() is None:
+            return "cliente", None
+        repetido = conn.execute("SELECT id FROM cliente_documentos WHERE cliente_fiscal_id = ? AND hash_sha256 = ?", (cliente_fiscal_id, huella)).fetchone()
+        if repetido:
+            return "duplicado", repetido["id"]
+        if conn.execute("SELECT COUNT(*) FROM cliente_documentos WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,)).fetchone()[0] >= db.MAX_DOCUMENTOS_POR_CLIENTE:
+            return "limite", None
+        guardado, cifrado, sobre = _sellar(tenant_id, contenido)
+        seguro = db._nombre_de_archivo_seguro(nombre)
+        nombre_col, nombre_sellado = _cifrado.sellar_nombre(tenant_id, seguro) if cifrado else (seguro, None)
+        cur = conn.execute(
+            "INSERT INTO cliente_documentos (tenant_id, cliente_fiscal_id, nombre_archivo, nombre_cifrado, tipo_mime, tamano_bytes, contenido, categoria, origen, subido_por, hash_sha256, creado_en, cifrado, sobre) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'subida', NULL, ?, ?, ?, ?)",
+            (tenant_id, cliente_fiscal_id, nombre_col, nombre_sellado, (tipo_mime or "application/octet-stream")[:100], len(contenido), guardado, (categoria or "").strip()[:60] or None, huella,
+             db.now_iso(), cifrado, sobre))
+        conn.commit()
+        return "ok", cur.lastrowid
+    finally:
+        conn.close()
+
+
 def listar_de_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int, limite: int = 300) -> list[dict]:
     filas = db.listar_documentos_cliente(tenant_id, cliente_fiscal_id, limite)
     privada = _cifrado.privada_disponible(tenant_id) if any(f.get("nombre_cifrado") for f in filas) else None

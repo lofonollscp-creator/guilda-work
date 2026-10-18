@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Mis facturas') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <div class="portal-cliente-shell">
+    <header class="page-header">
+      <div>
+        <h1>{{ _('Mis facturas') }}</h1>
+        <p class="subtitle">{{ cliente.nombre }} · {{ _('Anota aquí tus facturas del trimestre y tu gestoría las contabilizará.') }}</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.dashboard') }}">‹ {{ _('Volver') }}</a>
+    </header>
+
+    {% if anotada %}<p class="portal-peticion" role="status"><strong>{{ _('Factura anotada. Tu gestoría la revisará.') }}</strong></p>{% endif %}
+    {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+
+    <section class="dash-panel">
+      <h2>{{ _('Anotar una factura') }}</h2>
+      <form method="post" enctype="multipart/form-data" class="edit-form">
+        <label for="f-tipo">{{ _('¿Qué factura es?') }}</label>
+        <select id="f-tipo" name="tipo">
+          <option value="recibida" {{ 'selected' if datos.tipo == 'recibida' }}>{{ _('Me la han hecho a mí (una compra o un gasto)') }}</option>
+          <option value="emitida" {{ 'selected' if datos.tipo == 'emitida' }}>{{ _('La he hecho yo a un cliente (una venta)') }}</option>
+        </select>
+        <div class="fila-campos">
+          <label>{{ _('Fecha de la factura') }}<input type="date" name="fecha" value="{{ datos.fecha }}" required></label>
+          <label>{{ _('Número de factura') }}<input type="text" name="numero" value="{{ datos.numero }}" maxlength="60" required></label>
+        </div>
+        <div class="fila-campos">
+          <label>{{ _('Nombre del proveedor o cliente') }}<input type="text" name="tercero_nombre" value="{{ datos.tercero_nombre }}" maxlength="100" required></label>
+          <label>{{ _('NIF / CIF') }}<input type="text" name="tercero_nif" value="{{ datos.tercero_nif }}" maxlength="20" required></label>
+        </div>
+        <div class="fila-campos">
+          <label>{{ _('Total de la factura (con IVA)') }}<input type="text" name="total" value="{{ datos.total }}" inputmode="decimal" placeholder="1.210,00" required></label>
+          <label>{{ _('Tipo de IVA') }}
+            <select name="pct_iva">{% for p in ('21', '10', '4', '0') %}<option value="{{ p }}" {{ 'selected' if datos.pct_iva == p }}>{{ p }} %</option>{% endfor %}</select></label>
+        </div>
+        <label class="checkbox-label"><input type="checkbox" name="complicada" value="1" {{ 'checked' if datos.complicada }}> {{ _('Lleva retención (IRPF) o más de un tipo de IVA: mi gestoría la completará con la factura delante') }}</label>
+        <label>{{ _('Foto o PDF de la factura (recomendado)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" capture="environment"></label>
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Anotar factura') }}</button></div>
+      </form>
+    </section>
+
+    <section class="ds-mt-24">
+      <h2>{{ _('Facturas anotadas') }}</h2>
+      {% if not facturas %}
+      <p class="empty-lane">{{ _('Todavía no has anotado ninguna factura.') }}</p>
+      {% else %}
+      <div class="table-wrap"><table class="historial-table">
+        <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Estado') }}</th></tr></thead>
+        <tbody>{% for f in facturas %}<tr><td class="mono">{{ f.fecha }}</td><td>{{ f.numero }}</td><td>{{ f.tercero_nombre }}</td><td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td><td>{{ textos[f.estado] }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% endif %}
+    </section>
+  </div>
+</body>
+</html>

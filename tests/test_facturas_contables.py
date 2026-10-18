@@ -266,3 +266,126 @@ def test_el_texto_de_la_factura_se_escapa(cliente):
 def test_el_enlace_de_la_barra_lateral_sale_en_gestoria(cliente):
     _web(cliente, "contabarra@ejemplo.com")
     assert 'href="/contabilidad/"' in cliente.get("/").get_data(as_text=True)
+
+
+# --- Portal del cliente ------------------------------------------------------------------------------------------------------------------------------
+
+PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
+
+
+def _portal(cliente_http, tenant_nombre="Despacho portal", con_responsable=True):
+    t = db.crear_tenant(tenant_nombre)
+    u = db.crear_usuario_vinculado_a_kratos(f"resp-{tenant_nombre}@ejemplo.com".replace(" ", ""), "k-" + tenant_nombre.replace(" ", ""))
+    db.asignar_tenant(u, t)
+    verticales.fijar_activo(t, "gestoria", True)
+    c = crear_cliente_fiscal(t, "Cliente Portal", nif="B12345678")
+    if con_responsable:
+        conn = db.get_connection(); conn.execute("UPDATE clientes_fiscales SET responsable_id = ? WHERE id = ?", (u, c)); conn.commit(); conn.close()
+    with cliente_http.session_transaction() as sesion:
+        sesion["cliente_fiscal_id"] = c
+    return t, u, c
+
+
+def test_el_cliente_anota_una_factura_desde_su_total_y_el_despacho_la_ve(cliente):
+    t, u, c = _portal(cliente)
+    assert "Anotar una factura" in cliente.get("/portal/facturas").get_data(as_text=True)
+    r = cliente.post("/portal/facturas", data={"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-77", "tercero_nombre": "Ferretería Paco", "tercero_nif": "B11111111", "total": "121,00",
+                                                "pct_iva": "21", "archivo": (io.BytesIO(PDF), "factura.pdf", "application/pdf")}, content_type="multipart/form-data")
+    assert r.status_code == 302 and "anotada=1" in r.headers["Location"]
+    f = fc.listar(t, u)[0]
+    assert (f["origen"], f["estado"], f["numero"], f["total_centimos"], f["creado_por"]) == ("portal", "pendiente", "P-77", 12100, None)
+    d = fc.obtener(t, u, f["id"])
+    assert d["lineas"][0]["base_centimos"] == 10000 and d["lineas"][0]["cuota_iva"] == 2100 and d["documento_id"], "el total 121 con IVA 21 % se desglosa en base 100 y cuota 21"
+    assert db.get_connection().execute("SELECT categoria, subido_por, tipo_mime FROM cliente_documentos WHERE id = ?", (d["documento_id"],)).fetchone()["categoria"] == "Factura"
+    html = cliente.get("/portal/facturas?anotada=1").get_data(as_text=True)
+    assert "Factura anotada" in html and "P-77" in html and "el despacho la revisará" in html
+
+
+def test_el_desglose_desde_el_total_cuadra_para_cualquier_iva():
+    for total in (1, 99, 12100, 99999, 123456):
+        for pct in (2100, 1000, 400, 0):
+            base, cuota = fc._desglose_desde_el_total(total, pct)
+            assert base + cuota == total and abs(cuota - fc.enlace_a3.cuota(base, pct)) <= 1
+
+
+def test_una_factura_complicada_queda_marcada_para_completar():
+    t, u, c = _despacho()
+    fid = fc.crear_desde_portal(c, {"tipo": "emitida", "fecha": "2026-09-10", "numero": "E-1", "tercero_nombre": "Cliente", "tercero_nif": "12345678Z", "total": "1000", "pct_iva": "21", "complicada": "1"})
+    assert "PENDIENTE DE COMPLETAR" in fc.obtener(t, u, fid)["notas"]
+
+
+@pytest.mark.parametrize("datos,fragmento", [({"total": ""}, "importe|total"), ({"total": "0"}, "total"), ({"fecha": "ayer"}, "fecha"), ({"numero": ""}, "número"), ({"tercero_nombre": ""}, "nombre"), ({"tipo": "x"}, "emitida o recibida")])
+def test_el_portal_valida_lo_que_escribe_el_cliente(cliente, datos, fragmento):
+    t, u, c = _portal(cliente, "Despacho portal val")
+    base = {"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-1", "tercero_nombre": "X", "tercero_nif": "B1", "total": "10", "pct_iva": "21"}
+    r = cliente.post("/portal/facturas", data={**base, **datos})
+    assert r.status_code == 200 and fc.listar(t, u) == []
+
+
+@pytest.mark.parametrize("nombre,tipo,contenido", [("virus.exe", "application/x-msdownload", b"MZ" + b"x" * 100), ("grande.pdf", "application/pdf", b"%PDF" + b"x" * (9 * 1024 * 1024)), ("vacio.pdf", "application/pdf", b"")])
+def test_el_portal_rechaza_adjuntos_no_validos_y_no_guarda_la_factura(cliente, nombre, tipo, contenido):
+    t, u, c = _portal(cliente, "Despacho portal adj")
+    r = cliente.post("/portal/facturas", data={"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-1", "tercero_nombre": "X", "tercero_nif": "B1", "total": "10", "pct_iva": "21",
+                                                "archivo": (io.BytesIO(contenido), nombre, tipo)}, content_type="multipart/form-data")
+    assert r.status_code == 200 and "Archivo no válido" in r.get_data(as_text=True) or "vacío" in r.get_data(as_text=True)
+    assert fc.listar(t, u) == []
+
+
+def test_un_mismo_archivo_no_se_duplica_en_los_documentos():
+    t, u, c = _despacho()
+    a = fc.adjuntar(t, c, None, "uno.pdf", "application/pdf", PDF)
+    assert fc.adjuntar(t, c, None, "otro-nombre.pdf", "application/pdf", PDF) == a
+
+
+def test_se_avisa_a_quien_lleva_al_cliente_o_si_no_hay_a_la_direccion(cliente):
+    t, u, c = _portal(cliente, "Despacho portal avisos")
+    cliente.post("/portal/facturas", data={"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-1", "tercero_nombre": "Proveedor", "tercero_nif": "B1", "total": "10", "pct_iva": "21"})
+    assert [n["titulo"] for n in db.listar_notificaciones(u)] == ["Cliente Portal ha anotado una factura"]
+    t2, u2, c2 = _portal(cliente, "Despacho portal sin resp", con_responsable=False)
+    db.asignar_supervisor_tenant(u2, True)
+    cliente.post("/portal/facturas", data={"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-2", "tercero_nombre": "Proveedor", "tercero_nif": "B1", "total": "10", "pct_iva": "21"})
+    assert len(db.listar_notificaciones(u2)) == 1
+
+
+def test_el_portal_solo_enseña_las_facturas_del_propio_cliente(cliente):
+    t, u, c = _portal(cliente, "Despacho portal aisl")
+    otro = crear_cliente_fiscal(t, "Otro Cliente", nif="B22222222")
+    fc.crear(t, u, otro, _datos(numero="AJENA-1"), [LINEA])
+    fc.crear(t, u, c, _datos(numero="MIA-1"), [LINEA])
+    html = cliente.get("/portal/facturas").get_data(as_text=True)
+    assert "MIA-1" in html and "AJENA-1" not in html
+
+
+def test_sin_sesion_o_sin_gestoria_el_portal_no_ofrece_facturas(cliente):
+    assert cliente.get("/portal/facturas").status_code == 302
+    t, u, c = _portal(cliente, "Despacho portal sin gest")
+    verticales.fijar_activo(t, "gestoria", False)
+    assert cliente.get("/portal/facturas").status_code == 404
+    assert "Mis facturas" not in cliente.get("/portal/").get_data(as_text=True)
+
+
+def test_el_portal_enlaza_a_las_facturas_y_el_texto_se_escapa(cliente):
+    t, u, c = _portal(cliente, "Despacho portal enlace")
+    assert 'href="/portal/facturas"' in cliente.get("/portal/").get_data(as_text=True)
+    fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": "2026-09-10", "numero": "X-1", "tercero_nombre": "<script>alert(1)</script>", "tercero_nif": "B1", "total": "10", "pct_iva": "21"})
+    html = cliente.get("/portal/facturas").get_data(as_text=True)
+    assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
+
+
+def test_el_despacho_ve_la_procedencia_y_la_factura_adjunta(cliente):
+    uid, t, c = _web(cliente, "contaportal@ejemplo.com")
+    fid = fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-9", "tercero_nombre": "Proveedor", "tercero_nif": "B1", "total": "121", "pct_iva": "21"},
+                                ("f.pdf", "application/pdf", PDF))
+    assert "Portal" in cliente.get("/contabilidad/").get_data(as_text=True)
+    html = cliente.get(f"/contabilidad/{fid}").get_data(as_text=True)
+    assert "Anotada por el cliente desde el portal" in html and "Ver la factura adjunta" in html
+    doc = fc.obtener(t, uid, fid)["documento_id"]
+    r = cliente.get(f"/fiscal/clientes/{c}/documentos/{doc}")
+    assert r.status_code == 200 and r.data == PDF
+
+
+def test_el_despacho_puede_adjuntar_al_crear(cliente):
+    uid, t, c = _web(cliente, "contaadj@ejemplo.com")
+    r = cliente.post("/contabilidad/nueva", data={"cliente_id": c, "tipo": "recibida", "fecha": "2026-08-20", "numero": "W-5", "tercero_nombre": "P", "base_0": "100", "pct_iva_0": "21",
+                                                  "archivo": (io.BytesIO(PDF), "f.pdf", "application/pdf")}, content_type="multipart/form-data")
+    assert r.status_code == 302 and fc.obtener(t, uid, int(r.headers["Location"].rsplit("/", 1)[1]))["documento_id"]

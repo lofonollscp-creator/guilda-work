@@ -9,6 +9,8 @@ import re
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
+from flask_babel import lazy_gettext as _l
+
 from . import acceso, auditoria, db, enlace_a3
 
 ESQUEMA = """
@@ -65,6 +67,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables (
     abono INTEGER NOT NULL DEFAULT 0,
     rectifica_fecha TEXT,
     rectifica_numero TEXT,
+    documento_id INTEGER,
     suplidos_centimos INTEGER NOT NULL DEFAULT 0,
     total_centimos INTEGER NOT NULL,
     notas TEXT,
@@ -106,6 +109,7 @@ def crear_esquema(conn) -> None:
     # ampliación posterior: los abonos llevan la factura que rectifican (registro tipo 4 del enlace de a3)
     db._asegurar_columna(conn, "facturas_contables", "rectifica_fecha", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "rectifica_numero", "TEXT")
+    db._asegurar_columna(conn, "facturas_contables", "documento_id", "INTEGER")       # la factura escaneada o fotografiada, en los documentos del cliente
 
 
 # --- Lectura de lo que se escribe -----------------------------------------------------------------------------------------------------------------------
@@ -300,8 +304,13 @@ def _datos_limpios(datos: dict) -> dict:
             "suplidos_centimos": importe_a_centimos(datos.get("suplidos")), "notas": str(datos.get("notas") or "").strip()[:1000] or None}
 
 
-def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict, lineas: list[dict], origen: str = "despacho") -> int:
+def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict, lineas: list[dict], origen: str = "despacho", documento_id: int | None = None) -> int:
     f = _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    return _insertar(tenant_id, usuario_id, f, datos, lineas, origen, documento_id)
+
+
+def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: list[dict], origen: str, documento_id: int | None) -> int:
+    cliente_fiscal_id = f["id"]
     d = _datos_limpios(datos)
     ls = _lineas_limpias(lineas)
     total = _total_de(ls, d["suplidos_centimos"])
@@ -309,9 +318,9 @@ def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict, 
     conn = db.get_connection()
     try:
         cur = conn.execute("INSERT INTO facturas_contables (tenant_id, cliente_fiscal_id, tipo, origen, estado, fecha, fecha_operacion, numero, tercero_nombre, tercero_nif, tercero_cuenta, concepto, "
-                           "referencia, abono, rectifica_fecha, rectifica_numero, suplidos_centimos, total_centimos, notas, creado_por, creado_en, actualizado_en) VALUES (?, ?, ?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                           "referencia, abono, rectifica_fecha, rectifica_numero, suplidos_centimos, total_centimos, notas, creado_por, creado_en, actualizado_en, documento_id) VALUES (?, ?, ?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                            (tenant_id, cliente_fiscal_id, d["tipo"], origen, d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"],
-                            d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"], d["suplidos_centimos"], total, d["notas"], usuario_id, ahora, ahora))
+                            d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"], d["suplidos_centimos"], total, d["notas"], usuario_id, ahora, ahora, documento_id))
         fid = cur.lastrowid
         _guardar_lineas(conn, fid, ls)
         if d["tercero_cuenta"]:
@@ -347,7 +356,7 @@ def obtener(tenant_id: int, usuario_id: int, factura_id: int) -> dict | None:
     return d
 
 
-def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, lineas: list[dict]) -> None:
+def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, lineas: list[dict], documento_id: int | None = None) -> None:
     """Corrige una factura que aún no se ha exportado. Al cambiarla vuelve a `pendiente`: hay que revisarla otra vez."""
     f = obtener(tenant_id, usuario_id, factura_id)
     if f is None:
@@ -360,9 +369,10 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
     conn = db.get_connection()
     try:
         conn.execute("UPDATE facturas_contables SET estado = 'pendiente', fecha = ?, fecha_operacion = ?, numero = ?, tercero_nombre = ?, tercero_nif = ?, tercero_cuenta = ?, concepto = ?, referencia = ?, "
-                     "abono = ?, rectifica_fecha = ?, rectifica_numero = ?, suplidos_centimos = ?, total_centimos = ?, notas = ?, actualizado_en = ?, revisado_por = NULL, revisado_en = NULL WHERE id = ? AND tenant_id = ?",
+                     "abono = ?, rectifica_fecha = ?, rectifica_numero = ?, suplidos_centimos = ?, total_centimos = ?, notas = ?, actualizado_en = ?, revisado_por = NULL, revisado_en = NULL, "
+                     "documento_id = COALESCE(?, documento_id) WHERE id = ? AND tenant_id = ?",
                      (d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"], d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"],
-                      d["suplidos_centimos"], total, d["notas"], db.now_iso(), factura_id, tenant_id))
+                      d["suplidos_centimos"], total, d["notas"], db.now_iso(), documento_id, factura_id, tenant_id))
         _guardar_lineas(conn, factura_id, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -514,3 +524,94 @@ def contenido_del_lote(tenant_id: int, usuario_id: int, lote_id: int) -> bytes |
     if f is None or not acceso.puede_ver_cliente(tenant_id, usuario_id, f["cliente_fiscal_id"]):
         return None
     return bytes(f["contenido"])
+
+
+# --- Subida desde el portal del cliente ------------------------------------------------------------------------------------------------------------------
+
+MAX_PENDIENTES_DEL_PORTAL = 300
+MIME_ADJUNTO = {"image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf"}
+MAX_ADJUNTO_BYTES = 8 * 1024 * 1024
+TEXTO_ESTADO_PORTAL = {"pendiente": _l("Recibida: el despacho la revisará"), "revisada": _l("Revisada por el despacho"), "exportada": _l("Contabilizada"),
+                       "descartada": _l("No válida: el despacho te contactará")}
+
+
+def adjuntar(tenant_id: int, cliente_fiscal_id: int, usuario_id: int | None, nombre: str, tipo_mime: str | None, contenido: bytes) -> int:
+    """Guarda la factura escaneada o fotografiada en los documentos del cliente (por el almacén de documentos: sellada con la clave del despacho si la tiene activada, como cualquier otro documento)
+    y devuelve su id. `ValueError` con un mensaje legible si no vale. Un mismo archivo subido dos veces no se duplica."""
+    from . import almacen_documentos
+    mime = (tipo_mime or "").lower().split(";")[0]
+    if mime not in MIME_ADJUNTO or len(contenido or b"") > MAX_ADJUNTO_BYTES:
+        raise ValueError("Archivo no válido: solo imágenes o PDF, hasta 8 MB.")
+    if usuario_id is None:
+        resultado, doc = almacen_documentos.guardar_de_cliente_fiscal_sin_usuario(tenant_id, cliente_fiscal_id, nombre, mime, contenido, "Factura")
+    else:
+        resultado, doc = almacen_documentos.guardar_de_cliente_fiscal(usuario_id, cliente_fiscal_id, nombre, mime, contenido, categoria="Factura")
+    if resultado in ("ok", "duplicado"):
+        return doc
+    raise ValueError({"vacio": "El archivo está vacío.", "grande": "Archivo no válido: solo imágenes o PDF, hasta 8 MB.", "limite": "Se ha alcanzado el máximo de documentos de este cliente.",
+                      "clave_privada": "Ese archivo no se puede guardar."}.get(resultado, "No se ha podido guardar el archivo."))
+
+
+def _desglose_desde_el_total(total_centimos: int, pct_centesimas: int) -> tuple[int, int]:
+    """(base, cuota) de una factura de la que solo se conoce el total y el tipo de IVA."""
+    base = int((Decimal(total_centimos) * Decimal(10000) / Decimal(10000 + pct_centesimas)).quantize(Decimal("1")))
+    return base, total_centimos - base
+
+
+def crear_desde_portal(cliente_fiscal_id: int, datos: dict, archivo: tuple[str, str | None, bytes] | None = None) -> int:
+    """El cliente apunta una factura suya desde su portal con lo que sabe: tipo, fecha, número, proveedor o cliente, total y tipo de IVA. Queda `pendiente`: el despacho la completa y la revisa.
+    `datos["complicada"]` (lleva retención o varios tipos de IVA) lo deja anotado para que el despacho la complete con la factura delante. `ValueError` con un mensaje legible si algo no vale."""
+    f = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    if f is None:
+        raise ValueError("Cliente no encontrado.")
+    tenant_id = f["tenant_id"]
+    conn = db.get_connection()
+    try:
+        pendientes = conn.execute("SELECT COUNT(*) FROM facturas_contables WHERE cliente_fiscal_id = ? AND origen = 'portal' AND estado = 'pendiente'", (cliente_fiscal_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    if pendientes >= MAX_PENDIENTES_DEL_PORTAL:
+        raise ValueError("Tienes muchas facturas pendientes de revisar: espera a que el despacho las procese.")
+    total = importe_a_centimos(datos.get("total"), permitir_cero=False)
+    if total <= 0:
+        raise ValueError("Indica el total de la factura.")
+    pct = porcentaje_a_centesimas(datos.get("pct_iva"))
+    base, cuota_iva = _desglose_desde_el_total(total, pct)
+    notas = "Anotada por el cliente desde el portal."
+    if str(datos.get("complicada")) in ("1", "on", "true", "True"):
+        notas += " PENDIENTE DE COMPLETAR: lleva retención o más de un tipo de IVA; el desglose de abajo es solo una aproximación a partir del total."
+    documento_id = adjuntar(tenant_id, cliente_fiscal_id, None, *archivo) if archivo else None
+    fid = _insertar(tenant_id, None, f, {**{k: datos.get(k) for k in ("tipo", "fecha", "numero", "tercero_nombre", "tercero_nif", "concepto")}, "notas": notas},
+                    [{"base": f"{base / 100:.2f}", "pct_iva": str(pct / 100), "cuota_iva": f"{cuota_iva / 100:.2f}"}], "portal", documento_id)
+    _avisar_al_despacho(f, fid, datos)
+    return fid
+
+
+def _avisar_al_despacho(f, factura_id: int, datos: dict) -> None:
+    """Avisa a quien lleva al cliente (o, si nadie, a la dirección y la coordinación) de que ha anotado una factura. Nunca rompe la subida."""
+    try:
+        from . import notificaciones
+        conn = db.get_connection()
+        try:
+            destinatarios = [f["responsable_id"]] if f["responsable_id"] else [r["id"] for r in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (f["tenant_id"],))]
+        finally:
+            conn.close()
+        titulo = f"{f['nombre']} ha anotado una factura"
+        for uid in destinatarios:
+            if uid and db.notificacion_tipo_activa(uid, "portal_mensaje_nuevo"):
+                notificaciones.crear_y_enviar(uid, "portal_mensaje_nuevo", titulo, f"{datos.get('tercero_nombre') or ''} · {datos.get('numero') or ''}"[:100], url=f"/contabilidad/{factura_id}",
+                                              datos={"tipo": "portal_mensaje_nuevo", "factura_contable_id": factura_id})
+    except Exception:
+        pass
+
+
+def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
+    """Lo que ve el cliente de sus facturas anotadas (sin cuentas ni notas internas)."""
+    conn = db.get_connection()
+    try:
+        filas = [dict(f) for f in conn.execute(
+            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
+            (cliente_fiscal_id, limite))]
+    finally:
+        conn.close()
+    return filas

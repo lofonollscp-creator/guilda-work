@@ -39,6 +39,14 @@ def _datos_del_formulario() -> dict:
     return {c: request.form.get(c, "") for c in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "tercero_cuenta", "concepto", "referencia", "suplidos", "notas", "abono", "rectifica_fecha", "rectifica_numero")}
 
 
+def _adjunto_del_formulario(cliente_id: int | None) -> int | None:
+    """El archivo subido con la factura (si lo hay), guardado en los documentos del cliente. `ValueError` si no vale."""
+    archivo = request.files.get("archivo")
+    if archivo is None or not archivo.filename or cliente_id is None:
+        return None
+    return fc.adjuntar(g.tenant_id, cliente_id, g.usuario_id, archivo.filename, archivo.mimetype, archivo.read(fc.MAX_ADJUNTO_BYTES + 1))
+
+
 def _trimestres() -> list[str]:
     hoy = date.today()
     res = []
@@ -72,7 +80,7 @@ def nueva():
     cliente_id = request.values.get("cliente_id", type=int)
     if request.method == "POST":
         try:
-            fid = fc.crear(g.tenant_id, g.usuario_id, cliente_id, _datos_del_formulario(), _lineas_del_formulario())
+            fid = fc.crear(g.tenant_id, g.usuario_id, cliente_id, _datos_del_formulario(), _lineas_del_formulario(), documento_id=_adjunto_del_formulario(cliente_id))
         except ValueError as e:
             return render_template("contabilidad_factura.html", f=None, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=cliente_id, clientes=_clientes(), error=str(e), cfg=None), 400
         return redirect(url_for("contabilidad.ver", factura_id=fid))
@@ -89,7 +97,7 @@ def ver(factura_id: int):
     cfg = fc.configuracion(g.tenant_id, f["cliente_fiscal_id"])
     if request.method == "POST":
         try:
-            fc.actualizar(g.tenant_id, g.usuario_id, factura_id, _datos_del_formulario(), _lineas_del_formulario())
+            fc.actualizar(g.tenant_id, g.usuario_id, factura_id, _datos_del_formulario(), _lineas_del_formulario(), documento_id=_adjunto_del_formulario(f["cliente_fiscal_id"]))
         except ValueError as e:
             return render_template("contabilidad_factura.html", f=f, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=f["cliente_fiscal_id"], clientes=_clientes(),
                                    error=str(e), cfg=cfg), 400

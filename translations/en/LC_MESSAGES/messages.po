@@ -13012,3 +13012,69 @@ msgstr "Internal reference"
 
 msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes)."
 msgstr "First use: import the file into an a3 test company and run it through the «Chequeo» (check) button before using it on a real one. The format follows a3's official input-link description (512-byte records)."
+
+msgid "Recibida: el despacho la revisará"
+msgstr "Received: the firm will review it"
+
+msgid "Revisada por el despacho"
+msgstr "Reviewed by the firm"
+
+msgid "Contabilizada"
+msgstr "Posted"
+
+msgid "No válida: el despacho te contactará"
+msgstr "Not valid: the firm will contact you"
+
+msgid "Anotada por el cliente desde el portal"
+msgstr "Entered by the client from the portal"
+
+msgid "Factura escaneada o fotografiada (PDF o imagen)"
+msgstr "Scanned or photographed invoice (PDF or image)"
+
+msgid "Ver la factura adjunta"
+msgstr "View the attached invoice"
+
+msgid "Portal"
+msgstr "Portal"
+
+msgid "Mis facturas"
+msgstr "My invoices"
+
+msgid "Anota aquí tus facturas del trimestre y tu gestoría las contabilizará."
+msgstr "Enter your quarter's invoices here and your accountant will post them."
+
+msgid "Factura anotada. Tu gestoría la revisará."
+msgstr "Invoice entered. Your accountant will review it."
+
+msgid "Anotar una factura"
+msgstr "Enter an invoice"
+
+msgid "¿Qué factura es?"
+msgstr "What kind of invoice is it?"
+
+msgid "Me la han hecho a mí (una compra o un gasto)"
+msgstr "It was issued to me (a purchase or an expense)"
+
+msgid "La he hecho yo a un cliente (una venta)"
+msgstr "I issued it to a client (a sale)"
+
+msgid "Nombre del proveedor o cliente"
+msgstr "Supplier or client name"
+
+msgid "Total de la factura (con IVA)"
+msgstr "Invoice total (including VAT)"
+
+msgid "Lleva retención (IRPF) o más de un tipo de IVA: mi gestoría la completará con la factura delante"
+msgstr "It has a withholding (IRPF) or more than one VAT rate: my accountant will complete it with the invoice in hand"
+
+msgid "Foto o PDF de la factura (recomendado)"
+msgstr "Photo or PDF of the invoice (recommended)"
+
+msgid "Anotar factura"
+msgstr "Enter invoice"
+
+msgid "Facturas anotadas"
+msgstr "Entered invoices"
+
+msgid "Todavía no has anotado ninguna factura."
+msgstr "You haven't entered any invoice yet."

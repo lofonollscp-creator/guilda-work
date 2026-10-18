@@ -17,7 +17,8 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import captcha, db, notificaciones
+from . import captcha, db, notificaciones, verticales
+from . import facturas_contables
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -148,7 +149,7 @@ def dashboard():
         instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"),
         solicitudes_pendientes=solicitudes_pendientes,
         por_anio=por_anio, anios_ordenados=anios_ordenados,
-        presentados=presentados, proximo_pendiente=proximo_pendiente,
+        presentados=presentados, proximo_pendiente=proximo_pendiente, portal_facturas=verticales.esta_activo(cliente["tenant_id"], "gestoria"),
     )
 
 
@@ -258,3 +259,31 @@ def mensajes_vencimiento(vencimiento_id: int):
         "portal_vencimiento_mensajes.html",
         vencimiento=vencimiento, mensajes=db.listar_mensajes_vencimiento(vencimiento_id),
     )
+
+
+# --- Facturas: el cliente las anota (y adjunta la foto o el PDF) para que el despacho las contabilice ---------------------------------------------------------
+
+def _cliente_con_facturas():
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None or not verticales.esta_activo(cliente["tenant_id"], "gestoria"):
+        abort(404)
+    return cliente
+
+
+@portal_bp.route("/facturas", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def facturas():
+    cliente = _cliente_con_facturas()
+    error, datos, anotada = None, {"tipo": request.args.get("tipo") or "recibida", "pct_iva": "21"}, request.args.get("anotada") == "1"
+    if request.method == "POST":
+        datos = {c: request.form.get(c, "") for c in ("tipo", "fecha", "numero", "tercero_nombre", "tercero_nif", "total", "pct_iva", "complicada")}
+        archivo = request.files.get("archivo")
+        adjunto = (archivo.filename, archivo.mimetype, archivo.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) if archivo is not None and archivo.filename else None
+        try:
+            facturas_contables.crear_desde_portal(cliente["id"], datos, adjunto)
+            return redirect(url_for("portal_cliente.facturas", anotada=1))
+        except ValueError as e:
+            error = str(e)
+    return render_template("portal_facturas.html", cliente=cliente, facturas=facturas_contables.listar_del_cliente(cliente["id"]), datos=datos, error=error, anotada=anotada,
+                           textos=facturas_contables.TEXTO_ESTADO_PORTAL)

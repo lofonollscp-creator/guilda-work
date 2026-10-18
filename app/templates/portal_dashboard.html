@@ -17,9 +17,12 @@
         </h1>
         <p class="subtitle">{{ _('Tu expediente fiscal.') }}</p>
       </div>
-      <form method="post" action="{{ url_for('portal_cliente.salir') }}">
-        <button type="submit" class="btn btn-ghost">{{ _('Salir') }}</button>
-      </form>
+      <div class="ds-fila">
+        {% if portal_facturas %}<a class="btn btn-primary" href="{{ url_for('portal_cliente.facturas') }}">{{ _('Mis facturas') }}</a>{% endif %}
+        <form method="post" action="{{ url_for('portal_cliente.salir') }}">
+          <button type="submit" class="btn btn-ghost">{{ _('Salir') }}</button>
+        </form>
+      </div>
     </header>
 
     {% if ayuda_enviada %}<p class="portal-peticion" role="status"><strong>{{ _('Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo.') }}</strong></p>{% endif %}

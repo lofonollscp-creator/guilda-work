@@ -13097,3 +13097,69 @@ msgstr "Référence interne"
 
 msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes)."
 msgstr "Première utilisation : importez le fichier dans une société de test a3 et passez-le par le bouton «Chequeo» avant de l'utiliser sur une vraie. Le format suit la description officielle du lien d'entrée d'a3 (enregistrements de 512 octets)."
+
+msgid "Recibida: el despacho la revisará"
+msgstr "Reçue : le cabinet la vérifiera"
+
+msgid "Revisada por el despacho"
+msgstr "Vérifiée par le cabinet"
+
+msgid "Contabilizada"
+msgstr "Comptabilisée"
+
+msgid "No válida: el despacho te contactará"
+msgstr "Non valide : le cabinet vous contactera"
+
+msgid "Anotada por el cliente desde el portal"
+msgstr "Saisie par le client depuis le portail"
+
+msgid "Factura escaneada o fotografiada (PDF o imagen)"
+msgstr "Facture scannée ou photographiée (PDF ou image)"
+
+msgid "Ver la factura adjunta"
+msgstr "Voir la facture jointe"
+
+msgid "Portal"
+msgstr "Portail"
+
+msgid "Mis facturas"
+msgstr "Mes factures"
+
+msgid "Anota aquí tus facturas del trimestre y tu gestoría las contabilizará."
+msgstr "Saisissez ici vos factures du trimestre et votre cabinet les comptabilisera."
+
+msgid "Factura anotada. Tu gestoría la revisará."
+msgstr "Facture saisie. Votre cabinet la vérifiera."
+
+msgid "Anotar una factura"
+msgstr "Saisir une facture"
+
+msgid "¿Qué factura es?"
+msgstr "De quelle facture s'agit-il ?"
+
+msgid "Me la han hecho a mí (una compra o un gasto)"
+msgstr "Elle m'a été adressée (un achat ou une charge)"
+
+msgid "La he hecho yo a un cliente (una venta)"
+msgstr "Je l'ai émise à un client (une vente)"
+
+msgid "Nombre del proveedor o cliente"
+msgstr "Nom du fournisseur ou du client"
+
+msgid "Total de la factura (con IVA)"
+msgstr "Total de la facture (TVA incluse)"
+
+msgid "Lleva retención (IRPF) o más de un tipo de IVA: mi gestoría la completará con la factura delante"
+msgstr "Elle comporte une retenue (IRPF) ou plusieurs taux de TVA : mon cabinet la complétera avec la facture sous les yeux"
+
+msgid "Foto o PDF de la factura (recomendado)"
+msgstr "Photo ou PDF de la facture (recommandé)"
+
+msgid "Anotar factura"
+msgstr "Saisir la facture"
+
+msgid "Facturas anotadas"
+msgstr "Factures saisies"
+
+msgid "Todavía no has anotado ninguna factura."
+msgstr "Vous n'avez encore saisi aucune facture."

@@ -5,7 +5,7 @@
 <header class="page-header">
   <div>
     <h1>{% if f %}{{ _('Factura %(numero)s', numero=f.numero) }}{% else %}{{ _('Nueva factura') }}{% endif %}</h1>
-    {% if f %}<p class="subtitle">{{ f.cliente_nombre }} · {{ f.trimestre }} · {{ {'pendiente': _('Pendiente de revisar'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</p>{% endif %}
+    {% if f %}<p class="subtitle">{% if f.origen == 'portal' %}{{ _('Anotada por el cliente desde el portal') }} · {% endif %}{{ f.cliente_nombre }} · {{ f.trimestre }} · {{ {'pendiente': _('Pendiente de revisar'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</p>{% endif %}
   </div>
   <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente_id) }}">‹ {{ _('Volver a las facturas') }}</a>
 </header>
@@ -15,7 +15,7 @@
 <div class="ia-error" role="alert"><strong>{{ _('Antes de poder exportarla:') }}</strong><ul>{% for p in f.problemas %}<li>{{ p }}</li>{% endfor %}</ul></div>
 {% endif %}
 
-<form method="post" class="edit-form" {% if f %}action="{{ url_for('contabilidad.ver', factura_id=f.id) }}"{% else %}action="{{ url_for('contabilidad.nueva') }}"{% endif %}>
+<form method="post" class="edit-form" enctype="multipart/form-data" {% if f %}action="{{ url_for('contabilidad.ver', factura_id=f.id) }}"{% else %}action="{{ url_for('contabilidad.nueva') }}"{% endif %}>
   {% if not f %}
   <label for="c-cliente">{{ _('Cliente del despacho') }}</label>
   <select id="c-cliente" name="cliente_id" required><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == cliente_id }}>{{ c.nombre }}</option>{% endfor %}</select>
@@ -60,6 +60,8 @@
   <label>{{ _('Suplidos (importe sin IVA que no forma parte de la base)') }}<input type="text" name="suplidos" value="{{ datos.suplidos }}" inputmode="decimal"></label>
   <label>{{ _('Referencia interna') }}<input type="text" name="referencia" value="{{ datos.referencia }}" maxlength="60"></label>
   <label>{{ _('Notas internas') }}<textarea name="notas" rows="3">{{ datos.notas }}</textarea></label>
+  <label>{{ _('Factura escaneada o fotografiada (PDF o imagen)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"></label>
+  {% if f and f.documento_id %}<p><a href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=f.cliente_fiscal_id, documento_id=f.documento_id) }}">{{ _('Ver la factura adjunta') }}</a></p>{% endif %}
   {% if f %}<p class="muted">{{ _('Total de la factura: %(t)s €', t='%.2f'|format(f.total_centimos / 100)) }}</p>{% endif %}
   <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if f and f.estado == 'exportada' }}>{{ _('Guardar') }}</button></div>
 </form>
