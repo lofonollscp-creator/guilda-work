@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from flask import url_for
 from flask_babel import gettext as _, ngettext
 
-from . import ausencias, certificados, db, mensajes_enlace, nucleo, resumen_pendientes, traspasos, verticales
+from . import ausencias, certificados, db, facturacion_despacho, mensajes_enlace, nucleo, resumen_pendientes, traspasos, verticales
 
 DIAS_CERCANO = 7                 # «próximo»: lo que vence en la próxima semana
 DIAS_CERTIFICADO = 30
@@ -94,6 +94,12 @@ def reunir(usuario_id: int, supervisor: bool = False, hoy: date | None = None) -
         if ausencias.puede_gestionar(usuario_id, tid):
             secciones.append(_seccion("ausencias", _("Ausencias por aprobar"), [
                 _item(f"{a['persona']}", url_for("fichaje.ausencias_equipo"), "hoy", f"{a['desde']} → {a['hasta']}", a["desde"]) for a in ausencias.listar(tid, estado="pendiente")]))
+
+        impagos = []
+        for f in facturacion_despacho.vencidas_sin_cobrar(tid, usuario_id, supervisor):
+            destino = url_for("expedientes.ficha", expediente_id=f["expediente_id"]) + "#facturacion" if f["expediente_id"] else (url_for("clientes.ficha", cliente_id=f["cliente_id"], pestana="fiscal") if f["cliente_id"] else url_for("clientes.lista"))
+            impagos.append(_item(_("Factura %(codigo)s sin cobrar", codigo=f["codigo"]), destino, "vencido", f"{f['cliente'] or ''} · {f['total']} €".strip(" ·"), f["fecha"]))
+        secciones.append(_seccion("facturas", _("Facturas vencidas sin cobrar"), impagos))
 
         if certificados.puede_gestionar(usuario_id, tid):
             cert = []

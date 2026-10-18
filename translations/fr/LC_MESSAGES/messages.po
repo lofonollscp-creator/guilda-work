@@ -12796,3 +12796,60 @@ msgstr "Afficher %(nombre)s dans la barre"
 
 msgid "Restablecer la barra de serie"
 msgstr "Rétablir la barre par défaut"
+
+msgid "Factura %(codigo)s sin cobrar"
+msgstr "Facture %(codigo)s impayée"
+
+msgid "Facturas vencidas sin cobrar"
+msgstr "Factures échues impayées"
+
+msgid "Marca la casilla para confirmar que quieres emitir la factura."
+msgstr "Cochez la case pour confirmer que vous voulez émettre la facture."
+
+msgid "FacturaScripts no ha podido crear la factura: %(motivo)s"
+msgstr "FacturaScripts n'a pas pu créer la facture : %(motivo)s"
+
+msgid "Factura"
+msgstr "Facture"
+
+msgid "Pendiente de cobro"
+msgstr "En attente de paiement"
+
+msgid "Todavía no se ha facturado nada desde este expediente."
+msgstr "Rien n'a encore été facturé depuis ce dossier."
+
+msgid "Importe sin IVA (€)"
+msgstr "Montant hors TVA (€)"
+
+msgid "Confirmo que quiero emitir esta factura a nombre de %(cliente)s."
+msgstr "Je confirme vouloir émettre cette facture au nom de %(cliente)s."
+
+msgid "Emitir factura"
+msgstr "Émettre la facture"
+
+msgid "El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente."
+msgstr "La TVA est appliquée par FacturaScripts selon sa configuration. La facture y est créée et liée à ce dossier."
+
+msgid "Para facturar desde aquí, el cliente necesita gestión fiscal activada y vinculación con FacturaScripts."
+msgstr "Pour facturer depuis ici, le client doit avoir la gestion fiscale activée et être lié à FacturaScripts."
+
+msgid "Ir a la ficha del cliente"
+msgstr "Aller à la fiche du client"
+
+msgid "Vincula antes al cliente con FacturaScripts desde su ficha fiscal."
+msgstr "Liez d'abord le client à FacturaScripts depuis sa fiche fiscale."
+
+msgid "Ir a su ficha fiscal"
+msgstr "Aller à sa fiche fiscale"
+
+msgid "Solo la dirección, la coordinación o quien lleva el expediente puede facturarlo."
+msgstr "Seuls la direction, la coordination ou la personne qui gère le dossier peuvent le facturer."
+
+msgid "Cobrado"
+msgstr "Encaissé"
+
+msgid "%(n)s factura vencida (%(importe)s €)"
+msgid_plural "%(n)s facturas vencidas (%(importe)s €)"
+msgstr[0] "%(n)s facture échue (%(importe)s €)"
+msgstr[1] "%(n)s factures échues (%(importe)s €)"
+

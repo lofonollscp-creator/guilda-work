@@ -12711,3 +12711,60 @@ msgstr "Show %(nombre)s in the sidebar"
 
 msgid "Restablecer la barra de serie"
 msgstr "Reset to the default sidebar"
+
+msgid "Factura %(codigo)s sin cobrar"
+msgstr "Invoice %(codigo)s unpaid"
+
+msgid "Facturas vencidas sin cobrar"
+msgstr "Overdue unpaid invoices"
+
+msgid "Marca la casilla para confirmar que quieres emitir la factura."
+msgstr "Tick the box to confirm you want to issue the invoice."
+
+msgid "FacturaScripts no ha podido crear la factura: %(motivo)s"
+msgstr "FacturaScripts could not create the invoice: %(motivo)s"
+
+msgid "Factura"
+msgstr "Invoice"
+
+msgid "Pendiente de cobro"
+msgstr "Awaiting payment"
+
+msgid "Todavía no se ha facturado nada desde este expediente."
+msgstr "Nothing has been invoiced from this case yet."
+
+msgid "Importe sin IVA (€)"
+msgstr "Amount excluding VAT (€)"
+
+msgid "Confirmo que quiero emitir esta factura a nombre de %(cliente)s."
+msgstr "I confirm I want to issue this invoice to %(cliente)s."
+
+msgid "Emitir factura"
+msgstr "Issue invoice"
+
+msgid "El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente."
+msgstr "VAT is applied by FacturaScripts according to its settings. The invoice is created there and linked to this case."
+
+msgid "Para facturar desde aquí, el cliente necesita gestión fiscal activada y vinculación con FacturaScripts."
+msgstr "To invoice from here, the client needs tax management enabled and a link to FacturaScripts."
+
+msgid "Ir a la ficha del cliente"
+msgstr "Go to the client record"
+
+msgid "Vincula antes al cliente con FacturaScripts desde su ficha fiscal."
+msgstr "First link the client to FacturaScripts from their tax record."
+
+msgid "Ir a su ficha fiscal"
+msgstr "Go to their tax record"
+
+msgid "Solo la dirección, la coordinación o quien lleva el expediente puede facturarlo."
+msgstr "Only management, coordination or whoever handles the case can invoice it."
+
+msgid "Cobrado"
+msgstr "Collected"
+
+msgid "%(n)s factura vencida (%(importe)s €)"
+msgid_plural "%(n)s facturas vencidas (%(importe)s €)"
+msgstr[0] "%(n)s overdue invoice (%(importe)s €)"
+msgstr[1] "%(n)s overdue invoices (%(importe)s €)"
+

@@ -102,4 +102,5 @@
   <form method="post" action="{{ url_for('expedientes.papelera', expediente_id=x.id) }}" class="ds-mt-16" data-confirmar-envio="{{ _('¿Mandar este expediente a la papelera?') }}" data-confirmar-peligro><button type="submit" class="btn btn-peligro btn-sm">{{ _('Mandar a la papelera') }}</button></form>
 </section>
 </div>
+{% include "_expediente_facturacion.html" %}
 {% endblock %}

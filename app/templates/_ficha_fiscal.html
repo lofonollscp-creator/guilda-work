@@ -71,6 +71,11 @@
 {% if fiscal.facturascripts_cliente_codigo %}
 <section class="ds-max-640 ds-mt-32">
   <h2>{{ _('Facturación') }}</h2>
+  {% if cobro and cobro.resumen.n %}
+  {% set r = cobro.resumen %}
+  <p class="subtitle">{{ _('Facturado') }}: <strong>{{ '%.2f'|format(r.facturado) }} €</strong> · {{ _('Cobrado') }}: <strong>{{ '%.2f'|format(r.cobrado) }} €</strong> · {{ _('Pendiente de cobro') }}: <strong>{{ '%.2f'|format(r.pendiente) }} €</strong>
+    {% if r.n_vencidas %}<span class="pill prioridad-alta">{{ ngettext('%(n)s factura vencida (%(importe)s €)', '%(n)s facturas vencidas (%(importe)s €)', r.n_vencidas, n=r.n_vencidas, importe='%.2f'|format(r.vencido)) }}</span>{% endif %}</p>
+  {% endif %}
   {% if not facturas %}
   <p class="empty-lane">{{ _('Todavía no hay facturas para este cliente.') }}</p>
   {% else %}
@@ -80,6 +85,7 @@
       <span class="log-text">{{ f.codigo or f.numero or ('#' ~ f.idfactura) }}</span>
       <span class="pill">{{ f.fecha }}</span>
       <span class="log-duration">{{ f.total }} €</span>
+      {% set est = estado_de_factura(f) %}{% if est == 'pagada' %}<span class="pill">{{ _('Cobrada') }}</span>{% elif est == 'vencida' %}<span class="pill prioridad-alta">{{ _('Vencida') }}</span>{% else %}<span class="pill">{{ _('Pendiente de cobro') }}</span>{% endif %}
     </li>
     {% endfor %}
   </ul>

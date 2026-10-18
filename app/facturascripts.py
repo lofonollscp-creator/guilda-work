@@ -500,3 +500,16 @@ def crear_factura(url: str, api_key: str, cliente_codigo: str, lineas: list[dict
         mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
         raise ErrorFacturaScripts(f"No se ha podido crear la factura en FacturaScripts: {mensaje}")
     return cuerpo
+
+
+def obtener_factura(url: str, api_key: str, idfactura) -> dict | None:
+    """Una factura de cliente por su id, o None si no existe."""
+    if not url or not api_key or idfactura in (None, ""):
+        return None
+    estado, cuerpo = _peticion(url, api_key, f"facturaclientes/{urllib.parse.quote(str(idfactura), safe='')}")
+    if estado == 404:
+        return None
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorFacturaScripts(f"No se ha podido leer la factura de FacturaScripts: {mensaje}")
+    return cuerpo.get("data", cuerpo) if isinstance(cuerpo, dict) else None

@@ -1,0 +1,37 @@
+{% set fact = panel_facturacion(x) %}
+{% if fact.disponible %}
+<section class="ds-max-640 ds-mt-32" id="facturacion">
+  <h2>{{ _('Facturación') }}</h2>
+  {% if fact.facturas %}
+  <ul class="log-list">
+    {% for f in fact.facturas %}
+    <li class="log-item">
+      <span class="log-text">{{ f.codigo or ('#' ~ f.idfactura if f.idfactura else _('Factura')) }} · {{ f.concepto }}</span>
+      <span class="pill">{{ f.creado_en[:10] }}</span>
+      <span class="log-duration">{{ f.base }} + {{ _('IVA') }}</span>
+      {% if f.estado == 'pagada' %}<span class="pill">{{ _('Cobrada') }}</span>{% elif f.estado == 'vencida' %}<span class="pill prioridad-alta">{{ _('Vencida') }}</span>{% elif f.estado == 'pendiente' %}<span class="pill">{{ _('Pendiente de cobro') }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-lane">{{ _('Todavía no se ha facturado nada desde este expediente.') }}</p>
+  {% endif %}
+  {% if fact.puede %}
+  <form method="post" action="{{ url_for('cobros.facturar', expediente_id=x.id) }}" class="edit-form">
+    <label for="fact-concepto">{{ _('Concepto') }}</label>
+    <input type="text" id="fact-concepto" name="concepto" value="{{ x.titulo }}" maxlength="200" required>
+    <label for="fact-importe">{{ _('Importe sin IVA (€)') }}</label>
+    <input type="text" id="fact-importe" name="importe" inputmode="decimal" placeholder="1.234,56" required>
+    <label class="checkbox-label"><input type="checkbox" name="confirmo" value="1" required> {{ _('Confirmo que quiero emitir esta factura a nombre de %(cliente)s.', cliente=x.cliente_nombre) }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Emitir factura') }}</button>
+    <p class="muted">{{ _('El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente.') }}</p>
+  </form>
+  {% elif fact.motivo == 'sin_gestion_fiscal' %}
+  <p class="muted">{{ _('Para facturar desde aquí, el cliente necesita gestión fiscal activada y vinculación con FacturaScripts.') }} <a href="{{ url_for('clientes.ficha', cliente_id=x.cliente_id) }}">{{ _('Ir a la ficha del cliente') }}</a></p>
+  {% elif fact.motivo == 'sin_vincular' %}
+  <p class="muted">{{ _('Vincula antes al cliente con FacturaScripts desde su ficha fiscal.') }} <a href="{{ url_for('clientes.ficha', cliente_id=x.cliente_id, pestana='fiscal') }}">{{ _('Ir a su ficha fiscal') }}</a></p>
+  {% elif fact.motivo == 'permiso' %}
+  <p class="muted">{{ _('Solo la dirección, la coordinación o quien lleva el expediente puede facturarlo.') }}</p>
+  {% endif %}
+</section>
+{% endif %}

@@ -12,7 +12,7 @@ from datetime import date, timedelta
 
 from flask import url_for
 
-from . import almacen_documentos, calcom, db, espocrm, facturascripts, perfil_fiscal
+from . import almacen_documentos, calcom, db, espocrm, facturacion_despacho, facturascripts, perfil_fiscal
 from .vencimientos_fiscales import modelos_disponibles
 
 PESTANAS = ("resumen", "fiscal", "laboral", "tareas", "documentos", "mensajes")
@@ -77,7 +77,7 @@ def contexto_fiscal(tenant_id: int, usuario_id: int, cliente, vencimientos) -> d
     return {
         "fiscal": cliente, "vencimientos": vencimientos, "modelos_cliente": db.modelos_fiscales_de_cliente(cliente), "modelos_disponibles": modelos_disponibles(cliente["pais"]),
         "hoy": date.today().isoformat(), "limite_proximo": (date.today() + timedelta(days=7)).isoformat(),
-        "facturas": facturas, "contactos_espocrm": contactos_espocrm, "proxima_cita": proxima_cita,
+        "facturas": facturas, "cobro": facturacion_despacho.cobro_de_cliente(tenant_id, cliente), "contactos_espocrm": contactos_espocrm, "proxima_cita": proxima_cita,
         "accesos": db.listar_accesos_cliente(tenant_id, cliente["id"], 50) if supervisor else None,
         "acciones_acceso": {k: str(v) for k, v in ETIQUETAS_ACCESO.items()},
     }
