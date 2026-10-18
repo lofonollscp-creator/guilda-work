@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS facturas_contables (
     concepto TEXT,
     referencia TEXT,
     abono INTEGER NOT NULL DEFAULT 0,
+    rectifica_fecha TEXT,
+    rectifica_numero TEXT,
     suplidos_centimos INTEGER NOT NULL DEFAULT 0,
     total_centimos INTEGER NOT NULL,
     notas TEXT,
@@ -93,7 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_l
 ESTADOS = ("pendiente", "revisada", "exportada", "descartada")
 TIPOS = ("emitida", "recibida")
 MAX_LINEAS = 8
-MAX_NUMERO = 10          # el registro de a3 reserva 10 posiciones para el número de factura
+MAX_NUMERO = 60          # el enlace de a3 admite hasta 60 caracteres (campo ampliado del SII); en las 10 posiciones clásicas va un resumen
 TOLERANCIA_CENTIMOS = 2
 CONFIG_DEFECTO = {"digitos": 8, "cuenta_proveedores": "40000000", "cuenta_clientes": "43000000", "cuenta_gasto": "62900000", "cuenta_ingreso": "70000000",
                   "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000"}
@@ -101,6 +103,9 @@ CONFIG_DEFECTO = {"digitos": 8, "cuenta_proveedores": "40000000", "cuenta_client
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    # ampliación posterior: los abonos llevan la factura que rectifican (registro tipo 4 del enlace de a3)
+    db._asegurar_columna(conn, "facturas_contables", "rectifica_fecha", "TEXT")
+    db._asegurar_columna(conn, "facturas_contables", "rectifica_numero", "TEXT")
 
 
 # --- Lectura de lo que se escribe -----------------------------------------------------------------------------------------------------------------------
@@ -287,9 +292,11 @@ def _datos_limpios(datos: dict) -> dict:
         raise ValueError("Indica el número de factura.")
     fecha = _fecha(datos.get("fecha"), "Fecha de la factura")
     return {"tipo": tipo, "fecha": fecha, "fecha_operacion": _fecha(datos["fecha_operacion"], "Fecha de operación") if str(datos.get("fecha_operacion") or "").strip() else fecha,
-            "numero": numero[:40], "tercero_nombre": nombre[:100], "tercero_nif": _nif(datos.get("tercero_nif"))[:20] or None,
+            "numero": numero[:MAX_NUMERO], "tercero_nombre": nombre[:100], "tercero_nif": _nif(datos.get("tercero_nif"))[:20] or None,
             "tercero_cuenta": re.sub(r"\D", "", str(datos.get("tercero_cuenta") or ""))[:12] or None, "concepto": str(datos.get("concepto") or "").strip()[:60] or None,
             "referencia": str(datos.get("referencia") or "").strip()[:60] or None, "abono": 1 if datos.get("abono") in (True, 1, "1", "on", "true") else 0,
+            "rectifica_fecha": _fecha(datos["rectifica_fecha"], "Fecha de la factura que rectifica") if str(datos.get("rectifica_fecha") or "").strip() else None,
+            "rectifica_numero": str(datos.get("rectifica_numero") or "").strip()[:60] or None,
             "suplidos_centimos": importe_a_centimos(datos.get("suplidos")), "notas": str(datos.get("notas") or "").strip()[:1000] or None}
 
 
@@ -302,9 +309,9 @@ def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict, 
     conn = db.get_connection()
     try:
         cur = conn.execute("INSERT INTO facturas_contables (tenant_id, cliente_fiscal_id, tipo, origen, estado, fecha, fecha_operacion, numero, tercero_nombre, tercero_nif, tercero_cuenta, concepto, "
-                           "referencia, abono, suplidos_centimos, total_centimos, notas, creado_por, creado_en, actualizado_en) VALUES (?, ?, ?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                           "referencia, abono, rectifica_fecha, rectifica_numero, suplidos_centimos, total_centimos, notas, creado_por, creado_en, actualizado_en) VALUES (?, ?, ?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                            (tenant_id, cliente_fiscal_id, d["tipo"], origen, d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"],
-                            d["referencia"], d["abono"], d["suplidos_centimos"], total, d["notas"], usuario_id, ahora, ahora))
+                            d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"], d["suplidos_centimos"], total, d["notas"], usuario_id, ahora, ahora))
         fid = cur.lastrowid
         _guardar_lineas(conn, fid, ls)
         if d["tercero_cuenta"]:
@@ -353,9 +360,9 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
     conn = db.get_connection()
     try:
         conn.execute("UPDATE facturas_contables SET estado = 'pendiente', fecha = ?, fecha_operacion = ?, numero = ?, tercero_nombre = ?, tercero_nif = ?, tercero_cuenta = ?, concepto = ?, referencia = ?, "
-                     "abono = ?, suplidos_centimos = ?, total_centimos = ?, notas = ?, actualizado_en = ?, revisado_por = NULL, revisado_en = NULL WHERE id = ? AND tenant_id = ?",
-                     (d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"], d["referencia"], d["abono"], d["suplidos_centimos"],
-                      total, d["notas"], db.now_iso(), factura_id, tenant_id))
+                     "abono = ?, rectifica_fecha = ?, rectifica_numero = ?, suplidos_centimos = ?, total_centimos = ?, notas = ?, actualizado_en = ?, revisado_por = NULL, revisado_en = NULL WHERE id = ? AND tenant_id = ?",
+                     (d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"], d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"],
+                      d["suplidos_centimos"], total, d["notas"], db.now_iso(), factura_id, tenant_id))
         _guardar_lineas(conn, factura_id, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -378,8 +385,8 @@ def problemas(tenant_id: int, f: dict) -> list[str]:
     res = []
     if not cfg["a3_empresa"]:
         res.append("Falta el código de empresa de a3 de este cliente (en Configuración de a3).")
-    if len(f["numero"]) > MAX_NUMERO:
-        res.append(f"El número de factura tiene {len(f['numero'])} caracteres y a3 admite {MAX_NUMERO}: se recortaría. Escribe una versión corta y deja el original en «Referencia».")
+    if f["abono"] and not (f.get("rectifica_numero") and f.get("rectifica_fecha")):
+        res.append("Un abono o rectificativa necesita el número y la fecha de la factura que rectifica: a3 lo exige.")
     if not f.get("tercero_nif"):
         res.append("Falta el NIF del proveedor o cliente.")
     ls = f.get("lineas") or []
@@ -449,12 +456,12 @@ def resumen_por_estado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
 def _para_enlace(tenant_id: int, f: dict, cfg: dict) -> dict:
     gasto_o_ingreso = cfg["cuenta_gasto"] if f["tipo"] == "recibida" else cfg["cuenta_ingreso"]
     cuenta_iva = cfg["cuenta_iva_soportado"] if f["tipo"] == "recibida" else cfg["cuenta_iva_repercutido"]
-    return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "concepto": f["concepto"] or (
-        ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "referencia": f["referencia"], "nif": f["tercero_nif"], "nombre": f["tercero_nombre"],
+    return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "rectifica_fecha": f.get("rectifica_fecha"), "rectifica_numero": f.get("rectifica_numero"), "concepto": f["concepto"] or (
+        ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"],
         "cuenta_tercero": cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
-        "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
+        "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "descripcion_cuenta": "Compras" if f["tipo"] == "recibida" else "Ventas", "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
                     "pct_recargo": l["pct_recargo"], "cuota_recargo": l["cuota_recargo"], "pct_retencion": l["pct_retencion"], "cuota_retencion": l["cuota_retencion"],
-                    "sujeta_iva": bool(l["sujeta_iva"]), "cuenta_iva": cuenta_iva, "cuenta_recargo": None, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
+                    "sujeta_iva": bool(l["sujeta_iva"]), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
                    for l in f["lineas"]]}
 
 

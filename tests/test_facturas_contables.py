@@ -94,7 +94,7 @@ def test_problemas_que_impiden_revisar():
     t, u, c = _despacho(a3=False)
     fid = fc.crear(t, u, c, _datos(numero="FACTURA-LARGA-123", tercero_nif=""), [LINEA])
     f = fc.obtener(t, u, fid)
-    assert len(f["problemas"]) == 3 and any("código de empresa" in p for p in f["problemas"]) and any("11 caracteres" not in p and "17 caracteres" in p for p in f["problemas"]) and any("NIF" in p for p in f["problemas"])
+    assert len(f["problemas"]) == 2 and any("código de empresa" in p for p in f["problemas"]) and any("NIF" in p for p in f["problemas"]), "un número largo ya no es un problema: va en el campo ampliado"
     with pytest.raises(ValueError, match="No se puede dar por revisada"):
         fc.cambiar_estado(t, u, fid, "revisada")
 
@@ -151,9 +151,9 @@ def test_exportar_genera_el_fichero_marca_exportadas_y_guarda_el_lote():
     for i in ids[:2]:
         fc.cambiar_estado(t, u, i, "revisada")
     r = fc.exportar(t, u, c, desde="2026-07-01", hasta="2026-09-30")
-    assert (r["n_facturas"], r["n_registros"]) == (2, 4) and len(r["contenido"]) == 4 * 256
+    assert (r["n_facturas"], r["n_registros"]) == (2, 4) and len(r["contenido"]) == 4 * 512
     lineas = r["contenido"].decode("latin-1").split("\r\n")[:-1]
-    assert lineas[0][1:6] == "00007" and lineas[0][6:14] == "20260710" and lineas[2][6:14] == "20260810" and lineas[0][15:27] == "400000000000"
+    assert lineas[0][0] == "5" and lineas[0][1:6] == "00007" and lineas[0][6:14] == "20260710" and lineas[2][6:14] == "20260810" and lineas[0][15:27] == "400000000000"
     assert lineas[1][15:27] == "629000000000" and lineas[1][191:203] == "472000000000", "gasto e IVA soportado por defecto"
     assert [fc.obtener(t, u, i)["estado"] for i in ids] == ["exportada", "exportada", "pendiente"]
     assert fc.contenido_del_lote(t, u, r["lote"]) == r["contenido"]
@@ -174,14 +174,18 @@ def test_una_emitida_usa_ingreso_y_iva_repercutido():
     t, u, c = _despacho()
     fid = fc.crear(t, u, c, _datos(tipo="emitida", numero="E-1"), [LINEA]); fc.cambiar_estado(t, u, fid, "revisada")
     lineas = fc.exportar(t, u, c)["contenido"].decode("latin-1").split("\r\n")
-    assert lineas[0][57] == "1" and lineas[0][15:27] == "430000000000" and lineas[1][15:27] == "700000000000" and lineas[1][191:203] == "477000000000"
+    assert lineas[0][57] == "1" and lineas[0][15:27] == "430000000000" and lineas[1][15:27] == "700000000000" and lineas[1][227:239] == "477000000000" and lineas[1][191:203] == " " * 12
 
 
-def test_un_abono_sale_con_registro_2_y_negativos():
+def test_un_abono_sale_con_registro_2_importes_positivos_y_registro_4_de_la_factura_rectificada():
     t, u, c = _despacho()
-    fid = fc.crear(t, u, c, _datos(abono="1"), [LINEA]); fc.cambiar_estado(t, u, fid, "revisada")
+    fid = fc.crear(t, u, c, _datos(abono="1"), [LINEA])
+    with pytest.raises(ValueError, match="factura que rectifica"):
+        fc.cambiar_estado(t, u, fid, "revisada")
+    fc.actualizar(t, u, fid, _datos(abono="1", rectifica_numero="F-0", rectifica_fecha="2026-07-01"), [LINEA]); fc.cambiar_estado(t, u, fid, "revisada")
     lineas = fc.exportar(t, u, c)["contenido"].decode("latin-1").split("\r\n")
-    assert lineas[0][14] == "2" and lineas[1][57] == "A" and lineas[1][101:115] == "-0000001000.00"
+    assert lineas[0][14] == "2" and lineas[1][57] == "A" and lineas[1][101:115] == "+0000001000.00"
+    assert lineas[2][14] == "4" and lineas[2][58:66] == "20260701" and lineas[2][66:126].strip() == "F-0" and lineas[2][156] == "R"
 
 
 def test_respeta_las_oficinas_y_los_despachos(monkeypatch):
@@ -229,7 +233,7 @@ def test_flujo_completo_desde_la_web(cliente):
     lista = cliente.get(f"/contabilidad/?cliente_id={c}&trimestre=2026-T3").get_data(as_text=True)
     assert "1 revisada" in lista and "Generar SUENLACE.DAT" in lista
     r = cliente.post("/contabilidad/exportar", data={"cliente_id": c, "trimestre": "2026-T3"})
-    assert r.status_code == 200 and "SUENLACE.DAT" in r.headers["Content-Disposition"] and len(r.data) == 512 and r.headers["Cache-Control"] == "no-store"
+    assert r.status_code == 200 and "SUENLACE.DAT" in r.headers["Content-Disposition"] and len(r.data) == 1024 and r.headers["Cache-Control"] == "no-store"
     assert "1 exportada" in cliente.get(f"/contabilidad/?cliente_id={c}").get_data(as_text=True)
     lotes = cliente.get("/contabilidad/lotes").get_data(as_text=True)
     assert "Descargar" in lotes

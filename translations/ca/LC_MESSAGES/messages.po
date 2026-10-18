@@ -13010,3 +13010,14 @@ msgid_plural "%(n)s exportadas"
 msgstr[0] "%(n)s exportada"
 msgstr[1] "%(n)s exportades"
 
+msgid "Número de la factura que rectifica (solo abonos)"
+msgstr "Número de la factura que rectifica (només abonaments)"
+
+msgid "Fecha de la factura que rectifica"
+msgstr "Data de la factura que rectifica"
+
+msgid "Referencia interna"
+msgstr "Referència interna"
+
+msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes)."
+msgstr "Primer ús: importa el fitxer en una empresa de proves d'a3 i passa'l pel botó «Chequeo» abans d'usar-lo en una de real. El format segueix la descripció oficial de l'enllaç d'entrada d'a3 (registres de 512 bytes)."

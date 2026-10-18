@@ -13086,3 +13086,14 @@ msgid_plural "%(n)s exportadas"
 msgstr[0] "%(n)s exportée"
 msgstr[1] "%(n)s exportées"
 
+msgid "Número de la factura que rectifica (solo abonos)"
+msgstr "Numéro de la facture rectifiée (avoirs uniquement)"
+
+msgid "Fecha de la factura que rectifica"
+msgstr "Date de la facture rectifiée"
+
+msgid "Referencia interna"
+msgstr "Référence interne"
+
+msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes)."
+msgstr "Première utilisation : importez le fichier dans une société de test a3 et passez-le par le bouton «Chequeo» avant de l'utiliser sur une vraie. Le format suit la description officielle du lien d'entrée d'a3 (enregistrements de 512 octets)."

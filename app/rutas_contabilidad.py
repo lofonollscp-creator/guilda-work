@@ -36,7 +36,7 @@ def _lineas_del_formulario() -> list[dict]:
 
 
 def _datos_del_formulario() -> dict:
-    return {c: request.form.get(c, "") for c in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "tercero_cuenta", "concepto", "referencia", "suplidos", "notas", "abono")}
+    return {c: request.form.get(c, "") for c in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "tercero_cuenta", "concepto", "referencia", "suplidos", "notas", "abono", "rectifica_fecha", "rectifica_numero")}
 
 
 def _trimestres() -> list[str]:
@@ -98,6 +98,7 @@ def ver(factura_id: int):
                "pct_recargo": f"{l['pct_recargo'] / 100:g}" if l["pct_recargo"] else "", "pct_retencion": f"{l['pct_retencion'] / 100:g}" if l["pct_retencion"] else "",
                "cuenta": l["cuenta"] or "", "subtipo": l["subtipo"]} for l in f["lineas"]]
     datos = {k: f[k] for k in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "concepto", "referencia", "notas")}
+    datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
                            cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg))

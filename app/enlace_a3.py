@@ -1,9 +1,9 @@
-"""Fichero de enlace contable de a3 (SUENLACE.DAT): facturas emitidas y recibidas para que a3ECO / a3CON las lea al importar (Utilidades › Importar/Exportar › Enlace contable).
+"""Fichero de enlace contable de entrada de a3asesor Eco / Con (SUENLACE.DAT): facturas emitidas y recibidas para que a3 las lea al importar (Utilidades › Importar/Exportar › Enlace contable).
 
-Es un texto de registros de ancho fijo: cada línea mide 254 caracteres más el salto de línea (256 bytes), en Latin-1. Por factura va un registro de cabecera (tipo 1; tipo 2 si es un abono o rectificativa)
-y uno de detalle de IVA (tipo 9) por cada tipo impositivo; el último de cada factura lleva la marca «U» y los anteriores «M». Las posiciones de abajo siguen la implementación abierta de referencia
-(Gest2A3Eco) y deben contrastarse con el manual «Enlace contable entrada» de Wolters Kluwer: ver `LONGITUD` y los tests, que fijan cada campo para poder ajustarlo en un único sitio si el manual
-dice otra cosa. Este módulo no toca la base de datos: recibe datos ya validados."""
+Sigue el documento oficial de Wolters Kluwer «Enlace de entrada en a3asesor Eco y a3asesor Con para el SII» (descripción de registros 9.80): fichero ASCII secuencial de registros de **512 bytes** (510
+caracteres más CR LF). Por factura va un registro de cabecera (tipo 1; tipo 2 si es un abono o rectificativa), uno de detalle de IVA (tipo 9) por cada tipo impositivo y, en las rectificativas, un registro
+de ampliación (tipo 4) con la factura que se rectifica. Los registros dan de alta las cuentas que no existan en el plan. Las posiciones están fijadas campo a campo en `tests/test_enlace_a3.py` con la
+numeración del documento (1 a 512). Este módulo no toca la base de datos: recibe datos ya validados."""
 from __future__ import annotations
 
 import re
@@ -11,7 +11,7 @@ import unicodedata
 from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
-LONGITUD = 254                      # sin el salto de línea
+LONGITUD = 510                      # sin el salto de línea (los 2 últimos de los 512 bytes)
 FIN_DE_LINEA = "\r\n"
 NOMBRE_FICHERO = "SUENLACE.DAT"
 EMITIDA, RECIBIDA = "1", "2"        # «tipo de factura» del registro de cabecera
@@ -78,49 +78,87 @@ def _dos(valor, vacio: str = "  ") -> str:
     return d.zfill(2)[-2:] if d else vacio
 
 
-def registro_cabecera(*, empresa, fecha, abono: bool, cuenta_tercero, digitos: int, tipo_factura: str, numero, concepto, total_centimos: int, referencia, nif, nombre,
+_NIF_ES = re.compile(r"^(\d{8}[A-Z]|[XYZ]\d{7}[A-Z]|[A-HJNPQRSUVW]\d{7}[0-9A-J])$")
+
+
+def _rellenar(r: str) -> str:
+    """Completa con espacios hasta la posición 508 y cierra el registro: moneda euros, indicador de generado y salto de línea."""
+    assert len(r) <= 508, f"registro de {len(r)} caracteres antes del cierre"
+    return r.ljust(508) + "E" + "N"
+
+
+def numero_corto(numero) -> str:
+    """El número que va en las 10 posiciones del registro: el propio si cabe; si no, sus 10 últimos caracteres (el número completo va en el campo ampliado para el SII, de 60)."""
+    t = "" if numero is None else str(numero).strip()
+    return t[-10:] if len(t) > 10 else t
+
+
+def registro_cabecera(*, empresa, fecha, abono: bool, cuenta_tercero, digitos: int, tipo_factura: str, numero, concepto, total_centimos: int, nif, nombre, codigo_postal=None,
                       fecha_operacion=None, fecha_factura=None) -> str:
-    """Registro de cabecera de factura (tipo 1; tipo 2 si `abono`)."""
-    r = ("4" + _empresa(empresa) + _fecha(fecha) + ("2" if abono else "1") + _cuenta(cuenta_tercero, digitos) + _texto(nombre, 30) + str(tipo_factura)[:1] + _texto(numero, 10) + "I"
-         + _texto(concepto, 30) + _importe(total_centimos) + _texto(referencia, 30) + " " * 32 + _texto(nif, 14) + _texto(nombre, 40) + " " * 5 + "  "
-         + _fecha(fecha_operacion) + _fecha(fecha_factura or fecha) + "E" + "N")
-    assert len(r) == LONGITUD, f"cabecera de {len(r)} caracteres"
-    return r
+    """Registro de cabecera de factura (tipo 1; tipo 2 si `abono`). Posiciones del documento de a3 entre paréntesis."""
+    nif_n = re.sub(r"[\s.\-]", "", str(nif or "")).upper()
+    es_es = bool(_NIF_ES.match(nif_n))
+    largo = "" if numero is None else str(numero).strip()
+    r = ("5" + _empresa(empresa) + _fecha(fecha) + ("2" if abono else "1")                                      # 1, 2-6, 7-14, 15
+         + _cuenta(cuenta_tercero, digitos) + _texto(nombre, 30) + str(tipo_factura)[:1] + _texto(numero_corto(numero), 10)   # 16-27, 28-57, 58, 59-68
+         + "I" + _texto(concepto, 30) + _importe(abs(int(total_centimos))) + " " * 62                           # 69, 70-99, 100-113, 114-175 (reserva)
+         + _texto(nif_n, 14) + (_texto(nombre, 40) + _texto(codigo_postal, 5) if nif_n else " " * 45) + "  "      # 176-189, 190-229, 230-234, 235-236
+         + _fecha(fecha_operacion or fecha) + _fecha(fecha_factura or fecha)                                    # 237-244, 245-252
+         + (_texto(largo, 60) if len(largo) > 10 else " " * 60) + " " * 61                                       # 253-312 (número ampliado SII), 313-373
+         + ("ES" if nif_n and es_es else "  ") + ("02" if nif_n and es_es else "  "))                           # 374-375 país, 376-377 tipo de documento
+    return _rellenar(r)
 
 
 def registro_detalle(*, empresa, fecha, abono: bool, cuenta_contrapartida, digitos: int, numero, concepto, ultimo: bool, subtipo, base_centimos: int, pct_iva: int, cuota_iva: int,
-                     pct_recargo: int = 0, cuota_recargo: int = 0, pct_retencion: int = 0, cuota_retencion: int = 0, sujeta_iva: bool = True, impreso=None,
-                     cuenta_iva=None, cuenta_recargo=None, cuenta_retencion=None) -> str:
-    """Registro de detalle de IVA (tipo 9): una línea por tipo impositivo. En un abono importes y cuotas van con signo negativo; la retención siempre va en positivo."""
-    signo = -1 if abono else 1
-    r = ("4" + _empresa(empresa) + _fecha(fecha) + "9" + _cuenta(cuenta_contrapartida, digitos) + " " * 30 + ("A" if abono else "C") + _texto(numero, 10) + ("U" if ultimo else "M")
-         + _texto(concepto, 30) + _dos(subtipo, "01") + _importe(signo * abs(base_centimos), True) + _porcentaje(pct_iva) + _importe(signo * abs(cuota_iva), True)
-         + _porcentaje(pct_recargo) + _importe(signo * abs(cuota_recargo), True) + _porcentaje(pct_retencion) + _importe(abs(cuota_retencion)) + _dos(subtipo, "01")
-         + ("S" if sujeta_iva else "N") + _dos(impreso) + " " * 14 + _cuenta_o_blancos(cuenta_iva, digitos) + _cuenta_o_blancos(cuenta_recargo, digitos)
-         + _cuenta_o_blancos(cuenta_retencion, digitos) + " " * 12 + " " * 12 + " " + "E" + "N")
-    assert len(r) == LONGITUD, f"detalle de {len(r)} caracteres"
+                     pct_recargo: int = 0, cuota_recargo: int = 0, pct_retencion: int = 0, cuota_retencion: int = 0, sujeta_iva: bool = True, impreso=None, descripcion_cuenta=None,
+                     cuenta_iva_soportado=None, cuenta_recargo_soportado=None, cuenta_retencion=None, cuenta_iva_repercutido=None, cuenta_recargo_repercutido=None) -> str:
+    """Registro de detalle de IVA (tipo 9): una línea por tipo impositivo. `C` = cargo y `A` = abono en factura; los importes van en positivo (un abono que disminuye la factura original se informa
+    en positivo, como dice el documento)."""
+    r = ("5" + _empresa(empresa) + _fecha(fecha) + "9" + _cuenta(cuenta_contrapartida, digitos) + _texto(descripcion_cuenta, 30) + ("A" if abono else "C")   # 1..58
+         + _texto(numero_corto(numero), 10) + ("U" if ultimo else "M") + _texto(concepto, 30) + _dos(subtipo, "01")                                          # 59-68, 69, 70-99, 100-101
+         + _importe(abs(base_centimos)) + _porcentaje(pct_iva) + _importe(abs(cuota_iva)) + _porcentaje(pct_recargo) + _importe(abs(cuota_recargo))          # 102-153
+         + _porcentaje(pct_retencion) + _importe(abs(cuota_retencion)) + _dos(impreso) + ("S" if sujeta_iva else "N")                                       # 154-175
+         + " " * 3 + " " * 13                                                                                                                              # 176-178 (415, caja, IVA 0 %), 179-191 reserva
+         + _cuenta_o_blancos(cuenta_iva_soportado, digitos) + _cuenta_o_blancos(cuenta_recargo_soportado, digitos) + _cuenta_o_blancos(cuenta_retencion, digitos)  # 192-227
+         + _cuenta_o_blancos(cuenta_iva_repercutido, digitos) + _cuenta_o_blancos(cuenta_recargo_repercutido, digitos))                                       # 228-251
+    return _rellenar(r)
+
+
+def registro_ampliacion_rectificativa(*, empresa, fecha, fecha_rectificada, numero_rectificado, tipo_factura: str) -> str:
+    """Registro tipo 4 de una rectificativa (obligatorio): fecha y número de la factura que se rectifica. Va después del último registro de detalle de la factura. `tipo_factura`: 1 emitida,
+    2 recibida (se informa como E o R en el campo «tipo de factura»); «R» = resto de rectificativas."""
+    r = ("5" + _empresa(empresa) + _fecha(fecha) + "4" + " " * 43 + _fecha(fecha_rectificada) + _texto(numero_rectificado, 60)       # 1-58, 59-66, 67-126
+         + " " * 30 + " " * 0)                                                                                                         # 127-156 (DUA, cuenta de proveedor)
+    r = r.ljust(156) + "R" + " " * 146                                                                                                   # 157 tipo de factura (R = resto de rectificativas), 158-303
+    r = r + ("E" if str(tipo_factura) == EMITIDA else "R")                                                                              # 304 tipo de factura E/R
+    r = r.ljust(509) + "N"
+    assert len(r) == 510, f"ampliación de {len(r)} caracteres"
     return r
 
 
 def generar(facturas: list[dict], *, empresa, digitos: int = 8) -> bytes:
     """El contenido de SUENLACE.DAT. Cada factura es un dict ya validado:
-    `{tipo: 'emitida'|'recibida', fecha, fecha_operacion, numero, concepto, referencia, nif, nombre, cuenta_tercero, total_centimos, lineas: [{cuenta, subtipo, base_centimos, pct_iva, cuota_iva,
-    pct_recargo, cuota_recargo, pct_retencion, cuota_retencion, sujeta_iva, impreso, cuenta_iva, cuenta_recargo, cuenta_retencion}]}`.
-    Un total negativo (o `abono`) genera el registro de abono. Devuelve los bytes en Latin-1, con salto de línea CRLF en cada registro."""
+    `{tipo: 'emitida'|'recibida', abono, rectifica_fecha, rectifica_numero, fecha, fecha_operacion, numero, concepto, nif, nombre, cuenta_tercero, total_centimos, lineas: [{cuenta,
+    descripcion_cuenta, subtipo, base_centimos, pct_iva, cuota_iva, pct_recargo, cuota_recargo, pct_retencion, cuota_retencion, sujeta_iva, impreso, cuenta_iva, cuenta_retencion}]}`.
+    Devuelve los bytes en Latin-1, con CR LF al final de cada registro."""
     lineas = []
     for f in facturas:
-        abono = bool(f.get("abono")) or int(f.get("total_centimos") or 0) < 0
+        abono = bool(f.get("abono"))
         tipo = RECIBIDA if f.get("tipo") == "recibida" else EMITIDA
         lineas.append(registro_cabecera(empresa=empresa, fecha=f["fecha"], abono=abono, cuenta_tercero=f["cuenta_tercero"], digitos=digitos, tipo_factura=tipo, numero=f["numero"],
-                                        concepto=f.get("concepto"), total_centimos=abs(int(f["total_centimos"])), referencia=f.get("referencia"), nif=f.get("nif"), nombre=f.get("nombre"),
+                                        concepto=f.get("concepto"), total_centimos=int(f["total_centimos"]), nif=f.get("nif"), nombre=f.get("nombre"),
                                         fecha_operacion=f.get("fecha_operacion"), fecha_factura=f["fecha"]))
         det = f["lineas"]
         for i, l in enumerate(det):
+            repercutido = tipo == EMITIDA
             lineas.append(registro_detalle(empresa=empresa, fecha=f["fecha"], abono=abono, cuenta_contrapartida=l["cuenta"], digitos=digitos, numero=f["numero"], concepto=f.get("concepto"),
                                            ultimo=(i == len(det) - 1), subtipo=l.get("subtipo", "01"), base_centimos=l["base_centimos"], pct_iva=l.get("pct_iva", 0), cuota_iva=l.get("cuota_iva", 0),
                                            pct_recargo=l.get("pct_recargo", 0), cuota_recargo=l.get("cuota_recargo", 0), pct_retencion=l.get("pct_retencion", 0),
-                                           cuota_retencion=l.get("cuota_retencion", 0), sujeta_iva=l.get("sujeta_iva", True), impreso=l.get("impreso"), cuenta_iva=l.get("cuenta_iva"),
-                                           cuenta_recargo=l.get("cuenta_recargo"), cuenta_retencion=l.get("cuenta_retencion")))
+                                           cuota_retencion=l.get("cuota_retencion", 0), sujeta_iva=l.get("sujeta_iva", True), impreso=l.get("impreso"), descripcion_cuenta=l.get("descripcion_cuenta"),
+                                           cuenta_iva_soportado=None if repercutido else l.get("cuenta_iva"), cuenta_iva_repercutido=l.get("cuenta_iva") if repercutido else None,
+                                           cuenta_retencion=l.get("cuenta_retencion")))
+        if abono:
+            lineas.append(registro_ampliacion_rectificativa(empresa=empresa, fecha=f["fecha"], fecha_rectificada=f.get("rectifica_fecha"), numero_rectificado=f.get("rectifica_numero"), tipo_factura=tipo))
     return "".join(l + FIN_DE_LINEA for l in lineas).encode("latin-1")
 
 

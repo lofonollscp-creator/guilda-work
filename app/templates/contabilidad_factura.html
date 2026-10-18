@@ -35,6 +35,10 @@
   {% if cuenta_efectiva %}<p class="muted">{{ _('Se contabilizará en la subcuenta %(c)s.', c=cuenta_efectiva) }}</p>{% endif %}
   <label>{{ _('Concepto') }}<input type="text" name="concepto" value="{{ datos.concepto }}" maxlength="60"></label>
   <label class="checkbox-label"><input type="checkbox" name="abono" value="1" {{ 'checked' if datos.abono }}> {{ _('Es un abono o factura rectificativa') }}</label>
+  <div class="fila-campos">
+    <label>{{ _('Número de la factura que rectifica (solo abonos)') }}<input type="text" name="rectifica_numero" value="{{ datos.rectifica_numero }}" maxlength="60"></label>
+    <label>{{ _('Fecha de la factura que rectifica') }}<input type="date" name="rectifica_fecha" value="{{ datos.rectifica_fecha }}"></label>
+  </div>
 
   <h2 class="ds-mt-16">{{ _('Importes') }}</h2>
   <div class="table-wrap"><table class="historial-table">
@@ -54,7 +58,7 @@
   </table></div>
   <datalist id="tipos-iva"><option value="21"><option value="10"><option value="4"><option value="0"></datalist>
   <label>{{ _('Suplidos (importe sin IVA que no forma parte de la base)') }}<input type="text" name="suplidos" value="{{ datos.suplidos }}" inputmode="decimal"></label>
-  <label>{{ _('Referencia (número original si es largo)') }}<input type="text" name="referencia" value="{{ datos.referencia }}" maxlength="60"></label>
+  <label>{{ _('Referencia interna') }}<input type="text" name="referencia" value="{{ datos.referencia }}" maxlength="60"></label>
   <label>{{ _('Notas internas') }}<textarea name="notas" rows="3">{{ datos.notas }}</textarea></label>
   {% if f %}<p class="muted">{{ _('Total de la factura: %(t)s €', t='%.2f'|format(f.total_centimos / 100)) }}</p>{% endif %}
   <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if f and f.estado == 'exportada' }}>{{ _('Guardar') }}</button></div>

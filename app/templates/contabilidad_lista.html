@@ -44,7 +44,7 @@
     <button type="submit" class="btn btn-primary" {{ 'disabled' if not resumen.revisada }}>{{ _('Generar SUENLACE.DAT') }}</button>
   </form>
   <p class="muted">{{ _('Solo entran las facturas revisadas que aún no se han exportado. En a3: Utilidades › Importar/Exportar › Enlace contable.') }}</p>
-  <p class="muted">{{ _('Primer uso: importa el fichero en una empresa de pruebas de a3 antes de usarlo en una real. El formato sigue el enlace contable de a3 y debe comprobarse con tu versión.') }}</p>
+  <p class="muted">{{ _('Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes).') }}</p>
   {% endif %}
 </section>
 {% endif %}
