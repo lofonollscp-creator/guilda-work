@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% block title %}{{ _('Importación terminada') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Importación terminada') }}</h1>
+    <p class="subtitle">{{ archivo }}</p>
+  </div>
+</header>
+{% include "_nucleo_subnav.html" %}
+
+<p>{{ chip(ngettext('%(n)s cliente creado', '%(n)s clientes creados', r.creados, n=r.creados)) }}
+   {% if r.duplicados %}{{ chip(ngettext('%(n)s repetido omitido', '%(n)s repetidos omitidos', r.duplicados, n=r.duplicados)) }}{% endif %}
+   {% if r.errores %}{{ chip(ngettext('%(n)s con error', '%(n)s con error', r.errores|length, n=r.errores|length)) }}{% endif %}
+   {% if r.con_gestion_fiscal %}{{ chip(ngettext('%(n)s con gestión fiscal', '%(n)s con gestión fiscal', r.con_gestion_fiscal, n=r.con_gestion_fiscal)) }}{% endif %}</p>
+
+{% if r.errores %}
+<h2>{{ _('Filas que no se importaron') }}</h2>
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Fila') }}</th><th>{{ _('Nombre') }}</th><th>{{ _('Motivo') }}</th></tr></thead>
+  <tbody>{% for e in r.errores[:100] %}<tr><td class="mono">{{ e.n }}</td><td>{{ e.nombre or '—' }}</td><td>{{ e.motivo }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if r.errores|length > 100 %}<p class="muted">{{ _('Se enseñan los primeros 100 errores.') }}</p>{% endif %}
+<p class="muted">{{ _('Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican.') }}</p>
+{% endif %}
+
+<div class="ds-fila ds-mt-16">
+  {% if r.etiqueta and r.creados %}<a class="btn btn-primary" href="{{ url_for('clientes.lista', etiqueta=r.etiqueta) }}">{{ _('Ver los clientes importados') }}</a>{% endif %}
+  <a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Ir a Clientes') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('importar_clientes.inicio') }}">{{ _('Importar otro archivo') }}</a>
+</div>
+{% endblock %}

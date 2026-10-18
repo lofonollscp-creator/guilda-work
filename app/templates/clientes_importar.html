@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Importar clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Importar clientes') }}</h1>
+    <p class="subtitle">{{ _('Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila.') }}</p>
+  </div>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+
+<form class="edit-form ds-max-640" method="post" enctype="multipart/form-data">
+  <label for="i-archivo"><strong>{{ _('Archivo') }}</strong></label>
+  <input type="file" id="i-archivo" name="archivo" accept=".xlsx,.csv,.txt,.tsv" required>
+  <p class="muted">{{ _('Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo.', n=max_filas) }}</p>
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir y revisar') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('importar_clientes.plantilla') }}">{{ _('Descargar un ejemplo') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Cancelar') }}</a></div>
+</form>
+
+<section class="ds-mt-24 ds-max-640">
+  <h2>{{ _('Qué columnas reconoce') }}</h2>
+  <p class="muted">{{ _('Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso.') }}</p>
+  <ul>{% for c, etiqueta in campos.items() %}<li>{{ etiqueta }}</li>{% endfor %}</ul>
+  <p class="muted">{{ _('Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos.') }}</p>
+</section>
+{% endblock %}

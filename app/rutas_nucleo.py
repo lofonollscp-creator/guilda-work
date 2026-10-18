@@ -69,7 +69,7 @@ def lista():
     filas, total = nucleo.listar_clientes(t, q, etiqueta, tipo, limite=POR_PAGINA, pagina=pagina)
     return render_template("clientes_lista.html", clientes=filas, total=total, pagina=pagina, paginas=max(1, -(-total // POR_PAGINA)), q=q or "", etiqueta=etiqueta or "", tipo=tipo or "",
                            etiquetas=nucleo.etiquetas_del_despacho(t), equipo=nucleo.equipo(t), error=_error(), subnav="clientes",
-                           gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t))
+                           gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t), puede_importar=_supervisor())
 
 
 def _datos_alta(t: int) -> dict:

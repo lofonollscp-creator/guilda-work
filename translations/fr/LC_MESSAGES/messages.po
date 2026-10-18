@@ -12519,3 +12519,165 @@ msgid "%(n)s nuevo"
 msgid_plural "%(n)s nuevos"
 msgstr[0] "%(n)s nouveau"
 msgstr[1] "%(n)s nouveaux"
+
+msgid "Tipo (persona o empresa)"
+msgstr "Type (personne ou entreprise)"
+
+msgid "País (gestión fiscal)"
+msgstr "Pays (gestion fiscale)"
+
+msgid "Esa importación ya no está disponible: sube el archivo otra vez."
+msgstr "Cet import n'est plus disponible : importez à nouveau le fichier."
+
+msgid "importación"
+msgstr "import"
+
+msgid "Importar clientes"
+msgstr "Importer des clients"
+
+msgid "Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila."
+msgstr "Importez votre portefeuille depuis un Excel ou un CSV sans saisir client par client. Avant toute création, vous verrez ce qui sera fait pour chaque ligne."
+
+msgid "Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo."
+msgstr "Excel (.xlsx) ou CSV. La première ligne doit contenir les noms des colonnes. Jusqu'à %(n)s clients et 5 Mo par fichier."
+
+msgid "Subir y revisar"
+msgstr "Importer et vérifier"
+
+msgid "Descargar un ejemplo"
+msgstr "Télécharger un exemple"
+
+msgid "Qué columnas reconoce"
+msgstr "Quelles colonnes sont reconnues"
+
+msgid "Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso."
+msgstr "Elles sont reconnues par leur nom (avec ou sans accents) : nom ou raison sociale, NIF ou CIF, email ou courriel, téléphone ou mobile, adresse, type, langue, étiquettes, notes, origine et pays. Celles qui ne sont pas reconnues pourront être attribuées à la main à l'étape suivante."
+
+msgid "Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos."
+msgstr "Les clients qui existent déjà (même NIF, email ou nom) ne sont pas dupliqués : ils sont ignorés et nous vous l'indiquons."
+
+msgid "Importación terminada"
+msgstr "Import terminé"
+
+msgid "Filas que no se importaron"
+msgstr "Lignes non importées"
+
+msgid "Fila"
+msgstr "Ligne"
+
+msgid "Se enseñan los primeros 100 errores."
+msgstr "Les 100 premières erreurs sont affichées."
+
+msgid "Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican."
+msgstr "Corrigez ces lignes dans le fichier et réimportez-le : les clients déjà créés seront détectés comme doublons et ne seront pas dupliqués."
+
+msgid "Ver los clientes importados"
+msgstr "Voir les clients importés"
+
+msgid "Ir a Clientes"
+msgstr "Aller à Clients"
+
+msgid "Importar otro archivo"
+msgstr "Importer un autre fichier"
+
+msgid "Revisar la importación"
+msgstr "Vérifier l'import"
+
+msgid "1. Qué es cada columna"
+msgstr "1. Ce que représente chaque colonne"
+
+msgid "Columna del archivo"
+msgstr "Colonne du fichier"
+
+msgid "Ejemplo"
+msgstr "Exemple"
+
+msgid "Importar como"
+msgstr "Importer comme"
+
+msgid "(sin nombre)"
+msgstr "(sans nom)"
+
+msgid "No importar"
+msgstr "Ne pas importer"
+
+msgid "Actualizar la vista previa"
+msgstr "Actualiser l'aperçu"
+
+msgid "2. Qué pasará con cada fila"
+msgstr "2. Ce qui se passera pour chaque ligne"
+
+msgid "Repetido"
+msgstr "Doublon"
+
+msgid "Se enseñan las primeras %(n)s filas; el resto se importa igual."
+msgstr "Les %(n)s premières lignes sont affichées ; les autres sont importées de la même façon."
+
+msgid "3. Importar"
+msgstr "3. Importer"
+
+msgid "Omitir los clientes repetidos (recomendado)"
+msgstr "Ignorer les clients en double (recommandé)"
+
+msgid "Etiqueta para todos los importados"
+msgstr "Étiquette pour tous les clients importés"
+
+msgid "Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta."
+msgstr "Elle vous permet de les retrouver ensemble ensuite. Laissez-la vide si vous ne voulez pas d'étiquette."
+
+msgid "Llevar también la gestión fiscal de estos clientes"
+msgstr "Gérer aussi la gestion fiscale de ces clients"
+
+msgid "País de tributación (si el archivo no lo indica)"
+msgstr "Pays de taxation (si le fichier ne l'indique pas)"
+
+msgid "Tipo de cliente fiscal"
+msgstr "Type de client fiscal"
+
+msgid "Generar los vencimientos automáticamente cada periodo"
+msgstr "Générer automatiquement les échéances à chaque période"
+
+msgid "Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha."
+msgstr "Sans type de client fiscal, la fiche fiscale est créée sans modèles : vous les attribuez ensuite dans chaque fiche."
+
+msgid "Importar desde Excel o CSV"
+msgstr "Importer depuis Excel ou CSV"
+
+msgid "Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Créez le premier ou importez votre portefeuille depuis un Excel pour commencer à ouvrir des dossiers, enregistrer des heures et conserver leurs documents."
+
+msgid "%(n)s cliente creado"
+msgid_plural "%(n)s clientes creados"
+msgstr[0] "%(n)s client créé"
+msgstr[1] "%(n)s clients créés"
+
+
+msgid "%(n)s repetido omitido"
+msgid_plural "%(n)s repetidos omitidos"
+msgstr[0] "%(n)s doublon ignoré"
+msgstr[1] "%(n)s doublons ignorés"
+
+
+msgid "%(n)s con error"
+msgid_plural "%(n)s con error"
+msgstr[0] "%(n)s avec erreur"
+msgstr[1] "%(n)s avec erreurs"
+
+
+msgid "%(n)s con gestión fiscal"
+msgid_plural "%(n)s con gestión fiscal"
+msgstr[0] "%(n)s avec gestion fiscale"
+msgstr[1] "%(n)s avec gestion fiscale"
+
+
+msgid "%(n)s fila"
+msgid_plural "%(n)s filas"
+msgstr[0] "%(n)s ligne"
+msgstr[1] "%(n)s lignes"
+
+
+msgid "%(n)s repetido"
+msgid_plural "%(n)s repetidos"
+msgstr[0] "%(n)s doublon"
+msgstr[1] "%(n)s doublons"
+

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Revisar la importación') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Revisar la importación') }}</h1>
+    <p class="subtitle">{{ importacion.nombre }} · {{ ngettext('%(n)s fila', '%(n)s filas', importacion.filas|length, n=importacion.filas|length) }}</p>
+  </div>
+</header>
+{% include "_nucleo_subnav.html" %}
+{{ aviso_error(error) }}
+
+<section>
+  <h2>{{ _('1. Qué es cada columna') }}</h2>
+  <form method="get" class="ds-mt-12">
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr><th>{{ _('Columna del archivo') }}</th><th>{{ _('Ejemplo') }}</th><th>{{ _('Importar como') }}</th></tr></thead>
+      <tbody>
+      {% for cab in importacion.cabeceras %}{% set i = loop.index0 %}
+        <tr><td>{{ cab or _('(sin nombre)') }}</td><td class="muted">{{ importacion.filas[0][i]|truncate(40) }}</td>
+          <td><select name="c{{ i }}" aria-label="{{ cab }}"><option value="">{{ _('No importar') }}</option>
+            {% for campo, etiqueta in campos.items() %}<option value="{{ campo }}" {{ 'selected' if correspondencia.get(i) == campo }}>{{ etiqueta }}</option>{% endfor %}</select></td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <button type="submit" class="btn btn-ghost ds-mt-12">{{ _('Actualizar la vista previa') }}</button>
+  </form>
+</section>
+
+{% if previa %}
+<section class="ds-mt-24">
+  <h2>{{ _('2. Qué pasará con cada fila') }}</h2>
+  <p>{{ chip(ngettext('%(n)s nuevo', '%(n)s nuevos', previa.cuentas.nuevo, n=previa.cuentas.nuevo)) }}
+     {{ chip(ngettext('%(n)s repetido', '%(n)s repetidos', previa.cuentas.duplicado, n=previa.cuentas.duplicado)) }}
+     {{ chip(ngettext('%(n)s con error', '%(n)s con error', previa.cuentas.error, n=previa.cuentas.error)) }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Fila') }}</th><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Contacto') }}</th><th>{{ _('Resultado') }}</th></tr></thead>
+    <tbody>
+    {% for f in previa.filas[:max_mostradas] %}
+      <tr><td class="mono">{{ f.n }}</td><td>{{ f.datos.nombre or '—' }}</td><td class="mono">{{ f.datos.nif or '—' }}</td><td>{{ f.datos.email or f.datos.telefono or '—' }}</td>
+        <td>{% if f.estado == 'nuevo' %}{{ chip(_('Nuevo')) }}{% elif f.estado == 'duplicado' %}{{ chip(_('Repetido')) }} <span class="muted">{{ f.motivo }}</span>{% else %}{{ chip(_('Error')) }} <span class="muted">{{ f.motivo }}</span>{% endif %}
+          {% for a in f.avisos %}<br><span class="muted">{{ a }}</span>{% endfor %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if previa.filas|length > max_mostradas %}<p class="muted">{{ _('Se enseñan las primeras %(n)s filas; el resto se importa igual.', n=max_mostradas) }}</p>{% endif %}
+</section>
+
+<section class="ds-mt-24">
+  <h2>{{ _('3. Importar') }}</h2>
+  <form method="post" class="edit-form ds-max-640">
+    {% for cab in importacion.cabeceras %}<input type="hidden" name="c{{ loop.index0 }}" value="{{ correspondencia.get(loop.index0, '') }}">{% endfor %}
+    <label class="checkbox-label"><input type="checkbox" name="omitir_duplicados" value="1" checked> {{ _('Omitir los clientes repetidos (recomendado)') }}</label>
+    <label for="i-etq">{{ _('Etiqueta para todos los importados') }}</label>
+    <input type="text" id="i-etq" name="etiqueta_comun" value="{{ etiqueta_sugerida }}" maxlength="60">
+    <p class="muted">{{ _('Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta.') }}</p>
+    {% if gestion_fiscal_disponible %}
+    <fieldset>
+      <legend>{{ _('Gestión fiscal') }}</legend>
+      <label class="checkbox-label"><input type="checkbox" name="gestion_fiscal" value="1"> {{ _('Llevar también la gestión fiscal de estos clientes') }}</label>
+      <label for="i-pais">{{ _('País de tributación (si el archivo no lo indica)') }}</label>
+      <select id="i-pais" name="pais">{% for p in paises %}<option value="{{ p }}">{{ _('España') if p == 'ES' else p }}</option>{% endfor %}</select>
+      <label for="i-perfil">{{ _('Tipo de cliente fiscal') }}</label>
+      <select id="i-perfil" name="perfil_tipo"><option value="">{{ _('Sin indicar') }}</option>{% for t, nombre in (('autonomo', _('Autónomo')), ('sociedad', _('Sociedad')), ('particular', _('Particular'))) %}<option value="{{ t }}">{{ nombre }}</option>{% endfor %}</select>
+      <label class="checkbox-label"><input type="checkbox" name="generacion_automatica" value="1"> {{ _('Generar los vencimientos automáticamente cada periodo') }}</label>
+      <p class="muted">{{ _('Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha.') }}</p>
+    </fieldset>
+    {% endif %}
+    <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if previa.cuentas.nuevo == 0 and previa.cuentas.duplicado == 0 }}>{{ _('Importar clientes') }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('importar_clientes.inicio') }}">{{ _('Cancelar') }}</a></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

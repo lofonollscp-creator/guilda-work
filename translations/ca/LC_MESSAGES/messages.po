@@ -12443,3 +12443,165 @@ msgid "%(n)s nuevo"
 msgid_plural "%(n)s nuevos"
 msgstr[0] "%(n)s nou"
 msgstr[1] "%(n)s nous"
+
+msgid "Tipo (persona o empresa)"
+msgstr "Tipus (persona o empresa)"
+
+msgid "País (gestión fiscal)"
+msgstr "País (gestió fiscal)"
+
+msgid "Esa importación ya no está disponible: sube el archivo otra vez."
+msgstr "Aquesta importació ja no està disponible: torna a pujar el fitxer."
+
+msgid "importación"
+msgstr "importació"
+
+msgid "Importar clientes"
+msgstr "Importar clients"
+
+msgid "Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila."
+msgstr "Porta la teva cartera des d'un Excel o un CSV sense teclejar client a client. Abans de crear res veuràs què farà amb cada fila."
+
+msgid "Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo."
+msgstr "Excel (.xlsx) o CSV. La primera fila ha de tenir els noms de les columnes. Fins a %(n)s clients i 5 MB per fitxer."
+
+msgid "Subir y revisar"
+msgstr "Pujar i revisar"
+
+msgid "Descargar un ejemplo"
+msgstr "Descarregar un exemple"
+
+msgid "Qué columnas reconoce"
+msgstr "Quines columnes reconeix"
+
+msgid "Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso."
+msgstr "Les reconeix pel nom (amb o sense accents): nom o raó social, NIF o CIF, email o correu, telèfon o mòbil, adreça, tipus, idioma, etiquetes, notes, origen i país. Les que no reconegui les podràs assignar a mà al pas següent."
+
+msgid "Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos."
+msgstr "Els clients que ja existeixen (mateix NIF, correu o nom) no es dupliquen: s'ometen i t'ho expliquem."
+
+msgid "Importación terminada"
+msgstr "Importació acabada"
+
+msgid "Filas que no se importaron"
+msgstr "Files que no s'han importat"
+
+msgid "Fila"
+msgstr "Fila"
+
+msgid "Se enseñan los primeros 100 errores."
+msgstr "Es mostren els primers 100 errors."
+
+msgid "Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican."
+msgstr "Corregeix aquestes files al fitxer i torna a importar-lo: els clients ja creats es detectaran com a repetits i no es dupliquen."
+
+msgid "Ver los clientes importados"
+msgstr "Veure els clients importats"
+
+msgid "Ir a Clientes"
+msgstr "Anar a Clients"
+
+msgid "Importar otro archivo"
+msgstr "Importar un altre fitxer"
+
+msgid "Revisar la importación"
+msgstr "Revisar la importació"
+
+msgid "1. Qué es cada columna"
+msgstr "1. Què és cada columna"
+
+msgid "Columna del archivo"
+msgstr "Columna del fitxer"
+
+msgid "Ejemplo"
+msgstr "Exemple"
+
+msgid "Importar como"
+msgstr "Importar com a"
+
+msgid "(sin nombre)"
+msgstr "(sense nom)"
+
+msgid "No importar"
+msgstr "No importar"
+
+msgid "Actualizar la vista previa"
+msgstr "Actualitzar la vista prèvia"
+
+msgid "2. Qué pasará con cada fila"
+msgstr "2. Què passarà amb cada fila"
+
+msgid "Repetido"
+msgstr "Repetit"
+
+msgid "Se enseñan las primeras %(n)s filas; el resto se importa igual."
+msgstr "Es mostren les primeres %(n)s files; la resta s'importa igualment."
+
+msgid "3. Importar"
+msgstr "3. Importar"
+
+msgid "Omitir los clientes repetidos (recomendado)"
+msgstr "Ometre els clients repetits (recomanat)"
+
+msgid "Etiqueta para todos los importados"
+msgstr "Etiqueta per a tots els importats"
+
+msgid "Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta."
+msgstr "Et serveix per trobar-los junts després. Deixa-la buida si no vols etiqueta."
+
+msgid "Llevar también la gestión fiscal de estos clientes"
+msgstr "Portar també la gestió fiscal d'aquests clients"
+
+msgid "País de tributación (si el archivo no lo indica)"
+msgstr "País de tributació (si el fitxer no l'indica)"
+
+msgid "Tipo de cliente fiscal"
+msgstr "Tipus de client fiscal"
+
+msgid "Generar los vencimientos automáticamente cada periodo"
+msgstr "Generar els venciments automàticament cada període"
+
+msgid "Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha."
+msgstr "Sense un tipus de client fiscal es crea la seva fitxa fiscal sense models: els assignes després a cada fitxa."
+
+msgid "Importar desde Excel o CSV"
+msgstr "Importar des d'Excel o CSV"
+
+msgid "Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Crea el primer o importa la teva cartera des d'un Excel per començar a obrir expedients, registrar hores i desar els seus documents."
+
+msgid "%(n)s cliente creado"
+msgid_plural "%(n)s clientes creados"
+msgstr[0] "%(n)s client creat"
+msgstr[1] "%(n)s clients creats"
+
+
+msgid "%(n)s repetido omitido"
+msgid_plural "%(n)s repetidos omitidos"
+msgstr[0] "%(n)s repetit omès"
+msgstr[1] "%(n)s repetits omesos"
+
+
+msgid "%(n)s con error"
+msgid_plural "%(n)s con error"
+msgstr[0] "%(n)s amb error"
+msgstr[1] "%(n)s amb errors"
+
+
+msgid "%(n)s con gestión fiscal"
+msgid_plural "%(n)s con gestión fiscal"
+msgstr[0] "%(n)s amb gestió fiscal"
+msgstr[1] "%(n)s amb gestió fiscal"
+
+
+msgid "%(n)s fila"
+msgid_plural "%(n)s filas"
+msgstr[0] "%(n)s fila"
+msgstr[1] "%(n)s files"
+
+
+msgid "%(n)s repetido"
+msgid_plural "%(n)s repetidos"
+msgstr[0] "%(n)s repetit"
+msgstr[1] "%(n)s repetits"
+

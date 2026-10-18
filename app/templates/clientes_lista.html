@@ -10,6 +10,7 @@
   </div>
   <div class="ds-fila">
     {% if gestion_fiscal_disponible %}<a class="btn btn-ghost" href="{{ url_for('clientes.plantillas') }}">{{ _('Plantillas de cliente') }}</a>{% endif %}
+    {% if puede_importar %}<a class="btn btn-ghost" href="{{ url_for('importar_clientes.inicio') }}">{{ _('Importar desde Excel o CSV') }}</a>{% endif %}
     <a class="btn btn-primary" href="{{ url_for('clientes.nuevo') }}">+ {{ _('Nuevo cliente') }}</a>
   </div>
 </header>
@@ -34,7 +35,8 @@
   {% if q or tipo or etiqueta %}
   {{ estado_vacio(_('Ningún cliente coincide'), _('Prueba con otra búsqueda o quita algún filtro.'), 'search') }}
   {% else %}
-  {{ estado_vacio(_('Todavía no hay clientes'), _('Crea el primero para empezar a abrir expedientes, registrar horas y guardar sus documentos.'), 'users', _('Nuevo cliente'), url_for('clientes.nuevo')) }}
+  {{ estado_vacio(_('Todavía no hay clientes'), _('Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos.'), 'users', _('Nuevo cliente'), url_for('clientes.nuevo')) }}
+  {% if puede_importar %}<p class="ds-mt-12"><a class="btn btn-ghost" href="{{ url_for('importar_clientes.inicio') }}">{{ _('Importar desde Excel o CSV') }}</a></p>{% endif %}
   {% endif %}
 {% else %}
 <p class="muted">{{ ngettext('%(n)s cliente', '%(n)s clientes', total, n=total) }}</p>
