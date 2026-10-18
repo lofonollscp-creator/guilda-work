@@ -21,7 +21,7 @@
     {% endif %}
   </div>
 </header>
-{% include "_nucleo_subnav.html" %}
+<p class="ficha-volver"><a href="{{ url_for('clientes.lista') }}">‹ {{ _('Clientes') }}</a></p>
 <nav class="tareas-subnav" aria-label="{{ _('Secciones de la ficha') }}">
   {% for p, nombre in (('resumen', _('Resumen')), ('fiscal', _('Fiscal')), ('laboral', _('Laboral')), ('tareas', _('Tareas')), ('documentos', _('Documentos')), ('mensajes', _('Mensajes'))) if p in pestanas %}
   <a class="{{ 'active' if p == pestana }}" href="{{ url_for('clientes.ficha', cliente_id=c.id, pestana=p) }}">{{ nombre }}</a>

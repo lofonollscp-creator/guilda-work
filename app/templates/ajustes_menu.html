@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Barra lateral') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Barra lateral y accesos directos') }}</h1>
+    <p class="subtitle">{{ _('Oculta lo que no usas y fija arriba lo que más abres. Solo cambia tu barra, no la de tus compañeros.') }}</p>
+  </div>
+</header>
+{% if aviso == 'guardado' %}<p class="aviso-ok" role="status">{{ _('Barra lateral guardada.') }}</p>{% elif aviso == 'restablecido' %}<p class="aviso-ok" role="status">{{ _('Barra lateral restablecida.') }}</p>{% endif %}
+
+<form method="post" class="edit-form">
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Pantalla') }}</th><th>{{ _('Mostrar en la barra') }}</th><th>{{ _('Fijar arriba') }}</th></tr></thead>
+    <tbody>
+    {% for e in elementos %}
+      <tr>
+        <td>{{ e.etiqueta }}</td>
+        <td>{% if e.ocultable %}<input type="checkbox" name="mostrar" value="{{ e.clave }}" aria-label="{{ _('Mostrar %(nombre)s en la barra', nombre=e.etiqueta) }}" {{ 'checked' if e.clave not in prefs.ocultos }}>{% else %}<span class="muted">{{ _('Siempre') }}</span>{% endif %}</td>
+        <td><input type="checkbox" name="fijar" value="{{ e.clave }}" aria-label="{{ _('Fijar %(nombre)s arriba', nombre=e.etiqueta) }}" {{ 'checked' if e.clave in prefs.fijados }}></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="muted">{{ _('Puedes fijar hasta %(n)s accesos directos. Lo que ocultes sigue disponible desde el buscador (Ctrl K) y desde esta pantalla.', n=max_fijados) }}</p>
+  <div class="ds-fila">
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+    <button type="submit" class="btn btn-ghost" name="restablecer" value="1">{{ _('Restablecer la barra de serie') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('ajustes') }}">{{ _('Volver a Ajustes') }}</a>
+  </div>
+</form>
+{% endblock %}

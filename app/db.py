@@ -2239,6 +2239,8 @@ def init_db() -> None:
         _asegurar_columna(conn, "usuario_perfil", "resumen_diario_hora", "INTEGER NOT NULL DEFAULT 8")
         _asegurar_columna(conn, "usuario_perfil", "resumen_diario_email", "INTEGER NOT NULL DEFAULT 1")
         _asegurar_columna(conn, "usuario_perfil", "resumen_diario_ultimo", "TEXT")
+        # Menú lateral a medida (app/navegacion.py): JSON con lo que la persona oculta y lo que fija arriba.
+        _asegurar_columna(conn, "usuario_perfil", "menu_prefs", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "uidvalidity", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")

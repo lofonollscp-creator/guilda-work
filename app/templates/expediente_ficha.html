@@ -13,7 +13,7 @@
     <select name="estado" data-autoenviar aria-label="{{ _('Estado') }}">{% for e in estados %}<option value="{{ e.id }}" {{ 'selected' if e.id == x.estado }}>{{ e.nombre }}</option>{% endfor %}</select>
   </form>
 </header>
-{% include "_nucleo_subnav.html" %}
+<p class="ficha-volver"><a href="{{ url_for('expedientes.lista') }}">‹ {{ _('Expedientes') }}</a></p>
 {{ aviso_error(error) }}
 
 {# El panel del módulo (inmueble, asunto judicial...) es lo principal de este tipo de expediente: va primero, antes de los plazos, horas y documentos genéricos. #}

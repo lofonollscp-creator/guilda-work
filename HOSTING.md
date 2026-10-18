@@ -83,6 +83,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Catálogo de reglas fiscales y laborales (backoffice)](#catálogo-de-reglas-fiscales-y-laborales-backoffice)
 - [Importar clientes desde Excel o CSV](#importar-clientes-desde-excel-o-csv)
 - [Hoy: la bandeja única de lo que necesita a cada persona](#hoy-la-bandeja-única-de-lo-que-necesita-a-cada-persona)
+- [Barra lateral a medida y fichas con una sola fila de pestañas](#barra-lateral-a-medida-y-fichas-con-una-sola-fila-de-pestañas)
 
 <!-- /INDICE -->
 
@@ -3250,3 +3251,7 @@ El archivo leído se guarda en `data/importaciones/<id>.json` (modo 600, ligado 
 ## Hoy: la bandeja única de lo que necesita a cada persona
 
 `/hoy/` (`app/bandeja_hoy.py`, `app/rutas_hoy.py`) junta en una pantalla lo que cada módulo ya calcula para la persona que entra: sus tareas vencidas y de hoy, los correos sin contestar, los plazos que vencen en la próxima semana, los vencimientos fiscales que lleva (los vencidos de cualquiera, si supervisa), los mensajes de clientes o propietarios sin leer (con las mismas reglas de visibilidad de los expedientes confidenciales), las visitas de hoy (inmobiliaria), los clientes que le quieren traspasar, las ausencias por aprobar y los certificados caducados o que caducan en 30 días (solo quien gestiona). Cada elemento se ordena por urgencia (vencido, hoy, esta semana) y lleva el enlace a donde se resuelve; las secciones vacías no aparecen. El inicio enseña los más urgentes que no son tareas (esas ya salen en «Mi día») en «Necesita tu atención», con enlace a la pantalla completa: el panel se pide después de cargar la página (`/hoy/destacados`, `static/hoy_inicio.js`) para no sumar consultas al inicio, y la barra lateral tiene su entrada «Hoy». Es de solo lectura y no guarda nada. Los avisos con acuse y escalado (`app/avisos.py`) todavía no forman parte de esta bandeja.
+
+## Barra lateral a medida y fichas con una sola fila de pestañas
+
+Cada persona puede personalizar su menú lateral en Ajustes › «Barra lateral y accesos directos» (`/ajustes/menu/`, `app/navegacion.py`, `app/rutas_menu.py`): ocultar lo que no usa (Notas, Tiquets, Fichaje, Videollamadas, Herramientas, Asistente IA, Histórico, Estadísticas, Papelera, Importar) y fijar hasta 6 accesos directos en un bloque «Accesos directos» bajo Inicio. Lo esencial (Hoy, Tareas, Correo, Clientes y la gestoría) no se puede ocultar, lo oculto sigue en el buscador (Ctrl K) y en esa pantalla, y «Restablecer» devuelve el menú de serie. Las preferencias son un JSON en `usuario_perfil.menu_prefs` (columna nueva, migración automática) que viaja con el perfil que ya se lee para pintar el menú, así que no suman consultas; son solo de esa persona. Un acceso fijado a algo que el despacho ya no lleva (p. ej. el panel fiscal sin gestoría) no se enseña, pero la preferencia se conserva. En la ficha de un cliente o de un expediente desaparece la fila de pestañas del núcleo (Clientes/Expedientes/Plazos/Horas, que repetía el submenú lateral) y queda un enlace «‹ Clientes» o «‹ Expedientes» sobre las pestañas propias de la ficha.

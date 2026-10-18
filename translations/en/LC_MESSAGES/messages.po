@@ -12661,3 +12661,53 @@ msgid_plural "Ver todo (%(n)s)"
 msgstr[0] "View all (%(n)s)"
 msgstr[1] "View all (%(n)s)"
 
+msgid "Oculta lo que no usas y fija arriba lo que más abres."
+msgstr "Hide what you don't use and pin what you open most to the top."
+
+msgid "Personalizado"
+msgstr "Customised"
+
+msgid "Correo del equipo"
+msgstr "Team mail"
+
+msgid "Pantalla"
+msgstr "Screen"
+
+msgid "Fijar arriba"
+msgstr "Pin to the top"
+
+msgid "Fijar %(nombre)s arriba"
+msgstr "Pin %(nombre)s to the top"
+
+msgid "Puedes fijar hasta %(n)s accesos directos. Lo que ocultes sigue disponible desde el buscador (Ctrl K) y desde esta pantalla."
+msgstr "You can pin up to %(n)s shortcuts. Whatever you hide stays available from search (Ctrl K) and from this screen."
+
+msgid "Volver a Ajustes"
+msgstr "Back to Settings"
+
+msgid "Accesos directos"
+msgstr "Shortcuts"
+
+msgid "Barra lateral y accesos directos"
+msgstr "Sidebar and shortcuts"
+
+msgid "Barra lateral"
+msgstr "Sidebar"
+
+msgid "Oculta lo que no usas y fija arriba lo que más abres. Solo cambia tu barra, no la de tus compañeros."
+msgstr "Hide what you don't use and pin what you open most to the top. It only changes your sidebar, not your colleagues'."
+
+msgid "Barra lateral guardada."
+msgstr "Sidebar saved."
+
+msgid "Barra lateral restablecida."
+msgstr "Sidebar reset."
+
+msgid "Mostrar en la barra"
+msgstr "Show in the sidebar"
+
+msgid "Mostrar %(nombre)s en la barra"
+msgstr "Show %(nombre)s in the sidebar"
+
+msgid "Restablecer la barra de serie"
+msgstr "Reset to the default sidebar"

@@ -12746,3 +12746,53 @@ msgid_plural "Ver todo (%(n)s)"
 msgstr[0] "Tout voir (%(n)s)"
 msgstr[1] "Tout voir (%(n)s)"
 
+msgid "Oculta lo que no usas y fija arriba lo que más abres."
+msgstr "Masquez ce que vous n'utilisez pas et épinglez en haut ce que vous ouvrez le plus."
+
+msgid "Personalizado"
+msgstr "Personnalisé"
+
+msgid "Correo del equipo"
+msgstr "Courrier de l'équipe"
+
+msgid "Pantalla"
+msgstr "Écran"
+
+msgid "Fijar arriba"
+msgstr "Épingler en haut"
+
+msgid "Fijar %(nombre)s arriba"
+msgstr "Épingler %(nombre)s en haut"
+
+msgid "Puedes fijar hasta %(n)s accesos directos. Lo que ocultes sigue disponible desde el buscador (Ctrl K) y desde esta pantalla."
+msgstr "Vous pouvez épingler jusqu'à %(n)s raccourcis. Ce que vous masquez reste disponible depuis la recherche (Ctrl K) et depuis cet écran."
+
+msgid "Volver a Ajustes"
+msgstr "Retour aux Réglages"
+
+msgid "Accesos directos"
+msgstr "Raccourcis"
+
+msgid "Barra lateral y accesos directos"
+msgstr "Barre latérale et raccourcis"
+
+msgid "Barra lateral"
+msgstr "Barre latérale"
+
+msgid "Oculta lo que no usas y fija arriba lo que más abres. Solo cambia tu barra, no la de tus compañeros."
+msgstr "Masquez ce que vous n'utilisez pas et épinglez en haut ce que vous ouvrez le plus. Cela ne change que votre barre, pas celle de vos collègues."
+
+msgid "Barra lateral guardada."
+msgstr "Barre latérale enregistrée."
+
+msgid "Barra lateral restablecida."
+msgstr "Barre latérale réinitialisée."
+
+msgid "Mostrar en la barra"
+msgstr "Afficher dans la barre"
+
+msgid "Mostrar %(nombre)s en la barra"
+msgstr "Afficher %(nombre)s dans la barre"
+
+msgid "Restablecer la barra de serie"
+msgstr "Rétablir la barre par défaut"

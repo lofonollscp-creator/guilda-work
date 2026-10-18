@@ -92,6 +92,17 @@
         <span class="icon-rail-etiqueta">{{ _('Proyectos') }}</span>
       </a>
 
+      {% set nav_fijados = nav.accesos(g.tenant_id is not none, 'gestoria' in verticales_activos) %}
+      {% if nav_fijados %}
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Accesos directos') }}</span>
+      {% for a in nav_fijados %}
+      <a href="{{ a.url }}" class="icon-rail-link {{ 'active' if request.endpoint == a.endpoint else '' }}" title="{{ a.etiqueta }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ a.icono }}"></use></svg>
+        <span class="icon-rail-etiqueta">{{ a.etiqueta }}</span>
+      </a>
+      {% endfor %}
+      {% endif %}
       <div class="icon-rail-separador" role="separator"></div>
       <span class="icon-rail-grupo-etiqueta">{{ _('Trabajo diario') }}</span>
       <a href="{{ url_for('hoy.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'hoy.bandeja' else '' }}" title="{{ _('Hoy') }}">
@@ -102,10 +113,12 @@
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tareas') }}</span>
       </a>
+      {% if nav.visible('notas') %}
       <a href="{{ url_for('lista_notas') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('lista_notas', 'editar_nota') else '' }}" title="{{ _('Notas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Notas') }}</span>
       </a>
+      {% endif %}
       <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and request.endpoint.startswith('correo.') }}">
         <a href="{{ url_for('correo.bandeja') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('correo.') else '' }}" title="{{ _('Correo') }}{{ (' — ' ~ correo_no_leidos_sidebar ~ ' ' ~ _('sin leer')) if correo_no_leidos_sidebar }}">
           <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
@@ -121,14 +134,18 @@
           <a href="{{ url_for('correo.ajustes') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.ajustes' else '' }}">{{ _('Ajustes') }}</a>
         </div>
       </div>
+      {% if nav.visible('tiquets') %}
       <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-ticket"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
       </a>
+      {% endif %}
+      {% if nav.visible('fichaje') %}
       <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="{{ _('Fichaje') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
       </a>
+      {% endif %}
       {% if g.tenant_id %}
       <div class="icon-rail-grupo-plegable {{ 'is-abierto' if request.endpoint and request.endpoint.split('.')[0] in ('clientes', 'expedientes', 'plazos', 'tiempo') }}">
         <a href="{{ url_for('clientes.lista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.split('.')[0] in ('clientes', 'expedientes', 'plazos', 'tiempo') else '' }}" title="{{ _('Clientes') }}">
@@ -170,41 +187,55 @@
       </div>
       {% endif %}
       {% if g.tenant_id %}
+      {% if nav.visible('videollamadas') %}
       <a href="{{ url_for('videollamadas.nueva') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('videollamadas.') else '' }}" title="{{ _('Videollamadas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-video"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Videollamadas') }}</span>
       </a>
       {% endif %}
+      {% endif %}
 
       <div class="icon-rail-separador" role="separator"></div>
-      <span class="icon-rail-grupo-etiqueta">{{ _('Herramientas y asistencia') }}</span>
+      {% if nav.visible('herramientas') or nav.visible('asistente') %}<span class="icon-rail-grupo-etiqueta">{{ _('Herramientas y asistencia') }}</span>{% endif %}
+      {% if nav.visible('herramientas') %}
       <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="{{ _('Herramientas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-wrench"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Herramientas') }}</span>
       </a>
+      {% endif %}
+      {% if nav.visible('asistente') %}
       <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="{{ _('Asistente IA') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Asistente IA') }}</span>
       </a>
+      {% endif %}
 
       <div class="icon-rail-separador" role="separator"></div>
-      <span class="icon-rail-grupo-etiqueta">{{ _('Datos y administración') }}</span>
+      {% if nav.visible('historial') or nav.visible('estadisticas') or nav.visible('papelera') or nav.visible('importar') or g.es_admin %}<span class="icon-rail-grupo-etiqueta">{{ _('Datos y administración') }}</span>{% endif %}
+      {% if nav.visible('historial') %}
       <a href="{{ url_for('historial') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('historial', 'informe_ia') else '' }}" title="{{ _('Histórico') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-history"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Histórico') }}</span>
       </a>
+      {% endif %}
+      {% if nav.visible('estadisticas') %}
       <a href="{{ url_for('estadisticas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'estadisticas' else '' }}" title="{{ _('Estadísticas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Estadísticas') }}</span>
       </a>
+      {% endif %}
+      {% if nav.visible('papelera') %}
       <a href="{{ url_for('papelera') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'papelera' else '' }}" title="{{ _('Papelera') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Papelera') }}</span>
       </a>
+      {% endif %}
+      {% if nav.visible('importar') %}
       <a href="{{ url_for('importar') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('importar', 'procesar_importacion') else '' }}" title="{{ _('Importar') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-upload"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Importar') }}</span>
       </a>
+      {% endif %}
       {% if g.es_admin %}
       <a href="{{ backoffice_url }}" target="_blank" rel="noopener" class="icon-rail-link" title="{{ _('Backoffice') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-shield"></use></svg>

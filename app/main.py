@@ -35,7 +35,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, ayuda, busqueda, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import ai_local, ayuda, busqueda, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -241,6 +241,7 @@ from .rutas_seguridad import seguridad_bp  # noqa: E402
 from .rutas_nucleo import clientes_bp, expedientes_bp, plazos_bp, tiempo_bp  # noqa: E402
 from .rutas_importar_clientes import importar_clientes_bp  # noqa: E402
 from .rutas_hoy import hoy_bp  # noqa: E402
+from .rutas_menu import menu_bp  # noqa: E402
 app.register_blueprint(abogados_bp)
 app.register_blueprint(inmobiliaria_bp)
 app.register_blueprint(seguridad_bp)
@@ -249,6 +250,7 @@ app.register_blueprint(asunto_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(importar_clientes_bp)
 app.register_blueprint(hoy_bp)
+app.register_blueprint(menu_bp)
 app.register_blueprint(expedientes_bp)
 app.register_blueprint(plazos_bp)
 app.register_blueprint(tiempo_bp)
@@ -687,9 +689,11 @@ def inyectar_perfil_rail():
     rail (base.html) -- mismas funciones ya usadas por
     /ajustes/perfil, sin repetir la consulta ahí."""
     if not g.usuario_id:
-        return {}
+        return {"nav": navegacion.Menu({"ocultos": [], "fijados": []})}
+    perfil = db.obtener_perfil_usuario(g.usuario_id)
     return {
-        "perfil_rail": db.obtener_perfil_usuario(g.usuario_id),
+        "nav": navegacion.Menu(navegacion.leer(perfil)),
+        "perfil_rail": perfil,
         "usuario_rail": peticion.memo("usuario", lambda: db.obtener_usuario(g.usuario_id)),
         "tenant_rail": peticion.memo("tenant", lambda: db.obtener_tenant(g.tenant_id) if g.tenant_id else None),
     }
@@ -1840,7 +1844,10 @@ def _secciones_ajustes() -> list[dict]:
         cuenta.append({"id": "seguridad", "icono": "lock", "titulo": _("Contraseña, email y verificación en dos pasos"), "texto": _("Cambia tus credenciales y protege la cuenta con un segundo factor."), "url": u("ajustes_cuenta"), "estado": None})
     cuenta.append({"id": "dispositivos", "icono": "smartphone", "titulo": _("Mis dispositivos"), "texto": _("Móviles con sesión iniciada: revísalos y cierra los que no uses."), "url": u("mis_dispositivos"),
                    "estado": ngettext("%(n)s dispositivo", "%(n)s dispositivos", n_dispositivos, n=n_dispositivos)})
+    n_menu = len(navegacion.leer(perfil)["ocultos"]) + len(navegacion.leer(perfil)["fijados"])
     trabajo = [
+        {"id": "menu", "icono": "layout-list", "titulo": _("Barra lateral y accesos directos"), "texto": _("Oculta lo que no usas y fija arriba lo que más abres."), "url": u("menu.pantalla"),
+         "estado": _("Personalizado") if n_menu else _("De serie")},
         {"id": "correo", "icono": "mail", "titulo": _("Correo"), "texto": _("Firma, categorías, reglas, plantillas y envío."), "url": u("correo.ajustes"), "estado": None},
         {"id": "cuentas", "icono": "send", "titulo": _("Cuentas de correo"), "texto": _("Conecta, sincroniza o desconecta tus buzones."), "url": u("correo.cuentas"),
          "estado": ngettext("%(n)s cuenta", "%(n)s cuentas", n_cuentas, n=n_cuentas)},

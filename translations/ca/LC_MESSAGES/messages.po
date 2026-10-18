@@ -12670,3 +12670,53 @@ msgid_plural "Ver todo (%(n)s)"
 msgstr[0] "Veure-ho tot (%(n)s)"
 msgstr[1] "Veure-ho tot (%(n)s)"
 
+msgid "Oculta lo que no usas y fija arriba lo que más abres."
+msgstr "Amaga el que no fas servir i fixa a dalt el que més obres."
+
+msgid "Personalizado"
+msgstr "Personalitzat"
+
+msgid "Correo del equipo"
+msgstr "Correu de l'equip"
+
+msgid "Pantalla"
+msgstr "Pantalla"
+
+msgid "Fijar arriba"
+msgstr "Fixar a dalt"
+
+msgid "Fijar %(nombre)s arriba"
+msgstr "Fixar %(nombre)s a dalt"
+
+msgid "Puedes fijar hasta %(n)s accesos directos. Lo que ocultes sigue disponible desde el buscador (Ctrl K) y desde esta pantalla."
+msgstr "Pots fixar fins a %(n)s accessos directes. El que amaguis continua disponible des del cercador (Ctrl K) i des d'aquesta pantalla."
+
+msgid "Volver a Ajustes"
+msgstr "Tornar a Ajustos"
+
+msgid "Accesos directos"
+msgstr "Accessos directes"
+
+msgid "Barra lateral y accesos directos"
+msgstr "Barra lateral i accessos directes"
+
+msgid "Barra lateral"
+msgstr "Barra lateral"
+
+msgid "Oculta lo que no usas y fija arriba lo que más abres. Solo cambia tu barra, no la de tus compañeros."
+msgstr "Amaga el que no fas servir i fixa a dalt el que més obres. Només canvia la teva barra, no la dels teus companys."
+
+msgid "Barra lateral guardada."
+msgstr "Barra lateral desada."
+
+msgid "Barra lateral restablecida."
+msgstr "Barra lateral restablerta."
+
+msgid "Mostrar en la barra"
+msgstr "Mostrar a la barra"
+
+msgid "Mostrar %(nombre)s en la barra"
+msgstr "Mostrar %(nombre)s a la barra"
+
+msgid "Restablecer la barra de serie"
+msgstr "Restablir la barra de sèrie"

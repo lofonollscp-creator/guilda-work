@@ -5174,3 +5174,6 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .hoy-item a:hover { text-decoration: underline; }
 .hoy-vencido { box-shadow: inset 3px 0 0 var(--danger, #e5484d); padding-left: 10px; }
 .hoy-fecha { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.85em; }
+.ficha-volver { margin: 0 0 var(--space-3, 12px); font-size: 0.9em; }
+.ficha-volver a { color: var(--text-muted); text-decoration: none; }
+.ficha-volver a:hover { text-decoration: underline; }
