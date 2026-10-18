@@ -69,6 +69,7 @@ class Vertical:
     panel_expediente: str | None = None               # plantilla que la ficha de expediente incluye para sus tipos
     tipos_con_panel: tuple[str, ...] = ()
     contexto_expediente: Callable | None = None       # contexto(tenant_id, usuario_id, supervisor, expediente) -> dict para ese panel
+    uso: Callable | None = None                       # uso(tenant_id) -> [(etiqueta, valor)]: lo que ha consumido este mes (el backoffice lo enseña; base del cobro por uso)
 
 
 ESTADOS_GENERALES = (Estado("abierto", _l("Abierto")), Estado("en_curso", _l("En curso")), Estado("en_espera", _l("En espera")), Estado("cerrado", _l("Cerrado"), True))
@@ -79,6 +80,8 @@ VERTICALES: dict[str, Vertical] = {v.id: v for v in (
     Vertical("gestoria", _l("Gestoría"), _l("Calendario fiscal, clientes fiscales, vencimientos, recordatorios y portal de cliente."), "calendar-days", por_defecto=True),
     Vertical("abogados", _l("Gabinete de abogados"), _l("Expedientes judiciales y extrajudiciales, plazos procesales, minutas y provisión de fondos."), "briefcase", disponible=False),
     Vertical("inmobiliaria", _l("Inmobiliaria"), _l("Inmuebles, captación, demandas, visitas, contratos y comisiones."), "building-2", disponible=False),
+    Vertical("contabilizacion", _l("Contabilización de facturas"), _l("Anotar las facturas de los clientes (ellos desde su portal o el despacho), revisarlas y generar el fichero de enlace para a3."), "clipboard-list",
+             disponible=False),
 )}
 
 
@@ -248,7 +251,8 @@ def estado_para_backoffice(tenant_id: int) -> list[dict]:
             continue
         m = manual.get(v.id)
         motivo = "manual" if m else ("extra" if v.id in por_extra else ("defecto" if v.por_defecto else None))
-        res.append({"id": v.id, "nombre": _es(v.nombre), "descripcion": _es(v.descripcion), "activo": v.id in activos, "motivo": motivo, "hasta": m["activo_hasta"] if m else None})
+        res.append({"id": v.id, "nombre": _es(v.nombre), "descripcion": _es(v.descripcion), "activo": v.id in activos, "motivo": motivo, "hasta": m["activo_hasta"] if m else None,
+                    "uso": v.uso(tenant_id) if (v.uso and v.id in activos) else []})
     return res
 
 
@@ -271,4 +275,4 @@ def entradas_de_menu(tenant_id: int | None) -> list[EntradaMenu]:
 
 
 # Los módulos de negocio se registran al importarse (cada uno completa su entrada de VERTICALES). Va al final: necesitan todo lo de arriba.
-from . import abogados, inmobiliaria  # noqa: E402,F401
+from . import abogados, facturas_contables, inmobiliaria  # noqa: E402,F401

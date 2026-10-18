@@ -15,8 +15,8 @@ contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad"
 
 @contabilidad_bp.before_request
 def _solo_con_gestoria():
-    """Es del módulo Gestoría: sin él no existe (404); y quien solo audita puede mirar, no cambiar."""
-    if g.get("tenant_id") is None or not verticales.esta_activo(g.tenant_id, "gestoria"):
+    """Es del módulo Contabilización de facturas: sin él no existe (404); y quien solo audita puede mirar, no cambiar."""
+    if g.get("tenant_id") is None or not verticales.esta_activo(g.tenant_id, "contabilizacion"):
         abort(404)
     if request.method not in ("GET", "HEAD", "OPTIONS") and g.get("usuario_id") is not None and acceso.es_solo_auditor(g.tenant_id, g.usuario_id):
         abort(403)

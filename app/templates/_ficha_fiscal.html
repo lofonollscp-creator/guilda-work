@@ -12,6 +12,7 @@
     {% if fiscal.espocrm_cuenta_id %}
     <a class="btn btn-ghost" href="{{ url_for('fiscal.ver_en_espocrm', cliente_id=fiscal.id) }}" target="_blank" rel="noopener">{{ _('Ver en EspoCRM') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-external-link"></use></svg></a>
     {% endif %}
+    {% if 'contabilizacion' in verticales_activos %}<a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=fiscal.id) }}">{{ _('Facturas para contabilizar') }}</a>{% endif %}
     {% if not fiscal.facturascripts_cliente_codigo %}
     <form method="post" action="{{ url_for('fiscal.vincular_facturascripts', cliente_id=fiscal.id) }}">
       <button type="submit" class="btn btn-ghost">{{ _('Vincular con FacturaScripts') }}</button>

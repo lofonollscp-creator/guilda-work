@@ -13087,3 +13087,9 @@ msgstr "Factures anotades"
 
 msgid "Todavía no has anotado ninguna factura."
 msgstr "Encara no has anotat cap factura."
+
+msgid "Contabilización de facturas"
+msgstr "Comptabilització de factures"
+
+msgid "Anotar las facturas de los clientes (ellos desde su portal o el despacho), revisarlas y generar el fichero de enlace para a3."
+msgstr "Anotar les factures dels clients (ells des del seu portal o el despatx), revisar-les i generar el fitxer d'enllaç per a a3."

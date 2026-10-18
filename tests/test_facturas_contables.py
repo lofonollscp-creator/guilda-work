@@ -6,12 +6,13 @@ import pytest
 from app import acceso, db, facturas_contables as fc, nucleo, verticales
 from app.db_fiscal import crear_cliente_fiscal
 from tests.conftest import iniciar_sesion_de_prueba
+from tests.test_backoffice_app import bo  # noqa: F401  (fixture del backoffice)
 
 
 def _despacho(a3=True):
     t = db.crear_tenant("Despacho conta")
     u = db.crear_usuario_vinculado_a_kratos("conta1@ejemplo.com", "k-conta1"); db.asignar_tenant(u, t); db.asignar_supervisor_tenant(u, True)
-    verticales.fijar_activo(t, "gestoria", True)
+    verticales.fijar_activo(t, "contabilizacion", True)
     c = crear_cliente_fiscal(t, "Cliente Conta S.L.", nif="B12345678")
     if a3:
         fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8"})
@@ -213,7 +214,7 @@ def test_borrar_el_cliente_fiscal_borra_sus_facturas_y_lotes():
 def _web(cliente, email="contaweb@ejemplo.com"):
     uid = iniciar_sesion_de_prueba(cliente, email, "contrasena123")
     t = db.crear_tenant("Despacho " + email); db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
-    verticales.fijar_activo(t, "gestoria", True)
+    verticales.fijar_activo(t, "contabilizacion", True)
     c = crear_cliente_fiscal(t, "Cliente Web", nif="B12345678")
     return uid, t, c
 
@@ -248,11 +249,11 @@ def test_errores_de_formulario_se_muestran_sin_guardar(cliente):
     assert fc.listar(t, uid) == []
 
 
-def test_sin_gestoria_no_existe_y_hay_que_iniciar_sesion(cliente):
+def test_sin_el_modulo_no_existe_y_hay_que_iniciar_sesion(cliente):
     assert cliente.get("/contabilidad/").status_code in (302, 401, 404)
     uid = iniciar_sesion_de_prueba(cliente, "sinconta@ejemplo.com", "contrasena123")
-    t = db.crear_tenant("Despacho sin gestoria"); db.asignar_tenant(uid, t)
-    verticales.fijar_activo(t, "gestoria", False)
+    t = db.crear_tenant("Despacho sin modulo"); db.asignar_tenant(uid, t)
+    verticales.fijar_activo(t, "contabilizacion", False)
     assert cliente.get("/contabilidad/").status_code == 404
 
 
@@ -263,7 +264,7 @@ def test_el_texto_de_la_factura_se_escapa(cliente):
     assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
 
 
-def test_el_enlace_de_la_barra_lateral_sale_en_gestoria(cliente):
+def test_el_enlace_de_la_barra_lateral_sale_con_el_modulo(cliente):
     _web(cliente, "contabarra@ejemplo.com")
     assert 'href="/contabilidad/"' in cliente.get("/").get_data(as_text=True)
 
@@ -277,7 +278,7 @@ def _portal(cliente_http, tenant_nombre="Despacho portal", con_responsable=True)
     t = db.crear_tenant(tenant_nombre)
     u = db.crear_usuario_vinculado_a_kratos(f"resp-{tenant_nombre}@ejemplo.com".replace(" ", ""), "k-" + tenant_nombre.replace(" ", ""))
     db.asignar_tenant(u, t)
-    verticales.fijar_activo(t, "gestoria", True)
+    verticales.fijar_activo(t, "contabilizacion", True)
     c = crear_cliente_fiscal(t, "Cliente Portal", nif="B12345678")
     if con_responsable:
         conn = db.get_connection(); conn.execute("UPDATE clientes_fiscales SET responsable_id = ? WHERE id = ?", (u, c)); conn.commit(); conn.close()
@@ -359,7 +360,7 @@ def test_el_portal_solo_enseña_las_facturas_del_propio_cliente(cliente):
 def test_sin_sesion_o_sin_gestoria_el_portal_no_ofrece_facturas(cliente):
     assert cliente.get("/portal/facturas").status_code == 302
     t, u, c = _portal(cliente, "Despacho portal sin gest")
-    verticales.fijar_activo(t, "gestoria", False)
+    verticales.fijar_activo(t, "contabilizacion", False)
     assert cliente.get("/portal/facturas").status_code == 404
     assert "Mis facturas" not in cliente.get("/portal/").get_data(as_text=True)
 
@@ -389,3 +390,88 @@ def test_el_despacho_puede_adjuntar_al_crear(cliente):
     r = cliente.post("/contabilidad/nueva", data={"cliente_id": c, "tipo": "recibida", "fecha": "2026-08-20", "numero": "W-5", "tercero_nombre": "P", "base_0": "100", "pct_iva_0": "21",
                                                   "archivo": (io.BytesIO(PDF), "f.pdf", "application/pdf")}, content_type="multipart/form-data")
     assert r.status_code == 302 and fc.obtener(t, uid, int(r.headers["Location"].rsplit("/", 1)[1]))["documento_id"]
+
+
+# --- Módulo propio, aparte de la Gestoría -------------------------------------------------------------------------------------------------------------
+
+def test_es_un_modulo_propio_que_no_viene_por_defecto():
+    v = verticales.VERTICALES["contabilizacion"]
+    assert v.disponible and not v.por_defecto and v.uso is not None and v.esquema is not None and v.borrar_datos is not None
+    t = db.crear_tenant("Despacho sin extras")
+    assert not verticales.esta_activo(t, "contabilizacion") and verticales.esta_activo(t, "gestoria")
+    assert "contabilizacion" in [o["id"] for o in verticales.opciones_para_backoffice()], "el backoffice lo ofrece"
+
+
+def test_gestoria_y_contabilizacion_se_activan_por_separado(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "separados@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho separados"); db.asignar_tenant(uid, t)
+    assert cliente.get("/contabilidad/").status_code == 404, "con Gestoría pero sin el módulo no hay contabilización"
+    assert 'title="Facturas para contabilizar"' not in cliente.get("/").get_data(as_text=True)
+    verticales.fijar_activo(t, "contabilizacion", True); verticales.fijar_activo(t, "gestoria", False)
+    assert cliente.get("/contabilidad/").status_code == 200, "con el módulo y sin Gestoría funciona"
+    assert 'title="Facturas para contabilizar"' in cliente.get("/").get_data(as_text=True)
+    assert cliente.get("/fiscal/vencimientos").status_code == 404
+
+
+def test_el_enlace_es_una_entrada_propia_y_no_cuelga_del_grupo_de_gestoria(cliente):
+    uid, t, c = _web(cliente, "grupo@ejemplo.com")
+    html = cliente.get("/").get_data(as_text=True)
+    assert '<a href="/contabilidad/" class="icon-rail-link ' in html and 'href="/contabilidad/" class="icon-rail-sublink' not in html
+
+
+def test_un_extra_de_pago_vinculado_activa_el_modulo():
+    t = db.crear_tenant("Despacho extra")
+    extra = db.crear_extra_guilda("Contabilización", "Facturas a a3", 1900)
+    verticales.fijar_vertical_de_extra(extra, "contabilizacion")
+    assert not verticales.esta_activo(t, "contabilizacion")
+    db.activar_extra_tenant(t, extra)
+    verticales.invalidar(t)
+    assert verticales.esta_activo(t, "contabilizacion")
+    assert [e["motivo"] for e in verticales.estado_para_backoffice(t) if e["id"] == "contabilizacion"] == ["extra"]
+
+
+def test_el_uso_del_mes_cuenta_lo_anotado_lo_del_portal_y_lo_exportado():
+    t, u, c = _despacho()
+    fc.crear(t, u, c, _datos(numero="U-1"), [LINEA])
+    f2 = fc.crear(t, u, c, _datos(numero="U-2"), [LINEA]); fc.cambiar_estado(t, u, f2, "revisada")
+    fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": "2026-09-10", "numero": "P-1", "tercero_nombre": "X", "tercero_nif": "B1", "total": "10", "pct_iva": "21"}, ("a.pdf", "application/pdf", PDF))
+    fc.exportar(t, u, c)
+    u_ = fc.uso_del_mes(t)
+    assert (u_["anotadas"], u_["desde_portal"], u_["con_archivo"], u_["ficheros"], u_["exportadas"]) == (3, 1, 1, 1, 1)
+    assert fc.uso_del_mes(t, "2020-01")["anotadas"] == 0
+    assert dict(next(e for e in verticales.estado_para_backoffice(t) if e["id"] == "contabilizacion")["uso"])["Facturas anotadas"].startswith("3 (1 desde el portal")
+
+
+def test_el_uso_solo_se_enseña_si_el_modulo_esta_activo():
+    t = db.crear_tenant("Despacho sin modulo uso")
+    assert next(e for e in verticales.estado_para_backoffice(t) if e["id"] == "contabilizacion")["uso"] == []
+
+
+def test_borrar_el_despacho_borra_lo_del_modulo():
+    t, u, c = _despacho()
+    fid = fc.crear(t, u, c, _datos(), [LINEA]); fc.cambiar_estado(t, u, fid, "revisada"); fc.exportar(t, u, c)
+    db.borrar_tenant(t, incluir_fichajes=True)
+    conn = db.get_connection()
+    assert [conn.execute(f"SELECT COUNT(*) FROM {tabla}").fetchone()[0] for tabla in ("facturas_contables", "facturas_contables_lineas", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes")] == [0] * 5
+
+
+def test_la_ficha_fiscal_enlaza_a_las_facturas_del_cliente_solo_con_el_modulo(cliente):
+    uid, t, c = _web(cliente, "fichalink@ejemplo.com")
+    assert f'href="/contabilidad/?cliente_id={c}"' in cliente.get(f"/fiscal/clientes/{c}", follow_redirects=True).get_data(as_text=True)
+    verticales.fijar_activo(t, "contabilizacion", False)
+    assert "/contabilidad/" not in cliente.get(f"/fiscal/clientes/{c}", follow_redirects=True).get_data(as_text=True).replace('href="/contabilidad/"', "")
+
+
+def test_el_backoffice_activa_el_modulo_y_enseña_su_uso(bo, monkeypatch):
+    from tests.test_backoffice_app import entrar, post
+    t, u, c = _despacho()
+    verticales.fijar_activo(t, "contabilizacion", False)
+    entrar(bo)
+    html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
+    assert "Contabilización de facturas" in html and "Uso este mes" not in html
+    assert post(bo, f"/tenants/{t}/verticales/contabilizacion").status_code == 302
+    verticales.invalidar(t)
+    assert verticales.esta_activo(t, "contabilizacion")
+    fc.crear(t, u, c, _datos(), [LINEA])
+    html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
+    assert "Uso este mes" in html and "Facturas anotadas" in html and "1 (0 desde el portal, 0 con archivo)" in html

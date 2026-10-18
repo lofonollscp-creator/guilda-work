@@ -13078,3 +13078,9 @@ msgstr "Entered invoices"
 
 msgid "Todavía no has anotado ninguna factura."
 msgstr "You haven't entered any invoice yet."
+
+msgid "Contabilización de facturas"
+msgstr "Invoice posting"
+
+msgid "Anotar las facturas de los clientes (ellos desde su portal o el despacho), revisarlas y generar el fichero de enlace para a3."
+msgstr "Enter clients' invoices (themselves from their portal, or the firm), review them and generate the link file for a3."

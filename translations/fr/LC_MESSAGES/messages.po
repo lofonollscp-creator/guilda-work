@@ -13163,3 +13163,9 @@ msgstr "Factures saisies"
 
 msgid "Todavía no has anotado ninguna factura."
 msgstr "Vous n'avez encore saisi aucune facture."
+
+msgid "Contabilización de facturas"
+msgstr "Comptabilisation des factures"
+
+msgid "Anotar las facturas de los clientes (ellos desde su portal o el despacho), revisarlas y generar el fichero de enlace para a3."
+msgstr "Saisir les factures des clients (eux depuis leur portail ou le cabinet), les vérifier et générer le fichier de liaison pour a3."

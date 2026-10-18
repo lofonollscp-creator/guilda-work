@@ -124,13 +124,14 @@
 
     {% elif seccion == 'modulos' %}
     <h2>Módulos de negocio</h2>
-    <p class="muted">Gestoría, Gabinete de abogados e Inmobiliaria. Se activan solos si el despacho tiene el extra de pago vinculado; aquí se puede forzar a mano (p. ej. una prueba gratuita). Un cambio tarda hasta 30 s en verse.</p>
+    <p class="muted">Gestoría, Gabinete de abogados, Inmobiliaria y Contabilización de facturas. Se activan solos si el despacho tiene el extra de pago vinculado; aquí se puede forzar a mano (p. ej. una prueba gratuita). Un cambio tarda hasta 30 s en verse.</p>
     <div class="rejilla rejilla-modulos">
       {% for v in verticales %}
       <form method="post" action="{{ url_for('rutas.alternar_vertical', tenant_id=t.id, vertical_id=v.id) }}" class="tarjeta modulo">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <div><strong>{{ v.nombre }}</strong><p class="muted">{{ v.descripcion }}</p>
-          <p class="muted">{% if v.motivo == 'manual' %}Ajuste manual{% if v.hasta %} hasta {{ v.hasta[:10] }}{% endif %}{% elif v.motivo == 'extra' %}Por su extra de pago{% elif v.motivo == 'defecto' %}Incluido por defecto{% else %}No incluido{% endif %}</p></div>
+          <p class="muted">{% if v.motivo == 'manual' %}Ajuste manual{% if v.hasta %} hasta {{ v.hasta[:10] }}{% endif %}{% elif v.motivo == 'extra' %}Por su extra de pago{% elif v.motivo == 'defecto' %}Incluido por defecto{% else %}No incluido{% endif %}</p>
+          {% if v.uso %}<p class="muted">Uso este mes: {% for etiqueta, valor in v.uso %}{{ etiqueta }}: <strong>{{ valor }}</strong>{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}</div>
         <div class="acciones">
           <button type="submit" class="interruptor {{ 'on' if v.activo }}" role="switch" aria-checked="{{ 'true' if v.activo else 'false' }}" aria-label="{{ v.nombre }}"></button>
           {% if v.motivo == 'manual' %}<button type="submit" class="boton" name="accion" value="auto">Volver a automático</button>{% endif %}

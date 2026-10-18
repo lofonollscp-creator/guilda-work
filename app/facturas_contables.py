@@ -9,9 +9,11 @@ import re
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
+from dataclasses import replace
+
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, auditoria, db, enlace_a3
+from . import acceso, auditoria, db, enlace_a3, verticales
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS contabilidad_clientes (
@@ -615,3 +617,43 @@ def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
     finally:
         conn.close()
     return filas
+
+
+# --- Módulo «Contabilización de facturas» ---------------------------------------------------------------------------------------------------------------
+# Es un módulo propio, aparte de la Gestoría aunque se apoye en sus clientes fiscales: se activa por despacho (extra de pago vinculado o a mano desde el backoffice) y se podrá cobrar por uso.
+
+def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
+    """Borra lo del módulo de un despacho (lo llama `nucleo.borrar_datos_de_tenant`). Las facturas cuelgan de las fichas fiscales y se irían con ellas, pero así no depende del orden."""
+    conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
+    for tabla in ("facturas_contables_lineas",):
+        conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
+    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes"):
+        conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
+
+
+def uso_del_mes(tenant_id: int, mes: str | None = None) -> dict:
+    """Lo consumido en un mes (AAAA-MM, por defecto el actual): facturas anotadas (y cuántas por el portal del cliente), con su archivo adjunto, y facturas y ficheros exportados. Es lo que
+    se contaría para un cobro por uso."""
+    mes = mes or db.now_iso()[:7]
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT COUNT(*) AS anotadas, COALESCE(SUM(origen = 'portal'), 0) AS portal, COALESCE(SUM(documento_id IS NOT NULL), 0) AS con_archivo FROM facturas_contables "
+                         "WHERE tenant_id = ? AND substr(creado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
+        e = conn.execute("SELECT COUNT(*) AS ficheros, COALESCE(SUM(n_facturas), 0) AS facturas FROM contabilidad_lotes WHERE tenant_id = ? AND substr(creado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
+    finally:
+        conn.close()
+    return {"mes": mes, "anotadas": f["anotadas"], "desde_portal": f["portal"], "con_archivo": f["con_archivo"], "ficheros": e["ficheros"], "exportadas": e["facturas"]}
+
+
+def _uso_para_backoffice(tenant_id: int) -> list[tuple[str, str]]:
+    u = uso_del_mes(tenant_id)
+    return [("Mes", u["mes"]), ("Facturas anotadas", f"{u['anotadas']} ({u['desde_portal']} desde el portal, {u['con_archivo']} con archivo)"), ("Facturas exportadas a a3", f"{u['exportadas']} en {u['ficheros']} fichero(s)")]
+
+
+def _registrar() -> None:
+    base = verticales.VERTICALES["contabilizacion"]
+    verticales.registrar(replace(base, disponible=True, esquema=crear_esquema, borrar_datos=borrar_datos_de_tenant, uso=_uso_para_backoffice,
+                                 entradas_menu=(verticales.EntradaMenu("contabilizacion", _l("Facturas para contabilizar"), "contabilidad.lista", "clipboard-list"),)))
+
+
+_registrar()

@@ -149,7 +149,7 @@ def dashboard():
         instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"),
         solicitudes_pendientes=solicitudes_pendientes,
         por_anio=por_anio, anios_ordenados=anios_ordenados,
-        presentados=presentados, proximo_pendiente=proximo_pendiente, portal_facturas=verticales.esta_activo(cliente["tenant_id"], "gestoria"),
+        presentados=presentados, proximo_pendiente=proximo_pendiente, portal_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"),
     )
 
 
@@ -265,7 +265,7 @@ def mensajes_vencimiento(vencimiento_id: int):
 
 def _cliente_con_facturas():
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
-    if cliente is None or not verticales.esta_activo(cliente["tenant_id"], "gestoria"):
+    if cliente is None or not verticales.esta_activo(cliente["tenant_id"], "contabilizacion"):
         abort(404)
     return cliente
 
