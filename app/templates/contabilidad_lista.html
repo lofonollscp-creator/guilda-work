@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Facturas para contabilizar') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Facturas para contabilizar') }}</h1>
+    <p class="subtitle">{{ _('Anota los datos de las facturas de tus clientes, revísalas y genera el fichero que lee a3 para contabilizarlas.') }}</p>
+  </div>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.lotes') }}">{{ _('Ficheros generados') }}</a>
+    <a class="btn btn-primary" href="{{ url_for('contabilidad.nueva', cliente_id=cliente_id, tipo='recibida') }}">+ {{ _('Factura recibida') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.nueva', cliente_id=cliente_id, tipo='emitida') }}">+ {{ _('Factura emitida') }}</a>
+  </div>
+</header>
+{{ aviso_error(error) }}
+
+<form class="filters" method="get">
+  <label>{{ _('Cliente') }}
+    <select name="cliente_id"><option value="">{{ _('Todos') }}</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == cliente_id }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+  <label>{{ _('Trimestre') }}
+    <select name="trimestre"><option value="">{{ _('Todos') }}</option>{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ t }}</option>{% endfor %}</select></label>
+  <label>{{ _('Estado') }}
+    <select name="estado"><option value="">{{ _('Todos') }}</option>
+      {% for e, n in (('pendiente', _('Pendientes de revisar')), ('revisada', _('Revisadas')), ('exportada', _('Exportadas')), ('descartada', _('Descartadas'))) %}<option value="{{ e }}" {{ 'selected' if e == estado }}>{{ n }}</option>{% endfor %}</select></label>
+  <label>{{ _('Tipo') }}
+    <select name="tipo"><option value="">{{ _('Todos') }}</option><option value="recibida" {{ 'selected' if tipo == 'recibida' }}>{{ _('Recibidas') }}</option><option value="emitida" {{ 'selected' if tipo == 'emitida' }}>{{ _('Emitidas') }}</option></select></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+<p>{{ chip(ngettext('%(n)s pendiente', '%(n)s pendientes', resumen.pendiente, n=resumen.pendiente)) }} {{ chip(ngettext('%(n)s revisada', '%(n)s revisadas', resumen.revisada, n=resumen.revisada)) }}
+   {{ chip(ngettext('%(n)s exportada', '%(n)s exportadas', resumen.exportada, n=resumen.exportada)) }}</p>
+
+{% if cliente_id %}
+<section class="dash-panel">
+  <div class="dash-panel-cab"><h2>{{ _('Generar el fichero para a3') }}</h2><a href="{{ url_for('contabilidad.configuracion', cliente_id=cliente_id) }}">{{ _('Configuración de a3 de este cliente') }}</a></div>
+  {% if not cfg.a3_empresa %}
+  <p class="muted">{{ _('Antes de generar el fichero hay que indicar el código de empresa que este cliente tiene en a3.') }} <a href="{{ url_for('contabilidad.configuracion', cliente_id=cliente_id) }}">{{ _('Configurar ahora') }}</a></p>
+  {% else %}
+  <form method="post" action="{{ url_for('contabilidad.exportar') }}" class="ds-fila">
+    <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
+    <label>{{ _('Facturas revisadas de') }} <select name="trimestre"><option value="">{{ _('Todas las fechas') }}</option>{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ t }}</option>{% endfor %}</select></label>
+    <button type="submit" class="btn btn-primary" {{ 'disabled' if not resumen.revisada }}>{{ _('Generar SUENLACE.DAT') }}</button>
+  </form>
+  <p class="muted">{{ _('Solo entran las facturas revisadas que aún no se han exportado. En a3: Utilidades › Importar/Exportar › Enlace contable.') }}</p>
+  <p class="muted">{{ _('Primer uso: importa el fichero en una empresa de pruebas de a3 antes de usarlo en una real. El formato sigue el enlace contable de a3 y debe comprobarse con tu versión.') }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if not facturas %}
+  {{ estado_vacio(_('No hay facturas'), _('Anota la primera, o cambia los filtros.'), 'file-text') }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+  <tbody>
+  {% for f in facturas %}
+    <tr>
+      <td class="mono">{{ f.fecha }}</td>
+      <td>{{ f.cliente_nombre }}</td>
+      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}</td>
+      <td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}"><strong>{{ f.numero }}</strong></a></td>
+      <td>{{ f.tercero_nombre }}{% if f.tercero_nif %} <span class="muted mono">{{ f.tercero_nif }}</span>{% endif %}</td>
+      <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
+      <td>{{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</td>
+      <td>{% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><input type="hidden" name="volver" value="{{ request.full_path }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar como revisada') }}</button></form>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

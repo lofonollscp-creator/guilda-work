@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Factura') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{% if f %}{{ _('Factura %(numero)s', numero=f.numero) }}{% else %}{{ _('Nueva factura') }}{% endif %}</h1>
+    {% if f %}<p class="subtitle">{{ f.cliente_nombre }} · {{ f.trimestre }} · {{ {'pendiente': _('Pendiente de revisar'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</p>{% endif %}
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente_id) }}">‹ {{ _('Volver a las facturas') }}</a>
+</header>
+{{ aviso_error(error) }}
+
+{% if f and f.problemas %}
+<div class="ia-error" role="alert"><strong>{{ _('Antes de poder exportarla:') }}</strong><ul>{% for p in f.problemas %}<li>{{ p }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<form method="post" class="edit-form" {% if f %}action="{{ url_for('contabilidad.ver', factura_id=f.id) }}"{% else %}action="{{ url_for('contabilidad.nueva') }}"{% endif %}>
+  {% if not f %}
+  <label for="c-cliente">{{ _('Cliente del despacho') }}</label>
+  <select id="c-cliente" name="cliente_id" required><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == cliente_id }}>{{ c.nombre }}</option>{% endfor %}</select>
+  <label for="c-tipo">{{ _('Tipo') }}</label>
+  <select id="c-tipo" name="tipo"><option value="recibida" {{ 'selected' if datos.tipo == 'recibida' }}>{{ _('Recibida (gasto, de un proveedor)') }}</option><option value="emitida" {{ 'selected' if datos.tipo == 'emitida' }}>{{ _('Emitida (ingreso, a un cliente)') }}</option></select>
+  {% else %}<input type="hidden" name="tipo" value="{{ f.tipo }}">{% endif %}
+  <div class="fila-campos">
+    <label>{{ _('Fecha de la factura') }}<input type="date" name="fecha" value="{{ datos.fecha }}" required></label>
+    <label>{{ _('Fecha de operación (si es distinta)') }}<input type="date" name="fecha_operacion" value="{{ datos.fecha_operacion if datos.fecha_operacion != datos.fecha else '' }}"></label>
+    <label>{{ _('Número de factura') }}<input type="text" name="numero" value="{{ datos.numero }}" maxlength="40" required></label>
+  </div>
+  <div class="fila-campos">
+    <label>{{ _('Nombre del proveedor / cliente') }}<input type="text" name="tercero_nombre" value="{{ datos.tercero_nombre }}" maxlength="100" required></label>
+    <label>{{ _('NIF / CIF') }}<input type="text" name="tercero_nif" value="{{ datos.tercero_nif }}" maxlength="20"></label>
+    <label>{{ _('Subcuenta en a3 (si ya existe)') }}<input type="text" name="tercero_cuenta" value="{{ datos.tercero_cuenta }}" maxlength="12" inputmode="numeric"></label>
+  </div>
+  {% if cuenta_efectiva %}<p class="muted">{{ _('Se contabilizará en la subcuenta %(c)s.', c=cuenta_efectiva) }}</p>{% endif %}
+  <label>{{ _('Concepto') }}<input type="text" name="concepto" value="{{ datos.concepto }}" maxlength="60"></label>
+  <label class="checkbox-label"><input type="checkbox" name="abono" value="1" {{ 'checked' if datos.abono }}> {{ _('Es un abono o factura rectificativa') }}</label>
+
+  <h2 class="ds-mt-16">{{ _('Importes') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Base imponible') }}</th><th>{{ _('Tipo de IVA') }} %</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Recargo') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Cuenta de gasto/ingreso') }}</th></tr></thead>
+    <tbody>
+    {% for i in range([lineas|length + 1, 3]|max if lineas|length < 8 else 8) %}{% set l = lineas[i] if i < lineas|length else {} %}
+      <tr>
+        <td><input type="text" name="base_{{ i }}" value="{{ l.base or '' }}" inputmode="decimal" placeholder="1.000,00" aria-label="{{ _('Base imponible') }}"></td>
+        <td><input type="text" name="pct_iva_{{ i }}" value="{{ l.pct_iva or '' }}" list="tipos-iva" size="5" aria-label="{{ _('Tipo de IVA') }}"></td>
+        <td><input type="text" name="cuota_iva_{{ i }}" value="{{ l.cuota_iva or '' }}" inputmode="decimal" placeholder="{{ _('automática') }}" aria-label="{{ _('Cuota IVA') }}"></td>
+        <td><input type="text" name="pct_recargo_{{ i }}" value="{{ l.pct_recargo or '' }}" size="5" aria-label="{{ _('Recargo') }}"></td>
+        <td><input type="text" name="pct_retencion_{{ i }}" value="{{ l.pct_retencion or '' }}" size="5" aria-label="{{ _('Retención') }}"></td>
+        <td><input type="text" name="cuenta_{{ i }}" value="{{ l.cuenta or '' }}" inputmode="numeric" maxlength="12" placeholder="{{ _('por defecto') }}" aria-label="{{ _('Cuenta') }}"><input type="hidden" name="subtipo_{{ i }}" value="{{ l.subtipo or '01' }}"></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <datalist id="tipos-iva"><option value="21"><option value="10"><option value="4"><option value="0"></datalist>
+  <label>{{ _('Suplidos (importe sin IVA que no forma parte de la base)') }}<input type="text" name="suplidos" value="{{ datos.suplidos }}" inputmode="decimal"></label>
+  <label>{{ _('Referencia (número original si es largo)') }}<input type="text" name="referencia" value="{{ datos.referencia }}" maxlength="60"></label>
+  <label>{{ _('Notas internas') }}<textarea name="notas" rows="3">{{ datos.notas }}</textarea></label>
+  {% if f %}<p class="muted">{{ _('Total de la factura: %(t)s €', t='%.2f'|format(f.total_centimos / 100)) }}</p>{% endif %}
+  <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if f and f.estado == 'exportada' }}>{{ _('Guardar') }}</button></div>
+</form>
+
+{% if f %}
+<section class="ds-mt-24"><h2>{{ _('Revisión') }}</h2>
+  <div class="ds-fila">
+    {% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><button type="submit" class="btn btn-primary">{{ _('Marcar como revisada') }}</button></form>{% endif %}
+    {% if f.estado != 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="pendiente"><button type="submit" class="btn btn-ghost">{{ _('Reabrir') }}</button></form>{% endif %}
+    {% if f.estado in ('pendiente', 'revisada') %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="descartada"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form>{% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

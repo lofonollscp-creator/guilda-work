@@ -12777,3 +12777,236 @@ msgid_plural "%(n)s facturas vencidas (%(importe)s €)"
 msgstr[0] "%(n)s factura vençuda (%(importe)s €)"
 msgstr[1] "%(n)s factures vençudes (%(importe)s €)"
 
+msgid "Facturas para contabilizar"
+msgstr "Factures per comptabilitzar"
+
+msgid "Configuración de a3"
+msgstr "Configuració d'a3"
+
+msgid "Configuración de a3 de %(cliente)s"
+msgstr "Configuració d'a3 de %(cliente)s"
+
+msgid "Cómo se identifica este cliente en a3 y qué cuentas se usan por defecto al generar el fichero."
+msgstr "Com s'identifica aquest client a a3 i quins comptes s'usen per defecte en generar el fitxer."
+
+msgid "Código de empresa en a3 (hasta 5 dígitos)"
+msgstr "Codi d'empresa a a3 (fins a 5 dígits)"
+
+msgid "Dígitos de las subcuentas del plan"
+msgstr "Dígits de les subcomptes del pla"
+
+msgid "Subcuentas genéricas (se usan si el proveedor o el cliente no tiene la suya)"
+msgstr "Subcomptes genèrics (s'usen si el proveïdor o el client no té el seu)"
+
+msgid "Proveedores"
+msgstr "Proveïdors"
+
+msgid "Cuentas por defecto"
+msgstr "Comptes per defecte"
+
+msgid "Gasto (facturas recibidas)"
+msgstr "Despesa (factures rebudes)"
+
+msgid "Ingreso (facturas emitidas)"
+msgstr "Ingrés (factures emeses)"
+
+msgid "IVA soportado"
+msgstr "IVA suportat"
+
+msgid "IVA repercutido"
+msgstr "IVA repercutit"
+
+msgid "Factura %(numero)s"
+msgstr "Factura %(numero)s"
+
+msgid "Nueva factura"
+msgstr "Nova factura"
+
+msgid "Pendiente de revisar"
+msgstr "Pendent de revisar"
+
+msgid "Revisada"
+msgstr "Revisada"
+
+msgid "Exportada"
+msgstr "Exportada"
+
+msgid "Volver a las facturas"
+msgstr "Tornar a les factures"
+
+msgid "Antes de poder exportarla:"
+msgstr "Abans de poder exportar-la:"
+
+msgid "Cliente del despacho"
+msgstr "Client del despatx"
+
+msgid "Recibida (gasto, de un proveedor)"
+msgstr "Rebuda (despesa, d'un proveïdor)"
+
+msgid "Emitida (ingreso, a un cliente)"
+msgstr "Emesa (ingrés, a un client)"
+
+msgid "Fecha de la factura"
+msgstr "Data de la factura"
+
+msgid "Fecha de operación (si es distinta)"
+msgstr "Data d'operació (si és diferent)"
+
+msgid "Número de factura"
+msgstr "Número de factura"
+
+msgid "Nombre del proveedor / cliente"
+msgstr "Nom del proveïdor / client"
+
+msgid "Subcuenta en a3 (si ya existe)"
+msgstr "Subcompte a a3 (si ja existeix)"
+
+msgid "Se contabilizará en la subcuenta %(c)s."
+msgstr "Es comptabilitzarà a la subcompte %(c)s."
+
+msgid "Es un abono o factura rectificativa"
+msgstr "És un abonament o factura rectificativa"
+
+msgid "Importes"
+msgstr "Imports"
+
+msgid "Base imponible"
+msgstr "Base imposable"
+
+msgid "Tipo de IVA"
+msgstr "Tipus d'IVA"
+
+msgid "Cuota IVA"
+msgstr "Quota d'IVA"
+
+msgid "Recargo"
+msgstr "Recàrrec"
+
+msgid "Retención"
+msgstr "Retenció"
+
+msgid "Cuenta de gasto/ingreso"
+msgstr "Compte de despesa/ingrés"
+
+msgid "automática"
+msgstr "automàtica"
+
+msgid "Suplidos (importe sin IVA que no forma parte de la base)"
+msgstr "Suplits (import sense IVA que no forma part de la base)"
+
+msgid "Referencia (número original si es largo)"
+msgstr "Referència (número original si és llarg)"
+
+msgid "Total de la factura: %(t)s €"
+msgstr "Total de la factura: %(t)s €"
+
+msgid "Revisión"
+msgstr "Revisió"
+
+msgid "Marcar como revisada"
+msgstr "Marcar com a revisada"
+
+msgid "Anota los datos de las facturas de tus clientes, revísalas y genera el fichero que lee a3 para contabilizarlas."
+msgstr "Anota les dades de les factures dels teus clients, revisa-les i genera el fitxer que llegeix a3 per comptabilitzar-les."
+
+msgid "Ficheros generados"
+msgstr "Fitxers generats"
+
+msgid "Factura recibida"
+msgstr "Factura rebuda"
+
+msgid "Factura emitida"
+msgstr "Factura emesa"
+
+msgid "Trimestre"
+msgstr "Trimestre"
+
+msgid "Pendientes de revisar"
+msgstr "Pendents de revisar"
+
+msgid "Revisadas"
+msgstr "Revisades"
+
+msgid "Exportadas"
+msgstr "Exportades"
+
+msgid "Descartadas"
+msgstr "Descartades"
+
+msgid "Recibidas"
+msgstr "Rebudes"
+
+msgid "Generar el fichero para a3"
+msgstr "Generar el fitxer per a a3"
+
+msgid "Configuración de a3 de este cliente"
+msgstr "Configuració d'a3 d'aquest client"
+
+msgid "Antes de generar el fichero hay que indicar el código de empresa que este cliente tiene en a3."
+msgstr "Abans de generar el fitxer cal indicar el codi d'empresa que aquest client té a a3."
+
+msgid "Configurar ahora"
+msgstr "Configurar ara"
+
+msgid "Facturas revisadas de"
+msgstr "Factures revisades de"
+
+msgid "Todas las fechas"
+msgstr "Totes les dates"
+
+msgid "Generar SUENLACE.DAT"
+msgstr "Generar SUENLACE.DAT"
+
+msgid "Solo entran las facturas revisadas que aún no se han exportado. En a3: Utilidades › Importar/Exportar › Enlace contable."
+msgstr "Només hi entren les factures revisades que encara no s'han exportat. A a3: Utilitats › Importar/Exportar › Enllaç comptable."
+
+msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 antes de usarlo en una real. El formato sigue el enlace contable de a3 y debe comprobarse con tu versión."
+msgstr "Primer ús: importa el fitxer en una empresa de proves d'a3 abans d'usar-lo en una de real. El format segueix l'enllaç comptable d'a3 i s'ha de comprovar amb la teva versió."
+
+msgid "No hay facturas"
+msgstr "No hi ha factures"
+
+msgid "Anota la primera, o cambia los filtros."
+msgstr "Anota la primera, o canvia els filtres."
+
+msgid "Proveedor / cliente"
+msgstr "Proveïdor / client"
+
+msgid "Recibida"
+msgstr "Rebuda"
+
+msgid "Abono"
+msgstr "Abonament"
+
+msgid "Cada vez que generas un SUENLACE.DAT queda guardado aquí por si hay que volver a bajarlo."
+msgstr "Cada cop que generes un SUENLACE.DAT es desa aquí per si cal tornar-lo a baixar."
+
+msgid "Todavía no has generado ningún fichero"
+msgstr "Encara no has generat cap fitxer"
+
+msgid "Revisa algunas facturas y genera el fichero desde la lista."
+msgstr "Revisa algunes factures i genera el fitxer des de la llista."
+
+msgid "Registros"
+msgstr "Registres"
+
+msgid "Descargar"
+msgstr "Descarregar"
+
+msgid "%(n)s pendiente"
+msgid_plural "%(n)s pendientes"
+msgstr[0] "%(n)s pendent"
+msgstr[1] "%(n)s pendents"
+
+
+msgid "%(n)s revisada"
+msgid_plural "%(n)s revisadas"
+msgstr[0] "%(n)s revisada"
+msgstr[1] "%(n)s revisades"
+
+
+msgid "%(n)s exportada"
+msgid_plural "%(n)s exportadas"
+msgstr[0] "%(n)s exportada"
+msgstr[1] "%(n)s exportades"
+

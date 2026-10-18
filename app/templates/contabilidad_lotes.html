@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% block title %}{{ _('Ficheros generados') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Ficheros generados') }}</h1>
+    <p class="subtitle">{{ _('Cada vez que generas un SUENLACE.DAT queda guardado aquí por si hay que volver a bajarlo.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Volver a las facturas') }}</a>
+</header>
+{% if not lotes %}
+  {{ estado_vacio(_('Todavía no has generado ningún fichero'), _('Revisa algunas facturas y genera el fichero desde la lista.'), 'file-text') }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Registros') }}</th><th></th></tr></thead>
+  <tbody>{% for l in lotes %}<tr><td class="mono">{{ l.creado_en[:16]|replace('T', ' ') }}</td><td>{{ l.cliente_nombre }}</td><td>{{ l.n_facturas }}</td><td>{{ l.n_registros }}</td>
+    <td><a class="btn btn-ghost btn-sm" href="{{ url_for('contabilidad.descargar_lote', lote_id=l.id) }}">{{ _('Descargar') }}</a></td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+{% endblock %}

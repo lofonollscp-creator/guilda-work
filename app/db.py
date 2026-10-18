@@ -2272,6 +2272,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
+        from . import facturas_contables
+        facturas_contables.crear_esquema(conn)       # facturas para contabilizar y lotes del fichero de enlace de a3 (app/facturas_contables.py)
         from . import facturacion_despacho
         facturacion_despacho.crear_esquema(conn)   # relación expediente → factura de FacturaScripts (app/facturacion_despacho.py)
         from . import reglas_fiscales

@@ -12768,3 +12768,236 @@ msgid_plural "%(n)s facturas vencidas (%(importe)s €)"
 msgstr[0] "%(n)s overdue invoice (%(importe)s €)"
 msgstr[1] "%(n)s overdue invoices (%(importe)s €)"
 
+msgid "Facturas para contabilizar"
+msgstr "Invoices to post"
+
+msgid "Configuración de a3"
+msgstr "a3 settings"
+
+msgid "Configuración de a3 de %(cliente)s"
+msgstr "a3 settings for %(cliente)s"
+
+msgid "Cómo se identifica este cliente en a3 y qué cuentas se usan por defecto al generar el fichero."
+msgstr "How this client is identified in a3 and which accounts are used by default when generating the file."
+
+msgid "Código de empresa en a3 (hasta 5 dígitos)"
+msgstr "Company code in a3 (up to 5 digits)"
+
+msgid "Dígitos de las subcuentas del plan"
+msgstr "Digits of the chart's sub-accounts"
+
+msgid "Subcuentas genéricas (se usan si el proveedor o el cliente no tiene la suya)"
+msgstr "Generic sub-accounts (used when the supplier or client has none of its own)"
+
+msgid "Proveedores"
+msgstr "Suppliers"
+
+msgid "Cuentas por defecto"
+msgstr "Default accounts"
+
+msgid "Gasto (facturas recibidas)"
+msgstr "Expense (received invoices)"
+
+msgid "Ingreso (facturas emitidas)"
+msgstr "Income (issued invoices)"
+
+msgid "IVA soportado"
+msgstr "Input VAT"
+
+msgid "IVA repercutido"
+msgstr "Output VAT"
+
+msgid "Factura %(numero)s"
+msgstr "Invoice %(numero)s"
+
+msgid "Nueva factura"
+msgstr "New invoice"
+
+msgid "Pendiente de revisar"
+msgstr "Pending review"
+
+msgid "Revisada"
+msgstr "Reviewed"
+
+msgid "Exportada"
+msgstr "Exported"
+
+msgid "Volver a las facturas"
+msgstr "Back to the invoices"
+
+msgid "Antes de poder exportarla:"
+msgstr "Before it can be exported:"
+
+msgid "Cliente del despacho"
+msgstr "Firm's client"
+
+msgid "Recibida (gasto, de un proveedor)"
+msgstr "Received (expense, from a supplier)"
+
+msgid "Emitida (ingreso, a un cliente)"
+msgstr "Issued (income, to a client)"
+
+msgid "Fecha de la factura"
+msgstr "Invoice date"
+
+msgid "Fecha de operación (si es distinta)"
+msgstr "Operation date (if different)"
+
+msgid "Número de factura"
+msgstr "Invoice number"
+
+msgid "Nombre del proveedor / cliente"
+msgstr "Supplier / client name"
+
+msgid "Subcuenta en a3 (si ya existe)"
+msgstr "Sub-account in a3 (if it already exists)"
+
+msgid "Se contabilizará en la subcuenta %(c)s."
+msgstr "It will be posted to sub-account %(c)s."
+
+msgid "Es un abono o factura rectificativa"
+msgstr "It is a credit note or corrective invoice"
+
+msgid "Importes"
+msgstr "Amounts"
+
+msgid "Base imponible"
+msgstr "Taxable base"
+
+msgid "Tipo de IVA"
+msgstr "VAT rate"
+
+msgid "Cuota IVA"
+msgstr "VAT amount"
+
+msgid "Recargo"
+msgstr "Surcharge"
+
+msgid "Retención"
+msgstr "Withholding"
+
+msgid "Cuenta de gasto/ingreso"
+msgstr "Expense/income account"
+
+msgid "automática"
+msgstr "automatic"
+
+msgid "Suplidos (importe sin IVA que no forma parte de la base)"
+msgstr "Disbursements (amount without VAT that is not part of the base)"
+
+msgid "Referencia (número original si es largo)"
+msgstr "Reference (original number if long)"
+
+msgid "Total de la factura: %(t)s €"
+msgstr "Invoice total: %(t)s €"
+
+msgid "Revisión"
+msgstr "Review"
+
+msgid "Marcar como revisada"
+msgstr "Mark as reviewed"
+
+msgid "Anota los datos de las facturas de tus clientes, revísalas y genera el fichero que lee a3 para contabilizarlas."
+msgstr "Enter the details of your clients' invoices, review them and generate the file a3 reads to post them."
+
+msgid "Ficheros generados"
+msgstr "Generated files"
+
+msgid "Factura recibida"
+msgstr "Received invoice"
+
+msgid "Factura emitida"
+msgstr "Issued invoice"
+
+msgid "Trimestre"
+msgstr "Quarter"
+
+msgid "Pendientes de revisar"
+msgstr "Pending review"
+
+msgid "Revisadas"
+msgstr "Reviewed"
+
+msgid "Exportadas"
+msgstr "Exported"
+
+msgid "Descartadas"
+msgstr "Discarded"
+
+msgid "Recibidas"
+msgstr "Received"
+
+msgid "Generar el fichero para a3"
+msgstr "Generate the file for a3"
+
+msgid "Configuración de a3 de este cliente"
+msgstr "a3 settings for this client"
+
+msgid "Antes de generar el fichero hay que indicar el código de empresa que este cliente tiene en a3."
+msgstr "Before generating the file you need to enter the company code this client has in a3."
+
+msgid "Configurar ahora"
+msgstr "Set up now"
+
+msgid "Facturas revisadas de"
+msgstr "Reviewed invoices from"
+
+msgid "Todas las fechas"
+msgstr "All dates"
+
+msgid "Generar SUENLACE.DAT"
+msgstr "Generate SUENLACE.DAT"
+
+msgid "Solo entran las facturas revisadas que aún no se han exportado. En a3: Utilidades › Importar/Exportar › Enlace contable."
+msgstr "Only reviewed invoices not yet exported are included. In a3: Utilities › Import/Export › Accounting link."
+
+msgid "Primer uso: importa el fichero en una empresa de pruebas de a3 antes de usarlo en una real. El formato sigue el enlace contable de a3 y debe comprobarse con tu versión."
+msgstr "First use: import the file into an a3 test company before using it on a real one. The format follows a3's accounting link and must be checked against your version."
+
+msgid "No hay facturas"
+msgstr "No invoices"
+
+msgid "Anota la primera, o cambia los filtros."
+msgstr "Enter the first one, or change the filters."
+
+msgid "Proveedor / cliente"
+msgstr "Supplier / client"
+
+msgid "Recibida"
+msgstr "Received"
+
+msgid "Abono"
+msgstr "Credit note"
+
+msgid "Cada vez que generas un SUENLACE.DAT queda guardado aquí por si hay que volver a bajarlo."
+msgstr "Every SUENLACE.DAT you generate is kept here in case you need to download it again."
+
+msgid "Todavía no has generado ningún fichero"
+msgstr "You haven't generated any file yet"
+
+msgid "Revisa algunas facturas y genera el fichero desde la lista."
+msgstr "Review some invoices and generate the file from the list."
+
+msgid "Registros"
+msgstr "Records"
+
+msgid "Descargar"
+msgstr "Download"
+
+msgid "%(n)s pendiente"
+msgid_plural "%(n)s pendientes"
+msgstr[0] "%(n)s pending"
+msgstr[1] "%(n)s pending"
+
+
+msgid "%(n)s revisada"
+msgid_plural "%(n)s revisadas"
+msgstr[0] "%(n)s reviewed"
+msgstr[1] "%(n)s reviewed"
+
+
+msgid "%(n)s exportada"
+msgid_plural "%(n)s exportadas"
+msgstr[0] "%(n)s exported"
+msgstr[1] "%(n)s exported"
+

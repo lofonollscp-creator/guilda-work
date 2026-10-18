@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Configuración de a3') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Configuración de a3 de %(cliente)s', cliente=cliente.nombre) }}</h1>
+    <p class="subtitle">{{ _('Cómo se identifica este cliente en a3 y qué cuentas se usan por defecto al generar el fichero.') }}</p>
+  </div>
+</header>
+{{ aviso_error(error) }}
+<form method="post" class="edit-form ds-max-640">
+  <label>{{ _('Código de empresa en a3 (hasta 5 dígitos)') }}<input type="text" name="a3_empresa" value="{{ cfg.a3_empresa or '' }}" maxlength="5" inputmode="numeric" required></label>
+  <label>{{ _('Dígitos de las subcuentas del plan') }}<input type="number" name="digitos" value="{{ cfg.digitos }}" min="4" max="12"></label>
+  <h2>{{ _('Subcuentas genéricas (se usan si el proveedor o el cliente no tiene la suya)') }}</h2>
+  <label>{{ _('Proveedores') }}<input type="text" name="cuenta_proveedores" value="{{ cfg.cuenta_proveedores }}" inputmode="numeric"></label>
+  <label>{{ _('Clientes') }}<input type="text" name="cuenta_clientes" value="{{ cfg.cuenta_clientes }}" inputmode="numeric"></label>
+  <h2>{{ _('Cuentas por defecto') }}</h2>
+  <label>{{ _('Gasto (facturas recibidas)') }}<input type="text" name="cuenta_gasto" value="{{ cfg.cuenta_gasto }}" inputmode="numeric"></label>
+  <label>{{ _('Ingreso (facturas emitidas)') }}<input type="text" name="cuenta_ingreso" value="{{ cfg.cuenta_ingreso }}" inputmode="numeric"></label>
+  <label>{{ _('IVA soportado') }}<input type="text" name="cuenta_iva_soportado" value="{{ cfg.cuenta_iva_soportado }}" inputmode="numeric"></label>
+  <label>{{ _('IVA repercutido') }}<input type="text" name="cuenta_iva_repercutido" value="{{ cfg.cuenta_iva_repercutido }}" inputmode="numeric"></label>
+  <label>{{ _('Retenciones') }}<input type="text" name="cuenta_retencion" value="{{ cfg.cuenta_retencion }}" inputmode="numeric"></label>
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button><a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente.id) }}">{{ _('Cancelar') }}</a></div>
+</form>
+{% endblock %}
