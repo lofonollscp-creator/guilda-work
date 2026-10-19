@@ -109,7 +109,8 @@ def ver(factura_id: int):
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg))
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg),
+                           cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
 
 
 @contabilidad_bp.route("/<int:factura_id>/estado", methods=["POST"])
@@ -137,7 +138,7 @@ def configuracion(cliente_id: int):
         except ValueError as e:
             error = str(e)
             cfg = {**cfg, **{k: request.form.get(k, "") for k in cfg}}
-    return render_template("contabilidad_config.html", cliente=cliente, cfg=cfg, error=error)
+    return render_template("contabilidad_config.html", cliente=cliente, cfg=cfg, error=error, terceros=fc.terceros_del_cliente(g.tenant_id, g.usuario_id, cliente_id))
 
 
 @contabilidad_bp.route("/exportar", methods=["POST"])

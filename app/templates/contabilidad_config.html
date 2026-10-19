@@ -15,6 +15,8 @@
   <h2>{{ _('Subcuentas genéricas (se usan si el proveedor o el cliente no tiene la suya)') }}</h2>
   <label>{{ _('Proveedores') }}<input type="text" name="cuenta_proveedores" value="{{ cfg.cuenta_proveedores }}" inputmode="numeric"></label>
   <label>{{ _('Clientes') }}<input type="text" name="cuenta_clientes" value="{{ cfg.cuenta_clientes }}" inputmode="numeric"></label>
+  <label><input type="checkbox" name="subcuentas_auto" value="1" {{ 'checked' if cfg.subcuentas_auto }}> {{ _('Asignar solas una subcuenta a cada proveedor o cliente nuevo (la siguiente libre tras la genérica, al exportar)') }}</label>
+  <p class="muted">{{ _('a3 crea en la contabilidad las subcuentas que no existan al leer el fichero. Si ya tienes las tuyas, escríbelas en la factura y se recordarán por NIF.') }}</p>
   <h2>{{ _('Cuentas por defecto') }}</h2>
   <label>{{ _('Gasto (facturas recibidas)') }}<input type="text" name="cuenta_gasto" value="{{ cfg.cuenta_gasto }}" inputmode="numeric"></label>
   <label>{{ _('Ingreso (facturas emitidas)') }}<input type="text" name="cuenta_ingreso" value="{{ cfg.cuenta_ingreso }}" inputmode="numeric"></label>
@@ -23,4 +25,13 @@
   <label>{{ _('Retenciones') }}<input type="text" name="cuenta_retencion" value="{{ cfg.cuenta_retencion }}" inputmode="numeric"></label>
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button><a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente.id) }}">{{ _('Cancelar') }}</a></div>
 </form>
+{% if terceros %}
+<section class="ds-max-640">
+  <h2>{{ _('Subcuentas recordadas') }}</h2>
+  <table class="tabla">
+    <thead><tr><th>{{ _('Subcuenta') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Nombre') }}</th><th>{{ _('Tipo') }}</th></tr></thead>
+    <tbody>{% for t in terceros %}<tr><td>{{ t.cuenta }}</td><td>{{ t.nif }}</td><td>{{ t.nombre }}</td><td>{{ _('Proveedor') if t.tipo == 'proveedor' else _('Cliente') }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
 {% endblock %}

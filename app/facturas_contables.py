@@ -103,7 +103,7 @@ MAX_LINEAS = 8
 MAX_NUMERO = 60          # el enlace de a3 admite hasta 60 caracteres (campo ampliado del SII); en las 10 posiciones clásicas va un resumen
 TOLERANCIA_CENTIMOS = 2
 CONFIG_DEFECTO = {"digitos": 8, "cuenta_proveedores": "40000000", "cuenta_clientes": "43000000", "cuenta_gasto": "62900000", "cuenta_ingreso": "70000000",
-                  "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000"}
+                  "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000", "subcuentas_auto": 0}
 
 
 def crear_esquema(conn) -> None:
@@ -112,6 +112,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "rectifica_fecha", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "rectifica_numero", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "documento_id", "INTEGER")       # la factura escaneada o fotografiada, en los documentos del cliente
+    db._asegurar_columna(conn, "contabilidad_clientes", "subcuentas_auto", "INTEGER NOT NULL DEFAULT 0")   # numerar solas las subcuentas de los terceros nuevos
 
 
 # --- Lectura de lo que se escribe -----------------------------------------------------------------------------------------------------------------------
@@ -220,12 +221,12 @@ def guardar_configuracion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     conn = db.get_connection()
     try:
         conn.execute("INSERT INTO contabilidad_clientes (cliente_fiscal_id, tenant_id, a3_empresa, digitos, cuenta_proveedores, cuenta_clientes, cuenta_gasto, cuenta_ingreso, cuenta_iva_soportado, "
-                     "cuenta_iva_repercutido, cuenta_retencion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id) DO UPDATE SET a3_empresa = excluded.a3_empresa, "
+                     "cuenta_iva_repercutido, cuenta_retencion, subcuentas_auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id) DO UPDATE SET a3_empresa = excluded.a3_empresa, subcuentas_auto = excluded.subcuentas_auto, "
                      "digitos = excluded.digitos, cuenta_proveedores = excluded.cuenta_proveedores, cuenta_clientes = excluded.cuenta_clientes, cuenta_gasto = excluded.cuenta_gasto, "
                      "cuenta_ingreso = excluded.cuenta_ingreso, cuenta_iva_soportado = excluded.cuenta_iva_soportado, cuenta_iva_repercutido = excluded.cuenta_iva_repercutido, "
                      "cuenta_retencion = excluded.cuenta_retencion",
                      (cliente_fiscal_id, tenant_id, empresa or None, digitos, *[cuentas[k] for k in ("cuenta_proveedores", "cuenta_clientes", "cuenta_gasto", "cuenta_ingreso",
-                                                                                                  "cuenta_iva_soportado", "cuenta_iva_repercutido", "cuenta_retencion")]))
+                                                                                                  "cuenta_iva_soportado", "cuenta_iva_repercutido", "cuenta_retencion")], 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0))
         auditoria.registrar(tenant_id, usuario_id, "contabilidad.configuracion", "cliente_fiscal", cliente_fiscal_id, {"a3_empresa": empresa or None, "digitos": digitos}, conn=conn)
         conn.commit()
     finally:
@@ -255,6 +256,50 @@ def _recordar_tercero(conn, tenant_id: int, cliente_fiscal_id: int, tipo_factura
         conn.execute("INSERT INTO contabilidad_terceros (tenant_id, cliente_fiscal_id, tipo, nif, nombre, cuenta) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id, tipo, nif) DO UPDATE SET "
                      "cuenta = excluded.cuenta, nombre = excluded.nombre",
                      (tenant_id, cliente_fiscal_id, "proveedor" if tipo_factura == "recibida" else "cliente", nif, nombre[:100], cuenta))
+
+
+def _subcuentas_nuevas(tenant_id: int, cfg: dict, facturas: list[dict]) -> dict[tuple[str, str], tuple[str, str]]:
+    """Con `subcuentas_auto`, la subcuenta que toca a cada tercero (por NIF) que aún no tiene la suya: la siguiente libre tras la genérica (40000001, 40000002… / 43000001…).
+    Nunca repite una que el cliente ya use, ni las escritas a mano. Devuelve {(tipo_tercero, nif): (cuenta, nombre)}; no escribe nada."""
+    if not cfg.get("subcuentas_auto") or not facturas:
+        return {}
+    cliente_id = facturas[0]["cliente_fiscal_id"]
+    conn = db.get_connection()
+    try:
+        usadas = {"proveedor": set(), "cliente": set()}
+        for r in conn.execute("SELECT tipo, cuenta FROM contabilidad_terceros WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id)):
+            usadas[r["tipo"]].add(r["cuenta"])
+        for r in conn.execute("SELECT tipo, tercero_cuenta FROM facturas_contables WHERE cliente_fiscal_id = ? AND tenant_id = ? AND tercero_cuenta IS NOT NULL", (cliente_id, tenant_id)):
+            usadas["proveedor" if r["tipo"] == "recibida" else "cliente"].add(r["tercero_cuenta"])
+    finally:
+        conn.close()
+    res: dict[tuple[str, str], tuple[str, str]] = {}
+    for f in sorted(facturas, key=lambda f: (f["fecha"], f["id"])):
+        nif = _nif(f.get("tercero_nif"))
+        tipo = "proveedor" if f["tipo"] == "recibida" else "cliente"
+        if not nif or f.get("tercero_cuenta") or (tipo, nif) in res or cuenta_del_tercero(tenant_id, cliente_id, f["tipo"], nif):
+            continue
+        generica = cfg["cuenta_proveedores"] if tipo == "proveedor" else cfg["cuenta_clientes"]
+        ancho = cfg["digitos"]
+        prefijo = generica[:3]
+        hueco = ancho - len(prefijo)
+        propias = usadas[tipo] | {generica} | {c for (t, _n), (c, _nom) in res.items() if t == tipo}
+        mayor = max([int(c[len(prefijo):]) for c in propias if len(c) == ancho and c.startswith(prefijo) and c[len(prefijo):].isdigit()] + [0])
+        siguiente = mayor + 1
+        if len(str(siguiente)) > hueco:
+            raise ValueError(f"No quedan subcuentas libres de {ancho} dígitos para los {'proveedores' if tipo == 'proveedor' else 'clientes'} de este cliente.")
+        res[(tipo, nif)] = (prefijo + str(siguiente).zfill(hueco), f["tercero_nombre"])
+    return res
+
+
+def terceros_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> list[dict]:
+    """Las subcuentas recordadas de proveedores y clientes (para que el despacho las tenga a la vista al configurar)."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        return [dict(r) for r in conn.execute("SELECT tipo, nif, nombre, cuenta FROM contabilidad_terceros WHERE cliente_fiscal_id = ? AND tenant_id = ? ORDER BY tipo, cuenta", (cliente_fiscal_id, tenant_id))]
+    finally:
+        conn.close()
 
 
 # --- Alta, edición y comprobación ----------------------------------------------------------------------------------------------------------------------
@@ -465,12 +510,12 @@ def resumen_por_estado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
 
 # --- Exportar a a3 ---------------------------------------------------------------------------------------------------------------------------------------
 
-def _para_enlace(tenant_id: int, f: dict, cfg: dict) -> dict:
+def _para_enlace(tenant_id: int, f: dict, cfg: dict, nuevas: dict | None = None) -> dict:
     gasto_o_ingreso = cfg["cuenta_gasto"] if f["tipo"] == "recibida" else cfg["cuenta_ingreso"]
     cuenta_iva = cfg["cuenta_iva_soportado"] if f["tipo"] == "recibida" else cfg["cuenta_iva_repercutido"]
     return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "rectifica_fecha": f.get("rectifica_fecha"), "rectifica_numero": f.get("rectifica_numero"), "concepto": f["concepto"] or (
         ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"],
-        "cuenta_tercero": cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
+        "cuenta_tercero": (nuevas or {}).get(("proveedor" if f["tipo"] == "recibida" else "cliente", _nif(f["tercero_nif"])), (None,))[0] or cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
         "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "descripcion_cuenta": "Compras" if f["tipo"] == "recibida" else "Ventas", "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
                     "pct_recargo": l["pct_recargo"], "cuota_recargo": l["cuota_recargo"], "pct_retencion": l["pct_retencion"], "cuota_retencion": l["cuota_retencion"],
                     "sujeta_iva": bool(l["sujeta_iva"]), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
@@ -490,7 +535,8 @@ def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: 
     for f in facturas:
         if f["problemas"]:
             raise ValueError(f"La factura {f['numero']} tiene problemas: " + " ".join(f["problemas"]))
-    contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"])
+    nuevas = _subcuentas_nuevas(tenant_id, cfg, facturas)
+    contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg, nuevas) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"])
     n_registros = contenido.count(b"\r\n")
     conn = db.get_connection()
     try:
@@ -498,7 +544,11 @@ def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: 
                            (tenant_id, cliente_fiscal_id, usuario_id, db.now_iso(), desde, hasta, len(facturas), n_registros, contenido))
         lote = cur.lastrowid
         conn.executemany("UPDATE facturas_contables SET estado = 'exportada', lote_id = ?, actualizado_en = ? WHERE id = ? AND tenant_id = ?", [(lote, db.now_iso(), f["id"], tenant_id) for f in facturas])
-        auditoria.registrar(tenant_id, usuario_id, "contabilidad.exportada", "cliente_fiscal", cliente_fiscal_id, {"lote": lote, "facturas": len(facturas), "desde": desde, "hasta": hasta}, conn=conn)
+        for (tipo_tercero, nif), (cuenta, nombre) in nuevas.items():
+            conn.execute("INSERT INTO contabilidad_terceros (tenant_id, cliente_fiscal_id, tipo, nif, nombre, cuenta) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id, tipo, nif) DO NOTHING",
+                         (tenant_id, cliente_fiscal_id, tipo_tercero, nif, nombre[:100], cuenta))
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.exportada", "cliente_fiscal", cliente_fiscal_id,
+                            {"lote": lote, "facturas": len(facturas), "desde": desde, "hasta": hasta, "subcuentas_nuevas": len(nuevas)}, conn=conn)
         conn.commit()
     finally:
         conn.close()

@@ -13169,3 +13169,18 @@ msgstr "Comptabilisation des factures"
 
 msgid "Anotar las facturas de los clientes (ellos desde su portal o el despacho), revisarlas y generar el fichero de enlace para a3."
 msgstr "Saisir les factures des clients (eux depuis leur portail ou le cabinet), les vérifier et générer le fichier de liaison pour a3."
+
+msgid "Asignar solas una subcuenta a cada proveedor o cliente nuevo (la siguiente libre tras la genérica, al exportar)"
+msgstr "Attribuer automatiquement un sous-compte à chaque nouveau fournisseur ou client (le suivant libre après le compte générique, à l'export)"
+
+msgid "a3 crea en la contabilidad las subcuentas que no existan al leer el fichero. Si ya tienes las tuyas, escríbelas en la factura y se recordarán por NIF."
+msgstr "a3 crée dans la comptabilité les sous-comptes inexistants à la lecture du fichier. Si vous avez déjà les vôtres, saisissez-les sur la facture : elles seront mémorisées par NIF."
+
+msgid "Subcuentas recordadas"
+msgstr "Sous-comptes mémorisés"
+
+msgid "Subcuenta"
+msgstr "Sous-compte"
+
+msgid "Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre."
+msgstr "Nouveau tiers : le prochain sous-compte libre lui sera attribué à l'export."

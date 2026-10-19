@@ -13084,3 +13084,18 @@ msgstr "Invoice posting"
 
 msgid "Anotar las facturas de los clientes (ellos desde su portal o el despacho), revisarlas y generar el fichero de enlace para a3."
 msgstr "Enter clients' invoices (themselves from their portal, or the firm), review them and generate the link file for a3."
+
+msgid "Asignar solas una subcuenta a cada proveedor o cliente nuevo (la siguiente libre tras la genérica, al exportar)"
+msgstr "Assign a subaccount automatically to each new supplier or customer (the next free one after the generic account, on export)"
+
+msgid "a3 crea en la contabilidad las subcuentas que no existan al leer el fichero. Si ya tienes las tuyas, escríbelas en la factura y se recordarán por NIF."
+msgstr "a3 creates any subaccounts that do not exist when it reads the file. If you already have your own, type them on the invoice and they will be remembered by tax ID."
+
+msgid "Subcuentas recordadas"
+msgstr "Remembered subaccounts"
+
+msgid "Subcuenta"
+msgstr "Subaccount"
+
+msgid "Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre."
+msgstr "This is a new third party: the next free subaccount will be assigned on export."

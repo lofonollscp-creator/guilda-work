@@ -32,7 +32,8 @@
     <label>{{ _('NIF / CIF') }}<input type="text" name="tercero_nif" value="{{ datos.tercero_nif }}" maxlength="20"></label>
     <label>{{ _('Subcuenta en a3 (si ya existe)') }}<input type="text" name="tercero_cuenta" value="{{ datos.tercero_cuenta }}" maxlength="12" inputmode="numeric"></label>
   </div>
-  {% if cuenta_efectiva %}<p class="muted">{{ _('Se contabilizará en la subcuenta %(c)s.', c=cuenta_efectiva) }}</p>{% endif %}
+  {% if cuenta_nueva %}<p class="muted">{{ _('Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre.') }}</p>
+  {% elif cuenta_efectiva %}<p class="muted">{{ _('Se contabilizará en la subcuenta %(c)s.', c=cuenta_efectiva) }}</p>{% endif %}
   <label>{{ _('Concepto') }}<input type="text" name="concepto" value="{{ datos.concepto }}" maxlength="60"></label>
   <label class="checkbox-label"><input type="checkbox" name="abono" value="1" {{ 'checked' if datos.abono }}> {{ _('Es un abono o factura rectificativa') }}</label>
   <div class="fila-campos">

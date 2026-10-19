@@ -475,3 +475,74 @@ def test_el_backoffice_activa_el_modulo_y_enseña_su_uso(bo, monkeypatch):
     fc.crear(t, u, c, _datos(), [LINEA])
     html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
     assert "Uso este mes" in html and "Facturas anotadas" in html and "1 (0 desde el portal, 0 con archivo)" in html
+
+
+# --- Subcuentas automáticas -------------------------------------------------------------------------------------------------------------------------
+
+def _auto(**extra):
+    t, u, c = _despacho()
+    fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8", "subcuentas_auto": "1", **extra})
+    return t, u, c
+
+
+def _cuentas_tercero(contenido):
+    return [l[15:27] for l in contenido.decode("latin-1").split("\r\n") if l[:1] == "5" and l[14] == "1"]
+
+
+def test_sin_la_opcion_todo_va_a_la_subcuenta_generica():
+    t, u, c = _despacho()
+    assert fc.configuracion(t, c)["subcuentas_auto"] == 0
+    for n, nif in (("A-1", "B111"), ("A-2", "B222")):
+        fc.cambiar_estado(t, u, fc.crear(t, u, c, _datos(numero=n, tercero_nif=nif), [LINEA]), "revisada")
+    assert set(_cuentas_tercero(fc.exportar(t, u, c)["contenido"])) == {"400000000000"}
+    assert fc.terceros_del_cliente(t, u, c) == []
+
+
+def test_cada_tercero_nuevo_recibe_la_siguiente_subcuenta_libre_y_se_recuerda():
+    t, u, c = _auto()
+    for n, nif, nombre in (("A-1", "B111", "Uno"), ("A-2", "B222", "Dos"), ("A-3", "b-111", "Uno otra vez")):
+        fc.cambiar_estado(t, u, fc.crear(t, u, c, _datos(numero=n, tercero_nif=nif, tercero_nombre=nombre), [LINEA]), "revisada")
+    assert _cuentas_tercero(fc.exportar(t, u, c)["contenido"]) == ["40000001" + "0000", "40000002" + "0000", "40000001" + "0000"], "mismo NIF (aunque se escriba distinto), misma subcuenta"
+    assert [(x["nif"], x["cuenta"]) for x in fc.terceros_del_cliente(t, u, c)] == [("B111", "40000001"), ("B222", "40000002")]
+    # en la siguiente exportación el ya conocido conserva la suya y el nuevo sigue la numeración
+    for n, nif in (("A-4", "B222"), ("A-5", "B333")):
+        fc.cambiar_estado(t, u, fc.crear(t, u, c, _datos(numero=n, tercero_nif=nif), [LINEA]), "revisada")
+    assert _cuentas_tercero(fc.exportar(t, u, c)["contenido"]) == ["40000002" + "0000", "40000003" + "0000"]
+
+
+def test_las_subcuentas_automaticas_no_pisan_las_escritas_a_mano_ni_mezclan_clientes_y_proveedores():
+    t, u, c = _auto()
+    fc.crear(t, u, c, _datos(numero="M-1", tercero_nif="B555", tercero_cuenta="40000007"), [LINEA])
+    for n, tipo, nif in (("N-1", "recibida", "B666"), ("N-2", "emitida", "B777")):
+        fc.cambiar_estado(t, u, fc.crear(t, u, c, _datos(numero=n, tipo=tipo, tercero_nif=nif), [LINEA]), "revisada")
+    cuentas = _cuentas_tercero(fc.exportar(t, u, c)["contenido"])
+    assert cuentas == ["40000008" + "0000", "43000001" + "0000"], "sigue tras la mayor ya usada; clientes con su propia serie 430"
+
+
+def test_la_opcion_respeta_los_digitos_y_avisa_si_se_agotan():
+    t, u, c = _auto(digitos="4", cuenta_proveedores="4000")
+    fid = fc.crear(t, u, c, _datos(tercero_nif="B111"), [LINEA]); fc.cambiar_estado(t, u, fid, "revisada")
+    assert _cuentas_tercero(fc.exportar(t, u, c)["contenido"]) == ["4001" + "00000000"]
+    for i in range(2, 11):
+        fc.cambiar_estado(t, u, fc.crear(t, u, c, _datos(numero=f"X-{i}", tercero_nif=f"B{i}00"), [LINEA]), "revisada")
+    with pytest.raises(ValueError, match="No quedan subcuentas libres"):
+        fc.exportar(t, u, c)
+    assert len(fc.terceros_del_cliente(t, u, c)) == 1, "al fallar no se guarda nada"
+
+
+def test_la_configuracion_web_guarda_la_opcion_y_enseña_las_subcuentas(cliente):
+    uid, t, c = _web(cliente, "contaauto@ejemplo.com")
+    url = "/contabilidad/cliente/%d/configuracion" % c
+    assert cliente.post(url, data={"a3_empresa": "12", "digitos": "8", "subcuentas_auto": "1"}).status_code == 302
+    assert 'name="subcuentas_auto" value="1" checked' in cliente.get(url).get_data(as_text=True)
+    r = cliente.post("/contabilidad/nueva", data={"cliente_id": c, "tipo": "recibida", "fecha": "2026-08-20", "numero": "W-1", "tercero_nombre": "Proveedor <b>Visible</b>", "tercero_nif": "B22222222",
+                                                  "base_0": "250,00", "pct_iva_0": "21"})
+    fid = int(r.headers["Location"].rsplit("/", 1)[1])
+    assert "asignará la siguiente subcuenta libre" in cliente.get(f"/contabilidad/{fid}").get_data(as_text=True)
+    cliente.post(f"/contabilidad/{fid}/estado", data={"estado": "revisada"})
+    assert cliente.post("/contabilidad/exportar", data={"cliente_id": c}).status_code == 200
+    html = cliente.get(url).get_data(as_text=True)
+    assert "Subcuentas recordadas" in html and "40000001" in html and "<b>Visible</b>" not in html
+    assert "Se contabilizará en la subcuenta 40000001" in cliente.get(f"/contabilidad/{fid}").get_data(as_text=True)
+    assert cliente.post(url, data={"a3_empresa": "12", "digitos": "8"}).status_code == 302
+    assert 'value="1" checked' not in cliente.get(url).get_data(as_text=True), "sin marcar la casilla, se apaga"
