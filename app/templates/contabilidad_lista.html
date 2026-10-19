@@ -49,6 +49,30 @@
 </section>
 {% endif %}
 
+{% if cliente_id %}
+<section class="dash-panel">
+  <div class="dash-panel-cab"><h2>{{ _('Subir facturas para leerlas con IA') }}</h2></div>
+  <form method="post" action="{{ url_for('contabilidad.subir') }}" enctype="multipart/form-data" class="ds-fila">
+    <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
+    <select name="tipo" aria-label="{{ _('Tipo') }}"><option value="recibida">{{ _('Recibidas') }}</option><option value="emitida">{{ _('Emitidas') }}</option></select>
+    <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Subir') }}</button>
+  </form>
+  <p class="muted">{{ _('Hasta %(n)s archivos de 8 MB cada vez. Quedan «por leer» hasta que la IA (o tú) rellene sus datos.', n=max_archivos) }}</p>
+</section>
+{% endif %}
+{% if por_leer %}
+<section class="dash-panel">
+  <div class="dash-panel-cab"><h2>{{ _('Facturas por leer: %(n)s', n=por_leer|length) }}</h2></div>
+  {% if ia_lista %}
+  <div class="ds-fila"><button type="button" id="leer-todas" class="btn btn-primary" data-ids="{{ por_leer|join(',') }}" data-url="{{ url_for('contabilidad.leer', factura_id=0) }}">{{ _('Leerlas todas con IA') }}</button><span id="leer-todas-estado" class="muted" role="status"></span></div>
+  <p class="muted">{{ _('Cada lectura es una consulta a tu modelo de OpenRouter. Después revisa cada factura con el documento delante: la IA puede equivocarse.') }}</p>
+  {% else %}
+  <p class="muted">{{ _('Para leerlas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA.') }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if not facturas %}
   {{ estado_vacio(_('No hay facturas'), _('Anota la primera, o cambia los filtros.'), 'file-text') }}
 {% else %}
@@ -59,7 +83,7 @@
     <tr>
       <td class="mono">{{ f.fecha }}</td>
       <td>{{ f.cliente_nombre }}</td>
-      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}{% if f.origen == 'portal' %} <span class="pill">{{ _('Portal') }}</span>{% endif %}</td>
+      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}{% if f.origen == 'portal' %} <span class="pill">{{ _('Portal') }}</span>{% endif %}{% if f.lectura == 'pendiente' %} <span class="pill">{{ _('Por leer') }}</span>{% elif f.lectura == 'fallida' %} <span class="pill">{{ _('No se pudo leer') }}</span>{% elif f.lectura == 'ia' %} <span class="pill">{{ _('Leída con IA') }}</span>{% endif %}</td>
       <td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}"><strong>{{ f.numero }}</strong></a></td>
       <td>{{ f.tercero_nombre }}{% if f.tercero_nif %} <span class="muted mono">{{ f.tercero_nif }}</span>{% endif %}</td>
       <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
@@ -71,3 +95,4 @@
 </table></div>
 {% endif %}
 {% endblock %}
+{% block scripts_pagina %}{% if por_leer %}<script src="{{ url_for('static', filename='contabilidad_leer.js') }}" defer></script>{% endif %}{% endblock %}

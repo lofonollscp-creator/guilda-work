@@ -13108,3 +13108,63 @@ msgstr "Subcompte"
 
 msgid "Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre."
 msgstr "És un tercer nou: en exportar se li assignarà la següent subcompte lliure."
+
+msgid "Subir facturas para leerlas con IA"
+msgstr "Puja factures per llegir-les amb IA"
+
+msgid "Fotos o PDF de las facturas"
+msgstr "Fotos o PDF de les factures"
+
+msgid "Hasta %(n)s archivos de 8 MB cada vez. Quedan «por leer» hasta que la IA (o tú) rellene sus datos."
+msgstr "Fins a %(n)s fitxers de 8 MB cada vegada. Queden «per llegir» fins que la IA (o tu) ompli les seves dades."
+
+msgid "Facturas por leer: %(n)s"
+msgstr "Factures per llegir: %(n)s"
+
+msgid "Leerlas todas con IA"
+msgstr "Llegeix-les totes amb IA"
+
+msgid "Cada lectura es una consulta a tu modelo de OpenRouter. Después revisa cada factura con el documento delante: la IA puede equivocarse."
+msgstr "Cada lectura és una consulta al teu model d'OpenRouter. Després revisa cada factura amb el document al davant: la IA es pot equivocar."
+
+msgid "Para leerlas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "Per llegir-les amb IA cal un model amb visió i la teva clau d'OpenRouter, a Ajustos de l'Assistent IA."
+
+msgid "Por leer"
+msgstr "Per llegir"
+
+msgid "No se pudo leer"
+msgstr "No s'ha pogut llegir"
+
+msgid "Leída con IA"
+msgstr "Llegida amb IA"
+
+msgid "Leer con IA"
+msgstr "Llegeix amb IA"
+
+msgid "Lee el archivo adjunto y rellena los datos; sustituye lo escrito"
+msgstr "Llegeix el fitxer adjunt i omple les dades; substitueix el que hi ha escrit"
+
+msgid "Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA"
+msgstr "Cal un model amb visió i la teva clau d'OpenRouter, a Ajustos de l'Assistent IA"
+
+msgid "Subir fotos o PDF de tus facturas"
+msgstr "Puja fotos o PDF de les teves factures"
+
+msgid "Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez."
+msgstr "Sense escriure res: la teva gestoria llegirà les dades de les factures. Fins a %(n)s fitxers de 8 MB cada vegada."
+
+msgid "¿Qué facturas son?"
+msgstr "Quines factures són?"
+
+msgid "Me las han hecho a mí (compras y gastos)"
+msgstr "Me les han fet a mi (compres i despeses)"
+
+msgid "Las he hecho yo a mis clientes (ventas)"
+msgstr "Les he fet jo als meus clients (vendes)"
+
+msgid "Subir facturas"
+msgstr "Puja factures"
+
+msgid "Pendiente de leer"
+msgstr "Pendent de llegir"

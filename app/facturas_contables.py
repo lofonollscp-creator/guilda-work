@@ -113,6 +113,8 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "rectifica_numero", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "documento_id", "INTEGER")       # la factura escaneada o fotografiada, en los documentos del cliente
     db._asegurar_columna(conn, "contabilidad_clientes", "subcuentas_auto", "INTEGER NOT NULL DEFAULT 0")   # numerar solas las subcuentas de los terceros nuevos
+    db._asegurar_columna(conn, "facturas_contables", "lectura", "TEXT")           # NULL = escrita a mano · pendiente = solo el archivo, por leer · ia = leída por la IA · fallida
+    db._asegurar_columna(conn, "facturas_contables", "lectura_error", "TEXT")
 
 
 # --- Lectura de lo que se escribe -----------------------------------------------------------------------------------------------------------------------
@@ -417,7 +419,8 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
     try:
         conn.execute("UPDATE facturas_contables SET estado = 'pendiente', fecha = ?, fecha_operacion = ?, numero = ?, tercero_nombre = ?, tercero_nif = ?, tercero_cuenta = ?, concepto = ?, referencia = ?, "
                      "abono = ?, rectifica_fecha = ?, rectifica_numero = ?, suplidos_centimos = ?, total_centimos = ?, notas = ?, actualizado_en = ?, revisado_por = NULL, revisado_en = NULL, "
-                     "documento_id = COALESCE(?, documento_id) WHERE id = ? AND tenant_id = ?",
+                     "documento_id = COALESCE(?, documento_id), lectura = CASE WHEN lectura IN ('pendiente', 'fallida') THEN NULL ELSE lectura END, "
+                     "lectura_error = CASE WHEN lectura IN ('pendiente', 'fallida') THEN NULL ELSE lectura_error END WHERE id = ? AND tenant_id = ?",
                      (d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"], d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"],
                       d["suplidos_centimos"], total, d["notas"], db.now_iso(), documento_id, factura_id, tenant_id))
         _guardar_lineas(conn, factura_id, ls)
@@ -440,6 +443,10 @@ def problemas(tenant_id: int, f: dict) -> list[str]:
     """Lo que impide dar por buena y exportar una factura (lista vacía = lista para revisar)."""
     cfg = configuracion(tenant_id, f["cliente_fiscal_id"])
     res = []
+    if f.get("lectura") == "pendiente":
+        res.append("Es solo el archivo de la factura: léela con la IA o rellena sus datos.")
+    elif f.get("lectura") == "fallida":
+        res.append("No se pudo leer el archivo: " + (f.get("lectura_error") or "rellena los datos a mano."))
     if not cfg["a3_empresa"]:
         res.append("Falta el código de empresa de a3 de este cliente (en Configuración de a3).")
     if f["abono"] and not (f.get("rectifica_numero") and f.get("rectifica_fecha")):
@@ -639,7 +646,67 @@ def crear_desde_portal(cliente_fiscal_id: int, datos: dict, archivo: tuple[str, 
     return fid
 
 
-def _avisar_al_despacho(f, factura_id: int, datos: dict) -> None:
+MAX_ARCHIVOS_POR_SUBIDA = 10
+
+
+def _crear_borrador(tenant_id: int, usuario_id: int | None, f, tipo: str, documento_id: int, origen: str, nota: str) -> int:
+    """Una factura que es solo el archivo, a la espera de que alguien (o la IA) la lea: datos de relleno que `problemas` marca hasta entonces."""
+    ahora = db.now_iso()
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("INSERT INTO facturas_contables (tenant_id, cliente_fiscal_id, tipo, origen, estado, fecha, fecha_operacion, numero, tercero_nombre, total_centimos, notas, creado_por, creado_en, "
+                           "actualizado_en, documento_id, lectura) VALUES (?, ?, ?, ?, 'pendiente', ?, ?, '(por leer)', '(por leer)', 0, ?, ?, ?, ?, ?, 'pendiente')",
+                           (tenant_id, f["id"], tipo, origen, ahora[:10], ahora[:10], nota, usuario_id, ahora, ahora, documento_id))
+        fid = cur.lastrowid
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.subida", "factura_contable", fid, {"cliente": f["nombre"], "tipo": tipo, "origen": origen}, conn=conn)
+        conn.commit()
+        return fid
+    finally:
+        conn.close()
+
+
+def subir_archivos(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]]) -> list[int]:
+    """El despacho sube varias facturas (fotos o PDF) de un cliente sin rellenar nada: quedan por leer. Devuelve los ids."""
+    f = _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    return _subir(tenant_id, usuario_id, f, tipo, archivos, "despacho", "Subida por el despacho, pendiente de leer.")
+
+
+def _subir(tenant_id: int, usuario_id: int | None, f, tipo: str, archivos, origen: str, nota: str) -> list[int]:
+    if tipo not in TIPOS:
+        raise ValueError("Indica si son facturas emitidas o recibidas.")
+    archivos = [a for a in archivos if a and a[2]]
+    if not archivos:
+        raise ValueError("Elige al menos un archivo.")
+    if len(archivos) > MAX_ARCHIVOS_POR_SUBIDA:
+        raise ValueError(f"Sube como máximo {MAX_ARCHIVOS_POR_SUBIDA} archivos de una vez.")
+    for _n, mime, contenido in archivos:      # se comprueban todos antes de guardar ninguno
+        if (mime or "").lower().split(";")[0] not in MIME_ADJUNTO or len(contenido) > MAX_ADJUNTO_BYTES:
+            raise ValueError("Archivo no válido: solo imágenes o PDF, hasta 8 MB.")
+    ids = []
+    for nombre, mime, contenido in archivos:
+        documento_id = adjuntar(tenant_id, f["id"], usuario_id, nombre, mime, contenido)
+        ids.append(_crear_borrador(tenant_id, usuario_id, f, tipo, documento_id, origen, nota))
+    return ids
+
+
+def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]]) -> list[int]:
+    """El cliente sube fotos o PDF de sus facturas sin teclear nada: el despacho las leerá de golpe. Mismos límites que anotar una a mano."""
+    f = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    if f is None:
+        raise ValueError("Cliente no encontrado.")
+    conn = db.get_connection()
+    try:
+        pendientes = conn.execute("SELECT COUNT(*) FROM facturas_contables WHERE cliente_fiscal_id = ? AND origen = 'portal' AND estado = 'pendiente'", (cliente_fiscal_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    if pendientes + len([a for a in archivos if a and a[2]]) > MAX_PENDIENTES_DEL_PORTAL:
+        raise ValueError("Tienes muchas facturas pendientes de revisar: espera a que el despacho las procese.")
+    ids = _subir(f["tenant_id"], None, f, tipo, archivos, "portal", "Subida por el cliente desde el portal, pendiente de leer.")
+    _avisar_al_despacho(f, ids[-1], {"tercero_nombre": f"{len(ids)} archivo(s) por leer", "numero": ""}, len(ids))
+    return ids
+
+
+def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1) -> None:
     """Avisa a quien lleva al cliente (o, si nadie, a la dirección y la coordinación) de que ha anotado una factura. Nunca rompe la subida."""
     try:
         from . import notificaciones
@@ -648,7 +715,7 @@ def _avisar_al_despacho(f, factura_id: int, datos: dict) -> None:
             destinatarios = [f["responsable_id"]] if f["responsable_id"] else [r["id"] for r in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (f["tenant_id"],))]
         finally:
             conn.close()
-        titulo = f"{f['nombre']} ha anotado una factura"
+        titulo = f"{f['nombre']} ha anotado una factura" if cuantas == 1 else f"{f['nombre']} ha subido {cuantas} facturas"
         for uid in destinatarios:
             if uid and db.notificacion_tipo_activa(uid, "portal_mensaje_nuevo"):
                 notificaciones.crear_y_enviar(uid, "portal_mensaje_nuevo", titulo, f"{datos.get('tercero_nombre') or ''} · {datos.get('numero') or ''}"[:100], url=f"/contabilidad/{factura_id}",
@@ -687,17 +754,17 @@ def uso_del_mes(tenant_id: int, mes: str | None = None) -> dict:
     mes = mes or db.now_iso()[:7]
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT COUNT(*) AS anotadas, COALESCE(SUM(origen = 'portal'), 0) AS portal, COALESCE(SUM(documento_id IS NOT NULL), 0) AS con_archivo FROM facturas_contables "
+        f = conn.execute("SELECT COUNT(*) AS anotadas, COALESCE(SUM(origen = 'portal'), 0) AS portal, COALESCE(SUM(documento_id IS NOT NULL), 0) AS con_archivo, COALESCE(SUM(lectura = 'ia'), 0) AS leidas_ia FROM facturas_contables "
                          "WHERE tenant_id = ? AND substr(creado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
         e = conn.execute("SELECT COUNT(*) AS ficheros, COALESCE(SUM(n_facturas), 0) AS facturas FROM contabilidad_lotes WHERE tenant_id = ? AND substr(creado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
     finally:
         conn.close()
-    return {"mes": mes, "anotadas": f["anotadas"], "desde_portal": f["portal"], "con_archivo": f["con_archivo"], "ficheros": e["ficheros"], "exportadas": e["facturas"]}
+    return {"mes": mes, "anotadas": f["anotadas"], "desde_portal": f["portal"], "con_archivo": f["con_archivo"], "leidas_ia": f["leidas_ia"], "ficheros": e["ficheros"], "exportadas": e["facturas"]}
 
 
 def _uso_para_backoffice(tenant_id: int) -> list[tuple[str, str]]:
     u = uso_del_mes(tenant_id)
-    return [("Mes", u["mes"]), ("Facturas anotadas", f"{u['anotadas']} ({u['desde_portal']} desde el portal, {u['con_archivo']} con archivo)"), ("Facturas exportadas a a3", f"{u['exportadas']} en {u['ficheros']} fichero(s)")]
+    return [("Mes", u["mes"]), ("Facturas anotadas", f"{u['anotadas']} ({u['desde_portal']} desde el portal, {u['con_archivo']} con archivo)"), ("Facturas leídas con IA", str(u["leidas_ia"])), ("Facturas exportadas a a3", f"{u['exportadas']} en {u['ficheros']} fichero(s)")]
 
 
 def _registrar() -> None:

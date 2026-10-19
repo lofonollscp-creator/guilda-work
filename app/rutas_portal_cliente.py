@@ -276,7 +276,14 @@ def _cliente_con_facturas():
 def facturas():
     cliente = _cliente_con_facturas()
     error, datos, anotada = None, {"tipo": request.args.get("tipo") or "recibida", "pct_iva": "21"}, request.args.get("anotada") == "1"
-    if request.method == "POST":
+    if request.method == "POST" and request.form.get("modo") == "archivos":
+        try:
+            archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
+            facturas_contables.subir_desde_portal(cliente["id"], request.form.get("tipo", ""), archivos)
+            return redirect(url_for("portal_cliente.facturas", anotada=1))
+        except ValueError as e:
+            error = str(e)
+    elif request.method == "POST":
         datos = {c: request.form.get(c, "") for c in ("tipo", "fecha", "numero", "tercero_nombre", "tercero_nif", "total", "pct_iva", "complicada")}
         archivo = request.files.get("archivo")
         adjunto = (archivo.filename, archivo.mimetype, archivo.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) if archivo is not None and archivo.filename else None
@@ -286,4 +293,4 @@ def facturas():
         except ValueError as e:
             error = str(e)
     return render_template("portal_facturas.html", cliente=cliente, facturas=facturas_contables.listar_del_cliente(cliente["id"]), datos=datos, error=error, anotada=anotada,
-                           textos=facturas_contables.TEXTO_ESTADO_PORTAL)
+                           textos=facturas_contables.TEXTO_ESTADO_PORTAL, max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)

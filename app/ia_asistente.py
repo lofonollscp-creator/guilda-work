@@ -214,7 +214,7 @@ def borrar_api_key(usuario_id: int) -> None:
         pass
 
 
-def _post_json(url: str, payload: dict, api_key: str) -> dict:
+def _post_json(url: str, payload: dict, api_key: str, timeout: int = TIMEOUT_SEGUNDOS) -> dict:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         url, data=data, method="POST",
@@ -226,7 +226,7 @@ def _post_json(url: str, payload: dict, api_key: str) -> dict:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         detalle = e.read().decode("utf-8", errors="replace")
@@ -314,7 +314,7 @@ def _post_json_stream_con_fallback(url: str, payload: dict, claves: list[str]) -
     raise ultimo_error
 
 
-def _post_json_con_fallback(url: str, payload: dict, claves: list[str]) -> dict:
+def _post_json_con_fallback(url: str, payload: dict, claves: list[str], timeout: int = TIMEOUT_SEGUNDOS) -> dict:
     """Prueba cada clave en orden hasta que una funcione. Si todas fallan
     con un código de la lista de fallback, se propaga el error de la
     ÚLTIMA clave probada (la más informativa: ya se sabe que las
@@ -322,7 +322,7 @@ def _post_json_con_fallback(url: str, payload: dict, claves: list[str]) -> dict:
     ultimo_error: ErrorIA | None = None
     for clave in claves:
         try:
-            return _post_json(url, payload, clave)
+            return _post_json(url, payload, clave) if timeout == TIMEOUT_SEGUNDOS else _post_json(url, payload, clave, timeout)
         except ErrorIA as e:
             if e.codigo_http not in _CODIGOS_FALLBACK:
                 raise
@@ -511,6 +511,27 @@ def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
         return (respuesta["choices"][0]["message"].get("content") or "").strip()
     except (KeyError, IndexError, AttributeError) as e:
         raise ErrorIA(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
+
+
+def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout: int = 90) -> str:
+    """Como `completar_texto`, pero el mensaje del usuario puede llevar imágenes o PDF (partes `text`, `image_url` o `file` en el formato de OpenRouter). Usa la clave y el modelo del
+    usuario, que debe ser un modelo capaz de leer imágenes. Cuenta una consulta en el consumo del despacho."""
+    modelo = db.obtener_preferencias_ia(usuario_id)["modelo"]
+    claves = obtener_api_keys(usuario_id)
+    if not modelo.strip():
+        raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
+    if not claves:
+        raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    _reservar_uso(usuario_id)
+    respuesta = _post_json_con_fallback(
+        OPENROUTER_URL,
+        {"model": modelo, "temperature": 0, "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": partes}]},
+        claves, timeout,
+    )
+    try:
+        return (respuesta["choices"][0]["message"].get("content") or "").strip()
+    except (KeyError, IndexError, AttributeError, TypeError) as e:
+        raise ErrorIA("Respuesta inesperada de OpenRouter.") from e
 
 
 def _continuar_conversacion(usuario_id: int) -> dict:

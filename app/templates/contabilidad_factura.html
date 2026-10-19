@@ -70,6 +70,7 @@
 {% if f %}
 <section class="ds-mt-24"><h2>{{ _('Revisión') }}</h2>
   <div class="ds-fila">
+    {% if f.documento_id and f.estado != 'exportada' %}<form method="post" action="{{ url_for('contabilidad.leer', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost" {{ 'disabled' if not ia_lista }} title="{{ _('Lee el archivo adjunto y rellena los datos; sustituye lo escrito') if ia_lista else _('Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA') }}">{{ _('Leer con IA') }}</button></form>{% endif %}
     {% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><button type="submit" class="btn btn-primary">{{ _('Marcar como revisada') }}</button></form>{% endif %}
     {% if f.estado != 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="pendiente"><button type="submit" class="btn btn-ghost">{{ _('Reabrir') }}</button></form>{% endif %}
     {% if f.estado in ('pendiente', 'revisada') %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="descartada"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form>{% endif %}

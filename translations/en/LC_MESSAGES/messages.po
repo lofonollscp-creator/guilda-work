@@ -13099,3 +13099,63 @@ msgstr "Subaccount"
 
 msgid "Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre."
 msgstr "This is a new third party: the next free subaccount will be assigned on export."
+
+msgid "Subir facturas para leerlas con IA"
+msgstr "Upload invoices to read with AI"
+
+msgid "Fotos o PDF de las facturas"
+msgstr "Photos or PDFs of the invoices"
+
+msgid "Hasta %(n)s archivos de 8 MB cada vez. Quedan «por leer» hasta que la IA (o tú) rellene sus datos."
+msgstr "Up to %(n)s files of 8 MB each time. They stay “to read” until the AI (or you) fills in their data."
+
+msgid "Facturas por leer: %(n)s"
+msgstr "Invoices to read: %(n)s"
+
+msgid "Leerlas todas con IA"
+msgstr "Read them all with AI"
+
+msgid "Cada lectura es una consulta a tu modelo de OpenRouter. Después revisa cada factura con el documento delante: la IA puede equivocarse."
+msgstr "Each reading is a query to your OpenRouter model. Then check each invoice against the document: the AI can make mistakes."
+
+msgid "Para leerlas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "To read them with AI you need a vision model and your OpenRouter key, in the AI Assistant settings."
+
+msgid "Por leer"
+msgstr "To read"
+
+msgid "No se pudo leer"
+msgstr "Could not be read"
+
+msgid "Leída con IA"
+msgstr "Read with AI"
+
+msgid "Leer con IA"
+msgstr "Read with AI"
+
+msgid "Lee el archivo adjunto y rellena los datos; sustituye lo escrito"
+msgstr "Reads the attached file and fills in the data; replaces what was typed"
+
+msgid "Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA"
+msgstr "A vision model and your OpenRouter key are needed, in the AI Assistant settings"
+
+msgid "Subir fotos o PDF de tus facturas"
+msgstr "Upload photos or PDFs of your invoices"
+
+msgid "Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez."
+msgstr "Without typing anything: your accountancy firm will read the invoice data. Up to %(n)s files of 8 MB each time."
+
+msgid "¿Qué facturas son?"
+msgstr "Which invoices are they?"
+
+msgid "Me las han hecho a mí (compras y gastos)"
+msgstr "Issued to me (purchases and expenses)"
+
+msgid "Las he hecho yo a mis clientes (ventas)"
+msgstr "I issued them to my customers (sales)"
+
+msgid "Subir facturas"
+msgstr "Upload invoices"
+
+msgid "Pendiente de leer"
+msgstr "Waiting to be read"

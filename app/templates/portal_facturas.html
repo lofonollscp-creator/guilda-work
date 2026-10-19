@@ -22,6 +22,20 @@
     {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
 
     <section class="dash-panel">
+      <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
+      <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
+      <form method="post" enctype="multipart/form-data" class="edit-form">
+        <input type="hidden" name="modo" value="archivos">
+        <select name="tipo" aria-label="{{ _('¿Qué facturas son?') }}">
+          <option value="recibida">{{ _('Me las han hecho a mí (compras y gastos)') }}</option>
+          <option value="emitida">{{ _('Las he hecho yo a mis clientes (ventas)') }}</option>
+        </select>
+        <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir facturas') }}</button></div>
+      </form>
+    </section>
+
+    <section class="dash-panel">
       <h2>{{ _('Anotar una factura') }}</h2>
       <form method="post" enctype="multipart/form-data" class="edit-form">
         <label for="f-tipo">{{ _('¿Qué factura es?') }}</label>
@@ -55,7 +69,7 @@
       {% else %}
       <div class="table-wrap"><table class="historial-table">
         <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Estado') }}</th></tr></thead>
-        <tbody>{% for f in facturas %}<tr><td class="mono">{{ f.fecha }}</td><td>{{ f.numero }}</td><td>{{ f.tercero_nombre }}</td><td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td><td>{{ textos[f.estado] }}</td></tr>{% endfor %}</tbody>
+        <tbody>{% for f in facturas %}<tr><td class="mono">{{ f.fecha }}</td><td>{{ f.numero if f.numero != '(por leer)' else _('Pendiente de leer') }}</td><td>{{ f.tercero_nombre }}</td><td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td><td>{{ textos[f.estado] }}</td></tr>{% endfor %}</tbody>
       </table></div>
       {% endif %}
     </section>

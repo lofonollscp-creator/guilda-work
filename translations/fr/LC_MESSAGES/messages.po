@@ -13184,3 +13184,63 @@ msgstr "Sous-compte"
 
 msgid "Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre."
 msgstr "Nouveau tiers : le prochain sous-compte libre lui sera attribué à l'export."
+
+msgid "Subir facturas para leerlas con IA"
+msgstr "Téléverser des factures à lire avec l'IA"
+
+msgid "Fotos o PDF de las facturas"
+msgstr "Photos ou PDF des factures"
+
+msgid "Hasta %(n)s archivos de 8 MB cada vez. Quedan «por leer» hasta que la IA (o tú) rellene sus datos."
+msgstr "Jusqu'à %(n)s fichiers de 8 Mo à la fois. Ils restent « à lire » jusqu'à ce que l'IA (ou vous) en renseigne les données."
+
+msgid "Facturas por leer: %(n)s"
+msgstr "Factures à lire : %(n)s"
+
+msgid "Leerlas todas con IA"
+msgstr "Toutes les lire avec l'IA"
+
+msgid "Cada lectura es una consulta a tu modelo de OpenRouter. Después revisa cada factura con el documento delante: la IA puede equivocarse."
+msgstr "Chaque lecture est une requête à votre modèle OpenRouter. Vérifiez ensuite chaque facture avec le document sous les yeux : l'IA peut se tromper."
+
+msgid "Para leerlas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "Pour les lire avec l'IA, il faut un modèle avec vision et votre clé OpenRouter, dans les réglages de l'assistant IA."
+
+msgid "Por leer"
+msgstr "À lire"
+
+msgid "No se pudo leer"
+msgstr "Lecture impossible"
+
+msgid "Leída con IA"
+msgstr "Lue avec l'IA"
+
+msgid "Leer con IA"
+msgstr "Lire avec l'IA"
+
+msgid "Lee el archivo adjunto y rellena los datos; sustituye lo escrito"
+msgstr "Lit le fichier joint et remplit les données ; remplace ce qui a été saisi"
+
+msgid "Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA"
+msgstr "Il faut un modèle avec vision et votre clé OpenRouter, dans les réglages de l'assistant IA"
+
+msgid "Subir fotos o PDF de tus facturas"
+msgstr "Téléversez des photos ou PDF de vos factures"
+
+msgid "Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez."
+msgstr "Sans rien saisir : votre cabinet lira les données des factures. Jusqu'à %(n)s fichiers de 8 Mo à la fois."
+
+msgid "¿Qué facturas son?"
+msgstr "De quelles factures s'agit-il ?"
+
+msgid "Me las han hecho a mí (compras y gastos)"
+msgstr "Qu'on m'a faites (achats et dépenses)"
+
+msgid "Las he hecho yo a mis clientes (ventas)"
+msgstr "Je les ai faites à mes clients (ventes)"
+
+msgid "Subir facturas"
+msgstr "Téléverser les factures"
+
+msgid "Pendiente de leer"
+msgstr "En attente de lecture"

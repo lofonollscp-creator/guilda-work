@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from datetime import date
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, enlace_a3, verticales
+from . import acceso, db, enlace_a3, lectura_facturas, verticales
 from . import facturas_contables as fc
 from .auth import login_required
 
@@ -71,7 +71,8 @@ def lista():
     facturas = fc.listar(g.tenant_id, g.usuario_id, cliente_fiscal_id=cliente_id, estado=estado, tipo=tipo, desde=desde, hasta=hasta)
     cfg = fc.configuracion(g.tenant_id, cliente_id) if cliente_id else None
     return render_template("contabilidad_lista.html", facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
-                           trimestres=_trimestres(), resumen=fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id), cfg=cfg, error=_error(), subnav=None)
+                           trimestres=_trimestres(), resumen=fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id), cfg=cfg, error=_error(), subnav=None,
+                           por_leer=lectura_facturas.pendientes_de_leer(g.tenant_id, g.usuario_id, cliente_id), ia_lista=lectura_facturas.configurada(g.usuario_id), max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
 
 @contabilidad_bp.route("/nueva", methods=["GET", "POST"])
@@ -109,8 +110,37 @@ def ver(factura_id: int):
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg),
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
+
+
+@contabilidad_bp.route("/subir", methods=["POST"])
+@login_required
+def subir():
+    """Varias fotos o PDF de un cliente de una vez, sin rellenar nada: quedan «por leer»."""
+    cliente_id = request.form.get("cliente_id", type=int)
+    try:
+        archivos = [(a.filename, a.mimetype, a.read(fc.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
+        fc.subir_archivos(g.tenant_id, g.usuario_id, cliente_id, request.form.get("tipo", ""), archivos)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=str(e)[:300]))
+    return redirect(url_for("contabilidad.lista", cliente_id=cliente_id))
+
+
+@contabilidad_bp.route("/<int:factura_id>/leer", methods=["POST"])
+@login_required
+def leer(factura_id: int):
+    """Lee con IA el archivo de la factura. Con `Accept: application/json` (lo usa «Leer todas») responde JSON; si no, vuelve a la factura."""
+    quiere_json = request.accept_mimetypes.best == "application/json"
+    try:
+        avisos = lectura_facturas.leer(g.tenant_id, g.usuario_id, factura_id)
+    except ValueError as e:
+        if quiere_json:
+            return jsonify(ok=False, error=str(e)[:300]), 200
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
+    if quiere_json:
+        return jsonify(ok=True, avisos=avisos)
+    return redirect(url_for("contabilidad.ver", factura_id=factura_id))
 
 
 @contabilidad_bp.route("/<int:factura_id>/estado", methods=["POST"])
