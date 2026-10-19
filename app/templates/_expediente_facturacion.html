@@ -26,6 +26,24 @@
     <button type="submit" class="btn btn-primary">{{ _('Emitir factura') }}</button>
     <p class="muted">{{ _('El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente.') }}</p>
   </form>
+  {% if fact.horas %}
+  <h3>{{ _('Horas sin facturar') }}</h3>
+  <form method="post" action="{{ url_for('cobros.facturar_horas', expediente_id=x.id) }}" class="edit-form">
+    <ul class="log-list">
+      {% for h in fact.horas %}
+      <li class="log-item">
+        <label class="checkbox-label"><input type="checkbox" name="parte_id" value="{{ h.id }}" {{ 'checked' if h.importe_centimos > 0 else 'disabled' }}>
+          <span class="log-text">{{ h.fecha }} · {{ h.descripcion }} <span class="muted">({{ h.usuario }})</span></span></label>
+        <span class="log-duration">{{ '%d:%02d'|format(h.segundos // 3600, h.segundos % 3600 // 60) }} h</span>
+        <span class="pill">{% if h.importe_centimos > 0 %}{{ '%.2f'|format(h.importe_centimos / 100) }} €{% else %}{{ _('Sin tarifa') }}{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <label class="checkbox-label"><input type="checkbox" name="confirmo" value="1" required> {{ _('Confirmo que quiero emitir esta factura de horas a nombre de %(cliente)s.', cliente=x.cliente_nombre) }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Facturar las horas elegidas') }}</button>
+    <p class="muted">{{ _('Una línea por parte de horas, a la tarifa con la que se registró. El IVA lo aplica FacturaScripts.') }}</p>
+  </form>
+  {% endif %}
   {% elif fact.motivo == 'sin_gestion_fiscal' %}
   <p class="muted">{{ _('Para facturar desde aquí, el cliente necesita gestión fiscal activada y vinculación con FacturaScripts.') }} <a href="{{ url_for('clientes.ficha', cliente_id=x.cliente_id) }}">{{ _('Ir a la ficha del cliente') }}</a></p>
   {% elif fact.motivo == 'sin_vincular' %}

@@ -6,7 +6,7 @@ ese lote). `descartada` la saca del circuito sin borrarla. Cada exportación es 
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from dataclasses import replace
@@ -29,6 +29,18 @@ CREATE TABLE IF NOT EXISTS contabilidad_clientes (
     cuenta_iva_repercutido TEXT NOT NULL DEFAULT '47700000',
     cuenta_retencion TEXT NOT NULL DEFAULT '47510000'
 );
+CREATE TABLE IF NOT EXISTS contabilidad_despacho (
+    tenant_id INTEGER PRIMARY KEY,
+    digitos INTEGER NOT NULL DEFAULT 8,
+    cuenta_proveedores TEXT NOT NULL DEFAULT '40000000',
+    cuenta_clientes TEXT NOT NULL DEFAULT '43000000',
+    cuenta_gasto TEXT NOT NULL DEFAULT '62900000',
+    cuenta_ingreso TEXT NOT NULL DEFAULT '70000000',
+    cuenta_iva_soportado TEXT NOT NULL DEFAULT '47200000',
+    cuenta_iva_repercutido TEXT NOT NULL DEFAULT '47700000',
+    cuenta_retencion TEXT NOT NULL DEFAULT '47510000',
+    subcuentas_auto INTEGER NOT NULL DEFAULT 0
+);
 CREATE TABLE IF NOT EXISTS contabilidad_terceros (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -39,6 +51,15 @@ CREATE TABLE IF NOT EXISTS contabilidad_terceros (
     cuenta TEXT NOT NULL,
     UNIQUE (cliente_fiscal_id, tipo, nif)
 );
+CREATE TABLE IF NOT EXISTS contabilidad_recordatorios (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id) ON DELETE CASCADE,
+    trimestre TEXT NOT NULL,
+    enviado_por INTEGER,
+    enviado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_contabilidad_recordatorios ON contabilidad_recordatorios(cliente_fiscal_id, trimestre);
 CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -195,7 +216,7 @@ def configuracion(tenant_id: int, cliente_fiscal_id: int) -> dict:
         f = conn.execute("SELECT * FROM contabilidad_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id)).fetchone()
     finally:
         conn.close()
-    return {**CONFIG_DEFECTO, "a3_empresa": None, **({k: f[k] for k in f.keys() if k not in ("cliente_fiscal_id", "tenant_id")} if f else {})}
+    return {**configuracion_despacho(tenant_id), "a3_empresa": None, **({k: f[k] for k in f.keys() if k not in ("cliente_fiscal_id", "tenant_id")} if f else {})}
 
 
 def _cuenta_valida(valor, campo: str, digitos: int) -> str:
@@ -205,35 +226,184 @@ def _cuenta_valida(valor, campo: str, digitos: int) -> str:
     return d
 
 
-def guardar_configuracion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict) -> dict:
-    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
-    empresa = re.sub(r"\D", "", str(datos.get("a3_empresa") or ""))
-    if empresa and len(empresa) > 5:
+CAMPOS_CUENTAS = ("cuenta_proveedores", "cuenta_clientes", "cuenta_gasto", "cuenta_ingreso", "cuenta_iva_soportado", "cuenta_iva_repercutido", "cuenta_retencion")
+_ETIQUETAS_CUENTAS = {"cuenta_proveedores": "Subcuenta genérica de proveedores", "cuenta_clientes": "Subcuenta genérica de clientes", "cuenta_gasto": "Cuenta de gasto por defecto",
+                      "cuenta_ingreso": "Cuenta de ingreso por defecto", "cuenta_iva_soportado": "Cuenta de IVA soportado", "cuenta_iva_repercutido": "Cuenta de IVA repercutido",
+                      "cuenta_retencion": "Cuenta de retenciones"}
+
+
+def _empresa_valida(valor) -> str | None:
+    empresa = re.sub(r"\D", "", str(valor or ""))
+    if len(empresa) > 5:
         raise ValueError("El código de empresa de a3 tiene como máximo 5 dígitos.")
+    return empresa or None
+
+
+def _ajustes_validados(datos: dict) -> dict:
+    """Los ajustes de enlace (dígitos, cuentas, subcuentas automáticas) ya comprobados; `ValueError` con un mensaje legible si algo no vale."""
     try:
         digitos = int(datos.get("digitos") or 8)
     except ValueError:
         raise ValueError("Los dígitos de las subcuentas deben ser un número.") from None
     if not 4 <= digitos <= 12:
         raise ValueError("Los dígitos de las subcuentas deben estar entre 4 y 12.")
-    cuentas = {k: _cuenta_valida(datos.get(k) or CONFIG_DEFECTO[k], etiqueta, digitos) for k, etiqueta in (
-        ("cuenta_proveedores", "Subcuenta genérica de proveedores"), ("cuenta_clientes", "Subcuenta genérica de clientes"), ("cuenta_gasto", "Cuenta de gasto por defecto"),
-        ("cuenta_ingreso", "Cuenta de ingreso por defecto"), ("cuenta_iva_soportado", "Cuenta de IVA soportado"), ("cuenta_iva_repercutido", "Cuenta de IVA repercutido"),
-        ("cuenta_retencion", "Cuenta de retenciones"))}
+    res = {"digitos": digitos, "subcuentas_auto": 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0}
+    for k in CAMPOS_CUENTAS:
+        res[k] = _cuenta_valida(datos.get(k) or CONFIG_DEFECTO[k], _ETIQUETAS_CUENTAS[k], digitos)
+    return res
+
+
+def _guardar_fila_cliente(conn, tenant_id: int, cliente_fiscal_id: int, empresa: str | None, a: dict) -> None:
+    conn.execute("INSERT INTO contabilidad_clientes (cliente_fiscal_id, tenant_id, a3_empresa, digitos, cuenta_proveedores, cuenta_clientes, cuenta_gasto, cuenta_ingreso, cuenta_iva_soportado, "
+                 "cuenta_iva_repercutido, cuenta_retencion, subcuentas_auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id) DO UPDATE SET a3_empresa = excluded.a3_empresa, "
+                 "subcuentas_auto = excluded.subcuentas_auto, digitos = excluded.digitos, cuenta_proveedores = excluded.cuenta_proveedores, cuenta_clientes = excluded.cuenta_clientes, "
+                 "cuenta_gasto = excluded.cuenta_gasto, cuenta_ingreso = excluded.cuenta_ingreso, cuenta_iva_soportado = excluded.cuenta_iva_soportado, "
+                 "cuenta_iva_repercutido = excluded.cuenta_iva_repercutido, cuenta_retencion = excluded.cuenta_retencion",
+                 (cliente_fiscal_id, tenant_id, empresa, a["digitos"], *[a[k] for k in CAMPOS_CUENTAS], a["subcuentas_auto"]))
+
+
+def guardar_configuracion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict) -> dict:
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    empresa = _empresa_valida(datos.get("a3_empresa"))
+    ajustes = _ajustes_validados(datos)
     conn = db.get_connection()
     try:
-        conn.execute("INSERT INTO contabilidad_clientes (cliente_fiscal_id, tenant_id, a3_empresa, digitos, cuenta_proveedores, cuenta_clientes, cuenta_gasto, cuenta_ingreso, cuenta_iva_soportado, "
-                     "cuenta_iva_repercutido, cuenta_retencion, subcuentas_auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id) DO UPDATE SET a3_empresa = excluded.a3_empresa, subcuentas_auto = excluded.subcuentas_auto, "
-                     "digitos = excluded.digitos, cuenta_proveedores = excluded.cuenta_proveedores, cuenta_clientes = excluded.cuenta_clientes, cuenta_gasto = excluded.cuenta_gasto, "
-                     "cuenta_ingreso = excluded.cuenta_ingreso, cuenta_iva_soportado = excluded.cuenta_iva_soportado, cuenta_iva_repercutido = excluded.cuenta_iva_repercutido, "
-                     "cuenta_retencion = excluded.cuenta_retencion",
-                     (cliente_fiscal_id, tenant_id, empresa or None, digitos, *[cuentas[k] for k in ("cuenta_proveedores", "cuenta_clientes", "cuenta_gasto", "cuenta_ingreso",
-                                                                                                  "cuenta_iva_soportado", "cuenta_iva_repercutido", "cuenta_retencion")], 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0))
-        auditoria.registrar(tenant_id, usuario_id, "contabilidad.configuracion", "cliente_fiscal", cliente_fiscal_id, {"a3_empresa": empresa or None, "digitos": digitos}, conn=conn)
+        _guardar_fila_cliente(conn, tenant_id, cliente_fiscal_id, empresa, ajustes)
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.configuracion", "cliente_fiscal", cliente_fiscal_id, {"a3_empresa": empresa, "digitos": ajustes["digitos"]}, conn=conn)
         conn.commit()
     finally:
         conn.close()
     return configuracion(tenant_id, cliente_fiscal_id)
+
+
+# --- Valores por defecto del despacho y alta de muchos clientes de una vez ------------------------------------------------------------------------------
+
+def configuracion_despacho(tenant_id: int) -> dict:
+    """Los ajustes de enlace que heredan los clientes que no tienen los suyos: los del despacho si los ha fijado, y si no los de siempre."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM contabilidad_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+    return {**CONFIG_DEFECTO, **({k: f[k] for k in f.keys() if k != "tenant_id"} if f else {})}
+
+
+def guardar_configuracion_despacho(tenant_id: int, usuario_id: int, datos: dict) -> dict:
+    a = _ajustes_validados(datos)
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO contabilidad_despacho (tenant_id, digitos, cuenta_proveedores, cuenta_clientes, cuenta_gasto, cuenta_ingreso, cuenta_iva_soportado, cuenta_iva_repercutido, "
+                     "cuenta_retencion, subcuentas_auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(tenant_id) DO UPDATE SET digitos = excluded.digitos, "
+                     "cuenta_proveedores = excluded.cuenta_proveedores, cuenta_clientes = excluded.cuenta_clientes, cuenta_gasto = excluded.cuenta_gasto, cuenta_ingreso = excluded.cuenta_ingreso, "
+                     "cuenta_iva_soportado = excluded.cuenta_iva_soportado, cuenta_iva_repercutido = excluded.cuenta_iva_repercutido, cuenta_retencion = excluded.cuenta_retencion, "
+                     "subcuentas_auto = excluded.subcuentas_auto",
+                     (tenant_id, a["digitos"], *[a[k] for k in CAMPOS_CUENTAS], a["subcuentas_auto"]))
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.configuracion_despacho", "tenant", tenant_id, {"digitos": a["digitos"], "subcuentas_auto": a["subcuentas_auto"]}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return configuracion_despacho(tenant_id)
+
+
+def copiar_configuracion(tenant_id: int, usuario_id: int, desde_cliente_id: int, a_cliente_id: int) -> dict:
+    """Los ajustes de enlace de otro cliente (todo menos su código de empresa de a3, que es de cada uno)."""
+    _cliente(tenant_id, usuario_id, desde_cliente_id)
+    _cliente(tenant_id, usuario_id, a_cliente_id)
+    origen = configuracion(tenant_id, desde_cliente_id)
+    destino = configuracion(tenant_id, a_cliente_id)
+    return guardar_configuracion(tenant_id, usuario_id, a_cliente_id, {**origen, "a3_empresa": destino["a3_empresa"]})
+
+
+def restablecer_configuracion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
+    """Vuelve a los valores del despacho (conserva el código de empresa de a3 del cliente)."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    return guardar_configuracion(tenant_id, usuario_id, cliente_fiscal_id, {**configuracion_despacho(tenant_id), "a3_empresa": configuracion(tenant_id, cliente_fiscal_id)["a3_empresa"]})
+
+
+def resumen_clientes(tenant_id: int, usuario_id: int) -> list[dict]:
+    """Cada cliente que ve la persona con su situación frente a a3: código de empresa, si usa los valores del despacho o los suyos, y cuántas facturas esperan salir."""
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    base = configuracion_despacho(tenant_id)
+    conn = db.get_connection()
+    try:
+        filas = {r["cliente_fiscal_id"]: r for r in conn.execute("SELECT * FROM contabilidad_clientes WHERE tenant_id = ?", (tenant_id,))}
+        esperando = {r["cliente_fiscal_id"]: r["n"] for r in conn.execute(
+            "SELECT cliente_fiscal_id, COUNT(*) AS n FROM facturas_contables WHERE tenant_id = ? AND estado IN ('pendiente', 'revisada') GROUP BY cliente_fiscal_id", (tenant_id,))}
+    finally:
+        conn.close()
+    res = []
+    for c in db.listar_clientes_fiscales(tenant_id):
+        if visibles is not None and c["id"] not in visibles:
+            continue
+        f = filas.get(c["id"])
+        propia = bool(f) and any(f[k] != base[k] for k in ("digitos", "subcuentas_auto", *CAMPOS_CUENTAS))
+        res.append({"id": c["id"], "nombre": c["nombre"], "nif": c["nif"], "a3_empresa": f["a3_empresa"] if f else None, "digitos": f["digitos"] if f else base["digitos"], "propia": propia,
+                    "esperando": esperando.get(c["id"], 0)})
+    return res
+
+
+def guardar_codigos(tenant_id: int, usuario_id: int, codigos: dict[int, str]) -> int:
+    """Fija de golpe el código de empresa de a3 de varios clientes ({cliente_fiscal_id: código}; vacío lo quita). Todo o nada: si un código no vale no se guarda ninguno. Devuelve cuántos cambiaron."""
+    base = configuracion_despacho(tenant_id)
+    nuevos = {}
+    for cid, valor in codigos.items():
+        _cliente(tenant_id, usuario_id, cid)
+        try:
+            nuevos[cid] = _empresa_valida(valor)
+        except ValueError:
+            raise ValueError(f"El código «{str(valor)[:12]}» no es válido: como máximo 5 dígitos.") from None
+    cambiados = 0
+    conn = db.get_connection()
+    try:
+        for cid, empresa in nuevos.items():
+            actual = conn.execute("SELECT a3_empresa FROM contabilidad_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cid, tenant_id)).fetchone()
+            if actual is not None and actual["a3_empresa"] == empresa:
+                continue
+            if actual is None:
+                if empresa is None:
+                    continue
+                _guardar_fila_cliente(conn, tenant_id, cid, empresa, base)
+            else:
+                conn.execute("UPDATE contabilidad_clientes SET a3_empresa = ? WHERE cliente_fiscal_id = ? AND tenant_id = ?", (empresa, cid, tenant_id))
+            cambiados += 1
+        if cambiados:
+            auditoria.registrar(tenant_id, usuario_id, "contabilidad.codigos_a3", "tenant", tenant_id, {"clientes": cambiados}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return cambiados
+
+
+def _clave_nif(nif: str) -> str:
+    """El NIF sin espacios, puntos ni guiones y en mayúsculas, para casar «b-12345678» con «B12345678» (con la clave normalizada de la ficha cuando el NIF es válido)."""
+    from . import fiscal_identidad
+    return fiscal_identidad.clave_unica(nif, "ES") or re.sub(r"[^A-Z0-9]", "", str(nif or "").upper())
+
+
+def codigos_desde_texto(tenant_id: int, usuario_id: int, texto: str) -> dict:
+    """Pega «NIF;código» (una pareja por línea, separada por ; , tabulador o espacios) y fija el código de a3 de cada cliente por su NIF. Devuelve {aplicados, no_encontrados, invalidos}."""
+    por_nif = {}
+    for r in resumen_clientes(tenant_id, usuario_id):
+        if r["nif"]:
+            por_nif[_clave_nif(r["nif"])] = r["id"]
+    codigos, no_encontrados, invalidos = {}, [], []
+    for linea in str(texto or "").splitlines()[:2000]:
+        partes = [p for p in re.split(r"[;,\t ]+", linea.strip()) if p]
+        if not partes:
+            continue
+        if len(partes) < 2:
+            invalidos.append(linea.strip()[:40])
+            continue
+        nif, codigo = partes[0], partes[1]
+        cid = por_nif.get(_clave_nif(nif))
+        if cid is None:
+            no_encontrados.append(nif[:20])
+        elif not re.fullmatch(r"\d{1,5}", codigo):
+            invalidos.append(f"{nif[:20]} → {codigo[:12]}")
+        else:
+            codigos[cid] = codigo
+    aplicados = guardar_codigos(tenant_id, usuario_id, codigos) if codigos else 0
+    return {"aplicados": aplicados, "no_encontrados": no_encontrados, "invalidos": invalidos}
 
 
 def cuenta_del_tercero(tenant_id: int, cliente_fiscal_id: int, tipo_factura: str, nif: str | None) -> str | None:
@@ -736,6 +906,71 @@ def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
     return filas
 
 
+# --- Recordatorio a los clientes antes del cierre del trimestre ------------------------------------------------------------------------------------------
+
+DIAS_ENTRE_RECORDATORIOS = 3          # no se vuelve a escribir al mismo cliente por el mismo trimestre antes de esto
+
+
+def para_recordar(tenant_id: int, usuario_id: int, trimestre: str) -> list[dict]:
+    """Los clientes del despacho que ve la persona, con cuánto han anotado ese trimestre y cuándo se les recordó por última vez. `puede` = tiene email y no se le ha escrito hace poco."""
+    desde, hasta = rango_del_trimestre(trimestre)
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    conn = db.get_connection()
+    try:
+        notas = {r["cliente_fiscal_id"]: r for r in conn.execute(
+            "SELECT cliente_fiscal_id, COUNT(*) AS anotadas, COALESCE(SUM(estado = 'pendiente'), 0) AS por_revisar FROM facturas_contables WHERE tenant_id = ? AND fecha BETWEEN ? AND ? AND estado != 'descartada' "
+            "GROUP BY cliente_fiscal_id", (tenant_id, desde, hasta))}
+        ultimos = {r["cliente_fiscal_id"]: r["ultimo"] for r in conn.execute(
+            "SELECT cliente_fiscal_id, MAX(enviado_en) AS ultimo FROM contabilidad_recordatorios WHERE tenant_id = ? AND trimestre = ? GROUP BY cliente_fiscal_id", (tenant_id, trimestre))}
+    finally:
+        conn.close()
+    limite = (datetime.now() - timedelta(days=DIAS_ENTRE_RECORDATORIOS)).isoformat(timespec="seconds")
+    res = []
+    for c in db.listar_clientes_fiscales(tenant_id):
+        if visibles is not None and c["id"] not in visibles:
+            continue
+        n = notas.get(c["id"])
+        ultimo = ultimos.get(c["id"])
+        email = (c["email"] or "").strip()
+        res.append({"id": c["id"], "nombre": c["nombre"], "email": email, "anotadas": n["anotadas"] if n else 0, "por_revisar": n["por_revisar"] if n else 0, "ultimo": ultimo,
+                    "reciente": bool(ultimo and ultimo > limite), "puede": bool(email) and not (ultimo and ultimo > limite)})
+    return sorted(res, key=lambda c: (c["anotadas"], c["nombre"].lower()))
+
+
+def recordar(tenant_id: int, usuario_id: int, cliente_ids: list[int], trimestre: str, fecha_limite: str | None, url_portal: str) -> dict:
+    """Escribe a los clientes elegidos para pedirles las facturas del trimestre. Devuelve {enviados, omitidos: [(nombre, motivo)]}. `ValueError` si el correo saliente no está configurado."""
+    from . import notificaciones_email as ne
+    rango_del_trimestre(trimestre)
+    fecha_limite = _fecha(fecha_limite, "Fecha límite") if str(fecha_limite or "").strip() else None
+    if not ne.configurado():
+        raise ValueError("El correo saliente de la plataforma no está configurado: no se puede avisar a los clientes.")
+    candidatos = {c["id"]: c for c in para_recordar(tenant_id, usuario_id, trimestre)}
+    enviados, omitidos = 0, []
+    for cid in dict.fromkeys(int(i) for i in cliente_ids):
+        c = candidatos.get(cid)
+        if c is None:
+            omitidos.append(("#%d" % cid, "no es un cliente que puedas ver"))
+        elif not c["email"]:
+            omitidos.append((c["nombre"], "no tiene email"))
+        elif c["reciente"]:
+            omitidos.append((c["nombre"], f"ya se le recordó hace menos de {DIAS_ENTRE_RECORDATORIOS} días"))
+        else:
+            try:
+                ne.enviar_recordatorio_facturas(c["email"], c["nombre"], trimestre, fecha_limite, url_portal, tenant_id=tenant_id)
+            except ne.ErrorNotificacionesEmail as e:
+                omitidos.append((c["nombre"], str(e)[:120]))
+                continue
+            conn = db.get_connection()
+            try:
+                conn.execute("INSERT INTO contabilidad_recordatorios (tenant_id, cliente_fiscal_id, trimestre, enviado_por, enviado_en) VALUES (?, ?, ?, ?, ?)", (tenant_id, cid, trimestre, usuario_id, db.now_iso()))
+                conn.commit()
+            finally:
+                conn.close()
+            enviados += 1
+    auditoria.registrar(tenant_id, usuario_id, "contabilidad.recordatorio", "trimestre", None, {"trimestre": trimestre, "enviados": enviados, "omitidos": len(omitidos)})
+    return {"enviados": enviados, "omitidos": omitidos}
+
+
 # --- Módulo «Contabilización de facturas» ---------------------------------------------------------------------------------------------------------------
 # Es un módulo propio, aparte de la Gestoría aunque se apoye en sus clientes fiscales: se activa por despacho (extra de pago vinculado o a mano desde el backoffice) y se podrá cobrar por uso.
 
@@ -744,7 +979,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
     for tabla in ("facturas_contables_lineas",):
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
-    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes"):
+    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
 
 

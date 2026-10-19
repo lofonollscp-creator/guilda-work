@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Recordar a los clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Recordar a los clientes') }}</h1>
+    <p class="subtitle">{{ _('Antes del cierre del trimestre, escribe a los clientes que aún no han entregado sus facturas. Solo sale lo que elijas aquí.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Facturas') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if resultado %}
+<p class="portal-peticion" role="status"><strong>{{ _('Recordatorios enviados: %(n)s', n=resultado.enviados) }}</strong></p>
+{% if resultado.omitidos %}<ul class="muted">{% for nombre, motivo in resultado.omitidos %}<li>{{ nombre }}: {{ motivo }}</li>{% endfor %}</ul>{% endif %}
+{% endif %}
+
+<form class="filters" method="get">
+  <label>{{ _('Trimestre') }}
+    <select name="trimestre">{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ t }}</option>{% endfor %}</select></label>
+  <button type="submit" class="btn btn-primary">{{ _('Ver') }}</button>
+</form>
+
+{% if not clientes %}
+<p class="empty-lane">{{ _('No hay clientes fiscales.') }}</p>
+{% else %}
+<form method="post" class="edit-form">
+  <input type="hidden" name="trimestre" value="{{ trimestre }}">
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th></th><th>{{ _('Cliente') }}</th><th>{{ _('Email') }}</th><th>{{ _('Facturas anotadas') }}</th><th>{{ _('Último recordatorio') }}</th></tr></thead>
+    <tbody>
+    {% for c in clientes %}
+      <tr>
+        <td><input type="checkbox" name="cliente_id" value="{{ c.id }}" aria-label="{{ c.nombre }}" {{ 'checked' if c.puede and c.anotadas == 0 }} {{ 'disabled' if not c.puede }}></td>
+        <td>{{ c.nombre }}</td>
+        <td class="mono">{{ c.email or '—' }}</td>
+        <td>{{ c.anotadas }}{% if c.por_revisar %} <span class="muted">({{ _('%(n)s por revisar', n=c.por_revisar) }})</span>{% endif %}</td>
+        <td>{% if c.ultimo %}{{ c.ultimo[:10] }}{% if c.reciente %} <span class="pill">{{ _('Reciente') }}</span>{% endif %}{% else %}—{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <label>{{ _('Fecha límite para entregar (opcional)') }}<input type="date" name="fecha_limite"></label>
+  <label class="checkbox-label"><input type="checkbox" name="confirmo" value="1" required> {{ _('Confirmo que quiero enviar un correo a los clientes marcados.') }}</label>
+  <button type="submit" class="btn btn-primary">{{ _('Enviar el recordatorio') }}</button>
+  <p class="muted">{{ _('El correo lleva la marca de tu despacho y un botón al portal del cliente. A un mismo cliente no se le vuelve a escribir por el mismo trimestre en menos de %(n)s días.', n=dias) }}</p>
+</form>
+{% endif %}
+{% endblock %}

@@ -13168,3 +13168,168 @@ msgstr "Puja factures"
 
 msgid "Pendiente de leer"
 msgstr "Pendent de llegir"
+
+msgid "Horas sin facturar"
+msgstr "Hores sense facturar"
+
+msgid "Sin tarifa"
+msgstr "Sense tarifa"
+
+msgid "Confirmo que quiero emitir esta factura de horas a nombre de %(cliente)s."
+msgstr "Confirmo que vull emetre aquesta factura d'hores a nom de %(cliente)s."
+
+msgid "Facturar las horas elegidas"
+msgstr "Factura les hores triades"
+
+msgid "Una línea por parte de horas, a la tarifa con la que se registró. El IVA lo aplica FacturaScripts."
+msgstr "Una línia per part d'hores, a la tarifa amb què es va registrar. L'IVA l'aplica FacturaScripts."
+
+msgid "Hola, %(nombre)s."
+msgstr "Hola, %(nombre)s."
+
+msgid "Estamos preparando el cierre del trimestre %(trimestre)s y aún nos pueden faltar facturas tuyas, tanto las que has recibido como las que has emitido."
+msgstr "Estem preparant el tancament del trimestre %(trimestre)s i encara ens poden faltar factures teves, tant les que has rebut com les que has emès."
+
+msgid "Si puedes, súbelas antes del %(fecha)s."
+msgstr "Si pots, puja-les abans del %(fecha)s."
+
+msgid "Basta con una foto o un PDF de cada una: nosotros leemos los datos."
+msgstr "N'hi ha prou amb una foto o un PDF de cada una: nosaltres llegim les dades."
+
+msgid "Facturas del trimestre"
+msgstr "Factures del trimestre"
+
+msgid "Subir mis facturas"
+msgstr "Puja les meves factures"
+
+msgid "Se acerca el cierre del trimestre %(trimestre)s"
+msgstr "S'acosta el tancament del trimestre %(trimestre)s"
+
+msgid "Facturas del trimestre %(trimestre)s"
+msgstr "Factures del trimestre %(trimestre)s"
+
+msgid "Recordar a los clientes"
+msgstr "Recorda-ho als clients"
+
+msgid "Antes del cierre del trimestre, escribe a los clientes que aún no han entregado sus facturas. Solo sale lo que elijas aquí."
+msgstr "Abans del tancament del trimestre, escriu als clients que encara no han lliurat les seves factures. Només surt el que triïs aquí."
+
+msgid "No hay clientes fiscales."
+msgstr "No hi ha clients fiscals."
+
+msgid "Último recordatorio"
+msgstr "Darrer recordatori"
+
+msgid "Reciente"
+msgstr "Recent"
+
+msgid "%(n)s por revisar"
+msgstr "%(n)s per revisar"
+
+msgid "Fecha límite para entregar (opcional)"
+msgstr "Data límit per lliurar (opcional)"
+
+msgid "Confirmo que quiero enviar un correo a los clientes marcados."
+msgstr "Confirmo que vull enviar un correu als clients marcats."
+
+msgid "Enviar el recordatorio"
+msgstr "Envia el recordatori"
+
+msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente. A un mismo cliente no se le vuelve a escribir por el mismo trimestre en menos de %(n)s días."
+msgstr "El correu porta la marca del teu despatx i un botó al portal del client. Al mateix client no se li torna a escriure pel mateix trimestre en menys de %(n)s dies."
+
+msgid "Recordatorios enviados: %(n)s"
+msgstr "Recordatoris enviats: %(n)s"
+
+msgid "Marca la casilla para confirmar que quieres escribir a estos clientes."
+msgstr "Marca la casella per confirmar que vols escriure a aquests clients."
+
+msgid "Valores del despacho guardados. Los heredan los clientes que no tengan los suyos."
+msgstr "Valors del despatx desats. Els hereten els clients que no tinguin els seus."
+
+msgid "Códigos de a3 guardados: %(n)s cambios."
+msgstr "Codis d'a3 desats: %(n)s canvis."
+
+msgid "Códigos aplicados: %(n)s."
+msgstr "Codis aplicats: %(n)s."
+
+msgid "NIF sin cliente: %(l)s."
+msgstr "NIF sense client: %(l)s."
+
+msgid "No válidos: %(l)s."
+msgstr "No vàlids: %(l)s."
+
+msgid "Ajustes de a3"
+msgstr "Ajustos d'a3"
+
+msgid "Cómo se conecta Guilda Work con a3: los valores por defecto del despacho y el código de empresa de cada cliente."
+msgstr "Com es connecta Guilda Work amb a3: els valors per defecte del despatx i el codi d'empresa de cada client."
+
+msgid "Clientes listos para exportar"
+msgstr "Clients llestos per exportar"
+
+msgid "Un cliente está listo cuando tiene su código de empresa de a3. Sin él no se puede generar el fichero."
+msgstr "Un client està llest quan té el seu codi d'empresa d'a3. Sense ell no es pot generar el fitxer."
+
+msgid "Valores por defecto del despacho"
+msgstr "Valors per defecte del despatx"
+
+msgid "Los usan los clientes que no tengan ajustes propios. Cambiarlos no toca a los clientes que ya los personalizaron."
+msgstr "Els fan servir els clients que no tinguin ajustos propis. Canviar-los no toca els clients que ja els van personalitzar."
+
+msgid "Subcuenta genérica de proveedores"
+msgstr "Subcompte genèric de proveïdors"
+
+msgid "Subcuenta genérica de clientes"
+msgstr "Subcompte genèric de clients"
+
+msgid "Guardar los valores del despacho"
+msgstr "Desa els valors del despatx"
+
+msgid "Solo la dirección y la coordinación pueden cambiar los valores del despacho."
+msgstr "Només la direcció i la coordinació poden canviar els valors del despatx."
+
+msgid "Código de empresa de cada cliente"
+msgstr "Codi d'empresa de cada client"
+
+msgid "Código en a3"
+msgstr "Codi a a3"
+
+msgid "Facturas esperando"
+msgstr "Factures esperant"
+
+msgid "Propios"
+msgstr "Propis"
+
+msgid "dígitos"
+msgstr "dígits"
+
+msgid "Guardar los códigos"
+msgstr "Desa els codis"
+
+msgid "Pegar los códigos de golpe"
+msgstr "Enganxa els codis d'un cop"
+
+msgid "Una pareja por línea: NIF y código de a3, separados por punto y coma, coma, tabulador o espacio. Se asigna a cada cliente por su NIF."
+msgstr "Una parella per línia: NIF i codi d'a3, separats per punt i coma, coma, tabulador o espai. S'assigna a cada client pel seu NIF."
+
+msgid "NIF y código de a3"
+msgstr "NIF i codi d'a3"
+
+msgid "Aplicar los códigos"
+msgstr "Aplica els codis"
+
+msgid "Copiar ajustes"
+msgstr "Copia ajustos"
+
+msgid "Copiar los ajustes de"
+msgstr "Copia els ajustos de"
+
+msgid "Usar los valores del despacho"
+msgstr "Fes servir els valors del despatx"
+
+msgid "Copiar de %(c)s"
+msgstr "Copia de %(c)s"
+
+msgid "No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3."
+msgstr "No canvia el codi d'empresa d'a3 d'aquest client. Els valors del despatx es fixen a Ajustos d'a3."

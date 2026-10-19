@@ -109,6 +109,22 @@ def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal:
     _enviar(email_destino, _asunto(_("Tu gestoría te pide un documento"), tenant_id), plano, html)
 
 
+def enviar_recordatorio_facturas(email_destino: str, cliente_nombre: str, trimestre: str, fecha_limite: str | None, url_portal: str, tenant_id: int | None = None) -> None:
+    """Recordatorio de que se acerca el cierre del trimestre y la gestoría necesita sus facturas (módulo Contabilización de facturas). Enlaza a /portal/entrar: el cliente pide su enlace de acceso."""
+    lineas = [_("Hola, %(nombre)s.", nombre=cliente_nombre),
+              _("Estamos preparando el cierre del trimestre %(trimestre)s y aún nos pueden faltar facturas tuyas, tanto las que has recibido como las que has emitido.", trimestre=trimestre)]
+    if fecha_limite:
+        lineas.append(_("Si puedes, súbelas antes del %(fecha)s.", fecha=fecha_limite))
+    lineas.append(_("Basta con una foto o un PDF de cada una: nosotros leemos los datos."))
+    plano, html = _construir(tenant_id,
+        _("Facturas del trimestre"), lineas,
+        boton=(_("Subir mis facturas"), url_portal),
+        aviso=_("Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."),
+        preencabezado=_("Se acerca el cierre del trimestre %(trimestre)s", trimestre=trimestre),
+    )
+    _enviar(email_destino, _asunto(_("Facturas del trimestre %(trimestre)s", trimestre=trimestre), tenant_id), plano, html)
+
+
 def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str, tenant_id: int | None = None) -> None:
     """Aviso de que hay un enlace de pago de Stripe Checkout disponible
     para un vencimiento (app/rutas_fiscal.py:cobrar_stripe_vencimiento).

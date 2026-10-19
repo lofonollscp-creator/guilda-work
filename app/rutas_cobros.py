@@ -32,6 +32,24 @@ def facturar(expediente_id: int):
     return redirect(destino + "#facturacion")
 
 
+@cobros_bp.route("/<int:expediente_id>/facturar-horas", methods=["POST"])
+@login_required
+def facturar_horas(expediente_id: int):
+    if g.get("tenant_id") is None:
+        abort(404)
+    def volver(**kw):
+        return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, **kw) + "#facturacion")
+    if request.form.get("confirmo") != "1":
+        return volver(error=_("Marca la casilla para confirmar que quieres emitir la factura."))
+    try:
+        fd.facturar_horas(g.tenant_id, g.usuario_id, _supervisor(), expediente_id, [int(i) for i in request.form.getlist("parte_id") if i.isdigit()])
+    except fd.facturascripts.ErrorFacturaScripts as e:
+        return volver(error=_("FacturaScripts no ha podido crear la factura: %(motivo)s", motivo=str(e)[:150]))
+    except ValueError as e:
+        return volver(error=str(e)[:200])
+    return volver()
+
+
 @cobros_bp.app_context_processor
 def _ayudas_de_plantilla():
     """Funciones que usan las plantillas de la ficha del expediente y de la ficha fiscal; solo trabajan si se las llama."""
@@ -41,6 +59,7 @@ def _ayudas_de_plantilla():
         s = fd.situacion(g.tenant_id, g.usuario_id, _supervisor(), expediente)
         if s["disponible"]:
             s["facturas"] = fd.facturas_del_expediente(g.tenant_id, expediente["id"])
+            s["horas"] = fd.horas_sin_facturar(g.tenant_id, expediente["id"]) if s.get("puede") else []
         return s
 
     return {"panel_facturacion": panel_facturacion, "estado_de_factura": fd.estado_de, "resumen_cobro": fd.resumen_cobro}

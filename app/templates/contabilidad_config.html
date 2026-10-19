@@ -25,6 +25,17 @@
   <label>{{ _('Retenciones') }}<input type="text" name="cuenta_retencion" value="{{ cfg.cuenta_retencion }}" inputmode="numeric"></label>
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button><a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente.id) }}">{{ _('Cancelar') }}</a></div>
 </form>
+<section class="ds-max-640 ds-mt-24">
+  <h2>{{ _('Copiar ajustes') }}</h2>
+  <form method="post" action="{{ url_for('contabilidad.copiar_configuracion', cliente_id=cliente.id) }}" class="ds-fila">
+    <select name="origen" aria-label="{{ _('Copiar los ajustes de') }}">
+      <option value="despacho">{{ _('Usar los valores del despacho') }}</option>
+      {% for o in otros %}<option value="{{ o.id }}">{{ _('Copiar de %(c)s', c=o.nombre) }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-ghost">{{ _('Aplicar') }}</button>
+  </form>
+  <p class="muted">{{ _('No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3.') }} <a href="{{ url_for('contabilidad.ajustes') }}">{{ _('Ajustes de a3') }}</a></p>
+</section>
 {% if terceros %}
 <section class="ds-max-640">
   <h2>{{ _('Subcuentas recordadas') }}</h2>

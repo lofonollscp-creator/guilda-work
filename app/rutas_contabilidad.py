@@ -114,6 +114,29 @@ def ver(factura_id: int):
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
 
 
+@contabilidad_bp.route("/recordatorios", methods=["GET", "POST"])
+@login_required
+def recordatorios():
+    """Escribe a los clientes que aún no han entregado sus facturas antes del cierre del trimestre. Solo se envía lo que se elige y se confirma aquí: nada sale solo."""
+    trimestre = request.values.get("trimestre") or _trimestres()[0]
+    try:
+        fc.rango_del_trimestre(trimestre)
+    except ValueError:
+        trimestre = _trimestres()[0]
+    error = resultado = None
+    if request.method == "POST":
+        if request.form.get("confirmo") != "1":
+            error = _("Marca la casilla para confirmar que quieres escribir a estos clientes.")
+        else:
+            try:
+                resultado = fc.recordar(g.tenant_id, g.usuario_id, request.form.getlist("cliente_id", type=int), trimestre, request.form.get("fecha_limite"),
+                                        url_for("portal_cliente.entrar", _external=True))
+            except ValueError as e:
+                error = str(e)
+    return render_template("contabilidad_recordatorios.html", trimestre=trimestre, trimestres=_trimestres(), clientes=fc.para_recordar(g.tenant_id, g.usuario_id, trimestre), error=error,
+                           resultado=resultado, dias=fc.DIAS_ENTRE_RECORDATORIOS)
+
+
 @contabilidad_bp.route("/subir", methods=["POST"])
 @login_required
 def subir():
@@ -153,6 +176,55 @@ def estado(factura_id: int):
     return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))
 
 
+def _es_supervisor() -> bool:
+    return bool(g.get("supervisor_tenant") or g.get("es_admin"))
+
+
+@contabilidad_bp.route("/ajustes", methods=["GET", "POST"])
+@login_required
+def ajustes():
+    """Centro de la conexión con a3: los valores por defecto del despacho, el código de empresa de cada cliente y el alta de muchos de una vez."""
+    error = mensaje = None
+    cfg = fc.configuracion_despacho(g.tenant_id)
+    if request.method == "POST":
+        accion = request.form.get("accion")
+        try:
+            if accion == "despacho":
+                if not _es_supervisor():
+                    abort(403)
+                cfg = fc.guardar_configuracion_despacho(g.tenant_id, g.usuario_id, request.form)
+                mensaje = _("Valores del despacho guardados. Los heredan los clientes que no tengan los suyos.")
+            elif accion == "codigos":
+                n = fc.guardar_codigos(g.tenant_id, g.usuario_id, {int(k[7:]): v for k, v in request.form.items() if k.startswith("codigo_") and k[7:].isdigit()})
+                mensaje = _("Códigos de a3 guardados: %(n)s cambios.", n=n)
+            elif accion == "texto":
+                r = fc.codigos_desde_texto(g.tenant_id, g.usuario_id, request.form.get("texto", ""))
+                mensaje = _("Códigos aplicados: %(n)s.", n=r["aplicados"])
+                if r["no_encontrados"]:
+                    mensaje += " " + _("NIF sin cliente: %(l)s.", l=", ".join(r["no_encontrados"][:10]))
+                if r["invalidos"]:
+                    mensaje += " " + _("No válidos: %(l)s.", l="; ".join(r["invalidos"][:10]))
+        except ValueError as e:
+            error = str(e)
+            if accion == "despacho":
+                cfg = {**cfg, **{k: request.form.get(k, "") for k in cfg}}
+    clientes = fc.resumen_clientes(g.tenant_id, g.usuario_id)
+    return render_template("contabilidad_ajustes.html", cfg=cfg, clientes=clientes, listos=sum(1 for c in clientes if c["a3_empresa"]), error=error, mensaje=mensaje, puede_despacho=_es_supervisor())
+
+
+@contabilidad_bp.route("/cliente/<int:cliente_id>/copiar-configuracion", methods=["POST"])
+@login_required
+def copiar_configuracion(cliente_id: int):
+    try:
+        if request.form.get("origen") == "despacho":
+            fc.restablecer_configuracion(g.tenant_id, g.usuario_id, cliente_id)
+        else:
+            fc.copiar_configuracion(g.tenant_id, g.usuario_id, request.form.get("origen", type=int) or 0, cliente_id)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id, error=str(e)[:300]))
+    return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id))
+
+
 @contabilidad_bp.route("/cliente/<int:cliente_id>/configuracion", methods=["GET", "POST"])
 @login_required
 def configuracion(cliente_id: int):
@@ -168,7 +240,8 @@ def configuracion(cliente_id: int):
         except ValueError as e:
             error = str(e)
             cfg = {**cfg, **{k: request.form.get(k, "") for k in cfg}}
-    return render_template("contabilidad_config.html", cliente=cliente, cfg=cfg, error=error, terceros=fc.terceros_del_cliente(g.tenant_id, g.usuario_id, cliente_id))
+    return render_template("contabilidad_config.html", cliente=cliente, cfg=cfg, error=error, terceros=fc.terceros_del_cliente(g.tenant_id, g.usuario_id, cliente_id),
+                           otros=[c for c in fc.resumen_clientes(g.tenant_id, g.usuario_id) if c["id"] != cliente_id and c["a3_empresa"]])
 
 
 @contabilidad_bp.route("/exportar", methods=["POST"])

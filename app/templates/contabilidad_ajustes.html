@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Ajustes de a3') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Ajustes de a3') }}</h1>
+    <p class="subtitle">{{ _('Cómo se conecta Guilda Work con a3: los valores por defecto del despacho y el código de empresa de cada cliente.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Facturas') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if mensaje %}<p class="portal-peticion" role="status"><strong>{{ mensaje }}</strong></p>{% endif %}
+
+<section class="dash-panel">
+  <div class="dash-panel-cab"><h2>{{ _('Clientes listos para exportar') }}: {{ listos }} / {{ clientes|length }}</h2></div>
+  <p class="muted">{{ _('Un cliente está listo cuando tiene su código de empresa de a3. Sin él no se puede generar el fichero.') }}</p>
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Valores por defecto del despacho') }}</h2>
+  <p class="muted">{{ _('Los usan los clientes que no tengan ajustes propios. Cambiarlos no toca a los clientes que ya los personalizaron.') }}</p>
+  <form method="post" class="edit-form ds-max-640">
+    <input type="hidden" name="accion" value="despacho">
+    <label>{{ _('Dígitos de las subcuentas del plan') }}<input type="number" name="digitos" value="{{ cfg.digitos }}" min="4" max="12" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('Subcuenta genérica de proveedores') }}<input type="text" name="cuenta_proveedores" value="{{ cfg.cuenta_proveedores }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('Subcuenta genérica de clientes') }}<input type="text" name="cuenta_clientes" value="{{ cfg.cuenta_clientes }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('Gasto (facturas recibidas)') }}<input type="text" name="cuenta_gasto" value="{{ cfg.cuenta_gasto }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('Ingreso (facturas emitidas)') }}<input type="text" name="cuenta_ingreso" value="{{ cfg.cuenta_ingreso }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('IVA soportado') }}<input type="text" name="cuenta_iva_soportado" value="{{ cfg.cuenta_iva_soportado }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('IVA repercutido') }}<input type="text" name="cuenta_iva_repercutido" value="{{ cfg.cuenta_iva_repercutido }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label>{{ _('Retenciones') }}<input type="text" name="cuenta_retencion" value="{{ cfg.cuenta_retencion }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+    <label><input type="checkbox" name="subcuentas_auto" value="1" {{ 'checked' if cfg.subcuentas_auto }} {{ 'disabled' if not puede_despacho }}> {{ _('Asignar solas una subcuenta a cada proveedor o cliente nuevo (la siguiente libre tras la genérica, al exportar)') }}</label>
+    {% if puede_despacho %}<div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar los valores del despacho') }}</button></div>
+    {% else %}<p class="muted">{{ _('Solo la dirección y la coordinación pueden cambiar los valores del despacho.') }}</p>{% endif %}
+  </form>
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Código de empresa de cada cliente') }}</h2>
+  {% if not clientes %}
+  <p class="empty-lane">{{ _('No hay clientes fiscales.') }}</p>
+  {% else %}
+  <form method="post" class="edit-form">
+    <input type="hidden" name="accion" value="codigos">
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Código en a3') }}</th><th>{{ _('Ajustes') }}</th><th>{{ _('Facturas esperando') }}</th><th></th></tr></thead>
+      <tbody>
+      {% for c in clientes %}
+        <tr>
+          <td>{{ c.nombre }}</td>
+          <td class="mono">{{ c.nif or '—' }}</td>
+          <td><input type="text" name="codigo_{{ c.id }}" value="{{ c.a3_empresa or '' }}" maxlength="5" inputmode="numeric" size="6" aria-label="{{ _('Código en a3') }} {{ c.nombre }}"></td>
+          <td>{{ _('Propios') if c.propia else _('Del despacho') }} · {{ c.digitos }} {{ _('dígitos') }}</td>
+          <td>{{ c.esperando }}</td>
+          <td><a href="{{ url_for('contabilidad.configuracion', cliente_id=c.id) }}">{{ _('Configurar') }}</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar los códigos') }}</button></div>
+  </form>
+  {% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Pegar los códigos de golpe') }}</h2>
+  <p class="muted">{{ _('Una pareja por línea: NIF y código de a3, separados por punto y coma, coma, tabulador o espacio. Se asigna a cada cliente por su NIF.') }}</p>
+  <form method="post" class="edit-form ds-max-640">
+    <input type="hidden" name="accion" value="texto">
+    <textarea name="texto" rows="6" placeholder="B12345678;00123" aria-label="{{ _('NIF y código de a3') }}"></textarea>
+    <div class="ds-fila"><button type="submit" class="btn btn-ghost">{{ _('Aplicar los códigos') }}</button></div>
+  </form>
+</section>
+{% endblock %}

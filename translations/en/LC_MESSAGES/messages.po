@@ -13159,3 +13159,168 @@ msgstr "Upload invoices"
 
 msgid "Pendiente de leer"
 msgstr "Waiting to be read"
+
+msgid "Horas sin facturar"
+msgstr "Unbilled hours"
+
+msgid "Sin tarifa"
+msgstr "No rate"
+
+msgid "Confirmo que quiero emitir esta factura de horas a nombre de %(cliente)s."
+msgstr "I confirm that I want to issue this invoice for hours in the name of %(cliente)s."
+
+msgid "Facturar las horas elegidas"
+msgstr "Invoice the selected hours"
+
+msgid "Una línea por parte de horas, a la tarifa con la que se registró. El IVA lo aplica FacturaScripts."
+msgstr "One line per time entry, at the rate it was recorded with. VAT is applied by FacturaScripts."
+
+msgid "Hola, %(nombre)s."
+msgstr "Hello, %(nombre)s."
+
+msgid "Estamos preparando el cierre del trimestre %(trimestre)s y aún nos pueden faltar facturas tuyas, tanto las que has recibido como las que has emitido."
+msgstr "We are preparing the close of quarter %(trimestre)s and we may still be missing some of your invoices, both those you received and those you issued."
+
+msgid "Si puedes, súbelas antes del %(fecha)s."
+msgstr "If you can, upload them before %(fecha)s."
+
+msgid "Basta con una foto o un PDF de cada una: nosotros leemos los datos."
+msgstr "A photo or a PDF of each one is enough: we read the data."
+
+msgid "Facturas del trimestre"
+msgstr "Invoices for the quarter"
+
+msgid "Subir mis facturas"
+msgstr "Upload my invoices"
+
+msgid "Se acerca el cierre del trimestre %(trimestre)s"
+msgstr "Quarter %(trimestre)s is about to close"
+
+msgid "Facturas del trimestre %(trimestre)s"
+msgstr "Invoices for quarter %(trimestre)s"
+
+msgid "Recordar a los clientes"
+msgstr "Remind clients"
+
+msgid "Antes del cierre del trimestre, escribe a los clientes que aún no han entregado sus facturas. Solo sale lo que elijas aquí."
+msgstr "Before the quarter closes, write to the clients who have not yet handed in their invoices. Only what you choose here is sent."
+
+msgid "No hay clientes fiscales."
+msgstr "There are no tax clients."
+
+msgid "Último recordatorio"
+msgstr "Last reminder"
+
+msgid "Reciente"
+msgstr "Recent"
+
+msgid "%(n)s por revisar"
+msgstr "%(n)s to review"
+
+msgid "Fecha límite para entregar (opcional)"
+msgstr "Deadline to hand in (optional)"
+
+msgid "Confirmo que quiero enviar un correo a los clientes marcados."
+msgstr "I confirm that I want to send an email to the selected clients."
+
+msgid "Enviar el recordatorio"
+msgstr "Send the reminder"
+
+msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente. A un mismo cliente no se le vuelve a escribir por el mismo trimestre en menos de %(n)s días."
+msgstr "The email carries your firm's branding and a button to the client portal. The same client is not written to again for the same quarter within %(n)s days."
+
+msgid "Recordatorios enviados: %(n)s"
+msgstr "Reminders sent: %(n)s"
+
+msgid "Marca la casilla para confirmar que quieres escribir a estos clientes."
+msgstr "Tick the box to confirm that you want to write to these clients."
+
+msgid "Valores del despacho guardados. Los heredan los clientes que no tengan los suyos."
+msgstr "Firm defaults saved. Clients without their own settings inherit them."
+
+msgid "Códigos de a3 guardados: %(n)s cambios."
+msgstr "a3 codes saved: %(n)s changes."
+
+msgid "Códigos aplicados: %(n)s."
+msgstr "Codes applied: %(n)s."
+
+msgid "NIF sin cliente: %(l)s."
+msgstr "Tax IDs with no client: %(l)s."
+
+msgid "No válidos: %(l)s."
+msgstr "Not valid: %(l)s."
+
+msgid "Ajustes de a3"
+msgstr "a3 settings"
+
+msgid "Cómo se conecta Guilda Work con a3: los valores por defecto del despacho y el código de empresa de cada cliente."
+msgstr "How Guilda Work connects with a3: the firm's defaults and each client's company code."
+
+msgid "Clientes listos para exportar"
+msgstr "Clients ready to export"
+
+msgid "Un cliente está listo cuando tiene su código de empresa de a3. Sin él no se puede generar el fichero."
+msgstr "A client is ready when it has its a3 company code. The file cannot be generated without it."
+
+msgid "Valores por defecto del despacho"
+msgstr "Firm defaults"
+
+msgid "Los usan los clientes que no tengan ajustes propios. Cambiarlos no toca a los clientes que ya los personalizaron."
+msgstr "Used by clients without their own settings. Changing them does not affect clients that already customised theirs."
+
+msgid "Subcuenta genérica de proveedores"
+msgstr "Generic suppliers subaccount"
+
+msgid "Subcuenta genérica de clientes"
+msgstr "Generic customers subaccount"
+
+msgid "Guardar los valores del despacho"
+msgstr "Save the firm defaults"
+
+msgid "Solo la dirección y la coordinación pueden cambiar los valores del despacho."
+msgstr "Only management and coordination can change the firm defaults."
+
+msgid "Código de empresa de cada cliente"
+msgstr "Company code of each client"
+
+msgid "Código en a3"
+msgstr "Code in a3"
+
+msgid "Facturas esperando"
+msgstr "Invoices waiting"
+
+msgid "Propios"
+msgstr "Own"
+
+msgid "dígitos"
+msgstr "digits"
+
+msgid "Guardar los códigos"
+msgstr "Save the codes"
+
+msgid "Pegar los códigos de golpe"
+msgstr "Paste all the codes at once"
+
+msgid "Una pareja por línea: NIF y código de a3, separados por punto y coma, coma, tabulador o espacio. Se asigna a cada cliente por su NIF."
+msgstr "One pair per line: tax ID and a3 code, separated by semicolon, comma, tab or space. It is assigned to each client by its tax ID."
+
+msgid "NIF y código de a3"
+msgstr "Tax ID and a3 code"
+
+msgid "Aplicar los códigos"
+msgstr "Apply the codes"
+
+msgid "Copiar ajustes"
+msgstr "Copy settings"
+
+msgid "Copiar los ajustes de"
+msgstr "Copy the settings from"
+
+msgid "Usar los valores del despacho"
+msgstr "Use the firm defaults"
+
+msgid "Copiar de %(c)s"
+msgstr "Copy from %(c)s"
+
+msgid "No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3."
+msgstr "It does not change this client's a3 company code. The firm defaults are set in a3 settings."

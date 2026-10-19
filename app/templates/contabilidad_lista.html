@@ -10,6 +10,8 @@
   </div>
   <div class="ds-fila">
     <a class="btn btn-ghost" href="{{ url_for('contabilidad.lotes') }}">{{ _('Ficheros generados') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.recordatorios') }}">{{ _('Recordar a los clientes') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.ajustes') }}">{{ _('Ajustes de a3') }}</a>
     <a class="btn btn-primary" href="{{ url_for('contabilidad.nueva', cliente_id=cliente_id, tipo='recibida') }}">+ {{ _('Factura recibida') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('contabilidad.nueva', cliente_id=cliente_id, tipo='emitida') }}">+ {{ _('Factura emitida') }}</a>
   </div>

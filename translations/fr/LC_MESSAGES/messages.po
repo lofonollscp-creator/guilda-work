@@ -13244,3 +13244,168 @@ msgstr "Téléverser les factures"
 
 msgid "Pendiente de leer"
 msgstr "En attente de lecture"
+
+msgid "Horas sin facturar"
+msgstr "Heures non facturées"
+
+msgid "Sin tarifa"
+msgstr "Sans tarif"
+
+msgid "Confirmo que quiero emitir esta factura de horas a nombre de %(cliente)s."
+msgstr "Je confirme vouloir émettre cette facture d'heures au nom de %(cliente)s."
+
+msgid "Facturar las horas elegidas"
+msgstr "Facturer les heures choisies"
+
+msgid "Una línea por parte de horas, a la tarifa con la que se registró. El IVA lo aplica FacturaScripts."
+msgstr "Une ligne par saisie de temps, au tarif avec lequel elle a été enregistrée. La TVA est appliquée par FacturaScripts."
+
+msgid "Hola, %(nombre)s."
+msgstr "Bonjour, %(nombre)s."
+
+msgid "Estamos preparando el cierre del trimestre %(trimestre)s y aún nos pueden faltar facturas tuyas, tanto las que has recibido como las que has emitido."
+msgstr "Nous préparons la clôture du trimestre %(trimestre)s et il peut nous manquer encore des factures de votre part, reçues comme émises."
+
+msgid "Si puedes, súbelas antes del %(fecha)s."
+msgstr "Si possible, téléversez-les avant le %(fecha)s."
+
+msgid "Basta con una foto o un PDF de cada una: nosotros leemos los datos."
+msgstr "Une photo ou un PDF de chacune suffit : nous lisons les données."
+
+msgid "Facturas del trimestre"
+msgstr "Factures du trimestre"
+
+msgid "Subir mis facturas"
+msgstr "Téléverser mes factures"
+
+msgid "Se acerca el cierre del trimestre %(trimestre)s"
+msgstr "La clôture du trimestre %(trimestre)s approche"
+
+msgid "Facturas del trimestre %(trimestre)s"
+msgstr "Factures du trimestre %(trimestre)s"
+
+msgid "Recordar a los clientes"
+msgstr "Relancer les clients"
+
+msgid "Antes del cierre del trimestre, escribe a los clientes que aún no han entregado sus facturas. Solo sale lo que elijas aquí."
+msgstr "Avant la clôture du trimestre, écrivez aux clients qui n'ont pas encore remis leurs factures. Seul ce que vous choisissez ici est envoyé."
+
+msgid "No hay clientes fiscales."
+msgstr "Il n'y a aucun client fiscal."
+
+msgid "Último recordatorio"
+msgstr "Dernier rappel"
+
+msgid "Reciente"
+msgstr "Récent"
+
+msgid "%(n)s por revisar"
+msgstr "%(n)s à vérifier"
+
+msgid "Fecha límite para entregar (opcional)"
+msgstr "Date limite de remise (facultatif)"
+
+msgid "Confirmo que quiero enviar un correo a los clientes marcados."
+msgstr "Je confirme vouloir envoyer un e-mail aux clients cochés."
+
+msgid "Enviar el recordatorio"
+msgstr "Envoyer le rappel"
+
+msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente. A un mismo cliente no se le vuelve a escribir por el mismo trimestre en menos de %(n)s días."
+msgstr "Le courriel porte la marque de votre cabinet et un bouton vers le portail client. Un même client n'est pas relancé pour le même trimestre en moins de %(n)s jours."
+
+msgid "Recordatorios enviados: %(n)s"
+msgstr "Rappels envoyés : %(n)s"
+
+msgid "Marca la casilla para confirmar que quieres escribir a estos clientes."
+msgstr "Cochez la case pour confirmer que vous voulez écrire à ces clients."
+
+msgid "Valores del despacho guardados. Los heredan los clientes que no tengan los suyos."
+msgstr "Valeurs du cabinet enregistrées. Les clients sans réglages propres les héritent."
+
+msgid "Códigos de a3 guardados: %(n)s cambios."
+msgstr "Codes a3 enregistrés : %(n)s modifications."
+
+msgid "Códigos aplicados: %(n)s."
+msgstr "Codes appliqués : %(n)s."
+
+msgid "NIF sin cliente: %(l)s."
+msgstr "NIF sans client : %(l)s."
+
+msgid "No válidos: %(l)s."
+msgstr "Non valides : %(l)s."
+
+msgid "Ajustes de a3"
+msgstr "Réglages a3"
+
+msgid "Cómo se conecta Guilda Work con a3: los valores por defecto del despacho y el código de empresa de cada cliente."
+msgstr "Comment Guilda Work se connecte à a3 : les valeurs par défaut du cabinet et le code société de chaque client."
+
+msgid "Clientes listos para exportar"
+msgstr "Clients prêts à exporter"
+
+msgid "Un cliente está listo cuando tiene su código de empresa de a3. Sin él no se puede generar el fichero."
+msgstr "Un client est prêt quand il a son code société a3. Sans lui, le fichier ne peut pas être généré."
+
+msgid "Valores por defecto del despacho"
+msgstr "Valeurs par défaut du cabinet"
+
+msgid "Los usan los clientes que no tengan ajustes propios. Cambiarlos no toca a los clientes que ya los personalizaron."
+msgstr "Utilisées par les clients sans réglages propres. Les modifier n'affecte pas les clients qui ont déjà personnalisé les leurs."
+
+msgid "Subcuenta genérica de proveedores"
+msgstr "Sous-compte générique des fournisseurs"
+
+msgid "Subcuenta genérica de clientes"
+msgstr "Sous-compte générique des clients"
+
+msgid "Guardar los valores del despacho"
+msgstr "Enregistrer les valeurs du cabinet"
+
+msgid "Solo la dirección y la coordinación pueden cambiar los valores del despacho."
+msgstr "Seules la direction et la coordination peuvent modifier les valeurs du cabinet."
+
+msgid "Código de empresa de cada cliente"
+msgstr "Code société de chaque client"
+
+msgid "Código en a3"
+msgstr "Code dans a3"
+
+msgid "Facturas esperando"
+msgstr "Factures en attente"
+
+msgid "Propios"
+msgstr "Propres"
+
+msgid "dígitos"
+msgstr "chiffres"
+
+msgid "Guardar los códigos"
+msgstr "Enregistrer les codes"
+
+msgid "Pegar los códigos de golpe"
+msgstr "Coller tous les codes d'un coup"
+
+msgid "Una pareja por línea: NIF y código de a3, separados por punto y coma, coma, tabulador o espacio. Se asigna a cada cliente por su NIF."
+msgstr "Une paire par ligne : NIF et code a3, séparés par point-virgule, virgule, tabulation ou espace. Il est attribué à chaque client par son NIF."
+
+msgid "NIF y código de a3"
+msgstr "NIF et code a3"
+
+msgid "Aplicar los códigos"
+msgstr "Appliquer les codes"
+
+msgid "Copiar ajustes"
+msgstr "Copier les réglages"
+
+msgid "Copiar los ajustes de"
+msgstr "Copier les réglages de"
+
+msgid "Usar los valores del despacho"
+msgstr "Utiliser les valeurs du cabinet"
+
+msgid "Copiar de %(c)s"
+msgstr "Copier de %(c)s"
+
+msgid "No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3."
+msgstr "Cela ne change pas le code société a3 de ce client. Les valeurs du cabinet se fixent dans Réglages a3."

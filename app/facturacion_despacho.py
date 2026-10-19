@@ -197,6 +197,98 @@ def facturar_expediente(tenant_id: int, usuario_id: int, supervisor: bool, exped
     return {"id": registro, "idfactura": idfactura, "codigo": codigo, "base": base}
 
 
+MAX_PARTES_POR_FACTURA = 60
+
+
+def horas_sin_facturar(tenant_id: int, expediente_id: int) -> list[dict]:
+    """Los partes de horas facturables del expediente que aún no van en ninguna factura, con su importe a la tarifa con la que se registraron (0 si no tenían tarifa)."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT p.id, p.fecha, p.descripcion, p.segundos, p.tarifa_hora_centimos, COALESCE(pr.nombre_mostrado, u.email) AS usuario FROM partes_tiempo p "
+                             "JOIN usuarios u ON u.id = p.usuario_id LEFT JOIN usuario_perfil pr ON pr.usuario_id = p.usuario_id "
+                             "WHERE p.tenant_id = ? AND p.expediente_id = ? AND p.facturable = 1 AND p.facturado_en IS NULL AND p.papelera_en IS NULL ORDER BY p.fecha, p.id LIMIT 300",
+                             (tenant_id, expediente_id)).fetchall()
+    finally:
+        conn.close()
+    return [dict(f, importe_centimos=nucleo.importe_centimos(f["segundos"], f["tarifa_hora_centimos"])) for f in filas]
+
+
+def _linea_de_horas(p: dict) -> dict:
+    h, m = divmod(p["segundos"] // 60, 60)
+    return {"descripcion": f"{p['fecha']} · {p['descripcion'][:120]} ({h}:{m:02d} h × {p['tarifa_hora_centimos'] / 100:.2f} €/h)", "cantidad": 1, "precio": p["importe_centimos"] / 100}
+
+
+def facturar_horas(tenant_id: int, usuario_id: int, supervisor: bool, expediente_id: int, parte_ids: list[int]) -> dict:
+    """Factura en FacturaScripts las horas elegidas del expediente (una línea por parte, a la tarifa con la que se registró) y las marca como facturadas. Las horas se reservan antes de crear la factura
+    (dos envíos a la vez no las facturan dos veces) y se liberan si FacturaScripts falla. `ValueError` si algo no vale; `ErrorFacturaScripts` si FacturaScripts falla (entonces no queda nada marcado)."""
+    exp = nucleo.obtener_expediente(tenant_id, expediente_id, usuario_id, supervisor)
+    if exp is None:
+        raise ValueError("Expediente no encontrado.")
+    estado = situacion(tenant_id, usuario_id, supervisor, exp)
+    if not estado["disponible"]:
+        raise ValueError("Este despacho no tiene FacturaScripts configurado.")
+    if not estado["puede"]:
+        raise ValueError({"permiso": "Solo la dirección, la coordinación o quien lleva el expediente puede facturarlo.",
+                          "sin_gestion_fiscal": "El cliente no tiene gestión fiscal activada: actívala en su ficha para poder vincularlo con FacturaScripts.",
+                          "sin_vincular": "Vincula primero al cliente con FacturaScripts desde su ficha fiscal."}[estado["motivo"]])
+    ids = sorted({int(i) for i in parte_ids})
+    if not ids:
+        raise ValueError("Elige al menos un parte de horas.")
+    if len(ids) > MAX_PARTES_POR_FACTURA:
+        raise ValueError(f"Como máximo {MAX_PARTES_POR_FACTURA} partes por factura.")
+    libres = {p["id"]: p for p in horas_sin_facturar(tenant_id, expediente_id)}
+    if any(i not in libres for i in ids):
+        raise ValueError("Alguna de esas horas ya se ha facturado o no es de este expediente.")
+    partes = [libres[i] for i in ids]
+    if any(p["importe_centimos"] <= 0 for p in partes):
+        raise ValueError("Hay horas sin tarifa: fija la tarifa por hora de quien las registró o quítalas de la selección.")
+    hoy = db.now_iso()[:10]
+    marcas = ",".join("?" * len(ids))
+    conn = db.get_connection()
+    try:       # reserva atómica: solo sigue quien consigue marcarlas todas
+        cur = conn.execute(f"UPDATE partes_tiempo SET facturado_en = ? WHERE tenant_id = ? AND expediente_id = ? AND facturable = 1 AND facturado_en IS NULL AND papelera_en IS NULL AND id IN ({marcas})",
+                           [hoy, tenant_id, expediente_id, *ids])
+        if cur.rowcount != len(ids):
+            conn.rollback()
+            raise ValueError("Alguna de esas horas ya se ha facturado.")
+        conn.commit()
+    finally:
+        conn.close()
+    tenant = db.obtener_tenant(tenant_id)
+    try:
+        creada = facturascripts.crear_factura(tenant["facturascripts_url"], tenant["facturascripts_api_key"], estado["fiscal"]["facturascripts_cliente_codigo"], [_linea_de_horas(p) for p in partes])
+    except Exception:
+        conn = db.get_connection()
+        try:
+            conn.execute(f"UPDATE partes_tiempo SET facturado_en = NULL WHERE tenant_id = ? AND id IN ({marcas})", [tenant_id, *ids])
+            conn.commit()
+        finally:
+            conn.close()
+        raise
+    idfactura = str(creada.get("idfactura") or "") or None
+    codigo = None
+    try:
+        detalle = facturascripts.obtener_factura(tenant["facturascripts_url"], tenant["facturascripts_api_key"], idfactura) if idfactura else None
+        codigo = (detalle or {}).get("codigo")
+    except facturascripts.ErrorFacturaScripts:
+        pass
+    centimos = sum(p["importe_centimos"] for p in partes)
+    segundos = sum(p["segundos"] for p in partes)
+    concepto = f"Horas ({len(partes)} partes, {segundos // 3600}:{segundos % 3600 // 60:02d} h)"
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("INSERT INTO facturacion_expedientes (tenant_id, expediente_id, idfactura, codigo, concepto, base_centimos, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                           (tenant_id, expediente_id, idfactura, codigo, concepto, centimos, usuario_id, db.now_iso()))
+        nucleo._evento(conn, expediente_id, "factura", f"Factura {codigo or ('#' + idfactura if idfactura else '')} creada con horas: {concepto} ({_eur(centimos)} + IVA)".replace("  ", " "), usuario_id)
+        auditoria.registrar(tenant_id, usuario_id, "factura.horas", "expediente", expediente_id, {"idfactura": idfactura, "codigo": codigo, "partes": ids, "base_centimos": centimos}, conn=conn)
+        conn.commit()
+        registro = cur.lastrowid
+    finally:
+        conn.close()
+    olvidar_cache(tenant_id)
+    return {"id": registro, "idfactura": idfactura, "codigo": codigo, "base_centimos": centimos, "partes": len(partes)}
+
+
 def facturas_del_expediente(tenant_id: int, expediente_id: int) -> list[dict]:
     """Las facturas creadas desde el expediente, con su estado de cobro leído de FacturaScripts (`estado` es None si no se ha podido consultar)."""
     conn = db.get_connection()
