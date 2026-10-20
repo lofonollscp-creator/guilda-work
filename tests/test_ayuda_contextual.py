@@ -51,3 +51,15 @@ def test_las_pantallas_muestran_su_ayuda(cliente):
     assert b"https://help.guildawork.com/trabajo-diario/mi-dia/" in r.data
     assert "Ayuda sobre esta pantalla".encode() in r.data
     assert b"https://help.guildawork.com/trabajo-diario/notas/" in cliente.get("/notas").data
+
+
+def test_contabilizacion_de_facturas_tiene_su_ayuda(cliente):
+    from tests.test_facturas_contables import _web
+    assert ayuda.ruta_de("contabilidad.lista") == "contabilizacion-de-facturas/anotar-y-revisar-facturas"
+    assert ayuda.ruta_de("contabilidad.exportar") == "contabilizacion-de-facturas/empezar"
+    assert ayuda.ruta_de("contabilidad.comprobar_lote") == "contabilizacion-de-facturas/generar-el-fichero-para-a3"
+    assert ayuda.ruta_de("contabilidad.reglas") == ayuda.ruta_de("contabilidad.plan") == "contabilizacion-de-facturas/ajustes-de-a3"
+    assert ayuda.ruta_de("contabilidad.recordatorios") == "contabilizacion-de-facturas/recordar-y-automatizar"
+    _uid, _t, c = _web(cliente, "ayudaconta@ejemplo.com")
+    assert b"https://help.guildawork.com/contabilizacion-de-facturas/anotar-y-revisar-facturas/" in cliente.get("/contabilidad/").data
+    assert b"https://help.guildawork.com/contabilizacion-de-facturas/ajustes-de-a3/" in cliente.get("/contabilidad/ajustes").data
