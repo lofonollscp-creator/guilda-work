@@ -13606,3 +13606,15 @@ msgstr "Warns before exporting invoices from a closed period."
 
 msgid "Para exportarla habrá que confirmar el cierre."
 msgstr "To export it you will have to confirm the closure."
+
+msgid "Facturas de clientes"
+msgstr "Client invoices"
+
+msgid "Por revisar: %(n)s"
+msgstr "To review: %(n)s"
+
+msgid "Por leer: %(n)s"
+msgstr "To read: %(n)s"
+
+msgid "Para exportar: %(n)s"
+msgstr "Ready to export: %(n)s"

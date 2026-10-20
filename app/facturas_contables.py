@@ -1279,6 +1279,21 @@ def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
     return filas
 
 
+def pendientes_por_cliente(tenant_id: int, usuario_id: int) -> list[dict]:
+    """Por cada cliente que ve la persona, lo que espera en Facturas para contabilizar: pendientes de revisar (cuántas por leer y cuántas las subió el cliente), revisadas listas para exportar y la fecha
+    de la pendiente más antigua. Solo los clientes con algo pendiente o listo; lo que alimenta la bandeja «Hoy»."""
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT x.cliente_fiscal_id, c.nombre, SUM(x.estado = 'pendiente') AS pendientes, SUM(x.estado = 'revisada') AS revisadas, "
+                             "SUM(x.estado = 'pendiente' AND x.lectura IN ('pendiente', 'fallida')) AS por_leer, SUM(x.estado = 'pendiente' AND x.origen = 'portal') AS del_portal, "
+                             "MIN(CASE WHEN x.estado = 'pendiente' THEN x.creado_en END) AS antigua FROM facturas_contables x JOIN clientes_fiscales c ON c.id = x.cliente_fiscal_id "
+                             "WHERE x.tenant_id = ? AND x.estado IN ('pendiente', 'revisada') AND c.papelera_en IS NULL GROUP BY x.cliente_fiscal_id, c.nombre", (tenant_id,)).fetchall()
+    finally:
+        conn.close()
+    return [dict(f) for f in filas if visibles is None or f["cliente_fiscal_id"] in visibles]
+
+
 # --- Recordatorio a los clientes antes del cierre del trimestre ------------------------------------------------------------------------------------------
 
 DIAS_ENTRE_RECORDATORIOS = 3          # no se vuelve a escribir al mismo cliente por el mismo trimestre antes de esto

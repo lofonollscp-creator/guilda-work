@@ -7,10 +7,11 @@ from datetime import date, timedelta
 from flask import url_for
 from flask_babel import gettext as _, ngettext
 
-from . import ausencias, certificados, db, facturacion_despacho, mensajes_enlace, nucleo, resumen_pendientes, traspasos, verticales
+from . import ausencias, certificados, db, facturacion_despacho, facturas_contables, mensajes_enlace, nucleo, resumen_pendientes, traspasos, verticales
 
 DIAS_CERCANO = 7                 # «próximo»: lo que vence en la próxima semana
 DIAS_CERTIFICADO = 30
+DIAS_FACTURA_ANTIGUA = 5       # una factura de cliente que lleva tantos días sin revisar ya es urgente
 MAX_POR_SECCION = 25
 ORDEN_URGENCIA = {"vencido": 0, "hoy": 1, "proximo": 2, "info": 3}
 
@@ -100,6 +101,21 @@ def reunir(usuario_id: int, supervisor: bool = False, hoy: date | None = None) -
             destino = url_for("expedientes.ficha", expediente_id=f["expediente_id"]) + "#facturacion" if f["expediente_id"] else (url_for("clientes.ficha", cliente_id=f["cliente_id"], pestana="fiscal") if f["cliente_id"] else url_for("clientes.lista"))
             impagos.append(_item(_("Factura %(codigo)s sin cobrar", codigo=f["codigo"]), destino, "vencido", f"{f['cliente'] or ''} · {f['total']} €".strip(" ·"), f["fecha"]))
         secciones.append(_seccion("facturas", _("Facturas vencidas sin cobrar"), impagos))
+
+        if "contabilizacion" in activos:
+            limite_antiguas = (hoy - timedelta(days=DIAS_FACTURA_ANTIGUA)).isoformat()
+            facturas_cli = []
+            for c in facturas_contables.pendientes_por_cliente(tid, usuario_id):
+                partes = []
+                if c["pendientes"]:
+                    partes.append(_("Por revisar: %(n)s", n=c["pendientes"]))
+                if c["por_leer"]:
+                    partes.append(_("Por leer: %(n)s", n=c["por_leer"]))
+                if c["revisadas"]:
+                    partes.append(_("Para exportar: %(n)s", n=c["revisadas"]))
+                urgente = bool(c["del_portal"]) or bool(c["antigua"] and c["antigua"][:10] <= limite_antiguas)
+                facturas_cli.append(_item(c["nombre"], url_for("contabilidad.lista", cliente_id=c["cliente_fiscal_id"]), "hoy" if urgente else "info", " · ".join(partes), c["antigua"]))
+            secciones.append(_seccion("contabilizacion", _("Facturas de clientes"), facturas_cli))
 
         if certificados.puede_gestionar(usuario_id, tid):
             cert = []

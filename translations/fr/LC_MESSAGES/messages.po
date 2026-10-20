@@ -13691,3 +13691,15 @@ msgstr "Avertit avant d'exporter des factures d'une période clôturée."
 
 msgid "Para exportarla habrá que confirmar el cierre."
 msgstr "Pour l'exporter, il faudra confirmer la clôture."
+
+msgid "Facturas de clientes"
+msgstr "Factures des clients"
+
+msgid "Por revisar: %(n)s"
+msgstr "À vérifier : %(n)s"
+
+msgid "Por leer: %(n)s"
+msgstr "À lire : %(n)s"
+
+msgid "Para exportar: %(n)s"
+msgstr "À exporter : %(n)s"
