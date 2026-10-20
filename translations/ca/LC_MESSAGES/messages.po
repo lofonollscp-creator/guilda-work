@@ -13414,3 +13414,48 @@ msgstr "Fitxer exportat d'a3"
 
 msgid "Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa."
 msgstr "Fins a 5 MB. No es desa res fins que confirmis la vista prèvia."
+
+msgid "Pre-chequeo de la exportación"
+msgstr "Pre-xequeig de l'exportació"
+
+msgid "Pre-chequeo de un fichero generado"
+msgstr "Pre-xequeig d'un fitxer generat"
+
+msgid "Elige un fichero SUENLACE.DAT."
+msgstr "Tria un fitxer SUENLACE.DAT."
+
+msgid "El fichero es demasiado grande (máximo 2 MB)."
+msgstr "El fitxer és massa gran (màxim 2 MB)."
+
+msgid "Comprobar un fichero"
+msgstr "Comprova un fitxer"
+
+msgid "Comprobar antes"
+msgstr "Comprova abans"
+
+msgid "Sin errores"
+msgstr "Sense errors"
+
+msgid "Errores: %(n)s"
+msgstr "Errors: %(n)s"
+
+msgid "Avisos: %(n)s"
+msgstr "Avisos: %(n)s"
+
+msgid "%(f)s facturas (%(a)s abonos), %(r)s registros, total %(t)s €."
+msgstr "%(f)s factures (%(a)s abonaments), %(r)s registres, total %(t)s €."
+
+msgid "El fichero cumple lo que comprueba este pre-chequeo. Aun así, pásalo por el botón «Chequeo» de a3 en una empresa de pruebas la primera vez."
+msgstr "El fitxer compleix el que comprova aquest pre-xequeig. Tot i així, passa'l pel botó «Chequeo» d'a3 en una empresa de proves la primera vegada."
+
+msgid "Avisos"
+msgstr "Avisos"
+
+msgid "Subcuentas nuevas que se asignarían"
+msgstr "Subcomptes noves que s'assignarien"
+
+msgid "Sube un SUENLACE.DAT (por ejemplo, uno hecho por otro programa) y se revisa por sus posiciones antes de llevarlo a a3. No se guarda."
+msgstr "Puja un SUENLACE.DAT (per exemple, un fet per un altre programa) i es revisa per les seves posicions abans de portar-lo a a3. No es desa."
+
+msgid "Fichero SUENLACE.DAT"
+msgstr "Fitxer SUENLACE.DAT"

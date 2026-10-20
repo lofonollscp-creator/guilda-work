@@ -1,0 +1,20 @@
+{% macro informe_chequeo(informe) %}
+<section class="dash-panel">
+  <h2>{% if informe.ok %}{{ _('Sin errores') }}{% else %}{{ _('Errores: %(n)s', n=informe.errores|length) }}{% endif %}
+    {% if informe.avisos %} · {{ _('Avisos: %(n)s', n=informe.avisos|length) }}{% endif %}</h2>
+  <p class="muted">{{ _('%(f)s facturas (%(a)s abonos), %(r)s registros, total %(t)s €.', f=informe.facturas, a=informe.totales.abonos, r=informe.registros, t='%.2f'|format(informe.totales.total)) }}</p>
+  {% if informe.ok %}<p class="portal-peticion" role="status"><strong>{{ _('El fichero cumple lo que comprueba este pre-chequeo. Aun así, pásalo por el botón «Chequeo» de a3 en una empresa de pruebas la primera vez.') }}</strong></p>{% endif %}
+</section>
+{% if informe.errores %}
+<section class="dash-panel">
+  <h2>{{ _('Errores') }}</h2>
+  <ul class="log-list">{% for e in informe.errores %}<li class="log-item"><span class="pill prioridad-alta">{{ e.registro or '—' }}</span> <span class="log-text">{{ e.mensaje }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% if informe.avisos %}
+<section class="dash-panel">
+  <h2>{{ _('Avisos') }}</h2>
+  <ul class="log-list">{% for e in informe.avisos %}<li class="log-item"><span class="pill">{{ e.registro or '—' }}</span> <span class="log-text">{{ e.mensaje }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% endmacro %}

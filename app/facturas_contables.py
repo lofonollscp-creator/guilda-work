@@ -726,8 +726,8 @@ def _para_enlace(tenant_id: int, f: dict, cfg: dict, nuevas: dict | None = None)
                    for l in f["lineas"]]}
 
 
-def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: str | None = None, hasta: str | None = None) -> dict:
-    """Genera el SUENLACE.DAT con las facturas **revisadas** del cliente (en el rango de fechas, si se da), las marca como exportadas y guarda el lote. `ValueError` si no hay nada que exportar."""
+def _preparar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, desde: str | None, hasta: str | None):
+    """Las facturas revisadas del cliente y el fichero que saldría con ellas (sin guardar nada): (cliente, cfg, facturas, subcuentas nuevas, contenido)."""
     cliente = _cliente(tenant_id, usuario_id, cliente_fiscal_id)
     cfg = configuracion(tenant_id, cliente_fiscal_id)
     if not cfg["a3_empresa"]:
@@ -741,6 +741,29 @@ def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: 
             raise ValueError(f"La factura {f['numero']} tiene problemas: " + " ".join(f["problemas"]))
     nuevas = _subcuentas_nuevas(tenant_id, cfg, facturas)
     contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg, nuevas) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"])
+    return cliente, cfg, facturas, nuevas, contenido
+
+
+def comprobar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: str | None = None, hasta: str | None = None) -> dict:
+    """Pre-chequeo de lo que se exportaría ahora: genera el fichero en memoria, lo relee por sus posiciones y devuelve el informe (ver app/enlace_a3_chequeo.py). No marca ni guarda nada."""
+    from . import enlace_a3_chequeo
+    cliente, cfg, facturas, nuevas, contenido = _preparar_exportacion(tenant_id, usuario_id, cliente_fiscal_id, desde, hasta)
+    informe = enlace_a3_chequeo.chequear(contenido, cfg["digitos"])
+    informe["cliente"] = cliente["nombre"]
+    informe["subcuentas_nuevas"] = [{"tipo": t, "nif": nif, "cuenta": c, "nombre": nom} for (t, nif), (c, nom) in nuevas.items()]
+    informe["numeros"] = [f["numero"] for f in facturas]
+    return informe
+
+
+def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: str | None = None, hasta: str | None = None) -> dict:
+    """Genera el SUENLACE.DAT con las facturas **revisadas** del cliente (en el rango de fechas, si se da), las marca como exportadas y guarda el lote. Antes lo pasa por el pre-chequeo y no lo
+    entrega si encuentra errores. `ValueError` si no hay nada que exportar."""
+    from . import enlace_a3_chequeo
+    cliente, cfg, facturas, nuevas, contenido = _preparar_exportacion(tenant_id, usuario_id, cliente_fiscal_id, desde, hasta)
+    chequeo = enlace_a3_chequeo.chequear(contenido, cfg["digitos"])
+    if chequeo["errores"]:
+        e = chequeo["errores"][0]
+        raise ValueError(f"El fichero no pasa el pre-chequeo ({len(chequeo['errores'])} errores). El primero{' (registro %d)' % e['registro'] if e['registro'] else ''}: {e['mensaje']}")
     n_registros = contenido.count(b"\r\n")
     conn = db.get_connection()
     try:
@@ -756,7 +779,7 @@ def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: 
         conn.commit()
     finally:
         conn.close()
-    return {"lote": lote, "n_facturas": len(facturas), "n_registros": n_registros, "contenido": contenido, "cliente": cliente["nombre"]}
+    return {"lote": lote, "n_facturas": len(facturas), "n_registros": n_registros, "contenido": contenido, "cliente": cliente["nombre"], "avisos": chequeo["avisos"]}
 
 
 def listar_lotes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, limite: int = 50) -> list[dict]:
@@ -780,6 +803,23 @@ def contenido_del_lote(tenant_id: int, usuario_id: int, lote_id: int) -> bytes |
     if f is None or not acceso.puede_ver_cliente(tenant_id, usuario_id, f["cliente_fiscal_id"]):
         return None
     return bytes(f["contenido"])
+
+
+def comprobar_lote(tenant_id: int, usuario_id: int, lote_id: int) -> dict | None:
+    """Pre-chequeo de un fichero ya generado (con los dígitos que tiene configurados el cliente), o None si no existe o no se puede ver."""
+    from . import enlace_a3_chequeo
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT l.cliente_fiscal_id, l.contenido, l.creado_en, c.nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id WHERE l.id = ? AND l.tenant_id = ?",
+                         (lote_id, tenant_id)).fetchone()
+    finally:
+        conn.close()
+    if f is None or not acceso.puede_ver_cliente(tenant_id, usuario_id, f["cliente_fiscal_id"]):
+        return None
+    informe = enlace_a3_chequeo.chequear(bytes(f["contenido"]), configuracion(tenant_id, f["cliente_fiscal_id"])["digitos"])
+    informe["cliente"] = f["nombre"]
+    informe["creado_en"] = f["creado_en"]
+    return informe
 
 
 # --- Subida desde el portal del cliente ------------------------------------------------------------------------------------------------------------------

@@ -13490,3 +13490,48 @@ msgstr "Fichier exporté d'a3"
 
 msgid "Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa."
 msgstr "Jusqu'à 5 Mo. Rien n'est enregistré avant que vous confirmiez l'aperçu."
+
+msgid "Pre-chequeo de la exportación"
+msgstr "Pré-contrôle de l'export"
+
+msgid "Pre-chequeo de un fichero generado"
+msgstr "Pré-contrôle d'un fichier généré"
+
+msgid "Elige un fichero SUENLACE.DAT."
+msgstr "Choisissez un fichier SUENLACE.DAT."
+
+msgid "El fichero es demasiado grande (máximo 2 MB)."
+msgstr "Le fichier est trop volumineux (2 Mo maximum)."
+
+msgid "Comprobar un fichero"
+msgstr "Vérifier un fichier"
+
+msgid "Comprobar antes"
+msgstr "Vérifier d'abord"
+
+msgid "Sin errores"
+msgstr "Aucune erreur"
+
+msgid "Errores: %(n)s"
+msgstr "Erreurs : %(n)s"
+
+msgid "Avisos: %(n)s"
+msgstr "Avertissements : %(n)s"
+
+msgid "%(f)s facturas (%(a)s abonos), %(r)s registros, total %(t)s €."
+msgstr "%(f)s factures (%(a)s avoirs), %(r)s enregistrements, total %(t)s €."
+
+msgid "El fichero cumple lo que comprueba este pre-chequeo. Aun así, pásalo por el botón «Chequeo» de a3 en una empresa de pruebas la primera vez."
+msgstr "Le fichier respecte ce que vérifie ce pré-contrôle. Passez-le tout de même par le bouton « Chequeo » d'a3 dans une société de test la première fois."
+
+msgid "Avisos"
+msgstr "Avertissements"
+
+msgid "Subcuentas nuevas que se asignarían"
+msgstr "Nouveaux sous-comptes qui seraient attribués"
+
+msgid "Sube un SUENLACE.DAT (por ejemplo, uno hecho por otro programa) y se revisa por sus posiciones antes de llevarlo a a3. No se guarda."
+msgstr "Téléversez un SUENLACE.DAT (par exemple, créé par un autre programme) : il est vérifié par ses positions avant d'aller dans a3. Il n'est pas enregistré."
+
+msgid "Fichero SUENLACE.DAT"
+msgstr "Fichier SUENLACE.DAT"

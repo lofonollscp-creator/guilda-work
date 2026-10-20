@@ -44,6 +44,7 @@
     <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
     <label>{{ _('Facturas revisadas de') }} <select name="trimestre"><option value="">{{ _('Todas las fechas') }}</option>{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ t }}</option>{% endfor %}</select></label>
     <button type="submit" class="btn btn-primary" {{ 'disabled' if not resumen.revisada }}>{{ _('Generar SUENLACE.DAT') }}</button>
+    <button type="submit" class="btn btn-ghost" formaction="{{ url_for('contabilidad.comprobar') }}" {{ 'disabled' if not resumen.revisada }}>{{ _('Comprobar antes') }}</button>
   </form>
   <p class="muted">{{ _('Solo entran las facturas revisadas que aún no se han exportado. En a3: Utilidades › Importar/Exportar › Enlace contable.') }}</p>
   <p class="muted">{{ _('Primer uso: importa el fichero en una empresa de pruebas de a3 y pásalo por el botón «Chequeo» antes de usarlo en una real. El formato sigue la descripción oficial del enlace de entrada de a3 (registros de 512 bytes).') }}</p>

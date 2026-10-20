@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, enlace_a3, importador_clientes, lectura_facturas, plan_cuentas, verticales
+from . import acceso, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from .auth import login_required
 
@@ -297,6 +297,47 @@ def exportar():
     except ValueError as e:
         return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
     return _descarga(r["contenido"])
+
+
+@contabilidad_bp.route("/comprobar", methods=["POST"])
+@login_required
+def comprobar():
+    """Pre-chequeo de lo que saldría ahora para un cliente (y trimestre): no marca ni guarda nada."""
+    cliente_id = request.form.get("cliente_id", type=int)
+    trimestre = request.form.get("trimestre") or None
+    try:
+        desde, hasta = fc.rango_del_trimestre(trimestre) if trimestre else (None, None)
+        informe = fc.comprobar_exportacion(g.tenant_id, g.usuario_id, cliente_id, desde=desde, hasta=hasta)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+    return render_template("contabilidad_chequeo.html", informe=informe, titulo=_("Pre-chequeo de la exportación"), cliente_id=cliente_id, trimestre=trimestre or "")
+
+
+@contabilidad_bp.route("/lotes/<int:lote_id>/comprobar")
+@login_required
+def comprobar_lote(lote_id: int):
+    informe = fc.comprobar_lote(g.tenant_id, g.usuario_id, lote_id)
+    if informe is None:
+        abort(404)
+    return render_template("contabilidad_chequeo.html", informe=informe, titulo=_("Pre-chequeo de un fichero generado"), cliente_id=None, trimestre="")
+
+
+@contabilidad_bp.route("/comprobar-fichero", methods=["GET", "POST"])
+@login_required
+def comprobar_fichero():
+    """Pre-chequeo de cualquier SUENLACE.DAT que se suba (por ejemplo, uno hecho por otro programa)."""
+    informe = error = None
+    if request.method == "POST":
+        archivo = request.files.get("archivo")
+        contenido = archivo.read(2 * 1024 * 1024 + 1) if archivo is not None and archivo.filename else b""
+        if not contenido:
+            error = _("Elige un fichero SUENLACE.DAT.")
+        elif len(contenido) > 2 * 1024 * 1024:
+            error = _("El fichero es demasiado grande (máximo 2 MB).")
+        else:
+            informe = enlace_a3_chequeo.chequear(contenido, min(12, max(4, request.form.get("digitos", 8, type=int) or 8)))
+            informe["cliente"] = archivo.filename[:100]
+    return render_template("contabilidad_chequeo_fichero.html", informe=informe, error=error)
 
 
 def _descarga(contenido: bytes) -> Response:

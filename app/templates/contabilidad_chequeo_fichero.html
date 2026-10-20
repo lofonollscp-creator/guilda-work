@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% from "_chequeo_informe.html" import informe_chequeo %}
+{% block title %}{{ _('Comprobar un fichero') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Comprobar un fichero') }}</h1>
+    <p class="subtitle">{{ _('Sube un SUENLACE.DAT (por ejemplo, uno hecho por otro programa) y se revisa por sus posiciones antes de llevarlo a a3. No se guarda.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lotes') }}">‹ {{ _('Ficheros generados') }}</a>
+</header>
+{{ aviso_error(error) }}
+<form method="post" enctype="multipart/form-data" class="edit-form ds-max-640">
+  <input type="file" name="archivo" required aria-label="{{ _('Fichero SUENLACE.DAT') }}">
+  <label>{{ _('Dígitos de las subcuentas del plan') }}<input type="number" name="digitos" value="8" min="4" max="12"></label>
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Comprobar') }}</button></div>
+</form>
+{% if informe %}{{ informe_chequeo(informe) }}{% endif %}
+{% endblock %}

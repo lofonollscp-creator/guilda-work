@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_chequeo_informe.html" import informe_chequeo %}
+{% block title %}{{ titulo }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitle">{{ informe.cliente }}{% if informe.creado_en %} · {{ informe.creado_en[:16]|replace('T', ' ') }}{% endif %}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente_id, trimestre=trimestre or None) if cliente_id else url_for('contabilidad.lotes') }}">‹ {{ _('Volver') }}</a>
+</header>
+{{ informe_chequeo(informe) }}
+{% if informe.subcuentas_nuevas %}
+<section class="dash-panel">
+  <h2>{{ _('Subcuentas nuevas que se asignarían') }}</h2>
+  <ul class="log-list">{% for s in informe.subcuentas_nuevas %}<li class="log-item"><span class="log-text">{{ s.cuenta }} · {{ s.nombre }} <span class="muted">({{ s.nif }})</span></span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% if cliente_id and informe.ok %}
+<form method="post" action="{{ url_for('contabilidad.exportar') }}" class="ds-fila">
+  <input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="trimestre" value="{{ trimestre }}">
+  <button type="submit" class="btn btn-primary">{{ _('Generar SUENLACE.DAT') }}</button>
+</form>
+{% endif %}
+{% endblock %}

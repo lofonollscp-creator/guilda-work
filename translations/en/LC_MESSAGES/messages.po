@@ -13405,3 +13405,48 @@ msgstr "File exported from a3"
 
 msgid "Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa."
 msgstr "Up to 5 MB. Nothing is saved until you confirm the preview."
+
+msgid "Pre-chequeo de la exportación"
+msgstr "Export pre-check"
+
+msgid "Pre-chequeo de un fichero generado"
+msgstr "Pre-check of a generated file"
+
+msgid "Elige un fichero SUENLACE.DAT."
+msgstr "Choose a SUENLACE.DAT file."
+
+msgid "El fichero es demasiado grande (máximo 2 MB)."
+msgstr "The file is too large (maximum 2 MB)."
+
+msgid "Comprobar un fichero"
+msgstr "Check a file"
+
+msgid "Comprobar antes"
+msgstr "Check first"
+
+msgid "Sin errores"
+msgstr "No errors"
+
+msgid "Errores: %(n)s"
+msgstr "Errors: %(n)s"
+
+msgid "Avisos: %(n)s"
+msgstr "Warnings: %(n)s"
+
+msgid "%(f)s facturas (%(a)s abonos), %(r)s registros, total %(t)s €."
+msgstr "%(f)s invoices (%(a)s credit notes), %(r)s records, total %(t)s €."
+
+msgid "El fichero cumple lo que comprueba este pre-chequeo. Aun así, pásalo por el botón «Chequeo» de a3 en una empresa de pruebas la primera vez."
+msgstr "The file meets what this pre-check verifies. Even so, run it through a3's “Chequeo” button in a test company the first time."
+
+msgid "Avisos"
+msgstr "Warnings"
+
+msgid "Subcuentas nuevas que se asignarían"
+msgstr "New subaccounts that would be assigned"
+
+msgid "Sube un SUENLACE.DAT (por ejemplo, uno hecho por otro programa) y se revisa por sus posiciones antes de llevarlo a a3. No se guarda."
+msgstr "Upload a SUENLACE.DAT (for example, one made by another program) and it is checked by its positions before taking it to a3. It is not saved."
+
+msgid "Fichero SUENLACE.DAT"
+msgstr "SUENLACE.DAT file"
