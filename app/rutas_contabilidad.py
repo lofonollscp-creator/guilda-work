@@ -427,3 +427,6 @@ def descargar_lote(lote_id: int):
     if contenido is None:
         abort(404)
     return _descarga(contenido)
+
+
+from . import rutas_api_contabilidad  # noqa: E402,F401 -- registra las rutas de la API REST de este módulo en api_bp

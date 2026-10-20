@@ -469,6 +469,54 @@ HERRAMIENTAS: list[dict] = [
         ["certificado_id"],
     ),
     _tool(
+        "contabilidad_listar_facturas",
+        "Facturas anotadas en Facturas para contabilizar (las más recientes primero), con estado y procedencia.",
+        {"cliente_fiscal_id": _param("integer", "Solo las de este cliente fiscal, opcional."), "estado": _param("string", "pendiente, revisada, exportada o descartada, opcional."), "tipo": _param("string", "emitida o recibida, opcional."), "trimestre": _param("string", "Por ejemplo 2026-T3, opcional."), "limite": _param("integer", "Máximo de facturas (50 por defecto).")},
+        [],
+    ),
+    _tool(
+        "contabilidad_ver_factura",
+        "Una factura para contabilizar entera: datos, líneas de IVA, subcuenta, problemas que impiden revisarla y si su periodo está cerrado.",
+        {"factura_id": _param("integer", "Id de la factura.")},
+        ["factura_id"],
+    ),
+    _tool(
+        "contabilidad_resumen",
+        "Qué espera en Facturas para contabilizar, cliente por cliente: por revisar, por leer con IA y listas para exportar.",
+        {},
+        [],
+    ),
+    _tool(
+        "contabilidad_comprobar_exportacion",
+        "Pre-chequeo del SUENLACE.DAT que saldría ahora para un cliente (y trimestre): errores y avisos por registro, periodos cerrados y subcuentas nuevas. No guarda nada.",
+        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "trimestre": _param("string", "Por ejemplo 2026-T3, opcional.")},
+        ["cliente_fiscal_id"],
+    ),
+    _tool(
+        "contabilidad_anotar_factura",
+        "Anota una factura de un cliente de la gestoría para contabilizarla (queda pendiente de revisar). Lo que dejes en blanco lo rellenan el régimen del cliente y la regla del proveedor.",
+        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "tipo": _param("string", "emitida o recibida."), "fecha": _param("string", "AAAA-MM-DD."), "numero": _param("string", "Número de la factura."), "tercero_nombre": _param("string", "Nombre del proveedor (recibida) o cliente (emitida)."), "tercero_nif": _param("string", "NIF del proveedor o cliente, recomendado."), "lineas": _param("array", "Una por tipo de IVA: {\"base\": \"1.234,56\", \"pct_iva\": 21}; opcionales cuota_iva, pct_recargo, pct_retencion, cuenta, subtipo."), "concepto": _param("string", "Concepto breve, opcional."), "abono": _param("boolean", "true si es un abono o rectificativa."), "rectifica_numero": _param("string", "Número de la factura que rectifica (abonos)."), "rectifica_fecha": _param("string", "Fecha AAAA-MM-DD de la factura que rectifica (abonos).")},
+        ["cliente_fiscal_id", "tipo", "fecha", "numero", "tercero_nombre", "lineas"],
+    ),
+    _tool(
+        "contabilidad_cambiar_estado_factura",
+        "Da una factura por revisada, la reabre (pendiente) o la descarta.",
+        {"factura_id": _param("integer", "Id de la factura."), "estado": _param("string", "revisada, pendiente o descartada.")},
+        ["factura_id", "estado"],
+    ),
+    _tool(
+        "contabilidad_leer_factura_con_ia",
+        "Lee con IA la foto o el PDF adjunto de una factura y rellena sus datos (queda pendiente de revisar). Gasta una consulta de tu modelo, que debe tener visión.",
+        {"factura_id": _param("integer", "Id de la factura con archivo adjunto.")},
+        ["factura_id"],
+    ),
+    _tool(
+        "contabilidad_exportar",
+        "Genera el SUENLACE.DAT para a3 con las facturas revisadas del cliente (y trimestre) y las marca como exportadas. No exporta periodos cerrados. Devuelve el número de lote.",
+        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "trimestre": _param("string", "Por ejemplo 2026-T3, opcional.")},
+        ["cliente_fiscal_id"],
+    ),
+    _tool(
         "ver_mis_turnos",
         "Tus turnos de trabajo entre dos fechas (por defecto, las próximas dos semanas).",
         {"desde": _param("string", "AAAA-MM-DD, opcional."), "hasta": _param("string", "AAAA-MM-DD, opcional.")},
@@ -1003,6 +1051,7 @@ LECTURA: set[str] = {
     "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
     "listar_documentos_despacho", "leer_documento_despacho", "listar_certificados", "riesgos_de_certificados", "panel_fiscal", "listar_traspasos",
     "listar_facturas_cliente",
+    "contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion",
     "abogados_provision_asunto", "abogados_partes_asunto", "abogados_agenda_vistas", "abogados_comprobar_conflicto", "inmobiliaria_listar_inmuebles", "inmobiliaria_cruces_de_demanda", "inmobiliaria_agenda_visitas", "inmobiliaria_resumen", "mensajes_de_enlace",
     "crm_listar_leads", "crm_listar_contactos", "crm_listar_cuentas",
     "drive_listar_archivos", "drive_buscar_archivos", "enviar_archivo_drive_al_chat",
@@ -1033,6 +1082,7 @@ ESCRITURA: set[str] = {
     "cambiar_estado_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
     "cambiar_mis_ajustes",
     "pedir_ausencia", "cancelar_ausencia", "resolver_ausencia", "asignar_turno", "ajustar_bolsa_de_horas",
+    "contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar",
     "registrar_certificado", "renovar_certificado", "comprobar_certificado", "proponer_traspaso", "resolver_traspaso",
 }
 

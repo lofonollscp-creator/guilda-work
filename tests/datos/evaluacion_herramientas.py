@@ -111,6 +111,10 @@ CASOS: list[tuple[str, str]] = [
     ("qué mensajes ha escrito el cliente desde su enlace del asunto", "mensajes_de_enlace"),
     ("responde al mensaje del propietario desde su enlace", "responder_mensaje_de_enlace"),
     ("comprueba si el certificado digital está revocado", "comprobar_certificado"),
+    ("qué facturas de clientes hay pendientes de contabilizar", "contabilidad_listar_facturas"),
+    ("comprueba el fichero suenlace antes de llevarlo a a3", "contabilidad_comprobar_exportacion"),
+    ("anota la factura del cliente para contabilizarla", "contabilidad_anotar_factura"),
+    ("genera el fichero suenlace para a3 de este cliente", "contabilidad_exportar"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

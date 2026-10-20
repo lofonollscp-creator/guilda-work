@@ -42,6 +42,7 @@ GRUPOS: dict[str, tuple[str, ...]] = {
     "fichaje": ("fichar", "listar_mis_fichajes", "listar_mis_ausencias", "saldo_vacaciones", "pedir_ausencia", "cancelar_ausencia", "listar_ausencias_equipo", "resolver_ausencia", "ver_mis_turnos", "ver_cuadrante", "asignar_turno", "ver_bolsa_de_horas", "ajustar_bolsa_de_horas"),
     "tiquets": ("listar_tiquets", "crear_tiquet", "editar_tiquet", "eliminar_tiquet", "cambiar_estado_tiquet"),
     "facturacion": ("listar_facturas_cliente", "crear_factura_cliente"),
+    "contabilidad": ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar"),
     "crm": ("crm_listar_leads", "crm_crear_lead", "crm_listar_contactos", "crm_crear_contacto", "crm_listar_cuentas", "crm_crear_cuenta"),
     "archivos": (
         "drive_listar_archivos", "drive_buscar_archivos", "drive_subir_archivo", "enviar_archivo_drive_al_chat",
@@ -59,6 +60,7 @@ DESCRIPCIONES: dict[str, str] = {
     "fichaje": "fichar entrada/salida, ver fichajes, ausencias y vacaciones, turnos y bolsa de horas",
     "tiquets": "tiquets de soporte",
     "facturacion": "facturas de clientes",
+    "contabilidad": "facturas de los clientes de la gestoría para contabilizar en a3: anotar, revisar, leer con IA, comprobar y exportar el fichero SUENLACE",
     "crm": "leads, contactos y cuentas del CRM",
     "archivos": "Drive, hojas de cálculo y documentos generados",
     "firmas": "documentos para firma electrónica",
@@ -75,6 +77,7 @@ PALABRAS: dict[str, tuple[str, ...]] = {
     "fichaje": ("fich", "jornada", "entrada", "salida", "horas trabaj", "ausencia", "vacacion", "permiso", "turno", "cuadrante", "bolsa de horas", "bolsa de", "baja m"),
     "tiquets": ("tiquet", "ticket", "incidencia"),
     "facturacion": ("factura", "cobr"),
+    "contabilidad": ("contabiliz", "suenlace", "a3", "pre-chequeo", "prechequeo", "para contabilizar", "factura del cliente", "facturas del cliente", "facturas de mis clientes", "lectura con ia", "anota la factura"),
     "crm": ("crm", "lead", "contacto", "oportunidad"),
     "archivos": ("drive", "archivo", "fichero", "documento", "hoja de c", "hojas de c", "hoja", "tabla", "excel", "pdf", "sube", "descarga"),
     "firmas": ("firma", "firmar", "documenso"),

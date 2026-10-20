@@ -66,6 +66,7 @@ _PROPIAS_GUILDA_WORK = {
     "listar_certificados", "riesgos_de_certificados", "registrar_certificado", "renovar_certificado", "panel_fiscal", "listar_traspasos", "proponer_traspaso", "resolver_traspaso", "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
     "listar_documentos_despacho", "leer_documento_despacho",
     "listar_facturas_cliente", "crear_factura_cliente",
+    "contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar",
     "mover_correo", "destacar_correo", "posponer_correo", "listar_reglas_correo", "crear_regla_correo",
     "eliminar_regla_correo", "listar_conversacion_correo", "crear_tarea_desde_correo", "guardar_nota_desde_correo",
     "listar_proyectos", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto", "eliminar_nota",

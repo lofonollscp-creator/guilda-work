@@ -463,3 +463,39 @@ RESPUESTAS.update({
     "mensajes_asunto_api": ("HiloMensajes", False), "mensajes_inmueble_api": ("HiloMensajes", False), "responder_asunto_api": ("Identificador", False), "responder_inmueble_api": ("Identificador", False),
     "comprobar_certificado_api": ("Certificado", False),
 })
+
+
+# --- Facturas para contabilizar (app/rutas_api_contabilidad.py) ---------------------------------------------------------------------------------------
+ETIQUETAS["contabilidad"] = "Facturas para contabilizar: anotar, revisar, leer con IA, comprobar y exportar el SUENLACE.DAT para a3."
+_TIPOS["lineas"] = {"type": "array", "items": {"type": "object", "properties": {"base": {"type": "string", "description": "Base imponible («1.234,56»)."}, "pct_iva": {"type": "string"},
+                    "cuota_iva": {"type": "string"}, "pct_recargo": {"type": "string"}, "pct_retencion": {"type": "string"}, "cuenta": {"type": "string"}, "subtipo": {"type": "string"}}}}
+_BOOLEANOS |= {"abono", "criterio_caja"}
+REQUERIDOS.update({"anotar_factura_contable_api": ("cliente_fiscal_id", "tipo", "fecha", "numero", "tercero_nombre", "lineas"), "estado_factura_contable_api": ("estado",)})
+_S, _I, _B, _SN = {"type": "string"}, {"type": "integer"}, {"type": "boolean"}, {"type": "string", "nullable": True}
+_N = {"type": "number", "nullable": True}
+ESQUEMAS.update({
+    "FacturaContable": {"type": "object", "properties": {"id": _I, "cliente_fiscal_id": _I, "cliente": _SN, "tipo": {"type": "string", "enum": ["emitida", "recibida"]}, "abono": _B, "fecha": _S, "trimestre": _S,
+                                                       "numero": _S, "tercero": _S, "nif": _SN, "total": _N, "estado": {"type": "string", "enum": ["pendiente", "revisada", "exportada", "descartada"]},
+                                                       "origen": _S, "lectura": _SN, "tiene_archivo": _B}},
+    "FacturaContableDetalle": {"type": "object", "properties": {"id": _I, "cliente_fiscal_id": _I, "cliente": _SN, "tipo": _S, "abono": _B, "fecha": _S, "trimestre": _S, "numero": _S, "tercero": _S, "nif": _SN,
+                                                               "total": _N, "estado": _S, "origen": _S, "lectura": _SN, "tiene_archivo": _B, "fecha_operacion": _S, "concepto": _SN, "referencia": _SN,
+                                                               "subcuenta_tercero": _SN, "rectifica_numero": _SN, "rectifica_fecha": _SN, "criterio_caja": _B, "suplidos": _N, "notas": _SN,
+                                                               "lectura_error": _SN, "problemas": {"type": "array", "items": _S}, "periodo_cerrado": _SN,
+                                                               "lineas": {"type": "array", "items": {"type": "object", "properties": {"base": _N, "pct_iva": {"type": "number"}, "cuota_iva": _N,
+                                                                          "pct_recargo": {"type": "number"}, "cuota_recargo": _N, "pct_retencion": {"type": "number"}, "cuota_retencion": _N,
+                                                                          "cuenta": _SN, "tipo_operacion": _S}}},
+                                                               "avisos_de_la_lectura": {"type": "array", "items": _S}}},
+    "ResumenContabilidad": {"type": "object", "properties": {"por_revisar": _I, "por_leer": _I, "para_exportar": _I, "clientes": {"type": "array", "items": {"type": "object", "properties": {
+        "cliente_fiscal_id": _I, "cliente": _S, "por_revisar": _I, "por_leer": _I, "para_exportar": _I, "del_portal": _I, "mas_antigua": _SN}}}}},
+    "ChequeoExportacion": {"type": "object", "properties": {"cliente": _S, "ok": _B, "facturas": _I, "registros": _I, "total": _N,
+                                                           "errores": {"type": "array", "items": {"type": "object", "properties": {"registro": {"type": "integer", "nullable": True}, "mensaje": _S}}},
+                                                           "avisos": {"type": "array", "items": {"type": "object", "properties": {"registro": {"type": "integer", "nullable": True}, "mensaje": _S}}},
+                                                           "periodos_cerrados": {"type": "array", "items": {"type": "object", "properties": {"trimestre": _S, "motivo": _S, "detalle": _S}}},
+                                                           "subcuentas_nuevas": {"type": "array", "items": {"type": "object", "properties": {"tipo": _S, "nif": _S, "cuenta": _S, "nombre": _SN}}}}},
+    "ExportacionContable": {"type": "object", "properties": {"lote": {**_I, "description": "Descárgalo con GET /contabilidad/lotes/{id}/fichero."}, "cliente": _S, "facturas": _I, "registros": _I,
+                                                            "avisos": {"type": "array", "items": _S}}},
+})
+RESPUESTAS.update({"listar_facturas_contables_api": ("FacturaContable", True), "ver_factura_contable_api": ("FacturaContableDetalle", False), "anotar_factura_contable_api": ("FacturaContableDetalle", False),
+                   "estado_factura_contable_api": ("FacturaContableDetalle", False), "leer_factura_contable_api": ("FacturaContableDetalle", False), "resumen_contabilidad_api": ("ResumenContabilidad", False),
+                   "comprobar_exportacion_api": ("ChequeoExportacion", False), "exportar_contabilidad_api": ("ExportacionContable", False)})
+BINARIAS["fichero_del_lote_api"] = "application/octet-stream"
