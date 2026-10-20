@@ -36,6 +36,7 @@
   {% elif cuenta_efectiva %}<p class="muted">{{ _('Se contabilizará en la subcuenta %(c)s.', c=cuenta_efectiva) }}</p>{% endif %}
   <label>{{ _('Concepto') }}<input type="text" name="concepto" value="{{ datos.concepto }}" maxlength="60"></label>
   <label class="checkbox-label"><input type="checkbox" name="abono" value="1" {{ 'checked' if datos.abono }}> {{ _('Es un abono o factura rectificativa') }}</label>
+  {% if (datos.tipo or 'recibida') == 'recibida' %}<label class="checkbox-label"><input type="checkbox" name="criterio_caja" value="1" {{ 'checked' if datos.criterio_caja }}> {{ _('El proveedor aplica el criterio de caja') }}</label>{% endif %}
   <div class="fila-campos">
     <label>{{ _('Número de la factura que rectifica (solo abonos)') }}<input type="text" name="rectifica_numero" value="{{ datos.rectifica_numero }}" maxlength="60"></label>
     <label>{{ _('Fecha de la factura que rectifica') }}<input type="date" name="rectifica_fecha" value="{{ datos.rectifica_fecha }}"></label>
@@ -43,7 +44,7 @@
 
   <h2 class="ds-mt-16">{{ _('Importes') }}</h2>
   <div class="table-wrap"><table class="historial-table">
-    <thead><tr><th>{{ _('Base imponible') }}</th><th>{{ _('Tipo de IVA') }} %</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Recargo') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Cuenta de gasto/ingreso') }}</th></tr></thead>
+    <thead><tr><th>{{ _('Base imponible') }}</th><th>{{ _('Tipo de IVA') }} %</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Recargo') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('Tipo de operación') }}</th></tr></thead>
     <tbody>
     {% for i in range([lineas|length + 1, 3]|max if lineas|length < 8 else 8) %}{% set l = lineas[i] if i < lineas|length else {} %}
       <tr>
@@ -52,7 +53,9 @@
         <td><input type="text" name="cuota_iva_{{ i }}" value="{{ l.cuota_iva or '' }}" inputmode="decimal" placeholder="{{ _('automática') }}" aria-label="{{ _('Cuota IVA') }}"></td>
         <td><input type="text" name="pct_recargo_{{ i }}" value="{{ l.pct_recargo or '' }}" size="5" aria-label="{{ _('Recargo') }}"></td>
         <td><input type="text" name="pct_retencion_{{ i }}" value="{{ l.pct_retencion or '' }}" size="5" aria-label="{{ _('Retención') }}"></td>
-        <td><input type="text" name="cuenta_{{ i }}" value="{{ l.cuenta or '' }}" inputmode="numeric" maxlength="12" placeholder="{{ _('por defecto') }}" aria-label="{{ _('Cuenta') }}"><input type="hidden" name="subtipo_{{ i }}" value="{{ l.subtipo or '01' }}"></td>
+        <td><input type="text" name="cuenta_{{ i }}" value="{{ l.cuenta or '' }}" inputmode="numeric" maxlength="12" placeholder="{{ _('por defecto') }}" aria-label="{{ _('Cuenta') }}"></td>
+        <td><select name="subtipo_{{ i }}" aria-label="{{ _('Tipo de operación') }}"><option value="">{{ _('Según el régimen del cliente') }}</option>
+          {% for codigo, nombre in operaciones_contables[datos.tipo or 'recibida'] %}<option value="{{ codigo }}" {{ 'selected' if l.subtipo == codigo }}>{{ codigo }} · {{ nombre }}</option>{% endfor %}</select></td>
       </tr>
     {% endfor %}
     </tbody>

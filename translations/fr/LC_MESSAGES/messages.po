@@ -13535,3 +13535,72 @@ msgstr "Téléversez un SUENLACE.DAT (par exemple, créé par un autre programme
 
 msgid "Fichero SUENLACE.DAT"
 msgstr "Fichier SUENLACE.DAT"
+
+msgid "Operación interior sujeta a IVA"
+msgstr "Opération intérieure soumise à la TVA"
+
+msgid "Exenta sin derecho a deducción"
+msgstr "Exonérée sans droit à déduction"
+
+msgid "Entrega intracomunitaria"
+msgstr "Livraison intracommunautaire"
+
+msgid "Entrega intracomunitaria triangular"
+msgstr "Livraison intracommunautaire triangulaire"
+
+msgid "Operación con Canarias, Ceuta o Melilla"
+msgstr "Opération avec les Canaries, Ceuta ou Melilla"
+
+msgid "Exportación"
+msgstr "Exportation"
+
+msgid "No sujeta o inversión del sujeto pasivo"
+msgstr "Non soumise ou autoliquidation"
+
+msgid "Otra exenta con derecho a deducción"
+msgstr "Autre exonérée avec droit à déduction"
+
+msgid "Operación interior con IVA deducible"
+msgstr "Opération intérieure avec TVA déductible"
+
+msgid "Compensación agraria"
+msgstr "Compensation agricole"
+
+msgid "Adquisición intracomunitaria de bienes"
+msgstr "Acquisition intracommunautaire de biens"
+
+msgid "Inversión del sujeto pasivo"
+msgstr "Autoliquidation"
+
+msgid "IVA no deducible"
+msgstr "TVA non déductible"
+
+msgid "Adquisición intracomunitaria de servicios"
+msgstr "Acquisition intracommunautaire de services"
+
+msgid "Régimen general"
+msgstr "Régime général"
+
+msgid "Recargo de equivalencia (comercio minorista)"
+msgstr "Majoration d'équivalence (commerce de détail)"
+
+msgid "Actividad exenta de IVA (sin derecho a deducción)"
+msgstr "Activité exonérée de TVA (sans droit à déduction)"
+
+msgid "Tipo de operación"
+msgstr "Type d'opération"
+
+msgid "Según el régimen del cliente"
+msgstr "Selon le régime du client"
+
+msgid "El proveedor aplica el criterio de caja"
+msgstr "Le fournisseur applique la comptabilité de caisse"
+
+msgid "Régimen de IVA del cliente"
+msgstr "Régime de TVA du client"
+
+msgid "Con recargo de equivalencia, las facturas recibidas llevan solas el recargo de cada tipo de IVA. En una actividad exenta, las emitidas salen como exentas y las recibidas con IVA no deducible. Lo que escribas en una línea manda siempre."
+msgstr "Avec la majoration d'équivalence, les factures reçues portent seules la majoration de chaque taux de TVA. Dans une activité exonérée, les émises sortent comme exonérées et les reçues avec TVA non déductible. Ce que vous saisissez sur une ligne prévaut toujours."
+
+msgid "Retención de IRPF por defecto en sus facturas emitidas, en tanto por ciento"
+msgstr "Retenue d'IRPF par défaut sur ses factures émises, en pourcentage"

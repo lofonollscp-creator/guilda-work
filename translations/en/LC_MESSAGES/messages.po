@@ -13450,3 +13450,72 @@ msgstr "Upload a SUENLACE.DAT (for example, one made by another program) and it 
 
 msgid "Fichero SUENLACE.DAT"
 msgstr "SUENLACE.DAT file"
+
+msgid "Operación interior sujeta a IVA"
+msgstr "Domestic operation subject to VAT"
+
+msgid "Exenta sin derecho a deducción"
+msgstr "Exempt without right to deduction"
+
+msgid "Entrega intracomunitaria"
+msgstr "Intra-EU supply"
+
+msgid "Entrega intracomunitaria triangular"
+msgstr "Triangular intra-EU supply"
+
+msgid "Operación con Canarias, Ceuta o Melilla"
+msgstr "Operation with the Canary Islands, Ceuta or Melilla"
+
+msgid "Exportación"
+msgstr "Export"
+
+msgid "No sujeta o inversión del sujeto pasivo"
+msgstr "Not subject or reverse charge"
+
+msgid "Otra exenta con derecho a deducción"
+msgstr "Other exempt with right to deduction"
+
+msgid "Operación interior con IVA deducible"
+msgstr "Domestic operation with deductible VAT"
+
+msgid "Compensación agraria"
+msgstr "Agricultural compensation"
+
+msgid "Adquisición intracomunitaria de bienes"
+msgstr "Intra-EU acquisition of goods"
+
+msgid "Inversión del sujeto pasivo"
+msgstr "Reverse charge"
+
+msgid "IVA no deducible"
+msgstr "Non-deductible VAT"
+
+msgid "Adquisición intracomunitaria de servicios"
+msgstr "Intra-EU acquisition of services"
+
+msgid "Régimen general"
+msgstr "General regime"
+
+msgid "Recargo de equivalencia (comercio minorista)"
+msgstr "Equivalence surcharge (retail trade)"
+
+msgid "Actividad exenta de IVA (sin derecho a deducción)"
+msgstr "VAT-exempt activity (no right to deduction)"
+
+msgid "Tipo de operación"
+msgstr "Type of operation"
+
+msgid "Según el régimen del cliente"
+msgstr "According to the client's regime"
+
+msgid "El proveedor aplica el criterio de caja"
+msgstr "The supplier applies the cash basis"
+
+msgid "Régimen de IVA del cliente"
+msgstr "Client's VAT regime"
+
+msgid "Con recargo de equivalencia, las facturas recibidas llevan solas el recargo de cada tipo de IVA. En una actividad exenta, las emitidas salen como exentas y las recibidas con IVA no deducible. Lo que escribas en una línea manda siempre."
+msgstr "With the equivalence surcharge, received invoices carry the surcharge of each VAT rate automatically. In an exempt activity, issued invoices come out as exempt and received ones with non-deductible VAT. What you type on a line always wins."
+
+msgid "Retención de IRPF por defecto en sus facturas emitidas, en tanto por ciento"
+msgstr "Default income tax withholding on its issued invoices, in percent"

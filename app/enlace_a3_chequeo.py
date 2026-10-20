@@ -15,6 +15,10 @@ LONG_REGISTRO = enlace_a3.LONGITUD + 2
 TOLERANCIA_CENTIMOS = 2
 _IMPORTE = re.compile(r"^[+-]\d{10}\.\d{2}$")
 _PORCENTAJE = re.compile(r"^\d{2}\.\d{2}$")
+_SUBTIPOS_EMITIDA = {"01", "02", "03", "04", "05", "06", "08", "09"}
+_SUBTIPOS_RECIBIDA = {"01", "02", "03", "04", "06", "07", "08"}
+_EMITIDA_SIN_IVA = {"02", "03", "04", "05", "06", "09"}
+IMPRESO_349 = {("1", "03"): "02", ("1", "04"): "02", ("2", "03"): "02", ("2", "08"): "11"}      # tipo de factura 1 emitida · 2 recibida
 _CAMPOS_ACEPTADOS = "".join(chr(c) for c in range(32, 127)) + "ÁÉÍÓÚÜÑáéíóúüñÇçº¿¡·ª"
 
 
@@ -175,6 +179,21 @@ def _detalle(inf: _Informe, n: int, r: str, f: dict, digitos: int) -> None:
         inf.error(n, f"La marca de último detalle (69) debe ser «U» o «M» y es «{marca}».")
     if f["detalles"] and f["detalles"][-1]["marca"] == "U":
         inf.error(n, "Hay un detalle después del que estaba marcado como último («U»).")
+    subtipo = _c(r, 100, 101)
+    validos = _SUBTIPOS_EMITIDA if f["tipo_factura"] == "1" else _SUBTIPOS_RECIBIDA
+    if subtipo not in validos:
+        inf.error(n, f"El subtipo de operación (100-101) «{subtipo}» no vale en una factura {'emitida' if f['tipo_factura'] == '1' else 'recibida'}: los válidos son {', '.join(sorted(validos))}.")
+    impreso = _c(r, 173, 174)
+    if impreso.strip() and not re.fullmatch(r"\d{2}", impreso):
+        inf.error(n, f"El impreso (173-174) debe ser dos dígitos o ir en blanco y es «{impreso}».")
+    esperado_349 = IMPRESO_349.get((f["tipo_factura"], subtipo))
+    if esperado_349 and impreso != esperado_349:
+        inf.aviso(n, f"Una operación intracomunitaria (subtipo {subtipo}) debería ir al impreso {esperado_349} (modelo 349) y lleva «{impreso.strip() or 'ninguno'}».")
+    caja = _c(r, 177, 177)
+    if caja not in (" ", "S"):
+        inf.error(n, f"La marca de criterio de caja (177) debe ser «S» o ir en blanco y es «{caja}».")
+    elif caja == "S" and f["tipo_factura"] == "1":
+        inf.aviso(n, "El criterio de caja (177) solo se tiene en cuenta en facturas recibidas.")
     base, cuota = _importe(_c(r, 102, 115)), _importe(_c(r, 121, 134))
     rec, ret = _importe(_c(r, 140, 153)), _importe(_c(r, 159, 172))
     pct, pct_rec, pct_ret = _porcentaje(_c(r, 116, 120)), _porcentaje(_c(r, 135, 139)), _porcentaje(_c(r, 154, 158))
@@ -187,6 +206,10 @@ def _detalle(inf: _Informe, n: int, r: str, f: dict, digitos: int) -> None:
         inf.error(n, f"La marca «sujeta a IVA» (175) debe ser «S» o «N» y es «{sujeta}».")
     if base == 0:
         inf.aviso(n, "Un detalle con base cero.")
+    if sujeta == "S" and base and pct == 0 and subtipo == "01":
+        inf.aviso(n, "Operación interior con IVA al 0 %: ¿es exenta o no sujeta? Cámbiale el tipo de operación si lo es.")
+    if f["tipo_factura"] == "1" and subtipo in _EMITIDA_SIN_IVA and pct:
+        inf.aviso(n, f"Una operación del subtipo {subtipo} (exenta, intracomunitaria, exportación…) lleva IVA del {pct / 100:g} %.")
     if sujeta == "S":
         esperada = int((Decimal(base) * Decimal(pct) / Decimal(10000)).quantize(Decimal("1")))
         if abs(esperada - cuota) > TOLERANCIA_CENTIMOS:

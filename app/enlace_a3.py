@@ -110,7 +110,7 @@ def registro_cabecera(*, empresa, fecha, abono: bool, cuenta_tercero, digitos: i
 
 
 def registro_detalle(*, empresa, fecha, abono: bool, cuenta_contrapartida, digitos: int, numero, concepto, ultimo: bool, subtipo, base_centimos: int, pct_iva: int, cuota_iva: int,
-                     pct_recargo: int = 0, cuota_recargo: int = 0, pct_retencion: int = 0, cuota_retencion: int = 0, sujeta_iva: bool = True, impreso=None, descripcion_cuenta=None,
+                     pct_recargo: int = 0, cuota_recargo: int = 0, pct_retencion: int = 0, cuota_retencion: int = 0, sujeta_iva: bool = True, caja: bool = False, impreso=None, descripcion_cuenta=None,
                      cuenta_iva_soportado=None, cuenta_recargo_soportado=None, cuenta_retencion=None, cuenta_iva_repercutido=None, cuenta_recargo_repercutido=None) -> str:
     """Registro de detalle de IVA (tipo 9): una línea por tipo impositivo. `C` = cargo y `A` = abono en factura; los importes van en positivo (un abono que disminuye la factura original se informa
     en positivo, como dice el documento)."""
@@ -118,7 +118,7 @@ def registro_detalle(*, empresa, fecha, abono: bool, cuenta_contrapartida, digit
          + _texto(numero_corto(numero), 10) + ("U" if ultimo else "M") + _texto(concepto, 30) + _dos(subtipo, "01")                                          # 59-68, 69, 70-99, 100-101
          + _importe(abs(base_centimos)) + _porcentaje(pct_iva) + _importe(abs(cuota_iva)) + _porcentaje(pct_recargo) + _importe(abs(cuota_recargo))          # 102-153
          + _porcentaje(pct_retencion) + _importe(abs(cuota_retencion)) + _dos(impreso) + ("S" if sujeta_iva else "N")                                       # 154-175
-         + " " * 3 + " " * 13                                                                                                                              # 176-178 (415, caja, IVA 0 %), 179-191 reserva
+         + " " + ("S" if caja else " ") + " " + " " * 13                                                                                                     # 176 (415, solo IGIC), 177 criterio de caja (solo recibidas), 178 (IVA 0 %), 179-191 reserva
          + _cuenta_o_blancos(cuenta_iva_soportado, digitos) + _cuenta_o_blancos(cuenta_recargo_soportado, digitos) + _cuenta_o_blancos(cuenta_retencion, digitos)  # 192-227
          + _cuenta_o_blancos(cuenta_iva_repercutido, digitos) + _cuenta_o_blancos(cuenta_recargo_repercutido, digitos))                                       # 228-251
     return _rellenar(r)
@@ -154,7 +154,7 @@ def generar(facturas: list[dict], *, empresa, digitos: int = 8) -> bytes:
             lineas.append(registro_detalle(empresa=empresa, fecha=f["fecha"], abono=abono, cuenta_contrapartida=l["cuenta"], digitos=digitos, numero=f["numero"], concepto=f.get("concepto"),
                                            ultimo=(i == len(det) - 1), subtipo=l.get("subtipo", "01"), base_centimos=l["base_centimos"], pct_iva=l.get("pct_iva", 0), cuota_iva=l.get("cuota_iva", 0),
                                            pct_recargo=l.get("pct_recargo", 0), cuota_recargo=l.get("cuota_recargo", 0), pct_retencion=l.get("pct_retencion", 0),
-                                           cuota_retencion=l.get("cuota_retencion", 0), sujeta_iva=l.get("sujeta_iva", True), impreso=l.get("impreso"), descripcion_cuenta=l.get("descripcion_cuenta"),
+                                           cuota_retencion=l.get("cuota_retencion", 0), sujeta_iva=l.get("sujeta_iva", True), caja=bool(f.get("caja")) and tipo == RECIBIDA, impreso=l.get("impreso"), descripcion_cuenta=l.get("descripcion_cuenta"),
                                            cuenta_iva_soportado=None if repercutido else l.get("cuenta_iva"), cuenta_iva_repercutido=l.get("cuenta_iva") if repercutido else None,
                                            cuenta_retencion=l.get("cuenta_retencion")))
         if abono:

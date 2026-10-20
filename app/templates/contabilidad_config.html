@@ -17,6 +17,10 @@
   <label>{{ _('Clientes') }}<input type="text" name="cuenta_clientes" value="{{ cfg.cuenta_clientes }}" inputmode="numeric"></label>
   <label><input type="checkbox" name="subcuentas_auto" value="1" {{ 'checked' if cfg.subcuentas_auto }}> {{ _('Asignar solas una subcuenta a cada proveedor o cliente nuevo (la siguiente libre tras la genérica, al exportar)') }}</label>
   <p class="muted">{{ _('a3 crea en la contabilidad las subcuentas que no existan al leer el fichero. Si ya tienes las tuyas, escríbelas en la factura y se recordarán por NIF.') }}</p>
+  <label>{{ _('Régimen de IVA del cliente') }}
+    <select name="regimen_iva">{% for r, nombre in regimenes %}<option value="{{ r }}" {{ 'selected' if cfg.regimen_iva == r }}>{{ nombre }}</option>{% endfor %}</select></label>
+  <p class="muted">{{ _('Con recargo de equivalencia, las facturas recibidas llevan solas el recargo de cada tipo de IVA. En una actividad exenta, las emitidas salen como exentas y las recibidas con IVA no deducible. Lo que escribas en una línea manda siempre.') }}</p>
+  <label>{{ _('Retención de IRPF por defecto en sus facturas emitidas, en tanto por ciento') }}<input type="text" name="retencion_emitidas" value="{{ ('%g'|format(cfg.retencion_emitidas / 100)) if cfg.retencion_emitidas is number else cfg.retencion_emitidas }}" size="5" inputmode="decimal" placeholder="0"></label>
   <h2>{{ _('Cuentas por defecto') }}</h2>
   <label>{{ _('Gasto (facturas recibidas)') }}<input type="text" name="cuenta_gasto" value="{{ cfg.cuenta_gasto }}" inputmode="numeric"></label>
   <label>{{ _('Ingreso (facturas emitidas)') }}<input type="text" name="cuenta_ingreso" value="{{ cfg.cuenta_ingreso }}" inputmode="numeric"></label>

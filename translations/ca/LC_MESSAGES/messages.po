@@ -13459,3 +13459,72 @@ msgstr "Puja un SUENLACE.DAT (per exemple, un fet per un altre programa) i es re
 
 msgid "Fichero SUENLACE.DAT"
 msgstr "Fitxer SUENLACE.DAT"
+
+msgid "Operación interior sujeta a IVA"
+msgstr "Operació interior subjecta a IVA"
+
+msgid "Exenta sin derecho a deducción"
+msgstr "Exempta sense dret a deducció"
+
+msgid "Entrega intracomunitaria"
+msgstr "Lliurament intracomunitari"
+
+msgid "Entrega intracomunitaria triangular"
+msgstr "Lliurament intracomunitari triangular"
+
+msgid "Operación con Canarias, Ceuta o Melilla"
+msgstr "Operació amb Canàries, Ceuta o Melilla"
+
+msgid "Exportación"
+msgstr "Exportació"
+
+msgid "No sujeta o inversión del sujeto pasivo"
+msgstr "No subjecta o inversió del subjecte passiu"
+
+msgid "Otra exenta con derecho a deducción"
+msgstr "Una altra exempta amb dret a deducció"
+
+msgid "Operación interior con IVA deducible"
+msgstr "Operació interior amb IVA deduïble"
+
+msgid "Compensación agraria"
+msgstr "Compensació agrària"
+
+msgid "Adquisición intracomunitaria de bienes"
+msgstr "Adquisició intracomunitària de béns"
+
+msgid "Inversión del sujeto pasivo"
+msgstr "Inversió del subjecte passiu"
+
+msgid "IVA no deducible"
+msgstr "IVA no deduïble"
+
+msgid "Adquisición intracomunitaria de servicios"
+msgstr "Adquisició intracomunitària de serveis"
+
+msgid "Régimen general"
+msgstr "Règim general"
+
+msgid "Recargo de equivalencia (comercio minorista)"
+msgstr "Recàrrec d'equivalència (comerç minorista)"
+
+msgid "Actividad exenta de IVA (sin derecho a deducción)"
+msgstr "Activitat exempta d'IVA (sense dret a deducció)"
+
+msgid "Tipo de operación"
+msgstr "Tipus d'operació"
+
+msgid "Según el régimen del cliente"
+msgstr "Segons el règim del client"
+
+msgid "El proveedor aplica el criterio de caja"
+msgstr "El proveïdor aplica el criteri de caixa"
+
+msgid "Régimen de IVA del cliente"
+msgstr "Règim d'IVA del client"
+
+msgid "Con recargo de equivalencia, las facturas recibidas llevan solas el recargo de cada tipo de IVA. En una actividad exenta, las emitidas salen como exentas y las recibidas con IVA no deducible. Lo que escribas en una línea manda siempre."
+msgstr "Amb recàrrec d'equivalència, les factures rebudes porten soles el recàrrec de cada tipus d'IVA. En una activitat exempta, les emeses surten com a exemptes i les rebudes amb IVA no deduïble. El que escriguis en una línia mana sempre."
+
+msgid "Retención de IRPF por defecto en sus facturas emitidas, en tanto por ciento"
+msgstr "Retenció d'IRPF per defecte en les seves factures emeses, en tant per cent"

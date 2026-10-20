@@ -39,7 +39,9 @@ CREATE TABLE IF NOT EXISTS contabilidad_despacho (
     cuenta_iva_soportado TEXT NOT NULL DEFAULT '47200000',
     cuenta_iva_repercutido TEXT NOT NULL DEFAULT '47700000',
     cuenta_retencion TEXT NOT NULL DEFAULT '47510000',
-    subcuentas_auto INTEGER NOT NULL DEFAULT 0
+    subcuentas_auto INTEGER NOT NULL DEFAULT 0,
+    regimen_iva TEXT NOT NULL DEFAULT 'general',
+    retencion_emitidas INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS contabilidad_terceros (
     id INTEGER PRIMARY KEY,
@@ -130,13 +132,35 @@ CREATE TABLE IF NOT EXISTS facturas_contables_lineas (
 );
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_lineas(factura_id);
 """
+# Tipo de operación de cada línea (campo «subtipo» del enlace de a3, posiciones 100-101). La importación (06) necesita el número de DUA y no se ofrece.
+OPERACIONES = {
+    "emitida": (("01", _l("Operación interior sujeta a IVA")), ("02", _l("Exenta sin derecho a deducción")), ("03", _l("Entrega intracomunitaria")),
+                ("04", _l("Entrega intracomunitaria triangular")), ("05", _l("Operación con Canarias, Ceuta o Melilla")), ("06", _l("Exportación")),
+                ("08", _l("No sujeta o inversión del sujeto pasivo")), ("09", _l("Otra exenta con derecho a deducción"))),
+    "recibida": (("01", _l("Operación interior con IVA deducible")), ("02", _l("Compensación agraria")), ("03", _l("Adquisición intracomunitaria de bienes")),
+                 ("04", _l("Inversión del sujeto pasivo")), ("07", _l("IVA no deducible")), ("08", _l("Adquisición intracomunitaria de servicios"))),
+}
+IMPRESO_349 = {"emitida": {"03": "02", "04": "02"}, "recibida": {"03": "02", "08": "11"}}     # impreso 02 = 349 bienes · 11 = 349 servicios
+
+
+def operaciones_validas(tipo: str) -> set[str]:
+    return {c for c, _t in OPERACIONES.get(tipo, ())}
+
+
+def subtipo_por_defecto(tipo: str, cfg: dict | None) -> str:
+    """El tipo de operación de una línea sin elegir: el de siempre, salvo en una actividad exenta (emitidas exentas sin derecho a deducción; recibidas con IVA no deducible)."""
+    if cfg and cfg.get("regimen_iva") == "exento":
+        return "02" if tipo == "emitida" else "07"
+    return "01"
+
+
 ESTADOS = ("pendiente", "revisada", "exportada", "descartada")
 TIPOS = ("emitida", "recibida")
 MAX_LINEAS = 8
 MAX_NUMERO = 60          # el enlace de a3 admite hasta 60 caracteres (campo ampliado del SII); en las 10 posiciones clásicas va un resumen
 TOLERANCIA_CENTIMOS = 2
 CONFIG_DEFECTO = {"digitos": 8, "cuenta_proveedores": "40000000", "cuenta_clientes": "43000000", "cuenta_gasto": "62900000", "cuenta_ingreso": "70000000",
-                  "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000", "subcuentas_auto": 0}
+                  "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000", "subcuentas_auto": 0, "regimen_iva": "general", "retencion_emitidas": 0}
 
 
 def crear_esquema(conn) -> None:
@@ -146,6 +170,10 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "rectifica_numero", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "documento_id", "INTEGER")       # la factura escaneada o fotografiada, en los documentos del cliente
     db._asegurar_columna(conn, "contabilidad_clientes", "subcuentas_auto", "INTEGER NOT NULL DEFAULT 0")   # numerar solas las subcuentas de los terceros nuevos
+    for tabla in ("contabilidad_clientes", "contabilidad_despacho"):
+        db._asegurar_columna(conn, tabla, "regimen_iva", "TEXT NOT NULL DEFAULT 'general'")                   # general · recargo · exento
+        db._asegurar_columna(conn, tabla, "retencion_emitidas", "INTEGER NOT NULL DEFAULT 0")                 # centésimas de punto que se aplican por defecto a sus facturas emitidas
+    db._asegurar_columna(conn, "facturas_contables", "criterio_caja", "INTEGER NOT NULL DEFAULT 0")          # recibida de un proveedor en criterio de caja (posición 177 del enlace)
     db._asegurar_columna(conn, "facturas_contables", "lectura", "TEXT")           # NULL = escrita a mano · pendiente = solo el archivo, por leer · ia = leída por la IA · fallida
     db._asegurar_columna(conn, "facturas_contables", "lectura_error", "TEXT")
 
@@ -251,27 +279,39 @@ def _empresa_valida(valor) -> str | None:
     return empresa or None
 
 
+REGIMENES = ("general", "recargo", "exento")
+TEXTO_REGIMEN = {"general": _l("Régimen general"), "recargo": _l("Recargo de equivalencia (comercio minorista)"), "exento": _l("Actividad exenta de IVA (sin derecho a deducción)")}
+RECARGO_ESTANDAR = {2100: 520, 1000: 140, 400: 50}        # recargo de equivalencia que acompaña a cada tipo de IVA
+COLUMNAS_AJUSTES = ("digitos", *CAMPOS_CUENTAS, "subcuentas_auto", "regimen_iva", "retencion_emitidas")
+
+
 def _ajustes_validados(datos: dict) -> dict:
-    """Los ajustes de enlace (dígitos, cuentas, subcuentas automáticas) ya comprobados; `ValueError` con un mensaje legible si algo no vale."""
+    """Los ajustes de enlace (dígitos, cuentas, subcuentas automáticas, régimen de IVA y retención) ya comprobados; `ValueError` con un mensaje legible si algo no vale.
+    `retencion_emitidas` llega como texto en tanto por ciento («15») desde un formulario, o como entero en centésimas de punto (1500) si se copia de otra configuración."""
     try:
         digitos = int(datos.get("digitos") or 8)
     except ValueError:
         raise ValueError("Los dígitos de las subcuentas deben ser un número.") from None
     if not 4 <= digitos <= 12:
         raise ValueError("Los dígitos de las subcuentas deben estar entre 4 y 12.")
-    res = {"digitos": digitos, "subcuentas_auto": 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0}
+    regimen = datos.get("regimen_iva") or "general"
+    if regimen not in REGIMENES:
+        raise ValueError("Elige un régimen de IVA de la lista.")
+    ret = datos.get("retencion_emitidas")
+    retencion = ret if isinstance(ret, int) and not isinstance(ret, bool) else porcentaje_a_centesimas(ret)
+    if not 0 <= retencion <= 6000:
+        raise ValueError("La retención por defecto debe estar entre 0 y 60 %.")
+    res = {"digitos": digitos, "subcuentas_auto": 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0, "regimen_iva": regimen, "retencion_emitidas": retencion}
     for k in CAMPOS_CUENTAS:
         res[k] = _cuenta_valida(datos.get(k) or CONFIG_DEFECTO[k], _ETIQUETAS_CUENTAS[k], digitos)
     return res
 
 
 def _guardar_fila_cliente(conn, tenant_id: int, cliente_fiscal_id: int, empresa: str | None, a: dict) -> None:
-    conn.execute("INSERT INTO contabilidad_clientes (cliente_fiscal_id, tenant_id, a3_empresa, digitos, cuenta_proveedores, cuenta_clientes, cuenta_gasto, cuenta_ingreso, cuenta_iva_soportado, "
-                 "cuenta_iva_repercutido, cuenta_retencion, subcuentas_auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id) DO UPDATE SET a3_empresa = excluded.a3_empresa, "
-                 "subcuentas_auto = excluded.subcuentas_auto, digitos = excluded.digitos, cuenta_proveedores = excluded.cuenta_proveedores, cuenta_clientes = excluded.cuenta_clientes, "
-                 "cuenta_gasto = excluded.cuenta_gasto, cuenta_ingreso = excluded.cuenta_ingreso, cuenta_iva_soportado = excluded.cuenta_iva_soportado, "
-                 "cuenta_iva_repercutido = excluded.cuenta_iva_repercutido, cuenta_retencion = excluded.cuenta_retencion",
-                 (cliente_fiscal_id, tenant_id, empresa, a["digitos"], *[a[k] for k in CAMPOS_CUENTAS], a["subcuentas_auto"]))
+    columnas = COLUMNAS_AJUSTES
+    conn.execute(f"INSERT INTO contabilidad_clientes (cliente_fiscal_id, tenant_id, a3_empresa, {', '.join(columnas)}) VALUES (?, ?, ?, {', '.join('?' * len(columnas))}) "
+                 f"ON CONFLICT(cliente_fiscal_id) DO UPDATE SET a3_empresa = excluded.a3_empresa, " + ", ".join(f"{k} = excluded.{k}" for k in columnas),
+                 (cliente_fiscal_id, tenant_id, empresa, *[a[k] for k in columnas]))
 
 
 def guardar_configuracion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict) -> dict:
@@ -302,15 +342,13 @@ def configuracion_despacho(tenant_id: int) -> dict:
 
 def guardar_configuracion_despacho(tenant_id: int, usuario_id: int, datos: dict) -> dict:
     a = _ajustes_validados(datos)
+    columnas = COLUMNAS_AJUSTES
     conn = db.get_connection()
     try:
-        conn.execute("INSERT INTO contabilidad_despacho (tenant_id, digitos, cuenta_proveedores, cuenta_clientes, cuenta_gasto, cuenta_ingreso, cuenta_iva_soportado, cuenta_iva_repercutido, "
-                     "cuenta_retencion, subcuentas_auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(tenant_id) DO UPDATE SET digitos = excluded.digitos, "
-                     "cuenta_proveedores = excluded.cuenta_proveedores, cuenta_clientes = excluded.cuenta_clientes, cuenta_gasto = excluded.cuenta_gasto, cuenta_ingreso = excluded.cuenta_ingreso, "
-                     "cuenta_iva_soportado = excluded.cuenta_iva_soportado, cuenta_iva_repercutido = excluded.cuenta_iva_repercutido, cuenta_retencion = excluded.cuenta_retencion, "
-                     "subcuentas_auto = excluded.subcuentas_auto",
-                     (tenant_id, a["digitos"], *[a[k] for k in CAMPOS_CUENTAS], a["subcuentas_auto"]))
-        auditoria.registrar(tenant_id, usuario_id, "contabilidad.configuracion_despacho", "tenant", tenant_id, {"digitos": a["digitos"], "subcuentas_auto": a["subcuentas_auto"]}, conn=conn)
+        conn.execute(f"INSERT INTO contabilidad_despacho (tenant_id, {', '.join(columnas)}) VALUES (?, {', '.join('?' * len(columnas))}) ON CONFLICT(tenant_id) DO UPDATE SET "
+                     + ", ".join(f"{k} = excluded.{k}" for k in columnas), (tenant_id, *[a[k] for k in columnas]))
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.configuracion_despacho", "tenant", tenant_id,
+                            {"digitos": a["digitos"], "subcuentas_auto": a["subcuentas_auto"], "regimen_iva": a["regimen_iva"], "retencion_emitidas": a["retencion_emitidas"]}, conn=conn)
         conn.commit()
     finally:
         conn.close()
@@ -348,7 +386,7 @@ def resumen_clientes(tenant_id: int, usuario_id: int) -> list[dict]:
         if visibles is not None and c["id"] not in visibles:
             continue
         f = filas.get(c["id"])
-        propia = bool(f) and any(f[k] != base[k] for k in ("digitos", "subcuentas_auto", *CAMPOS_CUENTAS))
+        propia = bool(f) and any(f[k] != base[k] for k in COLUMNAS_AJUSTES)
         res.append({"id": c["id"], "nombre": c["nombre"], "nif": c["nif"], "a3_empresa": f["a3_empresa"] if f else None, "digitos": f["digitos"] if f else base["digitos"], "propia": propia,
                     "esperando": esperando.get(c["id"], 0)})
     return res
@@ -503,8 +541,9 @@ def terceros_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
 
 # --- Alta, edición y comprobación ----------------------------------------------------------------------------------------------------------------------
 
-def _lineas_limpias(lineas: list[dict]) -> list[dict]:
-    """Las líneas de IVA escritas, con las cuotas calculadas cuando se dejan en blanco. Se descartan las vacías."""
+def _lineas_limpias(lineas: list[dict], tipo: str | None = None, cfg: dict | None = None) -> list[dict]:
+    """Las líneas de IVA escritas, con las cuotas calculadas cuando se dejan en blanco. Se descartan las vacías. Con el tipo de factura y los ajustes del cliente, lo que se deja en blanco toma lo del
+    régimen del cliente: el tipo de operación, el recargo de equivalencia en sus compras y la retención por defecto en sus ventas. Lo escrito siempre manda (un «0» explícito quita el recargo)."""
     res = []
     for i, l in enumerate(lineas, start=1):
         if not any(str(l.get(k) or "").strip() for k in ("base", "cuota_iva", "pct_iva")):
@@ -513,11 +552,16 @@ def _lineas_limpias(lineas: list[dict]) -> list[dict]:
         pct_iva, pct_re, pct_ret = (porcentaje_a_centesimas(l.get(k)) for k in ("pct_iva", "pct_recargo", "pct_retencion"))
         if base <= 0:
             raise ValueError(f"Línea {i}: indica la base imponible.")
+        if cfg and tipo:
+            if not str(l.get("pct_recargo") or "").strip() and tipo == "recibida" and cfg.get("regimen_iva") == "recargo":
+                pct_re = RECARGO_ESTANDAR.get(pct_iva, 0)
+            if not str(l.get("pct_retencion") or "").strip() and tipo == "emitida" and cfg.get("retencion_emitidas"):
+                pct_ret = int(cfg["retencion_emitidas"])
         cuota_iva = importe_a_centimos(l.get("cuota_iva")) if str(l.get("cuota_iva") or "").strip() else enlace_a3.cuota(base, pct_iva)
         cuota_re = importe_a_centimos(l.get("cuota_recargo")) if str(l.get("cuota_recargo") or "").strip() else enlace_a3.cuota(base, pct_re)
         cuota_ret = importe_a_centimos(l.get("cuota_retencion")) if str(l.get("cuota_retencion") or "").strip() else enlace_a3.cuota(base, pct_ret)
         cuenta = re.sub(r"\D", "", str(l.get("cuenta") or "")) or None
-        res.append({"cuenta": cuenta, "subtipo": re.sub(r"\D", "", str(l.get("subtipo") or "")).zfill(2)[-2:] or "01", "base_centimos": base, "pct_iva": pct_iva, "cuota_iva": cuota_iva,
+        res.append({"cuenta": cuenta, "subtipo": (re.sub(r"\D", "", str(l.get("subtipo") or "")).zfill(2)[-2:] if str(l.get("subtipo") or "").strip() else subtipo_por_defecto(tipo or "recibida", cfg)), "base_centimos": base, "pct_iva": pct_iva, "cuota_iva": cuota_iva,
                     "pct_recargo": pct_re, "cuota_recargo": cuota_re, "pct_retencion": pct_ret, "cuota_retencion": cuota_ret, "sujeta_iva": 0 if str(l.get("sujeta_iva")) == "0" else 1})
     if not res:
         raise ValueError("Añade al menos una línea con la base imponible y el IVA.")
@@ -547,6 +591,7 @@ def _datos_limpios(datos: dict) -> dict:
             "referencia": str(datos.get("referencia") or "").strip()[:60] or None, "abono": 1 if datos.get("abono") in (True, 1, "1", "on", "true") else 0,
             "rectifica_fecha": _fecha(datos["rectifica_fecha"], "Fecha de la factura que rectifica") if str(datos.get("rectifica_fecha") or "").strip() else None,
             "rectifica_numero": str(datos.get("rectifica_numero") or "").strip()[:60] or None,
+            "criterio_caja": 1 if tipo == "recibida" and datos.get("criterio_caja") in (True, 1, "1", "on", "true") else 0,
             "suplidos_centimos": importe_a_centimos(datos.get("suplidos")), "notas": str(datos.get("notas") or "").strip()[:1000] or None}
 
 
@@ -558,7 +603,7 @@ def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict, 
 def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: list[dict], origen: str, documento_id: int | None) -> int:
     cliente_fiscal_id = f["id"]
     d = _datos_limpios(datos)
-    ls = _lineas_limpias(lineas)
+    ls = _lineas_limpias(lineas, d["tipo"], configuracion(tenant_id, cliente_fiscal_id))
     total = _total_de(ls, d["suplidos_centimos"])
     ahora = db.now_iso()
     conn = db.get_connection()
@@ -568,6 +613,7 @@ def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: li
                            (tenant_id, cliente_fiscal_id, d["tipo"], origen, d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"],
                             d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"], d["suplidos_centimos"], total, d["notas"], usuario_id, ahora, ahora, documento_id))
         fid = cur.lastrowid
+        conn.execute("UPDATE facturas_contables SET criterio_caja = ? WHERE id = ?", (d["criterio_caja"], fid))
         _guardar_lineas(conn, fid, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, cliente_fiscal_id, d["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -610,7 +656,7 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
     if f["estado"] == "exportada":
         raise ValueError("Esa factura ya se exportó: no se puede cambiar. Si hace falta corregirla, reábrela antes.")
     d = _datos_limpios({**datos, "tipo": f["tipo"]})
-    ls = _lineas_limpias(lineas)
+    ls = _lineas_limpias(lineas, f["tipo"], configuracion(tenant_id, f["cliente_fiscal_id"]))
     total = _total_de(ls, d["suplidos_centimos"])
     conn = db.get_connection()
     try:
@@ -620,6 +666,7 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
                      "lectura_error = CASE WHEN lectura IN ('pendiente', 'fallida') THEN NULL ELSE lectura_error END WHERE id = ? AND tenant_id = ?",
                      (d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"], d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"],
                       d["suplidos_centimos"], total, d["notas"], db.now_iso(), documento_id, factura_id, tenant_id))
+        conn.execute("UPDATE facturas_contables SET criterio_caja = ? WHERE id = ? AND tenant_id = ?", (d["criterio_caja"], factura_id, tenant_id))
         _guardar_lineas(conn, factura_id, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -718,11 +765,11 @@ def _para_enlace(tenant_id: int, f: dict, cfg: dict, nuevas: dict | None = None)
     gasto_o_ingreso = cfg["cuenta_gasto"] if f["tipo"] == "recibida" else cfg["cuenta_ingreso"]
     cuenta_iva = cfg["cuenta_iva_soportado"] if f["tipo"] == "recibida" else cfg["cuenta_iva_repercutido"]
     return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "rectifica_fecha": f.get("rectifica_fecha"), "rectifica_numero": f.get("rectifica_numero"), "concepto": f["concepto"] or (
-        ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"],
+        ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"], "caja": bool(f.get("criterio_caja")) and f["tipo"] == "recibida",
         "cuenta_tercero": (nuevas or {}).get(("proveedor" if f["tipo"] == "recibida" else "cliente", _nif(f["tercero_nif"])), (None,))[0] or cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
         "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "descripcion_cuenta": "Compras" if f["tipo"] == "recibida" else "Ventas", "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
                     "pct_recargo": l["pct_recargo"], "cuota_recargo": l["cuota_recargo"], "pct_retencion": l["pct_retencion"], "cuota_retencion": l["cuota_retencion"],
-                    "sujeta_iva": bool(l["sujeta_iva"]), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
+                    "sujeta_iva": bool(l["sujeta_iva"]), "impreso": IMPRESO_349.get(f["tipo"], {}).get(l["subtipo"]), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
                    for l in f["lineas"]]}
 
 
