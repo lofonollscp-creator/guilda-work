@@ -1,4 +1,6 @@
-mcp>=1.0
+# 1.30.0 corrige varios fallos de seguridad del SDK (límite de cuerpo en SSE/OAuth, sesiones HTTP sin caducar, redirecciones entre orígenes, issuer de OAuth).
+# Se queda en la rama 1.x a propósito: la 2.x cambia la API (FastMCP pasa a MCPServer, etc.) y hay que migrarla con calma.
+mcp>=1.30.0,<2
 # Único cliente HTTP que no es urllib puro en todo el proyecto — el
 # protocolo de firma S3 (SigV4) es real y complejo, ver app/minio_cliente.py.
 minio>=7.2

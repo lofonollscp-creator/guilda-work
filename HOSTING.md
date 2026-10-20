@@ -91,6 +91,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Informes de tareas, revisiones y tareas en el portal (octubre de 2026)](#informes-de-tareas-revisiones-y-tareas-en-el-portal-octubre-de-2026)
 - [Herramientas MCP e IA para tareas (octubre de 2026)](#herramientas-mcp-e-ia-para-tareas-octubre-de-2026)
 - [Varios clientes al crear una tarea (octubre de 2026)](#varios-clientes-al-crear-una-tarea-octubre-de-2026)
+- [Actualización de seguridad del SDK de MCP (octubre de 2026)](#actualización-de-seguridad-del-sdk-de-mcp-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3344,3 +3345,13 @@ Cierra el pendiente de la Fase 1: antes solo se podían vincular varios clientes
 - **Se valida todo antes de crear nada** (`tareas_trabajo.validar_clientes`, la misma comprobación que usa `fijar_clientes`): un cliente de otro despacho o inválido corta la creación entera con un aviso, sin dejar una tarea a medias. Con un solo cliente (o ninguno) el comportamiento es el de siempre.
 - En la pestaña Tareas de la ficha del cliente hay un botón **«Nueva tarea para este cliente»** que abre la lista con ese cliente ya elegido (`/tareas/?nuevo_cliente=<id>#nueva-tarea`).
 - **Pruebas**: cinco tests nuevos en `tests/test_tareas_trabajo_web.py`. Sin migraciones: no hace falta más que reiniciar.
+
+## Actualización de seguridad del SDK de MCP (octubre de 2026)
+
+El SDK `mcp` instalado era la 1.29.0, afectada por varios avisos de seguridad (límite de tamaño de cuerpo en SSE y endpoints OAuth, sesiones HTTP que nunca caducaban, redirecciones HTTP a otros orígenes, validación del `issuer` de OAuth y del recurso del token). `requirements-mcp.txt` exige ahora `mcp>=1.30.0,<2`: la 1.30.0 los corrige y se mantiene la rama 1.x porque la 2.x cambia la API (`FastMCP` pasa a `MCPServer`, etc.) y requiere una migración aparte.
+
+- **Instalar**: `cd /home/guilda/guilda-work && sudo -u guilda .venv/bin/pip install -r requirements-mcp.txt` y reiniciar `guilda-work`, `guilda-work-mcp` y `guilda-backoffice` (los tres importan el SDK). El código es compatible con la 1.29.0 y con la 1.30.0, así que el orden no importa.
+- **Qué cambia en el servidor remoto** (`mcp_server_remoto.py`): se fija `validate_token_resource=False` de forma explícita. El SDK 1.30 puede exigir que el token se haya emitido *para este servidor* (RFC 8707) y, si no trae `resource`, lo rechaza; hoy nuestro verificador no lo devuelve, así que activarlo cortaría todas las conexiones remotas. El acceso sigue acotado por `VerificadorHydra`: tokens personales propios e introspección de Hydra solo para los clientes pensados para el MCP (`mcp_acceso.cliente_hydra_permitido`). **Pendiente recomendado**: comprobar con Claude y ChatGPT que Hydra emite `aud`/`resource`, devolverlo en `AccessToken.resource` y activar la validación.
+- **Efectos de la 1.30**: las sesiones HTTP inactivas caducan a los 30 minutos y hay un máximo de 10.000 sesiones simultáneas; un cliente que lleve una sesión parada más tiempo tendrá que reconectar.
+- **No nos afecta el fallo de OAuth *cliente***: la aplicación solo usa el SDK como servidor, no como cliente OAuth.
+- **Pruebas**: `tests/test_dependencias_mcp.py` (la versión mínima, la decisión explícita y que el servidor se construye sin avisos; este último se omite mientras el entorno siga en 1.29.x, con el motivo a la vista).

@@ -88,6 +88,11 @@ mcp = FastMCP(
     auth=AuthSettings(
         issuer_url=HYDRA_PUBLIC_ORIGIN,
         resource_server_url=MCP_REMOTO_ORIGIN,
+        # Decisión explícita (mcp >= 1.30): el SDK podría comprobar que el token se emitió PARA este servidor (RFC 8707) y rechazarlo si no trae `resource`.
+        # Aquí no se hace porque VerificadorHydra ya acota quién entra: tokens personales propios e introspección de Hydra solo para los clientes pensados
+        # para el MCP (mcp_acceso.cliente_hydra_permitido). Activarlo exige que Hydra emita `aud`/`resource` y que el verificador lo devuelva en AccessToken.resource;
+        # hasta comprobarlo con los clientes reales (Claude, ChatGPT) activarlo cortaría todas las conexiones remotas.
+        validate_token_resource=False,
     ),
 )
 registrar_tools(mcp)
