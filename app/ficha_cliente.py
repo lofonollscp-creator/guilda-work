@@ -121,4 +121,8 @@ def contexto_tareas(usuario_id: int, cliente_fiscal) -> dict:
     """Las tareas del cliente que la persona puede ver (suyas, asignadas o en las que colabora), abiertas primero."""
     tareas = [dict(t) for t in db.listar_tareas_outlook(usuario_id, incluir_asignadas=True, cliente_fiscal_id=cliente_fiscal["id"])]
     tareas.sort(key=lambda t: (t["estado"] == "completada", t["fecha_vencimiento"] or "9999", t["id"]))
-    return {"tareas": tareas, "tareas_abiertas": sum(1 for t in tareas if t["estado"] != "completada")}
+    from . import tareas_trabajo
+    contadores = tareas_trabajo.contadores_de_cliente(tareas)
+    for t in tareas:
+        t["vencida"] = tareas_trabajo.esta_vencida(t["fecha_vencimiento"], t["estado"])
+    return {"tareas": tareas, "tareas_abiertas": contadores["abiertas"], "tareas_vencidas": contadores["vencidas"], "tareas_completadas": contadores["completadas"]}

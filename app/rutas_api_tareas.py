@@ -472,3 +472,6 @@ def eliminar_regla_vencimiento(regla_id: int):
         abort(404, "Regla no encontrada.")
     db.eliminar_regla_por_vencimiento(g.usuario_id, regla_id)
     return _ok()
+
+
+from . import rutas_api_tareas_trabajo  # noqa: E402,F401 -- transiciones con versión, clientes de una tarea y tareas de un cliente

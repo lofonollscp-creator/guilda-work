@@ -13639,3 +13639,9 @@ msgstr "En portes %(e)s de més, a %(p)s € cadascuna (sense IVA)."
 
 msgid "Límite del plan: %(l)s facturas al mes; te quedan %(r)s."
 msgstr "Límit del pla: %(l)s factures al mes; te'n queden %(r)s."
+
+msgid "vencidas"
+msgstr "vencudes"
+
+msgid "completadas"
+msgstr "completades"

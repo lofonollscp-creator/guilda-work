@@ -8,7 +8,7 @@ from __future__ import annotations
 TABLAS: dict[str, tuple[str, tuple[str, ...], dict]] = {
     "Nota": ("notas", (), {"categoria_nombre": {"type": "string", "nullable": True}, "dueno_nombre": {"type": "string", "nullable": True}}),
     "TareaConDuracion": ("tareas", (), {}),
-    "TareaOutlook": ("tareas_outlook", (), {"categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True}}),
+    "TareaOutlook": ("tareas_outlook", (), {"categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True}, "vencida": {"type": "boolean", "description": "Derivada: tiene fecha, ya pasó el día y no está completada (solo en las respuestas de transiciones y tareas de un cliente)."}, "clientes": {"type": "array", "items": {"$ref": "#/components/schemas/ClienteDeTarea"}}}),
     "Proyecto": ("categorias", (), {}),
     "ClienteFiscal": ("clientes_fiscales", (), {"modelos_fiscales": {"type": "string", "nullable": True, "description": "Modelos que se le generan, **serializados como JSON** (p. ej. `[\"303\",\"130\"]`). Solo `GET /fiscal/clientes/{id}` los devuelve ya como lista (`ClienteFiscalDetalle`); al enviarlos siempre es una lista."}}),
     "Vencimiento": ("vencimientos_fiscales", (), {"cliente_nombre": {"type": "string"}}),
@@ -293,7 +293,7 @@ REQUERIDOS: dict[str, tuple[str, ...]] = {
     "crear_categoria": ("nombre",), "crear_tarea": ("nombre", "categoria_id"), "crear_tarea_outlook": ("asunto",), "crear_cliente_fiscal": ("nombre",),
     "crear_vencimiento": ("cliente_id", "modelo", "periodo", "fecha_limite"), "enviar_correo": ("cuenta_id", "destinatarios", "asunto", "cuerpo_html"),
     "fichaje_admin_corregir": ("tipo", "marca_tiempo"), "accion_en_lote": ("ids", "accion"), "crear_webhook": ("url", "eventos"), "estado": ("estado",),
-    "cambiar_estado_tarea": ("estado",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
+    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
     "compartir_tarea": ("usuario_id",), "crear_recurrente": ("asunto", "periodicidad"), "crear_regla_vencimiento": ("modelo", "asunto"), "crear_plantilla": ("nombre", "cuerpo"),
     "crear_plantilla_tareas": ("nombre", "items"), "guardar_vista": ("nombre", "filtros"), "responder_mensaje_vencimiento": ("texto",), "marcar_fichaje": ("tipo",), "pedir_ausencia": ("tipo", "desde"), "importar_certificado_api": ("contenido_base64",), "proponer_traspaso_api": ("cliente_id", "a_usuario_id"), "rechazar_traspaso_api": ("motivo",), "renovado_certificado_api": ("nueva_caducidad",), "transicionar_vencimiento": ("destino",), "crear_oficina_api": ("nombre",), "dar_membresia_api": ("usuario_id", "rol", "alcance"), "crear_tipo_de_turno_api": ("nombre", "inicio", "fin"), "asignar_turno_api": ("usuario_id", "fecha"), "ajustar_bolsa_api": ("usuario_id", "minutos", "motivo"), "resolver_ausencia_api": ("decision",),
     "crear_tiquet": ("titulo",), "enviar_mensaje_ia": ("texto",), "crear_atajo_ia": ("etiqueta", "texto"),
@@ -499,3 +499,9 @@ RESPUESTAS.update({"listar_facturas_contables_api": ("FacturaContable", True), "
                    "estado_factura_contable_api": ("FacturaContableDetalle", False), "leer_factura_contable_api": ("FacturaContableDetalle", False), "resumen_contabilidad_api": ("ResumenContabilidad", False),
                    "comprobar_exportacion_api": ("ChequeoExportacion", False), "exportar_contabilidad_api": ("ExportacionContable", False)})
 BINARIAS["fichero_del_lote_api"] = "application/octet-stream"
+
+
+# --- Trabajo con tareas: transiciones con versión, clientes vinculados, tareas de un cliente (app/rutas_api_tareas_trabajo.py) ---
+ESQUEMAS["ClienteDeTarea"] = {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "nif": {"type": "string", "nullable": True}, "principal": {"type": "boolean"}}}
+ESQUEMAS["ClientesDeTarea"] = {"type": "object", "properties": {"clientes": {"type": "array", "items": {"$ref": "#/components/schemas/ClienteDeTarea"}}, "version": {"type": "integer", "description": "Versión de la tarea tras el cambio."}}}
+RESPUESTAS.update({"transicionar_tarea": ("TareaOutlook", False), "clientes_de_la_tarea": ("ClientesDeTarea", False), "fijar_clientes_de_la_tarea": ("ClientesDeTarea", False), "tareas_del_cliente": ("TareaOutlook", True)})

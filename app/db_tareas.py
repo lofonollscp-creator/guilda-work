@@ -1117,7 +1117,7 @@ def listar_tareas_outlook(
         if categoria_id is not None:
             cond.append("t.categoria_id = ?"); params.append(categoria_id)
         if cliente_fiscal_id is not None:
-            cond.append("t.cliente_fiscal_id = ?"); params.append(cliente_fiscal_id)
+            cond.append("(t.cliente_fiscal_id = ? OR t.id IN (SELECT tarea_id FROM tarea_clientes WHERE cliente_fiscal_id = ?))"); params.extend((cliente_fiscal_id, cliente_fiscal_id))
         if estado:
             cond.append("estado = ?"); params.append(estado)
         elif excluir_completadas:

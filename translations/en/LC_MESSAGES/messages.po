@@ -13630,3 +13630,9 @@ msgstr "You are %(e)s over, at %(p)s € each (excluding VAT)."
 
 msgid "Límite del plan: %(l)s facturas al mes; te quedan %(r)s."
 msgstr "Plan limit: %(l)s invoices per month; you have %(r)s left."
+
+msgid "vencidas"
+msgstr "overdue"
+
+msgid "completadas"
+msgstr "completed"

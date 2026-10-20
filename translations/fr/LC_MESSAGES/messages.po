@@ -13715,3 +13715,9 @@ msgstr "Vous en avez %(e)s de plus, à %(p)s € chacune (hors TVA)."
 
 msgid "Límite del plan: %(l)s facturas al mes; te quedan %(r)s."
 msgstr "Limite du forfait : %(l)s factures par mois ; il vous en reste %(r)s."
+
+msgid "vencidas"
+msgstr "en retard"
+
+msgid "completadas"
+msgstr "terminées"

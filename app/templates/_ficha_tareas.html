@@ -1,6 +1,7 @@
 {% from "_ds/componentes.html" import chip, estado_vacio %}
 <section class="dash-panel">
   <h2>{{ _('Tareas de este cliente') }} <span class="muted">({{ tareas_abiertas }} {{ _('abiertas') }})</span></h2>
+  <p class="muted" data-contadores-tareas>{% if tareas_vencidas %}{{ tareas_vencidas }} {{ _('vencidas') }} · {% endif %}{{ tareas_completadas }} {{ _('completadas') }}</p>
   {% if tareas %}
   <ul class="log-list">
     {% for t in tareas %}
@@ -8,6 +9,8 @@
       <span class="log-text">{{ t.asunto }}</span>
       {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Vence %(fecha)s', fecha=t.fecha_vencimiento[:10]) }}</span>{% endif %}
       {% if t.vencimiento_id %}<a class="pill" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=t.vencimiento_id) }}">{{ _('Vencimiento') }}</a>{% endif %}
+      {% if t.vencida %}{{ chip(_('Vencida'), 'peligro') }}{% endif %}
+      {% if t.estado == 'esperando' and t.motivo_bloqueo %}<span class="pill" title="{{ t.motivo_bloqueo }}">{{ _('Bloqueada') }}</span>{% endif %}
       <span class="pill">{{ _('Completada') if t.estado == 'completada' else _('Abierta') }}</span>
     </li>
     {% endfor %}
