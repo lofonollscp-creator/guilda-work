@@ -128,3 +128,60 @@ def test_filtros_de_la_pestana_tareas_del_cliente(cliente):
     a = pagina("abiertas")
     assert "Tarea futura" in a and "Tarea hecha" not in a
     assert "Tarea vencida" in pagina("inventado") and 'aria-current="true"' in v
+
+
+# --- Crear una tarea con varios clientes ----------------------------------------------------------------------------------------
+
+def test_crear_tarea_con_varios_clientes_desde_la_lista(cliente):
+    uid, t = _sesion(cliente, "cr1@ejemplo.com")
+    c1, c2, c3 = (db.crear_cliente_fiscal(t, n) for n in ("Uno SL", "Dos SL", "Tres SL"))
+    html = cliente.get("/tareas/").get_data(as_text=True)
+    assert 'name="clientes_vinculados"' in html and "Más clientes" in html and 'id="nueva-tarea"' in html
+    r = cliente.post("/tareas/", data={"asunto": "Para tres clientes", "cliente_fiscal_id": str(c2), "clientes_vinculados": [str(c1), str(c3), str(c2)]})
+    assert r.status_code == 302
+    tid = [x["id"] for x in db.listar_tareas_outlook(uid) if x["asunto"] == "Para tres clientes"][0]
+    clientes = tt.clientes_de_tarea(tid)
+    assert {c["id"] for c in clientes} == {c1, c2, c3} and [c["id"] for c in clientes if c["principal"]] == [c2]
+    assert db.obtener_tarea_outlook(uid, tid)["cliente_fiscal_id"] == c2
+
+
+def test_sin_cliente_principal_el_primero_marcado_pasa_a_serlo(cliente):
+    uid, t = _sesion(cliente, "cr2@ejemplo.com")
+    c1, c2 = db.crear_cliente_fiscal(t, "Uno SL"), db.crear_cliente_fiscal(t, "Dos SL")
+    cliente.post("/tareas/", data={"asunto": "Solo extras", "clientes_vinculados": [str(c1), str(c2)]})
+    tid = [x["id"] for x in db.listar_tareas_outlook(uid) if x["asunto"] == "Solo extras"][0]
+    assert [c["id"] for c in tt.clientes_de_tarea(tid)] == [c1, c2] and db.obtener_tarea_outlook(uid, tid)["cliente_fiscal_id"] == c1
+
+
+def test_un_cliente_ajeno_corta_la_creacion_entera(cliente):
+    uid, t = _sesion(cliente, "cr3@ejemplo.com")
+    propio = db.crear_cliente_fiscal(t, "Propio SL")
+    ajeno = db.crear_cliente_fiscal(db.crear_tenant("Otro despacho creación"), "Ajeno SL")
+    r = cliente.post("/tareas/", data={"asunto": "No debe crearse", "cliente_fiscal_id": str(propio), "clientes_vinculados": [str(ajeno)]})
+    assert r.status_code == 302 and "error=" in r.headers["Location"]
+    assert [x for x in db.listar_tareas_outlook(uid) if x["asunto"] == "No debe crearse"] == []          # ni siquiera una tarea a medias
+    cliente.post("/tareas/", data={"asunto": "No debe crearse", "clientes_vinculados": ["abc", "99999"]})
+    assert [x for x in db.listar_tareas_outlook(uid) if x["asunto"] == "No debe crearse"] == []
+
+
+def test_la_creacion_de_siempre_con_un_solo_cliente_no_cambia(cliente):
+    uid, t = _sesion(cliente, "cr4@ejemplo.com")
+    c1 = db.crear_cliente_fiscal(t, "Uno SL")
+    cliente.post("/tareas/", data={"asunto": "Clásica", "cliente_fiscal_id": str(c1)})
+    tid = [x["id"] for x in db.listar_tareas_outlook(uid) if x["asunto"] == "Clásica"][0]
+    assert [(c["id"], c["principal"]) for c in tt.clientes_de_tarea(tid)] == [(c1, True)]
+    cliente.post("/tareas/", data={"asunto": "Sin cliente"})
+    sin = [x["id"] for x in db.listar_tareas_outlook(uid) if x["asunto"] == "Sin cliente"][0]
+    assert tt.clientes_de_tarea(sin) == []
+
+
+def test_el_selector_solo_sale_con_mas_de_un_cliente_y_se_preselecciona_desde_la_ficha(cliente):
+    uid, t = _sesion(cliente, "cr5@ejemplo.com")
+    c1 = db.crear_cliente_fiscal(t, "Único SL")
+    assert 'name="clientes_vinculados"' not in cliente.get("/tareas/").get_data(as_text=True)         # con un solo cliente no hace falta
+    c2 = db.crear_cliente_fiscal(t, "Segundo SL")
+    html = cliente.get(f"/tareas/?nuevo_cliente={c2}").get_data(as_text=True)
+    assert f'<option value="{c2}" selected>' in html and f'<option value="{c1}" selected>' not in html
+    cid = db.obtener_cliente_fiscal(t, c1)["cliente_id"]
+    ficha = cliente.get(f"/clientes/{cid}?pestana=tareas").get_data(as_text=True)
+    assert "Nueva tarea para este cliente" in ficha and f"nuevo_cliente={c1}" in ficha and "#nueva-tarea" in ficha

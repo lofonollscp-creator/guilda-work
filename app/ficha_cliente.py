@@ -129,4 +129,4 @@ def contexto_tareas(usuario_id: int, cliente_fiscal) -> dict:
         t["vencida"] = tareas_trabajo.esta_vencida(t["fecha_vencimiento"], t["estado"])
     filtro = request.args.get("tareas") if request.args.get("tareas") in FILTROS_TAREAS else "todas"
     visibles = [t for t in tareas if {"todas": True, "abiertas": t["estado"] != "completada", "vencidas": t["vencida"], "completadas": t["estado"] == "completada"}[filtro]]
-    return {"tareas": visibles, "tareas_filtro": filtro, "tareas_abiertas": contadores["abiertas"], "tareas_vencidas": contadores["vencidas"], "tareas_completadas": contadores["completadas"]}
+    return {"tareas": visibles, "tareas_filtro": filtro, "cliente_fiscal_id_ficha": cliente_fiscal["id"], "tareas_abiertas": contadores["abiertas"], "tareas_vencidas": contadores["vencidas"], "tareas_completadas": contadores["completadas"]}

@@ -14036,3 +14036,12 @@ msgid "Lo que se acerca en %(n)s día"
 msgid_plural "Lo que se acerca en los próximos %(n)s días"
 msgstr[0] "Ce qui approche dans %(n)s jour"
 msgstr[1] "Ce qui approche dans les %(n)s prochains jours"
+
+msgid "Más clientes"
+msgstr "Plus de clients"
+
+msgid "Otros clientes a los que afecta la tarea"
+msgstr "Autres clients concernés par la tâche"
+
+msgid "Nueva tarea para este cliente"
+msgstr "Nouvelle tâche pour ce client"

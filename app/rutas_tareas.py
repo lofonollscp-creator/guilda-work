@@ -152,6 +152,7 @@ def listar():
         vista_activa=next((v["id"] for v in vistas if v["filtros"] == filtros_actuales), None),
         vista=vista,
         plantilla_creadas=request.args.get("plantilla_creadas", type=int),
+        cliente_preseleccionado=request.args.get("nuevo_cliente", type=int),
         error=(request.args.get("error") or "")[:200] or None,
         aviso=(request.args.get("aviso") or "")[:200] or None,
         lote_activo=True, volver_a=request.full_path.rstrip("?"), url_lote=url_for("tareas.lote"),
@@ -392,6 +393,15 @@ def crear():
         categoria_id = request.form.get("categoria_id") or entendido.etiqueta_id
         asignada_a = _int_o_none(request.form.get("asignada_a")) or entendido.persona_id
         prioridad_formulario = request.form.get("prioridad", "normal")
+        # Más de un cliente: se validan ANTES de crear nada (uno ajeno o inválido corta la creación entera, sin dejar una tarea a medias).
+        principal = _int_o_none(request.form.get("cliente_fiscal_id"))
+        extras = [i for i in (_int_o_none(x) for x in request.form.getlist("clientes_vinculados")) if i and i != principal]
+        clientes = ([principal] if principal else []) + extras
+        if extras:
+            try:
+                tareas_trabajo.validar_clientes(g.usuario_id, clientes, principal)
+            except tareas_trabajo.TransicionInvalida as e:
+                return _volver_con_error(_(str(e)))
         tarea_id = db.crear_tarea_outlook(
             g.usuario_id,
             asunto=asunto,
@@ -404,6 +414,8 @@ def crear():
             asignada_a=asignada_a,
             estimacion_min=quickadd.duracion_a_minutos(request.form.get("estimacion")) or entendido.estimacion_min,
         )
+        if extras:
+            tareas_trabajo.fijar_clientes(g.usuario_id, tarea_id, clientes, principal)
         _notificar_asignacion(g.usuario_id, tarea_id, asignada_a)
         if request.form.get("con_cronometro"):
             try:

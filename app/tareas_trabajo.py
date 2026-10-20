@@ -222,11 +222,9 @@ def clientes_de_tarea(tarea_id: int) -> list[dict]:
         conn.close()
 
 
-def fijar_clientes(usuario_id: int, tarea_id: int, cliente_ids: list[int], principal_id: int | None = None, version: int | None = None) -> list[dict]:
-    """Sustituye los clientes de la tarea. Reglas: quien edita la tarea; todos los clientes del mismo despacho que la persona (los demás se rechazan, no se ignoran);
-    sin repetidos; un solo principal (el indicado o, si no, el primero); `tareas_outlook.cliente_fiscal_id` queda igual al principal. Lista vacía = tarea sin cliente."""
-    if not db.puede_editar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para cambiar los clientes de esta tarea.")
+def validar_clientes(usuario_id: int, cliente_ids: list, principal_id: int | None = None) -> tuple[list[int], int | None, int | None]:
+    """Comprueba una lista de clientes ANTES de tocar nada (también al crear una tarea): enteros, sin repetidos, hasta el máximo, el principal entre ellos y todos del despacho de la persona
+    (los demás se rechazan, no se ignoran). Devuelve (ids, principal, tenant); lanza TransicionInvalida si algo no vale."""
     ids: list[int] = []
     for bruto in cliente_ids:
         try:
@@ -248,6 +246,15 @@ def fijar_clientes(usuario_id: int, tarea_id: int, cliente_ids: list[int], princ
                 raise TransicionInvalida("cliente_invalido", "Uno de los clientes no existe o no es de tu despacho.", "cliente_ids")
     finally:
         conn.close()
+    return ids, principal, tenant
+
+
+def fijar_clientes(usuario_id: int, tarea_id: int, cliente_ids: list[int], principal_id: int | None = None, version: int | None = None) -> list[dict]:
+    """Sustituye los clientes de la tarea. Reglas: quien edita la tarea; todos los clientes del mismo despacho que la persona (los demás se rechazan, no se ignoran);
+    sin repetidos; un solo principal (el indicado o, si no, el primero); `tareas_outlook.cliente_fiscal_id` queda igual al principal. Lista vacía = tarea sin cliente."""
+    if not db.puede_editar_tarea(usuario_id, tarea_id):
+        raise TransicionInvalida("sin_permiso", "No tienes permiso para cambiar los clientes de esta tarea.")
+    ids, principal, tenant = validar_clientes(usuario_id, cliente_ids, principal_id)
     reclamar_version(tarea_id, version)
     conn = db.get_connection()
     try:

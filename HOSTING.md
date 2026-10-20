@@ -90,6 +90,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Automatizaciones: reglas que crean tareas y avisan (octubre de 2026)](#automatizaciones-reglas-que-crean-tareas-y-avisan-octubre-de-2026)
 - [Informes de tareas, revisiones y tareas en el portal (octubre de 2026)](#informes-de-tareas-revisiones-y-tareas-en-el-portal-octubre-de-2026)
 - [Herramientas MCP e IA para tareas (octubre de 2026)](#herramientas-mcp-e-ia-para-tareas-octubre-de-2026)
+- [Varios clientes al crear una tarea (octubre de 2026)](#varios-clientes-al-crear-una-tarea-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3334,3 +3335,12 @@ Catorce herramientas nuevas en `mcp_tools/herramientas_tareas_trabajo.py`, expue
 - **Lo que deliberadamente no se ofrece**: marcar una tarea como visible para el cliente en su portal, y crear, cambiar o borrar reglas de automatización. Son decisiones de una persona (lo que ve un cliente y qué hace el sistema por su cuenta cada día); se hacen desde la pantalla o la API.
 - **Nombres**: las de automatización no empiezan por `automatizaciones_` porque ese prefijo es el de la integración con flujos externos. Contadores: 170 herramientas del asistente y 225 del MCP en el árbol de trabajo.
 - **Pruebas**: `tests/test_herramientas_tareas_trabajo.py` (9 tests), cinco peticiones nuevas en `tests/datos/evaluacion_herramientas.py` y los contadores de `tests/test_mcp_tools.py` y `tests/test_ia_herramientas.py`.
+
+## Varios clientes al crear una tarea (octubre de 2026)
+
+Cierra el pendiente de la Fase 1: antes solo se podían vincular varios clientes al **editar** una tarea. Ahora también al crearla, en Tareas › «Nueva tarea».
+
+- Junto al selector «Cliente» (el principal) aparece **«Más clientes»**, un desplegable con una casilla por cliente, solo si el despacho tiene más de uno. Sin principal, el primero marcado pasa a serlo.
+- **Se valida todo antes de crear nada** (`tareas_trabajo.validar_clientes`, la misma comprobación que usa `fijar_clientes`): un cliente de otro despacho o inválido corta la creación entera con un aviso, sin dejar una tarea a medias. Con un solo cliente (o ninguno) el comportamiento es el de siempre.
+- En la pestaña Tareas de la ficha del cliente hay un botón **«Nueva tarea para este cliente»** que abre la lista con ese cliente ya elegido (`/tareas/?nuevo_cliente=<id>#nueva-tarea`).
+- **Pruebas**: cinco tests nuevos en `tests/test_tareas_trabajo_web.py`. Sin migraciones: no hace falta más que reiniciar.

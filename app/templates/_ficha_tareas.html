@@ -21,5 +21,8 @@
     {% endfor %}
   </ul>
   {% else %}<p class="muted">{{ _('Este cliente todavía no tiene tareas.') if tareas_filtro == 'todas' else _('Ninguna tarea cumple este filtro.') }}</p>{% endif %}
-  <p class="ds-mt-12"><a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Abrir Tareas') }}</a></p>
+  <p class="ds-mt-12">
+    {% if cliente_fiscal_id_ficha %}<a class="btn btn-primary" href="{{ url_for('tareas.listar', nuevo_cliente=cliente_fiscal_id_ficha) }}#nueva-tarea">{{ _('Nueva tarea para este cliente') }}</a>{% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Abrir Tareas') }}</a>
+  </p>
 </section>

@@ -91,7 +91,7 @@
 </form>
 
 <section class="quick-actions">
-  <form class="quick-card quick-card-full" action="{{ url_for('tareas.crear') }}" method="post">
+  <form class="quick-card quick-card-full" id="nueva-tarea" action="{{ url_for('tareas.crear') }}" method="post">
     <label>{{ _('Nueva tarea') }}</label>
     <div class="quick-row">
       <input type="text" name="asunto" placeholder="{{ _('Asunto... (puedes añadir «viernes 10h», «@luis», «!alta», «#proyecto»)') }}" required autofocus autocomplete="off">
@@ -111,8 +111,18 @@
       {% if clientes_fiscales %}
       <select name="cliente_fiscal_id" title="{{ _('Cliente') }}">
         <option value="">{{ _('Sin cliente') }}</option>
-        {% for c in clientes_fiscales %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}" {% if c.id == cliente_preseleccionado %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
       </select>
+      {% if clientes_fiscales|length > 1 %}
+      <details class="tarea-mas-clientes ds-plegable">
+        <summary>{{ _('Más clientes') }}</summary>
+        <div role="group" aria-label="{{ _('Otros clientes a los que afecta la tarea') }}">
+          {% for c in clientes_fiscales %}
+          <label class="checkbox"><input type="checkbox" name="clientes_vinculados" value="{{ c.id }}"> {{ c.nombre }}</label>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
       {% endif %}
       {% if companeros %}
       <select name="asignada_a" title="{{ _('Asignar a') }}">
