@@ -26,6 +26,10 @@
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button><a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente.id) }}">{{ _('Cancelar') }}</a></div>
 </form>
 <section class="ds-max-640 ds-mt-24">
+  <h2>{{ _('Plan de cuentas de a3') }}</h2>
+  <p class="muted">{{ _('Importa la lista de subcuentas de proveedores y clientes que este cliente ya tiene en a3 para usar esas y no crear otras.') }} <a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Importar el plan de cuentas') }}</a></p>
+</section>
+<section class="ds-max-640 ds-mt-24">
   <h2>{{ _('Copiar ajustes') }}</h2>
   <form method="post" action="{{ url_for('contabilidad.copiar_configuracion', cliente_id=cliente.id) }}" class="ds-fila">
     <select name="origen" aria-label="{{ _('Copiar los ajustes de') }}">

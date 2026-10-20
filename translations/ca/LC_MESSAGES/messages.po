@@ -13333,3 +13333,84 @@ msgstr "Copia de %(c)s"
 
 msgid "No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3."
 msgstr "No canvia el codi d'empresa d'a3 d'aquest client. Els valors del despatx es fixen a Ajustos d'a3."
+
+msgid "Elige el archivo exportado de a3."
+msgstr "Tria el fitxer exportat d'a3."
+
+msgid "La importación ha caducado: vuelve a subir el archivo."
+msgstr "La importació ha caducat: torna a pujar el fitxer."
+
+msgid "Plan importado: %(n)s subcuentas. Coinciden por NIF: %(nif)s; confirmadas por nombre: %(nom)s."
+msgstr "Pla importat: %(n)s subcomptes. Coincideixen per NIF: %(nif)s; confirmades per nom: %(nom)s."
+
+msgid "Plan borrado."
+msgstr "Pla esborrat."
+
+msgid "Plan de cuentas de a3"
+msgstr "Pla de comptes d'a3"
+
+msgid "Importa la lista de subcuentas de proveedores y clientes que este cliente ya tiene en a3 para usar esas y no crear otras."
+msgstr "Importa la llista de subcomptes de proveïdors i clients que aquest client ja té a a3 per fer servir aquestes i no crear-ne d'altres."
+
+msgid "Importar el plan de cuentas"
+msgstr "Importa el pla de comptes"
+
+msgid "Plan de cuentas de a3 de %(cliente)s"
+msgstr "Pla de comptes d'a3 de %(cliente)s"
+
+msgid "Las subcuentas de proveedores y clientes que ya existen en a3, para que el fichero use esas y la numeración automática no choque con ellas."
+msgstr "Les subcomptes de proveïdors i clients que ja existeixen a a3, perquè el fitxer faci servir aquestes i la numeració automàtica no hi xoqui."
+
+msgid "Plan guardado"
+msgstr "Pla desat"
+
+msgid "%(n)s subcuentas (%(p)s de proveedores, %(c)s de clientes), importadas el %(f)s."
+msgstr "%(n)s subcomptes (%(p)s de proveïdors, %(c)s de clients), importades el %(f)s."
+
+msgid "Borrar el plan guardado"
+msgstr "Esborra el pla desat"
+
+msgid "Todavía no has importado el plan de cuentas de este cliente."
+msgstr "Encara no has importat el pla de comptes d'aquest client."
+
+msgid "Vista previa de la importación"
+msgstr "Vista prèvia de la importació"
+
+msgid "Subcuentas de %(d)s dígitos: %(v)s de %(t)s (%(p)s de proveedores, %(c)s de clientes; %(n)s con NIF)."
+msgstr "Subcomptes de %(d)s dígits: %(v)s de %(t)s (%(p)s de proveïdors, %(c)s de clients; %(n)s amb NIF)."
+
+msgid "%(n)s subcuentas tienen otra longitud y se dejan fuera. Si tu plan usa otros dígitos, cámbialos en la configuración del cliente."
+msgstr "%(n)s subcomptes tenen una altra longitud i es deixen fora. Si el teu pla fa servir altres dígits, canvia'ls a la configuració del client."
+
+msgid "Terceros de las facturas que coinciden por NIF: %(n)s. Usarán su subcuenta de a3 sin más."
+msgstr "Tercers de les factures que coincideixen per NIF: %(n)s. Faran servir la seva subcompte d'a3 sense més."
+
+msgid "Estos tienen recordada otra subcuenta distinta; manda la recordada:"
+msgstr "Aquests tenen recordada una altra subcompte diferent; mana la recordada:"
+
+msgid "Coincidencias solo por nombre"
+msgstr "Coincidències només per nom"
+
+msgid "Marca las que sean el mismo tercero; se recordarán por NIF. Las que dejes sin marcar seguirán sin subcuenta propia."
+msgstr "Marca les que siguin el mateix tercer; es recordaran per NIF. Les que deixis sense marcar continuaran sense subcompte pròpia."
+
+msgid "sin NIF"
+msgstr "sense NIF"
+
+msgid "Importar el plan"
+msgstr "Importa el pla"
+
+msgid "Sustituye el plan guardado de este cliente por el del archivo."
+msgstr "Substitueix el pla desat d'aquest client pel del fitxer."
+
+msgid "Importar desde a3"
+msgstr "Importa des d'a3"
+
+msgid "En a3, saca el listado del plan de cuentas (o de proveedores y clientes) a Excel o CSV. Hacen falta al menos la subcuenta y el nombre; con el NIF las coincidencias son seguras."
+msgstr "A a3, treu el llistat del pla de comptes (o de proveïdors i clients) a Excel o CSV. Calen almenys la subcompte i el nom; amb el NIF les coincidències són segures."
+
+msgid "Archivo exportado de a3"
+msgstr "Fitxer exportat d'a3"
+
+msgid "Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa."
+msgstr "Fins a 5 MB. No es desa res fins que confirmis la vista prèvia."

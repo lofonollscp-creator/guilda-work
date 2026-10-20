@@ -60,6 +60,18 @@ CREATE TABLE IF NOT EXISTS contabilidad_recordatorios (
     enviado_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_contabilidad_recordatorios ON contabilidad_recordatorios(cliente_fiscal_id, trimestre);
+CREATE TABLE IF NOT EXISTS contabilidad_plan (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id) ON DELETE CASCADE,
+    cuenta TEXT NOT NULL,
+    nombre TEXT,
+    nif TEXT,
+    tipo TEXT NOT NULL CHECK (tipo IN ('proveedor', 'cliente')),
+    importado_en TEXT NOT NULL,
+    UNIQUE (cliente_fiscal_id, cuenta)
+);
+CREATE INDEX IF NOT EXISTS idx_contabilidad_plan_nif ON contabilidad_plan(cliente_fiscal_id, tipo, nif);
 CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -419,6 +431,19 @@ def cuenta_del_tercero(tenant_id: int, cliente_fiscal_id: int, tipo_factura: str
     return f["cuenta"] if f else None
 
 
+def cuenta_del_plan(tenant_id: int, cliente_fiscal_id: int, tipo_factura: str, nif: str | None) -> str | None:
+    """La subcuenta que ese proveedor o cliente ya tiene en el plan de a3 importado del cliente (por NIF), o None."""
+    if not nif:
+        return None
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT cuenta FROM contabilidad_plan WHERE cliente_fiscal_id = ? AND tenant_id = ? AND tipo = ? AND nif = ? ORDER BY cuenta LIMIT 1",
+                         (cliente_fiscal_id, tenant_id, "proveedor" if tipo_factura == "recibida" else "cliente", _nif(nif))).fetchone()
+    finally:
+        conn.close()
+    return f["cuenta"] if f else None
+
+
 def _nif(valor) -> str:
     return re.sub(r"[\s.\-]", "", str(valor or "")).upper()
 
@@ -441,6 +466,8 @@ def _subcuentas_nuevas(tenant_id: int, cfg: dict, facturas: list[dict]) -> dict[
         usadas = {"proveedor": set(), "cliente": set()}
         for r in conn.execute("SELECT tipo, cuenta FROM contabilidad_terceros WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id)):
             usadas[r["tipo"]].add(r["cuenta"])
+        for r in conn.execute("SELECT tipo, cuenta FROM contabilidad_plan WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id)):      # las que ya existen en a3 no se repiten
+            usadas[r["tipo"]].add(r["cuenta"])
         for r in conn.execute("SELECT tipo, tercero_cuenta FROM facturas_contables WHERE cliente_fiscal_id = ? AND tenant_id = ? AND tercero_cuenta IS NOT NULL", (cliente_id, tenant_id)):
             usadas["proveedor" if r["tipo"] == "recibida" else "cliente"].add(r["tercero_cuenta"])
     finally:
@@ -449,7 +476,7 @@ def _subcuentas_nuevas(tenant_id: int, cfg: dict, facturas: list[dict]) -> dict[
     for f in sorted(facturas, key=lambda f: (f["fecha"], f["id"])):
         nif = _nif(f.get("tercero_nif"))
         tipo = "proveedor" if f["tipo"] == "recibida" else "cliente"
-        if not nif or f.get("tercero_cuenta") or (tipo, nif) in res or cuenta_del_tercero(tenant_id, cliente_id, f["tipo"], nif):
+        if not nif or f.get("tercero_cuenta") or (tipo, nif) in res or cuenta_del_tercero(tenant_id, cliente_id, f["tipo"], nif) or cuenta_del_plan(tenant_id, cliente_id, f["tipo"], nif):
             continue
         generica = cfg["cuenta_proveedores"] if tipo == "proveedor" else cfg["cuenta_clientes"]
         ancho = cfg["digitos"]
@@ -605,7 +632,7 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
 def cuenta_efectiva(tenant_id: int, f: dict, cfg: dict | None = None) -> str | None:
     """La subcuenta con la que se contabiliza el tercero: la escrita en la factura, la recordada por su NIF o la genérica del cliente."""
     cfg = cfg or configuracion(tenant_id, f["cliente_fiscal_id"])
-    return f.get("tercero_cuenta") or cuenta_del_tercero(tenant_id, f["cliente_fiscal_id"], f["tipo"], f.get("tercero_nif")) or (
+    return f.get("tercero_cuenta") or cuenta_del_tercero(tenant_id, f["cliente_fiscal_id"], f["tipo"], f.get("tercero_nif")) or cuenta_del_plan(tenant_id, f["cliente_fiscal_id"], f["tipo"], f.get("tercero_nif")) or (
         cfg["cuenta_proveedores"] if f["tipo"] == "recibida" else cfg["cuenta_clientes"])
 
 
@@ -979,7 +1006,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
     for tabla in ("facturas_contables_lineas",):
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
-    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho"):
+    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
 
 

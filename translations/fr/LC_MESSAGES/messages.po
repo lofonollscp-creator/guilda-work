@@ -13409,3 +13409,84 @@ msgstr "Copier de %(c)s"
 
 msgid "No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3."
 msgstr "Cela ne change pas le code société a3 de ce client. Les valeurs du cabinet se fixent dans Réglages a3."
+
+msgid "Elige el archivo exportado de a3."
+msgstr "Choisissez le fichier exporté d'a3."
+
+msgid "La importación ha caducado: vuelve a subir el archivo."
+msgstr "L'importation a expiré : téléversez de nouveau le fichier."
+
+msgid "Plan importado: %(n)s subcuentas. Coinciden por NIF: %(nif)s; confirmadas por nombre: %(nom)s."
+msgstr "Plan importé : %(n)s sous-comptes. Correspondances par NIF : %(nif)s ; confirmées par nom : %(nom)s."
+
+msgid "Plan borrado."
+msgstr "Plan supprimé."
+
+msgid "Plan de cuentas de a3"
+msgstr "Plan comptable a3"
+
+msgid "Importa la lista de subcuentas de proveedores y clientes que este cliente ya tiene en a3 para usar esas y no crear otras."
+msgstr "Importez la liste des sous-comptes fournisseurs et clients que ce client a déjà dans a3 pour utiliser ceux-là et ne pas en créer d'autres."
+
+msgid "Importar el plan de cuentas"
+msgstr "Importer le plan comptable"
+
+msgid "Plan de cuentas de a3 de %(cliente)s"
+msgstr "Plan comptable a3 de %(cliente)s"
+
+msgid "Las subcuentas de proveedores y clientes que ya existen en a3, para que el fichero use esas y la numeración automática no choque con ellas."
+msgstr "Les sous-comptes fournisseurs et clients qui existent déjà dans a3, pour que le fichier les utilise et que la numérotation automatique n'entre pas en conflit."
+
+msgid "Plan guardado"
+msgstr "Plan enregistré"
+
+msgid "%(n)s subcuentas (%(p)s de proveedores, %(c)s de clientes), importadas el %(f)s."
+msgstr "%(n)s sous-comptes (%(p)s fournisseurs, %(c)s clients), importés le %(f)s."
+
+msgid "Borrar el plan guardado"
+msgstr "Supprimer le plan enregistré"
+
+msgid "Todavía no has importado el plan de cuentas de este cliente."
+msgstr "Vous n'avez pas encore importé le plan comptable de ce client."
+
+msgid "Vista previa de la importación"
+msgstr "Aperçu de l'importation"
+
+msgid "Subcuentas de %(d)s dígitos: %(v)s de %(t)s (%(p)s de proveedores, %(c)s de clientes; %(n)s con NIF)."
+msgstr "Sous-comptes de %(d)s chiffres : %(v)s sur %(t)s (%(p)s fournisseurs, %(c)s clients ; %(n)s avec NIF)."
+
+msgid "%(n)s subcuentas tienen otra longitud y se dejan fuera. Si tu plan usa otros dígitos, cámbialos en la configuración del cliente."
+msgstr "%(n)s sous-comptes ont une autre longueur et sont exclus. Si votre plan utilise d'autres chiffres, modifiez-les dans la configuration du client."
+
+msgid "Terceros de las facturas que coinciden por NIF: %(n)s. Usarán su subcuenta de a3 sin más."
+msgstr "Tiers des factures correspondant par NIF : %(n)s. Ils utiliseront leur sous-compte a3 tel quel."
+
+msgid "Estos tienen recordada otra subcuenta distinta; manda la recordada:"
+msgstr "Ceux-ci ont un autre sous-compte mémorisé ; c'est celui mémorisé qui prévaut :"
+
+msgid "Coincidencias solo por nombre"
+msgstr "Correspondances par nom uniquement"
+
+msgid "Marca las que sean el mismo tercero; se recordarán por NIF. Las que dejes sin marcar seguirán sin subcuenta propia."
+msgstr "Cochez celles qui sont le même tiers ; elles seront mémorisées par NIF. Celles non cochées resteront sans sous-compte propre."
+
+msgid "sin NIF"
+msgstr "sans NIF"
+
+msgid "Importar el plan"
+msgstr "Importer le plan"
+
+msgid "Sustituye el plan guardado de este cliente por el del archivo."
+msgstr "Remplace le plan enregistré de ce client par celui du fichier."
+
+msgid "Importar desde a3"
+msgstr "Importer depuis a3"
+
+msgid "En a3, saca el listado del plan de cuentas (o de proveedores y clientes) a Excel o CSV. Hacen falta al menos la subcuenta y el nombre; con el NIF las coincidencias son seguras."
+msgstr "Dans a3, exportez la liste du plan comptable (ou des fournisseurs et clients) vers Excel ou CSV. Il faut au moins le sous-compte et le nom ; avec le NIF, les correspondances sont sûres."
+
+msgid "Archivo exportado de a3"
+msgstr "Fichier exporté d'a3"
+
+msgid "Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa."
+msgstr "Jusqu'à 5 Mo. Rien n'est enregistré avant que vous confirmiez l'aperçu."

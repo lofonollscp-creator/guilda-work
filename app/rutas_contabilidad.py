@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, enlace_a3, lectura_facturas, verticales
+from . import acceso, db, enlace_a3, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from .auth import login_required
 
@@ -210,6 +210,48 @@ def ajustes():
                 cfg = {**cfg, **{k: request.form.get(k, "") for k in cfg}}
     clientes = fc.resumen_clientes(g.tenant_id, g.usuario_id)
     return render_template("contabilidad_ajustes.html", cfg=cfg, clientes=clientes, listos=sum(1 for c in clientes if c["a3_empresa"]), error=error, mensaje=mensaje, puede_despacho=_es_supervisor())
+
+
+@contabilidad_bp.route("/cliente/<int:cliente_id>/plan", methods=["GET", "POST"])
+@login_required
+def plan(cliente_id: int):
+    """Importar el plan de cuentas del cliente en a3 (proveedores y clientes) para usar las subcuentas que ya existen allí."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None or not acceso.puede_ver_cliente(g.tenant_id, g.usuario_id, cliente_id):
+        abort(404)
+    error = mensaje = None
+    ident = request.values.get("importacion") or ""
+    if request.method == "POST":
+        accion = request.form.get("accion")
+        try:
+            if accion == "subir":
+                archivo = request.files.get("archivo")
+                if archivo is None or not archivo.filename:
+                    raise ValueError(_("Elige el archivo exportado de a3."))
+                ident = plan_cuentas.preparar(g.tenant_id, g.usuario_id, cliente_id, archivo.filename, archivo.read(importador_clientes.MAX_BYTES + 1))
+                return redirect(url_for("contabilidad.plan", cliente_id=cliente_id, importacion=ident))
+            if accion == "importar":
+                datos = plan_cuentas.cargar(g.tenant_id, g.usuario_id, cliente_id, ident)
+                if datos is None:
+                    raise ValueError(_("La importación ha caducado: vuelve a subir el archivo."))
+                r = plan_cuentas.importar(g.tenant_id, g.usuario_id, cliente_id, datos, request.form.getlist("nombre_ok", type=int))
+                importador_clientes.descartar(ident)
+                ident = ""
+                mensaje = _("Plan importado: %(n)s subcuentas. Coinciden por NIF: %(nif)s; confirmadas por nombre: %(nom)s.", n=r["cuentas"], nif=r["por_nif"], nom=r["por_nombre"])
+            elif accion == "borrar":
+                plan_cuentas.borrar(g.tenant_id, g.usuario_id, cliente_id)
+                mensaje = _("Plan borrado.")
+        except (ValueError, importador_clientes.ErrorImportacion) as e:
+            error = str(e)
+    vista = None
+    if ident:
+        datos = plan_cuentas.cargar(g.tenant_id, g.usuario_id, cliente_id, ident)
+        if datos is None:
+            error = error or _("La importación ha caducado: vuelve a subir el archivo.")
+            ident = ""
+        else:
+            vista = plan_cuentas.previsualizar(g.tenant_id, g.usuario_id, cliente_id, datos)
+    return render_template("contabilidad_plan.html", cliente=cliente, resumen=plan_cuentas.resumen(g.tenant_id, g.usuario_id, cliente_id), vista=vista, ident=ident, error=error, mensaje=mensaje)
 
 
 @contabilidad_bp.route("/cliente/<int:cliente_id>/copiar-configuracion", methods=["POST"])

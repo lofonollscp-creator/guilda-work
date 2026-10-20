@@ -13324,3 +13324,84 @@ msgstr "Copy from %(c)s"
 
 msgid "No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3."
 msgstr "It does not change this client's a3 company code. The firm defaults are set in a3 settings."
+
+msgid "Elige el archivo exportado de a3."
+msgstr "Choose the file exported from a3."
+
+msgid "La importación ha caducado: vuelve a subir el archivo."
+msgstr "The import has expired: upload the file again."
+
+msgid "Plan importado: %(n)s subcuentas. Coinciden por NIF: %(nif)s; confirmadas por nombre: %(nom)s."
+msgstr "Chart imported: %(n)s subaccounts. Matched by tax ID: %(nif)s; confirmed by name: %(nom)s."
+
+msgid "Plan borrado."
+msgstr "Chart deleted."
+
+msgid "Plan de cuentas de a3"
+msgstr "a3 chart of accounts"
+
+msgid "Importa la lista de subcuentas de proveedores y clientes que este cliente ya tiene en a3 para usar esas y no crear otras."
+msgstr "Import the list of supplier and customer subaccounts this client already has in a3 so those are used instead of creating new ones."
+
+msgid "Importar el plan de cuentas"
+msgstr "Import the chart of accounts"
+
+msgid "Plan de cuentas de a3 de %(cliente)s"
+msgstr "a3 chart of accounts of %(cliente)s"
+
+msgid "Las subcuentas de proveedores y clientes que ya existen en a3, para que el fichero use esas y la numeración automática no choque con ellas."
+msgstr "The supplier and customer subaccounts that already exist in a3, so the file uses them and automatic numbering does not clash with them."
+
+msgid "Plan guardado"
+msgstr "Saved chart"
+
+msgid "%(n)s subcuentas (%(p)s de proveedores, %(c)s de clientes), importadas el %(f)s."
+msgstr "%(n)s subaccounts (%(p)s suppliers, %(c)s customers), imported on %(f)s."
+
+msgid "Borrar el plan guardado"
+msgstr "Delete the saved chart"
+
+msgid "Todavía no has importado el plan de cuentas de este cliente."
+msgstr "You have not imported this client's chart of accounts yet."
+
+msgid "Vista previa de la importación"
+msgstr "Import preview"
+
+msgid "Subcuentas de %(d)s dígitos: %(v)s de %(t)s (%(p)s de proveedores, %(c)s de clientes; %(n)s con NIF)."
+msgstr "Subaccounts of %(d)s digits: %(v)s of %(t)s (%(p)s suppliers, %(c)s customers; %(n)s with tax ID)."
+
+msgid "%(n)s subcuentas tienen otra longitud y se dejan fuera. Si tu plan usa otros dígitos, cámbialos en la configuración del cliente."
+msgstr "%(n)s subaccounts have a different length and are left out. If your chart uses other digits, change them in the client's configuration."
+
+msgid "Terceros de las facturas que coinciden por NIF: %(n)s. Usarán su subcuenta de a3 sin más."
+msgstr "Third parties in the invoices that match by tax ID: %(n)s. They will use their a3 subaccount as is."
+
+msgid "Estos tienen recordada otra subcuenta distinta; manda la recordada:"
+msgstr "These have a different subaccount remembered; the remembered one wins:"
+
+msgid "Coincidencias solo por nombre"
+msgstr "Matches by name only"
+
+msgid "Marca las que sean el mismo tercero; se recordarán por NIF. Las que dejes sin marcar seguirán sin subcuenta propia."
+msgstr "Tick those that are the same third party; they will be remembered by tax ID. Those left unticked will still have no subaccount of their own."
+
+msgid "sin NIF"
+msgstr "no tax ID"
+
+msgid "Importar el plan"
+msgstr "Import the chart"
+
+msgid "Sustituye el plan guardado de este cliente por el del archivo."
+msgstr "Replaces this client's saved chart with the one in the file."
+
+msgid "Importar desde a3"
+msgstr "Import from a3"
+
+msgid "En a3, saca el listado del plan de cuentas (o de proveedores y clientes) a Excel o CSV. Hacen falta al menos la subcuenta y el nombre; con el NIF las coincidencias son seguras."
+msgstr "In a3, export the chart of accounts (or the suppliers and customers list) to Excel or CSV. At least the subaccount and name are needed; with the tax ID matches are certain."
+
+msgid "Archivo exportado de a3"
+msgstr "File exported from a3"
+
+msgid "Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa."
+msgstr "Up to 5 MB. Nothing is saved until you confirm the preview."

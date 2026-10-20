@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Plan de cuentas de a3') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Plan de cuentas de a3 de %(cliente)s', cliente=cliente.nombre) }}</h1>
+    <p class="subtitle">{{ _('Las subcuentas de proveedores y clientes que ya existen en a3, para que el fichero use esas y la numeración automática no choque con ellas.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.configuracion', cliente_id=cliente.id) }}">‹ {{ _('Configuración de a3') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if mensaje %}<p class="portal-peticion" role="status"><strong>{{ mensaje }}</strong></p>{% endif %}
+
+<section class="dash-panel">
+  <h2>{{ _('Plan guardado') }}</h2>
+  {% if resumen.cuentas %}
+  <p>{{ _('%(n)s subcuentas (%(p)s de proveedores, %(c)s de clientes), importadas el %(f)s.', n=resumen.cuentas, p=resumen.proveedores, c=resumen.clientes, f=resumen.importado_en[:10]) }}</p>
+  <form method="post"><input type="hidden" name="accion" value="borrar"><button type="submit" class="btn btn-ghost">{{ _('Borrar el plan guardado') }}</button></form>
+  {% else %}
+  <p class="empty-lane">{{ _('Todavía no has importado el plan de cuentas de este cliente.') }}</p>
+  {% endif %}
+</section>
+
+{% if vista %}
+<section class="dash-panel">
+  <h2>{{ _('Vista previa de la importación') }}</h2>
+  <p>{{ _('Subcuentas de %(d)s dígitos: %(v)s de %(t)s (%(p)s de proveedores, %(c)s de clientes; %(n)s con NIF).', d=vista.digitos, v=vista.validas, t=vista.total, p=vista.proveedores, c=vista.clientes, n=vista.con_nif) }}</p>
+  {% if vista.otros_digitos %}<p class="muted">{{ _('%(n)s subcuentas tienen otra longitud y se dejan fuera. Si tu plan usa otros dígitos, cámbialos en la configuración del cliente.', n=vista.otros_digitos) }}</p>{% endif %}
+  {% for a in vista.avisos %}<p class="muted">{{ a }}</p>{% endfor %}
+  {% if vista.muestra %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Subcuenta') }}</th><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Tipo') }}</th></tr></thead>
+    <tbody>{% for r in vista.muestra %}<tr><td class="mono">{{ r.cuenta }}</td><td>{{ r.nombre }}</td><td class="mono">{{ r.nif or '—' }}</td><td>{{ _('Proveedor') if r.tipo == 'proveedor' else _('Cliente') }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  <p>{{ _('Terceros de las facturas que coinciden por NIF: %(n)s. Usarán su subcuenta de a3 sin más.', n=vista.por_nif|length) }}</p>
+  {% if vista.difieren %}
+  <p class="muted">{{ _('Estos tienen recordada otra subcuenta distinta; manda la recordada:') }} {% for t in vista.difieren %}{{ t.nombre }} ({{ t.recordada }} ≠ {{ t.cuenta }}){{ ', ' if not loop.last }}{% endfor %}</p>
+  {% endif %}
+  <form method="post" class="edit-form">
+    <input type="hidden" name="accion" value="importar">
+    <input type="hidden" name="importacion" value="{{ ident }}">
+    {% if vista.por_nombre %}
+    <h3>{{ _('Coincidencias solo por nombre') }}</h3>
+    <p class="muted">{{ _('Marca las que sean el mismo tercero; se recordarán por NIF. Las que dejes sin marcar seguirán sin subcuenta propia.') }}</p>
+    <ul class="log-list">
+      {% for t in vista.por_nombre %}
+      <li class="log-item"><label class="checkbox-label"><input type="checkbox" name="nombre_ok" value="{{ loop.index0 }}" {{ 'disabled' if not t.nif }}>
+        <span class="log-text">{{ t.nombre }} <span class="muted">({{ t.nif or _('sin NIF') }})</span> → {{ t.cuenta }} {{ t.nombre_a3 }}</span></label></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if not vista.validas }}>{{ _('Importar el plan') }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Cancelar') }}</a></div>
+    <p class="muted">{{ _('Sustituye el plan guardado de este cliente por el del archivo.') }}</p>
+  </form>
+</section>
+{% else %}
+<section class="dash-panel">
+  <h2>{{ _('Importar desde a3') }}</h2>
+  <p class="muted">{{ _('En a3, saca el listado del plan de cuentas (o de proveedores y clientes) a Excel o CSV. Hacen falta al menos la subcuenta y el nombre; con el NIF las coincidencias son seguras.') }}</p>
+  <form method="post" enctype="multipart/form-data" class="edit-form ds-max-640">
+    <input type="hidden" name="accion" value="subir">
+    <input type="file" name="archivo" accept=".xlsx,.csv,.txt,.tsv" required aria-label="{{ _('Archivo exportado de a3') }}">
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir y revisar') }}</button></div>
+    <p class="muted">{{ _('Hasta 5 MB. No se guarda nada hasta que confirmes la vista previa.') }}</p>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
