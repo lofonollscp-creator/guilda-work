@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton %}
+{% block title %}{{ _('Regla de automatización') }} — Guilda Work{% endblock %}
+{% macro destino(nombre, actual) %}
+<select name="{{ nombre }}" aria-label="{{ _('A quién') }}">
+  <option value="responsable" {% if actual in (none, '', 'responsable') %}selected{% endif %}>{{ _('A quien lo lleva') }}</option>
+  <option value="direccion" {% if actual == 'direccion' %}selected{% endif %}>{{ _('A la dirección del despacho') }}</option>
+  {% for u in companeros %}<option value="u:{{ u.id }}" {% if actual|string == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}
+</select>
+{% endmacro %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Regla de automatización') if regla_id else _('Nueva regla de automatización') }}</h1>
+    <p class="subtitle">{{ _('Cuando pase algo (el disparador) y se cumpla la condición, el sistema hace lo que le indiques. Se revisa una vez al día y nunca repite lo ya hecho.') }}</p>
+  </div>
+</header>
+
+{% set subnav_activa = 'automatizaciones' %}
+{% include "_tareas_subnav.html" %}
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+
+<form class="edit-form ds-max-640" method="post" id="constructor-regla" action="{{ url_for('tareas.automatizaciones_regla_editar', regla_id=regla_id) if regla_id else url_for('tareas.automatizaciones_regla_nueva') }}">
+  <label>{{ _('Nombre') }}
+    <input type="text" name="nombre" maxlength="120" required value="{{ valores.nombre }}" placeholder="{{ _('Por ejemplo: Renovar certificados 30 días antes') }}">
+  </label>
+
+  <fieldset>
+    <legend>{{ _('1. Cuándo') }}</legend>
+    {% if regla_id %}
+    <p><strong>{{ disparadores[valores.disparador] }}</strong> <small class="muted">({{ _('el disparador no se puede cambiar; crea otra regla si necesitas otro') }})</small></p>
+    <input type="hidden" name="disparador" value="{{ valores.disparador }}">
+    {% else %}
+    <label>{{ _('Disparador') }}
+      <select name="disparador" id="disparador">
+        {% for clave, texto in disparadores.items() %}<option value="{{ clave }}" {% if clave == valores.disparador %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{ _('2. Condición') }}</legend>
+    {% set c = valores.condiciones %}
+    <div data-solo-disparador="certificado.caduca">
+      <label>{{ _('Avisar cuando falten, como máximo, estos días para que caduque') }}
+        <input type="number" name="c_dias_cert" min="0" max="365" value="{{ c.get('dias_antes', 30) }}">
+      </label>
+      <small class="muted">{{ _('Los certificados que ya tienen un sucesor (renovados) no cuentan.') }}</small>
+    </div>
+    <div data-solo-disparador="tarea.vencida">
+      <label>{{ _('Tareas que llevan vencidas al menos (días)') }}
+        <input type="number" name="c_dias_tarea" min="1" max="365" value="{{ c.get('dias_vencida', 1) }}">
+      </label>
+      <div role="group" aria-label="{{ _('Solo con estas prioridades') }}">
+        <span class="muted">{{ _('Solo con estas prioridades (ninguna marcada = todas)') }}</span>
+        {% for valor, etiqueta in prioridades %}
+        <label class="checkbox"><input type="checkbox" name="c_prioridades" value="{{ valor }}" {% if valor in c.get('prioridades', []) %}checked{% endif %}> {{ etiqueta }}</label>
+        {% endfor %}
+      </div>
+      <label>{{ _('Solo de este cliente') }}
+        <select name="c_cliente">
+          <option value="">{{ _('Cualquiera') }}</option>
+          {% for cl in clientes_fiscales %}<option value="{{ cl.id }}" {% if c.get('cliente_fiscal_id') == cl.id %}selected{% endif %}>{{ cl.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <small class="muted">{{ _('Las tareas que crea una automatización no vuelven a disparar reglas.') }}</small>
+    </div>
+    <div data-solo-disparador="vencimiento.proximo">
+      <label>{{ _('Cuando falten, como máximo, estos días para la fecha límite') }}
+        <input type="number" name="c_dias_venc" min="0" max="365" value="{{ c.get('dias_antes', 7) }}">
+      </label>
+      <label>{{ _('Solo del modelo (vacío = todos)') }}
+        <input type="text" name="c_modelo" maxlength="10" list="modelos-ejemplo" value="{{ c.get('modelo', '') }}">
+        <datalist id="modelos-ejemplo">{% for m in modelos_ejemplo %}<option value="{{ m }}">{% endfor %}</datalist>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{ _('3. Qué hace') }}</legend>
+    <p class="muted">{{ _('Hasta %(n)s acciones, en orden. Deja en blanco las que no uses.', n=valores.acciones|length) }}</p>
+    {% for i in range(valores.acciones|length) %}
+    {% set a = valores.acciones[i] %}
+    <div class="dash-panel accion-regla" data-fila-accion>
+      <label>{{ _('Acción %(n)s', n=i + 1) }}
+        <select name="a{{ i }}_tipo" data-tipo-accion>
+          <option value="">{{ _('— Ninguna —') }}</option>
+          <option value="crear_tarea" {% if a.get('tipo') == 'crear_tarea' %}selected{% endif %}>{{ _('Crear una tarea') }}</option>
+          <option value="notificar" {% if a.get('tipo') == 'notificar' %}selected{% endif %}>{{ _('Avisar a alguien') }}</option>
+          <option value="comentar" {% if a.get('tipo') == 'comentar' %}selected{% endif %}>{{ _('Anotar en la tarea vencida') }}</option>
+        </select>
+      </label>
+      <div data-solo-tipo="crear_tarea">
+        <label>{{ _('Asunto de la tarea') }} <input type="text" name="a{{ i }}_asunto" maxlength="300" value="{{ a.get('asunto', '') }}"></label>
+        <label>{{ _('Descripción (opcional)') }} <textarea name="a{{ i }}_cuerpo" rows="2" maxlength="2000">{{ a.get('cuerpo', '') if a.get('tipo') == 'crear_tarea' else '' }}</textarea></label>
+        <div class="ia-form-row">
+          <label>{{ _('Prioridad') }}
+            <select name="a{{ i }}_prioridad">{% for valor, etiqueta in prioridades %}<option value="{{ valor }}" {% if valor == a.get('prioridad', 'normal') %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select>
+          </label>
+          <label>{{ _('Plazo (días desde hoy)') }} <input type="number" name="a{{ i }}_dias_plazo" min="0" max="365" value="{{ a.get('dias_plazo', 7) }}"></label>
+          <label>{{ _('Asignar a') }} {{ destino('a' ~ i ~ '_dest', a.get('asignar_a') if a.get('tipo') == 'crear_tarea' else none) }}</label>
+        </div>
+      </div>
+      <div data-solo-tipo="notificar">
+        <label>{{ _('Título del aviso') }} <input type="text" name="a{{ i }}_titulo" maxlength="150" value="{{ a.get('titulo', '') }}"></label>
+        <label>{{ _('Texto (opcional)') }} <textarea name="a{{ i }}_cuerpo_aviso" rows="2" maxlength="500">{{ a.get('cuerpo', '') if a.get('tipo') == 'notificar' else '' }}</textarea></label>
+        <label>{{ _('Avisar a') }} {{ destino('a' ~ i ~ '_dest_aviso', a.get('a') if a.get('tipo') == 'notificar' else none) }}</label>
+      </div>
+      <div data-solo-tipo="comentar">
+        <label>{{ _('Texto de la nota') }} <input type="text" name="a{{ i }}_texto" maxlength="200" value="{{ a.get('texto', '') }}"></label>
+      </div>
+    </div>
+    {% endfor %}
+    {% for clave in disparadores %}
+    <p class="muted" data-solo-disparador="{{ clave }}">{{ _('Puedes usar estas variables en los textos:') }}
+      {% for v in variables[clave] %}<code>{{ '{' ~ v ~ '}' }}</code> {% endfor %}</p>
+    {% endfor %}
+  </fieldset>
+
+  <label class="checkbox"><input type="checkbox" name="activa" value="1" {% if valores.activa %}checked{% endif %}> {{ _('La regla está activa') }}</label>
+
+  <div class="edit-form-actions">
+    {{ boton(_('Guardar la regla'), 'primario', tipo='submit') }}
+    {{ boton(_('Cancelar'), 'fantasma', href=url_for('tareas.automatizaciones_lista')) }}
+  </div>
+</form>
+<script src="{{ url_for('static', filename='automatizaciones_editor.js') }}"></script>
+{% endblock %}

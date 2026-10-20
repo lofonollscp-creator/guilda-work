@@ -25,6 +25,12 @@ DISPARADORES = {
     "vencimiento.proximo": "Se acerca la fecha límite de un modelo fiscal pendiente",
 }
 ACCIONES = ("crear_tarea", "notificar", "comentar")
+# Variables que se pueden escribir entre llaves en los textos de cada disparador (las que rellena `_ocurrencias`).
+VARIABLES = {
+    "certificado.caduca": ("titular", "fecha", "dias"),
+    "tarea.vencida": ("asunto", "fecha", "dias"),
+    "vencimiento.proximo": ("modelo", "periodo", "cliente", "fecha", "dias"),
+}
 PRIORIDADES = ("baja", "normal", "alta")
 MAX_REGLAS = 50
 MAX_ACCIONES = 5
@@ -114,6 +120,14 @@ def validar_condiciones(disparador: str, condiciones: dict) -> dict:
     raise ValueError("Disparador no válido.")
 
 
+def _comprobar_variables(disparador: str, *textos: str) -> None:
+    permitidas = VARIABLES[disparador]
+    for texto in textos:
+        for nombre in _MARCADOR.findall(texto or ""):
+            if nombre not in permitidas:
+                raise ValueError(f"La variable {{{nombre}}} no existe para este disparador. Puedes usar: " + ", ".join("{" + v + "}" for v in permitidas) + ".")
+
+
 def validar_acciones(disparador: str, acciones: list) -> list[dict]:
     if not isinstance(acciones, list) or not acciones:
         raise ValueError("La regla necesita al menos una acción.")
@@ -130,6 +144,7 @@ def validar_acciones(disparador: str, acciones: list) -> list[dict]:
             asunto = (a.get("asunto") or "").strip()[:300]
             if not asunto:
                 raise ValueError("La tarea que se crea necesita un asunto.")
+            _comprobar_variables(disparador, asunto, a.get("cuerpo"))
             limpias.append({"tipo": tipo, "asunto": asunto, "cuerpo": (a.get("cuerpo") or "").strip()[:2000],
                             "prioridad": a.get("prioridad") if a.get("prioridad") in PRIORIDADES else "normal",
                             "dias_plazo": _entero(a.get("dias_plazo"), "El plazo de la tarea", 0, 365, 7), "asignar_a": _destino(a.get("asignar_a"), "responsable")})
@@ -137,11 +152,13 @@ def validar_acciones(disparador: str, acciones: list) -> list[dict]:
             titulo = (a.get("titulo") or "").strip()[:150]
             if not titulo:
                 raise ValueError("El aviso necesita un título.")
+            _comprobar_variables(disparador, titulo, a.get("cuerpo"))
             limpias.append({"tipo": tipo, "titulo": titulo, "cuerpo": (a.get("cuerpo") or "").strip()[:500], "a": _destino(a.get("a"), "responsable")})
         else:
             texto = (a.get("texto") or "").strip()[:200]
             if not texto:
                 raise ValueError("El comentario necesita un texto.")
+            _comprobar_variables(disparador, texto)
             limpias.append({"tipo": tipo, "texto": texto})
     return limpias
 
@@ -156,6 +173,62 @@ def _destino(valor, defecto: str):
         return int(valor)
     except (TypeError, ValueError):
         raise ValueError("El destinatario no es válido.") from None
+
+
+def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict]) -> None:
+    """Las personas y el cliente que nombra una regla tienen que ser del propio despacho (también al crearla por la API o por código, no solo desde la pantalla)."""
+    personas = {a["asignar_a"] for a in acciones if a["tipo"] == "crear_tarea" and isinstance(a["asignar_a"], int)}
+    personas |= {a["a"] for a in acciones if a["tipo"] == "notificar" and isinstance(a["a"], int)}
+    conn = db.get_connection()
+    try:
+        for u in personas:
+            if conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (u, tenant_id)).fetchone() is None:
+                raise ValueError("Una de las personas elegidas no es de tu despacho.")
+        cliente = condiciones.get("cliente_fiscal_id")
+        if cliente and conn.execute("SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (cliente, tenant_id)).fetchone() is None:
+            raise ValueError("El cliente elegido no es de tu despacho.")
+    finally:
+        conn.close()
+
+
+def _destino_de_formulario(valor: str):
+    """«responsable», «direccion» o «u:<id>» (una persona concreta)."""
+    if valor and valor.startswith("u:"):
+        return valor[2:]
+    return valor or "responsable"
+
+
+def formulario_a_regla(form, disparador: str) -> tuple[dict, list[dict]]:
+    """Traduce el formulario del constructor (campos `c_*` para las condiciones y `a<i>_*` para hasta cinco acciones) a condiciones y acciones SIN validar: la validación y los límites los
+    pone `validar_condiciones`/`validar_acciones` al guardar, igual que por la API. Las filas de acción sin tipo se saltan."""
+    if disparador == "certificado.caduca":
+        cond = {"dias_antes": form.get("c_dias_cert")}
+    elif disparador == "tarea.vencida":
+        cond = {"dias_vencida": form.get("c_dias_tarea"), "prioridades": form.getlist("c_prioridades"), "cliente_fiscal_id": form.get("c_cliente")}
+    elif disparador == "vencimiento.proximo":
+        cond = {"dias_antes": form.get("c_dias_venc"), "modelo": form.get("c_modelo")}
+    else:
+        raise ValueError("Disparador no válido.")
+    acciones = []
+    for i in range(MAX_ACCIONES):
+        tipo = (form.get(f"a{i}_tipo") or "").strip()
+        if not tipo:
+            continue
+        if tipo == "crear_tarea":
+            acciones.append({"tipo": tipo, "asunto": form.get(f"a{i}_asunto"), "cuerpo": form.get(f"a{i}_cuerpo"), "prioridad": form.get(f"a{i}_prioridad"),
+                             "dias_plazo": form.get(f"a{i}_dias_plazo"), "asignar_a": _destino_de_formulario(form.get(f"a{i}_dest"))})
+        elif tipo == "notificar":
+            acciones.append({"tipo": tipo, "titulo": form.get(f"a{i}_titulo"), "cuerpo": form.get(f"a{i}_cuerpo_aviso"), "a": _destino_de_formulario(form.get(f"a{i}_dest_aviso"))})
+        else:
+            acciones.append({"tipo": tipo, "texto": form.get(f"a{i}_texto")})
+    return cond, acciones
+
+
+def regla_a_formulario(regla: dict | None) -> dict:
+    """Los valores con los que se rellena el constructor al editar una regla (o vacíos al crearla)."""
+    if regla is None:
+        return {"nombre": "", "disparador": "certificado.caduca", "activa": True, "condiciones": {}, "acciones": []}
+    return {"nombre": regla["nombre"], "disparador": regla["disparador"], "activa": regla["activa"], "condiciones": regla["condiciones"], "acciones": regla["acciones"]}
 
 
 # --- CRUD de reglas (solo la dirección) --------------------------------------------------------------------------------
@@ -198,6 +271,7 @@ def crear_regla(tenant_id: int, usuario_id: int, nombre: str, disparador: str, c
     if disparador not in DISPARADORES:
         raise ValueError("Disparador no válido.")
     cond, acc = validar_condiciones(disparador, condiciones), validar_acciones(disparador, acciones)
+    comprobar_pertenencia(tenant_id, cond, acc)
     conn = db.get_connection()
     try:
         if conn.execute("SELECT COUNT(*) FROM automatizaciones_reglas WHERE tenant_id = ?", (tenant_id,)).fetchone()[0] >= MAX_REGLAS:
@@ -223,8 +297,14 @@ def cambiar_regla(tenant_id: int, usuario_id: int, regla_id: int, *, nombre=None
     cond = validar_condiciones(r["disparador"], condiciones) if condiciones is not None else r["condiciones"]
     acc = validar_acciones(r["disparador"], acciones) if acciones is not None else r["acciones"]
     cambia_logica = cond != r["condiciones"] or acc != r["acciones"]
+    if cambia_logica:
+        comprobar_pertenencia(tenant_id, cond, acc)
     conn = db.get_connection()
     try:
+        if acc != r["acciones"]:
+            # Lo que quedó a medias llevaba el progreso de las acciones ANTERIORES: reintentarlo con otras podría repetir o saltarse pasos. Se deja a la vista para que la dirección decida.
+            conn.execute("UPDATE automatizaciones_ejecuciones SET estado = 'fallida', error = 'La regla cambió mientras esta ejecución estaba a medias', proximo_intento = NULL, avisada = 1 "
+                         "WHERE regla_id = ? AND estado IN ('error', 'pendiente') AND progreso != '[]'", (regla_id,))
         conn.execute("UPDATE automatizaciones_reglas SET nombre = ?, condiciones = ?, acciones = ?, activa = ?, version = version + ?, actualizada_en = ? WHERE id = ? AND tenant_id = ?",
                      (nuevo_nombre, json.dumps(cond), json.dumps(acc, ensure_ascii=False), 1 if (r["activa"] if activa is None else activa) else 0, 1 if cambia_logica else 0, db.now_iso(), regla_id, tenant_id))
         auditoria.registrar(tenant_id, usuario_id, "automatizacion.cambiar", "regla", regla_id, {"activa": activa, "logica": cambia_logica}, conn=conn)

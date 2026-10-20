@@ -14045,3 +14045,126 @@ msgstr "Autres clients concernés par la tâche"
 
 msgid "Nueva tarea para este cliente"
 msgstr "Nouvelle tâche pour ce client"
+
+msgid "Regla de automatización"
+msgstr "Règle d'automatisation"
+
+msgid "Nueva regla de automatización"
+msgstr "Nouvelle règle d'automatisation"
+
+msgid "Cuando pase algo (el disparador) y se cumpla la condición, el sistema hace lo que le indiques. Se revisa una vez al día y nunca repite lo ya hecho."
+msgstr "Quand quelque chose se produit (le déclencheur) et que la condition est remplie, le système fait ce que vous indiquez. Il est vérifié une fois par jour et ne répète jamais ce qui a déjà été fait."
+
+msgid "Por ejemplo: Renovar certificados 30 días antes"
+msgstr "Par exemple : Renouveler les certificats 30 jours avant"
+
+msgid "1. Cuándo"
+msgstr "1. Quand"
+
+msgid "Disparador"
+msgstr "Déclencheur"
+
+msgid "el disparador no se puede cambiar; crea otra regla si necesitas otro"
+msgstr "le déclencheur ne peut pas être modifié ; créez une autre règle si besoin"
+
+msgid "2. Condición"
+msgstr "2. Condition"
+
+msgid "Avisar cuando falten, como máximo, estos días para que caduque"
+msgstr "Agir quand il reste au plus ce nombre de jours avant l'expiration"
+
+msgid "Los certificados que ya tienen un sucesor (renovados) no cuentan."
+msgstr "Les certificats qui ont déjà un successeur (renouvelés) ne comptent pas."
+
+msgid "Tareas que llevan vencidas al menos (días)"
+msgstr "Tâches en retard depuis au moins (jours)"
+
+msgid "Solo con estas prioridades"
+msgstr "Seulement avec ces priorités"
+
+msgid "Solo con estas prioridades (ninguna marcada = todas)"
+msgstr "Seulement avec ces priorités (aucune cochée = toutes)"
+
+msgid "Solo de este cliente"
+msgstr "Seulement pour ce client"
+
+msgid "Las tareas que crea una automatización no vuelven a disparar reglas."
+msgstr "Les tâches créées par une automatisation ne redéclenchent jamais de règles."
+
+msgid "Cuando falten, como máximo, estos días para la fecha límite"
+msgstr "Quand il reste au plus ce nombre de jours avant l'échéance"
+
+msgid "Solo del modelo (vacío = todos)"
+msgstr "Seulement pour le modèle (vide = tous)"
+
+msgid "3. Qué hace"
+msgstr "3. Ce qu'elle fait"
+
+msgid "Hasta %(n)s acciones, en orden. Deja en blanco las que no uses."
+msgstr "Jusqu'à %(n)s actions, dans l'ordre. Laissez vides celles que vous n'utilisez pas."
+
+msgid "Acción %(n)s"
+msgstr "Action %(n)s"
+
+msgid "— Ninguna —"
+msgstr "— Aucune —"
+
+msgid "Crear una tarea"
+msgstr "Créer une tâche"
+
+msgid "Avisar a alguien"
+msgstr "Avertir quelqu'un"
+
+msgid "Anotar en la tarea vencida"
+msgstr "Noter dans la tâche en retard"
+
+msgid "Descripción (opcional)"
+msgstr "Description (facultatif)"
+
+msgid "Plazo (días desde hoy)"
+msgstr "Délai (jours à partir d'aujourd'hui)"
+
+msgid "Título del aviso"
+msgstr "Titre de l'alerte"
+
+msgid "Texto (opcional)"
+msgstr "Texte (facultatif)"
+
+msgid "Avisar a"
+msgstr "Avertir"
+
+msgid "Texto de la nota"
+msgstr "Texte de la note"
+
+msgid "Puedes usar estas variables en los textos:"
+msgstr "Vous pouvez utiliser ces variables dans les textes :"
+
+msgid "La regla está activa"
+msgstr "La règle est active"
+
+msgid "Guardar la regla"
+msgstr "Enregistrer la règle"
+
+msgid "A quién"
+msgstr "À qui"
+
+msgid "A quien lo lleva"
+msgstr "À la personne qui s'en occupe"
+
+msgid "A la dirección del despacho"
+msgstr "À la direction du cabinet"
+
+msgid "Crear una regla a medida"
+msgstr "Créer une règle sur mesure"
+
+msgid "O empieza con una plantilla:"
+msgstr "Ou commencez avec un modèle :"
+
+msgid "Crea la tarea «%(t)s»"
+msgstr "Crée la tâche « %(t)s »"
+
+msgid "Avisa: «%(t)s»"
+msgstr "Avertit : « %(t)s »"
+
+msgid "Anota en la tarea: «%(t)s»"
+msgstr "Note dans la tâche : « %(t)s »"

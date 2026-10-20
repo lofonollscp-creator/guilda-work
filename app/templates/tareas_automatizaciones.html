@@ -20,6 +20,8 @@
 <section class="dash-panel">
   <h2>{{ _('Añadir una regla') }}</h2>
   <p class="muted">{{ _('Empieza con una plantilla y ajusta los días. Las reglas se revisan una vez al día; repetirlas nunca crea dos veces la misma tarea.') }}</p>
+  <p>{{ boton(_('Crear una regla a medida'), 'primario', href=url_for('tareas.automatizaciones_regla_nueva')) }}</p>
+  <p class="muted">{{ _('O empieza con una plantilla:') }}</p>
   <div class="quick-row">
     {% for clave, p in plantillas.items() %}
     <form action="{{ url_for('tareas.automatizaciones_nueva') }}" method="post">
@@ -38,7 +40,12 @@
   <ul class="log-list">
     {% for r in reglas %}
     <li class="log-item">
-      <span class="log-text"><strong>{{ r.nombre }}</strong><br><small class="muted">{{ r.disparador_texto }}</small></span>
+      <span class="log-text"><strong>{{ r.nombre }}</strong><br><small class="muted">{{ r.disparador_texto }}</small>
+        <ul class="muted">
+          {% for a in r.acciones %}
+          <li>{% if a.tipo == 'crear_tarea' %}{{ _('Crea la tarea «%(t)s»', t=a.asunto) }}{% elif a.tipo == 'notificar' %}{{ _('Avisa: «%(t)s»', t=a.titulo) }}{% else %}{{ _('Anota en la tarea: «%(t)s»', t=a.texto) }}{% endif %}</li>
+          {% endfor %}
+        </ul></span>
       {{ chip(_('Activa'), 'exito') if r.activa else chip(_('Apagada')) }}
       <form action="{{ url_for('tareas.automatizaciones_cambiar', regla_id=r.id) }}" method="post" class="quick-row">
         <label class="muted">{{ _('Días') }}
@@ -47,6 +54,7 @@
         {{ boton(_('Guardar'), 'fantasma', tipo='submit', pequeno=True) }}
         {{ boton(_('Apagar') if r.activa else _('Activar'), 'fantasma', tipo='submit', pequeno=True, nombre='accion', valor='apagar' if r.activa else 'activar') }}
       </form>
+      {{ boton(_('Editar'), 'fantasma', href=url_for('tareas.automatizaciones_regla_editar', regla_id=r.id), pequeno=True) }}
       <form action="{{ url_for('tareas.automatizaciones_simular', regla_id=r.id) }}" method="post">{{ boton(_('Ver qué haría ahora'), 'fantasma', tipo='submit', pequeno=True) }}</form>
       <form action="{{ url_for('tareas.automatizaciones_borrar', regla_id=r.id) }}" method="post">{{ boton(_('Borrar'), 'peligro', tipo='submit', pequeno=True, confirmar=_('¿Borrar esta regla y su historial?')) }}</form>
       {% if simulacion and simulacion.regla_id == r.id %}

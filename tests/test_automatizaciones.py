@@ -392,3 +392,121 @@ def test_la_pantalla_enseña_los_fallos_y_permite_reintentar(cliente, monkeypatc
     assert cliente.post(f"/tareas/automatizaciones/ejecuciones/{ejecucion['id']}/reintentar").status_code == 302
     au.ejecutar(t, AHORA + timedelta(days=2))
     assert au.ejecuciones(t)[0]["estado"] == "ok" and "ha fallado del todo" not in cliente.get("/tareas/automatizaciones").get_data(as_text=True)
+
+
+# --- Constructor de reglas ---------------------------------------------------------------------------------------------------------
+
+def test_las_variables_de_los_textos_tienen_que_existir_para_ese_disparador(d):
+    for disparador, ok, mala in (("certificado.caduca", "{titular} {fecha} {dias}", "{asunto}"), ("tarea.vencida", "{asunto} {fecha} {dias}", "{titular}"),
+                                 ("vencimiento.proximo", "{modelo} {periodo} {cliente} {fecha} {dias}", "{titular}")):
+        assert au.validar_acciones(disparador, [{"tipo": "notificar", "titulo": ok}])[0]["titulo"] == ok
+        for accion in ({"tipo": "notificar", "titulo": mala}, {"tipo": "crear_tarea", "asunto": "x", "cuerpo": mala}):
+            with pytest.raises(ValueError, match="no existe para este disparador"):
+                au.validar_acciones(disparador, [accion])
+    with pytest.raises(ValueError, match="Puedes usar: {titular}, {fecha}, {dias}"):
+        au.validar_acciones("certificado.caduca", [{"tipo": "crear_tarea", "asunto": "Renovar {cliente}"}])
+
+
+def test_las_personas_y_el_cliente_de_una_regla_tienen_que_ser_del_despacho(d):
+    otro = db.crear_tenant("Despacho de otra gente")
+    ajena = db.crear_usuario_vinculado_a_kratos("ajena-au@ejemplo.com", "k-ajena-au"); db.asignar_tenant(ajena, otro)
+    cliente_ajeno = db.crear_cliente_fiscal(otro, "Cliente ajeno SL")
+    with pytest.raises(ValueError, match="no es de tu despacho"):
+        au.crear_regla(d.t, d.sup, "x", "certificado.caduca", {}, [{"tipo": "crear_tarea", "asunto": "Renovar", "asignar_a": ajena}])
+    with pytest.raises(ValueError, match="no es de tu despacho"):
+        au.crear_regla(d.t, d.sup, "x", "certificado.caduca", {}, [{"tipo": "notificar", "titulo": "Aviso", "a": ajena}])
+    with pytest.raises(ValueError, match="cliente elegido no es de tu despacho"):
+        au.crear_regla(d.t, d.sup, "x", "tarea.vencida", {"cliente_fiscal_id": cliente_ajeno}, [{"tipo": "notificar", "titulo": "Aviso"}])
+    rid = au.crear_regla(d.t, d.sup, "bien", "tarea.vencida", {"cliente_fiscal_id": d.cliente}, [{"tipo": "notificar", "titulo": "Aviso", "a": d.otro}])
+    with pytest.raises(ValueError, match="no es de tu despacho"):
+        au.cambiar_regla(d.t, d.sup, rid, acciones=[{"tipo": "notificar", "titulo": "Aviso", "a": ajena}])
+
+
+def test_el_formulario_se_traduce_a_condiciones_y_acciones():
+    from werkzeug.datastructures import MultiDict
+    f = MultiDict([("c_dias_tarea", "4"), ("c_prioridades", "alta"), ("c_prioridades", "normal"), ("c_cliente", "7"),
+                   ("a0_tipo", "crear_tarea"), ("a0_asunto", "Llamar por {asunto}"), ("a0_cuerpo", "Hoy"), ("a0_prioridad", "alta"), ("a0_dias_plazo", "2"), ("a0_dest", "u:9"),
+                   ("a1_tipo", ""), ("a1_asunto", "se ignora"),
+                   ("a2_tipo", "notificar"), ("a2_titulo", "Vencida"), ("a2_cuerpo_aviso", "Desde {fecha}"), ("a2_dest_aviso", "direccion"),
+                   ("a3_tipo", "comentar"), ("a3_texto", "Aviso automático")])
+    cond, acc = au.formulario_a_regla(f, "tarea.vencida")
+    assert cond == {"dias_vencida": "4", "prioridades": ["alta", "normal"], "cliente_fiscal_id": "7"}
+    assert [a["tipo"] for a in acc] == ["crear_tarea", "notificar", "comentar"]
+    assert acc[0]["asignar_a"] == "9" and acc[1]["a"] == "direccion" and acc[1]["cuerpo"] == "Desde {fecha}"
+    assert au.formulario_a_regla(MultiDict([("c_dias_cert", "10")]), "certificado.caduca") == ({"dias_antes": "10"}, [])
+    assert au.formulario_a_regla(MultiDict([("c_dias_venc", "3"), ("c_modelo", "303")]), "vencimiento.proximo")[0] == {"dias_antes": "3", "modelo": "303"}
+    with pytest.raises(ValueError):
+        au.formulario_a_regla(MultiDict(), "inventado")
+
+
+def test_cambiar_las_acciones_deja_a_la_vista_lo_que_estaba_a_medias(d, monkeypatch):
+    rid = _regla_cert(d)
+    _cert(d, 5); _cert(d, 6, titular="Segundo")
+    original = au._aplicar
+
+    def inestable(tenant_id, regla, oc, accion, clave, hoy):
+        if accion["tipo"] == "notificar" and oc["datos"]["titular"] == "Marta Puig":
+            raise RuntimeError("push caído")                # a medias: la tarea ya se creó
+        if oc["datos"]["titular"] == "Segundo":
+            raise RuntimeError("falla antes de hacer nada") if accion["tipo"] == "crear_tarea" else RuntimeError("no llega")
+        return original(tenant_id, regla, oc, accion, clave, hoy)
+    monkeypatch.setattr(au, "_aplicar", inestable)
+    au.ejecutar(d.t, AHORA)
+    por_titular = {e["objeto"]: e for e in au.ejecuciones(d.t)}
+    assert sorted(e["estado"] for e in por_titular.values()) == ["error", "error"]
+    au.cambiar_regla(d.t, d.sup, rid, acciones=[{"tipo": "notificar", "titulo": "Otra cosa {titular}", "a": "responsable"}])
+    estados = {e["objeto"]: (e["estado"], e["error"]) for e in au.ejecuciones(d.t)}
+    a_medias = [v for v in estados.values() if v[0] == "fallida"]
+    intactas = [v for v in estados.values() if v[0] == "error"]
+    assert len(a_medias) == 1 and "La regla cambió" in a_medias[0][1] and len(intactas) == 1          # la que no había hecho nada sigue reintentándose
+    assert au.cambiar_regla(d.t, d.sup, rid, nombre="Solo el nombre")["version"] == 2                  # y cambiar solo el nombre no toca nada de esto
+
+
+def test_pantalla_del_constructor_crear_editar_y_errores(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "con1-au@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho constructor")
+    db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    otro = db.crear_usuario_vinculado_a_kratos("con1b-au@ejemplo.com", "k-con1b"); db.asignar_tenant(otro, t)
+    cl = db.crear_cliente_fiscal(t, "Cliente Constructor SL")
+    html = cliente.get("/tareas/automatizaciones/regla").get_data(as_text=True)
+    assert 'id="constructor-regla"' in html and "1. Cuándo" in html and "2. Condición" in html and "3. Qué hace" in html and "Acción 5" in html and "{titular}" in html
+    datos = {"nombre": "Vencidas a medida", "disparador": "tarea.vencida", "c_dias_tarea": "3", "c_prioridades": ["alta"], "c_cliente": str(cl), "activa": "1",
+             "a0_tipo": "crear_tarea", "a0_asunto": "Reclamar: {asunto}", "a0_prioridad": "alta", "a0_dias_plazo": "1", "a0_dest": f"u:{otro}",
+             "a1_tipo": "notificar", "a1_titulo": "Vencida hace {dias} días", "a1_dest_aviso": "direccion"}
+    assert cliente.post("/tareas/automatizaciones/regla", data=datos).status_code == 302
+    r = au.listar_reglas(t)[0]
+    assert r["nombre"] == "Vencidas a medida" and r["condiciones"] == {"dias_vencida": 3, "prioridades": ["alta"], "cliente_fiscal_id": cl} and r["activa"] is True
+    assert r["acciones"][0]["asignar_a"] == otro and r["acciones"][1]["a"] == "direccion"
+    lista = cliente.get("/tareas/automatizaciones").get_data(as_text=True)
+    assert "Crea la tarea «Reclamar: {asunto}»" in lista and "Avisa: «Vencida hace {dias} días»" in lista and "/automatizaciones/regla/" in lista
+    # errores: se vuelve a enseñar lo escrito con el motivo
+    malo = {**datos, "nombre": "Mala", "a0_asunto": "Hola {titular}"}
+    resp = cliente.post("/tareas/automatizaciones/regla", data=malo)
+    assert resp.status_code == 422 and "no existe para este disparador" in resp.get_data(as_text=True) and 'value="Mala"' in resp.get_data(as_text=True)
+    assert len(au.listar_reglas(t)) == 1
+    sin_acciones = {"nombre": "Vacía", "disparador": "certificado.caduca", "c_dias_cert": "20"}
+    assert "al menos una acción" in cliente.post("/tareas/automatizaciones/regla", data=sin_acciones).get_data(as_text=True)
+    assert cliente.post("/tareas/automatizaciones/regla", data={**datos, "disparador": "inventado"}).status_code == 400
+    # editar: el disparador manda lo guardado
+    html = cliente.get(f"/tareas/automatizaciones/regla/{r['id']}").get_data(as_text=True)
+    assert "Vencidas a medida" in html and "no se puede cambiar" in html and f'value="{3}"' in html
+    editado = {**datos, "nombre": "Editada", "disparador": "certificado.caduca", "c_dias_tarea": "5", "a1_tipo": "", "activa": ""}
+    assert cliente.post(f"/tareas/automatizaciones/regla/{r['id']}", data=editado).status_code == 302
+    r2 = au.obtener_regla(t, r["id"])
+    assert r2["disparador"] == "tarea.vencida" and r2["nombre"] == "Editada" and r2["condiciones"]["dias_vencida"] == 5 and len(r2["acciones"]) == 1 and r2["activa"] is False and r2["version"] == 2
+    assert cliente.get("/tareas/automatizaciones/regla/99999").status_code == 404
+
+
+def test_el_constructor_no_deja_usar_personas_de_otro_despacho_ni_a_quien_no_es_direccion(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "con2-au@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho constructor dos")
+    db.asignar_tenant(uid, t)
+    assert cliente.get("/tareas/automatizaciones/regla").status_code == 404                           # no es dirección
+    assert cliente.post("/tareas/automatizaciones/regla", data={"nombre": "x", "disparador": "certificado.caduca"}).status_code == 404
+    db.asignar_supervisor_tenant(uid, True)
+    ajena = db.crear_usuario_vinculado_a_kratos("ajena2-au@ejemplo.com", "k-ajena2"); db.asignar_tenant(ajena, db.crear_tenant("Otro despacho constructor"))
+    r = cliente.post("/tareas/automatizaciones/regla", data={"nombre": "Con ajena", "disparador": "certificado.caduca", "c_dias_cert": "30", "a0_tipo": "crear_tarea", "a0_asunto": "Renovar {titular}",
+                                                            "a0_dest": f"u:{ajena}"})
+    assert r.status_code == 422 and "no es de tu despacho" in r.get_data(as_text=True) and au.listar_reglas(t) == []

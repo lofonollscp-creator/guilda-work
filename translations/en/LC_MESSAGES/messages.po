@@ -13960,3 +13960,126 @@ msgstr "Other clients this task affects"
 
 msgid "Nueva tarea para este cliente"
 msgstr "New task for this client"
+
+msgid "Regla de automatización"
+msgstr "Automation rule"
+
+msgid "Nueva regla de automatización"
+msgstr "New automation rule"
+
+msgid "Cuando pase algo (el disparador) y se cumpla la condición, el sistema hace lo que le indiques. Se revisa una vez al día y nunca repite lo ya hecho."
+msgstr "When something happens (the trigger) and the condition is met, the system does what you tell it. It is checked once a day and never repeats what was already done."
+
+msgid "Por ejemplo: Renovar certificados 30 días antes"
+msgstr "For example: Renew certificates 30 days ahead"
+
+msgid "1. Cuándo"
+msgstr "1. When"
+
+msgid "Disparador"
+msgstr "Trigger"
+
+msgid "el disparador no se puede cambiar; crea otra regla si necesitas otro"
+msgstr "the trigger cannot be changed; create another rule if you need a different one"
+
+msgid "2. Condición"
+msgstr "2. Condition"
+
+msgid "Avisar cuando falten, como máximo, estos días para que caduque"
+msgstr "Act when at most this many days remain before it expires"
+
+msgid "Los certificados que ya tienen un sucesor (renovados) no cuentan."
+msgstr "Certificates that already have a successor (renewed) do not count."
+
+msgid "Tareas que llevan vencidas al menos (días)"
+msgstr "Tasks that have been overdue for at least (days)"
+
+msgid "Solo con estas prioridades"
+msgstr "Only with these priorities"
+
+msgid "Solo con estas prioridades (ninguna marcada = todas)"
+msgstr "Only with these priorities (none ticked = all)"
+
+msgid "Solo de este cliente"
+msgstr "Only for this client"
+
+msgid "Las tareas que crea una automatización no vuelven a disparar reglas."
+msgstr "Tasks created by an automation never trigger rules again."
+
+msgid "Cuando falten, como máximo, estos días para la fecha límite"
+msgstr "When at most this many days remain before the deadline"
+
+msgid "Solo del modelo (vacío = todos)"
+msgstr "Only for the form (empty = all)"
+
+msgid "3. Qué hace"
+msgstr "3. What it does"
+
+msgid "Hasta %(n)s acciones, en orden. Deja en blanco las que no uses."
+msgstr "Up to %(n)s actions, in order. Leave unused ones blank."
+
+msgid "Acción %(n)s"
+msgstr "Action %(n)s"
+
+msgid "— Ninguna —"
+msgstr "— None —"
+
+msgid "Crear una tarea"
+msgstr "Create a task"
+
+msgid "Avisar a alguien"
+msgstr "Notify someone"
+
+msgid "Anotar en la tarea vencida"
+msgstr "Add a note to the overdue task"
+
+msgid "Descripción (opcional)"
+msgstr "Description (optional)"
+
+msgid "Plazo (días desde hoy)"
+msgstr "Due in (days from today)"
+
+msgid "Título del aviso"
+msgstr "Notice title"
+
+msgid "Texto (opcional)"
+msgstr "Text (optional)"
+
+msgid "Avisar a"
+msgstr "Notify"
+
+msgid "Texto de la nota"
+msgstr "Note text"
+
+msgid "Puedes usar estas variables en los textos:"
+msgstr "You can use these variables in the texts:"
+
+msgid "La regla está activa"
+msgstr "The rule is active"
+
+msgid "Guardar la regla"
+msgstr "Save the rule"
+
+msgid "A quién"
+msgstr "To whom"
+
+msgid "A quien lo lleva"
+msgstr "To whoever handles it"
+
+msgid "A la dirección del despacho"
+msgstr "To the firm's management"
+
+msgid "Crear una regla a medida"
+msgstr "Create a custom rule"
+
+msgid "O empieza con una plantilla:"
+msgstr "Or start with a template:"
+
+msgid "Crea la tarea «%(t)s»"
+msgstr "Creates the task «%(t)s»"
+
+msgid "Avisa: «%(t)s»"
+msgstr "Notifies: «%(t)s»"
+
+msgid "Anota en la tarea: «%(t)s»"
+msgstr "Adds a note to the task: «%(t)s»"

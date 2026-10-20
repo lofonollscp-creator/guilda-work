@@ -92,6 +92,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Herramientas MCP e IA para tareas (octubre de 2026)](#herramientas-mcp-e-ia-para-tareas-octubre-de-2026)
 - [Varios clientes al crear una tarea (octubre de 2026)](#varios-clientes-al-crear-una-tarea-octubre-de-2026)
 - [Actualización de seguridad del SDK de MCP (octubre de 2026)](#actualización-de-seguridad-del-sdk-de-mcp-octubre-de-2026)
+- [Constructor de reglas de automatización (octubre de 2026)](#constructor-de-reglas-de-automatización-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3355,3 +3356,13 @@ El SDK `mcp` instalado era la 1.29.0, afectada por varios avisos de seguridad (l
 - **Efectos de la 1.30**: las sesiones HTTP inactivas caducan a los 30 minutos y hay un máximo de 10.000 sesiones simultáneas; un cliente que lleve una sesión parada más tiempo tendrá que reconectar.
 - **No nos afecta el fallo de OAuth *cliente***: la aplicación solo usa el SDK como servidor, no como cliente OAuth.
 - **Pruebas**: `tests/test_dependencias_mcp.py` (la versión mínima, la decisión explícita y que el servidor se construye sin avisos; este último se omite mientras el entorno siga en 1.29.x, con el motivo a la vista).
+
+## Constructor de reglas de automatización (octubre de 2026)
+
+Completa la Fase 4: antes, desde la pantalla solo se podían crear reglas a partir de tres plantillas y ajustar los días. Ahora Tareas › Automatizaciones tiene **«Crear una regla a medida»** y **«Editar»** en cada regla (solo la dirección del despacho).
+
+- **El formulario** (`/tareas/automatizaciones/regla` y `/regla/<id>`) sigue el orden *Cuándo → Condición → Qué hace*: disparador (no se puede cambiar al editar), las condiciones de ese disparador (días, prioridades y cliente en tareas vencidas, modelo en vencimientos…) y hasta cinco acciones (crear tarea con asunto, descripción, prioridad, plazo y a quién; avisar a alguien; anotar en la tarea vencida). Un poco de JavaScript (`app/static/automatizaciones_editor.js`) enseña solo lo que corresponde; sin JavaScript todo queda visible y el servidor ignora lo que no toca. Si algo no vale se vuelve a enseñar lo escrito, con el motivo.
+- **Validaciones nuevas** (también por API y código, no solo en la pantalla): las **variables** de los textos (`{titular}`, `{fecha}`, `{dias}`, `{asunto}`, `{modelo}`, `{periodo}`, `{cliente}`) tienen que existir para ese disparador (`automatizaciones.VARIABLES`); las **personas y el cliente** que nombra la regla tienen que ser del propio despacho (`comprobar_pertenencia`).
+- **Cambiar las acciones con ejecuciones a medias**: una ejecución que ya había hecho algún paso lleva guardado qué pasos hizo, contados con las acciones *anteriores*. Si se cambian las acciones, esas ejecuciones pasan a «Fallida» con el aviso «La regla cambió mientras esta ejecución estaba a medias», para que la dirección decida si las reintenta; las que no habían hecho nada siguen reintentándose solas. Cambiar solo el nombre, los días o apagar la regla no toca nada de esto.
+- **Sin migraciones**: no hace falta más que reiniciar.
+- **Pruebas**: 8 tests nuevos en `tests/test_automatizaciones.py` (variables, pertenencia, traducción del formulario, ejecuciones a medias, pantalla de crear y editar, errores y permisos). No he comprobado el aspecto en un navegador real.

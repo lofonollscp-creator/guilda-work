@@ -13969,3 +13969,126 @@ msgstr "Altres clients als quals afecta la tasca"
 
 msgid "Nueva tarea para este cliente"
 msgstr "Nova tasca per a aquest client"
+
+msgid "Regla de automatización"
+msgstr "Regla d'automatització"
+
+msgid "Nueva regla de automatización"
+msgstr "Nova regla d'automatització"
+
+msgid "Cuando pase algo (el disparador) y se cumpla la condición, el sistema hace lo que le indiques. Se revisa una vez al día y nunca repite lo ya hecho."
+msgstr "Quan passi alguna cosa (el disparador) i es compleixi la condició, el sistema fa el que li indiquis. Es revisa un cop al dia i mai repeteix el que ja s'ha fet."
+
+msgid "Por ejemplo: Renovar certificados 30 días antes"
+msgstr "Per exemple: Renova els certificats 30 dies abans"
+
+msgid "1. Cuándo"
+msgstr "1. Quan"
+
+msgid "Disparador"
+msgstr "Disparador"
+
+msgid "el disparador no se puede cambiar; crea otra regla si necesitas otro"
+msgstr "el disparador no es pot canviar; crea una altra regla si en necessites un altre"
+
+msgid "2. Condición"
+msgstr "2. Condició"
+
+msgid "Avisar cuando falten, como máximo, estos días para que caduque"
+msgstr "Actua quan faltin, com a màxim, aquests dies perquè caduqui"
+
+msgid "Los certificados que ya tienen un sucesor (renovados) no cuentan."
+msgstr "Els certificats que ja tenen un successor (renovats) no compten."
+
+msgid "Tareas que llevan vencidas al menos (días)"
+msgstr "Tasques que fa com a mínim (dies) que són vençudes"
+
+msgid "Solo con estas prioridades"
+msgstr "Només amb aquestes prioritats"
+
+msgid "Solo con estas prioridades (ninguna marcada = todas)"
+msgstr "Només amb aquestes prioritats (cap marcada = totes)"
+
+msgid "Solo de este cliente"
+msgstr "Només d'aquest client"
+
+msgid "Las tareas que crea una automatización no vuelven a disparar reglas."
+msgstr "Les tasques que crea una automatització no tornen a disparar regles."
+
+msgid "Cuando falten, como máximo, estos días para la fecha límite"
+msgstr "Quan faltin, com a màxim, aquests dies per a la data límit"
+
+msgid "Solo del modelo (vacío = todos)"
+msgstr "Només del model (buit = tots)"
+
+msgid "3. Qué hace"
+msgstr "3. Què fa"
+
+msgid "Hasta %(n)s acciones, en orden. Deja en blanco las que no uses."
+msgstr "Fins a %(n)s accions, per ordre. Deixa en blanc les que no facis servir."
+
+msgid "Acción %(n)s"
+msgstr "Acció %(n)s"
+
+msgid "— Ninguna —"
+msgstr "— Cap —"
+
+msgid "Crear una tarea"
+msgstr "Crear una tasca"
+
+msgid "Avisar a alguien"
+msgstr "Avisar algú"
+
+msgid "Anotar en la tarea vencida"
+msgstr "Anotar a la tasca vençuda"
+
+msgid "Descripción (opcional)"
+msgstr "Descripció (opcional)"
+
+msgid "Plazo (días desde hoy)"
+msgstr "Termini (dies des d'avui)"
+
+msgid "Título del aviso"
+msgstr "Títol de l'avís"
+
+msgid "Texto (opcional)"
+msgstr "Text (opcional)"
+
+msgid "Avisar a"
+msgstr "Avisa a"
+
+msgid "Texto de la nota"
+msgstr "Text de la nota"
+
+msgid "Puedes usar estas variables en los textos:"
+msgstr "Pots fer servir aquestes variables als textos:"
+
+msgid "La regla está activa"
+msgstr "La regla està activa"
+
+msgid "Guardar la regla"
+msgstr "Desa la regla"
+
+msgid "A quién"
+msgstr "A qui"
+
+msgid "A quien lo lleva"
+msgstr "A qui ho porta"
+
+msgid "A la dirección del despacho"
+msgstr "A la direcció del despatx"
+
+msgid "Crear una regla a medida"
+msgstr "Crea una regla a mida"
+
+msgid "O empieza con una plantilla:"
+msgstr "O comença amb una plantilla:"
+
+msgid "Crea la tarea «%(t)s»"
+msgstr "Crea la tasca «%(t)s»"
+
+msgid "Avisa: «%(t)s»"
+msgstr "Avisa: «%(t)s»"
+
+msgid "Anota en la tarea: «%(t)s»"
+msgstr "Anota a la tasca: «%(t)s»"

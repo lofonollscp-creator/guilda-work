@@ -1240,6 +1240,62 @@ def automatizaciones_nueva():
     return redirect(url_for("tareas.automatizaciones_lista"))
 
 
+def _pagina_constructor(valores: dict, regla_id: int | None = None, error: str | None = None):
+    from . import automatizaciones
+    acciones = list(valores["acciones"])[:automatizaciones.MAX_ACCIONES]
+    acciones += [{}] * (automatizaciones.MAX_ACCIONES - len(acciones))
+    respuesta = render_template(
+        "tareas_automatizacion_editar.html", valores={**valores, "acciones": acciones}, regla_id=regla_id, error=error, disparadores=automatizaciones.DISPARADORES,
+        variables=automatizaciones.VARIABLES, companeros=db.listar_companeros_tenant(g.usuario_id), clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id),
+        prioridades=PRIORIDADES, modelos_ejemplo=("303", "111", "115", "130", "190", "347", "390"))
+    return (respuesta, 422) if error else respuesta
+
+
+def _valores_de_formulario(form, disparador: str) -> dict:
+    from . import automatizaciones
+    try:
+        condiciones, acciones = automatizaciones.formulario_a_regla(form, disparador)
+    except ValueError:
+        condiciones, acciones = {}, []
+    return {"nombre": form.get("nombre", ""), "disparador": disparador, "activa": bool(form.get("activa")), "condiciones": condiciones, "acciones": acciones}
+
+
+@tareas_bp.route("/automatizaciones/regla", methods=["GET", "POST"])
+@login_required
+def automatizaciones_regla_nueva():
+    _direccion_o_404()
+    from . import automatizaciones
+    if request.method == "GET":
+        return _pagina_constructor(automatizaciones.regla_a_formulario(None))
+    disparador = request.form.get("disparador", "")
+    if disparador not in automatizaciones.DISPARADORES:
+        abort(400)
+    try:
+        condiciones, acciones = automatizaciones.formulario_a_regla(request.form, disparador)
+        automatizaciones.crear_regla(g.tenant_id, g.usuario_id, request.form.get("nombre", ""), disparador, condiciones, acciones, activa=bool(request.form.get("activa")))
+    except ValueError as e:
+        return _pagina_constructor(_valores_de_formulario(request.form, disparador), error=str(e))
+    return redirect(url_for("tareas.automatizaciones_lista"))
+
+
+@tareas_bp.route("/automatizaciones/regla/<int:regla_id>", methods=["GET", "POST"])
+@login_required
+def automatizaciones_regla_editar(regla_id: int):
+    _direccion_o_404()
+    from . import automatizaciones
+    regla = automatizaciones.obtener_regla(g.tenant_id, regla_id)
+    if regla is None:
+        abort(404)
+    if request.method == "GET":
+        return _pagina_constructor(automatizaciones.regla_a_formulario(regla), regla_id)
+    try:
+        condiciones, acciones = automatizaciones.formulario_a_regla(request.form, regla["disparador"])      # el disparador no se cambia: lo guardado manda
+        automatizaciones.cambiar_regla(g.tenant_id, g.usuario_id, regla_id, nombre=request.form.get("nombre", ""), condiciones=condiciones, acciones=acciones, activa=bool(request.form.get("activa")))
+    except ValueError as e:
+        return _pagina_constructor(_valores_de_formulario(request.form, regla["disparador"]), regla_id, error=str(e))
+    return redirect(url_for("tareas.automatizaciones_lista"))
+
+
 @tareas_bp.route("/automatizaciones/<int:regla_id>/cambiar", methods=["POST"])
 @login_required
 def automatizaciones_cambiar(regla_id: int):
