@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
+from . import acceso, cobro_contabilidad, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from .auth import login_required
 
@@ -81,7 +81,8 @@ def lista():
     for f in facturas:
         f["periodo_cerrado"] = cierres.get(f["cliente_fiscal_id"], {}).get(fc.trimestre_de(f["fecha"]))
     cierre = fc.periodos_cerrados(g.tenant_id, cliente_id, [trimestre]).get(trimestre) if cliente_id and trimestre else None
-    return render_template("contabilidad_lista.html", cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
+    uso_plan = cobro_contabilidad.consumo(g.tenant_id)
+    return render_template("contabilidad_lista.html", uso_plan=uso_plan if uso_plan["tarifa"] else None, cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
                            trimestres=_trimestres(), resumen=fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id), cfg=cfg, error=_error(), subnav=None,
                            por_leer=lectura_facturas.pendientes_de_leer(g.tenant_id, g.usuario_id, cliente_id), ia_lista=lectura_facturas.configurada(g.usuario_id), max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 

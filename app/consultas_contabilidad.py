@@ -3,7 +3,7 @@ Mismas reglas que la web: el despacho propio, el módulo `contabilizacion` activ
 con dos decimales además de en céntimos. Los `ValueError` llevan un mensaje legible y los de «no existe» o «no está activo» se tratan como 404."""
 from __future__ import annotations
 
-from . import acceso, facturas_contables as fc, lectura_facturas, verticales
+from . import acceso, cobro_contabilidad, facturas_contables as fc, lectura_facturas, verticales
 
 
 def _exigir_modulo(tenant_id: int) -> None:
@@ -57,7 +57,10 @@ def resumen(tenant_id: int, usuario_id: int) -> dict:
     """Lo que espera en el módulo, cliente por cliente: facturas por revisar, por leer con IA y revisadas listas para exportar."""
     _exigir_modulo(tenant_id)
     clientes = sorted(fc.pendientes_por_cliente(tenant_id, usuario_id), key=lambda c: (-(c["pendientes"] or 0), c["nombre"].lower()))
-    return {"por_revisar": sum(c["pendientes"] or 0 for c in clientes), "por_leer": sum(c["por_leer"] or 0 for c in clientes), "para_exportar": sum(c["revisadas"] or 0 for c in clientes),
+    uso = cobro_contabilidad.consumo(tenant_id)
+    plan = None if uso["tarifa"] is None else {"mes": uso["mes"], "unidad": uso["unidad"], "usadas": uso["unidades"], "incluidas": uso["incluidas"], "de_mas": uso["extra"],
+                                               "precio_por_factura_de_mas": _euros(uso["precio_extra_centimos"]), "limite": uso["limite_duro"], "restantes": uso["restantes"]}
+    return {"plan": plan, "por_revisar": sum(c["pendientes"] or 0 for c in clientes), "por_leer": sum(c["por_leer"] or 0 for c in clientes), "para_exportar": sum(c["revisadas"] or 0 for c in clientes),
             "clientes": [{"cliente_fiscal_id": c["cliente_fiscal_id"], "cliente": c["nombre"], "por_revisar": c["pendientes"] or 0, "por_leer": c["por_leer"] or 0, "para_exportar": c["revisadas"] or 0,
                           "del_portal": c["del_portal"] or 0, "mas_antigua": (c["antigua"] or "")[:10] or None} for c in clientes]}
 

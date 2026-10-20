@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block titulo %}Cobro de contabilización{% endblock %}
+{% macro eur(c) %}{{ ('%.2f'|format(c / 100))|replace('.', ',') }} €{% endmacro %}
+{% macro formulario_tarifa(ambito, referencia_id, t) %}
+<form method="post" action="{{ url_for('rutas.cobro_contabilidad_tarifa') }}" class="fila-catalogo">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="mes" value="{{ mes }}">
+  <input type="hidden" name="ambito" value="{{ ambito }}">
+  <input type="hidden" name="referencia_id" value="{{ referencia_id }}">
+  <select name="unidad" aria-label="Qué se cuenta">
+    <option value="anotadas" {{ 'selected' if not t or t.unidad == 'anotadas' }}>Facturas anotadas</option>
+    <option value="exportadas" {{ 'selected' if t and t.unidad == 'exportadas' }}>Facturas exportadas a a3</option>
+  </select>
+  <input type="number" name="incluidas" value="{{ t.incluidas if t else 0 }}" min="0" max="10000000" aria-label="Facturas incluidas al mes" title="Facturas incluidas al mes">
+  <input type="text" name="precio" value="{{ ('%.2f'|format(t.precio_extra_centimos / 100))|replace('.', ',') if t else '' }}" inputmode="decimal" size="6" placeholder="€/factura" aria-label="Precio de cada factura de más (€, sin IVA)" title="Precio de cada factura de más (€, sin IVA)">
+  <input type="number" name="limite" value="{{ t.limite_duro if t and t.limite_duro is not none else '' }}" min="0" placeholder="Límite" aria-label="Límite duro al mes (vacío = sin límite; solo con facturas anotadas)" title="Límite duro al mes (vacío = sin límite; solo con facturas anotadas)">
+  <span class="acciones"><button type="submit" class="boton">Guardar</button>
+    {% if t %}<button type="submit" class="boton" formaction="{{ url_for('rutas.cobro_contabilidad_tarifa_borrar') }}">Borrar</button>{% endif %}</span>
+</form>
+{% endmacro %}
+{% block contenido %}
+<header class="cabecera">
+  <h1>Cobro de contabilización</h1>
+  <p class="muted">Uso mensual de «Facturas para contabilizar» por despacho y lo que corresponde cobrar según su tarifa. Aquí no se cobra nada solo: se mide, se cierra el mes y se factura.</p>
+</header>
+
+<section class="tarjeta">
+  <h2>Liquidación de {{ mes }}</h2>
+  <form method="get" class="fila-catalogo">
+    <input type="text" name="mes" value="{{ mes }}" size="8" pattern="\d{4}-\d{2}" aria-label="Mes (AAAA-MM)">
+    <button type="submit" class="boton">Ver mes</button>
+    <a class="boton" href="{{ url_for('rutas.cobro_contabilidad_csv', mes=mes) }}">Descargar CSV</a>
+  </form>
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead><tr><th>Despacho</th><th>Se cuenta</th><th>Facturas</th><th>Incluidas</th><th>De más</th><th>Precio</th><th>Importe</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for f in filas %}
+        <tr>
+          <td><a href="{{ url_for('rutas.tenant', tenant_id=f.tenant_id) }}"><strong>{{ f.tenant }}</strong></a></td>
+          <td>{{ 'exportadas' if f.unidad == 'exportadas' else 'anotadas' }}{% if f.origen %} <span class="muted">({{ {'tenant': 'propia', 'plan': 'del plan', 'defecto': 'general'}[f.origen] }})</span>{% endif %}</td>
+          <td>{{ f.unidades }}{% if f.limite_duro is not none %} <span class="muted">/ {{ f.limite_duro }}</span>{% endif %}</td>
+          <td>{{ f.incluidas if f.incluidas is not none else '—' }}</td>
+          <td>{{ f.extra }}</td>
+          <td>{{ eur(f.precio_extra_centimos) }}</td>
+          <td><strong>{{ eur(f.importe_centimos) }}</strong></td>
+          <td>{% if f.estado == 'facturada' %}<span class="insignia insignia-ok">FACTURADA</span>{% elif f.estado == 'cerrada' %}<span class="insignia">CERRADA</span>{% elif f.estado == 'abierta' %}<span class="insignia">ABIERTA</span>{% else %}<span class="muted">sin calcular</span>{% endif %}</td>
+          <td>
+            {% if f.estado in ('cerrada', 'abierta') %}
+            <form method="post" action="{{ url_for('rutas.cobro_contabilidad_estado') }}" class="fila-catalogo">
+              <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="mes" value="{{ mes }}"><input type="hidden" name="tenant_id" value="{{ f.tenant_id }}">
+              {% if f.estado == 'cerrada' %}<button type="submit" class="boton" name="estado" value="facturada">Marcar facturada</button><button type="submit" class="boton" name="estado" value="abierta">Reabrir</button>{% endif %}
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="9" class="vacio">Ningún despacho tiene el módulo activo.</td></tr>{% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="6"><strong>Total sin IVA</strong></td><td colspan="3"><strong>{{ eur(total) }}</strong></td></tr></tfoot>
+    </table>
+  </div>
+  <div class="fila-catalogo">
+    <form method="post" action="{{ url_for('rutas.cobro_contabilidad_calcular') }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="mes" value="{{ mes }}"><button type="submit" class="boton">Calcular y guardar las liquidaciones abiertas</button></form>
+    <form method="post" action="{{ url_for('rutas.cobro_contabilidad_cerrar') }}" onsubmit="return confirm('Se congelan las liquidaciones de {{ mes }}: lo que se cobre ya no cambiará aunque cambie el uso. ¿Cerrar el mes?');"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="mes" value="{{ mes }}"><button type="submit" class="boton">Cerrar el mes</button></form>
+  </div>
+  <p class="muted">Un mes cerrado es una foto: no cambia aunque después se descarten facturas o se cambie la tarifa. Una factura anotada cuenta en el mes en que se anotó.</p>
+</section>
+
+<section class="tarjeta">
+  <h2>Tarifas</h2>
+  <p class="muted">Se aplica la del propio despacho; si no tiene, la de su plan; si no, la general. Sin tarifa no hay cargo ni límite. Cada columna: qué se cuenta, facturas incluidas al mes, precio de cada una de más (€ sin IVA) y límite duro opcional (a partir de él no se pueden anotar más facturas ese mes).</p>
+
+  <h3>General</h3>
+  {{ formulario_tarifa('defecto', 0, tarifas | selectattr('ambito', 'equalto', 'defecto') | first) }}
+
+  <h3>Por plan</h3>
+  {% for p in planes %}
+  <div class="fila-catalogo"><strong>{{ p.nombre }}</strong></div>
+  {{ formulario_tarifa('plan', p.id, tarifas | selectattr('ambito', 'equalto', 'plan') | selectattr('referencia_id', 'equalto', p.id) | first) }}
+  {% else %}<p class="vacio">Todavía no hay planes.</p>{% endfor %}
+
+  <h3>Propia de un despacho</h3>
+  {% for t in tarifas if t.ambito == 'tenant' %}
+  <div class="fila-catalogo"><strong>{{ t.nombre }}</strong></div>
+  {{ formulario_tarifa('tenant', t.referencia_id, t) }}
+  {% endfor %}
+  <form method="post" action="{{ url_for('rutas.cobro_contabilidad_tarifa') }}" class="fila-catalogo nueva">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="mes" value="{{ mes }}"><input type="hidden" name="ambito" value="tenant">
+    <select name="referencia_id" aria-label="Despacho" required><option value="">Despacho…</option>{% for t in tenants %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select>
+    <select name="unidad" aria-label="Qué se cuenta"><option value="anotadas">Facturas anotadas</option><option value="exportadas">Facturas exportadas a a3</option></select>
+    <input type="number" name="incluidas" value="0" min="0" aria-label="Facturas incluidas al mes">
+    <input type="text" name="precio" placeholder="€/factura" inputmode="decimal" size="6" aria-label="Precio de cada factura de más">
+    <input type="number" name="limite" min="0" placeholder="Límite" aria-label="Límite duro al mes">
+    <button type="submit" class="boton">Añadir tarifa propia</button>
+  </form>
+</section>
+{% endblock %}

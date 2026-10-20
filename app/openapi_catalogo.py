@@ -485,7 +485,7 @@ ESQUEMAS.update({
                                                                           "pct_recargo": {"type": "number"}, "cuota_recargo": _N, "pct_retencion": {"type": "number"}, "cuota_retencion": _N,
                                                                           "cuenta": _SN, "tipo_operacion": _S}}},
                                                                "avisos_de_la_lectura": {"type": "array", "items": _S}}},
-    "ResumenContabilidad": {"type": "object", "properties": {"por_revisar": _I, "por_leer": _I, "para_exportar": _I, "clientes": {"type": "array", "items": {"type": "object", "properties": {
+    "ResumenContabilidad": {"type": "object", "properties": {"plan": {"type": "object", "nullable": True, "description": "Uso del mes frente a las facturas incluidas en el plan; null si el despacho no tiene tarifa.", "properties": {"mes": _S, "unidad": {"type": "string", "enum": ["anotadas", "exportadas"]}, "usadas": _I, "incluidas": {"type": "integer", "nullable": True}, "de_mas": _I, "precio_por_factura_de_mas": _N, "limite": {"type": "integer", "nullable": True}, "restantes": {"type": "integer", "nullable": True}}}, "por_revisar": _I, "por_leer": _I, "para_exportar": _I, "clientes": {"type": "array", "items": {"type": "object", "properties": {
         "cliente_fiscal_id": _I, "cliente": _S, "por_revisar": _I, "por_leer": _I, "para_exportar": _I, "del_portal": _I, "mas_antigua": _SN}}}}},
     "ChequeoExportacion": {"type": "object", "properties": {"cliente": _S, "ok": _B, "facturas": _I, "registros": _I, "total": _N,
                                                            "errores": {"type": "array", "items": {"type": "object", "properties": {"registro": {"type": "integer", "nullable": True}, "mensaje": _S}}},

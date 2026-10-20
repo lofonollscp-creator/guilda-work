@@ -13618,3 +13618,15 @@ msgstr "To read: %(n)s"
 
 msgid "Para exportar: %(n)s"
 msgstr "Ready to export: %(n)s"
+
+msgid "Facturas anotadas este mes: %(n)s de %(i)s incluidas en tu plan."
+msgstr "Invoices entered this month: %(n)s of %(i)s included in your plan."
+
+msgid "Facturas exportadas este mes: %(n)s de %(i)s incluidas en tu plan."
+msgstr "Invoices exported this month: %(n)s of %(i)s included in your plan."
+
+msgid "Llevas %(e)s de más, a %(p)s € cada una (sin IVA)."
+msgstr "You are %(e)s over, at %(p)s € each (excluding VAT)."
+
+msgid "Límite del plan: %(l)s facturas al mes; te quedan %(r)s."
+msgstr "Plan limit: %(l)s invoices per month; you have %(r)s left."

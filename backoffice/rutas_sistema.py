@@ -10,7 +10,7 @@ import os
 from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
-from app import comunicados, eventos, ia_consumo, mantenimiento, ver_como, herramientas, salud, uptime_kuma
+from app import cobro_contabilidad, comunicados, eventos, ia_consumo, mantenimiento, ver_como, herramientas, salud, uptime_kuma
 
 from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
@@ -449,7 +449,7 @@ PAGINAS = (
     ("Dashboard", "rutas.dashboard"), ("Tenants", "rutas.tenants"), ("Usuarios", "rutas.usuarios"), ("Mapa de acceso", "rutas.mapa"),
     ("Herramientas", "rutas.catalogo"), ("Customer Journey", "rutas.journey"), ("Salud de clientes", "rutas.salud_clientes"),
     ("Alertas", "rutas.alertas"), ("Leads", "rutas.leads"), ("Solicitudes del portal", "rutas.solicitudes"), ("Planes y extras", "rutas.planes"),
-    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Tokens de API", "rutas.tokens_api"), ("Actividad MCP", "rutas.actividad_mcp"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
+    ("Ingresos", "rutas.ingresos"), ("Comunicados", "rutas.comunicados_vista"), ("Consumo de IA", "rutas.consumo_ia"), ("Cobro de contabilización", "rutas.cobro_contabilidad_vista"), ("Tokens de API", "rutas.tokens_api"), ("Actividad MCP", "rutas.actividad_mcp"), ("Mantenimiento", "rutas.mantenimiento_vista"), ("Salud del sistema", "rutas.salud_vista"),
     ("Estado del sistema", "rutas.estado"), ("Diagnóstico", "rutas.diagnostico_vista"), ("Dependencias", "rutas.dependencias_vista"),
     ("Copias de seguridad", "rutas.copias"), ("Webhooks", "rutas.webhooks"), ("Actividad", "rutas.actividad"), ("Mi cuenta", "rutas.cuenta"),
 )
@@ -524,6 +524,101 @@ def ver_como_usuario(usuario_id: int):
     auth.auditar("ver_como.emitir", f"usuario {usuario_id}: {request.form.get('motivo', '').strip()[:200]}")
     base = os.environ.get("GUILDA_APP_URL", "https://app.guildawork.com").rstrip("/")
     return redirect(f"{base}/soporte/ver-como/{token}")
+
+
+# --- Cobro por uso de Facturas para contabilizar -------------------------------------------------------------------
+
+def _mes_pedido() -> str:
+    mes = (request.values.get("mes") or "").strip() or None
+    try:
+        return cobro_contabilidad._mes(mes)
+    except ValueError:
+        flash("El mes debe tener el formato AAAA-MM.", "error")
+        return cobro_contabilidad._mes(None)
+
+
+def _volver_a_cobro(mes: str):
+    return redirect(url_for("rutas.cobro_contabilidad_vista", mes=mes))
+
+
+@bp.route("/cobro-contabilizacion")
+@auth.login_required
+def cobro_contabilidad_vista():
+    mes = _mes_pedido()
+    filas = cobro_contabilidad.vista_del_mes(mes)
+    with_tenants = [{"id": t["id"], "nombre": t["nombre"]} for t in plataforma.listar_suscripciones_tenants()]
+    return render_template("cobro_contabilidad.html", mes=mes, filas=filas, total=sum(f["importe_centimos"] for f in filas), tarifas=cobro_contabilidad.listar_tarifas(),
+                           planes=[dict(p) for p in plataforma.listar_planes_guilda()], tenants=with_tenants)
+
+
+@bp.route("/cobro-contabilizacion.csv")
+@auth.login_required
+def cobro_contabilidad_csv():
+    mes = _mes_pedido()
+    resp = Response(cobro_contabilidad.csv_del_mes(mes), mimetype="text/csv")
+    resp.headers.set("Content-Disposition", "attachment", filename=f"contabilizacion-{mes}.csv")
+    resp.headers.set("Cache-Control", "no-store")
+    return resp
+
+
+@bp.route("/cobro-contabilizacion/calcular", methods=["POST"])
+@auth.login_required
+def cobro_contabilidad_calcular():
+    mes = _mes_pedido()
+    n = len(cobro_contabilidad.liquidar(mes))
+    auth.auditar("cobro_conta.calcular", mes)
+    flash(f"Liquidaciones de {mes} calculadas: {n}.", "ok")
+    return _volver_a_cobro(mes)
+
+
+@bp.route("/cobro-contabilizacion/cerrar", methods=["POST"])
+@auth.login_required
+def cobro_contabilidad_cerrar():
+    mes = _mes_pedido()
+    n = cobro_contabilidad.cerrar_mes(mes)
+    auth.auditar("cobro_conta.cerrar", mes)
+    flash(f"Mes {mes} cerrado: {n} liquidaciones congeladas.", "ok")
+    return _volver_a_cobro(mes)
+
+
+@bp.route("/cobro-contabilizacion/estado", methods=["POST"])
+@auth.login_required
+def cobro_contabilidad_estado():
+    mes = _mes_pedido()
+    try:
+        cobro_contabilidad.cambiar_estado_liquidacion(request.form.get("tenant_id", type=int) or 0, mes, request.form.get("estado", ""))
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("cobro_conta.estado", f"tenant {request.form.get('tenant_id')} {mes}: {request.form.get('estado')}")
+        flash("Estado de la liquidación actualizado.", "ok")
+    return _volver_a_cobro(mes)
+
+
+@bp.route("/cobro-contabilizacion/tarifa", methods=["POST"])
+@auth.login_required
+def cobro_contabilidad_tarifa():
+    mes = _mes_pedido()
+    f = request.form
+    try:
+        t = cobro_contabilidad.guardar_tarifa(f.get("ambito", ""), f.get("referencia_id", type=int) or 0, f.get("unidad", ""), f.get("incluidas", "0"),
+                                              cobro_contabilidad.euros_a_centimos(f.get("precio")), (f.get("limite") or "").strip() or None)
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("cobro_conta.tarifa", str(t))
+        flash("Tarifa guardada.", "ok")
+    return _volver_a_cobro(mes)
+
+
+@bp.route("/cobro-contabilizacion/tarifa/borrar", methods=["POST"])
+@auth.login_required
+def cobro_contabilidad_tarifa_borrar():
+    mes = _mes_pedido()
+    if cobro_contabilidad.borrar_tarifa(request.form.get("ambito", ""), request.form.get("referencia_id", type=int) or 0):
+        auth.auditar("cobro_conta.tarifa_borrada", f"{request.form.get('ambito')} {request.form.get('referencia_id')}")
+        flash("Tarifa borrada.", "ok")
+    return _volver_a_cobro(mes)
 
 
 # --- Consumo de IA --------------------------------------------------------------------

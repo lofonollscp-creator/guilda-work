@@ -34,6 +34,15 @@
 <p>{{ chip(ngettext('%(n)s pendiente', '%(n)s pendientes', resumen.pendiente, n=resumen.pendiente)) }} {{ chip(ngettext('%(n)s revisada', '%(n)s revisadas', resumen.revisada, n=resumen.revisada)) }}
    {{ chip(ngettext('%(n)s exportada', '%(n)s exportadas', resumen.exportada, n=resumen.exportada)) }}</p>
 
+{% if uso_plan %}
+<p class="muted" role="status">
+  {% if uso_plan.unidad == 'exportadas' %}{{ _('Facturas exportadas este mes: %(n)s de %(i)s incluidas en tu plan.', n=uso_plan.unidades, i=uso_plan.incluidas) }}
+  {% else %}{{ _('Facturas anotadas este mes: %(n)s de %(i)s incluidas en tu plan.', n=uso_plan.unidades, i=uso_plan.incluidas) }}{% endif %}
+  {% if uso_plan.extra %}{{ _('Llevas %(e)s de más, a %(p)s € cada una (sin IVA).', e=uso_plan.extra, p='%.2f'|format(uso_plan.precio_extra_centimos / 100)) }}{% endif %}
+  {% if uso_plan.limite_duro is not none %}{{ _('Límite del plan: %(l)s facturas al mes; te quedan %(r)s.', l=uso_plan.limite_duro, r=uso_plan.restantes) }}{% endif %}
+</p>
+{% endif %}
+
 {% if cliente_id and trimestre %}
 <section class="dash-panel">
   {% if cierre %}

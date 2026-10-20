@@ -13627,3 +13627,15 @@ msgstr "Per llegir: %(n)s"
 
 msgid "Para exportar: %(n)s"
 msgstr "Per exportar: %(n)s"
+
+msgid "Facturas anotadas este mes: %(n)s de %(i)s incluidas en tu plan."
+msgstr "Factures anotades aquest mes: %(n)s de %(i)s incloses al teu pla."
+
+msgid "Facturas exportadas este mes: %(n)s de %(i)s incluidas en tu plan."
+msgstr "Factures exportades aquest mes: %(n)s de %(i)s incloses al teu pla."
+
+msgid "Llevas %(e)s de más, a %(p)s € cada una (sin IVA)."
+msgstr "En portes %(e)s de més, a %(p)s € cadascuna (sense IVA)."
+
+msgid "Límite del plan: %(l)s facturas al mes; te quedan %(r)s."
+msgstr "Límit del pla: %(l)s factures al mes; te'n queden %(r)s."

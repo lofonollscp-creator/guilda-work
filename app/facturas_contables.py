@@ -100,6 +100,32 @@ CREATE TABLE IF NOT EXISTS contabilidad_cierres (
     cerrado_en TEXT NOT NULL,
     UNIQUE (cliente_fiscal_id, trimestre)
 );
+CREATE TABLE IF NOT EXISTS contabilidad_tarifas (
+    id INTEGER PRIMARY KEY,
+    ambito TEXT NOT NULL CHECK (ambito IN ('defecto', 'plan', 'tenant')),
+    referencia_id INTEGER NOT NULL DEFAULT 0,
+    unidad TEXT NOT NULL CHECK (unidad IN ('anotadas', 'exportadas')),
+    incluidas INTEGER NOT NULL DEFAULT 0,
+    precio_extra_centimos INTEGER NOT NULL DEFAULT 0,
+    limite_duro INTEGER,
+    actualizado_en TEXT NOT NULL,
+    UNIQUE (ambito, referencia_id)
+);
+CREATE TABLE IF NOT EXISTS contabilidad_liquidaciones (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    mes TEXT NOT NULL,
+    unidad TEXT NOT NULL,
+    unidades INTEGER NOT NULL,
+    incluidas INTEGER,
+    extra INTEGER NOT NULL DEFAULT 0,
+    precio_extra_centimos INTEGER NOT NULL DEFAULT 0,
+    importe_centimos INTEGER NOT NULL DEFAULT 0,
+    estado TEXT NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta', 'cerrada', 'facturada')),
+    calculada_en TEXT NOT NULL,
+    cerrada_en TEXT,
+    UNIQUE (tenant_id, mes)
+);
 CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -850,6 +876,8 @@ def _aplicar_regla_a_datos(d: dict, regla: dict | None) -> None:
 def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: list[dict], origen: str, documento_id: int | None) -> int:
     cliente_fiscal_id = f["id"]
     d = _datos_limpios(datos)
+    from . import cobro_contabilidad
+    cobro_contabilidad.comprobar_cupo(tenant_id, 1, desde_portal=origen == "portal")
     regla = regla_del_tercero(tenant_id, cliente_fiscal_id, d["tipo"], d["tercero_nif"])
     _aplicar_regla_a_datos(d, regla)
     ls = _lineas_limpias(lineas, d["tipo"], configuracion(tenant_id, cliente_fiscal_id), regla)
@@ -1222,6 +1250,8 @@ def _subir(tenant_id: int, usuario_id: int | None, f, tipo: str, archivos, orige
         raise ValueError("Elige al menos un archivo.")
     if len(archivos) > MAX_ARCHIVOS_POR_SUBIDA:
         raise ValueError(f"Sube como máximo {MAX_ARCHIVOS_POR_SUBIDA} archivos de una vez.")
+    from . import cobro_contabilidad
+    cobro_contabilidad.comprobar_cupo(tenant_id, len(archivos), desde_portal=origen == "portal")
     for _n, mime, contenido in archivos:      # se comprueban todos antes de guardar ninguno
         if (mime or "").lower().split(";")[0] not in MIME_ADJUNTO or len(contenido) > MAX_ADJUNTO_BYTES:
             raise ValueError("Archivo no válido: solo imágenes o PDF, hasta 8 MB.")
@@ -1369,6 +1399,8 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
     for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas", "contabilidad_cierres"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
+    from . import cobro_contabilidad
+    cobro_contabilidad.borrar_datos_de_tenant(conn, tenant_id)
 
 
 def uso_del_mes(tenant_id: int, mes: str | None = None) -> dict:

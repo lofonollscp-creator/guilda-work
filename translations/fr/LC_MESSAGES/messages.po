@@ -13703,3 +13703,15 @@ msgstr "À lire : %(n)s"
 
 msgid "Para exportar: %(n)s"
 msgstr "À exporter : %(n)s"
+
+msgid "Facturas anotadas este mes: %(n)s de %(i)s incluidas en tu plan."
+msgstr "Factures saisies ce mois-ci : %(n)s sur %(i)s incluses dans votre forfait."
+
+msgid "Facturas exportadas este mes: %(n)s de %(i)s incluidas en tu plan."
+msgstr "Factures exportées ce mois-ci : %(n)s sur %(i)s incluses dans votre forfait."
+
+msgid "Llevas %(e)s de más, a %(p)s € cada una (sin IVA)."
+msgstr "Vous en avez %(e)s de plus, à %(p)s € chacune (hors TVA)."
+
+msgid "Límite del plan: %(l)s facturas al mes; te quedan %(r)s."
+msgstr "Limite du forfait : %(l)s factures par mois ; il vous en reste %(r)s."
