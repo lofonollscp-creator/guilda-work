@@ -115,7 +115,7 @@ def ver(factura_id: int):
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "", criterio_caja="1" if f.get("criterio_caja") else "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id),
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
 
 
@@ -257,6 +257,45 @@ def plan(cliente_id: int):
         else:
             vista = plan_cuentas.previsualizar(g.tenant_id, g.usuario_id, cliente_id, datos)
     return render_template("contabilidad_plan.html", cliente=cliente, resumen=plan_cuentas.resumen(g.tenant_id, g.usuario_id, cliente_id), vista=vista, ident=ident, error=error, mensaje=mensaje)
+
+
+@contabilidad_bp.route("/cliente/<int:cliente_id>/reglas", methods=["GET", "POST"])
+@login_required
+def reglas(cliente_id: int):
+    """Reglas por proveedor y cliente: lo que se rellena solo en sus facturas (cuenta, IVA, retención, tipo de operación, criterio de caja, concepto)."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None or not acceso.puede_ver_cliente(g.tenant_id, g.usuario_id, cliente_id):
+        abort(404)
+    error = mensaje = None
+    nueva = {}
+    if request.method == "POST":
+        accion = request.form.get("accion")
+        try:
+            if accion == "guardar":
+                n = 0
+                for r in fc.listar_reglas(g.tenant_id, g.usuario_id, cliente_id):
+                    p = f"r{r['id']}_"
+                    if request.form.get(p + "borrar"):
+                        n += fc.borrar_regla(g.tenant_id, g.usuario_id, cliente_id, r["id"])
+                    elif p + "nif" in request.form:
+                        fc.guardar_regla(g.tenant_id, g.usuario_id, cliente_id, r["tipo"], {c: request.form.get(p + c) for c in _CAMPOS_REGLA} | {"nif": r["nif"], "nombre": r["nombre"]})
+                        n += 1
+                mensaje = _("Reglas guardadas.")
+            elif accion == "nueva":
+                nueva = {c: request.form.get("n_" + c, "") for c in _CAMPOS_REGLA + ("nif", "nombre", "tipo")}
+                fc.guardar_regla(g.tenant_id, g.usuario_id, cliente_id, nueva["tipo"], nueva)
+                nueva = {}
+                mensaje = _("Regla creada.")
+            elif accion == "sugeridas":
+                claves = [tuple(v.split("|", 1)) for v in request.form.getlist("sugerida") if "|" in v]
+                mensaje = _("Reglas creadas: %(n)s.", n=fc.crear_reglas_sugeridas(g.tenant_id, g.usuario_id, cliente_id, claves))
+        except ValueError as e:
+            error = str(e)
+    return render_template("contabilidad_reglas.html", cliente=cliente, reglas=fc.listar_reglas(g.tenant_id, g.usuario_id, cliente_id), sugerencias=fc.sugerencias_de_reglas(g.tenant_id, g.usuario_id, cliente_id),
+                           nueva=nueva, error=error, mensaje=mensaje)
+
+
+_CAMPOS_REGLA = ("cuenta_linea", "pct_iva", "pct_retencion", "subtipo", "criterio_caja", "concepto")
 
 
 @contabilidad_bp.route("/cliente/<int:cliente_id>/copiar-configuracion", methods=["POST"])

@@ -13604,3 +13604,69 @@ msgstr "Avec la majoration d'équivalence, les factures reçues portent seules l
 
 msgid "Retención de IRPF por defecto en sus facturas emitidas, en tanto por ciento"
 msgstr "Retenue d'IRPF par défaut sur ses factures émises, en pourcentage"
+
+msgid "Reglas guardadas."
+msgstr "Règles enregistrées."
+
+msgid "Regla creada."
+msgstr "Règle créée."
+
+msgid "Reglas creadas: %(n)s."
+msgstr "Règles créées : %(n)s."
+
+msgid "Reglas por proveedor"
+msgstr "Règles par fournisseur"
+
+msgid "Reglas por proveedor y cliente de %(cliente)s"
+msgstr "Règles par fournisseur et client de %(cliente)s"
+
+msgid "Lo que casi siempre es igual en las facturas de un mismo proveedor o cliente se rellena solo cuando lo dejas en blanco. Lo que escribas en la factura manda siempre."
+msgstr "Ce qui est presque toujours identique sur les factures d'un même fournisseur ou client se remplit seul quand vous le laissez vide. Ce que vous saisissez sur la facture prévaut toujours."
+
+msgid "Sugeridas por sus facturas"
+msgstr "Suggérées d'après leurs factures"
+
+msgid "Terceros con varias facturas y sin regla. Se propone solo lo que es igual en todas sus facturas."
+msgstr "Tiers avec plusieurs factures et sans règle. Seul ce qui est identique sur toutes leurs factures est proposé."
+
+msgid "Crear las reglas marcadas"
+msgstr "Créer les règles cochées"
+
+msgid "Reglas actuales"
+msgstr "Règles actuelles"
+
+msgid "Todavía no hay reglas para este cliente."
+msgstr "Il n'y a pas encore de règles pour ce client."
+
+msgid "Criterio de caja"
+msgstr "Comptabilité de caisse"
+
+msgid "Guardar las reglas"
+msgstr "Enregistrer les règles"
+
+msgid "Añadir una regla"
+msgstr "Ajouter une règle"
+
+msgid "Es de un"
+msgstr "Concerne un"
+
+msgid "Proveedor (facturas recibidas)"
+msgstr "Fournisseur (factures reçues)"
+
+msgid "Cliente (facturas emitidas)"
+msgstr "Client (factures émises)"
+
+msgid "Tipo de operación (código de dos dígitos, opcional)"
+msgstr "Type d'opération (code à deux chiffres, facultatif)"
+
+msgid "Añadir la regla"
+msgstr "Ajouter la règle"
+
+msgid "Cuenta, IVA, retención y tipo de operación que se rellenan solos en las facturas de un mismo proveedor o cliente."
+msgstr "Compte, TVA, retenue et type d'opération qui se remplissent seuls sur les factures d'un même fournisseur ou client."
+
+msgid "Lo que dejes en blanco lo rellena la regla de este proveedor o cliente."
+msgstr "Ce que vous laissez vide est rempli par la règle de ce fournisseur ou client."
+
+msgid "Ver las reglas"
+msgstr "Voir les règles"

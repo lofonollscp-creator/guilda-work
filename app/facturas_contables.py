@@ -74,6 +74,23 @@ CREATE TABLE IF NOT EXISTS contabilidad_plan (
     UNIQUE (cliente_fiscal_id, cuenta)
 );
 CREATE INDEX IF NOT EXISTS idx_contabilidad_plan_nif ON contabilidad_plan(cliente_fiscal_id, tipo, nif);
+CREATE TABLE IF NOT EXISTS contabilidad_reglas (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id) ON DELETE CASCADE,
+    tipo TEXT NOT NULL CHECK (tipo IN ('proveedor', 'cliente')),
+    nif TEXT NOT NULL,
+    nombre TEXT,
+    cuenta_linea TEXT,
+    pct_iva INTEGER,
+    pct_retencion INTEGER,
+    subtipo TEXT,
+    criterio_caja INTEGER NOT NULL DEFAULT 0,
+    concepto TEXT,
+    aprendida INTEGER NOT NULL DEFAULT 0,
+    actualizado_en TEXT NOT NULL,
+    UNIQUE (cliente_fiscal_id, tipo, nif)
+);
 CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -539,16 +556,157 @@ def terceros_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
         conn.close()
 
 
+# --- Reglas por proveedor o cliente ---------------------------------------------------------------------------------------------------------------------
+# Lo que casi siempre es igual en las facturas de un mismo tercero (la cuenta de gasto, el tipo de IVA, la retención, el tipo de operación, el criterio de caja, el concepto) se guarda una vez
+# como regla y rellena lo que se deja en blanco al anotar o editar una factura. Lo escrito en la factura siempre manda.
+
+def _tipo_tercero(tipo_factura: str) -> str:
+    return "proveedor" if tipo_factura == "recibida" else "cliente"
+
+
+def regla_del_tercero(tenant_id: int, cliente_fiscal_id: int, tipo_factura: str, nif: str | None) -> dict | None:
+    if not nif:
+        return None
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM contabilidad_reglas WHERE cliente_fiscal_id = ? AND tenant_id = ? AND tipo = ? AND nif = ?",
+                         (cliente_fiscal_id, tenant_id, _tipo_tercero(tipo_factura), _nif(nif))).fetchone()
+    finally:
+        conn.close()
+    return dict(f) if f else None
+
+
+def listar_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> list[dict]:
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM contabilidad_reglas WHERE cliente_fiscal_id = ? AND tenant_id = ? ORDER BY tipo, lower(COALESCE(nombre, nif))", (cliente_fiscal_id, tenant_id))]
+    finally:
+        conn.close()
+
+
+def _porcentaje_o_nulo(texto, campo: str, maximo: int) -> int | None:
+    if texto is None or str(texto).strip() == "":
+        return None
+    valor = texto if isinstance(texto, int) and not isinstance(texto, bool) else porcentaje_a_centesimas(texto)
+    if not 0 <= valor <= maximo:
+        raise ValueError(f"{campo}: debe estar entre 0 y {maximo // 100} %.")
+    return valor
+
+
+def _regla_validada(tipo: str, datos: dict) -> dict:
+    if tipo not in ("proveedor", "cliente"):
+        raise ValueError("Indica si la regla es de un proveedor o de un cliente.")
+    tipo_factura = "recibida" if tipo == "proveedor" else "emitida"
+    nif = _nif(datos.get("nif"))
+    if not nif or len(nif) > 20:
+        raise ValueError("Indica el NIF del proveedor o cliente al que se aplica la regla.")
+    cuenta = re.sub(r"\D", "", str(datos.get("cuenta_linea") or "")) or None
+    if cuenta and not 3 <= len(cuenta) <= 12:
+        raise ValueError("La cuenta de gasto o ingreso debe tener entre 3 y 12 dígitos.")
+    subtipo = re.sub(r"\D", "", str(datos.get("subtipo") or "")).zfill(2)[-2:] if str(datos.get("subtipo") or "").strip() else None
+    if subtipo and subtipo not in operaciones_validas(tipo_factura):
+        raise ValueError("Ese tipo de operación no vale para " + ("facturas recibidas." if tipo == "proveedor" else "facturas emitidas."))
+    return {"tipo": tipo, "nif": nif, "nombre": str(datos.get("nombre") or "").strip()[:100] or None, "cuenta_linea": cuenta,
+            "pct_iva": _porcentaje_o_nulo(datos.get("pct_iva"), "Tipo de IVA", 10000), "pct_retencion": _porcentaje_o_nulo(datos.get("pct_retencion"), "Retención", 6000),
+            "subtipo": subtipo, "criterio_caja": 1 if tipo == "proveedor" and datos.get("criterio_caja") in (1, "1", "on", True) else 0,
+            "concepto": str(datos.get("concepto") or "").strip()[:60] or None}
+
+
+def guardar_regla(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, datos: dict, *, aprendida: bool = False) -> int:
+    """Crea o cambia la regla de un proveedor o cliente (identificado por su NIF). Devuelve su id."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    r = _regla_validada(tipo, datos)
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO contabilidad_reglas (tenant_id, cliente_fiscal_id, tipo, nif, nombre, cuenta_linea, pct_iva, pct_retencion, subtipo, criterio_caja, concepto, aprendida, actualizado_en) "
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id, tipo, nif) DO UPDATE SET nombre = excluded.nombre, cuenta_linea = excluded.cuenta_linea, "
+                     "pct_iva = excluded.pct_iva, pct_retencion = excluded.pct_retencion, subtipo = excluded.subtipo, criterio_caja = excluded.criterio_caja, concepto = excluded.concepto, "
+                     "aprendida = excluded.aprendida, actualizado_en = excluded.actualizado_en",
+                     (tenant_id, cliente_fiscal_id, r["tipo"], r["nif"], r["nombre"], r["cuenta_linea"], r["pct_iva"], r["pct_retencion"], r["subtipo"], r["criterio_caja"], r["concepto"],
+                      1 if aprendida else 0, db.now_iso()))
+        regla_id = conn.execute("SELECT id FROM contabilidad_reglas WHERE cliente_fiscal_id = ? AND tipo = ? AND nif = ?", (cliente_fiscal_id, r["tipo"], r["nif"])).fetchone()["id"]
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.regla", "cliente_fiscal", cliente_fiscal_id, {"tipo": r["tipo"], "nif": r["nif"], "aprendida": aprendida}, conn=conn)
+        conn.commit()
+        return regla_id
+    finally:
+        conn.close()
+
+
+def borrar_regla(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, regla_id: int) -> bool:
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        n = conn.execute("DELETE FROM contabilidad_reglas WHERE id = ? AND cliente_fiscal_id = ? AND tenant_id = ?", (regla_id, cliente_fiscal_id, tenant_id)).rowcount
+        if n:
+            auditoria.registrar(tenant_id, usuario_id, "contabilidad.regla_borrada", "cliente_fiscal", cliente_fiscal_id, {"regla": regla_id}, conn=conn)
+        conn.commit()
+        return bool(n)
+    finally:
+        conn.close()
+
+
+def sugerencias_de_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, minimo: int = 2) -> list[dict]:
+    """Los proveedores y clientes con al menos `minimo` facturas y sin regla, con lo que tienen en común todas sus facturas (cuenta, IVA, retención, tipo de operación). Solo cuenta lo que
+    coincide en todas: un tercero cuyas facturas llevan IVA distinto no propone IVA."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT x.id, x.tipo, x.tercero_nif, x.tercero_nombre, x.concepto, x.criterio_caja, l.cuenta, l.subtipo, l.pct_iva, l.pct_retencion FROM facturas_contables x "
+                             "JOIN facturas_contables_lineas l ON l.factura_id = x.id WHERE x.cliente_fiscal_id = ? AND x.tenant_id = ? AND x.estado != 'descartada' AND x.tercero_nif IS NOT NULL "
+                             "ORDER BY x.id", (cliente_fiscal_id, tenant_id)).fetchall()
+        con_regla = {(r["tipo"], r["nif"]) for r in conn.execute("SELECT tipo, nif FROM contabilidad_reglas WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))}
+    finally:
+        conn.close()
+    grupos: dict[tuple, list] = {}
+    for f in filas:
+        grupos.setdefault((_tipo_tercero(f["tipo"]), _nif(f["tercero_nif"])), []).append(f)
+    res = []
+    for (tipo, nif), lineas in grupos.items():
+        facturas = {f["id"] for f in lineas}
+        if len(facturas) < minimo or (tipo, nif) in con_regla:
+            continue
+        comun = lambda campo: lineas[0][campo] if len({f[campo] for f in lineas}) == 1 else None
+        conceptos = {f["concepto"] for f in lineas}
+        res.append({"tipo": tipo, "nif": nif, "nombre": lineas[-1]["tercero_nombre"], "facturas": len(facturas), "cuenta_linea": comun("cuenta"), "pct_iva": comun("pct_iva"),
+                    "pct_retencion": comun("pct_retencion") or None, "subtipo": comun("subtipo"), "criterio_caja": 1 if tipo == "proveedor" and all(f["criterio_caja"] for f in lineas) else 0,
+                    "concepto": next(iter(conceptos)) if len(conceptos) == 1 else None})
+    return sorted(res, key=lambda r: (-r["facturas"], r["nombre"].lower()))
+
+
+def crear_reglas_sugeridas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, claves: list[tuple[str, str]]) -> int:
+    """Crea las reglas de las sugerencias elegidas (pares tipo, NIF). Devuelve cuántas."""
+    por_clave = {(s["tipo"], s["nif"]): s for s in sugerencias_de_reglas(tenant_id, usuario_id, cliente_fiscal_id)}
+    n = 0
+    for tipo, nif in dict.fromkeys(claves):
+        s = por_clave.get((tipo, _nif(nif)))
+        if s:
+            guardar_regla(tenant_id, usuario_id, cliente_fiscal_id, tipo, s, aprendida=True)
+            n += 1
+    return n
+
+
 # --- Alta, edición y comprobación ----------------------------------------------------------------------------------------------------------------------
 
-def _lineas_limpias(lineas: list[dict], tipo: str | None = None, cfg: dict | None = None) -> list[dict]:
+def _lineas_limpias(lineas: list[dict], tipo: str | None = None, cfg: dict | None = None, regla: dict | None = None) -> list[dict]:
     """Las líneas de IVA escritas, con las cuotas calculadas cuando se dejan en blanco. Se descartan las vacías. Con el tipo de factura y los ajustes del cliente, lo que se deja en blanco toma lo del
-    régimen del cliente: el tipo de operación, el recargo de equivalencia en sus compras y la retención por defecto en sus ventas. Lo escrito siempre manda (un «0» explícito quita el recargo)."""
+    régimen del cliente: el tipo de operación, el recargo de equivalencia en sus compras y la retención por defecto en sus ventas; y con la regla del proveedor o cliente, su cuenta, su tipo de IVA,
+    su retención y su tipo de operación (la regla manda sobre el régimen). Lo escrito siempre manda (un «0» explícito quita el recargo)."""
     res = []
     for i, l in enumerate(lineas, start=1):
         if not any(str(l.get(k) or "").strip() for k in ("base", "cuota_iva", "pct_iva")):
             continue
         base = importe_a_centimos(l.get("base"))
+        l = dict(l)
+        if regla:                                # lo que la línea deja en blanco lo pone la regla del tercero
+            if not str(l.get("cuenta") or "").strip() and regla.get("cuenta_linea"):
+                l["cuenta"] = regla["cuenta_linea"]
+            if not str(l.get("pct_iva") or "").strip() and regla.get("pct_iva") is not None:
+                l["pct_iva"] = regla["pct_iva"] / 100
+            if not str(l.get("pct_retencion") or "").strip() and regla.get("pct_retencion") is not None:
+                l["pct_retencion"] = regla["pct_retencion"] / 100
+            if not str(l.get("subtipo") or "").strip() and regla.get("subtipo"):
+                l["subtipo"] = regla["subtipo"]
         pct_iva, pct_re, pct_ret = (porcentaje_a_centesimas(l.get(k)) for k in ("pct_iva", "pct_recargo", "pct_retencion"))
         if base <= 0:
             raise ValueError(f"Línea {i}: indica la base imponible.")
@@ -600,10 +758,22 @@ def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, datos: dict, 
     return _insertar(tenant_id, usuario_id, f, datos, lineas, origen, documento_id)
 
 
+def _aplicar_regla_a_datos(d: dict, regla: dict | None) -> None:
+    """Del concepto y del criterio de caja, lo que la regla del tercero aporta si la factura no lo trae (el criterio de caja, que es una casilla, solo se puede añadir, no quitar)."""
+    if not regla:
+        return
+    if not d.get("concepto") and regla.get("concepto"):
+        d["concepto"] = regla["concepto"]
+    if d["tipo"] == "recibida" and regla.get("criterio_caja"):
+        d["criterio_caja"] = 1
+
+
 def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: list[dict], origen: str, documento_id: int | None) -> int:
     cliente_fiscal_id = f["id"]
     d = _datos_limpios(datos)
-    ls = _lineas_limpias(lineas, d["tipo"], configuracion(tenant_id, cliente_fiscal_id))
+    regla = regla_del_tercero(tenant_id, cliente_fiscal_id, d["tipo"], d["tercero_nif"])
+    _aplicar_regla_a_datos(d, regla)
+    ls = _lineas_limpias(lineas, d["tipo"], configuracion(tenant_id, cliente_fiscal_id), regla)
     total = _total_de(ls, d["suplidos_centimos"])
     ahora = db.now_iso()
     conn = db.get_connection()
@@ -656,7 +826,9 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
     if f["estado"] == "exportada":
         raise ValueError("Esa factura ya se exportó: no se puede cambiar. Si hace falta corregirla, reábrela antes.")
     d = _datos_limpios({**datos, "tipo": f["tipo"]})
-    ls = _lineas_limpias(lineas, f["tipo"], configuracion(tenant_id, f["cliente_fiscal_id"]))
+    regla = regla_del_tercero(tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"])
+    _aplicar_regla_a_datos(d, regla)
+    ls = _lineas_limpias(lineas, f["tipo"], configuracion(tenant_id, f["cliente_fiscal_id"]), regla)
     total = _total_de(ls, d["suplidos_centimos"])
     conn = db.get_connection()
     try:
@@ -1093,7 +1265,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
     for tabla in ("facturas_contables_lineas",):
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
-    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan"):
+    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
 
 

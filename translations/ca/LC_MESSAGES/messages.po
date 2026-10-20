@@ -13528,3 +13528,69 @@ msgstr "Amb recàrrec d'equivalència, les factures rebudes porten soles el rec�
 
 msgid "Retención de IRPF por defecto en sus facturas emitidas, en tanto por ciento"
 msgstr "Retenció d'IRPF per defecte en les seves factures emeses, en tant per cent"
+
+msgid "Reglas guardadas."
+msgstr "Regles desades."
+
+msgid "Regla creada."
+msgstr "Regla creada."
+
+msgid "Reglas creadas: %(n)s."
+msgstr "Regles creades: %(n)s."
+
+msgid "Reglas por proveedor"
+msgstr "Regles per proveïdor"
+
+msgid "Reglas por proveedor y cliente de %(cliente)s"
+msgstr "Regles per proveïdor i client de %(cliente)s"
+
+msgid "Lo que casi siempre es igual en las facturas de un mismo proveedor o cliente se rellena solo cuando lo dejas en blanco. Lo que escribas en la factura manda siempre."
+msgstr "El que gairebé sempre és igual a les factures d'un mateix proveïdor o client s'omple sol quan ho deixes en blanc. El que escriguis a la factura mana sempre."
+
+msgid "Sugeridas por sus facturas"
+msgstr "Suggerides per les seves factures"
+
+msgid "Terceros con varias facturas y sin regla. Se propone solo lo que es igual en todas sus facturas."
+msgstr "Tercers amb diverses factures i sense regla. Es proposa només el que és igual a totes les seves factures."
+
+msgid "Crear las reglas marcadas"
+msgstr "Crea les regles marcades"
+
+msgid "Reglas actuales"
+msgstr "Regles actuals"
+
+msgid "Todavía no hay reglas para este cliente."
+msgstr "Encara no hi ha regles per a aquest client."
+
+msgid "Criterio de caja"
+msgstr "Criteri de caixa"
+
+msgid "Guardar las reglas"
+msgstr "Desa les regles"
+
+msgid "Añadir una regla"
+msgstr "Afegeix una regla"
+
+msgid "Es de un"
+msgstr "És d'un"
+
+msgid "Proveedor (facturas recibidas)"
+msgstr "Proveïdor (factures rebudes)"
+
+msgid "Cliente (facturas emitidas)"
+msgstr "Client (factures emeses)"
+
+msgid "Tipo de operación (código de dos dígitos, opcional)"
+msgstr "Tipus d'operació (codi de dos dígits, opcional)"
+
+msgid "Añadir la regla"
+msgstr "Afegeix la regla"
+
+msgid "Cuenta, IVA, retención y tipo de operación que se rellenan solos en las facturas de un mismo proveedor o cliente."
+msgstr "Compte, IVA, retenció i tipus d'operació que s'omplen sols a les factures d'un mateix proveïdor o client."
+
+msgid "Lo que dejes en blanco lo rellena la regla de este proveedor o cliente."
+msgstr "El que deixis en blanc ho omple la regla d'aquest proveïdor o client."
+
+msgid "Ver las reglas"
+msgstr "Veure les regles"

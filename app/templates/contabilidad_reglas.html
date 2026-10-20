@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% macro valor_pct(v) %}{% if v is not none %}{{ '%g'|format(v / 100) }}{% endif %}{% endmacro %}
+{% macro operaciones(tipo, elegida, nombre) %}
+<select name="{{ nombre }}" aria-label="{{ _('Tipo de operación') }}"><option value="">—</option>
+  {% for codigo, texto in operaciones_contables['recibida' if tipo == 'proveedor' else 'emitida'] %}<option value="{{ codigo }}" {{ 'selected' if elegida == codigo }}>{{ codigo }} · {{ texto }}</option>{% endfor %}</select>
+{% endmacro %}
+{% block title %}{{ _('Reglas por proveedor') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Reglas por proveedor y cliente de %(cliente)s', cliente=cliente.nombre) }}</h1>
+    <p class="subtitle">{{ _('Lo que casi siempre es igual en las facturas de un mismo proveedor o cliente se rellena solo cuando lo dejas en blanco. Lo que escribas en la factura manda siempre.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.configuracion', cliente_id=cliente.id) }}">‹ {{ _('Configuración de a3') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if mensaje %}<p class="portal-peticion" role="status"><strong>{{ mensaje }}</strong></p>{% endif %}
+
+{% if sugerencias %}
+<section class="dash-panel">
+  <h2>{{ _('Sugeridas por sus facturas') }}</h2>
+  <p class="muted">{{ _('Terceros con varias facturas y sin regla. Se propone solo lo que es igual en todas sus facturas.') }}</p>
+  <form method="post" class="edit-form">
+    <input type="hidden" name="accion" value="sugeridas">
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr><th></th><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Cuenta') }}</th><th>{{ _('IVA') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Operación') }}</th></tr></thead>
+      <tbody>{% for s in sugerencias %}
+        <tr><td><input type="checkbox" name="sugerida" value="{{ s.tipo }}|{{ s.nif }}" aria-label="{{ s.nombre }}"></td><td>{{ s.nombre }}</td><td class="mono">{{ s.nif }}</td><td>{{ s.facturas }}</td>
+          <td class="mono">{{ s.cuenta_linea or '—' }}</td><td>{{ valor_pct(s.pct_iva) or '—' }}</td><td>{{ valor_pct(s.pct_retencion) or '—' }}</td><td>{{ s.subtipo or '—' }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    <div class="ds-fila"><button type="submit" class="btn btn-ghost">{{ _('Crear las reglas marcadas') }}</button></div>
+  </form>
+</section>
+{% endif %}
+
+<section class="dash-panel">
+  <h2>{{ _('Reglas actuales') }}</h2>
+  {% if not reglas %}
+  <p class="empty-lane">{{ _('Todavía no hay reglas para este cliente.') }}</p>
+  {% else %}
+  <form method="post" class="edit-form">
+    <input type="hidden" name="accion" value="guardar">
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('IVA') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Tipo de operación') }}</th><th>{{ _('Criterio de caja') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Borrar') }}</th></tr></thead>
+      <tbody>{% for r in reglas %}
+        <tr>
+          <td>{{ r.nombre or '—' }}{% if r.aprendida %} <span class="pill">{{ _('Sugerida') }}</span>{% endif %}<br><span class="muted">{{ _('Proveedor') if r.tipo == 'proveedor' else _('Cliente') }}</span></td>
+          <td class="mono"><input type="hidden" name="r{{ r.id }}_nif" value="{{ r.nif }}">{{ r.nif }}</td>
+          <td><input type="text" name="r{{ r.id }}_cuenta_linea" value="{{ r.cuenta_linea or '' }}" inputmode="numeric" maxlength="12" size="12" aria-label="{{ _('Cuenta de gasto/ingreso') }}"></td>
+          <td><input type="text" name="r{{ r.id }}_pct_iva" value="{{ valor_pct(r.pct_iva) }}" size="5" aria-label="{{ _('IVA') }}"></td>
+          <td><input type="text" name="r{{ r.id }}_pct_retencion" value="{{ valor_pct(r.pct_retencion) }}" size="5" aria-label="{{ _('Retención') }}"></td>
+          <td>{{ operaciones(r.tipo, r.subtipo, 'r' ~ r.id ~ '_subtipo') }}</td>
+          <td>{% if r.tipo == 'proveedor' %}<input type="checkbox" name="r{{ r.id }}_criterio_caja" value="1" {{ 'checked' if r.criterio_caja }} aria-label="{{ _('Criterio de caja') }}">{% else %}—{% endif %}</td>
+          <td><input type="text" name="r{{ r.id }}_concepto" value="{{ r.concepto or '' }}" maxlength="60" aria-label="{{ _('Concepto') }}"></td>
+          <td><input type="checkbox" name="r{{ r.id }}_borrar" value="1" aria-label="{{ _('Borrar') }}"></td>
+        </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar las reglas') }}</button></div>
+  </form>
+  {% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Añadir una regla') }}</h2>
+  <form method="post" class="edit-form ds-max-640">
+    <input type="hidden" name="accion" value="nueva">
+    <label>{{ _('Es de un') }}<select name="n_tipo"><option value="proveedor" {{ 'selected' if nueva.tipo != 'cliente' }}>{{ _('Proveedor (facturas recibidas)') }}</option><option value="cliente" {{ 'selected' if nueva.tipo == 'cliente' }}>{{ _('Cliente (facturas emitidas)') }}</option></select></label>
+    <div class="fila-campos">
+      <label>{{ _('NIF') }}<input type="text" name="n_nif" value="{{ nueva.nif or '' }}" maxlength="20" required></label>
+      <label>{{ _('Nombre') }}<input type="text" name="n_nombre" value="{{ nueva.nombre or '' }}" maxlength="100"></label>
+    </div>
+    <div class="fila-campos">
+      <label>{{ _('Cuenta de gasto/ingreso') }}<input type="text" name="n_cuenta_linea" value="{{ nueva.cuenta_linea or '' }}" inputmode="numeric" maxlength="12"></label>
+      <label>{{ _('Tipo de IVA') }} %<input type="text" name="n_pct_iva" value="{{ nueva.pct_iva or '' }}" size="5"></label>
+      <label>{{ _('Retención') }} %<input type="text" name="n_pct_retencion" value="{{ nueva.pct_retencion or '' }}" size="5"></label>
+    </div>
+    <label>{{ _('Tipo de operación (código de dos dígitos, opcional)') }}<input type="text" name="n_subtipo" value="{{ nueva.subtipo or '' }}" maxlength="2" size="3" inputmode="numeric"></label>
+    <label class="checkbox-label"><input type="checkbox" name="n_criterio_caja" value="1" {{ 'checked' if nueva.criterio_caja }}> {{ _('El proveedor aplica el criterio de caja') }}</label>
+    <label>{{ _('Concepto') }}<input type="text" name="n_concepto" value="{{ nueva.concepto or '' }}" maxlength="60"></label>
+    <div class="ds-fila"><button type="submit" class="btn btn-ghost">{{ _('Añadir la regla') }}</button></div>
+  </form>
+</section>
+{% endblock %}
