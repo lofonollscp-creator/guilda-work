@@ -165,6 +165,14 @@ def test_para_correo_firma_el_enlace_del_logo_y_la_ruta_publica_lo_sirve():
     assert marca.para_correo(t)["logo_url"] is None
 
 
+def _ruta_alterada(ruta: str) -> str:
+    """La misma ruta con la firma estropeada. Se cambia la PRIMERA letra de la firma: la última de una firma de 160 bits solo lleva 4 bits útiles y cambiarla daba por buena la firma
+    alrededor de un 7 % de las veces (según el momento en que se creara el token), lo que hacía el test intermitente."""
+    cuerpo, extension = ruta[:-4], ruta[-4:]
+    payload, firma = cuerpo.rsplit(".", 1)
+    return payload + "." + ("A" if firma[0] != "A" else "B") + firma[1:] + extension
+
+
 def test_el_logo_publico_se_ve_sin_sesion_solo_con_el_enlace_firmado(cliente):
     t, _ = _despacho("Despacho marca publica")
     marca.guardar(t, nombre="Luna", logo_subido=_png(80))
@@ -172,7 +180,7 @@ def test_el_logo_publico_se_ve_sin_sesion_solo_con_el_enlace_firmado(cliente):
     ruta = "/marca/p/" + url.rsplit("/marca/p/", 1)[1]
     r = cliente.get(ruta)
     assert r.status_code == 200 and r.mimetype == "image/png" and r.data[:4] == b"\x89PNG" and "sandbox" in r.headers["Content-Security-Policy"]
-    assert cliente.get(ruta[:-5] + "x.png").status_code == 404 and cliente.get("/marca/p/inventado.png").status_code == 404
+    assert cliente.get(_ruta_alterada(ruta)).status_code == 404 and cliente.get("/marca/p/inventado.png").status_code == 404
     marca.guardar(t, nombre="Luna", quitar_logo=True)
     assert cliente.get(ruta).status_code == 404
 
