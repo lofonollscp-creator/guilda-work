@@ -34,6 +34,20 @@
 <p>{{ chip(ngettext('%(n)s pendiente', '%(n)s pendientes', resumen.pendiente, n=resumen.pendiente)) }} {{ chip(ngettext('%(n)s revisada', '%(n)s revisadas', resumen.revisada, n=resumen.revisada)) }}
    {{ chip(ngettext('%(n)s exportada', '%(n)s exportadas', resumen.exportada, n=resumen.exportada)) }}</p>
 
+{% if cliente_id and trimestre %}
+<section class="dash-panel">
+  {% if cierre %}
+  <p><span class="pill prioridad-alta">{{ _('Periodo cerrado') }}</span> {{ trimestre }} · {{ cierre.detalle }}</p>
+  {% if cierre.motivo == 'manual' %}<form method="post" action="{{ url_for('contabilidad.periodo') }}"><input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="trimestre" value="{{ trimestre }}"><input type="hidden" name="accion" value="reabrir"><button type="submit" class="btn btn-ghost">{{ _('Reabrir el periodo') }}</button></form>
+  {% else %}<p class="muted">{{ _('Se cierra solo porque el modelo está presentado; para reabrirlo cámbialo en el calendario fiscal.') }}</p>{% endif %}
+  {% else %}
+  <form method="post" action="{{ url_for('contabilidad.periodo') }}" class="ds-fila"><input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="trimestre" value="{{ trimestre }}"><input type="hidden" name="accion" value="cerrar">
+    <button type="submit" class="btn btn-ghost">{{ _('Cerrar el trimestre %(t)s', t=trimestre) }}</button>
+    <span class="muted">{{ _('Avisa antes de exportar facturas de un periodo cerrado.') }}</span></form>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if cliente_id %}
 <section class="dash-panel">
   <div class="dash-panel-cab"><h2>{{ _('Generar el fichero para a3') }}</h2><a href="{{ url_for('contabilidad.configuracion', cliente_id=cliente_id) }}">{{ _('Configuración de a3 de este cliente') }}</a></div>
@@ -43,6 +57,7 @@
   <form method="post" action="{{ url_for('contabilidad.exportar') }}" class="ds-fila">
     <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
     <label>{{ _('Facturas revisadas de') }} <select name="trimestre"><option value="">{{ _('Todas las fechas') }}</option>{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ t }}</option>{% endfor %}</select></label>
+    {% if cierre %}<label class="checkbox-label"><input type="checkbox" name="confirmo_cerrado" value="1"> {{ _('Exportar aunque el periodo esté cerrado') }}</label>{% endif %}
     <button type="submit" class="btn btn-primary" {{ 'disabled' if not resumen.revisada }}>{{ _('Generar SUENLACE.DAT') }}</button>
     <button type="submit" class="btn btn-ghost" formaction="{{ url_for('contabilidad.comprobar') }}" {{ 'disabled' if not resumen.revisada }}>{{ _('Comprobar antes') }}</button>
   </form>
@@ -86,7 +101,7 @@
     <tr>
       <td class="mono">{{ f.fecha }}</td>
       <td>{{ f.cliente_nombre }}</td>
-      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}{% if f.origen == 'portal' %} <span class="pill">{{ _('Portal') }}</span>{% endif %}{% if f.lectura == 'pendiente' %} <span class="pill">{{ _('Por leer') }}</span>{% elif f.lectura == 'fallida' %} <span class="pill">{{ _('No se pudo leer') }}</span>{% elif f.lectura == 'ia' %} <span class="pill">{{ _('Leída con IA') }}</span>{% endif %}</td>
+      <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}{% if f.origen == 'portal' %} <span class="pill">{{ _('Portal') }}</span>{% endif %}{% if f.lectura == 'pendiente' %} <span class="pill">{{ _('Por leer') }}</span>{% elif f.lectura == 'fallida' %} <span class="pill">{{ _('No se pudo leer') }}</span>{% elif f.lectura == 'ia' %} <span class="pill">{{ _('Leída con IA') }}</span>{% endif %}{% if f.periodo_cerrado %} <span class="pill">{{ _('Periodo cerrado') }}</span>{% endif %}</td>
       <td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}"><strong>{{ f.numero }}</strong></a></td>
       <td>{{ f.tercero_nombre }}{% if f.tercero_nif %} <span class="muted mono">{{ f.tercero_nif }}</span>{% endif %}</td>
       <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>

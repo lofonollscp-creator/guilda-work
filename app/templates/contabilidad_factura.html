@@ -32,6 +32,7 @@
     <label>{{ _('NIF / CIF') }}<input type="text" name="tercero_nif" value="{{ datos.tercero_nif }}" maxlength="20"></label>
     <label>{{ _('Subcuenta en a3 (si ya existe)') }}<input type="text" name="tercero_cuenta" value="{{ datos.tercero_cuenta }}" maxlength="12" inputmode="numeric"></label>
   </div>
+  {% if periodo_cerrado %}<p class="muted"><span class="pill prioridad-alta">{{ _('Periodo cerrado') }}</span> {{ f.trimestre }} · {{ periodo_cerrado.detalle }}. {{ _('Para exportarla habrá que confirmar el cierre.') }}</p>{% endif %}
   {% if regla %}<p class="muted">{{ _('Lo que dejes en blanco lo rellena la regla de este proveedor o cliente.') }} <a href="{{ url_for('contabilidad.reglas', cliente_id=f.cliente_fiscal_id) }}">{{ _('Ver las reglas') }}</a></p>{% endif %}
   {% if cuenta_nueva %}<p class="muted">{{ _('Es un tercero nuevo: al exportar se le asignará la siguiente subcuenta libre.') }}</p>
   {% elif cuenta_efectiva %}<p class="muted">{{ _('Se contabilizará en la subcuenta %(c)s.', c=cuenta_efectiva) }}</p>{% endif %}

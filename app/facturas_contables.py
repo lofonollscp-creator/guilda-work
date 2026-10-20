@@ -91,6 +91,15 @@ CREATE TABLE IF NOT EXISTS contabilidad_reglas (
     actualizado_en TEXT NOT NULL,
     UNIQUE (cliente_fiscal_id, tipo, nif)
 );
+CREATE TABLE IF NOT EXISTS contabilidad_cierres (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id) ON DELETE CASCADE,
+    trimestre TEXT NOT NULL,
+    cerrado_por INTEGER,
+    cerrado_en TEXT NOT NULL,
+    UNIQUE (cliente_fiscal_id, trimestre)
+);
 CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -556,6 +565,76 @@ def terceros_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
         conn.close()
 
 
+# --- Cierre de periodos ----------------------------------------------------------------------------------------------------------------------------------
+# Un trimestre de un cliente está cerrado cuando se ha cerrado a mano aquí, o cuando su modelo 303 (o el 390 de ese año) figura como presentado en el calendario fiscal. Exportar facturas de un periodo
+# cerrado exige confirmarlo: lo normal es que ya estén contabilizadas o que haya que presentar una complementaria.
+
+def _anio_de(trimestre: str) -> int:
+    return int(trimestre[:4])
+
+
+def periodos_cerrados(tenant_id: int, cliente_fiscal_id: int, trimestres) -> dict[str, dict]:
+    """{trimestre: {motivo, detalle}} de los trimestres pedidos que están cerrados. `motivo`: manual · 303 · 390."""
+    trimestres = sorted({t for t in trimestres if t})
+    if not trimestres:
+        return {}
+    conn = db.get_connection()
+    try:
+        manual = {r["trimestre"]: r for r in conn.execute("SELECT trimestre, cerrado_en FROM contabilidad_cierres WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))}
+        presentados = {(r["modelo"], r["periodo"]) for r in conn.execute(
+            "SELECT modelo, periodo FROM vencimientos_fiscales WHERE cliente_fiscal_id = ? AND tenant_id = ? AND estado = 'presentado' AND papelera_en IS NULL AND modelo IN ('303', '390')",
+            (cliente_fiscal_id, tenant_id))}
+    finally:
+        conn.close()
+    res = {}
+    for t in trimestres:
+        if t in manual:
+            res[t] = {"motivo": "manual", "detalle": f"cerrado a mano el {manual[t]['cerrado_en'][:10]}"}
+        elif ("303", t) in presentados:
+            res[t] = {"motivo": "303", "detalle": "modelo 303 presentado"}
+        elif ("390", f"{_anio_de(t)}-anual") in presentados:
+            res[t] = {"motivo": "390", "detalle": f"modelo 390 de {_anio_de(t)} presentado"}
+    return res
+
+
+def cerrar_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trimestre: str) -> None:
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    rango_del_trimestre(trimestre)
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT OR IGNORE INTO contabilidad_cierres (tenant_id, cliente_fiscal_id, trimestre, cerrado_por, cerrado_en) VALUES (?, ?, ?, ?, ?)", (tenant_id, cliente_fiscal_id, trimestre, usuario_id, db.now_iso()))
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.periodo_cerrado", "cliente_fiscal", cliente_fiscal_id, {"trimestre": trimestre}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def reabrir_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trimestre: str) -> None:
+    """Quita el cierre hecho a mano. Un trimestre cerrado por un modelo presentado se reabre desde el calendario fiscal, no desde aquí."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    rango_del_trimestre(trimestre)
+    cierre = periodos_cerrados(tenant_id, cliente_fiscal_id, [trimestre]).get(trimestre)
+    if cierre is None:
+        return
+    if cierre["motivo"] != "manual":
+        raise ValueError(f"Ese trimestre está cerrado por el {cierre['detalle']}: reábrelo desde el calendario fiscal si hace falta.")
+    conn = db.get_connection()
+    try:
+        conn.execute("DELETE FROM contabilidad_cierres WHERE cliente_fiscal_id = ? AND tenant_id = ? AND trimestre = ?", (cliente_fiscal_id, tenant_id, trimestre))
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.periodo_reabierto", "cliente_fiscal", cliente_fiscal_id, {"trimestre": trimestre}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _cerrados_en(tenant_id: int, cliente_fiscal_id: int, facturas: list[dict]) -> dict[str, dict]:
+    return periodos_cerrados(tenant_id, cliente_fiscal_id, {trimestre_de(f["fecha"]) for f in facturas})
+
+
+def _texto_cerrados(cerrados: dict[str, dict]) -> str:
+    return ", ".join(f"{t} ({c['detalle']})" for t, c in sorted(cerrados.items()))
+
+
 # --- Reglas por proveedor o cliente ---------------------------------------------------------------------------------------------------------------------
 # Lo que casi siempre es igual en las facturas de un mismo tercero (la cuenta de gasto, el tipo de IVA, la retención, el tipo de operación, el criterio de caja, el concepto) se guarda una vez
 # como regla y rellena lo que se deja en blanco al anotar o editar una factura. Lo escrito en la factura siempre manda.
@@ -971,14 +1050,21 @@ def comprobar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     informe["cliente"] = cliente["nombre"]
     informe["subcuentas_nuevas"] = [{"tipo": t, "nif": nif, "cuenta": c, "nombre": nom} for (t, nif), (c, nom) in nuevas.items()]
     informe["numeros"] = [f["numero"] for f in facturas]
+    cerrados = _cerrados_en(tenant_id, cliente_fiscal_id, facturas)
+    informe["periodos_cerrados"] = [{"trimestre": t, **c} for t, c in sorted(cerrados.items())]
+    if cerrados:
+        informe["avisos"] = [{"registro": None, "mensaje": "Hay facturas de periodos ya cerrados: " + _texto_cerrados(cerrados) + ". Para exportarlas tendrás que confirmarlo."}, *informe["avisos"]]
     return informe
 
 
-def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: str | None = None, hasta: str | None = None) -> dict:
+def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: str | None = None, hasta: str | None = None, confirmar_cerrado: bool = False) -> dict:
     """Genera el SUENLACE.DAT con las facturas **revisadas** del cliente (en el rango de fechas, si se da), las marca como exportadas y guarda el lote. Antes lo pasa por el pre-chequeo y no lo
     entrega si encuentra errores. `ValueError` si no hay nada que exportar."""
     from . import enlace_a3_chequeo
     cliente, cfg, facturas, nuevas, contenido = _preparar_exportacion(tenant_id, usuario_id, cliente_fiscal_id, desde, hasta)
+    cerrados = _cerrados_en(tenant_id, cliente_fiscal_id, facturas)
+    if cerrados and not confirmar_cerrado:
+        raise ValueError("Hay facturas de periodos ya cerrados: " + _texto_cerrados(cerrados) + ". Si de verdad hay que exportarlas, confírmalo (o reabre el periodo).")
     chequeo = enlace_a3_chequeo.chequear(contenido, cfg["digitos"])
     if chequeo["errores"]:
         e = chequeo["errores"][0]
@@ -994,7 +1080,8 @@ def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: 
             conn.execute("INSERT INTO contabilidad_terceros (tenant_id, cliente_fiscal_id, tipo, nif, nombre, cuenta) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id, tipo, nif) DO NOTHING",
                          (tenant_id, cliente_fiscal_id, tipo_tercero, nif, nombre[:100], cuenta))
         auditoria.registrar(tenant_id, usuario_id, "contabilidad.exportada", "cliente_fiscal", cliente_fiscal_id,
-                            {"lote": lote, "facturas": len(facturas), "desde": desde, "hasta": hasta, "subcuentas_nuevas": len(nuevas)}, conn=conn)
+                            {"lote": lote, "facturas": len(facturas), "desde": desde, "hasta": hasta, "subcuentas_nuevas": len(nuevas),
+                             "periodos_cerrados": sorted(cerrados) if cerrados else None}, conn=conn)
         conn.commit()
     finally:
         conn.close()
@@ -1265,7 +1352,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
     for tabla in ("facturas_contables_lineas",):
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
-    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas"):
+    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas", "contabilidad_cierres"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
 
 

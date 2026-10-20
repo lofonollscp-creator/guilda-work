@@ -13585,3 +13585,24 @@ msgstr "What you leave blank is filled in by this supplier's or customer's rule.
 
 msgid "Ver las reglas"
 msgstr "See the rules"
+
+msgid "Periodo cerrado"
+msgstr "Closed period"
+
+msgid "Exportar aunque el periodo esté cerrado"
+msgstr "Export even though the period is closed"
+
+msgid "Reabrir el periodo"
+msgstr "Reopen the period"
+
+msgid "Se cierra solo porque el modelo está presentado; para reabrirlo cámbialo en el calendario fiscal."
+msgstr "It closes by itself because the return has been filed; to reopen it, change it in the tax calendar."
+
+msgid "Cerrar el trimestre %(t)s"
+msgstr "Close quarter %(t)s"
+
+msgid "Avisa antes de exportar facturas de un periodo cerrado."
+msgstr "Warns before exporting invoices from a closed period."
+
+msgid "Para exportarla habrá que confirmar el cierre."
+msgstr "To export it you will have to confirm the closure."

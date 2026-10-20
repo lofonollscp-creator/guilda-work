@@ -75,7 +75,13 @@ def lista():
             trimestre = None
     facturas = fc.listar(g.tenant_id, g.usuario_id, cliente_fiscal_id=cliente_id, estado=estado, tipo=tipo, desde=desde, hasta=hasta)
     cfg = fc.configuracion(g.tenant_id, cliente_id) if cliente_id else None
-    return render_template("contabilidad_lista.html", facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
+    cierres = {}                                                       # {cliente_fiscal_id: {trimestre: cierre}} de los trimestres que salen en la lista
+    for cid in {f["cliente_fiscal_id"] for f in facturas}:
+        cierres[cid] = fc.periodos_cerrados(g.tenant_id, cid, {fc.trimestre_de(f["fecha"]) for f in facturas if f["cliente_fiscal_id"] == cid})
+    for f in facturas:
+        f["periodo_cerrado"] = cierres.get(f["cliente_fiscal_id"], {}).get(fc.trimestre_de(f["fecha"]))
+    cierre = fc.periodos_cerrados(g.tenant_id, cliente_id, [trimestre]).get(trimestre) if cliente_id and trimestre else None
+    return render_template("contabilidad_lista.html", cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
                            trimestres=_trimestres(), resumen=fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id), cfg=cfg, error=_error(), subnav=None,
                            por_leer=lectura_facturas.pendientes_de_leer(g.tenant_id, g.usuario_id, cliente_id), ia_lista=lectura_facturas.configurada(g.usuario_id), max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
@@ -115,7 +121,7 @@ def ver(factura_id: int):
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "", criterio_caja="1" if f.get("criterio_caja") else "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]),
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
 
 
@@ -330,6 +336,22 @@ def configuracion(cliente_id: int):
                            otros=[c for c in fc.resumen_clientes(g.tenant_id, g.usuario_id) if c["id"] != cliente_id and c["a3_empresa"]])
 
 
+@contabilidad_bp.route("/periodo", methods=["POST"])
+@login_required
+def periodo():
+    """Cierra a mano un trimestre de un cliente, o lo reabre."""
+    cliente_id = request.form.get("cliente_id", type=int)
+    trimestre = request.form.get("trimestre") or ""
+    try:
+        if request.form.get("accion") == "reabrir":
+            fc.reabrir_periodo(g.tenant_id, g.usuario_id, cliente_id, trimestre)
+        else:
+            fc.cerrar_periodo(g.tenant_id, g.usuario_id, cliente_id, trimestre)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+    return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre))
+
+
 @contabilidad_bp.route("/exportar", methods=["POST"])
 @login_required
 def exportar():
@@ -337,7 +359,7 @@ def exportar():
     trimestre = request.form.get("trimestre") or None
     try:
         desde, hasta = fc.rango_del_trimestre(trimestre) if trimestre else (None, None)
-        r = fc.exportar(g.tenant_id, g.usuario_id, cliente_id, desde=desde, hasta=hasta)
+        r = fc.exportar(g.tenant_id, g.usuario_id, cliente_id, desde=desde, hasta=hasta, confirmar_cerrado=request.form.get("confirmo_cerrado") == "1")
     except ValueError as e:
         return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
     return _descarga(r["contenido"])

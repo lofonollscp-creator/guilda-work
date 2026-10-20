@@ -13594,3 +13594,24 @@ msgstr "El que deixis en blanc ho omple la regla d'aquest proveïdor o client."
 
 msgid "Ver las reglas"
 msgstr "Veure les regles"
+
+msgid "Periodo cerrado"
+msgstr "Període tancat"
+
+msgid "Exportar aunque el periodo esté cerrado"
+msgstr "Exporta tot i que el període està tancat"
+
+msgid "Reabrir el periodo"
+msgstr "Reobre el període"
+
+msgid "Se cierra solo porque el modelo está presentado; para reabrirlo cámbialo en el calendario fiscal."
+msgstr "Es tanca sol perquè el model està presentat; per reobrir-lo canvia'l al calendari fiscal."
+
+msgid "Cerrar el trimestre %(t)s"
+msgstr "Tanca el trimestre %(t)s"
+
+msgid "Avisa antes de exportar facturas de un periodo cerrado."
+msgstr "Avisa abans d'exportar factures d'un període tancat."
+
+msgid "Para exportarla habrá que confirmar el cierre."
+msgstr "Per exportar-la caldrà confirmar el tancament."

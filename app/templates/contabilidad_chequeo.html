@@ -19,6 +19,7 @@
 {% if cliente_id and informe.ok %}
 <form method="post" action="{{ url_for('contabilidad.exportar') }}" class="ds-fila">
   <input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="trimestre" value="{{ trimestre }}">
+  {% if informe.periodos_cerrados %}<label class="checkbox-label"><input type="checkbox" name="confirmo_cerrado" value="1"> {{ _('Exportar aunque el periodo esté cerrado') }}</label>{% endif %}
   <button type="submit" class="btn btn-primary">{{ _('Generar SUENLACE.DAT') }}</button>
 </form>
 {% endif %}

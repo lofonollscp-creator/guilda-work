@@ -13670,3 +13670,24 @@ msgstr "Ce que vous laissez vide est rempli par la règle de ce fournisseur ou c
 
 msgid "Ver las reglas"
 msgstr "Voir les règles"
+
+msgid "Periodo cerrado"
+msgstr "Période clôturée"
+
+msgid "Exportar aunque el periodo esté cerrado"
+msgstr "Exporter même si la période est clôturée"
+
+msgid "Reabrir el periodo"
+msgstr "Rouvrir la période"
+
+msgid "Se cierra solo porque el modelo está presentado; para reabrirlo cámbialo en el calendario fiscal."
+msgstr "Il se clôture seul car la déclaration est déposée ; pour le rouvrir, modifiez-la dans le calendrier fiscal."
+
+msgid "Cerrar el trimestre %(t)s"
+msgstr "Clôturer le trimestre %(t)s"
+
+msgid "Avisa antes de exportar facturas de un periodo cerrado."
+msgstr "Avertit avant d'exporter des factures d'une période clôturée."
+
+msgid "Para exportarla habrá que confirmar el cierre."
+msgstr "Pour l'exporter, il faudra confirmer la clôture."
