@@ -1270,8 +1270,8 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     if _db.tarea_bloqueada(tarea_id):
         return
     from . import tareas_trabajo
-    if tareas_trabajo.subtareas_abiertas(tarea_id):
-        return                                 # política de cierre: sin subtareas abiertas (app/tareas_trabajo.py)
+    if tareas_trabajo.impedimento_de_cierre(tarea_id):
+        return                                 # política de cierre: sin subtareas abiertas ni revisión pendiente (app/tareas_trabajo.py)
     conn = _db.get_connection()
     try:
         cur = conn.execute(
@@ -1310,7 +1310,7 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
     if estado in ("en_progreso", "completada") and _db.tarea_bloqueada(tarea_id):
         return False
     from . import tareas_trabajo
-    if estado == "completada" and tareas_trabajo.subtareas_abiertas(tarea_id):
+    if estado == "completada" and tareas_trabajo.impedimento_de_cierre(tarea_id):
         return False
     antes = (_db.obtener_tarea_outlook_visible(usuario_id, tarea_id) or {"estado": None})["estado"]
     if estado == "completada":

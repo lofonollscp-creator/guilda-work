@@ -46,6 +46,22 @@ CREATE TABLE IF NOT EXISTS tarea_adjuntos (
     papelera_en TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_tarea_adjuntos_tarea ON tarea_adjuntos(tarea_id);
+CREATE TABLE IF NOT EXISTS tarea_revisiones (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    solicitada_por INTEGER NOT NULL REFERENCES usuarios(id),
+    revisor_id INTEGER NOT NULL REFERENCES usuarios(id),
+    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'cambios', 'cancelada')),
+    nota_solicitud TEXT,
+    nota_resolucion TEXT,
+    solicitada_en TEXT NOT NULL,
+    resuelta_en TEXT,
+    resuelta_por INTEGER REFERENCES usuarios(id)
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_revisiones_tarea ON tarea_revisiones(tarea_id);
+CREATE INDEX IF NOT EXISTS idx_tarea_revisiones_revisor ON tarea_revisiones(revisor_id, estado);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_revisiones_una_pendiente ON tarea_revisiones(tarea_id) WHERE estado = 'pendiente';
 CREATE TRIGGER IF NOT EXISTS tareas_outlook_version AFTER UPDATE ON tareas_outlook
 WHEN NEW.version = OLD.version
 BEGIN UPDATE tareas_outlook SET version = OLD.version + 1 WHERE id = NEW.id; END;
@@ -72,6 +88,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "tareas_outlook", "version", "INTEGER NOT NULL DEFAULT 1")
     db._asegurar_columna(conn, "tareas_outlook", "motivo_bloqueo", "TEXT")
     db._asegurar_columna(conn, "tareas_outlook", "tarea_padre_id", "INTEGER REFERENCES tareas_outlook(id)")
+    db._asegurar_columna(conn, "tareas_outlook", "visible_cliente", "INTEGER NOT NULL DEFAULT 0")
     conn.executescript(ESQUEMA)
     conn.execute(
         """INSERT OR IGNORE INTO tarea_clientes (tenant_id, tarea_id, cliente_fiscal_id, principal, creado_en)
@@ -325,10 +342,23 @@ def crear_subtarea(usuario_id: int, padre_id: int, asunto: str, fecha_vencimient
     return nueva
 
 
-def comprobar_completable(tarea_id: int) -> None:
-    """Lanza TransicionInvalida si la tarea tiene subtareas abiertas (la política de cierre de arriba)."""
+MENSAJE_REVISION = "Esta tarea tiene una revisión pendiente: primero tiene que resolverla quien revisa."
+
+
+def impedimento_de_cierre(tarea_id: int) -> tuple[str, str] | None:
+    """(código, mensaje) de lo que impide completar la tarea, o None si se puede: subtareas abiertas o una revisión pendiente. Lo usa el núcleo, así que valen todos los caminos."""
     if subtareas_abiertas(tarea_id):
-        raise TransicionInvalida("subtareas_abiertas", MENSAJE_SUBTAREAS)
+        return "subtareas_abiertas", MENSAJE_SUBTAREAS
+    if revision_pendiente(tarea_id) is not None:
+        return "revision_pendiente", MENSAJE_REVISION
+    return None
+
+
+def comprobar_completable(tarea_id: int) -> None:
+    """Lanza TransicionInvalida si algo impide completar la tarea (ver `impedimento_de_cierre`)."""
+    imp = impedimento_de_cierre(tarea_id)
+    if imp:
+        raise TransicionInvalida(*imp)
 
 
 def al_cambiar_estado(usuario_id: int, tarea_id: int, antes: str | None, despues: str) -> None:
@@ -453,9 +483,165 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     """Al borrar un despacho entero: sus vínculos tarea-cliente se van con él (referencian a sus clientes) y los adjuntos, que son de la tarea y de la persona, dejan de apuntar a un despacho que ya no existe."""
     conn.execute("DELETE FROM tarea_clientes WHERE tenant_id = ?", (tenant_id,))
     conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("UPDATE tarea_revisiones SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
 
 
 def desvincular_cliente(conn, tenant_id: int, cliente_fiscal_id: int) -> None:
     """Al borrar un cliente fiscal para siempre: las tareas siguen existiendo, solo dejan de estar vinculadas a él (y si era el principal, cliente_fiscal_id queda vacío)."""
     conn.execute("DELETE FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
     conn.execute("UPDATE tareas_outlook SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,))
+
+
+# --- Revisión (aprobación) ----------------------------------------------------------------------------------------------
+# Quien trabaja la tarea pide que la revise OTRA persona del despacho (nunca uno mismo: dos pares de ojos). Mientras esté pendiente, la tarea no se puede completar. Quien revisa aprueba
+# o pide cambios (con nota obligatoria); al pedir cambios la tarea vuelve a «en progreso» y se avisa a quien la pidió. Aprobar no completa la tarea: lo hace quien la lleva.
+# Solo puede resolver el revisor designado; quien pidió la revisión o el dueño la pueden cancelar. Todo queda en el historial de la tarea y en la auditoría.
+
+DECISIONES = {"aprobar": "aprobada", "cambios": "cambios"}
+
+
+def revision_pendiente(tarea_id: int) -> dict | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM tarea_revisiones WHERE tarea_id = ? AND estado = 'pendiente'", (tarea_id,)).fetchone()
+        return dict(f) if f else None
+    finally:
+        conn.close()
+
+
+def historial_de_revisiones(tarea_id: int) -> list[dict]:
+    conn = db.get_connection()
+    try:
+        filas = [dict(f) for f in conn.execute("SELECT * FROM tarea_revisiones WHERE tarea_id = ? ORDER BY id DESC LIMIT 20", (tarea_id,))]
+    finally:
+        conn.close()
+    for f in filas:
+        f["revisor"], f["solicitante"] = db.nombre_mostrado_usuario(f["revisor_id"]), db.nombre_mostrado_usuario(f["solicitada_por"])
+    return filas
+
+
+def _avisar(usuario_id: int, titulo: str, cuerpo: str, tarea_id: int) -> None:
+    from . import notificaciones
+    notificaciones.crear_y_enviar(usuario_id, "revision_tarea", titulo[:150], cuerpo[:300], url=f"/tareas/{tarea_id}")
+
+
+def solicitar_revision(usuario_id: int, tarea_id: int, revisor_id: int, nota: str | None = None) -> int:
+    tarea = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if tarea is None:
+        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+    if not db.puede_trabajar_tarea(usuario_id, tarea_id):
+        raise TransicionInvalida("sin_permiso", "No tienes permiso para pedir la revisión de esta tarea.")
+    if tarea["estado"] == "completada":
+        raise TransicionInvalida("tarea_completada", "La tarea ya está completada.")
+    try:
+        revisor_id = int(revisor_id)
+    except (TypeError, ValueError):
+        raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_id") from None
+    if revisor_id == usuario_id:
+        raise TransicionInvalida("revisor_invalido", "La revisión tiene que hacerla otra persona.", "revisor_id")
+    conn = db.get_connection()
+    try:
+        tenant = _tenant_de_usuario(conn, usuario_id)
+        if tenant is None or conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (revisor_id, tenant)).fetchone() is None:
+            raise TransicionInvalida("revisor_invalido", "Quien revisa tiene que ser de tu despacho.", "revisor_id")
+        try:
+            cur = conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, nota_solicitud, solicitada_en) VALUES (?, ?, ?, ?, ?, ?)",
+                               (tenant, tarea_id, usuario_id, revisor_id, (nota or "").strip()[:500] or None, db.now_iso()))
+        except sqlite3.IntegrityError:
+            raise TransicionInvalida("revision_pendiente", "Esta tarea ya tiene una revisión pendiente.") from None
+        if db.obtener_tarea_outlook_visible(revisor_id, tarea_id) is None:       # para poder revisarla tiene que verla: se le comparte como observador
+            conn.execute("INSERT OR IGNORE INTO tareas_participantes (tarea_id, usuario_id, rol, compartida_en) VALUES (?, ?, 'observa', ?)", (tarea_id, revisor_id, db.now_iso()))
+        auditoria.registrar(tenant, usuario_id, "tarea.revision.solicitar", "tarea", tarea_id, {"revisor": revisor_id}, conn=conn)
+        conn.commit()
+        revision_id = cur.lastrowid
+    finally:
+        conn.close()
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_solicitada", db.nombre_mostrado_usuario(revisor_id) or "")
+    _avisar(revisor_id, f"Te piden revisar: {tarea['asunto']}", (nota or "").strip() or "Revisión pendiente", tarea_id)
+    return revision_id
+
+
+def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str | None = None) -> dict:
+    if decision not in DECISIONES:
+        raise TransicionInvalida("decision_invalida", "La decisión tiene que ser aprobar o pedir cambios.", "decision")
+    nota = (nota or "").strip()[:500]
+    if decision == "cambios" and not nota:
+        raise TransicionInvalida("nota_obligatoria", "Explica qué hay que cambiar.", "nota")
+    rev = revision_pendiente(tarea_id)
+    if rev is None or db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        raise TransicionInvalida("no_encontrada", "No hay ninguna revisión pendiente en esta tarea.")
+    if rev["revisor_id"] != usuario_id:
+        raise TransicionInvalida("sin_permiso", "Solo puede resolverla la persona designada para revisar.")
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("UPDATE tarea_revisiones SET estado = ?, nota_resolucion = ?, resuelta_en = ?, resuelta_por = ? WHERE id = ? AND estado = 'pendiente'",
+                           (DECISIONES[decision], nota or None, db.now_iso(), usuario_id, rev["id"]))
+        if cur.rowcount == 0:                                  # otra petición se adelantó
+            raise TransicionInvalida("no_encontrada", "No hay ninguna revisión pendiente en esta tarea.")
+        if decision == "cambios":
+            conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso', fecha_completada = NULL, actualizada_en = ? WHERE id = ? AND estado != 'en_progreso'", (db.now_iso(), tarea_id))
+        auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision." + decision, "tarea", tarea_id, {"revision": rev["id"]}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    asunto = db._asunto_tarea(tarea_id)
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_aprobada" if decision == "aprobar" else "revision_cambios", nota)
+    _avisar(rev["solicitada_por"], (f"Revisión aprobada: {asunto}" if decision == "aprobar" else f"Piden cambios: {asunto}"), nota or "Sin comentarios", tarea_id)
+    return {**rev, "estado": DECISIONES[decision], "nota_resolucion": nota or None}
+
+
+def cancelar_revision(usuario_id: int, tarea_id: int) -> bool:
+    """Quien la pidió o el dueño de la tarea retira la revisión pendiente."""
+    rev = revision_pendiente(tarea_id)
+    tarea = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if rev is None or tarea is None or usuario_id not in (rev["solicitada_por"], tarea["usuario_id"]):
+        return False
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("UPDATE tarea_revisiones SET estado = 'cancelada', resuelta_en = ?, resuelta_por = ? WHERE id = ? AND estado = 'pendiente'", (db.now_iso(), usuario_id, rev["id"]))
+        auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision.cancelar", "tarea", tarea_id, {"revision": rev["id"]}, conn=conn)
+        conn.commit()
+        return bool(cur.rowcount)
+    finally:
+        conn.close()
+
+
+# --- Colaboración con el cliente (portal) ------------------------------------------------------------------------------------
+# Nada de una tarea sale al portal por defecto. Quien edita la tarea decide, tarea a tarea, enseñársela al cliente al que está vinculada. El cliente ve SOLO el asunto, el estado y la fecha
+# límite, de lectura: nunca la descripción, los comentarios, los adjuntos, quién la lleva, el motivo del bloqueo ni las subtareas (a menos que tengan su propia marca).
+
+ESTADOS_PARA_CLIENTE = {"no_iniciada": "Pendiente", "en_progreso": "En curso", "esperando": "En espera", "aplazada": "Aplazada", "completada": "Completada"}
+
+
+def fijar_visible_cliente(usuario_id: int, tarea_id: int, visible: bool) -> None:
+    if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+    if not db.puede_editar_tarea(usuario_id, tarea_id):
+        raise TransicionInvalida("sin_permiso", "No tienes permiso para cambiar lo que ve el cliente.")
+    if visible and not clientes_de_tarea(tarea_id):
+        raise TransicionInvalida("sin_cliente", "La tarea no está vinculada a ningún cliente.")
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("UPDATE tareas_outlook SET visible_cliente = ? WHERE id = ? AND visible_cliente != ?", (1 if visible else 0, tarea_id, 1 if visible else 0))
+        if cur.rowcount:
+            auditoria.registrar(_tenant_de_usuario(conn, usuario_id), usuario_id, "tarea.visible_cliente", "tarea", tarea_id, {"visible": bool(visible)}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "visible_cliente" if visible else "oculta_cliente")
+
+
+def tareas_para_cliente(tenant_id: int, cliente_fiscal_id: int) -> list[dict]:
+    """Lo que el portal enseña a ese cliente: solo tareas marcadas, de su propio despacho, vinculadas a él, fuera de la papelera. Abiertas primero, por fecha."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT t.asunto, t.estado, t.fecha_vencimiento FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
+               WHERE t.visible_cliente = 1 AND t.papelera_en IS NULL AND u.tenant_id = ?
+                 AND (t.cliente_fiscal_id = ? OR t.id IN (SELECT tarea_id FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?))
+               ORDER BY (t.estado = 'completada'), t.fecha_vencimiento IS NULL, t.fecha_vencimiento, t.id LIMIT 100""",
+            (tenant_id, cliente_fiscal_id, cliente_fiscal_id, tenant_id)).fetchall()
+        return [{"asunto": f["asunto"], "estado": f["estado"], "estado_texto": ESTADOS_PARA_CLIENTE.get(f["estado"], f["estado"]),
+                 "fecha_vencimiento": f["fecha_vencimiento"][:10] if f["fecha_vencimiento"] else None, "vencida": esta_vencida(f["fecha_vencimiento"], f["estado"])} for f in filas]
+    finally:
+        conn.close()

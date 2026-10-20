@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import captcha, db, notificaciones, verticales
+from . import captcha, db, notificaciones, tareas_trabajo, verticales
 from . import facturas_contables
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -150,6 +150,7 @@ def dashboard():
         solicitudes_pendientes=solicitudes_pendientes,
         por_anio=por_anio, anios_ordenados=anios_ordenados,
         presentados=presentados, proximo_pendiente=proximo_pendiente, portal_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"),
+        trabajo_en_curso=tareas_trabajo.tareas_para_cliente(cliente["tenant_id"], cliente["id"]),
     )
 
 

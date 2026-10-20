@@ -107,6 +107,14 @@
     <small class="muted">{{ _('El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea.') }}</small>
   </fieldset>
   {% endif %}
+  {% if tarea.cliente_fiscal_id or clientes_vinculados %}
+  <label class="checkbox ds-max-640">
+    <input type="hidden" name="visible_cliente_enviado" value="1">
+    <input type="checkbox" name="visible_cliente" value="1" {% if tarea.visible_cliente %}checked{% endif %}>
+    {{ _('Enseñar esta tarea al cliente en su portal') }}
+    <small class="muted">{{ _('El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos.') }}</small>
+  </label>
+  {% endif %}
   {% endif %}
 
   {% if tarea.fecha_completada %}
@@ -236,7 +244,7 @@
 </section>
 
 {{ bloque_recordatorios(tarea, recordatorios) }}
-{{ bloque_subtareas(tarea, tarea_padre, subtareas, progreso_subtareas, adjuntos, puede_trabajar, puede_editar_estructura, max_adjuntos) }}
+{{ bloque_subtareas(tarea, tarea_padre, subtareas, progreso_subtareas, adjuntos, puede_trabajar, puede_editar_estructura, max_adjuntos, revision, revisiones, revisores_posibles) }}
 {{ hilo(tarea, comentarios, personas_mencionables) }}
 {{ equipo_y_actividad(tiempo_equipo, actividad) }}
 

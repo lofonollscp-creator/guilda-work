@@ -88,6 +88,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Facturas para contabilizar y fichero de enlace de a3 (SUENLACE.DAT)](#facturas-para-contabilizar-y-fichero-de-enlace-de-a3-suenlacedat)
 - [Trabajo con tareas: versión, bloqueo y varios clientes (octubre de 2026)](#trabajo-con-tareas-versión-bloqueo-y-varios-clientes-octubre-de-2026)
 - [Automatizaciones: reglas que crean tareas y avisan (octubre de 2026)](#automatizaciones-reglas-que-crean-tareas-y-avisan-octubre-de-2026)
+- [Informes de tareas, revisiones y tareas en el portal (octubre de 2026)](#informes-de-tareas-revisiones-y-tareas-en-el-portal-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3311,3 +3312,14 @@ Fase 4 del plan de `docs/guilda-work-implementation-plan.md`. Código en `app/au
 - **Arreglo de la Fase 1**: borrar para siempre un cliente fiscal o un despacho con tareas vinculadas fallaba por la clave foránea de `tarea_clientes`; ahora `tareas_trabajo.desvincular_cliente` y `borrar_datos_de_tenant` la limpian (test en `tests/test_tareas_trabajo.py`).
 - **Pruebas**: `tests/test_automatizaciones.py` (23 tests).
 - **Pendiente**: constructor de reglas completo en pantalla (condiciones y acciones libres), disparadores por evento (`task.status_changed`, `client_service.activated`) y herramientas MCP e IA.
+
+## Informes de tareas, revisiones y tareas en el portal (octubre de 2026)
+
+Fase 5 del plan de `docs/guilda-work-implementation-plan.md`. Código en `app/informes_tareas.py` y `app/tareas_trabajo.py`; rutas web en `app/rutas_tareas.py` y API en `app/rutas_api_tareas_trabajo.py`.
+
+- **Informes** (Tareas › Informes, `GET /tareas/informes`, `.csv`, `.pdf` y `GET /api/v1/tareas-outlook/informe`): abiertas, vencidas y completadas por persona y por cliente, cumplimiento en plazo, tiempo medio de cierre, bloqueos con su antigüedad y lo que se acerca (tareas, vencimientos fiscales pendientes y, solo para la dirección, certificados). Reglas: **solo cuenta las tareas que la persona puede ver** (como la carga del equipo, tampoco la dirección ve las privadas de otros); la **ventana** (`desde`–`hasta`, máximo 366 días) acota lo histórico y lo de «ahora» es la foto de hoy; la tasa en plazo es «completadas en la ventana con fecha límite que se cerraron a tiempo» entre «completadas con fecha límite» y no existe si no hay ninguna; el día de vencimiento no es tarde; una tarea de varios clientes cuenta en cada uno, pero una sola vez en el total; los clientes de otra oficina no salen en el desglose. El CSV neutraliza fórmulas (`=…`) como el resto de exportaciones.
+- **Revisión** (`tarea_revisiones`; bloque «Revisión» de la tarea y `GET/POST /tareas-outlook/<id>/revision`, `…/resolver`, `…/cancelar`): quien trabaja la tarea pide que la revise **otra** persona del despacho (se le comparte como observador para que la vea). Mientras está pendiente la tarea **no se puede completar** (409 `revision_pendiente`, exigido en el núcleo igual que las subtareas abiertas: `tareas_trabajo.impedimento_de_cierre`). Solo el revisor designado resuelve: aprobar no completa la tarea; pedir cambios exige nota, devuelve la tarea a «en progreso» y avisa a quien la pidió. Quien la pidió o el dueño la pueden retirar. Todo queda en el historial y en la auditoría. Sin estado nuevo en la tarea (decisión del plan).
+- **Tareas en el portal del cliente** (`tareas_outlook.visible_cliente`, por defecto 0; casilla «Enseñar esta tarea al cliente en su portal» en Editar tarea y `PUT /tareas-outlook/<id>/visible-cliente`): el cliente al que está vinculada la tarea ve, solo de lectura y en «Trabajo en curso con tu gestoría», el asunto, el estado y la fecha. Nunca la descripción, comentarios, adjuntos, responsable, motivo de bloqueo ni subtareas (estas solo con su propia marca). Se comprueba el despacho y el vínculo; una tarea en la papelera desaparece.
+- **Migración al arrancar** (`tareas_trabajo.crear_esquema`, idempotente): tabla `tarea_revisiones` (índice único: una sola pendiente por tarea) y columna `tareas_outlook.visible_cliente`. Reversión: la columna se puede ignorar y `DROP TABLE tarea_revisiones` no tiene dependientes.
+- **Pruebas**: `tests/test_informes_tareas.py` (10), `tests/test_tareas_revision.py` (8) y `tests/test_tareas_portal_cliente.py` (7).
+- **Pendiente**: aprobaciones con varios revisores o cadenas, comentarios del cliente desde el portal, informes guardados o programados y herramientas MCP e IA para tareas.

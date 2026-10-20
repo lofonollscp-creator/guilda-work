@@ -13784,3 +13784,179 @@ msgid "Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo."
 msgid_plural "Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos."
 msgstr[0] "Ara compleix %(n)s cas, dels quals %(nuevas)s seria nou."
 msgstr[1] "Ara compleixen %(n)s casos, dels quals %(nuevas)s serien nous."
+
+msgid "Informes de tareas"
+msgstr "Informes de tasques"
+
+msgid "Informes"
+msgstr "Informes"
+
+msgid "Qué hay abierto, qué va tarde y cómo se cumple, por persona y por cliente. Solo cuenta las tareas que tú puedes ver."
+msgstr "Què hi ha obert, què va tard i com es compleix, per persona i per client. Només compta les tasques que tu pots veure."
+
+msgid "Próximos (días)"
+msgstr "Propers (dies)"
+
+msgid "Descargar CSV"
+msgstr "Descarrega CSV"
+
+msgid "Ventana: %(desde)s a %(hasta)s (%(n)s días). Lo de «ahora» es la foto de hoy y no depende de la ventana."
+msgstr "Finestra: %(desde)s a %(hasta)s (%(n)s dies). Allò d'«ara» és la foto d'avui i no depèn de la finestra."
+
+msgid "Ahora"
+msgstr "Ara"
+
+msgid "En la ventana"
+msgstr "A la finestra"
+
+msgid "Creadas"
+msgstr "Creades"
+
+msgid "Cumplimiento en plazo"
+msgstr "Compliment en termini"
+
+msgid "de las completadas que tenían fecha límite"
+msgstr "de les completades que tenien data límit"
+
+msgid "Tiempo medio de cierre"
+msgstr "Temps mitjà de tancament"
+
+msgid "Por persona"
+msgstr "Per persona"
+
+msgid "Por cliente"
+msgstr "Per client"
+
+msgid "No hay datos."
+msgstr "No hi ha dades."
+
+msgid "Una tarea vinculada a varios clientes cuenta en cada uno; por eso las filas pueden sumar más que el total."
+msgstr "Una tasca vinculada a diversos clients compta en cadascun; per això les files poden sumar més que el total."
+
+msgid "Sin motivo anotado"
+msgstr "Sense motiu anotat"
+
+msgid "No hay tareas bloqueadas."
+msgstr "No hi ha tasques bloquejades."
+
+msgid "Certificado de %(titular)s"
+msgstr "Certificat de %(titular)s"
+
+msgid "No hay nada que venza en ese plazo."
+msgstr "No hi ha res que venci en aquest termini."
+
+msgid "Ventana"
+msgstr "Finestra"
+
+msgid "Las tareas que puedes ver"
+msgstr "Les tasques que pots veure"
+
+msgid "Ahora: abiertas / vencidas / bloqueadas"
+msgstr "Ara: obertes / vençudes / bloquejades"
+
+msgid "Creadas en la ventana"
+msgstr "Creades a la finestra"
+
+msgid "Completadas en la ventana"
+msgstr "Completades a la finestra"
+
+msgid "Informe de tareas"
+msgstr "Informe de tasques"
+
+msgid "La revisa %(quien)s."
+msgstr "La revisa %(quien)s."
+
+msgid "Mientras esté pendiente, la tarea no se puede completar."
+msgstr "Mentre sigui pendent, la tasca no es pot completar."
+
+msgid "Comentario de la revisión"
+msgstr "Comentari de la revisió"
+
+msgid "Comentario (obligatorio si pides cambios)"
+msgstr "Comentari (obligatori si demanes canvis)"
+
+msgid "Pedir cambios"
+msgstr "Demana canvis"
+
+msgid "Retirar la petición"
+msgstr "Retira la petició"
+
+msgid "Pedir que la revise"
+msgstr "Demana que la revisi"
+
+msgid "Elige a una persona…"
+msgstr "Tria una persona…"
+
+msgid "Nota para quien revisa"
+msgstr "Nota per a qui revisa"
+
+msgid "Nota para quien revisa (opcional)"
+msgstr "Nota per a qui revisa (opcional)"
+
+msgid "Pedir revisión"
+msgstr "Demana revisió"
+
+msgid "No hay ninguna revisión pendiente."
+msgstr "No hi ha cap revisió pendent."
+
+msgid "Cambios pedidos"
+msgstr "Canvis demanats"
+
+msgid "No tienes permiso para pedir la revisión de esta tarea."
+msgstr "No tens permís per demanar la revisió d'aquesta tasca."
+
+msgid "La tarea ya está completada."
+msgstr "La tasca ja està completada."
+
+msgid "Elige a quien la revisa."
+msgstr "Tria qui la revisa."
+
+msgid "La revisión tiene que hacerla otra persona."
+msgstr "La revisió l'ha de fer una altra persona."
+
+msgid "Quien revisa tiene que ser de tu despacho."
+msgstr "Qui revisa ha de ser del teu despatx."
+
+msgid "Esta tarea ya tiene una revisión pendiente."
+msgstr "Aquesta tasca ja té una revisió pendent."
+
+msgid "La decisión tiene que ser aprobar o pedir cambios."
+msgstr "La decisió ha de ser aprovar o demanar canvis."
+
+msgid "Explica qué hay que cambiar."
+msgstr "Explica què cal canviar."
+
+msgid "No hay ninguna revisión pendiente en esta tarea."
+msgstr "No hi ha cap revisió pendent en aquesta tasca."
+
+msgid "Solo puede resolverla la persona designada para revisar."
+msgstr "Només la pot resoldre la persona designada per revisar."
+
+msgid "Esta tarea tiene una revisión pendiente: primero tiene que resolverla quien revisa."
+msgstr "Aquesta tasca té una revisió pendent: primer l'ha de resoldre qui revisa."
+
+msgid "Trabajo en curso"
+msgstr "Treball en curs"
+
+msgid "Trabajo en curso con tu gestoría"
+msgstr "Treball en curs amb la teva gestoria"
+
+msgid "Fecha prevista: %(fecha)s"
+msgstr "Data prevista: %(fecha)s"
+
+msgid "Enseñar esta tarea al cliente en su portal"
+msgstr "Mostra aquesta tasca al client al seu portal"
+
+msgid "El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos."
+msgstr "El client només veurà l'assumpte, l'estat i la data límit, sense la descripció, els comentaris ni els fitxers."
+
+msgid "La tarea no está vinculada a ningún cliente."
+msgstr "La tasca no està vinculada a cap client."
+
+msgid "No tienes permiso para cambiar lo que ve el cliente."
+msgstr "No tens permís per canviar el que veu el client."
+
+msgid "Lo que se acerca en %(n)s día"
+msgid_plural "Lo que se acerca en los próximos %(n)s días"
+msgstr[0] "El que s'acosta en %(n)s dia"
+msgstr[1] "El que s'acosta en els propers %(n)s dies"

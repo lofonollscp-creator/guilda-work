@@ -8,7 +8,7 @@ from . import db, tareas_trabajo as tt
 from .auth import token_required
 from .rutas_api import _body, _dict, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
 
-_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
+_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "sin_cliente": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
            "tipo_no_admitido": 415, "archivo_grande": 413}
 
 
@@ -204,3 +204,85 @@ def respuesta_de_adjunto(adjunto, en_linea: bool = False):
     r.headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
     r.headers["Cache-Control"] = "private, no-store"
     return r
+
+
+# --- Informe ----------------------------------------------------------------------------------------------------------
+
+@api_bp.route("/tareas-outlook/informe", methods=["GET"])
+@token_required
+def informe_de_tareas():
+    """Abiertas, vencidas y completadas por persona y por cliente, tasa en plazo, tiempo medio de cierre, bloqueos y lo que se acerca. Solo las tareas que puedes ver.
+    `desde`/`hasta` (AAAA-MM-DD, por defecto los últimos 30 días, máximo 366) acotan lo histórico; `dias_proximos` (1-90) lo que se acerca. Lo de «ahora» no depende de la ventana."""
+    from . import informes_tareas
+    try:
+        return _ok(informes_tareas.informe(g.tenant_id, g.usuario_id, request.args.get("desde"), request.args.get("hasta"), request.args.get("dias_proximos", type=int) or 14))
+    except ValueError as e:
+        return _err(str(e), 400, "ventana_invalida")
+
+
+# --- Revisión (aprobación) ------------------------------------------------------------------------------------------------
+
+def _revision_json(tarea_id: int) -> dict:
+    return {"pendiente": tt.revision_pendiente(tarea_id), "historial": tt.historial_de_revisiones(tarea_id)}
+
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/revision", methods=["GET"])
+@token_required
+def revision_de_la_tarea(tarea_id: int):
+    """La revisión pendiente (si la hay) y las últimas resueltas."""
+    _tarea_o_404(tarea_id)
+    return _ok(_revision_json(tarea_id))
+
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/revision", methods=["POST"])
+@token_required
+def pedir_revision_de_la_tarea(tarea_id: int):
+    """Cuerpo: `{"revisor_id": 7, "nota": "Mira el cálculo del IVA"}`. Tiene que revisarla otra persona del despacho. Mientras esté pendiente la tarea no se puede completar
+    (409 `revision_pendiente`)."""
+    _tarea_o_404(tarea_id)
+    datos = _body()
+    try:
+        tt.solicitar_revision(g.usuario_id, tarea_id, datos.get("revisor_id"), datos.get("nota"))
+    except tt.TransicionInvalida as e:
+        return _err(str(e), _STATUS.get(e.codigo, 400), e.codigo, e.campo)
+    return _ok(_revision_json(tarea_id), 201)
+
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/revision/resolver", methods=["POST"])
+@token_required
+def resolver_revision_de_la_tarea(tarea_id: int):
+    """Solo la persona designada. Cuerpo: `{"decision": "aprobar" | "cambios", "nota": "…"}`; pedir cambios exige nota y devuelve la tarea a «en progreso». Aprobar no la completa."""
+    _tarea_o_404(tarea_id)
+    datos = _body()
+    try:
+        tt.resolver_revision(g.usuario_id, tarea_id, (datos.get("decision") or "").strip(), datos.get("nota"))
+    except tt.TransicionInvalida as e:
+        return _err(str(e), _STATUS.get(e.codigo, 400), e.codigo, e.campo)
+    return _ok(_revision_json(tarea_id))
+
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/revision/cancelar", methods=["POST"])
+@token_required
+def cancelar_revision_de_la_tarea(tarea_id: int):
+    _tarea_o_404(tarea_id)
+    if not tt.cancelar_revision(g.usuario_id, tarea_id):
+        return _err("No hay una revisión pendiente que puedas cancelar.", 404, "no_encontrada")
+    return _ok(_revision_json(tarea_id))
+
+
+# --- Visibilidad para el cliente (portal) ---------------------------------------------------------------------------------
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/visible-cliente", methods=["PUT"])
+@token_required
+def fijar_visible_cliente_de_la_tarea(tarea_id: int):
+    """Cuerpo: `{"visible": true}`. Enseña (o deja de enseñar) la tarea al cliente al que está vinculada, en su portal, solo de lectura: asunto, estado y fecha límite.
+    Por defecto ninguna tarea es visible. Hace falta que la tarea tenga cliente (409 `sin_cliente`)."""
+    _tarea_o_404(tarea_id)
+    datos = _body()
+    if not isinstance(datos.get("visible"), bool):
+        return _err("visible tiene que ser true o false.", 400, "visible_invalido", "visible")
+    try:
+        tt.fijar_visible_cliente(g.usuario_id, tarea_id, datos["visible"])
+    except tt.TransicionInvalida as e:
+        return _err(str(e), _STATUS.get(e.codigo, 400), e.codigo, e.campo)
+    return _ok({"visible_cliente": datos["visible"]})

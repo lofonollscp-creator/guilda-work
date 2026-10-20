@@ -46,8 +46,9 @@ def cambiar_estado_tarea(tarea_id: int):
         return _err(f"estado debe ser uno de: {', '.join(ESTADOS)}.", 400, "estado_invalido", "estado")
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
         return _err(MENSAJE_BLOQUEADA, 409, "tarea_bloqueada")
-    if estado == "completada" and tareas_trabajo.subtareas_abiertas(tarea_id):
-        return _err(tareas_trabajo.MENSAJE_SUBTAREAS, 409, "subtareas_abiertas")
+    impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id) if estado == "completada" else None
+    if impedimento:
+        return _err(impedimento[1], 409, impedimento[0])
     if not db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, estado):
         return _sin_permiso()
     _avisar_desbloqueos(g.usuario_id, tarea_id, previa["estado"] == "completada")

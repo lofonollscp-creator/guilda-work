@@ -13860,3 +13860,179 @@ msgid "Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo."
 msgid_plural "Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos."
 msgstr[0] "%(n)s cas correspond actuellement, dont %(nuevas)s serait nouveau."
 msgstr[1] "%(n)s cas correspondent actuellement, dont %(nuevas)s seraient nouveaux."
+
+msgid "Informes de tareas"
+msgstr "Rapports de tâches"
+
+msgid "Informes"
+msgstr "Rapports"
+
+msgid "Qué hay abierto, qué va tarde y cómo se cumple, por persona y por cliente. Solo cuenta las tareas que tú puedes ver."
+msgstr "Ce qui est ouvert, ce qui est en retard et le respect des délais, par personne et par client. Seules comptent les tâches que vous pouvez voir."
+
+msgid "Próximos (días)"
+msgstr "À venir (jours)"
+
+msgid "Descargar CSV"
+msgstr "Télécharger le CSV"
+
+msgid "Ventana: %(desde)s a %(hasta)s (%(n)s días). Lo de «ahora» es la foto de hoy y no depende de la ventana."
+msgstr "Fenêtre : du %(desde)s au %(hasta)s (%(n)s jours). Les chiffres « maintenant » sont l'instantané du jour et ne dépendent pas de la fenêtre."
+
+msgid "Ahora"
+msgstr "Maintenant"
+
+msgid "En la ventana"
+msgstr "Dans la fenêtre"
+
+msgid "Creadas"
+msgstr "Créées"
+
+msgid "Cumplimiento en plazo"
+msgstr "Respect des délais"
+
+msgid "de las completadas que tenían fecha límite"
+msgstr "des tâches terminées qui avaient une échéance"
+
+msgid "Tiempo medio de cierre"
+msgstr "Délai moyen de clôture"
+
+msgid "Por persona"
+msgstr "Par personne"
+
+msgid "Por cliente"
+msgstr "Par client"
+
+msgid "No hay datos."
+msgstr "Aucune donnée."
+
+msgid "Una tarea vinculada a varios clientes cuenta en cada uno; por eso las filas pueden sumar más que el total."
+msgstr "Une tâche liée à plusieurs clients compte dans chacun ; les lignes peuvent donc dépasser le total."
+
+msgid "Sin motivo anotado"
+msgstr "Aucun motif noté"
+
+msgid "No hay tareas bloqueadas."
+msgstr "Aucune tâche bloquée."
+
+msgid "Certificado de %(titular)s"
+msgstr "Certificat de %(titular)s"
+
+msgid "No hay nada que venza en ese plazo."
+msgstr "Rien n'arrive à échéance dans ce délai."
+
+msgid "Ventana"
+msgstr "Fenêtre"
+
+msgid "Las tareas que puedes ver"
+msgstr "Les tâches que vous pouvez voir"
+
+msgid "Ahora: abiertas / vencidas / bloqueadas"
+msgstr "Maintenant : ouvertes / en retard / bloquées"
+
+msgid "Creadas en la ventana"
+msgstr "Créées dans la fenêtre"
+
+msgid "Completadas en la ventana"
+msgstr "Terminées dans la fenêtre"
+
+msgid "Informe de tareas"
+msgstr "Rapport de tâches"
+
+msgid "La revisa %(quien)s."
+msgstr "%(quien)s la révise."
+
+msgid "Mientras esté pendiente, la tarea no se puede completar."
+msgstr "Tant qu'elle est en attente, la tâche ne peut pas être terminée."
+
+msgid "Comentario de la revisión"
+msgstr "Commentaire de la révision"
+
+msgid "Comentario (obligatorio si pides cambios)"
+msgstr "Commentaire (obligatoire si vous demandez des modifications)"
+
+msgid "Pedir cambios"
+msgstr "Demander des modifications"
+
+msgid "Retirar la petición"
+msgstr "Retirer la demande"
+
+msgid "Pedir que la revise"
+msgstr "Demander une révision"
+
+msgid "Elige a una persona…"
+msgstr "Choisissez une personne…"
+
+msgid "Nota para quien revisa"
+msgstr "Note pour le réviseur"
+
+msgid "Nota para quien revisa (opcional)"
+msgstr "Note pour le réviseur (facultatif)"
+
+msgid "Pedir revisión"
+msgstr "Demander une révision"
+
+msgid "No hay ninguna revisión pendiente."
+msgstr "Aucune révision en attente."
+
+msgid "Cambios pedidos"
+msgstr "Modifications demandées"
+
+msgid "No tienes permiso para pedir la revisión de esta tarea."
+msgstr "Vous n'avez pas la permission de demander la révision de cette tâche."
+
+msgid "La tarea ya está completada."
+msgstr "La tâche est déjà terminée."
+
+msgid "Elige a quien la revisa."
+msgstr "Choisissez qui la révise."
+
+msgid "La revisión tiene que hacerla otra persona."
+msgstr "La révision doit être faite par quelqu'un d'autre."
+
+msgid "Quien revisa tiene que ser de tu despacho."
+msgstr "Le réviseur doit être de votre cabinet."
+
+msgid "Esta tarea ya tiene una revisión pendiente."
+msgstr "Cette tâche a déjà une révision en attente."
+
+msgid "La decisión tiene que ser aprobar o pedir cambios."
+msgstr "La décision doit être approuver ou demander des modifications."
+
+msgid "Explica qué hay que cambiar."
+msgstr "Expliquez ce qu'il faut modifier."
+
+msgid "No hay ninguna revisión pendiente en esta tarea."
+msgstr "Il n'y a aucune révision en attente sur cette tâche."
+
+msgid "Solo puede resolverla la persona designada para revisar."
+msgstr "Seule la personne désignée pour la révision peut la résoudre."
+
+msgid "Esta tarea tiene una revisión pendiente: primero tiene que resolverla quien revisa."
+msgstr "Cette tâche a une révision en attente : le réviseur doit d'abord la résoudre."
+
+msgid "Trabajo en curso"
+msgstr "Travail en cours"
+
+msgid "Trabajo en curso con tu gestoría"
+msgstr "Travail en cours avec votre cabinet"
+
+msgid "Fecha prevista: %(fecha)s"
+msgstr "Date prévue : %(fecha)s"
+
+msgid "Enseñar esta tarea al cliente en su portal"
+msgstr "Montrer cette tâche au client dans son portail"
+
+msgid "El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos."
+msgstr "Le client ne verra que l'objet, le statut et l'échéance, sans la description, les commentaires ni les fichiers."
+
+msgid "La tarea no está vinculada a ningún cliente."
+msgstr "La tâche n'est liée à aucun client."
+
+msgid "No tienes permiso para cambiar lo que ve el cliente."
+msgstr "Vous n'avez pas la permission de modifier ce que voit le client."
+
+msgid "Lo que se acerca en %(n)s día"
+msgid_plural "Lo que se acerca en los próximos %(n)s días"
+msgstr[0] "Ce qui approche dans %(n)s jour"
+msgstr[1] "Ce qui approche dans les %(n)s prochains jours"

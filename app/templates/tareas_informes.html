@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, chip, estado_vacio %}
+{% block title %}{{ _('Informes de tareas') }} — Guilda Work{% endblock %}
+{% macro tasa(f) %}{% if f.tasa_en_plazo is none %}—{% else %}{{ f.tasa_en_plazo|string|replace('.', ',') }} % <small class="muted">({{ f.en_plazo }}/{{ f.con_fecha }})</small>{% endif %}{% endmacro %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Qué hay abierto, qué va tarde y cómo se cumple, por persona y por cliente. Solo cuenta las tareas que tú puedes ver.') }}</p>
+  </div>
+</header>
+
+{% set subnav_activa = 'informes' %}
+{% include "_tareas_subnav.html" %}
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+
+<section class="dash-panel">
+  <form method="get" class="quick-row">
+    <label class="muted">{{ _('Desde') }} <input type="date" name="desde" value="{{ r.ventana.desde }}"></label>
+    <label class="muted">{{ _('Hasta') }} <input type="date" name="hasta" value="{{ r.ventana.hasta }}"></label>
+    <label class="muted">{{ _('Próximos (días)') }} <input type="number" name="dias_proximos" min="1" max="90" value="{{ r.proximas.dias }}"></label>
+    {{ boton(_('Ver'), 'secundario', tipo='submit') }}
+    {{ boton(_('Descargar CSV'), 'fantasma', href=url_for('tareas.informes_csv', desde=r.ventana.desde, hasta=r.ventana.hasta, dias_proximos=r.proximas.dias)) }}
+    {{ boton(_('Descargar PDF'), 'fantasma', href=url_for('tareas.informes_pdf', desde=r.ventana.desde, hasta=r.ventana.hasta, dias_proximos=r.proximas.dias)) }}
+  </form>
+  <p class="muted">{{ _('Ventana: %(desde)s a %(hasta)s (%(n)s días). Lo de «ahora» es la foto de hoy y no depende de la ventana.', desde=r.ventana.desde, hasta=r.ventana.hasta, n=r.ventana.dias) }}</p>
+</section>
+
+<section class="dash-panel" aria-label="{{ _('Ahora') }}">
+  <h2>{{ _('Ahora') }}</h2>
+  <ul class="log-list">
+    <li class="log-item"><span class="log-text">{{ _('Abiertas') }}</span><strong>{{ r.ahora.abiertas }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Vencidas') }}</span><strong>{{ r.ahora.vencidas }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Bloqueadas') }}</span><strong>{{ r.ahora.bloqueadas }}</strong></li>
+  </ul>
+</section>
+
+<section class="dash-panel" aria-label="{{ _('En la ventana') }}">
+  <h2>{{ _('En la ventana') }}</h2>
+  <ul class="log-list">
+    <li class="log-item"><span class="log-text">{{ _('Creadas') }}</span><strong>{{ r.creadas_en_ventana }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Completadas') }}</span><strong>{{ r.en_ventana.completadas }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Cumplimiento en plazo') }}</span><strong>{{ tasa(r.en_ventana) }}</strong>
+      <small class="muted">{{ _('de las completadas que tenían fecha límite') }}</small></li>
+    <li class="log-item"><span class="log-text">{{ _('Tiempo medio de cierre') }}</span>
+      <strong>{% if r.en_ventana.tiempo_medio_cierre_dias is none %}—{% else %}{{ r.en_ventana.tiempo_medio_cierre_dias|string|replace('.', ',') }} {{ _('días') }}{% endif %}</strong></li>
+  </ul>
+</section>
+
+{% for titulo, filas, clave in [(_('Por persona'), r.por_responsable, 'persona'), (_('Por cliente'), r.por_cliente, 'cliente')] %}
+<section class="dash-panel">
+  <h2>{{ titulo }}</h2>
+  {% if filas %}
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('Abiertas') }}</th><th>{{ _('Vencidas') }}</th><th>{{ _('Completadas') }}</th><th>{{ _('En plazo') }}</th></tr></thead>
+    <tbody>
+      {% for f in filas %}
+      <tr><td>{{ f.nombre or _('Sin cliente') }}</td><td>{{ f.abiertas }}</td><td>{{ f.vencidas }}{% if f.vencidas %} {{ chip(_('Atención'), 'aviso') }}{% endif %}</td><td>{{ f.completadas }}</td><td>{{ tasa(f) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if clave == 'cliente' %}<p class="muted">{{ _('Una tarea vinculada a varios clientes cuenta en cada uno; por eso las filas pueden sumar más que el total.') }}</p>{% endif %}
+  {% else %}<p class="muted">{{ _('No hay datos.') }}</p>{% endif %}
+</section>
+{% endfor %}
+
+<section class="dash-panel">
+  <h2>{{ _('Bloqueadas') }}</h2>
+  {% if r.bloqueadas %}
+  <ul class="log-list">
+    {% for b in r.bloqueadas %}
+    <li class="log-item"><a class="log-text" href="{{ url_for('tareas.ver', tarea_id=b.id) }}">{{ b.asunto }}</a>
+      <span class="muted">{{ b.motivo or _('Sin motivo anotado') }}</span>
+      <span class="log-duration">{{ ngettext('%(n)s día', '%(n)s días', b.dias, n=b.dias) }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('No hay tareas bloqueadas.') }}</p>{% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ ngettext('Lo que se acerca en %(n)s día', 'Lo que se acerca en los próximos %(n)s días', r.proximas.dias, n=r.proximas.dias) }}</h2>
+  {% set p = r.proximas %}
+  {% if p.tareas or p.vencimientos_fiscales or p.certificados %}
+  <ul class="log-list">
+    {% for t in p.tareas %}<li class="log-item"><a class="log-text" href="{{ url_for('tareas.ver', tarea_id=t.id) }}">{{ t.asunto }}</a><span class="log-duration">{{ t.fecha }}</span></li>{% endfor %}
+    {% for v in p.vencimientos_fiscales %}<li class="log-item"><span class="log-text">{{ v.modelo }} {{ v.periodo }} · {{ v.cliente }}</span><span class="log-duration">{{ v.fecha_limite }}</span></li>{% endfor %}
+    {% for c in p.certificados %}<li class="log-item"><span class="log-text">{{ _('Certificado de %(titular)s', titular=c.titular or '') }}</span><span class="log-duration">{{ c.caduca }}</span></li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('No hay nada que venza en ese plazo.') }}</p>{% endif %}
+</section>
+{% endblock %}

@@ -468,8 +468,9 @@ def editar(tarea_id: int):
             return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _("Indica por qué la tarea queda bloqueada.")))
         if campos["estado"] in ("en_progreso", "completada") and campos["estado"] != tarea["estado"] and db.tarea_bloqueada(tarea_id):
             return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, MENSAJE_BLOQUEADA))
-        if campos["estado"] == "completada" and tarea["estado"] != "completada" and tareas_trabajo.subtareas_abiertas(tarea_id):
-            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _(tareas_trabajo.MENSAJE_SUBTAREAS)))
+        impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id) if campos["estado"] == "completada" and tarea["estado"] != "completada" else None
+        if impedimento:
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _(impedimento[1])))
         try:
             tareas_trabajo.reclamar_version(tarea_id, tareas_trabajo.version_pedida(request.form.get("version")))
         except ValueError:
@@ -494,6 +495,11 @@ def editar(tarea_id: int):
                 tareas_trabajo.fijar_clientes(g.usuario_id, tarea_id, ids, principal)
             except tareas_trabajo.TransicionInvalida as e:
                 return render_template("tarea_outlook_editar.html", **_contexto_edicion(db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id), str(e))), 422
+        if request.form.get("visible_cliente_enviado"):
+            try:
+                tareas_trabajo.fijar_visible_cliente(g.usuario_id, tarea_id, bool(request.form.get("visible_cliente")))
+            except tareas_trabajo.TransicionInvalida as e:
+                return render_template("tarea_outlook_editar.html", **_contexto_edicion(db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id), _(str(e)))), 422
         nueva_asignacion = _int_o_none(request.form.get("asignada_a"))
         if es_dueno and nueva_asignacion != tarea["asignada_a"] and db.asignar_tarea_outlook(g.usuario_id, tarea_id, nueva_asignacion):
             _notificar_asignacion(g.usuario_id, tarea_id, nueva_asignacion)
@@ -633,8 +639,9 @@ def tablero():
 def cambiar_estado(tarea_id: int):
     previa = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
     estaba_completada = previa is not None and previa["estado"] == "completada"
-    if previa is not None and request.form.get("estado") == "completada" and tareas_trabajo.subtareas_abiertas(tarea_id) and db.puede_trabajar_tarea(g.usuario_id, tarea_id):
-        return _volver_con_error(_(tareas_trabajo.MENSAJE_SUBTAREAS))
+    impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id) if previa is not None and request.form.get("estado") == "completada" and db.puede_trabajar_tarea(g.usuario_id, tarea_id) else None
+    if impedimento:
+        return _volver_con_error(_(impedimento[1]))
     if not db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, request.form.get("estado", "")):
         if previa is not None and db.tarea_bloqueada(tarea_id) and request.form.get("estado") in ("en_progreso", "completada"):
             return _volver_con_error(MENSAJE_BLOQUEADA)
@@ -746,6 +753,8 @@ def _contexto_subtareas_y_adjuntos(tarea_id: int) -> dict:
         "adjuntos": tareas_trabajo.listar_adjuntos(tarea_id), "puede_trabajar": db.puede_trabajar_tarea(g.usuario_id, tarea_id),
         "puede_editar_estructura": db.puede_editar_tarea(g.usuario_id, tarea_id) and padre_id is None,
         "max_adjuntos": tareas_trabajo.MAX_ADJUNTOS_POR_TAREA,
+        "revision": tareas_trabajo.revision_pendiente(tarea_id), "revisiones": tareas_trabajo.historial_de_revisiones(tarea_id),
+        "revisores_posibles": [c for c in db.listar_companeros_tenant(g.usuario_id) if c["id"] != g.usuario_id],
     }
 
 
@@ -1280,3 +1289,99 @@ def _inyectar_automatizar():
             g._puede_automatizar = bool(getattr(g, "usuario_id", None) and getattr(g, "tenant_id", None) and acceso.es_directivo(g.usuario_id))
         return g._puede_automatizar
     return {"puede_automatizar": puede_automatizar}
+
+
+# --- Informes de tareas (ver app/informes_tareas.py) -----------------------------------------------------------------------
+
+def _informe_desde_la_peticion():
+    from . import informes_tareas
+    try:
+        return informes_tareas.informe(g.tenant_id, g.usuario_id, request.args.get("desde"), request.args.get("hasta"), request.args.get("dias_proximos", type=int) or 14), None
+    except ValueError as e:
+        return informes_tareas.informe(g.tenant_id, g.usuario_id), str(e)
+
+
+@tareas_bp.route("/informes")
+@login_required
+def informes():
+    informe, error = _informe_desde_la_peticion()
+    return render_template("tareas_informes.html", r=informe, error=error)
+
+
+@tareas_bp.route("/informes.csv")
+@login_required
+def informes_csv():
+    import csv
+    import io
+    from . import informes_tareas
+    informe, error = _informe_desde_la_peticion()
+    if error:
+        return _volver_con_error(error)
+    salida = io.StringIO()
+    escritor = csv.writer(salida)
+    escritor.writerow(["Sección", "Nombre", *informes_tareas.CABECERAS])
+    for fila in informes_tareas.filas_planas(informe):
+        escritor.writerow([_celda_segura(fila[0]), _celda_segura(fila[1]), *fila[2:]])
+    v = informe["ventana"]
+    return Response("\ufeff" + salida.getvalue(), mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="informe-tareas-{v["desde"]}_{v["hasta"]}.csv"'})
+
+
+@tareas_bp.route("/informes.pdf")
+@login_required
+def informes_pdf():
+    from . import informes, informes_tareas
+    informe, error = _informe_desde_la_peticion()
+    if error:
+        return _volver_con_error(error)
+    v, ahora, hist = informe["ventana"], informe["ahora"], informe["en_ventana"]
+    tasa = "—" if hist["tasa_en_plazo"] is None else f'{hist["tasa_en_plazo"]} % ({hist["en_plazo"]} de {hist["con_fecha"]})'
+    cierre = "—" if hist["tiempo_medio_cierre_dias"] is None else f'{hist["tiempo_medio_cierre_dias"]} días ({hist["tiempo_medio_n"]} tareas)'
+    cab = ["Nombre", *informes_tareas.CABECERAS]
+    bloques = [
+        ("seccion", _("Resumen")),
+        ("claves", [(_("Ventana"), f'{v["desde"]} — {v["hasta"]}'), (_("Alcance"), _("Las tareas que puedes ver")),
+                    (_("Ahora: abiertas / vencidas / bloqueadas"), f'{ahora["abiertas"]} / {ahora["vencidas"]} / {ahora["bloqueadas"]}'),
+                    (_("Creadas en la ventana"), informe["creadas_en_ventana"]), (_("Completadas en la ventana"), hist["completadas"]),
+                    (_("Cumplimiento en plazo"), tasa), (_("Tiempo medio de cierre"), cierre)]),
+        ("seccion", _("Por persona")), ("tabla", cab, [[f["nombre"] or f"#{f['usuario_id']}", *informes_tareas._celdas(f)] for f in informe["por_responsable"]]),
+        ("seccion", _("Por cliente")), ("tabla", cab, [[f["nombre"] or _("Sin cliente"), *informes_tareas._celdas(f)] for f in informe["por_cliente"]]),
+    ]
+    if informe["bloqueadas"]:
+        bloques += [("seccion", _("Bloqueadas")), ("tabla", [_("Tarea"), _("Motivo"), _("Desde"), _("Días")], [[b["asunto"], b["motivo"] or "", b["desde"], b["dias"]] for b in informe["bloqueadas"]])]
+    pdf = informes.construir_pdf(_("Informe de tareas"), bloques, despacho=informes.nombre_despacho(g.tenant_id), subtitulo=f'{v["desde"]} — {v["hasta"]}', apaisado=True)
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'attachment; filename="informe-tareas-{v["desde"]}_{v["hasta"]}.pdf"'})
+
+
+# --- Revisión de una tarea (ver app/tareas_trabajo.py) ----------------------------------------------------------------------
+
+@tareas_bp.route("/<int:tarea_id>/revision", methods=["POST"])
+@login_required
+def pedir_revision(tarea_id: int):
+    try:
+        tareas_trabajo.solicitar_revision(g.usuario_id, tarea_id, request.form.get("revisor_id"), request.form.get("nota"))
+    except tareas_trabajo.TransicionInvalida as e:
+        if e.codigo == "no_encontrada":
+            abort(404)
+        return _volver_a_tarea(tarea_id, "#revision", _(str(e)))
+    return _volver_a_tarea(tarea_id, "#revision")
+
+
+@tareas_bp.route("/<int:tarea_id>/revision/resolver", methods=["POST"])
+@login_required
+def resolver_revision(tarea_id: int):
+    try:
+        tareas_trabajo.resolver_revision(g.usuario_id, tarea_id, request.form.get("decision", ""), request.form.get("nota"))
+    except tareas_trabajo.TransicionInvalida as e:
+        if e.codigo == "no_encontrada":
+            abort(404)
+        return _volver_a_tarea(tarea_id, "#revision", _(str(e)))
+    return _volver_a_tarea(tarea_id, "#revision")
+
+
+@tareas_bp.route("/<int:tarea_id>/revision/cancelar", methods=["POST"])
+@login_required
+def cancelar_revision(tarea_id: int):
+    if not tareas_trabajo.cancelar_revision(g.usuario_id, tarea_id):
+        abort(404)
+    return _volver_a_tarea(tarea_id, "#revision")

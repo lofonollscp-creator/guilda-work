@@ -13775,3 +13775,179 @@ msgid "Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo."
 msgid_plural "Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos."
 msgstr[0] "It currently matches %(n)s case, of which %(nuevas)s would be new."
 msgstr[1] "It currently matches %(n)s cases, of which %(nuevas)s would be new."
+
+msgid "Informes de tareas"
+msgstr "Task reports"
+
+msgid "Informes"
+msgstr "Reports"
+
+msgid "Qué hay abierto, qué va tarde y cómo se cumple, por persona y por cliente. Solo cuenta las tareas que tú puedes ver."
+msgstr "What is open, what is late and how well deadlines are met, by person and by client. It only counts the tasks you can see."
+
+msgid "Próximos (días)"
+msgstr "Upcoming (days)"
+
+msgid "Descargar CSV"
+msgstr "Download CSV"
+
+msgid "Ventana: %(desde)s a %(hasta)s (%(n)s días). Lo de «ahora» es la foto de hoy y no depende de la ventana."
+msgstr "Window: %(desde)s to %(hasta)s (%(n)s days). «Now» figures are today's snapshot and do not depend on the window."
+
+msgid "Ahora"
+msgstr "Now"
+
+msgid "En la ventana"
+msgstr "In the window"
+
+msgid "Creadas"
+msgstr "Created"
+
+msgid "Cumplimiento en plazo"
+msgstr "On-time completion"
+
+msgid "de las completadas que tenían fecha límite"
+msgstr "of the completed ones that had a due date"
+
+msgid "Tiempo medio de cierre"
+msgstr "Average time to close"
+
+msgid "Por persona"
+msgstr "By person"
+
+msgid "Por cliente"
+msgstr "By client"
+
+msgid "No hay datos."
+msgstr "No data."
+
+msgid "Una tarea vinculada a varios clientes cuenta en cada uno; por eso las filas pueden sumar más que el total."
+msgstr "A task linked to several clients counts in each one, so the rows can add up to more than the total."
+
+msgid "Sin motivo anotado"
+msgstr "No reason noted"
+
+msgid "No hay tareas bloqueadas."
+msgstr "There are no blocked tasks."
+
+msgid "Certificado de %(titular)s"
+msgstr "Certificate of %(titular)s"
+
+msgid "No hay nada que venza en ese plazo."
+msgstr "Nothing is due in that period."
+
+msgid "Ventana"
+msgstr "Window"
+
+msgid "Las tareas que puedes ver"
+msgstr "The tasks you can see"
+
+msgid "Ahora: abiertas / vencidas / bloqueadas"
+msgstr "Now: open / overdue / blocked"
+
+msgid "Creadas en la ventana"
+msgstr "Created in the window"
+
+msgid "Completadas en la ventana"
+msgstr "Completed in the window"
+
+msgid "Informe de tareas"
+msgstr "Task report"
+
+msgid "La revisa %(quien)s."
+msgstr "%(quien)s is reviewing it."
+
+msgid "Mientras esté pendiente, la tarea no se puede completar."
+msgstr "While it is pending, the task cannot be completed."
+
+msgid "Comentario de la revisión"
+msgstr "Review comment"
+
+msgid "Comentario (obligatorio si pides cambios)"
+msgstr "Comment (required if you ask for changes)"
+
+msgid "Pedir cambios"
+msgstr "Request changes"
+
+msgid "Retirar la petición"
+msgstr "Withdraw the request"
+
+msgid "Pedir que la revise"
+msgstr "Ask someone to review it"
+
+msgid "Elige a una persona…"
+msgstr "Choose a person…"
+
+msgid "Nota para quien revisa"
+msgstr "Note for the reviewer"
+
+msgid "Nota para quien revisa (opcional)"
+msgstr "Note for the reviewer (optional)"
+
+msgid "Pedir revisión"
+msgstr "Request review"
+
+msgid "No hay ninguna revisión pendiente."
+msgstr "There is no pending review."
+
+msgid "Cambios pedidos"
+msgstr "Changes requested"
+
+msgid "No tienes permiso para pedir la revisión de esta tarea."
+msgstr "You do not have permission to request a review of this task."
+
+msgid "La tarea ya está completada."
+msgstr "The task is already completed."
+
+msgid "Elige a quien la revisa."
+msgstr "Choose who reviews it."
+
+msgid "La revisión tiene que hacerla otra persona."
+msgstr "Someone else has to do the review."
+
+msgid "Quien revisa tiene que ser de tu despacho."
+msgstr "The reviewer has to be from your firm."
+
+msgid "Esta tarea ya tiene una revisión pendiente."
+msgstr "This task already has a pending review."
+
+msgid "La decisión tiene que ser aprobar o pedir cambios."
+msgstr "The decision has to be approve or request changes."
+
+msgid "Explica qué hay que cambiar."
+msgstr "Explain what needs to change."
+
+msgid "No hay ninguna revisión pendiente en esta tarea."
+msgstr "There is no pending review on this task."
+
+msgid "Solo puede resolverla la persona designada para revisar."
+msgstr "Only the person assigned to review can resolve it."
+
+msgid "Esta tarea tiene una revisión pendiente: primero tiene que resolverla quien revisa."
+msgstr "This task has a pending review: the reviewer has to resolve it first."
+
+msgid "Trabajo en curso"
+msgstr "Work in progress"
+
+msgid "Trabajo en curso con tu gestoría"
+msgstr "Work in progress with your firm"
+
+msgid "Fecha prevista: %(fecha)s"
+msgstr "Expected date: %(fecha)s"
+
+msgid "Enseñar esta tarea al cliente en su portal"
+msgstr "Show this task to the client in their portal"
+
+msgid "El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos."
+msgstr "The client will only see the subject, status and due date, not the description, comments or files."
+
+msgid "La tarea no está vinculada a ningún cliente."
+msgstr "The task is not linked to any client."
+
+msgid "No tienes permiso para cambiar lo que ve el cliente."
+msgstr "You do not have permission to change what the client sees."
+
+msgid "Lo que se acerca en %(n)s día"
+msgid_plural "Lo que se acerca en los próximos %(n)s días"
+msgstr[0] "What is coming up in %(n)s day"
+msgstr[1] "What is coming up in the next %(n)s days"

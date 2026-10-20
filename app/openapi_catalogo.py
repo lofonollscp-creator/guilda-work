@@ -293,7 +293,7 @@ REQUERIDOS: dict[str, tuple[str, ...]] = {
     "crear_categoria": ("nombre",), "crear_tarea": ("nombre", "categoria_id"), "crear_tarea_outlook": ("asunto",), "crear_cliente_fiscal": ("nombre",),
     "crear_vencimiento": ("cliente_id", "modelo", "periodo", "fecha_limite"), "enviar_correo": ("cuenta_id", "destinatarios", "asunto", "cuerpo_html"),
     "fichaje_admin_corregir": ("tipo", "marca_tiempo"), "accion_en_lote": ("ids", "accion"), "crear_webhook": ("url", "eventos"), "estado": ("estado",),
-    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "crear_subtarea_de_la_tarea": ("asunto",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
+    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "crear_subtarea_de_la_tarea": ("asunto",), "pedir_revision_de_la_tarea": ("revisor_id",), "resolver_revision_de_la_tarea": ("decision",), "fijar_visible_cliente_de_la_tarea": ("visible",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
     "compartir_tarea": ("usuario_id",), "crear_recurrente": ("asunto", "periodicidad"), "crear_regla_vencimiento": ("modelo", "asunto"), "crear_plantilla": ("nombre", "cuerpo"),
     "crear_plantilla_tareas": ("nombre", "items"), "guardar_vista": ("nombre", "filtros"), "responder_mensaje_vencimiento": ("texto",), "marcar_fichaje": ("tipo",), "pedir_ausencia": ("tipo", "desde"), "importar_certificado_api": ("contenido_base64",), "proponer_traspaso_api": ("cliente_id", "a_usuario_id"), "rechazar_traspaso_api": ("motivo",), "renovado_certificado_api": ("nueva_caducidad",), "transicionar_vencimiento": ("destino",), "crear_oficina_api": ("nombre",), "dar_membresia_api": ("usuario_id", "rol", "alcance"), "crear_tipo_de_turno_api": ("nombre", "inicio", "fin"), "asignar_turno_api": ("usuario_id", "fecha"), "ajustar_bolsa_api": ("usuario_id", "minutos", "motivo"), "resolver_ausencia_api": ("decision",),
     "crear_tiquet": ("titulo",), "enviar_mensaje_ia": ("texto",), "crear_atajo_ia": ("etiqueta", "texto"),
@@ -516,3 +516,20 @@ RESPUESTAS.update({"subtareas_de_la_tarea": ("SubtareasDeTarea", False), "crear_
                    "subir_adjuntos_de_la_tarea": ("ResultadoAdjuntosTarea", False)})
 BINARIAS["descargar_adjunto_de_tarea"] = "application/octet-stream"
 SIN_DATOS_ESPERADOS.add("eliminar_adjunto_de_tarea")
+ESQUEMAS["RevisionTarea"] = {"type": "object", "properties": {"id": {"type": "integer"}, "tarea_id": {"type": "integer"}, "solicitada_por": {"type": "integer"}, "revisor_id": {"type": "integer"},
+                             "estado": {"type": "string", "enum": ["pendiente", "aprobada", "cambios", "cancelada"]}, "nota_solicitud": {"type": "string", "nullable": True},
+                             "nota_resolucion": {"type": "string", "nullable": True}, "solicitada_en": {"type": "string"}, "resuelta_en": {"type": "string", "nullable": True}}}
+ESQUEMAS["RevisionesDeTarea"] = {"type": "object", "properties": {"pendiente": {"allOf": [{"$ref": "#/components/schemas/RevisionTarea"}], "nullable": True},
+                                 "historial": {"type": "array", "items": {"$ref": "#/components/schemas/RevisionTarea"}}}}
+ESQUEMAS["VisibleCliente"] = {"type": "object", "properties": {"visible_cliente": {"type": "boolean"}}}
+ESQUEMAS["InformeTareas"] = {"type": "object", "description": "Cifras de tareas por persona y por cliente. Lo «histórico» se mide en la ventana; lo de «ahora» es la foto de hoy.", "properties": {
+    "ventana": {"type": "object", "properties": {"desde": {"type": "string"}, "hasta": {"type": "string"}, "dias": {"type": "integer"}}}, "hoy": {"type": "string"}, "alcance": {"type": "string"},
+    "creadas_en_ventana": {"type": "integer"}, "ahora": {"type": "object", "properties": {"abiertas": {"type": "integer"}, "vencidas": {"type": "integer"}, "bloqueadas": {"type": "integer"}}},
+    "en_ventana": {"type": "object", "properties": {"completadas": {"type": "integer"}, "con_fecha": {"type": "integer"}, "en_plazo": {"type": "integer"},
+                   "tasa_en_plazo": {"type": "number", "nullable": True, "description": "en_plazo / con_fecha, en %; null si no hay ninguna completada con fecha límite."},
+                   "tiempo_medio_cierre_dias": {"type": "number", "nullable": True}, "tiempo_medio_n": {"type": "integer"}}},
+    "por_responsable": {"type": "array", "items": {"type": "object"}}, "por_cliente": {"type": "array", "items": {"type": "object"}}, "bloqueadas": {"type": "array", "items": {"type": "object"}},
+    "proximas": {"type": "object", "properties": {"dias": {"type": "integer"}, "tareas": {"type": "array", "items": {"type": "object"}}, "vencimientos_fiscales": {"type": "array", "items": {"type": "object"}},
+                 "certificados": {"type": "array", "items": {"type": "object"}}}}}}
+RESPUESTAS.update({"informe_de_tareas": ("InformeTareas", False), "revision_de_la_tarea": ("RevisionesDeTarea", False), "pedir_revision_de_la_tarea": ("RevisionesDeTarea", False),
+                   "resolver_revision_de_la_tarea": ("RevisionesDeTarea", False), "cancelar_revision_de_la_tarea": ("RevisionesDeTarea", False), "fijar_visible_cliente_de_la_tarea": ("VisibleCliente", False)})

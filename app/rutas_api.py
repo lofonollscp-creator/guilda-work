@@ -727,8 +727,9 @@ def completar_tarea_outlook(tarea_id: int):
     if db.tarea_bloqueada(tarea_id):
         return _err("Esta tarea espera a otras que todavía no están completadas.", 409, "tarea_bloqueada")
     from . import tareas_trabajo
-    if tareas_trabajo.subtareas_abiertas(tarea_id):
-        return _err(tareas_trabajo.MENSAJE_SUBTAREAS, 409, "subtareas_abiertas")
+    impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id)
+    if impedimento:
+        return _err(impedimento[1], 409, impedimento[0])
     db.completar_tarea_outlook(g.usuario_id, tarea_id)
     from .rutas_tareas import _avisar_desbloqueos
     _avisar_desbloqueos(g.usuario_id, tarea_id, previa["estado"] == "completada")

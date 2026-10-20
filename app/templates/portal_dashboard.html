@@ -76,6 +76,23 @@
     </section>
     {% endif %}
 
+    {% if trabajo_en_curso %}
+    <section class="portal-resumen" aria-label="{{ _('Trabajo en curso') }}">
+      <div>
+        <strong>{{ _('Trabajo en curso con tu gestoría') }}</strong>
+        <ul class="log-list">
+          {% for t in trabajo_en_curso %}
+          <li class="log-item {{ 'is-completada' if t.estado == 'completada' }}">
+            <span class="log-text">{{ t.asunto }}</span>
+            {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Fecha prevista: %(fecha)s', fecha=t.fecha_vencimiento|fecha_dia) }}</span>{% endif %}
+            <span class="pill">{{ _(t.estado_texto) }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% endif %}
+
     {% if not vencimientos %}
     <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
     {% else %}
