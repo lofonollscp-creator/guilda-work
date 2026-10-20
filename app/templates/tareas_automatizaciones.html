@@ -28,6 +28,8 @@
       <input type="hidden" name="plantilla" value="{{ clave }}">
       {% if clave == 'renovar_certificado' %}{{ boton(_('Renovar certificados antes de que caduquen'), 'secundario', tipo='submit') }}
       {% elif clave == 'tarea_vencida' %}{{ boton(_('Avisar de tareas vencidas'), 'secundario', tipo='submit') }}
+      {% elif clave == 'tarea_bloqueada' %}{{ boton(_('Avisar cuando una tarea quede en espera'), 'secundario', tipo='submit') }}
+      {% elif clave == 'tarea_urgente' %}{{ boton(_('Avisar de las tareas urgentes nuevas'), 'secundario', tipo='submit') }}
       {% else %}{{ boton(_('Preparar el modelo antes de su fecha límite'), 'secundario', tipo='submit') }}{% endif %}
     </form>
     {% endfor %}
@@ -48,9 +50,11 @@
         </ul></span>
       {{ chip(_('Activa'), 'exito') if r.activa else chip(_('Apagada')) }}
       <form action="{{ url_for('tareas.automatizaciones_cambiar', regla_id=r.id) }}" method="post" class="quick-row">
+        {% if parametro_de[r.id] %}
         <label class="muted">{{ _('Días') }}
           <input type="number" name="dias" min="{{ 1 if parametro_de[r.id] == 'dias_vencida' else 0 }}" max="365" value="{{ r.condiciones[parametro_de[r.id]] }}" aria-label="{{ _('Días de la condición') }}">
         </label>
+        {% endif %}
         {{ boton(_('Guardar'), 'fantasma', tipo='submit', pequeno=True) }}
         {{ boton(_('Apagar') if r.activa else _('Activar'), 'fantasma', tipo='submit', pequeno=True, nombre='accion', valor='apagar' if r.activa else 'activar') }}
       </form>
@@ -59,7 +63,8 @@
       <form action="{{ url_for('tareas.automatizaciones_borrar', regla_id=r.id) }}" method="post">{{ boton(_('Borrar'), 'peligro', tipo='submit', pequeno=True, confirmar=_('¿Borrar esta regla y su historial?')) }}</form>
       {% if simulacion and simulacion.regla_id == r.id %}
       <div class="muted" role="status">
-        {{ ngettext('Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo.', 'Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos.', simulacion.cumplen, n=simulacion.cumplen, nuevas=simulacion.nuevas) }}
+        {% if simulacion.reciente %}{{ ngettext('Esta regla reacciona cuando ocurre. En los últimos 7 días la habría activado %(n)s tarea.', 'Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas.', simulacion.cumplen, n=simulacion.cumplen) }}
+        {% else %}{{ ngettext('Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo.', 'Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos.', simulacion.cumplen, n=simulacion.cumplen, nuevas=simulacion.nuevas) }}{% endif %}
         {% if simulacion.ejemplos %}<ul>{% for e in simulacion.ejemplos %}<li>{{ e.objeto }} · {{ e.fecha }}</li>{% endfor %}</ul>{% endif %}
         <small>{{ _('Es solo una vista previa: no se ha creado ni enviado nada.') }}</small>
       </div>

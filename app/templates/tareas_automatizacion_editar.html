@@ -67,6 +67,41 @@
       </label>
       <small class="muted">{{ _('Las tareas que crea una automatización no vuelven a disparar reglas.') }}</small>
     </div>
+    <div data-solo-disparador="tarea.creada">
+      <p class="muted">{{ _('Se activa cada vez que alguien crea una tarea (a mano, por correo o por una regla recurrente). Las tareas creadas por otra automatización no cuentan.') }}</p>
+      <div role="group" aria-label="{{ _('Solo con estas prioridades') }}">
+        <span class="muted">{{ _('Solo con estas prioridades (ninguna marcada = todas)') }}</span>
+        {% for valor, etiqueta in prioridades %}
+        <label class="checkbox"><input type="checkbox" name="c_prioridades_c" value="{{ valor }}" {% if valor in c.get('prioridades', []) %}checked{% endif %}> {{ etiqueta }}</label>
+        {% endfor %}
+      </div>
+      <label>{{ _('Solo de este cliente') }}
+        <select name="c_cliente_c">
+          <option value="">{{ _('Cualquiera') }}</option>
+          {% for cl in clientes_fiscales %}<option value="{{ cl.id }}" {% if c.get('cliente_fiscal_id') == cl.id %}selected{% endif %}>{{ cl.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div data-solo-disparador="tarea.estado">
+      <label>{{ _('Cuando una tarea pase a') }}
+        <select name="c_estado_e">
+          {% for clave, texto in estados_tarea.items() %}<option value="{{ clave }}" {% if c.get('estado') == clave %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+        </select>
+      </label>
+      <div role="group" aria-label="{{ _('Solo con estas prioridades') }}">
+        <span class="muted">{{ _('Solo con estas prioridades (ninguna marcada = todas)') }}</span>
+        {% for valor, etiqueta in prioridades %}
+        <label class="checkbox"><input type="checkbox" name="c_prioridades_e" value="{{ valor }}" {% if valor in c.get('prioridades', []) %}checked{% endif %}> {{ etiqueta }}</label>
+        {% endfor %}
+      </div>
+      <label>{{ _('Solo de este cliente') }}
+        <select name="c_cliente_e">
+          <option value="">{{ _('Cualquiera') }}</option>
+          {% for cl in clientes_fiscales %}<option value="{{ cl.id }}" {% if c.get('cliente_fiscal_id') == cl.id %}selected{% endif %}>{{ cl.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <small class="muted">{{ _('Cuenta el cambio desde cualquier sitio: la lista, el tablero, la ficha o la API.') }}</small>
+    </div>
     <div data-solo-disparador="vencimiento.proximo">
       <label>{{ _('Cuando falten, como máximo, estos días para la fecha límite') }}
         <input type="number" name="c_dias_venc" min="0" max="365" value="{{ c.get('dias_antes', 7) }}">
@@ -89,7 +124,7 @@
           <option value="">{{ _('— Ninguna —') }}</option>
           <option value="crear_tarea" {% if a.get('tipo') == 'crear_tarea' %}selected{% endif %}>{{ _('Crear una tarea') }}</option>
           <option value="notificar" {% if a.get('tipo') == 'notificar' %}selected{% endif %}>{{ _('Avisar a alguien') }}</option>
-          <option value="comentar" {% if a.get('tipo') == 'comentar' %}selected{% endif %}>{{ _('Anotar en la tarea vencida') }}</option>
+          <option value="comentar" {% if a.get('tipo') == 'comentar' %}selected{% endif %}>{{ _('Anotar en la tarea') }}</option>
         </select>
       </label>
       <div data-solo-tipo="crear_tarea">

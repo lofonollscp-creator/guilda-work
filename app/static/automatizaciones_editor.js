@@ -15,7 +15,8 @@
     formulario.querySelectorAll("[data-solo-disparador]").forEach(function (bloque) {
       mostrar(bloque, bloque.getAttribute("data-solo-disparador") === actual);
     });
-    formulario.querySelectorAll("[data-tipo-accion] option[value=comentar]").forEach(function (opcion) { opcion.disabled = actual !== "tarea.vencida"; });
+    var conTarea = ["tarea.vencida", "tarea.creada", "tarea.estado"].indexOf(actual) !== -1;
+    formulario.querySelectorAll("[data-tipo-accion] option[value=comentar]").forEach(function (opcion) { opcion.disabled = !conTarea; });
   }
 
   function actualizarFila(fila) {

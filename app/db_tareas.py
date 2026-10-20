@@ -457,9 +457,17 @@ def _emitir_evento(usuario_id: int, evento: str, payload: dict) -> None:
     from . import eventos
     try:
         tenant = _db.tenant_de_usuario(usuario_id)
-        eventos.emitir(evento, tenant["id"] if tenant else None, payload)
+        # `tarea.estado_cambiado` es interno (lo consumen las automatizaciones): no es un evento de webhook ni se ofrece para suscribirse.
+        if evento not in EVENTOS_INTERNOS:
+            eventos.emitir(evento, tenant["id"] if tenant else None, payload)
+        if tenant:
+            from . import automatizaciones
+            automatizaciones.registrar_evento(tenant["id"], evento, payload)       # no hace nada si el despacho no tiene reglas para ese evento
     except Exception:
         pass
+
+
+EVENTOS_INTERNOS = {"tarea.estado_cambiado"}
 
 
 def _emitir_evento_tarea_finalizada(usuario_id: int, tarea_id: int, nombre: str, duracion_segundos: int) -> None:
@@ -1259,6 +1267,8 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
         ]
         if cambiados:
             _db.registrar_actividad_tarea(usuario_id, tarea_id, "editada", ", ".join(cambiados))
+        if "estado" in columnas and antes is not None and campos.get("estado") and antes["estado"] != campos["estado"]:
+            _db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": antes["estado"], "a": campos["estado"]})
     finally:
         conn.close()
 
@@ -1274,6 +1284,7 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
         return                                 # política de cierre: sin subtareas abiertas ni revisión pendiente (app/tareas_trabajo.py)
     conn = _db.get_connection()
     try:
+        previo = conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
         cur = conn.execute(
             """UPDATE tareas_outlook
                SET estado = 'completada', porcentaje_completado = 100,
@@ -1299,6 +1310,8 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
             _db.registrar_actividad_tarea(usuario_id, libre["id"], "desbloqueada", _db._asunto_tarea(tarea_id))
             _db._emitir_evento(usuario_id, "tarea.desbloqueada", {"tarea_id": libre["id"], "responsable_id": libre["responsable_id"]})
         _db._emitir_evento(usuario_id, "tarea.completada", {"tarea_id": tarea_id, "completada_por": usuario_id})
+        if previo is not None and previo["estado"] != "completada":
+            _db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": "completada"})
 
 
 def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) -> bool:
@@ -1331,6 +1344,8 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
         conn.close()
     _db.registrar_actividad_tarea(usuario_id, tarea_id, "estado", estado)
     tareas_trabajo.al_cambiar_estado(usuario_id, tarea_id, antes, estado)
+    if antes != estado:
+        _db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": antes, "a": estado})
     return True
 
 

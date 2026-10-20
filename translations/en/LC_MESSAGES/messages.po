@@ -14083,3 +14083,29 @@ msgstr "Notifies: «%(t)s»"
 
 msgid "Anota en la tarea: «%(t)s»"
 msgstr "Adds a note to the task: «%(t)s»"
+
+msgid "Se activa cada vez que alguien crea una tarea (a mano, por correo o por una regla recurrente). Las tareas creadas por otra automatización no cuentan."
+msgstr "It triggers every time someone creates a task (by hand, from an email or by a recurring rule). Tasks created by another automation do not count."
+
+msgid "Cuando una tarea pase a"
+msgstr "When a task changes to"
+
+msgid "Cuenta el cambio desde cualquier sitio: la lista, el tablero, la ficha o la API."
+msgstr "The change counts from anywhere: the list, the board, the task page or the API."
+
+msgid "Anotar en la tarea"
+msgstr "Add a note to the task"
+
+msgid "Avisar cuando una tarea quede en espera"
+msgstr "Alert when a task is put on hold"
+
+msgid "Avisar de las tareas urgentes nuevas"
+msgstr "Alert about new urgent tasks"
+
+msgid "Sin empezar"
+msgstr "Not started"
+
+msgid "Esta regla reacciona cuando ocurre. En los últimos 7 días la habría activado %(n)s tarea."
+msgid_plural "Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas."
+msgstr[0] "This rule reacts when something happens. In the last 7 days %(n)s task would have triggered it."
+msgstr[1] "This rule reacts when something happens. In the last 7 days %(n)s tasks would have triggered it."

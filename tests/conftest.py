@@ -343,6 +343,14 @@ def webhooks_sin_hilo_de_fondo(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def automatizaciones_sin_hilo_de_fondo(monkeypatch):
+    """Igual que con los webhooks: el hilo que procesa los eventos de las automatizaciones no arranca en los tests. Los tests llaman a `automatizaciones.procesar_eventos()` a mano."""
+    from app import automatizaciones
+
+    monkeypatch.setattr(automatizaciones, "iniciar_worker", lambda: None)
+
+
+@pytest.fixture(autouse=True)
 def sin_tocar_contenedores_ni_datos_de_produccion(monkeypatch, tmp_path):
     """CAUSA RAÍZ de las «caídas» de FacturaScripts que el vigilante reparaba cada pocos minutos: con una base temporal el primer tenant
     es siempre el 1, y los tests de «borrar tenant» llamaban al `facturascripts.desaprovisionar_tenant(1)` REAL, que hace `docker stop` +

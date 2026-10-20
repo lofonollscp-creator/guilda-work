@@ -14092,3 +14092,29 @@ msgstr "Avisa: «%(t)s»"
 
 msgid "Anota en la tarea: «%(t)s»"
 msgstr "Anota a la tasca: «%(t)s»"
+
+msgid "Se activa cada vez que alguien crea una tarea (a mano, por correo o por una regla recurrente). Las tareas creadas por otra automatización no cuentan."
+msgstr "S'activa cada cop que algú crea una tasca (a mà, per correu o per una regla recurrent). Les tasques creades per una altra automatització no compten."
+
+msgid "Cuando una tarea pase a"
+msgstr "Quan una tasca passi a"
+
+msgid "Cuenta el cambio desde cualquier sitio: la lista, el tablero, la ficha o la API."
+msgstr "Compta el canvi des de qualsevol lloc: la llista, el tauler, la fitxa o l'API."
+
+msgid "Anotar en la tarea"
+msgstr "Anotar a la tasca"
+
+msgid "Avisar cuando una tarea quede en espera"
+msgstr "Avisa quan una tasca quedi en espera"
+
+msgid "Avisar de las tareas urgentes nuevas"
+msgstr "Avisa de les tasques urgents noves"
+
+msgid "Sin empezar"
+msgstr "Sense començar"
+
+msgid "Esta regla reacciona cuando ocurre. En los últimos 7 días la habría activado %(n)s tarea."
+msgid_plural "Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas."
+msgstr[0] "Aquesta regla reacciona quan passa. Els últims 7 dies l'hauria activat %(n)s tasca."
+msgstr[1] "Aquesta regla reacciona quan passa. Els últims 7 dies l'haurien activat %(n)s tasques."

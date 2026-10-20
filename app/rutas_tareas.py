@@ -1214,7 +1214,7 @@ def _pagina_automatizaciones(simulacion=None, error=None):
     return render_template(
         "tareas_automatizaciones.html", reglas=reglas, plantillas=automatizaciones.PLANTILLAS, ejecuciones=automatizaciones.ejecuciones(g.tenant_id, limite=40),
         salud=automatizaciones.resumen_de_salud(g.tenant_id), simulacion=simulacion, error=error or (request.args.get("error") or "")[:200] or None,
-        parametro_de={r["id"]: ("dias_antes" if "dias_antes" in r["condiciones"] else "dias_vencida") for r in reglas},
+        parametro_de={r["id"]: ("dias_antes" if "dias_antes" in r["condiciones"] else ("dias_vencida" if "dias_vencida" in r["condiciones"] else None)) for r in reglas},
     )
 
 
@@ -1247,7 +1247,7 @@ def _pagina_constructor(valores: dict, regla_id: int | None = None, error: str |
     respuesta = render_template(
         "tareas_automatizacion_editar.html", valores={**valores, "acciones": acciones}, regla_id=regla_id, error=error, disparadores=automatizaciones.DISPARADORES,
         variables=automatizaciones.VARIABLES, companeros=db.listar_companeros_tenant(g.usuario_id), clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id),
-        prioridades=PRIORIDADES, modelos_ejemplo=("303", "111", "115", "130", "190", "347", "390"))
+        prioridades=PRIORIDADES, estados_tarea=automatizaciones.ESTADOS_TAREA, modelos_ejemplo=("303", "111", "115", "130", "190", "347", "390"))
     return (respuesta, 422) if error else respuesta
 
 
@@ -1307,8 +1307,9 @@ def automatizaciones_cambiar(regla_id: int):
     cambios = {}
     if request.form.get("accion") in ("activar", "apagar"):
         cambios["activa"] = request.form["accion"] == "activar"
-    if request.form.get("dias") not in (None, ""):
-        cambios["condiciones"] = {**r["condiciones"], ("dias_antes" if "dias_antes" in r["condiciones"] else "dias_vencida"): request.form["dias"]}
+    parametro = "dias_antes" if "dias_antes" in r["condiciones"] else ("dias_vencida" if "dias_vencida" in r["condiciones"] else None)
+    if parametro and request.form.get("dias") not in (None, ""):
+        cambios["condiciones"] = {**r["condiciones"], parametro: request.form["dias"]}
     try:
         automatizaciones.cambiar_regla(g.tenant_id, g.usuario_id, regla_id, **cambios)
     except ValueError as e:

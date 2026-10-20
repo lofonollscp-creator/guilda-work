@@ -384,6 +384,7 @@ def al_cambiar_estado(usuario_id: int, tarea_id: int, antes: str | None, despues
         conn.close()
     if cur.rowcount:
         db.registrar_actividad_tarea(usuario_id, padre_id, "reabierta_por_subtarea", db._asunto_tarea(tarea_id))
+        db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": padre_id, "de": "completada", "a": "en_progreso"})
 
 
 # --- Adjuntos ---------------------------------------------------------------------------------------------------------
@@ -585,6 +586,7 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
                            (DECISIONES[decision], nota or None, db.now_iso(), usuario_id, rev["id"]))
         if cur.rowcount == 0:                                  # otra petición se adelantó
             raise TransicionInvalida("no_encontrada", "No hay ninguna revisión pendiente en esta tarea.")
+        previo = conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
         if decision == "cambios":
             conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso', fecha_completada = NULL, actualizada_en = ? WHERE id = ? AND estado != 'en_progreso'", (db.now_iso(), tarea_id))
         auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision." + decision, "tarea", tarea_id, {"revision": rev["id"]}, conn=conn)
@@ -592,6 +594,8 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
     finally:
         conn.close()
     asunto = db._asunto_tarea(tarea_id)
+    if decision == "cambios" and previo is not None and previo["estado"] != "en_progreso":
+        db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": "en_progreso"})
     db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_aprobada" if decision == "aprobar" else "revision_cambios", nota)
     _avisar(rev["solicitada_por"], (f"Revisión aprobada: {asunto}" if decision == "aprobar" else f"Piden cambios: {asunto}"), nota or "Sin comentarios", tarea_id)
     return {**rev, "estado": DECISIONES[decision], "nota_resolucion": nota or None}

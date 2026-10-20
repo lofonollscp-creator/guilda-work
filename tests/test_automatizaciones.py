@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from app import automatizaciones as au, certificados as ce, db
+from app import automatizaciones as au, certificados as ce, db, tareas_trabajo as tt
 
 AHORA = datetime(2026, 10, 20, 8, 0, 0, tzinfo=timezone.utc)
 HOY = AHORA.date()
@@ -329,7 +329,7 @@ def test_hoy_depende_de_la_zona_del_despacho(d):
 def test_las_plantillas_son_validas_y_rellenar_no_ejecuta_nada(d):
     for p in au.PLANTILLAS.values():
         au.crear_regla(d.t, d.sup, p["nombre"], p["disparador"], p["condiciones"], p["acciones"])
-    assert len(au.listar_reglas(d.t)) == 3
+    assert len(au.listar_reglas(d.t)) == len(au.PLANTILLAS)
     assert au.rellenar("Hola {nombre} {__class__} {x.y} {desconocida}", {"nombre": "Ana"}) == "Hola Ana  {x.y} "
 
 
@@ -510,3 +510,219 @@ def test_el_constructor_no_deja_usar_personas_de_otro_despacho_ni_a_quien_no_es_
     r = cliente.post("/tareas/automatizaciones/regla", data={"nombre": "Con ajena", "disparador": "certificado.caduca", "c_dias_cert": "30", "a0_tipo": "crear_tarea", "a0_asunto": "Renovar {titular}",
                                                             "a0_dest": f"u:{ajena}"})
     assert r.status_code == 422 and "no es de tu despacho" in r.get_data(as_text=True) and au.listar_reglas(t) == []
+
+
+# --- Disparadores por evento ------------------------------------------------------------------------------------------------------
+
+def _regla_estado(d, estado="esperando", **extra):
+    return au.crear_regla(d.t, d.sup, "Al cambiar", "tarea.estado", {"estado": estado, **extra},
+                          [{"tipo": "notificar", "titulo": "{asunto}: de {anterior} a {estado}", "cuerpo": "Cliente {cliente}", "a": "direccion"}])
+
+
+def _avisos_de_automatizacion(uid):
+    return [n for n in _notificaciones(uid) if n["tipo"] == "automatizacion"]
+
+
+def test_validacion_de_los_disparadores_de_evento(d):
+    assert au.validar_condiciones("tarea.creada", {"prioridades": ["alta", "rara"], "cliente_fiscal_id": "3"}) == {"prioridades": ["alta"], "cliente_fiscal_id": 3}
+    assert au.validar_condiciones("tarea.estado", {"estado": "esperando"}) == {"estado": "esperando"}
+    with pytest.raises(ValueError, match="a qué estado"):
+        au.validar_condiciones("tarea.estado", {})
+    with pytest.raises(ValueError, match="a qué estado"):
+        au.validar_condiciones("tarea.estado", {"estado": "inventado"})
+    assert au.validar_acciones("tarea.estado", [{"tipo": "comentar", "texto": "{estado}"}])[0]["tipo"] == "comentar"
+    with pytest.raises(ValueError, match="no existe para este disparador"):
+        au.validar_acciones("tarea.creada", [{"tipo": "notificar", "titulo": "{estado}"}])         # «estado» solo existe al cambiar de estado
+    with pytest.raises(ValueError, match="no existe para este disparador"):
+        au.validar_acciones("tarea.estado", [{"tipo": "notificar", "titulo": "{titular}"}])
+
+
+def test_el_cambio_de_estado_dispara_la_regla_una_vez_por_cada_cambio(d):
+    _regla_estado(d)
+    t = db.crear_tarea_outlook(d.cus, asunto="Declaración", cliente_fiscal_id=d.cliente)
+    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")                       # otro estado: no interesa
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")
+    r = au.procesar_eventos(AHORA)
+    assert (r["eventos"], r["ejecuciones"], r["ok"]) == (2, 1, 1)                  # se anotan los dos cambios (la regla escucha cambios de estado), pero solo uno cumple su condición
+    avisos = _avisos_de_automatizacion(d.sup)
+    assert [a["titulo"] for a in avisos] == ["Declaración: de En progreso a Esperando a otros"] and avisos[0]["cuerpo"] == "Cliente Marta Puig"
+    assert au.procesar_eventos(AHORA)["eventos"] == 0                              # repetir no hace nada
+    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")                         # otro cambio, otro aviso
+    au.procesar_eventos(AHORA)
+    assert len(_avisos_de_automatizacion(d.sup)) == 2
+    assert au.eventos_pendientes() == 0
+
+
+def test_se_dispara_venga_el_cambio_de_donde_venga(d):
+    _regla_estado(d, "completada")
+    ana = d.cus
+    t1 = db.crear_tarea_outlook(ana, asunto="Por completar")
+    t2 = db.crear_tarea_outlook(ana, asunto="Por la edición")
+    t3 = db.crear_tarea_outlook(ana, asunto="Por transición")
+    db.completar_tarea_outlook(ana, t1)                                             # el camino de «completar»
+    db.editar_tarea_outlook(ana, t2, estado="completada")                           # el de editar (API PUT)
+    tt.transicionar(ana, t3, "completada")                                          # el de la API de transiciones
+    au.procesar_eventos(AHORA)
+    assert sorted(a["titulo"] for a in _avisos_de_automatizacion(d.sup)) == ["Por completar: de Sin empezar a Completada", "Por la edición: de Sin empezar a Completada",
+                                                                              "Por transición: de Sin empezar a Completada"]
+
+
+def test_pedir_cambios_en_una_revision_y_reabrir_el_padre_tambien_son_cambios_de_estado(d):
+    _regla_estado(d, "en_progreso")
+    t = db.crear_tarea_outlook(d.cus, asunto="Con revisión")
+    tt.solicitar_revision(d.cus, t, d.otro)
+    tt.resolver_revision(d.otro, t, "cambios", "Falta algo")
+    padre = db.crear_tarea_outlook(d.cus, asunto="Padre")
+    hija = tt.crear_subtarea(d.cus, padre, "Hija")
+    db.cambiar_estado_tarea_outlook(d.cus, hija, "completada")
+    db.cambiar_estado_tarea_outlook(d.cus, padre, "completada")
+    au.procesar_eventos(AHORA)
+    n0 = len(_avisos_de_automatizacion(d.sup))
+    db.cambiar_estado_tarea_outlook(d.cus, hija, "no_iniciada")                    # reabrir la hija devuelve el padre a «en progreso»
+    au.procesar_eventos(AHORA)
+    titulos = [a["titulo"] for a in _avisos_de_automatizacion(d.sup)]
+    assert n0 == 1 and "Con revisión: de Sin empezar a En progreso" in titulos and "Padre: de Completada a En progreso" in titulos
+
+
+def test_la_creacion_de_tareas_dispara_con_filtros_y_nunca_las_creadas_por_una_automatizacion(d):
+    au.crear_regla(d.t, d.sup, "Urgentes", "tarea.creada", {"prioridades": ["alta"], "cliente_fiscal_id": d.cliente}, [{"tipo": "notificar", "titulo": "Nueva: {asunto} ({prioridad})", "a": "direccion"}])
+    db.crear_tarea_outlook(d.cus, asunto="Urgente del cliente", prioridad="alta", cliente_fiscal_id=d.cliente)
+    db.crear_tarea_outlook(d.cus, asunto="Normal del cliente", prioridad="normal", cliente_fiscal_id=d.cliente)
+    db.crear_tarea_outlook(d.cus, asunto="Urgente sin cliente", prioridad="alta")
+    r = au.procesar_eventos(AHORA)
+    assert r["eventos"] == 3 and r["ejecuciones"] == 1
+    assert [a["titulo"] for a in _avisos_de_automatizacion(d.sup)] == ["Nueva: Urgente del cliente (alta)"]
+
+
+def test_una_regla_de_evento_no_se_dispara_a_si_misma_ni_en_cadena(d):
+    # Esta regla crea una tarea urgente cada vez que se crea una tarea urgente: sin protección sería un bucle infinito.
+    au.crear_regla(d.t, d.sup, "Bucle", "tarea.creada", {"prioridades": ["alta"]}, [{"tipo": "crear_tarea", "asunto": "Seguimiento de {asunto}", "prioridad": "alta", "dias_plazo": 1, "asignar_a": d.cus}])
+    au.crear_regla(d.t, d.sup, "Cadena", "tarea.creada", {}, [{"tipo": "notificar", "titulo": "Creada {asunto}", "a": "direccion"}])
+    db.crear_tarea_outlook(d.cus, asunto="Original", prioridad="alta")
+    for _ in range(5):
+        au.procesar_eventos(AHORA)
+    asuntos = sorted(t["asunto"] for t in _tareas(d.cus))
+    assert asuntos == ["Original", "Seguimiento de Original"]                       # una sola tarea nueva, nada de bucle
+    assert [a["titulo"] for a in _avisos_de_automatizacion(d.sup)] == ["Creada Original"]       # y la segunda regla no se activa por la tarea que creó la primera
+    assert au.eventos_pendientes() == 0
+
+
+def test_solo_se_encolan_eventos_si_hay_una_regla_activa_que_los_escuche(d):
+    db.crear_tarea_outlook(d.cus, asunto="Sin reglas")
+    assert au.eventos_pendientes() == 0
+    rid = _regla_estado(d)
+    db.crear_tarea_outlook(d.cus, asunto="Con regla de estado")                   # crear no interesa a una regla de estado
+    assert au.eventos_pendientes() == 0
+    t = db.crear_tarea_outlook(d.cus, asunto="Cambiará")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")
+    assert au.eventos_pendientes() == 1
+    au.cambiar_regla(d.t, d.sup, rid, activa=False)
+    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")
+    assert au.eventos_pendientes() == 1                                           # apagada: ya no se anota nada nuevo
+
+
+def test_las_reglas_y_eventos_de_un_despacho_no_tocan_a_otro(d):
+    otro = db.crear_tenant("Despacho vecino eventos")
+    v = db.crear_usuario_vinculado_a_kratos("sup-vecino-ev@ejemplo.com", "k-sve"); db.asignar_tenant(v, otro); db.asignar_supervisor_tenant(v, True)
+    a = db.crear_usuario_vinculado_a_kratos("ana-vecino-ev@ejemplo.com", "k-ave"); db.asignar_tenant(a, otro)
+    au.crear_regla(otro, v, "Vecino", "tarea.estado", {"estado": "esperando"}, [{"tipo": "notificar", "titulo": "Vecino: {asunto}", "a": "direccion"}])
+    _regla_estado(d)
+    t_nuestra = db.crear_tarea_outlook(d.cus, asunto="Nuestra")
+    t_vecina = db.crear_tarea_outlook(a, asunto="Del vecino")
+    db.cambiar_estado_tarea_outlook(d.cus, t_nuestra, "esperando")
+    db.cambiar_estado_tarea_outlook(a, t_vecina, "esperando")
+    au.procesar_eventos(AHORA)
+    assert [x["titulo"] for x in _avisos_de_automatizacion(d.sup)] == ["Nuestra: de Sin empezar a Esperando a otros"]
+    assert [x["titulo"] for x in _avisos_de_automatizacion(v)] == ["Vecino: Del vecino"]
+
+
+def test_un_fallo_en_una_regla_de_evento_se_reintenta_con_su_contexto_y_no_duplica(d, monkeypatch):
+    au.crear_regla(d.t, d.sup, "Dos pasos", "tarea.estado", {"estado": "esperando"},
+                   [{"tipo": "crear_tarea", "asunto": "Reclamar {asunto}", "dias_plazo": 1, "asignar_a": d.cus}, {"tipo": "notificar", "titulo": "Reclamar {asunto}", "a": "direccion"}])
+    original = au._aplicar_accion
+
+    def inestable(tenant_id, regla, oc, accion, clave, hoy):
+        if accion["tipo"] == "notificar" and not getattr(inestable, "ya", False):
+            inestable.ya = True
+            raise RuntimeError("push caído")
+        return original(tenant_id, regla, oc, accion, clave, hoy)
+    monkeypatch.setattr(au, "_aplicar_accion", inestable)
+    t = db.crear_tarea_outlook(d.cus, asunto="Pago")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")
+    r = au.procesar_eventos(AHORA)
+    assert (r["ejecuciones"], r["errores"]) == (1, 1) and len([x for x in _tareas(d.cus) if x["asunto"] == "Reclamar Pago"]) == 1
+    e = au.ejecuciones(d.t)[0]
+    assert e["estado"] == "error" and len(e["progreso"]) == 1
+    au.ejecutar(d.t, AHORA + timedelta(minutes=20))                                # el reintento usa el contexto guardado (no hay nada que buscar)
+    assert au.ejecuciones(d.t)[0]["estado"] == "ok"
+    assert len([x for x in _tareas(d.cus) if x["asunto"] == "Reclamar Pago"]) == 1 and len(_avisos_de_automatizacion(d.sup)) == 1
+
+
+def test_comentar_deja_la_nota_en_la_tarea_del_evento(d):
+    au.crear_regla(d.t, d.sup, "Nota", "tarea.estado", {"estado": "aplazada"}, [{"tipo": "comentar", "texto": "Aplazada: avisar al cliente"}])
+    t = db.crear_tarea_outlook(d.cus, asunto="Aplazable")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "aplazada")
+    au.procesar_eventos(AHORA)
+    assert any(a["tipo"] == "automatizacion" and "avisar al cliente" in a["detalle"] for a in db.actividad_de_tarea(d.cus, t))
+
+
+def test_una_tarea_borrada_antes_de_procesar_se_ignora_sin_romper(d):
+    _regla_estado(d)
+    t = db.crear_tarea_outlook(d.cus, asunto="Efímera")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")
+    db.eliminar_tarea_outlook(d.cus, t)
+    r = au.procesar_eventos(AHORA)
+    assert r["eventos"] == 1 and r["ejecuciones"] == 0 and au.eventos_pendientes() == 0
+
+
+def test_la_vista_previa_de_una_regla_de_evento_enseña_los_casos_recientes_sin_escribir(d):
+    rid = _regla_estado(d)
+    t = db.crear_tarea_outlook(d.cus, asunto="En espera ahora")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")
+    db.crear_tarea_outlook(d.cus, asunto="Otra cosa")
+    au.procesar_eventos(AHORA)
+    antes = len(au.ejecuciones(d.t))
+    s = au.simular(d.t, rid)
+    assert s["reciente"] is True and s["cumplen"] == 1 and s["ejemplos"][0]["datos"]["asunto"] == "En espera ahora" and len(au.ejecuciones(d.t)) == antes
+    # y el análisis diario no se inventa casos para las reglas de evento
+    assert au.ejecutar(d.t, AHORA)["nuevas"] == 0
+
+
+def test_las_plantillas_nuevas_y_el_borrado_del_despacho(d):
+    for clave in ("tarea_bloqueada", "tarea_urgente"):
+        p = au.PLANTILLAS[clave]
+        au.crear_regla(d.t, d.sup, p["nombre"], p["disparador"], p["condiciones"], p["acciones"])
+    t = db.crear_tarea_outlook(d.cus, asunto="Nueva", prioridad="alta")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "esperando")
+    assert au.eventos_pendientes() == 2
+    db.borrar_tenant(d.t)
+    conn = db.get_connection()
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM automatizaciones_eventos WHERE tenant_id = ?", (d.t,)).fetchone()[0] == 0
+    finally:
+        conn.close()
+
+
+def test_constructor_y_lista_con_disparadores_de_evento(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "ev1-au@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho eventos pantalla")
+    db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    html = cliente.get("/tareas/automatizaciones/regla").get_data(as_text=True)
+    assert 'value="tarea.creada"' in html and 'value="tarea.estado"' in html and 'name="c_estado_e"' in html and "{estado}" in html
+    datos = {"nombre": "Al esperar", "disparador": "tarea.estado", "c_estado_e": "esperando", "c_prioridades_e": ["alta"], "activa": "1",
+             "a0_tipo": "notificar", "a0_titulo": "En espera: {asunto}", "a0_dest_aviso": "direccion", "a1_tipo": "comentar", "a1_texto": "Pasó a {estado}"}
+    assert cliente.post("/tareas/automatizaciones/regla", data=datos).status_code == 302
+    r = au.listar_reglas(t)[0]
+    assert r["condiciones"] == {"estado": "esperando", "prioridades": ["alta"]} and [a["tipo"] for a in r["acciones"]] == ["notificar", "comentar"]
+    lista = cliente.get("/tareas/automatizaciones").get_data(as_text=True)
+    assert "Una tarea cambia de estado" in lista and 'name="dias"' not in lista                     # una regla de evento no tiene «días»
+    assert cliente.post(f"/tareas/automatizaciones/{r['id']}/cambiar", data={"dias": "9"}).status_code == 302
+    assert au.obtener_regla(t, r["id"])["condiciones"] == {"estado": "esperando", "prioridades": ["alta"]}   # y mandar días no estropea nada
+    assert "reacciona cuando ocurre" in cliente.post(f"/tareas/automatizaciones/{r['id']}/simular").get_data(as_text=True)
+    sin_estado = {**datos, "nombre": "Mala", "c_estado_e": "inventado"}
+    resp = cliente.post("/tareas/automatizaciones/regla", data=sin_estado)
+    assert resp.status_code == 422 and "a qué estado" in resp.get_data(as_text=True) and len(au.listar_reglas(t)) == 1
+    creada = {"nombre": "Nueva", "disparador": "tarea.creada", "c_prioridades_c": ["alta"], "a0_tipo": "notificar", "a0_titulo": "Nueva {asunto}"}
+    assert cliente.post("/tareas/automatizaciones/regla", data=creada).status_code == 302

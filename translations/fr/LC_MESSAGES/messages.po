@@ -14168,3 +14168,29 @@ msgstr "Avertit : « %(t)s »"
 
 msgid "Anota en la tarea: «%(t)s»"
 msgstr "Note dans la tâche : « %(t)s »"
+
+msgid "Se activa cada vez que alguien crea una tarea (a mano, por correo o por una regla recurrente). Las tareas creadas por otra automatización no cuentan."
+msgstr "Elle se déclenche chaque fois que quelqu'un crée une tâche (à la main, depuis un e-mail ou par une règle récurrente). Les tâches créées par une autre automatisation ne comptent pas."
+
+msgid "Cuando una tarea pase a"
+msgstr "Quand une tâche passe à"
+
+msgid "Cuenta el cambio desde cualquier sitio: la lista, el tablero, la ficha o la API."
+msgstr "Le changement compte d'où qu'il vienne : la liste, le tableau, la fiche ou l'API."
+
+msgid "Anotar en la tarea"
+msgstr "Noter dans la tâche"
+
+msgid "Avisar cuando una tarea quede en espera"
+msgstr "Alerter quand une tâche est mise en attente"
+
+msgid "Avisar de las tareas urgentes nuevas"
+msgstr "Alerter des nouvelles tâches urgentes"
+
+msgid "Sin empezar"
+msgstr "Pas commencée"
+
+msgid "Esta regla reacciona cuando ocurre. En los últimos 7 días la habría activado %(n)s tarea."
+msgid_plural "Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas."
+msgstr[0] "Cette règle réagit quand cela se produit. Ces 7 derniers jours, %(n)s tâche l'aurait déclenchée."
+msgstr[1] "Cette règle réagit quand cela se produit. Ces 7 derniers jours, %(n)s tâches l'auraient déclenchée."

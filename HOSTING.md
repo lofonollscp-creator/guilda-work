@@ -93,6 +93,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Varios clientes al crear una tarea (octubre de 2026)](#varios-clientes-al-crear-una-tarea-octubre-de-2026)
 - [Actualización de seguridad del SDK de MCP (octubre de 2026)](#actualización-de-seguridad-del-sdk-de-mcp-octubre-de-2026)
 - [Constructor de reglas de automatización (octubre de 2026)](#constructor-de-reglas-de-automatización-octubre-de-2026)
+- [Automatizaciones por evento (octubre de 2026)](#automatizaciones-por-evento-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3366,3 +3367,17 @@ Completa la Fase 4: antes, desde la pantalla solo se podían crear reglas a part
 - **Cambiar las acciones con ejecuciones a medias**: una ejecución que ya había hecho algún paso lleva guardado qué pasos hizo, contados con las acciones *anteriores*. Si se cambian las acciones, esas ejecuciones pasan a «Fallida» con el aviso «La regla cambió mientras esta ejecución estaba a medias», para que la dirección decida si las reintenta; las que no habían hecho nada siguen reintentándose solas. Cambiar solo el nombre, los días o apagar la regla no toca nada de esto.
 - **Sin migraciones**: no hace falta más que reiniciar.
 - **Pruebas**: 8 tests nuevos en `tests/test_automatizaciones.py` (variables, pertenencia, traducción del formulario, ejecuciones a medias, pantalla de crear y editar, errores y permisos). No he comprobado el aspecto en un navegador real.
+
+## Automatizaciones por evento (octubre de 2026)
+
+Las reglas ya no solo se buscan una vez al día: dos disparadores nuevos **reaccionan en cuanto ocurre algo**. Código en `app/automatizaciones.py`; se crean y editan desde el mismo constructor (Tareas › Automatizaciones).
+
+- **Disparadores**: «Se crea una tarea» (`tarea.creada`; filtros de prioridad y cliente) y «Una tarea cambia de estado» (`tarea.estado`; estado de destino obligatorio y los mismos filtros). Variables para los textos: `{asunto}`, `{prioridad}`, `{cliente}`, `{fecha}` y, al cambiar de estado, `{estado}` y `{anterior}`. Valen las tres acciones (crear tarea, avisar, anotar en la tarea) y hay dos plantillas nuevas.
+- **De dónde sale el evento**: el cambio de estado se detecta en todos los caminos (lista, tablero, ficha, API, completar, transiciones, pedir cambios en una revisión y reabrir una tarea padre al reabrir una subtarea) mediante un evento interno `tarea.estado_cambiado` que **no** es de webhook: no aparece entre los eventos suscribibles ni sale del sistema.
+- **Cola persistente (outbox)**: tabla `automatizaciones_eventos`. Anotar es una fila y vuelve al instante; **solo se anota si el despacho tiene una regla activa que escuche ese evento**, así los cambios masivos no llenan la cola. Un hilo de fondo (`automatizaciones`, como el de webhooks) la procesa cada pocos segundos; los eventos que generan otros procesos (las tareas recurrentes de las 04:30) los vacía la pasada de las 07:00. Se purgan a los 7 días.
+- **Garantías**: idempotente por evento (la ejecución de cada regla para cada evento tiene clave única `evt:<id>`; dos procesos o un reinicio no duplican nada); mismos reintentos (15 min, 1 h, 4 h), aviso único a la dirección y botón «Reintentar» que el análisis diario; el reintento usa el contexto guardado de la ocurrencia (`automatizaciones_ejecuciones.contexto`), sin volver a buscar nada.
+- **Sin bucles ni cadenas**: lo que provoca una automatización (por ejemplo, la tarea que crea) no genera eventos para otras reglas, y las tareas creadas por una automatización (`referencia_externa = auto:…`) nunca disparan reglas de evento. Una regla «cuando se cree una tarea urgente, crea otra» crea una sola.
+- **Vista previa**: «Ver qué haría ahora» enseña los casos de los últimos 7 días que la habrían activado, sin crear ni enviar nada.
+- **Migración al arrancar** (idempotente): tabla `automatizaciones_eventos` y columna `automatizaciones_ejecuciones.contexto`. Reversión: ambas se pueden ignorar; `DROP TABLE automatizaciones_eventos`. Hace falta **reiniciar** para que arranque el hilo y se carguen los cambios.
+- **Pruebas**: 14 tests nuevos en `tests/test_automatizaciones.py` (validación, cada camino de cambio de estado, filtros, ausencia de bucles, aislamiento entre despachos, reintentos con contexto, tarea borrada, vista previa, pantalla). El hilo de fondo se anula en los tests, como el de webhooks.
+- **Sigue sin haber**: disparadores por servicio de cliente, expediente o recurrencia, ni acciones de «pedir revisión» o «fijar fecha».
