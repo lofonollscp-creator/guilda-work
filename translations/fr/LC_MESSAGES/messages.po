@@ -13784,3 +13784,79 @@ msgstr "PDF, images, texte, CSV et documents Office. Jusqu'à 15 Mo chacun."
 
 msgid "Esta tarea tiene subtareas sin completar."
 msgstr "Cette tâche a des sous-tâches non terminées."
+
+msgid "Automatizaciones"
+msgstr "Automatisations"
+
+msgid "Reglas que crean tareas o avisan solas cuando se cumple una condición: un certificado a punto de caducar, una tarea vencida o un modelo que se acerca."
+msgstr "Règles qui créent des tâches ou envoient des alertes toutes seules quand une condition est remplie : un certificat sur le point d'expirer, une tâche en retard ou un modèle qui approche."
+
+msgid "Empieza con una plantilla y ajusta los días. Las reglas se revisan una vez al día; repetirlas nunca crea dos veces la misma tarea."
+msgstr "Commencez par un modèle et ajustez les jours. Les règles sont vérifiées une fois par jour ; les répéter ne crée jamais deux fois la même tâche."
+
+msgid "Renovar certificados antes de que caduquen"
+msgstr "Renouveler les certificats avant leur expiration"
+
+msgid "Avisar de tareas vencidas"
+msgstr "Alerter des tâches en retard"
+
+msgid "Preparar el modelo antes de su fecha límite"
+msgstr "Préparer le modèle avant sa date limite"
+
+msgid "Reglas"
+msgstr "Règles"
+
+msgid "Apagada"
+msgstr "Désactivée"
+
+msgid "Días de la condición"
+msgstr "Jours de la condition"
+
+msgid "Apagar"
+msgstr "Désactiver"
+
+msgid "Activar"
+msgstr "Activer"
+
+msgid "Ver qué haría ahora"
+msgstr "Voir ce qu'elle ferait maintenant"
+
+msgid "¿Borrar esta regla y su historial?"
+msgstr "Supprimer cette règle et son historique ?"
+
+msgid "Es solo una vista previa: no se ha creado ni enviado nada."
+msgstr "Ce n'est qu'un aperçu : rien n'a été créé ni envoyé."
+
+msgid "Todavía no hay reglas"
+msgstr "Il n'y a pas encore de règles"
+
+msgid "Añade una a partir de una plantilla."
+msgstr "Ajoutez-en une à partir d'un modèle."
+
+msgid "Últimas ejecuciones"
+msgstr "Dernières exécutions"
+
+msgid "Intentos"
+msgstr "Tentatives"
+
+msgid "Reintentando"
+msgstr "Nouvelle tentative"
+
+msgid "Reintentar"
+msgstr "Réessayer"
+
+msgid "Todavía no se ha ejecutado ninguna regla."
+msgstr "Aucune règle n'a encore été exécutée."
+
+msgid "Regla"
+msgstr "Règle"
+
+msgid "%(n)s ejecución ha fallado del todo. Revísala abajo y reinténtala."
+msgid_plural "%(n)s ejecuciones han fallado del todo. Revísalas abajo y reinténtalas."
+msgstr[0] "%(n)s exécution a totalement échoué. Vérifiez-la ci-dessous et réessayez."
+msgstr[1] "%(n)s exécutions ont totalement échoué. Vérifiez-les ci-dessous et réessayez."
+
+msgid "Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo."
+msgid_plural "Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos."
+msgstr[0] "%(n)s cas correspond actuellement, dont %(nuevas)s serait nouveau."
+msgstr[1] "%(n)s cas correspondent actuellement, dont %(nuevas)s seraient nouveaux."

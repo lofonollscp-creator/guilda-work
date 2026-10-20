@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, chip, estado_vacio %}
+{% block title %}{{ _('Automatizaciones') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Tareas') }}</h1>
+    <p class="subtitle">{{ _('Reglas que crean tareas o avisan solas cuando se cumple una condición: un certificado a punto de caducar, una tarea vencida o un modelo que se acerca.') }}</p>
+  </div>
+</header>
+
+{% set subnav_activa = 'automatizaciones' %}
+{% include "_tareas_subnav.html" %}
+
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if salud.get('fallida') %}
+<div class="ia-error" role="alert">{{ ngettext('%(n)s ejecución ha fallado del todo. Revísala abajo y reinténtala.', '%(n)s ejecuciones han fallado del todo. Revísalas abajo y reinténtalas.', salud.fallida, n=salud.fallida) }}</div>
+{% endif %}
+
+<section class="dash-panel">
+  <h2>{{ _('Añadir una regla') }}</h2>
+  <p class="muted">{{ _('Empieza con una plantilla y ajusta los días. Las reglas se revisan una vez al día; repetirlas nunca crea dos veces la misma tarea.') }}</p>
+  <div class="quick-row">
+    {% for clave, p in plantillas.items() %}
+    <form action="{{ url_for('tareas.automatizaciones_nueva') }}" method="post">
+      <input type="hidden" name="plantilla" value="{{ clave }}">
+      {% if clave == 'renovar_certificado' %}{{ boton(_('Renovar certificados antes de que caduquen'), 'secundario', tipo='submit') }}
+      {% elif clave == 'tarea_vencida' %}{{ boton(_('Avisar de tareas vencidas'), 'secundario', tipo='submit') }}
+      {% else %}{{ boton(_('Preparar el modelo antes de su fecha límite'), 'secundario', tipo='submit') }}{% endif %}
+    </form>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Reglas') }}</h2>
+  {% if reglas %}
+  <ul class="log-list">
+    {% for r in reglas %}
+    <li class="log-item">
+      <span class="log-text"><strong>{{ r.nombre }}</strong><br><small class="muted">{{ r.disparador_texto }}</small></span>
+      {{ chip(_('Activa'), 'exito') if r.activa else chip(_('Apagada')) }}
+      <form action="{{ url_for('tareas.automatizaciones_cambiar', regla_id=r.id) }}" method="post" class="quick-row">
+        <label class="muted">{{ _('Días') }}
+          <input type="number" name="dias" min="{{ 1 if parametro_de[r.id] == 'dias_vencida' else 0 }}" max="365" value="{{ r.condiciones[parametro_de[r.id]] }}" aria-label="{{ _('Días de la condición') }}">
+        </label>
+        {{ boton(_('Guardar'), 'fantasma', tipo='submit', pequeno=True) }}
+        {{ boton(_('Apagar') if r.activa else _('Activar'), 'fantasma', tipo='submit', pequeno=True, nombre='accion', valor='apagar' if r.activa else 'activar') }}
+      </form>
+      <form action="{{ url_for('tareas.automatizaciones_simular', regla_id=r.id) }}" method="post">{{ boton(_('Ver qué haría ahora'), 'fantasma', tipo='submit', pequeno=True) }}</form>
+      <form action="{{ url_for('tareas.automatizaciones_borrar', regla_id=r.id) }}" method="post">{{ boton(_('Borrar'), 'peligro', tipo='submit', pequeno=True, confirmar=_('¿Borrar esta regla y su historial?')) }}</form>
+      {% if simulacion and simulacion.regla_id == r.id %}
+      <div class="muted" role="status">
+        {{ ngettext('Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo.', 'Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos.', simulacion.cumplen, n=simulacion.cumplen, nuevas=simulacion.nuevas) }}
+        {% if simulacion.ejemplos %}<ul>{% for e in simulacion.ejemplos %}<li>{{ e.objeto }} · {{ e.fecha }}</li>{% endfor %}</ul>{% endif %}
+        <small>{{ _('Es solo una vista previa: no se ha creado ni enviado nada.') }}</small>
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}{{ estado_vacio(_('Todavía no hay reglas'), _('Añade una a partir de una plantilla.'), 'zap') }}{% endif %}
+</section>
+
+<section class="dash-panel" id="ejecuciones">
+  <h2>{{ _('Últimas ejecuciones') }}</h2>
+  {% if ejecuciones %}
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>{{ _('Regla') }}</th><th>{{ _('Qué') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Intentos') }}</th><th>{{ _('Detalle') }}</th><th></th></tr></thead>
+    <tbody>
+      {% for e in ejecuciones %}
+      <tr>
+        <td>{{ e.regla }}</td><td>{{ e.objeto }}</td>
+        <td>{% if e.estado == 'ok' %}{{ chip(_('Hecha'), 'exito') }}{% elif e.estado == 'fallida' %}{{ chip(_('Fallida'), 'peligro') }}{% elif e.estado == 'error' %}{{ chip(_('Reintentando'), 'aviso') }}{% else %}{{ chip(_('En curso')) }}{% endif %}</td>
+        <td>{{ e.intentos }}</td>
+        <td>{{ e.error or (e.progreso|join(', ')) }}</td>
+        <td>{% if e.estado == 'fallida' %}<form action="{{ url_for('tareas.automatizaciones_reintentar', ejecucion_id=e.id) }}" method="post">{{ boton(_('Reintentar'), 'fantasma', tipo='submit', pequeno=True) }}</form>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="muted">{{ _('Todavía no se ha ejecutado ninguna regla.') }}</p>{% endif %}
+</section>
+{% endblock %}

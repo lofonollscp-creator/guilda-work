@@ -13708,3 +13708,79 @@ msgstr "PDF, imatges, text, CSV i documents d'Office. Fins a 15 MB cada un."
 
 msgid "Esta tarea tiene subtareas sin completar."
 msgstr "Aquesta tasca té subtasques sense completar."
+
+msgid "Automatizaciones"
+msgstr "Automatitzacions"
+
+msgid "Reglas que crean tareas o avisan solas cuando se cumple una condición: un certificado a punto de caducar, una tarea vencida o un modelo que se acerca."
+msgstr "Regles que creen tasques o avisen soles quan es compleix una condició: un certificat a punt de caducar, una tasca vençuda o un model que s'acosta."
+
+msgid "Empieza con una plantilla y ajusta los días. Las reglas se revisan una vez al día; repetirlas nunca crea dos veces la misma tarea."
+msgstr "Comença amb una plantilla i ajusta els dies. Les regles es revisen un cop al dia; repetir-les mai crea dues vegades la mateixa tasca."
+
+msgid "Renovar certificados antes de que caduquen"
+msgstr "Renova els certificats abans que caduquin"
+
+msgid "Avisar de tareas vencidas"
+msgstr "Avisa de tasques vençudes"
+
+msgid "Preparar el modelo antes de su fecha límite"
+msgstr "Prepara el model abans de la data límit"
+
+msgid "Reglas"
+msgstr "Regles"
+
+msgid "Apagada"
+msgstr "Apagada"
+
+msgid "Días de la condición"
+msgstr "Dies de la condició"
+
+msgid "Apagar"
+msgstr "Apaga"
+
+msgid "Activar"
+msgstr "Activa"
+
+msgid "Ver qué haría ahora"
+msgstr "Veure què faria ara"
+
+msgid "¿Borrar esta regla y su historial?"
+msgstr "Vols esborrar aquesta regla i el seu historial?"
+
+msgid "Es solo una vista previa: no se ha creado ni enviado nada."
+msgstr "Això és només una vista prèvia: no s'ha creat ni enviat res."
+
+msgid "Todavía no hay reglas"
+msgstr "Encara no hi ha regles"
+
+msgid "Añade una a partir de una plantilla."
+msgstr "Afegeix-ne una a partir d'una plantilla."
+
+msgid "Últimas ejecuciones"
+msgstr "Últimes execucions"
+
+msgid "Intentos"
+msgstr "Intents"
+
+msgid "Reintentando"
+msgstr "Reintentant"
+
+msgid "Reintentar"
+msgstr "Reintenta"
+
+msgid "Todavía no se ha ejecutado ninguna regla."
+msgstr "Encara no s'ha executat cap regla."
+
+msgid "Regla"
+msgstr "Regla"
+
+msgid "%(n)s ejecución ha fallado del todo. Revísala abajo y reinténtala."
+msgid_plural "%(n)s ejecuciones han fallado del todo. Revísalas abajo y reinténtalas."
+msgstr[0] "%(n)s execució ha fallat del tot. Revisa-la a sota i reintenta-la."
+msgstr[1] "%(n)s execucions han fallat del tot. Revisa-les a sota i reintenta-les."
+
+msgid "Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo."
+msgid_plural "Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos."
+msgstr[0] "Ara compleix %(n)s cas, dels quals %(nuevas)s seria nou."
+msgstr[1] "Ara compleixen %(n)s casos, dels quals %(nuevas)s serien nous."

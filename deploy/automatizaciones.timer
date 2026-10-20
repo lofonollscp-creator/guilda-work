@@ -1,0 +1,20 @@
+# Plantilla de timer systemd para automatizaciones.service. Copia
+# junto al .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now automatizaciones.timer
+#
+# 07:00 -- después de los timers de la madrugada (vencimientos 04:00, tareas
+# recurrentes), para que los avisos lleguen al empezar la jornada. La hora de
+# arranque es indiferente para el resultado: cada despacho cuenta «hoy» en su
+# propia zona horaria (tenants.zona_horaria, Europe/Madrid por defecto).
+
+[Unit]
+Description=Guilda Work - reglas de automatización (pasada diaria, ver automatizaciones.service)
+
+[Timer]
+OnCalendar=*-*-* 07:00:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

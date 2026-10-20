@@ -1,4 +1,4 @@
-{# Navegación de la sección Tareas. `subnav_activa`: lista | hoy | tablero | calendario | carga | sincronizar | recurrentes #}
+{# Navegación de la sección Tareas. `subnav_activa`: lista | hoy | tablero | calendario | carga | sincronizar | recurrentes | automatizaciones #}
 <nav class="tareas-subnav">
   <a class="{{ 'active' if subnav_activa == 'lista' }}" href="{{ url_for('tareas.listar') }}">{{ _('Lista') }}</a>
   <a class="{{ 'active' if subnav_activa == 'hoy' }}" href="{{ url_for('tareas.hoy') }}">{{ _('Mi día') }}</a>
@@ -8,4 +8,5 @@
   <a class="{{ 'active' if subnav_activa == 'sincronizar' }}" href="{{ url_for('tareas.sincronizar') }}">{{ _('Sincronizar') }}</a>
   <a class="{{ 'active' if subnav_activa == 'plantillas' }}" href="{{ url_for('tareas.plantillas') }}">{{ _('Plantillas') }}</a>
   <a class="{{ 'active' if subnav_activa == 'recurrentes' }}" href="{{ url_for('tareas.recurrentes') }}">{{ _('Recurrentes') }}</a>
+  {% if puede_automatizar() %}<a class="{{ 'active' if subnav_activa == 'automatizaciones' }}" href="{{ url_for('tareas.automatizaciones_lista') }}">{{ _('Automatizaciones') }}</a>{% endif %}
 </nav>

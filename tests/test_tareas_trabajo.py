@@ -219,3 +219,19 @@ def test_migracion_idempotente_y_rellena_lo_existente(cliente):
     finally:
         conn.close()
     assert [f["principal"] for f in filas] == [1]
+
+
+def test_borrar_un_cliente_o_un_despacho_no_se_atasca_con_tareas_vinculadas(cliente):
+    t, h, uid = _despacho(cliente, "bd1@ejemplo.com", "Despacho borrado")
+    c1, c2 = db.crear_cliente_fiscal(t, "Borrable SL"), db.crear_cliente_fiscal(t, "Quedará SL")
+    tid = db.crear_tarea_outlook(uid, asunto="Vinculada", cliente_fiscal_id=c1)
+    tt.fijar_clientes(uid, tid, [c1, c2], c1)
+    db.eliminar_cliente_fiscal_definitivamente(t, c1)                      # antes lanzaba IntegrityError por la clave foránea de tarea_clientes
+    assert [c["id"] for c in tt.clientes_de_tarea(tid)] == [c2]
+    db.borrar_tenant(t)                                                    # y el despacho entero, igual
+    conn = db.get_connection()
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM tarea_clientes WHERE tarea_id = ?", (tid,)).fetchone()[0] == 0
+        assert conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ?", (tid,)).fetchone() is not None       # la tarea es de la persona y se conserva
+    finally:
+        conn.close()

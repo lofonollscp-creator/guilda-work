@@ -87,6 +87,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Facturación conectada con los expedientes](#facturación-conectada-con-los-expedientes)
 - [Facturas para contabilizar y fichero de enlace de a3 (SUENLACE.DAT)](#facturas-para-contabilizar-y-fichero-de-enlace-de-a3-suenlacedat)
 - [Trabajo con tareas: versión, bloqueo y varios clientes (octubre de 2026)](#trabajo-con-tareas-versión-bloqueo-y-varios-clientes-octubre-de-2026)
+- [Automatizaciones: reglas que crean tareas y avisan (octubre de 2026)](#automatizaciones-reglas-que-crean-tareas-y-avisan-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3297,3 +3298,16 @@ Fase 1 del plan de `docs/guilda-work-implementation-plan.md`, todo aditivo sobre
 - **Ya existía y no se ha tocado**: comentarios con menciones, dependencias con detección de ciclos, calendario, plantillas y tareas recurrentes.
 - **Reversión**: la columna `tarea_padre_id` se puede ignorar y `DROP TABLE tarea_adjuntos` no tiene dependientes. Con adjuntos ya subidos, haz copia antes de borrar la tabla.
 - **Pendiente** (siguientes incrementos): herramientas MCP e IA equivalentes, selector de varios clientes al crear la tarea (hoy solo al editarla) y las fases 4 y 5 del plan.
+
+## Automatizaciones: reglas que crean tareas y avisan (octubre de 2026)
+
+Fase 4 del plan de `docs/guilda-work-implementation-plan.md`. Código en `app/automatizaciones.py`; pantalla en Tareas › Automatizaciones (solo la dirección del despacho); pasada diaria en `scripts/ejecutar_automatizaciones.py`.
+
+- **Qué es**: disparador → condiciones → acciones, por despacho. Disparadores: `certificado.caduca` (un certificado dentro de N días de caducar y sin sucesor), `tarea.vencida` (N días vencida; filtros de prioridad y cliente) y `vencimiento.proximo` (modelo fiscal pendiente a N días, con filtro de modelo). Acciones: `crear_tarea` (asunto con `{titular}`, `{fecha}`, `{dias}`, `{cliente}`…; asignada al responsable, a la dirección o a una persona), `notificar` (campana y push) y `comentar` (nota en el historial de la tarea vencida). La pantalla ofrece tres plantillas y permite ajustar los días, apagar, simular y borrar; las acciones de una plantilla se cambian de momento por API/código, no desde la pantalla.
+- **Migración al arrancar** (`automatizaciones.crear_esquema`, enganchada en `db.init_db`): tablas `automatizaciones_reglas` y `automatizaciones_ejecuciones`. Reversión: `DROP TABLE automatizaciones_ejecuciones; DROP TABLE automatizaciones_reglas;` (no tienen dependientes). El borrado de un despacho las limpia.
+- **Programarlo**: copiar `deploy/automatizaciones.service` y `.timer` a `/etc/systemd/system/` (ajustar `USUARIO`), `sudo systemctl daemon-reload && sudo systemctl enable --now automatizaciones.timer`. Corre a las 07:00; la hora de arranque no cambia el resultado porque cada despacho cuenta «hoy» en su zona (`tenants.zona_horaria`, Europe/Madrid por defecto). Anota su latido en el panel de salud con el nombre `automatizaciones`.
+- **Garantías**: idempotente (clave única regla + ocurrencia, p. ej. «este certificado con esta caducidad»; repetir la pasada no duplica y un certificado renovado cambia de caducidad, así que el aviso viejo desaparece solo); reintentos acotados a 15 min, 1 h y 4 h, y al tercer fallo queda `fallida` y se avisa una vez a la dirección (botón «Reintentar»); un reintento no repite las acciones ya hechas, y si el objeto ya no cumple se cierra sin actuar; sin bucles (las tareas creadas por una regla llevan `referencia_externa = auto:…` y ninguna regla de tareas vencidas las toca); topes de 50 reglas por despacho, 5 acciones por regla y 200 ejecuciones por pasada; aislamiento por despacho; todo cambio de regla queda en la auditoría.
+- **Relación con otros módulos**: no sustituye al aviso por correo de los certificados (`certificados.revisar_avisos`) ni al motor de alertas del control fiscal (`app/avisos.py`): añade la **tarea de renovación**, que antes no existía, y reglas propias de cada despacho.
+- **Arreglo de la Fase 1**: borrar para siempre un cliente fiscal o un despacho con tareas vinculadas fallaba por la clave foránea de `tarea_clientes`; ahora `tareas_trabajo.desvincular_cliente` y `borrar_datos_de_tenant` la limpian (test en `tests/test_tareas_trabajo.py`).
+- **Pruebas**: `tests/test_automatizaciones.py` (23 tests).
+- **Pendiente**: constructor de reglas completo en pantalla (condiciones y acciones libres), disparadores por evento (`task.status_changed`, `client_service.activated`) y herramientas MCP e IA.

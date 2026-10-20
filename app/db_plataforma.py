@@ -720,6 +720,9 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
         auditoria.purgar_tenant(conn, tenant_id)                   # el despacho se elimina entero: su rastro también (solo aquí se puede borrar)
         traspasos.borrar_datos_de_tenant(conn, tenant_id)
         certificados.borrar_datos_de_tenant(conn, tenant_id)      # antes que los clientes fiscales: sus vínculos los referencian
+        from . import automatizaciones, tareas_trabajo
+        automatizaciones.borrar_datos_de_tenant(conn, tenant_id)
+        tareas_trabajo.borrar_datos_de_tenant(conn, tenant_id)    # antes que los clientes fiscales: tarea_clientes los referencia
         conn.execute("DELETE FROM concesiones_cliente WHERE tenant_id = ?", (tenant_id,))
         venc = "SELECT id FROM vencimientos_fiscales WHERE tenant_id = ?"
         clientes = "SELECT id FROM clientes_fiscales WHERE tenant_id = ?"

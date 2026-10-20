@@ -272,6 +272,8 @@ def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> 
         conn.execute("UPDATE certificados_vinculos SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.execute("DELETE FROM concesiones_cliente WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.execute("DELETE FROM traspasos WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
+        from . import tareas_trabajo
+        tareas_trabajo.desvincular_cliente(conn, tenant_id, cliente_id)       # las tareas se conservan, sin el cliente
         conn.execute("DELETE FROM clientes_fiscales WHERE id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.commit()
     finally:

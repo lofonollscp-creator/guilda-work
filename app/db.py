@@ -2272,6 +2272,8 @@ def init_db() -> None:
         auditoria.crear_esquema(conn)         # auditoría unificada, solo de anexado (app/auditoria.py)
         from . import tareas_trabajo
         tareas_trabajo.crear_esquema(conn)    # versión y bloqueo de tareas, varios clientes por tarea (app/tareas_trabajo.py)
+        from . import automatizaciones
+        automatizaciones.crear_esquema(conn)  # reglas de automatización y sus ejecuciones (app/automatizaciones.py)
         from . import fiscal_base
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
         from . import facturacion_despacho

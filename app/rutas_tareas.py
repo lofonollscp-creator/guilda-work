@@ -1177,3 +1177,106 @@ def importar_archivo():
         return render_template("tareas_outlook_sync.html", resumen=None, error=str(e))
 
     return render_template("tareas_outlook_sync.html", resumen=resumen, error=None)
+
+
+# --- Automatizaciones (solo la dirección del despacho; ver app/automatizaciones.py) -----------------------------------------
+
+def _direccion_o_404():
+    from . import acceso
+    if not g.tenant_id or not acceso.es_directivo(g.usuario_id):
+        abort(404)
+
+
+def _pagina_automatizaciones(simulacion=None, error=None):
+    from . import automatizaciones
+    reglas = automatizaciones.listar_reglas(g.tenant_id)
+    return render_template(
+        "tareas_automatizaciones.html", reglas=reglas, plantillas=automatizaciones.PLANTILLAS, ejecuciones=automatizaciones.ejecuciones(g.tenant_id, limite=40),
+        salud=automatizaciones.resumen_de_salud(g.tenant_id), simulacion=simulacion, error=error or (request.args.get("error") or "")[:200] or None,
+        parametro_de={r["id"]: ("dias_antes" if "dias_antes" in r["condiciones"] else "dias_vencida") for r in reglas},
+    )
+
+
+@tareas_bp.route("/automatizaciones")
+@login_required
+def automatizaciones_lista():
+    _direccion_o_404()
+    return _pagina_automatizaciones()
+
+
+@tareas_bp.route("/automatizaciones/nueva", methods=["POST"])
+@login_required
+def automatizaciones_nueva():
+    _direccion_o_404()
+    from . import automatizaciones
+    p = automatizaciones.PLANTILLAS.get(request.form.get("plantilla", ""))
+    if p is None:
+        abort(400)
+    try:
+        automatizaciones.crear_regla(g.tenant_id, g.usuario_id, p["nombre"], p["disparador"], p["condiciones"], p["acciones"])
+    except ValueError as e:
+        return redirect(url_for("tareas.automatizaciones_lista", error=str(e)))
+    return redirect(url_for("tareas.automatizaciones_lista"))
+
+
+@tareas_bp.route("/automatizaciones/<int:regla_id>/cambiar", methods=["POST"])
+@login_required
+def automatizaciones_cambiar(regla_id: int):
+    _direccion_o_404()
+    from . import automatizaciones
+    r = automatizaciones.obtener_regla(g.tenant_id, regla_id)
+    if r is None:
+        abort(404)
+    cambios = {}
+    if request.form.get("accion") in ("activar", "apagar"):
+        cambios["activa"] = request.form["accion"] == "activar"
+    if request.form.get("dias") not in (None, ""):
+        cambios["condiciones"] = {**r["condiciones"], ("dias_antes" if "dias_antes" in r["condiciones"] else "dias_vencida"): request.form["dias"]}
+    try:
+        automatizaciones.cambiar_regla(g.tenant_id, g.usuario_id, regla_id, **cambios)
+    except ValueError as e:
+        return redirect(url_for("tareas.automatizaciones_lista", error=str(e)))
+    return redirect(url_for("tareas.automatizaciones_lista"))
+
+
+@tareas_bp.route("/automatizaciones/<int:regla_id>/simular", methods=["POST"])
+@login_required
+def automatizaciones_simular(regla_id: int):
+    _direccion_o_404()
+    from . import automatizaciones
+    try:
+        simulacion = {"regla_id": regla_id, **automatizaciones.simular(g.tenant_id, regla_id)}
+    except LookupError:
+        abort(404)
+    return _pagina_automatizaciones(simulacion)
+
+
+@tareas_bp.route("/automatizaciones/<int:regla_id>/borrar", methods=["POST"])
+@login_required
+def automatizaciones_borrar(regla_id: int):
+    _direccion_o_404()
+    from . import automatizaciones
+    if not automatizaciones.borrar_regla(g.tenant_id, g.usuario_id, regla_id):
+        abort(404)
+    return redirect(url_for("tareas.automatizaciones_lista"))
+
+
+@tareas_bp.route("/automatizaciones/ejecuciones/<int:ejecucion_id>/reintentar", methods=["POST"])
+@login_required
+def automatizaciones_reintentar(ejecucion_id: int):
+    _direccion_o_404()
+    from . import automatizaciones
+    if not automatizaciones.reintentar(g.tenant_id, g.usuario_id, ejecucion_id):
+        abort(404)
+    return redirect(url_for("tareas.automatizaciones_lista"))
+
+
+@tareas_bp.app_context_processor
+def _inyectar_automatizar():
+    """`puede_automatizar()` para la navegación de Tareas: se calcula solo si la plantilla lo pide (una vez por petición) y solo es verdad para la dirección del despacho."""
+    def puede_automatizar() -> bool:
+        if not hasattr(g, "_puede_automatizar"):
+            from . import acceso
+            g._puede_automatizar = bool(getattr(g, "usuario_id", None) and getattr(g, "tenant_id", None) and acceso.es_directivo(g.usuario_id))
+        return g._puede_automatizar
+    return {"puede_automatizar": puede_automatizar}

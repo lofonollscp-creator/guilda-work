@@ -447,3 +447,15 @@ def eliminar_adjunto(usuario_id: int, adjunto_id: int) -> bool:
         conn.close()
     db.registrar_actividad_tarea(usuario_id, a["tarea_id"], "adjunto_eliminado", a["nombre_archivo"])
     return True
+
+
+def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
+    """Al borrar un despacho entero: sus vínculos tarea-cliente se van con él (referencian a sus clientes) y los adjuntos, que son de la tarea y de la persona, dejan de apuntar a un despacho que ya no existe."""
+    conn.execute("DELETE FROM tarea_clientes WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+
+
+def desvincular_cliente(conn, tenant_id: int, cliente_fiscal_id: int) -> None:
+    """Al borrar un cliente fiscal para siempre: las tareas siguen existiendo, solo dejan de estar vinculadas a él (y si era el principal, cliente_fiscal_id queda vacío)."""
+    conn.execute("DELETE FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
+    conn.execute("UPDATE tareas_outlook SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,))

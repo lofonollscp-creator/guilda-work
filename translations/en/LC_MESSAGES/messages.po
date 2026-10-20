@@ -13699,3 +13699,79 @@ msgstr "PDF, images, text, CSV and Office documents. Up to 15 MB each."
 
 msgid "Esta tarea tiene subtareas sin completar."
 msgstr "This task has subtasks that are not completed."
+
+msgid "Automatizaciones"
+msgstr "Automations"
+
+msgid "Reglas que crean tareas o avisan solas cuando se cumple una condición: un certificado a punto de caducar, una tarea vencida o un modelo que se acerca."
+msgstr "Rules that create tasks or send alerts on their own when a condition is met: a certificate about to expire, an overdue task or an approaching tax form."
+
+msgid "Empieza con una plantilla y ajusta los días. Las reglas se revisan una vez al día; repetirlas nunca crea dos veces la misma tarea."
+msgstr "Start with a template and adjust the days. Rules are checked once a day; repeating them never creates the same task twice."
+
+msgid "Renovar certificados antes de que caduquen"
+msgstr "Renew certificates before they expire"
+
+msgid "Avisar de tareas vencidas"
+msgstr "Alert about overdue tasks"
+
+msgid "Preparar el modelo antes de su fecha límite"
+msgstr "Prepare the tax form before its deadline"
+
+msgid "Reglas"
+msgstr "Rules"
+
+msgid "Apagada"
+msgstr "Off"
+
+msgid "Días de la condición"
+msgstr "Days of the condition"
+
+msgid "Apagar"
+msgstr "Turn off"
+
+msgid "Activar"
+msgstr "Turn on"
+
+msgid "Ver qué haría ahora"
+msgstr "See what it would do now"
+
+msgid "¿Borrar esta regla y su historial?"
+msgstr "Delete this rule and its history?"
+
+msgid "Es solo una vista previa: no se ha creado ni enviado nada."
+msgstr "This is only a preview: nothing has been created or sent."
+
+msgid "Todavía no hay reglas"
+msgstr "There are no rules yet"
+
+msgid "Añade una a partir de una plantilla."
+msgstr "Add one from a template."
+
+msgid "Últimas ejecuciones"
+msgstr "Latest runs"
+
+msgid "Intentos"
+msgstr "Attempts"
+
+msgid "Reintentando"
+msgstr "Retrying"
+
+msgid "Reintentar"
+msgstr "Retry"
+
+msgid "Todavía no se ha ejecutado ninguna regla."
+msgstr "No rule has run yet."
+
+msgid "Regla"
+msgstr "Rule"
+
+msgid "%(n)s ejecución ha fallado del todo. Revísala abajo y reinténtala."
+msgid_plural "%(n)s ejecuciones han fallado del todo. Revísalas abajo y reinténtalas."
+msgstr[0] "%(n)s run has failed completely. Review it below and retry it."
+msgstr[1] "%(n)s runs have failed completely. Review them below and retry them."
+
+msgid "Ahora cumple %(n)s caso, de los que %(nuevas)s sería nuevo."
+msgid_plural "Ahora cumplen %(n)s casos, de los que %(nuevas)s serían nuevos."
+msgstr[0] "It currently matches %(n)s case, of which %(nuevas)s would be new."
+msgstr[1] "It currently matches %(n)s cases, of which %(nuevas)s would be new."
