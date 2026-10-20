@@ -115,6 +115,11 @@ CASOS: list[tuple[str, str]] = [
     ("comprueba el fichero suenlace antes de llevarlo a a3", "contabilidad_comprobar_exportacion"),
     ("anota la factura del cliente para contabilizarla", "contabilidad_anotar_factura"),
     ("genera el fichero suenlace para a3 de este cliente", "contabilidad_exportar"),
+    ("dame el informe de tareas vencidas por cliente", "informe_tareas"),
+    ("pide la revisión de esta tarea a Marta antes de cerrarla", "pedir_revision_tarea"),
+    ("la tarea está bloqueada, apunta el motivo", "cambiar_estado_tarea_con_motivo"),
+    ("qué automatizaciones tiene el despacho y cuáles han fallado", "listar_ejecuciones_automatizacion"),
+    ("añade una subtarea para pedir el certificado", "crear_subtarea"),
     # firmas
     ("envía el contrato a firma electrónica", "enviar_documento_a_firma"),
     ("qué documentos están pendientes de firma", "listar_documentos_firma"),

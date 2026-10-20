@@ -16,6 +16,7 @@ GRUPOS: dict[str, tuple[str, ...]] = {
     ),
     "soporte": ("ver_mis_ajustes", "cambiar_mis_ajustes"),
     "tareas_avanzadas": (
+        "cambiar_estado_tarea_con_motivo", "listar_subtareas_tarea", "crear_subtarea", "listar_clientes_de_tarea", "fijar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "informe_tareas", "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion",
         "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones", "consumo_ia", "listar_comunicados",
         "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
         "asignar_tarea", "listar_companeros", "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
@@ -52,7 +53,7 @@ GRUPOS: dict[str, tuple[str, ...]] = {
 }
 
 DESCRIPCIONES: dict[str, str] = {
-    "tareas_avanzadas": "checklist, asignar a compañeros, proyectos, recurrentes, papelera, exportar/importar, estadísticas",
+    "tareas_avanzadas": "checklist, subtareas, asignar a compañeros, proyectos, recurrentes, papelera, exportar/importar, estadísticas, bloqueos con motivo, clientes de una tarea, revisiones, informe de tareas y consulta de automatizaciones",
     "correo": "bandeja, leer/mover/destacar, borradores, reglas, categorías, conversaciones",
     "fiscal": "clientes fiscales y vencimientos (modelos, presentar, generar), certificados, panel de control y traspasos de clientes",
     "despacho": "clientes, expedientes (asuntos u operaciones) y plazos y documentos del despacho, solo lectura",
@@ -69,7 +70,7 @@ DESCRIPCIONES: dict[str, str] = {
 
 # Palabras clave (en minúsculas, por prefijo de palabra) que activan un grupo en el chat.
 PALABRAS: dict[str, tuple[str, ...]] = {
-    "tareas_avanzadas": ("checklist", "subtarea", "asigna", "compañer", "proyecto", "recurrente", "papelera", "estadístic", "estadistic", "exporta", "importa", "fija", "elimina", "borra", "cronómetro", "cronometro", "cronometra", "comenta", "comentario", "mención", "dependencia", "estimaci"),
+    "tareas_avanzadas": ("checklist", "revisión de la tarea", "revision de la tarea", "pide la revisi", "pedir revisi", "que la revise", "que revise", "informe de tareas", "informe de las tareas", "cumplimiento en plazo", "automatizaci", "bloquead", "subtarea", "asigna", "compañer", "proyecto", "recurrente", "papelera", "estadístic", "estadistic", "exporta", "importa", "fija", "elimina", "borra", "cronómetro", "cronometro", "cronometra", "comenta", "comentario", "mención", "dependencia", "estimaci"),
     "correo": ("correo", "mail", "email", "bandeja", "borrador", "remitente", "adjunto", "responde", "respuesta", "mueve", "destaca", "pospon", "conversaci", "regla"),
     "fiscal": ("fiscal", "vencimiento", "modelo", "iva", "irpf", "impuesto", "presentar", "presentad", "declaraci", "gestor", "cliente", "certificad", "traspas", "panel fiscal"),
     "despacho": ("documento", "expediente", "asunto", "operaci", "inmueble", "plazo", "procesal", "cliente", "resume", "ficha", "demanda", "mandato"),

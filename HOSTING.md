@@ -89,6 +89,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Trabajo con tareas: versión, bloqueo y varios clientes (octubre de 2026)](#trabajo-con-tareas-versión-bloqueo-y-varios-clientes-octubre-de-2026)
 - [Automatizaciones: reglas que crean tareas y avisan (octubre de 2026)](#automatizaciones-reglas-que-crean-tareas-y-avisan-octubre-de-2026)
 - [Informes de tareas, revisiones y tareas en el portal (octubre de 2026)](#informes-de-tareas-revisiones-y-tareas-en-el-portal-octubre-de-2026)
+- [Herramientas MCP e IA para tareas (octubre de 2026)](#herramientas-mcp-e-ia-para-tareas-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3323,3 +3324,13 @@ Fase 5 del plan de `docs/guilda-work-implementation-plan.md`. Código en `app/in
 - **Migración al arrancar** (`tareas_trabajo.crear_esquema`, idempotente): tabla `tarea_revisiones` (índice único: una sola pendiente por tarea) y columna `tareas_outlook.visible_cliente`. Reversión: la columna se puede ignorar y `DROP TABLE tarea_revisiones` no tiene dependientes.
 - **Pruebas**: `tests/test_informes_tareas.py` (10), `tests/test_tareas_revision.py` (8) y `tests/test_tareas_portal_cliente.py` (7).
 - **Pendiente**: aprobaciones con varios revisores o cadenas, comentarios del cliente desde el portal, informes guardados o programados y herramientas MCP e IA para tareas.
+
+## Herramientas MCP e IA para tareas (octubre de 2026)
+
+Catorce herramientas nuevas en `mcp_tools/herramientas_tareas_trabajo.py`, expuestas por el servidor MCP y por el asistente de IA (grupo `tareas_avanzadas`, que se ofrece con frases como «informe de tareas», «pide la revisión de la tarea», «subtarea», «bloqueada» o «automatizaciones»). Llaman a la misma lógica que la web y la API (`app/tareas_trabajo.py`, `app/informes_tareas.py`, `app/automatizaciones.py`): mismos permisos, mismo aislamiento por despacho y mismas reglas de cierre.
+
+- **Lectura** (sin confirmación en el chat; las únicas del perfil MCP de solo lectura): `listar_subtareas_tarea`, `listar_clientes_de_tarea`, `listar_tareas_de_cliente` (con contadores), `listar_adjuntos_tarea` (solo la lista, nunca el contenido), `listar_revisiones_tarea`, `informe_tareas`, y, **solo para la dirección**, `listar_reglas_automatizacion`, `simular_regla_automatizacion` (no escribe nada) y `listar_ejecuciones_automatizacion`.
+- **Escritura** (el chat pide confirmación salvo en modo autónomo): `cambiar_estado_tarea_con_motivo` (el bloqueo exige motivo; acepta la `version` leída y rechaza el cambio si la tarea se tocó antes; no completa con subtareas abiertas ni con una revisión pendiente), `crear_subtarea`, `fijar_clientes_de_tarea`, `pedir_revision_tarea` y `resolver_revision_tarea` (solo el revisor designado).
+- **Lo que deliberadamente no se ofrece**: marcar una tarea como visible para el cliente en su portal, y crear, cambiar o borrar reglas de automatización. Son decisiones de una persona (lo que ve un cliente y qué hace el sistema por su cuenta cada día); se hacen desde la pantalla o la API.
+- **Nombres**: las de automatización no empiezan por `automatizaciones_` porque ese prefijo es el de la integración con flujos externos. Contadores: 170 herramientas del asistente y 225 del MCP en el árbol de trabajo.
+- **Pruebas**: `tests/test_herramientas_tareas_trabajo.py` (9 tests), cinco peticiones nuevas en `tests/datos/evaluacion_herramientas.py` y los contadores de `tests/test_mcp_tools.py` y `tests/test_ia_herramientas.py`.
