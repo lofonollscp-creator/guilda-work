@@ -6,7 +6,7 @@ from datetime import date, timedelta
 
 from flask import abort, g, request
 
-from . import db, quickadd
+from . import db, quickadd, tareas_trabajo
 from .auth import token_required
 from .rutas_api import _body, _dict, _dicts, _err, _ok, _ok_paginado, api_bp
 from .rutas_tareas import (
@@ -46,6 +46,8 @@ def cambiar_estado_tarea(tarea_id: int):
         return _err(f"estado debe ser uno de: {', '.join(ESTADOS)}.", 400, "estado_invalido", "estado")
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
         return _err(MENSAJE_BLOQUEADA, 409, "tarea_bloqueada")
+    if estado == "completada" and tareas_trabajo.subtareas_abiertas(tarea_id):
+        return _err(tareas_trabajo.MENSAJE_SUBTAREAS, 409, "subtareas_abiertas")
     if not db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, estado):
         return _sin_permiso()
     _avisar_desbloqueos(g.usuario_id, tarea_id, previa["estado"] == "completada")

@@ -31,6 +31,21 @@ CREATE TABLE IF NOT EXISTS tarea_clientes (
 CREATE INDEX IF NOT EXISTS idx_tarea_clientes_cliente ON tarea_clientes(tenant_id, cliente_fiscal_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_clientes_principal ON tarea_clientes(tarea_id) WHERE principal = 1;
 CREATE INDEX IF NOT EXISTS idx_tareas_outlook_cliente ON tareas_outlook(cliente_fiscal_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_outlook_padre ON tareas_outlook(tarea_padre_id);
+CREATE TABLE IF NOT EXISTS tarea_adjuntos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    hash_sha256 TEXT NOT NULL,
+    subido_por INTEGER REFERENCES usuarios(id),
+    creado_en TEXT NOT NULL,
+    papelera_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_adjuntos_tarea ON tarea_adjuntos(tarea_id);
 CREATE TRIGGER IF NOT EXISTS tareas_outlook_version AFTER UPDATE ON tareas_outlook
 WHEN NEW.version = OLD.version
 BEGIN UPDATE tareas_outlook SET version = OLD.version + 1 WHERE id = NEW.id; END;
@@ -56,6 +71,7 @@ def crear_esquema(conn) -> None:
     """Idempotente: columnas nuevas, tabla de vínculos, disparador de versión y vínculo principal de lo que ya existía."""
     db._asegurar_columna(conn, "tareas_outlook", "version", "INTEGER NOT NULL DEFAULT 1")
     db._asegurar_columna(conn, "tareas_outlook", "motivo_bloqueo", "TEXT")
+    db._asegurar_columna(conn, "tareas_outlook", "tarea_padre_id", "INTEGER REFERENCES tareas_outlook(id)")
     conn.executescript(ESQUEMA)
     conn.execute(
         """INSERT OR IGNORE INTO tarea_clientes (tenant_id, tarea_id, cliente_fiscal_id, principal, creado_en)
@@ -140,6 +156,8 @@ def transicionar(usuario_id: int, tarea_id: int, estado: str, motivo: str | None
         raise TransicionInvalida("motivo_obligatorio", "Indica por qué la tarea queda bloqueada.", "motivo")
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
         raise TransicionInvalida("tarea_bloqueada", "Esta tarea espera a otras que todavía no están completadas.")
+    if estado == "completada":
+        comprobar_completable(tarea_id)
     reclamar_version(tarea_id, version)
     if not db.cambiar_estado_tarea_outlook(usuario_id, tarea_id, estado):
         raise TransicionInvalida("sin_permiso", "No tienes permiso para hacer esto con esta tarea.")
@@ -235,3 +253,197 @@ def contadores_de_cliente(tareas: list, hoy: date | None = None) -> dict:
     abiertas = [t for t in tareas if t["estado"] != "completada"]
     return {"abiertas": len(abiertas), "vencidas": sum(1 for t in abiertas if esta_vencida(t["fecha_vencimiento"], t["estado"], hoy)),
             "completadas": len(tareas) - len(abiertas), "total": len(tareas)}
+
+
+# --- Subtareas ------------------------------------------------------------------------------------------------------
+# Una subtarea es una tarea de verdad (con su estado, fecha, responsable y comentarios) colgada de otra, a UN solo nivel. Política de cierre, explícita:
+#   - la tarea padre no se puede completar mientras tenga subtareas abiertas (las que están en la papelera no cuentan);
+#   - al completar la última subtarea el padre NO se completa solo: la persona decide;
+#   - si se reabre una subtarea de un padre ya completado, el padre vuelve a «en progreso» (no puede estar completo con trabajo abierto);
+#   - mandar el padre a la papelera manda con él las subtareas, y restaurarlo restaura las que se fueron con él.
+
+MENSAJE_SUBTAREAS = "Esta tarea tiene subtareas sin completar."
+
+
+def subtareas_de(tarea_id: int) -> list[dict]:
+    conn = db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            """SELECT id, asunto, estado, fecha_vencimiento, asignada_a, usuario_id FROM tareas_outlook
+               WHERE tarea_padre_id = ? AND papelera_en IS NULL ORDER BY (estado = 'completada'), fecha_vencimiento IS NULL, fecha_vencimiento, id""", (tarea_id,))]
+    finally:
+        conn.close()
+
+
+def subtareas_abiertas(tarea_id: int) -> int:
+    conn = db.get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) FROM tareas_outlook WHERE tarea_padre_id = ? AND papelera_en IS NULL AND estado != 'completada'", (tarea_id,)).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def progreso_subtareas(subtareas: list[dict]) -> dict:
+    hechas = sum(1 for t in subtareas if t["estado"] == "completada")
+    return {"total": len(subtareas), "hechas": hechas, "abiertas": len(subtareas) - hechas}
+
+
+def padre_de(tarea_id: int) -> int | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT tarea_padre_id FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+        return f["tarea_padre_id"] if f else None
+    finally:
+        conn.close()
+
+
+def crear_subtarea(usuario_id: int, padre_id: int, asunto: str, fecha_vencimiento: str | None = None, asignada_a: int | None = None) -> int:
+    """Quien puede editar la tarea padre añade subtareas. Hereda el cliente principal y el proyecto del padre. Solo un nivel; no sobre una tarea completada."""
+    padre = db.obtener_tarea_outlook_visible(usuario_id, padre_id)
+    if padre is None:
+        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+    if not db.puede_editar_tarea(usuario_id, padre_id):
+        raise TransicionInvalida("sin_permiso", "No tienes permiso para añadir subtareas a esta tarea.")
+    asunto = (asunto or "").strip()[:300]
+    if not asunto:
+        raise TransicionInvalida("asunto_vacio", "El asunto no puede estar vacío.", "asunto")
+    if padre["tarea_padre_id"] is not None:
+        raise TransicionInvalida("subtarea_de_subtarea", "Una subtarea no puede tener subtareas: solo se permite un nivel.")
+    if padre["estado"] == "completada":
+        raise TransicionInvalida("padre_completada", "Reabre la tarea antes de añadirle subtareas.")
+    nueva = db.crear_tarea_outlook(usuario_id, asunto=asunto, fecha_vencimiento=fecha_vencimiento or None, cliente_fiscal_id=padre["cliente_fiscal_id"],
+                                   categoria_id=padre["categoria_id"])
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE tareas_outlook SET tarea_padre_id = ? WHERE id = ?", (padre_id, nueva))
+        conn.commit()
+    finally:
+        conn.close()
+    if asignada_a and db.asignar_tarea_outlook(usuario_id, nueva, asignada_a):
+        pass
+    db.registrar_actividad_tarea(usuario_id, padre_id, "subtarea_nueva", asunto)
+    return nueva
+
+
+def comprobar_completable(tarea_id: int) -> None:
+    """Lanza TransicionInvalida si la tarea tiene subtareas abiertas (la política de cierre de arriba)."""
+    if subtareas_abiertas(tarea_id):
+        raise TransicionInvalida("subtareas_abiertas", MENSAJE_SUBTAREAS)
+
+
+def al_cambiar_estado(usuario_id: int, tarea_id: int, antes: str | None, despues: str) -> None:
+    """Si una subtarea sale de «completada» y su padre estaba completado, el padre vuelve a «en progreso»."""
+    if antes != "completada" or despues == "completada":
+        return
+    padre_id = padre_de(tarea_id)
+    if padre_id is None:
+        return
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso', fecha_completada = NULL, actualizada_en = ? WHERE id = ? AND estado = 'completada' AND papelera_en IS NULL",
+                           (db.now_iso(), padre_id))
+        conn.commit()
+    finally:
+        conn.close()
+    if cur.rowcount:
+        db.registrar_actividad_tarea(usuario_id, padre_id, "reabierta_por_subtarea", db._asunto_tarea(tarea_id))
+
+
+# --- Adjuntos ---------------------------------------------------------------------------------------------------------
+# Archivos de trabajo de la tarea, en la base (mismo criterio que los adjuntos de notas, pero con más tipos y más tamaño). Se sirven siempre como descarga con
+# el tipo que decide el servidor (nunca el que dice el navegador) para que un HTML o un SVG subido no se ejecute. Las claves privadas y los .p12/.pfx no se guardan nunca.
+
+TIPOS_ADJUNTO = {
+    "pdf": "application/pdf", "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp",
+    "txt": "text/plain", "csv": "text/csv", "md": "text/plain",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "odt": "application/vnd.oasis.opendocument.text", "ods": "application/vnd.oasis.opendocument.spreadsheet", "odp": "application/vnd.oasis.opendocument.presentation",
+}
+IMAGENES = ("png", "jpg", "jpeg", "gif", "webp")
+MAX_ADJUNTO_BYTES = 15 * 1024 * 1024
+MAX_ADJUNTOS_POR_TAREA = 20
+
+
+def _extension(nombre: str) -> str:
+    return nombre.rsplit(".", 1)[-1].lower() if "." in nombre else ""
+
+
+def subir_adjunto(usuario_id: int, tarea_id: int, nombre: str, contenido: bytes) -> int:
+    """Quien trabaja la tarea (dueño, asignado o colaborador) adjunta archivos. Devuelve el id; lanza TransicionInvalida con un código estable si no se puede."""
+    import hashlib
+    if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+    if not db.puede_trabajar_tarea(usuario_id, tarea_id):
+        raise TransicionInvalida("sin_permiso", "No tienes permiso para adjuntar archivos a esta tarea.")
+    nombre = db._nombre_de_archivo_seguro(nombre or "")[:150]
+    ext = _extension(nombre)
+    if ext not in TIPOS_ADJUNTO:
+        raise TransicionInvalida("tipo_no_admitido", "Tipo de archivo no admitido (PDF, imágenes, texto, CSV y documentos de Office o LibreOffice).", "adjunto")
+    if not contenido:
+        raise TransicionInvalida("archivo_vacio", "El archivo está vacío.", "adjunto")
+    if len(contenido) > MAX_ADJUNTO_BYTES:
+        raise TransicionInvalida("archivo_grande", f"El archivo supera los {MAX_ADJUNTO_BYTES // (1024 * 1024)} MB.", "adjunto")
+    from . import certificados
+    if certificados.contiene_clave_privada(contenido):
+        raise TransicionInvalida("clave_privada", "Los certificados con clave privada no se adjuntan nunca.", "adjunto")
+    huella = hashlib.sha256(contenido).hexdigest()
+    conn = db.get_connection()
+    try:
+        if conn.execute("SELECT 1 FROM tarea_adjuntos WHERE tarea_id = ? AND hash_sha256 = ? AND papelera_en IS NULL", (tarea_id, huella)).fetchone():
+            raise TransicionInvalida("duplicado", "Ese archivo ya está adjunto a la tarea.", "adjunto")
+        if conn.execute("SELECT COUNT(*) FROM tarea_adjuntos WHERE tarea_id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()[0] >= MAX_ADJUNTOS_POR_TAREA:
+            raise TransicionInvalida("limite", f"Una tarea admite hasta {MAX_ADJUNTOS_POR_TAREA} archivos.", "adjunto")
+        cur = conn.execute(
+            "INSERT INTO tarea_adjuntos (tenant_id, tarea_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, hash_sha256, subido_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (_tenant_de_usuario(conn, usuario_id), tarea_id, nombre, TIPOS_ADJUNTO[ext], len(contenido), contenido, huella, usuario_id, db.now_iso()))
+        conn.commit()
+        adjunto_id = cur.lastrowid
+    finally:
+        conn.close()
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "adjunto", nombre)
+    return adjunto_id
+
+
+def listar_adjuntos(tarea_id: int) -> list[dict]:
+    """Metadatos, sin el contenido. Quien llama ya comprobó que ve la tarea."""
+    conn = db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            """SELECT a.id, a.nombre_archivo, a.tipo_mime, a.tamano_bytes, a.subido_por, a.creado_en FROM tarea_adjuntos a
+               WHERE a.tarea_id = ? AND a.papelera_en IS NULL ORDER BY a.id""", (tarea_id,))]
+    finally:
+        conn.close()
+
+
+def leer_adjunto(usuario_id: int, adjunto_id: int) -> dict | None:
+    """El adjunto con su contenido, o None si no existe o la persona no ve la tarea."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM tarea_adjuntos WHERE id = ? AND papelera_en IS NULL", (adjunto_id,)).fetchone()
+    finally:
+        conn.close()
+    if f is None or db.obtener_tarea_outlook_visible(usuario_id, f["tarea_id"]) is None:
+        return None
+    d = {k: f[k] for k in f.keys() if k != "contenido"}
+    d["contenido"] = bytes(f["contenido"])
+    d["imagen"] = _extension(f["nombre_archivo"]) in IMAGENES
+    return d
+
+
+def eliminar_adjunto(usuario_id: int, adjunto_id: int) -> bool:
+    """A la papelera: quien lo subió o el dueño de la tarea."""
+    a = leer_adjunto(usuario_id, adjunto_id)
+    if a is None:
+        return False
+    tarea = db.obtener_tarea_outlook_visible(usuario_id, a["tarea_id"])
+    if a["subido_por"] != usuario_id and tarea["usuario_id"] != usuario_id:
+        return False
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE tarea_adjuntos SET papelera_en = ? WHERE id = ?", (db._marca_papelera(), adjunto_id))
+        conn.commit()
+    finally:
+        conn.close()
+    db.registrar_actividad_tarea(usuario_id, a["tarea_id"], "adjunto_eliminado", a["nombre_archivo"])
+    return True

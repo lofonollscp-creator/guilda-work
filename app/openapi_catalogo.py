@@ -293,7 +293,7 @@ REQUERIDOS: dict[str, tuple[str, ...]] = {
     "crear_categoria": ("nombre",), "crear_tarea": ("nombre", "categoria_id"), "crear_tarea_outlook": ("asunto",), "crear_cliente_fiscal": ("nombre",),
     "crear_vencimiento": ("cliente_id", "modelo", "periodo", "fecha_limite"), "enviar_correo": ("cuenta_id", "destinatarios", "asunto", "cuerpo_html"),
     "fichaje_admin_corregir": ("tipo", "marca_tiempo"), "accion_en_lote": ("ids", "accion"), "crear_webhook": ("url", "eventos"), "estado": ("estado",),
-    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
+    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "crear_subtarea_de_la_tarea": ("asunto",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
     "compartir_tarea": ("usuario_id",), "crear_recurrente": ("asunto", "periodicidad"), "crear_regla_vencimiento": ("modelo", "asunto"), "crear_plantilla": ("nombre", "cuerpo"),
     "crear_plantilla_tareas": ("nombre", "items"), "guardar_vista": ("nombre", "filtros"), "responder_mensaje_vencimiento": ("texto",), "marcar_fichaje": ("tipo",), "pedir_ausencia": ("tipo", "desde"), "importar_certificado_api": ("contenido_base64",), "proponer_traspaso_api": ("cliente_id", "a_usuario_id"), "rechazar_traspaso_api": ("motivo",), "renovado_certificado_api": ("nueva_caducidad",), "transicionar_vencimiento": ("destino",), "crear_oficina_api": ("nombre",), "dar_membresia_api": ("usuario_id", "rol", "alcance"), "crear_tipo_de_turno_api": ("nombre", "inicio", "fin"), "asignar_turno_api": ("usuario_id", "fecha"), "ajustar_bolsa_api": ("usuario_id", "minutos", "motivo"), "resolver_ausencia_api": ("decision",),
     "crear_tiquet": ("titulo",), "enviar_mensaje_ia": ("texto",), "crear_atajo_ia": ("etiqueta", "texto"),
@@ -505,3 +505,14 @@ BINARIAS["fichero_del_lote_api"] = "application/octet-stream"
 ESQUEMAS["ClienteDeTarea"] = {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "nif": {"type": "string", "nullable": True}, "principal": {"type": "boolean"}}}
 ESQUEMAS["ClientesDeTarea"] = {"type": "object", "properties": {"clientes": {"type": "array", "items": {"$ref": "#/components/schemas/ClienteDeTarea"}}, "version": {"type": "integer", "description": "Versión de la tarea tras el cambio."}}}
 RESPUESTAS.update({"transicionar_tarea": ("TareaOutlook", False), "clientes_de_la_tarea": ("ClientesDeTarea", False), "fijar_clientes_de_la_tarea": ("ClientesDeTarea", False), "tareas_del_cliente": ("TareaOutlook", True)})
+ESQUEMAS["SubtareasDeTarea"] = {"type": "object", "properties": {"subtareas": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}, "asunto": {"type": "string"}, "estado": {"type": "string"},
+                                "fecha_vencimiento": {"type": "string", "nullable": True}, "asignada_a": {"type": "integer", "nullable": True}}}},
+                                "progreso": {"type": "object", "properties": {"total": {"type": "integer"}, "hechas": {"type": "integer"}, "abiertas": {"type": "integer"}}}}}
+ESQUEMAS["AdjuntoTarea"] = {"type": "object", "properties": {"id": {"type": "integer"}, "nombre_archivo": {"type": "string"}, "tipo_mime": {"type": "string"}, "tamano_bytes": {"type": "integer"},
+                            "subido_por": {"type": "integer", "nullable": True}, "creado_en": {"type": "string"}}}
+ESQUEMAS["ResultadoAdjuntosTarea"] = {"type": "array", "items": {"type": "object", "properties": {"archivo": {"type": "string"}, "ok": {"type": "boolean"}, "id": {"type": "integer"},
+                                      "codigo": {"type": "string", "description": "tipo_no_admitido, archivo_vacio, archivo_grande, clave_privada, duplicado, limite o sin_permiso."}, "error": {"type": "string"}}}}
+RESPUESTAS.update({"subtareas_de_la_tarea": ("SubtareasDeTarea", False), "crear_subtarea_de_la_tarea": ("TareaOutlook", False), "adjuntos_de_la_tarea": ("AdjuntoTarea", True),
+                   "subir_adjuntos_de_la_tarea": ("ResultadoAdjuntosTarea", False)})
+BINARIAS["descargar_adjunto_de_tarea"] = "application/octet-stream"
+SIN_DATOS_ESPERADOS.add("eliminar_adjunto_de_tarea")

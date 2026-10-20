@@ -468,6 +468,8 @@ def editar(tarea_id: int):
             return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _("Indica por qué la tarea queda bloqueada.")))
         if campos["estado"] in ("en_progreso", "completada") and campos["estado"] != tarea["estado"] and db.tarea_bloqueada(tarea_id):
             return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, MENSAJE_BLOQUEADA))
+        if campos["estado"] == "completada" and tarea["estado"] != "completada" and tareas_trabajo.subtareas_abiertas(tarea_id):
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _(tareas_trabajo.MENSAJE_SUBTAREAS)))
         try:
             tareas_trabajo.reclamar_version(tarea_id, tareas_trabajo.version_pedida(request.form.get("version")))
         except ValueError:
@@ -483,6 +485,7 @@ def editar(tarea_id: int):
             campos.pop("estado")
             campos.pop("porcentaje_completado")
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        tareas_trabajo.al_cambiar_estado(g.usuario_id, tarea_id, tarea["estado"], campos.get("estado") or "completada")
         tareas_trabajo.guardar_motivo(tarea_id, campos.get("estado") or "completada", motivo)
         if request.form.get("clientes_enviados"):
             principal = campos["cliente_fiscal_id"]
@@ -630,6 +633,8 @@ def tablero():
 def cambiar_estado(tarea_id: int):
     previa = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
     estaba_completada = previa is not None and previa["estado"] == "completada"
+    if previa is not None and request.form.get("estado") == "completada" and tareas_trabajo.subtareas_abiertas(tarea_id) and db.puede_trabajar_tarea(g.usuario_id, tarea_id):
+        return _volver_con_error(_(tareas_trabajo.MENSAJE_SUBTAREAS))
     if not db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, request.form.get("estado", "")):
         if previa is not None and db.tarea_bloqueada(tarea_id) and request.form.get("estado") in ("en_progreso", "completada"):
             return _volver_con_error(MENSAJE_BLOQUEADA)
@@ -728,7 +733,67 @@ def _contexto_comentarios(tarea_id: int) -> dict:
         "recordatorios": db.listar_recordatorios_tarea(g.usuario_id, tarea_id),
         "tiempo_equipo": db.tiempo_equipo_tarea(g.usuario_id, tarea_id),
         "personas_mencionables": [p for p in db.personas_de_tarea(g.usuario_id, tarea_id) if p["id"] != g.usuario_id],
+        **_contexto_subtareas_y_adjuntos(tarea_id),
     }
+
+
+def _contexto_subtareas_y_adjuntos(tarea_id: int) -> dict:
+    subtareas = tareas_trabajo.subtareas_de(tarea_id)
+    padre_id = tareas_trabajo.padre_de(tarea_id)
+    padre = db.obtener_tarea_outlook_visible(g.usuario_id, padre_id) if padre_id else None
+    return {
+        "subtareas": subtareas, "progreso_subtareas": tareas_trabajo.progreso_subtareas(subtareas), "tarea_padre": padre,
+        "adjuntos": tareas_trabajo.listar_adjuntos(tarea_id), "puede_trabajar": db.puede_trabajar_tarea(g.usuario_id, tarea_id),
+        "puede_editar_estructura": db.puede_editar_tarea(g.usuario_id, tarea_id) and padre_id is None,
+        "max_adjuntos": tareas_trabajo.MAX_ADJUNTOS_POR_TAREA,
+    }
+
+
+def _volver_a_tarea(tarea_id: int, ancla: str, error: str | None = None):
+    return redirect(url_for("tareas.ver", tarea_id=tarea_id, error=error) + ancla)
+
+
+@tareas_bp.route("/<int:tarea_id>/subtareas", methods=["POST"])
+@login_required
+def anadir_subtarea(tarea_id: int):
+    try:
+        tareas_trabajo.crear_subtarea(g.usuario_id, tarea_id, request.form.get("asunto", ""), request.form.get("fecha_vencimiento") or None)
+    except tareas_trabajo.TransicionInvalida as e:
+        if e.codigo == "no_encontrada":
+            abort(404)
+        return _volver_a_tarea(tarea_id, "#subtareas", str(e))
+    return _volver_a_tarea(tarea_id, "#subtareas")
+
+
+@tareas_bp.route("/<int:tarea_id>/adjuntos", methods=["POST"])
+@login_required
+def subir_adjuntos(tarea_id: int):
+    errores = []
+    for f in request.files.getlist("adjunto"):
+        if f and f.filename:
+            try:
+                tareas_trabajo.subir_adjunto(g.usuario_id, tarea_id, f.filename, f.read(tareas_trabajo.MAX_ADJUNTO_BYTES + 1))
+            except tareas_trabajo.TransicionInvalida as e:
+                if e.codigo == "no_encontrada":
+                    abort(404)
+                errores.append(f"{f.filename}: {e}")
+    return _volver_a_tarea(tarea_id, "#adjuntos", " · ".join(errores)[:200] or None)
+
+
+@tareas_bp.route("/adjuntos/<int:adjunto_id>")
+@login_required
+def descargar_adjunto(adjunto_id: int):
+    from .rutas_api_tareas_trabajo import respuesta_de_adjunto
+    return respuesta_de_adjunto(tareas_trabajo.leer_adjunto(g.usuario_id, adjunto_id), request.args.get("ver") == "1")
+
+
+@tareas_bp.route("/adjuntos/<int:adjunto_id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_adjunto(adjunto_id: int):
+    adjunto = tareas_trabajo.leer_adjunto(g.usuario_id, adjunto_id)
+    if adjunto is None or not tareas_trabajo.eliminar_adjunto(g.usuario_id, adjunto_id):
+        abort(404)
+    return _volver_a_tarea(adjunto["tarea_id"], "#adjuntos")
 
 
 @tareas_bp.route("/<int:tarea_id>/comentarios", methods=["POST"])

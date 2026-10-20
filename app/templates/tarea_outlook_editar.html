@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_tarea_comentarios.html" import hilo, equipo_y_actividad %}
 {% from "_tarea_recordatorios.html" import bloque as bloque_recordatorios %}
+{% from "_tarea_subtareas.html" import bloque as bloque_subtareas %}
 {% block title %}{{ _('Editar tarea') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -235,6 +236,7 @@
 </section>
 
 {{ bloque_recordatorios(tarea, recordatorios) }}
+{{ bloque_subtareas(tarea, tarea_padre, subtareas, progreso_subtareas, adjuntos, puede_trabajar, puede_editar_estructura, max_adjuntos) }}
 {{ hilo(tarea, comentarios, personas_mencionables) }}
 {{ equipo_y_actividad(tiempo_equipo, actividad) }}
 

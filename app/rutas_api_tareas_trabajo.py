@@ -2,13 +2,14 @@
 cliente con contadores. Capa fina sobre `app/tareas_trabajo.py`; mismo token, mismo formato de error y mismos permisos que el resto de la API de tareas. Todo aditivo."""
 from __future__ import annotations
 
-from flask import abort, g, jsonify, request
+from flask import Response, abort, g, jsonify, request
 
 from . import db, tareas_trabajo as tt
 from .auth import token_required
 from .rutas_api import _body, _dict, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
 
-_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409}
+_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
+           "tipo_no_admitido": 415, "archivo_grande": 413}
 
 
 def _tarea_o_404(tarea_id: int):
@@ -115,3 +116,91 @@ def tareas_del_cliente(cliente_id: int):
     nueva = jsonify(cuerpo)
     nueva.headers.update(respuesta.headers)
     return nueva, status
+
+
+# --- Subtareas ------------------------------------------------------------------------------------------------------
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/subtareas", methods=["GET"])
+@token_required
+def subtareas_de_la_tarea(tarea_id: int):
+    """Las subtareas (un nivel) con su progreso. La tarea padre no se puede completar mientras tenga subtareas abiertas (409 `subtareas_abiertas`)."""
+    _tarea_o_404(tarea_id)
+    subtareas = tt.subtareas_de(tarea_id)
+    return _ok({"subtareas": subtareas, "progreso": tt.progreso_subtareas(subtareas)})
+
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/subtareas", methods=["POST"])
+@token_required
+def crear_subtarea_de_la_tarea(tarea_id: int):
+    """Cuerpo: `{"asunto": "Pedir el certificado", "fecha_vencimiento": "2026-10-30", "asignada_a": 7}`. Hereda el cliente y el proyecto del padre."""
+    _tarea_o_404(tarea_id)
+    datos = _body()
+    try:
+        nueva = tt.crear_subtarea(g.usuario_id, tarea_id, datos.get("asunto"), datos.get("fecha_vencimiento"), _int(datos.get("asignada_a")))
+    except tt.TransicionInvalida as e:
+        return _err(str(e), _STATUS.get(e.codigo, 400), e.codigo, e.campo)
+    return _ok(_dict(db.obtener_tarea_outlook_visible(g.usuario_id, nueva)), 201)
+
+
+def _int(valor):
+    try:
+        return int(valor) if valor not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
+# --- Adjuntos -------------------------------------------------------------------------------------------------------
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/adjuntos", methods=["GET"])
+@token_required
+def adjuntos_de_la_tarea(tarea_id: int):
+    """Metadatos de los archivos adjuntos (sin el contenido)."""
+    _tarea_o_404(tarea_id)
+    return _ok(tt.listar_adjuntos(tarea_id))
+
+
+@api_bp.route("/tareas-outlook/<int:tarea_id>/adjuntos", methods=["POST"])
+@token_required
+def subir_adjuntos_de_la_tarea(tarea_id: int):
+    """Multipart, uno o varios `adjunto`. PDF, imágenes, texto, CSV y documentos de Office o LibreOffice; 15 MB cada uno y 20 por tarea. Devuelve el resultado por archivo
+    (los válidos quedan adjuntos aunque otro falle). Nunca se guardan claves privadas ni .p12/.pfx."""
+    _tarea_o_404(tarea_id)
+    archivos = [f for f in request.files.getlist("adjunto") if f and f.filename]
+    if not archivos:
+        return _err("Adjunta al menos un archivo en el campo «adjunto» (multipart).", 400, "sin_archivos", "adjunto")
+    resultados = []
+    for f in archivos:
+        try:
+            resultados.append({"archivo": f.filename, "ok": True, "id": tt.subir_adjunto(g.usuario_id, tarea_id, f.filename, f.read(tt.MAX_ADJUNTO_BYTES + 1))})
+        except tt.TransicionInvalida as e:
+            resultados.append({"archivo": f.filename, "ok": False, "codigo": e.codigo, "error": str(e)})
+    return _ok(resultados, 201 if any(r["ok"] for r in resultados) else 400)
+
+
+@api_bp.route("/tareas-outlook/adjuntos/<int:adjunto_id>", methods=["GET"])
+@token_required
+def descargar_adjunto_de_tarea(adjunto_id: int):
+    """Descarga el archivo (`?ver=1` lo muestra en línea solo si es una imagen)."""
+    return respuesta_de_adjunto(tt.leer_adjunto(g.usuario_id, adjunto_id), request.args.get("ver") == "1")
+
+
+@api_bp.route("/tareas-outlook/adjuntos/<int:adjunto_id>", methods=["DELETE"])
+@token_required
+def eliminar_adjunto_de_tarea(adjunto_id: int):
+    if not tt.eliminar_adjunto(g.usuario_id, adjunto_id):
+        abort(404, "Adjunto no encontrado.")
+    return _ok()
+
+
+def respuesta_de_adjunto(adjunto, en_linea: bool = False):
+    """La respuesta de descarga, igual para la web y la API: el tipo lo fija el servidor, `nosniff` y una CSP que impide ejecutar nada del archivo."""
+    if adjunto is None:
+        abort(404, "Adjunto no encontrado.")
+    en_linea = en_linea and adjunto["imagen"]
+    r = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
+    nombre = adjunto["nombre_archivo"].replace('"', "").replace("\r", "").replace("\n", "")
+    r.headers["Content-Disposition"] = f'{"inline" if en_linea else "attachment"}; filename="{nombre}"'
+    r.headers["X-Content-Type-Options"] = "nosniff"
+    r.headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    r.headers["Cache-Control"] = "private, no-store"
+    return r

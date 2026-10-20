@@ -1,0 +1,57 @@
+{# Subtareas y archivos adjuntos de una tarea. Variables del contexto: tarea, tarea_padre, subtareas, progreso_subtareas, adjuntos, puede_trabajar, puede_editar_estructura, max_adjuntos. #}
+{% macro bloque(tarea, tarea_padre, subtareas, progreso_subtareas, adjuntos, puede_trabajar, puede_editar_estructura, max_adjuntos) %}
+{% from "_ds/componentes.html" import chip %}
+<section class="tarea-comentarios ds-max-640" id="subtareas">
+  <h2 class="tarea-bloque-titulo">{{ _('Subtareas') }}{% if progreso_subtareas.total %} <span class="pill">{{ progreso_subtareas.hechas }}/{{ progreso_subtareas.total }}</span>{% endif %}</h2>
+  {% if tarea_padre %}<p class="muted">{{ _('Es una subtarea de') }} <a href="{{ url_for('tareas.ver', tarea_id=tarea_padre.id) }}">{{ tarea_padre.asunto }}</a>.</p>{% endif %}
+  {% if subtareas %}
+  {% if progreso_subtareas.total %}<progress max="{{ progreso_subtareas.total }}" value="{{ progreso_subtareas.hechas }}" aria-label="{{ _('Progreso de las subtareas') }}"></progress>{% endif %}
+  <ul class="log-list">
+    {% for st in subtareas %}
+    <li class="log-item {{ 'is-completada' if st.estado == 'completada' }}">
+      <a class="log-text" href="{{ url_for('tareas.ver', tarea_id=st.id) }}">{{ st.asunto }}</a>
+      {% if st.fecha_vencimiento %}<span class="log-duration">{{ _('Vence %(fecha)s', fecha=st.fecha_vencimiento[:10]) }}</span>{% endif %}
+      {{ chip(_('Completada'), 'exito') if st.estado == 'completada' else chip(_('Abierta')) }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if progreso_subtareas.abiertas %}<p class="muted">{{ _('La tarea no se puede completar hasta que se completen sus subtareas.') }}</p>{% endif %}
+  {% elif not tarea_padre %}<p class="muted">{{ _('Esta tarea no tiene subtareas.') }}</p>{% endif %}
+  {% if puede_editar_estructura and tarea.estado != 'completada' %}
+  <form class="comentario-form" action="{{ url_for('tareas.anadir_subtarea', tarea_id=tarea.id) }}" method="post">
+    <label class="sr-only" for="subtarea-asunto">{{ _('Asunto de la subtarea') }}</label>
+    <input type="text" id="subtarea-asunto" name="asunto" maxlength="300" required placeholder="{{ _('Nueva subtarea…') }}">
+    <label class="sr-only" for="subtarea-fecha">{{ _('Vencimiento de la subtarea') }}</label>
+    <input type="date" id="subtarea-fecha" name="fecha_vencimiento">
+    <div class="comentario-acciones"><button type="submit" class="btn btn-ghost">{{ _('Añadir subtarea') }}</button></div>
+  </form>
+  {% endif %}
+</section>
+
+<section class="tarea-comentarios ds-max-640" id="adjuntos">
+  <h2 class="tarea-bloque-titulo">{{ _('Archivos adjuntos') }}{% if adjuntos %} <span class="pill">{{ adjuntos|length }}</span>{% endif %}</h2>
+  {% if adjuntos %}
+  <ul class="log-list">
+    {% for a in adjuntos %}
+    <li class="log-item">
+      <a class="log-text" href="{{ url_for('tareas.descargar_adjunto', adjunto_id=a.id) }}">{{ a.nombre_archivo }}</a>
+      <span class="log-duration">{{ (a.tamano_bytes / 1024)|round(0)|int }} KB</span>
+      {% if puede_trabajar %}
+      <form action="{{ url_for('tareas.eliminar_adjunto', adjunto_id=a.id) }}" method="post" class="comentario-borrar">
+        <button type="submit" class="chip-del" title="{{ _('Quitar archivo') }}" aria-label="{{ _('Quitar archivo') }} {{ a.nombre_archivo }}">×</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay archivos adjuntos.') }}</p>{% endif %}
+  {% if puede_trabajar and adjuntos|length < max_adjuntos %}
+  <form class="comentario-form" action="{{ url_for('tareas.subir_adjuntos', tarea_id=tarea.id) }}" method="post" enctype="multipart/form-data">
+    <label class="sr-only" for="adjunto-archivo">{{ _('Elegir archivos') }}</label>
+    <input type="file" id="adjunto-archivo" name="adjunto" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv,.md,.docx,.xlsx,.pptx,.odt,.ods,.odp">
+    <div class="comentario-acciones"><button type="submit" class="btn btn-ghost">{{ _('Adjuntar') }}</button></div>
+    <small class="muted">{{ _('PDF, imágenes, texto, CSV y documentos de Office. Hasta 15 MB cada uno.') }}</small>
+  </form>
+  {% endif %}
+</section>
+{% endmacro %}

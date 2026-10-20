@@ -1269,6 +1269,9 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     No hace nada si aún espera a otras tareas (ver tarea_bloqueada)."""
     if _db.tarea_bloqueada(tarea_id):
         return
+    from . import tareas_trabajo
+    if tareas_trabajo.subtareas_abiertas(tarea_id):
+        return                                 # política de cierre: sin subtareas abiertas (app/tareas_trabajo.py)
     conn = _db.get_connection()
     try:
         cur = conn.execute(
@@ -1306,6 +1309,10 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
         return False
     if estado in ("en_progreso", "completada") and _db.tarea_bloqueada(tarea_id):
         return False
+    from . import tareas_trabajo
+    if estado == "completada" and tareas_trabajo.subtareas_abiertas(tarea_id):
+        return False
+    antes = (_db.obtener_tarea_outlook_visible(usuario_id, tarea_id) or {"estado": None})["estado"]
     if estado == "completada":
         _db.completar_tarea_outlook(usuario_id, tarea_id)
         return True
@@ -1323,6 +1330,7 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
     finally:
         conn.close()
     _db.registrar_actividad_tarea(usuario_id, tarea_id, "estado", estado)
+    tareas_trabajo.al_cambiar_estado(usuario_id, tarea_id, antes, estado)
     return True
 
 
@@ -2582,10 +2590,10 @@ def contar_mi_dia(usuario_id: int) -> tuple[int, int]:
 def eliminar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     conn = _db.get_connection()
     try:
-        conn.execute(
-            "UPDATE tareas_outlook SET papelera_en = ? WHERE id = ? AND usuario_id = ?",
-            (_db._marca_papelera(), tarea_id, usuario_id),
-        )
+        marca = _db._marca_papelera()
+        conn.execute("UPDATE tareas_outlook SET papelera_en = ? WHERE id = ? AND usuario_id = ?", (marca, tarea_id, usuario_id))
+        conn.execute("UPDATE tareas_outlook SET papelera_en = ? WHERE tarea_padre_id = ? AND papelera_en IS NULL "
+                     "AND ? IN (SELECT id FROM tareas_outlook WHERE id = ? AND usuario_id = ?)", (marca, tarea_id, tarea_id, tarea_id, usuario_id))
         conn.commit()
     finally:
         conn.close()
@@ -2594,6 +2602,9 @@ def eliminar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
 def restaurar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
     conn = _db.get_connection()
     try:
+        marca = conn.execute("SELECT papelera_en FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone()
+        if marca and marca["papelera_en"]:       # solo las subtareas que se fueron con el padre (misma marca), no las borradas aparte
+            conn.execute("UPDATE tareas_outlook SET papelera_en = NULL WHERE tarea_padre_id = ? AND papelera_en = ?", (tarea_id, marca["papelera_en"]))
         conn.execute(
             "UPDATE tareas_outlook SET papelera_en = NULL WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)
         )
@@ -2606,6 +2617,13 @@ def eliminar_tarea_outlook_definitivamente(usuario_id: int, tarea_id: int) -> No
     conn = _db.get_connection()
     try:
         if conn.execute("SELECT 1 FROM tareas_outlook WHERE id = ? AND usuario_id = ?", (tarea_id, usuario_id)).fetchone():
+            for hija in conn.execute("SELECT id FROM tareas_outlook WHERE tarea_padre_id = ?", (tarea_id,)).fetchall():
+                for tabla, col in (("tareas_participantes", "tarea_id"), ("tarea_comentarios", "tarea_id"), ("tarea_actividad", "tarea_id"), ("tarea_recordatorios", "tarea_id"),
+                                   ("tarea_adjuntos", "tarea_id"), ("tarea_clientes", "tarea_id"), ("tarea_checklist", "tarea_outlook_id")):
+                    conn.execute(f"DELETE FROM {tabla} WHERE {col} = ?", (hija["id"],))
+                conn.execute("DELETE FROM tareas_dependencias WHERE tarea_id = ? OR depende_de_id = ?", (hija["id"], hija["id"]))
+                conn.execute("DELETE FROM tareas_outlook WHERE id = ?", (hija["id"],))
+            conn.execute("DELETE FROM tarea_adjuntos WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tareas_participantes WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tarea_comentarios WHERE tarea_id = ?", (tarea_id,))
             conn.execute("DELETE FROM tarea_actividad WHERE tarea_id = ?", (tarea_id,))

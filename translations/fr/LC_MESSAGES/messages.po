@@ -13748,3 +13748,39 @@ msgstr "Quelqu'un d'autre a modifié cette tâche pendant votre édition. La voi
 
 msgid "Obligatorio si el estado es Esperando a otros"
 msgstr "Obligatoire si le statut est En attente d'autres"
+
+msgid "Es una subtarea de"
+msgstr "C'est une sous-tâche de"
+
+msgid "Progreso de las subtareas"
+msgstr "Progression des sous-tâches"
+
+msgid "La tarea no se puede completar hasta que se completen sus subtareas."
+msgstr "La tâche ne peut pas être terminée tant que ses sous-tâches ne le sont pas."
+
+msgid "Esta tarea no tiene subtareas."
+msgstr "Cette tâche n'a pas de sous-tâches."
+
+msgid "Asunto de la subtarea"
+msgstr "Objet de la sous-tâche"
+
+msgid "Vencimiento de la subtarea"
+msgstr "Échéance de la sous-tâche"
+
+msgid "Nueva subtarea…"
+msgstr "Nouvelle sous-tâche…"
+
+msgid "Añadir subtarea"
+msgstr "Ajouter une sous-tâche"
+
+msgid "Quitar archivo"
+msgstr "Retirer le fichier"
+
+msgid "Todavía no hay archivos adjuntos."
+msgstr "Aucun fichier joint pour l'instant."
+
+msgid "PDF, imágenes, texto, CSV y documentos de Office. Hasta 15 MB cada uno."
+msgstr "PDF, images, texte, CSV et documents Office. Jusqu'à 15 Mo chacun."
+
+msgid "Esta tarea tiene subtareas sin completar."
+msgstr "Cette tâche a des sous-tâches non terminées."

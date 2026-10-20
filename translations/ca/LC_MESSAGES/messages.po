@@ -13672,3 +13672,39 @@ msgstr "Una altra persona ha modificat aquesta tasca mentre l'editaves. Aquí la
 
 msgid "Obligatorio si el estado es Esperando a otros"
 msgstr "Obligatori si l'estat és Esperant altres"
+
+msgid "Es una subtarea de"
+msgstr "És una subtasca de"
+
+msgid "Progreso de las subtareas"
+msgstr "Progrés de les subtasques"
+
+msgid "La tarea no se puede completar hasta que se completen sus subtareas."
+msgstr "La tasca no es pot completar fins que es completin les seves subtasques."
+
+msgid "Esta tarea no tiene subtareas."
+msgstr "Aquesta tasca no té subtasques."
+
+msgid "Asunto de la subtarea"
+msgstr "Assumpte de la subtasca"
+
+msgid "Vencimiento de la subtarea"
+msgstr "Venciment de la subtasca"
+
+msgid "Nueva subtarea…"
+msgstr "Nova subtasca…"
+
+msgid "Añadir subtarea"
+msgstr "Afegeix subtasca"
+
+msgid "Quitar archivo"
+msgstr "Treu el fitxer"
+
+msgid "Todavía no hay archivos adjuntos."
+msgstr "Encara no hi ha fitxers adjunts."
+
+msgid "PDF, imágenes, texto, CSV y documentos de Office. Hasta 15 MB cada uno."
+msgstr "PDF, imatges, text, CSV i documents d'Office. Fins a 15 MB cada un."
+
+msgid "Esta tarea tiene subtareas sin completar."
+msgstr "Aquesta tasca té subtasques sense completar."

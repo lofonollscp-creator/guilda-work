@@ -13663,3 +13663,39 @@ msgstr "Someone else changed this task while you were editing it. Here is how it
 
 msgid "Obligatorio si el estado es Esperando a otros"
 msgstr "Required when the status is Waiting on others"
+
+msgid "Es una subtarea de"
+msgstr "It is a subtask of"
+
+msgid "Progreso de las subtareas"
+msgstr "Subtask progress"
+
+msgid "La tarea no se puede completar hasta que se completen sus subtareas."
+msgstr "The task cannot be completed until its subtasks are completed."
+
+msgid "Esta tarea no tiene subtareas."
+msgstr "This task has no subtasks."
+
+msgid "Asunto de la subtarea"
+msgstr "Subtask subject"
+
+msgid "Vencimiento de la subtarea"
+msgstr "Subtask due date"
+
+msgid "Nueva subtarea…"
+msgstr "New subtask…"
+
+msgid "Añadir subtarea"
+msgstr "Add subtask"
+
+msgid "Quitar archivo"
+msgstr "Remove file"
+
+msgid "Todavía no hay archivos adjuntos."
+msgstr "There are no attached files yet."
+
+msgid "PDF, imágenes, texto, CSV y documentos de Office. Hasta 15 MB cada uno."
+msgstr "PDF, images, text, CSV and Office documents. Up to 15 MB each."
+
+msgid "Esta tarea tiene subtareas sin completar."
+msgstr "This task has subtasks that are not completed."
