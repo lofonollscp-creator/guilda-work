@@ -2,6 +2,11 @@
 <section class="dash-panel">
   <h2>{{ _('Tareas de este cliente') }} <span class="muted">({{ tareas_abiertas }} {{ _('abiertas') }})</span></h2>
   <p class="muted" data-contadores-tareas>{% if tareas_vencidas %}{{ tareas_vencidas }} {{ _('vencidas') }} · {% endif %}{{ tareas_completadas }} {{ _('completadas') }}</p>
+  <nav class="ds-mt-12" aria-label="{{ _('Filtrar tareas') }}">
+    {% for valor, etiqueta in [('todas', _('Todas')), ('abiertas', _('Abiertas')), ('vencidas', _('Vencidas')), ('completadas', _('Completadas'))] %}
+    <a class="btn btn-ghost{{ ' is-active' if tareas_filtro == valor }}" href="?pestana=tareas&tareas={{ valor }}" {% if tareas_filtro == valor %}aria-current="true"{% endif %}>{{ etiqueta }}</a>
+    {% endfor %}
+  </nav>
   {% if tareas %}
   <ul class="log-list">
     {% for t in tareas %}
@@ -15,6 +20,6 @@
     </li>
     {% endfor %}
   </ul>
-  {% else %}<p class="muted">{{ _('Este cliente todavía no tiene tareas.') }}</p>{% endif %}
+  {% else %}<p class="muted">{{ _('Este cliente todavía no tiene tareas.') if tareas_filtro == 'todas' else _('Ninguna tarea cumple este filtro.') }}</p>{% endif %}
   <p class="ds-mt-12"><a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Abrir Tareas') }}</a></p>
 </section>

@@ -12,7 +12,7 @@ from flask_babel import format_date, ngettext
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd
+from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd, tareas_trabajo
 from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
@@ -439,6 +439,7 @@ def editar(tarea_id: int):
             checklist=db.listar_checklist(tarea["id"]),
             companeros=db.listar_companeros_tenant(g.usuario_id),
             clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id) if g.tenant_id else [],
+            clientes_vinculados={c["id"] for c in tareas_trabajo.clientes_de_tarea(tarea["id"])},
             cronometro=db.cronometros_de_tareas_outlook(g.usuario_id, [tarea["id"]]).get(tarea["id"]),
         )
 
@@ -462,14 +463,34 @@ def editar(tarea_id: int):
         }
         if not es_dueno:
             campos.pop("categoria_id")
+        motivo = request.form.get("motivo_bloqueo", "").strip()
+        if campos["estado"] == "esperando" and not motivo:
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _("Indica por qué la tarea queda bloqueada.")))
         if campos["estado"] in ("en_progreso", "completada") and campos["estado"] != tarea["estado"] and db.tarea_bloqueada(tarea_id):
             return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, MENSAJE_BLOQUEADA))
+        try:
+            tareas_trabajo.reclamar_version(tarea_id, tareas_trabajo.version_pedida(request.form.get("version")))
+        except ValueError:
+            abort(400)
+        except tareas_trabajo.ConflictoDeVersion:
+            # Alguien guardó antes: se enseña la tarea tal como está ahora (con su versión nueva) para revisarla y volver a guardar.
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(
+                db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id),
+                _("Otra persona ha modificado esta tarea mientras la editabas. Aquí tienes cómo está ahora; revísala y vuelve a guardar tus cambios."))), 409
         if campos["estado"] == "completada" and tarea["estado"] != "completada":
             db.completar_tarea_outlook(g.usuario_id, tarea_id)
             _avisar_desbloqueos(g.usuario_id, tarea_id, False)
             campos.pop("estado")
             campos.pop("porcentaje_completado")
         db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        tareas_trabajo.guardar_motivo(tarea_id, campos.get("estado") or "completada", motivo)
+        if request.form.get("clientes_enviados"):
+            principal = campos["cliente_fiscal_id"]
+            ids = ([principal] if principal else []) + [i for i in (_int_o_none(x) for x in request.form.getlist("clientes_vinculados")) if i and i != principal]
+            try:
+                tareas_trabajo.fijar_clientes(g.usuario_id, tarea_id, ids, principal)
+            except tareas_trabajo.TransicionInvalida as e:
+                return render_template("tarea_outlook_editar.html", **_contexto_edicion(db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id), str(e))), 422
         nueva_asignacion = _int_o_none(request.form.get("asignada_a"))
         if es_dueno and nueva_asignacion != tarea["asignada_a"] and db.asignar_tarea_outlook(g.usuario_id, tarea_id, nueva_asignacion):
             _notificar_asignacion(g.usuario_id, tarea_id, nueva_asignacion)

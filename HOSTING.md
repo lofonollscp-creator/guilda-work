@@ -86,6 +86,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Barra lateral a medida y fichas con una sola fila de pestañas](#barra-lateral-a-medida-y-fichas-con-una-sola-fila-de-pestañas)
 - [Facturación conectada con los expedientes](#facturación-conectada-con-los-expedientes)
 - [Facturas para contabilizar y fichero de enlace de a3 (SUENLACE.DAT)](#facturas-para-contabilizar-y-fichero-de-enlace-de-a3-suenlacedat)
+- [Trabajo con tareas: versión, bloqueo y varios clientes (octubre de 2026)](#trabajo-con-tareas-versión-bloqueo-y-varios-clientes-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3290,4 +3291,5 @@ Fase 1 del plan de `docs/guilda-work-implementation-plan.md`, todo aditivo sobre
 - **Varios clientes por tarea**: `PUT /tareas-outlook/<id>/clientes` con `cliente_ids` y `principal_id`. Todos tienen que ser del despacho de quien edita (si uno no lo es, se rechaza el conjunto entero con 422). `cliente_fiscal_id` sigue siendo el principal y los escritores antiguos siguen valiendo: los disparadores mantienen `tarea_clientes` al día. El filtro por cliente de las listas y la pestaña Tareas de la ficha incluyen las tareas vinculadas.
 - **Vencida** es siempre derivada (`tareas_trabajo.esta_vencida`, se compara el día). `GET /fiscal/clientes/<id>/tareas` devuelve las tareas con `vencida` y los contadores abiertas/vencidas/completadas calculados sobre esa misma lista; la ficha del cliente enseña los mismos números.
 - **Pruebas**: `tests/test_tareas_trabajo.py` (14 tests: concurrencia, bloqueo, permisos, aislamiento entre despachos, sincronía con escritores antiguos, migración idempotente).
-- **Pendiente** (siguientes incrementos): herramientas MCP e IA equivalentes, selector de varios clientes en el formulario de tarea y aviso de conflicto 409 en la interfaz.
+- **Interfaz (Fase 2)**: el formulario «Editar tarea» (`tareas.editar`) lleva la `version` oculta; si otra persona guardó antes, responde 409 con la tarea tal como está ahora y un aviso, sin pisar nada (un formulario sin `version` sigue funcionando). «Esperando a otros» pide el «Motivo del bloqueo» y lo borra al salir de ese estado desde cualquier camino (`db_tareas.cambiar_estado_tarea_outlook` lo limpia). Bajo «Cliente» hay una lista «Otros clientes de esta tarea» (solo si el despacho tiene más de un cliente; sin el campo `clientes_enviados` no se tocan los vínculos). La pestaña Tareas de la ficha del cliente tiene los filtros Todas / Abiertas / Vencidas / Completadas (`?pestana=tareas&tareas=...`); los contadores no cambian con el filtro. Pruebas: `tests/test_tareas_trabajo_web.py` (8 tests).
+- **Pendiente** (siguientes incrementos): herramientas MCP e IA equivalentes, selector de varios clientes al crear la tarea (hoy solo al editarla) y las fases 3 a 5 del plan.

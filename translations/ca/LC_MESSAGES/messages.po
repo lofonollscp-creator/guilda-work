@@ -13645,3 +13645,30 @@ msgstr "vencudes"
 
 msgid "completadas"
 msgstr "completades"
+
+msgid "Completadas"
+msgstr "Completades"
+
+msgid "Filtrar tareas"
+msgstr "Filtra les tasques"
+
+msgid "Ninguna tarea cumple este filtro."
+msgstr "Cap tasca compleix aquest filtre."
+
+msgid "Motivo del bloqueo"
+msgstr "Motiu del bloqueig"
+
+msgid "Indica por qué la tarea queda bloqueada."
+msgstr "Indica per què la tasca queda bloquejada."
+
+msgid "Otros clientes de esta tarea"
+msgstr "Altres clients d'aquesta tasca"
+
+msgid "El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea."
+msgstr "El client de dalt és el principal; aquí marques els altres als quals afecta la tasca."
+
+msgid "Otra persona ha modificado esta tarea mientras la editabas. Aquí tienes cómo está ahora; revísala y vuelve a guardar tus cambios."
+msgstr "Una altra persona ha modificat aquesta tasca mentre l'editaves. Aquí la tens com està ara; revisa-la i torna a desar els canvis."
+
+msgid "Obligatorio si el estado es Esperando a otros"
+msgstr "Obligatori si l'estat és Esperant altres"

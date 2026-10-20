@@ -18,6 +18,7 @@
 <p class="muted ds-max-640"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-users"></use></svg> {{ _('Tarea compartida contigo por %(quien)s: puedes editarla y completarla.', quien=dueno_nombre or '') }}</p>
 {% endif %}
 <form class="edit-form ds-max-640" method="post" action="{{ url_for('tareas.editar', tarea_id=tarea.id) }}">
+  <input type="hidden" name="version" value="{{ tarea.version }}">
   <label>{{ _('Asunto') }}
     <input type="text" name="asunto" value="{{ tarea.asunto }}" required autofocus>
   </label>
@@ -48,6 +49,10 @@
       {% if tarea.estimacion_min and cronometro and cronometro.equipo_segundos %}<small class="muted">{{ _('Registrado') }}: {{ cronometro.equipo_segundos|duracion_hm }}</small>{% endif %}
     </label>
   </div>
+
+  <label>{{ _('Motivo del bloqueo') }}
+    <input type="text" name="motivo_bloqueo" maxlength="500" value="{{ tarea.motivo_bloqueo or '' }}" placeholder="{{ _('Obligatorio si el estado es Esperando a otros') }}">
+  </label>
 
   <div class="ia-form-row">
     <label>{{ _('Fecha y hora de inicio') }}
@@ -91,6 +96,16 @@
     </label>
     {% endif %}
   </div>
+  {% if clientes_fiscales and clientes_fiscales|length > 1 %}
+  <fieldset class="ds-max-640">
+    <legend>{{ _('Otros clientes de esta tarea') }}</legend>
+    <input type="hidden" name="clientes_enviados" value="1">
+    {% for c in clientes_fiscales %}
+    <label class="checkbox"><input type="checkbox" name="clientes_vinculados" value="{{ c.id }}" {% if c.id in clientes_vinculados and c.id != tarea.cliente_fiscal_id %}checked{% endif %}> {{ c.nombre }}</label>
+    {% endfor %}
+    <small class="muted">{{ _('El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea.') }}</small>
+  </fieldset>
+  {% endif %}
   {% endif %}
 
   {% if tarea.fecha_completada %}

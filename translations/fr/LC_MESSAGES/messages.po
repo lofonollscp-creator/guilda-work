@@ -13721,3 +13721,30 @@ msgstr "en retard"
 
 msgid "completadas"
 msgstr "terminées"
+
+msgid "Completadas"
+msgstr "Terminées"
+
+msgid "Filtrar tareas"
+msgstr "Filtrer les tâches"
+
+msgid "Ninguna tarea cumple este filtro."
+msgstr "Aucune tâche ne correspond à ce filtre."
+
+msgid "Motivo del bloqueo"
+msgstr "Motif du blocage"
+
+msgid "Indica por qué la tarea queda bloqueada."
+msgstr "Indiquez pourquoi la tâche est bloquée."
+
+msgid "Otros clientes de esta tarea"
+msgstr "Autres clients de cette tâche"
+
+msgid "El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea."
+msgstr "Le client ci-dessus est le principal ; cochez ici les autres concernés par la tâche."
+
+msgid "Otra persona ha modificado esta tarea mientras la editabas. Aquí tienes cómo está ahora; revísala y vuelve a guardar tus cambios."
+msgstr "Quelqu'un d'autre a modifié cette tâche pendant votre édition. La voici telle qu'elle est maintenant ; vérifiez-la et enregistrez à nouveau vos changements."
+
+msgid "Obligatorio si el estado es Esperando a otros"
+msgstr "Obligatoire si le statut est En attente d'autres"

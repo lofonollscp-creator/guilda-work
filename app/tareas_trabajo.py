@@ -153,6 +153,18 @@ def transicionar(usuario_id: int, tarea_id: int, estado: str, motivo: str | None
         db.registrar_actividad_tarea(usuario_id, tarea_id, "bloqueada", motivo)
 
 
+def guardar_motivo(tarea_id: int, estado: str, motivo: str | None) -> None:
+    """Para quien cambia el estado por otro camino (formulario de edición): el motivo solo existe mientras la tarea está en «esperando»."""
+    motivo = (motivo or "").strip()[:500]
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE tareas_outlook SET motivo_bloqueo = ? WHERE id = ? AND COALESCE(motivo_bloqueo, '') != COALESCE(?, '')",
+                     (motivo or None if estado == "esperando" else None, tarea_id, motivo or None if estado == "esperando" else None))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # --- Clientes de una tarea ------------------------------------------------------------------------------------------
 
 def _tenant_de_usuario(conn: sqlite3.Connection, usuario_id: int) -> int | None:

@@ -1313,10 +1313,11 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
     try:
         conn.execute(
             """UPDATE tareas_outlook SET estado = ?, fecha_completada = NULL, actualizada_en = ?,
-                   porcentaje_completado = CASE WHEN estado = 'completada' THEN 0 ELSE porcentaje_completado END
+                   porcentaje_completado = CASE WHEN estado = 'completada' THEN 0 ELSE porcentaje_completado END,
+                   motivo_bloqueo = CASE WHEN ? = 'esperando' THEN motivo_bloqueo ELSE NULL END
                WHERE id = ? AND (usuario_id = ? OR asignada_a = ? OR id IN (
                      SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ? AND rol = 'colabora'))""",
-            (estado, _db.now_iso(), tarea_id, usuario_id, usuario_id, usuario_id),
+            (estado, _db.now_iso(), estado, tarea_id, usuario_id, usuario_id, usuario_id),
         )
         conn.commit()
     finally:

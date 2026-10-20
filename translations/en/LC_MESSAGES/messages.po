@@ -13636,3 +13636,30 @@ msgstr "overdue"
 
 msgid "completadas"
 msgstr "completed"
+
+msgid "Completadas"
+msgstr "Completed"
+
+msgid "Filtrar tareas"
+msgstr "Filter tasks"
+
+msgid "Ninguna tarea cumple este filtro."
+msgstr "No task matches this filter."
+
+msgid "Motivo del bloqueo"
+msgstr "Reason for the block"
+
+msgid "Indica por qué la tarea queda bloqueada."
+msgstr "Say why the task is blocked."
+
+msgid "Otros clientes de esta tarea"
+msgstr "Other clients on this task"
+
+msgid "El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea."
+msgstr "The client above is the main one; tick the others this task affects."
+
+msgid "Otra persona ha modificado esta tarea mientras la editabas. Aquí tienes cómo está ahora; revísala y vuelve a guardar tus cambios."
+msgstr "Someone else changed this task while you were editing it. Here is how it is now; review it and save your changes again."
+
+msgid "Obligatorio si el estado es Esperando a otros"
+msgstr "Required when the status is Waiting on others"
