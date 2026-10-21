@@ -14313,3 +14313,18 @@ msgstr "Open the task"
 
 msgid "Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."
 msgstr "You receive this notice because you turned it on in your profile, under Notifications. We write at most once per hour and task."
+
+msgid "Adjuntar archivos (opcional)"
+msgstr "Attach files (optional)"
+
+msgid "PDF o imágenes. Hasta 3 archivos de 5 MB."
+msgstr "PDF or images. Up to 3 files of 5 MB."
+
+msgid "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF)."
+msgstr "Only PDF files and images (PNG, JPG, WEBP or GIF) are accepted."
+
+msgid "Uno de los archivos está vacío."
+msgstr "One of the files is empty."
+
+msgid "Has subido muchos archivos hoy. Vuelve a intentarlo mañana."
+msgstr "You have uploaded many files today. Try again tomorrow."

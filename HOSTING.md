@@ -101,6 +101,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Revisiones en cadena (octubre de 2026)](#revisiones-en-cadena-octubre-de-2026)
 - [Conversaciones con el cliente por API, MCP e IA (octubre de 2026)](#conversaciones-con-el-cliente-por-api-mcp-e-ia-octubre-de-2026)
 - [Avisos por correo al equipo cuando un cliente comenta (octubre de 2026)](#avisos-por-correo-al-equipo-cuando-un-cliente-comenta-octubre-de-2026)
+- [Archivos del cliente en sus comentarios del portal (octubre de 2026)](#archivos-del-cliente-en-sus-comentarios-del-portal-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3470,3 +3471,16 @@ Además de la campana y el push de siempre, cada persona puede pedir un **correo
 - **Migración al arrancar** (idempotente): columna `usuario_perfil.avisos_cliente_por_correo` y tabla `tarea_avisos_correo`. Reversión: ambas se ignoran sin más. Hace falta reiniciar.
 - **No se ha hecho a propósito**: elegir la frecuencia, resumir varios comentarios en un solo correo, ni cambiar este ajuste por la API o el asistente (solo desde el perfil).
 - **Pruebas**: 7 tests en `tests/test_tareas_aviso_correo_cliente.py` (apagado por defecto, sin el texto del cliente, uno por hora y tarea, aislamiento, fallos y perfil).
+
+## Archivos del cliente en sus comentarios del portal (octubre de 2026)
+
+El cliente puede **adjuntar archivos** al comentar en una tarea que el despacho le enseña (campo «Adjuntar archivos» bajo el comentario en su portal). Código en `app/tareas_trabajo.py` (`comentar_como_cliente`, `leer_adjunto_de_cliente_para_cliente` y `…_para_equipo`), `app/rutas_portal_cliente.py` y `app/rutas_tareas.py`.
+
+- **Es contenido de un tercero y se trata como tal**: solo **PDF e imágenes** (PNG, JPG, WEBP, GIF), comprobados por su contenido (la firma del archivo tiene que corresponder a la extensión; no vale lo que diga el nombre ni el navegador). Se rechazan HTML, SVG, ejecutables, vacíos y cualquier cosa con una clave privada. **Hasta 3 archivos por comentario y 5 MB cada uno, 15 por tarea y cliente y 30 al día por cliente.** Todo o nada: si un archivo no vale, no se guarda ni el texto.
+- **Aislamiento**: viven en su propia tabla (`tarea_comentarios_cliente_adjuntos`), nunca mezclados con los adjuntos de trabajo del equipo. Cada cliente descarga **solo los suyos** (404 para otro cliente, otro despacho o sin sesión), y solo mientras el despacho le siga enseñando la tarea. El equipo los descarga desde «Conversación con el cliente» si ve la tarea.
+- **Descarga segura**: siempre como descarga (nunca en línea), con el tipo que fija el servidor, `nosniff` y CSP `sandbox`. Ocultar un comentario oculta también sus archivos (ni portal ni ficha; quedan en la base). Borrar un cliente o un despacho se lleva sus archivos.
+- **Límite conocido**: los archivos **no se pasan por antivirus** (el proyecto no tiene ninguno). Se descargan, no se abren en el navegador, pero el equipo debe tratarlos como cualquier adjunto de un tercero.
+- La API y las herramientas MCP/IA de las conversaciones muestran los **metadatos** de los archivos (`adjuntos`: id, nombre, tipo, tamaño), no su contenido; se descargan desde la ficha.
+- **Migración al arrancar** (idempotente): tabla `tarea_comentarios_cliente_adjuntos`. Reversión: se ignora. Hace falta reiniciar.
+- **No se ha hecho a propósito**: que el equipo conteste con archivos, antivirus, ni más tipos (Office).
+- **Pruebas**: 14 tests en `tests/test_tareas_adjuntos_cliente.py` (subida y descarga, firmas falsas, límites, todo o nada, aislamiento entre clientes y despachos, ocultar, borrado).

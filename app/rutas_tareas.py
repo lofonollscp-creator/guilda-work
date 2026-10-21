@@ -1497,6 +1497,14 @@ def responder_al_cliente(tarea_id: int):
     return _volver_a_tarea(tarea_id, "#cliente")
 
 
+@tareas_bp.route("/cliente-adjuntos/<int:adjunto_id>")
+@login_required
+def descargar_adjunto_de_cliente(adjunto_id: int):
+    """Un archivo que el cliente envió en un comentario: siempre como descarga, sin ejecutar nada; es contenido externo, ábrelo con cuidado."""
+    from .rutas_api_tareas_trabajo import respuesta_de_adjunto
+    return respuesta_de_adjunto(tareas_trabajo.leer_adjunto_de_cliente_para_equipo(g.usuario_id, adjunto_id))
+
+
 @tareas_bp.route("/cliente-comentarios/<int:comentario_id>/ocultar", methods=["POST"])
 @login_required
 def ocultar_comentario_cliente(comentario_id: int):

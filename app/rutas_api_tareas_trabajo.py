@@ -278,7 +278,7 @@ def cancelar_revision_de_la_tarea(tarea_id: int):
 def _conversaciones_json(tarea_id: int) -> list[dict]:
     return [{"cliente_fiscal_id": c["cliente_fiscal_id"], "cliente": c["cliente"], "sin_leer": c["sin_leer"],
              "mensajes": [{"id": m["id"], "origen": "cliente" if m["autor"] == "cliente" else "despacho", "usuario": m["usuario"], "texto": m["texto"], "creado_en": m["creado_en"],
-                           "leido": m["leido_en"] is not None, "oculto": m["oculto_en"] is not None} for m in c["mensajes"]]}
+                           "leido": m["leido_en"] is not None, "oculto": m["oculto_en"] is not None, "adjuntos": m["adjuntos"]} for m in c["mensajes"]]}
             for c in tt.conversaciones_con_clientes(g.usuario_id, tarea_id)]
 
 

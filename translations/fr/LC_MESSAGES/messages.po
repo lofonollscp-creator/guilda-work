@@ -14398,3 +14398,18 @@ msgstr "Ouvrir la tâche"
 
 msgid "Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."
 msgstr "Vous recevez cet avis parce que vous l'avez activé dans votre profil, sous Notifications. Nous écrivons au plus une fois par heure et par tâche."
+
+msgid "Adjuntar archivos (opcional)"
+msgstr "Joindre des fichiers (facultatif)"
+
+msgid "PDF o imágenes. Hasta 3 archivos de 5 MB."
+msgstr "PDF ou images. Jusqu'à 3 fichiers de 5 Mo."
+
+msgid "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF)."
+msgstr "Seuls les PDF et les images (PNG, JPG, WEBP ou GIF) sont acceptés."
+
+msgid "Uno de los archivos está vacío."
+msgstr "L'un des fichiers est vide."
+
+msgid "Has subido muchos archivos hoy. Vuelve a intentarlo mañana."
+msgstr "Vous avez envoyé beaucoup de fichiers aujourd'hui. Réessayez demain."

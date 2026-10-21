@@ -275,7 +275,8 @@ def comentar_tarea(tarea_id: int):
         session.pop("cliente_fiscal_id", None)
         return redirect(url_for("portal_cliente.entrar"))
     try:
-        nuevo = tareas_trabajo.comentar_como_cliente(cliente["tenant_id"], cliente["id"], tarea_id, request.form.get("texto", ""))
+        archivos = [(a.filename, a.read(tareas_trabajo.MAX_ADJUNTO_CLIENTE_BYTES + 1)) for a in request.files.getlist("archivos")[:tareas_trabajo.MAX_ADJUNTOS_POR_COMENTARIO + 1] if a and a.filename]
+        nuevo = tareas_trabajo.comentar_como_cliente(cliente["tenant_id"], cliente["id"], tarea_id, request.form.get("texto", ""), archivos)
     except tareas_trabajo.ComentarioInvalido as e:
         if e.codigo == "no_encontrada":
             abort(404)
@@ -286,6 +287,17 @@ def comentar_tarea(tarea_id: int):
                                           url=f"/tareas/{tarea_id}#cliente", datos={"tipo": "portal_comentario_tarea", "tarea_id": tarea_id})
         tareas_trabajo.avisar_por_correo_comentario_cliente(destino, tarea_id, nuevo["tarea"]["asunto"], cliente["nombre"], cliente["tenant_id"], url_for("tareas.ver", tarea_id=tarea_id, _external=True) + "#cliente")
     return redirect(url_for("portal_cliente.dashboard", _anchor=f"tarea-{tarea_id}"))
+
+
+@portal_bp.route("/tareas/adjuntos/<int:adjunto_id>")
+@cliente_login_required
+def descargar_adjunto_de_tarea(adjunto_id: int):
+    """El cliente descarga un archivo que él mismo envió en un comentario. Siempre como descarga y sin ejecutar nada; lo ajeno, oculto o de una tarea que ya no se le enseña es un 404."""
+    from .rutas_api_tareas_trabajo import respuesta_de_adjunto
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        abort(404)
+    return respuesta_de_adjunto(tareas_trabajo.leer_adjunto_de_cliente_para_cliente(cliente["tenant_id"], cliente["id"], adjunto_id))
 
 
 # --- Facturas: el cliente las anota (y adjunta la foto o el PDF) para que el despacho las contabilice ---------------------------------------------------------

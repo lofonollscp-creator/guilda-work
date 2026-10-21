@@ -90,14 +90,18 @@
             {% if t.comentarios or t.puede_comentar %}
             <div class="portal-hilo">
               {% for m in t.comentarios %}
-              <div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ m.creado_en|fecha_y_hora }}</span></div>
+              <div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">{{ m.texto }}
+                {% for a in m.adjuntos %}<a class="portal-adjunto" href="{{ url_for('portal_cliente.descargar_adjunto_de_tarea', adjunto_id=a.id) }}">📎 {{ a.nombre }}</a> {% endfor %}<span class="fecha">{{ m.creado_en|fecha_y_hora }}</span></div>
               {% endfor %}
             </div>
             {% endif %}
             {% if t.puede_comentar %}
-            <form method="post" action="{{ url_for('portal_cliente.comentar_tarea', tarea_id=t.id) }}" class="portal-subir">
+            <form method="post" action="{{ url_for('portal_cliente.comentar_tarea', tarea_id=t.id) }}" class="portal-subir" enctype="multipart/form-data">
               <label for="comentario-{{ t.id }}">{{ _('Escribe un comentario') }}</label>
               <textarea id="comentario-{{ t.id }}" class="ds-ancho-total" name="texto" rows="2" maxlength="{{ max_caracteres }}" required></textarea>
+              <label for="archivos-{{ t.id }}">{{ _('Adjuntar archivos (opcional)') }}</label>
+              <input type="file" id="archivos-{{ t.id }}" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.gif">
+              <small class="muted">{{ _('PDF o imágenes. Hasta 3 archivos de 5 MB.') }}</small>
               <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
             </form>
             {% endif %}

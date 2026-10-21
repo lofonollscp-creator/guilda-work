@@ -76,6 +76,20 @@ CREATE TABLE IF NOT EXISTS tarea_comentarios_cliente (
     oculto_por INTEGER REFERENCES usuarios(id)
 );
 CREATE INDEX IF NOT EXISTS idx_tarea_coment_cliente_tarea ON tarea_comentarios_cliente(tarea_id, cliente_fiscal_id, id);
+CREATE TABLE IF NOT EXISTS tarea_comentarios_cliente_adjuntos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    comentario_id INTEGER NOT NULL REFERENCES tarea_comentarios_cliente(id) ON DELETE CASCADE,
+    tarea_id INTEGER NOT NULL,
+    cliente_fiscal_id INTEGER NOT NULL,
+    nombre_archivo TEXT NOT NULL,
+    tipo_mime TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    contenido BLOB NOT NULL,
+    hash_sha256 TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_coment_adj_comentario ON tarea_comentarios_cliente_adjuntos(comentario_id);
 CREATE TABLE IF NOT EXISTS tarea_avisos_correo (
     usuario_id INTEGER NOT NULL,
     tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
@@ -539,12 +553,14 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
     conn.execute("UPDATE tarea_revisiones SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM informes_tareas_suscripciones WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("DELETE FROM tarea_comentarios_cliente_adjuntos WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM tarea_comentarios_cliente WHERE tenant_id = ?", (tenant_id,))             # son conversaciones con clientes de ese despacho: se van con él
 
 
 def desvincular_cliente(conn, tenant_id: int, cliente_fiscal_id: int) -> None:
     """Al borrar un cliente fiscal para siempre: las tareas siguen existiendo, solo dejan de estar vinculadas a él (y si era el principal, cliente_fiscal_id queda vacío)."""
     conn.execute("DELETE FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
+    conn.execute("DELETE FROM tarea_comentarios_cliente_adjuntos WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
     conn.execute("DELETE FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
     conn.execute("UPDATE tareas_outlook SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,))
 
@@ -810,9 +826,11 @@ def tareas_para_cliente(tenant_id: int, cliente_fiscal_id: int) -> list[dict]:
         ids = [f["id"] for f in filas]
         hilos: dict[int, list[dict]] = {}
         if ids:
-            for c in conn.execute(f"SELECT tarea_id, autor, texto, creado_en FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND oculto_en IS NULL AND tarea_id IN ({','.join('?' * len(ids))}) ORDER BY id",
-                                  (cliente_fiscal_id, *ids)):
-                hilos.setdefault(c["tarea_id"], []).append({"autor": c["autor"], "texto": c["texto"], "creado_en": c["creado_en"]})
+            filas_c = conn.execute(f"SELECT id, tarea_id, autor, texto, creado_en FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND oculto_en IS NULL AND tarea_id IN ({','.join('?' * len(ids))}) ORDER BY id",
+                                   (cliente_fiscal_id, *ids)).fetchall()
+            adj = _adjuntos_por_comentario(conn, [c["id"] for c in filas_c])
+            for c in filas_c:
+                hilos.setdefault(c["tarea_id"], []).append({"autor": c["autor"], "texto": c["texto"], "creado_en": c["creado_en"], "adjuntos": adj.get(c["id"], [])})
         return [{"id": f["id"], "asunto": f["asunto"], "estado": f["estado"], "estado_texto": ESTADOS_PARA_CLIENTE.get(f["estado"], f["estado"]),
                  "fecha_vencimiento": f["fecha_vencimiento"][:10] if f["fecha_vencimiento"] else None, "vencida": esta_vencida(f["fecha_vencimiento"], f["estado"]),
                  "puede_comentar": bool(f["comentarios_cliente"]) and f["estado"] != "completada", "comentarios": hilos.get(f["id"], [])} for f in filas]
@@ -820,14 +838,67 @@ def tareas_para_cliente(tenant_id: int, cliente_fiscal_id: int) -> list[dict]:
         conn.close()
 
 
-def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int, texto: str) -> dict:
-    """El cliente escribe en una tarea que se le enseña y en la que se le deja comentar. Devuelve {"id", "tarea", "destinatarios"} (a quién avisar). Lanza ComentarioInvalido con un código estable."""
+# Archivos del cliente en sus comentarios. Es contenido de un tercero y se trata como tal: solo PDF e imágenes, comprobados por su contenido (no por lo que diga el nombre o el navegador),
+# hasta 3 por comentario y 5 MB cada uno, 15 por tarea y 30 al día por cliente; nada con claves privadas. Viven en su propia tabla (nunca mezclados con los adjuntos del equipo), cada cliente
+# solo descarga los suyos, se sirven siempre como descarga y sin ejecutar nada, y un comentario oculto se lleva sus archivos (no se ven ni en el portal ni en la ficha). No se analizan con antivirus.
+TIPOS_ADJUNTO_CLIENTE = {"pdf": "application/pdf", "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "webp": "image/webp", "gif": "image/gif"}
+MAX_ADJUNTO_CLIENTE_BYTES = 5 * 1024 * 1024
+MAX_ADJUNTOS_POR_COMENTARIO = 3
+MAX_ADJUNTOS_CLIENTE_POR_TAREA = 15
+MAX_ADJUNTOS_CLIENTE_POR_DIA = 30
+
+
+def _firma_valida(ext: str, contenido: bytes) -> bool:
+    cabecera = contenido[:16]
+    if ext == "pdf":
+        return cabecera.startswith(b"%PDF-")
+    if ext == "png":
+        return cabecera.startswith(b"\x89PNG\r\n\x1a\n")
+    if ext in ("jpg", "jpeg"):
+        return cabecera.startswith(b"\xff\xd8\xff")
+    if ext == "gif":
+        return cabecera.startswith((b"GIF87a", b"GIF89a"))
+    if ext == "webp":
+        return cabecera.startswith(b"RIFF") and cabecera[8:12] == b"WEBP"
+    return False
+
+
+def _validar_adjuntos_cliente(archivos) -> list[tuple[str, str, bytes]]:
+    """[(nombre seguro, tipo que decide el servidor, contenido)] o ComentarioInvalido. `archivos`: lista de (nombre, bytes); los vacíos (sin nombre) se ignoran."""
+    import hashlib
+    from . import certificados
+    validos, vistos = [], set()
+    for nombre, contenido in [a for a in (archivos or []) if a and a[0]]:
+        if len(validos) >= MAX_ADJUNTOS_POR_COMENTARIO:
+            raise ComentarioInvalido("demasiados_archivos", f"Puedes adjuntar hasta {MAX_ADJUNTOS_POR_COMENTARIO} archivos por comentario.")
+        nombre = db._nombre_de_archivo_seguro(nombre or "")[:150]
+        ext = _extension(nombre)
+        if ext not in TIPOS_ADJUNTO_CLIENTE:
+            raise ComentarioInvalido("tipo_no_admitido", "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF).")
+        if not contenido:
+            raise ComentarioInvalido("archivo_vacio", "Uno de los archivos está vacío.")
+        if len(contenido) > MAX_ADJUNTO_CLIENTE_BYTES:
+            raise ComentarioInvalido("archivo_grande", f"Cada archivo puede pesar como máximo {MAX_ADJUNTO_CLIENTE_BYTES // (1024 * 1024)} MB.")
+        if not _firma_valida(ext, contenido) or certificados.contiene_clave_privada(contenido):
+            raise ComentarioInvalido("tipo_no_admitido", "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF).")
+        huella = hashlib.sha256(contenido).hexdigest()
+        if huella in vistos:
+            continue
+        vistos.add(huella)
+        validos.append((nombre, TIPOS_ADJUNTO_CLIENTE[ext], contenido))
+    return validos
+
+
+def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int, texto: str, archivos=None) -> dict:
+    """El cliente escribe en una tarea que se le enseña y en la que se le deja comentar, con hasta 3 archivos (`archivos`: lista de (nombre, bytes)). Todo o nada: si algo no vale, no se guarda ni el texto.
+    Devuelve {"id", "tarea", "destinatarios", "adjuntos"} (a quién avisar). Lanza ComentarioInvalido con un código estable."""
     texto = (texto or "").strip()
     if not texto:
         raise ComentarioInvalido("vacio", "Escribe algo antes de enviar.")
     if len(texto) > MAX_CARACTERES_COMENTARIO:
         raise ComentarioInvalido("largo", f"El comentario admite como máximo {MAX_CARACTERES_COMENTARIO} caracteres.")
     texto = "".join(c for c in texto if c == "\n" or c >= " ")                       # fuera caracteres de control
+    adjuntos = _validar_adjuntos_cliente(archivos)
     conn = db.get_connection()
     try:
         t = conn.execute(
@@ -843,13 +914,58 @@ def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int,
         if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE tarea_id = ? AND cliente_fiscal_id = ? AND autor = 'cliente' AND creado_en >= ?", (tarea_id, cliente_fiscal_id, hace_una_hora)).fetchone()[0] >= MAX_COMENTARIOS_POR_HORA_Y_TAREA \
                 or conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND autor = 'cliente' AND creado_en >= ?", (cliente_fiscal_id, hace_un_dia)).fetchone()[0] >= MAX_COMENTARIOS_POR_DIA:
             raise ComentarioInvalido("limite", "Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo.")
+        if adjuntos:
+            if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente_adjuntos WHERE tarea_id = ? AND cliente_fiscal_id = ?", (tarea_id, cliente_fiscal_id)).fetchone()[0] + len(adjuntos) > MAX_ADJUNTOS_CLIENTE_POR_TAREA:
+                raise ComentarioInvalido("limite_archivos", f"Esta tarea ya tiene muchos archivos tuyos (máximo {MAX_ADJUNTOS_CLIENTE_POR_TAREA}).")
+            if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente_adjuntos WHERE cliente_fiscal_id = ? AND creado_en >= ?", (cliente_fiscal_id, hace_un_dia)).fetchone()[0] + len(adjuntos) > MAX_ADJUNTOS_CLIENTE_POR_DIA:
+                raise ComentarioInvalido("limite_archivos", "Has subido muchos archivos hoy. Vuelve a intentarlo mañana.")
         cur = conn.execute("INSERT INTO tarea_comentarios_cliente (tenant_id, tarea_id, cliente_fiscal_id, autor, texto, creado_en) VALUES (?, ?, ?, 'cliente', ?, ?)",
                            (tenant_id, tarea_id, cliente_fiscal_id, texto, ahora.isoformat(timespec="seconds")))
-        auditoria.registrar(tenant_id, None, "tarea.comentario_cliente", "tarea", tarea_id, {"comentario": cur.lastrowid, "cliente": cliente_fiscal_id}, conn=conn)
+        import hashlib
+        for nombre, mime, contenido in adjuntos:
+            conn.execute("INSERT INTO tarea_comentarios_cliente_adjuntos (tenant_id, comentario_id, tarea_id, cliente_fiscal_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, hash_sha256, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                         (tenant_id, cur.lastrowid, tarea_id, cliente_fiscal_id, nombre, mime, len(contenido), contenido, hashlib.sha256(contenido).hexdigest(), ahora.isoformat(timespec="seconds")))
+        auditoria.registrar(tenant_id, None, "tarea.comentario_cliente", "tarea", tarea_id, {"comentario": cur.lastrowid, "cliente": cliente_fiscal_id, "archivos": len(adjuntos)}, conn=conn)
         conn.commit()
-        return {"id": cur.lastrowid, "tarea": {"id": t["id"], "asunto": t["asunto"]}, "destinatarios": sorted({u for u in (t["usuario_id"], t["asignada_a"]) if u})}
+        return {"id": cur.lastrowid, "tarea": {"id": t["id"], "asunto": t["asunto"]}, "destinatarios": sorted({u for u in (t["usuario_id"], t["asignada_a"]) if u}), "adjuntos": len(adjuntos)}
     finally:
         conn.close()
+
+
+def _adjuntos_por_comentario(conn, comentario_ids: list[int]) -> dict[int, list[dict]]:
+    """Metadatos (sin el contenido) de los archivos de esos comentarios. Quien llama ya excluyó los ocultos."""
+    res: dict[int, list[dict]] = {}
+    for i in range(0, len(comentario_ids), 500):
+        lote = comentario_ids[i:i + 500]
+        for a in conn.execute(f"SELECT id, comentario_id, nombre_archivo, tipo_mime, tamano_bytes FROM tarea_comentarios_cliente_adjuntos WHERE comentario_id IN ({','.join('?' * len(lote))}) ORDER BY id", lote):
+            res.setdefault(a["comentario_id"], []).append({"id": a["id"], "nombre": a["nombre_archivo"], "tipo": a["tipo_mime"], "tamano": a["tamano_bytes"]})
+    return res
+
+
+def leer_adjunto_de_cliente_para_cliente(tenant_id: int, cliente_fiscal_id: int, adjunto_id: int) -> dict | None:
+    """Un cliente descarga SOLO sus archivos, de comentarios no ocultos y en tareas que el despacho le sigue enseñando. Cualquier otra cosa es None (404)."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute(
+            f"""SELECT a.* FROM tarea_comentarios_cliente_adjuntos a JOIN tarea_comentarios_cliente c ON c.id = a.comentario_id
+                WHERE a.id = ? AND a.cliente_fiscal_id = ? AND a.tenant_id = ? AND c.oculto_en IS NULL
+                  AND a.tarea_id IN (SELECT t.id FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id WHERE {_VISIBLE_PARA_CLIENTE})""",
+            (adjunto_id, cliente_fiscal_id, tenant_id, tenant_id, cliente_fiscal_id, cliente_fiscal_id, tenant_id)).fetchone()
+    finally:
+        conn.close()
+    return None if f is None else {"nombre_archivo": f["nombre_archivo"], "tipo_mime": f["tipo_mime"], "contenido": bytes(f["contenido"]), "imagen": False}
+
+
+def leer_adjunto_de_cliente_para_equipo(usuario_id: int, adjunto_id: int) -> dict | None:
+    """El equipo descarga el archivo de un cliente si ve la tarea y el comentario no está oculto."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT a.* FROM tarea_comentarios_cliente_adjuntos a JOIN tarea_comentarios_cliente c ON c.id = a.comentario_id WHERE a.id = ? AND c.oculto_en IS NULL", (adjunto_id,)).fetchone()
+    finally:
+        conn.close()
+    if f is None or db.obtener_tarea_outlook_visible(usuario_id, f["tarea_id"]) is None:
+        return None
+    return {"nombre_archivo": f["nombre_archivo"], "tipo_mime": f["tipo_mime"], "contenido": bytes(f["contenido"]), "imagen": False}
 
 
 def conversaciones_con_clientes(usuario_id: int, tarea_id: int) -> list[dict]:
@@ -862,8 +978,14 @@ def conversaciones_con_clientes(usuario_id: int, tarea_id: int) -> list[dict]:
             """SELECT c.*, cf.nombre AS cliente FROM tarea_comentarios_cliente c JOIN clientes_fiscales cf ON cf.id = c.cliente_fiscal_id WHERE c.tarea_id = ? ORDER BY c.id""", (tarea_id,))]
     finally:
         conn.close()
+    conn = db.get_connection()
+    try:
+        adj = _adjuntos_por_comentario(conn, [f["id"] for f in filas if f["oculto_en"] is None])
+    finally:
+        conn.close()
     por_cliente: dict[int, dict] = {}
     for f in filas:
+        f["adjuntos"] = adj.get(f["id"], [])
         h = por_cliente.setdefault(f["cliente_fiscal_id"], {"cliente_fiscal_id": f["cliente_fiscal_id"], "cliente": f["cliente"], "mensajes": [], "sin_leer": 0})
         f["usuario"] = db.nombre_mostrado_usuario(f["usuario_id"]) if f["usuario_id"] else None
         h["mensajes"].append(f)

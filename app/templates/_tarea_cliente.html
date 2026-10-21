@@ -15,7 +15,8 @@
   <div class="portal-hilo">
     {% for m in conv.mensajes %}
     <div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">
-      {% if m.oculto_en %}<em class="muted">{{ _('Comentario oculto') }}</em>{% else %}{{ m.texto }}{% endif %}
+      {% if m.oculto_en %}<em class="muted">{{ _('Comentario oculto') }}</em>{% else %}{{ m.texto }}
+      {% for a in m.adjuntos %}<a class="portal-adjunto" href="{{ url_for('tareas.descargar_adjunto_de_cliente', adjunto_id=a.id) }}">📎 {{ a.nombre }}</a> {% endfor %}{% endif %}
       <span class="fecha">{{ m.creado_en|fecha_y_hora }}{% if m.autor == 'despacho' and m.usuario %} · {{ m.usuario }}{% endif %}</span>
       {% if m.autor == 'cliente' and not m.oculto_en and puede_trabajar %}
       <form method="post" action="{{ url_for('tareas.ocultar_comentario_cliente', comentario_id=m.id) }}" class="comentario-borrar">

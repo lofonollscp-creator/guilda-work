@@ -14322,3 +14322,18 @@ msgstr "Obrir la tasca"
 
 msgid "Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."
 msgstr "Reps aquest avís perquè el vas activar al teu perfil, a Notificacions. Com a màxim t'escrivim un cop per hora i tasca."
+
+msgid "Adjuntar archivos (opcional)"
+msgstr "Adjuntar fitxers (opcional)"
+
+msgid "PDF o imágenes. Hasta 3 archivos de 5 MB."
+msgstr "PDF o imatges. Fins a 3 fitxers de 5 MB."
+
+msgid "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF)."
+msgstr "Només s'admeten PDF i imatges (PNG, JPG, WEBP o GIF)."
+
+msgid "Uno de los archivos está vacío."
+msgstr "Un dels fitxers està buit."
+
+msgid "Has subido muchos archivos hoy. Vuelve a intentarlo mañana."
+msgstr "Has pujat molts fitxers avui. Torna-ho a provar demà."
