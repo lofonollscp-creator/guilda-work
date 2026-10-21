@@ -910,6 +910,19 @@ def responder_al_cliente(usuario_id: int, tarea_id: int, cliente_fiscal_id: int,
     return {"id": cur.lastrowid, "cliente_fiscal_id": int(cliente_fiscal_id)}
 
 
+def avisar_respuesta_al_cliente(tenant_id: int | None, cliente_fiscal_id: int, texto: str, url_entrada: str) -> bool:
+    """Correo al cliente avisando de que tiene una respuesta (con el enlace de entrada al portal, como en los mensajes de los vencimientos). True si salió; un fallo o la falta de correo nunca estropea la respuesta, que ya está guardada."""
+    from . import notificaciones_email
+    cliente = db.obtener_cliente_fiscal(tenant_id, cliente_fiscal_id) if tenant_id else None
+    if cliente is None or not cliente["email"]:
+        return False
+    try:
+        notificaciones_email.enviar_respuesta_portal(cliente["email"], (texto or "").strip(), url_entrada, tenant_id=tenant_id)
+    except notificaciones_email.ErrorNotificacionesEmail:
+        return False
+    return True
+
+
 def ocultar_comentario_de_cliente(usuario_id: int, comentario_id: int) -> int | None:
     """Moderación: oculta un comentario del cliente (no se borra: queda en la base y en la auditoría). Quien trabaja la tarea. Devuelve el id de la tarea, o None si no se pudo."""
     conn = db.get_connection()

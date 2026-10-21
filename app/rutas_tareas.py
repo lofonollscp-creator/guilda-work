@@ -1486,7 +1486,6 @@ def cancelar_revision(tarea_id: int):
 @tareas_bp.route("/<int:tarea_id>/cliente/responder", methods=["POST"])
 @login_required
 def responder_al_cliente(tarea_id: int):
-    from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal
     texto = request.form.get("texto", "")
     try:
         r = tareas_trabajo.responder_al_cliente(g.usuario_id, tarea_id, _int_o_none(request.form.get("cliente_fiscal_id")) or 0, texto)
@@ -1494,12 +1493,7 @@ def responder_al_cliente(tarea_id: int):
         if e.codigo == "no_encontrada":
             abort(404)
         return _volver_a_tarea(tarea_id, "#cliente", _(str(e)))
-    cliente = db.obtener_cliente_fiscal(g.tenant_id, r["cliente_fiscal_id"]) if g.tenant_id else None
-    if cliente is not None and cliente["email"]:                          # aviso por correo, como en las respuestas de los vencimientos; un fallo del correo nunca estropea la respuesta
-        try:
-            enviar_respuesta_portal(cliente["email"], texto.strip(), url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
-        except ErrorNotificacionesEmail:
-            pass
+    tareas_trabajo.avisar_respuesta_al_cliente(g.tenant_id, r["cliente_fiscal_id"], texto, url_for("portal_cliente.entrar", _external=True))      # aviso por correo; un fallo nunca estropea la respuesta
     return _volver_a_tarea(tarea_id, "#cliente")
 
 

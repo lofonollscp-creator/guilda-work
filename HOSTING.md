@@ -99,6 +99,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Comentarios del cliente en las tareas del portal (octubre de 2026)](#comentarios-del-cliente-en-las-tareas-del-portal-octubre-de-2026)
 - [Resumen semanal de tareas por correo (octubre de 2026)](#resumen-semanal-de-tareas-por-correo-octubre-de-2026)
 - [Revisiones en cadena (octubre de 2026)](#revisiones-en-cadena-octubre-de-2026)
+- [Conversaciones con el cliente por API, MCP e IA (octubre de 2026)](#conversaciones-con-el-cliente-por-api-mcp-e-ia-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3445,3 +3446,15 @@ Una revisión puede ahora ir **uno tras otro**: modo `cadena`, además de `todos
 - Las respuestas de la API incluyen `turno` (a quién le toca) y `pueden_votar`. Sin migración: la columna `modo` ya existía. Basta con reiniciar para que cargue el código.
 - **No se ha hecho a propósito**: reordenar o añadir revisores a una cadena en curso (se retira y se vuelve a pedir), y la acción de automatización «pedir revisión» sigue pidiéndola en modo `todos`.
 - **Pruebas**: 5 tests nuevos en `tests/test_tareas_revision.py` (turno, aviso al siguiente, cambios que cortan la cadena, retirada, pantalla, herramienta).
+
+## Conversaciones con el cliente por API, MCP e IA (octubre de 2026)
+
+Las conversaciones de las tareas con el cliente (ver «Comentarios del cliente en las tareas del portal») se pueden ahora leer, contestar y moderar también por la API, las herramientas MCP y el asistente de IA, con las mismas reglas que en la ficha de la tarea.
+
+- **API** (`app/rutas_api_tareas_trabajo.py`): `GET /tareas-outlook/<id>/conversaciones-cliente` (una conversación por cliente; `?marcar_leidos=true` las da por leídas, por defecto leer no las marca), `POST` en la misma ruta con `{"cliente_fiscal_id", "texto"}` para contestar (se ve en el portal y, si el cliente tiene email, se le avisa por correo; la respuesta indica `cliente_avisado_por_correo`) y `POST /tareas-outlook/cliente-comentarios/<id>/ocultar` para moderar. Mismos permisos que la web: ver la tarea para leer, trabajarla para contestar u ocultar; lo ajeno responde 404.
+- **MCP e IA** (`mcp_tools/herramientas_tareas_trabajo.py`, grupo `tareas_avanzadas`): `listar_conversaciones_cliente_tarea` (lectura), `responder_cliente_tarea` y `ocultar_comentario_cliente_tarea` (escritura; no están en los perfiles de solo lectura).
+- **Contenido externo**: lo que escribe un cliente no es de confianza. La API y las herramientas lo devuelven marcado (`origen: "cliente"`; la herramienta añade un aviso para el modelo de no seguir instrucciones que contenga), solo texto y de máximo 1.000 caracteres.
+- **Confirmación**: en el asistente, `responder_cliente_tarea` está entre las acciones que piden confirmación SIEMPRE, incluso con el modo autónomo (es un mensaje a un tercero que no se puede deshacer); ocultar pide confirmación salvo en modo autónomo.
+- Refactor de paso: el aviso por correo de la respuesta es ahora `tareas_trabajo.avisar_respuesta_al_cliente`, compartido por la web, la API y las herramientas. Sin migración; hace falta reiniciar.
+- **No se ha hecho a propósito**: que el cliente escriba por API (sigue siendo solo desde su portal), adjuntos del cliente y avisos por correo al equipo.
+- **Pruebas**: 6 tests nuevos en `tests/test_tareas_portal_cliente_api.py` (lectura sin marcar, respuesta con correo y sin él, validaciones, ocultar, aislamiento entre despachos, confirmación y contenido externo).

@@ -5,9 +5,9 @@ import mcp_tools
 from app import db, herramientas_grupos as hg, ia_herramientas as ih, tareas_trabajo as tt
 from app.db_fiscal import crear_cliente_fiscal
 
-LECTURA = ("listar_subtareas_tarea", "listar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "informe_tareas",
+LECTURA = ("listar_subtareas_tarea", "listar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "informe_tareas", "listar_conversaciones_cliente_tarea",
            "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion")
-ESCRITURA = ("cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea")
+ESCRITURA = ("cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "ocultar_comentario_cliente_tarea")
 
 
 def _equipo(nombre):

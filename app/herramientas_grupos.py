@@ -16,7 +16,7 @@ GRUPOS: dict[str, tuple[str, ...]] = {
     ),
     "soporte": ("ver_mis_ajustes", "cambiar_mis_ajustes"),
     "tareas_avanzadas": (
-        "cambiar_estado_tarea_con_motivo", "listar_subtareas_tarea", "crear_subtarea", "listar_clientes_de_tarea", "fijar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "informe_tareas", "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion",
+        "cambiar_estado_tarea_con_motivo", "listar_subtareas_tarea", "crear_subtarea", "listar_clientes_de_tarea", "fijar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "listar_conversaciones_cliente_tarea", "responder_cliente_tarea", "ocultar_comentario_cliente_tarea", "informe_tareas", "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion",
         "eliminar_tarea", "eliminar_nota", "fijar_nota", "detalle_tarea", "completar_tareas", "listar_notificaciones", "consumo_ia", "listar_comunicados",
         "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea", "crear_proyecto", "renombrar_proyecto", "eliminar_proyecto",
         "asignar_tarea", "listar_companeros", "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
