@@ -80,12 +80,27 @@
     <section class="portal-resumen" aria-label="{{ _('Trabajo en curso') }}">
       <div>
         <strong>{{ _('Trabajo en curso con tu gestoría') }}</strong>
+        {% if aviso %}<p class="muted" role="status">{{ aviso }}</p>{% endif %}
         <ul class="log-list">
           {% for t in trabajo_en_curso %}
-          <li class="log-item {{ 'is-completada' if t.estado == 'completada' }}">
+          <li class="log-item {{ 'is-completada' if t.estado == 'completada' }}" id="tarea-{{ t.id }}">
             <span class="log-text">{{ t.asunto }}</span>
             {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Fecha prevista: %(fecha)s', fecha=t.fecha_vencimiento|fecha_dia) }}</span>{% endif %}
             <span class="pill">{{ _(t.estado_texto) }}</span>
+            {% if t.comentarios or t.puede_comentar %}
+            <div class="portal-hilo">
+              {% for m in t.comentarios %}
+              <div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ m.creado_en|fecha_y_hora }}</span></div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if t.puede_comentar %}
+            <form method="post" action="{{ url_for('portal_cliente.comentar_tarea', tarea_id=t.id) }}" class="portal-subir">
+              <label for="comentario-{{ t.id }}">{{ _('Escribe un comentario') }}</label>
+              <textarea id="comentario-{{ t.id }}" class="ds-ancho-total" name="texto" rows="2" maxlength="{{ max_caracteres }}" required></textarea>
+              <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+            </form>
+            {% endif %}
           </li>
           {% endfor %}
         </ul>

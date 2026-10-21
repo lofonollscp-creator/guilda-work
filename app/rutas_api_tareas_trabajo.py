@@ -8,7 +8,7 @@ from . import db, tareas_trabajo as tt
 from .auth import token_required
 from .rutas_api import _body, _dict, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
 
-_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "ya_has_votado": 409, "demasiados_revisores": 400, "sin_cliente": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
+_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "ya_has_votado": 409, "demasiados_revisores": 400, "sin_cliente": 409, "comentarios_sin_visible": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
            "tipo_no_admitido": 415, "archivo_grande": 413}
 
 
@@ -277,14 +277,18 @@ def cancelar_revision_de_la_tarea(tarea_id: int):
 @api_bp.route("/tareas-outlook/<int:tarea_id>/visible-cliente", methods=["PUT"])
 @token_required
 def fijar_visible_cliente_de_la_tarea(tarea_id: int):
-    """Cuerpo: `{"visible": true}`. Enseña (o deja de enseñar) la tarea al cliente al que está vinculada, en su portal, solo de lectura: asunto, estado y fecha límite.
-    Por defecto ninguna tarea es visible. Hace falta que la tarea tenga cliente (409 `sin_cliente`)."""
+    """Cuerpo: `{"visible": true, "comentarios": false}`. Enseña (o deja de enseñar) la tarea al cliente al que está vinculada, en su portal: asunto, estado y fecha límite. `comentarios` (opcional,
+    solo con `visible`) deja además que el cliente escriba en ella mientras esté abierta; el equipo le contesta desde la ficha. Por defecto ninguna tarea es visible ni comentable. Hace falta que la
+    tarea tenga cliente (409 `sin_cliente`)."""
     _tarea_o_404(tarea_id)
     datos = _body()
     if not isinstance(datos.get("visible"), bool):
         return _err("visible tiene que ser true o false.", 400, "visible_invalido", "visible")
+    if "comentarios" in datos and not isinstance(datos["comentarios"], bool):
+        return _err("comentarios tiene que ser true o false.", 400, "comentarios_invalido", "comentarios")
     try:
-        tt.fijar_visible_cliente(g.usuario_id, tarea_id, datos["visible"])
+        tt.fijar_visible_cliente(g.usuario_id, tarea_id, datos["visible"], datos.get("comentarios"))
     except tt.TransicionInvalida as e:
         return _err(str(e), _STATUS.get(e.codigo, 400), e.codigo, e.campo)
-    return _ok({"visible_cliente": datos["visible"]})
+    t = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    return _ok({"visible_cliente": bool(t["visible_cliente"]), "comentarios_cliente": bool(t["comentarios_cliente"])})

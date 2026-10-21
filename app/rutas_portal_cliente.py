@@ -151,6 +151,7 @@ def dashboard():
         por_anio=por_anio, anios_ordenados=anios_ordenados,
         presentados=presentados, proximo_pendiente=proximo_pendiente, portal_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"),
         trabajo_en_curso=tareas_trabajo.tareas_para_cliente(cliente["tenant_id"], cliente["id"]),
+        aviso=(request.args.get("aviso") or "")[:200] or None, max_caracteres=tareas_trabajo.MAX_CARACTERES_COMENTARIO,
     )
 
 
@@ -260,6 +261,30 @@ def mensajes_vencimiento(vencimiento_id: int):
         "portal_vencimiento_mensajes.html",
         vencimiento=vencimiento, mensajes=db.listar_mensajes_vencimiento(vencimiento_id),
     )
+
+
+# --- Tareas que el despacho enseña al cliente: comentarios --------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/tareas/<int:tarea_id>/comentarios", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def comentar_tarea(tarea_id: int):
+    """El cliente escribe en una tarea que se le enseña y en la que el despacho le deja comentar (ver app/tareas_trabajo.py). Cualquier otra cosa es un 404: ni se confirma que la tarea exista."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        session.pop("cliente_fiscal_id", None)
+        return redirect(url_for("portal_cliente.entrar"))
+    try:
+        nuevo = tareas_trabajo.comentar_como_cliente(cliente["tenant_id"], cliente["id"], tarea_id, request.form.get("texto", ""))
+    except tareas_trabajo.ComentarioInvalido as e:
+        if e.codigo == "no_encontrada":
+            abort(404)
+        return redirect(url_for("portal_cliente.dashboard", aviso=_(str(e)), _anchor=f"tarea-{tarea_id}"))
+    for destino in nuevo["destinatarios"]:
+        if db.notificacion_tipo_activa(destino, "portal_comentario_tarea"):
+            notificaciones.crear_y_enviar(destino, "portal_comentario_tarea", _("Comentario de un cliente en una tarea"), f"{cliente['nombre']}: {nuevo['tarea']['asunto']}"[:100],
+                                          url=f"/tareas/{tarea_id}#cliente", datos={"tipo": "portal_comentario_tarea", "tarea_id": tarea_id})
+    return redirect(url_for("portal_cliente.dashboard", _anchor=f"tarea-{tarea_id}"))
 
 
 # --- Facturas: el cliente las anota (y adjunta la foto o el PDF) para que el despacho las contabilice ---------------------------------------------------------

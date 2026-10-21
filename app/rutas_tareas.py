@@ -509,7 +509,7 @@ def editar(tarea_id: int):
                 return render_template("tarea_outlook_editar.html", **_contexto_edicion(db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id), str(e))), 422
         if request.form.get("visible_cliente_enviado"):
             try:
-                tareas_trabajo.fijar_visible_cliente(g.usuario_id, tarea_id, bool(request.form.get("visible_cliente")))
+                tareas_trabajo.fijar_visible_cliente(g.usuario_id, tarea_id, bool(request.form.get("visible_cliente")), bool(request.form.get("comentarios_cliente")))
             except tareas_trabajo.TransicionInvalida as e:
                 return render_template("tarea_outlook_editar.html", **_contexto_edicion(db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id), _(str(e)))), 422
         nueva_asignacion = _int_o_none(request.form.get("asignada_a"))
@@ -756,6 +756,17 @@ def _contexto_comentarios(tarea_id: int) -> dict:
     }
 
 
+def _hilo_cliente(tarea_id: int) -> dict:
+    """Lo que necesita la sección «Conversación con el cliente»: si se le enseña y puede escribir, las conversaciones por cliente y a quién se puede contestar. Al verla se marca como leída."""
+    t = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    conversaciones = tareas_trabajo.conversaciones_con_clientes(g.usuario_id, tarea_id)
+    hilo = {"visible": bool(t and t["visible_cliente"]), "comentarios": bool(t and t["comentarios_cliente"]), "conversaciones": conversaciones, "sin_leer": sum(c["sin_leer"] for c in conversaciones),
+            "vinculados": tareas_trabajo.clientes_de_tarea(tarea_id)}
+    if hilo["sin_leer"]:
+        tareas_trabajo.marcar_conversaciones_leidas(g.usuario_id, tarea_id)
+    return hilo
+
+
 def _contexto_subtareas_y_adjuntos(tarea_id: int) -> dict:
     subtareas = tareas_trabajo.subtareas_de(tarea_id)
     padre_id = tareas_trabajo.padre_de(tarea_id)
@@ -765,6 +776,7 @@ def _contexto_subtareas_y_adjuntos(tarea_id: int) -> dict:
         "adjuntos": tareas_trabajo.listar_adjuntos(tarea_id), "puede_trabajar": db.puede_trabajar_tarea(g.usuario_id, tarea_id),
         "puede_editar_estructura": db.puede_editar_tarea(g.usuario_id, tarea_id) and padre_id is None,
         "max_adjuntos": tareas_trabajo.MAX_ADJUNTOS_POR_TAREA,
+        "hilo_cliente": _hilo_cliente(tarea_id),
         "revision": tareas_trabajo.revision_pendiente(tarea_id), "revisiones": tareas_trabajo.historial_de_revisiones(tarea_id),
         "revisores_posibles": [c for c in db.listar_companeros_tenant(g.usuario_id) if c["id"] != g.usuario_id],
     }
@@ -1455,3 +1467,34 @@ def cancelar_revision(tarea_id: int):
     if not tareas_trabajo.cancelar_revision(g.usuario_id, tarea_id):
         abort(404)
     return _volver_a_tarea(tarea_id, "#revision")
+
+
+# --- Conversación con el cliente desde el portal (ver app/tareas_trabajo.py) ------------------------------------------------
+
+@tareas_bp.route("/<int:tarea_id>/cliente/responder", methods=["POST"])
+@login_required
+def responder_al_cliente(tarea_id: int):
+    from .notificaciones_email import ErrorNotificacionesEmail, enviar_respuesta_portal
+    texto = request.form.get("texto", "")
+    try:
+        r = tareas_trabajo.responder_al_cliente(g.usuario_id, tarea_id, _int_o_none(request.form.get("cliente_fiscal_id")) or 0, texto)
+    except tareas_trabajo.TransicionInvalida as e:
+        if e.codigo == "no_encontrada":
+            abort(404)
+        return _volver_a_tarea(tarea_id, "#cliente", _(str(e)))
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, r["cliente_fiscal_id"]) if g.tenant_id else None
+    if cliente is not None and cliente["email"]:                          # aviso por correo, como en las respuestas de los vencimientos; un fallo del correo nunca estropea la respuesta
+        try:
+            enviar_respuesta_portal(cliente["email"], texto.strip(), url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
+        except ErrorNotificacionesEmail:
+            pass
+    return _volver_a_tarea(tarea_id, "#cliente")
+
+
+@tareas_bp.route("/cliente-comentarios/<int:comentario_id>/ocultar", methods=["POST"])
+@login_required
+def ocultar_comentario_cliente(comentario_id: int):
+    tarea_id = tareas_trabajo.ocultar_comentario_de_cliente(g.usuario_id, comentario_id)
+    if tarea_id is None:
+        abort(404)
+    return _volver_a_tarea(tarea_id, "#cliente")

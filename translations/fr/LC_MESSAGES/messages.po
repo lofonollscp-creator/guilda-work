@@ -14260,3 +14260,72 @@ msgstr "Une révision admet jusqu'à 5 réviseurs."
 
 msgid "El modo tiene que ser «todos» o «cualquiera»."
 msgstr "Le mode doit être « tous » ou « n'importe lequel »."
+
+msgid "Comentario de un cliente en una tarea"
+msgstr "Commentaire d'un client sur une tâche"
+
+msgid "Escribe algo antes de enviar."
+msgstr "Écrivez quelque chose avant d'envoyer."
+
+msgid "El comentario admite como máximo 1000 caracteres."
+msgstr "Un commentaire admet au plus 1000 caractères."
+
+msgid "No se puede comentar en esta tarea."
+msgstr "Vous ne pouvez pas commenter cette tâche."
+
+msgid "Esta tarea ya está completada."
+msgstr "Cette tâche est déjà terminée."
+
+msgid "Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo."
+msgstr "Vous avez envoyé beaucoup de commentaires d'affilée. Patientez un moment et réessayez."
+
+msgid "No tienes permiso para contestar al cliente en esta tarea."
+msgstr "Vous n'avez pas la permission de répondre au client sur cette tâche."
+
+msgid "Escribe la respuesta."
+msgstr "Écrivez la réponse."
+
+msgid "La respuesta admite como máximo 1000 caracteres."
+msgstr "Une réponse admet au plus 1000 caractères."
+
+msgid "Ese cliente no está vinculado a la tarea."
+msgstr "Ce client n'est pas lié à la tâche."
+
+msgid "Para que el cliente pueda comentar, primero hay que enseñarle la tarea."
+msgstr "Pour que le client puisse commenter, il faut d'abord lui montrer la tâche."
+
+msgid "Conversación con el cliente"
+msgstr "Conversation avec le client"
+
+msgid "El cliente ve esta tarea en su portal y puede escribir en ella mientras esté abierta."
+msgstr "Le client voit cette tâche dans son portail et peut y écrire tant qu'elle est ouverte."
+
+msgid "El cliente ve esta tarea en su portal, pero no puede escribir en ella."
+msgstr "Le client voit cette tâche dans son portail mais ne peut pas y écrire."
+
+msgid "Esta tarea ya no se enseña al cliente; la conversación se conserva aquí."
+msgstr "Cette tâche n'est plus montrée au client ; la conversation est conservée ici."
+
+msgid "Comentario oculto"
+msgstr "Commentaire masqué"
+
+msgid "Ocultar este comentario al cliente"
+msgstr "Masquer ce commentaire au client"
+
+msgid "Contestar a"
+msgstr "Répondre à"
+
+msgid "Respuesta para el cliente"
+msgstr "Réponse pour le client"
+
+msgid "Respuesta para el cliente (la verá en su portal y le llegará un correo)"
+msgstr "Réponse pour le client (il la verra dans son portail et recevra un e-mail)"
+
+msgid "Contestar al cliente"
+msgstr "Répondre au client"
+
+msgid "Permitir que el cliente escriba comentarios en esta tarea"
+msgstr "Permettre au client d'écrire des commentaires sur cette tâche"
+
+msgid "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
+msgstr "Seulement tant qu'elle est ouverte. Vous pourrez lui répondre et masquer ce qui ne convient pas."

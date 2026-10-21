@@ -274,6 +274,7 @@ def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> 
         conn.execute("DELETE FROM traspasos WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         from . import tareas_trabajo
         tareas_trabajo.desvincular_cliente(conn, tenant_id, cliente_id)       # las tareas se conservan, sin el cliente
+        conn.execute("DELETE FROM clientes_fiscales_accesos WHERE cliente_fiscal_id = ?", (cliente_id,))        # los enlaces de acceso al portal: sin esto, un cliente que ya entró una vez no se podía borrar
         conn.execute("DELETE FROM clientes_fiscales WHERE id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.commit()
     finally:

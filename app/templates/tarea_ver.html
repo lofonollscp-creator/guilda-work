@@ -2,6 +2,7 @@
 {% from "_tarea_comentarios.html" import hilo, equipo_y_actividad %}
 {% from "_tarea_recordatorios.html" import bloque as bloque_recordatorios %}
 {% from "_tarea_subtareas.html" import bloque as bloque_subtareas %}
+{% from "_tarea_cliente.html" import bloque as bloque_cliente %}
 {% block title %}{{ tarea.asunto }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -36,6 +37,7 @@
 </section>
 
 {{ bloque_recordatorios(tarea, recordatorios) }}
+{{ bloque_cliente(tarea, hilo_cliente, puede_trabajar) }}
 {{ bloque_subtareas(tarea, tarea_padre, subtareas, progreso_subtareas, adjuntos, puede_trabajar, puede_editar_estructura, max_adjuntos, revision, revisiones, revisores_posibles) }}
 {{ hilo(tarea, comentarios, personas_mencionables) }}
 {{ equipo_y_actividad(tiempo_equipo, actividad) }}

@@ -14184,3 +14184,72 @@ msgstr "Una revisió admet fins a 5 revisors."
 
 msgid "El modo tiene que ser «todos» o «cualquiera»."
 msgstr "El mode ha de ser «tots» o «qualsevol»."
+
+msgid "Comentario de un cliente en una tarea"
+msgstr "Comentari d'un client en una tasca"
+
+msgid "Escribe algo antes de enviar."
+msgstr "Escriu alguna cosa abans d'enviar."
+
+msgid "El comentario admite como máximo 1000 caracteres."
+msgstr "El comentari admet com a màxim 1000 caràcters."
+
+msgid "No se puede comentar en esta tarea."
+msgstr "No es pot comentar en aquesta tasca."
+
+msgid "Esta tarea ya está completada."
+msgstr "Aquesta tasca ja està completada."
+
+msgid "Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo."
+msgstr "Has enviat molts comentaris seguits. Espera una estona i torna-ho a provar."
+
+msgid "No tienes permiso para contestar al cliente en esta tarea."
+msgstr "No tens permís per contestar al client en aquesta tasca."
+
+msgid "Escribe la respuesta."
+msgstr "Escriu la resposta."
+
+msgid "La respuesta admite como máximo 1000 caracteres."
+msgstr "La resposta admet com a màxim 1000 caràcters."
+
+msgid "Ese cliente no está vinculado a la tarea."
+msgstr "Aquest client no està vinculat a la tasca."
+
+msgid "Para que el cliente pueda comentar, primero hay que enseñarle la tarea."
+msgstr "Perquè el client pugui comentar, primer cal ensenyar-li la tasca."
+
+msgid "Conversación con el cliente"
+msgstr "Conversa amb el client"
+
+msgid "El cliente ve esta tarea en su portal y puede escribir en ella mientras esté abierta."
+msgstr "El client veu aquesta tasca al seu portal i hi pot escriure mentre sigui oberta."
+
+msgid "El cliente ve esta tarea en su portal, pero no puede escribir en ella."
+msgstr "El client veu aquesta tasca al seu portal, però no hi pot escriure."
+
+msgid "Esta tarea ya no se enseña al cliente; la conversación se conserva aquí."
+msgstr "Aquesta tasca ja no s'ensenya al client; la conversa es conserva aquí."
+
+msgid "Comentario oculto"
+msgstr "Comentari ocult"
+
+msgid "Ocultar este comentario al cliente"
+msgstr "Amaga aquest comentari al client"
+
+msgid "Contestar a"
+msgstr "Contesta a"
+
+msgid "Respuesta para el cliente"
+msgstr "Resposta per al client"
+
+msgid "Respuesta para el cliente (la verá en su portal y le llegará un correo)"
+msgstr "Resposta per al client (la veurà al seu portal i li arribarà un correu)"
+
+msgid "Contestar al cliente"
+msgstr "Contesta al client"
+
+msgid "Permitir que el cliente escriba comentarios en esta tarea"
+msgstr "Permet que el client escrigui comentaris en aquesta tasca"
+
+msgid "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
+msgstr "Només mentre sigui oberta. Podràs contestar-li i amagar el que no escaigui."

@@ -526,7 +526,7 @@ ESQUEMAS["RevisionTarea"] = {"type": "object", "properties": {"id": {"type": "in
                                        "nota": {"type": "string", "nullable": True}, "votado_en": {"type": "string", "nullable": True}}}}}}
 ESQUEMAS["RevisionesDeTarea"] = {"type": "object", "properties": {"pendiente": {"allOf": [{"$ref": "#/components/schemas/RevisionTarea"}], "nullable": True},
                                  "historial": {"type": "array", "items": {"$ref": "#/components/schemas/RevisionTarea"}}}}
-ESQUEMAS["VisibleCliente"] = {"type": "object", "properties": {"visible_cliente": {"type": "boolean"}}}
+ESQUEMAS["VisibleCliente"] = {"type": "object", "properties": {"visible_cliente": {"type": "boolean"}, "comentarios_cliente": {"type": "boolean", "description": "El cliente puede escribir comentarios en la tarea mientras esté abierta."}}}
 ESQUEMAS["InformeTareas"] = {"type": "object", "description": "Cifras de tareas por persona y por cliente. Lo «histórico» se mide en la ventana; lo de «ahora» es la foto de hoy.", "properties": {
     "ventana": {"type": "object", "properties": {"desde": {"type": "string"}, "hasta": {"type": "string"}, "dias": {"type": "integer"}}}, "hoy": {"type": "string"}, "alcance": {"type": "string"},
     "creadas_en_ventana": {"type": "integer"}, "ahora": {"type": "object", "properties": {"abiertas": {"type": "integer"}, "vencidas": {"type": "integer"}, "bloqueadas": {"type": "integer"}}},

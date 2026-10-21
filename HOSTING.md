@@ -96,6 +96,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Automatizaciones por evento (octubre de 2026)](#automatizaciones-por-evento-octubre-de-2026)
 - [Automatizaciones: asignar, fijar fecha y pedir revisión (octubre de 2026)](#automatizaciones-asignar-fijar-fecha-y-pedir-revisión-octubre-de-2026)
 - [Revisiones con varios revisores (octubre de 2026)](#revisiones-con-varios-revisores-octubre-de-2026)
+- [Comentarios del cliente en las tareas del portal (octubre de 2026)](#comentarios-del-cliente-en-las-tareas-del-portal-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3407,3 +3408,16 @@ La revisión de una tarea (Fase 5) admite ahora **hasta cinco revisores**. Lo de
 - **Migración al arrancar** (idempotente): tabla `tarea_revision_votos` y columna `tarea_revisiones.modo`; las revisiones que ya existían (un solo revisor) reciben su voto con el estado en que acabaron. Reversión: ambas se pueden ignorar; `DROP TABLE tarea_revision_votos`. Hace falta reiniciar.
 - **Sin hacer a propósito**: revisiones en cadena (primero uno y luego otro) y varios revisores en la acción «pedir revisión» de las automatizaciones (esa sigue siendo de uno).
 - **Pruebas**: 8 tests nuevos en `tests/test_tareas_revision.py` (validación, modo todos, modo cualquiera, cambios que detienen, designación y retirada, migración de las antiguas, pantalla y herramientas).
+
+## Comentarios del cliente en las tareas del portal (octubre de 2026)
+
+El cliente puede ahora **escribir en las tareas que el despacho le enseña** en su portal («Trabajo en curso con tu gestoría»), y el equipo le contesta desde la ficha de la tarea. Código en `app/tareas_trabajo.py` (dominio), `app/rutas_portal_cliente.py` (portal) y `app/rutas_tareas.py` (equipo).
+
+- **Doble permiso, tarea a tarea y apagado por defecto**: primero «Enseñar esta tarea al cliente en su portal» y, además, «Permitir que el cliente escriba comentarios en esta tarea» (Editar tarea, o `PUT /tareas-outlook/<id>/visible-cliente` con `{"visible": true, "comentarios": true}`). Los comentarios solo se pueden activar si la tarea se enseña; dejar de enseñarla los apaga.
+- **Política**: solo texto (sin caracteres de control; el HTML se escapa en el portal y en la ficha), hasta 1.000 caracteres, **10 comentarios por hora y tarea y 40 al día por cliente** (lo demás se rechaza con un aviso, no se guarda) y 30 envíos por hora por IP. Solo en tareas **abiertas**: al completarla, borrarla o dejar de enseñarla, el cliente deja de poder comentar y de verla; la conversación se conserva para el equipo.
+- **Aislamiento**: cada cliente ve solo lo que él escribió y lo que se le contestó a él, aunque la tarea esté vinculada a varios clientes. Una tarea no enseñada, sin permiso, de otro cliente o de otro despacho responde 404 (no se confirma que exista). La conversación es una tabla aparte (`tarea_comentarios_cliente`), nunca mezclada con los comentarios internos.
+- **Equipo**: al comentar el cliente, se avisa (campana y push) al dueño y a quien lleva la tarea (tipo `portal_comentario_tarea`, desactivable en preferencias). En la ficha, «Conversación con el cliente» muestra lo nuevo (queda leído al verlo); quien trabaja la tarea puede **contestar** (la respuesta sale en el portal y llega un correo con el enlace de entrada, como en los mensajes de los vencimientos; si el correo falla, la respuesta se guarda igual) y **ocultar** un comentario (no se borra: queda en la base y en la auditoría, pero deja de verse en el portal). Auditoría: `tarea.comentario_cliente`, `tarea.respuesta_cliente`, `tarea.comentario_cliente.ocultar`, `tarea.comentarios_cliente`.
+- **Migración al arrancar** (idempotente): tabla `tarea_comentarios_cliente` y columna `tareas_outlook.comentarios_cliente`. Borrar un cliente o un despacho se lleva sus conversaciones. Reversión: la columna se ignora; `DROP TABLE tarea_comentarios_cliente`. Hace falta reiniciar.
+- **Arreglo de paso**: borrar para siempre un cliente que ya había entrado al portal fallaba (error de clave foránea por su enlace de acceso); ahora `eliminar_cliente_fiscal_definitivamente` borra también esos enlaces. Queda sin comprobar si un cliente con vencimientos o correos asociados se puede borrar para siempre sin quitar antes esos datos.
+- **No se ha hecho a propósito**: API y herramientas MCP/IA para leer o contestar estas conversaciones (es contenido externo; se gestiona desde la ficha), adjuntos del cliente y notificaciones por correo al equipo.
+- **Pruebas**: 12 tests nuevos en `tests/test_tareas_portal_cliente.py` (permisos, límites, texto, escape de HTML, aislamiento entre clientes y despachos, respuesta con correo y sin él, moderación, borrado de clientes y despachos).

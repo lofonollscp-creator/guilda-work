@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from . import auditoria, db
 
@@ -62,6 +62,20 @@ CREATE TABLE IF NOT EXISTS tarea_revisiones (
 CREATE INDEX IF NOT EXISTS idx_tarea_revisiones_tarea ON tarea_revisiones(tarea_id);
 CREATE INDEX IF NOT EXISTS idx_tarea_revisiones_revisor ON tarea_revisiones(revisor_id, estado);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_revisiones_una_pendiente ON tarea_revisiones(tarea_id) WHERE estado = 'pendiente';
+CREATE TABLE IF NOT EXISTS tarea_comentarios_cliente (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id),
+    autor TEXT NOT NULL CHECK (autor IN ('cliente', 'despacho')),
+    usuario_id INTEGER REFERENCES usuarios(id),
+    texto TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    leido_en TEXT,
+    oculto_en TEXT,
+    oculto_por INTEGER REFERENCES usuarios(id)
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_coment_cliente_tarea ON tarea_comentarios_cliente(tarea_id, cliente_fiscal_id, id);
 CREATE TABLE IF NOT EXISTS tarea_revision_votos (
     id INTEGER PRIMARY KEY,
     revision_id INTEGER NOT NULL REFERENCES tarea_revisiones(id) ON DELETE CASCADE,
@@ -99,6 +113,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "tareas_outlook", "motivo_bloqueo", "TEXT")
     db._asegurar_columna(conn, "tareas_outlook", "tarea_padre_id", "INTEGER REFERENCES tareas_outlook(id)")
     db._asegurar_columna(conn, "tareas_outlook", "visible_cliente", "INTEGER NOT NULL DEFAULT 0")
+    db._asegurar_columna(conn, "tareas_outlook", "comentarios_cliente", "INTEGER NOT NULL DEFAULT 0")
     conn.executescript(ESQUEMA)
     db._asegurar_columna(conn, "tarea_revisiones", "modo", "TEXT NOT NULL DEFAULT 'todos'")
     conn.execute(                    # las revisiones de antes tenían un solo revisor: pasan a tener su voto (pendiente, aprobado o con cambios según cómo acabaron)
@@ -509,11 +524,13 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM tarea_clientes WHERE tenant_id = ?", (tenant_id,))
     conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
     conn.execute("UPDATE tarea_revisiones SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("DELETE FROM tarea_comentarios_cliente WHERE tenant_id = ?", (tenant_id,))             # son conversaciones con clientes de ese despacho: se van con él
 
 
 def desvincular_cliente(conn, tenant_id: int, cliente_fiscal_id: int) -> None:
     """Al borrar un cliente fiscal para siempre: las tareas siguen existiendo, solo dejan de estar vinculadas a él (y si era el principal, cliente_fiscal_id queda vacío)."""
     conn.execute("DELETE FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
+    conn.execute("DELETE FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
     conn.execute("UPDATE tareas_outlook SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ?", (cliente_fiscal_id,))
 
 
@@ -704,40 +721,187 @@ def cancelar_revision(usuario_id: int, tarea_id: int) -> bool:
 
 # --- Colaboración con el cliente (portal) ------------------------------------------------------------------------------------
 # Nada de una tarea sale al portal por defecto. Quien edita la tarea decide, tarea a tarea, enseñársela al cliente al que está vinculada. El cliente ve SOLO el asunto, el estado y la fecha
-# límite, de lectura: nunca la descripción, los comentarios, los adjuntos, quién la lleva, el motivo del bloqueo ni las subtareas (a menos que tengan su propia marca).
+# límite: nunca la descripción, los comentarios internos, los adjuntos, quién la lleva, el motivo del bloqueo ni las subtareas (a menos que tengan su propia marca).
+# Comentarios del cliente (segundo permiso, también por tarea y apagado por defecto): el cliente puede escribir en las tareas ABIERTAS que se le enseñan y el equipo le contesta desde la
+# ficha. Es una conversación aparte (`tarea_comentarios_cliente`), nunca mezclada con los comentarios internos. Política, explícita:
+#   - solo texto, hasta 1.000 caracteres; como mucho 10 comentarios por hora por tarea y 40 al día en total por cliente (lo demás se rechaza con un aviso, no se guarda);
+#   - cada cliente ve solo su propia conversación (lo que escribió y lo que se le contestó a él), aunque la tarea esté vinculada a varios;
+#   - el equipo puede ocultar un comentario (queda en la base, auditado, pero ya no se ve en el portal ni cuenta); contestar al cliente le manda un correo con un enlace al portal;
+#   - si la tarea se completa, se borra o se deja de enseñar, el cliente deja de poder comentar y de verla (la conversación se conserva para el equipo).
 
 ESTADOS_PARA_CLIENTE = {"no_iniciada": "Pendiente", "en_progreso": "En curso", "esperando": "En espera", "aplazada": "Aplazada", "completada": "Completada"}
+MAX_CARACTERES_COMENTARIO = 1000
+MAX_COMENTARIOS_POR_HORA_Y_TAREA = 10
+MAX_COMENTARIOS_POR_DIA = 40
 
 
-def fijar_visible_cliente(usuario_id: int, tarea_id: int, visible: bool) -> None:
+class ComentarioInvalido(Exception):
+    def __init__(self, codigo: str, mensaje: str):
+        super().__init__(mensaje)
+        self.codigo = codigo
+
+
+def fijar_visible_cliente(usuario_id: int, tarea_id: int, visible: bool, comentarios: bool | None = None) -> None:
+    """`visible`: enseñar la tarea al cliente. `comentarios`: dejar que además escriba en ella (solo con `visible`; si se deja de enseñar, se apaga también). None = no cambia."""
     if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
         raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
     if not db.puede_editar_tarea(usuario_id, tarea_id):
         raise TransicionInvalida("sin_permiso", "No tienes permiso para cambiar lo que ve el cliente.")
     if visible and not clientes_de_tarea(tarea_id):
         raise TransicionInvalida("sin_cliente", "La tarea no está vinculada a ningún cliente.")
+    if comentarios and not visible:
+        raise TransicionInvalida("comentarios_sin_visible", "Para que el cliente pueda comentar, primero hay que enseñarle la tarea.")
+    if not visible:
+        comentarios = False
     conn = db.get_connection()
     try:
         cur = conn.execute("UPDATE tareas_outlook SET visible_cliente = ? WHERE id = ? AND visible_cliente != ?", (1 if visible else 0, tarea_id, 1 if visible else 0))
         if cur.rowcount:
             auditoria.registrar(_tenant_de_usuario(conn, usuario_id), usuario_id, "tarea.visible_cliente", "tarea", tarea_id, {"visible": bool(visible)}, conn=conn)
+        if comentarios is not None:
+            cur = conn.execute("UPDATE tareas_outlook SET comentarios_cliente = ? WHERE id = ? AND comentarios_cliente != ?", (1 if comentarios else 0, tarea_id, 1 if comentarios else 0))
+            if cur.rowcount:
+                auditoria.registrar(_tenant_de_usuario(conn, usuario_id), usuario_id, "tarea.comentarios_cliente", "tarea", tarea_id, {"permitidos": bool(comentarios)}, conn=conn)
         conn.commit()
     finally:
         conn.close()
     db.registrar_actividad_tarea(usuario_id, tarea_id, "visible_cliente" if visible else "oculta_cliente")
 
 
+_VISIBLE_PARA_CLIENTE = """t.visible_cliente = 1 AND t.papelera_en IS NULL AND u.tenant_id = ?
+                 AND (t.cliente_fiscal_id = ? OR t.id IN (SELECT tarea_id FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?))"""
+
+
 def tareas_para_cliente(tenant_id: int, cliente_fiscal_id: int) -> list[dict]:
-    """Lo que el portal enseña a ese cliente: solo tareas marcadas, de su propio despacho, vinculadas a él, fuera de la papelera. Abiertas primero, por fecha."""
+    """Lo que el portal enseña a ese cliente: solo tareas marcadas, de su propio despacho, vinculadas a él, fuera de la papelera. Abiertas primero, por fecha. Cada una lleva su conversación
+    (lo que él escribió y se le contestó) y si puede comentar ahora."""
     conn = db.get_connection()
     try:
         filas = conn.execute(
-            """SELECT t.asunto, t.estado, t.fecha_vencimiento FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
-               WHERE t.visible_cliente = 1 AND t.papelera_en IS NULL AND u.tenant_id = ?
-                 AND (t.cliente_fiscal_id = ? OR t.id IN (SELECT tarea_id FROM tarea_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?))
-               ORDER BY (t.estado = 'completada'), t.fecha_vencimiento IS NULL, t.fecha_vencimiento, t.id LIMIT 100""",
+            f"""SELECT t.id, t.asunto, t.estado, t.fecha_vencimiento, t.comentarios_cliente FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
+                WHERE {_VISIBLE_PARA_CLIENTE}
+                ORDER BY (t.estado = 'completada'), t.fecha_vencimiento IS NULL, t.fecha_vencimiento, t.id LIMIT 100""",
             (tenant_id, cliente_fiscal_id, cliente_fiscal_id, tenant_id)).fetchall()
-        return [{"asunto": f["asunto"], "estado": f["estado"], "estado_texto": ESTADOS_PARA_CLIENTE.get(f["estado"], f["estado"]),
-                 "fecha_vencimiento": f["fecha_vencimiento"][:10] if f["fecha_vencimiento"] else None, "vencida": esta_vencida(f["fecha_vencimiento"], f["estado"])} for f in filas]
+        ids = [f["id"] for f in filas]
+        hilos: dict[int, list[dict]] = {}
+        if ids:
+            for c in conn.execute(f"SELECT tarea_id, autor, texto, creado_en FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND oculto_en IS NULL AND tarea_id IN ({','.join('?' * len(ids))}) ORDER BY id",
+                                  (cliente_fiscal_id, *ids)):
+                hilos.setdefault(c["tarea_id"], []).append({"autor": c["autor"], "texto": c["texto"], "creado_en": c["creado_en"]})
+        return [{"id": f["id"], "asunto": f["asunto"], "estado": f["estado"], "estado_texto": ESTADOS_PARA_CLIENTE.get(f["estado"], f["estado"]),
+                 "fecha_vencimiento": f["fecha_vencimiento"][:10] if f["fecha_vencimiento"] else None, "vencida": esta_vencida(f["fecha_vencimiento"], f["estado"]),
+                 "puede_comentar": bool(f["comentarios_cliente"]) and f["estado"] != "completada", "comentarios": hilos.get(f["id"], [])} for f in filas]
+    finally:
+        conn.close()
+
+
+def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int, texto: str) -> dict:
+    """El cliente escribe en una tarea que se le enseña y en la que se le deja comentar. Devuelve {"id", "tarea", "destinatarios"} (a quién avisar). Lanza ComentarioInvalido con un código estable."""
+    texto = (texto or "").strip()
+    if not texto:
+        raise ComentarioInvalido("vacio", "Escribe algo antes de enviar.")
+    if len(texto) > MAX_CARACTERES_COMENTARIO:
+        raise ComentarioInvalido("largo", f"El comentario admite como máximo {MAX_CARACTERES_COMENTARIO} caracteres.")
+    texto = "".join(c for c in texto if c == "\n" or c >= " ")                       # fuera caracteres de control
+    conn = db.get_connection()
+    try:
+        t = conn.execute(
+            f"""SELECT t.id, t.asunto, t.estado, t.comentarios_cliente, t.usuario_id, t.asignada_a FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
+                WHERE t.id = ? AND {_VISIBLE_PARA_CLIENTE}""", (tarea_id, tenant_id, cliente_fiscal_id, cliente_fiscal_id, tenant_id)).fetchone()
+        if t is None or not t["comentarios_cliente"]:
+            raise ComentarioInvalido("no_encontrada", "No se puede comentar en esta tarea.")
+        if t["estado"] == "completada":
+            raise ComentarioInvalido("cerrada", "Esta tarea ya está completada.")
+        ahora = datetime.now()
+        hace_una_hora = (ahora - timedelta(hours=1)).isoformat(timespec="seconds")
+        hace_un_dia = (ahora - timedelta(days=1)).isoformat(timespec="seconds")
+        if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE tarea_id = ? AND cliente_fiscal_id = ? AND autor = 'cliente' AND creado_en >= ?", (tarea_id, cliente_fiscal_id, hace_una_hora)).fetchone()[0] >= MAX_COMENTARIOS_POR_HORA_Y_TAREA \
+                or conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND autor = 'cliente' AND creado_en >= ?", (cliente_fiscal_id, hace_un_dia)).fetchone()[0] >= MAX_COMENTARIOS_POR_DIA:
+            raise ComentarioInvalido("limite", "Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo.")
+        cur = conn.execute("INSERT INTO tarea_comentarios_cliente (tenant_id, tarea_id, cliente_fiscal_id, autor, texto, creado_en) VALUES (?, ?, ?, 'cliente', ?, ?)",
+                           (tenant_id, tarea_id, cliente_fiscal_id, texto, ahora.isoformat(timespec="seconds")))
+        auditoria.registrar(tenant_id, None, "tarea.comentario_cliente", "tarea", tarea_id, {"comentario": cur.lastrowid, "cliente": cliente_fiscal_id}, conn=conn)
+        conn.commit()
+        return {"id": cur.lastrowid, "tarea": {"id": t["id"], "asunto": t["asunto"]}, "destinatarios": sorted({u for u in (t["usuario_id"], t["asignada_a"]) if u})}
+    finally:
+        conn.close()
+
+
+def conversaciones_con_clientes(usuario_id: int, tarea_id: int) -> list[dict]:
+    """Para el equipo: una conversación por cliente vinculado que haya escrito o a quien se haya contestado, con lo no leído. Lo ocultado se ve marcado. Solo quien ve la tarea."""
+    if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        return []
+    conn = db.get_connection()
+    try:
+        filas = [dict(f) for f in conn.execute(
+            """SELECT c.*, cf.nombre AS cliente FROM tarea_comentarios_cliente c JOIN clientes_fiscales cf ON cf.id = c.cliente_fiscal_id WHERE c.tarea_id = ? ORDER BY c.id""", (tarea_id,))]
+    finally:
+        conn.close()
+    por_cliente: dict[int, dict] = {}
+    for f in filas:
+        h = por_cliente.setdefault(f["cliente_fiscal_id"], {"cliente_fiscal_id": f["cliente_fiscal_id"], "cliente": f["cliente"], "mensajes": [], "sin_leer": 0})
+        f["usuario"] = db.nombre_mostrado_usuario(f["usuario_id"]) if f["usuario_id"] else None
+        h["mensajes"].append(f)
+        if f["autor"] == "cliente" and f["leido_en"] is None and f["oculto_en"] is None:
+            h["sin_leer"] += 1
+    return list(por_cliente.values())
+
+
+def marcar_conversaciones_leidas(usuario_id: int, tarea_id: int) -> None:
+    if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        return
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE tarea_comentarios_cliente SET leido_en = ? WHERE tarea_id = ? AND autor = 'cliente' AND leido_en IS NULL", (db.now_iso(), tarea_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def sin_leer_de_clientes(tarea_id: int) -> int:
+    conn = db.get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE tarea_id = ? AND autor = 'cliente' AND leido_en IS NULL AND oculto_en IS NULL", (tarea_id,)).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def responder_al_cliente(usuario_id: int, tarea_id: int, cliente_fiscal_id: int, texto: str) -> dict:
+    """El equipo contesta a un cliente en la conversación de esa tarea. Quien trabaja la tarea; el cliente tiene que estar vinculado a ella. Devuelve {"id", "cliente_fiscal_id"}."""
+    if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+    if not db.puede_trabajar_tarea(usuario_id, tarea_id):
+        raise TransicionInvalida("sin_permiso", "No tienes permiso para contestar al cliente en esta tarea.")
+    texto = (texto or "").strip()
+    if not texto:
+        raise TransicionInvalida("vacio", "Escribe la respuesta.", "texto")
+    if len(texto) > MAX_CARACTERES_COMENTARIO:
+        raise TransicionInvalida("largo", f"La respuesta admite como máximo {MAX_CARACTERES_COMENTARIO} caracteres.", "texto")
+    if int(cliente_fiscal_id or 0) not in {c["id"] for c in clientes_de_tarea(tarea_id)}:
+        raise TransicionInvalida("cliente_invalido", "Ese cliente no está vinculado a la tarea.", "cliente_fiscal_id")
+    conn = db.get_connection()
+    try:
+        tenant = _tenant_de_usuario(conn, usuario_id)
+        cur = conn.execute("INSERT INTO tarea_comentarios_cliente (tenant_id, tarea_id, cliente_fiscal_id, autor, usuario_id, texto, creado_en, leido_en) VALUES (?, ?, ?, 'despacho', ?, ?, ?, ?)",
+                           (tenant, tarea_id, int(cliente_fiscal_id), usuario_id, texto, db.now_iso(), db.now_iso()))
+        auditoria.registrar(tenant, usuario_id, "tarea.respuesta_cliente", "tarea", tarea_id, {"comentario": cur.lastrowid, "cliente": int(cliente_fiscal_id)}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "respuesta_cliente")
+    return {"id": cur.lastrowid, "cliente_fiscal_id": int(cliente_fiscal_id)}
+
+
+def ocultar_comentario_de_cliente(usuario_id: int, comentario_id: int) -> int | None:
+    """Moderación: oculta un comentario del cliente (no se borra: queda en la base y en la auditoría). Quien trabaja la tarea. Devuelve el id de la tarea, o None si no se pudo."""
+    conn = db.get_connection()
+    try:
+        c = conn.execute("SELECT tarea_id, tenant_id FROM tarea_comentarios_cliente WHERE id = ? AND oculto_en IS NULL", (comentario_id,)).fetchone()
+        if c is None or not db.puede_trabajar_tarea(usuario_id, c["tarea_id"]):
+            return None
+        conn.execute("UPDATE tarea_comentarios_cliente SET oculto_en = ?, oculto_por = ? WHERE id = ?", (db.now_iso(), usuario_id, comentario_id))
+        auditoria.registrar(c["tenant_id"], usuario_id, "tarea.comentario_cliente.ocultar", "tarea", c["tarea_id"], {"comentario": comentario_id}, conn=conn)
+        conn.commit()
+        return c["tarea_id"]
     finally:
         conn.close()

@@ -1,0 +1,42 @@
+{# Conversación con el cliente desde el portal. Variables: tarea, hilo_cliente (visible, comentarios, conversaciones, vinculados), puede_trabajar. #}
+{% macro bloque(tarea, hilo_cliente, puede_trabajar) %}
+{% from "_ds/componentes.html" import boton, chip %}
+{% if hilo_cliente.visible or hilo_cliente.conversaciones %}
+<section class="tarea-comentarios ds-max-640" id="cliente">
+  <h2 class="tarea-bloque-titulo">{{ _('Conversación con el cliente') }}
+    {% if hilo_cliente.sin_leer %}<span class="pill">{{ ngettext('%(n)s nuevo', '%(n)s nuevos', hilo_cliente.sin_leer, n=hilo_cliente.sin_leer) }}</span>{% endif %}</h2>
+  <p class="muted">
+    {% if hilo_cliente.comentarios %}{{ _('El cliente ve esta tarea en su portal y puede escribir en ella mientras esté abierta.') }}
+    {% elif hilo_cliente.visible %}{{ _('El cliente ve esta tarea en su portal, pero no puede escribir en ella.') }}
+    {% else %}{{ _('Esta tarea ya no se enseña al cliente; la conversación se conserva aquí.') }}{% endif %}
+  </p>
+  {% for conv in hilo_cliente.conversaciones %}
+  <h3>{{ conv.cliente }}</h3>
+  <div class="portal-hilo">
+    {% for m in conv.mensajes %}
+    <div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">
+      {% if m.oculto_en %}<em class="muted">{{ _('Comentario oculto') }}</em>{% else %}{{ m.texto }}{% endif %}
+      <span class="fecha">{{ m.creado_en|fecha_y_hora }}{% if m.autor == 'despacho' and m.usuario %} · {{ m.usuario }}{% endif %}</span>
+      {% if m.autor == 'cliente' and not m.oculto_en and puede_trabajar %}
+      <form method="post" action="{{ url_for('tareas.ocultar_comentario_cliente', comentario_id=m.id) }}" class="comentario-borrar">
+        <button type="submit" class="chip-del" title="{{ _('Ocultar este comentario al cliente') }}" aria-label="{{ _('Ocultar este comentario al cliente') }}">×</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  {% if puede_trabajar and hilo_cliente.vinculados and (hilo_cliente.visible or hilo_cliente.conversaciones) %}
+  <form class="comentario-form" method="post" action="{{ url_for('tareas.responder_al_cliente', tarea_id=tarea.id) }}">
+    {% if hilo_cliente.vinculados|length > 1 %}
+    <label for="cliente-destino">{{ _('Contestar a') }}</label>
+    <select id="cliente-destino" name="cliente_fiscal_id">{% for c in hilo_cliente.vinculados %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
+    {% else %}<input type="hidden" name="cliente_fiscal_id" value="{{ hilo_cliente.vinculados[0].id }}">{% endif %}
+    <label class="sr-only" for="cliente-respuesta">{{ _('Respuesta para el cliente') }}</label>
+    <textarea id="cliente-respuesta" name="texto" rows="2" maxlength="1000" required placeholder="{{ _('Respuesta para el cliente (la verá en su portal y le llegará un correo)') }}"></textarea>
+    <div class="comentario-acciones">{{ boton(_('Contestar al cliente'), 'secundario', tipo='submit') }}</div>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endmacro %}

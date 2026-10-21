@@ -14175,3 +14175,72 @@ msgstr "A review allows up to 5 reviewers."
 
 msgid "El modo tiene que ser «todos» o «cualquiera»."
 msgstr "The mode has to be «all» or «any»."
+
+msgid "Comentario de un cliente en una tarea"
+msgstr "A client commented on a task"
+
+msgid "Escribe algo antes de enviar."
+msgstr "Write something before sending."
+
+msgid "El comentario admite como máximo 1000 caracteres."
+msgstr "A comment can have at most 1000 characters."
+
+msgid "No se puede comentar en esta tarea."
+msgstr "You cannot comment on this task."
+
+msgid "Esta tarea ya está completada."
+msgstr "This task is already completed."
+
+msgid "Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo."
+msgstr "You have sent many comments in a row. Wait a while and try again."
+
+msgid "No tienes permiso para contestar al cliente en esta tarea."
+msgstr "You do not have permission to reply to the client on this task."
+
+msgid "Escribe la respuesta."
+msgstr "Write the reply."
+
+msgid "La respuesta admite como máximo 1000 caracteres."
+msgstr "A reply can have at most 1000 characters."
+
+msgid "Ese cliente no está vinculado a la tarea."
+msgstr "That client is not linked to the task."
+
+msgid "Para que el cliente pueda comentar, primero hay que enseñarle la tarea."
+msgstr "For the client to comment, the task must be shown to them first."
+
+msgid "Conversación con el cliente"
+msgstr "Conversation with the client"
+
+msgid "El cliente ve esta tarea en su portal y puede escribir en ella mientras esté abierta."
+msgstr "The client sees this task in their portal and can write on it while it is open."
+
+msgid "El cliente ve esta tarea en su portal, pero no puede escribir en ella."
+msgstr "The client sees this task in their portal but cannot write on it."
+
+msgid "Esta tarea ya no se enseña al cliente; la conversación se conserva aquí."
+msgstr "This task is no longer shown to the client; the conversation is kept here."
+
+msgid "Comentario oculto"
+msgstr "Hidden comment"
+
+msgid "Ocultar este comentario al cliente"
+msgstr "Hide this comment from the client"
+
+msgid "Contestar a"
+msgstr "Reply to"
+
+msgid "Respuesta para el cliente"
+msgstr "Reply for the client"
+
+msgid "Respuesta para el cliente (la verá en su portal y le llegará un correo)"
+msgstr "Reply for the client (they will see it in their portal and get an email)"
+
+msgid "Contestar al cliente"
+msgstr "Reply to the client"
+
+msgid "Permitir que el cliente escriba comentarios en esta tarea"
+msgstr "Let the client write comments on this task"
+
+msgid "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
+msgstr "Only while it is open. You can reply and hide anything inappropriate."
