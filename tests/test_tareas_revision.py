@@ -314,3 +314,82 @@ def test_herramienta_con_varios_revisores_y_el_voto_de_cada_uno():
     assert ih.ejecutar(c, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})["revision"]["estado"] == "aprobada"
     with pytest.raises(ih.ErrorHerramientaIA, match="hasta 5"):
         ih.ejecutar(a, "pedir_revision_tarea", {"tarea_id": tid, "revisor_ids": [b, c, 901, 902, 903, 904]})
+
+
+# --- Revisión en cadena: aprueban uno tras otro ------------------------------------------------------------------------------
+
+def _cadena(cliente, h, tid, revisores):
+    return cliente.post(f"/api/v1/tareas-outlook/{tid}/revision", json={"revisor_ids": revisores, "modo": "cadena", "nota": "En orden"}, headers=h)
+
+
+def test_cadena_solo_vota_quien_tiene_el_turno_y_se_avisa_al_siguiente(cliente):
+    t, (h1, u1), (h2, u2), (h3, u3) = _equipo(cliente, "ch1")
+    tid = _tarea(cliente, h1, "En cadena")
+    r = _cadena(cliente, h1, tid, [u3, u2])
+    assert r.status_code == 201 and r.get_json()["data"]["pendiente"]["turno"] == u3
+    assert len(_notis(u3)) == 1 and _notis(u2) == []                                                  # solo se avisa a quien tiene el turno
+    fuera = _resolver(cliente, h2, tid, "aprobar")
+    assert fuera.status_code == 409 and fuera.get_json()["codigo"] == "no_es_tu_turno" and "Todavía no es tu turno" in fuera.get_json()["error"]
+    assert tt.revision_pendiente(tid)["aprobados"] == 0                                                 # el intento fuera de turno no cuenta
+    assert _resolver(cliente, h3, tid, "aprobar", "Primera").get_json()["data"]["pendiente"]["turno"] == u2
+    assert [n["titulo"] for n in _notis(u2)] == ["Te toca revisar: En cadena"] and _notis(u1) == []   # le toca al siguiente; quien la pidió espera al final
+    assert cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "completada"}, headers=h1).get_json()["codigo"] == "revision_pendiente"
+    assert _resolver(cliente, h3, tid, "aprobar").get_json()["codigo"] == "ya_has_votado"
+    r = _resolver(cliente, h2, tid, "aprobar", "Segunda")
+    assert r.get_json()["data"]["pendiente"] is None and r.get_json()["data"]["historial"][0]["estado"] == "aprobada"
+    assert [n["titulo"] for n in _notis(u1)] == ["Revisión aprobada: En cadena"]
+    assert cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "completada"}, headers=h1).status_code == 200
+
+
+def test_cadena_pedir_cambios_detiene_la_cadena_y_el_siguiente_nunca_llega_a_votar(cliente):
+    t, (h1, u1), (h2, u2), (h3, u3) = _equipo(cliente, "ch2")
+    tid = _tarea(cliente, h1, "Cadena rota")
+    _cadena(cliente, h1, tid, [u2, u3])
+    assert _resolver(cliente, h2, tid, "cambios").get_json()["codigo"] == "nota_obligatoria"
+    r = _resolver(cliente, h2, tid, "cambios", "Falta el anexo")
+    assert r.status_code == 200 and r.get_json()["data"]["pendiente"] is None
+    assert _notis(u3) == [] and [n["titulo"] for n in _notis(u1)] == ["Piden cambios: Cadena rota"]    # al segundo nunca se le avisó
+    assert tt.historial_de_revisiones(tid)[0]["estado"] == "cambios"
+    assert tt.revision_pendiente(tid) is None
+
+
+def test_cadena_cuenta_cada_voto_solo_una_vez_y_se_puede_retirar(cliente):
+    t, (h1, u1), (h2, u2), (h3, u3) = _equipo(cliente, "ch3")
+    tid = _tarea(cliente, h1, "Cadena retirada")
+    _cadena(cliente, h1, tid, [u2, u3])
+    p = tt.revision_pendiente(tid)
+    assert p["modo"] == "cadena" and p["revisores"] == [u2, u3] and p["pueden_votar"] == [u2] and tt.tiene_voto_pendiente(u2, p) and not tt.tiene_voto_pendiente(u3, p)
+    assert cliente.post(f"/api/v1/tareas-outlook/{tid}/revision", json={"revisor_ids": [u2], "modo": "todos"}, headers=h1).get_json()["codigo"] == "revision_pendiente"
+    assert tt.cancelar_revision(u1, tid) is True and tt.revision_pendiente(tid) is None
+    assert cliente.post(f"/api/v1/tareas-outlook/{tid}/revision", json={"revisor_ids": [u2], "modo": "otro"}, headers=h1).get_json()["codigo"] == "modo_invalido"
+
+
+def test_cadena_pantalla_muestra_el_turno_y_solo_ofrece_votar_a_quien_le_toca(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "chw1@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho cadena web")
+    db.asignar_tenant(uid, t)
+    r2 = db.crear_usuario_vinculado_a_kratos("chw2@ejemplo.com", "k-chw2"); db.asignar_tenant(r2, t)
+    r3 = db.crear_usuario_vinculado_a_kratos("chw3@ejemplo.com", "k-chw3"); db.asignar_tenant(r3, t)
+    tid = db.crear_tarea_outlook(uid, asunto="Cadena web")
+    assert 'value="cadena"' in cliente.get(f"/tareas/{tid}").get_data(as_text=True)
+    assert cliente.post(f"/tareas/{tid}/revision", data={"revisor_ids": [str(r2), str(r3)], "modo": "cadena"}).status_code == 302
+    html = cliente.get(f"/tareas/{tid}").get_data(as_text=True)
+    assert "Aprueban uno tras otro" in html and "Le toca" in html and "Sin votar" in html
+    assert 'name="decision"' not in html                                                              # quien la pidió no vota
+    assert tt.revision_pendiente(tid)["turno"] == r2
+
+
+def test_cadena_por_herramienta_y_orden_de_la_lista():
+    import mcp_tools  # noqa: F401
+    from app import ia_herramientas as ih
+    t = db.crear_tenant("Despacho cadena herramienta")
+    a, b, c = (db.crear_usuario_vinculado_a_kratos(f"{n}-chh@ejemplo.com", f"k-{n}-chh") for n in ("a", "b", "c"))
+    for u in (a, b, c):
+        db.asignar_tenant(u, t)
+    tid = db.crear_tarea_outlook(a, asunto="Cadena herramienta")
+    r = ih.ejecutar(a, "pedir_revision_tarea", {"tarea_id": tid, "revisor_ids": [c, b], "modo": "cadena"})
+    assert r["pendiente"]["turno"] == c
+    with pytest.raises(ih.ErrorHerramientaIA, match="Todavía no es tu turno"):
+        ih.ejecutar(b, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})
+    ih.ejecutar(c, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})
+    assert ih.ejecutar(b, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})["revision"]["estado"] == "aprobada"

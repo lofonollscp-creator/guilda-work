@@ -546,12 +546,14 @@ def desvincular_cliente(conn, tenant_id: int, cliente_fiscal_id: int) -> None:
 # Quien trabaja la tarea pide que la revise OTRA persona del despacho —o varias, hasta cinco— (nunca uno mismo: dos pares de ojos). Mientras esté pendiente, la tarea no se puede completar.
 # Política, explícita:
 #   - modo «todos» (por defecto): hace falta que aprueben todos los revisores; modo «cualquiera»: basta con que apruebe uno, y el primer voto decide;
+#   - modo «cadena»: aprueban uno tras otro, en el orden en que se eligieron. Solo vota quien tiene el turno (los demás aún no pueden, y no se les avisa hasta que les toque); al aprobar uno, se avisa al
+#     siguiente; la revisión se aprueba cuando aprueba el último;
 #   - UNA petición de cambios, de quien sea, detiene la revisión: la tarea vuelve a «en progreso» y se avisa a quien la pidió (con la nota obligatoria). Los demás ya no tienen que votar;
 #   - cada revisor vota una sola vez; solo vota quien está designado; aprobar no completa la tarea: lo hace quien la lleva;
 #   - quien pidió la revisión o el dueño de la tarea la pueden retirar. Todo queda en el historial de la tarea y en la auditoría.
 
 DECISIONES = {"aprobar": "aprobada", "cambios": "cambios"}
-MODOS_REVISION = {"todos": "Tienen que aprobarla todos", "cualquiera": "Basta con que la apruebe uno"}
+MODOS_REVISION = {"todos": "Tienen que aprobarla todos", "cualquiera": "Basta con que la apruebe uno", "cadena": "Aprueban uno tras otro, en el orden elegido"}
 MAX_REVISORES = 5
 
 
@@ -564,6 +566,9 @@ def _con_votos(conn, rev: dict) -> dict:
     rev["pendientes"] = [v["revisor_id"] for v in votos if v["estado"] == "pendiente"]
     rev["aprobados"] = sum(1 for v in votos if v["estado"] == "aprobado")
     rev["revisor"] = ", ".join(v["revisor"] or "" for v in votos)
+    # Quién puede votar ahora: en cadena, solo el primero que falta (el orden de los votos es el orden elegido); en los demás modos, todos los que faltan.
+    rev["turno"] = rev["pendientes"][0] if rev.get("modo") == "cadena" and rev["pendientes"] else None
+    rev["pueden_votar"] = [rev["turno"]] if rev["turno"] is not None else (rev["pendientes"] if rev.get("modo") != "cadena" else [])
     return rev
 
 
@@ -589,7 +594,7 @@ def historial_de_revisiones(tarea_id: int) -> list[dict]:
 
 
 def tiene_voto_pendiente(usuario_id: int, revision: dict | None) -> bool:
-    return bool(revision and usuario_id in revision["pendientes"])
+    return bool(revision and usuario_id in revision["pueden_votar"])
 
 
 def _avisar(usuario_id: int, titulo: str, cuerpo: str, tarea_id: int) -> None:
@@ -617,7 +622,7 @@ def _lista_de_revisores(revisores) -> list[int]:
 
 
 def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | None = None, modo: str = "todos") -> int:
-    """`revisores`: una persona (un entero, como siempre) o una lista de hasta cinco. `modo`: «todos» o «cualquiera»."""
+    """`revisores`: una persona (un entero, como siempre) o una lista de hasta cinco. `modo`: «todos», «cualquiera» o «cadena» (uno tras otro, en el orden de la lista)."""
     tarea = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
     if tarea is None:
         raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
@@ -626,7 +631,7 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
     if tarea["estado"] == "completada":
         raise TransicionInvalida("tarea_completada", "La tarea ya está completada.")
     if (modo or "todos") not in MODOS_REVISION:
-        raise TransicionInvalida("modo_invalido", "El modo tiene que ser «todos» o «cualquiera».", "modo")
+        raise TransicionInvalida("modo_invalido", "El modo tiene que ser «todos», «cualquiera» o «cadena».", "modo")
     modo = modo or "todos"
     ids = _lista_de_revisores(revisores)
     if usuario_id in ids:
@@ -652,7 +657,7 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
     finally:
         conn.close()
     db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_solicitada", ", ".join(db.nombre_mostrado_usuario(r) or "" for r in ids))
-    for r in ids:
+    for r in (ids[:1] if modo == "cadena" else ids):               # en cadena solo se avisa a quien tiene el turno
         _avisar(r, f"Te piden revisar: {tarea['asunto']}", (nota or "").strip() or "Revisión pendiente", tarea_id)
     return revision_id
 
@@ -671,6 +676,8 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
         raise TransicionInvalida("sin_permiso", "Solo puede resolverla la persona designada para revisar.")
     if usuario_id not in rev["pendientes"]:
         raise TransicionInvalida("ya_has_votado", "Ya has votado en esta revisión.")
+    if usuario_id not in rev["pueden_votar"]:
+        raise TransicionInvalida("no_es_tu_turno", f"Todavía no es tu turno: revisa antes {db.nombre_mostrado_usuario(rev['turno']) or 'la persona anterior'}.")
     voto = "aprobado" if decision == "aprobar" else "cambios"
     conn = db.get_connection()
     previo = None
@@ -703,7 +710,10 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
     quien = db.nombre_mostrado_usuario(usuario_id) or ""
     if final is None:
         db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_voto", f"{quien} aprobó ({rev['aprobados'] + 1} de {len(rev['revisores'])})" if voto == "aprobado" else f"{quien} pidió cambios")
-        return {**rev, "estado": "pendiente", "pendientes": [p for p in rev["pendientes"] if p != usuario_id], "nota_resolucion": None}
+        pendientes = [p for p in rev["pendientes"] if p != usuario_id]
+        if rev["modo"] == "cadena" and pendientes:                      # le toca al siguiente de la cadena
+            _avisar(pendientes[0], f"Te toca revisar: {asunto}", f"{quien} ya la ha aprobado", tarea_id)
+        return {**rev, "estado": "pendiente", "pendientes": pendientes, "turno": pendientes[0] if rev["modo"] == "cadena" and pendientes else None, "nota_resolucion": None}
     if final == "cambios" and previo is not None and previo["estado"] != "en_progreso":
         db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": "en_progreso"})
     db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_aprobada" if final == "aprobada" else "revision_cambios", f"{quien}: {nota}" if nota else quien)

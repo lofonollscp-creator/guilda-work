@@ -108,7 +108,7 @@ def listar_revisiones_tarea(tarea_id: int) -> dict:
 
 def pedir_revision_tarea(tarea_id: int, revisor_id: int | None = None, nota: str | None = None, revisor_ids: list[int] | None = None, modo: str = "todos") -> dict:
     """Pide que otra persona de tu despacho —o varias, hasta cinco, con `revisor_ids`— revise la tarea (se les avisa y se les comparte para que la vean). `modo`: «todos» (aprueban todos, por defecto)
-    o «cualquiera» (basta uno); una petición de cambios, de quien sea, detiene la revisión. Mientras esté pendiente la tarea no se puede completar."""
+    «cualquiera» (basta uno) o «cadena» (uno tras otro, en el orden de `revisor_ids`; solo vota quien tiene el turno); una petición de cambios, de quien sea, detiene la revisión. Mientras esté pendiente la tarea no se puede completar."""
     _mt._tarea_visible(tarea_id)
     tt = _mt._tt()
     try:

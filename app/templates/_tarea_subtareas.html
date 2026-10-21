@@ -59,19 +59,19 @@
   <h2 class="tarea-bloque-titulo">{{ _('Revisión') }}</h2>
   {% if revision %}
   {% if revision.votos|length > 1 %}
-  <p>{{ chip(_('Pendiente'), 'aviso') }} {{ _('La revisan %(n)s personas.', n=revision.votos|length) }} {{ _('Tienen que aprobarla todos') if revision.modo == 'todos' else _('Basta con que la apruebe uno') }}.
+  <p>{{ chip(_('Pendiente'), 'aviso') }} {{ _('La revisan %(n)s personas.', n=revision.votos|length) }} {% if revision.modo == 'cadena' %}{{ _('Aprueban uno tras otro, en el orden indicado') }}{% elif revision.modo == 'todos' %}{{ _('Tienen que aprobarla todos') }}{% else %}{{ _('Basta con que la apruebe uno') }}{% endif %}.
     {% if revision.nota_solicitud %}<span class="muted">«{{ revision.nota_solicitud }}»</span>{% endif %}</p>
   <ul class="log-list">
     {% for v in revision.votos %}
     <li class="log-item"><span class="log-text">{{ v.revisor }}{% if v.nota %}: «{{ v.nota }}»{% endif %}</span>
-      {{ chip(_('Ha aprobado'), 'exito') if v.estado == 'aprobado' else (chip(_('Pide cambios'), 'aviso') if v.estado == 'cambios' else chip(_('Sin votar'))) }}</li>
+      {{ chip(_('Ha aprobado'), 'exito') if v.estado == 'aprobado' else (chip(_('Pide cambios'), 'aviso') if v.estado == 'cambios' else (chip(_('Le toca'), 'aviso') if revision.turno == v.revisor_id else chip(_('Sin votar')))) }}</li>
     {% endfor %}
   </ul>
   {% else %}
   <p>{{ chip(_('Pendiente'), 'aviso') }} {{ _('La revisa %(quien)s.', quien=revisiones[0].revisor) }}{% if revision.nota_solicitud %} <span class="muted">«{{ revision.nota_solicitud }}»</span>{% endif %}</p>
   {% endif %}
   <p class="muted">{{ _('Mientras esté pendiente, la tarea no se puede completar.') }}</p>
-  {% if g.usuario_id in revision.pendientes %}
+  {% if g.usuario_id in revision.pueden_votar %}
   <form class="comentario-form" action="{{ url_for('tareas.resolver_revision', tarea_id=tarea.id) }}" method="post">
     <label class="sr-only" for="revision-nota">{{ _('Comentario de la revisión') }}</label>
     <textarea id="revision-nota" name="nota" rows="2" maxlength="500" placeholder="{{ _('Comentario (obligatorio si pides cambios)') }}"></textarea>
@@ -96,6 +96,7 @@
     <select id="revision-modo" name="modo">
       <option value="todos">{{ _('Tienen que aprobarla todos') }}</option>
       <option value="cualquiera">{{ _('Basta con que la apruebe uno') }}</option>
+      <option value="cadena">{{ _('Uno tras otro, en el orden de esta lista') }}</option>
     </select>
     <small class="muted">{{ _('Si alguien pide cambios, la revisión se detiene y la tarea vuelve a «en progreso».') }}</small>
     <label class="sr-only" for="revision-solicitud">{{ _('Nota para quien revisa') }}</label>

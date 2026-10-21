@@ -98,6 +98,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Revisiones con varios revisores (octubre de 2026)](#revisiones-con-varios-revisores-octubre-de-2026)
 - [Comentarios del cliente en las tareas del portal (octubre de 2026)](#comentarios-del-cliente-en-las-tareas-del-portal-octubre-de-2026)
 - [Resumen semanal de tareas por correo (octubre de 2026)](#resumen-semanal-de-tareas-por-correo-octubre-de-2026)
+- [Revisiones en cadena (octubre de 2026)](#revisiones-en-cadena-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3434,3 +3435,13 @@ Cada persona puede pedir que le llegue por correo un **resumen semanal de sus ta
 - **Migración al arrancar** (idempotente): tabla `informes_tareas_suscripciones`. Borrar un despacho se lleva sus suscripciones. Reversión: `DROP TABLE informes_tareas_suscripciones`. Hace falta reiniciar.
 - **No se ha hecho a propósito**: enviar resúmenes a otras personas o a la dirección sobre el equipo, otras frecuencias, ni elegir el día.
 - **Pruebas**: `tests/test_informes_tareas_correo.py` (opt-in, semana en curso, una vez por semana, vacío, reintento sin duplicar, aislamiento por persona, escape de HTML, pantalla).
+
+## Revisiones en cadena (octubre de 2026)
+
+Una revisión puede ahora ir **uno tras otro**: modo `cadena`, además de `todos` y `cualquiera`. Código en `app/tareas_trabajo.py`; se elige en el formulario de la tarea («Para darla por buena»), con `modo: "cadena"` en `POST /tareas-outlook/<id>/revision` y en las herramientas MCP/IA `pedir_revision_tarea`.
+
+- **Política**: el orden de la lista de revisores es el orden de la cadena (en la pantalla, el de la lista de personas). Solo vota quien tiene el turno; otro revisor recibe 409 `no_es_tu_turno` y su intento no cuenta. Al aprobar uno, se avisa al siguiente («Te toca revisar»); quien pidió la revisión solo recibe aviso al final. La revisión se aprueba cuando aprueba el último.
+- **Pedir cambios** (el que tiene el turno) detiene la cadena entera: la tarea vuelve a «en progreso», se avisa a quien la pidió y a los siguientes nunca se les llegó a avisar. Retirarla funciona como siempre. Mientras esté pendiente, la tarea no se puede completar.
+- Las respuestas de la API incluyen `turno` (a quién le toca) y `pueden_votar`. Sin migración: la columna `modo` ya existía. Basta con reiniciar para que cargue el código.
+- **No se ha hecho a propósito**: reordenar o añadir revisores a una cadena en curso (se retira y se vuelve a pedir), y la acción de automatización «pedir revisión» sigue pidiéndola en modo `todos`.
+- **Pruebas**: 5 tests nuevos en `tests/test_tareas_revision.py` (turno, aviso al siguiente, cambios que cortan la cadena, retirada, pantalla, herramienta).

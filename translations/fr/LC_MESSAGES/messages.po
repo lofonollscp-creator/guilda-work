@@ -14371,3 +14371,12 @@ msgstr "Voir le rapport complet"
 
 msgid "Recibes este resumen porque lo activaste en Tareas › Informes. Puedes desactivarlo allí cuando quieras."
 msgstr "Vous recevez ce résumé parce que vous l'avez activé dans Tâches › Rapports. Vous pouvez le désactiver à tout moment."
+
+msgid "Aprueban uno tras otro, en el orden indicado"
+msgstr "Ils approuvent l'un après l'autre, dans l'ordre indiqué"
+
+msgid "Le toca"
+msgstr "À son tour"
+
+msgid "Uno tras otro, en el orden de esta lista"
+msgstr "L'un après l'autre, dans l'ordre de cette liste"

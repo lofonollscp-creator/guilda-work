@@ -8,7 +8,7 @@ from . import db, tareas_trabajo as tt
 from .auth import token_required
 from .rutas_api import _body, _dict, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
 
-_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "ya_has_votado": 409, "demasiados_revisores": 400, "sin_cliente": 409, "comentarios_sin_visible": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
+_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "ya_has_votado": 409, "no_es_tu_turno": 409, "demasiados_revisores": 400, "sin_cliente": 409, "comentarios_sin_visible": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
            "tipo_no_admitido": 415, "archivo_grande": 413}
 
 
@@ -238,7 +238,7 @@ def revision_de_la_tarea(tarea_id: int):
 @token_required
 def pedir_revision_de_la_tarea(tarea_id: int):
     """Cuerpo: `{"revisor_id": 7, "nota": "Mira el cálculo del IVA"}` o, con varias personas, `{"revisor_ids": [7, 9], "modo": "todos", "nota": "…"}` (hasta cinco). Tiene que revisarla otra
-    persona del despacho. `modo`: `todos` (por defecto, aprueban todos) o `cualquiera` (basta uno); una petición de cambios, de quien sea, detiene la revisión. Mientras esté pendiente la tarea
+    persona del despacho. `modo`: `todos` (por defecto, aprueban todos), `cualquiera` (basta uno) o `cadena` (uno tras otro, en el orden de `revisor_ids`; solo vota quien tiene el turno, 409 `no_es_tu_turno`); una petición de cambios, de quien sea, detiene la revisión. Mientras esté pendiente la tarea
     no se puede completar (409 `revision_pendiente`)."""
     _tarea_o_404(tarea_id)
     datos = _body()
