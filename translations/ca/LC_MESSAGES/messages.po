@@ -14253,3 +14253,45 @@ msgstr "Permet que el client escrigui comentaris en aquesta tasca"
 
 msgid "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
 msgstr "Només mentre sigui oberta. Podràs contestar-li i amagar el que no escaigui."
+
+msgid "Resumen semanal por correo"
+msgstr "Resum setmanal per correu"
+
+msgid "Cada lunes te mandamos a tu correo un resumen de tus tareas: lo abierto, lo vencido, lo que vence en la semana y lo bloqueado. Solo a ti, y solo con lo que tú puedes ver. Si no hay nada que contar, no te escribimos."
+msgstr "Cada dilluns t'enviem al correu un resum de les teves tasques: allò obert, allò vençut, allò que venç aquesta setmana i allò bloquejat. Només a tu, i només amb allò que tu pots veure. Si no hi ha res a explicar, no t'escrivim."
+
+msgid "Activado: el primer resumen llegará el próximo lunes."
+msgstr "Activat: el primer resum arribarà el proper dilluns."
+
+msgid "Desactivado: ya no recibirás el resumen semanal."
+msgstr "Desactivat: ja no rebràs el resum setmanal."
+
+msgid "Tu usuario no pertenece a ningún despacho, así que no hay resumen que mandarte."
+msgstr "El teu usuari no pertany a cap despatx, així que no hi ha resum per enviar-te."
+
+msgid "Dejar de recibirlo"
+msgstr "Deixar de rebre'l"
+
+msgid "Recibirlo cada lunes"
+msgstr "Rebre'l cada dilluns"
+
+msgid "Tu semana en tareas, del %(desde)s al %(hasta)s. Solo cuenta lo que tú puedes ver."
+msgstr "La teva setmana en tasques, del %(desde)s al %(hasta)s. Només compta allò que tu pots veure."
+
+msgid "Ahora: %(a)s abiertas, %(v)s vencidas, %(b)s bloqueadas. En estos días: %(c)s creadas, %(h)s completadas, cumplimiento en plazo %(t)s."
+msgstr "Ara: %(a)s obertes, %(v)s vençudes, %(b)s bloquejades. En aquests dies: %(c)s creades, %(h)s completades, compliment en termini %(t)s."
+
+msgid "… y %(n)s más"
+msgstr "… i %(n)s més"
+
+msgid "Tareas que vencen en los próximos %(n)s días"
+msgstr "Tasques que venceixen els propers %(n)s dies"
+
+msgid "Tu resumen semanal de tareas"
+msgstr "El teu resum setmanal de tasques"
+
+msgid "Ver el informe completo"
+msgstr "Veure l'informe complet"
+
+msgid "Recibes este resumen porque lo activaste en Tareas › Informes. Puedes desactivarlo allí cuando quieras."
+msgstr "Reps aquest resum perquè el vas activar a Tasques › Informes. Pots desactivar-lo allà quan vulguis."

@@ -97,6 +97,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Automatizaciones: asignar, fijar fecha y pedir revisión (octubre de 2026)](#automatizaciones-asignar-fijar-fecha-y-pedir-revisión-octubre-de-2026)
 - [Revisiones con varios revisores (octubre de 2026)](#revisiones-con-varios-revisores-octubre-de-2026)
 - [Comentarios del cliente en las tareas del portal (octubre de 2026)](#comentarios-del-cliente-en-las-tareas-del-portal-octubre-de-2026)
+- [Resumen semanal de tareas por correo (octubre de 2026)](#resumen-semanal-de-tareas-por-correo-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3421,3 +3422,15 @@ El cliente puede ahora **escribir en las tareas que el despacho le enseña** en 
 - **Arreglo de paso**: borrar para siempre un cliente que ya había entrado al portal fallaba (error de clave foránea por su enlace de acceso); ahora `eliminar_cliente_fiscal_definitivamente` borra también esos enlaces. Queda sin comprobar si un cliente con vencimientos o correos asociados se puede borrar para siempre sin quitar antes esos datos.
 - **No se ha hecho a propósito**: API y herramientas MCP/IA para leer o contestar estas conversaciones (es contenido externo; se gestiona desde la ficha), adjuntos del cliente y notificaciones por correo al equipo.
 - **Pruebas**: 12 tests nuevos en `tests/test_tareas_portal_cliente.py` (permisos, límites, texto, escape de HTML, aislamiento entre clientes y despachos, respuesta con correo y sin él, moderación, borrado de clientes y despachos).
+
+## Resumen semanal de tareas por correo (octubre de 2026)
+
+Cada persona puede pedir que le llegue por correo un **resumen semanal de sus tareas**. Código en `app/informes_tareas_correo.py`; el botón está en Tareas › Informes («Resumen semanal por correo»).
+
+- **Política**: opt-in, personal y solo a su propio correo (no hay destinatarios externos ni envíos en nombre de otra persona). Mismo alcance que la pantalla de Informes: solo las tareas que esa persona puede ver. Contenido: abiertas, vencidas y bloqueadas ahora; creadas y completadas en los últimos 7 días con el cumplimiento en plazo; tareas, vencimientos fiscales y (solo la dirección) certificados de los próximos 7 días, con un máximo de 10 líneas por sección y un enlace al informe completo.
+- **Cuándo**: una vez por semana natural, el primer día en que corre la pasada diaria (el lunes; si estuvo parado, el martes, etc.). Quien lo activa a media semana empieza el lunes siguiente. Sin nada que contar no se manda, pero la semana queda atendida.
+- **Fallos**: si el envío falla, la semana no se marca y la pasada del día siguiente lo reintenta; no se duplica nunca. Si falta la configuración del correo saliente (`PORTAL_SMTP_*`), no se toca a nadie y se reintenta cuando exista. Si la persona deja de pertenecer a un despacho, su suscripción se apaga sola.
+- **Cómo corre**: dentro de `scripts/ejecutar_automatizaciones.py` (el mismo timer diario que ya está instalado; no hace falta ninguna unidad nueva). Su latido en el panel de salud se llama `resumen_tareas_correo`.
+- **Migración al arrancar** (idempotente): tabla `informes_tareas_suscripciones`. Borrar un despacho se lleva sus suscripciones. Reversión: `DROP TABLE informes_tareas_suscripciones`. Hace falta reiniciar.
+- **No se ha hecho a propósito**: enviar resúmenes a otras personas o a la dirección sobre el equipo, otras frecuencias, ni elegir el día.
+- **Pruebas**: `tests/test_informes_tareas_correo.py` (opt-in, semana en curso, una vez por semana, vacío, reintento sin duplicar, aislamiento por persona, escape de HTML, pantalla).

@@ -14329,3 +14329,45 @@ msgstr "Permettre au client d'écrire des commentaires sur cette tâche"
 
 msgid "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
 msgstr "Seulement tant qu'elle est ouverte. Vous pourrez lui répondre et masquer ce qui ne convient pas."
+
+msgid "Resumen semanal por correo"
+msgstr "Résumé hebdomadaire par e-mail"
+
+msgid "Cada lunes te mandamos a tu correo un resumen de tus tareas: lo abierto, lo vencido, lo que vence en la semana y lo bloqueado. Solo a ti, y solo con lo que tú puedes ver. Si no hay nada que contar, no te escribimos."
+msgstr "Chaque lundi, nous vous envoyons par e-mail un résumé de vos tâches : ce qui est ouvert, en retard, à échéance cette semaine et bloqué. Rien que pour vous, et uniquement avec ce que vous pouvez voir. S'il n'y a rien à signaler, nous n'écrivons pas."
+
+msgid "Activado: el primer resumen llegará el próximo lunes."
+msgstr "Activé : le premier résumé arrivera lundi prochain."
+
+msgid "Desactivado: ya no recibirás el resumen semanal."
+msgstr "Désactivé : vous ne recevrez plus le résumé hebdomadaire."
+
+msgid "Tu usuario no pertenece a ningún despacho, así que no hay resumen que mandarte."
+msgstr "Votre utilisateur n'appartient à aucun cabinet : il n'y a donc pas de résumé à vous envoyer."
+
+msgid "Dejar de recibirlo"
+msgstr "Ne plus le recevoir"
+
+msgid "Recibirlo cada lunes"
+msgstr "Le recevoir chaque lundi"
+
+msgid "Tu semana en tareas, del %(desde)s al %(hasta)s. Solo cuenta lo que tú puedes ver."
+msgstr "Votre semaine en tâches, du %(desde)s au %(hasta)s. Seul ce que vous pouvez voir est compté."
+
+msgid "Ahora: %(a)s abiertas, %(v)s vencidas, %(b)s bloqueadas. En estos días: %(c)s creadas, %(h)s completadas, cumplimiento en plazo %(t)s."
+msgstr "Maintenant : %(a)s ouvertes, %(v)s en retard, %(b)s bloquées. Ces jours-ci : %(c)s créées, %(h)s terminées, respect des délais %(t)s."
+
+msgid "… y %(n)s más"
+msgstr "… et %(n)s de plus"
+
+msgid "Tareas que vencen en los próximos %(n)s días"
+msgstr "Tâches à échéance dans les %(n)s prochains jours"
+
+msgid "Tu resumen semanal de tareas"
+msgstr "Votre résumé hebdomadaire des tâches"
+
+msgid "Ver el informe completo"
+msgstr "Voir le rapport complet"
+
+msgid "Recibes este resumen porque lo activaste en Tareas › Informes. Puedes desactivarlo allí cuando quieras."
+msgstr "Vous recevez ce résumé parce que vous l'avez activé dans Tâches › Rapports. Vous pouvez le désactiver à tout moment."

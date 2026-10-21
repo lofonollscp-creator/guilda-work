@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import automatizaciones, salud  # noqa: E402
+from app import automatizaciones, informes_tareas_correo, salud  # noqa: E402
 
 
 def main() -> None:
@@ -32,6 +32,14 @@ def main() -> None:
     # Un error de una regla concreta ya queda en su ejecución y avisa a la dirección; el latido solo se pone en rojo si la pasada entera se rompe.
     salud.registrar_ok("automatizaciones", 24 * 3600, detalle)
     print(f"Automatizaciones: {detalle}")
+    # Resumen semanal de tareas por correo (opcional, de cada persona): su fallo no tumba la pasada de reglas, que ya quedó hecha y anotada.
+    try:
+        c = informes_tareas_correo.enviar_pendientes()
+        salud.registrar_ok("resumen_tareas_correo", 24 * 3600, f"{c['enviados']} enviado(s), {c['vacios']} sin novedades, {c['errores']} error(es)" + (", correo saliente sin configurar" if c["sin_correo_saliente"] else ""))
+        print(f"Resumen semanal de tareas: {c}")
+    except Exception as e:
+        salud.registrar_error("resumen_tareas_correo", 24 * 3600, f"{type(e).__name__}: {e}")
+        raise
 
 
 if __name__ == "__main__":

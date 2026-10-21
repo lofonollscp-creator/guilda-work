@@ -14244,3 +14244,45 @@ msgstr "Let the client write comments on this task"
 
 msgid "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
 msgstr "Only while it is open. You can reply and hide anything inappropriate."
+
+msgid "Resumen semanal por correo"
+msgstr "Weekly summary by email"
+
+msgid "Cada lunes te mandamos a tu correo un resumen de tus tareas: lo abierto, lo vencido, lo que vence en la semana y lo bloqueado. Solo a ti, y solo con lo que tú puedes ver. Si no hay nada que contar, no te escribimos."
+msgstr "Every Monday we email you a summary of your tasks: what is open, what is overdue, what is due this week and what is blocked. Only to you, and only with what you can see. If there is nothing to report, we do not write."
+
+msgid "Activado: el primer resumen llegará el próximo lunes."
+msgstr "Turned on: the first summary will arrive next Monday."
+
+msgid "Desactivado: ya no recibirás el resumen semanal."
+msgstr "Turned off: you will no longer receive the weekly summary."
+
+msgid "Tu usuario no pertenece a ningún despacho, así que no hay resumen que mandarte."
+msgstr "Your user does not belong to any office, so there is no summary to send you."
+
+msgid "Dejar de recibirlo"
+msgstr "Stop receiving it"
+
+msgid "Recibirlo cada lunes"
+msgstr "Receive it every Monday"
+
+msgid "Tu semana en tareas, del %(desde)s al %(hasta)s. Solo cuenta lo que tú puedes ver."
+msgstr "Your week in tasks, from %(desde)s to %(hasta)s. It only counts what you can see."
+
+msgid "Ahora: %(a)s abiertas, %(v)s vencidas, %(b)s bloqueadas. En estos días: %(c)s creadas, %(h)s completadas, cumplimiento en plazo %(t)s."
+msgstr "Now: %(a)s open, %(v)s overdue, %(b)s blocked. In these days: %(c)s created, %(h)s completed, on-time rate %(t)s."
+
+msgid "… y %(n)s más"
+msgstr "… and %(n)s more"
+
+msgid "Tareas que vencen en los próximos %(n)s días"
+msgstr "Tasks due in the next %(n)s days"
+
+msgid "Tu resumen semanal de tareas"
+msgstr "Your weekly task summary"
+
+msgid "Ver el informe completo"
+msgstr "See the full report"
+
+msgid "Recibes este resumen porque lo activaste en Tareas › Informes. Puedes desactivarlo allí cuando quieras."
+msgstr "You receive this summary because you turned it on in Tasks › Reports. You can turn it off there whenever you like."

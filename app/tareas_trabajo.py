@@ -76,6 +76,13 @@ CREATE TABLE IF NOT EXISTS tarea_comentarios_cliente (
     oculto_por INTEGER REFERENCES usuarios(id)
 );
 CREATE INDEX IF NOT EXISTS idx_tarea_coment_cliente_tarea ON tarea_comentarios_cliente(tarea_id, cliente_fiscal_id, id);
+CREATE TABLE IF NOT EXISTS informes_tareas_suscripciones (
+    usuario_id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    activa INTEGER NOT NULL DEFAULT 1,
+    ultimo_envio TEXT,
+    creada_en TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS tarea_revision_votos (
     id INTEGER PRIMARY KEY,
     revision_id INTEGER NOT NULL REFERENCES tarea_revisiones(id) ON DELETE CASCADE,
@@ -524,6 +531,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM tarea_clientes WHERE tenant_id = ?", (tenant_id,))
     conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
     conn.execute("UPDATE tarea_revisiones SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+    conn.execute("DELETE FROM informes_tareas_suscripciones WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM tarea_comentarios_cliente WHERE tenant_id = ?", (tenant_id,))             # son conversaciones con clientes de ese despacho: se van con él
 
 

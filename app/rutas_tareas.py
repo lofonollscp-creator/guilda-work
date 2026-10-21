@@ -1385,8 +1385,20 @@ def _informe_desde_la_peticion():
 @tareas_bp.route("/informes")
 @login_required
 def informes():
+    from . import informes_tareas_correo
     informe, error = _informe_desde_la_peticion()
-    return render_template("tareas_informes.html", r=informe, error=error)
+    return render_template("tareas_informes.html", r=informe, error=error, resumen_semanal=informes_tareas_correo.esta_suscrito(g.usuario_id), resumen_avisado=request.args.get("resumen"))
+
+
+@tareas_bp.route("/informes/resumen-semanal", methods=["POST"])
+@login_required
+def informes_resumen_semanal():
+    """Activa o desactiva el resumen semanal por correo de la persona que lo pide (solo ella, solo a su correo; ver app/informes_tareas_correo.py)."""
+    from . import informes_tareas_correo
+    activar = request.form.get("activar") == "1"
+    if not informes_tareas_correo.suscribir(g.usuario_id, activar):
+        return redirect(url_for("tareas.informes", resumen="sin_despacho"))
+    return redirect(url_for("tareas.informes", resumen="activado" if activar else "desactivado"))
 
 
 @tareas_bp.route("/informes.csv")

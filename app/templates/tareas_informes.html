@@ -27,6 +27,18 @@
   <p class="muted">{{ _('Ventana: %(desde)s a %(hasta)s (%(n)s días). Lo de «ahora» es la foto de hoy y no depende de la ventana.', desde=r.ventana.desde, hasta=r.ventana.hasta, n=r.ventana.dias) }}</p>
 </section>
 
+<section class="dash-panel" aria-label="{{ _('Resumen semanal por correo') }}">
+  <h2>{{ _('Resumen semanal por correo') }}</h2>
+  <p class="muted">{{ _('Cada lunes te mandamos a tu correo un resumen de tus tareas: lo abierto, lo vencido, lo que vence en la semana y lo bloqueado. Solo a ti, y solo con lo que tú puedes ver. Si no hay nada que contar, no te escribimos.') }}</p>
+  {% if resumen_avisado == 'activado' %}<p role="status">{{ _('Activado: el primer resumen llegará el próximo lunes.') }}</p>
+  {% elif resumen_avisado == 'desactivado' %}<p role="status">{{ _('Desactivado: ya no recibirás el resumen semanal.') }}</p>
+  {% elif resumen_avisado == 'sin_despacho' %}<p class="ia-error" role="alert">{{ _('Tu usuario no pertenece a ningún despacho, así que no hay resumen que mandarte.') }}</p>{% endif %}
+  <form action="{{ url_for('tareas.informes_resumen_semanal') }}" method="post">
+    <input type="hidden" name="activar" value="{{ 0 if resumen_semanal else 1 }}">
+    {% if resumen_semanal %}{{ boton(_('Dejar de recibirlo'), 'secundario', tipo='submit') }}{% else %}{{ boton(_('Recibirlo cada lunes'), 'secundario', tipo='submit') }}{% endif %}
+  </form>
+</section>
+
 <section class="dash-panel" aria-label="{{ _('Ahora') }}">
   <h2>{{ _('Ahora') }}</h2>
   <ul class="log-list">
