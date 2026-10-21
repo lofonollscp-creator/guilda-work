@@ -14148,3 +14148,39 @@ msgstr "Assigna la tasca a una persona"
 
 msgid "Pide que otra persona revise la tarea"
 msgstr "Demana que una altra persona revisi la tasca"
+
+msgid "La revisan %(n)s personas."
+msgstr "La revisen %(n)s persones."
+
+msgid "Ha aprobado"
+msgstr "Ha aprovat"
+
+msgid "Pide cambios"
+msgstr "Demana canvis"
+
+msgid "Sin votar"
+msgstr "Sense votar"
+
+msgid "Pedir que la revise (puedes elegir hasta cinco personas)"
+msgstr "Demana que la revisi (pots triar fins a cinc persones)"
+
+msgid "Para darla por buena"
+msgstr "Per donar-la per bona"
+
+msgid "Tienen que aprobarla todos"
+msgstr "Cal que l'aprovin tots"
+
+msgid "Basta con que la apruebe uno"
+msgstr "N'hi ha prou que l'aprovi un"
+
+msgid "Si alguien pide cambios, la revisión se detiene y la tarea vuelve a «en progreso»."
+msgstr "Si algú demana canvis, la revisió s'atura i la tasca torna a «en progrés»."
+
+msgid "Ya has votado en esta revisión."
+msgstr "Ja has votat en aquesta revisió."
+
+msgid "Una revisión admite hasta 5 revisores."
+msgstr "Una revisió admet fins a 5 revisors."
+
+msgid "El modo tiene que ser «todos» o «cualquiera»."
+msgstr "El mode ha de ser «tots» o «qualsevol»."

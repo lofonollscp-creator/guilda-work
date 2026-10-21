@@ -95,6 +95,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Constructor de reglas de automatización (octubre de 2026)](#constructor-de-reglas-de-automatización-octubre-de-2026)
 - [Automatizaciones por evento (octubre de 2026)](#automatizaciones-por-evento-octubre-de-2026)
 - [Automatizaciones: asignar, fijar fecha y pedir revisión (octubre de 2026)](#automatizaciones-asignar-fijar-fecha-y-pedir-revisión-octubre-de-2026)
+- [Revisiones con varios revisores (octubre de 2026)](#revisiones-con-varios-revisores-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3394,3 +3395,15 @@ Tres acciones nuevas para las reglas cuyo disparador es una tarea (tarea vencida
 - **Validaciones**: solo valen con disparadores de tarea (con otro se rechaza al guardar); la persona o el revisor tienen que ser del despacho y concretos (no «la dirección»); y se rechaza **al guardar** la combinación imposible «cuando una tarea pase a Completada → pedir revisión», porque una tarea completada no admite revisión. Si el revisor resulta ser el propio dueño, la acción falla de forma visible en las ejecuciones con el motivo («La revisión tiene que hacerla otra persona»).
 - **Pruebas**: 7 tests más en `tests/test_automatizaciones.py`. Sin migraciones; basta reiniciar.
 - **Lo que sigue sin hacerse a propósito** (decisiones tuyas, ver la conversación): que el cliente comente desde el portal, informes que se envíen solos por correo y revisiones con varios revisores.
+
+## Revisiones con varios revisores (octubre de 2026)
+
+La revisión de una tarea (Fase 5) admite ahora **hasta cinco revisores**. Lo de siempre —un solo revisor— sigue funcionando igual en la web, la API, el MCP y el asistente.
+
+- **Cómo se pide**: en la ficha de la tarea se marcan las personas (casillas) y se elige el modo; por la API, `POST /tareas-outlook/<id>/revision` con `{"revisor_ids": [7, 9], "modo": "todos"}` (o `revisor_id` como antes). Herramienta `pedir_revision_tarea` con `revisor_ids` y `modo`. Nadie puede revisar su propia petición, todos tienen que ser del despacho y se unifican los repetidos.
+- **Política**: modo **«todos»** (por defecto): la revisión sigue pendiente hasta que aprueben todos; modo **«cualquiera»**: basta que apruebe uno y el resto ya no vota. **Una sola petición de cambios, de quien sea y en cualquier modo, detiene la revisión**: la tarea vuelve a «en progreso» y los demás ya no tienen que votar. Cada revisor vota una vez (409 `ya_has_votado`); solo vota quien está designado (403); quien la pidió o el dueño pueden retirarla, y lo ya votado queda como historial.
+- **Avisos**: cada revisor recibe el aviso al pedirla; quien la pidió **no** recibe uno por cada voto parcial (se ve en la ficha, «Ha aprobado / Pide cambios / Sin votar»), solo cuando la revisión se cierra —aprobada por todos o con cambios, con el nombre y la nota de quien los pidió—.
+- **Mientras esté pendiente** la tarea no se puede completar, igual que antes. Los votos parciales quedan en el historial de la tarea («Ana aprobó (1 de 3)») y en la auditoría (`tarea.revision.voto`); el cierre sigue siendo `tarea.revision.aprobar` o `tarea.revision.cambios`.
+- **Migración al arrancar** (idempotente): tabla `tarea_revision_votos` y columna `tarea_revisiones.modo`; las revisiones que ya existían (un solo revisor) reciben su voto con el estado en que acabaron. Reversión: ambas se pueden ignorar; `DROP TABLE tarea_revision_votos`. Hace falta reiniciar.
+- **Sin hacer a propósito**: revisiones en cadena (primero uno y luego otro) y varios revisores en la acción «pedir revisión» de las automatizaciones (esa sigue siendo de uno).
+- **Pruebas**: 8 tests nuevos en `tests/test_tareas_revision.py` (validación, modo todos, modo cualquiera, cambios que detienen, designación y retirada, migración de las antiguas, pantalla y herramientas).

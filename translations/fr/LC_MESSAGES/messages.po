@@ -14224,3 +14224,39 @@ msgstr "Assigne la tâche à une personne"
 
 msgid "Pide que otra persona revise la tarea"
 msgstr "Demande à une autre personne de réviser la tâche"
+
+msgid "La revisan %(n)s personas."
+msgstr "%(n)s personnes la révisent."
+
+msgid "Ha aprobado"
+msgstr "A approuvé"
+
+msgid "Pide cambios"
+msgstr "Demande des modifications"
+
+msgid "Sin votar"
+msgstr "Pas voté"
+
+msgid "Pedir que la revise (puedes elegir hasta cinco personas)"
+msgstr "Demander une révision (jusqu'à cinq personnes)"
+
+msgid "Para darla por buena"
+msgstr "Pour la valider"
+
+msgid "Tienen que aprobarla todos"
+msgstr "Tous doivent l'approuver"
+
+msgid "Basta con que la apruebe uno"
+msgstr "Une seule approbation suffit"
+
+msgid "Si alguien pide cambios, la revisión se detiene y la tarea vuelve a «en progreso»."
+msgstr "Si quelqu'un demande des modifications, la révision s'arrête et la tâche repasse « en cours »."
+
+msgid "Ya has votado en esta revisión."
+msgstr "Vous avez déjà voté dans cette révision."
+
+msgid "Una revisión admite hasta 5 revisores."
+msgstr "Une révision admet jusqu'à 5 réviseurs."
+
+msgid "El modo tiene que ser «todos» o «cualquiera»."
+msgstr "Le mode doit être « tous » ou « n'importe lequel »."

@@ -58,9 +58,20 @@
 <section class="tarea-comentarios ds-max-640" id="revision">
   <h2 class="tarea-bloque-titulo">{{ _('Revisión') }}</h2>
   {% if revision %}
+  {% if revision.votos|length > 1 %}
+  <p>{{ chip(_('Pendiente'), 'aviso') }} {{ _('La revisan %(n)s personas.', n=revision.votos|length) }} {{ _('Tienen que aprobarla todos') if revision.modo == 'todos' else _('Basta con que la apruebe uno') }}.
+    {% if revision.nota_solicitud %}<span class="muted">«{{ revision.nota_solicitud }}»</span>{% endif %}</p>
+  <ul class="log-list">
+    {% for v in revision.votos %}
+    <li class="log-item"><span class="log-text">{{ v.revisor }}{% if v.nota %}: «{{ v.nota }}»{% endif %}</span>
+      {{ chip(_('Ha aprobado'), 'exito') if v.estado == 'aprobado' else (chip(_('Pide cambios'), 'aviso') if v.estado == 'cambios' else chip(_('Sin votar'))) }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
   <p>{{ chip(_('Pendiente'), 'aviso') }} {{ _('La revisa %(quien)s.', quien=revisiones[0].revisor) }}{% if revision.nota_solicitud %} <span class="muted">«{{ revision.nota_solicitud }}»</span>{% endif %}</p>
+  {% endif %}
   <p class="muted">{{ _('Mientras esté pendiente, la tarea no se puede completar.') }}</p>
-  {% if revision.revisor_id == g.usuario_id %}
+  {% if g.usuario_id in revision.pendientes %}
   <form class="comentario-form" action="{{ url_for('tareas.resolver_revision', tarea_id=tarea.id) }}" method="post">
     <label class="sr-only" for="revision-nota">{{ _('Comentario de la revisión') }}</label>
     <textarea id="revision-nota" name="nota" rows="2" maxlength="500" placeholder="{{ _('Comentario (obligatorio si pides cambios)') }}"></textarea>
@@ -75,11 +86,18 @@
   {% endif %}
   {% elif puede_trabajar and tarea.estado != 'completada' and revisores_posibles %}
   <form class="comentario-form" action="{{ url_for('tareas.pedir_revision', tarea_id=tarea.id) }}" method="post">
-    <label for="revision-revisor">{{ _('Pedir que la revise') }}</label>
-    <select id="revision-revisor" name="revisor_id" required>
-      <option value="">{{ _('Elige a una persona…') }}</option>
-      {% for c in revisores_posibles %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+    <fieldset>
+      <legend>{{ _('Pedir que la revise (puedes elegir hasta cinco personas)') }}</legend>
+      {% for c in revisores_posibles %}
+      <label class="checkbox"><input type="checkbox" name="revisor_ids" value="{{ c.id }}"> {{ c.nombre }}</label>
+      {% endfor %}
+    </fieldset>
+    <label for="revision-modo">{{ _('Para darla por buena') }}</label>
+    <select id="revision-modo" name="modo">
+      <option value="todos">{{ _('Tienen que aprobarla todos') }}</option>
+      <option value="cualquiera">{{ _('Basta con que la apruebe uno') }}</option>
     </select>
+    <small class="muted">{{ _('Si alguien pide cambios, la revisión se detiene y la tarea vuelve a «en progreso».') }}</small>
     <label class="sr-only" for="revision-solicitud">{{ _('Nota para quien revisa') }}</label>
     <input type="text" id="revision-solicitud" name="nota" maxlength="500" placeholder="{{ _('Nota para quien revisa (opcional)') }}">
     <div class="comentario-acciones">{{ boton(_('Pedir revisión'), 'secundario', tipo='submit') }}</div>
@@ -89,7 +107,7 @@
   {% if resueltas %}
   <ul class="log-list">
     {% for rv in resueltas %}
-    <li class="log-item"><span class="log-text">{{ rv.revisor }}{% if rv.nota_resolucion %}: «{{ rv.nota_resolucion }}»{% endif %}</span>
+    <li class="log-item"><span class="log-text">{{ rv.revisor }}{% if rv.nota_resolucion %}: «{{ rv.nota_resolucion }}»{% endif %}{% if rv.votos|length > 1 %} <small class="muted">({{ rv.aprobados }}/{{ rv.votos|length }})</small>{% endif %}</span>
       {{ chip(_('Aprobada'), 'exito') if rv.estado == 'aprobada' else (chip(_('Cambios pedidos'), 'aviso') if rv.estado == 'cambios' else chip(_('Retirada'))) }}</li>
     {% endfor %}
   </ul>

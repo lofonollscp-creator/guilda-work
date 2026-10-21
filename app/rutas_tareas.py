@@ -1428,7 +1428,8 @@ def informes_pdf():
 @login_required
 def pedir_revision(tarea_id: int):
     try:
-        tareas_trabajo.solicitar_revision(g.usuario_id, tarea_id, request.form.get("revisor_id"), request.form.get("nota"))
+        elegidos = request.form.getlist("revisor_ids") or request.form.get("revisor_id")             # la lista nueva o el campo único de siempre
+        tareas_trabajo.solicitar_revision(g.usuario_id, tarea_id, elegidos, request.form.get("nota"), request.form.get("modo") or "todos")
     except tareas_trabajo.TransicionInvalida as e:
         if e.codigo == "no_encontrada":
             abort(404)

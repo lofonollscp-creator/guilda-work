@@ -106,19 +106,21 @@ def listar_revisiones_tarea(tarea_id: int) -> dict:
     return {"pendiente": _mt._tt().revision_pendiente(tarea_id), "historial": _mt._tt().historial_de_revisiones(tarea_id)}
 
 
-def pedir_revision_tarea(tarea_id: int, revisor_id: int, nota: str | None = None) -> dict:
-    """Pide que otra persona de tu despacho revise la tarea (se le avisa y se le comparte para que la vea). Mientras esté pendiente la tarea no se puede completar."""
+def pedir_revision_tarea(tarea_id: int, revisor_id: int | None = None, nota: str | None = None, revisor_ids: list[int] | None = None, modo: str = "todos") -> dict:
+    """Pide que otra persona de tu despacho —o varias, hasta cinco, con `revisor_ids`— revise la tarea (se les avisa y se les comparte para que la vean). `modo`: «todos» (aprueban todos, por defecto)
+    o «cualquiera» (basta uno); una petición de cambios, de quien sea, detiene la revisión. Mientras esté pendiente la tarea no se puede completar."""
     _mt._tarea_visible(tarea_id)
     tt = _mt._tt()
     try:
-        tt.solicitar_revision(_mt._uid(), tarea_id, revisor_id, nota)
+        tt.solicitar_revision(_mt._uid(), tarea_id, revisor_ids if revisor_ids else revisor_id, nota, modo or "todos")
     except tt.TransicionInvalida as e:
         raise _mt._como_error(e) from e
     return {"pendiente": tt.revision_pendiente(tarea_id)}
 
 
 def resolver_revision_tarea(tarea_id: int, decision: str, nota: str | None = None) -> dict:
-    """Solo la persona designada para revisar. `decision`: aprobar (no completa la tarea) o cambios (exige `nota` y devuelve la tarea a en progreso)."""
+    """El voto de una persona designada para revisar (cada una vota una vez). `decision`: aprobar (no completa la tarea; con varios revisores en modo «todos» la revisión sigue pendiente hasta que aprueben todos)
+    o cambios (exige `nota`, detiene la revisión y devuelve la tarea a en progreso)."""
     _mt._tarea_visible(tarea_id)
     tt = _mt._tt()
     try:

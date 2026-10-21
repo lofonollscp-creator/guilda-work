@@ -14139,3 +14139,39 @@ msgstr "Assigns the task to a person"
 
 msgid "Pide que otra persona revise la tarea"
 msgstr "Asks another person to review the task"
+
+msgid "La revisan %(n)s personas."
+msgstr "%(n)s people are reviewing it."
+
+msgid "Ha aprobado"
+msgstr "Approved"
+
+msgid "Pide cambios"
+msgstr "Asks for changes"
+
+msgid "Sin votar"
+msgstr "Not voted"
+
+msgid "Pedir que la revise (puedes elegir hasta cinco personas)"
+msgstr "Ask to review it (you can choose up to five people)"
+
+msgid "Para darla por buena"
+msgstr "To accept it"
+
+msgid "Tienen que aprobarla todos"
+msgstr "Everyone has to approve it"
+
+msgid "Basta con que la apruebe uno"
+msgstr "One approval is enough"
+
+msgid "Si alguien pide cambios, la revisión se detiene y la tarea vuelve a «en progreso»."
+msgstr "If anyone asks for changes, the review stops and the task goes back to «in progress»."
+
+msgid "Ya has votado en esta revisión."
+msgstr "You have already voted in this review."
+
+msgid "Una revisión admite hasta 5 revisores."
+msgstr "A review allows up to 5 reviewers."
+
+msgid "El modo tiene que ser «todos» o «cualquiera»."
+msgstr "The mode has to be «all» or «any»."

@@ -566,9 +566,10 @@ HERRAMIENTAS: list[dict] = [
     ),
     _tool(
         "pedir_revision_tarea",
-        "Pide que otra persona de tu despacho revise una tarea. Mientras esté pendiente la tarea no se puede completar.",
-        {"tarea_id": _param("integer", "Id de la tarea."), "revisor_id": _param("integer", "Id de quien revisa (otra persona del despacho)."), "nota": _param("string", "Nota para quien revisa, opcional.")},
-        ["tarea_id", "revisor_id"],
+        "Pide que otra persona de tu despacho (o varias, hasta cinco) revise una tarea. Mientras esté pendiente la tarea no se puede completar.",
+        {"tarea_id": _param("integer", "Id de la tarea."), "revisor_id": _param("integer", "Id de quien revisa (otra persona del despacho)."), "nota": _param("string", "Nota para quien revisa, opcional."),
+         "revisor_ids": _param("array", "Varios revisores (hasta cinco) en vez de revisor_id."), "modo": _param("string", "todos (aprueban todos, por defecto) o cualquiera (basta uno).")},
+        ["tarea_id"],
     ),
     _tool(
         "resolver_revision_tarea",

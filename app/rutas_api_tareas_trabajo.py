@@ -8,7 +8,7 @@ from . import db, tareas_trabajo as tt
 from .auth import token_required
 from .rutas_api import _body, _dict, _err, _exigir_tenant_api, _ok, _ok_paginado, api_bp
 
-_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "sin_cliente": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
+_STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "subtareas_abiertas": 409, "revision_pendiente": 409, "tarea_completada": 409, "nota_obligatoria": 400, "ya_has_votado": 409, "demasiados_revisores": 400, "sin_cliente": 409, "subtarea_de_subtarea": 409, "padre_completada": 409, "duplicado": 409, "limite": 409,
            "tipo_no_admitido": 415, "archivo_grande": 413}
 
 
@@ -237,12 +237,13 @@ def revision_de_la_tarea(tarea_id: int):
 @api_bp.route("/tareas-outlook/<int:tarea_id>/revision", methods=["POST"])
 @token_required
 def pedir_revision_de_la_tarea(tarea_id: int):
-    """Cuerpo: `{"revisor_id": 7, "nota": "Mira el cálculo del IVA"}`. Tiene que revisarla otra persona del despacho. Mientras esté pendiente la tarea no se puede completar
-    (409 `revision_pendiente`)."""
+    """Cuerpo: `{"revisor_id": 7, "nota": "Mira el cálculo del IVA"}` o, con varias personas, `{"revisor_ids": [7, 9], "modo": "todos", "nota": "…"}` (hasta cinco). Tiene que revisarla otra
+    persona del despacho. `modo`: `todos` (por defecto, aprueban todos) o `cualquiera` (basta uno); una petición de cambios, de quien sea, detiene la revisión. Mientras esté pendiente la tarea
+    no se puede completar (409 `revision_pendiente`)."""
     _tarea_o_404(tarea_id)
     datos = _body()
     try:
-        tt.solicitar_revision(g.usuario_id, tarea_id, datos.get("revisor_id"), datos.get("nota"))
+        tt.solicitar_revision(g.usuario_id, tarea_id, datos.get("revisor_ids") if datos.get("revisor_ids") is not None else datos.get("revisor_id"), datos.get("nota"), datos.get("modo") or "todos")
     except tt.TransicionInvalida as e:
         return _err(str(e), _STATUS.get(e.codigo, 400), e.codigo, e.campo)
     return _ok(_revision_json(tarea_id), 201)
@@ -251,7 +252,8 @@ def pedir_revision_de_la_tarea(tarea_id: int):
 @api_bp.route("/tareas-outlook/<int:tarea_id>/revision/resolver", methods=["POST"])
 @token_required
 def resolver_revision_de_la_tarea(tarea_id: int):
-    """Solo la persona designada. Cuerpo: `{"decision": "aprobar" | "cambios", "nota": "…"}`; pedir cambios exige nota y devuelve la tarea a «en progreso». Aprobar no la completa."""
+    """El voto de un revisor designado (cada uno vota una vez). Cuerpo: `{"decision": "aprobar" | "cambios", "nota": "…"}`; pedir cambios exige nota, detiene la revisión y devuelve la tarea a
+    «en progreso». Aprobar no la completa; con varios revisores en modo `todos`, la revisión sigue pendiente hasta que aprueben todos."""
     _tarea_o_404(tarea_id)
     datos = _body()
     try:

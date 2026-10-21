@@ -62,6 +62,16 @@ CREATE TABLE IF NOT EXISTS tarea_revisiones (
 CREATE INDEX IF NOT EXISTS idx_tarea_revisiones_tarea ON tarea_revisiones(tarea_id);
 CREATE INDEX IF NOT EXISTS idx_tarea_revisiones_revisor ON tarea_revisiones(revisor_id, estado);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_revisiones_una_pendiente ON tarea_revisiones(tarea_id) WHERE estado = 'pendiente';
+CREATE TABLE IF NOT EXISTS tarea_revision_votos (
+    id INTEGER PRIMARY KEY,
+    revision_id INTEGER NOT NULL REFERENCES tarea_revisiones(id) ON DELETE CASCADE,
+    revisor_id INTEGER NOT NULL REFERENCES usuarios(id),
+    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'cambios')),
+    nota TEXT,
+    votado_en TEXT,
+    UNIQUE (revision_id, revisor_id)
+);
+CREATE INDEX IF NOT EXISTS idx_tarea_revision_votos_revisor ON tarea_revision_votos(revisor_id, estado);
 CREATE TRIGGER IF NOT EXISTS tareas_outlook_version AFTER UPDATE ON tareas_outlook
 WHEN NEW.version = OLD.version
 BEGIN UPDATE tareas_outlook SET version = OLD.version + 1 WHERE id = NEW.id; END;
@@ -90,6 +100,13 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "tareas_outlook", "tarea_padre_id", "INTEGER REFERENCES tareas_outlook(id)")
     db._asegurar_columna(conn, "tareas_outlook", "visible_cliente", "INTEGER NOT NULL DEFAULT 0")
     conn.executescript(ESQUEMA)
+    db._asegurar_columna(conn, "tarea_revisiones", "modo", "TEXT NOT NULL DEFAULT 'todos'")
+    conn.execute(                    # las revisiones de antes tenían un solo revisor: pasan a tener su voto (pendiente, aprobado o con cambios según cómo acabaron)
+        """INSERT OR IGNORE INTO tarea_revision_votos (revision_id, revisor_id, estado, nota, votado_en)
+           SELECT r.id, r.revisor_id, CASE r.estado WHEN 'aprobada' THEN 'aprobado' WHEN 'cambios' THEN 'cambios' ELSE 'pendiente' END,
+                  CASE WHEN r.estado IN ('aprobada', 'cambios') THEN r.nota_resolucion END, CASE WHEN r.estado IN ('aprobada', 'cambios') THEN r.resuelta_en END
+           FROM tarea_revisiones r WHERE r.estado != 'cancelada' AND NOT EXISTS (SELECT 1 FROM tarea_revision_votos v WHERE v.revision_id = r.id)"""
+    )
     conn.execute(
         """INSERT OR IGNORE INTO tarea_clientes (tenant_id, tarea_id, cliente_fiscal_id, principal, creado_en)
            SELECT cf.tenant_id, t.id, t.cliente_fiscal_id, 1, t.creada_en
@@ -501,18 +518,36 @@ def desvincular_cliente(conn, tenant_id: int, cliente_fiscal_id: int) -> None:
 
 
 # --- Revisión (aprobación) ----------------------------------------------------------------------------------------------
-# Quien trabaja la tarea pide que la revise OTRA persona del despacho (nunca uno mismo: dos pares de ojos). Mientras esté pendiente, la tarea no se puede completar. Quien revisa aprueba
-# o pide cambios (con nota obligatoria); al pedir cambios la tarea vuelve a «en progreso» y se avisa a quien la pidió. Aprobar no completa la tarea: lo hace quien la lleva.
-# Solo puede resolver el revisor designado; quien pidió la revisión o el dueño la pueden cancelar. Todo queda en el historial de la tarea y en la auditoría.
+# Quien trabaja la tarea pide que la revise OTRA persona del despacho —o varias, hasta cinco— (nunca uno mismo: dos pares de ojos). Mientras esté pendiente, la tarea no se puede completar.
+# Política, explícita:
+#   - modo «todos» (por defecto): hace falta que aprueben todos los revisores; modo «cualquiera»: basta con que apruebe uno, y el primer voto decide;
+#   - UNA petición de cambios, de quien sea, detiene la revisión: la tarea vuelve a «en progreso» y se avisa a quien la pidió (con la nota obligatoria). Los demás ya no tienen que votar;
+#   - cada revisor vota una sola vez; solo vota quien está designado; aprobar no completa la tarea: lo hace quien la lleva;
+#   - quien pidió la revisión o el dueño de la tarea la pueden retirar. Todo queda en el historial de la tarea y en la auditoría.
 
 DECISIONES = {"aprobar": "aprobada", "cambios": "cambios"}
+MODOS_REVISION = {"todos": "Tienen que aprobarla todos", "cualquiera": "Basta con que la apruebe uno"}
+MAX_REVISORES = 5
+
+
+def _con_votos(conn, rev: dict) -> dict:
+    votos = [dict(v) for v in conn.execute("SELECT revisor_id, estado, nota, votado_en FROM tarea_revision_votos WHERE revision_id = ? ORDER BY id", (rev["id"],))]
+    for v in votos:
+        v["revisor"] = db.nombre_mostrado_usuario(v["revisor_id"])
+    rev["votos"] = votos
+    rev["revisores"] = [v["revisor_id"] for v in votos]
+    rev["pendientes"] = [v["revisor_id"] for v in votos if v["estado"] == "pendiente"]
+    rev["aprobados"] = sum(1 for v in votos if v["estado"] == "aprobado")
+    rev["revisor"] = ", ".join(v["revisor"] or "" for v in votos)
+    return rev
 
 
 def revision_pendiente(tarea_id: int) -> dict | None:
+    """La revisión pendiente con sus votos (`votos`, `revisores`, `pendientes`, `aprobados`). `revisor_id` sigue siendo el primer revisor, por compatibilidad."""
     conn = db.get_connection()
     try:
         f = conn.execute("SELECT * FROM tarea_revisiones WHERE tarea_id = ? AND estado = 'pendiente'", (tarea_id,)).fetchone()
-        return dict(f) if f else None
+        return _con_votos(conn, dict(f)) if f else None
     finally:
         conn.close()
 
@@ -520,12 +555,16 @@ def revision_pendiente(tarea_id: int) -> dict | None:
 def historial_de_revisiones(tarea_id: int) -> list[dict]:
     conn = db.get_connection()
     try:
-        filas = [dict(f) for f in conn.execute("SELECT * FROM tarea_revisiones WHERE tarea_id = ? ORDER BY id DESC LIMIT 20", (tarea_id,))]
+        filas = [_con_votos(conn, dict(f)) for f in conn.execute("SELECT * FROM tarea_revisiones WHERE tarea_id = ? ORDER BY id DESC LIMIT 20", (tarea_id,))]
     finally:
         conn.close()
     for f in filas:
-        f["revisor"], f["solicitante"] = db.nombre_mostrado_usuario(f["revisor_id"]), db.nombre_mostrado_usuario(f["solicitada_por"])
+        f["solicitante"] = db.nombre_mostrado_usuario(f["solicitada_por"])
     return filas
+
+
+def tiene_voto_pendiente(usuario_id: int, revision: dict | None) -> bool:
+    return bool(revision and usuario_id in revision["pendientes"])
 
 
 def _avisar(usuario_id: int, titulo: str, cuerpo: str, tarea_id: int) -> None:
@@ -533,7 +572,27 @@ def _avisar(usuario_id: int, titulo: str, cuerpo: str, tarea_id: int) -> None:
     notificaciones.crear_y_enviar(usuario_id, "revision_tarea", titulo[:150], cuerpo[:300], url=f"/tareas/{tarea_id}")
 
 
-def solicitar_revision(usuario_id: int, tarea_id: int, revisor_id: int, nota: str | None = None) -> int:
+def _lista_de_revisores(revisores) -> list[int]:
+    if revisores in (None, ""):
+        raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_ids")
+    bruto = list(revisores) if isinstance(revisores, (list, tuple, set)) else [revisores]
+    ids: list[int] = []
+    for x in bruto:
+        try:
+            i = int(x)
+        except (TypeError, ValueError):
+            raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_ids") from None
+        if i not in ids:
+            ids.append(i)
+    if not ids:
+        raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_ids")
+    if len(ids) > MAX_REVISORES:
+        raise TransicionInvalida("demasiados_revisores", f"Una revisión admite hasta {MAX_REVISORES} revisores.", "revisor_ids")
+    return ids
+
+
+def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | None = None, modo: str = "todos") -> int:
+    """`revisores`: una persona (un entero, como siempre) o una lista de hasta cinco. `modo`: «todos» o «cualquiera»."""
     tarea = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
     if tarea is None:
         raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
@@ -541,35 +600,40 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisor_id: int, nota: st
         raise TransicionInvalida("sin_permiso", "No tienes permiso para pedir la revisión de esta tarea.")
     if tarea["estado"] == "completada":
         raise TransicionInvalida("tarea_completada", "La tarea ya está completada.")
-    try:
-        revisor_id = int(revisor_id)
-    except (TypeError, ValueError):
-        raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_id") from None
-    if revisor_id == usuario_id:
-        raise TransicionInvalida("revisor_invalido", "La revisión tiene que hacerla otra persona.", "revisor_id")
+    if (modo or "todos") not in MODOS_REVISION:
+        raise TransicionInvalida("modo_invalido", "El modo tiene que ser «todos» o «cualquiera».", "modo")
+    modo = modo or "todos"
+    ids = _lista_de_revisores(revisores)
+    if usuario_id in ids:
+        raise TransicionInvalida("revisor_invalido", "La revisión tiene que hacerla otra persona.", "revisor_ids")
     conn = db.get_connection()
     try:
         tenant = _tenant_de_usuario(conn, usuario_id)
-        if tenant is None or conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (revisor_id, tenant)).fetchone() is None:
-            raise TransicionInvalida("revisor_invalido", "Quien revisa tiene que ser de tu despacho.", "revisor_id")
+        for r in ids:
+            if tenant is None or conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (r, tenant)).fetchone() is None:
+                raise TransicionInvalida("revisor_invalido", "Quien revisa tiene que ser de tu despacho.", "revisor_ids")
         try:
-            cur = conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, nota_solicitud, solicitada_en) VALUES (?, ?, ?, ?, ?, ?)",
-                               (tenant, tarea_id, usuario_id, revisor_id, (nota or "").strip()[:500] or None, db.now_iso()))
+            cur = conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, nota_solicitud, solicitada_en, modo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                               (tenant, tarea_id, usuario_id, ids[0], (nota or "").strip()[:500] or None, db.now_iso(), modo))
         except sqlite3.IntegrityError:
             raise TransicionInvalida("revision_pendiente", "Esta tarea ya tiene una revisión pendiente.") from None
-        if db.obtener_tarea_outlook_visible(revisor_id, tarea_id) is None:       # para poder revisarla tiene que verla: se le comparte como observador
-            conn.execute("INSERT OR IGNORE INTO tareas_participantes (tarea_id, usuario_id, rol, compartida_en) VALUES (?, ?, 'observa', ?)", (tarea_id, revisor_id, db.now_iso()))
-        auditoria.registrar(tenant, usuario_id, "tarea.revision.solicitar", "tarea", tarea_id, {"revisor": revisor_id}, conn=conn)
-        conn.commit()
         revision_id = cur.lastrowid
+        for r in ids:
+            conn.execute("INSERT INTO tarea_revision_votos (revision_id, revisor_id) VALUES (?, ?)", (revision_id, r))
+            if db.obtener_tarea_outlook_visible(r, tarea_id) is None:            # para poder revisarla tiene que verla: se le comparte como observador
+                conn.execute("INSERT OR IGNORE INTO tareas_participantes (tarea_id, usuario_id, rol, compartida_en) VALUES (?, ?, 'observa', ?)", (tarea_id, r, db.now_iso()))
+        auditoria.registrar(tenant, usuario_id, "tarea.revision.solicitar", "tarea", tarea_id, {"revisores": ids, "modo": modo}, conn=conn)
+        conn.commit()
     finally:
         conn.close()
-    db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_solicitada", db.nombre_mostrado_usuario(revisor_id) or "")
-    _avisar(revisor_id, f"Te piden revisar: {tarea['asunto']}", (nota or "").strip() or "Revisión pendiente", tarea_id)
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_solicitada", ", ".join(db.nombre_mostrado_usuario(r) or "" for r in ids))
+    for r in ids:
+        _avisar(r, f"Te piden revisar: {tarea['asunto']}", (nota or "").strip() or "Revisión pendiente", tarea_id)
     return revision_id
 
 
 def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str | None = None) -> dict:
+    """El voto de un revisor. Devuelve la revisión: si ese voto la cierra, con su estado final; si faltan votos, sigue `pendiente` con quién falta."""
     if decision not in DECISIONES:
         raise TransicionInvalida("decision_invalida", "La decisión tiene que ser aprobar o pedir cambios.", "decision")
     nota = (nota or "").strip()[:500]
@@ -578,27 +642,48 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
     rev = revision_pendiente(tarea_id)
     if rev is None or db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
         raise TransicionInvalida("no_encontrada", "No hay ninguna revisión pendiente en esta tarea.")
-    if rev["revisor_id"] != usuario_id:
+    if usuario_id not in rev["revisores"]:
         raise TransicionInvalida("sin_permiso", "Solo puede resolverla la persona designada para revisar.")
+    if usuario_id not in rev["pendientes"]:
+        raise TransicionInvalida("ya_has_votado", "Ya has votado en esta revisión.")
+    voto = "aprobado" if decision == "aprobar" else "cambios"
     conn = db.get_connection()
+    previo = None
     try:
-        cur = conn.execute("UPDATE tarea_revisiones SET estado = ?, nota_resolucion = ?, resuelta_en = ?, resuelta_por = ? WHERE id = ? AND estado = 'pendiente'",
-                           (DECISIONES[decision], nota or None, db.now_iso(), usuario_id, rev["id"]))
+        cur = conn.execute("UPDATE tarea_revision_votos SET estado = ?, nota = ?, votado_en = ? WHERE revision_id = ? AND revisor_id = ? AND estado = 'pendiente'",
+                           (voto, nota or None, db.now_iso(), rev["id"], usuario_id))
         if cur.rowcount == 0:                                  # otra petición se adelantó
-            raise TransicionInvalida("no_encontrada", "No hay ninguna revisión pendiente en esta tarea.")
-        previo = conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+            raise TransicionInvalida("ya_has_votado", "Ya has votado en esta revisión.")
+        restantes = conn.execute("SELECT COUNT(*) FROM tarea_revision_votos WHERE revision_id = ? AND estado = 'pendiente'", (rev["id"],)).fetchone()[0]
+        final = None
         if decision == "cambios":
-            conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso', fecha_completada = NULL, actualizada_en = ? WHERE id = ? AND estado != 'en_progreso'", (db.now_iso(), tarea_id))
-        auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision." + decision, "tarea", tarea_id, {"revision": rev["id"]}, conn=conn)
+            final = "cambios"
+        elif rev["modo"] == "cualquiera" or restantes == 0:
+            final = "aprobada"
+        if final:
+            cur = conn.execute("UPDATE tarea_revisiones SET estado = ?, nota_resolucion = ?, resuelta_en = ?, resuelta_por = ? WHERE id = ? AND estado = 'pendiente'",
+                               (final, nota or None, db.now_iso(), usuario_id, rev["id"]))
+            if cur.rowcount == 0:                              # otro voto la cerró un instante antes (p. ej. unos cambios): este voto queda anotado, la revisión ya está resuelta
+                final = None
+            elif final == "cambios":
+                previo = conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+                conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso', fecha_completada = NULL, actualizada_en = ? WHERE id = ? AND estado != 'en_progreso'", (db.now_iso(), tarea_id))
+        auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision.voto", "tarea", tarea_id, {"revision": rev["id"], "voto": voto}, conn=conn)
+        if final:
+            auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision." + decision, "tarea", tarea_id, {"revision": rev["id"], "modo": rev["modo"]}, conn=conn)
         conn.commit()
     finally:
         conn.close()
     asunto = db._asunto_tarea(tarea_id)
-    if decision == "cambios" and previo is not None and previo["estado"] != "en_progreso":
+    quien = db.nombre_mostrado_usuario(usuario_id) or ""
+    if final is None:
+        db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_voto", f"{quien} aprobó ({rev['aprobados'] + 1} de {len(rev['revisores'])})" if voto == "aprobado" else f"{quien} pidió cambios")
+        return {**rev, "estado": "pendiente", "pendientes": [p for p in rev["pendientes"] if p != usuario_id], "nota_resolucion": None}
+    if final == "cambios" and previo is not None and previo["estado"] != "en_progreso":
         db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": "en_progreso"})
-    db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_aprobada" if decision == "aprobar" else "revision_cambios", nota)
-    _avisar(rev["solicitada_por"], (f"Revisión aprobada: {asunto}" if decision == "aprobar" else f"Piden cambios: {asunto}"), nota or "Sin comentarios", tarea_id)
-    return {**rev, "estado": DECISIONES[decision], "nota_resolucion": nota or None}
+    db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_aprobada" if final == "aprobada" else "revision_cambios", f"{quien}: {nota}" if nota else quien)
+    _avisar(rev["solicitada_por"], (f"Revisión aprobada: {asunto}" if final == "aprobada" else f"Piden cambios: {asunto}"), (f"{quien}: " if len(rev["revisores"]) > 1 else "") + (nota or "Sin comentarios"), tarea_id)
+    return {**rev, "estado": final, "nota_resolucion": nota or None, "pendientes": []}
 
 
 def cancelar_revision(usuario_id: int, tarea_id: int) -> bool:

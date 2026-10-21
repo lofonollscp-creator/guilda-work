@@ -293,7 +293,7 @@ REQUERIDOS: dict[str, tuple[str, ...]] = {
     "crear_categoria": ("nombre",), "crear_tarea": ("nombre", "categoria_id"), "crear_tarea_outlook": ("asunto",), "crear_cliente_fiscal": ("nombre",),
     "crear_vencimiento": ("cliente_id", "modelo", "periodo", "fecha_limite"), "enviar_correo": ("cuenta_id", "destinatarios", "asunto", "cuerpo_html"),
     "fichaje_admin_corregir": ("tipo", "marca_tiempo"), "accion_en_lote": ("ids", "accion"), "crear_webhook": ("url", "eventos"), "estado": ("estado",),
-    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "crear_subtarea_de_la_tarea": ("asunto",), "pedir_revision_de_la_tarea": ("revisor_id",), "resolver_revision_de_la_tarea": ("decision",), "fijar_visible_cliente_de_la_tarea": ("visible",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
+    "cambiar_estado_tarea": ("estado",), "transicionar_tarea": ("estado",), "fijar_clientes_de_la_tarea": ("cliente_ids",), "crear_subtarea_de_la_tarea": ("asunto",), "resolver_revision_de_la_tarea": ("decision",), "fijar_visible_cliente_de_la_tarea": ("visible",), "comentar_tarea": ("texto",), "agregar_item_checklist": ("texto",), "anadir_dependencia": ("depende_de_id",),
     "compartir_tarea": ("usuario_id",), "crear_recurrente": ("asunto", "periodicidad"), "crear_regla_vencimiento": ("modelo", "asunto"), "crear_plantilla": ("nombre", "cuerpo"),
     "crear_plantilla_tareas": ("nombre", "items"), "guardar_vista": ("nombre", "filtros"), "responder_mensaje_vencimiento": ("texto",), "marcar_fichaje": ("tipo",), "pedir_ausencia": ("tipo", "desde"), "importar_certificado_api": ("contenido_base64",), "proponer_traspaso_api": ("cliente_id", "a_usuario_id"), "rechazar_traspaso_api": ("motivo",), "renovado_certificado_api": ("nueva_caducidad",), "transicionar_vencimiento": ("destino",), "crear_oficina_api": ("nombre",), "dar_membresia_api": ("usuario_id", "rol", "alcance"), "crear_tipo_de_turno_api": ("nombre", "inicio", "fin"), "asignar_turno_api": ("usuario_id", "fecha"), "ajustar_bolsa_api": ("usuario_id", "minutos", "motivo"), "resolver_ausencia_api": ("decision",),
     "crear_tiquet": ("titulo",), "enviar_mensaje_ia": ("texto",), "crear_atajo_ia": ("etiqueta", "texto"),
@@ -518,7 +518,12 @@ BINARIAS["descargar_adjunto_de_tarea"] = "application/octet-stream"
 SIN_DATOS_ESPERADOS.add("eliminar_adjunto_de_tarea")
 ESQUEMAS["RevisionTarea"] = {"type": "object", "properties": {"id": {"type": "integer"}, "tarea_id": {"type": "integer"}, "solicitada_por": {"type": "integer"}, "revisor_id": {"type": "integer"},
                              "estado": {"type": "string", "enum": ["pendiente", "aprobada", "cambios", "cancelada"]}, "nota_solicitud": {"type": "string", "nullable": True},
-                             "nota_resolucion": {"type": "string", "nullable": True}, "solicitada_en": {"type": "string"}, "resuelta_en": {"type": "string", "nullable": True}}}
+                             "nota_resolucion": {"type": "string", "nullable": True}, "solicitada_en": {"type": "string"}, "resuelta_en": {"type": "string", "nullable": True},
+                             "modo": {"type": "string", "enum": ["todos", "cualquiera"], "description": "`todos`: tienen que aprobar todos los revisores; `cualquiera`: basta uno. Pedir cambios detiene la revisión en ambos."},
+                             "revisores": {"type": "array", "items": {"type": "integer"}}, "pendientes": {"type": "array", "items": {"type": "integer"}, "description": "Revisores que aún no han votado."},
+                             "aprobados": {"type": "integer"},
+                             "votos": {"type": "array", "items": {"type": "object", "properties": {"revisor_id": {"type": "integer"}, "estado": {"type": "string", "enum": ["pendiente", "aprobado", "cambios"]},
+                                       "nota": {"type": "string", "nullable": True}, "votado_en": {"type": "string", "nullable": True}}}}}}
 ESQUEMAS["RevisionesDeTarea"] = {"type": "object", "properties": {"pendiente": {"allOf": [{"$ref": "#/components/schemas/RevisionTarea"}], "nullable": True},
                                  "historial": {"type": "array", "items": {"$ref": "#/components/schemas/RevisionTarea"}}}}
 ESQUEMAS["VisibleCliente"] = {"type": "object", "properties": {"visible_cliente": {"type": "boolean"}}}
