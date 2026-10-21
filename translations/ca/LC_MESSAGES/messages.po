@@ -14118,3 +14118,33 @@ msgid "Esta regla reacciona cuando ocurre. En los últimos 7 días la habría ac
 msgid_plural "Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas."
 msgstr[0] "Aquesta regla reacciona quan passa. Els últims 7 dies l'hauria activat %(n)s tasca."
 msgstr[1] "Aquesta regla reacciona quan passa. Els últims 7 dies l'haurien activat %(n)s tasques."
+
+msgid "Fijar la fecha límite de la tarea"
+msgstr "Fixa la data límit de la tasca"
+
+msgid "Asignar la tarea a una persona"
+msgstr "Assigna la tasca a una persona"
+
+msgid "Pedir que alguien revise la tarea"
+msgstr "Demana que algú revisi la tasca"
+
+msgid "Fecha límite: días desde hoy"
+msgstr "Data límit: dies des d'avui"
+
+msgid "Solo si la tarea no tiene ya fecha límite"
+msgstr "Només si la tasca encara no té data límit"
+
+msgid "Quién la revisa"
+msgstr "Qui la revisa"
+
+msgid "La pide el dueño de la tarea; si es la misma persona que revisa, la acción falla y queda a la vista en las ejecuciones."
+msgstr "La demana el propietari de la tasca; si és la mateixa persona que revisa, l'acció falla i queda a la vista a les execucions."
+
+msgid "Fija la fecha límite a %(n)s días vista"
+msgstr "Fixa la data límit a %(n)s dies vista"
+
+msgid "Asigna la tarea a una persona"
+msgstr "Assigna la tasca a una persona"
+
+msgid "Pide que otra persona revise la tarea"
+msgstr "Demana que una altra persona revisi la tasca"

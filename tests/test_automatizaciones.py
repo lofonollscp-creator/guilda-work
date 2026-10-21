@@ -726,3 +726,112 @@ def test_constructor_y_lista_con_disparadores_de_evento(cliente):
     assert resp.status_code == 422 and "a qué estado" in resp.get_data(as_text=True) and len(au.listar_reglas(t)) == 1
     creada = {"nombre": "Nueva", "disparador": "tarea.creada", "c_prioridades_c": ["alta"], "a0_tipo": "notificar", "a0_titulo": "Nueva {asunto}"}
     assert cliente.post("/tareas/automatizaciones/regla", data=creada).status_code == 302
+
+
+# --- Acciones sobre la tarea: fijar fecha, asignar, pedir revisión -----------------------------------------------------------------
+
+def test_validacion_de_las_acciones_sobre_la_tarea(d):
+    ok = au.validar_acciones("tarea.creada", [{"tipo": "fijar_fecha", "dias_plazo": "5"}, {"tipo": "asignar", "a": str(d.otro)}, {"tipo": "pedir_revision", "revisor": d.otro, "nota": "Mira {asunto}"}])
+    assert ok[0] == {"tipo": "fijar_fecha", "dias_plazo": 5, "solo_si_vacia": True} and ok[1] == {"tipo": "asignar", "a": d.otro} and ok[2]["revisor"] == d.otro
+    for disparador in ("certificado.caduca", "vencimiento.proximo"):
+        for accion in ({"tipo": "fijar_fecha"}, {"tipo": "asignar", "a": 1}, {"tipo": "pedir_revision", "revisor": 1}):
+            with pytest.raises(ValueError, match="actúa sobre la tarea"):
+                au.validar_acciones(disparador, [accion])
+    for malo in ({"tipo": "asignar"}, {"tipo": "asignar", "a": "responsable"}, {"tipo": "pedir_revision", "revisor": "direccion"}, {"tipo": "pedir_revision", "revisor": 0}):
+        with pytest.raises(ValueError, match="elige una persona"):
+            au.validar_acciones("tarea.creada", [malo])
+    with pytest.raises(ValueError, match="no existe para este disparador"):
+        au.validar_acciones("tarea.creada", [{"tipo": "pedir_revision", "revisor": 1, "nota": "{titular}"}])
+    ajena = db.crear_usuario_vinculado_a_kratos("ajena-acc@ejemplo.com", "k-ajena-acc"); db.asignar_tenant(ajena, db.crear_tenant("Otro despacho acciones"))
+    for accion in ({"tipo": "asignar", "a": ajena}, {"tipo": "pedir_revision", "revisor": ajena}):
+        with pytest.raises(ValueError, match="no es de tu despacho"):
+            au.crear_regla(d.t, d.sup, "x", "tarea.creada", {}, [accion])
+
+
+def test_fijar_fecha_solo_si_esta_vacia_y_sin_repetirse(d):
+    au.crear_regla(d.t, d.sup, "Fecha", "tarea.creada", {}, [{"tipo": "fijar_fecha", "dias_plazo": 3}])
+    sin = db.crear_tarea_outlook(d.cus, asunto="Sin fecha")
+    con = db.crear_tarea_outlook(d.cus, asunto="Con fecha", fecha_vencimiento="2030-01-01")
+    au.procesar_eventos(AHORA)
+    assert db.obtener_tarea_outlook(d.cus, sin)["fecha_vencimiento"][:10] == (HOY + timedelta(days=3)).isoformat()
+    assert db.obtener_tarea_outlook(d.cus, con)["fecha_vencimiento"][:10] == "2030-01-01"                 # no pisa la que ya tenía
+    assert any(a["tipo"] == "automatizacion" and "fecha límite en 3 días" in a["detalle"] for a in db.actividad_de_tarea(d.cus, sin))
+    assert au.procesar_eventos(AHORA)["eventos"] == 0
+    # con «solo si está vacía» desmarcado sí la sustituye
+    au.crear_regla(d.t, d.sup, "Fecha forzada", "tarea.creada", {}, [{"tipo": "fijar_fecha", "dias_plazo": 1, "solo_si_vacia": False}])
+    otra = db.crear_tarea_outlook(d.cus, asunto="Otra", fecha_vencimiento="2030-01-01")
+    au.procesar_eventos(AHORA)
+    assert db.obtener_tarea_outlook(d.cus, otra)["fecha_vencimiento"][:10] == (HOY + timedelta(days=1)).isoformat()
+
+
+def test_asignar_una_tarea_nueva_a_una_persona_del_despacho(d):
+    au.crear_regla(d.t, d.sup, "Reparto", "tarea.creada", {"prioridades": ["alta"]}, [{"tipo": "asignar", "a": d.otro}])
+    urgente = db.crear_tarea_outlook(d.cus, asunto="Urgente", prioridad="alta")
+    normal = db.crear_tarea_outlook(d.cus, asunto="Normal")
+    au.procesar_eventos(AHORA)
+    assert db.obtener_tarea_outlook(d.cus, urgente)["asignada_a"] == d.otro and db.obtener_tarea_outlook(d.cus, normal)["asignada_a"] is None
+    assert [t["asunto"] for t in _tareas(d.otro)] == ["Urgente"]                                      # y ahora la ve quien la lleva
+    assert au.ejecuciones(d.t)[0]["progreso"] == ["asignada"]
+
+
+def test_pedir_revision_automatica_y_sus_casos_limite(d):
+    with pytest.raises(ValueError, match="ya completada"):                                # una combinación imposible se rechaza al guardar, no se ve fallar cada vez
+        au.crear_regla(d.t, d.sup, "Imposible", "tarea.estado", {"estado": "completada"}, [{"tipo": "pedir_revision", "revisor": d.otro}])
+    au.crear_regla(d.t, d.sup, "Revisión", "tarea.estado", {"estado": "en_progreso"}, [{"tipo": "pedir_revision", "revisor": d.otro, "nota": "Revisa {asunto}"}])
+    t = db.crear_tarea_outlook(d.cus, asunto="Modelo 303")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")
+    r = au.procesar_eventos(AHORA)
+    assert r["ok"] == 1 and tt.revision_pendiente(t)["revisor_id"] == d.otro, (r, [e["error"] for e in au.ejecuciones(d.t)])
+    assert [n for n in _notificaciones(d.otro) if n["tipo"] == "revision_tarea"][0]["cuerpo"] == "Revisa Modelo 303"
+    # el revisor es el propio dueño: la acción falla y se ve, sin tumbar nada
+    au.crear_regla(d.t, d.sup, "Autorevisión", "tarea.creada", {}, [{"tipo": "pedir_revision", "revisor": d.cus}])
+    db.crear_tarea_outlook(d.cus, asunto="Propia")
+    r = au.procesar_eventos(AHORA)
+    assert r["errores"] == 1
+    e = [x for x in au.ejecuciones(d.t) if x["regla"] == "Autorevisión"][0]
+    assert e["estado"] == "error" and "otra persona" in e["error"]
+    rid = au.crear_regla(d.t, d.sup, "Cambiable", "tarea.estado", {"estado": "esperando"}, [{"tipo": "notificar", "titulo": "x", "a": "direccion"}])
+    with pytest.raises(ValueError, match="ya completada"):                                # y lo mismo al editarla
+        au.cambiar_regla(d.t, d.sup, rid, condiciones={"estado": "completada"}, acciones=[{"tipo": "pedir_revision", "revisor": d.otro}])
+
+
+def test_una_revision_ya_pendiente_no_hace_fallar_a_la_regla(d):
+    au.crear_regla(d.t, d.sup, "Revisión", "tarea.estado", {"estado": "en_progreso"}, [{"tipo": "pedir_revision", "revisor": d.otro}])
+    t = db.crear_tarea_outlook(d.cus, asunto="Con revisión previa")
+    tt.solicitar_revision(d.cus, t, d.sup)
+    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")
+    r = au.procesar_eventos(AHORA)
+    assert (r["ok"], r["errores"]) == (1, 0) and tt.revision_pendiente(t)["revisor_id"] == d.sup and au.ejecuciones(d.t)[0]["progreso"] == ["ya había una revisión pendiente"]
+
+
+def test_las_acciones_sobre_la_tarea_valen_tambien_con_tareas_vencidas(d):
+    au.crear_regla(d.t, d.sup, "Vencidas", "tarea.vencida", {"dias_vencida": 2}, [{"tipo": "asignar", "a": d.otro}, {"tipo": "fijar_fecha", "dias_plazo": 2, "solo_si_vacia": False}])
+    t = db.crear_tarea_outlook(d.cus, asunto="Atrasada", fecha_vencimiento=(HOY - timedelta(days=5)).isoformat())
+    assert au.ejecutar(d.t, AHORA)["ok"] == 1
+    f = db.obtener_tarea_outlook(d.cus, t)
+    assert f["asignada_a"] == d.otro and f["fecha_vencimiento"][:10] == (HOY + timedelta(days=2)).isoformat()
+    assert au.ejecutar(d.t, AHORA)["nuevas"] == 0                                     # la clave incluye la fecha antigua; con la nueva ya no está vencida
+
+
+def test_el_constructor_guarda_las_acciones_nuevas(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "acc1-au@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho acciones pantalla")
+    db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    otra = db.crear_usuario_vinculado_a_kratos("acc1b-au@ejemplo.com", "k-acc1b"); db.asignar_tenant(otra, t)
+    html = cliente.get("/tareas/automatizaciones/regla").get_data(as_text=True)
+    assert 'value="fijar_fecha"' in html and 'value="asignar"' in html and 'value="pedir_revision"' in html and 'name="a0_revisor"' in html
+    datos = {"nombre": "Alta de tarea", "disparador": "tarea.creada", "activa": "1",
+             "a0_tipo": "fijar_fecha", "a0_dias_fecha": "4", "a0_solo_vacia": "1",
+             "a1_tipo": "asignar", "a1_persona": str(otra),
+             "a2_tipo": "pedir_revision", "a2_revisor": str(otra), "a2_nota_rev": "Mira {asunto}"}
+    assert cliente.post("/tareas/automatizaciones/regla", data=datos).status_code == 302
+    r = au.listar_reglas(t)[0]
+    assert r["acciones"][0] == {"tipo": "fijar_fecha", "dias_plazo": 4, "solo_si_vacia": True} and r["acciones"][1]["a"] == otra and r["acciones"][2]["nota"] == "Mira {asunto}"
+    lista = cliente.get("/tareas/automatizaciones").get_data(as_text=True)
+    assert "Fija la fecha límite a 4 días vista" in lista and "Asigna la tarea a una persona" in lista and "Pide que otra persona revise la tarea" in lista
+    html = cliente.get(f"/tareas/automatizaciones/regla/{r['id']}").get_data(as_text=True)
+    assert f'<option value="{otra}" selected>' in html
+    mala = {**datos, "nombre": "Mala", "disparador": "certificado.caduca", "c_dias_cert": "10"}
+    resp = cliente.post("/tareas/automatizaciones/regla", data=mala)
+    assert resp.status_code == 422 and "actúa sobre la tarea" in resp.get_data(as_text=True) and len(au.listar_reglas(t)) == 1

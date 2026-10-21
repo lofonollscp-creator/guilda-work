@@ -34,7 +34,9 @@ DISPARADORES = {
 DISPARADORES_DE_EVENTO = {"tarea.creada": "tarea.creada", "tarea.estado": "tarea.estado_cambiado"}
 DISPARADORES_CON_TAREA = ("tarea.vencida", "tarea.creada", "tarea.estado")
 ESTADOS_TAREA = {"no_iniciada": "Sin empezar", "en_progreso": "En progreso", "completada": "Completada", "esperando": "Esperando a otros", "aplazada": "Aplazada"}
-ACCIONES = ("crear_tarea", "notificar", "comentar")
+ACCIONES = ("crear_tarea", "notificar", "comentar", "fijar_fecha", "asignar", "pedir_revision")
+# Estas actúan sobre LA tarea del disparador, así que solo valen cuando el disparador es una tarea (vencida, creada o que cambia de estado).
+ACCIONES_SOBRE_LA_TAREA = ("comentar", "fijar_fecha", "asignar", "pedir_revision")
 # Variables que se pueden escribir entre llaves en los textos de cada disparador (las que rellena `_ocurrencias`).
 VARIABLES = {
     "certificado.caduca": ("titular", "fecha", "dias"),
@@ -176,8 +178,8 @@ def validar_acciones(disparador: str, acciones: list) -> list[dict]:
         tipo = (a or {}).get("tipo")
         if tipo not in ACCIONES:
             raise ValueError("Acción no válida.")
-        if tipo == "comentar" and disparador not in DISPARADORES_CON_TAREA:
-            raise ValueError("Anotar en la tarea solo tiene sentido cuando el disparador es una tarea.")
+        if tipo in ACCIONES_SOBRE_LA_TAREA and disparador not in DISPARADORES_CON_TAREA:
+            raise ValueError("Esa acción actúa sobre la tarea del disparador, así que solo vale cuando el disparador es una tarea.")
         if tipo == "crear_tarea":
             asunto = (a.get("asunto") or "").strip()[:300]
             if not asunto:
@@ -192,6 +194,13 @@ def validar_acciones(disparador: str, acciones: list) -> list[dict]:
                 raise ValueError("El aviso necesita un título.")
             _comprobar_variables(disparador, titulo, a.get("cuerpo"))
             limpias.append({"tipo": tipo, "titulo": titulo, "cuerpo": (a.get("cuerpo") or "").strip()[:500], "a": _destino(a.get("a"), "responsable")})
+        elif tipo == "fijar_fecha":
+            limpias.append({"tipo": tipo, "dias_plazo": _entero(a.get("dias_plazo"), "El plazo", 0, 365, 7), "solo_si_vacia": a.get("solo_si_vacia") not in (False, "0", 0, "")})
+        elif tipo == "asignar":
+            limpias.append({"tipo": tipo, "a": _persona(a.get("a"), "A quién se asigna la tarea")})
+        elif tipo == "pedir_revision":
+            _comprobar_variables(disparador, a.get("nota"))
+            limpias.append({"tipo": tipo, "revisor": _persona(a.get("revisor"), "Quién revisa la tarea"), "nota": (a.get("nota") or "").strip()[:500]})
         else:
             texto = (a.get("texto") or "").strip()[:200]
             if not texto:
@@ -199,6 +208,17 @@ def validar_acciones(disparador: str, acciones: list) -> list[dict]:
             _comprobar_variables(disparador, texto)
             limpias.append({"tipo": tipo, "texto": texto})
     return limpias
+
+
+def _persona(valor, que: str) -> int:
+    """Una persona concreta (no «el responsable» ni «la dirección»): estas acciones necesitan saber exactamente a quién."""
+    try:
+        n = int(valor)
+    except (TypeError, ValueError):
+        raise ValueError(f"{que}: elige una persona.") from None
+    if n < 1:
+        raise ValueError(f"{que}: elige una persona.")
+    return n
 
 
 def _destino(valor, defecto: str):
@@ -216,7 +236,8 @@ def _destino(valor, defecto: str):
 def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict]) -> None:
     """Las personas y el cliente que nombra una regla tienen que ser del propio despacho (también al crearla por la API o por código, no solo desde la pantalla)."""
     personas = {a["asignar_a"] for a in acciones if a["tipo"] == "crear_tarea" and isinstance(a["asignar_a"], int)}
-    personas |= {a["a"] for a in acciones if a["tipo"] == "notificar" and isinstance(a["a"], int)}
+    personas |= {a["a"] for a in acciones if a["tipo"] in ("notificar", "asignar") and isinstance(a["a"], int)}
+    personas |= {a["revisor"] for a in acciones if a["tipo"] == "pedir_revision"}
     conn = db.get_connection()
     try:
         for u in personas:
@@ -227,6 +248,12 @@ def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict
             raise ValueError("El cliente elegido no es de tu despacho.")
     finally:
         conn.close()
+
+
+def comprobar_coherencia(disparador: str, condiciones: dict, acciones: list[dict]) -> None:
+    """Combinaciones que nunca pueden funcionar y que es mejor rechazar al guardar que ver fallar cada vez: pedir la revisión de una tarea que, por la propia condición, ya está completada."""
+    if disparador == "tarea.estado" and condiciones.get("estado") == "completada" and any(a["tipo"] == "pedir_revision" for a in acciones):
+        raise ValueError("No se puede pedir la revisión de una tarea ya completada: elige otro estado o quita esa acción.")
 
 
 def _destino_de_formulario(valor: str):
@@ -261,6 +288,12 @@ def formulario_a_regla(form, disparador: str) -> tuple[dict, list[dict]]:
                              "dias_plazo": form.get(f"a{i}_dias_plazo"), "asignar_a": _destino_de_formulario(form.get(f"a{i}_dest"))})
         elif tipo == "notificar":
             acciones.append({"tipo": tipo, "titulo": form.get(f"a{i}_titulo"), "cuerpo": form.get(f"a{i}_cuerpo_aviso"), "a": _destino_de_formulario(form.get(f"a{i}_dest_aviso"))})
+        elif tipo == "fijar_fecha":
+            acciones.append({"tipo": tipo, "dias_plazo": form.get(f"a{i}_dias_fecha"), "solo_si_vacia": bool(form.get(f"a{i}_solo_vacia"))})
+        elif tipo == "asignar":
+            acciones.append({"tipo": tipo, "a": form.get(f"a{i}_persona")})
+        elif tipo == "pedir_revision":
+            acciones.append({"tipo": tipo, "revisor": form.get(f"a{i}_revisor"), "nota": form.get(f"a{i}_nota_rev")})
         else:
             acciones.append({"tipo": tipo, "texto": form.get(f"a{i}_texto")})
     return cond, acciones
@@ -314,6 +347,7 @@ def crear_regla(tenant_id: int, usuario_id: int, nombre: str, disparador: str, c
         raise ValueError("Disparador no válido.")
     cond, acc = validar_condiciones(disparador, condiciones), validar_acciones(disparador, acciones)
     comprobar_pertenencia(tenant_id, cond, acc)
+    comprobar_coherencia(disparador, cond, acc)
     conn = db.get_connection()
     try:
         if conn.execute("SELECT COUNT(*) FROM automatizaciones_reglas WHERE tenant_id = ?", (tenant_id,)).fetchone()[0] >= MAX_REGLAS:
@@ -341,6 +375,7 @@ def cambiar_regla(tenant_id: int, usuario_id: int, regla_id: int, *, nombre=None
     cambia_logica = cond != r["condiciones"] or acc != r["acciones"]
     if cambia_logica:
         comprobar_pertenencia(tenant_id, cond, acc)
+        comprobar_coherencia(r["disparador"], cond, acc)
     conn = db.get_connection()
     try:
         if acc != r["acciones"]:
@@ -538,9 +573,43 @@ def _aplicar_accion(tenant_id: int, regla: dict, oc: dict, accion: dict, ejecuci
             enviados += 1
         return f"{enviados} aviso(s)"
     if not oc.get("tarea_id"):
-        raise RuntimeError("No hay tarea sobre la que comentar.")
-    db.registrar_actividad_tarea(oc.get("responsable") or regla["creada_por"] or 0, oc["tarea_id"], "automatizacion", rellenar(accion["texto"], datos))
-    return "comentario"
+        raise RuntimeError("No hay una tarea sobre la que actuar.")
+    if accion["tipo"] == "comentar":
+        db.registrar_actividad_tarea(oc.get("responsable") or regla["creada_por"] or 0, oc["tarea_id"], "automatizacion", rellenar(accion["texto"], datos))
+        return "comentario"
+    return _actuar_sobre_la_tarea(tenant_id, regla, oc, accion, datos, hoy)
+
+
+def _actuar_sobre_la_tarea(tenant_id: int, regla: dict, oc: dict, accion: dict, datos: dict, hoy: date) -> str:
+    """Fijar fecha, asignar y pedir revisión. Actúan en nombre de la persona dueña de la tarea (es quien tiene derecho a hacerlo) y dejan constancia de la regla en el historial. Si ya está hecho
+    (la fecha ya estaba puesta, ya hay una revisión pendiente) no es un fallo."""
+    tarea = _tarea_del_evento(oc["tarea_id"])
+    if tarea is None:
+        raise RuntimeError("La tarea ya no existe.")
+    dueno = tarea["dueno"]
+    if accion["tipo"] == "fijar_fecha":
+        if accion["solo_si_vacia"] and tarea["fecha_vencimiento"]:
+            return "ya tenía fecha"
+        db.editar_tarea_outlook(dueno, tarea["id"], fecha_vencimiento=(hoy + timedelta(days=accion["dias_plazo"])).isoformat())
+        db.registrar_actividad_tarea(dueno, tarea["id"], "automatizacion", f"{regla['nombre']}: fecha límite en {accion['dias_plazo']} días")
+        return "fecha fijada"
+    if accion["tipo"] == "asignar":
+        if _usuario_del_despacho(tenant_id, accion["a"]) is None:
+            raise RuntimeError("La persona elegida ya no es de este despacho.")
+        if tarea["responsable"] == accion["a"] and tarea["dueno"] != accion["a"]:
+            return "ya estaba asignada"
+        if not db.asignar_tarea_outlook(dueno, tarea["id"], accion["a"]):
+            raise RuntimeError("No se pudo asignar la tarea.")
+        db.registrar_actividad_tarea(dueno, tarea["id"], "automatizacion", f"{regla['nombre']}: asignada")
+        return "asignada"
+    from . import tareas_trabajo
+    try:
+        tareas_trabajo.solicitar_revision(dueno, tarea["id"], accion["revisor"], rellenar(accion["nota"], datos) or None)
+    except tareas_trabajo.TransicionInvalida as e:
+        if e.codigo == "revision_pendiente":
+            return "ya había una revisión pendiente"
+        raise RuntimeError(str(e)) from e
+    return "revisión pedida"
 
 
 def _avisar_fallo(tenant_id: int, regla: dict, objeto: str, error: str) -> None:
@@ -816,7 +885,7 @@ def _tarea_del_evento(tarea_id: int) -> dict | None:
     conn = db.get_connection()
     try:
         f = conn.execute(
-            """SELECT t.id, t.asunto, t.estado, t.prioridad, t.fecha_vencimiento, t.cliente_fiscal_id, t.referencia_externa, COALESCE(t.asignada_a, t.usuario_id) AS responsable,
+            """SELECT t.id, t.asunto, t.estado, t.prioridad, t.fecha_vencimiento, t.cliente_fiscal_id, t.referencia_externa, t.usuario_id AS dueno, COALESCE(t.asignada_a, t.usuario_id) AS responsable,
                       (SELECT nombre FROM clientes_fiscales WHERE id = t.cliente_fiscal_id) AS cliente
                FROM tareas_outlook t WHERE t.id = ? AND t.papelera_en IS NULL""", (tarea_id,)).fetchone()
         return dict(f) if f else None

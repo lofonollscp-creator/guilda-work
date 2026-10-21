@@ -45,7 +45,7 @@
       <span class="log-text"><strong>{{ r.nombre }}</strong><br><small class="muted">{{ r.disparador_texto }}</small>
         <ul class="muted">
           {% for a in r.acciones %}
-          <li>{% if a.tipo == 'crear_tarea' %}{{ _('Crea la tarea «%(t)s»', t=a.asunto) }}{% elif a.tipo == 'notificar' %}{{ _('Avisa: «%(t)s»', t=a.titulo) }}{% else %}{{ _('Anota en la tarea: «%(t)s»', t=a.texto) }}{% endif %}</li>
+          <li>{% if a.tipo == 'crear_tarea' %}{{ _('Crea la tarea «%(t)s»', t=a.asunto) }}{% elif a.tipo == 'notificar' %}{{ _('Avisa: «%(t)s»', t=a.titulo) }}{% elif a.tipo == 'comentar' %}{{ _('Anota en la tarea: «%(t)s»', t=a.texto) }}{% elif a.tipo == 'fijar_fecha' %}{{ _('Fija la fecha límite a %(n)s días vista', n=a.dias_plazo) }}{% elif a.tipo == 'asignar' %}{{ _('Asigna la tarea a una persona') }}{% else %}{{ _('Pide que otra persona revise la tarea') }}{% endif %}</li>
           {% endfor %}
         </ul></span>
       {{ chip(_('Activa'), 'exito') if r.activa else chip(_('Apagada')) }}

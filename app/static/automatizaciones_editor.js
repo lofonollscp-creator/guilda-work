@@ -16,7 +16,9 @@
       mostrar(bloque, bloque.getAttribute("data-solo-disparador") === actual);
     });
     var conTarea = ["tarea.vencida", "tarea.creada", "tarea.estado"].indexOf(actual) !== -1;
-    formulario.querySelectorAll("[data-tipo-accion] option[value=comentar]").forEach(function (opcion) { opcion.disabled = !conTarea; });
+    formulario.querySelectorAll("[data-tipo-accion] option").forEach(function (opcion) {
+      if (["comentar", "fijar_fecha", "asignar", "pedir_revision"].indexOf(opcion.value) !== -1) opcion.disabled = !conTarea;
+    });
   }
 
   function actualizarFila(fila) {

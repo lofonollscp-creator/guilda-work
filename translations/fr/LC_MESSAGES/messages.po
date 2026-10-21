@@ -14194,3 +14194,33 @@ msgid "Esta regla reacciona cuando ocurre. En los últimos 7 días la habría ac
 msgid_plural "Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas."
 msgstr[0] "Cette règle réagit quand cela se produit. Ces 7 derniers jours, %(n)s tâche l'aurait déclenchée."
 msgstr[1] "Cette règle réagit quand cela se produit. Ces 7 derniers jours, %(n)s tâches l'auraient déclenchée."
+
+msgid "Fijar la fecha límite de la tarea"
+msgstr "Fixer l'échéance de la tâche"
+
+msgid "Asignar la tarea a una persona"
+msgstr "Assigner la tâche à une personne"
+
+msgid "Pedir que alguien revise la tarea"
+msgstr "Demander à quelqu'un de réviser la tâche"
+
+msgid "Fecha límite: días desde hoy"
+msgstr "Échéance : jours à partir d'aujourd'hui"
+
+msgid "Solo si la tarea no tiene ya fecha límite"
+msgstr "Seulement si la tâche n'a pas encore d'échéance"
+
+msgid "Quién la revisa"
+msgstr "Qui la révise"
+
+msgid "La pide el dueño de la tarea; si es la misma persona que revisa, la acción falla y queda a la vista en las ejecuciones."
+msgstr "La demande est faite par le propriétaire de la tâche ; si c'est aussi le réviseur, l'action échoue et reste visible dans les exécutions."
+
+msgid "Fija la fecha límite a %(n)s días vista"
+msgstr "Fixe l'échéance à %(n)s jours"
+
+msgid "Asigna la tarea a una persona"
+msgstr "Assigne la tâche à une personne"
+
+msgid "Pide que otra persona revise la tarea"
+msgstr "Demande à une autre personne de réviser la tâche"

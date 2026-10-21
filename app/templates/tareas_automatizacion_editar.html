@@ -125,6 +125,9 @@
           <option value="crear_tarea" {% if a.get('tipo') == 'crear_tarea' %}selected{% endif %}>{{ _('Crear una tarea') }}</option>
           <option value="notificar" {% if a.get('tipo') == 'notificar' %}selected{% endif %}>{{ _('Avisar a alguien') }}</option>
           <option value="comentar" {% if a.get('tipo') == 'comentar' %}selected{% endif %}>{{ _('Anotar en la tarea') }}</option>
+          <option value="fijar_fecha" {% if a.get('tipo') == 'fijar_fecha' %}selected{% endif %}>{{ _('Fijar la fecha límite de la tarea') }}</option>
+          <option value="asignar" {% if a.get('tipo') == 'asignar' %}selected{% endif %}>{{ _('Asignar la tarea a una persona') }}</option>
+          <option value="pedir_revision" {% if a.get('tipo') == 'pedir_revision' %}selected{% endif %}>{{ _('Pedir que alguien revise la tarea') }}</option>
         </select>
       </label>
       <div data-solo-tipo="crear_tarea">
@@ -142,6 +145,22 @@
         <label>{{ _('Título del aviso') }} <input type="text" name="a{{ i }}_titulo" maxlength="150" value="{{ a.get('titulo', '') }}"></label>
         <label>{{ _('Texto (opcional)') }} <textarea name="a{{ i }}_cuerpo_aviso" rows="2" maxlength="500">{{ a.get('cuerpo', '') if a.get('tipo') == 'notificar' else '' }}</textarea></label>
         <label>{{ _('Avisar a') }} {{ destino('a' ~ i ~ '_dest_aviso', a.get('a') if a.get('tipo') == 'notificar' else none) }}</label>
+      </div>
+      <div data-solo-tipo="fijar_fecha">
+        <label>{{ _('Fecha límite: días desde hoy') }} <input type="number" name="a{{ i }}_dias_fecha" min="0" max="365" value="{{ a.get('dias_plazo', 7) if a.get('tipo') == 'fijar_fecha' else 7 }}"></label>
+        <label class="checkbox"><input type="checkbox" name="a{{ i }}_solo_vacia" value="1" {% if a.get('tipo') != 'fijar_fecha' or a.get('solo_si_vacia', True) %}checked{% endif %}> {{ _('Solo si la tarea no tiene ya fecha límite') }}</label>
+      </div>
+      <div data-solo-tipo="asignar">
+        <label>{{ _('Asignar a') }}
+          <select name="a{{ i }}_persona">{% for u in companeros %}<option value="{{ u.id }}" {% if a.get('tipo') == 'asignar' and a.get('a')|string == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}</select>
+        </label>
+      </div>
+      <div data-solo-tipo="pedir_revision">
+        <label>{{ _('Quién la revisa') }}
+          <select name="a{{ i }}_revisor">{% for u in companeros %}<option value="{{ u.id }}" {% if a.get('tipo') == 'pedir_revision' and a.get('revisor')|string == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}</select>
+        </label>
+        <label>{{ _('Nota para quien revisa (opcional)') }} <input type="text" name="a{{ i }}_nota_rev" maxlength="500" value="{{ a.get('nota', '') if a.get('tipo') == 'pedir_revision' else '' }}"></label>
+        <small class="muted">{{ _('La pide el dueño de la tarea; si es la misma persona que revisa, la acción falla y queda a la vista en las ejecuciones.') }}</small>
       </div>
       <div data-solo-tipo="comentar">
         <label>{{ _('Texto de la nota') }} <input type="text" name="a{{ i }}_texto" maxlength="200" value="{{ a.get('texto', '') }}"></label>

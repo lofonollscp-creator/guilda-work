@@ -94,6 +94,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Actualización de seguridad del SDK de MCP (octubre de 2026)](#actualización-de-seguridad-del-sdk-de-mcp-octubre-de-2026)
 - [Constructor de reglas de automatización (octubre de 2026)](#constructor-de-reglas-de-automatización-octubre-de-2026)
 - [Automatizaciones por evento (octubre de 2026)](#automatizaciones-por-evento-octubre-de-2026)
+- [Automatizaciones: asignar, fijar fecha y pedir revisión (octubre de 2026)](#automatizaciones-asignar-fijar-fecha-y-pedir-revisión-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3381,3 +3382,15 @@ Las reglas ya no solo se buscan una vez al día: dos disparadores nuevos **reacc
 - **Migración al arrancar** (idempotente): tabla `automatizaciones_eventos` y columna `automatizaciones_ejecuciones.contexto`. Reversión: ambas se pueden ignorar; `DROP TABLE automatizaciones_eventos`. Hace falta **reiniciar** para que arranque el hilo y se carguen los cambios.
 - **Pruebas**: 14 tests nuevos en `tests/test_automatizaciones.py` (validación, cada camino de cambio de estado, filtros, ausencia de bucles, aislamiento entre despachos, reintentos con contexto, tarea borrada, vista previa, pantalla). El hilo de fondo se anula en los tests, como el de webhooks.
 - **Sigue sin haber**: disparadores por servicio de cliente, expediente o recurrencia, ni acciones de «pedir revisión» o «fijar fecha».
+
+## Automatizaciones: asignar, fijar fecha y pedir revisión (octubre de 2026)
+
+Tres acciones nuevas para las reglas cuyo disparador es una tarea (tarea vencida, tarea creada o tarea que cambia de estado). Se eligen en el constructor junto a «Crear una tarea», «Avisar» y «Anotar».
+
+- **Fijar la fecha límite**: pone la fecha a N días desde hoy; por defecto **solo si la tarea no tiene ya una** (se puede desmarcar para sustituirla).
+- **Asignar a una persona**: la tarea pasa a esa persona del despacho. Si ya estaba asignada a ella, no hace nada.
+- **Pedir que alguien revise**: abre una revisión (la misma de la ficha de la tarea: la tarea no se puede completar mientras esté pendiente) con una nota opcional que admite variables. Si ya hay una revisión pendiente, no es un fallo.
+- **Quién actúa**: estas acciones actúan en nombre del **dueño de la tarea**, que es quien tiene derecho a hacerlo, y dejan en su historial «<nombre de la regla>: …». No generan eventos para otras reglas (nunca hay cadenas).
+- **Validaciones**: solo valen con disparadores de tarea (con otro se rechaza al guardar); la persona o el revisor tienen que ser del despacho y concretos (no «la dirección»); y se rechaza **al guardar** la combinación imposible «cuando una tarea pase a Completada → pedir revisión», porque una tarea completada no admite revisión. Si el revisor resulta ser el propio dueño, la acción falla de forma visible en las ejecuciones con el motivo («La revisión tiene que hacerla otra persona»).
+- **Pruebas**: 7 tests más en `tests/test_automatizaciones.py`. Sin migraciones; basta reiniciar.
+- **Lo que sigue sin hacerse a propósito** (decisiones tuyas, ver la conversación): que el cliente comente desde el portal, informes que se envíen solos por correo y revisiones con varios revisores.

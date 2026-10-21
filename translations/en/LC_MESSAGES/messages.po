@@ -14109,3 +14109,33 @@ msgid "Esta regla reacciona cuando ocurre. En los últimos 7 días la habría ac
 msgid_plural "Esta regla reacciona cuando ocurre. En los últimos 7 días la habrían activado %(n)s tareas."
 msgstr[0] "This rule reacts when something happens. In the last 7 days %(n)s task would have triggered it."
 msgstr[1] "This rule reacts when something happens. In the last 7 days %(n)s tasks would have triggered it."
+
+msgid "Fijar la fecha límite de la tarea"
+msgstr "Set the task's due date"
+
+msgid "Asignar la tarea a una persona"
+msgstr "Assign the task to a person"
+
+msgid "Pedir que alguien revise la tarea"
+msgstr "Ask someone to review the task"
+
+msgid "Fecha límite: días desde hoy"
+msgstr "Due date: days from today"
+
+msgid "Solo si la tarea no tiene ya fecha límite"
+msgstr "Only if the task has no due date yet"
+
+msgid "Quién la revisa"
+msgstr "Who reviews it"
+
+msgid "La pide el dueño de la tarea; si es la misma persona que revisa, la acción falla y queda a la vista en las ejecuciones."
+msgstr "The task owner makes the request; if the owner is also the reviewer the action fails and is shown in the runs."
+
+msgid "Fija la fecha límite a %(n)s días vista"
+msgstr "Sets the due date %(n)s days ahead"
+
+msgid "Asigna la tarea a una persona"
+msgstr "Assigns the task to a person"
+
+msgid "Pide que otra persona revise la tarea"
+msgstr "Asks another person to review the task"
