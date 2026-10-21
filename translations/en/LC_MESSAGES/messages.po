@@ -14295,3 +14295,21 @@ msgstr "Their turn"
 
 msgid "Uno tras otro, en el orden de esta lista"
 msgstr "One after another, in the order of this list"
+
+msgid "Comentarios de clientes en tareas, por correo"
+msgstr "Client comments on tasks, by email"
+
+msgid "Un correo a tu dirección cuando un cliente comenta en una de tus tareas (sin el texto; como mucho uno por hora y tarea)."
+msgstr "An email to your address when a client comments on one of your tasks (without the text; at most one per hour and task)."
+
+msgid "Un cliente ha comentado en una tarea"
+msgstr "A client has commented on a task"
+
+msgid "%(cliente)s ha escrito en la tarea «%(tarea)s». Ábrela para leerlo y contestar."
+msgstr "%(cliente)s wrote on the task “%(tarea)s”. Open it to read and reply."
+
+msgid "Abrir la tarea"
+msgstr "Open the task"
+
+msgid "Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."
+msgstr "You receive this notice because you turned it on in your profile, under Notifications. We write at most once per hour and task."

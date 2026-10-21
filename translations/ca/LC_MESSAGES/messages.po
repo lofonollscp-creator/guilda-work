@@ -14304,3 +14304,21 @@ msgstr "Li toca"
 
 msgid "Uno tras otro, en el orden de esta lista"
 msgstr "Un darrere l'altre, en l'ordre d'aquesta llista"
+
+msgid "Comentarios de clientes en tareas, por correo"
+msgstr "Comentaris de clients a les tasques, per correu"
+
+msgid "Un correo a tu dirección cuando un cliente comenta en una de tus tareas (sin el texto; como mucho uno por hora y tarea)."
+msgstr "Un correu a la teva adreça quan un client comenta en una de les teves tasques (sense el text; com a màxim un per hora i tasca)."
+
+msgid "Un cliente ha comentado en una tarea"
+msgstr "Un client ha comentat en una tasca"
+
+msgid "%(cliente)s ha escrito en la tarea «%(tarea)s». Ábrela para leerlo y contestar."
+msgstr "%(cliente)s ha escrit a la tasca «%(tarea)s». Obre-la per llegir-ho i contestar."
+
+msgid "Abrir la tarea"
+msgstr "Obrir la tasca"
+
+msgid "Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."
+msgstr "Reps aquest avís perquè el vas activar al teu perfil, a Notificacions. Com a màxim t'escrivim un cop per hora i tasca."

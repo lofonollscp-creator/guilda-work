@@ -76,6 +76,12 @@ CREATE TABLE IF NOT EXISTS tarea_comentarios_cliente (
     oculto_por INTEGER REFERENCES usuarios(id)
 );
 CREATE INDEX IF NOT EXISTS idx_tarea_coment_cliente_tarea ON tarea_comentarios_cliente(tarea_id, cliente_fiscal_id, id);
+CREATE TABLE IF NOT EXISTS tarea_avisos_correo (
+    usuario_id INTEGER NOT NULL,
+    tarea_id INTEGER NOT NULL REFERENCES tareas_outlook(id) ON DELETE CASCADE,
+    enviado_en TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, tarea_id)
+);
 CREATE TABLE IF NOT EXISTS informes_tareas_suscripciones (
     usuario_id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL,
@@ -116,6 +122,7 @@ END;
 
 def crear_esquema(conn) -> None:
     """Idempotente: columnas nuevas, tabla de vínculos, disparador de versión y vínculo principal de lo que ya existía."""
+    db._asegurar_columna(conn, "usuario_perfil", "avisos_cliente_por_correo", "INTEGER NOT NULL DEFAULT 0")      # opt-in: correo al equipo cuando un cliente comenta
     db._asegurar_columna(conn, "tareas_outlook", "version", "INTEGER NOT NULL DEFAULT 1")
     db._asegurar_columna(conn, "tareas_outlook", "motivo_bloqueo", "TEXT")
     db._asegurar_columna(conn, "tareas_outlook", "tarea_padre_id", "INTEGER REFERENCES tareas_outlook(id)")
@@ -908,6 +915,46 @@ def responder_al_cliente(usuario_id: int, tarea_id: int, cliente_fiscal_id: int,
         conn.close()
     db.registrar_actividad_tarea(usuario_id, tarea_id, "respuesta_cliente")
     return {"id": cur.lastrowid, "cliente_fiscal_id": int(cliente_fiscal_id)}
+
+
+AVISO_CORREO_MINUTOS = 60
+
+
+def avisar_por_correo_comentario_cliente(destinatario_id: int, tarea_id: int, asunto_tarea: str, cliente_nombre: str, tenant_id: int | None, url: str) -> bool:
+    """Correo al equipo cuando un cliente comenta en una tarea. Opt-in de cada persona (`usuario_perfil.avisos_cliente_por_correo`), solo a su propio correo, SIN el texto del cliente (el correo es un canal
+    menos protegido que la ficha: dice quién y en qué tarea, y el enlace lleva a leerlo) y como mucho UNO por persona y tarea cada hora, aunque el cliente escriba diez veces. Se anota antes de enviar: nunca
+    dos veces. True si salió; un fallo o la falta de correo nunca afecta al comentario."""
+    from datetime import datetime, timedelta
+    from . import correo_diseno, notificaciones_email
+    from .notificaciones_email import _
+    if not notificaciones_email.configurado():
+        return False
+    ahora = datetime.now().replace(microsecond=0)
+    conn = db.get_connection()
+    try:
+        perfil = conn.execute("SELECT avisos_cliente_por_correo FROM usuario_perfil WHERE usuario_id = ?", (destinatario_id,)).fetchone()
+        correo = conn.execute("SELECT email FROM usuarios WHERE id = ?", (destinatario_id,)).fetchone()
+        if not perfil or not perfil["avisos_cliente_por_correo"] or not correo or not correo["email"]:
+            return False
+        limite = (ahora - timedelta(minutes=AVISO_CORREO_MINUTOS)).isoformat()
+        cur = conn.execute("UPDATE tarea_avisos_correo SET enviado_en = ? WHERE usuario_id = ? AND tarea_id = ? AND enviado_en < ?", (ahora.isoformat(), destinatario_id, tarea_id, limite))
+        if cur.rowcount == 0:
+            cur = conn.execute("INSERT OR IGNORE INTO tarea_avisos_correo (usuario_id, tarea_id, enviado_en) VALUES (?, ?, ?)", (destinatario_id, tarea_id, ahora.isoformat()))
+        conn.commit()
+        if cur.rowcount == 0:                                  # ya se avisó hace menos de una hora
+            return False
+        destino = correo["email"]
+    finally:
+        conn.close()
+    try:
+        titulo = _("Un cliente ha comentado en una tarea")
+        plano, html = correo_diseno.construir(titulo, [_("%(cliente)s ha escrito en la tarea «%(tarea)s». Ábrela para leerlo y contestar.", cliente=cliente_nombre, tarea=asunto_tarea)],
+                                              boton=(_("Abrir la tarea"), url), aviso=_("Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."),
+                                              preencabezado=cliente_nombre, marca=notificaciones_email._marca(tenant_id))
+        notificaciones_email._enviar(destino, notificaciones_email._asunto(titulo, tenant_id), plano, html)
+    except Exception:  # noqa: BLE001
+        return False
+    return True
 
 
 def avisar_respuesta_al_cliente(tenant_id: int | None, cliente_fiscal_id: int, texto: str, url_entrada: str) -> bool:

@@ -100,6 +100,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Resumen semanal de tareas por correo (octubre de 2026)](#resumen-semanal-de-tareas-por-correo-octubre-de-2026)
 - [Revisiones en cadena (octubre de 2026)](#revisiones-en-cadena-octubre-de-2026)
 - [Conversaciones con el cliente por API, MCP e IA (octubre de 2026)](#conversaciones-con-el-cliente-por-api-mcp-e-ia-octubre-de-2026)
+- [Avisos por correo al equipo cuando un cliente comenta (octubre de 2026)](#avisos-por-correo-al-equipo-cuando-un-cliente-comenta-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3458,3 +3459,14 @@ Las conversaciones de las tareas con el cliente (ver «Comentarios del cliente e
 - Refactor de paso: el aviso por correo de la respuesta es ahora `tareas_trabajo.avisar_respuesta_al_cliente`, compartido por la web, la API y las herramientas. Sin migración; hace falta reiniciar.
 - **No se ha hecho a propósito**: que el cliente escriba por API (sigue siendo solo desde su portal), adjuntos del cliente y avisos por correo al equipo.
 - **Pruebas**: 6 tests nuevos en `tests/test_tareas_portal_cliente_api.py` (lectura sin marcar, respuesta con correo y sin él, validaciones, ocultar, aislamiento entre despachos, confirmación y contenido externo).
+
+## Avisos por correo al equipo cuando un cliente comenta (octubre de 2026)
+
+Además de la campana y el push de siempre, cada persona puede pedir un **correo** cuando un cliente comenta en una tarea suya. Se activa en el perfil (Notificaciones › «Comentarios de clientes en tareas, por correo»). Código en `app/tareas_trabajo.py` (`avisar_por_correo_comentario_cliente`) y `app/rutas_portal_cliente.py`.
+
+- **Política**: opt-in (apagado por defecto), solo al correo de la propia persona y solo a quien lleva la tarea (dueño o asignado, como la campana). El correo dice quién ha escrito y en qué tarea, con el enlace a la ficha, pero **no incluye el texto del cliente**: el correo es un canal menos protegido que la ficha.
+- **Sin avalancha**: como mucho **un correo por persona y tarea cada hora**, aunque el cliente escriba diez veces (tabla `tarea_avisos_correo`; se anota antes de enviar, así que nunca salen dos). Otra tarea, otro correo.
+- **Fallos**: sin la configuración del correo saliente (`PORTAL_SMTP_*`) o si el envío falla, el comentario se guarda igual y simplemente no hay correo.
+- **Migración al arrancar** (idempotente): columna `usuario_perfil.avisos_cliente_por_correo` y tabla `tarea_avisos_correo`. Reversión: ambas se ignoran sin más. Hace falta reiniciar.
+- **No se ha hecho a propósito**: elegir la frecuencia, resumir varios comentarios en un solo correo, ni cambiar este ajuste por la API o el asistente (solo desde el perfil).
+- **Pruebas**: 7 tests en `tests/test_tareas_aviso_correo_cliente.py` (apagado por defecto, sin el texto del cliente, uno por hora y tarea, aislamiento, fallos y perfil).

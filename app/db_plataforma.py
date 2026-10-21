@@ -2360,6 +2360,7 @@ def guardar_perfil_usuario(
     notificar_resumen_semanal: bool | None = None,
     notificar_push_correo: bool | None = None,
     notificar_push_portal_mensajes: bool | None = None,
+    avisos_cliente_por_correo: bool | None = None,
     cargo: str | None = None,
     telefono: str | None = None,
     silencio_desde: str | None = None,
@@ -2400,6 +2401,9 @@ def guardar_perfil_usuario(
         if notificar_push_portal_mensajes is not None:
             asignaciones.append("notificar_push_portal_mensajes = ?")
             valores.append(int(notificar_push_portal_mensajes))
+        if avisos_cliente_por_correo is not None:
+            asignaciones.append("avisos_cliente_por_correo = ?")
+            valores.append(int(avisos_cliente_por_correo))
         for columna, valor, largo in (("cargo", cargo, 80), ("telefono", telefono, 30)):
             if valor is not None:
                 asignaciones.append(f"{columna} = ?")

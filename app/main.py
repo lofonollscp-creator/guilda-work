@@ -1791,6 +1791,7 @@ def ajustes_perfil():
             notificar_resumen_semanal="notificar_resumen_semanal" in request.form,
             notificar_push_correo="notificar_push_correo" in request.form,
             notificar_push_portal_mensajes="notificar_push_portal_mensajes" in request.form,
+            avisos_cliente_por_correo="avisos_cliente_por_correo" in request.form,
             resumen_diario="resumen_diario" in request.form,
             resumen_diario_email="resumen_diario_email" in request.form,
             resumen_diario_hora=int(request.form["resumen_diario_hora"]) if request.form.get("resumen_diario_hora", "").strip().isdigit() else None,

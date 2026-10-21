@@ -284,6 +284,7 @@ def comentar_tarea(tarea_id: int):
         if db.notificacion_tipo_activa(destino, "portal_comentario_tarea"):
             notificaciones.crear_y_enviar(destino, "portal_comentario_tarea", _("Comentario de un cliente en una tarea"), f"{cliente['nombre']}: {nuevo['tarea']['asunto']}"[:100],
                                           url=f"/tareas/{tarea_id}#cliente", datos={"tipo": "portal_comentario_tarea", "tarea_id": tarea_id})
+        tareas_trabajo.avisar_por_correo_comentario_cliente(destino, tarea_id, nuevo["tarea"]["asunto"], cliente["nombre"], cliente["tenant_id"], url_for("tareas.ver", tarea_id=tarea_id, _external=True) + "#cliente")
     return redirect(url_for("portal_cliente.dashboard", _anchor=f"tarea-{tarea_id}"))
 
 

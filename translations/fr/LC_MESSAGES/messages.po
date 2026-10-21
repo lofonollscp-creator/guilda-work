@@ -14380,3 +14380,21 @@ msgstr "À son tour"
 
 msgid "Uno tras otro, en el orden de esta lista"
 msgstr "L'un après l'autre, dans l'ordre de cette liste"
+
+msgid "Comentarios de clientes en tareas, por correo"
+msgstr "Commentaires de clients sur les tâches, par e-mail"
+
+msgid "Un correo a tu dirección cuando un cliente comenta en una de tus tareas (sin el texto; como mucho uno por hora y tarea)."
+msgstr "Un e-mail à votre adresse quand un client commente l'une de vos tâches (sans le texte ; au plus un par heure et par tâche)."
+
+msgid "Un cliente ha comentado en una tarea"
+msgstr "Un client a commenté une tâche"
+
+msgid "%(cliente)s ha escrito en la tarea «%(tarea)s». Ábrela para leerlo y contestar."
+msgstr "%(cliente)s a écrit sur la tâche « %(tarea)s ». Ouvrez-la pour lire et répondre."
+
+msgid "Abrir la tarea"
+msgstr "Ouvrir la tâche"
+
+msgid "Recibes este aviso porque lo activaste en tu perfil, en Notificaciones. Como mucho te escribimos una vez por hora y tarea."
+msgstr "Vous recevez cet avis parce que vous l'avez activé dans votre profil, sous Notifications. Nous écrivons au plus une fois par heure et par tâche."
