@@ -37,6 +37,8 @@ class TipoExpediente:
     nombre: object
     estados: tuple[Estado, ...]
     calendario: str = "general"          # "general" | "procesal": qué días cuentan para sus plazos
+    al_cambiar_estado: Callable | None = None   # (tenant_id, usuario_id, expediente, nuevo_estado, excepcion) -> None; lanza ValueError para impedir el cambio (p. ej. controles de cierre)
+    al_anotar: Callable | None = None           # (tenant_id, usuario_id, expediente, texto) -> callable | None; valida el comentario (ValueError lo rechaza) y devuelve qué hacer ya guardado (menciones)
 
     def estado(self, estado_id: str) -> Estado | None:
         return next((e for e in self.estados if e.id == estado_id), None)

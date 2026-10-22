@@ -177,6 +177,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "correo_adjuntos", "sobre", "TEXT")
     db._asegurar_columna(conn, "correo_adjuntos", "nombre_cifrado", "TEXT")
     db._asegurar_columna(conn, "documentos", "compartido_cliente", "INTEGER NOT NULL DEFAULT 0")    # el despacho lo enseña al cliente (enlace de solo lectura)
+    from . import control_expedientes      # noqa: F401  (registra los tipos de expediente del control fiscal en la Gestoría antes de crear sus tablas)
     for v in verticales.VERTICALES.values():
         if v.esquema:
             v.esquema(conn)
@@ -683,7 +684,7 @@ def listar_expedientes(tenant_id: int, usuario_id: int, supervisor: bool = False
         conn.close()
 
 
-def cambiar_estado_expediente(tenant_id: int, usuario_id: int, expediente_id: int, estado: str, supervisor: bool = False) -> None:
+def cambiar_estado_expediente(tenant_id: int, usuario_id: int, expediente_id: int, estado: str, supervisor: bool = False, *, excepcion: str | None = None) -> None:
     exp = obtener_expediente(tenant_id, expediente_id, usuario_id, supervisor)
     if exp is None:
         raise ValueError("Expediente no encontrado.")
@@ -693,6 +694,8 @@ def cambiar_estado_expediente(tenant_id: int, usuario_id: int, expediente_id: in
         raise ValueError("Ese estado no existe para este tipo de expediente.")
     if exp["estado"] == estado:
         return
+    if tipo.al_cambiar_estado is not None:
+        tipo.al_cambiar_estado(tenant_id, usuario_id, exp, estado, excepcion)      # controles propios del tipo (p. ej. cerrar exige completar la lista); lanza ValueError
     anterior = tipo.estado(exp["estado"])
     conn = db.get_connection()
     try:
@@ -789,12 +792,16 @@ def miembros_de(expediente_id: int) -> list:
         conn.close()
 
 
-def anotar_expediente(tenant_id: int, usuario_id: int, expediente_id: int, texto: str, supervisor: bool = False) -> None:
+def anotar_expediente(tenant_id: int, usuario_id: int, expediente_id: int, texto: str, supervisor: bool = False):
+    """Añade un comentario. Si el tipo de expediente tiene un `al_anotar` (control fiscal: sin secretos, menciones), lo valida antes y devuelve lo que ese gancho devuelva (None si no hay)."""
     texto = (texto or "").strip()
     if not texto:
         raise ValueError("Escribe la nota.")
-    if obtener_expediente(tenant_id, expediente_id, usuario_id, supervisor) is None:
+    exp = obtener_expediente(tenant_id, expediente_id, usuario_id, supervisor)
+    if exp is None:
         raise ValueError("Expediente no encontrado.")
+    gancho = verticales.tipo_de(exp["tipo"]).al_anotar
+    despues = gancho(tenant_id, usuario_id, exp, texto) if gancho is not None else None     # valida (ValueError) antes de guardar nada; devuelve qué hacer una vez guardado
     conn = db.get_connection()
     try:
         _evento(conn, expediente_id, "nota", texto, usuario_id)
@@ -802,6 +809,7 @@ def anotar_expediente(tenant_id: int, usuario_id: int, expediente_id: int, texto
         conn.commit()
     finally:
         conn.close()
+    return despues() if callable(despues) else None
 
 
 def linea_de_tiempo(tenant_id: int, usuario_id: int, expediente_id: int, supervisor: bool = False, limite: int = 200) -> list:

@@ -1,6 +1,7 @@
 {# Flujo de trabajo de la obligación: fase, indicadores, evidencias y los pasos que ESTA persona puede dar. Variables: flujo (obligaciones.resumen), vencimiento, fases_texto. #}
 <section class="flujo-obligacion" aria-labelledby="flujo-t">
   <h2 id="flujo-t">{{ _('Flujo de trabajo') }}</h2>
+  <form method="post" action="{{ url_for('control_fiscal.expediente_de_obligacion', vencimiento_id=vencimiento.id) }}" class="form-en-linea"><button type="submit" class="btn btn-secondary btn-sm">{{ _('Abrir o ver su expediente') }}</button></form>
   <p>
     <span class="pill flujo-fase flujo-{{ flujo.fase }}">{{ fases_texto[flujo.fase] }}</span>
     {% if flujo.indicadores.vencida %}<span class="pill flujo-alerta">{{ _('Vencida') }}</span>{% endif %}

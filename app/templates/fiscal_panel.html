@@ -25,6 +25,7 @@
       (p.totales.bloqueadas, _('Bloqueadas'), 'pronto', '#bloqueadas'), (p.totales.para_revisar, _('Para revisar'), 'pronto', '#revision'), (p.totales.traspasos, _('Traspasos sin aceptar'), 'urgente', '#traspasos')) %}
   <a class="cert-tarjeta-resumen cert-tono-{{ tono if n else 'ok' }}" href="{{ ancla }}"><strong>{{ n }}</strong><span>{{ etiqueta }}</span></a>
   {% endfor %}
+  <a class="cert-tarjeta-resumen cert-tono-{{ 'urgente' if p.totales.avisos_sin_atender else 'ok' }}" href="{{ url_for('control_fiscal.avisos_pantalla') }}"><strong>{{ p.totales.avisos_sin_atender }}</strong><span>{{ _('Avisos sin atender') }}</span></a>
   {% if p.certificados %}<a class="cert-tarjeta-resumen cert-tono-{{ 'caducado' if p.totales.riesgos_certificados else 'ok' }}" href="#certificados"><strong>{{ p.totales.riesgos_certificados }}</strong><span>{{ _('Obligaciones sin certificado asegurado') }}</span></a>{% endif %}
 </section>
 
@@ -43,7 +44,7 @@
 {% endif %}
 {% endmacro %}
 
-{% if not (p.totales.vencidas or p.totales.proximas or p.totales.bloqueadas or p.totales.para_revisar or p.totales.traspasos or p.totales.riesgos_certificados) %}
+{% if not (p.totales.vencidas or p.totales.proximas or p.totales.bloqueadas or p.totales.para_revisar or p.totales.traspasos or p.totales.avisos_sin_atender or p.totales.riesgos_certificados) %}
 <p class="ds-estado-ok" role="status">{{ _('Nada urgente. Aun así, mira los indicadores de abajo: que no haya avisos no significa que no haya nada que revisar.') }}</p>
 {% endif %}
 
@@ -104,6 +105,7 @@
       {% if i.clientes.sin_responsable %}<span class="subtitle"><a href="{{ url_for('control_fiscal.traspasos_pantalla') }}">{{ _('Asignar responsable') }}</a></span>{% endif %}</li>
     <li><strong>{{ i.bloqueadas }}</strong> {{ _('obligaciones bloqueadas') }}</li>
     {% if i.sin_evidencia %}<li><strong>{{ i.sin_evidencia.sin }}</strong> {{ _('de %(n)s presentadas no tienen evidencia registrada', n=i.sin_evidencia.n) }}</li>{% endif %}
+    {% if i.expedientes.n %}<li><strong>{{ i.expedientes.sin }}</strong> {{ _('de %(n)s expedientes resueltos o cerrados no tienen ningún documento', n=i.expedientes.n) }}</li>{% endif %}
     {% if i.certificados %}<li><strong>{{ i.certificados.con_custodio }}</strong> {{ _('de %(n)s certificados tienen un custodio asignado', n=i.certificados.n) }}</li>{% endif %}
   </ul>
   <p class="subtitle">{{ _('Calculado el %(f)s a partir del calendario fiscal del despacho. «Sin datos» no significa que todo esté bien. Este panel mide el trabajo del despacho; no garantiza la ausencia de sanciones.', f=p.generado_en.replace('T', ' ')) }}</p>

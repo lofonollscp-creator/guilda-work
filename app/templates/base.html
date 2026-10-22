@@ -177,6 +177,8 @@
         <div class="icon-rail-submenu">
           <a href="{{ url_for('control_fiscal.panel') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.panel' else '' }}">{{ _('Panel fiscal') }}</a>
           <a href="{{ url_for('fiscal.vencimientos') }}" class="icon-rail-sublink {{ 'active' if request.endpoint and request.endpoint.startswith('fiscal.') else '' }}">{{ _('Calendario fiscal') }}</a>
+          <a href="{{ url_for('control_fiscal.expedientes_lista') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.expedientes_lista' else '' }}">{{ _('Expedientes de control') }}</a>
+          <a href="{{ url_for('control_fiscal.avisos_pantalla') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.avisos_pantalla' else '' }}">{{ _('Avisos') }}</a>
           <a href="{{ url_for('control_fiscal.traspasos_pantalla') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.traspasos_pantalla' else '' }}">{{ _('Traspasos') }}</a>
           {% if ve_oficinas() %}<a href="{{ url_for('control_fiscal.oficinas') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.oficinas' else '' }}">{{ _('Oficinas y permisos') }}</a>
           <a href="{{ url_for('control_fiscal.flujo') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'control_fiscal.flujo' else '' }}">{{ _('Flujo de trabajo') }}</a>{% endif %}

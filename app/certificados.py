@@ -1023,8 +1023,9 @@ def _abrir_renovaciones_automaticas(ahora: datetime, tenant_id: int | None) -> i
 def revisar_avisos(tenant_id: int | None = None, ahora: datetime | None = None, enviar_correo: bool = True) -> dict:
     """Una pasada (la lanza el hilo diario): abre solas las renovaciones a ≤ 60 días y manda los avisos de umbral pendientes. Cada aviso se envía una sola vez por certificado,
     umbral, destinatario y canal; si un certificado entra ya dentro de un umbral, solo se avisa el vigente y los anteriores se anotan como omitidos. Devuelve contadores."""
-    from . import correo_diseno, notificaciones, notificaciones_email
+    from . import avisos, correo_diseno, notificaciones, notificaciones_email
     ahora = ahora or _ahora()
+    motor = {}       # despachos con el motor de avisos v2: el aviso interno (campana/push) lo da él, con acuse y escalado; el correo sigue como siempre
     res = {"avisos": 0, "omitidos": 0, "renovaciones": _abrir_renovaciones_automaticas(ahora, tenant_id), "fallidos": 0}
     conn = db.get_connection()
     try:
@@ -1039,6 +1040,8 @@ def revisar_avisos(tenant_id: int | None = None, ahora: datetime | None = None, 
             for u in cruzados:
                 for d in _destinatarios(conn, tid, c, u):
                     for canal in ("interno", "correo"):
+                        if canal == "interno" and motor.setdefault(tid, avisos.activo(tid)):
+                            continue
                         previo = conn.execute("SELECT estado FROM certificados_avisos WHERE certificado_id = ? AND umbral = ? AND destinatario_id = ? AND canal = ? AND version_fecha = ?", (c["id"], u, d, canal, c["not_after"])).fetchone()
                         if previo and previo["estado"] != "fallido":
                             continue                      # ya enviado u omitido; un envío fallido se reintenta en la pasada siguiente

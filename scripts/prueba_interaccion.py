@@ -347,6 +347,39 @@ def panel_y_traspasos(pg):
     pg.screenshot(path=str(SAL / "traspasos.png"), full_page=True)
 
 
+@paso("avisos fiscales: ver los sin atender, acusar con nota y consultar cómo van")
+def avisos_fiscales(pg):
+    pg.goto(BASE + "/fiscal/avisos")
+    cuerpo = pg.inner_text("body")
+    assert "Avisos fiscales" in cuerpo and "Lo llevo" in cuerpo and "Cómo van los avisos" in cuerpo, "faltan los avisos o sus métricas"
+    pg.screenshot(path=str(SAL / "avisos.png"), full_page=True)
+    pg.fill("input[name=nota]", "Lo presento esta tarde")
+    pg.click("button:has-text('Lo llevo')")
+    pg.wait_for_load_state()
+    pg.goto(BASE + "/fiscal/avisos?estado=acusada")
+    assert "Lo presento esta tarde" in pg.inner_text("body"), "no registra el acuse"
+    pg.screenshot(path=str(SAL / "avisos-acusados.png"), full_page=True)
+
+
+@paso("expedientes de control: lista, ficha con lista de comprobación, cierre bloqueado, comentario sin secretos y nueva versión")
+def expedientes_de_control(pg):
+    pg.goto(BASE + "/fiscal/expedientes")
+    assert "Expedientes de control" in pg.inner_text("body") and "Requerimiento de Hacienda" in pg.inner_text("body"), "falta la lista"
+    pg.screenshot(path=str(SAL / "expedientes-control.png"), full_page=True)
+    pg.click("a:has-text('303')")
+    pg.wait_for_load_state()
+    cuerpo = pg.inner_text("body")
+    assert "Control del expediente" in cuerpo and "Lista de comprobación" in cuerpo and "v2" in cuerpo, "falta el panel de control"
+    pg.screenshot(path=str(SAL / "expediente-ficha.png"), full_page=True)
+    pg.fill("form[action$='/nota'] textarea[name=texto], form[action$='/nota'] input[name=texto]", "la contraseña: Hunter2022 del portal")
+    pg.click("form[action$='/nota'] button[type=submit]")
+    pg.wait_for_load_state()
+    assert "secretos" in pg.inner_text("body"), "no rechaza el secreto"
+    pg.select_option("select[name=estado][data-autoenviar]", "cerrado")
+    pg.wait_for_load_state()
+    assert "puntos obligatorios" in pg.inner_text("body"), "no bloquea el cierre"
+
+
 @paso("control fiscal: flujo de una obligación, oficinas y auditoría")
 def control_fiscal(pg):
     pg.goto(BASE + "/fiscal/vencimientos")
@@ -412,6 +445,8 @@ with sync_playwright() as p:
     certificados(pg)
     certificados_sin_archivo(pg)
     panel_y_traspasos(pg)
+    avisos_fiscales(pg)
+    expedientes_de_control(pg)
     control_fiscal(pg)
     movil(pg, nav.new_context(viewport={"width": 390, "height": 800}, locale="es-ES"))
     nav.close()

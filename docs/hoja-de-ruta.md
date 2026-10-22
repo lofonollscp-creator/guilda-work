@@ -36,7 +36,7 @@ Ver el apartado «Fase 1: qué se hizo» más abajo y la sección de `HOSTING.md
 ### Fase 2 — El núcleo del despacho (4-8 semanas)
 - **Servicios de cliente**: un servicio (nóminas mensuales, alta de autónomo, declaración de la renta) que genere solo tareas, vencimientos, expediente y lista de comprobación con responsables. Une lo que ya existe (tareas recurrentes, reglas de automatización, expedientes) y es lo que más tiempo ahorra.
 - **Ficha 360 del cliente**: una cronología única de correos, tareas, facturas, documentos, horas y cobros.
-- **CRM propio (Comercial) · primera entrega hecha el 22-oct-2026**: embudo de oportunidades, informes, panel en la ficha del cliente, notas de reunión con acta de IA (sin audio) y disparador de automatización. Decisión: el CRM es nativo sobre el núcleo; EspoCRM queda sin desplegar. Falta: API REST, propuestas PDF con firma, captación web, audio.
+- **CRM propio (Comercial) · primera entrega hecha el 22-oct-2026**: embudo de oportunidades, informes, panel en la ficha del cliente, notas de reunión con acta de IA (sin audio) y disparador de automatización. Decisión: el CRM es nativo sobre el núcleo; EspoCRM queda sin desplegar. API REST hecha. Falta: propuestas PDF con firma, captación web, audio.
 - **Portal del cliente como producto**: solicitudes de documentos con recordatorios automáticos, firma desde el portal, mensajes.
 - **Automatizaciones**: más acciones (enviar un correo con plantilla, pedir un documento, abrir un expediente) y más disparadores (llega un correo, el cliente sube una factura, se completa una firma).
 

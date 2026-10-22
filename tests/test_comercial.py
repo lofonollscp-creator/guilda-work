@@ -352,3 +352,93 @@ def test_las_herramientas_exigen_el_modulo_y_respetan_al_auditor(d):
     with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
         ih.ejecutar(d.aud, "comercial_crear_oportunidad", {"titulo": "X", "contacto_nombre": "Y"})
     assert ih.ejecutar(d.aud, "comercial_listar_oportunidades", {}) == []
+
+
+NUEVAS_HERRAMIENTAS = {
+    "lectura": ("comercial_listar_etapas", "comercial_listar_reuniones"),
+    "escritura": ("comercial_editar_oportunidad", "comercial_convertir_en_cliente", "comercial_eliminar_oportunidad", "comercial_editar_reunion", "comercial_borrar_transcripcion",
+                  "comercial_guardar_acta", "comercial_crear_tareas_de_acta", "comercial_eliminar_reunion"),
+}
+
+
+def test_las_herramientas_nuevas_estan_en_el_mcp_el_asistente_y_su_grupo():
+    import mcp_tools
+    from app import herramientas_grupos as hg, ia_herramientas as ih
+    todas = [n for lote in NUEVAS_HERRAMIENTAS.values() for n in lote] + ["comercial_guardar_transcripcion"]
+    en_mcp = {t.__name__ for t in mcp_tools.TOOLS}
+    definidas = {t["function"]["name"] for t in ih.HERRAMIENTAS}
+    for n in todas:
+        assert n in en_mcp and n in definidas and hg.grupo_de(n) == "comercial", n
+    for n in NUEVAS_HERRAMIENTAS["lectura"]:
+        assert n in ih.LECTURA and not ih.necesita_confirmacion(n, modo_autonomo=False)
+    for n in NUEVAS_HERRAMIENTAS["escritura"]:
+        assert n in ih.ESCRITURA and ih.necesita_confirmacion(n, modo_autonomo=False)
+    assert "comercial_guardar_transcripcion" in ih.SIEMPRE_CONFIRMAR and ih.necesita_confirmacion("comercial_guardar_transcripcion", modo_autonomo=True), "el aviso de grabación lo confirma siempre la persona"
+
+
+def test_herramientas_de_gestion_de_oportunidades_y_reuniones(d, monkeypatch):
+    import json
+    import mcp_tools  # noqa: F401
+    from app import ia_asistente, ia_herramientas as ih, reuniones as ru
+    etapas = ih.ejecutar(d.ana, "comercial_listar_etapas", {})
+    assert [e["clave"] for e in etapas][:2] == ["nuevo", "contactado"] and {"clave", "nombre", "probabilidad", "tipo"} == set(etapas[0])
+    o = ih.ejecutar(d.ana, "comercial_crear_oportunidad", {"titulo": "Autónomo", "contacto_nombre": "Rosa", "empresa": "Floristería Rosa"})
+    e = ih.ejecutar(d.ana, "comercial_editar_oportunidad", {"oportunidad_id": o["id"], "importe": "450", "email": "rosa@ejemplo.com", "cierre_previsto": "2026-12-01"})
+    assert e["importe"] == 450.0 and e["contacto_email"] == "rosa@ejemplo.com" and e["titulo"] == "Autónomo" and e["cierre_previsto"] == "2026-12-01"
+    with pytest.raises(ih.ErrorHerramientaIA, match="AAAA-MM-DD"):
+        ih.ejecutar(d.ana, "comercial_editar_oportunidad", {"oportunidad_id": o["id"], "cierre_previsto": "ayer"})
+    with pytest.raises(ih.ErrorHerramientaIA, match="no puedes verla"):
+        ih.ejecutar(d.ana, "comercial_editar_oportunidad", {"oportunidad_id": 999999, "titulo": "x"})
+    c = ih.ejecutar(d.ana, "comercial_convertir_en_cliente", {"oportunidad_id": o["id"], "nif": "B12345678"})
+    assert c["cliente_id"] and co.obtener_oportunidad(d.t, d.ana, o["id"])["estado"] == "ganada"
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(d.ana, "comercial_convertir_en_cliente", {"oportunidad_id": o["id"]})
+    assert ih.ejecutar(d.ana, "comercial_eliminar_oportunidad", {"oportunidad_id": o["id"]})["en_papelera"] is True
+    assert ih.ejecutar(d.ana, "comercial_listar_oportunidades", {"estado": "todas"}) == []
+    # reuniones
+    monkeypatch.setattr(ia_asistente, "completar_texto", lambda u, s, c: json.dumps({"resumen": "Hecho.", "decisiones": [], "proximos_pasos": [],
+                                                                                    "tareas": [{"texto": "Enviar presupuesto", "responsable": "", "fecha": ""}, {"texto": "Llamar", "responsable": "", "fecha": ""}]}))
+    monkeypatch.setattr(ru, "configurada", lambda u: True)
+    rid = ih.ejecutar(d.ana, "comercial_crear_reunion", {"titulo": "Seguimiento", "notas": "n", "plantilla": "comercial"})["reunion_id"]
+    otra = ih.ejecutar(d.ana, "comercial_crear_reunion", {"titulo": "Otra", "cliente_id": c["cliente_id"]})["reunion_id"]
+    lista = ih.ejecutar(d.ana, "comercial_listar_reuniones", {})
+    assert {r["id"] for r in lista} == {rid, otra} and all("notas" not in r and "transcripcion" not in r for r in lista)
+    assert [r["id"] for r in ih.ejecutar(d.ana, "comercial_listar_reuniones", {"cliente_id": c["cliente_id"]})] == [otra]
+    assert ih.ejecutar(d.ana, "comercial_editar_reunion", {"reunion_id": rid, "titulo": "Seguimiento 2", "participantes": "Rosa"})["titulo"] == "Seguimiento 2"
+    with pytest.raises(ih.ErrorHerramientaIA, match="plantilla"):
+        ih.ejecutar(d.ana, "comercial_editar_reunion", {"reunion_id": rid, "plantilla": "rara"})
+    with pytest.raises(ih.ErrorHerramientaIA, match="avisó|Confirma"):
+        ih.ejecutar(d.ana, "comercial_guardar_transcripcion", {"reunion_id": rid, "texto": "SECRETO", "aviso_grabacion": False})
+    assert ih.ejecutar(d.ana, "comercial_guardar_transcripcion", {"reunion_id": rid, "texto": "SECRETO", "aviso_grabacion": True}) == {"reunion_id": rid, "tiene_transcripcion": True}
+    assert "SECRETO" not in json.dumps(ih.ejecutar(d.ana, "comercial_ver_reunion", {"reunion_id": rid}))
+    with pytest.raises(ih.ErrorHerramientaIA, match="todavía no tiene acta"):
+        ih.ejecutar(d.ana, "comercial_crear_tareas_de_acta", {"reunion_id": rid, "indices": [0]})
+    ih.ejecutar(d.ana, "comercial_generar_acta", {"reunion_id": rid})
+    assert ih.ejecutar(d.ana, "comercial_borrar_transcripcion", {"reunion_id": rid})["tiene_transcripcion"] is False
+    with pytest.raises(ih.ErrorHerramientaIA, match="Indica qué tareas"):
+        ih.ejecutar(d.ana, "comercial_crear_tareas_de_acta", {"reunion_id": rid, "indices": []})
+    with pytest.raises(ih.ErrorHerramientaIA, match="no existe"):
+        ih.ejecutar(d.ana, "comercial_crear_tareas_de_acta", {"reunion_id": rid, "indices": [7]})
+    with pytest.raises(ih.ErrorHerramientaIA, match="no es de tu despacho"):
+        ih.ejecutar(d.ana, "comercial_crear_tareas_de_acta", {"reunion_id": rid, "indices": [0], "responsable_id": 999999})
+    r1 = ih.ejecutar(d.ana, "comercial_crear_tareas_de_acta", {"reunion_id": rid, "indices": [0], "responsable_id": d.beto, "fecha": "2026-11-30"})
+    assert len(r1["tarea_ids"]) == 1
+    assert ih.ejecutar(d.ana, "comercial_crear_tareas_de_acta", {"reunion_id": rid, "indices": [0, 1]})["tarea_ids"].__len__() == 1, "la ya creada no se duplica"
+    g = ih.ejecutar(d.ana, "comercial_guardar_acta", {"reunion_id": rid, "resumen": "Corregido", "decisiones": ["Una"], "tareas": [{"texto": "Enviar presupuesto"}]})
+    assert g["acta"]["resumen"] == "Corregido" and g["acta"]["tareas"][0]["tarea_id"] == r1["tarea_ids"][0], "conserva el enlace de la tarea ya creada"
+    assert ih.ejecutar(d.ana, "comercial_eliminar_reunion", {"reunion_id": rid})["en_papelera"] is True
+    with pytest.raises(ih.ErrorHerramientaIA, match="no puedes verla"):
+        ih.ejecutar(d.ana, "comercial_ver_reunion", {"reunion_id": rid})
+
+
+def test_el_auditor_no_escribe_con_las_herramientas_nuevas(d):
+    import mcp_tools  # noqa: F401
+    from app import ia_herramientas as ih, reuniones as ru
+    o = _op(d)
+    rid = ru.crear(d.t, d.ana, "Reunión", plantilla="comercial", oportunidad_id=o)
+    assert [e["clave"] for e in ih.ejecutar(d.aud, "comercial_listar_etapas", {})][0] == "nuevo"
+    for nombre, args in (("comercial_editar_oportunidad", {"oportunidad_id": o, "titulo": "x"}), ("comercial_convertir_en_cliente", {"oportunidad_id": o}), ("comercial_eliminar_oportunidad", {"oportunidad_id": o}),
+                         ("comercial_editar_reunion", {"reunion_id": rid, "titulo": "x"}), ("comercial_guardar_transcripcion", {"reunion_id": rid, "texto": "x", "aviso_grabacion": True}),
+                         ("comercial_guardar_acta", {"reunion_id": rid, "resumen": "x"}), ("comercial_eliminar_reunion", {"reunion_id": rid})):
+        with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
+            ih.ejecutar(d.aud, nombre, args)

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import interruptor %}
+{% block title %}{{ _('Avisos fiscales') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Avisos fiscales') }}</h1>
+    <p class="subtitle">{{ _('Lo que exige actuar: obligaciones vencidas o a punto de vencer, bloqueadas con el plazo cerca, traspasos sin aceptar y certificados a punto de caducar. Acusar un aviso dice «lo llevo»: deja de insistir, pero no presenta nada.') }}</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('control_fiscal.panel') }}">{{ _('Panel fiscal') }}</a>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if aviso %}<p class="ds-estado-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+{% if not cfg.activo %}<p class="ds-estado-aviso" role="status">{{ _('Los avisos con acuse y escalado están desactivados en este despacho: se siguen mandando los recordatorios de siempre.') }}{% if es_directivo %} <a href="#configuracion">{{ _('Activarlos') }}</a>{% endif %}</p>{% endif %}
+
+<nav class="cert-filtros" aria-label="{{ _('Filtros') }}">
+  {% for clave, etiqueta in (('abierta', _('Sin atender')), ('acusada', _('Acusados')), ('resuelta', _('Resueltos'))) %}
+  <a class="btn btn-sm {{ 'btn-primary' if estado == clave else 'btn-secondary' }}" href="{{ url_for('control_fiscal.avisos_pantalla', estado=clave, mios='1' if mios else None) }}">{{ etiqueta }}</a>
+  {% endfor %}
+  <a class="btn btn-sm {{ 'btn-primary' if mios else 'btn-secondary' }}" href="{{ url_for('control_fiscal.avisos_pantalla', estado=estado, mios=None if mios else '1') }}" aria-pressed="{{ 'true' if mios else 'false' }}">{{ _('Solo los míos') }}</a>
+</nav>
+
+{% if not lista %}
+<p class="subtitle">{{ _('No hay avisos en esta lista.') }}</p>
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Aviso') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Para') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+  <tbody>{% for a in lista %}
+    <tr>
+      <td><strong>{{ _('Urgente') if a.severidad == 'urgente' else _('Atención') }}</strong> · {{ a.titulo }}<br><span class="subtitle">{{ a.detalle }}</span> <a href="{{ a.url }}">{{ _('Abrir') }}</a></td>
+      <td>{{ a.cliente or '—' }}</td>
+      <td>{{ a.destinatario or '—' }}{% if a.nivel == 1 %}<br><span class="subtitle">{{ _('Escalado a coordinación') }}</span>{% elif a.nivel >= 2 %}<br><span class="subtitle">{{ _('Escalado a dirección') }}</span>{% endif %}</td>
+      <td>{% if a.estado == 'abierta' %}{{ _('Sin atender desde hace %(h)s h', h=a.horas_abierta) }}
+          {% elif a.estado == 'acusada' %}{{ _('Acusado por %(q)s', q=a.acusada_por_nombre or '—') }}{% if a.nota_acuse %}<br><em>{{ a.nota_acuse }}</em>{% endif %}
+          {% else %}{{ _('Resuelto') }}<br><span class="subtitle">{{ a.motivo_resolucion }}</span>{% endif %}</td>
+      <td>{% if a.estado == 'abierta' %}
+        <form method="post" action="{{ url_for('control_fiscal.avisos_acusar', alerta_id=a.id) }}" class="form-en-linea">
+          <input type="text" name="nota" maxlength="500" placeholder="{{ _('Nota (opcional)') }}" aria-label="{{ _('Nota (opcional)') }}">
+          <button class="btn btn-primary btn-sm">{{ _('Lo llevo') }}</button>
+        </form>{% endif %}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+{% if es_directivo %}
+{% if metricas %}
+<section class="ausencias-seccion" id="metricas">
+  <h2>{{ _('Cómo van los avisos') }}</h2>
+  <ul class="panel-indicadores">
+    <li><strong>{{ metricas.abiertas }}</strong> {{ _('sin atender ahora') }} <span class="subtitle">{{ _('%(n)s llevan más de 24 horas sin acuse', n=metricas.sin_acusar_mas_de_24h) }}</span></li>
+    <li><strong>{% if metricas.horas_hasta_acuse_mediana is none %}{{ _('Sin datos') }}{% else %}{{ metricas.horas_hasta_acuse_mediana }} h{% endif %}</strong> {{ _('de mediana hasta el acuse') }}
+        <span class="subtitle">{{ _('Muestra: %(n)s avisos acusados en los últimos %(d)s días.', n=metricas.muestra_acuses, d=metricas.dias) }}</span></li>
+    <li><strong>{{ metricas.escaladas }}</strong> {{ _('escalados sin resolver') }}</li>
+    <li><strong>{{ metricas.fallos_de_entrega }}</strong> {{ _('fallos de entrega') }} · <strong>{{ metricas.duplicados }}</strong> {{ _('duplicados') }}</li>
+  </ul>
+</section>
+{% endif %}
+<section class="ausencias-seccion" id="configuracion">
+  <h2>{{ _('Configuración') }}</h2>
+  <form method="post" class="cert-form">
+    {{ interruptor('activo', _('Avisos con acuse y escalado'), marcado=cfg.activo, ayuda=_('Sustituye, para este despacho, al recordatorio único de 7 días y al escalado de traspasos de antes. Apagado, todo funciona como siempre.'), id='cfg-avisos') }}
+    <div class="cert-form-fila">
+      <label for="av-dias">{{ _('Avisar cuando falten (días)') }}<input type="text" id="av-dias" name="dias_antes" value="{{ cfg.dias_antes|join(', ') }}" maxlength="40"></label>
+      <label for="av-cert">{{ _('Certificados: avisar cuando falten (días)') }}<input type="text" id="av-cert" name="dias_certificados" value="{{ cfg.dias_certificados|join(', ') }}" maxlength="40"></label>
+      <label for="av-rep">{{ _('Repetir los urgentes cada (horas)') }}<input type="number" id="av-rep" name="reenviar_horas" min="1" max="720" value="{{ cfg.reenviar_horas }}"></label>
+      <label for="av-max">{{ _('Repeticiones como máximo') }}<input type="number" id="av-max" name="max_reenvios" min="0" max="20" value="{{ cfg.max_reenvios }}"></label>
+    </div>
+    <div class="cert-form-fila">
+      <label for="av-eu">{{ _('Escalar un urgente sin acuse a las (horas)') }}<input type="number" id="av-eu" name="escalar_horas_urgente" min="1" max="720" value="{{ cfg.escalar_horas_urgente }}"></label>
+      <label for="av-ea">{{ _('Escalar el resto sin acuse a las (horas)') }}<input type="number" id="av-ea" name="escalar_horas_atencion" min="1" max="720" value="{{ cfg.escalar_horas_atencion }}"></label>
+    </div>
+    <p class="subtitle">{{ _('Sin acuse, el aviso sube a la coordinación de la oficina del cliente y, pasado el mismo tiempo, a la dirección. Cada aviso se cierra solo cuando la obligación se presenta, se anula o se marca «no aplica».') }}</p>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

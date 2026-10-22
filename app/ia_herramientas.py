@@ -624,6 +624,77 @@ HERRAMIENTAS: list[dict] = [
         {"reunion_id": _param("integer", "Id de la reunión.")}, ["reunion_id"],
     ),
     _tool(
+        "comercial_listar_etapas",
+        "Las etapas del embudo comercial del despacho, en orden, con su probabilidad de cierre y su tipo (abierta, ganada, perdida). Sus claves valen para comercial_mover_oportunidad.",
+        {}, [],
+    ),
+    _tool(
+        "comercial_editar_oportunidad",
+        "Cambia datos de una oportunidad (solo los campos que indiques). Para cambiar de etapa usa comercial_mover_oportunidad.",
+        {"oportunidad_id": _param("integer", "Id de la oportunidad."), "titulo": _param("string", "Nuevo título."), "contacto_nombre": _param("string", "Persona de contacto."), "empresa": _param("string", "Empresa."),
+         "email": _param("string", "Correo."), "telefono": _param("string", "Teléfono."), "importe": _param("string", "Importe estimado en euros, por ejemplo 1.200,50."),
+         "cierre_previsto": _param("string", "AAAA-MM-DD (cadena vacía la quita)."), "origen": _param("string", "Cómo llegó."), "notas": _param("string", "Notas."),
+         "cliente_id": _param("integer", "Id de un cliente existente."), "responsable_id": _param("integer", "Id de la persona que la lleva.")},
+        ["oportunidad_id"],
+    ),
+    _tool(
+        "comercial_convertir_en_cliente",
+        "Convierte el prospecto de una oportunidad en cliente del despacho y, por defecto, da la oportunidad por ganada. Con gestion_fiscal crea también su ficha fiscal (solo si el despacho lleva la gestoría).",
+        {"oportunidad_id": _param("integer", "Id de la oportunidad."), "nif": _param("string", "NIF o CIF del cliente, opcional."), "gestion_fiscal": _param("boolean", "Crear también la ficha fiscal."),
+         "ganar": _param("boolean", "Dar la oportunidad por ganada (true por defecto).")},
+        ["oportunidad_id"],
+    ),
+    _tool(
+        "comercial_eliminar_oportunidad",
+        "Manda una oportunidad a la papelera (no se borra de forma definitiva).",
+        {"oportunidad_id": _param("integer", "Id de la oportunidad.")}, ["oportunidad_id"],
+    ),
+    _tool(
+        "comercial_listar_reuniones",
+        "Lista las reuniones que puedes ver, de la más reciente a la más antigua, sin notas ni transcripción. Se pueden filtrar por cliente o por oportunidad.",
+        {"cliente_id": _param("integer", "Solo reuniones de ese cliente."), "oportunidad_id": _param("integer", "Solo reuniones de esa oportunidad."), "limite": _param("integer", "Máximo de resultados (30 por defecto).")},
+        [],
+    ),
+    _tool(
+        "comercial_editar_reunion",
+        "Cambia el título, la fecha, la plantilla, los participantes o las notas de una reunión (solo lo que indiques). Las notas sustituyen a las anteriores: para añadir, lee antes la reunión.",
+        {"reunion_id": _param("integer", "Id de la reunión."), "titulo": _param("string", "Título."), "fecha": _param("string", "AAAA-MM-DD."), "plantilla": _param("string", "cliente, comercial o interna."),
+         "participantes": _param("string", "Participantes."), "notas": _param("string", "Notas completas de la reunión.")},
+        ["reunion_id"],
+    ),
+    _tool(
+        "comercial_guardar_transcripcion",
+        "Guarda la transcripción de una reunión para generar el acta. Pon aviso_grabacion=true SOLO si la persona te ha confirmado que se avisó a los participantes de que la reunión se grababa o transcribía; "
+        "no lo supongas. La transcripción no se podrá leer después con estas herramientas y solo se envía al modelo de IA de la persona.",
+        {"reunion_id": _param("integer", "Id de la reunión."), "texto": _param("string", "La transcripción."), "aviso_grabacion": _param("boolean", "La persona confirma que se avisó a los participantes.")},
+        ["reunion_id", "texto", "aviso_grabacion"],
+    ),
+    _tool(
+        "comercial_borrar_transcripcion",
+        "Borra la transcripción guardada de una reunión; las notas y el acta se quedan.",
+        {"reunion_id": _param("integer", "Id de la reunión.")}, ["reunion_id"],
+    ),
+    _tool(
+        "comercial_guardar_acta",
+        "Guarda el acta de una reunión escrita o corregida a mano (sustituye la actual). Las tareas son solo propuestas: no se crea ninguna hasta comercial_crear_tareas_de_acta.",
+        {"reunion_id": _param("integer", "Id de la reunión."), "resumen": _param("string", "Resumen de la reunión."), "decisiones": _param("array", "Decisiones, una por elemento."),
+         "proximos_pasos": _param("array", "Próximos pasos, uno por elemento."), "temas": _param("array", "Temas tratados."),
+         "tareas": _param("array", "Tareas propuestas: [{\"texto\": \"...\", \"responsable\": \"nombre\", \"fecha\": \"AAAA-MM-DD\"}].")},
+        ["reunion_id", "resumen"],
+    ),
+    _tool(
+        "comercial_crear_tareas_de_acta",
+        "Crea tareas a partir de las propuestas del acta de una reunión, solo las que indiques. Pregunta antes a la persona cuáles quiere y quién las lleva. Una tarea ya creada no se duplica.",
+        {"reunion_id": _param("integer", "Id de la reunión."), "indices": _param("array", "Posiciones (desde 0) de las tareas del acta que se crean."),
+         "responsable_id": _param("integer", "Id de la persona que las lleva (por defecto la que propuso el acta o quien llama)."), "fecha": _param("string", "AAAA-MM-DD para todas, opcional.")},
+        ["reunion_id", "indices"],
+    ),
+    _tool(
+        "comercial_eliminar_reunion",
+        "Manda una reunión a la papelera.",
+        {"reunion_id": _param("integer", "Id de la reunión.")}, ["reunion_id"],
+    ),
+    _tool(
         "listar_dependencias_tarea",
         "De qué tareas depende una tarea y si está bloqueada (espera a otras sin completar).",
         {"tarea_id": _param("integer", "Id de la tarea.")},
@@ -769,6 +840,50 @@ HERRAMIENTAS: list[dict] = [
         "Acepta, rechaza (con motivo) o cancela un traspaso de cliente.",
         {"traspaso_id": _param("integer", "Id del traspaso."), "accion": _param("string", "aceptar, rechazar o cancelar."), "motivo": _param("string", "Obligatorio al rechazar.")},
         ["traspaso_id", "accion"],
+    ),
+    _tool(
+        "listar_avisos_fiscales",
+        "Lista los avisos del control fiscal: obligaciones vencidas o a punto de vencer, bloqueadas con el plazo cerca, traspasos sin aceptar y certificados a punto de caducar. Por defecto, los que siguen sin atender.",
+        {"estado": _param("string", "abierta (sin atender), acusada o resuelta."), "solo_mios": _param("boolean", "Solo los dirigidos a mí.")}, [],
+    ),
+    _tool(
+        "acusar_aviso_fiscal",
+        "Acusa un aviso fiscal («lo he visto, lo llevo»): deja de repetirse y de escalar. No presenta ni cierra la obligación.",
+        {"aviso_id": _param("integer", "Id del aviso."), "nota": _param("string", "Nota opcional, por ejemplo cuándo lo hará.")},
+        ["aviso_id"],
+    ),
+    _tool(
+        "listar_expedientes_control",
+        "Lista los expedientes de control fiscal (campaña, obligación, renovación, requerimiento, incidencia) con su avance, prioridad y fecha objetivo. Por defecto solo los abiertos.",
+        {"estado": _param("string", "abierto, en_curso, pendiente_cliente, pendiente_tercero, en_revision, resuelto o cerrado."), "tipo": _param("string", "control_campana, control_obligacion, control_renovacion, control_requerimiento o control_incidencia."),
+         "incluir_cerrados": _param("boolean", "Incluir los cerrados.")}, [],
+    ),
+    _tool(
+        "ver_expediente_control",
+        "Ficha de un expediente de control: datos, lista de comprobación (qué obligatorio falta para cerrar) y documentos con versiones.",
+        {"expediente_id": _param("integer", "Id del expediente.")}, ["expediente_id"],
+    ),
+    _tool(
+        "abrir_expediente_control",
+        "Abre un expediente de control fiscal. Para una obligación existente usa obligacion_id (reutiliza el abierto). Si no, cliente_fiscal_id, tipo y titulo.",
+        {"obligacion_id": _param("integer", "Id de la obligación (vencimiento fiscal)."), "cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "tipo": _param("string", "control_campana, control_obligacion, control_renovacion, control_requerimiento o control_incidencia."),
+         "titulo": _param("string", "Título del expediente."), "prioridad": _param("string", "baja, normal, alta o urgente."), "fecha_objetivo": _param("string", "AAAA-MM-DD.")}, [],
+    ),
+    _tool(
+        "marcar_punto_expediente",
+        "Marca un punto de la lista de comprobación de un expediente de control como hecho (o lo reabre con hecho=false).",
+        {"punto_id": _param("integer", "Id del punto."), "hecho": _param("boolean", "true por defecto."), "nota": _param("string", "Nota opcional, sin contraseñas.")}, ["punto_id"],
+    ),
+    _tool(
+        "cambiar_estado_expediente_control",
+        "Cambia el estado de un expediente de control. Cerrar exige completar los puntos obligatorios o una excepción que solo autoriza la dirección o un revisor fiscal.",
+        {"expediente_id": _param("integer", "Id del expediente."), "estado": _param("string", "abierto, en_curso, pendiente_cliente, pendiente_tercero, en_revision, resuelto o cerrado."),
+         "excepcion": _param("string", "Motivo para cerrar sin completar lo obligatorio.")}, ["expediente_id", "estado"],
+    ),
+    _tool(
+        "comentar_expediente_control",
+        "Añade un comentario a un expediente de control. No puede llevar contraseñas ni claves. @nombre avisa solo a quien puede ver el expediente.",
+        {"expediente_id": _param("integer", "Id del expediente."), "texto": _param("string", "El comentario.")}, ["expediente_id", "texto"],
     ),
     _tool(
         "listar_papelera",
@@ -1222,7 +1337,7 @@ LECTURA: set[str] = {
     "listar_clientes_fiscales", "listar_vencimientos_fiscales", "leer_adjunto_chat",
     "resumen_cliente_fiscal", "listar_plantillas_correo", "listar_tareas_recurrentes",
     "listar_clientes_despacho", "resumen_cliente_despacho", "listar_expedientes_despacho", "resumen_expediente_despacho", "listar_plazos_despacho",
-    "listar_documentos_despacho", "leer_documento_despacho", "listar_certificados", "riesgos_de_certificados", "panel_fiscal", "listar_traspasos",
+    "listar_documentos_despacho", "leer_documento_despacho", "listar_certificados", "riesgos_de_certificados", "panel_fiscal", "listar_traspasos", "listar_avisos_fiscales", "listar_expedientes_control", "ver_expediente_control",
     "listar_facturas_cliente",
     "contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion",
     "listar_subtareas_tarea", "listar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "listar_conversaciones_cliente_tarea", "listar_dependencias_tarea", "comercial_listar_oportunidades", "comercial_ver_oportunidad", "comercial_embudo", "comercial_ver_reunion", "informe_tareas", "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion",
@@ -1235,6 +1350,7 @@ LECTURA: set[str] = {
     "listar_reglas_correo", "listar_conversacion_correo", "listar_proyectos", "listar_tareas_hoy",
     "ayuda_buscar", "abrir_pantalla", "ver_mis_ajustes",
     "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea", "listar_comentarios_tarea",
+    "comercial_listar_etapas", "comercial_listar_reuniones",
 }
 
 # Herramientas que modifican datos: piden confirmación salvo modo autónomo activado.
@@ -1258,7 +1374,8 @@ ESCRITURA: set[str] = {
     "pedir_ausencia", "cancelar_ausencia", "resolver_ausencia", "asignar_turno", "ajustar_bolsa_de_horas",
     "cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "ocultar_comentario_cliente_tarea", "anadir_dependencia_tarea", "quitar_dependencia_tarea", "comercial_crear_oportunidad", "comercial_mover_oportunidad", "comercial_anotar_actividad", "comercial_crear_reunion", "comercial_generar_acta",
     "contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar",
-    "registrar_certificado", "renovar_certificado", "comprobar_certificado", "proponer_traspaso", "resolver_traspaso",
+    "registrar_certificado", "renovar_certificado", "comprobar_certificado", "proponer_traspaso", "resolver_traspaso", "acusar_aviso_fiscal", "abrir_expediente_control", "marcar_punto_expediente", "cambiar_estado_expediente_control", "comentar_expediente_control",
+    "comercial_editar_oportunidad", "comercial_convertir_en_cliente", "comercial_eliminar_oportunidad", "comercial_editar_reunion", "comercial_borrar_transcripcion", "comercial_guardar_acta", "comercial_crear_tareas_de_acta", "comercial_eliminar_reunion",
 }
 
 # Piden confirmación SIEMPRE, incluso con el modo autónomo activado: son
@@ -1267,7 +1384,7 @@ ESCRITURA: set[str] = {
 # ya avisaban de esto en su description para el LLM, pero solo estaban en
 # ESCRITURA -- con modo autónomo activado, el propio modelo decidía si
 # confirmar o no, sin ninguna garantía en código).
-SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace", "responder_cliente_tarea"}
+SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace", "responder_cliente_tarea", "comercial_guardar_transcripcion"}
 
 _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
 

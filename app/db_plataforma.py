@@ -716,8 +716,9 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
                     f"El tenant tiene {n} fichajes, que la ley obliga a conservar cuatro años. "
                     "Expórtalos y confirma que quieres borrarlos también."
                 )
-        from . import auditoria, certificados, traspasos
+        from . import auditoria, avisos, certificados, traspasos
         auditoria.purgar_tenant(conn, tenant_id)                   # el despacho se elimina entero: su rastro también (solo aquí se puede borrar)
+        avisos.borrar_datos_de_tenant(conn, tenant_id)
         traspasos.borrar_datos_de_tenant(conn, tenant_id)
         certificados.borrar_datos_de_tenant(conn, tenant_id)      # antes que los clientes fiscales: sus vínculos los referencian
         from . import automatizaciones, tareas_trabajo

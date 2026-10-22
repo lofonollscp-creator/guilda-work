@@ -345,6 +345,8 @@ def eliminar(tenant_id: int, usuario_id: int, documento_id: int) -> bool:
         f = conn.execute("SELECT * FROM documentos WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (documento_id, tenant_id)).fetchone()
         if u is None or f is None or not _visible(conn, usuario_id, f) or not (f["subido_por"] == usuario_id or u["supervisor_tenant"]):
             return False
+        if "conservar_hasta" in f.keys() and f["conservar_hasta"] and f["conservar_hasta"] > db.now_iso()[:10]:
+            return False                      # política de conservación: no se manda a la papelera antes de «conservar hasta»
         conn.execute("UPDATE documentos SET papelera_en = ? WHERE id = ?", (db._marca_papelera(), documento_id))
         if f["expediente_id"] is not None:
             nucleo._evento(conn, f["expediente_id"], "documento", _texto_evento(tenant_id, "Documento eliminado", f["nombre_archivo"]), usuario_id)

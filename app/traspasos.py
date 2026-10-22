@@ -239,6 +239,8 @@ def escalar(hoy: date | None = None) -> int:
         conn.commit()
     finally:
         conn.close()
+    from . import avisos
+    datos = [t for t in datos if not avisos.activo(t["tenant_id"])]     # con el motor de avisos v2 activo, el escalado lo hace él (con acuse)
     for t in datos:
         destinatarios = {u for u in db.usuarios_de_tenant(t["tenant_id"]) if acceso.es_directivo(u)} | {t["de_usuario_id"], t["a_usuario_id"]}
         for u in destinatarios - {None}:

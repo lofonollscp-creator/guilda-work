@@ -12444,131 +12444,401 @@ msgid_plural "%(n)s nuevos"
 msgstr[0] "%(n)s nou"
 msgstr[1] "%(n)s nous"
 
-msgid "Tipo (persona o empresa)"
-msgstr "Tipus (persona o empresa)"
+#, python-format
+msgid "%(n)s llevan más de 24 horas sin acuse"
+msgstr "%(n)s fa més de 24 hores que no tenen acusament"
 
-msgid "País (gestión fiscal)"
-msgstr "País (gestió fiscal)"
+#, python-format
+msgid "%(n)s obligatorio pendiente"
+msgid_plural "%(n)s obligatorios pendientes"
+msgstr[0] "%(n)s obligatori pendent"
+msgstr[1] "%(n)s obligatoris pendents"
 
-msgid "Esa importación ya no está disponible: sube el archivo otra vez."
-msgstr "Aquesta importació ja no està disponible: torna a pujar el fitxer."
-
-msgid "importación"
-msgstr "importació"
-
-msgid "Importar clientes"
-msgstr "Importar clients"
-
-msgid "Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila."
-msgstr "Porta la teva cartera des d'un Excel o un CSV sense teclejar client a client. Abans de crear res veuràs què farà amb cada fila."
-
-msgid "Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo."
-msgstr "Excel (.xlsx) o CSV. La primera fila ha de tenir els noms de les columnes. Fins a %(n)s clients i 5 MB per fitxer."
-
-msgid "Subir y revisar"
-msgstr "Pujar i revisar"
-
-msgid "Descargar un ejemplo"
-msgstr "Descarregar un exemple"
-
-msgid "Qué columnas reconoce"
-msgstr "Quines columnes reconeix"
-
-msgid "Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso."
-msgstr "Les reconeix pel nom (amb o sense accents): nom o raó social, NIF o CIF, email o correu, telèfon o mòbil, adreça, tipus, idioma, etiquetes, notes, origen i país. Les que no reconegui les podràs assignar a mà al pas següent."
-
-msgid "Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos."
-msgstr "Els clients que ja existeixen (mateix NIF, correu o nom) no es dupliquen: s'ometen i t'ho expliquem."
-
-msgid "Importación terminada"
-msgstr "Importació acabada"
-
-msgid "Filas que no se importaron"
-msgstr "Files que no s'han importat"
-
-msgid "Fila"
-msgstr "Fila"
-
-msgid "Se enseñan los primeros 100 errores."
-msgstr "Es mostren els primers 100 errors."
-
-msgid "Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican."
-msgstr "Corregeix aquestes files al fitxer i torna a importar-lo: els clients ja creats es detectaran com a repetits i no es dupliquen."
-
-msgid "Ver los clientes importados"
-msgstr "Veure els clients importats"
-
-msgid "Ir a Clientes"
-msgstr "Anar a Clients"
-
-msgid "Importar otro archivo"
-msgstr "Importar un altre fitxer"
-
-msgid "Revisar la importación"
-msgstr "Revisar la importació"
-
-msgid "1. Qué es cada columna"
-msgstr "1. Què és cada columna"
-
-msgid "Columna del archivo"
-msgstr "Columna del fitxer"
-
-msgid "Ejemplo"
-msgstr "Exemple"
-
-msgid "Importar como"
-msgstr "Importar com a"
+#, python-format
+msgid "%(n)s versión anterior"
+msgid_plural "%(n)s versiones anteriores"
+msgstr[0] "%(n)s versió anterior"
+msgstr[1] "%(n)s versions anteriors"
 
 msgid "(sin nombre)"
 msgstr "(sense nom)"
 
-msgid "No importar"
-msgstr "No importar"
-
-msgid "Actualizar la vista previa"
-msgstr "Actualitzar la vista prèvia"
+msgid "1. Qué es cada columna"
+msgstr "1. Què és cada columna"
 
 msgid "2. Qué pasará con cada fila"
 msgstr "2. Què passarà amb cada fila"
 
-msgid "Repetido"
-msgstr "Repetit"
-
-msgid "Se enseñan las primeras %(n)s filas; el resto se importa igual."
-msgstr "Es mostren les primeres %(n)s files; la resta s'importa igualment."
-
 msgid "3. Importar"
 msgstr "3. Importar"
 
-msgid "Omitir los clientes repetidos (recomendado)"
-msgstr "Ometre els clients repetits (recomanat)"
+msgid "Abiertos"
+msgstr "Oberts"
+
+msgid "Abrir o ver su expediente"
+msgstr "Obre o mira el seu expedient"
+
+msgid "Abrir un expediente"
+msgstr "Obre un expedient"
+
+msgid "Activarlos"
+msgstr "Activa'ls"
+
+msgid "Actualizar la vista previa"
+msgstr "Actualitzar la vista prèvia"
+
+#, python-format
+msgid "Acusado por %(q)s"
+msgstr "Acusat per %(q)s"
+
+msgid "Acusados"
+msgstr "Acusats"
+
+msgid "Avisar cuando falten (días)"
+msgstr "Avisa quan faltin (dies)"
+
+msgid "Aviso"
+msgstr "Avís"
+
+msgid "Avisos"
+msgstr "Avisos"
+
+msgid "Avisos con acuse y escalado"
+msgstr "Avisos amb acusament i escalat"
+
+msgid "Avisos fiscales"
+msgstr "Avisos fiscals"
+
+msgid "Avisos sin atender"
+msgstr "Avisos sense atendre"
+
+msgid "Añadir punto"
+msgstr "Afegeix punt"
+
+msgid "Campaña"
+msgstr "Campanya"
+
+msgid "Campañas, obligaciones, renovaciones, requerimientos e incidencias: quién lo lleva, qué falta y qué documentos lo acreditan. Para cerrar hay que completar los puntos obligatorios o documentar una excepción autorizada."
+msgstr "Campanyes, obligacions, renovacions, requeriments i incidències: qui ho porta, què falta i quins documents ho acrediten. Per tancar cal completar els punts obligatoris o documentar una excepció autoritzada."
+
+msgid "Cerrado con excepción"
+msgstr "Tancat amb excepció"
+
+msgid "Cerrar con excepción"
+msgstr "Tanca amb excepció"
+
+msgid "Certificados: avisar cuando falten (días)"
+msgstr "Certificats: avisa quan faltin (dies)"
+
+msgid "Columna del archivo"
+msgstr "Columna del fitxer"
+
+#, python-format
+msgid "Comentario guardado. No se ha avisado a %(q)s: no tiene acceso al expediente o no se ha encontrado."
+msgstr "Comentari desat. No s'ha avisat %(q)s: no té accés a l'expedient o no s'ha trobat."
+
+msgid "Conservar hasta"
+msgstr "Conserva fins"
+
+msgid "Control del expediente"
+msgstr "Control de l'expedient"
+
+msgid "Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican."
+msgstr "Corregeix aquestes files al fitxer i torna a importar-lo: els clients ja creats es detectaran com a repetits i no es dupliquen."
+
+msgid "Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Crea el primer o importa la teva cartera des d'un Excel per començar a obrir expedients, registrar hores i desar els seus documents."
+
+msgid "Cómo van los avisos"
+msgstr "Com van els avisos"
+
+msgid "Descargar un ejemplo"
+msgstr "Descarregar un exemple"
+
+msgid "Documentos y versiones"
+msgstr "Documents i versions"
+
+msgid "Ejemplo"
+msgstr "Exemple"
+
+msgid "Esa importación ya no está disponible: sube el archivo otra vez."
+msgstr "Aquesta importació ja no està disponible: torna a pujar el fitxer."
+
+msgid "Escalado a coordinación"
+msgstr "Escalat a coordinació"
+
+msgid "Escalado a dirección"
+msgstr "Escalat a direcció"
+
+msgid "Escalar el resto sin acuse a las (horas)"
+msgstr "Escala la resta sense acusament a les (hores)"
+
+msgid "Escalar un urgente sin acuse a las (horas)"
+msgstr "Escala un urgent sense acusament a les (hores)"
+
+msgid "Esperar al cliente o a un tercero no pausa el plazo legal: la fecha objetivo y los avisos siguen corriendo."
+msgstr "Esperar el client o un tercer no atura el termini legal: la data objectiu i els avisos continuen corrent."
 
 msgid "Etiqueta para todos los importados"
 msgstr "Etiqueta per a tots els importats"
 
-msgid "Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta."
-msgstr "Et serveix per trobar-los junts després. Deixa-la buida si no vols etiqueta."
+#, python-format
+msgid "Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo."
+msgstr "Excel (.xlsx) o CSV. La primera fila ha de tenir els noms de les columnes. Fins a %(n)s clients i 5 MB per fitxer."
 
-msgid "Llevar también la gestión fiscal de estos clientes"
-msgstr "Portar també la gestió fiscal d'aquests clients"
+msgid "Expedientes de control"
+msgstr "Expedients de control"
 
-msgid "País de tributación (si el archivo no lo indica)"
-msgstr "País de tributació (si el fitxer no l'indica)"
+msgid "Fecha del punto"
+msgstr "Data del punt"
 
-msgid "Tipo de cliente fiscal"
-msgstr "Tipus de client fiscal"
+msgid "Fila"
+msgstr "Fila"
+
+msgid "Filas que no se importaron"
+msgstr "Files que no s'han importat"
 
 msgid "Generar los vencimientos automáticamente cada periodo"
 msgstr "Generar els venciments automàticament cada període"
 
-msgid "Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha."
-msgstr "Sense un tipus de client fiscal es crea la seva fitxa fiscal sense models: els assignes després a cada fitxa."
+msgid "Hecho"
+msgstr "Fet"
+
+msgid "Importación terminada"
+msgstr "Importació acabada"
+
+msgid "Importar clientes"
+msgstr "Importar clients"
+
+msgid "Importar como"
+msgstr "Importar com a"
 
 msgid "Importar desde Excel o CSV"
 msgstr "Importar des d'Excel o CSV"
 
-msgid "Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos."
-msgstr "Crea el primer o importa la teva cartera des d'un Excel per començar a obrir expedients, registrar hores i desar els seus documents."
+msgid "Importar otro archivo"
+msgstr "Importar un altre fitxer"
+
+msgid "Incidencia"
+msgstr "Incidència"
+
+msgid "Interno"
+msgstr "Intern"
+
+msgid "Ir a Clientes"
+msgstr "Anar a Clients"
+
+msgid "Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso."
+msgstr "Les reconeix pel nom (amb o sense accents): nom o raó social, NIF o CIF, email o correu, telèfon o mòbil, adreça, tipus, idioma, etiquetes, notes, origen i país. Les que no reconegui les podràs assignar a mà al pas següent."
+
+msgid "Lista de comprobación"
+msgstr "Llista de comprovació"
+
+msgid "Llevar también la gestión fiscal de estos clientes"
+msgstr "Portar també la gestió fiscal d'aquests clients"
+
+msgid "Lo llevo"
+msgstr "Ho porto jo"
+
+msgid "Lo que exige actuar: obligaciones vencidas o a punto de vencer, bloqueadas con el plazo cerca, traspasos sin aceptar y certificados a punto de caducar. Acusar un aviso dice «lo llevo»: deja de insistir, pero no presenta nada."
+msgstr "El que exigeix actuar: obligacions vençudes o a punt de vèncer, bloquejades amb el termini a prop, traspassos sense acceptar i certificats a punt de caducar. Acusar un avís vol dir «ho porto jo»: deixa d'insistir, però no presenta res."
+
+msgid "Los avisos con acuse y escalado están desactivados en este despacho: se siguen mandando los recordatorios de siempre."
+msgstr "Els avisos amb acusament i escalat estan desactivats en aquest despatx: se segueixen enviant els recordatoris de sempre."
+
+msgid "Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos."
+msgstr "Els clients que ja existeixen (mateix NIF, correu o nom) no es dupliquen: s'ometen i t'ho expliquem."
+
+msgid "Los comentarios no pueden llevar contraseñas ni claves. Con @nombre solo se avisa a quien puede ver el expediente."
+msgstr "Els comentaris no poden portar contrasenyes ni claus. Amb @nom només s'avisa qui pot veure l'expedient."
+
+msgid "Motivo de la excepción"
+msgstr "Motiu de l'excepció"
+
+#, python-format
+msgid "Muestra: %(n)s avisos acusados en los últimos %(d)s días."
+msgstr "Mostra: %(n)s avisos acusats en els últims %(d)s dies."
+
+msgid "No hay avisos en esta lista."
+msgstr "No hi ha avisos en aquesta llista."
+
+msgid "No hay expedientes en esta lista."
+msgstr "No hi ha expedients en aquesta llista."
+
+msgid "No importar"
+msgstr "No importar"
+
+msgid "Nueva versión"
+msgstr "Nova versió"
+
+msgid "Nuevo punto"
+msgstr "Nou punt"
+
+msgid "Obligatorio"
+msgstr "Obligatori"
+
+msgid "Obligatorio para cerrar"
+msgstr "Obligatori per tancar"
+
+msgid "Oficina responsable"
+msgstr "Oficina responsable"
+
+msgid "Omitir los clientes repetidos (recomendado)"
+msgstr "Ometre els clients repetits (recomanat)"
+
+#, python-format
+msgid "Para cerrar falta %(n)s punto obligatorio."
+msgid_plural "Para cerrar faltan %(n)s puntos obligatorios."
+msgstr[0] "Per tancar falta %(n)s punt obligatori."
+msgstr[1] "Per tancar falten %(n)s punts obligatoris."
+
+msgid "Para una obligación o un certificado, ábrelo desde su ficha: así queda enlazado y no se duplica."
+msgstr "Per a una obligació o un certificat, obre'l des de la seva fitxa: així queda enllaçat i no es duplica."
+
+msgid "Pasada"
+msgstr "Passada"
+
+msgid "Pasada: el plazo sigue corriendo"
+msgstr "Passada: el termini continua corrent"
+
+msgid "País (gestión fiscal)"
+msgstr "País (gestió fiscal)"
+
+msgid "País de tributación (si el archivo no lo indica)"
+msgstr "País de tributació (si el fitxer no l'indica)"
+
+msgid "Pendiente de un tercero"
+msgstr "Pendent d'un tercer"
+
+msgid "Prioridad alta"
+msgstr "Prioritat alta"
+
+msgid "Prioridad baja"
+msgstr "Prioritat baixa"
+
+msgid "Prioridad normal"
+msgstr "Prioritat normal"
+
+msgid "Prioridad urgente"
+msgstr "Prioritat urgent"
+
+msgid "Qué columnas reconoce"
+msgstr "Quines columnes reconeix"
+
+msgid "Renovación de certificado"
+msgstr "Renovació de certificat"
+
+msgid "Repeticiones como máximo"
+msgstr "Repeticions com a màxim"
+
+msgid "Repetido"
+msgstr "Repetit"
+
+msgid "Repetir los urgentes cada (horas)"
+msgstr "Repeteix els urgents cada (hores)"
+
+msgid "Responsable del punto"
+msgstr "Responsable del punt"
+
+msgid "Resueltos"
+msgstr "Resolts"
+
+msgid "Revisar la importación"
+msgstr "Revisar la importació"
+
+msgid "Revisor"
+msgstr "Revisor"
+
+#, python-format
+msgid "Se enseñan las primeras %(n)s filas; el resto se importa igual."
+msgstr "Es mostren les primeres %(n)s files; la resta s'importa igualment."
+
+msgid "Se enseñan los primeros 100 errores."
+msgstr "Es mostren els primers 100 errors."
+
+msgid "Si hay un motivo, puedes cerrar con una excepción autorizada (queda registrada y auditada)."
+msgstr "Si hi ha un motiu, pots tancar amb una excepció autoritzada (queda registrada i auditada)."
+
+msgid "Sin acuse, el aviso sube a la coordinación de la oficina del cliente y, pasado el mismo tiempo, a la dirección. Cada aviso se cierra solo cuando la obligación se presenta, se anula o se marca «no aplica»."
+msgstr "Sense acusament, l'avís puja a la coordinació de l'oficina del client i, passat el mateix temps, a la direcció. Cada avís es tanca sol només quan l'obligació es presenta, s'anul·la o es marca «no aplica»."
+
+msgid "Sin atender"
+msgstr "Sense atendre"
+
+#, python-format
+msgid "Sin atender desde hace %(h)s h"
+msgstr "Sense atendre fa %(h)s h"
+
+msgid "Sin clasificar"
+msgstr "Sense classificar"
+
+msgid "Sin puntos todavía."
+msgstr "Encara no hi ha punts."
+
+msgid "Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha."
+msgstr "Sense un tipus de client fiscal es crea la seva fitxa fiscal sense models: els assignes després a cada fitxa."
+
+msgid "Subir nueva versión"
+msgstr "Puja una nova versió"
+
+msgid "Subir y revisar"
+msgstr "Pujar i revisar"
+
+msgid "Sustituye, para este despacho, al recordatorio único de 7 días y al escalado de traspasos de antes. Apagado, todo funciona como siempre."
+msgstr "Substitueix, per a aquest despatx, el recordatori únic de 7 dies i l'escalat de traspassos d'abans. Apagat, tot funciona com sempre."
+
+msgid "Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta."
+msgstr "Et serveix per trobar-los junts després. Deixa-la buida si no vols etiqueta."
+
+msgid "Tipo (persona o empresa)"
+msgstr "Tipus (persona o empresa)"
+
+msgid "Tipo de cliente fiscal"
+msgstr "Tipus de client fiscal"
+
+msgid "Todavía no hay documentos. Súbelos más abajo, en «Documentos»."
+msgstr "Encara no hi ha documents. Puja'ls més avall, a «Documents»."
+
+msgid "Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila."
+msgstr "Porta la teva cartera des d'un Excel o un CSV sense teclejar client a client. Abans de crear res veuràs què farà amb cada fila."
+
+msgid "Urgente"
+msgstr "Urgent"
+
+msgid "Ver los clientes importados"
+msgstr "Veure els clients importats"
+
+msgid "Visible para el cliente"
+msgstr "Visible per al client"
+
+#, python-format
+msgid "de %(n)s expedientes resueltos o cerrados no tienen ningún documento"
+msgstr "de %(n)s expedients resolts o tancats no tenen cap document"
+
+msgid "de mediana hasta el acuse"
+msgstr "de mediana fins a l'acusament"
+
+msgid "duplicados"
+msgstr "duplicats"
+
+msgid "escalados sin resolver"
+msgstr "escalats sense resoldre"
+
+msgid "fallos de entrega"
+msgstr "errors de lliurament"
+
+#, python-format
+msgid "hecho por %(q)s"
+msgstr "fet per %(q)s"
+
+msgid "importación"
+msgstr "importació"
+
+msgid "sin atender ahora"
+msgstr "sense atendre ara"
+
+msgid "¿Quitar este punto de la lista?"
+msgstr "Vols treure aquest punt de la llista?"
 
 msgid "%(n)s cliente creado"
 msgid_plural "%(n)s clientes creados"
@@ -12670,6 +12940,9 @@ msgid_plural "Ver todo (%(n)s)"
 msgstr[0] "Veure-ho tot (%(n)s)"
 msgstr[1] "Veure-ho tot (%(n)s)"
 
+msgid "Menú y accesos directos"
+msgstr "Menú i accessos directes"
+
 msgid "Oculta lo que no usas y fija arriba lo que más abres."
 msgstr "Amaga el que no fas servir i fixa a dalt el que més obres."
 
@@ -12679,17 +12952,38 @@ msgstr "Personalitzat"
 msgid "Correo del equipo"
 msgstr "Correu de l'equip"
 
+msgid "Menú"
+msgstr "Menú"
+
+msgid "Oculta lo que no usas y fija arriba lo que más abres. Solo cambia tu menú, no el de tus compañeros."
+msgstr "Amaga el que no fas servir i fixa a dalt el que més obres. Només canvia el teu menú, no el dels teus companys."
+
+msgid "Menú guardado."
+msgstr "Menú desat."
+
+msgid "Menú restablecido."
+msgstr "Menú restablert."
+
 msgid "Pantalla"
 msgstr "Pantalla"
 
+msgid "Mostrar en el menú"
+msgstr "Mostrar al menú"
+
 msgid "Fijar arriba"
 msgstr "Fixar a dalt"
+
+msgid "Mostrar %(nombre)s en el menú"
+msgstr "Mostrar %(nombre)s al menú"
 
 msgid "Fijar %(nombre)s arriba"
 msgstr "Fixar %(nombre)s a dalt"
 
 msgid "Puedes fijar hasta %(n)s accesos directos. Lo que ocultes sigue disponible desde el buscador (Ctrl K) y desde esta pantalla."
 msgstr "Pots fixar fins a %(n)s accessos directes. El que amaguis continua disponible des del cercador (Ctrl K) i des d'aquesta pantalla."
+
+msgid "Restablecer el menú de serie"
+msgstr "Restablir el menú de sèrie"
 
 msgid "Volver a Ajustes"
 msgstr "Tornar a Ajustos"
@@ -13448,9 +13742,6 @@ msgstr "%(f)s factures (%(a)s abonaments), %(r)s registres, total %(t)s €."
 msgid "El fichero cumple lo que comprueba este pre-chequeo. Aun así, pásalo por el botón «Chequeo» de a3 en una empresa de pruebas la primera vez."
 msgstr "El fitxer compleix el que comprova aquest pre-xequeig. Tot i així, passa'l pel botó «Chequeo» d'a3 en una empresa de proves la primera vegada."
 
-msgid "Avisos"
-msgstr "Avisos"
-
 msgid "Subcuentas nuevas que se asignarían"
 msgstr "Subcomptes noves que s'assignarien"
 
@@ -13658,6 +13949,9 @@ msgstr "Cap tasca compleix aquest filtre."
 msgid "Motivo del bloqueo"
 msgstr "Motiu del bloqueig"
 
+msgid "Obligatorio si el estado es Esperando a otros"
+msgstr "Obligatori si l'estat és Esperant altres"
+
 msgid "Indica por qué la tarea queda bloqueada."
 msgstr "Indica per què la tasca queda bloquejada."
 
@@ -13669,9 +13963,6 @@ msgstr "El client de dalt és el principal; aquí marques els altres als quals a
 
 msgid "Otra persona ha modificado esta tarea mientras la editabas. Aquí tienes cómo está ahora; revísala y vuelve a guardar tus cambios."
 msgstr "Una altra persona ha modificat aquesta tasca mentre l'editaves. Aquí la tens com està ara; revisa-la i torna a desar els canvis."
-
-msgid "Obligatorio si el estado es Esperando a otros"
-msgstr "Obligatori si l'estat és Esperant altres"
 
 msgid "Es una subtarea de"
 msgstr "És una subtasca de"
@@ -13863,6 +14154,11 @@ msgstr "Completades a la finestra"
 msgid "Informe de tareas"
 msgstr "Informe de tasques"
 
+msgid "Lo que se acerca en %(n)s día"
+msgid_plural "Lo que se acerca en los próximos %(n)s días"
+msgstr[0] "El que s'acosta en %(n)s dia"
+msgstr[1] "El que s'acosta en els propers %(n)s dies"
+
 msgid "La revisa %(quien)s."
 msgstr "La revisa %(quien)s."
 
@@ -13955,11 +14251,6 @@ msgstr "La tasca no està vinculada a cap client."
 
 msgid "No tienes permiso para cambiar lo que ve el cliente."
 msgstr "No tens permís per canviar el que veu el client."
-
-msgid "Lo que se acerca en %(n)s día"
-msgid_plural "Lo que se acerca en los próximos %(n)s días"
-msgstr[0] "El que s'acosta en %(n)s dia"
-msgstr[1] "El que s'acosta en els propers %(n)s dies"
 
 msgid "Más clientes"
 msgstr "Més clients"
@@ -14575,6 +14866,9 @@ msgstr "Taxa d'èxit"
 msgid "Ciclo medio de venta"
 msgstr "Cicle mitjà de venda"
 
+msgid "Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien."
+msgstr "Sense oportunitats tancades en el període no hi ha taxa d'èxit: no s'inventa un zero ni un cent per cent."
+
 msgid "Por qué se pierden"
 msgstr "Per què es perden"
 
@@ -14769,6 +15063,3 @@ msgstr "Trucada"
 
 msgid "Visita"
 msgstr "Visita"
-
-msgid "Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien."
-msgstr "Sense oportunitats tancades en el període no hi ha taxa d'èxit: no s'inventa un zero ni un cent per cent."

@@ -117,3 +117,149 @@ def comercial_generar_acta(reunion_id: int) -> dict:
     except reuniones.ErrorReunion as e:
         raise _mt._traducir_comercial(e) from e
     return {"reunion_id": reunion_id, "acta": r["acta"]}
+
+
+def comercial_listar_etapas() -> list[dict]:
+    """Las etapas del embudo del despacho, en orden, con su probabilidad de cierre. `tipo`: abierta, ganada o perdida (estas dos cierran la oportunidad). Las claves se usan en `comercial_mover_oportunidad`."""
+    from app import comercial
+    t, _u = _mt._ctx_comercial()
+    return [{k: e.get(k) for k in ("clave", "nombre", "probabilidad", "tipo")} for e in comercial.listar_etapas(t)]
+
+
+def comercial_editar_oportunidad(oportunidad_id: int, titulo: str | None = None, contacto_nombre: str | None = None, empresa: str | None = None, email: str | None = None, telefono: str | None = None,
+                                 importe: str | None = None, cierre_previsto: str | None = None, origen: str | None = None, notas: str | None = None, cliente_id: int | None = None,
+                                 responsable_id: int | None = None) -> dict:
+    """Cambia datos de una oportunidad; solo se tocan los campos que se indican. `importe` en euros ('1.200,50'), `cierre_previsto` AAAA-MM-DD (cadena vacía la quita). Para cambiar de etapa usa
+    `comercial_mover_oportunidad`."""
+    from app import comercial
+    t, u = _mt._ctx_comercial()
+    campos = {"titulo": titulo, "contacto_nombre": contacto_nombre, "empresa": empresa, "contacto_email": email, "contacto_telefono": telefono, "importe": importe, "cierre_previsto": cierre_previsto,
+              "origen": origen, "notas": notas, "cliente_id": cliente_id, "responsable_id": responsable_id}
+    campos = {k: v for k, v in campos.items() if v is not None}
+    if comercial.obtener_oportunidad(t, u, oportunidad_id) is None:
+        raise ValueError(f"No existe la oportunidad {oportunidad_id} (o no puedes verla).")
+    try:
+        return _mt._oportunidad_json(comercial.editar_oportunidad(t, u, oportunidad_id, **campos))
+    except comercial.ErrorComercial as e:
+        raise _mt._traducir_comercial(e) from e
+
+
+def comercial_convertir_en_cliente(oportunidad_id: int, nif: str = "", gestion_fiscal: bool = False, ganar: bool = True) -> dict:
+    """Convierte el prospecto de una oportunidad en cliente del despacho (ficha con sus datos de contacto, enlazada a la oportunidad). Con `ganar` (por defecto) la oportunidad pasa a ganada; con
+    `gestion_fiscal` se crea también su ficha fiscal (solo si el despacho lleva la gestoría). Devuelve `cliente_id` y `cliente_fiscal_id`."""
+    from app import comercial
+    t, u = _mt._ctx_comercial()
+    if comercial.obtener_oportunidad(t, u, oportunidad_id) is None:
+        raise ValueError(f"No existe la oportunidad {oportunidad_id} (o no puedes verla).")
+    try:
+        return comercial.convertir_en_cliente(t, u, oportunidad_id, gestion_fiscal=bool(gestion_fiscal), nif=nif or None, ganar=bool(ganar))
+    except comercial.ErrorComercial as e:
+        raise _mt._traducir_comercial(e) from e
+
+
+def comercial_eliminar_oportunidad(oportunidad_id: int) -> dict:
+    """Manda una oportunidad a la papelera (no se borra de forma definitiva)."""
+    from app import comercial
+    t, u = _mt._ctx_comercial()
+    if comercial.obtener_oportunidad(t, u, oportunidad_id) is None:
+        raise ValueError(f"No existe la oportunidad {oportunidad_id} (o no puedes verla).")
+    try:
+        comercial.papelera_oportunidad(t, u, oportunidad_id)
+    except comercial.ErrorComercial as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"oportunidad_id": oportunidad_id, "en_papelera": True}
+
+
+def comercial_listar_reuniones(cliente_id: int | None = None, oportunidad_id: int | None = None, limite: int = 30) -> list[dict]:
+    """Reuniones que puedes ver (una interna solo la ven quien la creó y la dirección), de la más reciente a la más antigua. Se pueden filtrar por cliente o por oportunidad. Sin notas ni transcripción:
+    para el detalle usa `comercial_ver_reunion`."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    filas = reuniones.listar(t, u, cliente_id=cliente_id, oportunidad_id=oportunidad_id, limite=max(1, min(int(limite or 30), 100)))
+    return [{k: r.get(k) for k in ("id", "titulo", "fecha", "plantilla", "cliente_nombre", "oportunidad_id", "participantes")} | {"tiene_acta": bool(r.get("acta"))} for r in filas]
+
+
+def comercial_editar_reunion(reunion_id: int, titulo: str | None = None, fecha: str | None = None, plantilla: str | None = None, participantes: str | None = None, notas: str | None = None) -> dict:
+    """Cambia el título, la fecha (AAAA-MM-DD), la plantilla (cliente, comercial o interna), los participantes o las notas de una reunión; solo se tocan los campos que se indican. Las notas sustituyen
+    a las anteriores: para añadir, lee antes con `comercial_ver_reunion`."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    campos = {k: v for k, v in {"titulo": titulo, "fecha": fecha, "plantilla": plantilla, "participantes": participantes, "notas": notas}.items() if v is not None}
+    if reuniones.obtener(t, u, reunion_id) is None:
+        raise ValueError(f"No existe la reunión {reunion_id} (o no puedes verla).")
+    try:
+        r = reuniones.editar(t, u, reunion_id, **campos)
+    except (reuniones.ErrorReunion, ValueError) as e:
+        raise _mt._traducir_comercial(e) from e
+    return {k: r.get(k) for k in ("id", "titulo", "fecha", "plantilla", "participantes", "notas")}
+
+
+def comercial_guardar_transcripcion(reunion_id: int, texto: str, aviso_grabacion: bool = False) -> dict:
+    """Guarda (o sustituye) la transcripción de una reunión para que el acta salga de ella. Solo con `aviso_grabacion=true`, y únicamente si la persona ha confirmado que se avisó a los participantes de que
+    la reunión se grababa o transcribía: nunca lo marques por tu cuenta. La transcripción no se puede leer después por esta vía (solo `tiene_transcripcion`) y se envía solo al modelo de IA de la persona."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    if reuniones.obtener(t, u, reunion_id) is None:
+        raise ValueError(f"No existe la reunión {reunion_id} (o no puedes verla).")
+    try:
+        reuniones.guardar_transcripcion(t, u, reunion_id, texto, aviso_grabacion is True)
+    except (reuniones.ErrorReunion, ValueError) as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"reunion_id": reunion_id, "tiene_transcripcion": True}
+
+
+def comercial_borrar_transcripcion(reunion_id: int) -> dict:
+    """Borra la transcripción guardada de una reunión; las notas y el acta se quedan."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    if reuniones.obtener(t, u, reunion_id) is None:
+        raise ValueError(f"No existe la reunión {reunion_id} (o no puedes verla).")
+    try:
+        reuniones.borrar_transcripcion(t, u, reunion_id)
+    except (reuniones.ErrorReunion, ValueError) as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"reunion_id": reunion_id, "tiene_transcripcion": False}
+
+
+def comercial_guardar_acta(reunion_id: int, resumen: str, decisiones: list[str] | None = None, proximos_pasos: list[str] | None = None, temas: list[str] | None = None,
+                           tareas: list[dict] | None = None) -> dict:
+    """Guarda el acta escrita o corregida a mano (sustituye la actual). `tareas`: [{"texto": "...", "responsable": "nombre", "fecha": "AAAA-MM-DD"}], son solo propuestas: no se crea ninguna tarea
+    hasta `comercial_crear_tareas_de_acta`."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    if reuniones.obtener(t, u, reunion_id) is None:
+        raise ValueError(f"No existe la reunión {reunion_id} (o no puedes verla).")
+    try:
+        r = reuniones.guardar_acta(t, u, reunion_id, {"resumen": resumen, "decisiones": decisiones or [], "proximos_pasos": proximos_pasos or [], "temas": temas or [], "tareas": tareas or []})
+    except (reuniones.ErrorReunion, ValueError) as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"reunion_id": reunion_id, "acta": r["acta"]}
+
+
+def comercial_crear_tareas_de_acta(reunion_id: int, indices: list[int], responsable_id: int | None = None, fecha: str = "") -> dict:
+    """Crea tareas a partir de las propuestas del acta, solo las que se indiquen (`indices`: posición en `acta.tareas` según `comercial_ver_reunion`, empezando en 0). Todas con el mismo
+    `responsable_id` (por defecto el que propuso el acta o quien llama) y la misma `fecha` AAAA-MM-DD si se da. Una tarea ya creada no se duplica. Pídele antes a la persona cuáles quiere."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    if reuniones.obtener(t, u, reunion_id) is None:
+        raise ValueError(f"No existe la reunión {reunion_id} (o no puedes verla).")
+    if not indices:
+        raise ValueError("Indica qué tareas del acta quieres crear.")
+    elegidas = [{"indice": i, **({"responsable_id": responsable_id} if responsable_id else {}), **({"fecha": fecha} if fecha else {})} for i in indices]
+    try:
+        return {"reunion_id": reunion_id, "tarea_ids": reuniones.crear_tareas(t, u, reunion_id, elegidas)}
+    except (reuniones.ErrorReunion, ValueError) as e:
+        raise _mt._traducir_comercial(e) from e
+
+
+def comercial_eliminar_reunion(reunion_id: int) -> dict:
+    """Manda una reunión a la papelera."""
+    from app import reuniones
+    t, u = _mt._ctx_comercial()
+    if reuniones.obtener(t, u, reunion_id) is None:
+        raise ValueError(f"No existe la reunión {reunion_id} (o no puedes verla).")
+    try:
+        reuniones.papelera(t, u, reunion_id)
+    except (reuniones.ErrorReunion, ValueError) as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"reunion_id": reunion_id, "en_papelera": True}

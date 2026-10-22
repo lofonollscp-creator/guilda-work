@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from . import acceso, certificados, db, obligaciones, traspasos
+from . import acceso, avisos, certificados, control_expedientes, db, obligaciones, traspasos
 
 DIAS_PROXIMOS = 7
 DIAS_INDICADOR = 90
@@ -60,6 +60,7 @@ def construir(tenant_id: int, usuario_id: int, hoy: date | None = None) -> dict:
     for t in tr:
         t["urgente"] = t["dias_al_vencimiento"] is not None and t["dias_al_vencimiento"] <= traspasos.DIAS_ESCALADO
         t["para_mi"] = t["a_usuario_id"] == usuario_id
+    sin_atender = avisos.listar(tenant_id, usuario_id, estado="abierta")
     # Certificados: solo quien los gestiona los ve; «cobertura desconocida» se muestra como riesgo, nunca como correcto.
     ve_cert = certificados.puede_gestionar(usuario_id, tenant_id)
     riesgos_cert, cert_resumen = [], None
@@ -108,6 +109,7 @@ def construir(tenant_id: int, usuario_id: int, hoy: date | None = None) -> dict:
         "clientes": {"n": len(clientes), "sin_responsable": len(sin_resp)},
         "bloqueadas": len(bloqueadas),
         "sin_evidencia": {"n": n_pres, "sin": n_sin_evidencia} if n_pres else None,
+        "expedientes": control_expedientes.sin_evidencia(tenant_id),
     }
     conn = db.get_connection()
     try:
@@ -120,7 +122,7 @@ def construir(tenant_id: int, usuario_id: int, hoy: date | None = None) -> dict:
     return {
         "generado_en": datetime.now().isoformat(timespec="minutes"), "hoy": hoy_s, "ambito": "todo" if visibles is None else "parcial", "dias_proximos": DIAS_PROXIMOS,
         "hoy_lista": {"vencidas": vencidas[:LIMITE_LISTA], "proximas": proximas[:LIMITE_LISTA], "para_revisar": en_revision[:LIMITE_LISTA]},
-        "totales": {"vencidas": len(vencidas), "proximas": len(proximas), "bloqueadas": len(bloqueadas), "para_revisar": len(en_revision), "traspasos": len(tr), "riesgos_certificados": len(riesgos_cert)},
+        "totales": {"vencidas": len(vencidas), "proximas": len(proximas), "bloqueadas": len(bloqueadas), "para_revisar": len(en_revision), "traspasos": len(tr), "avisos_sin_atender": len(sin_atender), "riesgos_certificados": len(riesgos_cert)},
         "bloqueadas": bloqueadas[:LIMITE_LISTA], "traspasos": tr, "riesgos_certificados": riesgos_cert[:LIMITE_LISTA], "certificados": cert_resumen,
         "carga_por_responsable": por_responsable, "carga_por_oficina": por_oficina, "indicadores": indicadores,
     }

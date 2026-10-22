@@ -1,8 +1,10 @@
 """Pantallas del control fiscal (fase A): flujo de trabajo del despacho, oficinas y permisos, y auditoría. Ver app/obligaciones.py, app/acceso.py y app/auditoria.py."""
+from datetime import date
+
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, auditoria, db, obligaciones, panel_fiscal, traspasos, verticales
+from . import acceso, auditoria, avisos, control_expedientes, db, nucleo, obligaciones, panel_fiscal, traspasos, verticales
 from .auth import login_required
 
 control_fiscal_bp = Blueprint("control_fiscal", __name__, url_prefix="/fiscal")
@@ -192,3 +194,147 @@ def traspaso_cancelar(traspaso_id: int):
 @login_required
 def cliente_responsable(cliente_id: int):
     return _traspaso("hecho", traspasos.asignar_responsable, cliente_id, request.form.get("responsable_id", type=int) or None)
+
+
+# --- Avisos con acuse y escalado (motor de avisos v2) -----------------------------------------------------------------------------------------
+@control_fiscal_bp.route("/avisos", methods=["GET", "POST"])
+@login_required
+def avisos_pantalla():
+    directivo = acceso.es_directivo(g.usuario_id)
+    if request.method == "POST":
+        if not directivo:
+            abort(403)
+        f = request.form
+        try:
+            avisos.guardar_config(g.tenant_id, g.usuario_id, activo="activo" in f, dias_antes=f.get("dias_antes", ""), escalar_horas_urgente=f.get("escalar_horas_urgente"),
+                                  escalar_horas_atencion=f.get("escalar_horas_atencion"), reenviar_horas=f.get("reenviar_horas"), max_reenvios=f.get("max_reenvios"), dias_certificados=f.get("dias_certificados") or None)
+        except ValueError as e:
+            return _volver("control_fiscal.avisos_pantalla", error=str(e))
+        return _volver("control_fiscal.avisos_pantalla", aviso="hecho")
+    estado = request.args.get("estado", "abierta")
+    estado = estado if estado in avisos.ESTADOS else "abierta"
+    mios = request.args.get("mios") == "1"
+    return render_template("fiscal_avisos.html", lista=avisos.listar(g.tenant_id, g.usuario_id, estado=estado, mios=mios), estado=estado, mios=mios, cfg=avisos.config(g.tenant_id),
+                           metricas=avisos.metricas(g.tenant_id) if directivo else None, es_directivo=directivo, error=request.args.get("error"), aviso=request.args.get("aviso"))
+
+
+@control_fiscal_bp.route("/avisos/<int:alerta_id>/acusar", methods=["POST"])
+@login_required
+def avisos_acusar(alerta_id: int):
+    try:
+        avisos.acusar(g.tenant_id, g.usuario_id, alerta_id, request.form.get("nota"))
+    except ValueError as e:
+        return _volver("control_fiscal.avisos_pantalla", error=str(e))
+    return _volver("control_fiscal.avisos_pantalla", aviso="acusado")
+
+
+# --- Expedientes unificados (RF-13) -----------------------------------------------------------------------------------------------------------
+def _a_expediente(expediente_id: int, error: str | None = None):
+    return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, **({"error": error[:200]} if error else {})))
+
+
+@control_fiscal_bp.route("/expedientes")
+@login_required
+def expedientes_lista():
+    estado = request.args.get("estado") or None
+    todos = request.args.get("todos") == "1"
+    clientes = nucleo.listar_clientes(g.tenant_id, limite=500)[0]
+    return render_template("fiscal_expedientes.html", lista=control_expedientes.listar(g.tenant_id, g.usuario_id, estado=estado, solo_abiertos=not todos), tipos=control_expedientes.TIPOS, estados=control_expedientes.ESTADOS,
+                           estado=estado, todos=todos, clientes=clientes, equipo=_equipo(), hoy=date.today().isoformat(), error=request.args.get("error"),
+                           solo_lectura=acceso.es_solo_auditor(g.tenant_id, g.usuario_id))
+
+
+@control_fiscal_bp.route("/expedientes/nuevo", methods=["POST"])
+@login_required
+def expediente_nuevo():
+    f = request.form
+    try:
+        nuevo = control_expedientes.crear(g.tenant_id, g.usuario_id, f.get("cliente_id", type=int) or 0, f.get("tipo", ""), f.get("titulo", ""), prioridad=f.get("prioridad") or "normal",
+                                          fecha_objetivo=f.get("fecha_objetivo") or None, revisor_id=f.get("revisor_id", type=int) or None, descripcion=f.get("descripcion"))
+    except ValueError as e:
+        return redirect(url_for("control_fiscal.expedientes_lista", error=str(e)[:200]))
+    return _a_expediente(nuevo)
+
+
+@control_fiscal_bp.route("/expedientes/obligacion/<int:vencimiento_id>/abrir", methods=["POST"])
+@login_required
+def expediente_de_obligacion(vencimiento_id: int):
+    try:
+        r = control_expedientes.abrir_desde_obligacion(g.tenant_id, g.usuario_id, vencimiento_id)
+    except ValueError as e:
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)[:200]))
+    return _a_expediente(r["id"])
+
+
+@control_fiscal_bp.route("/expedientes/certificado/<int:certificado_id>/abrir", methods=["POST"])
+@login_required
+def expediente_de_certificado(certificado_id: int):
+    try:
+        r = control_expedientes.abrir_desde_certificado(g.tenant_id, g.usuario_id, certificado_id)
+    except ValueError as e:
+        return redirect(url_for("certificados.detalle", certificado_id=certificado_id, error=str(e)[:200]))
+    return _a_expediente(r["id"])
+
+
+def _en_expediente(expediente_id: int, funcion, *a, **kw):
+    try:
+        funcion(g.tenant_id, g.usuario_id, *a, **kw)
+    except ValueError as e:
+        return _a_expediente(expediente_id, str(e))
+    return _a_expediente(expediente_id)
+
+
+@control_fiscal_bp.route("/expedientes/<int:expediente_id>/control", methods=["POST"])
+@login_required
+def expediente_control(expediente_id: int):
+    f = request.form
+    return _en_expediente(expediente_id, control_expedientes.editar_control, expediente_id, revisor_id=f.get("revisor_id", type=int) or None, prioridad=f.get("prioridad") or "normal",
+                          fecha_objetivo=f.get("fecha_objetivo") or None, **({"oficina_id": f.get("oficina_id", type=int) or None} if "oficina_id" in f else {}))
+
+
+@control_fiscal_bp.route("/expedientes/<int:expediente_id>/lista", methods=["POST"])
+@login_required
+def expediente_punto_nuevo(expediente_id: int):
+    f = request.form
+    return _en_expediente(expediente_id, control_expedientes.anadir_punto, expediente_id, f.get("texto", ""), obligatorio=bool(f.get("obligatorio")), asignado_id=f.get("asignado_id", type=int) or None,
+                          fecha_limite=f.get("fecha_limite") or None)
+
+
+def _expediente_del_punto(punto_id: int) -> int:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT c.expediente_id FROM expediente_checklist c JOIN expedientes x ON x.id = c.expediente_id WHERE c.id = ? AND x.tenant_id = ?", (punto_id, g.tenant_id)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        abort(404)
+    return f["expediente_id"]
+
+
+@control_fiscal_bp.route("/expedientes/lista/<int:punto_id>/hecho", methods=["POST"])
+@login_required
+def expediente_punto_hecho(punto_id: int):
+    exp = _expediente_del_punto(punto_id)
+    return _en_expediente(exp, control_expedientes.marcar_punto, punto_id, not request.form.get("reabrir"), request.form.get("nota"))
+
+
+@control_fiscal_bp.route("/expedientes/lista/<int:punto_id>/quitar", methods=["POST"])
+@login_required
+def expediente_punto_quitar(punto_id: int):
+    exp = _expediente_del_punto(punto_id)
+    return _en_expediente(exp, control_expedientes.eliminar_punto, punto_id)
+
+
+@control_fiscal_bp.route("/expedientes/<int:expediente_id>/documentos/<int:documento_id>/version", methods=["POST"])
+@login_required
+def expediente_documento_version(expediente_id: int, documento_id: int):
+    archivo = request.files.get("archivo")
+    if not archivo or not archivo.filename:
+        return _a_expediente(expediente_id, "Elige un archivo.")
+    return _en_expediente(expediente_id, control_expedientes.subir_version, documento_id, archivo.filename, archivo.mimetype, archivo.read(db.MAX_DOCUMENTO_CLIENTE_BYTES + 1))
+
+
+@control_fiscal_bp.route("/expedientes/<int:expediente_id>/documentos/<int:documento_id>/conservacion", methods=["POST"])
+@login_required
+def expediente_documento_conservacion(expediente_id: int, documento_id: int):
+    return _en_expediente(expediente_id, control_expedientes.fijar_conservacion, documento_id, request.form.get("hasta") or None)

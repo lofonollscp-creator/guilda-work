@@ -38,7 +38,7 @@ from .notas_formato import nota_a_html
 from . import acceso, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
-from . import rutas_api_ampliada, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
+from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
 from .rutas_proyectos import proyectos_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
@@ -2473,6 +2473,10 @@ def _recordatorio_vencimientos_fiscales():
             if not v["usuario_id"]:
                 continue
             try:
+                from . import avisos
+                if avisos.activo(v["tenant_id"]):      # el motor de avisos v2 ya cubre este despacho: no se duplica el aviso
+                    db.marcar_recordatorio_vencimiento_fiscal_enviado(v["id"])
+                    continue
                 if not db.notificacion_tipo_activa(v["usuario_id"], "vencimiento_fiscal"):
                     db.marcar_recordatorio_vencimiento_fiscal_enviado(v["id"])
                     continue

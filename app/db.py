@@ -2294,6 +2294,8 @@ def init_db() -> None:
         plantillas_cliente.crear_esquema(conn)  # plantillas de alta de cliente por tipo (app/plantillas_cliente.py)
         from . import traspasos
         traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
+        from . import avisos
+        avisos.crear_esquema(conn)            # motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py)
 
         conn.commit()
     finally:
@@ -3157,8 +3159,6 @@ from .db_correo import (  # noqa: E402,F401
     guardar_carpetas_correo,
     listar_carpetas_correo,
     renombrar_carpeta_correo,
-    eliminar_carpeta_correo,
-    crear_categoria_correo,
     crear_identidad_correo,
     bloquear_remitente_correo,
     listar_bloqueados_correo,
@@ -3167,6 +3167,8 @@ from .db_correo import (  # noqa: E402,F401
     listar_identidades_correo,
     obtener_identidad_correo,
     eliminar_identidad_correo,
+    eliminar_carpeta_correo,
+    crear_categoria_correo,
     listar_categorias_correo,
     eliminar_categoria_correo,
     crear_plantilla_correo,
@@ -3360,10 +3362,10 @@ from .db_fichaje import (  # noqa: E402,F401
     verificar_integridad_fichajes,
     estado_actual_fichaje,
     jornadas_abiertas_sin_aviso,
-    registrar_aviso_fichaje,
-    entrada_abierta_fichaje,
     jornadas_abiertas_desde,
     registrar_aviso_turno,
+    registrar_aviso_fichaje,
+    entrada_abierta_fichaje,
     ultimo_fichaje,
     listar_fichajes,
     fichajes_tenant_crudos,

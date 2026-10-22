@@ -272,6 +272,7 @@ def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> 
         conn.execute("UPDATE certificados_vinculos SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.execute("DELETE FROM concesiones_cliente WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.execute("DELETE FROM traspasos WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
+        conn.execute("DELETE FROM alertas WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         from . import tareas_trabajo
         tareas_trabajo.desvincular_cliente(conn, tenant_id, cliente_id)       # las tareas se conservan, sin el cliente
         conn.execute("DELETE FROM clientes_fiscales_accesos WHERE cliente_fiscal_id = ?", (cliente_id,))        # los enlaces de acceso al portal: sin esto, un cliente que ya entró una vez no se podía borrar
@@ -1084,8 +1085,8 @@ def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int, 
                JOIN tenants t ON t.id = v.tenant_id
                WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
                  AND c.recordatorios_portal = 1 AND c.email IS NOT NULL AND trim(c.email) <> ''
-                 AND v.fecha_limite >= ? AND v.fecha_limite < ? AND (? IS NULL OR v.tenant_id = ?)
                  AND v.modelo NOT IN ('NOMINAS', 'ALTA-SS', 'BAJA-SS', 'CONTRATO')
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ? AND (? IS NULL OR v.tenant_id = ?)
                  AND NOT EXISTS (SELECT 1 FROM vencimientos_recordatorios r
                                  WHERE r.vencimiento_id = v.id AND r.dias_antes = ?)""",
             (fecha_objetivo, _db._fecha_exclusiva(fecha_objetivo), tenant_id, tenant_id, dias_antes),

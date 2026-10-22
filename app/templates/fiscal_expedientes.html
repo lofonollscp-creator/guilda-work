@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Expedientes de control') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Expedientes de control') }}</h1>
+    <p class="subtitle">{{ _('Campañas, obligaciones, renovaciones, requerimientos e incidencias: quién lo lleva, qué falta y qué documentos lo acreditan. Para cerrar hay que completar los puntos obligatorios o documentar una excepción autorizada.') }}</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('control_fiscal.panel') }}">{{ _('Panel fiscal') }}</a>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+
+<nav class="cert-filtros" aria-label="{{ _('Filtros') }}">
+  <a class="btn btn-sm {{ 'btn-primary' if not todos and not estado else 'btn-secondary' }}" href="{{ url_for('control_fiscal.expedientes_lista') }}">{{ _('Abiertos') }}</a>
+  {% for e in estados %}<a class="btn btn-sm {{ 'btn-primary' if estado == e.id else 'btn-secondary' }}" href="{{ url_for('control_fiscal.expedientes_lista', estado=e.id, todos='1') }}">{{ e.nombre }}</a>{% endfor %}
+</nav>
+
+{% if not lista %}
+<p class="subtitle">{{ _('No hay expedientes en esta lista.') }}</p>
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Expediente') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Prioridad') }}</th><th>{{ _('Fecha objetivo') }}</th><th>{{ _('Lista') }}</th></tr></thead>
+  <tbody>{% for x in lista %}
+    <tr>
+      <td><a href="{{ url_for('expedientes.ficha', expediente_id=x.id) }}"><strong>{{ x.titulo }}</strong></a><br><span class="subtitle">{% for t in tipos %}{% if t.id == x.tipo %}{{ t.nombre }}{% endif %}{% endfor %}</span></td>
+      <td>{{ x.cliente }}</td>
+      <td>{% for e in estados %}{% if e.id == x.estado %}{{ e.nombre }}{% endif %}{% endfor %}</td>
+      <td>{{ {'baja': _('Baja'), 'normal': _('Normal'), 'alta': _('Alta'), 'urgente': _('Urgente')}[x.prioridad] }}</td>
+      <td>{{ x.fecha_objetivo or '—' }}{% if x.fecha_objetivo and x.fecha_objetivo < hoy and x.estado not in ('resuelto', 'cerrado') %}<br><span class="subtitle">{{ _('Pasada: el plazo sigue corriendo') }}</span>{% endif %}</td>
+      <td>{{ x.puntos_hechos }}/{{ x.puntos }}{% if x.obligatorios_pendientes %}<br><span class="subtitle">{{ ngettext('%(n)s obligatorio pendiente', '%(n)s obligatorios pendientes', x.obligatorios_pendientes, n=x.obligatorios_pendientes) }}</span>{% endif %}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+{% if not solo_lectura %}
+<section class="ausencias-seccion" id="nuevo">
+  <h2>{{ _('Abrir un expediente') }}</h2>
+  <p class="subtitle">{{ _('Para una obligación o un certificado, ábrelo desde su ficha: así queda enlazado y no se duplica.') }}</p>
+  <form method="post" action="{{ url_for('control_fiscal.expediente_nuevo') }}" class="cert-form">
+    <div class="cert-form-fila">
+      <label for="ex-cliente">{{ _('Cliente') }}<select id="ex-cliente" name="cliente_id" required><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></label>
+      <label for="ex-tipo">{{ _('Tipo') }}<select id="ex-tipo" name="tipo">{% for t in tipos %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select></label>
+      <label for="ex-prio">{{ _('Prioridad') }}<select id="ex-prio" name="prioridad"><option value="normal">{{ _('Normal') }}</option><option value="baja">{{ _('Baja') }}</option><option value="alta">{{ _('Alta') }}</option><option value="urgente">{{ _('Urgente') }}</option></select></label>
+    </div>
+    <label for="ex-titulo">{{ _('Título') }}<input type="text" id="ex-titulo" name="titulo" required maxlength="200"></label>
+    <div class="cert-form-fila">
+      <label for="ex-fecha">{{ _('Fecha objetivo') }}<input type="date" id="ex-fecha" name="fecha_objetivo"></label>
+      <label for="ex-rev">{{ _('Revisor') }}<select id="ex-rev" name="revisor_id"><option value="">{{ _('Sin asignar') }}</option>{% for e in equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select></label>
+    </div>
+    <div class="edit-form-actions"><button type="submit" class="btn btn-primary">{{ _('Abrir expediente') }}</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

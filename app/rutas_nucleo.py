@@ -377,7 +377,7 @@ def _accion_expediente(expediente_id: int, f):
 @expedientes_bp.route("/<int:expediente_id>/estado", methods=["POST"])
 @login_required
 def estado(expediente_id: int):
-    return _accion_expediente(expediente_id, lambda: nucleo.cambiar_estado_expediente(_tenant(), g.usuario_id, expediente_id, request.form.get("estado", ""), _supervisor()))
+    return _accion_expediente(expediente_id, lambda: nucleo.cambiar_estado_expediente(_tenant(), g.usuario_id, expediente_id, request.form.get("estado", ""), _supervisor(), excepcion=request.form.get("excepcion")))
 
 
 @expedientes_bp.route("/<int:expediente_id>/responsable", methods=["POST"])
@@ -389,7 +389,15 @@ def responsable(expediente_id: int):
 @expedientes_bp.route("/<int:expediente_id>/nota", methods=["POST"])
 @login_required
 def nota(expediente_id: int):
-    return _accion_expediente(expediente_id, lambda: nucleo.anotar_expediente(_tenant(), g.usuario_id, expediente_id, request.form.get("texto", ""), _supervisor()))
+    try:
+        r = nucleo.anotar_expediente(_tenant(), g.usuario_id, expediente_id, request.form.get("texto", ""), _supervisor())
+    except ValueError as e:
+        return _volver("expedientes.ficha", str(e), expediente_id=expediente_id)
+    if isinstance(r, dict) and (r.get("sin_acceso") or r.get("no_encontradas")):
+        # Comentario guardado, pero hay menciones a las que no se ha podido avisar: se dice, no se calla.
+        quienes = ", ".join("@" + m for m in (*r["sin_acceso"], *r["no_encontradas"]))
+        return _volver("expedientes.ficha", _("Comentario guardado. No se ha avisado a %(q)s: no tiene acceso al expediente o no se ha encontrado.", q=quienes), expediente_id=expediente_id)
+    return _volver("expedientes.ficha", expediente_id=expediente_id)
 
 
 @expedientes_bp.route("/<int:expediente_id>/editar", methods=["POST"])

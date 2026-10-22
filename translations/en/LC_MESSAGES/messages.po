@@ -12435,131 +12435,401 @@ msgid_plural "%(n)s nuevos"
 msgstr[0] "%(n)s new"
 msgstr[1] "%(n)s new"
 
-msgid "Tipo (persona o empresa)"
-msgstr "Type (person or company)"
+#, python-format
+msgid "%(n)s llevan más de 24 horas sin acuse"
+msgstr "%(n)s have been over 24 hours without acknowledgement"
 
-msgid "País (gestión fiscal)"
-msgstr "Country (tax management)"
+#, python-format
+msgid "%(n)s obligatorio pendiente"
+msgid_plural "%(n)s obligatorios pendientes"
+msgstr[0] "%(n)s mandatory item pending"
+msgstr[1] "%(n)s mandatory items pending"
 
-msgid "Esa importación ya no está disponible: sube el archivo otra vez."
-msgstr "That import is no longer available: upload the file again."
-
-msgid "importación"
-msgstr "import"
-
-msgid "Importar clientes"
-msgstr "Import clients"
-
-msgid "Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila."
-msgstr "Bring in your client list from an Excel or CSV file without typing client by client. Before anything is created you will see what it will do with each row."
-
-msgid "Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo."
-msgstr "Excel (.xlsx) or CSV. The first row must contain the column names. Up to %(n)s clients and 5 MB per file."
-
-msgid "Subir y revisar"
-msgstr "Upload and review"
-
-msgid "Descargar un ejemplo"
-msgstr "Download an example"
-
-msgid "Qué columnas reconoce"
-msgstr "Which columns it recognises"
-
-msgid "Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso."
-msgstr "It recognises them by name (with or without accents): name or company name, NIF or CIF, email, phone or mobile, address, type, language, tags, notes, origin and country. Any it does not recognise you can assign by hand in the next step."
-
-msgid "Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos."
-msgstr "Clients that already exist (same NIF, email or name) are not duplicated: they are skipped and we tell you."
-
-msgid "Importación terminada"
-msgstr "Import finished"
-
-msgid "Filas que no se importaron"
-msgstr "Rows that were not imported"
-
-msgid "Fila"
-msgstr "Row"
-
-msgid "Se enseñan los primeros 100 errores."
-msgstr "The first 100 errors are shown."
-
-msgid "Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican."
-msgstr "Fix those rows in the file and import it again: clients already created will be detected as duplicates and will not be duplicated."
-
-msgid "Ver los clientes importados"
-msgstr "View the imported clients"
-
-msgid "Ir a Clientes"
-msgstr "Go to Clients"
-
-msgid "Importar otro archivo"
-msgstr "Import another file"
-
-msgid "Revisar la importación"
-msgstr "Review the import"
-
-msgid "1. Qué es cada columna"
-msgstr "1. What each column is"
-
-msgid "Columna del archivo"
-msgstr "File column"
-
-msgid "Ejemplo"
-msgstr "Example"
-
-msgid "Importar como"
-msgstr "Import as"
+#, python-format
+msgid "%(n)s versión anterior"
+msgid_plural "%(n)s versiones anteriores"
+msgstr[0] "%(n)s earlier version"
+msgstr[1] "%(n)s earlier versions"
 
 msgid "(sin nombre)"
 msgstr "(no name)"
 
-msgid "No importar"
-msgstr "Do not import"
-
-msgid "Actualizar la vista previa"
-msgstr "Update the preview"
+msgid "1. Qué es cada columna"
+msgstr "1. What each column is"
 
 msgid "2. Qué pasará con cada fila"
 msgstr "2. What will happen with each row"
 
-msgid "Repetido"
-msgstr "Duplicate"
-
-msgid "Se enseñan las primeras %(n)s filas; el resto se importa igual."
-msgstr "The first %(n)s rows are shown; the rest are imported all the same."
-
 msgid "3. Importar"
 msgstr "3. Import"
 
-msgid "Omitir los clientes repetidos (recomendado)"
-msgstr "Skip duplicate clients (recommended)"
+msgid "Abiertos"
+msgstr "Open"
+
+msgid "Abrir o ver su expediente"
+msgstr "Open or view its case file"
+
+msgid "Abrir un expediente"
+msgstr "Open a case file"
+
+msgid "Activarlos"
+msgstr "Turn them on"
+
+msgid "Actualizar la vista previa"
+msgstr "Update the preview"
+
+#, python-format
+msgid "Acusado por %(q)s"
+msgstr "Acknowledged by %(q)s"
+
+msgid "Acusados"
+msgstr "Acknowledged"
+
+msgid "Avisar cuando falten (días)"
+msgstr "Alert when this many days remain"
+
+msgid "Aviso"
+msgstr "Alert"
+
+msgid "Avisos"
+msgstr "Alerts"
+
+msgid "Avisos con acuse y escalado"
+msgstr "Alerts with acknowledgement and escalation"
+
+msgid "Avisos fiscales"
+msgstr "Tax alerts"
+
+msgid "Avisos sin atender"
+msgstr "Unattended alerts"
+
+msgid "Añadir punto"
+msgstr "Add item"
+
+msgid "Campaña"
+msgstr "Campaign"
+
+msgid "Campañas, obligaciones, renovaciones, requerimientos e incidencias: quién lo lleva, qué falta y qué documentos lo acreditan. Para cerrar hay que completar los puntos obligatorios o documentar una excepción autorizada."
+msgstr "Campaigns, obligations, renewals, requests and incidents: who is handling it, what is missing and which documents support it. To close, complete the mandatory items or document an authorised exception."
+
+msgid "Cerrado con excepción"
+msgstr "Closed with exception"
+
+msgid "Cerrar con excepción"
+msgstr "Close with exception"
+
+msgid "Certificados: avisar cuando falten (días)"
+msgstr "Certificates: alert when this many days remain"
+
+msgid "Columna del archivo"
+msgstr "File column"
+
+#, python-format
+msgid "Comentario guardado. No se ha avisado a %(q)s: no tiene acceso al expediente o no se ha encontrado."
+msgstr "Comment saved. %(q)s was not notified: they have no access to the case file or could not be found."
+
+msgid "Conservar hasta"
+msgstr "Keep until"
+
+msgid "Control del expediente"
+msgstr "Case file control"
+
+msgid "Corrige esas filas en el archivo y vuelve a importarlo: los clientes ya creados se detectarán como repetidos y no se duplican."
+msgstr "Fix those rows in the file and import it again: clients already created will be detected as duplicates and will not be duplicated."
+
+msgid "Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos."
+msgstr "Create the first one or import your client list from an Excel file to start opening cases, logging hours and storing their documents."
+
+msgid "Cómo van los avisos"
+msgstr "How the alerts are going"
+
+msgid "Descargar un ejemplo"
+msgstr "Download an example"
+
+msgid "Documentos y versiones"
+msgstr "Documents and versions"
+
+msgid "Ejemplo"
+msgstr "Example"
+
+msgid "Esa importación ya no está disponible: sube el archivo otra vez."
+msgstr "That import is no longer available: upload the file again."
+
+msgid "Escalado a coordinación"
+msgstr "Escalated to coordination"
+
+msgid "Escalado a dirección"
+msgstr "Escalated to management"
+
+msgid "Escalar el resto sin acuse a las (horas)"
+msgstr "Escalate the rest without acknowledgement after (hours)"
+
+msgid "Escalar un urgente sin acuse a las (horas)"
+msgstr "Escalate an unacknowledged urgent alert after (hours)"
+
+msgid "Esperar al cliente o a un tercero no pausa el plazo legal: la fecha objetivo y los avisos siguen corriendo."
+msgstr "Waiting for the client or a third party does not pause the legal deadline: the target date and the alerts keep running."
 
 msgid "Etiqueta para todos los importados"
 msgstr "Tag for all imported clients"
 
-msgid "Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta."
-msgstr "It helps you find them together later. Leave it empty if you do not want a tag."
+#, python-format
+msgid "Excel (.xlsx) o CSV. La primera fila debe tener los nombres de las columnas. Hasta %(n)s clientes y 5 MB por archivo."
+msgstr "Excel (.xlsx) or CSV. The first row must contain the column names. Up to %(n)s clients and 5 MB per file."
 
-msgid "Llevar también la gestión fiscal de estos clientes"
-msgstr "Also handle the tax management of these clients"
+msgid "Expedientes de control"
+msgstr "Control case files"
 
-msgid "País de tributación (si el archivo no lo indica)"
-msgstr "Country of taxation (if the file does not say)"
+msgid "Fecha del punto"
+msgstr "Item date"
 
-msgid "Tipo de cliente fiscal"
-msgstr "Tax client type"
+msgid "Fila"
+msgstr "Row"
+
+msgid "Filas que no se importaron"
+msgstr "Rows that were not imported"
 
 msgid "Generar los vencimientos automáticamente cada periodo"
 msgstr "Generate the due dates automatically each period"
 
-msgid "Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha."
-msgstr "Without a tax client type, the tax record is created without forms: you assign them later in each record."
+msgid "Hecho"
+msgstr "Done"
+
+msgid "Importación terminada"
+msgstr "Import finished"
+
+msgid "Importar clientes"
+msgstr "Import clients"
+
+msgid "Importar como"
+msgstr "Import as"
 
 msgid "Importar desde Excel o CSV"
 msgstr "Import from Excel or CSV"
 
-msgid "Crea el primero o importa tu cartera desde un Excel para empezar a abrir expedientes, registrar horas y guardar sus documentos."
-msgstr "Create the first one or import your client list from an Excel file to start opening cases, logging hours and storing their documents."
+msgid "Importar otro archivo"
+msgstr "Import another file"
+
+msgid "Incidencia"
+msgstr "Incident"
+
+msgid "Interno"
+msgstr "Internal"
+
+msgid "Ir a Clientes"
+msgstr "Go to Clients"
+
+msgid "Las reconoce por su nombre (con o sin tildes): nombre o razón social, NIF o CIF, email o correo, teléfono o móvil, dirección, tipo, idioma, etiquetas, notas, origen y país. Las que no reconozca las podrás asignar a mano en el siguiente paso."
+msgstr "It recognises them by name (with or without accents): name or company name, NIF or CIF, email, phone or mobile, address, type, language, tags, notes, origin and country. Any it does not recognise you can assign by hand in the next step."
+
+msgid "Lista de comprobación"
+msgstr "Checklist"
+
+msgid "Llevar también la gestión fiscal de estos clientes"
+msgstr "Also handle the tax management of these clients"
+
+msgid "Lo llevo"
+msgstr "I'm on it"
+
+msgid "Lo que exige actuar: obligaciones vencidas o a punto de vencer, bloqueadas con el plazo cerca, traspasos sin aceptar y certificados a punto de caducar. Acusar un aviso dice «lo llevo»: deja de insistir, pero no presenta nada."
+msgstr "What needs action: overdue or nearly due obligations, blocked ones close to their deadline, unaccepted transfers and certificates about to expire. Acknowledging an alert means \"I'm on it\": it stops nagging but files nothing."
+
+msgid "Los avisos con acuse y escalado están desactivados en este despacho: se siguen mandando los recordatorios de siempre."
+msgstr "Alerts with acknowledgement and escalation are switched off in this firm: the usual reminders are still sent."
+
+msgid "Los clientes que ya existen (mismo NIF, correo o nombre) no se duplican: se omiten y te lo contamos."
+msgstr "Clients that already exist (same NIF, email or name) are not duplicated: they are skipped and we tell you."
+
+msgid "Los comentarios no pueden llevar contraseñas ni claves. Con @nombre solo se avisa a quien puede ver el expediente."
+msgstr "Comments cannot contain passwords or keys. With @name, only people who can see the case file are notified."
+
+msgid "Motivo de la excepción"
+msgstr "Reason for the exception"
+
+#, python-format
+msgid "Muestra: %(n)s avisos acusados en los últimos %(d)s días."
+msgstr "Sample: %(n)s alerts acknowledged in the last %(d)s days."
+
+msgid "No hay avisos en esta lista."
+msgstr "There are no alerts in this list."
+
+msgid "No hay expedientes en esta lista."
+msgstr "There are no case files in this list."
+
+msgid "No importar"
+msgstr "Do not import"
+
+msgid "Nueva versión"
+msgstr "New version"
+
+msgid "Nuevo punto"
+msgstr "New item"
+
+msgid "Obligatorio"
+msgstr "Mandatory"
+
+msgid "Obligatorio para cerrar"
+msgstr "Mandatory to close"
+
+msgid "Oficina responsable"
+msgstr "Responsible office"
+
+msgid "Omitir los clientes repetidos (recomendado)"
+msgstr "Skip duplicate clients (recommended)"
+
+#, python-format
+msgid "Para cerrar falta %(n)s punto obligatorio."
+msgid_plural "Para cerrar faltan %(n)s puntos obligatorios."
+msgstr[0] "To close, %(n)s mandatory item is missing."
+msgstr[1] "To close, %(n)s mandatory items are missing."
+
+msgid "Para una obligación o un certificado, ábrelo desde su ficha: así queda enlazado y no se duplica."
+msgstr "For an obligation or a certificate, open it from its own page: that way it is linked and not duplicated."
+
+msgid "Pasada"
+msgstr "Past"
+
+msgid "Pasada: el plazo sigue corriendo"
+msgstr "Past: the deadline keeps running"
+
+msgid "País (gestión fiscal)"
+msgstr "Country (tax management)"
+
+msgid "País de tributación (si el archivo no lo indica)"
+msgstr "Country of taxation (if the file does not say)"
+
+msgid "Pendiente de un tercero"
+msgstr "Waiting on a third party"
+
+msgid "Prioridad alta"
+msgstr "High priority"
+
+msgid "Prioridad baja"
+msgstr "Low priority"
+
+msgid "Prioridad normal"
+msgstr "Normal priority"
+
+msgid "Prioridad urgente"
+msgstr "Urgent priority"
+
+msgid "Qué columnas reconoce"
+msgstr "Which columns it recognises"
+
+msgid "Renovación de certificado"
+msgstr "Certificate renewal"
+
+msgid "Repeticiones como máximo"
+msgstr "Maximum repetitions"
+
+msgid "Repetido"
+msgstr "Duplicate"
+
+msgid "Repetir los urgentes cada (horas)"
+msgstr "Repeat urgent alerts every (hours)"
+
+msgid "Responsable del punto"
+msgstr "Item owner"
+
+msgid "Resueltos"
+msgstr "Resolved"
+
+msgid "Revisar la importación"
+msgstr "Review the import"
+
+msgid "Revisor"
+msgstr "Reviewer"
+
+#, python-format
+msgid "Se enseñan las primeras %(n)s filas; el resto se importa igual."
+msgstr "The first %(n)s rows are shown; the rest are imported all the same."
+
+msgid "Se enseñan los primeros 100 errores."
+msgstr "The first 100 errors are shown."
+
+msgid "Si hay un motivo, puedes cerrar con una excepción autorizada (queda registrada y auditada)."
+msgstr "If there is a reason, you can close with an authorised exception (it is recorded and audited)."
+
+msgid "Sin acuse, el aviso sube a la coordinación de la oficina del cliente y, pasado el mismo tiempo, a la dirección. Cada aviso se cierra solo cuando la obligación se presenta, se anula o se marca «no aplica»."
+msgstr "Without acknowledgement, the alert goes up to the client's office coordination and, after the same time, to management. Each alert closes by itself only when the obligation is filed, cancelled or marked \"not applicable\"."
+
+msgid "Sin atender"
+msgstr "Unattended"
+
+#, python-format
+msgid "Sin atender desde hace %(h)s h"
+msgstr "Unattended for %(h)s h"
+
+msgid "Sin clasificar"
+msgstr "Unclassified"
+
+msgid "Sin puntos todavía."
+msgstr "No items yet."
+
+msgid "Sin un tipo de cliente fiscal se crea su ficha fiscal sin modelos: los asignas después en cada ficha."
+msgstr "Without a tax client type, the tax record is created without forms: you assign them later in each record."
+
+msgid "Subir nueva versión"
+msgstr "Upload new version"
+
+msgid "Subir y revisar"
+msgstr "Upload and review"
+
+msgid "Sustituye, para este despacho, al recordatorio único de 7 días y al escalado de traspasos de antes. Apagado, todo funciona como siempre."
+msgstr "For this firm, it replaces the single 7-day reminder and the earlier escalation of transfers. When off, everything works as before."
+
+msgid "Te sirve para encontrarlos juntos después. Déjala vacía si no quieres etiqueta."
+msgstr "It helps you find them together later. Leave it empty if you do not want a tag."
+
+msgid "Tipo (persona o empresa)"
+msgstr "Type (person or company)"
+
+msgid "Tipo de cliente fiscal"
+msgstr "Tax client type"
+
+msgid "Todavía no hay documentos. Súbelos más abajo, en «Documentos»."
+msgstr "There are no documents yet. Upload them below, under \"Documents\"."
+
+msgid "Trae tu cartera desde un Excel o un CSV sin teclear cliente a cliente. Antes de crear nada verás qué hará con cada fila."
+msgstr "Bring in your client list from an Excel or CSV file without typing client by client. Before anything is created you will see what it will do with each row."
+
+msgid "Urgente"
+msgstr "Urgent"
+
+msgid "Ver los clientes importados"
+msgstr "View the imported clients"
+
+msgid "Visible para el cliente"
+msgstr "Visible to the client"
+
+#, python-format
+msgid "de %(n)s expedientes resueltos o cerrados no tienen ningún documento"
+msgstr "of %(n)s resolved or closed case files have no document"
+
+msgid "de mediana hasta el acuse"
+msgstr "median time to acknowledgement"
+
+msgid "duplicados"
+msgstr "duplicates"
+
+msgid "escalados sin resolver"
+msgstr "escalated and unresolved"
+
+msgid "fallos de entrega"
+msgstr "delivery failures"
+
+#, python-format
+msgid "hecho por %(q)s"
+msgstr "done by %(q)s"
+
+msgid "importación"
+msgstr "import"
+
+msgid "sin atender ahora"
+msgstr "unattended now"
+
+msgid "¿Quitar este punto de la lista?"
+msgstr "Remove this item from the list?"
 
 msgid "%(n)s cliente creado"
 msgid_plural "%(n)s clientes creados"
@@ -12661,6 +12931,9 @@ msgid_plural "Ver todo (%(n)s)"
 msgstr[0] "View all (%(n)s)"
 msgstr[1] "View all (%(n)s)"
 
+msgid "Menú y accesos directos"
+msgstr "Menu and shortcuts"
+
 msgid "Oculta lo que no usas y fija arriba lo que más abres."
 msgstr "Hide what you don't use and pin what you open most to the top."
 
@@ -12670,17 +12943,38 @@ msgstr "Customised"
 msgid "Correo del equipo"
 msgstr "Team mail"
 
+msgid "Menú"
+msgstr "Menu"
+
+msgid "Oculta lo que no usas y fija arriba lo que más abres. Solo cambia tu menú, no el de tus compañeros."
+msgstr "Hide what you don't use and pin what you open most to the top. It only changes your menu, not your colleagues'."
+
+msgid "Menú guardado."
+msgstr "Menu saved."
+
+msgid "Menú restablecido."
+msgstr "Menu reset."
+
 msgid "Pantalla"
 msgstr "Screen"
 
+msgid "Mostrar en el menú"
+msgstr "Show in the menu"
+
 msgid "Fijar arriba"
 msgstr "Pin to the top"
+
+msgid "Mostrar %(nombre)s en el menú"
+msgstr "Show %(nombre)s in the menu"
 
 msgid "Fijar %(nombre)s arriba"
 msgstr "Pin %(nombre)s to the top"
 
 msgid "Puedes fijar hasta %(n)s accesos directos. Lo que ocultes sigue disponible desde el buscador (Ctrl K) y desde esta pantalla."
 msgstr "You can pin up to %(n)s shortcuts. Whatever you hide stays available from search (Ctrl K) and from this screen."
+
+msgid "Restablecer el menú de serie"
+msgstr "Reset to the default menu"
 
 msgid "Volver a Ajustes"
 msgstr "Back to Settings"
@@ -13439,9 +13733,6 @@ msgstr "%(f)s invoices (%(a)s credit notes), %(r)s records, total %(t)s €."
 msgid "El fichero cumple lo que comprueba este pre-chequeo. Aun así, pásalo por el botón «Chequeo» de a3 en una empresa de pruebas la primera vez."
 msgstr "The file meets what this pre-check verifies. Even so, run it through a3's “Chequeo” button in a test company the first time."
 
-msgid "Avisos"
-msgstr "Warnings"
-
 msgid "Subcuentas nuevas que se asignarían"
 msgstr "New subaccounts that would be assigned"
 
@@ -13649,6 +13940,9 @@ msgstr "No task matches this filter."
 msgid "Motivo del bloqueo"
 msgstr "Reason for the block"
 
+msgid "Obligatorio si el estado es Esperando a otros"
+msgstr "Required when the status is Waiting on others"
+
 msgid "Indica por qué la tarea queda bloqueada."
 msgstr "Say why the task is blocked."
 
@@ -13660,9 +13954,6 @@ msgstr "The client above is the main one; tick the others this task affects."
 
 msgid "Otra persona ha modificado esta tarea mientras la editabas. Aquí tienes cómo está ahora; revísala y vuelve a guardar tus cambios."
 msgstr "Someone else changed this task while you were editing it. Here is how it is now; review it and save your changes again."
-
-msgid "Obligatorio si el estado es Esperando a otros"
-msgstr "Required when the status is Waiting on others"
 
 msgid "Es una subtarea de"
 msgstr "It is a subtask of"
@@ -13854,6 +14145,11 @@ msgstr "Completed in the window"
 msgid "Informe de tareas"
 msgstr "Task report"
 
+msgid "Lo que se acerca en %(n)s día"
+msgid_plural "Lo que se acerca en los próximos %(n)s días"
+msgstr[0] "What is coming up in %(n)s day"
+msgstr[1] "What is coming up in the next %(n)s days"
+
 msgid "La revisa %(quien)s."
 msgstr "%(quien)s is reviewing it."
 
@@ -13946,11 +14242,6 @@ msgstr "The task is not linked to any client."
 
 msgid "No tienes permiso para cambiar lo que ve el cliente."
 msgstr "You do not have permission to change what the client sees."
-
-msgid "Lo que se acerca en %(n)s día"
-msgid_plural "Lo que se acerca en los próximos %(n)s días"
-msgstr[0] "What is coming up in %(n)s day"
-msgstr[1] "What is coming up in the next %(n)s days"
 
 msgid "Más clientes"
 msgstr "More clients"
@@ -14566,6 +14857,9 @@ msgstr "Win rate"
 msgid "Ciclo medio de venta"
 msgstr "Average sales cycle"
 
+msgid "Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien."
+msgstr "With no closed opportunities in the period there is no win rate: no zero or one hundred percent is made up."
+
 msgid "Por qué se pierden"
 msgstr "Why they are lost"
 
@@ -14760,6 +15054,3 @@ msgstr "Call"
 
 msgid "Visita"
 msgstr "Visit"
-
-msgid "Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien."
-msgstr "With no closed opportunities in the period there is no win rate: no zero or one hundred percent is made up."

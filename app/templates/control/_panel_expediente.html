@@ -1,0 +1,86 @@
+{# Panel del control fiscal en la ficha de un expediente (campaña, obligación, renovación, requerimiento, incidencia). Lo incluye expediente_ficha.html con `panel` (ver control_expedientes.contexto_panel). #}
+{% from "_ds/componentes.html" import chip %}
+{% set c = panel.control %}
+<section class="dash-panel ds-mt-16" id="panel-control">
+  <h2>{{ _('Control del expediente') }}</h2>
+  <p class="muted">
+    {{ chip({'baja': _('Prioridad baja'), 'normal': _('Prioridad normal'), 'alta': _('Prioridad alta'), 'urgente': _('Prioridad urgente')}[c.prioridad], 'peligro' if c.prioridad in ('alta', 'urgente') else 'neutro') }}
+    {% if c.fecha_objetivo %}· {{ _('Fecha objetivo') }}: <strong>{{ c.fecha_objetivo }}</strong>{% if c.fecha_objetivo < panel.hoy and x.estado not in ('resuelto', 'cerrado') %} {{ chip(_('Pasada'), 'peligro') }}{% endif %}{% endif %}
+    · {{ _('Revisor') }}: {{ panel.revisor or _('Sin asignar') }}
+    {% if panel.vinculo %}· {{ _('Sobre') }}: <a href="{{ panel.vinculo.url }}">{{ panel.vinculo.texto }}</a>{% endif %}
+  </p>
+  <p class="muted">{{ _('Esperar al cliente o a un tercero no pausa el plazo legal: la fecha objetivo y los avisos siguen corriendo.') }}</p>
+
+  {% if not panel.solo_lectura %}
+  <form method="post" action="{{ url_for('control_fiscal.expediente_control', expediente_id=x.id) }}" class="edit-form">
+    <div class="cert-form-fila">
+      <label>{{ _('Revisor') }}<select name="revisor_id"><option value="">{{ _('Sin asignar') }}</option>{% for e in panel.equipo %}<option value="{{ e.id }}" {{ 'selected' if e.id == c.revisor_id }}>{{ e.nombre }}</option>{% endfor %}</select></label>
+      <label>{{ _('Prioridad') }}<select name="prioridad">{% for p, n in (('baja', _('Baja')), ('normal', _('Normal')), ('alta', _('Alta')), ('urgente', _('Urgente'))) %}<option value="{{ p }}" {{ 'selected' if p == c.prioridad }}>{{ n }}</option>{% endfor %}</select></label>
+      <label>{{ _('Fecha objetivo') }}<input type="date" name="fecha_objetivo" value="{{ c.fecha_objetivo or '' }}"></label>
+      {% if panel.oficinas %}<label>{{ _('Oficina responsable') }}<select name="oficina_id"><option value="">{{ _('Sin oficina') }}</option>{% for o in panel.oficinas %}<option value="{{ o.id }}" {{ 'selected' if o.id == c.oficina_id }}>{{ o.nombre }}</option>{% endfor %}</select></label>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-secondary">{{ _('Guardar') }}</button>
+  </form>
+  {% endif %}
+
+  <h3 class="ds-mt-16">{{ _('Lista de comprobación') }}</h3>
+  {% if panel.lista %}
+  <ul class="log-list">{% for p in panel.lista %}
+    <li class="log-item">
+      <span class="log-text">
+        {% if p.hecho_en %}<strong>✓</strong> <s>{{ p.texto }}</s>{% else %}<strong>○</strong> {{ p.texto }}{% endif %}
+        {% if p.obligatorio %}{{ chip(_('Obligatorio'), 'aviso') }}{% endif %}
+        <span class="muted">{% if p.asignado %}· {{ p.asignado }}{% endif %}{% if p.fecha_limite %} · {{ p.fecha_limite }}{% endif %}{% if p.hecho_en %} · {{ _('hecho por %(q)s', q=p.hecho_por_nombre or '—') }}{% endif %}{% if p.nota %} · {{ p.nota }}{% endif %}</span>
+      </span>
+      {% if not panel.solo_lectura %}
+      <form method="post" action="{{ url_for('control_fiscal.expediente_punto_hecho', punto_id=p.id) }}" class="form-en-linea">
+        {% if p.hecho_en %}<input type="hidden" name="reabrir" value="1"><button class="btn btn-ghost btn-sm">{{ _('Reabrir') }}</button>
+        {% else %}<input type="text" name="nota" maxlength="300" placeholder="{{ _('Nota (opcional)') }}" aria-label="{{ _('Nota (opcional)') }}"><button class="btn btn-primary btn-sm">{{ _('Hecho') }}</button>{% endif %}
+      </form>
+      <form method="post" action="{{ url_for('control_fiscal.expediente_punto_quitar', punto_id=p.id) }}" data-confirmar-envio="{{ _('¿Quitar este punto de la lista?') }}" data-confirmar-peligro><button type="submit" class="chip-del" title="{{ _('Quitar') }}">×</button></form>
+      {% endif %}
+    </li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Sin puntos todavía.') }}</p>{% endif %}
+  {% if not panel.solo_lectura %}
+  <form method="post" action="{{ url_for('control_fiscal.expediente_punto_nuevo', expediente_id=x.id) }}" class="edit-form ds-mt-12">
+    <input type="text" name="texto" placeholder="{{ _('Nuevo punto') }}" required maxlength="300" aria-label="{{ _('Nuevo punto') }}">
+    <select name="asignado_id" aria-label="{{ _('Responsable del punto') }}"><option value="">{{ _('Sin asignar') }}</option>{% for e in panel.equipo %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}</select>
+    <input type="date" name="fecha_limite" aria-label="{{ _('Fecha del punto') }}">
+    <label class="ds-fila"><input type="checkbox" name="obligatorio" value="1"> {{ _('Obligatorio para cerrar') }}</label>
+    <button type="submit" class="btn btn-ghost">+ {{ _('Añadir punto') }}</button>
+  </form>
+  {% endif %}
+
+  {% if panel.faltan and x.estado != 'cerrado' %}
+  <p class="muted ds-mt-12">{{ ngettext('Para cerrar falta %(n)s punto obligatorio.', 'Para cerrar faltan %(n)s puntos obligatorios.', panel.faltan, n=panel.faltan) }}
+    {% if panel.puede_autorizar %}{{ _('Si hay un motivo, puedes cerrar con una excepción autorizada (queda registrada y auditada).') }}{% endif %}</p>
+  {% if panel.puede_autorizar and not panel.solo_lectura %}
+  <form method="post" action="{{ url_for('expedientes.estado', expediente_id=x.id) }}" class="edit-form">
+    <input type="hidden" name="estado" value="cerrado">
+    <input type="text" name="excepcion" required maxlength="500" placeholder="{{ _('Motivo de la excepción') }}" aria-label="{{ _('Motivo de la excepción') }}">
+    <button type="submit" class="btn btn-secondary">{{ _('Cerrar con excepción') }}</button>
+  </form>
+  {% endif %}{% endif %}
+  {% if c.excepcion_motivo %}<p class="muted">{{ chip(_('Cerrado con excepción'), 'aviso') }} {{ c.excepcion_motivo }}</p>{% endif %}
+
+  <h3 class="ds-mt-16">{{ _('Documentos y versiones') }}</h3>
+  {% if panel.docs %}
+  <ul class="log-list">{% for d in panel.docs %}
+    <li class="log-item">
+      <span class="log-text"><a href="{{ url_for('expedientes.descargar_documento', expediente_id=x.id, documento_id=d.id) }}">{{ d.nombre_archivo }}</a> {{ chip('v' ~ d.version) }}
+        <span class="muted">· {{ d.categoria or _('Sin clasificar') }} · {{ d.autor or '—' }} · {{ d.creado_en[:10] }} · <code>{{ d.hash_sha256[:10] }}</code>{% if d.conservar_hasta %} · {{ _('Conservar hasta') }} {{ d.conservar_hasta }}{% endif %}{% if d.compartido_cliente %} · {{ _('Visible para el cliente') }}{% else %} · {{ _('Interno') }}{% endif %}</span>
+        {% if d.versiones %}<details><summary class="muted">{{ ngettext('%(n)s versión anterior', '%(n)s versiones anteriores', d.versiones|length, n=d.versiones|length) }}</summary>
+          <ul>{% for v in d.versiones %}<li><a href="{{ url_for('expedientes.descargar_documento', expediente_id=x.id, documento_id=v.id) }}">{{ v.nombre_archivo }}</a> v{{ v.version }} <span class="muted">· {{ v.creado_en[:10] }} · <code>{{ v.hash_sha256[:10] }}</code></span></li>{% endfor %}</ul></details>{% endif %}
+      </span>
+      {% if not panel.solo_lectura %}
+      <form method="post" action="{{ url_for('control_fiscal.expediente_documento_version', expediente_id=x.id, documento_id=d.id) }}" enctype="multipart/form-data" class="form-en-linea">
+        <input type="file" name="archivo" required aria-label="{{ _('Nueva versión') }}"><button class="btn btn-ghost btn-sm">{{ _('Subir nueva versión') }}</button>
+      </form>
+      <form method="post" action="{{ url_for('control_fiscal.expediente_documento_conservacion', expediente_id=x.id, documento_id=d.id) }}" class="form-en-linea">
+        <input type="date" name="hasta" value="{{ d.conservar_hasta or '' }}" aria-label="{{ _('Conservar hasta') }}"><button class="btn btn-ghost btn-sm">{{ _('Conservar hasta') }}</button>
+      </form>
+      {% endif %}
+    </li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay documentos. Súbelos más abajo, en «Documentos».') }}</p>{% endif %}
+  <p class="muted">{{ _('Los comentarios no pueden llevar contraseñas ni claves. Con @nombre solo se avisa a quien puede ver el expediente.') }}</p>
+</section>

@@ -86,6 +86,17 @@ _cl = db.listar_clientes_fiscales(t)
 _tr.asignar_responsable(t, yo, _cl[0]["id"], ana)
 _tr.asignar_responsable(t, yo, _cl[1]["id"], yo)
 _tr.proponer(t, yo, _cl[1]["id"], ana, nota="Falta el modelo 303 del T3 y pedir el justificante de la domiciliación")
+from app import avisos as _av
+_av.guardar_config(t, yo, activo=True, dias_antes=[7, 3, 1], escalar_horas_urgente=24, escalar_horas_atencion=72, reenviar_horas=24, max_reenvios=3)
+_av.evaluar(t)
+from app import control_expedientes as _ce, almacen_documentos as _ad
+_vs = db.listar_vencimientos_fiscales(t)
+_ex = _ce.abrir_desde_obligacion(t, yo, _vs[0]["id"])["id"]
+_ce.marcar_punto(t, yo, _ce.listar_lista(_ex)[0]["id"], True, "Recibida por correo")
+_ce.editar_control(t, yo, _ex, revisor_id=ana, prioridad="alta")
+_, _doc = _ad.guardar(yo, "modelo303.pdf", "application/pdf", b"%PDF borrador uno", expediente_id=_ex, categoria="modelo")
+_ce.subir_version(t, yo, _doc, "modelo303.pdf", "application/pdf", b"%PDF version dos")
+_ce.crear(t, yo, __import__("app.nucleo", fromlist=["x"]).vincular_cliente_fiscal(t, _cl[1]["id"]), "control_requerimiento", "Requerimiento de Hacienda IVA 2025", responsable_id=ana, prioridad="urgente", fecha_objetivo="2026-10-30")
 kratos.whoami = lambda c: {"active": True, "identity": {"id": "k-demo", "traits": {"email": "demo@ejemplo.com"}}}
 from app.main import app
 _wsgi = app.wsgi_app

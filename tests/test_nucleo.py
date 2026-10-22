@@ -316,7 +316,8 @@ def test_los_verticales_se_guardan_en_memoria_poco_tiempo(usuario_id, monkeypatc
 
 def test_tipos_de_expediente_segun_los_verticales_activos(usuario_id):
     t, _ = _despacho()
-    assert list(verticales.tipos_expediente(t)) == ["general"]
+    # La Gestoría (por defecto) trae los cinco tipos del control fiscal (app/control_expedientes.py) además del general.
+    assert list(verticales.tipos_expediente(t)) == ["general", "control_campana", "control_obligacion", "control_renovacion", "control_requerimiento", "control_incidencia"]
     assert verticales.tipo_de("tipo_retirado") is verticales.TIPO_GENERAL
     assert [e.id for e in verticales.TIPO_GENERAL.estados] == ["abierto", "en_curso", "en_espera", "cerrado"] and verticales.TIPO_GENERAL.inicial == "abierto"
 
