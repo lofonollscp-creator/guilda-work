@@ -14385,3 +14385,9 @@ msgstr "La tasca és en revisió: resol-la o retira la petició abans de canviar
 
 msgid "Se activa cuando se completa la última tarea de la que dependía otra, que queda libre para empezar. Sirve, por ejemplo, para avisar a quien la lleva o fijarle una fecha."
 msgstr "S'activa quan es completa l'última tasca de la qual en depenia una altra, que queda lliure per començar. Serveix, per exemple, per avisar qui la du o posar-hi una data límit."
+
+msgid "El archivo no se ha podido aceptar: nuestro antivirus ha detectado en él algo peligroso. Revisa tu equipo antes de volver a enviarlo."
+msgstr "El fitxer no s'ha pogut acceptar: el nostre antivirus hi ha detectat alguna cosa perillosa. Revisa el teu equip abans de tornar-lo a enviar."
+
+msgid "Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."
+msgstr "Ara mateix no podem comprovar el fitxer amb l'antivirus. Torna-ho a provar d'aquí a uns minuts."

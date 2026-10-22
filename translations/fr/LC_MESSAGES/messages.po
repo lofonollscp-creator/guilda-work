@@ -14461,3 +14461,9 @@ msgstr "La tâche est en révision : résolvez-la ou retirez la demande avant de
 
 msgid "Se activa cuando se completa la última tarea de la que dependía otra, que queda libre para empezar. Sirve, por ejemplo, para avisar a quien la lleva o fijarle una fecha."
 msgstr "Se déclenche quand la dernière tâche dont une autre dépendait est terminée, ce qui la libère pour démarrer. Utile, par exemple, pour prévenir la personne qui la gère ou fixer une échéance."
+
+msgid "El archivo no se ha podido aceptar: nuestro antivirus ha detectado en él algo peligroso. Revisa tu equipo antes de volver a enviarlo."
+msgstr "Le fichier n'a pas pu être accepté : notre antivirus y a détecté quelque chose de dangereux. Vérifiez votre ordinateur avant de le renvoyer."
+
+msgid "Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."
+msgstr "Nous ne pouvons pas vérifier le fichier avec l'antivirus pour le moment. Réessayez dans quelques minutes."

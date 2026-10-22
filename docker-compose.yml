@@ -837,6 +837,18 @@ services:
       # pero se mantiene porque ahí vive la instalación en sí.
       - nextcloud-data:/var/www/html
 
+  # Antivirus para lo que suben los clientes desde su portal (ver app/antivirus.py y HOSTING.md). clamd escucha SOLO en 127.0.0.1:3310 (la app habla con él por el protocolo INSTREAM).
+  # Gasta ~1-1,5 GB de memoria con las firmas cargadas y tarda unos minutos en estar listo la primera vez (descarga las firmas). Para activarlo en la app: CLAMAV_HOST=127.0.0.1 en /etc/guilda-work.env.
+  # Imagen fijada por digest como las demás (octubre de 2026, rama 1.4; el digest se leyó del registro de Docker Hub sin descargar la imagen).
+  clamav:
+    image: clamav/clamav:1.4@sha256:3bba6dd5ac6663d55b80f86a3126e146612d93b593cc2617188d13f637d91260
+    container_name: guilda-work-clamav
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3310:3310"
+    volumes:
+      - clamav-db:/var/lib/clamav
+
   # Nivel: mínimo (CPX22), ver HOSTING.md.
   # Documenso (firma electrónica) — instancia compartida, como EspoCRM/
   # Nextcloud, pero SIN SSO (confirmado en la documentación oficial:
@@ -1890,6 +1902,7 @@ volumes:
   espocrm-data:
   postgres-nextcloud-data:
   nextcloud-data:
+  clamav-db:
   postgres-documenso-data:
   paperless-broker-data:
   postgres-paperless-data:

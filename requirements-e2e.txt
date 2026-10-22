@@ -1,0 +1,3 @@
+# Pruebas de navegador (tests/e2e): Playwright con Chromium. NO se instalan con el resto; ver «Pruebas de navegador» en HOSTING.md.
+-r requirements-dev.txt
+playwright>=1.49

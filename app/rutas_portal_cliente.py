@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import captcha, db, notificaciones, tareas_trabajo, verticales
+from . import antivirus, captcha, db, notificaciones, tareas_trabajo, verticales
 from . import facturas_contables
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -182,6 +182,7 @@ def _vencimiento_del_cliente_actual(vencimiento_id: int):
 @cliente_login_required
 def documentos_vencimiento(vencimiento_id: int):
     vencimiento = _vencimiento_del_cliente_actual(vencimiento_id)
+    cliente_actual = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     error = None
     resultados = []
     if request.method == "POST":
@@ -198,8 +199,13 @@ def documentos_vencimiento(vencimiento_id: int):
                                    "mensaje": _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")})
             else:
                 try:
+                    antivirus.exigir_limpio(f.filename, contenido, cliente_actual["tenant_id"], cliente_actual["id"])
                     db.subir_documento_vencimiento(vencimiento_id, f.filename, f.mimetype, contenido)
                     resultados.append({"nombre": f.filename, "ok": True, "mensaje": _("Subido.")})
+                except antivirus.ArchivoRechazado as e:
+                    mensaje = (_("El archivo no se ha podido aceptar: nuestro antivirus ha detectado en él algo peligroso. Revisa tu equipo antes de volver a enviarlo.") if e.codigo == "virus"
+                               else _("Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."))
+                    resultados.append({"nombre": f.filename, "ok": False, "mensaje": mensaje})
                 except ValueError:
                     resultados.append({"nombre": f.filename, "ok": False, "mensaje": _("Archivo no válido: solo imágenes o PDF, hasta 8MB.")})
         if archivos and not error and all(r["ok"] for r in resultados):

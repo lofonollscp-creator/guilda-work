@@ -12,7 +12,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import date, datetime, timedelta
 
-from . import auditoria, db
+from . import antivirus, auditoria, db
 
 ESTADOS = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada", "en_revision")
 ESTADOS_CERRADOS = ("completada",)
@@ -941,7 +941,7 @@ def _firma_valida(ext: str, contenido: bytes) -> bool:
     return False
 
 
-def _validar_adjuntos_cliente(archivos) -> list[tuple[str, str, bytes]]:
+def _validar_adjuntos_cliente(archivos, tenant_id: int | None = None, cliente_fiscal_id: int | None = None) -> list[tuple[str, str, bytes]]:
     """[(nombre seguro, tipo que decide el servidor, contenido)] o ComentarioInvalido. `archivos`: lista de (nombre, bytes); los vacíos (sin nombre) se ignoran."""
     import hashlib
     from . import certificados
@@ -963,6 +963,10 @@ def _validar_adjuntos_cliente(archivos) -> list[tuple[str, str, bytes]]:
         if huella in vistos:
             continue
         vistos.add(huella)
+        try:
+            antivirus.exigir_limpio(nombre, contenido, tenant_id, cliente_fiscal_id)           # apagado por defecto (ver app/antivirus.py)
+        except antivirus.ArchivoRechazado as e:
+            raise ComentarioInvalido(e.codigo, str(e)) from None
         validos.append((nombre, TIPOS_ADJUNTO_CLIENTE[ext], contenido))
     return validos
 
@@ -976,7 +980,7 @@ def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int,
     if len(texto) > MAX_CARACTERES_COMENTARIO:
         raise ComentarioInvalido("largo", f"El comentario admite como máximo {MAX_CARACTERES_COMENTARIO} caracteres.")
     texto = "".join(c for c in texto if c == "\n" or c >= " ")                       # fuera caracteres de control
-    adjuntos = _validar_adjuntos_cliente(archivos)
+    adjuntos = _validar_adjuntos_cliente(archivos, tenant_id, cliente_fiscal_id)
     conn = db.get_connection()
     try:
         t = conn.execute(

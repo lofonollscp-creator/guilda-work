@@ -13,7 +13,7 @@ from dataclasses import replace
 
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, auditoria, db, enlace_a3, verticales
+from . import acceso, antivirus, auditoria, db, enlace_a3, verticales
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS contabilidad_clientes (
@@ -1210,6 +1210,8 @@ def crear_desde_portal(cliente_fiscal_id: int, datos: dict, archivo: tuple[str, 
     notas = "Anotada por el cliente desde el portal."
     if str(datos.get("complicada")) in ("1", "on", "true", "True"):
         notas += " PENDIENTE DE COMPLETAR: lleva retención o más de un tipo de IVA; el desglose de abajo es solo una aproximación a partir del total."
+    if archivo:
+        antivirus.exigir_limpio(archivo[0], archivo[2], tenant_id, cliente_fiscal_id)        # ArchivoRechazado es un ValueError con un mensaje apto para el cliente
     documento_id = adjuntar(tenant_id, cliente_fiscal_id, None, *archivo) if archivo else None
     fid = _insertar(tenant_id, None, f, {**{k: datos.get(k) for k in ("tipo", "fecha", "numero", "tercero_nombre", "tercero_nif", "concepto")}, "notas": notas},
                     [{"base": f"{base / 100:.2f}", "pct_iva": str(pct / 100), "cuota_iva": f"{cuota_iva / 100:.2f}"}], "portal", documento_id)
@@ -1274,6 +1276,9 @@ def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[s
         conn.close()
     if pendientes + len([a for a in archivos if a and a[2]]) > MAX_PENDIENTES_DEL_PORTAL:
         raise ValueError("Tienes muchas facturas pendientes de revisar: espera a que el despacho las procese.")
+    for a in archivos:
+        if a and a[2]:
+            antivirus.exigir_limpio(a[0], a[2], f["tenant_id"], cliente_fiscal_id)           # antes de guardar nada: si uno falla, no se guarda ninguno
     ids = _subir(f["tenant_id"], None, f, tipo, archivos, "portal", "Subida por el cliente desde el portal, pendiente de leer.")
     _avisar_al_despacho(f, ids[-1], {"tercero_nombre": f"{len(ids)} archivo(s) por leer", "numero": ""}, len(ids))
     return ids

@@ -14376,3 +14376,9 @@ msgstr "The task is in review: resolve it or withdraw the request before changin
 
 msgid "Se activa cuando se completa la última tarea de la que dependía otra, que queda libre para empezar. Sirve, por ejemplo, para avisar a quien la lleva o fijarle una fecha."
 msgstr "It fires when the last task another one depended on is completed, freeing it to start. Useful, for example, to notify whoever has it or to set a due date."
+
+msgid "El archivo no se ha podido aceptar: nuestro antivirus ha detectado en él algo peligroso. Revisa tu equipo antes de volver a enviarlo."
+msgstr "The file could not be accepted: our antivirus detected something dangerous in it. Check your computer before sending it again."
+
+msgid "Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."
+msgstr "We cannot check the file with the antivirus right now. Please try again in a few minutes."

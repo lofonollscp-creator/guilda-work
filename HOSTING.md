@@ -108,6 +108,8 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Rendimiento del panel fiscal con muchos vencimientos (octubre de 2026)](#rendimiento-del-panel-fiscal-con-muchos-vencimientos-octubre-de-2026)
 - [Dependencias entre tareas: herramientas MCP/IA y disparador «Una tarea queda libre» (octubre de 2026)](#dependencias-entre-tareas-herramientas-mcpia-y-disparador-una-tarea-queda-libre-octubre-de-2026)
 - [«En revisión» como estado real de la tarea (octubre de 2026)](#en-revisión-como-estado-real-de-la-tarea-octubre-de-2026)
+- [Antivirus (ClamAV) para los archivos que suben los clientes (octubre de 2026)](#antivirus-clamav-para-los-archivos-que-suben-los-clientes-octubre-de-2026)
+- [Pruebas de navegador de los flujos críticos (octubre de 2026)](#pruebas-de-navegador-de-los-flujos-críticos-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3549,3 +3551,22 @@ Hasta ahora una tarea con una revisión pendiente seguía en el estado que tuvie
 - **Migración al arrancar** (idempotente, sin copiar ni mover datos): el `CHECK` del estado de `tareas_outlook` se amplía con «en_revision» reescribiendo su definición (`writable_schema` + `schema_version`, el procedimiento que la documentación de SQLite admite para AMPLIAR un `CHECK`), seguido de `PRAGMA integrity_check`; se añade `tarea_revisiones.estado_previo`; las revisiones que ya estaban pendientes pasan a verse «en revisión». **Ensayada sobre una copia de la base de datos real** (integridad `ok`, sin claves foráneas rotas, segunda ejecución sin cambios). **Haz copia de seguridad de `data/registro.db` antes de reiniciar** y reinicia `guilda-work`, `guilda-work-mcp` y `guilda-backoffice` a la vez. Reversión: restaurar la copia (el estado «en_revision» deja de ser válido para la versión anterior).
 - **Otros sitios**: las reglas de automatización pueden usar «en revisión» como estado de destino (pedir una revisión desde una regla que se activa en ese mismo estado se rechaza al guardar); el cliente en su portal lo ve como «En curso»; Outlook/iCalendar y CSV lo exportan como «en curso». **App móvil**: `models.dart` y la pantalla de edición muestran el estado (sin ofrecerlo como destino); hay que recompilar la app, y mientras no se haga una versión antigua podría mostrar mal una tarea en revisión.
 - **Pruebas**: 6 tests nuevos en `tests/test_tareas_revision.py` (flujo, devolución del estado, bloqueo por todos los caminos, disparadores de la base de datos, migración idempotente, pantallas) y 2 en `tests/test_automatizaciones_expediente_recurrencia.py`; se actualizaron 4 tests antiguos al nuevo comportamiento.
+
+## Antivirus (ClamAV) para los archivos que suben los clientes (octubre de 2026)
+
+Código en `app/antivirus.py`; contenedor `clamav` en `docker-compose.yml`. **Apagado por defecto**: no cambia nada hasta que se enciende.
+
+- **Qué pasa por el antivirus**: lo que sube el cliente desde su portal: documentos de un vencimiento, archivos de los comentarios de tareas y facturas. Los archivos del propio equipo y el correo entrante **no** pasan por aquí.
+- **Si detecta algo**: el archivo se rechaza y no se guarda (en un comentario o en un lote de facturas, no se guarda nada), el cliente recibe un mensaje claro sin el nombre de la amenaza, y el despacho recibe un aviso y una anotación en la auditoría (`antivirus.rechazado`): el ordenador del cliente puede estar comprometido.
+- **Si el antivirus no responde**: por defecto **se rechaza** la subida con «inténtalo más tarde» (`CLAMAV_SI_FALLA=rechazar`); con `CLAMAV_SI_FALLA=aceptar` se acepta sin escanear. En ambos casos el panel de salud muestra el latido `antivirus` en rojo.
+- **Cómo activarlo** (lo hace una persona): `docker compose pull clamav && docker compose up -d clamav` (gasta ~1-1,5 GB de memoria; la primera vez tarda unos minutos en descargar las firmas, y `docker logs guilda-work-clamav` indica cuándo está listo); la imagen ya va fijada por digest (`clamav/clamav:1.4@sha256:3bba6dd5…`); después añadir a `/etc/guilda-work.env` `CLAMAV_HOST=127.0.0.1` (y, si se quiere, `CLAMAV_PUERTO`, `CLAMAV_TIMEOUT` y `CLAMAV_SI_FALLA`); reiniciar `guilda-work`. Comprobación con el fichero de prueba estándar EICAR: subirlo desde el portal debe rechazarse.
+- **Límites**: ClamAV detecta lo que conocen sus firmas; no es una garantía. La imagen no se ha descargado ni arrancado desde aquí (solo se comprobó en el registro que la etiqueta 1.4 existe y se leyó su digest): la primera vez que se arranque, mirar `docker logs guilda-work-clamav`.
+- **Pruebas**: `tests/test_antivirus.py` (10 tests) con un `clamd` simulado que habla el protocolo `INSTREAM`: limpio, infectado, error, archivo grande en varios trozos, apagado, política de fallo y los tres puntos de subida del portal.
+
+## Pruebas de navegador de los flujos críticos (octubre de 2026)
+
+`tests/e2e/` recorre en un Chromium real, con la aplicación arrancada de verdad sobre una base de datos temporal: el cliente comentando con un archivo en su portal y descargándolo, el equipo contestándole, la revisión de una tarea de principio a fin y el constructor de reglas (su JavaScript); cada prueba exige además que no haya errores de JavaScript. **No forman parte de la suite normal** (`scripts/probar.sh` ni las ve).
+
+- **Instalación** (una vez, la hace una persona; instala Playwright y descarga Chromium, ~300 MB, con sus librerías del sistema): `.venv/bin/pip install -r requirements-e2e.txt && .venv/bin/playwright install --with-deps chromium`.
+- **Ejecución**: `scripts/probar_navegador.sh` (o `-k portal` para una sola). Corre en una copia aislada como el resto y usa el Kratos de pruebas: el equipo inicia sesión por el camino real y sus cookies pasan al navegador.
+- **Estado**: escritas sin poder ejecutarlas en el servidor (no hay navegador instalado); la primera ejecución real puede necesitar retoques de selectores.
