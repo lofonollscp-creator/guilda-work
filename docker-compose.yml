@@ -814,7 +814,8 @@ services:
       - postgres-nextcloud-data:/var/lib/postgresql/data
 
   nextcloud:
-    image: nextcloud:latest@sha256:eea6e621ded409a0f878db118cd8aec619b555172d30f50d04f9bc2e5e852b4c
+    # Rama 34 fijada (no `latest`): `latest` ya es la 35 y Nextcloud no permite volver atrás tras migrar. 34.0.5 con PHP 8.5.12 (octubre de 2026).
+    image: nextcloud:34@sha256:9dbdc711cef21e1767a6e45a97e318e654d9e2ab2c1f1c570bb9cafc94529a18
     container_name: guilda-work-nextcloud
     restart: unless-stopped
     depends_on:

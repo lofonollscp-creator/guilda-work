@@ -81,9 +81,10 @@ FACTURASCRIPTS_POSTGRES_ADMIN_PASSWORD = os.environ.get("FACTURASCRIPTS_POSTGRES
 FACTURASCRIPTS_RED_DOCKER = os.environ.get("FACTURASCRIPTS_RED_DOCKER", "eleganza_default")
 # Imagen fijada por digest: los tenants nuevos arrancan con la misma versión que ya se ha probado. Para subir de
 # versión a propósito, cambia el digest aquí (o en FACTURASCRIPTS_IMAGEN) tras probar la nueva.
+# Octubre de 2026: PHP 8.4.27 (antes 8.4.23, con los parches de PHP de agosto y septiembre sin aplicar); ver HOSTING.md «PHP de los contenedores».
 FACTURASCRIPTS_IMAGEN = os.environ.get(
     "FACTURASCRIPTS_IMAGEN",
-    "facturascripts/facturascripts:latest@sha256:6341adc86551231d8e71ef75494869e35e3549bcc230bf42bafe48a84feafff5",
+    "facturascripts/facturascripts:latest@sha256:f3a1cafd37ad01b3f1f2e4c02b93818919cf325ce767f73683e35a2965ef538f",
 )
 # Hasta ahora _docker_run() no montaba nada: MyFiles/Plugins/Dinamic vivían
 # solo en la capa escribible del contenedor (efímera, y contando contra el

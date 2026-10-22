@@ -102,6 +102,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Conversaciones con el cliente por API, MCP e IA (octubre de 2026)](#conversaciones-con-el-cliente-por-api-mcp-e-ia-octubre-de-2026)
 - [Avisos por correo al equipo cuando un cliente comenta (octubre de 2026)](#avisos-por-correo-al-equipo-cuando-un-cliente-comenta-octubre-de-2026)
 - [Archivos del cliente en sus comentarios del portal (octubre de 2026)](#archivos-del-cliente-en-sus-comentarios-del-portal-octubre-de-2026)
+- [PHP de los contenedores: actualización de octubre de 2026](#php-de-los-contenedores-actualización-de-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3484,3 +3485,14 @@ El cliente puede **adjuntar archivos** al comentar en una tarea que el despacho 
 - **Migración al arrancar** (idempotente): tabla `tarea_comentarios_cliente_adjuntos`. Reversión: se ignora. Hace falta reiniciar.
 - **No se ha hecho a propósito**: que el equipo conteste con archivos, antivirus, ni más tipos (Office).
 - **Pruebas**: 14 tests en `tests/test_tareas_adjuntos_cliente.py` (subida y descarga, firmas falsas, límites, todo o nada, aislamiento entre clientes y despachos, ocultar, borrado).
+
+## PHP de los contenedores: actualización de octubre de 2026
+
+No hay PHP instalado en el servidor; solo corre dentro de dos contenedores (FacturaScripts y Nextcloud). Estaban por detrás de los parches de PHP de agosto y septiembre de 2026 (entre ellos una inyección SQL en la extensión de PostgreSQL y un fallo grave en SOAP), porque las dos imágenes están fijadas por digest y no se actualizan solas.
+
+- **Nextcloud**: `docker-compose.yml` pasa de `nextcloud:latest@sha256:eea6e621…` (Nextcloud 34.0.2, PHP 8.5.9) a **`nextcloud:34@sha256:9dbdc711…`** (34.0.5, PHP 8.5.12). Se fija la **rama 34**, no `latest`: `latest` ya es la 35 y Nextcloud migra el esquema al arrancar y no se puede volver atrás. Subir a la 35 es una actualización planificada, con copia de seguridad y leyendo sus notas de cambios.
+- **FacturaScripts**: `app/facturascripts.py` pasa del digest `6341adc8…` (PHP 8.4.23) a **`f3a1cafd…`** (PHP 8.4.27). Afecta a los tenants nuevos y a cualquier contenedor que se reconstruya.
+- **Cómo aplicarlo** (lo hace una persona, con copia de seguridad antes):
+  - Nextcloud: `docker compose up -d nextcloud`; comprobar con `docker exec guilda-work-nextcloud php -v` y `docker exec -u www-data guilda-work-nextcloud php occ status`.
+  - FacturaScripts: el contenedor del tenant no vive en `docker-compose.yml`. Se reconstruye con `reparar_tenant`, que resetea la contraseña del rol, recrea el contenedor con la imagen fijada y reinstala `config.php` sobre los datos existentes (`MyFiles/Plugins/Dinamic` están en el segundo disco y la base de datos es ajena al contenedor). Lo más simple: `docker stop guilda-work-facturascripts-tenant-1` y `sudo systemctl start vigilar-facturascripts.service` (o esperar a su timer de 5 minutos); hay una breve caída del servicio. Después: `docker exec guilda-work-facturascripts-tenant-1 php -v`. Hace falta reiniciar `guilda-work` para que la app lea el digest nuevo al crear tenants.
+- **Para la próxima vez**: comprobar la versión con `docker exec <contenedor> php -v` y mirar si hay parche de PHP nuevo (php.net) antes de pensar que está al día; un digest fijado no se mueve solo.
